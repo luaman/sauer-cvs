@@ -7,7 +7,7 @@ int allocnodes = 0;
 
 void destroyva(vtxarray *va)
 {
-    if (va->vbufGL) (*glDeleteBuffers)(1, &(va->vbufGL));
+    if (hasVBO && va->vbufGL) (*glDeleteBuffers)(1, &(va->vbufGL));
     wverts -= va->verts;
     wtris -= va->tris;
     gp()->dealloc(va, va->allocsize);

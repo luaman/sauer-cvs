@@ -1,5 +1,9 @@
 History of changes:
 
+Dec 31 2004:
+----------------
+- fixed GL_ARB_vertex_buffer_object function pointer dereference when extension not present
+
 Dec 19 2004:
 ----------------
 - revision 1.12 of the exe has a new command "fixmap", that can be entered through the console. this will convert older maps that had problems because of recent updates. it acts as a toggle. "fixmap" will not be a part of future exe s, and I haven't bothered putting it in the source code.
