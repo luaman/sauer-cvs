@@ -1,35 +1,20 @@
 #include "cube.h"
 
-void boxzs(int x, int y, int xs, int ys, int z)
+void boxs(int d, int x, int y, int xs, int ys, int z)
 {
+    int v[4][3] = 
+    {
+        {z, y,    x},
+        {z, y,    x+xs},
+        {z, y+ys, x+xs},
+        {z, y+ys, x}
+    };
     glBegin(GL_POLYGON);
-    glVertex3i(x,    z, y);
-    glVertex3i(x+xs, z, y);
-    glVertex3i(x+xs, z, y+ys);
-    glVertex3i(x,    z, y+ys);
+    loopi(4) glVertex3i( d==2 ? v[i][0] : v[i][2], 
+                         d==0 ? v[i][0] : v[i][1], 
+                         d==2 ? v[i][2] : v[i][d^1] );
     glEnd();
 };
-
-void boxys(int x, int y, int xs, int ys, int z)
-{
-    glBegin(GL_POLYGON);
-    glVertex3i(x,    y   , z);
-    glVertex3i(x+xs, y   , z);
-    glVertex3i(x+xs, y+ys, z);
-    glVertex3i(x,    y+ys, z);
-    glEnd();
-};
-
-void boxxs(int x, int y, int xs, int ys, int z)
-{
-    glBegin(GL_POLYGON);
-    glVertex3i( z,y   , x   );
-    glVertex3i( z,y   , x+xs);
-    glVertex3i( z,y+ys, x+xs);
-    glVertex3i( z,y+ys, x   );
-    glEnd();
-};
-
 
 int orient = 0;
 cube *last = NULL;
@@ -40,7 +25,7 @@ bool editmode = false;
 
 bool havesel = false;
 int cx, cy, cz, lastx, lasty, lastz, lastcorx, lastcory;
-int selx, sely, selz, selxs, selys, selzs, selgrid, selorient, selcx, selcxs, selcy, selcys;
+int sel[3], sels[3], selgrid, selorient, selcx, selcxs, selcy, selcys;
 bool dragging = false;
 
 VARF(gridpower, 2, 5, 16,
@@ -90,6 +75,7 @@ void toggleedit()
 
 COMMANDN(edittoggle, toggleedit, ARG_NONE);
 
+int lu(int dim) { return (dim==0?luz:(dim==1?luy:lux)); };  // ! 4|\/| h4XoR
 void cursorupdate()
 {
     int yawo[] = { O_LEFT, O_FRONT, O_RIGHT, O_BACK }; 
@@ -97,6 +83,7 @@ void cursorupdate()
     else if(player1->pitch<-45) orient = O_BOTTOM;
     else orient = yawo[(((int)player1->yaw-45)/90)&3];
 
+    int d = dimension(orient);
     int x = (int)worldpos.x;
     int y = (int)worldpos.y;
     int z = (int)worldpos.z;
@@ -110,7 +97,7 @@ void cursorupdate()
         case O_LEFT:   x+=4; break;
         case O_RIGHT:  x-=4; break;
     };
-    
+
     last = &lookupcube(x, y, z);
     
     if(lusize>gridsize)
@@ -126,58 +113,48 @@ void cursorupdate()
         luz &= ~(gridsize-1);
     };    
     lusize = gridsize;
+    int g2 = gridsize/2;
+    corx = (d==2?y:x)/g2;
+    cory = (d==0?y:z)/g2;
+    corner = (corx-lu(rd(d))/g2)+(cory-lu(cd(d))/g2)*2;    
+    cx = lux;
+    cy = luy;
+    cz = luz;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     //glColor4ub(64,64,255,32);
     glColor3ub(120,120,120);
     glLineWidth(1);
-    int g2 = gridsize/2;
-    switch(dimension(orient))
-    {
-        case 0: boxzs(lux, luy, lusize, lusize, luz+dimcoord(orient)*lusize); corx = x/g2; cory = y/g2; corner = (corx-lux/g2)+(cory-luy/g2)*2; break;
-        case 1: boxys(lux, luz, lusize, lusize, luy+dimcoord(orient)*lusize); corx = x/g2; cory = z/g2; corner = (corx-lux/g2)+(cory-luz/g2)*2; break;
-        case 2: boxxs(luy, luz, lusize, lusize, lux+dimcoord(orient)*lusize); corx = y/g2; cory = z/g2; corner = (corx-luy/g2)+(cory-luz/g2)*2; break;
-    };
-
-    cx = lux;
-    cy = luy;
-    cz = luz;
+    boxs(d, lu(rd(d)), lu(cd(d)), lusize, lusize, lu(d)+dimcoord(orient)*lusize);
     
     if(dragging && gridsize==selgrid && orient==selorient)
     {
-        selx = min(lastx, cx);
-        sely = min(lasty, cy);
-        selz = min(lastz, cz);
-        selxs = abs(lastx-cx)+selgrid;
-        selys = abs(lasty-cy)+selgrid;
-        selzs = abs(lastz-cz)+selgrid;
-        selcx  = min(corx, lastcorx);
-        selcxs = max(corx, lastcorx)-selcx+1;
-        selcy  = min(cory, lastcory);
-        selcys = max(cory, lastcory)-selcy+1;
+        sel[2]  = min(lastx, cx);
+        sel[1]  = min(lasty, cy);
+        sel[0]  = min(lastz, cz);
+        sels[2] = abs(lastx-cx)+selgrid;
+        sels[1] = abs(lasty-cy)+selgrid;
+        sels[0] = abs(lastz-cz)+selgrid;
+        selcx   = min(corx, lastcorx);
+        selcxs  = max(corx, lastcorx)-selcx+1;
+        selcy   = min(cory, lastcory);
+        selcys  = max(cory, lastcory)-selcy+1;
         havesel = true;
-        selcx &= 1;
-        selcy &= 1;
+        selcx  &= 1;
+        selcy  &= 1;
     }; 
     
     if(havesel)
     {
         glColor3ub(20,20,20);
-        switch(dimension(selorient))
-        {
-            case 0: { for(int x = selx; x<selx+selxs; x += selgrid) for(int y = sely; y<sely+selys; y += selgrid) boxzs(x, y, selgrid, selgrid, selz+dimcoord(selorient)*selzs); }; break;
-            case 1: { for(int x = selx; x<selx+selxs; x += selgrid) for(int z = selz; z<selz+selzs; z += selgrid) boxys(x, z, selgrid, selgrid, sely+dimcoord(selorient)*selys); }; break;
-            case 2: { for(int y = sely; y<sely+selys; y += selgrid) for(int z = selz; z<selz+selzs; z += selgrid) boxxs(y, z, selgrid, selgrid, selx+dimcoord(selorient)*selxs); }; break;
-        };
+        d = dimension(selorient);
+        for(int row = sel[rd(d)]; row<sel[rd(d)]+sels[rd(d)]; row += selgrid) 
+        for(int col = sel[cd(d)]; col<sel[cd(d)]+sels[cd(d)]; col += selgrid) 
+            boxs(d, row, col, selgrid, selgrid, sel[d]+dimcoord(selorient)*sels[d]);
         glColor3ub(60,60,60);
         //conoutf("%d %d ", selcxs*g2, selcys*g2);
-        switch(dimension(selorient))
-        {
-            case 0: boxzs(selx+selcx*g2, sely+selcy*g2, selcxs*g2, selcys*g2, selz+dimcoord(selorient)*selzs); break;
-            case 1: boxys(selx+selcx*g2, selz+selcy*g2, selcxs*g2, selcys*g2, sely+dimcoord(selorient)*selys); break;
-            case 2: boxxs(sely+selcx*g2, selz+selcy*g2, selcxs*g2, selcys*g2, selx+dimcoord(selorient)*selxs); break;
-        };
+        boxs(d, sel[rd(d)]+selcx*g2, sel[cd(d)]+selcy*g2, selcxs*g2, selcys*g2, sel[d]+dimcoord(selorient)*sels[d]);
     };
     glDisable(GL_BLEND);
 };
@@ -219,27 +196,21 @@ void editface(int dir, int mode)
     if(noedit()) return;
     if(havesel)
     {
-        int xs, ys;
-        switch(dimension(selorient))
-        {
-            case 0: xs = selxs/selgrid; ys = selys/selgrid; break;
-            case 1: xs = selxs/selgrid; ys = selzs/selgrid; break;
-            case 2: xs = selys/selgrid; ys = selzs/selgrid; break;
-        };
+        int xs = sels[rd(dimension(selorient))]/selgrid;
+        int ys = sels[cd(dimension(selorient))]/selgrid;
+        if(dimcoord(selorient)) dir *= -1;
         loop(x,xs) loop(y,ys)
         {
             cube *c;
             switch(dimension(selorient))
-            {
-                case 0: c = &lookupcube(selx+x*selgrid, sely+y*selgrid, selz, selgrid); break;
-                case 1: c = &lookupcube(selx+x*selgrid, sely, selz+y*selgrid, selgrid); break;
-                case 2: c = &lookupcube(selx, sely+x*selgrid, selz+y*selgrid, selgrid); break;
+            {   
+                case 0: c = &lookupcube(sel[2]+x*selgrid, sel[1]+y*selgrid, sel[0], selgrid); break;
+                case 1: c = &lookupcube(sel[2]+x*selgrid, sel[1], sel[0]+y*selgrid, selgrid); break;
+                case 2: c = &lookupcube(sel[2], sel[1]+x*selgrid, sel[0]+y*selgrid, selgrid); break;
             };
             discardchildren(*c);
-
-            if(dimcoord(selorient)) dir *= -1;
-            uchar *p = (uchar *)&c->faces[dimension(selorient)];
-            
+           
+            uchar *p = (uchar *)&c->faces[dimension(selorient)];         
             loop(mx,2) loop(my,2)
             {
                 if(x==0 && mx==0 && selcx) continue;
@@ -284,5 +255,31 @@ void editface(int dir, int mode)
     };
     changed = true;  
 };
-
 COMMAND(editface, ARG_2INT);
+
+void recurseflip(cube &c, int dim)
+{
+    loop(d,3)
+    {
+        if (d==dim)    c.faces[d] = 0x88888888 - (((c.faces[d]&0xF0F0F0F0)>>4)+ ((c.faces[d]&0x0F0F0F0F)<<4));
+        else if ((d<dim)==(dim!=1)) c.faces[d] = ((c.faces[d]&0xFF00FF00)>>8) + ((c.faces[d]&0x00FF00FF)<<8);
+        else                        c.faces[d] = ((c.faces[d]&0xFFFF0000)>>16)+ ((c.faces[d]&0x0000FFFF)<<16);
+    };
+
+    uchar swap = c.texture[dim*2];
+    c.texture[dim*2] = c.texture[dim*2+1];
+    c.texture[dim*2+1] = swap;
+
+    if (c.children)
+    {
+        loopi(8) if (i&(1<<(2-dim)))
+        {
+            cube t = c.children[i];
+            c.children[i] = c.children[i-(1<<(2-dim))];
+            c.children[i-(1<<(2-dim))] = t;
+        };
+        loopi(8) recurseflip(c.children[i], dim);
+    };
+};
+void flipcube() { recurseflip(lookupcube(lux,luy,luz,lusize), dimension(orient)); changed = true; };
+COMMAND(flipcube, ARG_NONE);
