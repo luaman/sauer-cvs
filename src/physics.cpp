@@ -59,49 +59,54 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     o.z += z - d->eyeheight;
     conv2espace(r, z, o);                   // first convert everything to espace
     gentris(c, pos, size, tris, z, z, r);
-    loopi(12) if(tris[i].isnormalized())    // seperation plane check
+    loopi(12) if(tris[i].isnormalized())
     {
-        float dist = tris[i].dot(o) + tris[i].offset;
-        if(dist>sr) return true;
-        if(dist>=0)
+        float dist = tris[i].dist(o);
+        if(dist>=sr) return true;           // seperation plane check
+        if(dist>=0)                         // 'voronoi region' check
         {
-            mindist = min(dist, mindist);
-            p[pi] = w = pl[pi] = tris[i];
+            p[pi] = pl[pi] = tris[i];
             p[pi].mul(-dist);
-            p[pi].add(o);
-            fh = p[pi].z;
+            p[pi].add(o);                   // projection onto pl[pi]
             loopj(pi)
             {
-                float d1 = pl[j].dot(p[pi])+pl[j].offset;
-                float d2 = pl[pi].dot(p[j])+pl[pi].offset;
-                if(d1<0) pl[j] = pl[pi];
+                float d1 = pl[j].dist(p[pi]);
+                float d2 = pl[pi].dist(p[j]);
+                if(d1<0) { pl[j] = pl[pi]; p[j] = p[pi]; };
                 if(d1<0 || d2<0) pi--;
             };
-            if(++pi==3) break;
+            if(++pi==1)                     // collect info for plane case
+            {
+                w = pl[0];
+                fh = p[0].z;
+                mindist = dist*dist;
+            };
+            if(pi==3) break;
         };
     };
 
     if(pi>1)                                // nearest point on cube check
     {
-        if(pi==2)
+        if(pi==2)                           // set up edge case
         {
             pl[2].cross(pl[0], pl[1]);
             pl[2].offset = -o.dot(pl[2]);
         };
-        vec n;
+        vec n, d(o);
         ASSERT(threeplaneintersect(pl[0], pl[1], pl[2], n));
-        float dist = o.dist(n);
-        if(dist>sr) return true;
-        mindist = min(dist, mindist);
+        d.sub(n);
+        float dist2 = d.squaredlen();
+        if(dist2>=sr*sr) return true;
+        mindist = dist2;
         fh = n.z;
         w = o;
         w.sub(n);
     };
 
+	floorheight = min(fh/r, floorheight);
+
     if(mindist<walldist)
-    {
-        fh /= r;
-        if(fh>floorheight) floorheight = fh;
+    {        
         walldist = mindist;
         wall = w;
         conv2espace(z, r, wall);            // convert back to realspace
@@ -145,9 +150,9 @@ bool cubecollide(dynent *d, cube *c, float cx, float cy, float cz, float size) /
 bool collide(dynent *d)
 {
     headspace = 10;
-    floorheight = 0;
+    floorheight = hdr.worldsize;
     wall.x = wall.y = wall.z = 0;
-    walldist = hdr.worldsize; // no real reason
+    walldist = 99999999999999999;
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];
@@ -187,14 +192,12 @@ void move(dynent *d, vec &dir, float rise)
     //conoutf("dir xyz %d %d %d", dir.x*1000, dir.y*1000, dir.z*1000);
 
     const float space = floorheight-(d->o.z-d->eyeheight);
-    //conoutf("space %d %d %d", space, d->onfloor, d->vel.z*100);
+    //conoutf("space %d %d %d", space, floorheight, d->onfloor);
 
     if(space<=STAIRHEIGHT && space>-rise)
     {
         d->onfloor = true;
         if(space>0) d->o.z += rise; // rise thru stair
-        else if(d->vel.z<1.7f) d->vel.z = 0; // hack to stop upward motion after landing
-        //d->o.z = floorheight + d->eyeheight; // clamp to ground
     };
 };
 
@@ -279,7 +282,6 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         pl->onfloor = false;
 
         // discrete steps collision detection & sliding
-        // conoutf("****************");
         d.mul(f);
         loopi(moveres) move(pl, d, rise);
     };

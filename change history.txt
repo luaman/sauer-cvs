@@ -1,5 +1,9 @@
 History of changes:
 
+Dec 11 2004:
+----------------
+- fixed up ramp collision
+
 Dec 8 2004:
 ----------------
 - added VBO support
