@@ -134,18 +134,33 @@ void empty_world(int factor, bool force)    // main empty world creation routine
 {
     if(!force && !editmode) return; 
     
+    pruneundos();
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
-    hdr.worldsize = 256*16;     
+    if (!hdr.worldsize || !factor) hdr.worldsize = 256*16;
+    else if(factor>0) hdr.worldsize = 1 << (factor<10 ? 10 : (factor>16 ? 16 : factor));
+    if (factor<0 && hdr.worldsize < 1<<15)
+    {
+        hdr.worldsize *= 2;
+        cube *c = newcubes(F_SOLID);
+        c[0].children = worldroot;
+        worldroot = c;
+    }
+    else
+    {
+        strn0cpy(hdr.maptitle, "Untitled Map by Unknown", 128);
+        hdr.waterlevel = -100000;
+        loopi(15) hdr.reserved[i] = 0;
+        loopi(256) hdr.texlist[i] = i;
+        ents.setsize(0);
+        freeocta(worldroot);
+        worldroot = newcubes(F_EMPTY);
+        loopi(4) solidfaces(worldroot[i]);
+    };
 
-    strn0cpy(hdr.maptitle, "Untitled Map by Unknown", 128);
-    hdr.waterlevel = -100000;
-    loopi(15) hdr.reserved[i] = 0;
-    loopi(256) hdr.texlist[i] = i;
-    ents.setsize(0);
-    
     startmap("base/unnamed");
+    changed = true;
 };
 
 void mapenlarge()  { empty_world(-1, false); };
