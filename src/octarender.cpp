@@ -166,9 +166,24 @@ bool touchingface(cube &c, int orient)
     return dimcoord(orient) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0;
 };
 
+uint faceedgesidx(cube &c, int x, int y, int z, int w)
+{
+    uchar edges[4] = { c.edges[x], c.edges[y], c.edges[z], c.edges[w] };
+    return *(uint *)edges;
+};
+
 uint faceedges(cube &c, int orient)
 {
-    return 0;
+    switch(orient)
+    {
+        case O_TOP:    return faceedgesidx(c, 4, 5, 8, 9);
+        case O_BOTTOM: return faceedgesidx(c, 6, 7, 10, 11);
+        case O_FRONT:  return faceedgesidx(c, 0, 1, 8, 10);
+        case O_BACK:   return faceedgesidx(c, 2, 3, 9, 11);
+        case O_LEFT:   return faceedgesidx(c, 0, 2, 4, 6);
+        case O_RIGHT:  return faceedgesidx(c, 1, 3, 5, 7);
+        default: ASSERT(0); return 0;
+    };
 };
 
 extern cube *last;
@@ -177,17 +192,17 @@ COMMAND(recalc, ARG_NONE);
 
 bool visibleface(cube &c, int orient, int x, int y, int z, int size)
 {
-    //return true;
-    //if(last==&c)        __asm int 3;
+    //if(last==&c) __asm int 3;
     cube &o = neighbourcube(x, y, z, size, 0, orient);
     if(&o==&c || isempty(o)) return true;
     if(!touchingface(c, orient) || !touchingface(o, opposite(orient))) return true;
     if(isentirelysolid(o) && lusize>=size) return false;
-    return true;
+    //return true;
     uint cfe = faceedges(c, orient);
     uint ofe = faceedges(o, opposite(orient));
     if(size==lusize) return ofe!=cfe;
-    
+    return true;
+
     if(size>lusize) return true; // TODO: do special case for bigger and smaller cubes
     return false;
 };
