@@ -36,31 +36,51 @@ void freeocta(cube *c)
     allocnodes--;
 };
 
-void newworld()
-{
-    return;
-    int sizes[] = { 32, 64, 128, 256, 512, 1024, 2048, }; 
-    loopi(5000)
-    {
-        int x = rnd(hdr.worldsize/4);//+hdr.worldsize/4;
-        int y = rnd(hdr.worldsize/2)+hdr.worldsize/4;
-        int z = rnd(hdr.worldsize/4)+hdr.worldsize/2;
-        cube &p = lookupcube(x, y, z);
-        if(isempty(p)) continue;
-        cube &c = lookupcube(x, y, z, sizes[rnd(5)]);
-        emptyfaces(c);
-        //if(rnd(2)) 
-        //loopi(12) c->edges[i] = rnd(4)|((rnd(4)+5)<<4);
-    };
-};
-
-int rvertcoord(int edge)            { return edge&1 ? 8 : 0; };
 int rvertedge(int edge, int coord)  { return (rd(edge>>2)<<2) + (edge<4 ? (edge&2?1:0)+(coord?2:0) : (edge&2?2:0)+(coord?1:0)); };
 int dc(int d, int i)                { return i&(1<<(2-d)) ? 1 : 0; };            // dimension coord
 int eavg(int a, int b)              { return ((a>>1)&0x77) + ((b>>1)&0x77); };   // edge average 
 
-int lux, luy, luz, lusize;
+void subdividecube(cube &c) // nasty code follows... 
+{
+    if (c.children) return;
+    c.children = newcubes(F_EMPTY);
+    uchar se[3][3][3];  // [dim][col][row]
+    loop(d,3)           // expand edges from 4 to 9
+    {
+        loopk(2) loopj(2) se[d][2*k][2*j] = c.edges[d*4 + k*2 + j];
+        loopj(2) se[d][2*j][1] = eavg(se[d][2*j][0], se[d][2*j][2]);
+        loopj(2) se[d][1][2*j] = eavg(se[d][0][2*j], se[d][2][2*j]);
+                 se[d][1][1]   = eavg(se[d][0][2],   se[d][2][0]); // FIXME: take into account that tris face split is now dynamic
+    };
+    loopi(8)
+    {   
+        loop(d,3) loop(col,2) loop(row,2) // split edges and assign
+        {   
+            uchar *cce = &c.children[i].edges[(d*4)+(col*2)+row];
+            uchar sed = se[d][col + dc(cd(d),i)][row + dc(rd(d),i)];
+            if     (edgeget(sed,1) < 5) *cce = (dc(d,i) ? 0 : 2*sed);               // edge is entirely in lower quad
+            else if(edgeget(sed,0) > 4) *cce = (dc(d,i) ? 2*sed - 0x88 : 0x88);     // edge is entirely in upper quad
+            else                        *cce = (dc(d,i) ? ((2*sed)&0xF0)-0x80 : ((2*sed)&0x0F)+0x80); // edge is split
+        };
+        loopj(6) c.children[i].texture[j] = c.texture[j];
+        loopj(3) c.children[i].colour[j] = c.colour[j];
+    };
+    loopi(8) // clean up edges
+    {   
+        loopj(3) if (!c.children[i].faces[j] || c.children[i].faces[j]==0x88888888) { emptyfaces(c.children[i]); break; };
+        if (isempty(c.children[i])) continue;
+        uchar *cce = &c.children[i].edges[0];
+        loopj(12) if (cce[j]==0x88 || !cce[j])
+        {
+            if (cce[j]==cce[j^1] && cce[j]==cce[j^2])               // fix peeling
+                cce[rvertedge(j, cce[j])] = j&1 ? 0 : 0x88;
+            else if (dc(j>>2,i)*8 != edgeget(cce[j], !dc(j>>2,i)))  // fix cracking
+                edgeset(c.children[i^(1<<(2-(j>>2)))].edges[j], dc(j>>2,i), dc(j>>2,i) ? 8 : 0);                   
+        };
+    };
+};
 
+int lux, luy, luz, lusize;
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
@@ -74,45 +94,12 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         if(ty>=y+size) { y += size; c += 2; };
         if(tx>=x+size) { x += size; c += 1; };
         if(tsize==size) break;
+        //if(abs(tsize)>=size) break;
         if(c->children==NULL)
         {
             if(!tsize) break;
-            c->children = newcubes(F_EMPTY);
-            // geomip : some of the nastiest code in the engine follows
-            uchar se[3][3][3];  // [dim zxy][col yzz][row xxy]
-            loop(d,3)           // expand edges from 4 to 9
-            {
-                loopk(2) loopj(2) se[d][2*k][2*j] = c->edges[d*4 + k*2 + j];
-                loopj(2) se[d][2*j][1] = eavg(se[d][2*j][0], se[d][2*j][2]);
-                loopj(2) se[d][1][2*j] = eavg(se[d][0][2*j], se[d][2][2*j]);
-                         se[d][1][1]   = eavg(se[d][0][2],   se[d][2][0]); // to comply with renderer...
-            };
-            loopi(8)
-            {   
-                loop(d,3) loop(col,2) loop(row,2) // split edges and assign
-                {   
-                    uchar *cce = &c->children[i].edges[(d*4)+(col*2)+row];
-                    uchar sed = se[d][col + dc(cd(d),i)][row + dc(rd(d),i)];
-                    if     (edgeget(sed,1) < 5) *cce = (dc(d,i) ? 0 : 2*sed);
-                    else if(edgeget(sed,0) > 4) *cce = (dc(d,i) ? 2*sed - 0x88 : 0x88);
-                    else                        *cce = (dc(d,i) ? ((2*sed)&0xF0)-0x80 : ((2*sed)&0x0F)+0x80);
-                };
-                loopj(6) c->children[i].texture[j] = c->texture[j];
-                loopj(3) c->children[i].colour[j] = c->colour[j];
-            };
-            loopi(8) // clean up edges
-            {   
-                loopj(3) if (!c->children[i].faces[j] || c->children[i].faces[j]==0x88888888) { emptyfaces(c->children[i]); break; };
-                if (isempty(c->children[i])) continue;
-                uchar *cce = &c->children[i].edges[0];
-                loopj(12) if (cce[j]==0x88 || !cce[j])
-                {
-                    if (cce[j]==cce[j^1] && cce[j]==cce[j^2])               // fix peeling
-                        cce[rvertedge(j, cce[j])] = rvertcoord(j) ? 0 : 0x88;
-                    else if (dc(j>>2,i)*8 != edgeget(cce[j], !dc(j>>2,i)))  // fix cracking somewhat
-                        edgeset(c->children[i^(1<<(2-(j>>2)))].edges[j], dc(j>>2,i), dc(j>>2,i) ? 8 : 0);                   
-                };
-            };
+            //if(tsize<=0) break;
+            subdividecube(*c);
         };
         c = c->children;
     };
@@ -136,16 +123,3 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     };
     return lookupcube(x, y, z, rsize);
 };
-
-//////// REMOVE AFTER 0.03 Release ///////////
-void fixface(cube &c)
-{
-    uchar t; 
-    swap(c.texture[0],c.texture[1],t);
-    swap(c.texture[2],c.texture[3],t);
-    if (c.children) loopi(8) fixface(c.children[i]);
-};
-
-void fixfaces() { changed = true; loopi(8) fixface(worldroot[i]); };
-COMMAND(fixfaces, ARG_NONE);
-//////// REMOVE AFTER 0.03 Release ///////////
