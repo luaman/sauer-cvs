@@ -7,6 +7,7 @@ Dec 6 2004:
 - improved hidden face rejection
 - added hierarchial vertex arrays
 - added view frustrum culling
+- updated included glext.h to latest from SGI
 
 Dec 4 2004:
 ----------------

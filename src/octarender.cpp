@@ -461,10 +461,10 @@ vtxarray *newva(int x, int y, int z, int size)
         texlist[textures++] = (char)k;
 
     int allocsize = sizeof(vtxarray);
-    allocize += textures * sizeof(elementset); // length of eslist buffer
-    allocize += curvert * sizeof(vertex);      // length of vertex buffer
-    allocize += curtris * 2 * sizeof(ushort);  // length of element buffer
-    vtxarray *va = (vtxarray *)gp()->alloc(allocize); // single malloc call
+    allocsize += textures * sizeof(elementset); // length of eslist buffer
+    allocsize += curvert * sizeof(vertex);      // length of vertex buffer
+    allocsize += curtris * 2 * sizeof(ushort);  // length of element buffer
+    vtxarray *va = (vtxarray *)gp()->alloc(allocsize); // single malloc call
     va->eslist = (elementset *)((char *)va + sizeof(vtxarray));
     va->vbuf = (vertex *)((char *)va->eslist + (textures * sizeof(elementset)));
     va->ebuf = (ushort *)((char *)va->vbuf + (curvert * sizeof(vertex)));
@@ -547,7 +547,7 @@ void octarender()
 
     loopi(8) vaclear(c+i);  // Purge all vtxarray.
 
-    if(worldva) gp()->dealloc(worldva, c->va->allocsize);
+    if(worldva) gp()->dealloc(worldva, worldva->allocsize);
 
     // Parse entire map
     renderc(c, hdr.worldsize/2, 0, 0, 0);
