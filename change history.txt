@@ -1,5 +1,10 @@
 History of changes:
 
+Jan 3 2005:
+----------------
+- fixed memory leak (vertex array not destroyed)
+- force all children in selection area to update
+
 Dec 31 2004:
 ----------------
 - fixed GL_ARB_vertex_buffer_object function pointer dereference when extension not present

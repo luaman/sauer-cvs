@@ -503,6 +503,8 @@ void octarenderc(cube *c, int size, int cx, int cy, int cz)
 {
     loopi(8) if (c[i].children)
     {
+        if(c[i].va) destroyva(c[i].va);
+
         int x = cx+((i&1)>>0)*size;
         int y = cy+((i&2)>>1)*size;
         int z = cz+((i&4)>>2)*size;

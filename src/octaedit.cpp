@@ -313,17 +313,19 @@ void allchanged()
     loopi(8) changedva((i&1)?size:0, (i&2)?size:0, (i&4)?size:0, hdr.worldsize, dummy);
 };
 
-void addchanged(block3 &b, bool internal = false)
+void addchanged(block3 &bo, bool internal = false)
 {
     static uint badmask;
+    block3 bb, b;
     if (!internal)
     {
         badmask = hdr.worldsize;
         loopi(5) badmask = badmask | badmask << (1 << i);
     };
+    loopi(3) { b.o[i]=bo.o[i]; b.s[i]=bo.s[i]*bo.grid; };
+    b.grid = 1;
     loopi(3) if((b.o[i] | (b.o[i]+b.s[i]*b.grid-1)) & badmask) return;
 
-    block3 bb;
     int ze=b.o[0]+b.s[0]*b.grid;
     int ye=b.o[1]+b.s[1]*b.grid;
     int xe=b.o[2]+b.s[2]*b.grid;
