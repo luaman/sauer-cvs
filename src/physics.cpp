@@ -7,7 +7,8 @@
 
 // info about collisions
 plane wall; // just the normal vector. offset is garbage.
-float headspace, floorheight, ceilheight;
+float headspace, floorheight;
+const int STAIRHEIGHT = 4;
 
 bool plcollide(dynent *d, dynent *o)          // collide with player or monster
 {
@@ -58,7 +59,7 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     float mdist = -9999999;
     loopi(12) // collision detection
     {
-        conoutf("%d %d", i, tris[i].squaredlen()*1000);
+        //conoutf("%d %d", i, tris[i].squaredlen()*1000);
         if(!tris[i].isnormalized()) continue;
         float dist = tris[i].dot(o) + tris[i].offset;
         //conoutf("%d dist : %d",i,dist);
@@ -74,18 +75,15 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     wall.normalize();
 
     float fh = hdr.worldsize;
-    float ch = 0;
     loopi(12)
     {
         if(!tris[i].isnormalized()) continue;
         float h = -(tris[i].offset + o.x*tris[i].x + o.y*tris[i].y) / (tris[i].z*r);
         if(tris[i].z>0 && h<fh) fh = h;
-        else if(tris[i].z<0 && h>ch) ch = h;
-    };
-    if(ch<ceilheight) ceilheight = ch;
+    };    
     if(fh>floorheight) floorheight = fh;
     float space = floorheight-(d->o.z-d->eyeheight);
-    if (space<=8) return true;
+    if (space<=STAIRHEIGHT) return true;
     return false;
 };
 
@@ -123,7 +121,6 @@ bool collide(dynent *d)
 {
     headspace = 10;
     floorheight = 0;
-    ceilheight = hdr.worldsize;
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];
@@ -143,13 +140,12 @@ bool collide(dynent *d)
 
 bool move(dynent *d, vec &dir, float drop, float rise)
 {
-    vec reset(dir);
+    vec old(d->o);
     d->o.add(dir); 
     collide(d);
     
     float space = floorheight-(d->o.z-d->eyeheight);
-    //float space2 = ceilheight-(d->o.z+d->aboveeye);
-    //conoutf("space %d %d %d", space, d->onfloor, d->vel.z*100);
+     //conoutf("space %d %d %d", space, d->onfloor, d->vel.z*100);
 
     if(space<0)
     {
@@ -163,7 +159,7 @@ bool move(dynent *d, vec &dir, float drop, float rise)
         if(d->vel.z < 1.7f) d->vel.z = 0; // hack to stop upward motion after landing
         d->o.z = floorheight + d->eyeheight; // clamp to ground
     }
-    else if(space<=8 && space>0) d->o.z += rise; // rise thru stair
+    else if(space<=STAIRHEIGHT && space>0) d->o.z += rise; // rise thru stair
 
     if(space>0)
     {
@@ -172,10 +168,10 @@ bool move(dynent *d, vec &dir, float drop, float rise)
         dir.sub(wall);  // try sliding against wall for next move
         //conoutf("dir xyz %d %d %d", dir.x*1000, dir.y*1000, dir.z*1000);
 
-        if(!d->onfloor || space>8) // collide
+        if(!d->onfloor || space>STAIRHEIGHT) // collide
         {
             d->blocked = true;
-            d->o.sub(reset);
+            d->o = old;
             return false;
         };
     };
