@@ -293,8 +293,7 @@ void changedva(int x, int y, int z, int size, block3 &step)
         }
         cc = cc + ((x & grid)?1:0) + ((y & grid)?2:0) + ((z & grid)?4:0);
         if (cc->va || !i) { c = cc; g = grid; m = mm; };
-        if (!cc->children) break;
-        if (grid <= size) { vaclearc(cc->children); break; };
+        if (!cc->children || grid<=size) break;
         cc = cc->children;
     };
     if (!c->va)
@@ -401,7 +400,6 @@ void pruneundos(int maxremain)                          // bound memory
 
 void makeundo()                                         // stores state of selected cubes before editing
 {
-    addchanged(sel);
     if(lastsel == sel) return;
     undoblock u = { selgridmap(), block3copy(lastsel=sel, -sel.grid)};
     undos.add(u);
@@ -412,8 +410,8 @@ void editundo()                                         // undoes last action
 {
     if(noedit()) return;
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
-    addchanged(*(undos.last()).b);
     pasteundo(undos.pop());
+    addchanged(*(undos.last()).b);
     lastsel.s[0]=0;                                     // next edit should save state again
 };
 
@@ -435,6 +433,7 @@ void paste()
     makeundo();
     cube *s = copybuf->c();
     loopxyz(sel, O_TOP) pastecube(*s++, x, y, z, sel, sel.grid);
+    addchanged(sel);
 };
 
 COMMAND(copy, ARG_NONE);
@@ -467,7 +466,6 @@ void editface(int dir, int mode)
     int ts = sel.s[D(dimension(selorient))];
     sel.s[D(dimension(selorient))] = 1;
     makeundo();
-    sel.s[D(dimension(selorient))] = ts;
     loopselxy()
     {
         cube &c = selcube(x, y, 0);
@@ -493,6 +491,8 @@ void editface(int dir, int mode)
             optiface(p, c);
         };
     };
+    addchanged(sel);
+    sel.s[D(dimension(selorient))] = ts;
     if (mode==1 && dir>0) sel.o[d] += sel.grid * seldir;
 };
 
@@ -528,6 +528,7 @@ void edittex(int dir)
     curtexindex = i = min(max(i, 0), 255);
     makeundo();
     loopselxyz() edittexcube(selcube(x,y,z), lasttex = hdr.texlist[i], selorient);
+    addchanged(sel, true); // Don't update neighbors
 };
 
 COMMAND(edittex, ARG_1INT);
@@ -546,6 +547,7 @@ void lite(int r, int g, int b)
     if(noedit()) return;
     makeundo();
     loopselxyz() lightcube(selcube(x, y, z), r*litepower, g*litepower, b*litepower);
+    addchanged(sel); // Update neighbirs since vertex lighting shared
 };
 COMMAND(lite, ARG_3INT);
 
@@ -614,6 +616,7 @@ void flip()
             swap(cube, a, b);
         };
     };
+    addchanged(sel);
 };
 
 void rotate(int cw)
@@ -634,6 +637,7 @@ void rotate(int cw)
             selcube(ss-1-x-y, ss-1-y, d)
         );
     };
+    addchanged(sel); // Is this correct?
 };
 
 COMMAND(flip, ARG_NONE);

@@ -2,6 +2,7 @@ History of changes:
 
 Dec 18 2004:
 ----------------
+- fixed partial update bug, now calls addchanged() after octree is changed
 - perfoemance improvement for partial updates
 - added partial updates
 
