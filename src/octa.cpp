@@ -15,7 +15,7 @@ cube *newcubes(uint face)
         loopl(6) c->texture[l] = 2+l;
         int col = rnd(256);
         loopl(3) c->colour[l] = col;
-        c->colour[3] = 255; 
+        c->colour[3] = 255;
         c++;
     };
     allocnodes++;
@@ -61,7 +61,9 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             if(!tsize) break;
             //if(tsize<=0) break;
-            subdividecube(*c);
+            if(isentirelysolid(*c)) c->children = newcubes(F_SOLID);
+            else if(isempty(*c)) c->children = newcubes(F_EMPTY);
+            else subdividecube(*c);
         };
         c = c->children;
     };
