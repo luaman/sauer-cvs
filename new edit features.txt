@@ -1,0 +1,37 @@
+New Editing Features
+--------------------
+
+First off, there's no need to select the cubes to use the following edit functions. Simply hovering the cursor over the cube is enough. Any selections are completely ignored.
+
+Also, you'll want to make the following changes to your autoexec.cfg file:
+
+//////////////////////////////////
+// add these bindings
+bind X flip
+bind C copy
+bind V paste
+bind Z undo
+
+bind Q [ domodifier 3 ]	// this used to bound to 'R',
+bind R [ domodifier 4 ]
+bind T [ domodifier 6 ]
+
+alias delta_edit_4 [ rotate $arg1 ]
+alias delta_edit_6 [ edittex $arg1 ] 
+
+//////////////////////////////////
+
+
+Description of changes:
+
+flip: press 'X' to flip a cube front to back relative to the face the cursor is currently over.
+
+rotate: press and hold 'r', then move the mouse wheel up to rotate the cube clockwise relative to the face that is being pointed at. Move the mouse wheel down to rotate counter clockwise.
+
+copy: just press 'c' to copy the cube. remember, it copies the cube you're currently looking at, using the current gridsize. Right now it is completely independent from any selections that are being done.
+
+paste: just look at where you want to paste, and then press 'v' to paste the copied cube, using the current gridsize. In other words, if the cube that was copied is of a different size then your current grid, it will be scaled to fit.
+
+edittex: While hovering the cursor over a cube, press and hold 't', then use the mouse wheel to scroll through the different textures. Release 't' to save the texture onto the cube. If your gridsize captures many cubes, all of them will also get their faces textured, just like normal.
+
+undo: pressing 'z' will undo your last edit move. currently, any editing done with selections is not fully supported by undo.
