@@ -1,5 +1,10 @@
 History of changes:
 
+Sept 8 2004:
+----------------
+- added stairs support
+- added jumping
+
 July 29 2004:
 ----------------
 - fixed player starting inside the ground when newmap
