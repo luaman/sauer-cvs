@@ -204,6 +204,13 @@ uint faceedges(cube &c, int orient)
 void recalc() { changed = true; };
 COMMAND(recalc, ARG_NONE);
 
+bool faceedgegt(uint cfe, uint ofe)
+{
+    loopi(4) if ((faceedgeget(ofe, i, 0) > faceedgeget(cfe, i, 0)) ||
+                 (faceedgeget(ofe, i, 1) < faceedgeget(cfe, i, 1))) return true;
+    return false;
+}
+
 bool visibleface(cube &c, int orient, int x, int y, int z, int size)
 {
     //if(last==&c) __asm int 3;
@@ -214,7 +221,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size)
     //return true;
     uint cfe = faceedges(c, orient);
     uint ofe = faceedges(o, opposite(orient));
-    if(size==lusize) return ofe!=cfe;
+    if(size==lusize) return ofe!=cfe ? faceedgegt(cfe, ofe) : false;
     return true;
 
     if(size>lusize) return true; // TODO: do special case for bigger and smaller cubes
@@ -260,6 +267,10 @@ void renderq()
 {
     int si[] = { 2, 0, 1 };
     int ti[] = { 0, 1, 2 };
+
+    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(verts[0].colour));
+    glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(verts[0].x));
+
     loopl(3) loopk(256)
     {
         usvector &v = indices[l][k];

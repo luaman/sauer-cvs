@@ -1,5 +1,11 @@
 History of changes:
 
+Dec 6 2004:
+----------------
+- make tools.h more compatible with gcc
+- comment out VAR code
+- improved hidden face rejection
+
 Dec 4 2004:
 ----------------
 - fixed edgeinv creating invalid cubes

@@ -8,7 +8,7 @@ bool hasVAR = false;
 void purgetextures();
 
 GLUquadricObj *qsphere = NULL;
-
+/*
 vertex *varbuf = NULL;
 
 typedef void* (APIENTRY * PFNWGLALLOCATEMEMORYNVPROC) (GLsizei size, 
@@ -20,7 +20,7 @@ PFNWGLALLOCATEMEMORYNVPROC wglAllocateMemoryNV = NULL;
 PFNWGLFREEMEMORYNVPROC wglFreeMemoryNV = NULL;
 
 #define MAX_VAR_VERTS 500000
-
+*/
 void *getprocaddress(const char *name)
 {
     #ifdef WIN32
@@ -62,7 +62,7 @@ void gl_init(int w, int h)
     
     if(strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
     else conoutf("WARNING: cannot use overbright lighting, using old lighting model!");
-        
+    /*
     if(!strstr(exts, "GL_NV_vertex_array_range")) conoutf("no vertex_array_range extension!");
     else
     {
@@ -98,7 +98,7 @@ void gl_init(int w, int h)
         conoutf("WARNING: your card does not support VAR (T&L), using slow fallback...");    
         varbuf = new vertex[MAX_VAR_VERTS];
     };
-
+    */
     purgetextures();
 
     if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
@@ -112,7 +112,7 @@ void gl_init(int w, int h)
 
 void cleangl()
 {
-    if(varbuf && hasVAR) (*wglFreeMemoryNV)(varbuf);
+    //if(varbuf && hasVAR) (*wglFreeMemoryNV)(varbuf);
     if(qsphere) gluDeleteQuadric(qsphere);
 };
 
@@ -227,8 +227,8 @@ void setupworld()
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
     //glEnableClientState(GL_TEXTURE_COORD_ARRAY); 
-    glVertexPointer(3, GL_FLOAT, sizeof(vertex), &varbuf[0].x);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &varbuf[0].colour);
+    //glVertexPointer(3, GL_FLOAT, sizeof(vertex), &varbuf[0].x);
+    //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &varbuf[0].colour);
     //glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &varbuf[0].u);
 
     if(hasoverbright)
@@ -366,7 +366,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     {
         changed = false;
         octarender();
-        memcpy(varbuf, verts, min(curvert, MAX_VAR_VERTS)*sizeof(vertex));
+        //memcpy(varbuf, verts, min(curvert, MAX_VAR_VERTS)*sizeof(vertex));
     };
 
     ///render_world(player1->o.x, player1->o.y, player1->o.z, changelod, (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
