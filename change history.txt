@@ -1,5 +1,10 @@
 History of changes:
 
+Jan 24 2005:
+----------------
+- simplifyied the rendering and partial update code
+- rearranged the hud map numbers abit, added allocated vertex array counter "va"
+
 Jan 18 2005:
 ----------------
 - fixed crash due to failed to clear va pointer
