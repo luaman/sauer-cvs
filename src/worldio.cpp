@@ -14,7 +14,7 @@ void backup(char *name, char *backupname)
     rename(name, backupname);
 };
 
-string cgzname, bakname, pcfname, mcfname; 
+string cgzname, bakname, pcfname, mcfname;
 
 void setnames(char *name)
 {
@@ -39,7 +39,7 @@ void setnames(char *name)
     path(bakname);
 };
 
-// these two are used by getmap/sendmap.. transfers compressed maps directly 
+// these two are used by getmap/sendmap.. transfers compressed maps directly
 
 void writemap(char *mname, int msize, uchar *mdata)
 {
@@ -75,7 +75,7 @@ void savec(cube *c, gzFile f)
             gzputc(f, OCTSAV_CHILDREN);
             savec(c[i].children, f);
         }
-        else 
+        else
         {
             if(isempty(c[i])) gzputc(f, OCTSAV_EMPTY);
             else if(isentirelysolid(c[i])) gzputc(f, OCTSAV_SOLID);
@@ -98,12 +98,12 @@ void loadc(gzFile f, cube &c)
     {
         case OCTSAV_CHILDREN:
             c.children = loadchildren(f);
-            return;  
-                  
-        case OCTSAV_EMPTY:  emptyfaces(c);          break;            
-        case OCTSAV_SOLID:  solidfaces(c);          break;            
+            return;
+
+        case OCTSAV_EMPTY:  emptyfaces(c);          break;
+        case OCTSAV_SOLID:  solidfaces(c);          break;
         case OCTSAV_NORMAL: gzread(f, c.edges, 12); break;
-        
+
         default:
             fatal("garbage in map");
     };
@@ -115,7 +115,6 @@ void loadc(gzFile f, cube &c)
 cube *loadchildren(gzFile f)
 {
     cube *c = newcubes();
-    c->va = NULL;
     loopi(8) loadc(f, c[i]);
     // TODO: remip c from children here
     return c;
@@ -135,9 +134,9 @@ void save_world(char *mname)
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
-    loopv(ents) 
+    loopv(ents)
     {
-        if(ents[i].type!=NOTUSED) 
+        if(ents[i].type!=NOTUSED)
         {
             entity tmp = ents[i];
             endianswap(&tmp.o, sizeof(int), 3);
@@ -145,9 +144,9 @@ void save_world(char *mname)
             gzwrite(f, &tmp, sizeof(entity));
         };
     };
-    
+
     savec(worldroot, f);
-    
+
     gzclose(f);
     conoutf("wrote map file %s", (int)cgzname);
     settagareas();
@@ -171,11 +170,11 @@ void load_world(char *mname)        // still supports all map formats that have 
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
     };
-    
+
     freeocta(worldroot);
     worldroot = loadchildren(f);
     allchanged();
-    
+
     gzclose(f);
     settagareas();
     conoutf("read map %s (%d milliseconds)", (int)cgzname, SDL_GetTicks()-lastmillis);
@@ -200,7 +199,7 @@ void gzputi(gzFile f, int i) { gzwrite(f, &i, sizeof(int)); };
 int gzgeti(gzFile f)
 {
     int i;
-    if(gzread(f, &i, sizeof(int))<sizeof(int)) fatal("savegame file corrupt (short)");  
+    if(gzread(f, &i, sizeof(int))<sizeof(int)) fatal("savegame file corrupt (short)");
     return i;
 };
 
@@ -211,7 +210,7 @@ void savegame(char *name)
     gzFile f = gzopen(fn, "wb9");
     if(!f) { conoutf("could not write %s", (int)fn); return; };
     gzwrite(f, (void *)"CUBESAVE", 8);
-    gzputc(f, islittleendian);  
+    gzputc(f, islittleendian);
     gzputi(f, SAVEGAMEVERSION);
     gzputi(f, sizeof(dynent));
     gzwrite(f, getclientmap(), _MAXDEFSTR);
@@ -234,7 +233,7 @@ void loadgame(char *name)
     sprintf_sd(fn)("savegames/%s.csgz", name);
     f = gzopen(fn, "rb9");
     if(!f) { conoutf("could not open %s", (int)fn); return; };
-    
+
     string buf;
     gzread(f, buf, 8);
     if(strncmp(buf, "CUBESAVE", 8)) goto out;
@@ -243,9 +242,9 @@ void loadgame(char *name)
     string mapname;
     gzread(f, mapname, _MAXDEFSTR);
     nextmode = gzgeti(f);
-    changemap(mapname); // continue below once map has been loaded and client & server have updated 
+    changemap(mapname); // continue below once map has been loaded and client & server have updated
     return;
-    out:    
+    out:
     gzclose(f);
     f = NULL;
     conoutf("aborting: savegame from a different version of cube or cpu architecture");
@@ -261,18 +260,18 @@ void loadgameout()
 void loadgamerest()
 {
     if(!f) return;
-        
+
     if(gzgeti(f)!=ents.length()) return loadgameout();
     loopv(ents)
     {
-        ents[i].spawned = gzgetc(f)!=0;   
+        ents[i].spawned = gzgetc(f)!=0;
         if(ents[i].type==CARROT && !ents[i].spawned) trigger(ents[i].attr1, ents[i].attr2, true);
     };
     restoreserverstate(ents);
-    
+
     gzread(f, player1, sizeof(dynent));
     player1->lastattack = lastmillis;
-    
+
     int nmonsters = gzgeti(f);
     dvector &monsters = getmonsters();
     if(nmonsters!=monsters.length()) return loadgameout();
@@ -283,12 +282,12 @@ void loadgamerest()
         monsters[i]->lastattack = monsters[i]->trigger = lastmillis+500;    // also lazy, but no real noticable effect on game
     };
     restoremonsterstate();
-    
+
     string buf;
     int bytesleft = gzread(f, buf, 1);
-    gzclose(f);  
+    gzclose(f);
     f = NULL;
-    if(bytesleft==1) fatal("savegame file corrupt (long)");    
+    if(bytesleft==1) fatal("savegame file corrupt (long)");
     conoutf("savegame restored");
 };
 

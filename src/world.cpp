@@ -132,7 +132,7 @@ int findentity(int type, int index)
 
 void empty_world(int factor, bool force)    // main empty world creation routine, if passed factor -1 will enlarge old world by 1
 {
-    if(!force && !editmode) return conoutf("Must be in editmode to create newmap.");
+    if(!force && !editmode) return conoutf("newmap only allowed in edit mode");
 
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
@@ -143,7 +143,6 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     {
         hdr.worldsize *= 2;
         cube *c = newcubes(F_SOLID);
-        c->va = NULL;
         c[0].children = worldroot;
         worldroot = c;
     }
