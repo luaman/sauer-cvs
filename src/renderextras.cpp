@@ -309,6 +309,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glPopMatrix();
         glPushMatrix();
         glOrtho(0, VIRTW*3/2, VIRTH*3/2, 0, -1, 1);
+        if(editmode) draw_textf("cube %d", 3100, 2250, 2, familysize(lookupcube(lux,luy,luz,lusize)));
         draw_textf("fps %d", 3100, 2320, 2, curfps);
         draw_textf("tri %d", 3100, 2390, 2, wtris);
         draw_textf("ond %d", 3100, 2460, 2, allocnodes*8); 
