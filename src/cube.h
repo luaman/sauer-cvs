@@ -31,6 +31,7 @@ struct cvec
     uchar x, y, z;
     cvec() {};
     cvec(uchar a, uchar b, uchar c) : x(a), y(b), z(c) {};
+    uchar &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
 };    
     
 struct vec
@@ -41,7 +42,8 @@ struct vec
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(cvec &v) : x(v.x), y(v.y), z(v.z) {};
     
-    bool equals(const vec &o){ return x==o.x && y==o.y && z==o.z; };
+    float &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
+
     float squaredlen()       { return x*x + y*y + z*z; };
     float dot(const vec &o)  { return x*o.x + y*o.y + z*o.z; };
     void mul(float f)        { x *= f; y *= f; z *= f; }
@@ -50,6 +52,7 @@ struct vec
     void sub(const vec &o)   { x -= o.x; y -= o.y; z -= o.z; };
     float magnitude()        { return (float)sqrt(dot(*this)); };
     void normalize()         { div(magnitude()); };
+    bool isnormalized()      { float m = squaredlen(); return (m>0.99f && m<1.01f); };
     float dist(const vec &e) { vec t; return dist(e, t); };
     float dist(const vec &e, vec &t) { t = *this; t.sub(e); return t.magnitude(); };
     bool reject(const vec &o, float max) { return x>o.x+max || x<o.x-max || y>o.y+max || y<o.y-max; };

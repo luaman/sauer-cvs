@@ -311,3 +311,24 @@ void octarender()
     renderc(worldroot, hdr.worldsize/2, 0, 0, 0);
     vh.clear();
 };
+
+void gentris(cube &c, vec &pos, float size, plane *tris, float x=1, float y=1, float z=1) 
+{
+    vertex v[8];
+    loopi(8)
+    {   
+        v[i] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, 0);
+        float t = v[i].y * z;
+        v[i].y = v[i].z * y;
+        v[i].x *= x;
+        v[i].z = t;     
+    };
+    loopi(12) tris[i].x = tris[i].y = tris[i].z = tris[i].offset = 0.0f; // init
+    loopi(6) loopj(2)
+    {
+        vec ve[4];
+        loopk(4) ve[k] = v[faceverts(c,i,k)];
+        if(j && tris[i*2].isnormalized() && faceconvexity(ve,i)==0) continue; // skip redundant planes
+        vertstoplane(ve[0], ve[1+j], ve[2+j], tris[i*2+j]);
+    };
+};

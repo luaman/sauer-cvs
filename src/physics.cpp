@@ -41,52 +41,6 @@ bool mmcollide(dynent *d)           // collide with a mapmodel
 // This ellipsoid is a sphere in the espace, though not normalized.
 void conv2espace(float r, float z, vec &v) { v.x *= z; v.y *= z; v.z *= r; };
 
-bool validplane(plane &p) { return p.x<=1 && p.x>=-1; }; // quick non robust test for normalized planes only...
-
-void geneplanes(cube &c, float r, float z, vec &pos, float size, plane *tris) // generates the 12 tris planes of a cube in espace 
-{
-    // if too slow, could either finish the commented stuff below, or instead add a cache of recently used cube planes.
-    //-----------
-    // should also add quick solid cube plane gen
-    /* 
-    // this method should be faster then one below, but
-    // first got to figure out a quick way of culling unused planes...
-    vec v[6][4];
-    conv2espace(r,z,pos);
-    r*=size/8.0f;
-    z*=size/8.0f;
-    loopi(6) loopk(4) 
-    {
-        cvec &cc = (*(cvec *)cubecoords[faceverts(c,i,k)]);
-        v[i][k].x = (float)cc.x;
-        v[i][k].y = (float)cc.y;
-        v[i][k].z = (float)cc.z;
-        vertrepl(cc, v[i][k], dimension(i), dimcoord(i), c.faces[dimension(i)]);
-        conv2espace(r,z,v[i][k]);
-        v[i][k].add(pos);
-    };
-    */
-    vertex v[8];
-    loopi(8) 
-    {   
-        v[i] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, 0);
-        float t; swap(v[i].y, v[i].z, t);
-        conv2espace(r, z, v[i]);
-    };
-    loopi(6) loopj(2)
-    {
-        vec ve[4];
-        //loopk(4) ve[k] = v[i][k];
-        loopk(4) ve[k] = v[faceverts(c,i,k)];
-        if (j) if (validplane(tris[i])) if (faceconvexity(ve,i)==0) // skip redundant planes
-        { 
-            tris[i+(6*j)].x = 0xBAD; 
-            continue; 
-        };
-        vertstoplane(ve[0], ve[1+j], ve[2+j], tris[i+(6*j)]);
-    };
-};
-
 bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) // collide with cube geometry
 {
     // first convert everything to espace
@@ -98,48 +52,22 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     conv2espace(r, z, o);
     plane tris[12];
     vec pos(cx, cy, cz);
-    geneplanes(c, r, z, pos, size, tris);
-
+    gentris(c, pos, size, tris, z, z, r);
+    
     int max=0;
     float mdist = -9999999;
-    //int max[3];
-    //float mdist[3] = { -9999999 };
     loopi(12) // collision detection
     {
-        if(!validplane(tris[i])) continue;
+        conoutf("%d %d", i, tris[i].squaredlen()*1000);
+        if(!tris[i].isnormalized()) continue;
         float dist = tris[i].dot(o) + tris[i].offset;
         //conoutf("%d dist : %d",i,dist);
         if(dist>sr) return true;
         if(dist>mdist)  { mdist = dist; max = i; };
-        /*{ 
-            loopj(2) { max[2-j] = max[1-j]; mdist[2-j] = mdist[1-j]; };
-            mdist[0] = dist; 
-            max[0] = i; 
-        };*/
-    };
+   };
 
     // collision detected. now collect info for response
     
-    /*
-    // can try below, or somehow get interesct point (ie: wall = o - intersect)
-    if (mdist[0] - mdist[2] < 0.01f) //hit a vert
-    {
-        vec dest;
-        threeplaneintersect(tris[max[0]], tris[max[1]], tris[max[2]], dest);
-        dest.sub(o); // or reverse???
-        wall = dest;
-    }
-    else (mdist[0] - mdist[1] < 0.01f) //hit an edge
-    {
-        vec dest;
-        line3 ln;
-        planeplaneintersect(tris[max[0]], tris[max[1]], ln);
-        // get dest: is closest point on ln to o
-        dest.sub(o); // or reverse???
-        wall = dest;
-    }
-    else wall = tris[max[0]]; //hit a plane
-    */
     wall = tris[max]; // FIXME: not good enough. need to generate for 2 and 3 plane intersect (line and vertex)
 
     conv2espace(r, z, wall); // convert back to realspace.. offset not included
@@ -149,7 +77,7 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     float ch = 0;
     loopi(12)
     {
-        if(!validplane(tris[i])) continue;
+        if(!tris[i].isnormalized()) continue;
         float h = -(tris[i].offset + o.x*tris[i].x + o.y*tris[i].y) / (tris[i].z*r);
         if(tris[i].z>0 && h<fh) fh = h;
         else if(tris[i].z<0 && h>ch) ch = h;

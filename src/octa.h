@@ -58,11 +58,7 @@ extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 
 // rendercubes
-extern const uchar cubecoords[8][3];
-extern int faceverts(cube &c, int orient, int vert);
-extern int faceconvexity(vec v[4], int orient);
-extern void vertrepl(cvec &p, vec &v, int dim, int coord, uint faces);
-extern vertex genvert(cvec &p, cube &c, vec &pos, float size, uint col);
+extern void gentris(cube &c, vec &pos, float size, plane *tris, float x, float y, float z);
 extern void octarender();
 extern void renderq();
 
