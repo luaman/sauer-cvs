@@ -28,6 +28,8 @@ const uint F_SOLID = 0x80808080;     // all edges in the range (0,8)
 
 #define edgeget(edge, coord) (coord ? (edge)>>4 : (edge)&0xF)
 #define edgeset(edge, coord, val) (edge = (coord ? ((edge)&0xF)|(val<<4) : ((edge)&0xF0)|val))
+#define rd(dim) ((dim)==2?1:2)
+#define cd(dim) ((dim)==0?1:0)
 
 enum
 {
