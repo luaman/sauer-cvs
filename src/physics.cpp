@@ -32,16 +32,127 @@ bool mmcollide(dynent *d)           // collide with a mapmodel
     return true;
 };
 
+// maps a vec onto an 'ellipsoid-space'. an 'espace' is derived from a specfic ellipsoid
+// in 'realspace' with horizontal (x==y) radius r, and vertical radius z.
+// This ellipsoid is a sphere in the espace, though not normalized.
+void conv2espace(float r, float z, vec &v) { v.x *= z; v.y *= z; v.z *= r; };
+
+bool validplane(plane &p) { return p.x<=1 && p.x>=-1; }; // quick non robust test for normalized planes only...
+
+void geneplanes(cube &c, float r, float z, vec &pos, float size, plane *tris) // generates the 12 tris planes of a cube in espace 
+{
+    // should also add quick solid cube plane gen
+    /* 
+    // this method should be faster then one below, but
+    // first got to figure out a quick way of culling unused planes...
+    vec v[6][4];
+    conv2espace(r,z,pos);
+    r*=size/8.0f;
+    z*=size/8.0f;
+    loopi(6) loopk(4) 
+    {
+        cvec &cc = (*(cvec *)cubecoords[faceverts(c,i,k)]);
+        v[i][k].x = (float)cc.x;
+        v[i][k].y = (float)cc.y;
+        v[i][k].z = (float)cc.z;
+        vertrepl(cc, v[i][k], dimension(i), dimcoord(i), c.faces[dimension(i)]);
+        conv2espace(r,z,v[i][k]);
+        v[i][k].add(pos);
+    };
+    */
+    vertex v[8];
+    loopi(8) 
+    {   
+        v[i] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, 0);
+        float t; swap(v[i].y, v[i].z, t);
+        conv2espace(r, z, v[i]);
+    };
+    loopi(6) loopj(2)
+    {
+        vec ve[4];
+        //loopk(4) ve[k] = v[i][k];
+        loopk(4) ve[k] = v[faceverts(c,i,k)];
+        if (j) if (validplane(tris[i])) if (faceconvexity(ve,i)==0) // skip redundant planes
+        { 
+            tris[i+(6*j)].x = 0xBAD; 
+            continue; 
+        };
+        vertstoplane(ve[0], ve[1+j], ve[2+j], tris[i+(6*j)]);
+    };
+};
+
+bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size, float &space, plane &wall) // collide with cube geometry
+{
+    // first convert everything to espace
+    float r = d->radius;
+    float z = (d->aboveeye + d->eyeheight)/2;
+    vec o(d->o);
+    o.z += z - d->eyeheight;
+    conv2espace(r, z, o);
+    plane tris[12];
+    vec pos(cx, cy, cz);
+    geneplanes(c, r, z, pos, size, tris);
+    r *= z;   // conv2espace
+
+    int max=0;
+    float mdist=-99999;
+    loopi(12) // collision detection
+    {
+        if(!validplane(tris[i])) continue;
+        float dist = tris[i].dot(o) + tris[i].offset;
+        //conoutf("%d dist : %d",i,dist);
+        if(dist > r) return true;
+        if(dist>mdist) { mdist = dist; max = i; };
+    };
+
+    // collision detected. now collect info for response
+    wall = tris[max]; // FIXME: not good enough
+
+    vec zero; if(wall.equals(zero)) conoutf("SLIDE PLANE IS ZERO"); // which is not good...
+
+    conv2espace(d->radius, z, wall); // convert back to realspace.. offset not included
+    wall.normalize();
+//  printf("wall: %f %f %f\n",wall.x, wall.y, wall.z);
+//  vec floor(0,0,1);
+//  loopi(2) if (tris[i*6+1].equals(floor)) space = d->o.z-d->eyeheight-(tris[i*6+1].offset/d->radius); // only tris 1 or 7 could be a floor
+    return false;
+};
+
+bool cubecollide(dynent *d, cube *c, float cx, float cy, float cz, float size, float &space, plane &wall) // collide with octants
+{
+    uchar possible = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
+    if (cz+size < d->o.z-d->eyeheight)  possible &= 0xF0; // not in a -ve Z octant
+    if (cz+size > d->o.z+d->aboveeye)   possible &= 0x0F; // not in a +ve Z octant
+    if (cy+size < d->o.y-d->radius)     possible &= 0xCC; // not in a -ve Y octant
+    if (cy+size > d->o.y+d->radius)     possible &= 0x33; // etc..
+    if (cx+size < d->o.x-d->radius)     possible &= 0xAA;
+    if (cx+size > d->o.x+d->radius)     possible &= 0x55;
+    loopi(8) if (possible & (1<<i))
+    {
+        float x = cx+((i&1)>>0)*size;
+        float y = cy+((i&2)>>1)*size;
+        float z = cz+((i&4)>>2)*size;
+        if (c[i].children)
+        {
+            if(!cubecollide(d, c[i].children, x, y, z, size/2, space, wall)) return false;
+        }
+        else
+        {
+            if (isempty(c[i])) continue;
+            if (!geomcollide(d, c[i], x, y, z, size, space, wall)) return false;
+        };
+    };
+    return true;
+};
+
+// FIXME: Need to add sliding planes for collisions with players / map models
 // all collision happens here
 // spawn is a dirty side effect used in spawning
-// drop & rise are supplied by the physics below to indicate gravity/push for current mini-timestep
-
-bool collide(dynent *d, float drop, float rise)
+bool collide(dynent *d, float &headspace, float &space, plane &wall)
 {
-    float headspace = 10;
     loopv(players)       // collide with other players
     {
-        dynent *o = players[i]; 
+        dynent *o = players[i];
         if(!o || o==d) continue;
         if(!plcollide(d, o, headspace)) return false;
     };
@@ -49,35 +160,46 @@ bool collide(dynent *d, float drop, float rise)
     dvector &v = getmonsters();
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
-    loopv(v) if(!d->o.reject(v[i]->o, 7.0f) && d!=v[i] && !plcollide(d, v[i], headspace)) return false; 
+    loopv(v) if(!d->o.reject(v[i]->o, 7.0f) && d!=v[i] && !plcollide(d, v[i], headspace)) return false;
     headspace -= 0.01f;
-    
+
     if(!mmcollide(d)) return false;     // collide with map models
+    return cubecollide(d, worldroot, 0, 0, 0, (float)(hdr.worldsize>>1), space, wall); // collide with world
+};
 
+bool collide(dynent *d) { float a,m; plane n; return collide(d,a,m,n); };
+
+bool move(dynent *d, vec &dir, float rise)
+{
+    float headspace = 10;
     float space = 4;
+    plane wall;
 
-    cube &c = lookupcube((int)d->o.x, (int)d->o.y, (int)(d->o.z));
-    if(!isempty(c)) return false;
-    cube &b = lookupcube((int)d->o.x, (int)d->o.y, (int)(d->o.z-d->eyeheight));
-    if(!isempty(b)) space = d->o.z-d->eyeheight-luz-lusize;
-
-    if(drop==0 && rise==0) return true;
-
-    d->onfloor = false;
-
-    if(space<1)
+    d->onfloor = false; 
+    d->o.add(dir); 
+    if (collide(d, headspace, space, wall)) return true; // no collision if true
+    d->onfloor = true; 
+	d->blocked = true;
+    d->o.sub(dir);  // else reset position
+    wall.mul(wall.dot(dir)/wall.magnitude());
+    dir.sub(wall);  // try sliding against wall for next move
+    return false;
+    // step response
+    /*if (!rise) return false;
+    if (space < 0)
     {
-        if(space>-16) { d->o.z = luz+lusize+d->eyeheight-1; d->onfloor = true; }
-        //else if(space>-16) d->o.z += rise;       // rise thru stair
+        if(space > 0.1f) // clamp to ground
+        { 
+            d->onfloor = true; 
+            conoutf("FLOOR"); 
+            d->o.z -= space;
+        };  
+        //else if(space>-16) { d->o.z += rise; } // rise thru stair
         else return false;
-    }
-    else
-    {
-        d->o.z -= min(min(drop, space), headspace);       // gravity
-    };
-    
-    return true;
-}
+        //d->onfloor = true;
+        return true;
+    };*/
+};
 
 float rad(float x) { return x*3.14159f/180; };
 
@@ -128,8 +250,8 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     const float speed = curtime/(water ? 2000.0f : 1000.0f)*pl->maxspeed;
     const float friction = water ? 20.0f : (pl->onfloor || floating ? 6.0f : 30.0f);
 
-    const float fpsfric = friction/curtime*20.0f;   
-    
+    const float fpsfric = friction/curtime*20.0f;
+
     pl->vel.mul(fpsfric-1);   // slowly apply friction and direction to velocity, gives a smooth movement
     pl->vel.add(d);
     pl->vel.div(fpsfric);
@@ -142,7 +264,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     if(floating)                // just apply velocity
     {
         pl->o.add(d);
-        if(pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2;    }
+        if(pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2; }
     }
     else                        // apply velocity with collision
     {
@@ -174,31 +296,12 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         if(water) { dropf = 5; pl->timeinair = 0; };            // float slowly down in water
         const float drop = dropf*curtime/gravity/100/moveres;   // at high fps, gravity kicks in too fast
         const float rise = speed/moveres/1.2f;                  // extra smoothness when lifting up stairs
+        vec g(0,0,-drop);
+        d.mul(f);
 
-        loopi(moveres)                                          // discrete steps collision detection & sliding
-        {
-            // try move forward
-            pl->o.x += f*d.x;
-            pl->o.y += f*d.y;
-            pl->o.z += f*d.z;
-            if(collide(pl, drop, rise)) continue;                     
-            // player stuck, try slide along y axis
-            pl->blocked = true;
-            pl->o.x -= f*d.x;
-            if(collide(pl, drop, rise)) { d.x = 0; continue; };   
-            pl->o.x += f*d.x;
-            // still stuck, try x axis
-            pl->o.y -= f*d.y;
-            if(collide(pl, drop, rise)) { d.y = 0; continue; };       
-            pl->o.y += f*d.y;
-            // try just dropping down
-            pl->moving = false;
-            pl->o.x -= f*d.x;
-            pl->o.y -= f*d.y;
-            if(collide(pl, drop, rise)) { d.y = d.x = 0; continue; }; 
-            pl->o.z -= f*d.z;
-            break;
-        };
+        // discrete steps collision detection & sliding
+        loopi(moveres) move(pl, d, rise);
+        loopi(moveres) move(pl, g, 0);
     };
 
     // detect wether player is outside map, used for skipping zbuffer clear mostly
@@ -216,10 +319,10 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
            || pl->o.z > s->ceil  + (s->type==CHF ? s->vdelta/4 : 0);
     };
     */
-    
+
     // automatically apply smooth roll when strafing
 
-    if(pl->strafe==0) 
+    if(pl->strafe==0)
     {
         pl->roll = pl->roll/(1+(float)sqrtf((float)curtime)/25);
     }
@@ -229,9 +332,9 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         if(pl->roll>maxroll) pl->roll = (float)maxroll;
         if(pl->roll<-maxroll) pl->roll = (float)-maxroll;
     };
-    
+
     // play sounds on water transitions
-    
+
     if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->vel.z = 0; }
     else if(pl->inwater && !water) playsound(S_SPLASH1, &pl->o);
     pl->inwater = water;
