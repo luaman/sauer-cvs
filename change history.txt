@@ -1,0 +1,14 @@
+History of changes:
+
+
+May 06 2004:
+----------------
+
+- added geomip (though not inverse)
+- added cubic copy and paste
+- added cubic flip and 90 degree rotate
+- added undo (doesn't work with selections fully )
+- added texture edit
+- changed pitch/yaw derived selection to cubic boundary face selection
+- cleaned up octaedit
+- hacked a fix for a culling error in touchingfaces
