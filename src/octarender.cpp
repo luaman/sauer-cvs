@@ -382,8 +382,8 @@ void vaclearc(cube *c)
 
 void renderq()
 {
-    int si[] = { 0, 0, 1 };
-    int ti[] = { 2, 1, 2 };
+    int si[] = { 0, 0, 2 };
+    int ti[] = { 2, 1, 1 };
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
