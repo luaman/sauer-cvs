@@ -35,3 +35,14 @@ paste: just look at where you want to paste, and then press 'v' to paste the cop
 edittex: While hovering the cursor over a cube, press and hold 't', then use the mouse wheel to scroll through the different textures. Release 't' to save the texture onto the cube. If your gridsize captures many cubes, all of them will also get their faces textured, just like normal.
 
 undo: pressing 'z' will undo your last edit move. currently, any editing done with selections is not fully supported by undo.
+
+=========================================
+NEW for release 0.03
+=========================================
+
+if you made a map in an older build, you'll first want to go into the editing menu (press ESC) and select the "Fix textures option."
+
+As well there have been some slight changes to the fill command -- scrolling down + F will no longer fill the selected cube, but only fill the neighbouring cube.
+
+Ad-hoc vertex light editing commands have also been added. Hold the UP arrow + scroll wheel to change the brightness of a cube. The other three arrows will change the red, green and blue lighting respectively. This is just something neat to use until more powerful light entites are supported by the engine. the proper lighting model has not been added yet, so there's a very good chance that any light changes done using this will be obsolete and not supported in the future.
+
