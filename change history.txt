@@ -1,5 +1,10 @@
 History of changes:
 
+Nov 27 2004:
+----------------
+- starting to refactor some things like subdivision
+- made bounding box react more elliptical... though still need to fix physics/collision stuff with z dimension like changing gravity to a velocity.
+
 Sept 8 2004:
 ----------------
 - added stairs support
