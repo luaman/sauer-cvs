@@ -22,6 +22,13 @@ cube *newcubes(uint face)
     return c-8;
 };
 
+int familysize(cube &c)
+{
+    int size = 1;
+    if (c.children) loopi(8) size += familysize(c.children[i]);
+    return size;
+};
+
 void freeocta(cube *c)
 {
     loopi(8) if(c[i].children) freeocta(c[i].children);
@@ -48,7 +55,8 @@ void newworld()
 };
 
 int lux, luy, luz, lusize;
-int dv(int d, int i) { return i&(1<<(2-d)) ? 1 : 0; };
+#define dc(d,i) ( (i)&(1<<(2-(d))) ? 1 : 0 )                        // dimension coord
+#define eavg(a,b,mask) ( (((a)>>1)&(mask)) + (((b)>>1)&(mask)) )    // edge average 
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
@@ -66,24 +74,23 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             if(!tsize) break;
             c->children = newcubes(F_EMPTY);
-            uchar se[3][3][3];  //[dim zxy][col yzz][row xxy]
+            uchar se[3][3][3];  // [dim zxy][col yzz][row xxy]
             loop(d,3)           // expand edges from 4 to 9
-            {                   
-                loopk(2) loopj(2) se[d][2*k][2*j] = c->edges[j+(2*k)+(d*4)];
-                loopj(2) se[d][2*j][1] = ((se[d][2*j][0]>>1)&0x77) + ((se[d][2*j][2]>>1)&0x77);
-                loopj(2) se[d][1][2*j] = ((se[d][0][2*j]>>1)&0x77) + ((se[d][2][2*j]>>1)&0x77);
-                         se[d][1][1]   = ((se[d][0][2]>>1)&(!d?7:0x70)) + ((se[d][2][0]>>1)&(!d?7:0x70))  // to comply with renderer...
-                                       + ((se[d][0][0]>>1)&(!d?0x70:7)) + ((se[d][2][2]>>1)&(!d?0x70:7));
+            {
+                loopk(2) loopj(2) se[d][2*k][2*j] = c->edges[d*4 + k*2 + j];
+                loopj(2) se[d][2*j][1] = eavg(se[d][2*j][0], se[d][2*j][2], 0x77);
+                loopj(2) se[d][1][2*j] = eavg(se[d][0][2*j], se[d][2][2*j], 0x77);
+                         se[d][1][1]   = eavg(se[d][0][2], se[d][2][0], d ? 0x70:7) + eavg(se[d][0][0], se[d][2][2], d ? 7:0x70); // to comply with renderer...
             };
             loopi(8)
             {   
                 loop(d,3) loop(col,2) loop(row,2) // split edges and assign
                 {   
                     uchar *cce = &c->children[i].edges[(d*4)+(col*2)+row];
-                    uchar sed = se[d][col + dv(cd(d),i)][row + dv(rd(d),i)];
-                    if     (edgeget(sed,1) < 5) *cce = (dv(d,i) ? 0 : 2*sed);
-                    else if(edgeget(sed,0) > 4) *cce = (dv(d,i) ? 2*sed - 0x88 : 0x88);
-                    else                        *cce = (dv(d,i) ? ((2*sed)&0xF0)-0x80 : ((2*sed)&0x0F)+0x80);
+                    uchar sed = se[d][col + dc(cd(d),i)][row + dc(rd(d),i)];
+                    if     (edgeget(sed,1) < 5) *cce = (dc(d,i) ? 0 : 2*sed);
+                    else if(edgeget(sed,0) > 4) *cce = (dc(d,i) ? 2*sed - 0x88 : 0x88);
+                    else                        *cce = (dc(d,i) ? ((2*sed)&0xF0)-0x80 : ((2*sed)&0x0F)+0x80);
                 };
                 loopj(3) if (!c->children[i].faces[j] || c->children[i].faces[j]==0x88888888) emptyfaces(c->children[i]);//FIXME: need proper validation proc
                 loopj(6) c->children[i].texture[j] = c->texture[j];
