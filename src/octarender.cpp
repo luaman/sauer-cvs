@@ -47,9 +47,7 @@ struct vechash
 };
 
 vechash vh;
-
 vertex *verts = NULL;
-vtxarray *worldva = NULL;
 int curvert = 0, curtris = 0;
 int curmaxverts = 10000;
 
@@ -278,7 +276,7 @@ enum {
     VFC_NOT_VISIBLE
 };
 
-vtxarray *lastvisibleva;
+vtxarray *visibleva;
 
 int isvisiblecube(cube *c, int size, int cx, int cy, int cz)
 {
@@ -301,40 +299,40 @@ int isvisiblecube(cube *c, int size, int cx, int cy, int cz)
     return v;
 };
 
-void addvisiblecube(cube *c)
+void addvisibleva(vtxarray *va)
 {
-    lastvisibleva->next = c->va;
-    lastvisibleva = c->va;
-    vtris += c->va->tris;
-    vverts += c->va->verts;
-    c->va->distance = vfcV[0].dot(c->va->cv) - vfcD[0] - c->va->radius;
+    va->next = visibleva;
+    visibleva = va;
+    vtris += va->tris;
+    vverts += va->verts;
+    va->distance = vfcV[0].dot(va->cv) - vfcD[0] - va->radius;
 };
 
-void addfullvisiblecube(cube *c)
+void addvisiblecubec(cube *c)
 {
-    if (c->children)
+    loopi(8)
     {
-        if (c->va && c->verts != c->va->verts) loopi(8) addfullvisiblecube(c->children+i);
-        if (c->va) addvisiblecube(c);
+        if (c[i].va) addvisibleva(c[i].va);
+        if (c[i].children) addvisiblecubec(c[i].children);
     };
 };
 
 void visiblecubec(cube *c, int size, int cx, int cy, int cz)
 {
-    loopi(8) if (c[i].children)
+    loopi(8)
     {
         int x = cx+((i&1)>>0)*size;
         int y = cy+((i&2)>>1)*size;
         int z = cz+((i&4)>>2)*size;
-
         switch(isvisiblecube(c+i, size/2, x, y, z))
         {
         case VFC_FULL_VISIBLE:
-            addfullvisiblecube(c+i);
+            if (c[i].va) addvisibleva(c[i].va);
+            if (c[i].children) addvisiblecubec(c[i].children);
             break;
         case VFC_PART_VISIBLE:
-            if (c[i].va) addvisiblecube(c+i);
-            if (c[i].verts > VA_VERTMIN) visiblecubec(c[i].children, size/2, x, y, z);
+            if (c[i].va) addvisibleva(c[i].va);
+            if (c[i].children) visiblecubec(c[i].children, size/2, x, y, z);
             break;
         case VFC_NOT_VISIBLE:
             break;
@@ -347,49 +345,42 @@ void visiblecubec(cube *c, int size, int cx, int cy, int cz)
 
 void visiblecubes(cube *c, int size, int cx, int cy, int cz)
 {
-    lastvisibleva = worldva;
-    vtris = worldva->tris;
-    vverts = worldva->verts;
+    visibleva = NULL;
+    vtris = vverts = 0;
 
-    if (wverts != worldva->verts)
-    {
-        // Calculate view frustrum: Only changes if resize, but...
-        float fov = getvar("fov");
-        float vpxo = 90.0 - fov / 2.0;
-        float vpyo = 90.0 - (fov * (float) scr_h / scr_w) / 2;
-        float yaw = player1->yaw * RAD;
-        float yawp = (player1->yaw + vpxo) * RAD;
-        float yawm = (player1->yaw - vpxo) * RAD;
-        float pitch = player1->pitch * RAD;
-        float pitchp = (player1->pitch + vpyo) * RAD;
-        float pitchm = (player1->pitch - vpyo) * RAD;
-        vfcV[0] = yptovec(yaw,  pitch);  // back/far plane
-        vfcV[1] = yptovec(yawp, pitch);  // left plane
-        vfcV[2] = yptovec(yawm, pitch);  // right plane
-        vfcV[3] = yptovec(yaw,  pitchp); // top plane
-        vfcV[4] = yptovec(yaw,  pitchm); // bottom plane
-        loopi(5) vfcD[i] = vfcV[i].dot(player1->o);
-        vfcDfog = getvar("fog");
+    // Calculate view frustrum: Only changes if resize, but...
+    float fov = getvar("fov");
+    float vpxo = 90.0 - fov / 2.0;
+    float vpyo = 90.0 - (fov * (float) scr_h / scr_w) / 2;
+    float yaw = player1->yaw * RAD;
+    float yawp = (player1->yaw + vpxo) * RAD;
+    float yawm = (player1->yaw - vpxo) * RAD;
+    float pitch = player1->pitch * RAD;
+    float pitchp = (player1->pitch + vpyo) * RAD;
+    float pitchm = (player1->pitch - vpyo) * RAD;
+    vfcV[0] = yptovec(yaw,  pitch);  // back/far plane
+    vfcV[1] = yptovec(yawp, pitch);  // left plane
+    vfcV[2] = yptovec(yawm, pitch);  // right plane
+    vfcV[3] = yptovec(yaw,  pitchp); // top plane
+    vfcV[4] = yptovec(yaw,  pitchm); // bottom plane
+    loopi(5) vfcD[i] = vfcV[i].dot(player1->o);
+    vfcDfog = getvar("fog");
 
-        visiblecubec(c, size, cx, cy, cz);
-    };
-
-    lastvisibleva->next = NULL;
-
-    // Depth sort vertex arrays to reduce overdraw?
-    // Do occlusion culling here?
+    visiblecubec(c, size, cx, cy, cz);
 };
 
-void vaclear(cube *c)
+void vaclearc(cube *c)
 {
-    if (c->children)
+    loopi(8)
     {
-        loopi(8) vaclear(c->children+i);
-        if (c->va)
+        if (c[i].va)
         {
-            destroyva(c->va);
-            c->va = NULL;
+            wverts -= c[i].va->verts;
+            wtris -= c[i].va->tris;
+            destroyva(c[i].va);
+            c[i].va = NULL;
         };
+        if (c[i].children) vaclearc(c[i].children);
     };
 };
 
@@ -404,9 +395,9 @@ void renderq()
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0);
 
     int vacount = 0;
-    vtxarray *va = worldva;
+    vtxarray *va = visibleva;
 
-    do
+    while (va)
     {
         if (hasVBO) (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
@@ -430,7 +421,8 @@ void renderq()
                 ebuf += va->eslist[i].length[l];  // Advance to next array.
             };
         };
-    } while ((va = va->next));
+        va = va->next;
+    };
 
     if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -446,15 +438,14 @@ void renderc(cube *c, int size, int cx, int cy, int cz)
         int z = cz+octacoord(0,i)*size;
         if(c[i].children)
         {
-            int svert = curvert, stris = curtris;
+            if (c[i].va) continue;
             renderc(c[i].children, size/2, x, y, z);
-            c[i].verts = curvert - svert;
-            c[i].tris = curtris - stris;
         }
         else if(!isempty(c[i]))
         {
             gencubeverts(c[i], x, y, z, size);
         };
+        if (curvert > VA_VERTMAX) return;
     };
 };
 
@@ -503,6 +494,8 @@ vtxarray *newva(int x, int y, int z, int size)
     };
 
     loopl(3) loopk(256) indices[l][k].setsize(0);
+    wverts += curvert;
+    wtris += curtris;
     curtris = curvert = 0;
 
     return va;
@@ -510,79 +503,65 @@ vtxarray *newva(int x, int y, int z, int size)
 
 void octarenderc(cube *c, int size, int cx, int cy, int cz)
 {
-    loopi(8) // First pass, create independent vtxarray for big children.
+    loopi(8) if (c[i].children)
     {
-        if (c[i].children && c[i].verts > VA_VERTMIN)
+        int x = cx+((i&1)>>0)*size;
+        int y = cy+((i&2)>>1)*size;
+        int z = cz+((i&4)>>2)*size;
+        renderc(c[i].children, size/2, x, y, z);
+        vh.clear();
+
+        if (curvert > VA_VERTMAX)
         {
-            int x = cx+((i&1)>>0)*size;
-            int y = cy+((i&2)>>1)*size;
-            int z = cz+((i&4)>>2)*size;
+            loopl(3) loopk(256) indices[l][k].setsize(0);
+            curvert = curtris = 0;
             octarenderc(c[i].children, size/2, x, y, z);
-
-            c[i].verts = curvert;
-            c[i].tris = curtris;
-            loopj(8) if (c[i].children[j].children)
-            {
-                c[i].verts += c[i].children[j].verts;
-                c[i].tris += c[i].children[j].tris;
-            };
-            c[i].va = newva(x, y, z, size);
+            renderc(c[i].children, size/2, x, y, z);
+            vh.clear();
         };
-    };
-
-    loopi(8) // Second pass, collect small children and return.
-    {
-        if (!c[i].children || c[i].verts <= VA_VERTMIN)
+        if (curvert < VA_VERTMIN)
         {
-            vaclear(c+i);
-
-            int x = cx+((i&1)>>0)*size;
-            int y = cy+((i&2)>>1)*size;
-            int z = cz+((i&4)>>2)*size;
-
-            if (c[i].children)
-            {
-                int svert = curvert;
-                renderc(c[i].children, size/2, x, y, z);
-                c[i].verts = curvert - svert;
-            } else if(!isempty(c[i]))
-            {
-                gencubeverts(c[i], x, y, z, size);
-            };
+            loopl(3) loopk(256) indices[l][k].setsize(0);
+            curvert = curtris = 0;
         };
+        if (curvert) c[i].va = newva(x, y, z, size/2);
     };
-    vh.clear();
 };
 
 void octarender()
 {
-    curvert = 0;
     cube *c = worldroot;
     if(!verts) reallocv();
 
-    loopi(8) vaclear(c+i);  // Purge all vtxarray.
+    vaclearc(c);
+    wverts = wtris = 0;
+    int size = hdr.worldsize/2;
+    int cx = 0, cy = 0, cz = 0;
 
-    if(worldva) destroyva(worldva);
-
-    // Parse entire map
-    renderc(c, hdr.worldsize/2, 0, 0, 0);
-    vh.clear();
-
-    // If verts is greater than maximum verts, reparse.
-    if (curvert > VA_VERTMAX)
+    loopi(8)
     {
-        loopl(3) loopk(256) indices[l][k].setsize(0);
-        curtris = curvert = 0;
-        octarenderc(c, hdr.worldsize/2, 0, 0, 0);
-    };
+        int x = cx+((i&1)>>0)*size;
+        int y = cy+((i&2)>>1)*size;
+        int z = cz+((i&4)>>2)*size;
+        if (c[i].children)
+        {
+            renderc(c[i].children, size/2, x, y, z);
+            vh.clear();
 
-    wverts = curvert;
-    wtris = curtris;
-    worldva = newva(0, 0, 0, hdr.worldsize);
-    loopi(8) if (c[i].children)
-    {
-        wverts += c[i].verts;
-        wtris += c[i].tris;
+            if (curvert > VA_VERTMAX)
+            {
+                loopl(3) loopk(256) indices[l][k].setsize(0);
+                curtris = curvert = 0;
+                octarenderc(c[i].children, size/2, x, y, z);
+                renderc(c[i].children, size/2, x, y, z);
+                vh.clear();
+            };
+        } else {
+            gencubeverts(c[i], x, y, z, size);
+            vh.clear();
+        };
+
+        if (curvert) c[i].va = newva(x, y, z, size/2);
     };
 };
 

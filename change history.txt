@@ -1,5 +1,10 @@
 History of changes:
 
+Dec 12 2004:
+----------------
+- rework vertex array code to better fit model
+- GNU g++ compatibility in physics.cpp
+
 Dec 11 2004:
 ----------------
 - fixed up ramp collision

@@ -23,26 +23,17 @@ struct vtxarray
 struct cube
 {
     cube *children;         // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
-//    union
-//    {
-//        struct
-//        {
-            union
-            {
-                uchar edges[12];    // edges of the cube, each uchar is 2 4bit values denoting the range.
-                                    // see documentation jpgs for more info.
-                uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
-            };
-            uchar texture[6];       // one for each face. same order as orient.
-            uchar colour[3];        // colour at (-X,-Y,-Z) corner
-//        };
-//        struct
-//        {
-            vtxarray *va;           // vertex array for children, or NULL
-            int verts;              // verts count, for vertex array subdivision
-            int tris;
-//        };
-//    };
+    union
+    {
+        uchar edges[12];    // edges of the cube, each uchar is 2 4bit values denoting the range.
+                            // see documentation jpgs for more info.
+        uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
+    };
+    uchar texture[6];       // one for each face. same order as orient.
+    uchar colour[3];        // colour at (-X,-Y,-Z) corner
+    vtxarray *va;           // vertex array for children, or NULL
+    //int verts;              // verts count, for vertex array subdivision
+    //int tris;
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)

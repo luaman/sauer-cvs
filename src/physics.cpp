@@ -152,7 +152,7 @@ bool collide(dynent *d)
     headspace = 10;
     floorheight = hdr.worldsize;
     wall.x = wall.y = wall.z = 0;
-    walldist = 99999999999999999;
+    walldist = 99999999999999999.0;
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];

@@ -38,14 +38,13 @@ int familysize(cube &c)
 
 void freeocta(cube *c)
 {
-    loopi(8) if(c[i].children)
+    loopi(8)
     {
+        if (c[i].children) freeocta(c[i].children);
         if (c[i].va)
         {
             destroyva(c[i].va);
-            c[i].va = NULL;
         };
-        freeocta(c[i].children);
     };
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;
