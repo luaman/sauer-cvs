@@ -40,6 +40,7 @@ typedef unsigned int uint;
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define rnd(max) (randomMT()%(max))
+#define swap(a,b,t) { t=a; a=b; b=t; }
 #define loop(v,m) for(int v = 0; v<(m); v++)
 #define loopi(m) loop(i,m)
 #define loopj(m) loop(j,m)
