@@ -1,0 +1,158 @@
+// world.cpp: core map management stuff
+
+#include "cube.h"
+
+header hdr;
+
+void resettagareas() {  };                                                         // reset for editing or map saving
+void settagareas() {  };   // set for playing
+
+void trigger(int tag, int type, bool savegame)
+{
+    if(!tag) return;
+    ///settag(tag, type);
+    if(!savegame) playsound(S_RUMBLE);
+    sprintf_sd(aliasname)("level_trigger_%d", tag);
+    if(identexists(aliasname)) execute(aliasname);
+    if(type==2) endsp(false);
+};
+
+COMMAND(trigger, ARG_2INT);
+
+
+int closestent()        // used for delent and edit mode ent display
+{
+    if(!editmode) return -1;
+    int best;
+    float bdist = 99999;
+    loopv(ents)
+    {
+        entity &e = ents[i];
+        if(e.type==NOTUSED) continue;
+        float dist = e.o.dist(player1->o);
+        if(dist<bdist)
+        {
+            best = i;
+            bdist = dist;
+        };
+    };
+    return bdist==99999 ? -1 : best; 
+};
+
+void entproperty(int prop, int amount)
+{
+    int e = closestent();
+    if(e<0) return;
+    switch(prop)
+    {
+        case 0: ents[e].attr1 += amount; break;
+        case 1: ents[e].attr2 += amount; break;
+        case 2: ents[e].attr3 += amount; break;
+        case 3: ents[e].attr4 += amount; break;
+    };
+};
+
+void delent()
+{
+    int e = closestent();
+    if(e<0) { conoutf("no more entities"); return; };
+    int t = ents[e].type;
+    conoutf("%s entity deleted", (int)entnames[t]);
+    ents[e].type = NOTUSED;
+    addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
+    ///if(t==LIGHT) calclight();
+};
+
+int findtype(char *what)
+{
+    loopi(MAXENTTYPES) if(strcmp(what, entnames[i])==0) return i;
+    conoutf("unknown entity type \"%s\"", (int)what);
+    return NOTUSED;
+}
+
+entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
+{
+    int type = findtype(what);
+    entity &e = ents.add(entity());
+    e.o = o;
+    e.attr1 = v1;
+    e.attr2 = v2;
+    e.attr3 = v3;
+    e.attr4 = v4;
+    e.attr5 = v5;
+    e.type = type;
+    e.spawned = false;
+    switch(type)
+    {
+        case LIGHT:
+            if(v1>32) v1 = 32;
+            if(!v1) e.attr1 = 16;
+            if(!v2 && !v3 && !v4) e.attr2 = 255;          
+            break;
+            
+        case MONSTER:
+        case MAPMODEL:
+        case TELEDEST:
+            e.attr2 = e.attr1;
+        case PLAYERSTART:
+            e.attr1 = (int)player1->yaw;
+            break;
+    };           
+    addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
+    return &e;
+};
+
+void newent(char *what, char *a1, char *a2, char *a3, char *a4)
+{
+    newentity(player1->o, what, atoi(a1), atoi(a2), atoi(a3), atoi(a4), 0);
+};
+
+COMMAND(newent, ARG_5STR);
+
+void clearents(char *name)
+{  
+    int type = findtype(name);
+    if(!editmode || multiplayer()) return;
+    loopv(ents)
+    {
+        entity &e = ents[i];
+        if(e.type==type) e.type = NOTUSED;
+    };
+    ///if(type==LIGHT) calclight();
+};
+
+COMMAND(clearents, ARG_1STR);
+
+int findentity(int type, int index)
+{
+    for(int i = index; i<ents.length(); i++) if(ents[i].type==type) return i;
+    loopj(index) if(ents[j].type==type) return j;
+    return -1;
+};
+
+void empty_world(int factor, bool force)    // main empty world creation routine, if passed factor -1 will enlarge old world by 1
+{
+    if(!force && !editmode) return; 
+    
+    strncpy(hdr.head, "OCTA", 4);
+    hdr.version = MAPVERSION;
+    hdr.headersize = sizeof(header);
+    hdr.worldsize = 256*16;     
+
+    strn0cpy(hdr.maptitle, "Untitled Map by Unknown", 128);
+    hdr.waterlevel = -100000;
+    loopi(15) hdr.reserved[i] = 0;
+    loopi(256) hdr.texlist[i] = i;
+    ents.setsize(0);
+    
+    startmap("base/unnamed");
+};
+
+void mapenlarge()  { empty_world(-1, false); };
+void newmap(int i) { empty_world(i, false); };
+
+COMMAND(mapenlarge, ARG_NONE);
+COMMAND(newmap, ARG_1INT);
+COMMAND(delent, ARG_NONE);
+COMMAND(entproperty, ARG_2INT);
+

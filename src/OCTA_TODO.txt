@@ -1,0 +1,23 @@
+- larger selections
+- connected push
+- copy & paste
+- texturing
+- push side edge
+- more precise picking
+- face based selection
+- somehow lock edit ops in timeframe to a particular cube?
+- unlimited undo
+- blend screen when inside a cube
+- better geommip
+- better inverse geomip
+- better display of editing: show corners that are influenced by operation etc.
+- rotate & flip
+- fix entintmap -> physics problem, also shows when going editmode -> normal outside of octree
+- improve visibleface()
+
+    p/p     sel
+0   face    aligned 4
+1   cube    aligned 4
+2   vert    unal 1
+3   conn    unal 4
+4   edge    unal 2

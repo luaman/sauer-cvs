@@ -1,0 +1,22 @@
+------------>Sla Town For Sauerbraten<-------------
+Author SirLiveAlot(Corey) (SirLiveAlot@shaw.ca or SirLiveAlot@totalise.co.uk)
+files: sla-town.ogz, sla-town.txt
+------------------------------>Useless info<---------------------------------
+Pre-release: Febuary 28, 2003
+Cube (http://wouter.fov120.com/cube/)
+Mode: Multiplayer
+Base: scratch
+Build time: 100min
+Map#: 1st
+------------------------------>Installation<---------------------------------
+To install just extract to the cube folder
+--------------------------------->Rants<-------------------------------------
+I just had some fun with the new engine.
+------------------------------->Thanks<--------------------------------------
+aard for Sauerbraten.
+------------------------------->Permissions<---------------------------------
+You're free to distribute this map as you wish as long as: you make no
+profit, and leave the files intact.  I reserve the right to ask you to
+remove files.  You're free to use the map as a base for your own work if
+you ask for permission and give me credit.
+
