@@ -1,8 +1,12 @@
 History of changes:
 
+Nov 28 2004:
+----------------
+- real gravity (but too much air friction)
+
 Nov 27 2004:
 ----------------
-- starting to refactor some things like subdivision
+- starting to refactor some things like subdivision (but need to fix special cases), RCD, loopsel, gentris etc
 - made bounding box react more elliptical... though still need to fix physics/collision stuff with z dimension like changing gravity to a velocity.
 
 Sept 8 2004:
