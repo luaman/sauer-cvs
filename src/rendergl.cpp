@@ -24,7 +24,7 @@ PFNWGLFREEMEMORYNVPROC wglFreeMemoryNV = NULL;
 void *getprocaddress(const char *name)
 {
     #ifdef WIN32
-    return wglGetProcAddress(name);
+    return (void *)wglGetProcAddress(name);
     #else
     return dlsym(dlopen(NULL, RTLD_NOW), name);
     #endif

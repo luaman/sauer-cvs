@@ -137,7 +137,6 @@ int main(int argc, char **argv)
       
     log("world");
     empty_world(7, true);
-    newworld(); 
 
     log("video: sdl");
     if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0) fatal("Unable to initialize SDL Video");
