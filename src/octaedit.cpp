@@ -2,7 +2,7 @@
 
 void boxs(int d, int x, int y, int xs, int ys, int z)
 {
-    int v[4][3] = 
+    int v[4][3] =
     {
         {z, y,    x},
         {z, y,    x+xs},
@@ -14,16 +14,16 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
     glEnd();
 };
 
-int orient = 0;
-int gridsize = 32;
+int orient = 0, selorient = 0;
+int gridsize = 32, selgrid = 32;
 int corner = 0, cor[3], lastcor[3];
 
-bool editmode = false; 
+bool editmode = false;
 
 bool havesel = false;
 bool cursorchange = true;
 int cx, cy, cz, lastx, lasty, lastz;
-int sel[3], sels[3], selgrid, selorient, selcx, selcxs, selcy, selcys;
+int sel[3], sels[3], selcx, selcxs, selcy, selcys;
 bool dragging = false;
 
 void cancelsel() { havesel = false; cursorchange = true; };
@@ -89,14 +89,14 @@ void discardchildren(cube &c)
     };
 };
 
-int lu(int dim) { return (dim==0?luz:(dim==1?luy:lux)); }; 
+int lu(int dim) { return (dim==0?luz:(dim==1?luy:lux)); };
 void cursorupdate()
 {
     vec dir(worldpos);
     dir.sub(player1->o);
     float len = dir.magnitude() / (gridsize/8); // depth modifier might need to be tweaked
     int x = (int)(worldpos.x + dir.x/len);
-    int y = (int)(worldpos.y + dir.y/len);      
+    int y = (int)(worldpos.y + dir.y/len);
     int z = (int)(worldpos.z + dir.z/len);
     lookupcube(x, y, z);
 
@@ -111,7 +111,7 @@ void cursorupdate()
         lux &= ~(gridsize-1);
         luy &= ~(gridsize-1);
         luz &= ~(gridsize-1);
-    };    
+    };
     lusize = gridsize;
 
     int lastorient = orient;
@@ -121,21 +121,21 @@ void cursorupdate()
     if (xint < lux+gridsize && xint > lux && zint < luz+gridsize && zint > luz) orient = (dir.y>0 ? O_FRONT : O_BACK);
     else if (zint2 < luz+gridsize && zint2 > luz) orient = (dir.x>0 ? O_LEFT : O_RIGHT);
     else orient = (dir.z>0 ? O_TOP : O_BOTTOM);
-  
+
     if (lastorient != orient || cx != lux || cy != luy || cz != luz) cursorchange = true;
     int d = dimension(havesel ? selorient : orient);
     int g2 = gridsize/2;
     cor[2] = x/g2;
     cor[1] = y/g2;
     cor[0] = z/g2;
-    corner = (cor[R(d)]-lu(R(d))/g2)+(cor[C(d)]-lu(C(d))/g2)*2;    
+    corner = (cor[R(d)]-lu(R(d))/g2)+(cor[C(d)]-lu(C(d))/g2)*2;
     cx = lux;
     cy = luy;
     cz = luz;
-    
+
     if (cor[0]>=0) // ie: cursor not in the void
     {
-        if(dragging && gridsize==selgrid) 
+        if(dragging && gridsize==selgrid)
         {
             sel[2]  = min(lastx, cx);
             sel[1]  = min(lasty, cy);
@@ -174,8 +174,8 @@ void cursorupdate()
     {
         d = dimension(selorient);
         glColor3ub(20,20,20);   // grid
-        for(int row = sel[R(d)]; row<sel[R(d)]+sels[R(d)]; row += selgrid) 
-        for(int col = sel[C(d)]; col<sel[C(d)]+sels[C(d)]; col += selgrid) 
+        for(int row = sel[R(d)]; row<sel[R(d)]+sels[R(d)]; row += selgrid)
+        for(int col = sel[C(d)]; col<sel[C(d)]+sels[C(d)]; col += selgrid)
             boxs(d, row, col, selgrid, selgrid, sel[d]+dimcoord(selorient)*sels[d]);
         glColor3ub(200,0,0);    // 0 reference
         boxs(d, sel[R(d)]-4, sel[C(d)]-4, 8, 8, sel[d]);
@@ -194,11 +194,11 @@ void cursorupdate()
 //////////// copy and undo /////////////
 cube copycube(cube &src)
 {
-    cube c = src; 
-    if (src.children) 
-    { 
-        c.children = newcubes(F_EMPTY); 
-        loopi(8) c.children[i] = copycube(src.children[i]); 
+    cube c = src;
+    if (src.children)
+    {
+        c.children = newcubes(F_EMPTY);
+        loopi(8) c.children[i] = copycube(src.children[i]);
     };
     return c;
 };
@@ -242,10 +242,10 @@ void pruneundos(int maxremain)                          // bound memory
         int size = undos[i].ss[0] * undos[i].ss[1] * undos[i].ss[2];
         t += sizeof(undocube);
         loopj(size) t += familysize(undos[i].c[j])*sizeof(cube);
-        if(t>maxremain) 
-        { 
+        if(t>maxremain)
+        {
             delcopysel(undos[i].c, size);
-            undos.remove(i); 
+            undos.remove(i);
         };
     };
 };
@@ -273,17 +273,17 @@ void editundo() // FIX : doesn't remip
 };
 
 cube *copybuf=NULL; int copys[3];
-void copy() 
-{ 
-    if(noedit()) return; 
+void copy()
+{
+    if(noedit()) return;
     if (copybuf) delcopysel(copybuf, copys[0]*copys[1]*copys[2]);
     loopi(3) copys[i] = sels[i]/selgrid;
-    copybuf = copysel(); 
+    copybuf = copysel();
 };
 
-void paste() 
-{   
-    if(noedit() || copybuf==NULL) return; 
+void paste()
+{
+    if(noedit() || copybuf==NULL) return;
     loopi(3) sels[i] = copys[i]*selgrid;
     makeundo();
     pastesel(copybuf, sel, copys, selgrid);
@@ -303,7 +303,7 @@ int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); };
 void pushedge(uchar &edge, int dir, int dc)
 {
     int ne = bounded(edgeget(edge, dc)+dir);
-    edge = edgeset(edge, dc, ne);   
+    edge = edgeset(edge, dc, ne);
     int oe = edgeget(edge, 1-dc);
     if((dir<0 && dc && oe>ne) || (dir>0 && dc==0 && oe<ne)) edge = edgeset(edge, 1-dc, ne);
 };
@@ -318,13 +318,14 @@ cube &selcube(int row, int col, int depth)
 void editface(int dir, int mode)
 {
     if(noedit()) return;
-    int seldir = dimcoord(selorient) ? -dir : dir;
+    int dc = dimcoord(selorient);
+    int seldir = dc ? -dir : dir;
     int xs = sels[R(dimension(selorient))]/selgrid;
     int ys = sels[C(dimension(selorient))]/selgrid;
-    if (mode==1) 
+    if (mode==1)
     {
-        if(sel[dimension(selorient)]+dimcoord(selorient)*selgrid==0 && dimcoord(selorient) == !(dir<0)) return;
-        if(sel[dimension(selorient)]+dimcoord(selorient)*selgrid==hdr.worldsize && dimcoord(selorient) == !(dir>0) ) return;
+        int h = sel[dimension(selorient)]+dc*selgrid;
+        if((dir>0 == dc && h<=0) || (dir<0 == dc && h>=hdr.worldsize)) return;
         if(dir<0) sel[dimension(selorient)] += selgrid * seldir;
     };
     makeundo();
@@ -332,12 +333,12 @@ void editface(int dir, int mode)
     {
         cube &c = selcube(x, y, 0);
         discardchildren(c);
-        
+
         if (mode==1) { if (dir<0) { solidfaces(c); } else emptyfaces(c); }
-        else 
+        else
         {
             uchar *p = (uchar *)&c.faces[dimension(selorient)];
-            if(mode==2) pushedge(p[corner], seldir, dimcoord(selorient));
+            if(mode==2) pushedge(p[corner], seldir, dc);
             else
             {
                 loop(mx,2) loop(my,2)
@@ -346,15 +347,15 @@ void editface(int dir, int mode)
                     if(y==0 && my==0 && selcy) continue;
                     if(x==xs-1 && mx==1 && (selcx+selcxs)&1) continue;
                     if(y==ys-1 && my==1 && (selcy+selcys)&1) continue;
-                    
-                    pushedge(p[mx+my*2], seldir, dimcoord(selorient));
+
+                    pushedge(p[mx+my*2], seldir, dc);
                 };
             };
             optiface(p, c);
         };
     };
     changed = true; cursorchange = false;
-    if (mode==1) { cursorchange = true; if(dir>0) sel[dimension(selorient)] += selgrid * seldir; };   
+    if (mode==1) { cursorchange = true; if(dir>0) sel[dimension(selorient)] += selgrid * seldir; };
 };
 
 COMMAND(editface, ARG_2INT);
@@ -402,11 +403,11 @@ void lightcube(cube &c, int dr, int dg, int db)
     if (c.children) loopi(8) lightcube(c.children[i],dr,dg,db);
 };
 
-void lite(int r, int g, int b) 
-{ 
-    EDITINIT;     
-    int ds = sels[dimension(selorient)]/selgrid; 
-    loop(d,ds) loopsel(x,y) lightcube(selcube(x, y, d), r*litepower, g*litepower, b*litepower); 
+void lite(int r, int g, int b)
+{
+    EDITINIT;
+    int ds = sels[dimension(selorient)]/selgrid;
+    loop(d,ds) loopsel(x,y) lightcube(selcube(x, y, d), r*litepower, g*litepower, b*litepower);
 };
 COMMAND(lite, ARG_3INT);
 
@@ -416,7 +417,6 @@ int rflip(int face)         { return ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)
 int cflip(int face)         { return ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16); };
 int mflip(int face)         { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8); };
 int rcflip(int face, int r) { return r>0 ? rflip(face) : cflip(face); };
-int rcd(int dim, int r)     { return r>0 ? R(dim) : C(dim); };
 
 void flipcube(cube &c, int dim)
 {
@@ -424,8 +424,7 @@ void flipcube(cube &c, int dim)
     loop(d,3)
     {
         if (d==dim) c.faces[d] = edgeinv(c.faces[d]);
-        else if ((d<dim)==(dim!=1)) c.faces[d] = rflip(c.faces[d]);
-        else c.faces[d] = cflip(c.faces[d]);
+        else c.faces[d] = rcflip(c.faces[d], (d<dim)==(dim!=1));
     };
     if (c.children)
     {
@@ -434,47 +433,76 @@ void flipcube(cube &c, int dim)
     };
 };
 
-void rotatecube(cube &c, int dim, int cw)   // swapping stuff to mimic rotation -- kinda like a rubiks cube!
-{                                           // not too hard to understand if you can visualize it. see pics in cvs for help
-    c.faces[dim]          = dim==1 ? rcflip (mflip(c.faces[dim]),-cw)          : rcflip (mflip(c.faces[dim]),cw);
-    c.faces[rcd(dim,-cw)] = dim==1 ? rcflip (mflip(c.faces[rcd(dim,-cw)]),-cw) : edgeinv(c.faces[rcd(dim,-cw)]);
-    c.faces[rcd(dim,cw)]  = dim==1 ? edgeinv(mflip(c.faces[rcd(dim,cw)]))      : rcflip (c.faces[rcd(dim,cw)],2-dim);
+void rotatequad(cube &a, cube &b, cube &c, cube &d)
+{
+    cube t = a;
+    a = b;
+    b = c;
+    c = d;
+    d = t;
+};
+
+void rotatecube(cube &c, int dim)   // swapping stuff to mimic rotation -- kinda like a rubiks cube!
+{                                   // not too hard to understand if you can visualize it. see pics in cvs for help
+    c.faces[dim]    = dim==1 ? cflip  (mflip(c.faces[dim]))    : rflip  (mflip(c.faces[dim]));
+    c.faces[C(dim)] = dim==1 ? cflip  (mflip(c.faces[C(dim)])) : edgeinv(c.faces[C(dim)]);
+    c.faces[R(dim)] = dim==1 ? edgeinv(mflip(c.faces[R(dim)])) : rcflip (c.faces[R(dim)],2-dim);
     uint t; swap(c.faces[R(dim)], c.faces[C(dim)], t);
 
-    swap(c.texture[2*R(dim)],     c.texture[2*C(dim)+(dim==1?0:1)], t);
-    swap(c.texture[2*R(dim)+1],   c.texture[2*C(dim)+(dim==1?1:0)], t);
-    swap(c.texture[2*rcd(dim,-cw)], c.texture[2*rcd(dim,-cw)+1], t);
+    t = c.texture[2*C(dim)+1];
+    c.texture[2*C(dim)+1] = c.texture[2*R(dim)+1];
+    c.texture[2*R(dim)+1] = c.texture[2*C(dim)];
+    c.texture[2*C(dim)] = c.texture[2*R(dim)];
+    c.texture[2*R(dim)] = t;
 
     if (c.children)
     {
         int row = dim==1 ? (1<<R(dim)) : (1<<(2-R(dim)));
         int col = dim==1 ? (1<<C(dim)) : (1<<(2-C(dim)));
-        for(int i=0; i<=1<<(2-dim); i+=1<<(2-dim))
-        {
-            cube tc;
-            swap(c.children[i],              c.children[i+row], tc);
-            swap(c.children[i+col],          c.children[i+row+col], tc);
-            swap(c.children[i+(cw>0?0:col)], c.children[i+row+(cw>0?col:0)], tc);
-        };
-        loopi(8) rotatecube(c.children[i], dim, cw);
+        for(int i=0; i<=1<<(2-dim); i+=1<<(2-dim)) rotatequad
+        (
+            c.children[i+col],
+            c.children[i+row+col],
+            c.children[i+row],
+            c.children[i]
+        );
+        loopi(8) rotatecube(c.children[i], dim);
     };
 };
 
-void flip()         
-{ 
+void flip()
+{
     EDITINIT;
-    int ds = sels[dimension(selorient)]/selgrid; 
+    int ds = sels[dimension(selorient)]/selgrid;
+    loop(d,ds) loopsel(x,y) flipcube(selcube(x, y, d), dimension(selorient));
     loop(d,ds/2) loopsel(x,y)
     {
         cube &a = selcube(x, y, d), t;
         cube &b = selcube(x, y, ds-d-1);
-        flipcube(a, dimension(selorient));
-        flipcube(b, dimension(selorient));
         swap(a,b,t);
     };
 };
 
-void rotate(int cw) { EDITINIT; rotatecube(lookupcube(lux,luy,luz,lusize), dimension(orient), dimcoord(orient)?cw:-cw); };
+void rotate(int cw)
+{
+    EDITINIT;
+    if(!dimcoord(selorient)) cw = -cw;
+    int dim = dimension(selorient);
+    int ds = sels[D(dim)]/selgrid;
+    int ss = min(sels[R(dim)], sels[C(dim)]) = max(sels[R(dim)], sels[C(dim)]);
+    ss /= selgrid;
+    loop(d,ds) loopi(cw>0 ? 1 : 3)
+    {
+        loopsel(x,y) rotatecube(selcube(x,y,d), dim);
+        loop(y,ss/2) loop(x,ss-1-y) rotatequad
+        (
+            selcube(y, ss-1-x-y, d),
+            selcube(ss-1-x-y, ss-1-y, d),
+            selcube(ss-1-y, x+y, d),
+            selcube(x+y, y, d)
+        );
+    };
+};
 
 COMMAND(flip, ARG_NONE);
 COMMAND(rotate, ARG_1INT);
