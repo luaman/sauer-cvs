@@ -29,6 +29,7 @@ struct header                   // map file format header
 struct cvec
 {
     uchar x, y, z;
+    cvec() {};
     cvec(uchar a, uchar b, uchar c) : x(a), y(b), z(c) {};
 };    
     
@@ -40,6 +41,7 @@ struct vec
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(cvec &v) : x(v.x), y(v.y), z(v.z) {};
     
+    bool equals(const vec &o){ return x==o.x && y==o.y && z==o.z; };
     float squaredlen()       { return x*x + y*y + z*z; };
     float dot(const vec &o)  { return x*o.x + y*o.y + z*o.z; };
     void mul(float f)        { x *= f; y *= f; z *= f; }
@@ -371,7 +373,7 @@ extern void loadgamerest();
 
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
-extern bool collide(dynent *d, float drop, float rise);
+extern bool collide(dynent *d);
 extern void entinmap(dynent *d);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
