@@ -1,5 +1,13 @@
 History of changes:
 
+Jan 9 2005:
+----------------
+- changed cvec into ivec (integers instead of uchar)
+- changed most integer points into ivec
+- fixed cursor position depth for small gridsizes
+- added error msg to newmap when not in editmode
+- started to clean up some stuff
+
 Jan 4 2005:
 ----------------
 - make _DEBUG gcc friendly
