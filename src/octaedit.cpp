@@ -41,13 +41,14 @@ void editdrag(bool on)
 {
     if(dragging = on)
     {
+        cancelsel();
+        if(cor[0]<0) return;
         lastx = cx;
         lasty = cy;
         lastz = cz;
         selgrid = gridsize;
         selorient = orient;
         loopi(3) lastcor[i] = cor[i];
-        cancelsel();
     };
 };
 
@@ -134,7 +135,7 @@ void cursorupdate()
     cy = luy;
     cz = luz;
     
-    if (cor[0]>-1234567) // ie: cursor not in the void
+    if (cor[0]>=0) // ie: cursor not in the void
     {
         if(dragging && gridsize==selgrid) 
         {
@@ -154,11 +155,8 @@ void cursorupdate()
         }
         else if (!havesel)
         {
-            loopi(3)
-            {
-                sel[i] = lu(i);
-                sels[i] = gridsize;
-            };
+            loopi(3) sel[i] = lu(i);
+            loopi(3) sels[i] = gridsize;
             selcx = selcy = 0;
             selcxs = selcys = 2;
             selgrid = gridsize;
@@ -207,7 +205,7 @@ cube copycube(cube &src)
     return c;
 };
 
-cube *copyselcube()
+cube *copysel()
 {
     int xs = sels[2]/selgrid;
     int ys = sels[1]/selgrid;
@@ -218,7 +216,23 @@ cube *copyselcube()
     return c;
 };
 
-struct undocube { cube* c; int x, y, z, xs, ys, zs, size; };
+void pastesel(cube *src, int dest[3], int ds[3], int grid)
+{   // going backwards makes it work when it's over the boundaries
+    for (int z=ds[0]-1; z>=0; z--) for (int y=ds[1]-1; y>=0; y--) for (int x=ds[2]-1; x>=0; x--)
+    {
+        cube &c = lookupcube(dest[2]+x*grid, dest[1]+y*grid, dest[0]+z*grid, grid);
+        discardchildren(c);
+        c = copycube(src[z*ds[1]*ds[2] + y*ds[2] + x]);
+    };
+};
+
+void delcopysel(cube *sc, int size)
+{
+    loopi(size) discardchildren(sc[i]);
+    gp()->dealloc(sc, sizeof(cube)*size);
+};
+
+struct undocube { cube* c; int s[3], ss[3], grid; };
 vector<undocube> undos;                                 // unlimited undo
 VAR(undomegs, 0, 1, 10);                                // bounded by n megs
 
@@ -227,13 +241,12 @@ void pruneundos(int maxremain)                          // bound memory
     int t = 0;
     loopvrev(undos)
     {
-        int volume = undos[i].xs * undos[i].ys * undos[i].zs;
+        int size = undos[i].ss[0] * undos[i].ss[1] * undos[i].ss[2];
         t += sizeof(undocube);
-        loopj(volume) t += familysize(undos[i].c[j])*sizeof(cube);
+        loopj(size) t += familysize(undos[i].c[j])*sizeof(cube);
         if(t>maxremain) 
         { 
-            loopj(volume) discardchildren(undos[i].c[j]); 
-            gp()->dealloc(undos[i].c, sizeof(cube)*volume); 
+            delcopysel(undos[i].c, size);
             undos.remove(i); 
         };
     };
@@ -243,30 +256,21 @@ void makeundo()
 {
     if (!cursorchange) return;
     undocube u;
-    u.x = sel[2];
-    u.y = sel[1];
-    u.z = sel[0];
-    u.xs = sels[2]/selgrid;
-    u.ys = sels[1]/selgrid;
-    u.zs = sels[0]/selgrid;
-    u.size = selgrid;
-    u.c = copyselcube();
+    loopi(3) u.s[i] = sel[i];
+    loopi(3) u.ss[i] = sels[i]/selgrid;
+    u.grid = selgrid;
+    u.c = copysel();
     undos.add(u);
     pruneundos(undomegs<<20);
 };
 
-void editundo()
+void editundo() // FIX : doesn't remip
 {
     if(noedit()) return;
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
     undocube u = undos.pop();
-    loop(z,u.zs) loop(y,u.ys) loop(x,u.xs)
-    {
-        cube &c = lookupcube(u.x+x*u.size, u.y+y*u.size, u.z+z*u.size, u.size);
-        discardchildren(c);
-        c = u.c[z*u.ys*u.xs + y*u.xs + x];
-    };
-    gp()->dealloc(u.c, sizeof(cube)*u.xs*u.ys*u.zs);
+    pastesel(u.c, u.s, u.ss, u.grid);
+    delcopysel(u.c, u.ss[0]*u.ss[1]*u.ss[2]);
     changed = true; cursorchange = true;
 };
 
@@ -274,27 +278,17 @@ cube *copybuf=NULL; int copys[3];
 void copy() 
 { 
     if(noedit()) return; 
-    if (copybuf) 
-    {
-        int size = copys[0]*copys[1]*copys[2];
-        loopi(size) discardchildren(copybuf[i]); 
-        gp()->dealloc(copybuf, sizeof(cube)*size);
-    };
+    if (copybuf) delcopysel(copybuf, copys[0]*copys[1]*copys[2]);
     loopi(3) copys[i] = sels[i]/selgrid;
-    copybuf = copyselcube(); 
+    copybuf = copysel(); 
 };
 
 void paste() 
 {   
     if(noedit() || copybuf==NULL) return; 
-    loopi(3) loopi(3) sels[i] = copys[i]*selgrid;
+    loopi(3) sels[i] = copys[i]*selgrid;
     makeundo();
-    loop(z,copys[0]) loop(y,copys[1]) loop(x,copys[2])
-    {
-        cube &c = lookupcube(sel[2]+x*selgrid, sel[1]+y*selgrid, sel[0]+z*selgrid, selgrid);
-        discardchildren(c);
-        c = copycube(copybuf[z*copys[1]*copys[2] + y*copys[2] + x]);
-    };
+    pastesel(copybuf, sel, copys, selgrid);
     changed = true; cursorchange = true;
 };
 
@@ -338,14 +332,19 @@ void editface(int dir, int mode)
     int seldir = dimcoord(selorient) ? -dir : dir;
     int xs = sels[rd(dimension(selorient))]/selgrid;
     int ys = sels[cd(dimension(selorient))]/selgrid;
-    if (mode==1 && dir<0) sel[dimension(selorient)] += selgrid * seldir;
+    if (mode==1) 
+    {
+        if(sel[dimension(selorient)]+dimcoord(selorient)*selgrid==0 && dimcoord(selorient) == !(dir<0)) return;
+        if(sel[dimension(selorient)]+dimcoord(selorient)*selgrid==hdr.worldsize && dimcoord(selorient) == !(dir>0) ) return;
+        if(dir<0) sel[dimension(selorient)] += selgrid * seldir;
+    };
     makeundo();
     loop(x,xs) loop(y,ys)
     {
         cube &c = selcube(x, y, 0);
         discardchildren(c);
         
-        if (mode==1) { if (dir<0) { solidfaces(c); } else emptyfaces(c); } // FIX : UNDO 
+        if (mode==1) { if (dir<0) { solidfaces(c); } else emptyfaces(c); }
         else 
         {
             uchar *p = (uchar *)&c.faces[dimension(selorient)];
@@ -366,8 +365,7 @@ void editface(int dir, int mode)
         };
     };
     changed = true; cursorchange = false;
-    if (mode==1 && dir>0) sel[dimension(selorient)] += selgrid * seldir;
-    if (mode==1) cursorchange = true;
+    if (mode==1) { cursorchange = true; if(dir>0) sel[dimension(selorient)] += selgrid * seldir; };   
 };
 
 COMMAND(editface, ARG_2INT);
