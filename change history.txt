@@ -1,5 +1,20 @@
 History of changes:
 
+May 21 2004:
+----------------
+- added red 0 reference box
+- added selection support to copy and paste
+- added selection support to undo
+- added selection support to flip
+
+May 19 2004:
+----------------
+- tweaked cursor depth
+- added 3D selection
+- added selection support to fill command
+- added selection support to edittex
+- made undo more conservative
+
 May 15 2004:
 ----------------
 - fixed subdivision happening in cursorupdate, cube stat
