@@ -1,5 +1,12 @@
 History of changes:
 
+July 29 2004:
+----------------
+- fixed player starting inside the ground when newmap
+- took out the newworld function
+- cubes are now always convex (well except for some very rare special cases)
+- added collision detection for ellipsoid players. step response is only partial finished.
+
 May 21 2004:
 ----------------
 - added red 0 reference box
