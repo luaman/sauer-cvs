@@ -84,7 +84,7 @@ dynent *newdynent()                 // create a new blank player or monster
     d->maxspeed = 100;
     d->outsidemap = false;
     d->inwater = false;
-    d->radius = 6;
+    d->radius = 8;
     d->eyeheight = 15;
     d->aboveeye = 5;
     d->frags = 0;
@@ -139,13 +139,13 @@ void updateworld(int millis)        // main game update loop
 void entinmap(dynent *d)    // brute force but effective way to find a free spawn spot in the map
 {
     vec orig = d->o;
-    loopi(100)              // try max 100 times
-    {
-        d->o.x += (rnd(21)-10)/2.0f*i;  // increasing distance
-        d->o.y += (rnd(21)-10)/2.0f*i;
+    //loopi(100)              // try max 100 times
+    //{
+        //d->o.x += (rnd(21)-10)/2.0f*i;  // increasing distance
+        //d->o.y += (rnd(21)-10)/2.0f*i;
         if(collide(d)) return;
         d->o = orig;
-    };
+    //};
     conoutf("can't find entity spawn spot! (%d, %d)", (int)d->o.x, (int)d->o.y);
     // leave ent at original pos, possibly stuck
 };
@@ -313,6 +313,7 @@ void initclient()
 
 void startmap(char *name)   // called just after a map load
 {
+    cancelsel();
     pruneundos();
     spawncycle = 0;
     if(netmapstart() && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); };
