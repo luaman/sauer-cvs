@@ -96,6 +96,7 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
         ASSERT(threeplaneintersect(pl[0], pl[1], pl[2], n));
         d.sub(n);
         float dist2 = d.squaredlen();
+        if(dist2==0) return false;
         if(dist2>=sr*sr) return true;
         mindist = dist2;
         fh = n.z;
@@ -103,10 +104,10 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
         w.sub(n);
     };
 
-	floorheight = min(fh/r, floorheight);
+    floorheight = min(fh/r, floorheight);
 
     if(mindist<walldist)
-    {        
+    {
         walldist = mindist;
         wall = w;
         conv2espace(z, r, wall);            // convert back to realspace
@@ -135,9 +136,8 @@ bool cubecollide(dynent *d, cube *c, float cx, float cy, float cz, float size) /
         {
             if(!cubecollide(d, c[i].children, x, y, z, size/2)) r = false;
         }
-        else
+        else if(!isempty(c[i]))
         {
-            if(isempty(c[i])) continue;
             if(!geomcollide(d, c[i], x, y, z, size)) r = false;
         };
     };
@@ -152,7 +152,7 @@ bool collide(dynent *d)
     headspace = 10;
     floorheight = hdr.worldsize;
     wall.x = wall.y = wall.z = 0;
-    walldist = 99999999999999999.0;
+    walldist = 99999999999999999.0f;
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];
@@ -170,7 +170,7 @@ bool collide(dynent *d)
     return cubecollide(d, worldroot, 0, 0, 0, (float)(hdr.worldsize>>1)); // collide with world
 };
 
-void move(dynent *d, vec &dir, float rise)
+void move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
     d->o.add(dir);
@@ -182,22 +182,21 @@ void move(dynent *d, vec &dir, float rise)
         vec w(wall), v(wall);
         w.mul(w.dot(dir));
         v.mul(v.dot(d->vel));
-        dir.sub(w);             // try sliding against wall for next move
+        dir.sub(w);                     // try sliding against wall for next move
         d->vel.sub(v);
 
-        if(dir.x == 0 && dir.y == 0 && dir.z == 0) d->moving = false;
-    };
-
-    //conoutf("wal xyz %d %d %d", wall.x*1000, wall.y*1000, wall.z*1000);
-    //conoutf("dir xyz %d %d %d", dir.x*1000, dir.y*1000, dir.z*1000);
-
-    const float space = floorheight-(d->o.z-d->eyeheight);
-    //conoutf("space %d %d %d", space, floorheight, d->onfloor);
-
-    if(space<=STAIRHEIGHT && space>-rise)
-    {
-        d->onfloor = true;
-        if(space>0) d->o.z += rise; // rise thru stair
+        if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
+        const float space = floorheight-(d->o.z-d->eyeheight);
+        if(space<=STAIRHEIGHT && space>-push)
+        {
+            d->onfloor = true;
+            if(space>0) d->o.z += push; // rise thru stair
+        }
+        else if(space<=d->aboveeye+d->eyeheight)
+        {
+            d->o.x += push*wall.x; // push against walls
+            d->o.y += push*wall.y;
+        };
     };
 };
 
@@ -278,12 +277,12 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         };
 
         const float f = 1.0f/moveres;
-        const float rise = speed/moveres/1.2f;                  // extra smoothness when lifting up stairs
+        const float push = speed/moveres/1.2f;                  // extra smoothness when lifting up stairs or against walls
         pl->onfloor = false;
 
         // discrete steps collision detection & sliding
         d.mul(f);
-        loopi(moveres) move(pl, d, rise);
+        loopi(moveres) move(pl, d, push);
     };
 
     // detect wether player is outside map, used for skipping zbuffer clear mostly

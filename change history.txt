@@ -1,5 +1,10 @@
 History of changes:
 
+Dec 13 2004:
+----------------
+- more work on ramp collision and response (very smooth now)
+- fixed bug #15
+
 Dec 12 2004:
 ----------------
 - rework vertex array code to better fit model
