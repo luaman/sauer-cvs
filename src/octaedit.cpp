@@ -464,7 +464,10 @@ void editface(int dir, int mode)
         if((dir>0 == dc && h<=0) || (dir<0 == dc && h>=hdr.worldsize)) return;
         if(dir<0) sel.o[d] += sel.grid * seldir;
     };
+    int ts = sel.s[D(dimension(selorient))];
+    sel.s[D(dimension(selorient))] = 1;
     makeundo();
+    sel.s[D(dimension(selorient))] = ts;
     loopselxy()
     {
         cube &c = selcube(x, y, 0);
