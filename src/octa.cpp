@@ -48,7 +48,7 @@ void newworld()
 };
 
 int lux, luy, luz, lusize;
-
+int dv(int d, int i) { return i&(1<<(2-d)) ? 1 : 0; };
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
@@ -65,7 +65,30 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         if(c->children==NULL)
         {
             if(!tsize) break;
-            c->children = newcubes(isempty(*c) ? F_EMPTY : F_SOLID);      // FIXME: more accurate way to produce children from parent
+            c->children = newcubes(F_EMPTY);
+            uchar se[3][3][3];  //[dim zxy][col yzz][row xxy]
+            loop(d,3)           // expand edges from 4 to 9
+            {                   
+                loopk(2) loopj(2) se[d][2*k][2*j] = c->edges[j+(2*k)+(d*4)];
+                loopj(2) se[d][2*j][1] = ((se[d][2*j][0]>>1)&0x77) + ((se[d][2*j][2]>>1)&0x77);
+                loopj(2) se[d][1][2*j] = ((se[d][0][2*j]>>1)&0x77) + ((se[d][2][2*j]>>1)&0x77);
+                         se[d][1][1]   = ((se[d][0][2]>>1)&(!d?7:0x70)) + ((se[d][2][0]>>1)&(!d?7:0x70))  // to comply with renderer...
+                                       + ((se[d][0][0]>>1)&(!d?0x70:7)) + ((se[d][2][2]>>1)&(!d?0x70:7));
+            };
+            loopi(8)
+            {   
+                loop(d,3) loop(col,2) loop(row,2) // split edges and assign
+                {   
+                    uchar *cce = &c->children[i].edges[(d*4)+(col*2)+row];
+                    uchar sed = se[d][col + dv(cd(d),i)][row + dv(rd(d),i)];
+                    if     (edgeget(sed,1) < 5) *cce = (dv(d,i) ? 0 : 2*sed);
+                    else if(edgeget(sed,0) > 4) *cce = (dv(d,i) ? 2*sed - 0x88 : 0x88);
+                    else                        *cce = (dv(d,i) ? ((2*sed)&0xF0)-0x80 : ((2*sed)&0x0F)+0x80);
+                };
+                loopj(3) if (!c->children[i].faces[j] || c->children[i].faces[j]==0x88888888) emptyfaces(c->children[i]);//FIXME: need proper validation proc
+                loopj(6) c->children[i].texture[j] = c->texture[j];
+                loopj(3) c->children[i].colour[j] = c->colour[j];
+            };
         };
         c = c->children;
     };
