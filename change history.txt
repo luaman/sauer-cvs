@@ -1,5 +1,9 @@
 History of changes:
 
+Jan 18 2005:
+----------------
+- fixed crash due to failed to clear va pointer
+
 Jan 9 2005:
 ----------------
 - changed cvec into ivec (integers instead of uchar)

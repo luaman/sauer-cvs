@@ -237,10 +237,10 @@ void cursorupdate()
 cube copycube(cube &src)
 {
     cube c = src;
+    c.va = NULL;
     if (src.children)
     {
         c.children = newcubes(F_EMPTY);
-        c.va = NULL;
         loopi(8) c.children[i] = copycube(src.children[i]);
     };
     return c;
