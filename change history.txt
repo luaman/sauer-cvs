@@ -1,5 +1,24 @@
 History of changes:
 
+May 15 2004:
+----------------
+- fixed subdivision happening in cursorupdate, cube stat
+- fixed subdivisions 'peeling' and 'cracking' to a decent degree
+- changed fill command to no longer fill cube when scrolling down 
+- added selection functionality to fill command
+- added ad-hoc vertex lighting editing
+- more rearrangement of faceverts. 
+- added fixfaces to fix old maps that are displayed differently because of faceverts changes (remove after next release)
+- finished empty_world / newmap
+- updated menu.cfg, autoexec
+
+May 11 2004:
+----------------
+- added cube stat to hud
+
+May 09 2004:
+----------------
+- rearranged faceverts in octarender, which removed the need for some hacks
 
 May 06 2004:
 ----------------
