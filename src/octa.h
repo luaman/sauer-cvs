@@ -15,7 +15,7 @@ struct cube
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern int lux, luy, luz, lusize;
-extern int wtris, allocnodes;
+extern int wtris, allocnodes, selchildcount;
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)
 const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
@@ -32,9 +32,12 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 #define D(dim) (dim)
 #define R(dim) ((dim)==0?2:(dim)-1)  // gets relative row dimension of given
 #define C(dim) ((dim)==2?0:(dim)+1)  // gets relative column dimension of given
-#define X(dim) ((dim)==2?0:2-(dim))      // gets x description, when dimension is the given
+#define X(dim) ((dim)==2?0:2-(dim))  // gets x description, when dimension is the given
 #define Y(dim) ((dim)==2?2:1-(dim))
 #define Z(dim) ((dim)==0?0:3-(dim))
+
+#define octamask(d)     (1<<(2-(d)))                    // creates mask for bit of given dimension
+#define octacoord(d, i) (((i)&octamask(d))>>(2-(d)))
 
 enum
 {

@@ -55,12 +55,12 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         if(tz>=z+size) { z += size; c += 4; };
         if(ty>=y+size) { y += size; c += 2; };
         if(tx>=x+size) { x += size; c += 1; };
-        if(tsize==size) break;
-        //if(abs(tsize)>=size) break;
+        //if(tsize==size) break;
+        if(abs(tsize)>=size) break;
         if(c->children==NULL)
         {
-            if(!tsize) break;
-            //if(tsize<=0) break;
+            //if(!tsize) break;
+            if(tsize<=0) break;
             if(isempty(*c)) c->children = newcubes(F_EMPTY);
             else subdividecube(*c);
         };
