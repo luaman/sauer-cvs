@@ -31,7 +31,14 @@ struct ivec
     int x, y, z;
     ivec() {};
     ivec(int a, int b, int c) : x(a), y(b), z(c) {};
+    ivec(int i, int cx, int cy, int cz, int size)
+    {
+        x = cx+((i&1)>>0)*size;
+        y = cy+((i&2)>>1)*size;
+        z = cz+((i&4)>>2)*size;
+    };
     int &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
+	bool operator==(ivec &v) { return x==v.x && y==v.y && z==v.z; };
 };
 
 struct vec
