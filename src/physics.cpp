@@ -6,7 +6,7 @@
 #include "cube.h"
 
 // info about collisions
-plane wall; // just the normal vector. offset is garbage.
+vec wall; // just the normal vector.
 float headspace, floorheight;
 const int STAIRHEIGHT = 4;
 
@@ -14,7 +14,7 @@ bool plcollide(dynent *d, dynent *o)          // collide with player or monster
 {
     if(o->state!=CS_ALIVE) return true;
     const float r = o->radius+d->radius;
-    if(fabs(o->o.x-d->o.x)<r && fabs(o->o.y-d->o.y)<r) 
+    if(fabs(o->o.x-d->o.x)<r && fabs(o->o.y-d->o.y)<r)
     {
         if(fabs(o->o.z-d->o.z)<o->aboveeye+d->eyeheight) return false;
         if(d->monsterstate) return false; // hack
@@ -23,7 +23,7 @@ bool plcollide(dynent *d, dynent *o)          // collide with player or monster
     };
     return true;
 };
-  
+
 bool mmcollide(dynent *d)           // collide with a mapmodel
 {
     loopv(ents)
@@ -54,33 +54,49 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     plane tris[12];
     vec pos(cx, cy, cz);
     gentris(c, pos, size, tris, z, z, r);
-    
-    int max=0;
-    float mdist = -9999999;
-    loopi(12) // collision detection
+
+    int pi=0;
+    plane p[3];
+    wall.x = wall.y = wall.z = 0;
+    vec ot(o);
+    loopi(12) if(tris[i].isnormalized()) // collision detection
     {
-        //conoutf("%d %d", i, tris[i].squaredlen()*1000);
-        if(!tris[i].isnormalized()) continue;
-        float dist = tris[i].dot(o) + tris[i].offset;
-        //conoutf("%d dist : %d",i,dist);
+        float dist = tris[i].dot(ot) + tris[i].offset;
         if(dist>sr) return true;
-        if(dist>mdist)  { mdist = dist; max = i; };
-   };
+        if(dist>=0)
+        {
+            vec t = wall = p[pi] = tris[i];
+            t.mul(-dist);
+            ot.add(t);
+            pi++;
+        };
+        if(pi==3) break;
+    };
 
     // collision detected. now collect info for response
-    
-    wall = tris[max]; // FIXME: not good enough. need to generate for 2 and 3 plane intersect (line and vertex)
-
-    conv2espace(r, z, wall); // convert back to realspace.. offset not included
-    wall.normalize();
-
-    float fh = hdr.worldsize;
-    loopi(12)
+    if(pi>1)
     {
-        if(!tris[i].isnormalized()) continue;
+        if(pi==2)
+        {
+            p[2].cross(p[0], p[1]);
+            p[2].offset = -o.dot(p[2]);
+        };
+        vec dest;
+        threeplaneintersect(p[0], p[1], p[2], dest); // nearest point on cube
+        if(o.dist(dest)>sr) return true;
+        wall = o;
+        wall.sub(dest);
+    };
+
+    conv2espace(z, r, wall); // convert back to realspace.. offset not included
+    wall.normalize();
+    //printf("%d %.4f %.4f %.4f\n", pi, wall.x, wall.y, wall.z);
+    float fh = hdr.worldsize;
+    loopi(12) if(tris[i].isnormalized())
+    {
         float h = -(tris[i].offset + o.x*tris[i].x + o.y*tris[i].y) / (tris[i].z*r);
         if(tris[i].z>0 && h<fh) fh = h;
-    };    
+    };
     if(fh>floorheight) floorheight = fh;
     float space = floorheight-(d->o.z-d->eyeheight);
     if (space<=STAIRHEIGHT) return true;
@@ -109,6 +125,7 @@ bool cubecollide(dynent *d, cube *c, float cx, float cy, float cz, float size) /
         {
             if (isempty(c[i])) continue;
             if (!geomcollide(d, c[i], x, y, z, size)) return false;
+            wall.x = wall.y = wall.z = 0;
         };
     };
     return true;
@@ -141,9 +158,9 @@ bool collide(dynent *d)
 bool move(dynent *d, vec &dir, float drop, float rise)
 {
     vec old(d->o);
-    d->o.add(dir); 
+    d->o.add(dir);
     collide(d);
-    
+
     float space = floorheight-(d->o.z-d->eyeheight);
      //conoutf("space %d %d %d", space, d->onfloor, d->vel.z*100);
 
@@ -154,8 +171,8 @@ bool move(dynent *d, vec &dir, float drop, float rise)
     };
 
     if(space<drop && space>-rise)
-    { 
-        d->onfloor = true;          
+    {
+        d->onfloor = true;
         if(d->vel.z < 1.7f) d->vel.z = 0; // hack to stop upward motion after landing
         d->o.z = floorheight + d->eyeheight; // clamp to ground
     }
