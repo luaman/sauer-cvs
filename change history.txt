@@ -2,6 +2,7 @@ History of changes:
 
 Dec 18 2004:
 ----------------
+- perfoemance improvement for partial updates
 - added partial updates
 
 Dec 13 2004:

@@ -279,29 +279,39 @@ struct undoblock { int *g; block3 *b; };
 vector<undoblock> undos;                                // unlimited undo
 VAR(undomegs, 0, 1, 10);                                // bounded by n megs
 
-vtxarray *changedva(int x, int y, int z, int size)
+void changedva(int x, int y, int z, int size, block3 &step)
 {
     cube *c, *cc = worldroot;
     int g, m, mm = 0, grid = hdr.worldsize;
     loopi(16)
     {
         grid = grid >> 1; mm = mm | grid;
+        loopj(8) if (cc[j].va)
+        {
+            step.o[2]=(x&mm)+grid; step.o[1]=(y&mm)+grid; step.o[0]=(z&mm)+grid;
+            break;
+        }
         cc = cc + ((x & grid)?1:0) + ((y & grid)?2:0) + ((z & grid)?4:0);
         if (cc->va || !i) { c = cc; g = grid; m = mm; };
-        if ((!cc->children) || (grid <= size)) break;
+        if (!cc->children) break;
+        if (grid <= size) { vaclearc(cc->children); break; };
         cc = cc->children;
     };
-    if (!c->va) c->va = newva(x & m, y & m, z & m, g);
+    if (!c->va)
+    {
+        c->va = newva(x & m, y & m, z & m, g);
+        step.o[2]=(x&m)+g; step.o[1]=(y&m)+g; step.o[0]=(z&m)+g;
+    };
     if (!c->va->changed) { c->va->changed = true; changed.add(c); };
-    return c->va;
 };
 
 void allchanged()
 {
+    block3 dummy;
     int size = hdr.worldsize / 2;
     vaclearc(worldroot);
     changed.setsize(0);
-    loopi(8) changedva((i&1)?size:0, (i&2)?size:0, (i&4)?size:0, hdr.worldsize);
+    loopi(8) changedva((i&1)?size:0, (i&2)?size:0, (i&4)?size:0, hdr.worldsize, dummy);
 };
 
 void addchanged(block3 &b, bool internal = false)
@@ -314,6 +324,7 @@ void addchanged(block3 &b, bool internal = false)
     };
     loopi(3) if((b.o[i] | (b.o[i]+b.s[i]*b.grid-1)) & badmask) return;
 
+    block3 bb;
     int ze=b.o[0]+b.s[0]*b.grid;
     int ye=b.o[1]+b.s[1]*b.grid;
     int xe=b.o[2]+b.s[2]*b.grid;
@@ -321,15 +332,14 @@ void addchanged(block3 &b, bool internal = false)
         for(int y=b.o[1], yn=ye; y<ye; y=yn, yn=ye)
             for(int x=b.o[2], xn=xe; x<xe; x=xn, xn=xe)
     {
-        vtxarray *va = changedva(x, y, z, b.grid);
-        xn = min(xn, va->x+va->size);
-        yn = min(yn, va->y+va->size);
-        zn = min(zn, va->z+va->size);
+        changedva(x, y, z, b.grid, bb);
+        xn = min(xn, bb.o[2]);
+        yn = min(yn, bb.o[1]);
+        zn = min(zn, bb.o[0]);
     };
 
     if (!internal)
     {
-        block3 bb;
         bb.grid = 1;
         bb.o[2] = b.o[2]; bb.s[2] = b.s[2] * b.grid;
         bb.o[1] = b.o[1]; bb.s[1] = b.s[1] * b.grid;

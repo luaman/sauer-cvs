@@ -432,7 +432,11 @@ void renderc(cube *c, int size, int cx, int cy, int cz)
         int z = cz+octacoord(0,i)*size;
         if(c[i].children)
         {
-            if (c[i].va) continue;
+            if (c[i].va)
+            {
+                if (c[i].va->changed) { destroyva(c[i].va); c[i].va=NULL; }
+                else continue;
+            };
             renderc(c[i].children, size/2, x, y, z);
         }
         else if(!isempty(c[i]))
@@ -525,13 +529,14 @@ void octarenderc(cube *c, int size, int cx, int cy, int cz)
 void octarender()
 {
     if(!verts) reallocv();
-    loopj(changed.length()) if(changed[j]->children) vaclearc(changed[j]->children);
-    loopj(changed.length()) if(!changed[j]->va && ((changed[j]-worldroot) > 7))
-        changed[j] = NULL;
 
-    loopj(changed.length()) if(changed[j])
+    for(int s=hdr.worldsize/2, sn=0; s; s=sn, sn=0) loopj(changed.length())
+        if(!changed[j] || !changed[j]->va) { changed[j]=NULL; continue; }
+        else if(!changed[j]->va->changed) { changed[j]=NULL; continue; }
+        else if(!(changed[j]->va->size==s)) { sn=max(sn, changed[j]->va->size); continue; }
+        else
     {
-        cube *c = changed[j];
+        cube *c = changed[j]; changed[j] = NULL;
         int x = c->va->x, y = c->va->y, z = c->va->z;
         int size = c->va->size;
         if (c->va) destroyva(c->va); c->va = NULL;
