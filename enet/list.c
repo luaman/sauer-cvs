@@ -1,5 +1,15 @@
-#include <enet/list.h>
+/** 
+ @file list.c
+ @brief ENet linked list functions
+*/
+#define ENET_BUILDING_LIB 1
+#include "enet/list.h"
 
+/** 
+    @defgroup list ENet linked list utility functions
+    @ingroup private
+    @{
+*/
 void
 enet_list_clear (ENetList * list)
 {
@@ -44,3 +54,4 @@ enet_list_size (ENetList * list)
    return size;
 }
 
+/** @} */

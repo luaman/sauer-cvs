@@ -1,8 +1,31 @@
-#include <enet/memory.h>
-#include <enet/enet.h>
+/** 
+ @file host.c
+ @brief ENet host management functions
+*/
+#define ENET_BUILDING_LIB 1
+#include "enet/memory.h"
+#include "enet/enet.h"
 
+/** @defgroup host ENet host functions
+    @{
+*/
+
+/** Creates a host for communicating to peers.  
+
+    @param address   the address at which other peers may connect to this host.  If NULL, then no peers may connect to the host.
+    @param peerCount the maximum number of peers that should be allocated for the host.
+    @param incomingBandwidth downstream bandwidth of the host in bytes/second; if 0, ENet will assume unlimited bandwidth.
+    @param outgoingBandwidth upstream bandwidth of the host in bytes/second; if 0, ENet will assume unlimited bandwidth.
+
+    @returns the host on success and NULL on failure
+
+    @remarks ENet will strategically drop packets on specific sides of a connection between hosts
+    to ensure the host's bandwidth is not overwhelmed.  The bandwidth parameters also determine
+    the window size of a connection which limits the amount of reliable packets that may be in transit
+    at any given time.
+*/
 ENetHost *
-enet_host_create (const ENetAddress * address, size_t peerCount, uint32 incomingBandwidth, uint32 outgoingBandwidth)
+enet_host_create (const ENetAddress * address, size_t peerCount, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth)
 {
     ENetHost * host = (ENetHost *) enet_malloc (sizeof (ENetHost));
     ENetPeer * currentPeer;
@@ -25,6 +48,7 @@ enet_host_create (const ENetAddress * address, size_t peerCount, uint32 incoming
     host -> outgoingBandwidth = outgoingBandwidth;
     host -> bandwidthThrottleEpoch = 0;
     host -> recalculateBandwidthLimits = 0;
+    host -> mtu = ENET_HOST_DEFAULT_MTU;
     host -> peerCount = peerCount;
     host -> lastServicedPeer = host -> peers;
     host -> commandCount = 0;
@@ -53,6 +77,9 @@ enet_host_create (const ENetAddress * address, size_t peerCount, uint32 incoming
     return host;
 }
 
+/** Destroys the host and all resources associated with it.
+    @param host pointer to the host to destroy
+*/
 void
 enet_host_destroy (ENetHost * host)
 {
@@ -71,6 +98,14 @@ enet_host_destroy (ENetHost * host)
     enet_free (host);
 }
 
+/** Initiates a connection to a foreign host.
+    @param host host seeking the connection
+    @param address destination for the connection
+    @param channelCount number of channels to allocate
+    @returns a peer representing the foreign host on success, NULL on failure
+    @remarks The peer returned will have not completed the connection until enet_host_service()
+    notifies of an ENET_EVENT_TYPE_CONNECT event for the peer.
+*/
 ENetPeer *
 enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelCount)
 {
@@ -99,7 +134,21 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     currentPeer -> address = * address;
     currentPeer -> channels = (ENetChannel *) enet_malloc (channelCount * sizeof (ENetChannel));
     currentPeer -> channelCount = channelCount;
+    currentPeer -> challenge = (enet_uint32) rand ();
 
+    if (host -> outgoingBandwidth == 0)
+      currentPeer -> windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
+    else
+      currentPeer -> windowSize = (host -> outgoingBandwidth /
+                                    ENET_PEER_WINDOW_SIZE_SCALE) * 
+                                      ENET_PROTOCOL_MINIMUM_WINDOW_SIZE;
+
+    if (currentPeer -> windowSize < ENET_PROTOCOL_MINIMUM_WINDOW_SIZE)
+      currentPeer -> windowSize = ENET_PROTOCOL_MINIMUM_WINDOW_SIZE;
+    else
+    if (currentPeer -> windowSize > ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE)
+      currentPeer -> windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
+         
     for (channel = currentPeer -> channels;
          channel < & currentPeer -> channels [channelCount];
          ++ channel)
@@ -118,7 +167,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     command.header.flags = ENET_PROTOCOL_FLAG_ACKNOWLEDGE;
     command.header.commandLength = sizeof (ENetProtocolConnect);
     command.connect.outgoingPeerID = ENET_HOST_TO_NET_16 (currentPeer -> incomingPeerID);
-    command.connect.packetSize = ENET_HOST_TO_NET_16 (currentPeer -> packetSize);
+    command.connect.mtu = ENET_HOST_TO_NET_16 (currentPeer -> mtu);
     command.connect.windowSize = ENET_HOST_TO_NET_32 (currentPeer -> windowSize);
     command.connect.channelCount = ENET_HOST_TO_NET_32 (channelCount);
     command.connect.incomingBandwidth = ENET_HOST_TO_NET_32 (host -> incomingBandwidth);
@@ -132,8 +181,13 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     return currentPeer;
 }
 
+/** Queues a packet to be sent to all peers associated with the host.
+    @param host host on which to broadcast the packet
+    @param channelID channel on which to broadcast
+    @param packet packet to broadcast
+*/
 void
-enet_host_broadcast (ENetHost * host, uint8 channelID, ENetPacket * packet)
+enet_host_broadcast (ENetHost * host, enet_uint8 channelID, ENetPacket * packet)
 {
     ENetPeer * currentPeer;
 
@@ -151,8 +205,15 @@ enet_host_broadcast (ENetHost * host, uint8 channelID, ENetPacket * packet)
       enet_packet_destroy (packet);
 }
 
+/** Adjusts the bandwidth limits of a host.
+    @param host host to adjust
+    @param incomingBandwidth new incoming bandwidth
+    @param outgoingBandwidth new outgoing bandwidth
+    @remarks the incoming and outgoing bandwidth parameters are identical in function to those
+    specified in enet_host_create().
+*/
 void
-enet_host_bandwidth_limit (ENetHost * host, uint32 incomingBandwidth, uint32 outgoingBandwidth)
+enet_host_bandwidth_limit (ENetHost * host, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth)
 {
     host -> incomingBandwidth = incomingBandwidth;
     host -> outgoingBandwidth = outgoingBandwidth;
@@ -162,7 +223,7 @@ enet_host_bandwidth_limit (ENetHost * host, uint32 incomingBandwidth, uint32 out
 void
 enet_host_bandwidth_throttle (ENetHost * host)
 {
-    uint32 timeCurrent = enet_time_get (),
+    enet_uint32 timeCurrent = enet_time_get (),
            elapsedTime = timeCurrent - host -> bandwidthThrottleEpoch,
            peersTotal = 0,
            dataTotal = 0,
@@ -212,7 +273,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
              peer < & host -> peers [host -> peerCount];
              ++ peer)
         {
-            uint32 peerBandwidth;
+            enet_uint32 peerBandwidth;
             
             if (peer -> state != ENET_PEER_STATE_CONNECTED ||
                 peer -> incomingBandwidth == 0 ||
@@ -326,3 +387,4 @@ enet_host_bandwidth_throttle (ENetHost * host)
     }
 }
     
+/** @} */

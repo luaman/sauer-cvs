@@ -1,9 +1,14 @@
+/** 
+ @file  win32.c
+ @brief ENet Win32 system specific functions
+*/
 #ifdef WIN32
 
 #include <time.h>
-#include <enet/enet.h>
+#define ENET_BUILDING_LIB 1
+#include "enet/enet.h"
 
-static uint32 timeBase = 0;
+static enet_uint32 timeBase = 0;
 
 int
 enet_initialize (void)
@@ -31,30 +36,16 @@ enet_deinitialize (void)
     WSACleanup ();
 }
 
-uint32
+enet_uint32
 enet_time_get (void)
 {
-    return (uint32) GetTickCount () - timeBase;
-}
-
-uint32
-enet_time_get_sec (void)
-{
-
-    return (uint32) (GetTickCount () - timeBase) / 1000;  // FIXME: get higher res time from somewhere
-    /*
-    SYSTEMTIME st;
-    GetSystemTime(&st);
-    FILETIME ft;
-    assert(SystemTimeToFileTime(&st, &ft));
-    return (uint32) (((ft.dwLowDateTime>>23)|(ft.dwHighDateTime<<9))/(10000000/(float)1>>23));
-    */
+    return (enet_uint32) GetTickCount () - timeBase;
 }
 
 void
-enet_time_set (uint32 newTimeBase)
+enet_time_set (enet_uint32 newTimeBase)
 {
-    timeBase = (uint32) GetTickCount () - newTimeBase;
+    timeBase = (enet_uint32) GetTickCount () - newTimeBase;
 }
 
 int
@@ -67,7 +58,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
         hostEntry -> h_addrtype != AF_INET)
       return -1;
 
-    address -> host = * (uint32 *) hostEntry -> h_addr_list [0];
+    address -> host = * (enet_uint32 *) hostEntry -> h_addr_list [0];
 
     return 0;
 }
@@ -89,62 +80,6 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
     return 0;
 }
 
-ENetSocket 
-enet_socket_create (ENetSocketType type, const ENetAddress * address) 
-{ 
-    ENetSocket newSocket = socket (PF_INET, type == ENET_SOCKET_TYPE_DATAGRAM ? SOCK_DGRAM : SOCK_STREAM, 0); 
-    int nonBlocking = 1, 
-        receiveBufferSize = ENET_HOST_RECEIVE_BUFFER_SIZE; 
-    struct sockaddr_in sin; 
-
-    if (newSocket == ENET_SOCKET_NULL) 
-      return ENET_SOCKET_NULL; 
-
-    if (type == ENET_SOCKET_TYPE_DATAGRAM) 
-    { 
-        ioctlsocket (newSocket, FIONBIO, & nonBlocking); 
-
-        setsockopt (newSocket, SOL_SOCKET, SO_RCVBUF, (char *) & receiveBufferSize, sizeof (int)); 
-    } 
-
-    memset (& sin, 0, sizeof (struct sockaddr_in)); 
-
-    sin.sin_family = AF_INET; 
-
-    if (address != NULL) 
-    { 
-       sin.sin_port = ENET_HOST_TO_NET_16 (address -> port); 
-       sin.sin_addr.s_addr = address -> host; 
-    } 
-    else 
-    { 
-/* need to bind client sockets to a port, since windows will otherwise 
-* only do the binding on the first socket send 
-*/ 
-       sin.sin_port = 0; 
-       sin.sin_addr.s_addr = INADDR_ANY; 
-    } 
-
-    if ((type == ENET_SOCKET_TYPE_STREAM && 
-/* the following check makes sure that if address == NULL (i.e. a client socket) 
-* that the listen never gets called, but it still falls through to the bind 
-* so that the client socket can be bound immediately to port 
-*/ 
-          address != NULL && 
-          listen (newSocket, SOMAXCONN) == SOCKET_ERROR) || 
-        bind (newSocket, 
-              (struct sockaddr *) & sin, 
-              sizeof (struct sockaddr_in)) == SOCKET_ERROR) 
-    { 
-       closesocket (newSocket); 
-    
-       return ENET_SOCKET_NULL; 
-    } 
-
-    return newSocket; 
-} 
-
-/*
 ENetSocket
 enet_socket_create (ENetSocketType type, const ENetAddress * address)
 {
@@ -178,11 +113,12 @@ enet_socket_create (ENetSocketType type, const ENetAddress * address)
        sin.sin_addr.s_addr = INADDR_ANY;
     }
 
-    if ((type == ENET_SOCKET_TYPE_STREAM &&
-          listen (newSocket, SOMAXCONN) == SOCKET_ERROR) ||
-        bind (newSocket,    
+    if (bind (newSocket,    
               (struct sockaddr *) & sin,
-              sizeof (struct sockaddr_in)) == SOCKET_ERROR)
+              sizeof (struct sockaddr_in)) == SOCKET_ERROR ||
+        (type == ENET_SOCKET_TYPE_STREAM &&
+          address != NULL &&
+          listen (newSocket, SOMAXCONN) == SOCKET_ERROR))
     {
        closesocket (newSocket);
 
@@ -191,7 +127,6 @@ enet_socket_create (ENetSocketType type, const ENetAddress * address)
 
     return newSocket;
 }
-*/
 
 int
 enet_socket_connect (ENetSocket socket, const ENetAddress * address)
@@ -223,7 +158,7 @@ enet_socket_accept (ENetSocket socket, ENetAddress * address)
 
     if (address != NULL)
     {
-        address -> host = (uint32) sin.sin_addr.s_addr;
+        address -> host = (enet_uint32) sin.sin_addr.s_addr;
         address -> port = ENET_NET_TO_HOST_16 (sin.sin_port);
     }
 
@@ -307,7 +242,7 @@ enet_socket_receive (ENetSocket socket,
 
     if (address != NULL)
     {
-        address -> host = (uint32) sin.sin_addr.s_addr;
+        address -> host = (enet_uint32) sin.sin_addr.s_addr;
         address -> port = ENET_NET_TO_HOST_16 (sin.sin_port);
     }
 
@@ -315,7 +250,7 @@ enet_socket_receive (ENetSocket socket,
 }
 
 int
-enet_socket_wait (ENetSocket socket, uint32 * condition, uint32 timeout)
+enet_socket_wait (ENetSocket socket, enet_uint32 * condition, enet_uint32 timeout)
 {
     fd_set readSet, writeSet;
     struct timeval timeVal;

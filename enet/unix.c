@@ -1,3 +1,7 @@
+/** 
+ @file  unix.c
+ @brief ENet Unix system specific functions
+*/
 #ifndef WIN32
 
 #include <sys/types.h>
@@ -9,7 +13,9 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <enet/enet.h>
+
+#define ENET_BUILDING_LIB 1
+#include "enet/enet.h"
 
 #ifdef HAS_FCNTL
 #include <fcntl.h>
@@ -23,7 +29,7 @@
 #define MSG_NOSIGNAL 0
 #endif
 
-static uint32 timeBase = 0;
+static enet_uint32 timeBase = 0;
 
 int
 enet_initialize (void)
@@ -36,7 +42,7 @@ enet_deinitialize (void)
 {
 }
 
-uint32
+enet_uint32
 enet_time_get (void)
 {
     struct timeval timeVal;
@@ -46,18 +52,8 @@ enet_time_get (void)
     return timeVal.tv_sec * 1000 + timeVal.tv_usec / 1000 - timeBase;
 }
 
-uint32
-enet_time_get_sec (void)
-{
-    struct timeval timeVal;
-
-    gettimeofday (& timeVal, NULL);
-
-    return timeVal.tv_sec - timeBase / 1000;
-}
-
 void
-enet_time_set (uint32 newTimeBase)
+enet_time_set (enet_uint32 newTimeBase)
 {
     struct timeval timeVal;
 
@@ -69,14 +65,26 @@ enet_time_set (uint32 newTimeBase)
 int
 enet_address_set_host (ENetAddress * address, const char * name)
 {
-    struct hostent * hostEntry;
+    struct hostent * hostEntry = NULL;
+#ifdef HAS_GETHOSTBYNAME_R
+    struct hostent hostData;
+    char buffer [2048];
+    int errnum;
 
+#ifdef linux
+    gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
+#else
+    hostEntry = gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & errnum);
+#endif
+#else
     hostEntry = gethostbyname (name);
+#endif
+
     if (hostEntry == NULL ||
         hostEntry -> h_addrtype != AF_INET)
       return -1;
 
-    address -> host = * (uint32 *) hostEntry -> h_addr_list [0];
+    address -> host = * (enet_uint32 *) hostEntry -> h_addr_list [0];
 
     return 0;
 }
@@ -85,11 +93,25 @@ int
 enet_address_get_host (const ENetAddress * address, char * name, size_t nameLength)
 {
     struct in_addr in;
-    struct hostent * hostEntry;
-    
+    struct hostent * hostEntry = NULL;
+#ifdef HAS_GETHOSTBYADDR_R
+    struct hostent hostData;
+    char buffer [2048];
+    int errnum;
+
     in.s_addr = address -> host;
-    
+
+#ifdef linux
+    gethostbyaddr_r ((char *) & in, sizeof (struct in_addr), AF_INET, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
+#else
+    hostEntry = gethostbyaddr_r ((char *) & in, sizeof (struct in_addr), AF_INET, & hostData, buffer, sizeof (buffer), & errnum);
+#endif
+#else
+    in.s_addr = address -> host;
+
     hostEntry = gethostbyaddr ((char *) & in, sizeof (struct in_addr), AF_INET);
+#endif
+
     if (hostEntry == NULL)
       return -1;
 
@@ -131,11 +153,11 @@ enet_socket_create (ENetSocketType type, const ENetAddress * address)
     sin.sin_port = ENET_HOST_TO_NET_16 (address -> port);
     sin.sin_addr.s_addr = address -> host;
 
-    if ((type == ENET_SOCKET_TYPE_STREAM &&
-          listen (newSocket, SOMAXCONN) == -1) ||
-        bind (newSocket, 
+    if (bind (newSocket, 
               (struct sockaddr *) & sin,
-              sizeof (struct sockaddr_in)) == -1)
+              sizeof (struct sockaddr_in)) == -1 ||
+        (type == ENET_SOCKET_TYPE_STREAM &&
+          listen (newSocket, SOMAXCONN) == -1))
     {
        close (newSocket);
 
@@ -175,7 +197,7 @@ enet_socket_accept (ENetSocket socket, ENetAddress * address)
 
     if (address != NULL)
     {
-        address -> host = (uint32) sin.sin_addr.s_addr;
+        address -> host = (enet_uint32) sin.sin_addr.s_addr;
         address -> port = ENET_NET_TO_HOST_16 (sin.sin_port);
     }
 
@@ -264,7 +286,7 @@ enet_socket_receive (ENetSocket socket,
 
     if (address != NULL)
     {
-        address -> host = (uint32) sin.sin_addr.s_addr;
+        address -> host = (enet_uint32) sin.sin_addr.s_addr;
         address -> port = ENET_NET_TO_HOST_16 (sin.sin_port);
     }
 
@@ -272,7 +294,7 @@ enet_socket_receive (ENetSocket socket,
 }
 
 int
-enet_socket_wait (ENetSocket socket, uint32 * condition, uint32 timeout)
+enet_socket_wait (ENetSocket socket, enet_uint32 * condition, enet_uint32 timeout)
 {
 #ifdef HAS_POLL
     struct pollfd pollSocket;
