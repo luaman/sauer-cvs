@@ -12,11 +12,12 @@ struct vtxarray
     vertex *vbuf;       // vertex buffer
     ushort *ebuf;       // packed element indices buffer
     vtxarray *next;     // linked list of visible VOBs
-    int verts, tris, texs;
     int allocsize;      // size of allocated memory for this va
+    int verts, tris, texs;
+    vec cv;             // cube center
     float radius;       // cube bounding radius
     float distance;     // distance from player 1
-    vec cv;             // cube center
+    uint vbufGL;        // VBO buffer ID
 };
 
 struct cube
@@ -48,6 +49,7 @@ extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie
 extern int lux, luy, luz, lusize;
 extern int wtris, wverts, vtris, vverts;
 extern int allocnodes, selchildcount;
+extern void destroyva(vtxarray *va);
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)
 const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)

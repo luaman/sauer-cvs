@@ -97,7 +97,7 @@ void discardchildren(cube &c)
     {
         if (c.va)
         {
-            gp()->dealloc(c.va, c.va->allocsize);
+            destroyva(c.va);
             c.va = NULL;
         };
         solidfaces(c); // FIXME: better mipmap

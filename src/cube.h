@@ -279,6 +279,7 @@ extern char *getservername(int n);
 extern void writeservercfg();
 
 // rendergl
+extern bool hasVBO;
 extern void gl_init(int w, int h);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float changelod, float curfps);
@@ -461,3 +462,7 @@ extern void perlinarea(block &b, int scale, int seed, int psize);
 
 #include "octa.h"
 
+extern PFNGLGENBUFFERSARBPROC    glGenBuffers;
+extern PFNGLBINDBUFFERARBPROC    glBindBuffer;
+extern PFNGLBUFFERDATAARBPROC    glBufferData;
+extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers;

@@ -1,5 +1,11 @@
 History of changes:
 
+Dec 8 2004:
+----------------
+- added VBO support
+- fixed possible memory leak
+- removed VAR code
+
 Dec 6 2004:
 ----------------
 - make tools.h more compatible with gcc

@@ -342,6 +342,7 @@ void visiblecubec(cube *c, int size, int cx, int cy, int cz)
     };
 };
 
+// convert yaw/pitch to a normalized vector
 #define yptovec(y, p) vec(sin(y)*cos(p), -cos(y)*cos(p), sin(p))
 
 void visiblecubes(cube *c, int size, int cx, int cy, int cz)
@@ -383,10 +384,10 @@ void vaclear(cube *c)
 {
     if (c->children)
     {
-        if (c->va ? c->verts != c->va->verts : true) loopi(8) vaclear(c->children+i);
+        loopi(8) vaclear(c->children+i);
         if (c->va)
         {
-            gp()->dealloc(c->va, c->va->allocsize);
+            destroyva(c->va);
             c->va = NULL;
         };
     };
@@ -403,12 +404,15 @@ void renderq()
     int vacount = 0;
     vtxarray *va = worldva;
 
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
     do
     {
-        vertex *vbuf = va->vbuf;
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(vbuf[0].x));
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(vbuf[0].colour));
+        if (hasVBO) (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
+        // begin display list from here.
         unsigned short *ebuf = va->ebuf;
         loopi(va->texs)
         {
@@ -428,6 +432,10 @@ void renderq()
         };
     };
     } while ((va = va->next));
+
+    if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
 };
 
 void renderc(cube *c, int size, int cx, int cy, int cz)
@@ -462,19 +470,28 @@ vtxarray *newva(int x, int y, int z, int size)
 
     int allocsize = sizeof(vtxarray);
     allocsize += textures * sizeof(elementset); // length of eslist buffer
-    allocsize += curvert * sizeof(vertex);      // length of vertex buffer
     allocsize += curtris * 2 * sizeof(ushort);  // length of element buffer
+    if (!hasVBO) allocsize += curvert * sizeof(vertex); // length of vertex buffer
     vtxarray *va = (vtxarray *)gp()->alloc(allocsize); // single malloc call
     va->eslist = (elementset *)((char *)va + sizeof(vtxarray));
-    va->vbuf = (vertex *)((char *)va->eslist + (textures * sizeof(elementset)));
-    va->ebuf = (ushort *)((char *)va->vbuf + (curvert * sizeof(vertex)));
+    va->ebuf = (ushort *)((char *)va->eslist + (textures * sizeof(elementset)));
+    if (hasVBO)
+    {
+        (*glGenBuffers)(1, &(va->vbufGL));
+        (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        (*glBufferData)(GL_ARRAY_BUFFER_ARB, curvert * sizeof(vertex), verts, GL_STATIC_DRAW_ARB);
+        va->vbuf = 0; // Offset in VBO
+    } else {
+        va->vbuf = (vertex *)((char *)va->ebuf + (curtris * 2 * sizeof(ushort)));
+        memcpy(va->vbuf, verts, curvert * sizeof(vertex));
+    };
     va->allocsize = allocsize;
-    memcpy(va->vbuf, verts, curvert * sizeof(vertex));
     va->verts = curvert;
     va->tris = curtris;
+    va->texs = textures;
     va->cv = vec(x+size, y+size, z+size); // Center of cube
     va->radius = size * SQRT3; // cube radius
-    va->texs = textures;
+    va->displaylist = 0;
 
     ushort *ebuf = va->ebuf;
     loopk(textures)
@@ -547,7 +564,7 @@ void octarender()
 
     loopi(8) vaclear(c+i);  // Purge all vtxarray.
 
-    if(worldva) gp()->dealloc(worldva, worldva->allocsize);
+    if(worldva) destroyva(worldva);
 
     // Parse entire map
     renderc(c, hdr.worldsize/2, 0, 0, 0);

@@ -3,24 +3,17 @@
 #include "cube.h"
 
 bool hasoverbright = false;
-bool hasVAR = false;
+bool hasVBO = false;
 
 void purgetextures();
 
 GLUquadricObj *qsphere = NULL;
-/*
-vertex *varbuf = NULL;
 
-typedef void* (APIENTRY * PFNWGLALLOCATEMEMORYNVPROC) (GLsizei size, 
-               GLfloat readFrequency, GLfloat writeFrequency, GLfloat priority);
-typedef void (APIENTRY * PFNWGLFREEMEMORYNVPROC) (void *pointer);
+PFNGLGENBUFFERSARBPROC    glGenBuffers    = NULL;
+PFNGLBINDBUFFERARBPROC    glBindBuffer    = NULL;
+PFNGLBUFFERDATAARBPROC    glBufferData    = NULL;
+PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
 
-PFNGLVERTEXARRAYRANGENVPROC glVAR = NULL; 
-PFNWGLALLOCATEMEMORYNVPROC wglAllocateMemoryNV = NULL;
-PFNWGLFREEMEMORYNVPROC wglFreeMemoryNV = NULL;
-
-#define MAX_VAR_VERTS 500000
-*/
 void *getprocaddress(const char *name)
 {
     #ifdef WIN32
@@ -62,43 +55,18 @@ void gl_init(int w, int h)
     
     if(strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
     else conoutf("WARNING: cannot use overbright lighting, using old lighting model!");
-    /*
-    if(!strstr(exts, "GL_NV_vertex_array_range")) conoutf("no vertex_array_range extension!");
+
+    if(!strstr(exts, "GL_ARB_vertex_buffer_object")) conoutf("no vertex_buffer_object extension!");
     else
     {
-        glVAR = (PFNGLVERTEXARRAYRANGENVPROC)getprocaddress("glVertexArrayRangeNV"); 
-        wglAllocateMemoryNV = (PFNWGLALLOCATEMEMORYNVPROC)getprocaddress("wglAllocateMemoryNV");
-        wglFreeMemoryNV = (PFNWGLFREEMEMORYNVPROC)getprocaddress("wglFreeMemoryNV");
-
-        if(!wglAllocateMemoryNV) conoutf("no wglAllocateMemoryNV?");
-        else
-        {
-            char *vartype = "AGP memory";
-            varbuf = (vertex *)(*wglAllocateMemoryNV)(MAX_VAR_VERTS*sizeof(vertex), 0.0f, 0.0f, 0.5f);
-
-            if(!varbuf)
-            {
-                varbuf = (vertex *)(*wglAllocateMemoryNV)(MAX_VAR_VERTS*sizeof(vertex), 0.0f, 0.0f, 1.0f);
-                vartype = "on-card video memory";
-            };
-
-            if(!varbuf) conoutf("could not allocate AGP/video memory for VAR!");
-            else
-            {
-                conoutf("vertex_array_range set up (using %s)", (int)vartype);
-                glEnableClientState(GL_VERTEX_ARRAY_RANGE_NV);
-                (*glVAR)(MAX_VAR_VERTS*sizeof(vertex), varbuf); // sync happens here too
-                hasVAR = true;
-            };
-        };
+        glGenBuffers = (PFNGLGENBUFFERSARBPROC)getprocaddress("glGenBuffersARB");
+        glBindBuffer = (PFNGLBINDBUFFERARBPROC)getprocaddress("glBindBufferARB");
+        glBufferData = (PFNGLBUFFERDATAARBPROC)getprocaddress("glBufferDataARB");
+        glDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
+        hasVBO = true;
+        conoutf("Using GL_ARB_vertex_buffer_object extensions");
     };
 
-    if(!varbuf)
-    {
-        conoutf("WARNING: your card does not support VAR (T&L), using slow fallback...");    
-        varbuf = new vertex[MAX_VAR_VERTS];
-    };
-    */
     purgetextures();
 
     if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
@@ -112,7 +80,6 @@ void gl_init(int w, int h)
 
 void cleangl()
 {
-    //if(varbuf && hasVAR) (*wglFreeMemoryNV)(varbuf);
     if(qsphere) gluDeleteQuadric(qsphere);
 };
 
@@ -224,13 +191,6 @@ int lookuptexture(int tex, int &xs, int &ys)
 
 void setupworld()
 {
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-    //glEnableClientState(GL_TEXTURE_COORD_ARRAY); 
-    //glVertexPointer(3, GL_FLOAT, sizeof(vertex), &varbuf[0].x);
-    //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &varbuf[0].colour);
-    //glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &varbuf[0].u);
-
     if(hasoverbright)
     {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT); 

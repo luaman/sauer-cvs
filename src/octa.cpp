@@ -5,6 +5,13 @@
 cube *worldroot = newcubes(F_SOLID);
 int allocnodes = 0;
 
+void destroyva(vtxarray *va)
+{
+    if (va->vbufGL) (*glDeleteBuffers)(1, &(va->vbufGL));
+    if (va->displaylist) glDeleteLists(va->displaylist, 1);
+    gp()->dealloc(va, va->allocsize);
+};
+
 cube *newcubes(uint face)
 {
     cube *c = (cube *)gp()->alloc(sizeof(cube)*8);
@@ -36,7 +43,7 @@ void freeocta(cube *c)
     {
         if (c[i].va)
         {
-            gp()->dealloc(c[i].va, c[i].va->allocsize);
+            destroyva(c[i].va);
             c[i].va = NULL;
         };
         freeocta(c[i].children);
