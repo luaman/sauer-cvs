@@ -134,7 +134,6 @@ void empty_world(int factor, bool force)    // main empty world creation routine
 {
     if(!force && !editmode) return; 
     
-    pruneundos();
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
@@ -157,9 +156,10 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         freeocta(worldroot);
         worldroot = newcubes(F_EMPTY);
         loopi(4) solidfaces(worldroot[i]);
+        startmap("base/unnamed");
+        player1->o.z += player1->eyeheight+1;
     };
 
-    startmap("base/unnamed");
     changed = true;
 };
 
