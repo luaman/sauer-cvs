@@ -392,7 +392,7 @@ extern void cleanupserver();
 extern void localconnect();
 extern void localdisconnect();
 extern void localclienttoserver(struct _ENetPacket *);
-extern void serverslice(int seconds, unsigned long timeout);
+extern void serverslice(int seconds, unsigned int timeout);
 extern void putint(uchar *&p, int n);
 extern int getint(uchar *&p);
 extern void sendstring(char *t, uchar *&p);

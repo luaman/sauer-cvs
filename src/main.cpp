@@ -197,7 +197,7 @@ int main(int argc, char **argv)
         else if(millis-lastmillis<1) lastmillis = millis-1;
         ///cleardlights();
         updateworld(millis);
-        serverslice(enet_time_get_sec(), 0);
+        serverslice(time(NULL), 0);
         static int frames = 0;
         static float fps = 10.0;
         frames++;

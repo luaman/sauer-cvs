@@ -456,7 +456,7 @@ void sendpongs()        // reply all server info requests
     ENetAddress addr;
     uchar pong[MAXTRANS], *p;
     int len, numplayers;
-    uint32 events = ENET_SOCKET_WAIT_RECEIVE;
+    unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
     buf.data = pong;
     while(enet_socket_wait(pongsock, &events, 0) >= 0 && events)
     {
@@ -502,7 +502,7 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
 void httpgetrecieve(ENetBuffer &buf)
 {
     if(mssock==ENET_SOCKET_NULL) return;
-    uint32 events = ENET_SOCKET_WAIT_RECEIVE;
+    unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
     if(enet_socket_wait(mssock, &events, 0) >= 0 && events)
     {
         int len = enet_socket_receive(mssock, NULL, &buf, 1);
@@ -560,7 +560,7 @@ uchar *retrieveservers(uchar *buf, int buflen)
     return stripheader(buf);
 };
 
-void serverslice(int seconds, uint32 timeout)   // main server update, called from cube main loop in sp, or from below in dedicated server
+void serverslice(int seconds, unsigned int timeout)   // main server update, called from cube main loop in sp, or from below in dedicated server
 {
     loopv(sents)        // spawn entities when timer reached
     {
@@ -695,7 +695,7 @@ void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char 
         printf("dedicated server started, waiting for clients...\nCtrl-C to exit\n\n");
         atexit(cleanupserver);
         atexit(enet_deinitialize);
-        for(;;) serverslice(enet_time_get_sec(), 5);
+        for(;;) serverslice(time(NULL), 5);
     };
 };
 

@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <assert.h>
 #include <new.h>
+#include <time.h>
 
 #ifdef NULL
 #undef NULL

@@ -9,13 +9,11 @@ CLIENT_OBJS= \
 	clientgame.o \
 	command.o \
 	console.o \
-	editing.o \
 	entities.o \
 	main.o \
 	menus.o \
 	monster.o \
 	physics.o \
-	rendercubes.o \
 	renderextras.o \
 	rendergl.o \
 	rendermd2.o \
@@ -29,9 +27,11 @@ CLIENT_OBJS= \
 	weapon.o \
 	world.o \
 	worldio.o \
-	worldlight.o \
 	worldocull.o \
-	worldrender.o
+        geom.o \
+        octa.o \
+        octaedit.o \
+	octarender.o 
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \

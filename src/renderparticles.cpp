@@ -110,7 +110,8 @@ void particle_splash(int type, int num, int fade, vec &p)
             z = rnd(radius*2)-radius;
         }
         while(x*x+y*y+z*z>radius*radius);
-        newparticle(p, vec((float)x, (float)y, (float)z), rnd(fade*3), type);
+    	vec tmp =  vec((float)x, (float)y, (float)z);
+        newparticle(p, tmp, rnd(fade*3), type);
     };
 };
 
@@ -123,7 +124,8 @@ void particle_trail(int type, int fade, vec &s, vec &e)
     loopi((int)d*2)
     {
         p.add(v);
-        newparticle(p, vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5)), rnd(fade)+fade, type);
+        vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
+        newparticle(p, tmp, rnd(fade)+fade, type);
     };
 };
 
