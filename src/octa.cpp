@@ -8,6 +8,8 @@ int allocnodes = 0;
 void destroyva(vtxarray *va)
 {
     if (va->vbufGL) (*glDeleteBuffers)(1, &(va->vbufGL));
+    wverts -= va->verts;
+    wtris -= va->tris;
     gp()->dealloc(va, va->allocsize);
 };
 
@@ -41,10 +43,7 @@ void freeocta(cube *c)
     loopi(8)
     {
         if (c[i].children) freeocta(c[i].children);
-        if (c[i].va)
-        {
-            destroyva(c[i].va);
-        };
+        if (c[i].va) destroyva(c[i].va);
     };
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;

@@ -1,5 +1,9 @@
 History of changes:
 
+Dec 18 2004:
+----------------
+- added partial updates
+
 Dec 13 2004:
 ----------------
 - more work on ramp collision and response (very smooth now)

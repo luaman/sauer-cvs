@@ -95,11 +95,7 @@ void discardchildren(cube &c)
 {
     if(c.children)
     {
-        if (c.va)
-        {
-            destroyva(c.va);
-            c.va = NULL;
-        };
+        if (c.va) { destroyva(c.va); c.va = NULL; };
         solidfaces(c); // FIXME: better mipmap
         freeocta(c.children);
         c.children = NULL;
@@ -278,20 +274,80 @@ void freeblock3(block3 *b)
     gp()->dealloc(b, sizeof(block3)+sizeof(cube)*b->size());
 };
 
-vector<changedcube> changed;
+vector<cube*> changed;
 struct undoblock { int *g; block3 *b; };
 vector<undoblock> undos;                                // unlimited undo
 VAR(undomegs, 0, 1, 10);                                // bounded by n megs
 
+vtxarray *changedva(int x, int y, int z, int size)
+{
+    cube *c, *cc = worldroot;
+    int g, m, mm = 0, grid = hdr.worldsize;
+    loopi(16)
+    {
+        grid = grid >> 1; mm = mm | grid;
+        cc = cc + ((x & grid)?1:0) + ((y & grid)?2:0) + ((z & grid)?4:0);
+        if (cc->va || !i) { c = cc; g = grid; m = mm; };
+        if ((!cc->children) || (grid <= size)) break;
+        cc = cc->children;
+    };
+    if (!c->va) c->va = newva(x & m, y & m, z & m, g);
+    if (!c->va->changed) { c->va->changed = true; changed.add(c); };
+    return c->va;
+};
+
 void allchanged()
 {
     int size = hdr.worldsize / 2;
-    loopi(8) changed.add(changedcube(worldroot+i, octacoord(2,i)*size, octacoord(1,i)*size, octacoord(0,i)*size, size));
+    vaclearc(worldroot);
+    changed.setsize(0);
+    loopi(8) changedva((i&1)?size:0, (i&2)?size:0, (i&4)?size:0, hdr.worldsize);
 };
 
-void setchanged(block3 *b)
+void addchanged(block3 &b, bool internal = false)
 {
-    allchanged();
+    static uint badmask;
+    if (!internal)
+    {
+        badmask = hdr.worldsize;
+        loopi(5) badmask = badmask | badmask << (1 << i);
+    };
+    loopi(3) if((b.o[i] | (b.o[i]+b.s[i]*b.grid-1)) & badmask) return;
+
+    int ze=b.o[0]+b.s[0]*b.grid;
+    int ye=b.o[1]+b.s[1]*b.grid;
+    int xe=b.o[2]+b.s[2]*b.grid;
+    for(int z=b.o[0], zn=ze; z<ze; z=zn, zn=ze)
+        for(int y=b.o[1], yn=ye; y<ye; y=yn, yn=ye)
+            for(int x=b.o[2], xn=xe; x<xe; x=xn, xn=xe)
+    {
+        vtxarray *va = changedva(x, y, z, b.grid);
+        xn = min(xn, va->x+va->size);
+        yn = min(yn, va->y+va->size);
+        zn = min(zn, va->z+va->size);
+    };
+
+    if (!internal)
+    {
+        block3 bb;
+        bb.grid = 1;
+        bb.o[2] = b.o[2]; bb.s[2] = b.s[2] * b.grid;
+        bb.o[1] = b.o[1]; bb.s[1] = b.s[1] * b.grid;
+        bb.o[0] = b.o[0] - 1; bb.s[0] = 1;
+        addchanged(bb, true);
+        bb.o[0] = b.o[0] + b.s[0] * b.grid;
+        addchanged(bb, true);
+        bb.o[0] = b.o[0]; bb.s[0] = b.s[0] * b.grid;
+        bb.o[1] = b.o[1] - 1; bb.s[1] = 1;
+        addchanged(bb, true);
+        bb.o[1] = b.o[1] + b.s[1] * b.grid;
+        addchanged(bb, true);
+        bb.o[1] = b.o[1]; bb.s[1] = b.s[1] * b.grid;
+        bb.o[2] = b.o[2] - 1; bb.s[2] = 1;
+        addchanged(bb, true);
+        bb.o[2] = b.o[2] + b.s[2] * b.grid;
+        addchanged(bb, true);
+    };
 };
 
 void freeundo(undoblock u)
@@ -335,7 +391,7 @@ void pruneundos(int maxremain)                          // bound memory
 
 void makeundo()                                         // stores state of selected cubes before editing
 {
-    setchanged(&sel);
+    addchanged(sel);
     if(lastsel == sel) return;
     undoblock u = { selgridmap(), block3copy(lastsel=sel, -sel.grid)};
     undos.add(u);
@@ -346,7 +402,7 @@ void editundo()                                         // undoes last action
 {
     if(noedit()) return;
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
-    setchanged((undos.last()).b);
+    addchanged(*(undos.last()).b);
     pasteundo(undos.pop());
     lastsel.s[0]=0;                                     // next edit should save state again
 };

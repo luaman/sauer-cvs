@@ -373,13 +373,7 @@ void vaclearc(cube *c)
 {
     loopi(8)
     {
-        if (c[i].va)
-        {
-            wverts -= c[i].va->verts;
-            wtris -= c[i].va->tris;
-            destroyva(c[i].va);
-            c[i].va = NULL;
-        };
+        if (c[i].va) { destroyva(c[i].va); c[i].va = NULL; };
         if (c[i].children) vaclearc(c[i].children);
     };
 };
@@ -465,7 +459,7 @@ vtxarray *newva(int x, int y, int z, int size)
     vtxarray *va = (vtxarray *)gp()->alloc(allocsize); // single malloc call
     va->eslist = (elementset *)((char *)va + sizeof(vtxarray));
     va->ebuf = (ushort *)((char *)va->eslist + (textures * sizeof(elementset)));
-    if (hasVBO)
+    if (hasVBO && curvert)
     {
         (*glGenBuffers)(1, &(va->vbufGL));
         (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
@@ -476,11 +470,11 @@ vtxarray *newva(int x, int y, int z, int size)
         memcpy(va->vbuf, verts, curvert * sizeof(vertex));
     };
     va->allocsize = allocsize;
-    va->verts = curvert;
-    va->tris = curtris;
-    va->texs = textures;
+    va->verts = curvert; va->tris = curtris; va->texs = textures;
+    va->x = x; va->y = y; va->z = z; va->size = size;
     va->cv = vec(x+size, y+size, z+size); // Center of cube
     va->radius = size * SQRT3; // cube radius
+    va->changed = false;
 
     ushort *ebuf = va->ebuf;
     loopk(textures)
@@ -524,31 +518,30 @@ void octarenderc(cube *c, int size, int cx, int cy, int cz)
             loopl(3) loopk(256) indices[l][k].setsize(0);
             curvert = curtris = 0;
         };
-        if (curvert) c[i].va = newva(x, y, z, size/2);
+        if (curvert) c[i].va = newva(x, y, z, size);
     };
 };
 
 void octarender()
 {
     if(!verts) reallocv();
+    loopj(changed.length()) if(changed[j]->children) vaclearc(changed[j]->children);
+    loopj(changed.length()) if(!changed[j]->va && ((changed[j]-worldroot) > 7))
+        changed[j] = NULL;
 
-    loopj(changed.length())
+    loopj(changed.length()) if(changed[j])
     {
-        cube *c = changed[j].c;
-        int x = changed[j].cx;
-        int y = changed[j].cy;
-        int z = changed[j].cz;
-        int size = changed[j].size;
+        cube *c = changed[j];
+        int x = c->va->x, y = c->va->y, z = c->va->z;
+        int size = c->va->size;
+        if (c->va) destroyva(c->va); c->va = NULL;
 
-        if (c->va) destroyva(c->va); // must have VA unless first
-        if (c->children) vaclearc(c->children);
-
-        if (c->children)
+        if(c->children)
         {
             renderc(c->children, size/2, x, y, z);
             vh.clear();
 
-            if (curvert > VA_VERTMAX)
+            if(curvert > VA_VERTMAX)
             {
                 loopl(3) loopk(256) indices[l][k].setsize(0);
                 curtris = curvert = 0;
@@ -561,7 +554,7 @@ void octarender()
             vh.clear();
         };
 
-        if (curvert) c->va = newva(x, y, z, size/2);
+        if(curvert) c->va = newva(x, y, z, size);
     };
     changed.setsize(0);
 };

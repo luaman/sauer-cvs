@@ -18,6 +18,8 @@ struct vtxarray
     float radius;       // cube bounding radius
     float distance;     // distance from player 1
     uint vbufGL;        // VBO buffer ID
+    bool changed;       // change marker for partial updates
+    int x, y, z, size;  // location and size of cube.
 };
 
 struct cube
@@ -32,17 +34,6 @@ struct cube
     uchar texture[6];       // one for each face. same order as orient.
     uchar colour[3];        // colour at (-X,-Y,-Z) corner
     vtxarray *va;           // vertex array for children, or NULL
-    //int verts;              // verts count, for vertex array subdivision
-    //int tris;
-};
-
-struct changedcube
-{
-    cube *c;
-    int cx, cy, cz, size;
-
-    changedcube(cube *cube, int x, int y, int z, int s)
-        : c(cube), cx(x), cy(y), cz(z), size(s) {};
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
@@ -112,5 +103,8 @@ extern void editdrag(bool on);
 extern void cancelsel();
 extern void pruneundos(int maxremain = 0);
 extern void allchanged();
+extern vector<cube*> changed;
 
-extern vector<changedcube> changed;
+// octarender
+extern void vaclearc(cube *c);
+extern vtxarray *newva(int x, int y, int z, int size);
