@@ -28,9 +28,5 @@ typedef struct
     size_t dataLength;
 } ENetBuffer;
 
-#ifndef HAS_SOCKLEN_T
-typedef int socklen_t;
-#endif
-
 #endif /* __ENET_UNIX_H__ */
 
