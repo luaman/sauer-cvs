@@ -75,7 +75,23 @@ void toggleedit()
 
 COMMANDN(edittoggle, toggleedit, ARG_NONE);
 
-int lu(int dim) { return (dim==0?luz:(dim==1?luy:lux)); };  // ! 4|\/| h4XoR
+bool noedit()
+{
+    if(!editmode) conoutf("operation only allowed in edit mode");
+    return !editmode;
+};
+
+void discardchildren(cube &c)
+{
+    if(c.children)
+    {
+        solidfaces(c); // FIXME: better mipmap
+        freeocta(c.children);
+        c.children = NULL;
+    };
+};
+
+int lu(int dim) { return (dim==0?luz:(dim==1?luy:lux)); }; 
 void cursorupdate()
 {
     int yawo[] = { O_LEFT, O_FRONT, O_RIGHT, O_BACK }; 
@@ -97,21 +113,7 @@ void cursorupdate()
         case O_LEFT:   x+=4; break;
         case O_RIGHT:  x-=4; break;
     };
-    last = &lookupcube(x, y, z);
-  
-    if(lusize>gridsize)
-    {
-        lux += (x-lux)/gridsize*gridsize;
-        luy += (y-luy)/gridsize*gridsize;
-        luz += (z-luz)/gridsize*gridsize;
-    }
-    else if(gridsize>lusize)
-    {
-        lux &= ~(gridsize-1);
-        luy &= ~(gridsize-1);
-        luz &= ~(gridsize-1);
-    };    
-    lusize = gridsize;
+    last = &lookupcube(x, y, z, gridsize);
     int g2 = gridsize/2;
     corx = (d==2?y:x)/g2;
     cory = (d==0?y:z)/g2;
@@ -158,11 +160,67 @@ void cursorupdate()
     glDisable(GL_BLEND);
 };
 
-bool noedit()
+/////////////////////////////////////////
+
+cube copycube(cube &src)
 {
-    if(!editmode) conoutf("operation only allowed in edit mode");
-    return !editmode;
+    cube c = src; 
+    if (src.children) 
+    { 
+        c.children = newcubes(F_EMPTY); 
+        loopi(8) c.children[i] = copycube(src.children[i]); 
+    };
+    return c;
 };
+
+struct undo { cube c; int x, y, z, size; };
+vector<undo> undos;                                     // unlimited undo
+VAR(undomegs, 0, 1, 10);                                // bounded by n megs
+
+void pruneundos(int maxremain)                          // bound memory
+{
+    int t = 0;
+    loopvrev(undos)
+    {
+        t += familysize(undos[i].c)*sizeof(cube) + sizeof(int)*4;
+        if(t>maxremain) { discardchildren(undos[i].c); undos.remove(i); };
+    };
+};
+
+void makeundo()
+{
+    undo u = { copycube(*last), lux, luy, luz, lusize };
+    undos.add(u);
+    pruneundos(undomegs<<20);
+};
+
+void editundo()
+{
+    if(noedit()) return;
+    if(undos.empty()) { conoutf("nothing more to undo"); return; };
+    undo u = undos.pop();
+    cube &dest = lookupcube(u.x, u.y, u.z, u.size); 
+    discardchildren(dest);
+    dest = copycube(u.c);
+    discardchildren(u.c);
+    changed = true;
+};
+
+cube copybuf;
+void copy() { if(noedit()) return; discardchildren(copybuf); copybuf = copycube(*last); };
+void paste() 
+{ 
+    if(noedit()) return; makeundo();
+    discardchildren(*last);
+    *last = copycube(copybuf);
+    changed = true; 
+};
+
+COMMAND(copy, ARG_NONE);
+COMMAND(paste, ARG_NONE);
+COMMANDN(undo, editundo, ARG_NONE);
+
+////////////////////////////////////////
 
 int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); };
 
@@ -180,19 +238,9 @@ void optiface(uchar *p, cube &c)
     emptyfaces(c);
 };
 
-void discardchildren(cube &c)
-{
-    if(c.children)
-    {
-        solidfaces(c); // FIXME: better mipmap
-        freeocta(c.children);
-        c.children = NULL;
-    };
-};
-
 void editface(int dir, int mode)
 {
-    if(noedit()) return;
+    if(noedit()) return; makeundo(); // FIXME: Not adequate
     if(havesel)
     {
         int xs = sels[rd(dimension(selorient))]/selgrid;
@@ -254,14 +302,55 @@ void editface(int dir, int mode)
     };
     changed = true;  
 };
+
 COMMAND(editface, ARG_2INT);
 
-#define swap(a,b,t) { t=a; a=b; b=t; }
-#define edgeinv(face) ( 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)) )
-#define rflip(face)   ( ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8) )
-#define cflip(face)   ( ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16) )
-#define mflip(face)   ( (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8) )
-void recurseflip(cube &c, int dim)
+//////////////////////////////////////
+
+int curtexindex = -1, lasttex = 0, lastorient = 0;
+cube *lasttexcube = NULL;
+void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
+{
+    int c = curtexindex;
+    if(c>=0)
+    {
+        uchar *p = hdr.texlist;
+        int t = p[c];
+        for(int a = c-1; a>=0; a--) p[a+1] = p[a];
+        p[0] = t;
+        curtexindex = -1;
+    };
+};
+
+void edittexcube(cube &c, int tex)
+{
+    c.texture[dimension(orient)==2 ? orient : opposite(orient)] = tex;  //FIXME ?? : see neighbourcube and octarender
+    if (c.children) loopi(8) edittexcube(c.children[i], tex);
+};
+
+void edittex(int dir)
+{
+    if(noedit()) return; makeundo();
+    if(last!=lasttexcube || lastorient!=orient) { tofronttex(); lasttexcube = last; lastorient = orient; };
+    int i = curtexindex;
+    i = i<0 ? 0 : i+dir;
+    curtexindex = i = min(max(i, 0), 255);
+    edittexcube(*last, lasttex = hdr.texlist[i]);
+    changed = true;
+};
+
+COMMAND(edittex, ARG_1INT);
+
+///////////////////////////////////////
+
+#define edgeinv(face)  ( 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)) )
+#define rflip(face)    ( ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8) )
+#define cflip(face)    ( ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16) )
+#define mflip(face)    ( (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8) )
+#define rcflip(face,r) ( r>0 ? rflip(face) : cflip(face) )
+#define rcd(dim,r)     ( r>0 ? rd(dim) : cd(dim) )
+
+void flipcube(cube &c, int dim)
 {
     uchar t; swap(c.texture[dim*2], c.texture[dim*2+1], t);
     loop(d,3)
@@ -273,15 +362,11 @@ void recurseflip(cube &c, int dim)
     if (c.children)
     {
         loopi(8) if (i&(1<<(2-dim))) { cube tc; swap(c.children[i], c.children[i-(1<<(2-dim))], tc); }
-        loopi(8) recurseflip(c.children[i], dim);
+        loopi(8) flipcube(c.children[i], dim);
     };
 };
-void flipcube() { if(noedit()) return; recurseflip(lookupcube(lux,luy,luz,lusize), dimension(orient)); changed = true; };
-COMMAND(flipcube, ARG_NONE);
 
-#define rcflip(face,r) ( r>0 ? rflip(face) : cflip(face) )
-#define rcd(dim,r)     ( r>0 ? rd(dim) : cd(dim) )
-void recurserotate(cube &c, int dim, int cw)
+void rotatecube(cube &c, int dim, int cw)
 {
     c.faces[dim]          = dim==1 ? rcflip (mflip(c.faces[dim]),-cw)          : rcflip (mflip(c.faces[dim]),cw);
     c.faces[rcd(dim,-cw)] = dim==1 ? rcflip (mflip(c.faces[rcd(dim,-cw)]),-cw) : edgeinv(c.faces[rcd(dim,-cw)]);
@@ -303,33 +388,12 @@ void recurserotate(cube &c, int dim, int cw)
             swap(c.children[i+col],          c.children[i+row+col], tc);
             swap(c.children[i+(cw>0?0:col)], c.children[i+row+(cw>0?col:0)], tc);
         };
-        loopi(8) recurserotate(c.children[i], dim, cw);
-    };
-};
-void rotatecube(int cw) { if(noedit()) return; recurserotate(lookupcube(lux,luy,luz,lusize), dimension(orient), dimcoord(orient)?cw:-cw); changed = true; };
-COMMAND(rotatecube, ARG_1INT);
-
-cube copy;
-void recursecopy(cube &c, cube &src)
-{
-    c = src; 
-    if (src.children) 
-    { 
-        c.children = newcubes(F_EMPTY); 
-        loopi(8) recursecopy(c.children[i], src.children[i]); 
+        loopi(8) rotatecube(c.children[i], dim, cw);
     };
 };
 
-void copycube() { if(noedit()) return; discardchildren(copy); recursecopy(copy, lookupcube(lux,luy,luz,lusize)); };
-void pastecube() 
-{ 
-    if(noedit()) return; 
-    cube &dest = lookupcube(lux,luy,luz,lusize);
-    discardchildren(dest);
-    recursecopy(dest, copy);
-    changed = true; 
-};
+void flip()         { if(noedit()) return; makeundo(); flipcube(*last, dimension(orient)); changed = true; };
+void rotate(int cw) { if(noedit()) return; makeundo(); rotatecube(*last, dimension(orient), dimcoord(orient)?cw:-cw); changed = true; };
 
-COMMAND(copycube, ARG_NONE);
-COMMAND(pastecube, ARG_NONE);
-
+COMMAND(flip, ARG_NONE);
+COMMAND(rotate, ARG_1INT);
