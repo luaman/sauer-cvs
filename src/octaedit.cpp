@@ -21,7 +21,7 @@ struct block3
     cube *c()     { return (cube *)(this+1); };
     int size()    { return s.x*s.y*s.z; };
     int us(int d) { return s[d]*grid; };
-    bool operator==(block3 b) { loopi(3) if(o[i]!=b.o[i] || s[i]!=b.s[i]) return false; return true; };
+    bool operator==(block3 &b) { return o==b.o && s==b.s && grid==b.grid; };
 };
 
 block3 sel;
@@ -92,9 +92,10 @@ bool noedit()
 
 void discardchildren(cube &c)
 {
+    if(c.va) destroyva(c.va);
+    c.va = NULL;
     if(c.children)
     {
-        if (c.va) { destroyva(c.va); c.va = NULL; };
         solidfaces(c); // FIXME: better mipmap
         freeocta(c.children);
         c.children = NULL;
@@ -105,8 +106,8 @@ void discardchildren(cube &c)
 
 #define loopxy(b,d)  loop(y,(b).s[C(d)]) loop(x,(b).s[R(d)])    //loops through the row and columns (defined by d) of given block
 #define loopxyz(b)   loop(z,(b).s[D(0)]) loopxy((b),0)
-#define loopselxy()  loopxy(sel,dimension(selorient))
-#define loopselxyz() loop(z,sel.s[D(dimension(selorient))]) loopxy(sel,dimension(selorient))
+#define loopselxy()  loopxy(sel, dimension(selorient))
+#define loopselxyz() loop(z, sel.s[D(dimension(selorient))]) loopxy(sel, dimension(selorient))
 
 cube &blockcube(int x, int y, int z, block3 &b, int rgrid, int o=O_TOP) // looks up a world cube, based on coordinates mapped by the block
 {
@@ -117,24 +118,29 @@ cube &blockcube(int x, int y, int z, block3 &b, int rgrid, int o=O_TOP) // looks
 
 cube &selcube(int x, int y, int z) { return blockcube(x, y, z, sel, sel.grid, selorient); };
 
+uchar octatouchblock(block3 &b, int cx, int cy, int cz, int size)
+{
+    uchar m = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
+    if(cz+size <= b.o.z)         m &= 0xF0; // not in a -ve Z octant
+    if(cz+size >= b.o.z+b.us(0)) m &= 0x0F; // not in a +ve Z octant
+    if(cy+size <= b.o.y)         m &= 0xCC; // not in a -ve Y octant
+    if(cy+size >= b.o.y+b.us(1)) m &= 0x33; // etc..
+    if(cx+size <= b.o.x)         m &= 0xAA;
+    if(cx+size >= b.o.x+b.us(2)) m &= 0x55;
+    return m;
+};
+
 ////////////// cursor ///////////////
 
 int selchildcount=0;
+
 void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr.worldsize/2)
 {
-    uchar m = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
-    if(cz+size <= sel.o.z)           m &= 0xF0; // not in a -ve Z octant
-    if(cz+size >= sel.o.z+sel.us(0)) m &= 0x0F; // not in a +ve Z octant
-    if(cy+size <= sel.o.y)           m &= 0xCC; // not in a -ve Y octant
-    if(cy+size >= sel.o.y+sel.us(1)) m &= 0x33; // etc..
-    if(cx+size <= sel.o.x)           m &= 0xAA;
-    if(cx+size >= sel.o.x+sel.us(2)) m &= 0x55;
+    uchar m = octatouchblock(sel, cx, cy, cz, size);
     loopi(8) if(m&(1<<i))
     {
-        int x = cx+octacoord(2,i)*size;
-        int y = cy+octacoord(1,i)*size;
-        int z = cz+octacoord(0,i)*size;
-        if(c[i].children) countselchild(c[i].children, x, y, z, size/2);
+        ivec o(i, cx, cy, cz, size);
+        if(c[i].children) countselchild(c[i].children, o.x, o.y, o.z, size/2);
         else selchildcount++;
     };
 };
@@ -233,11 +239,46 @@ void cursorupdate()
     glDisable(GL_BLEND);
 };
 
+//////////// ready changes to vertex arrays ////////////
+
+void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
+{
+    uchar m = octatouchblock(b, cx, cy, cz, size);
+    loopi(8) if(m&(1<<i))
+    {
+        ivec o(i, cx, cy, cz, size);
+        if(c[i].va)             // removes va s so that octarender will recreate
+        {
+            destroyva(c[i].va);
+            c[i].va = NULL;
+        };
+        if(c[i].children) readyva(b, c[i].children, o.x, o.y, o.z, size/2);
+    };
+};
+
+void changed(bool internal = false)
+{
+    int of = internal ? 0 : 1;
+    int sf = internal ? 0 : 2;
+    block3 b = sel;
+    loopi(3) b.s[i] *= b.grid;
+    b.grid = 1;
+    loopi(internal ? 1 : 3)     // the changed blocks are the selected cubes
+    {                           // plus, if not internal, any cubes just 1 adjacent unit grid away from the sel block
+        b.o[i] -= of;
+        b.s[i] += sf;
+        readyva(b, worldroot, 0, 0, 0, hdr.worldsize/2);
+        b.o[i] += of;
+        b.s[i] -= sf;
+    };
+    octarender();
+};
+
 //////////// copy and undo /////////////
 cube copycube(cube &src)
 {
     cube c = src;
-    c.va = NULL;
+    c.va = NULL;                // src cube is responsible for va destruction
     if (src.children)
     {
         c.children = newcubes(F_EMPTY);
@@ -269,92 +310,9 @@ void freeblock3(block3 *b)
     gp()->dealloc(b, sizeof(block3)+sizeof(cube)*b->size());
 };
 
-vector<cube*> changed;
 struct undoblock { int *g; block3 *b; };
 vector<undoblock> undos;                                // unlimited undo
 VAR(undomegs, 0, 1, 10);                                // bounded by n megs
-
-void changedva(int x, int y, int z, int size, block3 &step)
-{
-    cube *c, *cc = worldroot;
-    int g, m, mm = 0, grid = hdr.worldsize;
-    loopi(16)
-    {
-        grid = grid >> 1; mm = mm | grid;
-        loopj(8) if (cc[j].va)
-        {
-            step.o.x=(x&mm)+grid; step.o.y=(y&mm)+grid; step.o.z=(z&mm)+grid;
-            break;
-        }
-        cc = cc + ((x & grid)?1:0) + ((y & grid)?2:0) + ((z & grid)?4:0);
-        if (cc->va || !i) { c = cc; g = grid; m = mm; };
-        if (!cc->children || grid<=size) break;
-        cc = cc->children;
-    };
-    if (!c->va)
-    {
-        c->va = newva(x & m, y & m, z & m, g);
-        step.o.x=(x&m)+g; step.o.y=(y&m)+g; step.o.z=(z&m)+g;
-    };
-    if (!c->va->changed) { c->va->changed = true; changed.add(c); };
-};
-
-void allchanged()
-{
-    block3 dummy;
-    int size = hdr.worldsize / 2;
-    vaclearc(worldroot);
-    changed.setsize(0);
-    loopi(8) changedva((i&1)?size:0, (i&2)?size:0, (i&4)?size:0, hdr.worldsize, dummy);
-};
-
-void addchanged(block3 &bo, bool internal = false)
-{
-    static uint badmask;
-    block3 bb, b;
-    if (!internal)
-    {
-        badmask = hdr.worldsize;
-        loopi(5) badmask = badmask | badmask << (1 << i);
-    };
-    loopi(3) { b.o[i]=bo.o[i]; b.s[i]=bo.s[i]*bo.grid; };
-    b.grid = 1;
-    loopi(3) if((b.o[i] | (b.o[i]+b.s[i]*b.grid-1)) & badmask) return;
-
-    int ze=b.o.z+b.s.z*b.grid;
-    int ye=b.o.y+b.s.y*b.grid;
-    int xe=b.o.z+b.s.x*b.grid;
-    for(int z=b.o.z, zn=ze; z<ze; z=zn, zn=ze)
-        for(int y=b.o.y, yn=ye; y<ye; y=yn, yn=ye)
-            for(int x=b.o.x, xn=xe; x<xe; x=xn, xn=xe)
-    {
-        changedva(x, y, z, b.grid, bb);
-        xn = min(xn, bb.o.x);
-        yn = min(yn, bb.o.y);
-        zn = min(zn, bb.o.z);
-    };
-
-    if (!internal)
-    {
-        bb.grid = 1;
-        bb.o.x = b.o.x; bb.s.x = b.s.x * b.grid;
-        bb.o.y = b.o.y; bb.s.y = b.s.y * b.grid;
-        bb.o.z = b.o.z - 1; bb.s.z = 1;
-        addchanged(bb, true);
-        bb.o.z = b.o.z + b.s.z * b.grid;
-        addchanged(bb, true);
-        bb.o.z = b.o.z; bb.s.z = b.s.z * b.grid;
-        bb.o.y = b.o.y - 1; bb.s.y = 1;
-        addchanged(bb, true);
-        bb.o.y = b.o.y + b.s.y * b.grid;
-        addchanged(bb, true);
-        bb.o.y = b.o.y; bb.s.y = b.s.y * b.grid;
-        bb.o.x = b.o.x - 1; bb.s.x = 1;
-        addchanged(bb, true);
-        bb.o.x = b.o.x + b.s.x * b.grid;
-        addchanged(bb, true);
-    };
-};
 
 void freeundo(undoblock u)
 {
@@ -365,13 +323,12 @@ void freeundo(undoblock u)
 int *selgridmap()                                       // generates a map of the cube sizes at each grid point
 {
     int *g = (int *)gp()->alloc(sizeof(int)*sel.size());
-    int *i = g;
     loopxyz(sel)
     {
         blockcube(x, y, z, sel, -sel.grid);
-        *i++ = lusize;
+        *g++ = lusize;
     };
-    return g;
+    return g-sel.size();
 };
 
 void pasteundo(undoblock &u)
@@ -383,15 +340,15 @@ void pasteundo(undoblock &u)
 
 void pruneundos(int maxremain)                          // bound memory
 {
-    int t = 0;
+    int t = 0, p = 0;
     loopvrev(undos)
     {
         cube *q = undos[i].b->c();
         t += undos[i].b->size()*sizeof(int);
         loopj(undos[i].b->size()) t += familysize(*q++)*sizeof(cube);
-        if(t>maxremain) freeundo(undos.remove(i));
+        if(t>maxremain) freeundo(undos.remove(i)); else p = t;
     };
-    conoutf("undo: %d of %d(%%%d)", t, undomegs<<20, t*100/(undomegs<<20));
+    conoutf("undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
 };
 
 void makeundo()                                         // stores state of selected cubes before editing
@@ -408,9 +365,9 @@ void editundo()                                         // undoes last action
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
     undoblock u = undos.pop();
     pasteundo(u);
-    addchanged(*u.b);
+    sel = *u.b;
     freeundo(u);
-    lastsel.s[0]=0;                                     // next edit should save state again
+    changed();
 };
 
 block3 *copybuf=NULL;
@@ -431,7 +388,7 @@ void paste()
     cube *s = copybuf->c();
     makeundo();
     loopxyz(sel) pastecube(*s++, x, y, z, sel, sel.grid);
-    addchanged(sel);
+    changed();
 };
 
 COMMAND(copy, ARG_NONE);
@@ -489,7 +446,7 @@ void editface(int dir, int mode)
             optiface(p, c);
         };
     };
-    addchanged(sel);
+    changed();
     if (mode==1 && dir>0) sel.o[d] += sel.grid * seldir;
 };
 
@@ -525,7 +482,7 @@ void edittex(int dir)
     curtexindex = i = min(max(i, 0), 255);
     makeundo();
     loopselxyz() edittexcube(selcube(x,y,z), lasttex = hdr.texlist[i], selorient);
-    addchanged(sel, true); // Don't update neighbors
+    changed(true); // Don't update neighbors
 };
 
 COMMAND(edittex, ARG_1INT);
@@ -544,7 +501,7 @@ void lite(int r, int g, int b)
     if(noedit()) return;
     makeundo();
     loopselxyz() lightcube(selcube(x, y, z), r*litepower, g*litepower, b*litepower);
-    addchanged(sel); // Update neighbirs since vertex lighting shared
+    changed(); // Update neighbirs since vertex lighting shared
 };
 COMMAND(lite, ARG_3INT);
 
@@ -613,7 +570,7 @@ void flip()
             swap(cube, a, b);
         };
     };
-    addchanged(sel);
+    changed();
 };
 
 void rotate(int cw)
@@ -635,7 +592,7 @@ void rotate(int cw)
             selcube(ss-1-x-y, ss-1-y, d)
         );
     };
-    addchanged(sel); // Is this correct?
+    changed();
 };
 
 COMMAND(flip, ARG_NONE);

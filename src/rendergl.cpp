@@ -320,8 +320,6 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     int xs, ys;
     loopi(10) lookuptexture(i, xs, ys);
     
-    if(changed.length()) octarender();
-
     ///render_world(player1->o.x, player1->o.y, player1->o.z, changelod, (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
     ///finishstrips();
 

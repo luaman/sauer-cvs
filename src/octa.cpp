@@ -5,14 +5,6 @@
 cube *worldroot = newcubes(F_SOLID);
 int allocnodes = 0;
 
-void destroyva(vtxarray *va)
-{
-    if (hasVBO && va->vbufGL) (*glDeleteBuffers)(1, &(va->vbufGL));
-    wverts -= va->verts;
-    wtris -= va->tris;
-    gp()->dealloc(va, va->allocsize);
-};
-
 cube *newcubes(uint face)
 {
     cube *c = (cube *)gp()->alloc(sizeof(cube)*8);
@@ -75,11 +67,8 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             //if(!tsize) break;
             if(tsize<=0) break;
-            if(isempty(*c))
-            {
-                c->children = newcubes(F_EMPTY);
-                c->va = NULL;
-            } else subdividecube(*c);
+            if(isempty(*c)) c->children = newcubes(F_EMPTY);
+            else subdividecube(*c);
         };
         c = c->children;
     };

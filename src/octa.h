@@ -18,7 +18,6 @@ struct vtxarray
     float radius;       // cube bounding radius
     float distance;     // distance from player 1
     uint vbufGL;        // VBO buffer ID
-    bool changed;       // change marker for partial updates
     int x, y, z, size;  // location and size of cube.
 };
 
@@ -40,8 +39,7 @@ extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie
 extern ivec lu;
 extern int lusize;
 extern int wtris, wverts, vtris, vverts;
-extern int allocnodes, selchildcount;
-extern void destroyva(vtxarray *va);
+extern int allocnodes, allocva, selchildcount;
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)
 const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
@@ -92,6 +90,7 @@ extern void subdividecube(cube &c);
 extern void gentris(cube &c, vec &pos, float size, plane *tris, float x, float y, float z);
 extern void octarender();
 extern void renderq();
+extern void allchanged();
 
 // geom
 extern void vertstoplane(vec &a, vec &b, vec &c, plane &pl);
@@ -102,9 +101,8 @@ extern void cursorupdate();
 extern void editdrag(bool on);
 extern void cancelsel();
 extern void pruneundos(int maxremain = 0);
-extern void allchanged();
-extern vector<cube*> changed;
 
 // octarender
 extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
+extern void destroyva(vtxarray *va);
