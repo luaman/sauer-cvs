@@ -398,21 +398,20 @@ void renderq()
     int si[] = { 2, 0, 1 };
     int ti[] = { 0, 1, 2 };
 
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0);
 
     int vacount = 0;
     vtxarray *va = worldva;
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
     do
     {
         if (hasVBO) (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
-        // begin display list from here.
         unsigned short *ebuf = va->ebuf;
         loopi(va->texs)
         {
@@ -429,8 +428,8 @@ void renderq()
                 glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
                 glDrawElements(GL_QUADS, va->eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
                 ebuf += va->eslist[i].length[l];  // Advance to next array.
+            };
         };
-    };
     } while ((va = va->next));
 
     if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
@@ -491,7 +490,6 @@ vtxarray *newva(int x, int y, int z, int size)
     va->texs = textures;
     va->cv = vec(x+size, y+size, z+size); // Center of cube
     va->radius = size * SQRT3; // cube radius
-    va->displaylist = 0;
 
     ushort *ebuf = va->ebuf;
     loopk(textures)

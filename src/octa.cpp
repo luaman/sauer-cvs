@@ -8,7 +8,6 @@ int allocnodes = 0;
 void destroyva(vtxarray *va)
 {
     if (va->vbufGL) (*glDeleteBuffers)(1, &(va->vbufGL));
-    if (va->displaylist) glDeleteLists(va->displaylist, 1);
     gp()->dealloc(va, va->allocsize);
 };
 
