@@ -47,28 +47,36 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     float r = d->radius;
     float z = (d->aboveeye + d->eyeheight)/2;
     float sr = r*z;
-    vec o(d->o);
+    float mindist = walldist;
+    float fh = hdr.worldsize;
+    vec o(d->o), w;
     vec pos(cx, cy, cz);
+    vec p[3];
+    plane pl[3];
     plane tris[12];
+    int pi=0;
 
     o.z += z - d->eyeheight;
     conv2espace(r, z, o);                   // first convert everything to espace
     gentris(c, pos, size, tris, z, z, r);
-
-    int pi=0;
-    float mindist = walldist;
-    vec ot(o), w;
-    plane p[3];
     loopi(12) if(tris[i].isnormalized())    // seperation plane check
     {
-        float dist = tris[i].dot(ot) + tris[i].offset;
+        float dist = tris[i].dot(o) + tris[i].offset;
         if(dist>sr) return true;
         if(dist>=0)
         {
             mindist = min(dist, mindist);
-            vec t = w = p[pi] = tris[i];
-            t.mul(-dist);
-            ot.add(t);
+            p[pi] = w = pl[pi] = tris[i];
+            p[pi].mul(-dist);
+            p[pi].add(o);
+            fh = p[pi].z;
+            loopj(pi)
+            {
+                float d1 = pl[j].dot(p[pi])+pl[j].offset;
+                float d2 = pl[pi].dot(p[j])+pl[pi].offset;
+                if(d1<0) pl[j] = pl[pi];
+                if(d1<0 || d2<0) pi--;
+            };
             if(++pi==3) break;
         };
     };
@@ -77,32 +85,27 @@ bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) /
     {
         if(pi==2)
         {
-            p[2].cross(p[0], p[1]);
-            p[2].offset = -o.dot(p[2]);
+            pl[2].cross(pl[0], pl[1]);
+            pl[2].offset = -o.dot(pl[2]);
         };
-        vec nearest;
-        ASSERT(threeplaneintersect(p[0], p[1], p[2], nearest));
-        float dist = o.dist(nearest);
+        vec n;
+        ASSERT(threeplaneintersect(pl[0], pl[1], pl[2], n));
+        float dist = o.dist(n);
         if(dist>sr) return true;
         mindist = min(dist, mindist);
+        fh = n.z;
         w = o;
-        w.sub(nearest);
+        w.sub(n);
     };
 
     if(mindist<walldist)
     {
+        fh /= r;
+        if(fh>floorheight) floorheight = fh;
         walldist = mindist;
         wall = w;
         conv2espace(z, r, wall);            // convert back to realspace
         wall.normalize();
-
-        float fh = hdr.worldsize;
-        loopi(12) if(tris[i].z>0 && tris[i].isnormalized())
-        {
-            float h = -(tris[i].offset + o.x*tris[i].x + o.y*tris[i].y) / (tris[i].z*r);
-            if(h<fh) fh = h;
-        };
-        if(fh>floorheight) floorheight = fh;
     };
 
     return false;
@@ -186,13 +189,13 @@ void move(dynent *d, vec &dir, float rise)
     const float space = floorheight-(d->o.z-d->eyeheight);
     //conoutf("space %d %d %d", space, d->onfloor, d->vel.z*100);
 
-    if(space<0.001f && space>-rise)
+    if(space<=STAIRHEIGHT && space>-rise)
     {
         d->onfloor = true;
-        if(d->vel.z < 1.7f) d->vel.z = 0; // hack to stop upward motion after landing
+        if(space>0) d->o.z += rise; // rise thru stair
+        else if(d->vel.z<1.7f) d->vel.z = 0; // hack to stop upward motion after landing
         //d->o.z = floorheight + d->eyeheight; // clamp to ground
-    }
-    else if(space<=STAIRHEIGHT && space>0) d->o.z += rise; // rise thru stair
+    };
 };
 
 float rad(float x) { return x*3.14159f/180; };
