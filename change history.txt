@@ -1,5 +1,15 @@
 History of changes:
 
+Dec 4 2004:
+----------------
+- fixed edgeinv creating invalid cubes
+- fixed grid being changable while dragging
+- fixed #2, #3
+- added selection support to cube hud counter
+- misc cleanup in octaedit
+- made tools.h more compatible with gnu c++, based on somebody's (D.plomat?, Thailon?) mingw cube source.
+- added subdivision special cases. still need to add slightly stronger condition for 'peeling'
+
 Nov 30 2004:
 ----------------
 - tiny bug fixes, like #8 and selgrid init
