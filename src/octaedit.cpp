@@ -19,7 +19,7 @@ struct block3
     int o[3], s[3], grid;
     cube *c()     { return (cube *)(this+1); };
     int size()    { return s[0]*s[1]*s[2]; };
-    int ss(int d) { return s[d]*grid; };
+    int us(int d) { return s[d]*grid; };
     bool operator==(block3 b) { loopi(3) if(o[i]!=b.o[i] || s[i]!=b.s[i]) return false; return true; };
 };
 
@@ -105,11 +105,11 @@ void discardchildren(cube &c)
 ///////// selection support /////////////
 
 #define loopxy(b,d)  loop(y,(b).s[C(d)]) loop(x,(b).s[R(d)])    //loops through the row and columns (defined by d) of given block
-#define loopxyz(b,d) loop(z,(b).s[D(d)]) loopxy((b),(d))
+#define loopxyz(b)   loop(z,(b).s[D(0)]) loopxy((b),0)
 #define loopselxy()  loopxy(sel,dimension(selorient))
-#define loopselxyz() loopxyz(sel,dimension(selorient))
+#define loopselxyz() loop(z,sel.s[D(dimension(selorient))]) loopxy(sel,dimension(selorient))
 
-cube &blockcube(int x, int y, int z, block3 &b, int rgrid, int o) // looks up a world cube, based on coordinates mapped by the block
+cube &blockcube(int x, int y, int z, block3 &b, int rgrid, int o=O_TOP) // looks up a world cube, based on coordinates mapped by the block
 {
     int d = dimension(o);
     int s[3] = { dimcoord(o)*(b.s[d]-1)*b.grid, y*b.grid, x*b.grid };
@@ -125,11 +125,11 @@ void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr
 {
     uchar m = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
     if(cz+size <= sel.o[0])           m &= 0xF0; // not in a -ve Z octant
-    if(cz+size >= sel.o[0]+sel.ss(0)) m &= 0x0F; // not in a +ve Z octant
+    if(cz+size >= sel.o[0]+sel.us(0)) m &= 0x0F; // not in a +ve Z octant
     if(cy+size <= sel.o[1])           m &= 0xCC; // not in a -ve Y octant
-    if(cy+size >= sel.o[1]+sel.ss(1)) m &= 0x33; // etc..
+    if(cy+size >= sel.o[1]+sel.us(1)) m &= 0x33; // etc..
     if(cx+size <= sel.o[2])           m &= 0xAA;
-    if(cx+size >= sel.o[2]+sel.ss(2)) m &= 0x55;
+    if(cx+size >= sel.o[2]+sel.us(2)) m &= 0x55;
     loopi(8) if(m&(1<<i))
     {
         int x = cx+octacoord(2,i)*size;
@@ -227,13 +227,13 @@ void cursorupdate()
     if(havesel)
     {
         glColor3ub(20,20,20);   // grid
-        loopselxy() boxs(d, sel.o[R(d)]+x*sel.grid, sel.o[C(d)]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(selorient)*sel.ss(d));
+        loopselxy() boxs(d, sel.o[R(d)]+x*sel.grid, sel.o[C(d)]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(selorient)*sel.us(d));
         glColor3ub(200,0,0);    // 0 reference
         boxs(d, sel.o[R(d)]-4, sel.o[C(d)]-4, 8, 8, sel.o[d]);
         glColor3ub(200,200,200);// 2D selection box
-        boxs(d, sel.o[R(d)]+selcx*g2, sel.o[C(d)]+selcy*g2, selcxs*g2, selcys*g2, sel.o[d]+dimcoord(selorient)*sel.ss(d));
+        boxs(d, sel.o[R(d)]+selcx*g2, sel.o[C(d)]+selcy*g2, selcxs*g2, selcys*g2, sel.o[d]+dimcoord(selorient)*sel.us(d));
         glColor3ub(0,0,40);     // 3D selection box
-        loopi(6) boxs(d=dimension(i), sel.o[R(d)], sel.o[C(d)], sel.ss(R(d)), sel.ss(C(d)), sel.o[d]+dimcoord(i)*sel.ss(d));
+        loopi(6) boxs(d=dimension(i), sel.o[R(d)], sel.o[C(d)], sel.us(R(d)), sel.us(C(d)), sel.o[d]+dimcoord(i)*sel.us(d));
     };
     glDisable(GL_BLEND);
 };
@@ -253,7 +253,7 @@ cube copycube(cube &src)
 
 void pastecube(cube &src, int x, int y, int z, block3 &b, int rgrid)
 {
-    cube &c = blockcube(x, y, z, b, rgrid, O_TOP);
+    cube &c = blockcube(x, y, z, b, rgrid);
     discardchildren(c);
     c = copycube(src);
 };
@@ -263,7 +263,7 @@ block3 *block3copy(block3 &s, int rgrid)
     block3 *b = (block3 *)gp()->alloc(sizeof(block3)+sizeof(cube)*s.size());
     *b = s;
     cube *q = b->c();
-    loopxyz(s,O_TOP) *q++ = copycube(blockcube(x, y, z, s, rgrid, O_TOP));
+    loopxyz(s) *q++ = copycube(blockcube(x, y, z, s, rgrid));
     return b;
 };
 
@@ -365,13 +365,13 @@ void freeundo(undoblock u)
     freeblock3(u.b);
 };
 
-int *selgridmap()                                       // generates a map of the leaf cube sizes at each grid point
+int *selgridmap()                                       // generates a map of the cube sizes at each grid point
 {
     int *g = (int *)gp()->alloc(sizeof(int)*sel.size());
     int *i = g;
-    loopxyz(sel, O_TOP)
+    loopxyz(sel)
     {
-        blockcube(x, y, z, sel, -sel.grid, O_TOP);
+        blockcube(x, y, z, sel, -sel.grid);
         *i++ = lusize;
     };
     return g;
@@ -381,8 +381,7 @@ void pasteundo(undoblock &u)
 {
     int *g = u.g;
     cube *s = u.b->c();
-    loopxyz(*u.b, O_TOP) pastecube(*s++, x, y, z, *u.b, *g++);
-    freeundo(u);
+    loopxyz(*u.b) pastecube(*s++, x, y, z, *u.b, *g++);
 };
 
 void pruneundos(int maxremain)                          // bound memory
@@ -410,14 +409,10 @@ void editundo()                                         // undoes last action
 {
     if(noedit()) return;
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
-    loopi(3)
-    {
-        lastsel.o[i] = undos.last().b->o[i];
-        lastsel.s[i] = undos.last().b->s[i];
-    };
-    lastsel.grid = undos.last().b->grid;
-    pasteundo(undos.pop());
-    addchanged(lastsel);
+    undoblock u = undos.pop();
+    pasteundo(u);
+    addchanged(*u.b);
+    freeundo(u);
     lastsel.s[0]=0;                                     // next edit should save state again
 };
 
@@ -436,9 +431,9 @@ void paste()
 {
     if(noedit() || copybuf==NULL) return;
     loopi(3) sel.s[i] = copybuf->s[i];
-    makeundo();
     cube *s = copybuf->c();
-    loopxyz(sel, O_TOP) pastecube(*s++, x, y, z, sel, sel.grid);
+    makeundo();
+    loopxyz(sel) pastecube(*s++, x, y, z, sel, sel.grid);
     addchanged(sel);
 };
 
@@ -469,8 +464,8 @@ void editface(int dir, int mode)
         if((dir>0 == dc && h<=0) || (dir<0 == dc && h>=hdr.worldsize)) return;
         if(dir<0) sel.o[d] += sel.grid * seldir;
     };
-    int ts = sel.s[D(dimension(selorient))];
-    sel.s[D(dimension(selorient))] = 1;
+    if(dc) sel.o[d] += sel.us(d)-sel.grid;
+    sel.s[d] = 1;
     makeundo();
     loopselxy()
     {
@@ -498,7 +493,6 @@ void editface(int dir, int mode)
         };
     };
     addchanged(sel);
-    sel.s[D(dimension(selorient))] = ts;
     if (mode==1 && dir>0) sel.o[d] += sel.grid * seldir;
 };
 
