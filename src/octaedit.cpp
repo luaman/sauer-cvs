@@ -410,8 +410,14 @@ void editundo()                                         // undoes last action
 {
     if(noedit()) return;
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
+    loopi(3)
+    {
+        lastsel.o[i] = undos.last().b->o[i];
+        lastsel.s[i] = undos.last().b->s[i];
+    };
+    lastsel.grid = undos.last().b->grid;
     pasteundo(undos.pop());
-    addchanged(*(undos.last()).b);
+    addchanged(lastsel);
     lastsel.s[0]=0;                                     // next edit should save state again
 };
 
