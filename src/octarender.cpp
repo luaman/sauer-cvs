@@ -129,41 +129,41 @@ int genvert(cvec &p, cube &c, vec &pos, float size, uint col)
     //ASSERT(v.y>=0 && v.y<=8);
     //ASSERT(v.z>=0 && v.z<=8);
       
-	v.mul(size);
-	v.add(pos);
-	float t = v.y;
-	v.y = v.z;
-	v.z = t;
-	v.colour = col;
-	return findindex(verts[curvert] = v);
+    v.mul(size);
+    v.add(pos);
+    float t = v.y;
+    v.y = v.z;
+    v.z = t;
+    v.colour = col;
+    return findindex(verts[curvert] = v);
 };
 
 uchar cubecoords[8][3] =
 {
-	{ 8, 8, 0 },	
-	{ 0, 8, 0 },
-	{ 0, 8, 8 },
-	{ 8, 8, 8 },
-	{ 8, 0, 8 },
-	{ 0, 0, 8 },
-	{ 0, 0, 0 },
-	{ 8, 0, 0 },
+    { 8, 8, 0 },    
+    { 0, 8, 0 },
+    { 0, 8, 8 },
+    { 8, 8, 8 },
+    { 8, 0, 8 },
+    { 0, 0, 8 },
+    { 0, 0, 0 },
+    { 8, 0, 0 },
 };
 
 ushort faceverts[6][4] =
 {
-	{ 3, 2, 5, 4 },
-	{ 7, 6, 1, 0 },
-	{ 0, 1, 2, 3 },
-	{ 4, 5, 6, 7 },
-	{ 2, 1, 6, 5 },
-	{ 0, 3, 4, 7 },
+    { 7, 6, 1, 0 },
+    { 3, 2, 5, 4 },
+    { 4, 5, 6, 7 },
+    { 0, 1, 2, 3 },
+    { 2, 1, 6, 5 },
+    { 0, 3, 4, 7 },
 };
 
 bool touchingface(cube &c, int orient)
 {
     uint face = c.faces[dimension(orient)];
-    return dimcoord(orient) == (dimension(orient)==2) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0; // HACK: see neighbourcube
+    return dimcoord(orient) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0;
 };
 
 uint faceedges(cube &c, int orient)
@@ -212,19 +212,19 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
         loopi(8) if(vertexuses[i]) cin[i] = vert(cubecoords[i][0]*size/8+x,
                                                  cubecoords[i][1]*size/8+y,
                                                  cubecoords[i][2]*size/8+z, col);
-	}
-	else
-	{
-	    vec pos((float)x, (float)y, (float)z);
-	    loopi(8) if(vertexuses[i]) cin[i] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, col);
-	};
-	
-	loopi(6) if(useface[i])
-	{
+    }
+    else
+    {
+        vec pos((float)x, (float)y, (float)z);
+        loopi(8) if(vertexuses[i]) cin[i] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, col);
+    };
+    
+    loopi(6) if(useface[i])
+    {
         usvector &v = indices[dimension(i)][c.texture[i]];
         loopk(4) v.add(cin[faceverts[i][k]]);
         wtris += 2;
-	};
+    };
 };
 
 void renderq()

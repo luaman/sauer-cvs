@@ -55,8 +55,8 @@ void newworld()
 };
 
 int lux, luy, luz, lusize;
-#define dc(d,i) ( (i)&(1<<(2-(d))) ? 1 : 0 )                        // dimension coord
-#define eavg(a,b,mask) ( (((a)>>1)&(mask)) + (((b)>>1)&(mask)) )    // edge average 
+int dc(int d, int i) { return i&(1<<(2-d)) ? 1 : 0; };                        // dimension coord
+int eavg(int a, int b, int mask) { return ((a>>1)&mask) + ((b>>1)&mask); };   // edge average 
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
@@ -107,20 +107,6 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
 };
 
 cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
-{
-    switch(orient)
-    {
-        case O_TOP:    z += size; break;
-        case O_BOTTOM: z -= size; break;
-        case O_FRONT:  y += size; break;
-        case O_BACK:   y -= size; break;
-        case O_LEFT:   x -= size; break;
-        case O_RIGHT:  x += size; break;
-    };
-    return lookupcube(x, y, z, rsize);
-};
-
-cube &neighbourcube2(int x, int y, int z, int size, int rsize, int orient)
 {
     switch(orient)
     {
