@@ -77,15 +77,14 @@ int vert(int x, int y, int z, uint col)
     return findindex(v);
 };
 
-uchar vertlookup(int coord, uint faces, int x, int y)
+uchar &edgelookup(cube &c, cvec &p, int dim)
 {
-    int edge = ((uchar *)&faces)[(y>>3)*2+(x>>3)];
-    return edgeget(edge, coord);
+   return c.edges[dim*4 +(p[C(dim)]>>3)*2 +(p[R(dim)]>>3)];
 };
 
-void vertrepl(cvec &p, vec &v, int dim, int coord, uint faces)
+void vertrepl(cube &c, cvec &p, vec &v, int dim, int coord)
 {
-    v[D(dim)] = vertlookup(coord, faces, p[R(dim)], p[C(dim)]);
+    v[D(dim)] = edgeget(edgelookup(c,p,dim), coord);
 };
 
 void genvertp(cube &c, cvec &p1, cvec &p2, cvec &p3, plane &pl)
@@ -94,13 +93,12 @@ void genvertp(cube &c, cvec &p1, cvec &p2, cvec &p3, plane &pl)
     if(p1.y==p2.y && p2.y==p3.y) dim = 1;
     else if(p1.z==p2.z && p2.z==p3.z) dim = 0;
 
-    uint faces = c.faces[dim];
     int coord = ((uchar *)&p1)[2-dim];
 
     vec v1(p1), v2(p2), v3(p3);
-    vertrepl(p1, v1, dim, coord, faces);
-    vertrepl(p2, v2, dim, coord, faces);
-    vertrepl(p3, v3, dim, coord, faces);
+    vertrepl(c, p1, v1, dim, coord);
+    vertrepl(c, p2, v2, dim, coord);
+    vertrepl(c, p3, v3, dim, coord);
 
     vertstoplane(v1, v2, v3, pl);
 };
@@ -168,7 +166,7 @@ int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that cubes ar
     vec v[4];
     int dim = dimension(orient);
     int coord = dimcoord(orient);
-    loopi(4) vertrepl(*(cvec *)cubecoords[fv[orient][i]], v[i], dim, coord, c.faces[dim]);
+    loopi(4) vertrepl(c, *(cvec *)cubecoords[fv[orient][i]], v[i], dim, coord);
     int n = (faceconvexity(v, orient)<0); // offset tris verts to 123, 130 if concave
     return fv[orient][(vert + n)&3];
 };
@@ -205,8 +203,12 @@ COMMAND(recalc, ARG_NONE);
 
 bool faceedgegt(uint cfe, uint ofe)
 {
-    loopi(4) if ((faceedgeget(ofe, i, 0) > faceedgeget(cfe, i, 0)) ||
-                 (faceedgeget(ofe, i, 1) < faceedgeget(cfe, i, 1))) return true;
+    loopi(4)
+    {
+        uchar o = ((uchar *)&ofe)[i];
+        uchar c = ((uchar *)&cfe)[i];
+        if ((edgeget(o, 0) > edgeget(c, 0)) || (edgeget(o, 1) < edgeget(c, 1))) return true;
+    };
     return false;
 }
 
@@ -380,8 +382,8 @@ void vaclearc(cube *c)
 
 void renderq()
 {
-    int si[] = { 2, 0, 1 };
-    int ti[] = { 0, 1, 2 };
+    int si[] = { 0, 0, 1 };
+    int ti[] = { 2, 1, 2 };
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -593,19 +595,13 @@ int edgevalue(plane &p, cvec &o, int d, int x, int y, int z)
     return (int)(((-(p.offset + q[R(d)]*p[R(d)] + q[C(d)]*p[C(d)]) / p[D(d)])) - (q[D(d)]-o[D(d)]));
 };
 
-uchar &cubeedgelookup(cube &c, cvec &p, int d)
-{
-    uchar *e = (uchar *)&c.faces[d];
-    return *(e + (p[C(d)]>>3)*2 + (p[R(d)]>>3));
-};
-
 void tris2cube(cube &c, plane *tris, int size, uchar x=0, uchar y=0, uchar z=0)
 {
     solidfaces(c);
     loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
     {
         cvec &p = *(cvec *)cubecoords[fv[i][k]];
-        uchar &edge = cubeedgelookup(c, p, dimension(i));
+        uchar &edge = edgelookup(c, p, dimension(i));
         int e = edgevalue(tris[i*2+j], p, dimension(i), x, y, z) / size;
         if(e<0) e = 0;
         if(e>8) e = 8;
@@ -628,7 +624,7 @@ void pushvert(cube &c, int e, int dc)
     cvec p;
     int d = R(e>>2);
     cubecoordlookup(p, e, dc);
-    uchar &edge = cubeedgelookup(c, p, d);
+    uchar &edge = edgelookup(c, p, d);
     edgeset(edge, p[d], 8-p[d]);
 };
 

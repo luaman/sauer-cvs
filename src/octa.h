@@ -63,7 +63,6 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 
 #define octamask(d)     (1<<(2-(d)))                    // creates mask for bit of given dimension
 #define octacoord(d, i) (((i)&octamask(d))>>(2-(d)))
-#define faceedgeget(face, i, coord) edgeget(((uchar *)&(face))[(i)], (coord))
 
 enum
 {
