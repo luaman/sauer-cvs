@@ -370,7 +370,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
         else if(!isempty(c[i])) count++;
     };
 
-    if(count > vacubemax) loopi(8)
+    if(count > vacubemax || size == hdr.worldsize/2) loopi(8)
     {
         ivec o(i, cx, cy, cz, size);
         setva(c[i], o.x, o.y, o.z, size);

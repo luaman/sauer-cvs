@@ -1,5 +1,9 @@
 History of changes:
 
+Feb 2 2005:
+----------------
+- fixed dropped geometries in octarender (#58)
+
 Jan 24 2005:
 ----------------
 - simplifyied the rendering and partial update code
