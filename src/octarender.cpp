@@ -163,7 +163,7 @@ ushort faceverts[6][4] =
 bool touchingface(cube &c, int orient)
 {
     uint face = c.faces[dimension(orient)];
-    return dimcoord(orient) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0;
+    return dimcoord(orient) == (dimension(orient)==2) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0; // HACK: see neighbourcube
 };
 
 uint faceedges(cube &c, int orient)
