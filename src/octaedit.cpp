@@ -146,7 +146,7 @@ void cursorupdate()
     
     if(havesel)
     {
-        glColor3ub(0,20,0);
+        glColor3ub(0,120,0);
         d = dimension(selorient);
         for(int row = sel[rd(d)]; row<sel[rd(d)]+sels[rd(d)]; row += selgrid) 
         for(int col = sel[cd(d)]; col<sel[cd(d)]+sels[cd(d)]; col += selgrid) 
@@ -256,20 +256,19 @@ void editface(int dir, int mode)
 };
 COMMAND(editface, ARG_2INT);
 
-#define edgeinverse(face) ( 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)) )
-#define redgeflip(face)   ( ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8) )
-#define cedgeflip(face)   ( ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16) )
-#define medgeflip(face)   ( (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8) )
 #define swap(a,b,t) { t=a; a=b; b=t; }
-
+#define edgeinv(face) ( 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)) )
+#define rflip(face)   ( ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8) )
+#define cflip(face)   ( ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16) )
+#define mflip(face)   ( (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8) )
 void recurseflip(cube &c, int dim)
 {
     uchar t; swap(c.texture[dim*2], c.texture[dim*2+1], t);
     loop(d,3)
     {
-        if (d==dim) c.faces[d] = edgeinverse(c.faces[d]);
-        else if ((d<dim)==(dim!=1)) c.faces[d] = redgeflip(c.faces[d]);
-        else c.faces[d] = cedgeflip(c.faces[d]);
+        if (d==dim) c.faces[d] = edgeinv(c.faces[d]);
+        else if ((d<dim)==(dim!=1)) c.faces[d] = rflip(c.faces[d]);
+        else c.faces[d] = cflip(c.faces[d]);
     };
     if (c.children)
     {
@@ -277,38 +276,60 @@ void recurseflip(cube &c, int dim)
         loopi(8) recurseflip(c.children[i], dim);
     };
 };
-void flipcube() { recurseflip(lookupcube(lux,luy,luz,lusize), dimension(orient)); changed = true; };
+void flipcube() { if(noedit()) return; recurseflip(lookupcube(lux,luy,luz,lusize), dimension(orient)); changed = true; };
 COMMAND(flipcube, ARG_NONE);
 
-void recurserotatec(cube &c, int dim)
+#define rcflip(face,r) ( r>0 ? rflip(face) : cflip(face) )
+#define rcd(dim,r)     ( r>0 ? rd(dim) : cd(dim) )
+void recurserotate(cube &c, int dim, int cw)
 {
-    c.faces[dim]     = dim==1 ? cedgeflip(medgeflip(c.faces[dim]))     : redgeflip(medgeflip(c.faces[dim]));
-    c.faces[cd(dim)] = dim==1 ? cedgeflip(medgeflip(c.faces[cd(dim)])) : edgeinverse(c.faces[cd(dim)]);
-    switch (dim)
-    {
-        case 0: c.faces[rd(dim)] = redgeflip(c.faces[rd(dim)]); break;
-        case 1: c.faces[rd(dim)] = edgeinverse(medgeflip(c.faces[rd(dim)])); break;
-        case 2: c.faces[rd(dim)] = cedgeflip(c.faces[rd(dim)]); break;      
-    };
+    c.faces[dim]          = dim==1 ? rcflip (mflip(c.faces[dim]),-cw)          : rcflip (mflip(c.faces[dim]),cw);
+    c.faces[rcd(dim,-cw)] = dim==1 ? rcflip (mflip(c.faces[rcd(dim,-cw)]),-cw) : edgeinv(c.faces[rcd(dim,-cw)]);
+    c.faces[rcd(dim,cw)]  = dim==1 ? edgeinv(mflip(c.faces[rcd(dim,cw)]))      : rcflip (c.faces[rcd(dim,cw)],2-dim);
     uint t; swap(c.faces[rd(dim)], c.faces[cd(dim)], t);
-    swap(c.texture[2*rd(dim)],   c.texture[2*cd(dim)+(dim?0:1)], t);
-    swap(c.texture[2*rd(dim)+1], c.texture[2*cd(dim)+(dim?1:0)], t);
-    swap(c.texture[2*rd(dim)],   c.texture[2*rd(dim)+1], t);
+
+    swap(c.texture[2*rd(dim)],     c.texture[2*cd(dim) + (dim?0:1)], t);
+    swap(c.texture[2*rd(dim)+1],   c.texture[2*cd(dim) + (dim?1:0)], t);
+    swap(c.texture[2*rcd(dim,cw)], c.texture[2*rcd(dim,cw)+1], t);
 
     if (c.children)
     {
         int row = dim==1 ? (1<<rd(dim)) : (1<<(2-rd(dim)));
         int col = dim==1 ? (1<<cd(dim)) : (1<<(2-cd(dim)));
-        for(int j=0; j<=1<<(2-dim); j+=1<<(2-dim))
+        for(int i=0; i<=1<<(2-dim); i+=1<<(2-dim))
         {
-            cube tc = c.children[j+row];
-            c.children[j+row] = c.children[j];
-            c.children[j]     = c.children[j+col];
-            c.children[j+col] = c.children[j+col+row];
-            c.children[j+col+row] = tc;
+            cube tc;
+            swap(c.children[i],              c.children[i+row], tc);
+            swap(c.children[i+col],          c.children[i+row+col], tc);
+            swap(c.children[i+(cw>0?0:col)], c.children[i+row+(cw>0?col:0)], tc);
         };
-        loopi(8) recurserotatec(c.children[i], dim);
+        loopi(8) recurserotate(c.children[i], dim, cw);
     };
 };
-void rotatecube() { recurserotatec(lookupcube(lux,luy,luz,lusize), dimension(orient)); changed = true; };
-COMMAND(rotatecube, ARG_NONE);
+void rotatecube(int cw) { if(noedit()) return; recurserotate(lookupcube(lux,luy,luz,lusize), dimension(orient), dimcoord(orient)?cw:-cw); changed = true; };
+COMMAND(rotatecube, ARG_1INT);
+
+cube copy;
+void recursecopy(cube &c, cube &src)
+{
+    c = src; 
+    if (src.children) 
+    { 
+        c.children = newcubes(F_EMPTY); 
+        loopi(8) recursecopy(c.children[i], src.children[i]); 
+    };
+};
+
+void copycube() { if(noedit()) return; discardchildren(copy); recursecopy(copy, lookupcube(lux,luy,luz,lusize)); };
+void pastecube() 
+{ 
+    if(noedit()) return; 
+    cube &dest = lookupcube(lux,luy,luz,lusize);
+    discardchildren(dest);
+    recursecopy(dest, copy);
+    changed = true; 
+};
+
+COMMAND(copycube, ARG_NONE);
+COMMAND(pastecube, ARG_NONE);
+
