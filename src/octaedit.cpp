@@ -296,6 +296,7 @@ COMMANDN(undo, editundo, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 #define EDITINIT if(noedit()) return; makeundo(); changed = true; cursorchange = false;
+#define loopsel(r,c) loop(r, sels[R(dimension(selorient))]/selgrid) loop(c, sels[C(dimension(selorient))]/selgrid)
 
 int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); };
 
@@ -305,12 +306,6 @@ void pushedge(uchar &edge, int dir, int dc)
     edge = edgeset(edge, dc, ne);   
     int oe = edgeget(edge, 1-dc);
     if((dir<0 && dc && oe>ne) || (dir>0 && dc==0 && oe<ne)) edge = edgeset(edge, 1-dc, ne);
-};
-
-void optiface(uchar *p, cube &c)
-{
-    loopi(4) if(edgeget(p[i], 0)!=edgeget(p[i], 1)) return;
-    emptyfaces(c);
 };
 
 cube &selcube(int row, int col, int depth)
@@ -333,7 +328,7 @@ void editface(int dir, int mode)
         if(dir<0) sel[dimension(selorient)] += selgrid * seldir;
     };
     makeundo();
-    loop(x,xs) loop(y,ys)
+    loopsel(x,y)
     {
         cube &c = selcube(x, y, 0);
         discardchildren(c);
@@ -392,9 +387,7 @@ void edittex(int dir)
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
     curtexindex = i = min(max(i, 0), 255);
-    loop(r, sels[R(dimension(selorient))]/selgrid) 
-    loop(c, sels[C(dimension(selorient))]/selgrid)
-        edittexcube(selcube(r,c,0), lasttex = hdr.texlist[i], selorient);
+    loopsel(r,c) edittexcube(selcube(r,c,0), lasttex = hdr.texlist[i], selorient);
     changed = true; cursorchange = false;
 };
 
@@ -411,11 +404,9 @@ void lightcube(cube &c, int dr, int dg, int db)
 
 void lite(int r, int g, int b) 
 { 
-    EDITINIT; 
-    int xs = sels[R(dimension(selorient))]/selgrid;
-    int ys = sels[C(dimension(selorient))]/selgrid;
+    EDITINIT;     
     int ds = sels[dimension(selorient)]/selgrid; 
-    loop(d,ds) loop(x,xs) loop(y,ys) lightcube(selcube(x, y, d), r*litepower, g*litepower, b*litepower); 
+    loop(d,ds) loopsel(x,y) lightcube(selcube(x, y, d), r*litepower, g*litepower, b*litepower); 
 };
 COMMAND(lite, ARG_3INT);
 
@@ -472,14 +463,13 @@ void rotatecube(cube &c, int dim, int cw)   // swapping stuff to mimic rotation 
 void flip()         
 { 
     EDITINIT;
-    int xs = sels[R(dimension(selorient))]/selgrid;
-    int ys = sels[C(dimension(selorient))]/selgrid;
     int ds = sels[dimension(selorient)]/selgrid; 
-    loop(d,ds) loop(x,xs) loop(y,ys) flipcube(selcube(x, y, d), dimension(selorient));
-    loop(d,ds/2) loop(x,xs) loop(y,ys) 
+    loop(d,ds/2) loopsel(x,y)
     {
         cube &a = selcube(x, y, d), t;
         cube &b = selcube(x, y, ds-d-1);
+        flipcube(a, dimension(selorient));
+        flipcube(b, dimension(selorient));
         swap(a,b,t);
     };
 };
