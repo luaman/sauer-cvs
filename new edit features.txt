@@ -40,9 +40,25 @@ undo: pressing 'z' will undo your last edit move. currently, any editing done wi
 NEW for release 0.03
 =========================================
 
-if you made a map in an older build, you'll first want to go into the editing menu (press ESC) and select the "Fix textures option."
+if you made a map in an older build, you'll first want to go into the editing menu (press ESC) and select the "Fix textures option." 
 
 As well there have been some slight changes to the fill command -- scrolling down + F will no longer fill the selected cube, but only fill the neighbouring cube.
 
+You'll also notice that there is a 'CUBE' stat on the HUD. This will tell you how many cubes are inside your cursor (selection not yet supported). Also remember, the 'OND' stat tells you the total amount of cubes you are using in the system. This includes all cubes in the current map + cubes in copy pad + cubes in undo.
+
 Ad-hoc vertex light editing commands have also been added. Hold the UP arrow + scroll wheel to change the brightness of a cube. The other three arrows will change the red, green and blue lighting respectively. This is just something neat to use until more powerful light entites are supported by the engine. the proper lighting model has not been added yet, so there's a very good chance that any light changes done using this will be obsolete and not supported in the future.
+
+-----------------------------------------
+3D SELECTION
+-----------------------------------------
+
+3D selection has been added to editing. It should be as simple to use as 2D selection. in order to select blocks in 2D, left click and hold on any surface and drag. A white selection box will outline your selection. To select in 3D, while still holding the LMB, point your cursor onto a surface that is not the surface you clicked on. A blue selection box will outline your selection.
+
+2D Commands such as pushing edges and changing textures will use the white selection box. 3D commands such as copy and flip will use the blue box. Also note the red reference box around one of the vertexs of the blue box. when copying and pasting, the red boxes of the copy and destination will be around the same vertex -- you can use it as a reference when pasting just like Cube.
+
+Remember, the cursor by itself can still be used as a selection box if you're not currently using another selection box. This is good for quick single cube changes.
+
+also currently rotation is only supported by the cursor selection box.
+
+As always, be careful of the grid size you are using. Try to make sure that you are using the largest gridsize that can do the job. If the grid is smaller then the selected cubes it will split them up until they are all of the same size as the grid. Selections are powerful but dangerous. use them with care young skywalker.
 
