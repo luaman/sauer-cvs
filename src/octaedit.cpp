@@ -94,28 +94,24 @@ void discardchildren(cube &c)
 int lu(int dim) { return (dim==0?luz:(dim==1?luy:lux)); }; 
 void cursorupdate()
 {
-    int yawo[] = { O_LEFT, O_FRONT, O_RIGHT, O_BACK }; 
-    if(player1->pitch>45) orient = O_TOP;
-    else if(player1->pitch<-45) orient = O_BOTTOM;
-    else orient = yawo[(((int)player1->yaw-45)/90)&3];
-
-    int d = dimension(orient);
-    int x = (int)worldpos.x;
-    int y = (int)worldpos.y;
-    int z = (int)worldpos.z;
-
-    switch(orient)
-    {
-        case O_TOP:    z+=4; break;
-        case O_BOTTOM: z-=4; break;
-        case O_FRONT:  y+=4; break;
-        case O_BACK:   y-=4; break;
-        case O_LEFT:   x+=4; break;
-        case O_RIGHT:  x-=4; break;
-    };
+	vec dir(worldpos);
+	dir.sub(player1->o);
+	float len = dir.magnitude() / 2;		// modifier might need to be tweaked
+    int x = (int)(worldpos.x + dir.x/len);	// worldpos + a nudge in the right direction to account for rounding etc
+    int y = (int)(worldpos.y + dir.y/len);	// nudge is pretty much a unit vector projection of view direction
+    int z = (int)(worldpos.z + dir.z/len);
     last = &lookupcube(x, y, z, gridsize);
-    int g2 = gridsize/2;
-    corx = (d==2?y:x)/g2;
+
+	int xint  = (int)(worldpos.x + (dir.x/dir.y) * (luy - worldpos.y + (dir.y<0 ? gridsize : 0))); // x intersect of xz plane
+	int zint  = (int)(worldpos.z + (dir.z/dir.y) * (luy - worldpos.y + (dir.y<0 ? gridsize : 0))); // z intersect of xz plane
+	int zint2 = (int)(worldpos.z + (dir.z/dir.x) * (lux - worldpos.x + (dir.x<0 ? gridsize : 0))); // z intersect of yz plane
+	if (xint < lux+gridsize && xint > lux && zint < luz+gridsize && zint > luz) orient = (dir.y>0 ? O_FRONT : O_BACK);
+	else if (zint2 < luz+gridsize && zint2 > luz) orient = (dir.x>0 ? O_LEFT : O_RIGHT);
+	else orient = (dir.z>0 ? O_TOP : O_BOTTOM);
+
+	int d = dimension(orient);
+	int g2 = gridsize/2;
+	corx = (d==2?y:x)/g2;
     cory = (d==0?y:z)/g2;
     corner = (corx-lu(rd(d))/g2)+(cory-lu(cd(d))/g2)*2;    
     cx = lux;
@@ -124,9 +120,9 @@ void cursorupdate()
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    //glColor4ub(64,64,255,32);
-    glColor3ub(120,120,120);
     glLineWidth(1);
+	//glColor4ub(64,64,255,32);
+	glColor3ub(120,120,120);
     boxs(d, lu(rd(d)), lu(cd(d)), lusize, lusize, lu(d)+dimcoord(orient)*lusize);
     
     if(dragging && gridsize==selgrid && orient==selorient)
@@ -148,20 +144,18 @@ void cursorupdate()
     
     if(havesel)
     {
-        glColor3ub(0,120,0);
         d = dimension(selorient);
+		glColor3ub(20,20,20);
         for(int row = sel[rd(d)]; row<sel[rd(d)]+sels[rd(d)]; row += selgrid) 
         for(int col = sel[cd(d)]; col<sel[cd(d)]+sels[cd(d)]; col += selgrid) 
             boxs(d, row, col, selgrid, selgrid, sel[d]+dimcoord(selorient)*sels[d]);
         glColor3ub(60,60,60);
-        //conoutf("%d %d ", selcxs*g2, selcys*g2);
         boxs(d, sel[rd(d)]+selcx*g2, sel[cd(d)]+selcy*g2, selcxs*g2, selcys*g2, sel[d]+dimcoord(selorient)*sels[d]);
     };
     glDisable(GL_BLEND);
 };
 
-/////////////////////////////////////////
-
+//////////// copy and undo /////////////
 cube copycube(cube &src)
 {
     cube c = src; 
@@ -201,8 +195,7 @@ void editundo()
     undo u = undos.pop();
     cube &dest = lookupcube(u.x, u.y, u.z, u.size); 
     discardchildren(dest);
-    dest = copycube(u.c);
-    discardchildren(u.c);
+    dest = u.c;
     changed = true;
 };
 
@@ -220,8 +213,7 @@ COMMAND(copy, ARG_NONE);
 COMMAND(paste, ARG_NONE);
 COMMANDN(undo, editundo, ARG_NONE);
 
-////////////////////////////////////////
-
+///////////// main cube edit ////////////////
 int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); };
 
 void pushedge(uchar &edge, int dir, int dc)
@@ -305,8 +297,7 @@ void editface(int dir, int mode)
 
 COMMAND(editface, ARG_2INT);
 
-//////////////////////////////////////
-
+/////////// texture editing //////////////////
 int curtexindex = -1, lasttex = 0, lastorient = 0;
 cube *lasttexcube = NULL;
 void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
@@ -324,7 +315,7 @@ void tofronttex()                                       // maintain most recentl
 
 void edittexcube(cube &c, int tex)
 {
-    c.texture[dimension(orient)==2 ? orient : opposite(orient)] = tex;  //FIXME ?? : see neighbourcube and octarender
+    c.texture[dimension(orient)==2 ? orient : opposite(orient)] = tex;  //could have been more elegant. see neighbourcube and octarender.
     if (c.children) loopi(8) edittexcube(c.children[i], tex);
 };
 
@@ -341,8 +332,7 @@ void edittex(int dir)
 
 COMMAND(edittex, ARG_1INT);
 
-///////////////////////////////////////
-
+////////// flip and rotate ///////////////
 #define edgeinv(face)  ( 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)) )
 #define rflip(face)    ( ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8) )
 #define cflip(face)    ( ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16) )
@@ -366,8 +356,8 @@ void flipcube(cube &c, int dim)
     };
 };
 
-void rotatecube(cube &c, int dim, int cw)
-{
+void rotatecube(cube &c, int dim, int cw)	// swapping stuff to mimic rotation -- kinda like a rubiks cube!
+{											// not too hard to understand if you can visualize it. see pics in cvs for help
     c.faces[dim]          = dim==1 ? rcflip (mflip(c.faces[dim]),-cw)          : rcflip (mflip(c.faces[dim]),cw);
     c.faces[rcd(dim,-cw)] = dim==1 ? rcflip (mflip(c.faces[rcd(dim,-cw)]),-cw) : edgeinv(c.faces[rcd(dim,-cw)]);
     c.faces[rcd(dim,cw)]  = dim==1 ? edgeinv(mflip(c.faces[rcd(dim,cw)]))      : rcflip (c.faces[rcd(dim,cw)],2-dim);
