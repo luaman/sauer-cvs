@@ -32,16 +32,16 @@ struct cvec
     cvec() {};
     cvec(uchar a, uchar b, uchar c) : x(a), y(b), z(c) {};
     uchar &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
-};    
-    
+};
+
 struct vec
 {
     float x, y, z;
-    
+
     vec() {};
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(cvec &v) : x(v.x), y(v.y), z(v.z) {};
-    
+
     float &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
 
     float squaredlen()       { return x*x + y*y + z*z; };
@@ -59,9 +59,9 @@ struct vec
     void cross(const vec &a, const vec &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; };
 };
 
-struct plane : vec { float offset; };
+struct plane : vec { float offset; float dist(const vec &p) { return dot(p)+offset; }; };
 struct line3 { vec orig, dir; };
-struct vertex : vec { uint colour; }; 
+struct vertex : vec { uint colour; };
 
 enum                            // static entity types
 {
@@ -83,7 +83,7 @@ enum                            // static entity types
 struct entity                   // map entity
 {
     vec o;                      // cube aligned position
-    short attr1, attr2, attr3, attr4, attr5;        
+    short attr1, attr2, attr3, attr4, attr5;
     uchar type;                 // type is one of the above
     char spawned;               // the only dynamic state of a map entity
 };
@@ -95,13 +95,13 @@ enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_FIREBALL, GUN_ICEBAL
 struct dynent                           // players & monsters
 {
     vec o, vel;                         // origin, velocity
-    float yaw, pitch, roll;             
+    float yaw, pitch, roll;
     float maxspeed;                     // cubes per second, 24 for player
     bool outsidemap;                    // from his eyes
     bool inwater;
     bool onfloor, jumpnext;
     int move, strafe;
-    bool k_left, k_right, k_up, k_down; // see input code  
+    bool k_left, k_right, k_up, k_down; // see input code
     int timeinair;                      // used for fake gravity
     float radius, eyeheight, aboveeye;  // bounding box size
     int lastupdate, plag, ping;
@@ -149,7 +149,7 @@ enum
     SV_SENDMAP, SV_RECVMAP, SV_SERVMSG, SV_ITEMLIST,
     SV_EXT,
     SV_SENDHASH, SV_GETHASH,       //CP
-};     
+};
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING };
 
@@ -165,11 +165,11 @@ enum
     S_SPLASH1, S_SPLASH2,
     S_GRUNT1, S_GRUNT2, S_RUMBLE,
     S_PAINO,
-    S_PAINR, S_DEATHR, 
-    S_PAINE, S_DEATHE, 
+    S_PAINR, S_DEATHR,
+    S_PAINE, S_DEATHE,
     S_PAINS, S_DEATHS,
-    S_PAINB, S_DEATHB, 
-    S_PAINP, S_PIGGR2, 
+    S_PAINB, S_DEATHB,
+    S_PAINP, S_PIGGR2,
     S_PAINH, S_DEATHH,
     S_PAIND, S_DEATHD,
     S_PIGR1, S_ICEBALL, S_SLIMEBALL,
@@ -235,7 +235,7 @@ enum    // function signatures for script functions, see command.cpp
     ARG_1EXP, ARG_2EXP,
     ARG_1EST, ARG_2EST,
     ARG_VARI
-}; 
+};
 
 // nasty macros for registering script functions, abuses globals to avoid excessive infrastructure
 #define COMMANDN(name, fun, nargs) static bool __dummy_##fun = addcommand(#name, (void (*)())fun, nargs)
@@ -243,7 +243,7 @@ enum    // function signatures for script functions, see command.cpp
 #define VAR(name, min, cur, max) static int name = variable(#name, min, cur, max, &name, NULL)
 #define VARF(name, min, cur, max, body) void var_##name(); static int name = variable(#name, min, cur, max, &name, var_##name); void var_##name() { body; }
 
-// protos for ALL external functions in cube... 
+// protos for ALL external functions in cube...
 
 // command
 extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)());
@@ -307,7 +307,7 @@ extern int getclientnum();
 extern void changemapserv(char *name, int mode);
 
 // clientgame
-extern void mousemove(int dx, int dy); 
+extern void mousemove(int dx, int dy);
 extern void updateworld(int millis);
 extern void startmap(char *name);
 extern void changemap(char *name);
