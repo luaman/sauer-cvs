@@ -54,10 +54,12 @@ enum
 extern cube *newcubes(uint face = F_EMPTY);
 extern int familysize(cube &c);
 extern void freeocta(cube *c);
+extern void optiface(uchar *p, cube &c);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 
 // rendercubes
+extern void subdividecube(cube &c);
 extern void gentris(cube &c, vec &pos, float size, plane *tris, float x, float y, float z);
 extern void octarender();
 extern void renderq();

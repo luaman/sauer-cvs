@@ -332,3 +332,48 @@ void gentris(cube &c, vec &pos, float size, plane *tris, float x=1, float y=1, f
         vertstoplane(ve[0], ve[1+j], ve[2+j], tris[i*2+j]);
     };
 };
+
+int edgevalue(plane &p, cvec &o, int d, int x, int y, int z)
+{
+    cvec q(x+o.x, y+o.y, z+o.z);
+    return (int)(((-(p.offset + q[R(d)]*p[R(d)] + q[C(d)]*p[C(d)]) / p[D(d)])) - (q[D(d)]-o[D(d)]));
+};
+
+uchar &cubeedgelookup(cube &c, cvec &p, int d)
+{
+    uchar *e = (uchar *)&c.faces[d];
+    return *(e + (p[C(d)]>>3)*2 + (p[R(d)]>>3));
+};
+
+bool tris2cube(cube &c, plane *tris, int size, uchar x=0, uchar y=0, uchar z=0)
+{
+    solidfaces(c);
+    loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
+    {
+        cvec &p = *(cvec *)cubecoords[fv[i][k]];
+        uchar &edge = cubeedgelookup(c, p, dimension(i));
+        int e = edgevalue(tris[i*2+j], p, dimension(i), x, y, z)*size;
+        if(e<0) e = 0;
+        if(e>8) e = 8;
+        int dc = dimcoord(i);
+        if(dc == e<edgeget(edge, dc)) edgeset(edge, dc, e);
+    };
+    loopi(3) optiface((uchar *)&c.faces[i], c);
+    return true;
+};
+
+void subdividecube(cube &c)
+{
+    if(c.children) return;
+    cube *ch = c.children = newcubes(F_SOLID);
+    vec zero(0,0,0);
+    plane tris[12];
+    gentris(c, zero, 16, tris);
+    loopi(8) tris2cube(ch[i], tris, 1, (i&1)*8, (i&2)*4, (i&4)*2);
+    //validatechildren(c.children);
+    loopi(8) 
+    {
+        loopj(6) ch[i].texture[j] = c.texture[j];
+        loopj(3) ch[i].colour[j] = c.colour[j];
+    };
+};
