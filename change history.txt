@@ -1,5 +1,9 @@
 History of changes:
 
+Jan 4 2005:
+----------------
+- make _DEBUG gcc friendly
+
 Jan 3 2005:
 ----------------
 - fixed memory leak (vertex array not destroyed)

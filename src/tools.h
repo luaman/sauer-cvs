@@ -36,7 +36,11 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 
 #ifdef _DEBUG
+#ifdef __GNUC__
+#define ASSERT(c) if(!(c)) { asm("int $3"); };
+#else
 #define ASSERT(c) if(!(c)) { __asm int 3 };
+#endif
 #else
 #define ASSERT(c) c
 #endif
