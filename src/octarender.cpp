@@ -111,7 +111,7 @@ void genvertp(cube &c, cvec &p1, cvec &p2, cvec &p3, plane &pl)
     vertstoplane(v1, v2, v3, pl);
 };
 
-int genvert(cvec &p, cube &c, vec &pos, float size, uint col)
+vertex genvert(cvec &p, cube &c, vec &pos, float size, uint col)
 {
     cvec p1(8-p.x, p.y, p.z);
     cvec p2(p.x, 8-p.y, p.z);
@@ -135,12 +135,13 @@ int genvert(cvec &p, cube &c, vec &pos, float size, uint col)
     v.y = v.z;
     v.z = t;
     v.colour = col;
-    return findindex(verts[curvert] = v);
+    // return findindex(verts[curvert] = v);
+    return v;
 };
 
-uchar cubecoords[8][3] =
+const uchar cubecoords[8][3] = // verts of bounding cube
 {
-    { 8, 8, 0 },    
+    { 8, 8, 0 },   
     { 0, 8, 0 },
     { 0, 8, 8 },
     { 8, 8, 8 },
@@ -150,14 +151,32 @@ uchar cubecoords[8][3] =
     { 8, 0, 0 },
 };
 
-ushort faceverts[6][4] =
+const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orientation
 {
-    { 1, 0, 7, 6 },
-    { 2, 5, 4, 3 },
-    { 5, 6, 7, 4 },
-    { 0, 1, 2, 3 },
-    { 1, 6, 5, 2 },
-    { 0, 3, 4, 7 },
+    { 6, 1, 0, 7 },     
+    { 5, 4, 3, 2 },     
+    { 4, 5, 6, 7 },
+    { 1, 2, 3, 0 }, 
+    { 2, 1, 6, 5 }, 
+    { 3, 4, 7, 0 },
+};
+
+int faceconvexity(vec *v, int orient)
+{
+    float *f = (float *)v + 2-dimension(orient);
+    int n = (int)(*f - *(f+3) + *(f+6) - *(f+9));
+    if (!dimcoord(orient)) n *= -1;
+    return n; // returns +ve if convex when tris are verts 012, 023. -ve for concave.
+};
+
+int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that cubes are almost always convex
+{                                               
+    vec v[4];
+    int dim = dimension(orient);
+    int coord = dimcoord(orient);
+    loopi(4) vertrepl(*(cvec *)cubecoords[fv[orient][i]], v[i], dim, coord, c.faces[dim]);
+    int n = (faceconvexity(v, orient)<0); // offset tris verts to 123, 130 if concave
+    return fv[orient][(vert + n)&3];
 };
 
 bool touchingface(cube &c, int orient)
@@ -186,7 +205,7 @@ uint faceedges(cube &c, int orient)
     };
 };
 
-extern cube *last;
+//extern cube *last;
 void recalc() { changed = true; };
 COMMAND(recalc, ARG_NONE);
 
@@ -220,7 +239,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     
     loopi(8) vertexuses[i] = 0;
 
-    loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts[i][k]]++;
+    loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts(c,i,k)]++;
 
     if(isentirelysolid(c))
     {
@@ -231,13 +250,13 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     else
     {
         vec pos((float)x, (float)y, (float)z);
-        loopi(8) if(vertexuses[i]) cin[i] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, col);
+        loopi(8) if(vertexuses[i]) cin[i] = (findindex(verts[curvert] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, col)));
     };
     
     loopi(6) if(useface[i])
     {
         usvector &v = indices[dimension(i)][c.texture[i]];
-        loopk(4) v.add(cin[faceverts[i][k]]);
+        loopk(4) v.add(cin[faceverts(c,i,k)]);
         wtris += 2;
     };
 };
