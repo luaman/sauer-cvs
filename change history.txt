@@ -1,5 +1,11 @@
 History of changes:
 
+Nov 30 2004:
+----------------
+- tiny bug fixes, like #8 and selgrid init
+- selection support for rotation 
+- changed edge configuration. simplifies flip and rotate, while everything else should be unaffected.
+
 Nov 28 2004:
 ----------------
 - real gravity (but too much air friction)

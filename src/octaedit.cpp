@@ -191,6 +191,17 @@ void cursorupdate()
     glDisable(GL_BLEND);
 };
 
+///////// selection support /////////////
+
+#define loopsel(r,c) loop(r, sels[R(dimension(selorient))]/selgrid) loop(c, sels[C(dimension(selorient))]/selgrid)
+
+cube &selcube(int row, int col, int depth)
+{
+    int d = dimension(selorient);
+    int s[3] = { dimcoord(selorient)*(sels[d]-selgrid), col*selgrid, row*selgrid };
+    return neighbourcube(sel[2]+s[X(d)], sel[1]+s[Y(d)], sel[0]+s[Z(d)], -depth*selgrid, selgrid, selorient);
+};
+
 //////////// copy and undo /////////////
 cube copycube(cube &src)
 {
@@ -296,7 +307,6 @@ COMMANDN(undo, editundo, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 #define EDITINIT if(noedit()) return; makeundo(); changed = true; cursorchange = false;
-#define loopsel(r,c) loop(r, sels[R(dimension(selorient))]/selgrid) loop(c, sels[C(dimension(selorient))]/selgrid)
 
 int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); };
 
@@ -306,13 +316,6 @@ void pushedge(uchar &edge, int dir, int dc)
     edge = edgeset(edge, dc, ne);
     int oe = edgeget(edge, 1-dc);
     if((dir<0 && dc && oe>ne) || (dir>0 && dc==0 && oe<ne)) edge = edgeset(edge, 1-dc, ne);
-};
-
-cube &selcube(int row, int col, int depth)
-{
-    int d = dimension(selorient);
-    int s[3] = { dimcoord(selorient)*(sels[d]-selgrid), col*selgrid, row*selgrid };
-    return neighbourcube(sel[2]+s[X(d)], sel[1]+s[Y(d)], sel[0]+s[Z(d)], -depth*selgrid, selgrid, selorient);
 };
 
 void editface(int dir, int mode)
@@ -416,16 +419,13 @@ int edgeinv(int face)       { return 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((fac
 int rflip(int face)         { return ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8); };
 int cflip(int face)         { return ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16); };
 int mflip(int face)         { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8); };
-int rcflip(int face, int r) { return r>0 ? rflip(face) : cflip(face); };
 
 void flipcube(cube &c, int dim)
 {
     uchar t; swap(c.texture[dim*2], c.texture[dim*2+1], t);
-    loop(d,3)
-    {
-        if (d==dim) c.faces[d] = edgeinv(c.faces[d]);
-        else c.faces[d] = rcflip(c.faces[d], (d<dim)==(dim!=1));
-    };
+    c.faces[D(dim)] = edgeinv(c.faces[D(dim)]);
+    c.faces[C(dim)] = rflip(c.faces[C(dim)]);
+    c.faces[R(dim)] = cflip(c.faces[R(dim)]);
     if (c.children)
     {
         loopi(8) if (i&(1<<(2-dim))) { cube tc; swap(c.children[i], c.children[i-(1<<(2-dim))], tc); }
@@ -435,36 +435,30 @@ void flipcube(cube &c, int dim)
 
 void rotatequad(cube &a, cube &b, cube &c, cube &d)
 {
-    cube t = a;
-    a = b;
-    b = c;
-    c = d;
-    d = t;
+    cube t = a; a = b; b = c; c = d; d = t;
 };
 
 void rotatecube(cube &c, int dim)   // swapping stuff to mimic rotation -- kinda like a rubiks cube!
 {                                   // not too hard to understand if you can visualize it. see pics in cvs for help
-    c.faces[dim]    = dim==1 ? cflip  (mflip(c.faces[dim]))    : rflip  (mflip(c.faces[dim]));
-    c.faces[C(dim)] = dim==1 ? cflip  (mflip(c.faces[C(dim)])) : edgeinv(c.faces[C(dim)]);
-    c.faces[R(dim)] = dim==1 ? edgeinv(mflip(c.faces[R(dim)])) : rcflip (c.faces[R(dim)],2-dim);
+    c.faces[D(dim)] = rflip  (mflip(c.faces[D(dim)]));
+    c.faces[C(dim)] = edgeinv(mflip(c.faces[C(dim)]));
+    c.faces[R(dim)] = cflip  (mflip(c.faces[R(dim)]));
     uint t; swap(c.faces[R(dim)], c.faces[C(dim)], t);
 
-    t = c.texture[2*C(dim)+1];
-    c.texture[2*C(dim)+1] = c.texture[2*R(dim)+1];
-    c.texture[2*R(dim)+1] = c.texture[2*C(dim)];
-    c.texture[2*C(dim)] = c.texture[2*R(dim)];
-    c.texture[2*R(dim)] = t;
+    swap(c.texture[2*R(dim)], c.texture[2*C(dim)+1], t);
+    swap(c.texture[2*C(dim)], c.texture[2*R(dim)+1], t);
+    swap(c.texture[2*C(dim)], c.texture[2*C(dim)+1], t);
 
-    if (c.children)
+    if(c.children)
     {
-        int row = dim==1 ? (1<<R(dim)) : (1<<(2-R(dim)));
-        int col = dim==1 ? (1<<C(dim)) : (1<<(2-C(dim)));
+        int row = 1<<(2-R(dim));
+        int col = 1<<(2-C(dim));
         for(int i=0; i<=1<<(2-dim); i+=1<<(2-dim)) rotatequad
         (
-            c.children[i+col],
-            c.children[i+row+col],
             c.children[i+row],
-            c.children[i]
+            c.children[i],
+            c.children[i+col],
+            c.children[i+col+row]
         );
         loopi(8) rotatecube(c.children[i], dim);
     };
@@ -474,32 +468,35 @@ void flip()
 {
     EDITINIT;
     int ds = sels[dimension(selorient)]/selgrid;
-    loop(d,ds) loopsel(x,y) flipcube(selcube(x, y, d), dimension(selorient));
-    loop(d,ds/2) loopsel(x,y)
+    loopsel(x,y)
     {
-        cube &a = selcube(x, y, d), t;
-        cube &b = selcube(x, y, ds-d-1);
-        swap(a,b,t);
+        loop(d,ds) flipcube(selcube(x, y, d), dimension(selorient));
+        loop(d,ds/2)
+        {
+            cube &a = selcube(x, y, d), t;
+            cube &b = selcube(x, y, ds-d-1);
+            swap(a,b,t);
+        };
     };
 };
 
 void rotate(int cw)
 {
     EDITINIT;
-    if(!dimcoord(selorient)) cw = -cw;
     int dim = dimension(selorient);
+    if(!dimcoord(selorient)) cw = -cw;
     int ds = sels[D(dim)]/selgrid;
     int ss = min(sels[R(dim)], sels[C(dim)]) = max(sels[R(dim)], sels[C(dim)]);
     ss /= selgrid;
     loop(d,ds) loopi(cw>0 ? 1 : 3)
     {
         loopsel(x,y) rotatecube(selcube(x,y,d), dim);
-        loop(y,ss/2) loop(x,ss-1-y) rotatequad
+        loop(y,ss/2) loop(x,ss-1-y*2) rotatequad
         (
-            selcube(y, ss-1-x-y, d),
-            selcube(ss-1-x-y, ss-1-y, d),
             selcube(ss-1-y, x+y, d),
-            selcube(x+y, y, d)
+            selcube(x+y, y, d),
+            selcube(y, ss-1-x-y, d),
+            selcube(ss-1-x-y, ss-1-y, d)
         );
     };
 };

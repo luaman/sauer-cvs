@@ -61,8 +61,7 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             if(!tsize) break;
             //if(tsize<=0) break;
-            if(isentirelysolid(*c)) c->children = newcubes(F_SOLID);
-            else if(isempty(*c)) c->children = newcubes(F_EMPTY);
+            if(isempty(*c)) c->children = newcubes(F_EMPTY);
             else subdividecube(*c);
         };
         c = c->children;
