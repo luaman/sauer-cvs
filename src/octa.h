@@ -26,8 +26,8 @@ const uint F_SOLID = 0x80808080;     // all edges in the range (0,8)
 #define solidfaces(c) setfaces(c, F_SOLID)
 #define emptyfaces(c) setfaces(c, F_EMPTY)
 
-#define edgeget(edge, coord) (coord ? (edge)>>4 : (edge)&0xF)
-#define edgeset(edge, coord, val) (edge = (coord ? ((edge)&0xF)|(val<<4) : ((edge)&0xF0)|val))
+#define edgeget(edge, coord) ((coord) ? (edge)>>4 : (edge)&0xF)
+#define edgeset(edge, coord, val) ((edge) = ((coord) ? ((edge)&0xF)|((val)<<4) : ((edge)&0xF0)|(val)))
 #define rd(dim) ((dim)==2?1:2)
 #define cd(dim) ((dim)==0?1:0)
 
@@ -52,19 +52,19 @@ extern int familysize(cube &c);
 extern void freeocta(cube *c);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
-extern cube &neighbourcube2(int x, int y, int z, int size, int rsize, int orient);
 
 // rendercubes
 extern void octarender();
 extern void renderq();
 
 // geom
-void vertstoplane(vec &a, vec &b, vec &c, plane &pl);
-bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
+extern void vertstoplane(vec &a, vec &b, vec &c, plane &pl);
+extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 
 // octaedit
-void cursorupdate();
-void editdrag(bool on);
-void cancelsel();
+extern void cursorupdate();
+extern void editdrag(bool on);
+extern void cancelsel();
+extern void pruneundos(int maxremain = 0);
 
 extern bool changed; //remove
