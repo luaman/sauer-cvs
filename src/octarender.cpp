@@ -77,23 +77,23 @@ int vert(int x, int y, int z, uint col)
     return findindex(v);
 };
 
-uchar &edgelookup(cube &c, cvec &p, int dim)
+uchar &edgelookup(cube &c, ivec &p, int dim)
 {
    return c.edges[dim*4 +(p[C(dim)]>>3)*2 +(p[R(dim)]>>3)];
 };
 
-void vertrepl(cube &c, cvec &p, vec &v, int dim, int coord)
+void vertrepl(cube &c, ivec &p, vec &v, int dim, int coord)
 {
     v[D(dim)] = edgeget(edgelookup(c,p,dim), coord);
 };
 
-void genvertp(cube &c, cvec &p1, cvec &p2, cvec &p3, plane &pl)
+void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
 {
     int dim = 2;
     if(p1.y==p2.y && p2.y==p3.y) dim = 1;
     else if(p1.z==p2.z && p2.z==p3.z) dim = 0;
 
-    int coord = ((uchar *)&p1)[2-dim];
+    int coord = ((int *)&p1)[2-dim];
 
     vec v1(p1), v2(p2), v3(p3);
     vertrepl(c, p1, v1, dim, coord);
@@ -103,11 +103,11 @@ void genvertp(cube &c, cvec &p1, cvec &p2, cvec &p3, plane &pl)
     vertstoplane(v1, v2, v3, pl);
 };
 
-vertex genvert(cvec &p, cube &c, vec &pos, float size, uint col)
+vertex genvert(ivec &p, cube &c, vec &pos, float size, uint col)
 {
-    cvec p1(8-p.x, p.y, p.z);
-    cvec p2(p.x, 8-p.y, p.z);
-    cvec p3(p.x, p.y, 8-p.z);
+    ivec p1(8-p.x, p.y, p.z);
+    ivec p2(p.x, 8-p.y, p.z);
+    ivec p3(p.x, p.y, 8-p.z);
 
     plane plane1, plane2, plane3;
     genvertp(c, p, p1, p2, plane1);
@@ -131,7 +131,7 @@ vertex genvert(cvec &p, cube &c, vec &pos, float size, uint col)
     return v;
 };
 
-const uchar cubecoords[8][3] = // verts of bounding cube
+const int cubecoords[8][3] = // verts of bounding cube
 {
     { 8, 8, 0 },
     { 0, 8, 0 },
@@ -166,7 +166,7 @@ int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that cubes ar
     vec v[4];
     int dim = dimension(orient);
     int coord = dimcoord(orient);
-    loopi(4) vertrepl(c, *(cvec *)cubecoords[fv[orient][i]], v[i], dim, coord);
+    loopi(4) vertrepl(c, *(ivec *)cubecoords[fv[orient][i]], v[i], dim, coord);
     int n = (faceconvexity(v, orient)<0); // offset tris verts to 123, 130 if concave
     return fv[orient][(vert + n)&3];
 };
@@ -253,7 +253,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     else
     {
         vec pos((float)x, (float)y, (float)z);
-        loopi(8) if(vertexuses[i]) cin[i] = (findindex(verts[curvert] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, col)));
+        loopi(8) if(vertexuses[i]) cin[i] = (findindex(verts[curvert] = genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, col)));
     };
 
     loopi(6) if(useface[i])
@@ -573,7 +573,7 @@ void gentris(cube &c, vec &pos, float size, plane *tris, float x=1, float y=1, f
     vertex v[8];
     loopi(8)
     {
-        v[i] = genvert(*(cvec *)cubecoords[i], c, pos, size/8.0f, 0);
+        v[i] = genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, 0);
         float t = v[i].y * z;
         v[i].y = v[i].z * y;
         v[i].x *= x;
@@ -589,18 +589,18 @@ void gentris(cube &c, vec &pos, float size, plane *tris, float x=1, float y=1, f
     };
 };
 
-int edgevalue(plane &p, cvec &o, int d, int x, int y, int z)
+int edgevalue(plane &p, ivec &o, int d, int x, int y, int z)
 {
-    cvec q(x+o.x, y+o.y, z+o.z);
+    ivec q(x+o.x, y+o.y, z+o.z);
     return (int)(((-(p.offset + q[R(d)]*p[R(d)] + q[C(d)]*p[C(d)]) / p[D(d)])) - (q[D(d)]-o[D(d)]));
 };
 
-void tris2cube(cube &c, plane *tris, int size, uchar x=0, uchar y=0, uchar z=0)
+void tris2cube(cube &c, plane *tris, int size, int x=0, int y=0, int z=0)
 {
     solidfaces(c);
     loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
     {
-        cvec &p = *(cvec *)cubecoords[fv[i][k]];
+        ivec &p = *(ivec *)cubecoords[fv[i][k]];
         uchar &edge = edgelookup(c, p, dimension(i));
         int e = edgevalue(tris[i*2+j], p, dimension(i), x, y, z) / size;
         if(e<0) e = 0;
@@ -611,7 +611,7 @@ void tris2cube(cube &c, plane *tris, int size, uchar x=0, uchar y=0, uchar z=0)
     loopi(3) optiface((uchar *)&c.faces[i], c);
 };
 
-void cubecoordlookup(cvec &p, int e, int dc)
+void cubecoordlookup(ivec &p, int e, int dc)
 {
     int d = e>>2;
     p[D(d)] = dc ? 8 : 0;
@@ -621,7 +621,7 @@ void cubecoordlookup(cvec &p, int e, int dc)
 
 void pushvert(cube &c, int e, int dc)
 {
-    cvec p;
+    ivec p;
     int d = R(e>>2);
     cubecoordlookup(p, e, dc);
     uchar &edge = edgelookup(c, p, d);

@@ -16,9 +16,10 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
 
 struct block3
 {
-    int o[3], s[3], grid;
+    ivec o, s;
+    int grid;
     cube *c()     { return (cube *)(this+1); };
-    int size()    { return s[0]*s[1]*s[2]; };
+    int size()    { return s.x*s.y*s.z; };
     int us(int d) { return s[d]*grid; };
     bool operator==(block3 b) { loopi(3) if(o[i]!=b.o[i] || s[i]!=b.s[i]) return false; return true; };
 };
@@ -28,13 +29,13 @@ block3 lastsel;
 
 int orient = 0, selorient = 0;
 int gridsize = 32;
-int corner = 0, cor[3], lastcor[3];
+int corner = 0;
+ivec cor, lastcor;
+ivec cur, lastcur;
+int selcx, selcxs, selcy, selcys;
 
 bool editmode = false;
-
 bool havesel = false;
-int cx, cy, cz, lastx, lasty, lastz;
-int selcx, selcxs, selcy, selcys;
 bool dragging = false;
 
 void cancelsel() { havesel = false; };
@@ -53,12 +54,10 @@ void editdrag(bool on)
     {
         cancelsel();
         if(cor[0]<0) return;
-        lastx = cx;
-        lasty = cy;
-        lastz = cz;
+        lastcur = cur;
+        lastcor = cor;
         sel.grid = gridsize;
         selorient = orient;
-        loopi(3) lastcor[i] = cor[i];
     };
 };
 
@@ -113,7 +112,7 @@ cube &blockcube(int x, int y, int z, block3 &b, int rgrid, int o=O_TOP) // looks
 {
     int d = dimension(o);
     int s[3] = { dimcoord(o)*(b.s[d]-1)*b.grid, y*b.grid, x*b.grid };
-    return neighbourcube(b.o[2]+s[X(d)], b.o[1]+s[Y(d)], b.o[0]+s[Z(d)], -z*b.grid, rgrid, o);
+    return neighbourcube(b.o.x+s[X(d)], b.o.y+s[Y(d)], b.o.z+s[Z(d)], -z*b.grid, rgrid, o);
 };
 
 cube &selcube(int x, int y, int z) { return blockcube(x, y, z, sel, sel.grid, selorient); };
@@ -124,12 +123,12 @@ int selchildcount=0;
 void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr.worldsize/2)
 {
     uchar m = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
-    if(cz+size <= sel.o[0])           m &= 0xF0; // not in a -ve Z octant
-    if(cz+size >= sel.o[0]+sel.us(0)) m &= 0x0F; // not in a +ve Z octant
-    if(cy+size <= sel.o[1])           m &= 0xCC; // not in a -ve Y octant
-    if(cy+size >= sel.o[1]+sel.us(1)) m &= 0x33; // etc..
-    if(cx+size <= sel.o[2])           m &= 0xAA;
-    if(cx+size >= sel.o[2]+sel.us(2)) m &= 0x55;
+    if(cz+size <= sel.o.z)           m &= 0xF0; // not in a -ve Z octant
+    if(cz+size >= sel.o.z+sel.us(0)) m &= 0x0F; // not in a +ve Z octant
+    if(cy+size <= sel.o.y)           m &= 0xCC; // not in a -ve Y octant
+    if(cy+size >= sel.o.y+sel.us(1)) m &= 0x33; // etc..
+    if(cx+size <= sel.o.x)           m &= 0xAA;
+    if(cx+size >= sel.o.x+sel.us(2)) m &= 0x55;
     loopi(8) if(m&(1<<i))
     {
         int x = cx+octacoord(2,i)*size;
@@ -140,66 +139,62 @@ void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr
     };
 };
 
-int lu(int dim) { return (dim==0?luz:(dim==1?luy:lux)); };
-
 void cursorupdate()
 {
     vec dir(worldpos);
     dir.sub(player1->o);
     dir.normalize();
-    float len = gridsize/8; // depth modifier might need to be tweaked
-    int x = (int)(worldpos.x + dir.x*len);
-    int y = (int)(worldpos.y + dir.y*len);
-    int z = (int)(worldpos.z + dir.z*len);
+
+    int x = (int)(worldpos.x +(dir.x<0?-2:2));
+    int y = (int)(worldpos.y +(dir.y<0?-2:2));
+    int z = (int)(worldpos.z +(dir.z<0?-2:2));
     lookupcube(x, y, z);
 
     if(lusize>gridsize)
     {
-        lux += (x-lux)/gridsize*gridsize;
-        luy += (y-luy)/gridsize*gridsize;
-        luz += (z-luz)/gridsize*gridsize;
+        lu.x += (x-lu.x)/gridsize*gridsize;
+        lu.y += (y-lu.y)/gridsize*gridsize;
+        lu.z += (z-lu.z)/gridsize*gridsize;
     }
     else if(gridsize>lusize)
     {
-        lux &= ~(gridsize-1);
-        luy &= ~(gridsize-1);
-        luz &= ~(gridsize-1);
+        lu.x &= ~(gridsize-1);
+        lu.y &= ~(gridsize-1);
+        lu.z &= ~(gridsize-1);
     };
     lusize = gridsize;
 
-    int xi  = (int)(worldpos.x + (dir.x/dir.y) * (luy - worldpos.y + (dir.y<0 ? gridsize : 0))); // x intersect of xz plane
-    int zi  = (int)(worldpos.z + (dir.z/dir.y) * (luy - worldpos.y + (dir.y<0 ? gridsize : 0))); // z intersect of xz plane
-    int zi2 = (int)(worldpos.z + (dir.z/dir.x) * (lux - worldpos.x + (dir.x<0 ? gridsize : 0))); // z intersect of yz plane
-    if (xi < lux+gridsize && xi > lux && zi < luz+gridsize && zi > luz) orient = (dir.y>0 ? O_FRONT : O_BACK);
-    else if (zi2 < luz+gridsize && zi2 > luz) orient = (dir.x>0 ? O_LEFT : O_RIGHT);
+    int xi  = (int)(worldpos.x + (dir.x/dir.y) * (lu.y - worldpos.y + (dir.y<0 ? gridsize : 0))); // x intersect of xz plane
+    int zi  = (int)(worldpos.z + (dir.z/dir.y) * (lu.y - worldpos.y + (dir.y<0 ? gridsize : 0))); // z intersect of xz plane
+    int zi2 = (int)(worldpos.z + (dir.z/dir.x) * (lu.x - worldpos.x + (dir.x<0 ? gridsize : 0))); // z intersect of yz plane
+    if (xi < lu.x+gridsize && xi > lu.x && zi < lu.z+gridsize && zi > lu.z) orient = (dir.y>0 ? O_FRONT : O_BACK);
+    else if (zi2 < lu.z+gridsize && zi2 > lu.z) orient = (dir.x>0 ? O_LEFT : O_RIGHT);
     else orient = (dir.z>0 ? O_TOP : O_BOTTOM);
 
     int g2 = gridsize/2;
-    cor[2] = x/g2;
-    cor[1] = y/g2;
-    cor[0] = z/g2;
-    cx = lux;
-    cy = luy;
-    cz = luz;
+    cur = lu;
+    cor.x = x/g2;
+    cor.y = y/g2;
+    cor.z = z/g2;
 
     int d = dimension(orient);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glLineWidth(1);
     glColor3ub(120,120,120); // cursor
-    boxs(d, lu(R(d)), lu(C(d)), lusize, lusize, lu(d)+dimcoord(orient)*lusize);
+    boxs(d, lu[R(d)], lu[C(d)], lusize, lusize, lu[d]+dimcoord(orient)*lusize);
 
     if (cor[0]>=0) // ie: cursor not in the void
     {
         if(dragging)
         {
             d = dimension(selorient);
-            sel.o[2]  = min(lastx, cx);
-            sel.o[1]  = min(lasty, cy);
-            sel.o[0]  = min(lastz, cz);
-            sel.s[2] = abs(lastx-cx)/sel.grid+1;
-            sel.s[1] = abs(lasty-cy)/sel.grid+1;
-            sel.s[0] = abs(lastz-cz)/sel.grid+1;
+            sel.o.x = min(lastcur.x, cur.x);
+            sel.o.y = min(lastcur.y, cur.y);
+            sel.o.z = min(lastcur.z, cur.z);
+            sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
+            sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
+            sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
             selcx   = min(cor[R(d)], lastcor[R(d)]);
             selcxs  = max(cor[R(d)], lastcor[R(d)])-selcx+1;
             selcy   = min(cor[C(d)], lastcor[C(d)]);
@@ -210,8 +205,8 @@ void cursorupdate()
         }
         else if (!havesel)
         {
-            loopi(3) sel.o[i] = lu(i);
-            loopi(3) sel.s[i] = 1;
+            sel.o = lu;
+            sel.s.x = sel.s.y = sel.s.z = 1;
             selcx = selcy = 0;
             selcxs = selcys = 2;
             sel.grid = gridsize;
@@ -223,7 +218,7 @@ void cursorupdate()
     countselchild();
 
     d = dimension(selorient);
-    corner = (cor[R(d)]-lu(R(d))/g2)+(cor[C(d)]-lu(C(d))/g2)*2;
+    corner = (cor[R(d)]-lu[R(d)]/g2)+(cor[C(d)]-lu[C(d)]/g2)*2;
     if(havesel)
     {
         glColor3ub(20,20,20);   // grid
@@ -288,7 +283,7 @@ void changedva(int x, int y, int z, int size, block3 &step)
         grid = grid >> 1; mm = mm | grid;
         loopj(8) if (cc[j].va)
         {
-            step.o[2]=(x&mm)+grid; step.o[1]=(y&mm)+grid; step.o[0]=(z&mm)+grid;
+            step.o.x=(x&mm)+grid; step.o.y=(y&mm)+grid; step.o.z=(z&mm)+grid;
             break;
         }
         cc = cc + ((x & grid)?1:0) + ((y & grid)?2:0) + ((z & grid)?4:0);
@@ -299,7 +294,7 @@ void changedva(int x, int y, int z, int size, block3 &step)
     if (!c->va)
     {
         c->va = newva(x & m, y & m, z & m, g);
-        step.o[2]=(x&m)+g; step.o[1]=(y&m)+g; step.o[0]=(z&m)+g;
+        step.o.x=(x&m)+g; step.o.y=(y&m)+g; step.o.z=(z&m)+g;
     };
     if (!c->va->changed) { c->va->changed = true; changed.add(c); };
 };
@@ -326,37 +321,37 @@ void addchanged(block3 &bo, bool internal = false)
     b.grid = 1;
     loopi(3) if((b.o[i] | (b.o[i]+b.s[i]*b.grid-1)) & badmask) return;
 
-    int ze=b.o[0]+b.s[0]*b.grid;
-    int ye=b.o[1]+b.s[1]*b.grid;
-    int xe=b.o[2]+b.s[2]*b.grid;
-    for(int z=b.o[0], zn=ze; z<ze; z=zn, zn=ze)
-        for(int y=b.o[1], yn=ye; y<ye; y=yn, yn=ye)
-            for(int x=b.o[2], xn=xe; x<xe; x=xn, xn=xe)
+    int ze=b.o.z+b.s.z*b.grid;
+    int ye=b.o.y+b.s.y*b.grid;
+    int xe=b.o.z+b.s.x*b.grid;
+    for(int z=b.o.z, zn=ze; z<ze; z=zn, zn=ze)
+        for(int y=b.o.y, yn=ye; y<ye; y=yn, yn=ye)
+            for(int x=b.o.x, xn=xe; x<xe; x=xn, xn=xe)
     {
         changedva(x, y, z, b.grid, bb);
-        xn = min(xn, bb.o[2]);
-        yn = min(yn, bb.o[1]);
-        zn = min(zn, bb.o[0]);
+        xn = min(xn, bb.o.x);
+        yn = min(yn, bb.o.y);
+        zn = min(zn, bb.o.z);
     };
 
     if (!internal)
     {
         bb.grid = 1;
-        bb.o[2] = b.o[2]; bb.s[2] = b.s[2] * b.grid;
-        bb.o[1] = b.o[1]; bb.s[1] = b.s[1] * b.grid;
-        bb.o[0] = b.o[0] - 1; bb.s[0] = 1;
+        bb.o.x = b.o.x; bb.s.x = b.s.x * b.grid;
+        bb.o.y = b.o.y; bb.s.y = b.s.y * b.grid;
+        bb.o.z = b.o.z - 1; bb.s.z = 1;
         addchanged(bb, true);
-        bb.o[0] = b.o[0] + b.s[0] * b.grid;
+        bb.o.z = b.o.z + b.s.z * b.grid;
         addchanged(bb, true);
-        bb.o[0] = b.o[0]; bb.s[0] = b.s[0] * b.grid;
-        bb.o[1] = b.o[1] - 1; bb.s[1] = 1;
+        bb.o.z = b.o.z; bb.s.z = b.s.z * b.grid;
+        bb.o.y = b.o.y - 1; bb.s.y = 1;
         addchanged(bb, true);
-        bb.o[1] = b.o[1] + b.s[1] * b.grid;
+        bb.o.y = b.o.y + b.s.y * b.grid;
         addchanged(bb, true);
-        bb.o[1] = b.o[1]; bb.s[1] = b.s[1] * b.grid;
-        bb.o[2] = b.o[2] - 1; bb.s[2] = 1;
+        bb.o.y = b.o.y; bb.s.y = b.s.y * b.grid;
+        bb.o.x = b.o.x - 1; bb.s.x = 1;
         addchanged(bb, true);
-        bb.o[2] = b.o[2] + b.s[2] * b.grid;
+        bb.o.x = b.o.x + b.s.x * b.grid;
         addchanged(bb, true);
     };
 };
@@ -432,7 +427,7 @@ void copy()
 void paste()
 {
     if(noedit() || copybuf==NULL) return;
-    loopi(3) sel.s[i] = copybuf->s[i];
+    sel.s = copybuf->s;
     cube *s = copybuf->c();
     makeundo();
     loopxyz(sel) pastecube(*s++, x, y, z, sel, sel.grid);
@@ -626,7 +621,8 @@ void rotate(int cw)
     if(noedit()) return;
     int dim = dimension(selorient);
     if(!dimcoord(selorient)) cw = -cw;
-    int ss = min(sel.s[R(dim)], sel.s[C(dim)]) = max(sel.s[R(dim)], sel.s[C(dim)]);
+    int &m = min(sel.s[C(dim)], sel.s[R(dim)]);
+    int ss = m = max(sel.s[R(dim)], sel.s[C(dim)]);
     makeundo();
     loop(d,sel.s[D(dim)]) loopi(cw>0 ? 1 : 3)
     {

@@ -55,7 +55,8 @@ void optiface(uchar *p, cube &c)
     emptyfaces(c);
 };
 
-int lux, luy, luz, lusize;
+ivec lu;
+int lusize;
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
@@ -82,9 +83,9 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         };
         c = c->children;
     };
-    lux = x;
-    luy = y;
-    luz = z;
+    lu.x = x;
+    lu.y = y;
+    lu.z = z;
     lusize = size;
     return *c;
 };

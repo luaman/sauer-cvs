@@ -37,7 +37,8 @@ struct cube
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
-extern int lux, luy, luz, lusize;
+extern ivec lu;
+extern int lusize;
 extern int wtris, wverts, vtris, vverts;
 extern int allocnodes, selchildcount;
 extern void destroyva(vtxarray *va);
