@@ -11,6 +11,7 @@ cube *newcubes(uint face)
     loopi(8)
     {
         c->children = NULL;
+        c->va = NULL;
         setfaces(*c, face);
         loopl(6) c->texture[l] = 2+l;
         int col = rnd(256);
@@ -31,7 +32,15 @@ int familysize(cube &c)
 
 void freeocta(cube *c)
 {
-    loopi(8) if(c[i].children) freeocta(c[i].children);
+    loopi(8) if(c[i].children)
+    {
+        if (c[i].va)
+        {
+            gp()->dealloc(c[i].va, c[i].va->allocsize);
+            c[i].va = NULL;
+        };
+        freeocta(c[i].children);
+    };
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;
 };
@@ -61,8 +70,11 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             //if(!tsize) break;
             if(tsize<=0) break;
-            if(isempty(*c)) c->children = newcubes(F_EMPTY);
-            else subdividecube(*c);
+            if(isempty(*c))
+            {
+                c->children = newcubes(F_EMPTY);
+                c->va = NULL;
+            } else subdividecube(*c);
         };
         c = c->children;
     };

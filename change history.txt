@@ -5,6 +5,8 @@ Dec 6 2004:
 - make tools.h more compatible with gcc
 - comment out VAR code
 - improved hidden face rejection
+- added hierarchial vertex arrays
+- added view frustrum culling
 
 Dec 4 2004:
 ----------------

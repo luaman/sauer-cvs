@@ -143,6 +143,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     {
         hdr.worldsize *= 2;
         cube *c = newcubes(F_SOLID);
+        c->va = NULL;
         c[0].children = worldroot;
         worldroot = c;
     }

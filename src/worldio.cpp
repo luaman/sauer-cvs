@@ -115,6 +115,7 @@ void loadc(gzFile f, cube &c)
 cube *loadchildren(gzFile f)
 {
     cube *c = newcubes();
+    c->va = NULL;
     loopi(8) loadc(f, c[i]);
     // TODO: remip c from children here
     return c;

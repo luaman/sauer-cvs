@@ -1,21 +1,53 @@
 // 6-directional octree heightfield map format
 
+struct elementset
+{
+    int texture;
+    int length[3];
+};
+
+struct vtxarray
+{
+    elementset *eslist; // List of element indces sets (range) per texture
+    vertex *vbuf;       // vertex buffer
+    ushort *ebuf;       // packed element indices buffer
+    vtxarray *next;     // linked list of visible VOBs
+    int verts, tris, texs;
+    int allocsize;      // size of allocated memory for this va
+    float radius;       // cube bounding radius
+    float distance;     // distance from player 1
+    vec cv;             // cube center
+};
+
 struct cube
 {
     cube *children;         // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
-    union
-    {
-        uchar edges[12];    // edges of the cube, each uchar is 2 4bit values denoting the range.
-                            // see documentation jpgs for more info.
-        uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
-    };
-    uchar texture[6];       // one for each face. same order as orient.
-    uchar colour[3];        // colour at (-X,-Y,-Z) corner
+//    union
+//    {
+//        struct
+//        {
+            union
+            {
+                uchar edges[12];    // edges of the cube, each uchar is 2 4bit values denoting the range.
+                                    // see documentation jpgs for more info.
+                uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
+            };
+            uchar texture[6];       // one for each face. same order as orient.
+            uchar colour[3];        // colour at (-X,-Y,-Z) corner
+//        };
+//        struct
+//        {
+            vtxarray *va;           // vertex array for children, or NULL
+            int verts;              // verts count, for vertex array subdivision
+            int tris;
+//        };
+//    };
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern int lux, luy, luz, lusize;
-extern int wtris, allocnodes, selchildcount;
+extern int wtris, wverts, vtris, vverts;
+extern int allocnodes, selchildcount;
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)
 const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)

@@ -95,6 +95,11 @@ void discardchildren(cube &c)
 {
     if(c.children)
     {
+        if (c.va)
+        {
+            gp()->dealloc(c.va, c.va->allocsize);
+            c.va = NULL;
+        };
         solidfaces(c); // FIXME: better mipmap
         freeocta(c.children);
         c.children = NULL;
@@ -244,6 +249,7 @@ cube copycube(cube &src)
     if (src.children)
     {
         c.children = newcubes(F_EMPTY);
+        c.va = NULL;
         loopi(8) c.children[i] = copycube(src.children[i]);
     };
     return c;

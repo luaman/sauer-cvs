@@ -212,6 +212,8 @@ extern int islittleendian;
 
 #define PI  (3.1415927f)
 #define PI2 (2*PI)
+#define SQRT3 (1.7320508f)
+#define RAD (PI / 180.0f)
 
 #define sgetstr() { char *t = text; do { *t = getint(p); } while(*t++); }   // used by networking
 
@@ -341,6 +343,7 @@ extern void computeraytable(float vx, float vy);
 extern int isoccluded(float vx, float vy, float cx, float cy, float csize);
 
 // main
+extern int scr_w, scr_h;
 extern void fatal(char *s, char *o = "");
 extern void *alloc(int s);
 extern void keyrepeat(bool on);
