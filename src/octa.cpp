@@ -36,7 +36,7 @@ void freeocta(cube *c)
     allocnodes--;
 };
 
-int rvertedge(int edge, int coord)  { return (rd(edge>>2)<<2) + (edge<4 ? (edge&2?1:0)+(coord?2:0) : (edge&2?2:0)+(coord?1:0)); };
+int rvertedge(int edge, int coord)  { return (R(edge>>2)<<2) + (edge<4 ? (edge&2?1:0)+(coord?2:0) : (edge&2?2:0)+(coord?1:0)); };
 int dc(int d, int i)                { return i&(1<<(2-d)) ? 1 : 0; };            // dimension coord
 int eavg(int a, int b)              { return ((a>>1)&0x77) + ((b>>1)&0x77); };   // edge average 
 
@@ -57,7 +57,7 @@ void subdividecube(cube &c) // nasty code follows...
         loop(d,3) loop(col,2) loop(row,2) // split edges and assign
         {   
             uchar *cce = &c.children[i].edges[(d*4)+(col*2)+row];
-            uchar sed = se[d][col + dc(cd(d),i)][row + dc(rd(d),i)];
+            uchar sed = se[d][col + dc(C(d),i)][row + dc(R(d),i)];
             if     (edgeget(sed,1) < 5) *cce = (dc(d,i) ? 0 : 2*sed);               // edge is entirely in lower quad
             else if(edgeget(sed,0) > 4) *cce = (dc(d,i) ? 2*sed - 0x88 : 0x88);     // edge is entirely in upper quad
             else                        *cce = (dc(d,i) ? ((2*sed)&0xF0)-0x80 : ((2*sed)&0x0F)+0x80); // edge is split

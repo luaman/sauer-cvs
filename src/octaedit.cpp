@@ -10,9 +10,7 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
         {z, y+ys, x}
     };
     glBegin(GL_POLYGON);
-    loopi(4) glVertex3i( d==2 ? v[i][0] : v[i][2], 
-                         d==0 ? v[i][0] : v[i][1], 
-                         d==2 ? v[i][2] : v[i][d^1] );
+    loopi(4) glVertex3i(v[i][X(d)], v[i][Z(d)], v[i][Y(d)]);
     glEnd();
 };
 
@@ -130,7 +128,7 @@ void cursorupdate()
     cor[2] = x/g2;
     cor[1] = y/g2;
     cor[0] = z/g2;
-    corner = (cor[rd(d)]-lu(rd(d))/g2)+(cor[cd(d)]-lu(cd(d))/g2)*2;    
+    corner = (cor[R(d)]-lu(R(d))/g2)+(cor[C(d)]-lu(C(d))/g2)*2;    
     cx = lux;
     cy = luy;
     cz = luz;
@@ -145,10 +143,10 @@ void cursorupdate()
             sels[2] = abs(lastx-cx)+selgrid;
             sels[1] = abs(lasty-cy)+selgrid;
             sels[0] = abs(lastz-cz)+selgrid;
-            selcx   = min(cor[rd(d)], lastcor[rd(d)]);
-            selcxs  = max(cor[rd(d)], lastcor[rd(d)])-selcx+1;
-            selcy   = min(cor[cd(d)], lastcor[cd(d)]);
-            selcys  = max(cor[cd(d)], lastcor[cd(d)])-selcy+1;
+            selcx   = min(cor[R(d)], lastcor[R(d)]);
+            selcxs  = max(cor[R(d)], lastcor[R(d)])-selcx+1;
+            selcy   = min(cor[C(d)], lastcor[C(d)]);
+            selcys  = max(cor[C(d)], lastcor[C(d)])-selcy+1;
             selcx  &= 1;
             selcy  &= 1;
             havesel = true;
@@ -170,24 +168,24 @@ void cursorupdate()
     glLineWidth(1);
     //glColor4ub(64,64,255,32);
     glColor3ub(120,120,120);    // cursor
-    boxs(d, lu(rd(d)), lu(cd(d)), lusize, lusize, lu(d)+dimcoord(orient)*lusize);
+    boxs(d, lu(R(d)), lu(C(d)), lusize, lusize, lu(d)+dimcoord(orient)*lusize);
 
     if(havesel)
     {
         d = dimension(selorient);
         glColor3ub(20,20,20);   // grid
-        for(int row = sel[rd(d)]; row<sel[rd(d)]+sels[rd(d)]; row += selgrid) 
-        for(int col = sel[cd(d)]; col<sel[cd(d)]+sels[cd(d)]; col += selgrid) 
+        for(int row = sel[R(d)]; row<sel[R(d)]+sels[R(d)]; row += selgrid) 
+        for(int col = sel[C(d)]; col<sel[C(d)]+sels[C(d)]; col += selgrid) 
             boxs(d, row, col, selgrid, selgrid, sel[d]+dimcoord(selorient)*sels[d]);
         glColor3ub(200,0,0);    // 0 reference
-        boxs(d, sel[rd(d)]-4, sel[cd(d)]-4, 8, 8, sel[d]);
+        boxs(d, sel[R(d)]-4, sel[C(d)]-4, 8, 8, sel[d]);
         glColor3ub(200,200,200);// 2D selection box
-        boxs(d, sel[rd(d)]+selcx*g2, sel[cd(d)]+selcy*g2, selcxs*g2, selcys*g2, sel[d]+dimcoord(selorient)*sels[d]);
+        boxs(d, sel[R(d)]+selcx*g2, sel[C(d)]+selcy*g2, selcxs*g2, selcys*g2, sel[d]+dimcoord(selorient)*sels[d]);
         glColor3ub(0,0,40);     // 3D selection box
         loopi(6)
         {
             d = dimension(i);
-            boxs(d, sel[rd(d)], sel[cd(d)], sels[rd(d)], sels[cd(d)], sel[d]+dimcoord(i)*sels[d]);
+            boxs(d, sel[R(d)], sel[C(d)], sels[R(d)], sels[C(d)], sel[d]+dimcoord(i)*sels[d]);
         };
     };
     glDisable(GL_BLEND);
@@ -315,23 +313,19 @@ void optiface(uchar *p, cube &c)
     emptyfaces(c);
 };
 
-
 cube &selcube(int row, int col, int depth)
 {
-    switch(dimension(selorient))
-    {   
-        case 0:  return neighbourcube(sel[2]+row*selgrid, sel[1]+col*selgrid, sel[0]+dimcoord(selorient)*(sels[0]-selgrid), -depth*selgrid, selgrid, selorient);
-        case 1:  return neighbourcube(sel[2]+row*selgrid, sel[1]+dimcoord(selorient)*(sels[1]-selgrid), sel[0]+col*selgrid, -depth*selgrid, selgrid, selorient);
-        default: return neighbourcube(sel[2]+dimcoord(selorient)*(sels[2]-selgrid), sel[1]+row*selgrid, sel[0]+col*selgrid, -depth*selgrid, selgrid, selorient);
-    };
+    int d = dimension(selorient);
+    int s[3] = { dimcoord(selorient)*(sels[d]-selgrid), col*selgrid, row*selgrid };
+    return neighbourcube(sel[2]+s[X(d)], sel[1]+s[Y(d)], sel[0]+s[Z(d)], -depth*selgrid, selgrid, selorient);
 };
 
 void editface(int dir, int mode)
 {
     if(noedit()) return;
     int seldir = dimcoord(selorient) ? -dir : dir;
-    int xs = sels[rd(dimension(selorient))]/selgrid;
-    int ys = sels[cd(dimension(selorient))]/selgrid;
+    int xs = sels[R(dimension(selorient))]/selgrid;
+    int ys = sels[C(dimension(selorient))]/selgrid;
     if (mode==1) 
     {
         if(sel[dimension(selorient)]+dimcoord(selorient)*selgrid==0 && dimcoord(selorient) == !(dir<0)) return;
@@ -398,8 +392,8 @@ void edittex(int dir)
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
     curtexindex = i = min(max(i, 0), 255);
-    loop(r, sels[rd(dimension(selorient))]/selgrid) 
-    loop(c, sels[cd(dimension(selorient))]/selgrid)
+    loop(r, sels[R(dimension(selorient))]/selgrid) 
+    loop(c, sels[C(dimension(selorient))]/selgrid)
         edittexcube(selcube(r,c,0), lasttex = hdr.texlist[i], selorient);
     changed = true; cursorchange = false;
 };
@@ -418,8 +412,8 @@ void lightcube(cube &c, int dr, int dg, int db)
 void lite(int r, int g, int b) 
 { 
     EDITINIT; 
-    int xs = sels[rd(dimension(selorient))]/selgrid;
-    int ys = sels[cd(dimension(selorient))]/selgrid;
+    int xs = sels[R(dimension(selorient))]/selgrid;
+    int ys = sels[C(dimension(selorient))]/selgrid;
     int ds = sels[dimension(selorient)]/selgrid; 
     loop(d,ds) loop(x,xs) loop(y,ys) lightcube(selcube(x, y, d), r*litepower, g*litepower, b*litepower); 
 };
@@ -431,7 +425,7 @@ int rflip(int face)         { return ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)
 int cflip(int face)         { return ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16); };
 int mflip(int face)         { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8); };
 int rcflip(int face, int r) { return r>0 ? rflip(face) : cflip(face); };
-int rcd(int dim, int r)     { return r>0 ? rd(dim) : cd(dim); };
+int rcd(int dim, int r)     { return r>0 ? R(dim) : C(dim); };
 
 void flipcube(cube &c, int dim)
 {
@@ -454,16 +448,16 @@ void rotatecube(cube &c, int dim, int cw)   // swapping stuff to mimic rotation 
     c.faces[dim]          = dim==1 ? rcflip (mflip(c.faces[dim]),-cw)          : rcflip (mflip(c.faces[dim]),cw);
     c.faces[rcd(dim,-cw)] = dim==1 ? rcflip (mflip(c.faces[rcd(dim,-cw)]),-cw) : edgeinv(c.faces[rcd(dim,-cw)]);
     c.faces[rcd(dim,cw)]  = dim==1 ? edgeinv(mflip(c.faces[rcd(dim,cw)]))      : rcflip (c.faces[rcd(dim,cw)],2-dim);
-    uint t; swap(c.faces[rd(dim)], c.faces[cd(dim)], t);
+    uint t; swap(c.faces[R(dim)], c.faces[C(dim)], t);
 
-    swap(c.texture[2*rd(dim)],     c.texture[2*cd(dim)+(dim==1?0:1)], t);
-    swap(c.texture[2*rd(dim)+1],   c.texture[2*cd(dim)+(dim==1?1:0)], t);
+    swap(c.texture[2*R(dim)],     c.texture[2*C(dim)+(dim==1?0:1)], t);
+    swap(c.texture[2*R(dim)+1],   c.texture[2*C(dim)+(dim==1?1:0)], t);
     swap(c.texture[2*rcd(dim,-cw)], c.texture[2*rcd(dim,-cw)+1], t);
 
     if (c.children)
     {
-        int row = dim==1 ? (1<<rd(dim)) : (1<<(2-rd(dim)));
-        int col = dim==1 ? (1<<cd(dim)) : (1<<(2-cd(dim)));
+        int row = dim==1 ? (1<<R(dim)) : (1<<(2-R(dim)));
+        int col = dim==1 ? (1<<C(dim)) : (1<<(2-C(dim)));
         for(int i=0; i<=1<<(2-dim); i+=1<<(2-dim))
         {
             cube tc;
@@ -478,8 +472,8 @@ void rotatecube(cube &c, int dim, int cw)   // swapping stuff to mimic rotation 
 void flip()         
 { 
     EDITINIT;
-    int xs = sels[rd(dimension(selorient))]/selgrid;
-    int ys = sels[cd(dimension(selorient))]/selgrid;
+    int xs = sels[R(dimension(selorient))]/selgrid;
+    int ys = sels[C(dimension(selorient))]/selgrid;
     int ds = sels[dimension(selorient)]/selgrid; 
     loop(d,ds) loop(x,xs) loop(y,ys) flipcube(selcube(x, y, d), dimension(selorient));
     loop(d,ds/2) loop(x,xs) loop(y,ys) 

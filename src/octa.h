@@ -29,12 +29,12 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 #define edgeget(edge, coord) ((coord) ? (edge)>>4 : (edge)&0xF)
 #define edgeset(edge, coord, val) ((edge) = ((coord) ? ((edge)&0xF)|((val)<<4) : ((edge)&0xF0)|(val)))
 // DIM: Z=0 Y=1 X=2. Descriptions: DEPTH=0 COL=1 ROW=2
-#define dd(dim) (dim)           
-#define rd(dim) ((dim)==2?1:2)      // gets relative row dimension of given
-#define cd(dim) ((dim)==0?1:0)      // gets relative column dimension of given
-#define xd(dim) ((dim)==2?0:2)      // gets x description, when dimension is the given
-#define yd(dim) ((dim)==2?2:1-(dim))
-#define zd(dim) ((dim)==0?0:1)
+#define D(dim) (dim)           
+#define R(dim) ((dim)==2?1:2)      // gets relative row dimension of given
+#define C(dim) ((dim)==0?1:0)      // gets relative column dimension of given
+#define X(dim) ((dim)==2?0:2)      // gets x description, when dimension is the given
+#define Y(dim) ((dim)==2?2:1-(dim))
+#define Z(dim) ((dim)==0?0:1)
 
 enum
 {
