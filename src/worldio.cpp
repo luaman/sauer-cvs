@@ -174,7 +174,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     
     freeocta(worldroot);
     worldroot = loadchildren(f);
-    changed = true;
+    allchanged();
     
     gzclose(f);
     settagareas();

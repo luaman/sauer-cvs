@@ -36,6 +36,15 @@ struct cube
     //int tris;
 };
 
+struct changedcube
+{
+    cube *c;
+    int cx, cy, cz, size;
+
+    changedcube(cube *cube, int x, int y, int z, int s)
+        : c(cube), cx(x), cy(y), cz(z), size(s) {};
+};
+
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern int lux, luy, luz, lusize;
 extern int wtris, wverts, vtris, vverts;
@@ -102,5 +111,6 @@ extern void cursorupdate();
 extern void editdrag(bool on);
 extern void cancelsel();
 extern void pruneundos(int maxremain = 0);
+extern void allchanged();
 
-extern bool changed; //remove
+extern vector<changedcube> changed;

@@ -200,7 +200,7 @@ uint faceedges(cube &c, int orient)
 };
 
 //extern cube *last;
-void recalc() { changed = true; };
+void recalc() { allchanged(); };
 COMMAND(recalc, ARG_NONE);
 
 bool faceedgegt(uint cfe, uint ofe)
@@ -530,39 +530,40 @@ void octarenderc(cube *c, int size, int cx, int cy, int cz)
 
 void octarender()
 {
-    cube *c = worldroot;
     if(!verts) reallocv();
 
-    vaclearc(c);
-    wverts = wtris = 0;
-    int size = hdr.worldsize/2;
-    int cx = 0, cy = 0, cz = 0;
-
-    loopi(8)
+    loopj(changed.length())
     {
-        int x = cx+((i&1)>>0)*size;
-        int y = cy+((i&2)>>1)*size;
-        int z = cz+((i&4)>>2)*size;
-        if (c[i].children)
+        cube *c = changed[j].c;
+        int x = changed[j].cx;
+        int y = changed[j].cy;
+        int z = changed[j].cz;
+        int size = changed[j].size;
+
+        if (c->va) destroyva(c->va); // must have VA unless first
+        if (c->children) vaclearc(c->children);
+
+        if (c->children)
         {
-            renderc(c[i].children, size/2, x, y, z);
+            renderc(c->children, size/2, x, y, z);
             vh.clear();
 
             if (curvert > VA_VERTMAX)
             {
                 loopl(3) loopk(256) indices[l][k].setsize(0);
                 curtris = curvert = 0;
-                octarenderc(c[i].children, size/2, x, y, z);
-                renderc(c[i].children, size/2, x, y, z);
+                octarenderc(c->children, size/2, x, y, z);
+                renderc(c->children, size/2, x, y, z);
                 vh.clear();
             };
         } else {
-            gencubeverts(c[i], x, y, z, size);
+            gencubeverts(*c, x, y, z, size);
             vh.clear();
         };
 
-        if (curvert) c[i].va = newva(x, y, z, size/2);
+        if (curvert) c->va = newva(x, y, z, size/2);
     };
+    changed.setsize(0);
 };
 
 void gentris(cube &c, vec &pos, float size, plane *tris, float x=1, float y=1, float z=1)

@@ -278,9 +278,21 @@ void freeblock3(block3 *b)
     gp()->dealloc(b, sizeof(block3)+sizeof(cube)*b->size());
 };
 
+vector<changedcube> changed;
 struct undoblock { int *g; block3 *b; };
 vector<undoblock> undos;                                // unlimited undo
 VAR(undomegs, 0, 1, 10);                                // bounded by n megs
+
+void allchanged()
+{
+    int size = hdr.worldsize / 2;
+    loopi(8) changed.add(changedcube(worldroot+i, octacoord(2,i)*size, octacoord(1,i)*size, octacoord(0,i)*size, size));
+};
+
+void setchanged(block3 *b)
+{
+    allchanged();
+};
 
 void freeundo(undoblock u)
 {
@@ -323,7 +335,7 @@ void pruneundos(int maxremain)                          // bound memory
 
 void makeundo()                                         // stores state of selected cubes before editing
 {
-    changed = true;
+    setchanged(&sel);
     if(lastsel == sel) return;
     undoblock u = { selgridmap(), block3copy(lastsel=sel, -sel.grid)};
     undos.add(u);
@@ -334,9 +346,9 @@ void editundo()                                         // undoes last action
 {
     if(noedit()) return;
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
+    setchanged((undos.last()).b);
     pasteundo(undos.pop());
     lastsel.s[0]=0;                                     // next edit should save state again
-    changed = true;
 };
 
 block3 *copybuf=NULL;

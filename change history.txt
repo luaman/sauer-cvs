@@ -4,6 +4,7 @@ Dec 12 2004:
 ----------------
 - rework vertex array code to better fit model
 - GNU g++ compatibility in physics.cpp
+- add framework for partial map updates
 
 Dec 11 2004:
 ----------------

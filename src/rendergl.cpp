@@ -286,8 +286,6 @@ void drawhudgun(float fovy, float aspect, int farplane)
     glDisable(GL_CULL_FACE);
 };
 
-bool changed = true;
-
 void gl_drawframe(int w, int h, float changelod, float curfps)
 {
     //glClear((player1->outsidemap ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
@@ -322,12 +320,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     int xs, ys;
     loopi(10) lookuptexture(i, xs, ys);
     
-    if(changed)
-    {
-        changed = false;
-        octarender();
-        //memcpy(varbuf, verts, min(curvert, MAX_VAR_VERTS)*sizeof(vertex));
-    };
+    if(changed.length()) octarender();
 
     ///render_world(player1->o.x, player1->o.y, player1->o.z, changelod, (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
     ///finishstrips();
