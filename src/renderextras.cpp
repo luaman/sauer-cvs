@@ -31,7 +31,7 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     glDisable(GL_TEXTURE_2D);
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
     glBegin(GL_QUADS);
-    if(border) glColor3d(0.5, 0.3, 0.4); 
+    if(border) glColor3d(0.5, 0.3, 0.4);
     else glColor3d(1.0, 1.0, 1.0);
     glVertex2i(x1, y1);
     glVertex2i(x2, y1);
@@ -41,7 +41,7 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     glDisable(GL_BLEND);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBegin(GL_POLYGON);
-    glColor3d(0.2, 0.7, 0.4); 
+    glColor3d(0.2, 0.7, 0.4);
     glVertex2i(x1, y1);
     glVertex2i(x2, y1);
     glVertex2i(x2, y2);
@@ -88,7 +88,7 @@ void renderspheres(int time)
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, 4);  
+    glBindTexture(GL_TEXTURE_2D, 4);
 
     for(sphere *p, **pp = &slist; p = *pp;)
     {
@@ -112,7 +112,7 @@ void renderspheres(int time)
         }
         else
         {
-            p->size += time/100.0f;   
+            p->size += time/100.0f;
             pp = &p->next;
         };
     };
@@ -126,10 +126,10 @@ char *entnames[] =
 {
     "none?", "light", "playerstart",
     "shells", "bullets", "rockets", "riflerounds",
-    "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage", 
-    "teleport", "teledest", 
-    "mapmodel", "monster", "trigger", 
-    "?", "?", "?", "?", "?", 
+    "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
+    "teleport", "teledest",
+    "mapmodel", "monster", "trigger",
+    "?", "?", "?", "?", "?",
 };
 
 void renderents()       // show sparkly thingies for map entities in edit mode
@@ -236,7 +236,7 @@ VAR(crosshairfx, 0, 1, 1);
 void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
 {
     readmatrices();
-    
+
     if(editmode)
     {
         if(cursordepth==1.0f) worldpos = player1->o;
@@ -249,7 +249,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     glDisable(GL_DEPTH_TEST);
     invertperspective();
-    glPushMatrix();  
+    glPushMatrix();
     glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
     glEnable(GL_BLEND);
 /*
@@ -309,23 +309,14 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glPopMatrix();
         glPushMatrix();
         glOrtho(0, VIRTW*3/2, VIRTH*3/2, 0, -1, 1);
-        if(editmode) 
-		{
-			int oldsize = lusize, oldx = lux, oldy = luy, oldz = luz;
-			lookupcube(lux,luy,luz);
-			draw_textf("cube %d", 3100, 2250, 2, oldsize > lusize ? familysize(lookupcube(lux,luy,luz,oldsize)) : 1);
-			lusize = oldsize;
-			lux = oldx;
-			luy = oldy;
-			luz = oldz;
-		};
+        if(editmode) draw_textf("cube %d", 3100, 2250, 2, selchildcount);
         draw_textf("fps %d", 3100, 2320, 2, curfps);
         draw_textf("tri %d", 3100, 2390, 2, wtris);
-        draw_textf("ond %d", 3100, 2460, 2, allocnodes*8); 
+        draw_textf("ond %d", 3100, 2460, 2, allocnodes*8);
         draw_textf("wvt %d", 3100, 2530, 2, curvert);
         draw_textf("evt %d", 3100, 2600, 2, xtraverts);
     };
-    
+
     glPopMatrix();
     glPushMatrix();
     glOrtho(0, VIRTW/2, VIRTH/2, 0, -1, 1);
@@ -339,11 +330,11 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glDisable(GL_BLEND);
 
     drawicon(128, 128, 20, 1650);
-    if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650); 
+    if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
     int g = player1->gunselect;
     int r = 64;
     if(g>2) { g -= 3; r = 128; };
-    drawicon((float)(g*64), (float)r, 1220, 1650); 
+    drawicon((float)(g*64), (float)r, 1220, 1650);
 
     glPopMatrix();
     glDisable(GL_TEXTURE_2D);
