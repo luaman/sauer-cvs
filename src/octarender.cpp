@@ -158,8 +158,8 @@ const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orien
 
 int faceconvexity(vec *v, int orient)
 {
-    float *f = (float *)v + 2-dimension(orient);
-    int n = (int)(*f - *(f+3) + *(f+6) - *(f+9));
+    int d = dimension(orient);
+    int n = (int)(v[0][d] - v[1][d] + v[2][d] - v[3][d]);
     if (!dimcoord(orient)) n *= -1;
     return n; // returns +ve if convex when tris are verts 012, 023. -ve for concave.
 };
@@ -258,8 +258,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
 void renderq()
 {
-    int si[] = { 0, 0, 1 };
-    int ti[] = { 2, 1, 2 };
+    int si[] = { 2, 0, 1 };
+    int ti[] = { 0, 1, 2 };
     loopl(3) loopk(256)
     {
         usvector &v = indices[l][k];
@@ -283,9 +283,9 @@ void renderc(cube *c, int size, int cx, int cy, int cz)
 {
     loopi(8)
     {
-        int x = cx+((i&1)>>0)*size;
-        int y = cy+((i&2)>>1)*size;
-        int z = cz+((i&4)>>2)*size;
+        int x = cx+octacoord(2,i)*size;
+        int y = cy+octacoord(1,i)*size;
+        int z = cz+octacoord(0,i)*size;
         if(c[i].children)
         {
             renderc(c[i].children, size/2, x, y, z);
@@ -356,6 +356,39 @@ void tris2cube(cube &c, plane *tris, int size, uchar x=0, uchar y=0, uchar z=0)
     loopi(3) optiface((uchar *)&c.faces[i], c);
 };
 
+void cubecoordlookup(cvec &p, int e, int dc)
+{
+    int d = e>>2;
+    p[D(d)] = dc ? 8 : 0;
+    p[R(d)] = 8*(e&1);
+    p[C(d)] = 4*(e&2);
+};
+
+void pushvert(cube &c, int e, int dc)
+{
+    cvec p;
+    int d = R(e>>2);
+    cubecoordlookup(p, e, dc);
+    uchar &edge = cubeedgelookup(c, p, d);
+    edgeset(edge, p[d], 8-p[d]);
+};
+
+void validatechildren(cube *c)                              // fixes the two special cases
+{
+    loopi(8) if(!isempty(c[i]))
+    {
+        uchar *e = &c[i].edges[0];
+        loopj(12) if(e[j]==0x88 || e[j]==0)
+        {
+            int dc = octacoord(j>>2,i);
+            uchar &n = c[i^octamask(j>>2)].edges[j];        // edge below e[j]
+            if(e[j]==e[j^1] && e[j]==e[j^2] && n!=0x80)     // fix 'peeling'
+                pushvert(c[i], j, e[j]);
+            else if(!e[j] != !dc) edgeset(n, dc, dc*8);     // fix 'cracking'
+        };
+    };
+};
+
 void subdividecube(cube &c)
 {
     if(c.children) return;
@@ -364,7 +397,7 @@ void subdividecube(cube &c)
     plane tris[12];
     gentris(c, zero, 16, tris);
     loopi(8) tris2cube(ch[i], tris, 1, (i&1)*8, (i&2)*4, (i&4)*2);
-    //validatechildren(c.children);
+    validatechildren(c.children);
     loopi(8)
     {
         loopj(6) ch[i].texture[j] = c.texture[j];
