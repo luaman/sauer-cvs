@@ -17,7 +17,6 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
 };
 
 int orient = 0;
-cube *last = NULL;
 int gridsize = 32;
 int corner = 0, corx, cory;
 
@@ -96,11 +95,25 @@ void cursorupdate()
 {
     vec dir(worldpos);
     dir.sub(player1->o);
-    float len = dir.magnitude() / 2;        // modifier might need to be tweaked
-    int x = (int)(worldpos.x + dir.x/len);  // worldpos + a nudge in the right direction to account for rounding etc
-    int y = (int)(worldpos.y + dir.y/len);  // nudge is pretty much a unit vector projection of view direction
+    float len = dir.magnitude() / (gridsize/4); // modifier might need to be tweaked
+    int x = (int)(worldpos.x + dir.x/len);      // worldpos + a nudge in the right direction to account for rounding etc
+    int y = (int)(worldpos.y + dir.y/len);      // nudge is pretty much a unit vector projection of view direction
     int z = (int)(worldpos.z + dir.z/len);
-    last = &lookupcube(x, y, z, gridsize);
+    lookupcube(x, y, z);
+
+    if(lusize>gridsize)
+    {
+        lux += (x-lux)/gridsize*gridsize;
+        luy += (y-luy)/gridsize*gridsize;
+        luz += (z-luz)/gridsize*gridsize;
+    }
+    else if(gridsize>lusize)
+    {
+        lux &= ~(gridsize-1);
+        luy &= ~(gridsize-1);
+        luz &= ~(gridsize-1);
+    };    
+    lusize = gridsize;
 
     int xint  = (int)(worldpos.x + (dir.x/dir.y) * (luy - worldpos.y + (dir.y<0 ? gridsize : 0))); // x intersect of xz plane
     int zint  = (int)(worldpos.z + (dir.z/dir.y) * (luy - worldpos.y + (dir.y<0 ? gridsize : 0))); // z intersect of xz plane
@@ -183,7 +196,7 @@ void pruneundos(int maxremain)                          // bound memory
 
 void makeundo()
 {
-    undo u = { copycube(*last), lux, luy, luz, lusize };
+    undo u = { copycube(lookupcube(lux,luy,luz,lusize)), lux, luy, luz, lusize };
     undos.add(u);
     pruneundos(undomegs<<20);
 };
@@ -199,14 +212,14 @@ void editundo()
     changed = true;
 };
 
-cube copybuf;
-void copy() { if(noedit()) return; discardchildren(copybuf); copybuf = copycube(*last); };
+cube copybuf; // need intialization?
+void copy() { if(noedit()) return; discardchildren(copybuf); copybuf = copycube(lookupcube(lux,luy,luz,lusize)); };
 void paste() 
 { 
-    if(noedit()) return; makeundo();
-    discardchildren(*last);
-    *last = copycube(copybuf);
-    changed = true; 
+    if(noedit()) return; makeundo(); changed = true;
+    cube &c = lookupcube(lux,luy,luz,lusize);
+    discardchildren(c);
+    c = copycube(copybuf);
 };
 
 COMMAND(copy, ARG_NONE);
@@ -232,7 +245,7 @@ void optiface(uchar *p, cube &c)
 
 void editface(int dir, int mode)
 {
-    if(noedit()) return; makeundo(); // FIXME: Not adequate
+    if(noedit()) return;
     if(havesel)
     {
         int xs = sels[rd(dimension(selorient))]/selgrid;
@@ -257,28 +270,29 @@ void editface(int dir, int mode)
                 if(x==xs-1 && mx==1 && (selcx+selcxs)&1) continue;
                 if(y==ys-1 && my==1 && (selcy+selcys)&1) continue;
                 
-                pushedge(p[mx+my*2], dir, dimcoord(selorient));
+                switch(mode)
+                {
+                    case 0: pushedge(p[mx+my*2], dir, dimcoord(selorient)); break;
+                    case 1: pushedge(p[mx+my*2], dir*8, dimcoord(selorient)); break;
+                };
             };       
             
             optiface(p, *c);
         };
     }
     else
-    {
-        cube &c = lookupcube(lux, luy, luz, lusize);
-        discardchildren(c);
-                
-        if(isentirelysolid(c) && dir<0)
+    {                
+        if(mode==1 && dir<0)
         {
             cube &o = neighbourcube(lux, luy, luz, lusize, lusize, orient);
-            
-            switch(mode)
-            {
-                case 1: discardchildren(o); solidfaces(o); break;
-            };
+            discardchildren(o); 
+            solidfaces(o);
         }
         else
         {
+            makeundo();
+            cube &c = lookupcube(lux, luy, luz, lusize);
+            discardchildren(c);
             if(dimcoord(orient)) dir *= -1;
             uchar *p = (uchar *)&c.faces[dimension(orient)];
             
@@ -321,16 +335,28 @@ void edittexcube(cube &c, int tex)
 
 void edittex(int dir)
 {
-    if(noedit()) return; makeundo();
-    if(last!=lasttexcube || lastorient!=orient) { tofronttex(); lasttexcube = last; lastorient = orient; };
+    if(noedit()) return; makeundo(); changed = true;
+    cube &c = lookupcube(lux,luy,luz,lusize);
+    if(&c!=lasttexcube || lastorient!=orient) { tofronttex(); lasttexcube = &c; lastorient = orient; };
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
     curtexindex = i = min(max(i, 0), 255);
-    edittexcube(*last, lasttex = hdr.texlist[i]);
-    changed = true;
+    edittexcube(c, lasttex = hdr.texlist[i]);
 };
 
 COMMAND(edittex, ARG_1INT);
+
+VAR(litepower, 1, 10, 255);
+void lightcube(cube &c, int dr, int dg, int db)
+{
+    c.colour[0] = (uchar) (c.colour[0]+dr<0 ? 0 : (c.colour[0]+dr>255 ? 255 : c.colour[0]+dr));
+    c.colour[1] = (uchar) (c.colour[1]+dg<0 ? 0 : (c.colour[1]+dg>255 ? 255 : c.colour[1]+dg));
+    c.colour[2] = (uchar) (c.colour[2]+db<0 ? 0 : (c.colour[2]+db>255 ? 255 : c.colour[2]+db));
+    if (c.children) loopi(8) lightcube(c.children[i],dr,dg,db);
+};
+
+void lite(int r, int g, int b) { if(noedit()) return; makeundo(); changed = true; lightcube(lookupcube(lux,luy,luz,lusize), r*litepower, g*litepower, b*litepower); };
+COMMAND(lite, ARG_3INT);
 
 ////////// flip and rotate ///////////////
 int edgeinv(int face)       { return 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); };
@@ -382,8 +408,8 @@ void rotatecube(cube &c, int dim, int cw)   // swapping stuff to mimic rotation 
     };
 };
 
-void flip()         { if(noedit()) return; makeundo(); flipcube(*last, dimension(orient)); changed = true; };
-void rotate(int cw) { if(noedit()) return; makeundo(); rotatecube(*last, dimension(orient), dimcoord(orient)?cw:-cw); changed = true; };
+void flip()         { if(noedit()) return; makeundo(); changed = true; flipcube(lookupcube(lux,luy,luz,lusize), dimension(orient)); };
+void rotate(int cw) { if(noedit()) return; makeundo(); changed = true; rotatecube(lookupcube(lux,luy,luz,lusize), dimension(orient), dimcoord(orient)?cw:-cw); };
 
 COMMAND(flip, ARG_NONE);
 COMMAND(rotate, ARG_1INT);
