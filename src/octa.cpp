@@ -54,9 +54,13 @@ void newworld()
     };
 };
 
+int rvertcoord(int edge)            { return edge&1 ? 8 : 0; };
+int rvertedge(int edge, int coord)  { return (rd(edge>>2)<<2) + (edge<4 ? (edge&2?1:0)+(coord?2:0) : (edge&2?2:0)+(coord?1:0)); };
+int dc(int d, int i)                { return i&(1<<(2-d)) ? 1 : 0; };            // dimension coord
+int eavg(int a, int b)              { return ((a>>1)&0x77) + ((b>>1)&0x77); };   // edge average 
+
 int lux, luy, luz, lusize;
-int dc(int d, int i) { return i&(1<<(2-d)) ? 1 : 0; };                        // dimension coord
-int eavg(int a, int b, int mask) { return ((a>>1)&mask) + ((b>>1)&mask); };   // edge average 
+
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
@@ -74,13 +78,14 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             if(!tsize) break;
             c->children = newcubes(F_EMPTY);
+            // geomip : some of the nastiest code in the engine follows
             uchar se[3][3][3];  // [dim zxy][col yzz][row xxy]
             loop(d,3)           // expand edges from 4 to 9
             {
                 loopk(2) loopj(2) se[d][2*k][2*j] = c->edges[d*4 + k*2 + j];
-                loopj(2) se[d][2*j][1] = eavg(se[d][2*j][0], se[d][2*j][2], 0x77);
-                loopj(2) se[d][1][2*j] = eavg(se[d][0][2*j], se[d][2][2*j], 0x77);
-                         se[d][1][1]   = eavg(se[d][0][2], se[d][2][0], d ? 0x70:7) + eavg(se[d][0][0], se[d][2][2], d ? 7:0x70); // to comply with renderer...
+                loopj(2) se[d][2*j][1] = eavg(se[d][2*j][0], se[d][2*j][2]);
+                loopj(2) se[d][1][2*j] = eavg(se[d][0][2*j], se[d][2][2*j]);
+                         se[d][1][1]   = eavg(se[d][0][2],   se[d][2][0]); // to comply with renderer...
             };
             loopi(8)
             {   
@@ -92,9 +97,21 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
                     else if(edgeget(sed,0) > 4) *cce = (dc(d,i) ? 2*sed - 0x88 : 0x88);
                     else                        *cce = (dc(d,i) ? ((2*sed)&0xF0)-0x80 : ((2*sed)&0x0F)+0x80);
                 };
-                loopj(3) if (!c->children[i].faces[j] || c->children[i].faces[j]==0x88888888) emptyfaces(c->children[i]);//FIXME: need proper validation proc
                 loopj(6) c->children[i].texture[j] = c->texture[j];
                 loopj(3) c->children[i].colour[j] = c->colour[j];
+            };
+            loopi(8) // clean up edges
+            {   
+                loopj(3) if (!c->children[i].faces[j] || c->children[i].faces[j]==0x88888888) { emptyfaces(c->children[i]); break; };
+                if (isempty(c->children[i])) continue;
+                uchar *cce = &c->children[i].edges[0];
+                loopj(12) if (cce[j]==0x88 || !cce[j])
+                {
+                    if (cce[j]==cce[j^1] && cce[j]==cce[j^2])               // fix peeling
+                        cce[rvertedge(j, cce[j])] = rvertcoord(j) ? 0 : 0x88;
+                    else if (dc(j>>2,i)*8 != edgeget(cce[j], !dc(j>>2,i)))  // fix cracking somewhat
+                        edgeset(c->children[i^(1<<(2-(j>>2)))].edges[j], dc(j>>2,i), dc(j>>2,i) ? 8 : 0);                   
+                };
             };
         };
         c = c->children;
@@ -119,3 +136,16 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     };
     return lookupcube(x, y, z, rsize);
 };
+
+//////// REMOVE AFTER 0.03 Release ///////////
+void fixface(cube &c)
+{
+    uchar t; 
+    swap(c.texture[0],c.texture[1],t);
+    swap(c.texture[2],c.texture[3],t);
+    if (c.children) loopi(8) fixface(c.children[i]);
+};
+
+void fixfaces() { changed = true; loopi(8) fixface(worldroot[i]); };
+COMMAND(fixfaces, ARG_NONE);
+//////// REMOVE AFTER 0.03 Release ///////////
