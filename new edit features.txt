@@ -1,64 +1,213 @@
-New Editing Features
---------------------
+New Editing Feautures.
+=================
 
-First off, there's no need to select the cubes to use the following edit functions. Simply hovering the cursor over the cube is enough. Any selections are completely ignored.
+April 2005 sauerbraten.exe version 1.15+
 
-Also, you'll want to make the following changes to your autoexec.cfg file:
+This text quickly describes sauerbraten editing.
+
+===========
+Contents:
+===========
+
+1. Selection
+2. Commands
+3. HUD stats
+4. Tips
+5. Bindings
+
+===============
+1. Selection
+===============
+
+Sauerbraten uses a form of 3D selection. Editing commands will only affect the selected cubes.
+
+There are two modes of selection: implicit and explicit. 
+
+All you have to do to implicitly select a cube is point at it as if to shoot it. A white 2D box will highlight the cube you are currently selecting.
+
+In order to explicitly select a block of cubes, just point and left click on a cube. If you hold down the left mouse buttong, you can select many cubes. It should be just like selecting files in windows, but in 3D. Explicit selections override implicit ones.
+
+As you explicitly select cubes, a blue 3D box will outline the cubes that you have selected. Also a white 2D box and grid will appear on one side of the selection. If you move the scroll wheel, all the corners of a selected cube that are inside this white box will be pushed in, or pulled out, deforming the cubes. You might also notice a red box that highlights one of the corners of the selection box. This is used as a reference as it always surrounds the same corner. 
+
+If you want to quickly change the side the white selection box appears on without relselecting, press the right mouse button when pointing at the new side you want, on any cube. This cube does not actually have be in the selection.
+
+===============
+2. Commands
+===============
+
+The commands below can be entered in the console (press '~'), or better yet, bound to keys. Some of these commands have parameters that need to be used.
+Parameters:
+N - integer
+D - direction (1 or -1)
+
+gridpower N
+-----------
+changes the size of the grid 
+
+reorient
+-----------
+change the side the white box is on to be the same as where you are currently pointing.
+
+editface D N
+-----------
+main editing command. 
+N=0	push corners in white box
+N=1	fill or empty cubes
+N=2	push corner you're pointing at
+
+flip 
+-----------
+flip the selected cubes front to back relative to the side of the white box.
+
+rotate D
+-----------
+rotates the selection 90 degrees around the side of the white box. This side must be square in order for it to work, so the selection will change automatically to fit if it's not.
+
+copy
+-----------
+copies the selection.
+
+paste
+-----------
+pastes the copied selection. if the current selection is not the same size as the copy, the corner of the red reference box will be used as the origin. If the current gridsize is changed from the copy, the pasted copy will be stretched by the same factor.
+
+edittex D
+-----------
+Cycles through a list of textures on the same side as the white box.
+
+undo
+-----------
+pressing 'Z' will undo your last edit move.
+
+undomegs N
+-----------
+sets the amount of megs allocated for undos. 
+
+lite N N N
+-----------
+*temporary command*
+changes the vertex lighting of the selection by the delta R G B, multiplied by litepower.
+
+litepower N
+-----------
+*temporary command*
+multiply the delta RGB values by this value.
+
+===============
+3. HUD stats
+===============
+
+On the bottom right of the screen are a bunch of stats. You'll find out what they mean below.
+
+cube
+--------
+the number of cubes in the current selection. Technically only the leaf nodes are counted, but you don't need to know that.
+
+fps
+--------
+frames per second
+
+ond
+--------
+number of 
+cubes in the system. This includes parent cubes, copied cubes, and undos.
+
+va
+--------
+number of vertex arrays used to store vertecies in the map. you probably don't need to use this.
+
+vtr
+--------
+number of triangles currently being displayed. will be a useful stat when culling is done.
+
+vvt
+--------
+number of vertecies currently being displayed. again, useful when culling is done.
+
+tri
+--------
+number of triangles in the entire map
+
+wvt
+--------
+number of vertecies in the entire map
+
+evt
+--------
+misc rendering effects. stuff like particles displayed, or text writting on screen.
+
+===============
+4. Tips
+===============
+
+In general, just like CUBE, the larger the cubes you use the better the performance and memory use you get. So always try to use the largest cubes possible that will give you the detail you need.
+
+gridsize matters. when using a command, if you use a gridsize smaller then that of the selected cube, that cube will split into eight or more smaller cubes. this is also known as subdivision, and is similar to carving in quake. 
+
+subdivision only makes a "best effort" at replicating the original cube using the smaller cubes... it is not something you should be relying on.
+
+===============
+5. Bindings
+===============
 
 //////////////////////////////////
-// add these bindings
+// Sauerbraten Editting related bindings
+// found in autoexec.cfg in your sauerbraten directory
+
+// bind SPACE jump // jump doubles as the deselect command
+bind MOUSE2 reorient
 bind X flip
 bind C copy
 bind V paste
 bind Z undo
 
-bind Q [ domodifier 3 ]	// this used to bound to 'R',
+// commands below are used with scroll wheel (and universaldelta). 
+// if you have no scroll wheel or don't want to use it,
+// you can either change the binds of universaldelta
+// ex:	bind MOUSE4 [ universaldelta 1 ] 
+// 	bind MOUSE5 [ universaldelta -1 ]
+// can be changed to:
+// 	bind INSERT [ universaldelta 1 ] 
+// 	bind DELETE [ universaldelta -1 ]
+// so that the INSERT and DELETE key act just like a scroll wheel
+//
+// or you can rebind all the commands to seperate keys
+// ex:	bind T [ domodifier 6 ]
+// can be changed to:
+// 	bind HOME [ edittex 1 ]
+// 	bind END [ edittex -1 ]
+
+bind G [ domodifier 1 ]	// domodifier 1 -> executes delta_edit_1
+bind F [ domodifier 2 ]	// etc...
+bind Q [ domodifier 3 ]
 bind R [ domodifier 4 ]
 bind T [ domodifier 6 ]
+bind UP    [ domodifier 23 ]	// temp commands. Will be removed in future
+bind LEFT  [ domodifier 20 ]	// .
+bind DOWN  [ domodifier 21 ]// .
+bind RIGHT [ domodifier 22 ]	// .
 
-alias delta_edit_4 [ rotate $arg1 ]
-alias delta_edit_6 [ edittex $arg1 ] 
+alias universaldelta [
+  if 1 [ alias s "edit" ] [ alias s "game" ]
+  concatword delta _ $s _ $modifier
+  s
+]
+
+bind MOUSE4 [ universaldelta 1 ]
+bind MOUSE5 [ universaldelta -1 ]
+
+
+alias delta_edit_0 [ editface $arg1 0 ] // push corners selected 
+alias delta_edit_1 [ gridpower (+ $arg1 $gridpower) ] 
+alias delta_edit_2 [ editface $arg1 1 ] // Fill and Empty cube
+alias delta_edit_3 [ editface $arg1 2 ] // push corner pointed at by cursor
+alias delta_edit_4 [ rotate $arg1 ] // rotate 90 degrees
+alias delta_edit_5 [ entproperty 0 $arg1 ]  // and the others
+alias delta_edit_6 [ edittex $arg1 ] // change textures
+
+alias delta_edit_23 [ lite $arg1 $arg1 $arg1 ] 
+alias delta_edit_20 [ lite $arg1 0 0 ] 
+alias delta_edit_21 [ lite 0 $arg1 0 ] 
+alias delta_edit_22 [ lite 0 0 $arg1 ] 
 
 //////////////////////////////////
-
-
-Description of changes:
-
-flip: press 'X' to flip a cube front to back relative to the face the cursor is currently over.
-
-rotate: press and hold 'r', then move the mouse wheel up to rotate the cube clockwise relative to the face that is being pointed at. Move the mouse wheel down to rotate counter clockwise.
-
-copy: just press 'c' to copy the cube. remember, it copies the cube you're currently looking at, using the current gridsize. Right now it is completely independent from any selections that are being done.
-
-paste: just look at where you want to paste, and then press 'v' to paste the copied cube, using the current gridsize. In other words, if the cube that was copied is of a different size then your current grid, it will be scaled to fit.
-
-edittex: While hovering the cursor over a cube, press and hold 't', then use the mouse wheel to scroll through the different textures. Release 't' to save the texture onto the cube. If your gridsize captures many cubes, all of them will also get their faces textured, just like normal.
-
-undo: pressing 'z' will undo your last edit move. currently, any editing done with selections is not fully supported by undo.
-
-=========================================
-NEW for release 0.03
-=========================================
-
-if you made a map in an older build, you'll first want to go into the editing menu (press ESC) and select the "Fix textures option." 
-
-As well there have been some slight changes to the fill command -- scrolling down + F will no longer fill the selected cube, but only fill the neighbouring cube.
-
-You'll also notice that there is a 'CUBE' stat on the HUD. This will tell you how many cubes are inside your cursor (selection not yet supported). Also remember, the 'OND' stat tells you the total amount of cubes you are using in the system. This includes all cubes in the current map + cubes in copy pad + cubes in undo.
-
-Ad-hoc vertex light editing commands have also been added. Hold the UP arrow + scroll wheel to change the brightness of a cube. The other three arrows will change the red, green and blue lighting respectively. This is just something neat to use until more powerful light entites are supported by the engine. the proper lighting model has not been added yet, so there's a very good chance that any light changes done using this will be obsolete and not supported in the future.
-
------------------------------------------
-3D SELECTION
------------------------------------------
-
-3D selection has been added to editing. It should be as simple to use as 2D selection. in order to select blocks in 2D, left click and hold on any surface and drag. A white selection box will outline your selection. To select in 3D, while still holding the LMB, point your cursor onto a surface that is not the surface you clicked on. A blue selection box will outline your selection.
-
-2D Commands such as pushing edges and changing textures will use the white selection box. 3D commands such as copy and flip will use the blue box. Also note the red reference box around one of the vertexs of the blue box. when copying and pasting, the red boxes of the copy and destination will be around the same vertex -- you can use it as a reference when pasting just like Cube.
-
-Remember, the cursor by itself can still be used as a selection box if you're not currently using another selection box. This is good for quick single cube changes.
-
-also currently rotation is only supported by the cursor selection box.
-
-As always, be careful of the grid size you are using. Try to make sure that you are using the largest gridsize that can do the job. If the grid is smaller then the selected cubes it will split them up until they are all of the same size as the grid. Selections are powerful but dangerous. use them with care young skywalker.
-
