@@ -61,6 +61,15 @@ void editdrag(bool on)
     };
 };
 
+void reorient()
+{
+    selcx = 0;
+    selcy = 0;
+    selcxs = sel.s[R(dimension(orient))]*2;
+    selcys = sel.s[C(dimension(orient))]*2;
+    selorient = orient;
+};
+
 void toggleedit()
 {
     if(player1->state==CS_DEAD) return;                 // do not allow dead players to edit to avoid state confusion
@@ -82,6 +91,7 @@ void toggleedit()
     keyrepeat(editmode);
 };
 
+COMMAND(reorient, ARG_NONE);
 COMMANDN(edittoggle, toggleedit, ARG_NONE);
 
 bool noedit()
@@ -519,7 +529,7 @@ void flipcube(cube &c, int dim)
     c.faces[R(dim)] = cflip(c.faces[R(dim)]);
     if (c.children)
     {
-        loopi(8) if (i&octamask(dim)) swap(cube, c.children[i], c.children[i-octamask(dim)]);
+        loopi(8) if (i&octadim(dim)) swap(cube, c.children[i], c.children[i-octadim(dim)]);
         loopi(8) flipcube(c.children[i], dim);
     };
 };
@@ -542,9 +552,9 @@ void rotatecube(cube &c, int dim)   // rotates cube clockwise. see pics in cvs f
 
     if(c.children)
     {
-        int row = octamask(R(dim));
-        int col = octamask(C(dim));
-        for(int i=0; i<=octamask(dim); i+=octamask(dim)) rotatequad
+        int row = octadim(R(dim));
+        int col = octadim(C(dim));
+        for(int i=0; i<=octadim(dim); i+=octadim(dim)) rotatequad
         (
             c.children[i+row],
             c.children[i],

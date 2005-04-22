@@ -7,8 +7,8 @@
 
 // info about collisions
 vec wall; // just the normal vector.
-float headspace, floorheight, walldist;
-const int STAIRHEIGHT = 4;
+float headspace, floorheight;
+const float STAIRHEIGHT = 5.0f;
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
@@ -37,89 +37,32 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
     return true;
 };
 
-// maps a vec onto an 'ellipsoid-space'. an 'espace' is derived from a specfic ellipsoid
-// in 'realspace' with horizontal (x==y) radius r, and vertical radius z.
-// This ellipsoid is a sphere in the espace, though not normalized.
-void conv2espace(float r, float z, vec &v) { v.x *= z; v.y *= z; v.z *= r; };
-
-bool geomcollide(dynent *d, cube &c, float cx, float cy, float cz, float size) // collide with cube geometry
+bool cubecollide(dynent *d, cube &c) // collide with cube geometry
 {
+    float m = -100.0f;
     float r = d->radius;
     float z = (d->aboveeye + d->eyeheight)/2;
-    float sr = r*z;
-    float mindist = walldist;
-    float fh = hdr.worldsize;
-    vec o(d->o), w;
-    vec pos(cx, cy, cz);
-    vec p[3];
-    plane pl[3];
-    plane tris[12];
-    int pi=0;
-
+    vec o(d->o), *w = &wall;
     o.z += z - d->eyeheight;
-    conv2espace(r, z, o);                   // first convert everything to espace
-    gentris(c, pos, size, tris, z, z, r);
-    loopi(12) if(tris[i].isnormalized())
+
+    loopi(18) if(c.clip[i].isnormalized())
     {
-        float dist = tris[i].dist(o);
-        if(dist>=sr) return true;           // seperation plane check
-        if(dist>=0)                         // 'voronoi region' check
-        {
-            p[pi] = pl[pi] = tris[i];
-            p[pi].mul(-dist);
-            p[pi].add(o);                   // projection onto pl[pi]
-            loopj(pi)
-            {
-                float d1 = pl[j].dist(p[pi]);
-                float d2 = pl[pi].dist(p[j]);
-                if(d1<0) { pl[j] = pl[pi]; p[j] = p[pi]; };
-                if(d1<0 || d2<0) pi--;
-            };
-            if(++pi==1)                     // collect info for plane case
-            {
-                w = pl[0];
-                fh = p[0].z;
-                mindist = dist*dist;
-            };
-            if(pi==3) break;
-        };
+        float dist = c.clip[i].dist(o) - fabs(c.clip[i].x*r) - fabs(c.clip[i].y*r) - fabs(c.clip[i].z*z);
+        if(dist>0) return true;
+        if(dist>m) { w = &c.clip[i]; m = dist; };
     };
 
-    if(pi>1)                                // nearest point on cube check
-    {
-        if(pi==2)                           // set up edge case
-        {
-            pl[2].cross(pl[0], pl[1]);
-            pl[2].offset = -o.dot(pl[2]);
-        };
-        vec n, d(o);
-        ASSERT(threeplaneintersect(pl[0], pl[1], pl[2], n));
-        d.sub(n);
-        float dist2 = d.squaredlen();
-        if(dist2==0) return false;
-        if(dist2>=sr*sr) return true;
-        mindist = dist2;
-        fh = n.z;
-        w = o;
-        w.sub(n);
-    };
-
-    floorheight = min(fh/r, floorheight);
-
-    if(mindist<walldist)
-    {
-        walldist = mindist;
-        wall = w;
-        conv2espace(z, r, wall);            // convert back to realspace
-        wall.normalize();
-    };
-
+    wall = *w;
+    if(wall.z>0) floorheight = max(o.z-z, floorheight);
+    else if(c.clip[2].z > 0.99999f) floorheight = max(-c.clip[2].offset, floorheight);
+    else if(c.clip[3].z > 0.99999f) floorheight = max(-c.clip[3].offset, floorheight);
+    else return false;
+    if(floorheight-(d->o.z-d->eyeheight) <= STAIRHEIGHT) return true;
     return false;
 };
 
-bool cubecollide(dynent *d, cube *c, float cx, float cy, float cz, float size) // collide with octants
+bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collide with octants
 {
-    bool r = true;
     uchar possible = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
     if (cz+size < d->o.z-d->eyeheight)  possible &= 0xF0; // not in a -ve Z octant
     if (cz+size > d->o.z+d->aboveeye)   possible &= 0x0F; // not in a +ve Z octant
@@ -129,19 +72,17 @@ bool cubecollide(dynent *d, cube *c, float cx, float cy, float cz, float size) /
     if (cx+size > d->o.x+d->radius)     possible &= 0x55;
     loopi(8) if(possible & (1<<i))
     {
-        float x = cx+((i&1)>>0)*size;
-        float y = cy+((i&2)>>1)*size;
-        float z = cz+((i&4)>>2)*size;
+        ivec o(i, cx, cy, cz, size);
         if(c[i].children)
         {
-            if(!cubecollide(d, c[i].children, x, y, z, size/2)) r = false;
+            if(!octacollide(d, c[i].children, o.x, o.y, o.z, size>>1)) return false;
         }
         else if(!isempty(c[i]))
         {
-            if(!geomcollide(d, c[i], x, y, z, size)) r = false;
+            if(!cubecollide(d, c[i])) return false;
         };
     };
-    return r;
+    return true;
 };
 
 // FIXME: Need to add sliding planes for collisions with players / map models
@@ -149,10 +90,10 @@ bool cubecollide(dynent *d, cube *c, float cx, float cy, float cz, float size) /
 // spawn is a dirty side effect used in spawning
 bool collide(dynent *d)
 {
+    //conoutf("--------");
     headspace = 10;
-    floorheight = hdr.worldsize;
+    floorheight = 0;
     wall.x = wall.y = wall.z = 0;
-    walldist = 99999999999999999.0f;
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];
@@ -167,33 +108,36 @@ bool collide(dynent *d)
     headspace -= 0.01f;
 
     if(!mmcollide(d)) return false;     // collide with map models
-    return cubecollide(d, worldroot, 0, 0, 0, (float)(hdr.worldsize>>1)); // collide with world
+    return octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1)); // collide with world
 };
 
 void move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
     d->o.add(dir);
-    if(!collide(d))
+    if(!collide(d) || floorheight)
     {
-        d->blocked = true;
-        d->o = old;
-
-        vec w(wall), v(wall);
-        w.mul(w.dot(dir));
-        v.mul(v.dot(d->vel));
-        dir.sub(w);                     // try sliding against wall for next move
-        d->vel.sub(v);
-
         if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
         const float space = floorheight-(d->o.z-d->eyeheight);
-        if(space<=STAIRHEIGHT && space>-push)
+        //conoutf("space %d", space *100);
+        //conoutf("wal   %d %d %d", wall.x*100, wall.y*100, wall.z*100);
+        if(space<=STAIRHEIGHT && space>-3)
         {
             d->onfloor = true;
-            if(space>0) d->o.z += push; // rise thru stair
+            d->o.z += push; // rise thru stair
+            d->vel.z = dir.z = 0;
         }
-        else if(space<=d->aboveeye+d->eyeheight)
+        else
         {
+            d->blocked = true;
+            d->o = old;
+
+            vec w(wall), v(wall);
+            w.mul(w.dot(dir));
+            dir.sub(w);
+            v.mul(v.dot(d->vel));             // try sliding against wall for next move
+            d->vel.sub(v);
+
             d->o.x += push*wall.x; // push against walls
             d->o.y += push*wall.y;
         };

@@ -33,6 +33,7 @@ struct cube
     uchar texture[6];       // one for each face. same order as orient.
     uchar colour[3];        // colour at (-X,-Y,-Z) corner
     vtxarray *va;           // vertex array for children, or NULL
+    plane clip[18];         // collision planes
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
@@ -60,8 +61,8 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 #define Y(dim) ((dim)==2?2:1-(dim))
 #define Z(dim) ((dim)==0?0:3-(dim))
 
-#define octamask(d)     (1<<(2-(d)))                    // creates mask for bit of given dimension
-#define octacoord(d, i) (((i)&octamask(d))>>(2-(d)))
+#define octadim(d)      (1<<(2-(d)))                    // creates mask for bit of given dimension
+#define octacoord(d, i) (((i)&octadim(d))>>(2-(d)))
 
 enum
 {
@@ -86,8 +87,7 @@ extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 
 // rendercubes
-extern void subdividecube(cube &c);
-extern void gentris(cube &c, vec &pos, float size, plane *tris, float x, float y, float z);
+extern void subdividecube(cube &c, int x, int y, int z, int size);
 extern void octarender();
 extern void renderq();
 extern void allchanged();

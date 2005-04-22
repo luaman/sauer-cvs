@@ -103,7 +103,7 @@ void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
     vertstoplane(v1, v2, v3, pl);
 };
 
-vertex genvert(ivec &p, cube &c, vec &pos, float size, uint col)
+int genvert(ivec &p, cube &c, vec &pos, float size, uint col)
 {
     ivec p1(8-p.x, p.y, p.z);
     ivec p2(p.x, 8-p.y, p.z);
@@ -127,8 +127,7 @@ vertex genvert(ivec &p, cube &c, vec &pos, float size, uint col)
     v.y = v.z;
     v.z = t;
     v.colour = col;
-    // return findindex(verts[curvert] = v);
-    return v;
+    return findindex(verts[curvert] = v);
 };
 
 const int cubecoords[8][3] = // verts of bounding cube
@@ -153,9 +152,11 @@ const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orien
     { 3, 4, 7, 0 },
 };
 
-int faceconvexity(vec *v, int orient)
+int faceconvexity(cube &c, int orient)
 {
+    vec v[4];
     int d = dimension(orient);
+    loopi(4) vertrepl(c, *(ivec *)cubecoords[fv[orient][i]], v[i], d, dimcoord(orient));
     int n = (int)(v[0][d] - v[1][d] + v[2][d] - v[3][d]);
     if (!dimcoord(orient)) n *= -1;
     return n; // returns +ve if convex when tris are verts 012, 023. -ve for concave.
@@ -163,11 +164,7 @@ int faceconvexity(vec *v, int orient)
 
 int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that cubes are almost always convex
 {
-    vec v[4];
-    int dim = dimension(orient);
-    int coord = dimcoord(orient);
-    loopi(4) vertrepl(c, *(ivec *)cubecoords[fv[orient][i]], v[i], dim, coord);
-    int n = (faceconvexity(v, orient)<0); // offset tris verts to 123, 130 if concave
+    int n = (faceconvexity(c, orient)<0); // offset tris verts to 123, 130 if concave
     return fv[orient][(vert + n)&3];
 };
 
@@ -232,15 +229,16 @@ usvector indices[3][256];
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
     vertcheck();
+    vec mx(x, z, y), mn(x+size, z+size, y+size);
     int col = *((int *)(&c.colour[0]));
     int cin[8];
     bool useface[6];
     int vertexuses[8];
 
     loopi(8) vertexuses[i] = 0;
+    loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = 0.0f;
 
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts(c,i,k)]++;
-
     if(isentirelysolid(c))
     {
         loopi(8) if(vertexuses[i]) cin[i] = vert(cubecoords[i][0]*size/8+x,
@@ -250,14 +248,32 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     else
     {
         vec pos((float)x, (float)y, (float)z);
-        loopi(8) if(vertexuses[i]) cin[i] = (findindex(verts[curvert] = genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, col)));
+        loopi(8) if(vertexuses[i]) cin[i] = genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, col);
     };
+
+    loopi(8) if(vertexuses[i]) loopj(3)
+    {
+        mn[j] = min(mn[j], verts[cin[i]][j]);
+        mx[j] = max(mx[j], verts[cin[i]][j]);
+    };
+
+    swap(float, mn.y, mn.z);
+    swap(float, mx.y, mx.z);
 
     loopi(6) if(useface[i])
     {
         usvector &v = indices[dimension(i)][c.texture[i]];
         loopk(4) v.add(cin[faceverts(c,i,k)]);
         curtris += 2;
+
+        vec p[5];
+        loopk(5) p[k] = verts[cin[faceverts(c,i,k&3)]];
+        loopk(5) swap(float, p[k].y, p[k].z);
+
+        vertstoplane(p[2], p[0], p[1], c.clip[i*2]);    // and gen clipping planes while we're at it
+        if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
+        c.clip[12+i][dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
+        c.clip[12+i].offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
     };
 };
 
@@ -536,45 +552,24 @@ void renderq()
     glDisableClientState(GL_COLOR_ARRAY);
 };
 
-///////////////////////////////////////////
-
-void gentris(cube &c, vec &pos, float size, plane *tris, float x=1, float y=1, float z=1)
-{
-    vertex v[8];
-    loopi(8)
-    {
-        v[i] = genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, 0);
-        float t = v[i].y * z;
-        v[i].y = v[i].z * y;
-        v[i].x *= x;
-        v[i].z = t;
-    };
-    loopi(12) tris[i].x = tris[i].y = tris[i].z = tris[i].offset = 0.0f; // init
-    loopi(6) loopj(2)
-    {
-        vec ve[4];
-        loopk(4) ve[k] = v[faceverts(c,i,k)];
-        if(j && tris[i*2].isnormalized() && faceconvexity(ve,i)==0) continue; // skip redundant planes
-        vertstoplane(ve[0], ve[1+j], ve[2+j], tris[i*2+j]);
-    };
-};
-
 ////////// (re)mip //////////
 
-int edgevalue(plane &p, ivec &o, int d, int x, int y, int z)
+int edgevalue(int d, plane &pl, ivec &o, ivec &p, int size)
 {
-    ivec q(x+o.x, y+o.y, z+o.z);
-    return (int)(((-(p.offset + q[R(d)]*p[R(d)] + q[C(d)]*p[C(d)]) / p[D(d)])) - (q[D(d)]-o[D(d)]));
+    float x = (o[R(d)]+p[R(d)]*size) * pl[R(d)];
+    float y = (o[C(d)]+p[C(d)]*size) * pl[C(d)];
+    float z = (-x-y-pl.offset) / pl[D(d)];
+    return (int) (z - o[D(d)]) / size;
 };
 
-void tris2cube(cube &c, plane *tris, int size, int x=0, int y=0, int z=0)
+void tris2cube(cube &c, plane *tris, ivec &o, int size)
 {
     solidfaces(c);
     loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
     {
         ivec &p = *(ivec *)cubecoords[fv[i][k]];
         uchar &edge = edgelookup(c, p, dimension(i));
-        int e = edgevalue(tris[i*2+j], p, dimension(i), x, y, z) / size;
+        int e = edgevalue(dimension(i), tris[i*2+j], o, p, size>>3);
         if(e<0) e = 0;
         if(e>8) e = 8;
         int dc = dimcoord(i);
@@ -608,7 +603,7 @@ void validatechildren(cube *c)                              // fixes the two spe
         loopj(12) if(e[j]==0x88 || e[j]==0)
         {
             int dc = octacoord(j>>2,i);
-            uchar &n = c[i^octamask(j>>2)].edges[j];        // edge below e[j]
+            uchar &n = c[i^octadim(j>>2)].edges[j];        // edge below e[j]
             if(e[j]==e[j^1] && e[j]==e[j^2] && n!=0x80)     // fix 'peeling'
                 pushvert(c[i], j, e[j]);
             else if(!e[j] != !dc) edgeset(n, dc, dc*8);     // fix 'cracking'
@@ -616,18 +611,17 @@ void validatechildren(cube *c)                              // fixes the two spe
     };
 };
 
-void subdividecube(cube &c)
+void subdividecube(cube &c, int x, int y, int z, int size)
 {
     if(c.children) return;
     cube *ch = c.children = newcubes(F_SOLID);
-    vec zero(0,0,0);
-    plane tris[12];
-    gentris(c, zero, 16, tris);
-    loopi(8) tris2cube(ch[i], tris, 1, (i&1)*8, (i&2)*4, (i&4)*2);
-    validatechildren(c.children);
     loopi(8)
     {
-        loopj(6) ch[i].texture[j] = c.texture[j];
-        loopj(3) ch[i].colour[j] = c.colour[j];
+        ch[i] = c;
+        ch[i].va = NULL;
+        ch[i].children = NULL;
+        ivec o(i, x, y, z, size);
+        tris2cube(ch[i], c.clip, o, size);
     };
+    validatechildren(c.children);
 };
