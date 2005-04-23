@@ -38,7 +38,7 @@ struct ivec
         z = cz+((i&4)>>2)*size;
     };
     int &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
-	bool operator==(ivec &v) { return x==v.x && y==v.y && z==v.z; };
+    bool operator==(ivec &v) { return x==v.x && y==v.y && z==v.z; };
 };
 
 struct vec
@@ -66,7 +66,12 @@ struct vec
     void cross(const vec &a, const vec &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; };
 };
 
-struct plane : vec { float offset; float dist(const vec &p) { return dot(p)+offset; }; };
+struct plane : vec
+{
+    float offset;
+    float dist(const vec &p)    { return dot(p)+offset; };
+    bool operator==(plane &p)   { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
+};
 struct line3 { vec orig, dir; };
 struct vertex : vec { uint colour; };
 
