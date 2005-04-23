@@ -625,3 +625,69 @@ void subdividecube(cube &c, int x, int y, int z, int size)
     };
     validatechildren(c.children);
 };
+
+bool mergeside(plane &d1, plane &d2, plane &s)
+{
+    if(!s.isnormalized()) return true;
+    else if(d1==s || d2==s) return true;
+    else if(!d1.isnormalized()) d1 = s;
+    else if(!d2.isnormalized()) d2 = s;
+    else return false;
+    return true;
+};
+
+bool mergetris(plane *d, plane *s)
+{
+    loopi(12) if(!mergeside(d[i], d[i+1], s[i]) ||
+                 !mergeside(d[i], d[i+1], s[i+1])) return false;
+              else i++; // ie: i+=2;
+    return true;
+};
+
+bool goodsplits(plane *t, ivec &o, int size)
+{
+    loopi(6) if(t[i*2].isnormalized() && t[i*2+1].isnormalized())
+    {
+        int a=0, b=0;
+        loopk(4)
+        {
+            ivec &p = *(ivec *)cubecoords[fv[i][k]];
+            int e = edgevalue(dimension(i), t[i*2], o, p, size);
+            int f = edgevalue(dimension(i), t[i*2+1], o, p, size);
+            if(e<f) a++; else if(e>f) b++;
+        };
+        if(a!=1 || b!=1) return false;
+    };
+    return true;
+};
+
+bool remip(cube &c, int x, int y, int z, int size)
+{
+    if(c.children==NULL) return true;
+    bool r = true, e = true;
+    loopi(8)
+    {
+        ivec o(i, x, y, z, size>>1);
+        if(!remip(c.children[i], o.x, o.y, o.z, size>>1)) r = false;
+        else if(!isempty(c.children[i])) e = false;
+    };
+    if(!r) return false;
+    emptyfaces(c);
+    loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = 0.0f;
+    if(!e)
+    {
+        ivec o(x, y, z);
+        loopi(8) if(!isempty(c.children[i])) if(!mergetris(c.clip, c.children[i].clip)) return false;
+        if(!goodsplits(c.clip, o, size>>3)) return false;
+        tris2cube(c, c.clip, o, size);
+        loopi(3) c.colour[i] = c.children[0].colour[i];
+    };
+    freeocta(c.children);
+    c.children = NULL;
+    return true;
+};
+
+void remop() { remip(lookupcube(lu.x, lu.y, lu.z, lusize), lu.x, lu.y, lu.z, lusize); allchanged(); };
+
+COMMANDN(remip, remop, ARG_NONE);
+
