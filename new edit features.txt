@@ -23,19 +23,30 @@ Sauerbraten uses a form of 3D selection. Editing commands will only affect the s
 
 There are two modes of selection: implicit and explicit. 
 
-All you have to do to implicitly select a cube is point at it as if to shoot it. A white 2D box will highlight the cube you are currently selecting.
+All you have to do to implicitly select a cube is point at it as if to shoot it. A white 2D box will 
+highlight the cube you are currently selecting.
 
-In order to explicitly select a block of cubes, just point and left click on a cube. If you hold down the left mouse buttong, you can select many cubes. It should be just like selecting files in windows, but in 3D. Explicit selections override implicit ones.
+In order to explicitly select a block of cubes, just point and left click on a cube. If you hold down 
+the left mouse buttong, you can select many cubes. It should be just like selecting files in windows, 
+but in 3D. Explicit selections override implicit ones.
 
-As you explicitly select cubes, a blue 3D box will outline the cubes that you have selected. Also a white 2D box and grid will appear on one side of the selection. If you move the scroll wheel, all the corners of a selected cube that are inside this white box will be pushed in, or pulled out, deforming the cubes. You might also notice a red box that highlights one of the corners of the selection box. This is used as a reference as it always surrounds the same corner. 
+As you explicitly select cubes, a blue 3D box will outline the cubes that you have selected. Also a 
+white 2D box and grid will appear on one side of the selection. If you move the scroll wheel, all 
+the corners of a selected cube that are inside this white box will be pushed in, or pulled out, 
+deforming the cubes. You might also notice a red box that highlights one of the corners of the 
+selection box. This is used as a reference as it always surrounds the same corner. 
 
-If you want to quickly change the side the white selection box appears on without relselecting, press the right mouse button when pointing at the new side you want, on any cube. This cube does not actually have be in the selection.
+If you want to quickly change the side the white selection box appears on without relselecting, 
+press the right mouse button when pointing at the new side you want, on any cube. This cube 
+does not actually have be in the selection.
 
 ===============
 2. Commands
 ===============
 
-The commands below can be entered in the console (press '~'), or better yet, bound to keys. Some of these commands have parameters that need to be used.
+The commands below can be entered in the console (press '~'), or better yet, bound to keys. 
+Some of these commands have parameters that need to be used.
+
 Parameters:
 N - integer
 D - direction (1 or -1)
@@ -61,7 +72,8 @@ flip the selected cubes front to back relative to the side of the white box.
 
 rotate D
 -----------
-rotates the selection 90 degrees around the side of the white box. This side must be square in order for it to work, so the selection will change automatically to fit if it's not.
+rotates the selection 90 degrees around the side of the white box. This side must be 
+square in order for it to work, so the selection will change automatically to fit if it's not.
 
 copy
 -----------
@@ -69,7 +81,9 @@ copies the selection.
 
 paste
 -----------
-pastes the copied selection. if the current selection is not the same size as the copy, the corner of the red reference box will be used as the origin. If the current gridsize is changed from the copy, the pasted copy will be stretched by the same factor.
+pastes the copied selection. if the current selection is not the same size as the copy, 
+the corner of the red reference box will be used as the origin. If the current gridsize is 
+changed from the copy, the pasted copy will be stretched by the same factor.
 
 edittex D
 -----------
@@ -101,7 +115,7 @@ On the bottom right of the screen are a bunch of stats. You'll find out what the
 
 cube
 --------
-the number of cubes in the current selection. Technically only the leaf nodes are counted, but you don't need to know that.
+the number of cubes in the current selection. Only the visible (leaf) cubes are counted.
 
 fps
 --------
@@ -109,8 +123,7 @@ frames per second
 
 ond
 --------
-number of 
-cubes in the system. This includes parent cubes, copied cubes, and undos.
+number of cubes in the system. This includes parent cubes, copied cubes, and undos.
 
 va
 --------
@@ -134,17 +147,22 @@ number of vertecies in the entire map
 
 evt
 --------
-misc rendering effects. stuff like particles displayed, or text writting on screen.
+misc rendering effects. stuff like particles displayed, or text written on screen.
 
 ===============
 4. Tips
 ===============
 
-In general, just like CUBE, the larger the cubes you use the better the performance and memory use you get. So always try to use the largest cubes possible that will give you the detail you need.
+In general, just like CUBE, the larger the cubes you use the better the performance and 
+memory use you get. So always try to use the largest cubes possible that will give you 
+the detail you need.
 
-gridsize matters. when using a command, if you use a gridsize smaller then that of the selected cube, that cube will split into eight or more smaller cubes. this is also known as subdivision, and is similar to carving in quake. 
+gridsize matters. when using a command, if you use a gridsize smaller then that of the 
+selected cube, that cube will split into eight or more smaller cubes. this is also known as 
+subdivision, and is similar to carving in quake. 
 
-subdivision only makes a "best effort" at replicating the original cube using the smaller cubes... it is not something you should be relying on.
+subdivision only makes a "best effort" at replicating the original cube using the smaller 
+cubes... it is not something you should be relying on.
 
 ===============
 5. Bindings
@@ -184,7 +202,7 @@ bind R [ domodifier 4 ]
 bind T [ domodifier 6 ]
 bind UP    [ domodifier 23 ]	// temp commands. Will be removed in future
 bind LEFT  [ domodifier 20 ]	// .
-bind DOWN  [ domodifier 21 ]// .
+bind DOWN  [ domodifier 21 ]	// .
 bind RIGHT [ domodifier 22 ]	// .
 
 alias universaldelta [

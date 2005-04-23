@@ -1,10 +1,16 @@
 History of changes:
 
+Apr 23 2005:
+----------------
+- remip. still need to integrate it with editing commands.
+
 Apr 22 2005:
 ----------------
 - added reorient command.
-- changed collision detection. Now player treated as rectangle. Much simpler and faster. still need to find proper floorheight
-- Collision clipping planes added to cube structure. Are generated at same as vertexes are. (currently static arrays, though will probably allocate dynamically in future to save mem)
+- changed collision detection. Now player treated as rectangle. Much simpler and faster. 
+  still need to find proper floorheight
+- Collision clipping planes added to cube structure. Are generated at same time as vertexes are. 
+  (currently static arrays, though will probably allocate dynamically in future to save mem)
 - also a few other minor changes to subdivision etc, since no need for gentris().
 
 Feb 2 2005:
