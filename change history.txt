@@ -1,5 +1,9 @@
 History of changes:
 
+Apr 24 2005:
+----------------
+- more tweaks to remip
+
 Apr 23 2005:
 ----------------
 - remip. still need to integrate it with editing commands.
