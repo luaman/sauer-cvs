@@ -236,7 +236,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     int vertexuses[8];
 
     loopi(8) vertexuses[i] = 0;
-    loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = 0.0f;
+    loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = c.clip[i].offset = 0.0f;
 
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts(c,i,k)]++;
     if(isentirelysolid(c))
@@ -554,28 +554,32 @@ void renderq()
 
 ////////// (re)mip //////////
 
-int edgevalue(int d, plane &pl, ivec &o, ivec &p, int size)
+int edgevalue(int d, plane &pl, ivec &o, ivec &p, float size)
 {
     float x = (o[R(d)]+p[R(d)]*size) * pl[R(d)];
     float y = (o[C(d)]+p[C(d)]*size) * pl[C(d)];
-    float z = (-x-y-pl.offset) / pl[D(d)];
-    return (int) (z - o[D(d)]) / size;
+    float z = ((-x-y-pl.offset) / pl[D(d)]) - o[D(d)];
+    float f = z/size;
+    int e = (int)f;
+    return e + (f-e>0.5f ? 1 : 0);
 };
 
-void tris2cube(cube &c, plane *tris, ivec &o, int size)
+bool tris2cube(cube &c, plane *tris, ivec &o, int size, bool strict)
 {
+    float s = (float)size/8;
     solidfaces(c);
     loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
     {
         ivec &p = *(ivec *)cubecoords[fv[i][k]];
         uchar &edge = edgelookup(c, p, dimension(i));
-        int e = edgevalue(dimension(i), tris[i*2+j], o, p, size>>3);
-        if(e<0) e = 0;
-        if(e>8) e = 8;
+        int e = edgevalue(dimension(i), tris[i*2+j], o, p, s);
+        if(e<0) if(strict) return false; else e = 0;
+        if(e>8) if(strict) return false; else e = 8;
         int dc = dimcoord(i);
         if(dc == e<edgeget(edge, dc)) edgeset(edge, dc, e);
     };
     loopi(3) optiface((uchar *)&c.faces[i], c);
+    return true;
 };
 
 void cubecoordlookup(ivec &p, int e, int dc)
@@ -621,7 +625,7 @@ void subdividecube(cube &c, int x, int y, int z, int size)
         ch[i].va = NULL;
         ch[i].children = NULL;
         ivec o(i, x, y, z, size);
-        tris2cube(ch[i], c.clip, o, size);
+        tris2cube(ch[i], c.clip, o, size, false);
     };
     validatechildren(c.children);
 };
@@ -679,8 +683,9 @@ bool remip(cube &c, int x, int y, int z, int size)
         ivec o(x, y, z);
         loopi(8) if(!isempty(c.children[i])) if(!mergetris(c.clip, c.children[i].clip)) return false;
         if(!goodsplits(c.clip, o, size>>3)) return false;
-        tris2cube(c, c.clip, o, size);
+        if(!tris2cube(c, c.clip, o, size, true)) return false;
         loopi(3) c.colour[i] = c.children[0].colour[i];
+        loopi(6) c.texture[i] = c.children[0].texture[i];
     };
     freeocta(c.children);
     c.children = NULL;
