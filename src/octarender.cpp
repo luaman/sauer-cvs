@@ -578,6 +578,7 @@ bool tris2cube(cube &c, plane *tris, ivec &o, int size, bool strict)
         int dc = dimcoord(i);
         if(dc == e<edgeget(edge, dc)) edgeset(edge, dc, e);
     };
+    loopi(12) if(edgeget(c.edges[i], 1)<edgeget(c.edges[i], 0)) return false;
     loopi(3) optiface((uchar *)&c.faces[i], c);
     return true;
 };
@@ -640,11 +641,15 @@ bool mergeside(plane &d1, plane &d2, plane &s)
     return true;
 };
 
-bool mergetris(plane *d, plane *s)
+bool mergetris(plane *d, plane *s, cube &dest, cube &src)
 {
-    loopi(12) if(!mergeside(d[i], d[i+1], s[i]) ||
-                 !mergeside(d[i], d[i+1], s[i+1])) return false;
-              else i++; // ie: i+=2;
+    if(isempty(src)) return true;
+    uchar *t = dest.texture, *u = src.texture;
+    for(int i=0, j=0; i<12; i+=2, j++)
+        if((d[i].isnormalized() && t[j] != u[j]) ||
+           !mergeside(d[i], d[i+1], s[i]) ||
+           !mergeside(d[i], d[i+1], s[i+1])) return false;
+        else t[j] = u[j];
     return true;
 };
 
@@ -665,6 +670,20 @@ bool goodsplits(plane *t, ivec &o, int size)
     return true;
 };
 
+bool innertest(cube &c)
+{
+    loop(d, 3) loop(z,2) loop(y,2) loop(x,2)
+    {
+        int e = d*4+y*2+x;
+        int j = octadim(D(d))*z+octadim(C(d))*y+octadim(R(d))*x;
+        if(isempty(c.children[j])) j ^= octadim(D(d));
+        int l = edgeget(c.edges[e], z);
+        int s = (edgeget(c.children[j].edges[e], z)>>1)+octacoord(D(d), j)*4;
+        if((z && l<s) || (z==0 && s<l))  return false;
+    };
+    return true;
+};
+
 bool remip(cube &c, int x, int y, int z, int size)
 {
     if(c.children==NULL) return true;
@@ -677,22 +696,25 @@ bool remip(cube &c, int x, int y, int z, int size)
     };
     if(!r) return false;
     emptyfaces(c);
-    loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = 0.0f;
+    loopi(3) c.colour[i] = c.children[0].colour[i];
     if(!e)
     {
         ivec o(x, y, z);
-        loopi(8) if(!isempty(c.children[i])) if(!mergetris(c.clip, c.children[i].clip)) return false;
+        plane d[18];
+        loopi(18) d[i].x = d[i].y = d[i].z = d[i].offset = 0.0f;
+        loopi(8) if(!mergetris(d, c.children[i].clip, c, c.children[i])) return false;
+        if(!tris2cube(c, d, o, size, true)) return false;
+        if(!innertest(c)) return false;
+        gencubeverts(c, x, y, z, size);
+        if(!mergetris(c.clip, d, c, c)) return false;
         if(!goodsplits(c.clip, o, size>>3)) return false;
-        if(!tris2cube(c, c.clip, o, size, true)) return false;
-        loopi(3) c.colour[i] = c.children[0].colour[i];
-        loopi(6) c.texture[i] = c.children[0].texture[i];
     };
     freeocta(c.children);
     c.children = NULL;
     return true;
 };
 
-void remop() { remip(lookupcube(lu.x, lu.y, lu.z, lusize), lu.x, lu.y, lu.z, lusize); allchanged(); };
+void remop() { loopi(8) { ivec o(i, 0, 0, 0, hdr.worldsize>>1); remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>1); } allchanged(); };
 
 COMMANDN(remip, remop, ARG_NONE);
 
