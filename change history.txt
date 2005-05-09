@@ -1,5 +1,14 @@
 History of changes:
 
+May 8 2005:
+----------------
+- collision detection / response is now functionally done.
+- cleaned up editing a bit.
+
+May 6 2005:
+----------------
+- remip functionally done. will want to clean it up a bit though.
+
 Apr 24 2005:
 ----------------
 - more tweaks to remip

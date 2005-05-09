@@ -10,14 +10,24 @@ vec wall; // just the normal vector.
 float headspace, floorheight;
 const float STAIRHEIGHT = 5.0f;
 
+bool hit(dynent *d, vec &o, float r, float z)
+{
+    vec v(d->o);
+    v.sub(o);
+    if(v.x<v.y && v.x-r<v.z-z) wall.x = v.x / v.x;
+    else if(v.y-r<v.z-z) wall.y = v.y / v.y;
+    else wall.z = v.z / v.z;
+    return false;
+};
+
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
     if(o->state!=CS_ALIVE) return true;
     const float r = o->radius+d->radius;
     if(fabs(o->o.x-d->o.x)<r && fabs(o->o.y-d->o.y)<r)
     {
-        if(fabs(o->o.z-d->o.z)<o->aboveeye+d->eyeheight) return false;
-        if(d->monsterstate) return false; // hack
+        if(fabs(o->o.z-d->o.z)<o->aboveeye+d->eyeheight) return hit(d, o->o, r, o->aboveeye+d->eyeheight);
+        if(d->monsterstate) return hit(d, o->o, r, o->aboveeye+d->eyeheight); // hack
         headspace = d->o.z-o->o.z-o->aboveeye-d->eyeheight;
         if(headspace<0) headspace = 10;
     };
@@ -32,12 +42,12 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
         if(e.type!=MAPMODEL) continue;
         float entrad = 1; // get real radius somehow?
         const float r = entrad+d->radius;
-        if(fabs(e.o.x-d->o.x)<r && fabs(e.o.y-d->o.y)<r) return false;
+        if(fabs(e.o.x-d->o.x)<r && fabs(e.o.y-d->o.y)<r) return hit(d, e.o, r, entrad+d->eyeheight);
     };
     return true;
 };
 
-bool cubecollide(dynent *d, cube &c) // collide with cube geometry
+bool cubecollide(dynent *d, cube &c, bool inside) // collide with cube geometry
 {
     float m = -100.0f;
     float r = d->radius;
@@ -52,12 +62,8 @@ bool cubecollide(dynent *d, cube &c) // collide with cube geometry
         if(dist>m) { w = &c.clip[i]; m = dist; };
     };
 
-    wall = *w;
-    if(wall.z>0) floorheight = max(o.z-z, floorheight);
-    else if(c.clip[2].z > 0.99999f) floorheight = max(-c.clip[2].offset, floorheight);
-    else if(c.clip[3].z > 0.99999f) floorheight = max(-c.clip[3].offset, floorheight);
-    else return false;
-    if(floorheight-(d->o.z-d->eyeheight) <= STAIRHEIGHT) return true;
+    if(m<-1.0f) inside = true; else wall = *w;
+    floorheight = max(-c.clip[13].offset, floorheight);
     return false;
 };
 
@@ -79,7 +85,14 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
         }
         else if(!isempty(c[i]))
         {
-            if(!cubecollide(d, c[i])) return false;
+            bool inside=false;
+            if(!cubecollide(d, c[i], inside))
+            {
+                vec v(o);
+                if(inside) hit(d, v, d->radius+size, d->eyeheight+d->aboveeye+size);
+                if(c[i].clip[13].z<1.0f) floorheight = max(o.z+size, floorheight);
+                if(floorheight-d->o.z+d->eyeheight>STAIRHEIGHT) return false;
+            };
         };
     };
     return true;
@@ -115,20 +128,20 @@ void move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
     d->o.add(dir);
-    if(!collide(d) || floorheight)
+    if(!collide(d) || floorheight>0)
     {
         if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
         const float space = floorheight-(d->o.z-d->eyeheight);
-        //conoutf("space %d", space *100);
-        //conoutf("wal   %d %d %d", wall.x*100, wall.y*100, wall.z*100);
-        if(space<=STAIRHEIGHT && space>-3)
+        if(space<=STAIRHEIGHT && space>-1.0f)
         {
             d->onfloor = true;
-            d->o.z += push; // rise thru stair
-            d->vel.z = dir.z = 0;
+            if(space>push) d->o.z += push; else d->o.z = floorheight+d->eyeheight;
+            dir.z = 0;
         }
         else
         {
+            if(wall.z>0.6f) d->onfloor = true;
+
             d->blocked = true;
             d->o = old;
 
@@ -178,7 +191,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->onfloor ? 0.0f : (water ? -1.0f : -2.0f);
+    d.z = pl->onfloor ? 0.0f : (water ? -1.0f : pl->vel.z*0.75f - 3.0f);
 
     if(floating || water)
     {
