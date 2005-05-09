@@ -17,17 +17,17 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
 struct block3
 {
     ivec o, s;
-    int grid;
+    int grid, orient;
     cube *c()     { return (cube *)(this+1); };
     int size()    { return s.x*s.y*s.z; };
     int us(int d) { return s[d]*grid; };
-    bool operator==(block3 &b) { return o==b.o && s==b.s && grid==b.grid; };
+    bool operator==(block3 &b) { return o==b.o && s==b.s && grid==b.grid && orient==b.orient; };
 };
 
 block3 sel;
 block3 lastsel;
 
-int orient = 0, selorient = 0;
+int orient = 0;
 int gridsize = 32;
 int corner = 0;
 ivec cor, lastcor;
@@ -38,7 +38,8 @@ bool editmode = false;
 bool havesel = false;
 bool dragging = false;
 
-void cancelsel() { havesel = false; };
+void forcenextundo() { lastsel.orient = -1; };
+void cancelsel()     { havesel = false; forcenextundo(); };
 
 VARF(gridpower, 2, 5, 16,
 {
@@ -57,7 +58,7 @@ void editdrag(bool on)
         lastcur = cur;
         lastcor = cor;
         sel.grid = gridsize;
-        selorient = orient;
+        sel.orient = orient;
     };
 };
 
@@ -67,7 +68,7 @@ void reorient()
     selcy = 0;
     selcxs = sel.s[R(dimension(orient))]*2;
     selcys = sel.s[C(dimension(orient))]*2;
-    selorient = orient;
+    sel.orient = orient;
 };
 
 void toggleedit()
@@ -114,19 +115,17 @@ void discardchildren(cube &c)
 
 ///////// selection support /////////////
 
-#define loopxy(b,d)  loop(y,(b).s[C(d)]) loop(x,(b).s[R(d)])    //loops through the row and columns (defined by d) of given block
-#define loopxyz(b)   loop(z,(b).s[D(0)]) loopxy((b),0)
-#define loopselxy()  loopxy(sel, dimension(selorient))
-#define loopselxyz() loop(z, sel.s[D(dimension(selorient))]) loopxy(sel, dimension(selorient))
-
-cube &blockcube(int x, int y, int z, block3 &b, int rgrid, int o=O_TOP) // looks up a world cube, based on coordinates mapped by the block
+cube &blockcube(int x, int y, int z, block3 &b, int rgrid) // looks up a world cube, based on coordinates mapped by the block
 {
-    int d = dimension(o);
-    int s[3] = { dimcoord(o)*(b.s[d]-1)*b.grid, y*b.grid, x*b.grid };
-    return neighbourcube(b.o.x+s[X(d)], b.o.y+s[Y(d)], b.o.z+s[Z(d)], -z*b.grid, rgrid, o);
+    int d = dimension(b.orient);
+    int s[3] = { dimcoord(b.orient)*(b.s[d]-1)*b.grid, y*b.grid, x*b.grid };
+    return neighbourcube(b.o.x+s[X(d)], b.o.y+s[Y(d)], b.o.z+s[Z(d)], -z*b.grid, rgrid, b.orient);
 };
 
-cube &selcube(int x, int y, int z) { return blockcube(x, y, z, sel, sel.grid, selorient); };
+#define loopxy(b)        loop(y,(b).s[C(dimension((b).orient))]) loop(x,(b).s[R(dimension((b).orient))])
+#define loopxyz(b, r, f) { loop(z,(b).s[D(dimension((b).orient))]) loopxy((b)) { cube &c = blockcube(x,y,z,b,r); f; }; }
+#define loopselxyz(f)    { makeundo(); loopxyz(sel, sel.grid, f); changed(); }
+#define selcube(x, y, z) blockcube(x, y, z, sel, sel.grid)
 
 uchar octatouchblock(block3 &b, int cx, int cy, int cz, int size)
 {
@@ -204,7 +203,7 @@ void cursorupdate()
     {
         if(dragging)
         {
-            d = dimension(selorient);
+            d = dimension(sel.orient);
             sel.o.x = min(lastcur.x, cur.x);
             sel.o.y = min(lastcur.y, cur.y);
             sel.o.z = min(lastcur.z, cur.z);
@@ -226,23 +225,23 @@ void cursorupdate()
             selcx = selcy = 0;
             selcxs = selcys = 2;
             sel.grid = gridsize;
-            selorient = orient;
+            sel.orient = orient;
         };
     };
 
     selchildcount = 0;
     countselchild();
 
-    d = dimension(selorient);
+    d = dimension(sel.orient);
     corner = (cor[R(d)]-lu[R(d)]/g2)+(cor[C(d)]-lu[C(d)]/g2)*2;
     if(havesel)
     {
         glColor3ub(20,20,20);   // grid
-        loopselxy() boxs(d, sel.o[R(d)]+x*sel.grid, sel.o[C(d)]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(selorient)*sel.us(d));
+        loopxy(sel) boxs(d, sel.o[R(d)]+x*sel.grid, sel.o[C(d)]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(200,0,0);    // 0 reference
         boxs(d, sel.o[R(d)]-4, sel.o[C(d)]-4, 8, 8, sel.o[d]);
         glColor3ub(200,200,200);// 2D selection box
-        boxs(d, sel.o[R(d)]+selcx*g2, sel.o[C(d)]+selcy*g2, selcxs*g2, selcys*g2, sel.o[d]+dimcoord(selorient)*sel.us(d));
+        boxs(d, sel.o[R(d)]+selcx*g2, sel.o[C(d)]+selcy*g2, selcxs*g2, selcys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(0,0,40);     // 3D selection box
         loopi(6) boxs(d=dimension(i), sel.o[R(d)], sel.o[C(d)], sel.us(R(d)), sel.us(C(d)), sel.o[d]+dimcoord(i)*sel.us(d));
     };
@@ -266,20 +265,18 @@ void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
     };
 };
 
-void changed(bool internal = false)
+void changed()
 {
-    int of = internal ? 0 : 1;
-    int sf = internal ? 0 : 2;
     block3 b = sel;
     loopi(3) b.s[i] *= b.grid;
     b.grid = 1;
-    loopi(internal ? 1 : 3)     // the changed blocks are the selected cubes
+    loopi(3)                    // the changed blocks are the selected cubes
     {                           // plus, if not internal, any cubes just 1 adjacent unit grid away from the sel block
-        b.o[i] -= of;
-        b.s[i] += sf;
+        b.o[i] -= 1;
+        b.s[i] += 2;
         readyva(b, worldroot, 0, 0, 0, hdr.worldsize/2);
-        b.o[i] += of;
-        b.s[i] -= sf;
+        b.o[i] += 1;
+        b.s[i] -= 2;
     };
     octarender();
 };
@@ -297,23 +294,22 @@ cube copycube(cube &src)
     return c;
 };
 
-void pastecube(cube &src, int x, int y, int z, block3 &b, int rgrid)
+void pastecube(cube &src, cube &dest)
 {
-    cube &c = blockcube(x, y, z, b, rgrid);
-    discardchildren(c);
-    c = copycube(src);
+    discardchildren(dest);
+    dest = copycube(src);
 };
 
-block3 *block3copy(block3 &s, int rgrid)
+block3 *blockcopy(block3 &s, int rgrid)
 {
     block3 *b = (block3 *)gp()->alloc(sizeof(block3)+sizeof(cube)*s.size());
     *b = s;
     cube *q = b->c();
-    loopxyz(s) *q++ = copycube(blockcube(x, y, z, s, rgrid));
+    loopxyz(s, rgrid, *q++ = copycube(c));
     return b;
 };
 
-void freeblock3(block3 *b)
+void freeblock(block3 *b)
 {
     cube *q = b->c();
     loopi(b->size()) discardchildren(*q++);
@@ -327,17 +323,13 @@ VAR(undomegs, 0, 1, 10);                                // bounded by n megs
 void freeundo(undoblock u)
 {
     gp()->dealloc(u.g, sizeof(int)*u.b->size());
-    freeblock3(u.b);
+    freeblock(u.b);
 };
 
 int *selgridmap()                                       // generates a map of the cube sizes at each grid point
 {
     int *g = (int *)gp()->alloc(sizeof(int)*sel.size());
-    loopxyz(sel)
-    {
-        blockcube(x, y, z, sel, -sel.grid);
-        *g++ = lusize;
-    };
+    loopxyz(sel, -sel.grid, *g++ = lusize);
     return g-sel.size();
 };
 
@@ -345,7 +337,7 @@ void pasteundo(undoblock &u)
 {
     int *g = u.g;
     cube *s = u.b->c();
-    loopxyz(*u.b) pastecube(*s++, x, y, z, *u.b, *g++);
+    loopxyz(*u.b, *g++, pastecube(*s++, c));
 };
 
 void pruneundos(int maxremain)                          // bound memory
@@ -364,7 +356,7 @@ void pruneundos(int maxremain)                          // bound memory
 void makeundo()                                         // stores state of selected cubes before editing
 {
     if(lastsel == sel) return;
-    undoblock u = { selgridmap(), block3copy(lastsel=sel, -sel.grid)};
+    undoblock u = { selgridmap(), blockcopy(lastsel=sel, -sel.grid)};
     undos.add(u);
     pruneundos(undomegs<<20);
 };
@@ -374,20 +366,22 @@ void editundo()                                         // undoes last action
     if(noedit()) return;
     if(undos.empty()) { conoutf("nothing more to undo"); return; };
     undoblock u = undos.pop();
-    pasteundo(u);
     sel = *u.b;
+    pasteundo(u);
     freeundo(u);
     changed();
+    reorient();
+    forcenextundo();
 };
 
 block3 *copybuf=NULL;
 void copy()
 {
     if(noedit()) return;
-    if(copybuf) freeblock3(copybuf);
-    lastsel.s[0]=0;                                     // force undo to guard against subdivision
-    makeundo();
-    copybuf = block3copy(sel, sel.grid);
+    if(copybuf) freeblock(copybuf);
+    forcenextundo();
+    makeundo(); // guard against subdivision
+    copybuf = blockcopy(sel, sel.grid);
     editundo();
 };
 
@@ -395,10 +389,9 @@ void paste()
 {
     if(noedit() || copybuf==NULL) return;
     sel.s = copybuf->s;
+    sel.orient = copybuf->orient;
     cube *s = copybuf->c();
-    makeundo();
-    loopxyz(sel) pastecube(*s++, x, y, z, sel, sel.grid);
-    changed();
+    loopselxyz(pastecube(*s++, c));
 };
 
 COMMAND(copy, ARG_NONE);
@@ -419,8 +412,8 @@ void pushedge(uchar &edge, int dir, int dc)
 void editface(int dir, int mode)
 {
     if(noedit()) return;
-    int d = dimension(selorient);
-    int dc = dimcoord(selorient);
+    int d = dimension(sel.orient);
+    int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
     if (mode==1)
     {
@@ -430,12 +423,8 @@ void editface(int dir, int mode)
     };
     if(dc) sel.o[d] += sel.us(d)-sel.grid;
     sel.s[d] = 1;
-    makeundo();
-    loopselxy()
-    {
-        cube &c = selcube(x, y, 0);
+    loopselxyz(
         discardchildren(c);
-
         if (mode==1) { if (dir<0) { solidfaces(c); } else emptyfaces(c); }  // fill command
         else
         {
@@ -455,8 +444,7 @@ void editface(int dir, int mode)
             };
             optiface(p, c);
         };
-    };
-    changed();
+    );
     if (mode==1 && dir>0) sel.o[d] += sel.grid * seldir;
 };
 
@@ -490,9 +478,8 @@ void edittex(int dir)
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
     curtexindex = i = min(max(i, 0), 255);
-    makeundo();
-    loopselxyz() edittexcube(selcube(x,y,z), lasttex = hdr.texlist[i], selorient);
-    changed(true); // Don't update neighbors
+    int t = lasttex = hdr.texlist[i];
+    loopselxyz(edittexcube(c, t, sel.orient));
 };
 
 COMMAND(edittex, ARG_1INT);
@@ -509,9 +496,7 @@ void lightcube(cube &c, int dr, int dg, int db)
 void lite(int r, int g, int b)
 {
     if(noedit()) return;
-    makeundo();
-    loopselxyz() lightcube(selcube(x, y, z), r*litepower, g*litepower, b*litepower);
-    changed(); // Update neighbirs since vertex lighting shared
+    loopselxyz(lightcube(c, r*litepower, g*litepower, b*litepower));
 };
 COMMAND(lite, ARG_3INT);
 
@@ -568,15 +553,15 @@ void rotatecube(cube &c, int dim)   // rotates cube clockwise. see pics in cvs f
 void flip()
 {
     if(noedit()) return;
-    int ds = sel.s[dimension(selorient)];
+    int zs = sel.s[dimension(sel.orient)];
     makeundo();
-    loopselxy()
+    loopxy(sel)
     {
-        loop(d,ds) flipcube(selcube(x, y, d), dimension(selorient));
-        loop(d,ds/2)
+        loop(z,zs) flipcube(selcube(x, y, z), dimension(sel.orient));
+        loop(z,zs/2)
         {
-            cube &a = selcube(x, y, d);
-            cube &b = selcube(x, y, ds-d-1);
+            cube &a = selcube(x, y, z);
+            cube &b = selcube(x, y, zs-z-1);
             swap(cube, a, b);
         };
     };
@@ -586,20 +571,20 @@ void flip()
 void rotate(int cw)
 {
     if(noedit()) return;
-    int dim = dimension(selorient);
-    if(!dimcoord(selorient)) cw = -cw;
+    int dim = dimension(sel.orient);
+    if(!dimcoord(sel.orient)) cw = -cw;
     int &m = min(sel.s[C(dim)], sel.s[R(dim)]);
     int ss = m = max(sel.s[R(dim)], sel.s[C(dim)]);
     makeundo();
-    loop(d,sel.s[D(dim)]) loopi(cw>0 ? 1 : 3)
+    loop(z,sel.s[D(dim)]) loopi(cw>0 ? 1 : 3)
     {
-        loopselxy() rotatecube(selcube(x,y,d), dim);
+        loopxy(sel) rotatecube(selcube(x,y,z), dim);
         loop(y,ss/2) loop(x,ss-1-y*2) rotatequad
         (
-            selcube(ss-1-y, x+y, d),
-            selcube(x+y, y, d),
-            selcube(y, ss-1-x-y, d),
-            selcube(ss-1-x-y, ss-1-y, d)
+            selcube(ss-1-y, x+y, z),
+            selcube(x+y, y, z),
+            selcube(y, ss-1-x-y, z),
+            selcube(ss-1-x-y, ss-1-y, z)
         );
     };
     changed();
