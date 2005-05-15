@@ -156,20 +156,16 @@ void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr
 
 void cursorupdate()
 {
-    vec dir(worldpos);
-    dir.sub(player1->o);
-    dir.normalize();
-
-    int x = (int)(worldpos.x +(dir.x<0?-2:2));
-    int y = (int)(worldpos.y +(dir.y<0?-2:2));
-    int z = (int)(worldpos.z +(dir.z<0?-2:2));
-    lookupcube(x, y, z);
+    vec v;
+    float m = cos(RAD*player1->pitch);
+    vec dir(m*cos(RAD*(player1->yaw-90)), m*sin(RAD*(player1->yaw-90)), sin(RAD*player1->pitch));
+    raytracecube(player1->o, dir, gridsize, v, &orient);
 
     if(lusize>gridsize)
     {
-        lu.x += (x-lu.x)/gridsize*gridsize;
-        lu.y += (y-lu.y)/gridsize*gridsize;
-        lu.z += (z-lu.z)/gridsize*gridsize;
+        lu.x += ((int)v.x-lu.x)/gridsize*gridsize;
+        lu.y += ((int)v.y-lu.y)/gridsize*gridsize;
+        lu.z += ((int)v.z-lu.z)/gridsize*gridsize;
     }
     else if(gridsize>lusize)
     {
@@ -179,61 +175,50 @@ void cursorupdate()
     };
     lusize = gridsize;
 
-    int xi  = (int)(worldpos.x + (dir.x/dir.y) * (lu.y - worldpos.y + (dir.y<0 ? gridsize : 0))); // x intersect of xz plane
-    int zi  = (int)(worldpos.z + (dir.z/dir.y) * (lu.y - worldpos.y + (dir.y<0 ? gridsize : 0))); // z intersect of xz plane
-    int zi2 = (int)(worldpos.z + (dir.z/dir.x) * (lu.x - worldpos.x + (dir.x<0 ? gridsize : 0))); // z intersect of yz plane
-    if (xi < lu.x+gridsize && xi > lu.x && zi < lu.z+gridsize && zi > lu.z) orient = (dir.y>0 ? O_FRONT : O_BACK);
-    else if (zi2 < lu.z+gridsize && zi2 > lu.z) orient = (dir.x>0 ? O_LEFT : O_RIGHT);
-    else orient = (dir.z>0 ? O_TOP : O_BOTTOM);
-
-    int g2 = gridsize/2;
     cur = lu;
-    cor.x = x/g2;
-    cor.y = y/g2;
-    cor.z = z/g2;
+    int g2 = gridsize/2;
+    cor.x = (int)v.x/g2;
+    cor.y = (int)v.y/g2;
+    cor.z = (int)v.z/g2;
+    int od = dimension(orient);
+    int d = dimension(sel.orient);
 
-    int d = dimension(orient);
+    if(dragging)
+    {
+        sel.o.x = min(lastcur.x, cur.x);
+        sel.o.y = min(lastcur.y, cur.y);
+        sel.o.z = min(lastcur.z, cur.z);
+        sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
+        sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
+        sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
+        selcx   = min(cor[R(d)], lastcor[R(d)]);
+        selcxs  = max(cor[R(d)], lastcor[R(d)])-selcx+1;
+        selcy   = min(cor[C(d)], lastcor[C(d)]);
+        selcys  = max(cor[C(d)], lastcor[C(d)])-selcy+1;
+        selcx  &= 1;
+        selcy  &= 1;
+        havesel = true;
+    }
+    else if (!havesel)
+    {
+        sel.o = lu;
+        sel.s.x = sel.s.y = sel.s.z = 1;
+        selcx = selcy = 0;
+        selcxs = selcys = 2;
+        sel.grid = gridsize;
+        sel.orient = orient;
+        d = od;
+    };
+
+    corner = (cor[R(d)]-lu[R(d)]/g2)+(cor[C(d)]-lu[C(d)]/g2)*2;
+    selchildcount = 0;
+    countselchild();
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glLineWidth(1);
     glColor3ub(120,120,120); // cursor
-    boxs(d, lu[R(d)], lu[C(d)], lusize, lusize, lu[d]+dimcoord(orient)*lusize);
-
-    if (cor[0]>=0) // ie: cursor not in the void
-    {
-        if(dragging)
-        {
-            d = dimension(sel.orient);
-            sel.o.x = min(lastcur.x, cur.x);
-            sel.o.y = min(lastcur.y, cur.y);
-            sel.o.z = min(lastcur.z, cur.z);
-            sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
-            sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
-            sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
-            selcx   = min(cor[R(d)], lastcor[R(d)]);
-            selcxs  = max(cor[R(d)], lastcor[R(d)])-selcx+1;
-            selcy   = min(cor[C(d)], lastcor[C(d)]);
-            selcys  = max(cor[C(d)], lastcor[C(d)])-selcy+1;
-            selcx  &= 1;
-            selcy  &= 1;
-            havesel = true;
-        }
-        else if (!havesel)
-        {
-            sel.o = lu;
-            sel.s.x = sel.s.y = sel.s.z = 1;
-            selcx = selcy = 0;
-            selcxs = selcys = 2;
-            sel.grid = gridsize;
-            sel.orient = orient;
-        };
-    };
-
-    selchildcount = 0;
-    countselchild();
-
-    d = dimension(sel.orient);
-    corner = (cor[R(d)]-lu[R(d)]/g2)+(cor[C(d)]-lu[C(d)]/g2)*2;
+    boxs(od, lu[R(od)], lu[C(od)], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     if(havesel)
     {
         glColor3ub(20,20,20);   // grid

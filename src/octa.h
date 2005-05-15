@@ -83,8 +83,11 @@ extern cube *newcubes(uint face = F_EMPTY);
 extern int familysize(cube &c);
 extern void freeocta(cube *c);
 extern void optiface(uchar *p, cube &c);
+extern void validatec(cube *c, int size);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
+extern cube &raytracecube(vec &o, vec &dir, int size, vec &dest, int *orient);
+extern cube &raytracecube(vec &o, vec &dir);
 
 // rendercubes
 extern void subdividecube(cube &c, int x, int y, int z, int size);
