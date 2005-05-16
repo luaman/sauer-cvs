@@ -7,31 +7,30 @@
 
 // info about collisions
 vec wall; // just the normal vector.
-float headspace, floorheight;
+float floorheight;
 const float STAIRHEIGHT = 5.0f;
 
-bool hit(dynent *d, vec &o, float r, float z)
+bool rectcollide(dynent *d, vec &o, float r, float hi, float lo, bool step)
 {
-    vec v(d->o);
-    v.sub(o);
-    if(v.x<v.y && v.x-r<v.z-z) wall.x = v.x / v.x;
-    else if(v.y-r<v.z-z) wall.y = v.y / v.y;
-    else wall.z = v.z / v.z;
+    vec s(d->o);
+    s.sub(o);
+    r += d->radius;
+    float z = s.z>0 ? d->eyeheight+hi : d->aboveeye+lo;
+    float ax = fabs(s.x)-r;
+    float ay = fabs(s.y)-r;
+    float az = fabs(s.z)-z;
+    if(ax>0 || ay>0 || az>0) return true;
+    if(ax>ay && ax>az) wall.x = s.x>0 ? 1 : -1;
+    else if(ay>az) wall.y = s.y>0 ? 1 : -1;
+    else wall.z = s.z>0 ? 1 : -1;
+    if(step) floorheight = max(o.z+hi, floorheight);
     return false;
 };
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
     if(o->state!=CS_ALIVE) return true;
-    const float r = o->radius+d->radius;
-    if(fabs(o->o.x-d->o.x)<r && fabs(o->o.y-d->o.y)<r)
-    {
-        if(fabs(o->o.z-d->o.z)<o->aboveeye+d->eyeheight) return hit(d, o->o, r, o->aboveeye+d->eyeheight);
-        if(d->monsterstate) return hit(d, o->o, r, o->aboveeye+d->eyeheight); // hack
-        headspace = d->o.z-o->o.z-o->aboveeye-d->eyeheight;
-        if(headspace<0) headspace = 10;
-    };
-    return true;
+    return rectcollide(d, o->o, o->radius, o->aboveeye, o->eyeheight, true);
 };
 
 bool mmcollide(dynent *d)               // collide with a mapmodel
@@ -40,9 +39,8 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
     {
         entity &e = ents[i];
         if(e.type!=MAPMODEL) continue;
-        float entrad = 1; // get real radius somehow?
-        const float r = entrad+d->radius;
-        if(fabs(e.o.x-d->o.x)<r && fabs(e.o.y-d->o.y)<r) return hit(d, e.o, r, entrad+d->eyeheight);
+        float entrad = 5; // get real radius somehow?
+        if(!rectcollide(d, e.o, entrad, entrad, entrad, true)) return false;
     };
     return true;
 };
@@ -85,11 +83,11 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
         }
         else if(!isempty(c[i]))
         {
-            bool inside=false;
+            bool inside = false;
             if(!cubecollide(d, c[i], inside))
             {
                 vec v(o);
-                if(inside) hit(d, v, d->radius+size, d->eyeheight+d->aboveeye+size);
+                if(inside) rectcollide(d, v, size, size>>1, size>>1, false);
                 if(c[i].clip[13].z<1.0f) floorheight = max(o.z+size, floorheight);
                 if(floorheight-d->o.z+d->eyeheight>STAIRHEIGHT) return false;
             };
@@ -98,13 +96,9 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
     return true;
 };
 
-// FIXME: Need to add sliding planes for collisions with players / map models
 // all collision happens here
-// spawn is a dirty side effect used in spawning
 bool collide(dynent *d)
 {
-    //conoutf("--------");
-    headspace = 10;
     floorheight = 0;
     wall.x = wall.y = wall.z = 0;
     loopv(players)       // collide with other players
@@ -117,8 +111,7 @@ bool collide(dynent *d)
     dvector &v = getmonsters();
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
-    loopv(v) if(!d->o.reject(v[i]->o, 7.0f) && d!=v[i] && !plcollide(d, v[i])) return false;
-    headspace -= 0.01f;
+    loopv(v) if(!d->o.reject(v[i]->o, 20.0f) && d!=v[i] && !plcollide(d, v[i])) return false;
 
     if(!mmcollide(d)) return false;     // collide with map models
     return octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1)); // collide with world
@@ -136,6 +129,7 @@ void move(dynent *d, vec &dir, float push)
         {
             d->onfloor = true;
             if(space>push) d->o.z += push; else d->o.z = floorheight+d->eyeheight;
+            if(d->vel.z<0) d->vel.z=0;
             dir.z = 0;
         }
         else
@@ -145,14 +139,17 @@ void move(dynent *d, vec &dir, float push)
             d->blocked = true;
             d->o = old;
 
-            vec w(wall), v(wall);
+            vec w(wall), v(wall); // try sliding against wall for next move
             w.mul(w.dot(dir));
             dir.sub(w);
-            v.mul(v.dot(d->vel));             // try sliding against wall for next move
+            v.mul(v.dot(d->vel));
             d->vel.sub(v);
 
-            d->o.x += push*wall.x; // push against walls
-            d->o.y += push*wall.y;
+            if(wall.z!=0)
+            {
+                d->o.x += push*wall.x; // push against slopes
+                d->o.y += push*wall.y;
+            };
         };
     };
 };
