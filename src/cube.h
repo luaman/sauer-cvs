@@ -73,7 +73,7 @@ struct plane : vec
     bool operator==(plane &p)   { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
 };
 struct line3 { vec orig, dir; };
-struct vertex : vec { uint colour; };
+struct vertex : vec { float u, v; };
 
 enum                            // static entity types
 {

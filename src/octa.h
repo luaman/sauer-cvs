@@ -31,6 +31,10 @@ struct surfaceinfo
     uchar texcoords[8];
     uchar w, h;
     ushort x, y, lmid;
+
+    surfaceinfo()
+     : w(1), h(1), lmid(0)
+    {}
 };
 
 struct cube

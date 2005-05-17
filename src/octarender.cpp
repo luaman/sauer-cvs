@@ -27,7 +27,7 @@ struct vechash
         for(chain *c = table[h]; c; c = c->next)
         {
             vertex &o = verts[c->i];
-            if(o.x==v->x && o.y==v->y && o.z==v->z) return c->i;
+            if(o.x==v->x && o.y==v->y && o.z==v->z && o.u==v->u && o.v==v->v) return c->i;
         };
         chain *n = (chain *)parent->alloc(sizeof(chain));
         n->i = curvert;
@@ -67,12 +67,14 @@ int findindex(vertex &v)
     //return curvert++;
 };
 
-int vert(int x, int y, int z)
+int vert(int x, int y, int z, float lmu, float lmv)
 {
     vertex &v = verts[curvert];
     v.x = (float)x;
     v.y = (float)z;
     v.z = (float)y;
+    v.u = lmu;
+    v.v = lmv;
     return findindex(v);
 };
 
@@ -257,22 +259,34 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     loopi(8) vertexuses[i] = 0;
     loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = c.clip[i].offset = 0.0f;
 
-    loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts(c,i,k)]++;
     if(isentirelysolid(c))
     {
-        loopi(8) if(vertexuses[i]) cin[i] = vert(cubecoords[i][0]*size/8+x,
-                                                 cubecoords[i][1]*size/8+y,
-                                                 cubecoords[i][2]*size/8+z);
+        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4) 
+        {
+            int coord = faceverts(c,i,k),
+                index = vert(cubecoords[coord][0]*size/8+x,
+                             cubecoords[coord][1]*size/8+y,
+                             cubecoords[coord][2]*size/8+z,
+                             float(c.surfaces[i].texcoords[k*2]) / float(c.surfaces[i].w),
+                             float(c.surfaces[i].texcoords[k*2 + 1]) / float(c.surfaces[i].h));
+            if(++vertexuses[coord] == 1)
+                cin[coord] = index;
+        }
     }
     else
     {
         vec pos((float)x, (float)y, (float)z);
-    
-        loopi(8) if(vertexuses[i]) 
+   
+        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4)
         {
+            int coord = faceverts(c,i,k);
             vertex v;
-            genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, v);
-            cin[i] = findindex(verts[curvert] = v);
+            genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, v);
+            v.u = float(c.surfaces[i].texcoords[k*2]) / float(c.surfaces[i].w);
+            v.v = float(c.surfaces[i].texcoords[k*2 + 1]) / float(c.surfaces[i].h);
+            int index = findindex(verts[curvert] = v);
+            if(++vertexuses[coord] == 1)
+                cin[coord] = index;
         }
     };
 

@@ -210,10 +210,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             loopj(6) if(!usefaces[j]) c[i].surfaces[j].lmid = 0;
             else
             {
-                vertex v0 = verts[faceverts(c[i], j, 0)],
-                       v1 = verts[faceverts(c[i], j, 1)], 
-                       v2 = verts[faceverts(c[i], j, 2)], 
-                       v3 = verts[faceverts(c[i], j, 3)];
+                vertex &v0 = verts[faceverts(c[i], j, 0)],
+                       &v1 = verts[faceverts(c[i], j, 1)], 
+                       &v2 = verts[faceverts(c[i], j, 2)], 
+                       &v3 = verts[faceverts(c[i], j, 3)];
                 vec u = v1, 
                     v = v2; 
                 plane lm_normal;
