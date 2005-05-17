@@ -133,7 +133,7 @@ bool lightray_occluded(const vec &light, const vec &ray, float radius, cube *c, 
         if(t < radius) 
         {
             if(!isentirelysolid(c[i]))
-              /* do expensive checking here */;
+              /* do expensive checking here */
             hit_cube = &c[i];
             return true;
         }
@@ -302,4 +302,6 @@ void calclight()
     lightmaps.setsize(0);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
 }
+
+COMMAND(calclight, ARG_NONE);
 
