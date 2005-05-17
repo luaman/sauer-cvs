@@ -295,7 +295,7 @@ extern bool hasVBO;
 extern void gl_init(int w, int h);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float changelod, float curfps);
-extern bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp = false);
+extern bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp = false, bool mipit = true);
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
 extern int lookuptexture(int tex, int &xs, int &ys);

@@ -547,6 +547,20 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz)
     visiblecubec(c, size, cx, cy, cz);
 };
 
+extern PFNGLACTIVETEXTUREARBPROC       glActiveTextureARB;
+extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
+
+
+void setupTMU()
+{
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,  GL_MODULATE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT,  GL_PREVIOUS_EXT);
+    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, GL_SRC_COLOR);
+    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT,  GL_TEXTURE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
+};
+
 void renderq()
 {
     int si[] = { 0, 0, 2 };
@@ -554,6 +568,7 @@ void renderq()
 
     glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_COLOR_ARRAY);
+    glColor3f(1, 1, 1); // temp
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0);
 
@@ -565,12 +580,29 @@ void renderq()
         //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
+        setupTMU();
+        
+        glActiveTextureARB(GL_TEXTURE1_ARB);
+        glClientActiveTextureARB(GL_TEXTURE1_ARB);
+        
+        glEnable(GL_TEXTURE_2D); 
+        setupTMU();
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
+        
+        glActiveTextureARB(GL_TEXTURE0_ARB);
+        glClientActiveTextureARB(GL_TEXTURE0_ARB);
+
         unsigned short *ebuf = va->ebuf;
         loopi(va->texs)
         {
             int xs, ys;
             int otex = lookuptexture(va->eslist[i].texture, xs, ys);
-            glBindTexture(GL_TEXTURE_2D, otex);
+            glBindTexture(GL_TEXTURE_2D, otex);  
+            glActiveTextureARB(GL_TEXTURE1_ARB);
+            glBindTexture(GL_TEXTURE_2D, otex);  // EIHRUL: replace otex with lmap texture id
+            glActiveTextureARB(GL_TEXTURE0_ARB);
+            
             loopl(3) if (va->eslist[i].length[l])
             {
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -589,6 +621,11 @@ void renderq()
     if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
     //glDisableClientState(GL_COLOR_ARRAY);
+    
+    glActiveTextureARB(GL_TEXTURE1_ARB);
+    glDisable(GL_TEXTURE_2D); 
+    glActiveTextureARB(GL_TEXTURE0_ARB);
+
 };
 
 ////////// (re)mip //////////

@@ -14,6 +14,9 @@ PFNGLBINDBUFFERARBPROC    glBindBuffer    = NULL;
 PFNGLBUFFERDATAARBPROC    glBufferData    = NULL;
 PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
 
+PFNGLACTIVETEXTUREARBPROC       glActiveTextureARB       = NULL;
+PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB = NULL;
+
 void *getprocaddress(const char *name)
 {
     #ifdef WIN32
@@ -56,6 +59,10 @@ void gl_init(int w, int h)
     if(strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
     else conoutf("WARNING: cannot use overbright lighting, using old lighting model!");
 
+    glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
+    glClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)wglGetProcAddress("glClientActiveTextureARB");
+    if(!glActiveTextureARB || !glClientActiveTextureARB) fatal("no multitexture!");
+
     if(!strstr(exts, "GL_ARB_vertex_buffer_object")) conoutf("no vertex_buffer_object extension!");
     else
     {
@@ -83,21 +90,26 @@ void cleangl()
     if(qsphere) gluDeleteQuadric(qsphere);
 };
 
-bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp)
+void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit)
+{
+    glBindTexture(GL_TEXTURE_2D, tnum);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR); 
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); 
+    if(mipit) { if(gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels)) fatal("could not build mipmaps"); }
+    else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+}
+
+bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit)
 {
     SDL_Surface *s = IMG_Load(texname);
     if(!s) { conoutf("couldn't load texture %s", (int)texname); return false; };
     if(s->format->BitsPerPixel!=24) { conoutf("texture must be 24bpp: %s", (int)texname); return false; };
     // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };  
-    glBindTexture(GL_TEXTURE_2D,tnum);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //NEAREST);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); 
-    if(gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, s->w, s->h, GL_RGB, GL_UNSIGNED_BYTE, s->pixels)) fatal("could not build mipmaps");
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, s->w, s->h, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
+    createtexture(tnum, s->w, s->h, s->pixels, clamp, mipit);
     xs = s->w;
     ys = s->h;
     SDL_FreeSurface(s);
