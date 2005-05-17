@@ -303,6 +303,9 @@
 				RelativePath="..\src\geom.cpp">
 			</File>
 			<File
+				RelativePath="..\src\lightmap.cpp">
+			</File>
+			<File
 				RelativePath="..\src\main.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -619,6 +622,9 @@
 			Filter="h;hpp;hxx;hm;inl">
 			<File
 				RelativePath="..\src\cube.h">
+			</File>
+			<File
+				RelativePath="..\src\lightmap.h">
 			</File>
 			<File
 				RelativePath="..\src\octa.h">
