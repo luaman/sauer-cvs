@@ -85,7 +85,7 @@ void savec(cube *c, gzFile f)
                 gzwrite(f, c[i].edges, 12);
             };
             gzwrite(f, c[i].texture, 6);
-            gzwrite(f, c[i].colour, 3);
+            loopj(3) gzputc(f, 0); //gzwrite(f, c[i].colour, 3);
         };
     };
 };
@@ -108,7 +108,7 @@ void loadc(gzFile f, cube &c)
             fatal("garbage in map");
     };
     gzread(f, c.texture, 6);
-    gzread(f, c.colour, 3);
+    loopi(3) gzgetc(f); //gzread(f, c.colour, 3);
     c.children = NULL;
 };
 

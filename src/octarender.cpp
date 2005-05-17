@@ -73,7 +73,7 @@ int vert(int x, int y, int z, uint col)
     v.x = (float)x;
     v.y = (float)z;
     v.z = (float)y;
-    v.colour = col;
+    //v.colour = col;
     return findindex(v);
 };
 
@@ -126,7 +126,7 @@ int genvert(ivec &p, cube &c, vec &pos, float size, uint col)
     float t = v.y;
     v.y = v.z;
     v.z = t;
-    v.colour = col;
+    //v.colour = col;
     return findindex(verts[curvert] = v);
 };
 
@@ -230,7 +230,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 {
     vertcheck();
     vec mx(x, z, y), mn(x+size, z+size, y+size);
-    int col = *((int *)(&c.colour[0]));
+    int col = 0; //*((int *)(&c.colour[0]));
     int cin[8];
     bool useface[6];
     int vertexuses[8];
@@ -696,7 +696,7 @@ bool remip(cube &c, int x, int y, int z, int size)
     };
     if(!r) return false;
     emptyfaces(c);
-    loopi(3) c.colour[i] = c.children[0].colour[i];
+    //loopi(3) c.colour[i] = c.children[0].colour[i];
     if(!e)
     {
         ivec o(x, y, z);

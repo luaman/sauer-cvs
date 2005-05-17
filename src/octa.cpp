@@ -15,8 +15,8 @@ cube *newcubes(uint face)
         setfaces(*c, face);
         loopl(6) c->texture[l] = 2+l;
         int col = rnd(256);
-        loopl(3) c->colour[l] = col;
-        c->colour[3] = 255;
+        //loopl(3) c->colour[l] = col;
+        //c->colour[3] = 255;
         c++;
     };
     allocnodes++;

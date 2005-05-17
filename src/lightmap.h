@@ -31,7 +31,6 @@ struct LightMap
     PackNode packroot;
 
     LightMap()
-     : packroot(LM_PACKW, LM_PACKH)
     {
         memset(data, 0, sizeof(data));
     }
