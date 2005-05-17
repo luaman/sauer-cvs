@@ -8,6 +8,56 @@ static vector<entity *> lights;
 static cube *hit_cube;
 static int hit_surface;
 
+bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
+{
+    if(packed || w < tw || h < th)
+        return false;
+    if(children)
+    {
+        bool inserted = children[0].insert(tx, ty, tw, th) ||
+                        children[1].insert(tx, ty, tw, th);
+        packed = children[0].packed && children[1].packed;
+        return inserted;    
+    }
+    if(w == tw && h == th)
+    {
+        packed = true;
+        tx = x;
+        ty = y;
+        return true;
+    }
+    
+    children = gp()->alloc(2 * sizeof(PackNode));
+    if(w - tw > h - th)
+    {
+        new (children) PackNode(x, y, tw, h);
+        new (children + 1) PackNode(x + tw, y, w - tw, h);
+    }
+    else
+    {
+        new (children) PackNode(x, y, w, th);
+        new (children + 1) PackNode(x, y + th, w, h - th);
+    }
+
+    return children[0].insert(tx, ty, tw, th);
+}
+
+bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
+{
+    if(!packroot.insert(tx, ty, tw, th))
+        return false;
+    uchar *dst = data + tx + ty * 3 * LM_PACKW;
+    loop(y, th)
+    {
+        loop(x, tw)
+        {
+            memcpy(dst, src, 3 * tw);
+            dst += 3 * LM_PACKW;
+            src += 3 * tw;
+        }
+    }
+}
+
 void pack_lightmap(surfaceinfo &surface) 
 {
     loopv(lightmaps)

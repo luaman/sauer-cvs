@@ -473,6 +473,17 @@ extern void perlinarea(block &b, int scale, int seed, int psize);
 #include <enet/enet.h>
 
 #include "octa.h"
+#include "lightmap.h"
+
+#ifndef GL_ARRAY_BUFFER_ARB
+#define GL_ARRAY_BUFFER_ARB               0x8892
+#define GL_STATIC_DRAW_ARB                0x88E4
+
+typedef void (* PFNGLBINDBUFFERARBPROC)(GLenum, GLuint);
+typedef void (* PFNGLDELETEBUFFERSARBPROC) (GLsizei, const GLuint *);
+typedef void (* PFNGLGENBUFFERSARBPROC) (GLsizei, GLuint *);
+typedef void (* PFNGLBUFFERDATAARBPROC) (GLenum, unsigned int, const GLvoid *, GLenum);
+#endif
 
 extern PFNGLGENBUFFERSARBPROC    glGenBuffers;
 extern PFNGLBINDBUFFERARBPROC    glBindBuffer;
