@@ -1,8 +1,8 @@
 #include "cube.h"
 
-vector<LightMap *> lightmaps;
+vector<LightMap> lightmaps;
 
-static uchar lm [3 * LM_MAXX * LM_MAXY];
+static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h, lm_upt;
 static vector<entity *> lights;
 static cube *hit_cube;
@@ -27,7 +27,7 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
         return true;
     }
     
-    children = gp()->alloc(2 * sizeof(PackNode));
+    children = (PackNode *) gp()->alloc(2 * sizeof(PackNode));
     if(w - tw > h - th)
     {
         new (children) PackNode(x, y, tw, h);
@@ -62,7 +62,7 @@ void pack_lightmap(surfaceinfo &surface)
 {
     loopv(lightmaps)
     {
-        if(lightmaps[i]->insert(surface.x, surface.y, lm, lm_w, lm_h))
+        if(lightmaps[i].insert(surface.x, surface.y, lm, lm_w, lm_h))
         {
             surface.lmid = i + 1;
             return;
@@ -204,10 +204,16 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
                 lights.add(&e);
             }
-            loopj(6)
+            vertex verts[8];
+            bool usefaces[6];
+            calcverts(c[i], cx, cy, cz, size, verts, usefaces);
+            loopj(6) if(!usefaces[j]) c[i].surfaces[j].lmid = 0;
+            else
             {
-                /* TODO: Figure out the surface vertices here. */
-                vertex v0, v1, v2, v3;
+                vertex v0 = verts[faceverts(c[i], j, 0)],
+                       v1 = verts[faceverts(c[i], j, 1)], 
+                       v2 = verts[faceverts(c[i], j, 2)], 
+                       v3 = verts[faceverts(c[i], j, 3)];
                 vec u = v1, 
                     v = v2; 
                 plane lm_normal;
@@ -243,10 +249,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(vo);
 
                 lm_w = uint((umax - umin) / float(lm_upt));
-                if(lm_w > LM_MAXX) lm_w = LM_MAXX;
+                if(lm_w > LM_MAXW) lm_w = LM_MAXW;
                 else if(!lm_w) lm_w = 1;
                 lm_h = uint((vmax - vmin) / float(lm_upt));
-                if(lm_h > LM_MAXX) lm_h = LM_MAXY;
+                if(lm_h > LM_MAXH) lm_h = LM_MAXH;
                 else if(!lm_h) lm_h = 1;
   
                 int lit = 0;

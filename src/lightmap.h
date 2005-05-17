@@ -38,5 +38,5 @@ struct LightMap
     bool insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th);
 };
 
-extern vector<LightMap *> lightmaps;
+extern vector<LightMap> lightmaps;
 

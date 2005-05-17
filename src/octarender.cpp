@@ -67,13 +67,12 @@ int findindex(vertex &v)
     //return curvert++;
 };
 
-int vert(int x, int y, int z, uint col)
+int vert(int x, int y, int z)
 {
     vertex &v = verts[curvert];
     v.x = (float)x;
     v.y = (float)z;
     v.z = (float)y;
-    //v.colour = col;
     return findindex(v);
 };
 
@@ -103,7 +102,7 @@ void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
     vertstoplane(v1, v2, v3, pl);
 };
 
-int genvert(ivec &p, cube &c, vec &pos, float size, uint col)
+void genvert(ivec &p, cube &c, vec &pos, float size, vertex &v)
 {
     ivec p1(8-p.x, p.y, p.z);
     ivec p2(p.x, 8-p.y, p.z);
@@ -114,7 +113,6 @@ int genvert(ivec &p, cube &c, vec &pos, float size, uint col)
     genvertp(c, p, p2, p3, plane2);
     genvertp(c, p, p1, p3, plane3);
 
-    vertex v;
     ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
 
     //ASSERT(v.x>=0 && v.x<=8);
@@ -126,8 +124,6 @@ int genvert(ivec &p, cube &c, vec &pos, float size, uint col)
     float t = v.y;
     v.y = v.z;
     v.z = t;
-    //v.colour = col;
-    return findindex(verts[curvert] = v);
 };
 
 const int cubecoords[8][3] = // verts of bounding cube
@@ -224,13 +220,36 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size)
     return false;
 };
 
+void calcverts(cube &c, int x, int y, int z, int size, vertex *verts, bool *usefaces)
+{
+    int vertexuses[8];
+
+    loopi(8) vertexuses[i] = 0;
+    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts(c,i,k)]++;
+    if(isentirelysolid(c))
+    {
+        loopi(8) if(vertexuses[i])
+        {
+            verts[i].x = cubecoords[i][0]*size/8+x;
+            verts[i].y = cubecoords[i][1]*size/8+y;
+            verts[i].z = cubecoords[i][2]*size/8+z;
+        }
+    }
+    else
+    {
+        vec pos((float)x, (float)y, (float)z);
+
+        loopi(8) if(vertexuses[i]) genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, verts[i]);
+    }
+}
+    
 usvector indices[3][256];
 
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
     vertcheck();
     vec mx(x, z, y), mn(x+size, z+size, y+size);
-    int col = 0; //*((int *)(&c.colour[0]));
+    //int col = *((int *)(&c.colour[0]));
     int cin[8];
     bool useface[6];
     int vertexuses[8];
@@ -243,12 +262,18 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     {
         loopi(8) if(vertexuses[i]) cin[i] = vert(cubecoords[i][0]*size/8+x,
                                                  cubecoords[i][1]*size/8+y,
-                                                 cubecoords[i][2]*size/8+z, col);
+                                                 cubecoords[i][2]*size/8+z);
     }
     else
     {
         vec pos((float)x, (float)y, (float)z);
-        loopi(8) if(vertexuses[i]) cin[i] = genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, col);
+    
+        loopi(8) if(vertexuses[i]) 
+        {
+            vertex v;
+            genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, v);
+            cin[i] = findindex(verts[curvert] = v);
+        }
     };
 
     loopi(8) if(vertexuses[i]) loopj(3)
@@ -514,7 +539,7 @@ void renderq()
     int ti[] = { 2, 1, 1 };
 
     glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
+    //glEnableClientState(GL_COLOR_ARRAY);
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0);
 
@@ -523,7 +548,7 @@ void renderq()
     while (va)
     {
         if (hasVBO) (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
+        //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
         unsigned short *ebuf = va->ebuf;
@@ -549,7 +574,7 @@ void renderq()
 
     if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    //glDisableClientState(GL_COLOR_ARRAY);
 };
 
 ////////// (re)mip //////////

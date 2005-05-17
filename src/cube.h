@@ -52,7 +52,7 @@ struct vec
     float &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
 
     float squaredlen()       { return x*x + y*y + z*z; };
-    float dot(const vec &o)  { return x*o.x + y*o.y + z*o.z; };
+    float dot(const vec &o) const { return x*o.x + y*o.y + z*o.z; };
     void mul(float f)        { x *= f; y *= f; z *= f; };
     void div(float f)        { x /= f; y /= f; z /= f; };
     void add(const vec &o)   { x += o.x; y += o.y; z += o.z; };

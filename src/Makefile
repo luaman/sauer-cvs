@@ -31,7 +31,8 @@ CLIENT_OBJS= \
         geom.o \
         octa.o \
         octaedit.o \
-	octarender.o 
+	octarender.o \
+	lightmap.o
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \
