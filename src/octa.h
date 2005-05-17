@@ -21,6 +21,18 @@ struct vtxarray
     int x, y, z, size;  // location and size of cube.
 };
 
+#define LM_MAXW 256
+#define LM_MAXH 256
+#define LM_PACKW 512
+#define LM_PACKH 512
+
+struct surfaceinfo
+{
+    uchar texcoords[8];
+    uchar w, h;
+    ushort x, y, lmid;
+};
+
 struct cube
 {
     cube *children;         // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
@@ -31,9 +43,9 @@ struct cube
         uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
     };
     uchar texture[6];       // one for each face. same order as orient.
-    uchar colour[3];        // colour at (-X,-Y,-Z) corner
     vtxarray *va;           // vertex array for children, or NULL
     plane clip[18];         // collision planes
+    surfaceinfo surfaces[6]; // lighting info for each surface
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
