@@ -56,6 +56,7 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
             src += 3 * tw;
         }
     }
+    return true;
 }
 
 void pack_lightmap(surfaceinfo &surface) 
