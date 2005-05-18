@@ -51,7 +51,7 @@ struct vec
 
     float &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
 
-    float squaredlen()       { return x*x + y*y + z*z; };
+    float squaredlen() const { return x*x + y*y + z*z; };
     float dot(const vec &o) const { return x*o.x + y*o.y + z*o.z; };
     void mul(float f)        { x *= f; y *= f; z *= f; };
     void div(float f)        { x /= f; y /= f; z /= f; };
@@ -59,7 +59,7 @@ struct vec
     void sub(const vec &o)   { x -= o.x; y -= o.y; z -= o.z; };
     float magnitude()        { return (float)sqrt(dot(*this)); };
     void normalize()         { div(magnitude()); };
-    bool isnormalized()      { float m = squaredlen(); return (m>0.99f && m<1.01f); };
+    bool isnormalized() const { float m = squaredlen(); return (m>0.99f && m<1.01f); };
     float dist(const vec &e) { vec t; return dist(e, t); };
     float dist(const vec &e, vec &t) { t = *this; t.sub(e); return t.magnitude(); };
     bool reject(const vec &o, float max) { return x>o.x+max || x<o.x-max || y>o.y+max || y<o.y-max; };
@@ -69,7 +69,7 @@ struct vec
 struct plane : vec
 {
     float offset;
-    float dist(const vec &p)    { return dot(p)+offset; };
+    float dist(const vec &p) const   { return dot(p)+offset; };
     bool operator==(plane &p)   { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
 };
 struct line3 { vec orig, dir; };
@@ -208,7 +208,6 @@ extern char *entnames[];                // lookup from map entities above to str
 extern int gamemode, nextmode;
 extern bool nogore;                     // implemented for the german market :)
 extern int xtraverts;
-extern bool hasoverbright;
 extern int curvert;
 extern vertex *verts;                   // the vertex array for all world rendering
 extern int islittleendian;
@@ -299,7 +298,8 @@ extern bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp = f
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
 extern int lookuptexture(int tex, int &xs, int &ys);
-
+extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit);
+        
 // client
 extern void localservertoclient(uchar *buf, int len);
 extern void connects(char *servername);

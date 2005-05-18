@@ -227,9 +227,21 @@ template <class T> struct vector
 #define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
 #define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
-template <class T> struct hashtable
+inline unsigned int hthash(char * key)
 {
-    struct chain { chain *next; char *key; T data; };
+    unsigned int h = 5381;
+    for(int i = 0, k; k = key[i]; i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
+    return h;
+}
+
+inline bool htcmp(char *x, char *y)
+{
+    return !strcmp(x, y);
+}
+
+template <class K, class T> struct hashtable
+{
+    struct chain { chain *next; K key; T data; };
 
     int size;
     int numelems;
@@ -237,47 +249,70 @@ template <class T> struct hashtable
     pool *parent;
     chain *enumc;
 
-    hashtable()
+    hashtable(int size = 1<<10)
+      : size(size)
     {
-        this->size = 1<<10;
-        this->parent = gp();
+        parent = gp();
         numelems = 0;
         table = (chain **)parent->alloc(size*sizeof(T));
         for(int i = 0; i<size; i++) table[i] = NULL;
     };
 
-    hashtable(hashtable<T> &v);
-    void operator=(hashtable<T> &v);
-
-    T *access(char *key, T *data = NULL)
+    chain *insert(const K &key, unsigned int h)
     {
-        unsigned int h = 5381;
-        for(int i = 0, k; k = key[i]; i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
-        h = h&(size-1);                                         // primes not much of an advantage
+        chain *c = (chain *)parent->alloc(sizeof(chain));
+        c->key = key;
+        new (& c->data) T;
+        c->next = table[h]; 
+        table[h] = c;
+        numelems++;
+        return c;
+    }
+
+    chain *find(const K &key, bool doinsert)
+    {
+        unsigned int h = hthash(key)&(size-1);
         for(chain *c = table[h]; c; c = c->next)
         {
-            for(char *p1 = key, *p2 = c->key, ch; (ch = *p1++)==*p2++; ) if(!ch)    //if(strcmp(key,c->key)==0)
-            {
-                T *d = &c->data;
-                if(data) c->data = *data;
-                return d;
-            };
-        };
-        if(data)
-        {
-            chain *c = (chain *)parent->alloc(sizeof(chain));
-            c->data = *data;
-            c->key = key;
-            c->next = table[h];
-            table[h] = c;
-            numelems++;
-        };
+            if(htcmp(key, c->key)) return c;
+        }
+        if(doinsert) return insert(key, h);
         return NULL;
+    }
+
+    T *access(const K &key, T *data = NULL)
+    {
+        chain *c = find(key, data != NULL);
+        if(data) c->data = *data;
+        if(c) return &c->data;
+        return NULL;
+    }
+
+    T &operator[](const K &key)
+    {
+        return find(key, true)->data;
     };
+
+    void clear()
+    {
+        loopi(size)
+        {
+            for(chain *c = table[i], *next; c; c = next) 
+            { 
+                next = c->next; 
+                c->data.~T();
+                parent->dealloc(c, sizeof(chain)); 
+            };
+            table[i] = NULL;
+            numelems = 0;
+        };
+    }
 };
 
-
-#define enumerate(ht,t,e,b) loopi(ht->size) for(ht->enumc = ht->table[i]; ht->enumc; ht->enumc = ht->enumc->next) { t e = &ht->enumc->data; b; }
+#define enumeratekt(ht,k,e,t,f,b) \
+        loopi(ht.size) for(hashtable<k,t>::chain *enumc = ht.table[i]; enumc; enumc = enumc->next) \
+            { const k &e = enumc->key; t *f = &enumc->data; b; }
+#define enumerate(ht,t,e,b) loopi(ht->size) for(ht->enumc = ht->table[i]; ht->enumc; ht->enumc = ht->enumc->next) { t *e = &ht->enumc->data; b; }
 
 inline char *newstring(char *s)        { return gp()->string(s);    };
 inline char *newstring(char *s, int l) { return gp()->string(s, l); };

@@ -29,8 +29,10 @@ struct LightMap
 {
     uchar data[3 * LM_PACKW * LM_PACKH];
     PackNode packroot;
-
+    uint totalpacked;
+    
     LightMap()
+     : totalpacked(0)
     {
         memset(data, 0, sizeof(data));
     }

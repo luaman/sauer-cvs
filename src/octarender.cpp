@@ -244,8 +244,31 @@ void calcverts(cube &c, int x, int y, int z, int size, vertex *verts, bool *usef
         loopi(8) if(vertexuses[i]) genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, verts[i]);
     }
 }
-    
-usvector indices[3][256];
+
+struct sortkey
+{
+     uint tex, lmid;
+     sortkey(uint tex, uint lmid)
+      : tex(tex), lmid(lmid)
+     {}
+};
+
+struct sortval
+{
+     usvector dims[3];
+};
+
+inline bool htcmp (const sortkey &x, const sortkey &y)
+{ 
+    return x.tex == y.tex && x.lmid == y.lmid;
+}
+
+inline unsigned int hthash (const sortkey &k)
+{
+    return k.tex + k.lmid*9741;
+}
+
+hashtable<sortkey, sortval> indices;
 
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
@@ -261,32 +284,54 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
     if(isentirelysolid(c))
     {
-        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4) 
+        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
         {
-            int coord = faceverts(c,i,k),
-                index = vert(cubecoords[coord][0]*size/8+x,
-                             cubecoords[coord][1]*size/8+y,
-                             cubecoords[coord][2]*size/8+z,
-                             float(c.surfaces[i].texcoords[k*2]) / float(c.surfaces[i].w),
-                             float(c.surfaces[i].texcoords[k*2 + 1]) / float(c.surfaces[i].h));
-            if(++vertexuses[coord] == 1)
-                cin[coord] = index;
+            usvector &iv = indices[sortkey(c.texture[i], c.surfaces[i].lmid)].dims[dimension(i)];
+            loopk(4)
+            {
+                float u, v;
+                if(c.surfaces[i].lmid)
+                {
+                    u = (c.surfaces[i].x + c.surfaces[i].texcoords[k*2] + 0.5) / LM_PACKW;
+                    v = (c.surfaces[i].y + c.surfaces[i].texcoords[k*2 + 1] + 0.5) / LM_PACKH;
+                }
+                else
+                     u = v = 0.0;
+                int coord = faceverts(c,i,k),
+                    index = vert(cubecoords[coord][0]*size/8+x,
+                                 cubecoords[coord][1]*size/8+y,
+                                 cubecoords[coord][2]*size/8+z,
+                                 u, v);
+                iv.add(index);
+                if(++vertexuses[coord] == 1)
+                    cin[coord] = index;
+            }
         }
     }
     else
     {
         vec pos((float)x, (float)y, (float)z);
    
-        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size)) loopk(4)
+        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
         {
-            int coord = faceverts(c,i,k);
-            vertex v;
-            genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, v);
-            v.u = float(c.surfaces[i].texcoords[k*2]) / float(c.surfaces[i].w);
-            v.v = float(c.surfaces[i].texcoords[k*2 + 1]) / float(c.surfaces[i].h);
-            int index = findindex(verts[curvert] = v);
-            if(++vertexuses[coord] == 1)
-                cin[coord] = index;
+            usvector &iv = indices[sortkey(c.texture[i], c.surfaces[i].lmid)].dims[dimension(i)];
+            loopk(4)
+            {
+                int coord = faceverts(c,i,k);
+                vertex v;
+                genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, v);
+                if(c.surfaces[i].lmid)
+                {
+                    v.u = (c.surfaces[i].x + c.surfaces[i].texcoords[k*2] + 0.5) / LM_PACKW;
+                    v.v = (c.surfaces[i].y + c.surfaces[i].texcoords[k*2 + 1] + 0.5) / LM_PACKH;
+                }
+                else
+                    v.u = v.v = 0.0;
+                int index = findindex(verts[curvert] = v);
+                iv.add(index);
+                if(++vertexuses[coord] == 1)
+                    cin[coord] = index;
+            }
         }
     };
 
@@ -301,8 +346,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
     loopi(6) if(useface[i])
     {
-        usvector &v = indices[dimension(i)][c.texture[i]];
-        loopk(4) v.add(cin[faceverts(c,i,k)]);
         curtris += 2;
 
         vec p[5];
@@ -323,17 +366,11 @@ int wtris = 0, wverts = 0, vtris = 0, vverts = 0;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
-    int textures = 0;
-    char texlist[256];
-    loopk(256) if (indices[0][k].length() ||
-                   indices[1][k].length() ||
-                   indices[2][k].length())  texlist[textures++] = (char)k;
-
-    int allocsize = sizeof(vtxarray) + textures*sizeof(elementset) + 2*curtris*sizeof(ushort);
+    int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + 2*curtris*sizeof(ushort);
     if (!hasVBO) allocsize += curvert * sizeof(vertex); // length of vertex buffer
     vtxarray *va = (vtxarray *)gp()->alloc(allocsize); // single malloc call
     va->eslist = (elementset *)((char *)va + sizeof(vtxarray));
-    va->ebuf = (ushort *)((char *)va->eslist + (textures * sizeof(elementset)));
+    va->ebuf = (ushort *)((char *)va->eslist + (indices.numelems * sizeof(elementset)));
     if (hasVBO && curvert)
     {
         (*glGenBuffers)(1, &(va->vbufGL));
@@ -348,18 +385,22 @@ vtxarray *newva(int x, int y, int z, int size)
     };
 
     ushort *ebuf = va->ebuf;
-    loopk(textures)
-    {
-        va->eslist[k].texture = texlist[k];
-        loopl(3) if((va->eslist[k].length[l] = indices[l][texlist[k]].length()))
+    int list = 0;
+    enumeratekt(indices, sortkey, k, sortval, t,
+        va->eslist[list].texture = k.tex;
+        va->eslist[list].lmid = k.lmid;
+        loopl(3) if(va->eslist[list].length[l] = t->dims[l].length())
         {
-            memcpy(ebuf, indices[l][texlist[k]].getbuf(), indices[l][texlist[k]].length() * sizeof(ushort));
-            ebuf += indices[l][texlist[k]].length();
+            memcpy(ebuf, t->dims[l].getbuf(), t->dims[l].length() * sizeof(ushort));
+            ebuf += t->dims[l].length();
+            if((char *)ebuf - (char *)va > allocsize)
+                * (int *) 0 = 0;
         };
-    };
+        ++list;
+    );
 
     va->allocsize = allocsize;
-    va->texs = textures;
+    va->texs = indices.numelems;
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->cv = vec(x+size, y+size, z+size); // Center of cube
     va->radius = size * SQRT3; // cube radius
@@ -405,7 +446,7 @@ void setva(cube &c, int cx, int cy, int cz, int size)
     if(curvert)                                 // since reseting is a bit slow
     {
         curvert = curtris = 0;
-        loopl(3) loopk(256) indices[l][k].setsize(0);
+        indices.clear();
         vh.clear();
     };
     rendercube(c, cx, cy, cz, size);
@@ -589,7 +630,7 @@ void renderq()
         setupTMU();
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
-        
+
         glActiveTextureARB(GL_TEXTURE0_ARB);
         glClientActiveTextureARB(GL_TEXTURE0_ARB);
 
@@ -600,9 +641,9 @@ void renderq()
             int otex = lookuptexture(va->eslist[i].texture, xs, ys);
             glBindTexture(GL_TEXTURE_2D, otex);  
             glActiveTextureARB(GL_TEXTURE1_ARB);
-            glBindTexture(GL_TEXTURE_2D, otex);  // EIHRUL: replace otex with lmap texture id
+            glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
             glActiveTextureARB(GL_TEXTURE0_ARB);
-            
+           
             loopl(3) if (va->eslist[i].length[l])
             {
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };

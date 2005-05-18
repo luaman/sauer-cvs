@@ -2,8 +2,10 @@
 
 vector<LightMap> lightmaps;
 
+VAR(upl, 1, 1, 256);
+
 static uchar lm [3 * LM_MAXW * LM_MAXH];
-static uint lm_w, lm_h, lm_upt;
+static uint lm_w, lm_h;
 static vector<entity *> lights;
 static cube *hit_cube;
 static int hit_surface;
@@ -46,16 +48,15 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
 {
     if(!packroot.insert(tx, ty, tw, th))
         return false;
-    uchar *dst = data + tx + ty * 3 * LM_PACKW;
-    loop(y, th)
+
+    uchar *dst = data + 3 * tx + ty * 3 * LM_PACKW;
+    loopi(th)
     {
-        loop(x, tw)
-        {
-            memcpy(dst, src, 3 * tw);
-            dst += 3 * LM_PACKW;
-            src += 3 * tw;
-        }
+        memcpy(dst, src, 3 * tw);
+        dst += 3 * LM_PACKW;
+        src += 3 * tw;
     }
+    ++totalpacked;
     return true;
 }
 
@@ -108,6 +109,8 @@ bool ray_aabb_intersect(const vec &origin, const vec &ray, const vec &box, float
     INTERSECT_PLANES(y, 2)
     INTERSECT_PLANES(z, 4)
 
+    if(tnear < 0.0)
+        return false;
     hitdist = tnear;
     return true;
 }
@@ -116,9 +119,6 @@ bool lightray_occluded(const vec &light, const vec &ray, float radius, cube *c, 
 {
     loopi(8)
     {
-        if(isempty(c[i]))
-            continue;
-
         ivec o(i, cx, cy, cz, size);
         float t;
         if(!ray_aabb_intersect (light, ray, vec(o), float(size), t, hit_surface))
@@ -130,7 +130,7 @@ bool lightray_occluded(const vec &light, const vec &ray, float radius, cube *c, 
                 return true;
         } 
         else 
-        if(t < radius) 
+        if(t < radius && !isempty(c[i])) 
         {
             if(!isentirelysolid(c[i]))
               /* do expensive checking here */
@@ -141,55 +141,60 @@ bool lightray_occluded(const vec &light, const vec &ray, float radius, cube *c, 
     return false;
 }
 
-void generate_lightmap(cube &target, int surface, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
+bool generate_lightmap(cube &target, int surface, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
     uint x, y;
     vec v = origin;
     uchar *lumel = lm;
+    int miss = 0;
     
     for(y = 0; y < lm_h; ++y) {
         vec u = v;
-        for(x = 0; x < lm_w; ++x) {
+        for(x = 0; x < lm_w; ++x, lumel += 3) {
             loopv(lights)
             {
                 entity &light = *lights[i];
 
                 vec ray = u;
                 ray.sub(light.o);
-                float attenuation = 1.0 - ray.magnitude() / float(light.attr1);
+                float mag = ray.magnitude(),
+                      attenuation = 1.0 - mag / float(light.attr1);
+                ray.mul(1.0 / mag);
                 if(attenuation <= 0.0 || 
-                   (lightray_occluded(light.o, (ray.normalize(), ray), float(light.attr1), worldroot, 0, 0, 0, hdr.worldsize >> 1) &&
+                   (lightray_occluded(light.o, ray, float(light.attr1), worldroot, 0, 0, 0, hdr.worldsize >> 1) &&
                     (hit_cube != &target || hit_surface != surface)))
                 {
-                    lumel[0] = lumel[1] = lumel[2] = 0;
-                    lumel += 3;
+                    ++miss;
+                    lumel[0] = 0;
+                    lumel[1] = 0;
+                    lumel[2] = 0;
                     continue;
                 }
 
-                float intensity = normal.dot(ray) * attenuation;
+                float intensity = -normal.dot(ray) * attenuation;
                 lumel[0] = uchar(intensity * float(light.attr2));
                 lumel[1] = uchar(intensity * float(light.attr3));
                 lumel[2] = uchar(intensity * float(light.attr4));
-                lumel += 3;
             }
             u.add(ustep);
         }
         v.add(vstep);
     }
+    return miss < lights.length() * lm_w * lm_h;
 }
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
     loopi(8)
     {
-        if(isempty(c[i]))
-            continue;
-
         ivec o(i, cx, cy, cz, size);
         if(c[i].children)
             generate_lightmaps(c[i].children, o.x, o.y, o.z, size >> 1);
         else 
+        if(!isempty(c[i]))
         {
+            loopj(6) c[i].surfaces[j].lmid = 0;
+
             lights.setsize(0);
             loopv(ents)
             {
@@ -197,30 +202,30 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 if(e.type != LIGHT)
                     continue;
 
-                float radius = float(e.attr1);
-                if(e.o.x + radius < float(cx) || e.o.x - radius > float(cx + size) ||
+               float radius = float(e.attr1);
+               if(e.o.x + radius < float(cx) || e.o.x - radius > float(cx + size) ||
                    e.o.y + radius < float(cy) || e.o.y - radius > float(cy + size) ||
                    e.o.z + radius < float(cz) || e.o.z - radius > float(cz + size))
                     continue;
 
                 lights.add(&e);
             }
+            if(!lights.length()) continue;
+
             vertex verts[8];
             bool usefaces[6];
             calcverts(c[i], cx, cy, cz, size, verts, usefaces);
-            loopj(6) if(!usefaces[j]) c[i].surfaces[j].lmid = 0;
-            else
+            loopj(6) if(usefaces[j])
             {
-                vertex &v0 = verts[faceverts(c[i], j, 0)],
-                       &v1 = verts[faceverts(c[i], j, 1)], 
-                       &v2 = verts[faceverts(c[i], j, 2)], 
-                       &v3 = verts[faceverts(c[i], j, 3)];
-                vec u = v1, 
-                    v = v2; 
-                plane lm_normal;
-                vertstoplane(v0, u, v, lm_normal);
+                const plane &lm_normal = c[i].clip[j*2];
+                vertex v0 = verts[faceverts(c[i], j, 0)],
+                       v1 = verts[faceverts(c[i], j, 1)], 
+                       v2 = verts[faceverts(c[i], j, 2)], 
+                       v3 = verts[faceverts(c[i], j, 3)];
+                vec u = v1, v;
+                u.sub(v0);
                 u.normalize();
-                v.cross(u, lm_normal);
+                v.cross(lm_normal, u);
 
 #define UVMINMAX(vert) \
                 { \
@@ -235,8 +240,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 }
 
                 float umin, umax, vmin, vmax;
-                umin = umax = u.dot(v0);
-                vmin = vmax = v.dot(v0);
+                umin = umax = vmin = vmax = 0.0;
                 UVMINMAX(v1)
                 UVMINMAX(v2)
                 UVMINMAX(v3)
@@ -249,18 +253,19 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = uint((umax - umin) / float(lm_upt));
+                lm_w = uint((umax - umin) / float(upl));
                 if(lm_w > LM_MAXW) lm_w = LM_MAXW;
                 else if(!lm_w) lm_w = 1;
-                lm_h = uint((vmax - vmin) / float(lm_upt));
+                lm_h = uint((vmax - vmin) / float(upl));
                 if(lm_h > LM_MAXH) lm_h = LM_MAXH;
                 else if(!lm_h) lm_h = 1;
-  
+
                 int lit = 0;
                 loopv(lights)
                 {
                    entity &light = *lights[i];
-                   if(fabs(lm_normal.dist(light.o)) < float(light.attr1))
+                   float dist = lm_normal.dist(light.o);
+                   if(dist >= 0.0 && dist < float(light.attr1))
                        ++lit;
                 }
                 if(!lit)
@@ -290,8 +295,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     vstep = v;
                 ustep.mul((umax - umin) / float(lm_w));
                 vstep.mul((vmax - vmin) / float(lm_h));
-                generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep);
+                if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
+                    continue;
                 pack_lightmap(surface);
+                //printf("c[%d].s[%d]/%d: %d,%d -> %dx%d\n", i, j, size, c[i].surfaces[j].x, c[i].surfaces[j].y, lm_w, lm_h);
             }
         }
     } 
@@ -301,6 +308,16 @@ void calclight()
 {
     lightmaps.setsize(0);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
+    uint total = 0;
+    uchar unlit[3] = {255, 255, 255};
+    createtexture(10000, 1, 1, unlit, false, false);
+    loopv(lightmaps)
+    {
+        total += lightmaps[i].totalpacked;
+        createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
+    }
+    allchanged();
+    conoutf("generated %d lightmaps in %d textures", total, lightmaps.length());
 }
 
 COMMAND(calclight, ARG_NONE);

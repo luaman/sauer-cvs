@@ -2,7 +2,6 @@
 
 #include "cube.h"
 
-bool hasoverbright = false;
 bool hasVBO = false;
 
 void purgetextures();
@@ -19,11 +18,14 @@ PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB = NULL;
 
 void *getprocaddress(const char *name)
 {
+    return SDL_GL_GetProcAddress(name);
+/*
     #ifdef WIN32
     return (void *)wglGetProcAddress(name);
     #else
     return dlsym(dlopen(NULL, RTLD_NOW), name);
     #endif
+*/
 }
 
 void gl_init(int w, int h)
@@ -56,12 +58,11 @@ void gl_init(int w, int h)
 
     char *exts = (char *)glGetString(GL_EXTENSIONS);
     
-    if(strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
-    else conoutf("WARNING: cannot use overbright lighting, using old lighting model!");
+    if(!strstr(exts, "GL_EXT_texture_env_combine")) fatal("no texture_env_combine extension!");
 
-    glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
-    glClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)wglGetProcAddress("glClientActiveTextureARB");
-    if(!glActiveTextureARB || !glClientActiveTextureARB) fatal("no multitexture!");
+    if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
+    glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)getprocaddress("glActiveTextureARB");
+    glClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object")) conoutf("no vertex_buffer_object extension!");
     else
@@ -203,18 +204,18 @@ int lookuptexture(int tex, int &xs, int &ys)
 
 void setupworld()
 {
-    if(hasoverbright)
-    {
+    /*if(hasoverbright)
+    {*/
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT); 
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
-    };
+    /*};*/
 };
 
 void renderstrips()
 {
-    if(hasoverbright) glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+    /*if(hasoverbright)*/ glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
     
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -226,7 +227,7 @@ void renderstrips()
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
 
-    if(hasoverbright) glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+    /*if(hasoverbright)*/ glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 };
 
 

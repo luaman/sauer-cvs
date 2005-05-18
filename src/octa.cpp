@@ -13,7 +13,11 @@ cube *newcubes(uint face)
         c->children = NULL;
         c->va = NULL;
         setfaces(*c, face);
-        loopl(6) c->texture[l] = 2+l;
+        loopl(6)
+        {
+            c->texture[l] = 2+l;
+            c->surfaces[l].lmid = 0;
+        };
         //int col = rnd(256);
         //loopl(3) c->colour[l] = col;
         //c->colour[3] = 255;

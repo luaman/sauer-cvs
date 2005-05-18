@@ -95,7 +95,7 @@ int islittleendian = 1;
 int main(int argc, char **argv)
 {
 //printf("%d\n", sizeof(entity));
-    bool dedicated = false, listen = false;
+    bool dedicated = false, listen = false, grabinput = true;
     int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;
     islittleendian = *((char *)&islittleendian);
@@ -111,6 +111,7 @@ int main(int argc, char **argv)
             case 'l': listen = true; break;
             case 'w': scr_w = atoi(&argv[i][2]); break;
             case 'h': scr_h = atoi(&argv[i][2]); break;
+            case 'z': grabinput = false; 
             case 't': fs = 0; break;
             case 'g': nogore = true; break;
             case 'u': uprate = atoi(&argv[i][2]);  break;
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
 
     log("video: misc");
     SDL_WM_SetCaption("sauerbraten engine", NULL);
-    SDL_WM_GrabInput(SDL_GRAB_ON);
+    if(grabinput) SDL_WM_GrabInput(SDL_GRAB_ON);
     keyrepeat(false);
     SDL_ShowCursor(0);
 
@@ -185,7 +186,7 @@ int main(int argc, char **argv)
 
     log("localconnect");
     localconnect();
-    changemap("x");
+    changemap("ltest");
 
     log("mainloop");
     int ignore = 5;

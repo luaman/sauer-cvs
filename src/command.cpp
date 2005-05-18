@@ -19,7 +19,9 @@ struct ident
 void itoa(char *s, int i) { sprintf_s(s)("%d", i); };
 char *exchangestr(char *o, char *n) { gp()->deallocstr(o); return newstring(n); };
 
-hashtable<ident> *idents = NULL;        // contains ALL vars/commands/aliases
+typedef hashtable<char*, ident> identtable;
+
+identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
 void alias(char *name, char *action)
 {
@@ -43,7 +45,7 @@ COMMAND(alias, ARG_2STR);
 
 int variable(char *name, int min, int cur, int max, int *storage, void (*fun)())
 {
-    if(!idents) idents = new hashtable<ident>;
+    if(!idents) idents = new identtable;
     ident v = { ID_VAR, name, min, max, storage, fun, 0, 0 };
     idents->access(name, &v);
     return cur;
@@ -61,7 +63,7 @@ char *getalias(char *name)
 
 bool addcommand(char *name, void (*fun)(), int narg)
 {
-    if(!idents) idents = new hashtable<ident>;
+    if(!idents) idents = new identtable;
     ident c = { ID_COMMAND, name, 0, 0, 0, fun, narg, 0 };
     idents->access(name, &c);
     return false;
@@ -239,7 +241,7 @@ void complete(char *s)
     if(!s[1]) return;
     if(!completesize) { completesize = strlen(s)-1; completeidx = 0; };
     int idx = 0;
-    enumerate(idents, ident *, id,
+    enumerate(idents, ident, id,
         if(strncmp(id->name, s+1, completesize)==0 && idx++==completeidx)
         {
             strcpy_s(s, "/");
