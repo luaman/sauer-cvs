@@ -107,33 +107,34 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     return lookupcube(x, y, z, rsize);
 };
 
-cube &raytracecube(vec &o, vec &dir, int size, vec &v, int *orient)
+cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, int &s, int *orient)
 {
     cube *last = NULL, *lastbig = NULL;
-    int xs = dir.x>0 ? 1 : 0;
-    int ys = dir.y>0 ? 1 : 0;
-    int zs = dir.z>0 ? 1 : 0;
-    float xd = 1.0f/dir.x;
-    float yd = 1.0f/dir.y;
-    float zd = 1.0f/dir.z;
+    int xs = ray.x>0 ? 1 : 0;
+    int ys = ray.y>0 ? 1 : 0;
+    int zs = ray.z>0 ? 1 : 0;
+    float xd = 1.0f/ray.x;
+    float yd = 1.0f/ray.y;
+    float zd = 1.0f/ray.z;
+    float dist = 0;
     v = o;
     for(;;)
     {
         cube &c = lookupcube(fast_f2nat(v.x), fast_f2nat(v.y), fast_f2nat(v.z), 0);
-        if(last==&c) return c; // stop at void
+        if(last==&c || dist>radius) return c;
         if(!isempty(c))
         {
-            float m = 0;
             if(!isentirelysolid(c) && lusize!=size)
             {
+                float m = 0;
                 loopi(12) // assumes null c.clip[i] == 0,0,0
                 {
-                    float a = dir.dot(c.clip[i]);
+                    float a = ray.dot(c.clip[i]);
                     if(a>=0) continue;
-                    float f = c.clip[i].dist(v);
-                    if(f*a<=0) m = max(-f/a, m);
+                    float f = -c.clip[i].dist(v)/a;
+                    if(f>=m) { m = f; s = i>>1; };
                 };
-                vec d(dir);
+                vec d(ray);
                 d.mul(m+1);
                 d.add(v);
                 loopi(18) if(c.clip[i].dist(d)>0) goto next;
@@ -145,22 +146,23 @@ cube &raytracecube(vec &o, vec &dir, int size, vec &v, int *orient)
         float dx = fabs((lusize*xs+lu.x-v.x)*xd);
         float dy = fabs((lusize*ys+lu.y-v.y)*yd);
         float dz = fabs((lusize*zs+lu.z-v.z)*zd);
-        float m = dz+1;
-        int t = O_BOTTOM-zs;
-        if(dx<dy && dx<dz) { m = dx+1; t = O_RIGHT-xs; }
-        else if(dy<dz)     { m = dy+1; t = O_BACK-ys; }
-        v.x += m*dir.x;
-        v.y += m*dir.y;
-        v.z += m*dir.z;
+        float m = dz; s = O_BOTTOM-zs;
+        if(dx<dy && dx<dz) { m = dx; s = O_RIGHT-xs; }
+        else if(dy<dz)     { m = dy; s = O_BACK-ys; }
+        vec d(ray);
+        d.mul(m+1);
+        v.add(d);
+        dist += m+1;
+        last = &c;
         if(orient!=NULL)
         {
-            cube &b = lookupcube((int)v.x, (int)v.y, (int)v.z, -size);
-            if(lastbig!=&b) *orient = t;
+            cube &b = lookupcube(int(v.x), int(v.y), int(v.z), -size);
+            if(lastbig!=&b) *orient = s;
             lastbig = &b;
         };
-        last = &c;
     };
 };
 
-cube &raytracecube(vec &o, vec &dir) { vec d; return raytracecube(o, dir, 0, d, NULL); };
+cube &raycube(const vec &o, const vec &ray, float radius, int &surface) { vec d; return raycube(o, ray, radius, 0, d, surface, NULL); };
+cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { int s; return raycube(o, ray, 1.0e10f, size, v, s, &orient); };
 
