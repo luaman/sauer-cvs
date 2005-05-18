@@ -1,5 +1,19 @@
 History of changes:
 
+May 17 2005:
+----------------
+- raycube changed to support lightmaps better
+
+May 16 2005:
+----------------
+- inital lightmap code added
+
+May 15 2005:
+----------------
+- added a cube validator that's called after a map is loaded.
+- added a ray casting function in preperation for lighting. Using it to get editing cursor for now.
+- added some collision detection / response against entities. they still get stuck...
+
 May 8 2005:
 ----------------
 - collision detection / response is now functionally done.
