@@ -393,8 +393,6 @@ vtxarray *newva(int x, int y, int z, int size)
         {
             memcpy(ebuf, t->dims[l].getbuf(), t->dims[l].length() * sizeof(ushort));
             ebuf += t->dims[l].length();
-            if((char *)ebuf - (char *)va > allocsize)
-                * (int *) 0 = 0;
         };
         ++list;
     );
