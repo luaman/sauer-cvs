@@ -171,7 +171,7 @@ bool generate_lightmap(cube &target, int surface, const vec &origin, const vec &
                     continue;
                 }
 
-                float intensity = -normal.dot(ray) * attenuation;
+                float intensity = normal.dot(ray) * attenuation;
                 lumel[0] = uchar(intensity * float(light.attr2));
                 lumel[1] = uchar(intensity * float(light.attr3));
                 lumel[2] = uchar(intensity * float(light.attr4));
@@ -214,10 +214,12 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
             vertex verts[8];
             bool usefaces[6];
-            calcverts(c[i], cx, cy, cz, size, verts, usefaces);
+            calcverts(c[i], o.x, o.y, o.z, size >> 1, verts, usefaces);
             loopj(6) if(usefaces[j])
             {
                 const plane &lm_normal = c[i].clip[j*2];
+                if(!lm_normal.isnormalized())
+                    continue;
                 vertex v0 = verts[faceverts(c[i], j, 0)],
                        v1 = verts[faceverts(c[i], j, 1)], 
                        v2 = verts[faceverts(c[i], j, 2)], 
@@ -264,8 +266,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 loopv(lights)
                 {
                    entity &light = *lights[i];
-                   float dist = lm_normal.dist(light.o);
-                   if(dist >= 0.0 && dist < float(light.attr1))
+                   if(fabs(lm_normal.dist(light.o)) < float(light.attr1))
                        ++lit;
                 }
                 if(!lit)
@@ -298,7 +299,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
                     continue;
                 pack_lightmap(surface);
-                //printf("c[%d].s[%d]/%d: %d,%d -> %dx%d\n", i, j, size, c[i].surfaces[j].x, c[i].surfaces[j].y, lm_w, lm_h);
             }
         }
     } 
@@ -309,7 +309,7 @@ void calclight()
     lightmaps.setsize(0);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0;
-    uchar unlit[3] = {255, 255, 255};
+    uchar unlit[3] = {0, 0, 0};//255, 255, 255};
     createtexture(10000, 1, 1, unlit, false, false);
     loopv(lightmaps)
     {

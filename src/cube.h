@@ -57,7 +57,7 @@ struct vec
     void div(float f)        { x /= f; y /= f; z /= f; };
     void add(const vec &o)   { x += o.x; y += o.y; z += o.z; };
     void sub(const vec &o)   { x -= o.x; y -= o.y; z -= o.z; };
-    float magnitude()        { return (float)sqrt(dot(*this)); };
+    float magnitude() const  { return (float)sqrt(dot(*this)); };
     void normalize()         { div(magnitude()); };
     bool isnormalized() const { float m = squaredlen(); return (m>0.99f && m<1.01f); };
     float dist(const vec &e) { vec t; return dist(e, t); };

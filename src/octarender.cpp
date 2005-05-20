@@ -637,7 +637,7 @@ void renderq()
         {
             int xs, ys;
             int otex = lookuptexture(va->eslist[i].texture, xs, ys);
-            glBindTexture(GL_TEXTURE_2D, otex);  
+            glBindTexture(GL_TEXTURE_2D, otex);
             glActiveTextureARB(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
             glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -650,7 +650,19 @@ void renderq()
                 t[ti[l]] = 8.0f/ys;
                 glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
                 glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+
+#ifdef BROKEN_VA_SUPPORT
+                glBegin(GL_QUADS);
+                loopk(va->eslist[i].length[l])
+                {
+			const vertex &v = va->vbuf[ebuf[k]];
+                        glMultiTexCoord2fv(GL_TEXTURE1_ARB, &v.u);
+                        glVertex3fv(&v.x);
+                }
+                glEnd();
+#else
                 glDrawElements(GL_QUADS, va->eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
+#endif
                 ebuf += va->eslist[i].length[l];  // Advance to next array.
             };
         };
@@ -660,7 +672,7 @@ void renderq()
     if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
     //glDisableClientState(GL_COLOR_ARRAY);
-    
+   
     glActiveTextureARB(GL_TEXTURE1_ARB);
     glDisable(GL_TEXTURE_2D); 
     glActiveTextureARB(GL_TEXTURE0_ARB);
