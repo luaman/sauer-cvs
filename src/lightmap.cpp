@@ -143,10 +143,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         if(e.o.x + radius < cx || e.o.x - radius > cx + (size << 1) ||
            e.o.y + radius < cy || e.o.y - radius > cy + (size << 1) ||
            e.o.z + radius < cz || e.o.z - radius > cz + (size << 1))
-        {
-            printf("%f,%f,%f @ %d, %d,%d,%d @ %d\n", e.o.x, e.o.y, e.o.z, radius, cx, cy, cz, size);
             continue;
-        }
 
         close_lights.add(&e);
     }

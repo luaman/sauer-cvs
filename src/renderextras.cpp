@@ -310,9 +310,10 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glPushMatrix();
         glOrtho(0, VIRTW*3/2, VIRTH*3/2, 0, -1, 1);
         if(editmode) draw_textf("cube %d", 3100, 2040, 2, selchildcount);
-        draw_textf("fps %d", 3100, 2110, 2, curfps);
-        draw_textf("ond %d", 3100, 2180, 2, allocnodes*8);
-        draw_textf("va  %d", 3100, 2250, 2, allocva);
+        draw_textf("fps %d", 3100, 2040, 2, curfps);
+        draw_textf("ond %d", 3100, 2110, 2, allocnodes*8);
+        draw_textf("va  %d", 3100, 2180, 2, allocva);
+        draw_textf("lm  %d", 3100, 2250, 2, lightmaps.length());
         draw_textf("vtr %d", 3100, 2320, 2, vtris);
         draw_textf("vvt %d", 3100, 2390, 2, vverts);
         draw_textf("tri %d", 3100, 2460, 2, wtris);
