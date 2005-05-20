@@ -104,7 +104,7 @@ void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
     vertstoplane(v1, v2, v3, pl);
 };
 
-void genvert(ivec &p, cube &c, vec &pos, float size, vertex &v)
+void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
 {
     ivec p1(8-p.x, p.y, p.z);
     ivec p2(p.x, 8-p.y, p.z);
@@ -123,9 +123,6 @@ void genvert(ivec &p, cube &c, vec &pos, float size, vertex &v)
 
     v.mul(size);
     v.add(pos);
-    float t = v.y;
-    v.y = v.z;
-    v.z = t;
 };
 
 const int cubecoords[8][3] = // verts of bounding cube
@@ -222,7 +219,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size)
     return false;
 };
 
-void calcverts(cube &c, int x, int y, int z, int size, vertex *verts, bool *usefaces)
+void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces)
 {
     int vertexuses[8];
 
@@ -320,6 +317,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
                 int coord = faceverts(c,i,k);
                 vertex v;
                 genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, v);
+                swap(float, v.y, v.z);
                 if(c.surfaces[i].lmid)
                 {
                     v.u = (c.surfaces[i].x + c.surfaces[i].texcoords[k*2] + 0.5) / LM_PACKW;
@@ -352,8 +350,17 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
         loopk(5) p[k] = verts[cin[faceverts(c,i,k&3)]];
         loopk(5) swap(float, p[k].y, p[k].z);
 
-        vertstoplane(p[2], p[0], p[1], c.clip[i*2]);    // and gen clipping planes while we're at it
-        if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
+        // and gen clipping planes while we're at it
+        if(p[0] == p[1])
+            vertstoplane(p[2], p[3], p[1], c.clip[i * 2]);
+        else
+        if(p[1] == p[2])
+            vertstoplane(p[2], p[3], p[0], c.clip[i * 2]);
+        else
+        {
+            vertstoplane(p[2], p[0], p[1], c.clip[i*2]);
+            if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
+        }
         c.clip[12+i][dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
         c.clip[12+i].offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
     };

@@ -50,7 +50,7 @@ struct vec
     vec(ivec &v) : x(v.x), y(v.y), z(v.z) {};
 
     float &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
-
+    bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
     float squaredlen() const { return x*x + y*y + z*z; };
     float dot(const vec &o) const { return x*o.x + y*o.y + z*o.z; };
     void mul(float f)        { x *= f; y *= f; z *= f; };
@@ -70,7 +70,7 @@ struct plane : vec
 {
     float offset;
     float dist(const vec &p) const   { return dot(p)+offset; };
-    bool operator==(plane &p)   { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
+    bool operator==(const plane &p)   { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
 };
 struct line3 { vec orig, dir; };
 struct vertex : vec { float u, v; };

@@ -55,7 +55,8 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
         dst += 3 * LM_PACKW;
         src += 3 * tw;
     }
-    ++totalpacked;
+    ++lightmaps;
+    lumels += tw * th;
     return true;
 }
 
@@ -95,11 +96,14 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                       attenuation = 1.0 - mag / float(light.attr1);
                 ray.mul(1.0 / mag);
                 int hit_surface;
+                vec occl = ray;
+                occl.mul(-1);
                 if(attenuation <= 0.0 || 
                    (shadows && 
                      (&raycube(light.o, ray, light.attr1, hit_surface) != &c ||
                        hit_surface != surface)))
                 {
+                    
                     ++miss;
                     continue;
                 }
@@ -132,6 +136,19 @@ void clear_lmids(cube *c)
             loopj(6) c[i].surfaces[j].lmid = 0;
     }
 }
+
+const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orientation
+{
+    { 6, 1, 0, 7 },
+    { 5, 4, 3, 2 },
+    { 4, 5, 6, 7 },
+    { 1, 2, 3, 0 },
+    { 2, 1, 6, 5 },
+    { 3, 4, 7, 0 },
+};
+
+bool eq(const vertex &x, const vertex &y)
+{ return x.x == y.x && x.y == y.y && x.z == y.z; }
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
@@ -166,7 +183,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         {
             loopj(6) c[i].surfaces[j].lmid = 0;
 
-            vertex verts[8];
+            vec verts[8];
             bool usefaces[6];
             calcverts(c[i], o.x, o.y, o.z, size, verts, usefaces);
             loopj(6) if(usefaces[j])
@@ -174,14 +191,18 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 const plane &lm_normal = c[i].clip[j*2];
                 if(!lm_normal.isnormalized())
                     continue;
-                vertex v0 = verts[faceverts(c[i], j, 0)],
-                       v1 = verts[faceverts(c[i], j, 1)], 
-                       v2 = verts[faceverts(c[i], j, 2)], 
-                       v3 = verts[faceverts(c[i], j, 3)];
-                vec u = v1, v;
+                vec v0 = verts[faceverts(c[i], j, 0)],
+                    v1 = verts[faceverts(c[i], j, 1)], 
+                    v2 = verts[faceverts(c[i], j, 2)], 
+                    v3 = verts[faceverts(c[i], j, 3)],
+                    u, v;
+                if(v0 == v1)
+                  u = v2;
+                else
+                  u = v1;
                 u.sub(v0);
                 u.normalize();
-                v.cross(lm_normal, u);
+                v.cross(u, lm_normal);
 
 #define UVMINMAX(vert) \
                 { \
@@ -209,10 +230,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = uint((umax - umin) / lightprecision * 16);
+                lm_w = uint(roundf(umax - umin) / lightprecision * 16);
                 if(lm_w > LM_MAXW) lm_w = LM_MAXW;
                 else if(!lm_w) lm_w = 1;
-                lm_h = uint((vmax - vmin) / lightprecision * 16);
+                lm_h = uint(roundf(vmax - vmin) / lightprecision * 16);
                 if(lm_h > LM_MAXH) lm_h = LM_MAXH;
                 else if(!lm_h) lm_h = 1;
 
@@ -270,16 +291,17 @@ void calclight()
 {
     lightmaps.setsize(0);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
-    uint total = 0;
+    uint total = 0, lumels = 0;
     uchar unlit[3] = {25, 25, 25};
     createtexture(10000, 1, 1, unlit, false, false);
     loopv(lightmaps)
     {
-        total += lightmaps[i].totalpacked;
+        total += lightmaps[i].lightmaps;
+        lumels += lightmaps[i].lumels;
         createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     }
     allchanged();
-    conoutf("generated %d lightmaps in %d textures", total, lightmaps.length());
+    conoutf("generated %d lightmaps using %d%% of %d textures", total, lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH), lightmaps.length());
 }
 
 COMMAND(calclight, ARG_NONE);

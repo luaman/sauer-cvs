@@ -55,6 +55,7 @@ extern ivec lu;
 extern int lusize;
 extern int wtris, wverts, vtris, vverts;
 extern int allocnodes, allocva, selchildcount;
+extern float raydist;
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)
 const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
@@ -124,5 +125,5 @@ extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va);
 extern int faceverts(cube &c, int orient, int vert);
-extern void calcverts(cube &c, int x, int y, int z, int size, vertex *verts, bool *usefaces);
+extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces);
 
