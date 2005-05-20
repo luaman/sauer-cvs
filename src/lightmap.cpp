@@ -133,19 +133,6 @@ void clear_lmids(cube *c)
     }
 }
 
-const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orientation
-{
-    { 6, 1, 0, 7 },
-    { 5, 4, 3, 2 },
-    { 4, 5, 6, 7 },
-    { 1, 2, 3, 0 },
-    { 2, 1, 6, 5 },
-    { 3, 4, 7, 0 },
-};
-
-bool eq(const vertex &x, const vertex &y)
-{ return x.x == y.x && x.y == y.y && x.z == y.z; }
-
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
     close_lights.setsize(0);
