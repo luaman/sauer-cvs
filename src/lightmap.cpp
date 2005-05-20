@@ -2,7 +2,7 @@
 
 vector<LightMap> lightmaps;
 
-VAR(lpu, 1, 1, 16);
+VAR(lightprecision, 1, 16, 256);
 VAR(shadows, 0, 1, 1);
 
 static uchar lm [3 * LM_MAXW * LM_MAXH];
@@ -80,7 +80,7 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
     vec v = origin;
     uchar *lumel = lm;
     int miss = 0;
-    
+
     for(y = 0; y < lm_h; ++y) {
         vec u = v;
         for(x = 0; x < lm_w; ++x, lumel += 3) {
@@ -209,10 +209,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = uint((umax - umin) * float(lpu));
+                lm_w = uint((umax - umin) / lightprecision * 16);
                 if(lm_w > LM_MAXW) lm_w = LM_MAXW;
                 else if(!lm_w) lm_w = 1;
-                lm_h = uint((vmax - vmin) * float(lpu));
+                lm_h = uint((vmax - vmin) / lightprecision * 16);
                 if(lm_h > LM_MAXH) lm_h = LM_MAXH;
                 else if(!lm_h) lm_h = 1;
 
