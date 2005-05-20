@@ -94,16 +94,27 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 float mag = ray.magnitude(),
                       attenuation = 1.0 - mag / float(light.attr1);
                 ray.mul(1.0 / mag);
-                int hit_surface;
-                if(attenuation <= 0.0 || 
-                   (shadows && 
-                     (&raycube(light.o, ray, light.attr1, hit_surface) != &c ||
-                       hit_surface != surface)))
+//                int hit_surface;
+//                if(attenuation <= 0.0 || 
+//                   (shadows && 
+//                     (&raycube(light.o, ray, light.attr1, hit_surface) != &c ||
+//                       hit_surface != surface)))
+                if(attenuation <= 0.0)
                 {
                     ++miss;
                     continue;
                 }
-
+                if(shadows)
+                {
+                    vec occl(-ray.x, -ray.y, -ray.z);
+                    float dist;
+                    raycube(u, occl, mag, dist);
+                    if(dist < mag)
+                    {
+                        ++miss;
+                        continue;
+                    }
+                }
                 float intensity = -normal.dot(ray) * attenuation;
                 r += uchar(intensity * float(light.attr2));
                 g += uchar(intensity * float(light.attr3));

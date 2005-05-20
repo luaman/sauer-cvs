@@ -111,16 +111,17 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     return lookupcube(x, y, z, rsize);
 };
 
-cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, int &s, int *orient)
+cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, float &dist, int *orient)
 {
     cube *last = NULL, *lastbig = NULL;
     int xs = ray.x>0 ? 1 : 0;
     int ys = ray.y>0 ? 1 : 0;
     int zs = ray.z>0 ? 1 : 0;
+    int s;
     float xd = 1.0f/ray.x;
     float yd = 1.0f/ray.y;
     float zd = 1.0f/ray.z;
-    float dist = 0;
+    dist = 0;
     v = o;
     for(;;)
     {
@@ -167,6 +168,6 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, int 
     };
 };
 
-cube &raycube(const vec &o, const vec &ray, float radius, int &surface) { vec d; return raycube(o, ray, radius, 0, d, surface, NULL); };
-cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { int s; return raycube(o, ray, 1.0e10f, size, v, s, &orient); };
+cube &raycube(const vec &o, const vec &ray, float radius, float &dist) { vec d; return raycube(o, ray, radius, 0, d, dist, NULL); };
+cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(o, ray, 1.0e10f, size, v, dist, &orient); };
 
