@@ -2,7 +2,7 @@
 
 vector<LightMap> lightmaps;
 
-VAR(upl, 1, 1, 256);
+VAR(lpu, 1, 1, 16);
 VAR(shadows, 0, 1, 1);
 
 static uchar lm [3 * LM_MAXW * LM_MAXH];
@@ -109,9 +109,12 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 g += uchar(intensity * float(light.attr3));
                 b += uchar(intensity * float(light.attr4));
             }
-            lumel[0] = min(r, 255);
-            lumel[1] = min(g, 255);
-            lumel[2] = min(b, 255);
+            if(r > 255) r = 255; else if(r < 25) r = 25;
+            if(g > 255) g = 255; else if(g < 25) g = 25;
+            if(b > 255) b = 255; else if(b < 25) b = 25;
+            lumel[0] = r;
+            lumel[1] = g;
+            lumel[2] = b;
             u.add(ustep);
         }
         v.add(vstep);
@@ -206,10 +209,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = uint((umax - umin) / float(upl));
+                lm_w = uint((umax - umin) * float(lpu));
                 if(lm_w > LM_MAXW) lm_w = LM_MAXW;
                 else if(!lm_w) lm_w = 1;
-                lm_h = uint((vmax - vmin) / float(upl));
+                lm_h = uint((vmax - vmin) * float(lpu));
                 if(lm_h > LM_MAXH) lm_h = LM_MAXH;
                 else if(!lm_h) lm_h = 1;
 
@@ -268,7 +271,7 @@ void calclight()
     lightmaps.setsize(0);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0;
-    uchar unlit[3] = {0, 0, 0};//255, 255, 255};
+    uchar unlit[3] = {25, 25, 25};
     createtexture(10000, 1, 1, unlit, false, false);
     loopv(lightmaps)
     {
