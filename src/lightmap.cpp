@@ -89,21 +89,17 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
             loopv(lights)
             {
                 entity &light = *lights[i];
-
                 vec ray = u;
                 ray.sub(light.o);
                 float mag = ray.magnitude(),
                       attenuation = 1.0 - mag / float(light.attr1);
                 ray.mul(1.0 / mag);
                 int hit_surface;
-                vec occl = ray;
-                occl.mul(-1);
                 if(attenuation <= 0.0 || 
                    (shadows && 
                      (&raycube(light.o, ray, light.attr1, hit_surface) != &c ||
                        hit_surface != surface)))
                 {
-                    
                     ++miss;
                     continue;
                 }
@@ -191,6 +187,24 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 const plane &lm_normal = c[i].clip[j*2];
                 if(!lm_normal.isnormalized())
                     continue;
+                lights.setsize(0);
+                loopv(close_lights)
+                {
+                    entity &light = *close_lights[i];
+
+                    int radius = light.attr1;
+                    if(light.o.x + radius < o.x || light.o.x - radius > o.x + size ||
+                       light.o.y + radius < o.y || light.o.y - radius > o.y + size ||
+                       light.o.z + radius < o.z || light.o.z - radius > o.z + size)
+                        continue;
+
+                    float dist = lm_normal.dist(light.o);
+                    if(dist >= 0.0 && dist < float(light.attr1))
+                       lights.add(&light);
+                }
+                if(!lights.length())
+                    continue;
+
                 vec v0 = verts[faceverts(c[i], j, 0)],
                     v1 = verts[faceverts(c[i], j, 1)], 
                     v2 = verts[faceverts(c[i], j, 2)], 
@@ -236,24 +250,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_h = uint(roundf(vmax - vmin) / lightprecision * 16);
                 if(lm_h > LM_MAXH) lm_h = LM_MAXH;
                 else if(!lm_h) lm_h = 1;
-
-                lights.setsize(0);
-                loopv(close_lights)
-                {
-                    entity &light = *close_lights[i];
-
-                    int radius = light.attr1;
-                    if(light.o.x + radius < o.x || light.o.x - radius > o.x + size ||
-                       light.o.y + radius < o.y || light.o.y - radius > o.y + size ||
-                       light.o.z + radius < o.z || light.o.z - radius > o.z + size)
-                        continue;
-
-                    float dist = lm_normal.dist(light.o);
-                    if(dist >= 0.0 && dist < float(light.attr1))
-                       lights.add(&light);
-                }
-                if(!lights.length())
-                    continue;
 
 #define CALCVERT(vert, index) \
                 { \

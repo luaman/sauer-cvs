@@ -55,7 +55,6 @@ extern ivec lu;
 extern int lusize;
 extern int wtris, wverts, vtris, vverts;
 extern int allocnodes, allocva, selchildcount;
-extern float raydist;
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)
 const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
