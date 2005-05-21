@@ -84,9 +84,9 @@ dynent *newdynent()                 // create a new blank player or monster
     d->maxspeed = 100;
     d->outsidemap = false;
     d->inwater = false;
-    d->radius = 8;
-    d->eyeheight = 15;
-    d->aboveeye = 5;
+    d->radius = 4;
+    d->eyeheight = 14;
+    d->aboveeye = 1;
     d->frags = 0;
     d->plag = 0;
     d->ping = 0;

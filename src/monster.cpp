@@ -40,11 +40,11 @@ dynent *basicmonster(int type, int yaw, int state, int trigger, int move)
     };
     dynent *m = newdynent();
     monstertype *t = &monstertypes[m->mtype = type];
-    m->eyeheight = 2.0f;
-    m->aboveeye = 1.9f;
-    m->radius *= t->bscale/2.5f;
-    m->eyeheight *= t->bscale/2.5f;
-    m->aboveeye *= t->bscale/2.5f;
+    m->eyeheight = 6.0f;
+    m->aboveeye = 2.0f;
+    m->radius *= t->bscale/10.0f;
+    m->eyeheight *= t->bscale/10.0f;
+    m->aboveeye *= t->bscale/10.0f;
     m->monsterstate = state;
     if(state!=M_SLEEP) spawnplayer(m);
     m->trigger = lastmillis+trigger;
