@@ -144,6 +144,7 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
                 d.add(v);
                 loopi(18) if(c.clip[i].dist(d)>0) goto next;
                 v = d;
+				dist += m+1;
             };
             return c;
         };
