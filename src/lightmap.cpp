@@ -233,10 +233,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = uint(roundf(umax - umin) / lightprecision * 16);
+                lm_w = (uint)(floorf(umax - umin + 0.5f) / lightprecision * 16);
                 if(lm_w > LM_MAXW) lm_w = LM_MAXW;
                 else if(!lm_w) lm_w = 1;
-                lm_h = uint(roundf(vmax - vmin) / lightprecision * 16);
+                lm_h = (uint)(floorf(vmax - vmin + 0.5f) / lightprecision * 16);
                 if(lm_h > LM_MAXH) lm_h = LM_MAXH;
                 else if(!lm_h) lm_h = 1;
 

@@ -460,6 +460,8 @@ void edittexcube(cube &c, int tex, int texorient)
     if (c.children) loopi(8) edittexcube(c.children[i], tex, texorient);
 };
 
+extern int curtexnum;
+
 void edittex(int dir)
 {
     if(noedit()) return;

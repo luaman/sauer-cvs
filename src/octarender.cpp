@@ -707,8 +707,11 @@ void renderq()
     //glDisableClientState(GL_COLOR_ARRAY);
    
     glActiveTextureARB(GL_TEXTURE1_ARB);
+    glClientActiveTextureARB(GL_TEXTURE1_ARB);
     glDisable(GL_TEXTURE_2D); 
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glActiveTextureARB(GL_TEXTURE0_ARB);
+    glClientActiveTextureARB(GL_TEXTURE0_ARB);
 
 };
 
