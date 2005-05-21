@@ -331,3 +331,15 @@ void lightreaching(const vec &target, uchar color[3])
     color[2] = min(255, max(25, b));
 }
 
+void fullbright()
+{
+        if(noedit()) return;
+        clear_lmids(worldroot);
+        uchar bright[3] = {255, 255, 255};
+        createtexture(10000, 1, 1, bright, false, false);
+        loopv(ents) memset(ents[i].color, 255, 3);
+        allchanged();
+}
+
+COMMAND(fullbright, ARG_NONE);
+
