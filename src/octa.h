@@ -22,11 +22,6 @@ struct vtxarray
     int x, y, z, size;  // location and size of cube.
 };
 
-#define LM_MAXW 256
-#define LM_MAXH 256
-#define LM_PACKW 512
-#define LM_PACKH 512
-
 struct surfaceinfo
 {
     uchar texcoords[8];
@@ -100,7 +95,7 @@ extern void optiface(uchar *p, cube &c);
 extern void validatec(cube *c, int size);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
-extern cube &raycube(const vec &o, const vec &ray, float radius, float &raydist);
+extern cube &raycube(const vec &o, const vec &ray, float radius, float &dist);
 extern cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient);
 
 // rendercubes

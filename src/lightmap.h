@@ -1,3 +1,8 @@
+#define LM_MAXW 128
+#define LM_MAXH 128
+#define LM_PACKW 512
+#define LM_PACKH 512
+
 struct PackNode
 {
     PackNode *children;

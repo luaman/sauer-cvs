@@ -127,28 +127,35 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     {
         cube &c = lookupcube(fast_f2nat(v.x), fast_f2nat(v.y), fast_f2nat(v.z), 0);
         if(last==&c || dist>radius) return c;
-        if(!isempty(c))
+        if(dist > 0 && !isempty(c))
         {
-            if(!isentirelysolid(c) && lusize!=size)
+            if(isentirelysolid(c) || lusize == size)
+                return c;
+            //float m = 0;
+            loopi(12) // assumes null c.clip[i] == 0,0,0
             {
-                float m = 0;
-                loopi(12) // assumes null c.clip[i] == 0,0,0
-                {
-                    float a = ray.dot(c.clip[i]);
-                    if(a>=0) continue;
-                    float f = -c.clip[i].dist(v)/a;
-                    if(f>=m) { m = f; s = i>>1; };
-                };
+                float a = ray.dot(c.clip[i]);
+                if(a>=0) continue;
+                float f = -c.clip[i].dist(v)/a;
+                if(f + dist < 0) continue;
                 vec d(ray);
-                d.mul(m+1);
+                d.mul(f);
                 d.add(v);
-                loopi(18) if(c.clip[i].dist(d)>0) goto next;
+                loopj(18) if(i != j && c.clip[j].dist(d)>0) goto nextplane;
+                dist += f;
                 v = d;
-				dist += m+1;
+                return c;
+                //if(f>=m) { m = f; s = i>>1; };
+            nextplane:
+                 ;
             };
-            return c;
+            //vec d(ray);
+            //d.mul(m+1);
+            //d.add(v);
+            //loopi(18) if(c.clip[i].dist(d)>0) goto next;
+            //v = d;
         };
-        next:
+        //next:
         float dx = fabs((lusize*xs+lu.x-v.x)*xd);
         float dy = fabs((lusize*ys+lu.y-v.y)*yd);
         float dz = fabs((lusize*zs+lu.z-v.z)*zd);
@@ -169,6 +176,6 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     };
 };
 
-cube &raycube(const vec &o, const vec &ray, float radius, float &dist) { vec d; return raycube(o, ray, radius, 0, d, dist, NULL); };
+cube &raycube(const vec &o, const vec &ray, float radius, float &dist) { vec v; return raycube(o, ray, radius, 0, v, dist, NULL); };
 cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(o, ray, 1.0e10f, size, v, dist, &orient); };
 

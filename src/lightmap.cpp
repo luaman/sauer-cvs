@@ -101,9 +101,11 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 }
                 if(shadows)
                 {
+                    vec tolight(-ray.x, -ray.y, -ray.z),
+                        origin(u.x - 0.1 * tolight.x, u.y - 0.1 * tolight.y, u.z - 0.1 * tolight.z);
                     float dist;
-                    raycube(light.o, ray, mag, dist);
-                    if(dist > 0 && dist < mag)
+                    raycube(origin, tolight, mag, dist);
+                    if(dist < mag + 0.1)
                     {
                         ++miss;
                         continue;
@@ -114,9 +116,9 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 g += uchar(intensity * float(light.attr3));
                 b += uchar(intensity * float(light.attr4));
             }
-			r = min(255, max(25, r));
-			g = min(255, max(25, g));
-			b = min(255, max(25, b));
+            r = min(255, max(25, r));
+            g = min(255, max(25, g));
+            b = min(255, max(25, b));
             lumel[0] = r;
             lumel[1] = g;
             lumel[2] = b;
@@ -289,7 +291,10 @@ void calclight()
         createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     }
     allchanged();
-    conoutf("generated %d lightmaps using %d%% of %d textures", total, lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH), lightmaps.length());
+    conoutf("generated %d lightmaps using %d%% of %d textures", 
+        total, 
+        lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0, 
+        lightmaps.length());
 }
 
 COMMAND(calclight, ARG_NONE);

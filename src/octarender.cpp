@@ -205,12 +205,16 @@ bool faceedgegt(uint cfe, uint ofe)
 bool visibleface(cube &c, int orient, int x, int y, int z, int size)
 {
     //if(last==&c) __asm int 3;
+    uint cfe = faceedges(c, orient);
+    if(((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
+       ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F))         
+        return false;
+
     cube &o = neighbourcube(x, y, z, size, 0, orient);
     if(&o==&c || isempty(o)) return true;
     if(!touchingface(c, orient) || !touchingface(o, opposite(orient))) return true;
     if(isentirelysolid(o) && lusize>=size) return false;
     //return true;
-    uint cfe = faceedges(c, orient);
     uint ofe = faceedges(o, opposite(orient));
     if(size==lusize) return ofe!=cfe ? faceedgegt(cfe, ofe) : false;
     return true;
@@ -361,6 +365,9 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
             vertstoplane(p[2], p[0], p[1], c.clip[i*2]);
             if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
         }
+        if(isnan(c.clip[i*2].x))
+            puts("FUCK");
+            
         c.clip[12+i][dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
         c.clip[12+i].offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
     };
