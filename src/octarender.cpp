@@ -223,27 +223,29 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size)
     return false;
 };
 
+void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
+{
+    if(isentirelysolid(c))
+    {
+        vert.x = cubecoords[i][0]*size/8+x;
+        vert.y = cubecoords[i][1]*size/8+y;
+        vert.z = cubecoords[i][2]*size/8+z;
+    }
+    else
+    {
+        vec pos((float)x, (float)y, (float)z);
+
+        genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, vert);
+    }
+}
+
 void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces)
 {
     int vertexuses[8];
 
     loopi(8) vertexuses[i] = 0;
     loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts(c,i,k)]++;
-    if(isentirelysolid(c))
-    {
-        loopi(8) if(vertexuses[i])
-        {
-            verts[i].x = cubecoords[i][0]*size/8+x;
-            verts[i].y = cubecoords[i][1]*size/8+y;
-            verts[i].z = cubecoords[i][2]*size/8+z;
-        }
-    }
-    else
-    {
-        vec pos((float)x, (float)y, (float)z);
-
-        loopi(8) if(vertexuses[i]) genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, verts[i]);
-    }
+    loopi(8) if(vertexuses[i]) calcvert(c, x, y, z, size, verts[i], i);
 }
 
 struct sortkey
@@ -278,6 +280,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     //int col = *((int *)(&c.colour[0]));
     int cin[8];
     bool useface[6];
+    int visible = 0;
     int vertexuses[8];
 
     loopi(8) vertexuses[i] = 0;
@@ -287,6 +290,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     {
         loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
         {
+            ++visible;
             usvector &iv = indices[sortkey(c.texture[i], c.surfaces[i].lmid)].dims[dimension(i)];
             loopk(4)
             {
@@ -315,6 +319,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
    
         loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
         {
+            ++visible;
             usvector &iv = indices[sortkey(c.texture[i], c.surfaces[i].lmid)].dims[dimension(i)];
             loopk(4)
             {
@@ -365,12 +370,26 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
             vertstoplane(p[2], p[0], p[1], c.clip[i*2]);
             if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
         }
-        if(isnan(c.clip[i*2].x))
-            puts("FUCK");
-            
+    }
+
+    if(visible > 0)
+    {
+        vec v;
+        loopi(8) if(!vertexuses[i])
+        {
+            calcvert(c, x, y, z, size, v, i);
+            loopj(3)
+            {
+                mn[j] = min(mn[j], v[j]);
+                mx[j] = max(mx[j], v[j]);
+            }
+        }
+    }
+    loopi(6) if(useface[i] || visible)
+    {
         c.clip[12+i][dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
         c.clip[12+i].offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
-    };
+    }
 };
 
 ////////// Vertex Arrays //////////////

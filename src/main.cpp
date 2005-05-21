@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 
     log("localconnect");
     localconnect();
-    changemap("ltest");
+    changemap("nmp4");
 
     log("mainloop");
     int ignore = 5;
