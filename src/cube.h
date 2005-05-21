@@ -211,6 +211,7 @@ extern bool nogore;                     // implemented for the german market :)
 extern int xtraverts;
 extern int curvert;
 extern vertex *verts;                   // the vertex array for all world rendering
+extern int curtexnum;
 extern int islittleendian;
 
 #define DMF 16.0f
