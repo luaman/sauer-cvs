@@ -1,5 +1,11 @@
 History of changes:
 
+May 21 2005:
+----------------
+- lots of updates to lightmaps, and related stuff
+- prune micro cubes in editing
+- limit texture selection
+
 May 17 2005:
 ----------------
 - raycube changed to support lightmaps better
