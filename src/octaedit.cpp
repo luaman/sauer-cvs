@@ -246,7 +246,11 @@ void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
             destroyva(c[i].va);
             c[i].va = NULL;
         };
-        if(c[i].children) readyva(b, c[i].children, o.x, o.y, o.z, size/2);
+        if(c[i].children)
+        {
+            if(size<=4) { freeocta(c[i].children); c[i].children = NULL; }
+            else readyva(b, c[i].children, o.x, o.y, o.z, size/2);
+        };
     };
 };
 
@@ -462,7 +466,7 @@ void edittex(int dir)
     if(!(lastsel==sel)) tofronttex();
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
-    curtexindex = i = min(max(i, 0), 255);
+    curtexindex = i = min(max(i, 0), curtexnum-1);
     int t = lasttex = hdr.texlist[i];
     loopselxyz(edittexcube(c, t, sel.orient));
 };
