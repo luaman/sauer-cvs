@@ -4,6 +4,7 @@ vector<LightMap> lightmaps;
 
 VAR(lightprecision, 1, 16, 256);
 VAR(shadows, 0, 1, 1);
+VAR(aalights, 0, 1, 1);
 
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
@@ -81,38 +82,60 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
     vec v = origin;
     uchar *lumel = lm;
     int miss = 0;
-
+    vec offsets[4] = 
+    { 
+        vec(0, 0, 0), 
+        vec(ustep.x * 0.5, ustep.y * 0.5, ustep.z * 0.5),
+        vec((ustep.x + vstep.x) * 0.5, (ustep.y + vstep.y) * 0.5, (ustep.z + vstep.z) * 0.5),
+        vec(vstep.x * 0.5, vstep.y * 0.5, vstep.z * 0.5)
+    };
+                
     for(y = 0; y < lm_h; ++y) {
         vec u = v;
         for(x = 0; x < lm_w; ++x, lumel += 3) {
             uint r = 0, g = 0, b = 0;
-            loopv(lights)
+            loopj(4)
             {
-                entity &light = *lights[i];
-                vec ray = u;
-                ray.sub(light.o);
-                float mag = ray.magnitude(),
-                      attenuation = 1.0 - mag / float(light.attr1);
-                ray.mul(1.0 / mag);
-                if(attenuation <= 0.0)
+                loopv(lights)
                 {
-                    ++miss;
-                    continue;
-                }
-                if(shadows)
-                {
-                    vec tolight(-ray.x, -ray.y, -ray.z),
-                        origin(u.x - 0.1 * tolight.x, u.y - 0.1 * tolight.y, u.z - 0.1 * tolight.z);
-                    if(raycube(origin, tolight, mag) < mag + 0.1)
+                    entity &light = *lights[i];
+                    vec target (u);
+                    target.add(offsets[j]);
+                    vec ray = target;
+                    ray.sub(light.o);
+                    float mag = ray.magnitude(),
+                          attenuation = 1.0 - mag / float(light.attr1);
+                    ray.mul(1.0 / mag);
+                    if(attenuation <= 0.0)
                     {
                         ++miss;
                         continue;
                     }
+                    if(shadows)
+                    {
+                        vec tolight(ray), origin(tolight);
+                        tolight.mul(-1);
+                        origin.mul(-0.1);
+                        origin.add(target);
+                        if(raycube(origin, tolight, mag) < mag + 0.1)
+                        {
+                            ++miss;
+                            continue;
+                        }
+                    }
+                    float intensity = -normal.dot(ray) * attenuation;
+                    r += uint(intensity * float(light.attr2));
+                    g += uint(intensity * float(light.attr3));
+                    b += uint(intensity * float(light.attr4));
                 }
-                float intensity = -normal.dot(ray) * attenuation;
-                r += uint(intensity * float(light.attr2));
-                g += uint(intensity * float(light.attr3));
-                b += uint(intensity * float(light.attr4));
+                if(!aalights)
+                    break;
+            }
+            if(aalights)
+            {
+                r /= 4;
+                g /= 4;
+                b /= 4;
             }
             lumel[0] = min(255, max(25, r));
             lumel[1] = min(255, max(25, g));
@@ -121,7 +144,7 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
         }
         v.add(vstep);
     }
-    return miss < lights.length() * lm_w * lm_h;
+    return miss < (aalights ? 4 : 1) * lights.length() * lm_w * lm_h;
 }
 
 void clear_lmids(cube *c)
