@@ -101,9 +101,8 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 }
                 if(shadows)
                 {
-                    vec occl(-ray.x, -ray.y, -ray.z);
                     float dist;
-                    raycube(u, occl, mag, dist);
+                    raycube(light.o, ray, mag, dist);
                     if(dist > 0 && dist < mag)
                     {
                         ++miss;
@@ -115,9 +114,9 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 g += uchar(intensity * float(light.attr3));
                 b += uchar(intensity * float(light.attr4));
             }
-            if(r > 255) r = 255; else if(r < 25) r = 25;
-            if(g > 255) g = 255; else if(g < 25) g = 25;
-            if(b > 255) b = 255; else if(b < 25) b = 25;
+			r = min(255, max(25, r));
+			g = min(255, max(25, g));
+			b = min(255, max(25, b));
             lumel[0] = r;
             lumel[1] = g;
             lumel[2] = b;
