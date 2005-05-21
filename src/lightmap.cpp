@@ -125,9 +125,9 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                         }
                     }
                     float intensity = -normal.dot(ray) * attenuation;
-                    r += uint(intensity * float(light.attr2));
-                    g += uint(intensity * float(light.attr3));
-                    b += uint(intensity * float(light.attr4));
+                    r += (uint)(intensity * float(light.attr2));
+                    g += (uint)(intensity * float(light.attr3));
+                    b += (uint)(intensity * float(light.attr4));
                 }
                 if(!aalights)
                     break;
@@ -346,9 +346,9 @@ void lightreaching(const vec &target, uchar color[3])
             continue;
         float intensity = 1.0 - mag / float(e.attr1);
         
-        r += intensity * float(e.attr2);
-        g += intensity * float(e.attr3);
-        b += intensity * float(e.attr4);
+        r += (uint)(intensity * float(e.attr2));
+        g += (uint)(intensity * float(e.attr3));
+        b += (uint)(intensity * float(e.attr4));
     }
     color[0] = min(255, max(25, r));
     color[1] = min(255, max(25, g));
