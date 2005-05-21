@@ -176,6 +176,6 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     };
 };
 
-cube &raycube(const vec &o, const vec &ray, float radius, float &dist) { vec v; return raycube(o, ray, radius, 0, v, dist, NULL); };
+float raycube(const vec &o, const vec &ray, float radius) { vec v; float dist; raycube(o, ray, radius, 0, v, dist, NULL); return dist; };
 cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(o, ray, 1.0e10f, size, v, dist, &orient); };
 

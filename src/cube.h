@@ -98,6 +98,7 @@ struct entity                   // map entity
     short attr1, attr2, attr3, attr4, attr5;
     uchar type;                 // type is one of the above
     char spawned;               // the only dynamic state of a map entity
+    uchar color[3];
 };
 
 struct block { int x, y, xs, ys; };

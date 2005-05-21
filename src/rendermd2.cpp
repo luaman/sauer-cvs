@@ -133,8 +133,8 @@ void md2::render(int frame, int range, float x, float y, float z, float yaw, flo
     vec *verts1 = mverts[fr1];
     vec *verts2 = mverts[fr2];
 
-    if(teammate) glColor3d(0.5f, 0.6f, 1.0f);
-    else glColor3d(1.0f, 1.0f, 1.0f);
+    //if(teammate) glColor3f(0.5f, 0.6f, 1.0f);
+    //else glColor3f(1.0f, 1.0f, 1.0f);
 
     for(long *command = glCommands; (*command)!=0;)
     {
@@ -205,7 +205,7 @@ void loadmodels()
 void rendermodel(int mdl, int frame, int range, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime)
 {
     if(!models[mdl]) return;
-    if(isoccluded(player1->o.x, player1->o.y, x-1.1f, z-1.1f, 2.2f)) return;
+//    if(isoccluded(player1->o.x, player1->o.y, x-1.1f, z-1.1f, 2.2f)) return;
     glBindTexture(GL_TEXTURE_2D, FIRSTMDL+mdl);
     models[mdl]->render(frame, range, x, y, z, yaw, pitch, teammate, scale, speed, basetime);
 };

@@ -11,6 +11,7 @@ void renderentities()
         entity &e = ents[i];
         if(e.type==MAPMODEL)
         {
+            glColor3ubv(e.color);
             rendermodel(18, 0, 1, e.o.x, e.o.z, e.o.y, e.attr1, 0, false, 1.0f, 10.0f);
         }
         else
@@ -25,6 +26,7 @@ void renderentities()
                 if(e.attr2==1) continue;
                 if(e.attr2==2) speed = 1;
             }; 
+            glColor3ubv(e.color);
             rendermodel(model, 0, 1, e.o.x, e.o.z+(float)sin(lastmillis/100.0+e.o.x+e.o.y)/20, e.o.y, (float)lastmillis/speed, 0, false, 1.0f, 10.0f);
         };
     };

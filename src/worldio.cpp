@@ -141,7 +141,7 @@ void save_world(char *mname)
             entity tmp = ents[i];
             endianswap(&tmp.o, sizeof(int), 3);
             endianswap(&tmp.attr1, sizeof(short), 5);
-            gzwrite(f, &tmp, sizeof(entity));
+            gzwrite(f, &tmp, size_t(&((entity *)0)->color)); // EIHRUL: FIXME: Size compatability.
         };
     };
 
@@ -165,10 +165,11 @@ void load_world(char *mname)        // still supports all map formats that have 
     loopi(hdr.numents)
     {
         entity &e = ents.add();
-        gzread(f, &e, sizeof(entity));
+        gzread(f, &e, size_t(&((entity *)0)->color)); // EIHRUL: FIXME: Size compatability.
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
+        memset(e.color, 255, 3);
     };
 
     freeocta(worldroot);

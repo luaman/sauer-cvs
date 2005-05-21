@@ -95,7 +95,7 @@ extern void optiface(uchar *p, cube &c);
 extern void validatec(cube *c, int size);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
-extern cube &raycube(const vec &o, const vec &ray, float radius, float &dist);
+extern float raycube(const vec &o, const vec &ray, float radius);
 extern cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient);
 
 // rendercubes

@@ -103,25 +103,20 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 {
                     vec tolight(-ray.x, -ray.y, -ray.z),
                         origin(u.x - 0.1 * tolight.x, u.y - 0.1 * tolight.y, u.z - 0.1 * tolight.z);
-                    float dist;
-                    raycube(origin, tolight, mag, dist);
-                    if(dist < mag + 0.1)
+                    if(raycube(origin, tolight, mag) < mag + 0.1)
                     {
                         ++miss;
                         continue;
                     }
                 }
                 float intensity = -normal.dot(ray) * attenuation;
-                r += uchar(intensity * float(light.attr2));
-                g += uchar(intensity * float(light.attr3));
-                b += uchar(intensity * float(light.attr4));
+                r += uint(intensity * float(light.attr2));
+                g += uint(intensity * float(light.attr3));
+                b += uint(intensity * float(light.attr4));
             }
-            r = min(255, max(25, r));
-            g = min(255, max(25, g));
-            b = min(255, max(25, b));
-            lumel[0] = r;
-            lumel[1] = g;
-            lumel[2] = b;
+            lumel[0] = min(255, max(25, r));
+            lumel[1] = min(255, max(25, g));
+            lumel[2] = min(255, max(25, b));
             u.add(ustep);
         }
         v.add(vstep);
@@ -295,7 +290,44 @@ void calclight()
         total, 
         lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0, 
         lightmaps.length());
+    loopv(ents)
+    {
+        entity &e = ents[i];
+        if(e.type <= PLAYERSTART)
+            continue;
+        lightreaching(e.o, e.color);
+    }
 }
 
 COMMAND(calclight, ARG_NONE);
+
+void lightreaching(const vec &target, uchar color[3])
+{
+    uint r = 0, g = 0, b = 0;
+
+    loopv(ents)
+    {
+        entity &e = ents[i];
+        if(e.type != LIGHT)
+            continue;
+
+        vec ray(target);
+        ray.sub(e.o);
+        float mag = ray.magnitude();
+        if(mag >= e.attr1)
+            continue;
+
+        ray.mul(1.0 / mag);
+        if(raycube(e.o, ray, mag) < mag)
+            continue;
+        float intensity = 1.0 - mag / float(e.attr1);
+        
+        r += intensity * float(e.attr2);
+        g += intensity * float(e.attr3);
+        b += intensity * float(e.attr4);
+    }
+    color[0] = min(255, max(25, r));
+    color[1] = min(255, max(25, g));
+    color[2] = min(255, max(25, b));
+}
 

@@ -262,6 +262,9 @@ VAR(hudgun, 0, 1, 1);
 
 void drawhudmodel(int start, int end, float speed, int base)
 {
+    uchar color[3];
+    lightreaching(player1->o, color);
+    glColor3ubv(color);
     rendermodel(21+player1->gunselect, start, end, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, base);
 };
 

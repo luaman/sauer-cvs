@@ -82,6 +82,7 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
     e.attr5 = v5;
     e.type = type;
     e.spawned = false;
+    memset(e.color, 255, 3);
     switch(type)
     {
         case LIGHT:
