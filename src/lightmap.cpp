@@ -178,10 +178,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         close_lights.add(&e);
     }
     if(!close_lights.length())
-    {
-        clear_lmids(c);
         return;
-    }
 
     loopi(8)
     {
@@ -300,6 +297,7 @@ void calclight()
 {
     if(noedit()) return;
     lightmaps.setsize(0);
+    clear_lmids(worldroot);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
     loopv(lightmaps)
