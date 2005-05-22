@@ -2,7 +2,7 @@
 
 vector<LightMap> lightmaps;
 
-VAR(lightprecision, 1, 32, 256);
+VAR(lightprecision, 1, 28, 256);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
 

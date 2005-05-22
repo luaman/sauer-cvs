@@ -1,5 +1,5 @@
-#define LM_MINW 4
-#define LM_MINH 4
+#define LM_MINW 3
+#define LM_MINH 3
 #define LM_MAXW 128
 #define LM_MAXH 128
 #define LM_PACKW 512
