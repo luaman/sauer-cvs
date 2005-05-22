@@ -2,7 +2,7 @@
 
 vector<LightMap> lightmaps;
 
-VAR(lightprecision, 1, 24, 256);
+VAR(lightprecision, 1, 32, 256);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
 
@@ -84,10 +84,10 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
     int miss = 0;
     vec offsets[4] = 
     { 
-        vec(0, 0, 0), 
-        vec(ustep.x * 0.5, ustep.y * 0.5, ustep.z * 0.5),
         vec((ustep.x + vstep.x) * 0.5, (ustep.y + vstep.y) * 0.5, (ustep.z + vstep.z) * 0.5),
-        vec(vstep.x * 0.5, vstep.y * 0.5, vstep.z * 0.5)
+        vec((ustep.x - vstep.x) * 0.5, (ustep.y - vstep.y) * 0.5, (ustep.z - vstep.z) * 0.5),
+        vec((vstep.x - ustep.x) * 0.5, (vstep.y - ustep.y) * 0.5, (vstep.z - ustep.z) * 0.5),
+        vec((ustep.x + vstep.x) * -0.5, (ustep.y + vstep.y) * -0.5, (ustep.z + vstep.z) * -0.5),
     };
                 
     for(y = 0; y < lm_h; ++y) {
@@ -100,7 +100,8 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 {
                     entity &light = *lights[i];
                     vec target (u);
-                    target.add(offsets[j]);
+                    if(aalights)
+                        target.add(offsets[j]);
                     vec ray = target;
                     ray.sub(light.o);
                     float mag = ray.magnitude(),
@@ -251,9 +252,9 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = (uint)(floorf(umax - umin + 0.5f) / lightprecision * 16);
+                lm_w = (uint)(floorf(umax - umin + 1.5f) / lightprecision * 16);
                 lm_w = max(LM_MINW, min(LM_MAXW, lm_w));
-                lm_h = (uint)(floorf(vmax - vmin + 0.5f) / lightprecision * 16);
+                lm_h = (uint)(floorf(vmax - vmin + 1.5f) / lightprecision * 16);
                 lm_h = max(LM_MINH, min(LM_MAXH, lm_h));
 
 #define CALCVERT(vert, index) \
@@ -278,8 +279,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
                 vec ustep = u,
                     vstep = v;
-                ustep.mul((umax - umin) / float(lm_w));
-                vstep.mul((vmax - vmin) / float(lm_h));
+                ustep.mul((umax - umin) / float(lm_w - 1));
+                vstep.mul((vmax - vmin) / float(lm_h - 1));
                 if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
                     continue;
                 if(!c[i].surfaces)

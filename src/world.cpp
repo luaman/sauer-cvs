@@ -161,6 +161,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         player1->o.z += player1->eyeheight+1;
     };
 
+    clearlights();
     allchanged();
 };
 
