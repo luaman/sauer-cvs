@@ -272,8 +272,6 @@ void drawhudgun(float fovy, float aspect, int farplane)
 {
     if(!hudgun || !player1->gunselect) return;
     
-    glEnable(GL_CULL_FACE);
-    
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(fovy, aspect, 0.3f, farplane);
@@ -298,13 +296,10 @@ void drawhudgun(float fovy, float aspect, int farplane)
     glLoadIdentity();
     gluPerspective(fovy, aspect, 0.15f, farplane);
     glMatrixMode(GL_MODELVIEW);
-
-    glDisable(GL_CULL_FACE);
 };
 
 void gl_drawframe(int w, int h, float changelod, float curfps)
 {
-    //glClear((player1->outsidemap ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     float hf = hdr.waterlevel-0.3f;
@@ -336,13 +331,8 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     int xs, ys;
     loopi(10) lookuptexture(i, xs, ys);
     
-    ///render_world(player1->o.x, player1->o.y, player1->o.z, changelod, (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
-    ///finishstrips();
-
     setupworld();
-
-    
-        
+      
     renderstrips();
 
 
@@ -357,30 +347,19 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     render_particles(curtime);
     renderents();
 
-    glDisable(GL_CULL_FACE);
-
-
-    //renderwater(hf);
-
     glDisable(GL_FOG);
 
-    //drawhudgun(fovy, aspect, farplane);
-
-
-    //renderstripssky();  
     glLoadIdentity();
     glRotated(player1->pitch, -1.0, 0.0, 0.0);
     glRotated(player1->yaw,   0.0, 1.0, 0.0);
     glRotated(90.0, 1.0, 0.0, 0.0);
     glColor3f(1.0f, 1.0f, 1.0f);
-    glDisable(GL_FOG);
-    //glDepthFunc(GL_GREATER);
     draw_envbox(14, farplane/2);
-    //glDepthFunc(GL_LESS);
-    glEnable(GL_FOG);
     transplayer();
 
+    //drawhudgun(fovy, aspect, farplane);
 
+    glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
 
     gl_drawhud(w, h, (int)curfps, 0, curvert, underwater);
