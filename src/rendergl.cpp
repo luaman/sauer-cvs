@@ -343,20 +343,20 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     //renderstripssky();
 
-    /*
+    
     glLoadIdentity();
     glRotated(player1->pitch, -1.0, 0.0, 0.0);
     glRotated(player1->yaw,   0.0, 1.0, 0.0);
     glRotated(90.0, 1.0, 0.0, 0.0);
     glColor3f(1.0f, 1.0f, 1.0f);
     glDisable(GL_FOG);
-    glDepthFunc(GL_GREATER);
-    draw_envbox(14, fog*4/3);
-    glDepthFunc(GL_LESS);
+    //glDepthFunc(GL_GREATER);
+    draw_envbox(14, farplane/2);
+    //glDepthFunc(GL_LESS);
     glEnable(GL_FOG);
 
     transplayer();
-    */
+    
         
     renderstrips();
 
