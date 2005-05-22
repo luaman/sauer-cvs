@@ -301,7 +301,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 void calclight()
 {
     if(noedit()) return;
-    lightmaps.setsize(0);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
     loopv(lightmaps)
@@ -355,6 +354,7 @@ void clearlights()
     uchar bright[3] = {255, 255, 255};
     createtexture(10000, 1, 1, bright, false, false);
     loopv(ents) memset(ents[i].color, 255, 3);
+    lightmaps.setsize(0);
 }
 
 void initlights()
@@ -369,6 +369,7 @@ void initlights()
             continue;
         lightreaching(e.o, e.color);
     }
+    lightmaps.setsize(0);
 }
 
 void fullbright()
