@@ -296,7 +296,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
 void calclight()
 {
-    if(noedit()) return;
+    //if(noedit()) return;
     lightmaps.setsize(0);
     clear_lmids(worldroot);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
