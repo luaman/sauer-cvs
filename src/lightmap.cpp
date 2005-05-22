@@ -2,7 +2,7 @@
 
 vector<LightMap> lightmaps;
 
-VAR(lightprecision, 1, 16, 256);
+VAR(lightprecision, 1, 24, 256);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
 
@@ -115,10 +115,7 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                     {
                         vec tolight(ray);
                         tolight.mul(-1);
-                        vec origin(tolight);
-                        origin.mul(-0.1);
-                        origin.add(target);
-                        if(raycube(origin, tolight, mag) < mag + 0.1)
+                        if(raycube(target, tolight, mag, &c) < mag)
                         {
                             ++miss;
                             continue;
