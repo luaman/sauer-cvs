@@ -305,7 +305,7 @@ void drawhudgun(float fovy, float aspect, int farplane)
 void gl_drawframe(int w, int h, float changelod, float curfps)
 {
     //glClear((player1->outsidemap ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     float hf = hdr.waterlevel-0.3f;
     float fovy = (float)fov*h/w;
@@ -341,21 +341,6 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     setupworld();
 
-    //renderstripssky();
-
-    
-    glLoadIdentity();
-    glRotated(player1->pitch, -1.0, 0.0, 0.0);
-    glRotated(player1->yaw,   0.0, 1.0, 0.0);
-    glRotated(90.0, 1.0, 0.0, 0.0);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glDisable(GL_FOG);
-    //glDepthFunc(GL_GREATER);
-    draw_envbox(14, farplane/2);
-    //glDepthFunc(GL_LESS);
-    glEnable(GL_FOG);
-
-    transplayer();
     
         
     renderstrips();
@@ -380,6 +365,21 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     glDisable(GL_FOG);
 
     //drawhudgun(fovy, aspect, farplane);
+
+
+    //renderstripssky();  
+    glLoadIdentity();
+    glRotated(player1->pitch, -1.0, 0.0, 0.0);
+    glRotated(player1->yaw,   0.0, 1.0, 0.0);
+    glRotated(90.0, 1.0, 0.0, 0.0);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glDisable(GL_FOG);
+    //glDepthFunc(GL_GREATER);
+    draw_envbox(14, farplane/2);
+    //glDepthFunc(GL_LESS);
+    glEnable(GL_FOG);
+    transplayer();
+
 
     glDisable(GL_TEXTURE_2D);
 
