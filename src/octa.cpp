@@ -140,7 +140,7 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
                 vec d(ray);
                 d.mul(f+1);
                 d.add(v);
-                loopj(18) if(c.clip[j].dist(d)>0) goto nextplane;
+                loopj(12) if(c.clip[j].dist(d)>0) goto nextplane;
                 dist += f+1;
                 v = d;
                 return c;

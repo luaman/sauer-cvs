@@ -195,8 +195,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             loopj(6) if(usefaces[j])
             {
                 const plane &lm_normal = c[i].clip[j*2];
-                if(!lm_normal.isnormalized())
-                    continue;
                 lights.setsize(0);
                 loopv(close_lights)
                 {

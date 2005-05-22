@@ -385,10 +385,11 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
             }
         }
     }
-    loopi(6) if(useface[i] || visible)
+    loopi(6) if(useface[i] || visible > 0)
     {
-        c.clip[12+i][dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
-        c.clip[12+i].offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
+        plane &clip = c.clip[useface[i] ? 12+i : 2*i];
+        clip[dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
+        clip.offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
     }
 };
 
