@@ -84,10 +84,10 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
     int miss = 0;
     vec offsets[4] = 
     { 
-        vec((ustep.x + vstep.x) * 0.5, (ustep.y + vstep.y) * 0.5, (ustep.z + vstep.z) * 0.5),
-        vec((ustep.x - vstep.x) * 0.5, (ustep.y - vstep.y) * 0.5, (ustep.z - vstep.z) * 0.5),
-        vec((vstep.x - ustep.x) * 0.5, (vstep.y - ustep.y) * 0.5, (vstep.z - ustep.z) * 0.5),
-        vec((ustep.x + vstep.x) * -0.5, (ustep.y + vstep.y) * -0.5, (ustep.z + vstep.z) * -0.5),
+        vec((ustep.x + vstep.x) * 0.3, (ustep.y + vstep.y) * 0.3, (ustep.z + vstep.z) * 0.3),
+        vec((ustep.x - vstep.x) * 0.3, (ustep.y - vstep.y) * 0.3, (ustep.z - vstep.z) * 0.3),
+        vec((vstep.x - ustep.x) * 0.3, (vstep.y - ustep.y) * 0.3, (vstep.z - ustep.z) * 0.3),
+        vec((ustep.x + vstep.x) * -0.3, (ustep.y + vstep.y) * -0.3, (ustep.z + vstep.z) * -0.3),
     };
                 
     for(y = 0; y < lm_h; ++y) {
