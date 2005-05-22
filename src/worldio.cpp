@@ -215,8 +215,10 @@ void load_world(char *mname)        // still supports all map formats that have 
     validatec(worldroot, hdr.worldsize>>1);
     if(hdr.version >= 7)
     {
+        lightmaps.setsize(0);
         loopi(hdr.lightmaps)  gzread(f, lightmaps.add().data, 3 * LM_PACKW * LM_PACKH);
         initlights();
+        lightmaps.setsize(0);
     }
     else
         clearlights();
