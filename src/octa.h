@@ -42,7 +42,7 @@ struct cube
     uchar colour[3];        // colour at (-X,-Y,-Z) corner
     vtxarray *va;           // vertex array for children, or NULL
     plane clip[18];         // collision planes
-    surfaceinfo surfaces[6]; // lighting info for each surface
+    surfaceinfo *surfaces; // lighting info for each surface
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)

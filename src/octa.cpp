@@ -13,10 +13,10 @@ cube *newcubes(uint face)
         c->children = NULL;
         c->va = NULL;
         setfaces(*c, face);
+        c->surfaces = NULL;
         loopl(6)
         {
             c->texture[l] = 2+l;
-            c->surfaces[l].lmid = 0;
         };
         //int col = rnd(256);
         //loopl(3) c->colour[l] = col;
@@ -40,6 +40,7 @@ void freeocta(cube *c)
     {
         if (c[i].children) freeocta(c[i].children);
         if (c[i].va) destroyva(c[i].va);
+        if (c[i].surfaces) gp()->dealloc(c[i].surfaces, 6*sizeof(surfaceinfo));
     };
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;

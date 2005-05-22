@@ -152,7 +152,11 @@ void clear_lmids(cube *c)
         if(c[i].children)
             clear_lmids(c[i].children);
         else
-            loopj(6) c[i].surfaces[j].lmid = 0;
+        if(c[i].surfaces)
+        {
+            gp()->dealloc(c[i].surfaces, 6*sizeof(surfaceinfo));
+            c[i].surfaces = NULL;
+        }
     }
 }
 
@@ -184,11 +188,9 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         ivec o(i, cx, cy, cz, size);
         if(c[i].children)
             generate_lightmaps(c[i].children, o.x, o.y, o.z, size >> 1);
-        else 
+        else
         if(!isempty(c[i]))
         {
-            loopj(6) c[i].surfaces[j].lmid = 0;
-
             vec verts[8];
             bool usefaces[6];
             calcverts(c[i], o.x, o.y, o.z, size, verts, usefaces);
@@ -271,7 +273,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
                 float uscale = (float(lm_w) - 0.5) / (umax - umin),
                       vscale = (float(lm_h) - 0.5) / (vmax - vmin);
-                surfaceinfo &surface = c[i].surfaces[j];
+                surfaceinfo surface;// = c[i].surfaces[j];
                 CALCVERT(v0, 0)
                 CALCVERT(v1, 1)
                 CALCVERT(v2, 2)
@@ -285,7 +287,12 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 vstep.mul((vmax - vmin) / float(lm_h));
                 if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
                     continue;
-                pack_lightmap(surface);
+                if(!c[i].surfaces)
+                {
+                    c[i].surfaces = (surfaceinfo *)gp()->alloc(6*sizeof(surfaceinfo));
+                    loopk(6) c[i].surfaces[k].lmid = 0;
+                }
+                pack_lightmap(c[i].surfaces[j] = surface);
             }
         }
     } 

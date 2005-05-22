@@ -291,11 +291,11 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
         loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
         {
             ++visible;
-            usvector &iv = indices[sortkey(c.texture[i], c.surfaces[i].lmid)].dims[dimension(i)];
+            usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
             loopk(4)
             {
                 float u, v;
-                if(c.surfaces[i].lmid)
+                if(c.surfaces && c.surfaces[i].lmid)
                 {
                     u = (c.surfaces[i].x + c.surfaces[i].texcoords[k*2] + 0.5) / LM_PACKW;
                     v = (c.surfaces[i].y + c.surfaces[i].texcoords[k*2 + 1] + 0.5) / LM_PACKH;
@@ -320,14 +320,14 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
         loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
         {
             ++visible;
-            usvector &iv = indices[sortkey(c.texture[i], c.surfaces[i].lmid)].dims[dimension(i)];
+            usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
             loopk(4)
             {
                 int coord = faceverts(c,i,k);
                 vertex v;
                 genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, v);
                 swap(float, v.y, v.z);
-                if(c.surfaces[i].lmid)
+                if(c.surfaces && c.surfaces[i].lmid)
                 {
                     v.u = (c.surfaces[i].x + c.surfaces[i].texcoords[k*2] + 0.5) / LM_PACKW;
                     v.v = (c.surfaces[i].y + c.surfaces[i].texcoords[k*2 + 1] + 0.5) / LM_PACKH;
