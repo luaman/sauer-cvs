@@ -154,6 +154,10 @@ void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr
     };
 };
 
+bool selectcorners = false;
+void selcorners(bool isdown) { selectcorners = isdown; }; 
+COMMAND(selcorners, ARG_DOWN);
+
 void cursorupdate()
 {
     vec v;
@@ -182,7 +186,7 @@ void cursorupdate()
     cor.z = (int)v.z/g2;
     int od = dimension(orient);
     int d = dimension(sel.orient);
-
+    
     if(dragging)
     {
         sel.o.x = min(lastcur.x, cur.x);
@@ -191,10 +195,27 @@ void cursorupdate()
         sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
         sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
         sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
+        
         selcx   = min(cor[R(d)], lastcor[R(d)]);
-        selcxs  = max(cor[R(d)], lastcor[R(d)])-selcx+1;
         selcy   = min(cor[C(d)], lastcor[C(d)]);
-        selcys  = max(cor[C(d)], lastcor[C(d)])-selcy+1;
+        selcxs  = max(cor[R(d)], lastcor[R(d)]);
+        selcys  = max(cor[C(d)], lastcor[C(d)]);
+        
+        if(!selectcorners)
+        {
+            selcx &= ~1;
+            selcy &= ~1;
+            selcxs &= ~1;
+            selcys &= ~1;
+            selcxs -= selcx-2;
+            selcys -= selcy-2;
+        }
+        else
+        {
+            selcxs -= selcx-1;
+            selcys -= selcy-1;
+        };
+        
         selcx  &= 1;
         selcy  &= 1;
         havesel = true;
