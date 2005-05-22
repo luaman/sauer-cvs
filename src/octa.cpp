@@ -127,7 +127,11 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     for(;;)
     {
         cube &c = lookupcube(fast_f2nat(v.x), fast_f2nat(v.y), fast_f2nat(v.z), 0);
-        if(last==&c || dist>radius) return c;
+        if(last==&c || dist>radius)
+        {
+            if(dist < radius) dist = radius;
+            return c;
+        }
         if(&c != source && !isempty(c))
         {
             if((isentirelysolid(c) && (source == NULL || dist > 0)) || lusize == size) return c;

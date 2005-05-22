@@ -329,7 +329,7 @@ void lightreaching(const vec &target, uchar color[3])
         vec ray(target);
         ray.sub(e.o);
         float mag = ray.magnitude();
-        if(mag >= e.attr1)
+        if(mag >= float(e.attr1))
             continue;
 
         ray.mul(1.0 / mag);
