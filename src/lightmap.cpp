@@ -300,29 +300,21 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
 void calclight()
 {
+    if(noedit()) return;
     lightmaps.setsize(0);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
-    uchar unlit[3] = {25, 25, 25};
-    createtexture(10000, 1, 1, unlit, false, false);
     loopv(lightmaps)
     {
         total += lightmaps[i].lightmaps;
         lumels += lightmaps[i].lumels;
-        createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     }
+    initlights();
     allchanged();
-    conoutf("generated %d lightmaps using %d%% of %d textures", 
-        total, 
-        lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0, 
+    conoutf("generated %d lightmaps using %d%% of %d textures",
+        total,
+        lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
         lightmaps.length());
-    loopv(ents)
-    {
-        entity &e = ents[i];
-        if(e.type <= PLAYERSTART)
-            continue;
-        lightreaching(e.o, e.color);
-    }
 }
 
 COMMAND(calclight, ARG_NONE);
@@ -357,14 +349,33 @@ void lightreaching(const vec &target, uchar color[3])
     color[2] = min(255, max(25, b));
 }
 
+void clearlights()
+{
+    clear_lmids(worldroot);
+    uchar bright[3] = {255, 255, 255};
+    createtexture(10000, 1, 1, bright, false, false);
+    loopv(ents) memset(ents[i].color, 255, 3);
+}
+
+void initlights()
+{
+    uchar unlit[3] = {25, 25, 25};
+    createtexture(10000, 1, 1, unlit, false, false);
+    loopi(lightmaps.length()) createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
+    loopv(ents)
+    {
+        entity &e = ents[i];
+        if(e.type <= PLAYERSTART)
+            continue;
+        lightreaching(e.o, e.color);
+    }
+}
+
 void fullbright()
 {
-        if(noedit()) return;
-        clear_lmids(worldroot);
-        uchar bright[3] = {255, 255, 255};
-        createtexture(10000, 1, 1, bright, false, false);
-        loopv(ents) memset(ents[i].color, 255, 3);
-        allchanged();
+    if(noedit()) return;
+    clearlights();
+    allchanged();
 }
 
 COMMAND(fullbright, ARG_NONE);

@@ -39,7 +39,7 @@ struct cube
         uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
     };
     uchar texture[6];       // one for each face. same order as orient.
-    uchar colour[3];        // colour at (-X,-Y,-Z) corner
+    //uchar colour[3];        // colour at (-X,-Y,-Z) corner
     vtxarray *va;           // vertex array for children, or NULL
     plane clip[18];         // collision planes
     surfaceinfo *surfaces; // lighting info for each surface

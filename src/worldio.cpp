@@ -85,7 +85,22 @@ void savec(cube *c, gzFile f)
                 gzwrite(f, c[i].edges, 12);
             };
             gzwrite(f, c[i].texture, 6);
-            loopj(3) gzputc(f, 0); //gzwrite(f, c[i].colour, 3);
+            //loopj(3) gzputc(f, 0); //gzwrite(f, c[i].colour, 3);
+            // save surface info for lighting
+            if(!c[i].surfaces)
+                gzputc(f, 0);
+            else
+            {
+                uchar mask = 0;
+                loopj(6) if(c[i].surfaces[j].lmid) mask |= 1 << j;
+                gzputc(f, mask);
+                loopj(6) if(c[i].surfaces[j].lmid)
+                {
+                    surfaceinfo tmp = c[i].surfaces[j];
+                    endianswap(&tmp.x, sizeof(ushort), 3);
+                    gzwrite(f, &tmp, sizeof(surfaceinfo)); 
+                }
+            }
         };
     };
 };
@@ -108,7 +123,25 @@ void loadc(gzFile f, cube &c)
             fatal("garbage in map");
     };
     gzread(f, c.texture, 6);
-    loopi(3) gzgetc(f); //gzread(f, c.colour, 3);
+    if(hdr.version < 7) loopi(3) gzgetc(f); //gzread(f, c.colour, 3);
+    else
+    {
+        uchar mask = gzgetc(f);
+        if(mask)
+        {
+            c.surfaces = (surfaceinfo *)gp()->alloc(6*sizeof(surfaceinfo));
+            loopi(6)
+            {
+                if(mask & (1 << i))
+                {
+                    gzread(f, &c.surfaces[i], sizeof(surfaceinfo));
+                    endianswap(&c.surfaces[i].x, sizeof(ushort), 3);
+                }
+                else
+                    c.surfaces[i].lmid = 0;
+            }
+        }
+    }
     c.children = NULL;
 };
 
@@ -131,6 +164,7 @@ void save_world(char *mname)
     hdr.version = MAPVERSION;
     hdr.numents = 0;
     loopv(ents) if(ents[i].type!=NOTUSED) hdr.numents++;
+    hdr.lightmaps = lightmaps.length();
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
@@ -146,6 +180,11 @@ void save_world(char *mname)
     };
 
     savec(worldroot, f);
+    loopv(lightmaps)
+    {
+        LightMap &lm = lightmaps[i];
+        gzwrite(f, lm.data, sizeof(lm.data));
+    }
 
     gzclose(f);
     conoutf("wrote map file %s", (int)cgzname);
@@ -169,12 +208,18 @@ void load_world(char *mname)        // still supports all map formats that have 
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
-        memset(e.color, 255, 3);
     };
 
     freeocta(worldroot);
     worldroot = loadchildren(f);
     validatec(worldroot, hdr.worldsize>>1);
+    if(hdr.version >= 7)
+    {
+        loopi(hdr.lightmaps)  gzread(f, lightmaps.add().data, 3 * LM_PACKW * LM_PACKH);
+        initlights();
+    }
+    else
+        clearlights();
     allchanged();
 
     gzclose(f);
