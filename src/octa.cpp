@@ -129,7 +129,7 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
         if(last==&c || dist>radius) return c;
         if(&c != source && !isempty(c))
         {
-            if(isentirelysolid(c) || lusize == size) return c;
+            if((isentirelysolid(c) && (source == NULL || dist > 0)) || lusize == size) return c;
             //float m = 0;
             loopi(12) // assumes null c.clip[i] == 0,0,0
             {
