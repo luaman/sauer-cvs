@@ -218,7 +218,6 @@ void load_world(char *mname)        // still supports all map formats that have 
         lightmaps.setsize(0);
         loopi(hdr.lightmaps)  gzread(f, lightmaps.add().data, 3 * LM_PACKW * LM_PACKH);
         initlights();
-        lightmaps.setsize(0);
     }
     else
         clearlights();
