@@ -3,12 +3,35 @@
 vector<LightMap> lightmaps;
 
 VAR(lightprecision, 1, 28, 256);
+VAR(lighterror, 1, 1, 16);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
-
+ 
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights, close_lights;
+
+struct compresskey
+{
+    uchar color[3];
+};
+
+struct compressval
+{
+    ushort x, y, lmid;
+};
+   
+inline bool htcmp (const compresskey &x, const compresskey &y)
+{
+    return x.color[0] == y.color[0] && x.color[1] == y.color[1] && x.color[2] == y.color[2];
+}
+
+inline unsigned int hthash (const compresskey &k)
+{   
+    return k.color[0] + (k.color[1] << 8) + (k.color[2] << 16);
+}   
+ 
+static hashtable<compresskey, compressval> compressed;
 
 bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
 {
@@ -61,19 +84,39 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
     return true;
 }
 
-void pack_lightmap(surfaceinfo &surface) 
+void insert_lightmap(ushort &x, ushort &y, ushort &lmid)
 {
     loopv(lightmaps)
     {
-        if(lightmaps[i].insert(surface.x, surface.y, lm, lm_w, lm_h))
+        if(lightmaps[i].insert(x, y, lm, lm_w, lm_h))
         {
-            surface.lmid = i + 1;
+            lmid = i + 1;
             return;
         }
     }
 
-    ASSERT(lightmaps.add().insert(surface.x, surface.y, lm, lm_w, lm_h));
-    surface.lmid = lightmaps.length();
+    ASSERT(lightmaps.add().insert(x, y, lm, lm_w, lm_h));
+    lmid = lightmaps.length();
+}
+
+void pack_lightmap(surfaceinfo &surface) 
+{
+    if(lm_w == 1 && lm_h == 1)
+    {
+        compresskey key;
+        memcpy(key.color, lm, 3);
+        compressval *val = compressed.access(key);
+        if(!val)
+        {
+            val = &compressed[key];
+            insert_lightmap(val->x, val->y, val->lmid);
+        }
+        surface.x = val->x;
+        surface.y = val->y;
+        surface.lmid = val->lmid;
+    }
+    else
+        insert_lightmap(surface.x, surface.y, surface.lmid);
 }
 
 bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
@@ -81,7 +124,7 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
     uint x, y;
     vec v = origin;
     uchar *lumel = lm;
-    int miss = 0;
+    uint miss = 0;
     vec offsets[4] = 
     { 
         vec((ustep.x + vstep.x) * 0.3, (ustep.y + vstep.y) * 0.3, (ustep.z + vstep.z) * 0.3),
@@ -89,7 +132,9 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
         vec((vstep.x - ustep.x) * 0.3, (vstep.y - ustep.y) * 0.3, (vstep.z - ustep.z) * 0.3),
         vec((ustep.x + vstep.x) * -0.3, (ustep.y + vstep.y) * -0.3, (ustep.z + vstep.z) * -0.3),
     };
-                
+    uchar mincolor[3] = {255, 255, 255},
+          maxcolor[3] = {0, 0, 0};
+
     for(y = 0; y < lm_h; ++y) {
         vec u = v;
         for(x = 0; x < lm_w; ++x, lumel += 3) {
@@ -139,11 +184,41 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
             lumel[0] = min(255, max(25, r));
             lumel[1] = min(255, max(25, g));
             lumel[2] = min(255, max(25, b));
+            loopk(3)
+            {
+                mincolor[k] = min(mincolor[k], lumel[k]);
+                maxcolor[k] = max(maxcolor[k], lumel[k]);
+            }
             u.add(ustep);
         }
         v.add(vstep);
     }
-    return miss < (aalights ? 4 : 1) * lights.length() * lm_w * lm_h;
+    if(miss)
+    {
+        if(miss == (aalights ? 4 : 1) * lights.length() * lm_w * lm_h) return false;
+        loopk(3)
+        {
+            mincolor[k] = min(mincolor[k], 25);
+            maxcolor[k] = max(maxcolor[k], 25);
+        }
+    }
+
+        
+    if(int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
+       int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
+       int(maxcolor[2]) - int(mincolor[2]) <= lighterror)
+    {
+       uchar color[3];
+       loopk(3) color[k] = (int(maxcolor[k]) + int(mincolor[k])) / 2;
+       if(int(color[0]) - 25 <= lighterror && 
+          int(color[1]) - 25 <= lighterror && 
+          int(color[2]) - 25 <= lighterror)
+           return false;
+       memcpy(lm, color, 3);
+       lm_w = 1;
+       lm_h = 1;
+    }
+    return true;
 }
 
 void clear_lmids(cube *c)
@@ -257,6 +332,13 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_h = (uint)(floorf(vmax - vmin + 1.5f) / lightprecision * 16);
                 lm_h = max(LM_MINH, min(LM_MAXH, lm_h));
 
+                vec ustep = u,
+                    vstep = v;
+                ustep.mul((umax - umin) / float(lm_w - 1));
+                vstep.mul((vmax - vmin) / float(lm_h - 1));
+                if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
+                    continue;
+
 #define CALCVERT(vert, index) \
                 { \
                   vec tovert = vert; \
@@ -269,7 +351,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
                 float uscale = (float(lm_w) - 0.5) / (umax - umin),
                       vscale = (float(lm_h) - 0.5) / (vmax - vmin);
-                surfaceinfo surface;// = c[i].surfaces[j];
+                surfaceinfo surface;
                 CALCVERT(v0, 0)
                 CALCVERT(v1, 1)
                 CALCVERT(v2, 2)
@@ -277,12 +359,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 surface.w = lm_w;
                 surface.h = lm_h;
 
-                vec ustep = u,
-                    vstep = v;
-                ustep.mul((umax - umin) / float(lm_w - 1));
-                vstep.mul((vmax - vmin) / float(lm_h - 1));
-                if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
-                    continue;
                 if(!c[i].surfaces)
                 {
                     c[i].surfaces = (surfaceinfo *)gp()->alloc(6*sizeof(surfaceinfo));
@@ -294,10 +370,16 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
     } 
 }
 
+void resetlightmaps()
+{
+    lightmaps.setsize(0);
+    compressed.clear();
+}
+
 void calclight()
 {
     //if(noedit()) return;
-    lightmaps.setsize(0);
+    resetlightmaps();
     clear_lmids(worldroot);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
