@@ -157,7 +157,7 @@ void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr
 };
 
 bool selectcorners = false;
-void selcorners(bool isdown) { selectcorners = isdown; }; 
+void selcorners(bool isdown) { selectcorners = isdown; };
 COMMAND(selcorners, ARG_DOWN);
 
 void cursorupdate()
@@ -188,7 +188,7 @@ void cursorupdate()
     cor.z = (int)v.z/g2;
     int od = dimension(orient);
     int d = dimension(sel.orient);
-    
+
     if(dragging)
     {
         sel.o.x = min(lastcur.x, cur.x);
@@ -197,12 +197,12 @@ void cursorupdate()
         sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
         sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
         sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
-        
+
         selcx   = min(cor[R(d)], lastcor[R(d)]);
         selcy   = min(cor[C(d)], lastcor[C(d)]);
         selcxs  = max(cor[R(d)], lastcor[R(d)]);
         selcys  = max(cor[C(d)], lastcor[C(d)]);
-        
+
         if(!selectcorners)
         {
             selcx &= ~1;
@@ -217,7 +217,7 @@ void cursorupdate()
             selcxs -= selcx-1;
             selcys -= selcy-1;
         };
-        
+
         selcx  &= 1;
         selcy  &= 1;
         havesel = true;
@@ -271,7 +271,7 @@ void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
         };
         if(c[i].children)
         {
-            if(size<=4) { freeocta(c[i].children); c[i].children = NULL; }
+            if(size<=4) discardchildren(c[i]);
             else readyva(b, c[i].children, o.x, o.y, o.z, size/2);
         };
     };
@@ -283,7 +283,7 @@ void changed()
     loopi(3) b.s[i] *= b.grid;
     b.grid = 1;
     loopi(3)                    // the changed blocks are the selected cubes
-    {                           // plus, if not internal, any cubes just 1 adjacent unit grid away from the sel block
+    {
         b.o[i] -= 1;
         b.s[i] += 2;
         readyva(b, worldroot, 0, 0, 0, hdr.worldsize/2);
@@ -498,22 +498,6 @@ void edittex(int dir)
 };
 
 COMMAND(edittex, ARG_1INT);
-
-VAR(litepower, 1, 10, 255);
-void lightcube(cube &c, int dr, int dg, int db)
-{
-    //c.colour[0] = (uchar) (c.colour[0]+dr<0 ? 0 : (c.colour[0]+dr>255 ? 255 : c.colour[0]+dr));
-    //c.colour[1] = (uchar) (c.colour[1]+dg<0 ? 0 : (c.colour[1]+dg>255 ? 255 : c.colour[1]+dg));
-    //c.colour[2] = (uchar) (c.colour[2]+db<0 ? 0 : (c.colour[2]+db>255 ? 255 : c.colour[2]+db));
-    if (c.children) loopi(8) lightcube(c.children[i],dr,dg,db);
-};
-
-void lite(int r, int g, int b)
-{
-    if(noedit()) return;
-    loopselxyz(lightcube(c, r*litepower, g*litepower, b*litepower));
-};
-COMMAND(lite, ARG_3INT);
 
 ////////// flip and rotate ///////////////
 uint edgeinv(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); };
