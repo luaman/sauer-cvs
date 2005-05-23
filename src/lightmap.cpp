@@ -328,9 +328,9 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(vo);
 
                 float lpu = 16.0f / float(lightprecision);
-                lm_w = (uint)ceilf((umax - umin + 1.0) * lpu);
+                lm_w = (uint)ceil((umax - umin + 1.0) * lpu);
                 lm_w = max(LM_MINW, min(LM_MAXW, lm_w));
-                lm_h = (uint)ceilf((vmax - vmin + 1.0) * lpu);
+                lm_h = (uint)ceil((vmax - vmin + 1.0) * lpu);
                 lm_h = max(LM_MINH, min(LM_MAXH, lm_h));
 
                 vec ustep = u,
