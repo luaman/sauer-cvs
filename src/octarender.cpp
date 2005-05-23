@@ -286,61 +286,43 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     loopi(8) vertexuses[i] = 0;
     loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = c.clip[i].offset = 0.0f;
 
-    if(isentirelysolid(c))
+    vec pos((float)x, (float)y, (float)z);
+
+    loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
     {
-        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
+        ++visible;
+        usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
+        loopk(4)
         {
-            ++visible;
-            usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
-            loopk(4)
+            float u, v;
+            if(c.surfaces && c.surfaces[i].lmid)
             {
-                float u, v;
-                if(c.surfaces && c.surfaces[i].lmid)
-                {
-                    u = (c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) / LM_PACKW;
-                    v = (c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) / LM_PACKH;
-                }
-                else
-                     u = v = 0.0;
-                int coord = faceverts(c,i,k),
-                    index = vert(cubecoords[coord][0]*size/8+x,
-                                 cubecoords[coord][1]*size/8+y,
-                                 cubecoords[coord][2]*size/8+z,
-                                 u, v);
-                iv.add(index);
-                if(++vertexuses[coord] == 1)
-                    cin[coord] = index;
+                u = (c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) / LM_PACKW;
+                v = (c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) / LM_PACKH;
             }
+            else
+                 u = v = 0.0;
+            int coord = faceverts(c,i,k), index;
+            if(isentirelysolid(c))
+                index = vert(cubecoords[coord][0]*size/8+x,
+                             cubecoords[coord][1]*size/8+y,
+                             cubecoords[coord][2]*size/8+z,
+                             u, v);
+            else
+            {
+                vertex vert;
+                vert.u = u;
+                vert.v = v;
+                genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, vert);
+                swap(float, vert.y, vert.z);
+                index = findindex(verts[curvert] = vert);
+            }
+
+            iv.add(index);
+            if(++vertexuses[coord] == 1)
+                cin[coord] = index;
         }
     }
-    else
-    {
-        vec pos((float)x, (float)y, (float)z);
-   
-        loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
-        {
-            ++visible;
-            usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
-            loopk(4)
-            {
-                int coord = faceverts(c,i,k);
-                vertex v;
-                genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, v);
-                swap(float, v.y, v.z);
-                if(c.surfaces && c.surfaces[i].lmid)
-                {
-                    v.u = (c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) / LM_PACKW;
-                    v.v = (c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) / LM_PACKH;
-                }
-                else
-                    v.u = v.v = 0.0;
-                int index = findindex(verts[curvert] = v);
-                iv.add(index);
-                if(++vertexuses[coord] == 1)
-                    cin[coord] = index;
-            }
-        }
-    };
 
     loopi(8) if(vertexuses[i]) loopj(3)
     {
