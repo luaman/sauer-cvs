@@ -202,6 +202,33 @@ bool faceedgegt(uint cfe, uint ofe)
 
 //extern cube *last;
 
+static cube *vc;
+static ivec vo;
+static int vsize;
+
+bool occludesface(cube &c, int orient, int x, int y, int z, int size)
+{
+    if(!c.children) {
+         if(isentirelysolid(c))
+             return true;
+         if(isempty(c))
+             return false;
+         return touchingface(c, orient) && faceedges(c, orient) == F_SOLID;
+    }
+    int dim = dimension(orient), coord = dimcoord(orient),
+        xd = (dim + 1) % 3, yd = (dim + 2) % 3;
+    loopi(8) if(octacoord(dim, i) == coord)
+    {
+        ivec o(i, x, y, z, size >> 1);
+        if(o[xd] < vo[xd] + vsize && o[xd] + (size >> 1) > vo[xd] &&
+           o[yd] < vo[yd] + vsize && o[yd] + (size >> 1) > vo[yd])
+        {
+            if(!occludesface(c.children[i], orient, o.x, o.y, o.z, size >> 1)) return false;
+        }
+    }
+    return true;
+}
+    
 bool visibleface(cube &c, int orient, int x, int y, int z, int size)
 {
     //if(last==&c) __asm int 3;
@@ -210,17 +237,21 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size)
        ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F))         
         return false;
 
-    cube &o = neighbourcube(x, y, z, size, 0, orient);
-    if(&o==&c || isempty(o)) return true;
-    if(!touchingface(c, orient) || !touchingface(o, opposite(orient))) return true;
-    if(isentirelysolid(o) && lusize>=size) return false;
-    //return true;
-    uint ofe = faceedges(o, opposite(orient));
-    if(size==lusize) return ofe!=cfe ? faceedgegt(cfe, ofe) : false;
-    return true;
+    cube &o = neighbourcube(x, y, z, size, -size, orient);
+    if(&o==&c) return false;
+    if(!touchingface(c, orient)) return true;
+    if(!o.children)
+    {
+        if(!touchingface(o, opposite(orient))) return true;
+        uint ofe = faceedges(o, opposite(orient));
+        if(ofe==cfe) return false;
+        return faceedgegt(cfe, ofe);
+    }
 
-    if(size>lusize) return true; // TODO: do special case for bigger and smaller cubes
-    return false;
+    vc = &c;
+    vo.x = x; vo.y = y; vo.z = z;
+    vsize = size;
+    return !occludesface(o, opposite(orient), lu.x, lu.y, lu.z, lusize);
 };
 
 void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
