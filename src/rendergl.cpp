@@ -245,11 +245,11 @@ void transplayer()
 {
     glLoadIdentity();
 
-    glRotated(player1->roll,0.0,0.0,1.0);
-    glRotated(player1->pitch,-1.0,0.0,0.0);
-    glRotated(player1->yaw,0.0,1.0,0.0);
+    glRotatef(player1->roll,0.0,0.0,1.0);
+    glRotatef(player1->pitch,-1.0,0.0,0.0);
+    glRotatef(player1->yaw,0.0,1.0,0.0);
 
-    glTranslated(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.2f : 0)-player1->o.z, -player1->o.y);   
+    glTranslatef(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.2f : 0)-player1->o.z, -player1->o.y);   
 };
 
 VAR(fov, 10, 105, 120);
@@ -265,7 +265,7 @@ void drawhudmodel(int start, int end, float speed, int base)
     uchar color[3];
     lightreaching(player1->o, color);
     glColor3ubv(color);
-    rendermodel(21+player1->gunselect, start, end, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, base);
+    rendermodel(21+player1->gunselect, start, end, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 4.0f, speed, base);
 };
 
 void drawhudgun(float fovy, float aspect, int farplane)
@@ -274,8 +274,11 @@ void drawhudgun(float fovy, float aspect, int farplane)
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 0.3f, farplane);
+    gluPerspective(fovy, aspect, 6.0f, farplane);
     glMatrixMode(GL_MODELVIEW);
+    //glPushMatrix();
+    //glScalef(0.25f, 0.25f, 0.25f);
+    //glScalef(4.0f, 4.0f, 4.0f);
     
     int rtime = reloadtime(player1->gunselect);
     if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastattack<rtime)
@@ -290,10 +293,10 @@ void drawhudgun(float fovy, float aspect, int farplane)
     {
         drawhudmodel(6, 1, 100, 0);
     };
-
+    //glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 2.5f, farplane);
+    gluPerspective(fovy, aspect, 1.0f, farplane);
     glMatrixMode(GL_MODELVIEW);
 };
 
@@ -320,7 +323,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     int farplane = max(fog*2, 384);
-    gluPerspective(fovy, aspect, 2.5f, farplane);
+    gluPerspective(fovy, aspect, 0.6f, farplane);
     glMatrixMode(GL_MODELVIEW);
 
     transplayer();
