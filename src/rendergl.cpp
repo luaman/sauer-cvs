@@ -274,10 +274,9 @@ void drawhudgun(float fovy, float aspect, int farplane)
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 1.7f, farplane);
+    gluPerspective(fovy, aspect, 0.3f, farplane);
     glMatrixMode(GL_MODELVIEW);
     
-    //glClear(GL_DEPTH_BUFFER_BIT);
     int rtime = reloadtime(player1->gunselect);
     if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastattack<rtime)
     {
