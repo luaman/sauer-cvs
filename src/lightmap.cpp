@@ -2,7 +2,7 @@
 
 vector<LightMap> lightmaps;
 
-VAR(lightprecision, 1, 28, 256);
+VAR(lightprecision, 1, 32, 256);
 VAR(lighterror, 1, 1, 16);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
@@ -327,9 +327,9 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = (uint)(floorf(umax - umin + 1.5f) / lightprecision * 16);
+                lm_w = (uint)((umax - umin + 1.5f) * 16.0f / lightprecision);
                 lm_w = max(LM_MINW, min(LM_MAXW, lm_w));
-                lm_h = (uint)(floorf(vmax - vmin + 1.5f) / lightprecision * 16);
+                lm_h = (uint)((vmax - vmin + 1.5f) * 16.0f / lightprecision);
                 lm_h = max(LM_MINH, min(LM_MAXH, lm_h));
 
                 vec ustep = u,
