@@ -77,6 +77,12 @@ struct plane : vec
 struct line3 { vec orig, dir; };
 struct vertex : vec { float u, v; };
 
+enum                            // cube empty-space materials
+{
+    MAT_AIR = 0,                // the default, fill the empty space with air
+    MAT_WATER                   // fill with water, showing waves at the surface
+};
+
 enum                            // static entity types
 {
     NOTUSED = 0,                // entity slot not in use in map
@@ -458,7 +464,6 @@ extern void teleport(int n, dynent *d);
 
 // rndmap
 extern void perlinarea(block &b, int scale, int seed, int psize);
-
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN

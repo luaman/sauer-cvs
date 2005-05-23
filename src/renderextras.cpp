@@ -252,7 +252,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glPushMatrix();
     glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
     glEnable(GL_BLEND);
-/*
+
     if(dblend || underwater)
     {
         glDepthMask(GL_FALSE);
@@ -269,7 +269,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         dblend -= curtime/3;
         if(dblend<0) dblend = 0;
     };
-*/
+
     glEnable(GL_TEXTURE_2D);
 
     char *command = getcurcommand();

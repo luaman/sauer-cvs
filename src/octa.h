@@ -39,6 +39,7 @@ struct cube
         uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
     };
     uchar texture[6];       // one for each face. same order as orient.
+    uchar material;         // empty-space material
     //uchar colour[3];        // colour at (-X,-Y,-Z) corner
     vtxarray *va;           // vertex array for children, or NULL
     plane clip[18];         // collision planes
@@ -121,4 +122,8 @@ extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va);
 extern int faceverts(cube &c, int orient, int vert);
 extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces);
+extern uint faceedges(cube &c, int orient);
+extern bool touchingface(cube &c, int orient);
 
+// water
+extern void rendermaterials(cube *c, int x, int y, int z, int size);

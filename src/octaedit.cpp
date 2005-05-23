@@ -591,3 +591,38 @@ void rotate(int cw)
 
 COMMAND(flip, ARG_NONE);
 COMMAND(rotate, ARG_1INT);
+
+struct material
+{
+    const char *name;
+    uchar id;
+} materials [] =
+{       
+    {"air", MAT_AIR},
+    {"water", MAT_WATER},
+};
+
+void setmat(cube &c, uchar mat)
+{
+    c.material = mat;
+    if(c.children)
+        loopi(8) setmat(c.children[i], mat);
+}
+
+void editmat(char *name)
+{
+    if(noedit()) return;
+    loopi(sizeof(materials)/sizeof(material))
+    {
+        if(!strcmp(materials[i].name, name))
+        {
+            loopselxyz(setmat(c, materials[i].id));
+            return;
+        }
+    }
+    conoutf("unknown material \"%s\"", (int)name);
+    return;
+}
+
+COMMAND(editmat, ARG_1STR);
+

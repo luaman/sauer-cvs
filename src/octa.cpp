@@ -10,6 +10,7 @@ cube *newcubes(uint face)
     cube *c = (cube *)gp()->alloc(sizeof(cube)*8);
     loopi(8)
     {
+        c->material = MAT_AIR;
         c->children = NULL;
         c->va = NULL;
         setfaces(*c, face);

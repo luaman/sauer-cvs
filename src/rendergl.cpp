@@ -307,7 +307,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     float hf = hdr.waterlevel-0.3f;
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
-    bool underwater = player1->o.z<hf;
+    bool underwater = lookupcube(player1->o.x, player1->o.y, player1->o.z).material == MAT_WATER;
     
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
@@ -336,7 +336,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     setupworld();
       
     renderstrips();
-
+    rendermaterials(worldroot, 0, 0, 0, hdr.worldsize>>1);
 
     xtraverts = 0;
 
