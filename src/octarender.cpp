@@ -297,8 +297,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
                 float u, v;
                 if(c.surfaces && c.surfaces[i].lmid)
                 {
-                    u = float(c.surfaces[i].x + c.surfaces[i].texcoords[k*2] + 0.5) / LM_PACKW;
-                    v = float(c.surfaces[i].y + c.surfaces[i].texcoords[k*2 + 1] + 0.5) / LM_PACKH;
+                    u = (c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) / LM_PACKW;
+                    v = (c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) / LM_PACKH;
                 }
                 else
                      u = v = 0.0;
@@ -329,8 +329,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
                 swap(float, v.y, v.z);
                 if(c.surfaces && c.surfaces[i].lmid)
                 {
-                    v.u = float(c.surfaces[i].x + c.surfaces[i].texcoords[k*2] + 0.5) / LM_PACKW;
-                    v.v = float(c.surfaces[i].y + c.surfaces[i].texcoords[k*2 + 1] + 0.5) / LM_PACKH;
+                    v.u = (c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) / LM_PACKW;
+                    v.v = (c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) / LM_PACKH;
                 }
                 else
                     v.u = v.v = 0.0;

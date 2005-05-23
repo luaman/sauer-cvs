@@ -127,8 +127,8 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
     uint miss = 0;
     vec offsets[4] = 
     { 
-        vec((ustep.x + vstep.x) * 0.3, (ustep.y + vstep.y) * 0.3, (ustep.z + vstep.z) * 0.3),
         vec((ustep.x - vstep.x) * 0.3, (ustep.y - vstep.y) * 0.3, (ustep.z - vstep.z) * 0.3),
+        vec((ustep.x + vstep.x) * 0.3, (ustep.y + vstep.y) * 0.3, (ustep.z + vstep.z) * 0.3),
         vec((vstep.x - ustep.x) * 0.3, (vstep.y - ustep.y) * 0.3, (vstep.z - ustep.z) * 0.3),
         vec((ustep.x + vstep.x) * -0.3, (ustep.y + vstep.y) * -0.3, (ustep.z + vstep.z) * -0.3),
     };
@@ -144,7 +144,7 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 loopv(lights)
                 {
                     entity &light = *lights[i];
-                    vec target (u);
+                    vec target(u);
                     if(aalights)
                         target.add(offsets[j]);
                     vec ray = target;
@@ -314,7 +314,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 }
 
                 float umin, umax, vmin, vmax;
-                umin = umax = vmin = vmax = 0.0;
+                umin = umax = vmin = vmax = 0.0f;
                 UVMINMAX(v1)
                 UVMINMAX(v2)
                 UVMINMAX(v3)
@@ -327,9 +327,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_origin.add(uo);
                 lm_origin.add(vo);
 
-                lm_w = (uint)ceilf((umax - umin + 1.0f) * 16.0f / lightprecision);
+                float lpu = 16.0f / float(lightprecision);
+                lm_w = (uint)ceilf((umax - umin + 1.0) * lpu);
                 lm_w = max(LM_MINW, min(LM_MAXW, lm_w));
-                lm_h = (uint)ceilf((vmax - vmin + 1.0f) * 16.0f / lightprecision);
+                lm_h = (uint)ceilf((vmax - vmin + 1.0) * lpu);
                 lm_h = max(LM_MINH, min(LM_MAXH, lm_h));
 
                 vec ustep = u,
@@ -349,8 +350,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                   surface.texcoords[index*2+1] = uchar(vcoord * vscale); \
                 }
 
-                float uscale = (float(lm_w) - 0.5) / (umax - umin),
-                      vscale = (float(lm_h) - 0.5) / (vmax - vmin);
+                float uscale = 255.0f / (umax - umin),
+                      vscale = 255.0f / (vmax - vmin);
                 surfaceinfo surface;
                 CALCVERT(v0, 0)
                 CALCVERT(v1, 1)
