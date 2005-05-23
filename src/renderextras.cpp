@@ -112,7 +112,7 @@ void renderspheres(int time)
         }
         else
         {
-            p->size += time/100.0f;
+            p->size += time/25.0f;
             pp = &p->next;
         };
     };

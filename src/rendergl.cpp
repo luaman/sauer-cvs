@@ -296,7 +296,7 @@ void drawhudgun(float fovy, float aspect, int farplane)
     //glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 1.0f, farplane);
+    gluPerspective(fovy, aspect, 0.6f, farplane);
     glMatrixMode(GL_MODELVIEW);
 };
 

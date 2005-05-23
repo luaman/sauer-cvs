@@ -132,8 +132,8 @@ void hit(int target, int damage, dynent *d, dynent *at)
     particle_splash(3, damage, 1000, d->o);
 };
 
-const float RL_RADIUS = 5;
-const float RL_DAMRAD = 7;   // hack
+const float RL_RADIUS = 20;
+const float RL_DAMRAD = 28;   // hack
 
 void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
 {
@@ -153,7 +153,7 @@ void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
 
 void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismonster, int qdam)
 {
-    particle_splash(0, 50, 300, v);
+    particle_splash(0, 200, 300, v);
     p->inuse = false;
     if(p->gun!=GUN_RL)
     {
@@ -238,7 +238,7 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
 
         case GUN_SG:
         {
-            loopi(SGRAYS) particle_splash(0, 5, 200, sg[i]);
+            loopi(SGRAYS) particle_splash(0, 20, 200, sg[i]);
             break;
         };
 
@@ -257,7 +257,7 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
             break;
 
         case GUN_RIFLE: 
-            particle_splash(0, 50, 200, to);
+            particle_splash(0, 100, 200, to);
             particle_trail(1, 500, from, to);
             break;
     };
@@ -299,17 +299,23 @@ void shoot(dynent *d, vec &targ)
     if(d->gunselect) d->ammo[d->gunselect]--;
     vec from = d->o;
     vec to = targ;
-    from.z -= 0.2f;    // below eye
+    from.z -= 0.8f;    // below eye
 
-    if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) 
+    vec temp;
+    float dist = to.dist(from, temp);
+    int shorten = 0;
+    
+    if(dist>1024) shorten = 1024;
+    if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) shorten = 3;
+
+    if(shorten)
     {
-        vec temp;
-        float dist = to.dist(from, temp);
-        dist /= 3;  // punch range
+        dist /= shorten;  // punch range
         temp.div(dist);
         to = from;
         to.add(temp);
     };   
+    
     if(d->gunselect==GUN_SG) createrays(from, to);
 
     if(d->quadmillis && attacktime>200) playsoundc(S_ITEMPUP);

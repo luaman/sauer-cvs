@@ -8,7 +8,7 @@ struct particle { vec o, d; int fade, type; int millis; particle *next; };
 particle particles[MAXPARTICLES], *parlist = NULL, *parempty = NULL;
 bool parinit = false;
 
-VAR(maxparticles, 100, 1000, MAXPARTICLES-500);
+VAR(maxparticles, 100, 5000, MAXPARTICLES-500);
 
 void newparticle(vec &o, vec &d, int fade, int type)
 {
@@ -84,7 +84,7 @@ void render_particles(int time)
         }
         else
         {
-            p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*10000);
+            p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*2500);
             vec a = p->d;
             a.mul((float)time);
             a.div(5000.0f);
@@ -119,9 +119,9 @@ void particle_trail(int type, int fade, vec &s, vec &e)
 {
     vec v;
     float d = e.dist(s, v);
-    v.div(d*2+0.1f);
+    v.div(d*8);
     vec p = s;
-    loopi((int)d*2)
+    loopi((int)d*8)
     {
         p.add(v);
         vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
