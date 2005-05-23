@@ -274,7 +274,7 @@ void drawhudgun(float fovy, float aspect, int farplane)
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 0.3f, farplane);
+    gluPerspective(fovy, aspect, 1.7f, farplane);
     glMatrixMode(GL_MODELVIEW);
     
     //glClear(GL_DEPTH_BUFFER_BIT);
@@ -294,7 +294,7 @@ void drawhudgun(float fovy, float aspect, int farplane)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 0.15f, farplane);
+    gluPerspective(fovy, aspect, 2.5f, farplane);
     glMatrixMode(GL_MODELVIEW);
 };
 
@@ -321,7 +321,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     int farplane = max(fog*2, 384);
-    gluPerspective(fovy, aspect, 4, farplane);
+    gluPerspective(fovy, aspect, 2.5f, farplane);
     glMatrixMode(GL_MODELVIEW);
 
     transplayer();
@@ -361,7 +361,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     renderents();
 
 
-    //drawhudgun(fovy, aspect, farplane);
+    drawhudgun(fovy, aspect, farplane);
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
