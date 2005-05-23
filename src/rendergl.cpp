@@ -344,9 +344,8 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     renderentities();
 
     renderspheres(curtime);
-    render_particles(curtime);
-    renderents();
-
+    
+    
     glDisable(GL_FOG);
 
     glLoadIdentity();
@@ -356,6 +355,11 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     glColor3f(1.0f, 1.0f, 1.0f);
     draw_envbox(14, farplane/2);
     transplayer();
+    
+    
+    render_particles(curtime);
+    renderents();
+
 
     //drawhudgun(fovy, aspect, farplane);
 
