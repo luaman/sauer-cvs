@@ -22,7 +22,8 @@ struct header                   // map file format header
     int numents;
     int waterlevel;
     int lightmaps;
-    int reserved[10];
+    int mapprec, maple;
+    int reserved[8];
     char maptitle[128];
     uchar texlist[256];
 };

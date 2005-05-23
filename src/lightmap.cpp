@@ -2,8 +2,8 @@
 
 vector<LightMap> lightmaps;
 
-VAR(lightprecision, 1, 32, 256);
-VAR(lighterror, 1, 1, 16);
+VARF(lightprecision, 1, 32, 256, (hdr.mapprec = lightprecision));
+VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
  
@@ -301,7 +301,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 u.normalize();
                 v.cross(u, lm_normal);
 
-#define UVMINMAX(vert) \
+                #define UVMINMAX(vert) \
                 { \
                   vec tovert = vert; \
                   tovert.sub(v0); \
@@ -339,7 +339,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
                     continue;
 
-#define CALCVERT(vert, index) \
+                #define CALCVERT(vert, index) \
                 { \
                   vec tovert = vert; \
                   tovert.sub(lm_origin); \

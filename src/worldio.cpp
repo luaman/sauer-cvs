@@ -200,6 +200,8 @@ void load_world(char *mname)        // still supports all map formats that have 
     endianswap(&hdr.version, sizeof(int), 16);
     if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
     if(hdr.version>MAPVERSION) fatal("this map requires a newer version of cube");
+    setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
+    setvar("lighterror", hdr.maple ? hdr.maple: 8);
     ents.setsize(0);
     loopi(hdr.numents)
     {

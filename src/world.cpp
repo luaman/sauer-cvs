@@ -151,7 +151,10 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     {
         strn0cpy(hdr.maptitle, "Untitled Map by Unknown", 128);
         hdr.waterlevel = -100000;
-        loopi(15) hdr.reserved[i] = 0;
+        hdr.maple = 8;
+        hdr.mapprec = 32;
+        hdr.lightmaps = 0;
+        loopi(8) hdr.reserved[i] = 0;
         loopi(256) hdr.texlist[i] = i;
         ents.setsize(0);
         freeocta(worldroot);
