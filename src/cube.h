@@ -118,7 +118,6 @@ struct dynent                           // players & monsters
     vec o, vel;                         // origin, velocity
     float yaw, pitch, roll;
     float maxspeed;                     // cubes per second, 24 for player
-    bool outsidemap;                    // from his eyes
     bool inwater;
     bool onfloor, jumpnext;
     int move, strafe;
@@ -406,6 +405,7 @@ extern bool collide(dynent *d);
 extern void entinmap(dynent *d);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
+extern void dropenttofloor(entity *e);
 
 // sound
 extern void playsound(int n, vec *loc = 0);

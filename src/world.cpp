@@ -52,6 +52,13 @@ void entproperty(int prop, int amount)
     };
 };
 
+void droptofloor()
+{
+    int e = closestent();
+    if(e<0) return;
+    dropenttofloor(&ents[e]);
+};
+
 void delent()
 {
     int e = closestent();
@@ -99,6 +106,7 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
             e.attr1 = (int)player1->yaw;
             break;
     };
+    if(type!=LIGHT) dropenttofloor(&e);
     addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
     return &e;
 };
@@ -174,5 +182,6 @@ void newmap(int i) { empty_world(i, false); };
 COMMAND(mapenlarge, ARG_NONE);
 COMMAND(newmap, ARG_1INT);
 COMMAND(delent, ARG_NONE);
+COMMAND(droptofloor, ARG_NONE);
 COMMAND(entproperty, ARG_2INT);
 

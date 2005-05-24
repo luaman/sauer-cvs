@@ -71,6 +71,8 @@ void reorient()
     sel.orient = orient;
 };
 
+VAR(editing,0,0,1);
+
 void toggleedit()
 {
     if(player1->state==CS_DEAD) return;                 // do not allow dead players to edit to avoid state confusion
@@ -90,6 +92,7 @@ void toggleedit()
     };
     cancelsel();
     keyrepeat(editmode);
+    editing = editmode;
 };
 
 COMMAND(reorient, ARG_NONE);

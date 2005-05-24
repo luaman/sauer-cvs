@@ -29,7 +29,7 @@ bool rectcollide(dynent *d, vec &o, float r, float hi, float lo, bool step)
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
-    if(o->state!=CS_ALIVE) return true;
+    if(o->state!=CS_ALIVE || d->state!=CS_ALIVE) return true;
     return rectcollide(d, o->o, o->radius, o->aboveeye, o->eyeheight, true);
 };
 
@@ -154,6 +154,27 @@ void move(dynent *d, vec &dir, float push)
     };
 };
 
+void dropenttofloor(entity *e)
+{
+    dynent d;
+    d.o = e->o;
+    d.vel = vec(0, 0, 0);
+    d.radius = 4;
+    d.eyeheight = 4;
+    d.aboveeye = 2;
+    d.onfloor = false;
+    d.blocked = false;
+    d.moving = true;
+    d.state = CS_DEAD;
+    vec v(0, 0, -1);
+    loopi(100)
+    {
+        move(&d, v, 1);
+        if(d.blocked) break;
+    };
+    e->o = d.o;
+};
+
 float rad(float x) { return x*3.14159f/180; };
 
 VAR(maxroll, 0, 3, 20);
@@ -224,7 +245,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         if(pl->onfloor || water) if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            pl->vel.z = 1.7f;       // physics impulse upwards
+            pl->vel.z = 1.5f;       // physics impulse upwards
             if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
             if(local) playsoundc(S_JUMP);
             else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
@@ -238,22 +259,6 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         d.mul(f);
         loopi(moveres) move(pl, d, push);
     };
-
-    // detect wether player is outside map, used for skipping zbuffer clear mostly
-
-    //if(pl->o.x < 0 || pl->o.x >= ssize || pl->o.y <0 || pl->o.y > ssize)
-    {
-        pl->outsidemap = true;
-    }
-    /*
-    else
-    {
-        sqr *s = S((int)pl->o.x, (int)pl->o.y);
-        pl->outsidemap = SOLID(s)
-           || pl->o.z < s->floor - (s->type==FHF ? s->vdelta/4 : 0)
-           || pl->o.z > s->ceil  + (s->type==CHF ? s->vdelta/4 : 0);
-    };
-    */
 
     // automatically apply smooth roll when strafing
 
@@ -275,8 +280,15 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     pl->inwater = water;
 };
 
+void worldhurts(dynent *d, int damage)
+{
+    if(d==player1) selfdamage(damage, -1, player1);
+    else if(d->monsterstate) monsterpain(d, damage, player1);
+};
+
 void moveplayer(dynent *pl, int moveres, bool local)
 {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
+    if(pl->o.z<0) worldhurts(pl, 400);
 };
 

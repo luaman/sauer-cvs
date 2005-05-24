@@ -82,7 +82,6 @@ dynent *newdynent()                 // create a new blank player or monster
     d->pitch = 0;
     d->roll = 0;
     d->maxspeed = 100;
-    d->outsidemap = false;
     d->inwater = false;
     d->radius = 4;
     d->eyeheight = 14;
@@ -138,14 +137,18 @@ void updateworld(int millis)        // main game update loop
 
 void entinmap(dynent *d)    // brute force but effective way to find a free spawn spot in the map
 {
+    #undef rnd
+    #define rnd(x) (rand()%(x))
+    // FIXME: doesn't work with RandomMT()... screwy numbers for some reason
     vec orig = d->o;
-    //loopi(100)              // try max 100 times
-    //{
-        //d->o.x += (rnd(21)-10)/2.0f*i;  // increasing distance
-        //d->o.y += (rnd(21)-10)/2.0f*i;
+    loopi(100)              // try max 100 times
+    {
         if(collide(d)) return;
         d->o = orig;
-    //};
+        d->o.x += (rnd(21)-10)*i;  // increasing distance
+        d->o.y += (rnd(21)-10)*i;
+        d->o.z += rnd(21)*i;
+    };
     conoutf("can't find entity spawn spot! (%d, %d)", (int)d->o.x, (int)d->o.y);
     // leave ent at original pos, possibly stuck
 };
@@ -167,9 +170,9 @@ void spawnplayer(dynent *d)   // place at random spawn. also used by monsters!
     {
         d->o.z = d->o.x = d->o.y = (float)hdr.worldsize/2;
     };
-    //entinmap(d);
     spawnstate(d);
     d->state = CS_ALIVE;
+    entinmap(d);
 };
 
 void respawn()

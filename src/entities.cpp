@@ -107,6 +107,7 @@ void teleport(int n, dynent *d)     // also used by monsters
         if(ents[e].attr2==tag)
         {
             d->o = ents[e].o;
+            d->o.z += 12;
             d->yaw = ents[e].attr1;
             d->pitch = 0;
             d->vel.x = d->vel.y = d->vel.z = 0;
@@ -165,12 +166,14 @@ void pickup(int n, dynent *d)
 void checkitems()
 {
     if(editmode) return;
+    vec o = player1->o;
+    o.z -= 10;
     loopv(ents)
     {
         entity &e = ents[i];
         if(e.type==NOTUSED) continue;
         if(!ents[i].spawned && e.type!=TELEPORT) continue;
-        float dist = e.o.dist(player1->o);
+        float dist = e.o.dist(o);
         if(dist<(e.type==TELEPORT ? 16 : 10)) pickup(i, player1);
     };
 };

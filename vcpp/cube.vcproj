@@ -457,6 +457,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\src\water.cpp">
+			</File>
+			<File
 				RelativePath="..\src\weapon.cpp">
 				<FileConfiguration
 					Name="Release|Win32">

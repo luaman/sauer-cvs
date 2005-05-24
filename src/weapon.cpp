@@ -146,7 +146,7 @@ void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
         if(dist<0) dist = 0;
         int damage = (int)(qdam*(1-(dist/RL_DAMRAD)));
         hit(cn, damage, o, at);
-        temp.mul((RL_DAMRAD-dist)*damage/800);
+        temp.mul((RL_DAMRAD-dist)*damage/2400);
         o->vel.add(temp);
     };
 };

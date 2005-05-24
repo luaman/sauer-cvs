@@ -304,7 +304,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 {
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    float hf = hdr.waterlevel-0.3f;
+    //float hf = hdr.waterlevel-0.3f;
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
     bool underwater = lookupcube(player1->o.x, player1->o.y, player1->o.z).material == MAT_WATER;
