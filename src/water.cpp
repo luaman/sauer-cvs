@@ -76,7 +76,7 @@ int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
 
 uint renderwaterlod(int x, int y, int z, uint size)
 {
-    if(size <= (128 << waterlod))
+    if(size <= (uint)(128 << waterlod))
     {
         float dist;
         if(player1->o.x >= x && player1->o.x < x + size &&
@@ -87,7 +87,7 @@ uint renderwaterlod(int x, int y, int z, uint size)
             vec t(x + size/2, y + size/2, z);
             dist = t.dist(player1->o) - size/2;
         }
-        uint subdiv = 1 << (watersubdiv + (uint)dist / (128 << waterlod));
+        uint subdiv = 1 << ((uint)watersubdiv + (uint)dist / (128 << (uint)waterlod));
         if(!subdiv) subdiv = ~0;
         if(subdiv < size * 2)
             renderwater(min(subdiv, size), x, y, z, size);
@@ -163,7 +163,7 @@ void rendermaterials(cube *c, int x, int y, int z, int size)
             switch(c[i].material)
             {
             case MAT_WATER:
-                if(renderwaterlod(o.x, o.y, o.z + size, size) >= size * 2)
+                if(renderwaterlod(o.x, o.y, o.z + size, size) >= (uint)size * 2)
                     renderwater(size, o.x, o.y, o.z + size, size);
                 break;
             }
