@@ -50,6 +50,7 @@ Some of these commands have parameters that need to be used.
 Parameters:
 N - integer
 D - direction (1 or -1)
+X - name
 
 gridpower N
 -----------
@@ -97,15 +98,14 @@ undomegs N
 -----------
 sets the amount of megs allocated for undos. 
 
-lite N N N
+editmat X 
 -----------
-*temporary command*
-changes the vertex lighting of the selection by the delta R G B, multiplied by litepower.
-
-litepower N
------------
-*temporary command*
-multiply the delta RGB values by this value.
+changes the empty space material of the cube.
+If the cube is partially or fully empty, then empty space will be filled with the material.
+This changes the physics and appearance of the space in various ways.
+Currently supported materials:
+  air - the default material for all cubes
+  water - shows water waves at the top surface of the cube
 
 ===============
 3. HUD stats
