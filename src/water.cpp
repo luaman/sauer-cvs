@@ -1,7 +1,7 @@
 #include "cube.h"
 
-VAR(watersubdiv, 1, 4, 64);
-VAR(waterlod, 128, 128, 1024);
+VAR(watersubdiv, 0, 2, 6);
+VAR(waterlod, 0, 0, 3);
 
 inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
 {
@@ -19,7 +19,7 @@ inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
-int renderwater(int watersubdiv, int wx1, int wy1, int z, int size)
+int renderwater(int subdiv, int wx1, int wy1, int z, int size)
 {
     if(wx1<0) return 0;
 
@@ -32,34 +32,34 @@ int renderwater(int watersubdiv, int wx1, int wy1, int z, int size)
     glBindTexture(GL_TEXTURE_2D, lookuptexture(DEFAULT_LIQUID, sx, sy));
     
     glColor3f(0.5f, 0.5f, 0.5f);
-    wx1 &= ~(watersubdiv-1);
-    wy1 &= ~(watersubdiv-1);
+    ASSERT((wx1 & (subdiv - 1)) == 0);
+    ASSERT((wy1 & (subdiv - 1)) == 0);
 
     float xf = 8.0f/sx;
     float yf = 8.0f/sy;
-    float xs = watersubdiv*xf;
-    float ys = watersubdiv*yf;
+    float xs = subdiv*xf;
+    float ys = subdiv*yf;
     float t1 = lastmillis/300.0f;
     float t2 = lastmillis/4000.0f;
     int wx2 = wx1 + size,
         wy2 = wy1 + size,
         nquads = 0;
       
-    for(int xx = wx1; xx<wx2; xx += watersubdiv)
+    for(int xx = wx1; xx<wx2; xx += subdiv)
     {
-        for(int yy = wy1; yy<wy2; yy += watersubdiv)
+        for(int yy = wy1; yy<wy2; yy += subdiv)
         {
             float xo = xf*(xx+t2);
             float yo = yf*(yy+t2);
             if(yy==wy1)
             {
                 vertw(xx,             z, yy, dx(xo),    dy(yo), t1);
-                vertw(xx+watersubdiv, z, yy, dx(xo+xs), dy(yo), t1);
+                vertw(xx+subdiv, z, yy, dx(xo+xs), dy(yo), t1);
             };
-            vertw(xx,             z, yy+watersubdiv, dx(xo),    dy(yo+ys), t1);
-            vertw(xx+watersubdiv, z, yy+watersubdiv, dx(xo+xs), dy(yo+ys), t1);
+            vertw(xx,             z, yy+subdiv, dx(xo),    dy(yo+ys), t1);
+            vertw(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
         };
-        int n = (wy2-wy1-1)/watersubdiv;
+        int n = (wy2-wy1-1)/subdiv;
         nquads += n;
         n = (n+2)*2;
         curvert -= n;
@@ -76,7 +76,7 @@ int renderwater(int watersubdiv, int wx1, int wy1, int z, int size)
 
 uint renderwaterlod(int x, int y, int z, int size)
 {
-    if(size <= waterlod)
+    if(size <= (128 << waterlod))
     {
         float dist;
         if(player1->o.x >= x && player1->o.x < x + size &&
@@ -87,7 +87,7 @@ uint renderwaterlod(int x, int y, int z, int size)
             vec t(x + size/2, y + size/2, z);
             dist = t.dist(player1->o) - size/2;
         }
-        uint subdiv = watersubdiv << ((uint)dist / waterlod);
+        uint subdiv = 1 << (watersubdiv + (uint)dist / (128 << waterlod));
         if(!subdiv) subdiv = ~0;
         if(subdiv < size * 2)
             renderwater(min(subdiv, size), x, y, z, size);
@@ -123,31 +123,6 @@ uint renderwaterlod(int x, int y, int z, int size)
         return minsubdiv;
     }
 }
-
-/* 
-void renderwaterlod(int x, int y, int z, int size)
-{
-    int sx = x, sy = y, ss = size;
-    if(waterlod < ss) ss = waterlod;
-    for(int sy = y; sy < y + size; sy += ss)
-    {
-        for(int sx = x; sx < x + size; sx += ss)
-        {
-            vec t(sx + ss/2, sy + ss/2, z + size);
-            float dist = t.dist(player1->o) - ss/2;
-            int subdiv = watersubdiv;
-            while(dist >= waterlod && subdiv < ss)
-            {
-                subdiv *= 2;
-                dist -= waterlod;
-            }
-            if(subdiv > ss)
-                subdiv = ss;
-            renderwater(subdiv, sx, sy, sx + ss, sy + ss, z + size);
-        }
-    }
-}
-*/
 
 bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 {
