@@ -1,6 +1,7 @@
 #include "cube.h"
 
 VAR(watersubdiv, 1, 4, 64);
+VAR(waterlod, 64, 128, 1024);
 
 inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
 {
@@ -18,7 +19,7 @@ inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
-int renderwater(int wx1, int wy1, int wx2, int wy2, int z)
+int renderwater(int watersubdiv, int wx1, int wy1, int wx2, int wy2, int z)
 {
     int nquads = 0;
     if(wx1<0) return 0;
@@ -71,6 +72,29 @@ int renderwater(int wx1, int wy1, int wx2, int wy2, int z)
     return nquads;
 };
 
+void renderwaterlod(int x, int y, int z, int size)
+{
+    int sx = x, sy = y, sz = z, ss = size;
+    if(waterlod < ss) ss = waterlod;
+    for(int sy = y; sy < y + size; sy += ss)
+    {
+        for(int sx = x; sx < x + size; sx += ss)
+        {
+                vec t(sx + ss/2, sy + ss/2, z + size);
+                float dist = t.dist(player1->o) - ss/2;
+                int subdiv = watersubdiv;
+                while(dist >= waterlod && subdiv < ss)
+                {
+                    subdiv *= 2;
+                    dist -= waterlod;
+                }
+                if(subdiv > ss)
+                    subdiv = ss;
+                renderwater(subdiv, sx, sy, sx + ss, sy + ss, z + size);
+        }
+    }
+}
+
 bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 {
     switch(c.material)
@@ -84,15 +108,15 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
         {
            cube &above = lookupcube(x, y, z + size, -size);
            if(above.material != MAT_AIR)
-               return false;
+               return false; 
            return true;
         }
 
     default:
         return false;
     }
-}
-                          
+}   
+
 void rendermaterials(cube *c, int x, int y, int z, int size)
 {
     loopi(8)
@@ -110,7 +134,7 @@ void rendermaterials(cube *c, int x, int y, int z, int size)
             switch(c[i].material)
             {
             case MAT_WATER:
-                renderwater(o.x, o.y, o.x + size, o.y + size, o.z + size);
+                renderwaterlod(o.x, o.y, o.z, size);
                 break;
             }
         }
