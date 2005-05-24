@@ -107,6 +107,15 @@ Currently supported materials:
   air - the default material for all cubes
   water - shows water waves at the top surface of the cube
 
+watersubdiv N
+--------------
+waves the water at 2^N unit intervals.
+
+waterlod N
+-----------
+increases the local water subdiv by 1 for every 128*2^N units the player is away from
+the water's edge.
+
 ===============
 3. HUD stats
 ===============
