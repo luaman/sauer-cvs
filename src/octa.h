@@ -13,7 +13,7 @@ struct materialsurface
     uchar orient;
     int x, y, z, size;
 };
-    
+
 struct vtxarray
 {
     elementset *eslist; // List of element indces sets (range) per texture
@@ -141,6 +141,7 @@ extern uint faceedges(cube &c, int orient);
 extern bool touchingface(cube &c, int orient);
 extern void vertcheck();
 extern int isvisiblecube(cube *c, int size, int cx, int cy, int cz);
+extern int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r);
 
 // water
 extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
