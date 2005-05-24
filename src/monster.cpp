@@ -98,13 +98,16 @@ void monsterclear()     // called after map start of when toggling edit mode to 
     };
 };
 
-bool enemylos(dynent *m)
+bool enemylos(dynent *m, vec &v)
 {
     vec ray(m->enemy->o);
     ray.sub(m->o);
     float mag = ray.magnitude();
     ray.mul(1.0f / mag);
     float distance = raycube(m->o, ray, mag);
+    ray.mul(distance);
+    v = m->o;
+    v.add(ray);
     return distance < mag; 
 };
 
@@ -171,7 +174,8 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
         case M_SLEEP:                       // state classic sp monster start in, wait for visual contact
         {
             if(editmode) break;          
-            if(enemylos(m))
+            vec target;
+            if(enemylos(m, target))
             {
                 normalise(m, enemyyaw);
                 float dist = m->o.dist(m->enemy->o);
@@ -205,7 +209,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
             if(m->trigger<lastmillis)
             {
                 vec target;
-                if(!enemylos(m))    // no visual contact anymore, let monster get as close as possible then search for player
+                if(!enemylos(m, target))    // no visual contact anymore, let monster get as close as possible then search for player
                 {
                     transition(m, M_HOME, 1, 800, 500);
                 }
