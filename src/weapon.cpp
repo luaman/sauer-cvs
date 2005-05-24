@@ -6,7 +6,7 @@ struct guninfo { short sound, attackdelay, damage, projspeed, part; char *name; 
 
 const int MONSTERDAMAGEFACTOR = 4;
 const int SGRAYS = 20;
-const float SGSPREAD = 2;
+const float SGSPREAD = 8;
 vec sg[SGRAYS];
 
 guninfo guns[NUMGUNS] =
@@ -306,7 +306,7 @@ void shoot(dynent *d, vec &targ)
     int shorten = 0;
     
     if(dist>1024) shorten = 1024;
-    if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) shorten = 3;
+    if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) shorten = 12;
 
     if(shorten)
     {
