@@ -13,18 +13,15 @@ void *alloc(int s) { void *b = calloc(1,s); if(!b) fatal("no memory!"); return b
 
 void putint(uchar *&p, int n)
 {
-    uchar *q = p;  //CP
     if(n<128 && n>-127) { *p++ = n; }
     else if(n<0x8000 && n>=-0x8000) { *p++ = 0x80; *p++ = n; *p++ = n>>8;  }
     else { *p++ = 0x81; *p++ = n; *p++ = n>>8; *p++ = n>>16; *p++ = n>>24; };
-    *q ^= 119;  //CP
 };
 
 int getint(uchar *&p)
 {
     int c = *((char *)p);
     p++;
-    c ^= 119;    //CP
     if(c==-128) { int n = *p++; n |= *((char *)p)<<8; p++; return n;}
     else if(c==-127) { int n = *p++; n |= *p++<<8; n |= *p++<<16; return n|(*p++<<24); } 
     else return c;
@@ -55,7 +52,6 @@ struct client                   // server side version of "dynent" type
     string mapvote;
     string name;
     int modevote;
-    int hashkey, hashtime, lastpacket;      //CP
 };
 
 vector<client> clients;
@@ -69,7 +65,6 @@ char msgsizesl[] =               // size inclusive message token, 0 for variable
     SV_TIMEUP, 2, SV_EDITENT, 10, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
     SV_SENDMAP, 0, SV_RECVMAP, 1, SV_SERVMSG, 0, SV_ITEMLIST, 0,
     SV_EXT, 0,
-    SV_SENDHASH, 2, SV_GETHASH, 2,   //CP
     -1
 };
 
@@ -237,34 +232,6 @@ bool vote(char *map, int reqmode, int sender)
     return true;    
 };
 
-void kickcheater(int cn)    //CP
-{
-    disconnect_client(cn, "modified client");
-    sprintf_sd(msg)("%s (%s) kicked for using a modified client", clients[cn].name, clients[cn].hostname);
-    sendservmsg(msg);
-}
-
-void findcheaters()     //CP
-{
-    loopv(clients)
-    {
-        int replytime = (lastsec-clients[i].hashtime)-(lastsec-clients[i].lastpacket);
-        if(clients[i].type==ST_TCPIP && replytime>=60)
-        {
-            if(clients[i].hashkey!=-1 && replytime==60)
-            {
-                kickcheater(i);
-            }
-            else
-            {
-                clients[i].hashkey = rand();
-                clients[i].hashtime = lastsec;
-                send2(true, i, SV_GETHASH, clients[i].hashkey);
-            };
-        };
-    };
-};
-
 
 // server side processing of updates: does very little and most state is tracked client only
 // could be extended to move more gameplay to server (at expense of lag)
@@ -276,9 +243,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
         disconnect_client(sender, "packet length");
         return;
     };
-    
-    if(sender>=0) clients[sender].lastpacket = lastsec; //CP
-    
+        
     uchar *end = packet->data+packet->dataLength;
     uchar *p = packet->data+2;
     char text[MAXTRANS];
@@ -370,14 +335,6 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
             break;
         };
 
-        case SV_SENDHASH:       //CP
-            if(sender>=0)
-            {
-                if(getint(p)!=HASHCHECK(clients[sender].hashkey)) { kickcheater(sender); return; }
-                else clients[sender].hashkey = -1;
-            };
-            break;
-
         default:
         {
             int size = msgsizelookup(type);
@@ -399,7 +356,6 @@ void send_welcome(int n)
     putint(p, n);
     putint(p, PROTOCOL_VERSION);
     putint(p, smapname[0]);
-    loopi(100) putint(p, rnd(100));   //CP
     if(smapname[0])
     {
         putint(p, SV_MAPCHANGE);
@@ -594,7 +550,6 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
 
     sendpongs();
     checkmasterreply();
-    findcheaters();         //CP
 
     if(seconds>updmaster)       // send alive signal to masterserver every hour of uptime
     {
@@ -621,7 +576,6 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             c.type = ST_TCPIP;
             c.peer = event.peer;
             c.peer->data = (void *)(&c-&clients[0]);
-            c.hashkey = c.hashtime = c.lastpacket = -1;  //CP
             char hn[1024];
             strcpy_s(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "localhost");
             printf("client connected (%s)\n", c.hostname);
@@ -664,7 +618,7 @@ void localconnect()
 
 void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char *master)
 {
-    if(!master) master = "wouter.fov120.com/cube/masterserver/";
+    if(!master) master = "localhost"; //"wouter.fov120.com/cube/masterserver/"; // sauer will need its own masterserver
     char *mid = strstr(master, "/");
     if(!mid) mid = master;
     strcpy_s(masterpath, mid);

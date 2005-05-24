@@ -151,16 +151,13 @@ enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  
 
 #define MAXCLIENTS 256                  // in a multiplayer game, can be arbitrarily changed
 #define MAXTRANS 5000                   // max amount of data to swallow in 1 go
-#define CUBE_SERVER_PORT 28775
-#define CUBE_SERVINFO_PORT 28776
+#define CUBE_SERVER_PORT 28785
+#define CUBE_SERVINFO_PORT 28786
 #define PROTOCOL_VERSION 241            // bump when protocol changes
-
-#define HASHCHECK(n) (((n) * 835912547 + 5390278) ^ 142375982) //CP
 
 // network messages codes, c2s, c2c, s2c
 enum
 {
-//CP
     SV_INITS2C = 0, SV_INITC2S, SV_POS, SV_TEXT, SV_SOUND, SV_CDIS,
     SV_DIED, SV_DAMAGE, SV_SHOT, SV_FRAGS,
     SV_MAPCHANGE, SV_ITEMSPAWN, SV_ITEMPICKUP, SV_DENIED,
@@ -168,7 +165,6 @@ enum
     SV_TIMEUP, SV_EDITENT, SV_MAPRELOAD, SV_ITEMACC,
     SV_SENDMAP, SV_RECVMAP, SV_SERVMSG, SV_ITEMLIST,
     SV_EXT,
-    SV_SENDHASH, SV_GETHASH,       //CP
 };
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING };

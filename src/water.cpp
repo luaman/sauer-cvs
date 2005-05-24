@@ -7,7 +7,7 @@ inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
     vertcheck();
     vertex &v = verts[curvert++];
     v.x = v1;
-    v.y = v2-0.2f-(float)sin(v1*v3*0.1+t)*0.2f;
+    v.y = v2-0.8f-(float)sin(v1*v3*0.1+t)*0.8f;
     v.z = v3;
     v.u = t1;
     v.v = t2;

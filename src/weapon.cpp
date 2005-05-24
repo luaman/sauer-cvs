@@ -6,7 +6,7 @@ struct guninfo { short sound, attackdelay, damage, projspeed, part; char *name; 
 
 const int MONSTERDAMAGEFACTOR = 4;
 const int SGRAYS = 20;
-const float SGSPREAD = 8;
+const float SGSPREAD = 2;
 vec sg[SGRAYS];
 
 guninfo guns[NUMGUNS] =

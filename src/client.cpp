@@ -380,7 +380,6 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             toservermap[0] = 0;
             clientnum = cn;                 // we are now fully connected
             if(!getint(p)) strcpy_s(toservermap, getclientmap());   // we are the first client on this server, set map
-            loopi(100) if(getint(p)>100) neterr("init"); //CP
             break;
         };
 
@@ -616,9 +615,6 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             for(int n = getint(p); n; n--) getint(p);
             break;
         };
-
-        case SV_GETHASH: addmsg(1, 2, SV_SENDHASH, HASHCHECK(getint(p))); break;  //CP  
-        case SV_SENDHASH: getint(p); break; //CP
 
         default:
             neterr("type");
