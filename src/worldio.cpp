@@ -88,12 +88,22 @@ void savec(cube *c, gzFile f)
             //loopj(3) gzputc(f, 0); //gzwrite(f, c[i].colour, 3);
             // save surface info for lighting
             if(!c[i].surfaces)
-                gzputc(f, 0);
+            {
+                if(c[i].material != MAT_AIR)
+                {
+                    gzputc(f, 0x80);
+                    gzputc(f, c[i].material);
+                }
+                else
+                    gzputc(f, 0);
+            }
             else
             {
-                uchar mask = 0;
+                uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0);
                 loopj(6) if(c[i].surfaces[j].lmid) mask |= 1 << j;
                 gzputc(f, mask);
+                if(c[i].material != MAT_AIR)
+                    gzputc(f, c[i].material);
                 loopj(6) if(c[i].surfaces[j].lmid)
                 {
                     surfaceinfo tmp = c[i].surfaces[j];
@@ -127,6 +137,9 @@ void loadc(gzFile f, cube &c)
     else
     {
         uchar mask = gzgetc(f);
+        if(mask & 0x80)
+            c.material = gzgetc(f);
+        mask &= 0x7F;
         if(mask)
         {
             c.surfaces = (surfaceinfo *)gp()->alloc(6*sizeof(surfaceinfo));
