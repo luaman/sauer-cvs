@@ -115,8 +115,8 @@ void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
     genvertp(c, p, p2, p3, plane2);
     genvertp(c, p, p1, p3, plane3);
 
-    ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
-
+	if(!threeplaneintersect(plane1, plane2, plane3, v)) v = p;
+    //ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
     //ASSERT(v.x>=0 && v.x<=8);
     //ASSERT(v.y>=0 && v.y<=8);
     //ASSERT(v.z>=0 && v.z<=8);
@@ -270,14 +270,53 @@ void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
     }
 }
 
+int vertused[8];
+
 void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces)
 {
-    int vertexuses[8];
+    loopi(8) vertused[i] = 0;
+    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertused[faceverts(c,i,k)]++;
+    loopi(8) if(vertused[i]) calcvert(c, x, y, z, size, verts[i], i);
 
-    loopi(8) vertexuses[i] = 0;
-    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertexuses[faceverts(c,i,k)]++;
-    loopi(8) if(vertexuses[i]) calcvert(c, x, y, z, size, verts[i], i);
 }
+
+int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r)
+{
+    int ci = 0;
+    bool usefaces[6];
+    vec v[8], mx(x, y, z), mn(x+size, y+size, z+size);
+
+    calcverts(c, x, y, z, size, v, usefaces);
+
+    loopi(8) if(vertused[i]) loopj(3) // generate tight bounding box
+    {
+        mn[j] = min(mn[j], v[i][j]);
+        mx[j] = max(mx[j], v[i][j]);
+    };
+    r = mx;     // radius of box
+    r.sub(mn);
+    r.mul(0.5f);
+    o = mn;     // center of box
+    o.add(r);
+
+    loopi(6) if(usefaces[i] && !touchingface(c,i)) // generate actual clipping planes
+    {
+        vec p[5];
+        loopk(5) p[k] = v[faceverts(c,i,k&3)];
+
+        if(p[0] == p[1])
+            vertstoplane(p[2], p[3], p[1], clip[ci++]);
+        else
+        if(p[1] == p[2])
+            vertstoplane(p[2], p[3], p[0], clip[ci++]);
+        else
+        {
+            vertstoplane(p[2], p[0], p[1], clip[ci++]);
+            if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], clip[ci++]);
+        };
+    };
+    return ci;
+};
 
 struct sortkey
 {
