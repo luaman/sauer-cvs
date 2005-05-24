@@ -7,6 +7,13 @@ struct elementset
     int length[3];
 };
 
+struct materialsurface
+{
+    uchar material;
+    uchar orient;
+    int x, y, z, size;
+};
+    
 struct vtxarray
 {
     elementset *eslist; // List of element indces sets (range) per texture
@@ -14,12 +21,13 @@ struct vtxarray
     ushort *ebuf;       // packed element indices buffer
     vtxarray *next;     // linked list of visible VOBs
     int allocsize;      // size of allocated memory for this va
-    int verts, tris, texs;
+    int verts, tris, texs, matsurfs;
     vec cv;             // cube center
     float radius;       // cube bounding radius
     float distance;     // distance from player 1
     uint vbufGL;        // VBO buffer ID
     int x, y, z, size;  // location and size of cube.
+    materialsurface *matbuf; // buffer of material surfaces
 };
 
 struct surfaceinfo
@@ -110,6 +118,7 @@ extern void subdividecube(cube &c, int x, int y, int z, int size);
 extern void octarender();
 extern void renderq();
 extern void allchanged();
+extern void rendermaterials();
 
 // geom
 extern void vertstoplane(vec &a, vec &b, vec &c, plane &pl);
@@ -135,4 +144,5 @@ extern int isvisiblecube(cube *c, int size, int cx, int cy, int cz);
 
 // water
 extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
-extern void rendermaterials(cube *c, int x, int y, int z, int size);
+extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
+

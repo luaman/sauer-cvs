@@ -329,7 +329,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     renderspheres(curtime);
     
-    rendermaterials(worldroot, 0, 0, 0, hdr.worldsize>>1);
+    rendermaterials();
     
     glDisable(GL_FOG);
 

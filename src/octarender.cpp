@@ -303,6 +303,7 @@ inline unsigned int hthash (const sortkey &k)
 }
 
 hashtable<sortkey, sortval> indices;
+vector<materialsurface> matsurfs;
 
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
@@ -413,7 +414,7 @@ int wtris = 0, wverts = 0, vtris = 0, vverts = 0;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
-    int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + 2*curtris*sizeof(ushort);
+    int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + 2*curtris*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface);
     if (!hasVBO) allocsize += curvert * sizeof(vertex); // length of vertex buffer
     vtxarray *va = (vtxarray *)gp()->alloc(allocsize); // single malloc call
     va->eslist = (elementset *)((char *)va + sizeof(vtxarray));
@@ -430,6 +431,10 @@ vtxarray *newva(int x, int y, int z, int size)
         va->vbuf = (vertex *)((char *)va->ebuf + (curtris * 2 * sizeof(ushort)));
         memcpy(va->vbuf, verts, curvert * sizeof(vertex));
     };
+    va->matbuf = (materialsurface *)((char *)va + allocsize - matsurfs.length() * sizeof(materialsurface));
+    va->matsurfs = matsurfs.length();
+    if(va->matsurfs)
+        memcpy(va->matbuf, matsurfs.getbuf(), matsurfs.length() * sizeof(materialsurface));
 
     ushort *ebuf = va->ebuf;
     int list = 0;
@@ -483,7 +488,18 @@ void rendercube(cube &c, int cx, int cy, int cz, int size)  // creates vertices 
         ivec o(i, cx, cy, cz, size/2);
         rendercube(c.children[i], o.x, o.y, o.z, size/2);
     }
-    else if(!isempty(c)) gencubeverts(c, cx, cy, cz, size);
+    else
+    {
+        if(!isempty(c)) gencubeverts(c, cx, cy, cz, size);
+        if(c.material != MAT_AIR)
+        {
+            loopi(6) if(visiblematerial(c, i, cx, cy, cz, size))
+            {
+                materialsurface matsurf = {c.material, i, cx, cy, cz, size};
+                matsurfs.add(matsurf);
+            }
+        }
+    }
 };
 
 void setva(cube &c, int cx, int cy, int cz, int size)
@@ -492,6 +508,7 @@ void setva(cube &c, int cx, int cy, int cz, int size)
     {
         curvert = curtris = 0;
         indices.clear();
+        matsurfs.setsize(0);
         vh.clear();
     };
     rendercube(c, cx, cy, cz, size);
@@ -722,6 +739,16 @@ void renderq()
     glClientActiveTextureARB(GL_TEXTURE0_ARB);
 
 };
+
+void rendermaterials()
+{
+    vtxarray *va = visibleva;
+    while(va)
+    {
+        if(va->matsurfs) rendermatsurfs(va->matbuf, va->matsurfs);
+        va = va->next;
+    }
+}
 
 ////////// (re)mip //////////
 

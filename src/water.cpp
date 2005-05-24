@@ -146,24 +146,17 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
     }
 }   
 
-void rendermaterials(cube *c, int x, int y, int z, int size)
+void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
-    loopi(8)
+    loopi(matsurfs)
     {
-        ivec o(i, x, y, z, size);
-        if(c[i].children)
-            rendermaterials(c[i].children, o.x, o.y, o.z, size >> 1);
-        else         
-        if(c[i].material != MAT_AIR)
+        materialsurface &matsurf = matbuf[i];
+        switch(matsurf.material)
         {
-            if(visiblematerial(c[i], O_TOP, o.x, o.y, o.z, size))
-            switch(c[i].material)
-            {
-            case MAT_WATER:
-                if(renderwaterlod(o.x, o.y, o.z + size, size) >= (uint)size * 2)
-                    renderwater(size, o.x, o.y, o.z + size, size);
-                break;
-            }
+        case MAT_WATER:
+            if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
+                renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
+               break;
         }
     }
 }
