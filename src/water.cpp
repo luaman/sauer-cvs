@@ -151,9 +151,6 @@ void rendermaterials(cube *c, int x, int y, int z, int size)
     loopi(8)
     {
         ivec o(i, x, y, z, size);
-        if(isvisiblecube(&c[i], size, o.x, o.y, o.z) == VFC_NOT_VISIBLE)
-            continue;
-
         if(c[i].children)
             rendermaterials(c[i].children, o.x, o.y, o.z, size >> 1);
         else         
