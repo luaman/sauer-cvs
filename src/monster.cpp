@@ -108,7 +108,7 @@ bool enemylos(dynent *m, vec &v)
     ray.mul(distance);
     v = m->o;
     v.add(ray);
-    return distance < mag; 
+    return distance >= mag; 
 };
 
 // monster AI is sequenced using transitions: they are in a particular state where
