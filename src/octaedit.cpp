@@ -345,7 +345,7 @@ void freeundo(undoblock u)
 int *selgridmap()                                       // generates a map of the cube sizes at each grid point
 {
     int *g = (int *)gp()->alloc(sizeof(int)*sel.size());
-    loopxyz(sel, -sel.grid, *g++ = lusize);
+    loopxyz(sel, -sel.grid, (*g++ = lusize, c));
     return g-sel.size();
 };
 

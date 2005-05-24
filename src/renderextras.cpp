@@ -231,6 +231,7 @@ int dblend = 0;
 void damageblend(int n) { dblend += n; };
 
 VAR(hidestats, 0, 0, 1);
+VAR(hidehud, 0, 0, 1);
 VAR(crosshairfx, 0, 1, 1);
 
 void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
@@ -275,7 +276,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     char *command = getcurcommand();
     char *player = playerincrosshair();
     if(command) draw_textf("> %s_", 20, 1570, 2, (int)command);
-    else if(closeent[0]) draw_text(closeent, 20, 1570, 2);
+    else if(closeent[0] && !hidehud) draw_text(closeent, 20, 1570, 2);
     else if(player) draw_text(player, 20, 1570, 2);
 
     renderscores();
@@ -322,24 +323,32 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     };
 
     glPopMatrix();
-    glPushMatrix();
-    glOrtho(0, VIRTW/2, VIRTH/2, 0, -1, 1);
-    draw_textf("%d",  90, 827, 2, player1->health);
-    if(player1->armour) draw_textf("%d", 390, 827, 2, player1->armour);
-    draw_textf("%d", 690, 827, 2, player1->ammo[player1->gunselect]);
-    glPopMatrix();
+    
+    if(!hidehud)
+    {
+        glPushMatrix();
+        glOrtho(0, VIRTW/2, VIRTH/2, 0, -1, 1);
+        draw_textf("%d",  90, 827, 2, player1->health);
+        if(player1->armour) draw_textf("%d", 390, 827, 2, player1->armour);
+        draw_textf("%d", 690, 827, 2, player1->ammo[player1->gunselect]);
+        glPopMatrix();
+    };
+    
     glPushMatrix();
     glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
 
     glDisable(GL_BLEND);
 
-    drawicon(128, 128, 20, 1650);
-    if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
-    int g = player1->gunselect;
-    int r = 64;
-    if(g>2) { g -= 3; r = 128; };
-    drawicon((float)(g*64), (float)r, 1220, 1650);
-
+    if(!hidehud)
+    {
+        drawicon(128, 128, 20, 1650);
+        if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
+        int g = player1->gunselect;
+        int r = 64;
+        if(g>2) { g -= 3; r = 128; };
+        drawicon((float)(g*64), (float)r, 1220, 1650);
+    };
+    
     glPopMatrix();
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);

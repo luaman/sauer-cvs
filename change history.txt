@@ -1,5 +1,10 @@
 History of changes:
 
+May 22 2005:
+----------------
+- 101 small changes to bring all the old cube functionality back up and running,
+  mostly affecting gameplay & rendering. Singleplayer and Multiplayer mostlty work again.
+
 May 21 2005:
 ----------------
 - lots of updates to lightmaps, and related stuff

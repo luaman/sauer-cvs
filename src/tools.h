@@ -42,7 +42,7 @@ typedef unsigned int uint;
 #define ASSERT(c) if(!(c)) { __asm int 3 };
 #endif
 #else
-#define ASSERT(c) c
+#define ASSERT(c) if(c) {};
 #endif
 
 #define swap(t,a,b) { t m=a; a=b; b=m; }
