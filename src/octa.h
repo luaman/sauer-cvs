@@ -87,6 +87,13 @@ enum
 #define dimcoord(orient)  ((orient)&1)
 #define opposite(orient)  ((orient)^1)
 
+enum
+{
+    VFC_FULL_VISIBLE = 0,
+    VFC_PART_VISIBLE,
+    VFC_NOT_VISIBLE
+};
+
 // octa
 extern cube *newcubes(uint face = F_EMPTY);
 extern int familysize(cube &c);
@@ -124,6 +131,7 @@ extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *
 extern uint faceedges(cube &c, int orient);
 extern bool touchingface(cube &c, int orient);
 extern void vertcheck();
+extern int isvisiblecube(cube *c, int size, int cx, int cy, int cz);
 
 // water
 extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
