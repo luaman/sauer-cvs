@@ -48,7 +48,8 @@ typedef unsigned int uint;
 #define swap(t,a,b) { t m=a; a=b; b=m; }
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
-#define rnd(x) (randomMT()%(x))
+//#define rnd(x) (randomMT()%(x)) // FIXME: doesn't work with RandomMT()... screwy numbers for some reason
+#define rnd(x) (rand()%(x))  
 #define loop(v,m) for(int v = 0; v<(m); v++)
 #define loopi(m) loop(i,m)
 #define loopj(m) loop(j,m)

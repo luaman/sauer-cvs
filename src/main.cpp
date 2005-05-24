@@ -202,7 +202,6 @@ int main(int argc, char **argv)
         static float fps = 10.0;
         frames++;
         fps = (1000.0f/curtime+fps*50)/51;
-        computeraytable(player1->o.x, player1->o.y);
         readdepth(scr_w, scr_h);
         SDL_GL_SwapBuffers();
         gl_drawframe(scr_w, scr_h, fps<minfps ? fps/minfps : (fps>maxfps ? fps/maxfps : 1.0f), fps);

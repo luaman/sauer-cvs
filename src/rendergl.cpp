@@ -204,18 +204,15 @@ int lookuptexture(int tex, int &xs, int &ys)
 
 void setupworld()
 {
-    /*if(hasoverbright)
-    {*/
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT); 
-        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
-        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
-    /*};*/
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT); 
+    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
 };
 
 void renderstrips()
 {
-    /*if(hasoverbright)*/ glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
     
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -227,7 +224,7 @@ void renderstrips()
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
 
-    /*if(hasoverbright)*/ glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 };
 
 
@@ -276,9 +273,6 @@ void drawhudgun(float fovy, float aspect, int farplane)
     glLoadIdentity();
     gluPerspective(fovy, aspect, 6.0f, farplane);
     glMatrixMode(GL_MODELVIEW);
-    //glPushMatrix();
-    //glScalef(0.25f, 0.25f, 0.25f);
-    //glScalef(4.0f, 4.0f, 4.0f);
     
     int rtime = reloadtime(player1->gunselect);
     if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastattack<rtime)
@@ -293,7 +287,7 @@ void drawhudgun(float fovy, float aspect, int farplane)
     {
         drawhudmodel(6, 1, 100, 0);
     };
-    //glPopMatrix();
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(fovy, aspect, 0.6f, farplane);
@@ -304,7 +298,6 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 {
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    //float hf = hdr.waterlevel-0.3f;
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
     bool underwater = lookupcube(player1->o.x, player1->o.y, player1->o.z).material == MAT_WATER;

@@ -137,9 +137,6 @@ void updateworld(int millis)        // main game update loop
 
 void entinmap(dynent *d)    // brute force but effective way to find a free spawn spot in the map
 {
-    #undef rnd
-    #define rnd(x) (rand()%(x))
-    // FIXME: doesn't work with RandomMT()... screwy numbers for some reason
     vec orig = d->o;
     loopi(100)              // try max 100 times
     {

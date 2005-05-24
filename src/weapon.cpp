@@ -238,7 +238,7 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
 
         case GUN_SG:
         {
-            loopi(SGRAYS) particle_splash(0, 20, 200, sg[i]);
+            loopi(SGRAYS) particle_splash(0, 10, 200, sg[i]);
             break;
         };
 

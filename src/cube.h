@@ -360,10 +360,6 @@ extern void resettagareas();
 extern void settagareas();
 extern entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5);
 
-// worldocull
-extern void computeraytable(float vx, float vy);
-extern int isoccluded(float vx, float vy, float cx, float cy, float csize);
-
 // main
 extern int scr_w, scr_h;
 extern void fatal(char *s, char *o = "");
