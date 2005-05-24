@@ -35,7 +35,7 @@ VARF(throttle_decel,    0, 1, 32, throttle());
 
 void throttle()
 {
-    if(!clienthost) return;
+    if(!clienthost || connecting) return;
     ASSERT(ENET_PEER_PACKET_THROTTLE_SCALE==32);
     enet_peer_throttle_configure(clienthost->peers, throttle_interval*1000, throttle_accel, throttle_decel);
 };
@@ -104,7 +104,6 @@ void connects(char *servername)
     {
         enet_host_connect(clienthost, &address, 1); 
         enet_host_flush(clienthost);
-        throttle();
         connecting = lastmillis;
         connattempts = 0;
     }
@@ -322,6 +321,7 @@ void gets2c()           // get updates from the server
         case ENET_EVENT_TYPE_CONNECT:
             conoutf("connected to server");
             connecting = 0;
+            throttle();
             break;
          
         case ENET_EVENT_TYPE_RECEIVE:
