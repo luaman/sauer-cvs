@@ -319,7 +319,6 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     setupworld();
       
     renderstrips();
-    rendermaterials(worldroot, 0, 0, 0, hdr.worldsize>>1);
 
     xtraverts = 0;
 
@@ -330,6 +329,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     renderspheres(curtime);
     
+    rendermaterials(worldroot, 0, 0, 0, hdr.worldsize>>1);
     
     glDisable(GL_FOG);
 
