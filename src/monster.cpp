@@ -40,8 +40,8 @@ dynent *basicmonster(int type, int yaw, int state, int trigger, int move)
     };
     dynent *m = newdynent();
     monstertype *t = &monstertypes[m->mtype = type];
-    m->eyeheight = 6.0f;
-    m->aboveeye = 2.0f;
+    m->eyeheight = 8.0f;
+    m->aboveeye = 7.0f;
     m->radius *= t->bscale/10.0f;
     m->eyeheight *= t->bscale/10.0f;
     m->aboveeye *= t->bscale/10.0f;
