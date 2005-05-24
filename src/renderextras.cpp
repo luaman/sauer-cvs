@@ -238,7 +238,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 {
     readmatrices();
 
-    if(editmode)
+    if(editmode && !hidehud)
     {
         if(cursordepth==1.0f) worldpos = player1->o;
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -280,7 +280,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     else if(player) draw_text(player, 20, 1570, 2);
 
     renderscores();
-    if(!rendermenu())
+    if(!rendermenu() && !hidehud)
     {
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, 1);
@@ -303,9 +303,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glPopMatrix();
     glPushMatrix();
     glOrtho(0, VIRTW*4/3, VIRTH*4/3, 0, -1, 1);
-    renderconsole();
+    if(!hidehud) renderconsole();
 
-    if(!hidestats)
+    if(!hidestats && !hidehud)
     {
         glPopMatrix();
         glPushMatrix();
