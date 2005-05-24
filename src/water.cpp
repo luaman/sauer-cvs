@@ -5,13 +5,15 @@ VAR(waterlod, 0, 0, 3);
 
 inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
 {
-    vertcheck();
-    vertex &v = verts[curvert++];
-    v.x = v1;
-    v.y = v2-0.8f-(float)sin(v1*v3*0.1+t)*0.8f;
-    v.z = v3;
-    v.u = t1;
-    v.v = t2;
+    glTexCoord2f(t1, t2);
+    glVertex3f(v1, v2-0.8f-(float)sin(v1*v3*0.1+t)*0.8f, v3);
+//    vertcheck();
+//    vertex &v = verts[curvert++];
+//    v.x = v1;
+//    v.y = v2-0.8f-(float)sin(v1*v3*0.1+t)*0.8f;
+//    v.z = v3;
+//    v.u = t1;
+//    v.v = t2;
 };
 
 inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
@@ -26,8 +28,8 @@ int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_SRC_COLOR);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    //glEnableClientState(GL_VERTEX_ARRAY);
+    //glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     int sx, sy;
     glBindTexture(GL_TEXTURE_2D, lookuptexture(DEFAULT_LIQUID, sx, sy));
     
@@ -47,6 +49,7 @@ int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
       
     for(int xx = wx1; xx<wx2; xx += subdiv)
     {
+        glBegin(GL_TRIANGLE_STRIP);
         for(int yy = wy1; yy<wy2; yy += subdiv)
         {
             float xo = xf*(xx+t2);
@@ -59,16 +62,17 @@ int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
             vertw(xx,             z, yy+subdiv, dx(xo),    dy(yo+ys), t1);
             vertw(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
         };
+        glEnd();
         int n = (wy2-wy1-1)/subdiv;
         nquads += n;
-        n = (n+2)*2;
-        curvert -= n;
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &verts[curvert].x);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &verts[curvert].u);
-        glDrawArrays(GL_TRIANGLE_STRIP, curvert, n);
+        //n = (n+2)*2;
+        //curvert -= n;
+        //glVertexPointer(3, GL_FLOAT, sizeof(vertex), &verts[curvert].x);
+        //glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &verts[curvert].u);
+        //glDrawArrays(GL_TRIANGLE_STRIP, curvert, n);
     };
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    //glDisableClientState(GL_VERTEX_ARRAY);
+    //glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
     return nquads;

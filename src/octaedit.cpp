@@ -607,9 +607,10 @@ struct material
 
 void setmat(cube &c, uchar mat)
 {
-    c.material = mat;
     if(c.children)
         loopi(8) setmat(c.children[i], mat);
+    else
+        c.material = mat;
 }
 
 void editmat(char *name)
