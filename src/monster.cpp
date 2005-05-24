@@ -98,43 +98,14 @@ void monsterclear()     // called after map start of when toggling edit mode to 
     };
 };
 
-bool los(float lx, float ly, float lz, float bx, float by, float bz, vec &v) // height-correct line of sight for monster shooting/seeing
+bool enemylos(dynent *m)
 {
-/*
-    if(OUTBORD((int)lx, (int)ly) || OUTBORD((int)bx, (int)by)) return false;
-    float dx = bx-lx;
-    float dy = by-ly; 
-    int steps = (int)(sqrt(dx*dx+dy*dy)/0.9);
-    if(!steps) return false;
-    float x = lx;
-    float y = ly;
-    int i = 0;
-    for(;;)
-    {
-        sqr *s = S(fast_f2nat(x), fast_f2nat(y));
-        if(SOLID(s)) break;
-        float floor = s->floor;
-        if(s->type==FHF) floor -= s->vdelta/4.0f;
-        float ceil = s->ceil;
-        if(s->type==CHF) ceil += s->vdelta/4.0f;
-        float rz = lz-((lz-bz)*(i/(float)steps));
-        if(rz<floor || rz>ceil) break;
-        v.x = x;
-        v.y = y;
-        v.z = rz;
-        x += dx/(float)steps;
-        y += dy/(float)steps;
-        i++;
-    };
-    return i>=steps;
-    */
-    return false;
-};
-
-bool enemylos(dynent *m, vec &v)
-{
-    v = m->o;
-    return los(m->o.x, m->o.y, m->o.z, m->enemy->o.x, m->enemy->o.y, m->enemy->o.z, v);
+    vec ray(m->enemy->o);
+    ray.sub(m->o);
+    float mag = ray.magnitude();
+    ray.mul(1.0f / mag);
+    float distance = raycube(m->o, ray, mag);
+    return distance < mag; 
 };
 
 // monster AI is sequenced using transitions: they are in a particular state where
@@ -200,8 +171,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
         case M_SLEEP:                       // state classic sp monster start in, wait for visual contact
         {
             if(editmode) break;          
-            vec target;
-            if(enemylos(m, target))
+            if(enemylos(m))
             {
                 normalise(m, enemyyaw);
                 float dist = m->o.dist(m->enemy->o);
@@ -235,7 +205,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
             if(m->trigger<lastmillis)
             {
                 vec target;
-                if(!enemylos(m, target))    // no visual contact anymore, let monster get as close as possible then search for player
+                if(!enemylos(m))    // no visual contact anymore, let monster get as close as possible then search for player
                 {
                     transition(m, M_HOME, 1, 800, 500);
                 }
