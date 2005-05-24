@@ -87,6 +87,9 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
                return false;
            return true;
         }
+
+    default:
+        return false;
     }
 }
                           
