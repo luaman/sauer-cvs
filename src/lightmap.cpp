@@ -229,10 +229,7 @@ void clear_lmids(cube *c)
             clear_lmids(c[i].children);
         else
         if(c[i].surfaces)
-        {
-            gp()->dealloc(c[i].surfaces, 6*sizeof(surfaceinfo));
-            c[i].surfaces = NULL;
-        }
+            freesurfaces(c[i]);
     }
 }
 
@@ -288,10 +285,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 if(!lights.length())
                     continue;
 
-                vec v0 = verts[faceverts(c[i], j, 0)],
-                    v1 = verts[faceverts(c[i], j, 1)], 
-                    v2 = verts[faceverts(c[i], j, 2)], 
-                    v3 = verts[faceverts(c[i], j, 3)],
+                vec v0(verts[faceverts(c[i], j, 0)]),
+                    v1(verts[faceverts(c[i], j, 1)]),
+                    v2(verts[faceverts(c[i], j, 2)]), 
+                    v3(verts[faceverts(c[i], j, 3)]),
                     u, v;
                 if(v0 == v1)
                   u = v2;
@@ -361,10 +358,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 surface.h = lm_h;
 
                 if(!c[i].surfaces)
-                {
-                    c[i].surfaces = (surfaceinfo *)gp()->alloc(6*sizeof(surfaceinfo));
-                    loopk(6) c[i].surfaces[k].lmid = 0;
-                }
+                    newsurfaces(c[i]);
                 pack_lightmap(c[i].surfaces[j] = surface);
             }
         }
@@ -459,4 +453,22 @@ void fullbright()
 }
 
 COMMAND(fullbright, ARG_NONE);
+
+void newsurfaces(cube &c)
+{
+    if(!c.surfaces)
+    {
+        c.surfaces = (surfaceinfo *)gp()->alloc(6 * sizeof(surfaceinfo));
+        loopi(6) c.surfaces[i].lmid = 0;
+    }
+}
+
+void freesurfaces(cube &c)
+{
+    if(c.surfaces)
+    {
+        gp()->dealloc(c.surfaces, 6 * sizeof(surfaceinfo));
+        c.surfaces = NULL;
+    }
+}
 

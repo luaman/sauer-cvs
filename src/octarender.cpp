@@ -797,10 +797,7 @@ void subdividecube(cube &c, int x, int y, int z, int size)
 {
     if(c.children) return;
     if(c.surfaces)
-    {
-        gp()->dealloc(c.surfaces, 6*sizeof(surfaceinfo));
-        c.surfaces = NULL;
-    }
+        freesurfaces(c);
     cube *ch = c.children = newcubes(F_SOLID);
     loopi(8)
     {

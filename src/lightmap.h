@@ -54,4 +54,6 @@ extern void calclight();
 extern void clearlights();
 extern void initlights();
 extern void resetlightmaps();
+extern void newsurfaces(cube &c);
+extern void freesurfaces(cube &c);
 

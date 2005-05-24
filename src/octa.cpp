@@ -41,7 +41,7 @@ void freeocta(cube *c)
     {
         if (c[i].children) freeocta(c[i].children);
         if (c[i].va) destroyva(c[i].va);
-        if (c[i].surfaces) gp()->dealloc(c[i].surfaces, 6*sizeof(surfaceinfo));
+        if (c[i].surfaces) freesurfaces(c[i]);
     };
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;

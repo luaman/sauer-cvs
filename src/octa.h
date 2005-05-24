@@ -124,6 +124,8 @@ extern int faceverts(cube &c, int orient, int vert);
 extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces);
 extern uint faceedges(cube &c, int orient);
 extern bool touchingface(cube &c, int orient);
+extern void vertcheck();
 
 // water
+extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
 extern void rendermaterials(cube *c, int x, int y, int z, int size);
