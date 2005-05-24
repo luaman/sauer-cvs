@@ -394,7 +394,7 @@ extern void loadgamerest();
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
 extern bool collide(dynent *d);
-extern void entinmap(dynent *d);
+extern void entinmap(dynent *d, bool froment = true);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);

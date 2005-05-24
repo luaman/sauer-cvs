@@ -70,7 +70,7 @@ void spawnmonster()     // spawn a random monster according to freq distribution
 {
     int n = rnd(TOTMFREQ), type;
     for(int i = 0; ; i++) if((n -= monstertypes[i].freq)<0) { type = i; break; };
-    basicmonster(0/*type*/, rnd(360), M_SEARCH, 1000, 1);
+    basicmonster(type, rnd(360), M_SEARCH, 1000, 1);
 };
 
 void monsterclear()     // called after map start of when toggling edit mode to reset/spawn all monsters to initial state

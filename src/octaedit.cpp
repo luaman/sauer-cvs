@@ -80,7 +80,7 @@ void toggleedit()
     if(!(editmode = !editmode))
     {
         settagareas();                                  // reset triggers to allow quick playtesting
-        entinmap(player1);                              // find spawn closest to current floating pos
+        entinmap(player1, false);                       // find spawn closest to current floating pos
         player1->timeinair = 0;
     }
     else

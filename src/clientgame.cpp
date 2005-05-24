@@ -135,8 +135,9 @@ void updateworld(int millis)        // main game update loop
     lastmillis = millis;
 };
 
-void entinmap(dynent *d)    // brute force but effective way to find a free spawn spot in the map
+void entinmap(dynent *d, bool froment)    // brute force but effective way to find a free spawn spot in the map
 {
+    if(froment) d->o.z += 12;
     vec orig = d->o;
     loopi(100)              // try max 100 times
     {

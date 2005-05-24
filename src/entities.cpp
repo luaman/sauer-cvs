@@ -107,7 +107,6 @@ void teleport(int n, dynent *d)     // also used by monsters
         if(ents[e].attr2==tag)
         {
             d->o = ents[e].o;
-            d->o.z += 12;
             d->yaw = ents[e].attr1;
             d->pitch = 0;
             d->vel.x = d->vel.y = d->vel.z = 0;

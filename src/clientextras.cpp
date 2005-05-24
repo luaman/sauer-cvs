@@ -17,7 +17,7 @@ void renderclient(dynent *d, bool team, int mdl, float scale)
     {
         if(nogore) return;
         mdl = (((int)d>>6)&1)+1;
-        mz = d->o.z-d->eyeheight+0.2f;
+        mz = d->o.z-d->eyeheight+0.8f;
         scale = 1.2f;
     }
     else if(d->state==CS_EDITING)                   { frame = 162; }
@@ -25,7 +25,7 @@ void renderclient(dynent *d, bool team, int mdl, float scale)
     else if(d->monsterstate==M_PAIN)                { frame = 54; range = 4;  if(mdl==19) { frame = 32; range = 18; }; } 
     else if((!d->move && !d->strafe) || !d->moving) { frame = 0;  range = 40; if(mdl==19) { frame = 0;  range = 1;  }; } // idle1
     else                                            { frame = 40; range = 6; speed = 1200/d->maxspeed*scale; if(mdl==19) { frame = 1;  range = 15; speed = 300/d->maxspeed; };  }; // running
-    if(mdl==19) { scale *= 32; mz -= 1.9f; };
+    if(mdl==19) { scale *= 32; mz -= 7.6f; };
     uchar color[3];
     lightreaching(d->o, color);
     glColor3ubv(color);
