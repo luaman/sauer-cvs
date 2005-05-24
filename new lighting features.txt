@@ -1,0 +1,49 @@
+
+Sauerbraten uses lightmaps for its lighting system. Place lights as in cube, e.g:
+
+	newent light RADIUS R G B
+
+A good radius for a small wall light is 64, for a middle sized room 128... for a sun
+probably more like 1000.
+
+	calclight
+	
+This calculates all lightmaps. Usually takes only a few seconds, depending on map size
+and settings. If you "savemap", the lightmap will be stored along with it.
+
+	lightprecision P
+
+Default = 32. This is the most important variable for tweaking the lighting, it determines
+what the resolution of the lightmap is. As such has a BIG effect on calculation time,
+video memory usage, and map file size.
+
+The default is good for most maps, you may go as low as 16 if you are lighting a really
+small map and love hard shadows, and for bigger maps you may need to set it to 64 or so
+to get reasonable memory usage.
+
+The number to watch out for is the number of lightmaps generated which are shown on the
+HUD (and also as output after a calclight). 1 or 2 lightmap textures is very good, over
+10 lightmap textures is excessive. 
+
+The map file size is for 90% determined by the lightmaps, so tweak this value to get
+an acceptable quality to size ratio. Look at the size of the map files, sometimes a
+slightly higher lightprecision can halve the size of your .ogz. 
+
+Every surface matters, even though sauerbraten attempts to compress surfaces with a
+uniform lightvalue, it is always a good ideas to delete parts of the world that are not
+part of your map.
+
+lightprecision and lighterror are stored as part of map files.
+
+	lighterror E
+	
+Default = 8. There should be little reason to tweak this. If in your map you can see
+visible polygon boundaries caused by lighting, you can try stepping this down to 6 or
+4 to improve quality at the expense of lightmap space. If you have an insanely large
+map and looking for ways to reduce file size, increasing error up to 16 may help.
+
+	aalight B
+
+Default = 1, determines wether to use 4x sampling for every lightmap texel. You should
+not need to touch this var, unless waiting for calclight really bothers you, you can set
+it to 0 for a 4x speedup and blockier shadows.
