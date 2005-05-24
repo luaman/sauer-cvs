@@ -19,7 +19,7 @@ inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
-int renderwater(int subdiv, int wx1, int wy1, int z, int size)
+int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
 {
     if(wx1<0) return 0;
 
@@ -74,7 +74,7 @@ int renderwater(int subdiv, int wx1, int wy1, int z, int size)
     return nquads;
 };
 
-uint renderwaterlod(int x, int y, int z, int size)
+uint renderwaterlod(int x, int y, int z, uint size)
 {
     if(size <= (128 << waterlod))
     {
@@ -95,8 +95,8 @@ uint renderwaterlod(int x, int y, int z, int size)
     }
     else
     {
-        int childsize = size / 2;
-        uint subdiv1 = renderwaterlod(x, y, z, childsize),
+        uint childsize = size / 2,
+             subdiv1 = renderwaterlod(x, y, z, childsize),
              subdiv2 = renderwaterlod(x + childsize, y, z, childsize),
              subdiv3 = renderwaterlod(x + childsize, y + childsize, z, childsize),
              subdiv4 = renderwaterlod(x, y + childsize, z, childsize),
