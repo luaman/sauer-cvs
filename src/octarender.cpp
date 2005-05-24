@@ -535,12 +535,6 @@ COMMANDN(recalc, allchanged, ARG_NONE);
 vec   vfcV[5];  // perpindictular vectors to view frustrum bounding planes
 float vfcD[5];  // Distance of player1 from culling planes.
 float vfcDfog;  // far plane culling distance (fog limit).
-enum
-{
-    VFC_FULL_VISIBLE = 0,
-    VFC_PART_VISIBLE,
-    VFC_NOT_VISIBLE
-};
 
 vtxarray *visibleva;
 
