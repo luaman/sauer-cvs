@@ -1,5 +1,5 @@
 CXX=g++
-CXXOPTFLAGS=--Wall -O3 -fsigned-char -fomit-frame-pointer
+CXXOPTFLAGS=-Wall -O3 -fsigned-char -fomit-frame-pointer
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
@@ -32,7 +32,8 @@ CLIENT_OBJS= \
         octa.o \
         octaedit.o \
 	octarender.o \
-	lightmap.o
+	lightmap.o \
+	water.o
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \
@@ -47,15 +48,15 @@ enet:
 	-make -C ../enet all
 
 clean:
-	-rm -f $(SERVER_OBJS) $(CLIENT_OBJS) cube_server cube_client
+	-rm -f $(SERVER_OBJS) $(CLIENT_OBJS) sauer_server sauer_client
 	-make -C ../enet/ clean
 
 standalone.o:
 	$(CXX) $(CXXFLAGS) -DSTANDALONE -o standalone.o -c server.cpp
 
 client: $(CLIENT_OBJS)
-	$(CXX) $(CXXFLAGS) -o cube_client $(CLIENT_OBJS) $(CLIENT_LIBS)
+	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
 
 server: $(SERVER_OBJS)
-	$(CXX) $(CXXFLAGS) -o cube_server $(SERVER_OBJS) $(SERVER_LIBS)  
+	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  
 	
