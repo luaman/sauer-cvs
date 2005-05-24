@@ -262,17 +262,12 @@ void drawhudmodel(int start, int end, float speed, int base)
     uchar color[3];
     lightreaching(player1->o, color);
     glColor3ubv(color);
-    rendermodel(21+player1->gunselect, start, end, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 4.0f, speed, base);
+    rendermodel(21+player1->gunselect, start, end, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base);
 };
 
 void drawhudgun(float fovy, float aspect, int farplane)
 {
     if(!hudgun || !player1->gunselect) return;
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fovy, aspect, 6.0f, farplane);
-    glMatrixMode(GL_MODELVIEW);
     
     int rtime = reloadtime(player1->gunselect);
     if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastattack<rtime)
@@ -287,11 +282,6 @@ void drawhudgun(float fovy, float aspect, int farplane)
     {
         drawhudmodel(6, 1, 100, 0);
     };
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fovy, aspect, 0.6f, farplane);
-    glMatrixMode(GL_MODELVIEW);
 };
 
 void gl_drawframe(int w, int h, float changelod, float curfps)
@@ -316,7 +306,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     int farplane = max(fog*2, 384);
-    gluPerspective(fovy, aspect, 0.6f, farplane);
+    gluPerspective(fovy, aspect, 0.54f, farplane);
     glMatrixMode(GL_MODELVIEW);
 
     transplayer();
