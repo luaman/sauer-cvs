@@ -748,18 +748,7 @@ void renderq()
                 glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
                 glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
 
-                #ifdef BROKEN_VA_SUPPORT
-                glBegin(GL_QUADS);
-                loopk(va->eslist[i].length[l])
-                {
-			            const vertex &v = va->vbuf[ebuf[k]];
-                        glMultiTexCoord2fv(GL_TEXTURE1_ARB, &v.u);
-                        glVertex3fv(&v.x);
-                }
-                glEnd();
-                #else
                 glDrawElements(GL_QUADS, va->eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
-                #endif
                 ebuf += va->eslist[i].length[l];  // Advance to next array.
             };
         };
