@@ -7,30 +7,36 @@
 
 // info about collisions
 vec wall; // just the normal vector.
-float floorheight;
+float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
 
-bool rectcollide(dynent *d, vec &o, float r, float hi, float lo, bool step)
+bool onstairs(dynent *d) { return floorheight-d->o.z+d->eyeheight < STAIRHEIGHT; };
+
+bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo)
 {
     vec s(d->o);
     s.sub(o);
-    r += d->radius;
-    float z = s.z>0 ? d->eyeheight+hi : d->aboveeye+lo;
-    float ax = fabs(s.x)-r;
-    float ay = fabs(s.y)-r;
-    float az = fabs(s.z)-z;
+    xr += d->radius;
+    yr += d->radius;
+    walldistance = -1e10f;
+    float zr = s.z>0 ? d->eyeheight+hi : d->aboveeye+lo;
+    float ax = fabs(s.x)-xr;
+    float ay = fabs(s.y)-yr;
+    float az = fabs(s.z)-zr;
     if(ax>0 || ay>0 || az>0) return true;
-    if(ax>ay && ax>az) wall.x = s.x>0 ? 1 : -1;
-    else if(ay>az) wall.y = s.y>0 ? 1 : -1;
-    else wall.z = s.z>0 ? 1 : -1;
-    if(step) floorheight = max(o.z+hi, floorheight);
+    floorheight = max(o.z+hi, floorheight);
+    if(onstairs(d)) return true;
+    wall.x = wall.y = wall.z = 0;
+    if(ax>ay && ax>az)  { wall.x = s.x>0 ? 1 : -1; walldistance = ax; }
+    else if(ay>az)      { wall.y = s.y>0 ? 1 : -1; walldistance = ay; }
+    else                { wall.z = s.z>0 ? 1 : -1; walldistance = az; }
     return false;
 };
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
-    if(o->state!=CS_ALIVE || d->state!=CS_ALIVE) return true;
-    return rectcollide(d, o->o, o->radius, o->aboveeye, o->eyeheight, true);
+    if(o->state!=CS_ALIVE) return true;
+    return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight);
 };
 
 bool mmcollide(dynent *d)               // collide with a mapmodel
@@ -40,29 +46,36 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
         entity &e = ents[i];
         if(e.type!=MAPMODEL) continue;
         float entrad = 5; // get real radius somehow?
-        if(!rectcollide(d, e.o, entrad, entrad, entrad, true)) return false;
+        if(!rectcollide(d, e.o, entrad, entrad, entrad, entrad)) return false;
     };
     return true;
 };
 
-bool cubecollide(dynent *d, cube &c, bool inside) // collide with cube geometry
+bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
-    float m = -100.0f;
+    plane clip[12];
+    int s2 = size>>1;
+    float f = floorheight;
     float r = d->radius;
-    float z = (d->aboveeye + d->eyeheight)/2;
+    float zr = (d->aboveeye+d->eyeheight)/2;
+    vec bo(x+s2, y+s2, z+s2), br(s2, s2, s2);
     vec o(d->o), *w = &wall;
-    o.z += z - d->eyeheight;
+    o.z += zr - d->eyeheight;
+    floorheight = 0;
 
-    loopi(18) if(c.clip[i].isnormalized())
+    int clipsize = isentirelysolid(c) ? 0 : genclipplanes(c, x, y, z, size, clip, bo, br);
+
+    if(rectcollide(d, bo, br.x, br.y, br.z, br.z) && floorheight==0) { floorheight = f; return true; };
+    float m = walldistance;
+    loopi(clipsize)
     {
-        float dist = c.clip[i].dist(o) - fabs(c.clip[i].x*r) - fabs(c.clip[i].y*r) - fabs(c.clip[i].z*z);
-        if(dist>0) return true;
-        if(dist>m) { w = &c.clip[i]; m = dist; };
+        float dist = clip[i].dist(o) - (fabs(clip[i].x*r)+fabs(clip[i].y*r)+fabs(clip[i].z*zr));
+        if(dist>0) { floorheight = f; return true; };
+        if(dist>m) { w = &clip[i]; m = dist; };
     };
-
-    if(m<-1.0f) inside = true; else wall = *w;
-    floorheight = max(-c.clip[13].offset, floorheight);
-    return false;
+    wall = *w;
+    floorheight = max(f, max(bo.z+br.z, floorheight));
+    return onstairs(d);
 };
 
 bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collide with octants
@@ -83,14 +96,7 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
         }
         else if(!isempty(c[i]))
         {
-            bool inside = false;
-            if(!cubecollide(d, c[i], inside))
-            {
-                vec v(o);
-                if(inside) rectcollide(d, v, size, size>>1, size>>1, false);
-                if(c[i].clip[13].z<1.0f) floorheight = max(o.z+size, floorheight);
-                if(floorheight-d->o.z+d->eyeheight>STAIRHEIGHT) return false;
-            };
+            if(!cubecollide(d, c[i], o.x, o.y, o.z, size)) return false;
         };
     };
     return true;
@@ -134,8 +140,7 @@ void move(dynent *d, vec &dir, float push)
         }
         else
         {
-            if(wall.z>0.6f) d->onfloor = true;
-
+            if(wall.z>0.5f) d->onfloor = true;
             d->blocked = true;
             d->o = old;
 
@@ -202,7 +207,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
 
 void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 {
-    const bool water = lookupcube(pl->o.x, pl->o.y, pl->o.z + 2.0f).material == MAT_WATER;
+    const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, int(pl->o.z+2.0f)).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
 
     vec d;      // vector of direction we ideally want to move in
