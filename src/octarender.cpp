@@ -361,7 +361,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     int vertexuses[8];
 
     loopi(8) vertexuses[i] = 0;
-    loopi(12) c.clip[i].x = c.clip[i].y = c.clip[i].z = c.clip[i].offset = 0.0f;
 
     vec pos((float)x, (float)y, (float)z);
 
@@ -410,32 +409,33 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     swap(float, mn.y, mn.z);
     swap(float, mx.y, mx.z);
 
-    loopi(6) if(useface[i])
-    {
-        curtris += 2;
-
-        vec p[5];
-        loopk(5) p[k] = verts[cin[faceverts(c,i,k&3)]];
-        loopk(5) swap(float, p[k].y, p[k].z);
-
-        // and gen clipping planes while we're at it
-        if(p[0] == p[1])
-            vertstoplane(p[2], p[3], p[1], c.clip[i * 2]);
-        else
-        if(p[1] == p[2])
-            vertstoplane(p[2], p[3], p[0], c.clip[i * 2]);
-        else
-        {
-            vertstoplane(p[2], p[0], p[1], c.clip[i*2]);
-            if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
-        }
-    }
-
+    newclipplanes(c);
     if(visible > 0)
     {
-        vec v;
+        newclipplanes(c);
+        loopi(6) if(useface[i])
+        {
+            curtris += 2;
+
+            vec p[5];
+            loopk(5) p[k] = verts[cin[faceverts(c,i,k&3)]];
+            loopk(5) swap(float, p[k].y, p[k].z);
+
+            // and gen clipping planes while we're at it
+            if(p[0] == p[1])
+                vertstoplane(p[2], p[3], p[1], c.clip[i * 2]);
+            else
+            if(p[1] == p[2])
+                vertstoplane(p[2], p[3], p[0], c.clip[i * 2]);
+            else
+            {
+                vertstoplane(p[2], p[0], p[1], c.clip[i*2]);
+                if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
+            }
+        }
         loopi(8) if(!vertexuses[i])
         {
+            vec v;
             calcvert(c, x, y, z, size, v, i);
             loopj(3)
             {
@@ -443,13 +443,12 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
                 mx[j] = max(mx[j], v[j]);
             }
         }
-    }
-    if(visible > 0)
-    loopi(6) if(!useface[i])
-    {
-        plane &clip = c.clip[2*i];
-        clip[dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
-        clip.offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
+        loopi(6) if(!useface[i])
+        {
+            plane &clip = c.clip[2*i];
+            clip[dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
+            clip.offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
+        }
     }
 };
 
@@ -801,6 +800,7 @@ bool tris2cube(cube &c, plane *tris, ivec &o, int size, bool strict)
 {
     float s = (float)size/8;
     solidfaces(c);
+    if(tris)
     loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
     {
         ivec &p = *(ivec *)cubecoords[fv[i][k]];
@@ -852,17 +852,18 @@ void validatechildren(cube *c)                              // fixes the two spe
 void subdividecube(cube &c, int x, int y, int z, int size)
 {
     if(c.children) return;
-    if(c.surfaces)
-        freesurfaces(c);
+    if(c.surfaces) freesurfaces(c);
     cube *ch = c.children = newcubes(F_SOLID);
     loopi(8)
     {
         ch[i] = c;
         ch[i].va = NULL;
+        ch[i].clip = NULL;
         ch[i].children = NULL;
         ivec o(i, x, y, z, size);
         tris2cube(ch[i], c.clip, o, size, false);
     };
+    if(c.clip) freeclipplanes(c);
     validatechildren(c.children);
 };
 
@@ -880,6 +881,9 @@ bool mergetris(plane *d, plane *s, cube &dest, cube &src)
 {
     if(isempty(src)) return true;
     uchar *t = dest.texture, *u = src.texture;
+    if(!d || !s)
+        memcpy(t, u, sizeof(dest.texture));
+    else
     for(int i=0, j=0; i<12; i+=2, j++)
         if((d[i].isnormalized() && t[j] != u[j]) ||
            !mergeside(d[i], d[i+1], s[i]) ||
@@ -890,6 +894,7 @@ bool mergetris(plane *d, plane *s, cube &dest, cube &src)
 
 bool goodsplits(plane *t, ivec &o, int size)
 {
+    if(t)
     loopi(6) if(t[i*2].isnormalized() && t[i*2+1].isnormalized())
     {
         int a=0, b=0;
@@ -935,8 +940,8 @@ bool remip(cube &c, int x, int y, int z, int size)
     if(!e)
     {
         ivec o(x, y, z);
-        plane d[18];
-        loopi(18) d[i].x = d[i].y = d[i].z = d[i].offset = 0.0f;
+        plane d[12];
+        loopi(12) d[i].x = d[i].y = d[i].z = d[i].offset = 0.0f;
         loopi(8) if(!mergetris(d, c.children[i].clip, c, c.children[i])) return false;
         if(!tris2cube(c, d, o, size, true)) return false;
         if(!innertest(c)) return false;

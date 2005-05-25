@@ -108,8 +108,8 @@ void discardchildren(cube &c)
 {
     if(c.va) destroyva(c.va);
     c.va = NULL;
-    if(c.surfaces) gp()->dealloc(c.surfaces, 6*sizeof(surfaceinfo));
-    c.surfaces = NULL;
+    if(c.surfaces) freesurfaces(c);
+    if(c.clip) freeclipplanes(c);
     if(c.children)
     {
         solidfaces(c); // FIXME: better mipmap
@@ -302,6 +302,7 @@ cube copycube(cube &src)
     cube c = src;
     c.va = NULL;                // src cube is responsible for va destruction
     c.surfaces = NULL;
+    c.clip = NULL;
     if(src.children)
     {
         c.children = newcubes(F_EMPTY);

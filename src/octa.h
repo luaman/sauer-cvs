@@ -49,7 +49,7 @@ struct cube
     uchar texture[6];       // one for each face. same order as orient.
     uchar material;         // empty-space material
     vtxarray *va;           // vertex array for children, or NULL
-    plane clip[12];         // collision planes
+    plane *clip;            // collision planes
     surfaceinfo *surfaces; // lighting info for each surface
 };
 
@@ -112,6 +112,8 @@ extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 extern float raycube(const vec &o, const vec &ray, float radius, cube *source = NULL);
 extern cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient);
+extern void newclipplanes(cube &c);
+extern void freeclipplanes(cube &c);
 
 // rendercubes
 extern void subdividecube(cube &c, int x, int y, int z, int size);

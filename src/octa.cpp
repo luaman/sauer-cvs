@@ -15,6 +15,7 @@ cube *newcubes(uint face)
         c->va = NULL;
         setfaces(*c, face);
         c->surfaces = NULL;
+        c->clip = NULL;
         loopl(6)
         {
             c->texture[l] = 2+l;
@@ -28,7 +29,7 @@ cube *newcubes(uint face)
 int familysize(cube &c)
 {
     int size = 1;
-    if (c.children) loopi(8) size += familysize(c.children[i]);
+    if(c.children) loopi(8) size += familysize(c.children[i]);
     return size;
 };
 
@@ -36,9 +37,10 @@ void freeocta(cube *c)
 {
     loopi(8)
     {
-        if (c[i].children) freeocta(c[i].children);
-        if (c[i].va) destroyva(c[i].va);
-        if (c[i].surfaces) freesurfaces(c[i]);
+        if(c[i].children) freeocta(c[i].children);
+        if(c[i].va) destroyva(c[i].va);
+        if(c[i].surfaces) freesurfaces(c[i]);
+        if(c[i].clip) freeclipplanes(c[i]);
     };
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;
@@ -132,7 +134,7 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
         }
         if(&c != source && !isempty(c))
         {
-            if((isentirelysolid(c) && (source == NULL || dist > 0)) || lusize == size) return c;
+            if(c.clip == NULL || (isentirelysolid(c) && (source == NULL || dist > 0)) || lusize == size) return c;
             //float m = 0;
             loopi(12) // assumes null c.clip[i] == 0,0,0
             {
@@ -180,4 +182,22 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
 
 float raycube(const vec &o, const vec &ray, float radius, cube *source) { vec v; float dist; raycube(o, ray, radius, 0, v, dist, NULL, source); return dist; };
 cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(o, ray, 1.0e10f, size, v, dist, &orient, NULL); };
+
+void newclipplanes(cube &c)
+{
+    if(!c.clip)
+    {
+        c.clip = (plane *)gp()->alloc(12 * sizeof(plane));
+        loopi(12) c.clip[i].x = c.clip[i].y = c.clip[i].z = c.clip[i].offset = 0.0f;
+    }
+}
+
+void freeclipplanes(cube &c)
+{
+    if(c.clip)
+    {
+        gp()->dealloc(c.clip, 12 * sizeof(plane));
+        c.clip = NULL;
+    }
+}
 
