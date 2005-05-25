@@ -361,7 +361,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     int vertexuses[8];
 
     loopi(8) vertexuses[i] = 0;
-    loopi(18) c.clip[i].x = c.clip[i].y = c.clip[i].z = c.clip[i].offset = 0.0f;
+    loopi(12) c.clip[i].x = c.clip[i].y = c.clip[i].z = c.clip[i].offset = 0.0f;
 
     vec pos((float)x, (float)y, (float)z);
 
@@ -444,9 +444,10 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
             }
         }
     }
-    loopi(6) if(useface[i] || visible > 0)
+    if(visible > 0)
+    loopi(6) if(!useface[i])
     {
-        plane &clip = c.clip[useface[i] ? 12+i : 2*i];
+        plane &clip = c.clip[2*i];
         clip[dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
         clip.offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
     }

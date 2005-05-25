@@ -49,7 +49,7 @@ struct cube
     uchar texture[6];       // one for each face. same order as orient.
     uchar material;         // empty-space material
     vtxarray *va;           // vertex array for children, or NULL
-    plane clip[18];         // collision planes
+    plane clip[12];         // collision planes
     surfaceinfo *surfaces; // lighting info for each surface
 };
 
