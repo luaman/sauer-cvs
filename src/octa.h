@@ -83,10 +83,10 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 
 enum
 {
-    O_TOP = 0,
-    O_BOTTOM,
-    O_FRONT,
+    O_BOTTOM = 0,
+    O_TOP,
     O_BACK,
+    O_FRONT,
     O_LEFT,
     O_RIGHT
 };

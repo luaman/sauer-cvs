@@ -19,14 +19,21 @@ struct PackNode
      : children(0), x(x), y(y), w(w), h(h), packed(false)
     {}
 
-    ~PackNode()
+    void clear()
     {
         if(children)
         {
             children[0].~PackNode();
             children[1].~PackNode();
             gp()->dealloc(children, 2 * sizeof(PackNode));
+            children = 0;
+            packed = false;
         }
+    }
+
+    ~PackNode()
+    {
+        clear();
     }
 
     bool insert(ushort &tx, ushort &ty, ushort tw, ushort th);

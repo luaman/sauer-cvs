@@ -100,10 +100,10 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
 {
     switch(orient)
     {
-        case O_TOP:    z -= size; break;
-        case O_BOTTOM: z += size; break;
-        case O_FRONT:  y -= size; break;
-        case O_BACK:   y += size; break;
+        case O_BOTTOM: z -= size; break;
+        case O_TOP:    z += size; break;
+        case O_BACK:   y -= size; break;
+        case O_FRONT:  y += size; break;
         case O_LEFT:   x -= size; break;
         case O_RIGHT:  x += size; break;
     };
@@ -161,9 +161,9 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
         float dx = fabs((lusize*xs+lu.x-v.x)*xd);
         float dy = fabs((lusize*ys+lu.y-v.y)*yd);
         float dz = fabs((lusize*zs+lu.z-v.z)*zd);
-        float m = dz; s = O_BOTTOM-zs;
+        float m = dz; s = O_TOP-zs;
         if(dx<dy && dx<dz) { m = dx; s = O_RIGHT-xs; }
-        else if(dy<dz)     { m = dy; s = O_BACK-ys; }
+        else if(dy<dz)     { m = dy; s = O_FRONT-ys; }
         vec d(ray);
         d.mul(m+1);
         v.add(d);

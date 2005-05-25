@@ -179,12 +179,12 @@ uint faceedges(cube &c, int orient)
 {
     switch(orient)
     {
-        case O_TOP:    return faceedgesidx(c, 4, 6, 8, 9);
-        case O_BOTTOM: return faceedgesidx(c, 5, 7, 10, 11);
-        case O_FRONT:  return faceedgesidx(c, 0, 1, 8, 10);
-        case O_BACK:   return faceedgesidx(c, 2, 3, 9, 11);
-        case O_LEFT:   return faceedgesidx(c, 0, 2, 4, 5);
+        case O_BOTTOM: return faceedgesidx(c, 4, 6, 8, 9);
+        case O_TOP:    return faceedgesidx(c, 5, 7, 10, 11);
+        case O_BACK:   return faceedgesidx(c, 0, 1, 8, 10);
+        case O_FRONT:  return faceedgesidx(c, 2, 3, 9, 11);
         case O_RIGHT:  return faceedgesidx(c, 1, 3, 6, 7);
+        case O_LEFT:   return faceedgesidx(c, 0, 2, 4, 5);
         default: ASSERT(0); return 0;
     };
 };
@@ -199,6 +199,14 @@ bool faceedgegt(uint cfe, uint ofe)
     };
     return false;
 };
+
+bool collapsedface(uint cfe)
+{
+    if(((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
+       ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F))
+        return true;
+    return false;
+}
 
 //extern cube *last;
 
@@ -232,17 +240,15 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size)
 bool visibleface(cube &c, int orient, int x, int y, int z, int size)
 {
     //if(last==&c) __asm int 3;
+    if(!touchingface(c, orient)) return true;
     uint cfe = faceedges(c, orient);
-    if(((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
-       ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F))         
-        return false;
-
+    if(collapsedface(cfe)) return false;
     cube &o = neighbourcube(x, y, z, size, -size, orient);
     if(&o==&c) return false;
-    if(!touchingface(c, orient)) return true;
     if(!o.children)
     {
-        if(!touchingface(o, opposite(orient))) return true;
+        if(lusize > size) return !isentirelysolid(o);
+        if(isempty(o) || !touchingface(o, opposite(orient))) return true; 
         uint ofe = faceedges(o, opposite(orient));
         if(ofe==cfe) return false;
         return faceedgegt(cfe, ofe);

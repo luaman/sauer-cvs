@@ -380,6 +380,7 @@ void calclight()
     uint total = 0, lumels = 0;
     loopv(lightmaps)
     {
+        lightmaps[i].packroot.clear();
         total += lightmaps[i].lightmaps;
         lumels += lightmaps[i].lumels;
     }
