@@ -86,7 +86,11 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             //if(!tsize) break;
             if(tsize<=0) break;
-            if(isempty(*c)) c->children = newcubes(F_EMPTY);
+            if(isempty(*c))
+            {
+                c->children = newcubes(F_EMPTY);
+                loopi(8) loopl(6) c->children[i].texture[l] = c->texture[l];
+            }
             else subdividecube(*c, x, y, z, size>>1);
         };
         c = c->children;
