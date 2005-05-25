@@ -27,7 +27,6 @@ struct PackNode
             children[1].~PackNode();
             gp()->dealloc(children, 2 * sizeof(PackNode));
             children = 0;
-            packed = false;
         }
     }
 

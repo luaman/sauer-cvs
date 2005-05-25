@@ -42,6 +42,8 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
         bool inserted = children[0].insert(tx, ty, tw, th) ||
                         children[1].insert(tx, ty, tw, th);
         packed = children[0].packed && children[1].packed;
+        if(packed)      
+            clear();
         return inserted;    
     }
     if(w == tw && h == th)
