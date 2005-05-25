@@ -2,7 +2,7 @@
 
 #include "cube.h"
 
-struct guninfo { short sound, attackdelay, damage, projspeed, part; char *name; };
+struct guninfo { short sound, attackdelay, damage, projspeed, part, kickamount; char *name; };
 
 const int MONSTERDAMAGEFACTOR = 4;
 const int SGRAYS = 20;
@@ -11,15 +11,15 @@ vec sg[SGRAYS];
 
 guninfo guns[NUMGUNS] =
 {
-    { S_PUNCH1,    250,  50, 0,   0, "fist"           },
-    { S_SG,       1400,  10, 0,   0, "shotgun"        },  // *SGRAYS
-    { S_CG,        100,  30, 0,   0, "chaingun"       },
-    { S_RLFIRE,    800, 120, 80,  0, "rocketlauncher" },
-    { S_RIFLE,    1500, 100, 0,   0, "rifle"          },
-    { S_FLAUNCH,   200,  20, 50,  4, "fireball"       },
-    { S_ICEBALL,   200,  40, 30,  6, "iceball"        },
-    { S_SLIMEBALL, 200,  30, 160, 7, "slimeball"      },
-    { S_PIGR1,     250,  50, 0,   0, "bite"           },
+    { S_PUNCH1,    250,  50, 0,   0,  1, "fist"           },
+    { S_SG,       1400,  10, 0,   0, 20, "shotgun"        },  // *SGRAYS
+    { S_CG,        100,  30, 0,   0,  7, "chaingun"       },
+    { S_RLFIRE,    800, 120, 80,  0, 10, "rocketlauncher" },
+    { S_RIFLE,    1500, 100, 0,   0, 30, "rifle"          },
+    { S_FLAUNCH,   200,  20, 50,  4,  1, "fireball"       },
+    { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"        },
+    { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"      },
+    { S_PIGR1,     250,  50, 0,   0,  1, "bite"           },
 };
 
 void selectgun(int a, int b, int c)
@@ -199,8 +199,9 @@ void moveprojectiles(int time)
         if(p->owner->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
         vec v;
         float dist = p->to.dist(p->o, v);
-        float tdist = dist/time*1000/p->speed; 
-        v.div(tdist);
+        float dtime = dist*1000/p->speed; 
+        if(time > dtime) dtime = time;
+        v.mul(time/dtime);
         v.add(p->o);
         if(p->local)
         {
@@ -301,8 +302,13 @@ void shoot(dynent *d, vec &targ)
     vec to = targ;
     from.z -= 0.8f;    // below eye
 
-    vec temp;
-    float dist = to.dist(from, temp);
+    vec unitv;
+    float dist = to.dist(from, unitv);
+    unitv.div(dist);
+    vec kickback = unitv;
+    kickback.mul(guns[d->gunselect].kickamount*-0.01f);
+    d->vel.add(kickback);
+    if(d->pitch<80.0f) d->pitch += guns[d->gunselect].kickamount*0.05f;
     int shorten = 0;
     
     if(dist>1024) shorten = 1024;
@@ -310,10 +316,9 @@ void shoot(dynent *d, vec &targ)
 
     if(shorten)
     {
-        dist /= shorten;  // punch range
-        temp.div(dist);
+        unitv.mul(shorten); // punch range
         to = from;
-        to.add(temp);
+        to.add(unitv);
     };   
     
     if(d->gunselect==GUN_SG) createrays(from, to);
