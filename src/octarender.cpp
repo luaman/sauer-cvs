@@ -286,6 +286,29 @@ void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *useface
 
 }
 
+int genclipplane(cube &c, int i, const vec *v, plane *clip)
+{
+    int planes = 1;
+    vec p[5];
+    loopk(5) p[k] = v[faceverts(c,i,k&3)];
+
+    if(p[0] == p[1])
+        vertstoplane(p[2], p[3], p[1], clip[0]);
+    else
+    if(p[1] == p[2])
+        vertstoplane(p[2], p[3], p[0], clip[0]);
+    else
+    {
+        vertstoplane(p[2], p[0], p[1], clip[0]);
+        if(faceconvexity(c, i) != 0)
+        {
+            ++planes;
+            vertstoplane(p[3], p[4], p[2], clip[1]);
+        }
+    };
+    return planes;
+}
+
 int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r)
 {
     int ci = 0;
@@ -306,21 +329,7 @@ int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, v
     o.add(r);
 
     loopi(6) if(usefaces[i] && !touchingface(c,i)) // generate actual clipping planes
-    {
-        vec p[5];
-        loopk(5) p[k] = v[faceverts(c,i,k&3)];
-
-        if(p[0] == p[1])
-            vertstoplane(p[2], p[3], p[1], clip[ci++]);
-        else
-        if(p[1] == p[2])
-            vertstoplane(p[2], p[3], p[0], clip[ci++]);
-        else
-        {
-            vertstoplane(p[2], p[0], p[1], clip[ci++]);
-            if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], clip[ci++]);
-        };
-    };
+        ci += genclipplane(c, i, v, &clip[ci]);
     return ci;
 };
 

@@ -268,7 +268,9 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             calcverts(c[i], o.x, o.y, o.z, size, verts, usefaces);
             loopj(6) if(usefaces[j])
             {
-                const plane &lm_normal = c[i].clip[j*2];
+                plane planes[2];
+                genclipplane(c[i], j, verts, planes);
+                const plane &lm_plane = planes[0];
                 lights.setsize(0);
                 loopv(close_lights)
                 {
@@ -280,7 +282,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                        light.o.z + radius < o.z || light.o.z - radius > o.z + size)
                         continue;
 
-                    float dist = lm_normal.dist(light.o);
+                    float dist = lm_plane.dist(light.o);
                     if(dist >= 0.0 && dist < float(light.attr1))
                        lights.add(&light);
                 }
@@ -298,7 +300,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                   u = v1;
                 u.sub(v0);
                 u.normalize();
-                v.cross(u, lm_normal);
+                v.cross(u, lm_plane);
 
                 #define UVMINMAX(vert) \
                 { \
@@ -336,7 +338,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     vstep = v;
                 ustep.mul((umax - umin) / float(lm_w - 1));
                 vstep.mul((vmax - vmin) / float(lm_h - 1));
-                if(!generate_lightmap(c[i], j, lm_origin, lm_normal, ustep, vstep))
+                if(!generate_lightmap(c[i], j, lm_origin, lm_plane, ustep, vstep))
                     continue;
 
                 #define CALCVERT(vert, index) \
