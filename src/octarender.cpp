@@ -409,7 +409,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     swap(float, mn.y, mn.z);
     swap(float, mx.y, mx.z);
 
-    newclipplanes(c);
     if(visible > 0)
     {
         newclipplanes(c);
