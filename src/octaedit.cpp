@@ -160,7 +160,7 @@ void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr
 };
 
 bool selectcorners = false;
-void selcorners(bool isdown) { selectcorners = isdown; };
+void selcorners(bool isdown) { selectcorners = isdown; editdrag(isdown); };
 COMMAND(selcorners, ARG_DOWN);
 
 void cursorupdate()
@@ -428,6 +428,7 @@ void pushedge(uchar &edge, int dir, int dc)
 void editface(int dir, int mode)
 {
     if(noedit()) return;
+    if(mode==1 && (selcx || selcy || selcxs&1 || selcys&1)) mode = 0;
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
