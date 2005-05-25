@@ -14,6 +14,7 @@ dynent *player1 = newdynent();          // our client
 dvector players;                        // other clients
 
 VAR(sensitivity, 0, 10, 1000);
+VAR(sensitivityscale, 1, 1, 100);
 VAR(invmouse, 0, 0, 1);
 
 int lastmillis = 0;
@@ -215,8 +216,8 @@ void mousemove(int dx, int dy)
 {
     if(player1->state==CS_DEAD || intermission) return;
     const float SENSF = 33.0f;     // try match quake sens
-    player1->yaw += (dx/SENSF)*sensitivity;
-    player1->pitch -= (dy/SENSF)*sensitivity*(invmouse ? -1 : 1);
+    player1->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
+    player1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
     const float MAXPITCH = 90.0;
     if(player1->pitch>MAXPITCH) player1->pitch = MAXPITCH;
     if(player1->pitch<-MAXPITCH) player1->pitch = -MAXPITCH;

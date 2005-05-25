@@ -1,6 +1,6 @@
 #include "cube.h"
 
-VAR(watersubdiv, 0, 2, 8);
+VAR(watersubdiv, 0, 2, 10);
 VAR(waterlod, 0, 0, 3);
 
 inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
