@@ -178,7 +178,8 @@ char *modelnames[] =
     "monster/knight",
     "monster/goblin",
 
-    "hudguns/shotg",  //22
+    "hudguns/fist", //22
+    "hudguns/shotg",
     "hudguns/chaing",
     "hudguns/rocket",
     "hudguns/rifle",
