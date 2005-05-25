@@ -1,6 +1,6 @@
 #include "cube.h"
 
-VAR(watersubdiv, 0, 2, 6);
+VAR(watersubdiv, 0, 2, 8);
 VAR(waterlod, 0, 0, 3);
 
 inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
@@ -30,13 +30,12 @@ int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
     glBlendFunc(GL_ONE, GL_SRC_COLOR);
     //glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glColor3f(0.5f, 0.5f, 0.5f);
     int sx, sy;
     glBindTexture(GL_TEXTURE_2D, lookuptexture(DEFAULT_LIQUID, sx, sy));
     
-    glColor3f(0.5f, 0.5f, 0.5f);
     ASSERT((wx1 & (subdiv - 1)) == 0);
     ASSERT((wy1 & (subdiv - 1)) == 0);
-
     float xf = 8.0f/sx;
     float yf = 8.0f/sy;
     float xs = subdiv*xf;
@@ -85,14 +84,17 @@ uint renderwaterlod(int x, int y, int z, uint size)
         float dist;
         if(player1->o.x >= x && player1->o.x < x + size &&
            player1->o.y >= y && player1->o.y < y + size)
-            dist = fabs(player1->o.z - float(z));
+            dist = player1->o.z - float(z);
         else
         {
             vec t(x + size/2, y + size/2, z);
             dist = t.dist(player1->o) - size/2;
         }
-        uint subdiv = 1 << ((uint)watersubdiv + (uint)dist / (128 << (uint)waterlod));
-        if(!subdiv) subdiv = ~0;
+        uint subdiv = watersubdiv + int(dist) / (128 << waterlod);
+        if(subdiv >= 8*sizeof(subdiv)) 
+            subdiv = ~0;
+        else
+            subdiv = 1 << subdiv;
         if(subdiv < size * 2)
             renderwater(min(subdiv, size), x, y, z, size);
         return subdiv;
@@ -135,7 +137,7 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
     case MAT_WATER:
         if(orient != O_TOP)
             return false;
-        if(faceedges(c, O_TOP) == F_SOLID && touchingface(c, O_BOTTOM))
+        if(faceedges(c, O_TOP) == F_SOLID && touchingface(c, O_TOP))
             return false;
         else
         {
@@ -158,9 +160,12 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         switch(matsurf.material)
         {
         case MAT_WATER:
+            if(player1->o.z < matsurf.z + matsurf.size)
+                break;
+
             if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
-               break;
+            break;
         }
     }
 }
