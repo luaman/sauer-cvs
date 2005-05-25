@@ -9,6 +9,7 @@ particle particles[MAXPARTICLES], *parlist = NULL, *parempty = NULL;
 bool parinit = false;
 
 VAR(maxparticles, 100, 5000, MAXPARTICLES-500);
+VAR(particlesize, 20, 100, 500);
 
 void newparticle(vec &o, vec &d, int fade, int type)
 {
@@ -67,7 +68,7 @@ void render_particles(int time)
         glBegin(GL_QUADS);
         
         glColor3d(pt->r, pt->g, pt->b);
-        float sz = pt->sz*4; 
+        float sz = pt->sz*4*particlesize/100.0f; 
         // perf varray?
         glTexCoord2f(0.0, 1.0); glVertex3d(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
         glTexCoord2f(1.0, 1.0); glVertex3d(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
