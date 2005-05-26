@@ -30,6 +30,11 @@ void check_calclight_canceled()
 
 void show_lightmap_progress()
 {
+    uint lumels = 0;
+    loopv(lightmaps) lumels += lightmaps[i].lumels;
+    float bar1 = float(progress) / float(wtris / 2),
+          bar2 = float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH);
+          
     glDisable(GL_DEPTH_TEST);
     invertperspective();
     glPushMatrix();
@@ -45,15 +50,29 @@ void show_lightmap_progress()
 
     glColor3f(0, 0.75, 0);
     glVertex2f(0, 0);
-    glVertex2f(float(progress) * VIRTW / float(wtris / 2), 0);
-    glVertex2f(float(progress) * VIRTW / float(wtris / 2), 2*FONTH);
+    glVertex2f(bar1 * VIRTW, 0);
+    glVertex2f(bar1 * VIRTW, 2*FONTH);
     glVertex2f(0, 2*FONTH);
+
+    glColor3f(0, 0, 0);
+    glVertex2i(0, 2*FONTH);
+    glVertex2i(VIRTW, 2*FONTH);
+    glVertex2i(VIRTW, 4*FONTH);
+    glVertex2i(0, 4*FONTH);
+    
+    glColor3f(1, 0, 0);
+    glVertex2f(0, 2*FONTH);
+    glVertex2f(bar2 * VIRTW, 2*FONTH);
+    glVertex2f(bar2 * VIRTW, 4*FONTH);
+    glVertex2f(0, 4*FONTH);
 
     glEnd();
 
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D); 
-    draw_textf("%d%%", VIRTW / 2, FONTH / 2, 2, progress * 100 / (wtris / 2));
+    draw_textf("%d%%", VIRTW/2, FONTH/2, 2, int(bar1 * 100));
+    sprintf_sd(buf)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100)); 
+    draw_text(buf, VIRTW/2, 2*FONTH + FONTH/2, 2);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 
