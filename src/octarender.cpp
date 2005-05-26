@@ -115,7 +115,7 @@ void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
     genvertp(c, p, p2, p3, plane2);
     genvertp(c, p, p1, p3, plane3);
 
-	if(!threeplaneintersect(plane1, plane2, plane3, v)) v = p;
+    if(!threeplaneintersect(plane1, plane2, plane3, v)) v = p;
     //ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
     //ASSERT(v.x>=0 && v.x<=8);
     //ASSERT(v.y>=0 && v.y<=8);
@@ -236,7 +236,7 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size)
     }
     return true;
 }
-    
+
 bool visibleface(cube &c, int orient, int x, int y, int z, int size)
 {
     //if(last==&c) __asm int 3;
@@ -248,7 +248,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size)
     if(!o.children)
     {
         if(lusize > size) return !isentirelysolid(o);
-        if(isempty(o) || !touchingface(o, opposite(orient))) return true; 
+        if(isempty(o) || !touchingface(o, opposite(orient))) return true;
         uint ofe = faceedges(o, opposite(orient));
         if(ofe==cfe) return false;
         return faceedgegt(cfe, ofe);
@@ -374,7 +374,7 @@ struct sortval
 };
 
 inline bool htcmp (const sortkey &x, const sortkey &y)
-{ 
+{
     return x.tex == y.tex && x.lmid == y.lmid;
 }
 
@@ -706,11 +706,11 @@ void renderq()
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
         setupTMU();
-        
+
         glActiveTextureARB(GL_TEXTURE1_ARB);
         glClientActiveTextureARB(GL_TEXTURE1_ARB);
-        
-        glEnable(GL_TEXTURE_2D); 
+
+        glEnable(GL_TEXTURE_2D);
         setupTMU();
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
@@ -727,7 +727,7 @@ void renderq()
             glActiveTextureARB(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
             glActiveTextureARB(GL_TEXTURE0_ARB);
-           
+
             loopl(3) if (va->eslist[i].length[l])
             {
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -747,10 +747,10 @@ void renderq()
     if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
     //glDisableClientState(GL_COLOR_ARRAY);
-   
+
     glActiveTextureARB(GL_TEXTURE1_ARB);
     glClientActiveTextureARB(GL_TEXTURE1_ARB);
-    glDisable(GL_TEXTURE_2D); 
+    glDisable(GL_TEXTURE_2D);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glActiveTextureARB(GL_TEXTURE0_ARB);
     glClientActiveTextureARB(GL_TEXTURE0_ARB);
@@ -854,109 +854,100 @@ void subdividecube(cube &c, int x, int y, int z, int size)
     validatechildren(c.children);
 };
 
-bool mergeside(plane &d1, plane &d2, plane &s)
+#define octaindex(x,y,z,d)  (octadim(D(d))*(z)+octadim(C(d))*(y)+octadim(R(d))*(x))
+#define oppositeocta(i,d)   (i^octadim(D(d)))
+
+int firstcube(cube *c, int x, int y, int z, int d)
 {
-    if(!s.isnormalized()) return true;
-    else if(d1==s || d2==s) return true;
-    else if(!d1.isnormalized()) d1 = s;
-    else if(!d2.isnormalized()) d2 = s;
-    else return false;
-    return true;
+    int j = octaindex(x, y, z, d);
+    if(isempty(c[j])) j = oppositeocta(j, d);
+    if(isempty(c[j])) return -1;
+    return j;
 };
 
-bool mergetris(plane *d, plane *s, cube &dest, cube &src)
+bool lineup(int &a, int &b, int &c)
 {
-    if(src.material != MAT_AIR && 
-       dest.material != MAT_AIR && 
-       src.material != dest.material)
-        return false;
-    if(isempty(src)) return true;
-    uchar *t = dest.texture, *u = src.texture;
-    for(int i=0, j=0; i<12; i+=2, j++)
-        if((d[i].isnormalized() && t[j] != u[j]) ||
-           !mergeside(d[i], d[i+1], s[i]) ||
-           !mergeside(d[i], d[i+1], s[i+1])) return false;
-        else t[j] = u[j];
-    return true;
+    if(a<0 && c<0) return true;
+    if(a<0) a = b-(c-b);
+    else
+    if(c<0) c = b-(a-b);
+    return a == b-(c-b) && a>=0 && c>=0 && a<=16 && c<=16;
 };
 
-bool goodsplits(plane *t, ivec &o, int size)
-{
-    loopi(6) if(t[i*2].isnormalized() && t[i*2+1].isnormalized())
-    {
-        int a=0, b=0;
-        loopk(4)
-        {
-            ivec &p = *(ivec *)cubecoords[fv[i][k]];
-            int e = edgevalue(dimension(i), t[i*2], o, p, size);
-            int f = edgevalue(dimension(i), t[i*2+1], o, p, size);
-            if(e<f) a++; else if(e>f) b++;
-        };
-        if(a!=1 || b!=1) return false;
-    };
-    return true;
-};
+bool match(int a, int b, int &s) { s = a; if(a<0) s = b; return s == b || b<0; };
 
-bool innertest(cube &c)
-{
-    loop(d, 3) loop(z,2) loop(y,2) loop(x,2)
-    {
-        int e = d*4+y*2+x;
-        int j = octadim(D(d))*z+octadim(C(d))*y+octadim(R(d))*x;
-        if(isempty(c.children[j])) j ^= octadim(D(d));
-        int l = edgeget(c.edges[e], z);
-        int s = (edgeget(c.children[j].edges[e], z)>>1)+octacoord(D(d), j)*4;
-        if((z && l<s) || (z==0 && s<l))  return false;
-    };
-    return true;
-};
+bool quadmatch(int a, int b, int c, int d, int &s) { int x, y; return match(a,b,x) && match(c,d,y) && match(x,y,s); };
 
-bool remip(cube &c, int x, int y, int z, int size)
+VAR(debug, 0, 0, 1);
+
+bool remip(cube &parent)
 {
-    if(c.children==NULL) return true;
+    cube *ch = parent.children;
+    if(ch==NULL) return true;
     bool r = true, e = true;
-    plane clip[12], childclips[8 * 12];
     loopi(8)
     {
-        ivec o(i, x, y, z, size>>1);
-        cube &child = c.children[i];
-        freeclipplanes(child);
-        child.clip = &childclips[i*12];
-        genclipplanes(child, o.x, o.y, o.z, size>>1, child.clip, false);
-        if(!remip(child, o.x, o.y, o.z, size>>1)) r = false;
-        else if(!isempty(child)) e = false;
+        if(!remip(ch[i])) r = false;
+        else
+        if(!isempty(ch[i])) e = false;
     };
-    if(!r) goto failed;
-    emptyfaces(c);
-    if(!e)
+    if(!r) return false;
+    if(debug) printf("------------\n");
+    if(!e) loopi(6)
     {
-        ivec o(x, y, z);
-        plane d[12];
-        freeclipplanes(c);
-        genclipplanes(c, x, y, z, size, clip, false);
-        c.clip = clip;
-        loopi(12) d[i].x = d[i].y = d[i].z = d[i].offset = 0.0f;
-        loopi(8) if(!mergetris(d, c.children[i].clip, c, c.children[i])) goto failed;
-        if(!tris2cube(c, d, o, size, true)) goto failed;
-        if(!innertest(c)) goto failed;
-        genclipplanes(c, x, y, z, size, c.clip);
-        if(!mergetris(c.clip, d, c, c)) goto failed;
-        if(!goodsplits(c.clip, o, size>>3)) goto failed;
-    };
-    c.clip = NULL;
-    loopi(8) c.children[i].clip = NULL;
-    freeocta(c.children);
-    c.children = NULL;
-    return true;
+        int e[4][4], t[4], q[4], m[4];
+        int d = dimension(i), dc = dimcoord(i);
+        int n = faceconvexity(parent,i)>0 ? 3 : 0;
 
-failed:
-    c.material = MAT_AIR;
-    if(c.clip == clip) c.clip = NULL; 
-    loopi(8) c.children[i].clip = NULL;
-    return false;
+        loopk(4)
+        {
+            q[k] = firstcube(ch, k&1, (k&2)>>1, dc, d);
+            if(q[k]<0) t[k] = m[k] = -1;
+            else
+            {
+                t[k] = ch[q[k]].texture[i];
+                m[k] = ch[q[k]].material;
+            };
+        };
+        loop(x, 4) loop(y, 4) e[y][x] = -1;
+        loopk(4) if(q[k]>=0) loop(x, 2) loop(y, 2)
+            e[y+(k&2)][x+(k&1)*2] = edgeget(ch[q[k]].edges[d*4 + y*2 + x], dc)+8*octacoord(d, q[k]);
+
+        if(debug)loopk(4) printf("[%d] %d = t %d, q %d\n", i, k, t[k], q[k]);
+        if(debug)loopk(4) loopj(4) printf("e %d %d = %d\n", k, j, e[k][j]);
+
+        int mat, tex, center, w, x, y, z;
+        if(!quadmatch(e[1][1], e[1][2], e[2][1], e[2][2], center) ||
+           !quadmatch(t[0], t[1], t[2], t[3], tex) ||
+           !quadmatch(m[0], m[1], m[2], m[3], mat) ||
+           !match(e[0][1], e[0][2], w) ||
+           !match(e[1][0], e[2][0], x) ||
+           !match(e[3][1], e[3][2], y) ||
+           !match(e[1][3], e[2][3], z) ||
+           !lineup(e[0][0], w, e[0][3]) ||
+           !lineup(e[0][0], x, e[3][0]) ||
+           !lineup(e[3][0], y, e[3][3]) ||
+           !lineup(e[0][3], z, e[3][3]) ||
+           e[0][0]&1==1 ||
+           e[0][3]&1==1 ||
+           e[3][0]&1==1 ||
+           e[3][3]&1==1 ||
+           !lineup(e[n][0], center, e[3-n][3])) return false;
+
+        if(debug)printf("w %d, x %d, y %d, z %d, center %d, tex %d\n", w, x, y, z, center, tex);
+
+        loopk(4) edgeset(parent.edges[d*4+k], dc, e[((k&2)>>1)*3][(k&1)*3]>>1);
+        if(debug)loopk(4) printf("<%d> pe = %d\n", k, edgeget(parent.edges[d*4+k], dc));
+        parent.texture[i] = tex;
+        parent.material = mat;
+    };
+    discardchildren(parent);
+    if(e) emptyfaces(parent);
+    return true;
 };
 
-void remop() { loopi(8) { ivec o(i, 0, 0, 0, hdr.worldsize>>1); remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>1); } allchanged(); };
+void remop() { loopi(8) remip(worldroot[i]); allchanged(); };
 
 COMMANDN(remip, remop, ARG_NONE);
+
 
