@@ -368,6 +368,8 @@ void send_welcome(int n)
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     send(n, packet);
+    if(clients[n].type == ST_LOCAL)
+        enet_packet_destroy(packet);
 };
 
 void multicast(ENetPacket *packet, int sender)

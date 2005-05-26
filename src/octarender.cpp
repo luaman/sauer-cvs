@@ -309,6 +309,33 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
     return planes;
 }
 
+void genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, bool bounded)
+{
+    vec v[8];
+    bool useface[8];
+    calcverts(c, x, y, z, size, v, useface);
+    loopi(12) clip[i].x = clip[i].y = clip[i].z = clip[i].offset = 0.0f;
+    loopi(6) if(useface[i]) genclipplane(c, i, v, &clip[2*i]);
+
+    if(!bounded) return;
+    vec mx(x, y, z), mn(x+size, y+size, z+size);
+    loopi(8)
+    {
+        if(!vertused[i]) calcvert(c, x, y, z, size, v[i], i);
+        loopj(3)
+        {
+            mn[j] = min(mn[j], v[i][j]);
+            mx[j] = max(mx[j], v[i][j]);
+        }
+    }
+    loopi(6) if(!useface[i])
+    {
+        plane &bound = clip[2*i];
+        bound[dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
+        bound.offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
+    }
+}
+
 int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r)
 {
     int ci = 0;
@@ -362,7 +389,6 @@ vector<materialsurface> matsurfs;
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
     vertcheck();
-    vec mx(x, z, y), mn(x+size, z+size, y+size);
     //int col = *((int *)(&c.colour[0]));
     int cin[8];
     bool useface[6];
@@ -375,6 +401,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
     {
+        curtris += 2;
         ++visible;
         usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
         loopk(4)
@@ -406,56 +433,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
             iv.add(index);
             if(++vertexuses[coord] == 1)
                 cin[coord] = index;
-        }
-    }
-
-    loopi(8) if(vertexuses[i]) loopj(3)
-    {
-        mn[j] = min(mn[j], verts[cin[i]][j]);
-        mx[j] = max(mx[j], verts[cin[i]][j]);
-    };
-
-    swap(float, mn.y, mn.z);
-    swap(float, mx.y, mx.z);
-
-    if(visible > 0)
-    {
-        newclipplanes(c);
-        loopi(6) if(useface[i])
-        {
-            curtris += 2;
-
-            vec p[5];
-            loopk(5) p[k] = verts[cin[faceverts(c,i,k&3)]];
-            loopk(5) swap(float, p[k].y, p[k].z);
-
-            // and gen clipping planes while we're at it
-            if(p[0] == p[1])
-                vertstoplane(p[2], p[3], p[1], c.clip[i * 2]);
-            else
-            if(p[1] == p[2])
-                vertstoplane(p[2], p[3], p[0], c.clip[i * 2]);
-            else
-            {
-                vertstoplane(p[2], p[0], p[1], c.clip[i*2]);
-                if(faceconvexity(c, i) != 0) vertstoplane(p[3], p[4], p[2], c.clip[i*2+1]);
-            }
-        }
-        loopi(8) if(!vertexuses[i])
-        {
-            vec v;
-            calcvert(c, x, y, z, size, v, i);
-            loopj(3)
-            {
-                mn[j] = min(mn[j], v[j]);
-                mx[j] = max(mx[j], v[j]);
-            }
-        }
-        loopi(6) if(!useface[i])
-        {
-            plane &clip = c.clip[2*i];
-            clip[dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
-            clip.offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
         }
     }
 };
@@ -808,7 +785,6 @@ bool tris2cube(cube &c, plane *tris, ivec &o, int size, bool strict)
 {
     float s = (float)size/8;
     solidfaces(c);
-    if(tris)
     loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
     {
         ivec &p = *(ivec *)cubecoords[fv[i][k]];
@@ -887,11 +863,12 @@ bool mergeside(plane &d1, plane &d2, plane &s)
 
 bool mergetris(plane *d, plane *s, cube &dest, cube &src)
 {
+    if(src.material != MAT_AIR && 
+       dest.material != MAT_AIR && 
+       src.material != dest.material)
+        return false;
     if(isempty(src)) return true;
     uchar *t = dest.texture, *u = src.texture;
-    if(!d || !s)
-        memcpy(t, u, sizeof(dest.texture));
-    else
     for(int i=0, j=0; i<12; i+=2, j++)
         if((d[i].isnormalized() && t[j] != u[j]) ||
            !mergeside(d[i], d[i+1], s[i]) ||
@@ -902,7 +879,6 @@ bool mergetris(plane *d, plane *s, cube &dest, cube &src)
 
 bool goodsplits(plane *t, ivec &o, int size)
 {
-    if(t)
     loopi(6) if(t[i*2].isnormalized() && t[i*2+1].isnormalized())
     {
         int a=0, b=0;
@@ -936,30 +912,45 @@ bool remip(cube &c, int x, int y, int z, int size)
 {
     if(c.children==NULL) return true;
     bool r = true, e = true;
+    plane clip[12], childclips[8 * 12];
     loopi(8)
     {
         ivec o(i, x, y, z, size>>1);
-        if(!remip(c.children[i], o.x, o.y, o.z, size>>1)) r = false;
-        else if(!isempty(c.children[i])) e = false;
+        cube &child = c.children[i];
+        freeclipplanes(child);
+        child.clip = &childclips[i*12];
+        genclipplanes(child, o.x, o.y, o.z, size>>1, child.clip, false);
+        if(!remip(child, o.x, o.y, o.z, size>>1)) r = false;
+        else if(!isempty(child)) e = false;
     };
-    if(!r) return false;
+    if(!r) goto failed;
     emptyfaces(c);
-    //loopi(3) c.colour[i] = c.children[0].colour[i];
     if(!e)
     {
         ivec o(x, y, z);
         plane d[12];
+        freeclipplanes(c);
+        genclipplanes(c, x, y, z, size, clip, false);
+        c.clip = clip;
         loopi(12) d[i].x = d[i].y = d[i].z = d[i].offset = 0.0f;
-        loopi(8) if(!mergetris(d, c.children[i].clip, c, c.children[i])) return false;
-        if(!tris2cube(c, d, o, size, true)) return false;
-        if(!innertest(c)) return false;
-        gencubeverts(c, x, y, z, size);
-        if(!mergetris(c.clip, d, c, c)) return false;
-        if(!goodsplits(c.clip, o, size>>3)) return false;
+        loopi(8) if(!mergetris(d, c.children[i].clip, c, c.children[i])) goto failed;
+        if(!tris2cube(c, d, o, size, true)) goto failed;
+        if(!innertest(c)) goto failed;
+        genclipplanes(c, x, y, z, size, c.clip);
+        if(!mergetris(c.clip, d, c, c)) goto failed;
+        if(!goodsplits(c.clip, o, size>>3)) goto failed;
     };
+    c.clip = NULL;
+    loopi(8) c.children[i].clip = NULL;
     freeocta(c.children);
     c.children = NULL;
     return true;
+
+failed:
+    c.material = MAT_AIR;
+    if(c.clip == clip) c.clip = NULL; 
+    loopi(8) c.children[i].clip = NULL;
+    return false;
 };
 
 void remop() { loopi(8) { ivec o(i, 0, 0, 0, hdr.worldsize>>1); remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>1); } allchanged(); };

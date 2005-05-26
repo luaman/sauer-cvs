@@ -138,26 +138,37 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
         }
         if(&c != source && !isempty(c))
         {
-            if((isentirelysolid(c) && (source == NULL || dist > 0)) || lusize == size) return c;
-            //float m = 0;
-            if(c.clip)
-            loopi(12) // assumes null c.clip[i] == 0,0,0
+            if(lusize == size) return c;
+            else
+            if(isentirelysolid(c))
             {
-                float a = ray.dot(c.clip[i]);
-                if(a>=0) continue;
-                float f = -c.clip[i].dist(v)/a;
-                if(f + dist < 0) continue;
-                vec d(ray);
-                d.mul(f+1);
-                d.add(v);
-                loopj(12) if(c.clip[j].dist(d)>0) goto nextplane;
-                dist += f+1;
-                v = d;
-                return c;
-                //if(f>=m) { m = f; s = i>>1; };
-            nextplane:
-                 ;
-            };
+                if(source == NULL || dist > 0) return c;
+            }
+            else
+            {
+                if(!c.clip)
+                {
+                    newclipplanes(c);
+                    genclipplanes(c, lu.x, lu.y, lu.z, lusize, c.clip);
+                }
+                loopi(12) // assumes null c.clip[i] == 0,0,0
+                {
+                    float a = ray.dot(c.clip[i]);
+                    if(a>=0) continue;
+                    float f = -c.clip[i].dist(v)/a;
+                    if(f + dist < 0) continue;
+                    vec d(ray);
+                    d.mul(f+1);
+                    d.add(v);
+                    loopj(12) if(c.clip[j].dist(d)>0) goto nextplane;
+                    dist += f+1;
+                    v = d;
+                    return c;
+                    //if(f>=m) { m = f; s = i>>1; };
+                nextplane:
+                    ;
+                };
+            }
             //vec d(ray);
             //d.mul(m+1);
             //d.add(v);

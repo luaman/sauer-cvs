@@ -77,6 +77,11 @@ int numkm = 0;
 
 void keymap(char *code, char *key, char *action)
 {
+    if(numkm >= 256)
+    {
+       conoutf("too many keymap entries");
+       return;
+    }
     keyms[numkm].code = atoi(code);
     keyms[numkm].name = newstring(key);
     keyms[numkm++].action = newstringbuf(action);
