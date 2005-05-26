@@ -33,7 +33,7 @@ void show_lightmap_progress()
     uint lumels = 0;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
     float bar1 = float(progress) / float(wtris / 2),
-          bar2 = float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH);
+          bar2 = lightmaps.length() ? float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH) : 0;
           
     glDisable(GL_DEPTH_TEST);
     invertperspective();
