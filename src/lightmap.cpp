@@ -290,8 +290,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
     if(!close_lights.length())
         return;
 
-    show_lightmap_progress();
-
     loopi(8)
     {
         ivec o(i, cx, cy, cz, size);
@@ -305,7 +303,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             calcverts(c[i], o.x, o.y, o.z, size, verts, usefaces);
             loopj(6) if(usefaces[j])
             {
-                ++progress;
+                if((progress++ % (wtris < 200 ? 1 : wtris / 2 / 100)) == 0)
+                    show_lightmap_progress();
                 plane planes[2];
                 genclipplane(c[i], j, verts, planes);
                 const plane &lm_plane = planes[0];
