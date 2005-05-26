@@ -10,6 +10,41 @@ VAR(aalights, 0, 1, 1);
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights, close_lights;
+static uint progress = 0;
+
+void show_lightmap_progress()
+{
+    glDisable(GL_DEPTH_TEST);
+    invertperspective();
+    glPushMatrix();
+    glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
+
+    glBegin(GL_QUADS);
+
+    glColor3f(0, 0, 1);
+    glVertex2i(0, 0);
+    glVertex2i(VIRTW, 0);
+    glVertex2i(VIRTW, 2*FONTH);
+    glVertex2i(0, 2*FONTH);
+
+    glColor3f(0, 1, 0);
+    glVertex2f(0, 0);
+    glVertex2f(float(progress) * VIRTW / float(wtris / 2), 0);
+    glVertex2f(float(progress) * VIRTW / float(wtris / 2), 2*FONTH);
+    glVertex2f(0, 2*FONTH);
+
+    glEnd();
+
+    glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D); 
+    draw_textf("%d%%", VIRTW / 2, FONTH / 2, 2, progress * 100 / (wtris / 2));
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+
+    glPopMatrix();
+    glEnable(GL_DEPTH_TEST);
+    SDL_GL_SwapBuffers();
+}
 
 struct compresskey
 {
@@ -255,6 +290,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
     if(!close_lights.length())
         return;
 
+    show_lightmap_progress();
+
     loopi(8)
     {
         ivec o(i, cx, cy, cz, size);
@@ -268,6 +305,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             calcverts(c[i], o.x, o.y, o.z, size, verts, usefaces);
             loopj(6) if(usefaces[j])
             {
+                ++progress;
                 plane planes[2];
                 genclipplane(c[i], j, verts, planes);
                 const plane &lm_plane = planes[0];
@@ -380,6 +418,7 @@ void calclight()
     //if(noedit()) return;
     resetlightmaps();
     clear_lmids(worldroot);
+    progress = 0;
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
     loopv(lightmaps)

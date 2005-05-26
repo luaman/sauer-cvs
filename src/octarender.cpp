@@ -392,7 +392,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     //int col = *((int *)(&c.colour[0]));
     int cin[8];
     bool useface[6];
-    int visible = 0;
     int vertexuses[8];
 
     loopi(8) vertexuses[i] = 0;
@@ -402,7 +401,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
     {
         curtris += 2;
-        ++visible;
         usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
         loopk(4)
         {
