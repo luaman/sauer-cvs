@@ -11,6 +11,22 @@ static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights, close_lights;
 static uint progress = 0;
+static bool canceled = false;
+
+void check_calclight_canceled()
+{
+    SDL_Event event;
+    while(SDL_PollEvent(&event))
+    {
+        switch(event.type)
+        {
+        case SDL_KEYDOWN:
+            if(event.key.keysym.sym == SDLK_ESCAPE)
+                canceled = true;
+            break;
+        }
+    }
+}
 
 void show_lightmap_progress()
 {
@@ -272,6 +288,10 @@ void clear_lmids(cube *c)
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
+    check_calclight_canceled();
+    if(canceled)
+        return;
+
     close_lights.setsize(0);
     loopv(ents)
     {
@@ -418,6 +438,7 @@ void calclight()
     resetlightmaps();
     clear_lmids(worldroot);
     progress = 0;
+    canceled = false;
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
     loopv(lightmaps)
@@ -428,10 +449,13 @@ void calclight()
     }
     initlights();
     allchanged();
-    conoutf("generated %d lightmaps using %d%% of %d textures",
-        total,
-        lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
-        lightmaps.length());
+    if(canceled == true)
+        conoutf("calclight aborted");
+    else
+        conoutf("generated %d lightmaps using %d%% of %d textures",
+            total,
+            lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
+            lightmaps.length());
 }
 
 COMMAND(calclight, ARG_NONE);
