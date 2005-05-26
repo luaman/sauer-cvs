@@ -27,7 +27,7 @@ void show_lightmap_progress()
     glVertex2i(VIRTW, 2*FONTH);
     glVertex2i(0, 2*FONTH);
 
-    glColor3f(0, 1, 0);
+    glColor3f(0, 0.75, 0);
     glVertex2f(0, 0);
     glVertex2f(float(progress) * VIRTW / float(wtris / 2), 0);
     glVertex2f(float(progress) * VIRTW / float(wtris / 2), 2*FONTH);
