@@ -28,7 +28,7 @@ void check_calclight_canceled()
     }
 }
 
-void show_lightmap_progress()
+void show_calclight_progress()
 {
     uint lumels = 0;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
@@ -343,7 +343,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             loopj(6) if(usefaces[j])
             {
                 if((progress++ % (wtris < 200 ? 1 : wtris / 2 / 100)) == 0)
-                    show_lightmap_progress();
+                    show_calclight_progress();
                 plane planes[2];
                 genclipplane(c[i], j, verts, planes);
                 const plane &lm_plane = planes[0];
