@@ -132,6 +132,7 @@ extern void editdrag(bool on);
 extern void cancelsel();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();
+extern void discardchildren(cube &c);
 
 // octarender
 extern void vaclearc(cube *c);
