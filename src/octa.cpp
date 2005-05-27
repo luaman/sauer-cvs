@@ -163,18 +163,11 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
                     dist += f+0.1;
                     v = d;
                     return c;
-                    //if(f>=m) { m = f; s = i>>1; };
                 nextplane:
                     ;
                 };
             }
-            //vec d(ray);
-            //d.mul(m+1);
-            //d.add(v);
-            //loopi(18) if(c.clip[i].dist(d)>0) goto next;
-            //v = d;
         };
-        //next:
         float dx = fabs((lusize*xs+lu.x-v.x)*xd);
         float dy = fabs((lusize*ys+lu.y-v.y)*yd);
         float dz = fabs((lusize*zs+lu.z-v.z)*zd);
@@ -182,9 +175,9 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
         if(dx<dy && dx<dz) { m = dx; s = O_RIGHT-xs; }
         else if(dy<dz)     { m = dy; s = O_FRONT-ys; }
         vec d(ray);
-        d.mul(m+1);
+        d.mul(m+0.1);
         v.add(d);
-        dist += m+1;
+        dist += m+0.1;
         last = &c;
         if(orient!=NULL)
         {
