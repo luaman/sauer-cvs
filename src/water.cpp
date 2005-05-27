@@ -15,7 +15,7 @@ int wx1, wy1, wx2, wy2, wsize;
 inline void vertwv(float v1, float v2, float v3, float t1, float t2, float t)
 {
     glTexCoord2f(t1, t2);
-    glVertex3f(v1, v2-1.1f-(float)sin((v1-wx1)/wsize*(v3-wy1)/wsize*(v1-wx2)*(v3-wy2)*M_PI*19/23+t)*0.8f, v3);
+    glVertex3f(v1, v2-1.1f-(float)sin((v1-wx1)/wsize*(v3-wy1)/wsize*(v1-wx2)*(v3-wy2)*59/23+t)*0.8f, v3);
 };
 
 inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
