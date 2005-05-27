@@ -60,7 +60,7 @@ void show_calclight_progress()
     glVertex2i(VIRTW, 4*FONTH);
     glVertex2i(0, 4*FONTH);
     
-    glColor3f(1, 0, 0);
+    glColor3f(0.75, 0, 0);
     glVertex2f(0, 2*FONTH);
     glVertex2f(bar2 * VIRTW, 2*FONTH);
     glVertex2f(bar2 * VIRTW, 4*FONTH);

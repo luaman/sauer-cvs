@@ -1,19 +1,19 @@
 #include "cube.h"
 
-VAR(watersubdiv, 0, 2, 10);
-VAR(waterlod, 0, 0, 3);
+VAR(watersubdiv, 0, 2, 3);
+VAR(waterlod, 0, 1, 3);
+VAR(waterwaves, 0, 1, 1);
 
-inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
+inline void vertw(float v1, float v2, float v3, float t1, float t2)
 {
     glTexCoord2f(t1, t2);
-    glVertex3f(v1, v2-0.8f-(float)sin(v1*v3*0.1+t)*0.8f, v3);
-//    vertcheck();
-//    vertex &v = verts[curvert++];
-//    v.x = v1;
-//    v.y = v2-0.8f-(float)sin(v1*v3*0.1+t)*0.8f;
-//    v.z = v3;
-//    v.u = t1;
-//    v.v = t2;
+    glVertex3f(v1, v2-1.6f, v3);
+};
+
+inline void vertwv(float v1, float v2, float v3, float t1, float t2, float t)
+{
+    glTexCoord2f(t1, t2);
+    glVertex3f(v1, v2-0.8f-(float)sin(v1*v3*0.1f+t)*0.8f, v3);
 };
 
 inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
@@ -21,16 +21,10 @@ inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
-int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
+void renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
 {
-    if(wx1<0) return 0;
+    if(wx1<0) return;
 
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_SRC_COLOR);
-    //glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glColor3f(0.5f, 0.5f, 0.5f);
     int sx, sy;
     glBindTexture(GL_TEXTURE_2D, lookuptexture(DEFAULT_LIQUID, sx, sy));
     
@@ -43,64 +37,78 @@ int renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
     float t1 = lastmillis/300.0f;
     float t2 = lastmillis/4000.0f;
     int wx2 = wx1 + size,
-        wy2 = wy1 + size,
-        nquads = 0;
-      
+        wy2 = wy1 + size;
+    
+    if(waterwaves && subdiv < size)
     for(int xx = wx1; xx<wx2; xx += subdiv)
     {
+        float xo = xf*(xx+t2);
         glBegin(GL_TRIANGLE_STRIP);
         for(int yy = wy1; yy<wy2; yy += subdiv)
         {
-            float xo = xf*(xx+t2);
             float yo = yf*(yy+t2);
             if(yy==wy1)
             {
-                vertw(xx,             z, yy, dx(xo),    dy(yo), t1);
-                vertw(xx+subdiv, z, yy, dx(xo+xs), dy(yo), t1);
+                vertwv(xx,             z, yy, dx(xo),    dy(yo), t1);
+                vertwv(xx+subdiv, z, yy, dx(xo+xs), dy(yo), t1);
             };
-            vertw(xx,             z, yy+subdiv, dx(xo),    dy(yo+ys), t1);
-            vertw(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
+            vertwv(xx,             z, yy+subdiv, dx(xo),    dy(yo+ys), t1);
+            vertwv(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
         };
         glEnd();
         int n = (wy2-wy1-1)/subdiv;
-        nquads += n;
-        //n = (n+2)*2;
-        //curvert -= n;
-        //glVertexPointer(3, GL_FLOAT, sizeof(vertex), &verts[curvert].x);
-        //glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &verts[curvert].u);
-        //glDrawArrays(GL_TRIANGLE_STRIP, curvert, n);
-    };
-    //glDisableClientState(GL_VERTEX_ARRAY);
-    //glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
-    return nquads;
+        n = (n+2)*2;
+        xtraverts += n;
+    }
+    else 
+    {
+        glBegin(GL_POLYGON);
+        vertw(wx1, z, wy1, dx(xf*(wx1+t2)), dy(xf*(wy1+t2)));
+        vertw(wx2, z, wy1, dx(xf*(wx2+t2)), dy(xf*(wy1+t2)));
+        vertw(wx2, z, wy2, dx(xf*(wx2+t2)), dy(xf*(wy2+t2)));
+        vertw(wx1, z, wy2, dx(xf*(wx1+t2)), dy(xf*(wy2+t2)));
+        glEnd();
+        xtraverts += 4;
+    }
 };
+
+uint calcwatersubdiv(int x, int y, int z, uint size)
+{
+    float dist;
+    if(player1->o.x >= x && player1->o.x < x + size &&
+       player1->o.y >= y && player1->o.y < y + size)
+        dist = player1->o.z - float(z);
+    else
+    {
+        vec t(x + size/2, y + size/2, z);
+        dist = t.dist(player1->o) - size/2;
+    }
+    uint subdiv = watersubdiv + int(dist) / (32 << waterlod);
+    if(subdiv >= 8*sizeof(subdiv))
+        subdiv = ~0;
+    else
+        subdiv = 1 << subdiv;
+    return subdiv;
+}
 
 uint renderwaterlod(int x, int y, int z, uint size)
 {
-    if(size <= (uint)(128 << waterlod))
+    if(size <= (uint)(32 << waterlod))
     {
-        float dist;
-        if(player1->o.x >= x && player1->o.x < x + size &&
-           player1->o.y >= y && player1->o.y < y + size)
-            dist = player1->o.z - float(z);
-        else
-        {
-            vec t(x + size/2, y + size/2, z);
-            dist = t.dist(player1->o) - size/2;
-        }
-        uint subdiv = watersubdiv + int(dist) / (128 << waterlod);
-        if(subdiv >= 8*sizeof(subdiv)) 
-            subdiv = ~0;
-        else
-            subdiv = 1 << subdiv;
+        uint subdiv = calcwatersubdiv(x, y, z, size);
         if(subdiv < size * 2)
             renderwater(min(subdiv, size), x, y, z, size);
         return subdiv;
     }
     else
     {
+        uint subdiv = calcwatersubdiv(x, y, z, size);
+        if(subdiv >= size)
+        {
+            if(subdiv < size * 2)
+                renderwater(size, x, y, z, size);
+            return subdiv;
+        }
         uint childsize = size / 2,
              subdiv1 = renderwaterlod(x, y, z, childsize),
              subdiv2 = renderwaterlod(x + childsize, y, z, childsize),
@@ -137,11 +145,11 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
     case MAT_WATER:
         if(orient != O_TOP)
             return false;
-        if(faceedges(c, O_TOP) == F_SOLID && touchingface(c, O_TOP))
+        if(faceedges(c, orient) == F_SOLID && touchingface(c, orient))
             return false;
         else
         {
-           cube &above = lookupcube(x, y, z + size, -size);
+           cube &above = neighbourcube(x, y, z, size, -size, orient);
            if(above.material != MAT_AIR)
                return false; 
            return true;
@@ -154,6 +162,13 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
+    if(!matsurfs)
+        return;
+
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_SRC_COLOR);
+    glColor3f(0.5f, 0.5f, 0.5f);
     loopi(matsurfs)
     {
         materialsurface &matsurf = matbuf[i];
@@ -163,10 +178,12 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             if(player1->o.z < matsurf.z + matsurf.size)
                 break;
 
-            if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
+            if(!waterwaves || renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
             break;
         }
     }
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
 }
 
