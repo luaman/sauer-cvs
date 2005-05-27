@@ -213,14 +213,14 @@ bool collapsedface(uint cfe)
 static cube *vc;
 static ivec vo;
 static int vsize;
+static uchar vmat;
 
 bool occludesface(cube &c, int orient, int x, int y, int z, int size)
 {
     if(!c.children) {
-         if(isentirelysolid(c))
-             return true;
-         if(isempty(c))
-             return false;
+         if(isentirelysolid(c)) return true;
+         if(vmat != MAT_AIR && c.material == vmat) return true;
+         if(isempty(c)) return false;
          return touchingface(c, orient) && faceedges(c, orient) == F_SOLID;
     }
     int dim = dimension(orient), coord = dimcoord(orient),
@@ -237,19 +237,28 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size)
     return true;
 }
 
-bool visibleface(cube &c, int orient, int x, int y, int z, int size)
+bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat)
 {
     //if(last==&c) __asm int 3;
-    if(!touchingface(c, orient)) return true;
     uint cfe = faceedges(c, orient);
-    if(collapsedface(cfe)) return false;
+    if(mat != MAT_AIR)
+    {
+        if(cfe == F_SOLID && touchingface(c, orient)) return false;
+    }
+    else
+    {
+        if(!touchingface(c, orient)) return true;
+        if(collapsedface(cfe)) return false;
+    }
     cube &o = neighbourcube(x, y, z, size, -size, orient);
     if(&o==&c) return false;
     if(!o.children)
     {
+        if(mat != MAT_AIR && o.material == mat) return false;
         if(lusize > size) return !isentirelysolid(o);
         if(isempty(o) || !touchingface(o, opposite(orient))) return true;
         uint ofe = faceedges(o, opposite(orient));
+        if(mat != MAT_AIR) return ofe != F_SOLID;
         if(ofe==cfe) return false;
         return faceedgegt(cfe, ofe);
     }
@@ -257,6 +266,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size)
     vc = &c;
     vo.x = x; vo.y = y; vo.z = z;
     vsize = size;
+    vmat = mat;
     return !occludesface(o, opposite(orient), lu.x, lu.y, lu.z, lusize);
 };
 

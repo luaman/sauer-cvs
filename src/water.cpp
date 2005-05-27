@@ -149,6 +149,7 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
     case MAT_WATER:
         if(orient != O_TOP)
             return false;
+        return visibleface(c, orient, x, y, z, size, MAT_WATER);
         if(faceedges(c, orient) == F_SOLID && touchingface(c, orient))
             return false;
         else
