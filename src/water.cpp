@@ -10,10 +10,12 @@ inline void vertw(float v1, float v2, float v3, float t1, float t2)
     glVertex3f(v1, v2-1.6f, v3);
 };
 
+int wx, wy, wsz, wsd;
+
 inline void vertwv(float v1, float v2, float v3, float t1, float t2, float t)
 {
     glTexCoord2f(t1, t2);
-    glVertex3f(v1, v2-0.8f-(float)sin(v1*v3*0.1f+t)*0.8f, v3);
+    glVertex3f(v1, v2-1.1f-(float)sin((v1-wx)/wsz*(v3-wy)/wsz*(v1-wx-wsz)*(v3-wy-wsz)*M_PI*19/23+t)*0.8f, v3);
 };
 
 inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
@@ -28,6 +30,11 @@ void renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
     int sx, sy;
     glBindTexture(GL_TEXTURE_2D, lookuptexture(DEFAULT_LIQUID, sx, sy));
     
+    wx = wx1;
+    wy = wy1;
+    wsz = size;
+    wsd = subdiv;
+
     ASSERT((wx1 & (subdiv - 1)) == 0);
     ASSERT((wy1 & (subdiv - 1)) == 0);
     float xf = 8.0f/sx;
@@ -39,7 +46,7 @@ void renderwater(uint subdiv, int wx1, int wy1, int z, uint size)
     int wx2 = wx1 + size,
         wy2 = wy1 + size;
     
-    if(waterwaves && subdiv < size)
+    if(waterwaves)
     for(int xx = wx1; xx<wx2; xx += subdiv)
     {
         float xo = xf*(xx+t2);
@@ -165,7 +172,6 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     if(!matsurfs)
         return;
 
-    glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_SRC_COLOR);
     glColor3f(0.5f, 0.5f, 0.5f);
@@ -184,6 +190,5 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         }
     }
     glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
 }
 
