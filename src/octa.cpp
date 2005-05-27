@@ -116,7 +116,7 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     return lookupcube(x, y, z, rsize);
 };
 
-cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, float &dist, int *orient, cube *source)
+cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, float &dist, int *orient)
 {
     cube *last = NULL, *lastbig = NULL;
     int xs = ray.x>0 ? 1 : 0;
@@ -126,8 +126,10 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     float xd = 1.0f/ray.x;
     float yd = 1.0f/ray.y;
     float zd = 1.0f/ray.z;
-    dist = 0;
-    v = o;
+    dist = 1;
+    v = ray;
+    v.mul(dist);
+    v.add(o);
     for(;;)
     {
         cube &c = lookupcube(fast_f2nat(v.x), fast_f2nat(v.y), fast_f2nat(v.z), 0);
@@ -136,14 +138,11 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
             if(dist < radius) dist = radius;
             return c;
         }
-        if(&c != source && !isempty(c))
+        if(!isempty(c))
         {
             if(lusize == size) return c;
             else
-            if(isentirelysolid(c))
-            {
-                if(source == NULL || dist > 0) return c;
-            }
+            if(isentirelysolid(c)) return c;
             else
             {
                 if(!c.clip)
@@ -196,8 +195,8 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     };
 };
 
-float raycube(const vec &o, const vec &ray, float radius, cube *source) { vec v; float dist; raycube(o, ray, radius, 0, v, dist, NULL, source); return dist; };
-cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(o, ray, 1.0e10f, size, v, dist, &orient, NULL); };
+float raycube(const vec &o, const vec &ray, float radius) { vec v; float dist; raycube(o, ray, radius, 0, v, dist, NULL); return dist; };
+cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(o, ray, 1.0e10f, size, v, dist, &orient); };
 
 void newclipplanes(cube &c)
 {

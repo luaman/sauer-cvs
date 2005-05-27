@@ -233,7 +233,7 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                     {
                         vec tolight(ray);
                         tolight.mul(-1);
-                        if(raycube(target, tolight, mag, &c) < mag)
+                        if(raycube(target, tolight, mag) < mag)
                         {
                             ++miss;
                             continue;
