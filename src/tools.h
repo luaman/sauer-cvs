@@ -57,6 +57,7 @@ typedef unsigned int uint;
 #define loopl(m) loop(l,m)
 
 #ifdef WIN32
+#define M_PI 3.14159265
 #ifndef __GNUC__
 #pragma warning( 3 : 4189 )
 #pragma warning( 4 : 4244 )

@@ -875,7 +875,7 @@ bool remip(cube &parent)
                 m[k] = ch[q[k]].material;
             };
         };
-        loop(x, 4) loop(y, 4) e[y][x] = -1;
+        { loop(x, 4) loop(y, 4) e[y][x] = -1; };
         loopk(4) if(q[k]>=0) loop(x, 2) loop(y, 2)
             e[y+(k&2)][x+(k&1)*2] = edgeget(ch[q[k]].edges[edgeindex(x,y,d)], dc)+8*octacoord(d, q[k]);
 
@@ -894,10 +894,10 @@ bool remip(cube &parent)
            !lineup(e[0][0], x, e[3][0]) ||
            !lineup(e[3][0], y, e[3][3]) ||
            !lineup(e[0][3], z, e[3][3]) ||
-           e[0][0]&1==1 ||
-           e[0][3]&1==1 ||
-           e[3][0]&1==1 ||
-           e[3][3]&1==1 ||
+           (e[0][0]&1)==1 ||
+           (e[0][3]&1)==1 ||
+           (e[3][0]&1)==1 ||
+           (e[3][3]&1)==1 ||
            !lineup(e[n][0], center, e[3-n][3])) return false;
 
         if(debug)printf("w %d, x %d, y %d, z %d, center %d, tex %d\n", w, x, y, z, center, tex);
