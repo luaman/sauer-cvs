@@ -78,8 +78,11 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 #define Y(dim) ((dim)==2?2:1-(dim))
 #define Z(dim) ((dim)==0?0:3-(dim))
 
-#define octadim(d)      (1<<(2-(d)))                    // creates mask for bit of given dimension
-#define octacoord(d, i) (((i)&octadim(d))>>(2-(d)))
+#define octadim(d)          (1<<(2-(d)))                    // creates mask for bit of given dimension
+#define octacoord(d, i)     (((i)&octadim(d))>>(2-(d)))
+#define oppositeocta(i,d)   ((i)^octadim(D(d)))
+#define octaindex(x,y,z,d)  (octadim(D(d))*(z)+octadim(C(d))*(y)+octadim(R(d))*(x))
+#define edgeindex(x,y,z)    (((z)<<2)+((y)<<1)+(x))
 
 enum
 {
@@ -116,7 +119,7 @@ extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
 
 // rendercubes
-extern void subdividecube(cube &c, int x, int y, int z, int size);
+extern void subdividecube(cube &c);
 extern void octarender();
 extern void renderq();
 extern void allchanged();

@@ -769,93 +769,59 @@ void rendermaterials()
 
 ////////// (re)mip //////////
 
-int edgevalue(int d, plane &pl, ivec &o, ivec &p, float size)
-{
-    float x = (o[R(d)]+p[R(d)]*size) * pl[R(d)];
-    float y = (o[C(d)]+p[C(d)]*size) * pl[C(d)];
-    float z = ((-x-y-pl.offset) / pl[D(d)]) - o[D(d)];
-    float f = z/size;
-    int e = (int)f;
-    return e + (f-e>0.5f ? 1 : 0);
-};
+int rvertedge(int e, int dc) { return (R(e>>2)<<2)+(e&2?1:0)+(dc?2:0); };
+int eavg(int a, int b)       { return (a+b)>>1; };
 
-bool tris2cube(cube &c, plane *tris, ivec &o, int size, bool strict)
+void subdividecube(cube &c)
 {
-    float s = (float)size/8;
-    solidfaces(c);
-    loopi(6) loopj(2) if(tris[i*2+j].isnormalized()) loopk(4)
+    if (c.children) return;
+    cube *ch = c.children = newcubes(F_EMPTY);
+
+    loop(d,3)
     {
-        ivec &p = *(ivec *)cubecoords[fv[i][k]];
-        uchar &edge = edgelookup(c, p, dimension(i));
-        int e = edgevalue(dimension(i), tris[i*2+j], o, p, s);
-        if(e<0) if(strict) return false; else e = 0;
-        if(e>8) if(strict) return false; else e = 8;
-        int dc = dimcoord(i);
-        if(dc == e<edgeget(edge, dc)) edgeset(edge, dc, e);
+        uchar e[3][3];
+        loop(y,2) loop(x,2) e[2*y][2*x] = c.edges[edgeindex(x,y,d)];
+        e[0][1] = eavg(e[0][0], e[0][2]);
+        e[1][0] = eavg(e[0][0], e[2][0]);
+        e[2][1] = eavg(e[2][0], e[2][2]);
+        e[1][2] = eavg(e[0][2], e[2][2]);
+        int n = eavg(e[0][0], e[2][2]);
+        int m = eavg(e[0][2], e[2][0]);
+        edgeset(e[1][1], 0, edgeget(faceconvexity(c,(d<<1)+0)>0 ? n : m, 0));
+        edgeset(e[1][1], 1, edgeget(faceconvexity(c,(d<<1)+1)>0 ? n : m, 1));
+
+        loopi(8) loop(y,2) loop(x,2) // split edges and assign
+        {
+            int dc = octacoord(d,i);
+            uchar &f = ch[i].edges[edgeindex(x,y,d)];
+            uchar s = e[y+octacoord(C(d),i)][x+octacoord(R(d),i)];
+            uchar s2 = s*2;
+
+            if(edgeget(s,1) < 5) f = dc ? 0 : s2;
+            else
+            if(edgeget(s,0) > 4) f = dc ? s2-0x88 : 0x88;
+            else                 f = dc ? (s2&0xF0)-0x80 : (s2&0x0F)+0x80;
+        };
     };
-    loopi(12) if(edgeget(c.edges[i], 1)<edgeget(c.edges[i], 0)) return false;
-    loopi(3) optiface((uchar *)&c.faces[i], c);
-    return true;
-};
-
-void cubecoordlookup(ivec &p, int e, int dc)
-{
-    int d = e>>2;
-    p[D(d)] = dc ? 8 : 0;
-    p[R(d)] = 8*(e&1);
-    p[C(d)] = 4*(e&2);
-};
-
-void pushvert(cube &c, int e, int dc)
-{
-    ivec p;
-    int d = R(e>>2);
-    cubecoordlookup(p, e, dc);
-    uchar &edge = edgelookup(c, p, d);
-    edgeset(edge, p[d], 8-p[d]);
-};
-
-void validatechildren(cube *c)                              // fixes the two special cases
-{
-    loopi(8) if(!isempty(c[i]))
+    loopi(8) // clean up edges
     {
-        uchar *e = &c[i].edges[0];
-        loopj(12) if(e[j]==0x88 || e[j]==0)
+        ch[i].material = c.material;
+        loopj(6) ch[i].texture[j] = c.texture[j];
+        loopj(3) if (!ch[i].faces[j] || ch[i].faces[j]==0x88888888) emptyfaces(ch[i]);
+        if(isempty(ch[i])) continue;
+
+        uchar *f = ch[i].edges;
+        loopj(12) if (f[j]==0x88 || !f[j])
         {
             int dc = octacoord(j>>2,i);
-            uchar &n = c[i^octadim(j>>2)].edges[j];        // edge below e[j]
-            if(e[j]==e[j^1] && e[j]==e[j^2] && n!=0x80)     // fix 'peeling'
-                pushvert(c[i], j, e[j]);
-            else if(!e[j] != !dc) edgeset(n, dc, dc*8);     // fix 'cracking'
+
+            if(f[j]==f[j^1] && f[j]==f[j^2])     // fix peeling
+                f[rvertedge(j, f[j])] = j&1 ? 0 : 0x88;
+            else if(dc*8 != edgeget(f[j], !dc))  // fix cracking
+                edgeset(ch[oppositeocta(i,j>>2)].edges[j], dc, dc*8);
         };
     };
 };
-
-void subdividecube(cube &c, int x, int y, int z, int size)
-{
-    if(c.children) return;
-    if(c.surfaces) freesurfaces(c);
-    if(!c.clip)
-    {
-        newclipplanes(c);
-        genclipplanes(c, x, y, z, size<<1, c.clip);
-    }
-    cube *ch = c.children = newcubes(F_SOLID);
-    loopi(8)
-    {
-        ch[i] = c;
-        ch[i].va = NULL;
-        ch[i].clip = NULL;
-        ch[i].children = NULL;
-        ivec o(i, x, y, z, size);
-        tris2cube(ch[i], c.clip, o, size, false);
-    };
-    if(c.clip) freeclipplanes(c);
-    validatechildren(c.children);
-};
-
-#define octaindex(x,y,z,d)  (octadim(D(d))*(z)+octadim(C(d))*(y)+octadim(R(d))*(x))
-#define oppositeocta(i,d)   (i^octadim(D(d)))
 
 int firstcube(cube *c, int x, int y, int z, int d)
 {
@@ -897,7 +863,7 @@ bool remip(cube &parent)
     {
         int e[4][4], t[4], q[4], m[4];
         int d = dimension(i), dc = dimcoord(i);
-        int n = faceconvexity(parent,i)>0 ? 3 : 0;
+        int n = faceconvexity(parent,i)>0 ? 0 : 3;
 
         loopk(4)
         {
@@ -911,7 +877,7 @@ bool remip(cube &parent)
         };
         loop(x, 4) loop(y, 4) e[y][x] = -1;
         loopk(4) if(q[k]>=0) loop(x, 2) loop(y, 2)
-            e[y+(k&2)][x+(k&1)*2] = edgeget(ch[q[k]].edges[d*4 + y*2 + x], dc)+8*octacoord(d, q[k]);
+            e[y+(k&2)][x+(k&1)*2] = edgeget(ch[q[k]].edges[edgeindex(x,y,d)], dc)+8*octacoord(d, q[k]);
 
         if(debug)loopk(4) printf("[%d] %d = t %d, q %d\n", i, k, t[k], q[k]);
         if(debug)loopk(4) loopj(4) printf("e %d %d = %d\n", k, j, e[k][j]);

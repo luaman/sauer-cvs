@@ -58,7 +58,7 @@ void validatec(cube *c, int size)
     {
         if(c[i].children)
         {
-            if(size<=4) { freeocta(c[i].children); c[i].children = NULL; }
+            if(size<=4) discardchildren(c[i]);
             else validatec(c[i].children, size>>1);
         };
         loopj(12) if(edgeget(c[i].edges[j], 1)<edgeget(c[i].edges[j], 0)) emptyfaces(c[i]);
@@ -91,7 +91,7 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
                 c->children = newcubes(F_EMPTY);
                 loopi(8) loopl(6) c->children[i].texture[l] = c->texture[l];
             }
-            else subdividecube(*c, x, y, z, size>>1);
+            else subdividecube(*c);
         };
         c = c->children;
     };
