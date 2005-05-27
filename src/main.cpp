@@ -73,6 +73,22 @@ void screenshot()
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
 
+void grabinput()
+{   
+    SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
+    SDL_WM_GrabInput(mode == SDL_GRAB_ON ? SDL_GRAB_OFF : SDL_GRAB_ON);
+}
+
+SDL_Surface *screen = NULL;
+
+void fullscreen()
+{
+    SDL_WM_ToggleFullScreen(screen);
+}
+
+COMMAND(grabinput, ARG_NONE);
+COMMAND(fullscreen, ARG_NONE);
+
 void fpsrange(int low, int high)
 {
     if(low>high || low<1) return;
@@ -144,7 +160,8 @@ int main(int argc, char **argv)
 
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    if(SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|fs)==NULL) fatal("Unable to create OpenGL screen");
+    screen = SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|fs);
+    if(screen==NULL) fatal("Unable to create OpenGL screen");
 
     log("video: misc");
     SDL_WM_SetCaption("sauerbraten engine", NULL);
