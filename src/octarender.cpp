@@ -147,6 +147,16 @@ const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orien
     { 3, 4, 7, 0 },
 };
 
+const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
+{//1st face,2nd face
+    { 4, 6, 8, 9 },
+    { 5, 7, 10, 11 },
+    { 0, 1, 8, 10 },
+    { 2, 3, 9, 11 },
+    { 0, 2, 4, 5 },
+    { 1, 3, 6, 7 },
+};
+
 int faceconvexity(cube &c, int orient)
 {
     vec v[4];
@@ -169,24 +179,11 @@ bool touchingface(cube &c, int orient)
     return dimcoord(orient) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0;
 };
 
-uint faceedgesidx(cube &c, int x, int y, int z, int w)
-{
-    uchar edges[4] = { c.edges[x], c.edges[y], c.edges[z], c.edges[w] };
-    return *(uint *)edges;
-};
-
 uint faceedges(cube &c, int orient)
 {
-    switch(orient)
-    {
-        case O_BOTTOM: return faceedgesidx(c, 4, 6, 8, 9);
-        case O_TOP:    return faceedgesidx(c, 5, 7, 10, 11);
-        case O_BACK:   return faceedgesidx(c, 0, 1, 8, 10);
-        case O_FRONT:  return faceedgesidx(c, 2, 3, 9, 11);
-        case O_RIGHT:  return faceedgesidx(c, 1, 3, 6, 7);
-        case O_LEFT:   return faceedgesidx(c, 0, 2, 4, 5);
-        default: ASSERT(0); return 0;
-    };
+    uchar edges[4];
+    loopk(4) edges[k] = c.edges[faceedgesidx[orient][k]];
+    return *(uint *)edges;
 };
 
 bool faceedgegt(uint cfe, uint ofe)
