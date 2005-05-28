@@ -10,11 +10,11 @@ vec wall; // just the normal vector.
 float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
 
-bool onstairs(dynent *d) 
-{ 
-	float space = floorheight-d->o.z+d->eyeheight;
-	if(space>-1 && space < STAIRHEIGHT && d->vel.z<0) d->vel.z = 0;
-	return (space < STAIRHEIGHT); 
+bool onstairs(dynent *d)
+{
+    float space = floorheight-d->o.z+d->eyeheight;
+    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0) d->vel.z = 0;
+    return (space < STAIRHEIGHT);
 };
 
 bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo)
@@ -68,7 +68,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     o.z += zr - d->eyeheight;
     floorheight = 0;
 
-    int clipsize = isentirelysolid(c) ? 0 : genclipplanes(c, x, y, z, size, clip, bo, br);
+    int clipsize = isentirelysolid(c) || c.material==MAT_CLIP ? 0 : genclipplanes(c, x, y, z, size, clip, bo, br);
 
     if(rectcollide(d, bo, br.x, br.y, br.z, br.z) && floorheight==0) { floorheight = f; return true; };
     float m = walldistance;
@@ -99,7 +99,7 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
         {
             if(!octacollide(d, c[i].children, o.x, o.y, o.z, size>>1)) return false;
         }
-        else if(!isempty(c[i]))
+        else if(!isempty(c[i]) || c[i].material==MAT_CLIP)
         {
             if(!cubecollide(d, c[i], o.x, o.y, o.z, size)) return false;
         };
@@ -112,7 +112,7 @@ bool collide(dynent *d)
 {
     floorheight = 0;
     wall.x = wall.y = wall.z = 0;
-	if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
+    if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];
@@ -145,7 +145,7 @@ void move(dynent *d, vec &dir, float push)
         }
         else
         {
-            if(wall.z>0.5f) d->onfloor = true;
+            if(wall.z>0.9f) d->onfloor = true;
             d->blocked = true;
             d->o = old;
 
@@ -219,7 +219,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->onfloor ? 0.0f : (water ? -1.0f : pl->vel.z*0.75f - 3.0f);
+    d.z = pl->onfloor ? 0.0f : (water ? -1.0f : pl->vel.z*0.75f - 2.0f);
 
     if(floating || water)
     {
@@ -255,7 +255,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         if(pl->onfloor || water) if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            pl->vel.z = 1.5f;       // physics impulse upwards
+            pl->vel.z = 1.1f;       // physics impulse upwards
             if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
             if(local) playsoundc(S_JUMP);
             else if(pl->monsterstate) playsound(S_JUMP, &pl->o);

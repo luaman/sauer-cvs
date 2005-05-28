@@ -106,6 +106,7 @@ This changes the physics and appearance of the space in various ways.
 Currently supported materials:
   air - the default material for all cubes
   water - shows water waves at the top surface of the cube
+  clip - cubes are always treated as entirely solid in physics
 
 watersubdiv N
 --------------

@@ -602,9 +602,10 @@ struct material
     const char *name;
     uchar id;
 } materials [] =
-{       
+{
     {"air", MAT_AIR},
     {"water", MAT_WATER},
+    {"clip", MAT_CLIP},
 };
 
 void setmat(cube &c, uchar mat)
