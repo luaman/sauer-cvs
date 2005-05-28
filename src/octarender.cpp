@@ -310,7 +310,7 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
     else
     {
         vertstoplane(p[2], p[0], p[1], clip[0]);
-        if(faceconvexity(c, i) != 0)
+        if(p[3] != p[4] && p[3] != p[2] && faceconvexity(c, i) != 0)
         {
             ++planes;
             vertstoplane(p[3], p[4], p[2], clip[1]);
@@ -322,7 +322,7 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
 void genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, bool bounded)
 {
     vec v[8];
-    bool useface[8];
+    bool useface[6];
     calcverts(c, x, y, z, size, v, useface);
     loopi(12) clip[i].x = clip[i].y = clip[i].z = clip[i].offset = 0.0f;
     loopi(6) if(useface[i]) genclipplane(c, i, v, &clip[2*i]);
