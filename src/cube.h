@@ -126,7 +126,7 @@ struct dynent                           // players & monsters
     bool onfloor, jumpnext;
     int move, strafe;
     bool k_left, k_right, k_up, k_down; // see input code
-    int timeinair;                      // used for fake gravity
+    vec nextmove;                       // small adjustments to be applied in next move
     float radius, eyeheight, aboveeye;  // bounding box size
     int lastupdate, plag, ping;
     int lifesequence;                   // sequence id for each respawn, used in damage test

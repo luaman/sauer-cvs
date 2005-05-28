@@ -131,6 +131,8 @@ void move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
     d->o.add(dir);
+    d->o.add(d->nextmove);
+    d->nextmove = vec(0,0,0);
     if(!collide(d) || floorheight>0)
     {
         if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
@@ -138,7 +140,7 @@ void move(dynent *d, vec &dir, float push)
         if(space<=STAIRHEIGHT && space>-1.0f)
         {
             d->onfloor = true;
-            if(space>push) d->o.z += push; else d->o.z = floorheight+d->eyeheight;
+            if(space>push) d->nextmove.z = push; else d->o.z = floorheight+d->eyeheight;
             if(d->vel.z<0) d->vel.z=0;
             dir.z = 0;
         }
@@ -156,8 +158,8 @@ void move(dynent *d, vec &dir, float push)
 
             if(wall.z!=0)
             {
-                d->o.x += push*wall.x; // push against slopes
-                d->o.y += push*wall.y;
+                d->nextmove.x = push*wall.x; // push against slopes
+                d->nextmove.y = push*wall.y;
             };
         };
     };

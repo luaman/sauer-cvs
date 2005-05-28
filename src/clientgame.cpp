@@ -28,7 +28,7 @@ void resetmovement(dynent *d)
     d->k_left = false;
     d->k_right = false;
     d->k_up = false;
-    d->k_down = false;  
+    d->k_down = false;
     d->jumpnext = false;
     d->strafe = 0;
     d->move = 0;
@@ -37,9 +37,9 @@ void resetmovement(dynent *d)
 void spawnstate(dynent *d)              // reset player state not persistent accross spawns
 {
     resetmovement(d);
-    d->vel.x = d->vel.y = d->vel.z = 0; 
+    d->vel.x = d->vel.y = d->vel.z = 0;
+    d->nextmove.x = d->nextmove.y = d->nextmove.z = 0;
     d->onfloor = false;
-    d->timeinair = 0;
     d->health = 100;
     d->armour = 50;
     d->armourtype = A_BLUE;
@@ -72,7 +72,7 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
         };
     };
 };
-    
+
 dynent *newdynent()                 // create a new blank player or monster
 {
     dynent *d = (dynent *)gp()->alloc(sizeof(dynent));
@@ -102,8 +102,8 @@ dynent *newdynent()                 // create a new blank player or monster
     spawnstate(d);
     return d;
 };
- 
-int aliveothers()   
+
+int aliveothers()
 {
     int alive = 0;
     loopv(players) if(players[i] && players[i]->state==CS_ALIVE) alive++;
@@ -119,7 +119,7 @@ void zapclient(int n)
 void updateworld(int millis)        // main game update loop
 {
     if(lastmillis)
-    {     
+    {
         curtime = millis - lastmillis;
         physicsframe();
         checkquad(curtime);
@@ -177,7 +177,7 @@ void spawnplayer(dynent *d)   // place at random spawn. also used by monsters!
 void respawn()
 {
     if(player1->state==CS_DEAD)
-    { 
+    {
         player1->attacking = false;
         if(m_arena && noarenarespawn) return;
         if(m_sp) { nextmode = gamemode; changemap(clientmap); return; };    // if we die in SP we try the same map again
@@ -192,8 +192,8 @@ void respawn()
 
 dir(backward, move,   -1, k_down,  k_up);
 dir(forward,  move,    1, k_up,    k_down);
-dir(left,     strafe,  1, k_left,  k_right); 
-dir(right,    strafe, -1, k_right, k_left); 
+dir(left,     strafe,  1, k_left,  k_right);
+dir(right,    strafe, -1, k_right, k_left);
 
 void attack(bool on)
 {
@@ -331,6 +331,6 @@ void startmap(char *name)   // called just after a map load
     showscores(false);
     intermission = false;
     conoutf("game mode is %s", (int)modestr(gamemode));
-}; 
+};
 
 COMMANDN(map, changemap, ARG_1STR);
