@@ -557,7 +557,7 @@ void initlights()
         entity &e = ents[i];
         if(e.type <= PLAYERSTART)
             continue;
-        vec target(e.o.x, e.o.y, e.o.z + 10);
+        vec target(e.o.x, e.o.y, e.o.z + (e.type == MAPMODEL ? 20 : 5));
         lightreaching(target, e.color);
     }
 }
