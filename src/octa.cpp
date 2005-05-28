@@ -126,10 +126,8 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     float xd = 1.0f/ray.x;
     float yd = 1.0f/ray.y;
     float zd = 1.0f/ray.z;
-    dist = 0.25;
-    v = ray;
-    v.mul(dist);
-    v.add(o);
+    dist = 0;
+    v = o;
     for(;;)
     {
         cube &c = lookupcube(fast_f2nat(v.x), fast_f2nat(v.y), fast_f2nat(v.z), 0);

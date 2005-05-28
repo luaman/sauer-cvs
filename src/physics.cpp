@@ -49,7 +49,7 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
     {
         entity &e = ents[i];
         if(e.type!=MAPMODEL) continue;
-        float entrad = 5; // get real radius somehow?
+        float entrad = 10; // get real radius somehow?
         if(!rectcollide(d, e.o, entrad, entrad, entrad, entrad, true)) return false;
     };
     return true;

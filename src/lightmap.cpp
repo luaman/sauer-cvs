@@ -195,7 +195,7 @@ static uchar mincolor[3], maxcolor[3];
 
 bool generate_lightmap(cube &c, int surface, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
-    uint x, y;
+    float tolerance = 0.5 * float(lightprecision) / 16.0f;
     vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     uchar *lumel = lm + y1 * 3 * lm_w;
@@ -212,9 +212,9 @@ bool generate_lightmap(cube &c, int surface, uint y1, uint y2, const vec &origin
         memset(maxcolor, 0, 3);
     }
 
-    for(y = y1; y < y2; ++y, v.add(vstep)) {
+    for(uint y = y1; y < y2; ++y, v.add(vstep)) {
         vec u = v;
-        for(x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
+        for(uint x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
             uint r = 0, g = 0, b = 0;
             loopj(4)
             {
@@ -233,9 +233,8 @@ bool generate_lightmap(cube &c, int surface, uint y1, uint y2, const vec &origin
                         continue;
                     if(shadows)
                     {
-                        vec tolight(ray);
-                        tolight.mul(-1);
-                        if(raycube(target, tolight, mag) < mag)
+                        float dist = raycube(light.o, ray, mag);
+                        if(dist < mag - tolerance)
                             continue;
                     }
                     float intensity = -normal.dot(ray) * attenuation;
@@ -558,7 +557,8 @@ void initlights()
         entity &e = ents[i];
         if(e.type <= PLAYERSTART)
             continue;
-        lightreaching(e.o, e.color);
+        vec target(e.o.x, e.o.y, e.o.z + 10);
+        lightreaching(target, e.color);
     }
 }
 
