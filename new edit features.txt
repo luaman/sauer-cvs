@@ -113,7 +113,7 @@ waves the water at 2^N unit intervals.
 
 waterlod N
 -----------
-increases the local water subdiv by 1 for every 128*2^N units the player is away from
+increases the local water subdiv by 1 for every 32*2^N units the player is away from
 the water's edge.
 
 ===============
