@@ -191,11 +191,12 @@ void pack_lightmap(surfaceinfo &surface)
         insert_lightmap(surface.x, surface.y, surface.lmid);
 }
 
-static uint mincolor[3], maxcolor[3];
+static uchar mincolor[3], maxcolor[3];
 
-bool generate_lightmap(vector<entity *> &lights, cube &c, int surface, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
+bool generate_lightmap(cube &c, int surface, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
     uint x, y;
+    vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     uchar *lumel = lm + y1 * 3 * lm_w;
     vec offsets[4] = 
@@ -207,8 +208,8 @@ bool generate_lightmap(vector<entity *> &lights, cube &c, int surface, uint y1, 
     };
     if(y1 == 0)
     {
-        memset(mincolor, 3, 255);
-        memset(maxcolor, 3, 0);
+        memset(mincolor, 255, 3);
+        memset(maxcolor, 0, 3);
     }
 
     for(y = y1; y < y2; ++y, v.add(vstep)) {
@@ -407,15 +408,10 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 uint ul((uint)ceil((umax - umin + 1) * lpu)),
                      vl((uint)ceil((vmax - vmin + 1) * lpu)),
                      tl(0);
-                ul = max(LM_MINW, min(LM_MAXW, ul));
-                vl = max(LM_MINW, min(LM_MAXW, vl));
                 if(numplanes > 1)
-                {
-                     tl = (uint)ceil((tmax - tmin + 1) * lpu);
-                     tl = max(LM_MINW, min(LM_MAXW, tl));
-                }
-                lm_w = ul;
-                lm_h = vl + tl;
+                    tl = (uint)ceil((tmax - tmin + 1) * lpu);
+                lm_w = max(LM_MINW, min(LM_MAXW, ul));
+                lm_h = max(LM_MINH, min(LM_MAXH, vl + tl));
 
                 
                 vec origin1(v0), uo(u), vo(v);
@@ -429,19 +425,20 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 origin1.add(uo);
                 origin1.add(vo);
                 vec ustep(u), vstep(v);
-                ustep.mul((umax - umin) / float(ul - 1));
-                vstep.mul((vmax - vmin) / float(vl - 1));
-                if(!generate_lightmap(lights1, c[i], j, 0, vl, origin1, planes[0], ustep, vstep))
+                ustep.mul((umax - umin) / float(lm_w - 1));
+                uint split = vl * lm_h / (vl + tl);
+                vstep.mul((vmax - vmin) / (split - 1));
+                if(!generate_lightmap(c[i], j, 0, split, origin1, planes[0], ustep, vstep))
                     continue;
                 vec origin2;
                 if(numplanes > 1)
                 {
                     ASSERT(tmin == 0);
                     vec tstep(t);
-                    tstep.mul(tmax / float(tl - 1));
+                    tstep.mul(tmax / (lm_h - split - 1));
                     origin2 = v0;
                     origin2.add(uo);
-                    if(!generate_lightmap(lights2, c[i], j, vl, lm_h, origin2, planes[1], ustep, tstep))
+                    if(!generate_lightmap(c[i], j, split, lm_h, origin2, planes[1], ustep, tstep))
                         continue;
                 }
 
@@ -456,7 +453,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 }
 
                 float uscale = 255.0f / float(umax - umin),
-                      vscale = 255.0f / float(vmax - vmin) * float(vl) / float(lm_h);
+                      vscale = 255.0f / float(vmax - vmin) * float(split) / float(lm_h);
                 surfaceinfo surface;
                 CALCVERT(origin1, u, v, 0, 0, v0)
                 CALCVERT(origin1, u, v, 0, 1, v1)
@@ -464,8 +461,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 if(numplanes < 2) CALCVERT(origin1, u, v, 0, 3, v3)
                 else
                 {
-                    uchar toffset = (uchar)(255.0 * float(vl) / float(lm_h));
-                    float tscale = 255.0f / float(tmax - tmin) * float(tl) / float(lm_h);
+                    uchar toffset = (uchar)(255.0 * float(split) / float(lm_h));
+                    float tscale = 255.0f / float(tmax - tmin) * float(lm_h - split) / float(lm_h);
                     CALCVERT(origin2, u, t, toffset, 3, v3);
                 }
                 surface.w = lm_w;
