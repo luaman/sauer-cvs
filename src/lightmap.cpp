@@ -408,7 +408,11 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                      vl((uint)ceil((vmax - vmin + 1) * lpu)),
                      tl(0);
                 if(numplanes > 1)
+                {
                     tl = (uint)ceil((tmax - tmin + 1) * lpu);
+                    tl = max(LM_MINH, tl);
+                    vl = max(LM_MINH, vl);
+                }
                 lm_w = max(LM_MINW, min(LM_MAXW, ul));
                 lm_h = max(LM_MINH, min(LM_MAXH, vl + tl));
 
