@@ -46,6 +46,8 @@ int maxfps = 40;
 int scr_w = 640;
 int scr_h = 480;
 
+SDL_Surface *screen = NULL;
+
 void screenshot()
 {
     SDL_Surface *image;
@@ -79,15 +81,24 @@ void grabinput()
     SDL_WM_GrabInput(mode == SDL_GRAB_ON ? SDL_GRAB_OFF : SDL_GRAB_ON);
 }
 
-SDL_Surface *screen = NULL;
-
 void fullscreen()
 {
     SDL_WM_ToggleFullScreen(screen);
 }
 
+void screenres(int w, int h, int bpp)
+{
+    SDL_Surface *surf = SDL_SetVideoMode(w, h, bpp, SDL_OPENGL|(screen->flags&SDL_FULLSCREEN));
+    if(!surf) return;
+    scr_w = w;
+    scr_h = h;
+    screen = surf;
+    glViewport(0, 0, w, h);
+}
+
 COMMAND(grabinput, ARG_NONE);
 COMMAND(fullscreen, ARG_NONE);
+COMMAND(screenres, ARG_3INT);
 
 void fpsrange(int low, int high)
 {

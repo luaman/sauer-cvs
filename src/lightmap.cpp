@@ -9,7 +9,7 @@ VAR(aalights, 0, 1, 1);
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
-static vector<entity *> lights, close_lights;
+static vector<entity *> lights1, lights2, close_lights;
 static uint progress = 0;
 static bool canceled = false;
 
@@ -191,12 +191,13 @@ void pack_lightmap(surfaceinfo &surface)
         insert_lightmap(surface.x, surface.y, surface.lmid);
 }
 
-bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
+static uint mincolor[3], maxcolor[3];
+
+bool generate_lightmap(vector<entity *> &lights, cube &c, int surface, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
     uint x, y;
     vec v = origin;
-    uchar *lumel = lm;
-    uint miss = 0;
+    uchar *lumel = lm + y1 * 3 * lm_w;
     vec offsets[4] = 
     { 
         vec((ustep.x - vstep.x) * 0.3, (ustep.y - vstep.y) * 0.3, (ustep.z - vstep.z) * 0.3),
@@ -204,12 +205,15 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
         vec((vstep.x - ustep.x) * 0.3, (vstep.y - ustep.y) * 0.3, (vstep.z - ustep.z) * 0.3),
         vec((ustep.x + vstep.x) * -0.3, (ustep.y + vstep.y) * -0.3, (ustep.z + vstep.z) * -0.3),
     };
-    uchar mincolor[3] = {255, 255, 255},
-          maxcolor[3] = {0, 0, 0};
+    if(y1 == 0)
+    {
+        memset(mincolor, 3, 255);
+        memset(maxcolor, 3, 0);
+    }
 
-    for(y = 0; y < lm_h; ++y) {
+    for(y = y1; y < y2; ++y, v.add(vstep)) {
         vec u = v;
-        for(x = 0; x < lm_w; ++x, lumel += 3) {
+        for(x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
             uint r = 0, g = 0, b = 0;
             loopj(4)
             {
@@ -225,19 +229,13 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                           attenuation = 1.0 - mag / float(light.attr1);
                     ray.mul(1.0 / mag);
                     if(attenuation <= 0.0)
-                    {
-                        ++miss;
                         continue;
-                    }
                     if(shadows)
                     {
                         vec tolight(ray);
                         tolight.mul(-1);
                         if(raycube(target, tolight, mag) < mag)
-                        {
-                            ++miss;
                             continue;
-                        }
                     }
                     float intensity = -normal.dot(ray) * attenuation;
                     r += (uint)(intensity * float(light.attr2));
@@ -261,22 +259,10 @@ bool generate_lightmap(cube &c, int surface, const vec &origin, const vec &norma
                 mincolor[k] = min(mincolor[k], lumel[k]);
                 maxcolor[k] = max(maxcolor[k], lumel[k]);
             }
-            u.add(ustep);
-        }
-        v.add(vstep);
-    }
-    if(miss)
-    {
-        if(miss == (aalights ? 4 : 1) * lights.length() * lm_w * lm_h) return false;
-        loopk(3)
-        {
-            mincolor[k] = min(mincolor[k], 25);
-            maxcolor[k] = max(maxcolor[k], 25);
         }
     }
-
-        
-    if(int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
+    if(y2 == lm_h &&
+       int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
        int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
        int(maxcolor[2]) - int(mincolor[2]) <= lighterror)
     {
@@ -342,12 +328,12 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             calcverts(c[i], o.x, o.y, o.z, size, verts, usefaces);
             loopj(6) if(usefaces[j])
             {
-                if((progress++ % (wtris < 200 ? 1 : wtris / 2 / 100)) == 0)
+                if((progress++ % (wtris / 2 < 100 ? 1 : wtris / 2 / 100)) == 0)
                     show_calclight_progress();
                 plane planes[2];
-                genclipplane(c[i], j, verts, planes);
-                const plane &lm_plane = planes[0];
-                lights.setsize(0);
+                int numplanes = genclipplane(c[i], j, verts, planes);
+                lights1.setsize(0);
+                lights2.setsize(0);
                 loopv(close_lights)
                 {
                     entity &light = *close_lights[i];
@@ -358,82 +344,130 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                        light.o.z + radius < o.z || light.o.z - radius > o.z + size)
                         continue;
 
-                    float dist = lm_plane.dist(light.o);
+                    float dist = planes[0].dist(light.o);
                     if(dist >= 0.0 && dist < float(light.attr1))
-                       lights.add(&light);
+                       lights1.add(&light);
+                    if(numplanes > 1)
+                    {
+                        dist = planes[1].dist(light.o);
+                        if(dist >= 0.0 && dist < float(light.attr1))
+                            lights2.add(&light);
+                    }
                 }
-                if(!lights.length())
+                if(!lights1.length() && !lights2.length())
                     continue;
 
                 vec v0(verts[faceverts(c[i], j, 0)]),
                     v1(verts[faceverts(c[i], j, 1)]),
                     v2(verts[faceverts(c[i], j, 2)]), 
                     v3(verts[faceverts(c[i], j, 3)]),
-                    u, v;
-                if(v0 == v1)
-                  u = v2;
+                    u, v, s, t;
+                if(numplanes < 2)
+                {
+                    u = (v0 == v1 ? v2 : v1);
+                    u.sub(v0);
+                    u.normalize();
+                    v.cross(planes[0], u);
+                }
                 else
-                  u = v1;
-                u.sub(v0);
-                u.normalize();
-                v.cross(u, lm_plane);
-
-                #define UVMINMAX(vert) \
-                { \
-                  vec tovert = vert; \
-                  tovert.sub(v0); \
-                  float ucoord = u.dot(tovert), \
-                        vcoord = v.dot(tovert); \
-                  umin = min(ucoord, umin); \
-                  umax = max(ucoord, umax); \
-                  vmin = min(vcoord, vmin); \
-                  vmax = max(vcoord, vmax);  \
+                {
+                    u = v2;
+                    u.sub(v0);
+                    u.normalize();
+                    v.cross(u, planes[0]);
+                    t.cross(planes[1], u);
                 }
 
-                float umin, umax, vmin, vmax;
-                umin = umax = vmin = vmax = 0.0f;
-                UVMINMAX(v1)
-                UVMINMAX(v2)
-                UVMINMAX(v3)
-        
-                vec lm_origin = v0,
-                    uo = u,
-                    vo = v;
-                uo.mul(umin);
-                vo.mul(vmin);
-                lm_origin.add(uo);
-                lm_origin.add(vo);
+                #define COORDMINMAX(u, v, vert) \
+                { \
+                    vec tovert = vert; \
+                    tovert.sub(v0); \
+                    float u ## coord = u.dot(tovert), \
+                          v ## coord = v.dot(tovert); \
+                    u ## min = min(u ## coord, u ## min); \
+                    u ## max = max(u ## coord, u ## max); \
+                    v ## min = min(v ## coord, v ## min); \
+                    v ## max = max(v ## coord, v ## max);  \
+                }
+
+                float umin(0.0f), umax(0.0f), 
+                      vmin(0.0f), vmax(0.0f),
+                      tmin(0.0f), tmax(0.0f);
+                COORDMINMAX(u, v, v1)
+                COORDMINMAX(u, v, v2)
+                if(numplanes < 2) 
+                    COORDMINMAX(u, v, v3)
+                else
+                {
+                    COORDMINMAX(u, t, v2);
+                    COORDMINMAX(u, t, v3);
+                }
 
                 float lpu = 16.0f / float(lightprecision);
-                lm_w = (uint)ceil((umax - umin + 1) * lpu);
-                lm_w = max(LM_MINW, min(LM_MAXW, lm_w));
-                lm_h = (uint)ceil((vmax - vmin + 1) * lpu);
-                lm_h = max(LM_MINH, min(LM_MAXH, lm_h));
+                uint ul((uint)ceil((umax - umin + 1) * lpu)),
+                     vl((uint)ceil((vmax - vmin + 1) * lpu)),
+                     tl(0);
+                ul = max(LM_MINW, min(LM_MAXW, ul));
+                vl = max(LM_MINW, min(LM_MAXW, vl));
+                if(numplanes > 1)
+                {
+                     tl = (uint)ceil((tmax - tmin + 1) * lpu);
+                     tl = max(LM_MINW, min(LM_MAXW, tl));
+                }
+                lm_w = ul;
+                lm_h = vl + tl;
 
-                vec ustep = u,
-                    vstep = v;
-                ustep.mul((umax - umin) / float(lm_w - 1));
-                vstep.mul((vmax - vmin) / float(lm_h - 1));
-                if(!generate_lightmap(c[i], j, lm_origin, lm_plane, ustep, vstep))
+                
+                vec origin1(v0), uo(u), vo(v);
+                uo.mul(umin);
+                if(numplanes < 2) vo.mul(vmin);
+                else
+                {
+                    vo.mul(vmax);
+                    v.mul(-1);
+                }
+                origin1.add(uo);
+                origin1.add(vo);
+                vec ustep(u), vstep(v);
+                ustep.mul((umax - umin) / float(ul - 1));
+                vstep.mul((vmax - vmin) / float(vl - 1));
+                if(!generate_lightmap(lights1, c[i], j, 0, vl, origin1, planes[0], ustep, vstep))
                     continue;
-
-                #define CALCVERT(vert, index) \
-                { \
-                  vec tovert = vert; \
-                  tovert.sub(lm_origin); \
-                  float ucoord = u.dot(tovert), \
-                        vcoord = v.dot(tovert); \
-                  surface.texcoords[index*2] = uchar(ucoord * uscale); \
-                  surface.texcoords[index*2+1] = uchar(vcoord * vscale); \
+                vec origin2;
+                if(numplanes > 1)
+                {
+                    ASSERT(tmin == 0);
+                    vec tstep(t);
+                    tstep.mul(tmax / float(tl - 1));
+                    origin2 = v0;
+                    origin2.add(uo);
+                    if(!generate_lightmap(lights2, c[i], j, vl, lm_h, origin2, planes[1], ustep, tstep))
+                        continue;
                 }
 
-                float uscale = 255.0f / (umax - umin),
-                      vscale = 255.0f / (vmax - vmin);
+                #define CALCVERT(origin, u, v, offset, index, vert) \
+                { \
+                    vec tovert = vert; \
+                    tovert.sub(origin); \
+                    float u ## coord = u.dot(tovert), \
+                          v ## coord = v.dot(tovert); \
+                    surface.texcoords[index*2] = uchar(u ## coord * u ## scale); \
+                    surface.texcoords[index*2+1] = offset + uchar(v ## coord * v ## scale); \
+                }
+
+                float uscale = 255.0f / float(umax - umin),
+                      vscale = 255.0f / float(vmax - vmin) * float(vl) / float(lm_h);
                 surfaceinfo surface;
-                CALCVERT(v0, 0)
-                CALCVERT(v1, 1)
-                CALCVERT(v2, 2)
-                CALCVERT(v3, 3)
+                CALCVERT(origin1, u, v, 0, 0, v0)
+                CALCVERT(origin1, u, v, 0, 1, v1)
+                CALCVERT(origin1, u, v, 0, 2, v2)
+                if(numplanes < 2) CALCVERT(origin1, u, v, 0, 3, v3)
+                else
+                {
+                    uchar toffset = (uchar)(255.0 * float(vl) / float(lm_h));
+                    float tscale = 255.0f / float(tmax - tmin) * float(tl) / float(lm_h);
+                    CALCVERT(origin2, u, t, toffset, 3, v3);
+                }
                 surface.w = lm_w;
                 surface.h = lm_h;
 

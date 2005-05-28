@@ -126,7 +126,7 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     float xd = 1.0f/ray.x;
     float yd = 1.0f/ray.y;
     float zd = 1.0f/ray.z;
-    dist = 1;
+    dist = 0.25;
     v = ray;
     v.mul(dist);
     v.add(o);
