@@ -10,7 +10,12 @@ vec wall; // just the normal vector.
 float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
 
-bool onstairs(dynent *d) { return floorheight-d->o.z+d->eyeheight < STAIRHEIGHT; };
+bool onstairs(dynent *d) 
+{ 
+	float space = floorheight-d->o.z+d->eyeheight;
+	if(space>-1 && space < STAIRHEIGHT && d->vel.z<0) d->vel.z = 0;
+	return (space < STAIRHEIGHT); 
+};
 
 bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo)
 {
@@ -107,6 +112,7 @@ bool collide(dynent *d)
 {
     floorheight = 0;
     wall.x = wall.y = wall.z = 0;
+	if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];
@@ -119,8 +125,7 @@ bool collide(dynent *d)
     // should replace with a blockmap but seems mostly fast enough
     loopv(v) if(!d->o.reject(v[i]->o, 20.0f) && d!=v[i] && !plcollide(d, v[i])) return false;
 
-    if(!mmcollide(d)) return false;     // collide with map models
-    return octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1)); // collide with world
+    return mmcollide(d);     // collide with map models
 };
 
 void move(dynent *d, vec &dir, float push)
