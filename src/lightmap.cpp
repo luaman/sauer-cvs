@@ -404,15 +404,16 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     COORDMINMAX(u, t, v3);
                 }
 
-                int scale = int(max(umax - umin, vmax - vmin));
+                int scale = int(min(umax - umin, vmax - vmin));
                 if(numplanes > 1)
-                    scale = max(scale, int(tmax));
+                    scale = min(scale, int(tmax));
                 float lpu = 16.0f / float(scale < (1 << lightlod) ? lightprecision / 2 : lightprecision);
                 uint ul((uint)ceil((umax - umin + 1) * lpu)),
                      vl((uint)ceil((vmax - vmin + 1) * lpu)),
                      tl(0);
                 if(numplanes > 1)
                 {
+                    ASSERT(tmin == 0);
                     tl = (uint)ceil((tmax + 1) * lpu);
                     tl = max(LM_MINH, tl);
                     vl = max(LM_MINH, vl);
@@ -420,7 +421,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 lm_w = max(LM_MINW, min(LM_MAXW, ul));
                 lm_h = max(LM_MINH, min(LM_MAXH, vl + tl));
 
-                
                 vec origin1(v0), uo(u), vo(v);
                 uo.mul(umin);
                 if(numplanes < 2) vo.mul(vmin);
@@ -440,7 +440,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 vec origin2;
                 if(numplanes > 1)
                 {
-                    ASSERT(tmin == 0);
                     vec tstep(t);
                     tstep.mul(tmax / (lm_h - split - 1));
                     origin2 = v0;
