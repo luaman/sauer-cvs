@@ -270,7 +270,7 @@ void hitpush(int target, int damage, dynent *d, dynent *at, vec &from, vec &to)
     vec v(to);
     v.sub(from);
     v.normalize();
-    v.mul(damage*4/50); 
+    v.mul(damage/50); 
     d->vel.add(v);
 };
 
