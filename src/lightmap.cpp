@@ -206,10 +206,10 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
         vec((ustep.x + vstep.x) * 0.3, (ustep.y + vstep.y) * 0.3, (ustep.z + vstep.z) * 0.3),
         vec((vstep.x - ustep.x) * 0.3, (vstep.y - ustep.y) * 0.3, (vstep.z - ustep.z) * 0.3),
         vec((ustep.x + vstep.x) * -0.3, (ustep.y + vstep.y) * -0.3, (ustep.z + vstep.z) * -0.3),
-        vec(vstep.x * 0.5, vstep.y * 0.5, vstep.z * 0.5),
-        vec(vstep.x * -0.5, vstep.y * -0.5, vstep.z * -0.5),
-        vec(ustep.x * 0.5, ustep.y * 0.5, ustep.z * 0.5),
-        vec(ustep.x * -0.5, ustep.y * -0.5, ustep.z * -0.5)
+        vec(vstep.x * 0.45, vstep.y * 0.45, vstep.z * 0.45),
+        vec(vstep.x * -0.45, vstep.y * -0.45, vstep.z * -0.45),
+        vec(ustep.x * 0.45, ustep.y * 0.45, ustep.z * 0.45),
+        vec(ustep.x * -0.45, ustep.y * -0.45, ustep.z * -0.45)
     };
     if(y1 == 0)
     {
