@@ -2,8 +2,9 @@
 
 vector<LightMap> lightmaps;
 
-VARF(lightprecision, 1, 32, 256, (hdr.mapprec = lightprecision));
+VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
+VAR(lightlod, 0, 8, 8);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
  
@@ -193,9 +194,9 @@ void pack_lightmap(surfaceinfo &surface)
 
 static uchar mincolor[3], maxcolor[3];
 
-bool generate_lightmap(cube &c, int surface, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
+bool generate_lightmap(float precision, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
-    float tolerance = 0.5 * float(lightprecision) / 16.0f;
+    float tolerance = 0.5 * precision / 16.0f;
     vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     uchar *lumel = lm + y1 * 3 * lm_w;
@@ -403,7 +404,13 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     COORDMINMAX(u, t, v3);
                 }
 
-                float lpu = 16.0f / float(lightprecision);
+                float scale = min(umax - umin, vmax - vmin);
+                if(numplanes > 1)
+                    scale = min(scale, tmax - tmin);
+                float lod = float(lightprecision) + 16.0f * scale / float(16 << lightlod);
+                if(lod > 256.0f)
+                    lod = 256.0f;
+                float lpu = 16.0f / lod;
                 uint ul((uint)ceil((umax - umin + 1) * lpu)),
                      vl((uint)ceil((vmax - vmin + 1) * lpu)),
                      tl(0);
@@ -431,7 +438,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                 ustep.mul((umax - umin) / float(lm_w - 1));
                 uint split = vl * lm_h / (vl + tl);
                 vstep.mul((vmax - vmin) / (split - 1));
-                if(!generate_lightmap(c[i], j, 0, split, origin1, planes[0], ustep, vstep))
+                if(!generate_lightmap(lod, 0, split, origin1, planes[0], ustep, vstep))
                     continue;
                 vec origin2;
                 if(numplanes > 1)
@@ -441,7 +448,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     tstep.mul(tmax / (lm_h - split - 1));
                     origin2 = v0;
                     origin2.add(uo);
-                    if(!generate_lightmap(c[i], j, split, lm_h, origin2, planes[1], ustep, tstep))
+                    if(!generate_lightmap(lod, split, lm_h, origin2, planes[1], ustep, tstep))
                         continue;
                 }
 
