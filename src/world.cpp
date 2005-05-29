@@ -161,6 +161,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         hdr.waterlevel = -100000;
         hdr.maple = 8;
         hdr.mapprec = 32;
+        hdr.mapllod = 0;
         hdr.lightmaps = 0;
         loopi(8) hdr.reserved[i] = 0;
         loopi(256) hdr.texlist[i] = i;

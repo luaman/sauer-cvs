@@ -215,6 +215,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     if(hdr.version>MAPVERSION) fatal("this map requires a newer version of cube");
     setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
     setvar("lighterror", hdr.maple ? hdr.maple: 8);
+    setvar("lightlod", hdr.mapllod);
     ents.setsize(0);
     loopi(hdr.numents)
     {

@@ -4,6 +4,7 @@ vector<LightMap> lightmaps;
 
 VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
+VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 1, 1);
  
@@ -403,13 +404,16 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     COORDMINMAX(u, t, v3);
                 }
 
-                float lpu = 16.0f / float(lightprecision);
+                int scale = int(max(umax - umin, vmax - vmin));
+                if(numplanes > 1)
+                    scale = max(scale, int(tmax));
+                float lpu = 16.0f / float(scale < (1 << lightlod) ? lightprecision / 2 : lightprecision);
                 uint ul((uint)ceil((umax - umin + 1) * lpu)),
                      vl((uint)ceil((vmax - vmin + 1) * lpu)),
                      tl(0);
                 if(numplanes > 1)
                 {
-                    tl = (uint)ceil((tmax - tmin + 1) * lpu);
+                    tl = (uint)ceil((tmax + 1) * lpu);
                     tl = max(LM_MINH, tl);
                     vl = max(LM_MINH, vl);
                 }
