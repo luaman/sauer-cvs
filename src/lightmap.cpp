@@ -232,7 +232,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                     vec ray = target;
                     ray.sub(light.o);
                     float mag = ray.magnitude(),
-                          attenuation = 1.0 - mag / float(light.attr1);
+                          attenuation = 1.0;
+                    if(light.attr1)
+                        attenuation -= mag / float(light.attr1);
                     ray.mul(1.0 / mag);
                     if(attenuation <= 0.0)
                         continue;
@@ -311,7 +313,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             continue;
 
         int radius = e.attr1;
-        if(e.o.x + radius < cx || e.o.x - radius > cx + (size << 1) ||
+        if(!radius ||
+           e.o.x + radius < cx || e.o.x - radius > cx + (size << 1) ||
            e.o.y + radius < cy || e.o.y - radius > cy + (size << 1) ||
            e.o.z + radius < cz || e.o.z - radius > cz + (size << 1))
             continue;
@@ -345,7 +348,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     entity &light = *close_lights[i];
 
                     int radius = light.attr1;
-                    if(light.o.x + radius < o.x || light.o.x - radius > o.x + size ||
+                    if(!radius ||
+                       light.o.x + radius < o.x || light.o.x - radius > o.x + size ||
                        light.o.y + radius < o.y || light.o.y - radius > o.y + size ||
                        light.o.z + radius < o.z || light.o.z - radius > o.z + size)
                         continue;
