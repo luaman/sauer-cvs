@@ -6,7 +6,7 @@ VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
 VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VAR(shadows, 0, 1, 1);
-VAR(aalights, 0, 1, 1);
+VAR(aalights, 0, 1, 2);
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
@@ -200,12 +200,16 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     uchar *lumel = lm + y1 * 3 * lm_w;
-    vec offsets[4] = 
+    vec offsets[8] = 
     { 
         vec((ustep.x - vstep.x) * 0.3, (ustep.y - vstep.y) * 0.3, (ustep.z - vstep.z) * 0.3),
         vec((ustep.x + vstep.x) * 0.3, (ustep.y + vstep.y) * 0.3, (ustep.z + vstep.z) * 0.3),
         vec((vstep.x - ustep.x) * 0.3, (vstep.y - ustep.y) * 0.3, (vstep.z - ustep.z) * 0.3),
         vec((ustep.x + vstep.x) * -0.3, (ustep.y + vstep.y) * -0.3, (ustep.z + vstep.z) * -0.3),
+        vec(vstep.x * 0.5, vstep.y * 0.5, vstep.z * 0.5),
+        vec(vstep.x * -0.5, vstep.y * -0.5, vstep.z * -0.5),
+        vec(ustep.x * 0.5, ustep.y * 0.5, ustep.z * 0.5),
+        vec(ustep.x * -0.5, ustep.y * -0.5, ustep.z * -0.5)
     };
     if(y1 == 0)
     {
@@ -217,7 +221,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
         vec u = v;
         for(uint x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
             uint r = 0, g = 0, b = 0;
-            loopj(4)
+            loopj(aalights ? aalights * 4 : 1)
             {
                 loopv(lights)
                 {
@@ -248,9 +252,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
             }
             if(aalights)
             {
-                r /= 4;
-                g /= 4;
-                b /= 4;
+                r /= aalights*4;
+                g /= aalights*4;
+                b /= aalights*4;
             }
             lumel[0] = min(255, max(25, r));
             lumel[1] = min(255, max(25, g));
