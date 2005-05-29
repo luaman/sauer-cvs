@@ -252,9 +252,10 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
             }
             if(aalights)
             {
-                r /= aalights*4;
-                g /= aalights*4;
-                b /= aalights*4;
+                uint sample = aalights * 4;
+                r /= sample;
+                g /= sample;
+                b /= sample;
             }
             lumel[0] = min(255, max(25, r));
             lumel[1] = min(255, max(25, g));
