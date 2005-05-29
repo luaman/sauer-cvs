@@ -213,20 +213,21 @@ void physicsframe()          // optimally schedule physics frames inside the gra
 
 void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 {
-    const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, int(pl->o.z+pl->aboveeye)).material == MAT_WATER;
+    const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
 
     vec d;      // vector of direction we ideally want to move in
 
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->onfloor ? 0.0f : (water ? -1.0f : pl->vel.z*0.75f - 2.0f);
+    d.z = pl->onfloor ? 0.0f : (water ? -0.5f : pl->vel.z*0.75f - 2.0f);
 
     if(floating || water)
     {
         d.x *= (float)cos(rad(pl->pitch));
         d.y *= (float)cos(rad(pl->pitch));
-        d.z = (float)(pl->move*sin(rad(pl->pitch)));
+        if(floating || pl->move)
+            d.z = (float)(pl->move*sin(rad(pl->pitch)));
     };
 
     d.x += (float)(pl->strafe*cos(rad(pl->yaw-180)));

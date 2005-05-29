@@ -81,7 +81,7 @@ uint calcwatersubdiv(int x, int y, int z, uint size)
     float dist;
     if(player1->o.x >= x && player1->o.x < x + size &&
        player1->o.y >= y && player1->o.y < y + size)
-        dist = player1->o.z - float(z);
+        dist = fabs(player1->o.z - float(z));
     else
     {
         vec t(x + size/2, y + size/2, z + size/2);
@@ -150,15 +150,6 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
         if(orient != O_TOP)
             return false;
         return visibleface(c, orient, x, y, z, size, MAT_WATER);
-        if(faceedges(c, orient) == F_SOLID && touchingface(c, orient))
-            return false;
-        else
-        {
-           cube &above = neighbourcube(x, y, z, size, -size, orient);
-           if(above.material != MAT_AIR)
-               return false; 
-           return true;
-        }
 
     default:
         return false;
@@ -170,6 +161,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     if(!matsurfs)
         return;
 
+    glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_SRC_COLOR);
     glColor3f(0.5f, 0.5f, 0.5f);
@@ -179,14 +171,12 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         switch(matsurf.material)
         {
         case MAT_WATER:
-            if(player1->o.z < matsurf.z + matsurf.size)
-                break;
-
             if(!waterwaves || renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
             break;
         }
     }
     glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
 }
 
