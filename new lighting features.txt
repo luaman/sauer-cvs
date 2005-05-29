@@ -47,11 +47,13 @@ Default = 0. This will double the resolution of lightmaps (cut the lightprecisio
 if size of the surface being lit is smaller than 2^D units. This allows large maps
 to have pockets of detailed lighting without using a high resolution over everything.
 
-	aalight B
+	aalights X
 
 Default = 1, determines whether to use 4x sampling for every lightmap texel. You should
 not need to touch this var, unless waiting for calclight really bothers you, you can set
-it to 0 for a 4x speedup and blockier shadows.
+it to 0 for a 4x speedup and blockier shadows. Also, for a slight increase in appearance,
+one may set it to 2 to turn on 8x sampling; however, this takes greatly longer and is
+enabled by default.
 
         shadows B
 Default = 1, determines whether or not objects cast shadows. You should also not need to
