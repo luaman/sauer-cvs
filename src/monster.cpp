@@ -205,7 +205,8 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
 
         case M_HOME:                        // monster has visual contact, heads straight for player and may want to shoot at any time
             m->targetyaw = enemyyaw;
-            m->targetpitch = 0;             // FIXME: correctly look at the player (for swimming etc.)
+            float dist = m->enemy->o.dist(m->o);
+            m->targetpitch = asin((m->enemy->o.z - m->o.z) / dist) / RAD; 
             if(m->trigger<lastmillis)
             {
                 vec target;
@@ -215,7 +216,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
                 }
                 else 
                 {
-                    float dist = m->enemy->o.dist(m->o);                        // the closer the monster is the more likely he wants to shoot
+                    // the closer the monster is the more likely he wants to shoot
                     if(!rnd((int)dist/3+1) && m->enemy->state==CS_ALIVE)        // get ready to fire
                     { 
                         m->attacktarget = target;

@@ -290,7 +290,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
-    bool underwater = lookupcube((int)player1->o.x, (int)player1->o.y, int(player1->o.z + player1->aboveeye)).material == MAT_WATER;
+    bool underwater = lookupcube((int)player1->o.x, (int)player1->o.y, int(player1->o.z + player1->aboveeye*0.25f)).material == MAT_WATER;
     
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
