@@ -4,7 +4,9 @@ Sauerbraten uses lightmaps for its lighting system. Place lights as in cube, e.g
 	newent light RADIUS R G B
 
 A good radius for a small wall light is 64, for a middle sized room 128... for a sun
-probably more like 1000.
+probably more like 1000. Lights with a radius of 0 do not attenuate and may be more
+appropriate for simulating sunlight or ambient light; however, this comes at the cost
+of slightly greater map file sizes.
 
 	calclight
 	
