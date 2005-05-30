@@ -377,7 +377,7 @@ struct sortkey
 
 struct sortval
 {
-     usvector dims[6];
+     usvector dims[3];
 };
 
 inline bool htcmp (const sortkey &x, const sortkey &y)
@@ -408,7 +408,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
     {
         curtris += 2;
-        usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[i];//dimension(i)];
+        usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
         loopk(4)
         {
             float u, v;
@@ -476,7 +476,7 @@ vtxarray *newva(int x, int y, int z, int size)
     enumeratekt(indices, sortkey, k, sortval, t,
         va->eslist[list].texture = k.tex;
         va->eslist[list].lmid = k.lmid;
-        loopl(6) if(va->eslist[list].length[l] = t->dims[l].length())
+        loopl(3) if(va->eslist[list].length[l] = t->dims[l].length())
         {
             memcpy(ebuf, t->dims[l].getbuf(), t->dims[l].length() * sizeof(ushort));
             ebuf += t->dims[l].length();
@@ -695,10 +695,10 @@ void setupTMU()
 
 void renderq()
 {
-    int si[] = { 0, 0, 0, 0, 2, 2};
-    int ti[] = { 2, 2, 1, 1, 1, 1};
-    float sc[] = { 8.0f, 8.0f, -8.0f, 8.0f, 8.0f, -8.0f};
-    float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
+    int si[] = { 0, 0, 2 }; //{ 0, 0, 0, 0, 2, 2};
+    int ti[] = { 2, 1, 1 }; //{ 2, 2, 1, 1, 1, 1};
+    //float sc[] = { 8.0f, 8.0f, -8.0f, 8.0f, 8.0f, -8.0f};
+    //float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
 
     glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_COLOR_ARRAY);
@@ -737,12 +737,12 @@ void renderq()
             glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
             glActiveTextureARB(GL_TEXTURE0_ARB);
 
-            loopl(6) if (va->eslist[i].length[l])
+            loopl(3) if (va->eslist[i].length[l])
             {
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                 GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                s[si[l]] = sc[l]/xs;
-                t[ti[l]] = tc[l]/ys;
+                s[si[l]] = 8.0f/xs;
+                t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/ys;
                 glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
                 glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
 
