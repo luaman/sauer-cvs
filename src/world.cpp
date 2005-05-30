@@ -72,7 +72,7 @@ int findtype(char *what)
     return NOTUSED;
 }
 
-VAR(entdrop, 0, 1, 2);
+VAR(entdrop, 0, 1, 3);
 
 extern block3 sel;
 extern bool havesel, selectcorners;
@@ -94,6 +94,7 @@ bool dropentity(entity &e)
         dropenttofloor(&e);
         break;
     case 2:
+    case 3:
         if(!havesel)
         {
             conoutf("can't drop entity without a selection");
@@ -129,6 +130,8 @@ bool dropentity(entity &e)
             if(sel.orient == O_LEFT) e.o.x -= radius;
             else e.o.x += sel.grid + radius;
         };
+        if(entdrop == 3)
+            dropenttofloor(&e);
         break;
     };
     return true;
