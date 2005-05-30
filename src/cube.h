@@ -487,7 +487,7 @@ extern void perlinarea(block &b, int scale, int seed, int psize);
 #include "octa.h"
 #include "lightmap.h"
 
-#ifndef GL_ARRAY_BUFFER_ARB
+#ifndef OLD_GL_HEADERS
 #define GL_ARRAY_BUFFER_ARB               0x8892
 #define GL_STATIC_DRAW_ARB                0x88E4
 
