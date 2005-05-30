@@ -110,6 +110,7 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
 
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)
 {
+    if(noedit()) return;
     newentity(player1->o, what, atoi(a1), atoi(a2), atoi(a3), atoi(a4), 0);
 };
 
