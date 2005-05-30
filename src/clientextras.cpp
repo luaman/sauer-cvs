@@ -24,7 +24,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
         basetime = d->lastaction;
         int t = lastmillis-d->lastaction;
         if(t<0 || t>20000) return;
-        if(t>(r-1)*100) { n += 4; if(t>(r+10)*100) { t -= (r+10)*100; mz -= 4*t*t/10000000000.0f*t; }; };
+        if(t>(r-1)*100) { n += 4; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t/16.0f; }; };
         if(mz<-1000) return;
         //mdl = (((int)d>>6)&1)+1;
         //mz = d->o.z-d->eyeheight+0.8f;
@@ -35,7 +35,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
     else if(d->monsterstate==M_ATTACKING)           { n = 8;  }
     else if(d->monsterstate==M_PAIN)                { n = 10; }
     else if((!d->move && !d->strafe) || !d->moving) { n = 12; }
-    //else if(!d->onfloor && d->timeinair>100)        { n = 18; }
+    else if(!d->onfloor && d->vel.z <= -1.0f)        { n = 18; }
     else                                            { n = 14; speed = 1200/d->maxspeed*scale; if(hellpig) speed = 300/d->maxspeed;  };
     if(hellpig) { n++; scale *= 32; mz -= 7.6f; };
     uchar color[3];

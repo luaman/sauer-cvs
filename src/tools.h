@@ -235,7 +235,7 @@ template <class T> struct vector
 inline unsigned int hthash(char * key)
 {
     unsigned int h = 5381;
-    for(int i = 0, k; k = key[i]; i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
+    for(int i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
     return h;
 }
 

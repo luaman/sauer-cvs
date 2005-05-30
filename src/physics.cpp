@@ -243,7 +243,8 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
     d.z = pl->onfloor ? 0.0f : (water ? -0.5f : pl->vel.z*0.75f - 2.0f);
-
+    const float drop = d.z;
+ 
     if(floating || water)
     {
         d.x *= (float)cos(rad(pl->pitch));
@@ -276,13 +277,16 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     }
     else                        // apply velocity with collision
     {
-        if(pl->onfloor || water) if(pl->jumpnext)
+        if(pl->onfloor || water)
         {
-            pl->jumpnext = false;
-            pl->vel.z = 1.3f;       // physics impulse upwards
-            if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
-            if(local) playsoundc(S_JUMP);
-            else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
+            if(pl->jumpnext)
+            {
+                pl->jumpnext = false;
+                pl->vel.z = 1.3f;       // physics impulse upwards
+                if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
+                if(local) playsoundc(S_JUMP);
+                else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
+            };
         };
 
         const float f = 1.0f/moveres;
@@ -292,6 +296,12 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         // discrete steps collision detection & sliding
         d.mul(f);
         loopi(moveres) move(pl, d, push);
+        
+        if(drop < -3.0f && pl->onfloor)
+        {
+            if(local) playsoundc(S_LAND);
+            else if(pl->monsterstate) playsound(S_LAND, &pl->o);
+        }
     };
 
     // automatically apply smooth roll when strafing
