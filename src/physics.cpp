@@ -166,6 +166,7 @@ void move(dynent *d, vec &dir, float push)
                 d->nextmove.y = push*wall.y;
             };
         };
+        d->timeinair = 0;
     };
 };
 
@@ -198,6 +199,7 @@ void dropenttofloor(entity *e)
     d.onfloor = false;
     d.blocked = false;
     d.moving = true;
+    d.timeinair = 0;
     d.state = CS_EDITING;
     loopi(hdr.worldsize)
     {
@@ -243,7 +245,6 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
     d.z = pl->onfloor ? 0.0f : (water ? -0.5f : pl->vel.z*0.75f - 2.0f);
-    const float drop = d.z;
  
     if(floating || water)
     {
@@ -286,7 +287,17 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
                 if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
                 if(local) playsoundc(S_JUMP);
                 else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
+            }
+            else if(pl->timeinair>800)  // if we land after long time must have been a high jump, make thud sound
+            {
+                if(local) playsoundc(S_LAND);
+                else if(pl->monsterstate) playsound(S_LAND, &pl->o);
             };
+            pl->timeinair = 0;
+        }
+        else
+        {
+            pl->timeinair += curtime;
         };
 
         const float f = 1.0f/moveres;
@@ -296,12 +307,6 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         // discrete steps collision detection & sliding
         d.mul(f);
         loopi(moveres) move(pl, d, push);
-        
-        if(drop < -3.0f && pl->onfloor)
-        {
-            if(local) playsoundc(S_LAND);
-            else if(pl->monsterstate) playsound(S_LAND, &pl->o);
-        }
     };
 
     // automatically apply smooth roll when strafing

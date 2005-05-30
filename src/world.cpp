@@ -23,7 +23,7 @@ COMMAND(trigger, ARG_2INT);
 int closestent()        // used for delent and edit mode ent display
 {
     if(!editmode) return -1;
-    int best;
+    int best = -1;
     float bdist = 99999;
     loopv(ents)
     {
@@ -106,9 +106,8 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
             break;
     };
     if(type!=LIGHT) dropenttofloor(&e);
-    ents.add(e);
     addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
-    return &e;
+    return &ents.add(e);
 };
 
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)

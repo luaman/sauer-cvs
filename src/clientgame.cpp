@@ -39,6 +39,7 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     resetmovement(d);
     d->vel.x = d->vel.y = d->vel.z = 0;
     d->nextmove.x = d->nextmove.y = d->nextmove.z = 0;
+    d->timeinair = 0;
     d->onfloor = false;
     d->health = 100;
     d->armour = 50;

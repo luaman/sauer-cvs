@@ -124,6 +124,7 @@ struct dynent                           // players & monsters
     vec o, vel;                         // origin, velocity
     float yaw, pitch, roll;
     float maxspeed;                     // cubes per second, 24 for player
+    int timeinair;
     bool inwater;
     bool onfloor, jumpnext;
     int move, strafe;
