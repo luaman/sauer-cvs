@@ -1,5 +1,5 @@
 CXX=g++
-CXXOPTFLAGS=-g#-Wall -O3 -fsigned-char -fomit-frame-pointer
+CXXOPTFLAGS=-Wall -O3 -fsigned-char -fomit-frame-pointer
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
