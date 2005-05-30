@@ -85,7 +85,7 @@ uint calcwatersubdiv(int x, int y, int z, uint size)
     else
     {
         vec t(x + size/2, y + size/2, z + size/2);
-        dist = t.dist(player1->o) - size/2;
+        dist = t.dist(player1->o) - size*1.42f/2;
     }
     uint subdiv = watersubdiv + int(dist) / (32 << waterlod);
     if(subdiv >= 8*sizeof(subdiv))
