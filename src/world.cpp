@@ -91,7 +91,8 @@ bool dropentity(entity &e)
     switch(entdrop)
     {
     case 1:
-        dropenttofloor(&e);
+        if(e.type != LIGHT)
+            dropenttofloor(&e);
         break;
     case 2:
     case 3:
@@ -130,7 +131,7 @@ bool dropentity(entity &e)
             if(sel.orient == O_LEFT) e.o.x -= radius;
             else e.o.x += sel.grid + radius;
         };
-        if(entdrop == 3)
+        if(entdrop == 3 && e.type != LIGHT)
             dropenttofloor(&e);
         break;
     };
@@ -170,7 +171,7 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
             e.attr1 = (int)player1->yaw;
             break;
     };
-    if(entdrop && type!=LIGHT)
+    if(entdrop)
         dropentity(e);
     addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
     return &ents.add(e);
