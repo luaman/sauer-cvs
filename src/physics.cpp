@@ -286,12 +286,6 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
                 if(local) playsoundc(S_JUMP);
                 else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
             }
-            else if(pl->timeinair>800)  // if we land after long time must have been a high jump, make thud sound
-            {
-                if(local) playsoundc(S_LAND);
-                else if(pl->monsterstate) playsound(S_LAND, &pl->o);
-            };
-            pl->timeinair = 0;
         }
         else
         {
@@ -300,11 +294,17 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
         const float f = 1.0f/moveres;
         const float push = speed/moveres/1.2f;                  // extra smoothness when lifting up stairs or against walls
+        const int timeinair = pl->timeinair;
         pl->onfloor = false;
 
         // discrete steps collision detection & sliding
         d.mul(f);
         loopi(moveres) move(pl, d, push);
+        if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
+        {
+            if(local) playsoundc(S_LAND);
+            else if(pl->monsterstate) playsound(S_LAND, &pl->o);
+        };
     };
 
     // automatically apply smooth roll when strafing
