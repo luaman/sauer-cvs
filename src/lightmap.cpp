@@ -313,11 +313,13 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
             continue;
 
         int radius = e.attr1;
-        if(!radius ||
-           e.o.x + radius < cx || e.o.x - radius > cx + (size << 1) ||
-           e.o.y + radius < cy || e.o.y - radius > cy + (size << 1) ||
-           e.o.z + radius < cz || e.o.z - radius > cz + (size << 1))
-            continue;
+        if(radius > 0)
+        {
+            if(e.o.x + radius < cx || e.o.x - radius > cx + (size << 1) ||
+               e.o.y + radius < cy || e.o.y - radius > cy + (size << 1) ||
+               e.o.z + radius < cz || e.o.z - radius > cz + (size << 1))
+                continue;
+        }
 
         close_lights.add(&e);
     }
@@ -348,19 +350,21 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
                     entity &light = *close_lights[i];
 
                     int radius = light.attr1;
-                    if(!radius ||
-                       light.o.x + radius < o.x || light.o.x - radius > o.x + size ||
-                       light.o.y + radius < o.y || light.o.y - radius > o.y + size ||
-                       light.o.z + radius < o.z || light.o.z - radius > o.z + size)
-                        continue;
+                    if(radius > 0)
+                    {
+                        if(light.o.x + radius < o.x || light.o.x - radius > o.x + size ||
+                           light.o.y + radius < o.y || light.o.y - radius > o.y + size ||
+                           light.o.z + radius < o.z || light.o.z - radius > o.z + size)
+                            continue;
+                    }
 
                     float dist = planes[0].dist(light.o);
-                    if(dist >= 0.0 && dist < float(light.attr1))
+                    if(dist >= 0.0 && (!radius || dist < float(radius)))
                        lights1.add(&light);
                     if(numplanes > 1)
                     {
                         dist = planes[1].dist(light.o);
-                        if(dist >= 0.0 && dist < float(light.attr1))
+                        if(dist >= 0.0 && (!radius || dist < float(radius)))
                             lights2.add(&light);
                     }
                 }
@@ -538,13 +542,15 @@ void lightreaching(const vec &target, uchar color[3])
         vec ray(target);
         ray.sub(e.o);
         float mag = ray.magnitude();
-        if(mag >= float(e.attr1))
+        if(e.attr1 && mag >= float(e.attr1))
             continue;
 
         ray.mul(1.0 / mag);
         if(raycube(e.o, ray, mag) < mag)
             continue;
-        float intensity = 1.0 - mag / float(e.attr1);
+        float intensity = 1.0;
+        if(e.attr1)
+            intensity -= mag / float(e.attr1);
         
         r += (uint)(intensity * float(e.attr2));
         g += (uint)(intensity * float(e.attr3));
