@@ -179,6 +179,13 @@ void readmatrices()
     glGetDoublev(GL_PROJECTION_MATRIX, pm);
 };
 
+// stupid function to cater for stupid ATI linux drivers that return incorrect depth values
+
+float depthcorrect(float d)
+{
+        return (d<=1/256.0f) ? d*256 : d;
+};
+
 // find out the 3d target of the crosshair in the world easily and very acurately.
 // sadly many very old cards and drivers appear to fuck up on gluUnProject() and give false
 // coordinates, making shooting and such impossible.
@@ -189,7 +196,7 @@ void readdepth(int w, int h)
 {
     glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
     double worldx = 0, worldy = 0, worldz = 0;
-    gluUnProject(w/2, h/2, cursordepth, mm, pm, viewport, &worldx, &worldz, &worldy);
+    gluUnProject(w/2, h/2, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
     worldpos = vec((float)worldx, (float)worldy, (float)worldz);
     setorient(vec((float)mm[0], (float)mm[4], (float)mm[8]), vec((float)mm[1], (float)mm[5], (float)mm[9]));
 };
