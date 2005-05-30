@@ -185,9 +185,9 @@ void dropenttofloor(entity *e)
     {
         mapmodelinfo &mmi = getmminfo(e->attr2);
         if(!&mmi) return;
-        d.radius = mmi.rad ? float(mmi.rad) : 4.0f;
+        d.radius = 4.0f;
         d.eyeheight = 0.0f;
-        d.aboveeye = float((mmi.h ? mmi.h : 4) + mmi.zoff + e->attr3);
+        d.aboveeye = 4.0f;
     }
     else
     {
