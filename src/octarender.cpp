@@ -679,8 +679,8 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz)
     visiblecubec(c, size, cx, cy, cz);
 };
 
-extern PFNGLACTIVETEXTUREARBPROC       glActiveTextureARB;
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
+extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture;
+extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture;
 
 
 void setupTMU()
@@ -716,16 +716,16 @@ void renderq()
 
         setupTMU();
 
-        glActiveTextureARB(GL_TEXTURE1_ARB);
-        glClientActiveTextureARB(GL_TEXTURE1_ARB);
+        glActiveTexture(GL_TEXTURE1_ARB);
+        glClientActiveTexture(GL_TEXTURE1_ARB);
 
         glEnable(GL_TEXTURE_2D);
         setupTMU();
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
 
-        glActiveTextureARB(GL_TEXTURE0_ARB);
-        glClientActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0_ARB);
+        glClientActiveTexture(GL_TEXTURE0_ARB);
 
         unsigned short *ebuf = va->ebuf;
         loopi(va->texs)
@@ -733,9 +733,9 @@ void renderq()
             int xs, ys;
             int otex = lookuptexture(va->eslist[i].texture, xs, ys);
             glBindTexture(GL_TEXTURE_2D, otex);
-            glActiveTextureARB(GL_TEXTURE1_ARB);
+            glActiveTexture(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
-            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glActiveTexture(GL_TEXTURE0_ARB);
 
             loopl(3) if (va->eslist[i].length[l])
             {
@@ -757,12 +757,12 @@ void renderq()
     glDisableClientState(GL_VERTEX_ARRAY);
     //glDisableClientState(GL_COLOR_ARRAY);
 
-    glActiveTextureARB(GL_TEXTURE1_ARB);
-    glClientActiveTextureARB(GL_TEXTURE1_ARB);
+    glActiveTexture(GL_TEXTURE1_ARB);
+    glClientActiveTexture(GL_TEXTURE1_ARB);
     glDisable(GL_TEXTURE_2D);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
-    glClientActiveTextureARB(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0_ARB);
+    glClientActiveTexture(GL_TEXTURE0_ARB);
 
 };
 

@@ -13,8 +13,8 @@ PFNGLBINDBUFFERARBPROC    glBindBuffer    = NULL;
 PFNGLBUFFERDATAARBPROC    glBufferData    = NULL;
 PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
 
-PFNGLACTIVETEXTUREARBPROC       glActiveTextureARB       = NULL;
-PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB = NULL;
+PFNGLACTIVETEXTUREARBPROC       glActiveTexture       = NULL;
+PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture = NULL;
 
 void *getprocaddress(const char *name)
 {
@@ -61,8 +61,8 @@ void gl_init(int w, int h)
     if(!strstr(exts, "GL_EXT_texture_env_combine")) fatal("no texture_env_combine extension!");
 
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
-    glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)getprocaddress("glActiveTextureARB");
-    glClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
+    glActiveTexture = (PFNGLACTIVETEXTUREARBPROC)getprocaddress("glActiveTextureARB");
+    glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object")) conoutf("no vertex_buffer_object extension!");
     else
