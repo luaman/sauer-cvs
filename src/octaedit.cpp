@@ -111,7 +111,6 @@ void discardchildren(cube &c)
     if(c.clip) freeclipplanes(c);
     if(c.children)
     {
-        solidfaces(c); // FIXME: better mipmap
         freeocta(c.children);
         c.children = NULL;
     };
@@ -273,7 +272,11 @@ void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
         };
         if(c[i].children)
         {
-            if(size<=4) discardchildren(c[i]);
+            if(size<=4)
+            {
+                solidfaces(c[i]);
+                discardchildren(c[i]);
+            }
             else readyva(b, c[i].children, o.x, o.y, o.z, size/2);
         };
     };
@@ -441,6 +444,7 @@ void editface(int dir, int mode)
     if(dc) sel.o[d] += sel.us(d)-sel.grid;
     sel.s[d] = 1;
     loopselxyz(
+        if(c.children) solidfaces(c);
         discardchildren(c);
         if (mode==1) { if (dir<0) { solidfaces(c); } else emptyfaces(c); }  // fill command
         else

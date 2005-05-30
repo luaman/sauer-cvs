@@ -58,7 +58,11 @@ void validatec(cube *c, int size)
     {
         if(c[i].children)
         {
-            if(size<=4) discardchildren(c[i]);
+            if(size<=4)
+            {
+                solidfaces(c[i]);
+                discardchildren(c[i]);
+            }
             else validatec(c[i].children, size>>1);
         };
         loopj(12) if(edgeget(c[i].edges[j], 1)<edgeget(c[i].edges[j], 0)) emptyfaces(c[i]);
