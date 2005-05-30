@@ -41,6 +41,7 @@ int closestent()        // used for delent and edit mode ent display
 
 void entproperty(int prop, int amount)
 {
+    if(noedit()) return;
     int e = closestent();
     if(e<0) return;
     switch(prop)
@@ -54,6 +55,7 @@ void entproperty(int prop, int amount)
 
 void droptofloor()
 {
+    if(noedit()) return;
     int e = closestent();
     if(e<0) return;
     dropenttofloor(&ents[e]);
@@ -61,6 +63,7 @@ void droptofloor()
 
 void delent()
 {
+    if(noedit()) return;
     int e = closestent();
     if(e<0) { conoutf("no more entities"); return; };
     int t = ents[e].type;
@@ -119,7 +122,7 @@ COMMAND(newent, ARG_5STR);
 void clearents(char *name)
 {
     int type = findtype(name);
-    if(!editmode || multiplayer()) return;
+    if(noedit() || multiplayer()) return;
     loopv(ents)
     {
         entity &e = ents[i];
