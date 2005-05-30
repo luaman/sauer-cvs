@@ -128,7 +128,7 @@ char *entnames[] =
     "shells", "bullets", "rockets", "riflerounds",
     "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
     "teleport", "teledest",
-    "mapmodel", "monster", "trigger",
+    "mapmodel", "monster", "trigger", "jumppad",
     "?", "?", "?", "?", "?",
 };
 

@@ -159,6 +159,17 @@ void pickup(int n, dynent *d)
             teleport(n, d);
             break;
         };
+
+        case JUMPPAD:
+        {
+            static int lastjumppad = 0;
+            if(lastmillis-lastjumppad<300) break;
+            lastjumppad = lastmillis;
+            vec v((int)(char)ents[n].attr3/10.0f, (int)(char)ents[n].attr2/10.0f, ents[n].attr1/10.0f);
+            player1->vel.add(v);
+            playsoundc(S_JUMPPAD);
+            break;
+        };
     };
 };
 
@@ -171,7 +182,7 @@ void checkitems()
     {
         entity &e = ents[i];
         if(e.type==NOTUSED) continue;
-        if(!ents[i].spawned && e.type!=TELEPORT) continue;
+        if(!ents[i].spawned && e.type!=TELEPORT && e.type!=JUMPPAD) continue;
         float dist = e.o.dist(o);
         if(dist<(e.type==TELEPORT ? 16 : 10)) pickup(i, player1);
     };
