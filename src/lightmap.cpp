@@ -573,7 +573,14 @@ void initlights()
         entity &e = ents[i];
         if(e.type <= PLAYERSTART)
             continue;
-        vec target(e.o.x, e.o.y, e.o.z + (e.type == MAPMODEL ? 20 : 5));
+        float height = 4.0f;
+        if(e.type == MAPMODEL)
+        {
+            mapmodelinfo &mmi = getmminfo(e.attr2);
+            if(&mmi)
+                height = float((mmi.h ? mmi.h : 4.0f) + mmi.zoff + e.attr3);
+        }
+        vec target(e.o.x, e.o.y, e.o.z + height);
         lightreaching(target, e.color);
     }
 }
