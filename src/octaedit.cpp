@@ -14,16 +14,6 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
     glEnd();
 };
 
-struct block3
-{
-    ivec o, s;
-    int grid, orient;
-    cube *c()     { return (cube *)(this+1); };
-    int size()    { return s.x*s.y*s.z; };
-    int us(int d) { return s[d]*grid; };
-    bool operator==(block3 &b) { return o==b.o && s==b.s && grid==b.grid && orient==b.orient; };
-};
-
 block3 sel;
 block3 lastsel;
 

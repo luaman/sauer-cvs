@@ -184,8 +184,6 @@ void dropenttofloor(entity *e)
     d.vel = vec(0, 0, 0);
     if(e->type == MAPMODEL)
     {
-        mapmodelinfo &mmi = getmminfo(e->attr2);
-        if(!&mmi) return;
         d.radius = 4.0f;
         d.eyeheight = 0.0f;
         d.aboveeye = 4.0f;

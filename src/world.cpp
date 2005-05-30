@@ -53,14 +53,6 @@ void entproperty(int prop, int amount)
     };
 };
 
-void droptofloor()
-{
-    if(noedit()) return;
-    int e = closestent();
-    if(e<0) return;
-    dropenttofloor(&ents[e]);
-};
-
 void delent()
 {
     if(noedit()) return;
@@ -79,6 +71,76 @@ int findtype(char *what)
     conoutf("unknown entity type \"%s\"", (int)what);
     return NOTUSED;
 }
+
+VAR(entdrop, 0, 1, 2);
+
+extern block3 sel;
+extern bool havesel, selectcorners;
+extern int selcx, selcy, selcxs, selcys;
+
+bool dropentity(entity &e)
+{
+    float radius = 4.0f,
+          zspace = 4.0f;
+    if(e.type == MAPMODEL)
+    {
+        zspace = 0.0f;
+        mapmodelinfo &mmi = getmminfo(e.attr2);
+        if(!&mmi && mmi.rad) radius = float(mmi.rad);
+    };
+    switch(entdrop)
+    {
+    case 1:
+        dropenttofloor(&e);
+        break;
+    case 2:
+        if(!havesel)
+        {
+            conoutf("can't drop entity without a selection");
+            return false;
+        };
+        int cx = 0, cy = 0;
+        if(selcxs == 1 && selcys == 1)
+        {
+            cx = (selcx ? 1 : -1) * sel.grid / 2;
+            cy = (selcy ? 1 : -1) * sel.grid / 2;
+        }
+        e.o = sel.o;
+        switch(sel.orient)
+        {
+        case O_BOTTOM:
+        case O_TOP:
+            e.o.x += sel.grid / 2 + cx;
+            e.o.y += sel.grid / 2 + cy;
+            if(sel.orient == O_BOTTOM) e.o.z -= zspace;
+            else e.o.z += sel.grid + zspace;
+            break;
+        case O_BACK:
+        case O_FRONT:
+            e.o.x += sel.grid / 2 + cx;
+            e.o.z += sel.grid / 2 + cy;
+            if(sel.orient == O_BACK) e.o.y -= radius;
+            else e.o.y += sel.grid + radius;
+            break;
+        case O_LEFT:
+        case O_RIGHT:
+            e.o.y += sel.grid / 2 + cx;
+            e.o.z += sel.grid / 2 + cy;
+            if(sel.orient == O_LEFT) e.o.x -= radius;
+            else e.o.x += sel.grid + radius;
+        };
+        break;
+    };
+    return true;
+};
+
+void dropent()
+{
+    if(noedit()) return;
+    int e = closestent();
+    if(e<0) return;
+    dropentity(ents[e]);
+};
 
 entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
 {
@@ -105,7 +167,8 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
             e.attr1 = (int)player1->yaw;
             break;
     };
-    if(type!=LIGHT) dropenttofloor(&e);
+    if(entdrop && type!=LIGHT)
+        dropentity(e);
     addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
     return &ents.add(e);
 };
@@ -183,6 +246,6 @@ void newmap(int i) { empty_world(i, false); };
 COMMAND(mapenlarge, ARG_NONE);
 COMMAND(newmap, ARG_1INT);
 COMMAND(delent, ARG_NONE);
-COMMAND(droptofloor, ARG_NONE);
+COMMAND(dropent, ARG_NONE);
 COMMAND(entproperty, ARG_2INT);
 
