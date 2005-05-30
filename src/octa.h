@@ -53,6 +53,16 @@ struct cube
     surfaceinfo *surfaces; // lighting info for each surface
 };
 
+struct block3
+{
+    ivec o, s;
+    int grid, orient;
+    cube *c()     { return (cube *)(this+1); };
+    int size()    { return s.x*s.y*s.z; };
+    int us(int d) { return s[d]*grid; };
+    bool operator==(block3 &b) { return o==b.o && s==b.s && grid==b.grid && orient==b.orient; };
+};
+
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern ivec lu;
 extern int lusize;
