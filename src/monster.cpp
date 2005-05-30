@@ -15,20 +15,21 @@ void restoremonsterstate() { loopv(monsters) if(monsters[i]->state==CS_DEAD) num
 
 struct monstertype      // see docs for how these values modify behaviour
 {
-    short gun, mdl, speed, health, freq, lag, rate, pain, loyalty, mscale, bscale;
+    short gun, speed, health, freq, lag, rate, pain, loyalty, mscale, bscale; 
     short painsound, diesound;
-    char *name;
-}
+    char *name, *mdlname;
+}   
+    
 monstertypes[NUMMONSTERTYPES] =
-{
-    { GUN_FIREBALL,   0, 14, 100, 3, 0,   100, 800, 1, 10, 10, S_PAINO, S_DIE1,   "an ogre", },
-    { GUN_CG,        14, 18,  70, 2, 70,   10, 400, 2,  8,  8, S_PAINR, S_DEATHR, "a rhino", },
-    { GUN_SG,        13, 12, 120, 1, 100, 300, 400, 4, 14, 14, S_PAINE, S_DEATHE, "ratamahatta", },
-    { GUN_RIFLE,     16, 12, 200, 1, 80,  400, 300, 4, 18, 18, S_PAINS, S_DEATHS, "a slith", },
-    { GUN_RL,        15, 10, 500, 1, 0,   200, 200, 6, 24, 24, S_PAINB, S_DEATHB, "bauul", },
-    { GUN_BITE,      19, 22,  50, 3, 0,   100, 400, 1, 12, 15, S_PAINP, S_PIGGR2, "a hellpig", },
-    { GUN_ICEBALL,   20,  8, 250, 1, 0,    10, 400, 6, 18, 18, S_PAINH, S_DEATHH, "a knight", },
-    { GUN_SLIMEBALL, 21, 12, 100, 1, 0,   200, 400, 2, 13, 10, S_PAIND, S_DEATHD, "a goblin", },
+{   
+    { GUN_FIREBALL,  15, 100, 3, 0,   100, 800, 1, 10, 10, S_PAINO, S_DIE1,   "an ogre",     "monster/ogro"    },
+    { GUN_CG,        18,  70, 2, 70,   10, 400, 2,  8,  8, S_PAINR, S_DEATHR, "a rhino",     "monster/rhino"   },
+    { GUN_SG,        13, 120, 1, 100, 300, 400, 4, 14, 14, S_PAINE, S_DEATHE, "ratamahatta", "monster/rat"     },
+    { GUN_RIFLE,     14, 200, 1, 80,  400, 300, 4, 18, 18, S_PAINS, S_DEATHS, "a slith",     "monster/slith"   },
+    { GUN_RL,        12, 500, 1, 0,   200, 200, 6, 24, 24, S_PAINB, S_DEATHB, "bauul",       "monster/bauul"   },
+    { GUN_BITE,      22,  50, 3, 0,   100, 400, 1, 12, 15, S_PAINP, S_PIGGR2, "a hellpig",   "monster/hellpig" },
+    { GUN_ICEBALL,   11, 250, 1, 0,    10, 400, 6, 18, 18, S_PAINH, S_DEATHH, "a knight",    "monster/knight"  },
+    { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 13, 10, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin"  },
 };
 
 dynent *basicmonster(int type, int yaw, int state, int trigger, int move)
@@ -49,7 +50,6 @@ dynent *basicmonster(int type, int yaw, int state, int trigger, int move)
     if(state!=M_SLEEP) spawnplayer(m);
     m->trigger = lastmillis+trigger;
     m->targetyaw = m->yaw = (float)yaw;
-    m->targetpitch = 0;
     m->move = move;
     m->enemy = player1;
     m->gunselect = t->gun;
@@ -121,7 +121,8 @@ void transition(dynent *m, int state, int moving, int n, int r) // n = at skill 
 {
     m->monsterstate = state;
     m->move = moving;
-    m->trigger = lastmillis+n-skill*(n/20)+rnd(r+1);
+    n = n*130/100;
+    m->trigger = lastmillis+n-skill*(n/16)+rnd(r+1);
 };
 
 void normalise(dynent *m, float angle)
@@ -144,7 +145,8 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
         m->yaw -= curtime*0.5f;
         if(m->targetyaw>m->yaw) m->yaw = m->targetyaw;
     };
-    m->pitch = m->targetpitch;
+    float dist = m->enemy->o.dist(m->o);
+    m->pitch = asin((m->enemy->o.z - m->o.z) / dist) / RAD;
 
     if(m->blocked)                                                              // special case: if we run into scenery
     {
@@ -156,7 +158,6 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
         else if(m->trigger<lastmillis && (m->monsterstate!=M_HOME || !rnd(5)))  // search for a way around (common)
         {
             m->targetyaw += 180+rnd(180);                                       // patented "random walk" AI pathfinding (tm) ;)
-            m->targetpitch = 0;
             transition(m, M_SEARCH, 1, 100, 1000);
         };
     };
@@ -178,12 +179,11 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
             if(enemylos(m, target))
             {
                 normalise(m, enemyyaw);
-                float dist = m->o.dist(m->enemy->o);
                 float angle = (float)fabs(enemyyaw-m->yaw);
-                if(dist<8                   // the better the angle to the player, the further the monster can see/hear
-                ||(dist<16 && angle<135)
-                ||(dist<32 && angle<90)
-                ||(dist<64 && angle<45)
+                if(dist<32                   // the better the angle to the player, the further the monster can see/hear
+                ||(dist<64 && angle<135)
+                ||(dist<128 && angle<90)
+                ||(dist<256 && angle<45)
                 || angle<10)
                 {
                     transition(m, M_HOME, 1, 500, 200);
@@ -196,7 +196,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
         case M_AIMING:                      // this state is the delay between wanting to shoot and actually firing
             if(m->trigger<lastmillis)
             {
-                m->lastattack = 0;
+                m->lastaction = 0;
                 m->attacking = true;
                 shoot(m, m->attacktarget);
                 transition(m, M_ATTACKING, 0, 600, 0);
@@ -205,8 +205,6 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
 
         case M_HOME:                        // monster has visual contact, heads straight for player and may want to shoot at any time
             m->targetyaw = enemyyaw;
-            float dist = m->enemy->o.dist(m->o);
-            m->targetpitch = asin((m->enemy->o.z - m->o.z) / dist) / RAD; 
             if(m->trigger<lastmillis)
             {
                 vec target;
@@ -217,7 +215,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
                 else 
                 {
                     // the closer the monster is the more likely he wants to shoot
-                    if(!rnd((int)dist/3+1) && m->enemy->state==CS_ALIVE)        // get ready to fire
+                    if(!rnd((int)dist/12+1) && m->enemy->state==CS_ALIVE)        // get ready to fire
                     { 
                         m->attacktarget = target;
                         transition(m, M_AIMING, 0, monstertypes[m->mtype].lag, 10);
@@ -255,6 +253,7 @@ void monsterpain(dynent *m, int damage, dynent *d)
     if((m->health -= damage)<=0)
     {
         m->state = CS_DEAD;
+        m->lastaction = lastmillis;
         numkilled++;
         player1->frags = numkilled;
         playsound(monstertypes[m->mtype].diesound, &m->o);
@@ -291,12 +290,20 @@ void monsterthink()
         entity &e = ents[i];
         if(e.type!=TELEPORT) continue;
         vec v = e.o;
-        loopv(monsters) if(monsters[i]->state!=CS_DEAD)
+        loopv(monsters) if(monsters[i]->state==CS_DEAD)
+        {
+            if(lastmillis-monsters[i]->lastaction<2000)
+            {
+                monsters[i]->move = 0;
+                moveplayer(monsters[i], 1, false);
+            };
+        }
+        else
         {
             v.z += monsters[i]->eyeheight;
             float dist = v.dist(monsters[i]->o);
             v.z -= monsters[i]->eyeheight;
-            if(dist<4) teleport(&e-&ents[0], monsters[i]);
+            if(dist<16) teleport(&e-&ents[0], monsters[i]);
         };
     };
     
@@ -305,5 +312,5 @@ void monsterthink()
 
 void monsterrender()
 {
-    loopv(monsters) renderclient(monsters[i], false, monstertypes[monsters[i]->mtype].mdl, monstertypes[monsters[i]->mtype].mscale/10.0f);
+    loopv(monsters) renderclient(monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->mtype == 5);
 };

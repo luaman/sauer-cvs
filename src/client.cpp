@@ -30,8 +30,8 @@ VARF(rate, 0, 0, 25000, if(clienthost) enet_host_bandwidth_limit (clienthost, ra
 void throttle();
 
 VARF(throttle_interval, 0, 5, 30, throttle());
-VARF(throttle_accel,    0, 7, 32, throttle());
-VARF(throttle_decel,    0, 1, 32, throttle());
+VARF(throttle_accel,    0, 2, 32, throttle());
+VARF(throttle_decel,    0, 2, 32, throttle());
 
 void throttle()
 {
@@ -40,7 +40,7 @@ void throttle()
     enet_peer_throttle_configure(clienthost->peers, throttle_interval*1000, throttle_accel, throttle_decel);
 };
 
-void newname(char *name) { c2sinit = false; strcpy_s(player1->name, name); };
+void newname(char *name) { c2sinit = false; strn0cpy(player1->name, name, 16); };
 void newteam(char *name) { c2sinit = false; strn0cpy(player1->team, name, 5); };
 
 COMMANDN(team, newteam, ARG_1STR);
@@ -68,20 +68,6 @@ void updatepos(dynent *d)
     {
         d->plag = (d->plag*5+lagtime)/6;
         d->lastupdate = lastmillis;
-    };
-};
-
-void otherplayers()
-{
-    loopv(players) if(players[i])
-    {
-        const int lagtime = lastmillis-players[i]->lastupdate;
-        if(lagtime>1000 && players[i]->state==CS_ALIVE)
-        {
-            players[i]->state = CS_LAGGED;
-            continue;
-        };
-        if(lagtime) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
     };
 };
 
@@ -140,7 +126,7 @@ void disconnect(int onlyclean, int async)
     clientnum = -1;
     c2sinit = false;
     player1->lifesequence = 0;
-    loopv(players) zapclient(i);
+    loopv(players) zapdynent(players[i]);
     
     localdisconnect();
 
@@ -402,7 +388,9 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             f >>= 2; 
             d->move = (f&3)==3 ? -1 : f&3;
             d->onfloor = (f>>2)&1;
-            d->state = f>>3;
+            int state = f>>3;
+            if(state==CS_DEAD && d->state!=CS_DEAD) d->lastaction = lastmillis;
+            d->state = state;
             updatepos(d);
             break;
         };
@@ -463,7 +451,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             cn = getint(p);
             if(!(d = getclient(cn))) break;
             conoutf("player %s disconnected", (int)d->name); 
-            zapclient(cn);
+            zapdynent(players[cn]);
             break;
 
         case SV_SHOT:
@@ -530,7 +518,6 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             };
             playsound(S_DIE1+rnd(2), &d->o);
             d->lifesequence++;
-            if(m_arena && !aliveothers()) spawnplayer(player1);
             break;
         };
 

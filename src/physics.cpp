@@ -39,7 +39,7 @@ bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, boo
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
-    if(o->state!=CS_ALIVE) return true;
+    if(d->state!=CS_ALIVE || o->state!=CS_ALIVE) return true;
     return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight, true);
 };
 
@@ -49,8 +49,12 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
     {
         entity &e = ents[i];
         if(e.type!=MAPMODEL) continue;
-        float entrad = 10; // get real radius somehow?
-        if(!rectcollide(d, e.o, entrad, entrad, entrad, entrad, true)) return false;
+        mapmodelinfo &mmi = getmminfo(e.attr2);
+        if(!&mmi || !mmi.h || !mmi.rad) continue;
+        vec o(e.o);
+        o.z += float(mmi.zoff+e.attr3);
+        float radius = float(mmi.rad);
+        if(!rectcollide(d, o, radius, radius, float(mmi.h), 0.0f, true)) return false;
     };
     return true;
 };
@@ -98,7 +102,7 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
         {
             if(!octacollide(d, c[i].children, o.x, o.y, o.z, size>>1)) return false;
         }
-        else if(!isempty(c[i]) || c[i].material==MAT_CLIP)
+       else if(!isempty(c[i]) || c[i].material==MAT_CLIP)
         {
             if(!cubecollide(d, c[i], o.x, o.y, o.z, size)) return false;
         };
@@ -167,22 +171,40 @@ void move(dynent *d, vec &dir, float push)
 
 void dropenttofloor(entity *e)
 {
+    if(e->o.x >= hdr.worldsize ||
+       e->o.y >= hdr.worldsize ||
+       e->o.z >= hdr.worldsize)
+        return;
+    vec v(0, 0, -1);
+    if(raycube(e->o, v) >= hdr.worldsize)
+        return;
     dynent d;
     d.o = e->o;
     d.vel = vec(0, 0, 0);
-    d.radius = 4;
-    d.eyeheight = 4;
-    d.aboveeye = 2;
+    if(e->type == MAPMODEL)
+    {
+        mapmodelinfo &mmi = getmminfo(e->attr2);
+        if(!&mmi) return;
+        d.radius = mmi.rad ? float(mmi.rad) : 4.0f;
+        d.eyeheight = 0.0f;
+        d.aboveeye = float((mmi.h ? mmi.h : 4) + mmi.zoff + e->attr3);
+    }
+    else
+    {
+        d.radius = 4.0f;
+        d.eyeheight = 4.0f;
+        d.aboveeye = 2.0f;
+    }
     d.onfloor = false;
     d.blocked = false;
     d.moving = true;
-    d.state = CS_DEAD;
-    vec v(0, 0, -1);
-    loopi(100)
+    d.state = CS_EDITING;
+    loopi(hdr.worldsize)
     {
+        d.nextmove = vec(0, 0, 0);
         move(&d, v, 1);
-        if(d.blocked) break;
-    };
+        if(d.blocked || d.onfloor) break;
+    }
     e->o = d.o;
 };
 

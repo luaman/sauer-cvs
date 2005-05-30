@@ -80,7 +80,7 @@ int findtype(char *what)
 entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
 {
     int type = findtype(what);
-    entity &e = ents.add(entity());
+    entity e;
     e.o = o;
     e.attr1 = v1;
     e.attr2 = v2;
@@ -92,14 +92,10 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
     memset(e.color, 255, 3);
     switch(type)
     {
-        case LIGHT:
-            if(v1>32) v1 = 32;
-            if(!v1) e.attr1 = 16;
-            if(!v2 && !v3 && !v4) e.attr2 = 255;
-            break;
-
-        case MONSTER:
         case MAPMODEL:
+            e.attr4 = e.attr3;
+            e.attr3 = e.attr2;
+        case MONSTER:
         case TELEDEST:
             e.attr2 = e.attr1;
         case PLAYERSTART:
@@ -107,6 +103,7 @@ entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
             break;
     };
     if(type!=LIGHT) dropenttofloor(&e);
+    ents.add(e);
     addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
     return &e;
 };

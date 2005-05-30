@@ -37,7 +37,7 @@ const char *modenames[] =
 {
     "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
     "instagib", "instagib team", "efficiency", "efficiency team",
-    "arena", "clan arena",
+    "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
 };
       
 const char *modestr(int n) { return (n>=-2 && n<10) ? modenames[n+2] : "unknown"; };

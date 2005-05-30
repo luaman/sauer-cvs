@@ -4,30 +4,56 @@
 
 vector<entity> ents;
 
+char *entmdlnames[] =
+{
+    "shells", "bullets", "rockets", "rrounds", "health", "boost",
+    "g_armour", "y_armour", "quad", "teleporter",
+};
+
+int triggertime = 0;
+
+void renderent(entity &e, char *mdlname, float z, float yaw, int frame = 0, int numf = 1, int basetime = 0, float speed = 10.0f)
+{
+    rendermodel(mdlname, frame, numf, 0, 4.4f, e.o.x, z+e.o.z, e.o.y, yaw, 0, false, 1.0f, speed, basetime);
+};
+
 void renderentities()
 {
+    if(lastmillis>triggertime+1000) triggertime = 0;
     loopv(ents)
     {
         entity &e = ents[i];
         if(e.type==MAPMODEL)
         {
             glColor3ubv(e.color);
-            rendermodel(18, 0, 1, e.o.x, e.o.z, e.o.y, e.attr1, 0, false, 1.0f, 10.0f);
+            mapmodelinfo &mmi = getmminfo(e.attr2);
+            if(!&mmi) continue;
+            rendermodel(mmi.name, 0, 1, e.attr4, (float)mmi.rad, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f);
         }
         else
         {
-            if(!e.spawned && e.type!=TELEPORT) continue;
-            if((e.type<I_SHELLS || e.type>TELEPORT) && e.type!=CARROT) continue;
-            int model = e.type;
-            int speed = 10;
-            if(e.type==CARROT)
+            if(e.type!=CARROT)
             {
-                model = 17;
-                if(e.attr2==1) continue;
-                if(e.attr2==2) speed = 1;
-            }; 
-            glColor3ubv(e.color);
-            rendermodel(model, 0, 1, e.o.x, e.o.z+(float)sin(lastmillis/100.0+e.o.x+e.o.y)/20, e.o.y, (float)lastmillis/speed, 0, false, 1.0f, 10.0f);
+                if(!e.spawned && e.type!=TELEPORT) continue;
+                if(e.type<I_SHELLS || e.type>TELEPORT) continue;
+                glColor3ubv(e.color);
+                renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(lastmillis/100.0+e.o.x+e.o.y)/20), lastmillis/10.0f);
+            }
+            else switch(e.attr2)
+            {
+                case 1:
+                case 3:
+                    continue;
+
+                case 2:
+                case 0:
+                    if(!e.spawned) continue;
+                    renderent(e, "carrot", (float)(1+sin(lastmillis/100.0+e.o.x+e.o.y)/20), lastmillis/(e.attr2 ? 1.0f : 10.0f));
+                    break;
+
+                case 4: renderent(e, "switch2", 3,      (float)e.attr3*90, (!e.spawned && !triggertime) ? 1  : 0, (e.spawned || !triggertime) ? 1 : 2,  triggertime, 1050.0f);  break;
+                case 5: renderent(e, "switch1", -0.15f, (float)e.attr3*90, (!e.spawned && !triggertime) ? 30 : 0, (e.spawned || !triggertime) ? 1 : 30, triggertime, 35.0f); break;
+            };
         };
     };
 };
@@ -44,6 +70,8 @@ struct itemstat { int add, max, sound; } itemstats[] =
     150,   150, S_ITEMARMOUR,
   20000, 30000, S_ITEMPUP,
 };
+
+void baseammo(int gun) { player1->ammo[gun] = itemstats[gun-1].add*2; };
 
 // these two functions are called when the server acknowledges that you really
 // picked up the item (in multiplayer someone may grab it before you).
@@ -148,6 +176,7 @@ void pickup(int n, dynent *d)
             
         case CARROT:
             ents[n].spawned = false;
+            triggertime = lastmillis;
             trigger(ents[n].attr1, ents[n].attr2, false);  // needs to go over server for multiplayer
             break;
 
@@ -177,7 +206,7 @@ void checkitems()
 {
     if(editmode) return;
     vec o = player1->o;
-    o.z -= 10;
+    o.z -= player1->eyeheight;
     loopv(ents)
     {
         entity &e = ents[i];

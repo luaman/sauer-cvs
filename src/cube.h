@@ -101,6 +101,7 @@ enum                            // static entity types
     MAPMODEL,                   // attr1 = angle, attr2 = idx
     MONSTER,                    // attr1 = angle, attr2 = monstertype
     CARROT,                     // attr1 = tag, attr2 = type
+    JUMPPAD,                    // attr1 = zpush, attr2 = ypush, attr3 = xpush
     MAXENTTYPES
 };
 
@@ -114,6 +115,7 @@ struct entity                   // map entity
 };
 
 struct block { int x, y, xs, ys; };
+struct mapmodelinfo { int rad, h, zoff; char *name; };
 
 enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_FIREBALL, GUN_ICEBALL, GUN_SLIMEBALL, GUN_BITE, NUMGUNS };
 
@@ -134,13 +136,13 @@ struct dynent                           // players & monsters
     int frags;
     int health, armour, armourtype, quadmillis;
     int gunselect, gunwait;
-    int lastattack, lastattackgun, lastmove;
+    int lastaction, lastattackgun, lastmove;
     bool attacking;
     int ammo[NUMGUNS];
     int monsterstate;                   // one of M_* below, M_NONE means human
     int mtype;                          // see monster.cpp
     dynent *enemy;                      // monster wants to kill this entity
-    float targetyaw, targetpitch;       // monster wants to look in this direction
+    float targetyaw;                    // monster wants to look in this direction
     bool blocked, moving;               // used by physics to signal ai
     int trigger;                        // millis at which transition to another monsterstate takes place
     vec attacktarget;                   // delayed attacks
@@ -193,6 +195,7 @@ enum
     S_PAINH, S_DEATHH,
     S_PAIND, S_DEATHD,
     S_PIGR1, S_ICEBALL, S_SLIMEBALL,
+    S_JUMPPAD,
 };
 
 // vertex array format
@@ -240,6 +243,7 @@ extern int islittleendian;
 #define m_noitems     (gamemode>=4)
 #define m_noitemsrail (gamemode<=5)
 #define m_arena       (gamemode>=8)
+#define m_tarena      (gamemode>=10)
 #define m_teammode    (gamemode&1 && gamemode>2)
 #define m_sp          (gamemode<0)
 #define m_dmsp        (gamemode==-1)
@@ -260,7 +264,7 @@ enum    // function signatures for script functions, see command.cpp
 // nasty macros for registering script functions, abuses globals to avoid excessive infrastructure
 #define COMMANDN(name, fun, nargs) static bool __dummy_##fun = addcommand(#name, (void (*)())fun, nargs)
 #define COMMAND(name, nargs) COMMANDN(name, name, nargs)
-#define VAR(name, min, cur, max) static int name = variable(#name, min, cur, max, &name, NULL)
+#define VAR(name, min, cur, max) int name = variable(#name, min, cur, max, &name, NULL)
 #define VARF(name, min, cur, max, body) void var_##name(); static int name = variable(#name, min, cur, max, &name, var_##name); void var_##name() { body; }
 
 // protos for ALL external functions in cube...
@@ -340,15 +344,14 @@ extern void selfdamage(int damage, int actor, dynent *act);
 extern dynent *newdynent();
 extern char *getclientmap();
 extern const char *modestr(int n);
-extern void zapclient(int n);
+extern void zapdynent(dynent *&);
 extern dynent *getclient(int cn);
-extern int aliveothers();
 extern void timeupdate(int timeremain);
 extern void resetmovement(dynent *d);
 
 // clientextras
 extern void renderclients();
-extern void renderclient(dynent *d, bool team, int mdl, float scale);
+extern void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig = false);
 void showscores(bool on);
 extern void renderscores();
 
@@ -412,8 +415,8 @@ extern void initsound();
 extern void cleansound();
 
 // rendermd2
-extern void loadmodels();
-extern void rendermodel(int mdl, int frame, int range, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime = 0);
+extern void rendermodel(char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime = 0);
+extern mapmodelinfo &getmminfo(int i);
 
 // server
 extern void initserver(bool dedicated, bool listen, int uprate, char *sdesc, char *ip, char *master);
@@ -459,6 +462,7 @@ extern void renderentities();
 extern void resetspawns();
 extern void setspawn(int i, bool on);
 extern void teleport(int n, dynent *d);
+extern void baseammo(int gun);
 
 // rndmap
 extern void perlinarea(block &b, int scale, int seed, int psize);

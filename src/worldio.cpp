@@ -334,7 +334,7 @@ void loadgamerest()
     restoreserverstate(ents);
 
     gzread(f, player1, sizeof(dynent));
-    player1->lastattack = lastmillis;
+    player1->lastaction = lastmillis;
 
     int nmonsters = gzgeti(f);
     dvector &monsters = getmonsters();
@@ -343,7 +343,7 @@ void loadgamerest()
     {
         gzread(f, monsters[i], sizeof(dynent));
         monsters[i]->enemy = player1;                                       // lazy, could save id of enemy instead
-        monsters[i]->lastattack = monsters[i]->trigger = lastmillis+500;    // also lazy, but no real noticable effect on game
+        monsters[i]->lastaction = monsters[i]->trigger = lastmillis+500;    // also lazy, but no real noticable effect on game
     };
     restoremonsterstate();
 

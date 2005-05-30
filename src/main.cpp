@@ -195,8 +195,8 @@ int main(int argc, char **argv)
        !installtex(5,  path(newstring("data/items.png")), xs, ys) ||
        !installtex(1,  path(newstring("data/crosshair.png")), xs, ys)) fatal("could not find core textures");
 
-    log("models");
-    loadmodels();
+    log("sound");
+    initsound();
 
     log("cfg");
     newmenu("frags\tpj\tping\tteam\tname");
@@ -208,9 +208,6 @@ int main(int argc, char **argv)
     exec("data/sounds.cfg");
     exec("servers.cfg");
     exec("autoexec.cfg");
-
-    log("sound");
-    initsound();
 
     log("localconnect");
     localconnect();

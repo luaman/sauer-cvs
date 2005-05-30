@@ -2,13 +2,13 @@
 
 #include "cube.h"
 
-int gamemode = 0, nextmode = 0;         // nextmode becomes gamemode after next map load
+int nextmode = 0;         // nextmode becomes gamemode after next map load
+VAR(gamemode, 1, 0, 0);
 
 void mode(int n) { addmsg(1, 2, SV_GAMEMODE, nextmode = n); };
 COMMAND(mode, ARG_1INT);
 
 bool intermission = false;
-bool noarenarespawn = false;            // for arena mode, not fully implemented
 
 dynent *player1 = newdynent();          // our client
 dvector players;                        // other clients
@@ -46,30 +46,48 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     d->quadmillis = 0;
     d->gunselect = GUN_SG;
     d->gunwait = 0;
+    d->attacking = false;
+    d->lastaction = 0;
     loopi(NUMGUNS) d->ammo[i] = 0;
     d->ammo[GUN_FIST] = 1;
-    d->ammo[GUN_SG] = 5;
     if(m_noitems)
     {
+        d->gunselect = GUN_RIFLE;
+        d->armour = 0;
         if(m_noitemsrail)
         {
-            d->armour = 0;
             d->health = 1;
-            d->ammo[GUN_SG] = 0;
             d->ammo[GUN_RIFLE] = 100;
-            d->gunselect = GUN_RIFLE;
         }
         else
         {
-            d->armour = 150;
-            d->health = 150;
-            d->armourtype = A_YELLOW;
-            d->ammo[GUN_SG] = 50;
-            d->ammo[GUN_CG] = 100;
-            d->ammo[GUN_RL] = 25;
-            d->ammo[GUN_RIFLE] = 25;
-            d->gunselect = GUN_CG;
+            if(gamemode==12) { d->gunselect = GUN_FIST; return; };  // eihrul's secret "instafist" mode
+            d->health = 256;
+            if(m_tarena)
+            {
+                int gun1 = rnd(4)+1;
+                baseammo(d->gunselect = gun1);
+                for(;;)
+                {
+                    int gun2 = rnd(4)+1;
+                    if(gun1!=gun2) { baseammo(gun2); break; };
+                };
+            }
+            else if(m_arena)    // insta arena
+            {
+                d->ammo[GUN_RIFLE] = 100;
+            }
+            else // efficiency
+            {
+                loopi(4) baseammo(i+1);
+                d->gunselect = GUN_CG;
+            };
+            d->ammo[GUN_CG] /= 2;
         };
+    }
+    else
+    {
+        d->ammo[GUN_SG] = 5;
     };
 };
 
@@ -96,41 +114,117 @@ dynent *newdynent()                 // create a new blank player or monster
     d->monsterstate = 0;
     d->name[0] = d->team[0] = 0;
     d->blocked = false;
-    d->lastattack = 0;
-    d->attacking = false;
     d->lifesequence = 0;
     spawnstate(d);
     return d;
 };
 
-int aliveothers()
+void respawnself()
 {
-    int alive = 0;
-    loopv(players) if(players[i] && players[i]->state==CS_ALIVE) alive++;
-    return alive;
+        spawnplayer(player1);
+        showscores(false);
 };
 
-void zapclient(int n)
+void arenacount(dynent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
 {
-    if(players[n]) gp()->dealloc(players[n], sizeof(dynent));
-    players[n] = NULL;
+    if(d->state!=CS_DEAD)
+    {
+        alive++;
+        if(lastteam && strcmp(lastteam, d->team)) oneteam = false;
+        lastteam = d->team;
+    }
+    else
+    {
+        dead++;
+    };
 };
 
+int arenarespawnwait = 0;
+int arenadetectwait  = 0;
+
+void arenarespawn()
+{
+    if(arenarespawnwait)
+    {
+        if(arenarespawnwait<lastmillis)
+        {
+            arenarespawnwait = 0;
+            conoutf("new round starting... fight!");
+            respawnself();
+        };
+    }
+    else if(arenadetectwait==0 || arenadetectwait<lastmillis)
+    {
+        arenadetectwait = 0;
+        int alive = 0, dead = 0;
+        char *lastteam = NULL;
+        bool oneteam = true;
+        loopv(players) if(players[i]) arenacount(players[i], alive, dead, lastteam, oneteam);
+        arenacount(player1, alive, dead, lastteam, oneteam);
+        if(dead>0 && (alive<=1 || (m_teammode && oneteam)))
+        {
+            conoutf("arena round is over! next round in 5 seconds...");
+            if(alive) conoutf("team %s is last man standing", (int)lastteam);
+            else conoutf("everyone died!");
+            arenarespawnwait = lastmillis+5000;
+            arenadetectwait  = lastmillis+10000;
+            player1->roll = 0;
+        };
+    };
+};
+
+void zapdynent(dynent *&d)
+{
+    if(d) gp()->dealloc(d, sizeof(dynent));
+    d = NULL;
+};
+
+void otherplayers()
+{   
+    loopv(players) if(players[i])
+    {
+        const int lagtime = lastmillis-players[i]->lastupdate;
+        if(lagtime>1000 && players[i]->state==CS_ALIVE)
+        {
+            players[i]->state = CS_LAGGED;
+            continue;
+        };
+        if(lagtime && players[i]->state != CS_DEAD) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
+    };
+};
+
+int sleepwait = 0;
+string sleepcmd;
+void sleepfun(char *msec, char *cmd) { sleepwait = atoi(msec)+lastmillis; strcpy_s(sleepcmd, cmd); };
+COMMANDN(sleep, sleepfun, ARG_2STR);
+    
 void updateworld(int millis)        // main game update loop
 {
     if(lastmillis)
     {
         curtime = millis - lastmillis;
+        if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
         physicsframe();
         checkquad(curtime);
-        if(m_arena && aliveothers()==0) noarenarespawn = false;
+        if(m_arena) arenarespawn();
         moveprojectiles(curtime);
         if(getclientnum()>=0) shoot(player1, worldpos);     // only shoot when connected to server
         gets2c();           // do this first, so we have most accurate information when our player moves
         otherplayers();
         monsterthink();
-        if(player1->state==CS_DEAD) spawnstate(player1);
-        else if(!intermission) { moveplayer(player1, 20, true); checkitems(); };
+        if(player1->state==CS_DEAD)
+        {
+            if(lastmillis-player1->lastaction<2000)
+            {
+                player1->move = player1->strafe = 0;
+                moveplayer(player1, 10, false);
+            };
+        }
+        else if(!intermission)
+        {
+            moveplayer(player1, 20, true);
+            checkitems();
+        };
         c2sinfo(player1);   // do this last, to reduce the effective frame lag
     };
     lastmillis = millis;
@@ -152,37 +246,37 @@ void entinmap(dynent *d, bool froment)    // brute force but effective way to fi
     // leave ent at original pos, possibly stuck
 };
 
-int spawncycle = 0;
+int spawncycle = -1;
+int fixspawn = 2; 
 
 void spawnplayer(dynent *d)   // place at random spawn. also used by monsters!
 {
-    int e = findentity(PLAYERSTART, spawncycle);
-    if(e!=-1)
+    int r = fixspawn-->0 ? 4 : rnd(10)+1;
+    loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
+    if(spawncycle!=-1)
     {
-        d->o = ents[e].o;
-        d->yaw = ents[e].attr1;
+        d->o = ents[spawncycle].o;
+        d->yaw = ents[spawncycle].attr1;
         d->pitch = 0;
         d->roll = 0;
-        spawncycle = e+1;
     }
     else
     {
-        d->o.z = d->o.x = d->o.y = (float)hdr.worldsize/2;
+        d->o.x = d->o.y = d->o.z = (float)hdr.worldsize/2;
     };
+    entinmap(d);
     spawnstate(d);
     d->state = CS_ALIVE;
-    entinmap(d);
-};
+};  
 
 void respawn()
 {
     if(player1->state==CS_DEAD)
-    {
+    { 
         player1->attacking = false;
-        if(m_arena && noarenarespawn) return;
+        if(m_arena) { conoutf("waiting for new round to start..."); return; };
         if(m_sp) { nextmode = gamemode; changemap(clientmap); return; };    // if we die in SP we try the same map again
-        spawnplayer(player1);
-        showscores(false);
+        respawnself();
     };
 };
 
@@ -212,17 +306,22 @@ COMMANDN(jump, jumpn, ARG_DOWN);
 COMMAND(attack, ARG_DOWN);
 COMMAND(showscores, ARG_DOWN);
 
+void fixplayer1range()
+{
+    const float MAXPITCH = 90.0f;
+    if(player1->pitch>MAXPITCH) player1->pitch = MAXPITCH;
+    if(player1->pitch<-MAXPITCH) player1->pitch = -MAXPITCH;
+    while(player1->yaw<0.0f) player1->yaw += 360.0f;
+    while(player1->yaw>=360.0f) player1->yaw -= 360.0f;
+};
+
 void mousemove(int dx, int dy)
 {
     if(player1->state==CS_DEAD || intermission) return;
     const float SENSF = 33.0f;     // try match quake sens
     player1->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
     player1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
-    const float MAXPITCH = 90.0;
-    if(player1->pitch>MAXPITCH) player1->pitch = MAXPITCH;
-    if(player1->pitch<-MAXPITCH) player1->pitch = -MAXPITCH;
-    while(player1->yaw<0.0) player1->yaw += 360.0;
-    while(player1->yaw>=360.0) player1->yaw -= 360.0;
+    fixplayer1range();
 };
 
 // damage arriving from the network, monsters, yourself, all ends up here.
@@ -272,7 +371,8 @@ void selfdamage(int damage, int actor, dynent *act)
         player1->pitch = 0;
         player1->roll = 60;
         playsound(S_DIE1+rnd(2));
-        noarenarespawn = true;
+        spawnstate(player1);
+        player1->lastaction = lastmillis;
     }
     else
     {
@@ -319,15 +419,19 @@ void startmap(char *name)   // called just after a map load
     pruneundos();
     spawncycle = 0;
     if(netmapstart() && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); };
+    sleepwait = 0;
     monsterclear();
     projreset();
-    if(m_sp) { spawncycle = 0; spawnplayer(player1); } else loopi((int)rnd(4)+1) spawnplayer(player1);
+    spawncycle = -1;
+    spawnplayer(player1);
     player1->frags = 0;
     loopv(players) if(players[i]) players[i]->frags = 0;
     resetspawns();
     strcpy_s(clientmap, name);
     ///if(!editmode) toggleedit();
     setvar("gamespeed", 100);
+    setvar("fog", 4000);
+    setvar("fogcolour", 0x8099B3);
     showscores(false);
     intermission = false;
     conoutf("game mode is %s", (int)modestr(gamemode));
