@@ -4,7 +4,7 @@ struct elementset
 {
     int texture;
     int lmid;
-    int length[3];
+    int length[6];
 };
 
 struct materialsurface
