@@ -114,7 +114,7 @@ bool dropentity(entity &e)
         case O_TOP:
             e.o.x += sel.grid / 2 + cx;
             e.o.y += sel.grid / 2 + cy;
-            if(sel.orient == O_BOTTOM) e.o.z -= zspace;
+            if(entdrop == 2 && sel.orient == O_BOTTOM) e.o.z -= zspace;
             else e.o.z += sel.grid + zspace;
             break;
         case O_BACK:
@@ -131,7 +131,7 @@ bool dropentity(entity &e)
             if(sel.orient == O_LEFT) e.o.x -= radius;
             else e.o.x += sel.grid + radius;
         };
-        if(entdrop == 3 && e.type != LIGHT)
+        if(entdrop == 3)
             dropenttofloor(&e);
         break;
     };
