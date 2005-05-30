@@ -8,13 +8,13 @@ void purgetextures();
 
 GLUquadricObj *qsphere = NULL;
 
-PFNGLGENBUFFERSARBPROC    glGenBuffers    = NULL;
-PFNGLBINDBUFFERARBPROC    glBindBuffer    = NULL;
-PFNGLBUFFERDATAARBPROC    glBufferData    = NULL;
-PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
+PFNGLGENBUFFERSARBPROC    pfnglGenBuffers    = NULL;
+PFNGLBINDBUFFERARBPROC    pfnglBindBuffer    = NULL;
+PFNGLBUFFERDATAARBPROC    pfnglBufferData    = NULL;
+PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers = NULL;
 
-PFNGLACTIVETEXTUREARBPROC       glActiveTexture       = NULL;
-PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture = NULL;
+PFNGLACTIVETEXTUREARBPROC       pfnglActiveTexture       = NULL;
+PFNGLCLIENTACTIVETEXTUREARBPROC pfnglClientActiveTexture = NULL;
 
 void *getprocaddress(const char *name)
 {
@@ -61,16 +61,16 @@ void gl_init(int w, int h)
     if(!strstr(exts, "GL_EXT_texture_env_combine")) fatal("no texture_env_combine extension!");
 
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
-    glActiveTexture = (PFNGLACTIVETEXTUREARBPROC)getprocaddress("glActiveTextureARB");
-    glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
+    pfnglActiveTexture = (PFNGLACTIVETEXTUREARBPROC)getprocaddress("glActiveTextureARB");
+    pfnglClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object")) conoutf("no vertex_buffer_object extension!");
     else
     {
-        glGenBuffers = (PFNGLGENBUFFERSARBPROC)getprocaddress("glGenBuffersARB");
-        glBindBuffer = (PFNGLBINDBUFFERARBPROC)getprocaddress("glBindBufferARB");
-        glBufferData = (PFNGLBUFFERDATAARBPROC)getprocaddress("glBufferDataARB");
-        glDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
+        pfnglGenBuffers = (PFNGLGENBUFFERSARBPROC)getprocaddress("glGenBuffersARB");
+        pfnglBindBuffer = (PFNGLBINDBUFFERARBPROC)getprocaddress("glBindBufferARB");
+        pfnglBufferData = (PFNGLBUFFERDATAARBPROC)getprocaddress("glBufferDataARB");
+        pfnglDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
         conoutf("Using GL_ARB_vertex_buffer_object extensions");
     };

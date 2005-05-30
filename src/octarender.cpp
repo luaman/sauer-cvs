@@ -444,6 +444,11 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
 ////////// Vertex Arrays //////////////
 
+extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
+extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
+extern PFNGLBUFFERDATAARBPROC    pfnglBufferData;
+extern PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers;
+
 int allocva = 0;
 int wtris = 0, wverts = 0, vtris = 0, vverts = 0;
 
@@ -456,9 +461,9 @@ vtxarray *newva(int x, int y, int z, int size)
     va->ebuf = (ushort *)((char *)va->eslist + (indices.numelems * sizeof(elementset)));
     if (hasVBO && curvert)
     {
-        (*glGenBuffers)(1, &(va->vbufGL));
-        (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        (*glBufferData)(GL_ARRAY_BUFFER_ARB, curvert * sizeof(vertex), verts, GL_STATIC_DRAW_ARB);
+        pfnglGenBuffers(1, &(va->vbufGL));
+        pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        pfnglBufferData(GL_ARRAY_BUFFER_ARB, curvert * sizeof(vertex), verts, GL_STATIC_DRAW_ARB);
         va->vbuf = 0; // Offset in VBO
     }
     else
@@ -498,7 +503,7 @@ vtxarray *newva(int x, int y, int z, int size)
 
 void destroyva(vtxarray *va)
 {
-    if (hasVBO && va->vbufGL) (*glDeleteBuffers)(1, &(va->vbufGL));
+    if (hasVBO && va->vbufGL) pfnglDeleteBuffers(1, &(va->vbufGL));
     wverts -= va->verts;
     wtris -= va->tris;
     allocva--;
@@ -679,8 +684,8 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz)
     visiblecubec(c, size, cx, cy, cz);
 };
 
-extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture;
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture;
+extern PFNGLACTIVETEXTUREARBPROC       pfnglActiveTexture;
+extern PFNGLCLIENTACTIVETEXTUREARBPROC pfnglClientActiveTexture;
 
 
 void setupTMU()
@@ -710,7 +715,7 @@ void renderq()
 
     while (va)
     {
-        if (hasVBO) (*glBindBuffer)(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
@@ -724,8 +729,8 @@ void renderq()
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
 
-        glActiveTexture(GL_TEXTURE0_ARB);
-        glClientActiveTexture(GL_TEXTURE0_ARB);
+        pfnglActiveTexture(GL_TEXTURE0_ARB);
+        pfnglClientActiveTexture(GL_TEXTURE0_ARB);
 
         unsigned short *ebuf = va->ebuf;
         loopi(va->texs)
@@ -733,9 +738,9 @@ void renderq()
             int xs, ys;
             int otex = lookuptexture(va->eslist[i].texture, xs, ys);
             glBindTexture(GL_TEXTURE_2D, otex);
-            glActiveTexture(GL_TEXTURE1_ARB);
+            pfnglActiveTexture(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
-            glActiveTexture(GL_TEXTURE0_ARB);
+            pfnglActiveTexture(GL_TEXTURE0_ARB);
 
             loopl(3) if (va->eslist[i].length[l])
             {
@@ -753,17 +758,16 @@ void renderq()
         va = va->next;
     };
 
-    if (hasVBO) (glBindBuffer)(GL_ARRAY_BUFFER_ARB, 0);
+    if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
     //glDisableClientState(GL_COLOR_ARRAY);
 
-    glActiveTexture(GL_TEXTURE1_ARB);
-    glClientActiveTexture(GL_TEXTURE1_ARB);
+    pfnglActiveTexture(GL_TEXTURE1_ARB);
+    pfnglClientActiveTexture(GL_TEXTURE1_ARB);
     glDisable(GL_TEXTURE_2D);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glActiveTexture(GL_TEXTURE0_ARB);
-    glClientActiveTexture(GL_TEXTURE0_ARB);
-
+    pfnglActiveTexture(GL_TEXTURE0_ARB);
+    pfnglClientActiveTexture(GL_TEXTURE0_ARB);
 };
 
 void rendermaterials()
