@@ -6,7 +6,7 @@ VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
 VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VAR(shadows, 0, 1, 1);
-VAR(aalights, 0, 1, 3);
+VAR(aalights, 0, 2, 2);
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
