@@ -52,6 +52,7 @@ struct vec
     vec(ivec &v) : x(v.x), y(v.y), z(v.z) {};
 
     float &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
+    float operator[](int dim) const { return dim==0 ? z : (dim==1 ? y : x); };
     bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
     bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; }
     float squaredlen() const { return x*x + y*y + z*z; };
