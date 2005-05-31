@@ -6,7 +6,7 @@ VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
 VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VAR(shadows, 0, 1, 1);
-VAR(aalights, 0, 1, 2);
+VAR(aalights, 0, 1, 3);
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
@@ -193,6 +193,17 @@ void pack_lightmap(surfaceinfo &surface)
 }
 
 static uchar mincolor[3], maxcolor[3];
+static float aacoords[8][2] =
+{
+  {0.15, -0.45},
+  {0.45, 0.15},
+  {-0.15, 0.45},
+  {-0.45, -0.15},
+  {0.6, -0.05},
+  {-0.6, 0.05},
+  {0.05, 0.6},
+  {-0.05, -0.6}
+};
 
 bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
@@ -200,17 +211,8 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     uchar *lumel = lm + y1 * 3 * lm_w;
-    vec offsets[8] = 
-    { 
-        vec((ustep.x - vstep.x) * 0.3, (ustep.y - vstep.y) * 0.3, (ustep.z - vstep.z) * 0.3),
-        vec((ustep.x + vstep.x) * 0.3, (ustep.y + vstep.y) * 0.3, (ustep.z + vstep.z) * 0.3),
-        vec((vstep.x - ustep.x) * 0.3, (vstep.y - ustep.y) * 0.3, (vstep.z - ustep.z) * 0.3),
-        vec((ustep.x + vstep.x) * -0.3, (ustep.y + vstep.y) * -0.3, (ustep.z + vstep.z) * -0.3),
-        vec(vstep.x * 0.45, vstep.y * 0.45, vstep.z * 0.45),
-        vec(vstep.x * -0.45, vstep.y * -0.45, vstep.z * -0.45),
-        vec(ustep.x * 0.45, ustep.y * 0.45, ustep.z * 0.45),
-        vec(ustep.x * -0.45, ustep.y * -0.45, ustep.z * -0.45)
-    };
+    vec offsets[8];
+    loopi(8) loopj(3) offsets[i][j] = aacoords[i][0]*ustep[j] + aacoords[i][1]*vstep[j];
     if(y1 == 0)
     {
         memset(mincolor, 255, 3);
