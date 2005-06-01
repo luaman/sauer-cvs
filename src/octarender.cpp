@@ -721,8 +721,8 @@ void renderq()
 
         setupTMU();
 
-        glActiveTexture(GL_TEXTURE1_ARB);
-        glClientActiveTexture(GL_TEXTURE1_ARB);
+        pfnglActiveTexture(GL_TEXTURE1_ARB);
+        pfnglClientActiveTexture(GL_TEXTURE1_ARB);
 
         glEnable(GL_TEXTURE_2D);
         setupTMU();
