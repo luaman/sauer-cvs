@@ -555,7 +555,7 @@ void setva(cube &c, int cx, int cy, int cz, int size)
     if(curvert) c.va = newva(cx, cy, cz, size);
 };
 
-VARF(vacubemax, 0, 256, 512, allchanged());
+VARF(vacubemax, 64, 4096, 256*256, allchanged());
 
 int updateva(cube *c, int cx, int cy, int cz, int size)
 {
@@ -630,7 +630,7 @@ void addvisiblecubec(cube *c)
     loopi(8)
     {
         if (c[i].va) addvisibleva(c[i].va);
-        if (c[i].children) addvisiblecubec(c[i].children);
+        else if (c[i].children) addvisiblecubec(c[i].children);
     };
 };
 
