@@ -195,14 +195,14 @@ void pack_lightmap(surfaceinfo &surface)
 static uchar mincolor[3], maxcolor[3];
 static float aacoords[8][2] =
 {
-  {0.15, -0.45},
-  {0.45, 0.15},
-  {-0.15, 0.45},
-  {-0.45, -0.15},
-  {0.6, -0.05},
-  {-0.6, 0.05},
-  {0.05, 0.6},
-  {-0.05, -0.6}
+  {0.15f, -0.45f},
+  {0.45f, 0.15f},
+  {-0.15f, 0.45f},
+  {-0.45f, -0.15f},
+  {0.6f, -0.05f},
+  {-0.6f, 0.05f},
+  {0.05f, 0.6f},
+  {-0.05f, -0.6f}
 };
 
 bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)

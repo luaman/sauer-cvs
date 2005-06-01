@@ -46,7 +46,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="0"
+				DebugInformationFormat="2"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -671,6 +671,9 @@
 				RelativePath="..\readme_source.txt">
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\VTune\sauerbraten.vpj">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
