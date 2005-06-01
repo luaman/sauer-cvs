@@ -19,13 +19,6 @@ PFNGLCLIENTACTIVETEXTUREARBPROC pfnglClientActiveTexture = NULL;
 void *getprocaddress(const char *name)
 {
     return SDL_GL_GetProcAddress(name);
-/*
-    #ifdef WIN32
-    return (void *)wglGetProcAddress(name);
-    #else
-    return dlsym(dlopen(NULL, RTLD_NOW), name);
-    #endif
-*/
 }
 
 void gl_init(int w, int h)
