@@ -615,6 +615,7 @@ struct material
     {"air", MAT_AIR},
     {"water", MAT_WATER},
     {"clip", MAT_CLIP},
+    {"noclip", MAT_NOCLIP},
 };
 
 void setmat(cube &c, uchar mat)

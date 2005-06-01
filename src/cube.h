@@ -85,7 +85,8 @@ enum                            // cube empty-space materials
 {
     MAT_AIR = 0,                // the default, fill the empty space with air
     MAT_WATER,                  // fill with water, showing waves at the surface
-    MAT_CLIP                    // collisions always treat cube as solid
+    MAT_CLIP,                   // collisions always treat cube as solid
+    MAT_NOCLIP                  // collisions always treat cube as empty
 };
 
 enum                            // static entity types

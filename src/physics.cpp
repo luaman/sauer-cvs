@@ -102,7 +102,7 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
         {
             if(!octacollide(d, c[i].children, o.x, o.y, o.z, size>>1)) return false;
         }
-       else if(!isempty(c[i]) || c[i].material==MAT_CLIP)
+        else if(c[i].material!=MAT_NOCLIP && (!isempty(c[i]) || c[i].material==MAT_CLIP))
         {
             if(!cubecollide(d, c[i], o.x, o.y, o.z, size)) return false;
         };
@@ -243,7 +243,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
     d.z = pl->onfloor ? 0.0f : (water ? -0.5f : pl->vel.z*0.75f - 2.0f);
- 
+
     if(floating || water)
     {
         d.x *= (float)cos(rad(pl->pitch));
