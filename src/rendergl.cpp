@@ -270,10 +270,6 @@ void drawhudgun(float fovy, float aspect, int farplane)
     {
         drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
     }
-    else if(lastmillis-player1->lastmove>10000 && lastmillis-player1->lastmove<13500)
-    {
-        drawhudmodel(25, 35, 100, player1->lastmove+10000);
-    }
     else
     {
         drawhudmodel(6, 1, 100, 0);
