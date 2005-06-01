@@ -117,6 +117,23 @@ waterlod N
 increases the local water subdiv by 1 for every 32*2^N units the player is away from
 the water's edge.
 
+entdrop N
+-----------
+variable controlling where entities created with "newent" will be placed.
+N=0     place entities at your current eye position.
+N=1     drop entities to the floor beneath you. 
+        Lights, however, will be placed at your current eye position as for N=0.
+N=2     place entities at the center of the currently selected cube face.
+        If a corner is selected, the entity will be placed at the corner vertex.
+N=3     behaves as with N=2, except all entities, including lights, will then be
+        dropped from that position to whatever floor lies beneath. This mode is
+        useful for placing objects on selected floors. Lights are also dropped
+        to the floor, unlike for N=1.
+
+dropent
+---------
+positions the closest entity according to the entdrop variable. 
+
 ===============
 3. HUD stats
 ===============
