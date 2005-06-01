@@ -450,7 +450,8 @@ extern PFNGLBUFFERDATAARBPROC    pfnglBufferData;
 extern PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers;
 
 int allocva = 0;
-int wtris = 0, wverts = 0, vtris = 0, vverts = 0;
+int wtris = 0, wverts = 0, vtris = 0, vverts = 0, glde = 0;
+vector<vtxarray *> valist;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
@@ -497,7 +498,7 @@ vtxarray *newva(int x, int y, int z, int size)
     wverts += va->verts = curvert;
     wtris  += va->tris  = curtris;
     allocva++;
-
+    valist.add(va);
     return va;
 };
 
@@ -508,6 +509,7 @@ void destroyva(vtxarray *va)
     wtris -= va->tris;
     allocva--;
     gp()->dealloc(va, va->allocsize);
+    valist.removeobj(va);
 };
 
 void vaclearc(cube *c)
@@ -555,8 +557,26 @@ void setva(cube &c, int cx, int cy, int cz, int size)
     if(curvert) c.va = newva(cx, cy, cz, size);
 };
 
-VARF(vacubemax, 64, 4096, 256*256, allchanged());
+VARF(vacubemax, 64, 1024, 256*256, allchanged());
 
+int updateva(cube *c, int cx, int cy, int cz, int size)
+{
+    int ccount = 0;
+    loopi(8)                                    // counting number of semi-solid/solid children cubes
+    {
+        int count = 0;
+        ivec o(i, cx, cy, cz, size);
+        if(c[i].va) {}//count += vacubemax+1;       // since must already have more then max cubes
+        else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2);
+        else if(!isempty(c[i])) count++;
+        if(count > vacubemax || size == hdr.worldsize/2) setva(c[i], o.x, o.y, o.z, size);
+        else ccount += count;
+    };
+
+    return ccount;
+};
+
+/*
 int updateva(cube *c, int cx, int cy, int cz, int size)
 {
     int count = 0;
@@ -576,6 +596,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
 
     return count;
 };
+*/
 
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
@@ -595,7 +616,7 @@ float vfcDfog;  // far plane culling distance (fog limit).
 
 vtxarray *visibleva;
 
-int isvisiblecube(cube *c, int size, int cx, int cy, int cz)
+int isvisiblecube(int size, int cx, int cy, int cz)
 {
     int v = VFC_FULL_VISIBLE;
     float crd = size * SQRT3;
@@ -625,12 +646,13 @@ void addvisibleva(vtxarray *va)
     va->distance = vfcV[0].dot(va->cv) - vfcD[0] - va->radius;
 };
 
+/*
 void addvisiblecubec(cube *c)
 {
     loopi(8)
     {
         if (c[i].va) addvisibleva(c[i].va);
-        else if (c[i].children) addvisiblecubec(c[i].children);
+        if (c[i].children) addvisiblecubec(c[i].children);
     };
 };
 
@@ -639,7 +661,7 @@ void visiblecubec(cube *c, int size, int cx, int cy, int cz)
     loopi(8)
     {
         ivec o(i, cx, cy, cz, size);
-        switch(isvisiblecube(c+i, size/2, o.x, o.y, o.z))
+        switch(isvisiblecube(size/2, o.x, o.y, o.z))
         {
             case VFC_FULL_VISIBLE:
                 if (c[i].va) addvisibleva(c[i].va);
@@ -654,6 +676,7 @@ void visiblecubec(cube *c, int size, int cx, int cy, int cz)
         };
     };
 };
+*/
 
 // convert yaw/pitch to a normalized vector
 #define yptovec(y, p) vec(sin(y)*cos(p), -cos(y)*cos(p), sin(p))
@@ -681,7 +704,12 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz)
     loopi(5) vfcD[i] = vfcV[i].dot(player1->o);
     vfcDfog = getvar("fog");
 
-    visiblecubec(c, size, cx, cy, cz);
+    //visiblecubec(c, size, cx, cy, cz);
+    loopv(valist)
+    {
+        vtxarray &v = *valist[i];
+        if(isvisiblecube(v.size, v.x, v.y, v.z)!=VFC_NOT_VISIBLE) addvisibleva(&v);
+    };
 };
 
 extern PFNGLACTIVETEXTUREARBPROC       pfnglActiveTexture;
@@ -712,6 +740,7 @@ void renderq()
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0);
 
     vtxarray *va = visibleva;
+    glde = 0;
 
     while (va)
     {
@@ -753,6 +782,7 @@ void renderq()
 
                 glDrawElements(GL_QUADS, va->eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
                 ebuf += va->eslist[i].length[l];  // Advance to next array.
+                glde++;
             };
         };
         va = va->next;

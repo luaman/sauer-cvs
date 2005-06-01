@@ -219,6 +219,11 @@ template <class T> struct vector
         ulen--;
         return e;
     };
+    
+    void removeobj(T &o)
+    {
+        loopi(ulen) if(buf[i]==o) remove(i--);
+    };
 
     T &insert(int i, const T &e)
     {
