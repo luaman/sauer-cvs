@@ -1,0 +1,52 @@
+CXX=g++
+CXXOPTFLAGS=-O3 -fsigned-char -fomit-frame-pointer
+CXXFLAGS= $(CXXOPTFLAGS) -I../enet/include -I../include
+
+CLIENT_LIBS=-L../lib.mingw -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lfmod -lz -lopengl32 -lglu32 -lws2_32
+CLIENT_OBJS= \
+	client.o \
+	clientextras.o \
+	clientgame.o \
+	command.o \
+	console.o \
+	entities.o \
+	main.o \
+	menus.o \
+	monster.o \
+	physics.o \
+	renderextras.o \
+	rendergl.o \
+	rendermd2.o \
+	renderparticles.o \
+	rendertext.o \
+	rndmap.o \
+	server.o \
+	serverbrowser.o \
+	sound.o \
+	tools.o \
+	weapon.o \
+	world.o \
+	worldio.o \
+	worldocull.o \
+	geom.o \
+	octa.o \
+	octaedit.o \
+	octarender.o \
+	lightmap.o \
+	water.o
+
+
+default: all
+
+all: client
+
+enet:
+	-mingw32-make -C ../enet all
+
+clean:
+	rm -f $(CLIENT_OBJS)
+	-make -C ../enet/ clean
+
+client: $(CLIENT_OBJS)
+	$(CXX) $(CXXFLAGS) -o ../sauerbraten/bin/sauerbraten-mingw.exe $(CLIENT_OBJS) $(CLIENT_LIBS)
+	strip ../sauerbraten/bin/sauerbraten-mingw.exe

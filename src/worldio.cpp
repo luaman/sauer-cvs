@@ -4,7 +4,9 @@
 
 #ifdef WIN32
   #define _WINDOWS
-  #define ZLIB_DLL
+  #ifndef __GNUC__
+    #define ZLIB_DLL
+  #endif
 #endif
 #include <zlib.h>
 
