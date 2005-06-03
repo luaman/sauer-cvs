@@ -2,6 +2,7 @@
 // is largely backwards compatible with the quake console language.
 
 #include "cube.h"
+#include <dirent.h>
 
 enum { ID_VAR, ID_COMMAND, ID_ALIAS };
 
@@ -22,6 +23,8 @@ char *exchangestr(char *o, char *n) { gp()->deallocstr(o); return newstring(n); 
 typedef hashtable<char*, ident> identtable;
 
 identtable *idents = NULL;        // contains ALL vars/commands/aliases
+
+vector<char *> mapnames;          // contains all legal mapnames in packages/base/
 
 void alias(char *name, char *action)
 {
@@ -223,11 +226,55 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
     return val;
 };
 
-// tab-completion of all idents
+// tab-completion of all idents and base maps
 
 int completesize = 0, completeidx = 0;
 
 void resetcomplete() { completesize = 0; };
+
+void buildmapnames()
+{
+    #if defined(WIN32)
+        WIN32_FIND_DATA	FindFileData;
+        HANDLE Find;
+        char *c;
+        int clength;
+        Find = FindFirstFile("packages\\base\\*.ogz", &FindFileData);
+        if (Find != INVALID_HANDLE_VALUE)
+        {
+            do {
+                clength = strlen(FindFileData.cFileName) - 4;
+                c = (char*) malloc(sizeof(char) * (clength+1));
+                strncpy(c, FindFileData.cFileName, clength);
+                c[clength] = '\0';
+                mapnames.add(c);
+            } while (FindNextFile(Find, &FindFileData));
+        }
+        else conoutf("unable to read base folder for map autocomplete");
+    #elif defined(__GNUC__)
+        DIR *d;
+        struct dirent *dir;
+        char *c;
+        int clength;
+        d = opendir("packages/base");
+        if (d)
+        {
+            while ((dir = readdir(d)) != NULL)
+            {
+                clength = strlen(dir->d_name) - 4;
+                if (clength > 4 && strncmp(dir->d_name+clength, ".ogz", 4)==0)
+                {
+                    c = (char*) malloc(sizeof(char) * (clength+1));
+                    strncpy(c, dir->d_name, clength);
+                    c[clength] = '\0';
+                    mapnames.add(c);
+                }
+            };
+            closedir(d);
+        }
+        else conoutf("unable to read base folder for map autocomplete");
+    #endif
+};
 
 void complete(char *s)
 {
@@ -240,14 +287,32 @@ void complete(char *s)
     };
     if(!s[1]) return;
     if(!completesize) { completesize = strlen(s)-1; completeidx = 0; };
-    int idx = 0;
-    enumerate(idents, ident, id,
-        if(strncmp(id->name, s+1, completesize)==0 && idx++==completeidx)
+    int idx;
+    if(completesize >= 4 && strncmp(s,"/map ", 5)==0)           // complete a mapname in packages/base/ instead of a command
+    {
+        if (mapnames.empty()) buildmapnames();
+        idx = 0;
+        loopi(mapnames.length())
         {
-            strcpy_s(s, "/");
-            strcat_s(s, id->name);
-        };
-    );
+            if(strncmp(mapnames[i], s+5, completesize-4)==0 && idx++==completeidx)
+            {
+                strcpy_s(s, "/");
+                strcat_s(s, "map ");
+                strcat_s(s, mapnames[i]);
+            };
+        }
+    }
+    else
+    {
+        idx = 0;
+        enumerate(idents, ident, id,
+            if(strncmp(id->name, s+1, completesize)==0 && idx++==completeidx)
+            {
+                strcpy_s(s, "/");
+                strcat_s(s, id->name);
+            };
+        );
+    };
     completeidx++;
     if(completeidx>=idx) completeidx = 0;
 };
