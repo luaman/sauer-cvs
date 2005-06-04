@@ -359,7 +359,7 @@ void pruneundos(int maxremain)                          // bound memory
         loopj(undos[i].b->size()) t += familysize(*q++)*sizeof(cube);
         if(t>maxremain) freeundo(undos.remove(i)); else p = t;
     };
-    conoutf("undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
+    //conoutf("undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
 };
 
 void makeundo()                                         // stores state of selected cubes before editing

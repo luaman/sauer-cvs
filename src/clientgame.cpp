@@ -199,36 +199,31 @@ string sleepcmd;
 void sleepfun(char *msec, char *cmd) { sleepwait = atoi(msec)+lastmillis; strcpy_s(sleepcmd, cmd); };
 COMMANDN(sleep, sleepfun, ARG_2STR);
     
-void updateworld(int millis)        // main game update loop
+void updateworld()        // main game update loop
 {
-    if(lastmillis)
+    if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
+    physicsframe();
+    checkquad(curtime);
+    if(m_arena) arenarespawn();
+    moveprojectiles(curtime);
+    if(getclientnum()>=0) shoot(player1, worldpos);     // only shoot when connected to server
+    gets2c();           // do this first, so we have most accurate information when our player moves
+    otherplayers();
+    monsterthink();
+    if(player1->state==CS_DEAD)
     {
-        curtime = millis - lastmillis;
-        if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
-        physicsframe();
-        checkquad(curtime);
-        if(m_arena) arenarespawn();
-        moveprojectiles(curtime);
-        if(getclientnum()>=0) shoot(player1, worldpos);     // only shoot when connected to server
-        gets2c();           // do this first, so we have most accurate information when our player moves
-        otherplayers();
-        monsterthink();
-        if(player1->state==CS_DEAD)
+        if(lastmillis-player1->lastaction<2000)
         {
-            if(lastmillis-player1->lastaction<2000)
-            {
-                player1->move = player1->strafe = 0;
-                moveplayer(player1, 10, false);
-            };
-        }
-        else if(!intermission)
-        {
-            moveplayer(player1, 20, true);
-            checkitems();
+            player1->move = player1->strafe = 0;
+            moveplayer(player1, 10, false);
         };
-        c2sinfo(player1);   // do this last, to reduce the effective frame lag
+    }
+    else if(!intermission)
+    {
+        moveplayer(player1, 20, true);
+        checkitems();
     };
-    lastmillis = millis;
+    c2sinfo(player1);   // do this last, to reduce the effective frame lag
 };
 
 void entinmap(dynent *d, bool froment)    // brute force but effective way to find a free spawn spot in the map

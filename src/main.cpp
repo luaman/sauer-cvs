@@ -217,16 +217,25 @@ int main(int argc, char **argv)
     int ignore = 5;
     for(;;)
     {
-        int millis = SDL_GetTicks()*gamespeed/100;
-        if(millis-lastmillis>200) lastmillis = millis-200;
-        else if(millis-lastmillis<1) lastmillis = millis-1;
-        ///cleardlights();
-        updateworld(millis);
-        serverslice(time(NULL), 0);
         static int frames = 0;
         static float fps = 10.0;
+        static int curmillis = 0;
+        int millis = SDL_GetTicks();
+        curtime = (millis-curmillis)*gamespeed/100;
+        if(curtime>200) curtime = 200;
+        else if(curtime<1) curtime = 1;
+        
+        if(lastmillis) updateworld();
+        
+        lastmillis += curtime;
+        curmillis = millis;
+        
+        serverslice(time(NULL), 0);
+        
         frames++;
         fps = (1000.0f/curtime+fps*50)/51;
+        //if(curtime>14) printf("%d: %d\n", millis, curtime);
+        
         readdepth(scr_w, scr_h);
         SDL_GL_SwapBuffers();
         gl_drawframe(scr_w, scr_h, fps<minfps ? fps/minfps : (fps>maxfps ? fps/maxfps : 1.0f), fps);

@@ -338,7 +338,7 @@ extern void changemapserv(char *name, int mode);
 
 // clientgame
 extern void mousemove(int dx, int dy);
-extern void updateworld(int millis);
+extern void updateworld();
 extern void startmap(char *name);
 extern void changemap(char *name);
 extern void initclient();
