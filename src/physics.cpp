@@ -336,6 +336,6 @@ void worldhurts(dynent *d, int damage)
 void moveplayer(dynent *pl, int moveres, bool local)
 {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
-    if(pl->o.z<0) worldhurts(pl, 400);
+    if(pl->o.z<0  && pl->state != CS_DEAD) worldhurts(pl, 400);
 };
 
