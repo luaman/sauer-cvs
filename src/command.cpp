@@ -2,7 +2,9 @@
 // is largely backwards compatible with the quake console language.
 
 #include "cube.h"
+#ifndef WIN32
 #include <dirent.h>
+#endif
 
 enum { ID_VAR, ID_COMMAND, ID_ALIAS };
 

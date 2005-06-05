@@ -42,7 +42,7 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     d->timeinair = 0;
     d->onfloor = false;
     d->health = 100;
-    d->armour = 50;
+    d->armour = 0;
     d->armourtype = A_BLUE;
     d->quadmillis = 0;
     d->gunselect = GUN_SG;
@@ -88,7 +88,7 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     }
     else
     {
-        d->ammo[GUN_SG] = 5;
+        d->ammo[GUN_SG] = 3;
     };
 };
 
@@ -326,7 +326,7 @@ void selfdamage(int damage, int actor, dynent *act)
 {
     if(player1->state!=CS_ALIVE || editmode || intermission) return;
     damageblend(damage);
-    int ad = damage*(player1->armourtype+1)*20/100;     // let armour absorb when possible
+    int ad = damage*(player1->armourtype+1)*25/100;     // let armour absorb when possible
     if(ad>player1->armour) ad = player1->armour;
     player1->armour -= ad;
     damage -= ad;

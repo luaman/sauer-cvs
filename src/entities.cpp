@@ -65,9 +65,9 @@ struct itemstat { int add, max, sound; } itemstats[] =
       5,    25, S_ITEMAMMO,
       5,    25, S_ITEMAMMO,
      25,   100, S_ITEMHEALTH,
-     50,   200, S_ITEMHEALTH,
+     75,   200, S_ITEMHEALTH,
     100,   100, S_ITEMARMOUR,
-    150,   150, S_ITEMARMOUR,
+    200,   200, S_ITEMARMOUR,
   20000, 30000, S_ITEMPUP,
 };
 
@@ -150,7 +150,7 @@ void pickup(int n, dynent *d)
     int np = 1;
     loopv(players) if(players[i]) np++;
     np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
-    int ammo = np*2;
+    int ammo = np*3;
     switch(ents[n].type)
     {
         case I_SHELLS:  additem(n, d->ammo[1], ammo); break;
@@ -161,8 +161,8 @@ void pickup(int n, dynent *d)
         case I_BOOST:   additem(n, d->health,  60);   break;
 
         case I_GREENARMOUR:
-            // (100h/100g only absorbs 166 damage)
-            if(d->armourtype==A_YELLOW && d->armour>66) break;
+            // (100h/100g only absorbs 200 damage)
+            if(d->armourtype==A_YELLOW && d->armour>=100) break;
             additem(n, d->armour, 20);
             break;
 

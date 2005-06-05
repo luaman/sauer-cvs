@@ -132,8 +132,8 @@ void hit(int target, int damage, dynent *d, dynent *at)
     particle_splash(3, damage, 1000, d->o);
 };
 
-const float RL_RADIUS = 20;
-const float RL_DAMRAD = 28;   // hack
+const float RL_RADIUS = 24;
+const float RL_DAMRAD = 34;   // hack
 
 void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
 {
