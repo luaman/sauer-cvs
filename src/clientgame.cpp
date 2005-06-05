@@ -106,6 +106,7 @@ dynent *newdynent()                 // create a new blank player or monster
     d->radius = 4.1f;
     d->eyeheight = 14;
     d->aboveeye = 1;
+    d->weight = 100;
     d->frags = 0;
     d->plag = 0;
     d->ping = 0;

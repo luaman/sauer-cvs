@@ -133,6 +133,7 @@ struct dynent                           // players & monsters
     bool k_left, k_right, k_up, k_down; // see input code
     vec nextmove;                       // small adjustments to be applied in next move
     float radius, eyeheight, aboveeye;  // bounding box size
+    int weight;                         // affects the effectiveness of hitpush
     int lastupdate, plag, ping;
     int lifesequence;                   // sequence id for each respawn, used in damage test
     int state;                          // one of CS_* below
