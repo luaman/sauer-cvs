@@ -5,7 +5,6 @@
 #ifndef WIN32
 #include <dirent.h>
 #endif
-
 enum { ID_VAR, ID_COMMAND, ID_ALIAS };
 
 struct ident
@@ -237,45 +236,29 @@ void resetcomplete() { completesize = 0; };
 void buildmapnames()
 {
     #if defined(WIN32)
-        WIN32_FIND_DATA	FindFileData;
-        HANDLE Find;
-        char *c;
-        int clength;
-        Find = FindFirstFile("packages\\base\\*.ogz", &FindFileData);
-        if (Find != INVALID_HANDLE_VALUE)
-        {
-            do {
-                clength = strlen(FindFileData.cFileName) - 4;
-                c = (char*) malloc(sizeof(char) * (clength+1));
-                strncpy(c, FindFileData.cFileName, clength);
-                c[clength] = '\0';
-                mapnames.add(c);
-            } while (FindNextFile(Find, &FindFileData));
-        }
-        else conoutf("unable to read base folder for map autocomplete");
+    WIN32_FIND_DATA	FindFileData;
+    HANDLE Find = FindFirstFile("packages\\base\\*.ogz", &FindFileData);
+    if(Find != INVALID_HANDLE_VALUE)
+    {
+        do {
+            mapnames.add(newstring(FindFileData.cFileName, strlen(FindFileData.cFileName) - 4));
+        } while(FindNextFile(Find, &FindFileData));
+    }
     #elif defined(__GNUC__)
-        DIR *d;
-        struct dirent *dir;
-        char *c;
-        int clength;
-        d = opendir("packages/base");
-        if (d)
+    DIR *d = opendir("packages/base");;
+    struct dirent *dir;
+    int namelength;
+    if(d)
+    {
+        while((dir = readdir(d)) != NULL)
         {
-            while ((dir = readdir(d)) != NULL)
-            {
-                clength = strlen(dir->d_name) - 4;
-                if (clength > 4 && strncmp(dir->d_name+clength, ".ogz", 4)==0)
-                {
-                    c = (char*) malloc(sizeof(char) * (clength+1));
-                    strncpy(c, dir->d_name, clength);
-                    c[clength] = '\0';
-                    mapnames.add(c);
-                }
-            };
-            closedir(d);
-        }
-        else conoutf("unable to read base folder for map autocomplete");
+            namelength = strlen(dir->d_name) - 4;
+            if(namelength > 0 && strncmp(dir->d_name+namelength, ".ogz", 4)==0)  mapnames.add(newstring(dir->d_name, namelength));
+        };
+        closedir(d);
+    }
     #endif
+    else conoutf("unable to read base folder for map autocomplete");
 };
 
 void complete(char *s)
