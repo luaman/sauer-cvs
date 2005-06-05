@@ -121,7 +121,6 @@ int islittleendian = 1;
 
 int main(int argc, char **argv)
 {
-//printf("%d\n", sizeof(entity));
     bool dedicated = false, listen = false, grabinput = true;
     int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;
@@ -140,7 +139,6 @@ int main(int argc, char **argv)
             case 'h': scr_h = atoi(&argv[i][2]); break;
             case 'z': grabinput = false; 
             case 't': fs = 0; break;
-            case 'g': nogore = true; break;
             case 'u': uprate = atoi(&argv[i][2]);  break;
             case 'n': sdesc = &argv[i][2]; break;
             case 'i': ip = &argv[i][2]; break;
@@ -154,6 +152,10 @@ int main(int argc, char **argv)
     par = SDL_INIT_NOPARACHUTE;
     fs = 0;
     #endif
+    
+    //#ifdef WIN32
+    //SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+    //#endif
 
     if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|par)<0) fatal("Unable to initialize SDL");
 

@@ -220,7 +220,6 @@ extern int lastmillis;                  // last time
 extern int curtime;                     // current frame time
 extern char *entnames[];                // lookup from map entities above to strings
 extern int gamemode, nextmode;
-extern bool nogore;                     // implemented for the german market :)
 extern int xtraverts;
 extern int curvert;
 extern vertex *verts;                   // the vertex array for all world rendering
