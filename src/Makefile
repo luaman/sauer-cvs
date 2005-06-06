@@ -2,6 +2,7 @@ CXX=g++
 CXXOPTFLAGS=-Wall -O3 -fsigned-char -fomit-frame-pointer
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 
+PLATFORM_PREFIX=linux
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
 	client.o \
@@ -60,3 +61,8 @@ client: $(CLIENT_OBJS)
 server: $(SERVER_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  
 	
+install: all
+	cp sauer_client ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_client
+	strip ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_client
+	cp sauer_server ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_server
+	strip ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_server
