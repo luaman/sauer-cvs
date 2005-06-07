@@ -75,15 +75,10 @@ void screenshot()
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
 
-void grabinput()
-{   
-    SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
-    SDL_WM_GrabInput(mode == SDL_GRAB_ON ? SDL_GRAB_OFF : SDL_GRAB_ON);
-}
-
 void fullscreen()
 {
     SDL_WM_ToggleFullScreen(screen);
+    SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
 }
 
 void screenres(int w, int h, int bpp)
@@ -96,7 +91,6 @@ void screenres(int w, int h, int bpp)
     glViewport(0, 0, w, h);
 }
 
-COMMAND(grabinput, ARG_NONE);
 COMMAND(fullscreen, ARG_NONE);
 COMMAND(screenres, ARG_3INT);
 
@@ -121,7 +115,7 @@ int islittleendian = 1;
 
 int main(int argc, char **argv)
 {
-    bool dedicated = false, listen = false, grabinput = true;
+    bool dedicated = false, listen = false;
     int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;
     islittleendian = *((char *)&islittleendian);
@@ -137,7 +131,6 @@ int main(int argc, char **argv)
             case 'l': listen = true; break;
             case 'w': scr_w = atoi(&argv[i][2]); break;
             case 'h': scr_h = atoi(&argv[i][2]); break;
-            case 'z': grabinput = false; 
             case 't': fs = 0; break;
             case 'u': uprate = atoi(&argv[i][2]);  break;
             case 'n': sdesc = &argv[i][2]; break;
@@ -178,7 +171,7 @@ int main(int argc, char **argv)
 
     log("video: misc");
     SDL_WM_SetCaption("sauerbraten engine", NULL);
-    if(grabinput) SDL_WM_GrabInput(SDL_GRAB_ON);
+    if(fs) SDL_WM_GrabInput(SDL_GRAB_ON);
     keyrepeat(false);
     SDL_ShowCursor(0);
 
@@ -216,7 +209,7 @@ int main(int argc, char **argv)
     changemap("aard3");
 
     log("mainloop");
-    int ignore = 5;
+    int ignore = 5, grabmouse = 0;
     for(;;)
     {
         static int frames = 0;
@@ -257,8 +250,18 @@ int main(int argc, char **argv)
                     keypress(event.key.keysym.sym, event.key.state==SDL_PRESSED, event.key.keysym.unicode);
                     break;
 
+                case SDL_ACTIVEEVENT:
+                    if(event.active.state & SDL_APPINPUTFOCUS)
+                        grabmouse = event.active.gain;
+                    break;
+
                 case SDL_MOUSEMOTION:
                     if(ignore) { ignore--; break; };
+                    if(!(screen->flags&SDL_FULLSCREEN) && grabmouse)
+                    {
+                        if(event.motion.x == scr_w / 2 && event.motion.y == scr_h / 2) break;
+                        SDL_WarpMouse(scr_w / 2, scr_h / 2);
+                    }
                     mousemove(event.motion.xrel, event.motion.yrel);
                     break;
 
