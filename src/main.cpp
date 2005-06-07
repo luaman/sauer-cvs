@@ -81,9 +81,9 @@ void fullscreen()
     SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
 }
 
-void screenres(int w, int h, int bpp)
+void screenres(int w, int h, int bpp = 0)
 {
-    SDL_Surface *surf = SDL_SetVideoMode(w, h, bpp, SDL_OPENGL|(screen->flags&SDL_FULLSCREEN));
+    SDL_Surface *surf = SDL_SetVideoMode(w, h, bpp, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
     scr_w = w;
     scr_h = h;
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    screen = SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|fs);
+    screen = SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|SDL_RESIZABLE|fs);
     if(screen==NULL) fatal("Unable to create OpenGL screen");
 
     log("video: misc");
@@ -243,6 +243,10 @@ int main(int argc, char **argv)
             {
                 case SDL_QUIT:
                     quit();
+                    break;
+
+                case SDL_VIDEORESIZE:
+                    screenres(event.resize.w, event.resize.h);
                     break;
 
                 case SDL_KEYDOWN: 
