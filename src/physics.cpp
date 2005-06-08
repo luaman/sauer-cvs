@@ -131,7 +131,7 @@ bool collide(dynent *d)
     return mmcollide(d);     // collide with map models
 };
 
-void move(dynent *d, vec &dir, float push)
+bool move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
     d->o.add(dir);
@@ -143,6 +143,7 @@ void move(dynent *d, vec &dir, float push)
         const float space = floorheight-(d->o.z-d->eyeheight);
         if(space<=STAIRHEIGHT && space>-1.0f)
         {
+            d->timeinair = 0;
             d->onfloor = true;
             if(space>push) d->nextmove.z = push; else d->o.z = floorheight+d->eyeheight;
             if(d->vel.z<0) d->vel.z=0;
@@ -165,9 +166,10 @@ void move(dynent *d, vec &dir, float push)
                 d->nextmove.x = push*wall.x; // push against slopes
                 d->nextmove.y = push*wall.y;
             };
-        };
-        d->timeinair = 0;
+            return false;
+        };        
     };
+    return true;
 };
 
 void dropenttofloor(entity *e)
@@ -293,13 +295,13 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         };
 
         const float f = 1.0f/moveres;
-        const float push = speed/moveres/1.2f;                  // extra smoothness when lifting up stairs or against walls
+        const float push = speed/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
-        pl->onfloor = false;
+        int collisions = 0;
 
-        // discrete steps collision detection & sliding
+        pl->onfloor = false; 
         d.mul(f);
-        loopi(moveres) move(pl, d, push);
+        loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--; // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);
