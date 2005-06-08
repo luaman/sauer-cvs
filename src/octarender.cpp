@@ -869,14 +869,16 @@ void subdividecube(cube &c)
 int firstcube(cube *c, int x, int y, int z, int d)
 {
     int j = octaindex(x, y, z, d);
-    if(isempty(c[j])) j = oppositeocta(j, d);
+    int k = oppositeocta(j, d);
+    if(isempty(c[j])) j = k;
+    else if(!touchingface(c[k], (d<<1)+z) && !isempty(c[k])) return 100;
     if(isempty(c[j])) return -1;
     return j;
 };
 
 bool lineup(int &a, int &b, int &c)
 {
-    if(a<0 && c<0) return true;
+    if(b<0) return true;
     if(a<0) a = b-(c-b);
     else
     if(c<0) c = b-(a-b);
@@ -906,18 +908,18 @@ bool remip(cube &parent)
     loopi(8) if(ch[i].material != mat) return false;
     if(!e) loopi(6)
     {
-        int e[4][4], t[4], q[4];//, m[4];
+        int e[4][4], t[4], q[4];
         int d = dimension(i), dc = dimcoord(i);
         int n = faceconvexity(parent,i)>0 ? 0 : 3;
 
         loopk(4)
         {
             q[k] = firstcube(ch, k&1, (k&2)>>1, dc, d);
-            if(q[k]<0) t[k] = -1; //m[k] = -1;
+            if(q[k]>8) return false;
+            if(q[k]<0) t[k] = -1;
             else
             {
                 t[k] = ch[q[k]].texture[i];
-                //m[k] = ch[q[k]].material;
             };
         };
         { loop(x, 4) loop(y, 4) e[y][x] = -1; };
@@ -928,10 +930,8 @@ bool remip(cube &parent)
         if(debug)loopk(4) loopj(4) printf("e %d %d = %d\n", k, j, e[k][j]);
 
         int tex, center, w, x, y, z;
-        //int mat;
         if(!quadmatch(e[1][1], e[1][2], e[2][1], e[2][2], center) ||
            !quadmatch(t[0], t[1], t[2], t[3], tex) ||
-           //!quadmatch(m[0], m[1], m[2], m[3], mat) ||
            !match(e[0][1], e[0][2], w) ||
            !match(e[1][0], e[2][0], x) ||
            !match(e[3][1], e[3][2], y) ||
@@ -951,7 +951,6 @@ bool remip(cube &parent)
         loopk(4) edgeset(parent.edges[d*4+k], dc, e[((k&2)>>1)*3][(k&1)*3]>>1);
         if(debug)loopk(4) printf("<%d> pe = %d\n", k, edgeget(parent.edges[d*4+k], dc));
         parent.texture[i] = tex;
-        //parent.material = mat;
     };
     parent.material = mat;
     discardchildren(parent);
