@@ -30,7 +30,12 @@ struct header                   // map file format header
 
 struct ivec
 {
-    int x, y, z;
+    union
+    {
+        struct { int x, y, z; };
+        int v[3];
+    };
+
     ivec() {};
     ivec(int a, int b, int c) : x(a), y(b), z(c) {};
     ivec(int i, int cx, int cy, int cz, int size)
@@ -39,22 +44,27 @@ struct ivec
         y = cy+((i&2)>>1)*size;
         z = cz+((i&4)>>2)*size;
     };
-    int &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
+    int &operator[](int i) { return v[2-i]; };
     bool operator==(ivec &v) { return x==v.x && y==v.y && z==v.z; };
 };
 
 struct vec
 {
-    float x, y, z;
+    union
+    {
+        struct { float x, y, z; };
+        float v[3];
+    };
 
     vec() {};
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(ivec &v) : x(v.x), y(v.y), z(v.z) {};
-
-    float &operator[](int dim) { return dim==0 ? z : (dim==1 ? y : x); };
-    float operator[](int dim) const { return dim==0 ? z : (dim==1 ? y : x); };
+    
+    float &operator[](int i) { return v[2-i]; };
+    float operator[](int i) const { return v[2-i]; };
     bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
     bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; }
+    
     float squaredlen() const { return x*x + y*y + z*z; };
     float dot(const vec &o) const { return x*o.x + y*o.y + z*o.z; };
     void mul(float f)        { x *= f; y *= f; z *= f; };

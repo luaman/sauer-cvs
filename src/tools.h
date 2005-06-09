@@ -64,6 +64,7 @@ typedef unsigned int uint;
 #ifndef __GNUC__
 #pragma warning( 3 : 4189 )
 #pragma warning( 4 : 4244 )
+
 //#pragma comment(linker,"/OPT:NOWIN98")
 #endif
 #define PATHDIV '\\'

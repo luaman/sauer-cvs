@@ -511,6 +511,27 @@ void edittex(int dir)
     loopselxyz(edittexcube(c, t, sel.orient));
 };
 
+void selextend()
+{
+    loopi(3)
+    {
+        if(cur[i]<sel.o[i])
+        {
+            sel.s[i] += (sel.o[i]-cur[i])/sel.grid;
+            sel.o[i] = cur[i];
+        }
+        else if(cur[i]>=sel.o[i]+sel.s[i]*sel.grid)
+        {
+            sel.s[i] = (cur[i]-sel.o[i])/sel.grid+1;
+        }
+    };
+    
+    cursorupdate();
+    reorient();
+}
+
+COMMAND(selextend, ARG_NONE);
+
 COMMAND(edittex, ARG_1INT);
 
 ////////// flip and rotate ///////////////
