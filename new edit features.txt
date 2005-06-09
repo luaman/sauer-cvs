@@ -134,6 +134,12 @@ dropent
 ---------
 positions the closest entity according to the entdrop variable. 
 
+
+selextend
+---------
+extend current selection to include cursor
+
+
 ===============
 3. HUD stats
 ===============
