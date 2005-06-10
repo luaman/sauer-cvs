@@ -463,21 +463,6 @@ COMMAND(editface, ARG_2INT);
 
 /////////// texture editing //////////////////
 
-bool crushededge(uchar e, int dc) { return dc ? e==0 : e==0x88; };
-
-int texorient(cube &c, int orient)
-{
-    loopi(2) loopj(2)
-    {
-        int a = faceedgesidx[orient][i*2 + 0];
-        int b = faceedgesidx[orient][i*2 + 1];
-        if(crushededge(c.edges[a],j) &&
-           crushededge(c.edges[b],j) &&
-           touchingface(c, orient)) return ((a>>2)<<1) + j;
-    };
-    return orient;
-};
-
 int curtexindex = -1, lasttex = 0;
 void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
 {
@@ -494,7 +479,7 @@ void tofronttex()                                       // maintain most recentl
 
 void edittexcube(cube &c, int tex, int orient)
 {
-    c.texture[texorient(c, orient)] = tex;
+    c.texture[visibleorient(c, orient)] = tex;
     if (c.children) loopi(8) edittexcube(c.children[i], tex, orient);
 };
 
@@ -525,7 +510,7 @@ void selextend()
             sel.s[i] = (cur[i]-sel.o[i])/sel.grid+1;
         }
     };
-    
+
     cursorupdate();
     reorient();
 }

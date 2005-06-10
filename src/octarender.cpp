@@ -866,6 +866,21 @@ void subdividecube(cube &c)
     };
 };
 
+bool crushededge(uchar e, int dc) { return dc ? e==0 : e==0x88; };
+
+int visibleorient(cube &c, int orient)
+{
+    loopi(2) loopj(2)
+    {
+        int a = faceedgesidx[orient][i*2 + 0];
+        int b = faceedgesidx[orient][i*2 + 1];
+        if(crushededge(c.edges[a],j) &&
+           crushededge(c.edges[b],j) &&
+           touchingface(c, orient)) return ((a>>2)<<1) + j;
+    };
+    return orient;
+};
+
 int firstcube(cube *c, int x, int y, int z, int d)
 {
     int j = octaindex(x, y, z, d);
@@ -889,8 +904,6 @@ bool match(int a, int b, int &s) { s = (a < 0 ? b : a); return s == b || b<0; };
 
 bool quadmatch(int a, int b, int c, int d, int &s) { int x, y; return match(a,b,x) && match(c,d,y) && match(x,y,s); };
 
-VAR(debug, 0, 0, 1);
-
 bool remip(cube &parent)
 {
     cube *ch = parent.children;
@@ -901,60 +914,60 @@ bool remip(cube &parent)
         if(!remip(ch[i])) r = false;
         else
         if(!isempty(ch[i])) e = false;
+        if(ch[i].material!=ch[0].material) r = false;
     };
     if(!r) return false;
-    if(debug) printf("------------\n");
-    int mat = ch[0].material;
-    loopi(8) if(ch[i].material != mat) return false;
+    solidfaces(parent);
     if(!e) loopi(6)
     {
         int e[4][4], t[4], q[4];
         int d = dimension(i), dc = dimcoord(i);
         int n = faceconvexity(parent,i)>0 ? 0 : 3;
 
-        loopk(4)
+        { loop(x, 4) loop(y, 4) e[y][x] = -1; };
+
+        loopk(4) // get corners
         {
             q[k] = firstcube(ch, k&1, (k&2)>>1, dc, d);
             if(q[k]>8) return false;
-            if(q[k]<0) t[k] = -1;
+            if(q[k]<0 || visibleorient(ch[q[k]], i)!=i) t[k] = -1;
             else
             {
                 t[k] = ch[q[k]].texture[i];
+                loop(x, 2) loop(y, 2)
+                    e[y+(k&2)][x+(k&1)*2] = edgeget(ch[q[k]].edges[edgeindex(x,y,d)], dc)+8*octacoord(d, q[k]);
             };
         };
-        { loop(x, 4) loop(y, 4) e[y][x] = -1; };
-        loopk(4) if(q[k]>=0) loop(x, 2) loop(y, 2)
-            e[y+(k&2)][x+(k&1)*2] = edgeget(ch[q[k]].edges[edgeindex(x,y,d)], dc)+8*octacoord(d, q[k]);
-
-        if(debug)loopk(4) printf("[%d] %d = t %d, q %d\n", i, k, t[k], q[k]);
-        if(debug)loopk(4) loopj(4) printf("e %d %d = %d\n", k, j, e[k][j]);
 
         int tex, center, w, x, y, z;
         if(!quadmatch(e[1][1], e[1][2], e[2][1], e[2][2], center) ||
-           !quadmatch(t[0], t[1], t[2], t[3], tex) ||
-           !match(e[0][1], e[0][2], w) ||
-           !match(e[1][0], e[2][0], x) ||
-           !match(e[3][1], e[3][2], y) ||
-           !match(e[1][3], e[2][3], z) ||
-           !lineup(e[0][0], w, e[0][3]) ||
-           !lineup(e[0][0], x, e[3][0]) ||
-           !lineup(e[3][0], y, e[3][3]) ||
-           !lineup(e[0][3], z, e[3][3]) ||
-           (e[0][0]&1)==1 ||
-           (e[0][3]&1)==1 ||
-           (e[3][0]&1)==1 ||
-           (e[3][3]&1)==1 ||
-           !lineup(e[n][0], center, e[3-n][3])) return false;
+           !quadmatch(t[0], t[1], t[2], t[3], tex)) return false;
 
-        if(debug)printf("w %d, x %d, y %d, z %d, center %d, tex %d\n", w, x, y, z, center, tex);
+        if(center>=0)
+        {
+            if(!lineup(e[n][0], center, e[3-n][3]) || // check middles
+               !match(e[0][1], e[0][2], w) ||
+               !match(e[1][0], e[2][0], x) ||
+               !match(e[3][1], e[3][2], y) ||
+               !match(e[1][3], e[2][3], z) ||
+               !lineup(e[0][0], w, e[0][3]) ||
+               !lineup(e[0][0], x, e[3][0]) ||
+               !lineup(e[3][0], y, e[3][3]) ||
+               !lineup(e[0][3], z, e[3][3]) ||
+               (e[0][0]&1)==1 ||
+               (e[0][3]&1)==1 ||
+               (e[3][0]&1)==1 ||
+               (e[3][3]&1)==1) return false;
 
-        loopk(4) edgeset(parent.edges[d*4+k], dc, e[((k&2)>>1)*3][(k&1)*3]>>1);
-        if(debug)loopk(4) printf("<%d> pe = %d\n", k, edgeget(parent.edges[d*4+k], dc));
+            loopk(4) edgeset(parent.edges[d*4+k], dc, e[((k&2)>>1)*3][(k&1)*3]>>1);
+        };
+
         parent.texture[i] = tex;
-    };
-    parent.material = mat;
+    }
+    else emptyfaces(parent);
+    if(!validcube(parent)) return false;
+    parent.material = ch[0].material;
     discardchildren(parent);
-    if(e) emptyfaces(parent);
     return true;
 };
 

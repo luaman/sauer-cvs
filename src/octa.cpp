@@ -52,6 +52,13 @@ void optiface(uchar *p, cube &c)
     emptyfaces(c);
 };
 
+bool validcube(cube &c)
+{
+    loopj(12) if(edgeget(c.edges[j], 1)<edgeget(c.edges[j], 0)) return false;
+    loopj(3) optiface((uchar *)&c.faces[j], c);
+    return true;
+};
+
 void validatec(cube *c, int size)
 {
     loopi(8)
@@ -64,9 +71,8 @@ void validatec(cube *c, int size)
                 discardchildren(c[i]);
             }
             else validatec(c[i].children, size>>1);
-        };
-        loopj(12) if(edgeget(c[i].edges[j], 1)<edgeget(c[i].edges[j], 0)) emptyfaces(c[i]);
-        loopj(3) optiface((uchar *)&c[i].faces[j], c[i]);
+        }
+        else if(!validcube(c[i])) emptyfaces(c[i]);
     };
 };
 

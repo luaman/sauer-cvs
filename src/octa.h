@@ -68,7 +68,6 @@ extern ivec lu;
 extern int lusize;
 extern int wtris, wverts, vtris, vverts, glde;
 extern int allocnodes, allocva, selchildcount;
-extern const uchar faceedgesidx[6][4];
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)
 const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
@@ -121,6 +120,7 @@ extern cube *newcubes(uint face = F_EMPTY);
 extern int familysize(cube &c);
 extern void freeocta(cube *c);
 extern void optiface(uchar *p, cube &c);
+extern bool validcube(cube &c);
 extern void validatec(cube *c, int size);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
@@ -162,6 +162,7 @@ extern int genclipplane(cube &c, int i, const vec *v, plane *clip);
 extern void genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, bool bounded = true);
 extern int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r);
 extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR);
+extern int visibleorient(cube &c, int orient);
 
 // water
 extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
