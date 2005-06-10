@@ -107,6 +107,7 @@ Currently supported materials:
   air - the default material for all cubes
   water - shows water waves at the top surface of the cube
   clip - cubes are always treated as entirely solid in physics
+  noclip - cubes are always treated as empty in physics
 
 watersubdiv N
 --------------
