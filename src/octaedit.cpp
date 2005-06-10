@@ -461,6 +461,37 @@ void editface(int dir, int mode)
 
 COMMAND(editface, ARG_2INT);
 
+void selextend()
+{
+    loopi(3)
+    {
+        if(cur[i]<sel.o[i])
+        {
+            sel.s[i] += (sel.o[i]-cur[i])/sel.grid;
+            sel.o[i] = cur[i];
+        }
+        else if(cur[i]>=sel.o[i]+sel.s[i]*sel.grid)
+        {
+            sel.s[i] = (cur[i]-sel.o[i])/sel.grid+1;
+        }
+    };
+
+    cursorupdate();
+    reorient();
+}
+
+COMMAND(selextend, ARG_NONE);
+
+void entmove(int dir, int dist)
+{
+    if(noedit()) return;
+    int e = closestent();
+    if(e<0||dir<0||dir>2) return;
+    ents[e].o[dir]+=dist;
+}
+
+COMMAND(entmove, ARG_2INT);
+
 /////////// texture editing //////////////////
 
 int curtexindex = -1, lasttex = 0;
@@ -495,27 +526,6 @@ void edittex(int dir)
     int t = lasttex = hdr.texlist[i];
     loopselxyz(edittexcube(c, t, sel.orient));
 };
-
-void selextend()
-{
-    loopi(3)
-    {
-        if(cur[i]<sel.o[i])
-        {
-            sel.s[i] += (sel.o[i]-cur[i])/sel.grid;
-            sel.o[i] = cur[i];
-        }
-        else if(cur[i]>=sel.o[i]+sel.s[i]*sel.grid)
-        {
-            sel.s[i] = (cur[i]-sel.o[i])/sel.grid+1;
-        }
-    };
-
-    cursorupdate();
-    reorient();
-}
-
-COMMAND(selextend, ARG_NONE);
 
 COMMAND(edittex, ARG_1INT);
 

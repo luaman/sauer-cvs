@@ -171,7 +171,10 @@ int main(int argc, char **argv)
 
     log("video: misc");
     SDL_WM_SetCaption("sauerbraten engine", NULL);
-    if(fs) SDL_WM_GrabInput(SDL_GRAB_ON);
+    #ifndef WIN32
+    if(fs)
+    #endif
+    SDL_WM_GrabInput(SDL_GRAB_ON);
     keyrepeat(false);
     SDL_ShowCursor(0);
 
