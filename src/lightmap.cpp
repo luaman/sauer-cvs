@@ -10,7 +10,7 @@ VAR(aalights, 0, 2, 2);
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
-static vector<entity *> lights1, lights2, close_lights;
+static vector<entity *> lights1, lights2;
 static uint progress = 0;
 static bool canceled = false;
 
@@ -247,6 +247,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                             continue;
                     }
                     float intensity = -normal.dot(ray) * attenuation;
+                    if(intensity < 0) intensity = 1.0;
                     r += (uint)(intensity * float(light.attr2));
                     g += (uint)(intensity * float(light.attr3));
                     b += (uint)(intensity * float(light.attr4));
@@ -305,9 +306,10 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
 {
     lights1.setsize(0);
     lights2.setsize(0);
-    loopv(close_lights)
+    loopv(ents)
     {
-        entity &light = *close_lights[i];
+        entity &light = ents[i];
+        if(light.type != LIGHT) continue;
 
         int radius = light.attr1;
         if(radius > 0)
@@ -481,27 +483,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
     check_calclight_canceled();
     if(canceled)
-        return;
-
-    close_lights.setsize(0);
-    loopv(ents)
-    {
-        entity &e = ents[i];
-        if(e.type != LIGHT)
-            continue;
-
-        int radius = e.attr1;
-        if(radius > 0)
-        {
-            if(e.o.x + radius < cx || e.o.x - radius > cx + (size << 1) ||
-               e.o.y + radius < cy || e.o.y - radius > cy + (size << 1) ||
-               e.o.z + radius < cz || e.o.z - radius > cz + (size << 1))
-                continue;
-        }
-
-        close_lights.add(&e);
-    }
-    if(!close_lights.length())
         return;
 
     loopi(8)

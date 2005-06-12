@@ -137,7 +137,7 @@ void playsound(int n, vec *loc)
     int vol = soundvol;
     if(loc)
     {
-        vol -= (int)(player1->o.dist(*loc)*3*soundvol/255);     // simple mono distance attenuation
+        vol -= (int)(player1->o.dist(*loc)*3/4*soundvol/255);     // simple mono distance attenuation
     }
     if(vol<=0) return;
 
