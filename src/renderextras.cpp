@@ -348,7 +348,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     if(!hidehud)
     {
-        drawicon(0, 192, 20, 1650);
+        drawicon(192, 0, 20, 1650);
         if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
         int g = player1->gunselect;
         int r = 64;

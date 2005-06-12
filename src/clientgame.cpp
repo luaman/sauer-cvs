@@ -87,7 +87,7 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     }
     else
     {
-        d->ammo[GUN_PISTOL] = 25;
+        d->ammo[GUN_PISTOL] = m_sp ? 50 : 20;
     };
 };
 
