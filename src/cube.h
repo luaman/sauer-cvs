@@ -209,7 +209,7 @@ enum
     S_PAINH, S_DEATHH,
     S_PAIND, S_DEATHD,
     S_PIGR1, S_ICEBALL, S_SLIMEBALL,
-    S_JUMPPAD,
+    S_JUMPPAD, S_PISTOL,
 };
 
 // vertex array format

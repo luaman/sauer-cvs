@@ -20,7 +20,7 @@ guninfo guns[NUMGUNS] =
     { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"        },
     { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"      },
     { S_PIGR1,     250,  50, 0,   0,  1, "bite"           },
-    { S_CG,        500,  40, 0,   0,  7, "pistol"         },    
+    { S_PISTOL,    500,  40, 0,   0,  7, "pistol"         },    
 };
 
 void selectgun(int a, int b, int c)
