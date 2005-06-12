@@ -45,7 +45,7 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     d->armour = 0;
     d->armourtype = A_BLUE;
     d->quadmillis = 0;
-    d->gunselect = GUN_SG;
+    d->gunselect = GUN_PISTOL;
     d->gunwait = 0;
     d->attacking = false;
     d->lastaction = 0;
@@ -62,7 +62,6 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
         }
         else
         {
-            if(gamemode==12) { d->gunselect = GUN_FIST; return; };  // eihrul's secret "instafist" mode
             d->health = 256;
             if(m_tarena)
             {
@@ -88,7 +87,7 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     }
     else
     {
-        d->ammo[GUN_SG] = 3;
+        d->ammo[GUN_PISTOL] = 25;
     };
 };
 

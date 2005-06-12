@@ -205,14 +205,13 @@ void drawicon(float tx, float ty, int x, int y)
 {
     glBindTexture(GL_TEXTURE_2D, 5);
     glBegin(GL_QUADS);
-    tx /= 192;
-    ty /= 192;
-    float o = 1/3.0f;
+    tx /= 320;
+    ty /= 128;
     int s = 120;
-    glTexCoord2f(tx,   ty);   glVertex2i(x,   y);
-    glTexCoord2f(tx+o, ty);   glVertex2i(x+s, y);
-    glTexCoord2f(tx+o, ty+o); glVertex2i(x+s, y+s);
-    glTexCoord2f(tx,   ty+o); glVertex2i(x,   y+s);
+    glTexCoord2f(tx,        ty);        glVertex2i(x,   y);
+    glTexCoord2f(tx+1/5.0f, ty);        glVertex2i(x+s, y);
+    glTexCoord2f(tx+1/5.0f, ty+1/2.0f); glVertex2i(x+s, y+s);
+    glTexCoord2f(tx,        ty+1/2.0f); glVertex2i(x,   y+s);
     glEnd();
     xtraverts += 4;
 };
@@ -349,11 +348,11 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     if(!hidehud)
     {
-        drawicon(128, 128, 20, 1650);
+        drawicon(0, 192, 20, 1650);
         if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
         int g = player1->gunselect;
         int r = 64;
-        if(g>2) { g -= 3; r = 128; };
+        if(g==9) { g = 4; r = 0; };
         drawicon((float)(g*64), (float)r, 1220, 1650);
     };
     

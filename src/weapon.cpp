@@ -20,6 +20,7 @@ guninfo guns[NUMGUNS] =
     { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"        },
     { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"      },
     { S_PIGR1,     250,  50, 0,   0,  1, "bite"           },
+    { S_CG,        500,  40, 0,   0,  7, "pistol"         },    
 };
 
 void selectgun(int a, int b, int c)
@@ -29,10 +30,11 @@ void selectgun(int a, int b, int c)
     if(a>=0 && s!=a && player1->ammo[a]) s = a;
     else if(b>=0 && s!=b && player1->ammo[b]) s = b;
     else if(c>=0 && s!=c && player1->ammo[c]) s = c;
-    else if(s!=GUN_RL && player1->ammo[GUN_RL]) s = GUN_RL;
     else if(s!=GUN_CG && player1->ammo[GUN_CG]) s = GUN_CG;
+    else if(s!=GUN_RL && player1->ammo[GUN_RL]) s = GUN_RL;
     else if(s!=GUN_SG && player1->ammo[GUN_SG]) s = GUN_SG;
     else if(s!=GUN_RIFLE && player1->ammo[GUN_RIFLE]) s = GUN_RIFLE;
+    else if(s!=GUN_PISTOL && player1->ammo[GUN_PISTOL]) s = GUN_PISTOL;
     else s = GUN_FIST;
     if(s!=player1->gunselect) playsoundc(S_WEAPLOAD);
     player1->gunselect = s;
@@ -244,6 +246,7 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
         };
 
         case GUN_CG:
+        case GUN_PISTOL:
             particle_splash(0, 100, 250, to);
             //particle_trail(1, 10, from, to);
             break;

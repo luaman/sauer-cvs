@@ -251,7 +251,7 @@ VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
 VAR(hudgun, 0, 1, 1);
 
-char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle" };
+char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol" };
 
 void drawhudmodel(int start, int end, float speed, int base)
 {
