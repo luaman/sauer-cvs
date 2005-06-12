@@ -619,3 +619,25 @@ void freesurfaces(cube &c)
     }
 }
 
+void dumplms()
+{
+    SDL_Surface *temp;
+    if(temp = SDL_CreateRGBSurface(SDL_SWSURFACE, LM_PACKW, LM_PACKH, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0))
+    {
+        loopv(lightmaps)
+        {
+            for(int idx = 0; idx<LM_PACKH; idx++)
+            {
+                char *dest = (char *)temp->pixels+3*LM_PACKW*idx;
+                memcpy(dest, (char *)lightmaps[i].data+3*LM_PACKW*(LM_PACKH-1-idx), 3*LM_PACKW);
+                //endianswap(dest, 3, LM_PACKW);
+            };
+            sprintf_sd(buf)("lightmap_%s_%d.bmp", getclientmap(), i);
+            SDL_SaveBMP(temp, buf);
+        };
+        SDL_FreeSurface(temp);
+    };
+};
+
+COMMAND(dumplms, ARG_NONE);
+

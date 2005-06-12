@@ -256,7 +256,10 @@ void load_world(char *mname)        // still supports all map formats that have 
     execfile(mcfname);
 };
 
+void savecurrentmap() { save_world(getclientmap()); };
+
 COMMANDN(savemap, save_world, ARG_1STR);
+COMMAND(savecurrentmap, ARG_NONE);
 
 // loading and saving of savegames, dumps the spawn state of all mapents, the full state of all dynents (monsters + player)
 

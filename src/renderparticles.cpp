@@ -120,9 +120,9 @@ void particle_trail(int type, int fade, vec &s, vec &e)
 {
     vec v;
     float d = e.dist(s, v);
-    v.div(d*8);
+    v.div(d*2);
     vec p = s;
-    loopi((int)d*8)
+    loopi((int)d*2)
     {
         p.add(v);
         vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
