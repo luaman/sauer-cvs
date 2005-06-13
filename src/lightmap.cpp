@@ -168,7 +168,7 @@ inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
     
 inline uint hthash (surfaceinfo *info)
 {
-    uint hash = 0;
+    uint hash = lm_w + (lm_h<<8);
     uchar *color = lm;
     loopi(lm_w*lm_h)
     {
