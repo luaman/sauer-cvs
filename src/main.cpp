@@ -260,6 +260,9 @@ int main(int argc, char **argv)
                 case SDL_ACTIVEEVENT:
                     if(event.active.state & SDL_APPINPUTFOCUS)
                         grabmouse = event.active.gain;
+                    else
+                    if(event.active.gain)
+                        grabmouse = 1;
                     break;
 
                 case SDL_MOUSEMOTION:
