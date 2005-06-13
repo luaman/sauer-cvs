@@ -230,7 +230,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         hdr.mapprec = 32;
         hdr.mapllod = 0;
         hdr.lightmaps = 0;
-        loopi(8) hdr.reserved[i] = 0;
+        memset(hdr.reserved, 0, sizeof(hdr.reserved));
         loopi(256) hdr.texlist[i] = i;
         ents.setsize(0);
         freeocta(worldroot);
