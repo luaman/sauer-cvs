@@ -2,17 +2,10 @@
 
 VAR(watersubdiv, 0, 2, 3);
 VAR(waterlod, 0, 1, 3);
-VAR(waterwaves, 0, 1, 1);
-
-inline void vertw(float v1, float v2, float v3, float t1, float t2)
-{
-    glTexCoord2f(t1, t2);
-    glVertex3f(v1, v2-1.6f, v3);
-};
 
 int wx1, wy1, wx2, wy2, wsize;
 
-inline void vertwv(float v1, float v2, float v3, float t1, float t2, float t)
+inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
 {
     glTexCoord2f(t1, t2);
     glVertex3f(v1, v2-1.1f-(float)sin((v1-wx1)/wsize*(v3-wy1)/wsize*(v1-wx2)*(v3-wy2)*59/23+t)*0.8f, v3);
@@ -43,7 +36,6 @@ void renderwater(uint subdiv, int x, int y, int z, uint size)
     wy2 = wy1 + size;
     wsize = size;
     
-    if(waterwaves)
     for(int xx = wx1; xx<wx2; xx += subdiv)
     {
         float xo = xf*(xx+t2);
@@ -53,26 +45,16 @@ void renderwater(uint subdiv, int x, int y, int z, uint size)
             float yo = yf*(yy+t2);
             if(yy==wy1)
             {
-                vertwv(xx,             z, yy, dx(xo),    dy(yo), t1);
-                vertwv(xx+subdiv, z, yy, dx(xo+xs), dy(yo), t1);
+                vertw(xx,             z, yy, dx(xo),    dy(yo), t1);
+                vertw(xx+subdiv, z, yy, dx(xo+xs), dy(yo), t1);
             };
-            vertwv(xx,             z, yy+subdiv, dx(xo),    dy(yo+ys), t1);
-            vertwv(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
+            vertw(xx,             z, yy+subdiv, dx(xo),    dy(yo+ys), t1);
+            vertw(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
         };
         glEnd();
         int n = (wy2-wy1-1)/subdiv;
         n = (n+2)*2;
         xtraverts += n;
-    }
-    else 
-    {
-        glBegin(GL_POLYGON);
-        vertw(wx1, z, wy1, dx(xf*(wx1+t2)), dy(xf*(wy1+t2)));
-        vertw(wx2, z, wy1, dx(xf*(wx2+t2)), dy(xf*(wy1+t2)));
-        vertw(wx2, z, wy2, dx(xf*(wx2+t2)), dy(xf*(wy2+t2)));
-        vertw(wx1, z, wy2, dx(xf*(wx1+t2)), dy(xf*(wy2+t2)));
-        glEnd();
-        xtraverts += 4;
     }
 };
 
@@ -171,7 +153,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         switch(matsurf.material)
         {
         case MAT_WATER:
-            if(!waterwaves || renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
+            if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
             break;
         }

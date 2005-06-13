@@ -396,12 +396,7 @@ vector<materialsurface> matsurfs;
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
     vertcheck();
-    //int col = *((int *)(&c.colour[0]));
-    int cin[8];
     bool useface[6];
-    int vertexuses[8];
-
-    loopi(8) vertexuses[i] = 0;
 
     vec pos((float)x, (float)y, (float)z);
 
@@ -436,8 +431,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
             }
 
             iv.add(index);
-            if(++vertexuses[coord] == 1)
-                cin[coord] = index;
         }
     }
 };
