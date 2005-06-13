@@ -63,6 +63,14 @@ Changes property P (0..3) of the closest entity by amount A. For example "entpro
 <pre>clearents type</pre>
 Deletes all entities of said type.
 
+<pre>editmat</pre>
+Changes the type of material left behind when a cube is deleted.  Currently the following types of materials are supported:
+<ul>
+    <li>Air: the default material, has no effect.</li>
+    <li>Water: acts as you would expect.  Only renders from the top, so treat it like real water and keep all 4 sides contained.</li>
+    <li>Clip: an invisible wall that blocks players movement but not bullets.  Is ideally used to keep players "in bounds" in a map.  Can be used sparingly to smooth out the flow around decoration.</li>
+</ul>
+
 <pre>map name</pre>
 Loads up map "name" in the gamemode set previously by "mode". A map given as "blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to "packages/mypackage/blah.cgz". The menu has a set of maps that can be loaded. See also map in the gameplay docs.
 <br><br>
@@ -108,8 +116,11 @@ Plays sound N, see data/sounds.cfg for default sounds, and use registersound to 
 <pre>calclight</pre>
 This calculates all lightmaps. Usually takes only a few seconds, depending on map size and settings. If you "savemap", the lightmap will be stored along with it.
 
+<pre>patchlight</pre>
+This will calculate lightmaps for any newly created cubes. This will generally be much quicker than doing a "calclight", and so is very useful when editing. However, it will  make very inefficient use of lightmap textures, and any new cubes will not properly cast shadows on surfaces that are already lit. It is recommended you do a "calclight" on your map before you publish it with "savemap".
+
 <pre>fullbright  B</pre>
-Throws away the current lightmap created by calclight and renders the map fullbright.
+This variable controls whether the map will be shown lighting disabled.  Fullbright 1 will disable lighting, whereas 0 will enable lighting. (Default = 0)
 
 <pre>lightprecision P</pre>
 Default = 32. This is the most important variable for tweaking the lighting, it determines what the resolution of the lightmap is. As such has a BIG effect on calculation time, video memory usage, and map file size.  The default is good for most maps, you may go as low as 16 if you are lighting a really small map and love hard shadows, and for bigger maps you may need to set it to 64 or so to get reasonable memory usage.
@@ -189,24 +200,16 @@ indicated on the HUD.
 
 <div>The HUD</div><a name="hud"></a>
 On the bottom right of the screen are a bunch of stats. You'll find out what they mean below.
-<br>
-cube: the number of cubes in the current selection. Only the visible (leaf) cubes are counted.
-<br>
-fps: frames per second
-<br>
-ond: number of cubes in the system. This includes parent cubes, copied cubes, and undos.
-<br>
-va: number of vertex arrays used to store vertecies in the map. you probably don't need to use this.
-<br>
-vtr: number of triangles currently being displayed. will be a useful stat when culling is done.
-<br>
-vvt: number of vertecies currently being displayed. again, useful when culling is done.
-<br>
-tri: number of triangles in the entire map
-<br>
-wvt: number of vertecies in the entire map
-<br>
-evt: misc rendering effects. stuff like particles displayed, or text written on screen.
+<ul>
+<li>cube: the number of cubes in the current selection. Only the visible (leaf) cubes are counted.</li>
+<li>fps: frames per second</li>
+<li>ond: number of cubes in the system. This includes parent cubes, copied cubes, and undos.</li>
+<li>va: number of vertex arrays used to store vertecies in the map. you probably don't need to use this.</li>
+<li>vtr: number of triangles currently being displayed. will be a useful stat when culling is done.</li>
+<li>vvt: number of vertecies currently being displayed. again, useful when culling is done.</li>
+<li>tri: number of triangles in the entire map</li>
+<li>wvt: number of vertecies in the entire map</li>
+<li>evt: misc rendering effects. stuff like particles displayed, or text written on screen.</li>
 
 </body>
 </html>
