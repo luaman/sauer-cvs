@@ -17,8 +17,9 @@ and settings. If you "savemap", the lightmap will be stored along with it.
 
 This will calculate lightmaps for any newly created cubes. This will generally be much
 quicker than doing a "calclight", and so is very useful when editing. However, it will 
-make very inefficient use of lightmap textures, so it is recommended you do a "calclight" 
-on your map before you publish it with "savemap".
+make very inefficient use of lightmap textures, and any new cubes will not properly cast
+shadows on surfaces that are already lit. It is recommended you do a "calclight" on your
+map before you publish it with "savemap".
 
         fullbright B
 
