@@ -82,28 +82,6 @@ void show_calclight_progress()
     SDL_GL_SwapBuffers();
 }
 
-struct compresskey
-{
-    uchar color[3];
-};
-
-struct compressval
-{
-    ushort x, y, lmid;
-};
-   
-inline bool htcmp (const compresskey &x, const compresskey &y)
-{
-    return x.color[0] == y.color[0] && x.color[1] == y.color[1] && x.color[2] == y.color[2];
-}
-
-inline unsigned int hthash (const compresskey &k)
-{   
-    return k.color[0] + (k.color[1] << 8) + (k.color[2] << 16);
-}   
- 
-static hashtable<compresskey, compressval> compressed;
-
 bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
 {
     if(packed || w < tw || h < th)
@@ -172,21 +150,54 @@ void insert_lightmap(ushort &x, ushort &y, ushort &lmid)
     lmid = lightmaps.length();
 }
 
+inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
+{
+    if(lm_w != y->w || lm_h != y->h) return false;
+    uchar *xdata = lm,
+          *ydata = lightmaps[y->lmid - 1].data + 3*(y->x + y->y*LM_PACKW);
+    loopi(lm_h)
+    {
+        loopj(lm_w)
+        {
+            loopk(3) if(*xdata++ != *ydata++) return false;
+        }
+        ydata += 3*(LM_PACKW - y->w);
+    }    
+    return true;
+}
+    
+inline uint hthash (surfaceinfo *info)
+{
+    uint hash = 0;
+    uchar *color = lm;
+    loopi(lm_w*lm_h)
+    {
+       hash ^= (color[0] + (color[1] << 8) + (color[2] << 16));
+       color += 3;
+    }
+    return hash;  
+}
+
+static hashtable<surfaceinfo *, surfaceinfo *> compressed;
+
+VAR(lightcompress, 0, 1, 4);
+
 void pack_lightmap(surfaceinfo &surface) 
 {
-    if(lm_w == 1 && lm_h == 1)
+    if(lm_w <= lightcompress && lm_h <= lightcompress)
     {
-        compresskey key;
-        memcpy(key.color, lm, 3);
-        compressval *val = compressed.access(key);
+        surfaceinfo **val = compressed.access(&surface);
         if(!val)
         {
-            val = &compressed[key];
-            insert_lightmap(val->x, val->y, val->lmid);
+            compressed[&surface] = &surface;
+            insert_lightmap(surface.x, surface.y, surface.lmid);
         }
-        surface.x = val->x;
-        surface.y = val->y;
-        surface.lmid = val->lmid;
+        else
+        {
+            surface.x = (*val)->x;
+            surface.y = (*val)->y;
+            surface.lmid = (*val)->lmid;
+        }
     }
     else
         insert_lightmap(surface.x, surface.y, surface.lmid);
@@ -517,6 +528,7 @@ void calclight()
         total += lightmaps[i].lightmaps;
         lumels += lightmaps[i].lumels;
     }
+    compressed.clear();
     initlights();
     allchanged();
     if(canceled == true)
