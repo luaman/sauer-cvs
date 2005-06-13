@@ -312,8 +312,6 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     renderentities();
 
-    renderspheres(curtime);
-    
     glDisable(GL_FOG);
 
     glLoadIdentity();
@@ -324,6 +322,10 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     draw_envbox(14, farplane/2);
     transplayer();
     
+    glEnable(GL_FOG);
+    renderspheres(curtime);
+    glDisable(GL_FOG);
+
     render_particles(curtime);
     renderents();
 
