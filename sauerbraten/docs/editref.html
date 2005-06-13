@@ -1,335 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-    <head>
-        <title>cube map editing reference</title></head>
-    <body text="#ffffff" bgcolor="#302c28" link="#ffbb00" vlink="#ff9900" alink="#ff9900">
-        <font face="verdana,trebuchet ms,zurich bt,tahoma,arial,helvetica,sans-serif">
-            <center>
-                &nbsp;&nbsp;
-                <p>
-                    <table width="80%">
-                        <TBODY>
-                            <tr>
-                                <td BGCOLOR="#662222"><font size="3"><strong> Editing related console commands </strong>
-                                    </font>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><font size="-1">
-                                        <pre><font size=3>    edittoggle     </font></pre>
-                                        switches between map edit mode and normal (default key = e). In map edit mode 
-                                        you can select bits of the map by clicking or dragging your crosshair on the 
-                                        floor or ceiling (using the "attack" command, normally MOUSE1), then use the 
-                                        commands below to modify the selection. While in edit mode, physics &amp; 
-                                        collision don't apply (noclip), and key repeat is ON. Note that if you fly 
-                                        outside the map, cube still renders the world as if you were standing on the 
-                                        floor directly below the camera.
-                                        <pre><font size=3>    edittex T D     </font></pre>
-                                        Changes the texture on current selection by browsing through a list of textures 
-                                        directly shown on the cubes. T is an integer denoting the type (floor = 0, 
-                                        lower or wall = 1, ceiling = 2, upper wall = 3), D is the direction you want to 
-                                        cycle the textures in (1 = forwards, -1 = backwards). Default keys are the six 
-                                        keys above the cursor keys, which each 2 of them cycle one type (and numpad 7/4 
-                                        for upper).
-                                        <p>
-                                            The way this works is slightly strange at first, but allows for very fast 
-                                            texture assignment. All textures are in 3 individual lists for each type (both 
-                                            wall kinds treated the same), and each time a texture is used, it is moved to 
-                                            the top of the list. So after a bit of editing, all your most frequently used 
-                                            textures will come first when pressing these keys, and the most recently used 
-                                            texture is set immediately when you press the forward key for the type. These 
-                                            lists are saved with the map. make a selection (including wall bits) and press 
-                                            these keys to get a feel for what they do.
-                                            <pre><font size=3>    editheight T D     </font></pre>
-                                            T is the type as above (floors &amp; ceilings only), and D is the delta value 
-                                            to move it in. Default keys are [ and ] for floor level, and o/p for ceiling.
-                                            <pre><font size=3>    solid B     </font></pre>
-                                            makes the current selection all solid (i.e. wall) if B is true (non-zero), or 
-                                            all non-solid if it is false (0). This operation retains floor/ceiling 
-                                            heights/textures while swapping between the two. Default keys f and g 
-                                            respectively.
-                                            <pre><font size=3>    equalize T     </font></pre>
-                                            levels the floor/ceiling of the selection (T as above). default keys , and .
-                                            <pre><font size=3>    heightfield T     </font></pre>
-                                        marks the current selection as a heightfield, with T being floor or ceiling, as 
-                                        above. A surface marked as heightfield will use the vdelta values (see below) 
-                                        of its 4 corners to create a sloped surface. To mark a heightfield as normal 
-                                        again (ignoring vdelta values, set or not) use "solid 0". Default keys are h 
-                                        (floor) and i (ceiling).
-                                        <p>
-                                            Heightfields should be made the exact size that is needed, not more not less. 
-                                            The most important reason for this is that cube automatically generates "caps" 
-                                            (side-faces for heightfields) only on the borders of the heighfield. This also 
-                                            means if you have 2 independant heightfields accidentally touch eachother, you 
-                                            will not get correct caps. Also, a heighfield is slightly slower to render than 
-                                            a non-heighfield floor or ceiling. Last but not least, a heightfield should 
-                                            have all the same baseheight (i.e. the height determined by a normal editheight 
-                                            operation) to get correct results.
-                                            <pre><font size=3>    vdelta N     </font></pre>
-                                        changes the vdelta value of the current selection by N. Note that unlike all 
-                                        other editing functions, this function doesn't affect a cube, but its top-left 
-                                        vertex (market by the dot in the editing cursor). So to edit a N * M 
-                                        heightfield, you will likely have to edit the vdelta of (N+1) * (M+1) cubes, 
-                                        i.e. you have to select 1 row and 1 column more in the opposite direction of 
-                                        the red dot to affect all the vertices of a heightfield of a given size (try 
-                                        it, it makes sense :)
-                                        <p>
-                                            A floor delta offsets vertices to beneath the level set by editheight (and a 
-                                            ceil delta to above). Delta offsets have a precision of a quarter of a unit, 
-                                            however you should use non-unitsize vertices only to touch other such vertices. 
-                                            Default keys are 8 and 9 to decrease/increase the vdelta.
-                                            <pre><font size=3>    corner     </font></pre>
-                                            makes the current selection into a "corner". Currently there is only one type 
-                                            of corner (a 45 degree one), only works on a single unit (cube) at a time. It 
-                                            can be positioned:
-                                            <lu>
-    <li> next to 2 solid walls
-    <li>
-                                                    in the middle of 2 higher floorlevels and 2 lower ones forming a diagonal (and 
-                                                    similar with ceiling)
-                                                    <UL>
-                                                    </UL>
-                                                    In both cases, the corner will orient itself automatically depending on its 
-                                                    neighbours, behaviour with other configurations than the 2 above is 
-                                                    unspecified. Since the latter configuration generates possibly 2 floor and 2 
-                                                    ceiling levels, up to 4 textures are used: for example for the 2 floors the 
-                                                    higher one will of the cube itself, and the lower one of a neighbouring low 
-                                                    cube. Default key = k you can make bigger corners at once by pressing "corner" 
-                                                    on grid aligned 2x2/4x4/8x8 selections, with equal size solid blocks next to 
-                                                    them.
-                                                    <pre><font size=3>    undo     </font></pre>
-                                                    multi-level undo of any of the changes caused by the above operations (default 
-                                                    key = u).
-                                                    <pre><font size=3>    undomegs N     </font></pre>
-                                                    sets the number of megabytes used for the undo buffer (default 1). undo's work 
-                                                    for any size areas, so the amount of undo steps per megabyte is more for small 
-                                                    areas than for big ones (a megabyte fits 280 undo steps on a 16x16 area, but 
-                                                    only 4 steps on a 128x128 area).
-                                                    <pre><font size=3>    copy     </font></pre>
-                                                    <pre><font size=3>    paste     </font></pre>
-                                                    copy copies the current selection into a buffer. to paste it back requires a 
-                                                    same size selection at the destination location. If it is not the same size the 
-                                                    selection will be resized automatically prior to the paste operation (with the 
-                                                    red dot as anchor), which is easier for large selections. (default keys are c 
-                                                    and v respectively).
-                                                    <pre><font size=3>    replace     </font></pre>
-                                                    repeats your last texture edit thruout the map. The way it works is intuitive: 
-                                                    simply edit any texture anywhere, then using "replace" will replace all 
-                                                    textures thruout the map in the same way (taking into account wether it was a 
-                                                    floor/wall/ceil/upper too). if the there was more than one "old" texture in 
-                                                    your selection, the one nearest to the red dot is used. This operation can't be 
-                                                    undone.
-                                                    <pre><font size=3>    newent type    value1 value2 value3 value4     </font></pre>
-                                                    adds a new entity where (x,y) is determined by the current selection (the red 
-                                                    dot corner) and z by the camera height, of said type. Type is a string giving 
-                                                    the type of entity, such as "light", and may optionally take values (depending 
-                                                    on the entity):
-                                                    <ul>
-                                                        <li>
-                                                            <pre><font size=3>"light" radius brightness
-"light" radius r g b    </font></pre>
-                                                            radius in units (1..32), optionally brightness (1..255) for a white light, or 
-                                                            coloured light (each component 1..255). Default key l creates a new light 
-                                                            (cylindrical) of radius 16, brightness 255 (white).
-                                                            <p></p>
-                                                        <li>
-                                                            <pre><font size=3>"playerstart"    </font></pre>
-                                                            Spawn spot, yaw is taken from the current camera yaw.
-                                                            <p></p>
-                                                        <li>
-                                                            <pre><font size=3>"shells", "bullets", "rockets", "riflerounds", "health",
-"healthboost", "greenarmour", "yellowarmour", "quaddamage"    </font></pre>
-                                                            A variety of pickup-able items, see <a href="game.html">here</a>.
-                                                            <p>
-                                                            </p>
-                                                        <li>
-                                                            <pre><font size=3>"teleport" N
-"teledest" N    </font></pre>
-                                                            creates a teleport connection, teleports are linked to a teledest with the same 
-                                                            N (of which there should be exactly one). N can be 0..255. The teledest uses 
-                                                            the current camera yaw.
-                                                            <P></P>
-                                                        <li>
-                                                            <pre><font size=3>"mapmodel" N   </font></pre>
-                                                            A map model, i.e. an object rendered as md2 which you collide against but has 
-                                                            no behaviour/movement. N determines which mapmodel you want, currently there is 
-                                                            only one, a tree (N = 0). yaw of the model is taken from the current camera 
-                                                            yaw.
-                                                            <p></p>
-                                                        <li>
-                                                            <pre><font size=3>"monster" N   </font></pre>
-                                                            A monster, currently N = 0..4 (see gameplay docs). Monster entities will be 
-                                                            spawned when in classic single player mode, and will attack you when you come 
-                                                            into view. yaw is taken from the current camera yaw.
-                                                            <p></p>
-                                                        <li>
-                                                            <pre><font size=3>"trigger" N T  </font></pre>
-                                                            A trigger of type T affecting all cubes with tag N when triggered in game (see 
-                                                            "edittag" on how to set tags on cubes). Triggers are rendered as a carrot 
-                                                            which, when "eaten", trigger an event (only once). The following trigger types 
-                                                            are available:
-                                                            <p>
-                                                            0: On being triggered, sets all target cubes to SPACE. This has the effect of 
-                                                            instantly opening doors or other geometry. You edit these "doors" as SPACE, 
-                                                            i.e. you determine what the "door" looks like when opened, they are then set to 
-                                                            SOLID automatically when playing (map start / edit toggle). Current "doors" 
-                                                            open instantly.
-                                                            <p>
-                                                            1: invisible: same as 0 but without the carrot. since the trigger radius is 
-                                                            fairly small, be sure to place them in tiny hallways and other areas you are 
-                                                            sure the player will pass through.
-                                                            <p>
-                                                            2: end of map marker. ends the map and triggers the intermission. carrot spins 
-                                                            wildly.
-                                                            <p>
-                                                            Scripting: each trigger automatically executes the alias "level_trigger_N" 
-                                                            where N is the trigger number. This means you can add any scripting you can do 
-                                                            through the available commands, by simply putting aliases of this kind in the 
-                                                            level .cfg file. For example, to print a message when the user hits trigger 1:
-                                                            <p>
-                                                            alias level_trigger_1 "echo A door opened nearby"
-                                                            <p></p>
-                                                        </li>
-                                                    </ul>
-                                                    Entities are shown in editmode by blue sparklies, and the closest one is 
-                                                    indicated on the HUD.
-                                                    <pre><font size=3>    delent     </font></pre>
-                                                    deletes the entity closest to the player (default key x)
-                                                    <pre><font size=3>    entproperty P A     </font></pre>
-                                                    changes property P (0..3) of the closest entity by amount A. For example 
-                                                    "entproperty 0 2" when executed near a lightsource would increase its radius by 
-                                                    2.
-                                                    <pre><font size=3>    clearents type     </font></pre>
-                                                    deletes all entities of said type.
-                                                    <pre><font size=3>    recalc     </font></pre>
-                                                    recomputes all there is to recompute about a map, currently only lighting. 
-                                                    Default key = r
-                                                    <pre><font size=3>    map name     </font></pre>
-                                                    loads up map "name" in the gamemode set previously by "mode". A map given as 
-                                                    "blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to 
-                                                    "packages/mypackage/blah.cgz". The menu has a set of maps that can be loaded. 
-                                                    See also map in the gameplay docs.
-                                                    <p>
-                                                    At every map load, "data/default_map_settings.cfg" is loaded which sets up all 
-                                                    texture definitions etc. Everything defined in there can be overridden per 
-                                                    package or per map by creating a "package.cfg" or "mapname.cfg" which contains 
-                                                    whatever you want to do differently from the default. It can also set up 
-                                                    triggers scripts per map etc.
-                                                    <p>
-                                                        When the map finishes it will load the next map when one is defined, otherwise 
-                                                        reloads the current map. You can define what map follows a particular map by 
-                                                        making an alias like (in the map script): <code><font size="2">alias nextmap_blah1 
-                                                                blah2</font></code> (loads "blah2" after "blah1").
-                                                        <pre><font size=3>    savemap name     </font></pre>
-                                                    saves the current map, using the same naming scheme as "map". makes a versioned 
-                                                    backup (mapname_N.BAK) if a map by that name already exists, so you can never 
-                                                    lose a map. If you leave out the "name" argument, it is saved under the current 
-                                                    map name.
-                                                    <p>
-                                                        where you store a map depends on the complexity of what you are creating: if 
-                                                        its a single map (maybe with its own .cfg) then the "base" package is the best 
-                                                        place. If its multiple maps or a map with new media (textures etc.) its better 
-                                                        to store it in its own package (a directory under "packages"), which makes 
-                                                        distributing it less messy.
-                                                        <pre><font size=3>    newmap size     </font></pre>
-                                                        creates a new map of 2^size cubes. 6 is small, 7 medium, 8 large. You can go up 
-                                                        to 12 but theres not a lot of point in that :)
-                                                        <pre><font size=3>    mapenlarge     </font></pre>
-                                                        if you accidentally made your map too small, this command will make it 1 power 
-                                                        of two bigger. So if you created a 6 size map (64x64 units) it will become a 7 
-                                                        map (128x128), with your old map in the middle (from 32-96) and the new areas 
-                                                        solid.
-                                                        <pre><font size=3>    mapmsg "Title by Author"     </font></pre>
-                                                        sets the map msg, which will be displayed when the map loads. Either use the 
-                                                        above format, or simply "by Author" if the map has no particular title (always 
-                                                        displayed after the map load msg).
-                                                        <pre><font size=3>    waterlevel H     </font></pre>
-                                                        sets the global water level in your map to H (an empty map has levels 0-16), 
-                                                        which will render every cube that has a lower floor than H with a nice wavy 
-                                                        water alpha texture, and applies water physics to any entity located below it. 
-                                                        Performance notes: water is rendered for a whole square encapsulating all 
-                                                        visible water areas in the map (try flying above the map in edit mode to see 
-                                                        how). So the most efficient water is a single body of water, or multiple water 
-                                                        areas that are mostly not visible from eachother. Players can influence how 
-                                                        accurate the water is rendered using the "watersubdiv" command (config).
-                                                        <pre><font size=3>    fullbright    B     </font></pre>
-                                                        sets all light values to fullbright (1 = on, 0 = off), so you don't need to 
-                                                        edit the map in the dark. Will be reset when you issue a recalc. Only works in 
-                                                        edit mode.
-                                                        <pre><font size=3>    showmip     </font></pre>
-                                                        Toggles between showing what parts of the scenery are rendered using what size 
-                                                        cubes, and outputs some stats too. This can give mappers hints as to what 
-                                                        architecture to align / textures to change etc.
-                                                        <pre><font size=3>    toggleocull     </font></pre>
-                                                        turns occlusion culling on &amp; off. the reason you may want to turn it off is 
-                                                        to get an overview of your map from above, without having all occluded bits 
-                                                        stripped out.
-                                                        <pre><font size=3>    texturereset     </font></pre>
-                                                        sets the texture slot to 0 for the subsequent "texture" commands
-                                                        <pre><font size=3>    texture subnum filename     </font></pre>
-                                                        binds the texture indicated in filename to the current texture slot, then 
-                                                        increments the slot number. This is for use in texture.cfg files only. subnum 
-                                                        allows secondary textures to be specified for a single texture slot, for use in 
-                                                        shaders and other features (unused for now, should be set to 0 to indicate 
-                                                        primary texture).
-                                                        <pre><font size=3>    slope xdelta ydelta     </font></pre>
-                                                        makes a slope out of the current selection (make it a heighfield first). xdelta 
-                                                        and ydelta are the steps that specify the slope with the red vertex as 
-                                                        left-top, i.e. "slope 1 2" will make a slope that increases just 1 step from 
-                                                        left to right, and is slightly steeper from top to bottom. "slope -6 0" 
-                                                        decreases steeply from left to right, and does not slope at all from top to 
-                                                        bottom. Note that like the vdelta command, an increasing vdelta goes further 
-                                                        away from the player, regardless of floor or ceiling.
-                                                        <pre><font size=3>    arch sidedelta     </font></pre>
-                                                        makes an arch out of the current selection (first make it a heightfield of some 
-                                                        sort). Will make the arch in the long direction, i.e when you have 6x2 cubes 
-                                                        selected, the arch will span 7 vertices. optionally, sidedelta specifies the 
-                                                        delta to add to the outer rows of vertices in the other direction, i.e. give 
-                                                        the impression of an arch that bends 2 ways (try "arch 2" on an selection of 
-                                                        atleast 2 thick to see the effect). Not all arch sizes are necessarily 
-                                                        available, see data/prefabs.cfg.
-                                                        <pre><font size=3>    archvertex span vertex delta     </font></pre>
-                                                        defines a vertex delta for a specific arch span prefab, used by the "arch" 
-                                                        command. See data/prefabs.cfg for an example on usage.
-                                                        <pre><font size=3>    perlin scale seed cubesize     </font></pre>
-                                                        generates a perlin noise landscape in the current selection. scale determines
-                                                        the frequency of the features, default = 10. seed sets the random seed, keep
-                                                        this the same if you want to create multiple perlin areas which fit with eachother,
-                                                        or use different numbers if you want alternative random generations. cubesize
-                                                        says how many cubes to generate a surface for at once, not used for now.
-                                                        <pre><font size=3>    select x y xs ys     </font></pre>
-                                                        selects the given area, as if dragged with the mouse. Useful for making complex 
-                                                        geometry-generating scripts. The current dimensions of the selection (either 
-                                                        created by the user or this command) are in the variables selx, sely, selxs and 
-                                                        selys and can also be read/modified. Coordinates are as follows: after a 
-                                                        "newmap 6" the top-left corner (the one where the red dot points) are (8,8), 
-                                                        the opposite corner is (56,56) (or (120,120) on a "newmap 7" etc.).
-                                                        <pre><font size=3>    edittag N     </font></pre>
-                                                        sets the tag value (1..255) for the current selection (0 means no tag). Tags 
-                                                        are used to determine what cubes to modify when a certain tag is triggered (see 
-                                                        "newent trigger"). If a cube has a tag associated with it, gridlines show up in 
-                                                        red.
-                                                        <pre><font size=3>    trigger N T    </font></pre>
-                                                        triggers trigger N of type T, as if the player had picked up the equivalent 
-                                                        "trigger" entity (see above).
-                                                        <pre><font size=3>    music name      </font></pre>
-                                                        plays song "name" (with "packages" as base dir). This command is best used from 
-                                                        map cfg files or triggers.
-                                                        <pre><font size=3>    N = registersound name      </font></pre>
-                                                        registers sound "name" with cube (see for example data/sounds.cfg). This 
-                                                        command returns the sound number N, which is assigned from 0 onwards, and which 
-                                                        can be used with "sound" command below. if the sound was already registered, 
-                                                        its existing index is returned. registersound does not actually load the sound, 
-                                                        this is done on first play.
-                                                        <pre><font size=3>    sound N      </font></pre>
-                                                        plays sound N, see data/sounds.cfg for default sounds, and use registersound to 
-                                                        register your own. for example, <code><font size="2">sound 0</font></code> and <code>
-                                                            <font size="2">sound (registersound "aard/jump")</font></code>
-                                                    both play the standard jump sound.
-                                                    <p>
-                                    </font>
-                    &nbsp;</p>
-                </LI></TD></TR></TBODY></TABLE>
-            </center>
-        </font></P>
-    </body>
+	<head>
+		<title>Sauerbraten Mapping Command Reference</title>
+		<link href="style.css" type="text/css" rel="stylesheet">
+	</head>
+<body>
+
+<div>Editing Related Console Commands</div>
+
+<pre>edittoggle</pre>
+Switches between map edit mode and normal (default key = e). In map edit mode you can select bits of the map by clicking or dragging your crosshair on the cubes (using the "attack" command, normally MOUSE1), then use the commands below to modify the selection. While in edit mode, physics &amp; collision don't apply (noclip), and key repeat is ON.
+
+<pre>editface D N</pre>
+This is the main editing command.  D is the direction of the action, -1 for towards you, 1 for away from you.  N=0 to push all corners in the white box.  N=1 create or destroy cubes.  N=2 push or pull a corner you are pointing at.
+
+<pre>edittex D</pre>
+Changes the texture on current selection by browsing through a list of textures directly shown on the cubes. D is the direction you want to cycle the textures in (1 = forwards, -1 = backwards). By default bound to holding F and using the mouse wheel.
+<br><br>
+The way this works is slightly strange at first, but allows for very fast texture assignment. All textures are in a list. and each time a texture is used, it is moved to the top of the list. So after a bit of editing, all your most frequently used textures will come first, and the most recently used texture is set immediately when you press the forward key for the type. These lists are saved with the map.
+
+<pre>gridpower N</pre>
+Changes the size of the grid.
+
+<pre>reorient</pre>
+Change the side the white box is on to be the same as where you are currently pointing.
+
+<pre>flip</pre>
+Flip the selected cubes front to back relative to the side of the white box.
+
+<pre>rotate D</pre>
+Rotates the selection 90 degrees around the side of the white box. Automatically squares the selection if it isn't already.
+
+<pre>undo</pre>
+Multi-level undo of any of the changes caused by the above operations (default key = z).
+
+<pre>undomegs N</pre>
+Sets the number of megabytes used for the undo buffer (default 1, max 10). Undo's work for any size areas, so the amount of undo steps per megabyte is more for small areas than for big ones.
+
+<pre>copy
+paste</pre>
+Copy copies the current selection into a buffer.  For pasting, if the current selection is not the same size as the copy, the corner of the red reference box will be used as the origin. If the current gridsize is changed from the copy, the pasted copy will be stretched by the same factor.
+
+<pre>newent type    value1 value2 value3 value4</pre>
+Adds a new entity where (x,y) is determined by the current selection (the red dot corner) and z by the camera height, of said type. Type is a string giving the type of entity, such as "light", and may optionally take values (depending on the entity).  The types are defines below in the <a href="#entitytypes">Entity Types</a> section.
+
+<pre>delent</pre>
+deletes the entity closest to the player
+
+<pre>dropent</pre>
+Positions the closest entity according to the entdrop variable.
+
+<pre>entdrop N</pre>
+variable controlling where entities created with "newent" will be placed.<br>
+N=0 place entities at your current eye position.<br>
+N=1 drop entities to the floor beneath you. Lights, however, will be placed at your current eye position as for N=0.<br>
+N=2 place entities at the center of the currently selected cube face. If a corner is selected, the entity will be placed at the corner vertex.<br>
+N=3 behaves as with N=2, except all entities, including lights, will then bedropped from that position to whatever floor lies beneath. This mode is useful for placing objects on selected floors. Lights are also dropped to the floor, unlike for N=1.
+
+<pre>entproperty P A</pre>
+Changes property P (0..3) of the closest entity by amount A. For example "entproperty 0 2" when executed near a lightsource would increase its radius by 2.
+
+<pre>clearents type</pre>
+Deletes all entities of said type.
+
+<pre>map name</pre>
+Loads up map "name" in the gamemode set previously by "mode". A map given as "blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to "packages/mypackage/blah.cgz". The menu has a set of maps that can be loaded. See also map in the gameplay docs.
+<br><br>
+At every map load, "data/default_map_settings.cfg" is loaded which sets up all texture definitions etc. Everything defined in there can be overridden per package or per map by creating a "package.cfg" or "mapname.cfg" which contains whatever you want to do differently from the default. It can also set up triggers scripts per map etc.
+<br><br>
+When the map finishes it will load the next map when one is defined, otherwise reloads the current map. You can define what map follows a particular map by making an alias like (in the map script): <code>alias nextmap_blah1 blah2</code> (loads "blah2" after "blah1").
+
+<pre>savemap name</pre>
+Saves the current map, using the same naming scheme as "map". makes a versioned backup (mapname_N.BAK) if a map by that name already exists, so you can never lose a map. If you leave out the "name" argument, it is saved under the current map name.
+<br><br>
+Where you store a map depends on the complexity of what you are creating: if its a single map (maybe with its own .cfg) then the "base" package is the best place. If its multiple maps or a map with new media (textures etc.) its better to store it in its own package (a directory under "packages"), which makes distributing it less messy.
+
+<pre>newmap size</pre>
+Creates a new map of size^2 cubes (on the smallest grid size).  10 is a small map, 13 is a large map but it goes up to 16.  Use <i>newmap -1</i> to double the dimensions of the current map.
+
+<pre>mapmsg "Title by Author"</pre>
+sets the map msg, which will be displayed when the map loads. Either use the above format, or simply "by Author" if the map has no particular title (always displayed after the map load msg).
+
+<pre>recalc</pre>
+Recalculates scene geometry.  Shouldn't be needed under normal curcumstances.
+
+<pre>texturereset</pre>
+Sets the texture slot to 0 for the subsequent "texture" commands.
+
+<pre>texture subnum filename</pre>
+Binds the texture indicated in filename to the current texture slot, then increments the slot number. This is for use in texture.cfg files only. subnum allows secondary textures to be specified for a single texture slot, for use in shaders and other features (unused for now, should be set to 0 to indicate primary texture).
+
+<pre>trigger N T</pre>
+Triggers trigger N of type T, as if the player had picked up the equivalent "trigger" entity (see below).
+
+<pre>music name</pre>
+Plays song "name" (with "packages" as base dir). This command is best used from map cfg files or triggers.
+
+<pre>N = registersound name</pre>
+Registers sound "name" with cube (see for example data/sounds.cfg). This command returns the sound number N, which is assigned from 0 onwards, and which can be used with "sound" command below. if the sound was already registered, its existing index is returned. registersound does not actually load the sound, this is done on first play.
+
+<pre>sound N</pre>
+Plays sound N, see data/sounds.cfg for default sounds, and use registersound to register your own. for example, <code>sound 0</code> and <code>sound (registersound "aard/jump")</code>both play the standard jump sound.
+
+
+<div>Lighting Commands</div><a name="lightingcommands"></a>
+
+<pre>calclight</pre>
+This calculates all lightmaps. Usually takes only a few seconds, depending on map size and settings. If you "savemap", the lightmap will be stored along with it.
+
+<pre>fullbright  B</pre>
+Throws away the current lightmap created by calclight and renders the map fullbright.
+
+<pre>lightprecision P</pre>
+Default = 32. This is the most important variable for tweaking the lighting, it determines what the resolution of the lightmap is. As such has a BIG effect on calculation time, video memory usage, and map file size.  The default is good for most maps, you may go as low as 16 if you are lighting a really small map and love hard shadows, and for bigger maps you may need to set it to 64 or so to get reasonable memory usage.
+<br><br>
+The number to watch out for is the number of lightmaps generated which are shown on the HUD (and also as output after a calclight). 1 or 2 lightmap textures is very good, over 10 lightmap textures is excessive. 
+<br><br>
+The map file size is for 90% determined by the lightmaps, so tweak this value to get an acceptable quality to size ratio. Look at the size of the map files, sometimes a slightly higher lightprecision can halve the size of your .ogz. 
+<br><br>
+Every surface matters, even though sauerbraten attempts to compress surfaces with a uniform lightvalue, it is always a good ideas to delete parts of the world that are not part of your map. Lightprecision, lighterror, and lightlod are stored as part of map files.
+
+<pre>lighterror E</pre>
+There should be little reason to tweak this. If in your map you can see visible polygon boundaries caused by lighting, you can try stepping this down to 6 or 4 to improve quality at the expense of lightmap space. If you have an insanely large map and looking for ways to reduce file size, increasing error up to 16 may help. (Default = 8)
+
+<pre>lightlod D</pre>
+Default = 0. This will double the resolution of lightmaps (cut the lightprecision in half) if size of the surface being lit is smaller than 2^D units. This allows large maps to have pockets of detailed lighting without using a high resolution over everything.
+<br><br>
+NOTE: if you feel like using this, test it thoroughly. On medium or small sized detailed maps, this command wastes space, use lightlod 0. lightlod 1 is only useful for huge maps with varying detail.
+
+<pre>aalights X</pre>
+Determines whether to use 4x sampling for every lightmap texel. You should not need to touch this var, unless waiting for calclight really bothers you, you can set it to 0 for a 4x speedup and blockier shadows. Also, for a slight increase in appearance, one may set it to 2 to turn on 8x sampling; however, this takes greatly longer and is enabled by default. (Default = 1)
+
+<pre>shadows B</pre>
+Determines whether or not objects cast shadows. You should also not need to touch this var. However, it does allow you to see the effectiveness and reach of your lights if turned off. (Default = 1)
+
+<pre>dumplms</pre>
+Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but mappers may find it interesting too.
+
+
+<div>Entity Types</div><a name="entitytypes"></a>
+
+<pre>"light" radius brightness
+"light" radius r g b</pre>
+If G and B are 0 the R value will be taken as brightness for a white light.  A good radius for a small wall light is 64, for a middle sized room 128... for a sun probably more like 1000. Lights with a radius of 0 do not attenuate and may be more appropriate for simulating sunlight or ambient light; however, this comes at the cost of slightly greater map file sizes.  See the <a href="#lightingcommands">lighting commands</a> for an indepth list of all lighting related commands.
+
+<pre>"playerstart"</pre>
+Spawn spot, yaw is taken from the current camera yaw.
+
+<pre>"shells"
+"bullets"
+"rockets"
+"riflerounds"
+"health"
+"healthboost"
+"greenarmour"
+"yellowarmour"
+"quaddamage"</pre>
+A variety of pickup-able items, see <a href="./game.html">here</a>.
+
+<pre>"teleport" N
+"teledest" N</pre>
+creates a teleport connection, teleports are linked to a teledest with the same N (of which there should be exactly one). N can be 0..255. The teledest uses the current camera yaw.
+
+<pre>"mapmodel" N</pre>
+A map model, i.e. an object rendered as md2 which you collide against but has no behaviour/movement. N determines which mapmodel you want, currently there is only one, a tree (N = 0). yaw of the model is taken from the current camera yaw.
+<br><br>
+
+<pre>"monster" N</pre>
+A monster, currently N = 0..4 (see gameplay docs). Monster entities will be spawned when in classic single player mode, and will attack you when you come into view. yaw is taken from the current camera yaw.
+<br><br>
+
+<pre>"trigger" N T</pre>
+A trigger of type T affecting all cubes with tag N when triggered in game (see "edittag" on how to set tags on cubes). Triggers are rendered as a carrot which, when "eaten", trigger an event (only once). The following trigger types are available:
+<br><br>
+0: doesn't do anything currently
+<br><br>
+1: invisible: same as 0 but without the carrot. Since the trigger radius is fairly small, be sure to place them in tiny hallways and other areas you are sure the player will pass through.
+<br><br>
+2: end of map marker. Ends the map and triggers the intermission. carrot spins wildly.
+<br><br>
+Scripting: each trigger automatically executes the alias "level_trigger_N" where N is the trigger number. This means you can add any scripting you can do through the available commands, by simply putting aliases of this kind in the level .cfg file. For example, to print a message when the user hits trigger 1:
+<br><br>
+alias level_trigger_1 "echo A door opened nearby"
+<br><br>
+Entities are shown in editmode by blue sparklies, and the closest one is 
+indicated on the HUD.
+
+
+<div>The HUD</div><a name="hud"></a>
+On the bottom right of the screen are a bunch of stats. You'll find out what they mean below.
+<br>
+cube: the number of cubes in the current selection. Only the visible (leaf) cubes are counted.
+<br>
+fps: frames per second
+<br>
+ond: number of cubes in the system. This includes parent cubes, copied cubes, and undos.
+<br>
+va: number of vertex arrays used to store vertecies in the map. you probably don't need to use this.
+<br>
+vtr: number of triangles currently being displayed. will be a useful stat when culling is done.
+<br>
+vvt: number of vertecies currently being displayed. again, useful when culling is done.
+<br>
+tri: number of triangles in the entire map
+<br>
+wvt: number of vertecies in the entire map
+<br>
+evt: misc rendering effects. stuff like particles displayed, or text written on screen.
+
+</body>
 </html>
+
