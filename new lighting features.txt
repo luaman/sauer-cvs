@@ -23,7 +23,7 @@ map before you publish it with "savemap".
 
         fullbright B
 
-Default = 0. This variable controls whether the map will be shown lighting disabled.
+Default = 0. This variable controls whether the map will be shown with lighting disabled.
 Fullbright 1 will disable lighting, whereas 0 will enable lighting.
 
 	lightprecision P
