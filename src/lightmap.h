@@ -50,6 +50,12 @@ struct LightMap
         memset(data, 0, sizeof(data));
     }
 
+    void finalize()
+    {
+        packroot.clear();
+        packroot.packed = true;
+    }
+
     bool insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th);
 };
 

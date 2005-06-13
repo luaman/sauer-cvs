@@ -29,9 +29,11 @@ void check_calclight_canceled()
     }
 }
 
+static int curlumels = 0;
+
 void show_calclight_progress()
 {
-    uint lumels = 0;
+    int lumels = curlumels;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
     float bar1 = float(progress) / float(wtris / 2),
           bar2 = lightmaps.length() ? float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH) : 0;
@@ -460,6 +462,15 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
 
 void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
 {
+    if(c.surfaces)
+    {
+        loopj(6) if(visibleface(c, j, cx, cy, cz, size))
+        {
+            if((progress++ % (wtris / 2 < 100 ? 1 : wtris / 2 / 100)) == 0)
+                show_calclight_progress();
+        }
+        return;
+    }
     vec verts[8];
     bool usefaces[6];
     calcverts(c, cx, cy, cz, size, verts, usefaces);
@@ -515,20 +526,20 @@ void resetlightmaps()
 
 void calclight()
 {
-    //if(noedit()) return;
     resetlightmaps();
     clear_lmids(worldroot);
+    curlumels = 0;
     progress = 0;
     canceled = false;
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
     loopv(lightmaps)
     {
-        lightmaps[i].packroot.clear();
+        if(!editmode) lightmaps[i].finalize();
         total += lightmaps[i].lightmaps;
         lumels += lightmaps[i].lumels;
     }
-    compressed.clear();
+    if(!editmode) compressed.clear();
     initlights();
     allchanged();
     if(canceled == true)
@@ -542,43 +553,41 @@ void calclight()
 
 COMMAND(calclight, ARG_NONE);
 
-void lightreaching(const vec &target, uchar color[3])
+void patchlight()
 {
-    uint r = 0, g = 0, b = 0;
-
-    loopv(ents)
+    if(noedit()) return;
+    progress = 0;
+    canceled = false;
+    int total = 0, lumels = 0;
+    loopv(lightmaps)
     {
-        entity &e = ents[i];
-        if(e.type != LIGHT)
-            continue;
-
-        vec ray(target);
-        ray.sub(e.o);
-        float mag = ray.magnitude();
-        if(e.attr1 && mag >= float(e.attr1))
-            continue;
-
-        ray.mul(1.0 / mag);
-        if(raycube(e.o, ray, mag) < mag)
-            continue;
-        float intensity = 1.0;
-        if(e.attr1)
-            intensity -= mag / float(e.attr1);
-        
-        r += (uint)(intensity * float(e.attr2));
-        g += (uint)(intensity * float(e.attr3));
-        b += (uint)(intensity * float(e.attr4));
+        total -= lightmaps[i].lightmaps;
+        lumels -= lightmaps[i].lumels;
     }
-    color[0] = min(255, max(75, r));
-    color[1] = min(255, max(75, g));
-    color[2] = min(255, max(75, b));
+    curlumels = lumels;
+    generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
+    loopv(lightmaps)
+    {
+        total += lightmaps[i].lightmaps;
+        lumels += lightmaps[i].lumels;
+    }
+    initlights();
+    allchanged();
+    if(canceled == true)
+        conoutf("patchlight aborted");
+    else
+        conoutf("patched %d lightmaps using %d%% of %d textures",
+            total,
+            lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
+            lightmaps.length()); 
 }
+
+COMMAND(patchlight, ARG_NONE);
 
 void clearlights()
 {
-    clear_lmids(worldroot);
-    uchar bright[3] = {255, 255, 255};
-    createtexture(10000, 1, 1, bright, false, false);
+    uchar bright[3] = {128, 128, 128};
+    loopi(lightmaps.length() + 1) createtexture(i + 10000, 1, 1, bright, false, false);
     loopv(ents) memset(ents[i].color, 255, 3);
 }
 
@@ -604,14 +613,50 @@ void initlights()
     }
 }
 
-void fullbright()
-{
+VARF(fullbright, 0, 0, 1,
     if(noedit()) return;
-    clearlights();
-    allchanged();
-}
+    if(fullbright) clearlights();
+    else initlights();
+);
 
-COMMAND(fullbright, ARG_NONE);
+void lightreaching(const vec &target, uchar color[3])
+{
+    if(fullbright)
+    {
+        color[0] = 255;
+        color[1] = 255;
+        color[2] = 255;
+        return;
+    }
+
+    uint r = 0, g = 0, b = 0;
+    loopv(ents)
+    {
+        entity &e = ents[i];
+        if(e.type != LIGHT)
+            continue;
+    
+        vec ray(target);
+        ray.sub(e.o);
+        float mag = ray.magnitude();
+        if(e.attr1 && mag >= float(e.attr1))
+            continue;
+    
+        ray.mul(1.0 / mag);
+        if(raycube(e.o, ray, mag) < mag)
+            continue;
+        float intensity = 1.0;
+        if(e.attr1)
+            intensity -= mag / float(e.attr1);
+ 
+        r += (uint)(intensity * float(e.attr2));
+        g += (uint)(intensity * float(e.attr3));
+        b += (uint)(intensity * float(e.attr4));
+    }
+    color[0] = min(255, max(75, r));
+    color[1] = min(255, max(75, g));
+    color[2] = min(255, max(75, b));
+}
 
 void newsurfaces(cube &c)
 {

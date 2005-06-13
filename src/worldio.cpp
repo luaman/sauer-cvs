@@ -218,6 +218,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
     setvar("lighterror", hdr.maple ? hdr.maple: 8);
     setvar("lightlod", hdr.mapllod);
+    setvar("fullbright", 0);
     ents.setsize(0);
     loopi(hdr.numents)
     {
@@ -234,7 +235,12 @@ void load_world(char *mname)        // still supports all map formats that have 
     resetlightmaps();
     if(hdr.version >= 7)
     {
-        loopi(hdr.lightmaps)  gzread(f, lightmaps.add().data, 3 * LM_PACKW * LM_PACKH);
+        loopi(hdr.lightmaps) 
+        {
+            LightMap &lm = lightmaps.add();
+            gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
+            lm.finalize();
+        }
         initlights();
     }
     else
