@@ -63,7 +63,7 @@ Default = 0. This will double the resolution of lightmaps (cut the lightprecisio
 if size of the surface being lit is smaller than 2^D units. This allows large maps
 to have pockets of detailed lighting without using a high resolution over everything.
 NOTE: if you feel like using this, test it thoroughly. On medium or small sized detailed
-maps, this command wastes space, use lightlod 0. lightlod 1 is only useful for huge maps
+maps, this command wastes space, use lightlod 0. lightlod > 0 is only useful for huge maps
 with varying detail.
 
 	aalights X
