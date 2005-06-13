@@ -569,9 +569,9 @@ void lightreaching(const vec &target, uchar color[3])
         g += (uint)(intensity * float(e.attr3));
         b += (uint)(intensity * float(e.attr4));
     }
-    color[0] = min(255, max(25, r));
-    color[1] = min(255, max(25, g));
-    color[2] = min(255, max(25, b));
+    color[0] = min(255, max(75, r));
+    color[1] = min(255, max(75, g));
+    color[2] = min(255, max(75, b));
 }
 
 void clearlights()
@@ -642,7 +642,6 @@ void dumplms()
             {
                 char *dest = (char *)temp->pixels+3*LM_PACKW*idx;
                 memcpy(dest, (char *)lightmaps[i].data+3*LM_PACKW*(LM_PACKH-1-idx), 3*LM_PACKW);
-                //endianswap(dest, 3, LM_PACKW);
             };
             sprintf_sd(buf)("lightmap_%s_%d.bmp", getclientmap(), i);
             SDL_SaveBMP(temp, buf);

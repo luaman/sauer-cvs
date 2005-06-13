@@ -195,14 +195,6 @@ int lookuptexture(int tex, int &xs, int &ys)
     };
 };
 
-void setupworld()
-{
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT); 
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
-};
-
 void renderstrips()
 {
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
@@ -311,8 +303,6 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     int xs, ys;
     loopi(10) lookuptexture(i, xs, ys);
     
-    setupworld();
-      
     renderstrips();
 
     xtraverts = 0;

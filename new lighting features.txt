@@ -45,9 +45,13 @@ visible polygon boundaries caused by lighting, you can try stepping this down to
 map and looking for ways to reduce file size, increasing error up to 16 may help.
 
         lightlod D
+        
 Default = 0. This will double the resolution of lightmaps (cut the lightprecision in half)
 if size of the surface being lit is smaller than 2^D units. This allows large maps
 to have pockets of detailed lighting without using a high resolution over everything.
+NOTE: if you feel like using this, test it thoroughly. On medium or small sized detailed
+maps, this command wastes space, use lightlod 0. lightlod 1 is only useful for huge maps
+with varying detail.
 
 	aalights X
 
@@ -58,7 +62,13 @@ one may set it to 2 to turn on 8x sampling; however, this takes greatly longer a
 enabled by default.
 
         shadows B
+        
 Default = 1, determines whether or not objects cast shadows. You should also not need to
 touch this var. However, it does allow you to see the effectiveness and reach of your
 lights if turned off.
+
+	dumplms
+	
+dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but mappers
+may find it interesting too.
 

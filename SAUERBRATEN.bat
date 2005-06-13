@@ -1,0 +1,2 @@
+cd sauerbraten
+sauerbraten.bat
