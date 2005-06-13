@@ -168,8 +168,6 @@ cube *loadchildren(gzFile f)
     return c;
 };
 
-static uchar jpegbuf[4096 + 3*LM_PACKW*LM_PACKH];
-
 void save_world(char *mname)
 {
     resettagareas();    // wouldn't be able to reproduce tagged areas otherwise
