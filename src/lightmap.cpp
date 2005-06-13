@@ -180,7 +180,7 @@ inline uint hthash (surfaceinfo *info)
 
 static hashtable<surfaceinfo *, surfaceinfo *> compressed;
 
-VAR(lightcompress, 0, 1, 4);
+VAR(lightcompress, 0, 3, 6);
 
 void pack_lightmap(surfaceinfo &surface) 
 {
