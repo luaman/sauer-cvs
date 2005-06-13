@@ -13,6 +13,18 @@ of slightly greater map file sizes.
 This calculates all lightmaps. Usually takes only a few seconds, depending on map size
 and settings. If you "savemap", the lightmap will be stored along with it.
 
+        patchlight
+
+This will calculate lightmaps for any newly created cubes. This will generally be much
+quicker than doing a "calclight", and so is very useful when editing. However, it will 
+make very inefficient use of lightmap textures, so it is recommended you do a "calclight" 
+on your map before you publish it with "savemap".
+
+        fullbright B
+
+Default = 0. This variable controls whether the map will be shown lighting disabled.
+Fullbright 1 will disable lighting, whereas 0 will enable lighting.
+
 	lightprecision P
 
 Default = 32. This is the most important variable for tweaking the lighting, it determines
