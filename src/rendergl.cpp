@@ -268,6 +268,34 @@ void drawhudgun(float fovy, float aspect, int farplane)
     };
 };
 
+VAR(sparklyfix, 0, 1, 1);
+
+void drawskybox(int farplane, bool limited)
+{
+    glDisable(GL_FOG);
+
+    if(limited)
+    {
+        glDisable(GL_TEXTURE_2D);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        rendersky();
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glEnable(GL_TEXTURE_2D);
+    }
+
+    glLoadIdentity();
+    glRotated(player1->pitch, -1.0, 0.0, 0.0);
+    glRotated(player1->yaw,   0.0, 1.0, 0.0);
+    glRotated(90.0, 1.0, 0.0, 0.0);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    if(limited) glDepthFunc(GL_GEQUAL);
+    draw_envbox(14, farplane/2);
+    if(limited) glDepthFunc(GL_LESS);
+    transplayer();
+
+    glEnable(GL_FOG);
+}
+
 void gl_drawframe(int w, int h, float changelod, float curfps)
 {
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -302,27 +330,25 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     
     int xs, ys;
     loopi(10) lookuptexture(i, xs, ys);
-    
-    renderstrips();
 
     xtraverts = 0;
+    glde = 0;
+
+    bool outsidemap = player1->o.x < 0 || player1->o.x >= hdr.worldsize ||
+                      player1->o.y < 0 || player1->o.y >= hdr.worldsize ||
+                      player1->o.z < 0 || player1->o.z >= hdr.worldsize;
+
+    if(!outsidemap && sparklyfix) drawskybox(farplane, true);
+
+    renderstrips();
 
     renderclients();
     monsterrender();
 
     renderentities();
 
-    glDisable(GL_FOG);
+    if(outsidemap || !sparklyfix) drawskybox(farplane, false);
 
-    glLoadIdentity();
-    glRotated(player1->pitch, -1.0, 0.0, 0.0);
-    glRotated(player1->yaw,   0.0, 1.0, 0.0);
-    glRotated(90.0, 1.0, 0.0, 0.0);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    draw_envbox(14, farplane/2);
-    transplayer();
-    
-    glEnable(GL_FOG);
     renderspheres(curtime);
     glDisable(GL_FOG);
 

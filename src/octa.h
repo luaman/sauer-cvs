@@ -19,9 +19,10 @@ struct vtxarray
     elementset *eslist; // List of element indces sets (range) per texture
     vertex *vbuf;       // vertex buffer
     ushort *ebuf;       // packed element indices buffer
+    ushort *skybuf;     // skybox packed element indices buffer
     vtxarray *next;     // linked list of visible VOBs
     int allocsize;      // size of allocated memory for this va
-    int verts, tris, texs, matsurfs;
+    int verts, tris, texs, matsurfs, sky;
     vec cv;             // cube center
     float radius;       // cube bounding radius
     float distance;     // distance from player 1
@@ -135,6 +136,7 @@ extern void octarender();
 extern void renderq();
 extern void allchanged();
 extern void rendermaterials();
+extern void rendersky();
 
 // geom
 extern void vertstoplane(vec &a, vec &b, vec &c, plane &pl);

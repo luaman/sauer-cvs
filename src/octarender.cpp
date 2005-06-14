@@ -392,6 +392,7 @@ inline unsigned int hthash (const sortkey &k)
 
 hashtable<sortkey, sortval> indices;
 vector<materialsurface> matsurfs;
+usvector skyindices;
 
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
@@ -402,8 +403,11 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
     {
-        curtris += 2;
-        usvector &iv = indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)];
+        if(c.texture[i] != DEFAULT_SKY)
+            curtris += 2;
+        usvector &iv = (c.texture[i] == DEFAULT_SKY ?
+                           skyindices :
+                           indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)]);
         loopk(4)
         {
             float u, v;
@@ -435,6 +439,51 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
     }
 };
 
+bool skyoccluded(cube &c, int orient)
+{
+    if(isempty(c)) return false;
+    if(c.texture[orient] == DEFAULT_SKY) return true;
+    if(touchingface(c, orient) && faceedges(c, orient) == F_SOLID) return true;
+    return false;
+};
+
+int skyfaces(cube &c, int x, int y, int z, int size, int faces[6])
+{
+    int numfaces = 0;
+    if(x == 0 && !skyoccluded(c, O_LEFT)) faces[numfaces++] = O_LEFT;
+    if(x + size == hdr.worldsize && !skyoccluded(c, O_RIGHT)) faces[numfaces++] = O_RIGHT;
+    if(y == 0 && !skyoccluded(c, O_BACK)) faces[numfaces++] = O_BACK;
+    if(y + size == hdr.worldsize && !skyoccluded(c, O_FRONT)) faces[numfaces++] = O_FRONT;
+    if(z == 0 && !skyoccluded(c, O_BOTTOM)) faces[numfaces++] = O_BOTTOM;
+    if(z + size == hdr.worldsize && !skyoccluded(c, O_TOP)) faces[numfaces++] = O_TOP;
+    return numfaces;
+};
+
+void genskyverts(cube &c, int x, int y, int z, int size)
+{
+    if(isentirelysolid(c)) return;
+
+    int faces[6],
+        numfaces = skyfaces(c, x, y, z, size, faces);
+    if(!numfaces) return;
+
+    vertcheck();
+
+    loopi(numfaces)
+    {
+        int orient = faces[i];
+        loopk(4)
+        {
+            int coord = faceverts(c, orient, 3 - k),
+                index = vert(cubecoords[coord][0]*size/8+x,
+                             cubecoords[coord][1]*size/8+y,
+                             cubecoords[coord][2]*size/8+z,
+                             0.0f, 0.0f);
+            skyindices.add(index);
+        }
+    }
+};
+
 ////////// Vertex Arrays //////////////
 
 extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
@@ -448,11 +497,14 @@ vector<vtxarray *> valist;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
-    int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + 2*curtris*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface);
+    int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface);
     if (!hasVBO) allocsize += curvert * sizeof(vertex); // length of vertex buffer
     vtxarray *va = (vtxarray *)gp()->alloc(allocsize); // single malloc call
-    va->eslist = (elementset *)((char *)va + sizeof(vtxarray));
-    va->ebuf = (ushort *)((char *)va->eslist + (indices.numelems * sizeof(elementset)));
+    va->eslist = (elementset *)(va + 1);
+    va->ebuf = (ushort *)(va->eslist + indices.numelems);
+    va->skybuf = va->ebuf + 2*curtris;
+    va->sky = skyindices.length();
+    memcpy(va->skybuf, skyindices.getbuf(), va->sky * sizeof(ushort));
     if (hasVBO && curvert)
     {
         pfnglGenBuffers(1, &(va->vbufGL));
@@ -462,7 +514,7 @@ vtxarray *newva(int x, int y, int z, int size)
     }
     else
     {
-        va->vbuf = (vertex *)((char *)va->ebuf + (curtris * 2 * sizeof(ushort)));
+        va->vbuf = (vertex *)(va->skybuf + va->sky);
         memcpy(va->vbuf, verts, curvert * sizeof(vertex));
     };
     va->matbuf = (materialsurface *)((char *)va + allocsize - matsurfs.length() * sizeof(materialsurface));
@@ -525,6 +577,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size)  // creates vertices 
     }
     else
     {
+        genskyverts(c, cx, cy, cz, size);
         if(!isempty(c)) gencubeverts(c, cx, cy, cz, size);
         if(c.material != MAT_AIR)
         {
@@ -543,6 +596,7 @@ void setva(cube &c, int cx, int cy, int cz, int size)
     {
         curvert = curtris = 0;
         indices.clear();
+        skyindices.setsize(0);
         matsurfs.setsize(0);
         vh.clear();
     };
@@ -554,6 +608,7 @@ VARF(vacubemax, 64, 1024, 256*256, allchanged());
 
 int updateva(cube *c, int cx, int cy, int cz, int size)
 {
+    static int faces[6];
     int ccount = 0;
     loopi(8)                                    // counting number of semi-solid/solid children cubes
     {
@@ -561,7 +616,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
         ivec o(i, cx, cy, cz, size);
         if(c[i].va) {}//count += vacubemax+1;       // since must already have more then max cubes
         else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2);
-        else if(!isempty(c[i])) count++;
+        else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
         if(count > vacubemax || size == hdr.worldsize/2) setva(c[i], o.x, o.y, o.z, size);
         else ccount += count;
     };
@@ -705,9 +760,29 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz)
     };
 };
 
+void rendersky()
+{
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        if(!va->sky) continue;
+
+        if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
+
+        glDrawElements(GL_QUADS, va->sky, GL_UNSIGNED_SHORT, va->skybuf);
+        glde++;
+        xtraverts += va->sky;
+    }
+
+    if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
+}
+
 extern PFNGLACTIVETEXTUREARBPROC       pfnglActiveTexture;
 extern PFNGLCLIENTACTIVETEXTUREARBPROC pfnglClientActiveTexture;
-
 
 void setupTMU()
 {
@@ -733,7 +808,6 @@ void renderq()
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0);
 
     vtxarray *va = visibleva;
-    glde = 0;
 
     while (va)
     {
