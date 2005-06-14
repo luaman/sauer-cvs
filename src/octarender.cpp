@@ -512,7 +512,7 @@ vtxarray *newva(int x, int y, int z, int size)
     memcpy(va->skybuf, skyindices.getbuf(), va->sky * sizeof(ushort));
     if (hasVBO && curvert)
     {
-        pfnglGenBuffers(1, &(va->vbufGL));
+        pfnglGenBuffers(1, (GLuint*)&(va->vbufGL));
         pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         pfnglBufferData(GL_ARRAY_BUFFER_ARB, curvert * sizeof(vertex), verts, GL_STATIC_DRAW_ARB);
         va->vbuf = 0; // Offset in VBO
@@ -556,7 +556,7 @@ vtxarray *newva(int x, int y, int z, int size)
 
 void destroyva(vtxarray *va)
 {
-    if (hasVBO && va->vbufGL) pfnglDeleteBuffers(1, &(va->vbufGL));
+    if (hasVBO && va->vbufGL) pfnglDeleteBuffers(1, (GLuint*)&(va->vbufGL));
     wverts -= va->verts;
     wtris -= va->tris;
     allocva--;

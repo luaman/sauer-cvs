@@ -132,7 +132,7 @@ void pasteconsole()
     strcat_s(commandbuf, cb);
     GlobalUnlock(cb);
     CloseClipboard();
-    #else
+    #elif !defined(__APPLE__)
     SDL_SysWMinfo wminfo;
     SDL_VERSION(&wminfo.version); 
     wminfo.subsystem = SDL_SYSWM_X11;

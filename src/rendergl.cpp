@@ -51,7 +51,8 @@ void gl_init(int w, int h)
 
     char *exts = (char *)glGetString(GL_EXTENSIONS);
     
-    if(!strstr(exts, "GL_EXT_texture_env_combine")) fatal("no texture_env_combine extension!");
+    if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
+        fatal("no texture_env_combine extension!");
 
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
     pfnglActiveTexture = (PFNGLACTIVETEXTUREARBPROC)getprocaddress("glActiveTextureARB");

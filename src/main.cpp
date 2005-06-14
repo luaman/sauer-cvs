@@ -158,9 +158,6 @@ int main(int argc, char **argv)
     initclient();
     initserver(dedicated, listen, uprate, sdesc, ip, master);  // never returns if dedicated
       
-    log("world");
-    empty_world(7, true);
-
     log("video: sdl");
     if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0) fatal("Unable to initialize SDL Video");
 
@@ -180,6 +177,9 @@ int main(int argc, char **argv)
 
     log("gl");
     gl_init(scr_w, scr_h);
+
+    log("world");
+    empty_world(7, true);
 
     log("basetex");
     int xs, ys;
