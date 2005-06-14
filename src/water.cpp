@@ -143,6 +143,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     if(!matsurfs)
         return;
 
+    glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_SRC_COLOR);
@@ -160,5 +161,6 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     }
     glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
 }
 
