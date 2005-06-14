@@ -22,7 +22,7 @@ struct vtxarray
     ushort *skybuf;     // skybox packed element indices buffer
     vtxarray *next;     // linked list of visible VOBs
     int allocsize;      // size of allocated memory for this va
-    int verts, tris, texs, matsurfs, sky;
+    int verts, tris, texs, matsurfs, sky, explicitsky, skyarea;
     vec cv;             // cube center
     float radius;       // cube bounding radius
     float distance;     // distance from player 1
