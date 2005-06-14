@@ -336,10 +336,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     xtraverts = 0;
     glde = 0;
 
-    bool outsidemap = player1->o.x < 0 || player1->o.x >= hdr.worldsize ||
-                      player1->o.y < 0 || player1->o.y >= hdr.worldsize ||
-                      player1->o.z < 0 || player1->o.z >= hdr.worldsize;
-    bool limitsky = !outsidemap && (explicitsky || (sparklyfix && skyarea*10 / ((hdr.worldsize>>4)*(hdr.worldsize>>4)*6) < 9));
+    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / ((hdr.worldsize>>4)*(hdr.worldsize>>4)*6) < 9);
 
     if(limitsky) drawskybox(farplane, true);
 
