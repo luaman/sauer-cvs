@@ -393,6 +393,7 @@ inline unsigned int hthash (const sortkey &k)
 hashtable<sortkey, sortval> indices;
 vector<materialsurface> matsurfs;
 usvector skyindices;
+int explicitsky = 0, skyarea = 0;
 
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
@@ -403,7 +404,9 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
     {
-        if(c.texture[i] != DEFAULT_SKY)
+        if(c.texture[i] == DEFAULT_SKY)
+            ++explicitsky;
+        else
             curtris += 2;
         usvector &iv = (c.texture[i] == DEFAULT_SKY ?
                            skyindices :
@@ -466,6 +469,8 @@ void genskyverts(cube &c, int x, int y, int z, int size)
     int faces[6],
         numfaces = skyfaces(c, x, y, z, size, faces);
     if(!numfaces) return;
+
+    skyarea += numfaces * (size>>4) * (size>>4);
 
     vertcheck();
 
@@ -540,6 +545,8 @@ vtxarray *newva(int x, int y, int z, int size)
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->cv = vec(x+size, y+size, z+size); // Center of cube
     va->radius = size * SQRT3; // cube radius
+    va->explicitsky = explicitsky;
+    va->skyarea = skyarea;
     wverts += va->verts = curvert;
     wtris  += va->tris  = curtris;
     allocva++;
@@ -594,7 +601,7 @@ void setva(cube &c, int cx, int cy, int cz, int size)
 {
     if(curvert)                                 // since reseting is a bit slow
     {
-        curvert = curtris = 0;
+        curvert = curtris = explicitsky = skyarea = 0;
         indices.clear();
         skyindices.setsize(0);
         matsurfs.setsize(0);
@@ -650,6 +657,14 @@ void octarender()                               // creates va s for all leaf cub
 {
     if(!verts) reallocv();
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2);
+    explicitsky = 0;
+    skyarea = 0;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        explicitsky += va->explicitsky;
+        skyarea += va->skyarea;
+    }
 };
 
 void allchanged() { vaclearc(worldroot); octarender(); };
