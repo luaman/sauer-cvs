@@ -170,4 +170,5 @@ extern int visibleorient(cube &c, int orient);
 // water
 extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
+extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 

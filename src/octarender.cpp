@@ -525,7 +525,10 @@ vtxarray *newva(int x, int y, int z, int size)
     va->matbuf = (materialsurface *)((char *)va + allocsize - matsurfs.length() * sizeof(materialsurface));
     va->matsurfs = matsurfs.length();
     if(va->matsurfs)
+    {
         memcpy(va->matbuf, matsurfs.getbuf(), matsurfs.length() * sizeof(materialsurface));
+        sortmatsurfs(va->matbuf, va->matsurfs);
+    }
 
     ushort *ebuf = va->ebuf;
     int list = 0;

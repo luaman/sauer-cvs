@@ -141,6 +141,18 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
     }
 }   
 
+int matsurfcmp(const materialsurface *x, const materialsurface *y)
+{
+    if(x->material < y->material) return -1;
+    else if(x->material > y->material) return 1;
+    else return 0;
+}
+
+void sortmatsurfs(materialsurface *matsurf, int matsurfs)
+{
+    qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
+}
+
 void blendmatsurf(materialsurface &matsurf)
 {
     glDepthMask(GL_FALSE);
