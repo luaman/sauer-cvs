@@ -614,8 +614,16 @@ void initlights()
 }
 
 VARF(fullbright, 0, 0, 1,
-    if(noedit()) return;
-    if(fullbright) clearlights();
+    if(fullbright)
+    {
+        if(noedit())
+        {
+            fullbright = 0;
+            initlights();
+            return;
+        }
+        clearlights();
+    }
     else initlights();
 );
 
