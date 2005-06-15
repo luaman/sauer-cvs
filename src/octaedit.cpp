@@ -463,6 +463,7 @@ COMMAND(editface, ARG_2INT);
 
 void selextend()
 {
+    if(noedit()) return;    
     loopi(3)
     {
         if(cur[i]<sel.o[i])
