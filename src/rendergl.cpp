@@ -352,13 +352,13 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     drawhudgun(fovy, aspect, farplane);
 
-    glEnable(GL_FOG);
     rendermaterials();
 
     renderspheres(curtime);
+    render_particles(curtime);
+
     glDisable(GL_FOG);
 
-    render_particles(curtime);
     renderents();
 
     glDisable(GL_CULL_FACE);
