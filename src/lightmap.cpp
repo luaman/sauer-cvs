@@ -235,7 +235,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     for(uint y = y1; y < y2; ++y, v.add(vstep)) {
         vec u = v;
         for(uint x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
-            uint r = 0, g = 0, b = 0;
+            int r = 0, g = 0, b = 0;
             loopj(aalights ? aalights * 4 : 1)
             {
                 loopv(lights)
@@ -261,9 +261,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                     }
                     float intensity = -normal.dot(ray) * attenuation;
                     if(intensity < 0) intensity = 1.0;
-                    r += (uint)(intensity * float(light.attr2));
-                    g += (uint)(intensity * float(light.attr3));
-                    b += (uint)(intensity * float(light.attr4));
+                    r += (int)(intensity * float(light.attr2));
+                    g += (int)(intensity * float(light.attr3));
+                    b += (int)(intensity * float(light.attr4));
                 }
                 if(!aalights)
                     break;
