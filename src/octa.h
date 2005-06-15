@@ -137,7 +137,7 @@ extern void renderq();
 extern void allchanged();
 extern void rendermaterials();
 extern void rendersky();
-extern void drawface(int orient, int x, int y, int z, int size);
+extern void drawface(int orient, int x, int y, int z, int size, float offset);
 
 // geom
 extern void vertstoplane(vec &a, vec &b, vec &c, plane &pl);

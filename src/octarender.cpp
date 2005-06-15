@@ -895,15 +895,25 @@ void rendermaterials()
     }
 }
 
-void drawface(int orient, int x, int y, int z, int size)
+void drawface(int orient, int x, int y, int z, int size, float offset)
 {
+    float xoffset = 0.0f, yoffset = 0.0f, zoffset = 0.0f;
+    switch(orient)
+    {
+    case O_BOTTOM: zoffset = offset; break;
+    case O_TOP: zoffset = -offset; break;
+    case O_BACK: yoffset = offset; break;
+    case O_FRONT: yoffset = -offset; break;
+    case O_LEFT: xoffset = offset; break;
+    case O_RIGHT: xoffset = -offset; break;
+    }
     glBegin(GL_POLYGON);
     loopi(4)
     {
         int coord = fv[orient][i];
-        glVertex3f(cubecoords[coord][0]*size/8+x,
-                   cubecoords[coord][2]*size/8+z,
-                   cubecoords[coord][1]*size/8+y);
+        glVertex3f(cubecoords[coord][0]*(size-2*xoffset)/8+x+xoffset,
+                   cubecoords[coord][2]*(size-2*zoffset)/8+z+zoffset,
+                   cubecoords[coord][1]*(size-2*yoffset)/8+y+yoffset);
     }
     glEnd();
 }
