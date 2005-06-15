@@ -155,12 +155,10 @@ void sortmatsurfs(materialsurface *matsurf, int matsurfs)
 
 void blendmatsurf(materialsurface &matsurf)
 {
-    glDepthMask(GL_FALSE);
     glDisable(GL_TEXTURE_2D);
     drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size);
     glEnd();
     glEnable(GL_TEXTURE_2D);
-    glDepthMask(GL_TRUE);
 }
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
