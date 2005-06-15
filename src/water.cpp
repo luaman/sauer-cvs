@@ -183,7 +183,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 
         case MAT_GLASS:    
             glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-            glColor3f(0.5f, 0.25f, 0.0f);
+            glColor3f(0.3f, 0.15f, 0.0f);
             blendmatsurf(matsurf);
             break;
         }
