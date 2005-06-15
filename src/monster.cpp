@@ -105,7 +105,7 @@ bool enemylos(dynent *m, vec &v)
     ray.sub(m->o);
     float mag = ray.magnitude();
     ray.mul(1.0f / mag);
-    float distance = raycube(m->o, ray, mag);
+    float distance = raycube(true, m->o, ray, mag);
     ray.mul(distance);
     v = m->o;
     v.add(ray);

@@ -255,7 +255,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                         continue;
                     if(shadows)
                     {
-                        float dist = raycube(light.o, ray, mag);
+                        float dist = raycube(false, light.o, ray, mag);
                         if(dist < mag - tolerance)
                             continue;
                     }
@@ -643,7 +643,7 @@ void lightreaching(const vec &target, uchar color[3])
             continue;
     
         ray.mul(1.0 / mag);
-        if(raycube(e.o, ray, mag) < mag)
+        if(raycube(false, e.o, ray, mag) < mag)
             continue;
         float intensity = 1.0;
         if(e.attr1)

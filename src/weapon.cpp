@@ -313,11 +313,13 @@ void shoot(dynent *d, vec &targ)
     kickback.mul(guns[d->gunselect].kickamount*-0.01f);
     d->vel.add(kickback);
     if(d->pitch<80.0f) d->pitch += guns[d->gunselect].kickamount*0.05f;
-    int shorten = 0;
+    float shorten = 0.0f;
     
     if(dist>1024) shorten = 1024;
     if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) shorten = 12;
-
+    float barrier = raycube(true, d->o, unitv, dist);
+    if(barrier < dist && (!shorten || barrier < shorten))
+        shorten = barrier;
     if(shorten)
     {
         unitv.mul(shorten); // punch range

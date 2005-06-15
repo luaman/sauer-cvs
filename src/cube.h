@@ -96,8 +96,11 @@ enum                            // cube empty-space materials
     MAT_AIR = 0,                // the default, fill the empty space with air
     MAT_WATER,                  // fill with water, showing waves at the surface
     MAT_CLIP,                   // collisions always treat cube as solid
+    MAT_GLASS,                  // behaves like clip but is blended blueish
     MAT_NOCLIP                  // collisions always treat cube as empty
 };
+
+#define isclipped(mat) ((mat) >= MAT_CLIP && (mat) < MAT_NOCLIP)
 
 enum                            // static entity types
 {
@@ -236,6 +239,8 @@ extern int curvert;
 extern vertex *verts;                   // the vertex array for all world rendering
 extern int curtexnum;
 extern int islittleendian;
+extern const int cubecoords[8][3];
+extern const ushort fv[6][4];
 
 #define DMF 16.0f
 #define DVF 100.0f

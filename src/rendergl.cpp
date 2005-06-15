@@ -350,18 +350,16 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     if(!limitsky) drawskybox(farplane, false);
 
+    drawhudgun(fovy, aspect, farplane);
+
+    glEnable(GL_FOG);
+    rendermaterials();
+
     renderspheres(curtime);
     glDisable(GL_FOG);
 
     render_particles(curtime);
     renderents();
-
-
-    drawhudgun(fovy, aspect, farplane);
-
-    glEnable(GL_FOG);
-    rendermaterials();
-    glDisable(GL_FOG);
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);

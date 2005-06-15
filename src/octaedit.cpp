@@ -156,7 +156,7 @@ void cursorupdate()
     vec v;
     float m = cos(RAD*player1->pitch);
     vec dir(m*cos(RAD*(player1->yaw-90)), m*sin(RAD*(player1->yaw-90)), sin(RAD*player1->pitch));
-    raycube(player1->o, dir, gridsize, v, orient);
+    raycube(false, player1->o, dir, gridsize, v, orient);
 
     if(lusize>gridsize)
     {
@@ -632,6 +632,7 @@ struct material
     {"air", MAT_AIR},
     {"water", MAT_WATER},
     {"clip", MAT_CLIP},
+    {"glass", MAT_GLASS},
     {"noclip", MAT_NOCLIP},
 };
 

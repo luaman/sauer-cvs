@@ -126,7 +126,7 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     return lookupcube(x, y, z, rsize);
 };
 
-cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, float &dist, int *orient)
+cube &raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size, vec &v, float &dist, int *orient)
 {
     cube *last = NULL, *lastbig = NULL;
     int xs = ray.x>0 ? 1 : 0;
@@ -146,11 +146,11 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
             if(dist < radius) dist = radius;
             return c;
         }
-        if(!isempty(c))
+        if(!isempty(c) || (clipmat && isclipped(c.material)))
         {
             if(lusize == size) return c;
             else
-            if(isentirelysolid(c)) return c;
+            if(isentirelysolid(c) || (clipmat && isclipped(c.material))) return c;
             else
             {
                 if(!c.clip)
@@ -196,8 +196,8 @@ cube &raycube(const vec &o, const vec &ray, float radius, int size, vec &v, floa
     };
 };
 
-float raycube(const vec &o, const vec &ray, float radius) { vec v; float dist; raycube(o, ray, radius, 0, v, dist, NULL); return dist; };
-cube &raycube(const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(o, ray, 1.0e10f, size, v, dist, &orient); };
+float raycube(bool clipmat, const vec &o, const vec &ray, float radius) { vec v; float dist; raycube(clipmat, o, ray, radius, 0, v, dist, NULL); return dist; };
+cube &raycube(bool clipmat, const vec &o, const vec &ray, int size, vec &v, int &orient) { float dist; return raycube(clipmat, o, ray, 1.0e10f, size, v, dist, &orient); };
 
 void newclipplanes(cube &c)
 {

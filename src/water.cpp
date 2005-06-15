@@ -133,10 +133,23 @@ bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
             return false;
         return visibleface(c, orient, x, y, z, size, MAT_WATER);
 
+    case MAT_GLASS:
+        return visibleface(c, orient, x, y, z, size, MAT_GLASS);
+
     default:
         return false;
     }
 }   
+
+void blendmatsurf(materialsurface &matsurf)
+{
+    glDepthMask(GL_FALSE);
+    glDisable(GL_TEXTURE_2D);
+    drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size);
+    glEnd();
+    glEnable(GL_TEXTURE_2D);
+    glDepthMask(GL_TRUE);
+}
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
@@ -146,16 +159,22 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_SRC_COLOR);
-    glColor3f(0.5f, 0.5f, 0.5f);
     loopi(matsurfs)
     {
         materialsurface &matsurf = matbuf[i];
         switch(matsurf.material)
         {
         case MAT_WATER:
+            glBlendFunc(GL_ONE, GL_SRC_COLOR);
+            glColor3f(0.5f, 0.5f, 0.5f);
             if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
+            break;
+
+        case MAT_GLASS:    
+            glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+            glColor3f(0.5f, 0.25f, 0.0f);
+            blendmatsurf(matsurf);
             break;
         }
     }

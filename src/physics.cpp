@@ -71,7 +71,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     o.z += zr - d->eyeheight;
     floorheight = 0;
 
-    int clipsize = isentirelysolid(c) || c.material==MAT_CLIP ? 0 : genclipplanes(c, x, y, z, size, clip, bo, br);
+    int clipsize = isentirelysolid(c) || isclipped(c.material) ? 0 : genclipplanes(c, x, y, z, size, clip, bo, br);
 
     if(rectcollide(d, bo, br.x, br.y, br.z, br.z, false) && floorheight==0) { floorheight = f; return true; };
     float m = walldistance;
@@ -102,7 +102,7 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
         {
             if(!octacollide(d, c[i].children, o.x, o.y, o.z, size>>1)) return false;
         }
-        else if(c[i].material!=MAT_NOCLIP && (!isempty(c[i]) || c[i].material==MAT_CLIP))
+        else if(c[i].material!=MAT_NOCLIP && (!isempty(c[i]) || isclipped(c[i].material)))
         {
             if(!cubecollide(d, c[i], o.x, o.y, o.z, size)) return false;
         };
@@ -179,7 +179,7 @@ void dropenttofloor(entity *e)
        e->o.z >= hdr.worldsize)
         return;
     vec v(0, 0, -1);
-    if(raycube(e->o, v) >= hdr.worldsize)
+    if(raycube(true, e->o, v) >= hdr.worldsize)
         return;
     dynent d;
     d.o = e->o;
@@ -324,7 +324,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
     // play sounds on water transitions
 
-    if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->vel.z = 0; }
+    if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->vel.z = 0; pl->timeinair = 0; }
     else if(pl->inwater && !water) playsound(S_SPLASH1, &pl->o);
     pl->inwater = water;
 };

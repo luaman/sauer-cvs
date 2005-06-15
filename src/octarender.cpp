@@ -892,6 +892,19 @@ void rendermaterials()
     }
 }
 
+void drawface(int orient, int x, int y, int z, int size)
+{
+    glBegin(GL_POLYGON);
+    loopi(4)
+    {
+        int coord = fv[orient][i];
+        glVertex3f(cubecoords[coord][0]*size/8+x,
+                   cubecoords[coord][2]*size/8+z,
+                   cubecoords[coord][1]*size/8+y);
+    }
+    glEnd();
+}
+
 ////////// (re)mip //////////
 
 int rvertedge(int e, int dc) { return (R(e>>2)<<2)+(e&2?1:0)+(dc?2:0); };
