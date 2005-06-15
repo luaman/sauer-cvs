@@ -270,7 +270,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
             }
             if(aalights)
             {
-                uint sample = aalights * 4;
+                int sample = aalights * 4;
                 r /= sample;
                 g /= sample;
                 b /= sample;
