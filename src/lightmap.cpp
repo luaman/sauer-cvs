@@ -480,7 +480,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
             show_calclight_progress();
         plane planes[2];
         int numplanes = genclipplane(c, j, verts, planes);
-        if(!find_lights(c, cx, cy, cz, size, planes, numplanes))
+        if(!numplanes || !find_lights(c, cx, cy, cz, size, planes, numplanes))
             continue;
 
         vec v0(verts[faceverts(c, j, 0)]),
@@ -584,6 +584,20 @@ void patchlight()
 
 COMMAND(patchlight, ARG_NONE);
 
+VARF(fullbright, 0, 0, 1,
+    if(fullbright)
+    {
+        if(noedit())
+        {
+            fullbright = 0;
+            initlights();
+            return;
+        }
+        clearlights();
+    }
+    else initlights();
+);
+
 void clearlights()
 {
     uchar bright[3] = {128, 128, 128};
@@ -593,6 +607,11 @@ void clearlights()
 
 void initlights()
 {
+    if(fullbright)
+    {
+        clearlights();
+        return;
+    }
     uchar unlit[3] = {25, 25, 25};
     createtexture(10000, 1, 1, unlit, false, false);
     loopi(lightmaps.length()) createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
@@ -612,20 +631,6 @@ void initlights()
         lightreaching(target, e.color);
     }
 }
-
-VARF(fullbright, 0, 0, 1,
-    if(fullbright)
-    {
-        if(noedit())
-        {
-            fullbright = 0;
-            initlights();
-            return;
-        }
-        clearlights();
-    }
-    else initlights();
-);
 
 void lightreaching(const vec &target, uchar color[3])
 {
