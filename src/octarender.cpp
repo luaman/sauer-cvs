@@ -916,6 +916,8 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
                    cubecoords[coord][1]*(size-2*yoffset)/8+y+yoffset);
     }
     glEnd();
+
+    xtraverts += 4;
 }
 
 ////////// (re)mip //////////
