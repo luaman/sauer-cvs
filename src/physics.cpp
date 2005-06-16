@@ -152,7 +152,7 @@ bool move(dynent *d, vec &dir, float push)
         }
         else
         {
-            if(wall.z>0.7f) d->onfloor = true;
+            if(wall.z>0.7f || dir.z >= 0.0f) d->onfloor = true;
             d->blocked = true;
             d->o = old;
 
