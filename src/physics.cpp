@@ -81,6 +81,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
         if(dist>0) { floorheight = f; return true; };
         if(dist>m) { w = &clip[i]; m = dist; };
     };
+    if(w->dot(d->vel) >= 0.0f) { floorheight = f; return true; }
     wall = *w;
     floorheight = max(f, floorheight);
     return onstairs(d, bo.z+br.z, true);
