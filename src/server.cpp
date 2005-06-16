@@ -58,7 +58,7 @@ vector<client> clients;
 
 char msgsizesl[] =               // size inclusive message token, 0 for variable or not-checked sizes
 { 
-    SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 12, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
+    SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 13, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
     SV_DIED, 2, SV_DAMAGE, 4, SV_SHOT, 8, SV_FRAGS, 2,
     SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
     SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,

@@ -232,8 +232,9 @@ void c2sinfo(dynent *d)                     // send update to the server
         putint(p, (int)(d->vel.x*DVF));     // quantize to 1/100, almost always 1 byte
         putint(p, (int)(d->vel.y*DVF));
         putint(p, (int)(d->vel.z*DVF));
-        // pack rest in 1 byte: strafe:2, move:2, onfloor:1, state:3
-        putint(p, (d->strafe&3) | ((d->move&3)<<2) | (((int)d->onfloor)<<4) | ((editmode ? CS_EDITING : d->state)<<5) );
+        putint(p, (int)(d->onfloor*DVF));
+        // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
+        putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<5) );
  
         if(senditemstoserver)
         {
@@ -383,11 +384,11 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             d->vel.x = getint(p)/DVF;
             d->vel.y = getint(p)/DVF;
             d->vel.z = getint(p)/DVF;
+            d->onfloor = getint(p)/DVF;
             int f = getint(p);
             d->strafe = (f&3)==3 ? -1 : f&3;
             f >>= 2; 
             d->move = (f&3)==3 ? -1 : f&3;
-            d->onfloor = (f>>2)&1;
             int state = f>>3;
             if(state==CS_DEAD && d->state!=CS_DEAD) d->lastaction = lastmillis;
             d->state = state;

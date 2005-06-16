@@ -33,7 +33,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
     else if(d->monsterstate==M_ATTACKING)           { n = 8;  }
     else if(d->monsterstate==M_PAIN)                { n = 10; }
     else if((!d->move && !d->strafe) || !d->moving) { n = 12; }
-    else if(!d->onfloor && d->timeinair > 100)      { n = 18; }
+    else if(d->timeinair > 100)                     { n = 18; }
     else                                            { n = 14; speed = 1200/d->maxspeed*scale; if(hellpig) speed = 300/d->maxspeed;  };
     if(hellpig) { n++; scale *= 32; mz -= 7.6f; };
     uchar color[3];

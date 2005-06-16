@@ -231,7 +231,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
             
     };
 
-    if(m->move || !m->onfloor) moveplayer(m, 1, false);        // use physics to move monster
+    if(m->move || m->timeinair > 0) moveplayer(m, 1, false);        // use physics to move monster
 };
 
 void monsterpain(dynent *m, int damage, dynent *d)

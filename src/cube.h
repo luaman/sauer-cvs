@@ -177,7 +177,7 @@ enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  
 #define MAXTRANS 5000                   // max amount of data to swallow in 1 go
 #define CUBE_SERVER_PORT 28785
 #define CUBE_SERVINFO_PORT 28786
-#define PROTOCOL_VERSION 241            // bump when protocol changes
+#define PROTOCOL_VERSION 242            // bump when protocol changes
 
 // network messages codes, c2s, c2c, s2c
 enum

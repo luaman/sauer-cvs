@@ -295,7 +295,6 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
             pl->timeinair += curtime;
         };
 
-        const float z = pl->o.z;
         const float f = 1.0f/moveres;
         const float push = speed/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
