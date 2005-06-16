@@ -142,17 +142,16 @@ bool move(dynent *d, vec &dir, float push)
     if(!collide(d) || floorheight>0)
     {
         if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
+        d->onfloor = wall.z;
         const float space = floorheight-(d->o.z-d->eyeheight);
         if(space<=STAIRHEIGHT && space>-1.0f)
         {
-            d->onfloor = 1.0f;
             if(space>push) d->nextmove.z = push; else d->o.z = floorheight+d->eyeheight;
             if(d->vel.z<0) d->vel.z=0;
             dir.z = 0;
         }
         else
         {
-            d->onfloor = wall.z;
             d->blocked = true;
             d->o = old;
 
