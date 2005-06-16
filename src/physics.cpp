@@ -9,6 +9,7 @@
 vec wall; // just the normal vector.
 float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
+const float FLOORZ = 0.7f;
 
 bool onstairs(dynent *d, float height, bool final)
 {
@@ -81,7 +82,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
         if(dist>0) { floorheight = f; return true; };
         if(dist>m) { w = &clip[i]; m = dist; };
     };
-    if(w->dot(d->vel) >= 0.0f) { floorheight = f; return true; }
+    if(w->dot(d->vel) > 0.0f) { floorheight = f; return true; }
     wall = *w;
     floorheight = max(f, floorheight);
     return onstairs(d, bo.z+br.z, true);
@@ -144,15 +145,14 @@ bool move(dynent *d, vec &dir, float push)
         const float space = floorheight-(d->o.z-d->eyeheight);
         if(space<=STAIRHEIGHT && space>-1.0f)
         {
-            d->timeinair = 0;
-            d->onfloor = true;
+            d->onfloor = 1.0f;
             if(space>push) d->nextmove.z = push; else d->o.z = floorheight+d->eyeheight;
             if(d->vel.z<0) d->vel.z=0;
             dir.z = 0;
         }
         else
         {
-            if(wall.z>0.7f || dir.z >= 0.0f) d->onfloor = true;
+            d->onfloor = wall.z;
             d->blocked = true;
             d->o = old;
 
@@ -184,7 +184,7 @@ void dropenttofloor(entity *e)
         return;
     dynent d;
     d.o = e->o;
-    d.vel = vec(0, 0, 0);
+    d.vel = vec(0, 0, -1);
     if(e->type == MAPMODEL)
     {
         d.radius = 4.0f;
@@ -197,7 +197,7 @@ void dropenttofloor(entity *e)
         d.eyeheight = 4.0f;
         d.aboveeye = 2.0f;
     }
-    d.onfloor = false;
+    d.onfloor = 0.0f;
     d.blocked = false;
     d.moving = true;
     d.timeinair = 0;
@@ -206,7 +206,7 @@ void dropenttofloor(entity *e)
     {
         d.nextmove = vec(0, 0, 0);
         move(&d, v, 1);
-        if(d.blocked || d.onfloor) break;
+        if(d.blocked || d.onfloor > 0.0f) break;
     }
     e->o = d.o;
 };
@@ -245,7 +245,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->onfloor ? 0.0f : (water ? -0.5f : pl->vel.z*0.75f - 2.0f);
+    d.z = pl->onfloor > FLOORZ ? 0.0f : (water ? -0.5f : pl->vel.z*0.75f - 2.0f);
 
     if(floating || water)
     {
@@ -259,7 +259,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     d.y += (float)(pl->strafe*sin(rad(pl->yaw-180)));
 
     const float speed = curtime/(water ? 2000.0f : 1000.0f)*pl->maxspeed;
-    const float friction = water ? 20.0f : (pl->onfloor || floating ? 6.0f : 30.0f);
+    const float friction = water ? 20.0f : (pl->onfloor > FLOORZ || floating ? 6.0f : 30.0f);
 
     const float fpsfric = friction/curtime*20.0f;
 
@@ -279,12 +279,12 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     }
     else                        // apply velocity with collision
     {
-        if(pl->onfloor || water)
+        if(pl->onfloor > 0.0f || water)
         {
             if(pl->jumpnext)
             {
                 pl->jumpnext = false;
-                pl->vel.z = 1.3f;       // physics impulse upwards
+                pl->vel.z = 1.3f * pl->onfloor;       // physics impulse upwards
                 if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
                 if(local) playsoundc(S_JUMP);
                 else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
@@ -295,14 +295,16 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
             pl->timeinair += curtime;
         };
 
+        const float z = pl->o.z;
         const float f = 1.0f/moveres;
         const float push = speed/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
         int collisions = 0;
 
-        pl->onfloor = false; 
+        pl->onfloor = 0.0f;
         d.mul(f);
         loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--; // discrete steps collision detection & sliding
+        if(pl->onfloor > FLOORZ) pl->timeinair = 0;
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);

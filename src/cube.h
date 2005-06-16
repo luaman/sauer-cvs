@@ -141,7 +141,8 @@ struct dynent                           // players & monsters
     float maxspeed;                     // cubes per second, 24 for player
     int timeinair;
     bool inwater;
-    bool onfloor, jumpnext;
+    float onfloor;
+    bool jumpnext;
     int move, strafe;
     bool k_left, k_right, k_up, k_down; // see input code
     vec nextmove;                       // small adjustments to be applied in next move

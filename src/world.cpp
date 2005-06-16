@@ -243,6 +243,8 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     resetlightmaps();
     clearlights();
     allchanged();
+
+    execfile("data/default_map_settings.cfg");
 };
 
 void mapenlarge()  { empty_world(-1, false); };
