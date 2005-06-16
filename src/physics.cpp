@@ -302,7 +302,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         pl->onfloor = 0.0f;
         d.mul(f);
         loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--; // discrete steps collision detection & sliding
-        if(pl->onfloor > FLOORZ) pl->timeinair = 0;
+        if(pl->onfloor > 0.0f) pl->timeinair = 0;
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);
