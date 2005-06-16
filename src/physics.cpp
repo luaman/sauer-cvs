@@ -19,7 +19,7 @@ bool onstairs(dynent *d, float height, float z, bool final)
         floorz = z;
     }
     float space = floorheight-d->o.z+d->eyeheight;
-    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0 && floorz>0.9f && final) d->vel.z = 0;
+    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0 && wall.z>0.9f && final) d->vel.z = 0;
     return (space < STAIRHEIGHT);
 };
 
