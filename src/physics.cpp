@@ -7,15 +7,19 @@
 
 // info about collisions
 vec wall; // just the normal vector.
-float floorheight, walldistance;
+float floorheight, floorz, walldistance;
 const float STAIRHEIGHT = 5.0f;
 const float FLOORZ = 0.7f;
 
-bool onstairs(dynent *d, float height, bool final)
+bool onstairs(dynent *d, float height, float z, bool final)
 {
-    floorheight = max(height, floorheight);
+    if(height > floorheight)
+    {
+        floorheight = height;
+        floorz = z;
+    }
     float space = floorheight-d->o.z+d->eyeheight;
-    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0 && wall.z>0.9f && final) d->vel.z = 0;
+    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0 && floorz>0.9f && final) d->vel.z = 0;
     return (space < STAIRHEIGHT);
 };
 
@@ -35,7 +39,7 @@ bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, boo
     if(ax>ay && ax>az)  { wall.x = s.x>0 ? 1 : -1; walldistance = ax; }
     else if(ay>az)      { wall.y = s.y>0 ? 1 : -1; walldistance = ay; }
     else                { wall.z = s.z>0 ? 1 : -1; walldistance = az; }
-    return onstairs(d, o.z+hi, final);
+    return onstairs(d, o.z+hi, 1.0f, final);
 };
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
@@ -85,7 +89,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     if(w->dot(d->vel) > 0.0f) { floorheight = f; return true; }
     wall = *w;
     floorheight = max(f, floorheight);
-    return onstairs(d, bo.z+br.z, true);
+    return onstairs(d, bo.z+br.z, wall.z, true);
 };
 
 bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collide with octants
@@ -142,16 +146,17 @@ bool move(dynent *d, vec &dir, float push)
     if(!collide(d) || floorheight>0)
     {
         if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
-        d->onfloor = wall.z;
         const float space = floorheight-(d->o.z-d->eyeheight);
         if(space<=STAIRHEIGHT && space>-1.0f)
         {
+            d->onfloor = floorz;
             if(space>push) d->nextmove.z = push; else d->o.z = floorheight+d->eyeheight;
             if(d->vel.z<0) d->vel.z=0;
             dir.z = 0;
         }
         else
         {
+            d->onfloor = wall.z;
             d->blocked = true;
             d->o = old;
 
