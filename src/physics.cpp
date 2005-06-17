@@ -164,8 +164,10 @@ bool move(dynent *d, vec &dir, float push)
         v.mul(v.dot(d->vel));
         d->vel.sub(v);
 
-        if(wall.z!=0)
+        if(wall.z != 0.0f)
         {
+            if(wall.z > FLOORZ && d->vel.z < 0.0f) d->vel.z = 0.0f;
+
             d->nextmove.x = push*wall.x; // push against slopes
             d->nextmove.y = push*wall.y;
         };
@@ -242,17 +244,19 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
 
+    float slide = pl->onfloor > FLOORZ ? 0.0f : (1.0f - pl->onfloor);
+
     vec d;  // vector of direction we ideally want to move in
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->vel.z - 2.0f*(1.0f - pl->onfloor);
+    d.z = pl->vel.z - 2.0f*slide;
 
     if(floating || water)
     {
         d.x *= (float)cos(rad(pl->pitch));
         d.y *= (float)cos(rad(pl->pitch));
         if(floating || pl->move) d.z = (float)(pl->move*sin(rad(pl->pitch)));
-        else d.z = -0.5f*(1.0f - pl->onfloor);
+        else d.z = -0.5f*slide;
             
     };
 
