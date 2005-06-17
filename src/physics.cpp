@@ -253,7 +253,8 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
             if(pl->jumpnext)
             {
                 pl->jumpnext = false;
-                pl->vel.z += 1.3f * pl->onfloor;       // physics impulse upwards
+                pl->vel.z += 1.3f * (water ? 1.0f : pl->onfloor);       // physics impulse upwards
+                if(pl->vel.z > 1.3f) pl->vel.z = 1.3f;
                 if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
                 if(local) playsoundc(S_JUMP);
                 else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
@@ -268,7 +269,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     vec d;  // vector of direction we ideally want to move in
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->vel.z - (1.0f - pl->onfloor)*(water ? 0.5f : 2.0f);
+    d.z = water ? -0.5f : (pl->vel.z - (1.0f - pl->onfloor)*2.0f);
 
     if(floating || water)
     {
