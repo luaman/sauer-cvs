@@ -11,7 +11,7 @@ float floorheight, floorz, walldistance;
 const float STAIRHEIGHT = 5.0f;
 const float FLOORZ = 0.7f;
 
-bool onstairs(dynent *d, float height, float z, bool final)
+bool onstairs(dynent *d, float height, float z)
 {
     if(height > floorheight)
     {
@@ -19,8 +19,8 @@ bool onstairs(dynent *d, float height, float z, bool final)
         floorz = z;
     }
     float space = floorheight-d->o.z+d->eyeheight;
-    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0 && wall.z>0.9f && final) d->vel.z = 0;
-    return (space < STAIRHEIGHT);
+    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0 && wall.z>FLOORZ) d->vel.z = 0;
+    return space < STAIRHEIGHT;
 };
 
 bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, bool final)
@@ -39,7 +39,8 @@ bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, boo
     if(ax>ay && ax>az)  { wall.x = s.x>0 ? 1 : -1; walldistance = ax; }
     else if(ay>az)      { wall.y = s.y>0 ? 1 : -1; walldistance = ay; }
     else                { wall.z = s.z>0 ? 1 : -1; walldistance = az; }
-    return onstairs(d, o.z+hi, 1.0f, final);
+    if(!final) return false;
+    return onstairs(d, o.z+hi, 1.0f);
 };
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
@@ -68,28 +69,26 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
 {
     plane clip[12];
     int s2 = size>>1;
-    float f = floorheight;
-    float r = d->radius;
-    float zr = (d->aboveeye+d->eyeheight)/2;
+    float r = d->radius, 
+          zr = (d->aboveeye+d->eyeheight)/2;
     vec bo(x+s2, y+s2, z+s2), br(s2, s2, s2);
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
-    floorheight = 0;
 
     int clipsize = isentirelysolid(c) || isclipped(c.material) ? 0 : genclipplanes(c, x, y, z, size, clip, bo, br);
 
-    if(rectcollide(d, bo, br.x, br.y, br.z, br.z, false) && floorheight==0) { floorheight = f; return true; };
+    if(rectcollide(d, bo, br.x, br.y, br.z, br.z, !clipsize)) return true;
+    if(!clipsize) return false;
     float m = walldistance;
     loopi(clipsize)
     {
         float dist = clip[i].dist(o) - (fabs(clip[i].x*r)+fabs(clip[i].y*r)+fabs(clip[i].z*zr));
-        if(dist>0) { floorheight = f; return true; };
+        if(dist>0) return true;
         if(dist>m) { w = &clip[i]; m = dist; };
     };
-    if(w->dot(d->vel) > 0.0f) { floorheight = f; return true; }
+    if(w->dot(d->vel) > 0.0f) return true;
     wall = *w;
-    floorheight = max(f, floorheight);
-    return onstairs(d, bo.z+br.z, wall.z, true);
+    return onstairs(d, bo.z+br.z, wall.z);
 };
 
 bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collide with octants
@@ -120,6 +119,7 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
 bool collide(dynent *d)
 {
     floorheight = 0;
+    floorz = 0;
     wall.x = wall.y = wall.z = 0;
     if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
     loopv(players)       // collide with other players
