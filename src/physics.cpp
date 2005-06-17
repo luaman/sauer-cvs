@@ -253,8 +253,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
             if(pl->jumpnext)
             {
                 pl->jumpnext = false;
-                pl->vel.z += 1.3f * (water ? 1.0f : pl->onfloor);       // physics impulse upwards
-                if(pl->vel.z > 1.3f) pl->vel.z = 1.3f;
+                pl->vel.z = 1.3f * (water ? 1.0f : pl->onfloor);       // physics impulse upwards
                 if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
                 if(local) playsoundc(S_JUMP);
                 else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
