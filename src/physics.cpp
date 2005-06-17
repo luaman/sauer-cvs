@@ -242,41 +242,18 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
 
-    if(floating)
-    {
-        if(pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2; }
-    }
-    else
-    {
-        if(pl->onfloor > 0.0f || water)
-        {
-            if(pl->jumpnext)
-            {
-                pl->jumpnext = false;
-                pl->vel.z += 1.3f * (water ? 1.0f : pl->onfloor);       // physics impulse upwards
-                pl->vel.z = min(pl->vel.z, 1.3f);
-                if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
-                if(local) playsoundc(S_JUMP);
-                else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
-            };
-        }
-        else
-        {
-            pl->timeinair += curtime;
-        };
-    };
-
     vec d;  // vector of direction we ideally want to move in
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = water ? -0.5f : (pl->vel.z - (1.0f - pl->onfloor)*2.0f);
+    d.z = pl->vel.z - 2.0f*(1.0f - pl->onfloor);
 
     if(floating || water)
     {
         d.x *= (float)cos(rad(pl->pitch));
         d.y *= (float)cos(rad(pl->pitch));
-        if(floating || pl->move)
-            d.z = (float)(pl->move*sin(rad(pl->pitch)));
+        if(floating || pl->move) d.z = (float)(pl->move*sin(rad(pl->pitch)));
+        else d.z = -0.5f*(1.0f - pl->onfloor);
+            
     };
 
     d.x += (float)(pl->strafe*cos(rad(pl->yaw-180)));
@@ -299,9 +276,27 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     if(floating)                // just apply velocity
     {
         pl->o.add(d);
+        if(pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2; }
     }
     else                        // apply velocity with collision
     {
+        if(pl->onfloor > 0.0f || water)
+        {
+            if(pl->jumpnext)
+            {
+                pl->jumpnext = false;
+                pl->vel.z += 1.3f * (water ? 1.0f : pl->onfloor);       // physics impulse upwards
+                pl->vel.z = min(pl->vel.z, 1.3f);
+                if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
+                if(local) playsoundc(S_JUMP);
+                else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
+            };
+        }
+        else
+        {
+            pl->timeinair += curtime;
+        };
+
         const float f = 1.0f/moveres;
         const float push = speed/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
