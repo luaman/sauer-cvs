@@ -7,20 +7,14 @@
 
 // info about collisions
 vec wall; // just the normal vector.
-float floorheight, floorz, walldistance;
+float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
 const float FLOORZ = 0.7f;
+const float JUMPVEL = 1.3f;
 
-bool onstairs(dynent *d, float height, float z)
+void checkstairs(float height)
 {
-    if(height > floorheight)
-    {
-        floorheight = height;
-        floorz = z;
-    }
-    float space = floorheight-d->o.z+d->eyeheight;
-    if(space>-1 && space < STAIRHEIGHT && d->vel.z<0 && wall.z>FLOORZ) d->vel.z = 0;
-    return space < STAIRHEIGHT;
+    floorheight = max(height, floorheight); 
 };
 
 bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, bool final)
@@ -39,8 +33,8 @@ bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, boo
     if(ax>ay && ax>az)  { wall.x = s.x>0 ? 1 : -1; walldistance = ax; }
     else if(ay>az)      { wall.y = s.y>0 ? 1 : -1; walldistance = ay; }
     else                { wall.z = s.z>0 ? 1 : -1; walldistance = az; }
-    if(!final) return false;
-    return onstairs(d, o.z+hi, 1.0f);
+    if(final) checkstairs(o.z+hi);
+    return false;
 };
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
@@ -88,7 +82,8 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     };
     if(w->dot(d->vel) > 0.0f) return true;
     wall = *w;
-    return onstairs(d, bo.z+br.z, wall.z);
+    checkstairs(bo.z+br.z);
+    return false;
 };
 
 bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collide with octants
@@ -119,7 +114,6 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
 bool collide(dynent *d)
 {
     floorheight = 0;
-    floorz = 0;
     wall.x = wall.y = wall.z = 0;
     if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
     loopv(players)       // collide with other players
@@ -142,37 +136,36 @@ bool move(dynent *d, vec &dir, float push)
     vec old(d->o);
     d->o.add(dir);
     d->o.add(d->nextmove);
-    d->nextmove = vec(0,0,0);
-    if(!collide(d) || floorheight>0)
+    d->nextmove = vec(0, 0, 0);
+    if(!collide(d))
     {
         if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
-        const float space = floorheight-(d->o.z-d->eyeheight);
-        if(space<=STAIRHEIGHT && space>-1.0f)
+        if(wall.z <= FLOORZ && d->onfloor > FLOORZ) /* if on flat ground try walking up stairs */
         {
-            d->onfloor = floorz;
-            if(space>push) d->nextmove.z = push; else d->o.z = floorheight+d->eyeheight;
-            if(d->vel.z<0) d->vel.z=0;
-            dir.z = 0;
-        }
-        else
+                const float space = floorheight-(d->o.z-d->eyeheight);
+                if(space<=STAIRHEIGHT && space>0.0f)
+                {
+                    d->onfloor = 0.0f;
+                    d->o.z += space + 0.01f;
+                    if(collide(d)) return true;
+                };
+        };
+        d->onfloor = wall.z;
+        d->blocked = true;
+        d->o = old;
+
+        vec w(wall), v(wall); // try sliding against wall for next move
+        w.mul(w.dot(dir));
+        dir.sub(w);
+        v.mul(v.dot(d->vel));
+        d->vel.sub(v);
+
+        if(wall.z!=0)
         {
-            d->onfloor = wall.z;
-            d->blocked = true;
-            d->o = old;
-
-            vec w(wall), v(wall); // try sliding against wall for next move
-            w.mul(w.dot(dir));
-            dir.sub(w);
-            v.mul(v.dot(d->vel));
-            d->vel.sub(v);
-
-            if(wall.z!=0)
-            {
-                d->nextmove.x = push*wall.x; // push against slopes
-                d->nextmove.y = push*wall.y;
-            };
-            return false;
-        };        
+            d->nextmove.x = push*wall.x; // push against slopes
+            d->nextmove.y = push*wall.y;
+        };
+        return false;
     };
     return true;
 };
@@ -288,7 +281,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
             if(pl->jumpnext)
             {
                 pl->jumpnext = false;
-                pl->vel.z += 1.3f * pl->onfloor;       // physics impulse upwards
+                pl->vel.z += JUMPVEL * pl->onfloor;       // physics impulse upwards
                 if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
                 if(local) playsoundc(S_JUMP);
                 else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
@@ -304,10 +297,10 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         const int timeinair = pl->timeinair;
         int collisions = 0;
 
-        pl->onfloor = 0.0f;
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--; // discrete steps collision detection & sliding
-        if(pl->onfloor > 0.0f) pl->timeinair = 0;
+        loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
+        if(!collisions) pl->onfloor = 0.0f;
+        else if(pl->onfloor > 0.0f) pl->timeinair = 0;
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);
