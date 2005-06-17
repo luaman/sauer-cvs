@@ -10,7 +10,6 @@ vec wall; // just the normal vector.
 float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
 const float FLOORZ = 0.7f;
-const float JUMPVEL = 1.3f;
 
 void checkstairs(float height)
 {
@@ -142,13 +141,18 @@ bool move(dynent *d, vec &dir, float push)
         if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
         if(wall.z <= FLOORZ && d->onfloor > FLOORZ) /* if on flat ground try walking up stairs */
         {
-                const float space = floorheight-(d->o.z-d->eyeheight);
-                if(space<=STAIRHEIGHT && space>0.0f)
-                {
-                    d->onfloor = 0.0f;
-                    d->o.z += space + 0.01f;
-                    if(collide(d)) return true;
+            const float space = floorheight-(d->o.z-d->eyeheight);
+            if(space<=STAIRHEIGHT && space>0.01f)
+            {
+                vec obstacle = wall;
+                d->o.z += space + 0.01f;
+                if(collide(d)) 
+                { 
+                    d->onfloor = 0.0f; 
+                    return true; 
                 };
+                wall = obstacle;
+            };
         };
         if(wall.z > 0.0f) d->onfloor = wall.z;
         d->blocked = true;
@@ -238,11 +242,33 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
 
-    vec d;      // vector of direction we ideally want to move in
+    if(floating)
+    {
+        if(pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2; }
+    }
+    else
+    {
+        if(pl->onfloor > 0.0f || water)
+        {
+            if(pl->jumpnext)
+            {
+                pl->jumpnext = false;
+                pl->vel.z += 1.3f * pl->onfloor;       // physics impulse upwards
+                if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
+                if(local) playsoundc(S_JUMP);
+                else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
+            };
+        }
+        else
+        {
+            pl->timeinair += curtime;
+        };
+    };
 
+    vec d;  // vector of direction we ideally want to move in
     d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->onfloor > FLOORZ ? 0.0f : (water ? -0.5f : pl->vel.z*0.75f - 2.0f);
+    d.z = pl->vel.z - (1.0f - pl->onfloor)*(water ? 0.5f : 2.0f);
 
     if(floating || water)
     {
@@ -272,35 +298,22 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     if(floating)                // just apply velocity
     {
         pl->o.add(d);
-        if(pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2; }
     }
     else                        // apply velocity with collision
     {
-        if(pl->onfloor > 0.0f || water)
-        {
-            if(pl->jumpnext)
-            {
-                pl->jumpnext = false;
-                pl->vel.z += JUMPVEL * pl->onfloor;       // physics impulse upwards
-                if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
-                if(local) playsoundc(S_JUMP);
-                else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
-            }
-        }
-        else
-        {
-            pl->timeinair += curtime;
-        };
-
         const float f = 1.0f/moveres;
         const float push = speed/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
-        int collisions = 0;
+        int collisions = 0, onfloor = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
-        if(!collisions) pl->onfloor = 0.0f;
-        else if(pl->onfloor > 0.0f) pl->timeinair = 0;
+        loopi(moveres) if(!move(pl, d, push)) 
+        {
+            if(wall.z > 0.0f) ++onfloor;
+            if(++collisions<5) i--;  // discrete steps collision detection & sliding
+        }
+        if(!onfloor) pl->onfloor = 0.0f;
+        if(pl->onfloor > 0.0f) pl->timeinair = 0;
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);
