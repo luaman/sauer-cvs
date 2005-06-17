@@ -150,7 +150,7 @@ bool move(dynent *d, vec &dir, float push)
                     if(collide(d)) return true;
                 };
         };
-        d->onfloor = wall.z;
+        if(wall.z > 0.0f) d->onfloor = wall.z;
         d->blocked = true;
         d->o = old;
 
