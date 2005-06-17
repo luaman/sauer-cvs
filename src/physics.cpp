@@ -178,7 +178,7 @@ bool move(dynent *d, vec &dir, float push)
         {
             d->nextmove.x = push*wall.x; // push against slopes
             d->nextmove.y = push*wall.y;
-            d->nextmove.z = push*wall.z;
+            if(wall.z > 0.0f) d->nextmove.z = push*(1.0f - wall.z);
         };
 
         return false;
