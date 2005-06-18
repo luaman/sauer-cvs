@@ -130,8 +130,6 @@ bool collide(dynent *d)
     return mmcollide(d);     // collide with map models
 };
 
-VAR(dp, 0, 0, 1);
-
 bool move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
