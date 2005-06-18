@@ -130,6 +130,8 @@ bool collide(dynent *d)
     return mmcollide(d);     // collide with map models
 };
 
+VAR(dp, 0, 0, 1);
+
 bool move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
@@ -138,7 +140,6 @@ bool move(dynent *d, vec &dir, float push)
     d->nextmove = vec(0, 0, 0);
     if(!collide(d))
     {
-        if(dir.x==0 && dir.y==0 && dir.z==0) d->moving = false;
         if(wall.z <= FLOORZ && d->onfloor > FLOORZ) /* if on flat ground try walking up stairs */
         {
             const float space = floorheight-(d->o.z-d->eyeheight);
@@ -161,9 +162,10 @@ bool move(dynent *d, vec &dir, float push)
         if(wall.z > FLOORZ)
         {
             dir.z -= wall.z * wall.dot(dir);
-            dir.z = max(dir.z, 0.0f);
             d->vel.z -= wall.z * wall.dot(d->vel);
-            d->vel.z = max(d->vel.z, 0.0f);
+            //uncomment if jumpy movement walking down slopes is desired
+            //dir.z = max(dir.z, 0.0f);
+            //d->vel.z = max(d->vel.z, 0.0f);
         }
         else
         {
@@ -174,10 +176,12 @@ bool move(dynent *d, vec &dir, float push)
             d->vel.sub(v);
         };
 
-        if(d->move || d->strafe)
+        if(fabs(dir.x) <= 0.01f && fabs(dir.y) <= 0.01f && fabs(dir.z) <= 0.01f) d->moving = false;
+        if(d->moving)
         {
             d->nextmove.x = push*wall.x; // push against slopes
             d->nextmove.y = push*wall.y;
+            //add extra lift to propel up slopes
             if(wall.z > 0.0f) d->nextmove.z = push*(1.0f - wall.z);
         };
 
