@@ -16,7 +16,7 @@ void checkstairs(float height)
     floorheight = max(height, floorheight); 
 };
 
-bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, bool final)
+bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, bool obstacle)
 {
     vec s(d->o);
     s.sub(o);
@@ -32,14 +32,14 @@ bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, boo
     if(ax>ay && ax>az)  { wall.x = s.x>0 ? 1 : -1; walldistance = ax; }
     else if(ay>az)      { wall.y = s.y>0 ? 1 : -1; walldistance = ay; }
     else                { wall.z = s.z>0 ? 1 : -1; walldistance = az; }
-    if(final) checkstairs(o.z+hi);
+    if(obstacle) checkstairs(o.z+hi);
     return false;
 };
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
     if(d->state!=CS_ALIVE || o->state!=CS_ALIVE) return true;
-    return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight, true);
+    return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight, false);
 };
 
 bool mmcollide(dynent *d)               // collide with a mapmodel
@@ -312,6 +312,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
     pl->blocked = false;
     pl->moving = true;
+    pl->onfloor = 0.0f;
 
     if(floating)                // just apply velocity
     {
@@ -322,15 +323,10 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         const float f = 1.0f/moveres;
         const float push = speed/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
-        int collisions = 0, onfloor = 0;
+        int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push)) 
-        {
-            if(wall.z > 0.0f) ++onfloor;
-            if(++collisions<5) i--;  // discrete steps collision detection & sliding
-        }
-        if(!onfloor) pl->onfloor = 0.0f;
+        loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
         if(pl->onfloor > 0.0f) pl->timeinair = 0;
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
