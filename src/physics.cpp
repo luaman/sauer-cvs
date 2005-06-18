@@ -130,12 +130,15 @@ bool collide(dynent *d)
     return mmcollide(d);     // collide with map models
 };
 
+VAR(dp, 0, 0, 1);
+
 bool move(dynent *d, vec &dir, float push)
 {
     vec old(d->o);
     d->o.add(dir);
     d->o.add(d->nextmove);
     d->nextmove = vec(0, 0, 0);
+    vec od(dir);
     if(!collide(d))
     {
         if(wall.z <= FLOORZ && d->onfloor > FLOORZ) /* if on flat ground try walking up stairs */
@@ -157,31 +160,25 @@ bool move(dynent *d, vec &dir, float push)
         d->blocked = true;
         d->o = old;
 
-        if(wall.z > FLOORZ)
-        {
-            dir.z -= wall.z * wall.dot(dir);
-            d->vel.z -= wall.z * wall.dot(d->vel);
-            //uncomment if jumpy movement walking down slopes is desired
-            //dir.z = max(dir.z, 0.0f);
-            //d->vel.z = max(d->vel.z, 0.0f);
-        }
-        else
-        {
-            vec w(wall), v(wall); // try sliding against wall for next move
-            w.mul(w.dot(dir));
-            dir.sub(w);
-            v.mul(v.dot(d->vel));
-            d->vel.sub(v);
-        };
+        float fr = 1.0f - wall.z*wall.z,
+              w = wall.dot(dir),
+              v = wall.dot(d->vel); 
+        dir.x -= wall.x*fr*w;
+        dir.y -= wall.y*fr*w;
+        dir.z -= wall.z*w;
+        d->vel.x -= wall.x*fr*v;
+        d->vel.y -= wall.y*fr*v;
+        d->vel.z -= wall.z*v;
 
-        if(fabs(dir.x) <= 0.01f && fabs(dir.y) <= 0.01f && fabs(dir.z) <= 0.01f) d->moving = false;
+        if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
+        
         if(d->moving)
         {
             d->nextmove.x = push*wall.x; // push against slopes
             d->nextmove.y = push*wall.y;
             //add extra lift to propel up slopes
             if(wall.z > 0.0f) d->nextmove.z = push*(1.0f - wall.z);
-        };
+        }
 
         return false;
     }
@@ -271,7 +268,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            pl->vel.z += 1.3f * (water ? 1.0f : pl->onfloor);       // physics impulse upwards
+            pl->vel.z += 1.3f * (water ? 1.0f : pl->onfloor*pl->onfloor);       // physics impulse upwards
             pl->vel.z = min(pl->vel.z, 1.3f); 
             if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
             if(local) playsoundc(S_JUMP);
