@@ -354,10 +354,10 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     rendermaterials();
 
+    glDisable(GL_FOG);
+
     renderspheres(curtime);
     render_particles(curtime);
-
-    glDisable(GL_FOG);
 
     renderents();
 
