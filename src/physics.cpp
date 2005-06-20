@@ -141,7 +141,7 @@ bool move(dynent *d, vec &dir, float push, float elasticity = 1.0f)
     vec od(dir);
     if(!collide(d))
     {
-        if(wall.z <= FLOORZ && d->onfloor > FLOORZ) /* if on flat ground try walking up stairs */
+        if(wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
         {
             const float space = floorheight-(d->o.z-d->eyeheight);
             if(space<=STAIRHEIGHT && space>-1.0f)
