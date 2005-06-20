@@ -6,10 +6,12 @@
 #include "cube.h"
 
 // info about collisions
-vec wall; // just the normal vector.
+vec wall, ground; // just the normal vectors.
 float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
 const float FLOORZ = 0.7f;
+const float JUMPVEL = 150.0f;
+const float GRAVITY = 400.0f;
 
 void checkstairs(float height)
 {
@@ -154,19 +156,19 @@ bool move(dynent *d, vec &dir, float push)
                 wall = obstacle;
             }
         };
-        if(wall.z > 0.0f) d->onfloor = wall.z;
+        if(wall.z > 0.0f)
+        {
+            d->onfloor = wall.z;
+            ground = wall;
+        };
         d->blocked = true;
         d->o = old;
 
-        float fr = 1.0f - wall.z*wall.z,
-              w = wall.dot(dir),
-              v = wall.dot(d->vel); 
-        dir.x -= wall.x*fr*w;
-        dir.y -= wall.y*fr*w;
-        dir.z -= wall.z*w;
-        d->vel.x -= wall.x*fr*v;
-        d->vel.y -= wall.y*fr*v;
-        d->vel.z -= wall.z*v;
+        vec w(wall), v(wall);
+        w.mul(wall.dot(dir));
+        dir.sub(w);
+        v.mul(wall.dot(d->vel));
+        d->vel.sub(v);
 
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
         
@@ -243,21 +245,24 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     };
 };
 
-// main physics routine, moves a player/monster for a curtime step
-// moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
-// local is false for multiplayer prediction
-
-void moveplayer(dynent *pl, int moveres, bool local, int curtime)
+void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, float secs)
 {
-    const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
-    const bool floating = (editmode && local) || pl->state==CS_EDITING;
+    /* accelerate to maximum speed in 1/8th of a second */
+    const float speed = 8.0f*secs*pl->maxspeed,
+                cfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
+                afr = floating ? 0.005f : (water ? 0.3f : 0.005f), /* coefficient of friction for the air */
+                dfr = afr + cfr*(1.0f - afr); /* friction against which the player is pushing to generate movement */
+    
+    /* use gravity 1/3rd as powerful in water to simulate some buoyancy */
+    if(!floating)
+        pl->vel.z -= GRAVITY*(water ? 0.3f : 1.0f)*secs;
 
     if(floating)
     {
-        if(pl->jumpnext) 
-        { 
-            pl->jumpnext = false; 
-            pl->vel.z = 2; 
+        if(pl->jumpnext)
+        {
+            pl->jumpnext = false;
+            pl->vel.z += JUMPVEL;
         };
     }
     else
@@ -266,9 +271,8 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            pl->vel.z += 1.3f * (water ? 1.0f : pl->onfloor*pl->onfloor);       // physics impulse upwards
-            pl->vel.z = min(pl->vel.z, 1.3f); 
-            if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
+            /* jump behaves long a strong kick in water */
+            pl->vel.z += JUMPVEL*(water ? 1.0f : pl->onfloor); // physics impulse upwards
             if(local) playsoundc(S_JUMP);
             else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
         };
@@ -278,32 +282,76 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         pl->timeinair += curtime;
     };
 
-    vec d;  // vector of direction we ideally want to move in
-    d.x = (float)(pl->move*cos(rad(pl->yaw-90)));
-    d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-    d.z = pl->vel.z - 2.0f;
-
-    if(floating || water)
+    vec m(0.0f, 0.0f, 0.0f);
+    if(pl->move || pl->strafe)
     {
-        d.x *= (float)cos(rad(pl->pitch));
-        d.y *= (float)cos(rad(pl->pitch));
-        if(floating || pl->move) d.z = (float)(pl->move*sin(rad(pl->pitch)));
-        else d.z = -0.5f;
+        m.x = (float)(pl->move*cos(rad(pl->yaw-90)));
+        m.y = (float)(pl->move*sin(rad(pl->yaw-90)));
+
+        if(floating || water)
+        {
+            m.x *= (float)cos(rad(pl->pitch));
+            m.y *= (float)cos(rad(pl->pitch));
+            if(floating || pl->move) m.z = (float)(pl->move*sin(rad(pl->pitch)));
+        };
+
+        m.x += (float)(pl->strafe*cos(rad(pl->yaw-180)));
+        m.y += (float)(pl->strafe*sin(rad(pl->yaw-180)));
+
+        if(pl->onfloor > 0.0f)
+        {
+            /* move up or down slopes in air
+             * but only move up slopes in water
+             */
+            float dz = -(m.x*ground.x + m.y*ground.y)/ground.z;
+            if(!water || dz > 0.0f) m.z += dz;
+        };
+        
+        m.normalize();
     };
 
-    d.x += (float)(pl->strafe*cos(rad(pl->yaw-180)));
-    d.y += (float)(pl->strafe*sin(rad(pl->yaw-180)));
+    float v = pl->vel.magnitude();
+    if(v > 0.0f)
+    {
+        /* player is about half as effective at stopping movement as generating it */
+        vec fr(pl->vel);
+        /* friction resisting current momentum: player generated stopping force + air resistance */
+        fr.mul(min(cfr*0.5f*speed + afr*v, v)/v);
+        vec mfr(m);
+        /* don't resist momentum in the direction the player is traveling */
+        mfr.mul(min((cfr*0.5f + afr)*speed, v));
+        fr.sub(mfr);
+        pl->vel.sub(fr);
+    };
 
-    const float speed = curtime/(water ? 2000.0f : 1000.0f)*pl->maxspeed;
-    const float friction = water ? 20.0f : (pl->onfloor > FLOORZ || floating ? 6.0f : 30.0f);
+    vec dv(m);
+    dv.mul(speed*dfr);
+    /* make sure the player doesn't go above maxspeed */
+    float xs = (m.x < 0.0f ? -1.0f : 1.0f),
+          ys = (m.y < 0.0f ? -1.0f : 1.0f),
+          zs = (m.z < 0.0f ? -1.0f : 1.0f),
+          limit = pl->maxspeed*dfr,
+          dx = xs*(m.x*limit - pl->vel.x),
+          dy = ys*(m.y*limit - pl->vel.y),
+          dz = zs*(m.z*limit - pl->vel.z);
+    dv.x = xs*max(min(dx, xs*dv.x), 0.0f);
+    dv.y = ys*max(min(dy, ys*dv.y), 0.0f);
+    dv.z = zs*max(min(dz, zs*dv.z), 0.0f);
+    pl->vel.add(dv);
+}
 
-    const float fpsfric = friction/curtime*20.0f;
+// main physics routine, moves a player/monster for a curtime step
+// moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
+// local is false for multiplayer prediction
 
-    pl->vel.mul(fpsfric-1);   // slowly apply friction and direction to velocity, gives a smooth movement
-    pl->vel.add(d);
-    pl->vel.div(fpsfric);
-    d = pl->vel;
-    d.mul(speed);             // d is now frametime based velocity vector
+void moveplayer(dynent *pl, int moveres, bool local, int curtime)
+{
+    const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
+    const bool floating = (editmode && local) || pl->state==CS_EDITING;
+    const float secs = curtime/1000.f;
+
+    vec d(pl->vel);
+    d.mul(secs);
 
     pl->blocked = false;
     pl->moving = true;
@@ -316,7 +364,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     else                        // apply velocity with collision
     {
         const float f = 1.0f/moveres;
-        const float push = speed/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
+        const float push = d.magnitude()/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
         int collisions = 0;
 
@@ -329,6 +377,9 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
             else if(pl->monsterstate) playsound(S_LAND, &pl->o);
         };
     };
+
+    // apply any player generated changes in velocity
+    modifyvelocity(pl, moveres, local, water, floating, secs);
 
     // automatically apply smooth roll when strafing
 
@@ -345,7 +396,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
     // play sounds on water transitions
 
-    if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->vel.z = 0; pl->timeinair = 0; }
+    if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->timeinair = 0; }
     else if(pl->inwater && !water) playsound(S_SPLASH1, &pl->o);
     pl->inwater = water;
 };
