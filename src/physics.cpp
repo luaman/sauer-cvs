@@ -147,6 +147,7 @@ bool move(dynent *d, vec &dir, float push)
             if(space<=STAIRHEIGHT && space>-1.0f)
             {
                 vec obstacle = wall;
+                /* add space to reach the floor plus a little stepping room */
                 d->o.z += space + 0.01f;
                 if(collide(d)) 
                 { 
@@ -154,7 +155,7 @@ bool move(dynent *d, vec &dir, float push)
                     return true; 
                 };
                 wall = obstacle;
-            }
+            };
         };
         if(wall.z == 0.0f) d->blocked = true;
         else
