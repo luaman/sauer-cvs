@@ -132,7 +132,7 @@ bool collide(dynent *d)
     return mmcollide(d);     // collide with map models
 };
 
-bool move(dynent *d, vec &dir, float push, float elasticity = 1.0f)
+bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
 {
     vec old(d->o);
     d->o.add(dir);
@@ -214,7 +214,7 @@ void dropenttofloor(entity *e)
     loopi(hdr.worldsize)
     {
         d.nextmove = vec(0, 0, 0);
-        move(&d, v, 1);
+        move(&d, v);
         if(d.blocked || d.onfloor > 0.0f) break;
     }
     e->o = d.o;
