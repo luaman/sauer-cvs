@@ -194,7 +194,7 @@ void pickup(int n, dynent *d)
             static int lastjumppad = 0;
             if(lastmillis-lastjumppad<300) break;
             lastjumppad = lastmillis;
-            vec v((int)(char)ents[n].attr3/10.0f, (int)(char)ents[n].attr2/10.0f, ents[n].attr1/10.0f);
+            vec v((int)(char)ents[n].attr3*10.0f, (int)(char)ents[n].attr2*10.0f, ents[n].attr1*10.0f);
             player1->vel.z = 0;
             player1->vel.add(v);
             playsoundc(S_JUMPPAD);
