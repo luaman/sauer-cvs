@@ -148,7 +148,7 @@ void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
         if(dist<0) dist = 0;
         int damage = (int)(qdam*(1-(dist/RL_DAMRAD)));
         hit(cn, damage, o, at);
-        temp.mul((RL_DAMRAD-dist)*damage/12800);
+        temp.mul((RL_DAMRAD-dist)*damage/256);
         o->vel.add(temp);
     };
 };
@@ -273,7 +273,7 @@ void hitpush(int target, int damage, dynent *d, dynent *at, vec &from, vec &to)
     vec v(to);
     v.sub(from);
     v.normalize();
-    v.mul(2*damage/d->weight);    // was damage/50
+    v.mul(100*damage/d->weight);    // was damage/50
     d->vel.add(v);
 };
 
@@ -310,7 +310,7 @@ void shoot(dynent *d, vec &targ)
     float dist = to.dist(from, unitv);
     unitv.div(dist);
     vec kickback(unitv);
-    kickback.mul(guns[d->gunselect].kickamount*-0.01f);
+    kickback.mul(guns[d->gunselect].kickamount*-2.5f);//-0.01f);
     d->vel.add(kickback);
     if(d->pitch<80.0f) d->pitch += guns[d->gunselect].kickamount*0.05f;
     float shorten = 0.0f;
