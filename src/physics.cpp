@@ -164,10 +164,11 @@ bool move(dynent *d, vec &dir, float push)
         };
         d->o = old;
 
+        /* add 20% elasticity to collisions */
         vec w(wall), v(wall);
-        w.mul(wall.dot(dir));
+        w.mul(1.2f*wall.dot(dir));
         dir.sub(w);
-        v.mul(wall.dot(d->vel));
+        v.mul(1.2f*wall.dot(d->vel));
         d->vel.sub(v);
 
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
