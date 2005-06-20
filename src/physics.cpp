@@ -156,12 +156,12 @@ bool move(dynent *d, vec &dir, float push)
                 wall = obstacle;
             }
         };
-        if(wall.z > 0.0f)
+        if(wall.z == 0.0f) d->blocked = true;
+        else
         {
             d->onfloor = wall.z;
             ground = wall;
         };
-        d->blocked = true;
         d->o = old;
 
         vec w(wall), v(wall);
@@ -172,13 +172,8 @@ bool move(dynent *d, vec &dir, float push)
 
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
         
-        if(d->moving)
-        {
-            d->nextmove.x = push*wall.x; // push against slopes
-            d->nextmove.y = push*wall.y;
-            //add extra lift to propel up slopes
-            if(wall.z > 0.0f) d->nextmove.z = push*(1.0f - wall.z);
-        }
+        d->nextmove.x = push*wall.x; // push against slopes
+        d->nextmove.y = push*wall.y;
 
         return false;
     }
@@ -272,7 +267,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         {
             pl->jumpnext = false;
             /* jump behaves long a strong kick in water */
-            pl->vel.z += JUMPVEL*(water ? 1.0f : pl->onfloor); // physics impulse upwards
+            pl->vel.z += JUMPVEL*(water ? 2.0f : pl->onfloor); // physics impulse upwards
             if(local) playsoundc(S_JUMP);
             else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
         };
