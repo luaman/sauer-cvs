@@ -132,7 +132,7 @@ bool collide(dynent *d)
     return mmcollide(d);     // collide with map models
 };
 
-bool move(dynent *d, vec &dir, float push)
+bool move(dynent *d, vec &dir, float push, float elasticity = 1.0f)
 {
     vec old(d->o);
     d->o.add(dir);
@@ -165,11 +165,10 @@ bool move(dynent *d, vec &dir, float push)
         };
         d->o = old;
 
-        /* add 20% elasticity to collisions */
         vec w(wall), v(wall);
-        w.mul(1.2f*wall.dot(dir));
+        w.mul(elasticity*wall.dot(dir));
         dir.sub(w);
-        v.mul(1.2f*wall.dot(d->vel));
+        v.mul(elasticity*wall.dot(d->vel));
         d->vel.sub(v);
 
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
@@ -366,7 +365,8 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
+        /* add 20% elasticity to collisions */
+        loopi(moveres) if(!move(pl, d, push, 1.2f)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
         if(pl->onfloor > 0.0f) pl->timeinair = 0;
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
