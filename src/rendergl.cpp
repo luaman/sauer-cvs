@@ -232,7 +232,7 @@ void transplayer()
     glRotatef(player1->pitch,-1.0,0.0,0.0);
     glRotatef(player1->yaw,0.0,1.0,0.0);
 
-    glTranslatef(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.8f : 0)-player1->o.z, -player1->o.y);   
+    glTranslatef(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.8f : 0)-player1->o.z-player1->bob, -player1->o.y);   
 };
 
 VAR(fov, 10, 105, 120);
@@ -251,7 +251,7 @@ void drawhudmodel(int start, int end, float speed, int base)
     uchar color[3];
     lightreaching(player1->o, color);
     glColor3ubv(color);
-    rendermodel(hudgunnames[player1->gunselect], start, end, 0, 4.0f, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base);
+    rendermodel(hudgunnames[player1->gunselect], start, end, 0, 4.0f, player1->o.x, player1->o.z+player1->bob, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base);
 };
 
 void drawhudgun(float fovy, float aspect, int farplane)

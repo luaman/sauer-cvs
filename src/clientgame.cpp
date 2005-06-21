@@ -97,6 +97,7 @@ dynent *newdynent()                 // create a new blank player or monster
     d->o.x = 0;
     d->o.y = 0;
     d->o.z = 0;
+	d->bob = 0;
     d->yaw = 270;
     d->pitch = 0;
     d->roll = 0;

@@ -137,7 +137,7 @@ enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_FIREBALL, GUN_ICEBAL
 struct dynent                           // players & monsters
 {
     vec o, vel;                         // origin, velocity
-    float yaw, pitch, roll;
+    float yaw, pitch, roll, bob;
     float maxspeed;                     // cubes per second, 100 for player
     int timeinair;
     bool inwater;

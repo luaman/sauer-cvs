@@ -152,6 +152,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
                 if(collide(d)) 
                 { 
                     d->onfloor = 0.0f; 
+					d->bob = -space;
                     return true; 
                 };
                 wall = obstacle;
@@ -352,6 +353,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     pl->blocked = false;
     pl->moving = true;
     pl->onfloor = 0.0f;
+	pl->bob = min(0, pl->bob+0.7f);
 
     if(floating)                // just apply velocity
     {
