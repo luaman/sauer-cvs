@@ -267,7 +267,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            /* jump behaves long a strong kick in water */
+            /* jump behaves like a strong kick in water */
             pl->vel.z += JUMPVEL*(water ? 2.0f : pl->onfloor); // physics impulse upwards
             if(local) playsoundc(S_JUMP);
             else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
