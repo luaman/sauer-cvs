@@ -158,6 +158,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
         if(wall.z == 0.0f) d->blocked = true;
         else
         {
+            d->timeinair = 0;
             d->onfloor = wall.z;
             ground = wall;
         };
@@ -361,7 +362,6 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         d.mul(f);
         /* add 20% elasticity to collisions */
         loopi(moveres) if(!move(pl, d, push, 1.2f)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
-        if(pl->onfloor > 0.0f) pl->timeinair = 0;
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);
