@@ -247,12 +247,12 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     const float speed = 8.0f*secs*pl->maxspeed,
                 cfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
                 afr = floating ? 0.005f : (water ? 0.3f : 0.005f), /* coefficient of friction for the air */
-                dfr = afr + cfr*(1.0f - afr); /* friction against which the player is pushing to generate movement */
+                dfr = 2.0f*afr + cfr; /* friction against which the player is pushing to generate movement */
     
-    /* use gravity 1/3rd as powerful in water to simulate some buoyancy */
     if(!floating)
-        pl->vel.z -= GRAVITY*(water ? 0.3f : 1.0f)*secs;
+        pl->vel.z -= GRAVITY*secs;
 
+#if 0
     if(floating)
     {
         if(pl->jumpnext)
@@ -277,6 +277,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     {
         pl->timeinair += curtime;
     };
+#endif
 
     vec m(0.0f, 0.0f, 0.0f);
     if(pl->move || pl->strafe)
@@ -306,16 +307,51 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         m.normalize();
     };
 
+    if(floating)
+    {
+        if(pl->jumpnext)
+        {
+            pl->jumpnext = false;
+            pl->vel.z += JUMPVEL;
+        };
+    }
+    else
+    if(pl->onfloor > 0.0f || water)
+    {
+        if(pl->jumpnext)
+        {
+            pl->jumpnext = false;
+
+            vec jump(0.0f, 0.0f, pl->onfloor); // physics impulse upwards
+            if(water) 
+            {
+                // jump behaves like a strong kick if swimming
+                if(pl->onfloor == 0.0f) jump = m;
+                jump.mul(2.0f);
+            }
+            jump.mul(JUMPVEL);
+            pl->vel.add(jump);
+
+            if(local) playsoundc(S_JUMP);
+            else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
+        };
+    }
+    else
+    {
+        pl->timeinair += curtime;
+    };
+
+
     float v = pl->vel.magnitude();
     if(v > 0.0f)
     {
         /* player is about half as effective at stopping movement as generating it */
         vec fr(pl->vel);
         /* friction resisting current momentum: player generated stopping force + air resistance */
-        fr.mul(min(cfr*0.5f*speed + afr*v, v)/v);
+        fr.mul(min(dfr*0.5f*speed + afr*v, v)/v);
         vec mfr(m);
         /* don't resist momentum in the direction the player is traveling */
-        mfr.mul(min((cfr*0.5f + afr)*speed, v));
+        mfr.mul(min(dfr*0.5f*speed, v));
         fr.sub(mfr);
         pl->vel.sub(fr);
     };
