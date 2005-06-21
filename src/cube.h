@@ -145,7 +145,6 @@ struct dynent                           // players & monsters
     bool jumpnext;
     int move, strafe;
     bool k_left, k_right, k_up, k_down; // see input code
-    vec nextmove;                       // small adjustments to be applied in next move
     float radius, eyeheight, aboveeye;  // bounding box size
     int weight;                         // affects the effectiveness of hitpush
     int lastupdate, plag, ping;

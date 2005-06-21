@@ -136,8 +136,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
 {
     vec old(d->o);
     d->o.add(dir);
-    d->o.add(d->nextmove);
-    d->nextmove = vec(0, 0, 0);
     if(!collide(d))
     {
         if(wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
@@ -172,9 +170,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
         d->vel.sub(v);
 
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
-        
-        d->nextmove.x = push*wall.x; // push against slopes
-        d->nextmove.y = push*wall.y;
 
         return false;
     };
@@ -213,7 +208,6 @@ void dropenttofloor(entity *e)
     d.state = CS_EDITING;
     loopi(hdr.worldsize)
     {
-        d.nextmove = vec(0, 0, 0);
         move(&d, v);
         if(d.blocked || d.onfloor > 0.0f) break;
     };
