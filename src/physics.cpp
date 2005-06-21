@@ -248,7 +248,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
                 gfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
                 afr = floating ? 0.005f : (water ? 0.3f : 0.005f), /* coefficient of friction for the air */
                 sfr = afr + 0.5f*gfr, /* friction against which the player is stopping movement - half as effective as generating movement */
-                dfr = 2.0f*afr + (!water && gfr == 0.0 ? 0.5f : gfr); /* friction against which the player is pushing to generate movement */
+                dfr = 2.0f*afr + (!water && gfr == 0.0 ? 0.3f : gfr); /* friction against which the player is pushing to generate movement */
     
     if(!floating && (!water || (!pl->move && !pl->strafe)))
         pl->vel.z -= GRAVITY*secs;
