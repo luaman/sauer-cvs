@@ -177,7 +177,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
         d->nextmove.y = push*wall.y;
 
         return false;
-    }
+    };
 
     return true;
 };
@@ -205,7 +205,7 @@ void dropenttofloor(entity *e)
         d.radius = 4.0f;
         d.eyeheight = 4.0f;
         d.aboveeye = 2.0f;
-    }
+    };
     d.onfloor = 0.0f;
     d.blocked = false;
     d.moving = true;
@@ -216,7 +216,7 @@ void dropenttofloor(entity *e)
         d.nextmove = vec(0, 0, 0);
         move(&d, v);
         if(d.blocked || d.onfloor > 0.0f) break;
-    }
+    };
     e->o = d.o;
 };
 
@@ -334,7 +334,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     dv.y = ys*max(min(dy, ys*dv.y), 0.0f);
     dv.z = zs*max(min(dz, zs*dv.z), 0.0f);
     pl->vel.add(dv);
-}
+};
 
 // main physics routine, moves a player/monster for a curtime step
 // moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
