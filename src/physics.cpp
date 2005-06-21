@@ -245,9 +245,12 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
 {
     /* accelerate to maximum speed in 1/8th of a second */
     const float speed = 8.0f*secs*pl->maxspeed,
-                cfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
+                gfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
                 afr = floating ? 0.005f : (water ? 0.3f : 0.005f), /* coefficient of friction for the air */
-                dfr = 2.0f*afr + cfr; /* friction against which the player is pushing to generate movement */
+                sfr = afr + 0.5f*gfr, /* friction against which the player is stopping movement - half as effective as generating movement */
+                dfr = 2.0f*afr + (!water && gfr == 0.0 ? 1.0f : gfr); /* friction against which the player is pushing to generate movement
+                                                                       * with added air swim
+                                                                       */
     
     if(!floating && (!water || (!pl->move && !pl->strafe)))
         pl->vel.z -= GRAVITY*secs;
@@ -310,10 +313,10 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         /* player is about half as effective at stopping movement as generating it */
         vec fr(pl->vel);
         /* friction resisting current momentum: player generated stopping force + air resistance */
-        fr.mul(min(dfr*0.5f*speed + afr*v, v)/v);
+        fr.mul(min(sfr*speed + afr*v, v)/v);
         vec mfr(m);
         /* don't resist momentum in the direction the player is traveling */
-        mfr.mul(min(dfr*0.5f*speed, v));
+        mfr.mul(min(sfr*speed, v));
         fr.sub(mfr);
         pl->vel.sub(fr);
     };
