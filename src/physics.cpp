@@ -138,7 +138,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
     d->o.add(dir);
     d->o.add(d->nextmove);
     d->nextmove = vec(0, 0, 0);
-    vec od(dir);
     if(!collide(d))
     {
         if(wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
