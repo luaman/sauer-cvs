@@ -66,10 +66,15 @@ Deletes all entities of said type.
 <pre>editmat</pre>
 Changes the type of material left behind when a cube is deleted.  Currently the following types of materials are supported:
 <ul>
-    <li>Air: the default material, has no effect.</li>
-    <li>Water: acts as you would expect.  Only renders from the top, so treat it like real water and keep all 4 sides contained.</li>
-    <li>Clip: an invisible wall that blocks players movement but not bullets.  Is ideally used to keep players "in bounds" in a map.  Can be used sparingly to smooth out the flow around decoration.</li>
+    <li>air: the default material, has no effect.</li>
+    <li>water: acts as you would expect.  Only renders from the top, so treat it like real water and keep all 4 sides contained.</li>
+    <li>clip: an invisible wall that blocks players movement but not bullets.  Is ideally used to keep players "in bounds" in a map.  Can be used sparingly to smooth out the flow around decoration.</li>
+    <li>noclip: cubes are always treated as empty in physics.</li>
+    <li>glass: a clip like material with a blended surface.</li>
 </ul>
+
+<pre>selextend</pre>
+Extend current selection to include the cursor.
 
 <pre>map name</pre>
 Loads up map "name" in the gamemode set previously by "mode". A map given as "blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to "packages/mypackage/blah.cgz". The menu has a set of maps that can be loaded. See also map in the gameplay docs.
@@ -137,7 +142,7 @@ There should be little reason to tweak this. If in your map you can see visible 
 <pre>lightlod D</pre>
 Default = 0. This will double the resolution of lightmaps (cut the lightprecision in half) if size of the surface being lit is smaller than 2^D units. This allows large maps to have pockets of detailed lighting without using a high resolution over everything.
 <br><br>
-NOTE: if you feel like using this, test it thoroughly. On medium or small sized detailed maps, this command wastes space, use lightlod 0. lightlod 1 is only useful for huge maps with varying detail.
+NOTE: if you feel like using this, test it thoroughly. On medium or small sized detailed maps, this command wastes space, use lightlod 0. Lightlod > 0 is only useful for huge maps
 
 <pre>aalights X</pre>
 Determines whether to use 4x sampling for every lightmap texel. You should not need to touch this var, unless waiting for calclight really bothers you, you can set it to 0 for a 4x speedup and blockier shadows. Also, for a slight increase in appearance, one may set it to 2 to turn on 8x sampling; however, this takes greatly longer and is enabled by default. (Default = 1)
