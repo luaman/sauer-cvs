@@ -42,11 +42,7 @@ void conline(const char *sf, bool highlight)        // add a line to the console
 
 void conoutf(const char *s, ...)
 {
-    string sf;
-    va_list v;
-    va_start(v, s);
-    formatstring(sf, s, v);
-    va_end(v);
+    sprintf_sdv(sf, s);
     s = sf;
     int n = 0;
     while(strlen(s)>WORDWRAP)                       // cut strings to fit on screen
