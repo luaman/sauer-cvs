@@ -40,9 +40,13 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     puts(cl.cref);
 };
 
-void conoutf(const char *s, int a, int b, int c)
+void conoutf(const char *s, ...)
 {
-    sprintf_sd(sf)(s, a, b, c);
+    string sf;
+    va_list v;
+    va_start(v, s);
+    formatstring(sf, s, v);
+    va_end(v);
     s = sf;
     int n = 0;
     while(strlen(s)>WORDWRAP)                       // cut strings to fit on screen

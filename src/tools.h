@@ -83,6 +83,12 @@ inline void strn0cpy(char *d, const char *s, int m) { strncpy(d,s,m); d[(m)-1] =
 inline void strcpy_s(char *d, const char *s) { strn0cpy(d,s,_MAXDEFSTR); };
 inline void strcat_s(char *d, const char *s) { int n = strlen(d); strn0cpy(d+n,s,_MAXDEFSTR-n); };
 
+inline void formatstring(char *d, const char *fmt, va_list v)
+{
+    _vsnprintf(d, _MAXDEFSTR, fmt, v);
+    d[_MAXDEFSTR-1] = 0;
+};
+
 struct sprintf_s_f
 {
     char *d;
@@ -91,9 +97,8 @@ struct sprintf_s_f
     {
         va_list v;
         va_start(v, fmt);
-        _vsnprintf(d, _MAXDEFSTR, fmt, v);
+        formatstring(d, fmt, v);
         va_end(v);
-        d[_MAXDEFSTR-1] = 0;
     };
 };
 
