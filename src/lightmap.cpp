@@ -74,8 +74,7 @@ void show_calclight_progress()
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D); 
     draw_textf("%d%%", VIRTW*7/16, FONTH/2, 2, int(bar1 * 100));
-    sprintf_sd(buf)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100)); 
-    draw_text(buf, VIRTW*5/16, 2*FONTH + FONTH/2, 2);
+    draw_textf("%d textures %d%% utilized", VIRTW*5/16, 2*FONTH + FONTH/2, 2, lightmaps.length(), int(bar2 * 100));
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 
