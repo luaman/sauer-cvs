@@ -76,11 +76,11 @@ void connects(char *servername)
     disconnect(1);  // reset state
     addserver(servername);
 
-    conoutf("attempting to connect to %s", (int)servername);
+    conoutf("attempting to connect to %s", servername);
     ENetAddress address = { ENET_HOST_ANY, CUBE_SERVER_PORT };
     if(enet_address_set_host(&address, servername) < 0)
     {
-        conoutf("could not resolve server %s", (int)servername);
+        conoutf("could not resolve server %s", servername);
         return;
     };
 
@@ -151,8 +151,8 @@ void trydisconnect()
 };
 
 string ctext;
-void toserver(char *text) { conoutf("%s:\f %s", (int)player1->name, (int)text); strcpy_s(ctext, text); };
-void echo(char *text) { conoutf("%s", (int)text); };
+void toserver(char *text) { conoutf("%s:\f %s", player1->name, text); strcpy_s(ctext, text); };
+void echo(char *text) { conoutf("%s", text); };
 
 COMMAND(echo, ARG_VARI);
 COMMANDN(say, toserver, ARG_VARI);
@@ -326,7 +326,7 @@ void gets2c()           // get updates from the server
 
 void neterr(char *s)
 {
-    conoutf("illegal network message (%s)", (int)s);
+    conoutf("illegal network message (%s)", s);
     disconnect();
 };
 
@@ -402,7 +402,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
 
         case SV_TEXT:
             sgetstr();
-            conoutf("%s:\f %s", (int)d->name, (int)&text); 
+            conoutf("%s:\f %s", d->name, &text); 
             break;
 
         case SV_MAPCHANGE:     
@@ -434,12 +434,12 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             if(d->name[0])          // already connected
             {
                 if(strcmp(d->name, text))
-                    conoutf("%s is now known as %s", (int)d->name, (int)&text);
+                    conoutf("%s is now known as %s", d->name, &text);
             }
             else                    // new client
             {
                 c2sinit = false;    // send new players my info again 
-                conoutf("connected: %s", (int)&text);
+                conoutf("connected: %s", &text);
             }; 
             strcpy_s(d->name, text);
             sgetstr();
@@ -451,7 +451,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
         case SV_CDIS:
             cn = getint(p);
             if(!(d = getclient(cn))) break;
-            conoutf("player %s disconnected", (int)d->name); 
+            conoutf("player %s disconnected", d->name); 
             zapdynent(players[cn]);
             break;
 
@@ -485,7 +485,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             int actor = getint(p);
             if(actor==cn)
             {
-                conoutf("%s suicided", (int)d->name);
+                conoutf("%s suicided", d->name);
             }
             else if(actor==clientnum)
             {
@@ -493,12 +493,12 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
                 if(isteam(player1->team, d->team))
                 {
                     frags = -1;
-                    conoutf("you fragged a teammate (%s)", (int)d->name);
+                    conoutf("you fragged a teammate (%s)", d->name);
                 }
                 else
                 {
                     frags = 1;
-                    conoutf("you fragged %s", (int)d->name);
+                    conoutf("you fragged %s", d->name);
                 };
                 addmsg(1, 2, SV_FRAGS, player1->frags += frags);
             }
@@ -509,11 +509,11 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
                 {
                     if(isteam(a->team, d->name))
                     {
-                        conoutf("%s fragged his teammate (%s)", (int)a->name, (int)d->name);
+                        conoutf("%s fragged his teammate (%s)", a->name, d->name);
                     }
                     else
                     {
-                        conoutf("%s fragged %s", (int)a->name, (int)d->name);
+                        conoutf("%s fragged %s", a->name, d->name);
                     };
                 };
             };
@@ -585,7 +585,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
         case SV_RECVMAP:
         {
             sgetstr();
-            conoutf("received map \"%s\" from server, reloading..", (int)&text);
+            conoutf("received map \"%s\" from server, reloading..", &text);
             int mapsize = getint(p);
             writemap(text, mapsize, p);
             p += mapsize;
@@ -595,7 +595,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
         
         case SV_SERVMSG:
             sgetstr();
-            conoutf("%s", (int)text);
+            conoutf("%s", text);
             break;
 
         case SV_EXT:        // so we can messages without breaking previous clients/servers, if necessary

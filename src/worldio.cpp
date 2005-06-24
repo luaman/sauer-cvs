@@ -48,17 +48,17 @@ void writemap(char *mname, int msize, uchar *mdata)
     setnames(mname);
     backup(cgzname, bakname);
     FILE *f = fopen(cgzname, "wb");
-    if(!f) { conoutf("could not write map to %s", (int)cgzname); return; };
+    if(!f) { conoutf("could not write map to %s", cgzname); return; };
     fwrite(mdata, 1, msize, f);
     fclose(f);
-    conoutf("wrote map %s as file %s", (int)mname, (int)cgzname);
+    conoutf("wrote map %s as file %s", mname, cgzname);
 }
 
 uchar *readmap(char *mname, int *msize)
 {
     setnames(mname);
     uchar *mdata = (uchar *)loadfile(cgzname, msize);
-    if(!mdata) { conoutf("could not read map %s", (int)cgzname); return NULL; };
+    if(!mdata) { conoutf("could not read map %s", cgzname); return NULL; };
     return mdata;
 }
 
@@ -175,7 +175,7 @@ void save_world(char *mname)
     setnames(mname);
     backup(cgzname, bakname);
     gzFile f = gzopen(cgzname, "wb9");
-    if(!f) { conoutf("could not write map to %s", (int)cgzname); return; };
+    if(!f) { conoutf("could not write map to %s", cgzname); return; };
     hdr.version = MAPVERSION;
     hdr.numents = 0;
     loopv(ents) if(ents[i].type!=NOTUSED) hdr.numents++;
@@ -202,7 +202,7 @@ void save_world(char *mname)
     }
 
     gzclose(f);
-    conoutf("wrote map file %s", (int)cgzname);
+    conoutf("wrote map file %s", cgzname);
     settagareas();
 };
 
@@ -210,7 +210,7 @@ void load_world(char *mname)        // still supports all map formats that have 
 {
     setnames(mname);
     gzFile f = gzopen(cgzname, "rb9");
-    if(!f) { conoutf("could not read map %s", (int)cgzname); return; };
+    if(!f) { conoutf("could not read map %s", cgzname); return; };
     gzread(f, &hdr, sizeof(header));
     endianswap(&hdr.version, sizeof(int), 16);
     if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
@@ -249,8 +249,8 @@ void load_world(char *mname)        // still supports all map formats that have 
 
     gzclose(f);
     settagareas();
-    conoutf("read map %s (%d milliseconds)", (int)cgzname, SDL_GetTicks()-lastmillis);
-    conoutf("%s", (int)hdr.maptitle);
+    conoutf("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
+    conoutf("%s", hdr.maptitle);
     startmap(mname);
     loopi(256)
     {
@@ -283,7 +283,7 @@ void savegame(char *name)
     if(!m_classicsp) { conoutf("can only save classic sp games"); return; };
     sprintf_sd(fn)("savegames/%s.csgz", name);
     gzFile f = gzopen(fn, "wb9");
-    if(!f) { conoutf("could not write %s", (int)fn); return; };
+    if(!f) { conoutf("could not write %s", fn); return; };
     gzwrite(f, (void *)"CUBESAVE", 8);
     gzputc(f, islittleendian);
     gzputi(f, SAVEGAMEVERSION);
@@ -297,7 +297,7 @@ void savegame(char *name)
     gzputi(f, monsters.length());
     loopv(monsters) gzwrite(f, monsters[i], sizeof(dynent));
     gzclose(f);
-    conoutf("wrote %s", (int)fn);
+    conoutf("wrote %s", fn);
 };
 
 gzFile f = NULL;
@@ -307,7 +307,7 @@ void loadgame(char *name)
     if(multiplayer()) return;
     sprintf_sd(fn)("savegames/%s.csgz", name);
     f = gzopen(fn, "rb9");
-    if(!f) { conoutf("could not open %s", (int)fn); return; };
+    if(!f) { conoutf("could not open %s", fn); return; };
 
     string buf;
     gzread(f, buf, 8);

@@ -38,7 +38,7 @@ void selectgun(int a, int b, int c)
     else s = GUN_FIST;
     if(s!=player1->gunselect) playsoundc(S_WEAPLOAD);
     player1->gunselect = s;
-    //conoutf("%s selected", (int)guns[s].name);
+    //conoutf("%s selected", guns[s].name);
 };
 
 int reloadtime(int gun) { return guns[gun].attackdelay; };

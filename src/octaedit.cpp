@@ -655,7 +655,7 @@ void editmat(char *name)
             return;
         }
     }
-    conoutf("unknown material \"%s\"", (int)name);
+    conoutf("unknown material \"%s\"", name);
     return;
 }
 

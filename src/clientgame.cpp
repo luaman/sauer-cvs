@@ -165,7 +165,7 @@ void arenarespawn()
         if(dead>0 && (alive<=1 || (m_teammode && oneteam)))
         {
             conoutf("arena round is over! next round in 5 seconds...");
-            if(alive) conoutf("team %s is last man standing", (int)lastteam);
+            if(alive) conoutf("team %s is last man standing", lastteam);
             else conoutf("everyone died!");
             arenarespawnwait = lastmillis+5000;
             arenadetectwait  = lastmillis+10000;
@@ -238,7 +238,7 @@ void entinmap(dynent *d, bool froment)    // brute force but effective way to fi
         d->o.y += (rnd(21)-10)*i;
         d->o.z += rnd(21)*i;
     };
-    conoutf("can't find entity spawn spot! (%d, %d)", (int)d->o.x, (int)d->o.y);
+    conoutf("can't find entity spawn spot! (%d, %d)", d->o.x, d->o.y);
     // leave ent at original pos, possibly stuck
 };
 
@@ -336,7 +336,7 @@ void selfdamage(int damage, int actor, dynent *act)
     {
         if(actor==-2)
         {
-            conoutf("you got killed by %s!", (int)&act->name);
+            conoutf("you got killed by %s!", &act->name);
         }
         else if(actor==-1)
         {
@@ -351,11 +351,11 @@ void selfdamage(int damage, int actor, dynent *act)
             {
                 if(isteam(a->team, player1->team))
                 {
-                    conoutf("you got fragged by a teammate (%s)", (int)a->name);
+                    conoutf("you got fragged by a teammate (%s)", a->name);
                 }
                 else
                 {
-                    conoutf("you got fragged by %s", (int)a->name);
+                    conoutf("you got fragged by %s", a->name);
                 };
             };
         };
@@ -430,7 +430,7 @@ void startmap(char *name)   // called just after a map load
     setvar("fogcolour", 0x8099B3);
     showscores(false);
     intermission = false;
-    conoutf("game mode is %s", (int)modestr(gamemode));
+    conoutf("game mode is %s", modestr(gamemode));
 };
 
 COMMANDN(map, changemap, ARG_1STR);

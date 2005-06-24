@@ -48,7 +48,7 @@ void initsound()
     #ifdef USE_MIXER
         if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 512)<0)
         {
-            conoutf("sound init failed (SDL_mixer): %s", (int) Mix_GetError());
+            conoutf("sound init failed (SDL_mixer): %s",  Mix_GetError());
             soundvol = 0;
         };
     #else
@@ -132,7 +132,7 @@ void playsound(int n, vec *loc)
             samples[n] = FSOUND_Sample_Load(n, path(buf), 0, 0);
         #endif
 
-        if(!samples[n]) { /*conoutf("failed to load sample: %s", (int)&buf);*/ return; };
+        if(!samples[n]) { /*conoutf("failed to load sample: %s", &buf);*/ return; };
     };
     int vol = soundvol;
     if(loc)

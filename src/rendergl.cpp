@@ -101,8 +101,8 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit)
 bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit)
 {
     SDL_Surface *s = IMG_Load(texname);
-    if(!s) { conoutf("couldn't load texture %s", (int)texname); return false; };
-    if(s->format->BitsPerPixel!=24) { conoutf("texture must be 24bpp: %s", (int)texname); return false; };
+    if(!s) { conoutf("couldn't load texture %s", texname); return false; };
+    if(s->format->BitsPerPixel!=24) { conoutf("texture must be 24bpp: %s", texname); return false; };
     // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };  
     createtexture(tnum, s->w, s->h, s->pixels, clamp, mipit);
     xs = s->w;
@@ -220,7 +220,7 @@ VARF(gamma, 30, 100, 300,
     if(SDL_SetGamma(f,f,f)==-1)
     {
         conoutf("Could not set gamma (card/driver doesn't support it?)");
-        conoutf("sdl: %s", (int)SDL_GetError());
+        conoutf("sdl: %s", SDL_GetError());
     };
 });
 

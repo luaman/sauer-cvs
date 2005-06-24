@@ -59,7 +59,7 @@ void delent()
     int e = closestent();
     if(e<0) { conoutf("no more entities"); return; };
     int t = ents[e].type;
-    conoutf("%s entity deleted", (int)entnames[t]);
+    conoutf("%s entity deleted", entnames[t]);
     ents[e].type = NOTUSED;
     addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
     ///if(t==LIGHT) calclight();
@@ -68,7 +68,7 @@ void delent()
 int findtype(char *what)
 {
     loopi(MAXENTTYPES) if(strcmp(what, entnames[i])==0) return i;
-    conoutf("unknown entity type \"%s\"", (int)what);
+    conoutf("unknown entity type \"%s\"", what);
     return NOTUSED;
 }
 
