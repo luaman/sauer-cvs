@@ -320,7 +320,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     float xs = (m.x < 0.0f ? -1.0f : 1.0f),
           ys = (m.y < 0.0f ? -1.0f : 1.0f),
           zs = (m.z < 0.0f ? -1.0f : 1.0f),
-          limit = pl->maxspeed*dfr,
+          limit = pl->maxspeed,
           dx = xs*(m.x*limit - pl->vel.x),
           dy = ys*(m.y*limit - pl->vel.y),
           dz = zs*(m.z*limit - pl->vel.z);
