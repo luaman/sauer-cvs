@@ -155,7 +155,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
                 wall = obstacle;
             };
         };
-        if(wall.z == 0.0f) d->blocked = true;
+        if(wall.z <= 0.0f) d->blocked = true;
         else
         {
             d->timeinair = 0;
@@ -339,6 +339,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
     const float secs = curtime/1000.f;
+    const float elasticity = pl->vel.x == 0.0f && pl->vel.y == 0.0f && pl->vel.z <= 0.0f && pl->vel.z >= GRAVITY*-0.05f ? 1.0f : 1.2f;
 
     vec d(pl->vel);
     d.mul(secs);
@@ -360,7 +361,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push, 1.2f)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d, push, elasticity)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);
