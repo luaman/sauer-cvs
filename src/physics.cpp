@@ -239,6 +239,8 @@ void physicsframe()          // optimally schedule physics frames inside the gra
 VAR(physics_friction_air, 1, 5, 1000);
 VAR(physics_friction_water, 1, 300, 1000);
 VAR(physics_friction_ground, 1, 400, 1000);
+VAR(physics_friction_stop, 1, 500, 1000);
+VAR(physics_friction_jump, 1, 400, 1000);
 
 void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, float secs)
 {
@@ -246,8 +248,8 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     const float speed = 8.0f*secs*pl->maxspeed,
                 gfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
                 afr = floating ? physics_friction_air/1000.0f : (water ? physics_friction_water/1000.0f : physics_friction_air/1000.0f), /* coefficient of friction for the air */
-                dfr = afr + (gfr == 0.0 ? physics_friction_ground/1000.0f : gfr), /* friction against which the player is pushing to generate movement */
-                sfr = 0.5f*(afr + gfr); /* friction against which the player is stopping movement - half as effective as generating movement */
+                dfr = afr + (gfr == 0.0 ? physics_friction_jump/1000.0f : gfr), /* friction against which the player is pushing to generate movement */
+                sfr = (physics_friction_stop/1000.f)*(afr + gfr); /* friction against which the player is stopping movement */
                 
     if(!floating && (!water || (!pl->move && !pl->strafe)))
         pl->vel.z -= GRAVITY*secs;
@@ -307,7 +309,6 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     float v = pl->vel.magnitude();
     if(v > 0.0f)
     {
-        /* player is about half as effective at stopping movement as generating it */
         vec fr(pl->vel);
         /* friction resisting current momentum: player generated stopping force + air resistance */
         fr.mul(min(sfr*speed + afr*v, v)/v);
