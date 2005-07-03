@@ -47,6 +47,7 @@ enum { ST_EMPTY, ST_LOCAL, ST_TCPIP };
 struct client                   // server side version of "dynent" type
 {
     int type;
+    int num;
     ENetPeer *peer;
     string hostname;
     string mapvote;
@@ -54,7 +55,7 @@ struct client                   // server side version of "dynent" type
     int modevote;
 };
 
-vector<client> clients;
+vector<client *> clients;
 
 char msgsizesl[] =               // size inclusive message token, 0 for variable or not-checked sizes
 { 
@@ -115,17 +116,17 @@ void disconnect_client(int n, char *reason);
 
 void send(int n, ENetPacket *packet)
 {
-    switch(clients[n].type)
+    switch(clients[n]->type)
     {
         case ST_TCPIP:
         {
-            enet_peer_send(clients[n].peer, 0, packet);
+            enet_peer_send(clients[n]->peer, 0, packet);
             bsend += packet->dataLength;
             break;
         };
 
         case ST_LOCAL:
-            localservertoclient(packet->data, packet->dataLength);
+            localservertoclient(packet->data, (int)packet->dataLength);
             break;
 
     };
@@ -160,9 +161,9 @@ void sendservmsg(char *msg)
 
 void disconnect_client(int n, char *reason)
 {
-    printf("disconnecting client (%s) [%s]\n", clients[n].hostname, reason);
-    enet_peer_disconnect(clients[n].peer);
-    clients[n].type = ST_EMPTY;
+    printf("disconnecting client (%s) [%s]\n", clients[n]->hostname, reason);
+    enet_peer_disconnect(clients[n]->peer);
+    clients[n]->type = ST_EMPTY;
     send2(true, -1, SV_CDIS, n);
 };
 
@@ -211,21 +212,21 @@ void recvmap(int n)
 
 void resetvotes()
 {
-    loopv(clients) clients[i].mapvote[0] = 0;
+    loopv(clients) clients[i]->mapvote[0] = 0;
 };
 
 bool vote(char *map, int reqmode, int sender)
 {
-    strcpy_s(clients[sender].mapvote, map);
-    clients[sender].modevote = reqmode;
+    strcpy_s(clients[sender]->mapvote, map);
+    clients[sender]->modevote = reqmode;
     int yes = 0, no = 0; 
-    loopv(clients) if(clients[i].type!=ST_EMPTY)
+    loopv(clients) if(clients[i]->type!=ST_EMPTY)
     {
-        if(clients[i].mapvote[0]) { if(strcmp(clients[i].mapvote, map)==0 && clients[i].modevote==reqmode) yes++; else no++; }
+        if(clients[i]->mapvote[0]) { if(strcmp(clients[i]->mapvote, map)==0 && clients[i]->modevote==reqmode) yes++; else no++; }
         else no++;
     };
     if(yes==1 && no==0) return true;  // single player
-    sprintf_sd(msg)("%s suggests %s on map %s (set map to vote)", clients[sender].name, modestr(reqmode), map);
+    sprintf_sd(msg)("%s suggests %s on map %s (set map to vote)", clients[sender]->name, modestr(reqmode), map);
     sendservmsg(msg);
     if(yes/(float)(yes+no) <= 0.5f) return false;
     sendservmsg("vote passed");
@@ -258,7 +259,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
 
         case SV_INITC2S:
             sgetstr();
-            strcpy_s(clients[cn].name, text);
+            strcpy_s(clients[cn]->name, text);
             sgetstr();
             getint(p);
             break;
@@ -307,7 +308,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
         case SV_POS:
         {
             cn = getint(p);
-            if(cn<0 || cn>=clients.length() || clients[cn].type==ST_EMPTY)
+            if(cn<0 || cn>=clients.length() || clients[cn]->type==ST_EMPTY)
             {
                 disconnect_client(sender, "client num");
                 return;
@@ -369,7 +370,7 @@ void send_welcome(int n)
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     send(n, packet);
-    if(clients[n].type == ST_LOCAL)
+    if(clients[n]->type == ST_LOCAL)
         enet_packet_destroy(packet);
 };
 
@@ -389,10 +390,10 @@ void localclienttoserver(ENetPacket *packet)
       enet_packet_destroy (packet);
 };
 
-client &addclient()
+client *addclient()
 {
-    loopv(clients) if(clients[i].type==ST_EMPTY) return clients[i];
-    return clients.add();
+    loopv(clients) if(clients[i]->type==ST_EMPTY) return clients[i];
+    return clients.add(new client);
 };
 
 void checkintermission()
@@ -426,7 +427,7 @@ void sendpongs()        // reply all server info requests
         putint(p, PROTOCOL_VERSION);
         putint(p, mode);
         numplayers = 0;
-        loopv(clients) if(clients[i].type!=ST_EMPTY) ++numplayers;
+        loopv(clients) if(clients[i]->type!=ST_EMPTY) ++numplayers;
         putint(p, numplayers);
         putint(p, minremain);
         sendstring(smapname, p);
@@ -537,7 +538,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
     if(interm && seconds>interm)
     {
         interm = 0;
-        loopv(clients) if(clients[i].type!=ST_EMPTY)
+        loopv(clients) if(clients[i]->type!=ST_EMPTY)
         {
             send2(true, i, SV_MAPRELOAD, 0);    // ask a client to trigger map reload
             mapreload = true;
@@ -563,7 +564,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
     if(seconds-laststatus>60)   // display bandwidth stats, useful for server ops
     {
         nonlocalclients = 0;
-        loopv(clients) if(clients[i].type==ST_TCPIP) nonlocalclients++;
+        loopv(clients) if(clients[i]->type==ST_TCPIP) nonlocalclients++;
         laststatus = seconds;     
         if(nonlocalclients || bsend || brec) printf("status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, bsend/60.0f/1024, brec/60.0f/1024);
         bsend = brec = 0;
@@ -575,28 +576,30 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
     {
         case ENET_EVENT_TYPE_CONNECT:
         {
-            client &c = addclient();
+            client &c = *addclient();
             c.type = ST_TCPIP;
+            c.num = clients.length()-1;
             c.peer = event.peer;
-            c.peer->data = (void *)(&c-&clients[0]);
+            c.peer->data = &c;
             char hn[1024];
             strcpy_s(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "localhost");
             printf("client connected (%s)\n", c.hostname);
-            send_welcome(&c-&clients[0]); 
+            send_welcome(c.num); 
             break;
         }
         case ENET_EVENT_TYPE_RECEIVE:
             brec += event.packet->dataLength;
-            process(event.packet, (int)event.peer->data); 
+            process(event.packet, ((client *)event.peer->data)->num); 
             if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT: 
-            if((int)event.peer->data<0) break;
-            printf("disconnected client (%s)\n", clients[(int)event.peer->data].hostname);
-            clients[(int)event.peer->data].type = ST_EMPTY;
-            send2(true, -1, SV_CDIS, (int)event.peer->data);
-            event.peer->data = (void *)-1;
+            if(!event.peer->data) break;
+            int num = ((client *)event.peer->data)->num;
+            printf("disconnected client (%s)\n", clients[num]->hostname);
+            clients[num]->type = ST_EMPTY;
+            send2(true, -1, SV_CDIS, num);
+            event.peer->data = NULL;
             break;
     };
 };
@@ -608,15 +611,16 @@ void cleanupserver()
 
 void localdisconnect()
 {
-    loopv(clients) if(clients[i].type==ST_LOCAL) clients[i].type = ST_EMPTY;
+    loopv(clients) if(clients[i]->type==ST_LOCAL) clients[i]->type = ST_EMPTY;
 };
 
 void localconnect()
 {
-    client &c = addclient();
+    client &c = *addclient();
     c.type = ST_LOCAL;
+    c.num = clients.length()-1;
     strcpy_s(c.hostname, "local");
-    send_welcome(&c-&clients[0]); 
+    send_welcome(c.num); 
 };
 
 void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char *master)

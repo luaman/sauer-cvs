@@ -241,7 +241,7 @@ void buildmapnames()
     if(Find != INVALID_HANDLE_VALUE)
     {
         do {
-            mapnames.add(newstring(FindFileData.cFileName, strlen(FindFileData.cFileName) - 4));
+            mapnames.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - 4));
         } while(FindNextFile(Find, &FindFileData));
     }
     #elif defined(__GNUC__)
@@ -271,7 +271,7 @@ void complete(char *s)
         strcat_s(s, t);
     };
     if(!s[1]) return;
-    if(!completesize) { completesize = strlen(s)-1; completeidx = 0; };
+    if(!completesize) { completesize = (int)strlen(s)-1; completeidx = 0; };
     int idx;
     if(completesize >= 4 && strncmp(s,"/map ", 5)==0)           // complete a mapname in packages/base/ instead of a command
     {
