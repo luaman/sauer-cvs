@@ -103,7 +103,8 @@ bool mapreload = false;
 
 bool listenserv;
 ENetHost * serverhost = NULL;
-int bsend = 0, brec = 0, laststatus = 0, lastsec = 0;
+size_t bsend = 0, brec = 0;
+int laststatus = 0, lastsec = 0;
 ENetSocket pongsock = ENET_SOCKET_NULL;
 
 #define MAXOBUF 100000
