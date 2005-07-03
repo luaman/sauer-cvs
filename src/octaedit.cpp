@@ -418,6 +418,34 @@ void pushedge(uchar &edge, int dir, int dc)
     if((dir<0 && dc && oe>ne) || (dir>0 && dc==0 && oe<ne)) edge = edgeset(edge, 1-dc, ne);
 };
 
+bool touching(int orient)
+{
+    loopselxyz(if(!touchingface(c, orient)) return false;);
+    return true;
+};
+
+void editheight(int dir)
+{
+    if(noedit()) return;
+    int d = dimension(sel.orient);
+    int dc = dimcoord(sel.orient);
+    int seldir = dc ? -dir : dir;
+    sel.s[R(d)]=2;
+    sel.s[C(d)]=2;
+    sel.s[D(d)]=1;
+    if(dir<0 && touching(sel.orient)) sel.o[D(d)] += seldir*sel.grid;
+    loopselxyz(
+        if(c.children) solidfaces(c);
+        if(isempty(c)) { solidfaces(c); c.faces[d] = dc ? 0 : 0x88888888; };
+        discardchildren(c);
+        uchar &e = c.edges[edgeindex(1-x, 1-y, d)];
+        pushedge(e, seldir, dc);
+        optiface((uchar *)&c.faces[d], c);
+    );
+};
+
+COMMAND(editheight, ARG_1INT);
+
 void editface(int dir, int mode)
 {
     if(noedit()) return;
@@ -463,7 +491,7 @@ COMMAND(editface, ARG_2INT);
 
 void selextend()
 {
-    if(noedit()) return;    
+    if(noedit()) return;
     loopi(3)
     {
         if(cur[i]<sel.o[i])
