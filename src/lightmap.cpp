@@ -156,9 +156,9 @@ inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
     if(lm_w != y->w || lm_h != y->h) return false;
     uchar *xdata = lm,
           *ydata = lightmaps[y->lmid - 1].data + 3*(y->x + y->y*LM_PACKW);
-    loopi(lm_h)
+    loopi((int)lm_h)
     {
-        loopj(lm_w)
+        loopj((int)lm_w)
         {
             loopk(3) if(*xdata++ != *ydata++) return false;
         }
@@ -171,7 +171,7 @@ inline uint hthash (surfaceinfo *info)
 {
     uint hash = lm_w + (lm_h<<8);
     uchar *color = lm;
-    loopi(lm_w*lm_h)
+    loopi((int)(lm_w*lm_h))
     {
        hash ^= (color[0] + (color[1] << 8) + (color[2] << 16));
        color += 3;
@@ -185,7 +185,7 @@ VAR(lightcompress, 0, 3, 6);
 
 void pack_lightmap(surfaceinfo &surface) 
 {
-    if(lm_w <= lightcompress && lm_h <= lightcompress)
+    if((int)lm_w <= lightcompress && (int)lm_h <= lightcompress)
     {
         surfaceinfo **val = compressed.access(&surface);
         if(!val)
