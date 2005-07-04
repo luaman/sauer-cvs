@@ -238,7 +238,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
 
 VAR(physics_friction_air, 1, 5, 1000);
 VAR(physics_friction_water, 1, 300, 1000);
-VAR(physics_friction_stop, 1, 500, 1000);
+VAR(physics_friction_stop, 1, 700, 1000);
 VAR(physics_friction_jump, 1, 400, 1000);
 
 void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, float secs)
