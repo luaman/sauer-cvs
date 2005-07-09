@@ -937,7 +937,7 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
 ////////// (re)mip //////////
 
 int rvertedge(int e, int dc) { return (R(e>>2)<<2)+(e&2?1:0)+(dc?2:0); };
-int eavg(int a, int b)       { return (a+b)>>1; };
+uchar eavg(uchar a, uchar b) { return ((a>>1)&0x77) + ((b>>1)&0x77); };
 
 void subdividecube(cube &c)
 {
