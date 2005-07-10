@@ -781,7 +781,7 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz)
     vfcV[2] = yptovec(yawm, pitch);  // right plane
     vfcV[3] = yptovec(yaw,  pitchp); // top plane
     vfcV[4] = yptovec(yaw,  pitchm); // bottom plane
-    loopi(5) vfcD[i] = vfcV[i].dot(player1->o);
+    loopi(5) vfcD[i] = vfcV[i].dot(camera1->o);
     vfcDfog = getvar("fog");
 
     //visiblecubec(c, size, cx, cy, cz);

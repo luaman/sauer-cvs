@@ -11,6 +11,7 @@ COMMAND(mode, ARG_1INT);
 bool intermission = false;
 
 dynent *player1 = newdynent();          // our client
+dynent *camera1 = NULL;
 dvector players;                        // other clients
 
 VAR(sensitivity, 0, 10, 1000);

@@ -231,7 +231,7 @@ int main(int argc, char **argv)
         serverslice(time(NULL), 0);
         
         frames++;
-        fps = (1000.0f/curtime+fps*50)/51;
+        fps = (1000.0f/curtime+fps*10)/11;
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
         
         readdepth(scr_w, scr_h);

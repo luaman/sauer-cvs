@@ -123,7 +123,7 @@ bool collide(dynent *d)
         if(!o || o==d) continue;
         if(!plcollide(d, o)) return false;
     };
-    if(d!=player1) if(!plcollide(d, player1)) return false;
+    if(d!=player1 && d!=camera1) if(!plcollide(d, player1)) return false;
     dvector &v = getmonsters();
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
@@ -241,7 +241,7 @@ VAR(physics_friction_water, 1, 300, 1000);
 VAR(physics_friction_stop, 1, 700, 1000);
 VAR(physics_friction_jump, 1, 400, 1000);
 
-void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, float secs)
+void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, float secs, float gravity)
 {
     /* accelerate to maximum speed in 1/8th of a second */
     const float speed = 8.0f*secs*pl->maxspeed,
@@ -251,7 +251,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
                 sfr = (physics_friction_stop/1000.f)*(afr + gfr); /* friction against which the player is stopping movement */
                 
     if(!floating && (!water || (!pl->move && !pl->strafe)))
-        pl->vel.z -= GRAVITY*secs;
+        pl->vel.z -= gravity*secs;
 
     if(floating)
     {
@@ -283,11 +283,11 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         m.x = (float)(pl->move*cos(rad(pl->yaw-90)));
         m.y = (float)(pl->move*sin(rad(pl->yaw-90)));
 
-        if(floating || water)
+        if(floating || water || gravity==0)
         {
             m.x *= (float)cos(rad(pl->pitch));
             m.y *= (float)cos(rad(pl->pitch));
-            if(floating || pl->move) m.z = (float)(pl->move*sin(rad(pl->pitch)));
+            if(floating || pl->move || gravity==0) m.z = (float)(pl->move*sin(rad(pl->pitch)));
         };
 
         m.x += (float)(pl->strafe*cos(rad(pl->yaw-180)));
@@ -338,7 +338,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
 // moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
 // local is false for multiplayer prediction
 
-void moveplayer(dynent *pl, int moveres, bool local, int curtime)
+void moveplayer(dynent *pl, int moveres, bool local, int curtime, bool nogravity)
 {
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
@@ -374,7 +374,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     };
 
     // apply any player generated changes in velocity
-    modifyvelocity(pl, moveres, local, water, floating, secs);
+    modifyvelocity(pl, moveres, local, water, floating, secs, nogravity ? 0 : GRAVITY);
 
     // automatically apply smooth roll when strafing
 
@@ -404,7 +404,7 @@ void worldhurts(dynent *d, int damage)
 
 void moveplayer(dynent *pl, int moveres, bool local)
 {
-    loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
+    loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1), false);
     if(pl->o.z<0  && pl->state != CS_DEAD) worldhurts(pl, 400);
 };
 

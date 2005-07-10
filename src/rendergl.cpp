@@ -232,7 +232,7 @@ void transplayer()
     glRotatef(player1->pitch,-1.0,0.0,0.0);
     glRotatef(player1->yaw,0.0,1.0,0.0);
 
-    glTranslatef(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.8f : 0)-player1->o.z-player1->bob, -player1->o.y);   
+    glTranslatef(-camera1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.8f : 0)-camera1->o.z-player1->bob, -camera1->o.y);   
 };
 
 VAR(fov, 10, 105, 120);
@@ -297,10 +297,38 @@ void drawskybox(int farplane, bool limited)
     glEnable(GL_FOG);
 }
 
+VAR(thirdperson, 0, 0, 1);
+VAR(thirdpersondistance, 10, 50, 1000);
+
+void recomputecamera()
+{
+    if(editmode || !thirdperson)
+    {
+        camera1 = player1;
+    }
+    else
+    {
+        static dynent tempcamera;
+        camera1 = &tempcamera;
+        *camera1 = *player1;
+        camera1->move = -1;
+        camera1->strafe = 0;
+        camera1->vel = vec(0, 0, 0);
+        
+        loopi(10)
+        {
+            camera1->timeinair = 0;
+            moveplayer(camera1, 10, true, thirdpersondistance, true);
+        };
+    };
+};
+
 extern int explicitsky, skyarea;
 
 void gl_drawframe(int w, int h, float changelod, float curfps)
 {
+    recomputecamera();
+    
     glClear(GL_DEPTH_BUFFER_BIT);
 
     float fovy = (float)fov*h/w;
@@ -350,7 +378,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     if(!limitsky) drawskybox(farplane, false);
 
-    drawhudgun(fovy, aspect, farplane);
+    if(player1==camera1) drawhudgun(fovy, aspect, farplane);
 
     rendermaterials();
 

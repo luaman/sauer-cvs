@@ -225,9 +225,14 @@ typedef vector<ushort> usvector;
 // globals ooh naughty
 
 extern header hdr;                      // current map header
-extern dynent *player1;                 // special client ent that receives input and acts as camera
+
+extern dynent *player1;                 // special client ent that receives input
+extern dynent *camera1;                 // special ent that acts as camera, same object as player1 in FPS mode
+
 extern dvector players;                 // all the other clients (in multiplayer)
+
 extern bool editmode;
+
 extern vector<entity> ents;             // map entities
 extern vec worldpos;                    // current target of the crosshair in the world
 extern int lastmillis;                  // last time
@@ -420,6 +425,7 @@ extern void loadgamerest();
 
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
+extern void moveplayer(dynent *pl, int moveres, bool local, int curtime, bool nogravity);
 extern bool collide(dynent *d);
 extern void entinmap(dynent *d, bool froment = true);
 extern void setentphysics(int mml, int mmr);

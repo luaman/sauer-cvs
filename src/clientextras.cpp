@@ -15,6 +15,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
     float speed = 100.0f;
     float mz = d->o.z-d->eyeheight+6.2f*scale;
     int basetime = -((int)d&0xFFF);
+    bool att = d==player1 && player1!=camera1 && lastmillis-d->lastaction<500;
     if(d->state==CS_DEAD)
     {
         int r;
@@ -30,7 +31,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
     }
     else if(d->state==CS_EDITING)                   { n = 16; }
     else if(d->state==CS_LAGGED)                    { n = 17; }
-    else if(d->monsterstate==M_ATTACKING)           { n = 8;  }
+    else if(d->monsterstate==M_ATTACKING || att)    { n = 8;  }
     else if(d->monsterstate==M_PAIN)                { n = 10; }
     else if(d->timeinair > 100)                     { n = 18; }
     else if((!d->move && !d->strafe) || !d->moving) { n = 12; }
@@ -46,6 +47,7 @@ void renderclients()
 {
     dynent *d;
     loopv(players) if(d = players[i]) renderclient(d, isteam(player1->team, d->team), "monster/ogro", 1.0f);
+    if(player1!=camera1) renderclient(player1, false, "monster/ogro", 1.0f);
 };
 
 // creation of scoreboard pseudo-menu
