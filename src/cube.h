@@ -71,7 +71,7 @@ struct vec
     void div(float f)        { x /= f; y /= f; z /= f; };
     void add(const vec &o)   { x += o.x; y += o.y; z += o.z; };
     void sub(const vec &o)   { x -= o.x; y -= o.y; z -= o.z; };
-    float magnitude() const  { return (float)sqrt(dot(*this)); };
+    float magnitude() const  { return sqrtf(dot(*this)); };
     void normalize()         { div(magnitude()); };
     bool isnormalized() const { float m = squaredlen(); return (m>0.99f && m<1.01f); };
     float dist(const vec &e) { vec t; return dist(e, t); };
@@ -406,7 +406,6 @@ extern void dot(int x, int y, float z);
 extern void newsphere(vec &o, float max, int type);
 extern void renderspheres(int time);
 extern void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater);
-extern void readdepth(int w, int h);
 extern void blendbox(int x1, int y1, int x2, int y2, bool border);
 extern void damageblend(int n);
 
@@ -425,12 +424,13 @@ extern void loadgamerest();
 
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
-extern void moveplayer(dynent *pl, int moveres, bool local, int curtime, bool nogravity);
+extern bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera);
 extern bool collide(dynent *d);
 extern void entinmap(dynent *d, bool froment = true);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
+extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
 
 // sound
 extern void playsound(int n, vec *loc = 0);

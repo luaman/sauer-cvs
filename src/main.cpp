@@ -234,7 +234,6 @@ int main(int argc, char **argv)
         fps = (1000.0f/curtime+fps*10)/11;
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
         
-        readdepth(scr_w, scr_h);
         SDL_GL_SwapBuffers();
         gl_drawframe(scr_w, scr_h, fps<minfps ? fps/minfps : (fps>maxfps ? fps/maxfps : 1.0f), fps);
 

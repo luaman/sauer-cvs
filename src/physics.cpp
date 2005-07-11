@@ -217,6 +217,22 @@ void dropenttofloor(entity *e)
 
 float rad(float x) { return x*3.14159f/180; };
 
+void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating)
+{
+    m.x = move*cosf(rad(yaw-90));
+    m.y = move*sinf(rad(yaw-90));
+
+    if(floating)
+    {
+        m.x *= cosf(rad(pitch));
+        m.y *= cosf(rad(pitch));
+        m.z = move*sinf(rad(pitch));
+    };
+
+    m.x += strafe*cosf(rad(yaw-180));
+    m.y += strafe*sinf(rad(yaw-180));
+};
+
 VAR(maxroll, 0, 3, 20);
 
 int physicsfraction = 0, physicsrepeat = 0;
@@ -280,18 +296,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     vec m(0.0f, 0.0f, 0.0f);
     if(pl->move || pl->strafe)
     {
-        m.x = (float)(pl->move*cos(rad(pl->yaw-90)));
-        m.y = (float)(pl->move*sin(rad(pl->yaw-90)));
-
-        if(floating || water || gravity==0)
-        {
-            m.x *= (float)cos(rad(pl->pitch));
-            m.y *= (float)cos(rad(pl->pitch));
-            if(floating || pl->move || gravity==0) m.z = (float)(pl->move*sin(rad(pl->pitch)));
-        };
-
-        m.x += (float)(pl->strafe*cos(rad(pl->yaw-180)));
-        m.y += (float)(pl->strafe*sin(rad(pl->yaw-180)));
+        vecfromyawpitch(pl->yaw, pl->pitch, pl->move, pl->strafe, m, floating || water || gravity==0);
 
         if(pl->onfloor > 0.0f)
         {
@@ -338,7 +343,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
 // moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
 // local is false for multiplayer prediction
 
-void moveplayer(dynent *pl, int moveres, bool local, int curtime, bool nogravity)
+bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 {
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
@@ -365,7 +370,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime, bool nogravity
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push, elasticity)) if(++collisions<5) i--;  // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d, push, elasticity)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             if(local) playsoundc(S_LAND);
@@ -374,7 +379,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime, bool nogravity
     };
 
     // apply any player generated changes in velocity
-    modifyvelocity(pl, moveres, local, water, floating, secs, nogravity ? 0 : GRAVITY);
+    modifyvelocity(pl, moveres, local, water, floating, secs, iscamera ? 0 : GRAVITY);
 
     // automatically apply smooth roll when strafing
 
@@ -391,9 +396,14 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime, bool nogravity
 
     // play sounds on water transitions
 
-    if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->timeinair = 0; }
-    else if(pl->inwater && !water) playsound(S_SPLASH1, &pl->o);
-    pl->inwater = water;
+    if(!iscamera)
+    {
+        if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->timeinair = 0; }
+        else if(pl->inwater && !water) playsound(S_SPLASH1, &pl->o);
+        pl->inwater = water;
+    };
+    
+    return true;
 };
 
 void worldhurts(dynent *d, int damage)

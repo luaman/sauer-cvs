@@ -1,3 +1,16 @@
+- fix 3rd person camera
+- limited range ambient light command
+- fix skybox rendering when world is bigger than fog distance
+- fix physics
+- fix holes on subdivision (Gilt)
+- fix polygons being rendered on top of eachother
+  * quick fix: rotate indices of quads that produce coplanar tris
+  * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
+- coop editing: simply send new editing commands over the network as with cube
+- fix variance in framerate?
+- factor out gamecode
+
+
 - larger selections
 - connected push
 - copy & paste
