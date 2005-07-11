@@ -426,13 +426,17 @@ bool touching(int orient)
 
 void editheight(int dir)
 {
-    if(noedit()) return;
+    if(noedit() || havesel) return;
+    reorient();
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
-    sel.s[R(d)]=2;
-    sel.s[C(d)]=2;
-    sel.s[D(d)]=1;
+    sel.s[R(d)] = 2;
+    sel.s[C(d)] = 2;
+    sel.s[D(d)] = 1;
+    sel.o[R(d)] += corner&1 ? 0 : -sel.grid;
+    sel.o[C(d)] += corner&2 ? 0 : -sel.grid;
+    loopselxyz(if(orient!=visibleorient(c, orient)) return;);
     if(dir<0 && touching(sel.orient)) sel.o[D(d)] += seldir*sel.grid;
     loopselxyz(
         if(c.children) solidfaces(c);
