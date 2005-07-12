@@ -67,6 +67,10 @@ N=0	push corners in white box
 N=1	fill or empty cubes
 N=2	push corner you're pointing at
 
+editheight D
+------------
+similar to editface N=2, but pushes all four corners surronding vertex
+
 flip 
 -----------
 flip the selected cubes front to back relative to the side of the white box.
