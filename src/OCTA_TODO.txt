@@ -1,31 +1,22 @@
 - fix 3rd person camera
 - limited range ambient light command
 - fix skybox rendering when world is bigger than fog distance
-- fix physics
+- fix physics feel
+- genclipplanes in physics bogs framerate
 - fix holes on subdivision (Gilt)
 - fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
 - coop editing: simply send new editing commands over the network as with cube
 - fix variance in framerate?
+- landscape generation and tools
 - factor out gamecode
+- shader system
+- try out hardware occlusion queries before portals
 
 
-- larger selections
 - connected push
-- copy & paste
-- texturing
-- push side edge
-- more precise picking
-- face based selection
-- somehow lock edit ops in timeframe to a particular cube?
-- unlimited undo
 - blend screen when inside a cube
-- better geommip
-- better inverse geomip
-- better display of editing: show corners that are influenced by operation etc.
-- rotate & flip
-- fix entintmap -> physics problem, also shows when going editmode -> normal outside of octree
 - improve visibleface()
 
     p/p     sel

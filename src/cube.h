@@ -45,6 +45,7 @@ struct ivec
         z = cz+((i&4)>>2)*size;
     };
     int &operator[](int i) { return v[2-i]; };
+    //int idx(int i) { return v[i]; };
     bool operator==(ivec &v) { return x==v.x && y==v.y && z==v.z; };
 };
 
@@ -330,11 +331,11 @@ extern bool hasVBO;
 extern void gl_init(int w, int h);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float changelod, float curfps);
-extern bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp = false, bool mipit = true);
+extern bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp);
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
 extern int lookuptexture(int tex, int &xs, int &ys);
-extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit);
+extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24);
 extern void invertperspective();
 extern void readmatrices();
 

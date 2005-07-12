@@ -159,8 +159,8 @@ void loadsky(char *basename)
     loopi(6)
     {
         sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
-        int xs, ys;
-        if(!installtex(texnum+i, path(name), xs, ys, true)) conoutf("could not load sky textures");
+        int xs, ys, bpp;
+        if(!installtex(texnum+i, path(name), xs, ys, true, true, bpp)) conoutf("could not load sky textures");
     };
     strcpy_s(lastsky, basename);
 };

@@ -85,7 +85,7 @@ void cleangl()
     if(qsphere) gluDeleteQuadric(qsphere);
 };
 
-void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit)
+void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp)
 {
     glBindTexture(GL_TEXTURE_2D, tnum);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -93,18 +93,25 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR); 
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); 
-    if(mipit) { if(gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels)) fatal("could not build mipmaps"); }
-    else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    int mode = bpp==24 ? GL_RGB : GL_RGBA;
+    if(mipit) { if(gluBuild2DMipmaps(GL_TEXTURE_2D, mode, w, h, mode, GL_UNSIGNED_BYTE, pixels)) fatal("could not build mipmaps"); }
+    else glTexImage2D(GL_TEXTURE_2D, 0, mode, w, h, 0, mode, GL_UNSIGNED_BYTE, pixels);
 }
 
-bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit)
+bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp)
 {
     SDL_Surface *s = IMG_Load(texname);
-    if(!s) { conoutf("couldn't load texture %s", texname); return false; };
-    if(s->format->BitsPerPixel!=24) { conoutf("texture must be 24bpp: %s", texname); return false; };
+    if(!s)
+    {
+        strcpy(texname+strlen(texname)-3, "png"); // hack
+        s = IMG_Load(texname);
+        if(!s) { conoutf("couldn't load texture %s", texname); return false; };
+    };
+    bpp = s->format->BitsPerPixel;
+    if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", texname); return false; };
     // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };  
-    createtexture(tnum, s->w, s->h, s->pixels, clamp, mipit);
+    createtexture(tnum, s->w, s->h, s->pixels, clamp, mipit, bpp);
     xs = s->w;
     ys = s->h;
     SDL_FreeSurface(s);
@@ -181,8 +188,9 @@ int lookuptexture(int tex, int &xs, int &ys)
     strcpy_s(texname[curtex], mapname[tex][frame]);
 
     sprintf_sd(name)("packages%c%s", PATHDIV, texname[curtex]);
-
-    if(installtex(tnum, name, xs, ys))
+    
+    int bpp;
+    if(installtex(tnum, name, xs, ys, false, true, bpp))
     {
         mapping[tex][frame] = tnum;
         texx[curtex] = xs;

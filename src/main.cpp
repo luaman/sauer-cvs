@@ -182,16 +182,16 @@ int main(int argc, char **argv)
     empty_world(7, true);
 
     log("basetex");
-    int xs, ys;
-    if(!installtex(2,  path(newstring("data/newchars.png")), xs, ys) ||
-       !installtex(3,  path(newstring("data/martin/base.png")), xs, ys) ||
-       !installtex(6,  path(newstring("data/martin/ball1.png")), xs, ys) ||
-       !installtex(7,  path(newstring("data/martin/smoke.png")), xs, ys) ||
-       !installtex(8,  path(newstring("data/martin/ball2.png")), xs, ys) ||
-       !installtex(9,  path(newstring("data/martin/ball3.png")), xs, ys) ||
-       !installtex(4,  path(newstring("data/explosion.jpg")), xs, ys) ||
-       !installtex(5,  path(newstring("data/items.png")), xs, ys) ||
-       !installtex(1,  path(newstring("data/crosshair.png")), xs, ys)) fatal("could not find core textures");
+    int xs, ys, bpp;
+    if(!installtex(2,  path(newstring("data/newchars.png")), xs, ys, false, true, bpp) ||
+       !installtex(3,  path(newstring("data/martin/base.png")), xs, ys, false, true, bpp) ||
+       !installtex(6,  path(newstring("data/martin/ball1.png")), xs, ys, false, true, bpp) ||
+       !installtex(7,  path(newstring("data/martin/smoke.png")), xs, ys, false, true, bpp) ||
+       !installtex(8,  path(newstring("data/martin/ball2.png")), xs, ys, false, true, bpp) ||
+       !installtex(9,  path(newstring("data/martin/ball3.png")), xs, ys, false, true, bpp) ||
+       !installtex(4,  path(newstring("data/explosion.jpg")), xs, ys, false, true, bpp) ||
+       !installtex(5,  path(newstring("data/items.png")), xs, ys, false, true, bpp) ||
+       !installtex(1,  path(newstring("data/crosshair.png")), xs, ys, false, true, bpp)) fatal("could not find core textures");
 
     log("sound");
     initsound();

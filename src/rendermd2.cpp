@@ -44,6 +44,7 @@ struct md2
     char *loadname;
     int mdlnum;
     bool loaded;
+    bool alpha;
 
     bool load(char* filename);
     void render(int numFrame, int range, float x, float y, float z, float yaw, float pitch, float scale, float speed, int basetime);
@@ -130,6 +131,14 @@ void md2::render(int frame, int range, float x, float y, float z, float yaw, flo
     glRotatef(yaw+180, 0, -1, 0);
     glRotatef(pitch, 0, 0, 1);
     
+    if(alpha)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 0.1f);
+    };
+    
     if(displaylist && frame==0 && range==1)
     {
 		glCallList(displaylist);
@@ -183,6 +192,12 @@ void md2::render(int frame, int range, float x, float y, float z, float yaw, flo
 			displaylistverts = xtraverts-displaylistverts;
 		};
 	};
+	
+	if(alpha)
+	{
+        glDisable(GL_ALPHA_TEST);
+	    glDisable(GL_BLEND);
+	};
 
     glPopMatrix();
 }
@@ -198,9 +213,10 @@ void delayedload(md2 *m)
         sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
         if(!m->load(path(name1))) fatal("failed to load model: ", name1);
         sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
-        int xs, ys;
-        installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys);
+        int xs, ys, bpp;
+        installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys, false, true, bpp);
         m->loaded = true;
+        m->alpha = bpp==32;
     };
 };
 
