@@ -136,7 +136,7 @@ void md2::render(int frame, int range, float x, float y, float z, float yaw, flo
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 0.1f);
+        glAlphaFunc(GL_GREATER, 0.5f);
     };
     
     if(displaylist && frame==0 && range==1)

@@ -1,5 +1,10 @@
+- texture rotation
 - fix 3rd person camera
+- mapobjects (trees!) must cast shadows, have lightorientation
+- some way to smooth out lighting on terrain
+- allow models to share texture
 - limited range ambient light command
+- physics efficiency: clip cache, tweak step accuracy, maybe reduce physics frames at low fps?
 - fix skybox rendering when world is bigger than fog distance
 - fix physics feel
 - genclipplanes in physics bogs framerate
