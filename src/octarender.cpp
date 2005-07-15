@@ -937,37 +937,30 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
 ////////// (re)mip //////////
 
 int rvertedge(int e, int dc) { return (R(e>>2)<<2)+(e&2?1:0)+(dc?2:0); };
-uchar eavg(uchar a, uchar b) { return ((a>>1)&0x77) + ((b>>1)&0x77); };
 
 void subdividecube(cube &c)
 {
     if (c.children) return;
     cube *ch = c.children = newcubes(F_EMPTY);
 
-    loop(d,3)
+    loopi(6)
     {
-        uchar e[3][3];
-        loop(y,2) loop(x,2) e[2*y][2*x] = c.edges[edgeindex(x,y,d)];
-        e[0][1] = eavg(e[0][0], e[0][2]);
-        e[1][0] = eavg(e[0][0], e[2][0]);
-        e[2][1] = eavg(e[2][0], e[2][2]);
-        e[1][2] = eavg(e[0][2], e[2][2]);
-        int n = eavg(e[0][0], e[2][2]);
-        int m = eavg(e[0][2], e[2][0]);
-        edgeset(e[1][1], 0, edgeget(faceconvexity(c,(d<<1)+0)>0 ? n : m, 0));
-        edgeset(e[1][1], 1, edgeget(faceconvexity(c,(d<<1)+1)>0 ? n : m, 1));
+        int d = dimension(i), dc = dimcoord(i);
+        int e[3][3];
+        loop(y,2) loop(x,2) e[2*y][2*x] = edgeget(c.edges[edgeindex(x,y,d)], dc);
+        e[0][1] = e[0][0]+e[0][2];
+        e[1][0] = e[0][0]+e[2][0];
+        e[2][1] = e[2][0]+e[2][2];
+        e[1][2] = e[0][2]+e[2][2];
+        e[1][1] = faceconvexity(c,i)>0 ? e[0][0]+e[2][2] : e[0][2]+e[2][0];
+        loop(y,2) loop(x,2) e[2*y][2*x] *= 2;
 
-        loopi(8) loop(y,2) loop(x,2) // split edges and assign
+        loopi(8) loop(y,2) loop(x,2) // assign edges
         {
-            int dc = octacoord(d,i);
+            int s = e[y+octacoord(C(d),i)][x+octacoord(R(d),i)];
+            int v = octacoord(d,i) ? max(0, s-8) : min(8, s);
             uchar &f = ch[i].edges[edgeindex(x,y,d)];
-            uchar s = e[y+octacoord(C(d),i)][x+octacoord(R(d),i)];
-            uchar s2 = s*2;
-
-            if(edgeget(s,1) < 5) f = dc ? 0 : s2;
-            else
-            if(edgeget(s,0) > 4) f = dc ? s2-0x88 : 0x88;
-            else                 f = dc ? (s2&0xF0)-0x80 : (s2&0x0F)+0x80;
+            edgeset(f, dc, v);
         };
     };
     loopi(8) // clean up edges
