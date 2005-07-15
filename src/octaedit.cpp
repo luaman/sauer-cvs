@@ -242,7 +242,7 @@ void cursorupdate()
         glColor3ub(200,200,200);// 2D selection box
         boxs(d, sel.o[R(d)]+selcx*g2, sel.o[C(d)]+selcy*g2, selcxs*g2, selcys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(0,0,40);     // 3D selection box
-        loopi(6) boxs(d=dimension(i), sel.o[R(d)], sel.o[C(d)], sel.us(R(d)), sel.us(C(d)), sel.o[d]+dimcoord(i)*sel.us(d));
+        loopi(6) { d=dimension(i); boxs(d, sel.o[R(d)], sel.o[C(d)], sel.us(R(d)), sel.us(C(d)), sel.o[d]+dimcoord(i)*sel.us(d)); };
     };
     glDisable(GL_BLEND);
 };
