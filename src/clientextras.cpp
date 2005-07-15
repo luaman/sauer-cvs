@@ -35,12 +35,12 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
     else if(d->monsterstate==M_PAIN)                { n = 10; }
     else if(d->timeinair > 100)                     { n = 18; }
     else if((!d->move && !d->strafe) || !d->moving) { n = 12; }
-    else                                            { n = 14; speed = 1200/d->maxspeed*scale; if(hellpig) speed = 300/d->maxspeed;  };
+    else                                            { n = 14; speed = 4800/d->maxspeed*scale; if(hellpig) speed = 1200/d->maxspeed;  };
     if(hellpig) { n++; scale *= 32; mz -= 7.6f; };
     uchar color[3];
     lightreaching(d->o, color);
     glColor3ubv(color);
-    rendermodel(mdlname, frame[n], range[n], 0, 6.0f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed*4, basetime);
+    rendermodel(mdlname, frame[n], range[n], 0, 6.0f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime);
 };  
 
 void renderclients()
