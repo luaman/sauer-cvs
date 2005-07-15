@@ -5,6 +5,7 @@ vector<LightMap> lightmaps;
 VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
 VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
+VARF(ambient, 1, 25, 64, hdr.ambient = ambient);
 VAR(shadows, 0, 1, 1);
 VAR(aalights, 0, 2, 2);
  
@@ -274,9 +275,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                 g /= sample;
                 b /= sample;
             }
-            lumel[0] = min(255, max(25, r));
-            lumel[1] = min(255, max(25, g));
-            lumel[2] = min(255, max(25, b));
+            lumel[0] = min(255, max(ambient, r));
+            lumel[1] = min(255, max(ambient, g));
+            lumel[2] = min(255, max(ambient, b));
             loopk(3)
             {
                 mincolor[k] = min(mincolor[k], lumel[k]);
@@ -291,9 +292,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     {
        uchar color[3];
        loopk(3) color[k] = (int(maxcolor[k]) + int(mincolor[k])) / 2;
-       if(int(color[0]) - 25 <= lighterror && 
-          int(color[1]) - 25 <= lighterror && 
-          int(color[2]) - 25 <= lighterror)
+       if(int(color[0]) - ambient <= lighterror && 
+          int(color[1]) - ambient <= lighterror && 
+          int(color[2]) - ambient <= lighterror)
            return false;
        memcpy(lm, color, 3);
        lm_w = 1;
@@ -611,7 +612,7 @@ void initlights()
         clearlights();
         return;
     }
-    uchar unlit[3] = {25, 25, 25};
+    uchar unlit[3] = { ambient, ambient, ambient };
     createtexture(10000, 1, 1, unlit, false, false);
     loopi(lightmaps.length()) createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     loopv(ents)

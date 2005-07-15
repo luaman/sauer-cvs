@@ -21,8 +21,6 @@ void renderwater(uint subdiv, int x, int y, int z, uint size)
     int sx, sy;
     glBindTexture(GL_TEXTURE_2D, lookuptexture(DEFAULT_LIQUID, sx, sy));
     
-    ASSERT((wx1 & (subdiv - 1)) == 0);
-    ASSERT((wy1 & (subdiv - 1)) == 0);
     float xf = 8.0f/sx;
     float yf = 8.0f/sy;
     float xs = subdiv*xf;
@@ -36,6 +34,9 @@ void renderwater(uint subdiv, int x, int y, int z, uint size)
     wy2 = wy1 + size;
     wsize = size;
     
+    ASSERT((wx1 & (subdiv - 1)) == 0);
+    ASSERT((wy1 & (subdiv - 1)) == 0);
+
     for(int xx = wx1; xx<wx2; xx += subdiv)
     {
         float xo = xf*(xx+t2);

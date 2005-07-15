@@ -8,7 +8,6 @@
 - fix skybox rendering when world is bigger than fog distance
 - fix physics feel
 - genclipplanes in physics bogs framerate
-- fix holes on subdivision (Gilt)
 - fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
