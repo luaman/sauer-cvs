@@ -161,6 +161,7 @@ extern uint faceedges(cube &c, int orient);
 extern bool touchingface(cube &c, int orient);
 extern void vertcheck();
 extern int isvisiblecube(cube *c, int size, int cx, int cy, int cz);
+extern int isvisiblesphere(float rad, float x, float y, float z);
 extern int genclipplane(cube &c, int i, const vec *v, plane *clip);
 extern void genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, bool bounded = true);
 extern int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r);

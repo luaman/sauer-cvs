@@ -696,25 +696,29 @@ float vfcDfog;  // far plane culling distance (fog limit).
 
 vtxarray *visibleva;
 
-int isvisiblecube(int size, int cx, int cy, int cz)
+int isvisiblesphere(float rad, float x, float y, float z)
 {
     int v = VFC_FULL_VISIBLE;
-    float crd = size * SQRT3;
     float dist;
-    vec cv = vec(cx+size, cy+size, cz+size); // Center of cube
+    vec cv = vec(x, y, z); // center of sphere
 
     loopi(5)
     {
         dist = vfcV[i].dot(cv) - vfcD[i];
-        if (dist < -crd) return VFC_NOT_VISIBLE;
-        if (dist < crd) v = VFC_PART_VISIBLE;
+        if (dist < -rad) return VFC_NOT_VISIBLE;
+        if (dist < rad) v = VFC_PART_VISIBLE;
     };
 
     dist = vfcV[0].dot(cv) - vfcD[0] - vfcDfog;
-    if (dist > crd) return VFC_NOT_VISIBLE;
-    if (dist > -crd) v = VFC_PART_VISIBLE;
+    if (dist > rad) return VFC_NOT_VISIBLE;
+    if (dist > -rad) v = VFC_PART_VISIBLE;
 
     return v;
+};
+
+int isvisiblecube(int size, int cx, int cy, int cz)
+{
+    return isvisiblesphere(size*SQRT3, cx+size, cy+size, cz+size);
 };
 
 void addvisibleva(vtxarray *va)
