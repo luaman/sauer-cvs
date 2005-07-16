@@ -30,7 +30,7 @@ void renderentities()
             if(!&mmi) continue;
             float rad = mmi.rad ? float(mmi.rad) : 8.0f, 
                   h = mmi.h ? float(mmi.h) : 8.0f;
-            rendermodel(mmi.name, 0, 1, e.attr4, !mmi.rad && !mmi.h ? 8.0f : max(rad, h*0.5f), e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f);
+            rendermodel(mmi.name, 0, 1, e.attr4, max(rad, h*0.5f), e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f);
         }
         else
         {
