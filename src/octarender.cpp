@@ -981,6 +981,7 @@ void subdividecube(cube &c)
                 edgeset(ch[oppositeocta(i,j>>2)].edges[j], dc, dc*8);
         };
     };
+	validatec(ch);
 };
 
 bool crushededge(uchar e, int dc) { return dc ? e==0 : e==0x88; };

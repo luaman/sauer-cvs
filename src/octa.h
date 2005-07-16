@@ -122,7 +122,7 @@ extern int familysize(cube &c);
 extern void freeocta(cube *c);
 extern void optiface(uchar *p, cube &c);
 extern bool validcube(cube &c);
-extern void validatec(cube *c, int size);
+extern void validatec(cube *c, int size=hdr.worldsize);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 extern float raycube(bool clipmat, const vec &o, const vec &ray, float radius = 1.0e10f);

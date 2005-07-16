@@ -54,7 +54,7 @@ void optiface(uchar *p, cube &c)
 
 bool validcube(cube &c)
 {
-    loopj(12) if(edgeget(c.edges[j], 1)<edgeget(c.edges[j], 0)) return false;
+    loopj(12) if(edgeget(c.edges[j], 1)>8 || edgeget(c.edges[j], 1)<edgeget(c.edges[j], 0)) return false;
     loopj(3) optiface((uchar *)&c.faces[j], c);
     return true;
 };
