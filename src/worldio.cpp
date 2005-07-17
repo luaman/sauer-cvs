@@ -229,6 +229,13 @@ void load_world(char *mname)        // still supports all map formats that have 
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
+		if(e.o.x<0 || e.o.x>hdr.worldsize || 
+		   e.o.y<0 || e.o.y>hdr.worldsize ||
+		   e.o.z<0 || e.o.z>hdr.worldsize) 
+		{
+			conoutf("invalid position :: enttype[%d] index %d", e.type, i);
+			ents.pop();
+		};
     };
 
     freeocta(worldroot);
