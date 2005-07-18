@@ -14,7 +14,6 @@
 - (EG) coop editing: simply send new editing commands over the network as with cube
 - fix variance in framerate?
 - (EG) landscape generation and tools (see wiki)
-- (E) improve visibleface() to not render some polys inside solids anymore (overdraw!)
 - (E) reduce geometry by merging surfaces and lightmaps
 - factor out gamecode
 - shader system
@@ -26,6 +25,7 @@
 
 - connected push
 - blend screen when inside a cube
+- improve visibleface()
 
     p/p     sel
 0   face    aligned 4
