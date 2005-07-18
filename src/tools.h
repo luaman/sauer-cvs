@@ -108,6 +108,8 @@ struct sprintf_s_f
 #define sprintf_sdv(d,fmt) sprintf_sdlv(d,fmt,fmt)
 
 
+template <class T> void _swap(T &a, T &b) { T t = a; a = b; b = t; };
+
 // fast pentium f2i
 
 #ifdef _MSC_VER

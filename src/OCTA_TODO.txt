@@ -1,3 +1,6 @@
+- test physics etc with devpartner
+- <nieb> with vsync off i get the normal 4cube jump height but with it on i can jump almost 10cubes
+- VFC entities
 - texture rotation
 - fix 3rd person camera
 - mapobjects (trees!) must cast shadows, have lightorientation
@@ -16,6 +19,8 @@
 - landscape generation and tools
 - factor out gamecode
 - shader system
+- LOD on VA's
+- render entities at distance as sprites
 - try out hardware occlusion queries before portals
 
 

@@ -505,11 +505,6 @@ void genskyverts(cube &c, int x, int y, int z, int size)
 
 ////////// Vertex Arrays //////////////
 
-extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
-extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
-extern PFNGLBUFFERDATAARBPROC    pfnglBufferData;
-extern PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers;
-
 int allocva = 0;
 int wtris = 0, wverts = 0, vtris = 0, vverts = 0, glde = 0;
 vector<vtxarray *> valist;
@@ -628,7 +623,7 @@ void setva(cube &c, int cx, int cy, int cz, int size)
     if(curvert) c.va = newva(cx, cy, cz, size);
 };
 
-VARF(vacubemax, 64, 1024, 256*256, allchanged());
+VARF(vacubemax, 64, 2048, 256*256, allchanged());
 
 int updateva(cube *c, int cx, int cy, int cz, int size)
 {
@@ -647,28 +642,6 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
 
     return ccount;
 };
-
-/*
-int updateva(cube *c, int cx, int cy, int cz, int size)
-{
-    int count = 0;
-    loopi(8)                                    // counting number of semi-solid/solid children cubes
-    {
-        ivec o(i, cx, cy, cz, size);
-        if(c[i].va) count += vacubemax+1;       // since must already have more then max cubes
-        else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2);
-        else if(!isempty(c[i])) count++;
-    };
-
-    if(count > vacubemax || size == hdr.worldsize/2) loopi(8)
-    {
-        ivec o(i, cx, cy, cz, size);
-        setva(c[i], o.x, o.y, o.z, size);
-    };
-
-    return count;
-};
-*/
 
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
@@ -729,38 +702,6 @@ void addvisibleva(vtxarray *va)
     vverts      += va->verts;
     va->distance = vfcV[0].dot(va->cv) - vfcD[0] - va->radius;
 };
-
-/*
-void addvisiblecubec(cube *c)
-{
-    loopi(8)
-    {
-        if (c[i].va) addvisibleva(c[i].va);
-        if (c[i].children) addvisiblecubec(c[i].children);
-    };
-};
-
-void visiblecubec(cube *c, int size, int cx, int cy, int cz)
-{
-    loopi(8)
-    {
-        ivec o(i, cx, cy, cz, size);
-        switch(isvisiblecube(size/2, o.x, o.y, o.z))
-        {
-            case VFC_FULL_VISIBLE:
-                if (c[i].va) addvisibleva(c[i].va);
-                if (c[i].children) addvisiblecubec(c[i].children);
-                break;
-            case VFC_PART_VISIBLE:
-                if (c[i].va) addvisibleva(c[i].va);
-                if (c[i].children) visiblecubec(c[i].children, size/2, o.x, o.y, o.z);
-                break;
-            case VFC_NOT_VISIBLE:
-                break;
-        };
-    };
-};
-*/
 
 // convert yaw/pitch to a normalized vector
 #define yptovec(y, p) vec(sin(y)*cos(p), -cos(y)*cos(p), sin(p))

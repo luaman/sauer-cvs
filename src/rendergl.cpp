@@ -101,6 +101,7 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
 
 bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp)
 {
+    //printf("texload: %s\n", texname);
     SDL_Surface *s = IMG_Load(texname);
     if(!s)
     {
@@ -245,7 +246,7 @@ void transplayer()
 
 VAR(fov, 10, 105, 120);
 
-int xtraverts;
+int xtraverts, xtravertsva;
 
 VAR(fog, 16, 4000, 1000024);
 VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
@@ -371,8 +372,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     int xs, ys;
     loopi(10) lookuptexture(i, xs, ys);
 
-    xtraverts = 0;
-    glde = 0;
+    xtravertsva = xtraverts = glde = 0;
 
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / ((hdr.worldsize>>4)*(hdr.worldsize>>4)*6) < 9);
 

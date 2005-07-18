@@ -242,7 +242,7 @@ extern int lastmillis;                  // last time
 extern int curtime;                     // current frame time
 extern char *entnames[];                // lookup from map entities above to strings
 extern int gamemode, nextmode;
-extern int xtraverts;
+extern int xtraverts, xtravertsva;
 extern int curvert;
 extern vertex *verts;                   // the vertex array for all world rendering
 extern int curtexnum;
@@ -494,6 +494,9 @@ extern void baseammo(int gun);
 // rndmap
 extern void perlinarea(block &b, int scale, int seed, int psize);
 
+
+
+
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
@@ -503,8 +506,15 @@ extern void perlinarea(block &b, int scale, int seed, int psize);
 #include <SDL_image.h>
 #include <SDL_opengl.h>
 
+extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
+extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
+extern PFNGLBUFFERDATAARBPROC    pfnglBufferData;
+extern PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers;
+
+
 #include <enet/enet.h>
 
 #include "octa.h"
 #include "lightmap.h"
+
 

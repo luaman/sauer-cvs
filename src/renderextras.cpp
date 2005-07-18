@@ -300,16 +300,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glPushMatrix();
         glOrtho(0, VIRTW*3/2, VIRTH*3/2, 0, -1, 1);
         if(editmode) draw_textf("cube %d", 3100, 1900, 2, selchildcount);
-        draw_textf("fps %d", 3100, 1970, 2, curfps);
-        draw_textf("ond %d", 3100, 2040, 2, allocnodes*8);
-        draw_textf("va  %d", 3100, 2110, 2, allocva);
-        draw_textf("gld %d", 3100, 2180, 2, glde);
-        draw_textf("lm  %d", 3100, 2250, 2, lightmaps.length());
-        draw_textf("vtr %d", 3100, 2320, 2, vtris);
-        draw_textf("vvt %d", 3100, 2390, 2, vverts);
-        draw_textf("tri %d", 3100, 2460, 2, wtris);
-        draw_textf("wvt %d", 3100, 2530, 2, wverts);
-        draw_textf("evt %d", 3100, 2600, 2, xtraverts);
+        draw_textf("fps %d", 30, 2060, 2, curfps);
+        draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", 30, 2130, 2, wtris/1024, vtris*100/wtris, wverts/1024, vverts*100/wverts, xtraverts/1024, xtravertsva/1024);
+        draw_textf("ond:%d va:%d gl:%d lm:%d", 30, 2200, 2, allocnodes*8, allocva, glde, lightmaps.length());
     };
 
     glPopMatrix();
