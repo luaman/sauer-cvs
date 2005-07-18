@@ -1,32 +1,31 @@
 - test physics etc with devpartner
-- <nieb> with vsync off i get the normal 4cube jump height but with it on i can jump almost 10cubes
-- fix VFC entities
-- texture rotation
-- mapobjects (trees!) must cast shadows, have lightorientation
+- (E) <nieb> with vsync off i get the normal 4cube jump height but with it on i can jump almost 10cubes
+- (E) fix VFC entities
+- (E) texture rotation
+- (E) mapobjects (trees!) must cast shadows, have lightorientation
 - some way to smooth out lighting on terrain
 - allow models to share texture
-- limited range ambient light command
-- physics efficiency: clip cache, tweak step accuracy, maybe reduce physics frames at low fps?
-- fix skybox rendering when world is bigger than fog distance
+- (E) physics efficiency: clip cache (see forum), tweak step accuracy, maybe reduce physics frames at low fps?
+- (E) fix skybox rendering when world is bigger than fog distance
 - fix physics feel
-- genclipplanes in physics bogs framerate
-- fix polygons being rendered on top of eachother
+- (EG) fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
-- coop editing: simply send new editing commands over the network as with cube
+- (EG) coop editing: simply send new editing commands over the network as with cube
 - fix variance in framerate?
-- landscape generation and tools
+- (EG) landscape generation and tools (see wiki)
+- (E) improve visibleface() to not render some polys inside solids anymore (overdraw!)
+- (E) reduce geometry by merging surfaces and lightmaps
 - factor out gamecode
 - shader system
 - LOD on VA's
 - render entities at distance as sprites
 - try out hardware occlusion queries before portals
-- sort the order of rendering mapmodels, so as to factor out glbindbuffer
+- (E) sort the order of rendering mapmodels, so as to factor out glbindbuffer
 
 
 - connected push
 - blend screen when inside a cube
-- improve visibleface()
 
     p/p     sel
 0   face    aligned 4

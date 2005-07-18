@@ -588,6 +588,7 @@ void vaclearc(cube *c)
 
 void rendercube(cube &c, int cx, int cy, int cz, int size)  // creates vertices and indices ready to be put into a va
 {
+    //if(size<=16) return;
     if(c.va) return;                            // don't re-render
     if(c.children) loopi(8)
     {
