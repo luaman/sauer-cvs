@@ -140,14 +140,13 @@ struct md2
 				loopv(verts)
 				{
 				    md2_vvert &v = verts[i];
-				    if(v.u==tu && v.v==tv && v.pos==v1) { tidxs.add(i); goto found; };
+				    if(v.u==tu && v.v==tv && v.pos==v1) { tidxs.add(i); continue; };
 				};
 				tidxs.add(verts.length());
 				md2_vvert &v = verts.add();
 				v.pos = v1;
 				v.u = tu;
 				v.v = tv;
-				found:;
 			};
 			if(isfan) { loopj(numvertex-2) { idxs.add(tidxs[0]); idxs.add(tidxs[j+1]); idxs.add(tidxs[j+2]); }; }
 			else { loopj(numvertex-2) loopk(3) idxs.add(tidxs[j&1 && k ? j+(1-(k-1))+1 : j+k]); };
