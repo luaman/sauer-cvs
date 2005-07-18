@@ -295,9 +295,8 @@ mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i]->mmi
 COMMAND(mapmodel, ARG_5STR);
 COMMAND(mapmodelreset, ARG_NONE);
 
-void rendermodel(char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime)
+void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime)
 {
-    if(isvisiblesphere(rad, x, z, y+rad) == VFC_NOT_VISIBLE) return;  
     md2 *m = loadmodel(mdl); 
     delayedload(m);
     int xs, ys;

@@ -442,7 +442,7 @@ extern void initsound();
 extern void cleansound();
 
 // rendermd2
-extern void rendermodel(char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime = 0);
+extern void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime = 0);
 extern mapmodelinfo &getmminfo(int i);
 
 // server

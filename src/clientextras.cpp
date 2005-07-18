@@ -40,7 +40,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
     uchar color[3];
     lightreaching(d->o, color);
     glColor3ubv(color);
-    rendermodel(mdlname, frame[n], range[n], 0, 6.0f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime);
+    rendermodel(mdlname, frame[n], range[n], 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime);
 };  
 
 void renderclients()
