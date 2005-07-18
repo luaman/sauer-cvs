@@ -233,8 +233,8 @@ void load_world(char *mname)        // still supports all map formats that have 
 		   e.o.y<0 || e.o.y>hdr.worldsize ||
 		   e.o.z<0 || e.o.z>hdr.worldsize) 
 		{
-			conoutf("invalid position :: enttype[%d] index %d", e.type, i);
-			ents.pop();
+			conoutf("warning: ent outside of world: enttype[%d] index %d", e.type, i);
+			//ents.pop();
 		};
     };
 
