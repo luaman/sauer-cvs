@@ -118,6 +118,19 @@ struct md2
         };
     };
 
+    float boundsphere(int frame, float scale, vec &center)
+    {
+        md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
+        float sc = 4.0f/scale;
+        vec radius;
+        memcpy(center.v, cf->translate, sizeof(center.v));
+        center.div(sc);
+        memcpy(radius.v, cf->scale, sizeof(radius.v));
+        radius.mul(0.5f*255.0f/sc);
+        center.add(radius);
+        return radius.magnitude();
+    };
+
     void genvar()
     {
         vector<md2_vvert> verts;
@@ -299,6 +312,10 @@ void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, flo
 {
     md2 *m = loadmodel(mdl); 
     delayedload(m);
+    float radius;
+    vec center;
+    radius = m->boundsphere(frame, scale, center);
+    if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
     int xs, ys;
     glBindTexture(GL_TEXTURE_2D, tex ? lookuptexture(tex, xs, ys) : FIRSTMDL+m->mdlnum);
     m->render(frame, range, x, y, z, yaw, pitch, scale, speed, basetime);
