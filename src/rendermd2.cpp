@@ -312,9 +312,8 @@ void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, flo
 {
     md2 *m = loadmodel(mdl); 
     delayedload(m);
-    float radius;
     vec center;
-    radius = m->boundsphere(frame, scale, center);
+    float radius = m->boundsphere(frame, scale, center);
     if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
     int xs, ys;
     glBindTexture(GL_TEXTURE_2D, tex ? lookuptexture(tex, xs, ys) : FIRSTMDL+m->mdlnum);
