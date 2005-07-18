@@ -122,12 +122,13 @@ struct md2
     {
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
         float sc = 4.0f/scale;
-        vec radius;
-        memcpy(center.v, cf->translate, sizeof(center.v));
+        loopi(3) center.v[i] = cf->translate[i];
         center.div(sc);
-        memcpy(radius.v, cf->scale, sizeof(radius.v));
+        vec radius;
+        loopi(3) radius.v[i] = cf->scale[i];
         radius.mul(0.5f*255.0f/sc);
         center.add(radius);
+        center.y = -center.y;
         return radius.magnitude();
     };
 
