@@ -5,7 +5,7 @@
 - (E) mapobjects (trees!) must cast shadows, have lightorientation
 - some way to smooth out lighting on terrain
 - allow models to share texture
-- (E) physics efficiency: clip cache (see forum), tweak step accuracy, maybe reduce physics frames at low fps?
+- (EG) physics efficiency: clip cache (see forum), tweak step accuracy, maybe reduce physics frames at low fps?
 - (E) fix skybox rendering when world is bigger than fog distance
 - fix physics feel
 - (EG) fix polygons being rendered on top of eachother
@@ -14,6 +14,7 @@
 - (EG) coop editing: simply send new editing commands over the network as with cube
 - fix variance in framerate?
 - (EG) landscape generation and tools (see wiki)
+- (E) improve visibleface() to not render some polys inside solids anymore (overdraw!)
 - (E) reduce geometry by merging surfaces and lightmaps
 - factor out gamecode
 - shader system
@@ -25,7 +26,6 @@
 
 - connected push
 - blend screen when inside a cube
-- improve visibleface()
 
     p/p     sel
 0   face    aligned 4
