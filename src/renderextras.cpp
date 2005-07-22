@@ -178,11 +178,11 @@ void aimat()
 
     setorient(vec(mm[0], mm[4], mm[8]), vec(mm[1], mm[5], mm[9]));
     
-    vec m(0.0f, 0.0f, 0.0f);
-    vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, m, true);
-    m.normalize();
-    int orient;
-    raycube(true, player1->o, m, 0, worldpos, orient);
+    worldpos = vec(0.0f, 0.0f, 0.0f);
+    vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, worldpos, true);
+    worldpos.normalize();
+    worldpos.mul(raycube(true, player1->o, worldpos));
+    worldpos.add(player1->o);
 };
 
 void drawicon(float tx, float ty, int x, int y)

@@ -38,6 +38,15 @@ struct surfaceinfo
     ushort x, y, lmid;
 };
 
+struct clipplanes
+{
+	vec o, r;
+	plane p[12];
+	int size, age;
+	clipplanes *next;
+	clipplanes **backptr;
+};
+
 struct cube
 {
     cube *children;         // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
@@ -50,7 +59,7 @@ struct cube
     uchar texture[6];       // one for each face. same order as orient.
     uchar material;         // empty-space material
     vtxarray *va;           // vertex array for children, or NULL
-    plane *clip;            // collision planes
+    clipplanes *clip;       // collision planes
     surfaceinfo *surfaces; // lighting info for each surface
 };
 
@@ -125,8 +134,7 @@ extern bool validcube(cube &c);
 extern void validatec(cube *c, int size=hdr.worldsize);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
-extern float raycube(bool clipmat, const vec &o, const vec &ray, float radius = 1.0e10f);
-extern cube &raycube(bool clipmat, const vec &o, const vec &ray, int size, vec &v, int &orient);
+extern float raycube(bool clipmat, const vec &o, const vec &ray, float radius = 1.0e10f, int size = 0);
 extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
 

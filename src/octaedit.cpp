@@ -153,11 +153,20 @@ COMMAND(selcorners, ARG_DOWN);
 
 void cursorupdate()
 {
-    vec v;
-    float m = cos(RAD*player1->pitch);
-    vec dir(m*cos(RAD*(player1->yaw-90)), m*sin(RAD*(player1->yaw-90)), sin(RAD*player1->pitch));
-    raycube(false, player1->o, dir, gridsize, v, orient);
+    vec ray(worldpos), v(worldpos);
+    ray.sub(player1->o);
+    float m = ray.magnitude();
+    ray.div(m);
+    float r = raycube(true, player1->o, ray, 1e16f, gridsize);
+    
+    if(r < m)
+    {
+        ray.mul(r);
+        v = player1->o;
+        v.add(ray);
+    };
 
+    lookupcube(int(v.x), int(v.y), int(v.z));
     if(lusize>gridsize)
     {
         lu.x += ((int)v.x-lu.x)/gridsize*gridsize;
@@ -171,6 +180,17 @@ void cursorupdate()
         lu.z &= ~(gridsize-1);
     };
     lusize = gridsize;
+
+    float xi  = v.x + (ray.x/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // x intersect of xz plane
+    float zi  = v.z + (ray.z/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // z intersect of xz plane
+    float zi2 = v.z + (ray.z/ray.x) * (lu.x - v.x + (ray.x<0 ? gridsize : 0)); // z intersect of yz plane
+    bool xside = (ray.x<0 && xi<lu.x+gridsize) || (ray.x>0 && xi>lu.x);
+    bool zside = (ray.z<0 && zi<lu.z+gridsize) || (ray.z>0 && zi>lu.z);
+    bool z2side= (ray.z<0 && zi2<lu.z+gridsize)|| (ray.z>0 && zi2>lu.z);
+
+    if(xside && zside) orient = (ray.y>0 ? O_BACK : O_FRONT);
+    else if(z2side) orient = (ray.x>0 ? O_LEFT : O_RIGHT);
+    else orient = (ray.z>0 ? O_BOTTOM : O_TOP);
 
     cur = lu;
     int g2 = gridsize/2;
