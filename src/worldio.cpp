@@ -235,7 +235,7 @@ void load_world(char *mname)        // still supports all map formats that have 
 		{
 			if(e.type != LIGHT) 
             {
-                conoutf("warning: ent outside of world: enttype[%d] index %d", e.type, i);
+                conoutf("warning: ent outside of world: enttype[%d] index %d (%f, %f, %f)", e.type, i, e.o.x, e.o.y, e.o.z);
 			    //ents.pop();
             };
 		};

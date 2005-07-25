@@ -14,12 +14,12 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
     int n = 3;
     float speed = 100.0f;
     float mz = d->o.z-d->eyeheight+6.2f*scale;
-    int basetime = -((int)d&0xFFF);
+    int basetime = -((int)(size_t)d&0xFFF);
     bool att = d==player1 && player1!=camera1 && lastmillis-d->lastaction<500;
     if(d->state==CS_DEAD)
     {
         int r;
-        if(hellpig) { n = 2; r = range[3]; } else { n = (int)d%3; r = range[n]; };
+        if(hellpig) { n = 2; r = range[3]; } else { n = (int)(size_t)d%3; r = range[n]; };
         basetime = d->lastaction;
         int t = lastmillis-d->lastaction;
         if(t<0 || t>20000) return;
