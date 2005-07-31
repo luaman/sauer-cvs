@@ -40,7 +40,7 @@ void freeocta(cube *c)
         if(c[i].children) freeocta(c[i].children);
         if(c[i].va) destroyva(c[i].va);
         if(c[i].surfaces) freesurfaces(c[i]);
-        if(c[i].clip) freeclipplanes(c[i]);
+        if(c[i].clip) c[i].clip = NULL;
     };
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;
@@ -125,87 +125,3 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     };
     return lookupcube(x, y, z, rsize);
 };
-
-void pushvec(vec &o, const vec &ray, float dist)
-{
-    vec d(ray);
-    d.mul(dist);
-    o.add(d);
-};
-
-bool vecincube(const cube &c, const vec &v)
-{
-    vec &o = c.clip->o;
-    vec &r = c.clip->r;
-    if(v.x > o.x+r.x || v.x < o.x-r.x ||
-       v.y > o.y+r.y || v.y < o.y-r.y ||
-       v.z > o.z+r.z || v.z < o.z-r.z) return false;
-    loopi(c.clip->size) if(c.clip->p[i].dist(v)>0) return false;
-    return true;
-};
-
-bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, float &dist)
-{
-    if(vecincube(c, o)) { dest = o; return true; };
-
-    loopi(c.clip->size)
-    {
-        float a = ray.dot(c.clip->p[i]);
-        if(a>=0) continue;
-        float f = -c.clip->p[i].dist(o)/a;
-        if(f + dist < 0) continue;
-
-        vec d(o);
-        pushvec(d, ray, f+0.1f);
-
-        if(vecincube(c, d))
-        {
-            dist += f+0.1;
-            dest = d;
-            return true;
-        };
-    };
-    return false;
-};
-
-float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size)
-{
-    cube *last = NULL;
-    float dist = 0;
-    vec v = o, rray;
-    loopi(3) rray[i] = ray[i]==0 ? 0 : 1.0f/ray[i];
-    for(;;)
-    {
-        cube &c = lookupcube(int(v.x), int(v.y), int(v.z), 0);
-        float disttonext = 1e16f;
-        loopi(3) disttonext = min(disttonext, 0.1f + fabs((float(lu[i]+(rray[i]>0?lusize:0))-v[i])*rray[i]));
-
-        if((clipmat && isclipped(c.material)) || isentirelysolid(c) || (lusize==size&&!isempty(c)) || dist>radius || last==&c)
-        {
-            if(last==&c) dist = radius;
-            return dist;
-        };
-
-        last = &c;
-
-        if(!isempty(c))
-        {
-            clipplanes clip;
-            c.clip = &clip;
-            clip.size = genclipplanes(c, lu.x, lu.y, lu.z, lusize, clip.p, clip.o, clip.r);
-            if(raycubeintersect(c, v, ray, v, dist)) return dist;
-        };
-
-        pushvec(v, ray, disttonext);
-        dist += disttonext;
-    };
-};
-
-void newclipplanes(cube &c)
-{
-}
-
-void freeclipplanes(cube &c)
-{
-}
-

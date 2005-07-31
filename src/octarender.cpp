@@ -330,36 +330,8 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
     return planes;
 }
 
-void genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, bool bounded)
+void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 {
-    vec v[8];
-    bool useface[6];
-    calcverts(c, x, y, z, size, v, useface);
-    loopi(12) clip[i].x = clip[i].y = clip[i].z = clip[i].offset = 0.0f;
-    loopi(6) if(useface[i]) genclipplane(c, i, v, &clip[2*i]);
-
-    if(!bounded) return;
-    vec mx(x, y, z), mn(x+size, y+size, z+size);
-    loopi(8)
-    {
-        if(!vertused[i]) calcvert(c, x, y, z, size, v[i], i);
-        loopj(3)
-        {
-            mn[j] = min(mn[j], v[i][j]);
-            mx[j] = max(mx[j], v[i][j]);
-        }
-    }
-    loopi(6) if(!useface[i])
-    {
-        plane &bound = clip[2*i];
-        bound[dimension(i)] = dimcoord(i) ? 1.0f : -1.0f;
-        bound.offset = dimcoord(i) ? -mx[dimension(i)] : mn[dimension(i)];
-    }
-}
-
-int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r)
-{
-    int ci = 0;
     bool usefaces[6];
     vec v[8], mx(x, y, z), mn(x+size, y+size, z+size);
 
@@ -370,15 +342,16 @@ int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, v
         mn[j] = min(mn[j], v[i][j]);
         mx[j] = max(mx[j], v[i][j]);
     };
-    r = mx;     // radius of box
-    r.sub(mn);
-    r.mul(0.5f);
-    o = mn;     // center of box
-    o.add(r);
 
-    loopi(6) if(usefaces[i] && !touchingface(c,i)) // generate actual clipping planes
-        ci += genclipplane(c, i, v, &clip[ci]);
-    return ci;
+    p.r = mx;     // radius of box
+    p.r.sub(mn);
+    p.r.mul(0.5f);
+    p.o = mn;     // center of box
+    p.o.add(p.r);
+
+    p.size = 0;
+    loopi(6) if(usefaces[i] && !touchingface(c, i)) // generate actual clipping planes
+        p.size += genclipplane(c, i, v, &p.p[p.size]);
 };
 
 struct sortkey
@@ -927,7 +900,7 @@ void subdividecube(cube &c)
                 edgeset(ch[oppositeocta(i,j>>2)].edges[j], dc, dc*8);
         };
     };
-	validatec(ch);
+    validatec(ch);
 };
 
 bool crushededge(uchar e, int dc) { return dc ? e==0 : e==0x88; };

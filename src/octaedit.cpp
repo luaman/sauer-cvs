@@ -98,7 +98,7 @@ void discardchildren(cube &c)
     if(c.va) destroyva(c.va);
     c.va = NULL;
     if(c.surfaces) freesurfaces(c);
-    if(c.clip) freeclipplanes(c);
+    if(c.clip) c.clip = NULL;
     if(c.children)
     {
         freeocta(c.children);
@@ -275,6 +275,7 @@ void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
     loopi(8) if(m&(1<<i))
     {
         ivec o(i, cx, cy, cz, size);
+        c[i].clip = NULL;
         if(c[i].va)             // removes va s so that octarender will recreate
         {
             destroyva(c[i].va);

@@ -40,11 +40,11 @@ struct surfaceinfo
 
 struct clipplanes
 {
-	vec o, r;
-	plane p[12];
-	int size, age;
-	clipplanes *next;
-	clipplanes **backptr;
+    vec o, r;
+    int size;
+    plane p[12];
+    clipplanes *next, *prev;
+    clipplanes **backptr;
 };
 
 struct cube
@@ -171,8 +171,7 @@ extern void vertcheck();
 extern int isvisiblecube(cube *c, int size, int cx, int cy, int cz);
 extern int isvisiblesphere(float rad, float x, float y, float z);
 extern int genclipplane(cube &c, int i, const vec *v, plane *clip);
-extern void genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, bool bounded = true);
-extern int genclipplanes(cube &c, int x, int y, int z, int size, plane *clip, vec &o, vec &r);
+extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p);
 extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR);
 extern int visibleorient(cube &c, int orient);
 

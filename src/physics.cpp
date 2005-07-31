@@ -5,6 +5,119 @@
 
 #include "cube.h"
 
+const int MAXCLIPPLANES = 1000;
+
+clipplanes clipcache[MAXCLIPPLANES], *nextclip = NULL;
+
+void setcubeclip(cube &c, int x, int y, int z, int size)
+{
+    if(nextclip == NULL)
+    {
+        loopi(MAXCLIPPLANES)
+        {
+            clipcache[i].next = &clipcache[(i+1)%MAXCLIPPLANES];
+            clipcache[i].prev = &clipcache[(i-1)%MAXCLIPPLANES];
+            clipcache[i].backptr = NULL;
+        };
+        nextclip = clipcache;
+    };
+    if(c.clip != NULL)
+    {
+		clipplanes *n = c.clip->next;
+		clipplanes *p = c.clip->prev;
+        n->prev = p;
+        p->next = n;
+        n = nextclip;
+        p = nextclip->prev;
+        n->prev = c.clip;
+        p->next = c.clip;
+    }
+    else
+    {
+        if(nextclip->backptr != NULL) *(nextclip->backptr) = NULL;
+        nextclip->backptr = &c.clip;
+        c.clip = nextclip;
+        genclipplanes(c, x, y, z, size, *c.clip);
+        nextclip = nextclip->next;
+    };
+};
+
+/////////////////////////  ray - cube collision ///////////////////////////////////////////////
+
+void pushvec(vec &o, const vec &ray, float dist)
+{
+    vec d(ray);
+    d.mul(dist);
+    o.add(d);
+};
+
+bool vecincube(const cube &c, const vec &v)
+{
+    vec &o = c.clip->o;
+    vec &r = c.clip->r;
+    if(v.x > o.x+r.x || v.x < o.x-r.x ||
+       v.y > o.y+r.y || v.y < o.y-r.y ||
+       v.z > o.z+r.z || v.z < o.z-r.z) return false;
+    loopi(c.clip->size) if(c.clip->p[i].dist(v)>0) return false;
+    return true;
+};
+
+bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, float &dist)
+{
+    if(vecincube(c, o)) { dest = o; return true; };
+
+    loopi(c.clip->size)
+    {
+        float a = ray.dot(c.clip->p[i]);
+        if(a>=0) continue;
+        float f = -c.clip->p[i].dist(o)/a;
+        if(f + dist < 0) continue;
+
+        vec d(o);
+        pushvec(d, ray, f+0.1f);
+
+        if(vecincube(c, d))
+        {
+            dist += f+0.1;
+            dest = d;
+            return true;
+        };
+    };
+    return false;
+};
+
+float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size)
+{
+    cube *last = NULL;
+    float dist = 0;
+    vec v = o;
+    for(;;)
+    {
+        cube &c = lookupcube(int(v.x), int(v.y), int(v.z), 0);
+        float disttonext = 1e16f;
+        loopi(3) disttonext = min(disttonext, 0.1f + fabs((float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i]));
+
+        if((clipmat && isclipped(c.material)) || isentirelysolid(c) || (lusize==size&&!isempty(c)) || dist>radius || last==&c)
+        {
+            if(last==&c) dist = radius;
+            return dist;
+        };
+
+        last = &c;
+
+        if(!isempty(c))
+        {
+            setcubeclip(c, lu.x, lu.y, lu.z, lusize);
+            if(raycubeintersect(c, v, ray, v, dist)) return dist;
+        };
+
+        pushvec(v, ray, disttonext);
+        dist += disttonext;
+    };
+};
+
+/////////////////////////  entity collision  ///////////////////////////////////////////////
+
 // info about collisions
 vec wall, ground; // just the normal vectors.
 float floorheight, walldistance;
@@ -15,7 +128,7 @@ const float GRAVITY = 400.0f;
 
 void checkstairs(float height)
 {
-    floorheight = max(height, floorheight); 
+    floorheight = max(height, floorheight);
 };
 
 bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, bool obstacle)
@@ -62,28 +175,38 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
 
 bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
-    plane clip[12];
-    int s2 = size>>1;
-    float r = d->radius, 
+    if(isentirelysolid(c) || isclipped(c.material))
+    {
+        int s2 = size>>1;
+        vec o = vec(x+s2, y+s2, z+s2);
+        vec r = vec(s2, s2, s2);
+        return rectcollide(d, o, r.x, r.y, r.z, r.z, true);
+    };
+
+    setcubeclip(c, x, y, z, size);
+	clipplanes &p = *c.clip;
+
+	float r = d->radius,
           zr = (d->aboveeye+d->eyeheight)/2;
-    vec bo(x+s2, y+s2, z+s2), br(s2, s2, s2);
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
 
-    int clipsize = isentirelysolid(c) || isclipped(c.material) ? 0 : genclipplanes(c, x, y, z, size, clip, bo, br);
+    if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z, false)) return true;
 
-    if(rectcollide(d, bo, br.x, br.y, br.z, br.z, !clipsize)) return true;
-    if(!clipsize) return false;
-    float m = walldistance;
-    loopi(clipsize)
+    if(p.size)
     {
-        float dist = clip[i].dist(o) - (fabs(clip[i].x*r)+fabs(clip[i].y*r)+fabs(clip[i].z*zr));
-        if(dist>0) return true;
-        if(dist>m) { w = &clip[i]; m = dist; };
+        float m = walldistance;
+        loopi(p.size)
+        {
+            float dist = p.p[i].dist(o) - (fabs(p.p[i].x*r)+fabs(p.p[i].y*r)+fabs(p.p[i].z*zr));
+            if(dist>0) return true;
+            if(dist>m) { w = &p.p[i]; m = dist; };
+        };
+        if(w->dot(d->vel) > 0.0f) return true;
+        wall = *w;
+        checkstairs(p.o.z+p.r.z);
     };
-    if(w->dot(d->vel) > 0.0f) return true;
-    wall = *w;
-    checkstairs(bo.z+br.z);
+
     return false;
 };
 
@@ -146,11 +269,11 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
                 vec obstacle = wall;
                 /* add space to reach the floor plus a little stepping room */
                 d->o.z += space + 0.01f;
-                if(collide(d)) 
-                { 
-                    d->onfloor = 0.0f; 
-					d->bob = -space;
-                    return true; 
+                if(collide(d))
+                {
+                    d->onfloor = 0.0f;
+                    d->bob = -space;
+                    return true;
                 };
                 wall = obstacle;
             };
@@ -265,7 +388,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
                 afr = floating ? physics_friction_air/1000.0f : (water ? physics_friction_water/1000.0f : physics_friction_air/1000.0f), /* coefficient of friction for the air */
                 dfr = afr + (gfr == 0.0 ? physics_friction_jump/1000.0f : gfr), /* friction against which the player is pushing to generate movement */
                 sfr = (physics_friction_stop/1000.f)*(afr + gfr); /* friction against which the player is stopping movement */
-                
+
     if(!floating && (!water || (!pl->move && !pl->strafe)))
         pl->vel.z -= gravity*secs;
 
@@ -306,7 +429,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
             float dz = -(m.x*ground.x + m.y*ground.y)/ground.z;
             if(!water || dz > 0.0f) m.z += dz;
         };
-        
+
         m.normalize();
     };
 
@@ -356,7 +479,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     pl->blocked = false;
     pl->moving = true;
     pl->onfloor = 0.0f;
-	pl->bob = min(0, pl->bob+0.7f);
+    pl->bob = min(0, pl->bob+0.7f);
 
     if(floating)                // just apply velocity
     {
@@ -402,7 +525,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         else if(pl->inwater && !water) playsound(S_SPLASH1, &pl->o);
         pl->inwater = water;
     };
-    
+
     return true;
 };
 
