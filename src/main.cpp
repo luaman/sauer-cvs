@@ -184,7 +184,6 @@ int main(int argc, char **argv)
    
     log("world");
     empty_world(7, true);
-    fatal("");
     log("sound");
     initsound();
 
