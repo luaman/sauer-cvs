@@ -677,6 +677,31 @@
 			<File
 				RelativePath="..\readme_source.txt">
 			</File>
+			<Filter
+				Name="docs"
+				Filter="">
+				<File
+					RelativePath="..\sauerbraten\docs\config.html">
+				</File>
+				<File
+					RelativePath="..\sauerbraten\docs\editing.html">
+				</File>
+				<File
+					RelativePath="..\sauerbraten\docs\editref.html">
+				</File>
+				<File
+					RelativePath="..\sauerbraten\docs\game.html">
+				</File>
+				<File
+					RelativePath="..\sauerbraten\docs\history.html">
+				</File>
+				<File
+					RelativePath="..\sauerbraten\docs\index.html">
+				</File>
+				<File
+					RelativePath="..\sauerbraten\docs\style.css">
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\VTune\sauerbraten.vpj">

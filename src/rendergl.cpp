@@ -85,6 +85,21 @@ void cleangl()
     if(qsphere) gluDeleteQuadric(qsphere);
 };
 
+SDL_Surface *rotate(SDL_Surface *s)
+{
+    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->h, s->w, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
+    if(!d) fatal("create surface");
+    int depth = s->format->BitsPerPixel==24 ? 3 : 4;
+    loop(y, s->h) loop(x, s->w)
+    {
+        uchar *src = (uchar *)s->pixels+(y*s->w+x)*depth;
+        uchar *dst = (uchar *)d->pixels+(x*s->h+(s->h-y)-1)*depth;
+        loopi(depth) *dst++=*src++;
+    }; 
+    SDL_FreeSurface(s);
+    return d;
+};
+
 void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp)
 {
     glBindTexture(GL_TEXTURE_2D, tnum);
@@ -99,13 +114,14 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
     else glTexImage2D(GL_TEXTURE_2D, 0, mode, w, h, 0, mode, GL_UNSIGNED_BYTE, pixels);
 }
 
-bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp, bool msg)
+bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp, bool msg, int rot)
 {
     //printf("texload: %s\n", texname);
     SDL_Surface *s = IMG_Load(texname);
     if(!s) { if(msg) conoutf("couldn't load texture %s", texname); return false; };
     bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", texname); return false; };
+    loopi(rot) s = rotate(s);
     // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };  
     createtexture(tnum, s->w, s->h, s->pixels, clamp, mipit, bpp);
     xs = s->w;
@@ -129,6 +145,7 @@ const int FIRSTTEX = 100;                   // opengl id = loaded id + FIRSTTEX
 const int MAXFRAMES = 2;                    // increase to allow more complex shader defs
 int mapping[256][MAXFRAMES];                // ( cube texture, frame ) -> ( opengl id, name )
 string mapname[256][MAXFRAMES];
+int rotation[256];
 
 void purgetextures()
 {
@@ -139,18 +156,19 @@ int curtexnum = 0;
 
 void texturereset() { curtexnum = 0; };
 
-void texture(char *aframe, char *name)
+void texture(char *aframe, char *name, char *rot)
 {
     int num = curtexnum++, frame = atoi(aframe);
     if(num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
     mapping[num][frame] = 1;
     char *n = mapname[num][frame];
+    rotation[num] = atoi(rot);
     strcpy_s(n, name);
     path(n);
 };
 
 COMMAND(texturereset, ARG_NONE);
-COMMAND(texture, ARG_2STR);
+COMMAND(texture, ARG_3STR);
 
 int lookuptexture(int tex, int &xs, int &ys)
 {
@@ -186,7 +204,7 @@ int lookuptexture(int tex, int &xs, int &ys)
     sprintf_sd(name)("packages%c%s", PATHDIV, texname[curtex]);
     
     int bpp;
-    if(installtex(tnum, name, xs, ys, false, true, bpp))
+    if(installtex(tnum, name, xs, ys, false, true, bpp, true, rotation[curtex]))
     {
         mapping[tex][frame] = tnum;
         texx[curtex] = xs;
