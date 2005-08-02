@@ -18,11 +18,11 @@ inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f
 
 void renderwater(uint subdiv, int x, int y, int z, uint size)
 {
-    int sx, sy;
-    glBindTexture(GL_TEXTURE_2D, lookuptexture(DEFAULT_LIQUID, sx, sy));
+    Texture *t = lookuptexture(DEFAULT_LIQUID);
+    glBindTexture(GL_TEXTURE_2D, t->gl);
     
-    float xf = 8.0f/sx;
-    float yf = 8.0f/sy;
+    float xf = 8.0f/t->xs;
+    float yf = 8.0f/t->ys;
     float xs = subdiv*xf;
     float ys = subdiv*yf;
     float t1 = lastmillis/300.0f;

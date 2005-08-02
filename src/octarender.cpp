@@ -782,9 +782,8 @@ void renderq()
         unsigned short *ebuf = va->ebuf;
         loopi(va->texs)
         {
-            int xs, ys;
-            int otex = lookuptexture(va->eslist[i].texture, xs, ys);
-            glBindTexture(GL_TEXTURE_2D, otex);
+            Texture *tex = lookuptexture(va->eslist[i].texture);
+            glBindTexture(GL_TEXTURE_2D, tex->gl);
             pfnglActiveTexture(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
             pfnglActiveTexture(GL_TEXTURE0_ARB);
@@ -793,8 +792,8 @@ void renderq()
             {
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                 GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                s[si[l]] = 8.0f/xs;
-                t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/ys;
+                s[si[l]] = 8.0f/tex->xs;
+                t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
                 glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
                 glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
 

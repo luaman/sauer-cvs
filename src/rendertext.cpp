@@ -118,16 +118,20 @@ int text_width(char *str)
 }
 
 
-void draw_textf(char *fstr, int left, int top, int gl_num, ...)
+void draw_textf(char *fstr, int left, int top, ...)
 {
-    sprintf_sdlv(str, gl_num, fstr);
-    draw_text(str, left, top, gl_num);
+    sprintf_sdlv(str, top, fstr);
+    draw_text(str, left, top);
 };
 
-void draw_text(char *str, int left, int top, int gl_num)
+Texture *texttex = NULL;
+
+void draw_text(char *str, int left, int top)
 {
+    if(!texttex) texttex = textureload(newstring("data/newchars.png"));
+
     glBlendFunc(GL_ONE, GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, gl_num);
+    glBindTexture(GL_TEXTURE_2D, texttex->gl);
     glColor3ub(255,255,255);
 
     int x = left;
@@ -166,7 +170,22 @@ void draw_text(char *str, int left, int top, int gl_num)
     }
 }
 
-// also Don's code, so goes in here too :)
+Texture *sky[6] = { 0, 0, 0, 0, 0, 0 };
+
+void loadsky(char *basename)
+{
+    static string lastsky = "";
+    if(strcmp(lastsky, basename)==0) return;
+    char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
+    loopi(6)
+    {
+        sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
+        if((sky[i] = textureload(name, true, true))==crosshair) conoutf("could not load sky textures");
+    };
+    strcpy_s(lastsky, basename);
+};
+
+COMMAND(loadsky, ARG_1STR);
 
 void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
                      float s1, float t1, int x1, int y1, int z1,
@@ -186,37 +205,39 @@ void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
 
 void draw_envbox(int t, int w)
 {
+    if(!sky[0]) fatal("no skybox");
+
     glDepthMask(GL_FALSE);
 
     draw_envbox_aux(1.0f, 1.0f, -w, -w,  w,
                     0.0f, 1.0f,  w, -w,  w,
                     0.0f, 0.0f,  w, -w, -w,
-                    1.0f, 0.0f, -w, -w, -w, t);
+                    1.0f, 0.0f, -w, -w, -w, sky[0]->gl);
 
     draw_envbox_aux(1.0f, 1.0f, +w,  w,  w,
                     0.0f, 1.0f, -w,  w,  w,
                     0.0f, 0.0f, -w,  w, -w,
-                    1.0f, 0.0f, +w,  w, -w, t+1);
+                    1.0f, 0.0f, +w,  w, -w, sky[1]->gl);
 
     draw_envbox_aux(0.0f, 0.0f, -w, -w, -w,
                     1.0f, 0.0f, -w,  w, -w,
                     1.0f, 1.0f, -w,  w,  w,
-                    0.0f, 1.0f, -w, -w,  w, t+2);
+                    0.0f, 1.0f, -w, -w,  w, sky[2]->gl);
 
     draw_envbox_aux(1.0f, 1.0f, +w, -w,  w,
                     0.0f, 1.0f, +w,  w,  w,
                     0.0f, 0.0f, +w,  w, -w,
-                    1.0f, 0.0f, +w, -w, -w, t+3);
+                    1.0f, 0.0f, +w, -w, -w, sky[3]->gl);
 
     draw_envbox_aux(0.0f, 1.0f, -w,  w,  w,
                     0.0f, 0.0f, +w,  w,  w,
                     1.0f, 0.0f, +w, -w,  w,
-                    1.0f, 1.0f, -w, -w,  w, t+4);
+                    1.0f, 1.0f, -w, -w,  w, sky[4]->gl);
 
     draw_envbox_aux(0.0f, 1.0f, +w,  w, -w,
                     0.0f, 0.0f, -w,  w, -w,
                     1.0f, 0.0f, -w, -w, -w,
-                    1.0f, 1.0f, +w, -w, -w, t+5);
+                    1.0f, 1.0f, +w, -w, -w, sky[5]->gl);
 
     glDepthMask(GL_TRUE);
 }

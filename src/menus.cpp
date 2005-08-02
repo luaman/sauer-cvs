@@ -69,7 +69,7 @@ bool rendermenu()
     int y = (VIRTH-h)/2;
     int x = (VIRTW-w)/2;
     blendbox(x-FONTH/2*3, y-FONTH, x+w+FONTH/2*3, y+h+FONTH, true);
-    draw_text(title, x, y,2);
+    draw_text(title, x, y);
     y += FONTH*2;
     if(vmenu)
     {
@@ -78,7 +78,7 @@ bool rendermenu()
     };
     loopj(mdisp)
     {
-        draw_text(m.items[j].text, x, y, 2);
+        draw_text(m.items[j].text, x, y);
         y += step;
     };
     return true;

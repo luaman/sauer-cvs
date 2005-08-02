@@ -58,6 +58,7 @@ const int MAXSPHERES = 50;
 struct sphere { vec o; float size, max; int type; sphere *next; };
 sphere spheres[MAXSPHERES], *slist = NULL, *sempty = NULL;
 bool sinit = false;
+Texture *expltex;
 
 void newsphere(vec &o, float max, int type)
 {
@@ -68,6 +69,7 @@ void newsphere(vec &o, float max, int type)
             spheres[i].next = sempty;
             sempty = &spheres[i];
         };
+        expltex = textureload(path(newstring("data/explosion.jpg")));
         sinit = true;
     };
     if(sempty)
@@ -150,23 +152,6 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     };
 };
 
-void loadsky(char *basename)
-{
-    static string lastsky = "";
-    if(strcmp(lastsky, basename)==0) return;
-    char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
-    int texnum = 14;
-    loopi(6)
-    {
-        sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
-        int xs, ys, bpp;
-        if(!installtex(texnum+i, path(name), xs, ys, true, true, bpp)) conoutf("could not load sky textures");
-    };
-    strcpy_s(lastsky, basename);
-};
-
-COMMAND(loadsky, ARG_1STR);
-
 GLfloat mm[16], pm[16];
 
 vec worldpos;
@@ -185,9 +170,12 @@ void aimat()
     worldpos.add(player1->o);
 };
 
+Texture *itemtex = NULL;
+
 void drawicon(float tx, float ty, int x, int y)
 {
-    glBindTexture(GL_TEXTURE_2D, 5);
+    if(!itemtex) itemtex = textureload(newstring("data/items.png"));
+    glBindTexture(GL_TEXTURE_2D, itemtex->gl);
     glBegin(GL_QUADS);
     tx /= 320;
     ty /= 128;
@@ -264,15 +252,15 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     char *command = getcurcommand();
     char *player = playerincrosshair();
-    if(command) draw_textf("> %s_", 20, 1570, 2, command);
-    else if(closeent[0] && !hidehud) draw_text(closeent, 20, 1570, 2);
-    else if(player) draw_text(player, 20, 1570, 2);
+    if(command) draw_textf("> %s_", 20, 1570, command);
+    else if(closeent[0] && !hidehud) draw_text(closeent, 20, 1570);
+    else if(player) draw_text(player, 20, 1570);
 
     renderscores();
     if(!rendermenu() && !hidehud)
     {
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
-        glBindTexture(GL_TEXTURE_2D, 1);
+        glBindTexture(GL_TEXTURE_2D, crosshair->gl);
         glBegin(GL_QUADS);
         glColor3ub(255,255,255);
         if(crosshairfx)
@@ -299,10 +287,10 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glPopMatrix();
         glPushMatrix();
         glOrtho(0, VIRTW*3/2, VIRTH*3/2, 0, -1, 1);
-        if(editmode) draw_textf("cube %d", 3100, 1900, 2, selchildcount);
-        draw_textf("fps %d", 30, 2060, 2, curfps);
-        draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", 30, 2130, 2, wtris/1024, vtris*100/wtris, wverts/1024, vverts*100/wverts, xtraverts/1024, xtravertsva/1024);
-        draw_textf("ond:%d va:%d gl:%d lm:%d", 30, 2200, 2, allocnodes*8, allocva, glde, lightmaps.length());
+        if(editmode) draw_textf("cube %d", 3100, 1900, selchildcount);
+        draw_textf("fps %d", 30, 2060, curfps);
+        draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", 30, 2130, wtris/1024, vtris*100/wtris, wverts/1024, vverts*100/wverts, xtraverts/1024, xtravertsva/1024);
+        draw_textf("ond:%d va:%d gl:%d lm:%d", 30, 2200, allocnodes*8, allocva, glde, lightmaps.length());
     };
 
     glPopMatrix();
@@ -311,9 +299,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     {
         glPushMatrix();
         glOrtho(0, VIRTW/2, VIRTH/2, 0, -1, 1);
-        draw_textf("%d",  90, 827, 2, player1->health);
-        if(player1->armour) draw_textf("%d", 390, 827, 2, player1->armour);
-        draw_textf("%d", 690, 827, 2, player1->ammo[player1->gunselect]);
+        draw_textf("%d",  90, 827, player1->health);
+        if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
+        draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
         glPopMatrix();
     };
     

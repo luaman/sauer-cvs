@@ -66,7 +66,7 @@ void renderconsole()                                // render buffer taking into
     };
     loopj(nd)
     {
-        draw_text(refs[j], FONTH/3, (FONTH/4*5)*(nd-j-1)+FONTH/3, 2);
+        draw_text(refs[j], FONTH/3, (FONTH/4*5)*(nd-j-1)+FONTH/3);
     };
 };
 

@@ -11,17 +11,27 @@ bool parinit = false;
 VAR(maxparticles, 100, 5000, MAXPARTICLES-500);
 VAR(particlesize, 20, 100, 500);
 
+Texture *parttexs[5];
+
+void particleinit()
+{
+    loopi(MAXPARTICLES)
+    {
+        particles[i].next = parempty;
+        parempty = &particles[i];
+    };
+    parinit = true;
+    parttexs[0] = textureload(newstring("data/martin/base.png"));
+    parttexs[1] = textureload(newstring("data/martin/ball1.png"));
+    parttexs[2]  = textureload(newstring("data/martin/smoke.png"));
+    parttexs[3] = textureload(newstring("data/martin/ball2.png"));
+    parttexs[4] = textureload(newstring("data/martin/ball3.png"));
+};
+
+
 void newparticle(vec &o, vec &d, int fade, int type)
 {
-    if(!parinit)
-    {
-        loopi(MAXPARTICLES)
-        {
-            particles[i].next = parempty;
-            parempty = &particles[i];
-        };
-        parinit = true;
-    };
+    if(!parinit) particleinit();
     if(parempty)
     {
         particle *p = parempty;
@@ -48,14 +58,14 @@ void render_particles(int time)
     
     struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
     {
-        { 0.7f, 0.6f, 0.3f, 2,  3, 0.06f }, // yellow: sparks 
-        { 0.5f, 0.5f, 0.5f, 20, 7, 0.15f }, // grey:   small smoke
-        { 0.2f, 0.2f, 1.0f, 20, 3, 0.08f }, // blue:   edit mode entities
-        { 1.0f, 0.1f, 0.1f, 1,  7, 0.06f }, // red:    blood spats
-        { 1.0f, 0.8f, 0.8f, 20, 6, 1.2f  }, // yellow: fireball1
-        { 0.5f, 0.5f, 0.5f, 20, 7, 0.6f  }, // grey:   big smoke   
-        { 1.0f, 1.0f, 1.0f, 20, 8, 1.2f  }, // blue:   fireball2
-        { 1.0f, 1.0f, 1.0f, 20, 9, 1.2f  }, // green:  fireball3
+        { 0.7f, 0.6f, 0.3f, 2,  0, 0.06f }, // yellow: sparks 
+        { 0.5f, 0.5f, 0.5f, 20, 2, 0.15f }, // grey:   small smoke
+        { 0.2f, 0.2f, 1.0f, 20, 0, 0.08f }, // blue:   edit mode entities
+        { 1.0f, 0.1f, 0.1f, 1,  2, 0.06f }, // red:    blood spats
+        { 1.0f, 0.8f, 0.8f, 20, 1, 1.2f  }, // yellow: fireball1
+        { 0.5f, 0.5f, 0.5f, 20, 2, 0.6f  }, // grey:   big smoke   
+        { 1.0f, 1.0f, 1.0f, 20, 3, 1.2f  }, // blue:   fireball2
+        { 1.0f, 1.0f, 1.0f, 20, 4, 1.2f  }, // green:  fireball3
     };
     
     int numrender = 0;
@@ -64,7 +74,7 @@ void render_particles(int time)
     {       
         parttype *pt = &parttypes[p->type];
 
-        glBindTexture(GL_TEXTURE_2D, pt->tex);  
+        glBindTexture(GL_TEXTURE_2D, parttexs[pt->tex]->gl);  
         glBegin(GL_QUADS);
         
         glColor3d(pt->r, pt->g, pt->b);

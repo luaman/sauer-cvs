@@ -42,9 +42,9 @@ struct md2
     mapmodelinfo mmi;
     
     char *loadname;
-    int mdlnum;
     bool loaded;
-    bool alpha;
+    
+    Texture *skin;
     
     GLuint vbufGL;
     ushort *vbufi;
@@ -187,7 +187,7 @@ struct md2
         glRotatef(yaw+180, 0, -1, 0);
         glRotatef(pitch, 0, 0, 1);
         
-        if(alpha)
+        if(skin->bpp==32)
         {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -249,7 +249,7 @@ struct md2
     		
 	    };
     	
-	    if(alpha)
+	    if(skin->bpp==32)
 	    {
             glDisable(GL_ALPHA_TEST);
 	        glDisable(GL_BLEND);
@@ -272,8 +272,7 @@ void delayedload(md2 *m)
         sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
         if(!m->load(path(name1))) fatal("failed to load model: ", name1);
         sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
-        int xs, ys, bpp;
-        #define ifnload if(!installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys, false, true, bpp, false))
+        #define ifnload if((m->skin = textureload(name2, false, true, false))==crosshair)
         ifnload
         {
             strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg
@@ -284,30 +283,25 @@ void delayedload(md2 *m)
                 string nn;
                 strn0cpy(nn, m->loadname, p-m->loadname+1);
                 sprintf_s(name2)("packages/models/%s/skin.jpg", nn);    // try jpg in the parent folder (skin sharing)
-                ifnload                                                 // FIXME: still causes texture to be loaded multiple times... make hashtable global
+                ifnload                                          
                 {
                     strcpy(name2+strlen(name2)-3, "png");               // and png again
                     ifnload
                     {
                         conoutf("could not load model skin for %s", name1);
-                        m->mdlnum = 1-FIRSTMDL; // crosshair :)
                     };
                 };
             };
         };
         m->loaded = true;
-        m->alpha = bpp==32;
     };
 };
-
-int modelnum = 0;
 
 md2 *loadmodel(char *name)
 {
     md2 **mm = mdllookup.access(name);
     if(mm) return *mm;
     md2 *m = new md2();
-    m->mdlnum = modelnum++;
     mapmodelinfo mmi = { 8, 8, 0, "" }; 
     m->mmi = mmi;
     m->loadname = newstring(name);
@@ -337,7 +331,7 @@ void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, flo
     vec center;
     float radius = m->boundsphere(frame, scale, center);
     if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
-    int xs, ys;
-    glBindTexture(GL_TEXTURE_2D, tex ? lookuptexture(tex, xs, ys) : FIRSTMDL+m->mdlnum);
+    Texture *t = tex ? lookuptexture(tex) : m->skin;
+    glBindTexture(GL_TEXTURE_2D, t->gl);
     m->render(frame, range, x, y, z, yaw, pitch, scale, speed, basetime);
 };

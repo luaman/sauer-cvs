@@ -114,107 +114,78 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
     else glTexImage2D(GL_TEXTURE_2D, 0, mode, w, h, 0, mode, GL_UNSIGNED_BYTE, pixels);
 }
 
-bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp, bool msg, int rot)
+hashtable<char *, Texture> textures;
+
+Texture *crosshair = NULL; // used as default, ensured to be loaded
+
+Texture *textureload(char *tname, int rot, bool clamp, bool mipit, bool msg)
 {
-    //printf("texload: %s\n", texname);
-    SDL_Surface *s = IMG_Load(texname);
-    if(!s) { if(msg) conoutf("couldn't load texture %s", texname); return false; };
-    bpp = s->format->BitsPerPixel;
-    if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", texname); return false; };
+    path(tname);
+    string rname;
+    strcpy_s(rname, tname);
+    if(rot) { sprintf_sd(rnum)("_%d", rot); strcat_s(rname, rnum); };
+
+    Texture *t = textures.access(rname);
+    if(t) return t;
+    t = &textures[newstring(rname)];
+    
+    strcpy_s(t->name, rname);
+    glGenTextures(1, &t->gl);
+
+    SDL_Surface *s = IMG_Load(tname);
+    if(!s) { if(msg) conoutf("couldn't load texture %s", tname); return crosshair; };
+    t->bpp = s->format->BitsPerPixel;
+    if(t->bpp!=24 && t->bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
     loopi(rot) s = rotate(s); // lazy!
-    createtexture(tnum, s->w, s->h, s->pixels, clamp, mipit, bpp);
-    xs = s->w;
-    ys = s->h;
+    createtexture(t->gl, s->w, s->h, s->pixels, clamp, mipit, t->bpp);
+    t->xs = s->w;
+    t->ys = s->h;
     SDL_FreeSurface(s);
-    return true;
+    return t;
 };
 
 // management of texture slots
 // each texture slot can have multople texture frames, of which currently only the first is used
 // additional frames can be used for various shaders
 
-const int MAXTEX = 1000;
-int texx[MAXTEX];                           // ( loaded texture ) -> ( name, size )
-int texy[MAXTEX];                           
-string texname[MAXTEX];
-int curtex = 0;
-const int FIRSTTEX = 100;                   // opengl id = loaded id + FIRSTTEX
-// std 1+, sky 14+, mdls 20+
+struct Slot
+{
+    Texture *t;              
+    string name;
+    int rotation;
+};
 
-const int MAXFRAMES = 2;                    // increase to allow more complex shader defs
-int mapping[256][MAXFRAMES];                // ( cube texture, frame ) -> ( opengl id, name )
-string mapname[256][MAXFRAMES];
-int rotation[256];
+Slot slots[256];
 
 void purgetextures()
 {
-    loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0;
+    loopi(256) { slots[i].t = NULL; slots[i].name[0] = 0; };
 };
 
 int curtexnum = 0;
 
 void texturereset() { curtexnum = 0; };
 
-void texture(char *aframe, char *name, char *rot)
+void texture(char *__dummy, char *name, char *rot)
 {
-    int num = curtexnum++, frame = atoi(aframe);
-    if(num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
-    mapping[num][frame] = 1;
-    char *n = mapname[num][frame];
-    rotation[num] = atoi(rot);
-    strcpy_s(n, name);
-    path(n);
+    int num = curtexnum++;    
+    if(num<0 || num>=256) return;
+    Slot &s = slots[num];
+    s.t = NULL;
+    s.rotation = atoi(rot);
+    strcpy_s(s.name, name);
+    path(s.name);
 };
 
 COMMAND(texturereset, ARG_NONE);
 COMMAND(texture, ARG_3STR);
 
-int lookuptexture(int tex, int &xs, int &ys)
+Texture *lookuptexture(int tex)
 {
-    int frame = 0;                      // other frames?
-    int tid = mapping[tex][frame];
-
-    if(tid>=FIRSTTEX)
-    {
-        xs = texx[tid-FIRSTTEX];
-        ys = texy[tid-FIRSTTEX];
-        return tid;
-    };
-
-    xs = ys = 16;
-    if(!tid) return 1;                  // crosshair :)
-
-    loopi(curtex)       // lazily happens once per "texture" command, basically
-    {
-        if(strcmp(mapname[tex][frame], texname[i])==0)
-        {
-            mapping[tex][frame] = tid = i+FIRSTTEX;
-            xs = texx[i];
-            ys = texy[i];
-            return tid;
-        };
-    };
-
-    if(curtex==MAXTEX) fatal("loaded too many textures");
-
-    int tnum = curtex+FIRSTTEX;
-    strcpy_s(texname[curtex], mapname[tex][frame]);
-
-    sprintf_sd(name)("packages%c%s", PATHDIV, texname[curtex]);
-    
-    int bpp;
-    if(installtex(tnum, name, xs, ys, false, true, bpp, true, rotation[curtex]))
-    {
-        mapping[tex][frame] = tnum;
-        texx[curtex] = xs;
-        texy[curtex] = ys;
-        curtex++;
-        return tnum;
-    }
-    else
-    {
-        return mapping[tex][frame] = FIRSTTEX;  // temp fix
-    };
+    Slot &s = slots[tex];
+    if(s.t) return s.t;
+    sprintf_sd(name)("packages/%s", s.name);
+    return s.t = textureload(name, s.rotation);
 };
 
 void renderstrips()
@@ -381,9 +352,6 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     glEnable(GL_TEXTURE_2D);
     
-    int xs, ys;
-    loopi(10) lookuptexture(i, xs, ys);
-
     xtravertsva = xtraverts = glde = 0;
 
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / ((hdr.worldsize>>4)*(hdr.worldsize>>4)*6) < 9);

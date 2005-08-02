@@ -2,6 +2,15 @@
 
 #include "tools.h"
 
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+#endif
+
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_opengl.h>
+
 enum                            // hardcoded texture numbers
 {
     DEFAULT_SKY = 0,
@@ -93,6 +102,13 @@ struct plane : vec
 };
 struct line3 { vec orig, dir; };
 struct vertex : vec { float u, v; };
+
+struct Texture
+{
+    int xs, ys, bpp;
+    GLuint gl;
+    string name;
+};
 
 enum                            // cube empty-space materials
 {
@@ -250,6 +266,8 @@ extern int islittleendian;
 extern const int cubecoords[8][3];
 extern const ushort fv[6][4];
 
+extern Texture *crosshair;
+
 #define DMF 16.0f
 #define DVF 100.0f
 #define di(f) ((int)(f*DMF))
@@ -333,10 +351,10 @@ extern bool hasVBO;
 extern void gl_init(int w, int h);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float changelod, float curfps);
-extern bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp, bool msg = true, int rot = 0);
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
-extern int lookuptexture(int tex, int &xs, int &ys);
+extern Texture *textureload(char *tname, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true);
+extern Texture *lookuptexture(int tex);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24);
 extern void invertperspective();
 extern void readmatrices();
@@ -398,8 +416,8 @@ extern void *alloc(int s);
 extern void keyrepeat(bool on);
 
 // rendertext
-extern void draw_text(char *str, int left, int top, int gl_num);
-extern void draw_textf(char *fstr, int left, int top, int gl_num, ...);
+extern void draw_text(char *str, int left, int top);
+extern void draw_textf(char *fstr, int left, int top, ...);
 extern int text_width(char *str);
 extern void draw_envbox(int t, int fogdist);
 
@@ -493,18 +511,6 @@ extern void baseammo(int gun);
 
 // rndmap
 extern void perlinarea(block &b, int scale, int seed, int psize);
-
-
-
-
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include "windows.h"
-#endif
-
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_opengl.h>
 
 extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
 extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
