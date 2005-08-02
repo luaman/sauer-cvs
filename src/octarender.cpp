@@ -785,7 +785,8 @@ void renderq()
             Texture *tex = lookuptexture(va->eslist[i].texture);
             glBindTexture(GL_TEXTURE_2D, tex->gl);
             pfnglActiveTexture(GL_TEXTURE1_ARB);
-            glBindTexture(GL_TEXTURE_2D, va->eslist[i].lmid + 10000);
+            extern vector<GLuint> lmtexids;
+            glBindTexture(GL_TEXTURE_2D, lmtexids[va->eslist[i].lmid]);
             pfnglActiveTexture(GL_TEXTURE0_ARB);
 
             loopl(3) if (va->eslist[i].length[l])

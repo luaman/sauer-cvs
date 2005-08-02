@@ -180,7 +180,8 @@ void loadsky(char *basename)
     loopi(6)
     {
         sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
-        if((sky[i] = textureload(name, true, true))==crosshair) conoutf("could not load sky textures");
+        if((sky[i] = textureload(name, 0, true, true))==crosshair) conoutf("could not load sky textures");
+        // FIXME? now doesn't overwrite old sky any more which uses more memory, but gives faster loadtimes...
     };
     strcpy_s(lastsky, basename);
 };

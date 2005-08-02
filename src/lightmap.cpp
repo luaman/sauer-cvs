@@ -598,10 +598,18 @@ VARF(fullbright, 0, 0, 1,
     else initlights();
 );
 
+vector<GLuint> lmtexids;
+
+void alloctexids()
+{
+    for(int i = lmtexids.length(); i<lightmaps.length()+1; i++) glGenTextures(1, &lmtexids.add());
+};
+
 void clearlights()
 {
     uchar bright[3] = {128, 128, 128};
-    loopi(lightmaps.length() + 1) createtexture(i + 10000, 1, 1, bright, false, false);
+    alloctexids();
+    loopi(lightmaps.length() + 1) createtexture(lmtexids[i], 1, 1, bright, false, false);
     loopv(ents) memset(ents[i].color, 255, 3);
 }
 
@@ -613,8 +621,9 @@ void initlights()
         return;
     }
     uchar unlit[3] = { ambient, ambient, ambient };
-    createtexture(10000, 1, 1, unlit, false, false);
-    loopi(lightmaps.length()) createtexture(i + 10001, LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
+    alloctexids();
+    createtexture(lmtexids[0], 1, 1, unlit, false, false);
+    loopi(lightmaps.length()) createtexture(lmtexids[i+1], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     loopv(ents)
     {
         entity &e = ents[i];
