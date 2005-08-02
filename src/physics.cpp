@@ -23,14 +23,16 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
     };
     if(c.clip != NULL)
     {
+    /*
 		clipplanes *n = c.clip->next;
 		clipplanes *p = c.clip->prev;
         n->prev = p;
-        p->next = n;
+        p->next = n;    // FIXME GILT (corrupts memory)
         n = nextclip;
         p = nextclip->prev;
         n->prev = c.clip;
         p->next = c.clip;
+        */
     }
     else
     {

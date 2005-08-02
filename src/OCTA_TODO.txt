@@ -22,7 +22,7 @@
 - render entities at distance as sprites
 - try out hardware occlusion queries before portals
 - (E) sort the order of rendering mapmodels, so as to factor out glbindbuffer
-
+- SP: add pistol ammo box... make monster use it? hmmm not more hitscan
 
 - connected push
 - blend screen when inside a cube

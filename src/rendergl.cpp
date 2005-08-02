@@ -99,16 +99,11 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
     else glTexImage2D(GL_TEXTURE_2D, 0, mode, w, h, 0, mode, GL_UNSIGNED_BYTE, pixels);
 }
 
-bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp)
+bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipit, int &bpp, bool msg)
 {
     //printf("texload: %s\n", texname);
     SDL_Surface *s = IMG_Load(texname);
-    if(!s)
-    {
-        strcpy(texname+strlen(texname)-3, "png"); // hack
-        s = IMG_Load(texname);
-        if(!s) { conoutf("couldn't load texture %s", texname); return false; };
-    };
+    if(!s) { if(msg) conoutf("couldn't load texture %s", texname); return false; };
     bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", texname); return false; };
     // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };  

@@ -273,7 +273,28 @@ void delayedload(md2 *m)
         if(!m->load(path(name1))) fatal("failed to load model: ", name1);
         sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
         int xs, ys, bpp;
-        installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys, false, true, bpp);
+        #define ifnload if(!installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys, false, true, bpp, false))
+        ifnload
+        {
+            strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg
+            ifnload
+            {
+                char *p = strrchr(m->loadname, '/');
+                if(!p) p = m->loadname;
+                string nn;
+                strn0cpy(nn, m->loadname, p-m->loadname+1);
+                sprintf_s(name2)("packages/models/%s/skin.jpg", nn);    // try jpg in the parent folder (skin sharing)
+                ifnload                                                 // FIXME: still causes texture to be loaded multiple times... make hashtable global
+                {
+                    strcpy(name2+strlen(name2)-3, "png");               // and png again
+                    ifnload
+                    {
+                        conoutf("could not load model skin for %s", name1);
+                        m->mdlnum = 1-FIRSTMDL; // crosshair :)
+                    };
+                };
+            };
+        };
         m->loaded = true;
         m->alpha = bpp==32;
     };
