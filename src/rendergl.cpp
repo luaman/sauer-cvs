@@ -121,8 +121,7 @@ bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp, bool mipi
     if(!s) { if(msg) conoutf("couldn't load texture %s", texname); return false; };
     bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", texname); return false; };
-    loopi(rot) s = rotate(s);
-    // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };  
+    loopi(rot) s = rotate(s); // lazy!
     createtexture(tnum, s->w, s->h, s->pixels, clamp, mipit, bpp);
     xs = s->w;
     ys = s->h;
