@@ -178,14 +178,13 @@ int main(int argc, char **argv)
     log("gl");
     gl_init(scr_w, scr_h);
 
-    log("world");
-    empty_world(7, true);
-
     log("basetex");
-
     crosshair = textureload(newstring("data/crosshair.png"));
     if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
-    
+   
+    log("world");
+    empty_world(7, true);
+    fatal("");
     log("sound");
     initsound();
 
