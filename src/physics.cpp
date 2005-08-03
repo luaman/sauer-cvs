@@ -15,24 +15,24 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
     {
         loopi(MAXCLIPPLANES)
         {
-            clipcache[i].next = &clipcache[(i+1)%MAXCLIPPLANES];
-            clipcache[i].prev = &clipcache[(i-1)%MAXCLIPPLANES];
+            clipcache[i].next = clipcache+i+1;
+            clipcache[i].prev = clipcache+i-1;
             clipcache[i].backptr = NULL;
         };
+        clipcache[MAXCLIPPLANES-1].next = clipcache;
+        clipcache[0].prev = clipcache+MAXCLIPPLANES-1;
         nextclip = clipcache;
     };
     if(c.clip != NULL)
     {
-    /*
-		clipplanes *n = c.clip->next;
-		clipplanes *p = c.clip->prev;
+        clipplanes *&n = c.clip->next;
+        clipplanes *&p = c.clip->prev;
         n->prev = p;
-        p->next = n;    // FIXME GILT (corrupts memory)
+        p->next = n;
         n = nextclip;
         p = nextclip->prev;
         n->prev = c.clip;
         p->next = c.clip;
-        */
     }
     else
     {
@@ -186,9 +186,9 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     };
 
     setcubeclip(c, x, y, z, size);
-	clipplanes &p = *c.clip;
+    clipplanes &p = *c.clip;
 
-	float r = d->radius,
+    float r = d->radius,
           zr = (d->aboveeye+d->eyeheight)/2;
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
