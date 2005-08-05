@@ -25,6 +25,7 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
     };
     if(c.clip != NULL)
     {
+        if(nextclip == c.clip) return;
         clipplanes *&n = c.clip->next;
         clipplanes *&p = c.clip->prev;
         n->prev = p;
@@ -42,6 +43,12 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
         genclipplanes(c, x, y, z, size, *c.clip);
         nextclip = nextclip->next;
     };
+};
+
+void freeclipplanes(cube &c)
+{
+    c.clip->backptr = NULL;
+    c.clip = NULL;
 };
 
 /////////////////////////  ray - cube collision ///////////////////////////////////////////////
