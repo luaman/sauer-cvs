@@ -46,11 +46,12 @@ void cleansound()
 void initsound()
 {
     #ifdef USE_MIXER
-        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 32, 512)<0)
+        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 512)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s",  Mix_GetError());
             soundvol = 0;
         };
+        Mix_AllocateChannels(32);
     #else
         if(FSOUND_GetVersion()<FMOD_VERSION) fatal("old FMOD dll");
         if(!FSOUND_Init(22050, 32, FSOUND_INIT_GLOBALFOCUS))
