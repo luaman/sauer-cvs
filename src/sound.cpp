@@ -46,7 +46,7 @@ void cleansound()
 void initsound()
 {
     #ifdef USE_MIXER
-        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 512)<0)
+        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 32, 512)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s",  Mix_GetError());
             soundvol = 0;
