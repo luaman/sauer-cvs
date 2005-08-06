@@ -272,7 +272,7 @@ void delayedload(md2 *m)
         sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
         if(!m->load(path(name1))) fatal("failed to load model: ", name1);
         sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
-        #define ifnload if((m->skin = textureload(name2, false, true, false))==crosshair)
+        #define ifnload if((m->skin = textureload(name2, 0, false, true, false))==crosshair)
         ifnload
         {
             strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg

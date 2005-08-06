@@ -93,19 +93,6 @@ bool noedit()
     return !editmode;
 };
 
-void discardchildren(cube &c)
-{
-    if(c.va) destroyva(c.va);
-    c.va = NULL;
-    if(c.surfaces) freesurfaces(c);
-    if(c.clip) freeclipplanes(c);
-    if(c.children)
-    {
-        freeocta(c.children);
-        c.children = NULL;
-    };
-};
-
 ///////// selection support /////////////
 
 cube &blockcube(int x, int y, int z, block3 &b, int rgrid) // looks up a world cube, based on coordinates mapped by the block

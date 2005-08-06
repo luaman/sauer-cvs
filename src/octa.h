@@ -129,6 +129,7 @@ enum
 extern cube *newcubes(uint face = F_EMPTY);
 extern int familysize(cube &c);
 extern void freeocta(cube *c);
+extern void discardchildren(cube &c);
 extern void optiface(uchar *p, cube &c);
 extern bool validcube(cube &c);
 extern void validatec(cube *c, int size=hdr.worldsize);
@@ -157,7 +158,6 @@ extern void editdrag(bool on);
 extern void cancelsel();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();
-extern void discardchildren(cube &c);
 
 // octarender
 extern void vaclearc(cube *c);

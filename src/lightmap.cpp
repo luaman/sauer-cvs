@@ -307,11 +307,8 @@ void clear_lmids(cube *c)
 {
     loopi(8)
     {
-        if(c[i].children)
-            clear_lmids(c[i].children);
-        else
-        if(c[i].surfaces)
-            freesurfaces(c[i]);
+        if(c[i].children) clear_lmids(c[i].children);
+        else freesurfaces(c[i]);
     }
 }
 

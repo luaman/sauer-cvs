@@ -13,10 +13,12 @@ VAR(musicvol, 0, 128, 255);
     #include "SDL_mixer.h"
     #define MAXVOL MIX_MAX_VOLUME
     Mix_Music *mod = NULL;
+    void *stream = NULL;    // TODO
 #else
     #include "fmod.h"
     #define MAXVOL 255
     FMUSIC_MODULE *mod = NULL;
+    FSOUND_STREAM *stream = NULL;
 #endif
 
 void stopsound()
@@ -30,6 +32,13 @@ void stopsound()
             FMUSIC_FreeSong(mod);
         #endif
         mod = NULL;
+    };
+    if(stream)
+    {
+        #ifndef USE_MIXER
+            FSOUND_Stream_Close(stream);
+        #endif
+        stream = NULL;
     };
 };
 
@@ -46,12 +55,12 @@ void cleansound()
 void initsound()
 {
     #ifdef USE_MIXER
-        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024)<0)
+        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 512)<0)
         {
-            conoutf("sound init failed (SDL_mixer): %s",  Mix_GetError());
+            conoutf("sound init failed (SDL_mixer): %s", (int) Mix_GetError());
             soundvol = 0;
         };
-        Mix_AllocateChannels(32);
+	    Mix_AllocateChannels(64);	
     #else
         if(FSOUND_GetVersion()<FMOD_VERSION) fatal("old FMOD dll");
         if(!FSOUND_Init(22050, 32, FSOUND_INIT_GLOBALFOCUS))
@@ -64,25 +73,32 @@ void initsound()
 
 void music(char *name)
 {
+    stopsound();
     if(soundvol && musicvol)
     {
-        stopsound();
         string sn;
         strcpy_s(sn, "packages/");
         strcat_s(sn, name);
         #ifdef USE_MIXER
-            mod = Mix_LoadMUS(path(sn));
-            if(mod)
+            if(mod = Mix_LoadMUS(path(sn)))
             {
                 Mix_PlayMusic(mod, -1);
                 Mix_VolumeMusic((musicvol*MAXVOL)/255);
-            }
+            };
         #else
-            mod = FMUSIC_LoadSong(path(sn));
-            if(mod)
+            if(mod = FMUSIC_LoadSong(path(sn)))
             {
                 FMUSIC_PlaySong(mod);
                 FMUSIC_SetMasterVolume(mod, musicvol);
+            }
+            else if(stream = FSOUND_Stream_OpenFile(path(sn), FSOUND_LOOP_NORMAL, 0))
+            {
+                int chan = FSOUND_Stream_Play(FSOUND_FREE, stream);
+                if(chan>=0) { FSOUND_SetVolume(chan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(chan, false); };
+            }
+            else
+            {
+                conoutf("could not play music: %s", sn);
             };
         #endif
     };
@@ -91,14 +107,11 @@ void music(char *name)
 COMMAND(music, ARG_1STR);
 
 #ifdef USE_MIXER
-typedef Mix_Chunk *sample_t;
+vector<Mix_Chunk *> samples;
 #else
-typedef FSOUND_SAMPLE *sample_t;
+vector<FSOUND_SAMPLE *> samples;
 #endif
 
-
-
-vector<sample_t> samples;
 cvector snames;
 
 int registersound(char *name)
@@ -133,24 +146,31 @@ void playsound(int n, vec *loc)
             samples[n] = FSOUND_Sample_Load(n, path(buf), 0, 0);
         #endif
 
-        if(!samples[n]) { /*conoutf("failed to load sample: %s", &buf);*/ return; };
+        if(!samples[n]) { conoutf("failed to load sample: %s", buf); return; };
     };
     int vol = soundvol;
+    float sndyaw= 0, pan= 0.5;
     if(loc)
     {
-        vol -= (int)(player1->o.dist(*loc)*3/4*soundvol/255);     // simple mono distance attenuation
+        vec v;
+        vol -= (int)(player1->o.dist(*loc, v)*3/4*soundvol/255);     // simple mono distance attenuation
+        sndyaw = -atan2(v.x, v.y); 		// simple stereo separation
+        if(sndyaw) sndyaw -= player1->yaw*PI/180; 
+        pan = sin(sndyaw)*0.5f+0.5f;		// range is from 0.0 (left) to 1.0 (right)
     }
-    if(vol<=0) return;
 
+    if(vol<=0) return;
+    
     #ifdef USE_MIXER
         int chan = Mix_PlayChannel(-1, samples[n], 0);
-        if(chan>=0) Mix_Volume(chan, (vol*MAXVOL)/255);
+        if(chan>=0) { Mix_Volume(chan, (vol*MAXVOL)/255); Mix_SetPanning(chan, 255-int(pan*255), int(pan*255)); }
     #else
         int chan = FSOUND_PlaySoundEx(FSOUND_FREE, samples[n], NULL, true);
-        if(chan>=0) { FSOUND_SetVolume(chan, (vol*MAXVOL)/255); FSOUND_SetPaused(chan, false); };
+        if(chan>=0) { FSOUND_SetVolume(chan, (vol*MAXVOL)/255); FSOUND_SetPan(chan, int(pan*255)); FSOUND_SetPaused(chan, false); };
     #endif
 };
 
 void sound(int n) { playsound(n, NULL); };
 COMMAND(sound, ARG_1INT);
+
 

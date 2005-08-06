@@ -47,6 +47,7 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
 
 void freeclipplanes(cube &c)
 {
+    if(!c.clip) return;
     c.clip->backptr = NULL;
     c.clip = NULL;
 };

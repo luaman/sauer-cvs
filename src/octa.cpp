@@ -35,15 +35,22 @@ int familysize(cube &c)
 
 void freeocta(cube *c)
 {
-    loopi(8)
-    {
-        if(c[i].children) freeocta(c[i].children);
-        if(c[i].va) destroyva(c[i].va);
-        if(c[i].surfaces) freesurfaces(c[i]);
-        if(c[i].clip) freeclipplanes(c[i]);
-    };
+    loopi(8) discardchildren(c[i]);
     gp()->dealloc(c, sizeof(cube)*8);
     allocnodes--;
+};
+
+void discardchildren(cube &c)
+{
+    if(c.va) destroyva(c.va);
+    c.va = NULL;
+    freesurfaces(c);
+    freeclipplanes(c);
+    if(c.children)
+    {
+        freeocta(c.children);
+        c.children = NULL;
+    };
 };
 
 void optiface(uchar *p, cube &c)
