@@ -9,7 +9,12 @@ pool::pool()
 {
     blocks = 0;
     allocnext(POOLSIZE);
-    for(int i = 0; i<MAXBUCKETS; i++) reuse[i] = NULL;
+    for(int i = 0; i<MAXBUCKETS; i++) { reuse[i] = NULL; stats[i] = 0; };
+};
+
+void pool::printstats()
+{
+    loopi(MAXBUCKETS) if(stats[i]>1000) printf("%d\t%d\n", i*4, stats[i]);
 };
 
 void *pool::alloc(size_t size)
@@ -21,6 +26,7 @@ void *pool::alloc(size_t size)
     else
     {
         size = bucket(size);
+        stats[size]++;
         void **r = (void **)reuse[size];
         if(r)
         {

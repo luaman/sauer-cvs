@@ -17,6 +17,7 @@ void cleanup(char *msg)         // single program exit point;
         printf(msg);
         #endif
     };
+    gp()->printstats();
     SDL_Quit();
     exit(1);
 };

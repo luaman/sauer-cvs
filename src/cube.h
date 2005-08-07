@@ -101,7 +101,7 @@ struct plane : vec
 
 };
 struct line3 { vec orig, dir; };
-struct vertex : vec { float u, v; };
+struct vertex : vec { float u, v; vertex *next; };
 
 struct Texture
 {

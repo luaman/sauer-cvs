@@ -2,19 +2,19 @@
 
 #include "cube.h"
 
+vertex *verts = NULL;
+
 struct vechash
 {
-    struct chain { chain *next; int i; };
-
     int size;
-    chain **table;
+    vertex **table;
     pool *parent;
 
     vechash()
     {
         size = 1<<12;
         parent = gp();
-        table = (chain **)parent->alloc(size*sizeof(chain *));
+        table = (vertex **)parent->alloc(size*sizeof(vertex *));
         loopi(size) table[i] = NULL;
     };
 
@@ -24,30 +24,22 @@ struct vechash
         uint h = 5381;
         loopl(12) h = ((h<<5)+h)^iv[l];
         h = h&(size-1);
-        for(chain *c = table[h]; c; c = c->next)
+        for(vertex *c = table[h]; c; c = c->next)
         {
-            vertex &o = verts[c->i];
-            if(o.x==v->x && o.y==v->y && o.z==v->z && o.u==v->u && o.v==v->v) return c->i;
+            if(c->x==v->x && c->y==v->y && c->z==v->z && c->u==v->u && c->v==v->v) return c-verts;
         };
-        chain *n = (chain *)parent->alloc(sizeof(chain));
-        n->i = curvert;
-        n->next = table[h];
-        table[h] = n;
+        v->next = table[h];
+        table[h] = v;
         return curvert++;
     };
 
     void clear()
     {
-        loopi(size)
-        {
-            for(chain *c = table[i], *next; c; c = next) { next = c->next; parent->dealloc(c, sizeof(chain)); };
-            table[i] = NULL;
-        };
+        loopi(size) table[i] = NULL;
     };
 };
 
 vechash vh;
-vertex *verts = NULL;
 int curvert = 0, curtris = 0;
 int curmaxverts = 10000;
 
@@ -60,13 +52,6 @@ void reallocv()
 
 void vertcheck() { if(curvert>=curmaxverts) reallocv(); };
 
-int findindex(vertex &v)
-{
-    //loopi(curvert) if(verts[i].x==v.x && verts[i].y==v.y && verts[i].z==v.z) return i;
-    return vh.access(&v);
-    //return curvert++;
-};
-
 int vert(int x, int y, int z, float lmu, float lmv)
 {
     vertex &v = verts[curvert];
@@ -75,7 +60,7 @@ int vert(int x, int y, int z, float lmu, float lmv)
     v.z = (float)y;
     v.u = lmu;
     v.v = lmv;
-    return findindex(v);
+    return vh.access(&v);
 };
 
 uchar &edgelookup(cube &c, ivec &p, int dim)
@@ -421,7 +406,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
                 vert.v = v;
                 genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, vert);
                 swap(float, vert.y, vert.z);
-                index = findindex(verts[curvert] = vert);
+                verts[curvert] = vert;
+                index = vh.access(&verts[curvert]);
             }
 
             iv.add(index);

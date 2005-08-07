@@ -142,7 +142,7 @@ struct pool
 {
     enum { POOLSIZE = 4096 };   // can be absolutely anything
     enum { PTRSIZE = sizeof(char *) };
-    enum { MAXBUCKETS = 65 };   // meaning up to size 256 on 32bit pointer systems
+    enum { MAXBUCKETS = 257 };   // meaning up to size 256 on 32bit pointer systems
     enum { MAXREUSESIZE = MAXBUCKETS*PTRSIZE-PTRSIZE };
     inline size_t bucket(size_t s) { return (s+PTRSIZE-1)>>PTRBITS; };
     enum { PTRBITS = PTRSIZE==2 ? 1 : PTRSIZE==4 ? 2 : 3 };
@@ -151,6 +151,7 @@ struct pool
     size_t left;
     char *blocks;
     void *reuse[MAXBUCKETS];
+    int stats[MAXBUCKETS];
 
     pool();
     ~pool() { dealloc_block(blocks); };
@@ -166,6 +167,8 @@ struct pool
 
     void dealloc_block(void *b);
     void allocnext(int allocsize);
+    
+    void printstats();
 };
 
 pool *gp();
