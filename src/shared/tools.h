@@ -175,7 +175,7 @@ template <class T> struct vector
         void *np = new uchar[newsize];
         if(!oldsize) return np;
         memcpy(np, p, newsize>oldsize ? oldsize : newsize);
-        delete[] p;
+        delete[] (char *)p;
         return np;
     };
     
