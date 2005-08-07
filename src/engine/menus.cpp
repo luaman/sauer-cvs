@@ -33,7 +33,7 @@ void clear_menus()
 
 void menuset(int menu)
 {
-    if((vmenu = menu)>=1) resetmovement(player1);
+    if((vmenu = menu)>=1) resetmovement(player);
     if(vmenu==1) menus[1].menusel = 0;
 };
 

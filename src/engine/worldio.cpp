@@ -170,19 +170,20 @@ void save_world(char *mname)
     if(!f) { conoutf("could not write map to %s", cgzname); return; };
     hdr.version = MAPVERSION;
     hdr.numents = 0;
-    loopv(ents) if(ents[i].type!=NOTUSED) hdr.numents++;
+    loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
     hdr.lightmaps = lightmaps.length();
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
     loopv(ents)
     {
-        if(ents[i].type!=NOTUSED)
+        if(ents[i]->type!=ET_EMPTY)
         {
-            entity tmp = ents[i];
+            entity tmp = *ents[i];
             endianswap(&tmp.o, sizeof(int), 3);
             endianswap(&tmp.attr1, sizeof(short), 5);
-            gzwrite(f, &tmp, size_t(&((entity *)0)->color)); // EIHRUL: FIXME: Size compatability.
+            gzwrite(f, &tmp, sizeof(entity)); 
+            writeent(*ents[i]);
         };
     };
 
@@ -215,16 +216,18 @@ void load_world(char *mname)        // still supports all map formats that have 
     ents.setsize(0);
     loopi(hdr.numents)
     {
-        entity &e = ents.add();
-        gzread(f, &e, size_t(&((entity *)0)->color)); // EIHRUL: FIXME: Size compatability.
+        extentity &e = *newentity();
+        ents.add(&e);
+        gzread(f, &e, sizeof(entity)); 
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
+        readent(e);
 		if(e.o.x<0 || e.o.x>hdr.worldsize || 
 		   e.o.y<0 || e.o.y>hdr.worldsize ||
 		   e.o.z<0 || e.o.z>hdr.worldsize) 
 		{
-			if(e.type != LIGHT) 
+			if(e.type != ET_LIGHT) 
             {
                 conoutf("warning: ent outside of world: enttype[%d] index %d (%f, %f, %f)", e.type, i, e.o.x, e.o.y, e.o.z);
 			    //ents.pop();
@@ -254,11 +257,6 @@ void load_world(char *mname)        // still supports all map formats that have 
     conoutf("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     conoutf("%s", hdr.maptitle);
     startmap(mname);
-    loopi(256)
-    {
-        sprintf_sd(aliasname)("level_trigger_%d", i);     // can this be done smarter?
-        if(identexists(aliasname)) alias(aliasname, "");
-    };
     execfile("data/default_map_settings.cfg");
     execfile(pcfname);
     execfile(mcfname);

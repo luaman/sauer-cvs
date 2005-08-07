@@ -51,7 +51,7 @@ COMMANDN(name, newname, ARG_1STR);
 // don't care if he's in the scenery or other players,
 // just don't overlap with our client
 
-void updatepos(dynent *d)
+void updatepos(fpsent *d)
 {
     const float r = player1->radius+d->radius;
     const float dx = player1->o.x-d->o.x;
@@ -204,7 +204,7 @@ void sendpackettoserv(void *packet)
     else localclienttoserver((ENetPacket *)packet);
 }
 
-void c2sinfo(dynent *d)                     // send update to the server
+void c2sinfo(fpsent *d)                     // send update to the server
 {
     if(clientnum<0) return;                 // we haven't had a welcome message from the server yet
     if(lastmillis-lastupdate<33) return;    // don't update faster than 30fps
@@ -350,7 +350,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
     uchar *p = buf+2;
     char text[MAXTRANS];
     int cn = -1, type;
-    dynent *d = NULL;
+    fpsent *d = NULL;
     bool mapchanged = false;
 
     while(p<end) switch(type = getint(p))
@@ -505,7 +505,7 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             }
             else
             {
-                dynent *a = getclient(actor);
+                fpsent *a = getclient(actor);
                 if(a)
                 {
                     if(isteam(a->team, d->name))
@@ -537,31 +537,33 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
             int i = getint(p);
             setspawn(i, true);
             if(i>=ents.length()) break;
-            playsound(S_ITEMSPAWN, &ents[i].o); 
+            playsound(S_ITEMSPAWN, &ents[i]->o); 
             break;
         };
 
         case SV_ITEMACC:            // server acknowledges that I picked up this item
             realpickup(getint(p), player1);
             break;
-
+        
+        /*
         case SV_EDITENT:            // coop edit of ent
         {
             int i = getint(p);
             while(ents.length()<i) ents.add().type = NOTUSED;
-            ///int to = ents[i].type;
-            ents[i].type = getint(p);
-            ents[i].o.x = (float)getint(p);
-            ents[i].o.y = (float)getint(p);
-            ents[i].o.z = (float)getint(p);
-            ents[i].attr1 = getint(p);
-            ents[i].attr2 = getint(p);
-            ents[i].attr3 = getint(p);
-            ents[i].attr4 = getint(p);
-            ents[i].spawned = false;
-            ///if(ents[i].type==LIGHT || to==LIGHT) calclight();
+            ///int to = ents[i]->type;
+            ents[i]->type = getint(p);
+            ents[i]->o.x = (float)getint(p);
+            ents[i]->o.y = (float)getint(p);
+            ents[i]->o.z = (float)getint(p);
+            ents[i]->attr1 = getint(p);
+            ents[i]->attr2 = getint(p);
+            ents[i]->attr3 = getint(p);
+            ents[i]->attr4 = getint(p);
+            ents[i]->spawned = false;
+            ///if(ents[i]->type==LIGHT || to==LIGHT) calclight();
             break;
         };
+        */
 
         case SV_PING:
             getint(p);

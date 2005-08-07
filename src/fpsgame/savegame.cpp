@@ -21,15 +21,14 @@ void savegame(char *name)
     gzwrite(f, (void *)"CUBESAVE", 8);
     gzputc(f, islittleendian);
     gzputi(f, SAVEGAMEVERSION);
-    gzputi(f, sizeof(dynent));
+    gzputi(f, sizeof(fpsent));
     gzwrite(f, getclientmap(), _MAXDEFSTR);
     gzputi(f, gamemode);
     gzputi(f, ents.length());
-    loopv(ents) gzputc(f, ents[i].spawned);
-    gzwrite(f, player1, sizeof(dynent));
-    dvector &monsters = getmonsters();
+    loopv(ents) gzputc(f, ents[i]->spawned);
+    gzwrite(f, player1, sizeof(fpsent));
     gzputi(f, monsters.length());
-    loopv(monsters) gzwrite(f, monsters[i], sizeof(dynent));
+    loopv(monsters) gzwrite(f, monsters[i], sizeof(fpsent));
     gzclose(f);
     conoutf("wrote %s", fn);
 };
@@ -47,7 +46,7 @@ void loadgame(char *name)
     gzread(f, buf, 8);
     if(strncmp(buf, "CUBESAVE", 8)) goto out;
     if(gzgetc(f)!=islittleendian) goto out;     // not supporting save->load accross incompatible architectures simpifies things a LOT
-    if(gzgeti(f)!=SAVEGAMEVERSION || gzgeti(f)!=sizeof(dynent)) goto out;
+    if(gzgeti(f)!=SAVEGAMEVERSION || gzgeti(f)!=sizeof(fpsent)) goto out;
     string mapname;
     gzread(f, mapname, _MAXDEFSTR);
     nextmode = gzgeti(f);
@@ -73,20 +72,19 @@ void loadgamerest()
     if(gzgeti(f)!=ents.length()) return loadgameout();
     loopv(ents)
     {
-        ents[i].spawned = gzgetc(f)!=0;
-        if(ents[i].type==CARROT && !ents[i].spawned) trigger(ents[i].attr1, ents[i].attr2, true);
+        ents[i]->spawned = gzgetc(f)!=0;
+        if(ents[i]->type==CARROT && !ents[i]->spawned) trigger(ents[i]->attr1, ents[i]->attr2, true);
     };
     restoreserverstate(ents);
 
-    gzread(f, player1, sizeof(dynent));
+    gzread(f, player1, sizeof(fpsent));
     player1->lastaction = lastmillis;
 
     int nmonsters = gzgeti(f);
-    dvector &monsters = getmonsters();
     if(nmonsters!=monsters.length()) return loadgameout();
     loopv(monsters)
     {
-        gzread(f, monsters[i], sizeof(dynent));
+        gzread(f, monsters[i], sizeof(fpsent));
         monsters[i]->enemy = player1;                                       // lazy, could save id of enemy instead
         monsters[i]->lastaction = monsters[i]->trigger = lastmillis+500;    // also lazy, but no real noticable effect on game
     };

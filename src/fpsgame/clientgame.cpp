@@ -11,16 +11,15 @@ COMMAND(mode, ARG_1INT);
 
 bool intermission = false;
 
-dynent *player1 = newdynent();          // our client
-dynent *camera1 = NULL;
-dvector players;                        // other clients
+fpsent *player1 = newdynent();          // our client
+vector<fpsent *> players;               // other clients
 
 VAR(sensitivity, 0, 10, 1000);
 VAR(sensitivityscale, 1, 1, 100);
 VAR(invmouse, 0, 0, 1);
 
 int lastmillis = 0;
-int curtime;
+
 string clientmap;
 
 char *getclientmap() { return clientmap; };
@@ -43,7 +42,7 @@ void resetmovement(dynent *d)
     d->move = 0;
 };
 
-void spawnstate(dynent *d)              // reset player state not persistent accross spawns
+void spawnstate(fpsent *d)              // reset player state not persistent accross spawns
 {
     resetmovement(d);
     d->vel.x = d->vel.y = d->vel.z = 0;
@@ -99,9 +98,9 @@ void spawnstate(dynent *d)              // reset player state not persistent acc
     };
 };
 
-dynent *newdynent()                 // create a new blank player or monster
+fpsent *newdynent()                 // create a new blank player or monster
 {
-    dynent *d = new dynent();
+    fpsent *d = new fpsent();
     d->o.x = 0;
     d->o.y = 0;
     d->o.z = 0;
@@ -135,7 +134,7 @@ void respawnself()
         showscores(false);
 };
 
-void arenacount(dynent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
+void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
 {
     if(d->state!=CS_DEAD)
     {
@@ -183,7 +182,7 @@ void arenarespawn()
     };
 };
 
-void zapdynent(dynent *&d)
+void zapdynent(fpsent *&d)
 {
     DELETEP(d);
 };
@@ -207,17 +206,17 @@ string sleepcmd;
 void sleepfun(char *msec, char *cmd) { sleepwait = atoi(msec)+lastmillis; strcpy_s(sleepcmd, cmd); };
 COMMANDN(sleep, sleepfun, ARG_2STR);
     
-void updateworld()        // main game update loop
+void updateworld(vec &pos, int curtime)        // main game update loop
 {
     if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
     physicsframe();
     checkquad(curtime);
     if(m_arena) arenarespawn();
     moveprojectiles(curtime);
-    if(getclientnum()>=0) shoot(player1, worldpos);     // only shoot when connected to server
+    if(getclientnum()>=0) shoot(player1, pos);     // only shoot when connected to server
     gets2c();           // do this first, so we have most accurate information when our player moves
     otherplayers();
-    monsterthink();
+    monsterthink(curtime);
     if(player1->state==CS_DEAD)
     {
         if(lastmillis-player1->lastaction<2000)
@@ -253,20 +252,20 @@ void entinmap(dynent *d, bool froment)    // brute force but effective way to fi
 int spawncycle = -1;
 int fixspawn = 2; 
 
-void spawnplayer(dynent *d)   // place at random spawn. also used by monsters!
+void spawnplayer(fpsent *d)   // place at random spawn. also used by monsters!
 {
     int r = fixspawn-->0 ? 4 : rnd(10)+1;
     loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
     if(spawncycle!=-1)
     {
-        d->o = ents[spawncycle].o;
-        d->yaw = ents[spawncycle].attr1;
+        d->o = ents[spawncycle]->o;
+        d->yaw = ents[spawncycle]->attr1;
         d->pitch = 0;
         d->roll = 0;
     }
     else
     {
-        d->o.x = d->o.y = d->o.z = (float)hdr.worldsize/2;
+        d->o.x = d->o.y = d->o.z = 2048.0f;
     };
     entinmap(d);
     spawnstate(d);
@@ -330,7 +329,7 @@ void mousemove(int dx, int dy)
 
 // damage arriving from the network, monsters, yourself, all ends up here.
 
-void selfdamage(int damage, int actor, dynent *act)
+void selfdamage(int damage, int actor, fpsent *act)
 {
     if(player1->state!=CS_ALIVE || editmode || intermission) return;
     damageblend(damage);
@@ -354,7 +353,7 @@ void selfdamage(int damage, int actor, dynent *act)
         }
         else
         {
-            dynent *a = getclient(actor);
+            fpsent *a = getclient(actor);
             if(a)
             {
                 if(isteam(a->team, player1->team))
@@ -400,7 +399,7 @@ void timeupdate(int timeremain)
     };
 };
 
-dynent *getclient(int cn)   // ensure valid entity
+fpsent *getclient(int cn)   // ensure valid entity
 {
     if(cn<0 || cn>=MAXCLIENTS)
     {
@@ -439,6 +438,94 @@ void startmap(char *name)   // called just after a map load
     showscores(false);
     intermission = false;
     conoutf("game mode is %s", modestr(gamemode));
+    loopi(256)
+    {
+        sprintf_sd(aliasname)("level_trigger_%d", i);     // can this be done smarter?
+        if(identexists(aliasname)) alias(aliasname, "");
+    };
 };
 
 COMMANDN(map, changemap, ARG_1STR);
+
+void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel)
+{
+    if     (waterlevel>0) playsound(S_SPLASH1, &d->o);
+    else if(waterlevel<0) playsound(S_SPLASH2, &d->o);
+    if     (floorlevel>0) { if(local) playsoundc(S_JUMP); else if(d->monsterstate) playsound(S_JUMP, &d->o); }
+    else if(floorlevel<0) { if(local) playsoundc(S_LAND); else if(d->monsterstate) playsound(S_LAND, &d->o); };
+};
+
+void playsoundc(int n) { addmsg(0, 2, SV_SOUND, n); playsound(n); };
+
+dynent *getplayer() { return player1; };
+vector<dynent *> &getplayers() { return (vector<dynent *> &)players; };
+
+void worldhurts(dynent *d, int damage)
+{
+    if(d==player1) selfdamage(damage, -1, player1);
+    else if(d->monsterstate) monsterpain((fpsent *)d, damage, player1);
+};
+
+VAR(hudgun, 0, 1, 1);
+
+char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol" };
+
+void drawhudmodel(int start, int end, float speed, int base)
+{
+    uchar color[3];
+    lightreaching(player1->o, color);
+    glColor3ubv(color);
+    rendermodel(hudgunnames[player1->gunselect], start, end, 0, player1->o.x, player1->o.z+player1->bob, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base);
+};
+
+void drawhudgun(float fovy, float aspect, int farplane)
+{
+    if(!hudgun || editmode) return;
+    
+    int rtime = reloadtime(player1->gunselect);
+    if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
+    {
+        drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
+    }
+    else
+    {
+        drawhudmodel(6, 1, 100, 0);
+    };
+};
+
+void drawicon(float tx, float ty, int x, int y)
+{
+    settexture("data/items.png");
+    glBegin(GL_QUADS);
+    tx /= 320;
+    ty /= 128;
+    int s = 120;
+    glTexCoord2f(tx,        ty);        glVertex2i(x,   y);
+    glTexCoord2f(tx+1/5.0f, ty);        glVertex2i(x+s, y);
+    glTexCoord2f(tx+1/5.0f, ty+1/2.0f); glVertex2i(x+s, y+s);
+    glTexCoord2f(tx,        ty+1/2.0f); glVertex2i(x,   y+s);
+    glEnd();
+};
+
+void gameplayhud()
+{
+    glPushMatrix();
+    
+    glOrtho(0, 1200, 900, 0, -1, 1);
+    draw_textf("%d",  90, 827, player1->health);
+    if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
+    draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
+
+    glOrtho(0, 2400, 1800, 0, -1, 1);
+
+    glDisable(GL_BLEND);
+
+    drawicon(192, 0, 20, 1650);
+    if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
+    int g = player1->gunselect;
+    int r = 64;
+    if(g==9) { g = 4; r = 0; };
+    drawicon((float)(g*64), (float)r, 1220, 1650);
+
+    glPopMatrix();
+};

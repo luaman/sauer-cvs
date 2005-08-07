@@ -51,7 +51,6 @@ struct LightMap
 
 extern vector<LightMap> lightmaps;
 
-extern void lightreaching(const vec &target, uchar color[3]);
 extern void calclight();
 extern void clearlights();
 extern void initlights();

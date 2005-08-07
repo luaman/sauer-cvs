@@ -125,15 +125,6 @@ void renderspheres(int time)
 };
 
 string closeent;
-char *entnames[] =
-{
-    "none?", "light", "playerstart",
-    "shells", "bullets", "rockets", "riflerounds",
-    "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
-    "teleport", "teledest",
-    "mapmodel", "monster", "trigger", "jumppad",
-    "?", "?", "?", "?", "?",
-};
 
 void renderents()       // show sparkly thingies for map entities in edit mode
 {
@@ -141,15 +132,15 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     if(!editmode) return;
     loopv(ents)
     {
-        entity &e = ents[i];
-        if(e.type==NOTUSED) continue;
+        entity &e = *ents[i];
+        if(e.type==ET_EMPTY) continue;
         particle_splash(2, 2, 40, e.o);
     };
     int e = closestent();
     if(e>=0)
     {
-        entity &c = ents[e];
-        sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d)", entnames[c.type], c.attr1, c.attr2, c.attr3, c.attr4);
+        entity &c = *ents[e];
+        sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d)", entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
     };
 };
 
@@ -165,28 +156,10 @@ void aimat()
     setorient(vec(mm[0], mm[4], mm[8]), vec(mm[1], mm[5], mm[9]));
     
     worldpos = vec(0.0f, 0.0f, 0.0f);
-    vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, worldpos, true);
+    vecfromyawpitch(player->yaw, player->pitch, 1, 0, worldpos, true);
     worldpos.normalize();
-    worldpos.mul(raycube(true, player1->o, worldpos));
-    worldpos.add(player1->o);
-};
-
-Texture *itemtex = NULL;
-
-void drawicon(float tx, float ty, int x, int y)
-{
-    if(!itemtex) itemtex = textureload(newstring("data/items.png"));
-    glBindTexture(GL_TEXTURE_2D, itemtex->gl);
-    glBegin(GL_QUADS);
-    tx /= 320;
-    ty /= 128;
-    int s = 120;
-    glTexCoord2f(tx,        ty);        glVertex2i(x,   y);
-    glTexCoord2f(tx+1/5.0f, ty);        glVertex2i(x+s, y);
-    glTexCoord2f(tx+1/5.0f, ty+1/2.0f); glVertex2i(x+s, y+s);
-    glTexCoord2f(tx,        ty+1/2.0f); glVertex2i(x,   y+s);
-    glEnd();
-    xtraverts += 4;
+    worldpos.mul(raycube(true, player->o, worldpos));
+    worldpos.add(player->o);
 };
 
 void invertperspective()
@@ -252,24 +225,27 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glEnable(GL_TEXTURE_2D);
 
     char *command = getcurcommand();
-    char *player = playerincrosshair();
+    char *playername = gamepointat(worldpos);
     if(command) draw_textf("> %s_", 20, 1570, command);
     else if(closeent[0] && !hidehud) draw_text(closeent, 20, 1570);
-    else if(player) draw_text(player, 20, 1570);
+    else if(playername) draw_text(playername, 20, 1570);
 
     renderscores();
+    
     if(!rendermenu() && !hidehud)
     {
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, crosshair->gl);
         glBegin(GL_QUADS);
         glColor3ub(255,255,255);
+        /*
         if(crosshairfx)
         {
-            if(player1->gunwait) glColor3ub(128,128,128);
-            else if(player1->health<=25) glColor3ub(255,0,0);
-            else if(player1->health<=50) glColor3ub(255,128,0);
+            if(player->gunwait) glColor3ub(128,128,128);
+            else if(player->health<=25) glColor3ub(255,0,0);
+            else if(player->health<=50) glColor3ub(255,128,0);
         };
+        */
         float chsize = (float)crosshairsize;
         glTexCoord2d(0.0, 0.0); glVertex2f(VIRTW/2 - chsize, VIRTH/2 - chsize);
         glTexCoord2d(1.0, 0.0); glVertex2f(VIRTW/2 + chsize, VIRTH/2 - chsize);
@@ -296,32 +272,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     glPopMatrix();
     
-    if(!hidehud)
-    {
-        glPushMatrix();
-        glOrtho(0, VIRTW/2, VIRTH/2, 0, -1, 1);
-        draw_textf("%d",  90, 827, player1->health);
-        if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
-        draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
-        glPopMatrix();
-    };
-    
-    glPushMatrix();
-    glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
-
-    glDisable(GL_BLEND);
-
-    if(!hidehud)
-    {
-        drawicon(192, 0, 20, 1650);
-        if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
-        int g = player1->gunselect;
-        int r = 64;
-        if(g==9) { g = 4; r = 0; };
-        drawicon((float)(g*64), (float)r, 1220, 1650);
-    };
-    
-    glPopMatrix();
+    if(!hidehud) gameplayhud();
+        
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 };

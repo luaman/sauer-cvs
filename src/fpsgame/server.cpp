@@ -44,7 +44,7 @@ const char *modestr(int n) { return (n>=-2 && n<10) ? modenames[n+2] : "unknown"
 
 enum { ST_EMPTY, ST_LOCAL, ST_TCPIP };
 
-struct client                   // server side version of "dynent" type
+struct client                   // server side version of "fpsent" type
 {
     int type;
     int num;
@@ -90,11 +90,11 @@ bool notgotitems = true;        // true when map has changed and waiting for cli
 
 int mode = 0;
 
-void restoreserverstate(vector<entity> &ents)   // hack: called from savegame code, only works in SP
+void restoreserverstate(vector<extentity *> &ents)   // hack: called from savegame code, only works in SP
 {
     loopv(sents)
     {
-        sents[i].spawned = ents[i].spawned;
+        sents[i].spawned = ents[i]->spawned;
         sents[i].spawnsecs = 0;
     }; 
 };

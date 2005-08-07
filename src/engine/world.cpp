@@ -5,19 +5,6 @@
 
 header hdr;
 
-void trigger(int tag, int type, bool savegame)
-{
-    if(!tag) return;
-    ///settag(tag, type);
-    if(!savegame) playsound(S_RUMBLE);
-    sprintf_sd(aliasname)("level_trigger_%d", tag);
-    if(identexists(aliasname)) execute(aliasname);
-    if(type==2) endsp(false);
-};
-
-COMMAND(trigger, ARG_2INT);
-
-
 int closestent()        // used for delent and edit mode ent display
 {
     if(!editmode) return -1;
@@ -25,9 +12,9 @@ int closestent()        // used for delent and edit mode ent display
     float bdist = 99999;
     loopv(ents)
     {
-        entity &e = ents[i];
-        if(e.type==NOTUSED) continue;
-        float dist = e.o.dist(player1->o);
+        entity &e = *ents[i];
+        if(e.type==ET_EMPTY) continue;
+        float dist = e.o.dist(player->o);
         if(dist<bdist)
         {
             best = i;
@@ -44,10 +31,10 @@ void entproperty(int prop, int amount)
     if(e<0) return;
     switch(prop)
     {
-        case 0: ents[e].attr1 += amount; break;
-        case 1: ents[e].attr2 += amount; break;
-        case 2: ents[e].attr3 += amount; break;
-        case 3: ents[e].attr4 += amount; break;
+        case 0: ents[e]->attr1 += amount; break;
+        case 1: ents[e]->attr2 += amount; break;
+        case 2: ents[e]->attr3 += amount; break;
+        case 3: ents[e]->attr4 += amount; break;
     };
 };
 
@@ -56,18 +43,18 @@ void delent()
     if(noedit()) return;
     int e = closestent();
     if(e<0) { conoutf("no more entities"); return; };
-    int t = ents[e].type;
-    conoutf("%s entity deleted", entnames[t]);
-    ents[e].type = NOTUSED;
-    addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
+    int t = ents[e]->type;
+    conoutf("%s entity deleted", entname(t));
+    ents[e]->type = ET_EMPTY;
+    //addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
     ///if(t==LIGHT) calclight();
 };
 
 int findtype(char *what)
 {
-    loopi(MAXENTTYPES) if(strcmp(what, entnames[i])==0) return i;
+    for(int i = 0; *entname(i); i++) if(strcmp(what, entname(i))==0) return i;
     conoutf("unknown entity type \"%s\"", what);
-    return NOTUSED;
+    return ET_EMPTY;
 }
 
 VAR(entdrop, 0, 1, 3);
@@ -80,7 +67,7 @@ bool dropentity(entity &e)
 {
     float radius = 4.0f,
           zspace = 4.0f;
-    if(e.type == MAPMODEL)
+    if(e.type == ET_MAPMODEL)
     {
         zspace = 0.0f;
         mapmodelinfo &mmi = getmminfo(e.attr2);
@@ -89,7 +76,7 @@ bool dropentity(entity &e)
     switch(entdrop)
     {
     case 1:
-        if(e.type != LIGHT)
+        if(e.type != ET_LIGHT)
             dropenttofloor(&e);
         break;
     case 2:
@@ -141,44 +128,17 @@ void dropent()
     if(noedit()) return;
     int e = closestent();
     if(e<0) return;
-    dropentity(ents[e]);
-};
-
-entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5)
-{
-    int type = findtype(what);
-    entity e;
-    e.o = o;
-    e.attr1 = v1;
-    e.attr2 = v2;
-    e.attr3 = v3;
-    e.attr4 = v4;
-    e.attr5 = v5;
-    e.type = type;
-    e.spawned = false;
-    memset(e.color, 255, 3);
-    switch(type)
-    {
-        case MAPMODEL:
-            e.attr4 = e.attr3;
-            e.attr3 = e.attr2;
-        case MONSTER:
-        case TELEDEST:
-            e.attr2 = e.attr1;
-        case PLAYERSTART:
-            e.attr1 = (int)player1->yaw;
-            break;
-    };
-    if(entdrop)
-        dropentity(e);
-    addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
-    return &ents.add(e);
+    dropentity(*ents[e]);
 };
 
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)
 {
     if(noedit()) return;
-    newentity(player1->o, what, atoi(a1), atoi(a2), atoi(a3), atoi(a4), 0);
+    int type = findtype(what);
+    extentity *e = newentity(player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
+    if(entdrop) dropentity(*e);
+    //addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
+    ents.add(e);
 };
 
 COMMAND(newent, ARG_5STR);
@@ -189,8 +149,8 @@ void clearents(char *name)
     if(noedit() || multiplayer()) return;
     loopv(ents)
     {
-        entity &e = ents[i];
-        if(e.type==type) e.type = NOTUSED;
+        entity &e = *ents[i];
+        if(e.type==type) e.type = ET_EMPTY;
     };
     ///if(type==LIGHT) calclight();
 };
@@ -199,10 +159,14 @@ COMMAND(clearents, ARG_1STR);
 
 int findentity(int type, int index)
 {
-    for(int i = index; i<ents.length(); i++) if(ents[i].type==type) return i;
-    loopj(index) if(ents[j].type==type) return j;
+    for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
+    loopj(index) if(ents[j]->type==type) return j;
     return -1;
 };
+
+COMMAND(delent, ARG_NONE);
+COMMAND(dropent, ARG_NONE);
+COMMAND(entproperty, ARG_2INT);
 
 void empty_world(int factor, bool force)    // main empty world creation routine, if passed factor -1 will enlarge old world by 1
 {
@@ -235,7 +199,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         worldroot = newcubes(F_EMPTY);
         loopi(4) solidfaces(worldroot[i]);
         startmap("base/unnamed");
-        player1->o.z += player1->eyeheight+1;
+        player->o.z += player->eyeheight+1;
     };
 
     resetlightmaps();
@@ -250,7 +214,4 @@ void newmap(int i) { empty_world(i, false); };
 
 COMMAND(mapenlarge, ARG_NONE);
 COMMAND(newmap, ARG_1INT);
-COMMAND(delent, ARG_NONE);
-COMMAND(dropent, ARG_NONE);
-COMMAND(entproperty, ARG_2INT);
 

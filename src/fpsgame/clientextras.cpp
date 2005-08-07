@@ -10,13 +10,13 @@
 int frame[] = { 178, 184, 190, 137, 183, 189, 197, 164, 46, 51, 54, 32, 0,  0, 40, 1,  162, 162, 67, 168 };
 int range[] = { 6,   6,   8,   28,  1,   1,   1,   1,   8,  19, 4,  18, 40, 1, 6,  15, 1,   1,   1,  1   };
 
-void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig)
+void renderclient(fpsent *d, bool team, char *mdlname, float scale, bool hellpig)
 {
     int n = 3;
     float speed = 100.0f;
     float mz = d->o.z-d->eyeheight+6.2f*scale;
     int basetime = -((int)(size_t)d&0xFFF);
-    bool att = d==player1 && player1!=camera1 && lastmillis-d->lastaction<500;
+    bool att = d==player1 && isthirdperson() && lastmillis-d->lastaction<500;
     if(d->state==CS_DEAD)
     {
         int r;
@@ -46,9 +46,9 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool hellpig
 
 void renderclients()
 {
-    dynent *d;
+    fpsent *d;
     loopv(players) if(d = players[i]) renderclient(d, isteam(player1->team, d->team), "monster/ogro", 1.0f);
-    if(player1!=camera1) renderclient(player1, false, "monster/ogro", 1.0f);
+    if(isthirdperson()) renderclient(player1, false, "monster/ogro", 1.0f);
 };
 
 // creation of scoreboard pseudo-menu
@@ -64,7 +64,7 @@ void showscores(bool on)
 struct sline { string s; };
 vector<sline> scorelines;
 
-void renderscore(dynent *d)
+void renderscore(fpsent *d)
 {
     sprintf_sd(lag)("%d", d->plag);
     sprintf_s(scorelines.add().s)("%d\t%s\t%d\t%s\t%s", d->frags, d->state==CS_LAGGED ? "LAG" : lag, d->ping, d->team, d->name);
@@ -77,7 +77,7 @@ int teamscore[maxteams], teamsused;
 string teamscores;
 int timeremain = 0;
 
-void addteamscore(dynent *d)
+void addteamscore(fpsent *d)
 {
     if(!d) return;
     loopi(teamsused) if(strcmp(teamname[i], d->team)==0) { teamscore[i] += d->frags; return; };

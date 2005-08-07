@@ -1,26 +1,12 @@
+// the interface the game uses to access the engine
 
-// octa
-extern cube *newcubes(uint face = F_EMPTY);
-extern int familysize(cube &c);
-extern void freeocta(cube *c);
-extern void discardchildren(cube &c);
-extern void optiface(uchar *p, cube &c);
-extern bool validcube(cube &c);
-extern void validatec(cube *c, int size);
-extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
-extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
+extern void lightreaching(const vec &target, uchar color[3]);
+
 extern float raycube(bool clipmat, const vec &o, const vec &ray, float radius = 1.0e10f, int size = 0);
-extern void newclipplanes(cube &c);
-extern void freeclipplanes(cube &c);
 
-// rendercubes
-extern void subdividecube(cube &c);
-extern void octarender();
-extern void renderq();
-extern void allchanged();
-extern void rendermaterials();
-extern void rendersky();
-extern void drawface(int orient, int x, int y, int z, int size, float offset);
+extern bool isthirdperson();
+
+extern void settexture(char *name);
 
 // octaedit
 extern void cursorupdate();
@@ -28,27 +14,6 @@ extern void editdrag(bool on);
 extern void cancelsel();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();
-
-// octarender
-extern void vaclearc(cube *c);
-extern vtxarray *newva(int x, int y, int z, int size);
-extern void destroyva(vtxarray *va);
-extern int faceverts(cube &c, int orient, int vert);
-extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces);
-extern uint faceedges(cube &c, int orient);
-extern bool touchingface(cube &c, int orient);
-extern int isvisiblecube(cube *c, int size, int cx, int cy, int cz);
-extern int isvisiblesphere(float rad, float x, float y, float z);
-extern int genclipplane(cube &c, int i, const vec *v, plane *clip);
-extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p);
-extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR);
-extern int visibleorient(cube &c, int orient);
-extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
-
-// water
-extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
-extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
-extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 
 // command
 extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)());
@@ -88,7 +53,6 @@ extern void empty_world(int factor, bool force);
 extern int closestent();
 extern int findentity(int type, int index = 0);
 extern void trigger(int tag, int type, bool savegame);
-extern entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int v5);
 
 // main
 extern int scr_w, scr_h;
@@ -123,7 +87,6 @@ extern uchar *readmap(char *mname, int *msize);
 extern void moveplayer(dynent *pl, int moveres, bool local);
 extern bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera);
 extern bool collide(dynent *d);
-extern void entinmap(dynent *d, bool froment = true);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
@@ -131,7 +94,6 @@ extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m
 
 // sound
 extern void playsound(int n, vec *loc = 0);
-extern void playsoundc(int n);
 extern void initsound();
 extern void cleansound();
 

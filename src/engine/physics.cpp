@@ -172,8 +172,8 @@ bool mmcollide(dynent *d)               // collide with a mapmodel
 {
     loopv(ents)
     {
-        entity &e = ents[i];
-        if(e.type!=MAPMODEL) continue;
+        entity &e = *ents[i];
+        if(e.type!=ET_MAPMODEL) continue;
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(!&mmi || !mmi.h || !mmi.rad) continue;
         vec o(e.o);
@@ -251,14 +251,15 @@ bool collide(dynent *d)
     floorheight = 0;
     wall.x = wall.y = wall.z = 0;
     if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
+    vector<dynent *> &players = getplayers();
     loopv(players)       // collide with other players
     {
         dynent *o = players[i];
         if(!o || o==d) continue;
         if(!plcollide(d, o)) return false;
     };
-    if(d!=player1 && d!=camera1) if(!plcollide(d, player1)) return false;
-    dvector &v = getmonsters();
+    if(d!=player && d!=camera1) if(!plcollide(d, player)) return false;
+    vector<dynent *> &v = getmonsters();
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
     loopv(v) if(!d->o.reject(v[i]->o, 20.0f) && d!=v[i] && !plcollide(d, v[i])) return false;
@@ -324,7 +325,7 @@ void dropenttofloor(entity *e)
     dynent d;
     d.o = e->o;
     d.vel = vec(0, 0, -1);
-    if(e->type == MAPMODEL)
+    if(e->type == ET_MAPMODEL)
     {
         d.radius = 4.0f;
         d.eyeheight = 0.0f;
@@ -418,8 +419,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         {
             pl->jumpnext = false;
             pl->vel.z += JUMPVEL*(water ? 2.0f : pl->onfloor); // physics impulse upwards
-            if(local) playsoundc(S_JUMP);
-            else if(pl->monsterstate) playsound(S_JUMP, &pl->o);
+            physicstrigger(pl, local, 1, 0);
         };
     }
     else
@@ -507,8 +507,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         loopi(moveres) if(!move(pl, d, push, elasticity)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
-            if(local) playsoundc(S_LAND);
-            else if(pl->monsterstate) playsound(S_LAND, &pl->o);
+            physicstrigger(pl, local, -1, 0);
         };
     };
 
@@ -532,18 +531,12 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 
     if(!iscamera)
     {
-        if(!pl->inwater && water) { playsound(S_SPLASH2, &pl->o); pl->timeinair = 0; }
-        else if(pl->inwater && !water) playsound(S_SPLASH1, &pl->o);
+        if(!pl->inwater && water) { physicstrigger(pl, local, 0, -1); pl->timeinair = 0; }
+        else if(pl->inwater && !water) physicstrigger(pl, local, 0, 1);
         pl->inwater = water;
     };
 
     return true;
-};
-
-void worldhurts(dynent *d, int damage)
-{
-    if(d==player1) selfdamage(damage, -1, player1);
-    else if(d->monsterstate) monsterpain(d, damage, player1);
 };
 
 void moveplayer(dynent *pl, int moveres, bool local)

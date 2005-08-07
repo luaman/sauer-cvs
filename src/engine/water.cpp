@@ -63,13 +63,13 @@ void renderwater(uint subdiv, int x, int y, int z, uint size)
 uint calcwatersubdiv(int x, int y, int z, uint size)
 {
     float dist;
-    if(player1->o.x >= x && player1->o.x < x + size &&
-       player1->o.y >= y && player1->o.y < y + size)
-        dist = fabs(player1->o.z - float(z));
+    if(player->o.x >= x && player->o.x < x + size &&
+       player->o.y >= y && player->o.y < y + size)
+        dist = fabs(player->o.z - float(z));
     else
     {
         vec t(x + size/2, y + size/2, z + size/2);
-        dist = t.dist(player1->o) - size*1.42f/2;
+        dist = t.dist(player->o) - size*1.42f/2;
     }
     uint subdiv = watersubdiv + int(dist) / (32 << waterlod);
     if(subdiv >= 8*sizeof(subdiv))

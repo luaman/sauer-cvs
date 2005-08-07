@@ -130,8 +130,6 @@ void clear_sound()
     snames.deletecontentsa();
 };
 
-void playsoundc(int n) { addmsg(0, 2, SV_SOUND, n); playsound(n); };
-
 int soundsatonce = 0, lastsoundmillis = 0;
 
 void playsound(int n, vec *loc)
@@ -159,9 +157,9 @@ void playsound(int n, vec *loc)
     if(loc)
     {
         vec v;
-        vol -= (int)(player1->o.dist(*loc, v)*3/4*soundvol/255);     // simple mono distance attenuation
+        vol -= (int)(player->o.dist(*loc, v)*3/4*soundvol/255);     // simple mono distance attenuation
         sndyaw = -atan2(v.x, v.y); 		// simple stereo separation
-        if(sndyaw) sndyaw -= player1->yaw*PI/180; 
+        if(sndyaw) sndyaw -= player->yaw*PI/180; 
         pan = sin(sndyaw)*0.5f+0.5f;		// range is from 0.0 (left) to 1.0 (right)
     }
 

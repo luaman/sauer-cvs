@@ -66,11 +66,11 @@ VAR(editing,0,0,1);
 
 void toggleedit()
 {
-    if(player1->state==CS_DEAD) return;                 // do not allow dead players to edit to avoid state confusion
+    if(player->state==CS_DEAD) return;                 // do not allow dead players to edit to avoid state confusion
     if(!editmode && !allowedittoggle()) return;         // not in most multiplayer modes
     if(!(editmode = !editmode))
     {
-        entinmap(player1, false);                       // find spawn closest to current floating pos
+        entinmap(player, false);                       // find spawn closest to current floating pos
     }
     else
     {
@@ -138,15 +138,15 @@ COMMAND(selcorners, ARG_DOWN);
 void cursorupdate()
 {
     vec ray(worldpos), v(worldpos);
-    ray.sub(player1->o);
+    ray.sub(player->o);
     float m = ray.magnitude();
     ray.div(m);
-    float r = raycube(true, player1->o, ray, 1e16f, gridsize);
+    float r = raycube(true, player->o, ray, 1e16f, gridsize);
 
     if(r < m)
     {
         ray.mul(r);
-        v = player1->o;
+        v = player->o;
         v.add(ray);
     };
 
@@ -525,7 +525,7 @@ void entmove(int dir, int dist)
     if(noedit()) return;
     int e = closestent();
     if(e<0||dir<0||dir>2) return;
-    ents[e].o[dir]+=dist;
+    ents[e]->o[dir] += dist;
 }
 
 COMMAND(entmove, ARG_2INT);

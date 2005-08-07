@@ -114,11 +114,11 @@ hashtable<char *, Texture> textures;
 
 Texture *crosshair = NULL; // used as default, ensured to be loaded
 
-Texture *textureload(char *tname, int rot, bool clamp, bool mipit, bool msg)
+Texture *textureload(char *name, int rot, bool clamp, bool mipit, bool msg)
 {
-    path(tname);
-    string rname;
-    strcpy_s(rname, tname);
+    string rname, tname;
+    strcpy_s(tname, name);
+    strcpy_s(rname, path(tname));
     if(rot) { sprintf_sd(rnum)("_%d", rot); strcat_s(rname, rnum); };
 
     Texture *t = textures.access(rname);
@@ -148,6 +148,11 @@ void cleangl()
     if(qsphere) gluDeleteQuadric(qsphere);
     enumerate((&textures), Texture, t, { delete[] textures.enumc->key; t; });
     textures.clear();
+};
+
+void settexture(char *name)
+{
+    glBindTexture(GL_TEXTURE_2D, textureload(name)->gl);
 };
 
 
@@ -228,11 +233,11 @@ void transplayer()
 {
     glLoadIdentity();
 
-    glRotatef(player1->roll,0.0,0.0,1.0);
-    glRotatef(player1->pitch,-1.0,0.0,0.0);
-    glRotatef(player1->yaw,0.0,1.0,0.0);
+    glRotatef(player->roll,0.0,0.0,1.0);
+    glRotatef(player->pitch,-1.0,0.0,0.0);
+    glRotatef(player->yaw,0.0,1.0,0.0);
 
-    glTranslatef(-camera1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.8f : 0)-camera1->o.z-player1->bob, -camera1->o.y);   
+    glTranslatef(-camera1->o.x, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z-player->bob, -camera1->o.y);   
 };
 
 VAR(fov, 10, 105, 120);
@@ -241,33 +246,6 @@ int xtraverts, xtravertsva;
 
 VAR(fog, 16, 4000, 1000024);
 VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
-
-VAR(hudgun, 0, 1, 1);
-
-char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol" };
-
-void drawhudmodel(int start, int end, float speed, int base)
-{
-    uchar color[3];
-    lightreaching(player1->o, color);
-    glColor3ubv(color);
-    rendermodel(hudgunnames[player1->gunselect], start, end, 0, player1->o.x, player1->o.z+player1->bob, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base);
-};
-
-void drawhudgun(float fovy, float aspect, int farplane)
-{
-    if(!hudgun || editmode) return;
-    
-    int rtime = reloadtime(player1->gunselect);
-    if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
-    {
-        drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
-    }
-    else
-    {
-        drawhudmodel(6, 1, 100, 0);
-    };
-};
 
 VAR(sparklyfix, 0, 1, 1);
 
@@ -285,8 +263,8 @@ void drawskybox(int farplane, bool limited)
     }
 
     glLoadIdentity();
-    glRotated(player1->pitch, -1.0, 0.0, 0.0);
-    glRotated(player1->yaw,   0.0, 1.0, 0.0);
+    glRotated(player->pitch, -1.0, 0.0, 0.0);
+    glRotated(player->yaw,   0.0, 1.0, 0.0);
     glRotated(90.0, 1.0, 0.0, 0.0);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode ? GL_ALWAYS : GL_GEQUAL);
@@ -299,18 +277,20 @@ void drawskybox(int farplane, bool limited)
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
+dynent *camera1 = NULL;
+bool isthirdperson() { return player!=camera1; };
 
 void recomputecamera()
 {
     if(editmode || !thirdperson)
     {
-        camera1 = player1;
+        camera1 = player;
     }
     else
     {
         static dynent tempcamera;
         camera1 = &tempcamera;
-        *camera1 = *player1;
+        *camera1 = *player;
         camera1->move = -1;
         camera1->strafe = 0;
         camera1->vel = vec(0, 0, 0);
@@ -375,7 +355,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     if(!limitsky) drawskybox(farplane, false);
 
-    if(player1==camera1) drawhudgun(fovy, aspect, farplane);
+    if(!isthirdperson()) drawhudgun(fovy, aspect, farplane);
 
     rendermaterials();
 

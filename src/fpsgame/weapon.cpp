@@ -64,7 +64,7 @@ void createrays(vec &from, vec &to)             // create random spread of rays 
     };
 };
 
-bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
+bool intersect(fpsent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
 {
     vec v = to, w = d->o, *p; 
     v.sub(from);
@@ -93,24 +93,24 @@ bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity boundi
         && p->z >= d->o.z-d->eyeheight;
 };
 
-char *playerincrosshair()
+char *gamepointat(vec &pos)
 {
     loopv(players)
     {
-        dynent *o = players[i];
+        fpsent *o = players[i];
         if(!o) continue; 
-        if(intersect(o, player1->o, worldpos)) return o->name;
+        if(intersect(o, player1->o, pos)) return o->name;
     };
     return NULL;
 };
 
 const int MAXPROJ = 100;
-struct projectile { vec o, to; float speed; dynent *owner; int gun; bool inuse, local; };
+struct projectile { vec o, to; float speed; fpsent *owner; int gun; bool inuse, local; };
 projectile projs[MAXPROJ];
 
 void projreset() { loopi(MAXPROJ) projs[i].inuse = false; };
 
-void newprojectile(vec &from, vec &to, float speed, bool local, dynent *owner, int gun)
+void newprojectile(vec &from, vec &to, float speed, bool local, fpsent *owner, int gun)
 {
     loopi(MAXPROJ)
     {
@@ -127,7 +127,7 @@ void newprojectile(vec &from, vec &to, float speed, bool local, dynent *owner, i
     };
 };
 
-void hit(int target, int damage, dynent *d, dynent *at)
+void hit(int target, int damage, fpsent *d, fpsent *at)
 {
     if(d==player1) selfdamage(damage, at==player1 ? -1 : -2, at);
     else if(d->monsterstate) monsterpain(d, damage, at);
@@ -138,7 +138,7 @@ void hit(int target, int damage, dynent *d, dynent *at)
 const float RL_RADIUS = 24;
 const float RL_DAMRAD = 34;   // hack
 
-void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
+void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at)
 {
     if(o->state!=CS_ALIVE) return;
     vec temp;
@@ -173,16 +173,15 @@ void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismons
         loopv(players)
         {
             if(i==notthisplayer) continue;
-            dynent *o = players[i];
+            fpsent *o = players[i];
             if(!o) continue; 
             radialeffect(o, v, i, qdam, p->owner);
         };
-        dvector &mv = getmonsters();
-        loopv(mv) if(i!=notthismonster) radialeffect(mv[i], v, i, qdam, p->owner);
+        loopv(monsters) if(i!=notthismonster) radialeffect(monsters[i], v, i, qdam, p->owner);
     };
 };
 
-inline void projdamage(dynent *o, projectile *p, vec &v, int i, int im, int qdam)
+inline void projdamage(fpsent *o, projectile *p, vec &v, int i, int im, int qdam)
 {
     if(o->state!=CS_ALIVE) return;
     if(intersect(o, p->o, v))
@@ -210,13 +209,12 @@ void moveprojectiles(int time)
         {
             loopv(players)
             {
-                dynent *o = players[i];
+                fpsent *o = players[i];
                 if(!o) continue; 
                 projdamage(o, p, v, i, -1, qdam);
             };
             if(p->owner!=player1) projdamage(player1, p, v, -1, -1, qdam);
-            dvector &mv = getmonsters();
-            loopv(mv) if(!mv[i]->o.reject(v, 10.0f) && mv[i]!=p->owner) projdamage(mv[i], p, v, -1, i, qdam);
+            loopv(monsters) if(!monsters[i]->o.reject(v, 10.0f) && monsters[i]!=p->owner) projdamage(monsters[i], p, v, -1, i, qdam);
         };
         if(p->inuse)
         {
@@ -231,7 +229,7 @@ void moveprojectiles(int time)
     };
 };
 
-void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create visual effect from a shot
+void shootv(int gun, vec &from, vec &to, fpsent *d, bool local)     // create visual effect from a shot
 {
     playsound(guns[gun].sound, &d->o);
     int pspeed = 25;
@@ -268,7 +266,7 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
     };
 };
 
-void hitpush(int target, int damage, dynent *d, dynent *at, vec &from, vec &to)
+void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
 {
     hit(target, damage, d, at);
     vec v(to);
@@ -278,7 +276,7 @@ void hitpush(int target, int damage, dynent *d, dynent *at, vec &from, vec &to)
     d->vel.add(v);
 };
 
-void raydamage(dynent *o, vec &from, vec &to, dynent *d, int i)
+void raydamage(fpsent *o, vec &from, vec &to, fpsent *d, int i)
 {
     if(o->state!=CS_ALIVE) return;
     int qdam = guns[d->gunselect].damage;
@@ -293,7 +291,7 @@ void raydamage(dynent *o, vec &from, vec &to, dynent *d, int i)
     else if(intersect(o, from, to)) hitpush(i, qdam, o, d, from, to);
 };
 
-void shoot(dynent *d, vec &targ)
+void shoot(fpsent *d, vec &targ)
 {
     int attacktime = lastmillis-d->lastaction;
     if(attacktime<d->gunwait) return;
@@ -339,13 +337,12 @@ void shoot(dynent *d, vec &targ)
     
     loopv(players)
     {
-        dynent *o = players[i];
+        fpsent *o = players[i];
         if(!o) continue; 
         raydamage(o, from, to, d, i);
     };
 
-    dvector &v = getmonsters();
-    loopv(v) if(v[i]!=d) raydamage(v[i], from, to, d, -2);
+    loopv(monsters) if(monsters[i]!=d) raydamage(monsters[i], from, to, d, -2);
 
     if(d->monsterstate) raydamage(player1, from, to, d, -1);
 };

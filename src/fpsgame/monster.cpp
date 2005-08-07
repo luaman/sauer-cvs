@@ -3,12 +3,12 @@
 #include "pch.h"
 #include "game.h"
 
-dvector monsters;
+vector<fpsent *> monsters;
 int nextmonster, spawnremain, numkilled, monstertotal, mtimestart;
 
 VARF(skill, 1, 3, 10, conoutf("skill is now %d", skill));
 
-dvector &getmonsters() { return monsters; };
+vector<dynent *> &getmonsters() { return (vector<dynent *> &)monsters; };
 void restoremonsterstate() { loopv(monsters) if(monsters[i]->state==CS_DEAD) numkilled++; };        // for savegames
 
 #define TOTMFREQ 13
@@ -33,14 +33,14 @@ monstertypes[NUMMONSTERTYPES] =
     { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 13, 10,  60, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin"  },
 };
 
-dynent *basicmonster(int type, int yaw, int state, int trigger, int move)
+fpsent *basicmonster(int type, int yaw, int state, int trigger, int move)
 {
     if(type>=NUMMONSTERTYPES)
     {
         conoutf("warning: unknown monster in spawn: %d", type);
         type = 0;
     };
-    dynent *m = newdynent();
+    fpsent *m = newdynent();
     monstertype *t = &monstertypes[m->mtype = type];
     m->eyeheight = 8.0f;
     m->aboveeye = 7.0f;
@@ -90,17 +90,17 @@ void monsterclear()     // called after map start of when toggling edit mode to 
     else if(m_classicsp)
     {
         mtimestart = lastmillis;
-        loopv(ents) if(ents[i].type==MONSTER)
+        loopv(ents) if(ents[i]->type==MONSTER)
         {
-            dynent *m = basicmonster(ents[i].attr2, ents[i].attr1, M_SLEEP, 100, 0);  
-            m->o = ents[i].o;
+            fpsent *m = basicmonster(ents[i]->attr2, ents[i]->attr1, M_SLEEP, 100, 0);  
+            m->o = ents[i]->o;
             entinmap(m);
             monstertotal++;
         };
     };
 };
 
-bool enemylos(dynent *m, vec &v)
+bool enemylos(fpsent *m, vec &v)
 {
     vec ray(m->enemy->o);
     ray.sub(m->o);
@@ -119,7 +119,7 @@ bool enemylos(dynent *m, vec &v)
 // transition to the next state. Transition timeframes are parametrized by difficulty
 // level (skill), faster transitions means quicker decision making means tougher AI.
 
-void transition(dynent *m, int state, int moving, int n, int r) // n = at skill 0, n/2 = at skill 10, r = added random factor
+void transition(fpsent *m, int state, int moving, int n, int r) // n = at skill 0, n/2 = at skill 10, r = added random factor
 {
     m->monsterstate = state;
     m->move = moving;
@@ -127,13 +127,13 @@ void transition(dynent *m, int state, int moving, int n, int r) // n = at skill 
     m->trigger = lastmillis+n-skill*(n/16)+rnd(r+1);
 };
 
-void normalise(dynent *m, float angle)
+void normalise(fpsent *m, float angle)
 {
     while(m->yaw<angle-180.0f) m->yaw += 360.0f;
     while(m->yaw>angle+180.0f) m->yaw -= 360.0f;
 };
 
-void monsteraction(dynent *m)           // main AI thinking routine, called every frame for every monster
+void monsteraction(fpsent *m, int curtime)           // main AI thinking routine, called every frame for every monster
 {
     if(m->enemy->state==CS_DEAD) { m->enemy = player1; m->anger = 0; };
     normalise(m, m->targetyaw);
@@ -235,7 +235,7 @@ void monsteraction(dynent *m)           // main AI thinking routine, called ever
     if(m->move || m->moving) moveplayer(m, 1, false);        // use physics to move monster
 };
 
-void monsterpain(dynent *m, int damage, dynent *d)
+void monsterpain(fpsent *m, int damage, fpsent *d)
 {
     if(d->monsterstate)     // a monster hit us
     {
@@ -276,7 +276,7 @@ void endsp(bool allkilled)
     startintermission();
 };
 
-void monsterthink()
+void monsterthink(int curtime)
 {
     if(m_dmsp && spawnremain && lastmillis>nextmonster)
     {
@@ -287,9 +287,9 @@ void monsterthink()
     
     if(monstertotal && !spawnremain && numkilled==monstertotal) endsp(true);
     
-    loopv(ents)             // equivalent of player entity touch, but only teleports are used
+    loopvj(ents)             // equivalent of player entity touch, but only teleports are used
     {
-        entity &e = ents[i];
+        entity &e = *ents[j];
         if(e.type!=TELEPORT) continue;
         vec v = e.o;
         loopv(monsters) if(monsters[i]->state==CS_DEAD)
@@ -305,11 +305,11 @@ void monsterthink()
             v.z += monsters[i]->eyeheight;
             float dist = v.dist(monsters[i]->o);
             v.z -= monsters[i]->eyeheight;
-            if(dist<16) teleport(&e-&ents[0], monsters[i]);
+            if(dist<16) teleport(j, monsters[i]);
         };
     };
     
-    loopv(monsters) if(monsters[i]->state==CS_ALIVE) monsteraction(monsters[i]);
+    loopv(monsters) if(monsters[i]->state==CS_ALIVE) monsteraction(monsters[i], curtime);
 };
 
 void monsterrender()

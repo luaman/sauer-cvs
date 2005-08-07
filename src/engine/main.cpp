@@ -52,6 +52,10 @@ int scr_h = 480;
 
 SDL_Surface *screen = NULL;
 
+int curtime;
+
+dynent *player = NULL;
+
 void screenshot()
 {
     SDL_Surface *image;
@@ -187,6 +191,7 @@ int main(int argc, char **argv)
     if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
    
     log("world");
+    player = getplayer();
     empty_world(7, true);
 
     log("sound");
@@ -219,7 +224,7 @@ int main(int argc, char **argv)
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
         
-        if(lastmillis) updateworld();
+        if(lastmillis) updateworld(worldpos, curtime);
         
         lastmillis += curtime;
         curmillis = millis;

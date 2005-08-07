@@ -318,8 +318,8 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
     lights2.setsize(0);
     loopv(ents)
     {
-        entity &light = ents[i];
-        if(light.type != LIGHT) continue;
+        entity &light = *ents[i];
+        if(light.type != ET_LIGHT) continue;
 
         int radius = light.attr1;
         if(radius > 0)
@@ -607,7 +607,7 @@ void clearlights()
     uchar bright[3] = {128, 128, 128};
     alloctexids();
     loopi(lightmaps.length() + 1) createtexture(lmtexids[i], 1, 1, bright, false, false);
-    loopv(ents) memset(ents[i].color, 255, 3);
+    loopv(ents) memset(ents[i]->color, 255, 3);
 }
 
 void initlights()
@@ -621,21 +621,7 @@ void initlights()
     alloctexids();
     createtexture(lmtexids[0], 1, 1, unlit, false, false);
     loopi(lightmaps.length()) createtexture(lmtexids[i+1], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
-    loopv(ents)
-    {
-        entity &e = ents[i];
-        if(e.type <= PLAYERSTART)
-            continue;
-        float height = 8.0f;
-        if(e.type == MAPMODEL)
-        {
-            mapmodelinfo &mmi = getmminfo(e.attr2);
-            if(&mmi)
-                height = float((mmi.h ? mmi.h : 8.0f) + mmi.zoff + e.attr3);
-        }
-        vec target(e.o.x, e.o.y, e.o.z + height);
-        lightreaching(target, e.color);
-    }
+    updateentlighting();
 }
 
 void lightreaching(const vec &target, uchar color[3])
@@ -651,8 +637,8 @@ void lightreaching(const vec &target, uchar color[3])
     uint r = 0, g = 0, b = 0;
     loopv(ents)
     {
-        entity &e = ents[i];
-        if(e.type != LIGHT)
+        entity &e = *ents[i];
+        if(e.type != ET_LIGHT)
             continue;
     
         vec ray(target);
