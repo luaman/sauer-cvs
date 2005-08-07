@@ -7,27 +7,17 @@
 
 struct PackNode
 {
-    PackNode *children;
+    PackNode *child1, *child2;
     ushort x, y, w, h;
     bool packed;
 
-    PackNode()
-     : children(0), x(0), y(0), w(LM_PACKW), h(LM_PACKH), packed(false)
-    {}
-
-    PackNode(ushort x, ushort y, ushort w, ushort h)
-     : children(0), x(x), y(y), w(w), h(h), packed(false)
-    {}
+    PackNode() : child1(0), child2(0), x(0), y(0), w(LM_PACKW), h(LM_PACKH), packed(false) {}
+    PackNode(ushort x, ushort y, ushort w, ushort h) : child1(0), child2(0), x(x), y(y), w(w), h(h), packed(false) {}
 
     void clear()
     {
-        if(children)
-        {
-            children[0].~PackNode();
-            children[1].~PackNode();
-            gp()->dealloc(children, 2 * sizeof(PackNode));
-            children = 0;
-        }
+        DELETEP(child1);
+        DELETEP(child2);
     }
 
     ~PackNode()

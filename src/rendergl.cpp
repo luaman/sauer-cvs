@@ -80,11 +80,6 @@ void gl_init(int w, int h)
     glEndList();
 };
 
-void cleangl()
-{
-    if(qsphere) gluDeleteQuadric(qsphere);
-};
-
 SDL_Surface *rotate(SDL_Surface *s)
 {
     SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->h, s->w, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
@@ -127,15 +122,17 @@ Texture *textureload(char *tname, int rot, bool clamp, bool mipit, bool msg)
 
     Texture *t = textures.access(rname);
     if(t) return t;
-    t = &textures[newstring(rname)];
-    
-    strcpy_s(t->name, rname);
-    glGenTextures(1, &t->gl);
 
     SDL_Surface *s = IMG_Load(tname);
     if(!s) { if(msg) conoutf("couldn't load texture %s", tname); return crosshair; };
-    t->bpp = s->format->BitsPerPixel;
-    if(t->bpp!=24 && t->bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
+    int bpp = s->format->BitsPerPixel;
+    if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
+
+    t = &textures[newstring(rname)];
+    strcpy_s(t->name, rname);
+    glGenTextures(1, &t->gl);
+    t->bpp = bpp;
+
     loopi(rot) s = rotate(s); // lazy!
     createtexture(t->gl, s->w, s->h, s->pixels, clamp, mipit, t->bpp);
     t->xs = s->w;
@@ -143,6 +140,16 @@ Texture *textureload(char *tname, int rot, bool clamp, bool mipit, bool msg)
     SDL_FreeSurface(s);
     return t;
 };
+
+
+void cleangl()
+{
+    if(qsphere) gluDeleteQuadric(qsphere);
+    enumerate((&textures), Texture, t, delete[] textures.enumc->key);
+    textures.clear();
+};
+
+
 
 // management of texture slots
 // each texture slot can have multople texture frames, of which currently only the first is used
@@ -381,7 +388,7 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
 
-    gl_drawhud(w, h, (int)curfps, 0, curvert, underwater);
+    gl_drawhud(w, h, (int)curfps, 0, verts.length(), underwater);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);

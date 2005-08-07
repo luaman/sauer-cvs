@@ -19,13 +19,19 @@ struct ident
 };
 
 void itoa(char *s, int i) { sprintf_s(s)("%d", i); };
-char *exchangestr(char *o, char *n) { gp()->deallocstr(o); return newstring(n); };
+char *exchangestr(char *o, char *n) { delete[] o; return newstring(n); };
 
 typedef hashtable<char*, ident> identtable;
 
 identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
 vector<char *> mapnames;          // contains all legal mapnames in packages/base/
+
+void clear_command()
+{
+    enumerate(idents, ident, i, if(i->type==ID_ALIAS) { DELETEA(i->name); DELETEA(i->action); });
+    if(idents) idents->clear();
+};
 
 void alias(char *name, char *action)
 {
@@ -219,10 +225,10 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                 };
                 char *action = newstring(id->action);   // create new string here because alias could rebind itself
                 val = execute(action, isdown);
-                gp()->deallocstr(action);
+                delete[] action;
                 break;
         };
-        loopj(numargs) gp()->deallocstr(w[j]);
+        loopj(numargs) delete[] w[j];
     };
     return val;
 };

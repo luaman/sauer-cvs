@@ -88,11 +88,11 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
 {
     if(packed || w < tw || h < th)
         return false;
-    if(children)
+    if(child1)
     {
-        bool inserted = children[0].insert(tx, ty, tw, th) ||
-                        children[1].insert(tx, ty, tw, th);
-        packed = children[0].packed && children[1].packed;
+        bool inserted = child1->insert(tx, ty, tw, th) ||
+                        child2->insert(tx, ty, tw, th);
+        packed = child1->packed && child2->packed;
         if(packed)      
             clear();
         return inserted;    
@@ -105,19 +105,18 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
         return true;
     }
     
-    children = (PackNode *) gp()->alloc(2 * sizeof(PackNode));
     if(w - tw > h - th)
     {
-        new (children) PackNode(x, y, tw, h);
-        new (children + 1) PackNode(x + tw, y, w - tw, h);
+        child1 = new PackNode(x, y, tw, h);
+        child2 = new PackNode(x + tw, y, w - tw, h);
     }
     else
     {
-        new (children) PackNode(x, y, w, th);
-        new (children + 1) PackNode(x, y + th, w, h - th);
+        child1 = new PackNode(x, y, w, th);
+        child2 = new PackNode(x, y + th, w, h - th);
     }
 
-    return children[0].insert(tx, ty, tw, th);
+    return child1->insert(tx, ty, tw, th);
 }
 
 bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
@@ -681,18 +680,14 @@ void newsurfaces(cube &c)
 {
     if(!c.surfaces)
     {
-        c.surfaces = (surfaceinfo *)gp()->alloc(6 * sizeof(surfaceinfo));
+        c.surfaces = new surfaceinfo[6];
         loopi(6) c.surfaces[i].lmid = 0;
     }
 }
 
 void freesurfaces(cube &c)
 {
-    if(c.surfaces)
-    {
-        gp()->dealloc(c.surfaces, 6 * sizeof(surfaceinfo));
-        c.surfaces = NULL;
-    }
+    DELETEA(c.surfaces);
 }
 
 void dumplms()

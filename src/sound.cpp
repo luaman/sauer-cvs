@@ -124,6 +124,11 @@ int registersound(char *name)
 
 COMMAND(registersound, ARG_1EST);
 
+void clear_sound()
+{
+    snames.deletecontentsa();
+};
+
 void playsoundc(int n) { addmsg(0, 2, SV_SOUND, n); playsound(n); };
 
 int soundsatonce = 0, lastsoundmillis = 0;

@@ -9,6 +9,12 @@ void cleanup(char *msg)         // single program exit point;
     cleansound();
     cleanupserver();
     SDL_ShowCursor(1);
+    freeocta(worldroot);
+    extern void clear_command(); clear_command();
+    extern void clear_console(); clear_console(); 
+    extern void clear_menus();   clear_menus();
+    extern void clear_md2s();    clear_md2s();
+    extern void clear_sound();   clear_sound();
     if(msg)
     {
         #ifdef WIN32
@@ -17,28 +23,22 @@ void cleanup(char *msg)         // single program exit point;
         printf(msg);
         #endif
     };
-    gp()->printstats();
+    //_CrtDumpMemoryLeaks();
     SDL_Quit();
     exit(1);
 };
 
+bool done = false;
+
 void quit()                     // normal exit
 {
-    writeservercfg();
-    cleanup(NULL);
+    done = true;
 };
 
 void fatal(char *s, char *o)    // failure exit
 {
     sprintf_sd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
     cleanup(msg);
-};
-
-void *alloc(int s)              // for some big chunks... most other allocs use the memory pool
-{
-    void *b = calloc(1,s);
-    if(!b) fatal("out of memory!");
-    return b;
 };
 
 int minfps = 32;
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
-    for(;;)
+    while(!done)
     {
         static int frames = 0;
         static float fps = 10.0;
@@ -277,8 +277,9 @@ int main(int argc, char **argv)
             };
         };
     };
-    quit();
-    return 1;
+    writeservercfg();
+    cleanup(NULL);
+    return 0;
 };
 
 

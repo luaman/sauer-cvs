@@ -319,7 +319,7 @@ void pastecube(cube &src, cube &dest)
 
 block3 *blockcopy(block3 &s, int rgrid)
 {
-    block3 *b = (block3 *)gp()->alloc(sizeof(block3)+sizeof(cube)*s.size());
+    block3 *b = (block3 *)new uchar[sizeof(block3)+sizeof(cube)*s.size()];
     *b = s;
     cube *q = b->c();
     loopxyz(s, rgrid, *q++ = copycube(c));
@@ -330,7 +330,7 @@ void freeblock(block3 *b)
 {
     cube *q = b->c();
     loopi(b->size()) discardchildren(*q++);
-    gp()->dealloc(b, sizeof(block3)+sizeof(cube)*b->size());
+    delete[] b;
 };
 
 struct undoblock { int *g; block3 *b; };
@@ -339,13 +339,13 @@ VAR(undomegs, 0, 1, 10);                                // bounded by n megs
 
 void freeundo(undoblock u)
 {
-    gp()->dealloc(u.g, sizeof(int)*u.b->size());
+    delete[] u.g;;
     freeblock(u.b);
 };
 
 int *selgridmap()                                       // generates a map of the cube sizes at each grid point
 {
-    int *g = (int *)gp()->alloc(sizeof(int)*sel.size());
+    int *g = new int[sel.size()];
     loopxyz(sel, -sel.grid, (*g++ = lusize, c));
     return g-sel.size();
 };

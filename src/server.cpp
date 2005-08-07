@@ -6,7 +6,6 @@
 #ifdef STANDALONE
 void localservertoclient(uchar *buf, int len) {};
 void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); };
-void *alloc(int s) { void *b = calloc(1,s); if(!b) fatal("no memory!"); return b; };
 #endif
 
 // all network traffic is in 32bit ints, which are then compressed using the following simple scheme (assumes that most values are small).
@@ -190,7 +189,7 @@ void sendmap(int n, string mapname, int mapsize, uchar *mapdata)
     strcpy_s(copyname, mapname);
     copysize = mapsize;
     if(copydata) free(copydata);
-    copydata = (uchar *)alloc(mapsize);
+    copydata = new uchar[mapsize];
     memcpy(copydata, mapdata, mapsize);
 }
 

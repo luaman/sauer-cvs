@@ -2,19 +2,19 @@
 
 #include "cube.h"
 
-vertex *verts = NULL;
+vector<vertex> verts;
 
 struct vechash
 {
-    static const int size = 1<<12;
+    static const int size = 1<<16;
     int table[size];
 
     vechash() { clear(); };
     void clear() { loopi(size) table[i] = -1; };
 
-    int access(vertex *v)
+    int access(vec &v, float tu, float tv)
     {
-        uchar *iv = (uchar *)v;
+        uchar *iv = (uchar *)&v;
         uint h = 5381;
         loopl(12) h = ((h<<5)+h)^iv[l];
         h = h&(size-1);
@@ -22,36 +22,27 @@ struct vechash
         for(int i = table[h]; i>=0; i = c->next)
         {
             c = &verts[i];
-            if(c->x==v->x && c->y==v->y && c->z==v->z && c->u==v->u && c->v==v->v) return i;
+            if(c->x==v.x && c->y==v.y && c->z==v.z && c->u==tu && c->v==tv) return i;
         };
-        v->next = table[h];
-        table[h] = curvert;
-        return curvert++;
+        vertex &n = verts.add();
+        ((vec &)n) = v;
+        n.u = tu;
+        n.v = tv;
+        n.next = table[h];
+        return table[h] = verts.length()-1;
     };
 };
 
 vechash vh;
-int curvert = 0, curtris = 0;
-int curmaxverts = 10000;
-
-void reallocv()
-{
-    verts = (vertex *)realloc(verts, (curmaxverts *= 2)*sizeof(vertex));
-    curmaxverts -= 30;
-    if(!verts) fatal("no vertex memory!");
-};
-
-void vertcheck() { if(curvert>=curmaxverts) reallocv(); };
+int curtris = 0;
 
 int vert(int x, int y, int z, float lmu, float lmv)
 {
-    vertex &v = verts[curvert];
+    vec v;
     v.x = (float)x;
     v.y = (float)z;
     v.z = (float)y;
-    v.u = lmu;
-    v.v = lmv;
-    return vh.access(&v);
+    return vh.access(v, lmu, lmv);
 };
 
 uchar &edgelookup(cube &c, ivec &p, int dim)
@@ -333,6 +324,7 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 struct sortkey
 {
      uint tex, lmid;
+     sortkey() {};
      sortkey(uint tex, uint lmid)
       : tex(tex), lmid(lmid)
      {}
@@ -360,7 +352,6 @@ int explicitsky = 0, skyarea = 0;
 
 void gencubeverts(cube &c, int x, int y, int z, int size)
 {
-    vertcheck();
     bool useface[6];
 
     vec pos((float)x, (float)y, (float)z);
@@ -392,13 +383,10 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
                              u, v);
             else
             {
-                vertex vert;
-                vert.u = u;
-                vert.v = v;
-                genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, vert);
-                swap(float, vert.y, vert.z);
-                verts[curvert] = vert;
-                index = vh.access(&verts[curvert]);
+                vec rv;
+                genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, rv);
+                swap(float, rv.y, rv.z);
+                index = vh.access(rv, u, v);
             }
 
             iv.add(index);
@@ -436,8 +424,6 @@ void genskyverts(cube &c, int x, int y, int z, int size)
 
     skyarea += numfaces * (size>>4) * (size>>4);
 
-    vertcheck();
-
     loopi(numfaces)
     {
         int orient = faces[i];
@@ -462,24 +448,24 @@ vector<vtxarray *> valist;
 vtxarray *newva(int x, int y, int z, int size)
 {
     int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface);
-    if (!hasVBO) allocsize += curvert * sizeof(vertex); // length of vertex buffer
-    vtxarray *va = (vtxarray *)gp()->alloc(allocsize); // single malloc call
+    if (!hasVBO) allocsize += verts.length() * sizeof(vertex); // length of vertex buffer
+    vtxarray *va = (vtxarray *)new uchar[allocsize]; 
     va->eslist = (elementset *)(va + 1);
     va->ebuf = (ushort *)(va->eslist + indices.numelems);
     va->skybuf = va->ebuf + 2*curtris;
     va->sky = skyindices.length();
     memcpy(va->skybuf, skyindices.getbuf(), va->sky * sizeof(ushort));
-    if (hasVBO && curvert)
+    if (hasVBO && verts.length())
     {
         pfnglGenBuffers(1, (GLuint*)&(va->vbufGL));
         pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        pfnglBufferData(GL_ARRAY_BUFFER_ARB, curvert * sizeof(vertex), verts, GL_STATIC_DRAW_ARB);
+        pfnglBufferData(GL_ARRAY_BUFFER_ARB, verts.length() * sizeof(vertex), verts.getbuf(), GL_STATIC_DRAW_ARB);
         va->vbuf = 0; // Offset in VBO
     }
     else
     {
         va->vbuf = (vertex *)(va->skybuf + va->sky);
-        memcpy(va->vbuf, verts, curvert * sizeof(vertex));
+        memcpy(va->vbuf, verts.getbuf(), verts.length() * sizeof(vertex));
     };
     va->matbuf = (materialsurface *)((char *)va + allocsize - matsurfs.length() * sizeof(materialsurface));
     va->matsurfs = matsurfs.length();
@@ -509,7 +495,7 @@ vtxarray *newva(int x, int y, int z, int size)
     va->radius = size * SQRT3; // cube radius
     va->explicitsky = explicitsky;
     va->skyarea = skyarea;
-    wverts += va->verts = curvert;
+    wverts += va->verts = verts.length();
     wtris  += va->tris  = curtris;
     allocva++;
     valist.add(va);
@@ -522,7 +508,7 @@ void destroyva(vtxarray *va)
     wverts -= va->verts;
     wtris -= va->tris;
     allocva--;
-    gp()->dealloc(va, va->allocsize);
+    delete[] va;
     valist.removeobj(va);
 };
 
@@ -562,16 +548,17 @@ void rendercube(cube &c, int cx, int cy, int cz, int size)  // creates vertices 
 
 void setva(cube &c, int cx, int cy, int cz, int size)
 {
-    if(curvert)                                 // since reseting is a bit slow
+    if(verts.length())                                 // since reseting is a bit slow
     {
-        curvert = curtris = explicitsky = skyarea = 0;
+        curtris = explicitsky = skyarea = 0;
+        verts.setsize(0);
         indices.clear();
         skyindices.setsize(0);
         matsurfs.setsize(0);
         vh.clear();
     };
     rendercube(c, cx, cy, cz, size);
-    if(curvert) c.va = newva(cx, cy, cz, size);
+    if(verts.length()) c.va = newva(cx, cy, cz, size);
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
@@ -596,7 +583,6 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
 
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
-    if(!verts) reallocv();
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2);
     explicitsky = 0;
     skyarea = 0;

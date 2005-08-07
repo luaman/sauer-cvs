@@ -2,7 +2,12 @@
 
 #include "cube.h"
 
-struct mitem { char *text, *action; };
+struct mitem
+{
+    char *text, *action;
+    
+    ~mitem() { if(text!=action) DELETEA(action); DELETEA(text); };
+};
 
 struct gmenu
 {
@@ -10,6 +15,8 @@ struct gmenu
     vector<mitem> items;
     int mwidth;
     int menusel;
+    
+    ~gmenu() { DELETEA(name); };
 };
 
 vector<gmenu> menus;
@@ -17,6 +24,11 @@ vector<gmenu> menus;
 int vmenu = -1;
 
 ivector menustack;
+
+void clear_menus()
+{
+    menus.setsize(0); //FIXME
+};
 
 void menuset(int menu)
 {
@@ -95,8 +107,8 @@ void menumanual(int m, int n, char *text)
 {
     if(!n) menus[m].items.setsize(0);
     mitem &mitem = menus[m].items.add();
-    mitem.text = text;
-    mitem.action = "";
+    mitem.text = newstring(text);
+    mitem.action = mitem.text;
 }
 
 void menuitem(char *text, char *action)

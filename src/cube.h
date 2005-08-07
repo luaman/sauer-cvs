@@ -259,8 +259,7 @@ extern int curtime;                     // current frame time
 extern char *entnames[];                // lookup from map entities above to strings
 extern int gamemode, nextmode;
 extern int xtraverts, xtravertsva;
-extern int curvert;
-extern vertex *verts;                   // the vertex array for all world rendering
+extern vector<vertex> verts;                   // the vertex array for all world rendering
 extern int curtexnum;
 extern int islittleendian;
 extern const int cubecoords[8][3];
@@ -412,7 +411,6 @@ extern entity *newentity(vec &o, char *what, int v1, int v2, int v3, int v4, int
 // main
 extern int scr_w, scr_h;
 extern void fatal(char *s, char *o = "");
-extern void *alloc(int s);
 extern void keyrepeat(bool on);
 
 // rendertext

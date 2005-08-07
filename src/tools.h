@@ -56,6 +56,11 @@ typedef unsigned int uint;
 #define loopk(m) loop(k,m)
 #define loopl(m) loop(l,m)
 
+
+#define DELETEP(p) if(p) { delete   p; p = 0; };
+#define DELETEA(p) if(p) { delete[] p; p = 0; };
+
+
 #ifdef WIN32
 #ifdef M_PI
 #undef M_PI
@@ -64,6 +69,7 @@ typedef unsigned int uint;
 #ifndef __GNUC__
 #pragma warning( 3 : 4189 )
 #pragma warning( 4 : 4244 )
+
 
 //#pragma comment(linker,"/OPT:NOWIN98")
 #endif
@@ -135,93 +141,67 @@ extern void seedMT(uint seed);
 extern uint randomMT(void);
 
 
-// memory pool that uses buckets and linear allocation for small objects
-// VERY fast, and reasonably good memory reuse
-
-struct pool
-{
-    enum { POOLSIZE = 4096 };   // can be absolutely anything
-    enum { PTRSIZE = sizeof(char *) };
-    enum { MAXBUCKETS = 257 };   // meaning up to size 256 on 32bit pointer systems
-    enum { MAXREUSESIZE = MAXBUCKETS*PTRSIZE-PTRSIZE };
-    inline size_t bucket(size_t s) { return (s+PTRSIZE-1)>>PTRBITS; };
-    enum { PTRBITS = PTRSIZE==2 ? 1 : PTRSIZE==4 ? 2 : 3 };
-
-    char *p;
-    size_t left;
-    char *blocks;
-    void *reuse[MAXBUCKETS];
-    int stats[MAXBUCKETS];
-
-    pool();
-    ~pool() { dealloc_block(blocks); };
-
-    void *alloc(size_t size);
-    void dealloc(void *p, size_t size);
-    void *realloc(void *p, int oldsize, int newsize);
-
-    char *string(char *s, size_t l);
-    char *string(char *s) { return string(s, strlen(s)); };
-    void deallocstr(char *s) { dealloc(s, strlen(s)+1); };
-    char *stringbuf(char *s) { return string(s, _MAXDEFSTR-1); };
-
-    void dealloc_block(void *b);
-    void allocnext(int allocsize);
-    
-    void printstats();
-};
-
-pool *gp();
-
 template <class T> struct vector
 {
     T *buf;
     int alen;
     int ulen;
-    pool *p;
 
     vector()
     {
-        this->p = gp();
         alen = 8;
-        buf = (T *)p->alloc(alen*sizeof(T));
+        buf = (T *)new uchar[alen*sizeof(T)];
         ulen = 0;
     };
 
-    ~vector() { setsize(0); p->dealloc(buf, alen*sizeof(T)); };
+    ~vector() { setsize(0); delete[] (uchar *)buf; };
 
     vector(vector<T> &v);
     void operator=(vector<T> &v);
 
     T &add(const T &x)
     {
-        if(ulen==alen) realloc();
+        if(ulen==alen) vrealloc();
         new (&buf[ulen]) T(x);
         return buf[ulen++];
     };
 
     T &add()
     {
-        if(ulen==alen) realloc();
+        if(ulen==alen) vrealloc();
         new (&buf[ulen]) T;
         return buf[ulen++];
     };
 
     T &pop() { return buf[--ulen]; };
     T &last() { return buf[ulen-1]; };
+    void drop() { buf[--ulen].~T(); };
     bool empty() { return ulen==0; };
 
     int length() { return ulen; };
     T &operator[](int i) { ASSERT(i>=0 && i<ulen); return buf[i]; };
-    void setsize(int i) { for(; ulen>i; ulen--) buf[ulen-1].~T(); };
+    void setsize(int i) { ASSERT(i<=ulen); while(ulen>i) drop(); };
+    
+    void deletecontentsp() { while(!empty()) delete   pop(); };
+    void deletecontentsa() { while(!empty()) delete[] pop(); };
+    
     T *getbuf() { return buf; };
 
     void sort(void *cf) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf); };
 
-    void realloc()
+    void *_realloc(void *p, int oldsize, int newsize)
+    {
+        void *np = new uchar[newsize];
+        if(!oldsize) return np;
+        memcpy(np, p, newsize>oldsize ? oldsize : newsize);
+        delete[] p;
+        return np;
+    };
+    
+    void vrealloc()
     {
         int olen = alen;
-        buf = (T *)p->realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
+        buf = (T *)_realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
     };
 
     T remove(int i)
@@ -247,6 +227,7 @@ template <class T> struct vector
 };
 
 #define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
+#define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
 #define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
 inline unsigned int hthash(char * key)
@@ -268,23 +249,20 @@ template <class K, class T> struct hashtable
     int size;
     int numelems;
     chain **table;
-    pool *parent;
     chain *enumc;
 
     hashtable(int size = 1<<10)
       : size(size)
     {
-        parent = gp();
         numelems = 0;
-        table = (chain **)parent->alloc(size*sizeof(T));
+        table = new chain *[size];
         for(int i = 0; i<size; i++) table[i] = NULL;
     };
 
     chain *insert(const K &key, unsigned int h)
     {
-        chain *c = (chain *)parent->alloc(sizeof(chain));
+        chain *c = new chain();
         c->key = key;
-        new (& c->data) T;
         c->next = table[h]; 
         table[h] = c;
         numelems++;
@@ -322,8 +300,7 @@ template <class K, class T> struct hashtable
             for(chain *c = table[i], *next; c; c = next) 
             { 
                 next = c->next; 
-                c->data.~T();
-                parent->dealloc(c, sizeof(chain)); 
+                delete c; 
             };
             table[i] = NULL;
             numelems = 0;
@@ -331,14 +308,31 @@ template <class K, class T> struct hashtable
     }
 };
 
-#define enumeratekt(ht,k,e,t,f,b) \
-        loopi(ht.size) for(hashtable<k,t>::chain *enumc = ht.table[i]; enumc; enumc = enumc->next) \
-            { const k &e = enumc->key; t *f = &enumc->data; b; }
-#define enumerate(ht,t,e,b) loopi(ht->size) for(ht->enumc = ht->table[i]; ht->enumc; ht->enumc = ht->enumc->next) { t *e = &ht->enumc->data; b; }
+#define enumeratekt(ht,k,e,t,f,b) loopi(ht.size)  for(hashtable<k,t>::chain *enumc = ht.table[i]; enumc;     enumc = enumc->next)         { const k &e = enumc->key; t *f = &enumc->data; b; }
+#define enumerate(ht,t,e,b)       loopi(ht->size) for(ht->enumc = ht->table[i];                   ht->enumc; ht->enumc = ht->enumc->next) { t *e = &ht->enumc->data; b; }
 
-inline char *newstring(char *s)        { return gp()->string(s);    };
-inline char *newstring(char *s, int l) { return gp()->string(s, l); };
-inline char *newstringbuf(char *s)     { return gp()->stringbuf(s); };
+inline char *newstring(char *s, size_t l)
+{
+    char *b = new char[l+1];
+    strncpy(b,s,l);
+    b[l] = 0;
+    return b;  
+};
+
+inline char *newstring(char *s)        { return newstring(s, strlen(s));    };
+inline char *newstringbuf(char *s)     { return newstring(s, _MAXDEFSTR-1); };
+
+
+#ifndef __GNUC__
+#ifdef _DEBUG
+//#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+inline void *__cdecl operator new(size_t n, const char *fn, int l) { return ::operator new(n, 1, fn, l); };
+inline void __cdecl operator delete(void *p, const char *fn, int l) { ::operator delete(p, 1, fn, l); };
+#define new new(__FILE__,__LINE__)
+#endif 
+#endif
+
 
 #endif
 

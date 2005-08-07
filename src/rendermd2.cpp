@@ -52,7 +52,7 @@ struct md2
 
     md2_header header;
 
-    md2() : loaded(false), vbufGL(0) {};
+    md2() : loaded(false), vbufGL(0), vbufi(0) {};
 
     ~md2()
     {
@@ -61,7 +61,7 @@ struct md2
         delete[] frames;
         loopi(header.numframes) if(mverts[i]) delete[] mverts[i];
         delete[] mverts;
-        delete[] vbufi;
+        DELETEA(vbufi);
         if(hasVBO && vbufGL) pfnglDeleteBuffers(1, &vbufGL);
     };
     
@@ -99,7 +99,7 @@ struct md2
         
         mverts = new vec*[header.numframes];
         loopj(header.numframes) mverts[j] = NULL;
-
+        
         return true;
     };
 
@@ -265,6 +265,11 @@ hashtable<char *, md2 *> mdllookup;
 vector<md2 *> mapmodels;
 const int FIRSTMDL = 20;
 
+void clear_md2s()
+{
+    enumerate((&mdllookup), md2 *, m, delete *m);
+};
+
 void delayedload(md2 *m)
 { 
     if(!m->loaded)
@@ -331,7 +336,6 @@ void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, flo
     vec center;
     float radius = m->boundsphere(frame, scale, center);
     if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
-    Texture *t = tex ? lookuptexture(tex) : m->skin;
-    glBindTexture(GL_TEXTURE_2D, t->gl);
+    glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : m->skin)->gl);
     m->render(frame, range, x, y, z, yaw, pitch, scale, speed, basetime);
 };

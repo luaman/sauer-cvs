@@ -7,7 +7,7 @@ int allocnodes = 0;
 
 cube *newcubes(uint face)
 {
-    cube *c = (cube *)gp()->alloc(sizeof(cube)*8);
+    cube *c = new cube[8];
     loopi(8)
     {
         c->material = MAT_AIR;
@@ -36,7 +36,7 @@ int familysize(cube &c)
 void freeocta(cube *c)
 {
     loopi(8) discardchildren(c[i]);
-    gp()->dealloc(c, sizeof(cube)*8);
+    delete[] c;
     allocnodes--;
 };
 

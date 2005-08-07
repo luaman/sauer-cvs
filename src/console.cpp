@@ -72,19 +72,22 @@ void renderconsole()                                // render buffer taking into
 
 // keymap is defined externally in keymap.cfg
 
-struct keym { int code; char *name; char *action; } keyms[256];
-int numkm = 0;                                     
+struct keym
+{
+     int code;
+     char *name, *action; 
+
+    ~keym() { DELETEA(name); DELETEA(action); };
+};
+
+vector<keym> keyms;                                 
 
 void keymap(char *code, char *key, char *action)
 {
-    if(numkm >= 256)
-    {
-       conoutf("too many keymap entries");
-       return;
-    }
-    keyms[numkm].code = atoi(code);
-    keyms[numkm].name = newstring(key);
-    keyms[numkm++].action = newstringbuf(action);
+    keym &km = keyms.add();
+    km.code = atoi(code);
+    km.name = newstring(key);
+    km.action = newstringbuf(action);
 };
 
 COMMAND(keymap, ARG_3STR);
@@ -92,7 +95,7 @@ COMMAND(keymap, ARG_3STR);
 void bindkey(char *key, char *action)
 {
     for(char *x = key; *x; x++) *x = toupper(*x);
-    loopi(numkm) if(strcmp(keyms[i].name, key)==0)
+    loopv(keyms) if(strcmp(keyms[i].name, key)==0)
     {
         strcpy_s(keyms[i].action, action);
         return;
@@ -235,7 +238,7 @@ void keypress(int code, bool isdown, int cooked)
     }
     else if(!menukey(code, isdown))                 // keystrokes go to menu
     {
-        loopi(numkm) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
+        loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
         {
             string temp;
             strcpy_s(temp, keyms[i].action);
@@ -250,3 +253,7 @@ char *getcurcommand()
     return saycommandon ? commandbuf : NULL;
 };
 
+void clear_console()
+{
+    keyms.setsize(0);
+};
