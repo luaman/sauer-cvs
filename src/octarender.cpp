@@ -6,17 +6,11 @@ vertex *verts = NULL;
 
 struct vechash
 {
-    int size;
-    vertex **table;
-    pool *parent;
+    static const int size = 1<<12;
+    int table[size];
 
-    vechash()
-    {
-        size = 1<<12;
-        parent = gp();
-        table = (vertex **)parent->alloc(size*sizeof(vertex *));
-        loopi(size) table[i] = NULL;
-    };
+    vechash() { clear(); };
+    void clear() { loopi(size) table[i] = -1; };
 
     int access(vertex *v)
     {
@@ -24,18 +18,15 @@ struct vechash
         uint h = 5381;
         loopl(12) h = ((h<<5)+h)^iv[l];
         h = h&(size-1);
-        for(vertex *c = table[h]; c; c = c->next)
+        vertex *c;
+        for(int i = table[h]; i>=0; i = c->next)
         {
-            if(c->x==v->x && c->y==v->y && c->z==v->z && c->u==v->u && c->v==v->v) return c-verts;
+            c = &verts[i];
+            if(c->x==v->x && c->y==v->y && c->z==v->z && c->u==v->u && c->v==v->v) return i;
         };
         v->next = table[h];
-        table[h] = v;
+        table[h] = curvert;
         return curvert++;
-    };
-
-    void clear()
-    {
-        loopi(size) table[i] = NULL;
     };
 };
 
