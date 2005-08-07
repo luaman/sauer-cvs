@@ -1,43 +1,43 @@
 CXX=g++
 CXXOPTFLAGS=-Wall -O3 -fsigned-char -fomit-frame-pointer
-CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
+CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include -Iengine -Ifpsgame -Ishared `sdl-config --cflags`
 
 PLATFORM_PREFIX=linux
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
-	client.o \
-	clientextras.o \
-	clientgame.o \
-	command.o \
-	console.o \
-	entities.o \
-	main.o \
-	menus.o \
-	monster.o \
-	physics.o \
-	renderextras.o \
-	rendergl.o \
-	rendermd2.o \
-	renderparticles.o \
-	rendertext.o \
-	server.o \
-	serverbrowser.o \
-	sound.o \
-	tools.o \
-	weapon.o \
-	world.o \
-	worldio.o \
-        geom.o \
-        octa.o \
-        octaedit.o \
-	octarender.o \
-	lightmap.o \
-	water.o
+	shared/tools.o \
+	engine/command.o \
+	engine/console.o \
+	engine/lightmap.o \
+	engine/main.o \
+	engine/menus.o \
+	engine/octa.o \
+	engine/octaedit.o \
+	engine/octarender.o \
+	engine/physics.o \
+	engine/renderextras.o \
+	engine/rendergl.o \
+	engine/rendermd2.o \
+	engine/renderparticles.o \
+	engine/rendertext.o \
+	engine/serverbrowser.o \
+	engine/sound.o \
+	engine/water.o \
+	engine/world.o \
+	engine/worldio.o \
+	fpsgame/client.o \
+	fpsgame/clientextras.o \
+	fpsgame/clientgame.o \
+	fpsgame/entities.o \
+	fpsgame/monster.o \
+	fpsgame/savegame.o \
+	fpsgame/server.o \
+	fpsgame/weapon.cpp
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \
 	standalone.o \
-	tools.o
+	shared/tools.o
 
 default: all
 
@@ -51,7 +51,7 @@ clean:
 	-make -C ../enet/ clean
 
 standalone.o:
-	$(CXX) $(CXXFLAGS) -DSTANDALONE -o standalone.o -c server.cpp
+	$(CXX) $(CXXFLAGS) -DSTANDALONE -o standalone.o -c fpsgame/server.cpp
 
 client: $(CLIENT_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
