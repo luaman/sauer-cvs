@@ -1,6 +1,7 @@
 // entities.cpp: map entity related functions (pickup etc.)
 
-#include "cube.h"
+#include "pch.h"
+#include "game.h"
 
 vector<entity> ents;
 

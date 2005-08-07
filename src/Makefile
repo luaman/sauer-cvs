@@ -20,7 +20,6 @@ CLIENT_OBJS= \
 	rendermd2.o \
 	renderparticles.o \
 	rendertext.o \
-	rndmap.o \
 	server.o \
 	serverbrowser.o \
 	sound.o \
@@ -28,7 +27,6 @@ CLIENT_OBJS= \
 	weapon.o \
 	world.o \
 	worldio.o \
-	worldocull.o \
         geom.o \
         octa.o \
         octaedit.o \

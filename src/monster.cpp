@@ -1,6 +1,7 @@
 // monster.cpp: implements AI for single player monsters, currently client only
 
-#include "cube.h"
+#include "pch.h"
+#include "game.h"
 
 dvector monsters;
 int nextmonster, spawnremain, numkilled, monstertotal, mtimestart;

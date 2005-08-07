@@ -1,6 +1,7 @@
 // clientgame.cpp: core game related stuff
 
-#include "cube.h"
+#include "pch.h"
+#include "game.h"
 
 int nextmode = 0;         // nextmode becomes gamemode after next map load
 VAR(gamemode, 1, 0, 0);
@@ -23,6 +24,13 @@ int curtime;
 string clientmap;
 
 char *getclientmap() { return clientmap; };
+
+void resetgamestate()
+{
+    player1->health = 100;
+    if(m_classicsp) monsterclear();                 // all monsters back at their spawns for editing
+    projreset();
+};
 
 void resetmovement(dynent *d)
 {

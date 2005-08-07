@@ -1,6 +1,7 @@
 // rendercubes.cpp: sits in between worldrender.cpp and rendergl.cpp and fills the vertex array for different cube surfaces.
 
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 vector<vertex> verts;
 
@@ -63,12 +64,27 @@ void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
 
     int coord = ((int *)&p1)[2-dim];
 
-    vec v1(p1), v2(p2), v3(p3);
+    vec v1(p1.v), v2(p2.v), v3(p3.v);
     vertrepl(c, p1, v1, dim, coord);
     vertrepl(c, p2, v2, dim, coord);
     vertrepl(c, p3, v3, dim, coord);
 
-    vertstoplane(v1, v2, v3, pl);
+    pl.toplane(v1, v2, v3);
+};
+
+bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest)
+{
+    vec &t1 = dest, t2, t3, t4;
+    t1.cross(pl1, pl2); t4 = t1; t1.mul(pl3.offset);
+    t2.cross(pl3, pl1);          t2.mul(pl2.offset);
+    t3.cross(pl2, pl3);          t3.mul(pl1.offset);
+    t1.add(t2);
+    t1.add(t3);
+    t1.mul(-1);
+    float d = t4.dot(pl3);
+    if(d==0) return false;
+    t1.div(d);
+    return true;
 };
 
 void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
@@ -82,7 +98,7 @@ void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
     genvertp(c, p, p2, p3, plane2);
     genvertp(c, p, p1, p3, plane3);
 
-    if(!threeplaneintersect(plane1, plane2, plane3, v)) v = p;
+    if(!threeplaneintersect(plane1, plane2, plane3, v)) v = p.v;
     //ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
     //ASSERT(v.x>=0 && v.x<=8);
     //ASSERT(v.y>=0 && v.y<=8);
@@ -271,7 +287,7 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
         if(p[2] != p[3])
         {
             ++planes;
-            vertstoplane(p[2], p[3], p[1], clip[0]);
+            clip[0].toplane(p[2], p[3], p[1]);
         }
     }
     else
@@ -280,17 +296,17 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
         if(p[3] != p[0])
         {
              ++planes;
-             vertstoplane(p[2], p[3], p[0], clip[0]);
+             clip[0].toplane(p[2], p[3], p[0]);
         }
     }
     else
     {
         ++planes;
-        vertstoplane(p[2], p[0], p[1], clip[0]);
+        clip[0].toplane(p[2], p[0], p[1]);
         if(p[3] != p[4] && p[3] != p[2] && faceconvexity(c, i) != 0)
         {
             ++planes;
-            vertstoplane(p[3], p[4], p[2], clip[1]);
+            clip[1].toplane(p[3], p[4], p[2]);
         }
     }
 
@@ -864,7 +880,7 @@ void subdividecube(cube &c)
                 edgeset(ch[oppositeocta(i,j>>2)].edges[j], dc, dc*8);
         };
     };
-    validatec(ch);
+    validatec(ch, hdr.worldsize);
 };
 
 bool crushededge(uchar e, int dc) { return dc ? e==0 : e==0x88; };

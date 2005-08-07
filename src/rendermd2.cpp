@@ -1,6 +1,7 @@
 // rendermd2.cpp: loader code adapted from a nehe tutorial
 
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 struct md2
 {
@@ -297,11 +298,8 @@ struct md2
     };
 };
 
-
-
 hashtable<char *, md2 *> mdllookup;
 vector<md2 *> mapmodels;
-const int FIRSTMDL = 20;
 
 void clear_md2s()
 {

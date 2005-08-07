@@ -1,6 +1,7 @@
 // menus.cpp: ingame menu system (also used for scores and serverlist)
 
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 struct mitem
 {

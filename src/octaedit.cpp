@@ -1,4 +1,5 @@
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 void boxs(int d, int x, int y, int xs, int ys, int z)
 {
@@ -69,15 +70,11 @@ void toggleedit()
     if(!editmode && !allowedittoggle()) return;         // not in most multiplayer modes
     if(!(editmode = !editmode))
     {
-        settagareas();                                  // reset triggers to allow quick playtesting
         entinmap(player1, false);                       // find spawn closest to current floating pos
     }
     else
     {
-        resettagareas();                                // clear trigger areas to allow them to be edited
-        player1->health = 100;
-        if(m_classicsp) monsterclear();                 // all monsters back at their spawns for editing
-        projreset();
+        resetgamestate();
     };
     cancelsel();
     keyrepeat(editmode);

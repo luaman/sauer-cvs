@@ -3,29 +3,6 @@
 #ifndef _TOOLS_H
 #define _TOOLS_H
 
-#ifdef __GNUC__
-#define gamma __gamma
-#endif
-
-#include <math.h>
-
-#ifdef __GNUC__
-#undef gamma
-#endif
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <limits.h>
-#include <assert.h>
-#ifdef __GNUC__
-#include <new>
-#else
-#include <new.h>
-#endif
-#include <time.h>
-
 #ifdef NULL
 #undef NULL
 #endif
@@ -60,6 +37,10 @@ typedef unsigned int uint;
 #define DELETEP(p) if(p) { delete   p; p = 0; };
 #define DELETEA(p) if(p) { delete[] p; p = 0; };
 
+#define PI  (3.1415927f)
+#define PI2 (2*PI)
+#define SQRT3 (1.7320508f)
+#define RAD (PI / 180.0f)
 
 #ifdef WIN32
 #ifdef M_PI
@@ -225,6 +206,10 @@ template <class T> struct vector
         return buf[i];
     };
 };
+
+typedef vector<char *> cvector;
+typedef vector<int> ivector;
+typedef vector<ushort> usvector;
 
 #define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
 #define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)

@@ -1,11 +1,9 @@
 // world.cpp: core map management stuff
 
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 header hdr;
-
-void resettagareas() {  };                                                         // reset for editing or map saving
-void settagareas() {  };   // set for playing
 
 void trigger(int tag, int type, bool savegame)
 {
@@ -107,7 +105,7 @@ bool dropentity(entity &e)
             cx = (selcx ? 1 : -1) * sel.grid / 2;
             cy = (selcy ? 1 : -1) * sel.grid / 2;
         }
-        e.o = sel.o;
+        e.o = sel.o.v;
         switch(sel.orient)
         {
         case O_BOTTOM:

@@ -1,6 +1,7 @@
 // weapon.cpp: all shooting and effects code
 
-#include "cube.h"
+#include "pch.h"
+#include "game.h"
 
 struct guninfo { short sound, attackdelay, damage, projspeed, part, kickamount; char *name; };
 

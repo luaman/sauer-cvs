@@ -1,6 +1,7 @@
 // rendergl.cpp: core opengl rendering stuff
 
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 bool hasVBO = false;
 
@@ -145,7 +146,7 @@ Texture *textureload(char *tname, int rot, bool clamp, bool mipit, bool msg)
 void cleangl()
 {
     if(qsphere) gluDeleteQuadric(qsphere);
-    enumerate((&textures), Texture, t, delete[] textures.enumc->key);
+    enumerate((&textures), Texture, t, { delete[] textures.enumc->key; t; });
     textures.clear();
 };
 

@@ -1,6 +1,7 @@
 // core world management routines
 
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 cube *worldroot = newcubes(F_SOLID);
 int allocnodes = 0;

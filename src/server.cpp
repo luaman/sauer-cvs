@@ -1,7 +1,8 @@
 // server.cpp: little more than enhanced multicaster
 // runs dedicated or as client coroutine
 
-#include "cube.h" 
+#include "pch.h"
+#include "game.h" 
 
 #ifdef STANDALONE
 void localservertoclient(uchar *buf, int len) {};

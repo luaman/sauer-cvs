@@ -1,6 +1,7 @@
 // sound.cpp: uses fmod on windows and sdl_mixer on unix (both had problems on the other platform)
 
-#include "cube.h"
+#include "pch.h"
+#include "engine.h"
 
 #ifndef WIN32
 #define USE_MIXER

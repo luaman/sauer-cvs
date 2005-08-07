@@ -1,6 +1,7 @@
 // client.cpp, mostly network related client game code
 
-#include "cube.h"
+#include "pch.h"
+#include "game.h"
 
 ENetHost *clienthost = NULL;
 int connecting = 0;

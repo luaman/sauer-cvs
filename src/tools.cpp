@@ -1,5 +1,6 @@
 // implementation of generic tools
 
+#include "pch.h"
 #include "tools.h"
 
 ///////////////////////// misc tools ///////////////////////

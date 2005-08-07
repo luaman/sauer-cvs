@@ -1,6 +1,7 @@
 // clientextras.cpp: stuff that didn't fit in client.cpp or clientgame.cpp :)
 
-#include "cube.h"
+#include "pch.h"
+#include "game.h"
 
 // render players & monsters
 // very messy ad-hoc handling of animation frames, should be made more configurable
@@ -155,4 +156,6 @@ void getmap()
 
 COMMAND(sendmap, ARG_1STR);
 COMMAND(getmap, ARG_NONE);
+
+
 
