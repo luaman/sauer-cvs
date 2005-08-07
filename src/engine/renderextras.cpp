@@ -158,7 +158,9 @@ void aimat()
     worldpos = vec(0.0f, 0.0f, 0.0f);
     vecfromyawpitch(player->yaw, player->pitch, 1, 0, worldpos, true);
     worldpos.normalize();
-    worldpos.mul(raycube(true, player->o, worldpos));
+    float dist = raycube(true, player->o, worldpos);
+    if(dist>4096) dist = 4096; // FIXME temp fix
+    worldpos.mul(dist);
     worldpos.add(player->o);
 };
 
