@@ -552,13 +552,14 @@ void setva(cube &c, int cx, int cy, int cz, int size)
     {
         curtris = explicitsky = skyarea = 0;
         verts.setsize(0);
-        indices.clear();
+        //indices.clear();
         skyindices.setsize(0);
         matsurfs.setsize(0);
         vh.clear();
     };
     rendercube(c, cx, cy, cz, size);
     if(verts.length()) c.va = newva(cx, cy, cz, size);
+    indices.clear();
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());

@@ -52,10 +52,16 @@ struct md2
 
     md2_header header;
 
-    md2() : loaded(false), vbufGL(0), vbufi(0) {};
+    md2(char *name) : loaded(false), vbufGL(0), vbufi(0)
+    {
+        mapmodelinfo _mmi = { 8, 8, 0, "" }; 
+        mmi = _mmi;
+        loadname = newstring(name);
+    };
 
     ~md2()
     {
+        delete[] loadname;
         if(!loaded) return;
         delete[] glcommands;
         delete[] frames;
@@ -257,6 +263,38 @@ struct md2
 
         glPopMatrix();
     };
+
+    void delayedload()
+    { 
+        if(!loaded)
+        {
+            sprintf_sd(name1)("packages/models/%s/tris.md2", loadname);
+            if(!load(path(name1))) fatal("failed to load model: ", name1);
+            sprintf_sd(name2)("packages/models/%s/skin.jpg", loadname);
+            #define ifnload if((skin = textureload(name2, 0, false, true, false))==crosshair)
+            ifnload
+            {
+                strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg
+                ifnload
+                {
+                    char *p = strrchr(loadname, '/');
+                    if(!p) p = loadname;
+                    string nn;
+                    strn0cpy(nn, loadname, p-loadname+1);
+                    sprintf_s(name2)("packages/models/%s/skin.jpg", nn);    // try jpg in the parent folder (skin sharing)
+                    ifnload                                          
+                    {
+                        strcpy(name2+strlen(name2)-3, "png");               // and png again
+                        ifnload
+                        {
+                            conoutf("could not load model skin for %s", name1);
+                        };
+                    };
+                };
+            };
+            loaded = true;
+        };
+    };
 };
 
 
@@ -270,46 +308,11 @@ void clear_md2s()
     enumerate((&mdllookup), md2 *, m, delete *m);
 };
 
-void delayedload(md2 *m)
-{ 
-    if(!m->loaded)
-    {
-        sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
-        if(!m->load(path(name1))) fatal("failed to load model: ", name1);
-        sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
-        #define ifnload if((m->skin = textureload(name2, 0, false, true, false))==crosshair)
-        ifnload
-        {
-            strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg
-            ifnload
-            {
-                char *p = strrchr(m->loadname, '/');
-                if(!p) p = m->loadname;
-                string nn;
-                strn0cpy(nn, m->loadname, p-m->loadname+1);
-                sprintf_s(name2)("packages/models/%s/skin.jpg", nn);    // try jpg in the parent folder (skin sharing)
-                ifnload                                          
-                {
-                    strcpy(name2+strlen(name2)-3, "png");               // and png again
-                    ifnload
-                    {
-                        conoutf("could not load model skin for %s", name1);
-                    };
-                };
-            };
-        };
-        m->loaded = true;
-    };
-};
-
 md2 *loadmodel(char *name)
 {
     md2 **mm = mdllookup.access(name);
     if(mm) return *mm;
-    md2 *m = new md2();
-    mapmodelinfo mmi = { 8, 8, 0, "" }; 
-    m->mmi = mmi;
-    m->loadname = newstring(name);
+    md2 *m = new md2(name);
     mdllookup.access(m->loadname, &m);
     return m;
 };
@@ -332,7 +335,7 @@ COMMAND(mapmodelreset, ARG_NONE);
 void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime)
 {
     md2 *m = loadmodel(mdl); 
-    delayedload(m);
+    m->delayedload();
     vec center;
     float radius = m->boundsphere(frame, scale, center);
     if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;

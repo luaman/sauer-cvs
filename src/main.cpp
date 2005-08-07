@@ -23,7 +23,9 @@ void cleanup(char *msg)         // single program exit point;
         printf(msg);
         #endif
     };
+    #ifdef WIN32
     //_CrtDumpMemoryLeaks();
+    #endif
     SDL_Quit();
     exit(1);
 };
