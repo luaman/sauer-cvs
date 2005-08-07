@@ -56,12 +56,12 @@ void cleansound()
 void initsound()
 {
     #ifdef USE_MIXER
-        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 512)<0)
+        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s", (int) Mix_GetError());
             soundvol = 0;
         };
-	    Mix_AllocateChannels(64);	
+	    Mix_AllocateChannels(32);	
     #else
         if(FSOUND_GetVersion()<FMOD_VERSION) fatal("old FMOD dll");
         if(!FSOUND_Init(22050, 32, FSOUND_INIT_GLOBALFOCUS))
@@ -152,25 +152,23 @@ void playsound(int n, vec *loc)
 
         if(!samples[n]) { conoutf("failed to load sample: %s", buf); return; };
     };
-    int vol = soundvol;
-    float sndyaw= 0, pan= 0.5;
+    int vol = soundvol, pan = 255/2;
     if(loc)
     {
         vec v;
         vol -= (int)(player->o.dist(*loc, v)*3/4*soundvol/255);     // simple mono distance attenuation
-        sndyaw = -atan2(v.x, v.y); 		// simple stereo separation
-        if(sndyaw) sndyaw -= player->yaw*PI/180; 
-        pan = sin(sndyaw)*0.5f+0.5f;		// range is from 0.0 (left) to 1.0 (right)
+        float yaw = -atan2(v.x, v.y) - player->yaw*RAD; 		// simple stereo separation
+        pan = int(255.9*(0.5*sin(yaw)+0.5f));		// range is from 0 (left) to 255 (right)
     }
 
     if(vol<=0) return;
     
     #ifdef USE_MIXER
         int chan = Mix_PlayChannel(-1, samples[n], 0);
-        if(chan>=0) { Mix_Volume(chan, (vol*MAXVOL)/255); Mix_SetPanning(chan, 255-int(pan*255), int(pan*255)); }
+        if(chan>=0) { Mix_Volume(chan, (vol*MAXVOL)/255); Mix_SetPanning(chan, 255-pan, pan); }
     #else
         int chan = FSOUND_PlaySoundEx(FSOUND_FREE, samples[n], NULL, true);
-        if(chan>=0) { FSOUND_SetVolume(chan, (vol*MAXVOL)/255); FSOUND_SetPan(chan, int(pan*255)); FSOUND_SetPaused(chan, false); };
+        if(chan>=0) { FSOUND_SetVolume(chan, (vol*MAXVOL)/255); FSOUND_SetPan(chan, pan); FSOUND_SetPaused(chan, false); };
     #endif
 };
 
