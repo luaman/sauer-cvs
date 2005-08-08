@@ -1,6 +1,6 @@
 CXX=g++
 CXXOPTFLAGS=-Wall -O3 -fsigned-char -fomit-frame-pointer
-CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
+CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
 
 PLATFORM_PREFIX=linux
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
@@ -20,6 +20,7 @@ CLIENT_OBJS= \
 	engine/rendermd2.o \
 	engine/renderparticles.o \
 	engine/rendertext.o \
+	engine/server.o \
 	engine/serverbrowser.o \
 	engine/sound.o \
 	engine/water.o \
@@ -29,15 +30,16 @@ CLIENT_OBJS= \
 	fpsgame/clientextras.o \
 	fpsgame/clientgame.o \
 	fpsgame/entities.o \
+	fpsgame/fpsserver.o \
 	fpsgame/monster.o \
 	fpsgame/savegame.o \
-	fpsgame/server.o \
 	fpsgame/weapon.o
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \
-	fpsgame/standalone.o \
-	shared/tools.o
+	shared/tools.o \
+	engine/standalone.o \
+	fpsgame/fpsserver.o
 
 default: all
 
