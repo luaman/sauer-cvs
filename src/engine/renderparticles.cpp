@@ -3,48 +3,45 @@
 #include "pch.h"
 #include "engine.h"
 
-const int MAXPARTICLES = 5500;
-const int NUMPARTCUTOFF = 20;
 struct particle { vec o, d; int fade, type; int millis; particle *next; };
-particle particles[MAXPARTICLES], *parlist = NULL, *parempty = NULL;
+particle *parlist = NULL, *parempty = NULL;
 bool parinit = false;
 
-VAR(maxparticles, 100, 5000, MAXPARTICLES-500);
 VAR(particlesize, 20, 100, 500);
 
 Texture *parttexs[5];
 
 void particleinit()
 {
-    loopi(MAXPARTICLES)
-    {
-        particles[i].next = parempty;
-        parempty = &particles[i];
-    };
-    parinit = true;
     parttexs[0] = textureload(newstring("data/martin/base.png"));
     parttexs[1] = textureload(newstring("data/martin/ball1.png"));
-    parttexs[2]  = textureload(newstring("data/martin/smoke.png"));
+    parttexs[2] = textureload(newstring("data/martin/smoke.png"));
     parttexs[3] = textureload(newstring("data/martin/ball2.png"));
     parttexs[4] = textureload(newstring("data/martin/ball3.png"));
+    parinit = true;
 };
-
 
 void newparticle(vec &o, vec &d, int fade, int type)
 {
-    if(!parinit) particleinit();
-    if(parempty)
+    if(!parempty)
     {
-        particle *p = parempty;
-        parempty = p->next;
-        p->o = o;
-        p->d = d;
-        p->fade = fade;
-        p->type = type;
-        p->millis = lastmillis;
-        p->next = parlist;
-        parlist = p;
+        if(!parinit) particleinit();
+        particle *ps = new particle[256];
+        loopi(256)
+        {
+            ps[i].next = parempty;
+            parempty = &ps[i];
+        };
     };
+    particle *p = parempty;
+    parempty = p->next;
+    p->o = o;
+    p->d = d;
+    p->fade = fade;
+    p->type = type;
+    p->millis = lastmillis;
+    p->next = parlist;
+    parlist = p;
 };
 
 vec right, up;
@@ -69,26 +66,31 @@ void render_particles(int time)
         { 1.0f, 1.0f, 1.0f, 20, 4, 1.2f  }, // green:  fireball3
     };
     
-    int numrender = 0;
+    parttype *ct = NULL;
     
     for(particle *p, **pp = &parlist; p = *pp;)
     {       
         parttype *pt = &parttypes[p->type];
 
-        glBindTexture(GL_TEXTURE_2D, parttexs[pt->tex]->gl);  
-        glBegin(GL_QUADS);
+        if(ct!=pt)
+        {
+            if(ct) glEnd();
+            ct = pt;
+            glBindTexture(GL_TEXTURE_2D, parttexs[pt->tex]->gl);
+            glBegin(GL_QUADS);
+            glColor3d(pt->r, pt->g, pt->b);
+        };
         
-        glColor3d(pt->r, pt->g, pt->b);
         float sz = pt->sz*4*particlesize/100.0f; 
         // perf varray?
-        glTexCoord2f(0.0, 1.0); glVertex3d(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
-        glTexCoord2f(1.0, 1.0); glVertex3d(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-        glTexCoord2f(1.0, 0.0); glVertex3d(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
-        glTexCoord2f(0.0, 0.0); glVertex3d(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
-        glEnd();
+        glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
+        glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
+        glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
+        glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+        
         xtraverts += 4;
 
-        if(numrender++>maxparticles || (p->fade -= time)<0)
+        if((p->fade -= time)<0)
         {
             *pp = p->next;
             p->next = parempty;
@@ -104,7 +106,9 @@ void render_particles(int time)
             pp = &p->next;
         };
     };
-
+    
+    if(ct) glEnd();
+    
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
 };
