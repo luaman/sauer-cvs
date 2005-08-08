@@ -592,6 +592,30 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\src\engine\server.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Profile|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\src\engine\serverbrowser.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -1066,6 +1090,30 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\src\fpsgame\fpsserver.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Profile|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\src\fpsgame\game.h">
 			</File>
 			<File
@@ -1094,30 +1142,6 @@
 			</File>
 			<File
 				RelativePath="..\src\fpsgame\savegame.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\src\fpsgame\server.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool

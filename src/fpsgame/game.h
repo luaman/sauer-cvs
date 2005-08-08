@@ -104,12 +104,14 @@ enum
     SV_PING, SV_PONG, SV_CLIENTPING, SV_GAMEMODE,
     SV_TIMEUP, SV_EDITENT, SV_MAPRELOAD, SV_ITEMACC,
     SV_SENDMAP, SV_RECVMAP, SV_SERVMSG, SV_ITEMLIST,
-    SV_EXT,
 };
+
+#define CUBE_SERVER_PORT 28785
+#define CUBE_SERVINFO_PORT 28786
+#define PROTOCOL_VERSION 242            // bump when protocol changes
 
 
 // client
-extern void localservertoclient(uchar *buf, int len);
 extern void addmsg(int rel, int num, int type, ...);
 extern void sendpackettoserv(void *packet);
 extern void gets2c();
@@ -130,6 +132,7 @@ extern void zapdynent(fpsent *&);
 extern fpsent *getclient(int cn);
 extern void timeupdate(int timeremain);
 extern void playsoundc(int n);
+extern const char *modestr(int n);
 
 // clientextras
 extern void renderclient(fpsent *d, bool team, char *mdlname, float scale, bool hellpig = false);
@@ -139,13 +142,6 @@ void showscores(bool on);
 extern void save_world(char *fname);
 extern void load_world(char *mname);
 extern void loadgamerest();
-
-// server
-extern void localclienttoserver(struct _ENetPacket *);
-extern void sendstring(char *t, uchar *&p);
-extern void startintermission();
-extern void restoreserverstate(vector<extentity *> &ents);
-extern char msgsizelookup(int msg);
 
 // weapon
 extern void selectgun(int a = -1, int b = -1, int c =-1);
@@ -173,5 +169,11 @@ extern void setspawn(int i, bool on);
 extern void teleport(int n, fpsent *d);
 extern void baseammo(int gun);
 
+// fpsserver
+extern void restoreserverstate(vector<extentity *> &ents);
+extern void startintermission();
+extern char msgsizelookup(int msg);
+extern void localclienttoserver(struct _ENetPacket *);
+extern void localdisconnect();
 
 

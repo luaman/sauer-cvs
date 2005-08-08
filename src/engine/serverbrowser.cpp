@@ -39,7 +39,7 @@ int resolverloop(void * data)
         rt->query = resolverqueries.pop();
         rt->starttime = lastmillis;
         SDL_UnlockMutex(resolvermutex);
-        ENetAddress address = { ENET_HOST_ANY, CUBE_SERVINFO_PORT };
+        ENetAddress address = { ENET_HOST_ANY, serverinfoport() };
         enet_address_set_host(&address, rt->query);
         SDL_LockMutex(resolvermutex);
         resolverresult &rr = resolverresults.add();
@@ -136,7 +136,8 @@ struct serverinfo
     string full;
     string map;
     string sdesc;
-    int mode, numplayers, ping, protocol, minremain;
+    int numplayers, ping;
+    vector<int> attr;
     ENetAddress address;
 };
 
@@ -149,18 +150,14 @@ char *getservername(int n) { return servers[n].name; };
 void addserver(char *servername)
 {
     loopv(servers) if(strcmp(servers[i].name, servername)==0) return;
-    serverinfo &si = servers.insert(0, serverinfo());
+    serverinfo &si = servers.add();
     strcpy_s(si.name, servername);
     si.full[0] = 0;
-    si.mode = 0;
-    si.numplayers = 0;
     si.ping = 999;
-    si.protocol = 0;
-    si.minremain = 0;
     si.map[0] = 0;
     si.sdesc[0] = 0;
     si.address.host = ENET_HOST_ANY;
-    si.address.port = CUBE_SERVINFO_PORT;
+    si.address.port = serverinfoport();
 };
 
 void pingservers()
@@ -184,7 +181,7 @@ void pingservers()
 void checkresolver()
 {
     char *name = NULL;
-    ENetAddress addr = { ENET_HOST_ANY, CUBE_SERVINFO_PORT };
+    ENetAddress addr = { ENET_HOST_ANY, serverinfoport() };
     while(resolvercheck(&name, &addr))
     {
         if(addr.host == ENET_HOST_ANY) continue;
@@ -220,10 +217,10 @@ void checkpings()
             {
                 p = ping;
                 si.ping = lastmillis - getint(p);
-                si.protocol = getint(p);
-                si.mode = getint(p);
                 si.numplayers = getint(p);
-                si.minremain = getint(p);
+                int numattr = getint(p);
+                si.attr.setsize(0);
+                loopj(numattr) si.attr.add(getint(p));
                 sgetstr();
                 strcpy_s(si.map, text);
                 sgetstr();
@@ -251,8 +248,7 @@ void refreshservers()
         serverinfo &si = servers[i];
         if(si.address.host != ENET_HOST_ANY && si.ping != 999)
         {
-            if(si.protocol!=PROTOCOL_VERSION) sprintf_s(si.full)("%s [different sauerbraten protocol]", si.name);
-            else sprintf_s(si.full)("%d\t%d\t%s, %s: %s %s", si.ping, si.numplayers, si.map[0] ? si.map : "[unknown]", modestr(si.mode), si.name, si.sdesc);
+            serverinfostr(si.full, si.name, si.sdesc, si.map, si.ping, si.attr);
         }
         else
         {

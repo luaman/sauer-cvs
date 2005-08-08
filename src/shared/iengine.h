@@ -101,3 +101,15 @@ extern void cleansound();
 extern void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime = 0);
 extern mapmodelinfo &getmminfo(int i);
 
+// server
+extern void *getinfo(int i);
+extern void sendintstr(int i, char *msg);
+extern void send2(bool rel, int cn, int a, int b);
+extern int getnumclients();
+extern void putint(uchar *&p, int n);
+extern int getint(uchar *&p);
+extern void sendstring(char *t, uchar *&p);
+extern void disconnect_client(int n, char *reason);
+extern void sendvmap(int n, string mapname, int mapsize, uchar *mapdata);
+extern void recvmap(int n, int tag);
+extern bool hasnonlocalclients();

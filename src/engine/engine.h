@@ -98,3 +98,8 @@ extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 
+// server
+extern void initserver(bool dedicated, bool listen, int uprate, char *sdesc, char *ip, char *master);
+extern void cleanupserver();
+extern void serverslice(int seconds, unsigned int timeout);
+extern uchar *retrieveservers(uchar *buf, int buflen);
