@@ -159,8 +159,9 @@ void playsound(int n, vec *loc)
         vol -= (int)(dist*3/4*soundvol/255);     // simple mono distance attenuation
         if(dist > 0.01f)
         {
-            float yaw = -atan2(v.x, v.y) - player->yaw*RAD; 		// simple stereo separation
-            pan = int(255.9*(0.5*sin(yaw)+0.5f));		// range is from 0 (left) to 255 (right)
+            float yaw = -atan2(v.x, v.y);     // simple stereo separation
+            if(yaw) yaw -= player->yaw*RAD;
+            pan = int(255.9*(0.5*sin(yaw)+0.5f));           // range is from 0 (left) to 255 (right)
         };
     };
 
