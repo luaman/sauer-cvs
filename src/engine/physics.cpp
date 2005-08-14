@@ -368,7 +368,7 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool 
     m.y += strafe*sinf(rad(yaw-180));
 };
 
-VAR(maxroll, 0, 3, 20);
+VARP(maxroll, 0, 3, 20);
 
 int physicsfraction = 0, physicsrepeat = 0;
 const int MINFRAMETIME = 20; // physics always simulated at 50fps or better

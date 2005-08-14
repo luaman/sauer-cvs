@@ -258,3 +258,11 @@ void clear_console()
 {
     keyms.setsize(0);
 };
+
+void writebinds(FILE *f)
+{
+    loopv(keyms)
+    {
+        if(*keyms[i].action) fprintf(f, "bind \"%s\" [%s]\n", keyms[i].name, keyms[i].action);
+    };
+};

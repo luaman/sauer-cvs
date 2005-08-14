@@ -47,6 +47,11 @@ void newteam(char *name) { c2sinit = false; strn0cpy(player1->team, name, 5); };
 COMMANDN(team, newteam, ARG_1STR);
 COMMANDN(name, newname, ARG_1STR);
 
+void writeclientinfo(FILE *f)
+{
+    fprintf(f, "name \"%s\"\nteam \"%s\"\n", player1->name, player1->team);
+};
+
 // update the position of other clients in the game in our world
 // don't care if he's in the scenery or other players,
 // just don't overlap with our client

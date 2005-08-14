@@ -103,3 +103,9 @@ extern void initserver(bool dedicated, bool listen, int uprate, char *sdesc, cha
 extern void cleanupserver();
 extern void serverslice(int seconds, unsigned int timeout);
 extern uchar *retrieveservers(uchar *buf, int buflen);
+
+// command
+extern void writecfg();
+
+// console
+extern void writebinds(FILE *f);

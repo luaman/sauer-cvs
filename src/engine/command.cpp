@@ -17,6 +17,7 @@ struct ident
     void (*fun)();      // ID_VAR, ID_COMMAND
     int narg;           // ID_VAR, ID_COMMAND
     char *action;       // ID_ALIAS
+    bool persist;
 };
 
 void itoa(char *s, int i) { sprintf_s(s)("%d", i); };
@@ -40,7 +41,7 @@ void alias(char *name, char *action)
     if(!b)
     {
         name = newstring(name);
-        ident b = { ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action) };
+        ident b = { ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action), true };
         idents->access(name, &b);
     }
     else
@@ -54,10 +55,10 @@ COMMAND(alias, ARG_2STR);
 
 // variable's and commands are registered through globals, see cube.h
 
-int variable(char *name, int min, int cur, int max, int *storage, void (*fun)())
+int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
 {
     if(!idents) idents = new identtable;
-    ident v = { ID_VAR, name, min, max, storage, fun, 0, 0 };
+    ident v = { ID_VAR, name, min, max, storage, fun, 0, 0, persist };
     idents->access(name, &v);
     return cur;
 };
@@ -75,7 +76,7 @@ char *getalias(char *name)
 bool addcommand(char *name, void (*fun)(), int narg)
 {
     if(!idents) idents = new identtable;
-    ident c = { ID_COMMAND, name, 0, 0, 0, fun, narg, 0 };
+    ident c = { ID_COMMAND, name, 0, 0, 0, fun, narg, 0, false };
     idents->access(name, &c);
     return false;
 };
@@ -87,6 +88,7 @@ char *parseexp(char *&p, int right)             // parse any nested set of () or
     for(int brak = 1; brak; )
     {
         int c = *p++;
+        if(c=='\r') *(p-1) = ' ';               // hack
         if(c==left) brak++;
         else if(c==right) brak--;
         else if(!c) { p--; conoutf("missing \"%c\"", right); return NULL; };
@@ -316,7 +318,7 @@ bool execfile(char *cfgfile)
     char *buf = loadfile(path(s), NULL);
     if(!buf) return false;
     execute(buf);
-    free(buf);
+    delete[] buf;
     return true;
 };
 
@@ -324,6 +326,33 @@ void exec(char *cfgfile)
 {
     if(!execfile(cfgfile)) conoutf("could not read \"%s\"", cfgfile);
 };
+
+void writecfg()
+{
+    FILE *f = fopen("config.cfg", "w");
+    if(!f) return;
+    fprintf(f, "// automatically written on exit, do not modify\n// delete this file to have defaults.cfg overwrite these settings\n// modify settings in game, or put settings in autoexec.cfg to override anything\n\n");
+    writeclientinfo(f);
+    fprintf(f, "\n");
+    enumerate(idents, ident, id,
+        if(id->type==ID_VAR && id->persist)
+        {
+            fprintf(f, "%s %d\n", id->name, *id->storage);
+        };
+    );
+    fprintf(f, "\n");
+    writebinds(f);
+    fprintf(f, "\n");
+    enumerate(idents, ident, id,
+        if(id->type==ID_ALIAS && !strstr(id->name, "nextmap_"))
+        {
+            fprintf(f, "alias \"%s\" [%s]\n", id->name, id->action);
+        };
+    );
+    fclose(f);
+};
+
+COMMAND(writecfg, ARG_NONE);
 
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.

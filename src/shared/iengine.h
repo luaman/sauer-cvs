@@ -16,7 +16,7 @@ extern void pruneundos(int maxremain = 0);
 extern bool noedit();
 
 // command
-extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)());
+extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
 extern void setvar(char *name, int i);
 extern int getvar(char *name);
 extern bool identexists(char *name);
@@ -95,7 +95,6 @@ extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m
 // sound
 extern void playsound(int n, vec *loc = 0);
 extern void initsound();
-extern void cleansound();
 
 // rendermd2
 extern void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime = 0);

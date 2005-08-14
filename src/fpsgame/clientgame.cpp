@@ -14,9 +14,9 @@ bool intermission = false;
 fpsent *player1 = newdynent();          // our client
 vector<fpsent *> players;               // other clients
 
-VAR(sensitivity, 0, 10, 1000);
-VAR(sensitivityscale, 1, 1, 100);
-VAR(invmouse, 0, 0, 1);
+VARP(sensitivity, 0, 10, 1000);
+VARP(sensitivityscale, 1, 1, 100);
+VARP(invmouse, 0, 0, 1);
 
 int lastmillis = 0;
 
@@ -52,7 +52,7 @@ void spawnstate(fpsent *d)              // reset player state not persistent acc
     d->armour = 0;
     d->armourtype = A_BLUE;
     d->quadmillis = 0;
-    d->gunselect = GUN_PISTOL;
+    d->lastattackgun = d->gunselect = GUN_PISTOL;
     d->gunwait = 0;
     d->attacking = false;
     d->lastaction = 0;
@@ -466,7 +466,7 @@ void worldhurts(dynent *d, int damage)
     else if(d->monsterstate) monsterpain((fpsent *)d, damage, player1);
 };
 
-VAR(hudgun, 0, 1, 1);
+VARP(hudgun, 0, 1, 1);
 
 char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol" };
 

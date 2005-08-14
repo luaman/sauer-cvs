@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "engine.h"
 
-VAR(watersubdiv, 0, 2, 3);
-VAR(waterlod, 0, 1, 3);
+VARP(watersubdiv, 0, 2, 3);
+VARP(waterlod, 0, 1, 3);
 
 int wx1, wy1, wx2, wy2, wsize;
 

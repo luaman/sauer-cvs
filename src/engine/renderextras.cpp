@@ -179,14 +179,14 @@ void invertperspective()
     glLoadMatrixf(inv);
 };
 
-VAR(crosshairsize, 0, 15, 50);
+VARP(crosshairsize, 0, 15, 50);
 
 int dblend = 0;
 void damageblend(int n) { dblend += n; };
 
-VAR(hidestats, 0, 0, 1);
-VAR(hidehud, 0, 0, 1);
-VAR(crosshairfx, 0, 1, 1);
+VARP(hidestats, 0, 0, 1);
+VARP(hidehud, 0, 0, 1);
+VARP(crosshairfx, 0, 1, 1);
 
 void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
 {

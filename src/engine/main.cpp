@@ -6,8 +6,8 @@
 void cleanup(char *msg)         // single program exit point;
 {
     disconnect(true);
+    writecfg();
     cleangl();
-    cleansound();
     cleanupserver();
     SDL_ShowCursor(1);
     freeocta(worldroot);
@@ -24,9 +24,6 @@ void cleanup(char *msg)         // single program exit point;
         printf(msg);
         #endif
     };
-    #ifdef WIN32
-    //_CrtDumpMemoryLeaks();
-    #endif
     SDL_Quit();
     exit(1);
 };
@@ -123,11 +120,15 @@ int islittleendian = 1;
 
 int main(int argc, char **argv)
 {
+    #ifdef WIN32
+    //atexit((void (__cdecl *)(void))_CrtDumpMemoryLeaks);
+    #endif
+
     bool dedicated = false, listen = false;
     int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;
     islittleendian = *((char *)&islittleendian);
-
+    
     #define log(s) puts("init: " s)
     log("sdl");
     
@@ -152,6 +153,7 @@ int main(int argc, char **argv)
     #ifdef _DEBUG
     par = SDL_INIT_NOPARACHUTE;
     fs = 0;
+    SetEnvironmentVariable("SDL_DEBUG", "1"); 
     #endif
     
     //#ifdef WIN32
@@ -203,9 +205,9 @@ int main(int argc, char **argv)
     exec("data/keymap.cfg");
     exec("data/default_map_settings.cfg");
     exec("data/menus.cfg");
-    ///exec("data/prefabs.cfg");
     exec("data/sounds.cfg");
     exec("servers.cfg");
+    if(!execfile("config.cfg")) exec("data/defaults.cfg");
     exec("autoexec.cfg");
 
     log("localconnect");

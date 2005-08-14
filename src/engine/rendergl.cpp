@@ -66,7 +66,7 @@ void gl_init(int w, int h)
         pfnglBindBuffer = (PFNGLBINDBUFFERARBPROC)getprocaddress("glBindBufferARB");
         pfnglBufferData = (PFNGLBUFFERDATAARBPROC)getprocaddress("glBufferDataARB");
         pfnglDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
-        hasVBO = true;
+        //hasVBO = true;
         conoutf("Using GL_ARB_vertex_buffer_object extensions");
     };
 
@@ -219,7 +219,7 @@ void renderstrips()
 };
 
 
-VARF(gamma, 30, 100, 300,
+VARFP(gamma, 30, 100, 300,
 {
     float f = gamma/100.0f;
     if(SDL_SetGamma(f,f,f)==-1)
@@ -240,14 +240,14 @@ void transplayer()
     glTranslatef(-camera1->o.x, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z-player->bob, -camera1->o.y);   
 };
 
-VAR(fov, 10, 105, 120);
+VARP(fov, 10, 105, 120);
 
 int xtraverts, xtravertsva;
 
 VAR(fog, 16, 4000, 1000024);
 VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
-VAR(sparklyfix, 0, 1, 1);
+VARP(sparklyfix, 0, 1, 1);
 
 void drawskybox(int farplane, bool limited)
 {

@@ -524,8 +524,8 @@ void destroyva(vtxarray *va)
     wverts -= va->verts;
     wtris -= va->tris;
     allocva--;
-    delete[] va;
     valist.removeobj(va);
+    delete[] va;
 };
 
 void vaclearc(cube *c)
@@ -573,6 +573,7 @@ void setva(cube &c, int cx, int cy, int cz, int size)
         matsurfs.setsize(0);
         vh.clear();
     };
+
     rendercube(c, cx, cy, cz, size);
     if(verts.length()) c.va = newva(cx, cy, cz, size);
     indices.clear();
@@ -601,6 +602,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2);
+
     explicitsky = 0;
     skyarea = 0;
     loopv(valist)

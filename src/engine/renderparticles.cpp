@@ -7,7 +7,7 @@ struct particle { vec o, d; int fade, type; int millis; particle *next; };
 particle *parlist = NULL, *parempty = NULL;
 bool parinit = false;
 
-VAR(particlesize, 20, 100, 500);
+VARP(particlesize, 20, 100, 500);
 
 Texture *parttexs[5];
 

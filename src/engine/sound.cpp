@@ -7,8 +7,8 @@
 #define USE_MIXER
 #endif
 
-VAR(soundvol, 0, 255, 255);
-VAR(musicvol, 0, 128, 255);
+VARP(soundvol, 0, 255, 255);
+VARP(musicvol, 0, 128, 255);
 
 #ifdef USE_MIXER
     #include "SDL_mixer.h"
@@ -43,20 +43,12 @@ void stopsound()
     };
 };
 
-void cleansound()
-{
-    stopsound();
-    #ifdef USE_MIXER
-        Mix_CloseAudio();
-    #else
-        FSOUND_Close();
-    #endif
-};
+VAR(soundbufferlen, 128, 1024, 4096);
 
 void initsound()
 {
     #ifdef USE_MIXER
-        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024)<0)
+        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s", (int) Mix_GetError());
             soundvol = 0;
@@ -127,6 +119,13 @@ COMMAND(registersound, ARG_1EST);
 
 void clear_sound()
 {
+    stopsound();
+    samples.setsize(0);
+    #ifdef USE_MIXER
+        Mix_CloseAudio();
+    #else
+        FSOUND_Close();
+    #endif
     snames.deletecontentsa();
 };
 

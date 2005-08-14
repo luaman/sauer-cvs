@@ -9,6 +9,7 @@ extern bool multiplayer();
 extern void connects(char *servername);
 extern bool allowedittoggle();
 extern void localservertoclient(uchar *buf, int len);
+extern void writeclientinfo(FILE *f);
 
 // clientgame
 extern void mousemove(int dx, int dy);

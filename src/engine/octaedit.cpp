@@ -332,7 +332,7 @@ void freeblock(block3 *b)
 
 struct undoblock { int *g; block3 *b; };
 vector<undoblock> undos;                                // unlimited undo
-VAR(undomegs, 0, 1, 10);                                // bounded by n megs
+VARP(undomegs, 0, 1, 10);                                // bounded by n megs
 
 void freeundo(undoblock u)
 {

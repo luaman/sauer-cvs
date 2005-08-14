@@ -303,6 +303,7 @@ vector<md2 *> mapmodels;
 
 void clear_md2s()
 {
+    mapmodels.setsize(0);
     enumerate((&mdllookup), md2 *, m, delete *m);
 };
 
