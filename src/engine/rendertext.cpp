@@ -119,7 +119,7 @@ int text_width(char *str)
 }
 
 
-void draw_textf(char *fstr, int left, int top, ...)
+void draw_textf(const char *fstr, int left, int top, ...)
 {
     sprintf_sdlv(str, top, fstr);
     draw_text(str, left, top);
@@ -127,7 +127,7 @@ void draw_textf(char *fstr, int left, int top, ...)
 
 Texture *texttex = NULL;
 
-void draw_text(char *str, int left, int top)
+void draw_text(const char *str, int left, int top)
 {
     if(!texttex) texttex = textureload(newstring("data/newchars.png"));
 
