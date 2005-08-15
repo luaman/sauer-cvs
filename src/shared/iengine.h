@@ -55,7 +55,6 @@ extern int findentity(int type, int index = 0);
 extern void trigger(int tag, int type, bool savegame);
 
 // main
-extern int scr_w, scr_h;
 extern void fatal(char *s, char *o = "");
 extern void keyrepeat(bool on);
 

@@ -60,8 +60,6 @@ bool fullconsole = false;
 void toggleconsole() { fullconsole = !fullconsole; };
 COMMAND(toggleconsole, ARG_NONE);
 
-extern int hidehud;
-
 void renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
     if(fullconsole)
@@ -70,7 +68,7 @@ void renderconsole(int w, int h)                   // render buffer taking into 
         blendbox(0, 0, w*4, (numl+1)*FONTH, true);
         loopi(numl) draw_text(i>=conlines.length() ? "" : conlines[i].cref, FONTH/2, FONTH*(numl-i-1)+FONTH/2); 
     }
-    else if(!hidehud)        
+    else     
     {
         int nd = 0;
         char *refs[ndraw];
