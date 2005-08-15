@@ -260,7 +260,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     
     glPushMatrix();
     glOrtho(0, w*4, h*4, 0, -1, 1);
-    if(!hidehud) renderconsole(w, h);
+    renderconsole(w, h);
     if(!hidestats && !hidehud)
     {
         int b = h*4*208/256;
