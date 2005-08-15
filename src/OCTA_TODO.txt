@@ -1,3 +1,11 @@
+eihrul:
+- implement variable LM sampling
+- physics dynamics that feel like cube
+- optimize overdraw in visibleface()
+- physics bugs (goes back to jump split second after landing, and whatever else)
+
+aard:
+- animation interpolation
 - all cfg stuff in menu
 - players more visible
 - rocketlauncher too weak | check damage in mp | rl bounce

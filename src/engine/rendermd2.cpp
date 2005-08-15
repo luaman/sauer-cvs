@@ -35,6 +35,29 @@ struct md2
         vec pos;
         float u, v;
     };
+    
+    struct md2_anint
+    {
+        int frame, range, basetime;
+        int fr1, fr2;
+        float frac1, frac2;
+        
+        md2_anint() {};
+        md2_anint(int f, int r, int b) : frame(f), range(r), basetime(b) {};
+        
+        bool operator==(const md2_anint &o) { return frame==o.frame && range==o.range && basetime==o.basetime; };
+        
+        void setframes(float speed)
+        {
+		    int time = lastmillis-basetime;
+		    fr1 = (int)(time/speed);
+		    frac1 = (time-fr1*speed)/speed;
+		    frac2 = 1-frac1;
+		    fr1 = fr1%range+frame;
+		    fr2 = fr1+1;
+		    if(fr2>=frame+range) fr2 = frame;
+		};
+    };
 
     int* glcommands;
     char* frames;
@@ -52,8 +75,12 @@ struct md2
     int vbufi_len;
 
     md2_header header;
+    
+    md2_anint prev, current;
+    int lastswitchtime;
+    static const int ANINTTIME = 500;
 
-    md2(char *name) : loaded(false), vbufGL(0), vbufi(0)
+    md2(char *name) : loaded(false), vbufGL(0), vbufi(0), lastswitchtime(-1)
     {
         mapmodelinfo _mmi = { 8, 8, 0, "" }; 
         mmi = _mmi;
@@ -184,10 +211,18 @@ struct md2
         pfnglBufferData(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
-    void render(int frame, int range, float x, float y, float z, float yaw, float pitch, float sc, float speed, int basetime)
+    void render(md2_anint ai, float x, float y, float z, float yaw, float pitch, float sc, float speed)
     {
-        loopi(range) if(!mverts[frame+i]) scale(frame+i, sc);
-        if(hasVBO && frame==0 && range==1 && !vbufGL) genvar();
+        loopi(ai.range) if(!mverts[ai.frame+i]) scale(ai.frame+i, sc);
+        if(hasVBO && ai.frame==0 && ai.range==1 && !vbufGL) genvar();
+      
+        if(lastswitchtime==-1) { current = ai; lastswitchtime = lastmillis-ANINTTIME*2; }
+        else if(!(current==ai))
+        {
+            if(lastmillis-lastswitchtime>ANINTTIME/2) prev = current;
+            current = ai;
+            lastswitchtime = lastmillis;
+        };
         
         glPushMatrix ();
         glTranslatef(x, y, z);
@@ -202,8 +237,7 @@ struct md2
             glAlphaFunc(GL_GREATER, 0.9f);
         };
         
-        
-        if(hasVBO && vbufGL && frame==0 && range==1)
+        if(hasVBO && vbufGL && ai.frame==0 && ai.range==1)
         {
             pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, vbufGL);
             glEnableClientState(GL_VERTEX_ARRAY);
@@ -221,15 +255,20 @@ struct md2
         }
         else
         {
-		    int time = lastmillis-basetime;
-		    int fr1 = (int)(time/speed);
-		    float frac1 = (time-fr1*speed)/speed;
-		    float frac2 = 1-frac1;
-		    fr1 = fr1%range+frame;
-		    int fr2 = fr1+1;
-		    if(fr2>=frame+range) fr2 = frame;
-		    vec *verts1 = mverts[fr1];
-		    vec *verts2 = mverts[fr2];
+            current.setframes(speed);
+		    vec *verts1 = mverts[current.fr1];
+		    vec *verts2 = mverts[current.fr2];
+		    vec *verts1p;
+		    vec *verts2p;
+		    bool doai;
+		    float aifrac1, aifrac2;
+		    if(doai = lastmillis-lastswitchtime<ANINTTIME)
+		    {
+		        verts1p = mverts[prev.fr1];
+		        verts2p = mverts[prev.fr2];
+		        aifrac1 = (lastmillis-lastswitchtime)/(float)ANINTTIME;
+		        aifrac2 = 1-aifrac1;
+		    };
 
 		    for(int *command = glcommands; (*command)!=0;)
 		    {
@@ -245,8 +284,16 @@ struct md2
 				    int vn = *command++;
 				    vec &v1 = verts1[vn];
 				    vec &v2 = verts2[vn];
-				    #define ip(c) v1.c*frac2+v2.c*frac1
-				    glVertex3f(ip(x), ip(z), ip(y));
+				    #define ip(c)  (v1.c*current.frac2+v2.c*current.frac1)
+				    #define ipv(c) (v1p.c*prev.frac2+v2p.c*prev.frac1)
+				    #define ipa(c) (ip(c)*aifrac1+ipv(c)*aifrac2)
+				    if(doai)
+				    {
+				        vec &v1p = verts1p[vn];
+				        vec &v2p = verts2p[vn];
+				        glVertex3f(ipa(x), ipa(z), ipa(y));
+				    }
+				    else glVertex3f(ip(x), ip(z), ip(y));
 			    };
 
 			    xtraverts += numVertex;
@@ -339,5 +386,6 @@ void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, flo
     float radius = m->boundsphere(frame, scale, center);
     if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
     glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : m->skin)->gl);
-    m->render(frame, range, x, y, z, yaw, pitch, scale, speed, basetime);
+    
+    m->render(md2::md2_anint(frame, range, basetime), x, y, z, yaw, pitch, scale, speed);
 };

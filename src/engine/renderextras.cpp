@@ -251,7 +251,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         renderconsole(w, h);
         if(!hidestats)
         {
-            int b = h*4*208/256;
+            int b = h*4*200/256;
             if(editmode) draw_textf("cube %d", FONTH*8, b, selchildcount);
             draw_textf("fps %d", FONTH/2, b, curfps);
             draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, b+FONTH, wtris/1024, vtris*100/wtris, wverts/1024, vverts*100/wverts, xtraverts/1024, xtravertsva/1024);
