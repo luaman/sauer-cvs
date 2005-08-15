@@ -3,6 +3,8 @@
 #include "pch.h"
 #include "engine.h"
 
+VARP(animationinterpolationtime, 0, 150, 1000);
+
 struct md2
 {
     struct md2_header
@@ -78,7 +80,6 @@ struct md2
     
     md2_anint prev, current;
     int lastswitchtime;
-    static const int ANINTTIME = 500;
 
     md2(char *name) : loaded(false), vbufGL(0), vbufi(0), lastswitchtime(-1)
     {
@@ -216,10 +217,10 @@ struct md2
         loopi(ai.range) if(!mverts[ai.frame+i]) scale(ai.frame+i, sc);
         if(hasVBO && ai.frame==0 && ai.range==1 && !vbufGL) genvar();
       
-        if(lastswitchtime==-1) { current = ai; lastswitchtime = lastmillis-ANINTTIME*2; }
+        if(lastswitchtime==-1) { current = ai; lastswitchtime = lastmillis-animationinterpolationtime*2; }
         else if(!(current==ai))
         {
-            if(lastmillis-lastswitchtime>ANINTTIME/2) prev = current;
+            if(lastmillis-lastswitchtime>animationinterpolationtime/2) prev = current;
             current = ai;
             lastswitchtime = lastmillis;
         };
@@ -262,11 +263,11 @@ struct md2
 		    vec *verts2p;
 		    bool doai;
 		    float aifrac1, aifrac2;
-		    if(doai = lastmillis-lastswitchtime<ANINTTIME)
+		    if(doai = lastmillis-lastswitchtime<animationinterpolationtime)
 		    {
 		        verts1p = mverts[prev.fr1];
 		        verts2p = mverts[prev.fr2];
-		        aifrac1 = (lastmillis-lastswitchtime)/(float)ANINTTIME;
+		        aifrac1 = (lastmillis-lastswitchtime)/(float)animationinterpolationtime;
 		        aifrac2 = 1-aifrac1;
 		    };
 
