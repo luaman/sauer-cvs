@@ -41,8 +41,9 @@ void show_calclight_progress()
           bar2 = lightmaps.length() ? float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH) : 0;
           
     glDisable(GL_DEPTH_TEST);
-    invertperspective();
+    glMatrixMode(GL_PROJECTION);    
     glPushMatrix();
+    glLoadIdentity();
     glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
 
     glBegin(GL_QUADS);

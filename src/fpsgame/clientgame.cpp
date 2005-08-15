@@ -509,15 +509,13 @@ void drawicon(float tx, float ty, int x, int y)
 
 void gameplayhud()
 {
-    glPushMatrix();
-    
+    glLoadIdentity();    
     glOrtho(0, 1200, 900, 0, -1, 1);
     draw_textf("%d",  90, 827, player1->health);
     if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
     draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
 
-    glPopMatrix();
-    glPushMatrix();
+    glLoadIdentity();    
     glOrtho(0, 2400, 1800, 0, -1, 1);
 
     glDisable(GL_BLEND);
@@ -529,5 +527,4 @@ void gameplayhud()
     if(g==9) { g = 4; r = 0; };
     drawicon((float)(g*64), (float)r, 1220, 1650);
 
-    glPopMatrix();
 };
