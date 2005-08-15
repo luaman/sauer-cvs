@@ -7,7 +7,7 @@ eihrul:
 - physics: dynent.moving appears to flip on and off all the time (monster animation issue)
 
 aard:
-- animation interpolation
+- add http://oss.sgi.com/projects/ogl-sample/registry/EXT/wgl_multisample.txt
 - all cfg stuff in menu
 - players more visible
 - rocketlauncher too weak | check damage in mp | rl bounce
