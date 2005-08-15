@@ -157,10 +157,11 @@ template <class T> struct vector
     T &pop() { return buf[--ulen]; };
     T &last() { return buf[ulen-1]; };
     void drop() { buf[--ulen].~T(); };
-    bool empty() { return ulen==0; };
+    bool empty() const { return ulen==0; };
 
-    int length() { return ulen; };
+    int length() const { return ulen; };
     T &operator[](int i) { ASSERT(i>=0 && i<ulen); return buf[i]; };
+    const T &operator[](int i) const { ASSERT(i >= 0 && i<ulen); return buf[i]; };
     void setsize(int i) { ASSERT(i<=ulen); while(ulen>i) drop(); };
     
     void deletecontentsp() { while(!empty()) delete   pop(); };
