@@ -257,21 +257,18 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     };
 
     glPopMatrix();
+    
     glPushMatrix();
-    glOrtho(0, VIRTW*4/3, VIRTH*4/3, 0, -1, 1);
-    if(!hidehud) renderconsole();
-
+    glOrtho(0, w*4, h*4, 0, -1, 1);
+    if(!hidehud) renderconsole(w, h);
     if(!hidestats && !hidehud)
     {
-        glPopMatrix();
-        glPushMatrix();
-        glOrtho(0, VIRTW*3/2, VIRTH*3/2, 0, -1, 1);
-        if(editmode) draw_textf("cube %d", 3100, 1900, selchildcount);
-        draw_textf("fps %d", 30, 2060, curfps);
-        draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", 30, 2130, wtris/1024, vtris*100/wtris, wverts/1024, vverts*100/wverts, xtraverts/1024, xtravertsva/1024);
-        draw_textf("ond:%d va:%d gl:%d lm:%d", 30, 2200, allocnodes*8, allocva, glde, lightmaps.length());
+        int b = h*4*208/256;
+        if(editmode) draw_textf("cube %d", FONTH*8, b, selchildcount);
+        draw_textf("fps %d", FONTH/2, b, curfps);
+        draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, b+FONTH, wtris/1024, vtris*100/wtris, wverts/1024, vverts*100/wverts, xtraverts/1024, xtravertsva/1024);
+        draw_textf("ond:%d va:%d gl:%d lm:%d", FONTH/2, b+FONTH*2, allocnodes*8, allocva, glde, lightmaps.length());
     };
-
     glPopMatrix();
     
     if(!hidehud) gameplayhud();

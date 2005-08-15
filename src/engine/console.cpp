@@ -56,18 +56,31 @@ void conoutf(const char *s, ...)
     conline(s, n!=0);
 };
 
-void renderconsole()                                // render buffer taking into account time & scrolling
+bool fullconsole = false;
+void toggleconsole() { fullconsole = !fullconsole; };
+COMMAND(toggleconsole, ARG_NONE);
+
+void renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
-    int nd = 0;
-    char *refs[ndraw];
-    loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-ndraw : lastmillis-conlines[i].outtime<20000)
+    if(fullconsole)
     {
-        refs[nd++] = conlines[i].cref;
-        if(nd==ndraw) break;
-    };
-    loopj(nd)
+        int numl = h*4/3/FONTH;
+        blendbox(0, 0, w*4, (numl+1)*FONTH, true);
+        loopi(numl) draw_text(i>=conlines.length() ? "" : conlines[i].cref, FONTH/2, FONTH*(numl-i-1)+FONTH/2); 
+    }
+    else
     {
-        draw_text(refs[j], FONTH/3, (FONTH/4*5)*(nd-j-1)+FONTH/3);
+        int nd = 0;
+        char *refs[ndraw];
+        loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-ndraw : lastmillis-conlines[i].outtime<20000)
+        {
+            refs[nd++] = conlines[i].cref;
+            if(nd==ndraw) break;
+        };
+        loopj(nd)
+        {
+            draw_text(refs[j], FONTH/2, FONTH*(nd-j-1)+FONTH/2);
+        };
     };
 };
 

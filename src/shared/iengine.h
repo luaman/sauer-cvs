@@ -31,7 +31,7 @@ extern char *getalias(char *name);
 
 // console
 extern void keypress(int code, bool isdown, int cooked);
-extern void renderconsole();
+extern void renderconsole(int w, int h);
 extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 

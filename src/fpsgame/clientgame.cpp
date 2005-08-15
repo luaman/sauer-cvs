@@ -516,6 +516,8 @@ void gameplayhud()
     if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
     draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
 
+    glPopMatrix();
+    glPushMatrix();
     glOrtho(0, 2400, 1800, 0, -1, 1);
 
     glDisable(GL_BLEND);

@@ -954,15 +954,6 @@
 				<File
 					RelativePath="..\src\OCTA_TODO.txt">
 				</File>
-				<File
-					RelativePath="..\readme_developer.txt">
-				</File>
-				<File
-					RelativePath="..\readme_player_mapper.txt">
-				</File>
-				<File
-					RelativePath="..\readme_source.txt">
-				</File>
 				<Filter
 					Name="docs"
 					Filter="">
@@ -985,7 +976,38 @@
 						RelativePath="..\sauerbraten\docs\index.html">
 					</File>
 					<File
+						RelativePath="..\readme_developer.txt">
+					</File>
+					<File
+						RelativePath="..\readme_player_mapper.txt">
+					</File>
+					<File
+						RelativePath="..\readme_source.txt">
+					</File>
+					<File
 						RelativePath="..\sauerbraten\docs\style.css">
+					</File>
+				</Filter>
+				<Filter
+					Name="cfg"
+					Filter="">
+					<File
+						RelativePath="..\sauerbraten\autoexec.cfg">
+					</File>
+					<File
+						RelativePath="..\sauerbraten\data\default_map_settings.cfg">
+					</File>
+					<File
+						RelativePath="..\sauerbraten\data\defaults.cfg">
+					</File>
+					<File
+						RelativePath="..\sauerbraten\data\keymap.cfg">
+					</File>
+					<File
+						RelativePath="..\sauerbraten\data\menus.cfg">
+					</File>
+					<File
+						RelativePath="..\sauerbraten\data\sounds.cfg">
 					</File>
 				</Filter>
 			</Filter>
