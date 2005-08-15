@@ -6,6 +6,7 @@
 // render players & monsters
 // very messy ad-hoc handling of animation frames, should be made more configurable
 
+//              0                   4                   8       10      12     14     16         18
 //              D    D    D    D'   D    D    D    D'   A   A'  P   P'  I   I' R,  R'  E    L    J   J'
 int frame[] = { 178, 184, 190, 137, 183, 189, 197, 164, 46, 51, 54, 32, 0,  0, 40, 1,  162, 162, 67, 168 };
 int range[] = { 6,   6,   8,   28,  1,   1,   1,   1,   8,  19, 4,  18, 40, 1, 6,  15, 1,   1,   1,  1   };
@@ -41,7 +42,7 @@ void renderclient(fpsent *d, bool team, char *mdlname, float scale, bool hellpig
     uchar color[3];
     lightreaching(d->o, color);
     glColor3ubv(color);
-    rendermodel(mdlname, frame[n], range[n], 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime);
+    rendermodel(mdlname, frame[n], range[n], 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime, true);
 };  
 
 void renderclients()

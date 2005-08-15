@@ -1,3 +1,12 @@
+eihrul:
+- implement variable LM sampling
+- physics dynamics that feel like cube
+- optimize overdraw in visibleface()
+- physics bugs (goes back to jump split second after landing, and whatever else)
+- physics: monsters sink into the floor all the time
+- physics: dynent.moving appears to flip on and off all the time (monster animation issue)
+
+aard:
 - animation interpolation
 - all cfg stuff in menu
 - players more visible
