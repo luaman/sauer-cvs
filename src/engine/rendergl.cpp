@@ -66,7 +66,7 @@ void gl_init(int w, int h)
         pfnglBindBuffer = (PFNGLBINDBUFFERARBPROC)getprocaddress("glBindBufferARB");
         pfnglBufferData = (PFNGLBUFFERDATAARBPROC)getprocaddress("glBufferDataARB");
         pfnglDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
-        //hasVBO = true;
+        hasVBO = true;
         conoutf("Using GL_ARB_vertex_buffer_object extensions");
     };
 
