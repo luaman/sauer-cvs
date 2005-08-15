@@ -1,4 +1,24 @@
-- test physics etc with devpartner
+- all cfg stuff in menu
+- players more visible
+- rocketlauncher too weak | check damage in mp | rl bounce
+- damage & bullets particles more visible | flat particle beams | gib fountains
+- physics left/right
+- HDR
+- revise health?
+- mp objectives
+- sword?
+- sounds | matt?
+- fix ssg rays
+
+- system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
+
+- more gameplay refactoring
+- cube map loader
+- new cube models -> sauer
+
+- use of glBufferData() makes ATI driver crash on SDL_Exit()
+- gui framework
+- test errors / performance etc with devpartner
 - (E) <nieb> with vsync off i get the normal 4cube jump height but with it on i can jump almost 10cubes
 - (E) fix VFC entities
 - (E) mapobjects (trees!) must cast shadows, have lightorientation

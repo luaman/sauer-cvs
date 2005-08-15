@@ -46,7 +46,7 @@ extern int curtime;                     // current frame time
 extern bool hasVBO;
 extern void gl_init(int w, int h);
 extern void cleangl();
-extern void gl_drawframe(int w, int h, float changelod, float curfps);
+extern void gl_drawframe(int w, int h, float curfps);
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
 extern Texture *textureload(char *tname, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true);
@@ -71,7 +71,7 @@ extern void freeclipplanes(cube &c);
 // rendercubes
 extern void subdividecube(cube &c);
 extern void octarender();
-extern void renderq();
+extern void renderq(int w, int h);
 extern void allchanged();
 extern void rendermaterials();
 extern void rendersky();

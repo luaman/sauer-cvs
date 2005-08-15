@@ -201,24 +201,6 @@ Texture *lookuptexture(int tex)
     return s.t = textureload(name, s.rotation);
 };
 
-void renderstrips()
-{
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-    
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-
-    renderq();
-
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
-};
-
-
 VARFP(gamma, 30, 100, 300,
 {
     float f = gamma/100.0f;
@@ -306,7 +288,7 @@ void recomputecamera()
 
 extern int explicitsky, skyarea;
 
-void gl_drawframe(int w, int h, float changelod, float curfps)
+void gl_drawframe(int w, int h, float curfps)
 {
     recomputecamera();
     
@@ -346,7 +328,19 @@ void gl_drawframe(int w, int h, float changelod, float curfps)
 
     if(limitsky) drawskybox(farplane, true);
 
-    renderstrips();
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+    
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+
+    renderq(w, h);
+
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
     renderclients();
     monsterrender();

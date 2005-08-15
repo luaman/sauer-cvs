@@ -41,19 +41,13 @@ void fatal(char *s, char *o)    // failure exit
     cleanup(msg);
 };
 
-int minfps = 32;
-int maxfps = 40;
-
-int scr_w = 640;
-int scr_h = 480;
-
 SDL_Surface *screen = NULL;
 
 int curtime;
 
 dynent *player = NULL;
 
-void screenshot()
+void screenshot(int scr_w, int scr_h)
 {
     SDL_Surface *image;
     SDL_Surface *temp;
@@ -80,6 +74,7 @@ void screenshot()
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
 
+/* // doesn't work
 void fullscreen()
 {
     SDL_WM_ToggleFullScreen(screen);
@@ -98,15 +93,7 @@ void screenres(int w, int h, int bpp = 0)
 
 COMMAND(fullscreen, ARG_NONE);
 COMMAND(screenres, ARG_3INT);
-
-void fpsrange(int low, int high)
-{
-    if(low>high || low<1) return;
-    minfps = low;
-    maxfps = high;
-};
-
-COMMAND(fpsrange, ARG_2INT);
+*/
 
 void keyrepeat(bool on)
 {
@@ -124,6 +111,7 @@ int main(int argc, char **argv)
     //atexit((void (__cdecl *)(void))_CrtDumpMemoryLeaks);
     #endif
 
+    int scr_w = 640, scr_h = 480;
     bool dedicated = false, listen = false;
     int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;
@@ -238,7 +226,7 @@ int main(int argc, char **argv)
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
         
         SDL_GL_SwapBuffers();
-        gl_drawframe(scr_w, scr_h, fps<minfps ? fps/minfps : (fps>maxfps ? fps/maxfps : 1.0f), fps);
+        gl_drawframe(scr_w, scr_h, fps);
 
         SDL_Event event;
         int lasttype = 0, lastbut = 0;
@@ -249,11 +237,11 @@ int main(int argc, char **argv)
                 case SDL_QUIT:
                     quit();
                     break;
-
+                /*
                 case SDL_VIDEORESIZE:
                     screenres(event.resize.w, event.resize.h);
                     break;
-
+                */
                 case SDL_KEYDOWN: 
                 case SDL_KEYUP: 
                     keypress(event.key.keysym.sym, event.key.state==SDL_PRESSED, event.key.keysym.unicode);

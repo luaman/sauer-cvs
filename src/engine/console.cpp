@@ -200,6 +200,7 @@ void keypress(int code, bool isdown, int cooked)
             switch(code)
             {
                 case SDLK_RETURN:
+                case SDLK_KP_ENTER:
                     break;
 
                 case SDLK_BACKSPACE:
@@ -232,7 +233,7 @@ void keypress(int code, bool isdown, int cooked)
         }
         else
         {
-            if(code==SDLK_RETURN)
+            if(code==SDLK_RETURN || code==SDLK_KP_ENTER)
             {
                 if(commandbuf[0])
                 {

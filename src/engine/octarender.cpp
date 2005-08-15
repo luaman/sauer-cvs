@@ -662,7 +662,7 @@ void addvisibleva(vtxarray *va)
 // convert yaw/pitch to a normalized vector
 #define yptovec(y, p) vec(sin(y)*cos(p), -cos(y)*cos(p), sin(p))
 
-void visiblecubes(cube *c, int size, int cx, int cy, int cz)
+void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
 {
     visibleva = NULL;
     vtris = vverts = 0;
@@ -727,7 +727,7 @@ void setupTMU()
     glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
 };
 
-void renderq()
+void renderq(int w, int h)
 {
     int si[] = { 0, 0, 2 }; //{ 0, 0, 0, 0, 2, 2};
     int ti[] = { 2, 1, 1 }; //{ 2, 2, 1, 1, 1, 1};
@@ -738,7 +738,7 @@ void renderq()
     //glEnableClientState(GL_COLOR_ARRAY);
     glColor3f(1, 1, 1); // temp
 
-    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0);
+    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
 
     vtxarray *va = visibleva;
 
