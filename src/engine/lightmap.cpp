@@ -205,6 +205,34 @@ void pack_lightmap(surfaceinfo &surface)
         insert_lightmap(surface.x, surface.y, surface.lmid);
 }
 
+void generate_lumel(const float tolerance, const vector<entity *> &lights, const vec &target, const vec &normal, int &r, int &g, int &b)
+{
+    loopv(lights)
+    {
+        entity &light = *lights[i];
+        vec ray = target;
+        ray.sub(light.o);
+        float mag = ray.magnitude(),
+              attenuation = 1.0;
+        if(light.attr1)
+            attenuation -= mag / float(light.attr1);
+        ray.mul(1.0 / mag);
+        if(attenuation <= 0.0)
+            continue;
+        if(shadows)
+        {
+            float dist = raycube(false, light.o, ray, mag);
+            if(dist < mag - tolerance)
+                continue;
+        }
+        float intensity = -normal.dot(ray) * attenuation;
+        if(intensity < 0) intensity = 1.0;
+        r += (int)(intensity * float(light.attr2));
+        g += (int)(intensity * float(light.attr3));
+        b += (int)(intensity * float(light.attr4));
+    }
+}
+
 bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
     static uchar mincolor[3], maxcolor[3];
@@ -232,48 +260,23 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
         memset(maxcolor, 0, 3);
     }
 
+    int aasample = 1 << (aalights * 2);
     for(uint y = y1; y < y2; ++y, v.add(vstep)) {
         vec u = v;
         for(uint x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
             int r = 0, g = 0, b = 0;
-            loopj(aalights ? aalights * 4 : 1)
+            loopj(aasample)
             {
-                loopv(lights)
-                {
-                    entity &light = *lights[i];
-                    vec target(u);
-                    if(aalights)
-                        target.add(offsets[j]);
-                    vec ray = target;
-                    ray.sub(light.o);
-                    float mag = ray.magnitude(),
-                          attenuation = 1.0;
-                    if(light.attr1)
-                        attenuation -= mag / float(light.attr1);
-                    ray.mul(1.0 / mag);
-                    if(attenuation <= 0.0)
-                        continue;
-                    if(shadows)
-                    {
-                        float dist = raycube(false, light.o, ray, mag);
-                        if(dist < mag - tolerance)
-                            continue;
-                    }
-                    float intensity = -normal.dot(ray) * attenuation;
-                    if(intensity < 0) intensity = 1.0;
-                    r += (int)(intensity * float(light.attr2));
-                    g += (int)(intensity * float(light.attr3));
-                    b += (int)(intensity * float(light.attr4));
-                }
-                if(!aalights)
-                    break;
+                vec target(u);
+                if(aalights)
+                    target.add(offsets[j]);
+                generate_lumel(tolerance, lights, target, normal, r, g, b);
             }
-            if(aalights)
+            if(aasample > 1)
             {
-                int sample = aalights * 4;
-                r /= sample;
-                g /= sample;
-                b /= sample;
+                r /= aasample;
+                g /= aasample;
+                b /= aasample;
             }
             lumel[0] = min(255, max(ambient, r));
             lumel[1] = min(255, max(ambient, g));
