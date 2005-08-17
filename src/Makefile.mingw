@@ -1,37 +1,38 @@
 CXX=g++
 CXXOPTFLAGS=-O3 -fsigned-char -fomit-frame-pointer
-CXXFLAGS= $(CXXOPTFLAGS) -I../enet/include -I../include
+CXXFLAGS= $(CXXOPTFLAGS) -I../enet/include -I../include -Ishared -Iengine -Ifpsgame
 
 CLIENT_LIBS=-L../lib.mingw -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lfmod -lz -lopengl32 -lglu32 -lws2_32
 CLIENT_OBJS= \
-	client.o \
-	clientextras.o \
-	clientgame.o \
-	command.o \
-	console.o \
-	entities.o \
-	main.o \
-	menus.o \
-	monster.o \
-	physics.o \
-	renderextras.o \
-	rendergl.o \
-	rendermd2.o \
-	renderparticles.o \
-	rendertext.o \
-	server.o \
-	serverbrowser.o \
-	sound.o \
-	tools.o \
-	weapon.o \
-	world.o \
-	worldio.o \
-	geom.o \
-	octa.o \
-	octaedit.o \
-	octarender.o \
-	lightmap.o \
-	water.o
+	shared/tools.o \
+	engine/command.o \
+	engine/console.o \
+	engine/lightmap.o \
+	engine/main.o \
+	engine/menus.o \
+	engine/octa.o \
+	engine/octaedit.o \
+	engine/octarender.o \
+	engine/physics.o \
+	engine/renderextras.o \
+	engine/rendergl.o \
+	engine/rendermd2.o \
+	engine/renderparticles.o \
+	engine/rendertext.o \
+	engine/server.o \
+	engine/serverbrowser.o \
+	engine/sound.o \
+	engine/water.o \
+	engine/world.o \
+	engine/worldio.o \
+	fpsgame/client.o \
+	fpsgame/clientextras.o \
+	fpsgame/clientgame.o \
+	fpsgame/entities.o \
+	fpsgame/fpsserver.o \
+	fpsgame/monster.o \
+	fpsgame/savegame.o \
+	fpsgame/weapon.o
 
 
 default: all
