@@ -157,9 +157,9 @@ void playsound(int n, vec *loc)
         vec v;
         float dist = player->o.dist(*loc, v);
         vol -= (int)(dist*3/4*soundvol/255);     // simple mono distance attenuation
-        if(dist > 0.01f)
+        if(v.x != 0 || v.y != 0)
         {
-            float yaw = -atan2(v.x, v.y) - player->yaw*RAD; // relative angle of sound along X-Y player
+            float yaw = -atan2(v.x, v.y) - player->yaw*RAD; // relative angle of sound along X-Y axis
             pan = int(255.9*(0.5*sin(yaw)+0.5f));           // range is from 0 (left) to 255 (right)
         };
     };
