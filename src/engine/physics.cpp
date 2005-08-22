@@ -108,9 +108,9 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
         float disttonext = 1e16f;
         loopi(3) disttonext = min(disttonext, 0.1f + fabs((float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i]));
 
-        if((clipmat && isclipped(c.material)) || isentirelysolid(c) || (lusize==size&&!isempty(c)) || dist>radius || last==&c)
+        if((clipmat && isclipped(c.material)) || isentirelysolid(c) || (lusize==size&&!isempty(c)) || (radius>0 && dist>radius) || last==&c)
         {
-            if(last==&c) dist = radius;
+            if(last==&c && radius>0) dist = radius;
             return dist;
         };
 

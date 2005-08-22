@@ -2,7 +2,7 @@
 
 extern void lightreaching(const vec &target, uchar color[3]);
 
-extern float raycube(bool clipmat, const vec &o, const vec &ray, float radius = 1.0e10f, int size = 0);
+extern float raycube(bool clipmat, const vec &o, const vec &ray, float radius = 0, int size = 0);
 
 extern bool isthirdperson();
 
