@@ -111,7 +111,7 @@ bool vote(char *map, int reqmode, int sender)
     return true;    
 };
 
-void parsepacket(int &sender, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
+bool parsepacket(int &sender, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
 {
     char text[MAXTRANS];
     int cn = -1, type;
@@ -133,7 +133,7 @@ void parsepacket(int &sender, uchar *&p, uchar *end)     // has to parse exactly
         {
             sgetstr();
             int reqmode = getint(p);
-            if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) return;
+            if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) return false;
             mapreload = false;
             mode = reqmode;
             minremain = mode&1 ? 15 : 10;
@@ -176,7 +176,7 @@ void parsepacket(int &sender, uchar *&p, uchar *end)     // has to parse exactly
             if(cn<0 || cn>=getnumclients() || !getinfo(cn))
             {
                 disconnect_client(sender, "client num");
-                return;
+                return false;
             };
             int size = msgsizelookup(type);
             assert(size!=-1);
@@ -189,20 +189,22 @@ void parsepacket(int &sender, uchar *&p, uchar *end)     // has to parse exactly
             sgetstr();
             int mapsize = getint(p);
             sendvmap(sender, text, mapsize, p);
-            return;
+            return false;
         }
 
         case SV_RECVMAP:
             recvmap(sender, SV_RECVMAP);
-            return;
+            return false;
             
         default:
         {
             int size = msgsizelookup(type);
-            if(size==-1) { disconnect_client(sender, "tag type"); return; };
+            if(size==-1) { disconnect_client(sender, "tag type"); return false; };
             loopi(size-1) getint(p);
         };
     };
+    
+    return true;
 };
 
 void welcomepacket(uchar *&p, int n)

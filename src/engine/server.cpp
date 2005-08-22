@@ -155,7 +155,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
     uchar *end = packet->data+packet->dataLength;
     uchar *p = packet->data+2;
 
-    parsepacket(sender, p, end);
+    if(!parsepacket(sender, p, end)) return;
 
     if(p>end) { disconnect_client(sender, "end of packet"); return; };
     multicast(packet, sender);

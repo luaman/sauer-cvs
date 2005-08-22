@@ -9,6 +9,7 @@ eihrul:
 aard:
 - add http://oss.sgi.com/projects/ogl-sample/registry/EXT/wgl_multisample.txt
 - all cfg stuff in menu
+- new mapmodels/trees in menu -> new ones from last cube
 - players more visible
 - rocketlauncher too weak | check damage in mp | rl bounce
 - damage & bullets particles more visible | flat particle beams | gib fountains

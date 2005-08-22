@@ -55,7 +55,7 @@ extern void *newinfo();
 extern void serverinit(char *sdesc);
 extern void clientdisconnect(int n);
 extern char *servername();
-extern void parsepacket(int &sender, uchar *&p, uchar *end);
+extern bool parsepacket(int &sender, uchar *&p, uchar *end);
 extern void welcomepacket(uchar *&p, int n);
 extern void serverinforeply(uchar *&p);
 extern void serverupdate(int seconds);
