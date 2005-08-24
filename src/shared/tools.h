@@ -29,8 +29,8 @@ typedef unsigned int uint;
 #ifndef min
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
-//#define rnd(x) (randomMT()%(x)) // FIXME: doesn't work with RandomMT()... screwy numbers for some reason
-#define rnd(x) (rand()%(x))  
+#define rnd(x) ((int)(randomMT()&0xFFFFFF)%(x))
+//#define rnd(x) (rand()%(x))  
 #define loop(v,m) for(int v = 0; v<(m); v++)
 #define loopi(m) loop(i,m)
 #define loopj(m) loop(j,m)

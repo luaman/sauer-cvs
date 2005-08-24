@@ -47,7 +47,9 @@ int curtime;
 
 dynent *player = NULL;
 
-void screenshot(int scr_w, int scr_h)
+int scr_w = 640, scr_h = 480;
+
+void screenshot()
 {
     SDL_Surface *image;
     SDL_Surface *temp;
@@ -111,7 +113,6 @@ int main(int argc, char **argv)
     //atexit((void (__cdecl *)(void))_CrtDumpMemoryLeaks);
     #endif
 
-    int scr_w = 640, scr_h = 480;
     bool dedicated = false, listen = false;
     int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;

@@ -88,6 +88,7 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 #define solidfaces(c) setfaces(c, F_SOLID)
 #define emptyfaces(c) setfaces(c, F_EMPTY)
 
+#define edgemake(a, b) ((b)<<4|a)
 #define edgeget(edge, coord) ((coord) ? (edge)>>4 : (edge)&0xF)
 #define edgeset(edge, coord, val) ((edge) = ((coord) ? ((edge)&0xF)|((val)<<4) : ((edge)&0xF0)|(val)))
 // DIM: Z=0 Y=1 X=2. Descriptions: DEPTH=0 COL=1 ROW=2

@@ -295,6 +295,30 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\src\engine\cubeloader.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Profile|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="pch.h"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\src\engine\engine.h">
 			</File>
 			<File
