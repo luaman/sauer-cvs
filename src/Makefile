@@ -8,6 +8,7 @@ CLIENT_OBJS= \
 	shared/tools.o \
 	engine/command.o \
 	engine/console.o \
+	engine/cubeloader.o \
 	engine/lightmap.o \
 	engine/main.o \
 	engine/menus.o \
