@@ -10,6 +10,9 @@
 VARP(soundvol, 0, 255, 255);
 VARP(musicvol, 0, 128, 255);
 
+#define MAXCHAN 32
+#define SOUNDFREQ 22050
+
 #ifdef USE_MIXER
     #include "SDL_mixer.h"
     #define MAXVOL MIX_MAX_VOLUME
@@ -48,15 +51,15 @@ VAR(soundbufferlen, 128, 1024, 4096);
 void initsound()
 {
     #ifdef USE_MIXER
-        if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
+        if(Mix_OpenAudio(SOUNDFREQ, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s", (int) Mix_GetError());
             soundvol = 0;
         };
-	    Mix_AllocateChannels(32);	
+	    Mix_AllocateChannels(MAXCHAN);	
     #else
         if(FSOUND_GetVersion()<FMOD_VERSION) fatal("old FMOD dll");
-        if(!FSOUND_Init(22050, 32, FSOUND_INIT_GLOBALFOCUS))
+        if(!FSOUND_Init(SOUNDFREQ, MAXCHAN, FSOUND_INIT_GLOBALFOCUS))
         {
             conoutf("sound init failed (FMOD): %d", FSOUND_GetError());
             soundvol = 0;
@@ -129,6 +132,69 @@ void clear_sound()
     snames.deletecontentsa();
 };
 
+VAR(stereo, 0, 1, 1);
+
+void updatechanvol(int chan, vec *loc)
+{
+    int vol = soundvol, pan = 255/2;
+    if(loc)
+    {
+        vec v;
+        float dist = player->o.dist(*loc, v);
+        vol -= (int)(dist*3/4*soundvol/255); // simple mono distance attenuation
+        if(stereo && (v.x != 0 || v.y != 0))
+        {
+            float yaw = -atan2(v.x, v.y) - player->yaw*RAD; // relative angle of sound along X-Y axis
+            pan = int(255.9f*(0.5*sin(yaw)+0.5f)); // range is from 0 (left) to 255 (right)
+        };
+    };
+    vol = (vol*MAXVOL)/255;
+    #ifdef USE_MIXER
+        Mix_Volume(chan, vol);
+        Mix_SetPanning(chan, 255-pan, pan);
+    #else
+        FSOUND_SetVolume(chan, vol);
+        FSOUND_SetPan(chan, pan);
+    #endif
+};  
+
+struct soundloc
+{
+    int chan;
+    vec loc;
+};  
+    
+static soundloc soundlocs[MAXCHAN];
+static int usedsoundlocs = 0;
+
+void newsoundloc(int chan, vec *loc)
+{
+    soundloc *newsloc = NULL;
+    loopi(usedsoundlocs) if(soundlocs[i].chan == chan) newsloc = &soundlocs[i];
+    if(!newsloc)
+    {
+        newsloc = &soundlocs[usedsoundlocs++];
+        newsloc->chan = chan;
+    };
+    newsloc->loc = *loc;
+};
+
+void updatevol()
+{
+    loopi(usedsoundlocs)
+    {
+        soundloc &sound = soundlocs[i];
+    #ifdef USE_MIXER
+        if(Mix_Playing(sound.chan))
+    #else
+        if(FSOUND_IsPlaying(sound.chan))
+    #endif
+            updatechanvol(sound.chan, &sound.loc);
+        else soundlocs[i--] = soundlocs[--usedsoundlocs];
+    };
+};
+
+
 int soundsatonce = 0, lastsoundmillis = 0;
 
 void playsound(int n, vec *loc)
@@ -151,27 +217,17 @@ void playsound(int n, vec *loc)
 
         if(!samples[n]) { conoutf("failed to load sample: %s", buf); return; };
     };
-    int vol = soundvol, pan = 255/2;
-    if(loc)
-    {
-        vec v;
-        float dist = player->o.dist(*loc, v);
-        vol -= (int)(dist*3/4*soundvol/255);     // simple mono distance attenuation
-        if(v.x != 0 || v.y != 0)
-        {
-            float yaw = -atan2(v.x, v.y) - player->yaw*RAD; // relative angle of sound along X-Y axis
-            pan = int(255.9*(0.5*sin(yaw)+0.5f));           // range is from 0 (left) to 255 (right)
-        };
-    };
 
-    if(vol<=0) return;
-    
     #ifdef USE_MIXER
         int chan = Mix_PlayChannel(-1, samples[n], 0);
-        if(chan>=0) { Mix_Volume(chan, (vol*MAXVOL)/255); Mix_SetPanning(chan, 255-pan, pan); }
     #else
         int chan = FSOUND_PlaySoundEx(FSOUND_FREE, samples[n], NULL, true);
-        if(chan>=0) { FSOUND_SetVolume(chan, (vol*MAXVOL)/255); FSOUND_SetPan(chan, pan); FSOUND_SetPaused(chan, false); };
+    #endif
+    if(chan<0) return;
+    if(loc) newsoundloc(chan, loc);
+    updatechanvol(chan, loc);
+    #ifndef USE_MIXER
+        FSOUND_SetPaused(chan, false);
     #endif
 };
 

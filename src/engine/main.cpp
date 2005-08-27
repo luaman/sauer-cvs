@@ -226,6 +226,8 @@ int main(int argc, char **argv)
         fps = (1000.0f/curtime+fps*10)/11;
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
         
+        extern void updatevol(); updatevol();
+
         SDL_GL_SwapBuffers();
         gl_drawframe(scr_w, scr_h, fps);
 
