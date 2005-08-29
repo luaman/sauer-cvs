@@ -27,6 +27,6 @@ static char *FMOD_ErrorString(int errcode)
 
 		default :						return "Unknown error";
 	};
-};
+}
 
 #endif

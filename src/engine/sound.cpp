@@ -3,9 +3,9 @@
 #include "pch.h"
 #include "engine.h"
 
-#ifndef WIN32
+//#ifndef WIN32
 #define USE_MIXER
-#endif
+//#endif
 
 VARP(soundvol, 0, 255, 255);
 VARP(musicvol, 0, 128, 255);
@@ -56,7 +56,7 @@ void initsound()
     #ifdef USE_MIXER
         if(Mix_OpenAudio(SOUNDFREQ, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
         {
-            conoutf("sound init failed (SDL_mixer): %s", (int) Mix_GetError());
+            conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
             soundvol = 0;
         };
 	    Mix_AllocateChannels(MAXCHAN);	
@@ -90,7 +90,7 @@ void music(char *name)
                 FMUSIC_PlaySong(mod);
                 FMUSIC_SetMasterVolume(mod, musicvol);
             }
-            else if(stream = FSOUND_Stream_OpenFile(path(sn), FSOUND_LOOP_NORMAL, 0))
+            else if(stream = FSOUND_Stream_Open(path(sn), FSOUND_LOOP_NORMAL, 0, 0))
             {
                 int chan = FSOUND_Stream_Play(FSOUND_FREE, stream);
                 if(chan>=0) { FSOUND_SetVolume(chan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(chan, false); };
@@ -199,7 +199,7 @@ void playsound(int n, vec *loc)
         #ifdef USE_MIXER
             samples[n] = Mix_LoadWAV(path(buf));
         #else
-            samples[n] = FSOUND_Sample_Load(n, path(buf), 0, 0);
+            samples[n] = FSOUND_Sample_Load(n, path(buf), FSOUND_LOOP_OFF, 0, 0);
         #endif
 
         if(!samples[n]) { conoutf("failed to load sample: %s", buf); return; };

@@ -449,8 +449,8 @@ COMMANDN(map, changemap, ARG_1STR);
 
 void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel)
 {
-    if     (waterlevel>0) playsound(S_SPLASH1, &d->o);
-    else if(waterlevel<0) playsound(S_SPLASH2, &d->o);
+    if     (waterlevel>0) playsound(S_SPLASH1, d==player1 ? NULL : &d->o);
+    else if(waterlevel<0) playsound(S_SPLASH2, d==player1 ? NULL : &d->o);
     if     (floorlevel>0) { if(local) playsoundc(S_JUMP); else if(d->monsterstate) playsound(S_JUMP, &d->o); }
     else if(floorlevel<0) { if(local) playsoundc(S_LAND); else if(d->monsterstate) playsound(S_LAND, &d->o); };
 };
