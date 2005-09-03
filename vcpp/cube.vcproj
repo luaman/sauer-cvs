@@ -125,7 +125,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="zlib.lib opengl32.lib glu32.lib SDLmain.lib SDL.lib SDL_image.lib fmodvc.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="zlib.lib opengl32.lib glu32.lib SDLmain.lib SDL.lib SDL_image.lib SDL_mixer.lib ws2_32.lib winmm.lib"
 				OutputFile="c:\w\sauerbraten\sauerbraten\bin\cubed.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"

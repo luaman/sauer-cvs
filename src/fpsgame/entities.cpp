@@ -16,7 +16,7 @@ int triggertime = 0;
 void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int numf = 1, int basetime = 0, float speed = 10.0f)
 {
     glColor3ubv(e.color);
-    rendermodel(mdlname, frame, numf, 0, e.o.x, z+e.o.z, e.o.y, yaw, 0, false, 1.0f, speed, basetime);
+    rendermodel(mdlname, frame, numf, 0, e.o.x, z+e.o.z, e.o.y, yaw, 0, false, 1.0f, speed, basetime, NULL);
 };
 
 void renderentities()
@@ -30,7 +30,7 @@ void renderentities()
             mapmodelinfo &mmi = getmminfo(e.attr2);
             if(!&mmi) continue;
             glColor3ubv(e.color);
-            rendermodel(mmi.name, 0, 1, e.attr4, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f);
+            rendermodel(mmi.name, 0, 1, e.attr4, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, 0, NULL);
         }
         else
         {

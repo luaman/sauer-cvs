@@ -3,12 +3,13 @@
 #include "pch.h"
 #include "engine.h"
 
-//#ifndef WIN32
+//#ifndef WIN32    // NOTE: fmod not being supported for the moment as it does not allow stereo pan/vol updating during playback
 #define USE_MIXER
 //#endif
 
 VARP(soundvol, 0, 255, 255);
 VARP(musicvol, 0, 128, 255);
+bool nosound = false;
 
 #define MAXCHAN 32
 #define SOUNDFREQ 22050
@@ -29,6 +30,7 @@ struct soundloc { vec loc; bool inuse; } soundlocs[MAXCHAN];
 
 void stopsound()
 {
+    if(nosound) return;
     if(mod)
     {
         #ifdef USE_MIXER
@@ -57,7 +59,7 @@ void initsound()
         if(Mix_OpenAudio(SOUNDFREQ, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
-            soundvol = 0;
+            nosound = true;
         };
 	    Mix_AllocateChannels(MAXCHAN);	
     #else
@@ -65,13 +67,14 @@ void initsound()
         if(!FSOUND_Init(SOUNDFREQ, MAXCHAN, FSOUND_INIT_GLOBALFOCUS))
         {
             conoutf("sound init failed (FMOD): %d", FSOUND_GetError());
-            soundvol = 0;
+            nosound = true;
         };
     #endif
 };
 
 void music(char *name)
 {
+    if(nosound) return;
     stopsound();
     if(soundvol && musicvol)
     {
@@ -125,6 +128,7 @@ COMMAND(registersound, ARG_1EST);
 
 void clear_sound()
 {
+    if(nosound) return;
     stopsound();
     samples.setsize(0);
     #ifdef USE_MIXER
@@ -170,6 +174,7 @@ void newsoundloc(int chan, vec *loc)
 
 void updatevol()
 {
+    if(nosound) return;
     loopi(MAXCHAN) if(soundlocs[i].inuse)
     {
         #ifdef USE_MIXER
@@ -186,6 +191,7 @@ int soundsatonce = 0, lastsoundmillis = 0;
 
 void playsound(int n, vec *loc)
 {
+    if(nosound) return;
     if(!soundvol) return;
     if(lastmillis==lastsoundmillis) soundsatonce++; else soundsatonce = 1;
     lastsoundmillis = lastmillis;

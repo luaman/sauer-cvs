@@ -18,6 +18,12 @@ struct extentity : entity       // part of the entity that doesn't get saved to 
 
 extern vector<extentity *> ents;             // map entities
 
+struct animstate
+{
+    int frame, range, basetime;
+    float speed;
+};
+
 struct dynent                           // players & monsters
 {
     vec o, vel;                         // origin, velocity
@@ -37,6 +43,9 @@ struct dynent                           // players & monsters
     int monsterstate;                   // one of M_* below, M_NONE means human
 
     bool blocked, moving;               // used by physics to signal ai
+    
+    animstate prev, current;            // used for correct animation blending
+    int lastanimswitchtime;
 };
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING };

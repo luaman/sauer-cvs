@@ -1,12 +1,17 @@
+gilt:
+- add optional checking of neighbour visibleface() to remip
+
 eihrul:
-- implement variable LM sampling
 - physics dynamics that feel like cube
+- implement variable LM sampling
 - optimize overdraw in visibleface()
 - physics bugs (goes back to jump split second after landing, and whatever else)
-- physics: monsters sink into the floor all the time
-- physics: dynent.moving appears to flip on and off all the time (monster animation issue)
 
 aard:
+- cube loader: dropent doesn't work again, ents only available after reload
+- animint
+- water sound -> overloads the sound system
+- check connect/disconnect: possible to only half connect, or connect and have a ghost
 - add http://oss.sgi.com/projects/ogl-sample/registry/EXT/wgl_multisample.txt
 - all cfg stuff in menu
 - new mapmodels/trees in menu -> new ones from last cube
@@ -20,6 +25,7 @@ aard:
 - sword?
 - sounds | matt?
 - fix ssg rays
+- improve on cma render then add to sauer
 
 - system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
 

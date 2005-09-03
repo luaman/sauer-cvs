@@ -38,29 +38,24 @@ struct md2
         float u, v;
     };
     
-    struct md2_anint
+    struct md2_anpos
     {
-        int frame, range, basetime;
-        float speed;
         int fr1, fr2;
         float frac1, frac2;
-        
-        md2_anint() {};
-        md2_anint(int f, int r, int b, float s) : frame(f), range(r), basetime(b), speed(s) {};
-        
-        bool operator==(const md2_anint &o) { return frame==o.frame && range==o.range && basetime==o.basetime && speed==o.speed; };
-        
-        void setframes()
+                
+        void setframes(animstate &a)
         {
-		    int time = lastmillis-basetime;
-		    fr1 = (int)(time/speed);
-		    frac1 = (time-fr1*speed)/speed;
+		    int time = lastmillis-a.basetime;
+		    fr1 = (int)(time/a.speed);
+		    frac1 = (time-fr1*a.speed)/a.speed;
 		    frac2 = 1-frac1;
-		    fr1 = fr1%range+frame;
+		    fr1 = fr1%a.range+a.frame;
 		    fr2 = fr1+1;
-		    if(fr2>=frame+range) fr2 = frame;
+		    if(fr2>=a.frame+a.range) fr2 = a.frame;
 		};
     };
+
+    bool aneq(animstate &a, animstate &o) { return a.frame==o.frame && a.range==o.range && a.basetime==o.basetime && a.speed==o.speed; };
 
     int* glcommands;
     char* frames;
@@ -79,10 +74,7 @@ struct md2
 
     md2_header header;
     
-    md2_anint prev, current;
-    int lastswitchtime;
-
-    md2(char *name) : loaded(false), vbufGL(0), vbufi(0), lastswitchtime(-1)
+    md2(char *name) : loaded(false), vbufGL(0), vbufi(0)
     {
         mapmodelinfo _mmi = { 8, 8, 0, "" }; 
         mmi = _mmi;
@@ -213,17 +205,20 @@ struct md2
         pfnglBufferData(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
-    void render(md2_anint ai, float x, float y, float z, float yaw, float pitch, float sc, bool doai)
+    void render(animstate ai, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
         loopi(ai.range) if(!mverts[ai.frame+i]) scale(ai.frame+i, sc);
         if(hasVBO && ai.frame==0 && ai.range==1 && !vbufGL) genvar();
-      
-        if(lastswitchtime==-1) { current = ai; lastswitchtime = lastmillis-animationinterpolationtime*2; }
-        else if(!(current==ai))
+        
+        if(d)
         {
-            if(lastmillis-lastswitchtime>animationinterpolationtime/2) prev = current;
-            current = ai;
-            lastswitchtime = lastmillis;
+            if(d->lastanimswitchtime==-1) { d->current = ai; d->lastanimswitchtime = lastmillis-animationinterpolationtime*2; }
+            else if(!aneq(d->current,ai))
+            {
+                if(lastmillis-d->lastanimswitchtime>animationinterpolationtime/2) d->prev = d->current;
+                d->current = ai;
+                d->lastanimswitchtime = lastmillis;
+            };
         };
         
         glPushMatrix ();
@@ -257,18 +252,20 @@ struct md2
         }
         else
         {
-            current.setframes();
+            md2_anpos prev, current;
+            current.setframes(d ? d->current : ai);
 		    vec *verts1 = mverts[current.fr1];
 		    vec *verts2 = mverts[current.fr2];
 		    vec *verts1p;
 		    vec *verts2p;
 		    float aifrac1, aifrac2;
-		    if(doai = doai && lastmillis-lastswitchtime<animationinterpolationtime)
+		    bool doai = d && lastmillis-d->lastanimswitchtime<animationinterpolationtime;
+		    if(doai)
 		    {
-		        prev.setframes();
+		        prev.setframes(d->prev);
 		        verts1p = mverts[prev.fr1];
 		        verts2p = mverts[prev.fr2];
-		        aifrac1 = (lastmillis-lastswitchtime)/(float)animationinterpolationtime;
+		        aifrac1 = (lastmillis-d->lastanimswitchtime)/(float)animationinterpolationtime;
 		        aifrac2 = 1-aifrac1;
 		    };
 
@@ -380,7 +377,7 @@ mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i]->mmi
 COMMAND(mapmodel, ARG_5STR);
 COMMAND(mapmodelreset, ARG_NONE);
 
-void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, bool doai)
+void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
 {
     md2 *m = loadmodel(mdl); 
     m->delayedload();
@@ -388,6 +385,10 @@ void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, flo
     float radius = m->boundsphere(frame, scale, center);
     if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
     glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : m->skin)->gl);
-    
-    m->render(md2::md2_anint(frame, range, basetime, speed), x, y, z, yaw, pitch, scale, doai);
+    animstate as;
+    as.basetime = basetime;
+    as.frame = frame;
+    as.range = range;
+    as.speed = speed;
+    m->render(as, x, y, z, yaw, pitch, scale, d);
 };
