@@ -87,16 +87,16 @@ paste</pre>
 		following types of materials are supported:
 		<ul>
 			<li>
-				air: the default material, has no effect.</li>
+			air: the default material, has no effect.
 			<li>
-				water: acts as you would expect. Only renders from the top, so treat it like 
-				real water and keep all 4 sides contained.</li>
+			water: acts as you would expect. Only renders from the top, so treat it like 
+			real water and keep all 4 sides contained.
 			<li>
-				clip: an invisible wall that blocks players movement but not bullets. Is 
-				ideally used to keep players "in bounds" in a map. Can be used sparingly to 
-				smooth out the flow around decoration.</li>
+			clip: an invisible wall that blocks players movement but not bullets. Is 
+			ideally used to keep players "in bounds" in a map. Can be used sparingly to 
+			smooth out the flow around decoration.
 			<li>
-				noclip: cubes are always treated as empty in physics.</li>
+			noclip: cubes are always treated as empty in physics.
 			<li>
 				glass: a clip like material with a blended surface.</li>
 		</ul>
@@ -171,21 +171,35 @@ paste</pre>
 		register your own. for example, <code>sound 0</code> and <code>sound (registersound 
 			"aard/jump")</code>both play the standard jump sound.
 		<pre>mapmodel R H Z S N</pre>
-registers a mapmodel that can be placed in maps using <code><font size="2">newent 
-																mapmodel</font></code> (see newent). N is the name, R is the square 
-														radius, H the height, Z the initial Z-offset above ground, and S the snap value 
-														in 16ths of a cube unit (0 meaning no snap). All of these values are used for 
-														collision as well as rendering. Specifying a snap can be useful for 
-														architectural mapmodels, as the md2 format doesn't provide exact vertex 
-														coordinates. Example: <code><font size="2">mapmodel 4 2 4 2</font></code> this 
-														map model is 8x8x2 in size (x,y,z), by default hovers 4 units above ground, and 
-														has all coordinates snapped to the nearest even number. See data/models.cfg.
-														Name N is the name of a folder inside packages/models folder, e.g. "hudguns/rifle".
-														Loaded from that folder are: tris.md2 and skin.jpg (and if not available, skin.png, or
-														the same from the parent folder to allow skin sharing).
-														
-														
-																<div>Lighting Commands</div>
+		<P>
+			registers a mapmodel that can be placed in maps using <code><font size="2">newent 
+					mapmodel</font></code> (see newent). N is the name, R is the square 
+			radius, H the height, Z the initial Z-offset above ground, and S the snap value 
+			in 16ths of a cube unit (0 meaning no snap). All of these values are used for 
+			collision as well as rendering. Specifying a snap can be useful for 
+			architectural mapmodels, as the md2 format doesn't provide exact vertex 
+			coordinates. Example: <code><font size="2">mapmodel 4 2 4 2</font></code> this 
+			map model is 8x8x2 in size (x,y,z), by default hovers 4 units above ground, and 
+			has all coordinates snapped to the nearest even number. See data/models.cfg. 
+			Name N is the name of a folder inside packages/models folder, e.g. 
+			"hudguns/rifle". Loaded from that folder are: tris.md2 and skin.jpg (and if not 
+			available, skin.png, or the same from the parent folder to allow skin sharing).</P>
+		<PRE>importcube N</PRE>
+		<P>imports a cube map (.cgz) and converts it to sauerbraten's map format. N is the 
+			name of the map, without the .cgz. The map file must reside in packages/cube, 
+			which is because that folder has a package.cfg that sets the default cube 
+			textures. If the cube map in question has a custom texture list, it will have 
+			to be adapted manually. Currently converts everything relatively faithfully, 
+			except heighfields which are converted as best as possible but not always 
+			accurately. Slopes tend to work faultlessly, landscape style stuff is usuable, 
+			but curves/arches are problematic, and may have to be redone. All entities are 
+			converted though mapmodels may not be present, and light entities are useless 
+			because of their 2d nature, so probably the first thing to do after converting 
+			a map is /clearents light, and place some new lights. The importcube does not 
+			automatically save the map, you still have to do a /savecurrentmap which will 
+			create packages/cube/N.ogz. Waterlevel is also not supported, you will have to 
+			add water using the new material system.</P>
+		<div>Lighting Commands</div>
 		<a name="lightingcommands"></a>
 		<pre>calclight</pre>
 		This calculates all lightmaps. Usually takes only a few seconds, depending on 
@@ -239,8 +253,8 @@ registers a mapmodel that can be placed in maps using <code><font size="2">newen
 		<br>
 		<br>
 		NOTE: if you feel like using this, test it thoroughly. On medium or small sized 
-		detailed maps, this command wastes space, use lightlod 0. Lightlod > 0 is only 
-		useful for huge maps
+		detailed maps, this command wastes space, use lightlod 0. Lightlod &gt; 0 is 
+		only useful for huge maps
 		<pre>aalights X</pre>
 		Determines whether to use 4x sampling for every lightmap texel. You should not 
 		need to touch this var, unless waiting for calclight really bothers you, you 
@@ -329,28 +343,28 @@ registers a mapmodel that can be placed in maps using <code><font size="2">newen
 		You'll find out what they mean below.
 		<ul>
 			<li>
-				cube: the number of cubes in the current selection. Only the visible (leaf) 
-				cubes are counted.</li>
+			cube: the number of cubes in the current selection. Only the visible (leaf) 
+			cubes are counted.
 			<li>
-				fps: frames per second</li>
+			fps: frames per second
 			<li>
-				ond: number of cubes in the system. This includes parent cubes, copied cubes, 
-				and undos.</li>
+			ond: number of cubes in the system. This includes parent cubes, copied cubes, 
+			and undos.
 			<li>
-				va: number of vertex arrays used to store vertecies in the map. you probably 
-				don't need to use this.</li>
+			va: number of vertex arrays used to store vertecies in the map. you probably 
+			don't need to use this.
 			<li>
-				vtr: number of triangles currently being displayed. will be a useful stat when 
-				culling is done.</li>
+			vtr: number of triangles currently being displayed. will be a useful stat when 
+			culling is done.
 			<li>
-				vvt: number of vertecies currently being displayed. again, useful when culling 
-				is done.</li>
+			vvt: number of vertecies currently being displayed. again, useful when culling 
+			is done.
 			<li>
-				tri: number of triangles in the entire map</li>
+			tri: number of triangles in the entire map
 			<li>
-				wvt: number of vertecies in the entire map</li>
+			wvt: number of vertecies in the entire map
 			<li>
 				evt: misc rendering effects. stuff like particles displayed, or text written on 
-				screen.</li>
+				screen.</li></ul>
 	</body>
 </html>
