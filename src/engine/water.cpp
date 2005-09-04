@@ -187,8 +187,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         {
         case MAT_WATER:
             glBlendFunc(GL_ONE, GL_SRC_COLOR);
-            if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2])
-                glColor3f(hdr.watercolour[0]/256.0f, hdr.watercolour[1]/256.0f, hdr.watercolour[2]/256.0f);
+            if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) glColor3ubv(hdr.watercolour);
             else glColor3f(0.5f, 0.5f, 0.5f);
             if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
