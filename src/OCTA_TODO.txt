@@ -10,7 +10,6 @@ eihrul:
 
 aard:
 - cube loader: dropent doesn't work again, ents only available after reload
-- water sound -> overloads the sound system
 - SDL_mixer doesn't load some of the monster sounds
 - check connect/disconnect: possible to only half connect, or connect and have a ghost
 - add http://oss.sgi.com/projects/ogl-sample/registry/EXT/wgl_multisample.txt
