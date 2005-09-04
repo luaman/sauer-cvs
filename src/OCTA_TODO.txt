@@ -6,11 +6,12 @@ eihrul:
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - physics bugs (goes back to jump split second after landing, and whatever else)
+- an RGB that is stored as part of the map, and that is set as the color value for all water
 
 aard:
 - cube loader: dropent doesn't work again, ents only available after reload
-- animint
 - water sound -> overloads the sound system
+- SDL_mixer doesn't load some of the monster sounds
 - check connect/disconnect: possible to only half connect, or connect and have a ghost
 - add http://oss.sgi.com/projects/ogl-sample/registry/EXT/wgl_multisample.txt
 - all cfg stuff in menu
@@ -27,6 +28,11 @@ aard:
 - fix ssg rays
 - improve on cma render then add to sauer
 
+- finish gameplay seperation
+- move some of the gameplay serverside
+- bf mode
+- start with rpg mode | clientside only, simplify
+
 - system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
 
 - more gameplay refactoring
@@ -40,7 +46,7 @@ aard:
 - (E) fix VFC entities
 - (E) mapobjects (trees!) must cast shadows, have lightorientation
 - some way to smooth out lighting on terrain
-- (EG) physics efficiency: clip cache (see forum), tweak step accuracy, maybe reduce physics frames at low fps?
+- (EG) physics efficiency: tweak step accuracy, maybe reduce physics frames at low fps?
 - (E) fix skybox rendering when world is bigger than fog distance
 - fix physics feel
 - (EG) fix polygons being rendered on top of eachother
@@ -58,6 +64,7 @@ aard:
 - try out hardware occlusion queries before portals
 - (E) sort the order of rendering mapmodels, so as to factor out glbindbuffer
 - SP: add pistol ammo box... make monster use it? hmmm not more hitscan
+- switch to new fmod api & 3d sound? not available for bsd? openal?
 
 - connected push
 - blend screen when inside a cube

@@ -531,9 +531,10 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 
     if(!iscamera)
     {
-        if(!pl->inwater && water) { physicstrigger(pl, local, 0, -1); pl->timeinair = 0; }
-        else if(pl->inwater && !water) physicstrigger(pl, local, 0, 1);
-        pl->inwater = water;
+        const bool inwater = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1).material == MAT_WATER;
+        if(!pl->inwater && inwater) { physicstrigger(pl, local, 0, -1); pl->timeinair = 0; }
+        else if(pl->inwater && !inwater) physicstrigger(pl, local, 0, 1);
+        pl->inwater = inwater;
     };
 
     return true;

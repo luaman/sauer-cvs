@@ -88,13 +88,12 @@ void newsphere(vec &o, float max, int type)
 
 void renderspheres(int time)
 {
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, 4);
-
     for(sphere *p, **pp = &slist; p = *pp;)
     {
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glBindTexture(GL_TEXTURE_2D, expltex->gl);
         glPushMatrix();
         float size = p->size/p->max;
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f-size);
@@ -106,7 +105,6 @@ void renderspheres(int time)
         glCallList(1);
         glPopMatrix();
         xtraverts += 12*6*2;
-
         if(p->size>p->max)
         {
             *pp = p->next;
@@ -118,10 +116,9 @@ void renderspheres(int time)
             p->size += time/25.0f;
             pp = &p->next;
         };
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
     };
-
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
 };
 
 string closeent;
