@@ -163,6 +163,13 @@ void blendmatsurf(materialsurface &matsurf)
     glEnable(GL_TEXTURE_2D);
 }
 
+VARF(watercolour, 0, 0, 0xFFFFFF, 
+{
+    hdr.watercolour[0] = watercolour>>16;
+    hdr.watercolour[1] = (watercolour>>8)&0xFF;
+    hdr.watercolour[2] = watercolour&0xFF;
+});
+
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs)
@@ -178,7 +185,8 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         {
         case MAT_WATER:
             glBlendFunc(GL_ONE, GL_SRC_COLOR);
-            glColor3f(0.5f, 0.5f, 0.5f);
+            if(!watercolour) glColor3f(0.5f, 0.5f, 0.5f);
+            else glColor3f((watercolour>>16)/256.0f, ((watercolour>>8)&0xFF)/256.0f, (watercolour&0xFF)/256.0f);
             if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
             break;
