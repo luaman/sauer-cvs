@@ -6,6 +6,7 @@ PLATFORM_PREFIX=linux
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
 	shared/tools.o \
+	engine/client.o \
 	engine/command.o \
 	engine/console.o \
 	engine/cubeloader.o \
@@ -27,10 +28,10 @@ CLIENT_OBJS= \
 	engine/water.o \
 	engine/world.o \
 	engine/worldio.o \
-	fpsgame/client.o \
 	fpsgame/clientextras.o \
 	fpsgame/clientgame.o \
 	fpsgame/entities.o \
+	fpsgame/fpsclient.o \
 	fpsgame/fpsserver.o \
 	fpsgame/monster.o \
 	fpsgame/savegame.o \

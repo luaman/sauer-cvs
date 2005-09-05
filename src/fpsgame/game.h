@@ -54,7 +54,7 @@ struct fpsent : dynent
     
     string name, team;
     
-    fpsent() : weight(100), plag(0), ping(0), lastupdate(lastmillis), lifesequence(0),
+    fpsent() : weight(100), lastupdate(lastmillis), plag(0), ping(0), lifesequence(0),
                enemy(NULL) { name[0] = team[0] = 0; respawn(); };
     
     void respawn()

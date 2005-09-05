@@ -54,9 +54,9 @@ struct dynent                                   // players & monsters
     animstate prev, current;            
     int lastanimswitchtime;
 
-    dynent() : o(0, 0, 0), bob(0), yaw(270), pitch(0), roll(0), maxspeed(100), 
+    dynent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), bob(0), maxspeed(100), 
                inwater(false), radius(4.1f), eyeheight(14), aboveeye(1), state(CS_ALIVE),
-               monsterstate(0), frags(0), blocked(false), moving(0), lastanimswitchtime(-1)
+               frags(0), monsterstate(0), blocked(false), moving(0), lastanimswitchtime(-1)
                { reset(); };
                
     void reset()
