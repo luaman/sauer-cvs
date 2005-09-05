@@ -107,6 +107,20 @@ VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 
 int islittleendian = 1;
 
+int sleepwait = 0;
+string sleepcmd;
+ICOMMAND(sleep, 2, { sleepwait = atoi(args[0])+lastmillis; strcpy_s(sleepcmd, args[1]); });
+
+void estartmap(char *name)
+{
+    ///if(!editmode) toggleedit();
+    gamespeed = 100;
+    sleepwait = 0;
+    cancelsel();
+    pruneundos();
+    startmap(name);
+};
+
 int main(int argc, char **argv)
 {
     #ifdef WIN32
@@ -217,6 +231,7 @@ int main(int argc, char **argv)
         else if(curtime<1) curtime = 1;
         
         if(lastmillis) updateworld(worldpos, curtime);
+        if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
         
         lastmillis += curtime;
         curmillis = millis;

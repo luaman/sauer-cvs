@@ -575,3 +575,29 @@ bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity boundi
         && p->z >= d->o.z-d->eyeheight;
 };
 
+#define dir(name,v,d,s,os) ICOMMAND(name, IARG_BOTH, { player->s = args!=NULL; player->v = player->s ? d : (player->os ? -(d) : 0); player->lastmove = lastmillis; });
+
+dir(backward, move,   -1, k_down,  k_up);
+dir(forward,  move,    1, k_up,    k_down);
+dir(left,     strafe,  1, k_left,  k_right);
+dir(right,    strafe, -1, k_right, k_left);
+
+ICOMMAND(jump,   IARG_BOTH, { if(editmode) cancelsel(); else if(args && canjump()) player->jumpnext = true; });
+ICOMMAND(attack, IARG_BOTH, { if(editmode) editdrag(args!=NULL); else doattack(args!=NULL); });
+
+VARP(sensitivity, 0, 10, 1000);
+VARP(sensitivityscale, 1, 1, 100);
+VARP(invmouse, 0, 0, 1);
+
+void mousemove(int dx, int dy)
+{
+    if(camerafixed()) return;
+    const float SENSF = 33.0f;     // try match quake sens
+    player->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
+    player->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
+    const float MAXPITCH = 90.0f;
+    if(player->pitch>MAXPITCH) player->pitch = MAXPITCH;
+    if(player->pitch<-MAXPITCH) player->pitch = -MAXPITCH;
+    while(player->yaw<0.0f) player->yaw += 360.0f;
+    while(player->yaw>=360.0f) player->yaw -= 360.0f;
+};

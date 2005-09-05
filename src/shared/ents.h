@@ -40,7 +40,7 @@ struct dynent                                   // players & monsters
     bool inwater;
     float onfloor;
     bool jumpnext;
-    int move, strafe;
+    int move, strafe, lastmove;
     bool k_left, k_right, k_up, k_down;         // see input code
     float radius, eyeheight, aboveeye;          // bounding box size
 
@@ -61,7 +61,7 @@ struct dynent                                   // players & monsters
                
     void reset()
     {
-        timeinair = strafe = move = 0;
+        timeinair = strafe = move = lastmove = 0;
         onfloor = 0;
         k_left = k_right = k_up = k_down = jumpnext = false;
         vel = vec(0, 0, 0);

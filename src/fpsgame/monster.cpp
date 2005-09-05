@@ -3,10 +3,14 @@
 #include "pch.h"
 #include "game.h"
 
+extern weaponstate ws;
+
+
+
 vector<fpsent *> monsters;
 int nextmonster, spawnremain, numkilled, monstertotal, mtimestart;
 
-VARF(skill, 1, 3, 10, conoutf("skill is now %d", skill));
+IVAR(skill, 1, 3, 10);
 
 vector<dynent *> &getmonsters() { return (vector<dynent *> &)monsters; };
 void restoremonsterstate() { loopv(monsters) if(monsters[i]->state==CS_DEAD) numkilled++; };        // for savegames
@@ -85,7 +89,7 @@ void monsterclear()     // called after map start of when toggling edit mode to 
     if(m_dmsp)
     {
         nextmonster = mtimestart = lastmillis+10000;
-        monstertotal = spawnremain = gamemode<0 ? skill*10 : 0;
+        monstertotal = spawnremain = gamemode<0 ? skill()*10 : 0;
     }
     else if(m_classicsp)
     {
@@ -124,7 +128,7 @@ void transition(fpsent *m, int state, int moving, int n, int r) // n = at skill 
     m->monsterstate = state;
     m->move = moving;
     n = n*130/100;
-    m->trigger = lastmillis+n-skill*(n/16)+rnd(r+1);
+    m->trigger = lastmillis+n-skill()*(n/16)+rnd(r+1);
 };
 
 void normalise(fpsent *m, float angle)
@@ -200,7 +204,7 @@ void monsteraction(fpsent *m, int curtime)           // main AI thinking routine
             {
                 m->lastaction = 0;
                 m->attacking = true;
-                shoot(m, m->attacktarget);
+                ws.shoot(m, m->attacktarget);
                 transition(m, M_ATTACKING, 0, 600, 0);
             };
             break;

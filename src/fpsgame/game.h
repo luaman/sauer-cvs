@@ -41,7 +41,7 @@ struct fpsent : dynent
     int lifesequence;                   // sequence id for each respawn, used in damage test
     int health, armour, armourtype, quadmillis;
     int gunselect, gunwait;
-    int lastaction, lastattackgun, lastmove;
+    int lastaction, lastattackgun;
     bool attacking;
     int ammo[NUMGUNS];
     
@@ -63,7 +63,7 @@ struct fpsent : dynent
         health = 100;
         armour = 0;
         armourtype = A_BLUE;
-        quadmillis = gunwait = lastmove = lastaction = 0;
+        quadmillis = gunwait = lastaction = 0;
         lastattackgun = gunselect = GUN_PISTOL;
         attacking = false; 
         loopi(NUMGUNS) ammo[i] = 0;
@@ -160,13 +160,14 @@ extern void load_world(char *mname);
 extern void loadgamerest();
 
 // weapon
-extern void selectgun(int a = -1, int b = -1, int c =-1);
+/*
 extern void shoot(fpsent *d, vec &to);
 extern void shootv(int gun, vec &from, vec &to, fpsent *d = 0, bool local = false);
 extern void createrays(vec &from, vec &to);
 extern void moveprojectiles(int time);
 extern void projreset();
 extern int reloadtime(int gun);
+*/
 
 // monster
 extern void monsterclear();
@@ -193,4 +194,4 @@ extern char msgsizelookup(int msg);
 // fpsclient
 extern void mapstart();
 
-
+#include "weapon.h"

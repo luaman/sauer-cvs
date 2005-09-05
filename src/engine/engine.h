@@ -67,6 +67,10 @@ extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
 extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
 
+// octaedit
+extern void editdrag(bool on);
+extern void cancelsel();
+
 // rendercubes
 extern void subdividecube(cube &c);
 extern void octarender();
@@ -114,3 +118,6 @@ extern void writecfg();
 
 // console
 extern void writebinds(FILE *f);
+
+// main
+extern void estartmap(char *name);

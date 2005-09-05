@@ -62,6 +62,8 @@ void showscores(bool on)
     menuset(((int)on)-1);
 };
 
+ICOMMAND(showscores, IARG_BOTH, showscores(args!=NULL));
+
 struct sline { string s; };
 vector<sline> scorelines;
 
@@ -111,8 +113,9 @@ void renderscores()
 
 // sendmap/getmap commands, should be replaced by more intuitive map downloading
 
-void sendmap(char *mapname)
+ICOMMAND(sendmap, 1,
 {
+    char *mapname = args[0];
     if(*mapname) save_world(mapname);
     changemap(mapname);
     mapname = getclientmap();
@@ -141,9 +144,9 @@ void sendmap(char *mapname)
     conoutf("sending map %s to server...", mapname);
     sprintf_sd(msg)("[map %s uploaded to server, \"getmap\" to receive it]", mapname);
     toserver(msg);
-}
+});
 
-void getmap()
+ICOMMAND(getmap, 0,
 {
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
@@ -153,10 +156,7 @@ void getmap()
     enet_packet_resize(packet, p-start);
     sendpackettoserv(packet);
     conoutf("requesting map from server...");
-}
-
-COMMAND(sendmap, ARG_1STR);
-COMMAND(getmap, ARG_NONE);
+});
 
 
 

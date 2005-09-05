@@ -3,20 +3,16 @@
 #include "pch.h"
 #include "game.h"
 
-int nextmode = 0;         // nextmode becomes gamemode after next map load
-VAR(gamemode, 1, 0, 0);
+weaponstate ws;
 
-void mode(int n) { addmsg(1, 2, SV_GAMEMODE, nextmode = n); };
-COMMAND(mode, ARG_1INT);
+int nextmode = 0, gamemode = 0;         // nextmode becomes gamemode after next map load
+
+ICOMMAND(mode, 1, { addmsg(1, 2, SV_GAMEMODE, nextmode = atoi(args[0])); });
 
 bool intermission = false;
 
 fpsent *player1 = newdynent();          // our client
 vector<fpsent *> players;               // other clients
-
-VARP(sensitivity, 0, 10, 1000);
-VARP(sensitivityscale, 1, 1, 100);
-VARP(invmouse, 0, 0, 1);
 
 int lastmillis = 0;
 
@@ -28,7 +24,7 @@ void resetgamestate()
 {
     player1->health = 100;
     if(m_classicsp) monsterclear();                 // all monsters back at their spawns for editing
-    projreset();
+    ws.projreset();
 };
 
 fpsent *spawnstate(fpsent *d)              // reset player state not persistent accross spawns
@@ -84,6 +80,17 @@ void respawnself()
 {
     spawnplayer(player1);
     showscores(false);
+};
+
+char *gamepointat(vec &pos)
+{
+    loopv(players)
+    {
+        fpsent *o = players[i];
+        if(!o) continue; 
+        if(intersect(o, player1->o, pos)) return o->name;
+    };
+    return NULL;
 };
 
 void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
@@ -152,20 +159,14 @@ void otherplayers()
         if(lagtime && players[i]->state != CS_DEAD) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
     };
 };
-
-int sleepwait = 0;
-string sleepcmd;
-void sleepfun(char *msec, char *cmd) { sleepwait = atoi(msec)+lastmillis; strcpy_s(sleepcmd, cmd); };
-COMMANDN(sleep, sleepfun, ARG_2STR);
     
 void updateworld(vec &pos, int curtime)        // main game update loop
 {
-    if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
     physicsframe();
     checkquad(curtime);
     if(m_arena) arenarespawn();
-    moveprojectiles(curtime);
-    if(getclientnum()>=0) shoot(player1, pos);     // only shoot when connected to server
+    ws.moveprojectiles(curtime);
+    if(getclientnum()>=0) ws.shoot(player1, pos);     // only shoot when connected to server
     gets2c();           // do this first, so we have most accurate information when our player moves
     otherplayers();
     monsterthink(curtime);
@@ -235,49 +236,16 @@ void respawn()
     };
 };
 
-// movement input code
+// inputs
 
-#define dir(name,v,d,s,os) void name(bool isdown) { player1->s = isdown; player1->v = isdown ? d : (player1->os ? -(d) : 0); player1->lastmove = lastmillis; };
-
-dir(backward, move,   -1, k_down,  k_up);
-dir(forward,  move,    1, k_up,    k_down);
-dir(left,     strafe,  1, k_left,  k_right);
-dir(right,    strafe, -1, k_right, k_left);
-
-void attack(bool on)
+void doattack(bool on)
 {
     if(intermission) return;
-    if(editmode) editdrag(on);
-    else if(player1->attacking = on) respawn();
+    if(player1->attacking = on) respawn();
 };
 
-void jumpn(bool on) { if(editmode) cancelsel(); else if(!intermission && (player1->jumpnext = on)) respawn(); };
-
-COMMAND(backward, ARG_DOWN);
-COMMAND(forward, ARG_DOWN);
-COMMAND(left, ARG_DOWN);
-COMMAND(right, ARG_DOWN);
-COMMANDN(jump, jumpn, ARG_DOWN);
-COMMAND(attack, ARG_DOWN);
-COMMAND(showscores, ARG_DOWN);
-
-void fixplayer1range()
-{
-    const float MAXPITCH = 90.0f;
-    if(player1->pitch>MAXPITCH) player1->pitch = MAXPITCH;
-    if(player1->pitch<-MAXPITCH) player1->pitch = -MAXPITCH;
-    while(player1->yaw<0.0f) player1->yaw += 360.0f;
-    while(player1->yaw>=360.0f) player1->yaw -= 360.0f;
-};
-
-void mousemove(int dx, int dy)
-{
-    if(player1->state==CS_DEAD || intermission) return;
-    const float SENSF = 33.0f;     // try match quake sens
-    player1->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
-    player1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
-    fixplayer1range();
-};
+bool camerafixed() { return player1->state==CS_DEAD || intermission; };
+bool canjump() { if(!intermission) respawn(); return !intermission; };
 
 // damage arriving from the network, monsters, yourself, all ends up here.
 
@@ -370,22 +338,17 @@ void initclient()
 
 void startmap(char *name)   // called just after a map load
 {
-    cancelsel();
-    pruneundos();
     spawncycle = 0;
     if(netmapstart() && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); };
     mapstart();
-    sleepwait = 0;
     monsterclear();
-    projreset();
+    ws.projreset();
     spawncycle = -1;
     spawnplayer(player1);
     player1->frags = 0;
     loopv(players) if(players[i]) players[i]->frags = 0;
     resetspawns();
     strcpy_s(clientmap, name);
-    ///if(!editmode) toggleedit();
-    setvar("gamespeed", 100);
     setvar("fog", 4000);
     setvar("fogcolour", 0x8099B3);
     showscores(false);
@@ -417,7 +380,7 @@ void worldhurts(dynent *d, int damage)
     else if(d->monsterstate) monsterpain((fpsent *)d, damage, player1);
 };
 
-VARP(hudgun, 0, 1, 1);
+IVAR(hudgun, 0, 1, 1);
 
 char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol" };
 
@@ -431,9 +394,9 @@ void drawhudmodel(int start, int end, float speed, int base)
 
 void drawhudgun(float fovy, float aspect, int farplane)
 {
-    if(!hudgun || editmode) return;
+    if(!hudgun() || editmode) return;
     
-    int rtime = reloadtime(player1->gunselect);
+    int rtime = ws.reloadtime(player1->gunselect);
     if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
     {
         drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);

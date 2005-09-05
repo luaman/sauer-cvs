@@ -16,6 +16,9 @@ extern void gameplayhud();
 extern vector<dynent *> &getplayers();
 extern void entinmap(dynent *d, bool froment = true);
 extern void drawhudgun(float fovy, float aspect, int farplane);
+extern bool camerafixed();
+extern bool canjump();
+extern void doattack(bool on);
 
 // clientextras
 extern void renderscores();

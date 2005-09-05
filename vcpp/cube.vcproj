@@ -108,7 +108,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="C:\w\sauerbraten\enet\include;C:\w\sauerbraten\include;C:\w\sauerbraten\src\engine;C:\w\sauerbraten\src\fpsgame;C:\w\sauerbraten\src\shared"
 				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
-				BasicRuntimeChecks="3"
+				BasicRuntimeChecks="1"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="3"
 				PrecompiledHeaderThrough="cube.h"
@@ -982,6 +982,9 @@
 				Name="common"
 				Filter="">
 				<File
+					RelativePath="..\src\shared\command.h">
+				</File>
+				<File
 					RelativePath="..\src\shared\cube.h">
 				</File>
 				<File
@@ -1016,9 +1019,6 @@
 				</File>
 				<File
 					RelativePath="..\src\shared\pch.h">
-				</File>
-				<File
-					RelativePath="..\src\shared\system.h">
 				</File>
 				<File
 					RelativePath="..\src\shared\tools.cpp">
@@ -1225,28 +1225,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\weapon.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
+				RelativePath="..\src\fpsgame\weapon.h">
 			</File>
 		</Filter>
 	</Files>

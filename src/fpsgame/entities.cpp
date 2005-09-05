@@ -69,8 +69,6 @@ void trigger(int tag, int type, bool savegame)
     if(type==2) endsp(false);
 };
 
-COMMAND(trigger, ARG_2INT);
-
 struct itemstat { int add, max, sound; } itemstats[] =
 {
      10,    50, S_ITEMAMMO,

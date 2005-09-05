@@ -299,7 +299,7 @@ struct cubeloader
 	    remop();
 	    loopv(ents) if(ents[i]->type!=ET_LIGHT) dropenttofloor(ents[i]);
         conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
-        startmap(pakname);
+        estartmap(pakname);
 	    string cfgname;
         sprintf_s(cfgname)("packages/cube/%s.cfg", mname);
         exec("packages/cube/package.cfg");

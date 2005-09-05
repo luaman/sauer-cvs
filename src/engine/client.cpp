@@ -111,9 +111,6 @@ void trydisconnect()
     disconnect(0, !disconnecting);
 };
 
-void echo(char *text) { conoutf("%s", text); };
-
-COMMAND(echo, ARG_VARI);
 COMMANDN(connect, connects, ARG_1STR);
 COMMANDN(disconnect, trydisconnect, ARG_NONE);
 

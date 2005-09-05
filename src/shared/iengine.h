@@ -10,8 +10,6 @@ extern void settexture(char *name);
 
 // octaedit
 extern void cursorupdate();
-extern void editdrag(bool on);
-extern void cancelsel();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();
 

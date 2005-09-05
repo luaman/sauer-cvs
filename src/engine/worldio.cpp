@@ -256,7 +256,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     gzclose(f);
     conoutf("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     conoutf("%s", hdr.maptitle);
-    startmap(mname);
+    estartmap(mname);
     execfile("data/default_map_settings.cfg");
     execfile(pcfname);
     execfile(mcfname);

@@ -3,17 +3,17 @@
 #include "pch.h"
 #include "game.h"
 
+extern weaponstate ws;
+
+
 bool c2sinit = false;       // whether we need to tell the other clients our stats
 
 string ctext;
 void toserver(char *text) { conoutf("%s:\f %s", player1->name, text); strcpy_s(ctext, text); };
-COMMANDN(say, toserver, ARG_VARI);
+ICOMMAND(say, IARG_VAR, toserver(args[0]));
 
-void newname(char *name) { c2sinit = false; strn0cpy(player1->name, name, 16); };
-void newteam(char *name) { c2sinit = false; strn0cpy(player1->team, name, 5); };
-
-COMMANDN(team, newteam, ARG_1STR);
-COMMANDN(name, newname, ARG_1STR);
+ICOMMAND(name, 1, { c2sinit = false; strn0cpy(player1->name, args[0], 16); });
+ICOMMAND(team, 1, { c2sinit = false; strn0cpy(player1->team, args[0], 5);  });
 
 string toservermap;
 bool senditemstoserver = false;     // after a map change, since server doesn't have map data
@@ -25,8 +25,6 @@ void initclientnet()
 {
     ctext[0] = 0;
     toservermap[0] = 0;
-    newname("unnamed");
-    newteam("red");
 };
 
 void writeclientinfo(FILE *f)
@@ -288,8 +286,8 @@ void parsepacketclient(uchar *end, uchar *p, int &clientnum)   // processes any 
             e.x = getint(p)/DMF;
             e.y = getint(p)/DMF;
             e.z = getint(p)/DMF;
-            if(gun==GUN_SG) createrays(s, e);
-            shootv(gun, s, e, d);
+            if(gun==GUN_SG) ws.createrays(s, e);
+            ws.shootv(gun, s, e, d, false);
             break;
         };
 
@@ -440,5 +438,5 @@ void changemap(char *name)                      // request map change, server ma
     strcpy_s(toservermap, name);
 };
 
-COMMANDN(map, changemap, ARG_1STR);
+ICOMMAND(map, 1, changemap(args[0]));
 

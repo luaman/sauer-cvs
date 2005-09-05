@@ -198,7 +198,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         freeocta(worldroot);
         worldroot = newcubes(F_EMPTY);
         loopi(4) solidfaces(worldroot[i]);
-        startmap("base/unnamed");
+        estartmap("base/unnamed");
         player->o.z += player->eyeheight+1;
     };
 

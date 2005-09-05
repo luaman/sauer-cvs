@@ -1,7 +1,7 @@
 #include "tools.h"
 #include "geom.h"
 #include "ents.h"
-#include "system.h"
+#include "command.h"
 
 struct mapmodelinfo { int rad, h, zoff; char *name; };
 
@@ -16,3 +16,4 @@ extern bool editmode;
 
 extern int lastmillis;                  // last time
 
+#define sgetstr() { char *t = text; do { *t = getint(p); } while(*t++); }

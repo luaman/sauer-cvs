@@ -12,10 +12,10 @@ int gzgeti(gzFile f)
     return i;
 };
 
-void savegame(char *name)
+ICOMMAND(savegame, 1,
 {
     if(!m_classicsp) { conoutf("can only save classic sp games"); return; };
-    sprintf_sd(fn)("savegames/%s.csgz", name);
+    sprintf_sd(fn)("savegames/%s.csgz", args[0]);
     gzFile f = gzopen(fn, "wb9");
     if(!f) { conoutf("could not write %s", fn); return; };
     gzwrite(f, (void *)"CUBESAVE", 8);
@@ -31,14 +31,14 @@ void savegame(char *name)
     loopv(monsters) gzwrite(f, monsters[i], sizeof(fpsent));
     gzclose(f);
     conoutf("wrote %s", fn);
-};
+});
 
 gzFile f = NULL;
 
-void loadgame(char *name)
+ICOMMAND(loadgame, 1,
 {
     if(multiplayer()) return;
-    sprintf_sd(fn)("savegames/%s.csgz", name);
+    sprintf_sd(fn)("savegames/%s.csgz", args[0]);
     f = gzopen(fn, "rb9");
     if(!f) { conoutf("could not open %s", fn); return; };
 
@@ -56,7 +56,7 @@ void loadgame(char *name)
     gzclose(f);
     f = NULL;
     conoutf("aborting: savegame from a different version of cube or cpu architecture");
-};
+});
 
 void loadgameout()
 {
@@ -97,6 +97,3 @@ void loadgamerest()
     if(bytesleft==1) fatal("savegame file corrupt (long)");
     conoutf("savegame restored");
 };
-
-COMMAND(savegame, ARG_1STR);
-COMMAND(loadgame, ARG_1STR);
