@@ -2,6 +2,8 @@
 
 #include "pch.h"
 #include "game.h"
+extern monsterset ms;
+
 
 // render players & monsters
 // very messy ad-hoc handling of animation frames, should be made more configurable
@@ -45,11 +47,12 @@ void renderclient(fpsent *d, bool team, char *mdlname, float scale, bool hellpig
     rendermodel(mdlname, frame[n], range[n], 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime, d);
 };  
 
-void renderclients()
+void rendergame()
 {
     fpsent *d;
     loopv(players) if(d = players[i]) renderclient(d, isteam(player1->team, d->team), "monster/ogro", 1.0f);
     if(isthirdperson()) renderclient(player1, false, "monster/ogro", 1.0f);
+    ms.monsterrender();
 };
 
 // creation of scoreboard pseudo-menu

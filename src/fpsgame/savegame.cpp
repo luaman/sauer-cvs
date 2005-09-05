@@ -3,6 +3,11 @@
 #include "pch.h"
 #include "game.h"
 
+extern monsterset ms;
+
+
+
+
 void gzputi(gzFile f, int i) { gzwrite(f, &i, sizeof(int)); };
 
 int gzgeti(gzFile f)
@@ -27,8 +32,8 @@ ICOMMAND(savegame, 1,
     gzputi(f, ents.length());
     loopv(ents) gzputc(f, ents[i]->spawned);
     gzwrite(f, player1, sizeof(fpsent));
-    gzputi(f, monsters.length());
-    loopv(monsters) gzwrite(f, monsters[i], sizeof(fpsent));
+    gzputi(f, ms.monsters.length());
+    loopv(ms.monsters) gzwrite(f, ms.monsters[i], sizeof(monsterset::monster));
     gzclose(f);
     conoutf("wrote %s", fn);
 });
@@ -81,14 +86,14 @@ void loadgamerest()
     player1->lastaction = lastmillis;
 
     int nmonsters = gzgeti(f);
-    if(nmonsters!=monsters.length()) return loadgameout();
-    loopv(monsters)
+    if(nmonsters!=ms.monsters.length()) return loadgameout();
+    loopv(ms.monsters)
     {
-        gzread(f, monsters[i], sizeof(fpsent));
-        monsters[i]->enemy = player1;                                       // lazy, could save id of enemy instead
-        monsters[i]->lastaction = monsters[i]->trigger = lastmillis+500;    // also lazy, but no real noticable effect on game
+        gzread(f, ms.monsters[i], sizeof(monsterset::monster));
+        ms.monsters[i]->enemy = player1;                                       // lazy, could save id of enemy instead
+        ms.monsters[i]->lastaction = ms.monsters[i]->trigger = lastmillis+500;    // also lazy, but no real noticable effect on game
     };
-    restoremonsterstate();
+    ms.restoremonsterstate();
 
     string buf;
     int bytesleft = gzread(f, buf, 1);

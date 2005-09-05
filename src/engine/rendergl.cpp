@@ -342,8 +342,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
-    renderclients();
-    monsterrender();
+    rendergame();
 
     renderentities();
 

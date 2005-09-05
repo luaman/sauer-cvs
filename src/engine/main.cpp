@@ -196,7 +196,7 @@ int main(int argc, char **argv)
     if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
    
     log("world");
-    player = getplayer();
+    player = iterdynents(0);
     empty_world(7, true);
 
     log("sound");

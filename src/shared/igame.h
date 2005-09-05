@@ -7,29 +7,22 @@ extern void updateworld(vec &pos, int curtime);
 extern void changemap(char *name);
 extern void initclient();
 extern void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel);
-extern dynent *getplayer();
 extern char *getclientmap();
 extern void resetgamestate();
 extern void worldhurts(dynent *d, int damage);
 extern void startmap(char *name);
 extern void gameplayhud();
-extern vector<dynent *> &getplayers();
 extern void entinmap(dynent *d, bool froment = true);
 extern void drawhudgun(float fovy, float aspect, int farplane);
 extern bool camerafixed();
 extern bool canjump();
 extern void doattack(bool on);
+extern char *gamepointat(vec &pos);
+extern dynent *iterdynents(int i);
 
 // clientextras
 extern void renderscores();
-extern void renderclients();
-
-// monster
-extern vector<dynent *> &getmonsters();
-extern void monsterrender();
-
-// weapon
-extern char *gamepointat(vec &pos);
+extern void rendergame();
 
 // entities
 extern void renderents();

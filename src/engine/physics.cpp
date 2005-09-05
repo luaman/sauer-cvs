@@ -251,18 +251,13 @@ bool collide(dynent *d)
     floorheight = 0;
     wall.x = wall.y = wall.z = 0;
     if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
-    vector<dynent *> &players = getplayers();
-    loopv(players)       // collide with other players
-    {
-        dynent *o = players[i];
-        if(!o || o==d) continue;
-        if(!plcollide(d, o)) return false;
-    };
-    if(d!=player && d!=camera1) if(!plcollide(d, player)) return false;
-    vector<dynent *> &v = getmonsters();
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
-    loopv(v) if(!d->o.reject(v[i]->o, 20.0f) && d!=v[i] && !plcollide(d, v[i])) return false;
+    dynent *o;
+    for(int i = 0; o = iterdynents(i); i++)
+    {
+        if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d!=camera1) && !plcollide(d, o)) return false;
+    };
 
     return mmcollide(d);     // collide with map models
 };

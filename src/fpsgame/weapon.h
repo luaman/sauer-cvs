@@ -87,7 +87,8 @@ struct weaponstate
     void hit(int target, int damage, fpsent *d, fpsent *at)
     {
         if(d==player1) selfdamage(damage, at==player1 ? -1 : -2, at);
-        else if(d->monsterstate) monsterpain(d, damage, at);
+        //BREAK
+        //else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, at);
         else { addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); playsound(S_PAIN1+rnd(5), &d->o); };
         particle_splash(3, damage, 1000, d->o);
     };
@@ -111,7 +112,7 @@ struct weaponstate
         };
     };
 
-    void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismonster, int qdam)
+    void splash(projectile *p, vec &v, vec &vold, dynent *notthis, int qdam)
     {
         particle_splash(0, 200, 300, v);
         p->inuse = false;
@@ -126,24 +127,21 @@ struct weaponstate
             newsphere(v, RL_RADIUS, 0);
             ///dodynlight(vold, v, 0, 0, p->owner);
             if(!p->local) return;
-            radialeffect(player1, v, -1, qdam, p->owner);
-            loopv(players)
+            fpsent *o;
+            for(int i = 0; o = (fpsent *)iterdynents(i); i++)
             {
-                if(i==notthisplayer) continue;
-                fpsent *o = players[i];
-                if(!o) continue; 
-                radialeffect(o, v, i, qdam, p->owner);
+                if(!o || o==notthis) continue;
+                radialeffect(o, v, i-1, qdam, p->owner);
             };
-            loopv(monsters) if(i!=notthismonster) radialeffect(monsters[i], v, i, qdam, p->owner);
         };
     };
 
-    inline void projdamage(fpsent *o, projectile *p, vec &v, int i, int im, int qdam)
+    void projdamage(fpsent *o, projectile *p, vec &v, int i, int qdam)
     {
         if(o->state!=CS_ALIVE) return;
         if(intersect(o, p->o, v))
         {
-            splash(p, v, p->o, i, im, qdam);
+            splash(p, v, p->o, o, qdam);
             hit(i, qdam, o, p->owner);
         }; 
     };
@@ -164,18 +162,16 @@ struct weaponstate
             v.add(p->o);
             if(p->local)
             {
-                loopv(players)
+                fpsent *o;
+                for(int i = 0; o = (fpsent *)iterdynents(i); i++)
                 {
-                    fpsent *o = players[i];
-                    if(!o) continue; 
-                    projdamage(o, p, v, i, -1, qdam);
+                    if(!o) continue;
+                    if(!o->o.reject(v, 10.0f) && p->owner!=o) projdamage(o, p, v, i-1, qdam);
                 };
-                if(p->owner!=player1) projdamage(player1, p, v, -1, -1, qdam);
-                loopv(monsters) if(!monsters[i]->o.reject(v, 10.0f) && monsters[i]!=p->owner) projdamage(monsters[i], p, v, -1, i, qdam);
             };
             if(p->inuse)
             {
-                if(dist<1) splash(p, v, p->o, -1, -1, qdam);
+                if(dist<1) splash(p, v, p->o, NULL, qdam);
                 else
                 {
                     if(p->gun==GUN_RL) { /*dodynlight(p->o, v, 0, 255, p->owner);*/ particle_splash(5, 2, 200, v); }
@@ -292,15 +288,11 @@ struct weaponstate
 
         if(guns[d->gunselect].projspeed) return;
         
-        loopv(players)
+        fpsent *o;
+        for(int i = 0; o = (fpsent *)iterdynents(i); i++)
         {
-            fpsent *o = players[i];
-            if(!o) continue; 
-            raydamage(o, from, to, d, i);
+            if(!o || o==d) continue;
+            raydamage(o, from, to, d, i-1);
         };
-
-        loopv(monsters) if(monsters[i]!=d) raydamage(monsters[i], from, to, d, -2);
-
-        if(d->monsterstate) raydamage(player1, from, to, d, -1);
     };
 };

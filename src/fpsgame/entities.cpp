@@ -2,6 +2,8 @@
 
 #include "pch.h"
 #include "game.h"
+extern monsterset ms;
+
 
 vector<extentity *> ents;
 
@@ -66,7 +68,7 @@ void trigger(int tag, int type, bool savegame)
     if(!savegame) playsound(S_RUMBLE);
     sprintf_sd(aliasname)("level_trigger_%d", tag);
     if(identexists(aliasname)) execute(aliasname);
-    if(type==2) endsp(false);
+    if(type==2) ms.endsp(false);
 };
 
 struct itemstat { int add, max, sound; } itemstats[] =

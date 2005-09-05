@@ -168,16 +168,17 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
         if(!id)
         {
             val = atoi(c);
-            if(!val && *c!='0') conoutf("unknown command: %s", c);
+            if(!val && *c!='0')
+                conoutf("unknown command: %s", c);
         }
         else switch(id->_type)
         {
             case ID_ICOMMAND:
                 switch(id->_narg)
                 {
-                    default: id->run(w+1); break;
-                    case IARG_BOTH: { id->run((char **)isdown); break; };
-                    case IARG_VAR:  { string r; vari(w, numargs, r); char *rr = r; id->run(&rr); break; };
+                    default: if(isdown) id->run(w+1); break;
+                    case IARG_BOTH: id->run((char **)isdown); break;
+                    case IARG_VAR:  if(isdown) { string r; vari(w, numargs, r); char *rr = r; id->run(&rr); }; break;
                 };
                 break;
         

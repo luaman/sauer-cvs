@@ -1177,28 +1177,7 @@
 				RelativePath="..\src\fpsgame\game.h">
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\monster.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
+				RelativePath="..\src\fpsgame\monster.h">
 			</File>
 			<File
 				RelativePath="..\src\fpsgame\savegame.cpp">

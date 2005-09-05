@@ -45,17 +45,10 @@ struct fpsent : dynent
     bool attacking;
     int ammo[NUMGUNS];
     
-    int mtype;                          // see monster.cpp
-    fpsent *enemy;                      // monster wants to kill this entity
-    float targetyaw;                    // monster wants to look in this direction
-    int trigger;                        // millis at which transition to another monsterstate takes place
-    vec attacktarget;                   // delayed attacks
-    int anger;                          // how many times already hit by fellow monster
-    
     string name, team;
     
-    fpsent() : weight(100), lastupdate(lastmillis), plag(0), ping(0), lifesequence(0),
-               enemy(NULL) { name[0] = team[0] = 0; respawn(); };
+    fpsent() : weight(100), lastupdate(lastmillis), plag(0), ping(0), lifesequence(0)
+               { name[0] = team[0] = 0; respawn(); };
     
     void respawn()
     {
@@ -73,7 +66,6 @@ struct fpsent : dynent
 
 extern int gamemode, nextmode;
 extern vector<fpsent *> players;                 // all the other clients (in multiplayer)
-extern vector<fpsent *> monsters;
 extern fpsent *player1;                 // special client ent that receives input
 
 #define m_noitems     (gamemode>=4)
@@ -143,7 +135,6 @@ extern void changemapserv(char *name, int mode);
 // clientgame
 extern void spawnplayer(fpsent *d);
 extern void selfdamage(int damage, int actor, fpsent *act);
-extern fpsent *newdynent();
 extern void zapdynent(fpsent *&);
 extern fpsent *getclient(int cn);
 extern void timeupdate(int timeremain);
@@ -158,23 +149,6 @@ void showscores(bool on);
 extern void save_world(char *fname);
 extern void load_world(char *mname);
 extern void loadgamerest();
-
-// weapon
-/*
-extern void shoot(fpsent *d, vec &to);
-extern void shootv(int gun, vec &from, vec &to, fpsent *d = 0, bool local = false);
-extern void createrays(vec &from, vec &to);
-extern void moveprojectiles(int time);
-extern void projreset();
-extern int reloadtime(int gun);
-*/
-
-// monster
-extern void monsterclear();
-extern void restoremonsterstate();
-extern void monsterthink(int curtime);
-extern void monsterpain(fpsent *m, int damage, fpsent *d);
-extern void endsp(bool allkilled);
 
 // entities
 extern void putitems(uchar *&p);
@@ -195,3 +169,4 @@ extern char msgsizelookup(int msg);
 extern void mapstart();
 
 #include "weapon.h"
+#include "monster.h"

@@ -4,6 +4,7 @@
 #include "game.h"
 
 weaponstate ws;
+monsterset ms;
 
 int nextmode = 0, gamemode = 0;         // nextmode becomes gamemode after next map load
 
@@ -11,8 +12,6 @@ ICOMMAND(mode, 1, { addmsg(1, 2, SV_GAMEMODE, nextmode = atoi(args[0])); });
 
 bool intermission = false;
 
-fpsent *player1 = newdynent();          // our client
-vector<fpsent *> players;               // other clients
 
 int lastmillis = 0;
 
@@ -23,7 +22,7 @@ char *getclientmap() { return clientmap; };
 void resetgamestate()
 {
     player1->health = 100;
-    if(m_classicsp) monsterclear();                 // all monsters back at their spawns for editing
+    if(m_classicsp) ms.monsterclear();                 // all monsters back at their spawns for editing
     ws.projreset();
 };
 
@@ -71,10 +70,8 @@ fpsent *spawnstate(fpsent *d)              // reset player state not persistent 
     return d;
 };
 
-fpsent *newdynent()                 // create a new blank player or monster
-{
-    return spawnstate(new fpsent());
-};
+fpsent *player1 = spawnstate(new fpsent());          // our client
+vector<fpsent *> players;                               // other clients
 
 void respawnself()
 {
@@ -169,7 +166,7 @@ void updateworld(vec &pos, int curtime)        // main game update loop
     if(getclientnum()>=0) ws.shoot(player1, pos);     // only shoot when connected to server
     gets2c();           // do this first, so we have most accurate information when our player moves
     otherplayers();
-    monsterthink(curtime);
+    ms.monsterthink(curtime);
     if(player1->state==CS_DEAD)
     {
         if(lastmillis-player1->lastaction<2000)
@@ -327,7 +324,7 @@ fpsent *getclient(int cn)   // ensure valid entity
         return NULL;
     };
     while(cn>=players.length()) players.add(NULL);
-    return players[cn] ? players[cn] : (players[cn] = newdynent());
+    return players[cn] ? players[cn] : (players[cn] = new fpsent());
 };
 
 void initclient()
@@ -341,7 +338,7 @@ void startmap(char *name)   // called just after a map load
     spawncycle = 0;
     if(netmapstart() && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); };
     mapstart();
-    monsterclear();
+    ms.monsterclear();
     ws.projreset();
     spawncycle = -1;
     spawnplayer(player1);
@@ -371,13 +368,20 @@ void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel)
 
 void playsoundc(int n) { addmsg(0, 2, SV_SOUND, n); playsound(n); };
 
-dynent *getplayer() { return player1; };
-vector<dynent *> &getplayers() { return (vector<dynent *> &)players; };
+dynent *iterdynents(int i)
+{
+    if(!i) return player1;
+    i--;
+    if(i<players.length()) return players[i];
+    i -= players.length();
+    if(i<ms.monsters.length()) return ms.monsters[i];
+    return NULL;
+};
 
 void worldhurts(dynent *d, int damage)
 {
     if(d==player1) selfdamage(damage, -1, player1);
-    else if(d->monsterstate) monsterpain((fpsent *)d, damage, player1);
+    else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, player1);
 };
 
 IVAR(hudgun, 0, 1, 1);
