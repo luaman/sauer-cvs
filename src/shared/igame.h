@@ -1,16 +1,6 @@
 // the interface the engine uses to run the gameplay module
 
 
-
-// client
-extern void disconnect(int onlyclean = 0, int async = 0);
-extern void toserver(char *text);
-extern bool multiplayer();
-extern void connects(char *servername);
-extern bool allowedittoggle();
-extern void localservertoclient(uchar *buf, int len);
-extern void writeclientinfo(FILE *f);
-
 // clientgame
 extern void mousemove(int dx, int dy);
 extern void updateworld(vec &pos, int curtime);
@@ -64,3 +54,12 @@ extern void serverinfostr(char *buf, char *name, char *desc, char *map, int ping
 extern int serverinfoport();
 extern int serverport();
 extern char *getdefaultmaster();
+
+// fpsclient
+extern void gamedisconnect();
+extern void parsepacketclient(uchar *end, uchar *p, int &clientnum);
+extern void sendpacketclient(uchar *&p, bool &reliable, int clientnum, dynent *d);
+extern void gameconnect(bool _remote);
+extern bool allowedittoggle();
+extern void writeclientinfo(FILE *f);
+extern void toserver(char *text);

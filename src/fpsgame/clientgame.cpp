@@ -423,6 +423,7 @@ void startmap(char *name)   // called just after a map load
     pruneundos();
     spawncycle = 0;
     if(netmapstart() && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); };
+    mapstart();
     sleepwait = 0;
     monsterclear();
     projreset();
@@ -445,8 +446,6 @@ void startmap(char *name)   // called just after a map load
         if(identexists(aliasname)) alias(aliasname, "");
     };
 };
-
-COMMANDN(map, changemap, ARG_1STR);
 
 void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel)
 {

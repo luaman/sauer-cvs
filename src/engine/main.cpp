@@ -201,6 +201,7 @@ int main(int argc, char **argv)
 
     log("localconnect");
     localconnect();
+    gameconnect(false);
     changemap("aard3");
 
     log("mainloop");

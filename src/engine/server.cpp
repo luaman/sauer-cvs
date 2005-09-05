@@ -188,8 +188,7 @@ void multicast(ENetPacket *packet, int sender)
 void localclienttoserver(ENetPacket *packet)
 {
     process(packet, 0);
-    if (packet -> referenceCount == 0)
-      enet_packet_destroy (packet);
+    if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
 client *addclient()

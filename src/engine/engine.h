@@ -102,6 +102,12 @@ extern void initserver(bool dedicated, bool listen, int uprate, char *sdesc, cha
 extern void cleanupserver();
 extern void serverslice(int seconds, unsigned int timeout);
 extern uchar *retrieveservers(uchar *buf, int buflen);
+extern void localclienttoserver(struct _ENetPacket *);
+
+// client
+extern void localdisconnect();
+extern void localservertoclient(uchar *buf, int len);
+extern void connects(char *servername);
 
 // command
 extern void writecfg();

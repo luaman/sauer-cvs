@@ -116,7 +116,6 @@ extern void addmsg(int rel, int num, int type, ...);
 extern void sendpackettoserv(void *packet);
 extern void gets2c();
 extern void otherplayers();
-extern void c2sinfo(fpsent *d);
 extern void neterr(char *s);
 extern void initclientnet();
 extern bool netmapstart();
@@ -173,7 +172,8 @@ extern void baseammo(int gun);
 extern void restoreserverstate(vector<extentity *> &ents);
 extern void startintermission();
 extern char msgsizelookup(int msg);
-extern void localclienttoserver(struct _ENetPacket *);
-extern void localdisconnect();
+
+// fpsclient
+extern void mapstart();
 
 

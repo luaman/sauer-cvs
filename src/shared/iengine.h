@@ -111,3 +111,8 @@ extern void disconnect_client(int n, char *reason);
 extern void sendvmap(int n, string mapname, int mapsize, uchar *mapdata);
 extern void recvmap(int n, int tag);
 extern bool hasnonlocalclients();
+
+// client
+extern void c2sinfo(dynent *d);
+extern void disconnect(int onlyclean = 0, int async = 0);
+extern bool multiplayer();
