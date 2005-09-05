@@ -546,3 +546,32 @@ void moveplayer(dynent *pl, int moveres, bool local)
     if(pl->o.z<0  && pl->state != CS_DEAD) worldhurts(pl, 400);
 };
 
+bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
+{
+    vec v = to, w = d->o, *p; 
+    v.sub(from);
+    w.sub(from);
+    float c1 = w.dot(v);
+
+    if(c1<=0) p = &from;
+    else
+    {
+        float c2 = v.dot(v);
+        if(c2<=c1) p = &to;
+        else
+        {
+            float f = c1/c2;
+            v.mul(f);
+            v.add(from);
+            p = &v;
+        };
+    };
+
+    return p->x <= d->o.x+d->radius
+        && p->x >= d->o.x-d->radius
+        && p->y <= d->o.y+d->radius
+        && p->y >= d->o.y-d->radius
+        && p->z <= d->o.z+d->aboveeye
+        && p->z >= d->o.z-d->eyeheight;
+};
+

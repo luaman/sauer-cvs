@@ -90,6 +90,7 @@ extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
 extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
+extern bool intersect(dynent *d, vec &from, vec &to);
 
 // sound
 extern void playsound(int n, vec *loc = 0);

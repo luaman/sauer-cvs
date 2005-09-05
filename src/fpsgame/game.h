@@ -31,6 +31,8 @@ struct fpsentity : extentity
 };
 
 enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_FIREBALL, GUN_ICEBALL, GUN_SLIMEBALL, GUN_BITE, GUN_PISTOL, NUMGUNS };
+enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
+enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  // monster states
 
 struct fpsent : dynent
 {
@@ -42,13 +44,31 @@ struct fpsent : dynent
     int lastaction, lastattackgun, lastmove;
     bool attacking;
     int ammo[NUMGUNS];
+    
     int mtype;                          // see monster.cpp
     fpsent *enemy;                      // monster wants to kill this entity
     float targetyaw;                    // monster wants to look in this direction
     int trigger;                        // millis at which transition to another monsterstate takes place
     vec attacktarget;                   // delayed attacks
     int anger;                          // how many times already hit by fellow monster
+    
     string name, team;
+    
+    fpsent() : weight(100), plag(0), ping(0), lastupdate(lastmillis), lifesequence(0),
+               enemy(NULL) { name[0] = team[0] = 0; respawn(); };
+    
+    void respawn()
+    {
+        reset();
+        health = 100;
+        armour = 0;
+        armourtype = A_BLUE;
+        quadmillis = gunwait = lastmove = lastaction = 0;
+        lastattackgun = gunselect = GUN_PISTOL;
+        attacking = false; 
+        loopi(NUMGUNS) ammo[i] = 0;
+        ammo[GUN_FIST] = 1;
+    };
 };
 
 extern int gamemode, nextmode;
@@ -91,9 +111,6 @@ enum
     S_JUMPPAD, S_PISTOL,
 };
 
-enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
-
-enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  // monster states
 
 // network messages codes, c2s, c2c, s2c
 enum

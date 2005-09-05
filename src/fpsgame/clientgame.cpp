@@ -31,33 +31,9 @@ void resetgamestate()
     projreset();
 };
 
-void resetmovement(dynent *d)
+fpsent *spawnstate(fpsent *d)              // reset player state not persistent accross spawns
 {
-    d->k_left = false;
-    d->k_right = false;
-    d->k_up = false;
-    d->k_down = false;
-    d->jumpnext = false;
-    d->strafe = 0;
-    d->move = 0;
-};
-
-void spawnstate(fpsent *d)              // reset player state not persistent accross spawns
-{
-    resetmovement(d);
-    d->vel.x = d->vel.y = d->vel.z = 0;
-    d->timeinair = 0;
-    d->onfloor = 0.0f;
-    d->health = 100;
-    d->armour = 0;
-    d->armourtype = A_BLUE;
-    d->quadmillis = 0;
-    d->lastattackgun = d->gunselect = GUN_PISTOL;
-    d->gunwait = 0;
-    d->attacking = false;
-    d->lastaction = 0;
-    loopi(NUMGUNS) d->ammo[i] = 0;
-    d->ammo[GUN_FIST] = 1;
+    d->respawn();
     if(m_noitems)
     {
         d->gunselect = GUN_RIFLE;
@@ -96,43 +72,18 @@ void spawnstate(fpsent *d)              // reset player state not persistent acc
     {
         d->ammo[GUN_PISTOL] = m_sp ? 50 : 20;
     };
+    return d;
 };
 
 fpsent *newdynent()                 // create a new blank player or monster
 {
-    fpsent *d = new fpsent();
-    d->o.x = 0;
-    d->o.y = 0;
-    d->o.z = 0;
-	d->bob = 0;
-    d->yaw = 270;
-    d->pitch = 0;
-    d->roll = 0;
-    d->maxspeed = 100;
-    d->inwater = false;
-    d->radius = 4.1f;
-    d->eyeheight = 14;
-    d->aboveeye = 1;
-    d->weight = 100;
-    d->frags = 0;
-    d->plag = 0;
-    d->ping = 0;
-    d->state = CS_ALIVE;
-    d->lastupdate = lastmillis;
-    d->enemy = NULL;
-    d->monsterstate = 0;
-    d->name[0] = d->team[0] = 0;
-    d->blocked = false;
-    d->lifesequence = 0;
-    d->lastanimswitchtime = -1;
-    spawnstate(d);
-    return d;
+    return spawnstate(new fpsent());
 };
 
 void respawnself()
 {
-        spawnplayer(player1);
-        showscores(false);
+    spawnplayer(player1);
+    showscores(false);
 };
 
 void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)

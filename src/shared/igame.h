@@ -10,7 +10,6 @@ extern void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel
 extern dynent *getplayer();
 extern char *getclientmap();
 extern void resetgamestate();
-extern void resetmovement(dynent *d);
 extern void worldhurts(dynent *d, int damage);
 extern void startmap(char *name);
 extern void gameplayhud();
