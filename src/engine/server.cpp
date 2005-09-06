@@ -111,7 +111,7 @@ void disconnect_client(int n, char *reason)
     printf("disconnecting client (%s) [%s]\n", clients[n]->hostname, reason);
     enet_peer_disconnect(clients[n]->peer);
     clients[n]->type = ST_EMPTY;
-    clientdisconnect(n);
+    sv->clientdisconnect(n);
 };
 
 string copyname;
@@ -155,7 +155,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
     uchar *end = packet->data+packet->dataLength;
     uchar *p = packet->data+2;
 
-    if(!parsepacket(sender, p, end)) return;
+    if(!sv->parsepacket(sender, p, end)) return;
 
     if(p>end) { disconnect_client(sender, "end of packet"); return; };
     multicast(packet, sender);
@@ -167,7 +167,7 @@ void send_welcome(int n)
     uchar *start = packet->data;
     uchar *p = start+2;
     
-    welcomepacket(p, n);
+    sv->welcomepacket(p, n);
     
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
@@ -195,7 +195,7 @@ client *addclient()
 {
     loopv(clients) if(clients[i]->type==ST_EMPTY) return clients[i];
     client *c = new client;
-    c->info = newinfo();
+    c->info = sv->newinfo();
     return clients.add(c);
 };
 
@@ -217,7 +217,7 @@ void sendpongs()        // reply all server info requests
         len = enet_socket_receive(pongsock, &addr, &buf, 1);
         if(len < 0) return;
         p = &pong[len];
-        serverinforeply(p);
+        sv->serverinforeply(p);
         buf.dataLength = p - pong;
         enet_socket_send(pongsock, &addr, &buf, 1);
     };
@@ -281,7 +281,7 @@ ENetBuffer masterb;
 void updatemasterserver()
 {
     sprintf_sd(path)("%sregister.do?action=add", masterpath);
-    httpgetsend(masterserver, masterbase, path, servername(), servername());
+    httpgetsend(masterserver, masterbase, path, sv->servername(), sv->servername());
     masterrep[0] = 0;
     masterb.data = masterrep;
     masterb.dataLength = MAXTRANS-1;
@@ -297,7 +297,7 @@ void checkmasterreply()
 uchar *retrieveservers(uchar *buf, int buflen)
 {
     sprintf_sd(path)("%sretrieve.do?item=list", masterpath);
-    httpgetsend(masterserver, masterbase, path, servername(), servername());
+    httpgetsend(masterserver, masterbase, path, sv->servername(), sv->servername());
     ENetBuffer eb;
     buf[0] = 0;
     eb.data = buf;
@@ -308,7 +308,7 @@ uchar *retrieveservers(uchar *buf, int buflen)
 
 void serverslice(int seconds, unsigned int timeout)   // main server update, called from main loop in sp, or from below in dedicated server
 {
-    serverupdate(seconds);
+    sv->serverupdate(seconds);
 
     if(!listenserv) return;     // below is network only
 
@@ -359,7 +359,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             int num = ((client *)event.peer->data)->num;
             printf("disconnected client (%s)\n", clients[num]->hostname);
             clients[num]->type = ST_EMPTY;
-            clientdisconnect(num);
+            sv->clientdisconnect(num);
             event.peer->data = NULL;
             break;
     };
@@ -386,7 +386,7 @@ void localconnect()
 
 void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char *master)
 {
-    if(!master) master = getdefaultmaster();
+    if(!master) master = sv->getdefaultmaster();
     char *mid = strstr(master, "/");
     if(!mid) mid = master;
     strcpy_s(masterpath, mid);
@@ -394,17 +394,17 @@ void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char 
     
     if(listenserv = l)
     {
-        ENetAddress address = { ENET_HOST_ANY, serverport() };
+        ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
         if(*ip && enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
         serverhost = enet_host_create(&address, MAXCLIENTS, 0, uprate);
         if(!serverhost) fatal("could not create server host\n");
         loopi(MAXCLIENTS) serverhost->peers[i].data = (void *)-1;
-        address.port = serverinfoport();
+        address.port = sv->serverinfoport();
         pongsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, &address);
         if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
     };
 
-    serverinit(sdesc);
+    sv->serverinit(sdesc);
 
     if(dedicated)       // do not return, this becomes main loop
     {

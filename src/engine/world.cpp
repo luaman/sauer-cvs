@@ -44,7 +44,7 @@ void delent()
     int e = closestent();
     if(e<0) { conoutf("no more entities"); return; };
     int t = ents[e]->type;
-    conoutf("%s entity deleted", entname(t));
+    conoutf("%s entity deleted", et->entname(t));
     ents[e]->type = ET_EMPTY;
     //addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
     ///if(t==LIGHT) calclight();
@@ -52,7 +52,7 @@ void delent()
 
 int findtype(char *what)
 {
-    for(int i = 0; *entname(i); i++) if(strcmp(what, entname(i))==0) return i;
+    for(int i = 0; *et->entname(i); i++) if(strcmp(what, et->entname(i))==0) return i;
     conoutf("unknown entity type \"%s\"", what);
     return ET_EMPTY;
 }
@@ -135,7 +135,7 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
 {
     if(noedit()) return;
     int type = findtype(what);
-    extentity *e = newentity(player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
+    extentity *e = et->newentity(player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
     if(entdrop) dropentity(*e);
     //addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
     ents.add(e);

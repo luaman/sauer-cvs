@@ -39,7 +39,7 @@ int resolverloop(void * data)
         rt->query = resolverqueries.pop();
         rt->starttime = lastmillis;
         SDL_UnlockMutex(resolvermutex);
-        ENetAddress address = { ENET_HOST_ANY, serverinfoport() };
+        ENetAddress address = { ENET_HOST_ANY, sv->serverinfoport() };
         enet_address_set_host(&address, rt->query);
         SDL_LockMutex(resolvermutex);
         resolverresult &rr = resolverresults.add();
@@ -157,7 +157,7 @@ void addserver(char *servername)
     si.map[0] = 0;
     si.sdesc[0] = 0;
     si.address.host = ENET_HOST_ANY;
-    si.address.port = serverinfoport();
+    si.address.port = sv->serverinfoport();
 };
 
 void pingservers()
@@ -181,7 +181,7 @@ void pingservers()
 void checkresolver()
 {
     char *name = NULL;
-    ENetAddress addr = { ENET_HOST_ANY, serverinfoport() };
+    ENetAddress addr = { ENET_HOST_ANY, sv->serverinfoport() };
     while(resolvercheck(&name, &addr))
     {
         if(addr.host == ENET_HOST_ANY) continue;
@@ -248,7 +248,7 @@ void refreshservers()
         serverinfo &si = servers[i];
         if(si.address.host != ENET_HOST_ANY && si.ping != 999)
         {
-            serverinfostr(si.full, si.name, si.sdesc, si.map, si.ping, si.attr);
+            sv->serverinfostr(si.full, si.name, si.sdesc, si.map, si.ping, si.attr);
         }
         else
         {

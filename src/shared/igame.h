@@ -1,60 +1,68 @@
 // the interface the engine uses to run the gameplay module
 
+struct icliententities
+{
+    virtual char *entname(int i) = 0;
+    virtual void writeent(entity &e) = 0;
+    virtual void readent(entity &e) = 0;
+    virtual extentity *newentity(vec &o, int type, int v1, int v2, int v3, int v4) = 0;
+    virtual extentity *newentity() = 0;
+};
 
-// clientgame
-extern void mousemove(int dx, int dy);
-extern void updateworld(vec &pos, int curtime);
-extern void changemap(char *name);
-extern void initclient();
-extern void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel);
-extern char *getclientmap();
-extern void resetgamestate();
-extern void worldhurts(dynent *d, int damage);
-extern void startmap(char *name);
-extern void gameplayhud();
-extern void entinmap(dynent *d, bool froment = true);
-extern void drawhudgun(float fovy, float aspect, int farplane);
-extern bool camerafixed();
-extern bool canjump();
-extern void doattack(bool on);
-extern char *gamepointat(vec &pos);
-extern dynent *iterdynents(int i);
+struct iclientcom
+{
+    virtual void gamedisconnect() = 0;
+    virtual void parsepacketclient(uchar *end, uchar *p, int &clientnum) = 0;
+    virtual void sendpacketclient(uchar *&p, bool &reliable, int clientnum, dynent *d) = 0;
+    virtual void gameconnect(bool _remote) = 0;
+    virtual bool allowedittoggle() = 0;
+    virtual void writeclientinfo(FILE *f) = 0;
+    virtual void toserver(char *text) = 0;
+    virtual void changemap(char *name) = 0;
+};
 
-// clientextras
-extern void renderscores();
-extern void rendergame();
+struct igameclient
+{
+    virtual icliententities *getents() = 0;
+    virtual iclientcom *getcom() = 0;
 
-// entities
-extern void renderents();
-extern void renderentities();
-extern void updateentlighting();
-extern char *entname(int i);
-extern void writeent(entity &e);
-extern void readent(entity &e);
-extern extentity *newentity(vec &o, int type, int v1, int v2, int v3, int v4);
-extern extentity *newentity();
+    virtual void updateworld(vec &pos, int curtime, int lm) = 0;
+    virtual void initclient() = 0;
+    virtual void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel) = 0;
+    virtual char *getclientmap() = 0;
+    virtual void resetgamestate() = 0;
+    virtual void worldhurts(dynent *d, int damage) = 0;
+    virtual void startmap(char *name) = 0;
+    virtual void gameplayhud() = 0;
+    virtual void entinmap(dynent *d, bool froment) = 0;
+    virtual void drawhudgun(float fovy, float aspect, int farplane) = 0;
+    virtual bool camerafixed() = 0;
+    virtual bool canjump() = 0;
+    virtual void doattack(bool on) = 0;
+    virtual char *gamepointat(vec &pos) = 0;
+    virtual dynent *iterdynents(int i) = 0;
+    virtual void renderscores() = 0;
+    virtual void rendergame() = 0;
+}; 
+ 
+struct igameserver
+{
+    virtual void *newinfo() = 0;
+    virtual void serverinit(char *sdesc) = 0;
+    virtual void clientdisconnect(int n) = 0;
+    virtual char *servername() = 0;
+    virtual bool parsepacket(int &sender, uchar *&p, uchar *end) = 0;
+    virtual void welcomepacket(uchar *&p, int n) = 0;
+    virtual void serverinforeply(uchar *&p) = 0;
+    virtual void serverupdate(int seconds) = 0;
+    virtual void serverinfostr(char *buf, char *name, char *desc, char *map, int ping, vector<int> &attr) = 0;
+    virtual int serverinfoport() = 0;
+    virtual int serverport() = 0;
+    virtual char *getdefaultmaster() = 0;
+};
 
-
-// fpsserver
-extern void *newinfo();
-extern void serverinit(char *sdesc);
-extern void clientdisconnect(int n);
-extern char *servername();
-extern bool parsepacket(int &sender, uchar *&p, uchar *end);
-extern void welcomepacket(uchar *&p, int n);
-extern void serverinforeply(uchar *&p);
-extern void serverupdate(int seconds);
-extern void localconnect();
-extern void serverinfostr(char *buf, char *name, char *desc, char *map, int ping, vector<int> &attr);
-extern int serverinfoport();
-extern int serverport();
-extern char *getdefaultmaster();
-
-// fpsclient
-extern void gamedisconnect();
-extern void parsepacketclient(uchar *end, uchar *p, int &clientnum);
-extern void sendpacketclient(uchar *&p, bool &reliable, int clientnum, dynent *d);
-extern void gameconnect(bool _remote);
-extern bool allowedittoggle();
-extern void writeclientinfo(FILE *f);
-extern void toserver(char *text);
+struct igame
+{
+    virtual igameclient *newclient() = 0;
+    virtual igameserver *newserver() = 0;
+};

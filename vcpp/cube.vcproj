@@ -1069,109 +1069,37 @@
 			Name="Game"
 			Filter="">
 			<File
-				RelativePath="..\src\fpsgame\clientextras.cpp">
+				RelativePath="..\src\fpsgame\client.h">
+			</File>
+			<File
+				RelativePath="..\src\fpsgame\entities.h">
+			</File>
+			<File
+				RelativePath="..\src\fpsgame\fps.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
 						PrecompiledHeaderThrough="pch.h"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
 						PrecompiledHeaderThrough="pch.h"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Profile|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
 						PrecompiledHeaderThrough="pch.h"/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\clientgame.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
+				RelativePath="..\src\fpsgame\fpsrender.h">
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\entities.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\src\fpsgame\fpsclient.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\src\fpsgame\fpsserver.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
+				RelativePath="..\src\fpsgame\fpsserver.h">
 			</File>
 			<File
 				RelativePath="..\src\fpsgame\game.h">
@@ -1180,28 +1108,10 @@
 				RelativePath="..\src\fpsgame\monster.h">
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\savegame.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="pch.h"/>
-				</FileConfiguration>
+				RelativePath="..\src\fpsgame\savegame.h">
+			</File>
+			<File
+				RelativePath="..\src\fpsgame\scoreboard.h">
 			</File>
 			<File
 				RelativePath="..\src\fpsgame\weapon.h">

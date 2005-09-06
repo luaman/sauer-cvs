@@ -1,8 +1,4 @@
 
-#include "cube.h"
-#include "iengine.h"
-#include "igame.h"
-
 #define DMF 16.0f
 #define DVF 100.0f
 #define di(f) ((int)(f*DMF))
@@ -47,7 +43,7 @@ struct fpsent : dynent
     
     string name, team;
     
-    fpsent() : weight(100), lastupdate(lastmillis), plag(0), ping(0), lifesequence(0)
+    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0)
                { name[0] = team[0] = 0; respawn(); };
     
     void respawn()
@@ -112,61 +108,10 @@ enum
     SV_MAPCHANGE, SV_ITEMSPAWN, SV_ITEMPICKUP, SV_DENIED,
     SV_PING, SV_PONG, SV_CLIENTPING, SV_GAMEMODE,
     SV_TIMEUP, SV_EDITENT, SV_MAPRELOAD, SV_ITEMACC,
-    SV_SENDMAP, SV_RECVMAP, SV_SERVMSG, SV_ITEMLIST,
+    SV_SERVMSG, SV_ITEMLIST,
 };
 
 #define CUBE_SERVER_PORT 28785
 #define CUBE_SERVINFO_PORT 28786
 #define PROTOCOL_VERSION 242            // bump when protocol changes
 
-
-// client
-extern void addmsg(int rel, int num, int type, ...);
-extern void sendpackettoserv(void *packet);
-extern void gets2c();
-extern void otherplayers();
-extern void neterr(char *s);
-extern void initclientnet();
-extern bool netmapstart();
-extern int getclientnum();
-extern void changemapserv(char *name, int mode);
-
-
-// clientgame
-extern void spawnplayer(fpsent *d);
-extern void selfdamage(int damage, int actor, fpsent *act);
-extern void zapdynent(fpsent *&);
-extern fpsent *getclient(int cn);
-extern void timeupdate(int timeremain);
-extern void playsoundc(int n);
-extern const char *modestr(int n);
-
-// clientextras
-extern void renderclient(fpsent *d, bool team, char *mdlname, float scale, bool hellpig = false);
-void showscores(bool on);
-
-// savegame
-extern void save_world(char *fname);
-extern void load_world(char *mname);
-extern void loadgamerest();
-
-// entities
-extern void putitems(uchar *&p);
-extern void checkquad(int time);
-extern void checkitems();
-extern void realpickup(int n, fpsent *d);
-extern void resetspawns();
-extern void setspawn(int i, bool on);
-extern void teleport(int n, fpsent *d);
-extern void baseammo(int gun);
-
-// fpsserver
-extern void restoreserverstate(vector<extentity *> &ents);
-extern void startintermission();
-extern char msgsizelookup(int msg);
-
-// fpsclient
-extern void mapstart();
-
-#include "weapon.h"
-#include "monster.h"

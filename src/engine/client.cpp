@@ -39,7 +39,7 @@ void connects(char *servername)
     addserver(servername);
 
     conoutf("attempting to connect to %s", servername);
-    ENetAddress address = { ENET_HOST_ANY, serverport() };
+    ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
     if(enet_address_set_host(&address, servername) < 0)
     {
         conoutf("could not resolve server %s", servername);
@@ -87,11 +87,11 @@ void disconnect(int onlyclean, int async)
     disconnecting = 0;
     clientnum = -1;
     
-    gamedisconnect();
+    cc->gamedisconnect();
     
     localdisconnect();
 
-    if(!onlyclean) { localconnect(); gameconnect(false); };
+    if(!onlyclean) { localconnect(); cc->gameconnect(false); };
 };
 
 void trydisconnect()
@@ -138,7 +138,7 @@ void c2sinfo(dynent *d)                     // send update to the server
     uchar *start = packet->data;
     uchar *p = start+2;
     bool reliable = false;
-    sendpacketclient(p, reliable, clientnum, d);
+    cc->sendpacketclient(p, reliable, clientnum, d);
     if(reliable) packet->flags = ENET_PACKET_FLAG_RELIABLE;
     if(packet)
     {
@@ -158,7 +158,7 @@ void neterr(char *s)
 void localservertoclient(uchar *buf, int len)   // processes any updates from the server
 {
     if(ENET_NET_TO_HOST_16(*(ushort *)buf)!=len) neterr("packet length");
-    parsepacketclient(buf+len, buf+2, clientnum);
+    cc->parsepacketclient(buf+len, buf+2, clientnum);
 };
 
 void gets2c()           // get updates from the server
@@ -184,7 +184,7 @@ void gets2c()           // get updates from the server
             conoutf("connected to server");
             connecting = 0;
             throttle();
-            gameconnect(true);
+            cc->gameconnect(true);
             break;
          
         case ENET_EVENT_TYPE_RECEIVE:

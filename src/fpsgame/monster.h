@@ -1,9 +1,10 @@
 // monster.cpp: implements AI for single player monsters, currently client only
 
-extern weaponstate ws;
-
 struct monsterset
 {
+    fpsclient &cl;
+    vector<extentity *> &ents;
+    
     static const int TOTMFREQ = 13;
     static const int NUMMONSTERTYPES = 8;
 
@@ -16,6 +17,8 @@ struct monsterset
     
     struct monster : fpsent
     {
+        fpsclient &cl;
+
         monstertype *monstertypes;
         monsterset *ms;
         
@@ -26,7 +29,7 @@ struct monsterset
         vec attacktarget;                   // delayed attacks
         int anger;                          // how many times already hit by fellow monster
     
-        monster(int _type, int _yaw, int _state, int _trigger, int _move, monsterset *_ms) : monstertypes(_ms->monstertypes), ms(_ms)
+        monster(int _type, int _yaw, int _state, int _trigger, int _move, monsterset *_ms) : cl(_ms->cl), monstertypes(_ms->monstertypes), ms(_ms)
         {
             respawn();
             if(_type>=NUMMONSTERTYPES)
@@ -42,11 +45,11 @@ struct monsterset
             aboveeye *= t->bscale/10.0f;
             weight = t->weight;
             monsterstate = _state;
-            if(state!=M_SLEEP) spawnplayer(this);
-            trigger = lastmillis+_trigger;
+            if(state!=M_SLEEP) cl.spawnplayer(this);
+            trigger = cl.lastmillis+_trigger;
             targetyaw = yaw = (float)_yaw;
             move = _move;
-            enemy = player1;
+            enemy = cl.player1;
             gunselect = t->gun;
             maxspeed = (float)t->speed*4;
             health = t->health;
@@ -83,7 +86,7 @@ struct monsterset
             monsterstate = _state;
             move = _moving;
             n = n*130/100;
-            trigger = lastmillis+n-ms->skill()*(n/16)+rnd(r+1);
+            trigger = cl.lastmillis+n-ms->skill()*(n/16)+rnd(r+1);
         };
 
         void normalise(float angle)
@@ -94,7 +97,7 @@ struct monsterset
 
         void monsteraction(int curtime)           // main AI thinking routine, called every frame for every monster
         {
-            if(enemy->state==CS_DEAD) { enemy = player1; anger = 0; };
+            if(enemy->state==CS_DEAD) { enemy = cl.player1; anger = 0; };
             normalise(targetyaw);
             if(targetyaw>yaw)             // slowly turn monster towards his target
             {
@@ -116,7 +119,7 @@ struct monsterset
                 {
                     jumpnext = true;
                 }
-                else if(trigger<lastmillis && (monsterstate!=M_HOME || !rnd(5)))  // search for a way around (common)
+                else if(trigger<cl.lastmillis && (monsterstate!=M_HOME || !rnd(5)))  // search for a way around (common)
                 {
                     targetyaw += 180+rnd(180);                                       // patented "random walk" AI pathfinding (tm) ;)
                     transition(M_SEARCH, 1, 100, 1000);
@@ -130,7 +133,7 @@ struct monsterset
                 case M_PAIN:
                 case M_ATTACKING:
                 case M_SEARCH:
-                    if(trigger<lastmillis) transition(M_HOME, 1, 100, 200);
+                    if(trigger<cl.lastmillis) transition(M_HOME, 1, 100, 200);
                     break;
                     
                 case M_SLEEP:                       // state classic sp monster start in, wait for visual contact
@@ -155,18 +158,18 @@ struct monsterset
                 };
                 
                 case M_AIMING:                      // this state is the delay between wanting to shoot and actually firing
-                    if(trigger<lastmillis)
+                    if(trigger<cl.lastmillis)
                     {
                         lastaction = 0;
                         attacking = true;
-                        ws.shoot(this, attacktarget);
+                        cl.ws.shoot(this, attacktarget);
                         transition(M_ATTACKING, 0, 600, 0);
                     };
                     break;
 
                 case M_HOME:                        // monster has visual contact, heads straight for player and may want to shoot at any time
                     targetyaw = enemyyaw;
-                    if(trigger<lastmillis)
+                    if(trigger<cl.lastmillis)
                     {
                         vec target;
                         if(!enemylos(target))    // no visual contact anymore, let monster get as close as possible then search for player
@@ -214,7 +217,7 @@ struct monsterset
             if((health -= damage)<=0)
             {
                 state = CS_DEAD;
-                lastaction = lastmillis;
+                lastaction = cl.lastmillis;
                 playsound(monstertypes[mtype].diesound, &o);
                 ms->monsterkilled();
             }
@@ -227,7 +230,7 @@ struct monsterset
 
     monstertype *monstertypes;
         
-    monsterset()
+    monsterset(fpsclient &_cl) : cl(_cl), ents(_cl.et.ents)
     {
         static monstertype _monstertypes[NUMMONSTERTYPES] =
         {   
@@ -258,7 +261,7 @@ struct monsterset
         monsters.add(new monster(type, rnd(360), M_SEARCH, 1000, 1, this));
     };
 
-    void monsterclear()     // called after map start of when toggling edit mode to reset/spawn all monsters to initial state
+    void monsterclear(int gamemode)     // called after map start of when toggling edit mode to reset/spawn all monsters to initial state
     {
         loopv(monsters) delete monsters[i]; 
         monsters.setsize(0);
@@ -267,18 +270,18 @@ struct monsterset
         spawnremain = 0;
         if(m_dmsp)
         {
-            nextmonster = mtimestart = lastmillis+10000;
+            nextmonster = mtimestart = cl.lastmillis+10000;
             monstertotal = spawnremain = gamemode<0 ? skill()*10 : 0;
         }
         else if(m_classicsp)
         {
-            mtimestart = lastmillis;
+            mtimestart = cl.lastmillis;
             loopv(ents) if(ents[i]->type==MONSTER)
             {
                 monster *m = new monster(ents[i]->attr2, ents[i]->attr1, M_SLEEP, 100, 0, this);  
                 monsters.add(m);
                 m->o = ents[i]->o;
-                entinmap(m);
+                cl.entinmap(m, true);
                 monstertotal++;
             };
         };
@@ -287,25 +290,26 @@ struct monsterset
     void endsp(bool allkilled)
     {
         conoutf(allkilled ? "you have cleared the map!" : "you reached the exit!");
-        conoutf("score: %d kills in %d seconds", numkilled, (lastmillis-mtimestart)/1000);
+        conoutf("score: %d kills in %d seconds", numkilled, (cl.lastmillis-mtimestart)/1000);
         monstertotal = 0;
-        startintermission();
+        //BREAK
+        //startintermission();
     };
     
     void monsterkilled()
     {
         numkilled++;
-        player1->frags = numkilled;
+        cl.player1->frags = numkilled;
         int remain = monstertotal-numkilled;
         if(remain>0 && remain<=5) conoutf("only %d monster(s) remaining", remain);
     };
 
-    void monsterthink(int curtime)
+    void monsterthink(int curtime, int gamemode)
     {
-        if(m_dmsp && spawnremain && lastmillis>nextmonster)
+        if(m_dmsp && spawnremain && cl.lastmillis>nextmonster)
         {
             if(spawnremain--==monstertotal) conoutf("The invasion has begun!");
-            nextmonster = lastmillis+1000;
+            nextmonster = cl.lastmillis+1000;
             spawnmonster();
         };
         
@@ -319,7 +323,7 @@ struct monsterset
             loopv(monsters)
             if(monsters[i]->state==CS_DEAD)
             {
-                if(lastmillis-monsters[i]->lastaction<2000)
+                if(cl.lastmillis-monsters[i]->lastaction<2000)
                 {
                     monsters[i]->move = 0;
                     moveplayer(monsters[i], 1, false);
@@ -330,7 +334,7 @@ struct monsterset
                 v.z += monsters[i]->eyeheight;
                 float dist = v.dist(monsters[i]->o);
                 v.z -= monsters[i]->eyeheight;
-                if(dist<16) teleport(j, monsters[i]);
+                if(dist<16) cl.et.teleport(j, monsters[i]);
             };
         };
         
@@ -339,6 +343,6 @@ struct monsterset
 
     void monsterrender()
     {
-        loopv(monsters) renderclient(monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->mtype == 5);
+        loopv(monsters) cl.fr.renderclient(cl, monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->mtype == 5);
     };
 };

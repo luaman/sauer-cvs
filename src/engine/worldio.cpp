@@ -34,27 +34,6 @@ void setnames(char *name)
     path(bakname);
 };
 
-// these two are used by getmap/sendmap.. transfers compressed maps directly
-
-void writemap(char *mname, int msize, uchar *mdata)
-{
-    setnames(mname);
-    backup(cgzname, bakname);
-    FILE *f = fopen(cgzname, "wb");
-    if(!f) { conoutf("could not write map to %s", cgzname); return; };
-    fwrite(mdata, 1, msize, f);
-    fclose(f);
-    conoutf("wrote map %s as file %s", mname, cgzname);
-}
-
-uchar *readmap(char *mname, int *msize)
-{
-    setnames(mname);
-    uchar *mdata = (uchar *)loadfile(cgzname, msize);
-    if(!mdata) { conoutf("could not read map %s", cgzname); return NULL; };
-    return mdata;
-}
-
 // save map as .cgz file. uses 2 layers of compression: first does simple run-length
 // encoding and leaves out data for certain kinds of cubes, then zlib removes the
 // last bits of redundancy. Both passes contribute greatly to the miniscule map sizes.
@@ -163,7 +142,7 @@ cube *loadchildren(gzFile f)
 
 void save_world(char *mname)
 {
-    if(!*mname) mname = getclientmap();
+    if(!*mname) mname = cl->getclientmap();
     setnames(mname);
     backup(cgzname, bakname);
     gzFile f = gzopen(cgzname, "wb9");
@@ -183,7 +162,7 @@ void save_world(char *mname)
             endianswap(&tmp.o, sizeof(int), 3);
             endianswap(&tmp.attr1, sizeof(short), 5);
             gzwrite(f, &tmp, sizeof(entity)); 
-            writeent(*ents[i]);
+            et->writeent(*ents[i]);
         };
     };
 
@@ -216,13 +195,13 @@ void load_world(char *mname)        // still supports all map formats that have 
     ents.setsize(0);
     loopi(hdr.numents)
     {
-        extentity &e = *newentity();
+        extentity &e = *et->newentity();
         ents.add(&e);
         gzread(f, &e, sizeof(entity)); 
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
-        readent(e);
+        et->readent(e);
 		if(e.o.x<0 || e.o.x>hdr.worldsize || 
 		   e.o.y<0 || e.o.y>hdr.worldsize ||
 		   e.o.z<0 || e.o.z>hdr.worldsize) 
@@ -262,8 +241,9 @@ void load_world(char *mname)        // still supports all map formats that have 
     execfile(mcfname);
 };
 
-void savecurrentmap() { save_world(getclientmap()); };
+void savecurrentmap() { save_world(cl->getclientmap()); };
 
 COMMANDN(savemap, save_world, ARG_1STR);
 COMMAND(savecurrentmap, ARG_NONE);
+
 

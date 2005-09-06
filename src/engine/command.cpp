@@ -28,7 +28,7 @@ void alias(char *name, char *action)
     if(!b)
     {
         name = newstring(name);
-        ident b(ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action), true);
+        ident b(ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action), true, NULL);
         idents->access(name, &b);
     }
     else
@@ -45,7 +45,7 @@ COMMAND(alias, ARG_2STR);
 int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
 {
     if(!idents) idents = new identtable;
-    ident v(ID_VAR, name, min, max, storage, (void *)fun, 0, 0, persist);
+    ident v(ID_VAR, name, min, max, storage, (void *)fun, 0, 0, persist, NULL);
     idents->access(name, &v);
     return cur;
 };
@@ -63,7 +63,7 @@ char *getalias(char *name)
 bool addcommand(char *name, void (*fun)(), int narg)
 {
     if(!idents) idents = new identtable;
-    ident c(ID_COMMAND, name, 0, 0, 0, (void *)fun, narg, 0, false);
+    ident c(ID_COMMAND, name, 0, 0, 0, (void *)fun, narg, 0, false, NULL);
     idents->access(name, &c);
     return false;
 };
@@ -340,7 +340,7 @@ void writecfg()
     FILE *f = fopen("config.cfg", "w");
     if(!f) return;
     fprintf(f, "// automatically written on exit, do not modify\n// delete this file to have defaults.cfg overwrite these settings\n// modify settings in game, or put settings in autoexec.cfg to override anything\n\n");
-    writeclientinfo(f);
+    cc->writeclientinfo(f);
     fprintf(f, "\n");
     enumerate(idents, ident, id,
         if(id->_type==ID_VAR && id->_persist)

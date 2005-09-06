@@ -14,6 +14,6 @@ extern int islittleendian;
 
 extern bool editmode;
 
-extern int lastmillis;                  // last time
-
 #define sgetstr() { char *t = text; do { *t = getint(p); } while(*t++); }
+
+#define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); }; igameclient *newclient() { return new c(); }; igameserver *newserver() { return new s(); }; } reg_##t

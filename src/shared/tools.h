@@ -54,7 +54,7 @@ typedef unsigned int uint;
 #ifndef __GNUC__
 #pragma warning( 3 : 4189 )
 #pragma warning( 4 : 4244 )
-
+#pragma warning( 4 : 4355 )     // "this" in initializer list
 
 //#pragma comment(linker,"/OPT:NOWIN98")
 #endif

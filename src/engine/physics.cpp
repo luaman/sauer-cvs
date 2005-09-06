@@ -254,7 +254,7 @@ bool collide(dynent *d)
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
     dynent *o;
-    for(int i = 0; o = iterdynents(i); i++)
+    for(int i = 0; o = cl->iterdynents(i); i++)
     {
         if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d!=camera1) && !plcollide(d, o)) return false;
     };
@@ -414,7 +414,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         {
             pl->jumpnext = false;
             pl->vel.z += JUMPVEL*(water ? 2.0f : pl->onfloor); // physics impulse upwards
-            physicstrigger(pl, local, 1, 0);
+            cl->physicstrigger(pl, local, 1, 0);
         };
     }
     else
@@ -502,7 +502,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         loopi(moveres) if(!move(pl, d, push, elasticity)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
-            physicstrigger(pl, local, -1, 0);
+            cl->physicstrigger(pl, local, -1, 0);
         };
     };
 
@@ -527,8 +527,8 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     if(!iscamera)
     {
         const bool inwater = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1).material == MAT_WATER;
-        if(!pl->inwater && inwater) { physicstrigger(pl, local, 0, -1); pl->timeinair = 0; }
-        else if(pl->inwater && !inwater) physicstrigger(pl, local, 0, 1);
+        if(!pl->inwater && inwater) { cl->physicstrigger(pl, local, 0, -1); pl->timeinair = 0; }
+        else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = inwater;
     };
 
@@ -538,7 +538,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 void moveplayer(dynent *pl, int moveres, bool local)
 {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1), false);
-    if(pl->o.z<0  && pl->state != CS_DEAD) worldhurts(pl, 400);
+    if(pl->o.z<0  && pl->state != CS_DEAD) cl->worldhurts(pl, 400);
 };
 
 bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
@@ -577,8 +577,8 @@ dir(forward,  move,    1, k_up,    k_down);
 dir(left,     strafe,  1, k_left,  k_right);
 dir(right,    strafe, -1, k_right, k_left);
 
-ICOMMAND(jump,   IARG_BOTH, { if(editmode) cancelsel(); else if(args && canjump()) player->jumpnext = true; });
-ICOMMAND(attack, IARG_BOTH, { if(editmode) editdrag(args!=NULL); else doattack(args!=NULL); });
+ICOMMAND(jump,   IARG_BOTH, { if(editmode) cancelsel(); else if(args && cl->canjump()) player->jumpnext = true; });
+ICOMMAND(attack, IARG_BOTH, { if(editmode) editdrag(args!=NULL); else cl->doattack(args!=NULL); });
 
 VARP(sensitivity, 0, 10, 1000);
 VARP(sensitivityscale, 1, 1, 100);
@@ -586,7 +586,7 @@ VARP(invmouse, 0, 0, 1);
 
 void mousemove(int dx, int dy)
 {
-    if(camerafixed()) return;
+    if(cl->camerafixed()) return;
     const float SENSF = 33.0f;     // try match quake sens
     player->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
     player->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);

@@ -137,7 +137,7 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     if(e>=0)
     {
         entity &c = *ents[e];
-        sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d)", entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
+        sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d)", et->entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
     };
 };
 
@@ -171,6 +171,7 @@ VARP(crosshairfx, 0, 1, 1);
 void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
 {
     aimat();
+    renderents();
     
     if(editmode && !hidehud)
     {
@@ -211,12 +212,12 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glEnable(GL_TEXTURE_2D);
 
     char *command = getcurcommand();
-    char *playername = gamepointat(worldpos);
+    char *playername = cl->gamepointat(worldpos);
     if(command) draw_textf("> %s_", 20, 1570, command);
     else if(closeent[0] && !hidehud) draw_text(closeent, 20, 1570);
     else if(playername) draw_text(playername, 20, 1570);
 
-    renderscores();
+    cl->renderscores();
     
     if(!hidehud)
     {
@@ -254,7 +255,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             draw_textf("ond:%d va:%d gl:%d lm:%d", FONTH/2, b+FONTH*2, allocnodes*8, allocva, glde, lightmaps.length());
         };
         
-        gameplayhud();
+        cl->gameplayhud();
     };
         
     glDisable(GL_BLEND);

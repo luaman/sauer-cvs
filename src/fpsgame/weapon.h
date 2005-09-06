@@ -2,6 +2,9 @@
 
 struct weaponstate
 {
+    fpsclient &cl;
+    fpsent *player1;
+
     struct guninfo { short sound, attackdelay, damage, projspeed, part, kickamount; char *name; };
 
     static const int MONSTERDAMAGEFACTOR = 4;
@@ -11,7 +14,7 @@ struct weaponstate
 
     guninfo *guns;
     
-    weaponstate()
+    weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
         static guninfo _guns[NUMGUNS] =
         {
@@ -27,29 +30,30 @@ struct weaponstate
             { S_PISTOL,    500,  40, 0,   0,  7, "pistol"         },    
         };
         guns = _guns;
+        
+        CCOMMAND(weaponstate, weapon, 3,
+        {
+            int *ammo = self->player1->ammo;
+            int a = args[0][0] ? atoi(args[0]) : -1;
+            int b = args[1][0] ? atoi(args[1]) : -1;
+            int c = args[2][0] ? atoi(args[2]) : -1;
+            if(a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
+            int s = self->player1->gunselect;
+            if(a>=0 && s!=a && ammo[a]) s = a;
+            else if(b>=0 && s!=b && ammo[b]) s = b;
+            else if(c>=0 && s!=c && ammo[c]) s = c;
+            else if(s!=GUN_CG && ammo[GUN_CG]) s = GUN_CG;
+            else if(s!=GUN_RL && ammo[GUN_RL]) s = GUN_RL;
+            else if(s!=GUN_SG && ammo[GUN_SG]) s = GUN_SG;
+            else if(s!=GUN_RIFLE && ammo[GUN_RIFLE]) s = GUN_RIFLE;
+            else if(s!=GUN_PISTOL && ammo[GUN_PISTOL]) s = GUN_PISTOL;
+            else s = GUN_FIST;
+            if(s!=self->player1->gunselect) self->cl.playsoundc(S_WEAPLOAD);
+            self->player1->gunselect = s;
+        });
     };
     
     int reloadtime(int gun) { return guns[gun].attackdelay; };
-
-    ICOMMAND(weapon, 3,
-    {
-        int a = args[0][0] ? atoi(args[0]) : -1;
-        int b = args[1][0] ? atoi(args[1]) : -1;
-        int c = args[2][0] ? atoi(args[2]) : -1;
-        if(a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
-        int s = player1->gunselect;
-        if(a>=0 && s!=a && player1->ammo[a]) s = a;
-        else if(b>=0 && s!=b && player1->ammo[b]) s = b;
-        else if(c>=0 && s!=c && player1->ammo[c]) s = c;
-        else if(s!=GUN_CG && player1->ammo[GUN_CG]) s = GUN_CG;
-        else if(s!=GUN_RL && player1->ammo[GUN_RL]) s = GUN_RL;
-        else if(s!=GUN_SG && player1->ammo[GUN_SG]) s = GUN_SG;
-        else if(s!=GUN_RIFLE && player1->ammo[GUN_RIFLE]) s = GUN_RIFLE;
-        else if(s!=GUN_PISTOL && player1->ammo[GUN_PISTOL]) s = GUN_PISTOL;
-        else s = GUN_FIST;
-        if(s!=player1->gunselect) playsoundc(S_WEAPLOAD);
-        player1->gunselect = s;
-    });
 
     void createrays(vec &from, vec &to)             // create random spread of rays for the shotgun
     {
@@ -86,10 +90,9 @@ struct weaponstate
 
     void hit(int target, int damage, fpsent *d, fpsent *at)
     {
-        if(d==player1) selfdamage(damage, at==player1 ? -1 : -2, at);
-        //BREAK
-        //else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, at);
-        else { addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); playsound(S_PAIN1+rnd(5), &d->o); };
+        if(d==player1) cl.selfdamage(damage, at==player1 ? -1 : -2, at);
+        else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, at);
+        else { cl.cc.addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); playsound(S_PAIN1+rnd(5), &d->o); };
         particle_splash(3, damage, 1000, d->o);
     };
 
@@ -128,7 +131,7 @@ struct weaponstate
             ///dodynlight(vold, v, 0, 0, p->owner);
             if(!p->local) return;
             fpsent *o;
-            for(int i = 0; o = (fpsent *)iterdynents(i); i++)
+            for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++)
             {
                 if(!o || o==notthis) continue;
                 radialeffect(o, v, i-1, qdam, p->owner);
@@ -163,7 +166,7 @@ struct weaponstate
             if(p->local)
             {
                 fpsent *o;
-                for(int i = 0; o = (fpsent *)iterdynents(i); i++)
+                for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++)
                 {
                     if(!o) continue;
                     if(!o->o.reject(v, 10.0f) && p->owner!=o) projdamage(o, p, v, i-1, qdam);
@@ -246,13 +249,13 @@ struct weaponstate
 
     void shoot(fpsent *d, vec &targ)
     {
-        int attacktime = lastmillis-d->lastaction;
+        int attacktime = cl.lastmillis-d->lastaction;
         if(attacktime<d->gunwait) return;
         d->gunwait = 0;
         if(!d->attacking) return;
-        d->lastaction = lastmillis;
+        d->lastaction = cl.lastmillis;
         d->lastattackgun = d->gunselect;
-        if(!d->ammo[d->gunselect]) { playsoundc(S_NOAMMO); d->gunwait = 250; d->lastattackgun = -1; return; };
+        if(!d->ammo[d->gunselect]) { cl.playsoundc(S_NOAMMO); d->gunwait = 250; d->lastattackgun = -1; return; };
         if(d->gunselect) d->ammo[d->gunselect]--;
         vec from = d->o;
         vec to = targ;
@@ -281,15 +284,15 @@ struct weaponstate
         
         if(d->gunselect==GUN_SG) createrays(from, to);
 
-        if(d->quadmillis && attacktime>200) playsoundc(S_ITEMPUP);
+        if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP);
         shootv(d->gunselect, from, to, d, true);
-        if(!d->monsterstate) addmsg(1, 8, SV_SHOT, d->gunselect, di(from.x), di(from.y), di(from.z), di(to.x), di(to.y), di(to.z));
+        if(!d->monsterstate) cl.cc.addmsg(1, 8, SV_SHOT, d->gunselect, di(from.x), di(from.y), di(from.z), di(to.x), di(to.y), di(to.z));
         d->gunwait = guns[d->gunselect].attackdelay;
 
         if(guns[d->gunselect].projspeed) return;
         
         fpsent *o;
-        for(int i = 0; o = (fpsent *)iterdynents(i); i++)
+        for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++)
         {
             if(!o || o==d) continue;
             raydamage(o, from, to, d, i-1);

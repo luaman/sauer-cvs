@@ -55,6 +55,7 @@ extern void trigger(int tag, int type, bool savegame);
 // main
 extern void fatal(char *s, char *o = "");
 extern void keyrepeat(bool on);
+extern void registergame(char *name, igame *ig);
 
 // rendertext
 extern void draw_text(const char *str, int left, int top);
@@ -77,8 +78,7 @@ extern void particle_trail(int type, int fade, vec &from, vec &to);
 extern void render_particles(int time);
 
 // worldio
-extern void writemap(char *mname, int msize, uchar *mdata);
-extern uchar *readmap(char *mname, int *msize);
+extern void load_world(char *mname);
 
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
@@ -115,3 +115,7 @@ extern bool hasnonlocalclients();
 extern void c2sinfo(dynent *d);
 extern void disconnect(int onlyclean = 0, int async = 0);
 extern bool multiplayer();
+extern void neterr(char *s);
+extern int getclientnum();
+extern void gets2c();
+extern bool netmapstart();

@@ -44,6 +44,7 @@ void fatal(char *s, char *o)    // failure exit
 SDL_Surface *screen = NULL;
 
 int curtime;
+int lastmillis = 0;
 
 dynent *player = NULL;
 
@@ -118,7 +119,20 @@ void estartmap(char *name)
     sleepwait = 0;
     cancelsel();
     pruneundos();
-    startmap(name);
+    cl->startmap(name);
+};
+
+igameclient     *cl = NULL;
+igameserver     *sv = NULL;
+iclientcom      *cc = NULL;
+icliententities *et = NULL;
+
+hashtable<char *, igame *> *gamereg = NULL;
+
+void registergame(char *name, igame *ig)
+{
+    if(!gamereg) gamereg = new hashtable<char *, igame *>;
+    (*gamereg)[name] = ig;
 };
 
 int main(int argc, char **argv)
@@ -130,6 +144,8 @@ int main(int argc, char **argv)
     bool dedicated = false, listen = false;
     int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;
+    char *game = "fps";
+    
     islittleendian = *((char *)&islittleendian);
     
     #define log(s) puts("init: " s)
@@ -148,6 +164,7 @@ int main(int argc, char **argv)
             case 'n': sdesc = &argv[i][2]; break;
             case 'i': ip = &argv[i][2]; break;
             case 'm': master = &argv[i][2]; break;
+            case 'g': game = &argv[i][2]; break;
             default:  conoutf("unknown commandline option");
         }
         else conoutf("unknown commandline argument");
@@ -165,10 +182,19 @@ int main(int argc, char **argv)
 
     if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|par)<0) fatal("Unable to initialize SDL");
 
-    log("net");
+    log("enet");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
 
-    initclient();
+    log("game");
+    igame *ig = (*gamereg)[game];
+    if(!ig) fatal("cannot start game module", game);
+    sv = ig->newserver();
+    cl = ig->newclient();
+    cc = cl->getcom();
+    et = cl->getents();
+    ASSERT(sv && cl && cc && et);
+
+    cl->initclient();
     initserver(dedicated, listen, uprate, sdesc, ip, master);  // never returns if dedicated
       
     log("video: sdl");
@@ -196,7 +222,7 @@ int main(int argc, char **argv)
     if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
    
     log("world");
-    player = iterdynents(0);
+    player = cl->iterdynents(0);
     empty_world(7, true);
 
     log("sound");
@@ -215,8 +241,8 @@ int main(int argc, char **argv)
 
     log("localconnect");
     localconnect();
-    gameconnect(false);
-    changemap("aard3");
+    cc->gameconnect(false);
+    cc->changemap("aard3");
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
@@ -230,7 +256,7 @@ int main(int argc, char **argv)
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
         
-        if(lastmillis) updateworld(worldpos, curtime);
+        if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
         if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
         
         lastmillis += curtime;

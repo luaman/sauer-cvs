@@ -242,7 +242,7 @@ void keypress(int code, bool isdown, int cooked)
                     };
                     histpos = vhistory.length();
                     if(commandbuf[0]=='/') execute(commandbuf, true);
-                    else toserver(commandbuf);
+                    else cc->toserver(commandbuf);
                 };
                 saycommand(NULL);
             }

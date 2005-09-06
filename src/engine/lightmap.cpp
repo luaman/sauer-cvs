@@ -614,6 +614,24 @@ void clearlights()
     loopv(ents) memset(ents[i]->color, 255, 3);
 }
 
+void updateentlighting()
+{
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        if(e.type==ET_LIGHT) continue;
+        float height = 8.0f;
+        if(e.type==ET_MAPMODEL)
+        {
+            mapmodelinfo &mmi = getmminfo(e.attr2);
+            if(&mmi)
+                height = float((mmi.h ? mmi.h : 8.0f) + mmi.zoff + e.attr3);
+        }
+        vec target(e.o.x, e.o.y, e.o.z + height);
+        lightreaching(target, e.color);
+    }
+};
+
 void initlights()
 {
     if(fullbright)
@@ -693,7 +711,7 @@ void dumplms()
                 char *dest = (char *)temp->pixels+3*LM_PACKW*idx;
                 memcpy(dest, (char *)lightmaps[i].data+3*LM_PACKW*(LM_PACKH-1-idx), 3*LM_PACKW);
             };
-            sprintf_sd(buf)("lightmap_%s_%d.bmp", getclientmap(), i);
+            sprintf_sd(buf)("lightmap_%s_%d.bmp", cl->getclientmap(), i);
             SDL_SaveBMP(temp, buf);
         };
         SDL_FreeSurface(temp);

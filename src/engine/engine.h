@@ -39,8 +39,14 @@ extern int curtexnum;
 extern const int cubecoords[8][3];
 extern const ushort fv[6][4];
 extern Texture *crosshair;
-extern int curtime;                     // current frame time
 
+extern int curtime;                     // current frame time
+extern int lastmillis;                  // last time
+
+extern igameclient     *cl;
+extern igameserver     *sv;
+extern iclientcom      *cc;
+extern icliententities *et;
 
 // rendergl
 extern bool hasVBO;
@@ -107,6 +113,7 @@ extern void cleanupserver();
 extern void serverslice(int seconds, unsigned int timeout);
 extern uchar *retrieveservers(uchar *buf, int buflen);
 extern void localclienttoserver(struct _ENetPacket *);
+extern void localconnect();
 
 // client
 extern void localdisconnect();
@@ -121,3 +128,7 @@ extern void writebinds(FILE *f);
 
 // main
 extern void estartmap(char *name);
+
+// physics 
+extern void mousemove(int dx, int dy);
+

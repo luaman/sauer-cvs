@@ -21,7 +21,7 @@ struct extentity : entity                       // part of the entity that doesn
     uchar color[3];
 };
 
-extern vector<extentity *> ents;                // map entities
+//extern vector<extentity *> ents;                // map entities
 
 struct animstate                                // used for animation blending of animated characters
 {

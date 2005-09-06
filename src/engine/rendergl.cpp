@@ -342,13 +342,12 @@ void gl_drawframe(int w, int h, float curfps)
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
-    rendergame();
+    cl->rendergame();
 
-    renderentities();
 
     if(!limitsky) drawskybox(farplane, false);
 
-    if(!isthirdperson()) drawhudgun(fovy, aspect, farplane);
+    if(!isthirdperson()) cl->drawhudgun(fovy, aspect, farplane);
 
     rendermaterials();
 
@@ -356,8 +355,6 @@ void gl_drawframe(int w, int h, float curfps)
 
     renderspheres(curtime);
     render_particles(curtime);
-
-    renderents();
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
