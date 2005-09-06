@@ -34,8 +34,7 @@ CLIENT_OBJS= \
 	fpsgame/fpsclient.o \
 	fpsgame/fpsserver.o \
 	fpsgame/monster.o \
-	fpsgame/savegame.o \
-	fpsgame/weapon.o
+	fpsgame/savegame.o
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \

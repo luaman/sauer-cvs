@@ -45,7 +45,7 @@ COMMAND(alias, ARG_2STR);
 int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
 {
     if(!idents) idents = new identtable;
-    ident v(ID_VAR, name, min, max, storage, fun, 0, 0, persist);
+    ident v(ID_VAR, name, min, max, storage, (void *)fun, 0, 0, persist);
     idents->access(name, &v);
     return cur;
 };
@@ -63,7 +63,7 @@ char *getalias(char *name)
 bool addcommand(char *name, void (*fun)(), int narg)
 {
     if(!idents) idents = new identtable;
-    ident c(ID_COMMAND, name, 0, 0, 0, fun, narg, 0, false);
+    ident c(ID_COMMAND, name, 0, 0, 0, (void *)fun, narg, 0, false);
     idents->access(name, &c);
     return false;
 };
