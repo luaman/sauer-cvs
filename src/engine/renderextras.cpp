@@ -127,16 +127,16 @@ void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
     if(!editmode) return;
-    loopv(ents)
+    loopv(et->getents())
     {
-        entity &e = *ents[i];
+        entity &e = *et->getents()[i];
         if(e.type==ET_EMPTY) continue;
         particle_splash(2, 2, 40, e.o);
     };
     int e = closestent();
     if(e>=0)
     {
-        entity &c = *ents[e];
+        entity &c = *et->getents()[e];
         sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d)", et->entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
     };
 };

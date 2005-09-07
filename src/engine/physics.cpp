@@ -170,9 +170,9 @@ bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 
 bool mmcollide(dynent *d)               // collide with a mapmodel
 {
-    loopv(ents)
+    loopv(et->getents())
     {
-        entity &e = *ents[i];
+        entity &e = *et->getents()[i];
         if(e.type!=ET_MAPMODEL) continue;
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(!&mmi || !mmi.h || !mmi.rad) continue;

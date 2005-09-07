@@ -11,7 +11,7 @@ struct entities : icliententities
 
     entities(fpsclient &_cl) : cl(_cl), triggertime(1)
     {
-        itemstat _itemstats[] =
+        static itemstat _itemstats[] =
         {
             10,    50, S_ITEMAMMO,
             20,   100, S_ITEMAMMO,
@@ -26,6 +26,8 @@ struct entities : icliententities
         itemstats = _itemstats;
     };
 
+    vector<extentity *> &getents() { return ents; };
+    
     void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int numf = 1, int basetime = 0, float speed = 10.0f)
     {
         glColor3ubv(e.color);

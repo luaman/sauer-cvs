@@ -10,9 +10,9 @@ int closestent()        // used for delent and edit mode ent display
     if(!editmode) return -1;
     int best = -1;
     float bdist = 99999;
-    loopv(ents)
+    loopv(et->getents())
     {
-        entity &e = *ents[i];
+        entity &e = *et->getents()[i];
         if(e.type==ET_EMPTY) continue;
         float dist = e.o.dist(player->o);
         if(dist<bdist)
@@ -31,10 +31,10 @@ void entproperty(int prop, int amount)
     if(e<0) return;
     switch(prop)
     {
-        case 0: ents[e]->attr1 += amount; break;
-        case 1: ents[e]->attr2 += amount; break;
-        case 2: ents[e]->attr3 += amount; break;
-        case 3: ents[e]->attr4 += amount; break;
+        case 0: et->getents()[e]->attr1 += amount; break;
+        case 1: et->getents()[e]->attr2 += amount; break;
+        case 2: et->getents()[e]->attr3 += amount; break;
+        case 3: et->getents()[e]->attr4 += amount; break;
     };
 };
 
@@ -43,9 +43,9 @@ void delent()
     if(noedit()) return;
     int e = closestent();
     if(e<0) { conoutf("no more entities"); return; };
-    int t = ents[e]->type;
+    int t = et->getents()[e]->type;
     conoutf("%s entity deleted", et->entname(t));
-    ents[e]->type = ET_EMPTY;
+    et->getents()[e]->type = ET_EMPTY;
     //addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
     ///if(t==LIGHT) calclight();
 };
@@ -128,7 +128,7 @@ void dropent()
     if(noedit()) return;
     int e = closestent();
     if(e<0) return;
-    dropentity(*ents[e]);
+    dropentity(*et->getents()[e]);
 };
 
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)
@@ -137,8 +137,8 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
     int type = findtype(what);
     extentity *e = et->newentity(player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
     if(entdrop) dropentity(*e);
-    //addmsg(1, 10, SV_EDITENT, ents.length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
-    ents.add(e);
+    //addmsg(1, 10, SV_EDITENT, et->getents().length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
+    et->getents().add(e);
 };
 
 COMMAND(newent, ARG_5STR);
@@ -147,9 +147,9 @@ void clearents(char *name)
 {
     int type = findtype(name);
     if(noedit() || multiplayer()) return;
-    loopv(ents)
+    loopv(et->getents())
     {
-        entity &e = *ents[i];
+        entity &e = *et->getents()[i];
         if(e.type==type) e.type = ET_EMPTY;
     };
     ///if(type==LIGHT) calclight();
@@ -159,8 +159,8 @@ COMMAND(clearents, ARG_1STR);
 
 int findentity(int type, int index)
 {
-    for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
-    loopj(index) if(ents[j]->type==type) return j;
+    for(int i = index; i<et->getents().length(); i++) if(et->getents()[i]->type==type) return i;
+    loopj(index) if(et->getents()[j]->type==type) return j;
     return -1;
 };
 
@@ -194,7 +194,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         hdr.lightmaps = 0;
         memset(hdr.reserved, 0, sizeof(hdr.reserved));
         loopi(256) hdr.texlist[i] = i;
-        ents.setsize(0);
+        et->getents().setsize(0);
         freeocta(worldroot);
         worldroot = newcubes(F_EMPTY);
         loopi(4) solidfaces(worldroot[i]);

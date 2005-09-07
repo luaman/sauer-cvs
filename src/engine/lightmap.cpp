@@ -320,9 +320,9 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
 {
     lights1.setsize(0);
     lights2.setsize(0);
-    loopv(ents)
+    loopv(et->getents())
     {
-        entity &light = *ents[i];
+        entity &light = *et->getents()[i];
         if(light.type != ET_LIGHT) continue;
 
         int radius = light.attr1;
@@ -611,14 +611,14 @@ void clearlights()
     uchar bright[3] = {128, 128, 128};
     alloctexids();
     loopi(lightmaps.length() + 1) createtexture(lmtexids[i], 1, 1, bright, false, false);
-    loopv(ents) memset(ents[i]->color, 255, 3);
+    loopv(et->getents()) memset(et->getents()[i]->color, 255, 3);
 }
 
 void updateentlighting()
 {
-    loopv(ents)
+    loopv(et->getents())
     {
-        extentity &e = *ents[i];
+        extentity &e = *et->getents()[i];
         if(e.type==ET_LIGHT) continue;
         float height = 8.0f;
         if(e.type==ET_MAPMODEL)
@@ -657,9 +657,9 @@ void lightreaching(const vec &target, uchar color[3])
     }
 
     uint r = 0, g = 0, b = 0;
-    loopv(ents)
+    loopv(et->getents())
     {
-        entity &e = *ents[i];
+        entity &e = *et->getents()[i];
         if(e.type != ET_LIGHT)
             continue;
     

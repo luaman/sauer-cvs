@@ -177,7 +177,7 @@ void loadsky(char *basename)
 {
     static string lastsky = "";
     if(strcmp(lastsky, basename)==0) return;
-    char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
+    static char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
     loopi(6)
     {
         sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);

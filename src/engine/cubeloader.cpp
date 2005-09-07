@@ -53,7 +53,7 @@ struct cubeloader
     {
 	    if(ce.type==ET_MAPMODEL) return;	// FIXME
         extentity &e = *et->newentity();
-        ents.add(&e);
+        et->getents().add(&e);
 	    e.type = ce.type;
 	    e.spawned = false;
 	    e.o = vec(ce.x*4+hdr.worldsize/4, ce.y*4+hdr.worldsize/4, ce.z*4+hdr.worldsize/2);
@@ -297,7 +297,7 @@ struct cubeloader
 	    create_cubes();
 	    extern void remop();
 	    remop();
-	    loopv(ents) if(ents[i]->type!=ET_LIGHT) dropenttofloor(ents[i]);
+	    loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
         conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
         estartmap(pakname);
 	    string cfgname;

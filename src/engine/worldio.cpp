@@ -149,20 +149,20 @@ void save_world(char *mname)
     if(!f) { conoutf("could not write map to %s", cgzname); return; };
     hdr.version = MAPVERSION;
     hdr.numents = 0;
-    loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
+    loopv(et->getents()) if(et->getents()[i]->type!=ET_EMPTY) hdr.numents++;
     hdr.lightmaps = lightmaps.length();
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
-    loopv(ents)
+    loopv(et->getents())
     {
-        if(ents[i]->type!=ET_EMPTY)
+        if(et->getents()[i]->type!=ET_EMPTY)
         {
-            entity tmp = *ents[i];
+            entity tmp = *et->getents()[i];
             endianswap(&tmp.o, sizeof(int), 3);
             endianswap(&tmp.attr1, sizeof(short), 5);
             gzwrite(f, &tmp, sizeof(entity)); 
-            et->writeent(*ents[i]);
+            et->writeent(*et->getents()[i]);
         };
     };
 
@@ -192,11 +192,11 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("lightlod", hdr.mapllod);
     setvar("ambient", hdr.ambient);
     setvar("fullbright", 0);
-    ents.setsize(0);
+    et->getents().setsize(0);
     loopi(hdr.numents)
     {
         extentity &e = *et->newentity();
-        ents.add(&e);
+        et->getents().add(&e);
         gzread(f, &e, sizeof(entity)); 
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
@@ -209,7 +209,7 @@ void load_world(char *mname)        // still supports all map formats that have 
 			if(e.type != ET_LIGHT) 
             {
                 conoutf("warning: ent outside of world: enttype[%d] index %d (%f, %f, %f)", e.type, i, e.o.x, e.o.y, e.o.z);
-			    //ents.pop();
+			    //et->getents().pop();
             };
 		};
     };

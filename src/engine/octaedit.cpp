@@ -525,7 +525,7 @@ void entmove(int dir, int dist)
     if(noedit()) return;
     int e = closestent();
     if(e<0||dir<0||dir>2) return;
-    ents[e]->o[dir] += dist;
+    et->getents()[e]->o[dir] += dist;
 }
 
 COMMAND(entmove, ARG_2INT);

@@ -81,7 +81,7 @@ struct gamesaver
         loopv(ents)
         {
             ents[i]->spawned = gzgetc(f)!=0;
-            if(ents[i]->type==CARROT && !ents[i]->spawned) trigger(ents[i]->attr1, ents[i]->attr2, true);
+            if(ents[i]->type==CARROT && !ents[i]->spawned) cl.et.trigger(ents[i]->attr1, ents[i]->attr2, true);
         };
         //BREAK
         //restoreserverstate(ents);

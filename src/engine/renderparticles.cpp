@@ -54,7 +54,7 @@ void render_particles(int time)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
     
-    struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
+    static struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
     {
         { 0.7f, 0.6f, 0.3f, 2,  0, 0.06f }, // yellow: sparks 
         { 0.5f, 0.5f, 0.5f, 20, 2, 0.15f }, // grey:   small smoke

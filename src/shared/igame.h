@@ -7,6 +7,7 @@ struct icliententities
     virtual void readent(entity &e) = 0;
     virtual extentity *newentity(vec &o, int type, int v1, int v2, int v3, int v4) = 0;
     virtual extentity *newentity() = 0;
+    virtual vector<extentity *> &getents() = 0;
 };
 
 struct iclientcom

@@ -15,16 +15,23 @@ aard:
 - all cfg stuff in menu
 - new mapmodels/trees in menu -> new ones from last cube
 - players more visible
-- rocketlauncher too weak | check damage in mp | rl bounce
-- damage & bullets particles more visible | flat particle beams | gib fountains
+- rocketlauncher too weak | check damage in mp | rl bounce | damage numbers
+- MG spread
+- damage & bullets particles more visible | flat particle beams | gib fountains | anything that gives better feedback
 - physics left/right
 - HDR
-- revise health?
+- revise health/armours? can either make armours more effective against certain weapons (feedback?)
+  or do more general properties (do more damage, run faster)
+- GL? / grapple? /
 - mp objectives
+- 2 teams only
+- sound samples for N kills in a row | accuracy stats
 - sword?
 - sounds | matt?
 - fix ssg rays
 - improve on cma render then add to sauer
+
+- fix the two //BREAK
 
 - finish gameplay seperation
 - move some of the gameplay serverside

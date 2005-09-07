@@ -50,7 +50,6 @@ extern void writeservercfg();
 extern void empty_world(int factor, bool force);
 extern int closestent();
 extern int findentity(int type, int index = 0);
-extern void trigger(int tag, int type, bool savegame);
 
 // main
 extern void fatal(char *s, char *o = "");
