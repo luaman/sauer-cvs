@@ -419,10 +419,20 @@ void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char 
 };
 
 #ifdef STANDALONE
+igameserver *sv = NULL;
+hashtable<char *, igame *> *gamereg = NULL;
+
+void registergame(char *name, igame *ig)
+{
+    if(!gamereg) gamereg = new hashtable<char *, igame *>;
+    (*gamereg)[name] = ig;
+};
+
 int main(int argc, char* argv[])
 {
     int uprate = 0;
     char *sdesc = "", *ip = "", *master = NULL;
+    char *game = "fps";
     
     for(int i = 1; i<argc; i++)
     {
@@ -432,11 +442,18 @@ int main(int argc, char* argv[])
             case 'n': sdesc = &argv[i][2]; break;
             case 'i': ip = &argv[i][2]; break;
             case 'm': master = &argv[i][2]; break;
+            case 'g': game = &argv[i][2]; break;
             default: printf("WARNING: unknown commandline option\n");
         };
     };
     
     if(enet_initialize()<0) fatal("Unable to initialise network module");
+
+    igame *ig = (*gamereg)[game];
+    if(!ig) fatal("cannot start game module", game);
+    sv = ig->newserver();
+    ASSERT(sv);
+
     initserver(true, true, uprate, sdesc, ip, master);
     return 0;
 };

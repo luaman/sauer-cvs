@@ -41,8 +41,8 @@ struct fpsclient : igameclient
     clientcom   cc;
 
     fpsclient()
-        : nextmode(0), gamemode(0), spawncycle(-1), fixspawn(2),
-          intermission(false), lastmillis(0), arenarespawnwait(0), arenadetectwait(0),
+        : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
+          arenarespawnwait(0), arenadetectwait(0), spawncycle(-1), fixspawn(2),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), gs(*this), et(*this), cc(*this)
     {

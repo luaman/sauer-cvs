@@ -77,7 +77,7 @@ void screenshot()
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
 
-/* // doesn't work
+#ifndef WIN32
 void fullscreen()
 {
     SDL_WM_ToggleFullScreen(screen);
@@ -96,7 +96,7 @@ void screenres(int w, int h, int bpp = 0)
 
 COMMAND(fullscreen, ARG_NONE);
 COMMAND(screenres, ARG_3INT);
-*/
+#endif
 
 void keyrepeat(bool on)
 {
@@ -282,11 +282,11 @@ int main(int argc, char **argv)
                 case SDL_QUIT:
                     quit();
                     break;
-                /*
+#ifndef WIN32
                 case SDL_VIDEORESIZE:
                     screenres(event.resize.w, event.resize.h);
                     break;
-                */
+#endif
                 case SDL_KEYDOWN: 
                 case SDL_KEYUP: 
                     keypress(event.key.keysym.sym, event.key.state==SDL_PRESSED, event.key.keysym.unicode);

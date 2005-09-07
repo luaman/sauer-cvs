@@ -28,13 +28,7 @@ CLIENT_OBJS= \
 	engine/water.o \
 	engine/world.o \
 	engine/worldio.o \
-	fpsgame/clientextras.o \
-	fpsgame/clientgame.o \
-	fpsgame/entities.o \
-	fpsgame/fpsclient.o \
-	fpsgame/fpsserver.o \
-	fpsgame/monster.o \
-	fpsgame/savegame.o
+	fpsgame/fps.o \
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \
