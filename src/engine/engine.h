@@ -108,12 +108,13 @@ extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 
 // server
-extern void initserver(bool dedicated, bool listen, int uprate, char *sdesc, char *ip, char *master);
+extern void initserver(bool dedicated);
 extern void cleanupserver();
 extern void serverslice(int seconds, unsigned int timeout);
 extern uchar *retrieveservers(uchar *buf, int buflen);
 extern void localclienttoserver(struct _ENetPacket *);
 extern void localconnect();
+extern bool serveroption(char *opt);
 
 // client
 extern void localdisconnect();

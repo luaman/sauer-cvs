@@ -16,6 +16,4 @@ extern bool editmode;
 
 #define sgetstr() { char *t = text; do { *t = getint(p); } while(*t++); }
 
-#define REGISTERCS(t, n, c, s) struct t : igame { t() { registergame(n, this); }; igameclient *newclient() { return c; }; igameserver *newserver() { return s; }; } reg_##t
-#define REGISTERGAME(t, n, c, s) REGISTERCS(t, n, new c(), new s())
-#define REGISTERSERVER(t, n, s) REGISTERCS(t, n, NULL, new s())
+#define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); }; igameclient *newclient() { return c; }; igameserver *newserver() { return s; }; } reg_##t

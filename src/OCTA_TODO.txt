@@ -16,7 +16,7 @@ aard:
 - new mapmodels/trees in menu -> new ones from last cube
 - players more visible
 - rocketlauncher too weak | check damage in mp | rl bounce | damage numbers
-- MG spread
+- MG spread | reduce amount of ammo in boxes | max ammo | respawn rates
 - damage & bullets particles more visible | flat particle beams | gib fountains | anything that gives better feedback
 - physics left/right
 - HDR
@@ -64,6 +64,7 @@ aard:
 - (E) reduce geometry by merging surfaces and lightmaps
 - factor out gamecode
 - shader system
+- (G) make it such that collision uses same quad->2tris subdivision as rendering
 - LOD on VA's
 - render entities at distance as sprites
 - try out hardware occlusion queries before portals

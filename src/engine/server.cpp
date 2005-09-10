@@ -46,7 +46,6 @@ struct client                   // server side version of "dynent" type
 
 vector<client *> clients;
 
-bool listenserv;
 ENetHost * serverhost = NULL;
 size_t bsend = 0, brec = 0;
 int laststatus = 0; 
@@ -300,7 +299,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
 {
     sv->serverupdate(seconds);
 
-    if(!listenserv) return;     // below is network only
+    if(!serverhost) return;     // below is network only
 
     sendpongs();
     
@@ -374,15 +373,48 @@ void localconnect()
     send_welcome(c.num); 
 };
 
-void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char *master)
+hashtable<char *, igame *> *gamereg = NULL;
+
+void registergame(char *name, igame *ig)
 {
+    if(!gamereg) gamereg = new hashtable<char *, igame *>;
+    (*gamereg)[name] = ig;
+};
+
+igameclient     *cl = NULL;
+igameserver     *sv = NULL;
+iclientcom      *cc = NULL;
+icliententities *et = NULL;
+
+void initgame(char *game)
+{
+    igame *ig = (*gamereg)[game];
+    if(!ig) fatal("cannot start game module", game);
+    sv = ig->newserver();
+    cl = ig->newclient();
+    if(cl)
+    {
+        cc = cl->getcom();
+        et = cl->getents();
+        cl->initclient();
+    };
+}
+
+int uprate = 0;
+char *sdesc = "", *ip = "", *master = NULL;
+char *game = "fps";
+
+void initserver(bool dedicated)
+{
+    initgame(game);
+    
     if(!master) master = sv->getdefaultmaster();
     char *mid = strstr(master, "/");
     if(!mid) mid = master;
     strcpy_s(masterpath, mid);
     strn0cpy(masterbase, master, mid-master+1);
     
-    if(listenserv = l)
+    if(dedicated)
     {
         ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
         if(*ip && enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
@@ -408,43 +440,27 @@ void initserver(bool dedicated, bool l, int uprate, char *sdesc, char *ip, char 
     };
 };
 
-#ifdef STANDALONE
-igameserver *sv = NULL;
-hashtable<char *, igame *> *gamereg = NULL;
-
-void registergame(char *name, igame *ig)
+bool serveroption(char *opt)
 {
-    if(!gamereg) gamereg = new hashtable<char *, igame *>;
-    (*gamereg)[name] = ig;
-};
-
-int main(int argc, char* argv[])
-{
-    int uprate = 0;
-    char *sdesc = "", *ip = "", *master = NULL;
-    char *game = "fps";
-    
-    for(int i = 1; i<argc; i++)
+    switch(opt[1])
     {
-        if(argv[i][0]=='-') switch(argv[i][1])
-        {
-            case 'u': uprate = atoi(&argv[i][2]); break;
-            case 'n': sdesc = &argv[i][2]; break;
-            case 'i': ip = &argv[i][2]; break;
-            case 'm': master = &argv[i][2]; break;
-            case 'g': game = &argv[i][2]; break;
-            default: printf("WARNING: unknown commandline option\n");
-        };
+        case 'u': uprate = atoi(opt+2); return true;
+        case 'n': sdesc = opt+2; return true;
+        case 'i': ip = opt+2; return true;
+        case 'm': master = opt+2; return true;
+        case 'g': game = opt+2; return true;
+        default: return false;
     };
     
+};
+
+#ifdef STANDALONE
+igameserver *sv = NULL;
+int main(int argc, char* argv[])
+{   
+    for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) printf("WARNING: unknown commandline option\n");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
-
-    igame *ig = (*gamereg)[game];
-    if(!ig) fatal("cannot start game module", game);
-    sv = ig->newserver();
-    ASSERT(sv);
-
-    initserver(true, true, uprate, sdesc, ip, master);
+    initserver(true);
     return 0;
 };
 #endif

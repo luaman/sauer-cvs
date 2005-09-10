@@ -11,6 +11,8 @@
 
 #include "fpsserver.h"
 
+#ifndef STANDALONE
+
 struct fpsclient : igameclient
 {
     // these define classes local to fpsclient
@@ -473,6 +475,13 @@ struct fpsclient : igameclient
     };
 };
 
-REGISTERGAME(fpsgame, "fps", fpsclient, fpsserver);
+REGISTERGAME(fpsgame, "fps", new fpsclient(), new fpsserver());
+
+#else
+
+REGISTERGAME(fpsgame, "fps", NULL, new fpsserver());
+
+#endif
+
 
 

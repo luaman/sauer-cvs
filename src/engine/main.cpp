@@ -122,29 +122,14 @@ void estartmap(char *name)
     cl->startmap(name);
 };
 
-igameclient     *cl = NULL;
-igameserver     *sv = NULL;
-iclientcom      *cc = NULL;
-icliententities *et = NULL;
-
-hashtable<char *, igame *> *gamereg = NULL;
-
-void registergame(char *name, igame *ig)
-{
-    if(!gamereg) gamereg = new hashtable<char *, igame *>;
-    (*gamereg)[name] = ig;
-};
-
 int main(int argc, char **argv)
 {
     #ifdef WIN32
     //atexit((void (__cdecl *)(void))_CrtDumpMemoryLeaks);
     #endif
 
-    bool dedicated = false, listen = false;
-    int fs = SDL_FULLSCREEN, par = 0, uprate = 0;
-    char *sdesc = "", *ip = "", *master = NULL;
-    char *game = "fps";
+    bool dedicated = false;
+    int fs = SDL_FULLSCREEN, par = 0;
     
     islittleendian = *((char *)&islittleendian);
     
@@ -155,17 +140,11 @@ int main(int argc, char **argv)
     {
         if(argv[i][0]=='-') switch(argv[i][1])
         {
-            case 'd': listen = dedicated = true; break;
-            case 'l': listen = true; break;
+            case 'd': dedicated = true; break;
             case 'w': scr_w = atoi(&argv[i][2]); break;
             case 'h': scr_h = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
-            case 'u': uprate = atoi(&argv[i][2]);  break;
-            case 'n': sdesc = &argv[i][2]; break;
-            case 'i': ip = &argv[i][2]; break;
-            case 'm': master = &argv[i][2]; break;
-            case 'g': game = &argv[i][2]; break;
-            default:  conoutf("unknown commandline option");
+            default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");
         }
         else conoutf("unknown commandline argument");
     };
@@ -185,17 +164,7 @@ int main(int argc, char **argv)
     log("enet");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
 
-    log("game");
-    igame *ig = (*gamereg)[game];
-    if(!ig) fatal("cannot start game module", game);
-    sv = ig->newserver();
-    cl = ig->newclient();
-    cc = cl->getcom();
-    et = cl->getents();
-    ASSERT(sv && cl && cc && et);
-
-    cl->initclient();
-    initserver(dedicated, listen, uprate, sdesc, ip, master);  // never returns if dedicated
+    initserver(dedicated);  // never returns if dedicated
       
     log("video: sdl");
     if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0) fatal("Unable to initialize SDL Video");
