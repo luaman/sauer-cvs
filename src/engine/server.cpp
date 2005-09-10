@@ -455,7 +455,6 @@ bool serveroption(char *opt)
 };
 
 #ifdef STANDALONE
-igameserver *sv = NULL;
 int main(int argc, char* argv[])
 {   
     for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) printf("WARNING: unknown commandline option\n");
