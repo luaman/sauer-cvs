@@ -33,8 +33,8 @@ CLIENT_OBJS= \
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \
 	shared/tools.o \
-	engine/standalone.o \
-	fpsgame/fpsserver.o
+	engine/server-standalone.o \
+	fpsgame/fps-standalone.o
 
 default: all
 
@@ -46,6 +46,12 @@ enet:
 clean:
 	-rm -f $(SERVER_OBJS) $(CLIENT_OBJS) sauer_server sauer_client
 	-make -C ../enet/ clean
+
+engine/server-standalone.o:
+	$(CXX) $(CXXFLAGS) -DSTANDALONE -c -o engine/server-standalone.o engine/server.cpp
+	
+fpsgame/fps-standalone.o:
+	$(CXX) $(CXXFLAGS) -DSTANDALONE -c -o fpsgame/fps-standalone.o fpsgame/fps.cpp
 
 client: $(CLIENT_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
