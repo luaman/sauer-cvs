@@ -82,10 +82,9 @@ void send2(bool rel, int cn, int a, int b)
 {
     ENetPacket *packet = enet_packet_create(NULL, 32, rel ? ENET_PACKET_FLAG_RELIABLE : 0);
     uchar *start = packet->data;
-    uchar *p = start+2;
+    uchar *p = start;
     putint(p, a);
     putint(p, b);
-    *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     if(cn<0) process(packet, -1);
     else send(cn, packet);
@@ -97,10 +96,9 @@ void sendintstr(int i, char *msg)
 {
     ENetPacket *packet = enet_packet_create(NULL, _MAXDEFSTR+10, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
-    uchar *p = start+2;
+    uchar *p = start;
     putint(p, i);
     sendstring(msg, p);
-    *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     multicast(packet, -1);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
@@ -133,27 +131,20 @@ void recvmap(int n, int tag)
     if(!copydata) return;
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS + copysize, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
-    uchar *p = start+2;
+    uchar *p = start;
     putint(p, tag);
     sendstring(copyname, p);
     putint(p, copysize);
     memcpy(p, copydata, copysize);
     p += copysize;
-    *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     send(n, packet);
 }
 
 void process(ENetPacket * packet, int sender)   // sender may be -1
 {
-    if(ENET_NET_TO_HOST_16(*(ushort *)packet->data)!=packet->dataLength)
-    {
-        disconnect_client(sender, "packet length");
-        return;
-    };
-        
     uchar *end = packet->data+packet->dataLength;
-    uchar *p = packet->data+2;
+    uchar *p = packet->data;
 
     if(!sv->parsepacket(sender, p, end)) return;
 
@@ -165,11 +156,10 @@ void send_welcome(int n)
 {
     ENetPacket * packet = enet_packet_create (NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
-    uchar *p = start+2;
+    uchar *p = start;
     
     sv->welcomepacket(p, n);
     
-    *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     send(n, packet);
     if(clients[n]->type == ST_LOCAL)

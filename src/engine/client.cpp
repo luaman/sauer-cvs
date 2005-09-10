@@ -18,7 +18,13 @@ bool multiplayer()
     return clienthost!=NULL;
 };
 
-VARF(rate, 0, 0, 25000, if(clienthost) enet_host_bandwidth_limit (clienthost, rate, rate));
+void setrate(int rate)
+{
+   if(!clienthost || connecting) return;
+   enet_host_bandwidth_limit (clienthost, rate, rate);
+};
+
+VARF(rate, 0, 0, 25000, setrate(rate));
 
 void throttle();
 
@@ -136,13 +142,12 @@ void c2sinfo(dynent *d)                     // send update to the server
     if(lastmillis-lastupdate<33) return;    // don't update faster than 30fps
     ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, 0);
     uchar *start = packet->data;
-    uchar *p = start+2;
+    uchar *p = start;
     bool reliable = false;
     cc->sendpacketclient(p, reliable, clientnum, d);
     if(reliable) packet->flags = ENET_PACKET_FLAG_RELIABLE;
     if(packet)
     {
-        *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
         enet_packet_resize(packet, p-start);
         sendpackettoserv(packet);
     };
@@ -157,8 +162,7 @@ void neterr(char *s)
 
 void localservertoclient(uchar *buf, int len)   // processes any updates from the server
 {
-    if(ENET_NET_TO_HOST_16(*(ushort *)buf)!=len) neterr("packet length");
-    cc->parsepacketclient(buf+len, buf+2, clientnum);
+    cc->parsepacketclient(buf+len, buf, clientnum);
 };
 
 void gets2c()           // get updates from the server
@@ -184,6 +188,7 @@ void gets2c()           // get updates from the server
             conoutf("connected to server");
             connecting = 0;
             throttle();
+            if(rate) setrate(rate);
             cc->gameconnect(true);
             break;
          
