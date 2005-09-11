@@ -1,10 +1,14 @@
 // code for loading, linking and rendering md3 models
 // See http://www.draekko.org/documentation/md3format.html for informations about the md3 format
 
-#include "pch.h"
-#include "engine.h"
+enum // md3 animations
+{
+    BOTH_DEATH1 = 0, BOTH_DEAD1, BOTH_DEATH2, BOTH_DEAD2, BOTH_DEATH3, BOTH_DEAD3,
+    TORSO_GESTURE, TORSO_ATTACK, TORSO_ATTACK2, TORSO_DROP, TORSO_RAISE, TORSO_STAND, TORSO_STAND2,
+    LEGS_WALKCR, LEGS_WALK, LEGS_RUN, LEGS_BACK, LEGS_SWIM, LEGS_JUMP, LEGS_LAND, LEGS_JUMPB, LEGS_LANDB, LEGS_IDLE, LEGS_IDLECR, LEGS_TURN
+};
 
-const int FIRSTMD3 = 20;
+enum { MDL_LOWER = 0, MDL_UPPER, MDL_HEAD };
 
 #define MD3_DEFAULT_SCALE 0.2f
 
@@ -206,7 +210,7 @@ void md3model::render()
     }
     else
     {
-        a = new md3state();
+        a = new md3state;
         a->frm = 0;
     }
     nextfrm = a->frm + 1;
@@ -390,3 +394,31 @@ void rendermd3player(int mdl, dynent *d, int gun)
     };
 };
 
+struct md3 : model
+{
+    string loadname;
+
+    md3(char *_name) { strcpy_s(loadname, _name); };
+    char *name() { return loadname; }; 
+    
+    float boundsphere(int frame, float scale, vec &center) { return 64; };  //FIXME
+    void setskin(int tex) {};  //FIXME
+    bool load() { loadplayermdl(loadname); return false; };  //FIXME error checking etc
+    
+    void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
+    {
+        int gun = 0; // FIXME lets do this later
+        switch(anim)
+        {
+            case ANIM_DEAD: md3setanim(d, BOTH_DEATH1); break;
+            case ANIM_EDIT: md3setanim(d, LEGS_IDLECR); md3setanim(d, TORSO_GESTURE); break;
+            case ANIM_LAG:  md3setanim(d, LEGS_IDLECR); md3setanim(d, TORSO_DROP); break;
+            case ANIM_JUMP: md3setanim(d, LEGS_JUMP); break;
+            case ANIM_IDLE: md3setanim(d, LEGS_IDLE); break;
+            case ANIM_RUN: md3setanim(d, LEGS_RUN); break;
+            case ANIM_ATTACK: md3setanim(d, TORSO_ATTACK2); break;
+            default: md3setanim(d, TORSO_STAND); break;
+        };
+        rendermd3player(0, d, gun);
+    };
+};

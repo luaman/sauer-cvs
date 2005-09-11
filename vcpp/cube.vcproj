@@ -637,6 +637,12 @@
 				Name="render"
 				Filter="">
 				<File
+					RelativePath="..\src\engine\md2.h">
+				</File>
+				<File
+					RelativePath="..\src\engine\md3.h">
+				</File>
+				<File
 					RelativePath="..\src\engine\renderextras.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
@@ -685,26 +691,23 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\rendermd2.cpp">
+					RelativePath="..\src\engine\rendermodel.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
 							PrecompiledHeaderThrough="pch.h"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Debug|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
 							PrecompiledHeaderThrough="pch.h"/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Profile|Win32">
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
 							PrecompiledHeaderThrough="pch.h"/>
 					</FileConfiguration>
 				</File>

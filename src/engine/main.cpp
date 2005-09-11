@@ -251,11 +251,13 @@ int main(int argc, char **argv)
                 case SDL_QUIT:
                     quit();
                     break;
-#ifndef WIN32
+                    
+                #ifndef WIN32
                 case SDL_VIDEORESIZE:
                     screenres(event.resize.w, event.resize.h);
                     break;
-#endif
+                #endif
+                
                 case SDL_KEYDOWN: 
                 case SDL_KEYUP: 
                     keypress(event.key.keysym.sym, event.key.state==SDL_PRESSED, event.key.keysym.unicode);

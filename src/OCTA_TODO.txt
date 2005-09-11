@@ -8,7 +8,7 @@ eihrul:
 - an RGB that is stored as part of the map, and that is set as the color value for all water
 
 aard:
-- cube loader: dropent doesn't work again, ents only available after reload
+- cube loader: dropent doesn't work again, ents only available after reload | import some sample cube maps
 - check connect/disconnect: possible to only half connect, or connect and have a ghost
 - add http://oss.sgi.com/projects/ogl-sample/registry/EXT/wgl_multisample.txt
 - all cfg stuff in menu
@@ -17,6 +17,7 @@ aard:
 - rocketlauncher too weak | check damage in mp | rl bounce | damage numbers
 - MG spread | reduce amount of ammo in boxes | max ammo | respawn rates
 - damage & bullets particles more visible | flat particle beams | gib fountains | anything that gives better feedback
+  long sparks, smoke & dirt pieces on impact
 - physics left/right
 - HDR
 - revise health/armours? can either make armours more effective against certain weapons (feedback?)
@@ -27,8 +28,12 @@ aard:
 - sound samples for N kills in a row | accuracy stats
 - sword?
 - sounds | matt?
+  * impact (diff materials + flesh)
+  * flyby, both instant & projectile
+  * soundspot / moving
 - fix ssg rays
 - improve on cma render then add to sauer
+- slowmo?
 
 - fix the two //BREAK
 

@@ -1,11 +1,6 @@
-// rendermd2.cpp: loader code adapted from a nehe tutorial
+// md2.h: loader code adapted from a nehe tutorial
 
-#include "pch.h"
-#include "engine.h"
-
-VARP(animationinterpolationtime, 0, 150, 1000);
-
-struct md2
+struct md2 : model
 {
     struct md2_header
     {
@@ -61,8 +56,6 @@ struct md2
     char* frames;
     vec **mverts;
     
-    mapmodelinfo mmi;
-    
     char *loadname;
     bool loaded;
     
@@ -76,8 +69,6 @@ struct md2
     
     md2(char *name) : loaded(false), vbufGL(0), vbufi(0)
     {
-        mapmodelinfo _mmi = { 8, 8, 0, "" }; 
-        mmi = _mmi;
         loadname = newstring(name);
     };
 
@@ -92,6 +83,8 @@ struct md2
         DELETEA(vbufi);
         if(hasVBO && vbufGL) pfnglDeleteBuffers(1, &vbufGL);
     };
+    
+    char *name() { return loadname; };
     
     bool load(char* filename)
     {
@@ -205,10 +198,24 @@ struct md2
         pfnglBufferData(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
-    void render(animstate ai, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
+    void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
+        //                      0                   4                   8       10      12     14     16         18       20
+        //                      D    D    D    D'   D    D    D    D'   A   A'  P   P'  I   I' R,  R'  E    L    J   J'   GS  GI S
+        static int _frame[] = { 178, 184, 190, 137, 183, 189, 197, 164, 46, 51, 54, 32, 0,  0, 40, 1,  162, 162, 67, 168, 7,  6, 0, };
+        static int _range[] = { 6,   6,   8,   28,  1,   1,   1,   1,   8,  19, 4,  18, 40, 1, 6,  15, 1,   1,   1,  1,   18, 1, 1, };
+        static int animfr[] = { 2, 6, 8, 10, 12, 14, 16, 17, 18, 20, 21, 22 };
+        int n = animfr[anim];
+        if(!strcmp(mdlname, "monster/hellpig")) { n++; sc *= 32; z -= 7.6f; }
+        else if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
+        animstate ai;
+        ai.frame = _frame[n];
+        ai.range = _range[n];
+        ai.basetime = basetime;
+        ai.speed = speed;
+    
         loopi(ai.range) if(!mverts[ai.frame+i]) scale(ai.frame+i, sc);
-        if(hasVBO && ai.frame==0 && ai.range==1 && !vbufGL) genvar();
+        if(hasVBO && !vbufGL && anim==ANIM_STATIC) genvar();
         
         if(d)
         {
@@ -234,7 +241,7 @@ struct md2
             glAlphaFunc(GL_GREATER, 0.9f);
         };
         
-        if(hasVBO && vbufGL && ai.frame==0 && ai.range==1)
+        if(hasVBO && vbufGL && anim==ANIM_STATIC)
         {
             pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, vbufGL);
             glEnableClientState(GL_VERTEX_ARRAY);
@@ -311,12 +318,12 @@ struct md2
         glPopMatrix();
     };
 
-    void delayedload()
+    bool load()
     { 
         if(!loaded)
         {
             sprintf_sd(name1)("packages/models/%s/tris.md2", loadname);
-            if(!load(path(name1))) fatal("failed to load model: ", name1);
+            if(!load(path(name1))) return false;
             sprintf_sd(name2)("packages/models/%s/skin.jpg", loadname);
             #define ifnload if((skin = textureload(name2, 0, false, true, false))==crosshair)
             ifnload
@@ -341,54 +348,11 @@ struct md2
             };
             loaded = true;
         };
+        return true;
     };
-};
-
-hashtable<char *, md2 *> mdllookup;
-vector<md2 *> mapmodels;
-
-void clear_md2s()
-{
-    mapmodels.setsize(0);
-    enumerate((&mdllookup), md2 *, m, delete *m);
-};
-
-md2 *loadmodel(char *name)
-{
-    md2 **mm = mdllookup.access(name);
-    if(mm) return *mm;
-    md2 *m = new md2(name);
-    mdllookup.access(m->loadname, &m);
-    return m;
-};
-
-void mapmodel(char *rad, char *h, char *zoff, char *name)
-{
-    md2 *m = loadmodel(name);
-    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), m->loadname }; 
-    m->mmi = mmi;
-    mapmodels.add(m);
-};
-
-void mapmodelreset() { mapmodels.setsize(0); };
-
-mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i]->mmi : *(mapmodelinfo *)0; };
-
-COMMAND(mapmodel, ARG_5STR);
-COMMAND(mapmodelreset, ARG_NONE);
-
-void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
-{
-    md2 *m = loadmodel(mdl); 
-    m->delayedload();
-    vec center;
-    float radius = m->boundsphere(frame, scale, center);
-    if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
-    glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : m->skin)->gl);
-    animstate as;
-    as.basetime = basetime;
-    as.frame = frame;
-    as.range = range;
-    as.speed = speed;
-    m->render(as, x, y, z, yaw, pitch, scale, d);
+    
+    void setskin(int tex)
+    {
+        glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : skin)->gl);
+    };
 };

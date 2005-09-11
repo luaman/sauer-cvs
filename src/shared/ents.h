@@ -29,14 +29,7 @@ struct animstate                                // used for animation blending o
     float speed;
 };
 
-enum // md3 animations
-{
-    BOTH_DEATH1 = 0, BOTH_DEAD1, BOTH_DEATH2, BOTH_DEAD2, BOTH_DEATH3, BOTH_DEAD3,
-    TORSO_GESTURE, TORSO_ATTACK, TORSO_ATTACK2, TORSO_DROP, TORSO_RAISE, TORSO_STAND, TORSO_STAND2,
-    LEGS_WALKCR, LEGS_WALK, LEGS_RUN, LEGS_BACK, LEGS_SWIM, LEGS_JUMP, LEGS_LAND, LEGS_JUMPB, LEGS_LANDB, LEGS_IDLE, LEGS_IDLECR, LEGS_TURN
-};
-
-enum { MDL_LOWER = 0, MDL_UPPER, MDL_HEAD };
+enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_ATTACK, ANIM_PAIN, ANIM_IDLE, ANIM_RUN, ANIM_EDIT, ANIM_LAG, ANIM_JUMP, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_STATIC };
 
 struct md3state
 {
@@ -68,7 +61,7 @@ struct dynent                                   // players & monsters
     bool blocked, moving;                       // used by physics to signal ai
     
     animstate prev, current;            
-    md3state as[2];
+    md3state as[2];     // FIXME, make coincide with md2 animstate
     int lastanimswitchtime;
 
     dynent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), bob(0), maxspeed(100), 

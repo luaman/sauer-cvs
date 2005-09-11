@@ -28,10 +28,10 @@ struct entities : icliententities
 
     vector<extentity *> &getents() { return ents; };
     
-    void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int numf = 1, int basetime = 0, float speed = 10.0f)
+    void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_STATIC, int basetime = 0, float speed = 10.0f)
     {
         glColor3ubv(e.color);
-        rendermodel(mdlname, frame, numf, 0, e.o.x, z+e.o.z, e.o.y, yaw, 0, false, 1.0f, speed, basetime, NULL);
+        rendermodel(mdlname, anim, 0, 0, e.o.x, z+e.o.z, e.o.y, yaw, 0, false, 1.0f, speed, basetime, NULL);
     };
 
     void renderentities()
@@ -45,7 +45,7 @@ struct entities : icliententities
                 mapmodelinfo &mmi = getmminfo(e.attr2);
                 if(!&mmi) continue;
                 glColor3ubv(e.color);
-                rendermodel(mmi.name, 0, 1, e.attr4, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, 0, NULL);
+                rendermodel(mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, 0, NULL);
             }
             else
             {
@@ -72,9 +72,10 @@ struct entities : icliententities
                         if(!e.spawned) continue;
                         renderent(e, "carrot", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
                         break;
-
-                    case 4: renderent(e, "switch2", 3,      (float)e.attr3*90, (!e.spawned && !triggertime) ? 1  : 0, (e.spawned || !triggertime) ? 1 : 2,  triggertime, 1050.0f);  break;
-                    case 5: renderent(e, "switch1", -0.15f, (float)e.attr3*90, (!e.spawned && !triggertime) ? 30 : 0, (e.spawned || !triggertime) ? 1 : 30, triggertime, 35.0f); break;
+                        
+                    //FIXME special anim consts
+                    //case 4: renderent(e, "switch2", 3,      (float)e.attr3*90, (!e.spawned && !triggertime) ? 1  : 0, (e.spawned || !triggertime) ? 1 : 2,  triggertime, 1050.0f);  break;
+                    //case 5: renderent(e, "switch1", -0.15f, (float)e.attr3*90, (!e.spawned && !triggertime) ? 30 : 0, (e.spawned || !triggertime) ? 1 : 30, triggertime, 35.0f); break;
                 };
             };
         };

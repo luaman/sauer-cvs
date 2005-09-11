@@ -12,16 +12,22 @@ struct Texture
     string name;
 };
 
+struct model
+{
+    virtual ~model() {};
+    virtual float boundsphere(int frame, float scale, vec &center) = 0;
+    virtual void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d) = 0;
+    virtual void setskin(int tex = 0) = 0;
+    virtual bool load() = 0;
+    virtual char *name() = 0;
+};
+
 #include "iengine.h"
-
-
 
 extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
 extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
 extern PFNGLBUFFERDATAARBPROC    pfnglBufferData;
 extern PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers;
-
-
 
 #define VIRTW 2400                      // virtual screen size for text & HUD
 #define VIRTH 1800

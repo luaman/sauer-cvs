@@ -412,13 +412,13 @@ struct fpsclient : igameclient
 
     IVAR(hudgun, 0, 1, 1);
 
-    void drawhudmodel(int start, int end, float speed, int base)
+    void drawhudmodel(int anim, float speed, int base)
     {
         static char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol" };
         uchar color[3];
         lightreaching(player1->o, color);
         glColor3ubv(color);
-        rendermodel(hudgunnames[player1->gunselect], start, end, 0, player1->o.x, player1->o.z+player1->bob, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base, NULL);
+        rendermodel(hudgunnames[player1->gunselect], anim, 0, 0, player1->o.x, player1->o.z+player1->bob, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base, NULL);
     };
 
     void drawhudgun(float fovy, float aspect, int farplane)
@@ -428,11 +428,11 @@ struct fpsclient : igameclient
         int rtime = ws.reloadtime(player1->gunselect);
         if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
         {
-            drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
+            drawhudmodel(ANIM_GUNSHOOT, rtime/18.0f, player1->lastaction);
         }
         else
         {
-            drawhudmodel(6, 1, 100, 0);
+            drawhudmodel(ANIM_GUNIDLE, 100, 0);
         };
     };
 
