@@ -465,7 +465,7 @@ vtxarray *newva(int x, int y, int z, int size)
 {
     int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface);
     if (!hasVBO) allocsize += verts.length() * sizeof(vertex); // length of vertex buffer
-    vtxarray *va = (vtxarray *)new uchar[allocsize]; 
+    vtxarray *va = (vtxarray *)new uchar[allocsize];
     va->eslist = (elementset *)(va + 1);
     va->ebuf = (ushort *)(va->eslist + indices.numelems);
     va->skybuf = va->ebuf + 2*curtris;
@@ -923,27 +923,29 @@ bool match(int a, int b, int &s) { s = (a < 0 ? b : a); return s == b || b<0; };
 
 bool quadmatch(int a, int b, int c, int d, int &s) { int x, y; return match(a,b,x) && match(c,d,y) && match(x,y,s); };
 
-bool remip(cube &parent)
+bool remip(cube &parent, int x, int y, int z, int size, bool full)
 {
     cube *ch = parent.children;
     if(ch==NULL) return true;
     bool r = true, e = true;
     loopi(8)
     {
-        if(!remip(ch[i])) r = false;
+        ivec o(i, x, y, z, size);
+        if(!remip(ch[i], o.x, o.y, o.z, size>>1, full)) r = false;
         else
         if(!isempty(ch[i])) e = false;
         if(ch[i].material!=ch[0].material) r = false;
     };
     if(!r) return false;
     solidfaces(parent);
-    if(!e) loopi(6)
+    if(e) { emptyfaces(parent); }
+    else loopi(6)
     {
         int e[4][4], t[4], q[4];
         int d = dimension(i), dc = dimcoord(i);
         int n = faceconvexity(parent,i)>0 ? 0 : 3;
 
-        { loop(x, 4) loop(y, 4) e[y][x] = -1; };
+        { loop(xx, 4) loop(yy, 4) e[yy][xx] = -1; };
 
         loopk(4) // get corners
         {
@@ -958,40 +960,56 @@ bool remip(cube &parent)
             };
         };
 
-        int tex, center, w, x, y, z;
-        if(!quadmatch(e[1][1], e[1][2], e[2][1], e[2][2], center) ||
-           !quadmatch(t[0], t[1], t[2], t[3], tex)) return false;
+        int tex=-1, center, m1, m2, m3, m4;
+        if(!quadmatch(e[1][1], e[1][2], e[2][1], e[2][2], center)) return false;
 
         if(center>=0)
         {
             if(!lineup(e[n][0], center, e[3-n][3]) || // check middles
-               !match(e[0][1], e[0][2], w) ||
-               !match(e[1][0], e[2][0], x) ||
-               !match(e[3][1], e[3][2], y) ||
-               !match(e[1][3], e[2][3], z) ||
-               !lineup(e[0][0], w, e[0][3]) ||
-               !lineup(e[0][0], x, e[3][0]) ||
-               !lineup(e[3][0], y, e[3][3]) ||
-               !lineup(e[0][3], z, e[3][3]) ||
+               !match(e[0][1], e[0][2], m1) ||
+               !match(e[1][0], e[2][0], m2) ||
+               !match(e[3][1], e[3][2], m3) ||
+               !match(e[1][3], e[2][3], m4) ||
+               !lineup(e[0][0], m1, e[0][3]) ||
+               !lineup(e[0][0], m2, e[3][0]) ||
+               !lineup(e[3][0], m3, e[3][3]) ||
+               !lineup(e[0][3], m4, e[3][3]) ||
                (e[0][0]&1)==1 ||
                (e[0][3]&1)==1 ||
                (e[3][0]&1)==1 ||
                (e[3][3]&1)==1) return false;
 
-            loopk(4) edgeset(parent.edges[d*4+k], dc, e[((k&2)>>1)*3][(k&1)*3]>>1);
-        };
+            if(full) loopk(4)
+            {
+                ivec o(q[k], x, y, z, size);
+                if(!visibleface(ch[q[k]], i, o.x, o.y, o.z, size))
+                    t[k] = -1;
+            };
 
-        parent.texture[i] = tex;
-    }
-    else emptyfaces(parent);
+            if(!quadmatch(t[0], t[1], t[2], t[3], tex)) return false;
+
+            loopk(4) edgeset(parent.edges[d*4+k], dc, e[((k&2)>>1)*3][(k&1)*3]>>1);
+        }
+
+        if(tex>=0) parent.texture[i] = tex;
+    };
     if(!validcube(parent)) return false;
     parent.material = ch[0].material;
     discardchildren(parent);
     return true;
 };
 
-void remop() { loopi(8) remip(worldroot[i]); allchanged(); };
+void remipworld(int full)
+{
+    loopi(8)
+    {
+        ivec o(i, 0, 0, 0, hdr.worldsize>>1);
+        remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2, full);
+        allchanged();
+    };
+};
 
-COMMANDN(remip, remop, ARG_NONE);
+COMMANDN(remip, remipworld, ARG_1INT);
+
 
 

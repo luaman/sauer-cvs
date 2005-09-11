@@ -1,5 +1,4 @@
 gilt:
-- add optional checking of neighbour visibleface() to remip
 
 eihrul:
 - physics dynamics that feel like cube

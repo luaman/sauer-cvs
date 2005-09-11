@@ -295,8 +295,8 @@ struct cubeloader
         };
         gzclose(f);
 	    create_cubes();
-	    extern void remop();
-	    remop();
+	    extern void remipworld(int full);
+	    remipworld(1);
 	    loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
         conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
         estartmap(pakname);
