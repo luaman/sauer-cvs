@@ -16,6 +16,7 @@ struct fpsrender
         range = _range;
     };
 
+/*
     void renderclient(fpsclient &cl, fpsent *d, bool team, char *mdlname, float scale, bool hellpig)
     {
         int n = 3;
@@ -48,6 +49,25 @@ struct fpsrender
         lightreaching(d->o, color);
         glColor3ubv(color);
         rendermodel(mdlname, frame[n], range[n], 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime, d);
+    };
+*/
+
+    void renderclient(fpsclient &cl, fpsent *d, bool team, char *mdlname, float scale, bool hellpig)
+    {
+        bool att = d==cl.player1 && isthirdperson() && cl.lastmillis-d->lastaction<500;
+        if(d->state == CS_DEAD)                         { md3setanim(d, BOTH_DEATH1); }
+        else if(d->state == CS_EDITING)                 { md3setanim(d, LEGS_IDLECR); md3setanim(d, TORSO_GESTURE); }
+        else if(d->state == CS_LAGGED)                  { md3setanim(d, LEGS_IDLECR); md3setanim(d, TORSO_DROP); }
+        else
+        {
+            if(!d->onfloor && d->timeinair>100)             { md3setanim(d, LEGS_JUMP); }
+            else if((!d->move && !d->strafe))               { md3setanim(d, LEGS_IDLE); }
+            else                                            { md3setanim(d, LEGS_RUN); }
+        
+            if(d->monsterstate == M_ATTACKING || d->attacking)       { md3setanim(d, TORSO_ATTACK2); }
+            else                                            { md3setanim(d, TORSO_STAND); }
+        };
+        rendermd3player(0, d, d->gunselect);
     };  
 
     void rendergame(fpsclient &cl, int gamemode)

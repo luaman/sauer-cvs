@@ -97,6 +97,10 @@ extern void initsound();
 extern void rendermodel(char *mdl, int frame, int range, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d);
 extern mapmodelinfo &getmminfo(int i);
 
+// rendermd3
+extern void md3setanim(dynent *d, int anim);
+extern void rendermd3player(int mdl, dynent *d, int gun);
+
 // server
 extern void *getinfo(int i);
 extern void sendintstr(int i, char *msg);

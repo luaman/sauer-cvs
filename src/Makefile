@@ -20,6 +20,7 @@ CLIENT_OBJS= \
 	engine/renderextras.o \
 	engine/rendergl.o \
 	engine/rendermd2.o \
+	engine/rendermd3.o \
 	engine/renderparticles.o \
 	engine/rendertext.o \
 	engine/server.o \
