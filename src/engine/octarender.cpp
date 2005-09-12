@@ -1005,8 +1005,8 @@ void remipworld(int full)
     {
         ivec o(i, 0, 0, 0, hdr.worldsize>>1);
         remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2, full);
-        allchanged();
     };
+    allchanged();
 };
 
 COMMANDN(remip, remipworld, ARG_1INT);
