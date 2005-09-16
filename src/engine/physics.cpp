@@ -314,7 +314,7 @@ void dropenttofloor(entity *e)
        e->o.y >= hdr.worldsize ||
        e->o.z >= hdr.worldsize)
         return;
-    vec v(0, 0, -1);
+    vec v(0.0001f, 0.0001f, -1);
     if(raycube(true, e->o, v) >= hdr.worldsize)
         return;
     dynent d;
@@ -328,9 +328,9 @@ void dropenttofloor(entity *e)
     }
     else
     {
-        d.radius = 4.0f;
+        d.radius = 1.0f;
         d.eyeheight = 4.0f;
-        d.aboveeye = 2.0f;
+        d.aboveeye = 1.0f;
     };
     d.onfloor = 0.0f;
     d.blocked = false;

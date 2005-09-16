@@ -100,9 +100,9 @@ paste</pre>
 			<li>
 				glass: a clip like material with a blended surface.</li>
 		</ul>
-        <pre>watercolour R G B</pre>
-        Changes the blended color of all water to RGB. This may be used to simulate various
-        lighting conditions for water.
+		<pre>watercolour R G B</pre>
+		Changes the blended color of all water to RGB. This may be used to simulate 
+		various lighting conditions for water.
 		<pre>selextend</pre>
 		Extend current selection to include the cursor.
 		<pre>map name</pre>
@@ -195,10 +195,12 @@ paste</pre>
 			but curves/arches are problematic, and may have to be redone. All entities are 
 			converted though mapmodels may not be present, and light entities are useless 
 			because of their 2d nature, so probably the first thing to do after converting 
-			a map is /clearents light, and place some new lights. The importcube does not 
-			automatically save the map, you still have to do a /savecurrentmap which will 
-			create packages/cube/N.ogz. Waterlevel is also not supported, you will have to 
-			add water using the new material system.</P>
+			a map is /clearents light, and place some new lights. Pickups and other items 
+			may spawn inside the walls because they have no proper Z value, you may have to 
+			correct these manually. The importcube command does not automatically save the 
+			map, you still have to do a /savecurrentmap which will create 
+			packages/cube/N.ogz. Reload the map to be able to pick up stuff. Waterlevel is 
+			also not supported, you will have to add water using the new material system.</P>
 		<div>Lighting Commands</div>
 		<a name="lightingcommands"></a>
 		<pre>calclight</pre>

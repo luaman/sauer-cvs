@@ -39,7 +39,11 @@ model *loadmodel(char *name)
     {
         delete m;
         m = new md3(name);
-        if(!(m->load())) fatal("could not load model", name);
+        if(!(m->load()))
+        {
+            conoutf("could not load model: %s", name);
+            return NULL;
+        };
     };
     mdllookup.access(m->name(), &m);
     return m;
@@ -53,6 +57,7 @@ void clear_md2s()
 void rendermodel(char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
 {
     model *m = loadmodel(mdl); 
+    if(!m) return;
     vec center;
     float radius = m->boundsphere(0/*frame*/, scale, center);   // FIXME
     if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;

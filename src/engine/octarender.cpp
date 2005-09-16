@@ -1004,7 +1004,7 @@ void remipworld(int full)
     loopi(8)
     {
         ivec o(i, 0, 0, 0, hdr.worldsize>>1);
-        remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2, full);
+        remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2, full!=0);
     };
     allchanged();
 };

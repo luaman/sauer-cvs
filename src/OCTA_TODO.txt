@@ -1,4 +1,8 @@
 gilt:
+- loopi(3) disttonext = min(disttonext, 0.1f + fabs((float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i]));
+  does not cope with components of "ray" being 0, which is entirely legal (see dropenttofloor)
+- connected push, and other tools that are geared towards easier editing of heightfields/terrain/rocks
+- make it such that collision uses same quad->2tris subdivision as rendering
 
 eihrul:
 - physics dynamics that feel like cube
@@ -8,9 +12,10 @@ eihrul:
 - an RGB that is stored as part of the map, and that is set as the color value for all water
 
 aard:
-- cube loader: dropent doesn't work again, ents only available after reload | import some sample cube maps
+- make sauer inner directory
+- wireframe mode
+- cube loader: import some sample cube maps
 - check connect/disconnect: possible to only half connect, or connect and have a ghost
-- add http://oss.sgi.com/projects/ogl-sample/registry/EXT/wgl_multisample.txt
 - all cfg stuff in menu
 - new mapmodels/trees in menu -> new ones from last cube
 - players more visible
@@ -37,12 +42,12 @@ aard:
 
 - fix the two //BREAK
 
-- finish gameplay seperation
 - move some of the gameplay serverside
 - bf mode
 - start with rpg mode | clientside only, simplify
 
 - system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
+- calclight while playing?
 
 - more gameplay refactoring
 - cube map loader
@@ -68,7 +73,6 @@ aard:
 - (E) reduce geometry by merging surfaces and lightmaps
 - factor out gamecode
 - shader system
-- (G) make it such that collision uses same quad->2tris subdivision as rendering
 - LOD on VA's
 - render entities at distance as sprites
 - try out hardware occlusion queries before portals
@@ -76,7 +80,6 @@ aard:
 - SP: add pistol ammo box... make monster use it? hmmm not more hitscan
 - switch to new fmod api & 3d sound? not available for bsd? openal?
 
-- connected push
 - blend screen when inside a cube
 
     p/p     sel

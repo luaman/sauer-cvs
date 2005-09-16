@@ -400,7 +400,6 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
          tl(0);
     if(numplanes > 1)
     {
-        ASSERT(tmin == 0);
         tl = (uint)ceil((tmax + 1) * lpu);
         tl = max(LM_MINH, tl);
         vl = max(LM_MINH, vl);
