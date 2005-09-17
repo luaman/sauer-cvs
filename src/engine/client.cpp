@@ -42,14 +42,24 @@ void throttle()
 void connects(char *servername)
 {   
     disconnect(1);  // reset state
-    addserver(servername);
 
-    conoutf("attempting to connect to %s", servername);
-    ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
-    if(enet_address_set_host(&address, servername) < 0)
+    ENetAddress address;
+    address.port = sv->serverport();
+
+    if(servername)
     {
-        conoutf("could not resolve server %s", servername);
-        return;
+        addserver(servername);
+        conoutf("attempting to connect to %s", servername);
+        if(enet_address_set_host(&address, servername) < 0)
+        {
+            conoutf("could not resolve server %s", servername);
+            return;
+        };
+    }
+    else
+    {
+        conoutf("attempting to connect over lan");
+        address.host = ENET_HOST_BROADCAST;
     };
 
     clienthost = enet_host_create(NULL, 1, rate, rate);
@@ -66,6 +76,11 @@ void connects(char *servername)
         conoutf("could not connect to server");
         disconnect();
     };
+};
+
+void lanconnect()
+{
+    connects(0);
 };
 
 void disconnect(int onlyclean, int async)
@@ -118,6 +133,7 @@ void trydisconnect()
 };
 
 COMMANDN(connect, connects, ARG_1STR);
+COMMAND(lanconnect, ARG_NONE);
 COMMANDN(disconnect, trydisconnect, ARG_NONE);
 
 void server_err()
