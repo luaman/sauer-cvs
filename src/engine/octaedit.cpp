@@ -423,37 +423,42 @@ void pushedge(uchar &edge, int dir, int dc)
     if((dir<0 && dc && oe>ne) || (dir>0 && dc==0 && oe<ne)) edge = edgeset(edge, 1-dc, ne);
 };
 
-bool touching(int orient)
-{
-    loopselxyz(if(!touchingface(c, orient)) return false;);
-    return true;
-};
-
-void editheight(int dir)
+void editheight(int dir, int mode)
 {
     if(noedit() || havesel) return;
-    reorient();
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
+    block3 t = sel;
+
     sel.s[R(d)] = 2;
     sel.s[C(d)] = 2;
     sel.s[D(d)] = 1;
     sel.o[R(d)] += corner&1 ? 0 : -sel.grid;
     sel.o[C(d)] += corner&2 ? 0 : -sel.grid;
-    loopselxyz(if(orient!=visibleorient(c, orient)) return;);
-    if(dir<0 && touching(sel.orient)) sel.o[D(d)] += seldir*sel.grid;
+
     loopselxyz(
-        if(c.children) solidfaces(c);
-        if(isempty(c)) { solidfaces(c); c.faces[d] = dc ? 0 : 0x88888888; };
-        discardchildren(c);
-        uchar &e = c.edges[edgeindex(1-x, 1-y, d)];
-        pushedge(e, seldir, dc);
+        if(c.children) { solidfaces(c); discardchildren(c); };
+
+        if(mode==1)
+        {
+            loopj(4) pushedge(c.edges[edgeindex(1-x, 1-y, d)], seldir, dc);
+            loopj(2) pushedge(c.edges[edgeindex(x, 1-y, d)], seldir, dc);
+            loopj(2) pushedge(c.edges[edgeindex(1-x, y, d)], seldir, dc);
+            pushedge(c.edges[edgeindex(x, y, d)], seldir, dc);
+        }
+        else
+        {
+            uchar &e = c.edges[edgeindex(1-x, 1-y, d)];
+            pushedge(e, seldir, dc);
+        };
+
         optiface((uchar *)&c.faces[d], c);
     );
+    sel = t;
 };
 
-COMMAND(editheight, ARG_1INT);
+COMMAND(editheight, ARG_2INT);
 
 void editface(int dir, int mode)
 {
