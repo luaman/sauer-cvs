@@ -22,7 +22,7 @@ struct fpsrender
         else if(d->state==CS_EDITING)                   { anim = ANIM_EDIT; }
         else if(d->state==CS_LAGGED)                    { anim = ANIM_LAG; }
         else if(d->monsterstate==M_PAIN)                { anim = ANIM_PAIN; }
-        else if(d->timeinair > 100)                     { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> */basetime = cl.lastmillis-d->timeinair; }
+        else if(d->timeinair > 100)                     { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
         else                                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; if(hellpig) speed = 1200/d->maxspeed;  };
         uchar color[3];
@@ -35,7 +35,7 @@ struct fpsrender
     {
         fpsent *d;
         loopv(cl.players) if(d = cl.players[i]) renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, false);
-        if(isthirdperson()) renderclient(cl, cl.player1, false, /*"monster/ogro"*/"players/lobo", 1.0f, false);
+        if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0f, false);
         cl.ms.monsterrender();
         cl.et.renderentities();
     };
