@@ -25,18 +25,13 @@ struct extentity : entity                       // part of the entity that doesn
 
 struct animstate                                // used for animation blending of animated characters
 {
-    int frame, range, basetime;
+    int anim, frame, range, basetime;
     float speed;
+    void reset() { anim = frame = range = basetime = 0; speed = 100.0f; };
+    animstate() { reset(); };
 };
 
-enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_ATTACK, ANIM_PAIN, ANIM_IDLE, ANIM_RUN, ANIM_EDIT, ANIM_LAG, ANIM_JUMP, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_STATIC };
-
-struct md3state
-{
-    int anim;
-    int frm;
-    int lastTime;
-};
+enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_PAIN, ANIM_IDLE, ANIM_IDLE_ATTACK, ANIM_RUN, ANIM_RUN_ATTACK, ANIM_EDIT, ANIM_LAG, ANIM_JUMP, ANIM_JUMP_ATTACK, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_STATIC };
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING };
 
@@ -60,14 +55,13 @@ struct dynent                                   // players & monsters
 
     bool blocked, moving;                       // used by physics to signal ai
     
-    animstate prev, current;            
-    md3state as[2];     // FIXME, make coincide with md2 animstate
-    int lastanimswitchtime;
+    animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
+    int lastanimswitchtime[2];
 
     dynent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), bob(0), maxspeed(100), 
                inwater(false), radius(4.1f), eyeheight(14), aboveeye(1), state(CS_ALIVE),
-               frags(0), monsterstate(0), blocked(false), moving(0), lastanimswitchtime(-1)
-               { reset(); };
+               frags(0), monsterstate(0), blocked(false), moving(0)
+               { reset(); loopi(2) lastanimswitchtime[i] = -1; };
                
     void reset()
     {

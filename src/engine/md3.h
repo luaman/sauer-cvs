@@ -1,5 +1,5 @@
 // code for loading, linking and rendering md3 models
-// See http://www.draekko.org/documentation/md3format.html for informations about the md3 format
+// See http://www.icculus.org/homepages/phaethon/q3/formats/md3format.html for informations about the md3 format
 
 enum // md3 animations
 {
@@ -11,10 +11,18 @@ enum // md3 animations
 enum { MDL_LOWER = 0, MDL_UPPER, MDL_HEAD };
 
 #define MD3_DEFAULT_SCALE 0.2f
+#define aneq(c,d) (c->anim == d->anim && c->frame == d->frame) /* (mostly) equal animstate */
 
 struct vec2
 {
     float x, y;
+};
+
+struct md3frame
+{
+    vec min_bounds, max_bounds, local_origin;
+    float radius;
+    char name[16];
 };
 
 struct md3tag
@@ -68,7 +76,7 @@ struct md3mesh
     md3triangle *triangles;
     vec *vertices;
     vec2 *uv;
-    int numtriangles, numvertices; // numvertices == numUV
+    int numtriangles, numvertices;
     Texture *skin;
 };
 
@@ -76,226 +84,271 @@ struct md3model
 {
     vector<md3mesh> meshes;
     vector<md3animinfo> animations;
-    md3state *animstate;
+    animstate *as, *current, *prev;
     md3model **links;
     md3tag *tags;
     int numframes, numtags;
+    int *lastanimswitchtime;
     bool loaded;
     vec scale;
-    bool link(md3model *link, char *tag);
-    bool load(char *path);
-    void render();
-    void draw(float x, float y, float z, float yaw, float pitch, float rad);
-    md3model();
-    ~md3model();
-};
-
-md3model::md3model()
-{
-    loaded = false;
-    scale.x = scale.y = scale.z = MD3_DEFAULT_SCALE;
-    animstate = NULL;
-};
-
-md3model::~md3model()
-{
-    loopv(meshes){
-        if(meshes[i].vertices) delete [] meshes[i].vertices;
-        if(meshes[i].triangles) delete [] meshes[i].triangles;
-        if(meshes[i].uv) delete [] meshes[i].uv;
-    };
-    if(links) free(links);
-    if(tags) delete [] tags;
-};
-
-bool md3model::link(md3model *link, char *tag)
-{
-    loopi(numtags)
-        if(strcmp(tags[i].name, tag) == 0)
-            {
-                links[i] = link;
-                return true;
-            };
-    return false;
-};
-
-bool md3model::load(char *path)
-{
-    if(!path) return false;
-    FILE *f = fopen(path, "rb");
-    if(!f) fatal("could not load md3 model: %s", path);
-    md3header header;
-    fread(&header, sizeof(md3header), 1, f);
-    if(header.id[0] != 'I' || header.id[1] != 'D' || header.id[2] != 'P' || header.id[3] != '3' || header.version != 15) // header check
-        fatal("corruped header in md3 model: %s", path);
+    bool stopped;
     
-    tags = new md3tag[header.numframes * header.numtags];
-    fseek(f, header.ofs_tags, SEEK_SET);
-    fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
-    numframes = header.numframes;
-    numtags = header.numtags;
-    
-    links = (md3model **) malloc(sizeof(md3model) * header.numtags);
-    loopi(header.numtags) links[i] = NULL;
-
-    int mesh_offset = ftell(f);
-    
-    loopi(header.nummeshes)
-    {   
-        md3mesh mesh;
-        md3meshheader mheader;
-        fseek(f, mesh_offset, SEEK_SET);
-        fread(&mheader, sizeof(md3meshheader), 1, f);
-        strn0cpy(mesh.name, mheader.name, 64);
-         
-        mesh.triangles = new md3triangle[mheader.numtriangles];
-        fseek(f, mesh_offset + mheader.ofs_triangles, SEEK_SET);       
-        fread(mesh.triangles, sizeof(md3triangle), mheader.numtriangles, f); // read the triangles
-        mesh.numtriangles = mheader.numtriangles;
-      
-        mesh.uv = new vec2[mheader.numvertices];
-        fseek(f, mesh_offset + mheader.ofs_uv , SEEK_SET); 
-        fread(mesh.uv, sizeof(vec2), mheader.numvertices, f); // read the UV data
-        
-        md3vertex *vertices = new md3vertex[mheader.numframes * mheader.numvertices];
-        fseek(f, mesh_offset + mheader.ofs_vertices, SEEK_SET); 
-        fread(vertices, sizeof(md3vertex), mheader.numframes * mheader.numvertices, f); // read the vertices
-        mesh.vertices = new vec[mheader.numframes * mheader.numvertices]; // transform to our own structure
-        loopj(mheader.numframes * mheader.numvertices)
-        {
-            mesh.vertices[j].x = vertices[j].vertex[0] / 64.0f;
-            mesh.vertices[j].y = vertices[j].vertex[1] / 64.0f;
-            mesh.vertices[j].z = vertices[j].vertex[2] / 64.0f;
-        };   
-        mesh.numvertices = mheader.numvertices;
-        
-        meshes.add(mesh);
-        mesh_offset += mheader.meshsize;
-        delete [] vertices;
-    };
-    
-    loaded = true;
-    return true;
-};
-
-void md3model::render()
-{
-    if(!loaded || meshes.length() <= 0) return;
-    float t = 0.0f;
-    int nextfrm;
-    md3state *a = animstate;
-    
-    if(a && animations.length() > a->anim)
+    bool link(md3model *link, char *tag)
     {
+        loopi(numtags)
+            if(strcmp(tags[i].name, tag) == 0)
+                {
+                    links[i] = link;
+                    return true;
+                };
+        return false;
+    };
+    
+    float updateframe(animstate *a)
+    {
+        float t = 0.0f;
         md3animinfo *info = &animations[a->anim];
-        if(a->frm < info->start || a->frm > info->end) // we switched to a new animation, jump to the start
-            a->frm = info->start;
-        t = (float) (lastmillis - a->lastTime) / (1000.0f / info->fps); // t has a value from 0.0f to 1.0f - used for interpolation
-        if(t >= 1.0f) // jump to the next keyframe
+        if(a->range && !stopped)
         {
-            a->frm++;
-            a->lastTime = lastmillis;
-            t = 0.0f;
+            if(as->frame < info->start || as->frame > info->end) as->frame = info->start;
+            int time = lastmillis-a->basetime;
+            int rounded = (int)(time/a->speed);
+            t = (float)(time-rounded*a->speed)/a->speed; // t has now a value from 0.0f to 1.0f, used for interpolation
+            int prevframe = a->frame;
+            a->frame = rounded%(a->range)+info->start;
+            if(a->frame<prevframe && !info->loop) // animation started over, no loop
+            {
+                a->frame = info->end;
+                t = 0.0f;
+                if(a != prev) stopped = true;
+            };
+        }
+        else a->frame = info->end;
+        return t;
+    }
+
+    bool load(char *path)
+    {
+        if(!path) return false;
+        FILE *f = fopen(path, "rb");
+        if(!f) return false;
+        md3header header;
+        fread(&header, sizeof(md3header), 1, f);
+        if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) // header check
+            fatal("corruped header in md3 model: ", path);
+        
+        tags = new md3tag[header.numframes * header.numtags];
+        fseek(f, header.ofs_tags, SEEK_SET);
+        fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
+        numframes = header.numframes;
+        numtags = header.numtags;
+        
+        links = (md3model **) malloc(sizeof(md3model) * header.numtags);
+        loopi(header.numtags) links[i] = NULL;
+
+        int mesh_offset = ftell(f);
+        
+        loopi(header.nummeshes)
+        {   
+            md3mesh mesh;
+            md3meshheader mheader;
+            fseek(f, mesh_offset, SEEK_SET);
+            fread(&mheader, sizeof(md3meshheader), 1, f);
+            strn0cpy(mesh.name, mheader.name, 64);
+             
+            mesh.triangles = new md3triangle[mheader.numtriangles];
+            fseek(f, mesh_offset + mheader.ofs_triangles, SEEK_SET);       
+            fread(mesh.triangles, sizeof(md3triangle), mheader.numtriangles, f); // read the triangles
+            mesh.numtriangles = mheader.numtriangles;
+          
+            mesh.uv = new vec2[mheader.numvertices];
+            fseek(f, mesh_offset + mheader.ofs_uv , SEEK_SET); 
+            fread(mesh.uv, sizeof(vec2), mheader.numvertices, f); // read the UV data
+            
+            md3vertex *vertices = new md3vertex[mheader.numframes * mheader.numvertices];
+            fseek(f, mesh_offset + mheader.ofs_vertices, SEEK_SET); 
+            fread(vertices, sizeof(md3vertex), mheader.numframes * mheader.numvertices, f); // read the vertices
+            mesh.vertices = new vec[mheader.numframes * mheader.numvertices]; // transform to our own structure
+            loopj(mheader.numframes * mheader.numvertices)
+            {
+                mesh.vertices[j].x = vertices[j].vertex[0] / 64.0f;
+                mesh.vertices[j].y = vertices[j].vertex[1] / 64.0f;
+                mesh.vertices[j].z = vertices[j].vertex[2] / 64.0f;
+            };   
+            mesh.numvertices = mheader.numvertices;
+            
+            meshes.add(mesh);
+            mesh_offset += mheader.meshsize;
+            delete [] vertices;
         };
-        if(a->frm >= info->end)
+        
+        loaded = true;
+        return true;
+    };
+    
+    void render()
+    {
+        if(!loaded || meshes.length() <= 0) return;
+        md3animinfo *info;
+        float t, t_prev, t_ai = 0.0f;
+        int nextfrm;
+        bool doai = false;
+        
+        if(numframes > 1 && as && current && prev && animations.length() > as->anim && animations.length() > 1)
         {
-            if(info->loop)
-                a->frm = info->start;
+            info = &animations[as->anim];
+            as->range = info->end-info->start;
+            if(as->speed < 0) as->speed = info->fps; // use fps value from the .cfg file
+            if(!as->range) stopped = true;
+            if(*(lastanimswitchtime) == -1) { *current = *as; *(lastanimswitchtime) = lastmillis-animationinterpolationtime*2; }
+            else if(current->anim != as->anim)
+            {
+                if(lastmillis-*(lastanimswitchtime)>animationinterpolationtime/2) *(prev) = *(current);
+                *current = *as;
+                *lastanimswitchtime = lastmillis;
+                stopped = false;
+            }
+            t = updateframe(current);
+            doai = lastmillis-*(lastanimswitchtime)<animationinterpolationtime;
+            if(doai)
+            {
+                prev->range = animations[prev->anim].end-animations[prev->anim].start;
+                t_prev = updateframe(prev);
+                t_ai = (lastmillis-*(lastanimswitchtime))/(float)animationinterpolationtime;
+            };
+        }
+        else
+        {
+            stopped = true;
+            current = new animstate;
+            current->frame = current->anim = 0;
+        }
+        nextfrm = current->frame + (stopped ? 0 : 1);
+        
+        #define ip(p1,p2,t) ((p1) + (t) * ((p2) - (p1)))
+        #define ip_as(c) ip( ip( point1p->c, point2p->c, t_prev), ip( point1->c, point2->c, t), t_ai)
+
+        loopv(meshes)
+        {
+            md3mesh *mesh = &meshes[i];
+            
+            glBindTexture(GL_TEXTURE_2D, mesh->skin->gl);
+            
+            
+            glBegin(GL_TRIANGLES);
+                loopj(mesh->numtriangles) // triangles
+                {
+                    loopk(3) // vertices
+                    {
+                        int index = mesh->triangles[j].vertexindices[k];
+                        vec *point1 = &mesh->vertices[index + current->frame * mesh->numvertices];
+                        vec *point2 = &mesh->vertices[index + nextfrm * mesh->numvertices];
+                        
+                        if(mesh->uv) 
+                            glTexCoord2f(mesh->uv[index].x, mesh->uv[index].y);
+                        
+                        if(doai)
+                        {
+                            vec *point1p = &mesh->vertices[index + prev->frame * mesh->numvertices];
+                            vec *point2p = &mesh->vertices[index + (prev->frame+1) * mesh->numvertices];
+                            glVertex3f(     ip_as(x), ip_as(y), ip_as(z) );
+                        }
+                        else glVertex3f(    ip(point1->x, point2->x, t),
+                                            ip(point1->y, point2->y, t),
+                                            ip(point1->z, point2->z, t));
+                    };
+                };
+            glEnd();
+        };
+        
+        #define ip_as_t(c) ip( ip( tag1p->c, tag2p->c, t_prev), ip( tag1->c, tag2->c, t), t_ai)
+        
+        loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
+        {
+            md3model *link = links[i];
+            if(!link) continue;
+            GLfloat matrix[16] = {0}; // fixme: un-obfuscate it!
+            md3tag *tag1 = &tags[current->frame * numtags + i];
+            md3tag *tag2 = &tags[nextfrm * numtags + i];
+            
+            if(doai)
+            {
+                md3tag *tag1p = &tags[prev->frame * numtags + i];
+                md3tag *tag2p = &tags[(prev->frame+1) * numtags + i];
+                loopj(3) matrix[j] = ip_as_t(rotation[0][j]); // rotation
+                loopj(3) matrix[4 + j] = ip_as_t(rotation[1][j]);
+                loopj(3) matrix[8 + j] = ip_as_t(rotation[2][j]);
+                loopj(3) matrix[12 + j] = ip_as_t(pos[j]); // position      
+            }
             else
             {
-                a->frm = info->end;
-                t = 0.0f; // stops the animation
+                loopj(3) matrix[j] = ip(tags[current->frame * numtags + i].rotation[0][j], tags[nextfrm * numtags + i].rotation[0][j], t); // rotation
+                loopj(3) matrix[4 + j] = ip(tags[current->frame * numtags + i].rotation[1][j], tags[nextfrm * numtags + i].rotation[1][j], t);
+                loopj(3) matrix[8 + j] = ip(tags[current->frame * numtags + i].rotation[2][j], tags[nextfrm * numtags + i].rotation[2][j], t);
+                loopj(3) matrix[12 + j] = ip(tags[current->frame * numtags + i].pos[j] , tags[nextfrm * numtags + i].pos[j], t); // position
             };
+            matrix[15] = 1.0f;
+            glPushMatrix();
+                glMultMatrixf(matrix);
+                link->render();
+            glPopMatrix();
         };
-    }
-    else
-    {
-        a = new md3state;
-        a->frm = 0;
-    }
-    nextfrm = a->frm + 1;
-    
-    #define interpolate(p1,p2) ((p1) + t * ((p2) - (p1)))
-    
-    loopv(meshes)
-    {
-        md3mesh *mesh = &meshes[i];
-        
-        glBindTexture(GL_TEXTURE_2D, mesh->skin->gl);
-        
-        
-        glBegin(GL_TRIANGLES);
-            loopj(mesh->numtriangles) // triangles
-            {
-                loopk(3) // vertices
-                {
-                    int index = mesh->triangles[j].vertexindices[k];
-                    vec *point1 = &mesh->vertices[index + a->frm * mesh->numvertices];
-                    vec *point2 = &mesh->vertices[index + nextfrm * mesh->numvertices];
-                    
-                    if(mesh->uv) 
-                        glTexCoord2f(mesh->uv[index].x, mesh->uv[index].y);
-                    
-                    glVertex3f( interpolate(point1->x, point2->x),
-                                interpolate(point1->y, point2->y),
-                                interpolate(point1->z, point2->z));
-                };
-            };
-        glEnd();
     };
     
-    loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
+    void draw(float x, float y, float z, float yaw, float pitch, float rad)
     {
-        md3model *link = links[i];
-        if(!link) continue;
-        GLfloat matrix[16] = {0}; // fixme: un-obfuscate it!
-        loopj(3) matrix[j] = interpolate(tags[a->frm * numtags + i].rotation[0][j], tags[nextfrm * numtags + i].rotation[0][j]); // rotation
-        loopj(3) matrix[4 + j] = interpolate(tags[a->frm * numtags + i].rotation[1][j], tags[nextfrm * numtags + i].rotation[1][j]);
-        loopj(3) matrix[8 + j] = interpolate(tags[a->frm * numtags + i].rotation[2][j], tags[nextfrm * numtags + i].rotation[2][j]);
-        loopj(3) matrix[12 + j] = interpolate(tags[a->frm * numtags + i].pos[j] , tags[nextfrm * numtags + i].pos[j]); // position
-        matrix[15] = 1.0f;
         glPushMatrix();
-            glMultMatrixf(matrix);
-            link->render();
+        
+        glTranslatef(x, y, z); // avoid models above ground
+        
+        glRotatef(yaw+180, 0, -1, 0);
+        glRotatef(pitch, 0, 0, 1);
+        glRotatef(-90, 1, 0, 0);
+        
+        glScalef( scale.x, scale.y, scale.z);
+        glTranslatef( 0.0f, 0.0f, 20.0f );
+        
+        render();
+        
         glPopMatrix();
     };
-};
-
-void md3model::draw(float x, float y, float z, float yaw, float pitch, float rad)
-{
-    glPushMatrix();
     
-    glTranslatef(x, y, z); // avoid models above ground
-    
-    glRotatef(yaw+180, 0, -1, 0);
-    glRotatef(pitch, 0, 0, 1);
-    glRotatef(-90, 1, 0, 0);
-    
-    glScalef( scale.x, scale.y, scale.z);
-    glTranslatef( 0.0f, 0.0f, 20.0f );
-    
-    render();
-    
-    glPopMatrix();
-};
-
-void md3setanim(dynent *d, int anim)
-{
-    if(anim <= BOTH_DEAD3) // assign to both, legs and torso
+    md3model()
     {
-        d->as[MDL_LOWER].anim = anim;
-        d->as[MDL_UPPER].anim = anim;
-    }
-    else if(anim <= TORSO_STAND2)
-        d->as[MDL_UPPER].anim = anim;
-    else
-        d->as[MDL_LOWER].anim = anim - 7; // skip gap
+        loaded = false;
+        scale.x = scale.y = scale.z = MD3_DEFAULT_SCALE;
+        stopped = false;
+        as = current = prev = NULL;
+    };
+    
+    ~md3model()
+    {
+        loopv(meshes){
+            if(meshes[i].vertices) delete [] meshes[i].vertices;
+            if(meshes[i].triangles) delete [] meshes[i].triangles;
+            if(meshes[i].uv) delete [] meshes[i].uv;
+        };
+        if(links) free(links);
+        if(tags) delete [] tags;
+    };
 };
 
 vector<md3model *> playermodels;
-vector<md3model *> weaponmodels;
 vector<md3animinfo> tmp_animations;
 char basedir[_MAXDEFSTR]; // necessary for relative path's
+
+void md3setanim(animstate *as, int anim)
+{
+    if(anim <= BOTH_DEAD3) // assign to both, legs and torso
+    {
+        as[MDL_LOWER].anim = anim;
+        as[MDL_UPPER].anim = anim;
+    }
+    else if(anim <= TORSO_STAND2)
+        as[MDL_UPPER].anim = anim;
+    else
+        as[MDL_LOWER].anim = anim - 7; // skip gap
+};
 
 void md3skin(char *objname, char *skin) // called by the {lower|upper|head}.cfg (kind of .skin in Q3A)
 {
@@ -318,107 +371,101 @@ void md3animation(char *first, char *nums, char *loopings, char *fps) /* configu
 {
     md3animinfo &a = tmp_animations.add();
     a.start = atoi(first);
-    a.end = a.start + atoi(nums) - 1;
+    a.end = a.start+atoi(nums)-1;
     (atoi(loopings) > 0) ? a.loop = true : a.loop = false;
     a.fps = atoi(fps);
 };
 
 COMMAND(md3animation, ARG_5STR);
 
-void loadplayermdl(char *model)
-{ 
-    char pl_objects[3][6] = {"lower", "upper", "head"};
-    tmp_animations.setsize(0);
-    sprintf(basedir, "packages/models/players/%s", model);
-    md3model *mdls[3];
-    loopi(3)  // load lower,upper and head models
-    {
-        sprintf_sd(path)("%s/%s", basedir, pl_objects[i]);
-        mdls[i] = new md3model();
-        playermodels.add(mdls[i]);
-        sprintf_sd(mdl_path)("%s.md3", path);
-        sprintf_sd(cfg_path)("%s_default.skin", path);
-        mdls[i]->load(mdl_path);
-        exec(cfg_path);
-    };
-    mdls[MDL_LOWER]->link(mdls[MDL_UPPER], "tag_torso");
-    mdls[MDL_UPPER]->link(mdls[MDL_HEAD], "tag_head");
-    sprintf_sd(modelcfg)("%s/animation.cfg", basedir);
-    exec(modelcfg); // load animations to tmp_animation
-    int skip_gap = tmp_animations[LEGS_WALKCR].start - tmp_animations[TORSO_GESTURE].start;
-    for(int i = LEGS_WALKCR; i < tmp_animations.length(); i++) // the upper and lower mdl frames are independent
-    {
-        tmp_animations[i].start -= skip_gap;
-        tmp_animations[i].end -= skip_gap;
-    };
-    loopv(tmp_animations) // assign the loaded animations to the lower,upper or head model
-    {
-        md3animinfo &anim = tmp_animations[i];
-        if(i <= BOTH_DEAD3)
-        {
-            mdls[MDL_UPPER]->animations.add(anim);
-            mdls[MDL_LOWER]->animations.add(anim);
-        }
-        else if(i <= TORSO_STAND2)
-            mdls[MDL_UPPER]->animations.add(anim);
-        else if(i <= LEGS_TURN)    
-            mdls[MDL_LOWER]->animations.add(anim);
-    };
-};
-
-COMMAND(loadplayermdl, ARG_1STR);
-
-void loadweapons()
-{
-    md3model *mdl = new md3model();
-    weaponmodels.add(mdl);
-    mdl->load("packages/models/hudguns/shotgun-aliens/default.md3");
-    Texture *tex = textureload("packages/models/hudguns/shotgun-aliens/default.jpg", false, true, false);
-    loopv(mdl->meshes) mdl->meshes[i].skin = tex;
-};
-
-COMMAND(loadweapons, ARG_NONE);
-
-void rendermd3player(int mdl, dynent *d, int gun)
-{
-    if(playermodels.length() >= 3)
-    {
-        loopi(2) playermodels[i]->animstate = &d->as[i];
-        
-        if(gun >= weaponmodels.length())
-            playermodels[mdl * 3 + MDL_UPPER]->link(NULL, "tag_weapon"); // no weapon model
-        else
-            playermodels[mdl * 3 + MDL_UPPER]->link(weaponmodels[gun], "tag_weapon"); // show current weapon
-            
-        playermodels[mdl * 3 + MDL_LOWER]->draw(d->o.x, d->o.z-d->eyeheight+1.55f, d->o.y, d->yaw+90, d->pitch/2, d->radius);
-    };
-};
-
 struct md3 : model
 {
     string loadname;
+    md3model *model;
 
     md3(char *_name) { strcpy_s(loadname, _name); };
     char *name() { return loadname; }; 
     
-    float boundsphere(int frame, float scale, vec &center) { return 64; };  //FIXME
+    float boundsphere(int frame, float scale, vec &center) { center.x=center.y=center.z=0; return 64; };  //FIXME culling stuff inside of md3model::render instead ?
     void setskin(int tex) {};  //FIXME
-    bool load() { loadplayermdl(loadname); return false; };  //FIXME error checking etc
+    bool load() { model = loadplayermdl(loadname); return model ? true : false; }; 
     
     void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
         int gun = 0; // FIXME lets do this later
-        switch(anim)
+        if(anim != ANIM_STATIC) // its a player model
         {
-            case ANIM_DEAD: md3setanim(d, BOTH_DEATH1); break;
-            case ANIM_EDIT: md3setanim(d, LEGS_IDLECR); md3setanim(d, TORSO_GESTURE); break;
-            case ANIM_LAG:  md3setanim(d, LEGS_IDLECR); md3setanim(d, TORSO_DROP); break;
-            case ANIM_JUMP: md3setanim(d, LEGS_JUMP); break;
-            case ANIM_IDLE: md3setanim(d, LEGS_IDLE); break;
-            case ANIM_RUN: md3setanim(d, LEGS_RUN); break;
-            case ANIM_ATTACK: md3setanim(d, TORSO_ATTACK2); break;
-            default: md3setanim(d, TORSO_STAND); break;
+            if(!model || !&model[1]) return;
+            animstate *a = new animstate[2];
+            md3setanim(a, TORSO_STAND);
+            switch(anim)
+            {
+                case ANIM_DEAD:         md3setanim(a, BOTH_DEATH1); break;
+                case ANIM_EDIT:         md3setanim(a, LEGS_IDLECR); md3setanim(a, TORSO_GESTURE); break;
+                case ANIM_LAG:          md3setanim(a, LEGS_IDLECR); md3setanim(a, TORSO_DROP); break;
+                case ANIM_JUMP:         md3setanim(a, LEGS_JUMP); break;
+                case ANIM_JUMP_ATTACK:  md3setanim(a, LEGS_JUMP); md3setanim(a, TORSO_ATTACK2); break;
+                case ANIM_IDLE:         md3setanim(a, LEGS_IDLE); break;
+                case ANIM_IDLE_ATTACK:  md3setanim(a, LEGS_IDLE); md3setanim(a, TORSO_ATTACK2); break;                
+                case ANIM_RUN:          md3setanim(a, LEGS_RUN); break;
+                case ANIM_RUN_ATTACK:   md3setanim(a, LEGS_RUN); md3setanim(a, TORSO_ATTACK2); break;
+                default: md3setanim(a, TORSO_STAND); md3setanim(a, LEGS_IDLE); break;
+            };
+            loopi(2)
+            {
+                model[i].as = &a[i];
+                model[i].as->speed = speed;
+                model[i].as->basetime = basetime;
+                model[i].current = &d->current[i];
+                model[i].prev = &d->prev[i];
+                model[i].lastanimswitchtime = &d->lastanimswitchtime[i];
+            };
+/*            if(gun >= weaponmodels.length())
+                model->link(NULL, "tag_weapon"); // no weapon model
+            else
+                playermodels[mdl * 3 + MDL_UPPER]->link(weaponmodels[gun], "tag_weapon"); // show current weapon*/
+        };   
+        model->draw(d->o.x, d->o.z-d->eyeheight+1.55f, d->o.y, d->yaw+90, d->pitch/2, d->radius);
+    };
+    
+    md3model *loadplayermdl(char *model)
+    { 
+        char pl_objects[3][6] = {"lower", "upper", "head"};
+        tmp_animations.setsize(0);
+        sprintf(basedir, "packages/models/%s", model);
+        md3model *mdls = new md3model[3];
+        loopi(3)  // load lower,upper and head models
+        {
+            sprintf_sd(path)("%s/%s", basedir, pl_objects[i]);
+            playermodels.add(&mdls[i]);
+            sprintf_sd(mdl_path)("%s.md3", path);
+            sprintf_sd(cfg_path)("%s_default.cfg", path);
+            mdls[i].load(mdl_path);
+            exec(cfg_path);
         };
-        rendermd3player(0, d, gun);
+        mdls[MDL_LOWER].link(&mdls[MDL_UPPER], "tag_torso");
+        mdls[MDL_UPPER].link(&mdls[MDL_HEAD], "tag_head");
+        sprintf_sd(modelcfg)("%s/animation.cfg", basedir);
+        exec(modelcfg); // load animations to tmp_animation
+        int skip_gap = tmp_animations[LEGS_WALKCR].start - tmp_animations[TORSO_GESTURE].start;
+        for(int i = LEGS_WALKCR; i < tmp_animations.length(); i++) // the upper and lower mdl frames are independent
+        {
+            tmp_animations[i].start -= skip_gap;
+            tmp_animations[i].end -= skip_gap;
+        };
+        loopv(tmp_animations) // assign the loaded animations to the lower,upper or head model
+        {
+            md3animinfo &anim = tmp_animations[i];
+            if(i <= BOTH_DEAD3)
+            {
+                mdls[MDL_UPPER].animations.add(anim);
+                mdls[MDL_LOWER].animations.add(anim);
+            }
+            else if(i <= TORSO_STAND2)
+                mdls[MDL_UPPER].animations.add(anim);
+            else if(i <= LEGS_TURN)    
+                mdls[MDL_LOWER].animations.add(anim);
+        };
+        return &mdls[0];
     };
 };

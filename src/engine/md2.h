@@ -204,7 +204,8 @@ struct md2 : model
         //                      D    D    D    D'   D    D    D    D'   A   A'  P   P'  I   I' R,  R'  E    L    J   J'   GS  GI S
         static int _frame[] = { 178, 184, 190, 137, 183, 189, 197, 164, 46, 51, 54, 32, 0,  0, 40, 1,  162, 162, 67, 168, 7,  6, 0, };
         static int _range[] = { 6,   6,   8,   28,  1,   1,   1,   1,   8,  19, 4,  18, 40, 1, 6,  15, 1,   1,   1,  1,   18, 1, 1, };
-        static int animfr[] = { 2, 6, 8, 10, 12, 14, 16, 17, 18, 20, 21, 22 };
+        static int animfr[] = { 2, 6, 10, 12, 8, 14, 8, 16, 17, 18, 18, 20, 21, 22 };
+        assert(anim<=13);
         int n = animfr[anim];
         if(!strcmp(mdlname, "monster/hellpig")) { n++; sc *= 32; z -= 7.6f; }
         else if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
@@ -213,21 +214,19 @@ struct md2 : model
         ai.range = _range[n];
         ai.basetime = basetime;
         ai.speed = speed;
-    
         loopi(ai.range) if(!mverts[ai.frame+i]) scale(ai.frame+i, sc);
         if(hasVBO && !vbufGL && anim==ANIM_STATIC) genvar();
         
         if(d)
         {
-            if(d->lastanimswitchtime==-1) { d->current = ai; d->lastanimswitchtime = lastmillis-animationinterpolationtime*2; }
-            else if(!aneq(d->current,ai))
+            if(d->lastanimswitchtime[0]==-1) { d->current[0] = ai; d->lastanimswitchtime[0] = lastmillis-animationinterpolationtime*2; }
+            else if(!aneq(d->current[0],ai))
             {
-                if(lastmillis-d->lastanimswitchtime>animationinterpolationtime/2) d->prev = d->current;
-                d->current = ai;
-                d->lastanimswitchtime = lastmillis;
+                if(lastmillis-d->lastanimswitchtime[0]>animationinterpolationtime/2) d->prev[0] = d->current[0];
+                d->current[0] = ai;
+                d->lastanimswitchtime[0] = lastmillis;
             };
-        };
-        
+        };
         glPushMatrix ();
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, -1, 0);
@@ -259,23 +258,23 @@ struct md2 : model
         }
         else
         {
+        
             md2_anpos prev, current;
-            current.setframes(d ? d->current : ai);
+            current.setframes(d ? d->current[0] : ai);
 		    vec *verts1 = mverts[current.fr1];
 		    vec *verts2 = mverts[current.fr2];
 		    vec *verts1p;
 		    vec *verts2p;
 		    float aifrac1, aifrac2;
-		    bool doai = d && lastmillis-d->lastanimswitchtime<animationinterpolationtime;
+		    bool doai = d && lastmillis-d->lastanimswitchtime[0]<animationinterpolationtime;
 		    if(doai)
 		    {
-		        prev.setframes(d->prev);
+		        prev.setframes(d->prev[0]);
 		        verts1p = mverts[prev.fr1];
 		        verts2p = mverts[prev.fr2];
-		        aifrac1 = (lastmillis-d->lastanimswitchtime)/(float)animationinterpolationtime;
+		        aifrac1 = (lastmillis-d->lastanimswitchtime[0])/(float)animationinterpolationtime;
 		        aifrac2 = 1-aifrac1;
-		    };
-
+		    };
 		    for(int *command = glcommands; (*command)!=0;)
 		    {
 			    int numVertex = *command++;

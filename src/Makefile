@@ -1,5 +1,5 @@
 CXX=g++
-CXXOPTFLAGS=-Wall -fsigned-char -O3 -fomit-frame-pointer
+CXXOPTFLAGS=-Wall -fsigned-char -O0 -fomit-frame-pointer
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
 
 PLATFORM_PREFIX=linux
@@ -54,13 +54,12 @@ fpsgame/fps-standalone.o:
 	$(CXX) $(CXXFLAGS) -DSTANDALONE -c -o fpsgame/fps-standalone.o fpsgame/fps.cpp
 
 client: $(CLIENT_OBJS)
-	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
+	$(CXX) $(CXXFLAGS) -g -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
 
 server: $(SERVER_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  
 	
 install: all
 	cp sauer_client ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_client
-	strip ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_client
 	cp sauer_server ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_server
 	strip ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_server
