@@ -27,8 +27,7 @@ struct animstate                                // used for animation blending o
 {
     int anim, frame, range, basetime;
     float speed;
-    void reset() { anim = frame = range = basetime = 0; speed = 100.0f; };
-    animstate() { reset(); };
+    animstate() : anim(0), frame(0), range(0), basetime(0), speed(100.0f) { };
 };
 
 enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_PAIN, ANIM_IDLE, ANIM_IDLE_ATTACK, ANIM_RUN, ANIM_RUN_ATTACK, ANIM_EDIT, ANIM_LAG, ANIM_JUMP, ANIM_JUMP_ATTACK, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_STATIC };
