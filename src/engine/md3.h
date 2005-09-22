@@ -86,6 +86,7 @@ struct md3model
     vector<md3animinfo> animations;
     animstate *as, *current, *prev;
     md3model **links;
+    md3frame *frames;
     md3tag *tags;
     int numframes, numtags;
     int *lastanimswitchtime;
@@ -137,11 +138,14 @@ struct md3model
         if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) // header check
             fatal("corruped header in md3 model: ", path);
         
+        numframes = header.numframes;
+        frames = new md3frame[header.numframes];
+        fseek(f, header.ofs_frames, SEEK_SET);
+        fread(frames, sizeof(md3frame), header.numframes, f);
         tags = new md3tag[header.numframes * header.numtags];
+        numtags = header.numtags;
         fseek(f, header.ofs_tags, SEEK_SET);
         fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
-        numframes = header.numframes;
-        numtags = header.numtags;
         
         links = (md3model **) malloc(sizeof(md3model) * header.numtags);
         loopi(header.numtags) links[i] = NULL;
@@ -226,7 +230,8 @@ struct md3model
         nextfrm = current->frame + (stopped ? 0 : 1);
         
         #define ip(p1,p2,t) ((p1) + (t) * ((p2) - (p1)))
-        #define ip_as(c) ip( ip( point1p->c, point2p->c, t_prev), ip( point1->c, point2->c, t), t_ai)
+        #define ip_ai(c) ip( ip( point1p->c, point2p->c, t_prev), ip( point1->c, point2->c, t), t_ai)
+        #define ip_ai_tag(c) ip( ip( tag1p->c, tag2p->c, t_prev), ip( tag1->c, tag2->c, t), t_ai)
 
         loopv(meshes)
         {
@@ -251,7 +256,7 @@ struct md3model
                         {
                             vec *point1p = &mesh->vertices[index + prev->frame * mesh->numvertices];
                             vec *point2p = &mesh->vertices[index + (prev->frame+1) * mesh->numvertices];
-                            glVertex3f(     ip_as(x), ip_as(y), ip_as(z) );
+                            glVertex3f(     ip_ai(x), ip_ai(y), ip_ai(z) );
                         }
                         else glVertex3f(    ip(point1->x, point2->x, t),
                                             ip(point1->y, point2->y, t),
@@ -260,8 +265,6 @@ struct md3model
                 };
             glEnd();
         };
-        
-        #define ip_as_t(c) ip( ip( tag1p->c, tag2p->c, t_prev), ip( tag1->c, tag2->c, t), t_ai)
         
         loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
         {
@@ -275,17 +278,17 @@ struct md3model
             {
                 md3tag *tag1p = &tags[prev->frame * numtags + i];
                 md3tag *tag2p = &tags[(prev->frame+1) * numtags + i];
-                loopj(3) matrix[j] = ip_as_t(rotation[0][j]); // rotation
-                loopj(3) matrix[4 + j] = ip_as_t(rotation[1][j]);
-                loopj(3) matrix[8 + j] = ip_as_t(rotation[2][j]);
-                loopj(3) matrix[12 + j] = ip_as_t(pos[j]); // position      
+                loopj(3) matrix[j] = ip_ai_tag(rotation[0][j]); // rotation
+                loopj(3) matrix[4 + j] = ip_ai_tag(rotation[1][j]);
+                loopj(3) matrix[8 + j] = ip_ai_tag(rotation[2][j]);
+                loopj(3) matrix[12 + j] = ip_ai_tag(pos[j]); // position      
             }
             else
             {
-                loopj(3) matrix[j] = ip(tags[current->frame * numtags + i].rotation[0][j], tags[nextfrm * numtags + i].rotation[0][j], t); // rotation
-                loopj(3) matrix[4 + j] = ip(tags[current->frame * numtags + i].rotation[1][j], tags[nextfrm * numtags + i].rotation[1][j], t);
-                loopj(3) matrix[8 + j] = ip(tags[current->frame * numtags + i].rotation[2][j], tags[nextfrm * numtags + i].rotation[2][j], t);
-                loopj(3) matrix[12 + j] = ip(tags[current->frame * numtags + i].pos[j] , tags[nextfrm * numtags + i].pos[j], t); // position
+                loopj(3) matrix[j] = ip(tag1->rotation[0][j], tag2->rotation[0][j], t); // rotation
+                loopj(3) matrix[4 + j] = ip(tag1->rotation[1][j], tag2->rotation[1][j], t);
+                loopj(3) matrix[8 + j] = ip(tag1->rotation[2][j], tag2->rotation[2][j], t);
+                loopj(3) matrix[12 + j] = ip(tag1->pos[j], tag2->pos[j], t); // position
             };
             matrix[15] = 1.0f;
             glPushMatrix();
