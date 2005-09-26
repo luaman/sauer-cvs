@@ -137,18 +137,14 @@ COMMAND(selcorners, ARG_DOWN);
 
 void cursorupdate()
 {
-    vec ray(worldpos), v(worldpos);
+    vec ray(worldpos), v(player->o);
     ray.sub(player->o);
     float m = ray.magnitude();
     ray.div(m);
-    float r = raycube(true, player->o, ray, 1e16f, gridsize);
+    float r = raycube(true, player->o, ray, 0, gridsize);
 
-    if(r < m)
-    {
-        ray.mul(r);
-        v = player->o;
-        v.add(ray);
-    };
+    ray.mul(r);
+    v.add(ray);
 
     lookupcube(int(v.x), int(v.y), int(v.z));
     if(lusize>gridsize)

@@ -102,28 +102,30 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
     cube *last = NULL;
     float dist = 0;
     vec v = o;
+    if(ray==vec(0,0,0)) return dist;
     for(;;)
     {
         cube &c = lookupcube(int(v.x), int(v.y), int(v.z), 0);
         float disttonext = 1e16f;
         loopi(3) if(ray[i]!=0) disttonext = min(disttonext, 0.1f + fabs((float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i]));
 
-        if((clipmat && isclipped(c.material)) || isentirelysolid(c) || (lusize==size&&!isempty(c)) || (radius>0 && dist>radius) || last==&c)
+        if(!(last==NULL && size>0)) // skip first cube if size set
         {
-            if(last==&c && radius>0) dist = radius;
-            return dist;
-        };
-
-        last = &c;
-
-        if(!isempty(c))
-        {
-            setcubeclip(c, lu.x, lu.y, lu.z, lusize);
-            if(raycubeintersect(c, v, ray, v, dist)) return dist;
+            if((clipmat && isclipped(c.material)) || isentirelysolid(c) || (lusize==size&&!isempty(c)) || (radius>0 && dist>radius) || last==&c)
+            {
+                if(last==&c && radius>0) dist = radius;
+                return dist;
+            }
+            else if(!isempty(c))
+            {
+                setcubeclip(c, lu.x, lu.y, lu.z, lusize);
+                if(raycubeintersect(c, v, ray, v, dist)) return dist;
+            };
         };
 
         pushvec(v, ray, disttonext);
         dist += disttonext;
+        last = &c;
     };
 };
 
@@ -543,7 +545,7 @@ void moveplayer(dynent *pl, int moveres, bool local)
 
 bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
 {
-    vec v = to, w = d->o, *p; 
+    vec v = to, w = d->o, *p;
     v.sub(from);
     w.sub(from);
     float c1 = w.dot(v);
