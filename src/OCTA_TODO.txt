@@ -1,7 +1,5 @@
 gilt:
-- loopi(3) disttonext = min(disttonext, 0.1f + fabs((float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i]));
-  does not cope with components of "ray" being 0, which is entirely legal (see dropenttofloor)
-- connected push, and other tools that are geared towards easier editing of heightfields/terrain/rocks
+- other tools that are geared towards easier editing of heightfields/terrain/rocks
 - make it such that collision uses same quad->2tris subdivision as rendering
 
 eihrul:
