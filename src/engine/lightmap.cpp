@@ -249,7 +249,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
       {-0.05f, -0.6f}
     };
 
-    float tolerance = 0.5 / lpu;
+    float tolerance = 2.0 / lpu;
     vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     uchar *lumel = lm + y1 * 3 * lm_w;
