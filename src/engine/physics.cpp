@@ -106,8 +106,6 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
     for(;;)
     {
         cube &c = lookupcube(int(v.x), int(v.y), int(v.z), 0);
-        float disttonext = 1e16f;
-        loopi(3) if(ray[i]!=0) disttonext = min(disttonext, 0.1f + fabs((float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i]));
 
         if(!(last==NULL && size>0)) // skip first cube if size set
         {
@@ -123,6 +121,12 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
             };
         };
 
+        float disttonext = 1e16f;
+        loopi(3) if(ray[i]!=0)
+        {
+            float d = (float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i];
+            if (d >= 0) disttonext = min(disttonext, 0.1f + d);
+        }
         pushvec(v, ray, disttonext);
         dist += disttonext;
         last = &c;
