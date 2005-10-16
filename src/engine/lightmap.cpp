@@ -261,7 +261,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
         memset(maxcolor, 0, 3);
     }
 
-    int aasample = 1 << (aalights * 2);
+    int aasample = aalights ? 1 << (aalights + 1) : 1;
     for(uint y = y1; y < y2; ++y, v.add(vstep)) {
         vec u = v;
         for(uint x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
