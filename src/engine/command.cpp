@@ -246,9 +246,10 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
 
 // tab-completion of all idents and base maps
 
-int completesize = 0, completeidx = 0;
+int completesize = 0;
+string lastcomplete;
 
-void resetcomplete() { completesize = 0; };
+void resetcomplete() { completesize = 0; }
 
 int mapnamecmp(char **x, char **y)
 {
@@ -265,6 +266,7 @@ void buildmapnames()
         do {
             mapnames.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - 4));
         } while(FindNextFile(Find, &FindFileData));
+    }
     #elif defined(__GNUC__)
     DIR *d = opendir("packages/base");;
     struct dirent *dir;
@@ -277,11 +279,10 @@ void buildmapnames()
             if(namelength > 0 && strncmp(dir->d_name+namelength, ".ogz", 4)==0)  mapnames.add(newstring(dir->d_name, namelength));
         };
         closedir(d);
-    #else
-    {
-    #endif
-        qsort(mapnames.getbuf(), mapnames.length(), sizeof(char **), (int (*)(const void *, const void *))mapnamecmp);
     }
+    #else
+    if(0)
+    #endif
     else conoutf("unable to read base folder for map autocomplete");
 };
 
@@ -295,35 +296,35 @@ void complete(char *s)
         strcat_s(s, t);
     };
     if(!s[1]) return;
-    if(!completesize) { completesize = (int)strlen(s)-1; completeidx = 0; };
-    int idx;
+    if(!completesize) { completesize = (int)strlen(s)-1; lastcomplete[0] = '\0'; };
+    char *prefix = "/", 
+         *nextcomplete = NULL;
     if(completesize >= 4 && strncmp(s,"/map ", 5)==0)           // complete a mapname in packages/base/ instead of a command
     {
-        if (mapnames.empty()) buildmapnames();
-        idx = 0;
+        prefix = "/map ";
+        if(mapnames.empty()) buildmapnames();
         loopi(mapnames.length())
         {
-            if(strncmp(mapnames[i], s+5, completesize-4)==0 && idx++==completeidx)
-            {
-                strcpy_s(s, "/");
-                strcat_s(s, "map ");
-                strcat_s(s, mapnames[i]);
-            };
-        }
+            if(strncmp(mapnames[i], s+5, completesize-4)==0 && 
+               strcmp(mapnames[i], lastcomplete) > 0 && (!nextcomplete || strcmp(mapnames[i], nextcomplete) < 0))
+                nextcomplete = mapnames[i];
+        };
     }
     else
     {
-        idx = 0;
         enumerate(idents, ident, id,
-            if(strncmp(id->_name, s+1, completesize)==0 && idx++==completeidx)
-            {
-                strcpy_s(s, "/");
-                strcat_s(s, id->_name);
-            };
+            if(strncmp(id->_name, s+1, completesize)==0 &&
+               strcmp(id->_name, lastcomplete) > 0 && (!nextcomplete || strcmp(id->_name, nextcomplete) < 0))
+                nextcomplete = id->_name;
         );
     };
-    completeidx++;
-    if(completeidx>=idx) completeidx = 0;
+    if(nextcomplete)
+    {
+        strcpy_s(s, prefix);
+        strcat_s(s, nextcomplete);
+        strcpy_s(lastcomplete, nextcomplete);
+    }
+    else lastcomplete[0] = '\0';
 };
 
 bool execfile(char *cfgfile)
