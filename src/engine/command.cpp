@@ -250,6 +250,11 @@ int completesize = 0, completeidx = 0;
 
 void resetcomplete() { completesize = 0; };
 
+int mapnamecmp(char **x, char **y)
+{
+    return strcmp(*x, *y);
+};
+
 void buildmapnames()
 {
     #if defined(WIN32)
@@ -260,7 +265,6 @@ void buildmapnames()
         do {
             mapnames.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - 4));
         } while(FindNextFile(Find, &FindFileData));
-    }
     #elif defined(__GNUC__)
     DIR *d = opendir("packages/base");;
     struct dirent *dir;
@@ -273,8 +277,11 @@ void buildmapnames()
             if(namelength > 0 && strncmp(dir->d_name+namelength, ".ogz", 4)==0)  mapnames.add(newstring(dir->d_name, namelength));
         };
         closedir(d);
-    }
+    #else
+    {
     #endif
+        qsort(mapnames.getbuf(), mapnames.length(), sizeof(char **), (int (*)(const void *, const void *))mapnamecmp);
+    }
     else conoutf("unable to read base folder for map autocomplete");
 };
 
