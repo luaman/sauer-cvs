@@ -54,13 +54,17 @@ void clear_md2s()
     enumerate((&mdllookup), model *, m, delete *m);
 };
 
+VARP(maxmodelradiusdistance, 10, 50, 1000);
+
 void rendermodel(char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
     vec center;
     float radius = m->boundsphere(0/*frame*/, scale, center);   // FIXME
-    if(isvisiblesphere(radius, center.x+x, center.z+z, center.y+y) == VFC_NOT_VISIBLE) return;
+    center.add(vec(x, z, y));
+    if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
+    if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     m->setskin(tex);
     m->render(anim, varseed, speed, basetime, mdl, x, y, z, yaw, pitch, scale, d);
 };

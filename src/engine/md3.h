@@ -229,6 +229,7 @@ struct md3model
         }
         nextfrm = current->frame + (stopped ? 0 : 1);
         
+        #undef ip
         #define ip(p1,p2,t) ((p1) + (t) * ((p2) - (p1)))
         #define ip_ai(c) ip( ip( point1p->c, point2p->c, t_prev), ip( point1->c, point2->c, t), t_ai)
         #define ip_ai_tag(c) ip( ip( tag1p->c, tag2p->c, t_prev), ip( tag1->c, tag2->c, t), t_ai)

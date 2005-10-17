@@ -10,6 +10,16 @@ eihrul:
 - an RGB that is stored as part of the map, and that is set as the color value for all water
 
 aard:
+- lod
+  * materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
+  * visibleface() must work correctly with lod neighbours
+  * check anything else in octarender
+  * distance to occupied BB instead of octa sphere
+  * lighting | make sure non-leafs can store surfaces
+  * improved lod-remip
+  * fix lodsize?
+
+
 - make sauer inner directory
 - wireframe mode
 - cube loader: import some sample cube maps
@@ -37,6 +47,7 @@ aard:
 - fix ssg rays
 - improve on cma render then add to sauer
 - slowmo?
+- VBO verts are 24 bytes, remove the next ptr, make UVs shorts or bytes? make coords shorts?
 
 - fix the two //BREAK
 

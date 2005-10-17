@@ -14,21 +14,24 @@ struct materialsurface
     int x, y, z, size;
 };
 
-struct vtxarray
+struct lodlevel
 {
     elementset *eslist; // List of element indces sets (range) per texture
-    vertex *vbuf;       // vertex buffer
     ushort *ebuf;       // packed element indices buffer
     ushort *skybuf;     // skybox packed element indices buffer
+    materialsurface *matbuf; // buffer of material surfaces
+    int tris, texs, matsurfs, sky;
+};
+
+struct vtxarray
+{
+    lodlevel l0, l1;
+    vertex *vbuf;       // vertex buffer
     vtxarray *next;     // linked list of visible VOBs
     int allocsize;      // size of allocated memory for this va
-    int verts, tris, texs, matsurfs, sky, explicitsky, skyarea;
-    vec cv;             // cube center
-    float radius;       // cube bounding radius
-    float distance;     // distance from player 1
+    int verts, explicitsky, skyarea, curlod;
     uint vbufGL;        // VBO buffer ID
     int x, y, z, size;  // location and size of cube.
-    materialsurface *matbuf; // buffer of material surfaces
 };
 
 struct surfaceinfo

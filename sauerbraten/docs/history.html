@@ -18,10 +18,20 @@
 			<LI>
 			fixed being at the surface of water generating many sound events
 			<LI>
-				did an endless amount of more refactoring to seperate the game code out more. 
-				Multiple "games" can now coexist in the same exe
-            <li>
-            "lanconnect" command for broadcasting connection requests over a LAN</LI></UL>
+			did an endless amount of more refactoring to seperate the game code out more. 
+			Multiple "games" can now coexist in the same exe
+			<li>
+			"lanconnect" command for broadcasting connection requests over a LAN
+			<LI>
+			"maxparticledistance" variable culls all particle splashes at distance
+			<LI>
+			"maxmodelradiusdistance" variable calls models at distance, relative to their 
+			size. One day we will render models as sprites in the distance, but for now 
+			this is a cheap way to significantly reduce the rendering load on large maps
+			<LI>
+				"loddistance" sets the distance at which vertex array blocks of world geometry 
+				use a lower LOD approximation. Significantly reduces amount of small detail 
+				rendered at distance. Useful on larger maps only.</LI></UL>
 		<div>2005_08_15_quakecon_edition</div>
 		<ul>
 			<LI>

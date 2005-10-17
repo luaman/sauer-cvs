@@ -113,8 +113,11 @@ void render_particles(int time)
     glDepthMask(GL_TRUE);
 };
 
+VARP(maxparticledistance, 256, 512, 4096);
+
 void particle_splash(int type, int num, int fade, vec &p)
 {
+    if(camera1->o.dist(p)>maxparticledistance) return; 
     loopi(num)
     {
         const int radius = type==5 ? 50 : 150;

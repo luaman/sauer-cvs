@@ -5,6 +5,19 @@
 
 vector<vertex> verts;
 
+struct cstat { int size, nleaf, nnode, nface; } cstats[32];
+
+VAR(showcstats, 0, 0, 1);
+
+void printcstats()
+{
+    if(showcstats) loopi(32) 
+    {
+        if(!cstats[i].size) break;
+        conoutf("%d: %d faces, %d leafs, %d nodes", cstats[i].size, cstats[i].nface, cstats[i].nleaf, cstats[i].nnode);
+    };
+};
+
 struct vechash
 {
     static const int size = 1<<16;
@@ -35,7 +48,6 @@ struct vechash
 };
 
 vechash vh;
-int curtris = 0;
 
 int vert(int x, int y, int z, float lmu, float lmv)
 {
@@ -188,32 +200,28 @@ bool collapsedface(uint cfe)
     return false;
 }
 
-//extern cube *last;
-
-static cube *vc;
-static ivec vo;
-static int vsize;
-static uchar vmat;
-
-bool occludesface(cube &c, int orient, int x, int y, int z, int size)
+bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, ivec &vo, int vsize, uchar vmat)
 {
-    if(!c.children) {
+    if(!c.children)
+    {
          if(isentirelysolid(c)) return true;
          if(vmat != MAT_AIR && c.material == vmat) return true;
          if(isempty(c)) return false;
          return touchingface(c, orient) && faceedges(c, orient) == F_SOLID;
     }
-    int dim = dimension(orient), coord = dimcoord(orient),
-        xd = (dim + 1) % 3, yd = (dim + 2) % 3;
+    
+    int dim = dimension(orient), coord = dimcoord(orient), xd = (dim + 1) % 3, yd = (dim + 2) % 3;
+    
     loopi(8) if(octacoord(dim, i) == coord)
     {
         ivec o(i, x, y, z, size >> 1);
         if(o[xd] < vo[xd] + vsize && o[xd] + (size >> 1) > vo[xd] &&
            o[yd] < vo[yd] + vsize && o[yd] + (size >> 1) > vo[yd])
         {
-            if(!occludesface(c.children[i], orient, o.x, o.y, o.z, size >> 1)) return false;
+            if(!occludesface(c.children[i], orient, o.x, o.y, o.z, size >> 1, vc, vo, vsize, vmat)) return false;
         }
     }
+    
     return true;
 }
 
@@ -243,11 +251,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat)
         return faceedgegt(cfe, ofe);
     }
 
-    vc = &c;
-    vo.x = x; vo.y = y; vo.z = z;
-    vsize = size;
-    vmat = mat;
-    return !occludesface(o, opposite(orient), lu.x, lu.y, lu.z, lusize);
+    return !occludesface(o, opposite(orient), lu.x, lu.y, lu.z, lusize, &c, ivec(x, y, z), size, mat);
 };
 
 void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
@@ -266,9 +270,7 @@ void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
     }
 }
 
-int vertused[8];
-
-void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces)
+void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused)
 {
     loopi(8) vertused[i] = 0;
     loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertused[faceverts(c,i,k)]++;
@@ -318,7 +320,9 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
     bool usefaces[6];
     vec v[8], mx(x, y, z), mn(x+size, y+size, z+size);
 
-    calcverts(c, x, y, z, size, v, usefaces);
+    int vertused[8];
+    
+    calcverts(c, x, y, z, size, v, usefaces, vertused);
 
     loopi(8) if(vertused[i]) loopj(3) // generate tight bounding box
     {
@@ -361,12 +365,66 @@ inline unsigned int hthash (const sortkey &k)
     return k.tex + k.lmid*9741;
 }
 
-hashtable<sortkey, sortval> indices;
-vector<materialsurface> matsurfs;
-usvector skyindices;
+struct lodcollect
+{
+    hashtable<sortkey, sortval> indices;
+    vector<materialsurface> matsurfs;
+    usvector skyindices;
+    int curtris;
+    
+    int size() { return indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface); };
+
+    void clearidx() { indices.clear(); };
+    void clear()
+    {
+        curtris = 0;
+        skyindices.setsize(0);
+        matsurfs.setsize(0);
+    };
+    
+    char *setup(lodlevel &lod, char *buf)
+    {
+        lod.eslist = (elementset *)buf;
+        lod.ebuf = (ushort *)(lod.eslist + indices.numelems);
+
+        lod.skybuf = lod.ebuf + 2*curtris;
+        lod.sky = skyindices.length();
+        memcpy(lod.skybuf, skyindices.getbuf(), lod.sky*sizeof(ushort));
+
+        lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky);   
+        lod.matsurfs = matsurfs.length();
+        if(lod.matsurfs)
+        {
+            memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
+            sortmatsurfs(lod.matbuf, lod.matsurfs);
+        };
+
+        ushort *ebuf = lod.ebuf;
+        int list = 0;
+        enumeratekt(indices, sortkey, k, sortval, t,
+            lod.eslist[list].texture = k.tex;
+            lod.eslist[list].lmid = k.lmid;
+            loopl(3) if(lod.eslist[list].length[l] = t->dims[l].length())
+            {
+                memcpy(ebuf, t->dims[l].getbuf(), t->dims[l].length() * sizeof(ushort));
+                ebuf += t->dims[l].length();
+            };
+            ++list;
+        );
+
+        lod.texs = indices.numelems;
+        lod.tris = curtris;
+        return (char *)(lod.matbuf+lod.matsurfs);
+    };
+}
+l0, l1;
+
 int explicitsky = 0, skyarea = 0;
 
-void gencubeverts(cube &c, int x, int y, int z, int size)
+VAR(lodsize, 8, 32, 128);
+VAR(loddistance, 0, 2000, 100000);
+
+void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 {
     bool useface[6];
 
@@ -374,13 +432,22 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
 
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
     {
+        cstats[csi].nface++;
+        
         if(c.texture[i] == DEFAULT_SKY)
-            ++explicitsky;
+        {
+            if(!lodcube) ++explicitsky;
+        }
         else
-            curtris += 2;
-        usvector &iv = (c.texture[i] == DEFAULT_SKY ?
-                           skyindices :
-                           indices[sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0))].dims[dimension(i)]);
+        {
+            if(!lodcube) l0.curtris += 2;
+            if(size>=lodsize) l1.curtris += 2;
+        };
+            
+        sortkey &key = sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0));
+        usvector &iv0 = (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]);
+        usvector &iv1 = (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]);
+        
         loopk(4)
         {
             float u, v;
@@ -405,7 +472,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size)
                 index = vh.access(rv, u, v);
             }
 
-            iv.add(index);
+            if(!lodcube) iv0.add(index);
+            if(size>=lodsize) iv1.add(index);
         }
     }
 };
@@ -450,7 +518,7 @@ void genskyverts(cube &c, int x, int y, int z, int size)
                              cubecoords[coord][1]*size/8+y,
                              cubecoords[coord][2]*size/8+z,
                              0.0f, 0.0f);
-            skyindices.add(index);
+            l0.skyindices.add(index);
         }
     }
 };
@@ -463,14 +531,10 @@ vector<vtxarray *> valist;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
-    int allocsize = sizeof(vtxarray) + indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface);
-    if (!hasVBO) allocsize += verts.length() * sizeof(vertex); // length of vertex buffer
+    int allocsize = sizeof(vtxarray) + l0.size() + l1.size();
+    if (!hasVBO) allocsize += verts.length()*sizeof(vertex); // length of vertex buffer
     vtxarray *va = (vtxarray *)new uchar[allocsize];
-    va->eslist = (elementset *)(va + 1);
-    va->ebuf = (ushort *)(va->eslist + indices.numelems);
-    va->skybuf = va->ebuf + 2*curtris;
-    va->sky = skyindices.length();
-    memcpy(va->skybuf, skyindices.getbuf(), va->sky * sizeof(ushort));
+    char *buf = l1.setup(va->l1, l0.setup(va->l0, (char *)(va+1)));
     if (hasVBO && verts.length())
     {
         pfnglGenBuffers(1, (GLuint*)&(va->vbufGL));
@@ -480,39 +544,16 @@ vtxarray *newva(int x, int y, int z, int size)
     }
     else
     {
-        va->vbuf = (vertex *)(va->skybuf + va->sky);
-        memcpy(va->vbuf, verts.getbuf(), verts.length() * sizeof(vertex));
+        va->vbuf = (vertex *)buf;
+        memcpy(va->vbuf, verts.getbuf(), verts.length()*sizeof(vertex));
     };
-    va->matbuf = (materialsurface *)((char *)va + allocsize - matsurfs.length() * sizeof(materialsurface));
-    va->matsurfs = matsurfs.length();
-    if(va->matsurfs)
-    {
-        memcpy(va->matbuf, matsurfs.getbuf(), matsurfs.length() * sizeof(materialsurface));
-        sortmatsurfs(va->matbuf, va->matsurfs);
-    }
-
-    ushort *ebuf = va->ebuf;
-    int list = 0;
-    enumeratekt(indices, sortkey, k, sortval, t,
-        va->eslist[list].texture = k.tex;
-        va->eslist[list].lmid = k.lmid;
-        loopl(3) if(va->eslist[list].length[l] = t->dims[l].length())
-        {
-            memcpy(ebuf, t->dims[l].getbuf(), t->dims[l].length() * sizeof(ushort));
-            ebuf += t->dims[l].length();
-        };
-        ++list;
-    );
 
     va->allocsize = allocsize;
-    va->texs = indices.numelems;
     va->x = x; va->y = y; va->z = z; va->size = size;
-    va->cv = vec(x+size, y+size, z+size); // Center of cube
-    va->radius = size * SQRT3; // cube radius
     va->explicitsky = explicitsky;
-    va->skyarea = skyarea;
+    va->skyarea = skyarea;    
     wverts += va->verts = verts.length();
-    wtris  += va->tris  = curtris;
+    wtris  += va->l0.tris;
     allocva++;
     valist.add(va);
     return va;
@@ -522,7 +563,7 @@ void destroyva(vtxarray *va)
 {
     if (hasVBO && va->vbufGL) pfnglDeleteBuffers(1, (GLuint*)&(va->vbufGL));
     wverts -= va->verts;
-    wtris -= va->tris;
+    wtris -= va->l0.tris;
     allocva--;
     valist.removeobj(va);
     delete[] va;
@@ -538,50 +579,76 @@ void vaclearc(cube *c)
     };
 };
 
-void rendercube(cube &c, int cx, int cy, int cz, int size)  // creates vertices and indices ready to be put into a va
+void genlod(cube &c)    // TODO: improve for higher visual LOD quality
+{
+    loopi(8) if(!isempty(c.children[i]))
+    {
+        solidfaces(c);
+        loopj(6) c.texture[j] = c.children[i].texture[j];
+        c.material = MAT_AIR; // temp
+        return;
+    };
+    emptyfaces(c);
+};
+
+void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates vertices and indices ready to be put into a va
 {
     //if(size<=16) return;
     if(c.va) return;                            // don't re-render
-    if(c.children) loopi(8)
+    cstats[csi].size = size;
+    bool lodcube = false;
+    
+    if(c.children)
     {
-        ivec o(i, cx, cy, cz, size/2);
-        rendercube(c.children[i], o.x, o.y, o.z, size/2);
-    }
-    else
-    {
-        genskyverts(c, cx, cy, cz, size);
-        if(!isempty(c)) gencubeverts(c, cx, cy, cz, size);
-        if(c.material != MAT_AIR)
+        cstats[csi].nnode++;
+        
+        loopi(8)
         {
-            loopi(6) if(visiblematerial(c, i, cx, cy, cz, size))
-            {
-                materialsurface matsurf = {c.material, i, cx, cy, cz, size};
-                matsurfs.add(matsurf);
-            }
+            ivec o(i, cx, cy, cz, size/2);
+            rendercube(c.children[i], o.x, o.y, o.z, size/2, csi+1);
+        };
+        
+        if(size<=lodsize) genlod(c);
+        if(size!=lodsize) return;
+        lodcube = true;
+    }
+    
+    genskyverts(c, cx, cy, cz, size);   
+    if(!isempty(c)) gencubeverts(c, cx, cy, cz, size, csi, lodcube);
+    if(c.material != MAT_AIR)
+    {
+        loopi(6) if(visiblematerial(c, i, cx, cy, cz, size))
+        {
+            materialsurface matsurf = {c.material, i, cx, cy, cz, size};
+            l0.matsurfs.add(matsurf);  
         }
     }
+    
+    if(lodcube) return;
+    
+    cstats[csi].nleaf++;
 };
 
-void setva(cube &c, int cx, int cy, int cz, int size)
+void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 {
     if(verts.length())                                 // since reseting is a bit slow
     {
-        curtris = explicitsky = skyarea = 0;
         verts.setsize(0);
-        //indices.clear();
-        skyindices.setsize(0);
-        matsurfs.setsize(0);
+        explicitsky = skyarea = 0;
         vh.clear();
+        l0.clear();
+        l1.clear();
     };
 
-    rendercube(c, cx, cy, cz, size);
+    rendercube(c, cx, cy, cz, size, csi);
     if(verts.length()) c.va = newva(cx, cy, cz, size);
-    indices.clear();
+    l0.clearidx();
+    l1.clearidx();
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
 
-int updateva(cube *c, int cx, int cy, int cz, int size)
+int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
 {
     static int faces[6];
     int ccount = 0;
@@ -590,9 +657,9 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
         int count = 0;
         ivec o(i, cx, cy, cz, size);
         if(c[i].va) {}//count += vacubemax+1;       // since must already have more then max cubes
-        else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2);
+        else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi+1);
         else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        if(count > vacubemax || size == hdr.worldsize/2) setva(c[i], o.x, o.y, o.z, size);
+        if(count > vacubemax || size == hdr.worldsize/2) setva(c[i], o.x, o.y, o.z, size, csi);
         else ccount += count;
     };
 
@@ -601,7 +668,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size)
 
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
-    updateva(worldroot, 0, 0, 0, hdr.worldsize/2);
+    updateva(worldroot, 0, 0, 0, hdr.worldsize/2, 0);
 
     explicitsky = 0;
     skyarea = 0;
@@ -613,7 +680,13 @@ void octarender()                               // creates va s for all leaf cub
     }
 };
 
-void allchanged() { vaclearc(worldroot); octarender(); };
+void allchanged()
+{
+    vaclearc(worldroot);
+    memset(cstats, 0, sizeof(cstat)*32);
+    octarender();
+    printcstats();
+};
 
 COMMANDN(recalc, allchanged, ARG_NONE);
 
@@ -625,11 +698,10 @@ float vfcDfog;  // far plane culling distance (fog limit).
 
 vtxarray *visibleva;
 
-int isvisiblesphere(float rad, float x, float y, float z)
+int isvisiblesphere(float rad, vec &cv)
 {
     int v = VFC_FULL_VISIBLE;
     float dist;
-    vec cv = vec(x, y, z); // center of sphere
 
     loopi(5)
     {
@@ -645,18 +717,13 @@ int isvisiblesphere(float rad, float x, float y, float z)
     return v;
 };
 
-int isvisiblecube(int size, int cx, int cy, int cz)
-{
-    return isvisiblesphere(size*SQRT3, cx+size, cy+size, cz+size);
-};
-
-void addvisibleva(vtxarray *va)
+void addvisibleva(vtxarray *va, vec &cv)
 {
     va->next     = visibleva;
     visibleva    = va;
-    vtris       += va->tris;
+    va->curlod   = cv.dist(camera1->o) - va->size*SQRT3/2 < loddistance ? 0 : 1;
+    vtris       += (va->curlod ? va->l1 : va->l0).tris;
     vverts      += va->verts;
-    va->distance = vfcV[0].dot(va->cv) - vfcD[0] - va->radius;
 };
 
 // convert yaw/pitch to a normalized vector
@@ -685,29 +752,31 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     loopi(5) vfcD[i] = vfcV[i].dot(camera1->o);
     vfcDfog = getvar("fog");
 
-    //visiblecubec(c, size, cx, cy, cz);
     loopv(valist)
     {
         vtxarray &v = *valist[i];
-        if(isvisiblecube(v.size, v.x, v.y, v.z)!=VFC_NOT_VISIBLE) addvisibleva(&v);
+        vec cv(v.x, v.y, v.z);
+        cv.add(v.size/2.0f); 
+        if(isvisiblesphere(v.size*SQRT3/2, cv)!=VFC_NOT_VISIBLE) addvisibleva(&v, cv);
     };
 };
 
-void rendersky()
+void rendersky()    
 {
     glEnableClientState(GL_VERTEX_ARRAY);
 
     loopv(valist)
     {
         vtxarray *va = valist[i];
-        if(!va->sky) continue;
+        lodlevel &lod = va->l0; 
+        if(!lod.sky) continue;
 
         if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
-        glDrawElements(GL_QUADS, va->sky, GL_UNSIGNED_SHORT, va->skybuf);
+        glDrawElements(GL_QUADS, lod.sky, GL_UNSIGNED_SHORT, lod.skybuf);
         glde++;
-        xtraverts += va->sky;
+        xtraverts += lod.sky;
     }
 
     if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
@@ -727,6 +796,13 @@ void setupTMU()
     glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
 };
 
+VAR(showva, 0, 0, 1);
+
+bool insideva(vtxarray *va, vec &v)
+{
+    return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
+};
+
 void renderq(int w, int h)
 {
     int si[] = { 0, 0, 2 }; //{ 0, 0, 0, 0, 2, 2};
@@ -736,14 +812,18 @@ void renderq(int w, int h)
 
     glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_COLOR_ARRAY);
-    glColor3f(1, 1, 1); // temp
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
 
     vtxarray *va = visibleva;
+    
+    int showvas = 0;
 
-    while (va)
+    while(va)
     {
+        glColor3f(1, 1, 1); 
+        if(showva && editmode && insideva(va, worldpos)) { glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
+
         if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
@@ -760,18 +840,20 @@ void renderq(int w, int h)
 
         pfnglActiveTexture(GL_TEXTURE0_ARB);
         pfnglClientActiveTexture(GL_TEXTURE0_ARB);
+        
+        lodlevel &lod = va->curlod ? va->l1 : va->l0; 
 
-        unsigned short *ebuf = va->ebuf;
-        loopi(va->texs)
+        unsigned short *ebuf = lod.ebuf;
+        loopi(lod.texs)
         {
-            Texture *tex = lookuptexture(va->eslist[i].texture);
+            Texture *tex = lookuptexture(lod.eslist[i].texture);
             glBindTexture(GL_TEXTURE_2D, tex->gl);
             pfnglActiveTexture(GL_TEXTURE1_ARB);
             extern vector<GLuint> lmtexids;
-            glBindTexture(GL_TEXTURE_2D, lmtexids[va->eslist[i].lmid]);
+            glBindTexture(GL_TEXTURE_2D, lmtexids[lod.eslist[i].lmid]);
             pfnglActiveTexture(GL_TEXTURE0_ARB);
 
-            loopl(3) if (va->eslist[i].length[l])
+            loopl(3) if (lod.eslist[i].length[l])
             {
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                 GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -780,8 +862,8 @@ void renderq(int w, int h)
                 glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
                 glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
 
-                glDrawElements(GL_QUADS, va->eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
-                ebuf += va->eslist[i].length[l];  // Advance to next array.
+                glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
+                ebuf += lod.eslist[i].length[l];  // Advance to next array.
                 glde++;
             };
         };
@@ -805,7 +887,8 @@ void rendermaterials()
     vtxarray *va = visibleva;
     while(va)
     {
-        if(va->matsurfs) rendermatsurfs(va->matbuf, va->matsurfs);
+        lodlevel &lod = va->l0; 
+        if(lod.matsurfs) rendermatsurfs(lod.matbuf, lod.matsurfs);
         va = va->next;
     }
 }
@@ -815,12 +898,12 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
     float xoffset = 0.0f, yoffset = 0.0f, zoffset = 0.0f;
     switch(orient)
     {
-    case O_BOTTOM: zoffset = offset; break;
-    case O_TOP: zoffset = -offset; break;
-    case O_BACK: yoffset = offset; break;
-    case O_FRONT: yoffset = -offset; break;
-    case O_LEFT: xoffset = offset; break;
-    case O_RIGHT: xoffset = -offset; break;
+        case O_BOTTOM: zoffset = offset; break;
+        case O_TOP: zoffset = -offset; break;
+        case O_BACK: yoffset = offset; break;
+        case O_FRONT: yoffset = -offset; break;
+        case O_LEFT: xoffset = offset; break;
+        case O_RIGHT: xoffset = -offset; break;
     }
     glBegin(GL_POLYGON);
     loopi(4)

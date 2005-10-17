@@ -473,7 +473,8 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
     }
     vec verts[8];
     bool usefaces[6];
-    calcverts(c, cx, cy, cz, size, verts, usefaces);
+    int vertused[8];
+    calcverts(c, cx, cy, cz, size, verts, usefaces, vertused);
     loopj(6) if(usefaces[j])
     {
         if((progress++ % (wtris / 2 < 100 ? 1 : wtris / 2 / 100)) == 0)
