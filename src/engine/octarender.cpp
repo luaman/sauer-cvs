@@ -421,7 +421,16 @@ l0, l1;
 
 int explicitsky = 0, skyarea = 0;
 
-const int lodsize = 32;     // fixed for now, as LM map storage depends on it. There doesn't seem to be a lot of point in 16 or 64, 32 is pretty much a sweet spot between size and geometry saved
+int roundlod(int newlod)
+{
+    int lodsize = 1;
+    while(lodsize <= newlod)
+        lodsize <<= 1;
+    lodsize >>= 1;
+    return lodsize;
+}
+
+VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize = roundlod(lodsize); );
 VAR(loddistance, 0, 2000, 100000);
 
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
@@ -756,7 +765,7 @@ float dist_to_aabox(vec &center, vec &extent, vec &p)
 };
 
 
-float dist_to_bb(vec &min, vec &max, vec &p)
+float dist_to_bb(const vec &min, const vec &max, vec &p)
 {
     vec extent = max;
     extent.sub(min).div(2);
@@ -775,7 +784,7 @@ void addvisibleva(vtxarray *va, vec &cv)
 {
     va->next     = visibleva;
     visibleva    = va;
-    va->distance = vadist(va, camera1->o); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
+    va->distance = int(vadist(va, camera1->o)); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
     va->curlod   = va->distance < loddistance ? 0 : 1;
     vtris       += (va->curlod ? va->l1 : va->l0).tris;
     vverts      += va->verts;

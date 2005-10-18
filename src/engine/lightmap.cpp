@@ -514,7 +514,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         ivec o(i, cx, cy, cz, size);
         if(c[i].children)
             generate_lightmaps(c[i].children, o.x, o.y, o.z, size >> 1);
-        if(!isempty(c[i]))
+        if((!c[i].children || hdr.mapwlod == size) && !isempty(c[i]))
             setup_surfaces(c[i], o.x, o.y, o.z, size);
     } 
 }
