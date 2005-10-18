@@ -31,7 +31,7 @@ struct vec
     bool reject(const vec &o, float max) { return x>o.x+max || x<o.x-max || y>o.y+max || y<o.y-max; };
     vec &cross(const vec &a, const vec &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; return *this; };
 
-    float dist_to_aabox(vec &center, vec &extent)
+    float dist_to_aabox(const vec &center, const vec &extent) const
     {
         float sqrdist = 0;
         
@@ -45,7 +45,7 @@ struct vec
         return sqrtf(sqrdist);
     };
 
-    float dist_to_bb(vec &min, vec &max)
+    float dist_to_bb(const vec &min, const vec &max) const
     {
         vec extent = max;
         extent.sub(min).div(2);
