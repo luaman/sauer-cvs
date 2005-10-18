@@ -9,14 +9,15 @@
 		</div>
 		For windows: install, and run the sauerbraten.bat. For linux: gunzip, run <i>chmod 
 			+x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>. Needs a decent 
-		& compliant OpenGL implementation. before you do, you may want to look at the 
-		config which is in "autoexec.cfg" and which should be fairly familiar if you 
-		ever played a quake style game. If you want to rebind your keys, see the "bind" 
-		command below. Press ESC to go into the menu with many useful commands, but 
-		will not rewrite the config file for you. Sauerbraten derives its simplicity 
-		from some rather brute force rendering methods, and as such it needs a beefy 
-		machine to get good visual quality. It runs best with "vertical sync" OFF and 
-		at high refresh rates (you may get excessive LOD/FPS variance otherwise).
+		&amp; compliant OpenGL implementation. before you do, you may want to look at 
+		the config which is in "autoexec.cfg" and which should be fairly familiar if 
+		you ever played a quake style game. If you want to rebind your keys, see the 
+		"bind" command below. Press ESC to go into the menu with many useful commands, 
+		but will not rewrite the config file for you. Sauerbraten derives its 
+		simplicity from some rather brute force rendering methods, and as such it needs 
+		a beefy machine to get good visual quality. It runs best with "vertical sync" 
+		OFF and at high refresh rates (you may get excessive LOD/FPS variance 
+		otherwise).
 		<div>Command line options
 		</div>
 		-d runs a dedicated server
@@ -26,9 +27,9 @@
 		<br>
 		Default is a non-dedicated server with only a single client. Dedicated servers 
 		run in the shell only (no graphics), with increased priority yet use very 
-		little cpu time & memory, so you can run one in the background, or at the same 
-		time with a client if you want to host a game (which is usually better than 
-		using a listen server). Cube servers need to be restarted every 3 weeks, 
+		little cpu time &amp; memory, so you can run one in the background, or at the 
+		same time with a client if you want to host a game (which is usually better 
+		than using a listen server). Cube servers need to be restarted every 3 weeks, 
 		otherwise atleast one game will not have correct timing. Server port is fixed 
 		at 28765, currently.
 		<br>
@@ -75,7 +76,7 @@
 		<pre>attack</pre>
 		Fires the current weapon. default = left mouse
 		<pre>jump</pre>
-		Triggers a jump. default key space & right mouse.
+		Triggers a jump. default key space &amp; right mouse.
 		<pre>invmouse B</pre>
 		Sets mouse to "flight sim" mode if B is not 0
 		<pre>sensitivity S</pre>
@@ -85,28 +86,7 @@
 		larger the value, the smaller the difference between sensitivity values. 
 		(default = 1)
 		<pre>fov N</pre>
-		Sets your FOV to 10..120.
-		<pre>fpsrange L H</pre>
-		Sets the desired fps you want between L and H, defaults to 30-40 which is most 
-		sensible. Do not set to silly high values as this has a very bad effect on your 
-		visuals: the engine tries to reach your desired fps at all costs, by reducing 
-		the LOD factor (the higher the LOD, the better visual quality, currently 
-		bounded between 25 & 250). because fps doesn't fluctuate as much like in other 
-		engines, 30-40 is already very smooth. check the HUD, if the LOD is locked at 
-		the minimum specified by minlod, you will need lower fps if you want less 
-		popup.
-		<pre>minlod N</pre>
-		Sets the minimum LOD factor can take. The higher you set this, the more 
-		guaranteed visual quality you will get, but the bigger dips in fps you must 
-		endure on slow hardware or slow maps. Setting N to a low value will effectively 
-		let fpsrange determine what LOD you will get. Tradeof of LOD vs fps is not 
-		linear, you'll have to experiment to find the sweet spot. On most hardware it 
-		pays of to have N relatively high, as the fps gain by setting it very low is 
-		neglible. Too high only has an effect on big or very detailed maps. Note that 
-		while tuning minlod/fpsrange, also take into account the resolution you are 
-		running at. If the resolution you set for cube makes your machine "fillrate 
-		limited", this may cause the engine to push LOD down in an effort to comply 
-		with a framerate your machine can't do at that res.
+		Sets your FOV to 10..150.
 		<pre>fog N</pre>
 		Sets fog distance to N (default currently 160). You can do this for tweaking 
 		the visual effect of the fog, or if you are on a slow machine, setting the fog 
@@ -114,18 +94,18 @@
 		geometry limited). Try out different values on big maps / maps which give you 
 		low fps.
 		<pre>dynlight B R</pre>
-		Determines wether dynamic shadows & lights are rendered (default B=1). provided 
-		just incase they slow your fps down too much. With radius you can optionally 
-		specify the radius of a dynamic light (default 16), smaller to maybe gain some 
-		speed, or bigger to see the effect of dynamic shadows more dramatically (try 
-		shooting it past some pillars that have a dark area on the other side... or use 
-		the "gamespeed" variable).
-		<pre>lighterror E</pre>
-		Allows you to finetune the amount of "error" the mipmapper/stripifier allow 
-		themselves for changing lightlevels. Set to 1 for maximum light quality at the 
-		expense of fps, set to some high value to gain fps but with messier lighting 
-		(only helps if you are geometry limited). Default = 8. If you change this 
-		during play, you have to do a "recalc" to see the effect.
+		Determines wether dynamic shadows &amp; lights are rendered (default B=1). 
+		provided just incase they slow your fps down too much. With radius you can 
+		optionally specify the radius of a dynamic light (default 16), smaller to maybe 
+		gain some speed, or bigger to see the effect of dynamic shadows more 
+		dramatically (try shooting it past some pillars that have a dark area on the 
+		other side... or use the "gamespeed" variable).
+		<pre>loddistance N</pre>
+		Sets the distance at which world vertex array blocks are rendered at a higher 
+		LOD (level of detail). The lower this value, the more geometry popup you will 
+		see, but the faster it may render. Every system has a different&nbsp;optimal 
+		value, experiment. This variable only has an effect for large scale maps where 
+		the level designer has turned on LOD using the "lodsize" variable.&nbsp;
 		<pre>watersubdiv N</pre>
 		Determines the subdivision of the water surface in maps, which can greatly 
 		affect fps on slow machines. Must be a power of 2: 4 is the default, 8 is 
@@ -212,7 +192,7 @@ menuitem A</pre>
 		called expressions, and combined with some commands made especially for 
 		"programming", you have a minimal language:
 		<pre>+ A B
->- A B
+&gt;- A B
 * A B
 div A B
 mod A B</pre>
@@ -259,7 +239,7 @@ strcmp A B</pre>
 		true when in edit mode
 		<pre>$flrceil</pre>
 		0 when the player looks at the floor, and 2 when looking at the ceiling. 
-		</font> &nbsp;
+		</FONT> &nbsp;
 		<div>THIS WHOLE THING NEEDS TO BE REWRITTEN</div>
 		The cube engine is simplicity itself. The whole map consists of a large 2D 
 		array of "cubes", each with a floor and ceiling height, textures (for 
@@ -272,8 +252,8 @@ strcmp A B</pre>
 		<br>
 		<br>
 		The floor size of a single unit (single cube) is similar to about 16x16 units 
-		in games such as doom & quake, so a staircase step is usually 1 unit, a wall 8 
-		units high etc.
+		in games such as doom &amp; quake, so a staircase step is usually 1 unit, a 
+		wall 8 units high etc.
 		<br>
 		<br>
 		Cube renders this world by first determining which cubes are visible using a 
@@ -285,16 +265,16 @@ strcmp A B</pre>
 		height, texturing etc.).
 		<br>
 		<br>
-	if you are on a fast machine, or you are playing a simple/small map, cube will 
-	simply render all of these visible cubes (this is indicated by LOD at its 
-	maximum of 250 on the hud). Cube can however make complex maps run fast even on 
-	slower computers by a technique called LOD: this will render cubes that are 
-	further away using bigger approximations (2x2 and up), even the properties of 
-	the constituent cubes don't match exactly. This reduces the amount of polys to 
-	be rendered tremendously, and thus allows even slow machines to have a 
-	consistent frame rate (cube will adapt the LOD figure every frame to aim for 
-	the fps you specify). The downside is of course that if the approximations are 
-	visible closeup, this can lead to ugly graphical glitches (this is called 
-	"popup" because it changes as you move). So in the end the choice is up to you: 
-	good fps or constant visual quality (most engines only cater for the latter).
+		if you are on a fast machine, or you are playing a simple/small map, cube will 
+		simply render all of these visible cubes (this is indicated by LOD at its 
+		maximum of 250 on the hud). Cube can however make complex maps run fast even on 
+		slower computers by a technique called LOD: this will render cubes that are 
+		further away using bigger approximations (2x2 and up), even the properties of 
+		the constituent cubes don't match exactly. This reduces the amount of polys to 
+		be rendered tremendously, and thus allows even slow machines to have a 
+		consistent frame rate (cube will adapt the LOD figure every frame to aim for 
+		the fps you specify). The downside is of course that if the approximations are 
+		visible closeup, this can lead to ugly graphical glitches (this is called 
+		"popup" because it changes as you move). So in the end the choice is up to you: 
+		good fps or constant visual quality (most engines only cater for the latter).</body>
 </html>

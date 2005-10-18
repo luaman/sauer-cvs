@@ -270,6 +270,14 @@ paste</pre>
 		<pre>dumplms</pre>
 		Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but 
 		mappers may find it interesting too.
+		<pre>lodsize N</pre>
+		Turn on world LOD (level of detail) for this map if N=32 (default is N=0, off). The state of this command
+		is saved with the map. N is the size of the blocks that will be used for LOD, in theory you can use 16 or 64
+		as well, but this usually just either just hurts performance, memory usage or visual quality. Use 32 unless you know exactly what you
+		are doing. After setting this var, LOD will only become apparent after a "recalc" (and "calclight") command. Turning LOD on for
+		a map is only useful on really large maps with lots of detail where you can see for half a mile, on smaller maps it will have no effect and only
+		wastes memory / lightmap space. LOD works on entire vertex array blocks at a time, and is dependent on the "loddistance" variable
+		which the player can set to trade off speed vs visual quality.
 		<div>Entity Types</div>
 		<a name="entitytypes"></a>
 		<pre>"light" radius brightness
