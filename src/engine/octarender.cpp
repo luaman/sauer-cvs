@@ -200,7 +200,7 @@ bool collapsedface(uint cfe)
     return false;
 }
 
-bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, ivec &vo, int vsize, uchar vmat)
+bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, const ivec &vo, int vsize, uchar vmat)
 {
     if(!c.children)
     {
@@ -444,7 +444,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             if(size>=lodsize) l1.curtris += 2;
         };
             
-        sortkey &key = sortkey(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0));
+        sortkey key(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0));
         usvector &iv0 = (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]);
         usvector &iv1 = (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]);
         

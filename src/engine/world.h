@@ -44,8 +44,9 @@ struct ivec
         z = cz+((i&4)>>2)*size;
     };
     int &operator[](int i) { return v[2-i]; };
+    int operator [](int i) const { return v[2 - i]; }
     //int idx(int i) { return v[i]; };
-    bool operator==(ivec &v) { return x==v.x && y==v.y && z==v.z; };
+    bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };
 };
 
 enum                            // cube empty-space materials
