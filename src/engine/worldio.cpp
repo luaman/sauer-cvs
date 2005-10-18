@@ -102,7 +102,7 @@ void loadc(gzFile f, cube &c)
             c.children = loadchildren(f);
             return;
 
-        case OCTSAV_LODCBUBE: haschildren = true;   break;
+        case OCTSAV_LODCUBE: haschildren = true;    break;
         case OCTSAV_EMPTY:  emptyfaces(c);          break;
         case OCTSAV_SOLID:  solidfaces(c);          break;
         case OCTSAV_NORMAL: gzread(f, c.edges, 12); break;
