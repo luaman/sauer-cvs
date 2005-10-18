@@ -311,8 +311,8 @@ void clear_lmids(cube *c)
 {
     loopi(8)
     {
+        if(c[i].surfaces) freesurfaces(c[i]);
         if(c[i].children) clear_lmids(c[i].children);
-        else freesurfaces(c[i]);
     }
 }
 
@@ -513,7 +513,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         ivec o(i, cx, cy, cz, size);
         if(c[i].children)
             generate_lightmaps(c[i].children, o.x, o.y, o.z, size >> 1);
-        else
         if(!isempty(c[i]))
             setup_surfaces(c[i], o.x, o.y, o.z, size);
     } 
