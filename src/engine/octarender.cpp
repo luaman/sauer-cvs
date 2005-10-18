@@ -427,7 +427,7 @@ int roundlod(int newlod)
     while(lodsize <= newlod)
         lodsize <<= 1;
     lodsize >>= 1;
-    return lodsize;
+    return lodsize & ~7;
 }
 
 VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize = roundlod(lodsize); );
