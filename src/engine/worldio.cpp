@@ -38,20 +38,21 @@ void setnames(char *name)
 // encoding and leaves out data for certain kinds of cubes, then zlib removes the
 // last bits of redundancy. Both passes contribute greatly to the miniscule map sizes.
 
-enum { OCTSAV_CHILDREN = 0, OCTSAV_EMPTY, OCTSAV_SOLID, OCTSAV_NORMAL };
+enum { OCTSAV_CHILDREN = 0, OCTSAV_EMPTY, OCTSAV_SOLID, OCTSAV_NORMAL, OCTSAV_LODCUBE };
 
 void savec(cube *c, gzFile f)
 {
     loopi(8)
     {
-        if(c[i].children)
+        if(c[i].children && !c[i].surfaces)
         {
             gzputc(f, OCTSAV_CHILDREN);
             savec(c[i].children, f);
         }
         else
         {
-            if(isempty(c[i])) gzputc(f, OCTSAV_EMPTY);
+            if(c[i].children) gzputc(f, OCTSAV_LODCUBE);
+            else if(isempty(c[i])) gzputc(f, OCTSAV_EMPTY);
             else if(isentirelysolid(c[i])) gzputc(f, OCTSAV_SOLID);
             else
             {
@@ -84,7 +85,8 @@ void savec(cube *c, gzFile f)
                     endianswap(&tmp.x, sizeof(ushort), 3);
                     gzwrite(f, &tmp, sizeof(surfaceinfo)); 
                 }
-            }
+            };
+            if(c[i].children) savec(c[i].children, f);
         };
     };
 };
@@ -93,12 +95,14 @@ cube *loadchildren(gzFile f);
 
 void loadc(gzFile f, cube &c)
 {
+    bool haschildren = false;
     switch(gzgetc(f))
     {
         case OCTSAV_CHILDREN:
             c.children = loadchildren(f);
             return;
 
+        case OCTSAV_LODCBUBE: haschildren = true;   break;
         case OCTSAV_EMPTY:  emptyfaces(c);          break;
         case OCTSAV_SOLID:  solidfaces(c);          break;
         case OCTSAV_NORMAL: gzread(f, c.edges, 12); break;
@@ -129,7 +133,7 @@ void loadc(gzFile f, cube &c)
             }
         }
     }
-    c.children = NULL;
+    c.children = (haschildren ? loadchildren (f) : NULL);
 };
 
 cube *loadchildren(gzFile f)
