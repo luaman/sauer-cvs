@@ -541,6 +541,8 @@ COMMAND(entmove, ARG_2INT);
 /////////// texture editing //////////////////
 
 int curtexindex = -1, lasttex = 0;
+int texpaneltimer = 0;
+
 void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
 {
     int c = curtexindex;
@@ -565,6 +567,7 @@ extern int curtexnum;
 void edittex(int dir)
 {
     if(noedit()) return;
+    texpaneltimer = 5000;
     if(!(lastsel==sel)) tofronttex();
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
@@ -706,3 +709,35 @@ void editmat(char *name)
 
 COMMAND(editmat, ARG_1STR);
 
+void render_texture_panel()
+{
+    if((texpaneltimer -= curtime)>0 && editmode)
+    {
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4f(1.0, 1.0, 1.0, texpaneltimer/1000.0f);
+        int x = 2100, y = 50, s = 230, gap = 20;
+
+        loopi(7)
+        {
+            int ti = curtexindex+i-3;
+            if(ti>=0 && ti<256)
+            {
+                Texture *tex = lookuptexture(hdr.texlist[ti]);
+                float sx = min(1, tex->xs/(float)tex->ys), sy = min(1, tex->ys/(float)tex->xs);
+                glBindTexture(GL_TEXTURE_2D, tex->gl);
+                glBegin(GL_QUADS);
+                glTexCoord2f(0.0,    0.0);    glVertex2f(x,   y);
+                glTexCoord2f(1.0/sx, 0.0);    glVertex2f(x+s, y);
+                glTexCoord2f(1.0/sx, 1.0/sy); glVertex2f(x+s, y+s);
+                glTexCoord2f(0.0,    1.0/sy); glVertex2f(x,   y+s);
+                glEnd();
+                xtraverts += 4;
+            }
+            y += s+gap;
+        }
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
+    }
+}

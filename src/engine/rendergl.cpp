@@ -222,7 +222,7 @@ void transplayer()
     glTranslatef(-camera1->o.x, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z-player->bob, -camera1->o.y);   
 };
 
-VARP(fov, 10, 105, 120);
+VARP(fov, 10, 105, 150);
 
 int xtraverts, xtravertsva;
 

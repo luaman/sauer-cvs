@@ -82,6 +82,7 @@ extern void freeclipplanes(cube &c);
 // octaedit
 extern void editdrag(bool on);
 extern void cancelsel();
+extern void render_texture_panel();
 
 // rendercubes
 extern void subdividecube(cube &c);
@@ -97,13 +98,13 @@ extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va);
 extern int faceverts(cube &c, int orient, int vert);
-extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused);
+extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused, bool lodcube);
 extern uint faceedges(cube &c, int orient);
 extern bool touchingface(cube &c, int orient);
 extern int isvisiblesphere(float rad, vec &cv);
 extern int genclipplane(cube &c, int i, const vec *v, plane *clip);
 extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p);
-extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR);
+extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR, bool lodcube = false);
 extern int visibleorient(cube &c, int orient);
 extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 

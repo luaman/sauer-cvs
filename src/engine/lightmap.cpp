@@ -461,11 +461,11 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
 }
 
 
-void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
+void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 {
     if(c.surfaces)
     {
-        loopj(6) if(visibleface(c, j, cx, cy, cz, size))
+        loopj(6) if(visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
         {
             if((progress++ % (wtris / 2 < 100 ? 1 : wtris / 2 / 100)) == 0)
                 show_calclight_progress();
@@ -475,7 +475,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
     vec verts[8];
     bool usefaces[6];
     int vertused[8];
-    calcverts(c, cx, cy, cz, size, verts, usefaces, vertused);
+    calcverts(c, cx, cy, cz, size, verts, usefaces, vertused, lodcube);
     loopj(6) if(usefaces[j])
     {
         if((progress++ % (wtris / 2 < 100 ? 1 : wtris / 2 / 100)) == 0)
@@ -514,8 +514,9 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         ivec o(i, cx, cy, cz, size);
         if(c[i].children)
             generate_lightmaps(c[i].children, o.x, o.y, o.z, size >> 1);
-        if((!c[i].children || hdr.mapwlod == size) && !isempty(c[i]))
-            setup_surfaces(c[i], o.x, o.y, o.z, size);
+        bool lodcube = c[i].children && hdr.mapwlod==size;
+        if((!c[i].children || lodcube) && !isempty(c[i]))
+            setup_surfaces(c[i], o.x, o.y, o.z, size, lodcube);
     } 
 }
 

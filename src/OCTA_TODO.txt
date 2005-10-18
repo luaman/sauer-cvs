@@ -10,11 +10,10 @@ eihrul:
 - an RGB that is stored as part of the map, and that is set as the color value for all water
 
 aard:
-- lod
-  * visibleface() must work correctly with lod neighbours | also for lighting
-  * improved lod-remip
-
-
+- LOD: improved lod-remip
+- LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
+- LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
+- LOD: make loddistance fov dependent (for models too)
 - make sauer inner directory
 - wireframe mode
 - cube loader: import some sample cube maps
@@ -85,7 +84,6 @@ aard:
 - switch to new fmod api & 3d sound? not available for bsd? openal?
 
 - blend screen when inside a cube
-- LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 
     p/p     sel
 0   face    aligned 4

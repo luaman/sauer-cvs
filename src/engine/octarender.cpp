@@ -194,10 +194,8 @@ bool faceedgegt(uint cfe, uint ofe)
 
 bool collapsedface(uint cfe)
 {
-    if(((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
-       ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F))
-        return true;
-    return false;
+    return ((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
+           ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F);
 }
 
 bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, const ivec &vo, int vsize, uchar vmat)
@@ -225,13 +223,12 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, 
     return true;
 }
 
-bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat)
+bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, bool lodcube)
 {
-    //if(last==&c) __asm int 3;
     uint cfe = faceedges(c, orient);
     if(mat != MAT_AIR)
     {
-        if(cfe == F_SOLID && touchingface(c, orient)) return false;
+        if(cfe==F_SOLID && touchingface(c, orient)) return false;
     }
     else
     {
@@ -240,7 +237,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat)
     }
     cube &o = neighbourcube(x, y, z, size, -size, orient);
     if(&o==&c) return false;
-    if(!o.children)
+    if(!o.children || lodcube)
     {
         if(mat != MAT_AIR && o.material == mat) return false;
         if(lusize > size) return !isentirelysolid(o);
@@ -270,12 +267,11 @@ void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
     }
 }
 
-void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused)
+void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused, bool lodcube)
 {
     loopi(8) vertused[i] = 0;
-    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size)) loopk(4) vertused[faceverts(c,i,k)]++;
+    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
     loopi(8) if(vertused[i]) calcvert(c, x, y, z, size, verts[i], i);
-
 }
 
 int genclipplane(cube &c, int i, const vec *v, plane *clip)
@@ -322,7 +318,7 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 
     int vertused[8];
     
-    calcverts(c, x, y, z, size, v, usefaces, vertused);
+    calcverts(c, x, y, z, size, v, usefaces, vertused, false);
 
     loopi(8) if(vertused[i]) loopj(3) // generate tight bounding box
     {
@@ -430,7 +426,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 
     vec pos((float)x, (float)y, (float)z);
 
-    loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size))
+    loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube))
     {
         cstats[csi].nface++;
         
@@ -579,18 +575,6 @@ void vaclearc(cube *c)
     };
 };
 
-void genlod(cube &c)    // TODO: improve for higher visual LOD quality
-{
-    loopi(8) if(!isempty(c.children[i]))
-    {
-        solidfaces(c);
-        loopj(6) c.texture[j] = c.children[i].texture[j];
-        c.material = MAT_AIR; // temp
-        return;
-    };
-    emptyfaces(c);
-};
-
 ivec bbmin, bbmax;
 
 void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates vertices and indices ready to be put into a va
@@ -610,7 +594,6 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
             rendercube(c.children[i], o.x, o.y, o.z, size/2, csi+1);
         };
         
-        if(size<=lodsize) genlod(c);
         if(size!=lodsize) return;
         lodcube = true;
     }
@@ -690,8 +673,29 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     return ccount;
 };
 
+void genlod(cube &c, int size)    // TODO: improve for higher visual LOD quality
+{
+    if(!c.children || c.va) return;
+    
+    loopi(8) genlod(c.children[i], size/2);
+    
+    if(size>lodsize) return;
+    
+    c.material = MAT_AIR; 
+
+    loopi(8) if(!isempty(c.children[i]))
+    {
+        solidfaces(c);
+        loopj(6) c.texture[j] = c.children[i].texture[j];
+        return;
+    };
+    
+    emptyfaces(c);
+};
+
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
+    if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2); 
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2, 0);
 
     explicitsky = 0;
