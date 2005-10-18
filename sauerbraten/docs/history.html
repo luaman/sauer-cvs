@@ -29,9 +29,12 @@
 			size. One day we will render models as sprites in the distance, but for now 
 			this is a cheap way to significantly reduce the rendering load on large maps
 			<LI>
-				"loddistance" sets the distance at which vertex array blocks of world geometry 
-				use a lower LOD approximation. Significantly reduces amount of small detail 
-				rendered at distance. Useful on larger maps only.</LI></UL>
+			"loddistance" sets the distance at which vertex array blocks of world geometry 
+			use a lower LOD approximation. Significantly reduces amount of small detail 
+			rendered at distance. Useful on larger maps only.
+			<LI>
+				"lodsize" must be set to 32 to turn lod on for a map (use only for really large 
+				maps), 0 turns it off. saved with the map.</LI></UL>
 		<div>2005_08_15_quakecon_edition</div>
 		<ul>
 			<LI>

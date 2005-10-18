@@ -396,7 +396,7 @@ struct md3 : model
     
     void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
-        int gun = 0; // FIXME lets do this later
+        //int gun = 0; // FIXME lets do this later
         if(anim != ANIM_STATIC) // its a player model
         {
             if(!model || !&model[1]) return;

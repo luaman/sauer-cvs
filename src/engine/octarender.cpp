@@ -421,16 +421,7 @@ l0, l1;
 
 int explicitsky = 0, skyarea = 0;
 
-int roundlod(int newlod)
-{
-    int lodsize = 1;
-    while(lodsize <= newlod)
-        lodsize <<= 1;
-    lodsize >>= 1;
-    return lodsize & ~7;
-}
-
-VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize = roundlod(lodsize); );
+VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize);
 VAR(loddistance, 0, 2000, 100000);
 
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
@@ -750,34 +741,10 @@ int isvisiblesphere(float rad, vec &cv)
     return v;
 };
 
-float dist_to_aabox(vec &center, vec &extent, vec &p)
-{
-    float sqrdist = 0;
-    
-    loopi(3)
-    {
-        float closest = p[i]-center[i];
-        if     (closest<-extent[i]) { float delta = closest+extent[i]; sqrdist += delta*delta; }
-        else if(closest> extent[i]) { float delta = closest-extent[i]; sqrdist += delta*delta; };
-    };
-
-    return sqrtf(sqrdist);
-};
-
-
-float dist_to_bb(const vec &min, const vec &max, vec &p)
-{
-    vec extent = max;
-    extent.sub(min).div(2);
-    vec center = min;
-    center.add(extent); 
-    return dist_to_aabox(center, extent, p);
-};
-
 float vadist(vtxarray *va, vec &p)
 {
     if(va->min.x>va->max.x) return 10000;   // box contains only sky/water
-    return dist_to_bb(va->min.tovec(), va->max.tovec(), p);
+    return p.dist_to_bb(va->min.tovec(), va->max.tovec());
 };
 
 void addvisibleva(vtxarray *va, vec &cv)
@@ -785,7 +752,7 @@ void addvisibleva(vtxarray *va, vec &cv)
     va->next     = visibleva;
     visibleva    = va;
     va->distance = int(vadist(va, camera1->o)); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
-    va->curlod   = va->distance < loddistance ? 0 : 1;
+    va->curlod   = lodsize==0 || va->distance<loddistance ? 0 : 1;
     vtris       += (va->curlod ? va->l1 : va->l0).tris;
     vverts      += va->verts;
 };
@@ -886,7 +853,7 @@ void renderq(int w, int h)
     while(va)
     {
         glColor3f(1, 1, 1); 
-        if(showva && editmode && insideva(va, worldpos)) { if(!showvas) conoutf("distance = %d", va->distance); glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
+        if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
 
         if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
