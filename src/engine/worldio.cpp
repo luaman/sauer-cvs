@@ -190,6 +190,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
     setvar("lighterror", hdr.maple ? hdr.maple : 8);
     setvar("lightlod", hdr.mapllod);
+    setvar("worldlod", hdr.mapwlod);
     setvar("ambient", hdr.ambient);
     setvar("fullbright", 0);
     et->getents().setsize(0);

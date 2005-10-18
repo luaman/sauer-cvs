@@ -29,9 +29,10 @@ struct vtxarray
     vertex *vbuf;       // vertex buffer
     vtxarray *next;     // linked list of visible VOBs
     int allocsize;      // size of allocated memory for this va
-    int verts, explicitsky, skyarea, curlod;
+    int verts, explicitsky, skyarea, curlod, distance;
     uint vbufGL;        // VBO buffer ID
     int x, y, z, size;  // location and size of cube.
+    ivec min, max;      // BB
 };
 
 struct surfaceinfo

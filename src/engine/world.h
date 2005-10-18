@@ -22,6 +22,8 @@ struct header                   // map file format header
     int mapprec, maple, mapllod;
     uchar ambient;
     uchar watercolour[3];
+    uchar mapwlod;
+    uchar ureserved[3];
     int reserved[6];
     char maptitle[128];
     uchar texlist[256];
@@ -43,6 +45,7 @@ struct ivec
         y = cy+((i&2)>>1)*size;
         z = cz+((i&4)>>2)*size;
     };
+    vec tovec() { return vec(x, y, z); }; 
     int &operator[](int i) { return v[2-i]; };
     int operator [](int i) const { return v[2 - i]; }
     //int idx(int i) { return v[i]; };

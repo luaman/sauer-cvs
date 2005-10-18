@@ -421,7 +421,7 @@ l0, l1;
 
 int explicitsky = 0, skyarea = 0;
 
-VAR(lodsize, 8, 32, 128);
+const int lodsize = 32;     // fixed for now, as LM map storage depends on it. There doesn't seem to be a lot of point in 16 or 64, 32 is pretty much a sweet spot between size and geometry saved
 VAR(loddistance, 0, 2000, 100000);
 
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
@@ -591,6 +591,8 @@ void genlod(cube &c)    // TODO: improve for higher visual LOD quality
     emptyfaces(c);
 };
 
+ivec bbmin, bbmax;
+
 void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates vertices and indices ready to be put into a va
 {
     //if(size<=16) return;
@@ -613,14 +615,26 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         lodcube = true;
     }
     
-    genskyverts(c, cx, cy, cz, size);   
-    if(!isempty(c)) gencubeverts(c, cx, cy, cz, size, csi, lodcube);
+    genskyverts(c, cx, cy, cz, size);  
+     
+    if(!isempty(c))
+    {
+        gencubeverts(c, cx, cy, cz, size, csi, lodcube);
+        
+        if(cx<bbmin.x) bbmin.x = cx;
+        if(cy<bbmin.y) bbmin.y = cy;
+        if(cz<bbmin.z) bbmin.z = cz;
+        if(cx+size>bbmax.x) bbmax.x = cx+size;
+        if(cy+size>bbmax.y) bbmax.y = cy+size;
+        if(cz+size>bbmax.z) bbmax.z = cz+size;
+    };
+    
     if(c.material != MAT_AIR)
     {
         loopi(6) if(visiblematerial(c, i, cx, cy, cz, size))
         {
             materialsurface matsurf = {c.material, i, cx, cy, cz, size};
-            l0.matsurfs.add(matsurf);  
+            l0.matsurfs.add(matsurf); 
         }
     }
     
@@ -639,9 +653,19 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
         l0.clear();
         l1.clear();
     };
-
+    
+    bbmin = ivec(cx+size, cy+size, cz+size);
+    bbmax = ivec(cx, cy, cz);
+    
     rendercube(c, cx, cy, cz, size, csi);
-    if(verts.length()) c.va = newva(cx, cy, cz, size);
+    
+    if(verts.length())
+    {
+        c.va = newva(cx, cy, cz, size);
+        c.va->min = bbmin;
+        c.va->max = bbmax;
+    };
+    
     l0.clearidx();
     l1.clearidx();
 };
@@ -717,11 +741,42 @@ int isvisiblesphere(float rad, vec &cv)
     return v;
 };
 
+float dist_to_aabox(vec &center, vec &extent, vec &p)
+{
+    float sqrdist = 0;
+    
+    loopi(3)
+    {
+        float closest = p[i]-center[i];
+        if     (closest<-extent[i]) { float delta = closest+extent[i]; sqrdist += delta*delta; }
+        else if(closest> extent[i]) { float delta = closest-extent[i]; sqrdist += delta*delta; };
+    };
+
+    return sqrtf(sqrdist);
+};
+
+
+float dist_to_bb(vec &min, vec &max, vec &p)
+{
+    vec extent = max;
+    extent.sub(min).div(2);
+    vec center = min;
+    center.add(extent); 
+    return dist_to_aabox(center, extent, p);
+};
+
+float vadist(vtxarray *va, vec &p)
+{
+    if(va->min.x>va->max.x) return 10000;   // box contains only sky/water
+    return dist_to_bb(va->min.tovec(), va->max.tovec(), p);
+};
+
 void addvisibleva(vtxarray *va, vec &cv)
 {
     va->next     = visibleva;
     visibleva    = va;
-    va->curlod   = cv.dist(camera1->o) - va->size*SQRT3/2 < loddistance ? 0 : 1;
+    va->distance = vadist(va, camera1->o); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
+    va->curlod   = va->distance < loddistance ? 0 : 1;
     vtris       += (va->curlod ? va->l1 : va->l0).tris;
     vverts      += va->verts;
 };
@@ -822,7 +877,7 @@ void renderq(int w, int h)
     while(va)
     {
         glColor3f(1, 1, 1); 
-        if(showva && editmode && insideva(va, worldpos)) { glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
+        if(showva && editmode && insideva(va, worldpos)) { if(!showvas) conoutf("distance = %d", va->distance); glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
 
         if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));

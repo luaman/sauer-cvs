@@ -11,13 +11,12 @@ eihrul:
 
 aard:
 - lod
-  * materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
-  * visibleface() must work correctly with lod neighbours
-  * check anything else in octarender
   * distance to occupied BB instead of octa sphere
+  * visibleface() must work correctly with lod neighbours
   * lighting | make sure non-leafs can store surfaces
   * improved lod-remip
   * fix lodsize?
+  * materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 
 
 - make sauer inner directory
