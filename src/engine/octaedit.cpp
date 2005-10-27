@@ -90,7 +90,7 @@ bool noedit()
     vec s(sel.s.v);
     s.mul(float(sel.grid) / 2.0f);
     o.add(s);
-	float r = float(min(s.x, min(s.y, s.z)));
+    float r = float(max(s.x, max(s.y, s.z)));
     bool viewable = (isvisiblesphere(r, o) != VFC_NOT_VISIBLE);
     if(!editmode) conoutf("operation only allowed in edit mode");
     if(!viewable) conoutf("selection not in view");
