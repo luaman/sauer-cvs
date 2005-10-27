@@ -11,7 +11,7 @@ VAR(showcstats, 0, 0, 1);
 
 void printcstats()
 {
-    if(showcstats) loopi(32) 
+    if(showcstats) loopi(32)
     {
         if(!cstats[i].size) break;
         conoutf("%d: %d faces, %d leafs, %d nodes", cstats[i].size, cstats[i].nface, cstats[i].nleaf, cstats[i].nnode);
@@ -207,9 +207,9 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, 
          if(isempty(c)) return false;
          return touchingface(c, orient) && faceedges(c, orient) == F_SOLID;
     }
-    
+
     int dim = dimension(orient), coord = dimcoord(orient), xd = (dim + 1) % 3, yd = (dim + 2) % 3;
-    
+
     loopi(8) if(octacoord(dim, i) == coord)
     {
         ivec o(i, x, y, z, size >> 1);
@@ -219,7 +219,7 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, 
             if(!occludesface(c.children[i], orient, o.x, o.y, o.z, size >> 1, vc, vo, vsize, vmat)) return false;
         }
     }
-    
+
     return true;
 }
 
@@ -317,7 +317,7 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
     vec v[8], mx(x, y, z), mn(x+size, y+size, z+size);
 
     int vertused[8];
-    
+
     calcverts(c, x, y, z, size, v, usefaces, vertused, false);
 
     loopi(8) if(vertused[i]) loopj(3) // generate tight bounding box
@@ -367,7 +367,7 @@ struct lodcollect
     vector<materialsurface> matsurfs;
     usvector skyindices;
     int curtris;
-    
+
     int size() { return indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface); };
 
     void clearidx() { indices.clear(); };
@@ -377,7 +377,7 @@ struct lodcollect
         skyindices.setsize(0);
         matsurfs.setsize(0);
     };
-    
+
     char *setup(lodlevel &lod, char *buf)
     {
         lod.eslist = (elementset *)buf;
@@ -387,7 +387,7 @@ struct lodcollect
         lod.sky = skyindices.length();
         memcpy(lod.skybuf, skyindices.getbuf(), lod.sky*sizeof(ushort));
 
-        lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky);   
+        lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky);
         lod.matsurfs = matsurfs.length();
         if(lod.matsurfs)
         {
@@ -429,7 +429,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube))
     {
         cstats[csi].nface++;
-        
+
         if(c.texture[i] == DEFAULT_SKY)
         {
             if(!lodcube) ++explicitsky;
@@ -439,11 +439,11 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             if(!lodcube) l0.curtris += 2;
             if(size>=lodsize) l1.curtris += 2;
         };
-            
+
         sortkey key(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0));
         usvector &iv0 = (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]);
         usvector &iv1 = (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]);
-        
+
         loopk(4)
         {
             float u, v;
@@ -547,7 +547,7 @@ vtxarray *newva(int x, int y, int z, int size)
     va->allocsize = allocsize;
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->explicitsky = explicitsky;
-    va->skyarea = skyarea;    
+    va->skyarea = skyarea;
     wverts += va->verts = verts.length();
     wtris  += va->l0.tris;
     allocva++;
@@ -583,27 +583,27 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
     if(c.va) return;                            // don't re-render
     cstats[csi].size = size;
     bool lodcube = false;
-    
+
     if(c.children)
     {
         cstats[csi].nnode++;
-        
+
         loopi(8)
         {
             ivec o(i, cx, cy, cz, size/2);
             rendercube(c.children[i], o.x, o.y, o.z, size/2, csi+1);
         };
-        
+
         if(size!=lodsize) return;
         lodcube = true;
     }
-    
-    genskyverts(c, cx, cy, cz, size);  
-     
+
+    genskyverts(c, cx, cy, cz, size);
+
     if(!isempty(c))
     {
         gencubeverts(c, cx, cy, cz, size, csi, lodcube);
-        
+
         if(cx<bbmin.x) bbmin.x = cx;
         if(cy<bbmin.y) bbmin.y = cy;
         if(cz<bbmin.z) bbmin.z = cz;
@@ -611,18 +611,18 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         if(cy+size>bbmax.y) bbmax.y = cy+size;
         if(cz+size>bbmax.z) bbmax.z = cz+size;
     };
-    
+
     if(c.material != MAT_AIR)
     {
         loopi(6) if(visiblematerial(c, i, cx, cy, cz, size))
         {
             materialsurface matsurf = {c.material, i, cx, cy, cz, size};
-            l0.matsurfs.add(matsurf); 
+            l0.matsurfs.add(matsurf);
         }
     }
-    
+
     if(lodcube) return;
-    
+
     cstats[csi].nleaf++;
 };
 
@@ -636,19 +636,19 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
         l0.clear();
         l1.clear();
     };
-    
+
     bbmin = ivec(cx+size, cy+size, cz+size);
     bbmax = ivec(cx, cy, cz);
-    
+
     rendercube(c, cx, cy, cz, size, csi);
-    
+
     if(verts.length())
     {
         c.va = newva(cx, cy, cz, size);
         c.va->min = bbmin;
         c.va->max = bbmax;
     };
-    
+
     l0.clearidx();
     l1.clearidx();
 };
@@ -673,29 +673,32 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     return ccount;
 };
 
+void forcemip(cube &parent);
+
 void genlod(cube &c, int size)    // TODO: improve for higher visual LOD quality
 {
     if(!c.children || c.va) return;
-    
+
     loopi(8) genlod(c.children[i], size/2);
-    
+
     if(size>lodsize) return;
-    
-    c.material = MAT_AIR; 
+
+    c.material = MAT_AIR;
 
     loopi(8) if(!isempty(c.children[i]))
     {
-        solidfaces(c);
-        loopj(6) c.texture[j] = c.children[i].texture[j];
+        forcemip(c);
+        //solidfaces(c);
+        //loopj(6) c.texture[j] = c.children[i].texture[j];
         return;
     };
-    
+
     emptyfaces(c);
 };
 
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
-    if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2); 
+    if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2);
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2, 0);
 
     explicitsky = 0;
@@ -791,19 +794,19 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     {
         vtxarray &v = *valist[i];
         vec cv(v.x, v.y, v.z);
-        cv.add(v.size/2.0f); 
+        cv.add(v.size/2.0f);
         if(isvisiblesphere(v.size*SQRT3/2, cv)!=VFC_NOT_VISIBLE) addvisibleva(&v, cv);
     };
 };
 
-void rendersky()    
+void rendersky()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
 
     loopv(valist)
     {
         vtxarray *va = valist[i];
-        lodlevel &lod = va->l0; 
+        lodlevel &lod = va->l0;
         if(!lod.sky) continue;
 
         if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
@@ -851,12 +854,12 @@ void renderq(int w, int h)
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
 
     vtxarray *va = visibleva;
-    
+
     int showvas = 0;
 
     while(va)
     {
-        glColor3f(1, 1, 1); 
+        glColor3f(1, 1, 1);
         if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
 
         if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
@@ -875,8 +878,8 @@ void renderq(int w, int h)
 
         pfnglActiveTexture(GL_TEXTURE0_ARB);
         pfnglClientActiveTexture(GL_TEXTURE0_ARB);
-        
-        lodlevel &lod = va->curlod ? va->l1 : va->l0; 
+
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
 
         unsigned short *ebuf = lod.ebuf;
         loopi(lod.texs)
@@ -922,7 +925,7 @@ void rendermaterials()
     vtxarray *va = visibleva;
     while(va)
     {
-        lodlevel &lod = va->l0; 
+        lodlevel &lod = va->l0;
         if(lod.matsurfs) rendermatsurfs(lod.matbuf, lod.matsurfs);
         va = va->next;
     }
@@ -1023,7 +1026,7 @@ int firstcube(cube *c, int x, int y, int z, int d)
     int j = octaindex(x, y, z, d);
     int k = oppositeocta(j, d);
     if(isempty(c[j])) j = k;
-    else if(!touchingface(c[k], (d<<1)+z) && !isempty(c[k])) return 100;
+    else if(!touchingface(c[k], (d<<1)+z) && !isempty(c[k])) return 100; // make sure no gap between cubes
     if(isempty(c[j])) return -1;
     return j;
 };
@@ -1061,7 +1064,6 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
     {
         int e[4][4], t[4], q[4];
         int d = dimension(i), dc = dimcoord(i);
-        int n = faceconvexity(parent,i)>0 ? 0 : 3;
 
         { loop(xx, 4) loop(yy, 4) e[yy][xx] = -1; };
 
@@ -1083,7 +1085,7 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
 
         if(center>=0)
         {
-            if(!lineup(e[n][0], center, e[3-n][3]) || // check middles
+            if(!(lineup(e[0][0], center, e[3][3]) || lineup(e[3][0], center, e[0][3])) || // check middles
                !match(e[0][1], e[0][2], m1) ||
                !match(e[1][0], e[2][0], m2) ||
                !match(e[3][1], e[3][2], m3) ||
@@ -1116,6 +1118,66 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
     discardchildren(parent);
     return true;
 };
+
+VAR(boundbox, 0, 0, 1);
+
+void forcemip(cube &parent)
+{
+    cube *ch = parent.children;
+    if(ch==NULL) return;
+    bool e = true;
+    loopi(8)
+    {
+        forcemip(ch[i]);
+        if(!isempty(ch[i])) e = false;
+    };
+    solidfaces(parent);
+    if(e)
+        { emptyfaces(parent); }
+    else
+    loopi(6)
+    {
+        int d = dimension(i), dc = dimcoord(i), tex[2][2] = {{-1,-1},{-1,-1}};
+        int m = dc>0?0:16;
+        bool empty[2][2], settex = false;
+
+        loop(xx, 2) loop(yy, 2)
+        {
+            int v = dc>0?0:16, q = firstcube(ch, xx, yy, dc, d);
+            if(empty[xx][yy] = q<0) continue;
+            if(q>8) q = octaindex(xx, yy, dc, d);
+
+            uchar t = ch[q].texture[i];
+            if(!settex) parent.texture[i] = t;
+            settex = true;
+
+            loop(x, 2) loop(y, 2)
+            {
+                int e = edgeget(ch[q].edges[edgeindex(x,y,d)], dc)+8*octacoord(d, q);
+                v = dc>0 ? max(v,e) : min(v,e);
+                if(t==tex[x][y]) parent.texture[i] = t;
+            };
+
+            tex[xx][yy] = t;
+            m = dc>0 ? max(v,m) : min(v,m);
+            edgeset(parent.edges[edgeindex(xx,yy,d)], dc, v>>1);
+        };
+
+        loop(x, 2) loop(y, 2) if(empty[x][y] || boundbox==1)
+            edgeset(parent.edges[edgeindex(x,y,d)], dc, m>>1);
+    };
+    parent.material = ch[0].material;
+};
+
+void force()
+{
+    cube &c = lookupcube(lu.x, lu.y, lu.z, lusize);
+    forcemip(c);
+    discardchildren(c);
+    allchanged();
+};
+
+COMMAND(force, ARG_NONE);
 
 void remipworld(int full)
 {
