@@ -105,16 +105,24 @@ void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
     ivec p2(p.x, 8-p.y, p.z);
     ivec p3(p.x, p.y, 8-p.z);
 
+    cube s;
+    solidfaces(s);
+
     plane plane1, plane2, plane3;
     genvertp(c, p, p1, p2, plane1);
     genvertp(c, p, p2, p3, plane2);
-    genvertp(c, p, p1, p3, plane3);
+    genvertp(c, p, p3, p1, plane3);
+    if(plane1==plane2) genvertp(s, p, p1, p2, plane1);
+    if(plane1==plane3) genvertp(s, p, p1, p2, plane1);
+    if(plane2==plane3) genvertp(s, p, p2, p3, plane2);
 
-    if(!threeplaneintersect(plane1, plane2, plane3, v)) v = p.v;
-    //ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
+    ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
     //ASSERT(v.x>=0 && v.x<=8);
     //ASSERT(v.y>=0 && v.y<=8);
     //ASSERT(v.z>=0 && v.z<=8);
+    v.x = max(0, min(8, v.x));
+    v.y = max(0, min(8, v.y));
+    v.z = max(0, min(8, v.z));
 
     v.mul(size);
     v.add(pos);
