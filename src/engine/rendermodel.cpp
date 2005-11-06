@@ -65,6 +65,6 @@ void rendermodel(char *mdl, int anim, int varseed, int tex, float x, float y, fl
     center.add(vec(x, z, y));
     if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
     if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
-    m->setskin(tex);
+    m->setskin(tex);  
     m->render(anim, varseed, speed, basetime, mdl, x, y, z, yaw, pitch, scale, d);
 };

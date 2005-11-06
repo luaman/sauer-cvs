@@ -1,6 +1,8 @@
 // code for loading, linking and rendering md3 models
 // See http://www.icculus.org/homepages/phaethon/q3/formats/md3format.html for informations about the md3 format
 
+#define MD3_DEFAULT_SCALE 0.2f
+
 enum // md3 animations
 {
     BOTH_DEATH1 = 0, BOTH_DEAD1, BOTH_DEATH2, BOTH_DEAD2, BOTH_DEATH3, BOTH_DEAD3,
@@ -10,7 +12,6 @@ enum // md3 animations
 
 enum { MDL_LOWER = 0, MDL_UPPER, MDL_HEAD };
 
-#define MD3_DEFAULT_SCALE 0.2f
 #define aneq(c,d) (c->anim == d->anim && c->frame == d->frame) /* (mostly) equal animstate */
 
 struct vec2
@@ -91,7 +92,6 @@ struct md3model
     int numframes, numtags;
     int *lastanimswitchtime;
     bool loaded;
-    vec scale;
     bool stopped;
     
     bool link(md3model *link, char *tag)
@@ -127,6 +127,27 @@ struct md3model
         else a->frame = info->end;
         return t;
     }
+    
+    float boundsphere_recv(int frame, float scale, vec &center) // recursive
+    {
+        md3frame &frm = frames[frame];
+        vec min = frm.min_bounds;
+        vec max = frm.max_bounds;   
+        min.mul(scale*MD3_DEFAULT_SCALE);
+        max.mul(scale*MD3_DEFAULT_SCALE);
+        float radius = max.dist(min, center)/2.0f;
+        center.div(2.0f);
+        center.add(min);
+        
+        loopi(numtags) // adds the rad's of all linked models, unexact but fast
+        {
+            md3model *mdl = links[i];
+            if(!mdl) continue;
+            vec dummy; // fixme
+            radius += mdl->boundsphere_recv(frame, scale, dummy);
+        };
+        return radius;
+    };
 
     bool load(char *path)
     {
@@ -266,7 +287,7 @@ struct md3model
                 };
             glEnd();
         };
-        
+
         loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
         {
             md3model *link = links[i];
@@ -297,9 +318,10 @@ struct md3model
                 link->render();
             glPopMatrix();
         };
+        
     };
     
-    void draw(float x, float y, float z, float yaw, float pitch, float rad)
+    void draw(float x, float y, float z, float yaw, float pitch, float sc)
     {
         glPushMatrix();
         
@@ -309,8 +331,8 @@ struct md3model
         glRotatef(pitch, 0, 0, 1);
         glRotatef(-90, 1, 0, 0);
         
-        glScalef( scale.x, scale.y, scale.z);
-        glTranslatef( 0.0f, 0.0f, 20.0f );
+        sc *= MD3_DEFAULT_SCALE;
+        glScalef(sc, sc, sc);
         
         render();
         
@@ -320,7 +342,6 @@ struct md3model
     md3model()
     {
         loaded = false;
-        scale.x = scale.y = scale.z = MD3_DEFAULT_SCALE;
         stopped = false;
         as = current = prev = NULL;
     };
@@ -390,7 +411,12 @@ struct md3 : model
     md3(char *_name) { strcpy_s(loadname, _name); };
     char *name() { return loadname; }; 
     
-    float boundsphere(int frame, float scale, vec &center) { center.x=center.y=center.z=0; return 64; };  //FIXME culling stuff inside of md3model::render instead ?
+    float boundsphere(int frame, float scale, vec &center) 
+    {      
+        if(!model) return 0;
+        return model->boundsphere_recv(frame, scale, center);
+    };  
+    
     void setskin(int tex) {};  //FIXME
     bool load() { model = loadplayermdl(loadname); return model ? true : false; }; 
     
@@ -429,7 +455,7 @@ struct md3 : model
             else
                 playermodels[mdl * 3 + MDL_UPPER]->link(weaponmodels[gun], "tag_weapon"); // show current weapon*/
         };   
-        model->draw(d->o.x, d->o.z-d->eyeheight+1.55f, d->o.y, d->yaw+90, d->pitch/2, d->radius);
+        model->draw(x, y, z, yaw, pitch, sc);
     };
     
     md3model *loadplayermdl(char *model)

@@ -35,7 +35,7 @@ struct fpsrender
     {
         fpsent *d;
         loopv(cl.players) if(d = cl.players[i]) renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, false);
-        if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0f, false);
+        if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, false);
         cl.ms.monsterrender();
         cl.et.renderentities();
     };
