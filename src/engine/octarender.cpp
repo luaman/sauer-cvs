@@ -99,30 +99,41 @@ bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest)
     return true;
 };
 
+VARF(vectorbasedrendering, 0, 0, 1, allchanged());
+
 void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
 {
-    ivec p1(8-p.x, p.y, p.z);
-    ivec p2(p.x, 8-p.y, p.z);
-    ivec p3(p.x, p.y, 8-p.z);
+    if(vectorbasedrendering==1)
+    {
+        vertrepl(c, p, v, 0, ((int *)&p)[2]);
+        vertrepl(c, p, v, 1, ((int *)&p)[1]);
+        vertrepl(c, p, v, 2, ((int *)&p)[0]);
+    }
+    else
+    {
+        ivec p1(8-p.x, p.y, p.z);
+        ivec p2(p.x, 8-p.y, p.z);
+        ivec p3(p.x, p.y, 8-p.z);
 
-    cube s;
-    solidfaces(s);
+        cube s;
+        solidfaces(s);
 
-    plane plane1, plane2, plane3;
-    genvertp(c, p, p1, p2, plane1);
-    genvertp(c, p, p2, p3, plane2);
-    genvertp(c, p, p3, p1, plane3);
-    if(plane1==plane2) genvertp(s, p, p1, p2, plane1);
-    if(plane1==plane3) genvertp(s, p, p1, p2, plane1);
-    if(plane2==plane3) genvertp(s, p, p2, p3, plane2);
+        plane plane1, plane2, plane3;
+        genvertp(c, p, p1, p2, plane1);
+        genvertp(c, p, p2, p3, plane2);
+        genvertp(c, p, p3, p1, plane3);
+        if(plane1==plane2) genvertp(s, p, p1, p2, plane1);
+        if(plane1==plane3) genvertp(s, p, p1, p2, plane1);
+        if(plane2==plane3) genvertp(s, p, p2, p3, plane2);
 
-    ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
-    //ASSERT(v.x>=0 && v.x<=8);
-    //ASSERT(v.y>=0 && v.y<=8);
-    //ASSERT(v.z>=0 && v.z<=8);
-    v.x = max(0, min(8, v.x));
-    v.y = max(0, min(8, v.y));
-    v.z = max(0, min(8, v.z));
+        ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
+        //ASSERT(v.x>=0 && v.x<=8);
+        //ASSERT(v.y>=0 && v.y<=8);
+        //ASSERT(v.z>=0 && v.z<=8);
+        v.x = max(0, min(8, v.x));
+        v.y = max(0, min(8, v.y));
+        v.z = max(0, min(8, v.z));
+    };
 
     v.mul(size);
     v.add(pos);
