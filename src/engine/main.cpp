@@ -119,6 +119,7 @@ void estartmap(char *name)
     sleepwait = 0;
     cancelsel();
     pruneundos();
+    setvar("wireframe", 0);
     cl->startmap(name);
 };
 

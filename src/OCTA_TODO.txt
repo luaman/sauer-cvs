@@ -17,7 +17,6 @@ aard:
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
 - make sauer inner directory
-- wireframe mode
 - cube loader: import some sample cube maps
 - check connect/disconnect: possible to only half connect, or connect and have a ghost
 - all cfg stuff in menu

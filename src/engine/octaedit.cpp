@@ -86,15 +86,15 @@ COMMANDN(edittoggle, toggleedit, ARG_NONE);
 
 bool noedit()
 {
+    if(!editmode) { conoutf("operation only allowed in edit mode"); return true; };
     vec o(sel.o.v);
     vec s(sel.s.v);
     s.mul(float(sel.grid) / 2.0f);
     o.add(s);
     float r = float(max(s.x, max(s.y, s.z)));
     bool viewable = (isvisiblesphere(r, o) != VFC_NOT_VISIBLE);
-    if(!editmode) conoutf("operation only allowed in edit mode");
     if(!viewable) conoutf("selection not in view");
-    return !editmode || !viewable;
+    return !viewable;
 };
 
 ///////// selection support /////////////

@@ -211,6 +211,8 @@ VARFP(gamma, 30, 100, 300,
     };
 });
 
+VARF(wireframe, 0, 0, 1, if(noedit()) wireframe = 0);
+
 void transplayer()
 {
     glLoadIdentity();
@@ -292,7 +294,7 @@ void gl_drawframe(int w, int h, float curfps)
 {
     recomputecamera();
     
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT|(wireframe ? GL_COLOR_BUFFER_BIT : 0));
 
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
@@ -321,6 +323,8 @@ void gl_drawframe(int w, int h, float curfps)
     transplayer();
 
     glEnable(GL_TEXTURE_2D);
+    
+    glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
     
     xtravertsva = xtraverts = glde = 0;
 
