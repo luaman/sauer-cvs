@@ -133,7 +133,7 @@ void loadc(gzFile f, cube &c)
             }
         }
     }
-    c.children = (haschildren ? loadchildren (f) : NULL);
+    c.children = (haschildren ? loadchildren(f) : NULL);
 };
 
 cube *loadchildren(gzFile f)
