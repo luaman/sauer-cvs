@@ -1138,7 +1138,7 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
     return true;
 };
 
-VAR(boundbox, 0, 0, 1);
+VAR(lodremipboundbox, 0, 0, 1);
 
 void forcemip(cube &parent)
 {
@@ -1182,13 +1182,13 @@ void forcemip(cube &parent)
             edgeset(parent.edges[edgeindex(xx,yy,d)], dc, v>>1);
         };
 
-        loop(x, 2) loop(y, 2) if(empty[x][y] || boundbox==1)
+        loop(x, 2) loop(y, 2) if(empty[x][y] || lodremipboundbox==1)
             edgeset(parent.edges[edgeindex(x,y,d)], dc, m>>1);
     };
     parent.material = ch[0].material;
 };
 
-void force()
+void lodremipforce()
 {
     cube &c = lookupcube(lu.x, lu.y, lu.z, lusize);
     forcemip(c);
@@ -1196,7 +1196,7 @@ void force()
     allchanged();
 };
 
-COMMAND(force, ARG_NONE);
+COMMAND(lodremipforce, ARG_NONE);
 
 void remipworld(int full)
 {

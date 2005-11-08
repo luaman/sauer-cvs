@@ -54,7 +54,7 @@ void clear_md2s()
     enumerate((&mdllookup), model *, m, delete *m);
 };
 
-VARP(maxmodelradiusdistance, 10, 50, 1000);
+VARP(maxmodelradiusdistance, 10, 80, 1000);
 
 void rendermodel(char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
 {

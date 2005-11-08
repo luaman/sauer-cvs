@@ -1,6 +1,8 @@
 gilt:
+- LOD: improved lod-remip
 - other tools that are geared towards easier editing of heightfields/terrain/rocks
 - make it such that collision uses same quad->2tris subdivision as rendering
+- "editing not in view" sometimes obstructs editing
 
 eihrul:
 - physics dynamics that feel like cube
@@ -10,7 +12,7 @@ eihrul:
 - an RGB that is stored as part of the map, and that is set as the color value for all water
 
 aard:
-- LOD: improved lod-remip
+- 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
