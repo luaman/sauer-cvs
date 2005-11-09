@@ -10,6 +10,7 @@ eihrul:
 - optimize overdraw in visibleface()
 - physics bugs (goes back to jump split second after landing, and whatever else) | more noticable at gamespeed 1000
 - an RGB that is stored as part of the map, and that is set as the color value for all water
+- add a spotlight (ask me)
 
 aard:
 - 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?

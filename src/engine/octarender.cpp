@@ -1090,7 +1090,7 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
         {
             q[k] = firstcube(ch, k&1, (k&2)>>1, dc, d);
             if(q[k]>8) return false;
-            if(q[k]<0 || visibleorient(ch[q[k]], i)!=i) t[k] = -1;
+            if(q[k]<0 || visibleorient(ch[q[k]], i)!=i) t[k] = -1;  // FIXME gilt this leave q[k] at -1
             else
             {
                 t[k] = ch[q[k]].texture[i];
@@ -1121,7 +1121,8 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
             if(full) loopk(4)
             {
                 ivec o(q[k], x, y, z, size);
-                if(!visibleface(ch[q[k]], i, o.x, o.y, o.z, size))
+                //ASSERT(q[k]>=0 && q[k]<8);
+                if(q[k]<0 || !visibleface(ch[q[k]], i, o.x, o.y, o.z, size))    // FIXME gilt this then uses that -1 for indexing into ch | temp fix ok?
                     t[k] = -1;
             };
 

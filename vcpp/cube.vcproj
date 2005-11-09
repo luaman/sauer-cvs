@@ -21,12 +21,12 @@
 			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				GlobalOptimizations="TRUE"
-				InlineFunctionExpansion="2"
+				Optimization="0"
+				GlobalOptimizations="FALSE"
+				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
+				FavorSizeOrSpeed="0"
+				OmitFramePointers="FALSE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="..\enet\include;..\include;..\src\engine;..\src\fpsgame;..\src\shared"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
@@ -47,7 +47,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="2"
+				DebugInformationFormat="3"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
