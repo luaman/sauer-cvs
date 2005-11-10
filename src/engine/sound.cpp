@@ -79,8 +79,8 @@ void music(char *name)
     if(soundvol && musicvol)
     {
         string sn;
-        strcpy_s(sn, "packages/");
-        strcat_s(sn, name);
+        s_strcpy(sn, "packages/");
+        s_strcat(sn, name);
         #ifdef USE_MIXER
             if(mod = Mix_LoadMUS(path(sn)))
             {
@@ -201,7 +201,7 @@ void playsound(int n, vec *loc)
 
     if(!samples[n])
     {
-        sprintf_sd(buf)("packages/sounds/%s.wav", snames[n]);
+        s_sprintfd(buf)("packages/sounds/%s.wav", snames[n]);
 
         #ifdef USE_MIXER
             samples[n] = Mix_LoadWAV(path(buf));

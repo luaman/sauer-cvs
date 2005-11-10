@@ -186,7 +186,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     }
     else
     {
-        strn0cpy(hdr.maptitle, "Untitled Map by Unknown", 128);
+        s_strncpy(hdr.maptitle, "Untitled Map by Unknown", 128);
         hdr.waterlevel = -100000;
         hdr.maple = 8;
         hdr.mapprec = 32;

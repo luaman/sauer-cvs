@@ -179,7 +179,7 @@ struct md3model
             md3meshheader mheader;
             fseek(f, mesh_offset, SEEK_SET);
             fread(&mheader, sizeof(md3meshheader), 1, f);
-            strn0cpy(mesh.name, mheader.name, 64);
+            s_strncpy(mesh.name, mheader.name, 64);
              
             mesh.triangles = new md3triangle[mheader.numtriangles];
             fseek(f, mesh_offset + mheader.ofs_triangles, SEEK_SET);       
@@ -383,7 +383,7 @@ void md3skin(char *objname, char *skin) // called by the {lower|upper|head}.cfg 
         md3mesh *mesh = &mdl->meshes[i];
         if(strcmp(mesh->name, objname) == 0)
         {
-            sprintf_sd(path)("%s/%s", basedir, skin); // 'skin' is a relative path
+            s_sprintfd(path)("%s/%s", basedir, skin); // 'skin' is a relative path
             mesh->skin = textureload(path, 0, false, true, false);
             
         };
@@ -408,7 +408,7 @@ struct md3 : model
     string loadname;
     md3model *model;
 
-    md3(char *_name) { strcpy_s(loadname, _name); };
+    md3(char *_name) { s_strcpy(loadname, _name); };
     char *name() { return loadname; }; 
     
     float boundsphere(int frame, float scale, vec &center) 
@@ -466,16 +466,16 @@ struct md3 : model
         md3model *mdls = new md3model[3];
         loopi(3)  // load lower,upper and head models
         {
-            sprintf_sd(path)("%s/%s", basedir, pl_objects[i]);
+            s_sprintfd(path)("%s/%s", basedir, pl_objects[i]);
             playermodels.add(&mdls[i]);
-            sprintf_sd(mdl_path)("%s.md3", path);
-            sprintf_sd(cfg_path)("%s_default.cfg", path);
+            s_sprintfd(mdl_path)("%s.md3", path);
+            s_sprintfd(cfg_path)("%s_default.cfg", path);
             mdls[i].load(mdl_path);
             exec(cfg_path);
         };
         mdls[MDL_LOWER].link(&mdls[MDL_UPPER], "tag_torso");
         mdls[MDL_UPPER].link(&mdls[MDL_HEAD], "tag_head");
-        sprintf_sd(modelcfg)("%s/animation.cfg", basedir);
+        s_sprintfd(modelcfg)("%s/animation.cfg", basedir);
         exec(modelcfg); // load animations to tmp_animation
         int skip_gap = tmp_animations[LEGS_WALKCR].start - tmp_animations[TORSO_GESTURE].start;
         for(int i = LEGS_WALKCR; i < tmp_animations.length(); i++) // the upper and lower mdl frames are independent

@@ -67,7 +67,7 @@ bool rendermenu()
     if(vmenu<0) { menustack.setsize(0); return false; };
     if(vmenu==1) refreshservers();
     gmenu &m = menus[vmenu];
-    sprintf_sd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
+    s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
     int mdisp = m.items.length();
     int w = 0;
     loopi(mdisp)

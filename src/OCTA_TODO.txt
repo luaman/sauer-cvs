@@ -13,6 +13,8 @@ eihrul:
 - add a spotlight (ask me)
 
 aard:
+- hudgun flickers when running on stairs?!?
+- skybox - roll
 - 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?

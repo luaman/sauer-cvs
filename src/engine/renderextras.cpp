@@ -137,7 +137,7 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     if(e>=0)
     {
         entity &c = *et->getents()[e];
-        sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d)", et->entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
+        s_sprintf(closeent)("closest entity = %s (%d, %d, %d, %d)", et->entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
     };
 };
 

@@ -37,7 +37,7 @@ void quit()                     // normal exit
 
 void fatal(char *s, char *o)    // failure exit
 {
-    sprintf_sd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
+    s_sprintfd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
     cleanup(msg);
 };
 
@@ -66,7 +66,7 @@ void screenshot()
                 memcpy(dest, (char *)image->pixels+3*scr_w*(scr_h-1-idx), 3*scr_w);
                 endianswap(dest, 3, scr_w);
             };
-            sprintf_sd(buf)("screenshot_%d.bmp", lastmillis);
+            s_sprintfd(buf)("screenshot_%d.bmp", lastmillis);
             SDL_SaveBMP(temp, buf);
             SDL_FreeSurface(temp);
         };
@@ -110,7 +110,7 @@ int islittleendian = 1;
 
 int sleepwait = 0;
 string sleepcmd;
-ICOMMAND(sleep, 2, { sleepwait = atoi(args[0])+lastmillis; strcpy_s(sleepcmd, args[1]); });
+ICOMMAND(sleep, 2, { sleepwait = atoi(args[0])+lastmillis; s_strcpy(sleepcmd, args[1]); });
 
 void estartmap(char *name)
 {

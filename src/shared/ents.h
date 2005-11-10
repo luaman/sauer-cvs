@@ -12,7 +12,7 @@ struct entity                                   // persistent map entity
     vec o;                                      // position
     short attr1, attr2, attr3, attr4, attr5;
     uchar type;                                 // type is one of the above
-    uchar __reserved;
+    uchar reserved;
 };
 
 struct extentity : entity                       // part of the entity that doesn't get saved to disk

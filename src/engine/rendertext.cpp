@@ -121,7 +121,7 @@ int text_width(char *str)
 
 void draw_textf(const char *fstr, int left, int top, ...)
 {
-    sprintf_sdlv(str, top, fstr);
+    s_sprintfdlv(str, top, fstr);
     draw_text(str, left, top);
 };
 
@@ -180,11 +180,11 @@ void loadsky(char *basename)
     static char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
     loopi(6)
     {
-        sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
+        s_sprintfd(name)("packages/%s_%s.jpg", basename, side[i]);
         if((sky[i] = textureload(name, 0, true, true))==crosshair) conoutf("could not load sky textures");
         // FIXME? now doesn't overwrite old sky any more which uses more memory, but gives faster loadtimes...
     };
-    strcpy_s(lastsky, basename);
+    s_strcpy(lastsky, basename);
 };
 
 COMMAND(loadsky, ARG_1STR);

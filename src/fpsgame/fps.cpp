@@ -371,7 +371,7 @@ struct fpsclient : igameclient
         player1->frags = 0;
         loopv(players) if(players[i]) players[i]->frags = 0;
         et.resetspawns();
-        strcpy_s(clientmap, name);
+        s_strcpy(clientmap, name);
         setvar("fog", 4000);
         setvar("fogcolour", 0x8099B3);
         sb.showscores(false);
@@ -379,7 +379,7 @@ struct fpsclient : igameclient
         conoutf("game mode is %s", fpsserver::modestr(gamemode));
         loopi(256)
         {
-            sprintf_sd(aliasname)("level_trigger_%d", i);     // can this be done smarter?
+            s_sprintfd(aliasname)("level_trigger_%d", i);     // can this be done smarter?
             if(identexists(aliasname)) alias(aliasname, "");
         };
     };

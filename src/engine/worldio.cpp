@@ -17,18 +17,18 @@ void setnames(char *name)
     char *slash = strpbrk(name, "/\\");
     if(slash)
     {
-        strn0cpy(pakname, name, slash-name+1);
-        strcpy_s(mapname, slash+1);
+        s_strncpy(pakname, name, slash-name+1);
+        s_strcpy(mapname, slash+1);
     }
     else
     {
-        strcpy_s(pakname, "base");
-        strcpy_s(mapname, name);
+        s_strcpy(pakname, "base");
+        s_strcpy(mapname, name);
     };
-    sprintf_s(cgzname)("packages/%s/%s.ogz",      pakname, mapname);
-    sprintf_s(bakname)("packages/%s/%s_%d.BAK",   pakname, mapname, lastmillis);
-    sprintf_s(pcfname)("packages/%s/package.cfg", pakname);
-    sprintf_s(mcfname)("packages/%s/%s.cfg",      pakname, mapname);
+    s_sprintf(cgzname)("packages/%s/%s.ogz",      pakname, mapname);
+    s_sprintf(bakname)("packages/%s/%s_%d.BAK",   pakname, mapname, lastmillis);
+    s_sprintf(pcfname)("packages/%s/package.cfg", pakname);
+    s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, mapname);
 
     path(cgzname);
     path(bakname);

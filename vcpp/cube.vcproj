@@ -1,43 +1,62 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="sauerbraten"
-	SccProjectName=""
-	SccLocalPath="">
+	ProjectGUID="{06594C6D-6DA9-49DC-9A91-8F47221DDCFD}"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			WholeProgramOptimization="TRUE">
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TypeLibraryName=".\Release/cube.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				GlobalOptimizations="FALSE"
-				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="0"
-				OmitFramePointers="FALSE"
-				OptimizeForProcessor="2"
+				Optimization="1"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="2"
+				OmitFramePointers="true"
 				AdditionalIncludeDirectories="..\enet\include;..\include;..\src\engine;..\src\fpsgame;..\src\shared"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
-				StringPooling="TRUE"
-				MinimalRebuild="FALSE"
-				ExceptionHandling="FALSE"
-				RuntimeLibrary="2"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="FALSE"
-				DisableLanguageExtensions="FALSE"
-				ForceConformanceInForLoopScope="TRUE"
+				StringPooling="true"
+				MinimalRebuild="false"
+				ExceptionHandling="0"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="false"
+				DisableLanguageExtensions="false"
+				ForceConformanceInForLoopScope="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="cube.h"
 				PrecompiledHeaderFile=".\Release/cube.pch"
@@ -45,64 +64,92 @@
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				Detect64BitPortabilityProblems="TRUE"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="2057"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="msvcrt.lib zlib.lib opengl32.lib glu32.lib SDLmain.lib SDL.lib SDL_image.lib ws2_32.lib SDL_mixer.lib fmodvc.lib winmm.lib"
 				OutputFile="..\sauerbraten\bin\sauerbraten.exe"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib"
-				IgnoreAllDefaultLibraries="TRUE"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Release/cube.pdb"
-				GenerateMapFile="TRUE"
+				GenerateMapFile="true"
 				MapFileName=".\Release/cube.map"
-				MapExports="TRUE"
-				MapLines="TRUE"
+				MapExports="true"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"/>
+				OptimizeForWindows98="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/cube.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="2057"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\Debug"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			WholeProgramOptimization="FALSE">
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TypeLibraryName=".\Debug/cube.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
@@ -110,134 +157,172 @@
 				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="1"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="cube.h"
 				PrecompiledHeaderFile=".\Debug/cube.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="2057"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="zlib.lib opengl32.lib glu32.lib SDLmain.lib SDL.lib SDL_image.lib SDL_mixer.lib ws2_32.lib winmm.lib"
 				OutputFile="..\sauerbraten\bin\sauerbraten_debug.exe"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib"
-				IgnoreAllDefaultLibraries="FALSE"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="false"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/cube_debug.pdb"
 				SubSystem="1"
 				HeapReserveSize="0"
-				HeapCommitSize="0"/>
+				HeapCommitSize="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/cube.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="2057"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Profile|Win32"
 			OutputDirectory="Profile"
 			IntermediateDirectory="Profile"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			WholeProgramOptimization="FALSE">
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TypeLibraryName=".\Release/cube.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
-				GlobalOptimizations="FALSE"
 				InlineFunctionExpansion="0"
-				EnableIntrinsicFunctions="FALSE"
+				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="2"
-				OmitFramePointers="TRUE"
-				OptimizeForProcessor="2"
+				OmitFramePointers="true"
 				AdditionalIncludeDirectories="..\enet\include;..\include;..\src\engine;..\src\fpsgame;..\src\shared"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE,USE_ENET"
-				StringPooling="TRUE"
-				MinimalRebuild="FALSE"
-				ExceptionHandling="FALSE"
+				StringPooling="true"
+				MinimalRebuild="false"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="FALSE"
-				ForceConformanceInForLoopScope="TRUE"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="false"
+				ForceConformanceInForLoopScope="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\Release/cube.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="2057"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="msvcrt.lib zlib.lib opengl32.lib glu32.lib SDLmain.lib SDL.lib SDL_image.lib ws2_32.lib SDL_mixer.lib fmodvc.lib"
 				OutputFile="c:\w\sauerbraten\sauerbraten\bin\sauerbraten.exe"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="C:\w\cube\lib"
-				IgnoreAllDefaultLibraries="TRUE"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Release/cube.pdb"
-				GenerateMapFile="TRUE"
+				GenerateMapFile="true"
 				MapFileName=".\Release/cube.map"
-				MapExports="TRUE"
-				MapLines="TRUE"
+				MapExports="true"
 				SubSystem="1"
-				OptimizeForWindows98="1"/>
+				OptimizeForWindows98="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/cube.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="2057"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -245,879 +330,1136 @@
 	<Files>
 		<Filter
 			Name="Engine"
-			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
 			<File
-				RelativePath="..\src\engine\engine.h">
+				RelativePath="..\src\engine\engine.h"
+				>
 			</File>
 			<Filter
 				Name="world"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\engine\cubeloader.cpp">
+					RelativePath="..\src\engine\cubeloader.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\lightmap.cpp">
+					RelativePath="..\src\engine\lightmap.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\lightmap.h">
-				</File>
-				<File
-					RelativePath="..\src\engine\octa.cpp">
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\octa.h">
+					RelativePath="..\src\engine\lightmap.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\engine\octaedit.cpp">
+					RelativePath="..\src\engine\octa.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\octarender.cpp">
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\physics.cpp">
+					RelativePath="..\src\engine\octa.h"
+					>
+				</File>
+				<File
+					RelativePath="..\src\engine\octaedit.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\world.cpp">
+					RelativePath="..\src\engine\octarender.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\world.h">
+					RelativePath="..\src\engine\physics.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\worldio.cpp">
+					RelativePath="..\src\engine\world.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\src\engine\world.h"
+					>
+				</File>
+				<File
+					RelativePath="..\src\engine\worldio.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
 				Name="cs"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\engine\client.cpp">
+					RelativePath="..\src\engine\client.cpp"
+					>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\server.cpp">
+					RelativePath="..\src\engine\server.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\serverbrowser.cpp">
+					RelativePath="..\src\engine\serverbrowser.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<Filter
 					Name="enet"
-					Filter="">
+					>
 					<File
-						RelativePath="..\enet\callbacks.c">
+						RelativePath="..\enet\callbacks.c"
+						>
 						<FileConfiguration
-							Name="Debug|Win32">
+							Name="Debug|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\enet\host.c">
+						RelativePath="..\enet\host.c"
+						>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="Release|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32">
+							Name="Debug|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\enet\list.c">
-						<FileConfiguration
-							Name="Release|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\enet\packet.c">
+						RelativePath="..\enet\list.c"
+						>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="Release|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32">
+							Name="Debug|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\enet\peer.c">
-						<FileConfiguration
-							Name="Release|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\enet\protocol.c">
+						RelativePath="..\enet\packet.c"
+						>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="Release|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32">
+							Name="Debug|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\enet\unix.c">
-						<FileConfiguration
-							Name="Release|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\enet\win32.c">
+						RelativePath="..\enet\peer.c"
+						>
 						<FileConfiguration
-							Name="Release|Win32">
+							Name="Release|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32">
+							Name="Debug|Win32"
+							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\enet\protocol.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\enet\unix.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\enet\win32.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
 						</FileConfiguration>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="render"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\engine\md2.h">
+					RelativePath="..\src\engine\md2.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\engine\md3.h">
+					RelativePath="..\src\engine\md3.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\engine\renderextras.cpp">
+					RelativePath="..\src\engine\renderextras.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\rendergl.cpp">
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\rendermodel.cpp">
+					RelativePath="..\src\engine\rendergl.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\renderparticles.cpp">
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\rendertext.cpp">
+					RelativePath="..\src\engine\rendermodel.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\water.cpp">
+					RelativePath="..\src\engine\renderparticles.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\src\engine\rendertext.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\src\engine\water.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
 				Name="system"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\engine\command.cpp">
+					RelativePath="..\src\engine\command.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\console.cpp">
+					RelativePath="..\src\engine\console.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\main.cpp">
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\menus.cpp">
+					RelativePath="..\src\engine\main.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\sound.cpp">
+					RelativePath="..\src\engine\menus.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="3"
-							PrecompiledHeaderThrough="pch.h"/>
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\src\engine\sound.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
-			Name="Shared"
-			Filter="h;hpp;hxx;hm;inl">
+			Name="Both"
+			Filter="h;hpp;hxx;hm;inl"
+			>
 			<File
-				RelativePath="..\src\shared\iengine.h">
+				RelativePath="..\src\shared\iengine.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\shared\igame.h">
+				RelativePath="..\src\shared\igame.h"
+				>
 			</File>
 			<Filter
 				Name="text"
-				Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+				Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+				>
 				<File
-					RelativePath="..\src\OCTA_TODO.txt">
+					RelativePath="..\src\OCTA_TODO.txt"
+					>
 				</File>
 				<Filter
 					Name="docs"
-					Filter="">
+					>
 					<File
-						RelativePath="..\sauerbraten\docs\config.html">
+						RelativePath="..\sauerbraten\docs\config.html"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\editing.html">
+						RelativePath="..\sauerbraten\docs\editing.html"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\editref.html">
+						RelativePath="..\sauerbraten\docs\editref.html"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\game.html">
+						RelativePath="..\sauerbraten\docs\game.html"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\history.html">
+						RelativePath="..\sauerbraten\docs\history.html"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\index.html">
+						RelativePath="..\sauerbraten\docs\index.html"
+						>
 					</File>
 					<File
-						RelativePath="..\readme_developer.txt">
+						RelativePath="..\readme_developer.txt"
+						>
 					</File>
 					<File
-						RelativePath="..\readme_player_mapper.txt">
+						RelativePath="..\readme_player_mapper.txt"
+						>
 					</File>
 					<File
-						RelativePath="..\readme_source.txt">
+						RelativePath="..\readme_source.txt"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\style.css">
+						RelativePath="..\sauerbraten\docs\style.css"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="cfg"
-					Filter="">
+					>
 					<File
-						RelativePath="..\sauerbraten\autoexec.cfg">
+						RelativePath="..\sauerbraten\autoexec.cfg"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\default_map_settings.cfg">
+						RelativePath="..\sauerbraten\data\default_map_settings.cfg"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\defaults.cfg">
+						RelativePath="..\sauerbraten\data\defaults.cfg"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\keymap.cfg">
+						RelativePath="..\sauerbraten\data\keymap.cfg"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\menus.cfg">
+						RelativePath="..\sauerbraten\data\menus.cfg"
+						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\sounds.cfg">
+						RelativePath="..\sauerbraten\data\sounds.cfg"
+						>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="common"
-				Filter="">
+				>
 				<File
-					RelativePath="..\src\shared\command.h">
+					RelativePath="..\src\shared\command.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\shared\cube.h">
+					RelativePath="..\src\shared\cube.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\shared\ents.h">
+					RelativePath="..\src\shared\ents.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\shared\geom.h">
+					RelativePath="..\src\shared\geom.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\shared\pch.cpp">
+					RelativePath="..\src\shared\pch.cpp"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="1"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="1"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Profile|Win32">
+						Name="Profile|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
 							UsePrecompiledHeader="1"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\shared\pch.h">
+					RelativePath="..\src\shared\pch.h"
+					>
 				</File>
 				<File
-					RelativePath="..\src\shared\tools.cpp">
+					RelativePath="..\src\shared\tools.cpp"
+					>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"/>
+							PrecompiledHeaderThrough="pch.h"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\shared\tools.h">
+					RelativePath="..\src\shared\tools.h"
+					>
 				</File>
 				<Filter
 					Name="eneth"
-					Filter="">
+					>
 					<File
-						RelativePath="..\enet\include\enet\enet.h">
+						RelativePath="..\enet\include\enet\enet.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\list.h">
+						RelativePath="..\enet\include\enet\list.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\memory.h">
+						RelativePath="..\enet\include\enet\memory.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\protocol.h">
+						RelativePath="..\enet\include\enet\protocol.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\time.h">
+						RelativePath="..\enet\include\enet\time.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\types.h">
+						RelativePath="..\enet\include\enet\types.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\unix.h">
+						RelativePath="..\enet\include\enet\unix.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\utility.h">
+						RelativePath="..\enet\include\enet\utility.h"
+						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\win32.h">
+						RelativePath="..\enet\include\enet\win32.h"
+						>
 					</File>
 				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Game"
-			Filter="">
+			>
 			<File
-				RelativePath="..\src\fpsgame\client.h">
+				RelativePath="..\src\fpsgame\client.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\entities.h">
+				RelativePath="..\src\fpsgame\entities.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\fps.cpp">
+				RelativePath="..\src\fpsgame\fps.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="pch.h"/>
+						PrecompiledHeaderThrough="pch.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="pch.h"/>
+						PrecompiledHeaderThrough="pch.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Profile|Win32">
+					Name="Profile|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="pch.h"/>
+						PrecompiledHeaderThrough="pch.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\fpsrender.h">
+				RelativePath="..\src\fpsgame\fpsrender.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\fpsserver.h">
+				RelativePath="..\src\fpsgame\fpsserver.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\game.h">
+				RelativePath="..\src\fpsgame\game.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\monster.h">
+				RelativePath="..\src\fpsgame\monster.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\savegame.h">
+				RelativePath="..\src\fpsgame\savegame.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\scoreboard.h">
+				RelativePath="..\src\fpsgame\scoreboard.h"
+				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\weapon.h">
+				RelativePath="..\src\fpsgame\weapon.h"
+				>
 			</File>
 		</Filter>
 	</Files>

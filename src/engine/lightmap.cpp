@@ -712,7 +712,7 @@ void dumplms()
                 char *dest = (char *)temp->pixels+3*LM_PACKW*idx;
                 memcpy(dest, (char *)lightmaps[i].data+3*LM_PACKW*(LM_PACKH-1-idx), 3*LM_PACKW);
             };
-            sprintf_sd(buf)("lightmap_%s_%d.bmp", cl->getclientmap(), i);
+            s_sprintfd(buf)("lightmap_%s_%d.bmp", cl->getclientmap(), i);
             SDL_SaveBMP(temp, buf);
         };
         SDL_FreeSurface(temp);

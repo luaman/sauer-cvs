@@ -151,7 +151,7 @@ void addserver(char *servername)
 {
     loopv(servers) if(strcmp(servers[i].name, servername)==0) return;
     serverinfo &si = servers.add();
-    strcpy_s(si.name, servername);
+    s_strcpy(si.name, servername);
     si.full[0] = 0;
     si.ping = 999;
     si.map[0] = 0;
@@ -222,9 +222,9 @@ void checkpings()
                 si.attr.setsize(0);
                 loopj(numattr) si.attr.add(getint(p));
                 sgetstr();
-                strcpy_s(si.map, text);
+                s_strcpy(si.map, text);
                 sgetstr();
-                strcpy_s(si.sdesc, text);                
+                s_strcpy(si.sdesc, text);                
                 break;
             };
         };
@@ -252,7 +252,7 @@ void refreshservers()
         }
         else
         {
-            sprintf_s(si.full)(si.address.host != ENET_HOST_ANY ? "%s [waiting for server response]" : "%s [unknown host]\t", si.name);
+            s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "%s [waiting for server response]" : "%s [unknown host]\t", si.name);
         }
         si.full[60] = 0; // cut off too long server descriptions
         menumanual(1, i, si.full);

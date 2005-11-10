@@ -32,24 +32,24 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     {
         cl.cref[0] = '\f';
         cl.cref[1] = 0;
-        strcat_s(cl.cref, sf);
+        s_strcat(cl.cref, sf);
     }
     else
     {
-        strcpy_s(cl.cref, sf);
+        s_strcpy(cl.cref, sf);
     };
     puts(cl.cref);
 };
 
 void conoutf(const char *s, ...)
 {
-    sprintf_sdv(sf, s);
+    s_sprintfdv(sf, s);
     s = sf;
     int n = 0;
     while(strlen(s)>WORDWRAP)                       // cut strings to fit on screen
     {
         string t;
-        strn0cpy(t, s, WORDWRAP+1);
+        s_strncpy(t, s, WORDWRAP+1);
         conline(t, n++!=0);
         s += WORDWRAP;
     };
@@ -112,7 +112,7 @@ void bindkey(char *key, char *action)
     for(char *x = key; *x; x++) *x = toupper(*x);
     loopv(keyms) if(strcmp(keyms[i].name, key)==0)
     {
-        strcpy_s(keyms[i].action, action);
+        s_strcpy(keyms[i].action, action);
         return;
     };
     conoutf("unknown key \"%s\"", key);   
@@ -125,10 +125,10 @@ void saycommand(char *init)                         // turns input to the comman
     SDL_EnableUNICODE(saycommandon = (init!=NULL));
     if(!editmode) keyrepeat(saycommandon);
     if(!init) init = "";
-    strcpy_s(commandbuf, init);
+    s_strcpy(commandbuf, init);
 };
 
-void mapmsg(char *s) { strn0cpy(hdr.maptitle, s, 128); };
+void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); };
 
 COMMAND(saycommand, ARG_VARI);
 COMMAND(mapmsg, ARG_1STR);
@@ -147,7 +147,7 @@ void pasteconsole()
     if(!IsClipboardFormatAvailable(CF_TEXT)) return; 
     if(!OpenClipboard(NULL)) return;
     char *cb = (char *)GlobalLock(GetClipboardData(CF_TEXT));
-    strcat_s(commandbuf, cb);
+    s_strcat(commandbuf, cb);
     GlobalUnlock(cb);
     CloseClipboard();
     #elif !defined(__APPLE__)
@@ -211,11 +211,11 @@ void keypress(int code, bool isdown, int cooked)
                 };
                     
                 case SDLK_UP:
-                    if(histpos) strcpy_s(commandbuf, vhistory[--histpos]);
+                    if(histpos) s_strcpy(commandbuf, vhistory[--histpos]);
                     break;
                 
                 case SDLK_DOWN:
-                    if(histpos<vhistory.length()) strcpy_s(commandbuf, vhistory[histpos++]);
+                    if(histpos<vhistory.length()) s_strcpy(commandbuf, vhistory[histpos++]);
                     break;
                     
                 case SDLK_TAB:
@@ -227,7 +227,7 @@ void keypress(int code, bool isdown, int cooked)
 
                 default:
                     resetcomplete();
-                    if(cooked) { char add[] = { cooked, 0 }; strcat_s(commandbuf, add); };
+                    if(cooked) { char add[] = { cooked, 0 }; s_strcat(commandbuf, add); };
             };
         }
         else
@@ -257,7 +257,7 @@ void keypress(int code, bool isdown, int cooked)
         loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
         {
             string temp;
-            strcpy_s(temp, keyms[i].action);
+            s_strcpy(temp, keyms[i].action);
             execute(temp, isdown); 
             return;
         };

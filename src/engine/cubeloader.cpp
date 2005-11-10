@@ -209,8 +209,8 @@ struct cubeloader
 	    freeocta(worldroot);
 	    worldroot = newcubes(F_SOLID);
 	    string pakname, cgzname; 
-        sprintf_s(pakname)("cube/%s", mname);
-        sprintf_s(cgzname)("packages/%s.cgz", pakname);
+        s_sprintf(pakname)("cube/%s", mname);
+        s_sprintf(cgzname)("packages/%s.cgz", pakname);
         gzFile f = gzopen(path(cgzname), "rb9");
         if(!f) { conoutf("could not read cube map %s", cgzname); return; };
 	    c_header hdr;
@@ -274,7 +274,7 @@ struct cubeloader
                 {
                     if(type<0 || type>=C_MAXTYPE)
                     {
-                        sprintf_sd(t)("%d @ %d", type, k);
+                        s_sprintfd(t)("%d @ %d", type, k);
                         fatal("while reading map: type out of range: ", t);
                     };
                     s->type = type;
@@ -301,7 +301,7 @@ struct cubeloader
         conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
         estartmap(pakname);
 	    string cfgname;
-        sprintf_s(cfgname)("packages/cube/%s.cfg", mname);
+        s_sprintf(cfgname)("packages/cube/%s.cfg", mname);
         exec("packages/cube/package.cfg");
 	    exec(path(cfgname));
     };

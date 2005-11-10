@@ -30,7 +30,6 @@ typedef unsigned int uint;
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 #define rnd(x) ((int)(randomMT()&0xFFFFFF)%(x))
-//#define rnd(x) (rand()%(x))  
 #define loop(v,m) for(int v = 0; v<(m); v++)
 #define loopi(m) loop(i,m)
 #define loopj(m) loop(j,m)
@@ -51,13 +50,14 @@ typedef unsigned int uint;
 #undef M_PI
 #endif
 #define M_PI 3.14159265
-#ifndef __GNUC__
-#pragma warning( 3 : 4189 )
-#pragma warning( 4 : 4244 )
-#pragma warning( 4 : 4355 )     // "this" in initializer list
 
-//#pragma comment(linker,"/OPT:NOWIN98")
+#ifndef __GNUC__
+#pragma warning (3: 4189)       // local variable is initialized but not referenced
+#pragma warning (disable: 4244) // conversion from 'int' to 'float', possible loss of data
+#pragma warning (disable: 4355) // 'this' : used in base member initializer list
+#pragma warning (disable: 4996) // 'strncpy' was declared deprecated
 #endif
+
 #define PATHDIV '\\'
 #else
 #define __cdecl
@@ -70,20 +70,17 @@ typedef unsigned int uint;
 #define _MAXDEFSTR 260
 typedef char string[_MAXDEFSTR];
 
-inline void strn0cpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[(m)-1] = 0; };
-inline void strcpy_s(char *d, const char *s) { strn0cpy(d,s,_MAXDEFSTR); };
-inline void strcat_s(char *d, const char *s) { size_t n = strlen(d); strn0cpy(d+n,s,_MAXDEFSTR-n); };
 
-inline void formatstring(char *d, const char *fmt, va_list v)
-{
-    _vsnprintf(d, _MAXDEFSTR, fmt, v);
-    d[_MAXDEFSTR-1] = 0;
-};
+inline void formatstring(char *d, const char *fmt, va_list v) { _vsnprintf(d, _MAXDEFSTR, fmt, v); d[_MAXDEFSTR-1] = 0; };
+inline char *s_strncpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[m-1] = 0; return d; };
+inline char *s_strcpy(char *d, const char *s) { return s_strncpy(d,s,_MAXDEFSTR); };
+inline char *s_strcat(char *d, const char *s) { size_t n = strlen(d); return s_strncpy(d+n,s,_MAXDEFSTR-n); };
 
-struct sprintf_s_f
+
+struct s_sprintf_f
 {
     char *d;
-    sprintf_s_f(char *str): d(str) {};
+    s_sprintf_f(char *str): d(str) {};
     void operator()(const char* fmt, ...)
     {
         va_list v;
@@ -93,30 +90,14 @@ struct sprintf_s_f
     };
 };
 
-#define sprintf_s(d) sprintf_s_f((char *)d)
-#define sprintf_sd(d) string d; sprintf_s(d)
-#define sprintf_sdlv(d,last,fmt) string d; { va_list ap; va_start(ap, last); formatstring(d, fmt, ap); va_end(ap); }
-#define sprintf_sdv(d,fmt) sprintf_sdlv(d,fmt,fmt)
+#define s_sprintf(d) s_sprintf_f((char *)d)
+#define s_sprintfd(d) string d; s_sprintf(d)
+#define s_sprintfdlv(d,last,fmt) string d; { va_list ap; va_start(ap, last); formatstring(d, fmt, ap); va_end(ap); }
+#define s_sprintfdv(d,fmt) s_sprintfdlv(d,fmt,fmt)
 
 
 template <class T> void _swap(T &a, T &b) { T t = a; a = b; b = t; };
 
-// fast pentium f2i
-
-#ifdef _MSC_VER
-inline int fast_f2nat(float a) {        // only for positive floats
-    static const float fhalf = 0.5f;
-    int retval;
-
-    __asm fld a
-    __asm fsub fhalf
-    __asm fistp retval      // perf regalloc?
-
-    return retval;
-};
-#else
-#define fast_f2nat(val) ((int)(val))
-#endif
 
 
 extern char *path(char *s);
@@ -301,16 +282,9 @@ template <class K, class T> struct hashtable
 #define enumeratekt(ht,k,e,t,f,b) loopi(ht.size)  for(hashtable<k,t>::chain *enumc = ht.table[i]; enumc;     enumc = enumc->next)         { const k &e = enumc->key; t *f = &enumc->data; b; }
 #define enumerate(ht,t,e,b)       loopi(ht->size) for(ht->enumc = ht->table[i];                   ht->enumc; ht->enumc = ht->enumc->next) { t *e = &ht->enumc->data; b; }
 
-inline char *newstring(char *s, size_t l)
-{
-    char *b = new char[l+1];
-    strncpy(b,s,l);
-    b[l] = 0;
-    return b;  
-};
-
-inline char *newstring(char *s)        { return newstring(s, strlen(s));    };
-inline char *newstringbuf(char *s)     { return newstring(s, _MAXDEFSTR-1); };
+inline char *newstring(char *s, size_t l) { return s_strncpy(new char[l+1], s, l+1); };
+inline char *newstring(char *s)           { return newstring(s, strlen(s));          };
+inline char *newstringbuf(char *s)        { return newstring(s, _MAXDEFSTR-1);       };
 
 
 #ifndef __GNUC__

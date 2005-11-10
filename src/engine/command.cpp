@@ -7,7 +7,7 @@
 #include <dirent.h>
 #endif
 
-void itoa(char *s, int i) { sprintf_s(s)("%d", i); };
+void itoa(char *s, int i) { s_sprintf(s)("%d", i); };
 char *exchangestr(char *o, char *n) { delete[] o; return newstring(n); };
 
 typedef hashtable<char *, ident> identtable;
@@ -134,9 +134,9 @@ void vari(char **w, int n, char *r)
     r[0] = 0;
     for(int i = 1; i<n; i++)       
     {
-        strcat_s(r, w[i]);  // make string-list out of all arguments
+        s_strcat(r, w[i]);  // make string-list out of all arguments
         if(i==n-1) break;
-        strcat_s(r, " ");
+        s_strcat(r, " ");
     };
 };
 
@@ -231,7 +231,7 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
             case ID_ALIAS:                              // alias, also used as functions and (global) variables
                 for(int i = 1; i<numargs; i++)
                 {
-                    sprintf_sd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
+                    s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
                     alias(t, w[i]);
                 };
                 char *action = newstring(id->_action);   // create new string here because alias could rebind itself
@@ -291,9 +291,9 @@ void complete(char *s)
     if(*s!='/')
     {
         string t;
-        strcpy_s(t, s);
-        strcpy_s(s, "/");
-        strcat_s(s, t);
+        s_strcpy(t, s);
+        s_strcpy(s, "/");
+        s_strcat(s, t);
     };
     if(!s[1]) return;
     if(!completesize) { completesize = (int)strlen(s)-1; lastcomplete[0] = '\0'; };
@@ -320,9 +320,9 @@ void complete(char *s)
     };
     if(nextcomplete)
     {
-        strcpy_s(s, prefix);
-        strcat_s(s, nextcomplete);
-        strcpy_s(lastcomplete, nextcomplete);
+        s_strcpy(s, prefix);
+        s_strcat(s, nextcomplete);
+        s_strcpy(lastcomplete, nextcomplete);
     }
     else lastcomplete[0] = '\0';
 };
@@ -330,7 +330,7 @@ void complete(char *s)
 bool execfile(char *cfgfile)
 {
     string s;
-    strcpy_s(s, cfgfile);
+    s_strcpy(s, cfgfile);
     char *buf = loadfile(path(s), NULL);
     if(!buf) return false;
     execute(buf);

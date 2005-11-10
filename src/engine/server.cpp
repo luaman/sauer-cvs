@@ -118,7 +118,7 @@ uchar *copydata = NULL;
 void sendvmap(int n, string mapname, int mapsize, uchar *mapdata)
 {
     if(mapsize <= 0 || mapsize > 256*256) return;
-    strcpy_s(copyname, mapname);
+    s_strcpy(copyname, mapname);
     copysize = mapsize;
     if(copydata) free(copydata);
     copydata = new uchar[mapsize];
@@ -227,7 +227,7 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
     if(mssock==ENET_SOCKET_NULL) { printf("could not open socket\n"); return; };
     if(enet_socket_connect(mssock, &ad)<0) { printf("could not connect\n"); return; };
     ENetBuffer buf;
-    sprintf_sd(httpget)("GET %s HTTP/1.0\nHost: %s\nReferer: %s\nUser-Agent: %s\n\n", req, hostname, ref, agent);
+    s_sprintfd(httpget)("GET %s HTTP/1.0\nHost: %s\nReferer: %s\nUser-Agent: %s\n\n", req, hostname, ref, agent);
     buf.data = httpget;
     buf.dataLength = strlen((char *)buf.data);
     printf("sending request to %s...\n", hostname);
@@ -269,7 +269,7 @@ ENetBuffer masterb;
 
 void updatemasterserver()
 {
-    sprintf_sd(path)("%sregister.do?action=add", masterpath);
+    s_sprintfd(path)("%sregister.do?action=add", masterpath);
     httpgetsend(masterserver, masterbase, path, sv->servername(), sv->servername());
     masterrep[0] = 0;
     masterb.data = masterrep;
@@ -285,7 +285,7 @@ void checkmasterreply()
 
 uchar *retrieveservers(uchar *buf, int buflen)
 {
-    sprintf_sd(path)("%sretrieve.do?item=list", masterpath);
+    s_sprintfd(path)("%sretrieve.do?item=list", masterpath);
     httpgetsend(masterserver, masterbase, path, sv->servername(), sv->servername());
     ENetBuffer eb;
     buf[0] = 0;
@@ -332,7 +332,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             c.peer = event.peer;
             c.peer->data = &c;
             char hn[1024];
-            strcpy_s(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "localhost");
+            s_strcpy(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "localhost");
             printf("client connected (%s)\n", c.hostname);
             send_welcome(c.num); 
             break;
@@ -369,7 +369,7 @@ void localconnect()
     client &c = *addclient();
     c.type = ST_LOCAL;
     c.num = clients.length()-1;
-    strcpy_s(c.hostname, "local");
+    s_strcpy(c.hostname, "local");
     send_welcome(c.num); 
 };
 
@@ -411,8 +411,8 @@ void initserver(bool dedicated)
     if(!master) master = sv->getdefaultmaster();
     char *mid = strstr(master, "/");
     if(!mid) mid = master;
-    strcpy_s(masterpath, mid);
-    strn0cpy(masterbase, master, mid-master+1);
+    s_strcpy(masterpath, mid);
+    s_strncpy(masterbase, master, mid-master+1);
     
     if(dedicated)
     {

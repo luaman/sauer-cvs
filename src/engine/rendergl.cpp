@@ -117,9 +117,9 @@ Texture *crosshair = NULL; // used as default, ensured to be loaded
 Texture *textureload(char *name, int rot, bool clamp, bool mipit, bool msg)
 {
     string rname, tname;
-    strcpy_s(tname, name);
-    strcpy_s(rname, path(tname));
-    if(rot) { sprintf_sd(rnum)("_%d", rot); strcat_s(rname, rnum); };
+    s_strcpy(tname, name);
+    s_strcpy(rname, path(tname));
+    if(rot) { s_sprintfd(rnum)("_%d", rot); s_strcat(rname, rnum); };
 
     Texture *t = textures.access(rname);
     if(t) return t;
@@ -130,7 +130,7 @@ Texture *textureload(char *name, int rot, bool clamp, bool mipit, bool msg)
     if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
 
     t = &textures[newstring(rname)];
-    strcpy_s(t->name, rname);
+    s_strcpy(t->name, rname);
     glGenTextures(1, &t->gl);
     t->bpp = bpp;
 
@@ -186,7 +186,7 @@ void texture(char *__dummy, char *name, char *rot)
     Slot &s = slots[num];
     s.t = NULL;
     s.rotation = atoi(rot);
-    strcpy_s(s.name, name);
+    s_strcpy(s.name, name);
     path(s.name);
 };
 
@@ -197,7 +197,7 @@ Texture *lookuptexture(int tex)
 {
     Slot &s = slots[tex];
     if(s.t) return s.t;
-    sprintf_sd(name)("packages/%s", s.name);
+    s_sprintfd(name)("packages/%s", s.name);
     return s.t = textureload(name, s.rotation);
 };
 

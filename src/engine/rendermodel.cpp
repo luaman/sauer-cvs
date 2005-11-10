@@ -15,7 +15,7 @@ vector<mapmodelinfo> mapmodels;
 void mapmodel(char *rad, char *h, char *zoff, char *name)
 {
     mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff) }; 
-    strcpy_s(mmi.name, name);
+    s_strcpy(mmi.name, name);
     mapmodels.add(mmi);
 };
 

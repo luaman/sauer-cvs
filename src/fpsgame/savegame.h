@@ -25,7 +25,7 @@ struct gamesaver
     {
         int gamemode = cl.gamemode;
         if(!m_classicsp) { conoutf("can only save classic sp games"); return; };
-        sprintf_sd(fn)("savegames/%s.csgz", arg);
+        s_sprintfd(fn)("savegames/%s.csgz", arg);
         gzFile f = gzopen(fn, "wb9");
         if(!f) { conoutf("could not write %s", fn); return; };
         gzwrite(f, (void *)"CUBESAVE", 8);
@@ -46,7 +46,7 @@ struct gamesaver
     void gameload(char *arg)
     {
         if(multiplayer()) return;
-        sprintf_sd(fn)("savegames/%s.csgz", arg);
+        s_sprintfd(fn)("savegames/%s.csgz", arg);
         f = gzopen(fn, "rb9");
         if(!f) { conoutf("could not open %s", fn); return; };
 

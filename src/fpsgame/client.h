@@ -5,7 +5,7 @@ struct clientcom : iclientcom
     bool c2sinit;       // whether we need to tell the other clients our stats
 
     string ctext;
-    void toserver(char *text) { conoutf("%s:\f %s", player1->name, text); strcpy_s(ctext, text); };
+    void toserver(char *text) { conoutf("%s:\f %s", player1->name, text); s_strcpy(ctext, text); };
 
     string toservermap;
     bool senditemstoserver;     // after a map change, since server doesn't have map data
@@ -18,8 +18,8 @@ struct clientcom : iclientcom
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, IARG_VAR, self->toserver(args[0]));
-        CCOMMAND(clientcom, name, 1, { self->c2sinit = false; strn0cpy(self->player1->name, args[0], 16); });
-        CCOMMAND(clientcom, team, 1, { self->c2sinit = false; strn0cpy(self->player1->team, args[0], 5);  });
+        CCOMMAND(clientcom, name, 1, { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
+        CCOMMAND(clientcom, team, 1, { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
         CCOMMAND(clientcom, map, 1, self->changemap(args[0]));
     };
 
@@ -63,7 +63,7 @@ struct clientcom : iclientcom
 
     void addmsg(int rel, int num, int type, ...)
     {
-        if(num!=fpsserver::msgsizelookup(type)) { sprintf_sd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
+        if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
         ivector &msg = messages.add();
         msg.add(num);
         msg.add(rel);
@@ -191,7 +191,7 @@ struct clientcom : iclientcom
                 };
                 toservermap[0] = 0;
                 clientnum = cn;                 // we are now fully connected
-                if(!getint(p)) strcpy_s(toservermap, cl.getclientmap());   // we are the first client on this server, set map
+                if(!getint(p)) s_strcpy(toservermap, cl.getclientmap());   // we are the first client on this server, set map
                 break;
             };
 
@@ -247,7 +247,7 @@ struct clientcom : iclientcom
             case SV_MAPRELOAD:          // server requests next map
             {
                 getint(p);
-                sprintf_sd(nextmapalias)("nextmap_%s", cl.getclientmap());
+                s_sprintfd(nextmapalias)("nextmap_%s", cl.getclientmap());
                 char *map = getalias(nextmapalias);     // look up map in the cycle
                 changemap(map ? map : cl.getclientmap());
                 break;
@@ -266,9 +266,9 @@ struct clientcom : iclientcom
                     c2sinit = false;    // send new players my info again 
                     conoutf("connected: %s", &text);
                 }; 
-                strcpy_s(d->name, text);
+                s_strcpy(d->name, text);
                 sgetstr();
-                strcpy_s(d->team, text);
+                s_strcpy(d->team, text);
                 d->lifesequence = getint(p);
                 break;
             };
@@ -428,6 +428,6 @@ struct clientcom : iclientcom
 
     void changemap(char *name)                      // request map change, server may ignore
     {
-        strcpy_s(toservermap, name);
+        s_strcpy(toservermap, name);
     };
 };

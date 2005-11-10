@@ -59,7 +59,7 @@ struct monsterset
             roll = 0;
             state = CS_ALIVE;
             anger = 0;
-            strcpy_s(name, t->name);
+            s_strcpy(name, t->name);
         };
         
         bool enemylos(vec &v)

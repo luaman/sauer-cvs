@@ -92,7 +92,7 @@ struct fpsserver : igameserver
     bool vote(char *map, int reqmode, int sender)
     {
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        strcpy_s(ci->mapvote, map);
+        s_strcpy(ci->mapvote, map);
         ci->modevote = reqmode;
         int yes = 0, no = 0; 
         loopi(getnumclients())
@@ -105,7 +105,7 @@ struct fpsserver : igameserver
             };
         };
         if(yes==1 && no==0) return true;  // single player
-        sprintf_sd(msg)("%s suggests %s on map %s (set map to vote)", ci->name, modestr(reqmode), map);
+        s_sprintfd(msg)("%s suggests %s on map %s (set map to vote)", ci->name, modestr(reqmode), map);
         sendservmsg(msg);
         if(yes/(float)(yes+no) <= 0.5f) return false;
         sendservmsg("vote passed");
@@ -126,7 +126,7 @@ struct fpsserver : igameserver
 
             case SV_INITC2S:
                 sgetstr();
-                strcpy_s(((clientinfo *)getinfo(cn))->name, text);
+                s_strcpy(((clientinfo *)getinfo(cn))->name, text);
                 sgetstr();
                 getint(p);
                 break;
@@ -141,7 +141,7 @@ struct fpsserver : igameserver
                 minremain = mode&1 ? 15 : 10;
                 mapend = lastsec+minremain*60;
                 interm = 0;
-                strcpy_s(smapname, text);
+                s_strcpy(smapname, text);
                 resetitems();
                 notgotitems = true;
                 sender = -1;
@@ -259,7 +259,7 @@ struct fpsserver : igameserver
 
     void serverinit(char *sdesc)
     {
-        strcpy_s(serverdesc, sdesc);
+        s_strcpy(serverdesc, sdesc);
         resetvotes();
         smapname[0] = 0;
         resetitems();
@@ -286,7 +286,7 @@ struct fpsserver : igameserver
 
     void serverinfostr(char *buf, char *name, char *sdesc, char *map, int ping, vector<int> &attr)
     {
-        if(attr[0]!=PROTOCOL_VERSION) sprintf_s(buf)("%s [different protocol]", name);
-        else sprintf_s(buf)("%d\t%d\t%s, %s: %s %s", ping, attr[2], map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
+        if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("%s [different protocol]", name);
+        else s_sprintf(buf)("%d\t%d\t%s, %s: %s %s", ping, attr[2], map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
     };
 };

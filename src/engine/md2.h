@@ -321,9 +321,9 @@ struct md2 : model
     { 
         if(!loaded)
         {
-            sprintf_sd(name1)("packages/models/%s/tris.md2", loadname);
+            s_sprintfd(name1)("packages/models/%s/tris.md2", loadname);
             if(!load(path(name1))) return false;
-            sprintf_sd(name2)("packages/models/%s/skin.jpg", loadname);
+            s_sprintfd(name2)("packages/models/%s/skin.jpg", loadname);
             #define ifnload if((skin = textureload(name2, 0, false, true, false))==crosshair)
             ifnload
             {
@@ -333,8 +333,8 @@ struct md2 : model
                     char *p = strrchr(loadname, '/');
                     if(!p) p = loadname;
                     string nn;
-                    strn0cpy(nn, loadname, p-loadname+1);
-                    sprintf_s(name2)("packages/models/%s/skin.jpg", nn);    // try jpg in the parent folder (skin sharing)
+                    s_strncpy(nn, loadname, p-loadname+1);
+                    s_sprintf(name2)("packages/models/%s/skin.jpg", nn);    // try jpg in the parent folder (skin sharing)
                     ifnload                                          
                     {
                         strcpy(name2+strlen(name2)-3, "png");               // and png again

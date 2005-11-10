@@ -86,7 +86,7 @@ struct entities : icliententities
         if(!tag) return;
         ///settag(tag, type);
         if(!savegame) playsound(S_RUMBLE);
-        sprintf_sd(aliasname)("level_trigger_%d", tag);
+        s_sprintfd(aliasname)("level_trigger_%d", tag);
         if(identexists(aliasname)) execute(aliasname);
         if(type==2) cl.ms.endsp(false);
     };
@@ -273,7 +273,7 @@ struct entities : icliententities
         e.attr4 = v4;
         e.attr5 = 0;
         e.type = type;
-        e.__reserved = 0;
+        e.reserved = 0;
         e.spawned = false;
         memset(e.color, 255, 3);
         switch(type)
