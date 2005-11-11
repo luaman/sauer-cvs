@@ -576,7 +576,20 @@ void edittex(int dir)
     loopselxyz(edittexcube(c, t, sel.orient));
 };
 
+void gettex()
+{
+    if(noedit()) return;
+    loopxyz(sel, sel.grid, curtexindex = c.texture[sel.orient]);
+    loopi(curtexnum) if(hdr.texlist[i]==curtexindex)
+    {
+        curtexindex = i;
+        tofronttex();
+        return;
+    };
+};
+
 COMMAND(edittex, ARG_1INT);
+COMMAND(gettex, ARG_NONE);
 
 ////////// flip and rotate ///////////////
 uint edgeinv(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); };
@@ -716,8 +729,7 @@ void render_texture_panel()
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColor4f(1.0, 1.0, 1.0, texpaneltimer/1000.0f);
-        int x = 2100, y = 50, s = 230, gap = 20;
+        int y = 50, s = 230, gap = 20;
 
         loopi(7)
         {
@@ -727,13 +739,22 @@ void render_texture_panel()
                 Texture *tex = lookuptexture(hdr.texlist[ti]);
                 float sx = min(1, tex->xs/(float)tex->ys), sy = min(1, tex->ys/(float)tex->xs);
                 glBindTexture(GL_TEXTURE_2D, tex->gl);
-                glBegin(GL_QUADS);
-                glTexCoord2f(0.0,    0.0);    glVertex2f(x,   y);
-                glTexCoord2f(1.0/sx, 0.0);    glVertex2f(x+s, y);
-                glTexCoord2f(1.0/sx, 1.0/sy); glVertex2f(x+s, y+s);
-                glTexCoord2f(0.0,    1.0/sy); glVertex2f(x,   y+s);
-                glEnd();
-                xtraverts += 4;
+                glColor4f(0, 0, 0, texpaneltimer/1000.0f);
+                int s = 230, x = 2100;
+                loopj(2)
+                {
+                    glBegin(GL_QUADS);
+                    glTexCoord2f(0.0,    0.0);    glVertex2f(x,   y);
+                    glTexCoord2f(1.0/sx, 0.0);    glVertex2f(x+s, y);
+                    glTexCoord2f(1.0/sx, 1.0/sy); glVertex2f(x+s, y+s);
+                    glTexCoord2f(0.0,    1.0/sy); glVertex2f(x,   y+s);
+                    glEnd();
+                    xtraverts += 4;
+                    glColor4f(1.0, 1.0, 1.0, texpaneltimer/1000.0f);
+                    s = 220;
+                    x += 5;
+                    y += 5;
+                };
             }
             y += s+gap;
         }
