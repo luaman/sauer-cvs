@@ -101,6 +101,32 @@ bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest)
 
 VARF(vectorbasedrendering, 0, 0, 1, allchanged());
 
+void genedgespanvert(ivec &p, cube &c, vec &v)
+{
+    ivec p1(8-p.x, p.y, p.z);
+    ivec p2(p.x, 8-p.y, p.z);
+    ivec p3(p.x, p.y, 8-p.z);
+
+    cube s;
+    solidfaces(s);
+
+    plane plane1, plane2, plane3;
+    genvertp(c, p, p1, p2, plane1);
+    genvertp(c, p, p2, p3, plane2);
+    genvertp(c, p, p3, p1, plane3);
+    if(plane1==plane2) genvertp(s, p, p1, p2, plane1);
+    if(plane1==plane3) genvertp(s, p, p1, p2, plane1);
+    if(plane2==plane3) genvertp(s, p, p2, p3, plane2);
+
+    ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
+    //ASSERT(v.x>=0 && v.x<=8);
+    //ASSERT(v.y>=0 && v.y<=8);
+    //ASSERT(v.z>=0 && v.z<=8);
+    v.x = max(0, min(8, v.x));
+    v.y = max(0, min(8, v.y));
+    v.z = max(0, min(8, v.z));
+};
+
 void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
 {
     if(vectorbasedrendering==1)
@@ -111,33 +137,39 @@ void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
     }
     else
     {
-        ivec p1(8-p.x, p.y, p.z);
-        ivec p2(p.x, 8-p.y, p.z);
-        ivec p3(p.x, p.y, 8-p.z);
-
-        cube s;
-        solidfaces(s);
-
-        plane plane1, plane2, plane3;
-        genvertp(c, p, p1, p2, plane1);
-        genvertp(c, p, p2, p3, plane2);
-        genvertp(c, p, p3, p1, plane3);
-        if(plane1==plane2) genvertp(s, p, p1, p2, plane1);
-        if(plane1==plane3) genvertp(s, p, p1, p2, plane1);
-        if(plane2==plane3) genvertp(s, p, p2, p3, plane2);
-
-        ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
-        //ASSERT(v.x>=0 && v.x<=8);
-        //ASSERT(v.y>=0 && v.y<=8);
-        //ASSERT(v.z>=0 && v.z<=8);
-        v.x = max(0, min(8, v.x));
-        v.y = max(0, min(8, v.y));
-        v.z = max(0, min(8, v.z));
+        genedgespanvert(p, c, v);
     };
 
     v.mul(size);
     v.add(pos);
 };
+
+void edgespan2vectorcube(cube &c)
+{
+    vec v;
+
+    if(c.children) loopi(8) edgespan2vectorcube(c.children[i]);
+
+    if(isentirelysolid(c) || isempty(c)) return;
+
+    loop(x,2) loop(y,2) loop(z,2)
+    {
+        ivec p(8*x, 8*y, 8*z);
+        genedgespanvert(p, c, v);
+
+        edgeset(c.edges[edgeindex(y, z, 2)], x, int(v.x));
+        edgeset(c.edges[edgeindex(z, x, 1)], y, int(v.y));
+        edgeset(c.edges[edgeindex(x, y, 0)], z, int(v.z));
+    };
+};
+
+void etovworld()
+{
+    loopi(8) edgespan2vectorcube(worldroot[i]);
+    allchanged();
+};
+
+COMMAND(etovworld, ARG_NONE);
 
 const int cubecoords[8][3] = // verts of bounding cube
 {
@@ -698,7 +730,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
 
 void forcemip(cube &parent);
 
-void genlod(cube &c, int size)    
+void genlod(cube &c, int size)
 {
     if(!c.children || c.va) return;
     progress("generating LOD...");
@@ -727,7 +759,7 @@ void octarender()                               // creates va s for all leaf cub
 {
     recalcprogress = 0;
     if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2);
-    
+
     recalcprogress = 0;
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2, 0);
 
