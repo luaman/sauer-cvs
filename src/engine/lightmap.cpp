@@ -488,7 +488,7 @@ void resetlightmaps()
 
 void calclight()
 {
-    computescreen("recomputing lightmaps... (esc to abort)");
+    computescreen("computing lightmaps... (esc to abort)");
     resetlightmaps();
     clear_lmids(worldroot);
     curlumels = 0;
@@ -520,6 +520,7 @@ COMMAND(calclight, ARG_NONE);
 void patchlight()
 {
     if(noedit()) return;
+    computescreen("patching lightmaps... (esc to abort)");
     progress = 0;
     canceled = false;
     int total = 0, lumels = 0;
