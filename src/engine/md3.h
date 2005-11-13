@@ -464,6 +464,9 @@ struct md3 : model
         tmp_animations.setsize(0);
         sprintf(basedir, "packages/models/%s", model);
         md3model *mdls = new md3model[3];
+
+        show_out_of_renderloop_progress(0, basedir);
+
         loopi(3)  // load lower,upper and head models
         {
             s_sprintfd(path)("%s/%s", basedir, pl_objects[i]);

@@ -36,7 +36,7 @@ struct igameclient
     virtual void startmap(char *name) = 0;
     virtual void gameplayhud() = 0;
     virtual void entinmap(dynent *d, bool froment) = 0;
-    virtual void drawhudgun(float fovy, float aspect, int farplane) = 0;
+    virtual void drawhudgun() = 0;
     virtual bool camerafixed() = 0;
     virtual bool canjump() = 0;
     virtual void doattack(bool on) = 0;

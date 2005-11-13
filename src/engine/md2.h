@@ -88,9 +88,11 @@ struct md2 : model
     
     bool load(char* filename)
     {
+        show_out_of_renderloop_progress(0, filename);
+        
         FILE* file;
 
-        if((file= fopen(filename, "rb"))==NULL) return false;
+        if((file = fopen(filename, "rb"))==NULL) return false;
 
         fread(&header, sizeof(md2_header), 1, file);
         endianswap(&header, sizeof(int), sizeof(md2_header)/sizeof(int));

@@ -124,11 +124,13 @@ Texture *textureload(char *name, int rot, bool clamp, bool mipit, bool msg)
     Texture *t = textures.access(rname);
     if(t) return t;
 
+    show_out_of_renderloop_progress(0, tname);  
+
     SDL_Surface *s = IMG_Load(tname);
     if(!s) { if(msg) conoutf("couldn't load texture %s", tname); return crosshair; };
     int bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
-
+    
     t = &textures[newstring(rname)];
     s_strcpy(t->name, rname);
     glGenTextures(1, &t->gl);
@@ -316,7 +318,7 @@ void gl_drawframe(int w, int h, float curfps)
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    int farplane = max(fog*2, 384);
+    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
     gluPerspective(fovy, aspect, 0.54f, farplane);
     glMatrixMode(GL_MODELVIEW);
 
@@ -351,7 +353,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     if(!limitsky) drawskybox(farplane, false);
 
-    if(!isthirdperson()) cl->drawhudgun(fovy, aspect, farplane);
+    if(!isthirdperson()) cl->drawhudgun();
 
     rendermaterials();
 

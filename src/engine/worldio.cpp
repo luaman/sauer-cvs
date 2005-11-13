@@ -186,6 +186,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     setnames(mname);
     gzFile f = gzopen(cgzname, "rb9");
     if(!f) { conoutf("could not read map %s", cgzname); return; };
+    computescreen(mname);
     gzread(f, &hdr, sizeof(header));
     endianswap(&hdr.version, sizeof(int), 16);
     if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
@@ -197,7 +198,10 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("lodsize", hdr.mapwlod);
     setvar("ambient", hdr.ambient);
     setvar("fullbright", 0);
+
+    show_out_of_renderloop_progress(0, "loading entities...");
     et->getents().setsize(0);
+    
     loopi(hdr.numents)
     {
         extentity &e = *et->newentity();
@@ -219,14 +223,21 @@ void load_world(char *mname)        // still supports all map formats that have 
 		};
     };
 
+    show_out_of_renderloop_progress(0, "clearing world...");
     freeocta(worldroot);
+    
+    show_out_of_renderloop_progress(0, "loading octree...");
     worldroot = loadchildren(f);
+    
+    show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
+
     resetlightmaps();
     if(hdr.version >= 7)
     {
         loopi(hdr.lightmaps) 
         {
+            show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");
             LightMap &lm = lightmaps.add();
             gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
             lm.finalize();
@@ -235,15 +246,25 @@ void load_world(char *mname)        // still supports all map formats that have 
     }
     else
         clearlights();
-    allchanged();
 
     gzclose(f);
+
+    allchanged();
+    
     conoutf("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     conoutf("%s", hdr.maptitle);
     estartmap(mname);
     execfile("data/default_map_settings.cfg");
     execfile(pcfname);
     execfile(mcfname);
+
+    precacheall();
+
+    loopv(et->getents())
+    {
+        extentity &e = *et->getents()[i];
+        if(e.type==ET_MAPMODEL) loadmodel(getmminfo(e.attr2).name);
+    };
 };
 
 void savecurrentmap() { save_world(cl->getclientmap()); };

@@ -293,7 +293,10 @@ void changed()
         b.o[i] += 1;
         b.s[i] -= 2;
     };
+    
+    inbetweenframes = false;
     octarender();
+    inbetweenframes = true;
 };
 
 //////////// copy and undo /////////////
@@ -729,7 +732,7 @@ void render_texture_panel()
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        int y = 50, s = 230, gap = 20;
+        int y = 50, s = 230, gap = 10;
 
         loopi(7)
         {

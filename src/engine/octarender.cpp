@@ -673,9 +673,13 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
+int recalcprogress = 0;
+#define progress(s)     if((recalcprogress++&0x7FF)==0) show_out_of_renderloop_progress(recalcprogress/(float)allocnodes, s);
+
 
 int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
 {
+    progress("recalculating geometry...");
     static int faces[6];
     int ccount = 0;
     loopi(8)                                    // counting number of semi-solid/solid children cubes
@@ -694,9 +698,10 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
 
 void forcemip(cube &parent);
 
-void genlod(cube &c, int size)    // TODO: improve for higher visual LOD quality
+void genlod(cube &c, int size)    
 {
     if(!c.children || c.va) return;
+    progress("generating LOD...");
 
     loopi(8) genlod(c.children[i], size/2);
 
@@ -715,9 +720,15 @@ void genlod(cube &c, int size)    // TODO: improve for higher visual LOD quality
     emptyfaces(c);
 };
 
+void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
+void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
+
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
+    recalcprogress = 0;
     if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2);
+    
+    recalcprogress = 0;
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2, 0);
 
     explicitsky = 0;
@@ -732,6 +743,7 @@ void octarender()                               // creates va s for all leaf cub
 
 void allchanged()
 {
+    show_out_of_renderloop_progress(0, "clearing VBOs...");
     vaclearc(worldroot);
     memset(cstats, 0, sizeof(cstat)*32);
     octarender();
@@ -761,7 +773,7 @@ int isvisiblesphere(float rad, vec &cv)
     };
 
     dist = vfcV[0].dot(cv) - vfcD[0] - vfcDfog;
-    if (dist > rad) return VFC_NOT_VISIBLE;
+    if (dist > rad) return VFC_PART_VISIBLE;  //VFC_NOT_VISIBLE;    // culling when fog is closer than size of world results in HOM
     if (dist > -rad) v = VFC_PART_VISIBLE;
 
     return v;

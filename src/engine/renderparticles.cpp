@@ -5,7 +5,6 @@
 
 struct particle { vec o, d; int fade, type; int millis; particle *next; };
 particle *parlist = NULL, *parempty = NULL;
-bool parinit = false;
 
 VARP(particlesize, 20, 100, 500);
 
@@ -18,14 +17,12 @@ void particleinit()
     parttexs[2] = textureload(newstring("data/martin/smoke.png"));
     parttexs[3] = textureload(newstring("data/martin/ball2.png"));
     parttexs[4] = textureload(newstring("data/martin/ball3.png"));
-    parinit = true;
 };
 
 void newparticle(vec &o, vec &d, int fade, int type)
 {
     if(!parempty)
     {
-        if(!parinit) particleinit();
         particle *ps = new particle[256];
         loopi(256)
         {

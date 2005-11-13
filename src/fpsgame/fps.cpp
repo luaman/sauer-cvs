@@ -421,7 +421,7 @@ struct fpsclient : igameclient
         rendermodel(hudgunnames[player1->gunselect], anim, 0, 0, player1->o.x, player1->o.z+player1->bob, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base, NULL);
     };
 
-    void drawhudgun(float fovy, float aspect, int farplane)
+    void drawhudgun()
     {
         if(!hudgun() || editmode) return;
         

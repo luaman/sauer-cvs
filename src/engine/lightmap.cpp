@@ -41,50 +41,10 @@ void show_calclight_progress()
     float bar1 = float(progress) / float(wtris / 2),
           bar2 = lightmaps.length() ? float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH) : 0;
           
-    glDisable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);    
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
+    s_sprintfd(text1)("%d%%", int(bar1 * 100));
+    s_sprintfd(text2)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100));
 
-    glBegin(GL_QUADS);
-
-    glColor3f(0, 0, 1);
-    glVertex2i(0, 0);
-    glVertex2i(VIRTW, 0);
-    glVertex2i(VIRTW, 2*FONTH);
-    glVertex2i(0, 2*FONTH);
-
-    glColor3f(0, 0.75, 0);
-    glVertex2f(0, 0);
-    glVertex2f(bar1 * VIRTW, 0);
-    glVertex2f(bar1 * VIRTW, 2*FONTH);
-    glVertex2f(0, 2*FONTH);
-
-    glColor3f(0, 0, 0);
-    glVertex2i(0, 2*FONTH);
-    glVertex2i(VIRTW, 2*FONTH);
-    glVertex2i(VIRTW, 4*FONTH);
-    glVertex2i(0, 4*FONTH);
-    
-    glColor3f(0.75, 0, 0);
-    glVertex2f(0, 2*FONTH);
-    glVertex2f(bar2 * VIRTW, 2*FONTH);
-    glVertex2f(bar2 * VIRTW, 4*FONTH);
-    glVertex2f(0, 4*FONTH);
-
-    glEnd();
-
-    glEnable(GL_BLEND);
-    glEnable(GL_TEXTURE_2D); 
-    draw_textf("%d%%", VIRTW*7/16, FONTH/2, int(bar1 * 100));
-    draw_textf("%d textures %d%% utilized", VIRTW*5/16, 2*FONTH + FONTH/2, lightmaps.length(), int(bar2 * 100));
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-
-    glPopMatrix();
-    glEnable(GL_DEPTH_TEST);
-    SDL_GL_SwapBuffers();
+    show_out_of_renderloop_progress(bar1, text1, bar2, text2);
 }
 
 bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
@@ -528,6 +488,7 @@ void resetlightmaps()
 
 void calclight()
 {
+    computescreen("recomputing lightmaps... (esc to abort)");
     resetlightmaps();
     clear_lmids(worldroot);
     curlumels = 0;
@@ -543,6 +504,7 @@ void calclight()
     }
     if(!editmode) compressed.clear();
     initlights();
+    computescreen("lighting done...");
     allchanged();
     if(canceled == true)
         conoutf("calclight aborted");

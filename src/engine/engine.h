@@ -45,6 +45,7 @@ extern int curtexnum;
 extern const int cubecoords[8][3];
 extern const ushort fv[6][4];
 extern Texture *crosshair;
+extern bool inbetweenframes;
 
 extern int curtime;                     // current frame time
 extern int lastmillis;                  // last time
@@ -107,6 +108,7 @@ extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR, bool lodcube = false);
 extern int visibleorient(cube &c, int orient);
 extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
+extern void precacheall();
 
 // water
 extern bool visiblematerial(cube &, int orient, int x, int y, int z, int size);
@@ -135,7 +137,16 @@ extern void writebinds(FILE *f);
 
 // main
 extern void estartmap(char *name);
+extern void computescreen(char *text);
 
 // physics 
 extern void mousemove(int dx, int dy);
 
+// lightmap
+extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 = 0, char *text2 = NULL);
+
+// loadmodel
+extern model *loadmodel(char *name);
+
+// particles
+extern void particleinit();

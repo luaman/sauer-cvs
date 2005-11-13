@@ -77,6 +77,73 @@ void screenshot()
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
 
+void computescreen(char *text)
+{
+    loopi(2)
+    {
+        glMatrixMode(GL_MODELVIEW);    
+        glLoadIdentity();
+        glMatrixMode(GL_PROJECTION);    
+        glLoadIdentity();
+        glOrtho(0, scr_w*4, scr_h*4, 0, -1, 1);
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glEnable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D); 
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        draw_text(text, 70, 2*FONTH + FONTH/2);
+        SDL_GL_SwapBuffers();
+    };
+};
+
+void bar(float bar, int o, float r, float g, float b)
+{
+        int side = 50;
+        glColor3f(r, g, b);
+        glVertex2f(side,                      o*FONTH);
+        glVertex2f(bar*(scr_w*4-2*side)+side, o*FONTH);
+        glVertex2f(bar*(scr_w*4-2*side)+side, (o+2)*FONTH);
+        glVertex2f(side,                      (o+2)*FONTH);
+};
+
+void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *text2)   // also used during loading
+{
+    if(!inbetweenframes) return;
+    
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);    
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, scr_w*4, scr_h*4, 0, -1, 1);
+
+    glBegin(GL_QUADS);
+
+    bar(1,    4, 0, 0,    0.8f);
+    bar(bar1, 4, 0, 0.5f, 1);
+
+    if(bar2>0)
+    {
+        bar(1,    6, 0.5f,  0, 0);
+        bar(bar2, 6, 0.75f, 0, 0);
+    };
+    
+    glEnd();
+
+    glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D); 
+    
+    draw_text(text1, 70, 4*FONTH + FONTH/2);
+    if(bar2>0) draw_text(text2, 70, 6*FONTH + FONTH/2);
+    
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+
+    glPopMatrix();
+    glEnable(GL_DEPTH_TEST);
+    SDL_GL_SwapBuffers();
+}
+
 #ifndef WIN32
 void fullscreen()
 {
@@ -122,6 +189,8 @@ void estartmap(char *name)
     setvar("wireframe", 0);
     cl->startmap(name);
 };
+
+bool inbetweenframes = false;
 
 int main(int argc, char **argv)
 {
@@ -186,10 +255,11 @@ int main(int argc, char **argv)
 
     log("gl");
     gl_init(scr_w, scr_h);
-
-    log("basetex");
     crosshair = textureload(newstring("data/crosshair.png"));
     if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
+    computescreen("initializing...");
+    inbetweenframes = true;
+    particleinit();
    
     log("world");
     player = cl->iterdynents(0);
@@ -240,8 +310,10 @@ int main(int argc, char **argv)
         
         extern void updatevol(); updatevol();
 
+        inbetweenframes = false;
         SDL_GL_SwapBuffers();
-        gl_drawframe(scr_w, scr_h, fps);
+        if(frames>2) gl_drawframe(scr_w, scr_h, fps);
+        inbetweenframes = true;
 
         SDL_Event event;
         int lasttype = 0, lastbut = 0;
