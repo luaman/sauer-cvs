@@ -64,7 +64,7 @@ struct cube
     uchar material;         // empty-space material
     vtxarray *va;           // vertex array for children, or NULL
     clipplanes *clip;       // collision planes
-    surfaceinfo *surfaces; // lighting info for each surface
+    surfaceinfo *surfaces;  // lighting info for each surface
 };
 
 struct block3

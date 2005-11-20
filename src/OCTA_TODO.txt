@@ -15,6 +15,7 @@ eihrul:
 aard:
 - thirdperson model flips into jump anim randomly at low fps
 - profile rpg_01
+- compression of octa info into indexes (e.g. textures into shorts?)
 - more progress bars
 - hudgun flickers when running on stairs?!?
 - skybox - roll
