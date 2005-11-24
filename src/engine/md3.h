@@ -79,6 +79,16 @@ struct md3mesh
     vec2 *uv;
     int numtriangles, numvertices;
     Texture *skin;
+    
+    GLuint vbufGL;
+    ushort *vbufi;
+    int vbufi_len;
+    md3mesh() : vbufGL(0), vbufi(0) {};
+    ~md3mesh() 
+    {
+        DELETEA(vbufi);
+        if(hasVBO && vbufGL) pfnglDeleteBuffers(1, &vbufGL);
+    };
 };
 
 struct md3model
@@ -92,7 +102,23 @@ struct md3model
     int numframes, numtags;
     int *lastanimswitchtime;
     bool loaded;
-    bool stopped;
+       
+    md3model()
+    {
+        loaded = false;
+        as = current = prev = NULL;
+    };
+    
+    ~md3model()
+    {
+        loopv(meshes){
+            if(meshes[i].vertices) delete [] meshes[i].vertices;
+            if(meshes[i].triangles) delete [] meshes[i].triangles;
+            if(meshes[i].uv) delete [] meshes[i].uv;
+        };
+        if(links) free(links);
+        if(tags) delete [] tags;
+    };
     
     bool link(md3model *link, char *tag)
     {
@@ -109,7 +135,7 @@ struct md3model
     {
         float t = 0.0f;
         md3animinfo *info = &animations[a->anim];
-        if(a->range && !stopped)
+        if(a->range)
         {
             if(as->frame < info->start || as->frame > info->end) as->frame = info->start;
             int time = lastmillis-a->basetime;
@@ -121,14 +147,56 @@ struct md3model
             {
                 a->frame = info->end;
                 t = 0.0f;
-                if(a != prev) stopped = true;
             };
         }
         else a->frame = info->end;
         return t;
     }
     
-    float boundsphere_recv(int frame, float scale, vec &center) // recursive
+    void genvar() // generate vbo for each mesh
+    {
+        vector<ushort> idxs;
+        vector<md2::md2_vvert> verts;
+        
+        loopv(meshes)
+        {
+            idxs.setsize(0);
+            verts.setsize(0);
+            md3mesh &m = meshes[i];
+            
+            loopl(m.numtriangles)
+            {
+                md3triangle &t = m.triangles[l];
+                loopk(3)
+                {
+                    int n = t.vertexindices[k];
+                    
+                	loopvj(verts) // check if it's already added
+    				{
+    				    md2::md2_vvert &v = verts[j];
+    				    if(v.u==m.uv[n].x && v.v==m.uv[n].y && v.pos==m.vertices[n]) { idxs.add(j); goto found; };
+    				};
+                    {
+                        idxs.add(verts.length());
+                        md2::md2_vvert &v = verts.add();
+                        v.pos = m.vertices[n];
+                        v.u = m.uv[n].x;
+                        v.v = m.uv[n].y;
+                    }
+                    found:;
+                };                    
+            };
+            
+            m.vbufi = new ushort[m.vbufi_len = idxs.length()];
+            memcpy(m.vbufi, idxs.getbuf(), sizeof(ushort)*m.vbufi_len);
+            
+            pfnglGenBuffers(1, &m.vbufGL);
+            pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, m.vbufGL);
+            pfnglBufferData(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+        };
+    };
+    
+    float boundsphere_recv(int frame, float scale, vec &center)
     {
         md3frame &frm = frames[frame];
         vec min = frm.min_bounds;
@@ -193,7 +261,7 @@ struct md3model
             md3vertex *vertices = new md3vertex[mheader.numframes * mheader.numvertices];
             fseek(f, mesh_offset + mheader.ofs_vertices, SEEK_SET); 
             fread(vertices, sizeof(md3vertex), mheader.numframes * mheader.numvertices, f); // read the vertices
-            mesh.vertices = new vec[mheader.numframes * mheader.numvertices]; // transform to our own structure
+            mesh.vertices = new vec[mheader.numframes * mheader.numvertices]; // transform, we dont need the normals
             loopj(mheader.numframes * mheader.numvertices)
             {
                 mesh.vertices[j].x = vertices[j].vertex[0] / 64.0f;
@@ -218,20 +286,20 @@ struct md3model
         float t, t_prev, t_ai = 0.0f;
         int nextfrm;
         bool doai = false;
+        bool stopped = false;
+        bool staticmdl = false;
         
         if(numframes > 1 && as && current && prev && animations.length() > as->anim && animations.length() > 1)
         {
             info = &animations[as->anim];
             as->range = info->end-info->start;
             if(as->speed < 0) as->speed = info->fps; // use fps value from the .cfg file
-            if(!as->range) stopped = true;
             if(*(lastanimswitchtime) == -1) { *current = *as; *(lastanimswitchtime) = lastmillis-animationinterpolationtime*2; }
             else if(current->anim != as->anim)
             {
                 if(lastmillis-*(lastanimswitchtime)>animationinterpolationtime/2) *(prev) = *(current);
                 *current = *as;
                 *lastanimswitchtime = lastmillis;
-                stopped = false;
             }
             t = updateframe(current);
             doai = lastmillis-*(lastanimswitchtime)<animationinterpolationtime;
@@ -247,7 +315,10 @@ struct md3model
             stopped = true;
             current = new animstate;
             current->frame = current->anim = 0;
-        }
+            if(numframes==1) staticmdl = true;
+            if(hasVBO && staticmdl && !meshes[0].vbufGL) genvar();
+        };
+        
         nextfrm = current->frame + (stopped ? 0 : 1);
         
         #undef ip
@@ -255,37 +326,66 @@ struct md3model
         #define ip_ai(c) ip( ip( point1p->c, point2p->c, t_prev), ip( point1->c, point2->c, t), t_ai)
         #define ip_ai_tag(c) ip( ip( tag1p->c, tag2p->c, t_prev), ip( tag1->c, tag2->c, t), t_ai)
 
+ 
         loopv(meshes)
         {
-            md3mesh *mesh = &meshes[i];
+            md3mesh &mesh = meshes[i];
             
-            glBindTexture(GL_TEXTURE_2D, mesh->skin->gl);
+            if(mesh.skin->bpp==32) // transparent skins
+            {
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glEnable(GL_ALPHA_TEST);
+                glAlphaFunc(GL_GREATER, 0.9f);
+            };
             
+            glBindTexture(GL_TEXTURE_2D, mesh.skin->gl);
             
-            glBegin(GL_TRIANGLES);
-                loopj(mesh->numtriangles) // triangles
-                {
-                    loopk(3) // vertices
+            if(hasVBO && staticmdl && meshes[0].vbufGL) // vbo's for static stuff
+            {             
+                pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
+                glEnableClientState(GL_VERTEX_ARRAY);
+                glVertexPointer(3, GL_FLOAT, sizeof(md2::md2_vvert), 0);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, sizeof(md2::md2_vvert), (void *)sizeof(vec));
+
+                glDrawElements(GL_TRIANGLES, mesh.vbufi_len, GL_UNSIGNED_SHORT, mesh.vbufi);
+                
+                pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glDisableClientState(GL_VERTEX_ARRAY);
+                
+                xtravertsva += mesh.numvertices;
+            }
+            else
+            {
+                glBegin(GL_TRIANGLES);
+                    loopj(mesh.numtriangles) // triangles
                     {
-                        int index = mesh->triangles[j].vertexindices[k];
-                        vec *point1 = &mesh->vertices[index + current->frame * mesh->numvertices];
-                        vec *point2 = &mesh->vertices[index + nextfrm * mesh->numvertices];
-                        
-                        if(mesh->uv) 
-                            glTexCoord2f(mesh->uv[index].x, mesh->uv[index].y);
-                        
-                        if(doai)
+                        loopk(3) // vertices
                         {
-                            vec *point1p = &mesh->vertices[index + prev->frame * mesh->numvertices];
-                            vec *point2p = &mesh->vertices[index + (prev->frame+1) * mesh->numvertices];
-                            glVertex3f(     ip_ai(x), ip_ai(y), ip_ai(z) );
-                        }
-                        else glVertex3f(    ip(point1->x, point2->x, t),
-                                            ip(point1->y, point2->y, t),
-                                            ip(point1->z, point2->z, t));
+                            int index = mesh.triangles[j].vertexindices[k];
+                            vec *point1 = &mesh.vertices[index + current->frame * mesh.numvertices];
+                            vec *point2 = &mesh.vertices[index + nextfrm * mesh.numvertices];
+                            
+                            if(mesh.uv) 
+                                glTexCoord2f(mesh.uv[index].x, mesh.uv[index].y);
+                            
+                            if(doai)
+                            {
+                                vec *point1p = &mesh.vertices[index + prev->frame * mesh.numvertices];
+                                vec *point2p = &mesh.vertices[index + (prev->frame+1) * mesh.numvertices];
+                                glVertex3f(     ip_ai(x), ip_ai(y), ip_ai(z) );
+                            }
+                            else glVertex3f(    ip(point1->x, point2->x, t),
+                                                ip(point1->y, point2->y, t),
+                                                ip(point1->z, point2->z, t));
+                        };
                     };
-                };
-            glEnd();
+                glEnd();
+                
+                xtraverts += mesh.numvertices;
+            };
         };
 
         loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
@@ -338,24 +438,6 @@ struct md3model
         
         glPopMatrix();
     };
-    
-    md3model()
-    {
-        loaded = false;
-        stopped = false;
-        as = current = prev = NULL;
-    };
-    
-    ~md3model()
-    {
-        loopv(meshes){
-            if(meshes[i].vertices) delete [] meshes[i].vertices;
-            if(meshes[i].triangles) delete [] meshes[i].triangles;
-            if(meshes[i].uv) delete [] meshes[i].uv;
-        };
-        if(links) free(links);
-        if(tags) delete [] tags;
-    };
 };
 
 vector<md3model *> playermodels;
@@ -364,6 +446,7 @@ char basedir[_MAXDEFSTR]; // necessary for relative path's
 
 void md3setanim(animstate *as, int anim)
 {
+    if(!as || anim < 0) return;
     if(anim <= BOTH_DEAD3) // assign to both, legs and torso
     {
         as[MDL_LOWER].anim = anim;
@@ -392,8 +475,9 @@ void md3skin(char *objname, char *skin) // called by the {lower|upper|head}.cfg 
 
 COMMAND(md3skin, ARG_2STR);
 
-void md3animation(char *first, char *nums, char *loopings, char *fps) /* configurable animations - use hardcoded instead ? */
+void md3animation(char *first, char *nums, char *loopings, char *fps) /* configurable animations */
 {
+    if(!first || !nums || !loopings || !fps) { conoutf("md3animation: invalid usage"); return; };
     md3animinfo &a = tmp_animations.add();
     a.start = atoi(first);
     a.end = a.start+atoi(nums)-1;
@@ -407,6 +491,7 @@ struct md3 : model
 {
     string loadname;
     md3model *model;
+    Texture *tmpskin;
 
     md3(char *_name) { s_strcpy(loadname, _name); };
     char *name() { return loadname; }; 
@@ -417,13 +502,23 @@ struct md3 : model
         return model->boundsphere_recv(frame, scale, center);
     };  
     
-    void setskin(int tex) {};  //FIXME
-    bool load() { model = loadplayermdl(loadname); return model ? true : false; }; 
+    void setskin(int tex)
+    {
+        md3mesh *m = &model->meshes[0]; // fixme: which skins should be changed?
+        if(m && tex)
+        {
+            tmpskin = m->skin;
+            m->skin = lookuptexture(tex);
+        }
+        else tmpskin = NULL;
+    };
+    
+    bool load() { model = loadplayermdl(loadname); return model ? true : false; };
     
     void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
         //int gun = 0; // FIXME lets do this later
-        if(anim != ANIM_STATIC) // its a player model
+        if(anim != ANIM_STATIC)
         {
             if(!model || !&model[1]) return;
             animstate *a = new animstate[2];
@@ -454,8 +549,11 @@ struct md3 : model
                 model->link(NULL, "tag_weapon"); // no weapon model
             else
                 playermodels[mdl * 3 + MDL_UPPER]->link(weaponmodels[gun], "tag_weapon"); // show current weapon*/
-        };   
+        };
+        
         model->draw(x, y, z, yaw, pitch, sc);
+        
+        if(tmpskin) model->meshes[0].skin = tmpskin;
     };
     
     md3model *loadplayermdl(char *model)
