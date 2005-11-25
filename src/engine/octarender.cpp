@@ -154,15 +154,19 @@ void edgespan2vectorcube(cube &c)
 
     if(isentirelysolid(c) || isempty(c)) return;
 
+    cube n = c;
+
     loop(x,2) loop(y,2) loop(z,2)
     {
         ivec p(8*x, 8*y, 8*z);
         genedgespanvert(p, c, v);
 
-        edgeset(c.edges[edgeindex(y, z, 2)], x, int(v.x+0.49f));
-        edgeset(c.edges[edgeindex(z, x, 1)], y, int(v.y+0.49f));
-        edgeset(c.edges[edgeindex(x, y, 0)], z, int(v.z+0.49f));
+        edgeset(n.edges[edgeindex(y, z, 2)], x, int(v.x+0.49f));
+        edgeset(n.edges[edgeindex(z, x, 1)], y, int(v.y+0.49f));
+        edgeset(n.edges[edgeindex(x, y, 0)], z, int(v.z+0.49f));
     };
+
+    c = n;
 };
 
 void convertvectorworld()
@@ -207,7 +211,7 @@ const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
 };
 
 int faceconvexity(cube &c, int orient)
-{    
+{
     // fast approximation
     vec v[4];
     int d = dimension(orient);
@@ -229,7 +233,7 @@ int faceconvexity(cube &c, int orient)
     if(dist > 0) return -1;     // concave
     else if(dist < 0) return 1; // convex
     else return 0;              // flat
-	*/
+    */
 };
 
 int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
