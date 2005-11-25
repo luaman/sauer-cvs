@@ -99,8 +99,6 @@ bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest)
     return true;
 };
 
-VARF(vectorbasedrendering, 0, 0, 1, allchanged());
-
 void genedgespanvert(ivec &p, cube &c, vec &v)
 {
     ivec p1(8-p.x, p.y, p.z);
@@ -127,7 +125,9 @@ void genedgespanvert(ivec &p, cube &c, vec &v)
     v.z = max(0, min(8, v.z));
 };
 
-void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
+VARF(vectorbasedrendering, 0, 0, 1, allchanged());
+
+void genvectorvert(ivec &p, cube &c, vec &v)
 {
     if(vectorbasedrendering==1)
     {
@@ -136,10 +136,12 @@ void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
         vertrepl(c, p, v, 2, ((int *)&p)[0]);
     }
     else
-    {
         genedgespanvert(p, c, v);
-    };
+};
 
+void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
+{
+    genvectorvert(p, c, v);
     v.mul(size);
     v.add(pos);
 };
@@ -157,19 +159,20 @@ void edgespan2vectorcube(cube &c)
         ivec p(8*x, 8*y, 8*z);
         genedgespanvert(p, c, v);
 
-        edgeset(c.edges[edgeindex(y, z, 2)], x, int(v.x));
-        edgeset(c.edges[edgeindex(z, x, 1)], y, int(v.y));
-        edgeset(c.edges[edgeindex(x, y, 0)], z, int(v.z));
+        edgeset(c.edges[edgeindex(y, z, 2)], x, int(v.x+0.49f));
+        edgeset(c.edges[edgeindex(z, x, 1)], y, int(v.y+0.49f));
+        edgeset(c.edges[edgeindex(x, y, 0)], z, int(v.z+0.49f));
     };
 };
 
-void etovworld()
+void convertvectorworld()
 {
+    vectorbasedrendering = 1;
     loopi(8) edgespan2vectorcube(worldroot[i]);
     allchanged();
 };
 
-COMMAND(etovworld, ARG_NONE);
+COMMAND(convertvectorworld, ARG_NONE);
 
 const int cubecoords[8][3] = // verts of bounding cube
 {
@@ -204,18 +207,34 @@ const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
 };
 
 int faceconvexity(cube &c, int orient)
-{
+{    
+    // fast approximation
     vec v[4];
     int d = dimension(orient);
     loopi(4) vertrepl(c, *(ivec *)cubecoords[fv[orient][i]], v[i], d, dimcoord(orient));
     int n = (int)(v[0][d] - v[1][d] + v[2][d] - v[3][d]);
     if (!dimcoord(orient)) n *= -1;
     return n; // returns +ve if convex when tris are verts 012, 023. -ve for concave.
+    /*
+    // slow perfect
+    vec v[4];
+    plane pl;
+
+    loopi(4)
+        genvectorvert(*(ivec *)cubecoords[fv[orient][i]], c, v[i]);
+
+    pl.toplane(v[0], v[1], v[2]);
+
+    float dist = pl.dist(v[3]);
+    if(dist > 0) return -1;     // concave
+    else if(dist < 0) return 1; // convex
+    else return 0;              // flat
+	*/
 };
 
-int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that cubes are almost always convex
+int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
 {
-    int n = (faceconvexity(c, orient)<0); // offset tris verts to 123, 130 if concave
+    int n = (faceconvexity(c, orient)<0) ? 1 : 0; // offset tris verts from 012, 023 to 123, 130 if concave
     return fv[orient][(vert + n)&3];
 };
 
@@ -476,6 +495,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
     bool useface[6];
 
     vec pos((float)x, (float)y, (float)z);
+
+    freeclipplanes(c);                          // physics planes based on rendering
 
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube))
     {
