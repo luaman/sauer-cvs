@@ -460,6 +460,7 @@ void md3setanim(animstate *as, int anim)
 
 void md3skin(char *objname, char *skin) // called by the {lower|upper|head}.cfg (kind of .skin in Q3A)
 {
+    if(!objname || !skin) { conoutf("md3skin: invalid usage"); return; };
     md3model *mdl = playermodels.last();
     loopv(mdl->meshes)
     {   
