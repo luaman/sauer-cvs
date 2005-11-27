@@ -73,8 +73,8 @@ extern int familysize(cube &c);
 extern void freeocta(cube *c);
 extern void discardchildren(cube &c);
 extern void optiface(uchar *p, cube &c);
-extern bool validcube(cube &c);
 extern void validatec(cube *c, int size);
+extern bool isvalidcube(cube &c, int x, int y, int z, int size);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 extern void newclipplanes(cube &c);
@@ -99,6 +99,7 @@ extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va);
 extern int faceverts(cube &c, int orient, int vert);
+extern void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i);
 extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused, bool lodcube);
 extern uint faceedges(cube &c, int orient);
 extern bool touchingface(cube &c, int orient);
@@ -139,8 +140,10 @@ extern void writebinds(FILE *f);
 extern void estartmap(char *name);
 extern void computescreen(char *text);
 
-// physics 
+// physics
 extern void mousemove(int dx, int dy);
+extern bool pointincube(const cube &c, const vec &v);
+extern void setcubeclip(cube &c, int x, int y, int z, int size);
 
 // lightmap
 extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 = 0, char *text2 = NULL);

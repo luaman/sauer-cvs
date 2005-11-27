@@ -125,11 +125,19 @@ void genedgespanvert(ivec &p, cube &c, vec &v)
     v.z = max(0, min(8, v.z));
 };
 
-VARF(vectorbasedrendering, 0, 0, 1, allchanged());
+int vectorformat = 0;
+
+void vectorbasedrendering(int i)
+{
+    vectorformat = i;
+    allchanged();
+};
+
+COMMAND(vectorbasedrendering, ARG_1INT);
 
 void genvectorvert(ivec &p, cube &c, vec &v)
 {
-    if(vectorbasedrendering==1)
+    if(vectorformat==1)
     {
         vertrepl(c, p, v, 0, ((int *)&p)[2]);
         vertrepl(c, p, v, 1, ((int *)&p)[1]);
@@ -161,9 +169,9 @@ void edgespan2vectorcube(cube &c)
         ivec p(8*x, 8*y, 8*z);
         genedgespanvert(p, c, v);
 
-        edgeset(n.edges[edgeindex(y, z, 2)], x, int(v.x+0.49f));
-        edgeset(n.edges[edgeindex(z, x, 1)], y, int(v.y+0.49f));
-        edgeset(n.edges[edgeindex(x, y, 0)], z, int(v.z+0.49f));
+        edgeset(cubeedge(n, 2, y, z), x, int(v.x+0.49f));
+        edgeset(cubeedge(n, 1, z, x), y, int(v.y+0.49f));
+        edgeset(cubeedge(n, 0, x, y), z, int(v.z+0.49f));
     };
 
     c = n;
@@ -171,7 +179,7 @@ void edgespan2vectorcube(cube &c)
 
 void convertvectorworld()
 {
-    vectorbasedrendering = 1;
+    vectorformat = 1;
     loopi(8) edgespan2vectorcube(worldroot[i]);
     allchanged();
 };
@@ -212,14 +220,14 @@ const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
 
 int faceconvexity(cube &c, int orient)
 {
-    // fast approximation
+   /* // fast approximation
     vec v[4];
     int d = dimension(orient);
     loopi(4) vertrepl(c, *(ivec *)cubecoords[fv[orient][i]], v[i], d, dimcoord(orient));
     int n = (int)(v[0][d] - v[1][d] + v[2][d] - v[3][d]);
     if (!dimcoord(orient)) n *= -1;
     return n; // returns +ve if convex when tris are verts 012, 023. -ve for concave.
-    /*
+    */
     // slow perfect
     vec v[4];
     plane pl;
@@ -233,7 +241,7 @@ int faceconvexity(cube &c, int orient)
     if(dist > 0) return -1;     // concave
     else if(dist < 0) return 1; // convex
     else return 0;              // flat
-    */
+
 };
 
 int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
@@ -394,10 +402,16 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 
     calcverts(c, x, y, z, size, v, usefaces, vertused, false);
 
-    loopi(8) if(vertused[i]) loopj(3) // generate tight bounding box
+    loopi(8)
     {
-        mn[j] = min(mn[j], v[i][j]);
-        mx[j] = max(mx[j], v[i][j]);
+        if(!vertused[i]) // need all verts for proper box
+            calcvert(c, x, y, z, size, v[i], i);
+
+        loopj(3) // generate tight bounding box
+        {
+            mn[j] = min(mn[j], v[i][j]);
+            mx[j] = max(mx[j], v[i][j]);
+        };
     };
 
     p.r = mx;     // radius of box
@@ -1057,7 +1071,7 @@ void subdividecube(cube &c)
     {
         int d = dimension(i), dc = dimcoord(i);
         int e[3][3];
-        loop(y,2) loop(x,2) e[2*y][2*x] = edgeget(c.edges[edgeindex(x,y,d)], dc);
+        loop(y,2) loop(x,2) e[2*y][2*x] = edgeget(cubeedge(c,d,x,y), dc);
         e[0][1] = e[0][0]+e[0][2];
         e[1][0] = e[0][0]+e[2][0];
         e[2][1] = e[2][0]+e[2][2];
@@ -1069,7 +1083,7 @@ void subdividecube(cube &c)
         {
             int s = e[y+octacoord(C(d),i)][x+octacoord(R(d),i)];
             int v = octacoord(d,i) ? max(0, s-8) : min(8, s);
-            uchar &f = ch[i].edges[edgeindex(x,y,d)];
+            uchar &f = cubeedge(ch[i],d,x,y);
             edgeset(f, dc, v);
         };
     };
@@ -1164,7 +1178,7 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
             {
                 t[k] = ch[q[k]].texture[i];
                 loop(x, 2) loop(y, 2)
-                    e[y+(k&2)][x+(k&1)*2] = edgeget(ch[q[k]].edges[edgeindex(x,y,d)], dc)+8*octacoord(d, q[k]);
+                    e[y+(k&2)][x+(k&1)*2] = edgeget(cubeedge(ch[q[k]],d,x,y), dc)+8*octacoord(d, q[k]);
             };
         };
 
@@ -1202,7 +1216,7 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
 
         if(tex>=0) parent.texture[i] = tex;
     };
-    if(!validcube(parent)) return false;
+    if(!isvalidcube(parent, x, y, z, size)) return false;
     parent.material = ch[0].material;
     discardchildren(parent);
     return true;
@@ -1242,18 +1256,18 @@ void forcemip(cube &parent)
 
             loop(x, 2) loop(y, 2)
             {
-                int e = edgeget(ch[q].edges[edgeindex(x,y,d)], dc)+8*octacoord(d, q);
+                int e = edgeget(cubeedge(ch[q],d,x,y), dc)+8*octacoord(d, q);
                 v = dc>0 ? max(v,e) : min(v,e);
                 if(t==tex[x][y]) parent.texture[i] = t;
             };
 
             tex[xx][yy] = t;
             m = dc>0 ? max(v,m) : min(v,m);
-            edgeset(parent.edges[edgeindex(xx,yy,d)], dc, v>>1);
+            edgeset(cubeedge(parent,d,xx,yy), dc, v>>1);
         };
 
         loop(x, 2) loop(y, 2) if(empty[x][y] || lodremipboundbox==1)
-            edgeset(parent.edges[edgeindex(x,y,d)], dc, m>>1);
+            edgeset(cubeedge(parent,d,x,y), dc, m>>1);
     };
     parent.material = ch[0].material;
 };

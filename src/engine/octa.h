@@ -1,5 +1,7 @@
 // 6-directional octree heightfield map format
 
+extern int vectorformat; // The big format switch
+
 struct elementset
 {
     int texture;
@@ -95,19 +97,13 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 #define edgemake(a, b) ((b)<<4|a)
 #define edgeget(edge, coord) ((coord) ? (edge)>>4 : (edge)&0xF)
 #define edgeset(edge, coord, val) ((edge) = ((coord) ? ((edge)&0xF)|((val)<<4) : ((edge)&0xF0)|(val)))
-// DIM: Z=0 Y=1 X=2. Descriptions: DEPTH=0 COL=1 ROW=2
-#define D(dim) (dim)
-#define R(dim) ((dim)==0?2:(dim)-1)  // gets relative row dimension of given
-#define C(dim) ((dim)==2?0:(dim)+1)  // gets relative column dimension of given
-#define X(dim) ((dim)==2?0:2-(dim))  // gets x description, when dimension is the given
-#define Y(dim) ((dim)==2?2:1-(dim))
-#define Z(dim) ((dim)==0?0:3-(dim))
+
+#define cubeedge(c, d, x, y) ((c).edges[(((d)<<2)+((y)<<1)+(x))])
 
 #define octadim(d)          (1<<(2-(d)))                    // creates mask for bit of given dimension
 #define octacoord(d, i)     (((i)&octadim(d))>>(2-(d)))
 #define oppositeocta(i,d)   ((i)^octadim(D(d)))
 #define octaindex(x,y,z,d)  (octadim(D(d))*(z)+octadim(C(d))*(y)+octadim(R(d))*(x))
-#define edgeindex(x,y,d)    (((d)<<2)+((y)<<1)+(x))
 
 enum
 {

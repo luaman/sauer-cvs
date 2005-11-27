@@ -3,15 +3,18 @@
 
 void boxs(int d, int x, int y, int xs, int ys, int z)
 {
-    int v[4][3] =
-    {
-        {z, y,    x},
-        {z, y,    x+xs},
-        {z, y+ys, x+xs},
-        {z, y+ys, x}
-    };
+    ivec m(d, x,    y,    z);
+    ivec n(d, x+xs, y,    z);
+    ivec o(d, x+xs, y+ys, z);
+    ivec p(d, x,    y+ys, z);
+
     glBegin(GL_POLYGON);
-    loopi(4) glVertex3i(v[i][X(d)], v[i][Z(d)], v[i][Y(d)]);
+
+    glVertex3i(m.x, m.z, m.y);
+    glVertex3i(n.x, n.z, n.y);
+    glVertex3i(o.x, o.z, o.y);
+    glVertex3i(p.x, p.z, p.y);
+
     glEnd();
 };
 
@@ -102,8 +105,10 @@ bool noedit()
 cube &blockcube(int x, int y, int z, block3 &b, int rgrid) // looks up a world cube, based on coordinates mapped by the block
 {
     int d = dimension(b.orient);
-    int s[3] = { dimcoord(b.orient)*(b.s[d]-1)*b.grid, y*b.grid, x*b.grid };
-    return neighbourcube(b.o.x+s[X(d)], b.o.y+s[Y(d)], b.o.z+s[Z(d)], -z*b.grid, rgrid, b.orient);
+
+    ivec s(d, x*b.grid, y*b.grid, dimcoord(b.orient)*(b.s[d]-1)*b.grid);
+
+    return neighbourcube(b.o.x+s.x, b.o.y+s.y, b.o.z+s.z, -z*b.grid, rgrid, b.orient);
 };
 
 #define loopxy(b)        loop(y,(b).s[C(dimension((b).orient))]) loop(x,(b).s[R(dimension((b).orient))])
@@ -262,7 +267,6 @@ void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
     loopi(8) if(m&(1<<i))
     {
         ivec o(i, cx, cy, cz, size);
-        freeclipplanes(c[i]);
         if(c[i].va)             // removes va s so that octarender will recreate
         {
             destroyva(c[i].va);
@@ -293,7 +297,7 @@ void changed()
         b.o[i] += 1;
         b.s[i] -= 2;
     };
-    
+
     inbetweenframes = false;
     octarender();
     inbetweenframes = true;
@@ -419,6 +423,15 @@ COMMAND(paste, ARG_NONE);
 COMMANDN(undo, editundo, ARG_NONE);
 
 ///////////// main cube edit ////////////////
+
+void getcubevector(cube &c, int d, int x, int y, int z, ivec &p)
+{
+    ivec v(d, x, y, z);
+
+    loopi(3)
+        p[i] = edgeget(cubeedge(c, i, v[R(i)], v[C(i)]), v[D(i)]);
+};
+
 int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); };
 
 void pushedge(uchar &edge, int dir, int dc)
@@ -427,6 +440,22 @@ void pushedge(uchar &edge, int dir, int dc)
     edge = edgeset(edge, dc, ne);
     int oe = edgeget(edge, 1-dc);
     if((dir<0 && dc && oe>ne) || (dir>0 && dc==0 && oe<ne)) edge = edgeset(edge, 1-dc, ne);
+};
+
+void linkedpush(cube &c, int d, int x, int y, int dc, int dir)
+{
+    if(vectorformat==0)
+        return pushedge(cubeedge(c, d, x, y), dir, dc);
+
+    ivec v, p;
+    getcubevector(c, d, x, y, dc, v);
+
+    loopi(2) loopj(2)
+    {
+        getcubevector(c, d, i, j, dc, p);
+        if(v==p)
+            pushedge(cubeedge(c, d, i, j), dir, dc);
+    };
 };
 
 void editheight(int dir, int mode)
@@ -446,20 +475,21 @@ void editheight(int dir, int mode)
     loopselxyz(
         if(c.children) { solidfaces(c); discardchildren(c); };
 
+        uint bak = c.faces[d];
+
         if(mode==1)
         {
-            loopj(4) pushedge(c.edges[edgeindex(1-x, 1-y, d)], seldir, dc);
-            loopj(2) pushedge(c.edges[edgeindex(x, 1-y, d)], seldir, dc);
-            loopj(2) pushedge(c.edges[edgeindex(1-x, y, d)], seldir, dc);
-            pushedge(c.edges[edgeindex(x, y, d)], seldir, dc);
+            loopj(4) linkedpush(c, d, 1-x, 1-y, dc, seldir);
+            loopj(2) linkedpush(c, d, x, 1-y, dc, seldir);
+            loopj(2) linkedpush(c, d, 1-x, y, dc, seldir);
+            linkedpush(c, d, x, y, dc, seldir);
         }
         else
-        {
-            uchar &e = c.edges[edgeindex(1-x, 1-y, d)];
-            pushedge(e, seldir, dc);
-        };
+            linkedpush(c, d, 1-x, 1-y, dc, seldir);
 
         optiface((uchar *)&c.faces[d], c);
+        if(!isvalidcube(c, lu.x, lu.y, lu.z, lusize))
+            c.faces[d] = bak;
     );
     sel = t;
 };
@@ -473,22 +503,29 @@ void editface(int dir, int mode)
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
+
     if (mode==1)
     {
         int h = sel.o[d]+dc*sel.grid;
         if((dir>0 == dc && h<=0) || (dir<0 == dc && h>=hdr.worldsize)) return;
         if(dir<0) sel.o[d] += sel.grid * seldir;
     };
+
     if(dc) sel.o[d] += sel.us(d)-sel.grid;
     sel.s[d] = 1;
+
     loopselxyz(
         if(c.children) solidfaces(c);
         discardchildren(c);
-        if (mode==1) { if (dir<0) { solidfaces(c); } else emptyfaces(c); }  // fill command
+        if (mode==1)
+            { if (dir<0) { solidfaces(c); } else emptyfaces(c); }  // fill command
         else
         {
+            uint bak = c.faces[d];
             uchar *p = (uchar *)&c.faces[d];
-            if(mode==2) pushedge(p[corner], seldir, dc);                    // coner command
+
+            if(mode==2)
+                linkedpush(c, d, corner&1, corner>>1, dc, seldir); // coner command
             else
             {
                 loop(mx,2) loop(my,2)                                       // pull/push edges command
@@ -497,14 +534,19 @@ void editface(int dir, int mode)
                     if(y==0 && my==0 && selcy) continue;
                     if(x==sel.s[R(d)]-1 && mx==1 && (selcx+selcxs)&1) continue;
                     if(y==sel.s[C(d)]-1 && my==1 && (selcy+selcys)&1) continue;
+                    if(vectorformat==1 && (p[mx+my*2] != ((uchar *)&bak)[mx+my*2])) continue;
 
-                    pushedge(p[mx+my*2], seldir, dc);
+                    linkedpush(c, d, mx, my, dc, seldir);
                 };
             };
+
             optiface(p, c);
+            if(!isvalidcube(c, lu.x, lu.y, lu.z, lusize))
+                c.faces[d] = bak;
         };
     );
-    if (mode==1 && dir>0) sel.o[d] += sel.grid * seldir;
+    if (mode==1 && dir>0)
+        sel.o[d] += sel.grid * seldir;
 };
 
 COMMAND(editface, ARG_2INT);

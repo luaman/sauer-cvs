@@ -60,10 +60,37 @@ void optiface(uchar *p, cube &c)
     emptyfaces(c);
 };
 
-bool validcube(cube &c)
+void printcube()
 {
-    loopj(12) if(edgeget(c.edges[j], 1)>8 || edgeget(c.edges[j], 1)<edgeget(c.edges[j], 0)) return false;
-    loopj(3) optiface((uchar *)&c.faces[j], c);
+    cube &c = lookupcube(lu.x, lu.y, lu.z, 0); // assume this is cube being pointed at
+    conoutf("= %p =", &c);
+    conoutf(" x  %.8x",c.faces[2]);
+    conoutf(" y  %.8x",c.faces[1]);
+    conoutf(" z  %.8x",c.faces[0]);
+};
+
+COMMAND(printcube, ARG_NONE);
+
+bool isvalidcube(cube &c, int x, int y, int z, int size)
+{
+    if(vectorformat==0) return true;
+
+    freeclipplanes(c);
+    setcubeclip(c, x, y, z, size);
+
+    loopi(8) // test that cube is convex
+    {
+        vec v;
+        calcvert(c, x, y, z, size, v, i);
+
+        if(!pointincube(c, v))
+        {
+            freeclipplanes(c);
+            return false;
+        };
+    };
+
+    freeclipplanes(c);
     return true;
 };
 
@@ -80,7 +107,14 @@ void validatec(cube *c, int size)
             }
             else validatec(c[i].children, size>>1);
         }
-        else if(!validcube(c[i])) emptyfaces(c[i]);
+        else
+        {
+            loopj(3) optiface((uchar *)&(c[i].faces[j]), c[i]);
+            loopj(12)
+                if(edgeget(c[i].edges[j], 1)>8 ||
+                   edgeget(c[i].edges[j], 1)<edgeget(c[i].edges[j], 0))
+                    emptyfaces(c[i]);
+        };
     };
 };
 
@@ -133,3 +167,4 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     };
     return lookupcube(x, y, z, rsize);
 };
+

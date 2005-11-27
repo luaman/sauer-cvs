@@ -62,24 +62,24 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
-bool vecincube(const cube &c, const vec &v)
+bool pointincube(const cube &c, const vec &v)
 {
     vec &o = c.clip->o;
     vec &r = c.clip->r;
     if(v.x > o.x+r.x || v.x < o.x-r.x ||
        v.y > o.y+r.y || v.y < o.y-r.y ||
        v.z > o.z+r.z || v.z < o.z-r.z) return false;
-    loopi(c.clip->size) if(c.clip->p[i].dist(v)>0) return false;
+    loopi(c.clip->size) if(c.clip->p[i].dist(v)>1e-3f) return false;
     return true;
 };
 
 bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, float &dist)
 {
-    if(vecincube(c, o)) { dest = o; return true; };
+    if(pointincube(c, o)) { dest = o; return true; };
 
     loopi(c.clip->size)
     {
-        float a = ray.dot(c.clip->p[i]);
+        float a = ray.dot(c.clip->p[i]); // FIXME: refactor into lineplaneintersect()
         if(a>=0) continue;
         float f = -c.clip->p[i].dist(o)/a;
         if(f + dist < 0) continue;
@@ -87,7 +87,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, fl
         vec d(o);
         pushvec(d, ray, f+0.1f);
 
-        if(vecincube(c, d))
+        if(pointincube(c, d))
         {
             dist += f+0.1;
             dest = d;
@@ -103,6 +103,7 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
     float dist = 0;
     vec v = o;
     if(ray==vec(0,0,0)) return dist;
+
     for(;;)
     {
         cube &c = lookupcube(int(v.x), int(v.y), int(v.z), 0);
@@ -115,7 +116,11 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
 
         if(!(last==NULL && size>0)) // skip first cube if size set
         {
-            if((clipmat && isclipped(c.material)) || isentirelysolid(c) || (lusize==size&&!isempty(c)) || (radius>0 && dist>radius) || last==&c)
+            if((clipmat && isclipped(c.material)) ||
+                (lusize==size && !isempty(c)) ||
+                (radius>0 && dist>radius) ||
+                isentirelysolid(c) ||
+                last==&c)
             {
                 if(last==&c && radius>0) dist = radius;
                 return dist;
@@ -123,7 +128,10 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
             else if(!isempty(c))
             {
                 setcubeclip(c, lu.x, lu.y, lu.z, lusize);
-                if(raycubeintersect(c, v, ray, v, dist)) return dist;
+                if(raycubeintersect(c, v, ray, v, dist))
+                {
+                    return dist;
+                };
             };
         };
 
