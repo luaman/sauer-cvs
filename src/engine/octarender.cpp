@@ -127,13 +127,11 @@ void genedgespanvert(ivec &p, cube &c, vec &v)
 
 int vectorformat = 0;
 
-void vectorbasedrendering(int i)
+VARF(vectorbasedrendering, 0, 0, 1,
 {
-    vectorformat = i;
+    vectorformat = vectorbasedrendering;
     allchanged();
-};
-
-COMMAND(vectorbasedrendering, ARG_1INT);
+});
 
 void genvectorvert(ivec &p, cube &c, vec &v)
 {
@@ -218,6 +216,12 @@ const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
     { 1, 3, 6, 7 },
 };
 
+bool touchingface(cube &c, int orient)
+{
+    uint face = c.faces[dimension(orient)];
+    return dimcoord(orient) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0;
+};
+
 int faceconvexity(cube &c, int orient)
 {
    /* // fast approximation
@@ -231,6 +235,8 @@ int faceconvexity(cube &c, int orient)
     // slow perfect
     vec v[4];
     plane pl;
+
+    if(touchingface(c, orient)) return 0;
 
     loopi(4)
         genvectorvert(*(ivec *)cubecoords[fv[orient][i]], c, v[i]);
@@ -248,12 +254,6 @@ int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each fac
 {
     int n = (faceconvexity(c, orient)<0) ? 1 : 0; // offset tris verts from 012, 023 to 123, 130 if concave
     return fv[orient][(vert + n)&3];
-};
-
-bool touchingface(cube &c, int orient)
-{
-    uint face = c.faces[dimension(orient)];
-    return dimcoord(orient) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0;
 };
 
 uint faceedges(cube &c, int orient)
