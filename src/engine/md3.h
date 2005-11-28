@@ -573,6 +573,7 @@ struct md3 : model
             s_sprintfd(mdl_path)("%s.md3", path);
             s_sprintfd(cfg_path)("%s_default.cfg", path);
             mdls[i].load(mdl_path);
+            //FIXME DRIAN: load returns false but is not checked, then crashes further down
             exec(cfg_path);
         };
         mdls[MDL_LOWER].link(&mdls[MDL_UPPER], "tag_torso");
