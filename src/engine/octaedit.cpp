@@ -424,14 +424,6 @@ COMMANDN(undo, editundo, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 
-void getcubevector(cube &c, int d, int x, int y, int z, ivec &p)
-{
-    ivec v(d, x, y, z);
-
-    loopi(3)
-        p[i] = edgeget(cubeedge(c, i, v[R(i)], v[C(i)]), v[D(i)]);
-};
-
 int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); };
 
 void pushedge(uchar &edge, int dir, int dc)

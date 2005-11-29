@@ -43,7 +43,7 @@ z is the coordinate of the reference dimension (DEPTH)
 
 **/
 
-// DIM: Z=0 Y=1 X=2. Descriptions: DEPTH=0 COL=1 ROW=2
+// DIM: Z=0 Y=1 X=2.
 #define D(d) (d)
 #define R(d) ((d)==0?2:(d)-1)  // gets relative row dimension of given
 #define C(d) ((d)==2?0:(d)+1)  // gets relative column dimension of given

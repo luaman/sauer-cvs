@@ -69,6 +69,8 @@ extern void readmatrices();
 
 // octa
 extern cube *newcubes(uint face = F_EMPTY);
+extern void getcubevector(cube &c, int d, int x, int y, int z, ivec &p);
+extern void setcubevector(cube &c, int d, int x, int y, int z, ivec &p);
 extern int familysize(cube &c);
 extern void freeocta(cube *c);
 extern void discardchildren(cube &c);

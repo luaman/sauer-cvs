@@ -767,7 +767,57 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     return ccount;
 };
 
-void forcemip(cube &parent);
+int getmippedtexture(cube *c, int orient)
+{
+    int d = dimension(orient);
+    int dc = dimcoord(orient);
+    int tex[4] = {-1,-1,-1,-1};
+    loop(x,2) loop(y,2)
+    {
+        int n = octaindex(d, x, y, dc);
+        if(isempty(c[n]))
+            n = oppositeocta(d, n);
+        if(isempty(c[n]))
+            continue;
+
+        loopk(3)
+            if(tex[k] == c[n].texture[orient])
+                return tex[k];
+
+        if(c[n].texture[orient] > 0) // assume 0 is sky. favour non-sky tex
+            tex[x*2+y] = c[n].texture[orient];
+    };
+
+    loopk(4)
+        if(tex[k]>0) return tex[k];
+
+    return 0;
+};
+
+void forcemip(cube &c)
+{
+    cube *ch = c.children;
+
+    loopi(8) loopj(8)
+    {
+        int n = i^(j==3 ? 4 : (j==4 ? 3 : j));
+        if(!isempty(ch[n])) // breadth first search for cube near vert
+        {
+            ivec v, p(i, 0, 0, 0, 1);
+            getcubevector(ch[n], 0, p.x, p.y, p.z, v);
+
+            loopk(3) // adjust vert to parent size
+            {
+                if((n&(1<<k))>0) 
+                    v[2-k] += 8;
+                v[2-k] >>= 1;
+            };
+
+            setcubevector(c, 0, p.x, p.y, p.z, v);
+            break;
+        };
+    };
+};
 
 void genlod(cube &c, int size)
 {
@@ -783,13 +833,30 @@ void genlod(cube &c, int size)
     loopi(8) if(!isempty(c.children[i]))
     {
         forcemip(c);
-        //solidfaces(c);
-        //loopj(6) c.texture[j] = c.children[i].texture[j];
+        loopj(6) c.texture[j] = getmippedtexture(c.children, j);
         return;
     };
 
     emptyfaces(c);
 };
+
+void forceremiprecurse(cube &c)
+{
+    if(c.children == NULL) return;
+    loopi(8) forceremiprecurse(c.children[i]);
+    loopj(6) c.texture[j] = getmippedtexture(c.children, j);
+    forcemip(c);
+};
+
+void lodremipforce()
+{
+    cube &c = lookupcube(lu.x, lu.y, lu.z, lusize);
+    forceremiprecurse(c);
+    discardchildren(c);
+    allchanged();
+};
+
+COMMAND(lodremipforce, ARG_NONE);
 
 void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
 void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
@@ -1102,7 +1169,7 @@ void subdividecube(cube &c)
             if(f[j]==f[j^1] && f[j]==f[j^2])     // fix peeling
                 f[rvertedge(j, f[j])] = j&1 ? 0 : 0x88;
             else if(dc*8 != edgeget(f[j], !dc))  // fix cracking
-                edgeset(ch[oppositeocta(i,j>>2)].edges[j], dc, dc*8);
+                edgeset(ch[oppositeocta(j>>2,i)].edges[j], dc, dc*8);
         };
     };
     validatec(ch, hdr.worldsize);
@@ -1125,8 +1192,8 @@ int visibleorient(cube &c, int orient)
 
 int firstcube(cube *c, int x, int y, int z, int d)
 {
-    int j = octaindex(x, y, z, d);
-    int k = oppositeocta(j, d);
+    int j = octaindex(d, x, y, z);
+    int k = oppositeocta(d, j);
     if(isempty(c[j])) j = k;
     else if(!touchingface(c[k], (d<<1)+z) && !isempty(c[k])) return 100; // make sure no gap between cubes
     if(isempty(c[j])) return -1;
@@ -1222,6 +1289,7 @@ bool remip(cube &parent, int x, int y, int z, int size, bool full)
     return true;
 };
 
+/*
 VAR(lodremipboundbox, 0, 0, 1);
 
 void forcemip(cube &parent)
@@ -1248,7 +1316,7 @@ void forcemip(cube &parent)
         {
             int v = dc>0?0:16, q = firstcube(ch, xx, yy, dc, d);
             if(empty[xx][yy] = q<0) continue;
-            if(q>8) q = octaindex(xx, yy, dc, d);
+            if(q>8) q = octaindex(d, xx, yy, dc);
 
             uchar t = ch[q].texture[i];
             if(!settex) parent.texture[i] = t;
@@ -1271,16 +1339,7 @@ void forcemip(cube &parent)
     };
     parent.material = ch[0].material;
 };
-
-void lodremipforce()
-{
-    cube &c = lookupcube(lu.x, lu.y, lu.z, lusize);
-    forcemip(c);
-    discardchildren(c);
-    allchanged();
-};
-
-COMMAND(lodremipforce, ARG_NONE);
+*/
 
 void remipworld(int full)
 {
