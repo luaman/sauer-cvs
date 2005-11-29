@@ -13,10 +13,10 @@ eihrul:
 - add a spotlight (ask me)
 
 aard:
+- "master" mode for servers
 - thirdperson model flips into jump anim randomly at low fps
 - profile rpg_01
 - compression of octa info into indexes (e.g. textures into shorts?)
-- more progress bars
 - hudgun flickers when running on stairs?!?
 - skybox - roll
 - 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
@@ -24,8 +24,9 @@ aard:
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
 - make sauer inner directory
-- cube loader: import some sample cube maps
+- cube loader: import some sample cube maps | metl3
 - check connect/disconnect: possible to only half connect, or connect and have a ghost
+  sparr: can get situation where you can see opponent, but not shoot him nor see him on scoreboard (but he can see you normally)
 - all cfg stuff in menu
 - new mapmodels/trees in menu -> new ones from last cube
 - players more visible
