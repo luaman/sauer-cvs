@@ -265,6 +265,8 @@ uint faceedges(cube &c, int orient)
 
 bool faceedgegt(uint cfe, uint ofe)
 {
+	if(vectorformat==1) return true; // this test no longer valid
+
     loopi(4)
     {
         uchar o = ((uchar *)&ofe)[i];
