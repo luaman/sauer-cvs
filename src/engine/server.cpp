@@ -27,7 +27,7 @@ int getint(uchar *&p)
     else return c;
 };
 
-void sendstring(char *t, uchar *&p)
+void sendstring(const char *t, uchar *&p)
 {
     while(*t) putint(p, *t++);
     putint(p, 0);
@@ -92,7 +92,7 @@ void send2(bool rel, int cn, int a, int b)
 };
 
 
-void sendintstr(int i, char *msg)
+void sendintstr(int i, const char *msg)
 {
     ENetPacket *packet = enet_packet_create(NULL, _MAXDEFSTR+10, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;

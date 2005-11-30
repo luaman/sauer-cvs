@@ -76,7 +76,7 @@ struct fpsserver : igameserver
         return -1;
     };
 
-    void sendservmsg(char *s) { sendintstr(SV_SERVMSG, s); };
+    void sendservmsg(const char *s) { sendintstr(SV_SERVMSG, s); };
 
     void resetitems() { sents.setsize(0); };
 

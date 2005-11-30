@@ -61,7 +61,7 @@ struct igameserver
     virtual int serverinfoport() = 0;
     virtual int serverport() = 0;
     virtual char *getdefaultmaster() = 0;
-    virtual void sendservmsg(char *s) = 0;
+    virtual void sendservmsg(const char *s) = 0;
 };
 
 struct igame

@@ -99,13 +99,13 @@ extern mapmodelinfo &getmminfo(int i);
 
 // server
 extern void *getinfo(int i);
-extern void sendintstr(int i, char *msg);
+extern void sendintstr(int i, const char *msg);
 extern void send2(bool rel, int cn, int a, int b);
 extern int getnumclients();
 extern uint getclientip(int n);
 extern void putint(uchar *&p, int n);
 extern int getint(uchar *&p);
-extern void sendstring(char *t, uchar *&p);
+extern void sendstring(const char *t, uchar *&p);
 extern void disconnect_client(int n, char *reason);
 extern void sendvmap(int n, string mapname, int mapsize, uchar *mapdata);
 extern void recvmap(int n, int tag);
