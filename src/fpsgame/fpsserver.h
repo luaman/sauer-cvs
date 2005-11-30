@@ -11,6 +11,10 @@ struct fpsserver : igameserver
         string name;
         string mapvote;
         int modevote;
+        bool master;
+        bool spectator;
+        
+        clientinfo() : master(false) {};
     };
 
     bool notgotitems;        // true when map has changed and waiting for clients to send item
@@ -21,8 +25,14 @@ struct fpsserver : igameserver
     int interm, minremain, mapend;
     bool mapreload;
     int lastsec;
+    int mastermode;
+    
+    ivector bannedips;
+    int lastkick;
+    
+    enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0) {};
+    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), lastkick(0) {};
 
     void *newinfo() { return new clientinfo; };
 
@@ -59,6 +69,7 @@ struct fpsserver : igameserver
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_EDITENT, 10, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0,
+            SV_MASTERMODE, 2, SV_KICK, 2,
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -105,10 +116,10 @@ struct fpsserver : igameserver
             };
         };
         if(yes==1 && no==0) return true;  // single player
-        s_sprintfd(msg)("%s suggests %s on map %s (set map to vote)", ci->name, modestr(reqmode), map);
+        s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", ci->name, modestr(reqmode), map);
         sendservmsg(msg);
-        if(yes/(float)(yes+no) <= 0.5f) return false;
-        sendservmsg("vote passed");
+        if(yes/(float)(yes+no) <= 0.5f && !(ci->master && mastermode>=MM_VETO)) return false;
+        sendservmsg(mastermode>=MM_VETO ? "vote passed by master" : "vote passed by majority");
         resetvotes();
         return true;    
     };
@@ -185,6 +196,30 @@ struct fpsserver : igameserver
                 loopi(size-2) getint(p);
                 break;
             };
+            
+            case SV_MASTERMODE:
+            {
+                int mm = getint(p);
+                if(((clientinfo *)getinfo(cn))->master)
+                {
+                    mastermode = mm;
+                    s_sprintfd(s)("mastermode is now %d", mastermode);
+                    sendservmsg(s);
+                };
+                break;
+            };
+            
+            case SV_KICK:
+            {
+                int victim = getint(p);
+                if(((clientinfo *)getinfo(cn))->master)
+                {
+                    bannedips.add(getclientip(victim));
+                    disconnect_client(victim, "kicked/banned");
+                    lastkick = lastsec;
+                };
+                break;
+            };
 
             default:
             {
@@ -240,6 +275,8 @@ struct fpsserver : igameserver
         
         lastsec = seconds;
         
+        if(lastkick && lastkick+4*60*60<lastsec) bannedips.setsize(lastkick = 0);  // forget about cheaters after 4hrs
+        
         if((mode>1 || (mode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
         {
@@ -264,8 +301,30 @@ struct fpsserver : igameserver
         smapname[0] = 0;
         resetitems();
     };
+    
+    void findmaster()
+    {
+        loopi(getnumclients())
+        {
+            clientinfo *ci = (clientinfo *)getinfo(i);
+            if(!ci || ci->spectator) continue;
+            if(ci->master) return;
+            ci->master = true;
+            mastermode = MM_OPEN;   // reset after master leaves or server clears
+            return;
+        };
+    };
+    
+    char *clientconnect(int n, uint ip)
+    {
+        loopv(bannedips) if(bannedips[i]==ip) return "ip is banned";
+        if(mastermode>=MM_PRIVATE) return "server is in private mode";
+        if(mastermode>=MM_LOCKED) ((clientinfo *)getinfo(n))->spectator = true;
+        findmaster();
+        return NULL;
+    };
 
-    void clientdisconnect(int n) { send2(true, -1, SV_CDIS, n); };
+    void clientdisconnect(int n) { send2(true, -1, SV_CDIS, n); findmaster(); };
     char *servername() { return "cubeserver"; };
     int serverinfoport() { return CUBE_SERVINFO_PORT; };
     int serverport() { return CUBE_SERVER_PORT; };

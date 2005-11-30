@@ -57,8 +57,9 @@ void process(ENetPacket *packet, int sender);
 void multicast(ENetPacket *packet, int sender);
 void disconnect_client(int n, char *reason);
 
-void *getinfo(int i) { return clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
-int getnumclients() { return clients.length(); };
+void *getinfo(int i)    { return clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
+int getnumclients()     { return clients.length(); };
+uint getclientip(int n) { return clients[n]->peer->address.host; };
 
 void send(int n, ENetPacket *packet)
 {
@@ -105,10 +106,12 @@ void sendintstr(int i, char *msg)
 
 void disconnect_client(int n, char *reason)
 {
-    printf("disconnecting client (%s) [%s]\n", clients[n]->hostname, reason);
+    s_sprintfd(s)("client (%s) disconnected because: %s\n", clients[n]->hostname, reason);
+    puts(s);
     enet_peer_disconnect(clients[n]->peer);
     clients[n]->type = ST_EMPTY;
     sv->clientdisconnect(n);
+    sv->sendservmsg(s);
 };
 
 string copyname;
@@ -334,7 +337,9 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             char hn[1024];
             s_strcpy(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "localhost");
             printf("client connected (%s)\n", c.hostname);
-            send_welcome(c.num); 
+            char *reason;
+            if(!(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
+            else disconnect_client(c.num, reason);
             break;
         }
         case ENET_EVENT_TYPE_RECEIVE:

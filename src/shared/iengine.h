@@ -102,6 +102,7 @@ extern void *getinfo(int i);
 extern void sendintstr(int i, char *msg);
 extern void send2(bool rel, int cn, int a, int b);
 extern int getnumclients();
+extern uint getclientip(int n);
 extern void putint(uchar *&p, int n);
 extern int getint(uchar *&p);
 extern void sendstring(char *t, uchar *&p);

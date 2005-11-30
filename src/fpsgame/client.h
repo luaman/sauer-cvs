@@ -21,6 +21,8 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, name, 1, { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
         CCOMMAND(clientcom, team, 1, { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
         CCOMMAND(clientcom, map, 1, self->changemap(args[0]));
+        CCOMMAND(clientcom, kick, 1, self->kick(atoi(args[0])));
+        CCOMMAND(clientcom, mastermode, 1, self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
     };
 
     void mapstart() { senditemstoserver = true; };
@@ -55,6 +57,12 @@ struct clientcom : iclientcom
         bool allow = !connected || !remote || cl.gamemode==1;
         if(!allow) conoutf("editing in multiplayer requires coopedit mode (1)");
         return allow; 
+    };
+    
+    void kick(int n)
+    { 
+        fpsent *o;
+        for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++) if(o && n--==0) addmsg(1, 2, SV_KICK, i);
     };
 
     // collect c2s messages conveniently
@@ -389,10 +397,6 @@ struct clientcom : iclientcom
             };
             */
 
-            case SV_PING:
-                getint(p);
-                break;
-
             case SV_PONG: 
                 addmsg(0, 2, SV_CLIENTPING, player1->ping = (player1->ping*5+cl.lastmillis-getint(p))/6);
                 break;
@@ -412,6 +416,12 @@ struct clientcom : iclientcom
             case SV_SERVMSG:
                 sgetstr();
                 conoutf("%s", text);
+                break;
+                
+            case SV_PING:
+            case SV_MASTERMODE:
+            case SV_KICK:
+                getint(p);
                 break;
 
             default:
