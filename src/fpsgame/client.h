@@ -62,7 +62,7 @@ struct clientcom : iclientcom
     void kick(int n)
     { 
         fpsent *o;
-        for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++) if(o && n--==0) addmsg(1, 2, SV_KICK, i);
+        for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++) if(o && n--==0 && i) addmsg(1, 2, SV_KICK, i-1);
     };
 
     // collect c2s messages conveniently

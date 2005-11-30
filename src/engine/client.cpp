@@ -136,12 +136,6 @@ COMMANDN(connect, connects, ARG_1STR);
 COMMAND(lanconnect, ARG_NONE);
 COMMANDN(disconnect, trydisconnect, ARG_NONE);
 
-void server_err()
-{
-    conoutf("server network error, disconnecting...");
-    disconnect();
-};
-
 int lastupdate = 0;
 
 bool netmapstart() { return clienthost!=NULL; };
@@ -215,8 +209,8 @@ void gets2c()           // get updates from the server
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT:
-            if(disconnecting) disconnect();
-            else server_err();
+            if(!disconnecting) conoutf("server network error, disconnecting...");
+            disconnect();
             return;
     }
 };
