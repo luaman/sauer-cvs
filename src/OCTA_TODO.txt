@@ -9,7 +9,6 @@ eihrul:
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - physics bugs (goes back to jump split second after landing, and whatever else) | more noticable at gamespeed 1000
-- an RGB that is stored as part of the map, and that is set as the color value for all water
 - add a spotlight (ask me)
 
 aard:
