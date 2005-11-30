@@ -130,9 +130,9 @@ struct weaponstate
             newsphere(v, RL_RADIUS, 0);
             ///dodynlight(vold, v, 0, 0, p->owner);
             if(!p->local) return;
-            fpsent *o;
-            for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++)
+            loopi(cl.numdynents())
             {
+                fpsent *o = (fpsent *)cl.iterdynents(i);
                 if(!o || o==notthis) continue;
                 radialeffect(o, v, i-1, qdam, p->owner);
             };
@@ -165,9 +165,9 @@ struct weaponstate
             v.add(p->o);
             if(p->local)
             {
-                fpsent *o;
-                for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++)
+                loopi(cl.numdynents())
                 {
+                    fpsent *o = (fpsent *)cl.iterdynents(i);
                     if(!o) continue;
                     if(!o->o.reject(v, 10.0f) && p->owner!=o) projdamage(o, p, v, i-1, qdam);
                 };
@@ -291,9 +291,9 @@ struct weaponstate
 
         if(guns[d->gunselect].projspeed) return;
         
-        fpsent *o;
-        for(int i = 0; o = (fpsent *)cl.iterdynents(i); i++)
+        loopi(cl.numdynents())
         {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
             if(!o || o==d) continue;
             raydamage(o, from, to, d, i-1);
         };

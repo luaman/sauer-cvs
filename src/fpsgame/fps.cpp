@@ -394,6 +394,8 @@ struct fpsclient : igameclient
 
     void playsoundc(int n) { cc.addmsg(0, 2, SV_SOUND, n); playsound(n); };
 
+    int numdynents() { return 1+players.length()+ms.monsters.length(); };
+
     dynent *iterdynents(int i)
     {
         if(!i) return player1;

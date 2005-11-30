@@ -267,9 +267,9 @@ bool collide(dynent *d)
     if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
-    dynent *o;
-    for(int i = 0; o = cl->iterdynents(i); i++)
+    loopi(cl->numdynents())
     {
+        dynent *o = cl->iterdynents(i);
         if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d!=camera1) && !plcollide(d, o)) return false;
     };
 

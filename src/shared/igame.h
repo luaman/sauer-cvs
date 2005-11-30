@@ -42,6 +42,7 @@ struct igameclient
     virtual void doattack(bool on) = 0;
     virtual char *gamepointat(vec &pos) = 0;
     virtual dynent *iterdynents(int i) = 0;
+    virtual int numdynents() = 0;
     virtual void renderscores() = 0;
     virtual void rendergame() = 0;
 }; 
