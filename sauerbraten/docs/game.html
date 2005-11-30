@@ -4,7 +4,7 @@ screenres W H BPP
 grabinput
 -->
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 	<head>
 		<title>Sauerbraten Command Reference</title>
@@ -113,7 +113,7 @@ Official game storyline: "You kill stuff. The End."  <b>All of the following is 
 <br><br>
 There are initially 5 weapons:
 <br><br>
-<table BORDER cellSpacing="0" cellPadding="4">
+<table BORDER=1 cellSpacing="0" cellPadding="4">
     <tr>
         <td>num</td>
         <td>name</td>
@@ -198,19 +198,19 @@ given are for 1-2, 3-4, and 5+ player games respectively.
 <div>Multiplayer</div>
 Quick start to multiplayer gaming with sauerbraten:
 <ul>
-<li>Open up autoexec.cfg with an editor and make sure you have your name set to something unique.</i>
-<li>Start sauerbraten</i>
-<li>go to the multiplayer menu and select "update from master server", this will get you the lastest server list (you only need to do this once every day of multiplayer gaming or so).</i>
-<li>select the server browser in the multiplayer menu. see how all servers get pinged automatically and information on player/map/game mode are displayed.</i>
-<li>select a server with a good ping (near the top of the list, below 200 is very playable, above may give noticable delays on gameplay events but is still playable).</i>
-<li>run, shoot and enjoy!</i>
-<li>you may want to get familiar with the various game modes sauerbraten has, and how to vote for other maps and modes (again, easily done using the multiplayer menu) Be cooperative with the other players on the server, and vote. Remember, press T to talk to others.</i>
+<li>Open up autoexec.cfg with an editor and make sure you have your name set to something unique.
+<li>Start sauerbraten
+<li>go to the multiplayer menu and select "update from master server", this will get you the lastest server list (you only need to do this once every day of multiplayer gaming or so).
+<li>select the server browser in the multiplayer menu. see how all servers get pinged automatically and information on player/map/game mode are displayed.
+<li>select a server with a good ping (near the top of the list, below 200 is very playable, above may give noticable delays on gameplay events but is still playable).
+<li>run, shoot and enjoy!
+<li>you may want to get familiar with the various game modes sauerbraten has, and how to vote for other maps and modes (again, easily done using the multiplayer menu) Be cooperative with the other players on the server, and vote. Remember, press T to talk to others.
 </ul>
 Setting up a LAN game:
 <ul>
-<li>One of the computers on the LAN has to run server.bat. It really doesn't matter which.</i>
-<li>The simplest way for all players to connect is for them to type "lanconnect" (if there is only one server on the LAN) or "connect servername" (if there are multiple servers) in the sauerbraten console (press ` to get in the console), where servername is the network name or ip address of the machine running server.bat. if all went well you should now be in the game together, as above.</i>
-<li>If your LAN is connected to the internet, by default your server will register with the masterserver, and players could thus follow the procedure above to join the game: your server will show up in the list, and may thus be joined by people over the internet! If you want to avoid your server to contact the master server, you can start it with -mblah or something.</i>
+<li>One of the computers on the LAN has to run server.bat. It really doesn't matter which.
+<li>The simplest way for all players to connect is for them to type "lanconnect" (if there is only one server on the LAN) or "connect servername" (if there are multiple servers) in the sauerbraten console (press ` to get in the console), where servername is the network name or ip address of the machine running server.bat. if all went well you should now be in the game together, as above.
+<li>If your LAN is connected to the internet, by default your server will register with the masterserver, and players could thus follow the procedure above to join the game: your server will show up in the list, and may thus be joined by people over the internet! If you want to avoid your server to contact the master server, you can start it with -mblah or something.
 </ul>
 
 
@@ -224,7 +224,7 @@ The mode numbers for these are -2 and -1 respectively, but can most conveniently
 <br><br>
 There are currently 5 monsters, with the following properties (sorted roughly in order of "threat" they pose:
 <br><br>
-<table border cellspacing="0" cellpadding="4">
+<table border=1 cellspacing="0" cellpadding="4">
 <tr>
     <td>gun used</td>
     <td>model</td>
@@ -371,6 +371,49 @@ It is impossible to completely hide lag however, and these are some of the effec
     </ul>
     <li>if a player is severely lagged (or you are) he temporarily becomes a "ghost" that cannot be hit (if &gt;1sec packet jump).</li>
 </ul>
+
+<div>Cheating & Multiplayer</div>
+
+Besides the abovementioned client-side gameplay, Sauerbraten is also open source, which makes it too easy to cheat with. Anyone can modify the source
+to add cheats, recompile, and join multiplayer games.
+
+There is no real trivial way to combat this:
+<ul>
+<li>Moving the gameplay entirely serverside makes things a lot more complicated, hurts smoothness of gameplay, and still doesn't really solve the cheating problem</li>
+<li>Sauerbraten's predecessor Cube had "official binaries" which differed from the Open Source version in a different network protocol. This helped combat cheating somewhat, but still not entirely.</li>
+<li>A social solution, "Trusted Communities" was proposed, that would give players an identity, and only allow you to play on trusted servers if you were trusted by other players. This system could work well but requires a lot of infrastructure and organization</li>
+</ul>
+
+Cube and Sauerbraten are small communities sofar, and the main issue is not necessarily to combat cheating (a lost battle to start with), but more to allow non-cheaters to have undisturbed games together.
+Hence Sauerbraten multiplayer has a very simple solution:
+
+There is no cheat protection at all. Nada.
+
+Servers operate in a so called "master mode" which allows people to easily and painlessly have games with people they know, without being disturbed by cheaters.
+The way it works is very simple: the first person to enter a server becomes the "master" of that server. The master has 2 commands at his disposal which other players have not:
+
+<pre>mastermode N</pre>
+Sets the server to master mode N. N can be (ranging from very open to very private):
+<ul>
+<li>0 (open): anyone can enter the server. This is the default mode. It is good for games with random people, if no cheaters appear to be around.</li>
+<li>1 (veto): as 0, but now the master can force map changes. This is good when playing with new players who may not understand how to vote for map changes.</li>
+<li>2 (locked): as 1, but anyone joining after this mode has been set will be forced to be spectator only. This mode is ideal for tournament play, or games with friends only.</li>
+<li>3 (private): as 2, but now noone can join the server anymore. Good for games with friends when cheaters are around, cheaters wont even connect, so wont have the chance to try and screw things up.</li>
+</ul> 
+
+<pre>kick N</pre>
+Kick's the Nth player on the score board off the server, and bans his ip for 4 hours. N is counted such that the top entry on the board (you) is 0, and the one below it 1, etc. You can't kick yourself.
+This command is useful when you started playing an open game, and a cheater joins. Additionally you can move to a higher mastermode for additional protection.
+Don't use this command for anything other than cheaters or people otherwise obstructing games.
+<p>
+The important thing to see about these commands is that they don't prevent cheating, nor are necessarily a fair way of adminning a server. They just make it real easy to have fun games with friends without being disturbed by cheaters or people you don't want to play with.
+<p>
+In the event that a cheater is the master, or someone is being abusive with his masters powers, you can simply leave the server and start a game somewhere else. There are usually more servers than players anyway, and more players than cheaters.
+<p>
+If the current master leaves the server, the next player in line will automatically be made the master. Mastermode will be reset to 0 when this happens (also when the server clears). At any time, all
+players will see who is the master in a game because his name is marked in a different colour on the scoreboard.
+ 
+
 
 </body>
 </html>

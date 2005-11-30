@@ -35,7 +35,7 @@ struct scoreboard
             if(o && !o->monsterstate)
             {
                 s_sprintfd(lag)("%d", o->plag);
-                s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s", o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, o->name);
+                s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, cl.cc.currentmaster==i-1 || cl.cc.currentmaster==getclientnum() ? "\f" : "", o->name);
                 menumanual(0, scorelines.length()-1, scorelines.last().s); 
             }
         };

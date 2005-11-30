@@ -12,10 +12,12 @@ struct clientcom : iclientcom
     int lastping;
     
     bool connected, remote;
+    
+    int currentmaster;
 
     fpsent *player1;
 
-    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), player1(_cl.player1)
+    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), player1(_cl.player1), currentmaster(0)
     {
         CCOMMAND(clientcom, say, IARG_VAR, self->toserver(args[0]));
         CCOMMAND(clientcom, name, 1, { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
@@ -49,6 +51,7 @@ struct clientcom : iclientcom
         connected = false;
         c2sinit = false;
         player1->lifesequence = 0;
+        currentmaster = 0;
         loopv(cl.players) DELETEP(cl.players[i]);
     };
 
@@ -419,6 +422,10 @@ struct clientcom : iclientcom
             case SV_SERVMSG:
                 sgetstr();
                 conoutf("%s", text);
+                break;
+                
+            case SV_CURRENTMASTER:
+                currentmaster = getint(p);
                 break;
                 
             case SV_PING:

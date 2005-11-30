@@ -26,13 +26,14 @@ struct fpsserver : igameserver
     bool mapreload;
     int lastsec;
     int mastermode;
+    int masterupdate;
     
     ivector bannedips;
     int lastkick;
     
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), lastkick(0) {};
+    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), lastkick(0), masterupdate(-1) {};
 
     void *newinfo() { return new clientinfo; };
 
@@ -69,7 +70,7 @@ struct fpsserver : igameserver
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_EDITENT, 10, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0,
-            SV_MASTERMODE, 2, SV_KICK, 2,
+            SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2,
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -277,6 +278,8 @@ struct fpsserver : igameserver
         
         if(lastkick && lastkick+4*60*60<lastsec) bannedips.setsize(lastkick = 0);  // forget about cheaters after 4hrs
         
+        if(masterupdate>0) { send2(true, -1, SV_CURRENTMASTER, masterupdate); masterupdate = -1; };
+        
         if((mode>1 || (mode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
         {
@@ -308,6 +311,7 @@ struct fpsserver : igameserver
         {
             clientinfo *ci = (clientinfo *)getinfo(i);
             if(!ci || ci->spectator) continue;
+            masterupdate = i;
             if(ci->master) return;
             ci->master = true;
             mastermode = MM_OPEN;   // reset after master leaves or server clears
@@ -324,7 +328,7 @@ struct fpsserver : igameserver
         return NULL;
     };
 
-    void clientdisconnect(int n) { send2(true, -1, SV_CDIS, n); findmaster(); };
+    void clientdisconnect(int n) { send2(true, -1, SV_CDIS, n); findmaster();  };
     char *servername() { return "cubeserver"; };
     int serverinfoport() { return CUBE_SERVINFO_PORT; };
     int serverport() { return CUBE_SERVER_PORT; };
