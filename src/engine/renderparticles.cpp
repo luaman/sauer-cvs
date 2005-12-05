@@ -3,8 +3,19 @@
 #include "pch.h"
 #include "engine.h"
 
-struct particle { vec o, d; int fade, type; int millis; particle *next; };
-particle *parlist = NULL, *parempty = NULL;
+#define MAXTEXT 4
+#define MAXPARTYPES 9
+
+struct particle
+{
+    vec o, d;
+    int fade, type;
+    int millis;
+    particle *next;
+    char text[MAXTEXT];
+};
+
+particle *parlist[MAXPARTYPES], *parempty = NULL;
 
 VARP(particlesize, 20, 100, 500);
 
@@ -17,9 +28,10 @@ void particleinit()
     parttexs[2] = textureload(newstring("data/martin/smoke.png"));
     parttexs[3] = textureload(newstring("data/martin/ball2.png"));
     parttexs[4] = textureload(newstring("data/martin/ball3.png"));
+    loopi(MAXPARTYPES) parlist[i] = NULL;
 };
 
-void newparticle(vec &o, vec &d, int fade, int type)
+particle *newparticle(vec &o, vec &d, int fade, int type)
 {
     if(!parempty)
     {
@@ -37,8 +49,9 @@ void newparticle(vec &o, vec &d, int fade, int type)
     p->fade = fade;
     p->type = type;
     p->millis = lastmillis;
-    p->next = parlist;
-    parlist = p;
+    p->next = parlist[type];
+    parlist[type] = p;
+    return p;
 };
 
 vec right, up;
@@ -51,7 +64,7 @@ void render_particles(int time)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
     
-    static struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
+    static struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
         { 0.7f, 0.6f, 0.3f, 2,  0, 0.06f }, // yellow: sparks 
         { 0.5f, 0.5f, 0.5f, 20, 2, 0.15f }, // grey:   small smoke
@@ -61,51 +74,66 @@ void render_particles(int time)
         { 0.5f, 0.5f, 0.5f, 20, 2, 0.6f  }, // grey:   big smoke   
         { 1.0f, 1.0f, 1.0f, 20, 3, 1.2f  }, // blue:   fireball2
         { 1.0f, 1.0f, 1.0f, 20, 4, 1.2f  }, // green:  fireball3
+        { 1.0f, 1.0f, 1.0f, -8, -1, 1.2f  }, // TEXT
     };
-    
-    parttype *ct = NULL;
-    
-    for(particle *p, **pp = &parlist; p = *pp;)
-    {       
-        parttype *pt = &parttypes[p->type];
+        
+    loopi(MAXPARTYPES) if(parlist[i])
+    {
+        parttype *pt = &parttypes[i];
+        float sz = pt->sz*4*particlesize/100.0f; 
 
-        if(ct!=pt)
+        if(pt->tex>=0)
         {
-            if(ct) glEnd();
-            ct = pt;
             glBindTexture(GL_TEXTURE_2D, parttexs[pt->tex]->gl);
             glBegin(GL_QUADS);
             glColor3d(pt->r, pt->g, pt->b);
         };
         
-        float sz = pt->sz*4*particlesize/100.0f; 
-        // perf varray?
-        glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
-        glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-        glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
-        glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
-        
-        xtraverts += 4;
+        for(particle *p, **pp = &parlist[i]; p = *pp;)
+        {   
+            if(pt->tex>=0)
+            {    
+                // perf varray?
+                glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
+                glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
+                glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
+                glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+                xtraverts += 4;
+            }
+            else
+            {
+                //glColor3ub(255, 40, 40);
+                glPushMatrix();
+                glTranslatef(p->o.x, p->o.z, p->o.y);
+                glRotatef(camera1->yaw-180, 0, -1, 0);
+                glRotatef(-camera1->pitch, 1, 0, 0);
+                float scale = 0.05f;
+                glScalef(-scale, -scale, -scale);
+                glTranslatef(-50, -50, 50);
+                draw_text(p->text, 0, 0, 255, 80, 40, p->fade*255/2000);
+                glPopMatrix();
+            };
 
-        if((p->fade -= time)<0)
-        {
-            *pp = p->next;
-            p->next = parempty;
-            parempty = p;
-        }
-        else
-        {
-            p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*2500);
-            vec a = p->d;
-            a.mul((float)time);
-            a.div(5000.0f);
-            p->o.add(a);
-            pp = &p->next;
+            if((p->fade -= time)<0)
+            {
+                *pp = p->next;
+                p->next = parempty;
+                parempty = p;
+            }
+            else
+            {
+                p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*2500);
+                vec a = p->d;
+                a.mul((float)time);
+                a.div(5000.0f);
+                p->o.add(a);
+                pp = &p->next;
+            };
         };
+        
+        if(pt->tex>=0) glEnd();
     };
-    
-    if(ct) glEnd();
-    
+        
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
 };
@@ -145,3 +173,8 @@ void particle_trail(int type, int fade, vec &s, vec &e)
     };
 };
 
+void particle_text(vec &s, char *t)
+{
+    particle *p = newparticle(s, vec(0, 0, 1), 2000, 8);
+    s_strncpy(p->text, t, MAXTEXT);
+};

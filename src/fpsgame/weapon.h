@@ -99,6 +99,8 @@ struct weaponstate
         else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, at);
         else { cl.cc.addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); playsound(S_PAIN1+rnd(5), &d->o); };
         particle_splash(3, damage, 1000, d->o);
+        s_sprintfd(ds)("%d", damage);
+        particle_text(d->o, ds);
     };
 
     static const int RL_RADIUS = 24;
@@ -265,6 +267,8 @@ struct weaponstate
         vec from = d->o;
         vec to = targ;
         from.z -= 0.8f;    // below eye
+
+//particle_text(to, "HIT");
 
         vec unitv;
         float dist = to.dist(from, unitv);

@@ -57,7 +57,7 @@ extern void keyrepeat(bool on);
 extern void registergame(char *name, igame *ig);
 
 // rendertext
-extern void draw_text(const char *str, int left, int top);
+extern void draw_text(const char *str, int left, int top, int r = 255, int g = 255, int b = 255, int a = 255);
 extern void draw_textf(const char *fstr, int left, int top, ...);
 extern int text_width(char *str);
 extern void draw_envbox(int t, int fogdist);
@@ -75,6 +75,7 @@ extern void setorient(const vec &r, const vec &u);
 extern void particle_splash(int type, int num, int fade, vec &p);
 extern void particle_trail(int type, int fade, vec &from, vec &to);
 extern void render_particles(int time);
+extern void particle_text(vec &s, char *t);
 
 // worldio
 extern void load_world(char *mname);
