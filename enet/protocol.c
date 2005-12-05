@@ -1215,6 +1215,7 @@ enet_host_flush (ENetHost * host)
 
     @param host    host to service
     @param event   an event structure where event details will be placed if one occurs
+                   if event == NULL then no events will be delivered
     @param timeout number of milliseconds that ENet should wait for events
     @retval > 0 if an event occurred within the specified time limit
     @retval 0 if no event occurred
