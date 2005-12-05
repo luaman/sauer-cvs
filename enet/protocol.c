@@ -533,10 +533,15 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
 
        host -> recalculateBandwidthLimits = 1;
 
-       peer -> state = ENET_PEER_STATE_CONNECTED;
+       if (event != NULL)
+       {
+          commandNumber = enet_protocol_remove_sent_reliable_command (peer, receivedReliableSequenceNumber, command -> header.channelID);
 
-       event -> type = ENET_EVENT_TYPE_CONNECT;
-       event -> peer = peer;
+          peer -> state = ENET_PEER_STATE_CONNECTED;
+
+          event -> type = ENET_EVENT_TYPE_CONNECT;
+          event -> peer = peer;
+       }
 
        return 1;
 
@@ -546,14 +551,20 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
 
        host -> recalculateBandwidthLimits = 1;
 
-       event -> type = ENET_EVENT_TYPE_DISCONNECT;
-       event -> peer = peer;
-
-       enet_peer_reset (peer);
+       if (event == NULL)
+         peer -> state = ENET_PEER_STATE_ZOMBIE;
+       else
+       {
+          event -> type = ENET_EVENT_TYPE_DISCONNECT;
+          event -> peer = peer;
+        
+          enet_peer_reset (peer);
+       }
 
        return 1;
 
     default:
+       commandNumber = enet_protocol_remove_sent_reliable_command (peer, receivedReliableSequenceNumber, command -> header.channelID);
        break;
     }
    
@@ -566,7 +577,8 @@ enet_protocol_handle_verify_connect (ENetHost * host, ENetEvent * event, ENetPee
     enet_uint16 mtu;
     enet_uint32 windowSize;
 
-    if (command -> header.commandLength < sizeof (ENetProtocolVerifyConnect) ||
+    if (event == NULL ||
+        command -> header.commandLength < sizeof (ENetProtocolVerifyConnect) ||
         peer -> state != ENET_PEER_STATE_CONNECTING)
       return;
 
@@ -765,7 +777,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
        }
     }
 
-    if (event -> type != ENET_EVENT_TYPE_NONE)
+    if (event != NULL && event -> type != ENET_EVENT_TYPE_NONE)
       return 1;
 
     return 0;
@@ -962,10 +974,15 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
                (outgoingCommand -> roundTripTimeout >= outgoingCommand -> roundTripTimeoutLimit &&
                  ENET_TIME_DIFFERENCE(timeCurrent, peer -> earliestTimeout) >= ENET_PEER_TIMEOUT_MINIMUM)))
        {
-          event -> type = ENET_EVENT_TYPE_DISCONNECT;
-          event -> peer = peer;
-
-          enet_peer_reset (peer);
+          if (event == NULL)
+            peer -> state = ENET_PEER_STATE_ZOMBIE;
+          else
+          {
+             event -> type = ENET_EVENT_TYPE_DISCONNECT;
+             event -> peer = peer;
+          
+             enet_peer_reset (peer);
+          }
 
           return 1;
        }
@@ -1210,24 +1227,27 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 {
     enet_uint32 waitCondition;
 
-    event -> type = ENET_EVENT_TYPE_NONE;
-    event -> peer = NULL;
-    event -> packet = NULL;
-
-    switch (enet_protocol_dispatch_incoming_commands (host, event))
+    if (event != NULL)
     {
-    case 1:
-       return 1;
+        event -> type = ENET_EVENT_TYPE_NONE;
+        event -> peer = NULL;
+        event -> packet = NULL;
 
-    case -1:
-       perror ("Error dispatching incoming packets");
+        switch (enet_protocol_dispatch_incoming_commands (host, event))
+        {
+        case 1:
+            return 1;
 
-       return -1;
+        case -1:
+            perror ("Error dispatching incoming packets");
 
-    default:
-       break;
+            return -1;
+
+        default:
+            break;
+        }
     }
-   
+
     timeCurrent = enet_time_get ();
     
     timeout += timeCurrent;
@@ -1279,18 +1299,21 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
           break;
        }
 
-       switch (enet_protocol_dispatch_incoming_commands (host, event))
+       if (event != NULL)
        {
-       case 1:
-          return 1;
+          switch (enet_protocol_dispatch_incoming_commands (host, event))
+          {
+          case 1:
+             return 1;
 
-       case -1:
-          perror ("Error dispatching incoming packets");
+          case -1:
+             perror ("Error dispatching incoming packets");
 
-          return -1;
+             return -1;
 
-       default:
-          break;
+          default:
+             break;
+          }
        }
 
        timeCurrent = enet_time_get ();
