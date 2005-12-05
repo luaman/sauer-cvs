@@ -17,7 +17,7 @@ struct clientcom : iclientcom
 
     fpsent *player1;
 
-    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), player1(_cl.player1), currentmaster(0)
+    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), currentmaster(0), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, IARG_VAR, self->toserver(args[0]));
         CCOMMAND(clientcom, name, 1, { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });

@@ -33,7 +33,7 @@ struct fpsserver : igameserver
     
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), lastkick(0), masterupdate(-1) {};
+    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), lastkick(0) {};
 
     void *newinfo() { return new clientinfo; };
 
