@@ -31,7 +31,7 @@ void particleinit()
     loopi(MAXPARTYPES) parlist[i] = NULL;
 };
 
-particle *newparticle(vec &o, vec &d, int fade, int type)
+particle *newparticle(const vec &o, const vec &d, int fade, int type)
 {
     if(!parempty)
     {
