@@ -92,15 +92,20 @@ struct weaponstate
             return;
         };
     };
+    
+    void damageeffect(vec &p, int damage)
+    {
+        particle_splash(3, damage, 1000, p);
+        s_sprintfd(ds)("%d", damage);
+        particle_text(p, ds);
+    };
 
     void hit(int target, int damage, fpsent *d, fpsent *at)
     {
         if(d==player1) cl.selfdamage(damage, at==player1 ? -1 : -2, at);
         else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, at);
         else { cl.cc.addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); playsound(S_PAIN1+rnd(5), &d->o); };
-        particle_splash(3, damage, 1000, d->o);
-        s_sprintfd(ds)("%d", damage);
-        particle_text(d->o, ds);
+        damageeffect(d->o, damage);
     };
 
     static const int RL_RADIUS = 24;

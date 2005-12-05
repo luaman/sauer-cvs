@@ -314,8 +314,16 @@ struct clientcom : iclientcom
                 int target = getint(p);
                 int damage = getint(p);
                 int ls = getint(p);
-                if(target==clientnum) { if(ls==player1->lifesequence) cl.selfdamage(damage, cn, d); }
-                else playsound(S_PAIN1+rnd(5), &cl.getclient(target)->o);
+                if(target==clientnum)
+                {
+                    if(ls==player1->lifesequence) cl.selfdamage(damage, cn, d);
+                }
+                else
+                {
+                    vec &v = cl.getclient(target)->o;
+                    playsound(S_PAIN1+rnd(5), &v);
+                    cl.ws.damageeffect(v, damage);
+                };
                 break;
             };
 

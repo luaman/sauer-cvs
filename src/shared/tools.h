@@ -30,6 +30,7 @@ typedef unsigned int uint;
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 #define rnd(x) ((int)(randomMT()&0xFFFFFF)%(x))
+#define seedrnd(x) (seedMT(x))
 #define loop(v,m) for(int v = 0; v<(m); v++)
 #define loopi(m) loop(i,m)
 #define loopj(m) loop(j,m)
