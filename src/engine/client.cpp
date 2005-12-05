@@ -175,6 +175,8 @@ void localservertoclient(uchar *buf, int len)   // processes any updates from th
     cc->parsepacketclient(buf+len, buf, clientnum);
 };
 
+void clientkeepalive() { if(clienthost) enet_host_service(clienthost, NULL, 0); };
+
 void gets2c()           // get updates from the server
 {
     ENetEvent event;

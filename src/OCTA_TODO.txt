@@ -10,6 +10,7 @@ eihrul:
 - optimize overdraw in visibleface()
 - physics bugs (goes back to jump split second after landing, and whatever else) | more noticable at gamespeed 1000
 - add a spotlight (ask me)
+- find better solution for network timeout when long map load times
 
 aard:
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics

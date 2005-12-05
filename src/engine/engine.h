@@ -131,6 +131,7 @@ extern bool serveroption(char *opt);
 extern void localdisconnect();
 extern void localservertoclient(uchar *buf, int len);
 extern void connects(char *servername);
+extern void clientkeepalive();
 
 // command
 extern void writecfg();

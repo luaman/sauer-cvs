@@ -121,6 +121,8 @@ void bar(float bar, int o, float r, float g, float b)
 void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *text2)   // also used during loading
 {
     if(!inbetweenframes) return;
+
+    clientkeepalive();      // make sure our connection doesn't time out while loading maps etc.
     
     glDisable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);    
