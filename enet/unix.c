@@ -21,6 +21,10 @@
 #include <fcntl.h>
 #endif
 
+#ifdef __APPLE__
+#undef HAS_POLL
+#endif
+
 #ifdef HAS_POLL
 #include <sys/poll.h>
 #endif
