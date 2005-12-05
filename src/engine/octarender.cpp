@@ -935,9 +935,6 @@ void addvisibleva(vtxarray *va, vec &cv)
     vverts      += va->verts;
 };
 
-// convert yaw/pitch to a normalized vector
-#define yptovec(y, p) vec(sin(y)*cos(p), -cos(y)*cos(p), sin(p))
-
 void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
 {
     visibleva = NULL;
@@ -953,11 +950,11 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     float pitch = player->pitch * RAD;
     float pitchp = (player->pitch + vpyo) * RAD;
     float pitchm = (player->pitch - vpyo) * RAD;
-    vfcV[0] = yptovec(yaw,  pitch);  // back/far plane
-    vfcV[1] = yptovec(yawp, pitch);  // left plane
-    vfcV[2] = yptovec(yawm, pitch);  // right plane
-    vfcV[3] = yptovec(yaw,  pitchp); // top plane
-    vfcV[4] = yptovec(yaw,  pitchm); // bottom plane
+    vfcV[0] = vec(yaw,  pitch);  // back/far plane
+    vfcV[1] = vec(yawp, pitch);  // left plane
+    vfcV[2] = vec(yawm, pitch);  // right plane
+    vfcV[3] = vec(yaw,  pitchp); // top plane
+    vfcV[4] = vec(yaw,  pitchm); // bottom plane
     loopi(5) vfcD[i] = vfcV[i].dot(camera1->o);
     vfcDfog = getvar("fog");
 

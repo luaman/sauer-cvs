@@ -183,12 +183,14 @@ void localclienttoserver(ENetPacket *packet)
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
-client *addclient()
+client &addclient()
 {
-    loopv(clients) if(clients[i]->type==ST_EMPTY) return clients[i];
+    loopv(clients) if(clients[i]->type==ST_EMPTY) return *clients[i];
     client *c = new client;
+    c->num = clients.length();
     c->info = sv->newinfo();
-    return clients.add(c);
+    clients.add(c);
+    return *c;
 };
 
 int nonlocalclients = 0;
@@ -329,9 +331,8 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
     {
         case ENET_EVENT_TYPE_CONNECT:
         {
-            client &c = *addclient();
+            client &c = addclient();
             c.type = ST_TCPIP;
-            c.num = clients.length()-1;
             c.peer = event.peer;
             c.peer->data = &c;
             char hn[1024];
@@ -371,9 +372,8 @@ void localdisconnect()
 
 void localconnect()
 {
-    client &c = *addclient();
+    client &c = addclient();
     c.type = ST_LOCAL;
-    c.num = clients.length()-1;
     s_strcpy(c.hostname, "local");
     send_welcome(c.num); 
 };

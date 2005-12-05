@@ -12,9 +12,13 @@ eihrul:
 - add a spotlight (ask me)
 
 aard:
-- "master" mode for servers
+- switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
+- ghost/disconnection bugs on rpg maps in multiplayer
+- better disconnection messages
+- spectator mode
 - thirdperson model flips into jump anim randomly at low fps
 - profile rpg_01
+- select entities in parallel to geometry by picking | make editing more readable
 - compression of octa info into indexes (e.g. textures into shorts?)
 - hudgun flickers when running on stairs?!?
 - skybox - roll
@@ -38,6 +42,7 @@ aard:
 - revise health/armours? can either make armours more effective against certain weapons (feedback?)
   or do more general properties (do more damage, run faster)
 - GL? / grapple? /
+- find more sensible solution for wiki / work on better sauer web page
 - mp objectives
 - 2 teams only
 - sound samples for N kills in a row | accuracy stats

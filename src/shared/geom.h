@@ -10,6 +10,9 @@ struct vec
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(int v[3]) : x(v[0]), y(v[1]), z(v[2]) {};
     
+    vec(float yaw, float pitch) : x(sinf(yaw)*cosf(pitch)), y(-cosf(yaw)*cosf(pitch)), z(sinf(pitch)) {};
+
+    
     float &operator[](int i) { return v[2-i]; };
     float operator[](int i) const { return v[2-i]; };
     bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }

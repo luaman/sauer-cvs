@@ -329,10 +329,10 @@ struct fpsserver : igameserver
     };
 
     void clientdisconnect(int n) { send2(true, -1, SV_CDIS, n); findmaster();  };
-    char *servername() { return "cubeserver"; };
+    char *servername() { return "sauerbratenserver"; };
     int serverinfoport() { return CUBE_SERVINFO_PORT; };
     int serverport() { return CUBE_SERVER_PORT; };
-    char *getdefaultmaster() { return ""; }; // signals we don't use one atm. was: "wouter.fov120.com/cube/masterserver/"; // sauer will need its own masterserver
+    char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; }; 
 
     void serverinforeply(uchar *&p)
     {

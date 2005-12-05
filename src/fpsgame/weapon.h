@@ -27,7 +27,7 @@ struct weaponstate
             { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"        },
             { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"      },
             { S_PIGR1,     250,  50, 0,   0,  1, "bite"           },
-            { S_PISTOL,    500,  40, 0,   0,  7, "pistol"         },    
+            { S_PISTOL,    500,  25, 0,   0,  7, "pistol"         },    
         };
         guns = _guns;
         
@@ -54,16 +54,21 @@ struct weaponstate
     };
     
     int reloadtime(int gun) { return guns[gun].attackdelay; };
+    
+    void offsetray(vec &from, vec &to, int spread, vec &dest)
+    {
+        float f = to.dist(from)*spread/1000;
+        #define RNDD (rnd(101)-50)*f
+        vec v(RNDD, RNDD, RNDD);
+        //float m = v.magnitude();
+        //if(m!=0) v.mul(50/m);
+        dest = to;
+        dest.add(v);
+    };
 
     void createrays(vec &from, vec &to)             // create random spread of rays for the shotgun
     {
-        float f = to.dist(from)*SGSPREAD/1000;
-        loopi(SGRAYS)
-        {
-            #define RNDD (rnd(101)-50)*f
-            sg[i] = to;
-            sg[i].add(vec(RNDD, RNDD, RNDD)); 
-        };
+        loopi(SGRAYS) offsetray(from, to, SGSPREAD, sg[i]);
     };
 
     static const int MAXPROJ = 100;
@@ -283,6 +288,7 @@ struct weaponstate
         };   
         
         if(d->gunselect==GUN_SG) createrays(from, to);
+        //else if(d->gunselect==GUN_MG) offsetray(from, to, 5, to);
 
         if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP);
         shootv(d->gunselect, from, to, d, true);

@@ -359,22 +359,20 @@ void dropenttofloor(entity *e)
     e->o = d.o;
 };
 
-float rad(float x) { return x*3.14159f/180; };
-
 void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating)
 {
-    m.x = move*cosf(rad(yaw-90));
-    m.y = move*sinf(rad(yaw-90));
+    m.x = move*cosf(RAD*(yaw-90));
+    m.y = move*sinf(RAD*(yaw-90));
 
     if(floating)
     {
-        m.x *= cosf(rad(pitch));
-        m.y *= cosf(rad(pitch));
-        m.z = move*sinf(rad(pitch));
+        m.x *= cosf(RAD*pitch);
+        m.y *= cosf(RAD*pitch);
+        m.z = move*sinf(RAD*pitch);
     };
 
-    m.x += strafe*cosf(rad(yaw-180));
-    m.y += strafe*sinf(rad(yaw-180));
+    m.x += strafe*cosf(RAD*(yaw-180));
+    m.y += strafe*sinf(RAD*(yaw-180));
 };
 
 VARP(maxroll, 0, 3, 20);
