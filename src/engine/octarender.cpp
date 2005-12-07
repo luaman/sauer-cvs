@@ -1124,6 +1124,40 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
     xtraverts += 4;
 }
 
+void writeobj(char *name)
+{
+    bool oldVBO = hasVBO;
+    hasVBO = false;
+    allchanged();
+    s_sprintfd(fname)("%s.obj", name);
+    FILE *f = fopen(fname, "w");
+    if(!f) return;
+    fprintf(f, "# obj file of sauerbraten level\n");
+    loopv(valist)
+    {
+        vtxarray &v = *valist[i];
+        vertex *verts = v.vbuf;
+        if(verts)
+        {
+            loopj(v.verts) fprintf(f, "v %.1f %.1f %.1f\n", verts[j].x, verts[j].y, verts[j].z);
+            lodlevel &lod = v.curlod ? v.l1 : v.l0;
+            unsigned short *ebuf = lod.ebuf;
+            loopi(lod.texs) loopl(3) loopj(lod.eslist[i].length[l]/4)
+            {
+                fprintf(f, "f");
+                for(int k = 3; k>=0; k--) fprintf(f, " %d", ebuf[k]-v.verts);
+                ebuf += 4;
+                fprintf(f, "\n");
+            };
+        };
+    };
+    fclose(f);
+    hasVBO = oldVBO;
+    allchanged();
+};
+
+COMMAND(writeobj, ARG_1STR);
+
 ////////// (re)mip //////////
 
 int rvertedge(int e, int dc) { return (R(e>>2)<<2)+(e&2?1:0)+(dc?2:0); };

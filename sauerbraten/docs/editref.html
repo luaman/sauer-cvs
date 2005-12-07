@@ -288,6 +288,10 @@ paste</pre>
 		memory / lightmap space. LOD works on entire vertex array blocks at a time, and 
 		is dependent on the "loddistance" variable which the player can set to trade 
 		off speed vs visual quality.
+		<pre>writeobj N</pre>
+		Writes out the current map as N.obj, so you could use sauerbraten as a generic modeller
+		with any program/engine that uses meshes. The meshes aren't very optimal and don't
+        have texture/lighting information.
 		<div>Entity Types</div>
 		<a name="entitytypes"></a>
 		<pre>"light" radius brightness
