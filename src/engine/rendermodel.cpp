@@ -40,10 +40,7 @@ model *loadmodel(char *name)
         delete m;
         m = new md3(name);
         if(!(m->load()))
-        {
-            conoutf("could not load model: %s", name);
-            return NULL;
-        };
+            fatal("could not load model: ", name);
     };
     mdllookup.access(m->name(), &m);
     return m;

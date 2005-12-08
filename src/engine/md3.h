@@ -225,7 +225,7 @@ struct md3model
         md3header header;
         fread(&header, sizeof(md3header), 1, f);
         if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) // header check
-            fatal("corruped header in md3 model: ", path);
+            { printf("md3: corruped header\n"); return false; };
         
         numframes = header.numframes;
         frames = new md3frame[header.numframes];
@@ -494,6 +494,11 @@ struct md3 : model
     md3model *model;
     Texture *tmpskin;
 
+    ~md3() 
+    { 
+        if(model) delete[] model;
+    };
+
     md3(char *_name) { s_strcpy(loadname, _name); };
     char *name() { return loadname; }; 
     
@@ -572,8 +577,8 @@ struct md3 : model
             playermodels.add(&mdls[i]);
             s_sprintfd(mdl_path)("%s.md3", path);
             s_sprintfd(cfg_path)("%s_default.cfg", path);
-            mdls[i].load(mdl_path);
-            //FIXME DRIAN: load returns false but is not checked, then crashes further down
+            if(!mdls[i].load(mdl_path))
+                return false;
             exec(cfg_path);
         };
         mdls[MDL_LOWER].link(&mdls[MDL_UPPER], "tag_torso");
