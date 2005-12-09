@@ -225,7 +225,7 @@ struct md3model
         md3header header;
         fread(&header, sizeof(md3header), 1, f);
         if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) // header check
-            { printf("md3: corruped header\n"); return false; };
+        { conoutf("md3: corruped header"); return false; };
         
         numframes = header.numframes;
         frames = new md3frame[header.numframes];
