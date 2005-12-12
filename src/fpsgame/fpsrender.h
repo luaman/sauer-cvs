@@ -27,8 +27,7 @@ struct fpsrender
         else                                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; if(hellpig) speed = 1200/d->maxspeed;  };
         uchar color[3];
         lightreaching(d->o, color);
-        glColor3ubv(color);
-        rendermodel(mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime, d);
+        rendermodel(color, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime, d);
     };
     
     void rendergame(fpsclient &cl, int gamemode)

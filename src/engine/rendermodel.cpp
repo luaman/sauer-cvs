@@ -57,7 +57,7 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
+void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -67,5 +67,6 @@ void rendermodel(char *mdl, int anim, int varseed, int tex, float x, float y, fl
     if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
     if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     m->setskin(tex);  
+    glColor3ubv(color);
     m->render(anim, varseed, speed, basetime, mdl, x, y, z, yaw, pitch, scale, d);
 };

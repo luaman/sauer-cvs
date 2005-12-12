@@ -533,8 +533,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
         };
 
         sortkey key(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0));
-        usvector &iv0 = (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]);
-        usvector &iv1 = (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]);
 
         loopk(4)
         {
@@ -560,8 +558,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
                 index = vh.access(rv, u, v);
             }
 
-            if(!lodcube) iv0.add(index);
-            if(size>=lodsize) iv1.add(index);
+            if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]).add(index);
+            if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]).add(index);
         }
     }
 };
@@ -1025,49 +1023,65 @@ void renderq(int w, int h)
 
     int showvas = 0;
 
+
+    setupTMU();
+
+    pfnglActiveTexture(GL_TEXTURE1_ARB);
+    pfnglClientActiveTexture(GL_TEXTURE1_ARB);
+
+    glEnable(GL_TEXTURE_2D);
+    setupTMU();
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    pfnglActiveTexture(GL_TEXTURE0_ARB);
+    pfnglClientActiveTexture(GL_TEXTURE0_ARB);
+
     while(va)
     {
         glColor3f(1, 1, 1);
         if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
 
         if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        //glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &(va->vbuf[0].colour));
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
-        setupTMU();
-
-        pfnglActiveTexture(GL_TEXTURE1_ARB);
         pfnglClientActiveTexture(GL_TEXTURE1_ARB);
-
-        glEnable(GL_TEXTURE_2D);
-        setupTMU();
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
-
-        pfnglActiveTexture(GL_TEXTURE0_ARB);
         pfnglClientActiveTexture(GL_TEXTURE0_ARB);
 
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
 
         unsigned short *ebuf = lod.ebuf;
+        int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
         loopi(lod.texs)
         {
             Texture *tex = lookuptexture(lod.eslist[i].texture);
             glBindTexture(GL_TEXTURE_2D, tex->gl);
-            pfnglActiveTexture(GL_TEXTURE1_ARB);
+            
             extern vector<GLuint> lmtexids;
-            glBindTexture(GL_TEXTURE_2D, lmtexids[lod.eslist[i].lmid]);
-            pfnglActiveTexture(GL_TEXTURE0_ARB);
+            int curlm = lmtexids[lod.eslist[i].lmid];
+            if(curlm!=lastlm)
+            {
+                pfnglActiveTexture(GL_TEXTURE1_ARB);
+                glBindTexture(GL_TEXTURE_2D, curlm);
+                pfnglActiveTexture(GL_TEXTURE0_ARB);
+                lastlm = curlm;
+            };
 
             loopl(3) if (lod.eslist[i].length[l])
             {
-                GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                s[si[l]] = 8.0f/tex->xs;
-                t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
-                glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
-                glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
-
+                if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys)
+                {
+                    GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                    s[si[l]] = 8.0f/tex->xs;
+                    glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+                    GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                    t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
+                    glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                    lastxs = tex->xs;
+                    lastys = tex->ys;
+                    lastl = l;
+                };
+                
                 glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
                 ebuf += lod.eslist[i].length[l];  // Advance to next array.
                 glde++;
@@ -1078,7 +1092,6 @@ void renderq(int w, int h)
 
     if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
-    //glDisableClientState(GL_COLOR_ARRAY);
 
     pfnglActiveTexture(GL_TEXTURE1_ARB);
     pfnglClientActiveTexture(GL_TEXTURE1_ARB);
