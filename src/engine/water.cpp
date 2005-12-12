@@ -17,11 +17,8 @@ inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
-void renderwater(uint subdiv, int x, int y, int z, uint size)
-{
-    Texture *t = lookuptexture(DEFAULT_LIQUID);
-    glBindTexture(GL_TEXTURE_2D, t->gl);
-    
+void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
+{ 
     float xf = 8.0f/t->xs;
     float yf = 8.0f/t->ys;
     float xs = subdiv*xf;
@@ -79,13 +76,13 @@ uint calcwatersubdiv(int x, int y, int z, uint size)
     return subdiv;
 }
 
-uint renderwaterlod(int x, int y, int z, uint size)
+uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
 {
     if(size <= (uint)(32 << waterlod))
     {
         uint subdiv = calcwatersubdiv(x, y, z, size);
         if(subdiv < size * 2)
-            renderwater(min(subdiv, size), x, y, z, size);
+            renderwater(min(subdiv, size), x, y, z, size, t);
         return subdiv;
     }
     else
@@ -94,14 +91,14 @@ uint renderwaterlod(int x, int y, int z, uint size)
         if(subdiv >= size)
         {
             if(subdiv < size * 2)
-                renderwater(size, x, y, z, size);
+                renderwater(size, x, y, z, size,t );
             return subdiv;
         }
         uint childsize = size / 2,
-             subdiv1 = renderwaterlod(x, y, z, childsize),
-             subdiv2 = renderwaterlod(x + childsize, y, z, childsize),
-             subdiv3 = renderwaterlod(x + childsize, y + childsize, z, childsize),
-             subdiv4 = renderwaterlod(x, y + childsize, z, childsize),
+             subdiv1 = renderwaterlod(x, y, z, childsize, t),
+             subdiv2 = renderwaterlod(x + childsize, y, z, childsize, t),
+             subdiv3 = renderwaterlod(x + childsize, y + childsize, z, childsize, t),
+             subdiv4 = renderwaterlod(x, y + childsize, z, childsize, t),
              minsubdiv = subdiv1;
         minsubdiv = min(minsubdiv, subdiv2);
         minsubdiv = min(minsubdiv, subdiv3);
@@ -109,17 +106,17 @@ uint renderwaterlod(int x, int y, int z, uint size)
         if(minsubdiv < size * 2)
         {
             if(minsubdiv >= size)
-                renderwater(size, x, y, z, size);
+                renderwater(size, x, y, z, size, t);
             else
             {
                 if(subdiv1 >= size) 
-                    renderwater(childsize, x, y, z, childsize);
+                    renderwater(childsize, x, y, z, childsize, t);
                 if(subdiv2 >= size) 
-                    renderwater(childsize, x + childsize, y, z, childsize);
+                    renderwater(childsize, x + childsize, y, z, childsize, t);
                 if(subdiv3 >= size) 
-                    renderwater(childsize, x + childsize, y + childsize, z, childsize);
+                    renderwater(childsize, x + childsize, y + childsize, z, childsize, t);
                 if(subdiv4 >= size) 
-                    renderwater(childsize, x, y + childsize, z, childsize);
+                    renderwater(childsize, x, y + childsize, z, childsize, t);
             }
         }
         return minsubdiv;
@@ -155,14 +152,6 @@ void sortmatsurfs(materialsurface *matsurf, int matsurfs)
     qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
 }
 
-void blendmatsurf(materialsurface &matsurf)
-{
-    glDisable(GL_TEXTURE_2D);
-    drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size, 0.01f);
-    glEnd();
-    glEnable(GL_TEXTURE_2D);
-}
-
 void watercolour(int r, int g, int b)
 {
     hdr.watercolour[0] = r;
@@ -174,32 +163,25 @@ COMMAND(watercolour, ARG_3INT);
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
-    if(!matsurfs)
-        return;
-
+    if(!matsurfs) return;
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
-    loopi(matsurfs)
-    {
-        materialsurface &matsurf = matbuf[i];
-        switch(matsurf.material)
-        {
-        case MAT_WATER:
-            glBlendFunc(GL_ONE, GL_SRC_COLOR);
-            if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) glColor3ubv(hdr.watercolour);
-            else glColor3f(0.5f, 0.5f, 0.5f);
-            if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size) >= (uint)matsurf.size * 2)
-                renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size);
-            break;
-
-        case MAT_GLASS:    
-            glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-            glColor3f(0.3f, 0.15f, 0.0f);
-            blendmatsurf(matsurf);
-            break;
-        }
-    }
+    glBlendFunc(GL_ONE, GL_SRC_COLOR);
+    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) glColor3ubv(hdr.watercolour);
+    else glColor3f(0.5f, 0.5f, 0.5f);
+    Texture *t = lookuptexture(DEFAULT_LIQUID);
+    glBindTexture(GL_TEXTURE_2D, t->gl);
+    #define matloop(m, s) loopi(matsurfs) { materialsurface &matsurf = matbuf[i]; if(matsurf.material==m) { s; }; }
+    matloop(MAT_WATER,
+        if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t) >= (uint)matsurf.size * 2)
+            renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t);
+    );
+    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+    glColor3f(0.3f, 0.15f, 0.0f);
+    glDisable(GL_TEXTURE_2D);
+    matloop(MAT_GLASS, drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size, 0.01f));
+    glEnable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);

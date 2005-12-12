@@ -59,6 +59,8 @@ aard:
 - improve on cma render then add to sauer
 - slowmo?
 - VBO verts are 24 bytes, remove the next ptr, make UVs shorts or bytes? make coords shorts?
+- voice during multiplayer?
+- give players identity to combat cheating by coupling to something like Steam?
 
 - fix the two //BREAK
 

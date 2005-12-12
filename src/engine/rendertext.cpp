@@ -143,6 +143,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
     float in_left, in_top, in_right, in_bottom;
     int in_width, in_height;
 
+    glBegin(GL_QUADS);
     for (i = 0; str[i] != 0; i++)
     {
         int c = str[i];
@@ -160,16 +161,15 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         in_width   = char_coords[c][2] - char_coords[c][0];
         in_height  = char_coords[c][3] - char_coords[c][1];
 
-        glBegin(GL_QUADS);
         glTexCoord2f(in_left,  in_top   ); glVertex2i(x,            y);
         glTexCoord2f(in_right, in_top   ); glVertex2i(x + in_width, y);
         glTexCoord2f(in_right, in_bottom); glVertex2i(x + in_width, y + in_height);
         glTexCoord2f(in_left,  in_bottom); glVertex2i(x,            y + in_height);
-        glEnd();
         
         xtraverts += 4;
         x += in_width  + 1;
     }
+    glEnd();
 }
 
 Texture *sky[6] = { 0, 0, 0, 0, 0, 0 };
