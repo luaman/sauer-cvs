@@ -201,7 +201,7 @@ void load_world(char *mname)        // still supports all map formats that have 
 
     show_out_of_renderloop_progress(0, "loading entities...");
     et->getents().setsize(0);
-    
+	
     loopi(hdr.numents)
     {
         extentity &e = *et->newentity();
@@ -210,6 +210,7 @@ void load_world(char *mname)        // still supports all map formats that have 
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
+		e.inoctanode = false;
         et->readent(e);
 		if(e.o.x<0 || e.o.x>hdr.worldsize || 
 		   e.o.y<0 || e.o.y>hdr.worldsize ||
@@ -265,6 +266,7 @@ void load_world(char *mname)        // still supports all map formats that have 
         extentity &e = *et->getents()[i];
         if(e.type==ET_MAPMODEL) loadmodel(getmminfo(e.attr2).name);
     };
+	entitiesinoctanodes();
 };
 
 void savecurrentmap() { save_world(cl->getclientmap()); };

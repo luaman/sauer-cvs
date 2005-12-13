@@ -406,6 +406,7 @@ struct clientcom : iclientcom
                 ents[i]->attr3 = getint(p);
                 ents[i]->attr4 = getint(p);
                 ents[i]->spawned = false;
+				ents[i]->inoctanode = false;
                 ///if(ents[i]->type==LIGHT || to==LIGHT) calclight();
                 break;
             };

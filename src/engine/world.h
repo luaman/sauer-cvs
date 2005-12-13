@@ -57,6 +57,12 @@ struct ivec
     };
 
     ivec() {};
+	ivec(int i)
+	{
+		x = ((i&1)>>0);
+        y = ((i&2)>>1);
+        z = ((i&4)>>2);
+	};
     ivec(int a, int b, int c) : x(a), y(b), z(c) {};
     ivec(int d, int row, int col, int depth)
     {
@@ -71,7 +77,8 @@ struct ivec
         z = cz+((i&4)>>2)*size;
     };
     vec tovec() { return vec(x, y, z); };
-    int &operator[](int i) { return v[2-i]; };
+	int toint() { return (x>0?1:0) + (y>0?2:0) + (z>0?4:0); };
+	int &operator[](int i) { return v[2-i]; };
     int operator [](int i) const { return v[2 - i]; }
     //int idx(int i) { return v[i]; };
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };

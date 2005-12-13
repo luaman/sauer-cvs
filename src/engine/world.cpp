@@ -29,6 +29,7 @@ void entproperty(int prop, int amount)
     if(noedit()) return;
     int e = closestent();
     if(e<0) return;
+	removeoctaentity(e);
     switch(prop)
     {
         case 0: et->getents()[e]->attr1 += amount; break;
@@ -36,6 +37,7 @@ void entproperty(int prop, int amount)
         case 2: et->getents()[e]->attr3 += amount; break;
         case 3: et->getents()[e]->attr4 += amount; break;
     };
+	addoctaentity(e);
 };
 
 void delent()
@@ -128,7 +130,9 @@ void dropent()
     if(noedit()) return;
     int e = closestent();
     if(e<0) return;
-    dropentity(*et->getents()[e]);
+	removeoctaentity(e);
+    dropentity(*et->getents()[e]);	
+	addoctaentity(e);
 };
 
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)
@@ -139,6 +143,7 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
     if(entdrop) dropentity(*e);
     //addmsg(1, 10, SV_EDITENT, et->getents().length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
     et->getents().add(e);
+	addoctaentity(et->getents().length()-1);
 };
 
 COMMAND(newent, ARG_5STR);
@@ -195,7 +200,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         memset(hdr.reserved, 0, sizeof(hdr.reserved));
         loopi(256) hdr.texlist[i] = i;
         et->getents().setsize(0);
-        freeocta(worldroot);
+		freeocta(worldroot);
         worldroot = newcubes(F_EMPTY);
         loopi(4) solidfaces(worldroot[i]);
         estartmap("base/unnamed");

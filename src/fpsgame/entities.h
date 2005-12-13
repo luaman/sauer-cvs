@@ -273,6 +273,7 @@ struct entities : icliententities
         e.type = type;
         e.reserved = 0;
         e.spawned = false;
+		e.inoctanode = false;
         memset(e.color, 255, 3);
         switch(type)
         {

@@ -18,6 +18,7 @@ struct entity                                   // persistent map entity
 struct extentity : entity                       // part of the entity that doesn't get saved to disk
 {
     char spawned;                               // the only dynamic state of a map entity
+	uchar inoctanode;
     uchar color[3];
 };
 

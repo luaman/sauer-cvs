@@ -104,9 +104,7 @@ bool noedit()
 
 cube &blockcube(int x, int y, int z, block3 &b, int rgrid) // looks up a world cube, based on coordinates mapped by the block
 {
-    int d = dimension(b.orient);
-
-    ivec s(d, x*b.grid, y*b.grid, dimcoord(b.orient)*(b.s[d]-1)*b.grid);
+    ivec s(dimension(b.orient), x*b.grid, y*b.grid, dimcoord(b.orient)*(b.s[dimension(b.orient)]-1)*b.grid);
 
     return neighbourcube(b.o.x+s.x, b.o.y+s.y, b.o.z+s.z, -z*b.grid, rgrid, b.orient);
 };
@@ -261,7 +259,7 @@ void cursorupdate()
 
 //////////// ready changes to vertex arrays ////////////
 
-void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
+void readychanges(block3 &b, cube *c, int cx, int cy, int cz, int size)
 {
     uchar m = octatouchblock(b, cx, cy, cz, size);
     loopi(8) if(m&(1<<i))
@@ -279,8 +277,9 @@ void readyva(block3 &b, cube *c, int cx, int cy, int cz, int size)
                 solidfaces(c[i]);
                 discardchildren(c[i]);
             }
-            else readyva(b, c[i].children, o.x, o.y, o.z, size/2);
+            else readychanges(b, c[i].children, o.x, o.y, o.z, size/2);
         };
+		freeoctaentities(c[i]);
     };
 };
 
@@ -293,7 +292,7 @@ void changed()
     {
         b.o[i] -= 1;
         b.s[i] += 2;
-        readyva(b, worldroot, 0, 0, 0, hdr.worldsize/2);
+        readychanges(b, worldroot, 0, 0, 0, hdr.worldsize/2);
         b.o[i] += 1;
         b.s[i] -= 2;
     };
@@ -301,6 +300,7 @@ void changed()
     inbetweenframes = false;
     octarender();
     inbetweenframes = true;
+	entitiesinoctanodes();
 };
 
 //////////// copy and undo /////////////
@@ -310,6 +310,7 @@ cube copycube(cube &src)
     c.va = NULL;                // src cube is responsible for va destruction
     c.surfaces = NULL;
     c.clip = NULL;
+	c.ents = NULL;
     if(src.children)
     {
         c.children = newcubes(F_EMPTY);
@@ -629,17 +630,17 @@ COMMAND(edittex, ARG_1INT);
 COMMAND(gettex, ARG_NONE);
 
 ////////// flip and rotate ///////////////
-uint edgeinv(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); };
-uint rflip(uint face)   { return ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8); };
-uint cflip(uint face)   { return ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16); };
-uint mflip(uint face)   { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8); };
+uint dflip(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); };
+uint cflip(uint face) { return ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8); };
+uint rflip(uint face) { return ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16); };
+uint mflip(uint face) { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8); };
 
 void flipcube(cube &c, int dim)
 {
     swap(uchar, c.texture[dim*2], c.texture[dim*2+1]);
-    c.faces[D(dim)] = edgeinv(c.faces[D(dim)]);
-    c.faces[C(dim)] = rflip(c.faces[C(dim)]);
-    c.faces[R(dim)] = cflip(c.faces[R(dim)]);
+    c.faces[D(dim)] = dflip(c.faces[D(dim)]);
+    c.faces[C(dim)] = cflip(c.faces[C(dim)]);
+    c.faces[R(dim)] = rflip(c.faces[R(dim)]);
     if (c.children)
     {
         loopi(8) if (i&octadim(dim)) swap(cube, c.children[i], c.children[i-octadim(dim)]);
@@ -654,9 +655,9 @@ void rotatequad(cube &a, cube &b, cube &c, cube &d)
 
 void rotatecube(cube &c, int dim)   // rotates cube clockwise. see pics in cvs for help.
 {
-    c.faces[D(dim)] = rflip  (mflip(c.faces[D(dim)]));
-    c.faces[C(dim)] = edgeinv(mflip(c.faces[C(dim)]));
-    c.faces[R(dim)] = cflip  (mflip(c.faces[R(dim)]));
+    c.faces[D(dim)] = cflip (mflip(c.faces[D(dim)]));
+    c.faces[C(dim)] = dflip (mflip(c.faces[C(dim)]));
+    c.faces[R(dim)] = rflip (mflip(c.faces[R(dim)]));
     swap(uint, c.faces[R(dim)], c.faces[C(dim)]);
 
     swap(uint, c.texture[2*R(dim)], c.texture[2*C(dim)+1]);

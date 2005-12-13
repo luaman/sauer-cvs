@@ -53,6 +53,11 @@ struct clipplanes
     clipplanes **backptr;
 };
 
+struct octaentities
+{
+	vector<int> list;
+};
+
 struct cube
 {
     cube *children;         // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
@@ -67,6 +72,7 @@ struct cube
     vtxarray *va;           // vertex array for children, or NULL
     clipplanes *clip;       // collision planes
     surfaceinfo *surfaces;  // lighting info for each surface
+	octaentities *ents;		// list of map entites totally inside cube
 };
 
 struct block3

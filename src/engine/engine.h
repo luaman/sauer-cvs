@@ -148,6 +148,11 @@ extern void mousemove(int dx, int dy);
 extern bool pointincube(const cube &c, const vec &v);
 extern void setcubeclip(cube &c, int x, int y, int z, int size);
 
+extern void entitiesinoctanodes();
+extern void freeoctaentities(cube &c);
+extern void removeoctaentity(int id);
+extern void addoctaentity(int id);
+
 // lightmap
 extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 = 0, char *text2 = NULL);
 

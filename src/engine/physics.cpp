@@ -53,6 +53,78 @@ void freeclipplanes(cube &c)
     c.clip = NULL;
 };
 
+VAR(octaentsize, 0, 128, 1024);
+
+void freeoctaentities(cube &c)
+{
+    if(!c.ents) return;
+    while(!c.ents->list.empty())
+        removeoctaentity(c.ents->list.pop());
+    delete c.ents;
+    c.ents = NULL;
+};
+
+void traverseoctaentity(bool add, int id, cube *c, int cx, int cy, int cz, int size, vec &bo, vec &br)
+{
+    uchar possible = 0xFF;
+    if(cz+size < bo.z-br.z) possible &= 0xF0; // need to refactor
+    if(cz+size > bo.z+br.z) possible &= 0x0F;
+    if(cy+size < bo.y-br.y) possible &= 0xCC;
+    if(cy+size > bo.y+br.y) possible &= 0x33;
+    if(cx+size < bo.x-br.x) possible &= 0xAA;
+    if(cx+size > bo.x+br.x) possible &= 0x55;
+    loopi(8) if(possible & (1<<i))
+    {
+        ivec o(i, cx, cy, cz, size);
+        if(c[i].children != NULL && size > octaentsize)
+            traverseoctaentity(add, id, c[i].children, o.x, o.y, o.z, size>>1, bo, br);
+        else if(add)
+        {
+            if(!c[i].ents) c[i].ents = new octaentities();
+            c[i].ents->list.add(id);
+        }
+        else if(c[i].ents)
+            c[i].ents->list.removeobj(id);
+
+    };
+};
+
+bool getmmboundingbox(extentity &e, vec &o, vec &r)
+{
+    if(e.type!=ET_MAPMODEL) return false;
+    mapmodelinfo &mmi = getmminfo(e.attr2);
+    if(!&mmi || !mmi.h || !mmi.rad) return false;
+    r.x = r.y = float(mmi.rad);
+    r.z = float(mmi.h)/2.0f;
+    o = e.o;
+    o.z += float(mmi.zoff+e.attr3)+r.z;
+    return true;
+};
+
+void addoctaentity(int id)
+{
+    vec o, r;
+    extentity &e = *et->getents()[id];
+    if(e.inoctanode || !getmmboundingbox(e, o, r)) return;
+    e.inoctanode = true;
+    traverseoctaentity(true, id, worldroot, 0, 0, 0, hdr.worldsize>>1, o, r);
+};
+
+void removeoctaentity(int id)
+{
+    vec o, r;
+    extentity &e = *et->getents()[id];
+    if(!e.inoctanode || !getmmboundingbox(e, o, r)) return;
+    e.inoctanode = false;
+    traverseoctaentity(false, id, worldroot, 0, 0, 0, hdr.worldsize>>1, o, r);
+};
+
+void entitiesinoctanodes()
+{
+    loopv(et->getents())
+        addoctaentity(i);
+};
+
 /////////////////////////  ray - cube collision ///////////////////////////////////////////////
 
 void pushvec(vec &o, const vec &ray, float dist)
@@ -64,6 +136,7 @@ void pushvec(vec &o, const vec &ray, float dist)
 
 bool pointincube(const cube &c, const vec &v)
 {
+    ASSERT(c.clip);
     vec &o = c.clip->o;
     vec &r = c.clip->r;
     if(v.x > o.x+r.x || v.x < o.x-r.x ||
@@ -182,11 +255,11 @@ bool plcollide(dynent *d, dynent *o)    // collide with player or monster
     return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight, false);
 };
 
-bool mmcollide(dynent *d)               // collide with a mapmodel
+bool mmcollide(dynent *d, octaentities &oc)               // collide with a mapmodel
 {
-    loopv(et->getents())
+    loopv(oc.list)
     {
-        entity &e = *et->getents()[i];
+        entity &e = *et->getents()[oc.list[i]];
         if(e.type!=ET_MAPMODEL) continue;
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(!&mmi || !mmi.h || !mmi.rad) continue;
@@ -246,6 +319,7 @@ bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collid
     if (cx+size > d->o.x+d->radius)     possible &= 0x55;
     loopi(8) if(possible & (1<<i))
     {
+        if(c[i].ents) if(!mmcollide(d, *c[i].ents)) return false;
         ivec o(i, cx, cy, cz, size);
         if(c[i].children)
         {
@@ -273,7 +347,7 @@ bool collide(dynent *d)
         if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d!=camera1) && !plcollide(d, o)) return false;
     };
 
-    return mmcollide(d);     // collide with map models
+    return true;
 };
 
 bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)

@@ -17,6 +17,7 @@ cube *newcubes(uint face)
         setfaces(*c, face);
         c->surfaces = NULL;
         c->clip = NULL;
+		c->ents = NULL;
         loopl(6)
         {
             c->texture[l] = 2+l;
@@ -47,6 +48,7 @@ void discardchildren(cube &c)
     c.va = NULL;
     freesurfaces(c);
     freeclipplanes(c);
+	freeoctaentities(c);
     if(c.children)
     {
         freeocta(c.children);
@@ -183,4 +185,3 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     };
     return lookupcube(x, y, z, rsize);
 };
-
