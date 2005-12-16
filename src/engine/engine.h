@@ -88,7 +88,7 @@ extern void cancelsel();
 extern void render_texture_panel();
 
 // rendercubes
-extern void subdividecube(cube &c);
+extern bool subdividecube(cube &c);
 extern void octarender();
 extern void renderq(int w, int h);
 extern void allchanged();

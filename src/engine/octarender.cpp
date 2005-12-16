@@ -265,7 +265,7 @@ uint faceedges(cube &c, int orient)
 
 bool faceedgegt(uint cfe, uint ofe)
 {
-	if(vectorformat==1) return true; // this test no longer valid
+    if(vectorformat==1) return true; // this test no longer valid
 
     loopi(4)
     {
@@ -803,12 +803,12 @@ void forcemip(cube &c)
         int n = i^(j==3 ? 4 : (j==4 ? 3 : j));
         if(!isempty(ch[n])) // breadth first search for cube near vert
         {
-            ivec v, p(i, 0, 0, 0, 1);
+            ivec v, p(i);
             getcubevector(ch[n], 0, p.x, p.y, p.z, v);
 
             loopk(3) // adjust vert to parent size
             {
-                if((n&(1<<k))>0) 
+                if((n&(1<<k))>0)
                     v[2-k] += 8;
                 v[2-k] >>= 1;
             };
@@ -817,6 +817,9 @@ void forcemip(cube &c)
             break;
         };
     };
+
+    loopj(6)
+        c.texture[j] = getmippedtexture(ch, j);
 };
 
 void genlod(cube &c, int size)
@@ -833,30 +836,11 @@ void genlod(cube &c, int size)
     loopi(8) if(!isempty(c.children[i]))
     {
         forcemip(c);
-        loopj(6) c.texture[j] = getmippedtexture(c.children, j);
         return;
     };
 
     emptyfaces(c);
 };
-
-void forceremiprecurse(cube &c)
-{
-    if(c.children == NULL) return;
-    loopi(8) forceremiprecurse(c.children[i]);
-    loopj(6) c.texture[j] = getmippedtexture(c.children, j);
-    forcemip(c);
-};
-
-void lodremipforce()
-{
-    cube &c = lookupcube(lu.x, lu.y, lu.z, lusize);
-    forceremiprecurse(c);
-    discardchildren(c);
-    allchanged();
-};
-
-COMMAND(lodremipforce, ARG_NONE);
 
 void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
 void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
@@ -1173,52 +1157,84 @@ COMMAND(writeobj, ARG_1STR);
 
 ////////// (re)mip //////////
 
-int rvertedge(int e, int dc) { return (R(e>>2)<<2)+(e&2?1:0)+(dc?2:0); };
-
-void subdividecube(cube &c)
+int midedge(const ivec &a, const ivec &b, int xd, int yd, bool &perfect)
 {
-    if (c.children) return;
-    cube *ch = c.children = newcubes(F_EMPTY);
+    int ax = a[xd], bx = b[xd];
+    int ay = a[yd], by = b[yd];
+    if(ay==by) return ay;
+    if(ax==bx) { perfect = false; return ay; };
+    bool crossx = (ax<8 && bx>8) || (ax>8 && bx<8);
+    bool crossy = (ay<8 && by>8) || (ay>8 && by<8);
+    if(crossy && !crossx) { midedge(a,b,yd,xd,perfect); return 8; }; // to test perfection
+    if(ax<=8 && bx<=8) return ax>bx ? ay : by;
+    if(ax>=8 && bx>=8) return ax<bx ? ay : by;
+    int risex = (by-ay)*(8-ax)*256;
+    int s = risex/(bx-ax);
+    int y = s/256 + ay;
+    if(((abs(s)&0xFF)!=0) || // ie: rounding error
+        (crossy && y!=8) ||
+        (y<0 || y>16)) perfect = false;
+    return crossy ? 8 : min(max(y, 0), 16);
+};
 
-    loopi(6)
+bool subdividecube(cube &c)
+{
+    if(c.children) return true;
+    cube *ch = c.children = newcubes(F_SOLID);
+    bool perfect = true, p1, p2;
+    ivec v[8];
+    loopi(8)
     {
-        int d = dimension(i), dc = dimcoord(i);
-        int e[3][3];
-        loop(y,2) loop(x,2) e[2*y][2*x] = edgeget(cubeedge(c,d,x,y), dc);
-        e[0][1] = e[0][0]+e[0][2];
-        e[1][0] = e[0][0]+e[2][0];
-        e[2][1] = e[2][0]+e[2][2];
-        e[1][2] = e[0][2]+e[2][2];
-        e[1][1] = faceconvexity(c,i)>0 ? e[0][0]+e[2][2] : e[0][2]+e[2][0];
-        loop(y,2) loop(x,2) e[2*y][2*x] *= 2;
-
-        loopi(8) loop(y,2) loop(x,2) // assign edges
-        {
-            int s = e[y+octacoord(C(d),i)][x+octacoord(R(d),i)];
-            int v = octacoord(d,i) ? max(0, s-8) : min(8, s);
-            uchar &f = cubeedge(ch[i],d,x,y);
-            edgeset(f, dc, v);
-        };
-    };
-    loopi(8) // clean up edges
-    {
+        ivec p(i);
+        getcubevector(c, 0, p.x, p.y, p.z, v[i]);
+        v[i].mul(2);
         ch[i].material = c.material;
-        loopj(6) ch[i].texture[j] = c.texture[j];
-        loopj(3) if (!ch[i].faces[j] || ch[i].faces[j]==0x88888888) emptyfaces(ch[i]);
-        if(isempty(ch[i])) continue;
+    };
 
-        uchar *f = ch[i].edges;
-        loopj(12) if (f[j]==0x88 || !f[j])
+    loopj(6)
+    {
+        int d = dimension(j);
+        int z = dimcoord(j);
+        int e[3][3];
+        ivec *v1[2][2];
+        loop(y, 2) loop(x, 2)
+            v1[x][y] = v+octaindex(d, x, y, z);
+
+        loop(y, 3) loop(x, 3)       // gen edges
         {
-            int dc = octacoord(j>>2,i);
+            if(x==1 && y==1)        // center
+            {
+                int c1 = midedge(*v1[0][0], *v1[1][1], R(d), d, p1 = perfect);
+                int c2 = midedge(*v1[0][1], *v1[1][0], R(d), d, p2 = perfect);
+                e[x][y] = z ? max(c1,c2) : min(c1,c2);
+                perfect = e[x][y]==c1 ? p1 : p2;
+            }
+            else if(((x+y)&1)==0)   // corner
+                e[x][y] = (*v1[x>>1][y>>1])[d];
+            else                    // edge
+            {
+                int a = min(x, y), b = x&1;
+                e[x][y] = midedge(*v1[a][a], *v1[a^b][a^(1-b)], x==1?R(d):C(d), d, perfect);
+            };
+        };
 
-            if(f[j]==f[j^1] && f[j]==f[j^2])     // fix peeling
-                f[rvertedge(j, f[j])] = j&1 ? 0 : 0x88;
-            else if(dc*8 != edgeget(f[j], !dc))  // fix cracking
-                edgeset(ch[oppositeocta(j>>2,i)].edges[j], dc, dc*8);
+        loopi(8)
+        {
+            ivec o(i);
+            ch[i].texture[j] = c.texture[j];
+            loop(y, 2) loop(x, 2) // assign child edges
+            {
+                int ce = e[x+o[R(d)]][y+o[C(d)]];
+                if(o[D(d)]) ce -= 8;
+                ce = min(max(ce, 0), 8);
+                uchar &f = cubeedge(ch[i], d, x, y);
+                edgeset(f, z, ce);
+            };
         };
     };
+
     validatec(ch, hdr.worldsize);
+    return perfect;
 };
 
 bool crushededge(uchar e, int dc) { return dc ? e==0 : e==0x88; };
@@ -1236,168 +1252,62 @@ int visibleorient(cube &c, int orient)
     return orient;
 };
 
-int firstcube(cube *c, int x, int y, int z, int d)
+bool remip(cube &c, int x, int y, int z, int size)
 {
-    int j = octaindex(d, x, y, z);
-    int k = oppositeocta(d, j);
-    if(isempty(c[j])) j = k;
-    else if(!touchingface(c[k], (d<<1)+z) && !isempty(c[k])) return 100; // make sure no gap between cubes
-    if(isempty(c[j])) return -1;
-    return j;
-};
+    cube *ch = c.children;
+    if(!ch) return true;
+    bool perfect = true;
+    uchar mat = ch[0].material;
 
-bool lineup(int &a, int &b, int &c)
-{
-    if(b<0) return true;
-    if(a<0) a = b-(c-b);
-    else
-    if(c<0) c = b-(a-b);
-    return a == b-(c-b) && a>=0 && c>=0 && a<=16 && c<=16;
-};
-
-bool match(int a, int b, int &s) { s = (a < 0 ? b : a); return s == b || b<0; };
-
-bool quadmatch(int a, int b, int c, int d, int &s) { int x, y; return match(a,b,x) && match(c,d,y) && match(x,y,s); };
-
-bool remip(cube &parent, int x, int y, int z, int size, bool full)
-{
-    cube *ch = parent.children;
-    if(ch==NULL) return true;
-    bool r = true, e = true;
     loopi(8)
     {
         ivec o(i, x, y, z, size);
-        if(!remip(ch[i], o.x, o.y, o.z, size>>1, full)) r = false;
-        else
-        if(!isempty(ch[i])) e = false;
-        if(ch[i].material!=ch[0].material) r = false;
+        if(!remip(ch[i], o.x, o.y, o.z, size>>1)) perfect = false;
     };
-    if(!r) return false;
-    solidfaces(parent);
-    if(e) { emptyfaces(parent); }
-    else loopi(6)
+
+    if(!perfect) return false;
+
+    cube n = c;
+    forcemip(n);
+    n.children = NULL;
+    if(!subdividecube(n))
+        { freeocta(n.children); return false; }
+
+    cube *nh = n.children;
+    loopi(8)
     {
-        int e[4][4], t[4], q[4];
-        int d = dimension(i), dc = dimcoord(i);
+        if (ch[i].faces[0] != nh[i].faces[0] ||
+            ch[i].faces[1] != nh[i].faces[1] ||
+            ch[i].faces[2] != nh[i].faces[2] ||
+            ch[i].material != mat)
+            { freeocta(nh); return false; }
 
-        { loop(xx, 4) loop(yy, 4) e[yy][xx] = -1; };
+        if(isempty(ch[i]) && isempty(nh[i])) continue;
 
-        loopk(4) // get corners
-        {
-            q[k] = firstcube(ch, k&1, (k&2)>>1, dc, d);
-            if(q[k]>8) return false;
-            if(q[k]<0 || visibleorient(ch[q[k]], i)!=i) t[k] = -1;  // FIXME gilt this leave q[k] at -1
-            else
-            {
-                t[k] = ch[q[k]].texture[i];
-                loop(x, 2) loop(y, 2)
-                    e[y+(k&2)][x+(k&1)*2] = edgeget(cubeedge(ch[q[k]],d,x,y), dc)+8*octacoord(d, q[k]);
-            };
-        };
-
-        int tex=-1, center, m1, m2, m3, m4;
-        if(!quadmatch(e[1][1], e[1][2], e[2][1], e[2][2], center)) return false;
-
-        if(center>=0)
-        {
-            if(!(lineup(e[0][0], center, e[3][3]) || lineup(e[3][0], center, e[0][3])) || // check middles
-               !match(e[0][1], e[0][2], m1) ||
-               !match(e[1][0], e[2][0], m2) ||
-               !match(e[3][1], e[3][2], m3) ||
-               !match(e[1][3], e[2][3], m4) ||
-               !lineup(e[0][0], m1, e[0][3]) ||
-               !lineup(e[0][0], m2, e[3][0]) ||
-               !lineup(e[3][0], m3, e[3][3]) ||
-               !lineup(e[0][3], m4, e[3][3]) ||
-               (e[0][0]&1)==1 ||
-               (e[0][3]&1)==1 ||
-               (e[3][0]&1)==1 ||
-               (e[3][3]&1)==1) return false;
-
-            if(full) loopk(4)
-            {
-                ivec o(q[k], x, y, z, size);
-                //ASSERT(q[k]>=0 && q[k]<8);
-                if(q[k]<0 || !visibleface(ch[q[k]], i, o.x, o.y, o.z, size))    // FIXME gilt this then uses that -1 for indexing into ch | temp fix ok?
-                    t[k] = -1;
-            };
-
-            if(!quadmatch(t[0], t[1], t[2], t[3], tex)) return false;
-
-            loopk(4) edgeset(parent.edges[d*4+k], dc, e[((k&2)>>1)*3][(k&1)*3]>>1);
-        }
-
-        if(tex>=0) parent.texture[i] = tex;
+        ivec o(i, x, y, z, size);
+        loop(orient, 6)
+            if(visibleface(ch[i], orient, o.x, o.y, o.z, size) &&
+                ch[i].texture[orient] != n.texture[orient])
+                { freeocta(nh); return false; }
     };
-    if(!isvalidcube(parent, x, y, z, size)) return false;
-    parent.material = ch[0].material;
-    discardchildren(parent);
+
+    freeocta(nh);
+    discardchildren(c);
+    loopi(3) c.faces[i] = n.faces[i];
+    loopi(6) c.texture[i] = n.texture[i];
+    c.material = mat;
     return true;
 };
 
-/*
-VAR(lodremipboundbox, 0, 0, 1);
-
-void forcemip(cube &parent)
-{
-    cube *ch = parent.children;
-    if(ch==NULL) return;
-    bool e = true;
-    loopi(8)
-    {
-        forcemip(ch[i]);
-        if(!isempty(ch[i])) e = false;
-    };
-    solidfaces(parent);
-    if(e)
-        { emptyfaces(parent); }
-    else
-    loopi(6)
-    {
-        int d = dimension(i), dc = dimcoord(i), tex[2][2] = {{-1,-1},{-1,-1}};
-        int m = dc>0?0:16;
-        bool empty[2][2], settex = false;
-
-        loop(xx, 2) loop(yy, 2)
-        {
-            int v = dc>0?0:16, q = firstcube(ch, xx, yy, dc, d);
-            if(empty[xx][yy] = q<0) continue;
-            if(q>8) q = octaindex(d, xx, yy, dc);
-
-            uchar t = ch[q].texture[i];
-            if(!settex) parent.texture[i] = t;
-            settex = true;
-
-            loop(x, 2) loop(y, 2)
-            {
-                int e = edgeget(cubeedge(ch[q],d,x,y), dc)+8*octacoord(d, q);
-                v = dc>0 ? max(v,e) : min(v,e);
-                if(t==tex[x][y]) parent.texture[i] = t;
-            };
-
-            tex[xx][yy] = t;
-            m = dc>0 ? max(v,m) : min(v,m);
-            edgeset(cubeedge(parent,d,xx,yy), dc, v>>1);
-        };
-
-        loop(x, 2) loop(y, 2) if(empty[x][y] || lodremipboundbox==1)
-            edgeset(cubeedge(parent,d,x,y), dc, m>>1);
-    };
-    parent.material = ch[0].material;
-};
-*/
-
-void remipworld(int full)
+void remipworld()
 {
     loopi(8)
     {
         ivec o(i, 0, 0, 0, hdr.worldsize>>1);
-        remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2, full!=0);
+        remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2);
     };
     allchanged();
+    entitiesinoctanodes();
 };
 
-COMMANDN(remip, remipworld, ARG_1INT);
-
-
-
+COMMANDN(remip, remipworld, ARG_NONE);

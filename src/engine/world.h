@@ -82,6 +82,7 @@ struct ivec
     int operator [](int i) const { return v[2 - i]; }
     //int idx(int i) { return v[i]; };
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };
+	ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; };    
 };
 
 enum                            // cube empty-space materials
