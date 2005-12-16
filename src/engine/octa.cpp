@@ -91,8 +91,6 @@ COMMAND(printcube, ARG_NONE);
 
 bool isvalidcube(cube &c, int x, int y, int z, int size)
 {
-    if(vectorformat==0) return true;
-
     freeclipplanes(c);
     setcubeclip(c, x, y, z, size);
 

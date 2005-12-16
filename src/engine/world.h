@@ -8,7 +8,7 @@ enum                            // hardcoded texture numbers
     DEFAULT_CEIL
 };
 
-#define MAPVERSION 8            // bump if map format changes, see worldio.cpp
+#define MAPVERSION 9            // bump if map format changes, see worldio.cpp
 
 struct header                   // map file format header
 {
@@ -41,6 +41,9 @@ x is the coordinate of the ROW dimension
 y is the coordinate of the COL dimension
 z is the coordinate of the reference dimension (DEPTH)
 
+typically, if d is not used, then it is implicitly the Z dimension.
+ie: d=z => x=x, y=y, z=z
+
 **/
 
 // DIM: Z=0 Y=1 X=2.
@@ -52,7 +55,7 @@ struct ivec
 {
     union
     {
-        struct { int x, y, z; }; // base system. also implicitly oriented around Z axis
+        struct { int x, y, z; };
         int v[3];
     };
 

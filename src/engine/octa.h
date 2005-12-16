@@ -1,7 +1,5 @@
 // 6-directional octree heightfield map format
 
-extern int vectorformat; // The big format switch
-
 struct elementset
 {
     int texture;

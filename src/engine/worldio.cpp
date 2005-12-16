@@ -83,7 +83,7 @@ void savec(cube *c, gzFile f)
                 {
                     surfaceinfo tmp = c[i].surfaces[j];
                     endianswap(&tmp.x, sizeof(ushort), 3);
-                    gzwrite(f, &tmp, sizeof(surfaceinfo)); 
+                    gzwrite(f, &tmp, sizeof(surfaceinfo));
                 }
             };
             if(c[i].children) savec(c[i].children, f);
@@ -165,7 +165,7 @@ void save_world(char *mname)
             entity tmp = *et->getents()[i];
             endianswap(&tmp.o, sizeof(int), 3);
             endianswap(&tmp.attr1, sizeof(short), 5);
-            gzwrite(f, &tmp, sizeof(entity)); 
+            gzwrite(f, &tmp, sizeof(entity));
             et->writeent(*et->getents()[i]);
         };
     };
@@ -201,42 +201,45 @@ void load_world(char *mname)        // still supports all map formats that have 
 
     show_out_of_renderloop_progress(0, "loading entities...");
     et->getents().setsize(0);
-	
+
     loopi(hdr.numents)
     {
         extentity &e = *et->newentity();
         et->getents().add(&e);
-        gzread(f, &e, sizeof(entity)); 
+        gzread(f, &e, sizeof(entity));
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
-		e.inoctanode = false;
+        e.inoctanode = false;
         et->readent(e);
-		if(e.o.x<0 || e.o.x>hdr.worldsize || 
-		   e.o.y<0 || e.o.y>hdr.worldsize ||
-		   e.o.z<0 || e.o.z>hdr.worldsize) 
-		{
-			if(e.type != ET_LIGHT) 
+        if(e.o.x<0 || e.o.x>hdr.worldsize ||
+           e.o.y<0 || e.o.y>hdr.worldsize ||
+           e.o.z<0 || e.o.z>hdr.worldsize)
+        {
+            if(e.type != ET_LIGHT)
             {
                 conoutf("warning: ent outside of world: enttype[%d] index %d (%f, %f, %f)", e.type, i, e.o.x, e.o.y, e.o.z);
-			    //et->getents().pop();
+                //et->getents().pop();
             };
-		};
+        };
     };
 
     show_out_of_renderloop_progress(0, "clearing world...");
     freeocta(worldroot);
-    
+
     show_out_of_renderloop_progress(0, "loading octree...");
     worldroot = loadchildren(f);
-    
+
+    if(hdr.version <= 8)
+        converttovectorworld();
+
     show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
 
     resetlightmaps();
     if(hdr.version >= 7)
     {
-        loopi(hdr.lightmaps) 
+        loopi(hdr.lightmaps)
         {
             show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");
             LightMap &lm = lightmaps.add();
@@ -251,7 +254,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     gzclose(f);
 
     allchanged();
-    
+
     conoutf("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     conoutf("%s", hdr.maptitle);
     estartmap(mname);
@@ -266,7 +269,7 @@ void load_world(char *mname)        // still supports all map formats that have 
         extentity &e = *et->getents()[i];
         if(e.type==ET_MAPMODEL) loadmodel(getmminfo(e.attr2).name);
     };
-	entitiesinoctanodes();
+    entitiesinoctanodes();
 };
 
 void savecurrentmap() { save_world(cl->getclientmap()); };

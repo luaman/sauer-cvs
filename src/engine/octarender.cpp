@@ -125,33 +125,6 @@ void genedgespanvert(ivec &p, cube &c, vec &v)
     v.z = max(0, min(8, v.z));
 };
 
-int vectorformat = 0;
-
-VARF(vectorbasedrendering, 0, 0, 1,
-{
-    vectorformat = vectorbasedrendering;
-    allchanged();
-});
-
-void genvectorvert(ivec &p, cube &c, vec &v)
-{
-    if(vectorformat==1)
-    {
-        vertrepl(c, p, v, 0, ((int *)&p)[2]);
-        vertrepl(c, p, v, 1, ((int *)&p)[1]);
-        vertrepl(c, p, v, 2, ((int *)&p)[0]);
-    }
-    else
-        genedgespanvert(p, c, v);
-};
-
-void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
-{
-    genvectorvert(p, c, v);
-    v.mul(size);
-    v.add(pos);
-};
-
 void edgespan2vectorcube(cube &c)
 {
     vec v;
@@ -175,14 +148,24 @@ void edgespan2vectorcube(cube &c)
     c = n;
 };
 
-void convertvectorworld()
+void converttovectorworld()
 {
-    vectorformat = 1;
     loopi(8) edgespan2vectorcube(worldroot[i]);
-    allchanged();
 };
 
-COMMAND(convertvectorworld, ARG_NONE);
+void genvectorvert(ivec &p, cube &c, vec &v)
+{
+    vertrepl(c, p, v, 0, ((int *)&p)[2]);
+    vertrepl(c, p, v, 1, ((int *)&p)[1]);
+    vertrepl(c, p, v, 2, ((int *)&p)[0]);
+};
+
+void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
+{
+    genvectorvert(p, c, v);
+    v.mul(size);
+    v.add(pos);
+};
 
 const int cubecoords[8][3] = // verts of bounding cube
 {
@@ -265,15 +248,15 @@ uint faceedges(cube &c, int orient)
 
 bool faceedgegt(uint cfe, uint ofe)
 {
-    if(vectorformat==1) return true; // this test no longer valid
+    return true; // this test no longer valid after vector format switch
 
-    loopi(4)
+/*    loopi(4)
     {
         uchar o = ((uchar *)&ofe)[i];
         uchar c = ((uchar *)&cfe)[i];
         if ((edgeget(o, 0) > edgeget(c, 0)) || (edgeget(o, 1) < edgeget(c, 1))) return true;
     };
-    return false;
+    return false;*/
 };
 
 bool collapsedface(uint cfe)

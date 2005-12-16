@@ -95,6 +95,7 @@ extern void allchanged();
 extern void rendermaterials();
 extern void rendersky();
 extern void drawface(int orient, int x, int y, int z, int size, float offset);
+extern void converttovectorworld();
 
 // octarender
 extern void vaclearc(cube *c);

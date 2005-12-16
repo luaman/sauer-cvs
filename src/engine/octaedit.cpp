@@ -437,9 +437,6 @@ void pushedge(uchar &edge, int dir, int dc)
 
 void linkedpush(cube &c, int d, int x, int y, int dc, int dir)
 {
-    if(vectorformat==0)
-        return pushedge(cubeedge(c, d, x, y), dir, dc);
-
     ivec v, p;
     getcubevector(c, d, x, y, dc, v);
 
@@ -527,7 +524,7 @@ void editface(int dir, int mode)
                     if(y==0 && my==0 && selcy) continue;
                     if(x==sel.s[R(d)]-1 && mx==1 && (selcx+selcxs)&1) continue;
                     if(y==sel.s[C(d)]-1 && my==1 && (selcy+selcys)&1) continue;
-                    if(vectorformat==1 && (p[mx+my*2] != ((uchar *)&bak)[mx+my*2])) continue;
+                    if(p[mx+my*2] != ((uchar *)&bak)[mx+my*2]) continue;
 
                     linkedpush(c, d, mx, my, dc, seldir);
                 };
