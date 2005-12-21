@@ -1,63 +1,66 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-	<head>
-		<title>Sauerbraten History</title>
-		<link href="style.css" type="text/css" rel="stylesheet">
-	</head>
-	<body>
-		<div>Sauerbraten Change History</div>
-		<UL>
-		    <li> "writeobj" command writes a sauer level out as .obj file for potential use in other apps.
-		    <li> added "text particles": small bits of text that can float in 3d space. Currently used for damage numbers.
-		    <li> gameplay changes: pistol damage 40 -> 25
-		    <li> "mastermode" for having easy, cheater-free multiplayer games with the people you want.
-		    read the section "Cheating & Multiplayer" in game.html to learn how to use it.
-			<li> gettex command
-			<li> fixed sky HOM when fog was closer than size of world
-			</UL>
-		<div>2005_11_07_agc_edition</div>
-		<UL>
-			<li>
-			warning will appear if player cannot see most of selection when trying to edit
-			<li>
-			selecting now ignores the cube the player is currently in
-			<li>
-			"importcube" command for converting old cube maps
-			<LI>
-			fixed animation blending
-			<LI>
-			fixed being at the surface of water generating many sound events
-			<LI>
-			did an endless amount of more refactoring to seperate the game code out more. 
-			Multiple "games" can now coexist in the same exe
-			<li>
-			"lanconnect" command for broadcasting connection requests over a LAN
-			<LI>
-			"maxparticledistance" variable culls all particle splashes at distance
-			<LI>
-			"maxmodelradiusdistance" variable calls models at distance, relative to their 
-			size. One day we will render models as sprites in the distance, but for now 
-			this is a cheap way to significantly reduce the rendering load on large maps
-			<LI>
-			"loddistance" sets the distance at which vertex array blocks of world geometry 
-			use a lower LOD approximation. Significantly reduces amount of small detail 
-			rendered at distance. Useful on larger maps only.
-			<LI>
-				"lodsize" must be set to 32 to turn lod on for a map (use only for really large 
-				maps), 0 turns it off. saved with the map.</LI></UL>
-		<div>2005_08_15_quakecon_edition</div>
-		<ul>
-			<LI>
-			animation blending... makes 3rd person view, other players&nbsp;and monsters 
-			look much better
-			<LI>
-			now saves to config.cfg automatically so you can change settings persistently 
-			in game
-			<LI>
-				first attempt at&nbsp;factoring out all gameplay code, results may be buggy</LI>
-		</ul>
-		<div>[old history]</div>
-		<pre>
+    <head>
+        <title>Sauerbraten History</title>
+        <link href="style.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+        <div>Sauerbraten Change History</div>
+        <UL>
+            <li> interpretation of cubes edges switched from 'edgepan' to 'vector'
+			<li> passthrough command. normally cubes of equal size to the grid are given priority when selecting; 
+			passthrough removes this priority while held down. (default key: LCTRL)
+            <li> "writeobj" command writes a sauer level out as .obj file for potential use in other apps.
+            <li> added "text particles": small bits of text that can float in 3d space. Currently used for damage numbers.
+            <li> gameplay changes: pistol damage 40 -> 25
+            <li> "mastermode" for having easy, cheater-free multiplayer games with the people you want.
+            read the section "Cheating & Multiplayer" in game.html to learn how to use it.
+            <li> gettex command
+            <li> fixed sky HOM when fog was closer than size of world
+            </UL>
+        <div>2005_11_07_agc_edition</div>
+        <UL>
+            <li>
+            warning will appear if player cannot see most of selection when trying to edit
+            <li>
+            selecting now ignores the cube the player is currently in
+            <li>
+            "importcube" command for converting old cube maps
+            <LI>
+            fixed animation blending
+            <LI>
+            fixed being at the surface of water generating many sound events
+            <LI>
+            did an endless amount of more refactoring to seperate the game code out more.
+            Multiple "games" can now coexist in the same exe
+            <li>
+            "lanconnect" command for broadcasting connection requests over a LAN
+            <LI>
+            "maxparticledistance" variable culls all particle splashes at distance
+            <LI>
+            "maxmodelradiusdistance" variable calls models at distance, relative to their
+            size. One day we will render models as sprites in the distance, but for now
+            this is a cheap way to significantly reduce the rendering load on large maps
+            <LI>
+            "loddistance" sets the distance at which vertex array blocks of world geometry
+            use a lower LOD approximation. Significantly reduces amount of small detail
+            rendered at distance. Useful on larger maps only.
+            <LI>
+                "lodsize" must be set to 32 to turn lod on for a map (use only for really large
+                maps), 0 turns it off. saved with the map.</LI></UL>
+        <div>2005_08_15_quakecon_edition</div>
+        <ul>
+            <LI>
+            animation blending... makes 3rd person view, other players&nbsp;and monsters
+            look much better
+            <LI>
+            now saves to config.cfg automatically so you can change settings persistently
+            in game
+            <LI>
+                first attempt at&nbsp;factoring out all gameplay code, results may be buggy</LI>
+        </ul>
+        <div>[old history]</div>
+        <pre>
 May 22 2005:
 ----------------
 - 101 small changes to bring all the old cube functionality back up and running,
@@ -103,9 +106,9 @@ Apr 23 2005:
 Apr 22 2005:
 ----------------
 - added reorient command.
-- changed collision detection. Now player treated as rectangle. Much simpler and faster. 
+- changed collision detection. Now player treated as rectangle. Much simpler and faster.
   still need to find proper floorheight
-- Collision clipping planes added to cube structure. Are generated at same time as vertexes are. 
+- Collision clipping planes added to cube structure. Are generated at same time as vertexes are.
   (currently static arrays, though will probably allocate dynamically in future to save mem)
 - also a few other minor changes to subdivision etc, since no need for gentris().
 
@@ -196,7 +199,7 @@ Dec 4 2004:
 Nov 30 2004:
 ----------------
 - tiny bug fixes, like #8 and selgrid init
-- selection support for rotation 
+- selection support for rotation
 - changed edge configuration. simplifies flip and rotate, while everything else should be unaffected.
 
 Nov 28 2004:
@@ -239,10 +242,10 @@ May 15 2004:
 ----------------
 - fixed subdivision happening in cursorupdate, cube stat
 - fixed subdivisions 'peeling' and 'cracking' to a decent degree
-- changed fill command to no longer fill cube when scrolling down 
+- changed fill command to no longer fill cube when scrolling down
 - added selection functionality to fill command
 - added ad-hoc vertex lighting editing
-- more rearrangement of faceverts. 
+- more rearrangement of faceverts.
 - added fixfaces to fix old maps that are displayed differently because of faceverts changes (remove after next release)
 - finished empty_world / newmap
 - updated menu.cfg, autoexec
@@ -267,5 +270,5 @@ May 06 2004:
 - cleaned up octaedit
 - hacked a fix for a culling error in touchingfaces
 </pre>
-	</body>
+    </body>
 </html>
