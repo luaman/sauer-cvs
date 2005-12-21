@@ -64,20 +64,13 @@ void freeoctaentities(cube &c)
     c.ents = NULL;
 };
 
-void traverseoctaentity(bool add, int id, cube *c, int cx, int cy, int cz, int size, vec &bo, vec &br)
+void traverseoctaentity(bool add, int id, cube *c, ivec &cor, int size, ivec &bo, ivec &br)
 {
-    uchar possible = 0xFF;
-    if(cz+size < bo.z-br.z) possible &= 0xF0; // need to refactor
-    if(cz+size > bo.z+br.z) possible &= 0x0F;
-    if(cy+size < bo.y-br.y) possible &= 0xCC;
-    if(cy+size > bo.y+br.y) possible &= 0x33;
-    if(cx+size < bo.x-br.x) possible &= 0xAA;
-    if(cx+size > bo.x+br.x) possible &= 0x55;
-    loopi(8) if(possible & (1<<i))
+    loopoctabox(cor, size, bo, br)
     {
-        ivec o(i, cx, cy, cz, size);
+        ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children != NULL && size > octaentsize)
-            traverseoctaentity(add, id, c[i].children, o.x, o.y, o.z, size>>1, bo, br);
+            traverseoctaentity(add, id, c[i].children, o, size>>1, bo, br);
         else if(add)
         {
             if(!c[i].ents) c[i].ents = new octaentities();
@@ -89,34 +82,39 @@ void traverseoctaentity(bool add, int id, cube *c, int cx, int cy, int cz, int s
     };
 };
 
-bool getmmboundingbox(extentity &e, vec &o, vec &r)
+bool getmmboundingbox(extentity &e, ivec &o, ivec &r)
 {
     if(e.type!=ET_MAPMODEL) return false;
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi || !mmi.h || !mmi.rad) return false;
-    r.x = r.y = float(mmi.rad);
-    r.z = float(mmi.h)/2.0f;
-    o = e.o;
-    o.z += float(mmi.zoff+e.attr3)+r.z;
+    r.x = r.y = mmi.rad*2;
+    r.z = mmi.h;
+	r.add(4);
+    o.x = int(e.o.x)-mmi.rad;
+    o.y = int(e.o.y)-mmi.rad;
+    o.z = int(e.o.z)+mmi.zoff+e.attr3;
+	o.add(-2);
     return true;
 };
 
+ivec orig(0,0,0);
+
 void addoctaentity(int id)
 {
-    vec o, r;
+    ivec o, r;
     extentity &e = *et->getents()[id];
     if(e.inoctanode || !getmmboundingbox(e, o, r)) return;
     e.inoctanode = true;
-    traverseoctaentity(true, id, worldroot, 0, 0, 0, hdr.worldsize>>1, o, r);
+    traverseoctaentity(true, id, worldroot, orig, hdr.worldsize>>1, o, r);
 };
 
 void removeoctaentity(int id)
 {
-    vec o, r;
+    ivec o, r;
     extentity &e = *et->getents()[id];
     if(!e.inoctanode || !getmmboundingbox(e, o, r)) return;
     e.inoctanode = false;
-    traverseoctaentity(false, id, worldroot, 0, 0, 0, hdr.worldsize>>1, o, r);
+    traverseoctaentity(false, id, worldroot, orig, hdr.worldsize>>1, o, r);
 };
 
 void entitiesinoctanodes()
@@ -134,21 +132,18 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
-bool pointincube(const cube &c, const vec &v)
+bool pointincube(const clipplanes &p, const vec &v)
 {
-    ASSERT(c.clip);
-    vec &o = c.clip->o;
-    vec &r = c.clip->r;
-    if(v.x > o.x+r.x || v.x < o.x-r.x ||
-       v.y > o.y+r.y || v.y < o.y-r.y ||
-       v.z > o.z+r.z || v.z < o.z-r.z) return false;
-    loopi(c.clip->size) if(c.clip->p[i].dist(v)>1e-3f) return false;
+    if(v.x > p.o.x+p.r.x || v.x < p.o.x-p.r.x ||
+       v.y > p.o.y+p.r.y || v.y < p.o.y-p.r.y ||
+       v.z > p.o.z+p.r.z || v.z < p.o.z-p.r.z) return false;
+    loopi(p.size) if(p.p[i].dist(v)>1e-3f) return false;
     return true;
 };
 
 bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, float &dist)
 {
-    if(pointincube(c, o)) { dest = o; return true; };
+    if(pointincube(*c.clip, o)) { dest = o; return true; };
 
     loopi(c.clip->size)
     {
@@ -160,7 +155,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, fl
         vec d(o);
         pushvec(d, ray, f+0.1f);
 
-        if(pointincube(c, d))
+        if(pointincube(*c.clip, d))
         {
             dist += f+0.1;
             dest = d;
@@ -170,6 +165,11 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, fl
     return false;
 };
 
+bool passthroughcube = false;
+void passthrough(bool isdown) { passthroughcube = isdown; };
+COMMAND(passthrough, ARG_DOWN);
+
+// modes: 0 = world only, 1 = world and object BB, 2 = per polygon, 3 = per poly with transparency, clipping, skip first cube
 float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size)
 {
     cube *last = NULL;
@@ -190,7 +190,7 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
         if(!(last==NULL && size>0)) // skip first cube if size set
         {
             if((clipmat && isclipped(c.material)) ||
-                (lusize==size && !isempty(c)) ||
+                (lusize==size && !isempty(c) && !passthroughcube) ||
                 (radius>0 && dist>radius) ||
                 isentirelysolid(c) ||
                 last==&c)
@@ -308,22 +308,15 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     return false;
 };
 
-bool octacollide(dynent *d, cube *c, int cx, int cy, int cz, int size) // collide with octants
+bool octacollide(dynent *d, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
 {
-    uchar possible = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
-    if (cz+size < d->o.z-d->eyeheight)  possible &= 0xF0; // not in a -ve Z octant
-    if (cz+size > d->o.z+d->aboveeye)   possible &= 0x0F; // not in a +ve Z octant
-    if (cy+size < d->o.y-d->radius)     possible &= 0xCC; // not in a -ve Y octant
-    if (cy+size > d->o.y+d->radius)     possible &= 0x33; // etc..
-    if (cx+size < d->o.x-d->radius)     possible &= 0xAA;
-    if (cx+size > d->o.x+d->radius)     possible &= 0x55;
-    loopi(8) if(possible & (1<<i))
+    loopoctabox(cor, size, bo, bs)
     {
         if(c[i].ents) if(!mmcollide(d, *c[i].ents)) return false;
-        ivec o(i, cx, cy, cz, size);
+        ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children)
         {
-            if(!octacollide(d, c[i].children, o.x, o.y, o.z, size>>1)) return false;
+            if(!octacollide(d, bo, bs, c[i].children, o, size>>1)) return false;
         }
         else if(c[i].material!=MAT_NOCLIP && (!isempty(c[i]) || isclipped(c[i].material)))
         {
@@ -338,7 +331,11 @@ bool collide(dynent *d)
 {
     floorheight = 0;
     wall.x = wall.y = wall.z = 0;
-    if(!octacollide(d, worldroot, 0, 0, 0, (hdr.worldsize>>1))) return false; // collide with world
+	ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
+		 bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
+	bo.add(-2); // guard space for rounding errors
+	bs.add(4);
+    if(!octacollide(d, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
     loopi(cl->numdynents())

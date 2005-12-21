@@ -51,6 +51,12 @@ ie: d=z => x=x, y=y, z=z
 #define R(d) ((d)==0?2:(d)-1)  // gets relative row dimension of given
 #define C(d) ((d)==2?0:(d)+1)  // gets relative column dimension of given
 
+/*
+const int D[3] = {0, 1, 2};
+const int R[3] = {2, 0, 1};
+const int C[3] = {1, 2, 0};
+*/
+
 struct ivec
 {
     union
@@ -86,6 +92,7 @@ struct ivec
     //int idx(int i) { return v[i]; };
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };
 	ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; };    
+	ivec &add(int n) { x += n; y += n; z += n; return *this; }; 
 };
 
 enum                            // cube empty-space materials

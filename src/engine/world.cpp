@@ -40,6 +40,17 @@ void entproperty(int prop, int amount)
 	addoctaentity(e);
 };
 
+
+void entmove(int dir, int dist)
+{
+    if(noedit()) return;
+    int e = closestent();
+    if(e<0||dir<0||dir>2) return;
+	removeoctaentity(e);
+    et->getents()[e]->o[dir] += dist;
+	addoctaentity(e);
+};
+
 void delent()
 {
     if(noedit()) return;
@@ -171,6 +182,7 @@ int findentity(int type, int index)
 
 COMMAND(delent, ARG_NONE);
 COMMAND(dropent, ARG_NONE);
+COMMAND(entmove, ARG_2INT);
 COMMAND(entproperty, ARG_2INT);
 
 void empty_world(int factor, bool force)    // main empty world creation routine, if passed factor -1 will enlarge old world by 1

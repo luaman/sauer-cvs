@@ -81,6 +81,8 @@ extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
+extern uchar octantrectangleoverlap(ivec &c, int size, ivec &o, ivec &s);
+
 
 // octaedit
 extern void editdrag(bool on);
@@ -146,8 +148,7 @@ extern void computescreen(char *text);
 
 // physics
 extern void mousemove(int dx, int dy);
-extern bool pointincube(const cube &c, const vec &v);
-extern void setcubeclip(cube &c, int x, int y, int z, int size);
+extern bool pointincube(const clipplanes &p, const vec &v);
 
 extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);

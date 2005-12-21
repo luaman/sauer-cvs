@@ -114,29 +114,19 @@ cube &blockcube(int x, int y, int z, block3 &b, int rgrid) // looks up a world c
 #define loopselxyz(f)    { makeundo(); loopxyz(sel, sel.grid, f); changed(); }
 #define selcube(x, y, z) blockcube(x, y, z, sel, sel.grid)
 
-uchar octatouchblock(block3 &b, int cx, int cy, int cz, int size)
-{
-    uchar m = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
-    if(cz+size <= b.o.z)         m &= 0xF0; // not in a -ve Z octant
-    if(cz+size >= b.o.z+b.us(0)) m &= 0x0F; // not in a +ve Z octant
-    if(cy+size <= b.o.y)         m &= 0xCC; // not in a -ve Y octant
-    if(cy+size >= b.o.y+b.us(1)) m &= 0x33; // etc..
-    if(cx+size <= b.o.x)         m &= 0xAA;
-    if(cx+size >= b.o.x+b.us(2)) m &= 0x55;
-    return m;
-};
-
 ////////////// cursor ///////////////
 
 int selchildcount=0;
-
-void countselchild(cube *c=worldroot, int cx=0, int cy=0, int cz=0, int size=hdr.worldsize/2)
+ivec origin(0,0,0);
+   
+void countselchild(cube *c, ivec &cor, int size)
 {
-    uchar m = octatouchblock(sel, cx, cy, cz, size);
-    loopi(8) if(m&(1<<i))
+	ivec ss(sel.s);
+	ss.mul(sel.grid);
+    loopoctabox(cor, size, sel.o, ss)
     {
-        ivec o(i, cx, cy, cz, size);
-        if(c[i].children) countselchild(c[i].children, o.x, o.y, o.z, size/2);
+        ivec o(i, cor.x, cor.y, cor.z, size);
+        if(c[i].children) countselchild(c[i].children, o, size/2);
         else selchildcount++;
     };
 };
@@ -236,7 +226,7 @@ void cursorupdate()
 
     corner = (cor[R(d)]-lu[R(d)]/g2)+(cor[C(d)]-lu[C(d)]/g2)*2;
     selchildcount = 0;
-    countselchild();
+    countselchild(worldroot, origin, hdr.worldsize/2);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -259,12 +249,11 @@ void cursorupdate()
 
 //////////// ready changes to vertex arrays ////////////
 
-void readychanges(block3 &b, cube *c, int cx, int cy, int cz, int size)
+void readychanges(block3 &b, cube *c, ivec &cor, int size)
 {
-    uchar m = octatouchblock(b, cx, cy, cz, size);
-    loopi(8) if(m&(1<<i))
+    loopoctabox(cor, size, b.o, b.s)
     {
-        ivec o(i, cx, cy, cz, size);
+        ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].va)             // removes va s so that octarender will recreate
         {
             destroyva(c[i].va);
@@ -277,7 +266,7 @@ void readychanges(block3 &b, cube *c, int cx, int cy, int cz, int size)
                 solidfaces(c[i]);
                 discardchildren(c[i]);
             }
-            else readychanges(b, c[i].children, o.x, o.y, o.z, size/2);
+            else readychanges(b, c[i].children, o, size/2);
         };
 		freeoctaentities(c[i]);
     };
@@ -285,14 +274,14 @@ void readychanges(block3 &b, cube *c, int cx, int cy, int cz, int size)
 
 void changed()
 {
-    block3 b = sel;
+	block3 b = sel;
     loopi(3) b.s[i] *= b.grid;
     b.grid = 1;
     loopi(3)                    // the changed blocks are the selected cubes
     {
         b.o[i] -= 1;
         b.s[i] += 2;
-        readychanges(b, worldroot, 0, 0, 0, hdr.worldsize/2);
+        readychanges(b, worldroot, origin, hdr.worldsize/2);
         b.o[i] += 1;
         b.s[i] -= 2;
     };
@@ -562,16 +551,6 @@ void selextend()
 }
 
 COMMAND(selextend, ARG_NONE);
-
-void entmove(int dir, int dist)
-{
-    if(noedit()) return;
-    int e = closestent();
-    if(e<0||dir<0||dir>2) return;
-    et->getents()[e]->o[dir] += dist;
-}
-
-COMMAND(entmove, ARG_2INT);
 
 /////////// texture editing //////////////////
 

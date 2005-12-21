@@ -91,22 +91,15 @@ COMMAND(printcube, ARG_NONE);
 
 bool isvalidcube(cube &c, int x, int y, int z, int size)
 {
-    freeclipplanes(c);
-    setcubeclip(c, x, y, z, size);
-
+    clipplanes p;
+	genclipplanes(c, x, y, z, size, p);
     loopi(8) // test that cube is convex
     {
         vec v;
         calcvert(c, x, y, z, size, v, i);
-
-        if(!pointincube(c, v))
-        {
-            freeclipplanes(c);
+        if(!pointincube(p, v))
             return false;
-        };
     };
-
-    freeclipplanes(c);
     return true;
 };
 
@@ -182,4 +175,18 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
         case O_RIGHT:  x += size; break;
     };
     return lookupcube(x, y, z, rsize);
+};
+
+uchar octantrectangleoverlap(ivec &c, int size, ivec &o, ivec &s)
+{
+    uchar p = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
+	ivec v(c);
+	v.add(size);
+    if(v.z <= o.z)     p &= 0xF0; // not in a -ve Z octant
+    if(v.z >= o.z+s.z) p &= 0x0F; // not in a +ve Z octant
+    if(v.y <= o.y)     p &= 0xCC; // not in a -ve Y octant
+    if(v.y >= o.y+s.y) p &= 0x33; // etc..
+    if(v.x <= o.x)     p &= 0xAA;
+    if(v.x >= o.x+s.x) p &= 0x55;
+    return p;
 };
