@@ -47,15 +47,9 @@ ie: d=z => x=x, y=y, z=z
 **/
 
 // DIM: Z=0 Y=1 X=2.
-#define D(d) (d)
-#define R(d) ((d)==0?2:(d)-1)  // gets relative row dimension of given
-#define C(d) ((d)==2?0:(d)+1)  // gets relative column dimension of given
-
-/*
-const int D[3] = {0, 1, 2};
-const int R[3] = {2, 0, 1};
-const int C[3] = {1, 2, 0};
-*/
+const int D[3] = {0, 1, 2}; // depth
+const int R[3] = {2, 0, 1}; // row
+const int C[3] = {1, 2, 0}; // col
 
 struct ivec
 {
@@ -75,9 +69,9 @@ struct ivec
     ivec(int a, int b, int c) : x(a), y(b), z(c) {};
     ivec(int d, int row, int col, int depth)
     {
-        v[2-R(d)] = row;
-        v[2-C(d)] = col;
-        v[2-D(d)] = depth;
+        v[2-R[d]] = row;
+        v[2-C[d]] = col;
+        v[2-D[d]] = depth;
     };
     ivec(int i, int cx, int cy, int cz, int size)
     {

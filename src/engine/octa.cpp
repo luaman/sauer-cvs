@@ -61,7 +61,7 @@ void getcubevector(cube &c, int d, int x, int y, int z, ivec &p)
     ivec v(d, x, y, z);
 
     loopi(3)
-        p[i] = edgeget(cubeedge(c, i, v[R(i)], v[C(i)]), v[D(i)]);
+        p[i] = edgeget(cubeedge(c, i, v[R[i]], v[C[i]]), v[D[i]]);
 };
 
 void setcubevector(cube &c, int d, int x, int y, int z, ivec &p)
@@ -69,7 +69,7 @@ void setcubevector(cube &c, int d, int x, int y, int z, ivec &p)
     ivec v(d, x, y, z);
 
     loopi(3)
-        edgeset(cubeedge(c, i, v[R(i)], v[C(i)]), v[D(i)], p[i]);
+        edgeset(cubeedge(c, i, v[R[i]], v[C[i]]), v[D[i]], p[i]);
 };
 
 void optiface(uchar *p, cube &c)

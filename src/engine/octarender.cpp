@@ -60,12 +60,12 @@ int vert(int x, int y, int z, float lmu, float lmv)
 
 uchar &edgelookup(cube &c, ivec &p, int dim)
 {
-   return c.edges[dim*4 +(p[C(dim)]>>3)*2 +(p[R(dim)]>>3)];
+   return c.edges[dim*4 +(p[C[dim]]>>3)*2 +(p[R[dim]]>>3)];
 };
 
 void vertrepl(cube &c, ivec &p, vec &v, int dim, int coord)
 {
-    v[D(dim)] = edgeget(edgelookup(c,p,dim), coord);
+    v[D[dim]] = edgeget(edgelookup(c,p,dim), coord);
 };
 
 void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
@@ -275,7 +275,7 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, 
          return touchingface(c, orient) && faceedges(c, orient) == F_SOLID;
     }
 
-    int dim = dimension(orient), coord = dimcoord(orient), xd = (dim + 1) % 3, yd = (dim + 2) % 3;
+    int dim = dimension(orient), coord = dimcoord(orient), xd = R[dim], yd = C[dim];
 
     loopi(8) if(octacoord(dim, i) == coord)
     {
@@ -1187,8 +1187,8 @@ bool subdividecube(cube &c)
         {
             if(x==1 && y==1)        // center
             {
-                int c1 = midedge(*v1[0][0], *v1[1][1], R(d), d, p1 = perfect);
-                int c2 = midedge(*v1[0][1], *v1[1][0], R(d), d, p2 = perfect);
+                int c1 = midedge(*v1[0][0], *v1[1][1], R[d], d, p1 = perfect);
+                int c2 = midedge(*v1[0][1], *v1[1][0], R[d], d, p2 = perfect);
                 e[x][y] = z ? max(c1,c2) : min(c1,c2);
                 perfect = e[x][y]==c1 ? p1 : p2;
             }
@@ -1197,7 +1197,7 @@ bool subdividecube(cube &c)
             else                    // edge
             {
                 int a = min(x, y), b = x&1;
-                e[x][y] = midedge(*v1[a][a], *v1[a^b][a^(1-b)], x==1?R(d):C(d), d, perfect);
+                e[x][y] = midedge(*v1[a][a], *v1[a^b][a^(1-b)], x==1?R[d]:C[d], d, perfect);
             };
         };
 
@@ -1207,8 +1207,8 @@ bool subdividecube(cube &c)
             ch[i].texture[j] = c.texture[j];
             loop(y, 2) loop(x, 2) // assign child edges
             {
-                int ce = e[x+o[R(d)]][y+o[C(d)]];
-                if(o[D(d)]) ce -= 8;
+                int ce = e[x+o[R[d]]][y+o[C[d]]];
+                if(o[D[d]]) ce -= 8;
                 ce = min(max(ce, 0), 8);
                 uchar &f = cubeedge(ch[i], d, x, y);
                 edgeset(f, z, ce);

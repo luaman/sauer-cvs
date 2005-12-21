@@ -60,8 +60,8 @@ void reorient()
 {
     selcx = 0;
     selcy = 0;
-    selcxs = sel.s[R(dimension(orient))]*2;
-    selcys = sel.s[C(dimension(orient))]*2;
+    selcxs = sel.s[R[dimension(orient)]]*2;
+    selcys = sel.s[C[dimension(orient)]]*2;
     sel.orient = orient;
 };
 
@@ -109,8 +109,8 @@ cube &blockcube(int x, int y, int z, block3 &b, int rgrid) // looks up a world c
     return neighbourcube(b.o.x+s.x, b.o.y+s.y, b.o.z+s.z, -z*b.grid, rgrid, b.orient);
 };
 
-#define loopxy(b)        loop(y,(b).s[C(dimension((b).orient))]) loop(x,(b).s[R(dimension((b).orient))])
-#define loopxyz(b, r, f) { loop(z,(b).s[D(dimension((b).orient))]) loopxy((b)) { cube &c = blockcube(x,y,z,b,r); f; }; }
+#define loopxy(b)        loop(y,(b).s[C[dimension((b).orient)]]) loop(x,(b).s[R[dimension((b).orient)]])
+#define loopxyz(b, r, f) { loop(z,(b).s[D[dimension((b).orient)]]) loopxy((b)) { cube &c = blockcube(x,y,z,b,r); f; }; }
 #define loopselxyz(f)    { makeundo(); loopxyz(sel, sel.grid, f); changed(); }
 #define selcube(x, y, z) blockcube(x, y, z, sel, sel.grid)
 
@@ -189,10 +189,10 @@ void cursorupdate()
         sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
         sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
 
-        selcx   = min(cor[R(d)], lastcor[R(d)]);
-        selcy   = min(cor[C(d)], lastcor[C(d)]);
-        selcxs  = max(cor[R(d)], lastcor[R(d)]);
-        selcys  = max(cor[C(d)], lastcor[C(d)]);
+        selcx   = min(cor[R[d]], lastcor[R[d]]);
+        selcy   = min(cor[C[d]], lastcor[C[d]]);
+        selcxs  = max(cor[R[d]], lastcor[R[d]]);
+        selcys  = max(cor[C[d]], lastcor[C[d]]);
 
         if(!selectcorners)
         {
@@ -224,7 +224,7 @@ void cursorupdate()
         d = od;
     };
 
-    corner = (cor[R(d)]-lu[R(d)]/g2)+(cor[C(d)]-lu[C(d)]/g2)*2;
+    corner = (cor[R[d]]-lu[R[d]]/g2)+(cor[C[d]]-lu[C[d]]/g2)*2;
     selchildcount = 0;
     countselchild(worldroot, origin, hdr.worldsize/2);
 
@@ -232,17 +232,17 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     glLineWidth(1);
     glColor3ub(120,120,120); // cursor
-    boxs(od, lu[R(od)], lu[C(od)], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
+    boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     if(havesel)
     {
         glColor3ub(20,20,20);   // grid
-        loopxy(sel) boxs(d, sel.o[R(d)]+x*sel.grid, sel.o[C(d)]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+        loopxy(sel) boxs(d, sel.o[R[d]]+x*sel.grid, sel.o[C[d]]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(200,0,0);    // 0 reference
-        boxs(d, sel.o[R(d)]-4, sel.o[C(d)]-4, 8, 8, sel.o[d]);
+        boxs(d, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
         glColor3ub(200,200,200);// 2D selection box
-        boxs(d, sel.o[R(d)]+selcx*g2, sel.o[C(d)]+selcy*g2, selcxs*g2, selcys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+        boxs(d, sel.o[R[d]]+selcx*g2, sel.o[C[d]]+selcy*g2, selcxs*g2, selcys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(0,0,40);     // 3D selection box
-        loopi(6) { d=dimension(i); boxs(d, sel.o[R(d)], sel.o[C(d)], sel.us(R(d)), sel.us(C(d)), sel.o[d]+dimcoord(i)*sel.us(d)); };
+        loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
     };
     glDisable(GL_BLEND);
 };
@@ -445,11 +445,11 @@ void editheight(int dir, int mode)
     int seldir = dc ? -dir : dir;
     block3 t = sel;
 
-    sel.s[R(d)] = 2;
-    sel.s[C(d)] = 2;
-    sel.s[D(d)] = 1;
-    sel.o[R(d)] += corner&1 ? 0 : -sel.grid;
-    sel.o[C(d)] += corner&2 ? 0 : -sel.grid;
+    sel.s[R[d]] = 2;
+    sel.s[C[d]] = 2;
+    sel.s[D[d]] = 1;
+    sel.o[R[d]] += corner&1 ? 0 : -sel.grid;
+    sel.o[C[d]] += corner&2 ? 0 : -sel.grid;
 
     loopselxyz(
         if(c.children) { solidfaces(c); discardchildren(c); };
@@ -511,8 +511,8 @@ void editface(int dir, int mode)
                 {
                     if(x==0 && mx==0 && selcx) continue;
                     if(y==0 && my==0 && selcy) continue;
-                    if(x==sel.s[R(d)]-1 && mx==1 && (selcx+selcxs)&1) continue;
-                    if(y==sel.s[C(d)]-1 && my==1 && (selcy+selcys)&1) continue;
+                    if(x==sel.s[R[d]]-1 && mx==1 && (selcx+selcxs)&1) continue;
+                    if(y==sel.s[C[d]]-1 && my==1 && (selcy+selcys)&1) continue;
                     if(p[mx+my*2] != ((uchar *)&bak)[mx+my*2]) continue;
 
                     linkedpush(c, d, mx, my, dc, seldir);
@@ -614,9 +614,9 @@ uint mflip(uint face) { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((fa
 void flipcube(cube &c, int dim)
 {
     swap(uchar, c.texture[dim*2], c.texture[dim*2+1]);
-    c.faces[D(dim)] = dflip(c.faces[D(dim)]);
-    c.faces[C(dim)] = cflip(c.faces[C(dim)]);
-    c.faces[R(dim)] = rflip(c.faces[R(dim)]);
+    c.faces[D[dim]] = dflip(c.faces[D[dim]]);
+    c.faces[C[dim]] = cflip(c.faces[C[dim]]);
+    c.faces[R[dim]] = rflip(c.faces[R[dim]]);
     if (c.children)
     {
         loopi(8) if (i&octadim(dim)) swap(cube, c.children[i], c.children[i-octadim(dim)]);
@@ -631,19 +631,19 @@ void rotatequad(cube &a, cube &b, cube &c, cube &d)
 
 void rotatecube(cube &c, int dim)   // rotates cube clockwise. see pics in cvs for help.
 {
-    c.faces[D(dim)] = cflip (mflip(c.faces[D(dim)]));
-    c.faces[C(dim)] = dflip (mflip(c.faces[C(dim)]));
-    c.faces[R(dim)] = rflip (mflip(c.faces[R(dim)]));
-    swap(uint, c.faces[R(dim)], c.faces[C(dim)]);
+    c.faces[D[dim]] = cflip (mflip(c.faces[D[dim]]));
+    c.faces[C[dim]] = dflip (mflip(c.faces[C[dim]]));
+    c.faces[R[dim]] = rflip (mflip(c.faces[R[dim]]));
+    swap(uint, c.faces[R[dim]], c.faces[C[dim]]);
 
-    swap(uint, c.texture[2*R(dim)], c.texture[2*C(dim)+1]);
-    swap(uint, c.texture[2*C(dim)], c.texture[2*R(dim)+1]);
-    swap(uint, c.texture[2*C(dim)], c.texture[2*C(dim)+1]);
+    swap(uint, c.texture[2*R[dim]], c.texture[2*C[dim]+1]);
+    swap(uint, c.texture[2*C[dim]], c.texture[2*R[dim]+1]);
+    swap(uint, c.texture[2*C[dim]], c.texture[2*C[dim]+1]);
 
     if(c.children)
     {
-        int row = octadim(R(dim));
-        int col = octadim(C(dim));
+        int row = octadim(R[dim]);
+        int col = octadim(C[dim]);
         for(int i=0; i<=octadim(dim); i+=octadim(dim)) rotatequad
         (
             c.children[i+row],
@@ -678,10 +678,10 @@ void rotate(int cw)
     if(noedit()) return;
     int dim = dimension(sel.orient);
     if(!dimcoord(sel.orient)) cw = -cw;
-    int &m = min(sel.s[C(dim)], sel.s[R(dim)]);
-    int ss = m = max(sel.s[R(dim)], sel.s[C(dim)]);
+    int &m = min(sel.s[C[dim]], sel.s[R[dim]]);
+    int ss = m = max(sel.s[R[dim]], sel.s[C[dim]]);
     makeundo();
-    loop(z,sel.s[D(dim)]) loopi(cw>0 ? 1 : 3)
+    loop(z,sel.s[D[dim]]) loopi(cw>0 ? 1 : 3)
     {
         loopxy(sel) rotatecube(selcube(x,y,z), dim);
         loop(y,ss/2) loop(x,ss-1-y*2) rotatequad
