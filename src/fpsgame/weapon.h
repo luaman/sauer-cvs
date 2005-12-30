@@ -97,7 +97,7 @@ struct weaponstate
     {
         particle_splash(3, damage, 1000, p);
         s_sprintfd(ds)("%d", damage);
-        particle_text(p, ds);
+        particle_text(p, ds, 8);
     };
 
     void hit(int target, int damage, fpsent *d, fpsent *at)
@@ -272,8 +272,6 @@ struct weaponstate
         vec from = d->o;
         vec to = targ;
         from.z -= 0.8f;    // below eye
-
-//particle_text(to, "HIT");
 
         vec unitv;
         float dist = to.dist(from, unitv);

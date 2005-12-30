@@ -241,6 +241,7 @@ struct clientcom : iclientcom
 
             case SV_TEXT:
                 sgetstr();
+                particle_text(d->o, "!?!", 9);
                 conoutf("%s:\f %s", d->name, &text); 
                 break;
 
@@ -370,13 +371,21 @@ struct clientcom : iclientcom
             };
 
             case SV_FRAGS:
-                cl.players[cn]->frags = getint(p);
+            {
+                s_sprintfd(ds)("%d", cl.players[cn]->frags = getint(p));
+                particle_text(cl.players[cn]->o, ds, 9);
                 break;
+            };
 
             case SV_ITEMPICKUP:
-                cl.et.setspawn(getint(p), false);
+            {
+                int i = getint(p);
+                cl.et.setspawn(i, false);
                 getint(p);
+                char *name = cl.et.itemname(i);
+                if(name) particle_text(cl.et.ents[i]->o, name, 9);
                 break;
+            };
 
             case SV_ITEMSPAWN:
             {
@@ -384,6 +393,9 @@ struct clientcom : iclientcom
                 cl.et.setspawn(i, true);
                 if(i>=cl.et.ents.length()) break;
                 playsound(S_ITEMSPAWN, &cl.et.ents[i]->o); 
+                char *name = cl.et.itemname(i);
+                if(name)
+                    particle_text(cl.et.ents[i]->o, name, 9);
                 break;
             };
 

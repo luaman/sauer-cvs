@@ -4,7 +4,7 @@
 #include "engine.h"
 
 #define MAXTEXT 4
-#define MAXPARTYPES 9
+#define MAXPARTYPES 10
 
 struct particle
 {
@@ -64,17 +64,18 @@ void render_particles(int time)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
     
-    static struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
+    static struct parttype { uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
-        { 0.7f, 0.6f, 0.3f, 2,  0, 0.06f }, // yellow: sparks 
-        { 0.5f, 0.5f, 0.5f, 20, 2, 0.15f }, // grey:   small smoke
-        { 0.2f, 0.2f, 1.0f, 20, 0, 0.08f }, // blue:   edit mode entities
-        { 1.0f, 0.1f, 0.1f, 1,  2, 0.06f }, // red:    blood spats
-        { 1.0f, 0.8f, 0.8f, 20, 1, 1.2f  }, // yellow: fireball1
-        { 0.5f, 0.5f, 0.5f, 20, 2, 0.6f  }, // grey:   big smoke   
-        { 1.0f, 1.0f, 1.0f, 20, 3, 1.2f  }, // blue:   fireball2
-        { 1.0f, 1.0f, 1.0f, 20, 4, 1.2f  }, // green:  fireball3
-        { 1.0f, 1.0f, 1.0f, -8, -1, 1.2f  }, // TEXT
+        { 180, 155, 75,  2,  0, 0.06f }, // yellow: sparks 
+        { 125, 125, 125, 20, 2, 0.15f }, // grey:   small smoke
+        { 50, 50, 255,   20, 0, 0.08f }, // blue:   edit mode entities
+        { 255, 25, 25,   1,  2, 0.06f }, // red:    blood spats
+        { 255, 200, 200, 20, 1, 1.2f  }, // yellow: fireball1
+        { 125, 125, 125, 20, 2, 0.6f  }, // grey:   big smoke   
+        { 255, 255, 255, 20, 3, 1.2f  }, // blue:   fireball2
+        { 255, 255, 255, 20, 4, 1.2f  }, // green:  fireball3
+        { 255, 75, 25,   -8, -1, 1.2f  }, // 8 TEXT RED
+        { 50, 255, 100,  -8, -1, 1.2f  }, // 9 TEXT GREEN
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -86,7 +87,7 @@ void render_particles(int time)
         {
             glBindTexture(GL_TEXTURE_2D, parttexs[pt->tex]->gl);
             glBegin(GL_QUADS);
-            glColor3d(pt->r, pt->g, pt->b);
+            glColor3ub(pt->r, pt->g, pt->b);
         };
         
         for(particle *p, **pp = &parlist[i]; p = *pp;)
@@ -102,7 +103,6 @@ void render_particles(int time)
             }
             else
             {
-                //glColor3ub(255, 40, 40);
                 glPushMatrix();
                 glTranslatef(p->o.x, p->o.z, p->o.y);
                 glRotatef(camera1->yaw-180, 0, -1, 0);
@@ -111,7 +111,7 @@ void render_particles(int time)
                 glScalef(-scale, -scale, -scale);
                 seedrnd((uint)(size_t)p);
                 glTranslatef(-rnd(100), -rnd(100), 50);
-                draw_text(p->text, 0, 0, 255, 80, 40, p->fade*255/2000);
+                draw_text(p->text, 0, 0, pt->r, pt->g, pt->b, p->fade*255/2000);
                 glPopMatrix();
             };
 
@@ -174,8 +174,8 @@ void particle_trail(int type, int fade, vec &s, vec &e)
     };
 };
 
-void particle_text(vec &s, char *t)
+void particle_text(vec &s, char *t, int type)
 {
-    particle *p = newparticle(s, vec(0, 0, 1), 2000, 8);
+    particle *p = newparticle(s, vec(0, 0, 1), 2000, type);
     s_strncpy(p->text, t, MAXTEXT);
 };

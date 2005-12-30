@@ -7,26 +7,33 @@ struct entities : icliententities
 
     int triggertime;
 
-    struct itemstat { int add, max, sound; } *itemstats;
+    struct itemstat { int add, max, sound; char *name; } *itemstats;
 
     entities(fpsclient &_cl) : cl(_cl), triggertime(1)
     {
         static itemstat _itemstats[] =
         {
-            10,    50, S_ITEMAMMO,
-            20,   100, S_ITEMAMMO,
-            5,    25, S_ITEMAMMO,
-            5,    25, S_ITEMAMMO,
-            25,   100, S_ITEMHEALTH,
-            75,   200, S_ITEMHEALTH,
-            100,   100, S_ITEMARMOUR,
-            200,   200, S_ITEMARMOUR,
-            20000, 30000, S_ITEMPUP,
+            10,    50,    S_ITEMAMMO,   "SG",
+            20,    100,   S_ITEMAMMO,   "MG",
+            5,     25,    S_ITEMAMMO,   "RL",
+            5,     25,    S_ITEMAMMO,   "RI",
+            25,    100,   S_ITEMHEALTH, "H",
+            75,    200,   S_ITEMHEALTH, "MH",
+            100,   100,   S_ITEMARMOUR, "GA",
+            200,   200,   S_ITEMARMOUR, "YA",
+            20000, 30000, S_ITEMPUP,    "Q",
         };
         itemstats = _itemstats;
     };
 
     vector<extentity *> &getents() { return ents; };
+    
+    char *itemname(int i)
+    {
+        int t = ents[i]->type;
+        if(t<I_SHELLS || t>I_QUAD) return NULL;
+        return itemstats[t-I_SHELLS].name;
+    };
     
     void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_STATIC, int basetime = 0, float speed = 10.0f)
     {

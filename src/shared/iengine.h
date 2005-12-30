@@ -75,7 +75,7 @@ extern void setorient(const vec &r, const vec &u);
 extern void particle_splash(int type, int num, int fade, vec &p);
 extern void particle_trail(int type, int fade, vec &from, vec &to);
 extern void render_particles(int time);
-extern void particle_text(vec &s, char *t);
+extern void particle_text(vec &s, char *t, int type);
 
 // worldio
 extern void load_world(char *mname);

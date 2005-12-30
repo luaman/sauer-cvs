@@ -572,11 +572,13 @@ void tofronttex()                                       // maintain most recentl
 
 void edittexcube(cube &c, int tex, int orient)
 {
-    c.texture[visibleorient(c, orient)] = tex;
+    if(orient<0) loopi(6) c.texture[i] = tex;
+    else c.texture[visibleorient(c, orient)] = tex;
     if (c.children) loopi(8) edittexcube(c.children[i], tex, orient);
 };
 
 extern int curtexnum;
+VAR(allfaces, 0, 0, 1);
 
 void edittex(int dir)
 {
@@ -587,7 +589,7 @@ void edittex(int dir)
     i = i<0 ? 0 : i+dir;
     curtexindex = i = min(max(i, 0), curtexnum-1);
     int t = lasttex = hdr.texlist[i];
-    loopselxyz(edittexcube(c, t, sel.orient));
+    loopselxyz(edittexcube(c, t, allfaces ? -1 : sel.orient));
 };
 
 void gettex()
