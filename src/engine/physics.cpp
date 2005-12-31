@@ -89,11 +89,10 @@ bool getmmboundingbox(extentity &e, ivec &o, ivec &r)
     if(!&mmi || !mmi.h || !mmi.rad) return false;
     r.x = r.y = mmi.rad*2;
     r.z = mmi.h;
-	r.add(4);
+	r.add(2);
     o.x = int(e.o.x)-mmi.rad;
     o.y = int(e.o.y)-mmi.rad;
     o.z = int(e.o.z)+mmi.zoff+e.attr3;
-	o.add(-2);
     return true;
 };
 
@@ -333,8 +332,7 @@ bool collide(dynent *d)
     wall.x = wall.y = wall.z = 0;
 	ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
 		 bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
-	bo.add(-2); // guard space for rounding errors
-	bs.add(4);
+	bs.add(2);  // guard space for rounding errors
     if(!octacollide(d, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
