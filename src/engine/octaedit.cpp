@@ -467,7 +467,7 @@ void editheight(int dir, int mode)
             linkedpush(c, d, 1-x, 1-y, dc, seldir);
 
         optiface((uchar *)&c.faces[d], c);
-        if(!isvalidcube(c, lu.x, lu.y, lu.z, lusize))
+        if(!isvalidcube(c))
             c.faces[d] = bak;
     );
     sel = t;
@@ -520,7 +520,7 @@ void editface(int dir, int mode)
             };
 
             optiface(p, c);
-            if(!isvalidcube(c, lu.x, lu.y, lu.z, lusize))
+            if(!isvalidcube(c))
                 c.faces[d] = bak;
         };
     );

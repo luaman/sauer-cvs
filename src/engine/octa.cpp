@@ -89,14 +89,14 @@ void printcube()
 
 COMMAND(printcube, ARG_NONE);
 
-bool isvalidcube(cube &c, int x, int y, int z, int size)
+bool isvalidcube(cube &c)
 {
     clipplanes p;
-	genclipplanes(c, x, y, z, size, p);
+	genclipplanes(c, 0, 0, 0, 256, p);
     loopi(8) // test that cube is convex
     {
         vec v;
-        calcvert(c, x, y, z, size, v, i);
+        calcvert(c, 0, 0, 0, 256, v, i);
         if(!pointincube(p, v))
             return false;
     };

@@ -76,7 +76,7 @@ extern void freeocta(cube *c);
 extern void discardchildren(cube &c);
 extern void optiface(uchar *p, cube &c);
 extern void validatec(cube *c, int size);
-extern bool isvalidcube(cube &c, int x, int y, int z, int size);
+extern bool isvalidcube(cube &c);
 extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 extern void newclipplanes(cube &c);
@@ -90,7 +90,7 @@ extern void cancelsel();
 extern void render_texture_panel();
 
 // rendercubes
-extern bool subdividecube(cube &c);
+extern bool subdividecube(cube &c, bool fullcheck=true);
 extern void octarender();
 extern void renderq(int w, int h);
 extern void allchanged();

@@ -288,7 +288,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
 
-    if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z, false)) return true;
+    if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z, p.size==0)) return true;
 
     if(p.size)
     {

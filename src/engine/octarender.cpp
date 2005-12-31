@@ -378,20 +378,21 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
     return planes;
 }
 
+bool flataxisface(cube &c, int orient)
+{
+    uint face = c.faces[dimension(orient)];
+    if(dimcoord(orient)) face >>= 4;
+    face &= 0x0F0F0F0F;
+    return face == 0x01010101*(face&0x0F);
+};
+
 void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 {
-    bool usefaces[6];
     vec v[8], mx(x, y, z), mn(x+size, y+size, z+size);
-
-    int vertused[8];
-
-    calcverts(c, x, y, z, size, v, usefaces, vertused, false);
 
     loopi(8)
     {
-        if(!vertused[i]) // need all verts for proper box
-            calcvert(c, x, y, z, size, v[i], i);
-
+        calcvert(c, x, y, z, size, v[i], i);
         loopj(3) // generate tight bounding box
         {
             mn[j] = min(mn[j], v[i][j]);
@@ -406,7 +407,7 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
     p.o.add(p.r);
 
     p.size = 0;
-    loopi(6) if(usefaces[i] && !touchingface(c, i)) // generate actual clipping planes
+    loopi(6) if(!flataxisface(c, i)) // generate actual clipping planes
         p.size += genclipplane(c, i, v, &p.p[p.size]);
 };
 
@@ -1023,7 +1024,7 @@ void renderq(int w, int h)
         {
             Texture *tex = lookuptexture(lod.eslist[i].texture);
             glBindTexture(GL_TEXTURE_2D, tex->gl);
-            
+
             extern vector<GLuint> lmtexids;
             int curlm = lmtexids[lod.eslist[i].lmid];
             if(curlm!=lastlm)
@@ -1048,7 +1049,7 @@ void renderq(int w, int h)
                     lastys = tex->ys;
                     lastl = l;
                 };
-                
+
                 glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
                 ebuf += lod.eslist[i].length[l];  // Advance to next array.
                 glde++;
@@ -1160,7 +1161,7 @@ int midedge(const ivec &a, const ivec &b, int xd, int yd, bool &perfect)
     return crossy ? 8 : min(max(y, 0), 16);
 };
 
-bool subdividecube(cube &c)
+bool subdividecube(cube &c, bool fullcheck)
 {
     if(c.children) return true;
     cube *ch = c.children = newcubes(F_SOLID);
@@ -1217,6 +1218,11 @@ bool subdividecube(cube &c)
     };
 
     validatec(ch, hdr.worldsize);
+	if(fullcheck) loopi(8) if(!isvalidcube(ch[i])) // not so good...
+	{
+		emptyfaces(ch[i]);
+		perfect=false;
+	};
     return perfect;
 };
 
@@ -1253,7 +1259,7 @@ bool remip(cube &c, int x, int y, int z, int size)
     cube n = c;
     forcemip(n);
     n.children = NULL;
-    if(!subdividecube(n))
+    if(!subdividecube(n, false))
         { freeocta(n.children); return false; }
 
     cube *nh = n.children;
