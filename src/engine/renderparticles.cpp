@@ -103,10 +103,10 @@ void render_particles(int time)
 					dir2.sub(camera1->o);
 					c1.cross(dir2, dir1).normalize();
 					c2.cross(dir1, dir2).normalize();
-                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x*sz, p->d.z+c1.y*sz, p->d.y+c1.z*sz);
-                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x*sz, p->d.z+c2.y*sz, p->d.y+c2.z*sz);
-                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+c2.x*sz, p->o.z+c2.y*sz, p->o.y+c2.z*sz);
-                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+c1.x*sz, p->o.z+c1.y*sz, p->o.y+c1.z*sz);
+                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x*sz, p->d.z+c1.z*sz, p->d.y+c1.y*sz);
+                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x*sz, p->d.z+c2.z*sz, p->d.y+c2.y*sz);
+                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+c2.x*sz, p->o.z+c2.z*sz, p->o.y+c2.y*sz);
+                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+c1.x*sz, p->o.z+c1.z*sz, p->o.y+c1.y*sz);
                 }
                 else        // regular particles
                 {
