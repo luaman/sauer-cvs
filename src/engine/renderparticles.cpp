@@ -4,7 +4,7 @@
 #include "engine.h"
 
 #define MAXTEXT 4
-#define MAXPARTYPES 10
+#define MAXPARTYPES 11
 
 struct particle
 {
@@ -19,7 +19,7 @@ particle *parlist[MAXPARTYPES], *parempty = NULL;
 
 VARP(particlesize, 20, 100, 500);
 
-Texture *parttexs[5];
+Texture *parttexs[6];
 
 void particleinit()
 {
@@ -28,6 +28,7 @@ void particleinit()
     parttexs[2] = textureload(newstring("data/martin/smoke.png"));
     parttexs[3] = textureload(newstring("data/martin/ball2.png"));
     parttexs[4] = textureload(newstring("data/martin/ball3.png"));
+    parttexs[5] = textureload(newstring("data/flare.jpg"));
     loopi(MAXPARTYPES) parlist[i] = NULL;
 };
 
@@ -74,8 +75,9 @@ void render_particles(int time)
         { 125, 125, 125, 20, 2, 0.6f  }, // grey:   big smoke   
         { 255, 255, 255, 20, 3, 1.2f  }, // blue:   fireball2
         { 255, 255, 255, 20, 4, 1.2f  }, // green:  fireball3
-        { 255, 75, 25,   -8, -1, 1.2f  }, // 8 TEXT RED
-        { 50, 255, 100,  -8, -1, 1.2f  }, // 9 TEXT GREEN
+        { 255, 75, 25,   -8, -1, 1.0f }, // 8 TEXT RED
+        { 50, 255, 100,  -8, -1, 1.0f }, // 9 TEXT GREEN
+        { 255, 200, 100, 0, 5, 0.3f   }, // 10 flare
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -92,16 +94,30 @@ void render_particles(int time)
         
         for(particle *p, **pp = &parlist[i]; p = *pp;)
         {   
-            if(pt->tex>=0)
+            if(pt->tex>=0)  
             {    
-                // perf varray?
-                glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
-                glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-                glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
-                glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+                if(i==10)   // flares
+                {
+					vec dir1 = p->d, dir2 = p->d, c1, c2;
+					dir1.sub(p->o);
+					dir2.sub(camera1->o);
+					c1.cross(dir2, dir1).normalize();
+					c2.cross(dir1, dir2).normalize();
+                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x*sz, p->d.z+c1.y*sz, p->d.y+c1.z*sz);
+                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x*sz, p->d.z+c2.y*sz, p->d.y+c2.z*sz);
+                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+c2.x*sz, p->o.z+c2.y*sz, p->o.y+c2.z*sz);
+                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+c1.x*sz, p->o.z+c1.y*sz, p->o.y+c1.z*sz);
+                }
+                else        // regular particles
+                {
+                    glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
+                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
+                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
+                    glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+                };
                 xtraverts += 4;
             }
-            else
+            else            // text
             {
                 glPushMatrix();
                 glTranslatef(p->o.x, p->o.z, p->o.y);
@@ -123,11 +139,14 @@ void render_particles(int time)
             }
             else
             {
-                p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*2500);
-                vec a = p->d;
-                a.mul((float)time);
-                a.div(5000.0f);
-                p->o.add(a);
+                if(pt->gr)
+                {
+                    p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*2500);
+                    vec a = p->d;
+                    a.mul((float)time);
+                    a.div(5000.0f);
+                    p->o.add(a);
+                };
                 pp = &p->next;
             };
         };
@@ -178,4 +197,9 @@ void particle_text(vec &s, char *t, int type)
 {
     particle *p = newparticle(s, vec(0, 0, 1), 2000, type);
     s_strncpy(p->text, t, MAXTEXT);
+};
+
+void particle_flare(vec &p, vec &dest, int fade)
+{
+    newparticle(p, dest, fade, 10);
 };

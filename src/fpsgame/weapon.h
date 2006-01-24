@@ -208,7 +208,11 @@ struct weaponstate
 
             case GUN_SG:
             {
-                loopi(SGRAYS) particle_splash(0, 10, 200, sg[i]);
+                loopi(SGRAYS)
+                {
+                    particle_splash(0, 10, 200, sg[i]);
+                    particle_flare(from, sg[i], 100);
+                };
                 break;
             };
 
@@ -216,6 +220,7 @@ struct weaponstate
             case GUN_PISTOL:
                 particle_splash(0, 100, 250, to);
                 //particle_trail(1, 10, from, to);
+                particle_flare(from, to, 100000);
                 break;
 
             case GUN_RL:

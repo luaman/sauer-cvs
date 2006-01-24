@@ -36,16 +36,27 @@ struct vec
 
     float dist_to_aabox(const vec &center, const vec &extent) const
     {
+
         float sqrdist = 0;
+
         
+
         loopi(3)
+
         {
+
             float closest = (*this)[i]-center[i];
+
             if     (closest<-extent[i]) { float delta = closest+extent[i]; sqrdist += delta*delta; }
+
             else if(closest> extent[i]) { float delta = closest-extent[i]; sqrdist += delta*delta; };
+
         };
 
+
+
         return sqrtf(sqrdist);
+
     };
 
     float dist_to_bb(const vec &min, const vec &max) const

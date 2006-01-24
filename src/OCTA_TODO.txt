@@ -1,7 +1,6 @@
 gilt:
 - LOD: improved lod-remip
 - other tools that are geared towards easier editing of heightfields/terrain/rocks
-- make it such that collision uses same quad->2tris subdivision as rendering
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
@@ -13,13 +12,13 @@ eihrul:
 - find better solution for network timeout when long map load times
 
 aard:
+- world size sometimes too small for importcube | importcube crashes?
 - check why texture stretching on certain recent nvidia drivers only happens for certain textures -> looks like its caused by async copying of the S/T vectors
 - triggers/doors for SP
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
 - optimize drawing of water & glass
 - hellpig rendered incorrectly?
 - do more MP client thirdperson anims (shooting/hurt)
-- use text particles for other gameplay events? pickups?
 - better disconnection messages
 - spectator mode
 - thirdperson model flips into jump anim randomly at low fps
@@ -34,8 +33,6 @@ aard:
 - LOD: make loddistance fov dependent (for models too)
 - make sauer inner directory
 - cube loader: import some sample cube maps | metl3
-- check connect/disconnect: possible to only half connect, or connect and have a ghost
-  sparr: can get situation where you can see opponent, but not shoot him nor see him on scoreboard (but he can see you normally)
 - all cfg stuff in menu
 - new mapmodels/trees in menu -> new ones from last cube
 - players more visible
