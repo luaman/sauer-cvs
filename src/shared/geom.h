@@ -67,13 +67,19 @@ struct plane : vec
     bool operator==(const plane &p) const { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
     bool operator!=(const plane &p) const { return x!=p.x || y!=p.y || z!=p.z || offset!=p.offset; };
     
-    void toplane(vec &a, vec &b, vec &c)        // trashes b & c
+    void toplane(const vec &a, vec &b, vec &c)        // trashes b & c
     {
         b.sub(a);
         c.sub(a);
         cross(b, c);
         normalize();
         offset = -dot(a);
+    };
+
+    float distbelow(const vec &p) const
+    {
+        float height = -(x*p.x+y*p.x+offset)/z;
+        return p.z-height;
     };
 };
 
