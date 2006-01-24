@@ -77,7 +77,7 @@ void render_particles(int time)
         { 255, 255, 255, 20, 4, 1.2f  }, // green:  fireball3
         { 255, 75, 25,   -8, -1, 1.0f }, // 8 TEXT RED
         { 50, 255, 100,  -8, -1, 1.0f }, // 9 TEXT GREEN
-        { 255, 200, 100, 0, 5, 0.3f   }, // 10 flare
+        { 255, 200, 100, 0,  5, 0.05f  }, // 10 flare
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -101,12 +101,12 @@ void render_particles(int time)
 					vec dir1 = p->d, dir2 = p->d, c1, c2;
 					dir1.sub(p->o);
 					dir2.sub(camera1->o);
-					c1.cross(dir2, dir1).normalize();
-					c2.cross(dir1, dir2).normalize();
-                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x*sz, p->d.z+c1.z*sz, p->d.y+c1.y*sz);
-                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x*sz, p->d.z+c2.z*sz, p->d.y+c2.y*sz);
-                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+c2.x*sz, p->o.z+c2.z*sz, p->o.y+c2.y*sz);
-                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+c1.x*sz, p->o.z+c1.z*sz, p->o.y+c1.y*sz);
+					c1.cross(dir2, dir1).normalize().mul(sz);
+					c2.cross(dir1, dir2).normalize().mul(sz);
+                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x, p->d.z+c1.z, p->d.y+c1.y);
+                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x, p->d.z+c2.z, p->d.y+c2.y);
+                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+c2.x, p->o.z+c2.z, p->o.y+c2.y);
+                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+c1.x, p->o.z+c1.z, p->o.y+c1.y);
                 }
                 else        // regular particles
                 {

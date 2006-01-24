@@ -220,7 +220,7 @@ struct weaponstate
             case GUN_PISTOL:
                 particle_splash(0, 100, 250, to);
                 //particle_trail(1, 10, from, to);
-                particle_flare(from, to, 100000);
+                particle_flare(from, to, 500);
                 break;
 
             case GUN_RL:
