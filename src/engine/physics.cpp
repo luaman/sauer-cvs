@@ -228,7 +228,7 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size)
         if(dent > 1e15f && (mode&RAY_BB))
         {
             cube &ce = lookupcube(x, y, z, -octaentsize);
-            dent = dist + disttoent(ce.ents, oclast, o, ray);
+            dent = disttoent(ce.ents, oclast, o, ray);
             oclast = ce.ents;
         };
 
