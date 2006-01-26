@@ -141,7 +141,7 @@ void cursorupdate()
     ray.sub(player->o);
     float m = ray.magnitude();
     ray.div(m);
-    float r = raycube(true, player->o, ray, 0, gridsize);
+    float r = raycube(player->o, ray, 0, RAY_CLIPMAT|RAY_SKIPFIRST, gridsize);
 
     ray.mul(r);
     v.add(ray);

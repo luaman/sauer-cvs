@@ -154,7 +154,7 @@ void aimat()
     worldpos = vec(0.0f, 0.0f, 0.0f);
     vecfromyawpitch(player->yaw, player->pitch, 1, 0, worldpos, true);
     worldpos.normalize();
-    float dist = raycube(true, player->o, worldpos, 0, 1); // ignore first cube
+    float dist = raycube(player->o, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
     worldpos.mul(dist);
     worldpos.add(player->o);
 };

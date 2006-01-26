@@ -289,7 +289,7 @@ struct weaponstate
         
         if(dist>1024) shorten = 1024;
         if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) shorten = 12;
-        float barrier = raycube(true, d->o, unitv, dist);
+        float barrier = raycube(d->o, unitv, dist);
         if(barrier < dist && (!shorten || barrier < shorten))
             shorten = barrier;
         if(shorten)

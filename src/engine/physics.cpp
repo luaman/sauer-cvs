@@ -89,7 +89,7 @@ bool getmmboundingbox(extentity &e, ivec &o, ivec &r)
     if(!&mmi || !mmi.h || !mmi.rad) return false;
     r.x = r.y = mmi.rad*2;
     r.z = mmi.h;
-	r.add(2);
+    r.add(2);
     o.x = int(e.o.x)-mmi.rad;
     o.y = int(e.o.y)-mmi.rad;
     o.z = int(e.o.z)+mmi.zoff+e.attr3;
@@ -131,54 +131,108 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
+bool pointinbox(const vec &v, const vec &bo, const vec &br)
+{
+    return v.x <= bo.x+br.x &&
+           v.x >= bo.x-br.x &&
+           v.y <= bo.y+br.y &&
+           v.y >= bo.y-br.y &&
+           v.z <= bo.z+br.z &&
+           v.z >= bo.z-br.z;
+};
+
 bool pointincube(const clipplanes &p, const vec &v)
 {
-    if(v.x > p.o.x+p.r.x || v.x < p.o.x-p.r.x ||
-       v.y > p.o.y+p.r.y || v.y < p.o.y-p.r.y ||
-       v.z > p.o.z+p.r.z || v.z < p.o.z-p.r.z) return false;
+    if(!pointinbox(v, p.o, p.r)) return false;
     loopi(p.size) if(p.p[i].dist(v)>1e-3f) return false;
     return true;
 };
 
-bool raycubeintersect(const cube &c, const vec &o, const vec &ray, vec &dest, float &dist)
+bool rayboxintersect(const vec &o, const vec &ray, const vec &bo, const vec &br, float &dist) // FIXME: not perfect
 {
-    if(pointincube(*c.clip, o)) { dest = o; return true; };
+    vec w(bo), v(ray);
+    w.sub(o);
+    dist = max(0, w.dot(ray)/ray.dot(ray));
+    if(dist <= 0) return false;
+    v.mul(dist);
+    v.add(o);
+    return pointinbox(v, bo, br);
+};
 
-    loopi(c.clip->size)
+bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
+{
+    clipplanes &p = *c.clip;
+    if(pointincube(p, o)) { dist = 0; return true; };
+    if(p.size == 0)
+        return rayboxintersect(o, ray, p.o, p.r, dist);
+
+    loopi(p.size)
     {
-        float a = ray.dot(c.clip->p[i]); // FIXME: refactor into lineplaneintersect()
+        float a = ray.dot(p.p[i]);
         if(a>=0) continue;
-        float f = -c.clip->p[i].dist(o)/a;
+        float f = -p.p[i].dist(o)/a;
         if(f + dist < 0) continue;
 
         vec d(o);
         pushvec(d, ray, f+0.1f);
-
-        if(pointincube(*c.clip, d))
+        if(pointincube(p, d))
         {
-            dist += f+0.1;
-            dest = d;
+            dist = f+0.1;
             return true;
         };
     };
     return false;
 };
 
+bool inlist(int id, octaentities *last)
+{
+    if(last!=NULL) loopv(last->list) if(id==last->list[id]) return true;
+    return false;
+};
+
+float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray)
+{
+    float dist = 1e16f;
+    if(oc == last || oc == NULL) return dist;
+    loopv(oc->list) if(!inlist(i, last))
+    {
+        float f;
+        ivec bo, br;
+        extentity &e = *et->getents()[oc->list[i]];
+        if(!e.inoctanode || !getmmboundingbox(e, bo, br)) continue;
+        vec vbo(bo.v), vbr(br.v);
+        vbr.mul(0.5f);
+        vbo.add(vbr);
+        if(rayboxintersect(o, ray, vbo, vbr, f))
+            dist = min(dist, f);
+    };
+    return dist;
+};
+
 bool passthroughcube = false;
 void passthrough(bool isdown) { passthroughcube = isdown; };
 COMMAND(passthrough, ARG_DOWN);
 
-// modes: 0 = world only, 1 = world and object BB, 2 = per polygon, 3 = per poly with transparency, clipping, skip first cube
-float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size)
+float raycube(const vec &o, const vec &ray, float radius, int mode, int size)
 {
+    octaentities *oclast = NULL;
+    float dist = 0, dent = 1e16f;
     cube *last = NULL;
-    float dist = 0;
     vec v = o;
     if(ray==vec(0,0,0)) return dist;
 
     for(;;)
     {
-        cube &c = lookupcube(int(v.x), int(v.y), int(v.z), 0);
+        int x = int(v.x), y = int(v.y), z = int(v.z);
+
+        if(dent > 1e15f && (mode&RAY_BB))
+        {
+            cube &ce = lookupcube(x, y, z, -octaentsize);
+            dent = dist + disttoent(ce.ents, oclast, o, ray);
+            oclast = ce.ents;
+        };
+
+        cube &c = lookupcube(x, y, z, 0);
         float disttonext = 1e16f;
         loopi(3) if(ray[i]!=0)
         {
@@ -186,23 +240,25 @@ float raycube(bool clipmat, const vec &o, const vec &ray, float radius, int size
             if (d >= 0) disttonext = min(disttonext, 0.1f + d);
         }
 
-        if(!(last==NULL && size>0)) // skip first cube if size set
+        if(!(last==NULL && (mode&RAY_SKIPFIRST)))
         {
-            if((clipmat && isclipped(c.material)) ||
+            if(((mode&RAY_CLIPMAT) && isclipped(c.material)) ||
                 (lusize==size && !isempty(c) && !passthroughcube) ||
                 (radius>0 && dist>radius) ||
                 isentirelysolid(c) ||
+                dent < dist ||
                 last==&c)
             {
                 if(last==&c && radius>0) dist = radius;
-                return dist;
+                return min(dent, dist);
             }
             else if(!isempty(c))
             {
+                float f;
                 setcubeclip(c, lu.x, lu.y, lu.z, lusize);
-                if(raycubeintersect(c, v, ray, v, dist))
+                if(raycubeintersect(c, v, ray, f = dist))
                 {
-                    return dist;
+                    return min(dent, dist+f);
                 };
             };
         };
@@ -330,9 +386,9 @@ bool collide(dynent *d)
 {
     floorheight = 0;
     wall.x = wall.y = wall.z = 0;
-	ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
-		 bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
-	bs.add(2);  // guard space for rounding errors
+    ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
+         bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
+    bs.add(2);  // guard space for rounding errors
     if(!octacollide(d, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
@@ -398,7 +454,7 @@ void dropenttofloor(entity *e)
        e->o.z >= hdr.worldsize)
         return;
     vec v(0.0001f, 0.0001f, -1);
-    if(raycube(true, e->o, v) >= hdr.worldsize)
+    if(raycube(e->o, v) >= hdr.worldsize)
         return;
     dynent d;
     d.o = e->o;

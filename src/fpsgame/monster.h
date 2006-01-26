@@ -68,7 +68,7 @@ struct monsterset
             ray.sub(o);
             float mag = ray.magnitude();
             ray.mul(1.0f / mag);
-            float distance = raycube(true, o, ray, mag);
+            float distance = raycube(o, ray, mag);
             ray.mul(distance);
             v = o;
             v.add(ray);
