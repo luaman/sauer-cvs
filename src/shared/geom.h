@@ -87,10 +87,7 @@ struct plane : vec
         offset = -dot(a);
     };
 
-    float distbelow(const vec &p) const
-    {
-        float height = -(x*p.x+y*p.x+offset)/z;
-        return p.z-height;
-    };
+    float zintersect(const vec &p) const { return -(x*p.x+y*p.x+offset)/z; };
+    float zdist(const vec &p) const { return p.z-zintersect(p); }; 
 };
 
