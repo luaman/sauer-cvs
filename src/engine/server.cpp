@@ -108,7 +108,7 @@ void disconnect_client(int n, char *reason)
 {
     s_sprintfd(s)("client (%s) disconnected because: %s\n", clients[n]->hostname, reason);
     puts(s);
-    enet_peer_disconnect(clients[n]->peer);
+    enet_peer_disconnect(clients[n]->peer, 777 /* FIXME: dummy value */);
     clients[n]->type = ST_EMPTY;
     sv->clientdisconnect(n);
     sv->sendservmsg(s);

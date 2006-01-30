@@ -89,7 +89,7 @@ void disconnect(int onlyclean, int async)
     {
         if(!connecting && !disconnecting) 
         {
-            enet_peer_disconnect(clienthost->peers);
+            enet_peer_disconnect(clienthost->peers, 666 /* FIXME: dummy value */);
             enet_host_flush(clienthost);
             disconnecting = lastmillis;
         };

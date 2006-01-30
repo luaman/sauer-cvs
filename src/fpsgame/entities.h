@@ -112,6 +112,9 @@ struct entities : icliententities
 
     void realpickup(int n, fpsent *d)
     {
+        char *name = itemname(n);
+        if(name)
+             particle_text(ents[n]->o, name, 9);
         switch(ents[n]->type)
         {
             case I_SHELLS:  radditem(n, d->ammo[1]); break;
