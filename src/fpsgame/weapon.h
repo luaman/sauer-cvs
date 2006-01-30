@@ -111,33 +111,45 @@ struct weaponstate
         particle_text(p, ds, 8);
     };
 
-    void hit(int target, int damage, fpsent *d, fpsent *at)
+    void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel)
     {
         d->lastpain = cl.lastmillis;
-        if(d==player1) cl.selfdamage(damage, at==player1 ? -1 : -2, at);
-        else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, at);
-        else { cl.cc.addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); playsound(S_PAIN1+rnd(5), &d->o); };
+        vel.mul(100*damage/d->weight);
+        if(d==player1)           { d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
+        else if(d->monsterstate) { d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
+        else                     { cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, di(vel.x), di(vel.y), di(vel.z)); playsound(S_PAIN1+rnd(5), &d->o); };
         damageeffect(d->o, damage);
+    };
+
+    void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
+    {
+        vec v(to);
+        v.sub(from);
+        v.normalize();
+        hit(target, damage, d, at, v);
     };
 
     static const int RL_DAMRAD = 40;  
 
-    void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at)
+    void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at, vec &dir, float dist)
     {
         if(o->state!=CS_ALIVE) return;
-        vec middle = o->o;
-        middle.z -= (o->aboveeye+o->eyeheight)/2;
-        vec temp;
-        float dist = middle.dist(v, temp);
         if(dist<RL_DAMRAD) 
         {
-            if(dist<0) dist = 0;
             int damage = (int)(qdam*(1-dist*2/(float)guns[GUN_RL].damage));
             if(o==at) damage /= 2; 
-            hit(cn, damage, o, at);
-            temp.mul((RL_DAMRAD-dist)*damage/o->weight);
-            o->vel.add(temp);
+            hit(cn, damage, o, at, dir);
         };
+    };
+
+    float rocketdist(fpsent *o, vec &dir, vec &v)
+    {
+        vec middle = o->o;
+        middle.z -= (o->aboveeye+o->eyeheight)/2;
+        float dist = middle.dist(v, dir);
+        if(dist<0) dist = 0;
+        dir.normalize().mul(5);
+        return dist;
     };
 
     void splash(projectile *p, vec &v, vec &vold, dynent *notthis, int qdam)
@@ -159,7 +171,9 @@ struct weaponstate
             {
                 fpsent *o = (fpsent *)cl.iterdynents(i);
                 if(!o || o==notthis) continue;
-                radialeffect(o, v, i-1, qdam, p->owner);
+                vec dir;
+                float dist = rocketdist(o, dir, v);
+                radialeffect(o, v, i-1, qdam, p->owner, dir, dist);
             };
         };
     };
@@ -170,7 +184,9 @@ struct weaponstate
         if(intersect(o, p->o, v))
         {
             splash(p, v, p->o, o, qdam);
-            hit(i, qdam, o, p->owner);
+            vec dir;
+            rocketdist(o, dir, v);
+            hit(i, qdam, o, p->owner, dir);
         }; 
     };
 
@@ -199,7 +215,10 @@ struct weaponstate
             };
             if(p->inuse)
             {
-                if(dist<1) splash(p, v, p->o, NULL, qdam);
+                if(dist<1)
+                {
+                    splash(p, v, p->o, NULL, qdam);
+                }
                 else
                 {
                     if(p->gun==GUN_RL) { /*dodynlight(p->o, v, 0, 255, p->owner);*/ particle_splash(5, 2, 200, v); }
@@ -254,16 +273,6 @@ struct weaponstate
                 particle_trail(1, 500, from, to);
                 break;
         };
-    };
-
-    void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
-    {
-        hit(target, damage, d, at);
-        vec v(to);
-        v.sub(from);
-        v.normalize();
-        v.mul(100*damage/d->weight);    // was damage/50
-        d->vel.add(v);
     };
 
     fpsent *intersectclosest(vec &from, vec &to, int &n, fpsent *at)

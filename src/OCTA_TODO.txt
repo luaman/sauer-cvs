@@ -10,11 +10,11 @@ eihrul:
 - physics bugs (goes back to jump split second after landing, and whatever else) | more noticable at gamespeed 1000
 - add a spotlight (ask me)
 - find better solution for network timeout when long map load times
+- physics: monsters have a "timeinair" value of several seconds randomly when rotating on one spot (makes em look like they're flying)
 
 aard:
-- hellpig rendered incorrectly?
-- do more MP client thirdperson anims (shooting/hurt)
-- knockback for all weapons when being hit in mp
+- test: do more MP client thirdperson anims (shooting/hurt)
+- test: knockback for all weapons when being hit in mp | monsters too
 
 - world size sometimes too small for importcube | importcube crashes?
 - check why texture stretching on certain recent nvidia drivers only happens for certain textures -> looks like its caused by async copying of the S/T vectors

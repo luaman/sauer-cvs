@@ -318,9 +318,13 @@ struct clientcom : iclientcom
                 int target = getint(p);
                 int damage = getint(p);
                 int ls = getint(p);
+                vec dir;
+                dir.x = getint(p)/DMF;
+                dir.y = getint(p)/DMF;
+                dir.z = getint(p)/DMF;
                 if(target==clientnum)
                 {
-                    if(ls==player1->lifesequence) cl.selfdamage(damage, cn, d);
+                    if(ls==player1->lifesequence) { cl.selfdamage(damage, cn, d); player1->vel.add(dir); };
                 }
                 else
                 {

@@ -209,7 +209,6 @@ struct monsterset
                 anger = 0;
                 enemy = d;
             };
-            transition(M_PAIN, 0, monstertypes[mtype].pain, 200);      // in this state monster won't attack
             if((health -= damage)<=0)
             {
                 state = CS_DEAD;
@@ -219,6 +218,7 @@ struct monsterset
             }
             else
             {
+                transition(M_PAIN, 0, monstertypes[mtype].pain, 200);      // in this state monster won't attack
                 playsound(monstertypes[mtype].painsound, &o);
             };
         };
@@ -316,16 +316,7 @@ struct monsterset
             entity &e = *ents[j];
             if(e.type!=TELEPORT) continue;
             vec v = e.o;
-            loopv(monsters)
-            if(monsters[i]->state==CS_DEAD)
-            {
-                if(cl.lastmillis-monsters[i]->lastaction<2000)
-                {
-                    monsters[i]->move = 0;
-                    moveplayer(monsters[i], 1, false);
-                };
-            }
-            else
+            loopv(monsters) if(monsters[i]->state==CS_ALIVE)
             {
                 v.z += monsters[i]->eyeheight;
                 float dist = v.dist(monsters[i]->o);
@@ -334,7 +325,19 @@ struct monsterset
             };
         };
         
-        loopv(monsters) if(monsters[i]->state==CS_ALIVE) monsters[i]->monsteraction(curtime);
+        loopv(monsters)
+        {
+            if(monsters[i]->state==CS_ALIVE) monsters[i]->monsteraction(curtime);
+            else if(monsters[i]->state==CS_DEAD)
+            {
+                if(cl.lastmillis-monsters[i]->lastaction<2000)
+                {
+                    //monsters[i]->move = 0;
+                    monsters[i]->move = monsters[i]->strafe = 0;
+                    moveplayer(monsters[i], 1, false);
+                };
+            }
+        };
     };
 
     void monsterrender()

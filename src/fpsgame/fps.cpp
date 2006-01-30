@@ -317,7 +317,9 @@ struct fpsclient : igameclient
             player1->pitch = 0;
             player1->roll = 60;
             playsound(S_DIE1+rnd(2));
+            vec vel = player1->vel;
             spawnstate(player1);
+            player1->vel = vel;
             player1->lastaction = lastmillis;
         }
         else
