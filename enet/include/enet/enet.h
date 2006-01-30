@@ -243,6 +243,7 @@ typedef struct _ENetPeer
    enet_uint32   incomingUnsequencedGroup;
    enet_uint32   outgoingUnsequencedGroup;
    enet_uint32   unsequencedWindow [ENET_PEER_UNSEQUENCED_WINDOW_SIZE / 32]; 
+   enet_uint32   disconnectData;
 } ENetPeer;
 
 /** An ENet host for communicating with peers.
@@ -297,7 +298,8 @@ typedef enum
      * completion of a disconnect initiated by enet_pper_disconnect, if 
      * a peer has timed out, or if a connection request intialized by 
      * enet_host_connect has timed out.  The peer field contains the peer 
-     * which disconnected. 
+     * which disconnected. The data field contains user supplied data 
+     * describing the disconnection, or 0, if none is available.
      */
    ENET_EVENT_TYPE_DISCONNECT = 2,  
 
@@ -319,8 +321,9 @@ typedef struct _ENetEvent
 {
    ENetEventType        type;      /**< type of the event */
    ENetPeer *           peer;      /**< peer that generated a connect, disconnect or receive event */
-   enet_uint8           channelID;
-   ENetPacket *         packet;
+   enet_uint8           channelID; /**< channel on the peer that generated the event, if appropriate */
+   enet_uint32          data;      /**< data associated with the event, if appropriate */
+   ENetPacket *         packet;    /**< packet associated with the event, if appropriate */
 } ENetEvent;
 
 /** @defgroup global ENet global functions
@@ -412,8 +415,8 @@ ENET_API int                 enet_peer_send (ENetPeer *, enet_uint8, ENetPacket 
 ENET_API ENetPacket *        enet_peer_receive (ENetPeer *, enet_uint8);
 ENET_API void                enet_peer_ping (ENetPeer *);
 ENET_API void                enet_peer_reset (ENetPeer *);
-ENET_API void                enet_peer_disconnect (ENetPeer *);
-ENET_API void                enet_peer_disconnect_now (ENetPeer *);
+ENET_API void                enet_peer_disconnect (ENetPeer *, enet_uint32);
+ENET_API void                enet_peer_disconnect_now (ENetPeer *, enet_uint32);
 ENET_API void                enet_peer_throttle_configure (ENetPeer *, enet_uint32, enet_uint32, enet_uint32);
 extern int                   enet_peer_throttle (ENetPeer *, enet_uint32);
 extern void                  enet_peer_reset_queues (ENetPeer *);

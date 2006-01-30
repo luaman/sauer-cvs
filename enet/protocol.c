@@ -30,6 +30,7 @@ enet_protocol_dispatch_incoming_commands (ENetHost * host, ENetEvent * event)
 
            event -> type = ENET_EVENT_TYPE_DISCONNECT;
            event -> peer = currentPeer;
+           event -> data = currentPeer -> disconnectData;
 
            enet_peer_reset (currentPeer);
 
@@ -467,6 +468,8 @@ enet_protocol_handle_disconnect (ENetHost * host, ENetPeer * peer, const ENetPro
       peer -> state = ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT;
     else
       peer -> state = ENET_PEER_STATE_ZOMBIE;
+
+    peer -> disconnectData = command -> disconnect.data;
 }
 
 static int
@@ -557,7 +560,8 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
        {
           event -> type = ENET_EVENT_TYPE_DISCONNECT;
           event -> peer = peer;
-        
+          event -> data = 0;
+
           enet_peer_reset (peer);
        }
 
@@ -980,7 +984,8 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
           {
              event -> type = ENET_EVENT_TYPE_DISCONNECT;
              event -> peer = peer;
-          
+             event -> data = 0;
+
              enet_peer_reset (peer);
           }
 
