@@ -9,7 +9,7 @@ struct weaponstate
 
     static const int MONSTERDAMAGEFACTOR = 4;
     static const int SGRAYS = 20;
-    static const int SGSPREAD = 2;
+    static const int SGSPREAD = 4;
     vec sg[SGRAYS];
 
     guninfo *guns;
@@ -58,17 +58,28 @@ struct weaponstate
     void offsetray(vec &from, vec &to, int spread, vec &dest)
     {
         float f = to.dist(from)*spread/1000;
-        #define RNDD (rnd(101)-50)*f
-        vec v(RNDD, RNDD, RNDD);
-        //float m = v.magnitude();
-        //if(m!=0) v.mul(50/m);
-        dest = to;
-        dest.add(v);
+        for(;;)
+        {
+            #define RNDD rnd(101)-50
+            vec v(RNDD, RNDD, RNDD);
+            if(v.magnitude()>50) continue;
+            v.mul(f);
+            v.z /= 2;
+            dest = to;
+            dest.add(v);
+            vec dir = dest;
+            dir.sub(from);
+            raycubepos(from, dir, dest, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
+            return;
+        };
     };
 
     void createrays(vec &from, vec &to)             // create random spread of rays for the shotgun
     {
-        loopi(SGRAYS) offsetray(from, to, SGSPREAD, sg[i]);
+        loopi(SGRAYS)
+        {
+            offsetray(from, to, SGSPREAD, sg[i]);
+        };
     };
 
     static const int MAXPROJ = 100;
@@ -102,25 +113,27 @@ struct weaponstate
 
     void hit(int target, int damage, fpsent *d, fpsent *at)
     {
+        d->lastpain = cl.lastmillis;
         if(d==player1) cl.selfdamage(damage, at==player1 ? -1 : -2, at);
         else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, at);
         else { cl.cc.addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); playsound(S_PAIN1+rnd(5), &d->o); };
         damageeffect(d->o, damage);
     };
 
-    static const int RL_RADIUS = 24;
-    static const int RL_DAMRAD = 34;   // hack
+    static const int RL_DAMRAD = 40;  
 
     void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at)
     {
         if(o->state!=CS_ALIVE) return;
+        vec middle = o->o;
+        middle.z -= (o->aboveeye+o->eyeheight)/2;
         vec temp;
-        float dist = o->o.dist(v, temp);
-        dist -= 2; // account for eye distance imprecision
+        float dist = middle.dist(v, temp);
         if(dist<RL_DAMRAD) 
         {
             if(dist<0) dist = 0;
-            int damage = (int)(qdam*(1-(dist/RL_DAMRAD)));
+            int damage = (int)(qdam*(1-dist*2/(float)guns[GUN_RL].damage));
+            if(o==at) damage /= 2; 
             hit(cn, damage, o, at);
             temp.mul((RL_DAMRAD-dist)*damage/o->weight);
             o->vel.add(temp);
@@ -139,7 +152,7 @@ struct weaponstate
         else
         {
             playsound(S_RLHIT, &v);
-            newsphere(v, RL_RADIUS, 0);
+            newsphere(v, RL_DAMRAD, 0);
             ///dodynlight(vold, v, 0, 0, p->owner);
             if(!p->local) return;
             loopi(cl.numdynents())
@@ -210,18 +223,22 @@ struct weaponstate
             {
                 loopi(SGRAYS)
                 {
-                    particle_splash(0, 10, 200, sg[i]);
-                    particle_flare(from, sg[i], 100);
+                    particle_splash(0, 20, 250, sg[i]);
+                    particle_flare(from, sg[i], 300);
                 };
                 break;
             };
 
             case GUN_CG:
             case GUN_PISTOL:
-                particle_splash(0, 100, 250, to);
+            {
+                particle_splash(0, 200, 250, to);
                 //particle_trail(1, 10, from, to);
-                particle_flare(from, to, 500);
+                vec lower = from;
+                lower.z -= 2;
+                particle_flare(lower, to, 600);
                 break;
+            };
 
             case GUN_RL:
             case GUN_FIREBALL:
@@ -233,7 +250,7 @@ struct weaponstate
                 break;
 
             case GUN_RIFLE: 
-                particle_splash(0, 100, 200, to);
+                particle_splash(0, 200, 250, to);
                 particle_trail(1, 500, from, to);
                 break;
         };
@@ -249,19 +266,65 @@ struct weaponstate
         d->vel.add(v);
     };
 
-    void raydamage(fpsent *o, vec &from, vec &to, fpsent *d, int i)
+    fpsent *intersectclosest(vec &from, vec &to, int &n, fpsent *at)
     {
-        if(o->state!=CS_ALIVE) return;
+        fpsent *best = NULL;
+        loopi(cl.numdynents())
+        {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(!o || o==at || o->state!=CS_ALIVE) continue;
+            if(!intersect(o, from, to)) continue;
+            if(!best || at->o.dist(o->o)<at->o.dist(best->o))
+            {
+                best = o;
+                n = i-1;
+            };
+        };
+        return best;
+    };
+
+    void shorten(vec &from, vec &to, vec &target)
+    {
+        target.sub(from).normalize().mul(from.dist(to)).add(from);
+    };
+
+    void raydamage(vec &from, vec &to, fpsent *d)
+    {
         int qdam = guns[d->gunselect].damage;
         if(d->quadmillis) qdam *= 4;
         if(d->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
+        int i, n;
+        fpsent *o, *cl;
         if(d->gunselect==GUN_SG)
         {
-            int damage = 0;
-            loop(r, SGRAYS) if(intersect(o, from, sg[r])) damage += qdam;
-            if(damage) hitpush(i, damage, o, d, from, to);
+            bool done[SGRAYS];
+            loopj(SGRAYS) done[j] = false;
+            for(;;)
+            {
+                bool raysleft = false;
+                int damage = 0;
+                o = NULL;
+                loop(r, SGRAYS) if(!done[r] && (cl = intersectclosest(from, sg[r], n, d)))
+                {
+                    if((!o || o==cl) && damage<cl->health)
+                    {
+                        damage += qdam;
+                        o = cl;
+                        done[r] = true;
+                        i = n;
+                        shorten(from, o->o, sg[r]);
+                    }
+                    else raysleft = true;
+                };
+                if(damage) hitpush(i, damage, o, d, from, to);
+                if(!raysleft) break;
+            };
         }
-        else if(intersect(o, from, to)) hitpush(i, qdam, o, d, from, to);
+        else if(o = intersectclosest(from, to, i, d))
+        {
+            hitpush(i, qdam, o, d, from, to);
+            shorten(from, o->o, to);
+        };
     };
 
     void shoot(fpsent *d, vec &targ)
@@ -282,7 +345,7 @@ struct weaponstate
         float dist = to.dist(from, unitv);
         unitv.div(dist);
         vec kickback(unitv);
-        kickback.mul(guns[d->gunselect].kickamount*-2.5f);//-0.01f);
+        kickback.mul(guns[d->gunselect].kickamount*-2.5f);
         d->vel.add(kickback);
         if(d->pitch<80.0f) d->pitch += guns[d->gunselect].kickamount*0.05f;
         float shorten = 0.0f;
@@ -300,20 +363,17 @@ struct weaponstate
         };   
         
         if(d->gunselect==GUN_SG) createrays(from, to);
-        //else if(d->gunselect==GUN_MG) offsetray(from, to, 5, to);
+        else if(d->gunselect==GUN_CG) offsetray(from, to, 1, to);
 
         if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP);
+
+        if(!guns[d->gunselect].projspeed) raydamage(from, to, d);
+
         shootv(d->gunselect, from, to, d, true);
+
         if(!d->monsterstate) cl.cc.addmsg(1, 8, SV_SHOT, d->gunselect, di(from.x), di(from.y), di(from.z), di(to.x), di(to.y), di(to.z));
+
         d->gunwait = guns[d->gunselect].attackdelay;
 
-        if(guns[d->gunselect].projspeed) return;
-        
-        loopi(cl.numdynents())
-        {
-            fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(!o || o==d) continue;
-            raydamage(o, from, to, d, i-1);
-        };
     };
 };

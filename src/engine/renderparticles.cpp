@@ -63,7 +63,7 @@ void render_particles(int time)
 {
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     
     static struct parttype { uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
@@ -77,7 +77,7 @@ void render_particles(int time)
         { 255, 255, 255, 20, 4, 1.2f  }, // green:  fireball3
         { 255, 75, 25,   -8, -1, 1.0f }, // 8 TEXT RED
         { 50, 255, 100,  -8, -1, 1.0f }, // 9 TEXT GREEN
-        { 255, 200, 100, 0,  5, 0.05f  }, // 10 flare
+        { 255, 200, 100, 0,  5, 0.07f }, // 10 yellow flare
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -94,10 +94,12 @@ void render_particles(int time)
         
         for(particle *p, **pp = &parlist[i]; p = *pp;)
         {   
+            int blend = p->fade*255/(lastmillis-p->millis+p->fade);
             if(pt->tex>=0)  
             {    
                 if(i==10)   // flares
                 {
+                    glColor4ub(pt->r, pt->g, pt->b, blend);
 					vec dir1 = p->d, dir2 = p->d, c1, c2;
 					dir1.sub(p->o);
 					dir2.sub(camera1->o);
@@ -127,7 +129,7 @@ void render_particles(int time)
                 glScalef(-scale, -scale, -scale);
                 seedrnd((uint)(size_t)p);
                 glTranslatef(-rnd(100), -rnd(100), 50);
-                draw_text(p->text, 0, 0, pt->r, pt->g, pt->b, p->fade*255/2000);
+                draw_text(p->text, 0, 0, pt->r, pt->g, pt->b, blend);
                 glPopMatrix();
             };
 

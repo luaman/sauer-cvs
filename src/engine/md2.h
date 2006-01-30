@@ -228,7 +228,8 @@ struct md2 : model
                 d->current[0] = ai;
                 d->lastanimswitchtime[0] = lastmillis;
             };
-        };
+        };
+
         glPushMatrix ();
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, -1, 0);
@@ -276,7 +277,8 @@ struct md2 : model
 		        verts2p = mverts[prev.fr2];
 		        aifrac1 = (lastmillis-d->lastanimswitchtime[0])/(float)animationinterpolationtime;
 		        aifrac2 = 1-aifrac1;
-		    };
+		    };
+
 		    for(int *command = glcommands; (*command)!=0;)
 		    {
 			    int numVertex = *command++;

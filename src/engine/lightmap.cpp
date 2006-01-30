@@ -644,9 +644,9 @@ void lightreaching(const vec &target, uchar color[3])
         g += (uint)(intensity * float(e.attr3));
         b += (uint)(intensity * float(e.attr4));
     }
-    color[0] = min(255, max(75, r));
-    color[1] = min(255, max(75, g));
-    color[2] = min(255, max(75, b));
+    color[0] = min(255, max(100, r));
+    color[1] = min(255, max(100, g));
+    color[2] = min(255, max(100, b));
 }
 
 void newsurfaces(cube &c)

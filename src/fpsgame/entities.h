@@ -13,10 +13,10 @@ struct entities : icliententities
     {
         static itemstat _itemstats[] =
         {
-            10,    50,    S_ITEMAMMO,   "SG",
-            20,    100,   S_ITEMAMMO,   "MG",
-            5,     25,    S_ITEMAMMO,   "RL",
-            5,     25,    S_ITEMAMMO,   "RI",
+            10,    30,    S_ITEMAMMO,   "SG",
+            20,    60,    S_ITEMAMMO,   "MG",
+            5,     15,    S_ITEMAMMO,   "RL",
+            5,     15,    S_ITEMAMMO,   "RI",
             25,    100,   S_ITEMHEALTH, "H",
             75,    200,   S_ITEMHEALTH, "MH",
             100,   100,   S_ITEMARMOUR, "GA",
@@ -176,7 +176,7 @@ struct entities : icliententities
         int np = 1;
         loopv(cl.players) if(cl.players[i]) np++;
         np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
-        int ammo = np*3;
+        int ammo = np*4;
         switch(ents[n]->type)
         {
             case I_SHELLS:  additem(n, d->ammo[1], ammo); break;

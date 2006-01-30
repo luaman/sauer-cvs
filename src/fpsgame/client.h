@@ -306,6 +306,9 @@ struct clientcom : iclientcom
                 e.y = getint(p)/DMF;
                 e.z = getint(p)/DMF;
                 if(gun==GUN_SG) cl.ws.createrays(s, e);
+                d->gunwait = 0;
+                d->lastaction = cl.lastmillis;
+                d->lastattackgun = d->gunselect;
                 cl.ws.shootv(gun, s, e, d, false);
                 break;
             };
@@ -321,7 +324,9 @@ struct clientcom : iclientcom
                 }
                 else
                 {
-                    vec &v = cl.getclient(target)->o;
+                    fpsent *victim = cl.getclient(target);
+                    victim->lastpain = cl.lastmillis;
+                    vec &v = victim->o;
                     playsound(S_PAIN1+rnd(5), &v);
                     cl.ws.damageeffect(v, damage);
                 };

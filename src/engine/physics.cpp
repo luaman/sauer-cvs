@@ -213,7 +213,17 @@ bool passthroughcube = false;
 void passthrough(bool isdown) { passthroughcube = isdown; };
 COMMAND(passthrough, ARG_DOWN);
 
-float raycube(const vec &o, const vec &ray, float radius, int mode, int size)
+float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)   
+{
+    ray.normalize();
+    hitpos = ray;
+    float dist = raycube(o, ray, radius, mode, size);
+    hitpos.mul(dist);
+    hitpos.add(o);
+    return dist;
+};
+
+float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 {
     octaentities *oclast = NULL;
     float dist = 0, dent = 1e16f;

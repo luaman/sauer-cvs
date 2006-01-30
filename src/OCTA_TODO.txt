@@ -12,13 +12,15 @@ eihrul:
 - find better solution for network timeout when long map load times
 
 aard:
+- hellpig rendered incorrectly?
+- do more MP client thirdperson anims (shooting/hurt)
+- knockback for all weapons when being hit in mp
+
 - world size sometimes too small for importcube | importcube crashes?
 - check why texture stretching on certain recent nvidia drivers only happens for certain textures -> looks like its caused by async copying of the S/T vectors
 - triggers/doors for SP
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
 - optimize drawing of water & glass
-- hellpig rendered incorrectly?
-- do more MP client thirdperson anims (shooting/hurt)
 - better disconnection messages
 - spectator mode
 - thirdperson model flips into jump anim randomly at low fps
@@ -34,13 +36,12 @@ aard:
 - make sauer inner directory
 - cube loader: import some sample cube maps | metl3
 - all cfg stuff in menu
+- a multiplayer player still shows SG rays go thru target
 - new mapmodels/trees in menu -> new ones from last cube
-- players more visible
-- rocketlauncher too weak | check damage in mp | rl bounce | damage numbers
-- MG spread | reduce amount of ammo in boxes | max ammo | respawn rates
-- damage & bullets particles more visible | flat particle beams | gib fountains | anything that gives better feedback
-  long sparks, smoke & dirt pieces on impact
+- damage more visible | gib fountains | anything that gives better feedback
+  smoke & dirt pieces on impact
 - physics left/right
+- players more visible / improve model lighting first?
 - HDR
 - revise health/armours? can either make armours more effective against certain weapons (feedback?)
   or do more general properties (do more damage, run faster)
@@ -54,7 +55,6 @@ aard:
   * impact (diff materials + flesh)
   * flyby, both instant & projectile
   * soundspot / moving
-- fix ssg rays
 - improve on cma render then add to sauer
 - slowmo?
 - VBO verts are 24 bytes, remove the next ptr, make UVs shorts or bytes? make coords shorts?

@@ -139,12 +139,7 @@ void cursorupdate()
 {
     vec ray(worldpos), v(player->o);
     ray.sub(player->o);
-    float m = ray.magnitude();
-    ray.div(m);
-    float r = raycube(player->o, ray, 0, RAY_CLIPMAT|RAY_SKIPFIRST, gridsize);
-
-    ray.mul(r);
-    v.add(ray);
+    raycubepos(player->o, ray, v, 0, RAY_CLIPMAT|RAY_SKIPFIRST, gridsize);
 
     lookupcube(int(v.x), int(v.y), int(v.z));
     if(lusize>gridsize)

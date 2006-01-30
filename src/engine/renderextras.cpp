@@ -55,41 +55,27 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     glDepthMask(GL_TRUE);
 };
 
-const int MAXSPHERES = 50;
-struct sphere { vec o; float size, max; int type; sphere *next; };
-sphere spheres[MAXSPHERES], *slist = NULL, *sempty = NULL;
-bool sinit = false;
-Texture *expltex;
+struct sphere { vec o; float size, max; int type; };
+
+vector<sphere> spheres;
+Texture *expltex = NULL;
 
 void newsphere(vec &o, float max, int type)
 {
-    if(!sinit)
-    {
-        loopi(MAXSPHERES)
-        {
-            spheres[i].next = sempty;
-            sempty = &spheres[i];
-        };
-        expltex = textureload(path(newstring("data/explosion.jpg")));
-        sinit = true;
-    };
-    if(sempty)
-    {
-        sphere *p = sempty;
-        sempty = p->next;
-        p->o = o;
-        p->max = max;
-        p->size = 4;
-        p->type = type;
-        p->next = slist;
-        slist = p;
-    };
+    sphere p;
+    p.o = o;
+    p.max = max;
+    p.size = 4;
+    p.type = type;
+    spheres.add(p);
 };
 
 void renderspheres(int time)
 {
-    for(sphere *p, **pp = &slist; p = *pp;)
+    if(!expltex) expltex = textureload(path(newstring("data/explosion.jpg")));
+    loopv(spheres)
     {
+        sphere *p = &spheres[i];
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -107,14 +93,11 @@ void renderspheres(int time)
         xtraverts += 12*6*2;
         if(p->size>p->max)
         {
-            *pp = p->next;
-            p->next = sempty;
-            sempty = p;
+            spheres.remove(i);
         }
         else
         {
             p->size += time/25.0f;
-            pp = &p->next;
         };
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
@@ -151,12 +134,9 @@ void aimat()
 
     setorient(vec(mm[0], mm[4], mm[8]), vec(mm[1], mm[5], mm[9]));
     
-    worldpos = vec(0.0f, 0.0f, 0.0f);
-    vecfromyawpitch(player->yaw, player->pitch, 1, 0, worldpos, true);
-    worldpos.normalize();
-    float dist = raycube(player->o, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
-    worldpos.mul(dist);
-    worldpos.add(player->o);
+    vec dir(0, 0, 0);
+    vecfromyawpitch(player->yaw, player->pitch, 1, 0, dir, true);
+    raycubepos(player->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
 };
 
 VARP(crosshairsize, 0, 15, 50);
