@@ -347,9 +347,9 @@ struct fpsserver : igameserver
         sendstring(serverdesc, p);
     };
 
-    void serverinfostr(char *buf, char *name, char *sdesc, char *map, int ping, vector<int> &attr)
+    void serverinfostr(char *buf, char *name, char *sdesc, char *map, int ping, vector<int> &attr, int np)
     {
         if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("%s [different protocol]", name);
-        else s_sprintf(buf)("%d\t%d\t%s, %s: %s %s", ping, attr[2], map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
+        else s_sprintf(buf)("%d\t%d\t%s, %s: %s %s", ping, np, map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
     };
 };

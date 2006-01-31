@@ -248,7 +248,7 @@ void refreshservers()
         serverinfo &si = servers[i];
         if(si.address.host != ENET_HOST_ANY && si.ping != 999)
         {
-            sv->serverinfostr(si.full, si.name, si.sdesc, si.map, si.ping, si.attr);
+            sv->serverinfostr(si.full, si.name, si.sdesc, si.map, si.ping, si.attr, si.numplayers);
         }
         else
         {

@@ -58,7 +58,7 @@ struct igameserver
     virtual void welcomepacket(uchar *&p, int n) = 0;
     virtual void serverinforeply(uchar *&p) = 0;
     virtual void serverupdate(int seconds) = 0;
-    virtual void serverinfostr(char *buf, char *name, char *desc, char *map, int ping, vector<int> &attr) = 0;
+    virtual void serverinfostr(char *buf, char *name, char *desc, char *map, int ping, vector<int> &attr, int np) = 0;
     virtual int serverinfoport() = 0;
     virtual int serverport() = 0;
     virtual char *getdefaultmaster() = 0;
