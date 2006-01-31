@@ -34,7 +34,7 @@ int resolverloop(void * data)
     {
 #ifdef __APPLE__
 		while (SDL_SemWaitTimeout(resolversem, 10) == SDL_MUTEX_TIMEDOUT) pthread_testcancel();		
-#elif
+#else
 		SDL_SemWait(resolversem);
 #endif
 		SDL_LockMutex(resolvermutex);
