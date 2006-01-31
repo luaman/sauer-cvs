@@ -147,6 +147,7 @@ struct fpsserver : igameserver
             {
                 sgetstr();
                 int reqmode = getint(p);
+                if(reqmode<0) reqmode = 0;
                 if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) return false;
                 mapreload = false;
                 mode = reqmode;
