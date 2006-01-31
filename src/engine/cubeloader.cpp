@@ -206,7 +206,7 @@ struct cubeloader
 
     void load_cube_world(char *mname)
     {
-        empty_world(11, true);
+        empty_world(12, true);
         freeocta(worldroot);
         worldroot = newcubes(F_SOLID);
         string pakname, cgzname;

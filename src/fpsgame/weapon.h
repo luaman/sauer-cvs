@@ -315,7 +315,7 @@ struct weaponstate
                 o = NULL;
                 loop(r, SGRAYS) if(!done[r] && (cl = intersectclosest(from, sg[r], n, d)))
                 {
-                    if((!o || o==cl) && damage<cl->health)
+                    if((!o || o==cl) && damage<cl->health+cl->armour)
                     {
                         damage += qdam;
                         o = cl;

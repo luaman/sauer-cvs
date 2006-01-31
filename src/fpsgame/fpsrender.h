@@ -7,7 +7,7 @@ struct fpsrender
         float speed = 100.0f;
         float mz = d->o.z-d->eyeheight+6.2f*scale;
         int basetime = -((int)(size_t)d&0xFFF);
-        bool attack = (d->monsterstate==M_ATTACKING || (!d->monsterstate && cl.lastmillis-d->lastaction<700));
+        bool attack = (d->monsterstate==M_ATTACKING || (!d->monsterstate && cl.lastmillis-d->lastaction<200));
         if(d->state==CS_DEAD)
         {
             anim = ANIM_DYING;
