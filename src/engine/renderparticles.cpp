@@ -127,8 +127,7 @@ void render_particles(int time)
                 glRotatef(-camera1->pitch, 1, 0, 0);
                 float scale = 0.05f;
                 glScalef(-scale, -scale, -scale);
-                seedrnd((uint)(size_t)p);
-                glTranslatef(-rnd(100), -rnd(100), 50);
+                glTranslatef(-detrnd((size_t)p, 100), -detrnd((size_t)p, 100), 50);
                 draw_text(p->text, 0, 0, pt->r, pt->g, pt->b, blend);
                 glPopMatrix();
             };

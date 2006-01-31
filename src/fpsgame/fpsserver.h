@@ -189,7 +189,7 @@ struct fpsserver : igameserver
                 cn = getint(p);
                 if(cn<0 || cn>=getnumclients() || !getinfo(cn))
                 {
-                    disconnect_client(sender, "client num");
+                    disconnect_client(sender, DISC_CN);
                     return false;
                 };
                 int size = msgsizelookup(type);
@@ -216,7 +216,7 @@ struct fpsserver : igameserver
                 if(((clientinfo *)getinfo(cn))->master)
                 {
                     bannedips.add(getclientip(victim));
-                    disconnect_client(victim, "kicked/banned");
+                    disconnect_client(victim, DISC_KICK);
                     lastkick = lastsec;
                 };
                 break;
@@ -225,7 +225,7 @@ struct fpsserver : igameserver
             default:
             {
                 int size = msgsizelookup(type);
-                if(size==-1) { disconnect_client(sender, "tag type"); return false; };
+                if(size==-1) { disconnect_client(sender, DISC_TAGT); return false; };
                 loopi(size-1) getint(p);
             };
         };
@@ -319,13 +319,13 @@ struct fpsserver : igameserver
         };
     };
     
-    char *clientconnect(int n, uint ip)
+    int clientconnect(int n, uint ip)
     {
-        loopv(bannedips) if(bannedips[i]==ip) return "ip is banned";
-        if(mastermode>=MM_PRIVATE) return "server is in private mode";
+        loopv(bannedips) if(bannedips[i]==ip) return DISC_IPBAN;
+        if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
         if(mastermode>=MM_LOCKED) ((clientinfo *)getinfo(n))->spectator = true;
         findmaster();
-        return NULL;
+        return DISC_NONE;
     };
 
     void clientdisconnect(int n) { send2(true, -1, SV_CDIS, n); findmaster();  };

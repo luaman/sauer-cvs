@@ -55,7 +55,7 @@ ENetSocket pongsock = ENET_SOCKET_NULL;
 
 void process(ENetPacket *packet, int sender);
 void multicast(ENetPacket *packet, int sender);
-void disconnect_client(int n, char *reason);
+//void disconnect_client(int n, int reason);
 
 void *getinfo(int i)    { return clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
 int getnumclients()     { return clients.length(); };
@@ -104,11 +104,13 @@ void sendintstr(int i, const char *msg)
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
-void disconnect_client(int n, char *reason)
+char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode" };
+
+void disconnect_client(int n, int reason)
 {
-    s_sprintfd(s)("client (%s) disconnected because: %s\n", clients[n]->hostname, reason);
+    s_sprintfd(s)("client (%s) disconnected because: %s\n", clients[n]->hostname, disc_reasons[reason]);
     puts(s);
-    enet_peer_disconnect(clients[n]->peer, 777 /* FIXME: dummy value */);
+    enet_peer_disconnect(clients[n]->peer, reason);
     clients[n]->type = ST_EMPTY;
     sv->clientdisconnect(n);
     sv->sendservmsg(s);
@@ -150,7 +152,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
 
     if(!sv->parsepacket(sender, p, end)) return;
 
-    if(p>end) { disconnect_client(sender, "end of packet"); return; };
+    if(p>end) { disconnect_client(sender, DISC_EOP); return; };
     multicast(packet, sender);
 };
 
@@ -338,7 +340,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             char hn[1024];
             s_strcpy(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "localhost");
             printf("client connected (%s)\n", c.hostname);
-            char *reason;
+            int reason;
             if(!(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
             else disconnect_client(c.num, reason);
             break;

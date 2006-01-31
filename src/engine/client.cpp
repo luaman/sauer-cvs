@@ -89,7 +89,7 @@ void disconnect(int onlyclean, int async)
     {
         if(!connecting && !disconnecting) 
         {
-            enet_peer_disconnect(clienthost->peers, 666 /* FIXME: dummy value */);
+            enet_peer_disconnect(clienthost->peers, DISC_NONE);
             enet_host_flush(clienthost);
             disconnecting = lastmillis;
         };
@@ -211,7 +211,8 @@ void gets2c()           // get updates from the server
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT:
-            if(!disconnecting) conoutf("server network error, disconnecting...");
+            extern char *disc_reasons[];
+            if(!disconnecting || event.data) conoutf("server network error, disconnecting (%s) ...", disc_reasons[event.data]);
             disconnect();
             return;
     }

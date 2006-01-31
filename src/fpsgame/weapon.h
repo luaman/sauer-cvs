@@ -221,8 +221,8 @@ struct weaponstate
                 }
                 else
                 {
-                    if(p->gun==GUN_RL) { /*dodynlight(p->o, v, 0, 255, p->owner);*/ particle_splash(5, 2, 200, v); }
-                    else { particle_splash(1, 1, 200, v); particle_splash(guns[p->gun].part, 1, 1, v); };
+                    if(p->gun==GUN_RL) { /*dodynlight(p->o, v, 0, 255, p->owner);*/ particle_splash(5, 2, 300, v); }
+                    else { particle_splash(1, 2, 300, v); particle_splash(guns[p->gun].part, 1, 1, v); };
                 };       
             };
             p->o = v;

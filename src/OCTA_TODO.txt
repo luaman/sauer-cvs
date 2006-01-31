@@ -15,13 +15,16 @@ eihrul:
 aard:
 - test: do more MP client thirdperson anims (shooting/hurt)
 - test: knockback for all weapons when being hit in mp | monsters too
+- test: better disconnection messages
 
+- make start of flares etc spawn out further from the player
+
+- allow people to look different in-game
 - world size sometimes too small for importcube | importcube crashes?
 - check why texture stretching on certain recent nvidia drivers only happens for certain textures -> looks like its caused by async copying of the S/T vectors
 - triggers/doors for SP
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
 - optimize drawing of water & glass
-- better disconnection messages
 - spectator mode
 - thirdperson model flips into jump anim randomly at low fps
 - profile rpg_01

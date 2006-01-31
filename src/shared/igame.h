@@ -52,7 +52,7 @@ struct igameserver
     virtual void *newinfo() = 0;
     virtual void serverinit(char *sdesc) = 0;
     virtual void clientdisconnect(int n) = 0;
-    virtual char *clientconnect(int n, uint ip) = 0;
+    virtual int clientconnect(int n, uint ip) = 0;
     virtual char *servername() = 0;
     virtual bool parsepacket(int &sender, uchar *&p, uchar *end) = 0;
     virtual void welcomepacket(uchar *&p, int n) = 0;
