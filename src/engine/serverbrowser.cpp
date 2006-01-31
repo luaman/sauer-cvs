@@ -3,6 +3,9 @@
 #include "pch.h"
 #include "engine.h"
 #include "SDL_thread.h"
+#ifdef __APPLE__
+#include <pthread.h>
+#endif
 
 struct resolverthread
 {
@@ -29,8 +32,12 @@ int resolverloop(void * data)
     resolverthread *rt = (resolverthread *)data;
     for(;;)
     {
-        SDL_SemWait(resolversem);
-        SDL_LockMutex(resolvermutex);
+        #ifdef __APPLE__
+		while (SDL_SemWaitTimeout(resolversem, 10) == SDL_MUTEX_TIMEDOUT) {pthread_testcancel();}		
+		#elif
+		SDL_SemWait(resolversem);
+        #endif
+		SDL_LockMutex(resolvermutex);
         if(resolverqueries.empty())
         {
             SDL_UnlockMutex(resolvermutex);
