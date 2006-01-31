@@ -32,17 +32,17 @@ int resolverloop(void * data)
     resolverthread *rt = (resolverthread *)data;
     for(;;)
     {
-        #ifdef __APPLE__
-		while (SDL_SemWaitTimeout(resolversem, 10) == SDL_MUTEX_TIMEDOUT) {pthread_testcancel();}		
-		#elif
+#ifdef __APPLE__
+		while (SDL_SemWaitTimeout(resolversem, 10) == SDL_MUTEX_TIMEDOUT) pthread_testcancel();		
+#elif
 		SDL_SemWait(resolversem);
-        #endif
+#endif
 		SDL_LockMutex(resolvermutex);
         if(resolverqueries.empty())
         {
             SDL_UnlockMutex(resolvermutex);
             continue;
-        }
+        };
         rt->query = resolverqueries.pop();
         rt->starttime = lastmillis;
         SDL_UnlockMutex(resolvermutex);
@@ -118,7 +118,7 @@ bool resolvercheck(char **name, ENetAddress *address)
         *address = rr.address;
         SDL_UnlockMutex(resolvermutex);
         return true;
-    }
+    };
     loopv(resolverthreads)
     {
         resolverthread &rt = resolverthreads[i];
@@ -200,10 +200,10 @@ void checkresolver()
                 si.address = addr;
                 addr.host = ENET_HOST_ANY;
                 break;
-            }
-        }
-    }
-}
+            };
+        };
+    };
+};
 
 void checkpings()
 {
@@ -260,7 +260,7 @@ void refreshservers()
         else
         {
             s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "%s [waiting for server response]" : "%s [unknown host]\t", si.name);
-        }
+        };
         si.full[60] = 0; // cut off too long server descriptions
         menumanual(1, i, si.full);
         if(!--maxmenu) return;
