@@ -111,13 +111,13 @@ struct weaponstate
         particle_text(p, ds, 8);
     };
 
-    void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel)
+    void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel, bool isrl)
     {
         d->lastpain = cl.lastmillis;
         vel.mul(100*damage/d->weight);
-        if(d==player1)           { d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
-        else if(d->monsterstate) { d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
-        else                     { cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, di(vel.x), di(vel.y), di(vel.z)); playsound(S_PAIN1+rnd(5), &d->o); };
+        if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
+        else if(d->monsterstate) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
+        else                     { if(isrl) vel.mul(2); cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, di(vel.x), di(vel.y), di(vel.z)); playsound(S_PAIN1+rnd(5), &d->o); };
         damageeffect(d->o, damage);
     };
 
@@ -126,7 +126,7 @@ struct weaponstate
         vec v(to);
         v.sub(from);
         v.normalize();
-        hit(target, damage, d, at, v);
+        hit(target, damage, d, at, v, false);
     };
 
     static const int RL_DAMRAD = 40;  
@@ -138,7 +138,7 @@ struct weaponstate
         {
             int damage = (int)(qdam*(1-dist*2/(float)guns[GUN_RL].damage));
             if(o==at) damage /= 2; 
-            hit(cn, damage, o, at, dir);
+            hit(cn, damage, o, at, dir, true);
         };
     };
 
@@ -148,7 +148,7 @@ struct weaponstate
         middle.z -= (o->aboveeye+o->eyeheight)/2;
         float dist = middle.dist(v, dir);
         if(dist<0) dist = 0;
-        dir.normalize().mul(5);
+        dir.normalize();
         return dist;
     };
 
@@ -186,7 +186,7 @@ struct weaponstate
             splash(p, v, p->o, o, qdam);
             vec dir;
             rocketdist(o, dir, v);
-            hit(i, qdam, o, p->owner, dir);
+            hit(i, qdam, o, p->owner, dir, p->gun==GUN_RL);
         }; 
     };
 

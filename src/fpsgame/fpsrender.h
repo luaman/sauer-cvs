@@ -7,7 +7,7 @@ struct fpsrender
         float speed = 100.0f;
         float mz = d->o.z-d->eyeheight+6.2f*scale;
         int basetime = -((int)(size_t)d&0xFFF);
-        bool attack = (d->monsterstate==M_ATTACKING || (!d->monsterstate && cl.lastmillis-d->lastaction<500));
+        bool attack = (d->monsterstate==M_ATTACKING || (!d->monsterstate && cl.lastmillis-d->lastaction<700));
         if(d->state==CS_DEAD)
         {
             anim = ANIM_DYING;
@@ -20,7 +20,7 @@ struct fpsrender
         }
         else if(d->state==CS_EDITING)                   { anim = ANIM_EDIT; }
         else if(d->state==CS_LAGGED)                    { anim = ANIM_LAG; }
-        else if(d->monsterstate==M_PAIN || cl.lastmillis-d->lastpain<200)  { anim = ANIM_PAIN; }
+        else if(d->monsterstate==M_PAIN || cl.lastmillis-d->lastpain<300)  { anim = ANIM_PAIN; }
         else if(d->timeinair > 100)                     { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
         else                                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; if(hellpig) speed = 1200/d->maxspeed;  };
