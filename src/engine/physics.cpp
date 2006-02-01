@@ -743,3 +743,65 @@ void mousemove(int dx, int dy)
     while(player->yaw<0.0f) player->yaw += 360.0f;
     while(player->yaw>=360.0f) player->yaw -= 360.0f;
 };
+
+bool findfloor(const vec &o, plane &floor, float &height)
+{
+    bool found = false;
+//    printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
+    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; !found && cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
+    {
+        cube &c = lookupcube(cx, cy, cz - 1);
+//        printf("c=(%d, %d, %d), lu=(%d, %d, %d)@%d\n", cx, cy, cz, lu.x, lu.y, lu.z, lusize);
+        if(isentirelysolid(c) || isclipped(c.material))
+        {
+//            if(isentirelysolid(c)) puts("solid");
+//            else puts("clipped");
+            floor = plane(0.0f, 0.0f, 1.0f, float(lu.z + lusize));
+            height = floor.offset;
+            return true;
+        };
+        if(isempty(c)) continue; //{ puts("empty"); continue; }
+        setcubeclip(c, lu.x, lu.y, lu.z, lusize);
+        clipplanes &p = *c.clip;
+//        printf("p.size=%d\n", p.size);
+        if(!p.size)
+        {
+//            puts("depressed");
+            float z = p.o.z + p.r.z;
+            if(z < o.z - STAIRHEIGHT) continue;
+            floor = plane(0.0f, 0.0f, 1.0f, z);
+            height = z;
+            return true;
+        }
+        else loopi(p.size)
+        {
+            const plane &f = p.p[i];
+//            printf("f=(%f, %f, %f)\n", f.x, f.y, f.z);
+            if(f.z <= 0) continue;
+            float z = f.zintersect(o);
+//            printf("z=%f above %f\n", z, o.z - STAIRHEIGHT);
+            if(z < lu.z || z < o.z - STAIRHEIGHT) continue;
+            if(!found || z < height)
+            {
+                found = true;
+                floor = f;
+                height = z;
+            };
+        };
+    };
+    return found;
+};
+
+void floortest()
+{
+    plane floor;
+    float height;
+    vec o = player->o;
+    o.z -= player->eyeheight;
+    if(findfloor(o, floor, height))
+        printf("FLOOR: (%f,%f,%f), %f\n", floor.x, floor.y, floor.z, height);
+    else
+        printf ("FALLING!\n");
+};
+
+COMMAND(floortest, ARG_NONE);

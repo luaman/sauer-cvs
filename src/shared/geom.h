@@ -73,6 +73,9 @@ struct vec
 struct plane : vec
 {
     float offset;
+
+    plane() {};
+    plane(float a, float b, float c, float d) : vec(a, b, c), offset(d) {};
     
     float dist(const vec &p) const { return dot(p)+offset; };
     bool operator==(const plane &p) const { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
