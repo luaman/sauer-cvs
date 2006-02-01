@@ -131,12 +131,17 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
-bool pointinbox(const vec &v, const vec &bo, const vec &br)
+bool pointoverbox(const vec &v, const vec &bo, const vec &br)
 {
     return v.x <= bo.x+br.x &&
            v.x >= bo.x-br.x &&
            v.y <= bo.y+br.y &&
-           v.y >= bo.y-br.y &&
+           v.y >= bo.y-br.y;
+};
+
+bool pointinbox(const vec &v, const vec &bo, const vec &br)
+{
+    return pointoverbox(v, bo, br) &&
            v.z <= bo.z+br.z &&
            v.z >= bo.z-br.z;
 };
@@ -746,9 +751,8 @@ void mousemove(int dx, int dy)
 
 bool findfloor(const vec &o, plane &floor, float &height)
 {
-    bool found = false;
 //    printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
-    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; !found && cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
+    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
     {
         cube &c = lookupcube(cx, cy, cz - 1);
 //        printf("c=(%d, %d, %d), lu=(%d, %d, %d)@%d\n", cx, cy, cz, lu.x, lu.y, lu.z, lusize);
@@ -764,16 +768,12 @@ bool findfloor(const vec &o, plane &floor, float &height)
         setcubeclip(c, lu.x, lu.y, lu.z, lusize);
         clipplanes &p = *c.clip;
 //        printf("p.size=%d\n", p.size);
-        if(!p.size)
-        {
-//            puts("depressed");
-            float z = p.o.z + p.r.z;
-            if(z < o.z - STAIRHEIGHT) continue;
-            floor = plane(0.0f, 0.0f, 1.0f, z);
-            height = z;
-            return true;
-        }
-        else loopi(p.size)
+        if(!pointoverbox(o, p.o, p.r)) continue;
+        float z = p.o.z + p.r.z;
+        if(z < o.z - STAIRHEIGHT) continue;
+        floor = plane(0.0f, 0.0f, 1.0f, z);
+        height = z;
+        loopi(p.size)
         {
             const plane &f = p.p[i];
 //            printf("f=(%f, %f, %f)\n", f.x, f.y, f.z);
@@ -781,15 +781,15 @@ bool findfloor(const vec &o, plane &floor, float &height)
             float z = f.zintersect(o);
 //            printf("z=%f above %f\n", z, o.z - STAIRHEIGHT);
             if(z < lu.z || z < o.z - STAIRHEIGHT) continue;
-            if(!found || z < height)
+            if(z < height)
             {
-                found = true;
                 floor = f;
                 height = z;
             };
         };
+        return true;
     };
-    return found;
+    return false;
 };
 
 void floortest()
