@@ -554,7 +554,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         };
         collided = true;
     }
-    else if(d->physstate == PHYS_STEP) d->physstate = PHYS_FALL;
     vec feet(d->o);
     feet.z -= d->eyeheight;
     float fz;
