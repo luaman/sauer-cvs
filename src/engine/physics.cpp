@@ -770,7 +770,7 @@ bool findfloor(const vec &o, plane &floor, float &height)
 //        printf("p.size=%d\n", p.size);
         if(!pointoverbox(o, p.o, p.r)) continue;
         float z = p.o.z + p.r.z;
-        if(z < o.z - STAIRHEIGHT) continue;
+        if(z < o.z - STAIRHEIGHT) return false;
         floor = plane(0.0f, 0.0f, 1.0f, z);
         height = z;
         loopi(p.size)
@@ -780,7 +780,8 @@ bool findfloor(const vec &o, plane &floor, float &height)
             if(f.z <= 0) continue;
             float z = f.zintersect(o);
 //            printf("z=%f above %f\n", z, o.z - STAIRHEIGHT);
-            if(z < lu.z || z < o.z - STAIRHEIGHT) continue;
+            if(z < lu.z) continue;
+            if(z < o.z - STAIRHEIGHT) return false;
             if(z < height)
             {
                 floor = f;
