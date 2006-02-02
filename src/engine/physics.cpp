@@ -493,8 +493,36 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
     d->o.add(dir);
     if(!collide(d))
     {
-        if(d->physstate >= PHYS_FLOOR || wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
+        if(d->physstate == PHYS_STEP || wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
         {
+     //       if(d->move) printf ("step: collide %f, %f, %f\n", wall.x, wall.y, wall.z);
+            vec feet(old);
+            feet.z -= d->eyeheight;
+            float fz;
+            if(findfloor(feet, d->floor, fz) && feet.z - fz <= STAIRHEIGHT)
+            {
+          //      if(d->move) printf ("step: within range %f / %f\n", feet.z - fz, STAIRHEIGHT);
+                vec obstacle = wall;
+                /* check if there is space atop the stair to move to */
+                d->o.z += fz + STAIRHEIGHT - feet.z + 0.1f;
+                if(collide(d))
+                {
+                //    if(d->move) puts ("step: reasonable");
+                    /* try stepping up */
+                    d->o = old;
+                    d->o.z += dir.magnitude();
+                    if(collide(d))
+                    {
+                        //if(d->move) puts ("step: success");
+                        d->physstate = PHYS_STEP;
+                        d->floor = vec(0.0f, 0.0f, 1.0f);
+                        return true;
+                    } //else if(d->move) printf("DO: %f, %f, %f\n", wall.x, wall.y, wall.z);
+                } //else if(d->move) printf ("ATTEMPT: %f, %f, %f\n", wall.x, wall.y, wall.z);
+                wall = obstacle;
+            };
+
+#if 0
             vec feet(old);
             feet.z -= d->eyeheight;
             float fz;
@@ -518,6 +546,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
                 }
                 wall = obstacle;
             };
+#endif
         };
 #if 0
         if(wall.z <= 0.0f) d->blocked = true;
@@ -529,6 +558,8 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         };
         d->o = old;
 #endif
+        d->blocked = true;
+        d->o = old;
         
         vec w(wall), v(wall);
         w.mul(/* elasticity* */wall.dot(dir));
@@ -542,8 +573,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
 #endif
         
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
-        d->blocked = true;
-        d->o = old;
         if(wall.z > FLOORZ)
         {
 //if(isthirdperson())
@@ -556,7 +585,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
             return false;
         };
         collided = true;
-    }
+    };
     vec feet(d->o);
     feet.z -= d->eyeheight;
     float fz;
