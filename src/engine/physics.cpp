@@ -754,7 +754,8 @@ bool findfloor(const vec &o, plane &floor, float &height)
 //    printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
     for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
     {
-        cube &c = lookupcube(cx, cy, cz - 1);
+        cz--;
+        cube &c = lookupcube(cx, cy, cz);
 //        printf("c=(%d, %d, %d), lu=(%d, %d, %d)@%d\n", cx, cy, cz, lu.x, lu.y, lu.z, lusize);
         if(isentirelysolid(c) || isclipped(c.material))
         {
@@ -764,28 +765,38 @@ bool findfloor(const vec &o, plane &floor, float &height)
             height = floor.offset;
             return true;
         };
+        static vec down(0.0f, 0.0f, -1.0f);
+        cube &ce = lookupcube(cx, cy, cz, -octaentsize);
+        float dent = disttoent(ce.ents, NULL, o, down);
+        if(dent <= STAIRHEIGHT)
+        {
+// puts("entity");
+            floor = plane(0.0f, 0.0f, 1.0f, o.z - dent);
+            height = floor.offset;
+            return true;
+        };
         if(isempty(c)) continue; //{ puts("empty"); continue; }
         setcubeclip(c, lu.x, lu.y, lu.z, lusize);
         clipplanes &p = *c.clip;
 //        printf("p.size=%d\n", p.size);
         if(!pointoverbox(o, p.o, p.r)) continue;
-        float z = p.o.z + p.r.z;
-        if(z < o.z - STAIRHEIGHT) return false;
-        floor = plane(0.0f, 0.0f, 1.0f, z);
-        height = z;
+        float bz = p.o.z + p.r.z;
+        if(bz < o.z - STAIRHEIGHT) return false;
+        floor = plane(0.0f, 0.0f, 1.0f, bz);
+        height = bz;
         loopi(p.size)
         {
             const plane &f = p.p[i];
 //            printf("f=(%f, %f, %f)\n", f.x, f.y, f.z);
             if(f.z <= 0) continue;
-            float z = f.zintersect(o);
+            float fz = f.zintersect(o);
 //            printf("z=%f above %f\n", z, o.z - STAIRHEIGHT);
-            if(z < lu.z) continue;
-            if(z < o.z - STAIRHEIGHT) return false;
-            if(z < height)
+            if(fz < lu.z) continue;
+            if(fz < o.z - STAIRHEIGHT) return false;
+            if(fz < height)
             {
                 floor = f;
-                height = z;
+                height = fz;
             };
         };
         return true;
