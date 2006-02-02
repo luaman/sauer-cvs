@@ -498,7 +498,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
             vec feet(old);
             feet.z -= d->eyeheight;
             float fz;
-            if(findfloor(feet, d->floor, fz) && floorheight - fz <= STAIRHEIGHT)
+            if(findfloor(feet, d->floor, fz) && floorheight > fz && floorheight - fz <= STAIRHEIGHT)
             {
                 /* try stepping up */
                 d->o = old;
@@ -506,6 +506,8 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
                 vec obstacle = wall;
                 if(collide(d))
                 {
+//if(isthirdperson()) 
+//printf("fh=%f - fz=%f => %f\n", floorheight, fz, floorheight - fz);
                     d->physstate = PHYS_STEP;
                     d->floor = vec(0.0f, 0.0f, 1.0f);
                     return true;
