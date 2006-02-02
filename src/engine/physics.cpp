@@ -292,7 +292,8 @@ float floorheight, walldistance;
 const float STAIRHEIGHT = 5.0f;
 const float FLOORZ = 0.7f;
 const float JUMPVEL = 150.0f;
-const float GRAVITY = 150.0f; 
+const float GRAVITY = 120.0f; 
+const float STEPSPEED = 2.0f;
 
 bool findfloor(const vec &o, vec &floor, float &height)
 {
@@ -510,7 +511,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
                 //    if(d->move) puts ("step: reasonable");
                     /* try stepping up */
                     d->o = old;
-                    d->o.z += dir.magnitude();
+                    d->o.z += dir.magnitude()*STEPSPEED;
                     if(collide(d))
                     {
                         //if(d->move) puts ("step: success");
