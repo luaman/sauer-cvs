@@ -526,13 +526,14 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
             ground = wall;
         };
         d->o = old;
-
+#endif
+        
         vec w(wall), v(wall);
         w.mul(/* elasticity* */wall.dot(dir));
         dir.sub(w);
         v.mul(/* elasticity* */wall.dot(d->vel));
         d->vel.sub(v);
-
+#if 0
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
 
         return false;
