@@ -751,10 +751,20 @@ void mousemove(int dx, int dy)
 
 bool findfloor(const vec &o, plane &floor, float &height)
 {
+    static vec down(0.0f, 0.0f, -1.0f); 
 //    printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
     for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
     {
         cz--;
+        cube &ce = lookupcube(cx, cy, cz, -octaentsize);
+        float dent = disttoent(ce.ents, NULL, o, down);
+        if(dent <= STAIRHEIGHT)
+        {
+//            puts("entity");
+            floor = plane(0.0f, 0.0f, 1.0f, o.z - dent);
+            height = floor.offset;
+            return true;
+        };
         cube &c = lookupcube(cx, cy, cz);
 //        printf("c=(%d, %d, %d), lu=(%d, %d, %d)@%d\n", cx, cy, cz, lu.x, lu.y, lu.z, lusize);
         if(isentirelysolid(c) || isclipped(c.material))
@@ -762,16 +772,6 @@ bool findfloor(const vec &o, plane &floor, float &height)
 //            if(isentirelysolid(c)) puts("solid");
 //            else puts("clipped");
             floor = plane(0.0f, 0.0f, 1.0f, float(lu.z + lusize));
-            height = floor.offset;
-            return true;
-        };
-        static vec down(0.0f, 0.0f, -1.0f);
-        cube &ce = lookupcube(cx, cy, cz, -octaentsize);
-        float dent = disttoent(ce.ents, NULL, o, down);
-        if(dent <= STAIRHEIGHT)
-        {
-// puts("entity");
-            floor = plane(0.0f, 0.0f, 1.0f, o.z - dent);
             height = floor.offset;
             return true;
         };
