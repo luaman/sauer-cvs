@@ -35,6 +35,8 @@ enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_PAIN, ANIM_IDLE, ANIM_IDLE_ATTACK, ANIM_R
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING };
 
+enum { PHYS_FALL = 0, PHYS_FLOAT = 1, PHYS_FLOOR = 2, PHYS_STEP = 3 };
+
 struct dynent                                   // players & monsters
 {
     vec o, vel;                                 // origin, velocity
@@ -42,7 +44,8 @@ struct dynent                                   // players & monsters
     float maxspeed;                             // cubes per second, 100 for player
     int timeinair;
     bool inwater;
-    float onfloor;
+    int physstate;                              // one of PHYS_* above
+    vec floor;                                  // the normal of floor the dynent is on
     bool jumpnext;
     int move, strafe, lastmove;
     bool k_left, k_right, k_up, k_down;         // see input code
@@ -59,14 +62,14 @@ struct dynent                                   // players & monsters
     int lastanimswitchtime[2];
 
     dynent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), bob(0), maxspeed(100), 
-               inwater(false), radius(4.1f), eyeheight(14), aboveeye(1), state(CS_ALIVE),
+               inwater(false), physstate(PHYS_FALL), radius(4.1f), eyeheight(14), aboveeye(1), state(CS_ALIVE),
                frags(0), monsterstate(0), blocked(false), moving(0)
                { reset(); loopi(2) lastanimswitchtime[i] = -1; };
                
     void reset()
     {
         timeinair = strafe = move = lastmove = 0;
-        onfloor = 0;
+        physstate = PHYS_FALL;
         k_left = k_right = k_up = k_down = jumpnext = false;
         vel = vec(0, 0, 0);
     };

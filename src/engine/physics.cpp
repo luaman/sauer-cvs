@@ -287,12 +287,82 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 /////////////////////////  entity collision  ///////////////////////////////////////////////
 
 // info about collisions
-vec wall, ground; // just the normal vectors.
-float floorheight, walldistance;
+vec wall; // just the normal vectors.
+float floorheight, walldistance; 
 const float STAIRHEIGHT = 5.0f;
 const float FLOORZ = 0.7f;
 const float JUMPVEL = 150.0f;
-const float GRAVITY = 400.0f;
+const float GRAVITY = 150.0f; 
+
+bool findfloor(const vec &o, vec &floor, float &height)
+{
+    static vec down(0.0f, 0.0f, -1.0f);
+//    printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
+    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
+    {
+        cz--;
+        cube &ce = lookupcube(cx, cy, cz, -octaentsize);
+        float dent = disttoent(ce.ents, NULL, o, down);
+        if(dent <= STAIRHEIGHT)
+        {
+//            puts("entity");
+            floor = vec(0.0f, 0.0f, 1.0f);
+            height = o.z - dent;
+            return true;
+        };
+// TODO: fold this lookupcube call and the above call together somehow
+        cube &c = lookupcube(cx, cy, cz);
+//        printf("c=(%d, %d, %d), lu=(%d, %d, %d)@%d\n", cx, cy, cz, lu.x, lu.y, lu.z, lusize);
+        if(isentirelysolid(c) || isclipped(c.material))
+        {
+//            if(isentirelysolid(c)) puts("solid");
+//            else puts("clipped");
+            floor = vec(0.0f, 0.0f, 1.0f);
+            height = float(lu.z + lusize);
+            return true;
+        };
+        if(isempty(c)) continue; //{ puts("empty"); continue; }
+        setcubeclip(c, lu.x, lu.y, lu.z, lusize);
+        clipplanes &p = *c.clip;
+//        printf("p.size=%d\n", p.size);
+        if(!pointoverbox(o, p.o, p.r)) continue;
+        float bz = p.o.z + p.r.z;
+        if(bz < o.z - STAIRHEIGHT) return false;
+        floor = vec(0.0f, 0.0f, 1.0f);
+        height = bz;
+        loopi(p.size)
+        {
+            const plane &f = p.p[i];
+//            printf("f=(%f, %f, %f)\n", f.x, f.y, f.z);
+            if(f.z <= 0) continue;
+            float fz = f.zintersect(o);
+//            printf("z=%f above %f\n", z, o.z - STAIRHEIGHT);
+            if(fz < lu.z) continue;
+            if(fz < o.z - STAIRHEIGHT) return false;
+            if(fz < height)
+            {
+                floor = f;
+                height = fz;
+            };
+        };
+        return true;
+    };
+    return false;
+};
+
+void floortest()
+{
+    vec floor;
+    float height;
+    vec o = player->o;
+    o.z -= player->eyeheight;
+    if(findfloor(o, floor, height))
+        printf("FLOOR: (%f,%f,%f), %f\n", floor.x, floor.y, floor.z, height);
+    else
+        printf ("FALLING!\n");
+};
+
+COMMAND(floortest, ARG_NONE);
 
 void checkstairs(float height)
 {
@@ -416,29 +486,38 @@ bool collide(dynent *d)
     return true;
 };
 
-bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
+bool move(dynent *d, vec &dir, float push = 0.0f)
 {
+    bool collided = false;
     vec old(d->o);
     d->o.add(dir);
     if(!collide(d))
     {
-        if(wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
+        if(d->physstate >= PHYS_FLOOR || wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
         {
-            const float space = floorheight-(d->o.z-d->eyeheight);
-            if(space<=STAIRHEIGHT && space>-1.0f)
+            vec feet(old);
+            feet.z -= d->eyeheight;
+            float fz;
+            if(findfloor(feet, d->floor, fz) && floorheight - fz <= STAIRHEIGHT)
             {
+                /* try stepping up */
+                d->o = old;
+                d->o.z += dir.magnitude();
                 vec obstacle = wall;
-                /* add space to reach the floor plus a little stepping room */
-                d->o.z += space + 0.01f;
                 if(collide(d))
                 {
+                    d->physstate = PHYS_STEP;
+                    d->floor = vec(0.0f, 0.0f, 1.0f);
+                    return true;
+#if 0
                     d->onfloor = 0.0f;
                     d->bob = -space;
-                    return true;
-                };
+#endif
+                }
                 wall = obstacle;
             };
         };
+#if 0
         if(wall.z <= 0.0f) d->blocked = true;
         else
         {
@@ -449,18 +528,56 @@ bool move(dynent *d, vec &dir, float push = 0.0f, float elasticity = 1.0f)
         d->o = old;
 
         vec w(wall), v(wall);
-        w.mul(elasticity*wall.dot(dir));
+        w.mul(/* elasticity* */wall.dot(dir));
         dir.sub(w);
-        v.mul(elasticity*wall.dot(d->vel));
+        v.mul(/* elasticity* */wall.dot(d->vel));
         d->vel.sub(v);
 
         if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
 
         return false;
-    };
-
-    return true;
+#endif
+        
+        if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
+        d->blocked = true;
+        d->o = old;
+        if(wall.z > FLOORZ)
+        {
+//if(isthirdperson())
+//printf("collided: %f, %f, %f\n", wall.x, wall.y, wall.z);
+            d->physstate = PHYS_FLOOR;
+            d->floor = wall;
+            d->timeinair = 0;
+            d->vel.z = 0.0f;
+//            d->o.z += 0.1f;
+            return false;
+        };
+        collided = true;
+    }
+    else if(d->physstate == PHYS_STEP) d->physstate = PHYS_FALL;
+    vec feet(d->o);
+    feet.z -= d->eyeheight;
+    float fz;
+    if(d->vel.z > 0.0f || !findfloor(feet, d->floor, fz) || feet.z - fz > 0.1f) d->physstate = PHYS_FALL;
+    else
+    {
+//if(isthirdperson())
+//printf("found: %f, %f, %f\n", d->floor.x, d->floor.y, d->floor.z);
+        d->physstate = PHYS_FLOOR;
+        d->timeinair = 0;
+        d->vel.z = 0.0f;
+        //d->o.z = fz + d->eyeheight + 0.1f;
+    }; 
+    return !collided;
 };
+
+void phystest()
+{
+    static const char *states[] = {"fall", "float", "floor", "step"};
+    printf ("PHYS: %s, (%f, %f, %f)\n", states[player->physstate], player->floor.x, player->floor.y, player->floor.z);
+}
+
+COMMAND(phystest, ARG_NONE);
 
 void dropenttofloor(entity *e)
 {
@@ -486,7 +603,7 @@ void dropenttofloor(entity *e)
         d.eyeheight = 4.0f;
         d.aboveeye = 1.0f;
     };
-    d.onfloor = 0.0f;
+    d.physstate = PHYS_FALL;
     d.blocked = false;
     d.moving = true;
     d.timeinair = 0;
@@ -494,7 +611,7 @@ void dropenttofloor(entity *e)
     loopi(hdr.worldsize)
     {
         move(&d, v);
-        if(d.blocked || d.onfloor > 0.0f) break;
+        if(d.blocked || d.physstate >= PHYS_FLOOR) break;
     };
     e->o = d.o;
 };
@@ -539,33 +656,36 @@ VAR(physics_friction_water, 1, 300, 1000);
 VAR(physics_friction_stop, 1, 700, 1000);
 VAR(physics_friction_jump, 1, 400, 1000);
 
-void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, float secs, float gravity)
+void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, int curtime, bool iscamera)
 {
+#if 0
     /* accelerate to maximum speed in 1/8th of a second */
     const float speed = 8.0f*secs*pl->maxspeed,
                 gfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
                 afr = floating ? physics_friction_air/1000.0f : (water ? physics_friction_water/1000.0f : physics_friction_air/1000.0f), /* coefficient of friction for the air */
                 dfr = afr + (gfr == 0.0 ? physics_friction_jump/1000.0f : gfr), /* friction against which the player is pushing to generate movement */
                 sfr = (physics_friction_stop/1000.f)*(afr + gfr); /* friction against which the player is stopping movement */
-
-    if(!floating && (!water || (!pl->move && !pl->strafe)))
+#endif
+#if 0
+    if(pl->physstate == PHYS_FALL && (!water || (!pl->move && !pl->strafe)))
         pl->vel.z -= gravity*secs;
-
+#endif
     if(floating)
     {
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            pl->vel.z += JUMPVEL;
+            pl->vel.z = JUMPVEL;
         };
     }
-    else
-    if(pl->onfloor > 0.0f || water)
+    else 
+    if(pl->physstate >= PHYS_FLOOR || water)
     {
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            pl->vel.z += JUMPVEL*(water ? 2.0f : pl->onfloor); // physics impulse upwards
+            pl->vel.z = JUMPVEL; // physics impulse upwards
+            if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; }; // dampen velocity change even harder, gives correct water feel
             cl->physicstrigger(pl, local, 1, 0);
         };
     }
@@ -577,20 +697,30 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     vec m(0.0f, 0.0f, 0.0f);
     if(pl->move || pl->strafe)
     {
-        vecfromyawpitch(pl->yaw, pl->pitch, pl->move, pl->strafe, m, floating || water || gravity==0);
+        vecfromyawpitch(pl->yaw, pl->pitch, pl->move, pl->strafe, m, floating || water || iscamera);
 
-        if(pl->onfloor > 0.0f)
+        if(!floating && pl->physstate >= PHYS_FLOOR)
         {
             /* move up or down slopes in air
              * but only move up slopes in water
              */
-            float dz = -(m.x*ground.x + m.y*ground.y)/ground.z;
-            if(!water || dz > 0.0f) m.z += dz;
+            float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
+            if(!water) m.z = dz;
+            else if(dz > 0.0f) m.z = max(m.z, dz);
         };
 
         m.normalize();
     };
 
+    vec d(m);
+    d.mul(pl->maxspeed);
+    float friction = water ? 20.0f : (pl->physstate >= PHYS_FLOOR || floating ? 6.0f : 30.f);
+    float fpsfric = friction/curtime*20.0f;
+
+    pl->vel.mul(fpsfric-1);
+    pl->vel.add(d);
+    pl->vel.div(fpsfric);
+#if 0
     float v = pl->vel.magnitude();
     if(v > 0.0f)
     {
@@ -618,6 +748,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     dv.y = ys*max(min(dy, ys*dv.y), 0.0f);
     dv.z = zs*max(min(dz, zs*dv.z), 0.0f);
     pl->vel.add(dv);
+#endif
 };
 
 // main physics routine, moves a player/monster for a curtime step
@@ -629,18 +760,25 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
     const float secs = curtime/1000.f;
-    const float elasticity = pl->vel.x == 0.0f && pl->vel.y == 0.0f && pl->vel.z <= 0.0f && pl->vel.z >= GRAVITY*-0.05f ? 1.0f : 1.2f;
+//    const float elasticity = pl->vel.x == 0.0f && pl->vel.y == 0.0f && pl->vel.z <= 0.0f && pl->vel.z >= GRAVITY*-0.05f ? 1.0f : 1.2f;
 
+    // apply any player generated changes in velocity
+    modifyvelocity(pl, moveres, local, water, floating, curtime, iscamera);
+    
     vec d(pl->vel);
-    d.mul(secs);
+    d.mul(secs); 
+    // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2), 
+    if(!iscamera && pl->physstate < PHYS_FLOOR && !floating && (!water || (!pl->move && !pl->strafe))) 
+        d.z -= water ? 0.1f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
+    if(water) d.mul(0.5f);
 
     pl->blocked = false;
     pl->moving = true;
-    pl->onfloor = 0.0f;
     pl->bob = min(0, pl->bob+0.7f);
 
     if(floating)                // just apply velocity
     {
+        pl->physstate = PHYS_FLOAT;
         pl->o.add(d);
     }
     else                        // apply velocity with collision
@@ -651,15 +789,12 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push, elasticity)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d, push/*, elasticity*/)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 1000 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
         };
     };
-
-    // apply any player generated changes in velocity
-    modifyvelocity(pl, moveres, local, water, floating, secs, iscamera ? 0 : GRAVITY);
 
     // automatically apply smooth roll when strafing
 
@@ -749,71 +884,3 @@ void mousemove(int dx, int dy)
     while(player->yaw>=360.0f) player->yaw -= 360.0f;
 };
 
-bool findfloor(const vec &o, plane &floor, float &height)
-{
-    static vec down(0.0f, 0.0f, -1.0f); 
-//    printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
-    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
-    {
-        cz--;
-        cube &ce = lookupcube(cx, cy, cz, -octaentsize);
-        float dent = disttoent(ce.ents, NULL, o, down);
-        if(dent <= STAIRHEIGHT)
-        {
-//            puts("entity");
-            floor = plane(0.0f, 0.0f, 1.0f, o.z - dent);
-            height = floor.offset;
-            return true;
-        };
-        cube &c = lookupcube(cx, cy, cz);
-//        printf("c=(%d, %d, %d), lu=(%d, %d, %d)@%d\n", cx, cy, cz, lu.x, lu.y, lu.z, lusize);
-        if(isentirelysolid(c) || isclipped(c.material))
-        {
-//            if(isentirelysolid(c)) puts("solid");
-//            else puts("clipped");
-            floor = plane(0.0f, 0.0f, 1.0f, float(lu.z + lusize));
-            height = floor.offset;
-            return true;
-        };
-        if(isempty(c)) continue; //{ puts("empty"); continue; }
-        setcubeclip(c, lu.x, lu.y, lu.z, lusize);
-        clipplanes &p = *c.clip;
-//        printf("p.size=%d\n", p.size);
-        if(!pointoverbox(o, p.o, p.r)) continue;
-        float bz = p.o.z + p.r.z;
-        if(bz < o.z - STAIRHEIGHT) return false;
-        floor = plane(0.0f, 0.0f, 1.0f, bz);
-        height = bz;
-        loopi(p.size)
-        {
-            const plane &f = p.p[i];
-//            printf("f=(%f, %f, %f)\n", f.x, f.y, f.z);
-            if(f.z <= 0) continue;
-            float fz = f.zintersect(o);
-//            printf("z=%f above %f\n", z, o.z - STAIRHEIGHT);
-            if(fz < lu.z) continue;
-            if(fz < o.z - STAIRHEIGHT) return false;
-            if(fz < height)
-            {
-                floor = f;
-                height = fz;
-            };
-        };
-        return true;
-    };
-    return false;
-};
-
-void floortest()
-{
-    plane floor;
-    float height;
-    vec o = player->o;
-    o.z -= player->eyeheight;
-    if(findfloor(o, floor, height))
-        printf("FLOOR: (%f,%f,%f), %f\n", floor.x, floor.y, floor.z, height);
-    else
-        printf ("FALLING!\n");
-};
-
-COMMAND(floortest, ARG_NONE);

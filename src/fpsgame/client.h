@@ -112,7 +112,10 @@ struct clientcom : iclientcom
         putint(p, (int)(d->vel.x*DVF));     // quantize to 1/100, almost always 1 byte
         putint(p, (int)(d->vel.y*DVF));
         putint(p, (int)(d->vel.z*DVF));
-        putint(p, (int)(d->onfloor*DVF));
+        putint(p, (int)d->physstate);
+        putint(p, (int)(d->floor.x*DVF));     // quantize to 1/100, almost always 1 byte
+        putint(p, (int)(d->floor.y*DVF));
+        putint(p, (int)(d->floor.z*DVF));
         // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
         putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<5) );
 
@@ -223,7 +226,10 @@ struct clientcom : iclientcom
                 d->vel.x = getint(p)/DVF;
                 d->vel.y = getint(p)/DVF;
                 d->vel.z = getint(p)/DVF;
-                d->onfloor = getint(p)/DVF;
+                d->physstate = getint(p);
+                d->floor.x = getint(p)/DVF;
+                d->floor.y = getint(p)/DVF;
+                d->floor.z = getint(p)/DVF;
                 int f = getint(p);
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2; 
