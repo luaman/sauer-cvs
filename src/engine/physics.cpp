@@ -541,7 +541,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
                     return true;
 #if 0
                     d->onfloor = 0.0f;
-                    d->bob = -space;
+//                    d->bob = -space;
 #endif
                 }
                 wall = obstacle;
@@ -581,7 +581,8 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
             d->floor = wall;
             d->timeinair = 0;
             d->vel.z = 0.0f;
-//            d->o.z += 0.1f;
+            // give a small bit of extra space for freer movement
+            d->o.z += 0.05f;
             return false;
         };
         collided = true;
@@ -597,7 +598,8 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->physstate = PHYS_FLOOR;
         d->timeinair = 0;
         d->vel.z = 0.0f;
-        //d->o.z = fz + d->eyeheight + 0.1f;
+        // clamp the player a bit above the ground
+        d->o.z = fz + d->eyeheight + 0.05f;
     }; 
     return !collided;
 };
@@ -805,7 +807,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 
     pl->blocked = false;
     pl->moving = true;
-    pl->bob = min(0, pl->bob+0.7f);
+//    pl->bob = min(0, pl->bob+0.7f);
 
     if(floating)                // just apply velocity
     {
@@ -827,6 +829,8 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         };
     };
 
+    if(pl->physstate == PHYS_FLOOR && d.x == 0 && d.y == 0 && d.z == 0) pl->moving = false;
+        
     // automatically apply smooth roll when strafing
 
     if(pl->strafe==0)

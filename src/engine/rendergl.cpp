@@ -223,7 +223,7 @@ void transplayer()
     glRotatef(player->pitch,-1.0,0.0,0.0);
     glRotatef(player->yaw,0.0,1.0,0.0);
 
-    glTranslatef(-camera1->o.x, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z-player->bob, -camera1->o.y);   
+    glTranslatef(-camera1->o.x, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z, -camera1->o.y);   
 };
 
 VARP(fov, 10, 105, 150);

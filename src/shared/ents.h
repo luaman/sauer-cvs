@@ -40,7 +40,7 @@ enum { PHYS_FALL = 0, PHYS_FLOAT = 1, PHYS_FLOOR = 2, PHYS_STEP = 3 };
 struct dynent                                   // players & monsters
 {
     vec o, vel;                                 // origin, velocity
-    float yaw, pitch, roll, bob;
+    float yaw, pitch, roll;
     float maxspeed;                             // cubes per second, 100 for player
     int timeinair;
     bool inwater;
@@ -61,7 +61,7 @@ struct dynent                                   // players & monsters
     animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
     int lastanimswitchtime[2];
 
-    dynent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), bob(0), maxspeed(100), 
+    dynent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
                inwater(false), physstate(PHYS_FALL), radius(4.1f), eyeheight(14), aboveeye(1), state(CS_ALIVE),
                frags(0), monsterstate(0), blocked(false), moving(0)
                { reset(); loopi(2) lastanimswitchtime[i] = -1; };
