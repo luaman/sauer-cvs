@@ -24,8 +24,17 @@ enet_protocol_dispatch_incoming_commands (ENetHost * host, ENetEvent * event)
        if (currentPeer >= & host -> peers [host -> peerCount])
          currentPeer = host -> peers;
 
-       if (currentPeer -> state == ENET_PEER_STATE_ZOMBIE)
+       switch (currentPeer -> state)
        {
+       case ENET_PEER_STATE_CONNECTION_PENDING:
+           currentPeer -> state = ENET_PEER_STATE_CONNECTED;
+
+           event -> type = ENET_EVENT_TYPE_CONNECT;
+           event -> peer = currentPeer;
+
+           return 1;
+           
+       case ENET_PEER_STATE_ZOMBIE:
            host -> recalculateBandwidthLimits = 1;
 
            event -> type = ENET_EVENT_TYPE_DISCONNECT;
@@ -536,10 +545,10 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
 
        host -> recalculateBandwidthLimits = 1;
 
-       if (event != NULL)
+       if (event == NULL)
+          peer -> state = ENET_PEER_STATE_CONNECTION_PENDING;
+       else
        {
-          commandNumber = enet_protocol_remove_sent_reliable_command (peer, receivedReliableSequenceNumber, command -> header.channelID);
-
           peer -> state = ENET_PEER_STATE_CONNECTED;
 
           event -> type = ENET_EVENT_TYPE_CONNECT;
@@ -566,10 +575,6 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
        }
 
        return 1;
-
-    default:
-       commandNumber = enet_protocol_remove_sent_reliable_command (peer, receivedReliableSequenceNumber, command -> header.channelID);
-       break;
     }
    
     return 0;
@@ -625,10 +630,15 @@ enet_protocol_handle_verify_connect (ENetHost * host, ENetEvent * event, ENetPee
 
     host -> recalculateBandwidthLimits = 1;
 
-    peer -> state = ENET_PEER_STATE_CONNECTED;
+    if (event == NULL)
+        peer -> state = ENET_PEER_STATE_CONNECTION_PENDING;
+    else
+    {
+        peer -> state = ENET_PEER_STATE_CONNECTED;
 
-    event -> type = ENET_EVENT_TYPE_CONNECT;
-    event -> peer = peer;
+        event -> type = ENET_EVENT_TYPE_CONNECT;
+        event -> peer = peer;
+    }
 }
 
 static int
