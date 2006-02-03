@@ -87,7 +87,7 @@ struct plane : vec
         offset = -dot(a);
     };
 
-    float zintersect(const vec &p) const { return -(x*p.x+y*p.x+offset)/z; };
+    float zintersect(const vec &p) const { return -(x*p.x+y*p.y+offset)/z; };
     float zdist(const vec &p) const { return p.z-zintersect(p); }; 
 };
 
