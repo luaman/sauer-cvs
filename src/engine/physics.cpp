@@ -536,7 +536,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->timeinair = 0;
         d->vel.z = 0.0f;
         // correct the player's position if he falls through the floor
-        if(fz > d->o.z - d->eyeheight) d->o.z = fz + d->eyeheight; 
+        if(fz > d->o.z - d->eyeheight - 0.01f) d->o.z = fz + d->eyeheight + 0.01f; 
     };
     return !collided;
 };
