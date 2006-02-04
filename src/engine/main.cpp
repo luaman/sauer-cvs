@@ -363,8 +363,9 @@ int main(int argc, char **argv)
                     {
                         if(event.motion.x == scr_w / 2 && event.motion.y == scr_h / 2) break;
                         SDL_WarpMouse(scr_w / 2, scr_h / 2);
-                    }
-                    mousemove(event.motion.xrel, event.motion.yrel);
+                    };
+                    if((screen->flags&SDL_FULLSCREEN) || grabmouse)
+                        mousemove(event.motion.xrel, event.motion.yrel);
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
