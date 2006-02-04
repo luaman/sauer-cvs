@@ -288,21 +288,18 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 
 // info about collisions
 vec wall; // just the normal vectors.
-float floorheight, walldistance; 
+float walldistance; 
 const float STAIRHEIGHT = 8.0f;
 const float FLOORZ = 0.7f;
 const float JUMPVEL = 150.0f;
 const float GRAVITY = 120.0f; 
 const float STEPSPEED = 2.0f;
 
-int debugfloor = 0;
-
 bool findfloor(dynent *d, vec &floor, float &height)
 {
     static vec down(0.0f, 0.0f, -1.0f);
     vec o(d->o);
     o.z -= d->eyeheight;
-if(debugfloor) printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
     float reach = max(STAIRHEIGHT, 2*d->radius);
     for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - reach; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
     {
@@ -311,27 +308,21 @@ if(debugfloor) printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
         float dent = disttoent(ce.ents, NULL, o, down);
         if(dent <= reach)
         {
-//            puts("entity");
             floor = vec(0.0f, 0.0f, 1.0f);
             height = o.z - dent;
             return true;
         };
 // TODO: fold this lookupcube call and the above call together somehow
         cube &c = lookupcube(cx, cy, cz);
-if(debugfloor) printf("c=(%d, %d, %d), lu=(%d, %d, %d) ... %d\n", cx, cy, cz, lu.x, lu.y, lu.z, lusize);
         if(isentirelysolid(c) || isclipped(c.material))
         {
-//            if(isentirelysolid(c)) puts("solid");
-//            else puts("clipped");
             floor = vec(0.0f, 0.0f, 1.0f);
             height = float(lu.z + lusize);
             return height <= o.z;
         };
-        if(isempty(c)) //continue;
-        { if(debugfloor) puts("empty"); continue; }
+        if(isempty(c)) continue;
         setcubeclip(c, lu.x, lu.y, lu.z, lusize);
         clipplanes &p = *c.clip;
-if(debugfloor) printf("p.size=%d\n", p.size);
         if(!pointoverbox(o, p.o, p.r)) continue;
         float bz = p.o.z + p.r.z;
         if(bz < o.z - reach) return false;
@@ -340,10 +331,8 @@ if(debugfloor) printf("p.size=%d\n", p.size);
         loopi(p.size)
         {
             const plane &f = p.p[i];
-if(debugfloor) printf("f=(%f, %f, %f, %f)\n", f.x, f.y, f.z, f.offset);
             if(f.z <= 0) continue;
             float fz = f.zintersect(o);
-if(debugfloor) printf("fz=%f above %f and %d, previous %f\n", fz, o.z - reach, lu.z, height);
             if(fz < lu.z) goto nextcube;
             if(fz < o.z - reach) return false;
             if(fz < height)
@@ -352,7 +341,6 @@ if(debugfloor) printf("fz=%f above %f and %d, previous %f\n", fz, o.z - reach, l
                 height = fz;
             };
         };
-if(debugfloor) printf("height=%f <= o.z=%f\n", height, o.z);
         return height <= o.z;
     nextcube:
         ;
@@ -362,24 +350,17 @@ if(debugfloor) printf("height=%f <= o.z=%f\n", height, o.z);
 
 void floortest()
 {
-    debugfloor = 1;
     vec floor;
     float height;
     if(findfloor(player, floor, height))
         printf("FLOOR: (%f,%f,%f), %f\n", floor.x, floor.y, floor.z, height);
     else
         printf ("FALLING!\n");
-    debugfloor = 0;
 };
 
 COMMAND(floortest, ARG_NONE);
 
-void checkstairs(float height)
-{
-    floorheight = max(height, floorheight);
-};
-
-bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, bool obstacle)
+bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo)
 {
     vec s(d->o);
     s.sub(o);
@@ -395,14 +376,13 @@ bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo, boo
     if(ax>ay && ax>az)  { wall.x = s.x>0 ? 1 : -1; walldistance = ax; }
     else if(ay>az)      { wall.y = s.y>0 ? 1 : -1; walldistance = ay; }
     else                { wall.z = s.z>0 ? 1 : -1; walldistance = az; }
-    if(obstacle) checkstairs(o.z+hi);
     return false;
 };
 
 bool plcollide(dynent *d, dynent *o)    // collide with player or monster
 {
     if(d->state!=CS_ALIVE || o->state!=CS_ALIVE) return true;
-    return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight, false);
+    return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight);
 };
 
 bool mmcollide(dynent *d, octaentities &oc)               // collide with a mapmodel
@@ -416,7 +396,7 @@ bool mmcollide(dynent *d, octaentities &oc)               // collide with a mapm
         vec o(e.o);
         o.z += float(mmi.zoff+e.attr3);
         float radius = float(mmi.rad);
-        if(!rectcollide(d, o, radius, radius, float(mmi.h), 0.0f, true)) return false;
+        if(!rectcollide(d, o, radius, radius, float(mmi.h), 0.0f)) return false;
     };
     return true;
 };
@@ -428,7 +408,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
         vec r = vec(s2, s2, s2);
-        return rectcollide(d, o, r.x, r.y, r.z, r.z, true);
+        return rectcollide(d, o, r.x, r.y, r.z, r.z);
     };
 
     setcubeclip(c, x, y, z, size);
@@ -439,7 +419,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
 
-    if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z, p.size==0)) return true;
+    if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z)) return true;
 
     if(p.size)
     {
@@ -452,7 +432,6 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
         };
         if(w->dot(d->vel) > 0.0f) return true;
         wall = *w;
-        checkstairs(p.o.z+p.r.z);
     };
 
     return false;
@@ -479,7 +458,6 @@ bool octacollide(dynent *d, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) //
 // all collision happens here
 bool collide(dynent *d)
 {
-    floorheight = 0;
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
@@ -496,8 +474,6 @@ bool collide(dynent *d)
     return true;
 };
 
-VAR(foop, 0, 0, 3);
-
 bool move(dynent *d, vec &dir, float push = 0.0f)
 {
     bool collided = false;
@@ -509,12 +485,10 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         if(d->physstate == PHYS_STEP || wall.z < FLOORZ) /* if the wall isn't flat enough try stepping */
         {
             float stairheight = max(STAIRHEIGHT, 2*d->radius);
-            if(foop) printf ("step: collide %f, %f, %f, %d\n", wall.x, wall.y, wall.z, d->physstate);
             float fz;
             /* check if the floor is close enough to continue stepping */
             if(findfloor(d, d->floor, fz) && old.z - d->eyeheight - fz <= stairheight)
             {
-                if(foop) printf ("step: within range %f / %f\n", old.z - d->eyeheight - fz, stairheight);
                 vec obstacle = wall;
                 /* check if there is space atop the stair to move to */
                 d->o.add(dir);
@@ -524,15 +498,13 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
                     /* try stepping up */
                     d->o = old;
                     d->o.z += dir.magnitude()*STEPSPEED;
-                   if(foop) printf ("step: reasonable +%f... %f, %f, %f... %f / %f\n", dir.magnitude()*STEPSPEED, d->o.x, d->o.y, d->o.z, old.z - d->eyeheight - fz, fz);
                     if(collide(d))
                     {
-                        if(foop) puts ("step: success");
                         d->physstate = PHYS_STEP;
                         d->floor = vec(0.0f, 0.0f, 1.0f);
                         return true;
-                    } else if(foop) printf("DO: %f, %f, %f\n", wall.x, wall.y, wall.z);
-                } else if(foop) printf ("ATTEMPT: %f, %f, %f\n", wall.x, wall.y, wall.z);
+                    };
+                };
                 d->o = old; 
                 wall = obstacle;
             };
@@ -540,7 +512,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->blocked = true;
         if(wall.z >= FLOORZ)
         {
-if(foop >= 2) printf("collided: %f, %f, %f, dir: %f, %f, %f, o: %f, %f, %f\n", wall.x, wall.y, wall.z, dir.x, dir.y, dir.z, d->o.x, d->o.y, d->o.z);
             d->physstate = (d->floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
             d->floor = wall;
             d->timeinair = 0;
@@ -559,12 +530,9 @@ if(foop >= 2) printf("collided: %f, %f, %f, dir: %f, %f, %f, o: %f, %f, %f\n", w
     };
     float fz;
 bool quux;
-    if(!(quux = findfloor(d, d->floor, fz)) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? d->radius : 0.1f)) //d->physstate = PHYS_FALL;
-    { static const char *states[] = {"fall", "float", "floor", "step", "slope"};
-if(foop >= 3 || (foop && d->physstate > PHYS_FLOOR)) printf("move=%d,%d,%s,%d dir=%f, %f, %f, d->o=%f, %f, %f\n", d->move, d->strafe, states[d->physstate], dir.x == 0 && dir.y == 0, dir.x, dir.y, dir.z, d->o.x, d->o.y, d->o.z), printf("fall: %s, %s, d->vel=(%f, %f, %f^%d), feet.z-fz=%f, fz=%f, d->floor=(%f, %f, %f)\n", quux ? "flr" : "no", collided ? "col" : "no", d->vel.x, d->vel.y, d->vel.z, d->vel.z > 0.0f, d->o.z - d->eyeheight - fz, fz, d->floor.x, d->floor.y, d->floor.z); d->physstate = PHYS_FALL; }
+    if(!(quux = findfloor(d, d->floor, fz)) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? d->radius : 0.1f)) d->physstate = PHYS_FALL;
     else if(d->physstate != PHYS_FLOOR && (d->physstate != PHYS_SLOPE || d->o.z - d->eyeheight - fz <= 0.1f))
     {
-if(foop >= 3 || (foop && d->physstate > PHYS_FLOOR)) printf("found: %f, %f, %f\n", d->floor.x, d->floor.y, d->floor.z);
         d->physstate = PHYS_FLOOR;
         d->timeinair = 0;
         d->vel.z = 0.0f;
