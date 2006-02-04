@@ -583,7 +583,7 @@ void dropenttofloor(entity *e)
     loopi(hdr.worldsize)
     {
         move(&d, v);
-        if(d.blocked || d.physstate >= PHYS_FLOOR) break;
+        if(d.blocked || !d.moving) break;
     };
     e->o = d.o;
 };
