@@ -301,7 +301,7 @@ bool findfloor(dynent *d, vec &floor, float &height)
     vec o(d->o);
     o.z -= d->eyeheight;
     float reach = max(STAIRHEIGHT, 2*d->radius);
-    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - reach; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
+    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - reach; cz = lu.z)
     {
         cz--;
         cube &ce = lookupcube(cx, cy, cz, -octaentsize);
@@ -544,7 +544,8 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
 void phystest()
 {
     static const char *states[] = {"fall", "float", "floor", "step", "slope"};
-    printf ("PHYS: %s, (%f, %f, %f)\n", states[player->physstate], player->floor.x, player->floor.y, player->floor.z);
+    printf ("PHYS(pl): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[player->physstate], player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z);
+    printf ("PHYS(cam): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[camera1->physstate], camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z);
 }
 
 COMMAND(phystest, ARG_NONE);
@@ -664,7 +665,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
              */
             float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
             if(water) m.z = max(m.z, dz);
-            else m.z = dz;
+            else m.z += dz;
         };
 
         m.normalize();
@@ -723,7 +724,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         };
     };
 
-    if(pl->physstate >= PHYS_FLOOR && d.x == 0 && d.y == 0 && d.z == 0) pl->moving = false;
+    if(pl->physstate >= PHYS_FLOOR && fabs(d.x) < 0.01f && fabs(d.y) < 0.01f && fabs(d.z) < 0.01f) pl->moving = false;
         
     // automatically apply smooth roll when strafing
 

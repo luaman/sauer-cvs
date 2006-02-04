@@ -284,6 +284,7 @@ void recomputecamera()
         
         loopi(10)
         {
+            camera1->physstate = PHYS_FALL;
             camera1->timeinair = 0;
             if(!moveplayer(camera1, 10, true, thirdpersondistance, true)) break;
         };
