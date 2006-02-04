@@ -643,6 +643,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
+            pl->timeinair = 0;
             pl->vel.z = JUMPVEL; // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; }; // dampen velocity change even harder, gives correct water feel
             cl->physicstrigger(pl, local, 1, 0);
@@ -687,7 +688,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
 
 bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 {
-    const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
+    const bool water = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z)).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
     const float secs = curtime/1000.f;
 
