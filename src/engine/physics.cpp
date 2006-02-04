@@ -297,11 +297,14 @@ const float STEPSPEED = 2.0f;
 
 int debugfloor = 0;
 
-bool findfloor(const vec &o, vec &floor, float &height)
+bool findfloor(dynent *d, vec &floor, float &height)
 {
     static vec down(0.0f, 0.0f, -1.0f);
+    vec o(d->o);
+    o.z -= d->eyeheight;
 if(debugfloor) printf("o=(%f, %f, %f)\n", o.x, o.y, o.z);
-    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
+    int cz = (int)o.z + 1;
+    for(int cx = int(o.x), cy = int(o.y), czq = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)//, printf("%d >= %f\n", cz + lusize, o.z - STAIRHEIGHT))
     {
         cz--;
         cube &ce = lookupcube(cx, cy, cz, -octaentsize);
@@ -322,9 +325,10 @@ if(debugfloor) printf("c=(%d, %d, %d), lu=(%d, %d, %d) ... %d\n", cx, cy, cz, lu
 //            else puts("clipped");
             floor = vec(0.0f, 0.0f, 1.0f);
             height = float(lu.z + lusize);
-            return true;
+            return height <= o.z;
         };
-        if(isempty(c)) { if(debugfloor) puts("empty"); continue; }
+        if(isempty(c)) //continue;
+        { if(debugfloor) puts("empty"); continue; }
         setcubeclip(c, lu.x, lu.y, lu.z, lusize);
         clipplanes &p = *c.clip;
 if(debugfloor) printf("p.size=%d\n", p.size);
@@ -340,7 +344,7 @@ if(debugfloor) printf("f=(%f, %f, %f, %f)\n", f.x, f.y, f.z, f.offset);
             if(f.z <= 0) continue;
             float fz = f.zintersect(o);
 if(debugfloor) printf("fz=%f above %f and %d, previous %f\n", fz, o.z - STAIRHEIGHT, lu.z, height);
-            if(fz < lu.z) continue;
+            if(fz < lu.z) goto nextcube;
             if(fz < o.z - STAIRHEIGHT) return false;
             if(fz < height)
             {
@@ -348,7 +352,10 @@ if(debugfloor) printf("fz=%f above %f and %d, previous %f\n", fz, o.z - STAIRHEI
                 height = fz;
             };
         };
+if(debugfloor) printf("height=%f <= o.z=%f\n", height, o.z);
         return height <= o.z;
+    nextcube:
+        ;
     };
     return false;
 };
@@ -358,9 +365,7 @@ void floortest()
     debugfloor = 1;
     vec floor;
     float height;
-    vec o = player->o;
-    o.z -= player->eyeheight;
-    if(findfloor(o, floor, height))
+    if(findfloor(player, floor, height))
         printf("FLOOR: (%f,%f,%f), %f\n", floor.x, floor.y, floor.z, height);
     else
         printf ("FALLING!\n");
@@ -500,24 +505,25 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
     d->o.add(dir);
     if(!collide(d))
     {
-        if(d->physstate == PHYS_STEP || wall.z <= FLOORZ) /* if the wall isn't flat enough try stepping */
+        d->o = old;
+        if(d->physstate == PHYS_STEP || wall.z < FLOORZ) /* if the wall isn't flat enough try stepping */
         {
             if(foop) printf ("step: collide %f, %f, %f\n", wall.x, wall.y, wall.z);
-            vec feet(old);
-            feet.z -= d->eyeheight;
             float fz;
-            if(findfloor(feet, d->floor, fz) && feet.z - fz <= STAIRHEIGHT)
+            /* check if the floor is close enough to continue stepping */
+            if(findfloor(d, d->floor, fz) && old.z - d->eyeheight - fz <= STAIRHEIGHT)
             {
-                if(foop) printf ("step: within range %f / %f\n", feet.z - fz, STAIRHEIGHT);
+                if(foop) printf ("step: within range %f / %f\n", old.z - fz, STAIRHEIGHT);
                 vec obstacle = wall;
                 /* check if there is space atop the stair to move to */
-                d->o.z += fz + STAIRHEIGHT - feet.z + 0.1f;
+                d->o.add(dir);
+                d->o.z += fz + STAIRHEIGHT - old.z + d->eyeheight + 0.1f;
                 if(d->physstate == PHYS_STEP || collide(d))
                 {
                     /* try stepping up */
                     d->o = old;
                     d->o.z += dir.magnitude()*STEPSPEED;
-                   if(foop) printf ("step: reasonable +%f... %f, %f, %f... %f / %f\n", dir.magnitude()*STEPSPEED, d->o.x, d->o.y, d->o.z, feet.z - fz, fz);
+                   if(foop) printf ("step: reasonable +%f... %f, %f, %f... %f / %f\n", dir.magnitude()*STEPSPEED, d->o.x, d->o.y, d->o.z, old.z - fz, fz);
                     if(collide(d))
                     {
                         if(foop) puts ("step: success");
@@ -526,6 +532,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
                         return true;
                     } else if(foop) printf("DO: %f, %f, %f\n", wall.x, wall.y, wall.z);
                 } else if(foop) printf ("ATTEMPT: %f, %f, %f\n", wall.x, wall.y, wall.z);
+                d->o = old; 
                 wall = obstacle;
             };
 
@@ -566,8 +573,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->o = old;
 #endif
         d->blocked = true;
-        d->o = old;
-        
 #if 0
         vec w(wall), v(wall);
         w.mul(/* elasticity* */wall.dot(dir));
@@ -581,7 +586,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         return false;
 #endif
         
-        if(wall.z > FLOORZ)
+        if(wall.z >= FLOORZ)
         {
 if(foop >= 2) printf("collided: %f, %f, %f, dir: %f, %f, %f, o: %f, %f, %f\n", wall.x, wall.y, wall.z, dir.x, dir.y, dir.z, d->o.x, d->o.y, d->o.z);
             d->physstate = PHYS_SLOPE; //(d->floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
@@ -593,27 +598,32 @@ if(foop >= 2) printf("collided: %f, %f, %f, dir: %f, %f, %f, o: %f, %f, %f\n", w
             return false;
         };
         collided = true;
+        float wdir = wall.dot(dir), wvel = wall.dot(d->vel); 
+        dir.x -= wall.x*wdir;
+        dir.y -= wall.y*wdir;
+        d->vel.x -= wall.x*wvel;
+        d->vel.y -= wall.y*wvel;
+#if 0
         vec w(wall), v(wall);
         w.mul(/* elasticity* */wall.dot(dir));
         dir.sub(w);
         v.mul(/* elasticity* */wall.dot(d->vel));
         d->vel.sub(v);
+#endif
     };
-    vec feet(d->o);
-    feet.z -= d->eyeheight;
     float fz;
 bool quux;
-    if(d->vel.z > 0.0f || !(quux = findfloor(feet, d->floor, fz)) || feet.z - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? STAIRHEIGHT : 0.1f)) //d->physstate = PHYS_FALL;
+    if(/*d->vel.z > 0.0f ||*/ !(quux = findfloor(d, d->floor, fz)) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? STAIRHEIGHT : 0.1f)) //d->physstate = PHYS_FALL;
     { static const char *states[] = {"fall", "float", "floor", "step", "slope"};
-if(foop >= 3 || (foop && d->physstate > PHYS_FLOOR)) printf("move=%d,%d,%s,%d dir=%f, %f, %f, d->o=%f, %f, %f\n", d->move, d->strafe, states[d->physstate], dir.x == 0 && dir.y == 0, dir.x, dir.y, dir.z, d->o.x, d->o.y, d->o.z), printf("fall: %s, %s, d->vel=(%f, %f, %f^%d), feet.z-fz=%f, fz=%f, d->floor=(%f, %f, %f)\n", quux ? "flr" : "no", collided ? "col" : "no", d->vel.x, d->vel.y, d->vel.z, d->vel.z > 0.0f, feet.z - fz, fz, d->floor.x, d->floor.y, d->floor.z); d->physstate = PHYS_FALL; }
-    else if(d->physstate != PHYS_SLOPE || feet.z - fz <= 0.1f)
+if(foop >= 3 || (foop && d->physstate > PHYS_FLOOR)) printf("move=%d,%d,%s,%d dir=%f, %f, %f, d->o=%f, %f, %f\n", d->move, d->strafe, states[d->physstate], dir.x == 0 && dir.y == 0, dir.x, dir.y, dir.z, d->o.x, d->o.y, d->o.z), printf("fall: %s, %s, d->vel=(%f, %f, %f^%d), feet.z-fz=%f, fz=%f, d->floor=(%f, %f, %f)\n", quux ? "flr" : "no", collided ? "col" : "no", d->vel.x, d->vel.y, d->vel.z, d->vel.z > 0.0f, d->o.z - d->eyeheight - fz, fz, d->floor.x, d->floor.y, d->floor.z); d->physstate = PHYS_FALL; }
+    else if(d->physstate != PHYS_FLOOR && (d->physstate != PHYS_SLOPE || d->o.z - d->eyeheight - fz <= 0.1f))
     {
 if(foop >= 3 || (foop && d->physstate > PHYS_FLOOR)) printf("found: %f, %f, %f\n", d->floor.x, d->floor.y, d->floor.z);
         d->physstate = PHYS_FLOOR;
         d->timeinair = 0;
         d->vel.z = 0.0f;
         // clamp the player a bit above the ground
-        //d->o.z = fz + d->eyeheight + 0.05f;
+        //if(d->o.z - d->eyeheight <= fz) d->o.z = fz + d->eyeheight + 0.05f;
     }; //else if (foop) printf ("d->floor.z: %f\n", d->floor.z); 
     return !collided;
 };
@@ -752,8 +762,8 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
              * but only move up slopes in water
              */
             float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
-            if(!water) m.z = dz;
-            else if(dz > 0.0f) m.z = max(m.z, dz);
+            if(water) m.z = max(m.z, dz);
+            else m.z = dz;
         };
 
         m.normalize();
