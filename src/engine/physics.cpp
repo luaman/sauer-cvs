@@ -318,7 +318,7 @@ bool findfloor(dynent *d, vec &floor, float &height)
         {
             floor = vec(0.0f, 0.0f, 1.0f);
             height = float(lu.z + lusize);
-            return height <= o.z;
+            return height < d->o.z + d->aboveeye;
         };
         if(isempty(c)) continue;
         setcubeclip(c, lu.x, lu.y, lu.z, lusize);
@@ -341,7 +341,7 @@ bool findfloor(dynent *d, vec &floor, float &height)
                 height = fz;
             };
         };
-        return height <= o.z;
+        return height < d->o.z + d->aboveeye;
     nextcube:
         ;
     };
@@ -535,6 +535,8 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->physstate = PHYS_FLOOR;
         d->timeinair = 0;
         d->vel.z = 0.0f;
+        // correct the player's position if he falls through the floor
+        if(fz > d->o.z - d->eyeheight) d->o.z = fz + d->eyeheight; 
     };
     return !collided;
 };
