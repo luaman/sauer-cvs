@@ -529,7 +529,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->vel.y -= wall.y*wvel;
     };
     float fz;
-    if(!findfloor(d, d->floor, fz) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? d->radius : 0.1f)) d->physstate = PHYS_FALL;
+    if(!findfloor(d, d->floor, fz) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? 2*d->radius : 0.1f)) d->physstate = PHYS_FALL;
     else if(d->physstate != PHYS_FLOOR && (d->physstate != PHYS_SLOPE || d->o.z - d->eyeheight - fz <= 0.1f))
     {
         d->physstate = PHYS_FLOOR;
@@ -718,7 +718,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 
         d.mul(f);
         loopi(moveres) if(!move(pl, d, push)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
-        if(timeinair > 1000 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
+        if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
         };
