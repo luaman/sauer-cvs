@@ -475,7 +475,54 @@ bool collide(dynent *d)
     return true;
 };
 
-bool move(dynent *d, vec &dir, float push = 0.0f)
+bool tryhop(dynent *d, vec &dir, float clearance)
+{
+    if(d->physstate == PHYS_FLOOR || d->physstate == PHYS_SLOPE)
+    {
+        vec old(d->o);
+        vec obstacle(wall);
+        /* check if there is space atop the stair to move to */
+        d->o.add(dir);
+        d->o.z += clearance + 0.1f;
+        if(collide(d))
+        {
+            d->o = old;
+            d->blocked = true;
+            dir.x = dir.y = 0;
+            d->vel.z = JUMPVEL/2;
+            return true;
+        };
+        d->o = old;
+        wall = obstacle;
+    };
+    return false;
+};
+
+bool trystep(dynent *d, vec &dir, float maxstep)
+{
+    vec old(d->o);
+    vec obstacle = wall;
+    /* check if there is space atop the stair to move to */
+    d->o.add(dir);
+    d->o.z += maxstep - old.z + d->eyeheight + 0.1f;
+    if(d->physstate == PHYS_STEP || collide(d))
+    {
+        /* try stepping up */
+        d->o = old;
+        d->o.z += dir.magnitude()*STEPSPEED;
+        if(collide(d))
+        {
+            d->physstate = PHYS_STEP;
+            d->floor = vec(0.0f, 0.0f, 1.0f);
+            return true;
+        };
+    };
+    d->o = old;
+    wall = obstacle;
+    return false;
+};
+ 
+bool move(dynent *d, vec &dir)
 {
     bool collided = false;
     vec old(d->o);
@@ -490,25 +537,10 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
             /* check if the floor is close enough to continue stepping */
             if(findfloor(d, d->floor, fz) && old.z - d->eyeheight - fz <= stairheight)
             {
-                vec obstacle = wall;
-                /* check if there is space atop the stair to move to */
-                d->o.add(dir);
-                d->o.z += fz + stairheight - old.z + d->eyeheight + 0.1f;
-                if(d->physstate == PHYS_STEP || collide(d))
-                {
-                    /* try stepping up */
-                    d->o = old;
-                    d->o.z += dir.magnitude()*STEPSPEED;
-                    if(collide(d))
-                    {
-                        d->physstate = PHYS_STEP;
-                        d->floor = vec(0.0f, 0.0f, 1.0f);
-                        return true;
-                    };
-                };
-                d->o = old; 
-                wall = obstacle;
-            };
+                if(trystep(d, dir, fz + stairheight)) return true;
+            }
+            /* unstable ground - see if hopping is possible instead of getting stuck */
+            else if(tryhop(d, dir, stairheight)) return false;
         };
         d->blocked = true;
         if(wall.z >= FLOORZ)
@@ -521,7 +553,6 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
             if(d->physstate == PHYS_SLOPE) d->o.z += 0.1f;
             return false;
         };
-        if(wall.z < 0) d->vel.z = 0.0f;
         collided = true;
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel); 
         dir.x -= wall.x*wdir;
@@ -530,7 +561,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->vel.y -= wall.y*wvel;
     };
     float fz;
-    if(!findfloor(d, d->floor, fz) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? 2*d->radius : 0.1f)) d->physstate = PHYS_FALL;
+    if(!findfloor(d, d->floor, fz) || d->floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? 2*d->radius : 0.1f)) d->physstate = PHYS_FALL;
     else if(d->physstate != PHYS_FLOOR && (d->physstate != PHYS_SLOPE || d->o.z - d->eyeheight - fz <= 0.1f))
     {
         d->physstate = PHYS_FLOOR;
@@ -714,12 +745,11 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     else                        // apply velocity with collision
     {
         const float f = 1.0f/moveres;
-        const float push = d.magnitude()/moveres/0.7f;                  // extra smoothness when lifting up stairs or against walls
         const int timeinair = pl->timeinair;
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
