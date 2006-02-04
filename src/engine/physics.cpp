@@ -513,7 +513,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->blocked = true;
         if(wall.z >= FLOORZ)
         {
-            d->physstate = (d->floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
+            d->physstate = (wall.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
             d->floor = wall;
             d->timeinair = 0;
             d->vel.z = 0.0f;
