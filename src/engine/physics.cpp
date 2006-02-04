@@ -536,57 +536,8 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
                 d->o = old; 
                 wall = obstacle;
             };
-
-#if 0
-            vec feet(old);
-            feet.z -= d->eyeheight;
-            float fz;
-            if(findfloor(feet, d->floor, fz) && floorheight > fz && floorheight - fz <= STAIRHEIGHT)
-            {
-                /* try stepping up */
-                d->o = old;
-                d->o.z += dir.magnitude();
-                vec obstacle = wall;
-                if(collide(d))
-                {
-//if(foop) 
-//printf("fh=%f - fz=%f => %f\n", floorheight, fz, floorheight - fz);
-                    d->physstate = PHYS_STEP;
-                    d->floor = vec(0.0f, 0.0f, 1.0f);
-                    return true;
-#if 0
-                    d->onfloor = 0.0f;
-//                    d->bob = -space;
-#endif
-                }
-                wall = obstacle;
-            };
-#endif
         };
-#if 0
-        if(wall.z <= 0.0f) d->blocked = true;
-        else
-        {
-            d->timeinair = 0;
-            d->onfloor = wall.z;
-            ground = wall;
-        };
-        d->o = old;
-#endif
         d->blocked = true;
-#if 0
-        vec w(wall), v(wall);
-        w.mul(/* elasticity* */wall.dot(dir));
-        dir.sub(w);
-        v.mul(/* elasticity* */wall.dot(d->vel));
-        d->vel.sub(v);
-#endif
-#if 0
-        if(fabs(dir.x) < 0.01f && fabs(dir.y) < 0.01f && fabs(dir.z) < 0.01f) d->moving = false;
-
-        return false;
-#endif
-        
         if(wall.z >= FLOORZ)
         {
 if(foop >= 2) printf("collided: %f, %f, %f, dir: %f, %f, %f, o: %f, %f, %f\n", wall.x, wall.y, wall.z, dir.x, dir.y, dir.z, d->o.x, d->o.y, d->o.z);
@@ -598,23 +549,17 @@ if(foop >= 2) printf("collided: %f, %f, %f, dir: %f, %f, %f, o: %f, %f, %f\n", w
             if(d->physstate == PHYS_SLOPE) d->o.z += 0.1f;
             return false;
         };
+        if(wall.z < 0) d->vel.z = 0.0f;
         collided = true;
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel); 
         dir.x -= wall.x*wdir;
         dir.y -= wall.y*wdir;
         d->vel.x -= wall.x*wvel;
         d->vel.y -= wall.y*wvel;
-#if 0
-        vec w(wall), v(wall);
-        w.mul(/* elasticity* */wall.dot(dir));
-        dir.sub(w);
-        v.mul(/* elasticity* */wall.dot(d->vel));
-        d->vel.sub(v);
-#endif
     };
     float fz;
 bool quux;
-    if(/*d->vel.z > 0.0f ||*/ !(quux = findfloor(d, d->floor, fz)) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? d->radius : 0.1f)) //d->physstate = PHYS_FALL;
+    if(!(quux = findfloor(d, d->floor, fz)) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? d->radius : 0.1f)) //d->physstate = PHYS_FALL;
     { static const char *states[] = {"fall", "float", "floor", "step", "slope"};
 if(foop >= 3 || (foop && d->physstate > PHYS_FLOOR)) printf("move=%d,%d,%s,%d dir=%f, %f, %f, d->o=%f, %f, %f\n", d->move, d->strafe, states[d->physstate], dir.x == 0 && dir.y == 0, dir.x, dir.y, dir.z, d->o.x, d->o.y, d->o.z), printf("fall: %s, %s, d->vel=(%f, %f, %f^%d), feet.z-fz=%f, fz=%f, d->floor=(%f, %f, %f)\n", quux ? "flr" : "no", collided ? "col" : "no", d->vel.x, d->vel.y, d->vel.z, d->vel.z > 0.0f, d->o.z - d->eyeheight - fz, fz, d->floor.x, d->floor.y, d->floor.z); d->physstate = PHYS_FALL; }
     else if(d->physstate != PHYS_FLOOR && (d->physstate != PHYS_SLOPE || d->o.z - d->eyeheight - fz <= 0.1f))
@@ -623,9 +568,7 @@ if(foop >= 3 || (foop && d->physstate > PHYS_FLOOR)) printf("found: %f, %f, %f\n
         d->physstate = PHYS_FLOOR;
         d->timeinair = 0;
         d->vel.z = 0.0f;
-        // clamp the player a bit above the ground
-        //if(d->o.z - d->eyeheight <= fz) d->o.z = fz + d->eyeheight + 0.05f;
-    }; //else if (foop) printf ("d->floor.z: %f\n", d->floor.z); 
+    };
     return !collided;
 };
 
@@ -716,18 +659,6 @@ VAR(physics_friction_jump, 1, 400, 1000);
 
 void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, int curtime, bool iscamera)
 {
-#if 0
-    /* accelerate to maximum speed in 1/8th of a second */
-    const float speed = 8.0f*secs*pl->maxspeed,
-                gfr = floating ? 1.0f : pl->onfloor, /* coefficient of friction for the ground */
-                afr = floating ? physics_friction_air/1000.0f : (water ? physics_friction_water/1000.0f : physics_friction_air/1000.0f), /* coefficient of friction for the air */
-                dfr = afr + (gfr == 0.0 ? physics_friction_jump/1000.0f : gfr), /* friction against which the player is pushing to generate movement */
-                sfr = (physics_friction_stop/1000.f)*(afr + gfr); /* friction against which the player is stopping movement */
-#endif
-#if 0
-    if(pl->physstate == PHYS_FALL && (!water || (!pl->move && !pl->strafe)))
-        pl->vel.z -= gravity*secs;
-#endif
     if(floating)
     {
         if(pl->jumpnext)
@@ -778,35 +709,6 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     pl->vel.mul(fpsfric-1);
     pl->vel.add(d);
     pl->vel.div(fpsfric);
-#if 0
-    float v = pl->vel.magnitude();
-    if(v > 0.0f)
-    {
-        vec fr(pl->vel);
-        /* friction resisting current momentum: player generated stopping force + air resistance */
-        fr.mul(min(sfr*speed + afr*v, v)/v);
-        vec mfr(m);
-        /* don't resist momentum in the direction the player is traveling */
-        mfr.mul(min(sfr*speed, v));
-        fr.sub(mfr);
-        pl->vel.sub(fr);
-    };
-
-    vec dv(m);
-    dv.mul(speed*dfr);
-    /* make sure the player doesn't go above maxspeed */
-    float xs = (m.x < 0.0f ? -1.0f : 1.0f),
-          ys = (m.y < 0.0f ? -1.0f : 1.0f),
-          zs = (m.z < 0.0f ? -1.0f : 1.0f),
-          limit = pl->maxspeed,
-          dx = xs*(m.x*limit - pl->vel.x),
-          dy = ys*(m.y*limit - pl->vel.y),
-          dz = zs*(m.z*limit - pl->vel.z);
-    dv.x = xs*max(min(dx, xs*dv.x), 0.0f);
-    dv.y = ys*max(min(dy, ys*dv.y), 0.0f);
-    dv.z = zs*max(min(dz, zs*dv.z), 0.0f);
-    pl->vel.add(dv);
-#endif
 };
 
 // main physics routine, moves a player/monster for a curtime step
@@ -818,7 +720,6 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     const bool water = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
     const float secs = curtime/1000.f;
-//    const float elasticity = pl->vel.x == 0.0f && pl->vel.y == 0.0f && pl->vel.z <= 0.0f && pl->vel.z >= GRAVITY*-0.05f ? 1.0f : 1.2f;
 
     // apply any player generated changes in velocity
     modifyvelocity(pl, moveres, local, water, floating, curtime, iscamera);
@@ -827,17 +728,11 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     d.mul(secs); 
     // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2), 
     if(!iscamera && pl->physstate < PHYS_FLOOR && !floating && (!water || (!pl->move && !pl->strafe))) 
-    {
         d.z -= water ? 0.1f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
-//        float g = GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
-//        if(g < 0) *(int *)0 = 0;
-//        if(foop) printf ("g: %f\n", GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs));
-    }
     if(water) d.mul(0.5f);
 
     pl->blocked = false;
     pl->moving = true;
-//    pl->bob = min(0, pl->bob+0.7f);
 
     if(floating)                // just apply velocity
     {
@@ -852,7 +747,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, push/*, elasticity*/)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d, push)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 1000 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
