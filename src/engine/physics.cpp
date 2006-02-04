@@ -353,7 +353,7 @@ void floortest()
     vec floor;
     float height;
     if(findfloor(player, floor, height))
-        printf("FLOOR: (%f,%f,%f), %f\n", floor.x, floor.y, floor.z, height);
+        printf("FLOOR: (%f,%f,%f), %f vs. %f\n", floor.x, floor.y, floor.z, height, player->o.z - player->eyeheight);
     else
         printf ("FALLING!\n");
 };

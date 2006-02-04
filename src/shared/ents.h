@@ -35,7 +35,7 @@ enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_PAIN, ANIM_IDLE, ANIM_IDLE_ATTACK, ANIM_R
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING };
 
-enum { PHYS_FALL = 0, PHYS_FLOAT = 1, PHYS_FLOOR = 2, PHYS_STEP = 3, PHYS_SLOPE = 4 };
+enum { PHYS_FALL = 0, PHYS_FLOAT, PHYS_FLOOR, PHYS_STEP, PHYS_SLOPE };
 
 struct dynent                                   // players & monsters
 {
