@@ -726,7 +726,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         };
     };
 
-    if(pl->physstate >= PHYS_FLOOR && fabs(d.x) < 0.01f && fabs(d.y) < 0.01f && fabs(d.z) < 0.01f) pl->moving = false;
+    if(pl->physstate >= PHYS_FLOOR && fabs(pl->vel.x) < 0.01f && fabs(pl->vel.y) < 0.01f && fabs(pl->vel.z) < 0.01f) pl->moving = false;
         
     // automatically apply smooth roll when strafing
 
