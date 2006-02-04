@@ -293,7 +293,7 @@ const float STAIRHEIGHT = 8.0f;
 const float FLOORZ = 0.7f;
 const float JUMPVEL = 150.0f;
 const float GRAVITY = 120.0f; 
-const float STEPSPEED = 2.0f;
+const float STEPSPEED = 3.0f;
 
 bool findfloor(dynent *d, vec &floor, float &height)
 {
@@ -529,8 +529,7 @@ bool move(dynent *d, vec &dir, float push = 0.0f)
         d->vel.y -= wall.y*wvel;
     };
     float fz;
-bool quux;
-    if(!(quux = findfloor(d, d->floor, fz)) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? d->radius : 0.1f)) d->physstate = PHYS_FALL;
+    if(!findfloor(d, d->floor, fz) || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? d->radius : 0.1f)) d->physstate = PHYS_FALL;
     else if(d->physstate != PHYS_FLOOR && (d->physstate != PHYS_SLOPE || d->o.z - d->eyeheight - fz <= 0.1f))
     {
         d->physstate = PHYS_FLOOR;
