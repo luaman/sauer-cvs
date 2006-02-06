@@ -509,22 +509,16 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     return false;
 };
 
-vec FWOOP(0, 0, 0);
-
 bool move(dynent *d, vec &dir)
 {
     static vec zero(0.0f, 0.0f, 0.0f);
-    float stairheight = max(STAIRHEIGHT, 2*d->radius);
     bool collided = false;
     vec old(d->o);
     d->o.add(dir);
     if(!collide(d))
     {
-        if(d == player)
-        {
-            FWOOP = wall;
-        };
         d->o = old;
+        float stairheight = max(STAIRHEIGHT, 2*d->radius);
         float fz;
         vec floor;
         /* check if the floor is close enough to continue stepping */
@@ -559,24 +553,21 @@ bool move(dynent *d, vec &dir)
     float fz;
     if(!findfloor(d, floor, fz) || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : 2*d->radius))
     {
-        if(d->physstate == PHYS_FALL && collided && wall.z >= FLOORZ)
+        if(collided && wall.z >= FLOORZ) floor = wall;
+        else
         {
-            if(trystep(d, dir, d->o.z - d->eyeheight + stairheight)) return true;
-        }; 
-        d->physstate = PHYS_FALL;
+            d->physstate = PHYS_FALL;
+            return !collided;
+        }
     }
-    else 
+    d->floor = floor;
+    if(d->physstate < PHYS_FLOOR)
     {
-        d->floor = floor;
-        if(d->physstate < PHYS_FLOOR)
-        {
-            d->timeinair = 0;
-            dir.z = 0.0f;
-            d->vel.z = 0.0f;
-        };
-        d->physstate = (floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
-    //    if(d->o.z - d->eyeheight < fz) d->o.z = fz + d->eyeheight;
+        d->timeinair = 0;
+        dir.z = 0.0f;
+        d->vel.z = 0.0f;
     };
+    d->physstate = (floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
     return !collided;
 };
 
