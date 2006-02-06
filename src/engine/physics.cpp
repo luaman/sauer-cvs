@@ -421,7 +421,7 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
     o.z += zr - d->eyeheight;
 
     if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z)) return true;
-
+    
     if(p.size)
     {
         float m = walldistance;
@@ -475,29 +475,6 @@ bool collide(dynent *d)
     return true;
 };
 
-bool tryhop(dynent *d, vec &dir, float clearance)
-{
-    if(d->physstate == PHYS_FLOOR || d->physstate == PHYS_SLOPE)
-    {
-        vec old(d->o);
-        vec obstacle(wall);
-        /* check if there is space atop the stair to move to */
-        d->o.add(dir);
-        d->o.z += clearance + 0.1f;
-        if(collide(d))
-        {
-            d->o = old;
-            d->blocked = true;
-            dir.x = dir.y = 0;
-            d->vel.z = JUMPVEL/2;
-            return true;
-        };
-        d->o = old;
-        wall = obstacle;
-    };
-    return false;
-};
-
 bool trystep(dynent *d, vec &dir, float maxstep)
 {
     vec old(d->o);
@@ -513,6 +490,8 @@ bool trystep(dynent *d, vec &dir, float maxstep)
         if(collide(d))
         {
             d->physstate = PHYS_STEP;
+            d->timeinair = 0;
+            d->vel.z = 0;
             d->floor = vec(0.0f, 0.0f, 1.0f);
             return true;
         };
@@ -521,38 +500,35 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     wall = obstacle;
     return false;
 };
- 
+
 bool move(dynent *d, vec &dir)
 {
+    static vec zero(0.0f, 0.0f, 0.0f);
     bool collided = false;
     vec old(d->o);
     d->o.add(dir);
     if(!collide(d))
     {
         d->o = old;
-        if(d->physstate == PHYS_STEP || wall.z < FLOORZ) /* if the wall isn't flat enough try stepping */
+        float stairheight = max(STAIRHEIGHT, 2*d->radius);
+        float fz;
+        vec floor;
+        /* check if the floor is close enough to continue stepping */
+        if((findfloor(d, floor, fz)) && old.z - d->eyeheight - fz <= stairheight)
         {
-            float stairheight = max(STAIRHEIGHT, 2*d->radius);
-            float fz;
-            /* check if the floor is close enough to continue stepping */
-            if(findfloor(d, d->floor, fz) && old.z - d->eyeheight - fz <= stairheight)
-            {
-                if(trystep(d, dir, fz + stairheight)) return true;
-            }
-            /* unstable ground - see if hopping is possible instead of getting stuck */
-            else if(tryhop(d, dir, stairheight)) return false;
+            if(trystep(d, dir, fz + stairheight)) return true;
         };
+        /* couldn't find any solid ground to step on, so try checking for a collision to step from */
+        vec obstacle(wall);
+        d->o.z -= stairheight/2;
+        if(!collide(d)) 
+        { 
+            d->o = old; 
+            if(trystep(d, dir, d->o.z - d->eyeheight + stairheight/2)) return true; 
+        } else d->o = old;
+        wall = obstacle;
+        /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
-        if(wall.z >= FLOORZ)
-        {
-            d->physstate = (wall.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
-            d->floor = wall;
-            d->timeinair = 0;
-            d->vel.z = 0.0f;
-            // give a small bit of extra space for freer movement
-            if(d->physstate == PHYS_SLOPE) d->o.z += 0.1f;
-            return false;
-        };
         collided = true;
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel); 
         dir.x -= wall.x*wdir;
@@ -560,15 +536,22 @@ bool move(dynent *d, vec &dir)
         d->vel.x -= wall.x*wvel;
         d->vel.y -= wall.y*wvel;
     };
+    vec floor;
     float fz;
-    if(!findfloor(d, d->floor, fz) || d->floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (d->physstate == PHYS_SLOPE && d->floor.z < 1.0f ? 2*d->radius : 0.1f)) d->physstate = PHYS_FALL;
-    else if(d->physstate != PHYS_FLOOR && (d->physstate != PHYS_SLOPE || d->o.z - d->eyeheight - fz <= 0.1f))
+    if(!findfloor(d, floor, fz) || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : 2*d->radius))
     {
-        d->physstate = PHYS_FLOOR;
-        d->timeinair = 0;
-        d->vel.z = 0.0f;
-        // correct the player's position if he falls through the floor
-        if(fz > d->o.z - d->eyeheight - 0.01f) d->o.z = fz + d->eyeheight + 0.01f; 
+        d->physstate = PHYS_FALL;
+    }
+    else 
+    {
+        d->floor = floor;
+        if(d->physstate < PHYS_FLOOR)
+        {
+            d->timeinair = 0;
+            d->vel.z = 0.0f;
+        };
+        d->physstate = (floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
+        if(d->o.z - d->eyeheight < fz) d->o.z = fz + d->eyeheight;
     };
     return !collided;
 };

@@ -107,6 +107,7 @@ extern int faceverts(cube &c, int orient, int vert);
 extern void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i);
 extern void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused, bool lodcube);
 extern uint faceedges(cube &c, int orient);
+extern bool collapsedface(uint cfe);
 extern bool touchingface(cube &c, int orient);
 extern int isvisiblesphere(float rad, vec &cv);
 extern int genclipplane(cube &c, int i, const vec *v, plane *clip);
