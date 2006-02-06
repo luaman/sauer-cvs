@@ -723,6 +723,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     if(floating)                // just apply velocity
     {
         pl->physstate = PHYS_FLOAT;
+        pl->timeinair = 0;
         pl->o.add(d);
     }
     else                        // apply velocity with collision
