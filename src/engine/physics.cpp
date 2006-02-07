@@ -512,13 +512,13 @@ bool trystep(dynent *d, vec &dir, float maxstep)
 bool move(dynent *d, vec &dir)
 {
     static vec zero(0.0f, 0.0f, 0.0f);
+    float stairheight = max(STAIRHEIGHT, 2*d->radius);
     bool collided = false;
     vec old(d->o);
     d->o.add(dir);
     if(!collide(d))
     {
         d->o = old;
-        float stairheight = max(STAIRHEIGHT, 2*d->radius);
         float fz;
         vec floor;
         /* check if the floor is close enough to continue stepping */
@@ -540,8 +540,8 @@ bool move(dynent *d, vec &dir)
         collided = true;
         if(wall.z < 0.0f)
         {
-            dir.z = 0.0f;
-            d->vel.z = 0.0f;
+            dir.z = min(dir.z, 0.0f);
+            d->vel.z = min(d->vel.z, 0.0f);
         };
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel); 
         dir.x -= wall.x*wdir;
@@ -550,9 +550,23 @@ bool move(dynent *d, vec &dir)
         d->vel.y -= wall.y*wvel;
     };
     vec floor;
-    float fz;
+    float fz = 0.0f;
     if(!findfloor(d, floor, fz) || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : 2*d->radius))
     {
+        if(d->physstate == PHYS_STEP && !collided)
+        {
+            vec moved(d->o);
+            d->o.z -= stairheight/2;
+            if(!collide(d) && wall.z >= FLOORZ)
+            {
+                if(fz <= 0.0f || fz < d->o.z - d->eyeheight)
+                {
+                    d->o = moved;
+                    return true;
+                }
+            };
+            d->o = moved;
+        };    
         if(collided && wall.z >= FLOORZ) floor = wall;
         else
         {
