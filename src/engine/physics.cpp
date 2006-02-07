@@ -542,7 +542,7 @@ bool move(dynent *d, vec &dir)
         {
             dir.z = 0.0f;
             d->vel.z = 0.0f;
-        }
+        };
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel); 
         dir.x -= wall.x*wdir;
         dir.y -= wall.y*wdir;
@@ -558,8 +558,8 @@ bool move(dynent *d, vec &dir)
         {
             d->physstate = PHYS_FALL;
             return !collided;
-        }
-    }
+        };
+    };
     d->floor = floor;
     if(d->physstate < PHYS_FLOOR)
     {
