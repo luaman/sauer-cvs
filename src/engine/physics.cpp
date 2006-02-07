@@ -550,22 +550,20 @@ bool move(dynent *d, vec &dir)
         d->vel.y -= wall.y*wvel;
     };
     vec floor;
-    float fz = 0.0f;
-    if(!findfloor(d, floor, fz) || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : 2*d->radius))
+    float fz;
+    bool found = findfloor(d, floor, fz);
+    if(!found || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : 2*d->radius))
     {
         if(d->physstate == PHYS_STEP && !collided)
         {
-            vec moved(d->o);
-            d->o.z -= stairheight/2;
-            if(!collide(d) && wall.z >= FLOORZ)
+            vec old(d->o);
+            d->o.z -= found ? d->o.z - d->eyeheight - fz - 0.1f : stairheight/2;
+            if(!collide(d) && (wall.z <= 0 || wall.z >= FLOORZ))
             {
-                if(fz <= 0.0f || fz < d->o.z - d->eyeheight)
-                {
-                    d->o = moved;
-                    return true;
-                }
+                d->o = old;
+                return true;
             };
-            d->o = moved;
+            d->o = old;
         };    
         if(collided && wall.z >= FLOORZ) floor = wall;
         else
