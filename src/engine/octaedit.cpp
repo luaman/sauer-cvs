@@ -740,29 +740,29 @@ void render_texture_panel()
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        int y = 50, s = 230, gap = 10;
+        int y = 50, gap = 10;
 
         loopi(7)
         {
-            int ti = curtexindex+i-3;
+            int s = (i == 3 ? 285 : 220), ti = curtexindex+i-3;
             if(ti>=0 && ti<256)
             {
                 Texture *tex = lookuptexture(hdr.texlist[ti]);
                 float sx = min(1, tex->xs/(float)tex->ys), sy = min(1, tex->ys/(float)tex->xs);
                 glBindTexture(GL_TEXTURE_2D, tex->gl);
                 glColor4f(0, 0, 0, texpaneltimer/1000.0f);
-                int s = 230, x = 2100;
+                int x = (i == 3 ? 2070 : 2100), r = s;
                 loopj(2)
                 {
                     glBegin(GL_QUADS);
                     glTexCoord2f(0.0,    0.0);    glVertex2f(x,   y);
-                    glTexCoord2f(1.0/sx, 0.0);    glVertex2f(x+s, y);
-                    glTexCoord2f(1.0/sx, 1.0/sy); glVertex2f(x+s, y+s);
-                    glTexCoord2f(0.0,    1.0/sy); glVertex2f(x,   y+s);
+                    glTexCoord2f(1.0/sx, 0.0);    glVertex2f(x+r, y);
+                    glTexCoord2f(1.0/sx, 1.0/sy); glVertex2f(x+r, y+r);
+                    glTexCoord2f(0.0,    1.0/sy); glVertex2f(x,   y+r);
                     glEnd();
                     xtraverts += 4;
                     glColor4f(1.0, 1.0, 1.0, texpaneltimer/1000.0f);
-                    s = 220;
+                    r -= 10;
                     x += 5;
                     y += 5;
                 };
