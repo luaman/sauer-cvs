@@ -551,7 +551,7 @@ bool move(dynent *d, vec &dir)
     vec floor;
     float fz;
     bool found = findfloor(d, floor, fz);
-    if(!found || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > 0.1f)
+    if(!found || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : STAIRHEIGHT))
     {
         if(d->physstate == PHYS_STEP && !collided)
         {
