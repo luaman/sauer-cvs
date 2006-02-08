@@ -528,7 +528,7 @@ bool move(dynent *d, vec &dir)
 #endif
         /* couldn't find any solid ground to step on, so try checking for a collision to step from */
         vec obstacle(wall);
-        d->o.z -= wall.z == 1.0f ? STAIRHEIGHT : d->radius+0.1f;
+        d->o.z -= (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
         if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
         { 
             d->o = old; 
