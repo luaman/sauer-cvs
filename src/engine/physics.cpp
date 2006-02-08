@@ -289,9 +289,9 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 // info about collisions
 vec wall; // just the normal vectors.
 float walldistance; 
-const float STAIRHEIGHT = 8.0f;
+const float STAIRHEIGHT = 4.0f;
 const float FLOORZ = 0.7f;
-const float JUMPVEL = 150.0f;
+const float JUMPVEL = 130.0f;
 const float GRAVITY = 120.0f; 
 const float STEPSPEED = 3.0f;
 
@@ -300,13 +300,12 @@ bool findfloor(dynent *d, vec &floor, float &height)
     static vec down(0.0f, 0.0f, -1.0f);
     vec o(d->o);
     o.z -= d->eyeheight;
-    float reach = max(STAIRHEIGHT, 2*d->radius);
-    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - reach; cz = lu.z)
+    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - STAIRHEIGHT; cz = lu.z)
     {
         cz--;
         cube &ce = lookupcube(cx, cy, cz, -octaentsize);
         float dent = disttoent(ce.ents, NULL, o, down);
-        if(dent <= reach)
+        if(dent <= STAIRHEIGHT)
         {
             floor = vec(0.0f, 0.0f, 1.0f);
             height = o.z - dent;
@@ -326,7 +325,7 @@ bool findfloor(dynent *d, vec &floor, float &height)
         clipplanes &p = *c.clip;
         if(!pointoverbox(o, p.o, p.r)) continue;
         float bz = p.o.z + p.r.z;
-        if(bz < o.z - reach) return false;
+        if(bz < o.z - STAIRHEIGHT) return false;
         floor = vec(0.0f, 0.0f, 1.0f);
         height = bz;
         loopi(p.size)
@@ -342,7 +341,7 @@ bool findfloor(dynent *d, vec &floor, float &height)
 
             float fz = f.zintersect(o);
             if(fz < lu.z) goto nextcube;
-            if(fz < o.z - reach) return false;
+            if(fz < o.z - STAIRHEIGHT) return false;
             if(fz < height)
             {
                 floor = f;
@@ -368,7 +367,7 @@ void floortest()
 
 COMMAND(floortest, ARG_NONE);
 
-bool rectcollide(dynent *d, vec &o, float xr, float yr,  float hi, float lo)
+bool rectcollide(dynent *d, const vec &o, float xr, float yr,  float hi, float lo)
 {
     vec s(d->o);
     s.sub(o);
@@ -409,7 +408,7 @@ bool mmcollide(dynent *d, octaentities &oc)               // collide with a mapm
     return true;
 };
 
-bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide with cube geometry
+bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
     if(isentirelysolid(c) || isclipped(c.material))
     {
@@ -438,14 +437,14 @@ bool cubecollide(dynent *d, cube &c, int x, int y, int z, int size) // collide w
             if(dist>0) return true;
             if(dist>m) { w = &p.p[i]; m = dist; };
         };
-        if(w->dot(d->vel) > 0.0f) return true;
+        if(w->dot(dir) > 0.0f) return true;
         wall = *w;
     };
 
     return false;
 };
 
-bool octacollide(dynent *d, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
+bool octacollide(dynent *d, const vec &dir, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
 {
     loopoctabox(cor, size, bo, bs)
     {
@@ -453,24 +452,24 @@ bool octacollide(dynent *d, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) //
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children)
         {
-            if(!octacollide(d, bo, bs, c[i].children, o, size>>1)) return false;
+            if(!octacollide(d, dir, bo, bs, c[i].children, o, size>>1)) return false;
         }
         else if(c[i].material!=MAT_NOCLIP && (!isempty(c[i]) || isclipped(c[i].material)))
         {
-            if(!cubecollide(d, c[i], o.x, o.y, o.z, size)) return false;
+            if(!cubecollide(d, dir, c[i], o.x, o.y, o.z, size)) return false;
         };
     };
     return true;
 };
 
 // all collision happens here
-bool collide(dynent *d)
+bool collide(dynent *d, const vec &dir)
 {
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
     bs.add(2);  // guard space for rounding errors
-    if(!octacollide(d, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
+    if(!octacollide(d, dir, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
     loopi(cl->numdynents())
@@ -489,18 +488,18 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     /* check if there is space atop the stair to move to */
     d->o.add(dir);
     d->o.z += maxstep - old.z + d->eyeheight + 0.1f;
-    if(d->physstate == PHYS_STEP || collide(d))
+    if(d->physstate == PHYS_STEP || collide(d, vec(0, 0, -1)))
     {
         /* try stepping up */
         d->o = old;
         d->o.z += dir.magnitude()*STEPSPEED;
-        if(collide(d))
+        if(collide(d, vec(0, 0, 1)))
         {
             d->physstate = PHYS_STEP;
             d->timeinair = 0;
-            dir.z = 0.0f;
-            d->vel.z = 0.0f;
-            d->floor = vec(0.0f, 0.0f, 1.0f);
+            dir.z = max(dir.z, 0.0f);
+            d->vel.z = max(d->vel.z, 0.0f);
+            d->floor = vec(0, 0, 1);
             return true;
         };
     };
@@ -511,28 +510,28 @@ bool trystep(dynent *d, vec &dir, float maxstep)
 
 bool move(dynent *d, vec &dir)
 {
-    static vec zero(0.0f, 0.0f, 0.0f);
-    float stairheight = max(STAIRHEIGHT, 2*d->radius);
     bool collided = false;
     vec old(d->o);
     d->o.add(dir);
-    if(!collide(d))
+    if(!collide(d, dir))
     {
         d->o = old;
+#if 0
         float fz;
         vec floor;
         /* check if the floor is close enough to continue stepping */
-        if(findfloor(d, floor, fz) && floor.z >= FLOORZ && old.z - d->eyeheight - fz <= stairheight)
+        if(findfloor(d, floor, fz) && floor.z >= FLOORZ && old.z - d->eyeheight - fz <= STAIRHEIGHT)
         {
-            if(trystep(d, dir, fz + stairheight)) return true;
+            if(trystep(d, dir, fz + STAIRHEIGHT)) return true;
         };
+#endif
         /* couldn't find any solid ground to step on, so try checking for a collision to step from */
         vec obstacle(wall);
-        d->o.z -= stairheight/2;
-        if(!collide(d) && (wall.z <= 0 || wall.z >= FLOORZ)) 
+        d->o.z -= STAIRHEIGHT;
+        if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
         { 
             d->o = old; 
-            if(trystep(d, dir, d->o.z - d->eyeheight + stairheight/2)) return true; 
+            if(trystep(d, dir, d->o.z - d->eyeheight + STAIRHEIGHT)) return true; 
         } else d->o = old;
         wall = obstacle;
         /* can't step over the obstacle, so just slide against it */
@@ -552,13 +551,13 @@ bool move(dynent *d, vec &dir)
     vec floor;
     float fz;
     bool found = findfloor(d, floor, fz);
-    if(!found || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : 2*d->radius))
+    if(!found || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > 0.1f)
     {
         if(d->physstate == PHYS_STEP && !collided)
         {
             vec old(d->o);
-            d->o.z -= found ? d->o.z - d->eyeheight - fz - 0.1f : stairheight/2;
-            if(!collide(d) && (wall.z <= 0 || wall.z >= FLOORZ))
+            d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, STAIRHEIGHT) : STAIRHEIGHT;
+            if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
             {
                 d->o = old;
                 return true;
@@ -664,11 +663,6 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     };
 };
 
-VAR(physics_friction_air, 1, 5, 1000);
-VAR(physics_friction_water, 1, 300, 1000);
-VAR(physics_friction_stop, 1, 700, 1000);
-VAR(physics_friction_jump, 1, 400, 1000);
-
 void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, int curtime, bool iscamera)
 {
     if(floating)
@@ -739,10 +733,10 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     
     vec d(pl->vel);
     d.mul(secs); 
-    // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2), 
-    if(!iscamera && pl->physstate < PHYS_FLOOR && !floating && (!water || (!pl->move && !pl->strafe))) 
-        d.z -= water ? 0.1f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
     if(water) d.mul(0.5f);
+    // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2), 
+    if(!iscamera && pl->physstate < PHYS_FLOOR && !floating && (!water || (!pl->move && !pl->strafe)))
+        d.z -= water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
 
     pl->blocked = false;
     pl->moving = true;

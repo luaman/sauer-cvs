@@ -86,7 +86,7 @@ extern void load_world(char *mname);
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
 extern bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera);
-extern bool collide(dynent *d);
+extern bool collide(dynent *d, const vec &dir = vec(0, 0, 0));
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
