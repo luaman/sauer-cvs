@@ -22,6 +22,7 @@ struct selinfo
     int grid, orient;
     int size() const    { return s.x*s.y*s.z; };
     int us(int d) const { return s[d]*grid; };
+    bool operator==(const selinfo &sel) const { return o==sel.o && s==sel.s && grid==sel.grid && orient==sel.orient; };
 };
 
 extern void cursorupdate();

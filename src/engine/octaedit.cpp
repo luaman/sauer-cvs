@@ -18,8 +18,7 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
     glEnd();
 };
 
-selinfo sel = { 0 };
-block3 lastsel;
+selinfo sel = { 0 }, lastsel;
 
 int orient = 0;
 int gridsize = 32;

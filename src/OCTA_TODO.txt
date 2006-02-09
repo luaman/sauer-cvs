@@ -83,12 +83,10 @@ aard:
 - (EG) fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
-- (EG) coop editing: simply send new editing commands over the network as with cube
 - fix variance in framerate?
 - (EG) landscape generation and tools (see wiki)
 - (E) improve visibleface() to not render some polys inside solids anymore (overdraw!)
 - (E) reduce geometry by merging surfaces and lightmaps
-- factor out gamecode
 - shader system
 - LOD on VA's
 - render entities at distance as sprites

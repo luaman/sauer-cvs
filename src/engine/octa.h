@@ -81,7 +81,6 @@ struct block3
     block3(const selinfo &sel) : o(sel.o), s(sel.s), grid(sel.grid), orient(sel.orient) {};
     cube *c()           { return (cube *)(this+1); };
     int size()    const { return s.x*s.y*s.z; };
-    bool operator==(const selinfo &sel) const { return o==sel.o && s==sel.s && grid==sel.grid && orient==sel.orient; };
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
