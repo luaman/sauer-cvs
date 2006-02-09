@@ -711,7 +711,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
 
     vec d(m);
     d.mul(pl->maxspeed);
-    float friction = water ? 20.0f : (pl->physstate >= PHYS_FLOOR || floating ? 6.0f : 30.f);
+    float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_FLOOR || floating ? 6.0f : 30.f);
     float fpsfric = friction/curtime*20.0f;
 
     pl->vel.mul(fpsfric-1);
@@ -734,10 +734,13 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     
     vec d(pl->vel);
     d.mul(secs); 
-    if(water) d.mul(0.5f);
-    // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2), 
-    if(!iscamera && pl->physstate < PHYS_FLOOR && !floating && (!water || (!pl->move && !pl->strafe)))
-        d.z -= water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
+    if(!floating && !iscamera)
+    {
+        if(water) d.mul(0.5f);
+        // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2), 
+        if(pl->physstate < PHYS_FLOOR && (!water || (!pl->move && !pl->strafe)))
+            d.z -= water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
+    };
 
     pl->blocked = false;
     pl->moving = true;
