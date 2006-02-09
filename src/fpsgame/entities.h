@@ -274,7 +274,7 @@ struct entities : icliententities
 
     extentity *newentity() { return new fpsentity(); };
 
-    extentity *newentity(vec &o, int type, int v1, int v2, int v3, int v4)
+    extentity *newentity(const vec &o, int type, int v1, int v2, int v3, int v4)
     {
         fpsentity &e = *new fpsentity();
         e.o = o;
@@ -323,5 +323,11 @@ struct entities : icliententities
 
     void readent(entity &e)     // read from disk, and init
     {
+    };
+
+    void editent(int i)
+    {
+        extentity &e = *ents[i];
+        cl.cc.addmsg(1, 10, SV_EDITENT, i, di(e.o.x), di(e.o.y), di(e.o.z), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
     };
 };

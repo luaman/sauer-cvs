@@ -4,8 +4,8 @@
 
 #include "cube.h"
 
-#include "igame.h"
 #include "iengine.h"
+#include "igame.h"
 
 #include "game.h"
 
@@ -475,6 +475,39 @@ struct fpsclient : igameclient
         if(g==9) { g = 4; r = 0; };
         drawicon((float)(g*64), (float)r, 1220, 1650);
 
+    };
+
+    void edittrigger(const selinfo &sel, int op, int arg1, int arg2)
+    {
+        switch(op)
+        {
+            case EDIT_FLIP:
+            {
+                cc.addmsg(1, 14, SV_EDITH + op,
+                   sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                   sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner);
+                break;
+            };
+            case EDIT_MAT:
+            case EDIT_ROTATE:
+            {
+                cc.addmsg(1, 15, SV_EDITH + op,
+                   sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                   sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
+                   arg1);
+                break;
+            };
+            case EDIT_HEIGHT:
+            case EDIT_FACE:
+            case EDIT_TEX:
+            {
+                cc.addmsg(1, 16, SV_EDITH + op,
+                   sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                   sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
+                   arg1, arg2);
+                break;
+            };
+        };
     };
 };
 

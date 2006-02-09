@@ -2,10 +2,11 @@
 
 struct icliententities
 {
+    virtual void editent(int i) = 0;
     virtual char *entname(int i) = 0;
     virtual void writeent(entity &e) = 0;
     virtual void readent(entity &e) = 0;
-    virtual extentity *newentity(vec &o, int type, int v1, int v2, int v3, int v4) = 0;
+    virtual extentity *newentity(const vec &o, int type, int v1, int v2, int v3, int v4) = 0;
     virtual extentity *newentity() = 0;
     virtual vector<extentity *> &getents() = 0;
 };
@@ -30,6 +31,7 @@ struct igameclient
     virtual void updateworld(vec &pos, int curtime, int lm) = 0;
     virtual void initclient() = 0;
     virtual void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel) = 0;
+    virtual void edittrigger(const selinfo &sel, int op, int arg1 = 0, int arg2 = 0) = 0;
     virtual char *getclientmap() = 0;
     virtual void resetgamestate() = 0;
     virtual void worldhurts(dynent *d, int damage) = 0;

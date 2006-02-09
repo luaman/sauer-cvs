@@ -11,9 +11,28 @@ extern bool isthirdperson();
 extern void settexture(char *name);
 
 // octaedit
+
+enum { EDIT_HEIGHT = 0, EDIT_FACE, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_ROTATE };
+
+struct selinfo
+{
+    int corner;
+    int cx, cxs, cy, cys;
+    ivec o, s;
+    int grid, orient;
+    int size() const    { return s.x*s.y*s.z; };
+    int us(int d) const { return s[d]*grid; };
+};
+
 extern void cursorupdate();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();
+extern void mpeditheight(int dir, int mode, selinfo &sel, bool local);
+extern void mpeditface(int dir, int mode, selinfo &sel, bool local);
+extern void mpedittex(int tex, int allfaces, selinfo &sel, bool local);
+extern void mpeditmat(int matid, selinfo &sel, bool local);
+extern void mpflip(selinfo &sel, bool local);
+extern void mprotate(int cw, selinfo &sel, bool local);
 
 // command
 extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
@@ -52,8 +71,11 @@ extern void writeservercfg();
 extern void empty_world(int factor, bool force);
 extern int closestent();
 extern int findentity(int type, int index = 0);
+extern void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local);
 
 // main
+struct igame;
+
 extern void fatal(char *s, char *o = "");
 extern void keyrepeat(bool on);
 extern void registergame(char *name, igame *ig);
@@ -120,6 +142,7 @@ extern bool hasnonlocalclients();
 // client
 extern void c2sinfo(dynent *d);
 extern void disconnect(int onlyclean = 0, int async = 0);
+extern bool isconnected();
 extern bool multiplayer();
 extern void neterr(char *s);
 extern int getclientnum();

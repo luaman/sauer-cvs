@@ -15,7 +15,7 @@ bool multiplayer()
 {
     // check not correct on listen server?
     if(clienthost) conoutf("operation not available in multiplayer");
-    return clienthost!=NULL;
+    return clienthost != NULL;
 };
 
 void setrate(int rate)

@@ -38,6 +38,7 @@ void entproperty(int prop, int amount)
         case 3: et->getents()[e]->attr4 += amount; break;
     };
 	addoctaentity(e);
+    et->editent(e);
 };
 
 
@@ -49,6 +50,7 @@ void entmove(int dir, int dist)
 	removeoctaentity(e);
     et->getents()[e]->o[dir] += dist;
 	addoctaentity(e);
+    et->editent(e);
 };
 
 void delent()
@@ -59,8 +61,7 @@ void delent()
     int t = et->getents()[e]->type;
     conoutf("%s entity deleted", et->entname(t));
     et->getents()[e]->type = ET_EMPTY;
-    //addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
-    ///if(t==LIGHT) calclight();
+    et->editent(e);
 };
 
 int findtype(char *what)
@@ -72,9 +73,8 @@ int findtype(char *what)
 
 VAR(entdrop, 0, 1, 3);
 
-extern block3 sel;
+extern selinfo sel;
 extern bool havesel, selectcorners;
-extern int selcx, selcy, selcxs, selcys;
 
 bool dropentity(entity &e)
 {
@@ -100,10 +100,10 @@ bool dropentity(entity &e)
             return false;
         };
         int cx = 0, cy = 0;
-        if(selcxs == 1 && selcys == 1)
+        if(sel.cxs == 1 && sel.cys == 1)
         {
-            cx = (selcx ? 1 : -1) * sel.grid / 2;
-            cy = (selcy ? 1 : -1) * sel.grid / 2;
+            cx = (sel.cx ? 1 : -1) * sel.grid / 2;
+            cy = (sel.cy ? 1 : -1) * sel.grid / 2;
         }
         e.o = sel.o.v;
         switch(sel.orient)
@@ -144,6 +144,7 @@ void dropent()
 	removeoctaentity(e);
     dropentity(*et->getents()[e]);	
 	addoctaentity(e);
+    et->editent(e);
 };
 
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)
@@ -152,9 +153,9 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
     int type = findtype(what);
     extentity *e = et->newentity(player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
     if(entdrop) dropentity(*e);
-    //addmsg(1, 10, SV_EDITENT, et->getents().length(), type, e.o.x, e.o.y, e.o.z, e.attr1, e.attr2, e.attr3, e.attr4);
     et->getents().add(e);
 	addoctaentity(et->getents().length()-1);
+    et->editent(et->getents().length()-1);
 };
 
 COMMAND(newent, ARG_5STR);
@@ -166,9 +167,12 @@ void clearents(char *name)
     loopv(et->getents())
     {
         entity &e = *et->getents()[i];
-        if(e.type==type) e.type = ET_EMPTY;
+        if(e.type==type)
+        {
+            e.type = ET_EMPTY;
+            et->editent(i);
+        };
     };
-    ///if(type==LIGHT) calclight();
 };
 
 COMMAND(clearents, ARG_1STR);
@@ -231,4 +235,21 @@ void newmap(int i) { empty_world(i, false); };
 
 COMMAND(mapenlarge, ARG_NONE);
 COMMAND(newmap, ARG_1INT);
+
+void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local)
+{
+    if(et->getents().length()<=i)
+    {
+        while(et->getents().length()<i) et->getents().add(et->newentity())->type = ET_EMPTY;
+        et->getents().add(et->newentity(o, type, attr1, attr2, attr3, attr4));
+    }
+    else
+    {
+        extentity &e = *et->getents()[i];
+        e.type = type;
+        e.o = o;
+        e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
+    };
+    addoctaentity(i);
+};
 

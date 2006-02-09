@@ -68,8 +68,9 @@ struct fpsserver : igameserver
             SV_DIED, 2, SV_DAMAGE, 7, SV_SHOT, 8, SV_FRAGS, 2,
             SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
-            SV_TIMEUP, 2, SV_EDITENT, 10, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
+            SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0,
+            SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15,  
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2,
             -1
         };

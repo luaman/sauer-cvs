@@ -83,12 +83,11 @@ struct clientcom : iclientcom
         msg.add(rel);
         msg.add(type);
         va_list marker;
-        va_start(marker, type); 
+        va_start(marker, type);
         loopi(num-1) msg.add(va_arg(marker, int));
-        va_end(marker);  
-                 
+        va_end(marker);
     };
-
+    
     void sendpacketclient(uchar *&p, bool &reliable, int clientnum, dynent *d)
     {
         bool serveriteminitdone = false;
@@ -418,26 +417,41 @@ struct clientcom : iclientcom
                 cl.et.realpickup(getint(p), player1);
                 break;
             
-            /*
+            case SV_EDITH:              // coop editing messages
+            case SV_EDITF: 
+            case SV_EDITT: 
+            case SV_EDITM: 
+            case SV_FLIP:
+            case SV_ROTATE:
+            {
+                selinfo sel;
+                sel.o.x = getint(p); sel.o.y = getint(p); sel.o.z = getint(p);
+                sel.s.x = getint(p); sel.s.y = getint(p); sel.s.z = getint(p);
+                sel.grid = getint(p); sel.orient = getint(p);
+                sel.cx = getint(p); sel.cxs = getint(p); sel.cy = getint(p), sel.cys = getint(p);
+                sel.corner = getint(p);
+                int dir, mode, tex, mat, allfaces;
+                switch(type)
+                {
+                    case SV_EDITH: dir = getint(p); mode = getint(p); mpeditheight(dir, mode, sel, false); break; 
+                    case SV_EDITF: dir = getint(p); mode = getint(p); mpeditface(dir, mode, sel, false); break;
+                    case SV_EDITT: tex = getint(p); allfaces = getint(p); mpedittex(tex, allfaces, sel, false); break;
+                    case SV_EDITM: mat = getint(p); mpeditmat(mat, sel, false); break; 
+                    case SV_FLIP: mpflip(sel, false); break;
+                    case SV_ROTATE: dir = getint(p); mprotate(dir, sel, false); break;
+                };
+                break;
+            };
             case SV_EDITENT:            // coop edit of ent
             {
                 int i = getint(p);
-                while(ents.length()<i) ents.add().type = NOTUSED;
-                ///int to = ents[i]->type;
-                ents[i]->type = getint(p);
-                ents[i]->o.x = (float)getint(p);
-                ents[i]->o.y = (float)getint(p);
-                ents[i]->o.z = (float)getint(p);
-                ents[i]->attr1 = getint(p);
-                ents[i]->attr2 = getint(p);
-                ents[i]->attr3 = getint(p);
-                ents[i]->attr4 = getint(p);
-                ents[i]->spawned = false;
-				ents[i]->inoctanode = false;
-                ///if(ents[i]->type==LIGHT || to==LIGHT) calclight();
+                float x = getint(p)/DMF, y = getint(p)/DMF, z = getint(p)/DMF;
+                int type = getint(p);
+                int attr1 = getint(p), attr2 = getint(p), attr3 = getint(p), attr4 = getint(p);
+                
+                mpeditent(i, vec(x, y, z), type, attr1, attr2, attr3, attr4, false);
                 break;
             };
-            */
 
             case SV_PONG: 
                 addmsg(0, 2, SV_CLIENTPING, player1->ping = (player1->ping*5+cl.lastmillis-getint(p))/6);

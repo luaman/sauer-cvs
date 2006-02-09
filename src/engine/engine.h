@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "iengine.h"
 #include "igame.h"
 
 #include "world.h"
@@ -21,8 +22,6 @@ struct model
     virtual bool load() = 0;
     virtual char *name() = 0;
 };
-
-#include "iengine.h"
 
 extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
 extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
