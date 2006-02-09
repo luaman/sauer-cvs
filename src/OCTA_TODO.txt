@@ -4,13 +4,9 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
-- physics dynamics that feel like cube
 - implement variable LM sampling
 - optimize overdraw in visibleface()
-- physics bugs (goes back to jump split second after landing, and whatever else) | more noticable at gamespeed 1000
 - add a spotlight (ask me)
-- find better solution for network timeout when long map load times
-- physics: monsters have a "timeinair" value of several seconds randomly when rotating on one spot (makes em look like they're flying)
 
 aard:
 
@@ -27,11 +23,9 @@ aard:
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
 - optimize drawing of water & glass
 - spectator mode
-- thirdperson model flips into jump anim randomly at low fps
 - profile rpg_01
 - select entities in parallel to geometry by picking | make editing more readable
 - compression of octa info into indexes (e.g. textures into shorts?)
-- hudgun flickers when running on stairs?!?
 - skybox - roll
 - 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
@@ -86,8 +80,6 @@ aard:
 - (E) mapobjects (trees!) must cast shadows, have lightorientation
 - some way to smooth out lighting on terrain
 - (EG) physics efficiency: tweak step accuracy, maybe reduce physics frames at low fps?
-- (E) fix skybox rendering when world is bigger than fog distance
-- fix physics feel
 - (EG) fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
