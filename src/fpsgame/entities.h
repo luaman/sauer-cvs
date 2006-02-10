@@ -328,6 +328,6 @@ struct entities : icliententities
     void editent(int i)
     {
         extentity &e = *ents[i];
-        cl.cc.addmsg(1, 10, SV_EDITENT, i, di(e.o.x), di(e.o.y), di(e.o.z), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
+        cl.cc.addmsg(1, 10, SV_EDITENT, i, (int)(e.o.x*DMF), (int)(e.o.y*DMF), (int)(e.o.z*DMF), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
     };
 };

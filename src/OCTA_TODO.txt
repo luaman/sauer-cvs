@@ -7,14 +7,47 @@ eihrul:
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
+- stop LM computation showing beyond 100%
 
 aard:
+- poly iterator for the model formats
 
-- green 26?
-- SP mode?
+- teamskins / teamplay hud?
+- double damage numbers (120) -> in mp you dont die immediately -> it doesn't know your health!
+- physics stuck high fps only? | 500 @ 1920???
+- pistol ammo up
+- fix spawn in 1 map
+- quad jump in 2 towers
+- sensitivity varies with fps?
+- control lag? (jogi)?
+- sg spread thinner
+- weapon auto switch?
+- water physics speed
+- item radius slightly bigger
+- kurts first map floor one level?
+- get disconnected whenever someone else disconnects?
+- tone down knockback of all weapons
+- make ents better visible?
+- pressed return on an empty list
+- stop movement in intermission
+- player spawn sound
+- make wether you are hitting other player clearer - blip sounds like q3?
+- rendering clip volumes in edit mode
+- hex numbers
+- make roll configurable?
+- can join a server in edit mode
+- highlight current texture in the texture window
+- should not jump if key is released before landing
 
+- new sounds!
+- experiment with physics speedup features
+- look at vsync/tripple buf/fps limits/fsaa
+
+- perma powerup / powerup announce
+- draw not-spawned items in wireframe?
+- green damage numbers?
 - make start of flares etc spawn out further from the player
-
+- hellpig sometimes goes invisble?
 - importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
 - allow people to look different in-game
 - better attack anim? with weapon maybe
@@ -41,6 +74,7 @@ aard:
 - physics left/right
 - players more visible / improve model lighting first?
 - HDR
+- start using md3 for new monsters/player models
 - revise health/armours? can either make armours more effective against certain weapons (feedback?)
   or do more general properties (do more damage, run faster)
 - GL? / grapple? /

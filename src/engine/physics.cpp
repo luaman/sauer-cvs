@@ -681,6 +681,11 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         {
             pl->jumpnext = false;
             pl->timeinair = 0;
+
+            //vec test = pl->vel;
+            //test.mul(0.9f);
+            //pl->vel.add(test);
+
             pl->vel.z = JUMPVEL; // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; }; // dampen velocity change even harder, gives correct water feel
             cl->physicstrigger(pl, local, 1, 0);

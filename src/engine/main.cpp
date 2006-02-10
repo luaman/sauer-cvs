@@ -295,7 +295,7 @@ int main(int argc, char **argv)
     log("localconnect");
     localconnect();
     cc->gameconnect(false);
-    cc->changemap("aard3");
+    cc->changemap("metl3");
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
@@ -326,6 +326,7 @@ int main(int argc, char **argv)
         inbetweenframes = false;
         SDL_GL_SwapBuffers();
         if(frames>2) gl_drawframe(scr_w, scr_h, fps);
+        //SDL_Delay(10);
         inbetweenframes = true;
 
         SDL_Event event;

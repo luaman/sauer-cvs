@@ -102,17 +102,17 @@ struct clientcom : iclientcom
         }
         putint(p, SV_POS);
         putint(p, clientnum);
-        putint(p, di(d->o.x));              // quantize coordinates to 1/16th of a cube, between 1 and 3 bytes
-        putint(p, di(d->o.y));
-        putint(p, di(d->o.z));
+        putint(p, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
+        putint(p, (int)(d->o.y*DMF));
+        putint(p, (int)(d->o.z*DMF));
         putint(p, (int)d->yaw);
         putint(p, (int)d->pitch);
         putint(p, (int)d->roll);
-        putint(p, (int)(d->vel.x*DVF));     // quantize to 1/100, almost always 1 byte
-        putint(p, (int)(d->vel.y*DVF));
-        putint(p, (int)(d->vel.z*DVF));
+        putint(p, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
+        putint(p, (int)(d->vel.y*DVELF));
+        putint(p, (int)(d->vel.z*DVELF));
         putint(p, (int)d->physstate);
-        putint(p, (int)(d->floor.x*DVF));     // quantize to 1/100, almost always 1 byte
+        putint(p, (int)(d->floor.x*DVF));          // quantize to 1/100, almost always 1 byte
         putint(p, (int)(d->floor.y*DVF));
         putint(p, (int)(d->floor.z*DVF));
         // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
@@ -222,9 +222,9 @@ struct clientcom : iclientcom
                 d->yaw = (float)getint(p);
                 d->pitch = (float)getint(p);
                 d->roll = (float)getint(p);
-                d->vel.x = getint(p)/DVF;
-                d->vel.y = getint(p)/DVF;
-                d->vel.z = getint(p)/DVF;
+                d->vel.x = getint(p)/DVELF;
+                d->vel.y = getint(p)/DVELF;
+                d->vel.z = getint(p)/DVELF;
                 d->physstate = getint(p);
                 d->floor.x = getint(p)/DVF;
                 d->floor.y = getint(p)/DVF;
@@ -324,9 +324,9 @@ struct clientcom : iclientcom
                 int damage = getint(p);
                 int ls = getint(p);
                 vec dir;
-                dir.x = getint(p)/DMF;
-                dir.y = getint(p)/DMF;
-                dir.z = getint(p)/DMF;
+                dir.x = getint(p)/DVELF;
+                dir.y = getint(p)/DVELF;
+                dir.z = getint(p)/DVELF;
                 if(target==clientnum)
                 {
                     if(ls==player1->lifesequence) { cl.selfdamage(damage, cn, d); player1->vel.add(dir); };

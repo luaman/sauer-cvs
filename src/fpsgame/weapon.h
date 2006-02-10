@@ -117,7 +117,7 @@ struct weaponstate
         vel.mul(100*damage/d->weight);
         if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
         else if(d->monsterstate) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
-        else                     { if(isrl) vel.mul(2); cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, di(vel.x), di(vel.y), di(vel.z)); playsound(S_PAIN1+rnd(5), &d->o); };
+        else                     { if(isrl) vel.mul(2); cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
         damageeffect(d->o, damage);
     };
 
@@ -380,7 +380,7 @@ struct weaponstate
 
         shootv(d->gunselect, from, to, d, true);
 
-        if(!d->monsterstate) cl.cc.addmsg(1, 8, SV_SHOT, d->gunselect, di(from.x), di(from.y), di(from.z), di(to.x), di(to.y), di(to.z));
+        if(!d->monsterstate) cl.cc.addmsg(1, 8, SV_SHOT, d->gunselect, (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF));
 
         d->gunwait = guns[d->gunselect].attackdelay;
 

@@ -1,7 +1,8 @@
 
-#define DMF 16.0f
-#define DVF 100.0f
-#define di(f) ((int)(f*DMF))
+// network quantization scale
+#define DMF 4.0f                // for world locations
+#define DVF 100.0f              // for normalized vectors
+#define DVELF 1.0f              // for playerspeed based velocity vectors
 
 enum                            // static entity types
 {
