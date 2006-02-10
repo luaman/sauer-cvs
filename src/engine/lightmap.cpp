@@ -500,7 +500,7 @@ void calclight()
     {
         vtxarray *va = valist[i];
         total_surfaces += va->explicitsky;
-        total_surfaces += va->l1.tris;
+        total_surfaces += va->l1.tris/2;
     };
     canceled = false;
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
