@@ -14,7 +14,7 @@ VAR(aalights, 0, 2, 2);
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights1, lights2;
-static uint progress = 0;
+static uint progress = 0, total_surfaces = 0;
 static bool canceled = false;
 
 void check_calclight_canceled()
@@ -38,7 +38,7 @@ void show_calclight_progress()
 {
     int lumels = curlumels;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
-    float bar1 = float(progress) / float(wtris / 2),
+    float bar1 = float(progress) / float(total_surfaces),
           bar2 = lightmaps.length() ? float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH) : 0;
           
     s_sprintfd(text1)("%d%%", int(bar1 * 100));
@@ -427,7 +427,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     {
         loopj(6) if(visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
         {
-            if((progress++ % (wtris / 2 < 100 ? 1 : wtris / 2 / 100)) == 0)
+            if((progress++ % (total_surfaces < 100 ? 1 : total_surfaces / 100)) == 0)
                 show_calclight_progress();
         }
         return;
@@ -438,7 +438,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     calcverts(c, cx, cy, cz, size, verts, usefaces, vertused, lodcube);
     loopj(6) if(usefaces[j])
     {
-        if((progress++ % (wtris / 2 < 100 ? 1 : wtris / 2 / 100)) == 0)
+        if((progress++ % (total_surfaces < 100 ? 1 : total_surfaces / 100)) == 0)
             show_calclight_progress();
         plane planes[2];
         int numplanes = genclipplane(c, j, verts, planes);
@@ -486,6 +486,8 @@ void resetlightmaps()
     compressed.clear();
 }
 
+extern vector<vtxarray *> valist;
+
 void calclight()
 {
     computescreen("computing lightmaps... (esc to abort)");
@@ -493,6 +495,13 @@ void calclight()
     clear_lmids(worldroot);
     curlumels = 0;
     progress = 0;
+    total_surfaces = wtris/2;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        total_surfaces += va->explicitsky;
+        total_surfaces += va->l1.tris;
+    };
     canceled = false;
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     uint total = 0, lumels = 0;
@@ -522,6 +531,13 @@ void patchlight()
     if(noedit()) return;
     computescreen("patching lightmaps... (esc to abort)");
     progress = 0;
+    total_surfaces = wtris/2;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        total_surfaces += va->explicitsky;
+        total_surfaces += va->l1.tris;
+    };
     canceled = false;
     int total = 0, lumels = 0;
     loopv(lightmaps)
