@@ -496,10 +496,13 @@ bool trystep(dynent *d, vec &dir, float maxstep)
         d->o.z += dir.magnitude()*STEPSPEED;
         if(collide(d, vec(0, 0, 1)))
         {
+            if(d->physstate < PHYS_FLOOR)
+            {
+                d->timeinair = 0;
+                dir.z = 0.0f;
+                d->vel.z = 0.0f;
+            };
             d->physstate = PHYS_STEP;
-            d->timeinair = 0;
-            dir.z = max(dir.z, 0.0f);
-            d->vel.z = max(d->vel.z, 0.0f);
             d->floor = vec(0, 0, 1);
             return true;
         };
@@ -572,7 +575,6 @@ bool move(dynent *d, vec &dir)
             return !collided;
         };
     };
-    d->floor = floor;
     if(d->physstate < PHYS_FLOOR)
     {
         d->timeinair = 0;
@@ -580,6 +582,7 @@ bool move(dynent *d, vec &dir)
         d->vel.z = 0.0f;
     };
     d->physstate = (floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
+    d->floor = floor;
     return !collided;
 };
 
