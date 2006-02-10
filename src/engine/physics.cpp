@@ -489,7 +489,7 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     /* check if there is space atop the stair to move to */
     d->o.add(dir);
     d->o.z += maxstep - old.z + d->eyeheight + 0.1f;
-    if(d->physstate == PHYS_STEP || collide(d, vec(0, 0, -1)))
+    if(collide(d, vec(0, 0, -1)))
     {
         /* try stepping up */
         d->o = old;
@@ -499,8 +499,11 @@ bool trystep(dynent *d, vec &dir, float maxstep)
             if(d->physstate < PHYS_FLOOR)
             {
                 d->timeinair = 0;
-                dir.z = 0.0f;
-                d->vel.z = 0.0f;
+                if(dir.z < 0.0f)
+                {
+                    dir.z = 0.0f;
+                    d->vel.z = 0.0f;
+                };
             };
             d->physstate = PHYS_STEP;
             d->floor = vec(0, 0, 1);
