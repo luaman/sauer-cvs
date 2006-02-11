@@ -634,9 +634,9 @@ void initlights()
     };
     alloctexids();
     uchar unlit[3] = { ambient, ambient, ambient };
-    createtexture(lmtexids[0], 1, 1, unlit, false, false);
+    createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, false, false);
     uchar bright[3] = { 128, 128, 128 };
-    createtexture(lmtexids[1], 1, 1, bright, false, false);
+    createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
     loopi(lightmaps.length()) createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     updateentlighting();
 };
