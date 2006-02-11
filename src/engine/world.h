@@ -35,7 +35,15 @@ enum                            // cube empty-space materials
     MAT_WATER,                  // fill with water, showing waves at the surface
     MAT_CLIP,                   // collisions always treat cube as solid
     MAT_GLASS,                  // behaves like clip but is blended blueish
-    MAT_NOCLIP                  // collisions always treat cube as empty
+    MAT_NOCLIP,                 // collisions always treat cube as empty
+    MAT_EDIT                    // basis for the edit volumes of the above materials
+};
+
+enum 
+{ 
+    MATSURF_NOT_VISIBLE = 0,
+    MATSURF_VISIBLE,
+    MATSURF_EDIT_ONLY
 };
 
 #define isclipped(mat) ((mat) >= MAT_CLIP && (mat) < MAT_NOCLIP)

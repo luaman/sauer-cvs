@@ -54,7 +54,7 @@ void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
         int n = (wy2-wy1-1)/subdiv;
         n = (n+2)*2;
         xtraverts += n;
-    }
+    };
 };
 
 uint calcwatersubdiv(int x, int y, int z, uint size)
@@ -67,14 +67,14 @@ uint calcwatersubdiv(int x, int y, int z, uint size)
     {
         vec t(x + size/2, y + size/2, z + size/2);
         dist = t.dist(player->o) - size*1.42f/2;
-    }
+    };
     uint subdiv = watersubdiv + int(dist) / (32 << waterlod);
     if(subdiv >= 8*sizeof(subdiv))
         subdiv = ~0;
     else
         subdiv = 1 << subdiv;
     return subdiv;
-}
+};
 
 uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
 {
@@ -93,7 +93,7 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
             if(subdiv < size * 2)
                 renderwater(size, x, y, z, size,t );
             return subdiv;
-        }
+        };
         uint childsize = size / 2,
              subdiv1 = renderwaterlod(x, y, z, childsize, t),
              subdiv2 = renderwaterlod(x + childsize, y, z, childsize, t),
@@ -117,47 +117,55 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
                     renderwater(childsize, x + childsize, y + childsize, z, childsize, t);
                 if(subdiv4 >= size) 
                     renderwater(childsize, x, y + childsize, z, childsize, t);
-            }
-        }
+            };
+        };
         return minsubdiv;
-    }
-}
+    };
+};
 
-bool visiblematerial(cube &c, int orient, int x, int y, int z, int size)
+int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 {
     switch(c.material)
     {
+    case MAT_AIR:
+         break;
+
     case MAT_WATER:
-        if(orient != O_TOP)
-            return false;
-        return visibleface(c, orient, x, y, z, size, MAT_WATER);
+        if(visibleface(c, orient, x, y, z, size, MAT_WATER))
+            return (orient == O_TOP ? MATSURF_VISIBLE : MATSURF_EDIT_ONLY);
+        break;
 
     case MAT_GLASS:
-        return visibleface(c, orient, x, y, z, size, MAT_GLASS);
+        if(visibleface(c, orient, x, y, z, size, MAT_GLASS))
+            return MATSURF_VISIBLE;
+        break;
 
     default:
-        return false;
-    }
-}   
+        if(visibleface(c, orient, x, y, z, size, c.material))
+            return MATSURF_EDIT_ONLY;
+        break;
+    };
+    return MATSURF_NOT_VISIBLE; 
+};   
 
 int matsurfcmp(const materialsurface *x, const materialsurface *y)
 {
     if(x->material < y->material) return -1;
     else if(x->material > y->material) return 1;
     else return 0;
-}
+};
 
 void sortmatsurfs(materialsurface *matsurf, int matsurfs)
 {
     qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
-}
+};
 
 void watercolour(int r, int g, int b)
 {
     hdr.watercolour[0] = r;
     hdr.watercolour[1] = g;
     hdr.watercolour[2] = b;
-}
+};
 
 COMMAND(watercolour, ARG_3INT);
 
@@ -178,12 +186,41 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t);
     );
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-    glColor3f(0.3f, 0.15f, 0.0f);
     glDisable(GL_TEXTURE_2D);
+
+    glColor3f(0.3f, 0.15f, 0.0f);
     matloop(MAT_GLASS, drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size, 0.01f));
+
+    if(editmode)
+    {
+        static float blendcols[MAT_EDIT][3] = 
+        {
+            { 0.0f, 0.0f, 0.0f }, // MAT_AIR - no edit volume,
+            { 1.0f, 1.0f, 0.0f }, // MAT_WATER - blue,
+            { 0.0f, 1.0f, 1.0f }, // MAT_CLIP - red,
+            { 0.0f, 0.0f, 0.0f }, // MAT_GLASS - no edit volume,
+            { 1.0f, 0.0f, 1.0f }, // MAT_NOCLIP - green
+        };    
+        glColor3f(1.0f, 0.0f, 1.0f);
+        int lastmat = -1;
+        loopi(matsurfs) 
+        { 
+            materialsurface &m = matbuf[i]; 
+            if(m.material>=MAT_EDIT)
+            {
+                if(m.material-MAT_EDIT != lastmat)
+                {
+                    lastmat = m.material-MAT_EDIT;
+                    glColor3fv(blendcols[lastmat]);
+                };
+                drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
+            };
+        };
+    };
+
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
-}
+};
 

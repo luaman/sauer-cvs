@@ -688,10 +688,14 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
 
     if(c.material != MAT_AIR)
     {
-        loopi(6) if(visiblematerial(c, i, cx, cy, cz, size))
+        loopi(6)
         {
-            materialsurface matsurf = {c.material, i, cx, cy, cz, size};
-            l0.matsurfs.add(matsurf);
+            int vis = visiblematerial(c, i, cx, cy, cz, size);
+            if(vis != MATSURF_NOT_VISIBLE)
+            {
+                materialsurface matsurf = {vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material, i, cx, cy, cz, size};
+                l0.matsurfs.add(matsurf);
+            };
         };
     };
 
