@@ -574,12 +574,13 @@ bool move(dynent *d, vec &dir)
             };
             d->o = old;
         };    
-        if(collided && wall.z >= FLOORZ) floor = wall;
-        else
+        if(!collided || wall.z < FLOORZ)
         {
             d->physstate = PHYS_FALL;
             return !collided;
         };
+        found = false;
+        floor = wall;
     };
     if(d->physstate < PHYS_FLOOR)
     {
@@ -587,7 +588,7 @@ bool move(dynent *d, vec &dir)
         dir.z = 0.0f;
         d->vel.z = 0.0f;
     };
-    d->physstate = (floor.z == 1.0f ? PHYS_FLOOR : PHYS_SLOPE);
+    d->physstate = (floor.z == 1.0f ? (found ? PHYS_FLOOR : PHYS_STEP) : PHYS_SLOPE);
     d->floor = floor;
     return !collided;
 };
