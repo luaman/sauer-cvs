@@ -293,7 +293,7 @@ const float STAIRHEIGHT = 4.0f;
 const float FLOORZ = 0.7f;
 const float JUMPVEL = 130.0f;
 const float GRAVITY = 120.0f; 
-const float STEPSPEED = 3.0f;
+const float STEPSPEED = 1.5f;
 
 bool findfloor(dynent *d, vec &floor, float &height)
 {
