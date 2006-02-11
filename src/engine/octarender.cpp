@@ -263,7 +263,7 @@ bool collapsedface(uint cfe)
 {
     return ((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
            ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F);
-}
+};
 
 bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, const ivec &vo, int vsize, uchar vmat)
 {
@@ -273,7 +273,7 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, 
          if(vmat != MAT_AIR && c.material == vmat) return true;
          if(isempty(c)) return false;
          return touchingface(c, orient) && faceedges(c, orient) == F_SOLID;
-    }
+    };
 
     int dim = dimension(orient), coord = dimcoord(orient), xd = R[dim], yd = C[dim];
 
@@ -284,11 +284,11 @@ bool occludesface(cube &c, int orient, int x, int y, int z, int size, cube *vc, 
            o[yd] < vo[yd] + vsize && o[yd] + (size >> 1) > vo[yd])
         {
             if(!occludesface(c.children[i], orient, o.x, o.y, o.z, size >> 1, vc, vo, vsize, vmat)) return false;
-        }
-    }
+        };
+    };
 
     return true;
-}
+};
 
 bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, bool lodcube)
 {
@@ -301,7 +301,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
     {
         if(!touchingface(c, orient)) return true;
         if(collapsedface(cfe)) return false;
-    }
+    };
     cube &o = neighbourcube(x, y, z, size, -size, orient);
     if(&o==&c) return false;
     if(!o.children || lodcube)
@@ -313,7 +313,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
         if(mat != MAT_AIR) return ofe != F_SOLID;
         if(ofe==cfe) return false;
         return faceedgegt(cfe, ofe);
-    }
+    };
 
     return !occludesface(o, opposite(orient), lu.x, lu.y, lu.z, lusize, &c, ivec(x, y, z), size, mat);
 };
@@ -331,15 +331,15 @@ void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
         vec pos((float)x, (float)y, (float)z);
 
         genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, vert);
-    }
-}
+    };
+};
 
 void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused, bool lodcube)
 {
     loopi(8) vertused[i] = 0;
     loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
     loopi(8) if(vertused[i]) calcvert(c, x, y, z, size, verts[i], i);
-}
+};
 
 int genclipplane(cube &c, int i, const vec *v, plane *clip)
 {
@@ -353,7 +353,7 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
         {
             ++planes;
             clip[0].toplane(p[2], p[3], p[1]);
-        }
+        };
     }
     else
     if(p[1] == p[2])
@@ -362,7 +362,7 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
         {
              ++planes;
              clip[0].toplane(p[2], p[3], p[0]);
-        }
+        };
     }
     else
     {
@@ -372,11 +372,11 @@ int genclipplane(cube &c, int i, const vec *v, plane *clip)
         {
             ++planes;
             clip[1].toplane(p[3], p[4], p[2]);
-        }
-    }
+        };
+    };
 
     return planes;
-}
+};
 
 bool flataxisface(cube &c, int orient)
 {
@@ -417,7 +417,7 @@ struct sortkey
      sortkey() {};
      sortkey(uint tex, uint lmid)
       : tex(tex), lmid(lmid)
-     {}
+     {};
 };
 
 struct sortval
@@ -428,12 +428,12 @@ struct sortval
 inline bool htcmp (const sortkey &x, const sortkey &y)
 {
     return x.tex == y.tex && x.lmid == y.lmid;
-}
+};
 
 inline unsigned int hthash (const sortkey &k)
 {
     return k.tex + k.lmid*9741;
-}
+};
 
 struct lodcollect
 {
@@ -516,18 +516,17 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             if(size>=lodsize) l1.curtris += 2;
         };
 
-        sortkey key(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : 0));
+        sortkey key(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : LMID_AMBIENT));
 
         loopk(4)
         {
             float u, v;
-            if(c.surfaces && c.surfaces[i].lmid)
+            if(c.surfaces && c.surfaces[i].lmid >= LMID_RESERVED)
             {
                 u = (c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) / LM_PACKW;
                 v = (c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) / LM_PACKH;
             }
-            else
-                 u = v = 0.0;
+            else u = v = 0.0f;
             int coord = faceverts(c,i,k), index;
             if(isentirelysolid(c))
                 index = vert(cubecoords[coord][0]*size/8+x,
@@ -540,12 +539,12 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
                 genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, rv);
                 swap(float, rv.y, rv.z);
                 index = vh.access(rv, u, v);
-            }
+            };
 
             if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]).add(index);
             if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]).add(index);
-        }
-    }
+        };
+    };
 };
 
 bool skyoccluded(cube &c, int orient)
@@ -589,8 +588,8 @@ void genskyverts(cube &c, int x, int y, int z, int size)
                              cubecoords[coord][2]*size/8+z,
                              0.0f, 0.0f);
             l0.skyindices.add(index);
-        }
-    }
+        };
+    };
 };
 
 ////////// Vertex Arrays //////////////
@@ -671,8 +670,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         if(size!=lodsize) return;
         lodcube = true;
     }
-
-    genskyverts(c, cx, cy, cz, size);
+    else genskyverts(c, cx, cy, cz, size);
 
     if(!isempty(c))
     {
@@ -686,16 +684,16 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         if(cz+size>bbmax.z) bbmax.z = cz+size;
     };
 
+    if(lodcube) return;
+
     if(c.material != MAT_AIR)
     {
         loopi(6) if(visiblematerial(c, i, cx, cy, cz, size))
         {
             materialsurface matsurf = {c.material, i, cx, cy, cz, size};
             l0.matsurfs.add(matsurf);
-        }
-    }
-
-    if(lodcube) return;
+        };
+    };
 
     cstats[csi].nleaf++;
 };
@@ -844,7 +842,7 @@ void octarender()                               // creates va s for all leaf cub
         vtxarray *va = valist[i];
         explicitsky += va->explicitsky;
         skyarea += va->skyarea;
-    }
+    };
 };
 
 void allchanged()
@@ -949,11 +947,11 @@ void rendersky()
         glDrawElements(GL_QUADS, lod.sky, GL_UNSIGNED_SHORT, lod.skybuf);
         glde++;
         xtraverts += lod.sky;
-    }
+    };
 
     if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
-}
+};
 
 extern PFNGLACTIVETEXTUREARBPROC       pfnglActiveTexture;
 extern PFNGLCLIENTACTIVETEXTUREARBPROC pfnglClientActiveTexture;
@@ -1077,8 +1075,8 @@ void rendermaterials()
         lodlevel &lod = va->l0;
         if(lod.matsurfs) rendermatsurfs(lod.matbuf, lod.matsurfs);
         va = va->next;
-    }
-}
+    };
+};
 
 void drawface(int orient, int x, int y, int z, int size, float offset)
 {
@@ -1091,7 +1089,7 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
         case O_FRONT: yoffset = -offset; break;
         case O_LEFT: xoffset = offset; break;
         case O_RIGHT: xoffset = -offset; break;
-    }
+    };
     glBegin(GL_POLYGON);
     loopi(4)
     {
@@ -1099,11 +1097,11 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
         glVertex3f(cubecoords[coord][0]*(size-2*xoffset)/8+x+xoffset,
                    cubecoords[coord][2]*(size-2*zoffset)/8+z+zoffset,
                    cubecoords[coord][1]*(size-2*yoffset)/8+y+yoffset);
-    }
+    };
     glEnd();
 
     xtraverts += 4;
-}
+};
 
 void writeobj(char *name)
 {

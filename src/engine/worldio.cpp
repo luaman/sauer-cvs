@@ -75,16 +75,16 @@ void savec(cube *c, gzFile f)
             else
             {
                 uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0);
-                loopj(6) if(c[i].surfaces[j].lmid) mask |= 1 << j;
+                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED) mask |= 1 << j;
                 gzputc(f, mask);
                 if(c[i].material != MAT_AIR)
                     gzputc(f, c[i].material);
-                loopj(6) if(c[i].surfaces[j].lmid)
+                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED)
                 {
                     surfaceinfo tmp = c[i].surfaces[j];
                     endianswap(&tmp.x, sizeof(ushort), 3);
                     gzwrite(f, &tmp, sizeof(surfaceinfo));
-                }
+                };
             };
             if(c[i].children) savec(c[i].children, f);
         };
@@ -127,12 +127,13 @@ void loadc(gzFile f, cube &c)
                 {
                     gzread(f, &c.surfaces[i], sizeof(surfaceinfo));
                     endianswap(&c.surfaces[i].x, sizeof(ushort), 3);
+                    if(hdr.version < 10) ++c.surfaces[i].lmid;
                 }
                 else
-                    c.surfaces[i].lmid = 0;
-            }
-        }
-    }
+                    c.surfaces[i].lmid = LMID_AMBIENT;
+            };
+        };
+    };
     c.children = (haschildren ? loadchildren(f) : NULL);
 };
 

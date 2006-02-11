@@ -28,9 +28,9 @@ void check_calclight_canceled()
             if(event.key.keysym.sym == SDLK_ESCAPE)
                 canceled = true;
             break;
-        }
-    }
-}
+        };
+    };
+};
 
 static int curlumels = 0;
 
@@ -45,7 +45,7 @@ void show_calclight_progress()
     s_sprintfd(text2)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100));
 
     show_out_of_renderloop_progress(bar1, text1, bar2, text2);
-}
+};
 
 bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
 {
@@ -59,14 +59,14 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
         if(packed)      
             clear();
         return inserted;    
-    }
+    };
     if(w == tw && h == th)
     {
         packed = true;
         tx = x;
         ty = y;
         return true;
-    }
+    };
     
     if(w - tw > h - th)
     {
@@ -77,10 +77,10 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
     {
         child1 = new PackNode(x, y, w, th);
         child2 = new PackNode(x, y + th, w, h - th);
-    }
+    };
 
     return child1->insert(tx, ty, tw, th);
-}
+};
 
 bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
 {
@@ -97,7 +97,7 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
     ++lightmaps;
     lumels += tw * th;
     return true;
-}
+};
 
 void insert_lightmap(ushort &x, ushort &y, ushort &lmid)
 {
@@ -105,30 +105,30 @@ void insert_lightmap(ushort &x, ushort &y, ushort &lmid)
     {
         if(lightmaps[i].insert(x, y, lm, lm_w, lm_h))
         {
-            lmid = i + 1;
+            lmid = i + LMID_RESERVED;
             return;
-        }
-    }
+        };
+    };
 
     ASSERT(lightmaps.add().insert(x, y, lm, lm_w, lm_h));
-    lmid = lightmaps.length();
-}
+    lmid = lightmaps.length() - 1 + LMID_RESERVED;
+};
 
 inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
 {
     if(lm_w != y->w || lm_h != y->h) return false;
     uchar *xdata = lm,
-          *ydata = lightmaps[y->lmid - 1].data + 3*(y->x + y->y*LM_PACKW);
+          *ydata = lightmaps[y->lmid - LMID_RESERVED].data + 3*(y->x + y->y*LM_PACKW);
     loopi((int)lm_h)
     {
         loopj((int)lm_w)
         {
             loopk(3) if(*xdata++ != *ydata++) return false;
-        }
+        };
         ydata += 3*(LM_PACKW - y->w);
-    }    
+    };    
     return true;
-}
+};
     
 inline uint hthash (surfaceinfo *info)
 {
@@ -138,9 +138,9 @@ inline uint hthash (surfaceinfo *info)
     {
        hash ^= (color[0] + (color[1] << 8) + (color[2] << 16));
        color += 3;
-    }
+    };
     return hash;  
-}
+};
 
 static hashtable<surfaceinfo *, surfaceinfo *> compressed;
 
@@ -161,11 +161,10 @@ void pack_lightmap(surfaceinfo &surface)
             surface.x = (*val)->x;
             surface.y = (*val)->y;
             surface.lmid = (*val)->lmid;
-        }
+        };
     }
-    else
-        insert_lightmap(surface.x, surface.y, surface.lmid);
-}
+    else insert_lightmap(surface.x, surface.y, surface.lmid);
+};
 
 void generate_lumel(const float tolerance, const vector<entity *> &lights, const vec &target, const vec &normal, int &r, int &g, int &b)
 {
@@ -186,14 +185,14 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
             float dist = raycube(light.o, ray, mag, 0);
             if(dist < mag - tolerance)
                 continue;
-        }
+        };
         float intensity = -normal.dot(ray) * attenuation;
         if(intensity < 0) intensity = 1.0;
         r += (int)(intensity * float(light.attr2));
         g += (int)(intensity * float(light.attr3));
         b += (int)(intensity * float(light.attr4));
-    }
-}
+    };
+};
 
 bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
@@ -220,7 +219,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     {
         memset(mincolor, 255, 3);
         memset(maxcolor, 0, 3);
-    }
+    };
 
     int aasample = aalights ? 1 << (aalights + 1) : 1;
     for(uint y = y1; y < y2; ++y, v.add(vstep)) {
@@ -233,13 +232,13 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                 if(aalights)
                     target.add(offsets[j]);
                 generate_lumel(tolerance, lights, target, normal, r, g, b);
-            }
+            };
             if(aasample > 1)
             {
                 r /= aasample;
                 g /= aasample;
                 b /= aasample;
-            }
+            };
             lumel[0] = min(255, max(ambient, r));
             lumel[1] = min(255, max(ambient, g));
             lumel[2] = min(255, max(ambient, b));
@@ -247,9 +246,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
             {
                 mincolor[k] = min(mincolor[k], lumel[k]);
                 maxcolor[k] = max(maxcolor[k], lumel[k]);
-            }
-        }
-    }
+            };
+        };
+    };
     if(y2 == lm_h &&
        int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
        int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
@@ -264,9 +263,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
        memcpy(lm, color, 3);
        lm_w = 1;
        lm_h = 1;
-    }
+    };
     return true;
-}
+};
 
 void clear_lmids(cube *c)
 {
@@ -274,8 +273,8 @@ void clear_lmids(cube *c)
     {
         if(c[i].surfaces) freesurfaces(c[i]);
         if(c[i].children) clear_lmids(c[i].children);
-    }
-}
+    };
+};
 
 bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
 {
@@ -293,7 +292,7 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
                light.o.y + radius < cy || light.o.y - radius > cy + size ||
                light.o.z + radius < cz || light.o.z - radius > cz + size)
                 continue;
-        }
+        };
 
         float dist = planes[0].dist(light.o);
         if(dist >= 0.0 && (!radius || dist < float(radius)))
@@ -303,8 +302,8 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
             dist = planes[1].dist(light.o);
             if(dist >= 0.0 && (!radius || dist < float(radius)))
                 lights2.add(&light);
-        }
-    }
+        };
+    };
     return lights1.length() || lights2.length();
 }
 
@@ -325,7 +324,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
         u.normalize();
         v.cross(u, planes[0]);
         t.cross(planes[1], u);
-    }
+    };
 
     #define COORDMINMAX(u, v, vert) \
     { \
@@ -337,7 +336,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
         u ## max = max(u ## coord, u ## max); \
         v ## min = min(v ## coord, v ## min); \
         v ## max = max(v ## coord, v ## max);  \
-    }
+    };
 
     float umin(0.0f), umax(0.0f),
           vmin(0.0f), vmax(0.0f),
@@ -345,12 +344,14 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     COORDMINMAX(u, v, v1)
     COORDMINMAX(u, v, v2)
     if(numplanes < 2)
+    {
         COORDMINMAX(u, v, v3)
+    }
     else
     {
-        COORDMINMAX(u, t, v2);
-        COORDMINMAX(u, t, v3);
-    }
+        COORDMINMAX(u, t, v2)
+        COORDMINMAX(u, t, v3)
+    };
 
     int scale = int(min(umax - umin, vmax - vmin));
     if(numplanes > 1)
@@ -364,7 +365,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
         tl = (uint)ceil((tmax + 1) * lpu);
         tl = max(LM_MINH, tl);
         vl = max(LM_MINH, vl);
-    }
+    };
     lm_w = max(LM_MINW, min(LM_MAXW, ul));
     lm_h = max(LM_MINH, min(LM_MAXH, vl + tl));
 
@@ -375,7 +376,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     {
         vo.mul(vmax);
         v.mul(-1);
-    }
+    };
     origin1.add(uo);
     origin1.add(vo);
     vec ustep(u), vstep(v);
@@ -393,7 +394,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
         origin2.add(uo);
         if(!generate_lightmap(lpu, split, lm_h, origin2, planes[1], ustep, tstep))
             return false;
-    }
+    };
 
     #define CALCVERT(origin, u, v, offset, index, vert) \
     { \
@@ -403,65 +404,77 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
               v ## coord = v.dot(tovert); \
         texcoords[index*2] = uchar(u ## coord * u ## scale); \
         texcoords[index*2+1] = offset + uchar(v ## coord * v ## scale); \
-    }
+    };
 
     float uscale = 255.0f / float(umax - umin),
           vscale = 255.0f / float(vmax - vmin) * float(split) / float(lm_h);
     CALCVERT(origin1, u, v, 0, 0, v0)
     CALCVERT(origin1, u, v, 0, 1, v1)
     CALCVERT(origin1, u, v, 0, 2, v2)
-    if(numplanes < 2) CALCVERT(origin1, u, v, 0, 3, v3)
+    if(numplanes < 2) 
+    {
+        CALCVERT(origin1, u, v, 0, 3, v3)
+    }
     else
     {
         uchar toffset = (uchar)(255.0 * float(split) / float(lm_h));
         float tscale = 255.0f / float(tmax - tmin) * float(lm_h - split) / float(lm_h);
-        CALCVERT(origin2, u, t, toffset, 3, v3);
-    }
+        CALCVERT(origin2, u, t, toffset, 3, v3)
+    };
     return true;
-}
+};
 
+#define CHECK_PROGRESS \
+    if((progress++ % (total_surfaces < 100 ? 1 : total_surfaces / 100)) == 0) \
+        show_calclight_progress();
 
 void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 {
     if(c.surfaces)
     {
-        loopj(6) if(visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
+        loopi(6) if(c.surfaces[i].lmid >= LMID_RESERVED)
         {
-            if((progress++ % (total_surfaces < 100 ? 1 : total_surfaces / 100)) == 0)
-                show_calclight_progress();
-        }
-        return;
-    }
+            loopj(6) if(visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
+            {
+                if(!lodcube) CHECK_PROGRESS
+                if(c.texture[i] != DEFAULT_SKY && size >= hdr.mapwlod) CHECK_PROGRESS
+            };
+            return;
+        };
+        freesurfaces(c);
+    };
     vec verts[8];
     bool usefaces[6];
     int vertused[8];
     calcverts(c, cx, cy, cz, size, verts, usefaces, vertused, lodcube);
-    loopj(6) if(usefaces[j])
+    loopi(6) if(usefaces[i])
     {
-        if((progress++ % (total_surfaces < 100 ? 1 : total_surfaces / 100)) == 0)
-            show_calclight_progress();
+        if(!lodcube) CHECK_PROGRESS
+        if(c.texture[i] == DEFAULT_SKY) continue;
+        if(size >= hdr.mapwlod) CHECK_PROGRESS
+
         plane planes[2];
-        int numplanes = genclipplane(c, j, verts, planes);
+        int numplanes = genclipplane(c, i, verts, planes);
         if(!numplanes || !find_lights(c, cx, cy, cz, size, planes, numplanes))
             continue;
 
-        vec v0(verts[faceverts(c, j, 0)]),
-            v1(verts[faceverts(c, j, 1)]),
-            v2(verts[faceverts(c, j, 2)]),
-            v3(verts[faceverts(c, j, 3)]);
+        vec v0(verts[faceverts(c, i, 0)]),
+            v1(verts[faceverts(c, i, 1)]),
+            v2(verts[faceverts(c, i, 2)]),
+            v3(verts[faceverts(c, i, 3)]);
         uchar texcoords[8];
         if(!setup_surface(planes, numplanes, v0, v1, v2, v3, texcoords))
             continue;
 
         if(!c.surfaces)
             newsurfaces(c);
-        surfaceinfo &surface = c.surfaces[j];
+        surfaceinfo &surface = c.surfaces[i];
         surface.w = lm_w;
         surface.h = lm_h;
         memcpy(surface.texcoords, texcoords, 8);
         pack_lightmap(surface);
-    }
-}
+    };
+};
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
@@ -477,14 +490,14 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         bool lodcube = c[i].children && hdr.mapwlod==size;
         if((!c[i].children || lodcube) && !isempty(c[i]))
             setup_surfaces(c[i], o.x, o.y, o.z, size, lodcube);
-    } 
-}
+    }; 
+};
 
 void resetlightmaps()
 {
     lightmaps.setsize(0);
     compressed.clear();
-}
+};
 
 extern vector<vtxarray *> valist;
 
@@ -510,7 +523,7 @@ void calclight()
         if(!editmode) lightmaps[i].finalize();
         total += lightmaps[i].lightmaps;
         lumels += lightmaps[i].lumels;
-    }
+    };
     if(!editmode) compressed.clear();
     initlights();
     computescreen("lighting done...");
@@ -522,7 +535,7 @@ void calclight()
             total,
             lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
             lightmaps.length());
-}
+};
 
 COMMAND(calclight, ARG_NONE);
 
@@ -536,7 +549,7 @@ void patchlight()
     {
         vtxarray *va = valist[i];
         total_surfaces += va->explicitsky;
-        total_surfaces += va->l1.tris;
+        total_surfaces += va->l1.tris/2;
     };
     canceled = false;
     int total = 0, lumels = 0;
@@ -544,14 +557,14 @@ void patchlight()
     {
         total -= lightmaps[i].lightmaps;
         lumels -= lightmaps[i].lumels;
-    }
+    };
     curlumels = lumels;
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     loopv(lightmaps)
     {
         total += lightmaps[i].lightmaps;
         lumels += lightmaps[i].lumels;
-    }
+    };
     initlights();
     allchanged();
     if(canceled == true)
@@ -561,7 +574,7 @@ void patchlight()
             total,
             lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
             lightmaps.length()); 
-}
+};
 
 COMMAND(patchlight, ARG_NONE);
 
@@ -583,16 +596,16 @@ vector<GLuint> lmtexids;
 
 void alloctexids()
 {
-    for(int i = lmtexids.length(); i<lightmaps.length()+1; i++) glGenTextures(1, &lmtexids.add());
+    for(int i = lmtexids.length(); i<lightmaps.length()+LMID_RESERVED; i++) glGenTextures(1, &lmtexids.add());
 };
 
 void clearlights()
 {
-    uchar bright[3] = {128, 128, 128};
+    uchar bright[3] = { 128, 128, 128 };
     alloctexids();
-    loopi(lightmaps.length() + 1) createtexture(lmtexids[i], 1, 1, bright, false, false);
+    loopi(lightmaps.length() + LMID_RESERVED) createtexture(lmtexids[i], 1, 1, bright, false, false);
     loopv(et->getents()) memset(et->getents()[i]->color, 255, 3);
-}
+};
 
 void updateentlighting()
 {
@@ -606,10 +619,10 @@ void updateentlighting()
             mapmodelinfo &mmi = getmminfo(e.attr2);
             if(&mmi)
                 height = float((mmi.h ? mmi.h : 8.0f) + mmi.zoff + e.attr3);
-        }
+        };
         vec target(e.o.x, e.o.y, e.o.z + height);
         lightreaching(target, e.color);
-    }
+    };
 };
 
 void initlights()
@@ -618,13 +631,15 @@ void initlights()
     {
         clearlights();
         return;
-    }
-    uchar unlit[3] = { ambient, ambient, ambient };
+    };
     alloctexids();
+    uchar unlit[3] = { ambient, ambient, ambient };
     createtexture(lmtexids[0], 1, 1, unlit, false, false);
-    loopi(lightmaps.length()) createtexture(lmtexids[i+1], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
+    uchar bright[3] = { 128, 128, 128 };
+    createtexture(lmtexids[1], 1, 1, bright, false, false);
+    loopi(lightmaps.length()) createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     updateentlighting();
-}
+};
 
 void lightreaching(const vec &target, uchar color[3])
 {
@@ -634,7 +649,7 @@ void lightreaching(const vec &target, uchar color[3])
         color[1] = 255;
         color[2] = 255;
         return;
-    }
+    };
 
     uint r = 0, g = 0, b = 0;
     loopv(et->getents())
@@ -659,25 +674,32 @@ void lightreaching(const vec &target, uchar color[3])
         r += (uint)(intensity * float(e.attr2));
         g += (uint)(intensity * float(e.attr3));
         b += (uint)(intensity * float(e.attr4));
-    }
+    };
     color[0] = min(255, max(100, r));
     color[1] = min(255, max(100, g));
     color[2] = min(255, max(100, b));
-}
+};
 
+void brightencube(cube &c)
+{
+    if(c.surfaces) memset(c.surfaces, 0, 6*sizeof(surfaceinfo));
+    else newsurfaces(c);
+    loopi(6) c.surfaces[i].lmid = LMID_BRIGHT;
+};
+        
 void newsurfaces(cube &c)
 {
     if(!c.surfaces)
     {
         c.surfaces = new surfaceinfo[6];
-        loopi(6) c.surfaces[i].lmid = 0;
-    }
-}
+        memset(c.surfaces, 0, 6*sizeof(surfaceinfo));
+    };
+};
 
 void freesurfaces(cube &c)
 {
     DELETEA(c.surfaces);
-}
+};
 
 void dumplms()
 {

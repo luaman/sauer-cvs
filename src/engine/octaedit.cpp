@@ -259,7 +259,8 @@ void readychanges(block3 &b, cube *c, ivec &cor, int size)
                 discardchildren(c[i]);
             }
             else readychanges(b, c[i].children, o, size/2);
-        };
+        }
+        else brightencube(c[i]);
 		freeoctaentities(c[i]);
     };
 };
