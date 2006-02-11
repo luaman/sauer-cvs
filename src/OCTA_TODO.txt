@@ -7,7 +7,6 @@ eihrul:
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
-- stop LM computation showing beyond 100%
 
 aard:
 - poly iterator for the model formats
@@ -32,11 +31,9 @@ aard:
 - stop movement in intermission
 - player spawn sound
 - make wether you are hitting other player clearer - blip sounds like q3?
-- rendering clip volumes in edit mode
 - hex numbers
 - make roll configurable?
 - can join a server in edit mode
-- highlight current texture in the texture window
 - should not jump if key is released before landing
 
 - new sounds!
