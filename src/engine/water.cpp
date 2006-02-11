@@ -167,6 +167,8 @@ void watercolour(int r, int g, int b)
     hdr.watercolour[2] = b;
 };
 
+VAR(showmat, 0, 1, 1);
+
 COMMAND(watercolour, ARG_3INT);
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
@@ -191,7 +193,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     glColor3f(0.3f, 0.15f, 0.0f);
     matloop(MAT_GLASS, drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size, 0.01f));
 
-    if(editmode)
+    if(editmode && showmat)
     {
         static float blendcols[MAT_EDIT][3] = 
         {
