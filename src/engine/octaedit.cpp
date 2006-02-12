@@ -364,7 +364,7 @@ void makeundo()                                         // stores state of selec
 {
     if(lastsel==sel) return;
     lastsel=sel;
-    if(getclientnum()>=0) return;
+    if(multiplayer(false)) return;
     undoblock u = { selgridmap(), blockcopy(lastsel, -sel.grid)};
     undos.add(u);
     pruneundos(undomegs<<20);

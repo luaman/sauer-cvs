@@ -11,10 +11,10 @@ int clientnum = -1;         // our client id in the game
 
 int getclientnum() { return clientnum; };
 
-bool multiplayer()
+bool multiplayer(bool msg)
 {
     // check not correct on listen server?
-    if(clienthost) conoutf("operation not available in multiplayer");
+    if(clienthost && msg) conoutf("operation not available in multiplayer");
     return clienthost != NULL;
 };
 

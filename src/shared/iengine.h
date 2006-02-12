@@ -144,7 +144,7 @@ extern bool hasnonlocalclients();
 extern void c2sinfo(dynent *d);
 extern void disconnect(int onlyclean = 0, int async = 0);
 extern bool isconnected();
-extern bool multiplayer();
+extern bool multiplayer(bool msg = true);
 extern void neterr(char *s);
 extern int getclientnum();
 extern void gets2c();
