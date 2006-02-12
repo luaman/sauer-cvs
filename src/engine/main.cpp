@@ -203,7 +203,7 @@ void estartmap(char *name)
     cl->startmap(name);
 };
 
-VAR(maxfps, 60, 200, 200);
+VAR(maxfps, 1, 1000, 1000);
 
 bool inbetweenframes = false;
 
@@ -306,13 +306,13 @@ int main(int argc, char **argv)
         static int frames = 0;
         static float fps = 10.0;
         static int curmillis = 0;
-        int millis = SDL_GetTicks(), delay = 1000/maxfps - (millis-curmillis);
+        int millis = SDL_GetTicks(), diff = millis-curmillis, delay = 1000/maxfps - diff;
         if(delay > 0)
         {
             SDL_Delay(delay);
             millis += delay;
         };
-        curtime = (millis-curmillis)*gamespeed/100;
+        curtime = diff*gamespeed/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
         if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
@@ -324,7 +324,7 @@ int main(int argc, char **argv)
         serverslice(time(NULL), 0);
         
         frames++;
-        fps = (1000.0f/curtime+fps*10)/11;
+        fps = (1000.0f/diff+fps*10)/11;
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
         
         extern void updatevol(); updatevol();
