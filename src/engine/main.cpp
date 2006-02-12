@@ -205,6 +205,27 @@ void estartmap(char *name)
 
 VAR(maxfps, 1, 1000, 1000);
 
+void limitfps(int &millis, int curmillis)
+{
+    static int fpserror = 0;
+    int delay = 1000/maxfps - (millis-curmillis);
+    if(delay < 0) fpserror = 0;
+    else
+    {
+        fpserror += 1000%maxfps;
+        if(fpserror >= maxfps)
+        {
+            ++delay;
+            fpserror -= maxfps;
+        };
+        if(delay > 0)
+        {
+            SDL_Delay(delay);
+            millis += delay;
+        };
+    };
+};
+
 bool inbetweenframes = false;
 
 int main(int argc, char **argv)
@@ -306,22 +327,8 @@ int main(int argc, char **argv)
         static int frames = 0;
         static float fps = 10.0;
         static int curmillis = 0;
-        int millis = SDL_GetTicks(), delay = 1000/maxfps - (millis-curmillis);
-        if(delay < 0) fpserror = 0;
-        else
-        {
-            fpserror += 1000%maxfps;
-            if(fpserror >= maxfps)
-            {
-                ++delay;
-                fpserror -= maxfps;
-            };
-            if(delay > 0)
-            {
-                SDL_Delay(delay);
-                millis += delay;
-            };
-        };
+        int millis = SDL_GetTicks();
+        limitfps(millis, curmillis);
         curtime = (millis-curmillis)*gamespeed/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
