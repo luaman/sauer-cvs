@@ -46,6 +46,7 @@ struct clipplanes
 {
     vec o, r;
     int size;
+    uchar box;
     plane p[12];
     clipplanes *next, *prev;
     clipplanes **backptr;

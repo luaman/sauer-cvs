@@ -178,9 +178,23 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 {
     clipplanes &p = *c.clip;
     if(pointincube(p, o)) { dist = 0; return true; };
-    if(p.size == 0)
-        return rayboxintersect(o, ray, p.o, p.r, dist);
-
+//    if(p.size == 0)
+//        return rayboxintersect(o, ray, p.o, p.r, dist);
+    loopi(3)
+    {
+        float a = ray[i], f;
+        if(a > 0 && (p.box & (1 << (2*i)))) f = (p.o[i]-p.r[i]-o[i])/a;
+        else if(a < 0 && (p.box & (2 << (2*i)))) f = (p.o[i]+p.r[i]-o[i])/a;
+        else continue;
+        if(f <= 0) continue;
+        vec d(o);
+        pushvec(d, ray, f+0.1f);
+        if(pointincube(p, d))
+        {
+            dist = f+0.1f;
+            return true;
+        };
+    };
     loopi(p.size)
     {
         float a = ray.dot(p.p[i]);

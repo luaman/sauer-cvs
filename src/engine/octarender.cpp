@@ -400,6 +400,16 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
         };
     };
 
+    
+    // find flat faces of the box inside the cube
+    p.box = 0;
+    if(mn.x > x) p.box |= 1 << O_LEFT;
+    if(mx.x < x+size) p.box |= 1 << O_RIGHT;
+    if(mn.y > y) p.box |= 1 << O_BACK;
+    if(mx.y < y+size) p.box |= 1 << O_FRONT;
+    if(mn.z > z) p.box |= 1 << O_BOTTOM;
+    if(mx.z < z+size) p.box |= 1 << O_TOP;
+
     p.r = mx;     // radius of box
     p.r.sub(mn);
     p.r.mul(0.5f);
@@ -408,7 +418,10 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 
     p.size = 0;
     loopi(6) if(!flataxisface(c, i)) // generate actual clipping planes
+    {
+        p.box &= ~(1 << i);
         p.size += genclipplane(c, i, v, &p.p[p.size]);
+    };
 };
 
 struct sortkey
