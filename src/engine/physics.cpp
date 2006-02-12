@@ -153,15 +153,25 @@ bool pointincube(const clipplanes &p, const vec &v)
     return true;
 };
 
-bool rayboxintersect(const vec &o, const vec &ray, const vec &bo, const vec &br, float &dist) // FIXME: not perfect
+bool rayboxintersect(const vec &o, const vec &ray, const vec &bo, const vec &br, float &dist)
 {
-    vec w(bo), v(ray);
-    w.sub(o);
-    dist = max(0, w.dot(ray)/ray.dot(ray));
-    if(dist <= 0) return false;
-    v.mul(dist);
-    v.add(o);
-    return pointinbox(v, bo, br);
+// TODO: make this faster if possible
+    loopi(3)
+    {
+        float a = ray[i], f;
+        if(a < 0) f = (bo[i]+br[i]-o[i])/a;
+        else if(a > 0) f = (bo[i]-br[i]-o[i])/a;
+        else continue;
+        if(f <= 0) continue;
+        vec d(o);
+        pushvec(d, ray, f+0.1f);
+        if(pointinbox(d, bo, br))
+        {
+            dist = f+0.1f;
+            return true;
+        };
+    };
+    return false;
 };
 
 bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
@@ -182,7 +192,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
         pushvec(d, ray, f+0.1f);
         if(pointincube(p, d))
         {
-            dist = f+0.1;
+            dist = f+0.1f;
             return true;
         };
     };
@@ -252,8 +262,8 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
         loopi(3) if(ray[i]!=0)
         {
             float d = (float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i];
-            if (d >= 0) disttonext = min(disttonext, 0.1f + d);
-        }
+            if(d >= 0) disttonext = min(disttonext, 0.1f + d);
+        };
 
         if(!(last==NULL && (mode&RAY_SKIPFIRST)))
         {
@@ -269,9 +279,9 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
             }
             else if(!isempty(c))
             {
-                float f;
+                float f = dist;
                 setcubeclip(c, lu.x, lu.y, lu.z, lusize);
-                if(raycubeintersect(c, v, ray, f = dist))
+                if(raycubeintersect(c, v, ray, f))
                 {
                     return min(dent, dist+f);
                 };
