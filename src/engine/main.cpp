@@ -321,7 +321,7 @@ int main(int argc, char **argv)
     cc->changemap("metl3");
 
     log("mainloop");
-    int ignore = 5, grabmouse = 0, fpserror = 0;
+    int ignore = 5, grabmouse = 0;
     while(!done)
     {
         static int frames = 0;
