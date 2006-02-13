@@ -174,25 +174,28 @@ COMMAND(watercolour, ARG_3INT);
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs) return;
-    glEnable(GL_TEXTURE_2D);
-    glBlendFunc(GL_ONE, GL_SRC_COLOR);
-    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) glColor3ubv(hdr.watercolour);
-    else glColor3f(0.5f, 0.5f, 0.5f);
-    Texture *t = lookuptexture(DEFAULT_LIQUID);
-    glBindTexture(GL_TEXTURE_2D, t->gl);
-    #define matloop(m, s) loopi(matsurfs) { materialsurface &matsurf = matbuf[i]; if(matsurf.material==m) { s; }; }
-    matloop(MAT_WATER,
-        if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t) >= (uint)matsurf.size * 2)
-            renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t);
-    );
-
-    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-    glDisable(GL_TEXTURE_2D);
-    glColor3f(0.3f, 0.15f, 0.0f);
-    matloop(MAT_GLASS, drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size, 0.01f));
-
-    if(editmode && showmat)
+    if(!editmode || !showmat)
     {
+         glEnable(GL_TEXTURE_2D);
+         glBlendFunc(GL_ONE, GL_SRC_COLOR);
+         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) glColor3ubv(hdr.watercolour);
+         else glColor3f(0.5f, 0.5f, 0.5f);
+         Texture *t = lookuptexture(DEFAULT_LIQUID);
+         glBindTexture(GL_TEXTURE_2D, t->gl);
+         #define matloop(m, s) loopi(matsurfs) { materialsurface &matsurf = matbuf[i]; if(matsurf.material==m) { s; }; }
+         matloop(MAT_WATER,
+             if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t) >= (uint)matsurf.size * 2)
+                 renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t);
+         );
+
+         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+         glDisable(GL_TEXTURE_2D);
+         glColor3f(0.3f, 0.15f, 0.0f);
+         matloop(MAT_GLASS, drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size, 0.01f));
+    }
+    else
+    {
+        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
         glDepthMask(GL_TRUE);
         static uchar blendcols[MAT_EDIT][3] = 
         {
@@ -206,15 +209,12 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         loopi(matsurfs) 
         { 
             materialsurface &m = matbuf[i]; 
-            if(m.material >= MAT_EDIT)
+            if(m.material != lastmat)
             {
-                if(m.material != lastmat)
-                {
-                    lastmat = m.material;
-                    glColor3ubv(blendcols[lastmat-MAT_EDIT]);
-                };
-                drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
+                lastmat = m.material;
+                glColor3ubv(blendcols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat]);
             };
+            drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
         };
         glDepthMask(GL_FALSE);
     };
