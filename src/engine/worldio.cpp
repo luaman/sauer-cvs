@@ -271,7 +271,7 @@ void load_world(char *mname)        // still supports all map formats that have 
         {
             mapmodelinfo &mmi = getmminfo(e.attr2);
             if(!&mmi) conoutf("could not find map model: %d", e.attr2);
-            else loadmodel(mmi.name);
+            else if(!loadmodel(mmi.name)) conoutf("could not load model: %s", mmi.name);
         };
     };
     entitiesinoctanodes();

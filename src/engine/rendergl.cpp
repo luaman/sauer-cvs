@@ -127,7 +127,7 @@ Texture *textureload(char *name, int rot, bool clamp, bool mipit, bool msg)
     show_out_of_renderloop_progress(0, tname);  
 
     SDL_Surface *s = IMG_Load(tname);
-    if(!s) { if(msg) conoutf("couldn't load texture %s", tname); return crosshair; };
+    if(!s) { if(msg) conoutf("could not load texture %s", tname); return crosshair; };
     int bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
     

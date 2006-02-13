@@ -42,7 +42,6 @@ model *loadmodel(char *name)
         if(!m->load())
         { 
             delete m;
-            conoutf("could not load model: ", name); 
             return NULL; 
         };
     };
