@@ -84,7 +84,7 @@ bool dropentity(entity &e)
     {
         zspace = 0.0f;
         mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(!&mmi && mmi.rad) radius = float(mmi.rad);
+        if(&mmi && mmi.rad) radius = float(mmi.rad);
     };
     switch(entdrop)
     {

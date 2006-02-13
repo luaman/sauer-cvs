@@ -267,7 +267,12 @@ void load_world(char *mname)        // still supports all map formats that have 
     loopv(et->getents())
     {
         extentity &e = *et->getents()[i];
-        if(e.type==ET_MAPMODEL) loadmodel(getmminfo(e.attr2).name);
+        if(e.type==ET_MAPMODEL)
+        {
+            mapmodelinfo &mmi = getmminfo(e.attr2);
+            if(!&mmi) conoutf("could not find map model: %d", e.attr2);
+            else loadmodel(mmi.name);
+        };
     };
     entitiesinoctanodes();
 };
