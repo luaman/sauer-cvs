@@ -200,7 +200,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         static uchar blendcols[MAT_EDIT][3] = 
         {
             { 0, 0, 0 },     // MAT_AIR - no edit volume,
-            { 255, 255, 0 }, // MAT_WATER - blue,
+            { 255, 128, 0 }, // MAT_WATER - blue,
             { 0, 255, 255 }, // MAT_CLIP - red,
             { 255, 0, 0 },   // MAT_GLASS - cyan,
             { 255, 0, 255 }, // MAT_NOCLIP - green
