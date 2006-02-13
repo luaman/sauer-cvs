@@ -200,20 +200,19 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             { 0, 0, 0 }, // MAT_AIR - no edit volume,
             { 255, 255, 0 }, // MAT_WATER - blue,
             { 0, 255, 255 }, // MAT_CLIP - red,
-            { 0, 0, 0 }, // MAT_GLASS - no edit volume,
+            { 255, 0, 0 }, // MAT_GLASS - cyan,
             { 255, 0, 255 }, // MAT_NOCLIP - green
         };    
-        glColor3ub(255, 0, 255);
         int lastmat = -1;
         loopi(matsurfs) 
         { 
             materialsurface &m = matbuf[i]; 
             if(m.material>=MAT_EDIT)
             {
-                if(m.material-MAT_EDIT != lastmat)
+                if(m.material != lastmat)
                 {
-                    lastmat = m.material-MAT_EDIT;
-                    glColor3ubv(blendcols[lastmat]);
+                    lastmat = m.material;
+                    glColor3ubv(blendcols[lastmat-MAT_EDIT]);
                 };
                 drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
             };
@@ -222,10 +221,16 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         glEnable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glLineWidth(1);
-        glColor3ub(0, 0, 0);
+        lastmat = -1;
         loopi(matsurfs)
         {
             materialsurface &m = matbuf[i];
+            if(m.material != lastmat)
+            {
+                lastmat = m.material;
+                uchar *blendcol = blendcols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat];
+                glColor3ub((255-blendcol[0])/3, (255-blendcol[1])/3, (255-blendcol[2])/3);
+            };
             drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
         };
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
