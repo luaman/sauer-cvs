@@ -195,15 +195,15 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 
     if(editmode && showmat)
     {
-        static float blendcols[MAT_EDIT][3] = 
+        static uchar blendcols[MAT_EDIT][3] = 
         {
-            { 0.0f, 0.0f, 0.0f }, // MAT_AIR - no edit volume,
-            { 1.0f, 1.0f, 0.0f }, // MAT_WATER - blue,
-            { 0.0f, 1.0f, 1.0f }, // MAT_CLIP - red,
-            { 0.0f, 0.0f, 0.0f }, // MAT_GLASS - no edit volume,
-            { 1.0f, 0.0f, 1.0f }, // MAT_NOCLIP - green
+            { 0, 0, 0 }, // MAT_AIR - no edit volume,
+            { 255, 255, 0 }, // MAT_WATER - blue,
+            { 0, 255, 255 }, // MAT_CLIP - red,
+            { 0, 0, 0 }, // MAT_GLASS - no edit volume,
+            { 255, 0, 255 }, // MAT_NOCLIP - green
         };    
-        glColor3f(1.0f, 0.0f, 1.0f);
+        glColor3ub(255, 0, 255);
         int lastmat = -1;
         loopi(matsurfs) 
         { 
@@ -213,11 +213,21 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                 if(m.material-MAT_EDIT != lastmat)
                 {
                     lastmat = m.material-MAT_EDIT;
-                    glColor3fv(blendcols[lastmat]);
+                    glColor3ubv(blendcols[lastmat]);
                 };
                 drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
             };
         };
+        glDisable(GL_BLEND);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glLineWidth(1);
+        glColor3ub(0, 0, 0);
+        loopi(matsurfs)
+        {
+            materialsurface &m = matbuf[i];
+            if(m.material>=MAT_EDIT) drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
+        };
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     };
 
     glEnable(GL_TEXTURE_2D);
