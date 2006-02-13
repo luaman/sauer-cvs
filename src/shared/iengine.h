@@ -2,7 +2,7 @@
 
 extern void lightreaching(const vec &target, uchar color[3]);
 
-enum { RAY_BB = 1, RAY_POLY = 3, RAY_ALPHAPOLY = 7, RAY_CLIPMAT = 16, RAY_SKIPFIRST = 32 };
+enum { RAY_BB = 1, RAY_POLY = 3, RAY_ALPHAPOLY = 7, RAY_CLIPMAT = 16, RAY_SKIPFIRST = 32, RAY_EDITMAT = 64 };
 
 extern float raycube   (const vec &o, vec &ray,           float radius = 0, int mode = RAY_CLIPMAT, int size = 0);
 extern float raycubepos(const vec &o, vec &ray, vec &hit, float radius = 0, int mode = RAY_CLIPMAT, int size = 0); 

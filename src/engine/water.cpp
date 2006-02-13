@@ -174,9 +174,7 @@ COMMAND(watercolour, ARG_3INT);
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs) return;
-    glDepthMask(GL_FALSE);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
     glBlendFunc(GL_ONE, GL_SRC_COLOR);
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) glColor3ubv(hdr.watercolour);
     else glColor3f(0.5f, 0.5f, 0.5f);
@@ -187,27 +185,28 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         if(renderwaterlod(matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t) >= (uint)matsurf.size * 2)
             renderwater(matsurf.size, matsurf.x, matsurf.y, matsurf.z + matsurf.size, matsurf.size, t);
     );
+
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
     glDisable(GL_TEXTURE_2D);
-
     glColor3f(0.3f, 0.15f, 0.0f);
     matloop(MAT_GLASS, drawface(matsurf.orient, matsurf.x, matsurf.y, matsurf.z, matsurf.size, 0.01f));
 
     if(editmode && showmat)
     {
+        glDepthMask(GL_TRUE);
         static uchar blendcols[MAT_EDIT][3] = 
         {
-            { 0, 0, 0 }, // MAT_AIR - no edit volume,
+            { 0, 0, 0 },     // MAT_AIR - no edit volume,
             { 255, 255, 0 }, // MAT_WATER - blue,
             { 0, 255, 255 }, // MAT_CLIP - red,
-            { 255, 0, 0 }, // MAT_GLASS - cyan,
+            { 255, 0, 0 },   // MAT_GLASS - cyan,
             { 255, 0, 255 }, // MAT_NOCLIP - green
         };    
         int lastmat = -1;
         loopi(matsurfs) 
         { 
             materialsurface &m = matbuf[i]; 
-            if(m.material>=MAT_EDIT)
+            if(m.material >= MAT_EDIT)
             {
                 if(m.material != lastmat)
                 {
@@ -217,28 +216,31 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                 drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
             };
         };
-        glDisable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glLineWidth(1);
-        lastmat = -1;
-        loopi(matsurfs)
-        {
-            materialsurface &m = matbuf[i];
-            if(m.material != lastmat)
-            {
-                lastmat = m.material;
-                uchar *blendcol = blendcols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat];
-                glColor3ub((255-blendcol[0])/3, (255-blendcol[1])/3, (255-blendcol[2])/3);
-            };
-            drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
-        };
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDepthMask(GL_FALSE);
     };
+};
 
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glDepthMask(GL_TRUE);
+void rendermatgrid(materialsurface *matbuf, int matsurfs)
+{
+    if(!matsurfs) return;
+    static uchar cols[MAT_EDIT][3] =
+    {
+        { 0, 0, 0 },   // MAT_AIR - no edit volume,
+        { 0, 0, 85 },  // MAT_WATER - blue,
+        { 85, 0, 0 },  // MAT_CLIP - red,
+        { 0, 85, 85 }, // MAT_GLASS - cyan,
+        { 0, 85, 0 },  // MAT_NOCLIP - green
+    };
+    int lastmat = -1;
+    loopi(matsurfs)
+    {
+        materialsurface &m = matbuf[i];
+        if(m.material != lastmat)
+        {
+            lastmat = m.material;
+            glColor3ubv(cols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat]);
+        };
+        drawface(m.orient, m.x, m.y, m.z, m.size, 0.01f);
+    };
 };
 

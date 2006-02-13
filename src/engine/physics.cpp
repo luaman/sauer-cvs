@@ -282,6 +282,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
         if(!(last==NULL && (mode&RAY_SKIPFIRST)))
         {
             if(((mode&RAY_CLIPMAT) && isclipped(c.material)) ||
+                ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
                 (lusize==size && !isempty(c) && !passthroughcube) ||
                 (radius>0 && dist>radius) ||
                 isentirelysolid(c) ||

@@ -136,7 +136,7 @@ void cursorupdate()
 {
     vec ray(worldpos), v(player->o);
     ray.sub(player->o);
-    raycubepos(player->o, ray, v, 0, RAY_CLIPMAT|RAY_SKIPFIRST, gridsize);
+    raycubepos(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0) | RAY_SKIPFIRST, gridsize);
 
     lookupcube(int(v.x), int(v.y), int(v.z));
     if(lusize>gridsize)

@@ -1086,6 +1086,11 @@ void renderq(int w, int h)
 
 void rendermaterials()
 {
+    glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    
     vtxarray *va = visibleva;
     while(va)
     {
@@ -1093,6 +1098,26 @@ void rendermaterials()
         if(lod.matsurfs) rendermatsurfs(lod.matbuf, lod.matsurfs);
         va = va->next;
     };
+
+    if(editmode && showmat)
+    {
+        glDisable(GL_BLEND);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glLineWidth(1);
+        va = visibleva;
+        while(va)
+        {
+            lodlevel &lod = va->l0;
+            if(lod.matsurfs) rendermatgrid(lod.matbuf, lod.matsurfs);
+            va = va->next;
+        };
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    };
+
+    glDisable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
 };
 
 void drawface(int orient, int x, int y, int z, int size, float offset)

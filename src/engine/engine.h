@@ -117,8 +117,11 @@ extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
 
 // water
+extern int showmat;
+
 extern int visiblematerial(cube &, int orient, int x, int y, int z, int size);
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
+extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 
 // server
