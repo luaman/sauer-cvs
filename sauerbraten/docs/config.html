@@ -239,42 +239,8 @@ strcmp A B</pre>
 		true when in edit mode
 		<pre>$flrceil</pre>
 		0 when the player looks at the floor, and 2 when looking at the ceiling. 
-		</FONT> &nbsp;
-		<div>THIS WHOLE THING NEEDS TO BE REWRITTEN</div>
-		The cube engine is simplicity itself. The whole map consists of a large 2D 
-		array of "cubes", each with a floor and ceiling height, textures (for 
-		floor/ceiling/wall) and other properties. These cubes are grouped 2x2 at a time 
-		recursively into a "quad tree", which is used hold bigger cubes which can be 
-		rendered faster. For those who have edited doom, this is very similar to having 
-		a lot of square sectors but at overlapping sizes. This is results in a map that 
-		can have no room over room (yet), and is pretty cubic, except for the odd 
-		slope/slant here and there.
-		<br>
-		<br>
-		The floor size of a single unit (single cube) is similar to about 16x16 units 
-		in games such as doom &amp; quake, so a staircase step is usually 1 unit, a 
-		wall 8 units high etc.
-		<br>
-		<br>
-		Cube renders this world by first determining which cubes are visible using a 
-		"dynamic occlusion culling" algorithm and frustrum culling. You can see the 
-		effect of this when you switch to edit mode (E), and then fly out above a map: 
-		you'll see parts of the map dropping away as you move. The remaining cubes are 
-		then rendered in their most efficient size (i.e. cube will render a mixture of 
-		1x1 2x2 4x4 etc. size cubes, depending on wether they have the same properties: 
-		height, texturing etc.).
-		<br>
-		<br>
-		if you are on a fast machine, or you are playing a simple/small map, cube will 
-		simply render all of these visible cubes (this is indicated by LOD at its 
-		maximum of 250 on the hud). Cube can however make complex maps run fast even on 
-		slower computers by a technique called LOD: this will render cubes that are 
-		further away using bigger approximations (2x2 and up), even the properties of 
-		the constituent cubes don't match exactly. This reduces the amount of polys to 
-		be rendered tremendously, and thus allows even slow machines to have a 
-		consistent frame rate (cube will adapt the LOD figure every frame to aim for 
-		the fps you specify). The downside is of course that if the approximations are 
-		visible closeup, this can lead to ugly graphical glitches (this is called 
-		"popup" because it changes as you move). So in the end the choice is up to you: 
-		good fps or constant visual quality (most engines only cater for the latter).</body>
+
+
+
+</body>
 </html>

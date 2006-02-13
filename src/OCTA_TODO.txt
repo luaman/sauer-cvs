@@ -4,17 +4,15 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- map up/download etc
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
 
 aard:
-- poly iterator for the model formats
 
 - teamskins / teamplay hud?
 - double damage numbers (120) -> in mp you dont die immediately -> it doesn't know your health!
-- physics stuck high fps only? | 500 @ 1920???
-- pistol ammo up
 - fix spawn in 1 map
 - quad jump in 2 towers
 - sensitivity varies with fps?
@@ -35,10 +33,15 @@ aard:
 - make roll configurable?
 - can join a server in edit mode
 - should not jump if key is released before landing
+- maxfps (look at qw)
+- edit textures when extruding
 
 - new sounds!
 - experiment with physics speedup features
 - look at vsync/tripple buf/fps limits/fsaa
+- think about simpler area based portals / combine with doors
+- make remip part of savemap?
+- poly iterator for the model formats
 
 - perma powerup / powerup announce
 - draw not-spawned items in wireframe?

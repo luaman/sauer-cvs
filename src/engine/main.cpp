@@ -203,7 +203,7 @@ void estartmap(char *name)
     cl->startmap(name);
 };
 
-VAR(maxfps, 1, 1000, 1000);
+VAR(maxfps, 5, 200, 500);
 
 void limitfps(int &millis, int curmillis)
 {

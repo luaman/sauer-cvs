@@ -104,7 +104,7 @@ struct fpsclient : igameclient
         }
         else
         {
-            d->ammo[GUN_PISTOL] = m_sp ? 50 : 20;
+            d->ammo[GUN_PISTOL] = m_sp ? 80 : 40;
         };
         return d;
     };

@@ -68,7 +68,8 @@ weapon           // just switch to anything with ammo
 In any selection, it will skip whichever weapon you have currently selected, so executing a weapon command repeatedly toggles between the two best weapons with ammo within a given selection. default keys 0 to 4 select the corresponding weapons, with sensible default alternatives, middle mouse button is a simple weapon switch.
 
 <pre>maxfps N</pre>
-Sets the max number of fps. If you set maxfps to exactly or a simple ratio of your monitor's refresh rate, you may experience tearing. maxfps is not a replacement for vsync.
+Sets the max number of fps. Default 200. Useful if you have a recent machine that
+    can run the engine at close to 1000 fps, or if you want to test. If you set maxfps to exactly or a simple ratio of your monitor's refresh rate, you may experience tearing. maxfps is not a replacement for vsync.
 
 <pre>gamespeed P</pre>
 Sets the gamespeed in percent, i.e. 50 is playing in slowmotion at half the speed. does not work in multiplayer. for entertainment purposes only :)
@@ -143,19 +144,24 @@ There are initially 5 weapons:
     </tr>
     <tr>
         <td>?</td>
-        <td>handgun</td>
-        <td>?</td>
-        <td>?</td>
-        <td>?</td>
-        <td>quake2 pistol</td>
+        <td> pistol</td>
+        <td>
+    25</td>
+        <td>
+    0.5</td>
+        <td>
+    50</td>
+        <td>
+    quake SG, but more precise</td>
     </tr>
     <tr>
         <td>1</td>
         <td>shotgun</td>
-        <td>200</td>
+        <td>
+    20x10</td>
         <td>1.4sec</td>
         <td>143</td>
-        <td>doom2 SSG (wide angle)</td>
+        <td>doom2 SSG (wide angle, but less than in doom2)</td>
     </tr>
     <tr>
         <td>2</td>
@@ -163,7 +169,7 @@ There are initially 5 weapons:
         <td>30</td>
         <td>0.1sec</td>
         <td>300</td>
-        <td>quake LG</td>
+        <td>quake LG (mild spread at distance)</td>
     </tr>
     <tr>
         <td>3</td>
@@ -187,11 +193,11 @@ The player has available all weapons when he spawns, but no ammo for them (excep
 <br><br>
 Items that can be picked up:
 <ul>
-<li>4 types of ammo (10 shells, 5 rockets, 20 bullets, 5 rifle rounds) (to a max of 50/25/100/25, respawn 8/6/4 seconds)</li>
+<li>4 types of ammo (10 shells, 5 rockets, 20 bullets, 5 rifle rounds) (to a max of 30/15/60/15, respawn 12/9/6 seconds)</li>
 <li>health (adds 25 to a max of 100, respawn 20/15/10 seconds)</li>
-<li>health boost (adds 50 to a max of 200, respawn 60 seconds)</li>
+<li>health boost (adds 75 to a max of 200, respawn 60 seconds)</li>
 <li>light armour (100, absorbs 40% of damage, respawn 20 seconds)</li>
-<li>heavy armour (150, absorbs 60% of damage, respawn 20 seconds)</li>
+<li>heavy armour (200, absorbs 60% of damage, respawn 20 seconds)</li>
 <li>quad powerup (4x damage for 20 seconds, respawn 60 seconds)</li>
 </ul>
 Health and ammo respawn depends on number of players in the game, the numbers 
@@ -366,12 +372,13 @@ It is impossible to completely hide lag however, and these are some of the effec
     <li>if the connection has packetloss. There is no direct indicator of packetloss, instead the "packet jump" figure is provided on the hud (use "showscores"). Packet jump says as much as the amount of milliseconds that pass between updates from the indicated player. If it is extremely variable, or is high(&gt;80) then your gameplay may be hampered (players jumping from place to place). Ideally it is a steady 40 or lower. A consistent packet jump is more vital to gameplay than ping.
     <br><br>
     Sauerbraten uses player prediction based on extrapolation using the physics model, in an attempt to be both as up to date as possible w.r.t. to the game state, and as realistic w.r.t. to physics. However, under packet loss this model breaks down and player movement becomes choppy.</li>
-    <li>if ping is high (either yours or someone you play with), some actions may appear lagged. The effect of ping is generally that the players in a game are effectively playing more and more seperate games, as someone with a high ping is "playing in the past". The local effects of this are masked out by client side movement &amp; aim, but may become noticable across players:</li>
+    <li>if ping is high (either yours or someone you play with), some actions may appear lagged. The effect of ping is generally that the players in a game are effectively playing more and more seperate games, as someone with a high ping is "playing in the past". The local effects of this are masked out by client side movement &amp; aim, but may become noticable across players:
     <ul>
         <li>you may get hit by someone even though you are already out of his view. This is because he is aiming at your movements of a while ago, and his hits take a while to arrive back at you. You may therefore be hit by gunfire up to his lag + your lag milliseconds after you leave his FOV.</li>
         <li>item pickup: you may be denied an item if you try to pick it up at virtually the same time as someone else (server decides who was "first"). Item pickup is server side, only when you hear the sound effect have you actually picked up the item.</li>
         <li>players dying appears lagged. This will improve.</li>
     </ul>
+    </li>
     <li>if a player is severely lagged (or you are) he temporarily becomes a "ghost" that cannot be hit (if &gt;1sec packet jump).</li>
 </ul>
 
