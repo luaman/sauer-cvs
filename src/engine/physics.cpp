@@ -340,6 +340,7 @@ bool findfloor(dynent *d, vec &floor, float &height)
 // TODO: fold this lookupcube call and the above call together somehow
         cube &c = lookupcube(cx, cy, cz);
         if(lu.z > cz) return false;
+        if(c.material == MAT_NOCLIP) continue;
         if(isentirelysolid(c) || isclipped(c.material))
         {
             floor = vec(0.0f, 0.0f, 1.0f);
