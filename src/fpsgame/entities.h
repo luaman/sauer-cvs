@@ -246,7 +246,7 @@ struct entities : icliententities
             if(e.type==NOTUSED) continue;
             if(!e.spawned && e.type!=TELEPORT && e.type!=JUMPPAD) continue;
             float dist = e.o.dist(o);
-            if(dist<(e.type==TELEPORT ? 16 : 10)) pickup(i, cl.player1);
+            if(dist<(e.type==TELEPORT ? 16 : 12)) pickup(i, cl.player1);
         };
     };
 

@@ -33,24 +33,29 @@ struct weaponstate
         
         CCOMMAND(weaponstate, weapon, 3,
         {
-            int *ammo = self->player1->ammo;
-            int a = args[0][0] ? atoi(args[0]) : -1;
-            int b = args[1][0] ? atoi(args[1]) : -1;
-            int c = args[2][0] ? atoi(args[2]) : -1;
-            if(a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
-            int s = self->player1->gunselect;
-            if(a>=0 && s!=a && ammo[a]) s = a;
-            else if(b>=0 && s!=b && ammo[b]) s = b;
-            else if(c>=0 && s!=c && ammo[c]) s = c;
-            else if(s!=GUN_CG && ammo[GUN_CG]) s = GUN_CG;
-            else if(s!=GUN_RL && ammo[GUN_RL]) s = GUN_RL;
-            else if(s!=GUN_SG && ammo[GUN_SG]) s = GUN_SG;
-            else if(s!=GUN_RIFLE && ammo[GUN_RIFLE]) s = GUN_RIFLE;
-            else if(s!=GUN_PISTOL && ammo[GUN_PISTOL]) s = GUN_PISTOL;
-            else s = GUN_FIST;
-            if(s!=self->player1->gunselect) self->cl.playsoundc(S_WEAPLOAD);
-            self->player1->gunselect = s;
+            self->weaponswitch(args[0][0] ? atoi(args[0]) : -1,
+                               args[1][0] ? atoi(args[1]) : -1,
+                               args[2][0] ? atoi(args[2]) : -1);
+
         });
+    };
+
+    void weaponswitch(int a = -1, int b = -1, int c = -1)
+    {
+        int *ammo = player1->ammo;
+        if(a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
+        int s = player1->gunselect;
+        if(a>=0 && s!=a && ammo[a]) s = a;
+        else if(b>=0 && s!=b && ammo[b]) s = b;
+        else if(c>=0 && s!=c && ammo[c]) s = c;
+        else if(s!=GUN_CG && ammo[GUN_CG]) s = GUN_CG;
+        else if(s!=GUN_RL && ammo[GUN_RL]) s = GUN_RL;
+        else if(s!=GUN_SG && ammo[GUN_SG]) s = GUN_SG;
+        else if(s!=GUN_RIFLE && ammo[GUN_RIFLE]) s = GUN_RIFLE;
+        else if(s!=GUN_PISTOL && ammo[GUN_PISTOL]) s = GUN_PISTOL;
+        else s = GUN_FIST;
+        if(s!=player1->gunselect) cl.playsoundc(S_WEAPLOAD);
+        player1->gunselect = s;
     };
     
     int reloadtime(int gun) { return guns[gun].attackdelay; };
@@ -114,7 +119,7 @@ struct weaponstate
     void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel, bool isrl)
     {
         d->lastpain = cl.lastmillis;
-        vel.mul(100*damage/d->weight);
+        vel.mul(80*damage/d->weight);
         if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
         else if(d->monsterstate) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
         else                     { if(isrl) vel.mul(2); cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
@@ -344,7 +349,7 @@ struct weaponstate
         if(!d->attacking) return;
         d->lastaction = cl.lastmillis;
         d->lastattackgun = d->gunselect;
-        if(!d->ammo[d->gunselect]) { cl.playsoundc(S_NOAMMO); d->gunwait = 250; d->lastattackgun = -1; return; };
+        if(!d->ammo[d->gunselect]) { cl.playsoundc(S_NOAMMO); d->gunwait = 1000; d->lastattackgun = -1; weaponswitch(); return; };
         if(d->gunselect) d->ammo[d->gunselect]--;
         vec from = d->o;
         vec to = targ;

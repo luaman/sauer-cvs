@@ -5,23 +5,16 @@ gilt:
 
 eihrul:
 - map up/download etc
+- water optimisation
+- water physics close to surface
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
 
 aard:
-
+- map rotation
 - teamskins / teamplay hud?
-- double damage numbers (120) -> in mp you dont die immediately -> it doesn't know your health!
-- fix spawn in 1 map
-- quad jump in 2 towers
-- sensitivity varies with fps?
-- control lag? (jogi)?
-- sg spread thinner
-- weapon auto switch?
-- water physics speed
-- item radius slightly bigger
-- kurts first map floor one level?
+- kurts first map floor one level? | jump to quad on two towers | new rpg map?
 - get disconnected whenever someone else disconnects?
 - tone down knockback of all weapons
 - make ents better visible?
@@ -33,13 +26,13 @@ aard:
 - make roll configurable?
 - can join a server in edit mode
 - should not jump if key is released before landing
-- maxfps (look at qw)
 - edit textures when extruding
 
 - new sounds!
 - experiment with physics speedup features
 - look at vsync/tripple buf/fps limits/fsaa
-- think about simpler area based portals / combine with doors
+- set newly touched cubes in edit mode to fullbright light + textures of visible part
+- think about simpler area based portals / combine with doors | automatically? compute portals of each VA?
 - make remip part of savemap?
 - poly iterator for the model formats
 

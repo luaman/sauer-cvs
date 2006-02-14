@@ -860,7 +860,7 @@ dir(forward,  move,    1, k_up,    k_down);
 dir(left,     strafe,  1, k_left,  k_right);
 dir(right,    strafe, -1, k_right, k_left);
 
-ICOMMAND(jump,   IARG_BOTH, { if(editmode) cancelsel(); else if(args && cl->canjump()) player->jumpnext = true; });
+ICOMMAND(jump,   IARG_BOTH, { if(editmode) cancelsel(); else if(cl->canjump()) player->jumpnext = args!=NULL; });
 ICOMMAND(attack, IARG_BOTH, { if(editmode) editdrag(args!=NULL); else cl->doattack(args!=NULL); });
 
 VARP(sensitivity, 0, 10, 1000);
