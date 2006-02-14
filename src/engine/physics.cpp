@@ -537,8 +537,6 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     return false;
 };
 
-VAR(foop, 0, 1, 1);
-
 void switchfloor(dynent *d, vec &dir, const vec &floor)
 {
     float dmag = dir.magnitude(), vmag = d->vel.magnitude();
@@ -597,27 +595,23 @@ bool move(dynent *d, vec &dir)
             };
             d->o = old;
         };
-        float q;
-        if(foop && d->physstate >= PHYS_FLOOR && (!found || (floor.z >= FLOORZ && floor.z != d->floor.z && 
-            (q = fabs(dir.dot(d->floor)/dir.magnitude()), printf("up: %f\n", q), q) < 0.01f)))
-            switchfloor(d, dir, found ? floor : vec(0, 0, 1));
         if(!collided || wall.z < FLOORZ)
         {
+            if(d->physstate >= PHYS_FLOOR && (!found || (floor.z >= FLOORZ && floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)))
+                switchfloor(d, dir, found ? floor : vec(0, 0, 1));
             d->physstate = PHYS_FALL;
             return !collided;
         };
         found = false;
         floor = wall;
     };
-    float q;
     if(d->physstate < PHYS_FLOOR)
     {
         d->timeinair = 0;
         dir.z = 0.0f;
         d->vel.z = 0.0f;
     }
-    else if(foop && floor.z != d->floor.z && 
-            (q = fabs(dir.dot(d->floor)/dir.magnitude()), printf("down: %f\n", q), q) < 0.01f)
+    else if(floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
         switchfloor(d, dir, floor);
     d->physstate = (floor.z == 1.0f ? (found ? PHYS_FLOOR : PHYS_STEP) : PHYS_SLOPE);
     d->floor = floor;
