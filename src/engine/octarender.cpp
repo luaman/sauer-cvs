@@ -459,6 +459,12 @@ struct lodcollect
         matsurfs.setsize(0);
     };
 
+    void optimize()
+    {
+        sortmatsurfs(matsurfs.getbuf(), matsurfs.length());
+        matsurfs.setsize(optimizematsurfs(matsurfs.getbuf(), matsurfs.length()));
+    };
+
     char *setup(lodlevel &lod, char *buf)
     {
         lod.eslist = (elementset *)buf;
@@ -470,11 +476,7 @@ struct lodcollect
 
         lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky);
         lod.matsurfs = matsurfs.length();
-        if(lod.matsurfs)
-        {
-            memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
-            sortmatsurfs(lod.matbuf, lod.matsurfs);
-        };
+        if(lod.matsurfs) memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
 
         ushort *ebuf = lod.ebuf;
         int list = 0;
@@ -607,6 +609,7 @@ vector<vtxarray *> valist;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
+    l0.optimize();
     int allocsize = sizeof(vtxarray) + l0.size() + l1.size();
     if (!hasVBO) allocsize += verts.length()*sizeof(vertex); // length of vertex buffer
     vtxarray *va = (vtxarray *)new uchar[allocsize];
@@ -700,7 +703,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
             int vis = visiblematerial(c, i, cx, cy, cz, size);
             if(vis != MATSURF_NOT_VISIBLE)
             {
-                materialsurface matsurf = {vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material, i, cx, cy, cz, size};
+                materialsurface matsurf = {vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material, i, ivec(cx, cy, cz), size};
                 l0.matsurfs.add(matsurf);
             };
         };

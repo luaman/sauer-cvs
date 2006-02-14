@@ -11,19 +11,19 @@ struct PackNode
     ushort x, y, w, h;
     bool packed;
 
-    PackNode() : child1(0), child2(0), x(0), y(0), w(LM_PACKW), h(LM_PACKH), packed(false) {}
-    PackNode(ushort x, ushort y, ushort w, ushort h) : child1(0), child2(0), x(x), y(y), w(w), h(h), packed(false) {}
+    PackNode() : child1(0), child2(0), x(0), y(0), w(LM_PACKW), h(LM_PACKH), packed(false) {};
+    PackNode(ushort x, ushort y, ushort w, ushort h) : child1(0), child2(0), x(x), y(y), w(w), h(h), packed(false) {};
 
     void clear()
     {
         DELETEP(child1);
         DELETEP(child2);
-    }
+    };
 
     ~PackNode()
     {
         clear();
-    }
+    };
 
     bool insert(ushort &tx, ushort &ty, ushort tw, ushort th);
 };
@@ -38,13 +38,13 @@ struct LightMap
      : lightmaps(0), lumels(0)
     {
         memset(data, 0, sizeof(data));
-    }
+    };
 
     void finalize()
     {
         packroot.clear();
         packroot.packed = true;
-    }
+    };
 
     bool insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th);
 };

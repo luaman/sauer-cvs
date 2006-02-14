@@ -123,6 +123,7 @@ extern int visiblematerial(cube &, int orient, int x, int y, int z, int size);
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
+extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
 
 // server
 extern void initserver(bool dedicated);

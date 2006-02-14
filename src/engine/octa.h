@@ -11,7 +11,8 @@ struct materialsurface
 {
     uchar material;
     uchar orient;
-    int x, y, z, size;
+    ivec o;
+    int size;
 };
 
 struct lodlevel
