@@ -161,7 +161,7 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
         if(subdiv >= size)
         {
             if(subdiv < size * 2)
-                renderwater(size, x, y, z, size,t );
+                renderwater(size, x, y, z, size, t);
             return subdiv;
         };
         uint childsize = size / 2,
