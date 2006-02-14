@@ -7,7 +7,6 @@ struct QuadNode
     uint filled;
     QuadNode *child[4];
 
-    QuadNode() : x(0), y(0), size(0), filled(0) { loopi(4) child[i] = 0; };
     QuadNode(int x, int y, int size) : x(x), y(y), size(size), filled(0) { loopi(4) child[i] = 0; };
 
     void clear()
@@ -115,10 +114,10 @@ void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
             float yo = yf*(yy+t2);
             if(yy==wy1)
             {
-                vertw(xx,             z, yy, dx(xo),    dy(yo), t1);
+                vertw(xx, z, yy, dx(xo), dy(yo), t1);
                 vertw(xx+subdiv, z, yy, dx(xo+xs), dy(yo), t1);
             };
-            vertw(xx,             z, yy+subdiv, dx(xo),    dy(yo+ys), t1);
+            vertw(xx, z, yy+subdiv, dx(xo), dy(yo+ys), t1);
             vertw(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
         };
         glEnd();
