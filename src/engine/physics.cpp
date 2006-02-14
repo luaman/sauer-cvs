@@ -178,23 +178,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 {
     clipplanes &p = *c.clip;
     if(pointincube(p, o)) { dist = 0; return true; };
-//    if(p.size == 0)
-//        return rayboxintersect(o, ray, p.o, p.r, dist);
-    if(p.box) loopi(3)
-    {
-        float a = ray[i], f;
-        if(a > 0 && (p.box & (1 << (2*i)))) f = (p.o[i]-p.r[i]-o[i])/a;
-        else if(a < 0 && (p.box & (2 << (2*i)))) f = (p.o[i]+p.r[i]-o[i])/a;
-        else continue;
-        if(f <= 0) continue;
-        vec d(o);
-        pushvec(d, ray, f+0.1f);
-        if(pointincube(p, d))
-        {
-            dist = f+0.1f;
-            return true;
-        };
-    };
+
     loopi(p.size)
     {
         float a = ray.dot(p.p[i]);
@@ -242,7 +226,7 @@ bool passthroughcube = false;
 void passthrough(bool isdown) { passthroughcube = isdown; };
 COMMAND(passthrough, ARG_DOWN);
 
-float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)   
+float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)
 {
     ray.normalize();
     hitpos = ray;
@@ -313,11 +297,11 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 
 // info about collisions
 vec wall; // just the normal vectors.
-float walldistance; 
+float walldistance;
 const float STAIRHEIGHT = 4.0f;
 const float FLOORZ = 0.7f;
 const float JUMPVEL = 130.0f;
-const float GRAVITY = 120.0f; 
+const float GRAVITY = 120.0f;
 const float STEPSPEED = 1.5f;
 
 bool findfloor(dynent *d, vec &floor, float &height)
@@ -454,7 +438,7 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
     o.z += zr - d->eyeheight;
 
     if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z)) return true;
-    
+
     if(p.size)
     {
         float m = walldistance;
@@ -525,11 +509,11 @@ bool trystep(dynent *d, vec &dir, float maxstep)
         if(!findfloor(d, floor, fz) || floor.z < FLOORZ || old.z - d->eyeheight - fz > stepdist) return false;
         d->o.add(dir);
         d->o.z = fz + d->eyeheight + stepdist + 0.1f;
-        if(!collide(d, vec(0, 0, -1))) 
-        { 
-            d->o = old; return false; 
+        if(!collide(d, vec(0, 0, -1)))
+        {
+            d->o = old; return false;
         };
-    };        
+    };
     /* try stepping up */
     d->o = old;
     d->o.z += dir.magnitude()*STEPSPEED;
@@ -565,9 +549,9 @@ bool move(dynent *d, vec &dir)
         vec obstacle(wall);
         d->o.z -= (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
         if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
-        { 
-            d->o = old; 
-            if(trystep(d, dir, d->o.z - d->eyeheight + (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT))) return true; 
+        {
+            d->o = old;
+            if(trystep(d, dir, d->o.z - d->eyeheight + (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT))) return true;
         } else d->o = old;
         wall = obstacle;
         /* can't step over the obstacle, so just slide against it */
@@ -578,7 +562,7 @@ bool move(dynent *d, vec &dir)
             dir.z = 0.0f;
             d->vel.z = 0.0f;
         };
-        float wdir = wall.dot(dir), wvel = wall.dot(d->vel); 
+        float wdir = wall.dot(dir), wvel = wall.dot(d->vel);
         dir.x -= wall.x*wdir;
         dir.y -= wall.y*wdir;
         d->vel.x -= wall.x*wvel;
@@ -599,7 +583,7 @@ bool move(dynent *d, vec &dir)
                 return true;
             };
             d->o = old;
-        };    
+        };
         if(!collided || wall.z < FLOORZ)
         {
             d->physstate = PHYS_FALL;
@@ -710,7 +694,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
             pl->vel.z = JUMPVEL;
         };
     }
-    else 
+    else
     if(pl->physstate >= PHYS_FLOOR || water)
     {
         if(pl->jumpnext)
@@ -772,13 +756,13 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 
     // apply any player generated changes in velocity
     modifyvelocity(pl, moveres, local, water, floating, curtime, iscamera);
-    
+
     vec d(pl->vel);
-    d.mul(secs); 
+    d.mul(secs);
     if(!floating && !iscamera)
     {
         if(water) d.mul(0.5f);
-        // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2), 
+        // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2),
         if(pl->physstate < PHYS_FLOOR && (!water || (!pl->move && !pl->strafe)))
             d.z -= water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
     };
@@ -807,7 +791,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     };
 
     if(pl->physstate >= PHYS_FLOOR && fabs(pl->vel.x) < 0.01f && fabs(pl->vel.y) < 0.01f && fabs(pl->vel.z) < 0.01f) pl->moving = false;
-        
+
     // automatically apply smooth roll when strafing
 
     if(pl->strafe==0)

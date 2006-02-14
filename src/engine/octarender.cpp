@@ -388,27 +388,22 @@ bool flataxisface(cube &c, int orient)
 
 void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 {
+    int vertused[8];
+    bool usefaces[6];
     vec v[8], mx(x, y, z), mn(x+size, y+size, z+size);
+    calcverts(c, x, y, z, size, v, usefaces, vertused, false);
 
     loopi(8)
     {
-        calcvert(c, x, y, z, size, v[i], i);
+        if(!vertused[i]) // need all verts for proper box
+            calcvert(c, x, y, z, size, v[i], i);
+
         loopj(3) // generate tight bounding box
         {
             mn[j] = min(mn[j], v[i][j]);
             mx[j] = max(mx[j], v[i][j]);
         };
     };
-
-    
-    // find flat faces of the box inside the cube
-    p.box = 0;
-    if(mn.x > x) p.box |= 1 << O_LEFT;
-    if(mx.x < x+size) p.box |= 1 << O_RIGHT;
-    if(mn.y > y) p.box |= 1 << O_BACK;
-    if(mx.y < y+size) p.box |= 1 << O_FRONT;
-    if(mn.z > z) p.box |= 1 << O_BOTTOM;
-    if(mx.z < z+size) p.box |= 1 << O_TOP;
 
     p.r = mx;     // radius of box
     p.r.sub(mn);
@@ -417,9 +412,8 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
     p.o.add(p.r);
 
     p.size = 0;
-    loopi(6) if(!flataxisface(c, i)) // generate actual clipping planes
+    loopi(6) if(usefaces[i] && !touchingface(c, i)) // generate actual clipping planes
     {
-        p.box &= ~(1 << i);
         p.size += genclipplane(c, i, v, &p.p[p.size]);
     };
 };
@@ -1090,7 +1084,7 @@ void rendermaterials()
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
-    
+
     vtxarray *va = visibleva;
     while(va)
     {
@@ -1258,11 +1252,11 @@ bool subdividecube(cube &c, bool fullcheck)
     };
 
     validatec(ch, hdr.worldsize);
-	if(fullcheck) loopi(8) if(!isvalidcube(ch[i])) // not so good...
-	{
-		emptyfaces(ch[i]);
-		perfect=false;
-	};
+    if(fullcheck) loopi(8) if(!isvalidcube(ch[i])) // not so good...
+    {
+        emptyfaces(ch[i]);
+        perfect=false;
+    };
     return perfect;
 };
 

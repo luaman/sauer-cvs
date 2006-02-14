@@ -46,7 +46,6 @@ struct clipplanes
 {
     vec o, r;
     int size;
-    uchar box;
     plane p[12];
     clipplanes *next, *prev;
     clipplanes **backptr;
@@ -54,7 +53,7 @@ struct clipplanes
 
 struct octaentities
 {
-	vector<int> list;
+    vector<int> list;
 };
 
 struct cube
@@ -71,7 +70,7 @@ struct cube
     vtxarray *va;           // vertex array for children, or NULL
     clipplanes *clip;       // collision planes
     surfaceinfo *surfaces;  // lighting info for each surface
-	octaentities *ents;		// list of map entites totally inside cube
+    octaentities *ents;     // list of map entites totally inside cube
 };
 
 struct block3
