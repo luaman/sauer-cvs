@@ -56,7 +56,7 @@ extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 
 // menus
-extern bool rendermenu();
+extern bool rendermenu(int scr_w, int scr_h);
 extern void menuset(int menu);
 extern void menumanual(int m, int n, char *text);
 extern void sortmenu(int start, int num);

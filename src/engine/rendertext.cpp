@@ -101,6 +101,8 @@ short char_coords[96][4] =
     {310,448,363,512},  //~
 };
 
+#define PIXELTAB (FONTH*4)
+
 int text_width(char *str)
 {
     int x = 0;

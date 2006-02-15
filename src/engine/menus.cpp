@@ -62,7 +62,7 @@ void sortmenu(int start, int num)
 
 void refreshservers();
 
-bool rendermenu()
+bool rendermenu(int scr_w, int scr_h)
 {
     if(vmenu<0) { menustack.setsize(0); return false; };
     if(vmenu==1) refreshservers();
@@ -79,8 +79,8 @@ bool rendermenu()
     if(tw>w) w = tw;
     int step = FONTH/4*5;
     int h = (mdisp+2)*step;
-    int y = (VIRTH-h)/2;
-    int x = (VIRTW-w)/2;
+    int y = (scr_h*4-h)/2;
+    int x = (scr_w*4-w)/2;
     blendbox(x-FONTH/2*3, y-FONTH, x+w+FONTH/2*3, y+h+FONTH, true);
     draw_text(title, x, y);
     y += FONTH*2;
@@ -145,7 +145,7 @@ bool menukey(int code, bool isdown)
     }
     else
     {
-        if(code==SDLK_RETURN || code==-2)
+        if((code==SDLK_RETURN || code==-2) && menus[vmenu].items.length())
         {
             char *action = menus[vmenu].items[menusel].action;
             if(vmenu==1) connects(getservername(menusel));

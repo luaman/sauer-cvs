@@ -247,7 +247,7 @@ int main(int argc, char **argv)
         if(argv[i][0]=='-') switch(argv[i][1])
         {
             case 'd': dedicated = true; break;
-            case 'w': scr_w = atoi(&argv[i][2]); break;
+            case 'w': scr_w = atoi(&argv[i][2]); scr_h = scr_w*3/4; break;
             case 'h': scr_h = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
             default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");

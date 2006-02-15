@@ -4,6 +4,7 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- must be able to jump when landing on a slope/stairs going downwards
 - map up/download etc
 - water optimisation
 - water physics close to surface
@@ -11,30 +12,29 @@ eihrul:
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
 
-aard:
-- map rotation
-- teamskins / teamplay hud?
+kurt:
 - kurts first map floor one level? | jump to quad on two towers | new rpg map?
-- get disconnected whenever someone else disconnects?
-- tone down knockback of all weapons
+
+aard:
+- teamskins / teamplay hud?
 - make ents better visible?
-- pressed return on an empty list
-- stop movement in intermission
 - player spawn sound
 - make wether you are hitting other player clearer - blip sounds like q3?
 - hex numbers
-- make roll configurable?
 - can join a server in edit mode
-- should not jump if key is released before landing
 - edit textures when extruding
 
 - new sounds!
 - experiment with physics speedup features
-- look at vsync/tripple buf/fps limits/fsaa
-- set newly touched cubes in edit mode to fullbright light + textures of visible part
 - think about simpler area based portals / combine with doors | automatically? compute portals of each VA?
-- make remip part of savemap?
+- make remip part of savemap or calclight?
 - poly iterator for the model formats
+- think of cheap way to have surface normals available.. can do tangent/bin globally? keep it all in worldspace? lights?
+can do bumpmapping by simply having an "average tangentspace lightvector" LM and a "occlusion and attenuation color" LM,
+then no list of lights and no tangent space vectors would be needed! superior to dot3 lightmaps really?
+big problem is how to get a tangent space eye vector for spec?? 
+to get accurate spec, we need per vertex sub, which can only ever be worldspace. best we can do is global TS.
+-> do some tests to see what current state sorting amounts to, and what would happen if you'd swap
 
 - perma powerup / powerup announce
 - draw not-spawned items in wireframe?

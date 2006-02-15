@@ -117,7 +117,7 @@ void render_particles(int time)
                     glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
                     glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
                 };
-                xtraverts += 4;
+                if(i!=2) xtraverts += 4;
             }
             else            // text
             {

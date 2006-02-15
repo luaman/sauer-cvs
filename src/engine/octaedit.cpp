@@ -21,7 +21,7 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
 selinfo sel = { 0 }, lastsel;
 
 int orient = 0;
-int gridsize = 32;
+int gridsize = 8;
 ivec cor, lastcor;
 ivec cur, lastcur;
 
@@ -32,7 +32,7 @@ bool dragging = false;
 void forcenextundo() { lastsel.orient = -1; };
 void cancelsel()     { havesel = false; forcenextundo(); };
 
-VARF(gridpower, 2, 5, 16,
+VARF(gridpower, 2, 3, 16,
 {
     if(dragging) return;
     gridsize = 1<<gridpower;

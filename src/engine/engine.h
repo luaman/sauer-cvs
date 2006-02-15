@@ -28,10 +28,7 @@ extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
 extern PFNGLBUFFERDATAARBPROC    pfnglBufferData;
 extern PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers;
 
-#define VIRTW 2400                      // virtual screen size for text & HUD
-#define VIRTH 1800
 #define FONTH 64
-#define PIXELTAB (VIRTW/12)
 
 extern dynent *player;
 extern dynent *camera1;                 // special ent that acts as camera, same object as player1 in FPS mode

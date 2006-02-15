@@ -169,7 +169,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     
     glMatrixMode(GL_PROJECTION);    
     glLoadIdentity();
-    glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
+    glOrtho(0, w, h, 0, -1, 1);
+
     glEnable(GL_BLEND);
 
     if(dblend || underwater)
@@ -180,9 +181,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         if(dblend) glColor3d(0.0f, 0.9f, 0.9f);
         else glColor3d(0.9f, 0.5f, 0.0f);
         glVertex2i(0, 0);
-        glVertex2i(VIRTW, 0);
-        glVertex2i(VIRTW, VIRTH);
-        glVertex2i(0, VIRTH);
+        glVertex2i(w, 0);
+        glVertex2i(w, h);
+        glVertex2i(0, h);
         glEnd();
         glDepthMask(GL_TRUE);
         dblend -= curtime/3;
@@ -191,17 +192,22 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     glEnable(GL_TEXTURE_2D);
 
+    glLoadIdentity();
+    glOrtho(0, w*4, h*4, 0, -1, 1);
+
+    int abovegameplayhud = h*4*1650/1800-FONTH*3/2; // hack
+
     char *command = getcurcommand();
     char *playername = cl->gamepointat(worldpos);
-    if(command) draw_textf("> %s_", 20, 1570, command);
-    else if(closeent[0] && !hidehud) draw_text(closeent, 20, 1570);
-    else if(playername) draw_text(playername, 20, 1570);
+    if(command) draw_textf("> %s_", FONTH/2, abovegameplayhud, command);
+    else if(closeent[0] && !hidehud) draw_text(closeent, FONTH/2, abovegameplayhud);
+    else if(playername) draw_text(playername, FONTH/2, abovegameplayhud);
 
     cl->renderscores();
     
     if(!hidehud)
     {
-        if(!rendermenu())
+        if(!rendermenu(w, h))
         {
             glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
             glBindTexture(GL_TEXTURE_2D, crosshair->gl);
@@ -215,27 +221,28 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
                 else if(player->health<=50) glColor3ub(255,128,0);
             };
             */
-            float chsize = (float)crosshairsize;
-            glTexCoord2d(0.0, 0.0); glVertex2f(VIRTW/2 - chsize, VIRTH/2 - chsize);
-            glTexCoord2d(1.0, 0.0); glVertex2f(VIRTW/2 + chsize, VIRTH/2 - chsize);
-            glTexCoord2d(1.0, 1.0); glVertex2f(VIRTW/2 + chsize, VIRTH/2 + chsize);
-            glTexCoord2d(0.0, 1.0); glVertex2f(VIRTW/2 - chsize, VIRTH/2 + chsize);
+            float chsize = (float)crosshairsize*w/600;
+            glTexCoord2d(0.0, 0.0); glVertex2f(w*2 - chsize, h*2 - chsize);
+            glTexCoord2d(1.0, 0.0); glVertex2f(w*2 + chsize, h*2 - chsize);
+            glTexCoord2d(1.0, 1.0); glVertex2f(w*2 + chsize, h*2 + chsize);
+            glTexCoord2d(0.0, 1.0); glVertex2f(w*2 - chsize, h*2 + chsize);
             glEnd();
         };
     
-        glLoadIdentity();
-        glOrtho(0, w*4, h*4, 0, -1, 1);
         renderconsole(w, h);
         if(!hidestats)
         {
-            int b = h*4*200/256;
-            if(editmode) draw_textf("cube %d", FONTH*8, b, selchildcount);
-            draw_textf("fps %d", FONTH/2, b, curfps);
-            draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, b+FONTH, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
-            draw_textf("ond:%d va:%d gl:%d lm:%d", FONTH/2, b+FONTH*2, allocnodes*8, allocva, glde, lightmaps.length());
+            draw_textf("fps %d", w*4-5*FONTH, h*4-100, curfps);
+
+            if(editmode)
+            {
+                draw_textf("cube %d", FONTH/2, abovegameplayhud-FONTH*3, selchildcount);
+                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
+                draw_textf("ond:%d va:%d gl:%d lm:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, glde, lightmaps.length());
+            };
         };
         
-        cl->gameplayhud();
+        cl->gameplayhud(w, h);
         render_texture_panel();
     };
         

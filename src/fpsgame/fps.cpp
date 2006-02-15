@@ -181,7 +181,7 @@ struct fpsclient : igameclient
                 players[i]->state = CS_LAGGED;
                 continue;
             };
-            if(lagtime && players[i]->state != CS_DEAD) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
+            if(lagtime && players[i]->state != CS_DEAD && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
         };
     };
         
@@ -455,16 +455,16 @@ struct fpsclient : igameclient
 
     void renderscores() { sb.render(*this, gamemode); };
 
-    void gameplayhud()
+    void gameplayhud(int w, int h)
     {
         glLoadIdentity();    
-        glOrtho(0, 1200, 900, 0, -1, 1);
+        glOrtho(0, w*900/h, 900, 0, -1, 1);
         draw_textf("%d",  90, 827, player1->health);
         if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
         draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
 
         glLoadIdentity();    
-        glOrtho(0, 2400, 1800, 0, -1, 1);
+        glOrtho(0, w*1800/h, 1800, 0, -1, 1);
 
         glDisable(GL_BLEND);
 

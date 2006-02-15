@@ -36,7 +36,7 @@ struct igameclient
     virtual void resetgamestate() = 0;
     virtual void worldhurts(dynent *d, int damage) = 0;
     virtual void startmap(char *name) = 0;
-    virtual void gameplayhud() = 0;
+    virtual void gameplayhud(int w, int h) = 0;
     virtual void entinmap(dynent *d, bool froment) = 0;
     virtual void drawhudgun() = 0;
     virtual bool camerafixed() = 0;

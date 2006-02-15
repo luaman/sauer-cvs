@@ -349,7 +349,7 @@ struct weaponstate
         if(!d->attacking) return;
         d->lastaction = cl.lastmillis;
         d->lastattackgun = d->gunselect;
-        if(!d->ammo[d->gunselect]) { cl.playsoundc(S_NOAMMO); d->gunwait = 1000; d->lastattackgun = -1; weaponswitch(); return; };
+        if(!d->ammo[d->gunselect]) { cl.playsoundc(S_NOAMMO); d->gunwait = 600; d->lastattackgun = -1; weaponswitch(); return; };
         if(d->gunselect) d->ammo[d->gunselect]--;
         vec from = d->o;
         vec to = targ;
