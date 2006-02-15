@@ -300,8 +300,8 @@ vec wall; // just the normal vectors.
 float walldistance;
 const float STAIRHEIGHT = 4.0f;
 const float FLOORZ = 0.7f;
-const float JUMPVEL = 130.0f;
-const float GRAVITY = 120.0f;
+const float JUMPVEL = 110.0f;
+const float GRAVITY = 90.0f;
 const float STEPSPEED = 1.5f;
 
 bool findfloor(dynent *d, vec &floor, float &height)
@@ -606,7 +606,25 @@ bool move(dynent *d, vec &dir)
             if(d->physstate >= PHYS_FLOOR && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f && 
                (collided || !found || floor.z < FLOORZ || floor.z != d->floor.z))
                 switchfloor(d, dir, !collided && found && floor.z >= FLOORZ ? floor : vec(0, 0, 1));
-            d->physstate = collided ? PHYS_SLIDE : PHYS_FALL;
+            if(!collided)
+            {
+                if(!found || floor.z >= FLOORZ) d->physstate = PHYS_FALL;
+                else
+                {
+                    d->physstate = PHYS_SLIDE;
+                    d->floor = floor;
+                };
+            }
+            else
+            {
+                if(d->physstate == PHYS_SLIDE)
+                {
+                    d->physstate = PHYS_TRAPPED;
+                    d->timeinair = 0;
+                }
+                else if(d->physstate != PHYS_TRAPPED) d->physstate = PHYS_SLIDE;
+                d->floor = wall;
+            };
             return !collided;
         };
         found = false;
@@ -628,7 +646,7 @@ bool move(dynent *d, vec &dir)
 
 void phystest()
 {
-    static const char *states[] = {"float", "fall", "slide", "trapped", "floor", "step", "slope"};
+    static const char *states[] = {"float", "fall", "slide", "floor", "step", "slope", "trapped"};
     printf ("PHYS(pl): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[player->physstate], player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z);
     printf ("PHYS(cam): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[camera1->physstate], camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z);
 }
@@ -718,7 +736,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
         };
     }
     else
-    if(pl->physstate >= PHYS_TRAPPED || water)
+    if(pl->physstate >= PHYS_FLOOR || water)
     {
         if(pl->jumpnext)
         {
@@ -744,14 +762,14 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     {
         vecfromyawpitch(pl->yaw, pl->pitch, pl->move, pl->strafe, m, floating || water || iscamera);
 
-        if(!floating && pl->physstate >= PHYS_FLOOR)
+        if(!floating && pl->physstate >= PHYS_SLIDE && pl->floor.z > 0)
         {
             /* move up or down slopes in air
              * but only move up slopes in water
              */
             float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
             if(water) m.z = max(m.z, dz);
-            else m.z = dz;
+             else m.z = dz;
         };
 
         m.normalize();
@@ -759,7 +777,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
 
     vec d(m);
     d.mul(pl->maxspeed);
-    float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_FLOOR || floating ? 6.0f : 30.f);
+    float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLIDE || floating ? 6.0f : 30.f);
     float fpsfric = friction/curtime*20.0f;
 
     pl->vel.mul(fpsfric-1);
