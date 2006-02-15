@@ -599,8 +599,8 @@ bool move(dynent *d, vec &dir)
         };
         if(!collided || wall.z < FLOORZ)
         {
-            if(d->physstate >= PHYS_FLOOR && 
-               (collided || !found || floor.z < FLOORZ || (floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)))
+            if(d->physstate >= PHYS_FLOOR && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f && 
+               (collided || !found || floor.z < FLOORZ || floor.z != d->floor.z))
                 switchfloor(d, dir, !collided && found && floor.z >= FLOORZ ? floor : vec(0, 0, 1));
             d->physstate = PHYS_FALL;
             return !collided;
