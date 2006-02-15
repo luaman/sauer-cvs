@@ -537,22 +537,20 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     return false;
 };
 
-void switchfloor(dynent *d, vec &dir, bool water, const vec &floor)
+void switchfloor(dynent *d, vec &dir, const vec &floor)
 {
     float dmag = dir.magnitude(), dz = -(dir.x*floor.x + dir.y*floor.y)/floor.z;
-    if(water) dz = max(dz, 0);
     dir.z = dz;
     float dfmag = dir.magnitude();
     if(dfmag > 0) dir.mul(dmag/dfmag);
 
     float vmag = d->vel.magnitude(), vz = -(d->vel.x*floor.x + d->vel.y*floor.y)/floor.z;
-    if(water) vz = max(vz, 0);
     d->vel.z = vz;
     float vfmag = d->vel.magnitude();
     if(vfmag > 0) d->vel.mul(vmag/vfmag);
 };
 
-bool move(dynent *d, vec &dir, bool water = false)
+bool move(dynent *d, vec &dir)
 {
     bool collided = false;
     vec old(d->o);
@@ -603,7 +601,7 @@ bool move(dynent *d, vec &dir, bool water = false)
         {
             if(d->physstate >= PHYS_FLOOR && 
                (collided || !found || floor.z < FLOORZ || (floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)))
-                switchfloor(d, dir, water, !collided && found && floor.z >= FLOORZ ? floor : vec(0, 0, 1));
+                switchfloor(d, dir, !collided && found && floor.z >= FLOORZ ? floor : vec(0, 0, 1));
             d->physstate = PHYS_FALL;
             return !collided;
         };
@@ -615,10 +613,10 @@ bool move(dynent *d, vec &dir, bool water = false)
         d->timeinair = 0;
         dir.z = 0.0f;
         d->vel.z = 0.0f;
-        switchfloor(d, dir, water, floor);
+        switchfloor(d, dir, floor);
     }
     else if(floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
-        switchfloor(d, dir, water, floor);
+        switchfloor(d, dir, floor);
     d->physstate = (floor.z == 1.0f ? (found ? PHYS_FLOOR : PHYS_STEP) : PHYS_SLOPE);
     d->floor = floor;
     return !collided;
@@ -804,7 +802,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, water)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
