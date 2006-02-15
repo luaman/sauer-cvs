@@ -18,16 +18,16 @@ struct fpsrender
             if(t>(r-1)*100) { anim = ANIM_DEAD; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t/16.0f; }; };
             if(mz<-1000) return;
         }
-        else if(d->state==CS_EDITING)                   { anim = ANIM_EDIT; }
-        else if(d->state==CS_LAGGED)                    { anim = ANIM_LAG; }
+        else if(d->state==CS_EDITING)                       { anim = ANIM_EDIT; }
+        else if(d->state==CS_LAGGED)                        { anim = ANIM_LAG; }
         else if(d->monsterstate==M_PAIN || cl.lastmillis-d->lastpain<300)  { anim = ANIM_PAIN; }
-        else if(d->timeinair > 100)                     { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
+        else if(d->timeinair > 100)                         { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
-        else                                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; if(hellpig) speed = 1200/d->maxspeed;  };
+        else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; if(hellpig) speed = 1200/d->maxspeed;  };
         uchar color[3];
         lightreaching(d->o, color);
         if(hellpig) { mz -= 7.6f; };
-        rendermodel(color, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, basetime, d);
+        rendermodel(color, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/4, team, scale, speed, basetime, d);
     };
     
     void rendergame(fpsclient &cl, int gamemode)

@@ -48,16 +48,20 @@ struct scoreboard
                 fpsent *o = (fpsent *)cl.iterdynents(i);
                 if(o && !o->monsterstate)
                 {
-                    loopi(teamsused) if(strcmp(teamname[i], o->team)==0) { teamscore[i] += o->frags; return; };
-                    if(teamsused==maxteams) return;
-                    teamname[teamsused] = o->team;
-                    teamscore[teamsused++] = o->frags;
+                    loopi(teamsused) if(strcmp(teamname[i], o->team)==0) { teamscore[i] += o->frags; goto out; };
+                    if(teamsused!=maxteams)
+                    {
+                        teamname[teamsused] = o->team;
+                        teamscore[teamsused++] = o->frags;
+                    };
+                    out:;
                 };
             };
             teamscores[0] = 0;
             loopj(teamsused)
             {
-                s_sprintf(teamscores)("[ %s: %d ]", teamname[j], teamscore[j]);
+                s_sprintfd(s)("[ %s: %d ]", teamname[j], teamscore[j]);
+                s_strcat(teamscores, s);
             };
             menumanual(0, scorelines.length(), "");
             menumanual(0, scorelines.length()+1, teamscores);

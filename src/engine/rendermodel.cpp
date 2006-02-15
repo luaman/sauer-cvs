@@ -66,6 +66,7 @@ void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float 
     if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
     if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     m->setskin(tex);  
+    if(teammate) { color[2] = 255; color[0] = 50; color[1] = 50; }; // VERY TEMP, find a better teammate display
     glColor3ubv(color);
     m->render(anim, varseed, speed, basetime, mdl, x, y, z, yaw, pitch, scale, d);
 };
