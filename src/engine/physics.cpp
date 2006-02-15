@@ -559,15 +559,18 @@ bool move(dynent *d, vec &dir)
     if(!collide(d, dir))
     {
         d->o = old;
-        /* check for a floor within the stair limit, and try stepping if found */
-        vec obstacle(wall);
-        d->o.z -= (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-        if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
+        if(d->move || d->strafe)
         {
-            d->o = old;
-            if(trystep(d, dir, d->o.z - d->eyeheight + (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT))) return true;
-        } else d->o = old;
-        wall = obstacle;
+            /* check for a floor within the stair limit, and try stepping if found */
+            vec obstacle(wall);
+            d->o.z -= (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
+            if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
+            {
+                d->o = old;
+                if(trystep(d, dir, d->o.z - d->eyeheight + (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT))) return true;
+            } else d->o = old;
+            wall = obstacle;
+        };
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
         collided = true;
@@ -577,11 +580,6 @@ bool move(dynent *d, vec &dir)
             d->vel.z = 0.0f;
         };
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel);
-        if(wall.z > 0.0f && wall.z < FLOORZ)
-        {
-            wdir *= 2.0f; 
-            wvel *= 2.0f;
-        };
         dir.x -= wall.x*wdir;
         dir.y -= wall.y*wdir;
         d->vel.x -= wall.x*wvel;
@@ -594,11 +592,11 @@ bool move(dynent *d, vec &dir)
     {
         if(d->physstate == PHYS_STEP && !collided)
         {
-            vec old(d->o);
+            vec stepped(d->o);
             d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, STAIRHEIGHT) : STAIRHEIGHT;
             if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
             {
-                d->o = old;
+                d->o = stepped;
                 return true;
             };
             d->o = old;
