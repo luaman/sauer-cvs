@@ -115,11 +115,11 @@ cube &blockcube(int x, int y, int z, const block3 &b, int rgrid) // looks up a w
 
 int selchildcount=0;
 ivec origin(0,0,0);
-   
+
 void countselchild(cube *c, ivec &cor, int size)
 {
-	ivec ss(sel.s);
-	ss.mul(sel.grid);
+    ivec ss(sel.s);
+    ss.mul(sel.grid);
     loopoctabox(cor, size, sel.o, ss)
     {
         ivec o(i, cor.x, cor.y, cor.z, size);
@@ -261,13 +261,13 @@ void readychanges(block3 &b, cube *c, ivec &cor, int size)
             else readychanges(b, c[i].children, o, size/2);
         }
         else brightencube(c[i]);
-		freeoctaentities(c[i]);
+        freeoctaentities(c[i]);
     };
 };
 
 void changed(const block3 &sel)
 {
-	block3 b = sel;
+    block3 b = sel;
     loopi(3) b.s[i] *= b.grid;
     b.grid = 1;
     loopi(3)                    // the changed blocks are the selected cubes
@@ -282,7 +282,7 @@ void changed(const block3 &sel)
     inbetweenframes = false;
     octarender();
     inbetweenframes = true;
-	entitiesinoctanodes();
+    entitiesinoctanodes();
 };
 
 //////////// copy and undo /////////////
@@ -292,7 +292,7 @@ cube copycube(cube &src)
     c.va = NULL;                // src cube is responsible for va destruction
     c.surfaces = NULL;
     c.clip = NULL;
-	c.ents = NULL;
+    c.ents = NULL;
     if(src.children)
     {
         c.children = newcubes(F_EMPTY);
@@ -525,7 +525,19 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 
             optiface(p, c);
             if(!isvalidcube(c))
+            {
+                uint newbak = c.faces[d];
+                uchar *m = (uchar *)&bak;
+                uchar *n = (uchar *)&newbak;
+                loopk(4) if(n[k] != m[k]) // try to find partial solution
+                {
+                    c.faces[d] = bak;
+                    c.edges[d*4+k] = n[k];
+                    if(isvalidcube(c))
+                        m[k] = n[k];
+                };
                 c.faces[d] = bak;
+            };
         };
     );
     if (mode==1 && dir>0)
