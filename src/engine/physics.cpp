@@ -511,7 +511,8 @@ bool trystep(dynent *d, vec &dir, float maxstep)
         d->o.z = fz + d->eyeheight + stepdist + 0.1f;
         if(!collide(d, vec(0, 0, -1)))
         {
-            d->o = old; return false;
+            d->o = old; 
+            return false;
         };
     };
     /* try stepping up */
@@ -576,6 +577,11 @@ bool move(dynent *d, vec &dir)
             d->vel.z = 0.0f;
         };
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel);
+        if(wall.z > 0.0f && wall.z < FLOORZ)
+        {
+            wdir *= 2.0f; 
+            wvel *= 2.0f;
+        };
         dir.x -= wall.x*wdir;
         dir.y -= wall.y*wdir;
         d->vel.x -= wall.x*wvel;
