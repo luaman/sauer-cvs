@@ -523,11 +523,7 @@ bool trystep(dynent *d, vec &dir, float maxstep)
         if(d->physstate < PHYS_FLOOR)
         {
             d->timeinair = 0;
-            if(dir.z < 0.0f)
-            {
-                dir.z = 0.0f;
-                d->vel.z = 0.0f;
-            };
+            if(dir.z < 0.0f) dir.z = d->vel.z = 0.0f;
         };
         d->physstate = PHYS_STEP;
         d->floor = vec(0, 0, 1);
@@ -574,12 +570,14 @@ bool move(dynent *d, vec &dir)
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
         collided = true;
-        if(wall.z < 0.0f && dir.z > 0.0f)
-        {
-            dir.z = 0.0f;
-            d->vel.z = 0.0f;
-        };
+        if(wall.z < 0.0f && dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel);
+        /* bounce off steep slopes */
+        if(wall.z > 0.0f && wall.z < FLOORZ)
+        {
+            wdir *= 2.0f;
+            wvel *= 2.0f;
+        };
         dir.x -= wall.x*wdir;
         dir.y -= wall.y*wdir;
         d->vel.x -= wall.x*wvel;
@@ -603,28 +601,23 @@ bool move(dynent *d, vec &dir)
         };
         if(!collided || wall.z < FLOORZ)
         {
-            if(d->physstate >= PHYS_FLOOR && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f && 
+            if(d->physstate >= PHYS_FLOOR && d->physstate < PHYS_TRAPPED && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f && 
                (collided || !found || floor.z < FLOORZ || floor.z != d->floor.z))
                 switchfloor(d, dir, !collided && found && floor.z >= FLOORZ ? floor : vec(0, 0, 1));
-            if(!collided)
+            if(collided)
             {
-                if(!found || floor.z >= FLOORZ) d->physstate = PHYS_FALL;
-                else
-                {
-                    d->physstate = PHYS_SLIDE;
-                    d->floor = floor;
-                };
-            }
-            else
-            {
-                if(d->physstate == PHYS_SLIDE)
+                /* check if the player is wedged between steep slopes */
+                if(d->physstate == PHYS_SLIDE && d->floor != wall)
                 {
                     d->physstate = PHYS_TRAPPED;
                     d->timeinair = 0;
+                    if(dir.z < 0 && d->vel.z > 0) dir.z = d->vel.z = 0.0f;
                 }
                 else if(d->physstate != PHYS_TRAPPED) d->physstate = PHYS_SLIDE;
                 d->floor = wall;
-            };
+            }
+            else if(d->physstate != PHYS_TRAPPED || fabs(dir.x) > 1e-3f || fabs(dir.y) > 1e-3f || fabs(dir.z) > 1e-3f) 
+                d->physstate = PHYS_FALL;
             return !collided;
         };
         found = false;
@@ -633,8 +626,7 @@ bool move(dynent *d, vec &dir)
     if(d->physstate < PHYS_FLOOR)
     {
         d->timeinair = 0;
-        dir.z = 0.0f;
-        d->vel.z = 0.0f;
+        dir.z = d->vel.z = 0.0f;
         switchfloor(d, dir, floor);
     }
     else if(floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
