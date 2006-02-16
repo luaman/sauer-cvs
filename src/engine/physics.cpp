@@ -426,7 +426,7 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
         vec r = vec(s2, s2, s2);
-        return rectcollide(d, o, r.x, r.y, r.z, r.z);
+        return rectcollide(d, o, r.x, r.y, r.z, r.z) || wall.dot(dir) > 0.0f;
     };
 
     setcubeclip(c, x, y, z, size);
@@ -451,7 +451,7 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
         if(w->dot(dir) > 0.0f) return true;
         wall = *w;
     };
-
+    if(wall.dot(dir) > 0.0f) return true;
     return false;
 };
 
@@ -499,7 +499,7 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     /* check if there is space atop the stair to move to */
     d->o.add(dir);
     d->o.z = maxstep + d->eyeheight + 0.1f;
-    if(!collide(d, vec(0, 0, -1)))
+    if(!collide(d))
     {
         d->o = old;
         float stepdist = maxstep - old.z + d->eyeheight;
@@ -509,7 +509,7 @@ bool trystep(dynent *d, vec &dir, float maxstep)
         if(!findfloor(d, floor, fz) || floor.z < FLOORZ || old.z - d->eyeheight - fz > stepdist) return false;
         d->o.add(dir);
         d->o.z = fz + d->eyeheight + stepdist + 0.1f;
-        if(!collide(d, vec(0, 0, -1)))
+        if(!collide(d))
         {
             d->o = old; 
             return false;
@@ -588,6 +588,17 @@ bool move(dynent *d, vec &dir)
     bool found = findfloor(d, floor, fz);
     if(!found || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : d->radius+0.1f))
     {
+        if(d->physstate == PHYS_SLOPE && !collided)
+        {
+            vec moved(d->o);
+            d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, d->radius+0.1f) : d->radius+0.1f;
+            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ)
+            {
+                d->o = moved;
+                goto floorcollide;
+            };
+            d->o = moved;
+        };
         if(d->physstate == PHYS_STEP && !collided)
         {
             vec stepped(d->o);
@@ -620,6 +631,7 @@ bool move(dynent *d, vec &dir)
                 d->physstate = PHYS_FALL;
             return !collided;
         };
+floorcollide:
         found = false;
         floor = wall;
     };
@@ -761,7 +773,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
              */
             float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
             if(water) m.z = max(m.z, dz);
-             else m.z = dz;
+            else m.z = dz;
         };
 
         m.normalize();
