@@ -307,7 +307,7 @@ const float STEPSPEED = 1.5f;
 bool findfloor(dynent *d, vec &floor, float &height)
 {
     static vec down(0, 0, -1);
-    float reach = max(STAIRHEIGHT, d->radius+1.0f);
+    float reach = max(STAIRHEIGHT*2.0f+0.1f, d->radius+0.1f);
     vec o(d->o);
     o.z -= d->eyeheight;
     for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - reach; cz = lu.z)
@@ -525,7 +525,7 @@ bool trystep(dynent *d, vec &dir, float maxstep)
             d->timeinair = 0;
             if(dir.z < 0.0f) dir.z = d->vel.z = 0.0f;
         };
-        d->physstate = PHYS_STEP;
+        d->physstate = PHYS_STEP_UP;
         d->floor = vec(0, 0, 1);
         return true;
     };
@@ -551,6 +551,13 @@ bool move(dynent *d, vec &dir)
 {
     bool collided = false;
     vec old(d->o);
+    if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && (d->move || d->strafe))
+    {
+        d->o.z -= dir.magnitude()*STEPSPEED;
+        if(collide(d, vec(0, 0, -1)))
+            return true;
+        d->o = old;
+    };
     d->o.add(dir);
     if(!collide(d, dir))
     {
@@ -571,19 +578,13 @@ bool move(dynent *d, vec &dir)
         d->blocked = true;
         collided = true;
         if(wall.z < 0.0f && dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
-        float wdir = wall.dot(dir), wvel = wall.dot(d->vel);
         if(wall.z < FLOORZ)
         {
-            /* bounce off steep slopes */
-            if(wall.z > 0.0f)
-            {
-                wdir *= 2.0f;
-                wvel *= 2.0f;
-            };
-            dir.x -= wall.x*wdir;
-            dir.y -= wall.y*wdir;
-            d->vel.x -= wall.x*wvel;
-            d->vel.y -= wall.y*wvel;
+            vec wdir(wall), wvel(wall);
+            wdir.mul(wall.dot(dir));
+            wvel.mul(wall.dot(d->vel));
+            dir.sub(wdir);
+            d->vel.sub(wvel);
         };
     };
     vec floor;
@@ -591,27 +592,15 @@ bool move(dynent *d, vec &dir)
     bool found = findfloor(d, floor, fz);
     if(!found || floor.z < FLOORZ || d->o.z - d->eyeheight - fz > (floor.z == 1.0f ? 0.1f : d->radius+0.1f))
     {
-        if(d->physstate == PHYS_SLOPE && !collided)
+        /* don't fall if the player is moving along a sledge or slope */
+        if((d->physstate == PHYS_LEDGE || d->physstate == PHYS_SLOPE) && !collided)
         {
             vec moved(d->o);
-            d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, d->radius+0.1f) : d->radius+0.1f;
-            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ && wall.z < 1.0f)
-            {
-                d->o = moved;
-                goto floorcollide;
-            };
+            if(d->physstate == PHYS_LEDGE) d->o.z -= 0.1f;
+            else d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, d->radius+0.1f) : d->radius+0.1f;
+            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ && (d->physstate == PHYS_LEDGE || wall.z < 1.0f))
+                collided = true;
             d->o = moved;
-        }
-        else if(d->physstate == PHYS_STEP && !collided)
-        {
-            vec stepped(d->o);
-            d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, STAIRHEIGHT) : STAIRHEIGHT;
-            if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
-            {
-                d->o = stepped;
-                return true;
-            };
-            d->o = old;
         };
         if(!collided || wall.z < FLOORZ)
         {
@@ -630,11 +619,16 @@ bool move(dynent *d, vec &dir)
                 else if(d->physstate != PHYS_TRAPPED) d->physstate = (d->physstate == PHYS_SLIDE ? PHYS_REBOUND : PHYS_SLIDE);
                 d->floor = wall;
             }
+            /* don't fall if the player is trapped and not moving */
             else if(d->physstate != PHYS_TRAPPED || fabs(dir.x) > 1e-3f || fabs(dir.y) > 1e-3f || fabs(dir.z) > 1e-3f) 
-                d->physstate = PHYS_FALL;
+            {
+                if(d->physstate >= PHYS_FLOOR && d->physstate != PHYS_STEP_UP && dir.z <= 0.0f && found && floor.z == 1.0f && d->o.z - d->eyeheight - fz <= STAIRHEIGHT*2.0f+0.1f && (d->move || d->strafe))
+                    d->physstate = PHYS_STEP_DOWN;
+                else
+                    d->physstate = PHYS_FALL;
+            };
             return !collided;
         };
-floorcollide:
         found = false;
         floor = wall;
     };
@@ -646,14 +640,14 @@ floorcollide:
     }
     else if(floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
         switchfloor(d, dir, floor);
-    d->physstate = (floor.z == 1.0f ? (found ? PHYS_FLOOR : PHYS_STEP) : PHYS_SLOPE);
+    d->physstate = (floor.z == 1.0f ? (found ? PHYS_FLOOR : PHYS_LEDGE) : PHYS_SLOPE);
     d->floor = floor;
     return !collided;
 };
 
 void phystest()
 {
-    static const char *states[] = {"float", "fall", "slide", "rebound", "floor", "step", "slope", "trapped"};
+    static const char *states[] = {"float", "fall", "slide", "rebound", "floor", "ledge", "step up", "step down", "slope", "trapped"};
     printf ("PHYS(pl): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[player->physstate], player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z);
     printf ("PHYS(cam): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[camera1->physstate], camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z);
 }
