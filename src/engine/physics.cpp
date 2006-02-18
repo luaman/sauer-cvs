@@ -572,16 +572,19 @@ bool move(dynent *d, vec &dir)
         collided = true;
         if(wall.z < 0.0f && dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
         float wdir = wall.dot(dir), wvel = wall.dot(d->vel);
-        /* bounce off steep slopes */
-        if(wall.z > 0.0f && wall.z < FLOORZ)
+        if(wall.z < FLOORZ)
         {
-            wdir *= 2.0f;
-            wvel *= 2.0f;
+            /* bounce off steep slopes */
+            if(wall.z > 0.0f)
+            {
+                wdir *= 2.0f;
+                wvel *= 2.0f;
+            };
+            dir.x -= wall.x*wdir;
+            dir.y -= wall.y*wdir;
+            d->vel.x -= wall.x*wvel;
+            d->vel.y -= wall.y*wvel;
         };
-        dir.x -= wall.x*wdir;
-        dir.y -= wall.y*wdir;
-        d->vel.x -= wall.x*wvel;
-        d->vel.y -= wall.y*wvel;
     };
     vec floor;
     float fz;
@@ -618,13 +621,13 @@ bool move(dynent *d, vec &dir)
             if(collided)
             {
                 /* check if the player is wedged between steep slopes */
-                if(d->physstate == PHYS_SLIDE && d->floor != wall && (wall.z > 0.0f || d->floor.z > 0.0f))
+                if(d->physstate == PHYS_REBOUND && d->floor != wall && (wall.z > 0.0f || d->floor.z > 0.0f))
                 {
                     d->physstate = PHYS_TRAPPED;
                     d->timeinair = 0;
                     if(dir.z < 0 && d->vel.z > 0) dir.z = d->vel.z = 0.0f;
                 }
-                else if(d->physstate != PHYS_TRAPPED) d->physstate = PHYS_SLIDE;
+                else if(d->physstate != PHYS_TRAPPED) d->physstate = (d->physstate == PHYS_SLIDE ? PHYS_REBOUND : PHYS_SLIDE);
                 d->floor = wall;
             }
             else if(d->physstate != PHYS_TRAPPED || fabs(dir.x) > 1e-3f || fabs(dir.y) > 1e-3f || fabs(dir.z) > 1e-3f) 
@@ -650,7 +653,7 @@ floorcollide:
 
 void phystest()
 {
-    static const char *states[] = {"float", "fall", "slide", "floor", "step", "slope", "trapped"};
+    static const char *states[] = {"float", "fall", "slide", "rebound", "floor", "step", "slope", "trapped"};
     printf ("PHYS(pl): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[player->physstate], player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z);
     printf ("PHYS(cam): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[camera1->physstate], camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z);
 }
