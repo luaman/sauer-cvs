@@ -592,14 +592,14 @@ bool move(dynent *d, vec &dir)
         {
             vec moved(d->o);
             d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, d->radius+0.1f) : d->radius+0.1f;
-            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ)
+            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ && wall.z < 1.0f)
             {
                 d->o = moved;
                 goto floorcollide;
             };
             d->o = moved;
-        };
-        if(d->physstate == PHYS_STEP && !collided)
+        }
+        else if(d->physstate == PHYS_STEP && !collided)
         {
             vec stepped(d->o);
             d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, STAIRHEIGHT) : STAIRHEIGHT;
@@ -618,7 +618,7 @@ bool move(dynent *d, vec &dir)
             if(collided)
             {
                 /* check if the player is wedged between steep slopes */
-                if(d->physstate == PHYS_SLIDE && d->floor != wall)
+                if(d->physstate == PHYS_SLIDE && d->floor != wall && (wall.z > 0.0f || d->floor.z > 0.0f))
                 {
                     d->physstate = PHYS_TRAPPED;
                     d->timeinair = 0;
