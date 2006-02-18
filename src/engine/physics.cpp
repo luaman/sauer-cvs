@@ -577,10 +577,14 @@ bool move(dynent *d, vec &dir)
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
         collided = true;
-        if(wall.z < 0.0f && dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
         if(wall.z < FLOORZ)
         {
             vec wdir(wall), wvel(wall);
+            if(wall.z < 0.0f && dir.z > 0.0f)
+            {
+                dir.z = d->vel.z = 0.0f;
+                wdir.z = wvel.z = 0.0f;
+            };
             wdir.mul(wall.dot(dir));
             wvel.mul(wall.dot(d->vel));
             dir.sub(wdir);
@@ -622,13 +626,16 @@ bool move(dynent *d, vec &dir)
             /* don't fall if the player is trapped and not moving */
             else if(d->physstate != PHYS_TRAPPED || fabs(dir.x) > 1e-3f || fabs(dir.y) > 1e-3f || fabs(dir.z) > 1e-3f) 
             {
-                if(d->physstate >= PHYS_FLOOR && d->physstate != PHYS_STEP_UP && dir.z <= 0.0f && found && floor.z == 1.0f && d->o.z - d->eyeheight - fz <= STAIRHEIGHT*2.0f+0.1f && (d->move || d->strafe))
+                if(d->physstate >= PHYS_FLOOR && d->physstate != PHYS_STEP_UP && dir.z <= 0.0f && found && floor.z >= FLOORZ && d->o.z - d->eyeheight - fz <= STAIRHEIGHT*2.0f+0.1f && (d->move || d->strafe))
                     d->physstate = PHYS_STEP_DOWN;
                 else
                     d->physstate = PHYS_FALL;
             };
             return !collided;
         };
+    };
+    if(collided && wall.z >= FLOORZ)
+    {
         found = false;
         floor = wall;
     };
