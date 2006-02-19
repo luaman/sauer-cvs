@@ -226,9 +226,10 @@ struct entities : icliententities
                 static int lastjumppad = 0;
                 if(cl.lastmillis-lastjumppad<300) break;
                 lastjumppad = cl.lastmillis;
-                vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*10.0f);
-                cl.player1->vel.z = 0;
-                cl.player1->vel.add(v);
+                vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*12.5f);
+                cl.player1->vel = v;
+//                cl.player1->vel.z = 0;
+//                cl.player1->vel.add(v);
                 cl.playsoundc(S_JUMPPAD);
                 break;
             };
