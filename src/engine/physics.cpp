@@ -549,6 +549,7 @@ void switchfloor(dynent *d, vec &dir, const vec &floor)
 
 bool move(dynent *d, vec &dir)
 {
+// TODO: optimize out the collide calls?
     bool collided = false;
     vec old(d->o);
     if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && (d->move || d->strafe))
@@ -626,10 +627,13 @@ bool move(dynent *d, vec &dir)
             /* don't fall if the player is trapped and not moving */
             else if(d->physstate != PHYS_TRAPPED || fabs(dir.x) > 1e-3f || fabs(dir.y) > 1e-3f || fabs(dir.z) > 1e-3f) 
             {
-                if(d->physstate >= PHYS_FLOOR && d->physstate != PHYS_STEP_UP && dir.z <= 0.0f && found && floor.z >= FLOORZ && d->o.z - d->eyeheight - fz <= STAIRHEIGHT*2.0f+0.1f && (d->move || d->strafe))
+                vec moved(d->o);
+                d->o.z -= STAIRHEIGHT + 0.1f;
+                if(d->physstate >= PHYS_FLOOR && d->physstate != PHYS_STEP_UP && dir.z <= 0.0f && (d->move || d->strafe) && !collide(d, vec(0, 0, -1)) && wall.z >= 0)
                     d->physstate = PHYS_STEP_DOWN;
                 else
                     d->physstate = PHYS_FALL;
+                d->o = moved;
             };
             return !collided;
         };
