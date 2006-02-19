@@ -219,7 +219,7 @@ void load_world(char *mname)        // still supports all map formats that have 
         {
             if(e.type != ET_LIGHT)
             {
-                conoutf("warning: ent outside of world: enttype[%d] index %d (%f, %f, %f)", e.type, i, e.o.x, e.o.y, e.o.z);
+                conoutf("warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
                 //et->getents().pop();
             };
         };
