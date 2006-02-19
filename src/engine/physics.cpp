@@ -627,13 +627,14 @@ bool move(dynent *d, vec &dir)
             /* don't fall if the player is trapped and not moving */
             else if(d->physstate != PHYS_TRAPPED || fabs(dir.x) > 1e-3f || fabs(dir.y) > 1e-3f || fabs(dir.z) > 1e-3f) 
             {
-                vec moved(d->o);
-                d->o.z -= STAIRHEIGHT + 0.1f;
-                if(d->physstate >= PHYS_FLOOR && d->physstate != PHYS_STEP_UP && dir.z <= 0.0f && (d->move || d->strafe) && !collide(d, vec(0, 0, -1)) && wall.z >= 0)
-                    d->physstate = PHYS_STEP_DOWN;
-                else
-                    d->physstate = PHYS_FALL;
-                d->o = moved;
+                if(d->physstate >= PHYS_FLOOR && d->physstate != PHYS_STEP_UP && dir.z <= 0.0f && (d->move || d->strafe))
+                {
+                    vec moved(d->o);
+                    d->o.z -= STAIRHEIGHT + 0.1f;
+                    d->physstate = collide(d, vec(0, 0, -1)) ? PHYS_FALL : PHYS_STEP_DOWN;
+                    d->o = moved;
+                }
+                else d->physstate = PHYS_FALL;
             };
             return !collided;
         };
