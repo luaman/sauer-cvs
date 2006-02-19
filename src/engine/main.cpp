@@ -296,13 +296,13 @@ int main(int argc, char **argv)
     computescreen("initializing...");
     inbetweenframes = true;
     particleinit();
-   
+  
+    log("sound");
+    initsound();
+        
     log("world");
     player = cl->iterdynents(0);
     empty_world(7, true);
-
-    log("sound");
-    initsound();
 
     log("cfg");
     newmenu("frags\tpj\tping\tteam\tname");
