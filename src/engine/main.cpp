@@ -296,19 +296,19 @@ int main(int argc, char **argv)
     computescreen("initializing...");
     inbetweenframes = true;
     particleinit();
-  
-    log("sound");
-    initsound();
-        
+ 
     log("world");
     player = cl->iterdynents(0);
     empty_world(7, true);
 
+    log("sound");
+    initsound();
+        
     log("cfg");
     newmenu("frags\tpj\tping\tteam\tname");
     newmenu("ping\tplr\tserver");
     exec("data/keymap.cfg");
-    exec("data/default_map_settings.cfg");
+//    exec("data/default_map_settings.cfg");
     exec("data/menus.cfg");
     exec("data/sounds.cfg");
     exec("servers.cfg");

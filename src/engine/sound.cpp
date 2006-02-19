@@ -9,7 +9,7 @@
 
 VARP(soundvol, 0, 255, 255);
 VARP(musicvol, 0, 128, 255);
-bool nosound = false;
+bool nosound = true;
 
 #define MAXCHAN 32
 #define SOUNDFREQ 22050
@@ -59,7 +59,7 @@ void initsound()
         if(Mix_OpenAudio(SOUNDFREQ, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
-            nosound = true;
+            return;
         };
 	    Mix_AllocateChannels(MAXCHAN);	
     #else
@@ -67,9 +67,10 @@ void initsound()
         if(!FSOUND_Init(SOUNDFREQ, MAXCHAN, FSOUND_INIT_GLOBALFOCUS))
         {
             conoutf("sound init failed (FMOD): %d", FSOUND_GetError());
-            nosound = true;
+            return;
         };
     #endif
+    nosound = false;
 };
 
 void music(char *name)
