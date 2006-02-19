@@ -568,7 +568,7 @@ bool move(dynent *d, vec &dir)
             /* check for a floor within the stair limit, and try stepping if found */
             vec obstacle(wall);
             d->o.z -= (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-            if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0 || wall.z >= FLOORZ))
+            if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0.0f || wall.z >= FLOORZ))
             {
                 d->o = old;
                 if(trystep(d, dir, d->o.z - d->eyeheight + (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT))) return true;
@@ -581,9 +581,9 @@ bool move(dynent *d, vec &dir)
         if(wall.z < FLOORZ)
         {
             vec wdir(wall), wvel(wall);
-            if(wall.z < 0.0f && dir.z > 0.0f)
+            if(wall.z < 0.0f)
             {
-                dir.z = d->vel.z = 0.0f;
+                if(dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
                 wdir.z = wvel.z = 0.0f;
             };
             wdir.mul(wall.dot(dir));
