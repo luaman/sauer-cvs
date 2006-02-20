@@ -425,7 +425,7 @@ bool mmcollide(dynent *d, const vec &dir, octaentities &oc)               // col
     return true;
 };
 
-bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int size) // collide with cube geometry
+bool cubecollide(dynent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
     if(isentirelysolid(c) || isclipped(c.material))
     {
@@ -452,15 +452,15 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
         {
             float dist = p.p[i].dist(o) - (fabs(p.p[i].x*r)+fabs(p.p[i].y*r)+fabs(p.p[i].z*zr));
             if(dist>0) return true;
-            if(dist>m && (dir.iszero() || p.p[i].dot(dir)<0)) { w = &p.p[i]; m = dist; };
+            if(dist>m && (dir.iszero() || p.p[i].dot(dir)<-cutoff)) { w = &p.p[i]; m = dist; };
         };
         wall = *w;
-        if(wall.iszero()) return false;
+        if(wall.iszero()) return true;
     };
     return false;
 };
 
-bool octacollide(dynent *d, const vec &dir, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
+bool octacollide(dynent *d, const vec &dir, float cutoff, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
 {
     loopoctabox(cor, size, bo, bs)
     {
@@ -468,24 +468,24 @@ bool octacollide(dynent *d, const vec &dir, ivec &bo, ivec &bs, cube *c, ivec &c
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children)
         {
-            if(!octacollide(d, dir, bo, bs, c[i].children, o, size>>1)) return false;
+            if(!octacollide(d, dir, cutoff, bo, bs, c[i].children, o, size>>1)) return false;
         }
         else if(c[i].material!=MAT_NOCLIP && (!isempty(c[i]) || isclipped(c[i].material)))
         {
-            if(!cubecollide(d, dir, c[i], o.x, o.y, o.z, size)) return false;
+            if(!cubecollide(d, dir, cutoff, c[i], o.x, o.y, o.z, size)) return false;
         };
     };
     return true;
 };
 
 // all collision happens here
-bool collide(dynent *d, const vec &dir)
+bool collide(dynent *d, const vec &dir, float cutoff)
 {
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
     bs.add(2);  // guard space for rounding errors
-    if(!octacollide(d, dir, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
+    if(!octacollide(d, dir, cutoff, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
     loopi(cl->numdynents())
@@ -554,7 +554,7 @@ void switchfloor(dynent *d, vec &dir, const vec &floor)
 
 bool move(dynent *d, vec &dir)
 {
-// TODO: optimize out the collide calls?
+// TODO: refactor this into more manageable functions and optimize out the collide calls if possible?
     bool collided = false;
     vec old(d->o);
     if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && (d->move || d->strafe))
@@ -573,7 +573,7 @@ bool move(dynent *d, vec &dir)
             /* check for a floor within the stair limit, and try stepping if found */
             vec obstacle(wall);
             d->o.z -= (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ)
+            if(!collide(d, vec(0, 0, -1), FLOORZ))
             {
                 d->o = old;
                 if(trystep(d, dir, d->o.z - d->eyeheight + (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT))) return true;
@@ -608,7 +608,7 @@ bool move(dynent *d, vec &dir)
             vec moved(d->o);
             if(d->physstate == PHYS_LEDGE) d->o.z -= 0.1f;
             else d->o.z -= found ? min(d->o.z - d->eyeheight - fz - 0.1f, d->radius+0.1f) : d->radius+0.1f;
-            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ && (d->physstate == PHYS_LEDGE || wall.z < 1.0f))
+            if(!collide(d, vec(0, 0, -1), FLOORZ) && (d->physstate == PHYS_LEDGE || wall.z < 1.0f))
                 collided = true;
             d->o = moved;
         };
@@ -636,7 +636,7 @@ bool move(dynent *d, vec &dir)
                 {
                     vec moved(d->o);
                     d->o.z -= STAIRHEIGHT + 0.1f;
-                    d->physstate = collide(d, vec(0, 0, -1)) ? PHYS_FALL : PHYS_STEP_DOWN;
+                    d->physstate = collide(d, vec(0, 0, -1), FLOORZ) ? PHYS_FALL : PHYS_STEP_DOWN;
                     d->o = moved;
                 }
                 else d->physstate = PHYS_FALL;
