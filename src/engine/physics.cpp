@@ -391,15 +391,15 @@ bool rectcollide(dynent *d, const vec &dir, const vec &o, float xr, float yr,  f
     float az = fabs(s.z)-zr;
     if(ax>0 || ay>0 || az>0) return true;
     wall.x = wall.y = wall.z = 0;
-#define TRYCOLLIDE(dim) \
+#define TRYCOLLIDE(dim, P, N) \
     { \
         walldistance = a ## dim; \
-        if(s.dim>0) { if(dir.iszero() || dir.dim<0) { wall.dim = 1; return false; }; } \
-        else if(dir.iszero() || dir.dim>0) { wall.dim = -1; return false; }; \
+        if(s.dim>0) { if(dir.iszero() || dir.dim<0) { if(P) wall.dim = 1; return false; }; } \
+        else if(dir.iszero() || dir.dim>0) { if(N) wall.dim = -1; return false; }; \
     }
-    if(ax>ay && ax>az) TRYCOLLIDE(x);
-    if(ay>az) TRYCOLLIDE(y);
-    TRYCOLLIDE(z);
+    if(ax>ay && ax>az) TRYCOLLIDE(x, true, true);
+    if(ay>az) TRYCOLLIDE(y, true, true);
+    TRYCOLLIDE(z, az >= -d->eyeheight/2, true);
     return collideonly;
 };
 
