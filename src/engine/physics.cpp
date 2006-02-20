@@ -378,7 +378,7 @@ void floortest()
 
 COMMAND(floortest, ARG_NONE);
 
-bool rectcollide(dynent *d, const vec &o, float xr, float yr,  float hi, float lo)
+bool rectcollide(dynent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, bool collideonly = true)
 {
     vec s(d->o);
     s.sub(o);
@@ -391,19 +391,25 @@ bool rectcollide(dynent *d, const vec &o, float xr, float yr,  float hi, float l
     float az = fabs(s.z)-zr;
     if(ax>0 || ay>0 || az>0) return true;
     wall.x = wall.y = wall.z = 0;
-    if(ax>ay && ax>az)  { wall.x = s.x>0 ? 1 : -1; walldistance = ax; }
-    else if(ay>az)      { wall.y = s.y>0 ? 1 : -1; walldistance = ay; }
-    else                { wall.z = s.z>0 ? 1 : -1; walldistance = az; }
-    return false;
+#define TRYCOLLIDE(dim) \
+    { \
+        walldistance = a ## dim; \
+        if(s.dim>0) { if(dir.iszero() || dir.dim<0) { wall.dim = 1; return false; }; } \
+        else if(dir.iszero() || dir.dim>0) { wall.dim = -1; return false; }; \
+    }
+    if(ax>ay && ax>az) TRYCOLLIDE(x);
+    if(ay>az) TRYCOLLIDE(y);
+    TRYCOLLIDE(z);
+    return collideonly;
 };
 
-bool plcollide(dynent *d, dynent *o)    // collide with player or monster
+bool plcollide(dynent *d, const vec &dir, dynent *o)    // collide with player or monster
 {
     if(d->state!=CS_ALIVE || o->state!=CS_ALIVE) return true;
-    return rectcollide(d, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight);
+    return rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight);
 };
 
-bool mmcollide(dynent *d, octaentities &oc)               // collide with a mapmodel
+bool mmcollide(dynent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
 {
     loopv(oc.list)
     {
@@ -414,7 +420,7 @@ bool mmcollide(dynent *d, octaentities &oc)               // collide with a mapm
         vec o(e.o);
         o.z += float(mmi.zoff+e.attr3);
         float radius = float(mmi.rad);
-        if(!rectcollide(d, o, radius, radius, float(mmi.h), 0.0f)) return false;
+        if(!rectcollide(d, dir, o, radius, radius, float(mmi.h), 0.0f)) return false;
     };
     return true;
 };
@@ -426,7 +432,7 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
         vec r = vec(s2, s2, s2);
-        return rectcollide(d, o, r.x, r.y, r.z, r.z) || (!dir.iszero() && wall.dot(dir) >= 0.0f);
+        return rectcollide(d, dir, o, r.x, r.y, r.z, r.z);
     };
 
     setcubeclip(c, x, y, z, size);
@@ -437,7 +443,7 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
 
-    if(rectcollide(d, p.o, p.r.x, p.r.y, p.r.z, p.r.z)) return true;
+    if(rectcollide(d, dir, p.o, p.r.x, p.r.y, p.r.z, p.r.z, !p.size)) return true;
 
     if(p.size)
     {
@@ -446,11 +452,11 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
         {
             float dist = p.p[i].dist(o) - (fabs(p.p[i].x*r)+fabs(p.p[i].y*r)+fabs(p.p[i].z*zr));
             if(dist>0) return true;
-            if(dist>m) { w = &p.p[i]; m = dist; };
+            if(dist>m && (dir.iszero() || p.p[i].dot(dir)<0)) { w = &p.p[i]; m = dist; };
         };
         wall = *w;
+        if(wall.iszero()) return false;
     };
-    if(!dir.iszero() && wall.dot(dir) >= 0.0f) return true;
     return false;
 };
 
@@ -458,7 +464,7 @@ bool octacollide(dynent *d, const vec &dir, ivec &bo, ivec &bs, cube *c, ivec &c
 {
     loopoctabox(cor, size, bo, bs)
     {
-        if(c[i].ents) if(!mmcollide(d, *c[i].ents)) return false;
+        if(c[i].ents) if(!mmcollide(d, dir, *c[i].ents)) return false;
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children)
         {
@@ -485,7 +491,7 @@ bool collide(dynent *d, const vec &dir)
     loopi(cl->numdynents())
     {
         dynent *o = cl->iterdynents(i);
-        if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d!=camera1) && !plcollide(d, o)) return false;
+        if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d!=camera1) && !plcollide(d, dir, o)) return false;
     };
 
     return true;
@@ -567,7 +573,7 @@ bool move(dynent *d, vec &dir)
             /* check for a floor within the stair limit, and try stepping if found */
             vec obstacle(wall);
             d->o.z -= (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-            if(!collide(d, vec(0, 0, -1)) && (wall.z <= 0.0f || wall.z >= FLOORZ))
+            if(!collide(d, vec(0, 0, -1)) && wall.z >= FLOORZ)
             {
                 d->o = old;
                 if(trystep(d, dir, d->o.z - d->eyeheight + (wall.z >= FLOORZ && wall.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT))) return true;
