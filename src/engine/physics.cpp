@@ -426,7 +426,7 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
         vec r = vec(s2, s2, s2);
-        return rectcollide(d, o, r.x, r.y, r.z, r.z) || wall.dot(dir) > 0.0f;
+        return rectcollide(d, o, r.x, r.y, r.z, r.z) || (dir.squaredlen() > 0.0f && wall.dot(dir) >= 0.0f);
     };
 
     setcubeclip(c, x, y, z, size);
@@ -448,10 +448,9 @@ bool cubecollide(dynent *d, const vec &dir, cube &c, int x, int y, int z, int si
             if(dist>0) return true;
             if(dist>m) { w = &p.p[i]; m = dist; };
         };
-        if(w->dot(dir) > 0.0f) return true;
         wall = *w;
     };
-    if(wall.dot(dir) > 0.0f) return true;
+    if(dir.squaredlen() > 0.0f && wall.dot(dir) >= 0.0f) return true;
     return false;
 };
 
