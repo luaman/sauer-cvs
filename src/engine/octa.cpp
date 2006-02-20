@@ -12,6 +12,7 @@ cube *newcubes(uint face)
     loopi(8)
     {
         c->material = MAT_AIR;
+        c->visible = 0;
         c->children = NULL;
         c->va = NULL;
         setfaces(*c, face);

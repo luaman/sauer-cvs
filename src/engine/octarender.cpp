@@ -511,8 +511,10 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 
     freeclipplanes(c);                          // physics planes based on rendering
 
+    c.visible = 0;
     loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube))
     {
+        if(touchingface(c, i)) c.visible |= 1<<i;
         cstats[csi].nface++;
 
         if(c.texture[i] == DEFAULT_SKY)
