@@ -507,18 +507,15 @@ bool move(dynent *d, vec &dir)
     vec foo(d->o);
     if(!collide(d, dir))
     {
-        d->o = old;
         obstacle = wall;
-        if(d->move || d->strafe)
-        { 
-            d->o.z -= STAIRHEIGHT;
-            if(d->physstate >= PHYS_SLOPE && (d->physstate != PHYS_STEP_UP || !collide(d, vec(0, 0, -1), SLOPEZ)))
-            {
-                d->o = old;
-                if(trystepup(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
-            }
-            else d->o = old;
-        };
+        d->o = old;
+        d->o.z -= STAIRHEIGHT;
+        if(d->physstate >= PHYS_SLOPE && (d->physstate != PHYS_STEP_UP || !collide(d, vec(0, 0, -1), SLOPEZ)))
+        {
+            d->o = old;
+            if(trystepup(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+        }
+        else d->o = old;
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
         collided = true;
