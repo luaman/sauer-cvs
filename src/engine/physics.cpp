@@ -305,80 +305,6 @@ const float JUMPVEL = 110.0f;
 const float GRAVITY = 90.0f;
 const float STEPSPEED = 1.5f;
 
-bool findfloor(dynent *d, vec &floor, float &height)
-{
-    static vec down(0, 0, -1);
-    float reach = max(STAIRHEIGHT*2.0f+0.1f, d->radius+0.1f);
-    vec o(d->o);
-    o.z -= d->eyeheight;
-    for(int cx = int(o.x), cy = int(o.y), cz = int(o.z) + 1; cz >= o.z - reach; cz = lu.z)
-    {
-        cz--;
-        cube &ce = lookupcube(cx, cy, cz, -octaentsize);
-        float dent = disttoent(ce.ents, NULL, o, down);
-        if(dent <= reach)
-        {
-            floor = vec(0, 0, 1);
-            height = o.z - dent;
-            return true;
-        };
-// TODO: fold this lookupcube call and the above call together somehow
-        cube &c = lookupcube(cx, cy, cz);
-        if(lu.z > cz) return false;
-        if(c.material == MAT_NOCLIP) continue;
-        if(isentirelysolid(c) || isclipped(c.material))
-        {
-            floor = vec(0, 0, 1);
-            height = float(lu.z + lusize);
-            return height < d->o.z + d->aboveeye;
-        };
-        if(isempty(c)) continue;
-        setcubeclip(c, lu.x, lu.y, lu.z, lusize);
-        clipplanes &p = *c.clip;
-        if(!pointoverbox(o, p.o, p.r)) continue;
-        float bz = p.o.z + p.r.z;
-        if(bz < o.z - reach) return false;
-        floor = vec(0, 0, 1);
-        height = bz;
-        loopi(p.size)
-        {
-            const plane &f = p.p[i];
-            if(f.z <= 0)
-            {
-                /* check if the player is outside the plane */
-                float dist = o.x*f.x + o.y*f.y + cz*f.z + f.offset;
-                if(dist > 0) goto nextcube;
-                else continue;
-            };
-
-            float fz = f.zintersect(o);
-            if(fz < lu.z) goto nextcube;
-            if(fz < o.z - reach) return false;
-            if(fz < height)
-            {
-                floor = f;
-                height = fz;
-            };
-        };
-        return height < d->o.z + d->aboveeye;
-    nextcube:
-        ;
-    };
-    return false;
-};
-
-void floortest()
-{
-    vec floor;
-    float height;
-    if(findfloor(player, floor, height))
-        printf("FLOOR: (%f,%f,%f), %f vs. %f\n", floor.x, floor.y, floor.z, height, player->o.z - player->eyeheight);
-    else
-        printf ("FALLING!\n");
-};
-
-COMMAND(floortest, ARG_NONE);
-
 bool rectcollide(dynent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true)
 {
     if(collideonly && !visible) return true;
@@ -400,7 +326,7 @@ bool rectcollide(dynent *d, const vec &dir, const vec &o, float xr, float yr,  f
     }
     if(ax>ay && ax>az) TRYCOLLIDE(x, visible&(1<<O_LEFT), visible&(1<<O_RIGHT));
     if(ay>az) TRYCOLLIDE(y, visible&(1<<O_BACK), visible&(1<<O_FRONT));
-    TRYCOLLIDE(z, visible&(1<<O_BOTTOM), az >= -d->eyeheight/2 && (visible&(1<<O_TOP)));
+    TRYCOLLIDE(z, visible&(1<<O_BOTTOM), az >= -d->eyeheight/2.0f && (visible&(1<<O_TOP)));
     return collideonly;
 };
 
@@ -433,7 +359,7 @@ bool cubecollide(dynent *d, const vec &dir, float cutoff, cube &c, int x, int y,
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
         vec r = vec(s2, s2, s2);
-        return rectcollide(d, dir, o, r.x, r.y, r.z, r.z, c.visible);
+        return rectcollide(d, dir, o, r.x, r.y, r.z, r.z, isclipped(c.material) ? 0xFF : c.visible);
     };
 
     setcubeclip(c, x, y, z, size);
@@ -453,10 +379,15 @@ bool cubecollide(dynent *d, const vec &dir, float cutoff, cube &c, int x, int y,
         {
             float dist = p.p[i].dist(o) - (fabs(p.p[i].x*r)+fabs(p.p[i].y*r)+fabs(p.p[i].z*zr));
             if(dist>0) return true;
-            if(dist>m && (dir.iszero() || p.p[i].dot(dir)<-cutoff)) { w = &p.p[i]; m = dist; };
+            if(dist>m && (dir.iszero() || (p.p[i].dot(dir)<-cutoff && (dir.z>=0.0f || p.p[i].z<=0.0f || dist>=-d->eyeheight/2.0f)))) 
+            { 
+                w = &p.p[i]; 
+                m = dist; 
+            };
         };
+        if(w->iszero()) return true;
         wall = *w;
-        if(wall.iszero()) return true;
+        walldistance = m;
     };
     return false;
 };
@@ -506,18 +437,8 @@ bool trystep(dynent *d, vec &dir, float maxstep)
     d->o.z += maxstep + 0.1f;
     if(!collide(d))
     {
-        d->o = old;
-        float fz;
-        vec floor;
-        /* get a more accurate floor distance and try again */
-        if(!findfloor(d, floor, fz) || floor.z < SLOPEZ || old.z - d->eyeheight - fz > maxstep) return false;
-        d->o.add(dir);
-        d->o.z = fz + d->eyeheight + maxstep + 0.1f;
-        if(!collide(d))
-        {
-            d->o = old; 
-            return false;
-        };
+        d->o = old; 
+        return false;
     };
     /* try stepping up */
     d->o = old;
@@ -561,11 +482,13 @@ bool move(dynent *d, vec &dir)
     };
     bool collided = false;
     vec obstacle;
+    float obstacledist;
     d->o.add(dir);
     if(!collide(d, dir))
     {
         d->o = old;
         obstacle = wall;
+        obstacledist = walldistance;
         if((d->move || d->strafe) && d->physstate >= PHYS_SLOPE)
         {
             if(trystep(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
