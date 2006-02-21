@@ -26,6 +26,7 @@ struct soundloc { vec loc; bool inuse; } soundlocs[MAXCHAN];
     #define MAXVOL 255
     FMUSIC_MODULE *mod = NULL;
     FSOUND_STREAM *stream = NULL;
+    int musicchan;
 #endif
 
 void stopsound()
@@ -73,41 +74,60 @@ void initsound()
     nosound = false;
 };
 
-void music(char *name)
+string musicdonecmd;
+
+void musicdone()
+{
+#ifdef USE_MIXER
+    if(mod) Mix_FreeMusic(mod);
+#else
+    if(mod) FMUSIC_FreeSong(mod);
+    if(stream) FSOUND_Stream_Close(stream);
+#endif
+    mod = NULL;
+    stream = NULL;
+    if(musicdonecmd[0]) execute(musicdonecmd);
+};
+
+void music(char *name, char *cmd)
 {
     if(nosound) return;
     stopsound();
     if(soundvol && musicvol)
     {
+        if(cmd) s_strcpy(musicdonecmd, cmd);
+        else musicdonecmd[0] = 0;
         string sn;
         s_strcpy(sn, "packages/");
         s_strcat(sn, name);
         #ifdef USE_MIXER
             if(mod = Mix_LoadMUS(path(sn)))
             {
-                Mix_PlayMusic(mod, -1);
+                Mix_HookMusicFinished(cmd ? musicdone : NULL);
+                Mix_PlayMusic(mod, cmd ? 0 : -1);
                 Mix_VolumeMusic((musicvol*MAXVOL)/255);
-            };
+            }
         #else
             if(mod = FMUSIC_LoadSong(path(sn)))
             {
                 FMUSIC_PlaySong(mod);
                 FMUSIC_SetMasterVolume(mod, musicvol);
+                FMUSIC_SetLooping(mod, cmd ? FALSE : TRUE);
             }
-            else if(stream = FSOUND_Stream_Open(path(sn), FSOUND_LOOP_NORMAL, 0, 0))
+            else if(stream = FSOUND_Stream_Open(path(sn), cmd ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0))
             {
-                int chan = FSOUND_Stream_Play(FSOUND_FREE, stream);
-                if(chan>=0) { FSOUND_SetVolume(chan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(chan, false); };
+                musicchan = FSOUND_Stream_Play(FSOUND_FREE, stream);
+                if(musicchan>=0) { FSOUND_SetVolume(chan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(chan, false); };
             }
+        #endif
             else
             {
                 conoutf("could not play music: %s", sn);
             };
-        #endif
     };
 };
 
-COMMAND(music, ARG_1STR);
+COMMAND(music, ARG_2STR);
 
 #ifdef USE_MIXER
 vector<Mix_Chunk *> samples;
@@ -187,6 +207,10 @@ void updatevol()
                 updatechanvol(i, &soundlocs[i].loc);
             else soundlocs[i].inuse = false;
     };
+#ifndef USE_MIXER
+    if(mod && FMUSIC_IsFinished(mod)) musicdone();
+    else if(stream && !FSOUND_IsPlaying(musicchan)) musicdone();
+#endif
 };
 
 int soundsatonce = 0, lastsoundmillis = 0;
