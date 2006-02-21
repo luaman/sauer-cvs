@@ -1,4 +1,5 @@
 gilt:
+- removeoctaentity crash
 - LOD: improved lod-remip
 - other tools that are geared towards easier editing of heightfields/terrain/rocks
 - "editing not in view" sometimes obstructs editing

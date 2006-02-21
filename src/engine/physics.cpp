@@ -299,7 +299,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 vec wall; // just the normal vectors.
 float walldistance;
 const float STAIRHEIGHT = 4.0f;
-const float FLOORZ = 0.867;
+const float FLOORZ = 0.867f;
 const float SLOPEZ = 0.5f;
 const float JUMPVEL = 110.0f;
 const float GRAVITY = 90.0f;
