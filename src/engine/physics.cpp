@@ -385,9 +385,8 @@ bool cubecollide(dynent *d, const vec &dir, float cutoff, cube &c, int x, int y,
                 m = dist; 
             };
         };
-        if(w->iszero()) return true;
         wall = *w;
-        walldistance = m;
+        if(wall.iszero()) return true;
     };
     return false;
 };
@@ -433,12 +432,15 @@ bool trystep(dynent *d, vec &dir, float maxstep)
 {
     vec old(d->o);
     /* check if there is space atop the stair to move to */
-    d->o.add(dir);
-    d->o.z += maxstep + 0.1f;
-    if(!collide(d))
+    if(d->physstate != PHYS_STEP_UP)
     {
-        d->o = old; 
-        return false;
+        d->o.add(dir);
+        d->o.z += maxstep + 0.1f;
+        if(!collide(d))
+        {
+            d->o = old; 
+            return false;
+        };
     };
     /* try stepping up */
     d->o = old;
@@ -482,13 +484,11 @@ bool move(dynent *d, vec &dir)
     };
     bool collided = false;
     vec obstacle;
-    float obstacledist;
     d->o.add(dir);
     if(!collide(d, dir))
     {
         d->o = old;
         obstacle = wall;
-        obstacledist = walldistance;
         if((d->move || d->strafe) && d->physstate >= PHYS_SLOPE)
         {
             if(trystep(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
