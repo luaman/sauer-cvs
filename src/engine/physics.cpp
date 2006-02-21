@@ -301,9 +301,9 @@ float walldistance;
 const float STAIRHEIGHT = 4.0f;
 const float FLOORZ = 0.867f;
 const float SLOPEZ = 0.5f;
-const float JUMPVEL = 110.0f;
+const float JUMPVEL = 120.0f;
 const float GRAVITY = 90.0f;
-const float STEPSPEED = 1.5f;
+const float STEPSPEED = 1.0f;
 
 bool rectcollide(dynent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true)
 {
@@ -428,7 +428,7 @@ bool collide(dynent *d, const vec &dir, float cutoff)
     return true;
 };
 
-bool trystep(dynent *d, vec &dir, float maxstep)
+bool trystepup(dynent *d, vec &dir, float maxstep)
 {
     vec old(d->o);
     /* check if there is space atop the stair to move to */
@@ -471,15 +471,34 @@ void switchfloor(dynent *d, vec &dir, const vec &floor)
     if(vfmag > 0) d->vel.mul(vmag/vfmag);
 };
 
+bool trystepdown(dynent *d, vec &dir, float step, float a, float b)
+{
+        vec old(d->o);
+        vec dv(dir.x*a/b, dir.y*a/b, -step*(b-a)/b), v(dv);
+        v.mul(STAIRHEIGHT/(step*(b-a)/b));
+        d->o.add(v);
+        if(!collide(d, vec(0, 0, -1), SLOPEZ))
+        {
+            d->o = old;
+            d->o.add(dv);
+            if(collide(d, vec(0, 0, -1))) return true;
+        };
+        d->o = old;
+        return false;
+};
+    
 bool move(dynent *d, vec &dir)
 {
 // TODO: refactor this into more manageable functions and optimize out the collide calls if possible?
     vec old(d->o);
     if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && (d->move || d->strafe))
     {
-        d->o.z -= dir.magnitude()*STEPSPEED;
-        if(collide(d, vec(0, 0, -1)))
-            return true;
+        float step = dir.magnitude()*STEPSPEED;
+        if(trystepdown(d, dir, step, 2, 3)) return true;
+        if(trystepdown(d, dir, step, 1, 2)) return true;
+        if(trystepdown(d, dir, step, 1, 3)) return true;
+        d->o.z -= step;
+        if(collide(d, vec(0, 0, -1))) return true;
         d->o = old;
     };
     bool collided = false;
@@ -490,8 +509,8 @@ bool move(dynent *d, vec &dir)
         d->o = old;
         obstacle = wall;
         if((d->move || d->strafe) && d->physstate >= PHYS_SLOPE)
-        {
-            if(trystep(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+        { 
+            if(trystepup(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
         };
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
@@ -531,7 +550,7 @@ bool move(dynent *d, vec &dir)
             floor = wall;
             if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
         };
-        if(collided && obstacle.z > floor.z)
+        if(collided && obstacle.z > (floor.z == 1.0f ? 0.0f : floor.z))
         {
             floor = obstacle;
             if(floor.z >= SLOPEZ) found = true;
