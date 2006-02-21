@@ -200,6 +200,9 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("ambient", hdr.ambient);
     setvar("fullbright", 0);
 
+    show_out_of_renderloop_progress(0, "clearing world...");
+    freeocta(worldroot);
+
     show_out_of_renderloop_progress(0, "loading entities...");
     et->getents().setsize(0);
 
@@ -225,9 +228,6 @@ void load_world(char *mname)        // still supports all map formats that have 
         };
     };
 
-    show_out_of_renderloop_progress(0, "clearing world...");
-    freeocta(worldroot);
-
     show_out_of_renderloop_progress(0, "loading octree...");
     worldroot = loadchildren(f);
 
@@ -239,7 +239,7 @@ void load_world(char *mname)        // still supports all map formats that have 
 
     resetlightmaps();
     if(hdr.version < 7 || !hdr.lightmaps) clearlights();
-    else 
+    else
     {
         loopi(hdr.lightmaps)
         {
