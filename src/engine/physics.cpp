@@ -474,8 +474,8 @@ void switchfloor(dynent *d, vec &dir, const vec &floor)
 bool trystepdown(dynent *d, vec &dir, float step, float a, float b)
 {
         vec old(d->o);
-        vec dv(dir.x*a/b, dir.y*a/b, -step*(b-a)/b), v(dv);
-        v.mul(STAIRHEIGHT/(step*(b-a)/b));
+        vec dv(dir.x*a, dir.y*a, -step*b), v(dv);
+        v.mul(STAIRHEIGHT/(step*b));
         d->o.add(v);
         if(!collide(d, vec(0, 0, -1), SLOPEZ))
         {
@@ -486,7 +486,7 @@ bool trystepdown(dynent *d, vec &dir, float step, float a, float b)
         d->o = old;
         return false;
 };
-    
+
 bool move(dynent *d, vec &dir)
 {
 // TODO: refactor this into more manageable functions and optimize out the collide calls if possible?
@@ -494,9 +494,9 @@ bool move(dynent *d, vec &dir)
     if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && (d->move || d->strafe))
     {
         float step = dir.magnitude()*STEPSPEED;
-        if(trystepdown(d, dir, step, 2, 3)) return true;
-        if(trystepdown(d, dir, step, 1, 2)) return true;
-        if(trystepdown(d, dir, step, 1, 3)) return true;
+        if(trystepdown(d, dir, step, 0.75f, 0.25f)) return true;
+        if(trystepdown(d, dir, step, 0.5f, 0.5f)) return true;
+        if(trystepdown(d, dir, step, 0.25f, 0.75f)) return true;
         d->o.z -= step;
         if(collide(d, vec(0, 0, -1))) return true;
         d->o = old;
@@ -504,13 +504,20 @@ bool move(dynent *d, vec &dir)
     bool collided = false;
     vec obstacle;
     d->o.add(dir);
+    vec foo(d->o);
     if(!collide(d, dir))
     {
         d->o = old;
         obstacle = wall;
-        if((d->move || d->strafe) && d->physstate >= PHYS_SLOPE)
+        if(d->move || d->strafe)
         { 
-            if(trystepup(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+            d->o.z -= STAIRHEIGHT;
+            if(d->physstate >= PHYS_SLOPE && (d->physstate != PHYS_STEP_UP || !collide(d, vec(0, 0, -1), SLOPEZ)))
+            {
+                d->o = old;
+                if(trystepup(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+            }
+            else d->o = old;
         };
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
