@@ -447,11 +447,7 @@ bool trystepup(dynent *d, vec &dir, float maxstep)
     d->o.z += dir.magnitude()*STEPSPEED;
     if(collide(d, vec(0, 0, 1)))
     {
-        if(d->physstate >= PHYS_FLOOR)
-        {
-            d->physstate = PHYS_STEP_UP;
-            d->floor = vec(0, 0, 1);
-        };
+        if(d->physstate >= PHYS_FLOOR) d->physstate = PHYS_STEP_UP;
         return true;
     };
     d->o = old;
@@ -509,7 +505,7 @@ bool move(dynent *d, vec &dir)
     {
         obstacle = wall;
         d->o = old;
-        d->o.z -= STAIRHEIGHT;
+        d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
         if(d->physstate >= PHYS_SLOPE && (d->physstate != PHYS_STEP_UP || !collide(d, vec(0, 0, -1), SLOPEZ)))
         {
             d->o = old;
