@@ -165,9 +165,13 @@ paste</pre>
 		<pre>trigger N T</pre>
 		Triggers trigger N of type T, as if the player had picked up the equivalent 
 		"trigger" entity (see below).
-		<pre>music name</pre>
+        <pre>music name</pre>
+		<pre>music name ondone</pre>
 		Plays song "name" (with "packages" as base dir). This command is best used from 
-		map cfg files or triggers.
+		map cfg files or triggers. Evaluates ondone when the song is finished, or just keeps
+        looping the song if ondone is missing. Example:
+        <br>
+        <code>music "songs/music.ogg" [ echo "Song dong playing!" ]</code>
 		<pre>N = registersound name</pre>
 		Registers sound "name" with cube (see for example data/sounds.cfg). This 
 		command returns the sound number N, which is assigned from 0 onwards, and which 
