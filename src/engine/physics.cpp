@@ -301,7 +301,7 @@ float walldistance;
 const float STAIRHEIGHT = 4.0f;
 const float FLOORZ = 0.867f;
 const float SLOPEZ = 0.5f;
-const float JUMPVEL = 120.0f;
+const float JUMPVEL = 125.0f;
 const float GRAVITY = 90.0f;
 const float STEPSPEED = 1.0f;
 
@@ -506,10 +506,11 @@ bool move(dynent *d, vec &dir)
         obstacle = wall;
         d->o = old;
         d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-        if(d->physstate >= PHYS_SLOPE && (d->physstate != PHYS_STEP_UP || !collide(d, vec(0, 0, -1), SLOPEZ)))
+        if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || !collide(d, vec(0, 0, -1), SLOPEZ))
         {
             d->o = old;
-            if(trystepup(d, dir, d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+            float floorz = (d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor.z : wall.z);
+            if(trystepup(d, dir, floorz < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
         }
         else d->o = old;
         /* can't step over the obstacle, so just slide against it */
