@@ -188,15 +188,25 @@ VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 
 int islittleendian = 1;
 
-int sleepwait = 0;
+struct sleepcmd
+{
+    int millis;
+    string command;
+    sleepcmd() : millis(0) {};
+};
+
+vector<sleepcmd> sleepcmds;
+ICOMMAND(sleep, 2, { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s_strcpy(s.command, args[1]); });
+
+/*int sleepwait = 0;
 string sleepcmd;
-ICOMMAND(sleep, 2, { sleepwait = atoi(args[0])+lastmillis; s_strcpy(sleepcmd, args[1]); });
+ICOMMAND(sleep, 2, { sleepwait = atoi(args[0])+lastmillis; s_strcpy(sleepcmd, args[1]); });*/
 
 void estartmap(char *name)
 {
     ///if(!editmode) toggleedit();
     gamespeed = 100;
-    sleepwait = 0;
+    sleepcmds.setsize(0);
     cancelsel();
     pruneundos();
     setvar("wireframe", 0);
@@ -332,8 +342,17 @@ int main(int argc, char **argv)
         curtime = (millis-curmillis)*gamespeed/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
-        if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
-        if(sleepwait && lastmillis>sleepwait) { execute(sleepcmd); sleepwait = 0; };
+        if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis); 
+        loopv(sleepcmds) 
+        { 
+            sleepcmd &s = sleepcmds[i]; 
+            if(s.millis && lastmillis>s.millis)
+            {
+                execute(s.command);
+                sleepcmds.remove(i);
+                i--;
+            };
+        };
         
         lastmillis += curtime;
         curmillis = millis;
