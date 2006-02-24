@@ -62,15 +62,38 @@ void sortmenu(int start, int num)
 
 void refreshservers();
 
+void drawarrow(int dir, int x, int y, int size, int r = 255, int g = 255, int b = 255)
+{
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glColor3ub(r, g, b);
+
+    glBegin(GL_POLYGON);
+    glVertex2i(x, dir ? y+size : y);
+    glVertex2i(x+size/2, dir ? y : y+size);
+    glVertex2i(x+size, dir ? y+size : y);
+    glEnd();
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+};
+
 bool rendermenu(int scr_w, int scr_h)
 {
     if(vmenu<0) { menustack.setsize(0); return false; };
     if(vmenu==1) refreshservers();
     gmenu &m = menus[vmenu];
     s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
-    int mdisp = m.items.length();
+    int maxmenu = 16, offset =0;
+    int mdisp = m.items.length(), cdisp = mdisp;
+    if(vmenu)
+    {
+        offset = m.menusel - (m.menusel%maxmenu);
+        mdisp = min(mdisp, maxmenu);
+        cdisp = min(cdisp - offset, maxmenu);
+    };
     int w = 0;
-    loopi(mdisp)
+    loopv(m.items)
     {
         int x = text_width(m.items[i].text);
         if(x>w) w = x;
@@ -83,15 +106,20 @@ bool rendermenu(int scr_w, int scr_h)
     int x = (scr_w*4-w)/2;
     blendbox(x-FONTH/2*3, y-FONTH, x+w+FONTH/2*3, y+h+FONTH, true);
     draw_text(title, x, y);
+    if(vmenu)
+    {
+        if(offset>0) drawarrow(1, x+w+FONTH/2*3-FONTH*5/6, y-FONTH*5/6, FONTH*2/3);
+        if(offset+maxmenu<m.items.length()) drawarrow(0, x+w+FONTH/2*3-FONTH*5/6, y+h+FONTH/6, FONTH*2/3);
+    };
     y += FONTH*2;
     if(vmenu)
     {
-        int bh = y+m.menusel*step;
+        int bh = y+(m.menusel%maxmenu)*step;
         blendbox(x-FONTH, bh-10, x+w+FONTH, bh+FONTH+10, false);
     };
-    loopj(mdisp)
+    loopj(cdisp)
     {
-        draw_text(m.items[j].text, x, y);
+        draw_text(m.items[offset+j].text, x, y);
         y += step;
     };
     return true;

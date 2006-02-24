@@ -249,7 +249,7 @@ void refreshservers()
     checkpings();
     if(lastmillis - lastinfo >= 5000) pingservers();
     servers.sort((void *)sicompare);
-    int maxmenu = 16;
+    //int maxmenu = 16;
     loopv(servers)
     {
         serverinfo &si = servers[i];
@@ -259,11 +259,11 @@ void refreshservers()
         }
         else
         {
-            s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "%s [waiting for response]" : "%s [unknown host]\t", si.name);
+            s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "[waiting for response] %s" : "[unknown host] %s\t", si.name);
         };
         si.full[60] = 0; // cut off too long server descriptions
         menumanual(1, i, si.full);
-        if(!--maxmenu) return;
+//        if(!--maxmenu) return;
     };
 };
 
