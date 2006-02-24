@@ -92,7 +92,11 @@ enet_address_set_host (ENetAddress * address, const char * name)
     if (hostEntry == NULL ||
         hostEntry -> h_addrtype != AF_INET)
     {
-        if(! inet_pton (AF_INET, name, & address -> host))
+#ifdef HAS_INET_PTON
+        if (! inet_pton (AF_INET, name, & address -> host))
+#else
+        if (! inet_aton (name, (struct in_addr *) & address -> host))
+#endif
             return -1;
     }
 
@@ -126,7 +130,15 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
 
     if (hostEntry == NULL)
     {
-        if(inet_ntop (AF_INET, & address -> host, name, nameLength) == NULL)
+#ifdef HAS_INET_NTOP
+        if (inet_ntop (AF_INET, & address -> host, name, nameLength) == NULL)
+#else
+        struct in_addr host = { address -> host };
+        char * addr = inet_ntoa (host);
+        if (addr != NULL)
+            strncpy (name, addr, nameLength);
+        else
+#endif
             return -1;
     }
 
