@@ -259,7 +259,7 @@ void refreshservers()
         }
         else
         {
-            s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "%s [waiting for server response]" : "%s [unknown host]\t", si.name);
+            s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "%s [waiting for response]" : "%s [unknown host]\t", si.name);
         };
         si.full[60] = 0; // cut off too long server descriptions
         menumanual(1, i, si.full);
