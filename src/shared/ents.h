@@ -59,8 +59,8 @@ struct physent                                  // base entity type, can be affe
     uchar type;                                 // one of ENT_* above
 
     physent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
-               inwater(false), physstate(PHYS_FALL), radius(4.1f), eyeheight(14), aboveeye(1), 
-               blocked(false), moving(0), state(CS_ALIVE), type(ENT_PLAYER)
+               radius(4.1f), eyeheight(14), aboveeye(1), 
+               inwater(false), blocked(false), moving(false), physstate(PHYS_FALL), state(CS_ALIVE), type(ENT_PLAYER)
                { reset(); };
                
     void reset()
