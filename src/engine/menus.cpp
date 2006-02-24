@@ -166,6 +166,8 @@ bool menukey(int code, bool isdown)
         }
         else if(code==SDLK_UP || code==-4) menusel--;
         else if(code==SDLK_DOWN || code==-5) menusel++;
+        else if(code==SDLK_PAGEUP) menusel-=16;
+        else if(code==SDLK_PAGEDOWN) menusel+=16;
         int n = menus[vmenu].items.length();
         if(menusel<0) menusel = n-1;
         else if(menusel>=n) menusel = 0;
