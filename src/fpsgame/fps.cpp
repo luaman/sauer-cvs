@@ -338,7 +338,7 @@ struct fpsclient : igameclient
             conoutf("game has ended!");
             sb.showscores(true);
         }
-        else
+        else if(timeremain > 0)
         {
             conoutf("time remaining: %d minutes", timeremain);
         };
