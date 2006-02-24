@@ -60,7 +60,10 @@ enet_address_set_host (ENetAddress * address, const char * name)
     hostEntry = gethostbyname (name);
     if (hostEntry == NULL ||
         hostEntry -> h_addrtype != AF_INET)
-      return -1;
+    {
+        if(! inet_pton (AF_INET, name, & address -> host))
+            return -1;
+    }
 
     address -> host = * (enet_uint32 *) hostEntry -> h_addr_list [0];
 
@@ -77,7 +80,10 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
     
     hostEntry = gethostbyaddr ((char *) & in, sizeof (struct in_addr), AF_INET);
     if (hostEntry == NULL)
-      return -1;
+    {
+        if(inet_ntop (AF_INET, & address -> host, name, nameLength) == NULL)
+            return -1;
+    }
 
     strncpy (name, hostEntry -> h_name, nameLength);
 

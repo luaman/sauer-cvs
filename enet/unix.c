@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
@@ -90,7 +91,10 @@ enet_address_set_host (ENetAddress * address, const char * name)
 
     if (hostEntry == NULL ||
         hostEntry -> h_addrtype != AF_INET)
-      return -1;
+    {
+        if(! inet_pton (AF_INET, name, & address -> host))
+            return -1;
+    }
 
     address -> host = * (enet_uint32 *) hostEntry -> h_addr_list [0];
 
@@ -121,7 +125,10 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
 #endif
 
     if (hostEntry == NULL)
-      return -1;
+    {
+        if(inet_ntop (AF_INET, & address -> host, name, nameLength) == NULL)
+            return -1;
+    }
 
     strncpy (name, hostEntry -> h_name, nameLength);
 
