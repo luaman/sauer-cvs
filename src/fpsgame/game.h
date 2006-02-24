@@ -42,10 +42,11 @@ struct fpsent : dynent
     int lastaction, lastattackgun;
     bool attacking;
     int ammo[NUMGUNS];
+    int frags;
     
     string name, team;
     
-    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0)
+    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0), frags(0)
                { name[0] = team[0] = 0; respawn(); };
     
     void respawn()

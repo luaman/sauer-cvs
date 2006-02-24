@@ -32,7 +32,7 @@ struct scoreboard
         loopi(cl.numdynents()) 
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && !o->monsterstate)
+            if(o && o->type!=ENT_AI)
             {
                 s_sprintfd(lag)("%d", o->plag);
                 s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, cl.cc.currentmaster==i-1 || cl.cc.currentmaster==getclientnum() ? "\f" : "", o->name);
@@ -46,7 +46,7 @@ struct scoreboard
             loopi(cl.numdynents()) 
             {
                 fpsent *o = (fpsent *)cl.iterdynents(i);
-                if(o && !o->monsterstate)
+                if(o && o->type!=ENT_AI)
                 {
                     loopi(teamsused) if(strcmp(teamname[i], o->team)==0) { teamscore[i] += o->frags; goto out; };
                     if(teamsused!=maxteams)

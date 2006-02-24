@@ -305,7 +305,7 @@ const float JUMPVEL = 125.0f;
 const float GRAVITY = 90.0f;
 const float STEPSPEED = 1.0f;
 
-bool rectcollide(dynent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true)
+bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true)
 {
     if(collideonly && !visible) return true;
     vec s(d->o);
@@ -330,13 +330,13 @@ bool rectcollide(dynent *d, const vec &dir, const vec &o, float xr, float yr,  f
     return collideonly;
 };
 
-bool plcollide(dynent *d, const vec &dir, dynent *o)    // collide with player or monster
+bool plcollide(physent *d, const vec &dir, physent *o)    // collide with player or monster
 {
     if(d->state!=CS_ALIVE || o->state!=CS_ALIVE) return true;
     return rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight);
 };
 
-bool mmcollide(dynent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
+bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
 {
     loopv(oc.list)
     {
@@ -352,7 +352,7 @@ bool mmcollide(dynent *d, const vec &dir, octaentities &oc)               // col
     return true;
 };
 
-bool cubecollide(dynent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size) // collide with cube geometry
+bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
     if(isentirelysolid(c) || isclipped(c.material))
     {
@@ -391,7 +391,7 @@ bool cubecollide(dynent *d, const vec &dir, float cutoff, cube &c, int x, int y,
     return false;
 };
 
-bool octacollide(dynent *d, const vec &dir, float cutoff, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
+bool octacollide(physent *d, const vec &dir, float cutoff, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
 {
     loopoctabox(cor, size, bo, bs)
     {
@@ -410,7 +410,7 @@ bool octacollide(dynent *d, const vec &dir, float cutoff, ivec &bo, ivec &bs, cu
 };
 
 // all collision happens here
-bool collide(dynent *d, const vec &dir, float cutoff)
+bool collide(physent *d, const vec &dir, float cutoff)
 {
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
@@ -428,7 +428,7 @@ bool collide(dynent *d, const vec &dir, float cutoff)
     return true;
 };
 
-bool trystepup(dynent *d, vec &dir, float maxstep)
+bool trystepup(physent *d, vec &dir, float maxstep)
 {
     vec old(d->o);
     /* check if there is space atop the stair to move to */
@@ -454,7 +454,7 @@ bool trystepup(dynent *d, vec &dir, float maxstep)
     return false;
 };
 
-void switchfloor(dynent *d, vec &dir, const vec &floor)
+void switchfloor(physent *d, vec &dir, const vec &floor)
 {
     float dmag = dir.magnitude(), dz = -(dir.x*floor.x + dir.y*floor.y)/floor.z;
     dir.z = dz;
@@ -467,7 +467,7 @@ void switchfloor(dynent *d, vec &dir, const vec &floor)
     if(vfmag > 0) d->vel.mul(vmag/vfmag);
 };
 
-bool trystepdown(dynent *d, vec &dir, float step, float a, float b)
+bool trystepdown(physent *d, vec &dir, float step, float a, float b)
 {
         vec old(d->o);
         vec dv(dir.x*a, dir.y*a, -step*b), v(dv);
@@ -483,7 +483,7 @@ bool trystepdown(dynent *d, vec &dir, float step, float a, float b)
         return false;
 };
 
-bool move(dynent *d, vec &dir)
+bool move(physent *d, vec &dir)
 {
 // TODO: refactor this into more manageable functions and optimize out the collide calls if possible?
     vec old(d->o);
@@ -615,7 +615,7 @@ void dropenttofloor(entity *e)
     vec v(0.0001f, 0.0001f, -1);
     if(raycube(e->o, v) >= hdr.worldsize)
         return;
-    dynent d;
+    physent d;
     d.o = e->o;
     d.vel = vec(0, 0, -1);
     if(e->type == ET_MAPMODEL)
@@ -678,7 +678,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     };
 };
 
-void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floating, int curtime, bool iscamera)
+void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool floating, int curtime)
 {
     if(floating)
     {
@@ -714,7 +714,7 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
     vec m(0.0f, 0.0f, 0.0f);
     if(pl->move || pl->strafe)
     {
-        vecfromyawpitch(pl->yaw, pl->pitch, pl->move, pl->strafe, m, floating || water || iscamera);
+        vecfromyawpitch(pl->yaw, pl->pitch, pl->move, pl->strafe, m, floating || water || pl->type==ENT_CAMERA);
 
         if(!floating && pl->physstate >= PHYS_SLIDE && pl->floor.z > 0)
         {
@@ -743,18 +743,18 @@ void modifyvelocity(dynent *pl, int moveres, bool local, bool water, bool floati
 // moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
 // local is false for multiplayer prediction
 
-bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
+bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
     const bool water = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z)).material == MAT_WATER;
     const bool floating = (editmode && local) || pl->state==CS_EDITING;
     const float secs = curtime/1000.f;
 
     // apply any player generated changes in velocity
-    modifyvelocity(pl, moveres, local, water, floating, curtime, iscamera);
+    modifyvelocity(pl, moveres, local, water, floating, curtime);
 
     vec d(pl->vel);
     d.mul(secs);
-    if(!floating && !iscamera)
+    if(!floating && pl->type!=ENT_CAMERA)
     {
         if(water) d.mul(0.5f);
         // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2),
@@ -788,7 +788,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d)) { if(iscamera) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d)) { if(pl->type==ENT_CAMERA) return false; if(++collisions<5) i--; }; // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
@@ -812,7 +812,7 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
 
     // play sounds on water transitions
 
-    if(!iscamera)
+    if(pl->type!=ENT_CAMERA)
     {
         const bool inwater = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1).material == MAT_WATER;
         if(!pl->inwater && inwater) { cl->physicstrigger(pl, local, 0, -1); pl->timeinair = 0; }
@@ -823,13 +823,13 @@ bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera)
     return true;
 };
 
-void moveplayer(dynent *pl, int moveres, bool local)
+void moveplayer(physent *pl, int moveres, bool local)
 {
-    loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1), false);
+    loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
     if(pl->o.z<0  && pl->state != CS_DEAD) cl->worldhurts(pl, 400);
 };
 
-bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
+bool intersect(physent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
 {
     vec v = to, w = d->o, *p;
     v.sub(from);
@@ -858,7 +858,7 @@ bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity boundi
         && p->z >= d->o.z-d->eyeheight;
 };
 
-#define dir(name,v,d,s,os) ICOMMAND(name, IARG_BOTH, { player->s = args!=NULL; player->v = player->s ? d : (player->os ? -(d) : 0); player->lastmove = lastmillis; });
+#define dir(name,v,d,s,os) ICOMMAND(name, IARG_BOTH, { player->s = args!=NULL; player->v = player->s ? d : (player->os ? -(d) : 0); });
 
 dir(backward, move,   -1, k_down,  k_up);
 dir(forward,  move,    1, k_up,    k_down);

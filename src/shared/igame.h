@@ -30,11 +30,11 @@ struct igameclient
 
     virtual void updateworld(vec &pos, int curtime, int lm) = 0;
     virtual void initclient() = 0;
-    virtual void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel) = 0;
+    virtual void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel) = 0;
     virtual void edittrigger(const selinfo &sel, int op, int arg1 = 0, int arg2 = 0) = 0;
     virtual char *getclientmap() = 0;
     virtual void resetgamestate() = 0;
-    virtual void worldhurts(dynent *d, int damage) = 0;
+    virtual void worldhurts(physent *d, int damage) = 0;
     virtual void startmap(char *name) = 0;
     virtual void gameplayhud(int w, int h) = 0;
     virtual void entinmap(dynent *d, bool froment) = 0;

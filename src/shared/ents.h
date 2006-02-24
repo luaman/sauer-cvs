@@ -37,42 +37,55 @@ enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING };
 
 enum { PHYS_FLOAT = 0, PHYS_FALL, PHYS_SLIDE, PHYS_SLOPE, PHYS_FLOOR, PHYS_STEP_UP, PHYS_STEP_DOWN };
 
-struct dynent                                   // players & monsters
+enum { ENT_PLAYER = 0, ENT_AI, ENT_CAMERA, ENT_BOUNCE };
+
+struct physent                                  // base entity type, can be affected by physics
 {
     vec o, vel;                                 // origin, velocity
     float yaw, pitch, roll;
     float maxspeed;                             // cubes per second, 100 for player
     int timeinair;
-    bool inwater;
-    int physstate;                              // one of PHYS_* above
-    vec floor;                                  // the normal of floor the dynent is on
-    bool jumpnext;
-    int move, strafe, lastmove;
-    bool k_left, k_right, k_up, k_down;         // see input code
     float radius, eyeheight, aboveeye;          // bounding box size
+    vec floor;                                  // the normal of floor the dynent is on
 
-    int state;                                  // one of CS_* above
-    int frags;
-
-    int monsterstate;                           // one of M_* below, M_NONE means human
-
+    bool inwater;
+    bool jumpnext;
     bool blocked, moving;                       // used by physics to signal ai
-    
-    animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
-    int lastanimswitchtime[2];
 
-    dynent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
-               inwater(false), physstate(PHYS_FALL), radius(4.1f), eyeheight(14), aboveeye(1), state(CS_ALIVE),
-               frags(0), monsterstate(0), blocked(false), moving(0)
-               { reset(); loopi(2) lastanimswitchtime[i] = -1; };
+    char move, strafe;
+
+    uchar physstate;                            // one of PHYS_* above
+    uchar state;                                // one of CS_* above
+    uchar type;                                 // one of ENT_* above
+
+    physent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
+               inwater(false), physstate(PHYS_FALL), radius(4.1f), eyeheight(14), aboveeye(1), 
+               blocked(false), moving(0), state(CS_ALIVE), type(ENT_PLAYER)
+               { reset(); };
                
     void reset()
     {
-        timeinair = strafe = move = lastmove = 0;
+        timeinair = strafe = move = 0;
         physstate = PHYS_FALL;
-        k_left = k_right = k_up = k_down = jumpnext = false;
         vel = vec(0, 0, 0);
     };
+};
+
+struct dynent : physent                         // animated characters, or characters that can receive input
+{
+    bool k_left, k_right, k_up, k_down;         // see input code
+
+    animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
+    int lastanimswitchtime[2];
+
+    dynent() : physent() { reset(); loopi(2) lastanimswitchtime[i] = -1; };
+               
+    void reset()
+    {
+        physent::reset();
+        k_left = k_right = k_up = k_down = jumpnext = false;
+    };
+
 };
 
 

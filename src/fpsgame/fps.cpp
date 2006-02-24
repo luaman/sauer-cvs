@@ -386,12 +386,12 @@ struct fpsclient : igameclient
         };
     };
 
-    void physicstrigger(dynent *d, bool local, int floorlevel, int waterlevel)
+    void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)
     {
         if     (waterlevel>0) playsound(S_SPLASH1, d==player1 ? NULL : &d->o);
         else if(waterlevel<0) playsound(S_SPLASH2, d==player1 ? NULL : &d->o);
-        if     (floorlevel>0) { if(local) playsoundc(S_JUMP); else if(d->monsterstate) playsound(S_JUMP, &d->o); }
-        else if(floorlevel<0) { if(local) playsoundc(S_LAND); else if(d->monsterstate) playsound(S_LAND, &d->o); };
+        if     (floorlevel>0) { if(local) playsoundc(S_JUMP); else if(d->type==ENT_AI) playsound(S_JUMP, &d->o); }
+        else if(floorlevel<0) { if(local) playsoundc(S_LAND); else if(d->type==ENT_AI) playsound(S_LAND, &d->o); };
     };
 
     void playsoundc(int n) { cc.addmsg(0, 2, SV_SOUND, n); playsound(n); };
@@ -408,10 +408,10 @@ struct fpsclient : igameclient
         return NULL;
     };
 
-    void worldhurts(dynent *d, int damage)
+    void worldhurts(physent *d, int damage)
     {
         if(d==player1) selfdamage(damage, -1, player1);
-        else if(d->monsterstate) ((monsterset::monster *)d)->monsterpain(damage, player1);
+        else if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(damage, player1);
     };
 
     IVAR(hudgun, 0, 1, 1);

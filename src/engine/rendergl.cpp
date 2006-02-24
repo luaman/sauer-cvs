@@ -263,7 +263,7 @@ void drawskybox(int farplane, bool limited)
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
-dynent *camera1 = NULL;
+physent *camera1 = NULL;
 bool isthirdperson() { return player!=camera1; };
 
 void recomputecamera()
@@ -274,9 +274,10 @@ void recomputecamera()
     }
     else
     {
-        static dynent tempcamera;
+        static physent tempcamera;
         camera1 = &tempcamera;
         *camera1 = *player;
+        camera1->type = ENT_CAMERA;
         camera1->move = -1;
         camera1->strafe = 0;
         camera1->vel = vec(0, 0, 0);
@@ -286,9 +287,17 @@ void recomputecamera()
         {
             camera1->physstate = PHYS_FALL;
             camera1->timeinair = 0;
-            if(!moveplayer(camera1, 10, true, thirdpersondistance, true)) break;
+            if(!moveplayer(camera1, 10, true, thirdpersondistance)) break;
         };
     };
+};
+
+void project(float fovy, float aspect, int farplane)
+{
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(fovy, aspect, 0.54f, farplane);
+    glMatrixMode(GL_MODELVIEW);
 };
 
 extern int explicitsky, skyarea;
@@ -317,11 +326,9 @@ void gl_drawframe(int w, int h, float curfps)
         glFogi(GL_FOG_END, (fog+96)/8);
     };
     
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    gluPerspective(fovy, aspect, 0.54f, farplane);
-    glMatrixMode(GL_MODELVIEW);
+
+    project(fovy, aspect, farplane);
 
     transplayer();
 
@@ -354,7 +361,9 @@ void gl_drawframe(int w, int h, float curfps)
 
     if(!limitsky) drawskybox(farplane, false);
 
+    project(65, aspect, farplane);
     if(!isthirdperson()) cl->drawhudgun();
+    project(fovy, aspect, farplane);
 
     rendermaterials();
 

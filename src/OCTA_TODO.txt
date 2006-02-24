@@ -17,6 +17,7 @@ kurt:
 - kurts first map floor one level? | jump to quad on two towers | new rpg map?
 
 aard:
+- player name above players heads? | multiplayer model
 - teamskins / teamplay hud?
 - make ents better visible?
 - player spawn sound

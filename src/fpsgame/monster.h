@@ -22,6 +22,8 @@ struct monsterset
         monstertype *monstertypes;
         monsterset *ms;
         
+        int monsterstate;                   // one of M_*, M_NONE means human
+    
         int mtype;                          // see monster.cpp
         fpsent *enemy;                      // monster wants to kill this entity
         float targetyaw;                    // monster wants to look in this direction
@@ -29,8 +31,9 @@ struct monsterset
         vec attacktarget;                   // delayed attacks
         int anger;                          // how many times already hit by fellow monster
     
-        monster(int _type, int _yaw, int _state, int _trigger, int _move, monsterset *_ms) : cl(_ms->cl), monstertypes(_ms->monstertypes), ms(_ms)
+        monster(int _type, int _yaw, int _state, int _trigger, int _move, monsterset *_ms) : cl(_ms->cl), monstertypes(_ms->monstertypes), ms(_ms), monsterstate(_state)
         {
+            type = ENT_AI;
             respawn();
             if(_type>=NUMMONSTERTYPES)
             {
@@ -44,7 +47,6 @@ struct monsterset
             eyeheight *= t->bscale/10.0f;
             aboveeye *= t->bscale/10.0f;
             weight = t->weight;
-            monsterstate = _state;
             if(state!=M_SLEEP) cl.spawnplayer(this);
             trigger = cl.lastmillis+_trigger;
             targetyaw = yaw = (float)_yaw;
@@ -195,12 +197,12 @@ struct monsterset
 
         void monsterpain(int damage, fpsent *d)
         {
-            if(d->monsterstate)     // a monster hit us
+            if(d->type==ENT_AI)     // a monster hit us
             {
                 if(this!=d)            // guard for RL guys shooting themselves :)
                 {
                     anger++;     // don't attack straight away, first get angry
-                    int _anger = d->monsterstate && mtype==((monster *)d)->mtype ? anger/2 : anger;
+                    int _anger = d->type==ENT_AI && mtype==((monster *)d)->mtype ? anger/2 : anger;
                     if(_anger>=monstertypes[mtype].loyalty) enemy = d;     // monster infight if very angry
                 };
             }
@@ -342,6 +344,6 @@ struct monsterset
 
     void monsterrender()
     {
-        loopv(monsters) cl.fr.renderclient(cl, monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->mtype == 5);
+        loopv(monsters) cl.fr.renderclient(cl, monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->mtype == 5, monsters[i]->monsterstate);
     };
 };

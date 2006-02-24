@@ -107,14 +107,14 @@ extern void particle_flare(vec &p, vec &dest, int fade);
 extern void load_world(char *mname);
 
 // physics
-extern void moveplayer(dynent *pl, int moveres, bool local);
-extern bool moveplayer(dynent *pl, int moveres, bool local, int curtime, bool iscamera);
-extern bool collide(dynent *d, const vec &dir = vec(0, 0, 0), float cutoff = 0.0f);
+extern void moveplayer(physent *pl, int moveres, bool local);
+extern bool moveplayer(physent *pl, int moveres, bool local, int curtime);
+extern bool collide(physent *d, const vec &dir = vec(0, 0, 0), float cutoff = 0.0f);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
 extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
-extern bool intersect(dynent *d, vec &from, vec &to);
+extern bool intersect(physent *d, vec &from, vec &to);
 
 // sound
 extern void playsound(int n, vec *loc = 0);

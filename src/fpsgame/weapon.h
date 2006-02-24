@@ -121,7 +121,7 @@ struct weaponstate
         d->lastpain = cl.lastmillis;
         vel.mul(80*damage/d->weight);
         if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
-        else if(d->monsterstate) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
+        else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
         else                     { if(isrl) vel.mul(2); cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
         damageeffect(d->o, damage);
     };
@@ -202,7 +202,7 @@ struct weaponstate
             projectile *p = &projs[i];
             if(!p->inuse) continue;
             int qdam = guns[p->gun].damage*(p->owner->quadmillis ? 4 : 1);
-            if(p->owner->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
+            if(p->owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
             vec v;
             float dist = p->to.dist(p->o, v);
             float dtime = dist*1000/p->speed; 
@@ -269,7 +269,7 @@ struct weaponstate
             case GUN_ICEBALL:
             case GUN_SLIMEBALL:
                 pspeed = guns[gun].projspeed*4;
-                if(d->monsterstate) pspeed /= 2;
+                if(d->type==ENT_AI) pspeed /= 2;
                 newprojectile(from, to, (float)pspeed, local, d, gun);
                 break;
 
@@ -306,7 +306,7 @@ struct weaponstate
     {
         int qdam = guns[d->gunselect].damage;
         if(d->quadmillis) qdam *= 4;
-        if(d->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
+        if(d->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
         int i, n;
         fpsent *o, *cl;
         if(d->gunselect==GUN_SG)
@@ -320,7 +320,7 @@ struct weaponstate
                 o = NULL;
                 loop(r, SGRAYS) if(!done[r] && (cl = intersectclosest(from, sg[r], n, d)))
                 {
-                    if((!o || o==cl) && (damage<cl->health+cl->armour || !cl->monsterstate))
+                    if((!o || o==cl) && (damage<cl->health+cl->armour || cl->type!=ENT_AI))
                     {
                         damage += qdam;
                         o = cl;
@@ -385,7 +385,7 @@ struct weaponstate
 
         shootv(d->gunselect, from, to, d, true);
 
-        if(!d->monsterstate) cl.cc.addmsg(1, 8, SV_SHOT, d->gunselect, (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF));
+        if(d->type!=ENT_AI) cl.cc.addmsg(1, 8, SV_SHOT, d->gunselect, (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF));
 
         d->gunwait = guns[d->gunselect].attackdelay;
 
