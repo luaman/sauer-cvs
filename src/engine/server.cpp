@@ -338,7 +338,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             c.peer = event.peer;
             c.peer->data = &c;
             char hn[1024];
-            s_strcpy(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "localhost");
+            s_strcpy(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
             printf("client connected (%s)\n", c.hostname);
             int reason;
             if(!(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
