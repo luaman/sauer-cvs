@@ -62,18 +62,19 @@ void sortmenu(int start, int num)
 
 void refreshservers();
 
-void drawarrow(int dir, int x, int y, int size, int r = 255, int g = 255, int b = 255)
+void drawarrow(int dir, int x, int y, int size, float r = 1.0f, float g = 1.0f, float b = 1.0f)
 {
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
-    glColor3ub(r, g, b);
+    glColor3f(r, g, b);
 
     glBegin(GL_POLYGON);
     glVertex2i(x, dir ? y+size : y);
     glVertex2i(x+size/2, dir ? y : y+size);
     glVertex2i(x+size, dir ? y+size : y);
     glEnd();
-
+    xtraverts += 3;
+    
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
 };
@@ -158,7 +159,7 @@ bool menukey(int code, bool isdown)
     int menusel = menus[vmenu].menusel;
     if(isdown)
     {
-        if(code==SDLK_ESCAPE)
+        if(code==SDLK_ESCAPE || code==-3)
         {
             menuset(-1);
             if(!menustack.empty()) menuset(menustack.pop());
