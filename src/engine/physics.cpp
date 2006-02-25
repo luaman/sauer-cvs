@@ -296,6 +296,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 /////////////////////////  entity collision  ///////////////////////////////////////////////
 
 // info about collisions
+bool inside; // whether an internal collision happened
 vec wall; // just the normal vectors.
 float walldistance;
 const float STAIRHEIGHT = 4.0f;
@@ -327,6 +328,7 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     if(ax>ay && ax>az) TRYCOLLIDE(x, visible&(1<<O_LEFT), visible&(1<<O_RIGHT));
     if(ay>az) TRYCOLLIDE(y, visible&(1<<O_BACK), visible&(1<<O_FRONT));
     TRYCOLLIDE(z, visible&(1<<O_BOTTOM), az >= -d->eyeheight/2.0f && (visible&(1<<O_TOP)));
+    if(collideonly) inside = true;
     return collideonly;
 };
 
@@ -386,7 +388,11 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
             };
         };
         wall = *w;
-        if(wall.iszero()) return true;
+        if(wall.iszero())
+        {
+            inside = true;
+            return true;
+        };
     };
     return false;
 };
@@ -412,6 +418,7 @@ bool octacollide(physent *d, const vec &dir, float cutoff, ivec &bo, ivec &bs, c
 // all collision happens here
 bool collide(physent *d, const vec &dir, float cutoff)
 {
+    inside = false;
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));

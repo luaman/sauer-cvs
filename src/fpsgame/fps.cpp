@@ -218,7 +218,8 @@ struct fpsclient : igameclient
         vec orig = d->o;
         loopi(100)              // try max 100 times
         {
-            if(collide(d)) return;
+            extern bool inside;
+            if(collide(d) && !inside) return;
             d->o = orig;
             d->o.x += (rnd(21)-10)*i/5;  // increasing distance
             d->o.y += (rnd(21)-10)*i/5;
