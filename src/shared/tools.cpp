@@ -32,7 +32,7 @@ char *loadfile(char *fn, int *size)
     return buf;
 };
 
-void endianswap(void *memory, int stride, int length)   // little indians as storage format
+void endianswap(void *memory, int stride, int length)   // little endian as storage format
 {
     if(*((char *)&stride)) return;
     loop(w, length) loop(i, stride/2)
