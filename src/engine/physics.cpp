@@ -500,19 +500,21 @@ bool move(physent *d, vec &dir)
     bool collided = false;
     vec obstacle;
     d->o.add(dir);
-    vec foo(d->o);
     if(!collide(d, dir))
     {
         obstacle = wall;
         d->o = old;
-        d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-        if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || !collide(d, vec(0, 0, -1), SLOPEZ))
+        if(d->physstate > PHYS_FALL)
         {
-            d->o = old;
-            float floorz = (d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor.z : wall.z);
-            if(trystepup(d, dir, floorz < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
-        }
-        else d->o = old;
+            d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
+            if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || !collide(d, vec(0, 0, -1), SLOPEZ))
+            {
+                d->o = old;
+                float floorz = (d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor.z : wall.z);
+                if(trystepup(d, dir, floorz < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+            }
+            else d->o = old;
+        };
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
         collided = true;
@@ -549,9 +551,9 @@ bool move(physent *d, vec &dir)
         if(!collide(d, vec(0, 0, -1)))
         {
             floor = wall;
-            if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
+            if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
         };
-        if(collided && obstacle.z > (floor.z == 1.0f ? 0.0f : floor.z))
+        if(collided && (!found || obstacle.z > floor.z))
         {
             floor = obstacle;
             if(floor.z >= SLOPEZ) found = true;
