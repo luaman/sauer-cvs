@@ -143,6 +143,7 @@ struct md2 : model
 
     float boundsphere(int frame, float scale, vec &center)
     {
+        if(!strcmp(loadname, "monster/hellpig")) scale *= 32;
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
         float sc = 4.0f/scale;
         loopi(3) center.v[i] = cf->translate[i];
