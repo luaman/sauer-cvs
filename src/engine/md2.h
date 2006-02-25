@@ -143,7 +143,6 @@ struct md2 : model
 
     float boundsphere(int frame, float scale, vec &center)
     {
-        if(!strcmp(loadname, "monster/hellpig")) scale *= 32;
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
         float sc = 4.0f/scale;
         loopi(3) center.v[i] = cf->translate[i];
@@ -210,7 +209,7 @@ struct md2 : model
         static int animfr[] = { 2, 6, 10, 12, 8, 14, 8, 16, 17, 18, 18, 20, 21, 22 };
         assert(anim<=13);
         int n = animfr[anim];
-        if(!strcmp(mdlname, "monster/hellpig")) { n++; sc *= 32; z -= 7.6f; }
+        if(!strcmp(mdlname, "monster/hellpig")) n++;
         else if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
         animstate ai;
         ai.frame = _frame[n];
