@@ -525,21 +525,8 @@ bool move(physent *d, vec &dir)
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
         collided = true;
-        if(obstacle.z < 1.0f)
-        {
-            vec wdir(obstacle), wvel(obstacle);
-            if(obstacle.z < 0.0f)
-            {
-                if(dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
-                wdir.z = wvel.z = 0.0f;
-            };
-            wdir.mul(obstacle.dot(dir));
-            wvel.mul(obstacle.dot(d->vel));
-            dir.sub(wdir);
-            d->vel.sub(wvel);
-        };
     };
-    bool found = false;
+    bool found = false, slide = collided && obstacle.z < 1.0f;
     vec moved(d->o), floor(0, 0, 0);
     d->o.z -= 0.1f;
     if(!collide(d, vec(0, 0, -1), FLOORZ))
@@ -551,6 +538,7 @@ bool move(physent *d, vec &dir)
     {
         floor = obstacle;
         found = true;
+        slide = false;
     }
     else
     {
@@ -563,12 +551,30 @@ bool move(physent *d, vec &dir)
         if(collided && (!found || obstacle.z > floor.z))
         {
             floor = obstacle;
-            if(floor.z >= SLOPEZ) found = true;
+            if(floor.z >= SLOPEZ)
+            {
+                found = true;
+                slide = false;
+            };
         };
     };
     d->o = moved;
+    if(slide)
+    {
+            vec wdir(obstacle), wvel(obstacle);
+            if(obstacle.z < 0.0f)
+            {
+                if(dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
+                wdir.z = wvel.z = 0.0f;
+            };
+            wdir.mul(obstacle.dot(dir));
+            wvel.mul(obstacle.dot(d->vel));
+            dir.sub(wdir);
+            d->vel.sub(wvel);
+    };
     if(!found)
     {
+#if 0
         if(d->physstate >= PHYS_FLOOR && (floor.z == 0.0f || floor.z == 1.0f))
         {
             d->o.z -= STAIRHEIGHT + 0.1f;
@@ -580,6 +586,7 @@ bool move(physent *d, vec &dir)
             }
             else d->o = moved;
         };
+#endif
         if(d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
             switchfloor(d, dir, floor.z > 0.0f && floor.z < SLOPEZ ? floor : vec(0, 0, 1));
         if(floor.z > 0.0f && floor.z < SLOPEZ)
@@ -591,7 +598,7 @@ bool move(physent *d, vec &dir)
     }
     else
     {
-        if(dir.z < 0.0f && d->timeinair > 0 && floor.z >= FLOORZ)
+        if(dir.z < 0.0f && d->timeinair > 0 && floor.z >= SLOPEZ)
         {
             d->timeinair = 0;
             dir.z = d->vel.z = 0.0f;
