@@ -490,6 +490,8 @@ bool trystepdown(physent *d, vec &dir, float step, float a, float b)
         return false;
 };
 
+VAR(stepdown, 0, 0, 1);
+
 bool move(physent *d, vec &dir)
 {
 // TODO: refactor this into more manageable functions and optimize out the collide calls if possible?
@@ -511,9 +513,9 @@ bool move(physent *d, vec &dir)
     {
         obstacle = wall;
         d->o = old;
-        if(d->physstate > PHYS_FALL)
+        if(d->physstate >= PHYS_SLOPE)
         {
-            d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
+            d->o.z -= (d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
             if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || !collide(d, vec(0, 0, -1), SLOPEZ))
             {
                 d->o = old;
@@ -574,8 +576,7 @@ bool move(physent *d, vec &dir)
     };
     if(!found)
     {
-#if 0
-        if(d->physstate >= PHYS_FLOOR && (floor.z == 0.0f || floor.z == 1.0f))
+        if(stepdown && d->physstate >= PHYS_FLOOR && (floor.z == 0.0f || floor.z == 1.0f))
         {
             d->o.z -= STAIRHEIGHT + 0.1f;
             if(!collide(d, vec(0, 0, -1), SLOPEZ))
@@ -586,7 +587,6 @@ bool move(physent *d, vec &dir)
             }
             else d->o = moved;
         };
-#endif
         if(d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
             switchfloor(d, dir, floor.z > 0.0f && floor.z < SLOPEZ ? floor : vec(0, 0, 1));
         if(floor.z > 0.0f && floor.z < SLOPEZ)
@@ -598,7 +598,7 @@ bool move(physent *d, vec &dir)
     }
     else
     {
-        if(dir.z < 0.0f && d->timeinair > 0 && floor.z >= SLOPEZ)
+        if(d->physstate < PHYS_SLOPE && dir.z < 0.0f && d->timeinair > 0)
         {
             d->timeinair = 0;
             dir.z = d->vel.z = 0.0f;
