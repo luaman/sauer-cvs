@@ -61,8 +61,11 @@ enet_address_set_host (ENetAddress * address, const char * name)
     if (hostEntry == NULL ||
         hostEntry -> h_addrtype != AF_INET)
     {
-        if(! inet_pton (AF_INET, name, & address -> host))
+        unsigned long host = inet_addr (name);
+        if (host == INADDR_NONE)
             return -1;
+        address -> host = host;
+        return 0;
     }
 
     address -> host = * (enet_uint32 *) hostEntry -> h_addr_list [0];
@@ -81,8 +84,11 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
     hostEntry = gethostbyaddr ((char *) & in, sizeof (struct in_addr), AF_INET);
     if (hostEntry == NULL)
     {
-        if(inet_ntop (AF_INET, & address -> host, name, nameLength) == NULL)
+        char * addr = inet_ntoa (* (struct in_addr *) & address -> host);
+        if (addr == NULL)
             return -1;
+        strncpy (name, addr, nameLength);
+        return 0;
     }
 
     strncpy (name, hostEntry -> h_name, nameLength);

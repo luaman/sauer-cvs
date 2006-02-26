@@ -98,6 +98,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
         if (! inet_aton (name, (struct in_addr *) & address -> host))
 #endif
             return -1;
+        return 0;
     }
 
     address -> host = * (enet_uint32 *) hostEntry -> h_addr_list [0];
@@ -133,13 +134,13 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
 #ifdef HAS_INET_NTOP
         if (inet_ntop (AF_INET, & address -> host, name, nameLength) == NULL)
 #else
-        struct in_addr host = { address -> host };
-        char * addr = inet_ntoa (host);
+        char * addr = inet_ntoa (* (struct in_addr *) & address -> host);
         if (addr != NULL)
             strncpy (name, addr, nameLength);
         else
 #endif
             return -1;
+        return 0;
     }
 
     strncpy (name, hostEntry -> h_name, nameLength);
