@@ -294,7 +294,7 @@ struct fpsserver : igameserver
             interm = lastsec+10;
             mapend = lastsec+1000;
         };
-        send2(true, -1, SV_TIMEUP, minremain--);
+        if(minremain>=0) send2(true, -1, SV_TIMEUP, minremain--);
     };
 
     void startintermission() { minremain = 0; checkintermission(); };
