@@ -40,7 +40,6 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 
 - perma powerup / powerup announce
 - draw not-spawned items in wireframe?
-- green damage numbers?
 - make start of flares etc spawn out further from the player
 - hellpig sometimes goes invisble?
 - importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
