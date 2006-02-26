@@ -130,6 +130,7 @@ enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_
 extern void *getinfo(int i);
 extern void sendintstr(int i, const char *msg);
 extern void send2(bool rel, int cn, int a, int b);
+extern void sendn(bool rel, int cn, int n, ...);
 extern int getnumclients();
 extern uint getclientip(int n);
 extern void putint(uchar *&p, int n);

@@ -17,6 +17,13 @@ struct fpsserver : igameserver
         clientinfo() : master(false) {};
     };
 
+    struct score
+    {
+        uint ip;
+        string name;
+        int frags;
+    };
+
     bool notgotitems;        // true when map has changed and waiting for clients to send item
     int mode;
 
@@ -38,7 +45,7 @@ struct fpsserver : igameserver
     void *newinfo() { return new clientinfo; };
 
     vector<server_entity> sents;
-
+    vector<score> scores;
 
     void restoreserverstate(vector<extentity *> &ents)   // hack: called from savegame code, only works in SP
     {
@@ -49,6 +56,22 @@ struct fpsserver : igameserver
         }; 
     };
 
+    score &findscore(int cn, bool insert)
+    {
+        uint ip = getclientip(cn);
+        clientinfo *ci = (clientinfo *)getinfo(cn);
+        loopv(scores)
+        {
+            score &sc = scores[i];
+            if(sc.ip == ip && !strcmp(sc.name, ci->name)) return sc;
+        };
+        if(!insert) return *(score *)0;
+        score &sc = scores.add();
+        sc.ip = ip;
+        s_strcpy(sc.name, ci->name);
+        return sc;
+    };
+    
     static const char *modestr(int n)
     {
         static const char *modenames[] =
@@ -69,7 +92,7 @@ struct fpsserver : igameserver
             SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
-            SV_SERVMSG, 0, SV_ITEMLIST, 0,
+            SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 3,
             SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15,  
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2,
             -1
@@ -142,6 +165,10 @@ struct fpsserver : igameserver
                 s_strcpy(((clientinfo *)getinfo(cn))->name, text);
                 sgetstr();
                 getint(p);
+                {
+                    score &sc = findscore(cn, false);
+                    if(&sc) sendn(true, -1, 3, SV_RESUME, cn, sc.frags);
+                };
                 break;
 
             case SV_MAPCHANGE:
@@ -158,6 +185,7 @@ struct fpsserver : igameserver
                 s_strcpy(smapname, text);
                 resetitems();
                 notgotitems = true;
+                scores.setsize(0);
                 sender = -1;
                 break;
             };
@@ -200,6 +228,13 @@ struct fpsserver : igameserver
                 break;
             };
             
+            case SV_FRAGS:
+            {
+                int frags = getint(p);    
+                if(minremain > 0) findscore(cn, true).frags = frags;
+                break;
+            };
+                
             case SV_MASTERMODE:
             {
                 int mm = getint(p);

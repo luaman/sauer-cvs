@@ -392,6 +392,15 @@ struct clientcom : iclientcom
                 break;
             };
 
+            case SV_RESUME:
+            {
+                cn = getint(p);
+                d = (cn == clientnum ? player1 : cl.getclient(cn));
+                if(!d) return;
+                d->frags = getint(p);
+                break;
+            };
+
             case SV_ITEMPICKUP:
             {
                 int i = getint(p);

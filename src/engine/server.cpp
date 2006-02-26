@@ -59,7 +59,7 @@ void multicast(ENetPacket *packet, int sender);
 
 void *getinfo(int i)    { return clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
 int getnumclients()     { return clients.length(); };
-uint getclientip(int n) { return clients[n]->peer->address.host; };
+uint getclientip(int n) { return clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; };
 
 void send(int n, ENetPacket *packet)
 {
@@ -78,19 +78,25 @@ void send(int n, ENetPacket *packet)
     };
 };
 
-void send2(bool rel, int cn, int a, int b)
+void sendn(bool rel, int cn, int n, ...)
 {
     ENetPacket *packet = enet_packet_create(NULL, 32, rel ? ENET_PACKET_FLAG_RELIABLE : 0);
     uchar *start = packet->data;
     uchar *p = start;
-    putint(p, a);
-    putint(p, b);
+    va_list args;
+    va_start(args, n);
+    while(n-- > 0) putint(p, va_arg(args, int));
+    va_end(args);
     enet_packet_resize(packet, p-start);
     if(cn<0) process(packet, -1);
     else send(cn, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
+void send2(bool rel, int cn, int a, int b)
+{
+    sendn(rel, cn, 2, a, b);
+};
 
 void sendintstr(int i, const char *msg)
 {
