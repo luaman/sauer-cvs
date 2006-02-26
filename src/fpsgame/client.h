@@ -296,8 +296,8 @@ struct clientcom : iclientcom
 
             case SV_CDIS:
                 cn = getint(p);
-                if(!(d = cl.getclient(cn))) break;
-                if(d->name[0]) conoutf("player %s disconnected", d->name); 
+                if(cn >= cl.players.length() || !(d = cl.players[cn])) break;
+                conoutf("player %s disconnected", d->name); 
                 DELETEP(cl.players[cn]);
                 break;
 
