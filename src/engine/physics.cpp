@@ -525,7 +525,7 @@ bool move(physent *d, vec &dir)
         /* can't step over the obstacle, so just slide against it */
         collided = true;
     } 
-    else if(inside)
+    else if(inside && d->type == ENT_AI)
     {
         d->o = old;
         d->blocked = true;
