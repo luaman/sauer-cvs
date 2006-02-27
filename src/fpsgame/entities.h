@@ -244,7 +244,7 @@ struct entities : icliententities
     void checkitems()
     {
         if(editmode) return;
-        itemstats[I_BOOST].max = cl.player1->maxhealth;
+        itemstats[I_HEALTH-I_SHELLS].max = cl.player1->maxhealth;
         vec o = cl.player1->o;
         o.z -= cl.player1->eyeheight;
         loopv(ents)

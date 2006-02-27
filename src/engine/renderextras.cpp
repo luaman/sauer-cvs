@@ -198,10 +198,10 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     int abovegameplayhud = h*4*1650/1800-FONTH*3/2; // hack
 
     char *command = getcurcommand();
-    char *playername = cl->gamepointat(worldpos);
+    //char *playername = cl->gamepointat(worldpos);
     if(command) draw_textf("> %s_", FONTH/2, abovegameplayhud, command);
     else if(closeent[0] && !hidehud) draw_text(closeent, FONTH/2, abovegameplayhud);
-    else if(playername) draw_text(playername, FONTH/2, abovegameplayhud);
+    //else if(playername) draw_text(playername, FONTH/2, abovegameplayhud);
 
     cl->renderscores();
     
