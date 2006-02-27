@@ -813,7 +813,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         };
     };
 
-    if(pl->physstate >= PHYS_FLOOR && fabs(pl->vel.x) < 0.01f && fabs(pl->vel.y) < 0.01f && fabs(pl->vel.z) < 0.01f) pl->moving = false;
+    if(!pl->timeinair && pl->physstate >= PHYS_FLOOR && fabs(pl->vel.x) < 0.01f && fabs(pl->vel.y) < 0.01f && fabs(pl->vel.z) < 0.01f) pl->moving = false;
 
     // automatically apply smooth roll when strafing
 
