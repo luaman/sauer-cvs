@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B90ADD4509B344D800A5B00B /* callbacks.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD0009B344D800A5B00B /* callbacks.c */; };
+		B90ADD5709B344D800A5B00B /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD1309B344D800A5B00B /* host.c */; };
+		B90ADD6A09B344D800A5B00B /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2809B344D800A5B00B /* list.c */; };
+		B90ADD6E09B344D800A5B00B /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2C09B344D800A5B00B /* memory.c */; };
+		B90ADD7109B344D800A5B00B /* packet.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2F09B344D800A5B00B /* packet.c */; };
+		B90ADD7209B344D800A5B00B /* peer.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3009B344D800A5B00B /* peer.c */; };
+		B90ADD7309B344D800A5B00B /* protocol.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3109B344D800A5B00B /* protocol.c */; };
+		B90ADD7609B344D800A5B00B /* unix.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3409B344D800A5B00B /* unix.c */; };
+		B90ADD7709B344D800A5B00B /* win32.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3509B344D800A5B00B /* win32.c */; };
+		B90ADF3109B34D1600A5B00B /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90ADF2809B34D1600A5B00B /* SDL_image.framework */; };
+		B90ADF3209B34D1600A5B00B /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90ADF2909B34D1600A5B00B /* SDL_mixer.framework */; };
+		B90ADF3309B34D1600A5B00B /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90ADF2A09B34D1600A5B00B /* SDL.framework */; };
 		B941988C09207E810029DAD1 /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
 		B941988D09207E810029DAD1 /* engine.h in Headers */ = {isa = PBXBuildFile; fileRef = B9419820092076920029DAD1 /* engine.h */; };
 		B941988E09207E810029DAD1 /* lightmap.h in Headers */ = {isa = PBXBuildFile; fileRef = B9419822092076920029DAD1 /* lightmap.h */; };
@@ -61,7 +73,6 @@
 		B94198C109207E810029DAD1 /* tools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B941984C092076920029DAD1 /* tools.cpp */; };
 		B94198C309207E810029DAD1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		B94198C409207E810029DAD1 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F67ED704C74A3F00A80002 /* OpenGL.framework */; };
-		B94198C509207E810029DAD1 /* libenet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B9419885092077660029DAD1 /* libenet.a */; };
 		B96D0D590920970C00B6C936 /* Launcher.m in Sources */ = {isa = PBXBuildFile; fileRef = B96D0D580920970C00B6C936 /* Launcher.m */; };
 		B96D0D630920971300B6C936 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = B96D0D5A0920971300B6C936 /* MainMenu.nib */; };
 		B96D0D6D0920976E00B6C936 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B96D0D6C0920976E00B6C936 /* main.m */; };
@@ -111,6 +122,18 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		B2F67ED704C74A3F00A80002 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
+		B90ADD0009B344D800A5B00B /* callbacks.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = callbacks.c; sourceTree = "<group>"; };
+		B90ADD1309B344D800A5B00B /* host.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = host.c; sourceTree = "<group>"; };
+		B90ADD2809B344D800A5B00B /* list.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = list.c; sourceTree = "<group>"; };
+		B90ADD2C09B344D800A5B00B /* memory.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
+		B90ADD2F09B344D800A5B00B /* packet.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = packet.c; sourceTree = "<group>"; };
+		B90ADD3009B344D800A5B00B /* peer.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = peer.c; sourceTree = "<group>"; };
+		B90ADD3109B344D800A5B00B /* protocol.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = protocol.c; sourceTree = "<group>"; };
+		B90ADD3409B344D800A5B00B /* unix.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = unix.c; sourceTree = "<group>"; };
+		B90ADD3509B344D800A5B00B /* win32.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = win32.c; sourceTree = "<group>"; };
+		B90ADF2809B34D1600A5B00B /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL_image.framework; sourceTree = "<group>"; };
+		B90ADF2909B34D1600A5B00B /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL_mixer.framework; sourceTree = "<group>"; };
+		B90ADF2A09B34D1600A5B00B /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL.framework; sourceTree = "<group>"; };
 		B941981C092076920029DAD1 /* client.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
 		B941981D092076920029DAD1 /* command.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = command.cpp; sourceTree = "<group>"; };
 		B941981E092076920029DAD1 /* console.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = console.cpp; sourceTree = "<group>"; };
@@ -159,7 +182,6 @@
 		B941984B092076920029DAD1 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
 		B941984C092076920029DAD1 /* tools.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = tools.cpp; sourceTree = "<group>"; };
 		B941984D092076920029DAD1 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
-		B9419885092077660029DAD1 /* libenet.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libenet.a; sourceTree = "<group>"; };
 		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D4C092096F200B6C936 /* launcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D570920970C00B6C936 /* Launcher.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Launcher.h; sourceTree = "<group>"; };
@@ -180,7 +202,9 @@
 			files = (
 				B94198C309207E810029DAD1 /* Cocoa.framework in Frameworks */,
 				B94198C409207E810029DAD1 /* OpenGL.framework in Frameworks */,
-				B94198C509207E810029DAD1 /* libenet.a in Frameworks */,
+				B90ADF3109B34D1600A5B00B /* SDL_image.framework in Frameworks */,
+				B90ADF3209B34D1600A5B00B /* SDL_mixer.framework in Frameworks */,
+				B90ADF3309B34D1600A5B00B /* SDL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,6 +233,9 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B90ADF2809B34D1600A5B00B /* SDL_image.framework */,
+				B90ADF2909B34D1600A5B00B /* SDL_mixer.framework */,
+				B90ADF2A09B34D1600A5B00B /* SDL.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 				B2F67ED704C74A3F00A80002 /* OpenGL.framework */,
 			);
@@ -251,7 +278,7 @@
 				B941981B092076920029DAD1 /* engine */,
 				B9419838092076920029DAD1 /* fpsgame */,
 				B9419843092076920029DAD1 /* shared */,
-				B9419885092077660029DAD1 /* libenet.a */,
+				B90ADCEE09B344D800A5B00B /* enet */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -276,6 +303,23 @@
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
+		};
+		B90ADCEE09B344D800A5B00B /* enet */ = {
+			isa = PBXGroup;
+			children = (
+				B90ADD0009B344D800A5B00B /* callbacks.c */,
+				B90ADD1309B344D800A5B00B /* host.c */,
+				B90ADD2809B344D800A5B00B /* list.c */,
+				B90ADD2C09B344D800A5B00B /* memory.c */,
+				B90ADD2F09B344D800A5B00B /* packet.c */,
+				B90ADD3009B344D800A5B00B /* peer.c */,
+				B90ADD3109B344D800A5B00B /* protocol.c */,
+				B90ADD3409B344D800A5B00B /* unix.c */,
+				B90ADD3509B344D800A5B00B /* win32.c */,
+			);
+			name = enet;
+			path = ../enet;
+			sourceTree = SOURCE_ROOT;
 		};
 		B941981B092076920029DAD1 /* engine */ = {
 			isa = PBXGroup;
@@ -559,7 +603,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "cd $TARGET_BUILD_DIR\n#make the directory which our disk image will be made of\nmkdir sauerbraten\n\n#copy sauerbraten there\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app sauerbraten/\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app sauerbraten/\nmv sauerbraten/launcher.app sauerbraten/SauerbratenLauncher.app\n\n#install all frameworks into app bundle\nmkdir sauerbraten/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $LOCAL_LIBRARY_DIR/Frameworks/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $LOCAL_LIBRARY_DIR/Frameworks/$framework/ sauerbraten/sauerbraten.app/Contents/Frameworks\n\t\trm -rf sauerbraten/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/docs sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/data sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/packages sauerbraten/\nrm -rf sauerbraten/docs/CVS/\nrm -rf sauerbraten/docs/*/CVS/\nrm -rf sauerbraten/docs/*/*/CVS/\nrm -f sauerbraten/docs/.DS_Store\nrm -f sauerbraten/docs/*/.DS_Store\nrm -f sauerbraten/docs/*/*/.DS_Store\nrm -rf sauerbraten/packages/CVS/\nrm -rf sauerbraten/packages/*/CVS/\nrm -rf sauerbraten/packages/*/*/CVS/\nrm -f sauerbraten/packages/.DS_Store\nrm -f sauerbraten/packages/*/.DS_Store\nrm -f sauerbraten/packages/*/*/.DS_Store\nrm -rf sauerbraten/data/CVS/\nrm -rf sauerbraten/data/*/CVS/\nrm -f sauerbraten/data/.DS_Store\nrm -f sauerbraten/data/*/.DS_Store\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -r sauerbraten";
+			shellScript = "echo $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n#make the directory which our disk image will be made of\nmkdir sauerbraten\n\n#copy sauerbraten there\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app sauerbraten/\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app sauerbraten/\nmv sauerbraten/launcher.app sauerbraten/SauerbratenLauncher.app\n\n#install all frameworks into app bundle\nmkdir sauerbraten/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $SRCROOT/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $SRCROOT/$framework/ sauerbraten/sauerbraten.app/Contents/Frameworks\n\t\trm -rf sauerbraten/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/docs sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/data sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/packages sauerbraten/\nrm -rf sauerbraten/docs/CVS/\nrm -rf sauerbraten/docs/*/CVS/\nrm -rf sauerbraten/docs/*/*/CVS/\nrm -f sauerbraten/docs/.DS_Store\nrm -f sauerbraten/docs/*/.DS_Store\nrm -f sauerbraten/docs/*/*/.DS_Store\nrm -rf sauerbraten/packages/CVS/\nrm -rf sauerbraten/packages/*/CVS/\nrm -rf sauerbraten/packages/*/*/CVS/\nrm -f sauerbraten/packages/.DS_Store\nrm -f sauerbraten/packages/*/.DS_Store\nrm -f sauerbraten/packages/*/*/.DS_Store\nrm -rf sauerbraten/data/CVS/\nrm -rf sauerbraten/data/*/CVS/\nrm -f sauerbraten/data/.DS_Store\nrm -f sauerbraten/data/*/.DS_Store\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -r sauerbraten";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -594,6 +638,15 @@
 				B94198BF09207E810029DAD1 /* fps.cpp in Sources */,
 				B94198C009207E810029DAD1 /* pch.cpp in Sources */,
 				B94198C109207E810029DAD1 /* tools.cpp in Sources */,
+				B90ADD4509B344D800A5B00B /* callbacks.c in Sources */,
+				B90ADD5709B344D800A5B00B /* host.c in Sources */,
+				B90ADD6A09B344D800A5B00B /* list.c in Sources */,
+				B90ADD6E09B344D800A5B00B /* memory.c in Sources */,
+				B90ADD7109B344D800A5B00B /* packet.c in Sources */,
+				B90ADD7209B344D800A5B00B /* peer.c in Sources */,
+				B90ADD7309B344D800A5B00B /* protocol.c in Sources */,
+				B90ADD7609B344D800A5B00B /* unix.c in Sources */,
+				B90ADD7709B344D800A5B00B /* win32.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -641,31 +694,23 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(SRCROOT)",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = (
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL.framework/Headers",
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL_image.framework/Headers",
 					../enet/include,
 					../include/,
 				);
 				INFOPLIST_FILE = "sauerbraten-Info.plist";
 				INSTALL_PATH = "$(BUILT_PRODUCTS_DIR)";
-				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)\"";
-				OTHER_LDFLAGS = (
-					"-framework",
-					SDL,
-					"-framework",
-					SDL_image,
-					"-framework",
-					SDL_mixer,
-					"-lz",
-				);
+				LIBRARY_SEARCH_PATHS = "";
+				OTHER_LDFLAGS = "-lz";
+				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "";
@@ -679,29 +724,21 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(SRCROOT)",
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = (
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL.framework/Headers",
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL_image.framework/Headers",
 					../enet/include,
 					../include/,
 				);
 				INFOPLIST_FILE = "sauerbraten-Info.plist";
 				INSTALL_PATH = "$(BUILT_PRODUCTS_DIR)";
-				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)\"";
-				OTHER_LDFLAGS = (
-					"-framework",
-					SDL,
-					"-framework",
-					SDL_image,
-					"-framework",
-					SDL_mixer,
-					"-lz",
-				);
+				LIBRARY_SEARCH_PATHS = "";
+				OTHER_LDFLAGS = "-lz";
+				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "";
@@ -718,29 +755,21 @@
 				DEPLOYMENT_POSTPROCESSING = YES;
 				DSTROOT = /;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(SRCROOT)",
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = (
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL.framework/Headers",
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL_image.framework/Headers",
 					../enet/include,
 					../include/,
 				);
 				INFOPLIST_FILE = "sauerbraten-Info.plist";
 				INSTALL_PATH = "$(BUILT_PRODUCTS_DIR)";
-				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)\"";
-				OTHER_LDFLAGS = (
-					"-framework",
-					SDL,
-					"-framework",
-					SDL_image,
-					"-framework",
-					SDL_mixer,
-					"-lz",
-				);
+				LIBRARY_SEARCH_PATHS = "";
+				OTHER_LDFLAGS = "-lz";
+				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "";
@@ -752,7 +781,12 @@
 		B94198EC09207F510029DAD1 /* Deployment-Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = "";
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = NO;
 			};
 			name = "Deployment-Release";
@@ -760,7 +794,12 @@
 		B960CF36085F3CC7004FB142 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = "";
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = NO;
 			};
 			name = Development;
@@ -768,7 +807,12 @@
 		B960CF37085F3CC7004FB142 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = "";
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = NO;
 			};
 			name = Deployment;
@@ -790,6 +834,7 @@
 					Foundation,
 					"-framework",
 					AppKit,
+					"-bind_at_load",
 				);
 				OTHER_REZFLAGS = "";
 				PREBINDING = NO;
@@ -820,6 +865,7 @@
 					Foundation,
 					"-framework",
 					AppKit,
+					"-bind_at_load",
 				);
 				OTHER_REZFLAGS = "";
 				PREBINDING = NO;
@@ -849,6 +895,7 @@
 					Foundation,
 					"-framework",
 					AppKit,
+					"-bind_at_load",
 				);
 				OTHER_REZFLAGS = "";
 				PREBINDING = NO;
