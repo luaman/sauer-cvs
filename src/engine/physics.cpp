@@ -532,7 +532,7 @@ bool move(physent *d, vec &dir)
     if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
     {
         floor = wall;
-        if(floor.z > SLOPEZ) found = true;
+        found = true;
     }
     else if(collided && obstacle.z >= SLOPEZ)
     {
@@ -544,7 +544,11 @@ bool move(physent *d, vec &dir)
     {
         if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
         {
-            if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f) floor = wall;
+            if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
+            {
+                floor = wall;
+                if(floor.z > SLOPEZ) found = true;
+            };
         }
         else
         {
