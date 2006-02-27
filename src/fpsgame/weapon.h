@@ -109,7 +109,7 @@ struct weaponstate
         };
     };
     
-    void damageeffect(vec &p, int damage)
+    void damageeffect(const vec &p, int damage)
     {
         particle_splash(3, damage, 1000, p);
         s_sprintfd(ds)("@%d", damage);

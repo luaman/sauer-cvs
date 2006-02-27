@@ -337,7 +337,7 @@ struct clientcom : iclientcom
                 {
                     fpsent *victim = cl.getclient(target);
                     victim->lastpain = cl.lastmillis;
-                    vec &v = victim->abovehead();
+                    vec v = victim->abovehead();
                     playsound(S_PAIN1+rnd(5), &v);
                     cl.ws.damageeffect(v, damage);
                 };
@@ -419,7 +419,7 @@ struct clientcom : iclientcom
                 if(i>=cl.et.ents.length()) break;
                 playsound(S_ITEMSPAWN, &cl.et.ents[i]->o); 
                 char *name = cl.et.itemname(i);
-                if(name) particle_text(d->abovehead(), name, 9);
+                if(name) particle_text(cl.et.ents[i]->o, name, 9);
                 break;
             };
 

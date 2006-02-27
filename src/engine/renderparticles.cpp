@@ -167,7 +167,7 @@ void render_particles(int time)
 
 VARP(maxparticledistance, 256, 512, 4096);
 
-void particle_splash(int type, int num, int fade, vec &p)
+void particle_splash(int type, int num, int fade, const vec &p)
 {
     if(camera1->o.dist(p)>maxparticledistance) return; 
     loopi(num)
@@ -186,7 +186,7 @@ void particle_splash(int type, int num, int fade, vec &p)
     };
 };
 
-void particle_trail(int type, int fade, vec &s, vec &e)
+void particle_trail(int type, int fade, const vec &s, const vec &e)
 {
     vec v;
     float d = e.dist(s, v);
@@ -200,14 +200,14 @@ void particle_trail(int type, int fade, vec &s, vec &e)
     };
 };
 
-void particle_text(vec &s, char *t, int type, int fade)
+void particle_text(const vec &s, char *t, int type, int fade)
 {
     if(t[0]=='@') t = newstring(t);
     particle *p = newparticle(s, vec(0, 0, 1), fade, type);
     p->text = t;
 };
 
-void particle_flare(vec &p, vec &dest, int fade)
+void particle_flare(const vec &p, const vec &dest, int fade)
 {
     newparticle(p, dest, fade, 10);
 };

@@ -31,8 +31,8 @@ struct vec
     float magnitude() const  { return sqrtf(dot(*this)); };
     vec &normalize()         { div(magnitude()); return *this; };
     bool isnormalized() const { float m = squaredlen(); return (m>0.99f && m<1.01f); };
-    float dist(const vec &e) { vec t; return dist(e, t); };
-    float dist(const vec &e, vec &t) { t = *this; t.sub(e); return t.magnitude(); };
+    float dist(const vec &e) const { vec t; return dist(e, t); };
+    float dist(const vec &e, vec &t) const { t = *this; t.sub(e); return t.magnitude(); };
     bool reject(const vec &o, float max) { return x>o.x+max || x<o.x-max || y>o.y+max || y<o.y-max; };
     vec &cross(const vec &a, const vec &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; return *this; };
 
