@@ -28,6 +28,7 @@ struct selinfo
 extern void cursorupdate();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();
+extern void toggleedit();
 extern void mpeditheight(int dir, int mode, selinfo &sel, bool local);
 extern void mpeditface(int dir, int mode, selinfo &sel, bool local);
 extern void mpedittex(int tex, int allfaces, selinfo &sel, bool local);

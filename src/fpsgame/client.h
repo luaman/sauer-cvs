@@ -513,6 +513,7 @@ struct clientcom : iclientcom
     void changemapserv(char *name, int mode)        // forced map change from the server
     {
         cl.gamemode = mode;
+        if(editmode && !allowedittoggle()) toggleedit();
         load_world(name);
     };
 
