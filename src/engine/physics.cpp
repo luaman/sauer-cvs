@@ -524,6 +524,12 @@ bool move(physent *d, vec &dir)
         else d->o = old;
         /* can't step over the obstacle, so just slide against it */
         collided = true;
+    } 
+    else if(inside)
+    {
+        d->o = old;
+        d->blocked = true;
+        return false;
     };
     bool found = false, slide = collided && obstacle.z < 1.0f;
     vec moved(d->o), floor(0, 0, 0);
