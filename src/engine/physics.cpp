@@ -513,17 +513,14 @@ bool move(physent *d, vec &dir)
     {
         obstacle = wall;
         d->o = old;
-        if(d->physstate >= PHYS_SLOPE)
+        d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
+        if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || (!collide(d, vec(0, 0, -1), SLOPEZ) && (d->physstate == PHYS_STEP_UP || wall.z == 1.0f)))
         {
-            d->o.z -= (d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-            if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || !collide(d, vec(0, 0, -1), SLOPEZ))
-            {
-                d->o = old;
-                float floorz = (d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor.z : wall.z);
-                if(trystepup(d, dir, floorz < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
-            }
-            else d->o = old;
-        };
+            d->o = old;
+            float floorz = (d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor.z : wall.z);
+            if(trystepup(d, dir, floorz < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+        }
+        else d->o = old;
         /* can't step over the obstacle, so just slide against it */
         d->blocked = true;
         collided = true;
@@ -531,7 +528,7 @@ bool move(physent *d, vec &dir)
     bool found = false, slide = collided && obstacle.z < 1.0f;
     vec moved(d->o), floor(0, 0, 0);
     d->o.z -= 0.1f;
-    if(!collide(d, vec(0, 0, -1), FLOORZ))
+    if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
     {
         floor = wall;
         found = true;
@@ -545,10 +542,10 @@ bool move(physent *d, vec &dir)
     else
     {
         d->o.z -= d->radius;
-        if(!collide(d, vec(0, 0, -1)))
+        if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && !collide(d, vec(0, 0, -1)))
         {
             floor = wall;
-            if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
+            if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
         };
         if(collided && (!found || obstacle.z > floor.z))
         {
