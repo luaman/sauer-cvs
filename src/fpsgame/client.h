@@ -419,7 +419,7 @@ struct clientcom : iclientcom
                 if(i>=cl.et.ents.length()) break;
                 playsound(S_ITEMSPAWN, &cl.et.ents[i]->o); 
                 char *name = cl.et.itemname(i);
-                if(name) particle_text(cl.et.ents[i]->o, name, 9);
+                if(name) particle_text(d->abovehead(), name, 9);
                 break;
             };
 
