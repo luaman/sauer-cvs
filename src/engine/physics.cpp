@@ -435,6 +435,19 @@ bool collide(physent *d, const vec &dir, float cutoff)
     return true;
 };
 
+void switchfloor(physent *d, vec &dir, const vec &floor)
+{
+    float dmag = dir.magnitude(), dz = -(dir.x*floor.x + dir.y*floor.y)/floor.z;
+    dir.z = dz;
+    float dfmag = dir.magnitude();
+    if(dfmag > 0) dir.mul(dmag/dfmag);
+
+    float vmag = d->vel.magnitude(), vz = -(d->vel.x*floor.x + d->vel.y*floor.y)/floor.z;
+    d->vel.z = vz;
+    float vfmag = d->vel.magnitude();
+    if(vfmag > 0) d->vel.mul(vmag/vfmag);
+};
+
 bool trystepup(physent *d, vec &dir, float maxstep)
 {
     vec old(d->o);
@@ -454,24 +467,12 @@ bool trystepup(physent *d, vec &dir, float maxstep)
     d->o.z += dir.magnitude()*STEPSPEED;
     if(collide(d, vec(0, 0, 1)))
     {
-        if(d->physstate >= PHYS_FLOOR) d->physstate = PHYS_STEP_UP;
+        if(d->physstate < PHYS_FLOOR) d->floor = vec(0, 0, 1);
+        d->physstate = PHYS_STEP_UP;
         return true;
     };
     d->o = old;
     return false;
-};
-
-void switchfloor(physent *d, vec &dir, const vec &floor)
-{
-    float dmag = dir.magnitude(), dz = -(dir.x*floor.x + dir.y*floor.y)/floor.z;
-    dir.z = dz;
-    float dfmag = dir.magnitude();
-    if(dfmag > 0) dir.mul(dmag/dfmag);
-
-    float vmag = d->vel.magnitude(), vz = -(d->vel.x*floor.x + d->vel.y*floor.y)/floor.z;
-    d->vel.z = vz;
-    float vfmag = d->vel.magnitude();
-    if(vfmag > 0) d->vel.mul(vmag/vfmag);
 };
 
 bool trystepdown(physent *d, vec &dir, float step, float a, float b)
@@ -531,9 +532,9 @@ bool move(physent *d, vec &dir)
     if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
     {
         floor = wall;
-        found = true;
+        if(floor.z > SLOPEZ) found = true;
     }
-    else if(collided && obstacle.z > SLOPEZ)
+    else if(collided && obstacle.z >= SLOPEZ)
     {
         floor = obstacle;
         found = true;
@@ -541,21 +542,20 @@ bool move(physent *d, vec &dir)
     }
     else
     {
-        d->o.z -= d->radius;
-        if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && !collide(d, vec(0, 0, -1)))
+        if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
         {
-            floor = wall;
-            if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
-        };
-        if(collided && (!found || obstacle.z > floor.z))
+            if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f) floor = wall;
+        }
+        else
         {
-            floor = obstacle;
-            if(floor.z >= SLOPEZ)
+            d->o.z -= d->radius;
+            if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && !collide(d, vec(0, 0, -1)))
             {
-                found = true;
-                slide = false;
+                floor = wall;
+                if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
             };
         };
+        if(collided && (!found || obstacle.z > floor.z)) floor = obstacle;
     };
     d->o = moved;
     if(slide)
