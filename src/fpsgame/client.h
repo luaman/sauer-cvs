@@ -264,7 +264,11 @@ struct clientcom : iclientcom
             {
                 int n;
                 if(mapchanged) { senditemstoserver = false; cl.et.resetspawns(); };
-                while((n = getint(p))!=-1) if(mapchanged) cl.et.setspawn(n, true);
+                while((n = getint(p))!=-1) 
+                { 
+                    if(mapchanged) cl.et.setspawn(n, true); 
+                    getint(p); // type
+                };
                 break;
             };
 
@@ -402,6 +406,7 @@ struct clientcom : iclientcom
                 cn = getint(p);
                 d = (cn == clientnum ? player1 : cl.getclient(cn));
                 if(!d) return;
+                d->maxhealth = getint(p);
                 d->frags = getint(p);
                 break;
             };

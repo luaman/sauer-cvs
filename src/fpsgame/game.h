@@ -121,5 +121,5 @@ enum
 
 #define CUBE_SERVER_PORT 28785
 #define CUBE_SERVINFO_PORT 28786
-#define PROTOCOL_VERSION 246            // bump when protocol changes
+#define PROTOCOL_VERSION 247            // bump when protocol changes
 

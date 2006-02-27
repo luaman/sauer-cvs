@@ -2,6 +2,7 @@ struct fpsserver : igameserver
 {
     struct server_entity            // server side version of "entity" type
     {
+        int type;
         int spawnsecs;
         char spawned;
     };
@@ -21,6 +22,7 @@ struct fpsserver : igameserver
     {
         uint ip;
         string name;
+        int maxhealth;
         int frags;
     };
 
@@ -69,6 +71,8 @@ struct fpsserver : igameserver
         score &sc = scores.add();
         sc.ip = ip;
         s_strcpy(sc.name, ci->name);
+        sc.maxhealth = 100;
+        sc.frags = 0;
         return sc;
     };
     
@@ -92,7 +96,7 @@ struct fpsserver : igameserver
             SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
-            SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 3,
+            SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15,  
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2,
             -1
@@ -113,6 +117,7 @@ struct fpsserver : igameserver
             sents[i].spawned = false;
             sents[i].spawnsecs = sec;
             send2(true, sender, SV_ITEMACC, i);
+            if(sents[i].type == I_BOOST) findscore(sender, true).maxhealth += 10;
         };
     };
 
@@ -167,7 +172,7 @@ struct fpsserver : igameserver
                 getint(p);
                 {
                     score &sc = findscore(cn, false);
-                    if(&sc) sendn(true, -1, 3, SV_RESUME, cn, sc.frags);
+                    if(&sc) sendn(true, -1, 4, SV_RESUME, cn, sc.maxhealth, sc.frags);
                 };
                 getint(p);
                 getint(p);
@@ -197,7 +202,7 @@ struct fpsserver : igameserver
                 int n;
                 while((n = getint(p))!=-1) if(notgotitems)
                 {
-                    server_entity se = { false, 0 };
+                    server_entity se = { getint(p), false, 0 };
                     while(sents.length()<=n) sents.add(se);
                     sents[n].spawned = true;
                 };
@@ -284,7 +289,11 @@ struct fpsserver : igameserver
             sendstring(smapname, p);
             putint(p, mode);
             putint(p, SV_ITEMLIST);
-            loopv(sents) if(sents[i].spawned) putint(p, i);
+            loopv(sents) if(sents[i].spawned)
+            {
+                putint(p, i);
+                putint(p, sents[i].type);
+            };
             putint(p, -1);
         };
     };

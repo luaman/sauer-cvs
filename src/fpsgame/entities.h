@@ -272,6 +272,7 @@ struct entities : icliententities
         loopv(ents) if((ents[i]->type>=I_SHELLS && ents[i]->type<=I_QUAD) || ents[i]->type==CARROT)
         {
             putint(p, i);
+            putint(p, ents[i]->type);
             ents[i]->spawned = true;
         };
     };
