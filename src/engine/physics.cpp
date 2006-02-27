@@ -599,10 +599,10 @@ bool move(physent *d, vec &dir)
     }
     else
     {
-        if(d->physstate < PHYS_SLOPE && dir.z < 0.0f && d->timeinair > 0)
+        if(floor.z >= FLOORZ && (d->physstate > PHYS_FALL || dir.z < 0.0f) && d->timeinair > 0)
         {
             d->timeinair = 0;
-            dir.z = d->vel.z = 0.0f;
+            if(d->physstate < PHYS_SLOPE) dir.z = d->vel.z = 0.0f;
             switchfloor(d, dir, floor);
         }
         else if(d->physstate >= PHYS_SLOPE && floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
@@ -617,8 +617,8 @@ bool move(physent *d, vec &dir)
 void phystest()
 {
     static const char *states[] = {"float", "fall", "slide", "slope", "floor", "step up", "step down"};
-    printf ("PHYS(pl): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[player->physstate], player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z);
-    printf ("PHYS(cam): %s, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[camera1->physstate], camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z);
+    printf ("PHYS(pl): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[player->physstate], player->timeinair, player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z);
+    printf ("PHYS(cam): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[camera1->physstate], camera1->timeinair, camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z);
 }
 
 COMMAND(phystest, ARG_NONE);
