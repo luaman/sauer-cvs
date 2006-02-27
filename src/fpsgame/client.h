@@ -143,6 +143,8 @@ struct clientcom : iclientcom
             sendstring(player1->name, p);
             sendstring(player1->team, p);
             putint(p, player1->lifesequence);
+            putint(p, player1->maxhealth);
+            putint(p, player1->frags);
         };
         loopv(messages)     // send messages collected during the previous frames
         {
@@ -292,6 +294,8 @@ struct clientcom : iclientcom
                 sgetstr();
                 s_strcpy(d->team, text);
                 d->lifesequence = getint(p);
+                d->maxhealth = getint(p);
+                d->frags = getint(p);
                 break;
             };
 

@@ -169,6 +169,8 @@ struct fpsserver : igameserver
                     score &sc = findscore(cn, false);
                     if(&sc) sendn(true, -1, 3, SV_RESUME, cn, sc.frags);
                 };
+                getint(p);
+                getint(p);
                 break;
 
             case SV_MAPCHANGE:
