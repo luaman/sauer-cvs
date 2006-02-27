@@ -228,7 +228,7 @@ struct clientcom : iclientcom
                 d->vel.y = getint(p)/DVELF;
                 d->vel.z = getint(p)/DVELF;
                 d->physstate = getint(p);
-                if(d->physstate >= PHYS_FLOOR) d->timeinair = 0;
+                if(d->physstate == PHYS_FLOOR) d->timeinair = 0;
                 d->floor.x = getint(p)/DVF;
                 d->floor.y = getint(p)/DVF;
                 d->floor.z = getint(p)/DVF;
