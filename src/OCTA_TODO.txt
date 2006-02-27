@@ -1,28 +1,22 @@
 gilt:
-- removeoctaentity crash
 - LOD: improved lod-remip
 - other tools that are geared towards easier editing of heightfields/terrain/rocks
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
-- monster physics?
 - map up/download etc
-- water optimisation
 - water physics close to surface
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
 
-kurt:
-- kurts first map floor one level? | jump to quad on two towers | new rpg map?
-
 aard:
-- new sounds?
 - make sauer inner directory
+- new BAS sounds?
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - per sound volume
 - grenade launcher | bouncing gib particles
-- make health/armour/maxhealth/quad be available clientside, then add em to player floating text | team diff colour?
+- make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
 - new multiplayer model.. md3?
 - keybinds per mode: editing/game
 - make ents better visible?
