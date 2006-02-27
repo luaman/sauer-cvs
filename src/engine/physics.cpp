@@ -661,6 +661,7 @@ void dropenttofloor(entity *e)
     d.moving = true;
     d.timeinair = 0;
     d.state = CS_EDITING;
+    d.type = ENT_AI;
     loopi(hdr.worldsize)
     {
         move(&d, v);
