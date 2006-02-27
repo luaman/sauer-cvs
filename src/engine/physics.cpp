@@ -523,7 +523,6 @@ bool move(physent *d, vec &dir)
         }
         else d->o = old;
         /* can't step over the obstacle, so just slide against it */
-        d->blocked = true;
         collided = true;
     };
     bool found = false, slide = collided && obstacle.z < 1.0f;
@@ -564,6 +563,7 @@ bool move(physent *d, vec &dir)
     d->o = moved;
     if(slide)
     {
+            d->blocked = true;
             vec wdir(obstacle), wvel(obstacle);
             if(obstacle.z < 0.0f)
             {
@@ -658,7 +658,7 @@ void dropenttofloor(entity *e)
     loopi(hdr.worldsize)
     {
         move(&d, v);
-        if(d.blocked || !d.moving) break;
+        if(d.physstate > PHYS_FALL) break;
     };
     e->o = d.o;
 };
