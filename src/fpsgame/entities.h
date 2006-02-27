@@ -115,8 +115,7 @@ struct entities : icliententities
         if(isthirdperson())
         {
             char *name = itemname(n);
-            if(name)
-                particle_text(ents[n]->o, name, 9);
+            if(name) particle_text(d->abovehead(), name, 9);
         };
         switch(ents[n]->type)
         {

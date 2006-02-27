@@ -112,7 +112,7 @@ struct weaponstate
     void damageeffect(vec &p, int damage)
     {
         particle_splash(3, damage, 1000, p);
-        s_sprintfd(ds)("%d", damage);
+        s_sprintfd(ds)("@%d", damage);
         particle_text(p, ds, 8);
     };
 
@@ -123,7 +123,7 @@ struct weaponstate
         if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
         else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
         else                     { if(isrl) vel.mul(2); cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
-        damageeffect(d->o, damage);
+        damageeffect(d->abovehead(), damage);
     };
 
     void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)

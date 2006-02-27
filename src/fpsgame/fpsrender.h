@@ -32,7 +32,11 @@ struct fpsrender
     void rendergame(fpsclient &cl, int gamemode)
     {
         fpsent *d;
-        loopv(cl.players) if(d = cl.players[i]) renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, false, M_NONE);
+        loopv(cl.players) if(d = cl.players[i])
+        {
+            renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, false, M_NONE);
+            particle_text(d->abovehead(), d->name, 11, 1);
+        };
         if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, false, M_NONE);
         cl.ms.monsterrender();
         cl.et.renderentities();

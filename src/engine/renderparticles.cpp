@@ -3,8 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define MAXTEXT 4
-#define MAXPARTYPES 11
+#define MAXPARTYPES 12
 
 struct particle
 {
@@ -12,7 +11,7 @@ struct particle
     int fade, type;
     int millis;
     particle *next;
-    char text[MAXTEXT];
+    char *text;         // will call delete[] on this only if it starts with an @
 };
 
 particle *parlist[MAXPARTYPES], *parempty = NULL;
@@ -51,6 +50,7 @@ particle *newparticle(const vec &o, const vec &d, int fade, int type)
     p->type = type;
     p->millis = lastmillis;
     p->next = parlist[type];
+    p->text = NULL;
     parlist[type] = p;
     return p;
 };
@@ -78,6 +78,7 @@ void render_particles(int time)
         { 255, 75, 25,   -8, -1, 1.0f }, // 8 TEXT RED
         { 50, 255, 100,  -8, -1, 1.0f }, // 9 TEXT GREEN
         { 255, 200, 100, 0,  5, 0.07f }, // 10 yellow flare
+        { 30, 200, 80,  -8, -1, 0.5f }, // 11 TEXT DARKGREEN, SMALL, NON-MOVING
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -125,10 +126,14 @@ void render_particles(int time)
                 glTranslatef(p->o.x, p->o.z, p->o.y);
                 glRotatef(camera1->yaw-180, 0, -1, 0);
                 glRotatef(-camera1->pitch, 1, 0, 0);
-                float scale = 0.05f;
+                float scale = 0.05f*pt->sz;
                 glScalef(-scale, -scale, -scale);
-                glTranslatef(-detrnd((size_t)p, 100), -detrnd((size_t)p, 100), 50);
-                draw_text(p->text, 0, 0, pt->r, pt->g, pt->b, blend);
+                char *t = p->text+(p->text[0]=='@');
+                float xoff = -text_width(t)/2;
+                float yoff = 0;
+                if(i!=11) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); };
+                glTranslatef(xoff, yoff, 50);
+                draw_text(t, 0, 0, pt->r, pt->g, pt->b, blend);
                 glPopMatrix();
             };
 
@@ -136,6 +141,7 @@ void render_particles(int time)
             {
                 *pp = p->next;
                 p->next = parempty;
+                if(p->text && p->text[0]=='@') delete[] p->text;
                 parempty = p;
             }
             else
@@ -194,10 +200,11 @@ void particle_trail(int type, int fade, vec &s, vec &e)
     };
 };
 
-void particle_text(vec &s, char *t, int type)
+void particle_text(vec &s, char *t, int type, int fade)
 {
-    particle *p = newparticle(s, vec(0, 0, 1), 2000, type);
-    s_strncpy(p->text, t, MAXTEXT);
+    if(t[0]=='@') t = newstring(t);
+    particle *p = newparticle(s, vec(0, 0, 1), fade, type);
+    p->text = t;
 };
 
 void particle_flare(vec &p, vec &dest, int fade)

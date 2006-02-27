@@ -18,6 +18,7 @@ kurt:
 
 aard:
 - player name above players heads? | multiplayer model
+- keybinds per mode: editing/game
 - teamskins / teamplay hud?
 - make ents better visible?
 - player spawn sound

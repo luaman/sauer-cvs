@@ -247,7 +247,8 @@ struct clientcom : iclientcom
 
             case SV_TEXT:
                 sgetstr();
-                particle_text(d->o, "!?!", 9);
+                s_sprintfd(ds)("@%s", &text);
+                particle_text(d->abovehead(), ds, 9);
                 conoutf("%s:\f %s", d->name, &text); 
                 break;
 
@@ -336,7 +337,7 @@ struct clientcom : iclientcom
                 {
                     fpsent *victim = cl.getclient(target);
                     victim->lastpain = cl.lastmillis;
-                    vec &v = victim->o;
+                    vec &v = victim->abovehead();
                     playsound(S_PAIN1+rnd(5), &v);
                     cl.ws.damageeffect(v, damage);
                 };
@@ -387,8 +388,8 @@ struct clientcom : iclientcom
 
             case SV_FRAGS:
             {
-                s_sprintfd(ds)("%d", cl.players[cn]->frags = getint(p));
-                particle_text(cl.players[cn]->o, ds, 9);
+                s_sprintfd(ds)("@%d", cl.players[cn]->frags = getint(p));
+                particle_text(cl.players[cn]->abovehead(), ds, 9);
                 break;
             };
 
@@ -407,7 +408,7 @@ struct clientcom : iclientcom
                 cl.et.setspawn(i, false);
                 getint(p);
                 char *name = cl.et.itemname(i);
-                if(name) particle_text(cl.et.ents[i]->o, name, 9);
+                if(name) particle_text(d->abovehead(), name, 9);
                 break;
             };
 
@@ -418,8 +419,7 @@ struct clientcom : iclientcom
                 if(i>=cl.et.ents.length()) break;
                 playsound(S_ITEMSPAWN, &cl.et.ents[i]->o); 
                 char *name = cl.et.itemname(i);
-                if(name)
-                    particle_text(cl.et.ents[i]->o, name, 9);
+                if(name) particle_text(cl.et.ents[i]->o, name, 9);
                 break;
             };
 

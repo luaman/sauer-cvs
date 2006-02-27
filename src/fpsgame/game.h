@@ -61,6 +61,8 @@ struct fpsent : dynent
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
     };
+
+    vec abovehead() { return vec(o).add(vec(0, 0, aboveeye+4)); };
 };
 
 extern int gamemode, nextmode;
