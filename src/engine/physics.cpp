@@ -599,11 +599,14 @@ bool move(physent *d, vec &dir)
     }
     else
     {
-        if(floor.z >= FLOORZ && (d->physstate > PHYS_FALL || dir.z < 0.0f) && d->timeinair > 0)
+        if(floor.z >= FLOORZ && d->timeinair > 0)
         {
             d->timeinair = 0;
-            if(d->physstate < PHYS_SLOPE) dir.z = d->vel.z = 0.0f;
-            switchfloor(d, dir, floor);
+            if(dir.z < 0.0f || d->physstate >= PHYS_SLOPE)
+            {
+                if(d->physstate < PHYS_SLOPE) dir.z = d->vel.z = 0.0f;
+                switchfloor(d, dir, floor);
+            };
         }
         else if(d->physstate >= PHYS_SLOPE && floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
             switchfloor(d, dir, floor);
