@@ -60,7 +60,7 @@ struct fpsclient : igameclient
 
     void resetgamestate()
     {
-        player1->health = 100;
+        player1->health = player1->maxhealth;
         if(m_classicsp) ms.monsterclear(gamemode);                 // all monsters back at their spawns for editing
         ws.projreset();
     };
@@ -370,9 +370,17 @@ struct fpsclient : igameclient
         ms.monsterclear(gamemode);
         ws.projreset();
         spawncycle = -1;
-        spawnplayer(player1);
+
+        // reset perma-state
         player1->frags = 0;
-        loopv(players) if(players[i]) players[i]->frags = 0;
+        player1->maxhealth = 100;
+        loopv(players) if(players[i])
+        {
+            players[i]->frags = 0;
+            players[i]->maxhealth = 100;
+        };
+
+        spawnplayer(player1);
         et.resetspawns();
         s_strcpy(clientmap, name);
         setvar("fog", 4000);

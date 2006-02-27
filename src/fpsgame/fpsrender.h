@@ -35,7 +35,9 @@ struct fpsrender
         loopv(cl.players) if(d = cl.players[i])
         {
             renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, false, M_NONE);
-            particle_text(d->abovehead(), d->name, 11, 1);
+            s_strcpy(d->info, d->name);
+            if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); };
+            particle_text(d->abovehead(), d->info, 11, 1);
         };
         if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, false, M_NONE);
         cl.ms.monsterrender();

@@ -17,19 +17,24 @@ kurt:
 - kurts first map floor one level? | jump to quad on two towers | new rpg map?
 
 aard:
-- player name above players heads? | multiplayer model
+- music
+- new sounds?
+- make sauer inner directory
+- powerup announce
+- grenade launcher | bouncing gib particles
+- make health/armour/maxhealth/quad be available clientside, then add em to player floating text | team diff colour?
+- new multiplayer model.. md3?
 - keybinds per mode: editing/game
-- teamskins / teamplay hud?
 - make ents better visible?
 - player spawn sound
 - make wether you are hitting other player clearer - blip sounds like q3?
 - hex numbers
+- add hidden ID to your name so that you can claim nicknames on a server?
 - can join a server in edit mode
 - edit textures when extruding
-
-- new sounds!
+- show quadded player with special rendering
 - experiment with physics speedup features
-- think about simpler area based portals / combine with doors | automatically? compute portals of each VA?
+- think about simpler area based portals / combine with doors | automatically? compute portals of each VA? REALLY need some culling for monsters/items etc
 - make remip part of savemap or calclight?
 - poly iterator for the model formats
 - think of cheap way to have surface normals available.. can do tangent/bin globally? keep it all in worldspace? lights?
@@ -38,14 +43,10 @@ then no list of lights and no tangent space vectors would be needed! superior to
 big problem is how to get a tangent space eye vector for spec?? 
 to get accurate spec, we need per vertex sub, which can only ever be worldspace. best we can do is global TS.
 -> do some tests to see what current state sorting amounts to, and what would happen if you'd swap
-
-- perma powerup / powerup announce
 - draw not-spawned items in wireframe?
 - make start of flares etc spawn out further from the player
-- hellpig sometimes goes invisble?
 - importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
-- allow people to look different in-game
-- better attack anim? with weapon maybe
+- better attack anim? with weapon maybe | add vwep?
 - check why texture stretching on certain recent nvidia drivers only happens for certain textures -> looks like its caused by async copying of the S/T vectors
 - triggers/doors for SP
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
@@ -53,26 +54,21 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - spectator mode
 - profile rpg_01
 - select entities in parallel to geometry by picking | make editing more readable
-- compression of octa info into indexes (e.g. textures into shorts?)
 - skybox - roll
 - 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
-- make sauer inner directory
 - cube loader: import some sample cube maps | metl3
 - all cfg stuff in menu
-- a multiplayer player still shows SG rays go thru target
+- a multiplayer player still shows SG rays go thru target | hard to fix, is it really a problem?
 - new mapmodels/trees in menu -> new ones from last cube
-- damage more visible | gib fountains | anything that gives better feedback
-  smoke & dirt pieces on impact
-- physics left/right
+- better damage particles
 - players more visible / improve model lighting first?
 - HDR
 - start using md3 for new monsters/player models
 - revise health/armours? can either make armours more effective against certain weapons (feedback?)
   or do more general properties (do more damage, run faster)
-- GL? / grapple? /
 - find more sensible solution for wiki / work on better sauer web page
 - mp objectives
 - 2 teams only

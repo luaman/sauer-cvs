@@ -1257,10 +1257,6 @@
 					Name="cfg"
 					>
 					<File
-						RelativePath="..\sauerbraten\autoexec.cfg"
-						>
-					</File>
-					<File
 						RelativePath="..\sauerbraten\data\default_map_settings.cfg"
 						>
 					</File>

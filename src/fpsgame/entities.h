@@ -18,7 +18,7 @@ struct entities : icliententities
             5,     15,    S_ITEMAMMO,   "RL",
             5,     15,    S_ITEMAMMO,   "RI",
             25,    100,   S_ITEMHEALTH, "H",
-            75,    200,   S_ITEMHEALTH, "MH",
+            10,    1000,  S_ITEMHEALTH, "MH",
             100,   100,   S_ITEMARMOUR, "GA",
             200,   200,   S_ITEMARMOUR, "YA",
             20000, 30000, S_ITEMPUP,    "Q",
@@ -124,7 +124,12 @@ struct entities : icliententities
             case I_ROCKETS: radditem(n, d->ammo[3]); break;
             case I_ROUNDS:  radditem(n, d->ammo[4]); break;
             case I_HEALTH:  radditem(n, d->health);  break;
-            case I_BOOST:   radditem(n, d->health);  break;
+
+            case I_BOOST:
+                d->maxhealth += 10;
+                conoutf("you have a permanent +10 health bonus! (%d)", d->maxhealth);
+                radditem(n, d->health);
+                break;
 
             case I_GREENARMOUR:
                 radditem(n, d->armour);
@@ -239,6 +244,7 @@ struct entities : icliententities
     void checkitems()
     {
         if(editmode) return;
+        itemstats[I_BOOST].max = cl.player1->maxhealth;
         vec o = cl.player1->o;
         o.z -= cl.player1->eyeheight;
         loopv(ents)

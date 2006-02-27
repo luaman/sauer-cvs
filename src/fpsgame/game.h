@@ -37,6 +37,7 @@ struct fpsent : dynent
     int lastupdate, plag, ping;
     int lifesequence;                   // sequence id for each respawn, used in damage test
     int health, armour, armourtype, quadmillis;
+    int maxhealth;
     int lastpain;
     int gunselect, gunwait;
     int lastaction, lastattackgun;
@@ -44,15 +45,15 @@ struct fpsent : dynent
     int ammo[NUMGUNS];
     int frags;
     
-    string name, team;
+    string name, team, info;
     
-    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0), frags(0)
-               { name[0] = team[0] = 0; respawn(); };
+    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0), frags(0), maxhealth(100)
+               { name[0] = team[0] = info[0] = 0; respawn(); };
     
     void respawn()
     {
         reset();
-        health = 100;
+        health = maxhealth;
         armour = 0;
         armourtype = A_BLUE;
         quadmillis = gunwait = lastaction = 0;

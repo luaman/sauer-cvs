@@ -409,6 +409,7 @@ struct clientcom : iclientcom
                 getint(p);
                 char *name = cl.et.itemname(i);
                 if(name) particle_text(d->abovehead(), name, 9);
+                if(cl.et.ents[i]->type==I_BOOST) d->maxhealth += 10;
                 break;
             };
 
