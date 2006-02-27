@@ -192,7 +192,7 @@ struct monsterset
                     
             };
 
-            if(move || moving) moveplayer(this, 1, false);        // use physics to move monster
+            if(move || moving) moveplayer(this, 2, false);        // use physics to move monster
         };
 
         void monsterpain(int damage, fpsent *d)
@@ -336,7 +336,7 @@ struct monsterset
                 {
                     //monsters[i]->move = 0;
                     monsters[i]->move = monsters[i]->strafe = 0;
-                    moveplayer(monsters[i], 1, false);
+                    moveplayer(monsters[i], 2, false);
                 };
             }
         };
