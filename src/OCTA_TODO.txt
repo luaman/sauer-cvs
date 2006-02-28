@@ -12,7 +12,9 @@ eihrul:
 
 aard:
 - make sauer inner directory
+- remove player name when dead
 - new BAS sounds?
+- make very clear section in the docs about what you can and cannot do with sauer
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - per sound volume
 - grenade launcher | bouncing gib particles
