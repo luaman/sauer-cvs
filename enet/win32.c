@@ -163,7 +163,7 @@ enet_socket_connect (ENetSocket socket, const ENetAddress * address)
 ENetSocket
 enet_socket_accept (ENetSocket socket, ENetAddress * address)
 {
-    int result;
+    SOCKET result;
     struct sockaddr_in sin;
     int sinLength = sizeof (struct sockaddr_in);
 
@@ -171,7 +171,7 @@ enet_socket_accept (ENetSocket socket, ENetAddress * address)
                      address != NULL ? (struct sockaddr *) & sin : NULL, 
                      address != NULL ? & sinLength : NULL);
 
-    if (result == -1)
+    if (result == INVALID_SOCKET)
       return ENET_SOCKET_NULL;
 
     if (address != NULL)
