@@ -207,7 +207,7 @@ void cursorupdate()
         sel.cy  &= 1;
         havesel = true;
     }
-    else if (!havesel)
+    else if(!havesel)
     {
         sel.o = lu;
         sel.s.x = sel.s.y = sel.s.z = 1;
@@ -594,11 +594,27 @@ void tofronttex()                                       // maintain most recentl
     };
 };
 
-void edittexcube(cube &c, int tex, int orient)
+selinfo repsel;
+int reptex = -1, reporient = -1;
+
+void edittexcube(cube &c, int tex, int orient, bool &findrep)
 {
     if(orient<0) loopi(6) c.texture[i] = tex;
-    else c.texture[visibleorient(c, orient)] = tex;
-    if (c.children) loopi(8) edittexcube(c.children[i], tex, orient);
+    else
+    {
+        int i = visibleorient(c, orient);
+        if(findrep)
+        {
+            if(reptex < 0)
+            {
+                reptex = c.texture[i];
+                reporient = orient;
+            }
+            else if(reptex != c.texture[i]) findrep = false;
+        };
+        c.texture[i] = tex;
+    };
+    if(c.children) loopi(8) edittexcube(c.children[i], tex, orient, findrep);
 };
 
 extern int curtexnum;
@@ -606,8 +622,13 @@ VAR(allfaces, 0, 0, 1);
 
 void mpedittex(int tex, int allfaces, selinfo &sel, bool local)
 {
-    if(local) cl->edittrigger(sel, EDIT_TEX, tex, allfaces);
-    loopselxyz(edittexcube(c, tex, allfaces ? -1 : sel.orient));
+    if(local)
+    {
+        cl->edittrigger(sel, EDIT_TEX, tex, allfaces);
+        if(allfaces || !(repsel == sel)) reptex = reporient = -1;
+    };
+    bool findrep = local && !allfaces && reptex < 0;
+    loopselxyz(edittexcube(c, tex, allfaces ? -1 : sel.orient, findrep));
 };
 
 void edittex(int dir)
@@ -636,6 +657,28 @@ void gettex()
 
 COMMAND(edittex, ARG_1INT);
 COMMAND(gettex, ARG_NONE);
+
+void replacetexcube(cube &c, int oldtex, int newtex, int orient)
+{
+    int i = visibleorient(c, orient);
+    if(c.texture[i] == oldtex) c.texture[i] = newtex;
+    if(c.children) loopi(8) replacetexcube(c.children[i], oldtex, newtex, orient);
+};
+
+void mpreplacetex(int oldtex, int newtex, int orient, selinfo &sel, bool local)
+{
+    if(local) cl->edittrigger(sel, EDIT_REPLACE, oldtex, newtex, orient);
+    loopselxyz(replacetexcube(c, oldtex, newtex, orient));
+};
+
+void replace()
+{
+    if(noedit()) return;
+    if(reptex < 0) { conoutf("can only replace after a texture edit"); return; };
+    mpreplacetex(reptex, lasttex, reporient, sel, true);
+};
+
+COMMAND(replace, ARG_NONE);
 
 ////////// flip and rotate ///////////////
 uint dflip(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); };

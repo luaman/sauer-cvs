@@ -486,7 +486,7 @@ struct fpsclient : igameclient
 
     };
 
-    void edittrigger(const selinfo &sel, int op, int arg1, int arg2)
+    void edittrigger(const selinfo &sel, int op, int arg1, int arg2, int arg3)
     {
         switch(op)
         {
@@ -514,6 +514,14 @@ struct fpsclient : igameclient
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1, arg2);
+                break;
+            };
+            case EDIT_REPLACE:
+            {
+                cc.addmsg(1, 17, SV_EDITH + op,
+                   sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                   sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
+                   arg1, arg2, arg3);
                 break;
             };
         };

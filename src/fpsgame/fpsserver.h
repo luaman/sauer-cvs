@@ -97,7 +97,7 @@ struct fpsserver : igameserver
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
-            SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15,  
+            SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15, SV_REPLACE, 17, 
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2,
             -1
         };

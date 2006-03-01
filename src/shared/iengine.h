@@ -12,7 +12,7 @@ extern void settexture(char *name);
 
 // octaedit
 
-enum { EDIT_HEIGHT = 0, EDIT_FACE, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_ROTATE };
+enum { EDIT_HEIGHT = 0, EDIT_FACE, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_ROTATE, EDIT_REPLACE };
 
 struct selinfo
 {
@@ -35,6 +35,7 @@ extern void mpedittex(int tex, int allfaces, selinfo &sel, bool local);
 extern void mpeditmat(int matid, selinfo &sel, bool local);
 extern void mpflip(selinfo &sel, bool local);
 extern void mprotate(int cw, selinfo &sel, bool local);
+extern void mpreplacetex(int oldtex, int newtex, int orient, selinfo &sel, bool local);
 
 // command
 extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);

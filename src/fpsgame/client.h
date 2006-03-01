@@ -450,7 +450,7 @@ struct clientcom : iclientcom
                 sel.grid = getint(p); sel.orient = getint(p);
                 sel.cx = getint(p); sel.cxs = getint(p); sel.cy = getint(p), sel.cys = getint(p);
                 sel.corner = getint(p);
-                int dir, mode, tex, mat, allfaces;
+                int dir, mode, tex, newtex, orient, mat, allfaces;
                 switch(type)
                 {
                     case SV_EDITH: dir = getint(p); mode = getint(p); mpeditheight(dir, mode, sel, false); break; 
@@ -459,6 +459,7 @@ struct clientcom : iclientcom
                     case SV_EDITM: mat = getint(p); mpeditmat(mat, sel, false); break; 
                     case SV_FLIP: mpflip(sel, false); break;
                     case SV_ROTATE: dir = getint(p); mprotate(dir, sel, false); break;
+                    case SV_REPLACE: tex = getint(p); newtex = getint(p); orient = getint(p); mpreplacetex(tex, newtex, orient, sel, false); break;
                 };
                 break;
             };
