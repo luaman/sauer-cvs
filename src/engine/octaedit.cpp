@@ -626,6 +626,7 @@ void mpedittex(int tex, int allfaces, selinfo &sel, bool local)
     {
         cl->edittrigger(sel, EDIT_TEX, tex, allfaces);
         if(allfaces || !(repsel == sel)) reptex = reporient = -1;
+        repsel = sel;
     };
     bool findrep = local && !allfaces && reptex < 0;
     loopselxyz(edittexcube(c, tex, allfaces ? -1 : sel.orient, findrep));
