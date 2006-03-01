@@ -9,6 +9,8 @@ eihrul:
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
+- shadows for mapmodels
+- texture replacement
 
 aard:
 - make sauer inner directory
