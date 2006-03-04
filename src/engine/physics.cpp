@@ -280,7 +280,7 @@ float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &r
         float f;
         ivec bo, br;
         extentity &e = *et->getents()[oc->list[i]];
-        if(!e.inoctanode) continue;
+        if(!e.inoctanode || e.type!=ET_MAPMODEL) continue;
         if(bb)
         {
             if(!getmmboundingbox(e, bo, br)) continue;
