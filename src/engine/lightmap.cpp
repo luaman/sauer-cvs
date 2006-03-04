@@ -9,6 +9,7 @@ VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VARF(worldlod, 0, 0, 1,  hdr.mapwlod = worldlod);
 VARF(ambient, 1, 25, 64, hdr.ambient = ambient);
 VAR(shadows, 0, 1, 1);
+VAR(mmshadows, 0, 0, 1);
 VAR(aalights, 0, 2, 2);
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
@@ -182,7 +183,7 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
             continue;
         if(shadows)
         {
-            float dist = raycube(light.o, ray, mag, 0);
+            float dist = raycube(light.o, ray, mag, mmshadows ? RAY_POLY : 0);
             if(dist < mag - tolerance)
                 continue;
         };

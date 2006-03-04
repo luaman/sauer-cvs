@@ -131,6 +131,74 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
+bool raytriintersect(const vec &o, const vec &ray, const vec &t0, const vec &t1, const vec &t2, float &dist)
+{
+    vec edge1(t1), edge2(t2);
+    edge1.sub(t0);
+    edge2.sub(t0);
+    vec p;
+    p.cross(ray, edge2);
+    float det = edge1.dot(p);
+    if(det == 0) return false;
+    vec r(o);
+    r.sub(t0);
+    float u = r.dot(p) / det;
+    if(u < 0 || u > 1) return false;
+    vec q;
+    q.cross(r, edge1);
+    float v = ray.dot(q) / det;
+    if(v < 0 || u + v > 1) return false;
+    dist = edge2.dot(q) / det;
+    return true;   
+};
+
+void yawray(vec &o, vec &ray, float angle)
+{
+    angle *= RAD;
+    float c = cos(angle), s = sin(angle),
+          ox = o.x, oy = o.y, 
+          rx = ray.x, ry = ray.y;
+    o.x = ox*c - oy*s;
+    o.y = oy*c + ox*s;
+    ray.x = rx*c - ry*s;
+    ray.y = ry*c + rx*s;
+};
+
+bool mmintersect(const extentity &e, const vec &o, const vec &ray, float &dist)
+{
+    mapmodelinfo &mmi = getmminfo(e.attr2);
+    if(!&mmi) return false;
+    vec eo(e.o);
+    float zoff = float(mmi.zoff+e.attr3);
+    eo.z += zoff;
+    float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
+    vec yo(o);
+    yo.sub(eo);
+    vec yray(ray);
+    yray.add(yo);
+    if(yaw != 0) yawray(yo, yray, yaw);
+    yray.sub(yo);
+    model *m = loadmodel(mmi.name); 
+    if(!m) return false;
+    vec center;
+    float radius = m->boundsphere(0, 1.0f, center);
+    vec co(yo);
+    co.sub(center);
+    float a = yray.squaredlen(), 
+          b = yray.dot(co), 
+          c = co.squaredlen() - radius*radius;
+    if(b*b < a*c) return false;
+#if 0
+    loopi(m->numtris())
+    {
+        vec a, b, c;
+        m->gettri(i, a, b, c);
+        if(raytriintersect(yo, yray, a, b, c, dist)) return true;
+    };
+#endif
+    return false;
+};
+
 bool pointoverbox(const vec &v, const vec &bo, const vec &br)
 {
     return v.x <= bo.x+br.x &&
@@ -203,7 +271,7 @@ bool inlist(int id, octaentities *last)
     return false;
 };
 
-float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray)
+float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, bool bb)
 {
     float dist = 1e16f;
     if(oc == last || oc == NULL) return dist;
@@ -212,12 +280,20 @@ float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &r
         float f;
         ivec bo, br;
         extentity &e = *et->getents()[oc->list[i]];
-        if(!e.inoctanode || !getmmboundingbox(e, bo, br)) continue;
-        vec vbo(bo.v), vbr(br.v);
-        vbr.mul(0.5f);
-        vbo.add(vbr);
-        if(rayboxintersect(o, ray, vbo, vbr, f))
-            dist = min(dist, f);
+        if(!e.inoctanode) continue;
+        if(bb)
+        {
+            if(!getmmboundingbox(e, bo, br)) continue;
+            vec vbo(bo.v), vbr(br.v);
+            vbr.mul(0.5f);
+            vbo.add(vbr);
+            if(!rayboxintersect(o, ray, vbo, vbr, f)) continue;
+        }
+        else
+        {
+            if(!mmintersect(e, o, ray, f)) continue;
+        };
+        dist = min(dist, f);
     };
     return dist;
 };
@@ -248,10 +324,10 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
     {
         int x = int(v.x), y = int(v.y), z = int(v.z);
 
-        if(dent > 1e15f && (mode&RAY_BB))
+        if(dent > 1e15f && (mode&RAY_POLY))
         {
             cube &ce = lookupcube(x, y, z, -octaentsize);
-            dent = disttoent(ce.ents, oclast, o, ray);
+            dent = disttoent(ce.ents, oclast, o, ray, (mode&RAY_POLY)==RAY_BB);
             oclast = ce.ents;
         };
 
@@ -639,6 +715,7 @@ void dropenttofloor(entity *e)
        e->o.z >= hdr.worldsize)
         return;
     vec v(0.0001f, 0.0001f, -1);
+    v.normalize();
     if(raycube(e->o, v) >= hdr.worldsize)
         return;
     physent d;
