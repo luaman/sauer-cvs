@@ -213,12 +213,13 @@ struct md2 : model
             bool isfan;
             if(isfan = (numvertex<0)) numvertex = -numvertex;
             command += 3;
-            triangle &first = hulltris.add();
+            triangle first;
             first.a = mverts[0][*command];
             command += 3;
             first.b = mverts[0][*command];
             command += 3;
             first.c = mverts[0][*command];
+            hulltris.add(first);
             loopj(numvertex-3)
             { 
                 triangle &tri = hulltris.add(), &prev = hulltris[hulltris.length()-2];
