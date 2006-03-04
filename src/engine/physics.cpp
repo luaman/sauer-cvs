@@ -412,7 +412,7 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     }
     if(ax>ay && ax>az) TRYCOLLIDE(x, visible&(1<<O_LEFT), visible&(1<<O_RIGHT));
     if(ay>az) TRYCOLLIDE(y, visible&(1<<O_BACK), visible&(1<<O_FRONT));
-    TRYCOLLIDE(z, visible&(1<<O_BOTTOM), az >= -d->eyeheight/2.0f && (visible&(1<<O_TOP)));
+    TRYCOLLIDE(z, az >= -(d->eyeheight+d->aboveeye)/4.0f && (visible&(1<<O_BOTTOM)), az >= -d->eyeheight/2.0f && (visible&(1<<O_TOP)));
     if(collideonly) inside = true;
     return collideonly;
 };
@@ -464,10 +464,20 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
         float m = walldistance;
         loopi(p.size)
         {
-            float dist = p.p[i].dist(o) - (fabs(p.p[i].x*r)+fabs(p.p[i].y*r)+fabs(p.p[i].z*zr));
-            if(dist>0) return true;
-            if(dist>m && (dir.iszero() || (p.p[i].dot(dir)<-cutoff && (dir.z>=0.0f || p.p[i].z<=0.0f || dist>=-d->eyeheight/2.0f)))) 
+            plane &f = p.p[i];
+            float dist = f.dist(o) - (fabs(f.x*r)+fabs(f.y*r)+fabs(f.z*zr));
+            if(dist > 0) return true;
+            if(dist > m)
             { 
+                if(!dir.iszero())
+                {
+                    if(f.dot(dir) >= -cutoff) continue;
+                    if(dir.z < 0)
+                    {
+                        if(f.z > 0 && dist < -d->eyeheight/2.0f) continue;
+                    }
+                    else if(dir.z > 0 && f.z < 0 && dist < -(d->eyeheight+d->aboveeye)/4.0f) continue;
+                };
                 w = &p.p[i]; 
                 m = dist; 
             };
