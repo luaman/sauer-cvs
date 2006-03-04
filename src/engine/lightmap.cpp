@@ -666,7 +666,7 @@ void lightreaching(const vec &target, uchar color[3])
             continue;
     
         ray.mul(1.0 / mag);
-        if(raycube(e.o, ray, mag, 0) < mag)
+        if(raycube(e.o, ray, mag, RAY_POLY) < mag)
             continue;
         float intensity = 1.0;
         if(e.attr1)
