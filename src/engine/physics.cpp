@@ -188,14 +188,12 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float &dist)
           b = yray.dot(co), 
           c = co.squaredlen() - radius*radius;
     if(b*b < a*c) return false;
-#if 0
-    loopi(m->numtris())
+    vector<triangle> &hull = m->hull();
+    loopv(hull)
     {
-        vec a, b, c;
-        m->gettri(i, a, b, c);
-        if(raytriintersect(yo, yray, a, b, c, dist)) return true;
+        triangle &tri = hull[i];
+        if(raytriintersect(yo, yray, tri.a, tri.b, tri.c, dist)) return true;
     };
-#endif
     return false;
 };
 

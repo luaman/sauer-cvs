@@ -21,6 +21,7 @@ struct model
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
     virtual char *name() = 0;
+    virtual vector<triangle> &hull() { static vector<triangle> nohull; return nohull; };
 };
 
 extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;

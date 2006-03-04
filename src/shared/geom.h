@@ -93,6 +93,14 @@ struct plane : vec
     float zdist(const vec &p) const { return p.z-zintersect(p); }; 
 };
 
+struct triangle
+{
+    vec a, b, c;
+
+    triangle(const vec &a, const vec &b, const vec &c) : a(a), b(b), c(c) {};
+    triangle() {};
+};
+
 /**
 
 Sauerbraten uses 3 different linear coordinate systems

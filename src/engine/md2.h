@@ -64,6 +64,7 @@ struct md2 : model
     GLuint vbufGL;
     ushort *vbufi;
     int vbufi_len;
+    vector<triangle> hulltris;
 
     md2_header header;
     
@@ -161,6 +162,8 @@ struct md2 : model
         vector<ushort> idxs;
         vector<ushort> tidxs;
 
+        verts.setsize(0);
+
 		for(int *command = glcommands; (*command)!=0;)
 		{
 			int numvertex = *command++;
@@ -198,6 +201,48 @@ struct md2 : model
         pfnglGenBuffers(1, &vbufGL);
         pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, vbufGL);
         pfnglBufferData(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+    };
+
+    vector<triangle> &hull()
+    {
+        if(hulltris.length()) return hulltris;
+        if(!mverts[0]) scale(0, 1.0f);
+        for(int *command = glcommands; (*command)!=0;)
+        {
+            int numvertex = *command;
+            bool isfan;
+            if(isfan = (numvertex<0)) numvertex = -numvertex;
+            command += 3;
+            triangle &first = hulltris.add();
+            first.a = mverts[0][*command];
+            command += 3;
+            first.b = mverts[0][*command];
+            command += 3;
+            first.c = mverts[0][*command];
+            loopj(numvertex-3)
+            { 
+                triangle &tri = hulltris.add(), &prev = hulltris[hulltris.length()-2];
+                if(isfan)
+                {
+                    tri.a = first.a;
+                    tri.b = prev.c;
+                }
+                else if(j&1)
+                {
+                    tri.a = prev.a;
+                    tri.b = prev.c;
+                }
+                else
+                {
+                    tri.a = prev.c;
+                    tri.b = prev.b;
+                };
+                command += 3;
+                tri.c = mverts[0][*command];
+            };
+            command++;
+        };
+        return hulltris;
     };
 
     void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
