@@ -207,7 +207,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     
     if(!hidehud)
     {
-        if(!rendermenu(w, h))
+        if(!rendermenu(w, h) && player->state!=CS_SPECTATOR)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
             glBindTexture(GL_TEXTURE_2D, crosshair->gl);

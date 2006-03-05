@@ -9,13 +9,20 @@ struct fpsserver : igameserver
 
     struct clientinfo
     {
+        int clientnum;
         string name;
         string mapvote;
         int modevote;
         bool master;
         bool spectator;
         
-        clientinfo() : master(false) {};
+        clientinfo() : master(false), spectator(false) {};
+
+        void reset()
+        {
+            master = false;
+            spectator = false;
+        };
     };
 
     struct score
@@ -39,13 +46,15 @@ struct fpsserver : igameserver
     
     ivector bannedips;
     int lastkick;
-    
+    vector<clientinfo *> clients;
+
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
     fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), lastkick(0) {};
 
     void *newinfo() { return new clientinfo; };
-
+    void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
+    
     vector<server_entity> sents;
     vector<score> scores;
 
@@ -91,7 +100,7 @@ struct fpsserver : igameserver
     {
         static char msgsizesl[] =               // size inclusive message token, 0 for variable or not-checked sizes
         { 
-            SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 16, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
+            SV_INITS2C, 5, SV_INITC2S, 0, SV_POS, 16, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
             SV_DIED, 2, SV_DAMAGE, 7, SV_SHOT, 8, SV_FRAGS, 2,
             SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
@@ -154,12 +163,26 @@ struct fpsserver : igameserver
         return true;    
     };
 
+    int checktype(int type, clientinfo *ci)
+    {
+        // spectators can only connect and talk
+        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING };
+        if(ci && ci->spectator)
+        {
+            loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
+            return -1;
+        };
+        // only allow edit messages in coop-edit mode
+        if(type >= SV_EDITENT && type <= SV_REPLACE && mode != 1) return -1;
+        return type;
+    };
+
     bool parsepacket(int &sender, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
     {
         char text[MAXTRANS];
         int cn = -1, type;
-
-        while(p<end) switch(type = getint(p))
+        clientinfo *ci = sender>=0 ? ((clientinfo *)getinfo(sender)) : NULL;
+        while(p<end) switch(checktype(type = getint(p), ci))
         {
             case SV_TEXT:
                 sgetstr();
@@ -167,12 +190,12 @@ struct fpsserver : igameserver
 
             case SV_INITC2S:
                 sgetstr();
-                s_strcpy(((clientinfo *)getinfo(cn))->name, text);
+                s_strcpy(ci->name, text);
                 sgetstr();
                 getint(p);
                 {
-                    score &sc = findscore(cn, false);
-                    if(&sc) sendn(true, -1, 4, SV_RESUME, cn, sc.maxhealth, sc.frags);
+                    score &sc = findscore(sender, false);
+                    if(&sc) sendn(true, -1, 4, SV_RESUME, sender, sc.maxhealth, sc.frags);
                 };
                 getint(p);
                 getint(p);
@@ -218,34 +241,36 @@ struct fpsserver : igameserver
             };
 
             case SV_PING:
-                send2(false, cn, SV_PONG, getint(p));
+                send2(false, sender, SV_PONG, getint(p));
                 break;
 
             case SV_POS:
             {
                 cn = getint(p);
-                if(cn<0 || cn>=getnumclients() || !getinfo(cn))
+                if(cn<0 || cn>=getnumclients() || cn != sender)
                 {
                     disconnect_client(sender, DISC_CN);
                     return false;
                 };
                 int size = msgsizelookup(type);
                 assert(size!=-1);
-                loopi(size-2) getint(p);
+                loopi(size-3) getint(p);
+                int state = getint(p);
+                if(ci->spectator && (state>>5) != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
                 break;
             };
             
             case SV_FRAGS:
             {
                 int frags = getint(p);    
-                if(minremain > 0) findscore(cn, true).frags = frags;
+                if(minremain > 0) findscore(sender, true).frags = frags;
                 break;
             };
                 
             case SV_MASTERMODE:
             {
                 int mm = getint(p);
-                if(((clientinfo *)getinfo(cn))->master)
+                if(ci->master)
                 {
                     mastermode = mm;
                     s_sprintfd(s)("mastermode is now %d", mastermode);
@@ -257,7 +282,7 @@ struct fpsserver : igameserver
             case SV_KICK:
             {
                 int victim = getint(p);
-                if(((clientinfo *)getinfo(cn))->master)
+                if(ci->master)
                 {
                     bannedips.add(getclientip(victim));
                     disconnect_client(victim, DISC_KICK);
@@ -283,6 +308,7 @@ struct fpsserver : igameserver
         putint(p, n);
         putint(p, PROTOCOL_VERSION);
         putint(p, smapname[0]);
+        putint(p, ((clientinfo *)getinfo(n))->spectator ? 1 : 0);
         if(smapname[0])
         {
             putint(p, SV_MAPCHANGE);
@@ -326,7 +352,7 @@ struct fpsserver : igameserver
         
         if(lastkick && lastkick+4*60*60<lastsec) bannedips.setsize(lastkick = 0);  // forget about cheaters after 4hrs
         
-        if(masterupdate>0) { send2(true, -1, SV_CURRENTMASTER, masterupdate); masterupdate = -1; };
+        if(masterupdate>=0) { send2(true, -1, SV_CURRENTMASTER, masterupdate); masterupdate = -1; };
         
         if((mode>1 || (mode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
@@ -355,31 +381,35 @@ struct fpsserver : igameserver
     
     void findmaster()
     {
-        loopi(getnumclients())
+        loopv(clients)
         {
-            clientinfo *ci = (clientinfo *)getinfo(i);
-            if(!ci || ci->spectator) continue;
-            masterupdate = i;
+            clientinfo *ci = clients[i];
+            if(ci->spectator) continue;
+            masterupdate = ci->clientnum;
             if(ci->master) return;
             ci->master = true;
             mastermode = MM_OPEN;   // reset after master leaves or server clears
             return;
         };
+        mastermode = MM_OPEN;
     };
     
     int clientconnect(int n, uint ip)
     {
+        clientinfo *ci = (clientinfo *)getinfo(n);
+        ci->clientnum = n;
+        clients.add(ci);
         loopv(bannedips) if(bannedips[i]==ip) return DISC_IPBAN;
         if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
-        if(mastermode>=MM_LOCKED) ((clientinfo *)getinfo(n))->spectator = true;
+        if(mastermode>=MM_LOCKED) ci->spectator = true;
         findmaster();
         return DISC_NONE;
     };
 
-    void clientdisconnect(int n) { send2(true, -1, SV_CDIS, n); findmaster();  };
+    void clientdisconnect(int n) { clients.removeobj((clientinfo *)getinfo(n)); send2(true, -1, SV_CDIS, n); findmaster();  };
     char *servername() { return "sauerbratenserver"; };
-    int serverinfoport() { return CUBE_SERVINFO_PORT; };
-    int serverport() { return CUBE_SERVER_PORT; };
+    int serverinfoport() { return SAUERBRATEN_SERVINFO_PORT; };
+    int serverport() { return SAUERBRATEN_SERVER_PORT; };
     char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; }; 
 
     void serverinforeply(uchar *&p)

@@ -12,22 +12,24 @@ struct clientcom : iclientcom
     int lastping;
     
     bool connected, remote;
-    
+    int clientnum;
+
     int currentmaster;
+    bool spectator;
 
     fpsent *player1;
 
-    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), currentmaster(0), player1(_cl.player1)
+    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, IARG_VAR, self->toserver(args[0]));
         CCOMMAND(clientcom, name, 1, { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
         CCOMMAND(clientcom, team, 1, { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
         CCOMMAND(clientcom, map, 1, self->changemap(args[0]));
-        CCOMMAND(clientcom, kick, 1, self->kick(atoi(args[0])));
+        CCOMMAND(clientcom, kick, 1, self->kick(args[0]));
         CCOMMAND(clientcom, mastermode, 1, self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
     };
 
-    void mapstart() { senditemstoserver = true; };
+    void mapstart() { if(!spectator) senditemstoserver = true; };
 
     void initclientnet()
     {
@@ -49,9 +51,10 @@ struct clientcom : iclientcom
     void gamedisconnect()
     {
         connected = false;
+        clientnum = -1;
         c2sinit = false;
         player1->lifesequence = 0;
-        currentmaster = 0;
+        currentmaster = -1;
         loopv(cl.players) DELETEP(cl.players[i]);
     };
 
@@ -59,16 +62,34 @@ struct clientcom : iclientcom
     {
         bool allow = !connected || !remote || cl.gamemode==1;
         if(!allow) conoutf("editing in multiplayer requires coopedit mode (1)");
+        if(allow && spectator)
+        {
+            conoutf("spectators can't edit");
+            return false;
+        };
         return allow; 
     };
     
-    void kick(int n)
-    { 
+    int parseplayer(const char *arg)
+    {
+        char *end;
+        int n = strtol(arg, &end, 10);
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && n--==0 && i) addmsg(1, 2, SV_KICK, i-1);
+            if(*arg && !*end)
+            {
+                if(o && n--==0 && i) return i-1;
+            }
+            else if(!strcmp(arg, o->name)) return i-1;
         };
+        return -1;
+    };
+
+    void kick(const char *arg)
+    { 
+        int i = parseplayer(arg);
+        if(i>=0) addmsg(1, 2, SV_KICK, i);
     };
 
     // collect c2s messages conveniently
@@ -77,6 +98,7 @@ struct clientcom : iclientcom
 
     void addmsg(int rel, int num, int type, ...)
     {
+        if(spectator) return;
         if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
         ivector &msg = messages.add();
         msg.add(num);
@@ -88,7 +110,7 @@ struct clientcom : iclientcom
         va_end(marker);
     };
     
-    void sendpacketclient(uchar *&p, bool &reliable, int clientnum, dynent *d)
+    void sendpacketclient(uchar *&p, bool &reliable, dynent *d)
     {
         bool serveriteminitdone = false;
         if(toservermap[0])                      // suggest server to change map
@@ -100,24 +122,26 @@ struct clientcom : iclientcom
             putint(p, cl.nextmode);
             return;
         }
-        putint(p, SV_POS);
-        putint(p, clientnum);
-        putint(p, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
-        putint(p, (int)(d->o.y*DMF));
-        putint(p, (int)(d->o.z*DMF));
-        putint(p, (int)d->yaw);
-        putint(p, (int)d->pitch);
-        putint(p, (int)d->roll);
-        putint(p, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
-        putint(p, (int)(d->vel.y*DVELF));
-        putint(p, (int)(d->vel.z*DVELF));
-        putint(p, (int)d->physstate);
-        putint(p, (int)(d->floor.x*DVF));          // quantize to 1/100, almost always 1 byte
-        putint(p, (int)(d->floor.y*DVF));
-        putint(p, (int)(d->floor.z*DVF));
-        // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
-        putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<5) );
-
+        if(!spectator || !c2sinit || ctext[0])
+        {
+            putint(p, SV_POS);
+            putint(p, clientnum);
+            putint(p, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
+            putint(p, (int)(d->o.y*DMF));
+            putint(p, (int)(d->o.z*DMF));
+            putint(p, (int)d->yaw);
+            putint(p, (int)d->pitch);
+            putint(p, (int)d->roll);
+            putint(p, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
+            putint(p, (int)(d->vel.y*DVELF));
+            putint(p, (int)(d->vel.z*DVELF));
+            putint(p, (int)d->physstate);
+            putint(p, (int)(d->floor.x*DVF));          // quantize to 1/100, almost always 1 byte
+            putint(p, (int)(d->floor.y*DVF));
+            putint(p, (int)(d->floor.z*DVF));
+            // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
+            putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<5) );
+        };
         if(senditemstoserver)
         {
             reliable = true;
@@ -174,7 +198,7 @@ struct clientcom : iclientcom
         const float dz = player1->o.z-d->o.z;
         const float rz = player1->aboveeye+d->eyeheight;
         const float fx = (float)fabs(dx), fy = (float)fabs(dy), fz = (float)fabs(dz);
-        if(fx<r && fy<r && fz<rz && d->state!=CS_DEAD)
+        if(fx<r && fy<r && fz<rz && player1->state!=CS_SPECTATOR && d->state!=CS_DEAD)
         {
             if(fx<fy) d->o.y += dy<0 ? r-fy : -(r-fy);  // push aside
             else      d->o.x += dx<0 ? r-fx : -(r-fx);
@@ -187,7 +211,7 @@ struct clientcom : iclientcom
         };
     };
 
-    void parsepacketclient(uchar *end, uchar *p, int &clientnum)   // processes any updates from the server
+    void parsepacketclient(uchar *end, uchar *p)   // processes any updates from the server
     {
         int gamemode = cl.gamemode;
         char text[MAXTRANS];
@@ -210,6 +234,7 @@ struct clientcom : iclientcom
                 toservermap[0] = 0;
                 clientnum = cn;                 // we are now fully connected
                 if(!getint(p)) s_strcpy(toservermap, cl.getclientmap());   // we are the first client on this server, set map
+                spectator = getint(p)!=0;
                 break;
             };
 
@@ -250,7 +275,7 @@ struct clientcom : iclientcom
             case SV_TEXT:
                 sgetstr();
                 s_sprintfd(ds)("@%s", &text);
-                particle_text(d->abovehead(), ds, 9);
+                if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
                 conoutf("%s:\f %s", d->name, &text); 
                 break;
 
@@ -308,6 +333,7 @@ struct clientcom : iclientcom
                 if(cn >= cl.players.length() || !(d = cl.players[cn])) break;
                 conoutf("player %s disconnected", d->name); 
                 DELETEP(cl.players[cn]);
+                if(currentmaster==cn) currentmaster = -1;
                 break;
 
             case SV_SHOT:
@@ -520,6 +546,6 @@ struct clientcom : iclientcom
 
     void changemap(char *name)                      // request map change, server may ignore
     {
-        s_strcpy(toservermap, name);
+        if(!spectator) s_strcpy(toservermap, name);
     };
 };

@@ -181,7 +181,7 @@ template <class T> struct vector
         return e;
     };
     
-    void removeobj(T &o)
+    void removeobj(const T &o)
     {
         loopi(ulen) if(buf[i]==o) remove(i--);
     };

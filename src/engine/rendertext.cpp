@@ -103,24 +103,38 @@ short char_coords[96][4] =
 
 #define PIXELTAB (FONTH*4)
 
-int text_width(char *str)
+int char_width(int c, int x = 0)
 {
-    int x = 0;
-    for (int i = 0; str[i] != 0; i++)
+    if(c=='\t') x = (x+PIXELTAB)/PIXELTAB*PIXELTAB;
+    else if(c==' ') x += FONTH/2;
+    else if(c>=33 && c<=126)
     {
-        int c = str[i];
-        if(c=='\t') { x = (x+PIXELTAB)/PIXELTAB*PIXELTAB; continue; }; 
-        if(c=='\f') continue; 
-        if(c==' ') { x += FONTH/2; continue; };
         c -= 33;
-        if(c<0 || c>=95) continue;
         int in_width = char_coords[c][2] - char_coords[c][0];
         x += in_width + 1;
-    }
+    };
+    return x;
+};
+
+int text_width(const char *str)
+{
+    int x = 0;
+    for(int i = 0; str[i]; i++) x += char_width(str[i], x);
     return x;
 }
 
-
+int text_visible(const char *str, int max)
+{
+    int i = 0, x = 0;
+    while(str[i])
+    {
+        x = char_width(str[i], x);
+        if(x > max) return i;
+        ++i;
+    };
+    return i;
+};
+ 
 void draw_textf(const char *fstr, int left, int top, ...)
 {
     s_sprintfdlv(str, top, fstr);

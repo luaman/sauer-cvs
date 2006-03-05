@@ -18,8 +18,8 @@ struct fpsrender
             if(t>(r-1)*100) { anim = ANIM_DEAD; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t/16.0f; }; };
             if(mz<-1000) return;
         }
-        else if(d->state==CS_EDITING)                       { anim = ANIM_EDIT; }
-        else if(d->state==CS_LAGGED)                        { anim = ANIM_LAG; }
+        else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) { anim = ANIM_EDIT; }
+        else if(d->state==CS_LAGGED)                            { anim = ANIM_LAG; }
         else if(monsterstate==M_PAIN || cl.lastmillis-d->lastpain<300) { anim = ANIM_PAIN; }
         else if(d->physstate==PHYS_FALL && d->timeinair>100)           { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
@@ -32,12 +32,12 @@ struct fpsrender
     void rendergame(fpsclient &cl, int gamemode)
     {
         fpsent *d;
-        loopv(cl.players) if(d = cl.players[i])
+        loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
             renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, false, M_NONE);
             s_strcpy(d->info, d->name);
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); };
-            particle_text(d->abovehead(), d->info, 11, 1);
+            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, 11, 1);
         };
         if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, false, M_NONE);
         cl.ms.monsterrender();

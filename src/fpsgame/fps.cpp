@@ -181,7 +181,7 @@ struct fpsclient : igameclient
                 players[i]->state = CS_LAGGED;
                 continue;
             };
-            if(lagtime && players[i]->state != CS_DEAD && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
+            if(lagtime && players[i]->state==CS_ALIVE && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
         };
     };
         
@@ -192,7 +192,7 @@ struct fpsclient : igameclient
         et.checkquad(curtime);
         if(m_arena) arenarespawn();
         ws.moveprojectiles(curtime);
-        if(getclientnum()>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos);     // only shoot when connected to server
+        if(cc.clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos);     // only shoot when connected to server
         gets2c();           // do this first, so we have most accurate information when our player moves
         otherplayers();
         ms.monsterthink(curtime, gamemode);
@@ -209,7 +209,7 @@ struct fpsclient : igameclient
             moveplayer(player1, 20, true);
             et.checkitems();
         };
-        c2sinfo(player1);   // do this last, to reduce the effective frame lag
+        if(cc.clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
     };
 
     void entinmap(dynent *d, bool froment)    // brute force but effective way to find a free spawn spot in the map
@@ -246,7 +246,7 @@ struct fpsclient : igameclient
         };
         entinmap(d, true);
         spawnstate(d);
-        d->state = CS_ALIVE;
+        d->state = cc.spectator ? CS_SPECTATOR : CS_ALIVE;
     };  
 
     void respawn()
@@ -291,7 +291,7 @@ struct fpsclient : igameclient
             }
             else if(actor==-1)
             {
-                actor = getclientnum();
+                actor = cc.clientnum;
                 conoutf("you suicided!");
                 cc.addmsg(1, 2, SV_FRAGS, --player1->frags);
             }
@@ -435,7 +435,7 @@ struct fpsclient : igameclient
 
     void drawhudgun()
     {
-        if(!hudgun() || editmode) return;
+        if(!hudgun() || editmode || player1->state==CS_SPECTATOR) return;
         
         int rtime = ws.reloadtime(player1->gunselect);
         if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
@@ -466,6 +466,7 @@ struct fpsclient : igameclient
 
     void gameplayhud(int w, int h)
     {
+        if(player1->state==CS_SPECTATOR) return;
         glLoadIdentity();    
         glOrtho(0, w*900/h, 900, 0, -1, 1);
         draw_textf("%d",  90, 827, player1->health);
@@ -483,7 +484,6 @@ struct fpsclient : igameclient
         int r = 64;
         if(g==9) { g = 4; r = 0; };
         drawicon((float)(g*64), (float)r, 1220, 1650);
-
     };
 
     void edittrigger(const selinfo &sel, int op, int arg1, int arg2, int arg3)

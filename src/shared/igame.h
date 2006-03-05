@@ -14,8 +14,8 @@ struct icliententities
 struct iclientcom
 {
     virtual void gamedisconnect() = 0;
-    virtual void parsepacketclient(uchar *end, uchar *p, int &clientnum) = 0;
-    virtual void sendpacketclient(uchar *&p, bool &reliable, int clientnum, dynent *d) = 0;
+    virtual void parsepacketclient(uchar *end, uchar *p) = 0;
+    virtual void sendpacketclient(uchar *&p, bool &reliable, dynent *d) = 0;
     virtual void gameconnect(bool _remote) = 0;
     virtual bool allowedittoggle() = 0;
     virtual void writeclientinfo(FILE *f) = 0;
@@ -52,6 +52,7 @@ struct igameclient
 struct igameserver
 {
     virtual void *newinfo() = 0;
+    virtual void resetinfo(void *ci) = 0;
     virtual void serverinit(char *sdesc) = 0;
     virtual void clientdisconnect(int n) = 0;
     virtual int clientconnect(int n, uint ip) = 0;

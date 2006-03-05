@@ -32,13 +32,23 @@ struct scoreboard
         loopi(cl.numdynents()) 
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && o->type!=ENT_AI)
+            if(o && o->type!=ENT_AI && o->state!=CS_SPECTATOR)
             {
                 s_sprintfd(lag)("%d", o->plag);
-                s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, cl.cc.currentmaster==i-1 || cl.cc.currentmaster==getclientnum() ? "\f" : "", o->name);
+                s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, (cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum))) ? "\f" : "", o->name);
                 menumanual(0, scorelines.length()-1, scorelines.last().s); 
             }
         };
+        loopi(cl.numdynents())
+        {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(o && o->state==CS_SPECTATOR)
+            {
+                s_sprintf(scorelines.add().s)("\t\t\t\t%s", o->name);
+                menumanual(0, scorelines.length()-1, scorelines.last().s);
+            }
+        };
+
         sortmenu(0, scorelines.length());
         if(m_teammode)
         {

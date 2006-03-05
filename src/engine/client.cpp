@@ -7,9 +7,6 @@ ENetHost *clienthost = NULL;
 int connecting = 0;
 int connattempts = 0;
 int disconnecting = 0;
-int clientnum = -1;         // our client id in the game
-
-int getclientnum() { return clientnum; };
 
 bool multiplayer(bool msg)
 {
@@ -106,7 +103,6 @@ void disconnect(int onlyclean, int async)
     connecting = 0;
     connattempts = 0;
     disconnecting = 0;
-    clientnum = -1;
     
     cc->gamedisconnect();
     
@@ -148,13 +144,12 @@ void sendpackettoserv(void *packet)
 
 void c2sinfo(dynent *d)                     // send update to the server
 {
-    if(clientnum<0) return;                 // we haven't had a welcome message from the server yet
     if(lastmillis-lastupdate<33) return;    // don't update faster than 30fps
     ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, 0);
     uchar *start = packet->data;
     uchar *p = start;
     bool reliable = false;
-    cc->sendpacketclient(p, reliable, clientnum, d);
+    cc->sendpacketclient(p, reliable, d);
     if(reliable) packet->flags = ENET_PACKET_FLAG_RELIABLE;
     if(packet)
     {
@@ -172,7 +167,7 @@ void neterr(char *s)
 
 void localservertoclient(uchar *buf, int len)   // processes any updates from the server
 {
-    cc->parsepacketclient(buf+len, buf, clientnum);
+    cc->parsepacketclient(buf+len, buf);
 };
 
 void clientkeepalive() { if(clienthost) enet_host_service(clienthost, NULL, 0); };

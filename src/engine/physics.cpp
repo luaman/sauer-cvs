@@ -756,7 +756,7 @@ void dropenttofloor(entity *e)
     d.blocked = false;
     d.moving = true;
     d.timeinair = 0;
-    d.state = CS_EDITING;
+    d.state = CS_ALIVE;
     d.type = ENT_AI;
     loopi(hdr.worldsize)
     {
@@ -867,7 +867,7 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
     const bool water = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z)).material == MAT_WATER;
-    const bool floating = (editmode && local) || pl->state==CS_EDITING;
+    const bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state == CS_SPECTATOR;
     const float secs = curtime/1000.f;
 
     // apply any player generated changes in velocity
@@ -947,7 +947,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 void moveplayer(physent *pl, int moveres, bool local)
 {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
-    if(pl->o.z<0  && pl->state != CS_DEAD) cl->worldhurts(pl, 400);
+    if(pl->o.z<0 && pl->state==CS_ALIVE) cl->worldhurts(pl, 400);
 };
 
 bool intersect(physent *d, vec &from, vec &to)   // if lineseg hits entity bounding box

@@ -41,19 +41,20 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     puts(cl.cref);
 };
 
+extern int scr_w;
+
 void conoutf(const char *s, ...)
 {
     s_sprintfdv(sf, s);
     s = sf;
-    int n = 0;
-    while(strlen(s)>WORDWRAP)                       // cut strings to fit on screen
+    int n = 0, visible;
+    while(visible = text_visible(s, 4*scr_w - FONTH)) // cut strings to fit on screen
     {
         string t;
-        s_strncpy(t, s, WORDWRAP+1);
+        s_strncpy(t, s, visible+1);
         conline(t, n++!=0);
-        s += WORDWRAP;
+        s += visible;
     };
-    conline(s, n!=0);
 };
 
 bool fullconsole = false;

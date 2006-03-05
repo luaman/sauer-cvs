@@ -117,8 +117,8 @@ void disconnect_client(int n, int reason)
     s_sprintfd(s)("client (%s) disconnected because: %s\n", clients[n]->hostname, disc_reasons[reason]);
     puts(s);
     enet_peer_disconnect(clients[n]->peer, reason);
-    clients[n]->type = ST_EMPTY;
     sv->clientdisconnect(n);
+    clients[n]->type = ST_EMPTY;
     sv->sendservmsg(s);
 };
 
@@ -193,7 +193,11 @@ void localclienttoserver(ENetPacket *packet)
 
 client &addclient()
 {
-    loopv(clients) if(clients[i]->type==ST_EMPTY) return *clients[i];
+    loopv(clients) if(clients[i]->type==ST_EMPTY)
+    {
+        sv->resetinfo(clients[i]->info);
+        return *clients[i];
+    };
     client *c = new client;
     c->num = clients.length();
     c->info = sv->newinfo();
@@ -361,8 +365,8 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             if(!event.peer->data) break;
             int num = ((client *)event.peer->data)->num;
             printf("disconnected client (%s)\n", clients[num]->hostname);
-            clients[num]->type = ST_EMPTY;
             sv->clientdisconnect(num);
+            clients[num]->type = ST_EMPTY;
             event.peer->data = NULL;
             break;
     };
