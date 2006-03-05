@@ -77,9 +77,10 @@ struct clientcom : iclientcom
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(!o) continue;
             if(*arg && !*end)
             {
-                if(o && n--==0 && i) return i-1;
+                if(n--==0) return i-1;
             }
             else if(!strcmp(arg, o->name)) return i-1;
         };
