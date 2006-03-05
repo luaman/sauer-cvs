@@ -119,7 +119,7 @@ int char_width(int c, int x = 0)
 int text_width(const char *str)
 {
     int x = 0;
-    for(int i = 0; str[i]; i++) x += char_width(str[i], x);
+    for(int i = 0; str[i]; i++) x = char_width(str[i], x);
     return x;
 }
 
