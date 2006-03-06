@@ -11,9 +11,6 @@ struct mapmodelinfo { int rad, h, zoff; string name; };
 
 extern int islittleendian;
 
-
 extern bool editmode;
-
-#define sgetstr() { char *t = text; do { *t = getint(p); } while(*t++ && t < &text[sizeof(text)]); t[-1] = '\0'; }
 
 #define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); }; igameclient *newclient() { return c; }; igameserver *newserver() { return s; }; } reg_##t

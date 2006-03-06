@@ -280,14 +280,14 @@ struct clientcom : iclientcom
                 break;
 
             case SV_TEXT:
-                sgetstr();
+                sgetstr(text, p);
                 s_sprintfd(ds)("@%s", &text);
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
                 conoutf("%s:\f %s", d->name, &text); 
                 break;
 
             case SV_MAPCHANGE:     
-                sgetstr();
+                sgetstr(text, p);
                 changemapserv(text, getint(p));
                 mapchanged = true;
                 break;
@@ -315,7 +315,7 @@ struct clientcom : iclientcom
 
             case SV_INITC2S:            // another client either connected or changed name/team
             {
-                sgetstr();
+                sgetstr(text, p);
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text))
@@ -327,7 +327,7 @@ struct clientcom : iclientcom
                     conoutf("connected: %s", &text);
                 }; 
                 s_strcpy(d->name, text);
-                sgetstr();
+                sgetstr(text, p);
                 s_strcpy(d->team, text);
                 d->lifesequence = getint(p);
                 d->maxhealth = getint(p);
@@ -524,7 +524,7 @@ struct clientcom : iclientcom
                 break;
 
             case SV_SERVMSG:
-                sgetstr();
+                sgetstr(text, p);
                 conoutf("%s", text);
                 break;
                 

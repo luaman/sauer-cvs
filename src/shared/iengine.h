@@ -69,6 +69,7 @@ extern void newmenu(char *name);
 extern void addserver(char *servername);
 extern char *getservername(int n);
 extern void writeservercfg();
+extern void sgetstr(char *text, uchar *&p);
 
 // world
 extern void empty_world(int factor, bool force);

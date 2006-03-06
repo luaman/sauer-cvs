@@ -11,9 +11,10 @@ void backup(char *name, char *backupname)
 
 string cgzname, bakname, pcfname, mcfname;
 
-void setnames(char *name)
+void setnames(char *fname)
 {
-    string pakname, mapname;
+    string name, pakname, mapname;
+    s_strncpy(name, fname, 100);
     char *slash = strpbrk(name, "/\\");
     if(slash)
     {

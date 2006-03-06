@@ -185,13 +185,13 @@ struct fpsserver : igameserver
         while(p<end) switch(checktype(type = getint(p), ci))
         {
             case SV_TEXT:
-                sgetstr();
+                sgetstr(text, p);
                 break;
 
             case SV_INITC2S:
-                sgetstr();
+                sgetstr(text, p);
                 s_strcpy(ci->name, text);
-                sgetstr();
+                sgetstr(text, p);
                 getint(p);
                 {
                     score &sc = findscore(sender, false);
@@ -203,7 +203,7 @@ struct fpsserver : igameserver
 
             case SV_MAPCHANGE:
             {
-                sgetstr();
+                sgetstr(text, p);
                 int reqmode = getint(p);
                 if(reqmode<0) reqmode = 0;
                 if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) return false;

@@ -228,9 +228,9 @@ void checkpings()
                 int numattr = getint(p);
                 si.attr.setsize(0);
                 loopj(numattr) si.attr.add(getint(p));
-                sgetstr();
+                sgetstr(text, p);
                 s_strcpy(si.map, text);
-                sgetstr();
+                sgetstr(text, p);
                 s_strcpy(si.sdesc, text);                
                 break;
             };
@@ -302,5 +302,18 @@ void writeservercfg()
     loopvrev(servers) fprintf(f, "addserver %s\n", servers[i].name);
     fclose(f);
 };
+
+void sgetstr(char *text, uchar *&p)    // text buffer must be size MAXTRANS
+{
+    char *t = text;
+    do
+    {
+        if(t-text==MAXTRANS) { *--t = 0; return; };
+        *t = getint(p);
+    }
+    while(*t++);
+};
+
+
 
 

@@ -13,7 +13,13 @@ eihrul:
 - texture replacement
 
 aard:
+- remove wiki for now
+- see if a workaround for th 8x.xx texture bugs is possible -> with shaders this would also go away
+- go do quick phong lighting for models
+- make 3rd person weapons show... how to make an axe swing rather than go back and forth?
+- update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - make sauer inner directory
+- iconic stats
 - remove player name when dead
 - new BAS sounds?
 - make very clear section in the docs about what you can and cannot do with sauer
