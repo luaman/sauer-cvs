@@ -94,7 +94,7 @@ bool getmmboundingbox(extentity &e, ivec &o, ivec &r)
     o.x = int(e.o.x+center.x-radius);
     o.y = int(e.o.y+center.y-radius);
     o.z = int(e.o.z+center.z-radius)+mmi.zoff+e.attr3;
-    r.x = r.y = r.z = 2*int(radius);
+    r.x = r.y = r.z = int(2.0f*radius);
 #if 0
     if(!&mmi || !mmi.h || !mmi.rad) return false;
     r.x = r.y = mmi.rad*2;
