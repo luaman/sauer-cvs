@@ -100,14 +100,14 @@ struct fpsserver : igameserver
     {
         static char msgsizesl[] =               // size inclusive message token, 0 for variable or not-checked sizes
         { 
-            SV_INITS2C, 5, SV_INITC2S, 0, SV_POS, 16, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
+            SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 16, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
             SV_DIED, 2, SV_DAMAGE, 7, SV_SHOT, 8, SV_FRAGS, 2,
             SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15, SV_REPLACE, 17, 
-            SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2,
+            SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3,
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -167,7 +167,7 @@ struct fpsserver : igameserver
     {
         // spectators can only connect and talk
         static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING };
-        if(ci && ci->spectator)
+        if(ci && ci->spectator && !ci->master)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
             return -1;
@@ -256,7 +256,7 @@ struct fpsserver : igameserver
                 assert(size!=-1);
                 loopi(size-3) getint(p);
                 int state = getint(p);
-                if(ci->spectator && (state>>5) != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
+                if(ci->spectator && (state>>5) != CS_SPECTATOR) return false;
                 break;
             };
             
@@ -291,6 +291,18 @@ struct fpsserver : igameserver
                 break;
             };
 
+            case SV_SPECTATOR:
+            {
+                int spectator = getint(p), val = getint(p);
+                if(ci->master || spectator == sender)
+                {
+                    clientinfo *spinfo = (clientinfo *)getinfo(spectator);
+                    spinfo->spectator = val!=0;
+                    if(spectator == sender) sendn(true, sender, 3, SV_SPECTATOR, sender, val);
+                };
+                break;
+            };
+
             default:
             {
                 int size = msgsizelookup(type);
@@ -308,7 +320,6 @@ struct fpsserver : igameserver
         putint(p, n);
         putint(p, PROTOCOL_VERSION);
         putint(p, smapname[0]);
-        putint(p, ((clientinfo *)getinfo(n))->spectator ? 1 : 0);
         if(smapname[0])
         {
             putint(p, SV_MAPCHANGE);
@@ -321,6 +332,12 @@ struct fpsserver : igameserver
                 putint(p, sents[i].type);
             };
             putint(p, -1);
+        };
+        if(((clientinfo *)getinfo(n))->spectator)
+        {
+            putint(p, SV_SPECTATOR);
+            putint(p, n);
+            putint(p, 1);
         };
     };
 
@@ -384,7 +401,7 @@ struct fpsserver : igameserver
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            if(ci->spectator) continue;
+            if(ci->spectator && !ci->master) continue;
             masterupdate = ci->clientnum;
             if(ci->master) return;
             ci->master = true;

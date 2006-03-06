@@ -26,10 +26,11 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, team, 1, { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
         CCOMMAND(clientcom, map, 1, self->changemap(args[0]));
         CCOMMAND(clientcom, kick, 1, self->kick(args[0]));
+        CCOMMAND(clientcom, spectator, 2, self->togglespectator(args[0], args[1]));
         CCOMMAND(clientcom, mastermode, 1, self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
     };
 
-    void mapstart() { if(!spectator) senditemstoserver = true; };
+    void mapstart() { if(!spectator || currentmaster==clientnum) senditemstoserver = true; };
 
     void initclientnet()
     {
@@ -55,6 +56,7 @@ struct clientcom : iclientcom
         c2sinit = false;
         player1->lifesequence = 0;
         currentmaster = -1;
+        spectator = false;
         loopv(cl.players) DELETEP(cl.players[i]);
     };
 
@@ -89,8 +91,17 @@ struct clientcom : iclientcom
 
     void kick(const char *arg)
     { 
+        if(!remote) return;
         int i = parseplayer(arg);
-        if(i>=0) addmsg(1, 2, SV_KICK, i);
+        if(i>=0) addmsg(1, 2, SV_KICK, i==0 ? clientnum : i);
+    };
+
+    void togglespectator(const char *arg1, const char *arg2)
+    {
+        if(!remote) return;
+        int i = arg2[0] ? parseplayer(arg2) : 0,
+            val = atoi(arg1);
+        addmsg(1, 3, SV_SPECTATOR, i==0 ? clientnum : i, val);
     };
 
     // collect c2s messages conveniently
@@ -99,7 +110,7 @@ struct clientcom : iclientcom
 
     void addmsg(int rel, int num, int type, ...)
     {
-        if(spectator) return;
+        if(spectator && currentmaster!=clientnum) return;
         if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
         ivector &msg = messages.add();
         msg.add(num);
@@ -235,7 +246,6 @@ struct clientcom : iclientcom
                 toservermap[0] = 0;
                 clientnum = cn;                 // we are now fully connected
                 if(!getint(p)) s_strcpy(toservermap, cl.getclientmap());   // we are the first client on this server, set map
-                spectator = getint(p)!=0;
                 break;
             };
 
@@ -532,6 +542,22 @@ struct clientcom : iclientcom
                 getint(p);
                 break;
 
+            case SV_SPECTATOR:
+                {
+                    int sn = getint(p), val = getint(p);
+                    fpsent *s;
+                    if(sn==clientnum)
+                    {
+                        spectator = (val!=0);
+                        s = player1;
+                    }
+                    else s = cl.getclient(sn);
+                    if(!s) return;
+                    if(val) s->state = CS_SPECTATOR;
+                    else if(s->state==CS_SPECTATOR) s->state = CS_ALIVE;
+                    break;
+                };
+
             default:
                 neterr("type");
                 return;
@@ -547,6 +573,6 @@ struct clientcom : iclientcom
 
     void changemap(char *name)                      // request map change, server may ignore
     {
-        if(!spectator) s_strcpy(toservermap, name);
+        if(!spectator || currentmaster==clientnum) s_strcpy(toservermap, name);
     };
 };
