@@ -64,11 +64,7 @@ struct clientcom : iclientcom
     {
         bool allow = !connected || !remote || cl.gamemode==1;
         if(!allow) conoutf("editing in multiplayer requires coopedit mode (1)");
-        if(allow && spectator)
-        {
-            conoutf("spectators can't edit");
-            return false;
-        };
+        if(allow && spectator) return false;
         return allow; 
     };
     
