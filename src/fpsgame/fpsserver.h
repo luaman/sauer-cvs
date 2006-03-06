@@ -294,7 +294,6 @@ struct fpsserver : igameserver
             case SV_SPECTATOR:
             {
                 int spectator = getint(p), val = getint(p);
-                if(spectator<0 || spectator>=getnumclients()) { disconnect_client(sender, DISC_TAGT); return false; };
                 if(ci->master || spectator==sender)
                 {
                     clientinfo *spinfo = (clientinfo *)getinfo(spectator);
