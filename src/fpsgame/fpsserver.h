@@ -167,9 +167,10 @@ struct fpsserver : igameserver
     {
         // spectators can only connect and talk
         static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING };
-        if(ci && ci->spectator && !ci->master)
+        if(ci && ci->spectator)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
+            if(ci->master && type >= SV_MASTERMODE) return type;
             return -1;
         };
         // only allow edit messages in coop-edit mode
@@ -256,7 +257,7 @@ struct fpsserver : igameserver
                 assert(size!=-1);
                 loopi(size-3) getint(p);
                 int state = getint(p);
-                if(ci->spectator && (state>>5) != CS_SPECTATOR) return false;
+                if(ci->spectator && (state>>5) != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
                 break;
             };
             
@@ -294,11 +295,12 @@ struct fpsserver : igameserver
             case SV_SPECTATOR:
             {
                 int spectator = getint(p), val = getint(p);
-                if(ci->master || spectator == sender)
+                if(spectator<0 || spectator>=getnumclients()) { disconnect_client(sender, DISC_TAGT); return false; };
+                if(ci->master || spectator==sender)
                 {
                     clientinfo *spinfo = (clientinfo *)getinfo(spectator);
                     spinfo->spectator = val!=0;
-                    if(spectator == sender) sendn(true, sender, 3, SV_SPECTATOR, sender, val);
+                    sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
                 };
                 break;
             };
@@ -409,6 +411,11 @@ struct fpsserver : igameserver
             return;
         };
         mastermode = MM_OPEN;
+        if(clients.length()) // spectators can become master if server is empty
+        {
+            clients[0]->master = true;
+            masterupdate = clients[0]->clientnum;
+        };
     };
     
     int clientconnect(int n, uint ip)

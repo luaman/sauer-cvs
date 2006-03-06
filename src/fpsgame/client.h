@@ -82,9 +82,9 @@ struct clientcom : iclientcom
             if(!o) continue;
             if(*arg && !*end)
             {
-                if(n--==0) return i-1;
+                if(n--==0) return i==0 ? clientnum : i-1;
             }
-            else if(!strcmp(arg, o->name)) return i-1;
+            else if(!strcmp(arg, o->name)) return i==0 ? clientnum : i-1;
         };
         return -1;
     };
@@ -93,15 +93,15 @@ struct clientcom : iclientcom
     { 
         if(!remote) return;
         int i = parseplayer(arg);
-        if(i>=0) addmsg(1, 2, SV_KICK, i==0 ? clientnum : i);
+        if(i>=0 && i!=clientnum) addmsg(1, 2, SV_KICK, i);
     };
 
     void togglespectator(const char *arg1, const char *arg2)
     {
         if(!remote) return;
-        int i = arg2[0] ? parseplayer(arg2) : 0,
+        int i = arg2[0] ? parseplayer(arg2) : clientnum,
             val = atoi(arg1);
-        addmsg(1, 3, SV_SPECTATOR, i==0 ? clientnum : i, val);
+        if(i>=0) addmsg(1, 3, SV_SPECTATOR, i, val);
     };
 
     // collect c2s messages conveniently
@@ -110,7 +110,7 @@ struct clientcom : iclientcom
 
     void addmsg(int rel, int num, int type, ...)
     {
-        if(spectator && currentmaster!=clientnum) return;
+        if(spectator && (currentmaster!=clientnum || type<SV_MASTERMODE)) return;
         if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
         ivector &msg = messages.add();
         msg.add(num);
@@ -543,20 +543,20 @@ struct clientcom : iclientcom
                 break;
 
             case SV_SPECTATOR:
+            {
+                int sn = getint(p), val = getint(p);
+                fpsent *s;
+                if(sn==clientnum)
                 {
-                    int sn = getint(p), val = getint(p);
-                    fpsent *s;
-                    if(sn==clientnum)
-                    {
-                        spectator = (val!=0);
-                        s = player1;
-                    }
-                    else s = cl.getclient(sn);
-                    if(!s) return;
-                    if(val) s->state = CS_SPECTATOR;
-                    else if(s->state==CS_SPECTATOR) s->state = CS_ALIVE;
-                    break;
-                };
+                    spectator = val!=0;
+                    s = player1;
+                }
+                else s = cl.getclient(sn);
+                if(!s) return;
+                if(val) s->state = CS_SPECTATOR;
+                else if(s->state==CS_SPECTATOR) s->state = CS_ALIVE;
+                break;
+            };
 
             default:
                 neterr("type");
