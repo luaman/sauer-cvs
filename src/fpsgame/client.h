@@ -553,7 +553,11 @@ struct clientcom : iclientcom
                 }
                 else s = cl.getclient(sn);
                 if(!s) return;
-                if(val) s->state = CS_SPECTATOR;
+                if(val)
+                {
+                    if(editmode) toggleedit();
+                    s->state = CS_SPECTATOR;
+                }
                 else if(s->state==CS_SPECTATOR) s->state = CS_ALIVE;
                 break;
             };
