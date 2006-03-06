@@ -167,10 +167,9 @@ struct fpsserver : igameserver
     {
         // spectators can only connect and talk
         static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING };
-        if(ci && ci->spectator)
+        if(ci && ci->spectator && !ci->master)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
-            if(ci->master && type >= SV_MASTERMODE) return type;
             return -1;
         };
         // only allow edit messages in coop-edit mode
