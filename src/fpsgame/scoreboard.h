@@ -36,8 +36,7 @@ struct scoreboard
             {
                 const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum)) ? "\f" : "";
                 
-                if(o->state == CS_SPECTATOR)
-                    s_sprintf(scorelines.add().s)("\t\t\t\t%s%s", master, o->name);
+                if(o->state == CS_SPECTATOR) s_sprintf(scorelines.add().s)("SPECTATOR\t\t\t%s%s", master, o->name);
                 else
                 {
                     s_sprintfd(lag)("%d", o->plag);

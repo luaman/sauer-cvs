@@ -466,9 +466,13 @@ struct fpsclient : igameclient
 
     void gameplayhud(int w, int h)
     {
-        if(player1->state==CS_SPECTATOR) return;
         glLoadIdentity();    
         glOrtho(0, w*900/h, 900, 0, -1, 1);
+        if(player1->state==CS_SPECTATOR)
+        {
+            draw_text("SPECTATOR", 10, 827);
+            return;
+        };
         draw_textf("%d",  90, 827, player1->health);
         if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
         draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
