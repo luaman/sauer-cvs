@@ -303,17 +303,3 @@ void writeservercfg()
     fclose(f);
 };
 
-void sgetstr(char *text, uchar *&p)    // text buffer must be size MAXTRANS
-{
-    char *t = text;
-    do
-    {
-        if(t-text==MAXTRANS) { *--t = 0; return; };
-        *t = getint(p);
-    }
-    while(*t++);
-};
-
-
-
-
