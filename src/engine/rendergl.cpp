@@ -129,7 +129,7 @@ Texture *textureload(char *name, int rot, bool clamp, bool mipit, bool msg)
     SDL_Surface *s = IMG_Load(tname);
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return crosshair; };
     int bpp = s->format->BitsPerPixel;
-    if(bpp!=24 && bpp!=32) { conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
+    if(bpp!=24 && bpp!=32) { SDL_FreeSurface(s); conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
     
     t = &textures[newstring(rname)];
     s_strcpy(t->name, rname);
