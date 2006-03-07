@@ -442,7 +442,7 @@ struct md3model
 
 vector<md3model *> playermodels;
 vector<md3animinfo> tmp_animations;
-char basedir[_MAXDEFSTR]; // necessary for relative path's
+string basedir; // necessary for relative path's
 
 void md3setanim(animstate *as, int anim)
 {

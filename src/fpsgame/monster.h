@@ -344,6 +344,6 @@ struct monsterset
 
     void monsterrender()
     {
-        loopv(monsters) cl.fr.renderclient(cl, monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->mtype == 5, monsters[i]->monsterstate);
+        loopv(monsters) cl.fr.renderclient(cl, monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->monsterstate);
     };
 };

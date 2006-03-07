@@ -70,3 +70,11 @@ void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float 
     glColor3ubv(color);
     m->render(anim, varseed, speed, basetime, mdl, x, y, z, yaw, pitch, scale, d);
 };
+
+int findanim(const char *name)
+{
+    const char *names[] = { "dying", "dead", "pain", "idle", "idle attack", "run", "run attack", "edit", "lag", "jump", "jump attack", "gun shoot", "gun idle", "static" };
+    loopi(sizeof(names)/sizeof(names[0])) if(!strcmp(name, names[i])) return i;
+    return -1;
+};
+

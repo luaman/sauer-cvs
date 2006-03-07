@@ -1,7 +1,7 @@
 
 struct fpsrender
 {      
-    void renderclient(fpsclient &cl, fpsent *d, bool team, char *mdlname, float scale, bool hellpig, int monsterstate)
+    void renderclient(fpsclient &cl, fpsent *d, bool team, char *mdlname, float scale, int monsterstate)
     {
         int anim = ANIM_IDLE;
         float speed = 100.0f;
@@ -23,7 +23,7 @@ struct fpsrender
         else if(monsterstate==M_PAIN || cl.lastmillis-d->lastpain<300) { anim = ANIM_PAIN; }
         else if(d->physstate==PHYS_FALL && d->timeinair>100)           { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
-        else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; if(hellpig) speed = 1200/d->maxspeed;  };
+        else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; };
         uchar color[3];
         lightreaching(d->o, color);
         rendermodel(color, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/4, team, scale, speed, basetime, d);
@@ -34,12 +34,12 @@ struct fpsrender
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
-            renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, false, M_NONE);
+            renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, M_NONE);
             s_strcpy(d->info, d->name);
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); };
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, 11, 1);
         };
-        if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, false, M_NONE);
+        if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, M_NONE);
         cl.ms.monsterrender();
         cl.et.renderentities();
     };

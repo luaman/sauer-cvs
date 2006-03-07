@@ -1,5 +1,9 @@
 // md2.h: loader code adapted from a nehe tutorial
 
+struct md2;
+
+md2 *loadingmd2 = 0;
+
 struct md2 : model
 {
     struct md2_header
@@ -50,6 +54,12 @@ struct md2 : model
 		};
     };
 
+    struct md2_anim
+    {
+        int frame, range;
+        float speed;
+    };
+
     bool aneq(animstate &a, animstate &o) { return a.frame==o.frame && a.range==o.range && a.basetime==o.basetime && a.speed==o.speed; };
 
     int* glcommands;
@@ -65,10 +75,11 @@ struct md2 : model
     ushort *vbufi;
     int vbufi_len;
     vector<triangle> hulltris;
+    vector<md2_anim> *anims;
 
     md2_header header;
     
-    md2(char *name) : loaded(false), vbufGL(0), vbufi(0)
+    md2(char *name) : loaded(false), vbufGL(0), vbufi(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -83,6 +94,7 @@ struct md2 : model
         delete[] mverts;
         DELETEA(vbufi);
         if(hasVBO && vbufGL) pfnglDeleteBuffers(1, &vbufGL);
+        DELETEA(anims);
     };
     
     char *name() { return loadname; };
@@ -248,20 +260,38 @@ struct md2 : model
 
     void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
-        //                      0                   4                   8       10      12     14     16         18       20
-        //                      D    D    D    D'   D    D    D    D'   A   A'  P   P'  I   I' R,  R'  E    L    J   J'   GS  GI S
-        static int _frame[] = { 178, 184, 190, 137, 183, 189, 197, 164, 46, 51, 54, 32, 0,  0, 40, 1,  162, 162, 67, 168, 7,  6, 0, };
-        static int _range[] = { 6,   6,   8,   28,  1,   1,   1,   1,   8,  19, 4,  18, 40, 1, 6,  15, 1,   1,   1,  1,   18, 1, 1, };
-        static int animfr[] = { 2, 6, 10, 12, 8, 14, 8, 16, 17, 18, 18, 20, 21, 22 };
-        assert(anim<=13);
-        int n = animfr[anim];
-        if(!strcmp(mdlname, "monster/hellpig")) n++;
-        else if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
+        //                      0              3              6   7   8   9   10        12  13
+        //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S
+        static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 7,  6, 0, };
+        static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  18, 1, 1, };
+        static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14, 15 };
+        assert(anim<=ANIM_STATIC);
         animstate ai;
-        ai.frame = _frame[n];
-        ai.range = _range[n];
         ai.basetime = basetime;
-        ai.speed = speed;
+        if(anims)
+        {
+            if(anims[anim].length())
+            {
+                md2_anim &a = anims[anim][varseed%anims[anim].length()];
+                ai.frame = a.frame;
+                ai.range = a.range;
+                ai.speed = speed*a.speed/100.0f;
+            }
+            else
+            {
+                ai.frame = 0;
+                ai.range = 1;
+                ai.speed = speed;
+            };
+        }
+        else
+        {
+            int n = animfr[anim];
+            if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
+            ai.frame = _frame[n];
+            ai.range = _range[n];
+            ai.speed = speed;
+        };
         loopi(ai.range) if(!mverts[ai.frame+i]) scale(ai.frame+i, sc);
         if(hasVBO && !vbufGL && anim==ANIM_STATIC) genvar();
         
@@ -395,6 +425,10 @@ struct md2 : model
                     };
                 };
             };
+            s_sprintfd(name3)("packages/models/%s/anim.cfg", loadname);
+            loadingmd2 = this;
+            execfile(name3);
+            loadingmd2 = 0;
             loaded = true;
         };
         return true;
@@ -404,4 +438,26 @@ struct md2 : model
     {
         glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : skin)->gl);
     };
+
+    void setanim(int num, int frame, int range, float speed)
+    {
+        if(!anims) anims = new vector<md2_anim>[ANIM_STATIC+1];
+        md2_anim &anim = anims[num].add();
+        anim.frame = frame;
+        anim.range = range;
+        anim.speed = speed;
+    };
 };
+
+void md2anim(char *anim, char *f, char *r, char *s)
+{
+    if(!loadingmd2) conoutf("not loading an md2");
+    int num = findanim(anim);
+    if(num<0) conoutf("could not find animation %s", anim);
+    int frame = atoi(f), range = atoi(r);
+    float speed = s[0] ? atof(s) : 100.0f;
+    loadingmd2->setanim(num, frame, range, speed);
+};
+
+COMMAND(md2anim, ARG_4STR);
+
