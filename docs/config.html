@@ -1,0 +1,248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Sauerbraten Configuration</title>
+		<link href="style.css" type="text/css" rel="stylesheet">
+	</head>
+	<body>
+		<div>Instructions for running Sauerbraten
+		</div>
+		For windows: install, and run the sauerbraten.bat. For linux: gunzip, run <i>chmod 
+			+x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>. Needs a decent 
+		&amp; compliant OpenGL implementation. before you do, you may want to look at 
+		the config which is in "autoexec.cfg" and which should be fairly familiar if 
+		you ever played a quake style game. If you want to rebind your keys, see the 
+		"bind" command below. Press ESC to go into the menu with many useful commands, 
+		but will not rewrite the config file for you. Sauerbraten derives its 
+		simplicity from some rather brute force rendering methods, and as such it needs 
+		a beefy machine to get good visual quality. It runs best with "vertical sync" 
+		OFF and at high refresh rates (you may get excessive LOD/FPS variance 
+		otherwise).
+		<div>Command line options
+		</div>
+		-d runs a dedicated server
+		<br>
+		-l runs a non-dedicated server that listens for other clients
+		<br>
+		<br>
+		Default is a non-dedicated server with only a single client. Dedicated servers 
+		run in the shell only (no graphics), with increased priority yet use very 
+		little cpu time &amp; memory, so you can run one in the background, or at the 
+		same time with a client if you want to host a game (which is usually better 
+		than using a listen server). Cube servers need to be restarted every 3 weeks, 
+		otherwise atleast one game will not have correct timing. Servers port are fixed 
+		at 28785 (UDP) and 28786 (UDP), currently.
+		<br>
+		<br>
+		-wX sets desired screen width to X, default is -w640
+		<br>
+		-hY sets desired screen height to Y, default is -h480
+		<br>
+		-t runs windowed
+		<br>
+		<br>
+		-uN sets the server upstream bandwidth to N bytes per second. only set this 
+		parameter if you know what you are doing, specifying a wrong value is worse 
+		than not specifying it at all.
+		<br>
+		<br>
+		-nN sets the server description, for people pinging the server. usually does 
+		not need to be set if you have a descriptive domain name already, but if you 
+		set it, keep it short as it may otherwise be truncated, i.e. 
+		-nBobsInstagibServer
+		<br>
+		<br>
+		-iIP sets the server ip to IP. this option is only useful for people running on 
+		machines with multiple network interfaces.
+		<br>
+		<br>
+		-mM sets the master server to use for either server (registering) and client 
+		(updating) to M. M is the base url of the master server and has to end in a / 
+		and without a http:// prefix, the default is 
+		wouter.fov120.com/cube/masterserver/
+		<div>General console commands and configuration</div>
+		<pre>bind K A</pre>
+		Binds key K to commands A (see console language below for what you can put in 
+		A). To find out what key names and their default bindings are, look at 
+		data/keymap.cfg, then add bind commands to your autoexec.cfg.
+		<pre>alias N A</pre>
+		Binds name N to commands A, after which you can use N as a shortcut for A. You 
+		may re-bind N as often as you like, and bind N again within the execution of A 
+		etc.
+		<pre>quit</pre>
+		Quits without asking.
+		<pre>forward / backward / left / right</pre>
+		Move you in said direction (defaults to cursor keys).
+		<pre>attack</pre>
+		Fires the current weapon. default = left mouse
+		<pre>jump</pre>
+		Triggers a jump. default key space &amp; right mouse.
+		<pre>invmouse B</pre>
+		Sets mouse to "flight sim" mode if B is not 0
+		<pre>sensitivity S</pre>
+		Sets mouse sensitivity (default = 10). should be a similar number to quake.
+		<pre>sensitivityscale S</pre>
+		Scales the effect of an increase or decrease in the sensitivity value. The 
+		larger the value, the smaller the difference between sensitivity values. 
+		(default = 1)
+		<pre>fov N</pre>
+		Sets your FOV to 10..150.
+		<pre>fog N</pre>
+		Sets fog distance to N (default currently 160). You can do this for tweaking 
+		the visual effect of the fog, or if you are on a slow machine, setting the fog 
+		to a low value can also be a very effective way to increase fps (if you are 
+		geometry limited). Try out different values on big maps / maps which give you 
+		low fps.
+		<pre>dynlight B R</pre>
+		Determines wether dynamic shadows &amp; lights are rendered (default B=1). 
+		provided just incase they slow your fps down too much. With radius you can 
+		optionally specify the radius of a dynamic light (default 16), smaller to maybe 
+		gain some speed, or bigger to see the effect of dynamic shadows more 
+		dramatically (try shooting it past some pillars that have a dark area on the 
+		other side... or use the "gamespeed" variable).
+		<pre>loddistance N</pre>
+		Sets the distance at which world vertex array blocks are rendered at a higher 
+		LOD (level of detail). The lower this value, the more geometry popup you will 
+		see, but the faster it may render. Every system has a different&nbsp;optimal 
+		value, experiment. This variable only has an effect for large scale maps where 
+		the level designer has turned on LOD using the "lodsize" variable.&nbsp;
+		<pre>watersubdiv N</pre>
+		Determines the subdivision of the water surface in maps, which can greatly 
+		affect fps on slow machines. Must be a power of 2: 4 is the default, 8 is 
+		recommended for people on slow machines, 2 is nice for fast machines, and 1 is 
+		quite OTT. See "waterlevel" (edit reference) on how to add water to your own 
+		levels.
+		<pre>maxparticles N  </pre>
+		Sets the maximum number of particles rendered at any one time. If more 
+		particles are generated than this number, the oldest ones are culled, so you 
+		can safely set this number relatively low without loss of information. default 
+		1000.
+		<pre>screenshot</pre>
+		Writes out "screenshotN.bmp", where N is the number of milliseconds since cube 
+		was launched (default key = F12).
+		<pre>musicvol n
+soundvol n</pre>
+		Sets the music/sound volume from 0 to 255
+		<pre>soundbufferlen n      </pre>
+		(default 512) tweak this if you experience stuttering or lagging sound
+		<pre>gamma n</pre>
+		Sets the hardware gamma value to n percent (default 100). May not work if your 
+		card/driver doesn't support it.
+		<pre>hidestats b</pre>
+		Turns on/off display of fps/rendering stats on the HUD (default = 1).
+		<pre>hidehud b</pre>
+		Turns on/off the entire hud display, which includes rendering stats, ammo, and 
+		echoed text. (default = 0)
+		<pre>maxroll n</pre>
+		Sets the maximum value your display will roll on strafing (0..20, default = 3)
+		<pre>crosshairsize n</pre>
+		Sets the size of your crosshair, 0 being off (default = 3)
+		<pre>crosshairfx b</pre>
+		Turns on or of crosshair effects (default 1). when on, the crosshair will go 
+		grey when the weapon is reloading, orange when health &lt;= 50, or red when 
+		&lt;=25.
+		<pre>exec C</pre>
+		Executes all commands in config file C.
+		<pre>newmenu N</pre>
+		Creates a new menu with name N. All following menuitem commands will apply to 
+		this menu
+		<pre>menuitem N A
+menuitem A</pre>
+		Creates a new menuitem with description N and action A. if you only specify 1, 
+		then it will be used for both the description and the action. See 
+		data/menus.cfg for examples.
+		<pre>showmenu N</pre>
+		Displays the menu with name N previously defined, and allows the user to pick 
+		an item with the cursor keys. Upon pressing return, the associated action will 
+		be executed. pressing ESC will cancel the menu.
+		<pre>history N</pre>
+		Executes the Nth command in the command line history. For example, binding 
+		"history 0" to a key allows you to quickly repeat the last command typed in 
+		(useful for placing many identical entities etc.)
+		<pre>keymap K N A</pre>
+		Sets up the keymap for key code K with name N and default action A. You should 
+		never have to use this command manually, use "bind" instead.
+		<div>Console Language
+		</div>
+		Cube's console language is similar to console languages of other games (e.g. 
+		Quake), but is a bit more powerful in that it is almost a full programming 
+		language.
+		<br>
+		<br>
+		What is similar to quake is the basic command structure: commands consist of 
+		the command itself, followed by any number of arguments seperated by 
+		whitespace. you can use "" to quote strings with whitespace in them (such as 
+		the actions in bind/alias), and whereever a command is required you can also 
+		use ; to sequence multiple commands in one.
+		<br>
+		<br>
+		What is new compared to quake is that you can evaluate aliases and expressions. 
+		You can substitute the value of an alias as an argument by prefixing it with a 
+		"$" sign, i.e.: <code>echo The current value of x is $x</code> You can even 
+		substitute the values of console variables this way, i.e $fov gives the current 
+		fov. Some aliases are set automatically, for example $arg1 to $argN are set if 
+		you supply arguments when you execute an alias.
+		<br>
+		<br>
+		There are two alternative ways to "" to quote a string: () and []. They work in 
+		the same way as "", with the difference that they can be nested infinitely, and 
+		that they may contain linefeeds (useful for larger scripts). () is different 
+		from [] in that it evaluates the commands contained in it _before_ it evaluates 
+		the surrounding command, and substitutes the results. () bracketed strings are 
+		called expressions, and combined with some commands made especially for 
+		"programming", you have a minimal language:
+		<pre>+ A B
+&gt;- A B
+* A B
+div A B
+mod A B</pre>
+		(add, substract, multiply, divide, modulo): these all work like the integer 
+		operators from other languages. Example:
+		<br>
+		<code>echo x squared is (* $x $x)</code>
+		<pre>= A B
+&lt; A B
+&gt; A B
+strcmp A B</pre>
+		(equals, lessthan, greaterthan, stringcompare): comparison operators that 
+		return 1 for true and 0 for false.
+		<pre>if cond true false</pre>
+		executes the true or false&nbsp;part depending on wether cond is "0" or 
+		something else. Example:
+		<br>
+		<code>if (&lt; $x 10) [ echo "x is" $x ] [ echo "x is too big" ]</code>
+		<pre>loop N body</pre>
+		evaluates body N times, and sets the alias "i" from 0 to N-1 for every 
+		iteration. Example:
+		<br>
+		<code>loop 10 [ echo $i ]</code>
+		<pre>while cond body</pre>
+		evaluates body while cond evaluates to true. Note that cond here has to have 
+		[], otherwise it would only be evaluated once. Example (same result as the 
+		"loop" example):
+		<br>
+		<code>alias i 0; while [ (&lt; $i 10) ] [ echo $i; alias i (+ $i 1) ]</code>
+		<pre>concat S...</pre>
+		concatenates all the arguments into alias "s"
+		<pre>concatword S...</pre>
+		same as concat but without spaces between the elements.
+		<pre>at S N</pre>
+		grabs the Nth word out of string S and puts it into alias "s"
+		<pre>listlen L</pre>
+		returns the number of items in the list L
+		<pre>onrelease A</pre>
+		only executes A if the command is executed on the release of a key/button (must 
+		be in an action in a bind or an alias in a bind).
+		<br>
+		<br>
+		<br>
+		variables that are only really useful when used as value:
+		<pre>$editing</pre>
+		true when in edit mode
+		<pre>$flrceil</pre>
+		0 when the player looks at the floor, and 2 when looking at the ceiling. 
+
+
+
+</body>
+</html>
