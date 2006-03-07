@@ -1,0 +1,195 @@
+// !$*UTF8*$!
+{
+	29B97313FDCFA39411CA2CEA /* Project object */ = {
+		activeBuildConfigurationName = "Deployment-Release";
+		activeBuildStyle = 4A9504CCFFE6A4B311CA0CBA /* Development */;
+		activeExecutable = B92175B809B37DFB0094D871 /* sauerbraten */;
+		activeTarget = B941988A09207E810029DAD1 /* sauerbraten */;
+		codeSenseManager = B92175D209B37E110094D871 /* Code sense */;
+		executables = (
+			B92175B809B37DFB0094D871 /* sauerbraten */,
+			B92175B909B37DFB0094D871 /* launcher */,
+		);
+		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					1000,
+					20,
+					48.1626,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 162758139;
+			PBXWorkspaceStateSaveDate = 162758139;
+		};
+		perUserProjectItems = {
+			B92175D709B37E970094D871 /* PBXTextBookmark */ = B92175D709B37E970094D871 /* PBXTextBookmark */;
+			B92175D909B37E970094D871 /* PBXTextBookmark */ = B92175D909B37E970094D871 /* PBXTextBookmark */;
+			B92175DA09B37E970094D871 /* PBXTextBookmark */ = B92175DA09B37E970094D871 /* PBXTextBookmark */;
+			B92175DC09B37E9A0094D871 /* PBXTextBookmark */ = B92175DC09B37E9A0094D871 /* PBXTextBookmark */;
+			B92175E509B386AA0094D871 /* PBXTextBookmark */ = B92175E509B386AA0094D871 /* PBXTextBookmark */;
+			B92175E609B386AA0094D871 /* PBXTextBookmark */ = B92175E609B386AA0094D871 /* PBXTextBookmark */;
+		};
+		sourceControlManager = B92175D109B37E110094D871 /* Source Control */;
+		userBuildSettings = {
+		};
+	};
+	B92175B809B37DFB0094D871 /* sauerbraten */ = {
+		isa = PBXExecutable;
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = sauerbraten;
+		sourceDirectories = (
+		);
+	};
+	B92175B909B37DFB0094D871 /* launcher */ = {
+		isa = PBXExecutable;
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = launcher;
+		sourceDirectories = (
+		);
+	};
+	B92175D109B37E110094D871 /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
+		};
+		scmType = "";
+	};
+	B92175D209B37E110094D871 /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
+	};
+	B92175D709B37E970094D871 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B941983E092076920029DAD1 /* game.h */;
+		name = "game.h: 108";
+		rLen = 0;
+		rLoc = 3731;
+		rType = 0;
+		vrLen = 1090;
+		vrLoc = 3252;
+	};
+	B92175D909B37E970094D871 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B941983E092076920029DAD1 /* game.h */;
+		name = "game.h: 108";
+		rLen = 0;
+		rLoc = 3731;
+		rType = 0;
+		vrLen = 1090;
+		vrLoc = 3252;
+	};
+	B92175DA09B37E970094D871 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B941982B092076920029DAD1 /* physics.cpp */;
+		name = "physics.cpp: 664";
+		rLen = 0;
+		rLoc = 19889;
+		rType = 0;
+		vrLen = 778;
+		vrLoc = 19484;
+	};
+	B92175DC09B37E9A0094D871 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B941982B092076920029DAD1 /* physics.cpp */;
+		name = "physics.cpp: 664";
+		rLen = 0;
+		rLoc = 19889;
+		rType = 0;
+		vrLen = 735;
+		vrLoc = 19527;
+	};
+	B92175E509B386AA0094D871 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B941982B092076920029DAD1 /* physics.cpp */;
+		name = "physics.cpp: 664";
+		rLen = 0;
+		rLoc = 19889;
+		rType = 0;
+		vrLen = 798;
+		vrLoc = 19500;
+	};
+	B92175E609B386AA0094D871 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B941982B092076920029DAD1 /* physics.cpp */;
+		name = "physics.cpp: 664";
+		rLen = 0;
+		rLoc = 19889;
+		rType = 0;
+		vrLen = 735;
+		vrLoc = 19527;
+	};
+	B941982B092076920029DAD1 /* physics.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1369, 12796}}";
+			sepNavSelRange = "{19889, 0}";
+			sepNavVisRect = "{{0, 9048}, {1369, 511}}";
+		};
+	};
+	B941983E092076920029DAD1 /* game.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1369, 1764}}";
+			sepNavSelRange = "{3731, 0}";
+			sepNavVisRect = "{{0, 1253}, {1369, 511}}";
+		};
+	};
+	B941988A09207E810029DAD1 /* sauerbraten */ = {
+		activeExec = 0;
+		executables = (
+			B92175B809B37DFB0094D871 /* sauerbraten */,
+		);
+	};
+	B96D0D4B092096F200B6C936 /* launcher */ = {
+		activeExec = 0;
+		executables = (
+			B92175B909B37DFB0094D871 /* launcher */,
+		);
+	};
+}
