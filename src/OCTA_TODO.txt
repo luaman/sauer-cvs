@@ -14,6 +14,7 @@ eihrul:
 - improve smoothness of going up steps
 
 aard (e = eihrul (or gilt) could do it):
+- windows installer | make remaining dir stuff friendly
 - remove wiki for now
 - see if a workaround for th 8x.xx texture bugs is possible -> with shaders this would also go away
 - go do quick phong lighting for models
@@ -32,6 +33,7 @@ aard (e = eihrul (or gilt) could do it):
 - player spawn sound
 - make wether you are hitting other player clearer - blip sounds like q3?
 - (e) hex numbers
+- 3d menus
 - add hidden ID to your name so that you can claim nicknames on a server?
 - (e) set textures when extruding
 - show quadded player with special rendering

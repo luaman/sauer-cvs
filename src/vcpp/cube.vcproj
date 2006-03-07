@@ -47,7 +47,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="..\enet\include;..\include;..\src\engine;..\src\fpsgame;..\src\shared"
+				AdditionalIncludeDirectories="..\enet\include;..\include;..\engine;..\fpsgame;..\shared"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -84,7 +84,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="msvcrt.lib zlib.lib opengl32.lib glu32.lib SDLmain.lib SDL.lib SDL_image.lib ws2_32.lib SDL_mixer.lib fmodvc.lib winmm.lib"
-				OutputFile="..\sauerbraten\bin\sauerbraten.exe"
+				OutputFile="..\..\bin\sauerbraten.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib"
@@ -153,7 +153,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\enet\include;..\include;..\src\engine;..\src\fpsgame;..\src\shared"
+				AdditionalIncludeDirectories="..\enet\include;..\include;..\engine;..\fpsgame;..\shared"
 				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="1"
 				RuntimeLibrary="3"
@@ -183,7 +183,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="zlib.lib opengl32.lib glu32.lib SDLmain.lib SDL.lib SDL_image.lib SDL_mixer.lib ws2_32.lib winmm.lib"
-				OutputFile="..\sauerbraten\bin\sauerbraten_debug.exe"
+				OutputFile="..\..\bin\sauerbraten_debug.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib"
@@ -252,7 +252,7 @@
 				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="..\enet\include;..\include;..\src\engine;..\src\fpsgame;..\src\shared"
+				AdditionalIncludeDirectories="..\enet\include;..\include;..\engine;..\fpsgame;..\shared"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE,USE_ENET"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -333,14 +333,14 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\src\engine\engine.h"
+				RelativePath="..\engine\engine.h"
 				>
 			</File>
 			<Filter
 				Name="world"
 				>
 				<File
-					RelativePath="..\src\engine\cubeloader.cpp"
+					RelativePath="..\engine\cubeloader.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -371,7 +371,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\lightmap.cpp"
+					RelativePath="..\engine\lightmap.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -402,46 +402,11 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\lightmap.h"
+					RelativePath="..\engine\lightmap.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\engine\octa.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\octa.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\engine\octaedit.cpp"
+					RelativePath="..\engine\octa.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -472,7 +437,11 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\octarender.cpp"
+					RelativePath="..\engine\octa.h"
+					>
+				</File>
+				<File
+					RelativePath="..\engine\octaedit.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -503,7 +472,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\physics.cpp"
+					RelativePath="..\engine\octarender.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -534,7 +503,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\world.cpp"
+					RelativePath="..\engine\physics.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -565,11 +534,42 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\world.h"
+					RelativePath="..\engine\world.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\engine\world.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\engine\worldio.cpp"
+					RelativePath="..\engine\worldio.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -604,7 +604,7 @@
 				Name="cs"
 				>
 				<File
-					RelativePath="..\src\engine\client.cpp"
+					RelativePath="..\engine\client.cpp"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
@@ -616,7 +616,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\server.cpp"
+					RelativePath="..\engine\server.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -647,7 +647,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\serverbrowser.cpp"
+					RelativePath="..\engine\serverbrowser.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -838,46 +838,15 @@
 				Name="render"
 				>
 				<File
-					RelativePath="..\src\engine\md2.h"
+					RelativePath="..\engine\md2.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\engine\md3.h"
+					RelativePath="..\engine\md3.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\engine\renderextras.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\rendergl.cpp"
+					RelativePath="..\engine\renderextras.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -908,35 +877,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\rendermodel.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\src\engine\renderparticles.cpp"
+					RelativePath="..\engine\rendergl.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -967,7 +908,35 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\rendertext.cpp"
+					RelativePath="..\engine\rendermodel.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\engine\renderparticles.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -998,7 +967,38 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\water.cpp"
+					RelativePath="..\engine\rendertext.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\engine\water.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1033,7 +1033,7 @@
 				Name="system"
 				>
 				<File
-					RelativePath="..\src\engine\command.cpp"
+					RelativePath="..\engine\command.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1064,7 +1064,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\console.cpp"
+					RelativePath="..\engine\console.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1095,7 +1095,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\main.cpp"
+					RelativePath="..\engine\main.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1126,7 +1126,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\menus.cpp"
+					RelativePath="..\engine\menus.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1157,7 +1157,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\engine\sound.cpp"
+					RelativePath="..\engine\sound.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1194,11 +1194,11 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="..\src\shared\iengine.h"
+				RelativePath="..\shared\iengine.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\shared\igame.h"
+				RelativePath="..\shared\igame.h"
 				>
 			</File>
 			<Filter
@@ -1206,7 +1206,7 @@
 				Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 				>
 				<File
-					RelativePath="..\src\OCTA_TODO.txt"
+					RelativePath="..\OCTA_TODO.txt"
 					>
 				</File>
 				<Filter
@@ -1282,23 +1282,23 @@
 				Name="common"
 				>
 				<File
-					RelativePath="..\src\shared\command.h"
+					RelativePath="..\shared\command.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\shared\cube.h"
+					RelativePath="..\shared\cube.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\shared\ents.h"
+					RelativePath="..\shared\ents.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\shared\geom.h"
+					RelativePath="..\shared\geom.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\shared\pch.cpp"
+					RelativePath="..\shared\pch.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1329,11 +1329,11 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\shared\pch.h"
+					RelativePath="..\shared\pch.h"
 					>
 				</File>
 				<File
-					RelativePath="..\src\shared\tools.cpp"
+					RelativePath="..\shared\tools.cpp"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
@@ -1345,7 +1345,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\src\shared\tools.h"
+					RelativePath="..\shared\tools.h"
 					>
 				</File>
 				<Filter
@@ -1394,15 +1394,15 @@
 			Name="Game"
 			>
 			<File
-				RelativePath="..\src\fpsgame\client.h"
+				RelativePath="..\fpsgame\client.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\entities.h"
+				RelativePath="..\fpsgame\entities.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\fps.cpp"
+				RelativePath="..\fpsgame\fps.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -1430,31 +1430,31 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\fpsrender.h"
+				RelativePath="..\fpsgame\fpsrender.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\fpsserver.h"
+				RelativePath="..\fpsgame\fpsserver.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\game.h"
+				RelativePath="..\fpsgame\game.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\monster.h"
+				RelativePath="..\fpsgame\monster.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\savegame.h"
+				RelativePath="..\fpsgame\savegame.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\scoreboard.h"
+				RelativePath="..\fpsgame\scoreboard.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\fpsgame\weapon.h"
+				RelativePath="..\fpsgame\weapon.h"
 				>
 			</File>
 		</Filter>
