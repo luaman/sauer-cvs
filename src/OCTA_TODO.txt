@@ -9,11 +9,8 @@ eihrul:
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
-- shadows for mapmodels
-- texture replacement
 - optimize per-poly raycube() by creating a bounding-sphere tree cache
 - very fancy: test alpha on a polygon for ultra-quality raycube()
-- test/finish spectator mode
 - improve smoothness of going up steps
 
 aard (e = eihrul (or gilt) could do it):
@@ -37,7 +34,6 @@ aard (e = eihrul (or gilt) could do it):
 - make wether you are hitting other player clearer - blip sounds like q3?
 - (e) hex numbers
 - add hidden ID to your name so that you can claim nicknames on a server?
-- (e) fix: can join a server in edit mode
 - (e) set textures when extruding
 - show quadded player with special rendering
 - experiment with physics speedup features
