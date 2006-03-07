@@ -1,9 +1,9 @@
 CXX=g++
 CXXOPTFLAGS=-Wall -fsigned-char -O3 -fomit-frame-pointer
-CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
+CXXFLAGS=$(CXXOPTFLAGS) -Ienet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
 
 PLATFORM_PREFIX=linux
-CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
+CLIENT_LIBS=-Lenet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
 	shared/tools.o \
 	engine/client.o \
@@ -30,7 +30,7 @@ CLIENT_OBJS= \
 	engine/worldio.o \
 	fpsgame/fps.o \
 
-SERVER_LIBS=-L../enet -lenet
+SERVER_LIBS=-Lenet -lenet
 SERVER_OBJS= \
 	shared/tools.o \
 	engine/server-standalone.o \
@@ -38,14 +38,14 @@ SERVER_OBJS= \
 
 default: all
 
-all: enet client server
+all: libenet client server
 
-enet:
-	-make -C ../enet all
+libenet:
+	-make -C enet/ all
 
 clean:
 	-rm -f $(SERVER_OBJS) $(CLIENT_OBJS) sauer_server sauer_client
-	-make -C ../enet/ clean
+	-make -C enet/ clean
 
 engine/server-standalone.o:
 	$(CXX) $(CXXFLAGS) -DSTANDALONE -c -o engine/server-standalone.o engine/server.cpp
@@ -60,7 +60,7 @@ server: $(SERVER_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  
 	
 install: all
-	cp sauer_client ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_client
-	cp sauer_server ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_server
-	strip ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_client
-	strip ../sauerbraten/bin_unix/$(PLATFORM_PREFIX)_server
+	cp sauer_client ../bin_unix/$(PLATFORM_PREFIX)_client
+	cp sauer_server ../bin_unix/$(PLATFORM_PREFIX)_server
+	strip ../bin_unix/$(PLATFORM_PREFIX)_client
+	strip ../bin_unix/$(PLATFORM_PREFIX)_server
