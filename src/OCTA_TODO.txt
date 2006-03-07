@@ -11,36 +11,38 @@ eihrul:
 - add a spotlight (ask me)
 - shadows for mapmodels
 - texture replacement
+- optimize per-poly raycube() by creating a bounding-sphere tree cache
+- very fancy: test alpha on a polygon for ultra-quality raycube()
+- test/finish spectator mode
+- improve smoothness of going up steps
 
-aard:
+aard (e = eihrul (or gilt) could do it):
 - remove wiki for now
 - see if a workaround for th 8x.xx texture bugs is possible -> with shaders this would also go away
 - go do quick phong lighting for models
-- make 3rd person weapons show... how to make an axe swing rather than go back and forth?
+- (e) make 3rd person weapons show... how to make an axe swing rather than go back and forth?
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
-- make sauer inner directory
+- (e) make sauer inner directory
 - iconic stats
 - remove player name when dead
 - new BAS sounds?
 - make very clear section in the docs about what you can and cannot do with sauer
 - powerup announce | make both powerups not spawn on map start / not be in sync
-- per sound volume
-- grenade launcher | bouncing gib particles
-- make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
-- new multiplayer model.. md3?
-- keybinds per mode: editing/game
-- make ents better visible?
+- (e) per sound volume
+- (e) grenade launcher | bouncing gib particles
+- (e) make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
+- (e) new multiplayer model.. md3?
+- (e) keybinds per mode: editing/game
 - player spawn sound
 - make wether you are hitting other player clearer - blip sounds like q3?
-- hex numbers
+- (e) hex numbers
 - add hidden ID to your name so that you can claim nicknames on a server?
-- can join a server in edit mode
-- edit textures when extruding
+- (e) fix: can join a server in edit mode
+- (e) set textures when extruding
 - show quadded player with special rendering
 - experiment with physics speedup features
 - think about simpler area based portals / combine with doors | automatically? compute portals of each VA? REALLY need some culling for monsters/items etc
 - make remip part of savemap or calclight?
-- poly iterator for the model formats
 - think of cheap way to have surface normals available.. can do tangent/bin globally? keep it all in worldspace? lights?
 can do bumpmapping by simply having an "average tangentspace lightvector" LM and a "occlusion and attenuation color" LM,
 then no list of lights and no tangent space vectors would be needed! superior to dot3 lightmaps really?
@@ -50,15 +52,13 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - draw not-spawned items in wireframe?
 - make start of flares etc spawn out further from the player
 - importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
-- better attack anim? with weapon maybe | add vwep?
+- (e) better attack anim? with weapon maybe | add vwep?
 - check why texture stretching on certain recent nvidia drivers only happens for certain textures -> looks like its caused by async copying of the S/T vectors
-- triggers/doors for SP
+- (e) triggers/doors for SP
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
-- optimize drawing of water & glass
-- spectator mode
 - profile rpg_01
 - select entities in parallel to geometry by picking | make editing more readable
-- skybox - roll
+- (e) skybox - roll
 - 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
@@ -71,13 +71,11 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - players more visible / improve model lighting first?
 - HDR
 - start using md3 for new monsters/player models
-- revise health/armours? can either make armours more effective against certain weapons (feedback?)
-  or do more general properties (do more damage, run faster)
-- find more sensible solution for wiki / work on better sauer web page
 - mp objectives
 - 2 teams only
 - sound samples for N kills in a row | accuracy stats
 - sword?
+- think about doing other permanent powerups besides +10h
 - sounds | matt?
   * impact (diff materials + flesh)
   * flyby, both instant & projectile
@@ -90,7 +88,6 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 
 - fix the two //BREAK
 
-- move some of the gameplay serverside
 - bf mode
 - start with rpg mode | clientside only, simplify
 
@@ -104,11 +101,8 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - use of glBufferData() makes ATI driver crash on SDL_Exit()
 - gui framework
 - test errors / performance etc with devpartner
-- (E) <nieb> with vsync off i get the normal 4cube jump height but with it on i can jump almost 10cubes
 - (E) fix VFC entities
-- (E) mapobjects (trees!) must cast shadows, have lightorientation
 - some way to smooth out lighting on terrain
-- (EG) physics efficiency: tweak step accuracy, maybe reduce physics frames at low fps?
 - (EG) fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
