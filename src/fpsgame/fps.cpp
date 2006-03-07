@@ -242,7 +242,7 @@ struct fpsclient : igameclient
         }
         else
         {
-            d->o.x = d->o.y = d->o.z = 2048.0f;
+            d->o.x = d->o.y = d->o.z = 0.5f*getworldsize();
         };
         entinmap(d, true);
         spawnstate(d);

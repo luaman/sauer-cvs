@@ -253,3 +253,5 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
     addoctaentity(i);
 };
 
+int getworldsize() { return hdr.worldsize; };
+
