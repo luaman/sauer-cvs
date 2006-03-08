@@ -696,7 +696,8 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
 
        command -> header.commandLength = ENET_NET_TO_HOST_32 (command -> header.commandLength);
 
-       if (currentData + command -> header.commandLength > & host -> receivedData [host -> receivedDataLength])
+       if (command -> header.commandLength <= 0 || 
+           command -> header.commandLength > & host -> receivedData [host -> receivedDataLength] - currentData)
          return 0;
 
        -- commandCount;
