@@ -572,21 +572,78 @@ bool trystepup(physent *d, vec &dir, float maxstep)
 
 bool trystepdown(physent *d, vec &dir, float step, float a, float b)
 {
-        vec old(d->o);
-        vec dv(dir.x*a, dir.y*a, -step*b), v(dv);
-        v.mul(STAIRHEIGHT/(step*b));
-        d->o.add(v);
-        if(!collide(d, vec(0, 0, -1), SLOPEZ))
-        {
-            d->o = old;
-            d->o.add(dv);
-            if(collide(d, vec(0, 0, -1))) return true;
-        };
+    vec old(d->o);
+    vec dv(dir.x*a, dir.y*a, -step*b), v(dv);
+    v.mul(STAIRHEIGHT/(step*b));
+    d->o.add(v);
+    if(!collide(d, vec(0, 0, -1), SLOPEZ))
+    {
         d->o = old;
-        return false;
+        d->o.add(dv);
+        if(collide(d, vec(0, 0, -1))) return true;
+    };
+    d->o = old;
+    return false;
 };
 
 VAR(stepdown, 0, 0, 1);
+
+void slideagainst(physent *d, vec &dir, const vec &obstacle)
+{
+    d->blocked = true;
+    vec wdir(obstacle), wvel(obstacle);
+    if(obstacle.z < 0.0f)
+    {
+        if(dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
+        wdir.z = wvel.z = 0.0f;
+    };
+    wdir.mul(obstacle.dot(dir));
+    wvel.mul(obstacle.dot(d->vel));
+    dir.sub(wdir);
+    d->vel.sub(wvel);
+};
+
+void falling(physent *d, vec &dir, const vec &floor)
+{
+    if(stepdown && d->physstate >= PHYS_FLOOR && (floor.z == 0.0f || floor.z == 1.0f))
+    {
+        vec moved(d->o);
+        d->o.z -= STAIRHEIGHT + 0.1f;
+        if(!collide(d, vec(0, 0, -1), SLOPEZ))
+        {
+            d->o = moved;
+            d->physstate = PHYS_STEP_DOWN;
+            return;
+        }
+        else d->o = moved;
+    };
+    if(d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
+        switchfloor(d, dir, floor.z > 0.0f && floor.z < SLOPEZ ? floor : vec(0, 0, 1));
+    if(floor.z > 0.0f && floor.z < SLOPEZ)
+    {
+        d->physstate = PHYS_SLIDE;
+        d->floor = floor;
+    }
+    else d->physstate = PHYS_FALL;
+};
+
+void landing(physent *d, vec &dir, const vec &floor)
+{
+    if(floor.z >= FLOORZ && d->timeinair > 0)
+    {
+        d->timeinair = 0;
+        if(dir.z < 0.0f || d->physstate >= PHYS_SLOPE)
+        {
+            if(d->physstate < PHYS_SLOPE) dir.z = d->vel.z = 0.0f;
+            switchfloor(d, dir, floor);
+        };
+    }
+    else if(d->physstate >= PHYS_SLOPE && floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
+        switchfloor(d, dir, floor);
+    if(floor.z >= FLOORZ) d->physstate = PHYS_FLOOR;
+    else d->physstate = PHYS_SLOPE;
+    d->floor = floor;
+};
 
 bool move(physent *d, vec &dir)
 {
@@ -662,60 +719,38 @@ bool move(physent *d, vec &dir)
         if(collided && (!found || obstacle.z > floor.z)) floor = obstacle;
     };
     d->o = moved;
-    if(slide)
-    {
-            d->blocked = true;
-            vec wdir(obstacle), wvel(obstacle);
-            if(obstacle.z < 0.0f)
-            {
-                if(dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
-                wdir.z = wvel.z = 0.0f;
-            };
-            wdir.mul(obstacle.dot(dir));
-            wvel.mul(obstacle.dot(d->vel));
-            dir.sub(wdir);
-            d->vel.sub(wvel);
-    };
-    if(!found)
-    {
-        if(stepdown && d->physstate >= PHYS_FLOOR && (floor.z == 0.0f || floor.z == 1.0f))
-        {
-            d->o.z -= STAIRHEIGHT + 0.1f;
-            if(!collide(d, vec(0, 0, -1), SLOPEZ))
-            {
-                d->o = moved;
-                d->physstate = PHYS_STEP_DOWN;
-                return !collided;
-            }
-            else d->o = moved;
-        };
-        if(d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
-            switchfloor(d, dir, floor.z > 0.0f && floor.z < SLOPEZ ? floor : vec(0, 0, 1));
-        if(floor.z > 0.0f && floor.z < SLOPEZ)
-        {
-            d->physstate = PHYS_SLIDE;
-            d->floor = floor;
-        }
-        else d->physstate = PHYS_FALL;
-    }
-    else
-    {
-        if(floor.z >= FLOORZ && d->timeinair > 0)
-        {
-            d->timeinair = 0;
-            if(dir.z < 0.0f || d->physstate >= PHYS_SLOPE)
-            {
-                if(d->physstate < PHYS_SLOPE) dir.z = d->vel.z = 0.0f;
-                switchfloor(d, dir, floor);
-            };
-        }
-        else if(d->physstate >= PHYS_SLOPE && floor.z != d->floor.z && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)
-            switchfloor(d, dir, floor);
-        if(floor.z >= FLOORZ) d->physstate = PHYS_FLOOR;
-        else d->physstate = PHYS_SLOPE;
-        d->floor = floor;
-    };
+    if(slide) slideagainst(d, dir, obstacle);
+    if(!found) falling(d, dir, floor);
+    else landing(d, dir, floor);
     return !collided;
+};
+
+bool bounce(physent *d, float secs, float elasticity)
+{
+    bool water = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z)).material == MAT_WATER;
+    d->vel.z -= (water ? 0.1f : 1.0f)*GRAVITY*secs;
+    vec dir(d->vel);
+    dir.mul(secs);
+    if(water) dir.mul(0.5f);
+    vec old(d->o);
+    d->o.add(dir);
+    if(!collide(d, dir))
+    {
+        d->blocked = true;
+        d->o = old;
+        vec wvel(wall);
+        wvel.mul(elasticity*wall.dot(d->vel));
+        d->vel.sub(wvel);
+        return false;
+    }
+    else if(inside)
+    {
+        d->blocked = true;
+        d->o = old;
+        d->vel.mul(-1);
+        return false;
+    };
+    return true;
 };
 
 void phystest()
@@ -866,9 +901,9 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
 
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
-    const bool water = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z)).material == MAT_WATER;
-    const bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state == CS_SPECTATOR;
-    const float secs = curtime/1000.f;
+    bool water = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z)).material == MAT_WATER;
+    bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state == CS_SPECTATOR;
+    float secs = curtime/1000.f;
 
     // apply any player generated changes in velocity
     modifyvelocity(pl, moveres, local, water, floating, curtime);
