@@ -74,7 +74,7 @@ struct weaponstate
             dest.add(v);
             vec dir = dest;
             dir.sub(from);
-            raycubepos(from, dir, dest, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
+            raycubepos(from, dir, dest, 0, RAY_CLIPMAT);
             return;
         };
     };
