@@ -77,6 +77,43 @@ enet_protocol_dispatch_incoming_commands (ENetHost * host, ENetEvent * event)
 }
 
 static void
+enet_protocol_notify_connect (ENetHost * host, ENetPeer * peer, ENetEvent * event)
+{
+    host -> recalculateBandwidthLimits = 1;
+
+    if (event == NULL)
+       peer -> state = ENET_PEER_STATE_CONNECTION_PENDING;
+    else
+    {
+       peer -> state = ENET_PEER_STATE_CONNECTED;
+
+       event -> type = ENET_EVENT_TYPE_CONNECT;
+       event -> peer = peer;
+    }
+}
+
+static void
+enet_protocol_notify_disconnect (ENetHost * host, ENetPeer * peer, ENetEvent * event)
+{
+    if (peer -> state >= ENET_PEER_STATE_CONNECTION_PENDING)
+        host -> recalculateBandwidthLimits = 1;
+
+    if (peer -> state < ENET_PEER_STATE_CONNECTED)
+        enet_peer_reset (peer);
+    else
+    if (event == NULL)
+        peer -> state = ENET_PEER_STATE_ZOMBIE;
+    else
+    {
+        event -> type = ENET_EVENT_TYPE_DISCONNECT;
+        event -> peer = peer;
+        event -> data = 0;
+
+        enet_peer_reset (peer);
+    }
+}
+
+static void
 enet_protocol_remove_sent_unreliable_commands (ENetPeer * peer)
 {
     ENetOutgoingCommand * outgoingCommand;
@@ -471,7 +508,11 @@ enet_protocol_handle_disconnect (ENetHost * host, ENetPeer * peer, const ENetPro
     enet_peer_reset_queues (peer);
 
     if (peer -> state != ENET_PEER_STATE_CONNECTED)
-      enet_peer_reset (peer);
+    {
+        if (peer -> state == ENET_PEER_STATE_CONNECTION_PENDING) host -> recalculateBandwidthLimits = 1;
+
+        enet_peer_reset (peer);
+    }
     else
     if (command -> header.flags & ENET_PROTOCOL_FLAG_ACKNOWLEDGE)
       peer -> state = ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT;
@@ -543,17 +584,7 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
        if (commandNumber != ENET_PROTOCOL_COMMAND_VERIFY_CONNECT)
          return 0;
 
-       host -> recalculateBandwidthLimits = 1;
-
-       if (event == NULL)
-          peer -> state = ENET_PEER_STATE_CONNECTION_PENDING;
-       else
-       {
-          peer -> state = ENET_PEER_STATE_CONNECTED;
-
-          event -> type = ENET_EVENT_TYPE_CONNECT;
-          event -> peer = peer;
-       }
+       enet_protocol_notify_connect (host, peer, event);
 
        return 1;
 
@@ -561,18 +592,7 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
        if (commandNumber != ENET_PROTOCOL_COMMAND_DISCONNECT)
          return 0;
 
-       host -> recalculateBandwidthLimits = 1;
-
-       if (event == NULL)
-         peer -> state = ENET_PEER_STATE_ZOMBIE;
-       else
-       {
-          event -> type = ENET_EVENT_TYPE_DISCONNECT;
-          event -> peer = peer;
-          event -> data = 0;
-
-          enet_peer_reset (peer);
-       }
+       enet_protocol_notify_disconnect (host, peer, event);
 
        return 1;
     }
@@ -628,17 +648,7 @@ enet_protocol_handle_verify_connect (ENetHost * host, ENetEvent * event, ENetPee
     peer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> verifyConnect.incomingBandwidth);
     peer -> outgoingBandwidth = ENET_NET_TO_HOST_32 (command -> verifyConnect.outgoingBandwidth);
 
-    host -> recalculateBandwidthLimits = 1;
-
-    if (event == NULL)
-        peer -> state = ENET_PEER_STATE_CONNECTION_PENDING;
-    else
-    {
-        peer -> state = ENET_PEER_STATE_CONNECTED;
-
-        event -> type = ENET_EVENT_TYPE_CONNECT;
-        event -> peer = peer;
-    }
+    enet_protocol_notify_connect (host, peer, event);
 }
 
 static int
@@ -989,16 +999,7 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
                (outgoingCommand -> roundTripTimeout >= outgoingCommand -> roundTripTimeoutLimit &&
                  ENET_TIME_DIFFERENCE(timeCurrent, peer -> earliestTimeout) >= ENET_PEER_TIMEOUT_MINIMUM)))
        {
-          if (event == NULL)
-            peer -> state = ENET_PEER_STATE_ZOMBIE;
-          else
-          {
-             event -> type = ENET_EVENT_TYPE_DISCONNECT;
-             event -> peer = peer;
-             event -> data = 0;
-
-             enet_peer_reset (peer);
-          }
+          enet_protocol_notify_disconnect (host, peer, event);
 
           return 1;
        }
