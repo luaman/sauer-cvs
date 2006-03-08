@@ -176,7 +176,7 @@ bool menukey(int code, bool isdown)
     }
     else
     {
-        if((code==SDLK_RETURN || code==-2) && menus[vmenu].items.length())
+        if((code==SDLK_RETURN || code==-1 || code==-2) && menus[vmenu].items.length())
         {
             char *action = menus[vmenu].items[menusel].action;
             if(vmenu==1) connects(getservername(menusel));
