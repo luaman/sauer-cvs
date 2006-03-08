@@ -477,7 +477,7 @@ bool serveroption(char *opt)
         case 'i': ip = opt+2; return true;
         case 'm': master = opt+2; return true;
         case 'g': game = opt+2; return true;
-        default: return false;
+        default: return sv->serveroption(opt);
     };
     
 };

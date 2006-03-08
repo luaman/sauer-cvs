@@ -47,10 +47,11 @@ struct fpsserver : igameserver
     ivector bannedips;
     int lastkick;
     vector<clientinfo *> clients;
-
+    bool publicserver;
+    
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), lastkick(0) {};
+    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), lastkick(0), publicserver(false) {};
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
@@ -396,8 +397,18 @@ struct fpsserver : igameserver
         resetitems();
     };
     
+    bool serveroption(char *opt)
+    {
+        switch(opt[1])
+        {
+            case 'p': publicserver = true; return true;
+            default: return false;
+        };
+    };
+
     void findmaster()
     {
+        if(publicserver) return;
         loopv(clients)
         {
             clientinfo *ci = clients[i];

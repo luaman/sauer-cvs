@@ -54,6 +54,7 @@ struct igameserver
     virtual void *newinfo() = 0;
     virtual void resetinfo(void *ci) = 0;
     virtual void serverinit(char *sdesc) = 0;
+    virtual bool serveroption(char *opt) { return false; };
     virtual void clientdisconnect(int n) = 0;
     virtual int clientconnect(int n, uint ip) = 0;
     virtual char *servername() = 0;
