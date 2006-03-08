@@ -12,6 +12,7 @@ eihrul:
 - optimize per-poly raycube() by creating a bounding-sphere tree cache
 - very fancy: test alpha on a polygon for ultra-quality raycube()
 - improve smoothness of going up steps
+- sound entities
 
 aard (e = eihrul (or gilt) could do it):
 - windows installer | make remaining dir stuff friendly
