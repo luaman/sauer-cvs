@@ -246,7 +246,7 @@ void drawskybox(int farplane, bool limited)
         rendersky();
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glEnable(GL_TEXTURE_2D);
-    }
+    };
 
     glLoadIdentity();
     glRotated(player->pitch, -1.0, 0.0, 0.0);
@@ -259,7 +259,7 @@ void drawskybox(int farplane, bool limited)
     transplayer();
 
     glEnable(GL_FOG);
-}
+};
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
