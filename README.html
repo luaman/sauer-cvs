@@ -3,7 +3,7 @@
 	<head>
 		<title>Sauerbraten</title>
 <style type="text/css">		
-body          { margin: 50px 11%; width: 80%;  background-color: #302c28; color: #ffffff; font-family: verdana,"trebuchet ms","zurich bt",tahoma,arial,helvetica,sans-serif; font-size: 8pt; }
+body          { margin: 50px 15%; width: 70%;  background-color: #302c28; color: #ffffff; font-family: verdana,"trebuchet ms","zurich bt",tahoma,arial,helvetica,sans-serif; font-size: 10pt; }
 a             { text-decoration: underline; color: #ffbb00; }
 a:visited     { color: #ff9900; }
 a:hover       { color: #ff9900; }
@@ -15,9 +15,12 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 		
 	</head>
 	<body>
-		<div>Sauerbraten</div>
-		Sauerbraten is another tiny game engine hosting a singleplayer/multiplayer fps 
-		game (see features below). You will want to read (roughly this order):
+	    <center><img src="docs/sauer_logo_710.gif" width="710" height="226">
+    </center>
+	    <div>Sauerbraten</div>
+		<p>Sauerbraten is multiplayer/singleplayer FPS 
+		game freeware game project, and soon an RPG game project. The sourcecode for the engine used in these games is Open Source (ZLIB licence, read the &quot;License&quot; section below carefully before starting ANY kind of project based on this engine). </p>
+		<p>You will want to read (roughly this order): </p>
 		<ul>
 			<li>
 				<a href="docs/game.html">game</a>: information on gameplay
@@ -29,8 +32,10 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 			<li>
 				<a href="docs/editref.html">editing reference</a>: map making reference
 			<li>
+
 				<a href="docs/history.html">history</a>: for seeing latest changes</li>
-		    <li><a href="docs/dev/wikistuff.html">wikistuff</a></li>
+		    <li><a href="docs/dev/wikistuff.html">wikistuff</a>: random documentation bits that don't have a place yet</li>
+
 		</ul>
 		<br>
 		Wouter van Oortmerssen aka Aardappel
@@ -42,25 +47,65 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 		wouter at&nbsp;gmx dot net
 		<div>Current Features</div>
 		<ul>
-			<li>
-			oc-trees
-			<li>
-			lighting
-			<li>
-			client/server networking
-			<li>
-				singleplayer &amp; multiplayer FPS game</li>
+			<li>...            
 		</ul>
 		<div>
-			Thanks go to all contributors</div>
+			Authors</div>
+		<p>G a m e - D e s i g n : </p>
 		<ul>
-			<li>
-				the usual long list of names</li>
-		</ul>
+		  <li>Wouter  &quot;Aardappel&quot; van Oortmerssen</li>
+    </ul>
+		<p>P r o g r a m m i n g :				</p>
+		<ul>
+		  <li>Wouter &quot;Aardappel&quot; van Oortmerssen : engine design/architecture, most of the code</li>
+		  <li>Lee &quot;Eihrul&quot; Salzman : enet networking library, *nix ports, and a lot of the general code, especially lightmaps/physics related </li>
+		  <li>Mike &quot;Gilt&quot; Dysart : general programming, especially editing/physics related</li>
+    </ul>
+		<blockquote>
+		  <p>Additional code by : Adrian &quot;driAn&quot; Henke (md3 code), Jerry Siebe (geometry rendering optimisations), 
+
+ 
+          Julian Mayer  (MacOSX port) </p>
+    </blockquote>
+		<p>L e v e l - D e s i g n :</p>
+		<ul>
+		  <li>Kurt &quot;kdoom&quot; Kessler : most dm maps, k_rpg1</li>
+          <li> Shane Nieb : nmp*, demomap </li>
+          <li>Clarence &quot;sparr&quot; Risher : roughinery and others </li>
+          <li>John &quot;metlslime&quot; fitzgibbons : metl* </li>
+	</ul>
+		<blockquote>
+		  <p>Additional maps by : Aardappel, driAn, Gilt, voot, shadow, staffy, JCDPC, ZappaZ, MakkE</p>
+    </blockquote>
+		<p>A r t :</p>
+		<ul>
+		  <li>MakkE : mapmodels</li>
+          <li> Dietmar &quot;dcp&quot; Pier :  mapmodels</li>
+	      <li> DarthVim :  hudguns models</li>
+	      <li>Sock (http://www.planetquake.com/simland) : egyptian &amp; tech textures</li>
+	      <li> Iikka "Fingers" Keranen (www.digital-eel.com/surface) : ikbase &amp; ik2k textures</li>
+	</ul>
+		<blockquote>
+		  <p>Additional art by: metlslime (textures), Than (textures), Remedy Entertainment Ltd (textures), Seth &amp; Ulrich Galbraith (GPL models), Brian "EvilBastard" Collins / Conrad / Magarnigal / Psionic / James Green / Andreas M&ouml;ller / Ryan Butts &amp; Jeramy Cooke (md2 models)</p>
+    </blockquote>
+		<p>S o u n d / M u s i c : </p>
+		<UL>
+		  <li>Marc &quot;Fanatic&quot; A. Pullen : soundtrack 
+    </UL>
+		<p>O t h e r  : </p>
+		<UL>
+		  <li> Kristian &quot;sleepwalker&quot; Duske : website / messageboard, hosting, master server. 
+          <li>Pushplay : documentation help 
+          <li> The SDL team (www.libsdl.org) for their libraries
+		</UL>
+		<p>&nbsp;</p>
 		<div>License</div>
-		Sauerbraten is freeware, you may use Sauerbraten for any purpose as long as you 
-		don't blame me for any damages incurred, and you may freely distribute the 
-		Sauerbraten archive unmodified on any media. If you wish to use the Sauerbraten 
-		source code (ZLIB license), read the source/readme.txt file carefully.
-	</body>
+		<p>The Sauerbraten game is freeware, you may freely distribute the 
+		Sauerbraten archive/installer <em>unmodified</em> on any media. You may re-compress using different archival formats suitable for your OS (i.e. zip/tgz/rpm/deb/dmg), any changes beyond that require my explicit permission.</p>
+		<p>You may play Sauerbraten for any purpose as long as you 
+	    don't blame me for any damages incurred.</p>
+		<p>You may produce new content for sauerbraten either as a &quot;custom map&quot; (.ogz/.cfg/textures etc) or as a &quot;mod&quot; (same, but with new exe), but you can only distribute this content as an add-on archive that contains NO existing sauerbraten content and installs into an existing sauerbraten installation without overwriting files. You explicitly may NOT repackage the game's media with your own content, only the engine is Open Source, the media that comes with the game comes with varying licenses from varying authors. If you wish to build your own game based on the sauerbraten engine, you therefore have to make it work <em>entirely</em> with either your own content, or content you have explicitly asked the authors permission for. </p>
+		<p>If you wish to use the Sauerbraten 
+		  source code (ZLIB license), read the src/readme_source.txt file carefully.</p>
+</body>
 </html>

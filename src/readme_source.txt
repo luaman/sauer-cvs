@@ -8,9 +8,9 @@ http://www.opensource.org/licenses/zlib-license.php
 LICENSE
 =======
 
-Sauerbraten game engine source code, 22 feb 2004 release.
+Sauerbraten game engine source code, any release.
 
-Copyright (C) 2001-2004 Wouter van Oortmerssen.
+Copyright (C) 2001-2006 Wouter van Oortmerssen.
 
 This software is provided 'as-is', without any express or implied
 warranty.  In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@ an MIT-style license, which is however compatible with the above license for all
 practical purposes.
 
 Game media included in the game (maps, textures, sounds, models etc.)
-are not covered by this license, and may have individual copyrights and
+are NOT covered by this license, and may have individual copyrights and
 distribution restrictions (see individual readmes).
 
 
@@ -51,9 +51,7 @@ makefiles can be used to build.
 
 Windows users can use the included visual studio .net project files, which
 references the lib/include directories for the external libraries and should
-thus be self contained. The project is set up assuming you have the normal
-sauerbraten binary distribution as a subdirectory "sauerbraten" of the root of
-this archive, so release mode builds will place executables in the bin dir
+thus be self contained. Release mode builds will place executables in the bin dir
 ready for testing and distribution. Do not come ask me for help in compiling
 or modifying the sources, if you can't figure out how to do this yourself
 you probably shouldn't be touching the files anyway.
@@ -74,7 +72,7 @@ it is merely the author's idea of a fun little programming project.
 AUTHOR
 ======
 Wouter van Oortmerssen aka Aardappel
-wouter@fov120.com
-http://wouter.fov120.com
+wvo at gmx dot net
+http://strlen.com
 
 For additional authors/contributors, see the sauerbraten binary distribution readme.

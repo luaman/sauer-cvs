@@ -1213,43 +1213,27 @@
 					Name="docs"
 					>
 					<File
-						RelativePath="..\sauerbraten\docs\config.html"
+						RelativePath="..\..\docs\config.html"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\editing.html"
+						RelativePath="..\..\docs\editing.html"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\editref.html"
+						RelativePath="..\..\docs\editref.html"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\game.html"
+						RelativePath="..\..\docs\game.html"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\history.html"
+						RelativePath="..\..\docs\history.html"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\docs\index.html"
-						>
-					</File>
-					<File
-						RelativePath="..\readme_developer.txt"
-						>
-					</File>
-					<File
-						RelativePath="..\readme_player_mapper.txt"
-						>
-					</File>
-					<File
-						RelativePath="..\readme_source.txt"
-						>
-					</File>
-					<File
-						RelativePath="..\sauerbraten\docs\style.css"
+						RelativePath="..\..\README.html"
 						>
 					</File>
 				</Filter>
@@ -1257,23 +1241,23 @@
 					Name="cfg"
 					>
 					<File
-						RelativePath="..\sauerbraten\data\default_map_settings.cfg"
+						RelativePath="..\..\data\default_map_settings.cfg"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\defaults.cfg"
+						RelativePath="..\..\data\defaults.cfg"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\keymap.cfg"
+						RelativePath="..\..\data\keymap.cfg"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\menus.cfg"
+						RelativePath="..\..\data\menus.cfg"
 						>
 					</File>
 					<File
-						RelativePath="..\sauerbraten\data\sounds.cfg"
+						RelativePath="..\..\data\sounds.cfg"
 						>
 					</File>
 				</Filter>

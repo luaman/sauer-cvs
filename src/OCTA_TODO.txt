@@ -15,8 +15,7 @@ eihrul:
 - sound entities
 
 aard (e = eihrul (or gilt) could do it):
-- windows installer | make remaining dir stuff friendly
-- remove wiki for now
+- windows installer
 - see if a workaround for th 8x.xx texture bugs is possible -> with shaders this would also go away
 - go do quick phong lighting for models
 - (e) make 3rd person weapons show... how to make an axe swing rather than go back and forth?
