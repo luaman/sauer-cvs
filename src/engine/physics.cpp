@@ -647,9 +647,49 @@ void landing(physent *d, vec &dir, const vec &floor)
     d->floor = floor;
 };
 
+bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec &floor)
+{
+    bool found = false;
+    vec moved(d->o);
+    d->o.z -= 0.1f;
+    if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
+    {
+        floor = wall;
+        found = true;
+    }
+    else if(collided && obstacle.z >= SLOPEZ)
+    {
+        floor = obstacle;
+        found = true;
+        slide = false;
+    }
+    else
+    {
+        if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
+        {
+            if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
+            {
+                floor = wall;
+                if(floor.z > SLOPEZ) found = true;
+            };
+        }
+        else
+        {
+            d->o.z -= d->radius;
+            if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && !collide(d, vec(0, 0, -1)))
+            {
+                floor = wall;
+                if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
+            };
+        };
+        if(collided && (!found || obstacle.z > floor.z)) floor = obstacle;
+    };
+    d->o = moved;
+    return found;
+};
+
 bool move(physent *d, vec &dir)
 {
-// TODO: refactor this into more manageable functions and optimize out the collide calls if possible?
     vec old(d->o);
     if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && (d->move || d->strafe))
     {
@@ -685,42 +725,9 @@ bool move(physent *d, vec &dir)
         d->blocked = true;
         return false;
     };
-    bool found = false, slide = collided && obstacle.z < 1.0f;
-    vec moved(d->o), floor(0, 0, 0);
-    d->o.z -= 0.1f;
-    if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
-    {
-        floor = wall;
-        found = true;
-    }
-    else if(collided && obstacle.z >= SLOPEZ)
-    {
-        floor = obstacle;
-        found = true;
-        slide = false;
-    }
-    else
-    {
-        if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
-        {
-            if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
-            {
-                floor = wall;
-                if(floor.z > SLOPEZ) found = true;
-            };
-        }
-        else
-        {
-            d->o.z -= d->radius;
-            if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && !collide(d, vec(0, 0, -1)))
-            {
-                floor = wall;
-                if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
-            };
-        };
-        if(collided && (!found || obstacle.z > floor.z)) floor = obstacle;
-    };
-    d->o = moved;
+    vec floor(0, 0, 0);
+    bool slide = collided && obstacle.z < 1.0f,
+         found = findfloor(d, collided, obstacle, slide, floor); 
     if(slide) slideagainst(d, dir, obstacle);
     if(!found) falling(d, dir, floor);
     else landing(d, dir, floor);
