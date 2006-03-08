@@ -368,7 +368,7 @@ struct fpsserver : igameserver
         
         lastsec = seconds;
         
-        if(lastkick && lastkick+4*60*60<lastsec) bannedips.setsize(lastkick = 0);  // forget about cheaters after 4hrs
+//        if(lastkick && lastkick+4*60*60<lastsec) bannedips.setsize(lastkick = 0);  // forget about cheaters after 4hrs
         
         if(masterupdate>=0) { send2(true, -1, SV_CURRENTMASTER, masterupdate); masterupdate = -1; };
         
@@ -424,6 +424,10 @@ struct fpsserver : igameserver
         {
             clients[0]->master = true;
             masterupdate = clients[0]->clientnum;
+        }
+        else
+        {
+            bannedips.setsize(0);
         };
     };
     
