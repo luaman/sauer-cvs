@@ -136,7 +136,7 @@ void aimat()
     
     vec dir(0, 0, 0);
     vecfromyawpitch(player->yaw, player->pitch, 1, 0, dir, true);
-    raycubepos(player->o, dir, worldpos, 0, RAY_CLIPMAT);
+    raycubepos(player->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
 };
 
 VARP(crosshairsize, 0, 15, 50);
