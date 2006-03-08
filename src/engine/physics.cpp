@@ -381,7 +381,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
 /////////////////////////  entity collision  ///////////////////////////////////////////////
 
 // info about collisions
-bool inside; // whether an internal collision happened
+bool inside, hitplayer; // whether an internal collision happened, whether the collision hit a player
 vec wall; // just the normal vectors.
 float walldistance;
 const float STAIRHEIGHT = 4.0f;
@@ -420,7 +420,9 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
 bool plcollide(physent *d, const vec &dir, physent *o)    // collide with player or monster
 {
     if(d->state!=CS_ALIVE || o->state!=CS_ALIVE) return true;
-    return rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight);
+    if(rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight)) return true;
+    hitplayer = true;
+    return false;
 };
 
 bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
@@ -513,7 +515,7 @@ bool octacollide(physent *d, const vec &dir, float cutoff, ivec &bo, ivec &bs, c
 // all collision happens here
 bool collide(physent *d, const vec &dir, float cutoff)
 {
-    inside = false;
+    inside = hitplayer = false;
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
