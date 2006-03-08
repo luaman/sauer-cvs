@@ -7,8 +7,6 @@
 #define USE_MIXER
 //#endif
 
-VARP(soundvol, 0, 255, 255);
-VARP(musicvol, 0, 128, 255);
 bool nosound = true;
 
 #define MAXCHAN 32
@@ -28,6 +26,20 @@ struct soundloc { vec loc; bool inuse; } soundlocs[MAXCHAN];
     FSOUND_STREAM *stream = NULL;
     int musicchan;
 #endif
+
+void setmusicvol(int musicvol)
+{
+    if(nosound) return;
+#ifdef USE_MIXER
+    if(mod) Mix_VolumeMusic((musicvol*MAXVOL)/255);
+#else
+    if(mod) FMUSIC_SetMasterVolume(mod, musicvol);
+    else if(stream && musicchan>=0) FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255);
+#endif
+};
+
+VARP(soundvol, 0, 255, 255);
+VARFP(musicvol, 0, 128, 255, setmusicvol(musicvol));
 
 void stopsound()
 {
@@ -117,7 +129,7 @@ void music(char *name, char *cmd)
             else if(stream = FSOUND_Stream_Open(path(sn), cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0))
             {
                 musicchan = FSOUND_Stream_Play(FSOUND_FREE, stream);
-                if(musicchan>=0) { FSOUND_SetVolume(chan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(chan, false); };
+                if(musicchan>=0) { FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(musicchan, false); };
             }
         #endif
             else
