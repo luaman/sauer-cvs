@@ -33,6 +33,12 @@ struct fpsserver : igameserver
         int frags;
     };
 
+    struct ban
+    {
+        int time;
+        uint ip;
+    };
+    
     bool notgotitems;        // true when map has changed and waiting for clients to send item
     int mode;
 
@@ -44,13 +50,12 @@ struct fpsserver : igameserver
     int mastermode;
     int masterupdate;
     
-    ivector bannedips;
-    int lastkick;
+    vector<ban> bannedips;
     vector<clientinfo *> clients;
     
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), lastkick(0) {};
+    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1) {};
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
@@ -284,9 +289,10 @@ struct fpsserver : igameserver
                 int victim = getint(p);
                 if(ci->master)
                 {
-                    bannedips.add(getclientip(victim));
+                    ban &b = bannedips.add();
+                    b.time = lastsec;
+                    b.ip = getclientip(victim);
                     disconnect_client(victim, DISC_KICK);
-                    lastkick = lastsec;
                 };
                 break;
             };
@@ -367,7 +373,7 @@ struct fpsserver : igameserver
         
         lastsec = seconds;
         
-//        if(lastkick && lastkick+4*60*60<lastsec) bannedips.setsize(lastkick = 0);  // forget about cheaters after 4hrs
+        while(bannedips.length() && bannedips[0].time+4*60*60<lastsec) bannedips.remove(0);
         
         if(masterupdate>=0) { send2(true, -1, SV_CURRENTMASTER, masterupdate); masterupdate = -1; };
         
@@ -425,7 +431,7 @@ struct fpsserver : igameserver
         clientinfo *ci = (clientinfo *)getinfo(n);
         ci->clientnum = n;
         clients.add(ci);
-        loopv(bannedips) if(bannedips[i]==ip) return DISC_IPBAN;
+        loopv(bannedips) if(bannedips[i].ip==ip) return DISC_IPBAN;
         if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
         if(mastermode>=MM_LOCKED) ci->spectator = true;
         findmaster();
