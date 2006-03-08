@@ -702,22 +702,19 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
        command = (ENetProtocol *) currentData;
 
        if (currentData + sizeof (ENetProtocolCommandHeader) > & host -> receivedData [host -> receivedDataLength])
-         return 0;
+         break;
 
        command -> header.commandLength = ENET_NET_TO_HOST_32 (command -> header.commandLength);
 
        if (command -> header.commandLength <= 0 || 
            command -> header.commandLength > & host -> receivedData [host -> receivedDataLength] - currentData)
-         return 0;
+         break;
 
        -- commandCount;
        currentData += command -> header.commandLength;
 
-       if (peer == NULL)
-       {
-          if (command -> header.command != ENET_PROTOCOL_COMMAND_CONNECT)
-            return 0;
-       }
+       if (peer == NULL && command -> header.command != ENET_PROTOCOL_COMMAND_CONNECT)
+         break;
          
        command -> header.reliableSequenceNumber = ENET_NET_TO_HOST_32 (command -> header.reliableSequenceNumber);
 
