@@ -21,7 +21,6 @@ aard (e = eihrul (or gilt) could do it):
 - (e) make 3rd person weapons show... how to make an axe swing rather than go back and forth?
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - iconic stats
-- remove player name when dead
 - new BAS sounds?
 - make very clear section in the docs about what you can and cannot do with sauer
 - powerup announce | make both powerups not spawn on map start / not be in sync
