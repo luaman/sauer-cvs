@@ -95,7 +95,7 @@ void music(char *name, char *cmd)
     stopsound();
     if(soundvol && musicvol)
     {
-        if(cmd) s_strcpy(musicdonecmd, cmd);
+        if(cmd[0]) s_strcpy(musicdonecmd, cmd);
         else musicdonecmd[0] = 0;
         string sn;
         s_strcpy(sn, "packages/");
@@ -103,8 +103,8 @@ void music(char *name, char *cmd)
         #ifdef USE_MIXER
             if(mod = Mix_LoadMUS(path(sn)))
             {
-                Mix_HookMusicFinished(cmd ? musicdone : NULL);
-                Mix_PlayMusic(mod, cmd ? 0 : -1);
+                Mix_HookMusicFinished(cmd[0] ? musicdone : NULL);
+                Mix_PlayMusic(mod, cmd[0] ? 0 : -1);
                 Mix_VolumeMusic((musicvol*MAXVOL)/255);
             }
         #else
@@ -112,9 +112,9 @@ void music(char *name, char *cmd)
             {
                 FMUSIC_PlaySong(mod);
                 FMUSIC_SetMasterVolume(mod, musicvol);
-                FMUSIC_SetLooping(mod, cmd ? FALSE : TRUE);
+                FMUSIC_SetLooping(mod, cmd[0] ? FALSE : TRUE);
             }
-            else if(stream = FSOUND_Stream_Open(path(sn), cmd ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0))
+            else if(stream = FSOUND_Stream_Open(path(sn), cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0))
             {
                 musicchan = FSOUND_Stream_Play(FSOUND_FREE, stream);
                 if(musicchan>=0) { FSOUND_SetVolume(chan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(chan, false); };
