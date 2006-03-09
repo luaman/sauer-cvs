@@ -21,7 +21,7 @@ struct fpsrender
         else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) { anim = ANIM_EDIT; }
         else if(d->state==CS_LAGGED)                            { anim = ANIM_LAG; }
         else if(monsterstate==M_PAIN || cl.lastmillis-d->lastpain<300) { anim = ANIM_PAIN; }
-        else if(d->physstate==PHYS_FALL && d->timeinair>100)           { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
+        else if(d->timeinair>100)                           { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
         else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; };
         uchar color[3];

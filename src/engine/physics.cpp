@@ -564,7 +564,11 @@ bool trystepup(physent *d, vec &dir, float maxstep)
     d->o.z += dir.magnitude()*STEPSPEED;
     if(collide(d, vec(0, 0, 1)))
     {
-        if(d->physstate < PHYS_FLOOR) d->floor = vec(0, 0, 1);
+        if(d->physstate == PHYS_FALL)
+        {
+            d->timeinair = 0;
+            d->floor = vec(0, 0, 1);
+        };
         d->physstate = PHYS_STEP_UP;
         return true;
     };
@@ -631,12 +635,12 @@ void falling(physent *d, vec &dir, const vec &floor)
 
 void landing(physent *d, vec &dir, const vec &floor)
 {
-    if(floor.z >= FLOORZ && d->timeinair > 0)
+    if(d->physstate == PHYS_FALL)
     {
         d->timeinair = 0;
-        if(dir.z < 0.0f || d->physstate >= PHYS_SLOPE)
+        if(dir.z < 0.0f)
         {
-            if(d->physstate < PHYS_SLOPE) dir.z = d->vel.z = 0.0f;
+            dir.z = d->vel.z = 0.0f;
             switchfloor(d, dir, floor);
         };
     }
@@ -782,6 +786,7 @@ void dropenttofloor(entity *e)
     if(raycube(e->o, v) >= hdr.worldsize)
         return;
     physent d;
+    d.type = ENT_AI;
     d.o = e->o;
     d.vel = vec(0, 0, -1);
     if(e->type == ET_MAPMODEL)
@@ -796,12 +801,6 @@ void dropenttofloor(entity *e)
         d.eyeheight = 4.0f;
         d.aboveeye = 1.0f;
     };
-    d.physstate = PHYS_FALL;
-    d.blocked = false;
-    d.moving = true;
-    d.timeinair = 0;
-    d.state = CS_ALIVE;
-    d.type = ENT_AI;
     loopi(hdr.worldsize)
     {
         move(&d, v);
@@ -858,16 +857,14 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
     else
     if(pl->physstate >= PHYS_SLOPE || water)
     {
-        if(pl->physstate == PHYS_SLOPE && !water) pl->timeinair += curtime;
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
-            pl->timeinair = 0;
 
             pl->vel.add(vec(pl->vel).mul(0.3f));        // EXPERIMENTAL
-
             pl->vel.z = JUMPVEL; // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; }; // dampen velocity change even harder, gives correct water feel
+
             cl->physicstrigger(pl, local, 1, 0);
         };
     }
@@ -922,10 +919,24 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     if(!floating && pl->type!=ENT_CAMERA)
     {
         if(water) d.mul(0.5f);
-        // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2),
-        if(pl->physstate < PHYS_FLOOR && (!water || (!pl->move && !pl->strafe)))
+        if(!water || (!pl->move && !pl->strafe))
         {
-            float g = water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
+            // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2),
+            if(pl->physstate == PHYS_FALL)
+                d.z -= water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
+            else if(pl->floor.z < FLOORZ)
+            {
+                float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ),
+                      g = GRAVITY*secs,//*c*c,
+                      k = pl->floor.z*g/(pl->floor.x*pl->floor.x + pl->floor.y*pl->floor.y);
+                pl->vel.x += pl->floor.x*k;
+                pl->vel.y += pl->floor.y*k;
+                pl->vel.z -= g;
+            };
+        };
+#if 0
+        {
+            float g = water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs); 
             if(pl->physstate > PHYS_FALL)
             {
                 float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
@@ -935,6 +946,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
             };
             d.z -= g;
         };
+#endif
     };
 
     pl->blocked = false;
