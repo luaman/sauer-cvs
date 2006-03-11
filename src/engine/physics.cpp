@@ -548,7 +548,7 @@ void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
         {
             if(floor.z >= FLOORZ) 
             {
-                if(d->vel.z + d->gravity.z > 0) d->vel.z += d->gravity.z;
+                if(d->vel.z + d->gravity.z > 0) d->vel.add(d->gravity);
                 else if(d->vel.z > 0) d->vel.z = 0.0f;
                 d->gravity = vec(0, 0, 0);
             }
