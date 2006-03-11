@@ -143,6 +143,9 @@ struct clientcom : iclientcom
             putint(p, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(p, (int)(d->vel.y*DVELF));
             putint(p, (int)(d->vel.z*DVELF));
+            putint(p, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
+            putint(p, (int)(d->gravity.y*DVELF));
+            putint(p, (int)(d->gravity.z*DVELF));
             putint(p, (int)d->physstate);
             putint(p, (int)(d->floor.x*DVF));          // quantize to 1/100, almost always 1 byte
             putint(p, (int)(d->floor.y*DVF));
@@ -259,8 +262,11 @@ struct clientcom : iclientcom
                 d->vel.x = getint(p)/DVELF;
                 d->vel.y = getint(p)/DVELF;
                 d->vel.z = getint(p)/DVELF;
+                d->gravity.x = getint(p)/DVELF;
+                d->gravity.y = getint(p)/DVELF;
+                d->gravity.z = getint(p)/DVELF;
                 d->physstate = getint(p);
-                if(d->physstate == PHYS_FLOOR) d->timeinair = 0;
+                if(d->physstate != PHYS_FALL) d->timeinair = 0;
                 d->floor.x = getint(p)/DVF;
                 d->floor.y = getint(p)/DVF;
                 d->floor.z = getint(p)/DVF;

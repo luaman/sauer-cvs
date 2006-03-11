@@ -277,16 +277,13 @@ void recomputecamera()
         static physent tempcamera;
         camera1 = &tempcamera;
         *camera1 = *player;
+        camera1->reset();
         camera1->type = ENT_CAMERA;
         camera1->move = -1;
-        camera1->strafe = 0;
-        camera1->vel = vec(0, 0, 0);
         camera1->eyeheight = 2;
         
         loopi(10)
         {
-            camera1->physstate = PHYS_FALL;
-            camera1->timeinair = 0;
             if(!moveplayer(camera1, 10, true, thirdpersondistance)) break;
         };
     };

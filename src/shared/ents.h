@@ -41,7 +41,7 @@ enum { ENT_PLAYER = 0, ENT_AI, ENT_CAMERA, ENT_BOUNCE };
 
 struct physent                                  // base entity type, can be affected by physics
 {
-    vec o, vel;                                 // origin, velocity
+    vec o, vel, gravity;                        // origin, velocity, accumulated gravity
     float yaw, pitch, roll;
     float maxspeed;                             // cubes per second, 100 for player
     int timeinair;
@@ -67,7 +67,7 @@ struct physent                                  // base entity type, can be affe
     {
         timeinair = strafe = move = 0;
         physstate = PHYS_FALL;
-        vel = vec(0, 0, 0);
+        vel = gravity = vec(0, 0, 0);
     };
 };
 
