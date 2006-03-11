@@ -933,6 +933,20 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
     pl->vel.div(fpsfric);
 };
 
+void modifygravity(physent *pl, bool water, float secs)
+{
+    vec g;
+    if(pl->physstate == PHYS_FALL) g = vec(0, 0, -GRAVITY*secs);
+    else if(pl->floor.z < FLOORZ)
+    {
+        float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
+        slopegravity(GRAVITY*secs*c*c, pl->floor, g);
+        pl->gravity.add(g);
+    };
+    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(2); 
+    else pl->gravity.add(g);
+};
+
 // main physics routine, moves a player/monster for a curtime step
 // moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
 // local is false for multiplayer prediction
@@ -940,34 +954,19 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
     bool water = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z)).material == MAT_WATER;
-    bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state == CS_SPECTATOR;
+    bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state==CS_SPECTATOR;
     float secs = curtime/1000.f;
 
     // apply any player generated changes in velocity
     modifyvelocity(pl, moveres, local, water, floating, curtime);
 
+    // apply gravity
+    if(!floating && pl->type!=ENT_CAMERA) modifygravity(pl, water, secs);
+
     vec d(pl->vel);
     d.add(pl->gravity);
     d.mul(secs);
-    if(!floating && pl->type!=ENT_CAMERA)
-    {
-        if(water) d.mul(0.5f);
-        if(!water || (!pl->move && !pl->strafe))
-        {
-            // gravity: x = 1/2*g*t^2, dx = 1/2*g*(timeinair^2 - (timeinair-curtime)^2) = 1/2*g*(2*timeinair*curtime - curtime^2),
-//            if(pl->physstate == PHYS_FALL)
-//                d.z -= water ? 0.05f*GRAVITY*secs : GRAVITY*(2.0f*pl->timeinair/1000.0f*secs - secs*secs);
-            if(pl->physstate == PHYS_FALL)
-                pl->gravity.z -= (water ? 0.1f : 1.0f)*GRAVITY*secs;
-            else if(pl->floor.z < FLOORZ)
-            {
-                float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
-                vec g;
-                slopegravity((water ? 0.1f : 1.0f)*GRAVITY*secs*c*c, pl->floor, g);
-                pl->gravity.add(g);
-            };
-        };
-    };
+    if(!floating && pl->type!=ENT_CAMERA && water) d.mul(0.5f);
 
     pl->blocked = false;
     pl->moving = true;
