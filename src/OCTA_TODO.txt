@@ -122,3 +122,43 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 2   vert    unal 1
 3   conn    unal 4
 4   edge    unal 2
+
+
+potential teamplay mode: similar to "battlefield":
+
+"bases" are placed thruout the map
+
+a base can be in 3 states: red, blue, or neutral. This is shown
+by the texture its rendered with. The model can be a flag, or whatever.
+
+a neutral base can be converted to your team color by standing next to
+it for N seconds (N = 10 or so) within a certain radius. Multiple players speed up
+the process proportionally. The time accumulated to N is counted by the server,
+and reset to 0 immediately once all players leave the radius.
+
+a base of the enemy color can be converted to neutral in exactly the same way.
+(so often it is a 2 step process to take over a base).
+
+at the spawn of a map, 1 base is preset as blue, and one as red. All players of
+either team spawn near this base. once other points are captured, they will
+spawn at whichever of their bases is closest to an enemy base.
+
+if a player dies, they wait M seconds before they can respawn again (M = 20 or so).
+if you have no bases left (the enemy has captured yours, or at least made em neutral)
+you can't spawn at all and have to wait for remaining players to recapture a base.
+if all bases are gone and all players dead, your team loses and the match is over.
+
+Alternatively, if this doesn't happen, at the timelimit the team that wins is the team
+that has held the most bases for the most amount of time (1 point per X seconds for every
+base in your color).
+
+No points are awarded for kills or self-deaths.
+
+When you spawn, you are given a certain amount of ammo for randomly 2 weapons out of the
+5 main ones, + pistol ammo. You will not be able to get more ammo unless it is placed in
+the map, or if given to you by another player. Any other player can replenish your ammo
+of types of ammo he doesn't have. I.e. if you have RL/MG and he has GL/MG, you can replenish
+his GL ammo, and he can give you RL ammo.
+
+There may be additional powerups needed, to emulate the functionality of vehicles in BF,
+but maybe without its already good enough.
