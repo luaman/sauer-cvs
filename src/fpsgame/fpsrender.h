@@ -26,7 +26,7 @@ struct fpsrender
         else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; };
         uchar color[3];
         lightreaching(d->o, color);
-        rendermodel(color, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/4, team, scale, speed, basetime, d);
+        rendermodel(color, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/4, team, scale, speed, basetime, d, true);
     };
     
     void rendergame(fpsclient &cl, int gamemode)

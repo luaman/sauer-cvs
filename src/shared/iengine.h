@@ -126,7 +126,7 @@ extern void playsound(int n, vec *loc = 0);
 extern void initsound();
 
 // rendermd2
-extern void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d);
+extern void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull);
 extern mapmodelinfo &getmminfo(int i);
 
 // server

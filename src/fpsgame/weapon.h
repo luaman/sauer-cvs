@@ -18,16 +18,17 @@ struct weaponstate
     {
         static guninfo _guns[NUMGUNS] =
         {
-            { S_PUNCH1,    250,  50, 0,   0,  1, "fist"           },
-            { S_SG,       1400,  10, 0,   0, 20, "shotgun"        },  // *SGRAYS
-            { S_CG,        100,  30, 0,   0,  7, "chaingun"       },
-            { S_RLFIRE,    800, 120, 80,  0, 10, "rocketlauncher" },
-            { S_RIFLE,    1500, 100, 0,   0, 30, "rifle"          },
-            { S_FLAUNCH,   200,  20, 50,  4,  1, "fireball"       },
-            { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"        },
-            { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"      },
-            { S_PIGR1,     250,  50, 0,   0,  1, "bite"           },
-            { S_PISTOL,    500,  25, 0,   0,  7, "pistol"         },    
+            { S_PUNCH1,    250,  50, 0,   0,  1, "fist"            },
+            { S_SG,       1400,  10, 0,   0, 20, "shotgun"         },  // *SGRAYS
+            { S_CG,        100,  30, 0,   0,  7, "chaingun"        },
+            { S_RLFIRE,    800, 120, 80,  0, 10, "rocketlauncher"  },
+            { S_RIFLE,    1500, 100, 0,   0, 30, "rifle"           },
+            { S_FLAUNCH,   200,  20, 50,  4,  1, "fireball"        },
+            { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"         },
+            { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"       },
+            { S_PIGR1,     250,  50, 0,   0,  1, "bite"            },
+            { S_PISTOL,    500,  25, 0,   0,  7, "pistol"          },    
+            { S_FLAUNCH,   500,  50, 80,  0, 10, "grenadelauncher" },
         };
         guns = _guns;
         
@@ -52,6 +53,7 @@ struct weaponstate
         else if(s!=GUN_RL && ammo[GUN_RL]) s = GUN_RL;
         else if(s!=GUN_SG && ammo[GUN_SG]) s = GUN_SG;
         else if(s!=GUN_RIFLE && ammo[GUN_RIFLE]) s = GUN_RIFLE;
+        else if(s!=GUN_GL && ammo[GUN_GL]) s = GUN_GL;
         else if(s!=GUN_PISTOL && ammo[GUN_PISTOL]) s = GUN_PISTOL;
         else s = GUN_FIST;
         if(s!=player1->gunselect) cl.playsoundc(S_WEAPLOAD);
@@ -271,6 +273,10 @@ struct weaponstate
                 pspeed = guns[gun].projspeed*4;
                 if(d->type==ENT_AI) pspeed /= 2;
                 newprojectile(from, to, (float)pspeed, local, d, gun);
+                break;
+
+            case GUN_GL:
+                //newbouncy(...)
                 break;
 
             case GUN_RIFLE: 

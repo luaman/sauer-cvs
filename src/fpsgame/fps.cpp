@@ -427,10 +427,10 @@ struct fpsclient : igameclient
 
     void drawhudmodel(int anim, float speed, int base)
     {
-        static char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol" };
+        static char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "", "", "", "", "hudguns/pistol", "hudguns/gl" };
         uchar color[3];
         lightreaching(player1->o, color);
-        rendermodel(color, hudgunnames[player1->gunselect], anim, 0, 0, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base, NULL);
+        rendermodel(color, hudgunnames[player1->gunselect], anim, 0, 0, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base, NULL, false);
     };
 
     void drawhudgun()
@@ -486,7 +486,8 @@ struct fpsclient : igameclient
         if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
         int g = player1->gunselect;
         int r = 64;
-        if(g==9) { g = 4; r = 0; };
+        if(g==GUN_PISTOL) { g = 4; r = 0; };
+        if(g==GUN_GL) { g = 3; r = 1; };    // FIXME
         drawicon((float)(g*64), (float)r, 1220, 1650);
     };
 

@@ -27,7 +27,7 @@ struct fpsentity : extentity
     // extend with additional fields if needed...
 };
 
-enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_FIREBALL, GUN_ICEBALL, GUN_SLIMEBALL, GUN_BITE, GUN_PISTOL, NUMGUNS };
+enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_FIREBALL, GUN_ICEBALL, GUN_SLIMEBALL, GUN_BITE, GUN_PISTOL, GUN_GL, NUMGUNS };
 enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
 enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  // monster states
 
@@ -61,6 +61,7 @@ struct fpsent : dynent
         attacking = false; 
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
+        ammo[GUN_GL] = 10; // TEMP!!!
     };
 
     vec abovehead() { return vec(o).add(vec(0, 0, aboveeye+4)); };

@@ -56,15 +56,18 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d)
+void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
-    vec center;
-    float radius = m->boundsphere(0/*frame*/, scale, center);   // FIXME
-    center.add(vec(x, z, y));
-    if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
-    if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
+    if(cull)
+    {
+        vec center;
+        float radius = m->boundsphere(0/*frame*/, scale, center);   // FIXME
+        center.add(vec(x, z, y));
+        if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
+        if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
+    }
     m->setskin(tex);  
     if(teammate) { color[2] = 255; color[0] = 50; color[1] = 50; }; // VERY TEMP, find a better teammate display
     glColor3ubv(color);
