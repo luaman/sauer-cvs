@@ -895,6 +895,11 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
     else
     if(pl->physstate >= PHYS_SLOPE || water)
     {
+        if(water && pl->timeinair > 0)
+        {
+            pl->timeinair = 0;
+            pl->vel.z = 0;
+        };
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
@@ -948,7 +953,7 @@ void modifygravity(physent *pl, bool water, float secs)
         float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
         slopegravity(GRAVITY*secs*c*c, pl->floor, g);
     };
-    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(2); 
+    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(8); 
     else pl->gravity.add(g);
 };
 
@@ -1020,7 +1025,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     if(pl->type!=ENT_CAMERA)
     {
         const bool inwater = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1).material == MAT_WATER;
-        if(!pl->inwater && inwater) { cl->physicstrigger(pl, local, 0, -1); pl->timeinair = 0; }
+        if(!pl->inwater && inwater) { cl->physicstrigger(pl, local, 0, -1); }
         else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = inwater;
     };
