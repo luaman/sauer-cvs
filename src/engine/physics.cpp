@@ -743,6 +743,7 @@ bool move(physent *d, vec &dir)
     d->o.add(dir);
     if(!collide(d, dir))
     {
+        if(d->type == ENT_CAMERA) return false;
         obstacle = wall;
         d->o = old;
         d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
@@ -765,9 +766,17 @@ bool move(physent *d, vec &dir)
     vec floor(0, 0, 0);
     bool slide = collided && obstacle.z < 1.0f,
          found = findfloor(d, collided, obstacle, slide, floor); 
-    if(slide) slideagainst(d, dir, obstacle);
-    if(!found) falling(d, dir, floor);
-    else landing(d, dir, floor);
+    if(slide)
+    {
+        slideagainst(d, dir, obstacle);
+        if(d->type == ENT_AI) d->blocked = true;
+    };
+    if(found)
+    {
+        if(d->type == ENT_CAMERA) return false;
+        landing(d, dir, floor);
+    }
+    else falling(d, dir, floor);
     return !collided;
 };
 
@@ -819,7 +828,7 @@ void dropenttofloor(entity *e)
     if(raycube(e->o, v) >= hdr.worldsize)
         return;
     physent d;
-    d.type = ENT_AI;
+    d.type = ENT_CAMERA;
     d.o = e->o;
     d.vel = vec(0, 0, -1);
     if(e->type == ET_MAPMODEL)
@@ -834,10 +843,7 @@ void dropenttofloor(entity *e)
         d.eyeheight = 4.0f;
         d.aboveeye = 1.0f;
     };
-    loopi(hdr.worldsize)
-    {
-        if(!move(&d, v) || d.physstate > PHYS_FALL) break;
-    };
+    loopi(hdr.worldsize) if(!move(&d, v)) break;
     e->o = d.o;
 };
 
@@ -935,13 +941,12 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
 
 void modifygravity(physent *pl, bool water, float secs)
 {
-    vec g;
-    if(pl->physstate == PHYS_FALL) g = vec(0, 0, -GRAVITY*secs);
+    vec g(0, 0, 0);
+    if(pl->physstate == PHYS_FALL) g.z -= GRAVITY*secs;
     else if(pl->floor.z < FLOORZ)
     {
         float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
         slopegravity(GRAVITY*secs*c*c, pl->floor, g);
-        pl->gravity.add(g);
     };
     if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(2); 
     else pl->gravity.add(g);
