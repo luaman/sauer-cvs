@@ -1,6 +1,6 @@
 struct fpsserver : igameserver
 {
-    static const float CAPTURERADIUS = 16.0f;
+    static const int CAPTURERADIUS = 16;
 
     struct server_entity            // server side version of "entity" type
     {
