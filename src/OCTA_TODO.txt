@@ -15,6 +15,16 @@ eihrul:
 - sound entities
 
 aard (e = eihrul (or gilt) could do it):
+
+[23:48] Lee: so, the function of interest is: bool bounce(physent *d, float secs, float elasticity = 0.8f, float waterfric = 3.0f) 
+[23:49] Lee: you just call it with the ent and the number of elapsed seconds, shouldn't need to touch the last two params
+[23:49] Lee: returns true if the ent moved without collisions
+[23:49] Lee: returns false if it collided
+[23:49] Lee: there is a global variable, hitplayer, that is set if it collided with a player
+[23:50] Lee: should just make sure it gets called no less than a certain number of times a second
+[23:50] Lee: maybe 20 or so
+[23:50] Lee: or every frame, whichever is more, i guess
+
 - windows installer
 - see if a workaround for th 8x.xx texture bugs is possible -> with shaders this would also go away
 - go do quick phong lighting for models
@@ -129,10 +139,12 @@ potential teamplay mode: similar to "battlefield":
 
 "bases" are placed thruout the map
 
-a base can be in 3 states: red, blue, or neutral. This is shown
-by the texture its rendered with. The model can be a flag, or whatever.
+a base can be in 2 states: captured or neutral. When captured, it is
+captured by a certain team. This is shown
+by the texture its rendered with (red means enemy captured, blue means
+your team, grey means neutral). The model can be a flag, or whatever.
 
-a neutral base can be converted to your team color by standing next to
+a neutral base can be converted to your team by standing next to
 it for N seconds (N = 10 or so) within a certain radius. Multiple players speed up
 the process proportionally. The time accumulated to N is counted by the server,
 and reset to 0 immediately once all players leave the radius.
@@ -140,8 +152,8 @@ and reset to 0 immediately once all players leave the radius.
 a base of the enemy color can be converted to neutral in exactly the same way.
 (so often it is a 2 step process to take over a base).
 
-at the spawn of a map, 1 base is preset as blue, and one as red. All players of
-either team spawn near this base. once other points are captured, they will
+at the spawn of a map, all bases are neutral, and all players spawn at normal player spawns,
+and try to capture whatever they can. basis are captured, players will
 spawn at whichever of their bases is closest to an enemy base.
 
 if a player dies, they wait M seconds before they can respawn again (M = 20 or so).
@@ -160,6 +172,9 @@ When you spawn, you are given a certain amount of ammo for randomly 2 weapons ou
 the map, or if given to you by another player. Any other player can replenish your ammo
 of types of ammo he doesn't have. I.e. if you have RL/MG and he has GL/MG, you can replenish
 his GL ammo, and he can give you RL ammo.
+
+A simple HUD shows bases relative to your current position in red or blue (can be a sphere with
+arrows pointing outwards for faraway bases).
 
 There may be additional powerups needed, to emulate the functionality of vehicles in BF,
 but maybe without its already good enough.
