@@ -203,14 +203,14 @@ typedef vector<ushort> usvector;
 #define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
 #define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
-inline unsigned int hthash(const char * key)
+inline unsigned int hthash(char * key)
 {
     unsigned int h = 5381;
     for(int i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
     return h;
 }
 
-inline bool htcmp(const char *x, const char *y)
+inline bool htcmp(char *x, char *y)
 {
     return !strcmp(x, y);
 }
