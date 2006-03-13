@@ -1,5 +1,7 @@
 struct fpsserver : igameserver
 {
+    static const float CAPTURERADIUS = 16.0f;
+
     struct server_entity            // server side version of "entity" type
     {
         int type;
@@ -10,19 +12,87 @@ struct fpsserver : igameserver
     struct clientinfo
     {
         int clientnum;
-        string name;
+        string name, team;
         string mapvote;
         int modevote;
         bool master;
         bool spectator;
+        vec o;
         
-        clientinfo() : master(false), spectator(false) {};
+        clientinfo() { reset(); };
 
         void reset()
         {
             master = false;
             spectator = false;
+            o = vec(-1e10f, -1e10f, -1e10f);
         };
+    };
+
+    struct baseinfo
+    {
+        vec o;
+        string owner, enemy;
+        int enemies, converted;
+        int capturetime;
+
+        baseinfo() { reset(); };
+
+        void noenemy()
+        {
+            enemy[0] = '\0';
+            enemies = 0;
+            converted = 0;
+        };
+        
+        void reset()
+        {
+            noenemy();
+            owner[0] = '\0';
+            capturetime = -1;
+        };
+
+        bool enter(const char *team)
+        {
+            if(!enemy[0])
+            {
+                if(!strcmp(owner, team)) return false;
+                s_strcpy(enemy, team);
+                enemies++;
+                return true;
+            }
+            else if(strcmp(enemy, team)) return false;
+            else enemies++;
+            return false;
+        };
+
+        bool leave(const char *team)
+        {
+            if(strcmp(enemy, team)) return false;
+            enemies--;
+            if(!enemies) noenemy();
+            return !enemies;
+        };
+
+        int occupy(const char *team, int units, int secs)
+        {
+            if(strcmp(enemy, team)) return -1;
+            converted += units;
+            if(converted<100) return -1;
+            bool captured = !owner[0];
+            reset();
+            if(!captured) s_strcpy(enemy, team);
+            else { s_strcpy(owner, team); capturetime = secs; };
+            return captured ? 1 : 0;
+        };
+    };
+
+    struct capturescore
+    {
+        string team;
+        int total;
+
+        capturescore(const char *t, int n) : total(n) { s_strcpy(team, t); };
     };
 
     struct score
@@ -52,7 +122,7 @@ struct fpsserver : igameserver
     
     vector<ban> bannedips;
     vector<clientinfo *> clients;
-    
+
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
     fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1) {};
@@ -62,6 +132,8 @@ struct fpsserver : igameserver
     
     vector<server_entity> sents;
     vector<score> scores;
+    vector<baseinfo> bases;
+    vector<capturescore> capturescores;
 
     void restoreserverstate(vector<extentity *> &ents)   // hack: called from savegame code, only works in SP
     {
@@ -97,8 +169,9 @@ struct fpsserver : igameserver
             "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
             "instagib", "instagib team", "efficiency", "efficiency team",
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
+            "capture", "team capture",
         };
-        return (n>=-2 && n<10) ? modenames[n+2] : "unknown";
+        return (n>=-2 && n+2<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+2] : "unknown";
     };
 
     static char msgsizelookup(int msg)
@@ -144,6 +217,60 @@ struct fpsserver : igameserver
         };
     };
 
+    void orphanedbase(baseinfo &b)
+    {
+        loopv(clients)
+        {
+            clientinfo *ci = clients[i];
+            if(ci->o.dist(b.o) <= CAPTURERADIUS)
+            {
+                b.enter(ci->team);
+                return;
+            };
+        };
+    };
+
+    void enterbases(const char *team, const vec &oldpos, const vec &newpos = vec(-1e10f, -1e10f, -1e10f))
+    {
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            bool leave = oldpos.dist(b.o) <= CAPTURERADIUS,
+                 enter = newpos.dist(b.o) <= CAPTURERADIUS;
+            if(leave && !enter)
+            {
+                if(b.leave(team)) orphanedbase(b);
+            }
+            else if(enter && !leave) b.enter(team);
+        };
+    };
+
+    void addcapturescore(const char *team, int n)
+    {
+        loopv(capturescores)
+        {
+            capturescore &cs = capturescores[i];
+            if(!strcmp(cs.team, team))
+            {
+                cs.total += n;
+                return;
+            };
+        };
+        capturescores.add(capturescore(team, n));
+    };
+ 
+    void occupybases(int secs)
+    {
+        int t = secs-lastsec;
+        if(t<1) return;
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            if(b.enemy[0]) b.occupy(b.enemy, b.enemies*t, secs);
+            if(b.owner[0]) addcapturescore(b.owner, t);
+        };
+    };
+ 
     bool vote(char *map, int reqmode, int sender)
     {
         clientinfo *ci = (clientinfo *)getinfo(sender);
@@ -197,6 +324,7 @@ struct fpsserver : igameserver
                 sgetstr(text, p);
                 s_strcpy(ci->name, text);
                 sgetstr(text, p);
+                s_strcpy(ci->team, text);
                 getint(p);
                 {
                     score &sc = findscore(sender, false);
@@ -259,7 +387,10 @@ struct fpsserver : igameserver
                 };
                 int size = msgsizelookup(type);
                 assert(size!=-1);
-                loopi(size-3) getint(p);
+                ci->o.x = getint(p)/DMF;
+                ci->o.y = getint(p)/DMF;
+                ci->o.z = getint(p)/DMF;
+                loopi(size-6) getint(p);
                 int state = getint(p);
                 if(ci->spectator && (state>>5) != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
                 break;
