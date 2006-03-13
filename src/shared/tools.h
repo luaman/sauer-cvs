@@ -203,14 +203,14 @@ typedef vector<ushort> usvector;
 #define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
 #define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
-inline unsigned int hthash(char * key)
+inline unsigned int hthash(const char * key)
 {
     unsigned int h = 5381;
     for(int i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
     return h;
 }
 
-inline bool htcmp(char *x, char *y)
+inline bool htcmp(const char *x, const char *y)
 {
     return !strcmp(x, y);
 }
@@ -284,9 +284,9 @@ template <class K, class T> struct hashtable
 #define enumeratekt(ht,k,e,t,f,b) loopi(ht.size)  for(hashtable<k,t>::chain *enumc = ht.table[i]; enumc;     enumc = enumc->next)         { const k &e = enumc->key; t *f = &enumc->data; b; }
 #define enumerate(ht,t,e,b)       loopi(ht->size) for(ht->enumc = ht->table[i];                   ht->enumc; ht->enumc = ht->enumc->next) { t *e = &ht->enumc->data; b; }
 
-inline char *newstring(char *s, size_t l) { return s_strncpy(new char[l+1], s, l+1); };
-inline char *newstring(char *s)           { return newstring(s, strlen(s));          };
-inline char *newstringbuf(char *s)        { return newstring(s, _MAXDEFSTR-1);       };
+inline char *newstring(const char *s, size_t l) { return s_strncpy(new char[l+1], s, l+1); };
+inline char *newstring(const char *s)           { return newstring(s, strlen(s));          };
+inline char *newstringbuf(const char *s)        { return newstring(s, _MAXDEFSTR-1);       };
 
 
 #ifndef __GNUC__

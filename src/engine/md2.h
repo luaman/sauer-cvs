@@ -79,7 +79,7 @@ struct md2 : model
 
     md2_header header;
     
-    md2(char *name) : loaded(false), vbufGL(0), vbufi(0), anims(0)
+    md2(const char *name) : loaded(false), vbufGL(0), vbufi(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -161,6 +161,13 @@ struct md2 : model
             v->y = -(cv[1]*cf->scale[1]+cf->translate[1])/sc;
             v->z =  (cv[2]*cf->scale[2]+cf->translate[2])/sc;
         };
+    };
+
+    float above(int frame, float scale)
+    {
+        md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
+        float sc = 4.0f/scale;
+        return cf->translate[2]/sc + cf->scale[2]*0.5f*255.0f/sc;        
     };
 
     float boundsphere(int frame, float scale, vec &center)
@@ -267,7 +274,7 @@ struct md2 : model
         return hulltris;
     };
 
-    void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
         //                      0              3              6   7   8   9   10        12  13
         //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S

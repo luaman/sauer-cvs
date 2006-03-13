@@ -99,7 +99,7 @@ struct fpsserver : igameserver
             "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
             "instagib", "instagib team", "efficiency", "efficiency team",
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
-            "capture", "team capture",
+            "capture",
         };
         return (n>=-2 && n+2<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+2] : "unknown";
     };

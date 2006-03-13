@@ -8,6 +8,9 @@ struct capturestate
     {
         vec o;
         string owner, enemy;
+#ifndef STANDALONE
+        string info;
+#endif
         int enemies, converted;
 
         baseinfo() { reset(); };
@@ -52,10 +55,8 @@ struct capturestate
             if(strcmp(enemy, team)) return -1;
             converted += units;
             if(converted<100) return -1;
-            bool captured = !owner[0];
-            reset();
-            if(captured) { s_strcpy(owner, team); return 1; };
-            else { s_strcpy(enemy, team); return 0; };
+            if(owner[0]) { owner[0] = '\0'; converted = 0; s_strcpy(enemy, team); return 0; }
+            else { noenemy(); s_strcpy(owner, team); return 1; };
         };
     };
 
@@ -69,14 +70,21 @@ struct capturestate
     
     vector<score> scores;
 
-    void addscore(const char *team, int n)
+    void reset()
+    {
+        bases.setsize(0);
+        scores.setsize(0);
+    };
+
+    void addscore(const char *team, int n, bool set = false)
     {
         loopv(scores)
         {
             score &cs = scores[i];
             if(!strcmp(cs.team, team))
             {
-                cs.total += n;
+                if(set) cs.total = n;
+                else cs.total += n;
                 return;
             };
         };
@@ -85,11 +93,59 @@ struct capturestate
         cs.total = n;
     };
 
+    void addbase(const vec &o)
+    {
+        bases.add().o = o;
+    };
+};
+
+#ifndef STANDALONE
+
+struct captureclient : capturestate
+{
+    fpsclient &cl;
+
+    captureclient(fpsclient &cl) : cl(cl) {};
+
+    void renderbases()
+    {
+        int j = 0;
+        loopv(cl.et.ents)
+        {
+            extentity *e = cl.et.ents[i];
+            if(e->type == BASE)
+            {
+                baseinfo &b = bases[j++];
+                const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
+                rendermodel(e->color, flagname, ANIM_STATIC, e->o.x, e->o.z, e->o.y, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
+                if(b.owner[0])
+                {
+                    if(b.enemy[0]) s_sprintf(b.info)("%s vs. %s (%d)", b.owner, b.enemy, b.converted);
+                    else s_sprintf(info)("%s", b.owner);
+                }
+                else if(b.enemy[0]) s_sprintf(b.info)("%s (%d)", b.enemy, b.converted); 
+                else b.info[0] = '\0';
+                vec above(e->o);
+                abovemodel(above, flagname, 1.0f);
+                particle_text(above, b.info, 11, 1);
+            };
+        };
+    };
+};
+
+#endif
+
+struct captureserv : capturestate
+{
+    fpsserver &sv;
+
+    captureserv(fpsserver &sv) : sv(sv) {};
+
     void orphanedbase(baseinfo &b)
     {
-        loopv(clients)
+        loopv(sv.clients)
         {
-            clientinfo *ci = clients[i];
+            fpsserver::clientinfo *ci = sv.clients[i];
             if(ci->o.dist(b.o) <= CAPTURERADIUS)
             {
                 b.enter(ci->team);
@@ -112,7 +168,7 @@ struct capturestate
             else if(enter && !leave) b.enter(team);
         };
     };
-    
+
     void occupybases(int secs)
     {
         int t = secs-lastsec;

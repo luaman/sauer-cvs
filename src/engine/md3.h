@@ -499,7 +499,7 @@ struct md3 : model
         if(model) delete[] model;
     };
 
-    md3(char *_name) { s_strcpy(loadname, _name); };
+    md3(const char *_name) { s_strcpy(loadname, _name); };
     char *name() { return loadname; }; 
     
     float boundsphere(int frame, float scale, vec &center) 
@@ -521,7 +521,7 @@ struct md3 : model
     
     bool load() { model = loadplayermdl(loadname); return model ? true : false; };
     
-    void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
     {
         //int gun = 0; // FIXME lets do this later
         if(anim != ANIM_STATIC)

@@ -23,7 +23,8 @@ struct fpsclient : igameclient
     #include "fpsrender.h"
     #include "entities.h"
     #include "client.h"
-
+    #include "capture.h"
+        
     int nextmode, gamemode;         // nextmode becomes gamemode after next map load
     bool intermission;
     int lastmillis;
@@ -41,12 +42,13 @@ struct fpsclient : igameclient
     fpsrender   fr;
     entities    et;
     clientcom   cc;
+    captureclient cpc;
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
           arenarespawnwait(0), arenadetectwait(0), spawncycle(-1), fixspawn(2),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), gs(*this), et(*this), cc(*this)
+          ws(*this), ms(*this), gs(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(fpsclient, mode, 1, { self->cc.addmsg(1, 2, SV_GAMEMODE, self->nextmode = atoi(args[0])); });
     };

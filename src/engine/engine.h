@@ -22,6 +22,12 @@ struct model
     virtual bool load() = 0;
     virtual char *name() = 0;
     virtual vector<triangle> &hull() { static vector<triangle> nohull; return nohull; };
+    virtual float above(int frame = 0, float scale = 1.0f)
+    {
+        vec center;
+        float rad = boundsphere(frame, scale, center);
+        return center.z + rad;
+    };
 };
 
 extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;

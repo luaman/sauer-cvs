@@ -28,9 +28,9 @@ COMMAND(mapmodelreset, ARG_NONE);
 
 // model registry
 
-hashtable<char *, model *> mdllookup;
+hashtable<const char *, model *> mdllookup;
 
-model *loadmodel(char *name)
+model *loadmodel(const char *name)
 {
     model **mm = mdllookup.access(name);
     if(mm) return *mm;
@@ -56,7 +56,7 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
+void rendermodel(uchar *color, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -71,7 +71,14 @@ void rendermodel(uchar *color, char *mdl, int anim, int varseed, int tex, float 
     m->setskin(tex);  
     if(teammate) { color[2] = 255; color[0] = 50; color[1] = 50; }; // VERY TEMP, find a better teammate display
     glColor3ubv(color);
-    m->render(anim, varseed, speed, basetime, mdl, x, y, z, yaw, pitch, scale, d);
+    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
+};
+
+void abovemodel(vec &o, const char *mdl, float scale)
+{
+    model *m = loadmodel(mdl);
+    if(!m) return;
+    o.z += m->above(0/*frame*/, scale);
 };
 
 int findanim(const char *name)
