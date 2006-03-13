@@ -17,7 +17,7 @@ struct model
 {
     virtual ~model() {};
     virtual float boundsphere(int frame, float scale, vec &center) = 0;
-    virtual void render(int anim, int varseed, float speed, int basetime, char *mdlname, float x, float y, float z, float yaw, float pitch, float sc, dynent *d) = 0;
+    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d) = 0;
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
     virtual char *name() = 0;
