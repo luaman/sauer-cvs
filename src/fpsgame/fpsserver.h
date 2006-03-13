@@ -1,5 +1,9 @@
 struct fpsserver : igameserver
 {
+    #define CAPTURESERV 1
+    #include "capture.h"
+    #undef CAPTURESERV
+
     struct server_entity            // server side version of "entity" type
     {
         int type;
@@ -55,9 +59,11 @@ struct fpsserver : igameserver
     vector<ban> bannedips;
     vector<clientinfo *> clients;
 
+    captureserv cps;
+
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1) {};
+    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), cps(*this) {};
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 

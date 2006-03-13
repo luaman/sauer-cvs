@@ -8,7 +8,7 @@ struct capturestate
     {
         vec o;
         string owner, enemy;
-#ifndef STANDALONE
+#ifndef CAPTURESERV
         string info;
 #endif
         int enemies, converted;
@@ -99,7 +99,7 @@ struct capturestate
     };
 };
 
-#ifndef STANDALONE
+#ifndef CAPTURESERV
 
 struct captureclient : capturestate
 {
@@ -133,7 +133,7 @@ struct captureclient : capturestate
     };
 };
 
-#endif
+#else
 
 struct captureserv : capturestate
 {
@@ -181,4 +181,6 @@ struct captureserv : capturestate
         };
     };
 };
+
+#endif
 
