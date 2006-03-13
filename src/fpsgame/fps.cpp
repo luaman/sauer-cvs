@@ -227,6 +227,7 @@ struct fpsclient : igameclient
         };
         conoutf("can't find entity spawn spot! (%d, %d)", d->o.x, d->o.y);
         // leave ent at original pos, possibly stuck
+        d->o = orig;
     };
 
     void spawnplayer(fpsent *d)   // place at random spawn. also used by monsters!

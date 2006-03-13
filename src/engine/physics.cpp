@@ -412,7 +412,7 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     }
     if(ax>ay && ax>az) TRYCOLLIDE(x, visible&(1<<O_LEFT), visible&(1<<O_RIGHT));
     if(ay>az) TRYCOLLIDE(y, visible&(1<<O_BACK), visible&(1<<O_FRONT));
-    TRYCOLLIDE(z, az >= -(d->eyeheight+d->aboveeye)/4.0f && (visible&(1<<O_BOTTOM)), az >= -d->eyeheight/2.0f && (visible&(1<<O_TOP)));
+    TRYCOLLIDE(z, az >= -(d->eyeheight+d->aboveeye)/4.0f && (visible&(1<<O_BOTTOM)), az >= -(d->eyeheight+d->aboveeye)/2.0f && (visible&(1<<O_TOP)));
     if(collideonly) inside = true;
     return collideonly;
 };
@@ -785,33 +785,77 @@ bool move(physent *d, vec &dir)
     return !collided;
 };
 
-bool bounce(physent *d, float secs, float elasticity)
+bool bounce(physent *d, float secs, float elasticity = 0.8f, float waterfric = 3.0f)
 {
     bool water = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z)).material == MAT_WATER;
-    d->vel.z -= (water ? 0.1f : 1.0f)*GRAVITY*secs;
+    if(water)
+    {
+        if(d->vel.z > 0 && d->vel.z + d->gravity.z < 0) d->vel.z = 0.0f;
+        d->gravity.z = -4.0f*GRAVITY*secs;
+    }
+    else d->gravity.z -= GRAVITY*secs;
+    if(water) d->vel.mul(1.0f - secs/waterfric);
     vec dir(d->vel);
-    dir.mul(secs);
     if(water) dir.mul(0.5f);
+    dir.add(d->gravity);
+    dir.mul(secs);
     vec old(d->o);
     d->o.add(dir);
     if(!collide(d, dir))
     {
-        d->blocked = true;
         d->o = old;
-        vec wvel(wall);
-        wvel.mul(elasticity*wall.dot(d->vel));
+        vec dvel(d->vel), wvel(wall);
+        dvel.add(d->gravity);
+        float c = wall.dot(dvel),
+              k = 1.0f + (1.0f-elasticity)*c/dvel.magnitude();
+        wvel.mul(elasticity*2.0f*c);
+        d->gravity.mul(k);
+        d->vel.mul(k);
         d->vel.sub(wvel);
         return false;
     }
     else if(inside)
     {
-        d->blocked = true;
         d->o = old;
-        d->vel.mul(-1);
+        d->gravity.mul(-elasticity);
+        d->vel.mul(-elasticity);
         return false;
     };
     return true;
 };
+
+#if 0
+physent bnc;
+
+void bncloop()
+{
+    if(bnc.type != ENT_BOUNCE) return;
+    bounce(&bnc, curtime/1000.0f);
+    uchar color[3] = {255, 255, 255};
+    rendermodel(color, "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.z, bnc.o.y, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
+};
+
+void bnctest()
+{
+    loadmodel("carrot");
+    bnc.reset();
+    bnc.type = ENT_BOUNCE;
+    bnc.o = player->o;
+    bnc.radius = 2;
+    bnc.eyeheight = 2;
+    bnc.aboveeye = 2;
+    vec m;
+    vecfromyawpitch(player->yaw, player->pitch, 1, 0, m, true);
+    m.normalize();
+    m.mul(2.0f*player->radius);
+    bnc.o.add(m);
+    m.normalize();
+    m.mul(200.0f);
+    bnc.vel = m;
+};
+
+COMMAND(bnctest, ARG_NONE);
+#endif
 
 void phystest()
 {
@@ -958,7 +1002,7 @@ void modifygravity(physent *pl, bool water, float secs)
         float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
         slopegravity(GRAVITY*secs*c*c, pl->floor, g);
     };
-    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(8); 
+    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(4.0f); 
     else pl->gravity.add(g);
 };
 
@@ -979,9 +1023,9 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     if(!floating && pl->type!=ENT_CAMERA) modifygravity(pl, water, secs);
 
     vec d(pl->vel);
+    if(!floating && pl->type!=ENT_CAMERA && water) d.mul(0.5f);
     d.add(pl->gravity);
     d.mul(secs);
-    if(!floating && pl->type!=ENT_CAMERA && water) d.mul(0.5f);
 
     pl->blocked = false;
     pl->moving = true;
@@ -1030,7 +1074,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     if(pl->type!=ENT_CAMERA)
     {
         const bool inwater = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1).material == MAT_WATER;
-        if(!pl->inwater && inwater) { cl->physicstrigger(pl, local, 0, -1); }
+        if(!pl->inwater && inwater) cl->physicstrigger(pl, local, 0, -1);
         else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = inwater;
     };
