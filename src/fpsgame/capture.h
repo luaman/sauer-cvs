@@ -117,11 +117,11 @@ struct captureclient : capturestate
             {
                 baseinfo &b = bases[j++];
                 const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
-                rendermodel(e->color, flagname, ANIM_STATIC, e->o.x, e->o.z, e->o.y, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
+                rendermodel(e->color, flagname, ANIM_STATIC, 0, 0, e->o.x, e->o.z, e->o.y, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
                 if(b.owner[0])
                 {
                     if(b.enemy[0]) s_sprintf(b.info)("%s vs. %s (%d)", b.owner, b.enemy, b.converted);
-                    else s_sprintf(info)("%s", b.owner);
+                    else s_sprintf(b.info)("%s", b.owner);
                 }
                 else if(b.enemy[0]) s_sprintf(b.info)("%s (%d)", b.enemy, b.converted); 
                 else b.info[0] = '\0';
@@ -171,7 +171,7 @@ struct captureserv : capturestate
 
     void occupybases(int secs)
     {
-        int t = secs-lastsec;
+        int t = secs-sv.lastsec;
         if(t<1) return;
         loopv(bases)
         {
