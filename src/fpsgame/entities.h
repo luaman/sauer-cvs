@@ -58,7 +58,7 @@ struct entities : icliententities
                 };
                 
                 case BASE:
-                    renderent(e, "carrot", 0.0f, 0.0f);
+                    renderent(e, "flags/neutral", 0.0f, 0.0f);
                     break;
 
                 case CARROT:

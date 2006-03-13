@@ -113,8 +113,12 @@ struct md2 : model
         if(header.magic!= 844121161 || header.version!=8) return false;
 
         frames = new char[header.framesize*header.numframes];
-        if(frames==NULL) return false;
-
+        if(frames==NULL) 
+        {
+            fclose(file);
+            return false;
+        };
+        
         fseek(file, header.offsetframes, SEEK_SET);
         fread(frames, header.framesize*header.numframes, 1, file);
 
@@ -124,7 +128,12 @@ struct md2 : model
         }
 
         glcommands = new int[header.numglcommands];
-        if(glcommands==NULL) return false;
+        if(glcommands==NULL)
+        {
+            delete[] frames;
+            fclose(file);
+            return false;
+        };
 
         fseek(file,       header.offsetglcommands, SEEK_SET);
         fread(glcommands, header.numglcommands*sizeof(int), 1, file);
@@ -402,7 +411,15 @@ struct md2 : model
         if(!loaded)
         {
             s_sprintfd(name1)("packages/models/%s/tris.md2", loadname);
-            if(!load(path(name1))) return false;
+            if(!load(path(name1)))
+            {
+                char *p  = strrchr(loadname, '/');
+                if(!p) p = loadname;
+                string nn;
+                s_strncpy(nn, loadname, p-loadname+1);
+                s_sprintf(name1)("packages/models/%s/tris.md2", nn);    // try md2 in parent folder (vert sharing)
+                if(!load(path(name1))) return false;
+            };
             s_sprintfd(name2)("packages/models/%s/skin.jpg", loadname);
             #define ifnload if((skin = textureload(name2, 0, false, true, false))==crosshair)
             ifnload
