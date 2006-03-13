@@ -33,6 +33,7 @@ aard (e = eihrul (or gilt) could do it):
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - iconic stats
 - new BAS sounds?
+- timing issue (map loading times?)
 - make very clear section in the docs about what you can and cannot do with sauer
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - (e) per sound volume
@@ -146,15 +147,19 @@ your team, grey means neutral). The model can be a flag, or whatever.
 
 a neutral base can be converted to your team by standing next to
 it for N seconds (N = 10 or so) within a certain radius. Multiple players speed up
-the process proportionally. The time accumulated to N is counted by the server,
-and reset to 0 immediately once all players leave the radius.
+the process proportionally. The time accumulated to N is counted by the server as soon
+as the first player enters the radius,
+and reset to 0 immediately once all players of the initial team leave the radius.
 
 a base of the enemy color can be converted to neutral in exactly the same way.
 (so often it is a 2 step process to take over a base).
 
+current team name and capture status is shown above the base using a text particle.
+
 at the spawn of a map, all bases are neutral, and all players spawn at normal player spawns,
-and try to capture whatever they can. basis are captured, players will
-spawn at whichever of their bases is closest to an enemy base.
+and try to capture whatever they can. Once bases are captured, players will
+spawn at spawnpoints close to whichever of their bases is closest to an enemy base.
+spawning will be preferred at bases which are not currently being captured by an enemy.
 
 if a player dies, they wait M seconds before they can respawn again (M = 20 or so).
 if you have no bases left (the enemy has captured yours, or at least made em neutral)
@@ -165,7 +170,8 @@ Alternatively, if this doesn't happen, at the timelimit the team that wins is th
 that has held the most bases for the most amount of time (1 point per X seconds for every
 base in your color).
 
-No points are awarded for kills or self-deaths.
+No points are awarded for kills or self-deaths. Infact, no individual score is ever displayed,
+your score is the same as the team's score.
 
 When you spawn, you are given a certain amount of ammo for randomly 2 weapons out of the
 5 main ones, + pistol ammo. You will not be able to get more ammo unless it is placed in
@@ -174,7 +180,7 @@ of types of ammo he doesn't have. I.e. if you have RL/MG and he has GL/MG, you c
 his GL ammo, and he can give you RL ammo.
 
 A simple HUD shows bases relative to your current position in red or blue (can be a sphere with
-arrows pointing outwards for faraway bases).
+blips on it, with blips on the border for faraway bases).
 
 There may be additional powerups needed, to emulate the functionality of vehicles in BF,
 but maybe without its already good enough.
