@@ -17,6 +17,7 @@ struct entities : icliententities
             20,    60,    S_ITEMAMMO,   "MG",
             5,     15,    S_ITEMAMMO,   "RL",
             5,     15,    S_ITEMAMMO,   "RI",
+            10,    30,    S_ITEMAMMO,   "GL",
             25,    100,   S_ITEMHEALTH, "H",
             10,    1000,  S_ITEMHEALTH, "MH",
             100,   100,   S_ITEMARMOUR, "GA",
@@ -46,19 +47,44 @@ struct entities : icliententities
         loopv(ents)
         {
             extentity &e = *ents[i];
-            if(e.type==MAPMODEL)
+            switch(e.type)
             {
-                mapmodelinfo &mmi = getmminfo(e.attr2);
-                if(!&mmi) continue;
-                rendermodel(e.color, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, 0, NULL, true);
-            }
-            else
-            {
-                if(e.type!=CARROT)
+                case MAPMODEL:
+                {
+                    mapmodelinfo &mmi = getmminfo(e.attr2);
+                    if(!&mmi) continue;
+                    rendermodel(e.color, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, 0, NULL, true);
+                    break;
+                };
+                
+                case BASE:
+                    renderent(e, "carrot", 0.0f, 0.0f);
+                    break;
+
+                case CARROT:
+                    switch(e.attr2)
+                    {
+                        case 1:
+                        case 3:
+                            continue;
+
+                        case 2:
+                        case 0:
+                            if(!e.spawned) continue;
+                            renderent(e, "carrot", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
+                            break;
+                        
+                        //FIXME special anim consts
+                        //case 4: renderent(e, "switch2", 3,      (float)e.attr3*90, (!e.spawned && !triggertime) ? 1  : 0, (e.spawned || !triggertime) ? 1 : 2,  triggertime, 1050.0f);  break;
+                        //case 5: renderent(e, "switch1", -0.15f, (float)e.attr3*90, (!e.spawned && !triggertime) ? 30 : 0, (e.spawned || !triggertime) ? 1 : 30, triggertime, 35.0f); break;
+                    };
+                    break;
+
+                default:
                 {
                     static char *entmdlnames[] =
                     {
-                        "shells", "bullets", "rockets", "rrounds", "health", "boost",
+                        "shells", "bullets", "rockets", "rrounds", "grenades", "health", "boost",
                         "g_armour", "y_armour", "quad", "teleporter",
                     };
 
@@ -66,22 +92,6 @@ struct entities : icliententities
                     if(e.type<I_SHELLS || e.type>TELEPORT) continue;
                     renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
                 }
-                else switch(e.attr2)
-                {
-                    case 1:
-                    case 3:
-                        continue;
-
-                    case 2:
-                    case 0:
-                        if(!e.spawned) continue;
-                        renderent(e, "carrot", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
-                        break;
-                        
-                    //FIXME special anim consts
-                    //case 4: renderent(e, "switch2", 3,      (float)e.attr3*90, (!e.spawned && !triggertime) ? 1  : 0, (e.spawned || !triggertime) ? 1 : 2,  triggertime, 1050.0f);  break;
-                    //case 5: renderent(e, "switch1", -0.15f, (float)e.attr3*90, (!e.spawned && !triggertime) ? 30 : 0, (e.spawned || !triggertime) ? 1 : 30, triggertime, 35.0f); break;
-                };
             };
         };
     };
@@ -119,11 +129,12 @@ struct entities : icliententities
         };
         switch(ents[n]->type)
         {
-            case I_SHELLS:  radditem(n, d->ammo[1]); break;
-            case I_BULLETS: radditem(n, d->ammo[2]); break;
-            case I_ROCKETS: radditem(n, d->ammo[3]); break;
-            case I_ROUNDS:  radditem(n, d->ammo[4]); break;
-            case I_HEALTH:  radditem(n, d->health);  break;
+            case I_SHELLS:   radditem(n, d->ammo[GUN_SG]); break;
+            case I_BULLETS:  radditem(n, d->ammo[GUN_CG]); break;
+            case I_ROCKETS:  radditem(n, d->ammo[GUN_RL]); break;
+            case I_ROUNDS:   radditem(n, d->ammo[GUN_RIFLE]); break;
+            case I_GRENADES: radditem(n, d->ammo[GUN_GL]); break;
+            case I_HEALTH:   radditem(n, d->health); break;
 
             case I_BOOST:
                 d->maxhealth += 10;
@@ -189,12 +200,13 @@ struct entities : icliententities
         int ammo = np*4;
         switch(ents[n]->type)
         {
-            case I_SHELLS:  additem(n, d->ammo[1], ammo); break;
-            case I_BULLETS: additem(n, d->ammo[2], ammo); break;
-            case I_ROCKETS: additem(n, d->ammo[3], ammo); break;
-            case I_ROUNDS:  additem(n, d->ammo[4], ammo); break;
-            case I_HEALTH:  additem(n, d->health,  np*5); break;
-            case I_BOOST:   additem(n, d->health,  60);   break;
+            case I_SHELLS:   additem(n, d->ammo[GUN_SG], ammo); break;
+            case I_BULLETS:  additem(n, d->ammo[GUN_CG], ammo); break;
+            case I_ROCKETS:  additem(n, d->ammo[GUN_RL], ammo); break;
+            case I_ROUNDS:   additem(n, d->ammo[GUN_RIFLE], ammo); break;
+            case I_GRENADES: additem(n, d->ammo[GUN_GL], ammo); break;
+            case I_HEALTH:   additem(n, d->health,  np*5); break;
+            case I_BOOST:    additem(n, d->health,  60); break;
 
             case I_GREENARMOUR:
                 // (100h/100g only absorbs 200 damage)
@@ -317,10 +329,11 @@ struct entities : icliententities
         static char *entnames[] =
         {
             "none?", "light", "playerstart",
-            "shells", "bullets", "rockets", "riflerounds",
+            "shells", "bullets", "rockets", "riflerounds", "grenades",
             "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
             "teleport", "teledest",
             "mapmodel", "monster", "trigger", "jumppad",
+            "base",
             "", "", "", "", "",
         };
         return entnames[i];
@@ -332,6 +345,10 @@ struct entities : icliententities
 
     void readent(entity &e)     // read from disk, and init
     {
+        if(getmapversion() <= 10)
+        {
+            if(e.type >= I_GRENADES) e.type++;
+        };
     };
 
     void editent(int i)

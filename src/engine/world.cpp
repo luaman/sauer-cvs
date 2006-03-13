@@ -254,4 +254,5 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
 };
 
 int getworldsize() { return hdr.worldsize; };
+int getmapversion() { return hdr.version; };
 

@@ -77,6 +77,7 @@ extern int closestent();
 extern int findentity(int type, int index = 0);
 extern void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local);
 extern int getworldsize();
+extern int getmapversion();
 
 // main
 struct igame;

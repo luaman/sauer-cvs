@@ -9,7 +9,7 @@ enum                            // static entity types
     NOTUSED = ET_EMPTY,         // entity slot not in use in map
     LIGHT = ET_LIGHT,           // lightsource, attr1 = radius, attr2 = intensity
     PLAYERSTART,                // attr1 = angle
-    I_SHELLS, I_BULLETS, I_ROCKETS, I_ROUNDS,
+    I_SHELLS, I_BULLETS, I_ROCKETS, I_ROUNDS, I_GRENADES,
     I_HEALTH, I_BOOST,
     I_GREENARMOUR, I_YELLOWARMOUR,
     I_QUAD,
@@ -19,6 +19,7 @@ enum                            // static entity types
     MONSTER,                    // attr1 = angle, attr2 = monstertype
     CARROT,                     // attr1 = tag, attr2 = type
     JUMPPAD,                    // attr1 = zpush, attr2 = ypush, attr3 = xpush
+    BASE,
     MAXENTTYPES
 };
 

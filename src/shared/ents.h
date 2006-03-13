@@ -5,7 +5,7 @@
 
 #define ET_EMPTY 0
 #define ET_LIGHT 1              
-#define ET_MAPMODEL 14                          // legacy constant for compatability with older mapfiles
+#define ET_MAPMODEL 15                          // legacy constant for compatability with older mapfiles
 
 struct entity                                   // persistent map entity
 {

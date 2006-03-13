@@ -51,7 +51,7 @@ struct cubeloader
 
     void create_ent(c_persistent_entity &ce)
     {
-        if(ce.type==ET_MAPMODEL) return;    // FIXME
+        if(ce.type==14) return;    // FIXME
         extentity &e = *et->newentity();
         et->getents().add(&e);
         e.type = ce.type;
