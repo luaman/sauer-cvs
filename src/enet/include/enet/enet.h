@@ -12,14 +12,6 @@ extern "C"
 
 #include <stdlib.h>
 
-
-#ifndef __GNUC__
-#pragma warning (disable: 4996) // 'strncpy' was declared deprecated
-#pragma warning (disable: 4267) // size_t to int conversion
-#pragma warning (disable: 4244) // 64bit to 32bit int
-#pragma warning (disable: 4018) // signed/unsigned mismatch
-#endif
-
 #ifdef WIN32
 #include "enet/win32.h"
 #else
