@@ -8,7 +8,8 @@ struct capturestate
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
     static const int REPAMMODIST = 25;
-        
+    static const int RESPAWNSECS = 10;        
+
     struct baseinfo
     {
         vec o;
