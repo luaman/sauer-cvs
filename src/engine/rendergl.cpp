@@ -51,8 +51,11 @@ void shader(char *name, char *vs, char *ps)
     char *rname = newstring(name);
     Shader &s = shaders[rname];
     s.name = rname;
-    compileshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
-    compileshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        compileshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
+        compileshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
+    };
 };
 
 void setshader(char *name)
@@ -64,6 +67,7 @@ void setshader(char *name)
 
 COMMAND(shader, ARG_3STR);
 COMMAND(setshader, ARG_1STR);
+VAR(forcenoshaders, 0, 0, 1);
 
 void *getprocaddress(const char *name)
 {
@@ -121,7 +125,7 @@ void gl_init(int w, int h)
         conoutf("Using GL_ARB_vertex_buffer_object extensions");
     };
 
-    if(!strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
+    if(ignoreshaders || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
     {
         conoutf("WARNING: no shader support! using fixed function fallback");
         renderpath = R_FIXEDFUNCTION;
