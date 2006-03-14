@@ -7,6 +7,7 @@ struct capturestate
     static const int OCCUPYLIMIT = 100;
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
+    static const int REPAMMODIST = 16;
         
     struct baseinfo
     {
@@ -119,7 +120,7 @@ struct captureclient : capturestate
     void sendammo()
     {
         fpsent *target = cl.pointatplayer();
-        if(!target || strcmp(target->team, cl.player1->team)) return;
+        if(!target || strcmp(target->team, cl.player1->team) || cl.player1->o.dist(target->o) > REPAMMODIST) return;
         conoutf("replenished %s's ammo", target->name);
         cl.cc.addmsg(1, 5, SV_REPAMMO, cl.cc.clientnum, cl.cc.clientnumof(target), cl.spawngun1, cl.spawngun2);
     };
