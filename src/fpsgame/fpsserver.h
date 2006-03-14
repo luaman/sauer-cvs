@@ -24,13 +24,18 @@ struct fpsserver : igameserver
         
         clientinfo() { reset(); };
 
+        void mapchange()
+        {
+            o = vec(-1e10f, -1e10f, -1e10f);
+            state = -1;
+        };
+
         void reset()
         {
             team[0] = '\0';
             master = false;
             spectator = false;
-            o = vec(-1e10f, -1e10f, -1e10f);
-            state = -1;
+            mapchange();
         };
     };
 
@@ -238,6 +243,8 @@ struct fpsserver : igameserver
                 notgotbases = m_capture;
                 scores.setsize(0);
                 sender = -1;
+                if(clients.empty() && ci) ci->mapchange();
+                else loopv(clients) clients[i]->mapchange();
                 break;
             };
             
