@@ -2,12 +2,12 @@
 
 struct capturestate
 {
-    static const int CAPTURERADIUS = 32;
+    static const int CAPTURERADIUS = 50;
     static const int OCCUPYPOINTS = 10;
     static const int OCCUPYLIMIT = 100;
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
-    static const int REPAMMODIST = 16;
+    static const int REPAMMODIST = 25;
         
     struct baseinfo
     {
