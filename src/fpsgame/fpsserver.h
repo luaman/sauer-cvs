@@ -319,7 +319,7 @@ struct fpsserver : igameserver
                         if(state==CS_ALIVE) cps.movebases(ci->team, oldpos, ci->o);
                         else cps.leavebases(ci->team, oldpos);
                     }
-                    else if(ci->state!=CS_ALIVE && state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
+                    else if(state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
                 };
                 ci->state = state;
                 break;
@@ -363,8 +363,7 @@ struct fpsserver : igameserver
                 if(ci->master || spectator==sender)
                 {
                     clientinfo *spinfo = (clientinfo *)getinfo(spectator);
-                    if(spinfo->spectator && !val) cps.enterbases(spinfo->team, spinfo->o);
-                    else if(!spinfo->spectator && val) cps.leavebases(spinfo->team, spinfo->o);
+                    if(!spinfo->spectator && val) cps.leavebases(spinfo->team, spinfo->o);
                     spinfo->spectator = val!=0;
                     sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
                 };
