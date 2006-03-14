@@ -111,7 +111,23 @@ struct captureclient : capturestate
 {
     fpsclient &cl;
 
-    captureclient(fpsclient &cl) : cl(cl) {};
+    captureclient(fpsclient &cl) : cl(cl)
+    {
+        CCOMMAND(captureclient, repammo, 0, self->sendammo()); 
+    };
+    
+    void sendammo()
+    {
+        fpsent *d = cl.pointatplayer();
+        if(!d || strcmp(d->team, cl.player1->team)) return;
+        cl.cc.addmsg(1, 4, SV_REPAMMO, cl.cc.clientnumof(d), cl.spawngun1, cl.spawngun2);
+    };
+
+    void recvammo(int gun1, int gun2)
+    {
+        if(cl.spawngun1!=gun1 && cl.spawngun1!=gun2) cl.et.addammo(cl.spawngun1);
+        if(cl.spawngun2!=gun1 && cl.spawngun2!=gun2) cl.et.addammo(cl.spawngun2);
+    };
 
     void renderbases()
     {

@@ -125,7 +125,7 @@ struct fpsserver : igameserver
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15, SV_REPLACE, 17, 
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3,
-            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0,
+            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4,
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -298,7 +298,7 @@ struct fpsserver : igameserver
             case SV_POS:
             {
                 cn = getint(p);
-                if(cn<0 || cn>=getnumclients() || cn != sender)
+                if(cn<0 || cn>=getnumclients() || cn!=sender)
                 {
                     disconnect_client(sender, DISC_CN);
                     return false;

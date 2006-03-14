@@ -42,7 +42,6 @@ struct igameclient
     virtual bool camerafixed() = 0;
     virtual bool canjump() = 0;
     virtual void doattack(bool on) = 0;
-    virtual char *gamepointat(vec &pos) = 0;
     virtual dynent *iterdynents(int i) = 0;
     virtual int numdynents() = 0;
     virtual void renderscores() = 0;

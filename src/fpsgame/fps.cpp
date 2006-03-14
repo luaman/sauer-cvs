@@ -31,6 +31,7 @@ struct fpsclient : igameclient
     string clientmap;
     int arenarespawnwait, arenadetectwait;
     int spawncycle, fixspawn; 
+    int spawngun1, spawngun2;
 
     fpsent *player1;                // our client
     vector<fpsent *> players;       // other clients
@@ -85,12 +86,12 @@ struct fpsclient : igameclient
                 if(m_tarena || m_capture)
                 {
                     d->ammo[GUN_PISTOL] = 80;
-                    int gun1 = rnd(5)+1;
-                    et.baseammo(d->gunselect = gun1);
+                    spawngun1 = rnd(5)+1;
+                    et.baseammo(d->gunselect = spawngun1);
                     for(;;)
                     {
-                        int gun2 = rnd(5)+1;
-                        if(gun1!=gun2) { et.baseammo(gun2); break; };
+                        spawngun2 = rnd(5)+1;
+                        if(spawngun1!=spawngun2) { et.baseammo(spawngun2); break; };
                     };
                 }
                 else if(m_arena)    // insta arena
@@ -118,13 +119,14 @@ struct fpsclient : igameclient
         sb.showscores(false);
     };
 
-    char *gamepointat(vec &pos)
+    fpsent *pointatplayer()
     {
+        extern vec worldpos;
         loopv(players)
         {
             fpsent *o = players[i];
             if(!o) continue; 
-            if(intersect(o, player1->o, pos)) return o->name;
+            if(intersect(o, player1->o, worldpos)) return o;
         };
         return NULL;
     };

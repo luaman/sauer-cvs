@@ -67,6 +67,16 @@ struct clientcom : iclientcom
         if(allow && spectator) return false;
         return allow; 
     };
+
+    int clientnumof(dynent *d)
+    {
+        loopi(cl.numdynents())
+        {
+            dynent *o = cl.iterdynents(i);
+            if(o == d) return i==0 ? clientnum : i-1;
+        };
+        return -1;
+    };
     
     int parseplayer(const char *arg)
     {
@@ -595,6 +605,14 @@ struct clientcom : iclientcom
                 sgetstr(text, p);
                 int total = getint(p), gamemode = cl.gamemode;
                 if(m_capture) cl.cpc.setscore(text, total);
+                break;
+            };
+
+            case SV_REPAMMO:
+            {
+                int target = getint(p), gun1 = getint(p), gun2 = getint(p);
+                int gamemode = cl.gamemode;
+                if(m_capture && target==clientnum) cl.cpc.recvammo(gun1, gun2);
                 break;
             };
 
