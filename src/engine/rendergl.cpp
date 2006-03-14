@@ -125,7 +125,7 @@ void gl_init(int w, int h)
         conoutf("Using GL_ARB_vertex_buffer_object extensions");
     };
 
-    if(ignoreshaders || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
+    if(forcenoshaders || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
     {
         conoutf("WARNING: no shader support! using fixed function fallback");
         renderpath = R_FIXEDFUNCTION;
