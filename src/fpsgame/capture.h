@@ -206,7 +206,7 @@ struct captureclient : capturestate
                 
     void updatebase(int i, const char *owner, const char *enemy, int converted)
     {
-        if(i<0 || i>=bases.length()) return;
+        if(i < 0 || i >= bases.length()) return;
         baseinfo &b = bases[i];
         if(owner[0])
         {
@@ -227,24 +227,31 @@ struct captureclient : capturestate
     {
         float bestdist = 1e10f;
         int best = -1;
+        int attackers = 0, attacked = -1;
         loopv(bases)
         {
             baseinfo &b = bases[i];
             if(!b.owner[0] || strcmp(b.owner, team)) continue;
             float dist = disttoenemy(b);
-            if(best < 0 || dist < bestdist)
+            if(dist < bestdist)
             {
                 best = i;
                 bestdist = dist;
+            }
+            else if(b.enemy[0] && b.enemies > attackers)
+            {
+                attacked = i;
+                attackers = b.enemies; 
             };
         };
+        if(best < 0) return attacked;
         return best;
     };
 
     int pickspawn(const char *team)
     {
         int closest = closesttoenemy(team);
-        if(closest<0) return -1;
+        if(closest < 0) return -1;
         baseinfo &b = bases[closest];
 
         float bestdist = 1e10f;
