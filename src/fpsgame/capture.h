@@ -222,7 +222,7 @@ struct captureserv : capturestate
         loopv(sv.clients)
         {
             fpsserver::clientinfo *ci = sv.clients[i];
-            if(ci->team[0] && strcmp(ci->team, team) && ci->o.dist(b.o) <= CAPTURERADIUS)
+            if(ci->state==CS_ALIVE && ci->team[0] && strcmp(ci->team, team) && ci->o.dist(b.o) <= CAPTURERADIUS)
             {
                 if(b.enter(ci->team) || b.owner[0]) break;
             };
