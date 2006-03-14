@@ -104,6 +104,25 @@ void sendn(bool rel, int cn, int n, ...)
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
+void sendf(bool rel, int cn, const char *format, ...)
+{
+    ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, rel ? ENET_PACKET_FLAG_RELIABLE : 0);
+    uchar *start = packet->data;
+    uchar *p = start;
+    va_list args;
+    va_start(args, format);
+    while(*format) switch(*format++)
+    {
+        case 'i': putint(p, va_arg(args, int)); break;
+        case 's': sendstring(va_arg(args, const char *), p); break;
+    };
+    va_end(args);
+    enet_packet_resize(packet, p-start);
+    if(cn<0) process(packet, -1);
+    else send(cn, packet);
+    if(packet->referenceCount==0) enet_packet_destroy(packet);
+};
+
 void send2(bool rel, int cn, int a, int b)
 {
     sendn(rel, cn, 2, a, b);
@@ -183,8 +202,7 @@ void send_welcome(int n)
     
     enet_packet_resize(packet, p-start);
     send(n, packet);
-    if(clients[n]->type == ST_LOCAL)
-        enet_packet_destroy(packet);
+    if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
 void multicast(ENetPacket *packet, int sender)

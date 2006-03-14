@@ -167,7 +167,7 @@ struct md2 : model
     {
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
         float sc = 4.0f/scale;
-        return cf->translate[2]/sc + cf->scale[2]*0.5f*255.0f/sc;        
+        return (cf->translate[2] + cf->scale[2]*255.0f)/sc;        
     };
 
     float boundsphere(int frame, float scale, vec &center)

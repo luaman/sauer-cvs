@@ -42,6 +42,7 @@ struct fpsrender
         if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, M_NONE);
         cl.ms.monsterrender();
         cl.et.renderentities();
+        if(m_capture) cl.cpc.renderbases();
     };
 
 };

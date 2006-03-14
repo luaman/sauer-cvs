@@ -76,7 +76,8 @@ extern fpsent *player1;                 // special client ent that receives inpu
 #define m_noitemsrail (gamemode<=5)
 #define m_arena       (gamemode>=8)
 #define m_tarena      (gamemode>=10)
-#define m_teammode    (gamemode&1 && gamemode>2)
+#define m_capture     (gamemode==12)
+#define m_teammode    ((gamemode&1 && gamemode>2) || m_capture)
 #define m_sp          (gamemode<0)
 #define m_dmsp        (gamemode==-1)
 #define m_classicsp   (gamemode==-2)
@@ -119,6 +120,7 @@ enum
     SV_SERVMSG, SV_ITEMLIST, SV_RESUME, 
     SV_EDITENT, SV_EDITH, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_ROTATE, SV_REPLACE,
     SV_MASTERMODE, SV_KICK, SV_CURRENTMASTER, SV_SPECTATOR, 
+    SV_BASES, SV_BASEINFO, SV_TEAMSCORE,
 };
 
 #define SAUERBRATEN_SERVER_PORT 28785

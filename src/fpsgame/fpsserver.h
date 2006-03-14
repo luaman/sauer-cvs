@@ -25,6 +25,7 @@ struct fpsserver : igameserver
 
         void reset()
         {
+            team[0] = '\0';
             master = false;
             spectator = false;
             o = vec(-1e10f, -1e10f, -1e10f);
@@ -45,8 +46,8 @@ struct fpsserver : igameserver
         uint ip;
     };
     
-    bool notgotitems;        // true when map has changed and waiting for clients to send item
-    int mode;
+    bool notgotitems, notgotbases;        // true when map has changed and waiting for clients to send item
+    int gamemode;
 
     string serverdesc;
     string smapname;
@@ -63,7 +64,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), mode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), cps(*this) {};
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), cps(*this) {};
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
@@ -122,6 +123,7 @@ struct fpsserver : igameserver
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_ROTATE, 15, SV_REPLACE, 17, 
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3,
+            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0,
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -130,7 +132,7 @@ struct fpsserver : igameserver
 
     void sendservmsg(const char *s) { sendintstr(SV_SERVMSG, s); };
 
-    void resetitems() { sents.setsize(0); };
+    void resetitems() { sents.setsize(0); cps.reset(); };
 
     void pickup(int i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
     {
@@ -187,7 +189,7 @@ struct fpsserver : igameserver
             return -1;
         };
         // only allow edit messages in coop-edit mode
-        if(type >= SV_EDITENT && type <= SV_REPLACE && mode != 1) return -1;
+        if(type >= SV_EDITENT && type <= SV_REPLACE && gamemode != 1) return -1;
         return type;
     };
 
@@ -206,6 +208,7 @@ struct fpsserver : igameserver
                 sgetstr(text, p);
                 s_strcpy(ci->name, text);
                 sgetstr(text, p);
+                if(m_capture && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strcpy(ci->team, text);
                 getint(p);
                 {
@@ -223,13 +226,14 @@ struct fpsserver : igameserver
                 if(reqmode<0) reqmode = 0;
                 if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) return false;
                 mapreload = false;
-                mode = reqmode;
-                minremain = mode&1 ? 15 : 10;
+                gamemode = reqmode;
+                minremain = m_teammode ? 15 : 10;
                 mapend = lastsec+minremain*60;
                 interm = 0;
                 s_strcpy(smapname, text);
                 resetitems();
                 notgotitems = true;
+                notgotbases = m_capture;
                 scores.setsize(0);
                 sender = -1;
                 break;
@@ -238,13 +242,43 @@ struct fpsserver : igameserver
             case SV_ITEMLIST:
             {
                 int n;
-                while((n = getint(p))!=-1) if(notgotitems)
+                while((n = getint(p))!=-1)
                 {
                     server_entity se = { getint(p), false, 0 };
-                    while(sents.length()<=n) sents.add(se);
-                    sents[n].spawned = true;
+                    if(notgotitems)
+                    {
+                        while(sents.length()<=n) sents.add(se);
+                        sents[n].spawned = true;
+                    };
                 };
                 notgotitems = false;
+                break;
+            };
+
+            case SV_TEAMSCORE:
+                sgetstr(text, p);
+                getint(p);
+                break;
+
+            case SV_BASEINFO:
+                getint(p);
+                sgetstr(text, p);
+                sgetstr(text, p);
+                getint(p);
+                break;
+
+            case SV_BASES:
+            {
+                int x;
+                while((x = getint(p))!=-1)
+                {
+                    vec o;
+                    o.x = x/DMF;
+                    o.y = getint(p)/DMF;
+                    o.z = getint(p)/DMF;
+                    if(notgotbases) cps.addbase(o);
+                };
+                notgotbases = false;
                 break;
             };
 
@@ -269,9 +303,11 @@ struct fpsserver : igameserver
                 };
                 int size = msgsizelookup(type);
                 assert(size!=-1);
+                vec oldpos(ci->o);
                 ci->o.x = getint(p)/DMF;
                 ci->o.y = getint(p)/DMF;
                 ci->o.z = getint(p)/DMF;
+                if(m_capture) cps.enterbases(ci->team, oldpos, ci->o);
                 loopi(size-6) getint(p);
                 int state = getint(p);
                 if(ci->spectator && (state>>5) != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
@@ -343,7 +379,7 @@ struct fpsserver : igameserver
         {
             putint(p, SV_MAPCHANGE);
             sendstring(smapname, p);
-            putint(p, mode);
+            putint(p, gamemode);
             putint(p, SV_ITEMLIST);
             loopv(sents) if(sents[i].spawned)
             {
@@ -384,13 +420,15 @@ struct fpsserver : igameserver
             };
         };
         
+        if(m_capture) cps.updatescores(seconds);
+
         lastsec = seconds;
         
         while(bannedips.length() && bannedips[0].time+4*60*60<lastsec) bannedips.remove(0);
         
         if(masterupdate>=0) { send2(true, -1, SV_CURRENTMASTER, masterupdate); masterupdate = -1; };
         
-        if((mode>1 || (mode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
+        if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
         {
             interm = 0;
@@ -464,7 +502,7 @@ struct fpsserver : igameserver
         putint(p, numplayers);
         putint(p, 3);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // a // generic attributes, passed back below
-        putint(p, mode);                // b
+        putint(p, gamemode);            // b
         putint(p, minremain);           // c
         sendstring(smapname, p);
         sendstring(serverdesc, p);

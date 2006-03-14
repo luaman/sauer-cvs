@@ -2,8 +2,11 @@
 
 struct capturestate
 {
-    static const int CAPTURERADIUS = 16;
-
+    static const int CAPTURERADIUS = 32;
+    static const int OCCUPYPOINTS = 10;
+    static const int OCCUPYLIMIT = 100;
+    static const int SCORESECS = 10;
+        
     struct baseinfo
     {
         vec o;
@@ -11,7 +14,7 @@ struct capturestate
 #ifndef CAPTURESERV
         string info;
 #endif
-        int enemies, converted;
+        int enemies, converted, capturetime;
 
         baseinfo() { reset(); };
 
@@ -26,6 +29,7 @@ struct capturestate
         {
             noenemy();
             owner[0] = '\0';
+            capturetime = -1;
         };
 
         bool enter(const char *team)
@@ -54,9 +58,9 @@ struct capturestate
         {
             if(strcmp(enemy, team)) return -1;
             converted += units;
-            if(converted<100) return -1;
+            if(converted<OCCUPYLIMIT) return -1;
             if(owner[0]) { owner[0] = '\0'; converted = 0; s_strcpy(enemy, team); return 0; }
-            else { noenemy(); s_strcpy(owner, team); return 1; };
+            else { s_strcpy(owner, team); capturetime = secs; noenemy(); return 1; };
         };
     };
 
@@ -70,27 +74,28 @@ struct capturestate
     
     vector<score> scores;
 
+    int captures;
+
+    capturestate() : captures(0) {};
+
     void reset()
     {
         bases.setsize(0);
         scores.setsize(0);
+        captures = 0;
     };
 
-    void addscore(const char *team, int n, bool set = false)
+    score &findscore(const char *team)
     {
         loopv(scores)
         {
             score &cs = scores[i];
-            if(!strcmp(cs.team, team))
-            {
-                if(set) cs.total = n;
-                else cs.total += n;
-                return;
-            };
+            if(!strcmp(cs.team, team)) return cs;
         };
         score &cs = scores.add();
         s_strcpy(cs.team, team);
-        cs.total = n;
+        cs.total = 0;
+        return cs;
     };
 
     void addbase(const vec &o)
@@ -127,9 +132,52 @@ struct captureclient : capturestate
                 else b.info[0] = '\0';
                 vec above(e->o);
                 abovemodel(above, flagname, 1.0f);
+                above.z += 2.0f;
                 particle_text(above, b.info, 11, 1);
             };
         };
+    };
+
+    void sendbases(uchar *&p)
+    {
+        putint(p, SV_BASES);
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            putint(p, int(b.o.x*DMF));   
+            putint(p, int(b.o.y*DMF));
+            putint(p, int(b.o.z*DMF));
+        };
+        putint(p, -1);
+    };
+
+    void setupbases()
+    {
+        reset();
+        loopv(cl.et.ents)
+        {
+            extentity *e = cl.et.ents[i];
+            if(e->type == BASE) addbase(e->o);
+        };
+    };
+                
+    void updatebase(int i, const char *owner, const char *enemy, int converted)
+    {
+        if(i<0 || i>=bases.length()) return;
+        baseinfo &b = bases[i];
+        if(owner[0])
+        {
+            if(strcmp(b.owner, owner)) conoutf("%s captured base %d", owner, i);
+        }
+        else if(b.owner[0]) conoutf("%s lost base %d", b.owner, i); 
+        s_strcpy(b.owner, owner);
+        s_strcpy(b.enemy, enemy);
+        b.converted = converted;
+    };
+
+    void setscore(const char *team, int total)
+    {
+        findscore(team).total = total;
     };
 };
 
@@ -138,24 +186,34 @@ struct captureclient : capturestate
 struct captureserv : capturestate
 {
     fpsserver &sv;
+    int scoresec;
+    
+    captureserv(fpsserver &sv) : sv(sv), scoresec(0) {};
 
-    captureserv(fpsserver &sv) : sv(sv) {};
-
-    void orphanedbase(baseinfo &b)
+    void reset()
     {
+        capturestate::reset();
+        scoresec = 0;
+    };
+
+    void orphanedbase(int i, const char *team)
+    {
+        baseinfo &b = bases[i];
         loopv(sv.clients)
         {
             fpsserver::clientinfo *ci = sv.clients[i];
-            if(ci->o.dist(b.o) <= CAPTURERADIUS)
+            if(ci->team[0] && strcmp(ci->team, team) && ci->o.dist(b.o) <= CAPTURERADIUS)
             {
-                b.enter(ci->team);
+                if(b.enter(ci->team)) sendbaseinfo(i);
                 return;
             };
         };
+        sendbaseinfo(i);
     };
     
     void enterbases(const char *team, const vec &oldpos, const vec &newpos = vec(-1e10f, -1e10f, -1e10f))
     {
+        if(!team[0]) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -163,22 +221,51 @@ struct captureserv : capturestate
                  enter = newpos.dist(b.o) <= CAPTURERADIUS;
             if(leave && !enter)
             {
-                if(b.leave(team)) orphanedbase(b);
+                if(b.leave(team)) orphanedbase(i, team);
             }
-            else if(enter && !leave) b.enter(team);
+            else if(enter && !leave && b.enter(team)) sendbaseinfo(i);
         };
     };
 
-    void occupybases(int secs)
+    void changeteam(const char *oldteam, const char *newteam, const vec &o)
+    {
+        enterbases(oldteam, o);
+        enterbases(newteam, vec(-1e10f, -1e10f, -1e10f), o);
+    };
+
+    void addscore(const char *team, int n)
+    {
+        score &cs = findscore(team);
+        cs.total += n;
+        sendf(true, -1, "isi", SV_TEAMSCORE, team, cs.total);
+    };
+
+    void updatescores(int secs)
     {
         int t = secs-sv.lastsec;
         if(t<1) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            if(b.enemy[0]) b.occupy(b.enemy, 10*b.enemies*t, secs);
-            if(b.owner[0]) addscore(b.owner, t);
+            if(b.enemy[0])
+            {
+                if(b.occupy(b.enemy, OCCUPYPOINTS*b.enemies*t, secs)==1)
+                    addscore(b.owner, 1);
+                sendbaseinfo(i);
+            };
+            if(b.owner[0])
+            {
+                int sincecapt = secs - b.capturetime,
+                    lastcapt = sv.lastsec - b.capturetime;
+                addscore(b.owner, (sincecapt - lastcapt+(lastcapt%SCORESECS))/SCORESECS);
+            };
         };
+    };
+
+    void sendbaseinfo(int i)
+    {
+        baseinfo &b = bases[i];
+        sendf(true, -1, "iissi", SV_BASEINFO, i, b.owner, b.enemy, b.converted);
     };
 };
 

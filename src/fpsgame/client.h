@@ -160,6 +160,7 @@ struct clientcom : iclientcom
             int gamemode = cl.gamemode;
             if(!m_noitems) cl.et.putitems(p);
             putint(p, -1);
+            if(m_capture) cl.cpc.sendbases(p);
             senditemstoserver = false;
             serveriteminitdone = true;
         };
@@ -564,17 +565,51 @@ struct clientcom : iclientcom
                 break;
             };
 
+            case SV_BASES:
+            {
+                while(getint(p)!=-1)
+                {
+                    getint(p);
+                    getint(p);
+                };
+                break;
+            };
+
+            case SV_BASEINFO:
+            {
+                int base = getint(p);
+                string owner, enemy;
+                int converted;
+                sgetstr(text, p);
+                s_strcpy(owner, text);
+                sgetstr(text, p);
+                s_strcpy(enemy, text);
+                converted = getint(p);
+                int gamemode = cl.gamemode;
+                if(m_capture) cl.cpc.updatebase(base, owner, enemy, converted);
+                break;
+            };
+
+            case SV_TEAMSCORE:
+            {
+                sgetstr(text, p);
+                int total = getint(p), gamemode = cl.gamemode;
+                if(m_capture) cl.cpc.setscore(text, total);
+                break;
+            };
+
             default:
                 neterr("type");
                 return;
         };
     };
 
-    void changemapserv(char *name, int mode)        // forced map change from the server
+    void changemapserv(char *name, int gamemode)        // forced map change from the server
     {
-        cl.gamemode = mode;
+        cl.gamemode = gamemode;
         if(editmode && !allowedittoggle()) toggleedit();
         load_world(name);
+        if(m_capture) cl.cpc.setupbases();
     };
 
     void changemap(char *name)                      // request map change, server may ignore

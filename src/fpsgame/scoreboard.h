@@ -40,7 +40,7 @@ struct scoreboard
                 else
                 {
                     s_sprintfd(lag)("%d", o->plag);
-                    s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, o->name);
+                    s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, o->name);
                 };
                 menumanual(0, scorelines.length()-1, scorelines.last().s); 
             }
@@ -50,7 +50,15 @@ struct scoreboard
         if(m_teammode)
         {
             teamsused = 0;
-            loopi(cl.numdynents()) 
+            if(m_capture)
+            {
+                loopv(cl.cpc.scores)
+                {
+                    teamname[teamsused] = cl.cpc.scores[i].team;
+                    teamscore[teamsused++] = cl.cpc.scores[i].total;
+                };
+            }
+            else loopi(cl.numdynents()) 
             {
                 fpsent *o = (fpsent *)cl.iterdynents(i);
                 if(o && o->type!=ENT_AI)
