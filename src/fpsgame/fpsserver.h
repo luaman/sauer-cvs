@@ -309,12 +309,18 @@ struct fpsserver : igameserver
                 ci->o.x = getint(p)/DMF;
                 ci->o.y = getint(p)/DMF;
                 ci->o.z = getint(p)/DMF;
-                if(m_capture && ci->state==CS_ALIVE) cps.movebases(ci->team, oldpos, ci->o);
                 loopi(size-6) getint(p);
                 int state = getint(p)>>5;
                 if(ci->spectator && state!=CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
-                if(ci->state==CS_ALIVE && state!=CS_ALIVE) cps.leavebases(ci->team, ci->o);
-                else if(ci->state!=CS_ALIVE && state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
+                if(m_capture)
+                {
+                    if(ci->state==CS_ALIVE)
+                    {
+                        if(state==CS_ALIVE) cps.movebases(ci->team, oldpos, ci->o);
+                        else cps.leavebases(ci->team, oldpos);
+                    }
+                    else if(ci->state!=CS_ALIVE && state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
+                };
                 ci->state = state;
                 break;
             };
