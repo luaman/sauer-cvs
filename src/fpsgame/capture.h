@@ -118,15 +118,17 @@ struct captureclient : capturestate
     
     void sendammo()
     {
-        fpsent *d = cl.pointatplayer();
-        if(!d || strcmp(d->team, cl.player1->team)) return;
-        cl.cc.addmsg(1, 4, SV_REPAMMO, cl.cc.clientnumof(d), cl.spawngun1, cl.spawngun2);
+        fpsent *target = cl.pointatplayer();
+        if(!target || strcmp(target->team, cl.player1->team)) return;
+        conoutf("replenished %s's ammo", target->name);
+        cl.cc.addmsg(1, 5, SV_REPAMMO, cl.cc.clientnum, cl.cc.clientnumof(target), cl.spawngun1, cl.spawngun2);
     };
 
-    void recvammo(int gun1, int gun2)
+    void recvammo(fpsent *from, int gun1, int gun2)
     {
         if(cl.spawngun1!=gun1 && cl.spawngun1!=gun2) cl.et.addammo(cl.spawngun1);
         if(cl.spawngun2!=gun1 && cl.spawngun2!=gun2) cl.et.addammo(cl.spawngun2);
+        conoutf("%s replenished your ammo", from->name);
     };
 
     void renderbases()

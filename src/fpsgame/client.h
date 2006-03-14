@@ -610,9 +610,10 @@ struct clientcom : iclientcom
 
             case SV_REPAMMO:
             {
-                int target = getint(p), gun1 = getint(p), gun2 = getint(p);
+                int from = getint(p), target = getint(p), gun1 = getint(p), gun2 = getint(p);
                 int gamemode = cl.gamemode;
-                if(m_capture && target==clientnum) cl.cpc.recvammo(gun1, gun2);
+                fpsent *f = cl.getclient(from);
+                if(m_capture && target==clientnum && f) cl.cpc.recvammo(f, gun1, gun2);
                 break;
             };
 
