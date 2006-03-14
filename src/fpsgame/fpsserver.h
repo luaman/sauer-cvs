@@ -30,7 +30,7 @@ struct fpsserver : igameserver
             master = false;
             spectator = false;
             o = vec(-1e10f, -1e10f, -1e10f);
-            state = CS_SPECTATOR;
+            state = -1;
         };
     };
 
@@ -191,7 +191,7 @@ struct fpsserver : igameserver
             return -1;
         };
         // only allow edit messages in coop-edit mode
-        if(type >= SV_EDITENT && type <= SV_REPLACE && gamemode != 1) return -1;
+        if(type>=SV_EDITENT && type<=SV_REPLACE && gamemode!=1) return -1;
         return type;
     };
 
@@ -312,7 +312,7 @@ struct fpsserver : igameserver
                 if(m_capture && ci->state==CS_ALIVE) cps.movebases(ci->team, oldpos, ci->o);
                 loopi(size-6) getint(p);
                 int state = getint(p)>>5;
-                if(ci->spectator && state != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
+                if(ci->spectator && state!=CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
                 if(ci->state==CS_ALIVE && state!=CS_ALIVE) cps.leavebases(ci->team, ci->o);
                 else if(ci->state!=CS_ALIVE && state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
                 ci->state = state;
@@ -401,6 +401,7 @@ struct fpsserver : igameserver
             putint(p, n);
             putint(p, 1);
         };
+        if(m_capture) cps.initclient(p);
     };
 
     void checkintermission()

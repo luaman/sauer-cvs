@@ -214,7 +214,7 @@ struct captureserv : capturestate
     
     void movebases(const char *team, const vec &oldpos, const vec &newpos)
     {
-        if(!team[0]) return;
+        if(!team[0] || sv.minremain<=0) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -255,7 +255,7 @@ struct captureserv : capturestate
     void updatescores(int secs)
     {
         int t = secs-sv.lastsec;
-        if(t<1) return;
+        if(t<1 || sv.minremain<=0) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -277,6 +277,26 @@ struct captureserv : capturestate
     {
         baseinfo &b = bases[i];
         sendf(true, -1, "iissi", SV_BASEINFO, i, b.owner, b.enemy, b.converted);
+    };
+
+    void initclient(uchar *&p)
+    {
+        loopv(scores)
+        {
+            score &cs = scores[i];
+            putint(p, SV_TEAMSCORE);
+            sendstring(cs.team, p);
+            putint(p, cs.total);
+        };
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            putint(p, SV_BASEINFO);
+            putint(p, i);
+            sendstring(b.owner, p);
+            sendstring(b.enemy, p);
+            putint(p, b.converted);
+        };
     };
 };
 
