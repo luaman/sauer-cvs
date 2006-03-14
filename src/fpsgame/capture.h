@@ -118,7 +118,7 @@ struct capturestate
 
     float disttoenemy(baseinfo &b)
     {
-        float dist = 1e16f;
+        float dist = 1e10f;
         loopv(bases)
         {
             baseinfo &e = bases[i];
@@ -232,7 +232,7 @@ struct captureclient : capturestate
             baseinfo &b = bases[i];
             if(!b.owner[0] || strcmp(b.owner, team)) continue;
             float dist = disttoenemy(b);
-            if(dist < bestdist)
+            if(best < 0 || dist < bestdist)
             {
                 best = i;
                 bestdist = dist;
