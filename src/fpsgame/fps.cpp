@@ -82,15 +82,16 @@ struct fpsclient : igameclient
             }
             else
             {
+                static int spawnguns[5] = { GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL };
                 d->health = 256;
                 if(m_tarena || m_capture)
                 {
                     d->ammo[GUN_PISTOL] = 80;
-                    spawngun1 = rnd(5)+1;
+                    spawngun1 = spawnguns[rnd(5)];
                     et.baseammo(d->gunselect = spawngun1);
                     for(;;)
                     {
-                        spawngun2 = rnd(5)+1;
+                        spawngun2 = spawnguns[rnd(5)];
                         if(spawngun1!=spawngun2) { et.baseammo(spawngun2); break; };
                     };
                 }
@@ -100,7 +101,7 @@ struct fpsclient : igameclient
                 }
                 else // efficiency
                 {
-                    loopi(5) et.baseammo(i+1);
+                    loopi(5) et.baseammo(spawnguns[i]);
                     d->gunselect = GUN_CG;
                 };
                 d->ammo[GUN_CG] /= 2;
