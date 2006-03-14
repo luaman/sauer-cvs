@@ -618,9 +618,9 @@ vtxarray *newva(int x, int y, int z, int size)
     char *buf = l1.setup(va->l1, l0.setup(va->l0, (char *)(va+1)));
     if (hasVBO && verts.length())
     {
-        pfnglGenBuffers(1, (GLuint*)&(va->vbufGL));
-        pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        pfnglBufferData(GL_ARRAY_BUFFER_ARB, verts.length() * sizeof(vertex), verts.getbuf(), GL_STATIC_DRAW_ARB);
+        glGenBuffers(1, (GLuint*)&(va->vbufGL));
+        glBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        glBufferData(GL_ARRAY_BUFFER_ARB, verts.length() * sizeof(vertex), verts.getbuf(), GL_STATIC_DRAW_ARB);
         va->vbuf = 0; // Offset in VBO
     }
     else
@@ -642,7 +642,7 @@ vtxarray *newva(int x, int y, int z, int size)
 
 void destroyva(vtxarray *va)
 {
-    if (hasVBO && va->vbufGL) pfnglDeleteBuffers(1, (GLuint*)&(va->vbufGL));
+    if (hasVBO && va->vbufGL) glDeleteBuffers(1, (GLuint*)&(va->vbufGL));
     wverts -= va->verts;
     wtris -= va->l0.tris;
     allocva--;
@@ -957,7 +957,7 @@ void rendersky()
         lodlevel &lod = va->l0;
         if(!lod.sky) continue;
 
-        if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        if (hasVBO) glBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_QUADS, lod.sky, GL_UNSIGNED_SHORT, lod.skybuf);
@@ -965,12 +965,9 @@ void rendersky()
         xtraverts += lod.sky;
     };
 
-    if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+    if (hasVBO) glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
 };
-
-extern PFNGLACTIVETEXTUREARBPROC       pfnglActiveTexture;
-extern PFNGLCLIENTACTIVETEXTUREARBPROC pfnglClientActiveTexture;
 
 void setupTMU()
 {
@@ -1008,27 +1005,31 @@ void renderq(int w, int h)
 
     setupTMU();
 
-    pfnglActiveTexture(GL_TEXTURE1_ARB);
-    pfnglClientActiveTexture(GL_TEXTURE1_ARB);
+    glActiveTexture(GL_TEXTURE1_ARB);
+    glClientActiveTexture(GL_TEXTURE1_ARB);
 
     glEnable(GL_TEXTURE_2D);
     setupTMU();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    pfnglActiveTexture(GL_TEXTURE0_ARB);
-    pfnglClientActiveTexture(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0_ARB);
+    glClientActiveTexture(GL_TEXTURE0_ARB);
+
+    Shader::on();
+
+    Shader *curshader = NULL;
 
     while(va)
     {
         glColor3f(1, 1, 1);
         if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
 
-        if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        if (hasVBO) glBindBuffer(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
-        pfnglClientActiveTexture(GL_TEXTURE1_ARB);
+        glClientActiveTexture(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
-        pfnglClientActiveTexture(GL_TEXTURE0_ARB);
+        glClientActiveTexture(GL_TEXTURE0_ARB);
 
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
 
@@ -1039,13 +1040,16 @@ void renderq(int w, int h)
             Texture *tex = lookuptexture(lod.eslist[i].texture);
             glBindTexture(GL_TEXTURE_2D, tex->gl);
 
+            Shader *s = lookupshader(lod.eslist[i].texture);
+            if(s!=curshader) (curshader = s)->set();
+
             extern vector<GLuint> lmtexids;
             int curlm = lmtexids[lod.eslist[i].lmid];
             if(curlm!=lastlm)
             {
-                pfnglActiveTexture(GL_TEXTURE1_ARB);
+                glActiveTexture(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, curlm);
-                pfnglActiveTexture(GL_TEXTURE0_ARB);
+                glActiveTexture(GL_TEXTURE0_ARB);
                 lastlm = curlm;
             };
 
@@ -1055,10 +1059,12 @@ void renderq(int w, int h)
                 {
                     GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     s[si[l]] = 8.0f/tex->xs;
-                    glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+                    if(renderpath==R_FIXEDFUNCTION) glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+                    else glProgramEnvParameter4fv(GL_VERTEX_PROGRAM_ARB, 0, s);
                     GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
-                    glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                    if(renderpath==R_FIXEDFUNCTION) glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                    else glProgramEnvParameter4fv(GL_VERTEX_PROGRAM_ARB, 1, t);
                     lastxs = tex->xs;
                     lastys = tex->ys;
                     lastl = l;
@@ -1072,15 +1078,17 @@ void renderq(int w, int h)
         va = va->next;
     };
 
-    if (hasVBO) pfnglBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+    Shader::off();
+
+    if (hasVBO) glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
 
-    pfnglActiveTexture(GL_TEXTURE1_ARB);
-    pfnglClientActiveTexture(GL_TEXTURE1_ARB);
+    glActiveTexture(GL_TEXTURE1_ARB);
+    glClientActiveTexture(GL_TEXTURE1_ARB);
     glDisable(GL_TEXTURE_2D);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    pfnglActiveTexture(GL_TEXTURE0_ARB);
-    pfnglClientActiveTexture(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0_ARB);
+    glClientActiveTexture(GL_TEXTURE0_ARB);
 };
 
 void rendermaterials()

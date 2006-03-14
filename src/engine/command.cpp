@@ -25,7 +25,7 @@ void clear_command()
 void alias(char *name, char *action)
 {
     ident *b = idents->access(name);
-    if(!b)
+    if(!b) 
     {
         name = newstring(name);
         ident b(ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action), true, NULL);

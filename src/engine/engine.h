@@ -5,6 +5,7 @@
 #include "world.h"
 #include "octa.h"
 #include "lightmap.h"
+#include "shaders.h"
 
 struct Texture
 {
@@ -30,10 +31,13 @@ struct model
     };
 };
 
-extern PFNGLGENBUFFERSARBPROC    pfnglGenBuffers;
-extern PFNGLBINDBUFFERARBPROC    pfnglBindBuffer;
-extern PFNGLBUFFERDATAARBPROC    pfnglBufferData;
-extern PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers;
+extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture;
+extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture;
+
+extern PFNGLGENBUFFERSARBPROC    glGenBuffers;
+extern PFNGLBINDBUFFERARBPROC    glBindBuffer;
+extern PFNGLBUFFERDATAARBPROC    glBufferData;
+extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers;
 
 #define FONTH 64
 
@@ -67,6 +71,7 @@ extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
 extern Texture *textureload(char *tname, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true);
 extern Texture *lookuptexture(int tex);
+extern Shader  *lookupshader(int slot);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24);
 extern void readmatrices();
 

@@ -998,6 +998,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\shaders.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\water.cpp"
 					>
 					<FileConfiguration
@@ -1258,6 +1262,10 @@
 					</File>
 					<File
 						RelativePath="..\..\data\sounds.cfg"
+						>
+					</File>
+					<File
+						RelativePath="..\..\data\stdshader.cfg"
 						>
 					</File>
 				</Filter>

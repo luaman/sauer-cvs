@@ -303,6 +303,7 @@ int main(int argc, char **argv)
 
     log("gl");
     gl_init(scr_w, scr_h);
+    exec("data/stdshader.cfg");
     crosshair = textureload(newstring("data/crosshair.png"));
     if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
     computescreen("initializing...");

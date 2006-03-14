@@ -4,18 +4,66 @@
 #include "engine.h"
 
 bool hasVBO = false;
+int renderpath;
 
 void purgetextures();
 
 GLUquadricObj *qsphere = NULL;
 
-PFNGLGENBUFFERSARBPROC    pfnglGenBuffers    = NULL;
-PFNGLBINDBUFFERARBPROC    pfnglBindBuffer    = NULL;
-PFNGLBUFFERDATAARBPROC    pfnglBufferData    = NULL;
-PFNGLDELETEBUFFERSARBPROC pfnglDeleteBuffers = NULL;
+PFNGLGENBUFFERSARBPROC    glGenBuffers    = NULL;
+PFNGLBINDBUFFERARBPROC    glBindBuffer    = NULL;
+PFNGLBUFFERDATAARBPROC    glBufferData    = NULL;
+PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
 
-PFNGLACTIVETEXTUREARBPROC       pfnglActiveTexture       = NULL;
-PFNGLCLIENTACTIVETEXTUREARBPROC pfnglClientActiveTexture = NULL;
+PFNGLACTIVETEXTUREARBPROC       glActiveTexture       = NULL;
+PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture = NULL;
+
+PFNGLGENPROGRAMSARBPROC            glGenPrograms = NULL;
+PFNGLBINDPROGRAMARBPROC            glBindProgram = NULL;
+PFNGLPROGRAMSTRINGARBPROC          glProgramString = NULL;
+PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f = NULL;
+PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv = NULL;
+
+
+hashtable<char *, Shader> shaders;
+Shader *curshader = NULL;
+
+void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
+{
+    glGenPrograms(1, &idx);
+    glBindProgram(type, idx);
+    def += strspn(def, " \t\r\n");
+    glProgramString(type, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(def), def);
+    GLint err;
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
+    if(err!=-1)
+    {
+        conoutf("COMPILE ERROR (%s:%s) - %s", tname, name, glGetString(GL_PROGRAM_ERROR_STRING_ARB)); 
+        loopi(err) putchar(*def++);
+        puts(" <<HERE>> ");
+        while(*def) putchar(*def++);
+    };
+};
+
+void shader(char *name, char *vs, char *ps)
+{
+    if(shaders.access(name)) return;
+    char *rname = newstring(name);
+    Shader &s = shaders[rname];
+    s.name = rname;
+    compileshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
+    compileshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
+};
+
+void setshader(char *name)
+{
+    Shader *s = shaders.access(name);
+    if(!s) conoutf("no such shader: %s", name);
+    else curshader = s;
+};
+
+COMMAND(shader, ARG_3STR);
+COMMAND(setshader, ARG_1STR);
 
 void *getprocaddress(const char *name)
 {
@@ -56,18 +104,37 @@ void gl_init(int w, int h)
         fatal("no texture_env_combine extension!");
 
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
-    pfnglActiveTexture = (PFNGLACTIVETEXTUREARBPROC)getprocaddress("glActiveTextureARB");
-    pfnglClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
+    glActiveTexture       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
+    glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
 
-    if(!strstr(exts, "GL_ARB_vertex_buffer_object")) conoutf("no vertex_buffer_object extension!");
+    if(!strstr(exts, "GL_ARB_vertex_buffer_object"))
+    {
+        conoutf("WARNING: no vertex_buffer_object extension!");
+    }
     else
     {
-        pfnglGenBuffers = (PFNGLGENBUFFERSARBPROC)getprocaddress("glGenBuffersARB");
-        pfnglBindBuffer = (PFNGLBINDBUFFERARBPROC)getprocaddress("glBindBufferARB");
-        pfnglBufferData = (PFNGLBUFFERDATAARBPROC)getprocaddress("glBufferDataARB");
-        pfnglDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
+        glGenBuffers    = (PFNGLGENBUFFERSARBPROC)   getprocaddress("glGenBuffersARB");
+        glBindBuffer    = (PFNGLBINDBUFFERARBPROC)   getprocaddress("glBindBufferARB");
+        glBufferData    = (PFNGLBUFFERDATAARBPROC)   getprocaddress("glBufferDataARB");
+        glDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
         conoutf("Using GL_ARB_vertex_buffer_object extensions");
+    };
+
+    if(!strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
+    {
+        conoutf("WARNING: no shader support! using fixed function fallback");
+        renderpath = R_FIXEDFUNCTION;
+    }
+    else
+    {
+        glGenPrograms =            (PFNGLGENPROGRAMSARBPROC)           getprocaddress("glGenProgramsARB");
+        glBindProgram =            (PFNGLBINDPROGRAMARBPROC)           getprocaddress("glBindProgramARB");
+        glProgramString =          (PFNGLPROGRAMSTRINGARBPROC)         getprocaddress("glProgramStringARB");
+        glProgramEnvParameter4f =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");
+        glProgramEnvParameter4fv = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
+        renderpath = R_ASMSHADER;
+        conoutf("rendering using the OpenGL 1.5 assembly shader path");
     };
 
     purgetextures();
@@ -168,6 +235,7 @@ struct Slot
     Texture *t;              
     string name;
     int rotation;
+    Shader *shader;
 };
 
 Slot slots[256];
@@ -188,6 +256,7 @@ void texture(char *__dummy, char *name, char *rot)
     Slot &s = slots[num];
     s.t = NULL;
     s.rotation = atoi(rot);
+    s.shader = curshader;
     s_strcpy(s.name, name);
     path(s.name);
 };
@@ -195,13 +264,15 @@ void texture(char *__dummy, char *name, char *rot)
 COMMAND(texturereset, ARG_NONE);
 COMMAND(texture, ARG_3STR);
 
-Texture *lookuptexture(int tex)
+Texture *lookuptexture(int slot)
 {
-    Slot &s = slots[tex];
+    Slot &s = slots[slot];
     if(s.t) return s.t;
     s_sprintfd(name)("packages/%s", s.name);
     return s.t = textureload(name, s.rotation);
 };
+
+Shader *lookupshader(int slot) { return slots[slot].shader; };
 
 VARFP(gamma, 30, 100, 300,
 {
