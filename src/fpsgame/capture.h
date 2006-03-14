@@ -5,6 +5,7 @@ struct capturestate
     static const int CAPTURERADIUS = 32;
     static const int OCCUPYPOINTS = 10;
     static const int OCCUPYLIMIT = 100;
+    static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
         
     struct baseinfo
@@ -211,7 +212,7 @@ struct captureserv : capturestate
         sendbaseinfo(i);
     };
     
-    void enterbases(const char *team, const vec &oldpos, const vec &newpos = vec(-1e10f, -1e10f, -1e10f))
+    void movebases(const char *team, const vec &oldpos, const vec &newpos)
     {
         if(!team[0]) return;
         loopv(bases)
@@ -227,14 +228,25 @@ struct captureserv : capturestate
         };
     };
 
+    void leavebases(const char *team, const vec &o)
+    {
+        movebases(team, o, vec(-1e10f, -1e10f, -1e10f));
+    };
+   
+    void enterbases(const char *team, const vec &o)
+    {
+        movebases(team, vec(-1e10f, -1e10f, -1e10f), o);
+    };
+    
     void changeteam(const char *oldteam, const char *newteam, const vec &o)
     {
-        enterbases(oldteam, o);
-        enterbases(newteam, vec(-1e10f, -1e10f, -1e10f), o);
+        leavebases(oldteam, o);
+        enterbases(newteam, o);
     };
 
     void addscore(const char *team, int n)
     {
+        if(!n) return;
         score &cs = findscore(team);
         cs.total += n;
         sendf(true, -1, "isi", SV_TEAMSCORE, team, cs.total);
@@ -249,8 +261,7 @@ struct captureserv : capturestate
             baseinfo &b = bases[i];
             if(b.enemy[0])
             {
-                if(b.occupy(b.enemy, OCCUPYPOINTS*b.enemies*t, secs)==1)
-                    addscore(b.owner, 1);
+                if(b.occupy(b.enemy, OCCUPYPOINTS*b.enemies*t, secs)==1) addscore(b.owner, CAPTURESCORE);
                 sendbaseinfo(i);
             };
             if(b.owner[0])

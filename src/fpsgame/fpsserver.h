@@ -20,6 +20,7 @@ struct fpsserver : igameserver
         bool master;
         bool spectator;
         vec o;
+        int state;
         
         clientinfo() { reset(); };
 
@@ -29,6 +30,7 @@ struct fpsserver : igameserver
             master = false;
             spectator = false;
             o = vec(-1e10f, -1e10f, -1e10f);
+            state = CS_SPECTATOR;
         };
     };
 
@@ -307,10 +309,13 @@ struct fpsserver : igameserver
                 ci->o.x = getint(p)/DMF;
                 ci->o.y = getint(p)/DMF;
                 ci->o.z = getint(p)/DMF;
-                if(m_capture) cps.enterbases(ci->team, oldpos, ci->o);
+                if(m_capture && ci->state==CS_ALIVE) cps.movebases(ci->team, oldpos, ci->o);
                 loopi(size-6) getint(p);
-                int state = getint(p);
-                if(ci->spectator && (state>>5) != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
+                int state = getint(p)>>5;
+                if(ci->spectator && state != CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
+                if(ci->state==CS_ALIVE && state!=CS_ALIVE) cps.leavebases(ci->team, ci->o);
+                else if(ci->state!=CS_ALIVE && state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
+                ci->state = state;
                 break;
             };
             
@@ -352,6 +357,8 @@ struct fpsserver : igameserver
                 if(ci->master || spectator==sender)
                 {
                     clientinfo *spinfo = (clientinfo *)getinfo(spectator);
+                    if(spinfo->spectator && !val) cps.enterbases(spinfo->team, spinfo->o);
+                    else if(!spinfo->spectator && val) cps.leavebases(spinfo->team, spinfo->o);
                     spinfo->spectator = val!=0;
                     sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
                 };
@@ -489,7 +496,14 @@ struct fpsserver : igameserver
         return DISC_NONE;
     };
 
-    void clientdisconnect(int n) { clients.removeobj((clientinfo *)getinfo(n)); send2(true, -1, SV_CDIS, n); findmaster();  };
+    void clientdisconnect(int n) 
+    { 
+        clientinfo *ci = (clientinfo *)getinfo(n);
+        if(m_capture) cps.leavebases(ci->team, ci->o);
+        send2(true, -1, SV_CDIS, n); 
+        findmaster();  
+    };
+
     char *servername() { return "sauerbratenserver"; };
     int serverinfoport() { return SAUERBRATEN_SERVINFO_PORT; };
     int serverport() { return SAUERBRATEN_SERVER_PORT; };
