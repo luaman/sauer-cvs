@@ -104,6 +104,16 @@ struct capturestate
     {
         bases.add().o = o;
     };
+
+    bool hasbases(const char *team)
+    {
+        loopv(bases)
+        {
+            baseinfo &b = bases[i]; 
+            if(b.owner[0] && !strcmp(b.owner, team)) return true;
+        };
+        return false;
+    };
 };
 
 #ifndef CAPTURESERV
@@ -127,8 +137,8 @@ struct captureclient : capturestate
 
     void recvammo(fpsent *from, int gun1, int gun2)
     {
-        if(cl.spawngun1!=gun1 && cl.spawngun1!=gun2) cl.et.addammo(cl.spawngun1);
-        if(cl.spawngun2!=gun1 && cl.spawngun2!=gun2) cl.et.addammo(cl.spawngun2);
+        if(cl.spawngun1!=gun1 && cl.spawngun1!=gun2) cl.et.repammo(cl.spawngun1);
+        if(cl.spawngun2!=gun1 && cl.spawngun2!=gun2) cl.et.repammo(cl.spawngun2);
         conoutf("%s replenished your ammo", from->name);
     };
 
@@ -269,6 +279,8 @@ struct captureserv : capturestate
 
     void updatescores(int secs)
     {
+        if(sv.minremain<=0) return;
+        endcheck();
         int t = secs-sv.lastsec;
         if(t<1 || sv.minremain<=0) return;
         loopv(bases)
@@ -312,6 +324,36 @@ struct captureserv : capturestate
             sendstring(b.enemy, p);
             putint(p, b.converted);
         };
+    };
+
+    void endcheck()
+    {
+        bool oneteam = true;
+        const char *lastteam = NULL;
+        int dead = 0;
+
+        loopv(sv.clients)
+        {
+            fpsserver::clientinfo *ci = sv.clients[i];
+            if(!ci || ci->spectator) continue;
+            if(ci->state==CS_DEAD && !hasbases(ci->team))
+            {
+                dead++;
+                continue;
+            };
+            if(!lastteam) lastteam = ci->team;
+            else if(strcmp(lastteam, ci->team))
+            {
+                oneteam = false;
+                break;
+            };
+        };
+
+        if(!dead) return;
+        else if(!lastteam) sv.sendservmsg("everyone died!");
+        else if(oneteam) { s_sprintfd(msg)("team %s is last man standing", lastteam); sv.sendservmsg(msg); }
+        else return;
+        sv.startintermission(); 
     };
 };
 

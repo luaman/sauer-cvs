@@ -74,8 +74,8 @@ extern fpsent *player1;                 // special client ent that receives inpu
 
 #define m_noitems     (gamemode>=4 && gamemode<12)
 #define m_noitemsrail (gamemode<=5)
-#define m_arena       (gamemode>=8)
-#define m_tarena      (gamemode>=10)
+#define m_arena       (gamemode>=8 && gamemode<12)
+#define m_tarena      (gamemode>=10 && gamemode<12)
 #define m_capture     (gamemode==12)
 #define m_teammode    ((gamemode&1 && gamemode>2) || m_capture)
 #define m_sp          (gamemode<0)

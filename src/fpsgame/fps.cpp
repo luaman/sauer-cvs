@@ -134,6 +134,7 @@ struct fpsclient : igameclient
 
     void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
     {
+        if(d->state==CS_SPECTATOR) return;
         if(d->state!=CS_DEAD)
         {
             alive++;
@@ -261,6 +262,7 @@ struct fpsclient : igameclient
         if(player1->state==CS_DEAD)
         { 
             player1->attacking = false;
+            if(m_capture && !cpc.hasbases(player1->team)) { conoutf("team %s has no bases!", player1->team); return; };
             if(m_arena) { conoutf("waiting for new round to start..."); return; };
             if(m_sp) { nextmode = gamemode; cc.changemap(clientmap); return; };    // if we die in SP we try the same map again
             respawnself();

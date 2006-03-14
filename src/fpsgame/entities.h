@@ -103,12 +103,10 @@ struct entities : icliententities
     };
 
     void baseammo(int gun) { cl.player1->ammo[gun] = itemstats[gun-1].add*2; };
-    void addammo(int gun) 
+    void repammo(int gun) 
     { 
         int &ammo = cl.player1->ammo[gun];
-        itemstat &is = itemstats[gun-1];
-        ammo += is.add*2; 
-        ammo = max(ammo, is.max);
+        ammo = max(ammo, itemstats[gun-1].add*2);
     };
 
     // these two functions are called when the server acknowledges that you really
