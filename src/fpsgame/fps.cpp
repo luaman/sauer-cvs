@@ -70,7 +70,7 @@ struct fpsclient : igameclient
     fpsent *spawnstate(fpsent *d)              // reset player state not persistent accross spawns
     {
         d->respawn();
-        if(m_noitems)
+        if(m_noitems || m_capture)
         {
             d->gunselect = GUN_RIFLE;
             d->armour = 0;
@@ -82,13 +82,14 @@ struct fpsclient : igameclient
             else
             {
                 d->health = 256;
-                if(m_tarena)
+                if(m_tarena || m_capture)
                 {
-                    int gun1 = rnd(4)+1;
+                    d->ammo[GUN_PISTOL] = 80;
+                    int gun1 = rnd(5)+1;
                     et.baseammo(d->gunselect = gun1);
                     for(;;)
                     {
-                        int gun2 = rnd(4)+1;
+                        int gun2 = rnd(5)+1;
                         if(gun1!=gun2) { et.baseammo(gun2); break; };
                     };
                 }
@@ -98,7 +99,7 @@ struct fpsclient : igameclient
                 }
                 else // efficiency
                 {
-                    loopi(4) et.baseammo(i+1);
+                    loopi(5) et.baseammo(i+1);
                     d->gunselect = GUN_CG;
                 };
                 d->ammo[GUN_CG] /= 2;
