@@ -52,19 +52,20 @@ struct scoreboard
             teamsused = 0;
             if(m_capture)
             {
-                loopv(cl.cpc.scores)
+                loopv(cl.cpc.scores) if(cl.cpc.scores[i].total)
                 {
                     teamname[teamsused] = cl.cpc.scores[i].team;
                     teamscore[teamsused++] = cl.cpc.scores[i].total;
+                    if(teamsused>=maxteams) break;
                 };
             }
             else loopi(cl.numdynents()) 
             {
                 fpsent *o = (fpsent *)cl.iterdynents(i);
-                if(o && o->type!=ENT_AI)
+                if(o && o->type!=ENT_AI && o->frags)
                 {
                     loopi(teamsused) if(strcmp(teamname[i], o->team)==0) { teamscore[i] += o->frags; goto out; };
-                    if(teamsused!=maxteams)
+                    if(teamsused<maxteams)
                     {
                         teamname[teamsused] = o->team;
                         teamscore[teamsused++] = o->frags;
