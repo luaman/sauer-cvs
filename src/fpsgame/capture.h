@@ -306,7 +306,7 @@ struct captureserv : capturestate
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            bool leave = (b.owner[0] || b.enemy[0]) && oldpos.dist(b.o) <= CAPTURERADIUS,
+            bool leave = oldpos.dist(b.o) <= CAPTURERADIUS,
                  enter = newpos.dist(b.o) <= CAPTURERADIUS;
             if(leave && !enter && b.leave(team)) orphanedbase(i, team);
             else if(enter && !leave && b.enter(team)) sendbaseinfo(i);

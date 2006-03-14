@@ -312,10 +312,9 @@ struct fpsserver : igameserver
                 };
                 int size = msgsizelookup(type);
                 assert(size!=-1);
-                vec oldpos(ci->o);
-                ci->o.x = getint(p)/DMF;
-                ci->o.y = getint(p)/DMF;
-                ci->o.z = getint(p)/DMF;
+                vec oldpos(ci->o), newpos;
+                loopi(3) newpos.v[i] = getint(p)/DMF;
+                if(!notgotitems && !notgotbases) ci->o = newpos;
                 loopi(size-6) getint(p);
                 int state = getint(p)>>5;
                 if(ci->spectator && state!=CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
@@ -328,7 +327,7 @@ struct fpsserver : igameserver
                     }
                     else if(state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
                 };
-                ci->state = state;
+                if(!notgotitems && !notgotbases) ci->state = state;
                 break;
             };
             
