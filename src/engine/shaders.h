@@ -1,8 +1,8 @@
-extern PFNGLGENPROGRAMSARBPROC            glGenPrograms;
-extern PFNGLBINDPROGRAMARBPROC            glBindProgram;
+extern PFNGLGENPROGRAMSARBPROC            glGenPrograms_;
+extern PFNGLBINDPROGRAMARBPROC            glBindProgram_;
 extern PFNGLPROGRAMSTRINGARBPROC          glProgramString;
-extern PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f;
-extern PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv;
+extern PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_;
+extern PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_;
 
 extern int renderpath;
 
@@ -16,8 +16,8 @@ struct Shader
     void set()
     {
         if(renderpath==R_FIXEDFUNCTION) return;
-        glBindProgram(GL_VERTEX_PROGRAM_ARB,   vs);
-        glBindProgram(GL_FRAGMENT_PROGRAM_ARB, ps);
+        glBindProgram_(GL_VERTEX_PROGRAM_ARB,   vs);
+        glBindProgram_(GL_FRAGMENT_PROGRAM_ARB, ps);
     };
 
     static void on()

@@ -31,13 +31,13 @@ struct model
     };
 };
 
-extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture;
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture;
+extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture_;
+extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_;
 
-extern PFNGLGENBUFFERSARBPROC    glGenBuffers;
-extern PFNGLBINDBUFFERARBPROC    glBindBuffer;
-extern PFNGLBUFFERDATAARBPROC    glBufferData;
-extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers;
+extern PFNGLGENBUFFERSARBPROC    glGenBuffers_;
+extern PFNGLBINDBUFFERARBPROC    glBindBuffer_;
+extern PFNGLBUFFERDATAARBPROC    glBufferData_;
+extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_;
 
 #define FONTH 64
 

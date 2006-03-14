@@ -93,7 +93,7 @@ struct md2 : model
         loopi(header.numframes) if(mverts[i]) delete[] mverts[i];
         delete[] mverts;
         DELETEA(vbufi);
-        if(hasVBO && vbufGL) glDeleteBuffers(1, &vbufGL);
+        if(hasVBO && vbufGL) glDeleteBuffers_(1, &vbufGL);
         DELETEA(anims);
     };
     
@@ -226,9 +226,9 @@ struct md2 : model
         vbufi = new ushort[vbufi_len = idxs.length()];
         memcpy(vbufi, idxs.getbuf(), sizeof(ushort)*vbufi_len);
         
-        glGenBuffers(1, &vbufGL);
-        glBindBuffer(GL_ARRAY_BUFFER_ARB, vbufGL);
-        glBufferData(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+        glGenBuffers_(1, &vbufGL);
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
+        glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
     vector<triangle> &hull()
@@ -337,7 +337,7 @@ struct md2 : model
         
         if(hasVBO && vbufGL && anim==ANIM_STATIC)
         {
-            glBindBuffer(GL_ARRAY_BUFFER_ARB, vbufGL);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, sizeof(md2_vvert), 0);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -347,7 +347,7 @@ struct md2 : model
             
             xtravertsva += header.numvertices;
             
-            glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisableClientState(GL_VERTEX_ARRAY);
         }

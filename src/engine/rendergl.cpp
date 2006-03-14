@@ -10,19 +10,19 @@ void purgetextures();
 
 GLUquadricObj *qsphere = NULL;
 
-PFNGLGENBUFFERSARBPROC    glGenBuffers    = NULL;
-PFNGLBINDBUFFERARBPROC    glBindBuffer    = NULL;
-PFNGLBUFFERDATAARBPROC    glBufferData    = NULL;
-PFNGLDELETEBUFFERSARBPROC glDeleteBuffers = NULL;
+PFNGLGENBUFFERSARBPROC    glGenBuffers_    = NULL;
+PFNGLBINDBUFFERARBPROC    glBindBuffer_    = NULL;
+PFNGLBUFFERDATAARBPROC    glBufferData_    = NULL;
+PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_ = NULL;
 
-PFNGLACTIVETEXTUREARBPROC       glActiveTexture       = NULL;
-PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture = NULL;
+PFNGLACTIVETEXTUREARBPROC       glActiveTexture_       = NULL;
+PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_ = NULL;
 
-PFNGLGENPROGRAMSARBPROC            glGenPrograms = NULL;
-PFNGLBINDPROGRAMARBPROC            glBindProgram = NULL;
-PFNGLPROGRAMSTRINGARBPROC          glProgramString = NULL;
-PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f = NULL;
-PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv = NULL;
+PFNGLGENPROGRAMSARBPROC            glGenPrograms_ = NULL;
+PFNGLBINDPROGRAMARBPROC            glBindProgram_ = NULL;
+PFNGLPROGRAMSTRINGARBPROC          glProgramString_ = NULL;
+PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_ = NULL;
+PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_ = NULL;
 
 
 hashtable<char *, Shader> shaders;
@@ -30,10 +30,10 @@ Shader *curshader = NULL;
 
 void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
 {
-    glGenPrograms(1, &idx);
-    glBindProgram(type, idx);
+    glGenPrograms_(1, &idx);
+    glBindProgram_(type, idx);
     def += strspn(def, " \t\r\n");
-    glProgramString(type, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(def), def);
+    glProgramString_(type, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(def), def);
     GLint err;
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
     if(err!=-1)
@@ -104,8 +104,8 @@ void gl_init(int w, int h)
         fatal("no texture_env_combine extension!");
 
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
-    glActiveTexture       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
-    glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
+    glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
+    glClientActiveTexture_ = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object"))
     {
@@ -113,10 +113,10 @@ void gl_init(int w, int h)
     }
     else
     {
-        glGenBuffers    = (PFNGLGENBUFFERSARBPROC)   getprocaddress("glGenBuffersARB");
-        glBindBuffer    = (PFNGLBINDBUFFERARBPROC)   getprocaddress("glBindBufferARB");
-        glBufferData    = (PFNGLBUFFERDATAARBPROC)   getprocaddress("glBufferDataARB");
-        glDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
+        glGenBuffers_    = (PFNGLGENBUFFERSARBPROC)   getprocaddress("glGenBuffersARB");
+        glBindBuffer_    = (PFNGLBINDBUFFERARBPROC)   getprocaddress("glBindBufferARB");
+        glBufferData_    = (PFNGLBUFFERDATAARBPROC)   getprocaddress("glBufferDataARB");
+        glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
         conoutf("Using GL_ARB_vertex_buffer_object extensions");
     };
@@ -128,11 +128,11 @@ void gl_init(int w, int h)
     }
     else
     {
-        glGenPrograms =            (PFNGLGENPROGRAMSARBPROC)           getprocaddress("glGenProgramsARB");
-        glBindProgram =            (PFNGLBINDPROGRAMARBPROC)           getprocaddress("glBindProgramARB");
-        glProgramString =          (PFNGLPROGRAMSTRINGARBPROC)         getprocaddress("glProgramStringARB");
-        glProgramEnvParameter4f =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");
-        glProgramEnvParameter4fv = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
+        glGenPrograms_ =            (PFNGLGENPROGRAMSARBPROC)           getprocaddress("glGenProgramsARB");
+        glBindProgram_ =            (PFNGLBINDPROGRAMARBPROC)           getprocaddress("glBindProgramARB");
+        glProgramString_ =          (PFNGLPROGRAMSTRINGARBPROC)         getprocaddress("glProgramStringARB");
+        glProgramEnvParameter4f_ =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");
+        glProgramEnvParameter4fv_ = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
         renderpath = R_ASMSHADER;
         conoutf("rendering using the OpenGL 1.5 assembly shader path");
     };

@@ -87,7 +87,7 @@ struct md3mesh
     ~md3mesh() 
     {
         DELETEA(vbufi);
-        if(hasVBO && vbufGL) glDeleteBuffers(1, &vbufGL);
+        if(hasVBO && vbufGL) glDeleteBuffers_(1, &vbufGL);
     };
 };
 
@@ -190,9 +190,9 @@ struct md3model
             m.vbufi = new ushort[m.vbufi_len = idxs.length()];
             memcpy(m.vbufi, idxs.getbuf(), sizeof(ushort)*m.vbufi_len);
             
-            glGenBuffers(1, &m.vbufGL);
-            glBindBuffer(GL_ARRAY_BUFFER_ARB, m.vbufGL);
-            glBufferData(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+            glGenBuffers_(1, &m.vbufGL);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, m.vbufGL);
+            glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
         };
     };
     
@@ -343,7 +343,7 @@ struct md3model
             
             if(hasVBO && staticmdl && meshes[0].vbufGL) // vbo's for static stuff
             {             
-                glBindBuffer(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
                 glEnableClientState(GL_VERTEX_ARRAY);
                 glVertexPointer(3, GL_FLOAT, sizeof(md2::md2_vvert), 0);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -351,7 +351,7 @@ struct md3model
 
                 glDrawElements(GL_TRIANGLES, mesh.vbufi_len, GL_UNSIGNED_SHORT, mesh.vbufi);
                 
-                glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 glDisableClientState(GL_VERTEX_ARRAY);
                 
