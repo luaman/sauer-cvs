@@ -364,4 +364,10 @@ struct entities : icliententities
         };
         cl.cc.addmsg(1, 10, SV_EDITENT, i, (int)(e.o.x*DMF), (int)(e.o.y*DMF), (int)(e.o.z*DMF), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
     };
+
+    float dropheight(entity &e)
+    {
+        if(e.type==MAPMODEL || e.type==BASE) return 0.0f;
+        return 4.0f;
+    };
 };

@@ -526,7 +526,7 @@ bool collide(physent *d, const vec &dir, float cutoff)
     loopi(cl->numdynents())
     {
         dynent *o = cl->iterdynents(i);
-        if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d!=camera1) && !plcollide(d, dir, o)) return false;
+        if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d->type!=ENT_CAMERA) && !plcollide(d, dir, o)) return false;
     };
 
     return true;
@@ -880,18 +880,9 @@ void dropenttofloor(entity *e)
     d.type = ENT_CAMERA;
     d.o = e->o;
     d.vel = vec(0, 0, -1);
-    if(e->type == ET_MAPMODEL)
-    {
-        d.radius = 4.0f;
-        d.eyeheight = 0.0f;
-        d.aboveeye = 4.0f;
-    }
-    else
-    {
-        d.radius = 1.0f;
-        d.eyeheight = 4.0f;
-        d.aboveeye = 1.0f;
-    };
+    d.radius = 1.0f;
+    d.eyeheight = et->dropheight(*e);
+    d.aboveeye = 1.0f;
     loopi(hdr.worldsize) if(!move(&d, v)) break;
     e->o = d.o;
 };
