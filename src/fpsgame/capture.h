@@ -114,6 +114,18 @@ struct capturestate
         };
         return false;
     };
+
+    float disttoenemy(baseinfo &b)
+    {
+        float dist = 1e16f;
+        loopv(bases)
+        {
+            baseinfo &e = bases[i];
+            if(e.owner[0] && strcmp(b.owner, e.owner))
+                dist = min(dist, b.o.dist(e.o));
+        };
+        return dist;
+    };
 };
 
 #ifndef CAPTURESERV
@@ -208,6 +220,46 @@ struct captureclient : capturestate
     void setscore(const char *team, int total)
     {
         findscore(team).total = total;
+    };
+
+    int closesttoenemy(const char *team)
+    {
+        float bestdist = 1e10f;
+        int best = -1;
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            if(!b.owner[0] || strcmp(b.owner, team)) continue;
+            float dist = disttoenemy(b);
+            if(dist < bestdist)
+            {
+                best = i;
+                bestdist = dist;
+            };
+        };
+        return best;
+    };
+
+    int pickspawn(const char *team)
+    {
+        int closest = closesttoenemy(team);
+        if(closest<0) return -1;
+        baseinfo &b = bases[closest];
+
+        float bestdist = 1e10f;
+        int best = -1;
+        loopv(cl.et.ents)
+        {
+            extentity *e = cl.et.ents[i];
+            if(e->type!=PLAYERSTART) continue;
+            float dist = e->o.dist(b.o);
+            if(dist < bestdist)
+            {
+                best = i;
+                bestdist = dist;
+            };
+        };
+        return best;
     };
 };
 

@@ -82,18 +82,14 @@ struct fpsclient : igameclient
             }
             else
             {
-                static int spawnguns[5] = { GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL };
                 d->health = 256;
                 if(m_tarena || m_capture)
                 {
                     d->ammo[GUN_PISTOL] = 80;
-                    spawngun1 = spawnguns[rnd(5)];
+                    spawngun1 = rnd(5)+1;
                     et.baseammo(d->gunselect = spawngun1);
-                    for(;;)
-                    {
-                        spawngun2 = spawnguns[rnd(5)];
-                        if(spawngun1!=spawngun2) { et.baseammo(spawngun2); break; };
-                    };
+                    do spawngun2 = rnd(5)+1; while(spawngun1==spawngun2);
+                    et.baseammo(spawngun2);
                 }
                 else if(m_arena)    // insta arena
                 {
@@ -101,7 +97,7 @@ struct fpsclient : igameclient
                 }
                 else // efficiency
                 {
-                    loopi(5) et.baseammo(spawnguns[i]);
+                    loopi(5) et.baseammo(i+1);
                     d->gunselect = GUN_CG;
                 };
                 d->ammo[GUN_CG] /= 2;
@@ -239,12 +235,18 @@ struct fpsclient : igameclient
 
     void spawnplayer(fpsent *d)   // place at random spawn. also used by monsters!
     {
-        int r = fixspawn-->0 ? 4 : rnd(10)+1;
-        loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
-        if(spawncycle!=-1)
+        int pick = -1;
+        if(m_capture) pick = cpc.pickspawn(d->team);
+        if(pick<0)
         {
-            d->o = et.ents[spawncycle]->o;
-            d->yaw = et.ents[spawncycle]->attr1;
+            int r = fixspawn-->0 ? 4 : rnd(10)+1;
+            loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
+            pick = spawncycle;
+        };
+        if(pick!=-1)
+        {
+            d->o = et.ents[pick]->o;
+            d->yaw = et.ents[pick]->attr1;
             d->pitch = 0;
             d->roll = 0;
         }

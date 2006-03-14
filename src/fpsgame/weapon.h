@@ -23,12 +23,12 @@ struct weaponstate
             { S_CG,        100,  30, 0,   0,  7, "chaingun"        },
             { S_RLFIRE,    800, 120, 80,  0, 10, "rocketlauncher"  },
             { S_RIFLE,    1500, 100, 0,   0, 30, "rifle"           },
+            { S_FLAUNCH,   500,  50, 80,  0, 10, "grenadelauncher" },
+            { S_PISTOL,    500,  25, 0,   0,  7, "pistol"          },
             { S_FLAUNCH,   200,  20, 50,  4,  1, "fireball"        },
             { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"         },
             { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"       },
             { S_PIGR1,     250,  50, 0,   0,  1, "bite"            },
-            { S_PISTOL,    500,  25, 0,   0,  7, "pistol"          },    
-            { S_FLAUNCH,   500,  50, 80,  0, 10, "grenadelauncher" },
         };
         guns = _guns;
         
