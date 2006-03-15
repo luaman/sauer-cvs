@@ -664,7 +664,7 @@ void lightreaching(const vec &target, vec &color, vec &dir)
         if(e.attr1 && mag >= float(e.attr1))
             continue;
     
-        ray.mul(1.0 / mag);
+        ray.div(mag);
         if(raycube(e.o, ray, mag, mmshadows ? RAY_POLY : 0) < mag)
             continue;
         float intensity = 1.0;
@@ -672,7 +672,7 @@ void lightreaching(const vec &target, vec &color, vec &dir)
             intensity -= mag / float(e.attr1);
  
         color.add(vec(e.attr2, e.attr3, e.attr4).div(255).mul(intensity));
-        dir.add(vec(e.o).sub(target).normalize().mul(intensity));
+        dir.add(vec(e.o).sub(target).mul(intensity/mag));
     };
     color.x = min(1, max(0.4f, color.x));
     color.y = min(1, max(0.4f, color.y));
