@@ -79,7 +79,7 @@ int wx1, wy1, wx2, wy2, wsize;
 inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
 {
     glTexCoord2f(t1, t2);
-    glVertex3f(v1, v2-1.1f-(float)sin((v1-wx1)/wsize*(v3-wy1)/wsize*(v1-wx2)*(v3-wy2)*59/23+t)*0.8f, v3);
+    glVertex3f(v1, v2, v3-1.1f-(float)sin((v1-wx1)/wsize*(v2-wy1)/wsize*(v1-wx2)*(v2-wy2)*59/23+t)*0.8f);
 };
 
 inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
@@ -114,11 +114,11 @@ void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
             float yo = yf*(yy+t2);
             if(yy==wy1)
             {
-                vertw(xx, z, yy, dx(xo), dy(yo), t1);
-                vertw(xx+subdiv, z, yy, dx(xo+xs), dy(yo), t1);
+                vertw(xx, yy, z, dx(xo), dy(yo), t1);
+                vertw(xx+subdiv, yy, z, dx(xo+xs), dy(yo), t1);
             };
-            vertw(xx, z, yy+subdiv, dx(xo), dy(yo+ys), t1);
-            vertw(xx+subdiv, z, yy+subdiv, dx(xo+xs), dy(yo+ys), t1);
+            vertw(xx, yy+subdiv, z, dx(xo), dy(yo+ys), t1);
+            vertw(xx+subdiv, yy+subdiv, z, dx(xo+xs), dy(yo+ys), t1);
         };
         glEnd();
         int n = (wy2-wy1-1)/subdiv;

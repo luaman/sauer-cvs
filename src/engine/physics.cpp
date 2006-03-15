@@ -830,7 +830,7 @@ void bncloop()
     if(bnc.type != ENT_BOUNCE) return;
     bounce(&bnc, curtime/1000.0f);
     uchar color[3] = {255, 255, 255};
-    rendermodel(color, "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.z, bnc.o.y, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
+    rendermodel(color, "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
 };
 
 void bnctest()
@@ -866,7 +866,7 @@ COMMAND(phystest, ARG_NONE);
 
 void dropenttofloor(entity *e)
 {
-    if(!insideworld(e.o)) return;
+    if(!insideworld(e->o)) return;
     vec v(0.0001f, 0.0001f, -1);
     v.normalize();
     if(raycube(e->o, v) >= hdr.worldsize) return;

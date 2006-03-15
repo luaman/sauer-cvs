@@ -300,7 +300,12 @@ void transplayer()
     glRotatef(player->pitch,-1.0,0.0,0.0);
     glRotatef(player->yaw,0.0,1.0,0.0);
 
-    glTranslatef(-camera1->o.x, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z, -camera1->o.y);   
+    // move from RH to Z-up LH quake style worldspace
+    glRotatef(-90, 1, 0, 0);
+    glScalef(1, -1, 1);
+
+    glTranslatef(-camera1->o.x, -camera1->o.y, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z);   
+
 };
 
 VARP(fov, 10, 105, 150);

@@ -65,7 +65,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
     {
         vec center;
         float radius = m->boundsphere(0/*frame*/, scale, center);   // FIXME
-        center.add(vec(x, z, y));
+        center.add(vec(x, y, z));
         if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     }
@@ -79,11 +79,11 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
     {
         vec rdir(dir);
         rdir.rotate_around_z((-yaw-180.0f)*RAD);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, rdir.x, rdir.y, rdir.z, 0);
+        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, rdir.x, rdir.y, rdir.z, 0);
 
-        vec halfangle = vec(player->o).sub(vec(x, z, y)).normalize().add(dir).normalize();
-        halfangle.rotate_around_z((-yaw-180.0f)*RAD);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, halfangle.x, halfangle.y, halfangle.z, 0);
+        vec camerapos = vec(player->o).sub(vec(x, y, z));
+        camerapos.rotate_around_z((-yaw-180.0f)*RAD);
+        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
     };
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
     modelshader->off();

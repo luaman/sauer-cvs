@@ -38,7 +38,7 @@ struct entities : icliententities
     
     void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_STATIC, int basetime = 0, float speed = 10.0f)
     {
-        rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, z+e.o.z, e.o.y, yaw, 0, false, 1.0f, speed, basetime, NULL, true);
+        rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, false, 1.0f, speed, basetime, NULL, true);
     };
 
     void renderentities()
@@ -53,7 +53,7 @@ struct entities : icliententities
                 {
                     mapmodelinfo &mmi = getmminfo(e.attr2);
                     if(!&mmi) continue;
-                    rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.z+mmi.zoff+e.attr3, e.o.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, 0, NULL, true);
+                    rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, 0, NULL, true);
                     break;
                 };
                 

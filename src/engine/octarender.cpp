@@ -53,8 +53,8 @@ int vert(int x, int y, int z, float lmu, float lmv)
 {
     vec v;
     v.x = (float)x;
-    v.y = (float)z;
-    v.z = (float)y;
+    v.y = (float)y;
+    v.z = (float)z;
     return vh.access(v, lmu, lmv);
 };
 
@@ -548,7 +548,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             {
                 vec rv;
                 genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, rv);
-                swap(float, rv.y, rv.z);
                 index = vh.access(rv, u, v);
             };
 
@@ -988,8 +987,8 @@ bool insideva(vtxarray *va, vec &v)
 
 void renderq(int w, int h)
 {
-    int si[] = { 0, 0, 2 }; //{ 0, 0, 0, 0, 2, 2};
-    int ti[] = { 2, 1, 1 }; //{ 2, 2, 1, 1, 1, 1};
+    int si[] = { 0, 0, 1 }; //{ 0, 0, 0, 0, 2, 2};
+    int ti[] = { 1, 2, 2 }; //{ 2, 2, 1, 1, 1, 1};
     //float sc[] = { 8.0f, 8.0f, -8.0f, 8.0f, 8.0f, -8.0f};
     //float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
 
@@ -1144,8 +1143,8 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
     {
         int coord = fv[orient][i];
         glVertex3f(cubecoords[coord][0]*(size-2*xoffset)/8+x+xoffset,
-                   cubecoords[coord][2]*(size-2*zoffset)/8+z+zoffset,
-                   cubecoords[coord][1]*(size-2*yoffset)/8+y+yoffset);
+                   cubecoords[coord][1]*(size-2*yoffset)/8+y+yoffset,
+                   cubecoords[coord][2]*(size-2*zoffset)/8+z+zoffset);
     };
     glEnd();
 

@@ -106,24 +106,24 @@ void render_particles(int time)
 					dir2.sub(camera1->o);
 					c1.cross(dir2, dir1).normalize().mul(sz);
 					c2.cross(dir1, dir2).normalize().mul(sz);
-                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x, p->d.z+c1.z, p->d.y+c1.y);
-                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x, p->d.z+c2.z, p->d.y+c2.y);
-                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+c2.x, p->o.z+c2.z, p->o.y+c2.y);
-                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+c1.x, p->o.z+c1.z, p->o.y+c1.y);
+                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x, p->d.y+c1.y, p->d.z+c1.z);
+                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x, p->d.y+c2.y, p->d.z+c2.z);
+                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+c2.x, p->o.y+c2.y, p->o.z+c2.z);
+                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+c1.x, p->o.y+c1.y, p->o.z+c1.z);
                 }
                 else        // regular particles
                 {
-                    glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
-                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
-                    glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+                    glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.y+(-right.y+up.y)*sz, p->o.z+(-right.z+up.z)*sz);
+                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.y+( right.y+up.y)*sz, p->o.z+( right.z+up.z)*sz);
+                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.y+( right.y-up.y)*sz, p->o.z+( right.z-up.z)*sz);
+                    glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.y+(-right.y-up.y)*sz, p->o.z+(-right.z-up.z)*sz);
                 };
                 if(i!=2) xtraverts += 4;
             }
             else            // text
             {
                 glPushMatrix();
-                glTranslatef(p->o.x, p->o.z, p->o.y);
+                glTranslatef(p->o.x, p->o.y, p->o.z);
                 glRotatef(camera1->yaw-180, 0, -1, 0);
                 glRotatef(-camera1->pitch, 1, 0, 0);
                 float scale = 0.05f*pt->sz;

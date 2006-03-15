@@ -10,10 +10,10 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
 
     glBegin(GL_POLYGON);
 
-    glVertex3i(m.x, m.z, m.y);
-    glVertex3i(n.x, n.z, n.y);
-    glVertex3i(o.x, o.z, o.y);
-    glVertex3i(p.x, p.z, p.y);
+    glVertex3i(m.x, m.y, m.z);
+    glVertex3i(n.x, n.y, n.z);
+    glVertex3i(o.x, o.y, o.z);
+    glVertex3i(p.x, p.y, p.z);
 
     glEnd();
 };

@@ -265,7 +265,6 @@ struct md2 : model
 				int vn = *command++;
 				vec v1 = mverts[0][vn];
                 vec n1 = mnorms[0][vn];
-				_swap(v1.y, v1.z);
 				loopv(verts)
 				{
 				    md2_vvert &v = verts[i];
@@ -386,8 +385,8 @@ struct md2 : model
 
         glPushMatrix ();
         glTranslatef(x, y, z);
-        glRotatef(yaw+180, 0, -1, 0);
-        glRotatef(pitch, 0, 0, 1);
+        glRotatef(yaw+180, 0, 0, 1);
+        glRotatef(pitch, 0, -1, 0);
         
         if(skin->bpp==32)
         {
@@ -425,6 +424,7 @@ struct md2 : model
 		    vec *verts2 = mverts[current.fr2];
 		    vec *verts1p;
 		    vec *verts2p;
+            vec *norms = mnorms[current.fr1];   // do we need to interpolate normals? don't think so
 		    float aifrac1, aifrac2;
 		    bool doai = d && lastmillis-d->lastanimswitchtime[0]<animationinterpolationtime;
 		    if(doai)
@@ -448,6 +448,7 @@ struct md2 : model
 				    float tv = *((float*)command++);
 				    glTexCoord2f(tu, tv);
 				    int vn = *command++;
+                    glNormal3fv(norms[vn].v);
 				    vec &v1 = verts1[vn];
 				    vec &v2 = verts2[vn];
 				    #define ip(c)  (v1.c*current.frac2+v2.c*current.frac1)
@@ -457,9 +458,9 @@ struct md2 : model
 				    {
 				        vec &v1p = verts1p[vn];
 				        vec &v2p = verts2p[vn];
-				        glVertex3f(ipa(x), ipa(z), ipa(y));
+				        glVertex3f(ipa(x), ipa(y), ipa(z));
 				    }
-				    else glVertex3f(ip(x), ip(z), ip(y));
+				    else glVertex3f(ip(x), ip(y), ip(z));
 			    };
 
 			    xtraverts += numVertex;

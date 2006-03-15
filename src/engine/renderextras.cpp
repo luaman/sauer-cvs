@@ -6,10 +6,10 @@
 void box(block &b, float z1, float z2, float z3, float z4)
 {
     glBegin(GL_POLYGON);
-    glVertex3f((float)b.x,      z1, (float)b.y);
-    glVertex3f((float)b.x+b.xs, z2, (float)b.y);
-    glVertex3f((float)b.x+b.xs, z3, (float)b.y+b.ys);
-    glVertex3f((float)b.x,      z4, (float)b.y+b.ys);
+    glVertex3f((float)b.x,      (float)b.y,      z1);
+    glVertex3f((float)b.x+b.xs, (float)b.y,      z2);
+    glVertex3f((float)b.x+b.xs, (float)b.y+b.ys, z3);
+    glVertex3f((float)b.x,      (float)b.y+b.ys, z4);
     glEnd();
     xtraverts += 4;
 };
@@ -18,10 +18,10 @@ void dot(int x, int y, float z)
 {
     const float DOF = 0.1f;
     glBegin(GL_POLYGON);
-    glVertex3f(x-DOF, (float)z, y-DOF);
-    glVertex3f(x+DOF, (float)z, y-DOF);
-    glVertex3f(x+DOF, (float)z, y+DOF);
-    glVertex3f(x-DOF, (float)z, y+DOF);
+    glVertex3f(x-DOF, y-DOF, (float)z);
+    glVertex3f(x+DOF, y-DOF, (float)z);
+    glVertex3f(x+DOF, y+DOF, (float)z);
+    glVertex3f(x-DOF, y+DOF, (float)z);
     glEnd();
     xtraverts += 4;
 };
@@ -83,7 +83,7 @@ void renderspheres(int time)
         glPushMatrix();
         float size = p->size/p->max;
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f-size);
-        glTranslatef(p->o.x, p->o.z, p->o.y);
+        glTranslatef(p->o.x, p->o.y, p->o.z);
         glRotatef(lastmillis/5.0f, 1, 1, 1);
         glScalef(p->size, p->size, p->size);
         glCallList(1);
