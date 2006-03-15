@@ -866,14 +866,10 @@ COMMAND(phystest, ARG_NONE);
 
 void dropenttofloor(entity *e)
 {
-    if(e->o.x >= hdr.worldsize ||
-       e->o.y >= hdr.worldsize ||
-       e->o.z >= hdr.worldsize)
-        return;
+    if(!insideworld(e.o)) return;
     vec v(0.0001f, 0.0001f, -1);
     v.normalize();
-    if(raycube(e->o, v) >= hdr.worldsize)
-        return;
+    if(raycube(e->o, v) >= hdr.worldsize) return;
     physent d;
     d.type = ENT_CAMERA;
     d.o = e->o;
