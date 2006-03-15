@@ -84,6 +84,10 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         vec camerapos = vec(player->o).sub(vec(x, y, z));
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
+
+        vec ambient = vec(color).mul(0.5f);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, ambient.x, ambient.y, ambient.z, 0);
+
     };
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
     modelshader->off();

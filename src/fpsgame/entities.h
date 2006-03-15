@@ -325,9 +325,9 @@ struct entities : icliententities
         return &e;
     };
 
-    char *entname(int i)
+    const char *entname(int i)
     {
-        static char *entnames[] =
+        static const char *entnames[] =
         {
             "none?", "light", "playerstart",
             "shells", "bullets", "rockets", "riflerounds", "grenades",

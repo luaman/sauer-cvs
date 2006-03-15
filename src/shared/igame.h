@@ -3,7 +3,7 @@
 struct icliententities
 {
     virtual void editent(int i) = 0;
-    virtual char *entname(int i) = 0;
+    virtual const char *entname(int i) = 0;
     virtual void writeent(entity &e) = 0;
     virtual void readent(entity &e) = 0;
     virtual float dropheight(entity &e) = 0;
