@@ -57,7 +57,7 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
+void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -70,13 +70,18 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     }
     m->setskin(tex);  
-    if(teammate) { color = vec(1, 0.2f, 0.2f); }; // VERY TEMP, find a better teammate display
-    glColor3fv(&color.x);
+    if(teammate) glColor3f(1, 0.2f, 0.2f); // VERY TEMP, find a better teammate display
+    else glColor3fv(color.v);
     if(!modelshader) modelshader = lookupshaderbyname("stdmodel");
     modelshader->on();
     modelshader->set();
-    dir.rotate_around_z(yaw);
-    if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, dir.x, dir.y, dir.z, 0);
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        vec rdir(dir);
+        rdir.y *= -1;
+        rdir.rotate_around_z(PI+yaw*RAD);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, rdir.x, rdir.y, rdir.z, 0);
+    };
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
     modelshader->off();
 };
