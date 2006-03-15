@@ -677,7 +677,7 @@ void lightreaching(const vec &target, vec &color, vec &dir)
     color.x = min(1, max(0.4f, color.x));
     color.y = min(1, max(0.4f, color.y));
     color.z = min(1, max(0.4f, color.z));
-    dir.normalize();
+    if(!dir.iszero()) dir.normalize();
 };
 
 void brightencube(cube &c)
