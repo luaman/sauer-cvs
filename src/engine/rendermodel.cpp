@@ -75,6 +75,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(!modelshader) modelshader = lookupshaderbyname("stdmodel");
     modelshader->on();
     modelshader->set();
+    dir.rotate_around_z(yaw);
     if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, dir.x, dir.y, dir.z, 0);
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
     modelshader->off();

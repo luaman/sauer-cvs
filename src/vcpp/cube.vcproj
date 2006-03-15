@@ -1352,10 +1352,6 @@
 						>
 					</File>
 					<File
-						RelativePath="..\enet\include\enet\memory.h"
-						>
-					</File>
-					<File
 						RelativePath="..\enet\include\enet\protocol.h"
 						>
 					</File>
