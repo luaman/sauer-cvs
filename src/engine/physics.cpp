@@ -783,7 +783,7 @@ bool move(physent *d, vec &dir)
     return !collided;
 };
 
-bool bounce(physent *d, float secs, float elasticity = 0.8f, float waterfric = 3.0f)
+bool bounce(physent *d, float secs, float elasticity, float waterfric)
 {
     bool water = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z)).material == MAT_WATER;
     if(water)
