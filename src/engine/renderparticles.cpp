@@ -124,10 +124,10 @@ void render_particles(int time)
             {
                 glPushMatrix();
                 glTranslatef(p->o.x, p->o.y, p->o.z);
-                glRotatef(camera1->yaw-180, 0, -1, 0);
-                glRotatef(-camera1->pitch, 1, 0, 0);
+                glRotatef(camera1->yaw-180, 0, 0, 1);
+                glRotatef(camera1->pitch-90, 1, 0, 0);
                 float scale = 0.05f*pt->sz;
-                glScalef(-scale, -scale, -scale);
+                glScalef(-scale, scale, -scale);
                 char *t = p->text+(p->text[0]=='@');
                 float xoff = -text_width(t)/2;
                 float yoff = 0;
