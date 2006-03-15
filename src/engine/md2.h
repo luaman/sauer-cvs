@@ -219,7 +219,7 @@ struct md2 : model
             v.z =  (cv[2]*cf->scale[2]+cf->translate[2])/sc;
             float *normal = normaltable[cv[3]];
             vec &n = mnorms[frame][vi];
-            n = vec(normal[0], normal[1], normal[2]);
+            n = vec(normal[0], -normal[1], normal[2]);
         };
     };
 
