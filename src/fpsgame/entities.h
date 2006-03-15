@@ -337,7 +337,7 @@ struct entities : icliententities
             "base",
             "", "", "", "", "",
         };
-        return entnames[i];
+        return i>=0 && i<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
     };
 
     void writeent(entity &e)   // write any additional data to disk
