@@ -168,11 +168,11 @@ void yawray(vec &o, vec &ray, float angle)
     angle *= RAD;
     float c = cos(angle), s = sin(angle),
           ox = o.x, oy = o.y, 
-          rx = ray.x, ry = ray.y;
+          rx = ox+ray.x, ry = oy+ray.y;
     o.x = ox*c - oy*s;
     o.y = oy*c + ox*s;
-    ray.x = rx*c - ry*s;
-    ray.y = ry*c + rx*s;
+    ray.x = rx*c - ry*s - o.x;
+    ray.y = ry*c + rx*s - o.y;
 };
 
 bool mmintersect(const extentity &e, const vec &o, const vec &ray, float &dist)
@@ -186,9 +186,7 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float &dist)
     vec yo(o);
     yo.sub(eo);
     vec yray(ray);
-    yray.add(yo);
     if(yaw != 0) yawray(yo, yray, yaw);
-    yray.sub(yo);
     model *m = loadmodel(mmi.name); 
     if(!m) return false;
     vec center;
