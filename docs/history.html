@@ -14,7 +14,10 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
     <body>
         <div>Sauerbraten Change History</div>
         <UL>
-            <li> added shader system, each world surface can now have its own shader.. soon other things too. Look at the shader and setshader commands.
+            <li> converted the engine's use of OpenGL from xzy to xyz (don't ask)</li>
+            <li> added phong lighting for models</li>
+            <li> addes basic world shader that does texgen manually, should therefore fix any texturemapping bugs</li>
+            <li> added shader system, each world surface can now have its own shader... Look at the shader and setshader commands.
             <li> reorganized directory structure
             <li> can now specify custom animations for md2s
             <li> clip material no longer stops bullets (only the glass material does)

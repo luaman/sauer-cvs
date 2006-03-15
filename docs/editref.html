@@ -175,8 +175,9 @@ paste</pre>
 		primary texture). Flags allow you to specify preprocessing on the image, 
 		currently only rotation (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW).
 		<pre>shader NAME VS PS</pre>
-		defines a shader NAME with vertex shader VS and pixel shader PS. See data/stdshader.cfg for examples.
+		defines a shader NAME with vertex shader VS and pixel shader PS (both in ARB OpenGL 1.5 assembly format). See data/stdshader.cfg for examples.
 		These definitions can be put in map cfg files or anywhere else, and will only be compiled once.
+		Requires DX9 / shader 2 class hardware (radeon 9500 or better, geforce 5200 or better) to run (older hardware will default to basic rendering).
 		<pre>setshader NAME</pre>
 		Sets a previously defined shader as the current shader. Any following texture slots (see "texture" command) will have this shader
 		attached to it.

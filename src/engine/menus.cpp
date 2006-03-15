@@ -85,7 +85,7 @@ bool rendermenu(int scr_w, int scr_h)
     if(vmenu==1) refreshservers();
     gmenu &m = menus[vmenu];
     s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
-    int maxmenu = 16, offset =0;
+    int maxmenu = 17, offset =0;
     int mdisp = m.items.length(), cdisp = mdisp;
     if(vmenu)
     {
