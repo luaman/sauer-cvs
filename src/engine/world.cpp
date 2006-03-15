@@ -256,3 +256,9 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
 int getworldsize() { return hdr.worldsize; };
 int getmapversion() { return hdr.version; };
 
+bool insideworld(const vec &o)
+{
+    loopi(3) if(o.v[i]<0 || o.v[i]>=hdr.worldsize) return false;
+    return true;
+};
+

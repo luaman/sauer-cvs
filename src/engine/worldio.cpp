@@ -217,9 +217,7 @@ void load_world(char *mname)        // still supports all map formats that have 
         e.spawned = false;
         e.inoctanode = false;
         et->readent(e);
-        if(e.o.x<0 || e.o.x>hdr.worldsize ||
-           e.o.y<0 || e.o.y>hdr.worldsize ||
-           e.o.z<0 || e.o.z>hdr.worldsize)
+        if(!insideworld(e.o))
         {
             if(e.type != ET_LIGHT)
             {
