@@ -78,9 +78,8 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
     if(renderpath!=R_FIXEDFUNCTION)
     {
         vec rdir(dir);
-        rdir.y *= -1;
-        rdir.rotate_around_z((yaw+180.0f)*RAD);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, rdir.x, rdir.y, rdir.z, 0);
+        rdir.rotate_around_z((-yaw-180.0f)*RAD);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, rdir.x, -rdir.y, rdir.z, 0);
     };
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
     modelshader->off();
