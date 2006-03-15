@@ -24,9 +24,9 @@ struct fpsrender
         else if(d->timeinair>100)                           { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
         else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; };
-        uchar color[3];
-        lightreaching(d->o, color);
-        rendermodel(color, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/4, team, scale, speed, basetime, d, true);
+        vec color, dir;
+        lightreaching(d->o, color, dir);
+        rendermodel(color, dir, mdlname, anim, (int)(size_t)d, 0, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/4, team, scale, speed, basetime, d, true);
     };
     
     void rendergame(fpsclient &cl, int gamemode)

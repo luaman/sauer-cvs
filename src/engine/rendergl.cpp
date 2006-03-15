@@ -28,12 +28,14 @@ PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_ = NULL;
 hashtable<char *, Shader> shaders;
 Shader *curshader = NULL;
 
+Shader *lookupshaderbyname(char *name) { return shaders.access(name); };
+
 void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
 {
     glGenPrograms_(1, &idx);
     glBindProgram_(type, idx);
     def += strspn(def, " \t\r\n");
-    glProgramString_(type, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(def), def);
+    glProgramString_(type, GL_PROGRAM_FORMAT_ASCII_ARB, (GLsizei)strlen(def), def);
     GLint err;
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
     if(err!=-1)
@@ -47,7 +49,7 @@ void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
 
 void shader(char *name, char *vs, char *ps)
 {
-    if(shaders.access(name)) return;
+    if(lookupshaderbyname(name)) return;
     char *rname = newstring(name);
     Shader &s = shaders[rname];
     s.name = rname;
@@ -60,7 +62,7 @@ void shader(char *name, char *vs, char *ps)
 
 void setshader(char *name)
 {
-    Shader *s = shaders.access(name);
+    Shader *s = lookupshaderbyname(name);
     if(!s) conoutf("no such shader: %s", name);
     else curshader = s;
 };

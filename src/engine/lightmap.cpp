@@ -605,7 +605,7 @@ void clearlights()
     uchar bright[3] = { 128, 128, 128 };
     alloctexids();
     loopi(lightmaps.length() + LMID_RESERVED) createtexture(lmtexids[i], 1, 1, bright, false, false);
-    loopv(et->getents()) memset(et->getents()[i]->color, 255, 3);
+    loopv(et->getents()) et->getents()[i]->color = vec(1, 1, 1);
 };
 
 void updateentlighting()
@@ -622,7 +622,7 @@ void updateentlighting()
                 height = float((mmi.h ? mmi.h : 8.0f) + mmi.zoff + e.attr3);
         };
         vec target(e.o.x, e.o.y, e.o.z + height);
-        lightreaching(target, e.color);
+        lightreaching(target, e.color, e.dir);
     };
 };
 
@@ -642,17 +642,16 @@ void initlights()
     updateentlighting();
 };
 
-void lightreaching(const vec &target, uchar color[3])
+void lightreaching(const vec &target, vec &color, vec &dir)
 {
     if(fullbright)
     {
-        color[0] = 255;
-        color[1] = 255;
-        color[2] = 255;
+        color = vec(1, 1, 1);
+        dir = vec(0, 0, 1);
         return;
     };
 
-    uint r = 0, g = 0, b = 0;
+    color = dir = vec(0, 0, 0);
     loopv(et->getents())
     {
         entity &e = *et->getents()[i];
@@ -672,13 +671,13 @@ void lightreaching(const vec &target, uchar color[3])
         if(e.attr1)
             intensity -= mag / float(e.attr1);
  
-        r += (uint)(intensity * float(e.attr2));
-        g += (uint)(intensity * float(e.attr3));
-        b += (uint)(intensity * float(e.attr4));
+        color.add(vec(e.attr2, e.attr3, e.attr4).div(255).mul(intensity));
+        dir.add(vec(e.o).sub(target).normalize().mul(intensity));
     };
-    color[0] = min(255, max(100, r));
-    color[1] = min(255, max(100, g));
-    color[2] = min(255, max(100, b));
+    color.x = min(1, max(0.4f, color.x));
+    color.y = min(1, max(0.4f, color.y));
+    color.z = min(1, max(0.4f, color.z));
+    dir.normalize();
 };
 
 void brightencube(cube &c)

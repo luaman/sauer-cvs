@@ -1,6 +1,6 @@
 // the interface the game uses to access the engine
 
-extern void lightreaching(const vec &target, uchar color[3]);
+extern void lightreaching(const vec &target, vec &color, vec &dir);
 
 enum { RAY_BB = 1, RAY_POLY = 3, RAY_ALPHAPOLY = 7, RAY_CLIPMAT = 16, RAY_SKIPFIRST = 32, RAY_EDITMAT = 64 };
 
@@ -127,7 +127,7 @@ extern void playsound(int n, vec *loc = 0);
 extern void initsound();
 
 // rendermd2
-extern void rendermodel(uchar *color, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull);
+extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull);
 extern void abovemodel(vec &o, const char *mdl, float scale);
 extern mapmodelinfo &getmminfo(int i);
 

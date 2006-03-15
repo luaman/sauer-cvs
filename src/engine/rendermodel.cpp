@@ -4,6 +4,7 @@
 #include "engine.h"
 
 VARP(animationinterpolationtime, 0, 150, 1000);
+Shader *modelshader = NULL;
 
 #include "md2.h"
 #include "md3.h"
@@ -56,7 +57,7 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(uchar *color, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
+void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -69,9 +70,14 @@ void rendermodel(uchar *color, const char *mdl, int anim, int varseed, int tex, 
         if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     }
     m->setskin(tex);  
-    if(teammate) { color[2] = 255; color[0] = 50; color[1] = 50; }; // VERY TEMP, find a better teammate display
-    glColor3ubv(color);
+    if(teammate) { color = vec(1, 0.2f, 0.2f); }; // VERY TEMP, find a better teammate display
+    glColor3fv(&color.x);
+    if(!modelshader) modelshader = lookupshaderbyname("stdmodel");
+    modelshader->on();
+    modelshader->set();
+    if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, dir.x, dir.y, dir.z, 0);
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
+    modelshader->off();
 };
 
 void abovemodel(vec &o, const char *mdl, float scale)

@@ -19,7 +19,7 @@ struct extentity : entity                       // part of the entity that doesn
 {
     char spawned;                               // the only dynamic state of a map entity
 	uchar inoctanode;
-    uchar color[3];
+    vec color, dir;
 };
 
 //extern vector<extentity *> ents;                // map entities

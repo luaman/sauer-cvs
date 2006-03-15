@@ -36,29 +36,18 @@ struct vec
     bool reject(const vec &o, float max) { return x>o.x+max || x<o.x-max || y>o.y+max || y<o.y-max; };
     vec &cross(const vec &a, const vec &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; return *this; };
 
+    void rotate_around_z(float yaw) { *this = vec(cosf(yaw)*x+sinf(yaw)*x, -sinf(yaw)*x+cosf(yaw)*y, z); };
+
     float dist_to_aabox(const vec &center, const vec &extent) const
     {
-
         float sqrdist = 0;
-
-        
-
         loopi(3)
-
         {
-
             float closest = (*this)[i]-center[i];
-
             if     (closest<-extent[i]) { float delta = closest+extent[i]; sqrdist += delta*delta; }
-
             else if(closest> extent[i]) { float delta = closest-extent[i]; sqrdist += delta*delta; };
-
         };
-
-
-
         return sqrtf(sqrdist);
-
     };
 
     float dist_to_bb(const vec &min, const vec &max) const

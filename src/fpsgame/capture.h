@@ -2,14 +2,13 @@
 
 struct capturestate
 {
-    static const int CAPTURERADIUS = 50;
+    static const int CAPTURERADIUS = 64;
     static const int OCCUPYPOINTS = 10;
     static const int OCCUPYLIMIT = 100;
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
-    static const int REPAMMODIST = 25;
+    static const int REPAMMODIST = 32;
     static const int RESPAWNSECS = 10;        
-
     struct baseinfo
     {
         vec o;
@@ -165,7 +164,7 @@ struct captureclient : capturestate
             {
                 baseinfo &b = bases[j++];
                 const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
-                rendermodel(e->color, flagname, ANIM_STATIC, 0, 0, e->o.x, e->o.z, e->o.y, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
+                rendermodel(e->color, e->dir, flagname, ANIM_STATIC, 0, 0, e->o.x, e->o.z, e->o.y, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
                 if(b.owner[0])
                 {
                     if(b.enemy[0]) s_sprintf(b.info)("%s vs. %s (%d)", b.owner, b.enemy, b.converted);

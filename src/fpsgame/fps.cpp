@@ -448,9 +448,9 @@ struct fpsclient : igameclient
     {
         static char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "hudguns/gl", "hudguns/pistol" };
         if(player1->gunselect>sizeof(hudgunnames)/sizeof(hudgunnames[0])) return;
-        uchar color[3];
-        lightreaching(player1->o, color);
-        rendermodel(color, hudgunnames[player1->gunselect], anim, 0, 0, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base, NULL, false);
+        vec color, dir;
+        lightreaching(player1->o, color, dir);
+        rendermodel(color, dir, hudgunnames[player1->gunselect], anim, 0, 0, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 0.44f, speed, base, NULL, false);
     };
 
     void drawhudgun()

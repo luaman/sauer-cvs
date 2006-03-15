@@ -72,6 +72,7 @@ extern void addstrip(int tex, int start, int n);
 extern Texture *textureload(char *tname, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true);
 extern Texture *lookuptexture(int tex);
 extern Shader  *lookupshader(int slot);
+extern Shader  *lookupshaderbyname(char *name);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24);
 extern void readmatrices();
 
