@@ -88,6 +88,8 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         vec ambient = vec(color).mul(0.5f);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, ambient.x, ambient.y, ambient.z, 0);
 
+        vec spec = vec(color).mul(1.5f);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, spec.x, spec.y, spec.z, 0);
     };
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
     modelshader->off();
