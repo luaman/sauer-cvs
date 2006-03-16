@@ -120,15 +120,22 @@ struct weaponstate
 
     void bounceupdate(int time)
     {
+        static const int maxtime = 20; // run at least 50 times a second
         loopv(bouncers)
         {
             bouncent &bnc = bouncers[i];
             particle_splash(1, 2, 150, bnc.o);
-            if((bnc.lifetime -= time)<0 || bounce(&bnc, time/1000.0f, 0.6f))
+            while(time > 0)
             {
-                int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
-                explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);
-                bouncers.remove(i);
+                int btime = min(maxtime, time);
+                time -= btime;
+                if((bnc.lifetime -= btime)<0 || bounce(&bnc, btime/1000.0f, 0.6f))
+                {
+                    int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
+                    explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);
+                    bouncers.remove(i);
+                    break;
+                };
             };
         };
     };
