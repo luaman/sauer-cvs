@@ -226,7 +226,7 @@ struct captureclient : capturestate
     {
         float bestdist = 1e10f;
         int best = -1;
-        int attackers = 0, attacked = -1;
+        int attackers = INT_MAX, attacked = -1;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -238,7 +238,7 @@ struct captureclient : capturestate
                 best = i;
                 bestdist = dist;
             }
-            else if(b.enemy[0] && b.enemies > attackers)
+            else if(b.enemy[0] && b.enemies < attackers)
             {
                 attacked = i;
                 attackers = b.enemies; 
