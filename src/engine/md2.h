@@ -420,11 +420,8 @@ struct md2 : model
         
             md2_anpos prev, current;
             current.setframes(d ? d->current[0] : ai);
-		    vec *verts1 = mverts[current.fr1];
-		    vec *verts2 = mverts[current.fr2];
-		    vec *verts1p;
-		    vec *verts2p;
-            vec *norms = mnorms[current.fr1];   // do we need to interpolate normals? don't think so
+		    vec *verts1 = mverts[current.fr1], *verts2 = mverts[current.fr2], *verts1p, *verts2p;
+            vec *norms1 = mnorms[current.fr1], *norms2 = mnorms[current.fr2], *norms1p, *norms2p;
 		    float aifrac1, aifrac2;
 		    bool doai = d && lastmillis-d->lastanimswitchtime[0]<animationinterpolationtime;
 		    if(doai)
@@ -432,6 +429,8 @@ struct md2 : model
 		        prev.setframes(d->prev[0]);
 		        verts1p = mverts[prev.fr1];
 		        verts2p = mverts[prev.fr2];
+                norms1p = mnorms[prev.fr1];
+                norms2p = mnorms[prev.fr2];
 		        aifrac1 = (lastmillis-d->lastanimswitchtime[0])/(float)animationinterpolationtime;
 		        aifrac2 = 1-aifrac1;
 		    };
@@ -448,19 +447,24 @@ struct md2 : model
 				    float tv = *((float*)command++);
 				    glTexCoord2f(tu, tv);
 				    int vn = *command++;
-                    glNormal3fv(norms[vn].v);
-				    vec &v1 = verts1[vn];
-				    vec &v2 = verts2[vn];
-				    #define ip(c)  (v1.c*current.frac2+v2.c*current.frac1)
-				    #define ipv(c) (v1p.c*prev.frac2+v2p.c*prev.frac1)
-				    #define ipa(c) (ip(c)*aifrac1+ipv(c)*aifrac2)
+                    #define ipn(c)  (n1.c*current.frac2+n2.c*current.frac1)
+                    vec &n1 = norms1[vn], &n2 = norms2[vn];
+				    vec &v1 = verts1[vn], &v2 = verts2[vn];
+				    #define ip(v1, v2, c)  (v1.c*current.frac2+v2.c*current.frac1)
+				    #define ipv(v1, v2, c) (v1 ## p.c*prev.frac2+v2 ## p.c*prev.frac1)
+				    #define ipa(v1, v2, c) (ip(v1, v2, c)*aifrac1+ipv(v1, v2, c)*aifrac2)
 				    if(doai)
 				    {
-				        vec &v1p = verts1p[vn];
-				        vec &v2p = verts2p[vn];
-				        glVertex3f(ipa(x), ipa(y), ipa(z));
+                        vec &n1p = norms1p[vn], &n2p = norms2p[vn];
+                        glNormal3f(ipa(n1, n2, x), ipa(n1, n2, y), ipa(n1, n2, z));
+				        vec &v1p = verts1p[vn], &v2p = verts2p[vn];
+				        glVertex3f(ipa(v1, v2, x), ipa(v1, v2, y), ipa(v1, v2, z));
 				    }
-				    else glVertex3f(ip(x), ip(y), ip(z));
+				    else
+                    {
+                        glNormal3f(ip(n1, n2, x), ip(n1, n2, y), ip(n1, n2, z));
+                        glVertex3f(ip(v1, v2, x), ip(v1, v2, y), ip(v1, v2, z));
+                    };
 			    };
 
 			    xtraverts += numVertex;
