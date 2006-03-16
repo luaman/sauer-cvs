@@ -191,6 +191,9 @@ menuitem A</pre>
 		substitute the values of console variables this way, i.e $fov gives the current 
 		fov. Some aliases are set automatically, for example $arg1 to $argN are set if 
 		you supply arguments when you execute an alias.
+		Alternative to $x is @x, which is using an alias as a macro. The difference is that @x can be subtituted inside
+		[] or () forms before they have ever been evaluated, which makes them useful for
+		composing strings or creating code on the fly.
 		<br>
 		<br>
 		There are two alternative ways to "" to quote a string: () and []. They work in 

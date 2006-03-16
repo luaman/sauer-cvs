@@ -185,6 +185,7 @@ void save_world(char *mname)
 
 void load_world(char *mname)        // still supports all map formats that have existed since the earliest cube betas!
 {
+    int loadingstart = SDL_GetTicks();
     setnames(mname);
     gzFile f = gzopen(cgzname, "rb9");
     if(!f) { conoutf("could not read map %s", cgzname); return; };
@@ -254,7 +255,7 @@ void load_world(char *mname)        // still supports all map formats that have 
 
     allchanged();
 
-    conoutf("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
+    conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);
     estartmap(mname);
     execfile("data/default_map_settings.cfg");

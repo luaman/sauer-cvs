@@ -89,10 +89,54 @@ struct weaponstate
         };
     };
 
+    struct bouncent : physent
+    {
+        int lifetime;
+        bool local;
+        fpsent *owner;
+    };
+
+    vector<bouncent> bouncers;
+
+    void newbouncer(vec &from, vec &to, bool local, fpsent *owner)
+    {
+        bouncent &bnc = bouncers.add();
+        bnc.reset();
+        bnc.type = ENT_BOUNCE;
+        bnc.o = from;
+        bnc.radius = 1;
+        bnc.eyeheight = 1;
+        bnc.aboveeye = 1;
+        vec m(to);
+        m.sub(from).normalize().mul(2.0f*owner->radius);
+        bnc.o.add(m);
+        m.normalize();
+        m.mul(200.0f);
+        bnc.vel = m;
+        bnc.lifetime = 3000;
+        bnc.local = local;
+        bnc.owner = owner;
+    };
+
+    void bounceupdate(int time)
+    {
+        loopv(bouncers)
+        {
+            bouncent &bnc = bouncers[i];
+            particle_splash(1, 2, 150, bnc.o);
+            if((bnc.lifetime -= time)<0 || bounce(&bnc, time/1000.0f, 0.6f))
+            {
+                int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
+                explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);
+                bouncers.remove(i);
+            };
+        };
+    };
+
     static const int MAXPROJ = 100;
     struct projectile { vec o, to; float speed; fpsent *owner; int gun; bool inuse, local; } projs[MAXPROJ];
 
-    void projreset() { loopi(MAXPROJ) projs[i].inuse = false; };
+    void projreset() { loopi(MAXPROJ) projs[i].inuse = false; bouncers.setsize(0); };
 
     void newprojectile(vec &from, vec &to, float speed, bool local, fpsent *owner, int gun)
     {
@@ -138,13 +182,13 @@ struct weaponstate
 
     static const int RL_DAMRAD = 40;  
 
-    void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at, vec &dir, float dist)
+    void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at, vec &dir, float dist, int gun)
     {
         if(o->state!=CS_ALIVE) return;
         if(dist<RL_DAMRAD) 
         {
-            int damage = (int)(qdam*(1-dist*2/(float)guns[GUN_RL].damage));
-            if(o==at) damage /= 2; 
+            int damage = (int)(qdam*(1-dist/1.5f/RL_DAMRAD));
+            if(gun==GUN_RL && o==at) damage /= 2; 
             hit(cn, damage, o, at, dir, true);
         };
     };
@@ -159,29 +203,34 @@ struct weaponstate
         return dist;
     };
 
-    void splash(projectile *p, vec &v, vec &vold, dynent *notthis, int qdam)
+    void explode(bool local, fpsent *owner, vec &v, dynent *notthis, int qdam, int gun)
     {
         particle_splash(0, 200, 300, v);
+        playsound(S_RLHIT, &v);
+        newsphere(v, RL_DAMRAD, 0);
+        if(!local) return;
+        loopi(cl.numdynents())
+        {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(!o || o==notthis) continue;
+            vec dir;
+            float dist = rocketdist(o, dir, v);
+            radialeffect(o, v, i-1, qdam, owner, dir, dist, gun);
+        };
+    };
+
+    void splash(projectile *p, vec &v, dynent *notthis, int qdam)
+    {
         p->inuse = false;
         if(p->gun!=GUN_RL)
         {
+            particle_splash(0, 100, 200, v);
             playsound(S_FEXPLODE, &v);
             // no push?
         }
         else
         {
-            playsound(S_RLHIT, &v);
-            newsphere(v, RL_DAMRAD, 0);
-            ///dodynlight(vold, v, 0, 0, p->owner);
-            if(!p->local) return;
-            loopi(cl.numdynents())
-            {
-                fpsent *o = (fpsent *)cl.iterdynents(i);
-                if(!o || o==notthis) continue;
-                vec dir;
-                float dist = rocketdist(o, dir, v);
-                radialeffect(o, v, i-1, qdam, p->owner, dir, dist);
-            };
+            explode(p->local, p->owner, v, notthis, qdam, GUN_RL);
         };
     };
 
@@ -190,7 +239,7 @@ struct weaponstate
         if(o->state!=CS_ALIVE) return;
         if(intersect(o, p->o, v))
         {
-            splash(p, v, p->o, o, qdam);
+            splash(p, v, o, qdam);
             vec dir;
             rocketdist(o, dir, v);
             hit(i, qdam, o, p->owner, dir, p->gun==GUN_RL);
@@ -224,7 +273,7 @@ struct weaponstate
             {
                 if(dist<1)
                 {
-                    splash(p, v, p->o, NULL, qdam);
+                    splash(p, v, NULL, qdam);
                 }
                 else
                 {
@@ -276,8 +325,13 @@ struct weaponstate
                 break;
 
             case GUN_GL:
-                //newbouncy(...)
+            {
+                float dist = from.dist(to);
+                vec up = to;
+                up.z += dist/8;
+                newbouncer(from, up, local, d);
                 break;
+            };
 
             case GUN_RIFLE: 
                 particle_splash(0, 200, 250, to);

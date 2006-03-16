@@ -810,47 +810,18 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         d->gravity.mul(k);
         d->vel.mul(k);
         d->vel.sub(wvel);
-        return false;
+        //return false;
     }
     else if(inside)
     {
         d->o = old;
         d->gravity.mul(-elasticity);
         d->vel.mul(-elasticity);
-        return false;
+        //return false;
     };
-    return true;
+    //return true;
+    return hitplayer;
 };
-
-physent bnc;
-
-void bncloop()
-{
-    if(bnc.type != ENT_BOUNCE) return;
-    bounce(&bnc, curtime/1000.0f);
-    rendermodel(vec(1, 1, 1), vec(0, 0, 1), "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, 0, 0, false, 1.0f, 10.0f, 0, NULL, true, 1);
-};
-
-void bnctest()
-{
-    loadmodel("carrot");
-    bnc.reset();
-    bnc.type = ENT_BOUNCE;
-    bnc.o = player->o;
-    bnc.radius = 2;
-    bnc.eyeheight = 2;
-    bnc.aboveeye = 2;
-    vec m;
-    vecfromyawpitch(player->yaw, player->pitch, 1, 0, m, true);
-    m.normalize();
-    m.mul(2.0f*player->radius);
-    bnc.o.add(m);
-    m.normalize();
-    m.mul(200.0f);
-    bnc.vel = m;
-};
-
-COMMAND(bnctest, ARG_NONE);
 
 void phystest()
 {

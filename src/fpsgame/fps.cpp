@@ -195,6 +195,7 @@ struct fpsclient : igameclient
         et.checkquad(curtime);
         if(m_arena) arenarespawn();
         ws.moveprojectiles(curtime);
+        ws.bounceupdate(curtime);
         if(cc.clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos);     // only shoot when connected to server
         gets2c();           // do this first, so we have most accurate information when our player moves
         otherplayers();

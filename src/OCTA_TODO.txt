@@ -15,29 +15,18 @@ eihrul:
 - sound entities
 
 aard (e = eihrul (or gilt) could do it):
-
-[23:48] Lee: so, the function of interest is: bool bounce(physent *d, float secs, float elasticity = 0.8f, float waterfric = 3.0f) 
-[23:49] Lee: you just call it with the ent and the number of elapsed seconds, shouldn't need to touch the last two params
-[23:49] Lee: returns true if the ent moved without collisions
-[23:49] Lee: returns false if it collided
-[23:49] Lee: there is a global variable, hitplayer, that is set if it collided with a player
-[23:50] Lee: should just make sure it gets called no less than a certain number of times a second
-[23:50] Lee: maybe 20 or so
-[23:50] Lee: or every frame, whichever is more, i guess
-
+- finish up grenade launcher (low fps? ammo? skin? model?)
 - windows installer
-- see if a workaround for th 8x.xx texture bugs is possible -> with shaders this would also go away
-- go do quick phong lighting for models
+- optimize model shader
 - monster spawner ammo
 - (e) make 3rd person weapons show... how to make an axe swing rather than go back and forth?
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - iconic stats
 - new BAS sounds?
-- timing issue (map loading times?)
 - make very clear section in the docs about what you can and cannot do with sauer
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - (e) per sound volume
-- (e) grenade launcher | bouncing gib particles
+- (e) bouncing gib particles
 - (e) make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
 - (e) new multiplayer model.. md3?
 - (e) keybinds per mode: editing/game
@@ -118,7 +107,6 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - (EG) landscape generation and tools (see wiki)
 - (E) improve visibleface() to not render some polys inside solids anymore (overdraw!)
 - (E) reduce geometry by merging surfaces and lightmaps
-- shader system
 - LOD on VA's
 - render entities at distance as sprites
 - try out hardware occlusion queries before portals
