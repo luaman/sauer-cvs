@@ -156,6 +156,11 @@ void gl_init(int w, int h)
     glNewList(1, GL_COMPILE);
     gluSphere(qsphere, 1, 12, 6);
     glEndList();
+
+    exec("data/stdshader.cfg");
+    defaultshader = lookupshaderbyname("default");
+    notextureshader = lookupshaderbyname("notexture");
+    defaultshader->set();
 };
 
 SDL_Surface *rotate(SDL_Surface *s)
@@ -391,8 +396,6 @@ extern int explicitsky, skyarea;
 
 void gl_drawframe(int w, int h, float curfps)
 {
-    if(!defaultshader) defaultshader = lookupshaderbyname("default");
-    if(!notextureshader) notextureshader = lookupshaderbyname("notexture");
     defaultshader->set();
 
     recomputecamera();

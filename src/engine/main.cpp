@@ -129,6 +129,7 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
     glPushMatrix();
     glLoadIdentity();
     glOrtho(0, scr_w*4, scr_h*4, 0, -1, 1);
+    notextureshader->set();
 
     glBegin(GL_QUADS);
 
@@ -145,6 +146,7 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
 
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D); 
+    defaultshader->set();
     
     draw_text(text1, 70, 4*FONTH + FONTH/2);
     if(bar2>0) draw_text(text2, 70, 6*FONTH + FONTH/2);
@@ -303,7 +305,6 @@ int main(int argc, char **argv)
 
     log("gl");
     gl_init(scr_w, scr_h);
-    exec("data/stdshader.cfg");
     crosshair = textureload(newstring("data/crosshair.png"));
     if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
     computescreen("initializing...");

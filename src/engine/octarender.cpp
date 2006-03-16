@@ -1056,12 +1056,10 @@ void renderq(int w, int h)
                 {
                     GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     s[si[l]] = 8.0f/tex->xs;
-                    if(renderpath==R_FIXEDFUNCTION) glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
-                    else glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);
+                    glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
                     GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
-                    if(renderpath==R_FIXEDFUNCTION) glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
-                    else glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 1, t);
+                    glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
                     lastxs = tex->xs;
                     lastys = tex->ys;
                     lastl = l;

@@ -76,17 +76,39 @@ void addident(char *name, ident *id)
 
 char *parseexp(char *&p, int right)             // parse any nested set of () or []
 {
+    static vector<char> wordbuf;
+    wordbuf.setsize(0);
     int left = *p++;
-    char *word = p;
     for(int brak = 1; brak; )
     {
         int c = *p++;
-        if(c=='\r') *(p-1) = ' ';               // hack
+        if(c=='\r') continue;               // hack
+        if(c=='@')
+        {
+            char *ident = p;
+            while(isalnum(*p)) p++;
+            c = *p;
+            *p = 0;
+            char *alias = getalias(ident);
+            *p = c;
+            if(alias)
+            {
+                while(*alias) wordbuf.add(*alias++);
+            }
+            else
+            {
+                ident--;
+                while(ident!=p) wordbuf.add(*ident++);
+            };
+            continue;
+        };
         if(c==left) brak++;
         else if(c==right) brak--;
         else if(!c) { p--; conoutf("missing \"%c\"", right); return NULL; };
+        wordbuf.add(c);
     };
-    char *s = newstring(word, p-word-1);
+    wordbuf.pop();
+    char *s = newstring(wordbuf.getbuf(), wordbuf.length());
     if(left=='(')
     {
         string t;
