@@ -86,9 +86,10 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
 
         vec ambient = vec(color).mul(0.5f);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, ambient.x, ambient.y, ambient.z, 0);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, ambient.x, ambient.y, ambient.z, 1);
 
         vec spec = vec(color).mul(1.5f);
+        loopi(3) spec[i] = min(spec[i], 1.0f);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, spec.x, spec.y, spec.z, 0);
     };
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
