@@ -222,7 +222,7 @@ struct captureclient : capturestate
         findscore(team).total = total;
     };
 
-    int closesttoenemy(const char *team)
+    int closesttoenemy(const char *team, bool noattacked = false)
     {
         float bestdist = 1e10f;
         int best = -1;
@@ -231,6 +231,7 @@ struct captureclient : capturestate
         {
             baseinfo &b = bases[i];
             if(!b.owner[0] || strcmp(b.owner, team)) continue;
+            if(noattacked && b.enemy[0]) continue;
             float dist = disttoenemy(b);
             if(dist < bestdist)
             {
@@ -249,7 +250,8 @@ struct captureclient : capturestate
 
     int pickspawn(const char *team)
     {
-        int closest = closesttoenemy(team);
+        int closest = closesttoenemy(team, true);
+        if(closest < 0) closest = closesttoenemy(team, false);
         if(closest < 0) return -1;
         baseinfo &b = bases[closest];
 
