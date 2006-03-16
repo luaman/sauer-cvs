@@ -1088,6 +1088,8 @@ void renderq(int w, int h)
 
 void rendermaterials()
 {
+    notextureshader->set();
+
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
@@ -1120,6 +1122,8 @@ void rendermaterials()
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
+
+    defaultshader->set();
 };
 
 void drawface(int orient, int x, int y, int z, int size, float offset)

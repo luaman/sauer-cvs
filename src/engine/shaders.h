@@ -21,4 +21,6 @@ struct Shader
     };
 };
 
+extern Shader *defaultshader;
+extern Shader *notextureshader;
 

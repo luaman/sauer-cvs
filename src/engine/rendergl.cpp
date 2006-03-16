@@ -28,6 +28,7 @@ PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_ = NULL;
 hashtable<char *, Shader> shaders;
 Shader *curshader = NULL;
 Shader *defaultshader = NULL;
+Shader *notextureshader = NULL;
 
 Shader *lookupshaderbyname(char *name) { return shaders.access(name); };
 
@@ -326,11 +327,15 @@ void drawskybox(int farplane, bool limited)
 
     if(limited)
     {
+        notextureshader->set();
+
         glDisable(GL_TEXTURE_2D);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         rendersky();
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glEnable(GL_TEXTURE_2D);
+
+        defaultshader->set();
     };
 
     glLoadIdentity();
@@ -387,6 +392,7 @@ extern int explicitsky, skyarea;
 void gl_drawframe(int w, int h, float curfps)
 {
     if(!defaultshader) defaultshader = lookupshaderbyname("default");
+    if(!notextureshader) notextureshader = lookupshaderbyname("notexture");
     defaultshader->set();
 
     recomputecamera();
@@ -464,6 +470,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
+    notextureshader->set();
 
     gl_drawhud(w, h, (int)curfps, 0, verts.length(), underwater);
 

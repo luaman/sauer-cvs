@@ -64,6 +64,8 @@ void refreshservers();
 
 void drawarrow(int dir, int x, int y, int size, float r = 1.0f, float g = 1.0f, float b = 1.0f)
 {
+    notextureshader->set();
+
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glColor3f(r, g, b);
@@ -77,6 +79,8 @@ void drawarrow(int dir, int x, int y, int size, float r = 1.0f, float g = 1.0f, 
     
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
+
+    defaultshader->set();
 };
 
 bool rendermenu(int scr_w, int scr_h)

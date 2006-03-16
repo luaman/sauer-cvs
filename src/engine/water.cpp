@@ -268,8 +268,10 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 
          glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
          glDisable(GL_TEXTURE_2D);
+         notextureshader->set();
          glColor3f(0.3f, 0.15f, 0.0f);
          matloop(MAT_GLASS, drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, 0.01f));
+         defaultshader->set();
     }
     else
     {

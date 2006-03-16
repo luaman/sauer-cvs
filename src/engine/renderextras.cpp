@@ -28,6 +28,8 @@ void dot(int x, int y, float z)
 
 void blendbox(int x1, int y1, int x2, int y2, bool border)
 {
+    notextureshader->set();
+
     glDepthMask(GL_FALSE);
     glDisable(GL_TEXTURE_2D);
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
@@ -53,6 +55,8 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);
+
+    defaultshader->set();
 };
 
 struct sphere { vec o; float size, max; int type; };
@@ -191,6 +195,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     };
 
     glEnable(GL_TEXTURE_2D);
+    defaultshader->set();
 
     glLoadIdentity();
     glOrtho(0, w*4, h*4, 0, -1, 1);
