@@ -43,6 +43,7 @@ struct fpsrender
         cl.ms.monsterrender();
         cl.et.renderentities();
         if(m_capture) cl.cpc.renderbases();
+//        extern void bncloop(); bncloop();
     };
 
 };

@@ -822,15 +822,13 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
     return true;
 };
 
-#if 0
 physent bnc;
 
 void bncloop()
 {
     if(bnc.type != ENT_BOUNCE) return;
     bounce(&bnc, curtime/1000.0f);
-    uchar color[3] = {255, 255, 255};
-    rendermodel(color, "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, 0, 0, false, 1.0f, 10.0f, 0, NULL, true, 0.5f);
+    rendermodel(vec(1, 1, 1), vec(0, 0, 1), "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, 0, 0, false, 1.0f, 10.0f, 0, NULL, true, 1);
 };
 
 void bnctest()
@@ -853,7 +851,6 @@ void bnctest()
 };
 
 COMMAND(bnctest, ARG_NONE);
-#endif
 
 void phystest()
 {
