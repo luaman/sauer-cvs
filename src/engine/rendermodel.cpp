@@ -24,7 +24,7 @@ void mapmodelreset() { mapmodels.setsize(0); };
 
 mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i] : *(mapmodelinfo *)0; };
 
-COMMAND(mapmodel, ARG_6STR);
+COMMAND(mapmodel, ARG_5STR);
 COMMAND(mapmodelreset, ARG_NONE);
 
 // model registry
