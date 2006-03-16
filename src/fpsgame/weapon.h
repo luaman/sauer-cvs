@@ -108,7 +108,7 @@ struct weaponstate
         bnc.eyeheight = 1;
         bnc.aboveeye = 1;
         vec m(to);
-        m.sub(from).normalize().mul(2.0f*owner->radius);
+        m.sub(from).normalize().mul(owner->radius+1.0f);
         bnc.o.add(m);
         m.normalize();
         m.mul(200.0f);
@@ -125,15 +125,16 @@ struct weaponstate
         {
             bouncent &bnc = bouncers[i];
             particle_splash(1, 2, 150, bnc.o);
-            while(time > 0)
+            int rtime = time;
+            while(rtime > 0)
             {
-                int btime = min(maxtime, time);
-                time -= btime;
-                if((bnc.lifetime -= btime)<0 || bounce(&bnc, btime/1000.0f, 0.6f))
+                int qtime = min(maxtime, rtime);
+                rtime -= qtime;
+                if((bnc.lifetime -= qtime)<0 || bounce(&bnc, qtime/1000.0f, 0.6f))
                 {
                     int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
                     explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);
-                    bouncers.remove(i);
+                    bouncers.remove(i--);
                     break;
                 };
             };
