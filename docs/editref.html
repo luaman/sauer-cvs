@@ -201,12 +201,12 @@ music name ondone</pre>
 		Plays sound N, see data/sounds.cfg for default sounds, and use registersound to 
 		register your own. for example, <code>sound 0</code> and <code>sound (registersound 
 			"aard/jump")</code>both play the standard jump sound.
-		<pre>mapmodel R H Z S N</pre>
+		<pre>mapmodel R H Z S N SI</pre>
 		<P>
 			registers a mapmodel that can be placed in maps using <code><font size="2">newent 
 					mapmodel</font></code> (see newent). N is the name, R is the square 
 			radius, H the height, Z the initial Z-offset above ground, and S the snap value 
-			in 16ths of a cube unit (0 meaning no snap). All of these values are used for 
+			in 16ths of a cube unit (0 meaning no snap), SI is the specular intensity (not given or 0 gives the default of 100, good for metal/plastics and anything shiny, use lower values like 50 for wood etc, -1 means off entirely). All of these values are used for 
 			collision as well as rendering. Specifying a snap can be useful for 
 			architectural mapmodels, as the md2 format doesn't provide exact vertex 
 			coordinates. Example: <code><font size="2">mapmodel 4 2 4 2</font></code> this 

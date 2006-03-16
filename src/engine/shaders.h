@@ -19,21 +19,6 @@ struct Shader
         glBindProgram_(GL_VERTEX_PROGRAM_ARB,   vs);
         glBindProgram_(GL_FRAGMENT_PROGRAM_ARB, ps);
     };
-
-    static void on()        // FIXME make global
-    {
-        if(renderpath==R_FIXEDFUNCTION) return;
-        glEnable(GL_VERTEX_PROGRAM_ARB);
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-    };
-
-    static void off()
-    {
-        if(renderpath==R_FIXEDFUNCTION) return;
-        glDisable(GL_VERTEX_PROGRAM_ARB);
-        glDisable(GL_FRAGMENT_PROGRAM_ARB);
-    };
-
 };
 
 

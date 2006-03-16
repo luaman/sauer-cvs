@@ -830,7 +830,7 @@ void bncloop()
     if(bnc.type != ENT_BOUNCE) return;
     bounce(&bnc, curtime/1000.0f);
     uchar color[3] = {255, 255, 255};
-    rendermodel(color, "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
+    rendermodel(color, "carrot", ANIM_STATIC, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, 0, 0, false, 1.0f, 10.0f, 0, NULL, true, 0.5f);
 };
 
 void bnctest()

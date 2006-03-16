@@ -1014,8 +1014,6 @@ void renderq(int w, int h)
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 
-    Shader::on();
-
     Shader *curshader = NULL;
 
     while(va)
@@ -1076,8 +1074,6 @@ void renderq(int w, int h)
         };
         va = va->next;
     };
-
-    Shader::off();
 
     if (hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);

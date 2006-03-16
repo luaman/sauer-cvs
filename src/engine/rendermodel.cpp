@@ -13,9 +13,9 @@ Shader *modelshader = NULL;
 
 vector<mapmodelinfo> mapmodels;
 
-void mapmodel(char *rad, char *h, char *zoff, char *name)
+void mapmodel(char *rad, char *h, char *zoff, char *name, char *spec)
 {
-    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff) }; 
+    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), atoi(spec) }; 
     s_strcpy(mmi.name, name);
     mapmodels.add(mmi);
 };
@@ -24,7 +24,7 @@ void mapmodelreset() { mapmodels.setsize(0); };
 
 mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i] : *(mapmodelinfo *)0; };
 
-COMMAND(mapmodel, ARG_5STR);
+COMMAND(mapmodel, ARG_6STR);
 COMMAND(mapmodelreset, ARG_NONE);
 
 // model registry
@@ -57,7 +57,7 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
+void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull, float specintensity)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -73,7 +73,6 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
     if(teammate) glColor3f(1, 0.2f, 0.2f); // VERY TEMP, find a better teammate display
     else glColor3fv(color.v);
     if(!modelshader) modelshader = lookupshaderbyname("stdmodel");
-    modelshader->on();
     modelshader->set();
     if(renderpath!=R_FIXEDFUNCTION)
     {
@@ -85,15 +84,13 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
 
-        vec ambient = vec(color).mul(0.5f);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, specintensity, specintensity, specintensity, 0);
+
+        vec ambient = vec(color).mul(0.3f);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, ambient.x, ambient.y, ambient.z, 1);
 
-        vec spec = vec(color).mul(1.5f);
-        loopi(3) spec[i] = min(spec[i], 1.0f);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, spec.x, spec.y, spec.z, 0);
     };
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
-    modelshader->off();
 };
 
 void abovemodel(vec &o, const char *mdl, float scale)

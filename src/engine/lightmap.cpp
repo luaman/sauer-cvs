@@ -670,6 +670,11 @@ void lightreaching(const vec &target, vec &color, vec &dir)
         float intensity = 1.0;
         if(e.attr1)
             intensity -= mag / float(e.attr1);
+
+        //if(target==player->o)
+        //{
+        //    conoutf("%d - %f %f", i, intensity, mag);
+        //};
  
         color.add(vec(e.attr2, e.attr3, e.attr4).div(255).mul(intensity));
         dir.add(vec(e.o).sub(target).mul(intensity/mag));

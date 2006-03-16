@@ -192,9 +192,10 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     case ARG_NONE: if(isdown) ((void (__cdecl *)())id->_fun)(); break;
                     case ARG_1STR: if(isdown) ((void (__cdecl *)(char *))id->_fun)(w[1]); break;
                     case ARG_2STR: if(isdown) ((void (__cdecl *)(char *, char *))id->_fun)(w[1], w[2]); break;
-                    case ARG_3STR: if(isdown) ((void (__cdecl *)(char *, char *, char*))id->_fun)(w[1], w[2], w[3]); break;
-                    case ARG_4STR: if(isdown) ((void (__cdecl *)(char *, char *, char*, char*))id->_fun)(w[1], w[2], w[3], w[4]); break;
-                    case ARG_5STR: if(isdown) ((void (__cdecl *)(char *, char *, char*, char*, char*))id->_fun)(w[1], w[2], w[3], w[4], w[5]); break;
+                    case ARG_3STR: if(isdown) ((void (__cdecl *)(char *, char *, char *))id->_fun)(w[1], w[2], w[3]); break;
+                    case ARG_4STR: if(isdown) ((void (__cdecl *)(char *, char *, char *, char *))id->_fun)(w[1], w[2], w[3], w[4]); break;
+                    case ARG_5STR: if(isdown) ((void (__cdecl *)(char *, char *, char *, char *, char *))id->_fun)(w[1], w[2], w[3], w[4], w[5]); break;
+                    case ARG_6STR: if(isdown) ((void (__cdecl *)(char *, char *, char *, char *, char *, char *))id->_fun)(w[1], w[2], w[3], w[4], w[5], w[6]); break;
                     case ARG_DOWN: ((void (__cdecl *)(bool))id->_fun)(isdown); break;
                     case ARG_DWN1: ((void (__cdecl *)(bool, char *))id->_fun)(isdown, w[1]); break;
                     case ARG_1EXP: if(isdown) val = ((int (__cdecl *)(int))id->_fun)(execute(w[1])); break;

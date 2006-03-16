@@ -27,6 +27,7 @@ PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_ = NULL;
 
 hashtable<char *, Shader> shaders;
 Shader *curshader = NULL;
+Shader *defaultshader = NULL;
 
 Shader *lookupshaderbyname(char *name) { return shaders.access(name); };
 
@@ -141,6 +142,8 @@ void gl_init(int w, int h)
         glProgramEnvParameter4fv_ = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
         renderpath = R_ASMSHADER;
         conoutf("rendering using the OpenGL 1.5 assembly shader path");
+        glEnable(GL_VERTEX_PROGRAM_ARB);
+        glEnable(GL_FRAGMENT_PROGRAM_ARB);
     };
 
     purgetextures();
@@ -383,6 +386,9 @@ extern int explicitsky, skyarea;
 
 void gl_drawframe(int w, int h, float curfps)
 {
+    if(!defaultshader) defaultshader = lookupshaderbyname("default");
+    defaultshader->set();
+
     recomputecamera();
     
     glClear(GL_DEPTH_BUFFER_BIT|(wireframe ? GL_COLOR_BUFFER_BIT : 0));
@@ -435,14 +441,19 @@ void gl_drawframe(int w, int h, float curfps)
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
+    defaultshader->set();
+
     cl->rendergame();
 
+    defaultshader->set();
 
     if(!limitsky) drawskybox(farplane, false);
 
     project(65, aspect, farplane);
     if(!isthirdperson()) cl->drawhudgun();
     project(fovy, aspect, farplane);
+
+    defaultshader->set();
 
     rendermaterials();
 
