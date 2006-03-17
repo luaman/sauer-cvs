@@ -124,6 +124,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = bouncers[i];
+            particle_splash(7, 1, 1, bnc.o);
             particle_splash(1, 2, 150, bnc.o);
             int rtime = time;
             while(rtime > 0)

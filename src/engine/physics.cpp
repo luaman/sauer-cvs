@@ -816,7 +816,8 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
     else if(inside)
     {
         d->o = old;
-        return true;
+        d->gravity.mul(-elasticity);
+        d->vel.mul(-elasticity);
     };
     return hitplayer;
 };
