@@ -8,7 +8,7 @@ extern float raycube   (const vec &o, vec &ray,           float radius = 0, int 
 extern float raycubepos(const vec &o, vec &ray, vec &hit, float radius = 0, int mode = RAY_CLIPMAT, int size = 0); 
 extern bool isthirdperson();
 
-extern void settexture(char *name);
+extern void settexture(const char *name);
 
 // octaedit
 

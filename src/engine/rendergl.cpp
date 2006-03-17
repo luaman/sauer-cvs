@@ -196,7 +196,7 @@ hashtable<char *, Texture> textures;
 
 Texture *crosshair = NULL; // used as default, ensured to be loaded
 
-Texture *textureload(char *name, int rot, bool clamp, bool mipit, bool msg)
+Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg)
 {
     string rname, tname;
     s_strcpy(tname, name);
@@ -234,7 +234,7 @@ void cleangl()
     textures.clear();
 };
 
-void settexture(char *name)
+void settexture(const char *name)
 {
     glBindTexture(GL_TEXTURE_2D, textureload(name)->gl);
 };

@@ -9,6 +9,8 @@ struct capturestate
     static const int SCORESECS = 10;
     static const int REPAMMODIST = 32;
     static const int RESPAWNSECS = 10;        
+    static const int RADARRADIUS = 1024;
+
     struct baseinfo
     {
         vec o;
@@ -178,6 +180,58 @@ struct captureclient : capturestate
                 particle_text(above, b.info, 11, 1);
             };
         };
+    };
+
+    void drawradar(float x, float y, float s)
+    {
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(x,   y);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(x+s, y);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(x+s, y+s);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(x,   y+s);
+    };
+    
+    void drawblips(int x, int y, int s, int type, bool skipenemy = false)
+    {
+        const char *textures[3] = {"data/blip_red.png", "data/blip_grey.png", "data/blip_blue.png"};
+        settexture(textures[max(type+1, 0)]);
+        glBegin(GL_QUADS);
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            if(skipenemy && b.enemy[0]) continue;
+            switch(type)
+            {
+                case 1: if(!b.owner[0] || strcmp(b.owner, cl.player1->team)) continue; break;
+                case 0: if(b.owner[0]) continue; break;
+                case -1: if(!b.owner[0] || !strcmp(b.owner, cl.player1->team)) continue; break;
+                case -2: if(!b.enemy[0]) continue; break;
+            }; 
+            vec v(b.o);
+            v.sub(cl.player1->o);
+            if(v.magnitude() >= RADARRADIUS) continue;
+            v.rotate_around_z(-cl.player1->yaw*RAD);
+            drawradar(x + s*0.5f*(1.0f+v.x/RADARRADIUS), y + s*0.5f*(1.0f+v.y/RADARRADIUS), 0.05f*s);
+        };
+        glEnd();
+    };
+    
+    void capturehud(int w, int h)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        int x = 1800*w/h*31/40, y = 1800*1/40, s = 1800*w/h*8/40;
+        glColor4f(1, 1, 1, 0.5f);
+        settexture("data/radar.png");
+        glBegin(GL_QUADS);
+        drawradar(float(x), float(y), float(s));
+        glEnd();
+        bool showenemies = cl.lastmillis%1000 >= 500;
+        drawblips(x, y, s, 1, showenemies);
+        drawblips(x, y, s, 0, showenemies);
+        drawblips(x, y, s, -1, showenemies);
+        if(showenemies) drawblips(x, y, s, -2);
+        glColor4f(1, 1, 1, 1);
+        glDisable(GL_BLEND);
     };
 
     void sendbases(uchar *&p)

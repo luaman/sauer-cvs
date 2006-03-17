@@ -510,6 +510,7 @@ struct fpsclient : igameclient
         if(g==GUN_PISTOL) { g = 4; r = 0; };
         if(g==GUN_GL) { g = 3; r = 1; };    // FIXME
         drawicon((float)(g*64), (float)r, 1220, 1650);
+        if(m_capture) cpc.capturehud(w, h);
     };
 
     void edittrigger(const selinfo &sel, int op, int arg1, int arg2, int arg3)
