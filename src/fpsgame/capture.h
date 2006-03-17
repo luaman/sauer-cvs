@@ -204,7 +204,7 @@ struct captureclient : capturestate
                 case 1: if(!b.owner[0] || strcmp(b.owner, cl.player1->team)) continue; break;
                 case 0: if(b.owner[0]) continue; break;
                 case -1: if(!b.owner[0] || !strcmp(b.owner, cl.player1->team)) continue; break;
-                case -2: if(!b.enemy[0]) continue; break;
+                case -2: if(!b.enemy[0] || !strcmp(b.owner, cl.player1->team)) continue; break;
             }; 
             vec v(b.o);
             v.sub(cl.player1->o);
@@ -225,12 +225,12 @@ struct captureclient : capturestate
         glBegin(GL_QUADS);
         drawradar(float(x), float(y), float(s));
         glEnd();
+        glBlendFunc(GL_ONE, GL_ONE);
         bool showenemies = cl.lastmillis%1000 >= 500;
         drawblips(x, y, s, 1, showenemies);
         drawblips(x, y, s, 0, showenemies);
         drawblips(x, y, s, -1, showenemies);
         if(showenemies) drawblips(x, y, s, -2);
-        glColor4f(1, 1, 1, 1);
         glDisable(GL_BLEND);
     };
 
