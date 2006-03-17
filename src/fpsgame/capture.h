@@ -132,8 +132,8 @@ struct capturestate
 
     bool insidebase(const baseinfo &b, const vec &o)
     {
-        float dx = (b.o.x-o.x)/CAPTURERADIUS, dy = (b.o.y-o.y)/CAPTURERADIUS, dz = (b.o.z-o.z+14)/CAPTUREHEIGHT;
-        return sqrt(dx*dx + dy*dy + dz*dz) <= 1.0f; 
+        float dx = (b.o.x-o.x), dy = (b.o.y-o.y), dz = (b.o.z-o.z+14);
+        return dx*dx + dy*dy <= CAPTURERADIUS*CAPTURERADIUS && fabs(dz) <= CAPTUREHEIGHT; 
     };
 };
 
