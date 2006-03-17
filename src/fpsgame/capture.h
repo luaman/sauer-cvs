@@ -204,7 +204,7 @@ struct captureclient : capturestate
                 case 1: if(!b.owner[0] || strcmp(b.owner, cl.player1->team)) continue; break;
                 case 0: if(b.owner[0]) continue; break;
                 case -1: if(!b.owner[0] || !strcmp(b.owner, cl.player1->team)) continue; break;
-                case -2: if(!b.enemy[0] || !strcmp(b.owner, cl.player1->team)) continue; break;
+                case -2: if(!b.enemy[0] || !strcmp(b.enemy, cl.player1->team)) continue; break;
             }; 
             vec v(b.o);
             v.sub(cl.player1->o);
