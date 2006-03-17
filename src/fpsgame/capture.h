@@ -219,7 +219,7 @@ struct captureclient : capturestate
             float dist = dir.magnitude();
             if(dist >= RADARRADIUS) dir.mul(RADARRADIUS/dist);
             dir.rotate_around_z(-cl.player1->yaw*RAD);
-            drawradar(x + s*0.5f*(1.0f+dir.x/RADARRADIUS), y + s*0.5f*(1.0f+dir.y/RADARRADIUS), 0.05f*s);
+            drawradar(x + s*0.5f*0.95f*(1.0f+dir.x/RADARRADIUS), y + s*0.5f*0.95f*(1.0f+dir.y/RADARRADIUS), 0.05f*s);
         };
         glEnd();
     };
