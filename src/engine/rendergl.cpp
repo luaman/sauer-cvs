@@ -71,7 +71,8 @@ void setshader(char *name)
 
 COMMAND(shader, ARG_3STR);
 COMMAND(setshader, ARG_1STR);
-VAR(forcenoshaders, 0, 0, 1);
+
+bool forcenoshaders = false;
 
 void *getprocaddress(const char *name)
 {

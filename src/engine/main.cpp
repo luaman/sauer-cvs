@@ -264,6 +264,7 @@ int main(int argc, char **argv)
             case 'w': scr_w = atoi(&argv[i][2]); scr_h = scr_w*3/4; break;
             case 'h': scr_h = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
+            case 'f': extern bool forcenoshaders; forcenoshaders = true; break;
             default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");
         }
         else conoutf("unknown commandline argument");
