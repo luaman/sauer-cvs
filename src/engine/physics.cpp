@@ -474,11 +474,11 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                 if(!dir.iszero())
                 {
                     if(f.dot(dir) >= -cutoff) continue;
-                    if(dir.z < 0)
+                    if(d->type < ENT_CAMERA)
                     {
-                        if(f.z > 0 && dist < -d->eyeheight/2.0f) continue;
-                    }
-                    else if(dir.z > 0 && f.z < 0 && dist < -(d->eyeheight+d->aboveeye)/4.0f) continue;
+                        if(dir.z < 0 && f.z > 0 && dist < -(d->eyeheight+d->aboveeye)/2.0f) continue;
+                        else if(dir.z > 0 && f.z < 0 && dist < -(d->eyeheight+d->aboveeye)/4.0f) continue;
+                    };
                 };
                 w = &p.p[i]; 
                 m = dist; 
