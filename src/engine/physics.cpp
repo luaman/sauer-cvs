@@ -828,8 +828,10 @@ void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
     bo.x -= obstacle->radius+d->radius;
     bo.y -= obstacle->radius+d->radius;
     bo.z -= obstacle->eyeheight+d->aboveeye;
-    vec br(obstacle->radius*2+d->radius, obstacle->radius*2+d->radius, obstacle->eyeheight+obstacle->aboveeye+d->eyeheight);
-
+    bo.sub(space);
+    vec br(2*(obstacle->radius+d->radius), 2*(obstacle->radius+d->radius), obstacle->eyeheight+obstacle->aboveeye+d->eyeheight+d->aboveeye);
+    br.add(space*2);
+    
     float mindist = 1e16f;
     loopi(3) if(dir[i] != 0)
     {
@@ -837,7 +839,7 @@ void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
         mindist = min(mindist, dist);
     };
 
-    if(mindist > -space && mindist < 1e15f) d->o.add(vec(dir).mul(mindist+space));
+    if(mindist >= 0.0f && mindist < 1e15f) d->o.add(vec(dir).mul(mindist));
 };
 
 void phystest()

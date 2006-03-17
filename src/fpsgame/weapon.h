@@ -113,7 +113,7 @@ struct weaponstate
 
         vec dir(to);
         dir.sub(from).normalize();
-        avoidcollision(&bnc, dir, owner, 2.0f);
+        avoidcollision(&bnc, dir, owner, 0.1f);
         bnc.vel = dir;
         bnc.vel.mul(200.0f);
     };
