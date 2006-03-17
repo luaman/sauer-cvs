@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define MAXPARTYPES 12
+#define MAXPARTYPES 13
 
 struct particle
 {
@@ -74,11 +74,12 @@ void render_particles(int time)
         { 255, 200, 200, 20, 1, 1.2f  }, // yellow: fireball1
         { 125, 125, 125, 20, 2, 0.6f  }, // grey:   big smoke   
         { 255, 255, 255, 20, 3, 1.2f  }, // blue:   fireball2
-        { 255, 255, 255, 20, 4, 1.2f  }, // green:  fireball3
+        { 255, 255, 255, 20, 4, 1.2f  }, // green:  big fireball3
         { 255, 75, 25,   -8, -1, 1.0f }, // 8 TEXT RED
         { 50, 255, 100,  -8, -1, 1.0f }, // 9 TEXT GREEN
         { 255, 200, 100, 0,  5, 0.07f }, // 10 yellow flare
-        { 30, 200, 80,  -8, -1, 0.5f }, // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+        { 30, 200, 80,  -8, -1, 0.5f },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+        { 255, 255, 255, 20, 4, 0.5f },  // green:  small fireball3
     };
         
     loopi(MAXPARTYPES) if(parlist[i])

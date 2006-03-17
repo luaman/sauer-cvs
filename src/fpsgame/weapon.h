@@ -104,16 +104,16 @@ struct weaponstate
         bnc.reset();
         bnc.type = ENT_BOUNCE;
         bnc.o = from;
-        bnc.radius = 1;
-        bnc.eyeheight = 1;
-        bnc.aboveeye = 1;
+        bnc.radius = 2;
+        bnc.eyeheight = 2;
+        bnc.aboveeye = 2;
         bnc.lifetime = 3000;
         bnc.local = local;
         bnc.owner = owner;
 
         vec dir(to);
         dir.sub(from).normalize();
-        avoidcollision(&bnc, dir, owner, 1.0f);
+        avoidcollision(&bnc, dir, owner, 2.0f);
         bnc.vel = dir;
         bnc.vel.mul(200.0f);
     };
@@ -124,7 +124,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = bouncers[i];
-            particle_splash(7, 1, 1, bnc.o);
+            particle_splash(12, 1, 1, bnc.o);
             particle_splash(1, 2, 150, bnc.o);
             int rtime = time;
             while(rtime > 0)
