@@ -3,7 +3,7 @@
 struct capturestate
 {
     static const int CAPTURERADIUS = 64;
-    static const int CAPTUREHEIGHT = 20;
+    static const int CAPTUREHEIGHT = 24;
     static const int OCCUPYPOINTS = 10;
     static const int OCCUPYLIMIT = 100;
     static const int CAPTURESCORE = 1;

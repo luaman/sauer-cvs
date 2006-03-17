@@ -812,19 +812,12 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         d->gravity.mul(k);
         d->vel.mul(k);
         d->vel.sub(wvel);
-        //return false;
     }
     else if(inside)
     {
         d->o = old;
-        d->gravity.mul(-elasticity);
-        d->vel.mul(-elasticity);
-        if(d->physstate == PHYS_TRAPPED) return true;
-        d->physstate = PHYS_TRAPPED;
-        //return false;
-    }
-    else d->physstate = PHYS_FALL;
-    //return true;
+        return true;
+    };
     return hitplayer;
 };
 
