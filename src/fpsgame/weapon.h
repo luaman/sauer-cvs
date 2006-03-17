@@ -107,15 +107,15 @@ struct weaponstate
         bnc.radius = 1;
         bnc.eyeheight = 1;
         bnc.aboveeye = 1;
-        vec m(to);
-        m.sub(from).normalize().mul(owner->radius+1.0f);
-        bnc.o.add(m);
-        m.normalize();
-        m.mul(200.0f);
-        bnc.vel = m;
         bnc.lifetime = 3000;
         bnc.local = local;
         bnc.owner = owner;
+
+        vec dir(to);
+        dir.sub(from).normalize();
+        avoidcollision(&bnc, dir, owner, 1.0f);
+        bnc.vel = dir;
+        bnc.vel.mul(200.0f);
     };
 
     void bounceupdate(int time)
