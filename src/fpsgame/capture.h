@@ -213,11 +213,13 @@ struct captureclient : capturestate
                 case -1: if(!b.owner[0] || !strcmp(b.owner, cl.player1->team)) continue; break;
                 case -2: if(!b.enemy[0] || !strcmp(b.enemy, cl.player1->team)) continue; break;
             }; 
-            vec v(b.o);
-            v.sub(cl.player1->o);
-            if(v.magnitude() >= RADARRADIUS) continue;
-            v.rotate_around_z(-cl.player1->yaw*RAD);
-            drawradar(x + s*0.5f*(1.0f+v.x/RADARRADIUS), y + s*0.5f*(1.0f+v.y/RADARRADIUS), 0.05f*s);
+            vec dir(b.o);
+            dir.sub(cl.player1->o);
+            dir.z = 0.0f;
+            float dist = dir.magnitude();
+            if(dist >= RADARRADIUS) dir.mul(RADARRADIUS/dist);
+            dir.rotate_around_z(-cl.player1->yaw*RAD);
+            drawradar(x + s*0.5f*(1.0f+dir.x/RADARRADIUS), y + s*0.5f*(1.0f+dir.y/RADARRADIUS), 0.05f*s);
         };
         glEnd();
     };
@@ -226,7 +228,7 @@ struct captureclient : capturestate
     {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-        int x = 1800*w/h*31/40, y = 1800*1/40, s = 1800*w/h*8/40;
+        int x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
         glColor4f(1, 1, 1, 0.5f);
         settexture("data/radar.png");
         glBegin(GL_QUADS);
