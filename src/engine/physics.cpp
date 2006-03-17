@@ -410,7 +410,9 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     }
     if(ax>ay && ax>az) TRYCOLLIDE(x, visible&(1<<O_LEFT), visible&(1<<O_RIGHT));
     if(ay>az) TRYCOLLIDE(y, visible&(1<<O_BACK), visible&(1<<O_FRONT));
-    TRYCOLLIDE(z, az >= -(d->eyeheight+d->aboveeye)/4.0f && (visible&(1<<O_BOTTOM)), az >= -(d->eyeheight+d->aboveeye)/2.0f && (visible&(1<<O_TOP)));
+    TRYCOLLIDE(z, 
+        (d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/4.0f) && (visible&(1<<O_BOTTOM)), 
+        (d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/2.0f) && (visible&(1<<O_TOP)));
     if(collideonly) inside = true;
     return collideonly;
 };

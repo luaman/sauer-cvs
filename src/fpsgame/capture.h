@@ -3,6 +3,7 @@
 struct capturestate
 {
     static const int CAPTURERADIUS = 64;
+    static const int CAPTUREHEIGHT = 20;
     static const int OCCUPYPOINTS = 10;
     static const int OCCUPYLIMIT = 100;
     static const int CAPTURESCORE = 1;
@@ -127,6 +128,12 @@ struct capturestate
                 dist = min(dist, b.o.dist(e.o));
         };
         return dist;
+    };
+
+    bool insidebase(const baseinfo &b, const vec &o)
+    {
+        float dx = (b.o.x-o.x)/CAPTURERADIUS, dy = (b.o.y-o.y)/CAPTURERADIUS, dz = (b.o.z-o.z+14)/CAPTUREHEIGHT;
+        return sqrt(dx*dx + dy*dy + dz*dz) <= 1.0f; 
     };
 };
 
@@ -347,7 +354,7 @@ struct captureserv : capturestate
         loopv(sv.clients)
         {
             fpsserver::clientinfo *ci = sv.clients[i];
-            if(!ci->spectator && ci->state==CS_ALIVE && ci->team[0] && strcmp(ci->team, team) && ci->o.dist(b.o) <= CAPTURERADIUS)
+            if(!ci->spectator && ci->state==CS_ALIVE && ci->team[0] && strcmp(ci->team, team) && insidebase(b, ci->o))
             {
                 if(b.enter(ci->team) || b.owner[0]) break;
             };
@@ -361,8 +368,8 @@ struct captureserv : capturestate
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            bool leave = oldpos.dist(b.o) <= CAPTURERADIUS,
-                 enter = newpos.dist(b.o) <= CAPTURERADIUS;
+            bool leave = insidebase(b, oldpos),
+                 enter = insidebase(b, newpos);
             if(leave && !enter && b.leave(team)) orphanedbase(i, team);
             else if(enter && !leave && b.enter(team)) sendbaseinfo(i);
         };
