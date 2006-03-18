@@ -62,7 +62,6 @@ struct fpsent : dynent
         attacking = false; 
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
-        ammo[GUN_GL] = 100; // TEMP!!!
     };
 
     vec abovehead() { return vec(o).add(vec(0, 0, aboveeye+4)); };

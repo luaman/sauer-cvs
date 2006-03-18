@@ -90,6 +90,7 @@ struct fpsclient : igameclient
                     et.baseammo(d->gunselect = spawngun1);
                     do spawngun2 = rnd(5)+1; while(spawngun1==spawngun2);
                     et.baseammo(spawngun2);
+                    d->ammo[GUN_GL] += 5;
                 }
                 else if(m_arena)    // insta arena
                 {
@@ -106,6 +107,7 @@ struct fpsclient : igameclient
         else
         {
             d->ammo[GUN_PISTOL] = m_sp ? 80 : 40;
+            d->ammo[GUN_GL] = 5;
         };
         return d;
     };
