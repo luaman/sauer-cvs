@@ -45,9 +45,9 @@ void unalias(char *name)
     ident *i = idents->access(name);
     if(i && i->_type==ID_ALIAS)
     {
+        idents->remove(name);
         DELETEA(i->_name);
         DELETEA(i->_action);
-        idents->remove(name);
     };
 };
 
@@ -89,7 +89,7 @@ void addident(char *name, ident *id)
 
 static vector<char> wordbuf;
 
-char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf);
+char *parseexp(char *&p, int right);
 
 #define savealias(name, body) \
 { \
@@ -100,22 +100,20 @@ char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf);
     if(hasalias) alias(name, oldaction); else unalias(name); \
 }
 
-void domacro(char *&p, vector<char> &wordbuf)
+void domacro(char *&p)
 {
     savealias("s", 
         alias("s", "");
-        vector<char> macrobuf;
-        char *macro = parseexp(p, ']', macrobuf);
+        char *macro = parseexp(p, ']');
         execute(macro);
         char *sub = getalias("s");
         if(sub) while(*sub) wordbuf.add(*sub++);
     );
 };
 
-char *parseexp(char *&p, int right, vector<char> &wordbuf)             // parse any nested set of () or []
+char *parseexp(char *&p, int right)          // parse any nested set of () or []
 {
-    wordbuf.setsize(0);
-    int left = *p++;
+    int pos = wordbuf.length(), left = *p++;
     for(int brak = 1; brak; )
     {
         int c = *p++;
@@ -124,7 +122,7 @@ char *parseexp(char *&p, int right, vector<char> &wordbuf)             // parse 
         {
             if(*p=='[')
             {
-                domacro(p, wordbuf);
+                domacro(p);
                 continue;
             };
             char *ident = p;
@@ -146,17 +144,18 @@ char *parseexp(char *&p, int right, vector<char> &wordbuf)             // parse 
         };
         if(c==left) brak++;
         else if(c==right) brak--;
-        else if(!c) { p--; conoutf("missing \"%c\"", right); return NULL; };
+        else if(!c) { p--; conoutf("missing \"%c\"", right); wordbuf.setsize(pos); return NULL; };
         wordbuf.add(c);
     };
     wordbuf.pop();
-    char *s = newstring(wordbuf.getbuf(), wordbuf.length());
+    char *s = newstring(wordbuf.getbuf()+pos, wordbuf.length()-pos);
     if(left=='(')
     {
         string t;
         itoa(t, execute(s));                    // evaluate () exps directly, and substitute result
         s = exchangestr(s, t);
     };
+    wordbuf.setsize(pos);
     return s;
 };
 
@@ -193,14 +192,14 @@ char *lookup(char *n)                           // find value of ident reference
     return n;
 };
 
-void vari(char **w, int n, char *r)
+void conc(char **w, int n, char *r, const char *sep = " ")
 {
     r[0] = 0;
-    for(int i = 1; i<n; i++)       
+    for(int i = 0; i<n; i++)       
     {
         s_strcat(r, w[i]);  // make string-list out of all arguments
         if(i==n-1) break;
-        s_strcat(r, " ");
+        if(sep) s_strcat(r, sep);
     };
 };
 
@@ -242,7 +241,7 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                 {
                     default: if(isdown) id->run(w+1); break;
                     case IARG_BOTH: id->run((char **)isdown); break;
-                    case IARG_VAR:  if(isdown) { string r; vari(w, numargs, r); char *rr = r; id->run(&rr); }; break;
+                    case IARG_CONC:  if(isdown) { string r; conc(w+1, numargs-1, r); char *rr = r; id->run(&rr); }; break;
                 };
                 break;
         
@@ -266,13 +265,15 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     case ARG_2EXP: if(isdown) val = ((int (__cdecl *)(int, int))id->_fun)(execute(w[1]), execute(w[2])); break;
                     case ARG_1EST: if(isdown) val = ((int (__cdecl *)(char *))id->_fun)(w[1]); break;
                     case ARG_2EST: if(isdown) val = ((int (__cdecl *)(char *, char *))id->_fun)(w[1], w[2]); break;
-                    case ARG_VARI: if(isdown)
+                    case ARG_CONC: if(isdown)
                     {
                         string r;               // limit, remove
-                        vari(w, numargs, r);
+                        conc(w+1, numargs-1, r);
                         ((void (__cdecl *)(char *))id->_fun)(r);
                         break;
-                    }
+                    };
+                    case ARG_VARI: if(isdown) ((void (__cdecl *)(char **, int))id->_fun)(w+1, numargs-1); break;
+                    
                 };
                 break;
        
@@ -450,9 +451,34 @@ void onrelease(bool on, char *body) { if(!on) execute(body); };
 
 void concat(char *s) { alias("s", s); };
 
-void concatword(char *s)
+void concatword(char **args, int numargs)
 {
-    for(char *a = s, *b = s; *a = *b; b++) if(*a!=' ') a++;   
+    string s;
+    conc(args, numargs, s, NULL);
+    concat(s);
+};
+
+void format(char **args, int numargs)
+{
+    string s;
+    char *f = args[0], *r = s;
+    while(*f && r < s+sizeof(s)-1)
+    {
+        int c = *f++;
+        if(c == '%')
+        {
+            int i = *f++;
+            if(i >= '1' && i <= '9')
+            {
+                i -= '0';
+                const char *sub = i < numargs ? args[i] : "";
+                while(*sub && r < s+sizeof(s)-1) *r++ = *sub++;
+            }
+            else *r++ = i;
+        }
+        else *r++ = c;
+    };
+    *r = '\0';
     concat(s);
 };
 
@@ -474,8 +500,9 @@ void at(char *s, char *pos)
 
 COMMAND(onrelease, ARG_DWN1);
 COMMAND(exec, ARG_1STR);
-COMMAND(concat, ARG_VARI);
+COMMAND(concat, ARG_CONC);
 COMMAND(concatword, ARG_VARI);
+COMMAND(format, ARG_VARI);
 COMMAND(at, ARG_2STR);
 COMMAND(listlen, ARG_1EST);
 
@@ -492,5 +519,5 @@ int strcmpa(char *a, char *b) { return strcmp(a,b)==0; };  COMMANDN(strcmp, strc
 
 int rndn(int a)    { return a>0 ? rnd(a) : 0; };  COMMANDN(rnd, rndn, ARG_1EXP);
 
-ICOMMAND(echo, IARG_VAR, conoutf("%s", args[0]));
+ICOMMAND(echo, IARG_CONC, conoutf("%s", args[0]));
 

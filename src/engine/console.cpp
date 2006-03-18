@@ -131,7 +131,7 @@ void saycommand(char *init)                         // turns input to the comman
 
 void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); };
 
-COMMAND(saycommand, ARG_VARI);
+COMMAND(saycommand, ARG_CONC);
 COMMAND(mapmsg, ARG_1STR);
 
 #ifdef WIN32

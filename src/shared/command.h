@@ -8,7 +8,7 @@ enum    // function signatures for script functions, see command.cpp
     ARG_DOWN, ARG_DWN1,
     ARG_1EXP, ARG_2EXP,
     ARG_1EST, ARG_2EST,
-    ARG_VARI
+    ARG_CONC, ARG_VARI
 };
 
 enum { ID_VAR, ID_COMMAND, ID_ICOMMAND, ID_ALIAS };
@@ -48,7 +48,7 @@ extern void addident(char *name, ident *id);
 #define VARF(name, min, cur, max, body)  void var_##name(); static int name = variable(#name, min, cur, max, &name, var_##name, false); void var_##name() { body; }
 #define VARFP(name, min, cur, max, body) void var_##name(); static int name = variable(#name, min, cur, max, &name, var_##name, true); void var_##name() { body; }
 
-#define IARG_VAR -1
+#define IARG_CONC -1
 #define IARG_BOTH -2
 
 // new style macros, have the body inline, and allow binds to happen anywhere, even inside class constructors, and access the surrounding class

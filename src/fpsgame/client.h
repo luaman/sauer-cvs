@@ -21,7 +21,7 @@ struct clientcom : iclientcom
 
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
-        CCOMMAND(clientcom, say, IARG_VAR, self->toserver(args[0]));
+        CCOMMAND(clientcom, say, IARG_CONC, self->toserver(args[0]));
         CCOMMAND(clientcom, name, 1, { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
         CCOMMAND(clientcom, team, 1, { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
         CCOMMAND(clientcom, map, 1, self->changemap(args[0]));
