@@ -264,7 +264,7 @@ music name ondone</pre>
 		recommended you do a "calclight" on your map before you publish it with 
 		"savemap".
 		<pre>fullbright  B</pre>
-		This variable controls whether the map will be shown lighting disabled. 
+		This variable controls whether the map will be shown with lighting disabled. 
 		Fullbright 1 will disable lighting, whereas 0 will enable lighting. (Default = 
 		0)
 		<pre>lightprecision P</pre>
@@ -306,19 +306,6 @@ music name ondone</pre>
 		NOTE: if you feel like using this, test it thoroughly. On medium or small sized 
 		detailed maps, this command wastes space, use lightlod 0. Lightlod &gt; 0 is 
 		only useful for huge maps
-		<pre>aalights X</pre>
-		Determines whether to use 4x sampling for every lightmap texel. You should not 
-		need to touch this var, unless waiting for calclight really bothers you, you 
-		can set it to 0 for a 4x speedup and blockier shadows. Also, for a slight 
-		increase in appearance, one may set it to 2 to turn on 8x sampling. (Default = 2)
-        <pre>mmshadows B</pre>
-        Determines whether or not md2 map models cast shadows. This is can significantly increase
-        the amount of time a "calclight" takes, depending on the amount of map models. Use with
-        caution. (Default = 0)
-		<pre>shadows B</pre>
-		Determines whether or not objects cast shadows. You should also not need to 
-		touch this var. However, it does allow you to see the effectiveness and reach 
-		of your lights if turned off. (Default = 1)
 		<pre>dumplms</pre>
 		Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but 
 		mappers may find it interesting too.
