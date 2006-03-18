@@ -76,32 +76,39 @@ void newsphere(vec &o, float max, int type)
 
 void renderspheres(int time)
 {
+    static struct spheretype { float r, g, b; } spheretypes[2] =
+    {
+        { 1.0f, 0.75f, 0.5f },
+        { 0.5f, 1.0f, 1.0f },
+    };
+
     if(!expltex) expltex = textureload(path(newstring("data/explosion.jpg")));
     loopv(spheres)
     {
-        sphere *p = &spheres[i];
+        sphere &p = spheres[i];
+        spheretype &pt = spheretypes[p.type];
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         glBindTexture(GL_TEXTURE_2D, expltex->gl);
         glPushMatrix();
-        float size = p->size/p->max;
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f-size);
-        glTranslatef(p->o.x, p->o.y, p->o.z);
+        float size = p.size/p.max;
+        glColor4f(pt.r, pt.g, pt.g, 1.0f-size);
+        glTranslatef(p.o.x, p.o.y, p.o.z);
         glRotatef(lastmillis/5.0f, 1, 1, 1);
-        glScalef(p->size, p->size, p->size);
+        glScalef(p.size, p.size, p.size);
         glCallList(1);
         glScalef(0.8f, 0.8f, 0.8f);
         glCallList(1);
         glPopMatrix();
         xtraverts += 12*6*2;
-        if(p->size>p->max)
+        if(p.size>p.max)
         {
             spheres.remove(i);
         }
         else
         {
-            p->size += time/25.0f;
+            p.size += time/25.0f;
         };
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);

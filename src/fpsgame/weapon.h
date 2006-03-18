@@ -216,7 +216,7 @@ struct weaponstate
     {
         particle_splash(0, 200, 300, v);
         playsound(S_RLHIT, &v);
-        newsphere(v, RL_DAMRAD, 0);
+        newsphere(v, RL_DAMRAD, gun==GUN_RL ? 0 : 1);
         if(!local) return;
         loopi(cl.numdynents())
         {
