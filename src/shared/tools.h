@@ -203,17 +203,17 @@ typedef vector<ushort> usvector;
 #define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
 #define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
-inline unsigned int hthash(char * key)
+inline unsigned int hthash(const char * key)
 {
     unsigned int h = 5381;
     for(int i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
     return h;
-}
+};
 
-inline bool htcmp(char *x, char *y)
+inline bool htcmp(const char *x, const char *y)
 {
     return !strcmp(x, y);
-}
+};
 
 template <class K, class T> struct hashtable
 {
@@ -234,13 +234,13 @@ template <class K, class T> struct hashtable
 
     chain *insert(const K &key, unsigned int h)
     {
-        chain *c = new chain();
+        chain *c = new chain;
         c->key = key;
         c->next = table[h]; 
         table[h] = c;
         numelems++;
         return c;
-    }
+    };
 
     chain *find(const K &key, bool doinsert)
     {
@@ -251,7 +251,7 @@ template <class K, class T> struct hashtable
         }
         if(doinsert) return insert(key, h);
         return NULL;
-    }
+    };
 
     T *access(const K &key, T *data = NULL)
     {
@@ -259,13 +259,29 @@ template <class K, class T> struct hashtable
         if(data) c->data = *data;
         if(c) return &c->data;
         return NULL;
-    }
+    };
 
     T &operator[](const K &key)
     {
         return find(key, true)->data;
     };
 
+    bool remove(const K &key)
+    {
+        unsigned int h = hthash(key)&(size-1); 
+        for(chain **p = &table[h], *c = table[h]; c; p = &c->next, c = c->next)
+        {
+            if(htcmp(key, c->key))
+            {
+                *p = c->next;
+                delete c;       
+                numelems--;
+                return true;
+            };
+        };
+        return false;
+    };
+        
     void clear()
     {
         loopi(size)
@@ -278,7 +294,7 @@ template <class K, class T> struct hashtable
             table[i] = NULL;
             numelems = 0;
         };
-    }
+    };
 };
 
 #define enumeratekt(ht,k,e,t,f,b) loopi(ht.size)  for(hashtable<k,t>::chain *enumc = ht.table[i]; enumc;     enumc = enumc->next)         { const k &e = enumc->key; t *f = &enumc->data; b; }
