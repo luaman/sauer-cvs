@@ -1056,17 +1056,25 @@ void renderq(int w, int h)
                 {
                     GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     s[si[l]] = 8.0f/tex->xs;
-                    glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
                     GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
-                    glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
-                    
-                    // KLUGE: workaround for buggy nvidia drivers
-                    // object planes are somehow invalid unless texgen is toggled
-                    glDisable(GL_TEXTURE_GEN_S);
-                    glDisable(GL_TEXTURE_GEN_T);
-                    glEnable(GL_TEXTURE_GEN_S);
-                    glEnable(GL_TEXTURE_GEN_T);
+
+                    if(renderpath==R_FIXEDFUNCTION)
+                    {
+                        glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+                        glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                        // KLUGE: workaround for buggy nvidia drivers
+                        // object planes are somehow invalid unless texgen is toggled
+                        glDisable(GL_TEXTURE_GEN_S);
+                        glDisable(GL_TEXTURE_GEN_T);
+                        glEnable(GL_TEXTURE_GEN_S);
+                        glEnable(GL_TEXTURE_GEN_T);
+                    }
+                    else
+                    {
+                        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);
+                        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 1, t);
+                    };
                    
                     lastxs = tex->xs;
                     lastys = tex->ys;
