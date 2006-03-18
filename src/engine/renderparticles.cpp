@@ -67,41 +67,41 @@ void render_particles(int time)
     
     static struct parttype { uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
-        { 180, 155, 75,  2,  0, 0.06f }, // yellow: sparks 
-        { 125, 125, 125, 20, 2, 0.15f }, // grey:   small smoke
-        { 50, 50, 255,   20, 0, 0.08f }, // blue:   edit mode entities
-        { 255, 25, 25,   1,  2, 0.06f }, // red:    blood spats
-        { 255, 200, 200, 20, 1, 1.2f  }, // yellow: fireball1
-        { 125, 125, 125, 20, 2, 0.6f  }, // grey:   big smoke   
-        { 255, 255, 255, 20, 3, 1.2f  }, // blue:   fireball2
-        { 255, 255, 255, 20, 4, 1.2f  }, // green:  big fireball3
-        { 255, 75, 25,   -8, -1, 1.0f }, // 8 TEXT RED
-        { 50, 255, 100,  -8, -1, 1.0f }, // 9 TEXT GREEN
-        { 255, 200, 100, 0,  5, 0.07f }, // 10 yellow flare
-        { 30, 200, 80,  -8, -1, 0.5f },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
-        { 255, 255, 255, 20, 4, 0.5f },  // green:  small fireball3
+        { 180, 155, 75,  2,  0, 0.24f }, // yellow: sparks 
+        { 125, 125, 125, 20, 2, 0.6f }, // grey:   small smoke
+        { 50, 50, 255,   20, 0, 0.32f }, // blue:   edit mode entities
+        { 255, 25, 25,   1,  2, 0.24f }, // red:    blood spats
+        { 255, 200, 200, 20, 1, 4.8f  }, // yellow: fireball1
+        { 125, 125, 125, 20, 2, 2.4f  }, // grey:   big smoke   
+        { 255, 255, 255, 20, 3, 4.8f  }, // blue:   fireball2
+        { 255, 255, 255, 20, 4, 4.8f  }, // green:  big fireball3
+        { 255, 75, 25,   -8, -1, 4.0f }, // 8 TEXT RED
+        { 50, 255, 100,  -8, -1, 4.0f }, // 9 TEXT GREEN
+        { 255, 200, 100, 0,  5, 0.28f }, // 10 yellow flare
+        { 30, 200, 80,  -8, -1, 2.0f },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+        { 255, 255, 255, 20, 4, 2.0f },  // green:  small fireball3
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
     {
-        parttype *pt = &parttypes[i];
-        float sz = pt->sz*4*particlesize/100.0f; 
+        parttype &pt = parttypes[i];
+        float sz = pt.sz*particlesize/100.0f; 
 
-        if(pt->tex>=0)
+        if(pt.tex>=0)
         {
-            glBindTexture(GL_TEXTURE_2D, parttexs[pt->tex]->gl);
+            glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
             glBegin(GL_QUADS);
-            glColor3ub(pt->r, pt->g, pt->b);
+            glColor3ub(pt.r, pt.g, pt.b);
         };
         
         for(particle *p, **pp = &parlist[i]; p = *pp;)
         {   
             int blend = p->fade*255/(lastmillis-p->millis+p->fade);
-            if(pt->tex>=0)  
+            if(pt.tex>=0)  
             {    
                 if(i==10)   // flares
                 {
-                    glColor4ub(pt->r, pt->g, pt->b, blend);
+                    glColor4ub(pt.r, pt.g, pt.b, blend);
 					vec dir1 = p->d, dir2 = p->d, c1, c2;
 					dir1.sub(p->o);
 					dir2.sub(camera1->o);
@@ -127,14 +127,14 @@ void render_particles(int time)
                 glTranslatef(p->o.x, p->o.y, p->o.z);
                 glRotatef(camera1->yaw-180, 0, 0, 1);
                 glRotatef(camera1->pitch-90, 1, 0, 0);
-                float scale = 0.05f*pt->sz;
+                float scale = pt.sz/80.0f;
                 glScalef(-scale, scale, -scale);
                 char *t = p->text+(p->text[0]=='@');
                 float xoff = -text_width(t)/2;
                 float yoff = 0;
                 if(i!=11) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); };
                 glTranslatef(xoff, yoff, 50);
-                draw_text(t, 0, 0, pt->r, pt->g, pt->b, blend);
+                draw_text(t, 0, 0, pt.r, pt.g, pt.b, blend);
                 glPopMatrix();
             };
 
@@ -147,9 +147,9 @@ void render_particles(int time)
             }
             else
             {
-                if(pt->gr)
+                if(pt.gr)
                 {
-                    p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*2500);
+                    p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt.gr*2500);
                     vec a = p->d;
                     a.mul((float)time);
                     a.div(5000.0f);
@@ -159,7 +159,7 @@ void render_particles(int time)
             };
         };
         
-        if(pt->tex>=0) glEnd();
+        if(pt.tex>=0) glEnd();
     };
         
     glDisable(GL_BLEND);
