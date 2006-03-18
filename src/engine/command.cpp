@@ -91,18 +91,25 @@ static vector<char> wordbuf;
 
 char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf);
 
+#define savealias(name, body) \
+{ \
+    string oldaction; \
+    char *hasalias = getalias(name); \
+    if(hasalias) s_strcpy(oldaction, hasalias); \
+    { body }; \
+    if(hasalias) alias(name, oldaction); else unalias(name); \
+}
+
 void domacro(char *&p, vector<char> &wordbuf)
 {
-    string s;
-    char *a = getalias("s");
-    if(a) s_strcpy(s, a);
-    alias("s", "");
-    vector<char> macrobuf;
-    char *macro = parseexp(p, ']', macrobuf);
-    execute(macro);
-    char *sub = getalias("s");
-    if(sub) while(*sub) wordbuf.add(*sub++);
-    if(a) alias("s", s); else unalias("s");
+    savealias("s", 
+        alias("s", "");
+        vector<char> macrobuf;
+        char *macro = parseexp(p, ']', macrobuf);
+        execute(macro);
+        char *sub = getalias("s");
+        if(sub) while(*sub) wordbuf.add(*sub++);
+    );
 };
 
 char *parseexp(char *&p, int right, vector<char> &wordbuf)             // parse any nested set of () or []
