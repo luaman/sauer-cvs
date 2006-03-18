@@ -177,7 +177,9 @@ char *parseword(char *&p)                       // parse single argument, includ
     char *word = p;
     p += strcspn(p, "; \t\r\n\0");
     if(p-word==0) return NULL;
-    return newstring(word, p-word);
+    char *s = newstring(word, p-word);
+    if(*s=='$') return lookup(s);               // substitute variables
+    return s;
 };
 
 char *lookup(char *n)                           // find value of ident referenced with $ in exp
@@ -217,7 +219,6 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
             if(i>numargs) continue;
             char *s = parseword(p);             // parse and evaluate exps
             if(!s) { numargs = i; s = ""; };
-            if(*s=='$') s = lookup(s);          // substitute variables
             w[i] = s;
         };
         
@@ -301,6 +302,9 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
                     alias(t, w[i]);
                 };
+                string t;
+                itoa(t, numargs-1);
+                alias("numargs", t);
                 char *action = newstring(id->_action);   // create new string here because alias could rebind itself
                 val = execute(action, isdown);
                 delete[] action;
