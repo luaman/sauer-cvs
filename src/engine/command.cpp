@@ -40,6 +40,19 @@ void alias(char *name, char *action)
 
 COMMAND(alias, ARG_2STR);
 
+void unalias(char *name)
+{
+    ident *i = idents->access(name);
+    if(i && i->_type==ID_ALIAS)
+    {
+        DELETEA(i->_name);
+        DELETEA(i->_action);
+        idents->remove(name);
+    };
+};
+
+COMMAND(unalias, ARG_1STR);
+        
 // variable's and commands are registered through globals, see cube.h
 
 int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
@@ -74,9 +87,10 @@ void addident(char *name, ident *id)
     idents->access(name, id);
 };
 
-char *parseexp(char *&p, int right)             // parse any nested set of () or []
+static vector<char> wordbuf;
+
+char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf)             // parse any nested set of () or []
 {
-    static vector<char> wordbuf;
     wordbuf.setsize(0);
     int left = *p++;
     for(int brak = 1; brak; )
@@ -85,6 +99,20 @@ char *parseexp(char *&p, int right)             // parse any nested set of () or
         if(c=='\r') continue;               // hack
         if(c=='@')
         {
+            if(*p=='[')
+            {
+                string s;
+                char *a = getalias("s");
+                if(a) s_strcpy(s, a);
+                alias("s", "");
+                vector<char> macrobuf;
+                char *macro = parseexp(p, ']', macrobuf);
+                execute(macro);
+                char *sub = getalias("s");
+                if(sub) while(*sub) wordbuf.add(*sub++);
+                if(a) alias("s", s); else unalias("s");
+                continue;
+            };
             char *ident = p;
             while(isalnum(*p)) p++;
             c = *p;
