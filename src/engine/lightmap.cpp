@@ -675,7 +675,7 @@ void lightreaching(const vec &target, vec &color, vec &dir)
             continue;
     
         ray.div(mag);
-        if(raycube(e.o, ray, mag, mmshadows ? RAY_POLY : 0) < mag)
+        if(raycube(e.o, ray, mag, RAY_POLY) < mag)
             continue;
         float intensity = 1.0;
         if(e.attr1)
