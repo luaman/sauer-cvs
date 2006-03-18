@@ -159,6 +159,18 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     return s;
 };
 
+char *lookup(char *n)                           // find value of ident referenced with $ in exp
+{
+    ident *id = idents->access(n+1);
+    if(id) switch(id->_type)
+    {
+        case ID_VAR: string t; itoa(t, *(id->_storage)); return exchangestr(n, t);
+        case ID_ALIAS: return exchangestr(n, id->_action);
+    };
+    conoutf("unknown alias lookup: %s", n+1);
+    return n;
+};
+
 char *parseword(char *&p)                       // parse single argument, including expressions
 {
     p += strspn(p, " \t\r");
@@ -180,18 +192,6 @@ char *parseword(char *&p)                       // parse single argument, includ
     char *s = newstring(word, p-word);
     if(*s=='$') return lookup(s);               // substitute variables
     return s;
-};
-
-char *lookup(char *n)                           // find value of ident referenced with $ in exp
-{
-    ident *id = idents->access(n+1);
-    if(id) switch(id->_type)
-    {
-        case ID_VAR: string t; itoa(t, *(id->_storage)); return exchangestr(n, t);
-        case ID_ALIAS: return exchangestr(n, id->_action);
-    };
-    conoutf("unknown alias lookup: %s", n+1);
-    return n;
 };
 
 void conc(char **w, int n, char *r, const char *sep = " ")
