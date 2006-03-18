@@ -89,6 +89,20 @@ void addident(char *name, ident *id)
 
 static vector<char> wordbuf;
 
+void domacro(char *&p, vector<char> &wordbuf)
+{
+    string s;
+    char *a = getalias("s");
+    if(a) s_strcpy(s, a);
+    alias("s", "");
+    vector<char> macrobuf;
+    char *macro = parseexp(p, ']', macrobuf);
+    execute(macro);
+    char *sub = getalias("s");
+    if(sub) while(*sub) wordbuf.add(*sub++);
+    if(a) alias("s", s); else unalias("s");
+};
+
 char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf)             // parse any nested set of () or []
 {
     wordbuf.setsize(0);
@@ -101,16 +115,7 @@ char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf)            
         {
             if(*p=='[')
             {
-                string s;
-                char *a = getalias("s");
-                if(a) s_strcpy(s, a);
-                alias("s", "");
-                vector<char> macrobuf;
-                char *macro = parseexp(p, ']', macrobuf);
-                execute(macro);
-                char *sub = getalias("s");
-                if(sub) while(*sub) wordbuf.add(*sub++);
-                if(a) alias("s", s); else unalias("s");
+                domacro(p, wordbuf);
                 continue;
             };
             char *ident = p;
