@@ -296,7 +296,6 @@ struct cubeloader
         };
         gzclose(f);
         create_cubes();
-        extern void remipworld();
         remipworld();
         loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
         entitiesinoctanodes();

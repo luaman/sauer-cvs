@@ -246,10 +246,16 @@ music name ondone</pre>
 
 		<div>Lighting Commands</div>
 		<a name="lightingcommands"></a>
-		<pre>calclight</pre>
+		<pre>calclight Q</pre>
 		This calculates all lightmaps. Usually takes only a few seconds, depending on 
 		map size and settings. If you "savemap", the lightmap will be stored along with 
-		it.
+		it. Q is these predefined quality settinsg:
+		<ul>
+		<li>1: 8x anti aliasing, shadows for mapmodels also (maximum quality, very slow)</li>
+		<li>0: 4x anti aliasing, world shadows only (default, good enough for most maps)</li>
+		<li>-1: no anti aliasing, but still shadowed (good for shadow previews)</li>
+		<li>-2: no anti aliasing and no shadows (VERY fast, good for lighting previews)</li>
+		</ul>
 		<pre>patchlight</pre>
 		This will calculate lightmaps for any newly created cubes. This will generally 
 		be much quicker than doing a "calclight", and so is very useful when editing. 

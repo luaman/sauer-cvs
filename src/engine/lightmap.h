@@ -53,7 +53,6 @@ extern vector<LightMap> lightmaps;
 
 enum { LMID_AMBIENT = 0, LMID_BRIGHT, LMID_RESERVED };
 
-extern void calclight();
 extern void clearlights();
 extern void initlights();
 extern void resetlightmaps();

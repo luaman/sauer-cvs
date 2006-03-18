@@ -125,6 +125,7 @@ extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, ucha
 extern int visibleorient(cube &c, int orient);
 extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
+extern void remipworld(); 
 
 // water
 extern int showmat;

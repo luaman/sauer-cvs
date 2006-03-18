@@ -8,9 +8,11 @@ VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
 VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VARF(worldlod, 0, 0, 1,  hdr.mapwlod = worldlod);
 VARF(ambient, 1, 25, 64, hdr.ambient = ambient);
-VAR(shadows, 0, 1, 1);
-VAR(mmshadows, 0, 0, 1);
-VAR(aalights, 0, 2, 2);
+
+// quality parameters, set by the calclight arg
+int shadows = 1;
+int mmshadows = 0;
+int aalights = 2;
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
@@ -502,8 +504,16 @@ void resetlightmaps()
 
 extern vector<vtxarray *> valist;
 
-void calclight()
+void calclight(int quality)
 {
+    switch(quality)
+    {
+        case  1: shadows = 1; aalights = 2; mmshadows = 1; break;
+        case  0: shadows = 1; aalights = 1; mmshadows = 0; break;
+        case -1: shadows = 1; aalights = 0; mmshadows = 0; break;
+        case -2: shadows = 0; aalights = 0; mmshadows = 0; break;
+    };
+    remipworld();
     computescreen("computing lightmaps... (esc to abort)");
     resetlightmaps();
     clear_lmids(worldroot);
@@ -538,7 +548,7 @@ void calclight()
             lightmaps.length());
 };
 
-COMMAND(calclight, ARG_NONE);
+COMMAND(calclight, ARG_1INT);
 
 void patchlight()
 {

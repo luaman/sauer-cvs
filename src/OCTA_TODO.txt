@@ -15,15 +15,16 @@ eihrul:
 - sound entities
 
 aard (e = eihrul (or gilt) could do it):
-- finish up grenade launcher (low fps? ammo? skin? model?)
+- finish up grenade launcher (low fps? ammo? skin? model? doc?)
 - windows installer
 - optimize model shader
+- document capture mode
 - monster spawner ammo
+- find efficient solution for normals on world geometry
 - (e) make 3rd person weapons show... how to make an axe swing rather than go back and forth?
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - iconic stats
 - new BAS sounds?
-- make very clear section in the docs about what you can and cannot do with sauer
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - (e) per sound volume
 - (e) bouncing gib particles
@@ -39,7 +40,6 @@ aard (e = eihrul (or gilt) could do it):
 - show quadded player with special rendering
 - experiment with physics speedup features
 - think about simpler area based portals / combine with doors | automatically? compute portals of each VA? REALLY need some culling for monsters/items etc
-- make remip part of savemap or calclight?
 - think of cheap way to have surface normals available.. can do tangent/bin globally? keep it all in worldspace? lights?
 can do bumpmapping by simply having an "average tangentspace lightvector" LM and a "occlusion and attenuation color" LM,
 then no list of lights and no tangent space vectors would be needed! superior to dot3 lightmaps really?
