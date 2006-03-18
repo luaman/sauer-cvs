@@ -1060,6 +1060,14 @@ void renderq(int w, int h)
                     GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
                     glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                    
+                    // KLUGE: workaround for buggy nvidia drivers
+                    // object planes are somehow invalid unless texgen is toggled
+                    glDisable(GL_TEXTURE_GEN_S);
+                    glDisable(GL_TEXTURE_GEN_T);
+                    glEnable(GL_TEXTURE_GEN_S);
+                    glEnable(GL_TEXTURE_GEN_T);
+                   
                     lastxs = tex->xs;
                     lastys = tex->ys;
                     lastl = l;
