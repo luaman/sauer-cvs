@@ -193,18 +193,28 @@ menuitem A</pre>
 		substitute the values of console variables this way, i.e $fov gives the current 
 		fov. Some aliases are set automatically, for example $arg1 to $argN are set if 
 		you supply arguments when you execute an alias.
-		Alternative to $x is @x, which is using an alias as a macro. The difference is that @x can be subtituted inside
-		[] or () forms before they have ever been evaluated, which makes them useful for
-		composing strings or creating code on the fly.
+        <br>
+        <br>
+		An alternative re two alternatives to "" for quoting a string: () and []. They work in
+        the same way as "", with the difference that they can be nested infinitely, and
+        that they may contain linefeeds (useful for larger scripts). () is different
+        from [] in that it evaluates the commands contained in it _before_ it evaluates
+        the surrounding command, and substitutes the results. () bracketed strings are
+        called expressions, and [] bracketed strings may be thought of as blocks.
+        <br>
+        <br>
+        An alternative to $x is @x, which uses an alias as a macro. The difference is that @x 
+        can be subtituted inside [] or () forms before they have ever been evaluated (at parse time), 
+        which makes them useful for composing strings or creating code on the fly. 
+        <br>
+        <br>
+        The form @[body] is similar to @x, except that body contains commands executed at parse time.
+        The value of the s alias after body executes is substituted in for @[body]. The s alias is 
+        initialized to "" before body executes and restored to its old value afterwards, for convenience.
+        Example: @[alias s "Hello, World!"] will substitute itself with Hello, World!
 		<br>
 		<br>
-		There are two alternative ways to "" to quote a string: () and []. They work in 
-		the same way as "", with the difference that they can be nested infinitely, and 
-		that they may contain linefeeds (useful for larger scripts). () is different 
-		from [] in that it evaluates the commands contained in it _before_ it evaluates 
-		the surrounding command, and substitutes the results. () bracketed strings are 
-		called expressions, and combined with some commands made especially for 
-		"programming", you have a minimal language:
+        The following commands are available for programming:
 		<pre>+ A B
 &gt;- A B
 * A B
@@ -240,6 +250,12 @@ strcmp A B</pre>
 		concatenates all the arguments into alias "s"
 		<pre>concatword S...</pre>
 		same as concat but without spaces between the elements.
+        <pre>format F V1..VN</pre>
+        substitutes the V values into the format string F and stores the result in "s".
+        The format strings %1 through %9 are substituted with V1 through V9, respectively, and may be
+        used multiple times. %% will generate a single % character. Example:
+        <br>
+        <code>format "%1 bottles of %2 on the %3, %1 bottles of %2!" 99 beer wall</code>
 		<pre>at S N</pre>
 		grabs the Nth word out of string S and puts it into alias "s"
 		<pre>listlen L</pre>
