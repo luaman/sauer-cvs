@@ -96,7 +96,7 @@ char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf);
     string oldaction; \
     char *hasalias = getalias(name); \
     if(hasalias) s_strcpy(oldaction, hasalias); \
-    { body }; \
+    body; \
     if(hasalias) alias(name, oldaction); else unalias(name); \
 }
 
