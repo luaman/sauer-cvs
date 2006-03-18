@@ -89,6 +89,8 @@ void addident(char *name, ident *id)
 
 static vector<char> wordbuf;
 
+char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf);
+
 void domacro(char *&p, vector<char> &wordbuf)
 {
     string s;
@@ -103,7 +105,7 @@ void domacro(char *&p, vector<char> &wordbuf)
     if(a) alias("s", s); else unalias("s");
 };
 
-char *parseexp(char *&p, int right, vector<char> &wordbuf = wordbuf)             // parse any nested set of () or []
+char *parseexp(char *&p, int right, vector<char> &wordbuf)             // parse any nested set of () or []
 {
     wordbuf.setsize(0);
     int left = *p++;
