@@ -304,6 +304,9 @@ int main(int argc, char **argv)
     keyrepeat(false);
     SDL_ShowCursor(0);
 
+    log("console");
+    exec("data/stdlib.cfg");
+
     log("gl");
     gl_init(scr_w, scr_h);
     crosshair = textureload(newstring("data/crosshair.png"));
