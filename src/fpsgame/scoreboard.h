@@ -73,14 +73,17 @@ struct scoreboard
                     out:;
                 };
             };
-            teamscores[0] = 0;
-            loopj(teamsused)
+            if(teamsused)
             {
-                s_sprintfd(s)("[ %s: %d ]", teamname[j], teamscore[j]);
-                s_strcat(teamscores, s);
+                teamscores[0] = 0;
+                loopj(teamsused)
+                {
+                    s_sprintfd(s)("[ %s: %d ]", teamname[j], teamscore[j]);
+                    s_strcat(teamscores, s);
+                };
+                menumanual(0, scorelines.length(), "");
+                menumanual(0, scorelines.length()+1, teamscores);
             };
-            menumanual(0, scorelines.length(), "");
-            menumanual(0, scorelines.length()+1, teamscores);
         };
     };
 };
