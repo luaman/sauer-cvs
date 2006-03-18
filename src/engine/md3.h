@@ -427,8 +427,8 @@ struct md3model
         
         glTranslatef(x, y, z); // avoid models above ground
         
-        glRotatef(yaw+180, 0, -1, 0);
-        glRotatef(pitch, 0, 0, 1);
+        glRotatef(yaw+180, 0, 0, 1);
+        glRotatef(pitch, 0, -1, 0);
         glRotatef(-90, 1, 0, 0);
         
         sc *= MD3_DEFAULT_SCALE;
