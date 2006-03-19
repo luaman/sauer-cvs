@@ -13,6 +13,7 @@ int conskip = 0;
 
 bool saycommandon = false;
 string commandbuf;
+int commandpos = -1;
 
 void setconskip(int n)
 {
@@ -60,6 +61,13 @@ void conoutf(const char *s, ...)
 bool fullconsole = false;
 void toggleconsole() { fullconsole = !fullconsole; };
 COMMAND(toggleconsole, ARG_NONE);
+
+void rendercommand(int x, int y)
+{
+    s_sprintfd(s)("> %s", commandbuf);
+    draw_textf(s, x, y);
+    draw_textf("_", x + text_width(s, commandpos>=0 ? commandpos+2 : -1), y);
+};
 
 void renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
@@ -127,6 +135,7 @@ void saycommand(char *init)                         // turns input to the comman
     if(!editmode) keyrepeat(saycommandon);
     if(!init) init = "";
     s_strcpy(commandbuf, init);
+    commandpos = -1;
 };
 
 void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); };
@@ -160,15 +169,15 @@ void pasteconsole()
     char *cb = XFetchBytes(wminfo.info.x11.display, &cbsize);
     if(!cb || !cbsize) return;
     int commandlen = strlen(commandbuf);
-    for(char *cbline = cb, *cbend; commandlen + 1 < _MAXDEFSTR && cbline < &cb[cbsize]; cbline = cbend + 1)
+    for(char *cbline = cb, *cbend; commandlen + 1 < sizeof(commandbuf) && cbline < &cb[cbsize]; cbline = cbend + 1)
     {
         cbend = (char *)memchr(cbline, '\0', &cb[cbsize] - cbline);
         if(!cbend) cbend = &cb[cbsize];
-        if(commandlen + cbend - cbline + 1 > _MAXDEFSTR) cbend = cbline + _MAXDEFSTR - commandlen - 1;
+        if(commandlen + cbend - cbline + 1 > sizeof(commandbuf)) cbend = cbline + sizeof(commandbuf) - commandlen - 1;
         memcpy(&commandbuf[commandlen], cbline, cbend - cbline);
         commandlen += cbend - cbline;
         commandbuf[commandlen] = '\n';
-        if(commandlen + 1 < _MAXDEFSTR && cbend < &cb[cbsize]) ++commandlen;
+        if(commandlen + 1 < sizeof(commandbuf) && cbend < &cb[cbsize]) ++commandlen;
         commandbuf[commandlen] = '\0';
     };
     XFree(cb);
@@ -203,14 +212,36 @@ void keypress(int code, bool isdown, int cooked)
                 case SDLK_KP_ENTER:
                     break;
 
-                case SDLK_BACKSPACE:
-                case SDLK_LEFT:
+                case SDLK_DELETE:
                 {
-                    for(int i = 0; commandbuf[i]; i++) if(!commandbuf[i+1]) commandbuf[i] = 0;
+                    int len = strlen(commandbuf);
+                    if(commandpos<0) break;
+                    memmove(&commandbuf[commandpos], &commandbuf[commandpos+1], len - commandpos);    
                     resetcomplete();
+                    if(commandpos>=len-1) commandpos = -1;
                     break;
                 };
-                    
+
+                case SDLK_BACKSPACE:
+                {
+                    int len = strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
+                    if(i<1) break;
+                    memmove(&commandbuf[i-1], &commandbuf[i], len - i + 1);  
+                    resetcomplete();
+                    if(commandpos>0) commandpos--;
+                    else if(!commandpos && len<=1) commandpos = -1;
+                    break;
+                };
+
+                case SDLK_LEFT:
+                    if(commandpos>0) commandpos--;
+                    else if(commandpos<0) commandpos = strlen(commandbuf)-1;
+                    break;
+
+                case SDLK_RIGHT:
+                    if(commandpos>=0 && ++commandpos>=strlen(commandbuf)) commandpos = -1;
+                    break;
+                        
                 case SDLK_UP:
                     if(histpos) s_strcpy(commandbuf, vhistory[--histpos]);
                     break;
@@ -221,6 +252,7 @@ void keypress(int code, bool isdown, int cooked)
                     
                 case SDLK_TAB:
                     complete(commandbuf);
+                    if(commandpos>=0 && commandpos>=strlen(commandbuf)) commandpos = -1;
                     break;
 
                 case SDLK_v:
@@ -228,7 +260,20 @@ void keypress(int code, bool isdown, int cooked)
 
                 default:
                     resetcomplete();
-                    if(cooked) { char add[] = { cooked, 0 }; s_strcat(commandbuf, add); };
+                    if(cooked) 
+                    { 
+                        int len = strlen(commandbuf);
+                        if(len+1<sizeof(commandbuf))
+                        {
+                            if(commandpos<0) commandbuf[len] = cooked;
+                            else
+                            {
+                                memmove(&commandbuf[commandpos+1], &commandbuf[commandpos], len - commandpos);
+                                commandbuf[commandpos++] = cooked;
+                            };
+                            commandbuf[len+1] = '\0';
+                        };
+                    };
             };
         }
         else

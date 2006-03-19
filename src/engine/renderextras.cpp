@@ -211,7 +211,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     char *command = getcurcommand();
     //char *playername = cl->gamepointat(worldpos);
-    if(command) draw_textf("> %s_", FONTH/2, abovegameplayhud, command);
+    if(command) rendercommand(FONTH/2, abovegameplayhud);
     else if(closeent[0] && !hidehud) draw_text(closeent, FONTH/2, abovegameplayhud);
     //else if(playername) draw_text(playername, FONTH/2, abovegameplayhud);
 

@@ -53,6 +53,7 @@ extern char *getalias(char *name);
 
 // console
 extern void keypress(int code, bool isdown, int cooked);
+extern void rendercommand(int x, int y);
 extern void renderconsole(int w, int h);
 extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
@@ -90,7 +91,7 @@ extern void registergame(char *name, igame *ig);
 // rendertext
 extern void draw_text(const char *str, int left, int top, int r = 255, int g = 255, int b = 255, int a = 255);
 extern void draw_textf(const char *fstr, int left, int top, ...);
-extern int text_width(const char *str);
+extern int text_width(const char *str, int limit = -1);
 extern int text_visible(const char *str, int max);
 extern void draw_envbox(int t, int fogdist);
 

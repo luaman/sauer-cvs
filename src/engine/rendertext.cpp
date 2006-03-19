@@ -116,10 +116,10 @@ int char_width(int c, int x = 0)
     return x;
 };
 
-int text_width(const char *str)
+int text_width(const char *str, int limit)
 {
     int x = 0;
-    for(int i = 0; str[i]; i++) x = char_width(str[i], x);
+    for(int i = 0; str[i] && (limit<0 || i<limit); i++) x = char_width(str[i], x);
     return x;
 }
 
