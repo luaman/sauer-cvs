@@ -18,7 +18,7 @@ static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights1, lights2;
 static uint progress = 0, total_surfaces = 0;
-static bool canceled = false;
+static bool canceled = false, check_progress = false;
 
 void check_calclight_canceled()
 {
@@ -33,6 +33,7 @@ void check_calclight_canceled()
             break;
         };
     };
+    check_progress = false;
 };
 
 static int curlumels = 0;
@@ -48,6 +49,8 @@ void show_calclight_progress()
     s_sprintfd(text2)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100));
 
     show_out_of_renderloop_progress(bar1, text1, bar2, text2);
+
+    check_calclight_canceled();
 };
 
 bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
@@ -228,6 +231,11 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     for(uint y = y1; y < y2; ++y, v.add(vstep)) {
         vec u = v;
         for(uint x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
+            if(check_progress)
+            {
+                show_calclight_progress();
+                if(canceled) return false;
+            };
             int r = 0, g = 0, b = 0;
             loopj(aasample)
             {
@@ -427,10 +435,6 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     return true;
 };
 
-#define CHECK_PROGRESS \
-    if((progress++ % (total_surfaces < 100 ? 1 : total_surfaces / 100)) == 0) \
-        show_calclight_progress();
-
 void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 {
     if(c.surfaces)
@@ -439,8 +443,8 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         {
             loopj(6) if(visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
             {
-                if(!lodcube) CHECK_PROGRESS
-                if(c.texture[i] != DEFAULT_SKY && size >= hdr.mapwlod) CHECK_PROGRESS
+                if(!lodcube) ++progress;
+                if(c.texture[i] != DEFAULT_SKY && size >= hdr.mapwlod) ++progress;
             };
             return;
         };
@@ -452,9 +456,9 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     calcverts(c, cx, cy, cz, size, verts, usefaces, vertused, lodcube);
     loopi(6) if(usefaces[i])
     {
-        if(!lodcube) CHECK_PROGRESS
+        if(!lodcube) progress++;
         if(c.texture[i] == DEFAULT_SKY) continue;
-        if(size >= hdr.mapwlod) CHECK_PROGRESS
+        if(size >= hdr.mapwlod) progress++;
 
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);
@@ -481,7 +485,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
-    check_calclight_canceled();
+    if(check_progress) show_calclight_progress();
     if(canceled)
         return;
 
@@ -502,6 +506,12 @@ void resetlightmaps()
     compressed.clear();
 };
 
+static Uint32 calclight_timer(Uint32 interval, void *param)
+{
+    check_progress = true;
+    return interval;
+};
+    
 extern vector<vtxarray *> valist;
 
 void calclight(int quality)
@@ -529,7 +539,10 @@ void calclight(int quality)
         total_surfaces += va->l1.tris/2;
     };
     canceled = false;
+    check_progress = false;
+    SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL); 
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
+    if(timer) SDL_RemoveTimer(timer);
     uint total = 0, lumels = 0;
     loopv(lightmaps)
     {
@@ -564,7 +577,6 @@ void patchlight()
         total_surfaces += va->explicitsky;
         total_surfaces += va->l1.tris/2;
     };
-    canceled = false;
     int total = 0, lumels = 0;
     loopv(lightmaps)
     {
@@ -572,7 +584,11 @@ void patchlight()
         lumels -= lightmaps[i].lumels;
     };
     curlumels = lumels;
+    canceled = false;
+    check_progress = false;
+    SDL_TimerID timer = SDL_AddTimer(500, calclight_timer, NULL);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
+    if(timer) SDL_RemoveTimer(timer);
     loopv(lightmaps)
     {
         total += lightmaps[i].lightmaps;
