@@ -475,12 +475,12 @@ struct fpsclient : igameclient
     {
         settexture("data/items.png");
         glBegin(GL_QUADS);
-        tx /= 320;
+        tx /= 384;
         ty /= 128;
         int s = 120;
         glTexCoord2f(tx,        ty);        glVertex2i(x,   y);
-        glTexCoord2f(tx+1/5.0f, ty);        glVertex2i(x+s, y);
-        glTexCoord2f(tx+1/5.0f, ty+1/2.0f); glVertex2i(x+s, y+s);
+        glTexCoord2f(tx+1/6.0f, ty);        glVertex2i(x+s, y);
+        glTexCoord2f(tx+1/6.0f, ty+1/2.0f); glVertex2i(x+s, y+s);
         glTexCoord2f(tx,        ty+1/2.0f); glVertex2i(x,   y+s);
         glEnd();
     };
@@ -510,7 +510,6 @@ struct fpsclient : igameclient
         int g = player1->gunselect;
         int r = 64;
         if(g==GUN_PISTOL) { g = 4; r = 0; };
-        if(g==GUN_GL) { g = 3; r = 1; };    // FIXME
         drawicon((float)(g*64), (float)r, 1220, 1650);
         if(m_capture) cpc.capturehud(w, h);
     };
