@@ -159,8 +159,10 @@ bool raytriintersect(const vec &o, const vec &ray, const vec &t0, const vec &t1,
     q.cross(r, edge1);
     float v = ray.dot(q) / det;
     if(v < 0 || u + v > 1) return false;
-    dist = edge2.dot(q) / det;
-    return true;   
+    float f = edge2.dot(q) / det;
+    if(f < 0) return false;
+    dist = f;
+    return true;
 };
 
 void yawray(vec &o, vec &ray, float angle)
@@ -175,10 +177,11 @@ void yawray(vec &o, vec &ray, float angle)
     ray.y = ry*c + rx*s - o.y;
 };
 
-bool mmintersect(const extentity &e, const vec &o, const vec &ray, float &dist)
+bool mmintersect(const extentity &e, const vec &o, const vec &ray, int mode, float &dist)
 {
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi) return false;
+    if((mode&RAY_SHADOW) && mmi.noshadow) return false;
     vec eo(e.o);
     float zoff = float(mmi.zoff+e.attr3);
     eo.z += zoff;
@@ -278,7 +281,7 @@ bool inlist(int id, octaentities *last)
     return false;
 };
 
-float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, bool bb)
+float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, int mode)
 {
     float dist = 1e16f;
     if(oc == last || oc == NULL) return dist;
@@ -288,7 +291,7 @@ float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &r
         ivec bo, br;
         extentity &e = *et->getents()[oc->list[i]];
         if(!e.inoctanode || e.type!=ET_MAPMODEL) continue;
-        if(bb)
+        if((mode&RAY_POLY) == RAY_BB)
         {
             if(!getmmboundingbox(e, bo, br)) continue;
             vec vbo(bo.v), vbr(br.v);
@@ -298,7 +301,7 @@ float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &r
         }
         else
         {
-            if(!mmintersect(e, o, ray, f)) continue;
+            if(!mmintersect(e, o, ray, mode, f)) continue;
         };
         dist = min(dist, f);
     };
@@ -334,7 +337,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
         if(dent > 1e15f && (mode&RAY_POLY))
         {
             cube &ce = lookupcube(x, y, z, -octaentsize);
-            dent = disttoent(ce.ents, oclast, o, ray, (mode&RAY_POLY)==RAY_BB);
+            dent = disttoent(ce.ents, oclast, o, ray, mode);
             oclast = ce.ents;
         };
 

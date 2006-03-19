@@ -76,7 +76,7 @@ struct weaponstate
             dest.add(v);
             vec dir = dest;
             dir.sub(from);
-            raycubepos(from, dir, dest, 0, RAY_CLIPMAT);
+            raycubepos(from, dir, dest, 0, RAY_CLIPMAT|RAY_POLY);
             return;
         };
     };
@@ -435,12 +435,12 @@ struct weaponstate
         
         if(dist>1024) shorten = 1024;
         if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) shorten = 12;
-        float barrier = raycube(d->o, unitv, dist);
+        float barrier = raycube(d->o, unitv, dist, RAY_POLY);
         if(barrier < dist && (!shorten || barrier < shorten))
             shorten = barrier;
         if(shorten)
         {
-            unitv.mul(shorten); // punch range
+            unitv.mul(shorten);
             to = from;
             to.add(unitv);
         };   

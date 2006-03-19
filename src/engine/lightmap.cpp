@@ -185,7 +185,7 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
             continue;
         if(shadows)
         {
-            float dist = raycube(light.o, ray, mag, mmshadows ? RAY_POLY : 0);
+            float dist = raycube(light.o, ray, mag, RAY_SHADOW | (mmshadows ? RAY_POLY : 0));
             if(dist < mag - tolerance)
                 continue;
         };
@@ -677,7 +677,7 @@ void lightreaching(const vec &target, vec &color, vec &dir)
             continue;
     
         ray.div(mag);
-        if(raycube(e.o, ray, mag, RAY_POLY) < mag)
+        if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY) < mag)
             continue;
         float intensity = 1.0;
         if(e.attr1)
