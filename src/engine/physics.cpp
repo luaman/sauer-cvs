@@ -181,7 +181,16 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
 {
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi) return false;
-    if((mode&RAY_SHADOW) && !mmi.shadow) return false;
+    if(mode&RAY_SHADOW)
+    {
+        if(!mmi.shadow) return false;
+        vec target(ray);
+        target.mul(maxdist);
+        target.add(o);
+        target.sub(e.o);
+        target.z -= (mmi.h ? mmi.h : 8.0f) + mmi.zoff + e.attr3;
+        if(target.squaredlen() < 0.01f) return false;
+    };
     vec eo(e.o);
     float zoff = float(mmi.zoff+e.attr3);
     eo.z += zoff;
@@ -197,12 +206,12 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     vec co(yo);
     co.sub(center);
     float a = yray.squaredlen(), 
-          b = 2.0f*yray.dot(co), 
+          b = yray.dot(co), 
           c = co.squaredlen() - radius*radius,
-          d = b*b - 4.0f*a*c;
+          d = b*b - a*c;
     if(d < 0) return false;
     d = sqrt(d);
-    float f1 = (d-b)/(2.0f*a), f2 = -(d+b)/(2.0f*a);
+    float f1 = (d-b)/a, f2 = -(d+b)/a;
     if((f1 < 0 || f1 > maxdist) && (f2 < 0 || f2 > maxdist)) return false;
     vector<triangle> &hull = m->hull();
     loopv(hull)
