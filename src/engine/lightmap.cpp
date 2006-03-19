@@ -617,7 +617,12 @@ void clearlights()
     uchar bright[3] = { 128, 128, 128 };
     alloctexids();
     loopi(lightmaps.length() + LMID_RESERVED) createtexture(lmtexids[i], 1, 1, bright, false, false);
-    loopv(et->getents()) et->getents()[i]->color = vec(1, 1, 1);
+    loopv(et->getents()) 
+    {
+        extentity &e = *et->getents()[i];
+        e.color = vec(1, 1, 1);
+        e.dir = vec(0, 0, 1);
+    };
 };
 
 void updateentlighting()

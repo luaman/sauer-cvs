@@ -52,6 +52,7 @@ struct cubeloader
     void create_ent(c_persistent_entity &ce)
     {
         if(ce.type==14) return;    // FIXME
+        if(ce.type>=7) ce.type++;
         extentity &e = *et->newentity();
         et->getents().add(&e);
         e.type = ce.type;
@@ -299,6 +300,7 @@ struct cubeloader
         remipworld();
         loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
         entitiesinoctanodes();
+        clearlights();
         conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
         estartmap(pakname);
         string cfgname;
