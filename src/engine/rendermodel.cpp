@@ -13,9 +13,9 @@ Shader *modelshader = NULL;
 
 vector<mapmodelinfo> mapmodels;
 
-void mapmodel(char *rad, char *h, char *zoff, char *name, char *spec, char *noshadow)
+void mapmodel(char *rad, char *h, char *zoff, char *name, char *spec, char *shadow)
 {
-    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), atoi(spec), atoi(noshadow) }; 
+    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), atoi(spec), shadow[0] ? atoi(shadow) : 1 };
     s_strcpy(mmi.name, name);
     mapmodels.add(mmi);
 };

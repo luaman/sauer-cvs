@@ -181,7 +181,7 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, int mode, flo
 {
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi) return false;
-    if((mode&RAY_SHADOW) && mmi.noshadow) return false;
+    if((mode&RAY_SHADOW) && !mmi.shadow) return false;
     vec eo(e.o);
     float zoff = float(mmi.zoff+e.attr3);
     eo.z += zoff;
