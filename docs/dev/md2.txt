@@ -1,0 +1,42 @@
+MD2
+==
+
+Your md2 files must be located in a directory in packages/models/.
+
+You must provide a skin (either skin.jpg or skin.png) and the md2 itself (tris.md2).
+
+If either of these files is not found, Sauerbraten will search the parent directory for them. For example, if for the flags/red model, the tris.md2 is not found in packages/models/flags/red/, then it will look for tris.md2 in packages/models/flags/. This allows the sharing of skins and geometry.
+
+Sauerbraten expects the md2 to use Quake-compatible scale and animations, unless you configure the model otherwise.
+
+You may also supply a config file (md2.cfg) in your model directory, which allows you to customize the model's animations. The following commands may be used in an md2.cfg:
+
+md2anim name frame numframes
+md2anim name frame numframes speed
+
+    "name" is the name of the animation to define. 
+    Any of the following names may be used:
+        dying
+        dead
+        pain
+        idle
+        idle attack
+        run
+        run attack
+        edit
+        lag
+        jump
+        jump attack
+        gun shoot
+        gun idle
+
+    "frame" is the frame number the animation starts at.
+    "numframes" is the number of frames in the animation.
+    "speed" is the relative speed to run the animation at. This is optional and defaults to 100.
+
+    Example: md2anim "run attack" 50 6 30
+        Defines a "run attack" animation starting at frame 50 with 6 frames and running at 30% speed.      
+
+md2cullface N
+    If N is 0, backface culling is disabled for this model. Otherwise, backface culling is enabled. Default = 1.
+
