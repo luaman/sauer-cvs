@@ -142,7 +142,7 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
-bool raytriintersect(const vec &o, const vec &ray, const vec &t0, const vec &t1, const vec &t2, float &dist)
+bool raytriintersect(const vec &o, const vec &ray, float maxdist, const vec &t0, const vec &t1, const vec &t2, float &dist)
 {
     vec edge1(t1), edge2(t2);
     edge1.sub(t0);
@@ -160,7 +160,7 @@ bool raytriintersect(const vec &o, const vec &ray, const vec &t0, const vec &t1,
     float v = ray.dot(q) / det;
     if(v < 0 || u + v > 1) return false;
     float f = edge2.dot(q) / det;
-    if(f < 0) return false;
+    if(f < 0 || f > maxdist) return false;
     dist = f;
     return true;
 };
@@ -177,7 +177,7 @@ void yawray(vec &o, vec &ray, float angle)
     ray.y = ry*c + rx*s - o.y;
 };
 
-bool mmintersect(const extentity &e, const vec &o, const vec &ray, int mode, float &dist)
+bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist, int mode, float &dist)
 {
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi) return false;
@@ -197,14 +197,18 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, int mode, flo
     vec co(yo);
     co.sub(center);
     float a = yray.squaredlen(), 
-          b = yray.dot(co), 
-          c = co.squaredlen() - radius*radius;
-    if(b*b < a*c) return false;
+          b = 2.0f*yray.dot(co), 
+          c = co.squaredlen() - radius*radius,
+          d = b*b - 4.0f*a*c;
+    if(d < 0) return false;
+    d = sqrt(d);
+    float f1 = (d-b)/(2.0f*a), f2 = -(d+b)/(2.0f*a);
+    if((f1 < 0 || f1 > maxdist) && (f2 < 0 || f2 > maxdist)) return false;
     vector<triangle> &hull = m->hull();
     loopv(hull)
     {
         triangle &tri = hull[i];
-        if(raytriintersect(yo, yray, tri.a, tri.b, tri.c, dist)) return true;
+        if(raytriintersect(yo, yray, maxdist, tri.a, tri.b, tri.c, dist)) return true;
     };
     return false;
 };
@@ -281,7 +285,7 @@ bool inlist(int id, octaentities *last)
     return false;
 };
 
-float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, int mode)
+float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode)
 {
     float dist = 1e16f;
     if(oc == last || oc == NULL) return dist;
@@ -301,7 +305,7 @@ float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &r
         }
         else
         {
-            if(!mmintersect(e, o, ray, mode, f)) continue;
+            if(!mmintersect(e, o, ray, radius, mode, f)) continue;
         };
         dist = min(dist, f);
     };
@@ -330,22 +334,50 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
     vec v = o;
     if(ray==vec(0,0,0)) return dist;
 
+    static cube *levels[32];
+    levels[0] = worldroot;
+    int l = 0, lsize = hdr.worldsize>>1;
+    ivec lo(0, 0, 0);
+
     for(;;)
     {
         int x = int(v.x), y = int(v.y), z = int(v.z);
 
-        if(dent > 1e15f && (mode&RAY_POLY))
+        cube *lc = levels[l];
+        for(;;)
         {
-            cube &ce = lookupcube(x, y, z, -octaentsize);
-            dent = disttoent(ce.ents, oclast, o, ray, mode);
-            oclast = ce.ents;
+            lo.x &= ~lsize;
+            lo.y &= ~lsize;
+            lo.z &= ~lsize;
+            lsize <<= 1;
+            if(x<lo.x+lsize && y<lo.y+lsize && z<lo.z+lsize)
+            {
+                if(x>=lo.x && y>=lo.y && z>=lo.z) break;
+            };
+            if(!l) break;
+            lc = levels[--l];
+        };
+        for(;;)
+        {
+            lsize >>= 1;
+            if(z>=lo.z+lsize) { lo.z += lsize; lc += 4; };
+            if(y>=lo.y+lsize) { lo.y += lsize; lc += 2; };
+            if(x>=lo.x+lsize) { lo.x += lsize; lc += 1; };
+            if(dent > 1e15f && (mode&RAY_POLY) && (lsize==octaentsize || (!lc->children && lsize>octaentsize)))
+            {
+                dent = disttoent(lc->ents, oclast, o, ray, radius, mode);
+                oclast = lc->ents;
+            }; 
+            if(lc->children==NULL) break;
+            lc = lc->children;
+            levels[++l] = lc;
         };
 
-        cube &c = lookupcube(x, y, z, 0);
+        cube &c = *lc;
         float disttonext = 1e16f;
         loopi(3) if(ray[i]!=0)
         {
-            float d = (float(lu[i]+(ray[i]>0?lusize:0))-v[i])/ray[i];
+            float d = (float(lo[i]+(ray[i]>0?lsize:0))-v[i])/ray[i];
             if(d >= 0) disttonext = min(disttonext, 0.1f + d);
         };
 
@@ -353,7 +385,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
         {
             if(((mode&RAY_CLIPMAT) && isclipped(c.material) && c.material != MAT_CLIP) ||
                 ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
-                (lusize==size && !isempty(c) && !passthroughcube) ||
+                (lsize==size && !isempty(c) && !passthroughcube) ||
                 (radius>0 && dist>radius) ||
                 isentirelysolid(c) ||
                 dent < dist ||
@@ -365,7 +397,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
             else if(!isempty(c))
             {
                 float f = dist;
-                setcubeclip(c, lu.x, lu.y, lu.z, lusize);
+                setcubeclip(c, lo.x, lo.y, lo.z, lsize);
                 if(raycubeintersect(c, v, ray, f))
                 {
                     return min(dent, dist+f);
