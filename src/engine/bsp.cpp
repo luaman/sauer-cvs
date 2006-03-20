@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define BSP_MEDIAN_SPLIT 1
+#define BSP_MEDIAN_PIVOT 1
 
 struct BSPTriRange 
 {
@@ -31,7 +31,7 @@ static void calcranges(int numtris, BSPTri *tris, BSPTriRange *ranges, vec &min,
     max.add(1);
 };
 
-#ifdef BSP_MEDIAN_SPLIT
+#ifdef BSP_MEDIAN_PIVOT
 static int sortdim = 0;
 
 static int sortmin(const BSPTriRange *const *x, const BSPTriRange *const *y)
