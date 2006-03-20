@@ -136,6 +136,7 @@ static BSP *partitiontris(BSPRoot *root, int numtris, BSPTriRange **ranges)
             root->dim = 0;
             root->coord = 0.0f;
             root->greater = new BSPLeaf(numtris, tris);
+            root->lesser = new BSPLeaf(0, 0);
             return root;
         }
         else node = root;
