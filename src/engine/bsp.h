@@ -8,6 +8,7 @@ struct BSP
     int dim;
 
     BSP(int dim) : dim(dim) {};
+    virtual ~BSP() {};
 };
 
 struct BSPBranch : BSP
@@ -16,9 +17,7 @@ struct BSPBranch : BSP
     BSP *less, *greater;
 
     BSPBranch(int dim, float coord) : BSP(dim), coord(coord), less(0), greater(0) {};
-    ~BSPBranch() { clear(); };
-
-    void clear()
+    ~BSPBranch() 
     {
         DELETEP(less);
         DELETEP(greater);
@@ -31,11 +30,8 @@ struct BSPLeaf : BSP
     BSPTri **tris;
 
     BSPLeaf(int numtris, BSPTri **tris) : BSP(-1), numtris(numtris), tris(tris) {};
-    ~BSPLeaf() { clear(); };
-
-    void clear()
+    ~BSPLeaf()
     {
-        numtris = 0;
         DELETEA(tris);
     };
 };
@@ -48,10 +44,8 @@ struct BSPRoot : BSPBranch
     BSPTri *tris; 
 
     BSPRoot(int dim, float coord) : BSPBranch(dim, coord), tested(0), bmin(0, 0, 0), bmax(0, 0, 0), numtris(0), tris(0) {};
-
-    void clear()
+    ~BSPRoot()
     {
-        BSPBranch::clear();
         tested = 0;
         bmin = bmax = vec(0, 0, 0);
         numtris = 0;
