@@ -198,7 +198,7 @@ void updatechanvol(int chan, vec *loc, int sound)
             pan = int(255.9f*(0.5*sin(yaw)+0.5f)); // range is from 0 (left) to 255 (right)
         };
     };
-    vol = (vol*MAXVOL*samples[sound].vol)/255/100;
+    vol = (vol*MAXVOL*samples[sound].vol)/255/255;
     #ifdef USE_MIXER
         Mix_Volume(chan, vol);
         Mix_SetPanning(chan, 255-pan, pan);
