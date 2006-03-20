@@ -172,7 +172,7 @@ void pack_lightmap(surfaceinfo &surface)
     else insert_lightmap(surface.x, surface.y, surface.lmid);
 };
 
-void generate_lumel(const float tolerance, const vector<entity *> &lights, const vec &target, const vec &normal, int &r, int &g, int &b)
+void generate_lumel(const float tolerance, const vector<entity *> &lights, const vec &target, const vec &normal, float &r, float &g, float &b)
 {
     loopv(lights)
     {
@@ -194,9 +194,9 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
         };
         float intensity = -normal.dot(ray) * attenuation;
         if(intensity < 0) intensity = 1.0;
-        r += (int)(intensity * float(light.attr2));
-        g += (int)(intensity * float(light.attr3));
-        b += (int)(intensity * float(light.attr4));
+        r += intensity * float(light.attr2);
+        g += intensity * float(light.attr3);
+        b += intensity * float(light.attr4);
     };
 };
 
@@ -236,7 +236,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                 show_calclight_progress();
                 if(canceled) return false;
             };
-            int r = 0, g = 0, b = 0;
+            float r = 0, g = 0, b = 0;
             loopj(aasample)
             {
                 vec target(u);
@@ -250,9 +250,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
                 g /= aasample;
                 b /= aasample;
             };
-            lumel[0] = min(255, max(ambient, r));
-            lumel[1] = min(255, max(ambient, g));
-            lumel[2] = min(255, max(ambient, b));
+            lumel[0] = min(255, max(ambient, int(r)));
+            lumel[1] = min(255, max(ambient, int(g)));
+            lumel[2] = min(255, max(ambient, int(b)));
             loopk(3)
             {
                 mincolor[k] = min(mincolor[k], lumel[k]);
