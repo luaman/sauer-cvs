@@ -18,10 +18,10 @@ struct Texture
 struct model
 {
     Shader *shader;
-    float spec;
+    float spec, ambient;
     bool cullface;
 
-    model() : shader(0), spec(1.0f), cullface(true) {};
+    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true) {};
     virtual ~model() {};
     virtual float boundsphere(int frame, float scale, vec &center) = 0;
     virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d) = 0;

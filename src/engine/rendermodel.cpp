@@ -29,6 +29,17 @@ void mdlspec(int percent)
 
 COMMAND(mdlspec, ARG_1INT);
 
+void mdlambient(int percent)
+{
+    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    float ambient = 0.3f;
+    if(percent>0) ambient = percent/100.0f;
+    else if(percent<0) ambient = 0.0f;
+    loadingmodel->ambient = ambient;
+};
+
+COMMAND(mdlambient, ARG_1INT);
+
 void mdlshader(char *shader)
 {
     if(!loadingmodel) { conoutf("not loading a model"); return; };
@@ -122,7 +133,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
 
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, m->spec, m->spec, m->spec, 0);
 
-        vec ambient = vec(color).mul(0.3f);
+        vec ambient = vec(color).mul(m->ambient);
         loopi(3) ambient[i] = max(ambient[i], 0.2f);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, ambient.x, ambient.y, ambient.z, 1);
 
