@@ -142,58 +142,6 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
-void yawray(vec &o, vec &ray, float angle)
-{
-    angle *= RAD;
-    float c = cos(angle), s = sin(angle),
-          ox = o.x, oy = o.y, 
-          rx = ox+ray.x, ry = oy+ray.y;
-    o.x = ox*c - oy*s;
-    o.y = oy*c + ox*s;
-    ray.x = rx*c - ry*s - o.x;
-    ray.y = ry*c + rx*s - o.y;
-};
-
-bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist, int mode, float &dist)
-{
-    mapmodelinfo &mmi = getmminfo(e.attr2);
-    if(!&mmi) return false;
-    if(mode&RAY_SHADOW)
-    {
-        if(!mmi.shadow) return false;
-        vec target(ray);
-        target.mul(maxdist);
-        target.add(o);
-        target.sub(e.o);
-        target.z -= (mmi.h ? mmi.h : 8.0f) + mmi.zoff + e.attr3;
-        if(target.squaredlen() < 0.01f) return false;
-    };
-    vec eo(e.o);
-    float zoff = float(mmi.zoff+e.attr3);
-    eo.z += zoff;
-    float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
-    vec yo(o);
-    yo.sub(eo);
-    vec yray(ray);
-    if(yaw != 0) yawray(yo, yray, yaw);
-    model *m = loadmodel(mmi.name); 
-    if(!m) return false;
-    vec center;
-    float radius = m->boundsphere(0, 1.0f, center);
-    vec co(yo);
-    co.sub(center);
-    float a = yray.squaredlen(), 
-          b = yray.dot(co), 
-          c = co.squaredlen() - radius*radius,
-          d = b*b - a*c;
-    if(d < 0) return false;
-    d = sqrt(d);
-    float f1 = (d-b)/a, f2 = -(d+b)/a;
-    if((f1 < 0 || f1 > maxdist) && (f2 < 0 || f2 > maxdist)) return false;
-    BSPRoot *bsp = m->collisiontree();
-    return bspintersect(bsp, yo, yray, maxdist, dist);
-};
-
 bool pointoverbox(const vec &v, const vec &bo, const vec &br)
 {
     return v.x <= bo.x+br.x &&
@@ -266,7 +214,7 @@ bool inlist(int id, octaentities *last)
     return false;
 };
 
-float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode)
+float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
     float dist = 1e16f;
     if(oc == last || oc == NULL) return dist;
@@ -275,7 +223,7 @@ float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &r
         float f;
         ivec bo, br;
         extentity &e = *et->getents()[oc->list[i]];
-        if(!e.inoctanode || e.type!=ET_MAPMODEL) continue;
+        if(!e.inoctanode || e.type!=ET_MAPMODEL || &e==t) continue;
         if((mode&RAY_POLY) == RAY_BB)
         {
             if(!getmmboundingbox(e, bo, br)) continue;
@@ -307,7 +255,7 @@ float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, in
     return dist;
 };
 
-float raycube(const vec &o, vec &ray, float radius, int mode, int size)
+float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentity *t)
 {
     octaentities *oclast = NULL;
     float dist = 0, dent = 1e16f;
@@ -346,7 +294,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size)
             if(x>=lo.x+lsize) { lo.x += lsize; lc += 1; };
             if(dent > 1e15f && (mode&RAY_POLY) && (lsize==octaentsize || (!lc->children && lsize>octaentsize)))
             {
-                dent = disttoent(lc->ents, oclast, o, ray, radius, mode);
+                dent = disttoent(lc->ents, oclast, o, ray, radius, mode, t);
                 oclast = lc->ents;
             }; 
             if(lc->children==NULL) break;

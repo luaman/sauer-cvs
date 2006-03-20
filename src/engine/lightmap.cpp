@@ -641,22 +641,22 @@ void clearlights()
     };
 };
 
+void lightent(extentity &e, float height)
+{
+    if(e.type==ET_LIGHT) return;
+    if(e.type==ET_MAPMODEL)
+    {
+        mapmodelinfo &mmi = getmminfo(e.attr2);
+        if(&mmi)
+            height = float((mmi.h ? mmi.h : height) + mmi.zoff + e.attr3);
+    };
+    vec target(e.o.x, e.o.y, e.o.z + height);
+    lightreaching(target, e.color, e.dir, &e);
+};
+
 void updateentlighting()
 {
-    loopv(et->getents())
-    {
-        extentity &e = *et->getents()[i];
-        if(e.type==ET_LIGHT) continue;
-        float height = 8.0f;
-        if(e.type==ET_MAPMODEL)
-        {
-            mapmodelinfo &mmi = getmminfo(e.attr2);
-            if(&mmi)
-                height = float((mmi.h ? mmi.h : 8.0f) + mmi.zoff + e.attr3);
-        };
-        vec target(e.o.x, e.o.y, e.o.z + height);
-        lightreaching(target, e.color, e.dir);
-    };
+    loopv(et->getents()) lightent(*et->getents()[i]);
 };
 
 void initlights()
@@ -675,7 +675,7 @@ void initlights()
     updateentlighting();
 };
 
-void lightreaching(const vec &target, vec &color, vec &dir)
+void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)
 {
     if(fullbright)
     {
@@ -698,7 +698,7 @@ void lightreaching(const vec &target, vec &color, vec &dir)
             continue;
     
         ray.div(mag);
-        if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY) < mag)
+        if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY, 0, t) < mag)
             continue;
         float intensity = 1.0;
         if(e.attr1)

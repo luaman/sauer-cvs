@@ -69,4 +69,5 @@ struct BSPRoot : BSPBranch
 
 extern BSPRoot *buildbsp(int numtris, BSPTri *tris);
 extern bool bspintersect(BSPRoot *root, const vec &o, const vec &ray, float maxdist, float &dist);
+extern bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist, int mode, float &dist);
 

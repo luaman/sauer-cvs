@@ -279,3 +279,46 @@ void bsptest(char *name)
 COMMAND(bsptest, ARG_1STR);
 #endif
 
+static void yawray(vec &o, vec &ray, float angle)
+{
+    angle *= RAD; 
+    float c = cos(angle), s = sin(angle),
+          ox = o.x, oy = o.y,
+          rx = ox+ray.x, ry = oy+ray.y; 
+    o.x = ox*c - oy*s;
+    o.y = oy*c + ox*s;
+    ray.x = rx*c - ry*s - o.x;
+    ray.y = ry*c + rx*s - o.y;
+};
+
+bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist, int mode, float &dist)
+{
+    mapmodelinfo &mmi = getmminfo(e.attr2);
+    if(!&mmi) return false;
+    if(mode&RAY_SHADOW && !mmi.shadow) return false;
+    vec eo(e.o);
+    float zoff = float(mmi.zoff+e.attr3);
+    eo.z += zoff;
+    float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
+    vec yo(o);
+    yo.sub(eo);
+    vec yray(ray);
+    if(yaw != 0) yawray(yo, yray, yaw);
+    model *m = loadmodel(mmi.name);
+    if(!m) return false;
+    vec center;
+    float radius = m->boundsphere(0, 1.0f, center);
+    vec co(yo);
+    co.sub(center);
+    float a = yray.squaredlen(), 
+          b = yray.dot(co),
+          c = co.squaredlen() - radius*radius,
+          d = b*b - a*c;
+    if(d < 0) return false;
+    d = sqrt(d);
+    float f1 = (d-b)/a, f2 = -(d+b)/a;
+    if((f1 < 0 || f1 > maxdist) && (f2 < 0 || f2 > maxdist)) return false;
+    BSPRoot *bsp = m->collisiontree();
+    return bspintersect(bsp, yo, yray, maxdist, dist);
+};
+

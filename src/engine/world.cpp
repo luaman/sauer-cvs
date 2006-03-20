@@ -45,12 +45,14 @@ void entproperty(int prop, int amount)
 void entmove(int dir, int dist)
 {
     if(noedit()) return;
-    int e = closestent();
-    if(e<0||dir<0||dir>2) return;
-	removeoctaentity(e);
-    et->getents()[e]->o[dir] += dist;
-	addoctaentity(e);
-    et->editent(e);
+    int i = closestent();
+    if(i<0||dir<0||dir>2) return;
+	removeoctaentity(i);
+    extentity &e = *et->getents()[i];
+    e.o[dir] += dist;
+	addoctaentity(i);
+    lightent(e);
+    et->editent(i);
 };
 
 void delent()
@@ -139,12 +141,14 @@ bool dropentity(entity &e)
 void dropent()
 {
     if(noedit()) return;
-    int e = closestent();
-    if(e<0) return;
-	removeoctaentity(e);
-    dropentity(*et->getents()[e]);	
-	addoctaentity(e);
-    et->editent(e);
+    int i = closestent();
+    if(i<0) return;
+	removeoctaentity(i);
+    extentity &e = *et->getents()[i];
+    dropentity(e);	
+	addoctaentity(i);
+    lightent(e);
+    et->editent(i);
 };
 
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)
@@ -154,8 +158,10 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
     extentity *e = et->newentity(player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
     if(entdrop) dropentity(*e);
     et->getents().add(e);
-	addoctaentity(et->getents().length()-1);
-    et->editent(et->getents().length()-1);
+    int i = et->getents().length()-1;
+	addoctaentity(i);
+    lightent(*e);
+    et->editent(i);
 };
 
 COMMAND(newent, ARG_5STR);
@@ -241,12 +247,15 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
     if(et->getents().length()<=i)
     {
         while(et->getents().length()<i) et->getents().add(et->newentity())->type = ET_EMPTY;
-        et->getents().add(et->newentity(o, type, attr1, attr2, attr3, attr4));
+        extentity *e = et->newentity(o, type, attr1, attr2, attr3, attr4);
+        et->getents().add(e);
+        lightent(*e);
     }
     else
     {
         extentity &e = *et->getents()[i];
         e.type = type;
+        if(e.o!=o) lightent(e);
         e.o = o;
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
     };
