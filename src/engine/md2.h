@@ -493,14 +493,15 @@ struct md2 : model
     { 
         if(!loaded)
         {
+            string pname;
+            char *p = strrchr(loadname, '/');
+            if(!p) p = loadname;
+            s_strncpy(pname, loadname, p-loadname+1);
+
             s_sprintfd(name1)("packages/models/%s/tris.md2", loadname);
             if(!load(path(name1)))
             {
-                char *p  = strrchr(loadname, '/');
-                if(!p) p = loadname;
-                string nn;
-                s_strncpy(nn, loadname, p-loadname+1);
-                s_sprintf(name1)("packages/models/%s/tris.md2", nn);    // try md2 in parent folder (vert sharing)
+                s_sprintf(name1)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
                 if(!load(path(name1))) return false;
             };
             s_sprintfd(name2)("packages/models/%s/skin.jpg", loadname);
@@ -510,11 +511,7 @@ struct md2 : model
                 strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg
                 ifnload
                 {
-                    char *p = strrchr(loadname, '/');
-                    if(!p) p = loadname;
-                    string nn;
-                    s_strncpy(nn, loadname, p-loadname+1);
-                    s_sprintf(name2)("packages/models/%s/skin.jpg", nn);    // try jpg in the parent folder (skin sharing)
+                    s_sprintf(name2)("packages/models/%s/skin.jpg", pname);    // try jpg in the parent folder (skin sharing)
                     ifnload                                          
                     {
                         strcpy(name2+strlen(name2)-3, "png");               // and png again
@@ -525,9 +522,13 @@ struct md2 : model
                     };
                 };
             };
-            s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
             loadingmd2 = this;
-            execfile(name3);
+            s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
+            if(!execfile(name3))
+            {
+                s_sprintf(name3)("packages/models/%s/md2.cfg", pname);    // try md2 in parent folder (vert sharing)
+                execfile(name3);
+            };
             loadingmd2 = 0;
             loaded = true;
         };
