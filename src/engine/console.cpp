@@ -214,7 +214,7 @@ void keypress(int code, bool isdown, int cooked)
 
                 case SDLK_DELETE:
                 {
-                    int len = strlen(commandbuf);
+                   int len = (int)strlen(commandbuf);
                     if(commandpos<0) break;
                     memmove(&commandbuf[commandpos], &commandbuf[commandpos+1], len - commandpos);    
                     resetcomplete();
@@ -224,7 +224,7 @@ void keypress(int code, bool isdown, int cooked)
 
                 case SDLK_BACKSPACE:
                 {
-                    int len = strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
+                    int len = (int)strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
                     if(i<1) break;
                     memmove(&commandbuf[i-1], &commandbuf[i], len - i + 1);  
                     resetcomplete();
@@ -235,11 +235,11 @@ void keypress(int code, bool isdown, int cooked)
 
                 case SDLK_LEFT:
                     if(commandpos>0) commandpos--;
-                    else if(commandpos<0) commandpos = strlen(commandbuf)-1;
+                    else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
                     break;
 
                 case SDLK_RIGHT:
-                    if(commandpos>=0 && ++commandpos>=strlen(commandbuf)) commandpos = -1;
+                    if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                     break;
                         
                 case SDLK_UP:
@@ -252,7 +252,7 @@ void keypress(int code, bool isdown, int cooked)
                     
                 case SDLK_TAB:
                     complete(commandbuf);
-                    if(commandpos>=0 && commandpos>=strlen(commandbuf)) commandpos = -1;
+                    if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                     break;
 
                 case SDLK_v:
@@ -262,7 +262,7 @@ void keypress(int code, bool isdown, int cooked)
                     resetcomplete();
                     if(cooked) 
                     { 
-                        int len = strlen(commandbuf);
+                        int len = (int)strlen(commandbuf);
                         if(len+1<sizeof(commandbuf))
                         {
                             if(commandpos<0) commandbuf[len] = cooked;

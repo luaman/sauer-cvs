@@ -242,8 +242,6 @@ bool inbetweenframes = false;
 
 int main(int argc, char **argv)
 {
-    //int test[15]; loopj(15) test[j] = 0; loopi(100000) test[rnd(15)]++;
-
     #ifdef WIN32
     //atexit((void (__cdecl *)(void))_CrtDumpMemoryLeaks);
     #endif

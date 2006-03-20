@@ -15,19 +15,22 @@ eihrul:
 - sound entities
 
 aard (e = eihrul (or gilt) could do it):
-- finish up grenade launcher (low fps? ammo? skin? model? doc?)
 - windows installer
+- update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
+- (e) per sound volume
+- powerup announce | make both powerups not spawn on map start / not be in sync
+- (e) bouncing gib particles
+- finish up grenade launcher (skin? doc?)
+- test capture mode more... | doc
+- (e) set textures when extruding
+- (e) triggers/doors for SP
 - optimize model shader
-- document capture mode
+- water shader
 - monster spawner ammo
 - find efficient solution for normals on world geometry
 - (e) make 3rd person weapons show... how to make an axe swing rather than go back and forth?
-- update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - iconic stats
 - new BAS sounds?
-- powerup announce | make both powerups not spawn on map start / not be in sync
-- (e) per sound volume
-- (e) bouncing gib particles
 - (e) make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
 - (e) new multiplayer model.. md3?
 - (e) keybinds per mode: editing/game
@@ -36,7 +39,6 @@ aard (e = eihrul (or gilt) could do it):
 - (e) hex numbers
 - 3d menus
 - add hidden ID to your name so that you can claim nicknames on a server?
-- (e) set textures when extruding
 - show quadded player with special rendering
 - experiment with physics speedup features
 - think about simpler area based portals / combine with doors | automatically? compute portals of each VA? REALLY need some culling for monsters/items etc
@@ -50,10 +52,7 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - make start of flares etc spawn out further from the player
 - importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
 - (e) better attack anim? with weapon maybe | add vwep?
-- check why texture stretching on certain recent nvidia drivers only happens for certain textures -> looks like its caused by async copying of the S/T vectors
-- (e) triggers/doors for SP
 - switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
-- profile rpg_01
 - select entities in parallel to geometry by picking | make editing more readable
 - (e) skybox - roll
 - 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
@@ -80,19 +79,16 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - improve on cma render then add to sauer
 - slowmo?
 - VBO verts are 24 bytes, remove the next ptr, make UVs shorts or bytes? make coords shorts?
-- voice during multiplayer?
+- voice during multiplayer? -> easier to use ventrillo
 - give players identity to combat cheating by coupling to something like Steam?
 
 - fix the two //BREAK
 
-- bf mode
 - start with rpg mode | clientside only, simplify
 
 - system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
 - calclight while playing?
 
-- more gameplay refactoring
-- cube map loader
 - new cube models -> sauer
 
 - use of glBufferData() makes ATI driver crash on SDL_Exit()
@@ -107,7 +103,6 @@ to get accurate spec, we need per vertex sub, which can only ever be worldspace.
 - (EG) landscape generation and tools (see wiki)
 - (E) improve visibleface() to not render some polys inside solids anymore (overdraw!)
 - (E) reduce geometry by merging surfaces and lightmaps
-- LOD on VA's
 - render entities at distance as sprites
 - try out hardware occlusion queries before portals
 - (E) sort the order of rendering mapmodels, so as to factor out glbindbuffer

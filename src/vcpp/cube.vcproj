@@ -838,6 +838,10 @@
 				Name="render"
 				>
 				<File
+					RelativePath="..\engine\bsp.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\md2.h"
 					>
 				</File>

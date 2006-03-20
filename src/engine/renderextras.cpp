@@ -78,8 +78,8 @@ void renderspheres(int time)
 {
     static struct spheretype { float r, g, b; } spheretypes[2] =
     {
-        { 1.0f, 0.75f, 0.5f },
-        { 0.5f, 1.0f, 1.0f },
+        { 1.0f, 0.5f, 0.5f },
+        { 0.9f, 1.0f, 0.5f },
     };
 
     if(!expltex) expltex = textureload(path(newstring("data/explosion.jpg")));

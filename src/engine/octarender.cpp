@@ -1072,7 +1072,7 @@ void renderq(int w, int h)
                     }
                     else
                     {
-                        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);
+                        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);     // have to pass in env, otherwise same problem as fixed function
                         glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 1, t);
                     };
                    
