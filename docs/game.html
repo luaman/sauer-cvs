@@ -194,6 +194,20 @@ There are initially 5 weapons:
         <td>66</td>
         <td>quake2 RG</td>
     </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+            grenade launcher</td>
+        <td>
+            50</td>
+        <td>
+            0.5sec</td>
+        <td>
+            100</td>
+        <td>
+            any quake GL, except faster but less damaging</td>
+    </tr>
 </table>
 <br>
 The player has available all weapons when he spawns, but no ammo for them (except 5 shells), 100 health, and 50 weak armour (20% absorbtion).
@@ -227,6 +241,72 @@ Setting up a LAN game:
 <li>The simplest way for all players to connect is for them to type "lanconnect" (if there is only one server on the LAN) or "connect servername" (if there are multiple servers) in the sauerbraten console (press ` to get in the console), where servername is the network name or ip address of the machine running server.bat. if all went well you should now be in the game together, as above.
 <li>If your LAN is connected to the internet, by default your server will register with the masterserver, and players could thus follow the procedure above to join the game: your server will show up in the list, and may thus be joined by people over the internet! If you want to avoid your server to contact the master server, you can start it with -mblah or something.
 </ul>
+
+
+<div>Multiplayer : capture mode</div>
+
+This is the most complicated multiplayer mode so some explanation is required. This mode is centered around the idea of capturing and holding bases, and has similarities to
+the game "battlefield 1942" and the "onslaught" mode of unreal 2004:
+<p>
+
+"bases" are placed thruout the map
+<p>
+
+a base can be in 2 states: captured or neutral. When captured, it is
+captured by a certain team. This is shown
+by the texture its rendered with (red means enemy captured, blue means
+your team, grey means neutral). The model can be a flag, or whatever.
+<p>
+
+a neutral base can be converted to your team by standing next to
+it for N seconds (N = 10 or so) within a certain radius. Multiple players speed up
+the process proportionally. The time accumulated to N is counted by the server as soon
+as the first player enters the radius,
+and reset to 0 immediately once all players of the initial team leave the radius.
+<p>
+
+a base of the enemy color can be converted to neutral in exactly the same way.
+(so often it is a 2 step process to take over a base).
+<p>
+
+current team name and capture status is shown above the base using a text particle.
+<p>
+
+at the spawn of a map, all bases are neutral, and all players spawn at normal player spawns,
+and try to capture whatever they can. Once bases are captured, players will
+spawn at spawnpoints close to whichever of their bases is closest to an enemy base.
+spawning will be preferred at bases which are not currently being captured by an enemy.
+<p>
+
+if a player dies, they wait M seconds before they can respawn again (M = 20 or so).
+if you have no bases left (the enemy has captured yours, or at least made em neutral)
+you can't spawn at all and have to wait for remaining players to recapture a base.
+if all bases are gone and all players dead, your team loses and the match is over.
+<p>
+
+Alternatively, if this doesn't happen, at the timelimit the team that wins is the team
+that has held the most bases for the most amount of time (1 point per X seconds for every
+base in your color).
+<p>
+
+No points are awarded for kills or self-deaths. Infact, no individual score is ever displayed,
+your score is the same as the team's score.
+<p>
+
+When you spawn, you are given a certain amount of ammo for randomly 2 weapons out of the
+5 main ones, + pistol ammo. You will not be able to get more ammo unless it is placed in
+the map, or if given to you by another player. Any other player can replenish your ammo
+of types of ammo he doesn't have. I.e. if you have RL/MG and he has GL/MG, you can replenish
+his GL ammo, and he can give you RL ammo.
+<p>
+
+A simple HUD shows bases relative to your current position in red or blue (can be a sphere with
+blips on it, with blips on the border for faraway bases).
+<p>
+
+There may be additional powerups needed, to emulate the functionality of vehicles in BF,
+but maybe without its already good enough.
+
 
 
 <div>Single Player Modes</div>
