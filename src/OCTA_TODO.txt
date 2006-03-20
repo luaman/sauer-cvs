@@ -15,13 +15,12 @@ eihrul:
 - sound entities
 
 aard (e = eihrul (or gilt) could do it):
-- windows installer
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
-- (e) per sound volume
+- can't select last 3 textures in list
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - (e) bouncing gib particles
 - finish up grenade launcher (skin? doc?)
-- test capture mode more... | doc
+- test capture mode more...
 - (e) set textures when extruding
 - (e) triggers/doors for SP
 - optimize model shader

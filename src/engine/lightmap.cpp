@@ -710,6 +710,9 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)
         //};
  
         color.add(vec(e.attr2, e.attr3, e.attr4).div(255).mul(intensity));
+
+        intensity *= e.attr2*e.attr3*e.attr4;
+
         dir.add(vec(e.o).sub(target).mul(intensity/mag));
     };
     color.x = min(1, max(0.4f, color.x));
