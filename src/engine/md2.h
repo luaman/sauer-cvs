@@ -113,7 +113,7 @@ struct md2 : model
     vec **mnorms;
     
     char *loadname;
-    bool loaded, cullface;
+    bool loaded;
     
     Texture *skin;
     
@@ -125,7 +125,7 @@ struct md2 : model
 
     md2_header header;
     
-    md2(const char *name) : loaded(false), cullface(true), vbufGL(0), vbufi(0), bsp(0), anims(0)
+    md2(const char *name) : loaded(false), vbufGL(0), vbufi(0), bsp(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -392,7 +392,6 @@ struct md2 : model
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
         
-        if(!cullface) glDisable(GL_CULL_FACE);
         if(skin->bpp==32)
         {
             glEnable(GL_BLEND);
@@ -479,7 +478,6 @@ struct md2 : model
     		
 	    };
     	
-        if(!cullface) glEnable(GL_CULL_FACE);
 	    if(skin->bpp==32)
 	    {
             glDisable(GL_ALPHA_TEST);
@@ -561,12 +559,4 @@ void md2anim(char *anim, char *f, char *r, char *s)
 };
 
 COMMAND(md2anim, ARG_4STR);
-
-void md2cullface(int cullface)
-{
-    if(!loadingmd2) conoutf("not loading an md2");
-    loadingmd2->cullface = cullface!=0;
-};
-
-COMMAND(md2cullface, ARG_1INT);
 
