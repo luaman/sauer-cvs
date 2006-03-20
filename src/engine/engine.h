@@ -6,6 +6,7 @@
 #include "octa.h"
 #include "lightmap.h"
 #include "shaders.h"
+#include "bsp.h"
 
 struct Texture
 {
@@ -22,7 +23,7 @@ struct model
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
     virtual char *name() = 0;
-    virtual vector<triangle> &hull() { static vector<triangle> nohull; return nohull; };
+    virtual BSPRoot *collisiontree() { return 0; };
     virtual float above(int frame = 0, float scale = 1.0f)
     {
         vec center;

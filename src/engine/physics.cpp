@@ -142,29 +142,6 @@ void pushvec(vec &o, const vec &ray, float dist)
     o.add(d);
 };
 
-bool raytriintersect(const vec &o, const vec &ray, float maxdist, const vec &t0, const vec &t1, const vec &t2, float &dist)
-{
-    vec edge1(t1), edge2(t2);
-    edge1.sub(t0);
-    edge2.sub(t0);
-    vec p;
-    p.cross(ray, edge2);
-    float det = edge1.dot(p);
-    if(det == 0) return false;
-    vec r(o);
-    r.sub(t0);
-    float u = r.dot(p) / det;
-    if(u < 0 || u > 1) return false;
-    vec q;
-    q.cross(r, edge1);
-    float v = ray.dot(q) / det;
-    if(v < 0 || u + v > 1) return false;
-    float f = edge2.dot(q) / det;
-    if(f < 0 || f > maxdist) return false;
-    dist = f;
-    return true;
-};
-
 void yawray(vec &o, vec &ray, float angle)
 {
     angle *= RAD;
@@ -213,13 +190,8 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     d = sqrt(d);
     float f1 = (d-b)/a, f2 = -(d+b)/a;
     if((f1 < 0 || f1 > maxdist) && (f2 < 0 || f2 > maxdist)) return false;
-    vector<triangle> &hull = m->hull();
-    loopv(hull)
-    {
-        triangle &tri = hull[i];
-        if(raytriintersect(yo, yray, maxdist, tri.a, tri.b, tri.c, dist)) return true;
-    };
-    return false;
+    BSPRoot *bsp = m->collisiontree();
+    return bspintersect(bsp, yo, yray, maxdist, dist);
 };
 
 bool pointoverbox(const vec &v, const vec &bo, const vec &br)

@@ -120,12 +120,12 @@ struct md2 : model
     GLuint vbufGL;
     ushort *vbufi;
     int vbufi_len;
-    vector<triangle> hulltris;
+    BSPRoot *bsp;
     vector<md2_anim> *anims;
 
     md2_header header;
     
-    md2(const char *name) : loaded(false), cullface(true), vbufGL(0), vbufi(0), anims(0)
+    md2(const char *name) : loaded(false), cullface(true), vbufGL(0), vbufi(0), bsp(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -292,26 +292,27 @@ struct md2 : model
         glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
-    vector<triangle> &hull()
+    BSPRoot *collisiontree()
     {
-        if(hulltris.length()) return hulltris;
+        if(bsp) return bsp;
         if(!mverts[0]) scale(0, 1.0f);
+        vector<BSPTri> tris;
         for(int *command = glcommands; (*command)!=0;)
         {
             int numvertex = *command;
             bool isfan;
             if(isfan = (numvertex<0)) numvertex = -numvertex;
             command += 3;
-            triangle first;
+            BSPTri first;
             first.a = mverts[0][*command];
             command += 3;
             first.b = mverts[0][*command];
             command += 3;
             first.c = mverts[0][*command];
-            hulltris.add(first);
+            tris.add(first);
             loopj(numvertex-3)
             { 
-                triangle &tri = hulltris.add(), &prev = hulltris[hulltris.length()-2];
+                BSPTri &tri = tris.add(), &prev = tris[tris.length()-2];
                 if(isfan)
                 {
                     tri.a = first.a;
@@ -332,7 +333,10 @@ struct md2 : model
             };
             command++;
         };
-        return hulltris;
+        BSPTri *bsptris = new BSPTri[tris.length()];
+        memcpy(bsptris, tris.getbuf(), tris.length()*sizeof(BSPTri));
+        bsp = buildbsp(tris.length(), bsptris);
+        return bsp;
     };
 
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
