@@ -12,7 +12,7 @@ model *loadingmodel = NULL;
 
 void mdlcullface(int cullface)
 {
-    if(!loadingmodel) conoutf("not loading a model");
+    if(!loadingmodel) { conoutf("not loading a model"); return; };
     loadingmodel->cullface = cullface!=0;
 };
 
@@ -20,7 +20,7 @@ COMMAND(mdlcullface, ARG_1INT);
 
 void mdlspec(int percent)
 {
-    if(!loadingmodel) conoutf("not loading a model");
+    if(!loadingmodel) { conoutf("not loading a model"); return; };
     float spec = 1.0f; 
     if(percent>0) spec = percent/100.0f;
     else if(percent<0) spec = 0.0f;
@@ -31,7 +31,7 @@ COMMAND(mdlspec, ARG_1INT);
 
 void mdlshader(char *shader)
 {
-    if(!loadingmodel) conoutf("not loading a model");
+    if(!loadingmodel) { conoutf("not loading a model"); return; };
     loadingmodel->shader = lookupshaderbyname(shader);
 };
 
