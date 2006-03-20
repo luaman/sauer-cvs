@@ -349,6 +349,7 @@ float walldistance;
 const float STAIRHEIGHT = 4.0f;
 const float FLOORZ = 0.867f;
 const float SLOPEZ = 0.5f;
+const float WALLZ = 0.2f;
 const float JUMPVEL = 125.0f;
 const float GRAVITY = 200.0f;
 const float STEPSPEED = 1.0f;
@@ -729,7 +730,7 @@ bool move(physent *d, vec &dir)
     else if(inside && d->type != ENT_PLAYER)
     {
         d->o = old;
-        d->blocked = true;
+        if(d->type == ENT_AI) d->blocked = true;
         return false;
     };
     vec floor(0, 0, 0);
@@ -739,6 +740,15 @@ bool move(physent *d, vec &dir)
     {
         slideagainst(d, dir, obstacle);
         if(d->type == ENT_AI) d->blocked = true;
+    };
+    if(d->physstate >= PHYS_SLOPE && floor.z > 0 && floor.z <= WALLZ)
+    {
+        if(!slide)
+        {
+            slideagainst(d, dir, floor);
+            if(d->type == ENT_AI) d->blocked = true;
+        };
+        return false;
     };
     if(found)
     {
@@ -913,7 +923,7 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
              */
             float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
             if(water) m.z = max(m.z, dz);
-            else m.z = dz;
+            else if(pl->floor.z > WALLZ) m.z = dz;
         };
 
         m.normalize();
