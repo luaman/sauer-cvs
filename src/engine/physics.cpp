@@ -936,7 +936,7 @@ void modifygravity(physent *pl, bool water, float secs)
     else if(pl->floor.z < FLOORZ)
     {
         float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
-        slopegravity(GRAVITY*secs*c*c, pl->floor, g);
+        slopegravity(GRAVITY*secs*c, pl->floor, g);
     };
     if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(4.0f); 
     else pl->gravity.add(g);
