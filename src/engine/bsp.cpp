@@ -260,25 +260,6 @@ bool bspintersect(BSPRoot *root, const vec &o, const vec &ray, float maxdist, fl
     return walkbsp(o, ray, maxdist, dist, root, root->bmin, root->bmax, root->tested);
 };
 
-#if 0
-void bsptest(char *name)
-{
-    model *m = loadmodel(name);
-    if(!m) { conoutf("failed to load model %s", name); return; };
-    vector<triangle> &hull = m->hull();
-    if(hull.empty()) { conoutf("model %s has no hull", name); return; };
-    BSPTri *tris = new BSPTri[hull.length()];
-    loopv(hull) tris[i] = hull[i];
-    BSPRoot *root = buildbsp(hull.length(), tris);
-    float f;
-    numtests = numdupes = 0;
-    bool hit = bspintersect(root, vec(0, 0, 1024), vec(0, 0, -1), 2048, f);
-    delete root;
-};
-        
-COMMAND(bsptest, ARG_1STR);
-#endif
-
 static void yawray(vec &o, vec &ray, float angle)
 {
     angle *= RAD; 

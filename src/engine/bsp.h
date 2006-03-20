@@ -1,14 +1,6 @@
 struct BSPTri : triangle
 {
     int tested;
-
-    BSPTri &operator=(const triangle &t)
-    {
-        a = t.a;
-        b = t.b;
-        c = t.c;
-        return *this;
-    };
 };  
 
 struct BSP
