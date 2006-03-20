@@ -550,9 +550,9 @@ struct md2 : model
 
 void md2anim(char *anim, char *f, char *r, char *s)
 {
-    if(!loadingmd2) conoutf("not loading an md2");
+    if(!loadingmd2) { conoutf("not loading an md2"); return; };
     int num = findanim(anim);
-    if(num<0) conoutf("could not find animation %s", anim);
+    if(num<0) { conoutf("could not find animation %s", anim); return; };
     int frame = atoi(f), range = atoi(r);
     float speed = s[0] ? atof(s) : 100.0f;
     loadingmd2->setanim(num, frame, range, speed);
