@@ -37,6 +37,17 @@ md2anim name frame numframes speed
     Example: md2anim "run attack" 50 6 30
         Defines a "run attack" animation starting at frame 50 with 6 frames and running at 30% speed.      
 
-md2cullface N
+mdlcullface N
     If N is 0, backface culling is disabled for this model. Otherwise, backface culling is enabled. Default = 1.
+
+mdlspec SI
+    SI is the specular intensity (not given or 0 gives the default of 100, good for metal/plastics and anything shiny, use
+    lower values like 50 for wood etc, -1 means off entirely)
+
+mdlshader SH
+    SH is the name of the shader to use for rendering the model. Default is "stdmodel".
+
+mdlambient A
+    A is the percent of the ambient light that should be used for shading. Not given or 0 gives the default of 30%, -1 means
+    no ambient.
 
