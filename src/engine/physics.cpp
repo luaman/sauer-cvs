@@ -504,6 +504,17 @@ void slopegravity(float g, const vec &slope, vec &gvec)
     gvec.y = slope.y*k;
     gvec.z = -g;
 };
+
+void slideagainst(physent *d, vec &dir, const vec &obstacle)
+{
+    vec wdir(obstacle), wvel(obstacle);
+    wdir.z = wvel.z = 0.0f;
+    if(obstacle.z < 0.0f && dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
+    wdir.mul(obstacle.dot(dir));
+    wvel.mul(obstacle.dot(d->vel));
+    dir.sub(wdir);
+    d->vel.sub(wvel);
+};
  
 void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
 {
@@ -535,6 +546,8 @@ void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
     if(((d->physstate == PHYS_SLIDE || (d->physstate == PHYS_FALL && floor.z < 1.0f)) && landing) || 
         (d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f))
     {
+        if(floor.z > 0 && floor.z < WALLZ) { slideagainst(d, dir, floor); return; };
+
         float dmag = dir.magnitude(), dz = -(dir.x*floor.x + dir.y*floor.y)/floor.z;
         dir.z = dz;
         float dfmag = dir.magnitude();
@@ -597,21 +610,6 @@ bool trystepdown(physent *d, vec &dir, float step, float a, float b)
 };
 #endif
 
-void slideagainst(physent *d, vec &dir, const vec &obstacle)
-{
-    d->blocked = true;
-    vec wdir(obstacle), wvel(obstacle);
-    if(obstacle.z < 0.0f)
-    {
-        if(dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
-        wdir.z = wvel.z = 0.0f;
-    };
-    wdir.mul(obstacle.dot(dir));
-    wvel.mul(obstacle.dot(d->vel));
-    dir.sub(wdir);
-    d->vel.sub(wvel);
-};
-
 void falling(physent *d, vec &dir, const vec &floor)
 {
 #if 0
@@ -671,7 +669,7 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
     else
     {
         if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
-        {
+       {
             if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
             {
                 floor = wall;
@@ -740,15 +738,6 @@ bool move(physent *d, vec &dir)
     {
         slideagainst(d, dir, obstacle);
         if(d->type == ENT_AI) d->blocked = true;
-    };
-    if(d->physstate >= PHYS_SLOPE && floor.z > 0 && floor.z <= WALLZ)
-    {
-        if(!slide)
-        {
-            slideagainst(d, dir, floor);
-            if(d->type == ENT_AI) d->blocked = true;
-        };
-        return false;
     };
     if(found)
     {
@@ -923,7 +912,7 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
              */
             float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
             if(water) m.z = max(m.z, dz);
-            else if(pl->floor.z > WALLZ) m.z = dz;
+            else if(pl->floor.z >= WALLZ) m.z = dz;
         };
 
         m.normalize();
