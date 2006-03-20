@@ -14,10 +14,11 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
     <body>
         <div>Sauerbraten Change History</div>
         <UL>
+            <li> can now render md2s without back face culling (good for vegetation models).
             <li> console now supports line-editing
             <li> calclight now forces a map remip automatically, and has 4 quality settings you can pass (see ref)</li>
             <li> added workaround for texgen bug in nvidia drivers
-            <li> added goal-oriented team player mode (mode 12, "capture")
+            <li> added goal-oriented team player mode (mode 12, "capture", see game.html, try playing it on face-capture map)
             <li> added initial version of the grenade launcher</li>
             <li> added macros to the scripting language </li>
             <li> everything in the engine is now rendered using shaders </li>
@@ -25,7 +26,7 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
             <li> added phong lighting for models</li>
             <li> added shader system, each world surface can now have its own shader, and maps can have their own shaders. Look at the shader and setshader commands.
             <li> reorganized directory structure
-            <li> can now specify custom animations for md2s
+            <li> can now specify custom animations for md2s (see docs/dev/md2.txt)
             <li> clip material no longer stops bullets (only the glass material does)
             <li> added spectator mode (toggled by "spectator" command, or mastermode 2)
             <li> many mastermode bug fixes
