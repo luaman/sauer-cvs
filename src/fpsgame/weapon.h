@@ -109,7 +109,7 @@ struct weaponstate
         bnc.radius = 2;
         bnc.eyeheight = 2;
         bnc.aboveeye = 2;
-        bnc.lifetime = 3000;
+        bnc.lifetime = 2000;
         bnc.local = local;
         bnc.owner = owner;
 
