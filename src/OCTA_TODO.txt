@@ -16,6 +16,8 @@ eihrul:
 
 aard (e = eihrul (or gilt) could do it):
 - figure out why binaries get corrupted | switch to SVN?
+- add PITCH to specular computation
+- add entity looping command?
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - can't select last 3 textures in list
 - powerup announce | make both powerups not spawn on map start / not be in sync

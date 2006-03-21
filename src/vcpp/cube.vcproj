@@ -838,10 +838,6 @@
 				Name="render"
 				>
 				<File
-					RelativePath="..\engine\bsp.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\engine\md2.h"
 					>
 				</File>
@@ -1003,6 +999,22 @@
 				</File>
 				<File
 					RelativePath="..\engine\shaders.h"
+					>
+				</File>
+				<File
+					RelativePath="..\engine\spheretree.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\engine\spheretree.h"
 					>
 				</File>
 				<File
