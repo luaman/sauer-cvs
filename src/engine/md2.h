@@ -120,12 +120,12 @@ struct md2 : model
     GLuint vbufGL;
     ushort *vbufi;
     int vbufi_len;
-    BSPRoot *bsp;
+    SphereTree *spheretree;
     vector<md2_anim> *anims;
 
     md2_header header;
     
-    md2(const char *name) : loaded(false), vbufGL(0), vbufi(0), bsp(0), anims(0)
+    md2(const char *name) : loaded(false), vbufGL(0), vbufi(0), spheretree(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -292,18 +292,18 @@ struct md2 : model
         glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
-    BSPRoot *collisiontree()
+    SphereTree *collisiontree()
     {
-        if(bsp) return bsp;
+        if(spheretree) return spheretree;
         if(!mverts[0]) scale(0, 1.0f);
-        vector<BSPTri> tris;
+        vector<triangle> tris;
         for(int *command = glcommands; (*command)!=0;)
         {
             int numvertex = *command;
             bool isfan;
             if(isfan = (numvertex<0)) numvertex = -numvertex;
             command += 3;
-            BSPTri first;
+            triangle first;
             first.a = mverts[0][*command];
             command += 3;
             first.b = mverts[0][*command];
@@ -311,8 +311,8 @@ struct md2 : model
             first.c = mverts[0][*command];
             tris.add(first);
             loopj(numvertex-3)
-            { 
-                BSPTri &tri = tris.add(), &prev = tris[tris.length()-2];
+            {
+                triangle &tri = tris.add(), &prev = tris[tris.length()-2];
                 if(isfan)
                 {
                     tri.a = first.a;
@@ -333,10 +333,8 @@ struct md2 : model
             };
             command++;
         };
-        BSPTri *bsptris = new BSPTri[tris.length()];
-        memcpy(bsptris, tris.getbuf(), tris.length()*sizeof(BSPTri));
-        bsp = buildbsp(tris.length(), bsptris);
-        return bsp;
+        spheretree = buildspheretree(tris.length(), tris.getbuf());
+        return spheretree;
     };
 
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)

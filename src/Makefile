@@ -6,7 +6,6 @@ PLATFORM_PREFIX=linux
 CLIENT_LIBS=-Lenet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
 	shared/tools.o \
-	engine/bsp.o \
 	engine/client.o \
 	engine/command.o \
 	engine/console.o \
@@ -25,6 +24,7 @@ CLIENT_OBJS= \
 	engine/rendertext.o \
 	engine/server.o \
 	engine/serverbrowser.o \
+	engine/spheretree.o \
 	engine/sound.o \
 	engine/water.o \
 	engine/world.o \

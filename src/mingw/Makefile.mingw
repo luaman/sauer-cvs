@@ -5,7 +5,6 @@ CXXFLAGS= $(CXXOPTFLAGS) -Ienet/include -Iinclude -Ishared -Iengine -Ifpsgame
 CLIENT_LIBS=-Llib.mingw -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lfmod -lz -lopengl32 -lglu32 -lws2_32
 CLIENT_OBJS= \
 	shared/tools.o \
-	engine/bsp.o \
 	engine/client.o \
 	engine/command.o \
 	engine/console.o \
@@ -24,6 +23,7 @@ CLIENT_OBJS= \
 	engine/rendertext.o \
 	engine/server.o \
 	engine/serverbrowser.o \
+	engine/spheretree.o \
 	engine/sound.o \
 	engine/water.o \
 	engine/world.o \

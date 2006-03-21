@@ -6,7 +6,7 @@
 #include "octa.h"
 #include "lightmap.h"
 #include "shaders.h"
-#include "bsp.h"
+#include "spheretree.h"
 
 struct Texture
 {
@@ -14,6 +14,8 @@ struct Texture
     GLuint gl;
     string name;
 };
+
+struct SphereTree;
 
 struct model
 {
@@ -28,7 +30,8 @@ struct model
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
     virtual char *name() = 0;
-    virtual BSPRoot *collisiontree() { return 0; };
+    virtual SphereTree *collisiontree() { return 0; };
+
     virtual float above(int frame = 0, float scale = 1.0f)
     {
         vec center;
