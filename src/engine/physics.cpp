@@ -218,7 +218,7 @@ float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &r
 {
     float dist = 1e16f;
     if(oc == last || oc == NULL) return dist;
-    loopv(oc->list) if(!inlist(i, last))
+    loopv(oc->list) if(!inlist(oc->list[i], last))
     {
         float f;
         ivec bo, br;
