@@ -46,7 +46,7 @@ static void listModes(CGDirectDisplayID dspy)
 	NSArray *res = [[resolutions titleOfSelectedItem] componentsSeparatedByString:@" x "];
 
 	NSString *cmd = [NSString stringWithFormat:@"cd %@; sauerbraten.app/Contents/MacOS/sauerbraten -w%@ -h%@ %@&",
-			[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent],
+			[[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten"],
 			[res objectAtIndex:0],
 			[res objectAtIndex:1],
 			[fullscreen state] == NSOffState ? @"-t " : @""];

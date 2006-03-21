@@ -7,18 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B903576809D093AF002C9DC7 /* spheretree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B903576609D093AF002C9DC7 /* spheretree.cpp */; };
+		B903576909D093AF002C9DC7 /* spheretree.h in Headers */ = {isa = PBXBuildFile; fileRef = B903576709D093AF002C9DC7 /* spheretree.h */; };
+		B90357B509D09B9D002C9DC7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		B90ADD4509B344D800A5B00B /* callbacks.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD0009B344D800A5B00B /* callbacks.c */; };
 		B90ADD5709B344D800A5B00B /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD1309B344D800A5B00B /* host.c */; };
 		B90ADD6A09B344D800A5B00B /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2809B344D800A5B00B /* list.c */; };
-		B90ADD6E09B344D800A5B00B /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2C09B344D800A5B00B /* memory.c */; };
 		B90ADD7109B344D800A5B00B /* packet.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2F09B344D800A5B00B /* packet.c */; };
 		B90ADD7209B344D800A5B00B /* peer.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3009B344D800A5B00B /* peer.c */; };
 		B90ADD7309B344D800A5B00B /* protocol.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3109B344D800A5B00B /* protocol.c */; };
 		B90ADD7609B344D800A5B00B /* unix.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3409B344D800A5B00B /* unix.c */; };
-		B90ADD7709B344D800A5B00B /* win32.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3509B344D800A5B00B /* win32.c */; };
-		B90ADF3109B34D1600A5B00B /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90ADF2809B34D1600A5B00B /* SDL_image.framework */; };
-		B90ADF3209B34D1600A5B00B /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90ADF2909B34D1600A5B00B /* SDL_mixer.framework */; };
-		B90ADF3309B34D1600A5B00B /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90ADF2A09B34D1600A5B00B /* SDL.framework */; };
+		B92DC0FC09D08CF9008219BD /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0F909D08CF9008219BD /* SDL_image.framework */; };
+		B92DC0FD09D08CF9008219BD /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */; };
+		B92DC0FE09D08CF9008219BD /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FB09D08CF9008219BD /* SDL.framework */; };
+		B92DC11409D08FA1008219BD /* shaders.h in Headers */ = {isa = PBXBuildFile; fileRef = B92DC11309D08FA1008219BD /* shaders.h */; };
 		B941988C09207E810029DAD1 /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
 		B941988D09207E810029DAD1 /* engine.h in Headers */ = {isa = PBXBuildFile; fileRef = B9419820092076920029DAD1 /* engine.h */; };
 		B941988E09207E810029DAD1 /* lightmap.h in Headers */ = {isa = PBXBuildFile; fileRef = B9419822092076920029DAD1 /* lightmap.h */; };
@@ -122,18 +124,19 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		B2F67ED704C74A3F00A80002 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
+		B903576609D093AF002C9DC7 /* spheretree.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = spheretree.cpp; sourceTree = "<group>"; };
+		B903576709D093AF002C9DC7 /* spheretree.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = spheretree.h; sourceTree = "<group>"; };
 		B90ADD0009B344D800A5B00B /* callbacks.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = callbacks.c; sourceTree = "<group>"; };
 		B90ADD1309B344D800A5B00B /* host.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = host.c; sourceTree = "<group>"; };
 		B90ADD2809B344D800A5B00B /* list.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = list.c; sourceTree = "<group>"; };
-		B90ADD2C09B344D800A5B00B /* memory.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
 		B90ADD2F09B344D800A5B00B /* packet.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = packet.c; sourceTree = "<group>"; };
 		B90ADD3009B344D800A5B00B /* peer.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = peer.c; sourceTree = "<group>"; };
 		B90ADD3109B344D800A5B00B /* protocol.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = protocol.c; sourceTree = "<group>"; };
 		B90ADD3409B344D800A5B00B /* unix.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = unix.c; sourceTree = "<group>"; };
-		B90ADD3509B344D800A5B00B /* win32.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = win32.c; sourceTree = "<group>"; };
-		B90ADF2809B34D1600A5B00B /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL_image.framework; sourceTree = "<group>"; };
-		B90ADF2909B34D1600A5B00B /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL_mixer.framework; sourceTree = "<group>"; };
-		B90ADF2A09B34D1600A5B00B /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL.framework; sourceTree = "<group>"; };
+		B92DC0F909D08CF9008219BD /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /Library/Frameworks/SDL_image.framework; sourceTree = "<absolute>"; };
+		B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_mixer.framework; path = /Library/Frameworks/SDL_mixer.framework; sourceTree = "<absolute>"; };
+		B92DC0FB09D08CF9008219BD /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/SDL.framework; sourceTree = "<absolute>"; };
+		B92DC11309D08FA1008219BD /* shaders.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = shaders.h; sourceTree = "<group>"; };
 		B941981C092076920029DAD1 /* client.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
 		B941981D092076920029DAD1 /* command.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = command.cpp; sourceTree = "<group>"; };
 		B941981E092076920029DAD1 /* console.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = console.cpp; sourceTree = "<group>"; };
@@ -182,7 +185,7 @@
 		B941984B092076920029DAD1 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
 		B941984C092076920029DAD1 /* tools.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = tools.cpp; sourceTree = "<group>"; };
 		B941984D092076920029DAD1 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
-		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D4C092096F200B6C936 /* launcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D570920970C00B6C936 /* Launcher.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Launcher.h; sourceTree = "<group>"; };
 		B96D0D580920970C00B6C936 /* Launcher.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Launcher.m; sourceTree = "<group>"; };
@@ -202,9 +205,9 @@
 			files = (
 				B94198C309207E810029DAD1 /* Cocoa.framework in Frameworks */,
 				B94198C409207E810029DAD1 /* OpenGL.framework in Frameworks */,
-				B90ADF3109B34D1600A5B00B /* SDL_image.framework in Frameworks */,
-				B90ADF3209B34D1600A5B00B /* SDL_mixer.framework in Frameworks */,
-				B90ADF3309B34D1600A5B00B /* SDL.framework in Frameworks */,
+				B92DC0FC09D08CF9008219BD /* SDL_image.framework in Frameworks */,
+				B92DC0FD09D08CF9008219BD /* SDL_mixer.framework in Frameworks */,
+				B92DC0FE09D08CF9008219BD /* SDL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -233,9 +236,9 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				B90ADF2809B34D1600A5B00B /* SDL_image.framework */,
-				B90ADF2909B34D1600A5B00B /* SDL_mixer.framework */,
-				B90ADF2A09B34D1600A5B00B /* SDL.framework */,
+				B92DC0F909D08CF9008219BD /* SDL_image.framework */,
+				B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */,
+				B92DC0FB09D08CF9008219BD /* SDL.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 				B2F67ED704C74A3F00A80002 /* OpenGL.framework */,
 			);
@@ -310,12 +313,10 @@
 				B90ADD0009B344D800A5B00B /* callbacks.c */,
 				B90ADD1309B344D800A5B00B /* host.c */,
 				B90ADD2809B344D800A5B00B /* list.c */,
-				B90ADD2C09B344D800A5B00B /* memory.c */,
 				B90ADD2F09B344D800A5B00B /* packet.c */,
 				B90ADD3009B344D800A5B00B /* peer.c */,
 				B90ADD3109B344D800A5B00B /* protocol.c */,
 				B90ADD3409B344D800A5B00B /* unix.c */,
-				B90ADD3509B344D800A5B00B /* win32.c */,
 			);
 			name = enet;
 			path = ../enet;
@@ -347,14 +348,17 @@
 				B9419830092076920029DAD1 /* rendertext.cpp */,
 				B9419831092076920029DAD1 /* server.cpp */,
 				B9419832092076920029DAD1 /* serverbrowser.cpp */,
+				B92DC11309D08FA1008219BD /* shaders.h */,
 				B9419833092076920029DAD1 /* sound.cpp */,
+				B903576609D093AF002C9DC7 /* spheretree.cpp */,
+				B903576709D093AF002C9DC7 /* spheretree.h */,
 				B9419834092076920029DAD1 /* water.cpp */,
 				B9419835092076920029DAD1 /* world.cpp */,
 				B9419836092076920029DAD1 /* world.h */,
 				B9419837092076920029DAD1 /* worldio.cpp */,
 			);
 			name = engine;
-			path = ../src/engine;
+			path = ../engine;
 			sourceTree = SOURCE_ROOT;
 		};
 		B9419838092076920029DAD1 /* fpsgame */ = {
@@ -372,7 +376,7 @@
 				B9419842092076920029DAD1 /* weapon.h */,
 			);
 			name = fpsgame;
-			path = ../src/fpsgame;
+			path = ../fpsgame;
 			sourceTree = SOURCE_ROOT;
 		};
 		B9419843092076920029DAD1 /* shared */ = {
@@ -390,7 +394,7 @@
 				B941984D092076920029DAD1 /* tools.h */,
 			);
 			name = shared;
-			path = ../src/shared;
+			path = ../shared;
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
@@ -424,6 +428,8 @@
 				B94198A109207E810029DAD1 /* igame.h in Headers */,
 				B94198A209207E810029DAD1 /* pch.h in Headers */,
 				B94198A309207E810029DAD1 /* tools.h in Headers */,
+				B92DC11409D08FA1008219BD /* shaders.h in Headers */,
+				B903576909D093AF002C9DC7 /* spheretree.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -586,6 +592,7 @@
 				B96D0D630920971300B6C936 /* MainMenu.nib in Resources */,
 				B9CACA13092099DF00A13F04 /* launcher-Info.plist in Resources */,
 				B9CACA2509209A5800A13F04 /* sauerbraten.icns in Resources */,
+				B90357B509D09B9D002C9DC7 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -603,7 +610,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "echo $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n#make the directory which our disk image will be made of\nmkdir sauerbraten\n\n#copy sauerbraten there\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app sauerbraten/\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app sauerbraten/\nmv sauerbraten/launcher.app sauerbraten/SauerbratenLauncher.app\n\n#install all frameworks into app bundle\nmkdir sauerbraten/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $SRCROOT/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $SRCROOT/$framework/ sauerbraten/sauerbraten.app/Contents/Frameworks\n\t\trm -rf sauerbraten/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/docs sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/data sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../sauerbraten/packages sauerbraten/\nrm -rf sauerbraten/docs/CVS/\nrm -rf sauerbraten/docs/*/CVS/\nrm -rf sauerbraten/docs/*/*/CVS/\nrm -f sauerbraten/docs/.DS_Store\nrm -f sauerbraten/docs/*/.DS_Store\nrm -f sauerbraten/docs/*/*/.DS_Store\nrm -rf sauerbraten/packages/CVS/\nrm -rf sauerbraten/packages/*/CVS/\nrm -rf sauerbraten/packages/*/*/CVS/\nrm -f sauerbraten/packages/.DS_Store\nrm -f sauerbraten/packages/*/.DS_Store\nrm -f sauerbraten/packages/*/*/.DS_Store\nrm -rf sauerbraten/data/CVS/\nrm -rf sauerbraten/data/*/CVS/\nrm -f sauerbraten/data/.DS_Store\nrm -f sauerbraten/data/*/.DS_Store\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -r sauerbraten";
+			shellScript = "echo $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n\n#make the directory which our disk image will be made of\nmkdir sauerbraten\nmkdir sauerbraten/sauerbraten\n\n#copy sauerbraten there\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app sauerbraten/sauerbraten\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app sauerbraten/\nmv sauerbraten/launcher.app sauerbraten/Sauerbraten.app\n\n#install all frameworks into app bundle\nmkdir sauerbraten/sauerbraten/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $LOCAL_LIBRARY_DIR/Frameworks/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $LOCAL_LIBRARY_DIR/Frameworks/$framework/ sauerbraten/sauerbraten/sauerbraten.app/Contents/Frameworks\n\t\trm -rf sauerbraten/sauerbraten/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../../docs sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../data sauerbraten/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../packages sauerbraten/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../README.html sauerbraten/\nrm -rf sauerbraten/docs/CVS/\nrm -rf sauerbraten/docs/*/CVS/\nrm -rf sauerbraten/docs/*/*/CVS/\nrm -f sauerbraten/docs/.DS_Store\nrm -f sauerbraten/docs/*/.DS_Store\nrm -f sauerbraten/docs/*/*/.DS_Store\nrm -rf sauerbraten/sauerbraten/packages/CVS/\nrm -rf sauerbraten/sauerbraten/packages/*/CVS/\nrm -rf sauerbraten/sauerbraten/packages/*/*/CVS/\nrm -f sauerbraten/sauerbraten/packages/.DS_Store\nrm -f sauerbraten/sauerbraten/packages/*/.DS_Store\nrm -f sauerbraten/sauerbraten/packages/*/*/.DS_Store\nrm -rf sauerbraten/sauerbraten/data/CVS/\nrm -rf sauerbraten/sauerbraten/data/*/CVS/\nrm -f sauerbraten/sauerbraten/data/.DS_Store\nrm -f sauerbraten/sauerbraten/data/*/.DS_Store\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -r sauerbraten";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -641,12 +648,11 @@
 				B90ADD4509B344D800A5B00B /* callbacks.c in Sources */,
 				B90ADD5709B344D800A5B00B /* host.c in Sources */,
 				B90ADD6A09B344D800A5B00B /* list.c in Sources */,
-				B90ADD6E09B344D800A5B00B /* memory.c in Sources */,
 				B90ADD7109B344D800A5B00B /* packet.c in Sources */,
 				B90ADD7209B344D800A5B00B /* peer.c in Sources */,
 				B90ADD7309B344D800A5B00B /* protocol.c in Sources */,
 				B90ADD7609B344D800A5B00B /* unix.c in Sources */,
-				B90ADD7709B344D800A5B00B /* win32.c in Sources */,
+				B903576809D093AF002C9DC7 /* spheretree.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -694,8 +700,8 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(FRAMEWORK_SEARCH_PATHS)",
-					"$(SRCROOT)",
+					"$(USER_LIBRARY_DIR)/Frameworks",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -708,7 +714,6 @@
 				);
 				INFOPLIST_FILE = "sauerbraten-Info.plist";
 				INSTALL_PATH = "$(BUILT_PRODUCTS_DIR)";
-				LIBRARY_SEARCH_PATHS = "";
 				OTHER_LDFLAGS = "-lz";
 				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
@@ -724,8 +729,8 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(FRAMEWORK_SEARCH_PATHS)",
-					"$(SRCROOT)",
+					"$(USER_LIBRARY_DIR)/Frameworks",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -736,7 +741,6 @@
 				);
 				INFOPLIST_FILE = "sauerbraten-Info.plist";
 				INSTALL_PATH = "$(BUILT_PRODUCTS_DIR)";
-				LIBRARY_SEARCH_PATHS = "";
 				OTHER_LDFLAGS = "-lz";
 				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
@@ -755,8 +759,8 @@
 				DEPLOYMENT_POSTPROCESSING = YES;
 				DSTROOT = /;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(FRAMEWORK_SEARCH_PATHS)",
-					"$(SRCROOT)",
+					"$(USER_LIBRARY_DIR)/Frameworks",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -767,7 +771,6 @@
 				);
 				INFOPLIST_FILE = "sauerbraten-Info.plist";
 				INSTALL_PATH = "$(BUILT_PRODUCTS_DIR)";
-				LIBRARY_SEARCH_PATHS = "";
 				OTHER_LDFLAGS = "-lz";
 				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
