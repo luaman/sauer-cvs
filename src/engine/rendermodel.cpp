@@ -50,46 +50,66 @@ COMMAND(mdlshader, ARG_1STR);
 
 // mapmodels
 
-vector<mapmodelinfo> mapmodels;
+struct mapmodel
+{
+    mapmodelinfo info;
+    model *m;
+};
 
-void mapmodel(char *rad, char *h, char *zoff, char *name, char *shadow)
+vector<mapmodel> mapmodels;
+
+void addmapmodel(char *rad, char *h, char *zoff, char *name, char *shadow)
 {
     mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), shadow[0] ? atoi(shadow) : 1 };
     s_strcpy(mmi.name, name);
-    mapmodels.add(mmi);
+    mapmodel &mm = mapmodels.add();
+    mm.info = mmi;
+    mm.m = NULL;
 };
 
 void mapmodelreset() { mapmodels.setsize(0); };
 
-mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i] : *(mapmodelinfo *)0; };
+mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i].info : *(mapmodelinfo *)0; };
 
-COMMAND(mapmodel, ARG_5STR);
+COMMANDN(mapmodel, addmapmodel, ARG_5STR);
 COMMAND(mapmodelreset, ARG_NONE);
 
 // model registry
 
 hashtable<const char *, model *> mdllookup;
 
-model *loadmodel(const char *name)
+model *loadmodel(const char *name, int i)
 {
-    model **mm = mdllookup.access(name);
-    if(mm) return *mm;
-    model *m = new md2(name);
-    loadingmodel = m;
-    if(!m->load())
+    if(!name)
     {
-        delete m;
-        m = new md3(name);
+        if(i>=mapmodels.length()) return NULL;
+        mapmodel &mm = mapmodels[i];
+        if(mm.m) return mm.m;
+        name = mm.info.name;
+    };
+    model **mm = mdllookup.access(name);
+    model *m;
+    if(mm) m = *mm;
+    else
+    { 
+        m = new md2(name);
         loadingmodel = m;
         if(!m->load())
-        { 
+        {
             delete m;
-            loadingmodel = 0;
-            return NULL; 
+            m = new md3(name);
+            loadingmodel = m;
+            if(!m->load())
+            {    
+                delete m;
+                loadingmodel = NULL;
+                return NULL; 
+            };
         };
+        loadingmodel = NULL;
+        mdllookup.access(m->name(), &m);
     };
-    loadingmodel = 0;
-    mdllookup.access(m->name(), &m);
+    if(i>=0 && i<mapmodels.length() && !mapmodels[i].m) mapmodels[i].m = m;
     return m;
 };
 

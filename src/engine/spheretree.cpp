@@ -87,7 +87,7 @@ SphereTree *buildspheretree(int numtris, const triangle *tris)
     int numspheres = numtris;
     while(numspheres>1)
     {
-        int farthest;
+        int farthest = -1;
         float dist = -1e16f;
         loopi(numspheres)
         {
@@ -98,7 +98,7 @@ SphereTree *buildspheretree(int numtris, const triangle *tris)
                 dist = d;
             };
         }; 
-        int closest;
+        int closest = -1;
         float radius = 1e16f;
         loopi(numspheres)
         {
@@ -144,7 +144,7 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     yo.sub(eo);
     vec yray(ray);
     if(yaw != 0) yawray(yo, yray, yaw);
-    model *m = loadmodel(mmi.name);
+    model *m = loadmodel(NULL, e.attr2);
     if(!m) return false;
     SphereTree *ct = m->collisiontree();
     if(!ct) return false;

@@ -210,7 +210,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 
 bool inlist(int id, octaentities *last)
 {
-    if(last!=NULL) loopv(last->list) if(id==last->list[id]) return true;
+    if(last!=NULL) loopv(last->list) if(id==last->list[i]) return true;
     return false;
 };
 
