@@ -9,13 +9,13 @@ eihrul:
 - implement variable LM sampling
 - optimize overdraw in visibleface()
 - add a spotlight (ask me)
-- optimize per-poly raycube() by creating a bounding-sphere tree cache
 - very fancy: test alpha on a polygon for ultra-quality raycube()
 - improve smoothness of going up steps
 - sound entities
 
 aard (e = eihrul (or gilt) could do it):
 - figure out why binaries get corrupted | switch to SVN?
+- set grenades back to 2 seconds
 - add PITCH to specular computation
 - add entity looping command?
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer

@@ -46,16 +46,18 @@ struct weaponstate
         int *ammo = player1->ammo;
         if(a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
         int s = player1->gunselect;
-        if(a>=0 && s!=a && ammo[a]) s = a;
-        else if(b>=0 && s!=b && ammo[b]) s = b;
-        else if(c>=0 && s!=c && ammo[c]) s = c;
-        else if(s!=GUN_CG && ammo[GUN_CG]) s = GUN_CG;
-        else if(s!=GUN_RL && ammo[GUN_RL]) s = GUN_RL;
-        else if(s!=GUN_SG && ammo[GUN_SG]) s = GUN_SG;
-        else if(s!=GUN_RIFLE && ammo[GUN_RIFLE]) s = GUN_RIFLE;
-        else if(s!=GUN_GL && ammo[GUN_GL]) s = GUN_GL;
+
+        if     (a>=0 && s!=a  && ammo[a])          s = a;
+        else if(b>=0 && s!=b  && ammo[b])          s = b;
+        else if(c>=0 && s!=c  && ammo[c])          s = c;
+        else if(s!=GUN_CG     && ammo[GUN_CG])     s = GUN_CG;
+        else if(s!=GUN_RL     && ammo[GUN_RL])     s = GUN_RL;
+        else if(s!=GUN_SG     && ammo[GUN_SG])     s = GUN_SG;
+        else if(s!=GUN_RIFLE  && ammo[GUN_RIFLE])  s = GUN_RIFLE;
+        else if(s!=GUN_GL     && ammo[GUN_GL])     s = GUN_GL;
         else if(s!=GUN_PISTOL && ammo[GUN_PISTOL]) s = GUN_PISTOL;
-        else s = GUN_FIST;
+        else                                       s = GUN_FIST;
+
         if(s!=player1->gunselect) cl.playsoundc(S_WEAPLOAD);
         player1->gunselect = s;
     };
@@ -107,7 +109,7 @@ struct weaponstate
         bnc.radius = 2;
         bnc.eyeheight = 2;
         bnc.aboveeye = 2;
-        bnc.lifetime = 2000;
+        bnc.lifetime = 3000;
         bnc.local = local;
         bnc.owner = owner;
 
