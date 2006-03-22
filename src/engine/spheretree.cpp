@@ -7,10 +7,15 @@ struct SphereBranch : SphereTree
 
     SphereBranch(SphereTree *c1, SphereTree *c2) : child1(c1), child2(c2)
     {
+        vec n(child2->center);
+        n.sub(child1->center);
+        float dist = n.magnitude();
+
+        radius = (child1->radius + child2->radius + dist) / 2;
+
         center = child1->center;
-        center.add(child2->center);
-        center.div(2);
-        radius = (child1->radius + child2->radius + child1->center.dist(child2->center)) / 2;
+        n.mul((radius - child1->radius) / dist);
+        center.add(n);
     };
 
     ~SphereBranch()
