@@ -16,6 +16,8 @@ struct SphereTree
         if(v < 0 || v > maxdist) return false;
         return true;
     };
+
+    virtual bool isleaf() { return false; };
 };
 
 extern SphereTree *buildspheretree(int numtris, const triangle *tris);

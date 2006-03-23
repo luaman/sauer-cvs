@@ -88,6 +88,8 @@ struct triangle
 
     triangle(const vec &a, const vec &b, const vec &c) : a(a), b(b), c(c) {};
     triangle() {};
+
+    bool operator==(const triangle &t) const { return a == t.a && b == t.b && c == t.c; }
 };
 
 /**

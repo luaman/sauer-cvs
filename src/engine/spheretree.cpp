@@ -14,8 +14,11 @@ struct SphereBranch : SphereTree
         radius = (child1->radius + child2->radius + dist) / 2;
 
         center = child1->center;
-        n.mul((radius - child1->radius) / dist);
-        center.add(n);
+        if(dist)
+        {
+            n.mul((radius - child1->radius) / dist);
+            center.add(n);
+        };
     };
 
     ~SphereBranch()
@@ -76,6 +79,8 @@ struct SphereLeaf : SphereTree
         if(!SphereTree::intersect(o, ray, maxdist, dist)) return false;
         return raytriintersect(o, ray, maxdist, tri, dist);
     };
+
+    bool isleaf() { return true; };
 };
 
 SphereTree *buildspheretree(int numtris, const triangle *tris)
@@ -103,20 +108,32 @@ SphereTree *buildspheretree(int numtris, const triangle *tris)
                 dist = d;
             };
         }; 
+        SphereTree *child1 = spheres[farthest];
         int closest = -1;
         float radius = 1e16f;
         loopi(numspheres)
         {
             if(i==farthest) continue;
-            float xyradius = (spheres[farthest]->radius + spheres[i]->radius + spheres[farthest]->center.dist(spheres[i]->center)) / 2;
-            if(xyradius < radius)
+            SphereTree *child2 = spheres[i];
+            float xyradius = (child1->radius + child2->radius + child1->center.dist(child2->center)) / 2;
+            if(!xyradius && child1->isleaf() && child2->isleaf() && ((SphereLeaf *)child1)->tri == ((SphereLeaf *)child2)->tri)
+            {
+                spheres[i] = spheres[--numspheres];
+                if(farthest==numspheres) farthest = i;
+                else i--;
+                continue;
+            }    
+            else if(xyradius < radius)
             {
                 closest = i;
                 radius = xyradius;
             };
         };
-        spheres[farthest] = new SphereBranch(spheres[farthest], spheres[closest]);
-        spheres[closest] = spheres[--numspheres];
+        if(closest>=0)
+        {
+            spheres[farthest] = new SphereBranch(spheres[farthest], spheres[closest]);
+            spheres[closest] = spheres[--numspheres];
+        };
     };
     
     SphereTree *root = spheres[0];
