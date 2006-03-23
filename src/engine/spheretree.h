@@ -10,10 +10,11 @@ struct SphereTree
         vec tocenter(center);
         tocenter.sub(o);
         float v = tocenter.dot(ray), 
-              d = radius*radius - (tocenter.squaredlen() - v*v);
+              inside = radius*radius - tocenter.squaredlen(),
+              d = inside + v*v;
         if(d < 0) return false;
         v -= sqrt(d);
-        if(v < 0 || v > maxdist) return false;
+        if(v > maxdist || (v < 0 && inside < 0)) return false;
         return true;
     };
 

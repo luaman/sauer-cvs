@@ -1065,10 +1065,14 @@ void renderq(int w, int h)
                         glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
                         // KLUGE: workaround for buggy nvidia drivers
                         // object planes are somehow invalid unless texgen is toggled
-                        glDisable(GL_TEXTURE_GEN_S);
-                        glDisable(GL_TEXTURE_GEN_T);
-                        glEnable(GL_TEXTURE_GEN_S);
-                        glEnable(GL_TEXTURE_GEN_T);
+                        extern int nvidia_texgen_bug;
+                        if(nvidia_texgen_bug)
+                        {
+                            glDisable(GL_TEXTURE_GEN_S);
+                            glDisable(GL_TEXTURE_GEN_T);
+                            glEnable(GL_TEXTURE_GEN_S);
+                            glEnable(GL_TEXTURE_GEN_T);
+                        };
                     }
                     else
                     {

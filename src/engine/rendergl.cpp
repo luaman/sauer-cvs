@@ -79,6 +79,8 @@ void *getprocaddress(const char *name)
     return SDL_GL_GetProcAddress(name);
 }
 
+int ati_texgen_bug = 0, nvidia_texgen_bug = 0;
+
 void gl_init(int w, int h)
 {
     #define fogvalues 0.5f, 0.6f, 0.7f, 1.0f
@@ -134,6 +136,9 @@ void gl_init(int w, int h)
     {
         conoutf("WARNING: no shader support! using fixed function fallback");
         renderpath = R_FIXEDFUNCTION;
+        const char *vendor = (const char *)glGetString(GL_VENDOR);
+        if(strstr(vendor, "ATI")) ati_texgen_bug = 1;
+        else if(strstr(vendor, "NVIDIA")) nvidia_texgen_bug = 1;
     }
     else
     {
@@ -443,13 +448,13 @@ void gl_drawframe(int w, int h, float curfps)
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glEnable(GL_TEXTURE_GEN_S);
     glEnable(GL_TEXTURE_GEN_T);
-    glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
+    if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
 
     renderq(w, h);
 
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
-    glDisable(GL_TEXTURE_GEN_R);
+    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 

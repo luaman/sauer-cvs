@@ -12,13 +12,20 @@ VARF(ambient, 1, 25, 64, hdr.ambient = ambient);
 // quality parameters, set by the calclight arg
 int shadows = 1;
 int mmshadows = 0;
-int aalights = 2;
+int aalights = 3;
  
 static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights1, lights2;
 static uint progress = 0, total_surfaces = 0;
 static bool canceled = false, check_progress = false;
+
+#define CHECK_PROGRESS(exit) \
+    if(check_progress) \
+    { \
+        show_calclight_progress(); \
+        if(canceled) exit; \
+    };
 
 void check_calclight_canceled()
 {
@@ -33,13 +40,15 @@ void check_calclight_canceled()
             break;
         };
     };
-    check_progress = false;
+    if(!canceled) check_progress = false;
 };
 
 static int curlumels = 0;
 
 void show_calclight_progress()
 {
+    if(canceled) return;
+
     int lumels = curlumels;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
     float bar1 = float(progress) / float(total_surfaces),
@@ -172,8 +181,9 @@ void pack_lightmap(surfaceinfo &surface)
     else insert_lightmap(surface.x, surface.y, surface.lmid);
 };
 
-void generate_lumel(const float tolerance, const vector<entity *> &lights, const vec &target, const vec &normal, float &r, float &g, float &b)
+void generate_lumel(const float tolerance, const vector<entity *> &lights, const vec &target, const vec &normal, vec &sample)
 {
+    float r = 0, g = 0, b = 0;
     loopv(lights)
     {
         entity &light = *lights[i];
@@ -188,7 +198,7 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
             continue;
         if(shadows)
         {
-            float dist = raycube(light.o, ray, mag, RAY_SHADOW | (mmshadows ? RAY_POLY : 0));
+            float dist = raycube(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows ? RAY_POLY : 0));
             if(dist < mag - tolerance)
                 continue;
         };
@@ -198,68 +208,143 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
         g += intensity * float(light.attr3);
         b += intensity * float(light.attr4);
     };
+    sample.x = min(255, max(ambient, r));
+    sample.y = min(255, max(ambient, g));
+    sample.z = min(255, max(ambient, b));
 };
+
+bool lumel_sample(const vec &sample, int aasample, int stride)
+{
+    if(sample.x >= ambient+1 || sample.y >= ambient+1 || sample.z >= ambient+1) return true;
+#define NCHECK(n) \
+    if((n).x >= ambient+1 || (n).y >= ambient+1 || (n).z >= ambient+1) \
+        return true;
+    const vec *n = &sample - stride - aasample;
+    NCHECK(n[0]); NCHECK(n[aasample]); NCHECK(n[2*aasample]);
+    n += stride;
+    NCHECK(n[0]); NCHECK(n[2*aasample]);
+    n += stride;
+    NCHECK(n[0]); NCHECK(n[aasample]); NCHECK(n[2*aasample]);
+    return false;
+};
+
+VAR(adaptivesample, 0, 1, 1);
 
 bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
 {
     static uchar mincolor[3], maxcolor[3];
     static float aacoords[8][2] =
     {
-      {0.15f, -0.45f},
-      {0.45f, 0.15f},
-      {-0.15f, 0.45f},
-      {-0.45f, -0.15f},
-      {0.6f, -0.05f},
-      {-0.6f, 0.05f},
-      {0.05f, 0.6f},
-      {-0.05f, -0.6f}
-    };
+        {0.0f, 0.0f},
+        {-0.5f, 0.5f},
+        {0.0f, 0.5f},
+        {-0.5f, 0.0f},
 
+        {0.3f, -0.3f},
+        {0.6f, 0.3f},
+        {-0.3f, 0.6f},
+        {-0.6f, -0.3f},
+    };
     float tolerance = 0.5 / lpu;
     vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     uchar *lumel = lm + y1 * 3 * lm_w;
     vec offsets[8];
     loopi(8) loopj(3) offsets[i][j] = aacoords[i][0]*ustep[j] + aacoords[i][1]*vstep[j];
+
     if(y1 == 0)
     {
         memset(mincolor, 255, 3);
         memset(maxcolor, 0, 3);
     };
 
-    int aasample = aalights ? 1 << (aalights + 1) : 1;
+    static vec samples [4*(LM_MAXW+1)*(LM_MAXH+1)];
+
+    vec *sample = samples;
+    int aasample = min(1 << aalights, 4);
     for(uint y = y1; y < y2; ++y, v.add(vstep)) {
         vec u = v;
-        for(uint x = 0; x < lm_w; ++x, lumel += 3, u.add(ustep)) {
-            if(check_progress)
+        for(uint x = 0; x < lm_w; ++x, u.add(ustep)) {
+            CHECK_PROGRESS(return false);
+            generate_lumel(tolerance, lights, u, normal, *sample);
+            sample += aasample;
+        };
+        sample += aasample;
+    };
+    v = origin;
+    sample = samples;
+    int stride = aasample*(lm_w+1);
+    for(uint y = y1; y < y2; ++y, v.add(vstep)) {
+        vec u = v;
+        for(uint x = 0; x < lm_w; ++x, u.add(ustep)) {
+            vec &center = *sample++;
+            if(adaptivesample && x > 0 && x+1 < lm_w && y > y1 && y+1 < y2 && !lumel_sample(center, aasample, stride))
+                loopi(aasample-1) *sample++ = center;
+            else
             {
-                show_calclight_progress();
-                if(canceled) return false;
+                loopi(aasample-1)
+                    generate_lumel(tolerance, lights, vec(u).add(offsets[i+1]), normal, *sample++);
+                if(aalights==3) 
+                {
+                    loopi(4)
+                    {
+                        vec s;
+                        generate_lumel(tolerance, lights, vec(u).add(offsets[i+4]), normal, s);
+                        center.add(s);
+                    };
+                    center.div(5);
+                };
             };
-            float r = 0, g = 0, b = 0;
-            loopj(aasample)
+        };
+        if(aasample>1)
+        {
+            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1]);
+            if(aasample>2)
+                generate_lumel(tolerance, lights, vec(u).add(offsets[3]), normal, sample[3]);
+        };
+        sample += aasample;
+    };
+    if(aasample>1) for(uint x = 0; x <= lm_w; ++x, v.add(ustep)) {
+        CHECK_PROGRESS(return false);
+        generate_lumel(tolerance, lights, vec(v).add(offsets[1]), normal, sample[1]);
+        if(aasample>2)
+            generate_lumel(tolerance, lights, vec(v).add(offsets[2]), normal, sample[2]);
+        sample += aasample;
+    };
+    
+    sample = samples;
+    float weight = 1.0f / (1.0f + 4.0f*aalights),
+          cweight = weight * (aalights==3 ? 5.0f : 1.0f);
+    for(uint y = y1; y < y2; ++y) {
+        for(uint x = 0; x < lm_w; ++x, lumel += 3) {
+            vec l(0, 0, 0);
+            const vec &center = *sample++;
+            loopi(aasample-1) l.add(*sample++);
+            if(aasample>1)
             {
-                vec target(u);
-                if(aalights)
-                    target.add(offsets[j]);
-                generate_lumel(tolerance, lights, target, normal, r, g, b);
+                l.add(sample[1]);
+                if(aasample>2) l.add(sample[3]);
             };
-            if(aasample > 1)
+            vec *next = sample + stride - aasample;
+            if(aasample>1)
             {
-                r /= aasample;
-                g /= aasample;
-                b /= aasample;
+                l.add(next[1]);
+                if(aasample>2) l.add(next[2]);
+                l.add(next[aasample+1]);
             };
-            lumel[0] = min(255, max(ambient, int(r)));
-            lumel[1] = min(255, max(ambient, int(g)));
-            lumel[2] = min(255, max(ambient, int(b)));
+
+            lumel[0] = int(center.x*cweight + l.x*weight);
+            lumel[1] = int(center.y*cweight + l.y*weight);
+            lumel[2] = int(center.z*cweight + l.z*weight);
             loopk(3)
             {
                 mincolor[k] = min(mincolor[k], lumel[k]);
                 maxcolor[k] = max(maxcolor[k], lumel[k]);
             };
         };
+        sample += aasample;
     };
+
     if(y2 == lm_h &&
        int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
        int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
@@ -456,6 +541,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     calcverts(c, cx, cy, cz, size, verts, usefaces, vertused, lodcube);
     loopi(6) if(usefaces[i])
     {
+        CHECK_PROGRESS(return);
         if(!lodcube) progress++;
         if(c.texture[i] == DEFAULT_SKY) continue;
         if(size >= hdr.mapwlod) progress++;
@@ -473,6 +559,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!setup_surface(planes, numplanes, v0, v1, v2, v3, texcoords))
             continue;
 
+        CHECK_PROGRESS(return);
         if(!c.surfaces)
             newsurfaces(c);
         surfaceinfo &surface = c.surfaces[i];
@@ -485,9 +572,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
-    if(check_progress) show_calclight_progress();
-    if(canceled)
-        return;
+    CHECK_PROGRESS(return);
 
     loopi(8)
     {
@@ -518,10 +603,10 @@ void calclight(int quality)
 {
     switch(quality)
     {
-        case  2: shadows = 1; aalights = 2; mmshadows = 1; break;
-        case  1: shadows = 1; aalights = 2; mmshadows = 0; break;
-        case  0: shadows = 1; aalights = 1; mmshadows = 0; break;
-        case -1: shadows = 1; aalights = 0; mmshadows = 0; break;
+        case  2: shadows = 1; aalights = 3; mmshadows = 1; break;
+        case  1: shadows = 1; aalights = 3; mmshadows = 0; break;
+        case  0: shadows = 1; aalights = 2; mmshadows = 0; break;
+        case -1: shadows = 1; aalights = 1; mmshadows = 0; break;
         case -2: shadows = 0; aalights = 0; mmshadows = 0; break;
         default: conoutf("valid range for calclight quality is -2..2"); return;
     };
@@ -540,7 +625,7 @@ void calclight(int quality)
     };
     canceled = false;
     check_progress = false;
-    SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL); 
+    SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     if(timer) SDL_RemoveTimer(timer);
     uint total = 0, lumels = 0;
@@ -762,4 +847,5 @@ void dumplms()
 };
 
 COMMAND(dumplms, ARG_NONE);
+
 

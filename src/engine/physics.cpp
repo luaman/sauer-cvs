@@ -265,57 +265,36 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
 
     static cube *levels[32];
     levels[0] = worldroot;
-    int l = 0, lsize = hdr.worldsize>>1;
+    int l = 0, lsize = hdr.worldsize;
     ivec lo(0, 0, 0);
 
+    int x = int(v.x), y = int(v.y), z = int(v.z);
     for(;;)
     {
-        int x = int(v.x), y = int(v.y), z = int(v.z);
-
         cube *lc = levels[l];
-        for(;;)
-        {
-            lo.x &= ~lsize;
-            lo.y &= ~lsize;
-            lo.z &= ~lsize;
-            lsize <<= 1;
-            if(x<lo.x+lsize && y<lo.y+lsize && z<lo.z+lsize)
-            {
-                if(x>=lo.x && y>=lo.y && z>=lo.z) break;
-            };
-            if(!l) break;
-            lc = levels[--l];
-        };
         for(;;)
         {
             lsize >>= 1;
             if(z>=lo.z+lsize) { lo.z += lsize; lc += 4; };
             if(y>=lo.y+lsize) { lo.y += lsize; lc += 2; };
             if(x>=lo.x+lsize) { lo.x += lsize; lc += 1; };
-            if(dent > 1e15f && (mode&RAY_POLY) && (lsize==octaentsize || (!lc->children && lsize>octaentsize)))
+            if(lc->ents && (mode&RAY_POLY) && dent > 1e15f)
             {
                 dent = disttoent(lc->ents, oclast, o, ray, radius, mode, t);
+                if(mode&RAY_SHADOW && dent < 1e15f) return min(dent, dist);
                 oclast = lc->ents;
-            }; 
+            };
             if(lc->children==NULL) break;
             lc = lc->children;
             levels[++l] = lc;
         };
 
         cube &c = *lc;
-        float disttonext = 1e16f;
-        loopi(3) if(ray[i]!=0)
-        {
-            float d = (float(lo[i]+(ray[i]>0?lsize:0))-v[i])/ray[i];
-            if(d >= 0) disttonext = min(disttonext, 0.1f + d);
-        };
-
         if(!(last==NULL && (mode&RAY_SKIPFIRST)))
         {
             if(((mode&RAY_CLIPMAT) && isclipped(c.material) && c.material != MAT_CLIP) ||
                 ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
                 (lsize==size && !isempty(c) && !passthroughcube) ||
-                (radius>0 && dist>radius) ||
                 isentirelysolid(c) ||
                 dent < dist ||
                 last==&c)
@@ -334,9 +313,35 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
             };
         };
 
+        float disttonext = 1e16f;
+        loopi(3) if(ray[i]!=0)
+        {
+            float d = (float(lo[i]+(ray[i]>0?lsize:0))-v[i])/ray[i];
+            if(d >= 0) disttonext = min(disttonext, 0.1f + d);
+        };
         pushvec(v, ray, disttonext);
         dist += disttonext;
         last = &c;
+
+        if(radius>0 && dist>=radius) return min(dent, dist);
+
+        x = int(v.x);
+        y = int(v.y);
+        z = int(v.z);
+
+        for(;;)
+        {
+            lo.x &= ~lsize;
+            lo.y &= ~lsize;
+            lo.z &= ~lsize;
+            lsize <<= 1;
+            if(x<lo.x+lsize && y<lo.y+lsize && z<lo.z+lsize)
+            {
+                if(x>=lo.x && y>=lo.y && z>=lo.z) break;
+            };
+            if(!l) break;
+            --l;
+        };
     };
 };
 
