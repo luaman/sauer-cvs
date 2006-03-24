@@ -31,21 +31,21 @@ typedef enum
    ENET_PROTOCOL_COMMAND_SEND_FRAGMENT      = 8,
    ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT    = 9,
    ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE = 10,
-   ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED   = 11
+   ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED   = 11,
+
+   ENET_PROTOCOL_COMMAND_MASK               = 0x0F,
 } ENetProtocolCommand;
 
 typedef enum
 {
-   ENET_PROTOCOL_FLAG_ACKNOWLEDGE = (1 << 0),
-   ENET_PROTOCOL_FLAG_UNSEQUENCED = (1 << 1)
+   ENET_PROTOCOL_FLAG_ACKNOWLEDGE = (1 << 7),
+   ENET_PROTOCOL_FLAG_UNSEQUENCED = (1 << 6),
 } ENetProtocolFlag;
 
 typedef struct
 {
    enet_uint16 peerID;
-   enet_uint8 flags;
-   enet_uint8 commandCount;
-   enet_uint32 sentTime;
+   enet_uint16 sentTime;
    enet_uint32 challenge;
 } ENetProtocolHeader;
 
@@ -53,17 +53,15 @@ typedef struct
 {
    enet_uint8 command;
    enet_uint8 channelID;
-   enet_uint8 flags;
-   enet_uint8 reserved;
-   enet_uint32 commandLength;
-   enet_uint32 reliableSequenceNumber;
+   enet_uint16 commandLength;
+   enet_uint16 reliableSequenceNumber;
 } ENetProtocolCommandHeader;
 
 typedef struct
 {
    ENetProtocolCommandHeader header;
-   enet_uint32 receivedReliableSequenceNumber;
-   enet_uint32 receivedSentTime;
+   enet_uint16 receivedReliableSequenceNumber;
+   enet_uint16 receivedSentTime;
 } ENetProtocolAcknowledge;
 
 typedef struct
@@ -128,19 +126,19 @@ typedef struct
 typedef struct
 {
    ENetProtocolCommandHeader header;
-   enet_uint32 unreliableSequenceNumber;
+   enet_uint16 unreliableSequenceNumber;
 } ENetProtocolSendUnreliable;
 
 typedef struct
 {
    ENetProtocolCommandHeader header;
-   enet_uint32 unsequencedGroup;
+   enet_uint16 unsequencedGroup;
 } ENetProtocolSendUnsequenced;
 
 typedef struct
 {
    ENetProtocolCommandHeader header;
-   enet_uint32 startSequenceNumber;
+   enet_uint16 startSequenceNumber;
    enet_uint32 fragmentCount;
    enet_uint32 fragmentNumber;
    enet_uint32 totalLength;

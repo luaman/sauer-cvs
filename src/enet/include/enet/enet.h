@@ -115,8 +115,8 @@ typedef struct _ENetAcknowledgement
 typedef struct _ENetOutgoingCommand
 {
    ENetListNode outgoingCommandList;
-   enet_uint32  reliableSequenceNumber;
-   enet_uint32  unreliableSequenceNumber;
+   enet_uint16  reliableSequenceNumber;
+   enet_uint16  unreliableSequenceNumber;
    enet_uint32  sentTime;
    enet_uint32  roundTripTimeout;
    enet_uint32  roundTripTimeoutLimit;
@@ -129,8 +129,8 @@ typedef struct _ENetOutgoingCommand
 typedef struct _ENetIncomingCommand
 {  
    ENetListNode     incomingCommandList;
-   enet_uint32      reliableSequenceNumber;
-   enet_uint32      unreliableSequenceNumber;
+   enet_uint16      reliableSequenceNumber;
+   enet_uint16      unreliableSequenceNumber;
    ENetProtocol     command;
    enet_uint32      fragmentCount;
    enet_uint32      fragmentsRemaining;
@@ -422,7 +422,7 @@ extern int                   enet_peer_throttle (ENetPeer *, enet_uint32);
 extern void                  enet_peer_reset_queues (ENetPeer *);
 extern ENetOutgoingCommand * enet_peer_queue_outgoing_command (ENetPeer *, const ENetProtocol *, ENetPacket *, enet_uint32, enet_uint16);
 extern ENetIncomingCommand * enet_peer_queue_incoming_command (ENetPeer *, const ENetProtocol *, ENetPacket *, enet_uint32);
-extern ENetAcknowledgement * enet_peer_queue_acknowledgement (ENetPeer *, const ENetProtocol *, enet_uint32);
+extern ENetAcknowledgement * enet_peer_queue_acknowledgement (ENetPeer *, const ENetProtocol *, enet_uint16);
 
 #ifdef __cplusplus
 }

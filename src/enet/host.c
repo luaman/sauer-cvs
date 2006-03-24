@@ -163,9 +163,8 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
         enet_list_clear (& channel -> incomingUnreliableCommands);
     }
         
-    command.header.command = ENET_PROTOCOL_COMMAND_CONNECT;
+    command.header.command = ENET_PROTOCOL_COMMAND_CONNECT | ENET_PROTOCOL_FLAG_ACKNOWLEDGE;
     command.header.channelID = 0xFF;
-    command.header.flags = ENET_PROTOCOL_FLAG_ACKNOWLEDGE;
     command.header.commandLength = sizeof (ENetProtocolConnect);
     command.connect.outgoingPeerID = ENET_HOST_TO_NET_16 (currentPeer -> incomingPeerID);
     command.connect.mtu = ENET_HOST_TO_NET_16 (currentPeer -> mtu);
@@ -362,9 +361,8 @@ enet_host_bandwidth_throttle (ENetHost * host)
            if (peer -> state != ENET_PEER_STATE_CONNECTED)
              continue;
 
-           command.header.command = ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT;
+           command.header.command = ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT | ENET_PROTOCOL_FLAG_ACKNOWLEDGE;
            command.header.channelID = 0xFF;
-           command.header.flags = ENET_PROTOCOL_FLAG_ACKNOWLEDGE;
            command.header.commandLength = sizeof (ENetProtocolBandwidthLimit);
            command.bandwidthLimit.outgoingBandwidth = ENET_HOST_TO_NET_32 (host -> outgoingBandwidth);
 
