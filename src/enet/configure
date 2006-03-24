@@ -811,6 +811,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-crc32   enable CRC32 packet verification
 
 Some influential environment variables:
   CC          C compiler command
@@ -3926,6 +3927,27 @@ fi
 rm -f conftest*
 
 
+echo "$as_me:$LINENO: checking whether to use CRC32" >&5
+echo $ECHO_N "checking whether to use CRC32... $ECHO_C" >&6
+# Check whether --enable-crc32 or --disable-crc32 was given.
+if test "${enable_crc32+set}" = set; then
+  enableval="$enable_crc32"
+  if test "$enableval" = yes; then
+        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+        cat >>confdefs.h <<\_ACEOF
+#define USE_CRC32 1
+_ACEOF
+
+     else
+        echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+     fi
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi;
+
                               ac_config_files="$ac_config_files Makefile include/Makefile include/enet/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5104,4 +5126,5 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
+
 

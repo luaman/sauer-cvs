@@ -184,7 +184,7 @@ enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint16 reliabl
 } 
 
 static ENetPeer *
-enet_protocol_handle_connect (ENetHost * host, const ENetProtocolHeader * header, const ENetProtocol * command)
+enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENetProtocol * command)
 {
     enet_uint16 mtu;
     enet_uint32 windowSize;
@@ -196,6 +196,27 @@ enet_protocol_handle_connect (ENetHost * host, const ENetProtocolHeader * header
     if (command -> header.commandLength < sizeof (ENetProtocolConnect))
       return NULL;
 
+#ifdef USE_CRC32
+    {
+        enet_uint32 crc = header -> checksum;
+        ENetBuffer buffer;
+
+        command -> header.commandLength = ENET_HOST_TO_NET_16 (command -> header.commandLength);
+        command -> header.reliableSequenceNumber = ENET_HOST_TO_NET_16 (command -> header.reliableSequenceNumber);
+
+        header -> checksum = command -> connect.sessionID;
+
+        buffer.data = host -> receivedData;
+        buffer.dataLength = host -> receivedDataLength;
+
+        if (enet_crc32 (& buffer, 1) != crc)
+          return NULL;
+
+        command -> header.commandLength = ENET_NET_TO_HOST_16 (command -> header.commandLength);
+        command -> header.reliableSequenceNumber = ENET_NET_TO_HOST_16 (command -> header.reliableSequenceNumber);
+    }
+#endif
+ 
     channelCount = ENET_NET_TO_HOST_32 (command -> connect.channelCount);
 
     if (channelCount < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT ||
@@ -209,7 +230,7 @@ enet_protocol_handle_connect (ENetHost * host, const ENetProtocolHeader * header
         if (currentPeer -> state != ENET_PEER_STATE_DISCONNECTED &&
             currentPeer -> address.host == host -> receivedAddress.host &&
             currentPeer -> address.port == host -> receivedAddress.port &&
-            currentPeer -> challenge == header -> challenge)
+            currentPeer -> sessionID == command -> connect.sessionID)
           return NULL;
     }
 
@@ -225,7 +246,7 @@ enet_protocol_handle_connect (ENetHost * host, const ENetProtocolHeader * header
       return NULL;
 
     currentPeer -> state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
-    currentPeer -> challenge = header -> challenge;
+    currentPeer -> sessionID = command -> connect.sessionID;
     currentPeer -> address = host -> receivedAddress;
     currentPeer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> connect.outgoingPeerID);
     currentPeer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.incomingBandwidth);
@@ -666,39 +687,52 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     ENetPeer * peer;
     enet_uint8 * currentData;
     size_t commandCount;
+    enet_uint16 peerID, sentTime;
 
     if (host -> receivedDataLength < sizeof (ENetProtocolHeader))
       return 0;
 
     header = (ENetProtocolHeader *) host -> receivedData;
 
-    header -> peerID = ENET_NET_TO_HOST_16 (header -> peerID);
-    header -> sentTime = ENET_NET_TO_HOST_16 (header -> sentTime);
+    peerID = ENET_NET_TO_HOST_16 (header -> peerID);
 
-    if (header -> peerID == 0xFFFF)
+    if (peerID == 0xFFFF)
       peer = NULL;
     else
-    if (header -> peerID >= host -> peerCount)
+    if (peerID >= host -> peerCount)
       return 0;
     else
     {
-       peer = & host -> peers [header -> peerID];
+       peer = & host -> peers [peerID];
 
        if (peer -> state == ENET_PEER_STATE_DISCONNECTED ||
            peer -> state == ENET_PEER_STATE_ZOMBIE || 
            (host -> receivedAddress.host != peer -> address.host &&
-             peer -> address.host != ENET_HOST_BROADCAST) ||
-           header -> challenge != peer -> challenge)
+             peer -> address.host != ENET_HOST_BROADCAST))
          return 0;
-       else
-       {
-           peer -> address.host = host -> receivedAddress.host;
-           peer -> address.port = host -> receivedAddress.port;
-       }
-    }
 
-    if (peer != NULL)
-      peer -> incomingDataTotal += host -> receivedDataLength;
+#ifdef USE_CRC32
+       {
+           enet_uint32 crc = header -> checksum;
+           ENetBuffer buffer;
+
+           header -> checksum = peer -> sessionID;
+
+           buffer.data = host -> receivedData;
+           buffer.dataLength = host -> receivedDataLength;
+
+           if (enet_crc32 (& buffer, 1) != crc)
+             return 0;
+       }
+#else
+       if (header -> checksum != peer -> sessionID)
+         return 0;
+#endif
+
+       peer -> address.host = host -> receivedAddress.host;
+       peer -> address.port = host -> receivedAddress.port;
+       peer -> incomingDataTotal += host -> receivedDataLength;
+    }
 
     currentData = host -> receivedData + sizeof (ENetProtocolHeader);
   
@@ -775,6 +809,8 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
        if (peer != NULL &&
            (command -> header.command & ENET_PROTOCOL_FLAG_ACKNOWLEDGE) != 0)
        {
+           enet_uint16 sentTime = ENET_NET_TO_HOST_16 (header -> sentTime);
+
            switch (peer -> state)
            {
            case ENET_PEER_STATE_DISCONNECTING:
@@ -783,11 +819,11 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
 
            case ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT:
               if ((command -> header.command & ENET_PROTOCOL_COMMAND_MASK) == ENET_PROTOCOL_COMMAND_DISCONNECT)
-                enet_peer_queue_acknowledgement (peer, command, header -> sentTime);
+                enet_peer_queue_acknowledgement (peer, command, sentTime);
               break;
 
            default:   
-              enet_peer_queue_acknowledgement (peer, command, header -> sentTime);        
+              enet_peer_queue_acknowledgement (peer, command, sentTime);        
               break;
            }
        }
@@ -1181,10 +1217,14 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
 
         header.peerID = ENET_HOST_TO_NET_16 (currentPeer -> outgoingPeerID);
         header.sentTime = ENET_HOST_TO_NET_16 (timeCurrent & 0xFFFF);
-        header.challenge = currentPeer -> challenge;
+        header.checksum = currentPeer -> sessionID;
 
         host -> buffers -> data = & header;
         host -> buffers -> dataLength = sizeof (ENetProtocolHeader);
+
+#ifdef USE_CRC32
+        header.checksum = enet_crc32 (host -> buffers, host -> bufferCount);
+#endif
 
         currentPeer -> lastSendTime = timeCurrent;
 

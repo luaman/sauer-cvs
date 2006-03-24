@@ -46,7 +46,7 @@ typedef struct
 {
    enet_uint16 peerID;
    enet_uint16 sentTime;
-   enet_uint32 challenge;
+   enet_uint32 checksum;
 } ENetProtocolHeader;
 
 typedef struct
@@ -76,6 +76,7 @@ typedef struct
    enet_uint32 packetThrottleInterval;
    enet_uint32 packetThrottleAcceleration;
    enet_uint32 packetThrottleDeceleration;
+   enet_uint32 sessionID;
 } ENetProtocolConnect;
 
 typedef struct

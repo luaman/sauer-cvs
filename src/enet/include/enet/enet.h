@@ -197,7 +197,7 @@ typedef struct _ENetPeer
    struct _ENetHost * host;
    enet_uint16   outgoingPeerID;
    enet_uint16   incomingPeerID;
-   enet_uint32   challenge;
+   enet_uint32   sessionID;
    ENetAddress   address;            /**< Internet address of the peer */
    void *        data;               /**< Application private data, may be freely modified */
    ENetPeerState state;
@@ -337,7 +337,7 @@ typedef struct _ENetEvent
 */
 ENET_API int enet_initialize (void);
 
-ENET_API int enet_initialize_with_callbacks (ENetVersion version, const ENetCallbacks * inits);
+ENET_API int enet_initialize_with_callbacks (ENetVersion, const ENetCallbacks *);
 
 /** 
   Shuts down ENet globally.  Should be called when a program that has
@@ -384,7 +384,7 @@ extern void       enet_socket_destroy (ENetSocket);
     @retval < 0 on failure
     @returns the address of the given hostName in address on success
 */
-ENET_API int enet_address_set_host (ENetAddress *address, const char *hostName );
+ENET_API int enet_address_set_host (ENetAddress * address, const char * hostName);
 
 /** Attempts to do a reserve lookup of the host field in the address parameter.
     @param address    address used for reverse lookup
@@ -394,17 +394,18 @@ ENET_API int enet_address_set_host (ENetAddress *address, const char *hostName )
     @retval 0 on success
     @retval < 0 on failure
 */
-ENET_API int enet_address_get_host (const ENetAddress *address, char *hostName, size_t nameLength );
+ENET_API int enet_address_get_host (const ENetAddress * address, char * hostName, size_t nameLength);
 
 /** @} */
 
-ENET_API ENetPacket * enet_packet_create (const void *dataContents, size_t dataLength, enet_uint32 flags);
-ENET_API void         enet_packet_destroy (ENetPacket *packet );
-ENET_API int          enet_packet_resize  (ENetPacket *packet, size_t dataLength );
-
-ENET_API ENetHost * enet_host_create (const ENetAddress *address, size_t peerCount, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth );
-ENET_API void       enet_host_destroy (ENetHost *host );
-ENET_API ENetPeer * enet_host_connect (ENetHost *host, const ENetAddress *address, size_t channelCount );
+ENET_API ENetPacket * enet_packet_create (const void *, size_t, enet_uint32);
+ENET_API void         enet_packet_destroy (ENetPacket *);
+ENET_API int          enet_packet_resize  (ENetPacket *, size_t);
+extern enet_uint32    enet_crc32 (const ENetBuffer *, size_t);
+                
+ENET_API ENetHost * enet_host_create (const ENetAddress *, size_t, enet_uint32, enet_uint32);
+ENET_API void       enet_host_destroy (ENetHost *);
+ENET_API ENetPeer * enet_host_connect (ENetHost *, const ENetAddress *, size_t);
 ENET_API int        enet_host_service (ENetHost *, ENetEvent *, enet_uint32);
 ENET_API void       enet_host_flush (ENetHost *);
 ENET_API void       enet_host_broadcast (ENetHost *, enet_uint8, ENetPacket *);

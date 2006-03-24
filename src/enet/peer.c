@@ -310,7 +310,7 @@ void
 enet_peer_reset (ENetPeer * peer)
 {
     peer -> outgoingPeerID = 0xFFFF;
-    peer -> challenge = 0;
+    peer -> sessionID = 0;
 
     peer -> address.host = ENET_HOST_ANY;
     peer -> address.port = 0;

@@ -135,7 +135,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     currentPeer -> address = * address;
     currentPeer -> channels = (ENetChannel *) enet_malloc (channelCount * sizeof (ENetChannel));
     currentPeer -> channelCount = channelCount;
-    currentPeer -> challenge = (enet_uint32) enet_rand ();
+    currentPeer -> sessionID = (enet_uint32) enet_rand ();
 
     if (host -> outgoingBandwidth == 0)
       currentPeer -> windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
@@ -175,6 +175,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     command.connect.packetThrottleInterval = ENET_HOST_TO_NET_32 (currentPeer -> packetThrottleInterval);
     command.connect.packetThrottleAcceleration = ENET_HOST_TO_NET_32 (currentPeer -> packetThrottleAcceleration);
     command.connect.packetThrottleDeceleration = ENET_HOST_TO_NET_32 (currentPeer -> packetThrottleDeceleration);
+    command.connect.sessionID = currentPeer -> sessionID;
     
     enet_peer_queue_outgoing_command (currentPeer, & command, NULL, 0, 0);
 

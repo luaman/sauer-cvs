@@ -71,4 +71,53 @@ enet_packet_resize (ENetPacket * packet, size_t dataLength)
     return 0;
 }
 
+static int initializedCRC32 = 0;
+static enet_uint32 crcTable [256];
+
+static void initialize_crc32 ()
+{
+    int byte;
+
+    for (byte = 0; byte < 256; ++ byte)
+    {
+        enet_uint32 crc = byte << 24;
+        int offset;
+
+        for(offset = 0; offset < 8; ++ offset)
+        {
+            if (crc & 0x80000000)
+                crc = (crc << 1) ^ 0x04c11db7;
+            else
+                crc <<= 1;
+        }
+
+        crcTable [byte] = crc;
+    }
+
+    initializedCRC32 = 1;
+}
+    
+enet_uint32
+enet_crc32 (const ENetBuffer * buffers, size_t bufferCount)
+{
+    enet_uint32 crc = 0xFFFFFFFF;
+    
+    if (! initializedCRC32) initialize_crc32 ();
+
+    while (bufferCount -- > 0)
+    {
+        const enet_uint8 * data = (const enet_uint8 *) buffers -> data,
+                         * dataEnd = & data [buffers -> dataLength];
+
+        while (data < dataEnd)
+        {
+            crc = ((crc << 8) | * data ++) ^ crcTable [crc >> 24];        
+        }
+
+        ++ buffers;
+    }
+
+    return ENET_HOST_TO_NET_32 (~ crc);
+}
+
 /** @} */
