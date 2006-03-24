@@ -157,7 +157,7 @@ enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint16 reliabl
     if (currentCommand == enet_list_end (& peer -> sentReliableCommands))
       return ENET_PROTOCOL_COMMAND_NONE;
 
-    commandNumber = outgoingCommand -> command.header.command;
+    commandNumber = outgoingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK;
 
     enet_list_remove (& outgoingCommand -> outgoingCommandList);
 
@@ -174,13 +174,13 @@ enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint16 reliabl
     enet_free (outgoingCommand);
 
     if (enet_list_empty (& peer -> sentReliableCommands))
-      return commandNumber & ENET_PROTOCOL_COMMAND_MASK;
+      return commandNumber;
     
     outgoingCommand = (ENetOutgoingCommand *) enet_list_front (& peer -> sentReliableCommands);
     
     peer -> nextTimeout = outgoingCommand -> sentTime + outgoingCommand -> roundTripTimeout;
 
-    return commandNumber & ENET_PROTOCOL_COMMAND_MASK;
+    return commandNumber;
 } 
 
 static ENetPeer *
@@ -626,6 +626,8 @@ enet_protocol_handle_verify_connect (ENetHost * host, ENetEvent * event, ENetPee
         return;
     }
 
+    enet_protocol_remove_sent_reliable_command (peer, 1, 0xFF);
+    
     peer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> verifyConnect.outgoingPeerID);
 
     mtu = ENET_NET_TO_HOST_16 (command -> verifyConnect.mtu);
@@ -776,6 +778,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
            switch (peer -> state)
            {
            case ENET_PEER_STATE_DISCONNECTING:
+           case ENET_PEER_STATE_ACKNOWLEDGING_CONNECT:
               break;
 
            case ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT:
@@ -783,11 +786,6 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
                 enet_peer_queue_acknowledgement (peer, command, header -> sentTime);
               break;
 
-           case ENET_PEER_STATE_ACKNOWLEDGING_CONNECT:
-              if ((command -> header.command & ENET_PROTOCOL_COMMAND_MASK) == ENET_PROTOCOL_COMMAND_DISCONNECT)
-                enet_peer_queue_acknowledgement (peer, command, header -> sentTime);
-              break;
-              
            default:   
               enet_peer_queue_acknowledgement (peer, command, header -> sentTime);        
               break;
