@@ -27,6 +27,7 @@ struct scoreboard
         char *teamname[maxteams];
         int teamscore[maxteams], teamsused;
         string teamscores;
+        bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.cc.clientnum;
 
         scorelines.setsize(0);
         loopi(cl.numdynents()) 
@@ -35,12 +36,14 @@ struct scoreboard
             if(o && o->type!=ENT_AI)
             {
                 const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum)) ? "\f" : "";
-                
+                string name;
+                if(showclientnum) s_sprintf(name)("%s \f(%d)", o->name, !i ? cl.cc.clientnum : i-1);
+                else s_strcpy(name, o->name);
                 if(o->state == CS_SPECTATOR) s_sprintf(scorelines.add().s)("SPECTATOR\t\t\t%s%s", master, o->name);
                 else
                 {
                     s_sprintfd(lag)("%d", o->plag);
-                    s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, o->name);
+                    s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, name);
                 };
                 menumanual(0, scorelines.length()-1, scorelines.last().s); 
             }

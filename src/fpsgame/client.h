@@ -82,15 +82,12 @@ struct clientcom : iclientcom
     {
         char *end;
         int n = strtol(arg, &end, 10);
+        if(n<0 || n>=cl.players.length()) return -1;
+        if(*arg && !*end) return n;
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(!o) continue;
-            if(*arg && !*end)
-            {
-                if(n--==0) return i==0 ? clientnum : i-1;
-            }
-            else if(!strcmp(arg, o->name)) return i==0 ? clientnum : i-1;
+            if(o && !strcmp(arg, o->name)) return i==0 ? clientnum : i-1;
         };
         return -1;
     };

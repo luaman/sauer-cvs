@@ -353,7 +353,7 @@ struct fpsserver : igameserver
             case SV_KICK:
             {
                 int victim = getint(p);
-                if(ci->master)
+                if(ci->master && victim>=0 && victim<getnumclients())
                 {
                     ban &b = bannedips.add();
                     b.time = lastsec;
@@ -366,7 +366,7 @@ struct fpsserver : igameserver
             case SV_SPECTATOR:
             {
                 int spectator = getint(p), val = getint(p);
-                if(ci->master || spectator==sender)
+                if((ci->master && spectator>=0 && spectator<getnumclients()) || spectator==sender)
                 {
                     clientinfo *spinfo = (clientinfo *)getinfo(spectator);
                     if(!spinfo->spectator && val) cps.leavebases(spinfo->team, spinfo->o);
@@ -513,6 +513,7 @@ struct fpsserver : igameserver
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(m_capture) cps.leavebases(ci->team, ci->o);
         send2(true, -1, SV_CDIS, n); 
+        clients.removeobj(ci);
         findmaster();  
     };
 
