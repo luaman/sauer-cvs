@@ -122,7 +122,7 @@ struct fpsserver : igameserver
     {
         static char msgsizesl[] =               // size inclusive message token, 0 for variable or not-checked sizes
         { 
-            SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 16, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
+            SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 0, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
             SV_DIED, 2, SV_DAMAGE, 7, SV_SHOT, 8, SV_FRAGS, 2,
             SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
@@ -310,12 +310,12 @@ struct fpsserver : igameserver
                     disconnect_client(sender, DISC_CN);
                     return false;
                 };
-                int size = msgsizelookup(type);
-                assert(size!=-1);
                 vec oldpos(ci->o), newpos;
                 loopi(3) newpos.v[i] = getint(p)/DMF;
                 if(!notgotitems && !notgotbases) ci->o = newpos;
-                loopi(size-6) getint(p);
+                loopi(6) getint(p);
+                int physstate = getint(p);
+                if(physstate&0x80) loopi(3) getint(p);
                 int state = getint(p)>>5;
                 if(ci->spectator && state!=CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
                 if(m_capture)

@@ -150,10 +150,13 @@ struct clientcom : iclientcom
             putint(p, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(p, (int)(d->vel.y*DVELF));
             putint(p, (int)(d->vel.z*DVELF));
-            putint(p, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
-            putint(p, (int)(d->gravity.y*DVELF));
-            putint(p, (int)(d->gravity.z*DVELF));
-            putint(p, (int)d->physstate);
+            putint(p, (int)d->physstate | (!d->gravity.iszero()<<7));
+            if(!d->gravity.iszero())
+            {
+                putint(p, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
+                putint(p, (int)(d->gravity.y*DVELF));
+                putint(p, (int)(d->gravity.z*DVELF));
+            };
             // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
             putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<5) );
         };
@@ -267,14 +270,20 @@ struct clientcom : iclientcom
                 d->vel.x = getint(p)/DVELF;
                 d->vel.y = getint(p)/DVELF;
                 d->vel.z = getint(p)/DVELF;
-                d->gravity.x = getint(p)/DVELF;
-                d->gravity.y = getint(p)/DVELF;
-                d->gravity.z = getint(p)/DVELF;
-                d->physstate = getint(p);
+                int physstate = getint(p);
+                d->physstate = physstate & 0x0F;
+                if(physstate&0x80) 
+                {
+                    d->gravity.x = getint(p)/DVELF;
+                    d->gravity.y = getint(p)/DVELF;
+                    d->gravity.z = getint(p)/DVELF;
+                }
+                else d->gravity = vec(0, 0, 0);
                 int f = getint(p);
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2; 
                 d->move = (f&3)==3 ? -1 : f&3;
+                f >>= 2;
                 int state = f>>3;
                 if(state==CS_DEAD && d->state!=CS_DEAD) d->lastaction = cl.lastmillis;
                 d->state = state;
