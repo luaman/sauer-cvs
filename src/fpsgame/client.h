@@ -154,9 +154,6 @@ struct clientcom : iclientcom
             putint(p, (int)(d->gravity.y*DVELF));
             putint(p, (int)(d->gravity.z*DVELF));
             putint(p, (int)d->physstate);
-            putint(p, (int)(d->floor.x*DVF));          // quantize to 1/100, almost always 1 byte
-            putint(p, (int)(d->floor.y*DVF));
-            putint(p, (int)(d->floor.z*DVF));
             // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
             putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<5) );
         };
@@ -274,10 +271,6 @@ struct clientcom : iclientcom
                 d->gravity.y = getint(p)/DVELF;
                 d->gravity.z = getint(p)/DVELF;
                 d->physstate = getint(p);
-                if(d->physstate != PHYS_FALL) d->timeinair = 0;
-                d->floor.x = getint(p)/DVF;
-                d->floor.y = getint(p)/DVF;
-                d->floor.z = getint(p)/DVF;
                 int f = getint(p);
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2; 
@@ -285,6 +278,7 @@ struct clientcom : iclientcom
                 int state = f>>3;
                 if(state==CS_DEAD && d->state!=CS_DEAD) d->lastaction = cl.lastmillis;
                 d->state = state;
+                updatephysstate(d);
                 updatepos(d);
                 break;
             };

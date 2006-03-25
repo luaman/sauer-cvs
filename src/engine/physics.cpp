@@ -1084,3 +1084,42 @@ void mousemove(int dx, int dy)
     while(player->yaw>=360.0f) player->yaw -= 360.0f;
 };
 
+void updatephysstate(physent *d)
+{
+    if(d->physstate == PHYS_FALL) return;
+    d->timeinair = 0;
+    vec old(d->o);
+    /* Attempt to reconstruct the floor state.
+     * May be inaccurate since movement collisions are not considered.
+     * If good floor is not found, just keep the old floor and hope it's correct enough.
+     */
+    switch(d->physstate)
+    {
+        case PHYS_SLOPE:
+        case PHYS_FLOOR:
+            d->o.z -= 0.1f;
+            if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
+                d->floor = wall;
+            else if(d->physstate == PHYS_SLOPE)
+            {
+                d->o.z -= d->radius;
+                if(!collide(d, vec(0, 0, -1), SLOPEZ))
+                    d->floor = wall;
+            }
+            break;
+
+        case PHYS_STEP_UP:
+            d->o.z -= STAIRHEIGHT+0.1f;
+            if(!collide(d, vec(0, 0, -1), SLOPEZ))
+                d->floor = wall;
+            break;
+
+        case PHYS_SLIDE:
+            d->o.z -= d->radius+0.1f;
+            if(!collide(d, vec(0, 0, -1)) && wall.z < SLOPEZ)
+                d->floor = wall;
+            break;
+    };
+    d->o = old;
+};
+
