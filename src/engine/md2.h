@@ -204,41 +204,42 @@ struct md2 : model
         return true;
     };
 
-    void scale(int frame, float scale)
+    void scaleverts(int frame)
     {
         mverts[frame] = new vec[header.numvertices];
         mnorms[frame] = new vec[header.numvertices];
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
-        float sc = 4.0f/scale;
+        float sc = scale/4.0f;
         loop(vi, header.numvertices)
         {
             uchar *cv = (uchar *)&cf->vertices[vi].vertex;
             vec &v = mverts[frame][vi];
-            v.x =  (cv[0]*cf->scale[0]+cf->translate[0])/sc;
-            v.y = -(cv[1]*cf->scale[1]+cf->translate[1])/sc;
-            v.z =  (cv[2]*cf->scale[2]+cf->translate[2])/sc;
+            v.x =  (cv[0]*cf->scale[0]+cf->translate[0])*sc + translate.x;
+            v.y = -(cv[1]*cf->scale[1]+cf->translate[1])*sc + translate.y;
+            v.z =  (cv[2]*cf->scale[2]+cf->translate[2])*sc + translate.z;
             float *normal = normaltable[cv[3]];
             vec &n = mnorms[frame][vi];
             n = vec(normal[0], -normal[1], normal[2]);
         };
     };
 
-    float above(int frame, float scale)
+    float above(int frame)
     {
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
-        float sc = 4.0f/scale;
-        return (cf->translate[2] + cf->scale[2]*255.0f)/sc;        
+        float sc = scale/4.0f;
+        return (cf->translate[2] + cf->scale[2]*255.0f)*sc + translate.z;
     };
 
-    float boundsphere(int frame, float scale, vec &center)
+    float boundsphere(int frame, vec &center)
     {
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
-        float sc = 4.0f/scale;
+        float sc = scale/4.0f;
         loopi(3) center.v[i] = cf->translate[i];
-        center.div(sc);
+        center.mul(sc);
+        center.add(translate);
         vec radius;
         loopi(3) radius.v[i] = cf->scale[i];
-        radius.mul(0.5f*255.0f/sc);
+        radius.mul(0.5f*255.0f*sc);
         center.add(radius);
         center.y = -center.y;
         return radius.magnitude();
@@ -295,7 +296,7 @@ struct md2 : model
     SphereTree *collisiontree()
     {
         if(spheretree) return spheretree;
-        if(!mverts[0]) scale(0, 1.0f);
+        if(!mverts[0]) scaleverts(0);
         vector<triangle> tris;
         for(int *command = glcommands; (*command)!=0;)
         {
@@ -337,7 +338,7 @@ struct md2 : model
         return spheretree;
     };
 
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
     {
         //                      0              3              6   7   8   9   10        12  13
         //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S
@@ -354,7 +355,7 @@ struct md2 : model
                 md2_anim &a = anims[anim][varseed%anims[anim].length()];
                 ai.frame = a.frame;
                 ai.range = a.range;
-                ai.speed = speed*a.speed/100.0f;
+                ai.speed = speed*100.0f/a.speed;
             }
             else
             {
@@ -371,7 +372,7 @@ struct md2 : model
             ai.range = _range[n];
             ai.speed = speed;
         };
-        loopi(ai.range) if(!mverts[ai.frame+i]) scale(ai.frame+i, sc);
+        loopi(ai.range) if(!mverts[ai.frame+i]) scaleverts(ai.frame+i);
         if(hasVBO && !vbufGL && anim==ANIM_STATIC) genvar();
         
         if(d)

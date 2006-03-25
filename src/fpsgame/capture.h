@@ -173,7 +173,7 @@ struct captureclient : capturestate
             {
                 baseinfo &b = bases[j++];
                 const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
-                rendermodel(e->color, e->dir, flagname, ANIM_STATIC, 0, 0, e->o.x, e->o.y, e->o.z, 0, 0, false, 1.0f, 10.0f, 0, NULL, true);
+                rendermodel(e->color, e->dir, flagname, ANIM_STATIC, 0, 0, e->o.x, e->o.y, e->o.z, 0, 0, false, 10.0f, 0, NULL, true);
                 if(b.owner[0])
                 {
                     if(b.enemy[0]) s_sprintf(b.info)("%s vs. %s (%d)", b.owner, b.enemy, b.converted);
@@ -182,7 +182,7 @@ struct captureclient : capturestate
                 else if(b.enemy[0]) s_sprintf(b.info)("%s (%d)", b.enemy, b.converted); 
                 else b.info[0] = '\0';
                 vec above(e->o);
-                abovemodel(above, flagname, 1.0f);
+                abovemodel(above, flagname);
                 above.z += 2.0f;
                 particle_text(above, b.info, 11, 1);
             };

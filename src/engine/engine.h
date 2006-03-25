@@ -22,20 +22,22 @@ struct model
     Shader *shader;
     float spec, ambient;
     bool cullface;
-
-    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true) {};
+    float scale;
+    vec translate;
+    
+    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), scale(1.0f), translate(0, 0, 0) {};
     virtual ~model() {};
-    virtual float boundsphere(int frame, float scale, vec &center) = 0;
-    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d) = 0;
+    virtual float boundsphere(int frame, vec &center) = 0;
+    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d) = 0;
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
     virtual char *name() = 0;
     virtual SphereTree *collisiontree() { return 0; };
 
-    virtual float above(int frame = 0, float scale = 1.0f)
+    virtual float above(int frame = 0)
     {
         vec center;
-        float rad = boundsphere(frame, scale, center);
+        float rad = boundsphere(frame, center);
         return center.z + rad;
     };
 };

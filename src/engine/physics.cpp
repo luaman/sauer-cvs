@@ -90,7 +90,7 @@ bool getmmboundingbox(extentity &e, ivec &o, ivec &r)
     model *m = loadmodel(mmi.name);
     if(!m) return false;
     vec center;
-    float radius = m->boundsphere(0, 1.0f, center);
+    float radius = m->boundsphere(0, center);
     o.x = int(e.o.x+center.x-radius);
     o.y = int(e.o.y+center.y-radius);
     o.z = int(e.o.z+center.z-radius)+mmi.zoff+e.attr3;

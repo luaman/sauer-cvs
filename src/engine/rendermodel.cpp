@@ -48,6 +48,25 @@ void mdlshader(char *shader)
 
 COMMAND(mdlshader, ARG_1STR);
 
+void mdlscale(int percent)
+{
+    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    float scale = 0.3f;
+    if(percent>0) scale = percent/100.0f;
+    else if(percent<0) scale = 0.0f;
+    loadingmodel->scale = scale;
+};  
+
+COMMAND(mdlscale, ARG_1INT);
+
+void mdltrans(char *x, char *y, char *z)
+{
+    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    loadingmodel->translate = vec(atof(x), atof(y), atof(z));
+}; 
+
+COMMAND(mdltrans, ARG_3STR);
+
 // mapmodels
 
 struct mapmodel
@@ -120,14 +139,14 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int basetime, dynent *d, bool cull)
+void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, bool cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
     if(cull)
     {
         vec center;
-        float radius = m->boundsphere(0/*frame*/, scale, center);   // FIXME
+        float radius = m->boundsphere(0/*frame*/, center);   // FIXME
         center.add(vec(x, y, z));
         if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
@@ -159,15 +178,15 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
 
     };
     if(!m->cullface) glDisable(GL_CULL_FACE);
-    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, scale, d);
+    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 };
 
-void abovemodel(vec &o, const char *mdl, float scale)
+void abovemodel(vec &o, const char *mdl)
 {
     model *m = loadmodel(mdl);
     if(!m) return;
-    o.z += m->above(0/*frame*/, scale);
+    o.z += m->above(0/*frame*/);
 };
 
 int findanim(const char *name)

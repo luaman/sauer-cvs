@@ -502,7 +502,7 @@ struct md3 : model
     md3(const char *_name) { s_strcpy(loadname, _name); };
     char *name() { return loadname; }; 
     
-    float boundsphere(int frame, float scale, vec &center) 
+    float boundsphere(int frame, vec &center) 
     {      
         if(!model) return 0;
         return model->boundsphere_recv(frame, scale, center);
@@ -521,7 +521,7 @@ struct md3 : model
     
     bool load() { model = loadplayermdl(loadname); return model ? true : false; };
     
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, float sc, dynent *d)
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
     {
         //int gun = 0; // FIXME lets do this later
         if(anim != ANIM_STATIC)
@@ -557,7 +557,7 @@ struct md3 : model
                 playermodels[mdl * 3 + MDL_UPPER]->link(weaponmodels[gun], "tag_weapon"); // show current weapon*/
         };
         
-        model->draw(x, y, z, yaw, pitch, sc);
+        model->draw(x, y, z, yaw, pitch, scale);
         
         if(tmpskin) model->meshes[0].skin = tmpskin;
     };

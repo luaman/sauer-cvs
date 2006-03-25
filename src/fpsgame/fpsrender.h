@@ -23,10 +23,10 @@ struct fpsrender
         else if(monsterstate==M_PAIN || cl.lastmillis-d->lastpain<300) { anim = ANIM_PAIN; }
         else if(d->timeinair>100)                           { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP; /*comment out for md2 -> *//*basetime = cl.lastmillis-d->timeinair;*/ }
         else if((!d->move && !d->strafe)/* || !d->moving*/) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE; }
-        else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 4800/d->maxspeed*scale; };
+        else                                                { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN; speed = 5500/d->maxspeed*scale; };
         vec color, dir;
         lightreaching(d->o, color, dir);
-        rendermodel(color, dir, mdlname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, team, scale, speed, basetime, d, true);
+        rendermodel(color, dir, mdlname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, team, speed, basetime, d, true);
     };
     
     void rendergame(fpsclient &cl, int gamemode)
@@ -39,7 +39,7 @@ struct fpsrender
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); };
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, 11, 1);
         };
-        if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0, M_NONE);
+        if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0f, M_NONE);
         cl.ms.monsterrender();
         cl.et.renderentities();
         if(m_capture) cl.cpc.renderbases();
