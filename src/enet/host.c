@@ -30,6 +30,9 @@ enet_host_create (const ENetAddress * address, size_t peerCount, enet_uint32 inc
     ENetHost * host = (ENetHost *) enet_malloc (sizeof (ENetHost));
     ENetPeer * currentPeer;
 
+    if (peerCount > ENET_PROTOCOL_MAXIMUM_PEER_ID)
+      return NULL;
+
     host -> peers = (ENetPeer *) enet_malloc (peerCount * sizeof (ENetPeer));
     memset (host -> peers, 0, peerCount * sizeof (ENetPeer));
 
@@ -163,9 +166,8 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
         enet_list_clear (& channel -> incomingUnreliableCommands);
     }
         
-    command.header.command = ENET_PROTOCOL_COMMAND_CONNECT | ENET_PROTOCOL_FLAG_ACKNOWLEDGE;
+    command.header.command = ENET_PROTOCOL_COMMAND_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
     command.header.channelID = 0xFF;
-    command.header.commandLength = sizeof (ENetProtocolConnect);
     command.connect.outgoingPeerID = ENET_HOST_TO_NET_16 (currentPeer -> incomingPeerID);
     command.connect.mtu = ENET_HOST_TO_NET_16 (currentPeer -> mtu);
     command.connect.windowSize = ENET_HOST_TO_NET_32 (currentPeer -> windowSize);
@@ -362,9 +364,8 @@ enet_host_bandwidth_throttle (ENetHost * host)
            if (peer -> state != ENET_PEER_STATE_CONNECTED)
              continue;
 
-           command.header.command = ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT | ENET_PROTOCOL_FLAG_ACKNOWLEDGE;
+           command.header.command = ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
            command.header.channelID = 0xFF;
-           command.header.commandLength = sizeof (ENetProtocolBandwidthLimit);
            command.bandwidthLimit.outgoingBandwidth = ENET_HOST_TO_NET_32 (host -> outgoingBandwidth);
 
            if (peer -> incomingBandwidthThrottleEpoch == timeCurrent)

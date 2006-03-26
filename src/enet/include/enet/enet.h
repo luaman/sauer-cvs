@@ -144,10 +144,11 @@ typedef enum
    ENET_PEER_STATE_CONNECTING                  = 1,
    ENET_PEER_STATE_ACKNOWLEDGING_CONNECT       = 2,
    ENET_PEER_STATE_CONNECTION_PENDING          = 3,
-   ENET_PEER_STATE_CONNECTED                   = 4,
-   ENET_PEER_STATE_DISCONNECTING               = 5,
-   ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT    = 6,
-   ENET_PEER_STATE_ZOMBIE                      = 7
+   ENET_PEER_STATE_CONNECTION_SUCCEEDED        = 4,
+   ENET_PEER_STATE_CONNECTED                   = 5,
+   ENET_PEER_STATE_DISCONNECTING               = 6,
+   ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT    = 7,
+   ENET_PEER_STATE_ZOMBIE                      = 8
 } ENetPeerState;
 
 #ifndef ENET_BUFFER_MAXIMUM
@@ -234,14 +235,14 @@ typedef struct _ENetPeer
    enet_uint16   mtu;
    enet_uint32   windowSize;
    enet_uint32   reliableDataInTransit;
-   enet_uint32   outgoingReliableSequenceNumber;
+   enet_uint16   outgoingReliableSequenceNumber;
    ENetList      acknowledgements;
    ENetList      sentReliableCommands;
    ENetList      sentUnreliableCommands;
    ENetList      outgoingReliableCommands;
    ENetList      outgoingUnreliableCommands;
-   enet_uint32   incomingUnsequencedGroup;
-   enet_uint32   outgoingUnsequencedGroup;
+   enet_uint16   incomingUnsequencedGroup;
+   enet_uint16   outgoingUnsequencedGroup;
    enet_uint32   unsequencedWindow [ENET_PEER_UNSEQUENCED_WINDOW_SIZE / 32]; 
    enet_uint32   disconnectData;
 } ENetPeer;
@@ -272,6 +273,7 @@ typedef struct _ENetHost
    size_t             peerCount;                   /**< number of peers allocated for this host */
    ENetPeer *         lastServicedPeer;
    size_t             packetSize;
+   enet_uint16        headerFlags;
    ENetProtocol       commands [ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS];
    size_t             commandCount;
    ENetBuffer         buffers [ENET_BUFFER_MAXIMUM];
@@ -424,6 +426,8 @@ extern void                  enet_peer_reset_queues (ENetPeer *);
 extern ENetOutgoingCommand * enet_peer_queue_outgoing_command (ENetPeer *, const ENetProtocol *, ENetPacket *, enet_uint32, enet_uint16);
 extern ENetIncomingCommand * enet_peer_queue_incoming_command (ENetPeer *, const ENetProtocol *, ENetPacket *, enet_uint32);
 extern ENetAcknowledgement * enet_peer_queue_acknowledgement (ENetPeer *, const ENetProtocol *, enet_uint16);
+
+extern size_t enet_protocol_command_size (enet_uint8);
 
 #ifdef __cplusplus
 }
