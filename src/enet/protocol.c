@@ -773,8 +773,6 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     headerSize = (flags & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME ? sizeof (ENetProtocolHeader) : (size_t) & ((ENetProtocolHeader *) 0) -> sentTime);
     currentData = host -> receivedData + headerSize;
   
-    enet_uint8 lastCommand;
-
     while (currentData < & host -> receivedData [host -> receivedDataLength])
     {
        enet_uint8 commandNumber;
@@ -799,8 +797,6 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
          break;
          
        command -> header.reliableSequenceNumber = ENET_NET_TO_HOST_16 (command -> header.reliableSequenceNumber);
-
-       lastCommand = command -> header.command;
 
        switch (command -> header.command & ENET_PROTOCOL_COMMAND_MASK)
        {
