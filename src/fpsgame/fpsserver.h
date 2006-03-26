@@ -306,12 +306,13 @@ struct fpsserver : igameserver
                     return false;
                 };
                 vec oldpos(ci->o), newpos;
-                loopi(3) newpos.v[i] = getint(p)/DMF;
+                loopi(3) newpos.v[i] = getuint(p)/DMF;
                 if(!notgotitems && !notgotbases) ci->o = newpos;
-                loopi(6) getint(p);
+                getuint(p);
+                loopi(5) getint(p);
                 int physstate = getint(p);
-                if(physstate&0x80) loopi(3) getint(p);
-                int state = getint(p)>>5;
+                if(physstate&0x10) loopi(3) getint(p);
+                int state = (getint(p)>>4) & 0x7;
                 if(ci->spectator && state!=CS_SPECTATOR) return false;
                 if(m_capture)
                 {

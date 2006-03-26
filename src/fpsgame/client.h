@@ -141,24 +141,24 @@ struct clientcom : iclientcom
         {
             putint(p, SV_POS);
             putint(p, clientnum);
-            putint(p, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
-            putint(p, (int)(d->o.y*DMF));
-            putint(p, (int)(d->o.z*DMF));
-            putint(p, (int)d->yaw);
+            putuint(p, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
+            putuint(p, (int)(d->o.y*DMF));
+            putuint(p, (int)(d->o.z*DMF));
+            putuint(p, (int)d->yaw);
             putint(p, (int)d->pitch);
             putint(p, (int)d->roll);
             putint(p, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(p, (int)(d->vel.y*DVELF));
             putint(p, (int)(d->vel.z*DVELF));
-            putint(p, (int)d->physstate | (!d->gravity.iszero()<<7));
+            putint(p, (int)d->physstate | (!d->gravity.iszero()<<4));
             if(!d->gravity.iszero())
             {
                 putint(p, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
                 putint(p, (int)(d->gravity.y*DVELF));
                 putint(p, (int)(d->gravity.z*DVELF));
             };
-            // pack rest in 1 byte: strafe:2, move:2, reserved:1, state:3
-            putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<5) );
+            // pack rest in 1 byte: strafe:2, move:2, state:3, reserved:1
+            putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<4) );
         };
         if(senditemstoserver)
         {
@@ -261,10 +261,10 @@ struct clientcom : iclientcom
                 cn = getint(p);
                 d = cl.getclient(cn);
                 if(!d) return;
-                d->o.x = getint(p)/DMF;
-                d->o.y = getint(p)/DMF;
-                d->o.z = getint(p)/DMF;
-                d->yaw = (float)getint(p);
+                d->o.x = getuint(p)/DMF;
+                d->o.y = getuint(p)/DMF;
+                d->o.z = getuint(p)/DMF;
+                d->yaw = (float)getuint(p);
                 d->pitch = (float)getint(p);
                 d->roll = (float)getint(p);
                 d->vel.x = getint(p)/DVELF;
@@ -272,7 +272,7 @@ struct clientcom : iclientcom
                 d->vel.z = getint(p)/DVELF;
                 int physstate = getint(p);
                 d->physstate = physstate & 0x0F;
-                if(physstate&0x80) 
+                if(physstate&0x10) 
                 {
                     d->gravity.x = getint(p)/DVELF;
                     d->gravity.y = getint(p)/DVELF;
@@ -283,8 +283,7 @@ struct clientcom : iclientcom
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2; 
                 d->move = (f&3)==3 ? -1 : f&3;
-                f >>= 2;
-                int state = f>>3;
+                int state = (f>>2)&7;
                 if(state==CS_DEAD && d->state!=CS_DEAD) d->lastaction = cl.lastmillis;
                 d->state = state;
                 updatephysstate(d);

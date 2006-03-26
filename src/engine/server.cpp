@@ -14,7 +14,7 @@ void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); 
 void putint(uchar *&p, int n)
 {
     if(n<128 && n>-127) { *p++ = n; }
-    else if(n<0x8000 && n>=-0x8000) { *p++ = 0x80; *p++ = n; *p++ = n>>8;  }
+    else if(n<0x8000 && n>=-0x8000) { *p++ = 0x80; *p++ = n; *p++ = n>>8; }
     else { *p++ = 0x81; *p++ = n; *p++ = n>>8; *p++ = n>>16; *p++ = n>>24; };
 };
 
@@ -25,6 +25,43 @@ int getint(uchar *&p)
     if(c==-128) { int n = *p++; n |= *((char *)p)<<8; p++; return n;}
     else if(c==-127) { int n = *p++; n |= *p++<<8; n |= *p++<<16; return n|(*p++<<24); } 
     else return c;
+};
+
+// much smaller encoding for unsigned integers up to 28 bits, but can handle signed
+void putuint(uchar *&p, int n)
+{
+    if(n < 0 || n >= (1<<21))
+    {
+        *p++ = 0x80 | (n & 0x7F);
+        *p++ = 0x80 | ((n >> 7) & 0x7F);
+        *p++ = 0x80 | ((n >> 14) & 0x7F);
+        *p++ = ((n >> 21) & 0xFF);
+    }
+    else if(n < (1<<7)) *p++ = n;
+    else if(n < (1<<14))
+    {
+        *p++ = 0x80 | (n & 0x7F);
+        *p++ = n >> 7;
+    }
+    else 
+    { 
+        *p++ = 0x80 | (n & 0x7F); 
+        *p++ = 0x80 | ((n >> 7) & 0x7F);
+        *p++ = n >> 14; 
+    };
+};
+
+int getuint(uchar *&p)
+{
+    int n = *p++;
+    if(n & 0x80)
+    {
+        n += (*p++ << 7) - 0x80;
+        if(n & (1<<14)) n += (*p++ << 14) - (1<<14);
+        if(n & (1<<21)) n += (*p++ << 21) - (1<<21);
+        if(n & (1<<28)) n |= 0xF0000000; 
+    };
+    return n;
 };
 
 void sendstring(const char *t, uchar *&p)

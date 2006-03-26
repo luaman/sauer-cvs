@@ -148,6 +148,8 @@ extern int getnumclients();
 extern uint getclientip(int n);
 extern void putint(uchar *&p, int n);
 extern int getint(uchar *&p);
+extern void putuint(uchar *&p, int n);
+extern int getuint(uchar *&p);
 extern void sendstring(const char *t, uchar *&p);
 extern void disconnect_client(int n, int reason);
 extern void sendvmap(int n, string mapname, int mapsize, uchar *mapdata);
