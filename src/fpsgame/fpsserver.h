@@ -155,27 +155,22 @@ struct fpsserver : igameserver
 
     void resetvotes()
     {
-        loopi(getnumclients())
-        {
-            clientinfo *ci = (clientinfo *)getinfo(i);
-            if(ci) ci->mapvote[0] = 0;
-        };
+        loopv(clients) clients[i]->mapvote[0] = 0;
     };
 
     bool vote(char *map, int reqmode, int sender)
     {
         clientinfo *ci = (clientinfo *)getinfo(sender);
+        if(ci->spectator && !ci->master) return false;
         s_strcpy(ci->mapvote, map);
         ci->modevote = reqmode;
         int yes = 0, no = 0; 
-        loopi(getnumclients())
+        loopv(clients)
         {
-            clientinfo *oi = (clientinfo *)getinfo(i);
-            if(oi)
-            {
-                if(oi->mapvote[0]) { if(strcmp(oi->mapvote, map)==0 && oi->modevote==reqmode) yes++; else no++; }
-                else no++;
-            };
+            clientinfo *oi = clients[i];
+            if(oi->spectator && !oi->master) continue;
+            if(oi->mapvote[0]) { if(strcmp(oi->mapvote, map)==0 && oi->modevote==reqmode) yes++; else no++; }
+            else no++;
         };
         if(yes==1 && no==0) return true;  // single player
         s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", ci->name, modestr(reqmode), map);
@@ -317,7 +312,7 @@ struct fpsserver : igameserver
                 int physstate = getint(p);
                 if(physstate&0x80) loopi(3) getint(p);
                 int state = getint(p)>>5;
-                if(ci->spectator && state!=CS_SPECTATOR) { disconnect_client(sender, DISC_TAGT); return false; };
+                if(ci->spectator && state!=CS_SPECTATOR) return false;
                 if(m_capture)
                 {
                     if(ci->state==CS_ALIVE)
@@ -369,7 +364,11 @@ struct fpsserver : igameserver
                 if((ci->master && spectator>=0 && spectator<getnumclients()) || spectator==sender)
                 {
                     clientinfo *spinfo = (clientinfo *)getinfo(spectator);
-                    if(!spinfo->spectator && val) cps.leavebases(spinfo->team, spinfo->o);
+                    if(!spinfo->spectator && val)
+                    {
+                        spinfo->state = CS_SPECTATOR;
+                        if(m_capture) cps.leavebases(spinfo->team, spinfo->o);
+                    };
                     spinfo->spectator = val!=0;
                     sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
                 };
@@ -451,9 +450,9 @@ struct fpsserver : igameserver
         if(interm && seconds>interm)
         {
             interm = 0;
-            loopi(getnumclients()) if(getinfo(i))
+            loopv(clients)
             {
-                send2(true, i, SV_MAPRELOAD, 0);    // ask a client to trigger map reload
+                send2(true, clients[i]->clientnum, SV_MAPRELOAD, 0);    // ask a client to trigger map reload
                 mapreload = true;
                 break;
             };
@@ -524,9 +523,7 @@ struct fpsserver : igameserver
 
     void serverinforeply(uchar *&p)
     {
-        int numplayers = 0;
-        loopi(getnumclients()) if(getinfo(i)) ++numplayers;
-        putint(p, numplayers);
+        putint(p, clients.length());
         putint(p, 3);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // a // generic attributes, passed back below
         putint(p, gamemode);            // b
