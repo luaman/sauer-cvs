@@ -503,20 +503,6 @@ int explicitsky = 0, skyarea = 0;
 VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize);
 VAR(loddistance, 0, 2000, 100000);
 
-bool facesoutsideworld(int orient, int x, int y, int z, int size)
-{
-    switch(orient)
-    {
-        case O_BOTTOM:  return !z;
-        case O_TOP:     return z+size==hdr.worldsize;
-        case O_BACK:    return !y;
-        case O_FRONT:   return y+size==hdr.worldsize;
-        case O_LEFT:    return !x;
-        case O_RIGHT:   return x+size==hdr.worldsize;
-    };
-    return false;
-};
-
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 {
     bool useface[6];
@@ -568,8 +554,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]).add(index);
             if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]).add(index);
         };
-    }
-    else if(facesoutsideworld(i, x, y, z, size) && touchingface(c, i)) c.visible |= 1<<i;
+    };
 };
 
 bool skyoccluded(cube &c, int orient)
