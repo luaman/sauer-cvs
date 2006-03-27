@@ -445,7 +445,11 @@ void cleanupserver()
 
 void localdisconnect()
 {
-    loopv(clients) if(clients[i]->type==ST_LOCAL) clients[i]->type = ST_EMPTY;
+    loopv(clients) if(clients[i]->type==ST_LOCAL) 
+    {
+        sv->localdisconnect(i);
+        clients[i]->type = ST_EMPTY;
+    };
 };
 
 void localconnect()
@@ -453,6 +457,7 @@ void localconnect()
     client &c = addclient();
     c.type = ST_LOCAL;
     s_strcpy(c.hostname, "local");
+    sv->localconnect(c.num);
     send_welcome(c.num); 
 };
 

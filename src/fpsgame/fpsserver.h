@@ -238,8 +238,7 @@ struct fpsserver : igameserver
                 notgotbases = m_capture;
                 scores.setsize(0);
                 sender = -1;
-                if(clients.empty() && ci) ci->mapchange();
-                else loopv(clients) clients[i]->mapchange();
+                loopv(clients) clients[i]->mapchange();
                 break;
             };
             
@@ -497,6 +496,20 @@ struct fpsserver : igameserver
         };
     };
     
+    void localconnect(int n)
+    {
+        clientinfo *ci = (clientinfo *)getinfo(n);
+        ci->clientnum = n;
+        clients.add(ci);
+    };
+
+    void localdisconnect(int n)
+    {
+        clientinfo *ci = (clientinfo *)getinfo(n);
+        if(m_capture) cps.leavebases(ci->team, ci->o);
+        clients.removeobj(ci);
+    };
+
     int clientconnect(int n, uint ip)
     {
         clientinfo *ci = (clientinfo *)getinfo(n);
