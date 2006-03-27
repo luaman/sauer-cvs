@@ -800,6 +800,12 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         d->gravity.mul(-elasticity);
         d->vel.mul(-elasticity);
     };
+    if(d->physstate != PHYS_BOUNCE)
+    {
+        // make sure bouncers don't start inside geometry
+        if(d->o == old) return true;
+        d->physstate = PHYS_BOUNCE;
+    };
     return hitplayer;
 };
 
@@ -825,7 +831,7 @@ void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
 
 void phystest()
 {
-    static const char *states[] = {"float", "fall", "slide", "slope", "floor", "step up", "step down", "trapped"};
+    static const char *states[] = {"float", "fall", "slide", "slope", "floor", "step up", "step down", "bounce"};
     printf ("PHYS(pl): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[player->physstate], player->timeinair, player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z, player->gravity.x, player->gravity.y, player->gravity.z);
     printf ("PHYS(cam): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[camera1->physstate], camera1->timeinair, camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z, camera1->gravity.x, camera1->gravity.y, camera1->gravity.z);
 }
