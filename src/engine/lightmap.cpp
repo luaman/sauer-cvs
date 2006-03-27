@@ -236,11 +236,11 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     static float aacoords[8][2] =
     {
         {0.0f, 0.0f},
-        {-0.5f, 0.5f},
-        {0.0f, 0.5f},
+        {-0.5f, -0.5f},
+        {0.0f, -0.5f},
         {-0.5f, 0.0f},
 
-        {0.3f, -0.3f},
+        {0.3f, -0.6f},
         {0.6f, 0.3f},
         {-0.3f, 0.6f},
         {-0.6f, -0.3f},
@@ -476,7 +476,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     origin1.add(uo);
     origin1.add(vo);
     vec ustep(u), vstep(v);
-    ustep.mul((umax - umin) / float(lm_w - 1));
+    ustep.mul((umax - umin) / (lm_w - 1));
     uint split = vl * lm_h / (vl + tl);
     vstep.mul((vmax - vmin) / (split - 1));
     if(!generate_lightmap(lpu, 0, split, origin1, planes[0], ustep, vstep))
