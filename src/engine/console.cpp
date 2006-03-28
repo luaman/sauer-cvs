@@ -168,7 +168,7 @@ void pasteconsole()
     int cbsize;
     char *cb = XFetchBytes(wminfo.info.x11.display, &cbsize);
     if(!cb || !cbsize) return;
-    int commandlen = strlen(commandbuf);
+    size_t commandlen = strlen(commandbuf);
     for(char *cbline = cb, *cbend; commandlen + 1 < sizeof(commandbuf) && cbline < &cb[cbsize]; cbline = cbend + 1)
     {
         cbend = (char *)memchr(cbline, '\0', &cb[cbsize] - cbline);
@@ -262,7 +262,7 @@ void keypress(int code, bool isdown, int cooked)
                     resetcomplete();
                     if(cooked) 
                     { 
-                        int len = (int)strlen(commandbuf);
+                        size_t len = (int)strlen(commandbuf);
                         if(len+1<sizeof(commandbuf))
                         {
                             if(commandpos<0) commandbuf[len] = cooked;
