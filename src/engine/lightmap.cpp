@@ -18,7 +18,8 @@ static uchar lm [3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights1, lights2;
 static uint progress = 0, total_surfaces = 0;
-static bool canceled = false, check_progress = false;
+static bool canceled = false;
+static volatile bool check_progress = false;
 
 #define CHECK_PROGRESS(exit) \
     if(check_progress) \
