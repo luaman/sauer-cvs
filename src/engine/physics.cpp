@@ -1139,6 +1139,7 @@ void updatephysstate(physent *d)
                 d->floor = wall;
             break;
     };
+    if(d->physstate > PHYS_FALL && d->floor.z <= 0) d->floor = vec(0, 0, 1);
     d->o = old;
 };
 
