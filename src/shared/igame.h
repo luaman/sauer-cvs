@@ -2,6 +2,8 @@
 
 struct icliententities
 {
+    virtual ~icliententities() {};
+
     virtual void editent(int i) = 0;
     virtual const char *entname(int i) = 0;
     virtual void writeent(entity &e) = 0;
@@ -14,6 +16,8 @@ struct icliententities
 
 struct iclientcom
 {
+    virtual ~iclientcom() {};
+
     virtual void gamedisconnect() = 0;
     virtual void parsepacketclient(uchar *end, uchar *p) = 0;
     virtual void sendpacketclient(uchar *&p, bool &reliable, dynent *d) = 0;
@@ -26,6 +30,8 @@ struct iclientcom
 
 struct igameclient
 {
+    virtual ~igameclient() {};
+
     virtual icliententities *getents() = 0;
     virtual iclientcom *getcom() = 0;
 
@@ -51,6 +57,8 @@ struct igameclient
  
 struct igameserver
 {
+    virtual ~igameserver() {};
+
     virtual void *newinfo() = 0;
     virtual void resetinfo(void *ci) = 0;
     virtual void serverinit(char *sdesc) = 0;
@@ -72,6 +80,8 @@ struct igameserver
 
 struct igame
 {
+    virtual ~igame() {};
+
     virtual igameclient *newclient() = 0;
     virtual igameserver *newserver() = 0;
 };

@@ -13,16 +13,16 @@ struct entities : icliententities
     {
         static itemstat _itemstats[] =
         {
-            10,    30,    S_ITEMAMMO,   "SG",
-            20,    60,    S_ITEMAMMO,   "MG",
-            5,     15,    S_ITEMAMMO,   "RL",
-            5,     15,    S_ITEMAMMO,   "RI",
-            10,    30,    S_ITEMAMMO,   "GL",
-            25,    100,   S_ITEMHEALTH, "H",
-            10,    1000,  S_ITEMHEALTH, "MH",
-            100,   100,   S_ITEMARMOUR, "GA",
-            200,   200,   S_ITEMARMOUR, "YA",
-            20000, 30000, S_ITEMPUP,    "Q",
+            {10,    30,    S_ITEMAMMO,   "SG"},
+            {20,    60,    S_ITEMAMMO,   "MG"},
+            {5,     15,    S_ITEMAMMO,   "RL"},
+            {5,     15,    S_ITEMAMMO,   "RI"},
+            {10,    30,    S_ITEMAMMO,   "GL"},
+            {25,    100,   S_ITEMHEALTH, "H"},
+            {10,    1000,  S_ITEMHEALTH, "MH"},
+            {100,   100,   S_ITEMARMOUR, "GA"},
+            {200,   200,   S_ITEMARMOUR, "YA"},
+            {20000, 30000, S_ITEMPUP,    "Q"},
         };
         itemstats = _itemstats;
     };

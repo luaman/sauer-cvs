@@ -28,7 +28,8 @@ template <class T> struct tident
     tident() {};
     tident(int t, char *n, int m, int x, int *s, void *f, int g, char *a, bool p, T *_s)
         : _type(t), _name(n), _min(m), _max(x), _storage(s), _fun((void (__cdecl *)(void))f), _narg(g), _action(a), _persist(p), self(_s) {};
-        
+    virtual ~tident() {};        
+
     tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; };        // force vtable copy, ugh
     
     int operator()() { return _narg; };
