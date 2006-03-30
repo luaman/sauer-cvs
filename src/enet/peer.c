@@ -180,7 +180,7 @@ enet_peer_receive (ENetPeer * peer, enet_uint8 channelID)
    ENetIncomingCommand * incomingCommand = NULL;
    ENetPacket * packet;
 
-   if (enet_list_empty (& channel -> incomingUnreliableCommands) == 0)
+   if (! enet_list_empty (& channel -> incomingUnreliableCommands))
    {
       incomingCommand = (ENetIncomingCommand *) enet_list_front (& channel -> incomingUnreliableCommands);
 
@@ -584,6 +584,9 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
             currentCommand = enet_list_previous (currentCommand))
        {
           incomingCommand = (ENetIncomingCommand *) currentCommand;
+
+          if ((incomingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE)
+            continue;
 
           if (unreliableSequenceNumber >= 0x10000 && incomingCommand -> unreliableSequenceNumber < 0xF000)
             unreliableSequenceNumber -= 0x10000;
