@@ -195,7 +195,7 @@ struct fpsserver : igameserver
         return type;
     };
 
-    bool parsepacket(int &sender, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
+    bool parsepacket(int sender, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
     {
         char text[MAXTRANS];
         int cn = -1, type;
@@ -237,8 +237,8 @@ struct fpsserver : igameserver
                 notgotitems = true;
                 notgotbases = m_capture;
                 scores.setsize(0);
-                sender = -1;
                 loopv(clients) clients[i]->mapchange();
+                sendf(true, sender, "isi", SV_MAPCHANGE, smapname, reqmode);
                 break;
             };
             

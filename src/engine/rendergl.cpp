@@ -79,7 +79,8 @@ void *getprocaddress(const char *name)
     return SDL_GL_GetProcAddress(name);
 }
 
-int ati_texgen_bug = 0, nvidia_texgen_bug = 0;
+VAR(ati_texgen_bug, 0, 0, 1);
+VAR(nvidia_texgen_bug, 0, 0, 1);
 
 void gl_init(int w, int h)
 {

@@ -346,7 +346,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
                  continue;
 
                if (peer -> outgoingBandwidth > 0 &&
-                   bandwidthLimit > peer -> outgoingBandwidth)
+                   peer -> outgoingBandwidth >= bandwidthLimit)
                  continue;
 
                peer -> incomingBandwidthThrottleEpoch = timeCurrent;
