@@ -272,6 +272,7 @@ typedef struct _ENetHost
    ENetPeer *         peers;                       /**< array of peers allocated for this host */
    size_t             peerCount;                   /**< number of peers allocated for this host */
    ENetPeer *         lastServicedPeer;
+   int                continueSending;
    size_t             packetSize;
    enet_uint16        headerFlags;
    ENetProtocol       commands [ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS];

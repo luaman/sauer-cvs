@@ -1101,8 +1101,6 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
 
        outgoingCommand -> roundTripTimeout *= 2;
 
-       host -> continueSending = 1;
-
        enet_list_insert (enet_list_begin (& peer -> outgoingReliableCommands),
                          enet_list_remove (& outgoingCommand -> outgoingCommandList));
 
