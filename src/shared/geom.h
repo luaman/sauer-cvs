@@ -69,11 +69,9 @@ struct plane : vec
     bool operator==(const plane &p) const { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
     bool operator!=(const plane &p) const { return x!=p.x || y!=p.y || z!=p.z || offset!=p.offset; };
     
-    void toplane(const vec &a, vec &b, vec &c)        // trashes b & c
+    void toplane(const vec &a, const vec &b, const vec &c)
     {
-        b.sub(a);
-        c.sub(a);
-        cross(b, c);
+        cross(vec(b).sub(a), vec(c).sub(a));
         normalize();
         offset = -dot(a);
     };
@@ -164,8 +162,8 @@ struct svec
     svec(short _x, short _y, short _z) : x(_x), y(_y), z(_z) {};
     svec(int *i) : x(i[0]), y(i[1]), z(i[2]) {};
 
-    void add(svec &o) { x += o.x; y += o.y; z += o.z; };
+    void add(const svec &o) { x += o.x; y += o.y; z += o.z; };
     void mul(int f)   { x *= f;   y *= f;   z *= f;   };
     void div(int f)   { x /= f;   y /= f;   z /= f;   };
-    vec tovec()       { return vec(x, y, z); };   
+    vec tovec() const { return vec(x, y, z); };   
 };

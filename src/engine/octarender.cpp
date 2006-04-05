@@ -26,9 +26,9 @@ struct vechash
     vechash() { clear(); };
     void clear() { loopi(size) table[i] = -1; };
 
-    int access(svec &v, float tu, float tv)
+    int access(const svec &v, float tu, float tv)
     {
-        uchar *iv = (uchar *)&v;
+        const uchar *iv = (uchar *)&v;
         uint h = 5381;
         loopl(sizeof(v)) h = ((h<<5)+h)^iv[l];
         h = h&(size-1);
@@ -54,12 +54,12 @@ int vert(short x, short y, short z, float lmu, float lmv)
     return vh.access(svec(x, y, z), lmu, lmv);
 };
 
-uchar &edgelookup(cube &c, ivec &p, int dim)
+uchar &edgelookup(cube &c, const ivec &p, int dim)
 {
    return c.edges[dim*4 +(p[C[dim]]>>3)*2 +(p[R[dim]]>>3)];
 };
 
-void vertrepl(cube &c, ivec &p, svec &v, int dim, int coord)
+void vertrepl(cube &c, const ivec &p, svec &v, int dim, int coord)
 {
     v.v[2-D[dim]] = edgeget(edgelookup(c,p,dim), coord);
 };
@@ -150,14 +150,14 @@ void converttovectorworld()
     loopi(8) edgespan2vectorcube(worldroot[i]);
 };
 
-void genvectorvert(ivec &p, cube &c, svec &v)
+void genvectorvert(const ivec &p, cube &c, svec &v)
 {
     vertrepl(c, p, v, 0, p.z);
     vertrepl(c, p, v, 1, p.y);
     vertrepl(c, p, v, 2, p.x);
 };
 
-void genvert(ivec &p, cube &c, svec &pos, int size, svec &v)
+void genvert(const ivec &p, cube &c, const svec &pos, int size, svec &v)
 {
     genvectorvert(p, c, v);
     v.mul(size);
