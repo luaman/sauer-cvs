@@ -203,7 +203,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
     if (!hdr.worldsize || !factor) hdr.worldsize = 256*16;
-    else if(factor>0) hdr.worldsize = 1 << (factor<10 ? 10 : (factor>16 ? 16 : factor));
+    else if(factor>0) hdr.worldsize = 1 << (factor<10 ? 10 : (factor>15 ? 15 : factor));
     if (factor<0 && hdr.worldsize < 1<<15)
     {
         hdr.worldsize *= 2;
