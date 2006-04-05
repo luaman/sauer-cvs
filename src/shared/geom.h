@@ -152,3 +152,20 @@ struct ivec
     ivec &add(int n) { x += n; y += n; z += n; return *this; };
 };
 
+struct svec
+{
+    union
+    {
+        struct { short x, y, z; };
+        short v[3];
+    };
+
+    svec() {};
+    svec(short _x, short _y, short _z) : x(_x), y(_y), z(_z) {};
+    svec(int *i) : x(i[0]), y(i[1]), z(i[2]) {};
+
+    void add(svec &o) { x += o.x; y += o.y; z += o.z; };
+    void mul(int f)   { x *= f;   y *= f;   z *= f;   };
+    void div(int f)   { x /= f;   y /= f;   z /= f;   };
+    vec tovec()       { return vec(x, y, z); };   
+};

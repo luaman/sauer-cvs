@@ -4,120 +4,107 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- test capture mode more... fix bugs
 - map up/download etc
 - water physics close to surface
-- implement variable LM sampling
-- optimize overdraw in visibleface()
 - add a spotlight (ask me)
 - very fancy: test alpha on a polygon for ultra-quality raycube()
 - improve smoothness of going up steps
 - sound entities
+- improve visibleface() to not render some polys inside solids anymore (overdraw!)
+- reduce geometry by merging surfaces and lightmaps
+- add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
 - figure out why binaries get corrupted | switch to SVN?
-- set grenades back to 2 seconds
+- maxmodelradiusdistance should not cull players and flags
 - add PITCH to specular computation
-- add entity looping command?
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - can't select last 3 textures in list
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - (e) bouncing gib particles
 - finish up grenade launcher (skin? doc?)
-- test capture mode more...
 - (e) set textures when extruding
-- (e) triggers/doors for SP
 - optimize model shader
 - water shader
-- monster spawner ammo
-- find efficient solution for normals on world geometry
-- (e) make 3rd person weapons show... how to make an axe swing rather than go back and forth?
+- monster spawner ammo - add egg model
 - iconic stats
 - new BAS sounds?
-- (e) make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
 - (e) new multiplayer model.. md3?
 - (e) keybinds per mode: editing/game
 - player spawn sound
-- make wether you are hitting other player clearer - blip sounds like q3?
+
+- VBO verts are 24 bytes, remove the next ptr, make UVs shorts or bytes? make coords shorts?
+- maybe make game code closed source to stop people making little ripoff games? what about ripoffs that only replace media?
+- fix polygons being rendered on top of eachother
+  * quick fix: rotate indices of quads that produce coplanar tris
+  * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
+  -> switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
+
+- check VFC on entities is optimal
+- start with rpg mode | clientside only, simplify
+
+- make start of flares etc spawn out further from the player
+- fix the two //BREAK : sp intermission | sp savegames
+- improve on cma render then add to sauer
+- new sounds: impact (diff materials + flesh) | flyby, both instant & projectile | soundspot / moving
+- start using md3 for new monsters/player models
+- fullscreen shader | bloom
+
+- better damage particles
+- new mapmodels/trees in menu -> new ones from last cube
+- all cfg stuff in menu
+- skybox - roll
+- draw not-spawned items in wireframe?
+- show quadded player with special rendering
+
 - (e) hex numbers
 - 3d menus
 - add hidden ID to your name so that you can claim nicknames on a server?
-- show quadded player with special rendering
+
 - experiment with physics speedup features
+
+- make 3rd person weapons show... how to make an axe swing rather than go back and forth?
+- better attack anim? with weapon maybe | add vwep?
+
+- triggers/doors for SP
 - think about simpler area based portals / combine with doors | automatically? compute portals of each VA? REALLY need some culling for monsters/items etc
+
+- find efficient solution for normals on world geometry, first just to compute smoother lighting, then for tangent space?
 - think of cheap way to have surface normals available.. can do tangent/bin globally? keep it all in worldspace? lights?
-can do bumpmapping by simply having an "average tangentspace lightvector" LM and a "occlusion and attenuation color" LM,
-then no list of lights and no tangent space vectors would be needed! superior to dot3 lightmaps really?
-big problem is how to get a tangent space eye vector for spec?? 
-to get accurate spec, we need per vertex sub, which can only ever be worldspace. best we can do is global TS.
--> do some tests to see what current state sorting amounts to, and what would happen if you'd swap
-- draw not-spawned items in wireframe?
-- make start of flares etc spawn out further from the player
+  can do bumpmapping by simply having an "average tangentspace lightvector" LM and a "occlusion and attenuation color" LM,
+  then no list of lights and no tangent space vectors would be needed! superior to dot3 lightmaps really?
+  big problem is how to get a tangent space eye vector for spec?? 
+  to get accurate spec, we need per vertex sub, which can only ever be worldspace. best we can do is global TS.
+  -> do some tests to see what current state sorting amounts to, and what would happen if you'd swap
+
+- make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
+- make wether you are hitting other player clearer - blip sounds like q3?
 - importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
-- (e) better attack anim? with weapon maybe | add vwep?
-- switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
 - select entities in parallel to geometry by picking | make editing more readable
-- (e) skybox - roll
-- 3rd person view seems to really slow fps on some systems still... | plan to have mapmodels and other entities as part of octanodes?
+- 3rd person view seems to really slow fps on some systems still...
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
-- cube loader: import some sample cube maps | metl3
-- all cfg stuff in menu
 - a multiplayer player still shows SG rays go thru target | hard to fix, is it really a problem?
-- new mapmodels/trees in menu -> new ones from last cube
-- better damage particles
-- players more visible / improve model lighting first?
-- HDR
-- start using md3 for new monsters/player models
-- mp objectives
+- players more visible?
 - 2 teams only
 - sound samples for N kills in a row | accuracy stats
 - sword?
 - think about doing other permanent powerups besides +10h
-- sounds | matt?
-  * impact (diff materials + flesh)
-  * flyby, both instant & projectile
-  * soundspot / moving
-- improve on cma render then add to sauer
-- slowmo?
-- VBO verts are 24 bytes, remove the next ptr, make UVs shorts or bytes? make coords shorts?
+- slowmo as gameplay feature?
 - voice during multiplayer? -> easier to use ventrillo
 - give players identity to combat cheating by coupling to something like Steam?
-
-- fix the two //BREAK
-
-- start with rpg mode | clientside only, simplify
-
 - system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
 - calclight while playing?
-
-- new cube models -> sauer
-
 - use of glBufferData() makes ATI driver crash on SDL_Exit()
 - gui framework
 - test errors / performance etc with devpartner
-- (E) fix VFC entities
-- some way to smooth out lighting on terrain
-- (EG) fix polygons being rendered on top of eachother
-  * quick fix: rotate indices of quads that produce coplanar tris
-  * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
 - fix variance in framerate?
-- (EG) landscape generation and tools (see wiki)
-- (E) improve visibleface() to not render some polys inside solids anymore (overdraw!)
-- (E) reduce geometry by merging surfaces and lightmaps
+- landscape generation and tools (see wiki)
 - render entities at distance as sprites
 - try out hardware occlusion queries before portals
-- (E) sort the order of rendering mapmodels, so as to factor out glbindbuffer
+- sort the order of rendering mapmodels, so as to factor out glbindbuffer
 - SP: add pistol ammo box... make monster use it? hmmm not more hitscan
 - switch to new fmod api & 3d sound? not available for bsd? openal?
-
 - blend screen when inside a cube
-
-    p/p     sel
-0   face    aligned 4
-1   cube    aligned 4
-2   vert    unal 1
-3   conn    unal 4
-4   edge    unal 2
-
-

@@ -26,11 +26,11 @@ struct vechash
     vechash() { clear(); };
     void clear() { loopi(size) table[i] = -1; };
 
-    int access(vec &v, float tu, float tv)
+    int access(svec &v, float tu, float tv)
     {
         uchar *iv = (uchar *)&v;
         uint h = 5381;
-        loopl(12) h = ((h<<5)+h)^iv[l];
+        loopl(sizeof(v)) h = ((h<<5)+h)^iv[l];
         h = h&(size-1);
         vertex *c;
         for(int i = table[h]; i>=0; i = c->next)
@@ -39,7 +39,7 @@ struct vechash
             if(c->x==v.x && c->y==v.y && c->z==v.z && c->u==tu && c->v==tv) return i;
         };
         vertex &n = verts.add();
-        ((vec &)n) = v;
+        ((svec &)n) = v;
         n.u = tu;
         n.v = tv;
         n.next = table[h];
@@ -49,13 +49,9 @@ struct vechash
 
 vechash vh;
 
-int vert(int x, int y, int z, float lmu, float lmv)
+int vert(short x, short y, short z, float lmu, float lmv)
 {
-    vec v;
-    v.x = (float)x;
-    v.y = (float)y;
-    v.z = (float)z;
-    return vh.access(v, lmu, lmv);
+    return vh.access(svec(x, y, z), lmu, lmv);
 };
 
 uchar &edgelookup(cube &c, ivec &p, int dim)
@@ -63,9 +59,9 @@ uchar &edgelookup(cube &c, ivec &p, int dim)
    return c.edges[dim*4 +(p[C[dim]]>>3)*2 +(p[R[dim]]>>3)];
 };
 
-void vertrepl(cube &c, ivec &p, vec &v, int dim, int coord)
+void vertrepl(cube &c, ivec &p, svec &v, int dim, int coord)
 {
-    v[D[dim]] = edgeget(edgelookup(c,p,dim), coord);
+    v.v[2-D[dim]] = edgeget(edgelookup(c,p,dim), coord);
 };
 
 void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
@@ -74,14 +70,14 @@ void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
     if(p1.y==p2.y && p2.y==p3.y) dim = 1;
     else if(p1.z==p2.z && p2.z==p3.z) dim = 0;
 
-    int coord = ((int *)&p1)[2-dim];
+    int coord = p1[dim];
 
-    vec v1(p1.v), v2(p2.v), v3(p3.v);
+    svec v1(p1.v), v2(p2.v), v3(p3.v);
     vertrepl(c, p1, v1, dim, coord);
     vertrepl(c, p2, v2, dim, coord);
     vertrepl(c, p3, v3, dim, coord);
 
-    pl.toplane(v1, v2, v3);
+    pl.toplane(v1.tovec(), v2.tovec(), v3.tovec());
 };
 
 bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest)
@@ -150,20 +146,22 @@ void edgespan2vectorcube(cube &c)
 
 void converttovectorworld()
 {
+    conoutf("WARNING: old map, use savecurrentmap");
     loopi(8) edgespan2vectorcube(worldroot[i]);
 };
 
-void genvectorvert(ivec &p, cube &c, vec &v)
+void genvectorvert(ivec &p, cube &c, svec &v)
 {
-    vertrepl(c, p, v, 0, ((int *)&p)[2]);
-    vertrepl(c, p, v, 1, ((int *)&p)[1]);
-    vertrepl(c, p, v, 2, ((int *)&p)[0]);
+    vertrepl(c, p, v, 0, p.z);
+    vertrepl(c, p, v, 1, p.y);
+    vertrepl(c, p, v, 2, p.x);
 };
 
-void genvert(ivec &p, cube &c, vec &pos, float size, vec &v)
+void genvert(ivec &p, cube &c, svec &pos, int size, svec &v)
 {
     genvectorvert(p, c, v);
     v.mul(size);
+    v.div(8);
     v.add(pos);
 };
 
@@ -216,7 +214,7 @@ int faceconvexity(cube &c, int orient)
     return n; // returns +ve if convex when tris are verts 012, 023. -ve for concave.
     */
     // slow perfect
-    vec v[4];
+    svec v[4];
     plane pl;
 
     if(touchingface(c, orient)) return 0;
@@ -224,9 +222,9 @@ int faceconvexity(cube &c, int orient)
     loopi(4)
         genvectorvert(*(ivec *)cubecoords[fv[orient][i]], c, v[i]);
 
-    pl.toplane(v[0], v[1], v[2]);
+    pl.toplane(v[0].tovec(), v[1].tovec(), v[2].tovec());
 
-    float dist = pl.dist(v[3]);
+    float dist = pl.dist(v[3].tovec());
     if(dist > 0) return -1;     // concave
     else if(dist < 0) return 1; // convex
     else return 0;              // flat
@@ -318,7 +316,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
     return !occludesface(o, opposite(orient), lu.x, lu.y, lu.z, lusize, &c, ivec(x, y, z), size, mat);
 };
 
-void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
+void calcvert(cube &c, int x, int y, int z, int size, svec &vert, int i)
 {
     if(isentirelysolid(c))
     {
@@ -328,24 +326,24 @@ void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i)
     }
     else
     {
-        vec pos((float)x, (float)y, (float)z);
+        svec pos(x, y, z);
 
-        genvert(*(ivec *)cubecoords[i], c, pos, size/8.0f, vert);
+        genvert(*(ivec *)cubecoords[i], c, pos, size, vert);
     };
 };
 
-void calcverts(cube &c, int x, int y, int z, int size, vec *verts, bool *usefaces, int *vertused, bool lodcube)
+void calcverts(cube &c, int x, int y, int z, int size, svec *verts, bool *usefaces, int *vertused, bool lodcube)
 {
     loopi(8) vertused[i] = 0;
     loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
     loopi(8) if(vertused[i]) calcvert(c, x, y, z, size, verts[i], i);
 };
 
-int genclipplane(cube &c, int i, const vec *v, plane *clip)
+int genclipplane(cube &c, int i, svec *v, plane *clip)
 {
     int planes = 0;
     vec p[5];
-    loopk(5) p[k] = v[faceverts(c,i,k&3)];
+    loopk(5) p[k] = v[faceverts(c,i,k&3)].tovec();
 
     if(p[0] == p[1])
     {
@@ -390,7 +388,8 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 {
     int vertused[8];
     bool usefaces[6];
-    vec v[8], mx(x, y, z), mn(x+size, y+size, z+size);
+    svec v[8];
+    vec mx(x, y, z), mn(x+size, y+size, z+size);
     calcverts(c, x, y, z, size, v, usefaces, vertused, false);
 
     loopi(8)
@@ -400,8 +399,8 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 
         loopj(3) // generate tight bounding box
         {
-            mn[j] = min(mn[j], v[i][j]);
-            mx[j] = max(mx[j], v[i][j]);
+            mn[j] = min(mn[j], v[i].v[2-j]);
+            mx[j] = max(mx[j], v[i].v[2-j]);
         };
     };
 
@@ -507,8 +506,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 {
     bool useface[6];
 
-    vec pos((float)x, (float)y, (float)z);
-
     freeclipplanes(c);                          // physics planes based on rendering
 
     c.visible = 0;
@@ -546,8 +543,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
                              u, v);
             else
             {
-                vec rv;
-                genvert(*(ivec *)cubecoords[coord], c, pos, size/8.0f, rv);
+                svec rv;
+                genvert(*(ivec *)cubecoords[coord], c, svec(x, y, z), size, rv);
                 index = vh.access(rv, u, v);
             };
 
@@ -957,7 +954,7 @@ void rendersky()
         if(!lod.sky) continue;
 
         if (hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
+        glVertexPointer(3, GL_SHORT, sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_QUADS, lod.sky, GL_UNSIGNED_SHORT, lod.skybuf);
         glde++;
@@ -1022,7 +1019,7 @@ void renderq(int w, int h)
         if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
 
         if (hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
+        glVertexPointer(3, GL_SHORT, sizeof(vertex), &(va->vbuf[0].x));
 
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));

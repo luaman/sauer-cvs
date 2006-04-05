@@ -8,8 +8,9 @@ struct gamesaver
     
     gamesaver(fpsclient &_cl) : cl(_cl), ents(_cl.et.ents), f(NULL)
     {
-        CCOMMAND(gamesaver, savegame, 1, self->gamesave(args[0]));
-        CCOMMAND(gamesaver, loadgame, 1, self->gameload(args[0]));
+        // FIXME needs testing
+        //CCOMMAND(gamesaver, savegame, 1, self->gamesave(args[0]));
+        //CCOMMAND(gamesaver, loadgame, 1, self->gameload(args[0]));
     };
 
     void gzputi(gzFile f, int i) { gzwrite(f, &i, sizeof(int)); };

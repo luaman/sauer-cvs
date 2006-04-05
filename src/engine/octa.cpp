@@ -96,9 +96,9 @@ bool isvalidcube(cube &c)
 	genclipplanes(c, 0, 0, 0, 256, p);
     loopi(8) // test that cube is convex
     {
-        vec v;
+        svec v;
         calcvert(c, 0, 0, 0, 256, v, i);
-        if(!pointincube(p, v))
+        if(!pointincube(p, v.tovec()))
             return false;
     };
     return true;

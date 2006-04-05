@@ -48,5 +48,5 @@ enum
 
 #define isclipped(mat) ((mat) >= MAT_CLIP && (mat) < MAT_NOCLIP)
 
-struct vertex : vec { float u, v; int next; };
+struct vertex : svec { float u, v; int next; };
 
