@@ -1181,7 +1181,7 @@ void writeobj(char *name)
         vertex *verts = v.vbuf;
         if(verts)
         {
-            loopj(v.verts) fprintf(f, "v %.1f %.1f %.1f\n", verts[j].x, verts[j].y, verts[j].z);
+            loopj(v.verts) fprintf(f, "v %d %d %d\n", verts[j].x, verts[j].y, verts[j].z);
             lodlevel &lod = v.curlod ? v.l1 : v.l0;
             unsigned short *ebuf = lod.ebuf;
             loopi(lod.texs) loopl(3) loopj(lod.eslist[i].length[l]/4)
