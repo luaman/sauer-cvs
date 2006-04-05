@@ -454,11 +454,10 @@ enet_protocol_handle_send_fragment (ENetHost * host, ENetPeer * peer, const ENet
     if (* currentData > & host -> receivedData [host -> receivedDataLength])
       return -1;
 
+    channel = & peer -> channels [command -> header.channelID];
     startSequenceNumber = ENET_NET_TO_HOST_16 (command -> sendFragment.startSequenceNumber);
     if (channel -> incomingReliableSequenceNumber >= 0xF000 && startSequenceNumber < 0x1000)
       startSequenceNumber += 0x10000;
-
-    channel = & peer -> channels [command -> header.channelID];
 
     if (startSequenceNumber < channel -> incomingReliableSequenceNumber ||
         (channel -> incomingReliableSequenceNumber < 0x1000 && (startSequenceNumber & 0xFFFF) >= 0xF000))
