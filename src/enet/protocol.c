@@ -141,7 +141,7 @@ enet_protocol_remove_sent_unreliable_commands (ENetPeer * peer)
 {
     ENetOutgoingCommand * outgoingCommand;
 
-    while (enet_list_empty (& peer -> sentUnreliableCommands) == 0)
+    while (! enet_list_empty (& peer -> sentUnreliableCommands))
     {
         outgoingCommand = (ENetOutgoingCommand *) enet_list_front (& peer -> sentUnreliableCommands);
         
@@ -1097,7 +1097,7 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
                          enet_list_remove (& outgoingCommand -> outgoingCommandList));
 
        if (currentCommand == enet_list_begin (& peer -> sentReliableCommands) &&
-           enet_list_empty (& peer -> sentReliableCommands) == 0)
+           ! enet_list_empty (& peer -> sentReliableCommands))
        {
           outgoingCommand = (ENetOutgoingCommand *) currentCommand;
 
@@ -1207,18 +1207,18 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
         host -> bufferCount = 1;
         host -> packetSize = sizeof (ENetProtocolHeader);
 
-        if (enet_list_empty (& currentPeer -> acknowledgements) == 0)
+        if (! enet_list_empty (& currentPeer -> acknowledgements))
           enet_protocol_send_acknowledgements (host, currentPeer);
      
         if (host -> commandCount < sizeof (host -> commands) / sizeof (ENetProtocol))
         {
             if (checkForTimeouts != 0 &&
-                enet_list_empty (& currentPeer -> sentReliableCommands) == 0 &&
+                ! enet_list_empty (& currentPeer -> sentReliableCommands) &&
                 ENET_TIME_GREATER_EQUAL (timeCurrent, currentPeer -> nextTimeout) &&
                 enet_protocol_check_timeouts (host, currentPeer, event) == 1)
               return 1;
         }
-        if (enet_list_empty (& currentPeer -> outgoingReliableCommands) == 0)
+        if (! enet_list_empty (& currentPeer -> outgoingReliableCommands))
           enet_protocol_send_reliable_outgoing_commands (host, currentPeer);
         else
         if (enet_list_empty (& currentPeer -> sentReliableCommands) &&
@@ -1230,7 +1230,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
         }
                       
         if (host -> commandCount < sizeof (host -> commands) / sizeof (ENetProtocol) &&
-            enet_list_empty (& currentPeer -> outgoingUnreliableCommands) == 0)
+            ! enet_list_empty (& currentPeer -> outgoingUnreliableCommands))
           enet_protocol_send_unreliable_outgoing_commands (host, currentPeer);
 
         if (host -> commandCount == 0)

@@ -230,7 +230,7 @@ enet_peer_reset_outgoing_commands (ENetList * queue)
 {
     ENetOutgoingCommand * outgoingCommand;
 
-    while (enet_list_empty (queue) == 0)
+    while (! enet_list_empty (queue))
     {
        outgoingCommand = (ENetOutgoingCommand *) enet_list_remove (enet_list_begin (queue));
 
@@ -251,7 +251,7 @@ enet_peer_reset_incoming_commands (ENetList * queue)
 {
     ENetIncomingCommand * incomingCommand;
 
-    while (enet_list_empty (queue) == 0)
+    while (! enet_list_empty (queue))
     {
        incomingCommand = (ENetIncomingCommand *) enet_list_remove (enet_list_begin (queue));
 
@@ -275,7 +275,7 @@ enet_peer_reset_queues (ENetPeer * peer)
 {
     ENetChannel * channel;
 
-    while (enet_list_empty (& peer -> acknowledgements) == 0)
+    while (! enet_list_empty (& peer -> acknowledgements))
       enet_free (enet_list_remove (enet_list_begin (& peer -> acknowledgements)));
 
     enet_peer_reset_outgoing_commands (& peer -> sentReliableCommands);
