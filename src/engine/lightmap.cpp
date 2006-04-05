@@ -346,25 +346,20 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
         sample += aasample;
     };
 
-    if(y2 == lm_h)
+    if(y2 == lm_h &&
+       int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
+       int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
+       int(maxcolor[2]) - int(mincolor[2]) <= lighterror)
     {
-        
-        if(maxcolor[0] <= ambient && maxcolor[1] <= ambient && maxcolor[2] <= ambient)
+        uchar color[3];
+        loopk(3) color[k] = (int(maxcolor[k]) + int(mincolor[k])) / 2;
+        if(color[0] <= ambient + lighterror && 
+           color[1] <= ambient + lighterror && 
+           color[2] <= ambient + lighterror)
             return false;
-        else if(int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
-            int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
-            int(maxcolor[2]) - int(mincolor[2]) <= lighterror)
-        {
-            uchar color[3];
-            loopk(3) color[k] = (int(maxcolor[k]) + int(mincolor[k])) / 2;
-            if(int(color[0]) - ambient <= lighterror && 
-               int(color[1]) - ambient <= lighterror && 
-               int(color[2]) - ambient <= lighterror)
-                return false;
-            memcpy(lm, color, 3);
-            lm_w = 1;
-            lm_h = 1;
-        };
+        memcpy(lm, color, 3);
+        lm_w = 1;
+        lm_h = 1;
     };
     return true;
 };
