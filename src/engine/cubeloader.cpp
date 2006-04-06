@@ -153,10 +153,10 @@ struct cubeloader
     {
         int ledge = edgemake(lstart, lend);
         int redge = edgemake(rstart, rend);
-        c.edges[4] = ledge;
-        c.edges[5] = ledge;
-        c.edges[6] = redge;
-        c.edges[7] = redge;
+        cubeedge(c, 1, 0, 0) = ledge;
+        cubeedge(c, 1, 1, 0) = ledge;
+        cubeedge(c, 1, 0, 1) = redge;
+        cubeedge(c, 1, 1, 1) = redge;
     };
 
     void create_cubes()
