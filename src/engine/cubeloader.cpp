@@ -170,9 +170,9 @@ struct cubeloader
             for(int z = z0-1; z<=z1+1; z++)
             {
                 cube &c = getcube(x, y, z);
-                c.texture[2] = c.texture[3] = c.texture[4] = c.texture[5] = s.type!=C_SOLID && z<ceil ? s.wtex : s.utex;
-                c.texture[0] = s.ctex;
-                c.texture[1] = s.ftex;
+                c.texture[O_LEFT] = c.texture[O_RIGHT] = c.texture[O_BACK] = c.texture[O_FRONT] = s.type!=C_SOLID && z<ceil ? s.wtex : s.utex;
+                c.texture[O_BOTTOM] = s.ctex;
+                c.texture[O_TOP] = s.ftex;
                 if(z>=floor && z<ceil)
                 {
                     setfaces(c, F_EMPTY);
@@ -190,10 +190,10 @@ struct cubeloader
                     else if(!tc && !lc && bc && rc) createcorner(c, 8, 8, 0, 8);    // BOT RIGHT
                     else        // fix texture on ground of a corner
                     {
-                        if      (ts->floor-1==z && bs->floor-1!=z) { c.texture[1] = ts->ftex; }
-                        else if (ts->floor-1!=z && bs->floor-1==z) { c.texture[1] = bs->ftex; };
-                        if      (ts->ceil==z && bs->ceil!=z)       { c.texture[0] = ts->ctex; }
-                        else if (ts->ceil!=z && bs->ceil==z)       { c.texture[0] = bs->ctex; };
+                        if      (ts->floor-1==z && bs->floor-1!=z) { c.texture[O_TOP] = ts->ftex; }
+                        else if (ts->floor-1!=z && bs->floor-1==z) { c.texture[O_TOP] = bs->ftex; };
+                        if      (ts->ceil==z && bs->ceil!=z)       { c.texture[O_BOTTOM] = ts->ctex; }
+                        else if (ts->ceil!=z && bs->ceil==z)       { c.texture[O_BOTTOM] = bs->ctex; };
                     };
                 };
             };
