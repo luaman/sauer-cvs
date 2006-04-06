@@ -13,8 +13,8 @@ struct vec
     vec(float yaw, float pitch) : x(sinf(yaw)*cosf(pitch)), y(-cosf(yaw)*cosf(pitch)), z(sinf(pitch)) {};
 
     
-    float &operator[](int i) { return v[2-i]; };
-    float operator[](int i) const { return v[2-i]; };
+    float &operator[](int i) { return v[i]; };
+    float operator[](int i) const { return v[i]; };
     bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
     bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; }
     
@@ -107,10 +107,10 @@ ie: d=z => x=x, y=y, z=z
 
 **/ 
     
-// DIM: Z=0 Y=1 X=2.
+// DIM: X=0 Y=1 Z=2.
 const int D[3] = {0, 1, 2}; // depth
-const int R[3] = {2, 0, 1}; // row
-const int C[3] = {1, 2, 0}; // col
+const int R[3] = {1, 2, 0}; // row
+const int C[3] = {2, 0, 1}; // col
 
 struct ivec
 {
@@ -130,9 +130,9 @@ struct ivec
     ivec(int a, int b, int c) : x(a), y(b), z(c) {};
     ivec(int d, int row, int col, int depth)
     {
-        v[2-R[d]] = row;
-        v[2-C[d]] = col;
-        v[2-D[d]] = depth;
+        v[R[d]] = row;
+        v[C[d]] = col;
+        v[D[d]] = depth;
     };
     ivec(int i, int cx, int cy, int cz, int size)
     {
@@ -142,8 +142,8 @@ struct ivec
     };
     vec tovec() { return vec(x, y, z); };
     int toint() { return (x>0?1:0) + (y>0?2:0) + (z>0?4:0); };
-    int &operator[](int i) { return v[2-i]; };
-    int operator [](int i) const { return v[2 - i]; }
+    int &operator[](int i) { return v[i]; };
+    int operator [](int i) const { return v[i]; }
     //int idx(int i) { return v[i]; };
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };
     ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; };
