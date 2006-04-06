@@ -144,7 +144,7 @@ struct cubeloader
     void hf(int x, int y, int z, int side, int dir, int cap)
     {
         cube &c = getcube(x, y, z);
-        loopi(2) loopj(2) cubeedge(c, 2, i, j) = edgeset(cubeedge(c, 2, i, j), side, dir*(o[(j<<1)+i]->vdelta-cap)*2+side*8);
+        loopi(2) loopj(2) edgeset(cubeedge(c, 2, i, j), side, dir*(o[(j<<1)+i]->vdelta-cap)*2+side*8);
     };
 
     bool cornersolid(int z, c_sqr *s) { return s->type==C_SOLID || z<s->floor || z>=s->ceil; };
