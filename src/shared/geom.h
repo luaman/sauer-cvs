@@ -12,9 +12,9 @@ struct vec
     
     vec(float yaw, float pitch) : x(sinf(yaw)*cosf(pitch)), y(-cosf(yaw)*cosf(pitch)), z(sinf(pitch)) {};
 
-    
-    float &operator[](int i) { return v[i]; };
-    float operator[](int i) const { return v[i]; };
+    float &operator[](int i)       { return v[i]; };
+    float  operator[](int i) const { return v[i]; };
+
     bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
     bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; }
     
@@ -142,8 +142,10 @@ struct ivec
     };
     vec tovec() { return vec(x, y, z); };
     int toint() { return (x>0?1:0) + (y>0?2:0) + (z>0?4:0); };
-    int &operator[](int i) { return v[i]; };
-    int operator [](int i) const { return v[i]; }
+
+    int &operator[](int i)       { return v[i]; };
+    int  operator[](int i) const { return v[i]; };
+
     //int idx(int i) { return v[i]; };
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };
     ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; };

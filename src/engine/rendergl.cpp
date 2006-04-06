@@ -113,7 +113,7 @@ void gl_init(int w, int h)
     char *exts = (char *)glGetString(GL_EXTENSIONS);
     
     if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
-        fatal("no texture_env_combine extension!");
+        fatal("no texture_env_combine extension! (your video card is WAY too old)");
 
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
     glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
@@ -121,7 +121,7 @@ void gl_init(int w, int h)
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object"))
     {
-        conoutf("WARNING: no vertex_buffer_object extension!");
+        conoutf("WARNING: no vertex_buffer_object extension! (geometry heavy maps will be SLOW)");
     }
     else
     {
@@ -135,7 +135,7 @@ void gl_init(int w, int h)
 
     if(forcenoshaders || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
     {
-        conoutf("WARNING: no shader support! using fixed function fallback");
+        conoutf("WARNING: no shader support! using fixed function fallback (no fancy visuals for you)");
         renderpath = R_FIXEDFUNCTION;
         const char *vendor = (const char *)glGetString(GL_VENDOR);
         if(strstr(vendor, "ATI")) ati_texgen_bug = 1;
