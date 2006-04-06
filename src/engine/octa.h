@@ -106,8 +106,8 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 
 #define cubeedge(c, d, x, y) ((c).edges[(((d)<<2)+((y)<<1)+(x))])
 
-#define octadim(d)          (1<<(2-(d)))                    // creates mask for bit of given dimension
-#define octacoord(d, i)     (((i)&octadim(d))>>(2-(d)))
+#define octadim(d)          (1<<(d))                    // creates mask for bit of given dimension
+#define octacoord(d, i)     (((i)&octadim(d))>>(d))
 #define oppositeocta(d, i)  ((i)^octadim(D[d]))
 #define octaindex(d,x,y,z)  (octadim(D[d])*(z)+octadim(C[d])*(y)+octadim(R[d])*(x))
 
@@ -115,12 +115,12 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 
 enum
 {
-    O_BOTTOM = 0,
-    O_TOP,
+	O_LEFT = 0,
+    O_RIGHT,
     O_BACK,
     O_FRONT,
-    O_LEFT,
-    O_RIGHT
+	O_BOTTOM,
+    O_TOP
 };
 
 #define dimension(orient) ((orient)>>1)

@@ -183,6 +183,22 @@ void save_world(char *mname)
     conoutf("wrote map file %s", cgzname);
 };
 
+void swapXZ(cube *c)
+{	
+	loopi(8) 
+	{
+		swap(uint,  c[i].faces[0],   c[i].faces[2]);
+		swap(uchar, c[i].texture[0], c[i].texture[4]);
+		swap(uchar, c[i].texture[1], c[i].texture[5]);
+		if(c[i].surfaces)
+		{
+			swap(surfaceinfo, c[i].surfaces[0], c[i].surfaces[4]);
+			swap(surfaceinfo, c[i].surfaces[1], c[i].surfaces[5]);
+		};
+		if(c[i].children) swapXZ(c[i].children);
+	};
+};
+
 void load_world(char *mname)        // still supports all map formats that have existed since the earliest cube betas!
 {
     int loadingstart = SDL_GetTicks();
@@ -230,6 +246,9 @@ void load_world(char *mname)        // still supports all map formats that have 
 
     show_out_of_renderloop_progress(0, "loading octree...");
     worldroot = loadchildren(f);
+
+	if(hdr.version <= 11)
+		swapXZ(worldroot);
 
     if(hdr.version <= 8)
         converttovectorworld();

@@ -61,14 +61,14 @@ uchar &edgelookup(cube &c, const ivec &p, int dim)
 
 void vertrepl(cube &c, const ivec &p, svec &v, int dim, int coord)
 {
-    v.v[2-D[dim]] = edgeget(edgelookup(c,p,dim), coord);
+    v.v[D[dim]] = edgeget(edgelookup(c,p,dim), coord);
 };
 
 void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
 {
-    int dim = 2;
+    int dim = 0;
     if(p1.y==p2.y && p2.y==p3.y) dim = 1;
-    else if(p1.z==p2.z && p2.z==p3.z) dim = 0;
+    else if(p1.z==p2.z && p2.z==p3.z) dim = 2;
 
     int coord = p1[dim];
 
@@ -136,9 +136,9 @@ void edgespan2vectorcube(cube &c)
         ivec p(8*x, 8*y, 8*z);
         genedgespanvert(p, c, v);
 
-        edgeset(cubeedge(n, 2, y, z), x, int(v.x+0.49f));
+        edgeset(cubeedge(n, 0, y, z), x, int(v.x+0.49f));
         edgeset(cubeedge(n, 1, z, x), y, int(v.y+0.49f));
-        edgeset(cubeedge(n, 0, x, y), z, int(v.z+0.49f));
+        edgeset(cubeedge(n, 2, x, y), z, int(v.z+0.49f));
     };
 
     c = n;
@@ -152,9 +152,9 @@ void converttovectorworld()
 
 void genvectorvert(const ivec &p, cube &c, svec &v)
 {
-    vertrepl(c, p, v, 0, p.z);
+    vertrepl(c, p, v, 2, p.z);
     vertrepl(c, p, v, 1, p.y);
-    vertrepl(c, p, v, 2, p.x);
+    vertrepl(c, p, v, 0, p.x);
 };
 
 void genvert(const ivec &p, cube &c, const svec &pos, int size, svec &v)
@@ -179,22 +179,22 @@ const int cubecoords[8][3] = // verts of bounding cube
 
 const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orientation
 {
-    { 6, 1, 0, 7 },
-    { 5, 4, 3, 2 },
-    { 4, 5, 6, 7 },
-    { 1, 2, 3, 0 },
     { 2, 1, 6, 5 },
     { 3, 4, 7, 0 },
+    { 4, 5, 6, 7 },
+    { 1, 2, 3, 0 },
+    { 6, 1, 0, 7 },
+    { 5, 4, 3, 2 },
 };
 
 const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
 {//1st face,2nd face
-    { 4, 6, 8, 9 },
-    { 5, 7, 10, 11 },
-    { 0, 1, 8, 10 },
-    { 2, 3, 9, 11 },
-    { 0, 2, 4, 5 },
-    { 1, 3, 6, 7 },
+    { 4, 5, 8, 10 },
+    { 6, 7, 9, 11 },
+    { 0, 2, 8, 9  },
+    { 1, 3, 10,11 },
+    { 0, 1, 4, 6 },
+    { 2, 3, 5, 7 },
 };
 
 bool touchingface(cube &c, int orient)
@@ -399,8 +399,8 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 
         loopj(3) // generate tight bounding box
         {
-            mn[j] = min(mn[j], v[i].v[2-j]);
-            mx[j] = max(mx[j], v[i].v[2-j]);
+            mn[j] = min(mn[j], v[i].v[j]);
+            mx[j] = max(mx[j], v[i].v[j]);
         };
     };
 
@@ -798,16 +798,16 @@ void forcemip(cube &c)
         if(!isempty(ch[n])) // breadth first search for cube near vert
         {
             ivec v, p(i);
-            getcubevector(ch[n], 0, p.x, p.y, p.z, v);
+            getcubevector(ch[n], 2, p.x, p.y, p.z, v);
 
             loopk(3) // adjust vert to parent size
             {
-                if((n&(1<<k))>0)
-                    v[2-k] += 8;
-                v[2-k] >>= 1;
+                if(octacoord(k, n) == 1)
+                    v[k] += 8;
+                v[k] >>= 1;
             };
 
-            setcubevector(c, 0, p.x, p.y, p.z, v);
+            setcubevector(c, 2, p.x, p.y, p.z, v);
             break;
         };
     };
@@ -984,8 +984,8 @@ bool insideva(vtxarray *va, vec &v)
 
 void renderq(int w, int h)
 {
-    int si[] = { 0, 0, 1 }; //{ 0, 0, 0, 0, 2, 2};
-    int ti[] = { 1, 2, 2 }; //{ 2, 2, 1, 1, 1, 1};
+    int si[] = { 1, 0, 0 }; //{ 0, 0, 0, 0, 2, 2};
+    int ti[] = { 2, 2, 1 }; //{ 2, 2, 1, 1, 1, 1};
     //float sc[] = { 8.0f, 8.0f, -8.0f, 8.0f, 8.0f, -8.0f};
     //float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
 
@@ -1076,7 +1076,7 @@ void renderq(int w, int h)
                         glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);     // have to pass in env, otherwise same problem as fixed function
                         glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 1, t);
                     };
-                   
+
                     lastxs = tex->xs;
                     lastys = tex->ys;
                     lastl = l;
@@ -1231,7 +1231,7 @@ bool subdividecube(cube &c, bool fullcheck)
     loopi(8)
     {
         ivec p(i);
-        getcubevector(c, 0, p.x, p.y, p.z, v[i]);
+        getcubevector(c, 2, p.x, p.y, p.z, v[i]);
         v[i].mul(2);
         ch[i].material = c.material;
     };
