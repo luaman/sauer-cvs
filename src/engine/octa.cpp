@@ -83,9 +83,9 @@ void printcube()
 {
     cube &c = lookupcube(lu.x, lu.y, lu.z, 0); // assume this is cube being pointed at
     conoutf("= %p =", &c);
-    conoutf(" x  %.8x",c.faces[2]);
+    conoutf(" x  %.8x",c.faces[0]);
     conoutf(" y  %.8x",c.faces[1]);
-    conoutf(" z  %.8x",c.faces[0]);
+    conoutf(" z  %.8x",c.faces[2]);
 };
 
 COMMAND(printcube, ARG_NONE);
