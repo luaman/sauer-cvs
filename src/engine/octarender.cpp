@@ -300,12 +300,22 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
         if(!touchingface(c, orient)) return true;
         if(collapsedface(cfe)) return false;
     };
-    cube &o = neighbourcube(x, y, z, size, -size, orient);
-    if(&o==&c) return false;
+    cube &oo = neighbourcube(x, y, z, size, -size, orient);
+    if(&oo==&c) return false;
+
+    cube o;
+    if(lusize > size)
+    {
+        if(isentirelysolid(oo)) return false;
+        o = neighbourcube(x, y, z, size, size, orient);
+        freeocta(oo.children);
+        oo.children = NULL;
+    }
+    else o = oo;
+
     if(!o.children || lodcube)
     {
         if(mat != MAT_AIR && o.material == mat) return false;
-        if(lusize > size) return !isentirelysolid(o);
         if(isempty(o) || !touchingface(o, opposite(orient))) return true;
         uint ofe = faceedges(o, opposite(orient));
         if(mat != MAT_AIR) return ofe != F_SOLID;
