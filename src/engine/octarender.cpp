@@ -225,8 +225,8 @@ int faceconvexity(cube &c, int orient)
     pl.toplane(v[0].tovec(), v[1].tovec(), v[2].tovec());
 
     float dist = pl.dist(v[3].tovec());
-    if(dist > 1e-3) return -1;      // concave
-    else if(dist < -1e-3) return 1; // convex
+    if(dist > 1e-4) return -1;      // concave
+    else if(dist < -1e-4) return 1; // convex
     else return 0;                  // flat
 
 };
