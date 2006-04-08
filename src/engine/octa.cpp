@@ -130,11 +130,13 @@ void validatec(cube *c, int size)
 
 ivec lu;
 int lusize;
+bool luperfect;
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
     int x = 0, y = 0, z = 0;
     cube *c = worldroot;
+	luperfect = true;
     for(;;)
     {
         size >>= 1;
@@ -153,7 +155,7 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
                 c->children = newcubes(F_EMPTY);
                 loopi(8) loopl(6) c->children[i].texture[l] = c->texture[l];
             }
-            else subdividecube(*c);
+            else if(!subdividecube(*c)) luperfect = false;
         };
         c = c->children;
     };

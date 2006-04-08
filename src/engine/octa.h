@@ -88,6 +88,7 @@ struct block3
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern ivec lu;
 extern int lusize;
+extern bool luperfect;
 extern int wtris, wverts, vtris, vverts, glde;
 extern int allocnodes, allocva, selchildcount;
 

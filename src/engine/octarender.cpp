@@ -246,9 +246,22 @@ uint faceedges(cube &c, int orient)
 
 bool faceedgegt(uint cfe, uint ofe)
 {
-    return true; // this test no longer valid after vector format switch
+    ushort *c = (ushort *)&cfe;
+    ushort *o = (ushort *)&ofe;
+    loopi(2)
+        if(o[i]==c[i] && o[i]==0x8080)
+        {
+            uchar *cc = (uchar *)(c+1-i);
+            uchar *oc = (uchar *)(o+1-i);
+            return  (edgeget(oc[0], 0) > edgeget(cc[0], 0)) ||
+                    (edgeget(oc[0], 1) < edgeget(cc[0], 1)) ||
+                    (edgeget(oc[1], 0) > edgeget(cc[1], 0)) ||
+                    (edgeget(oc[1], 1) < edgeget(cc[1], 1));
+        };
 
-/*    loopi(4)
+    return true;
+
+/*    loopi(4) // this test no longer valid after vector format switch
     {
         uchar o = ((uchar *)&ofe)[i];
         uchar c = ((uchar *)&cfe)[i];
@@ -310,6 +323,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
         o = neighbourcube(x, y, z, size, size, orient);
         freeocta(oo.children);
         oo.children = NULL;
+        if(!luperfect) return true;
     }
     else o = oo;
 
