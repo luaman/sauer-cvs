@@ -225,15 +225,15 @@ int faceconvexity(cube &c, int orient)
     pl.toplane(v[0].tovec(), v[1].tovec(), v[2].tovec());
 
     float dist = pl.dist(v[3].tovec());
-    if(dist > 0) return -1;     // concave
-    else if(dist < 0) return 1; // convex
-    else return 0;              // flat
+    if(dist > 1e-3) return -1;      // concave
+    else if(dist < -1e-3) return 1; // convex
+    else return 0;                  // flat
 
 };
 
 int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
 {
-    int n = (faceconvexity(c, orient)<0) ? 1 : 0; // offset tris verts from 012, 023 to 123, 130 if concave
+    int n = ((faceconvexity(c, orient))<0) ? 1 : 0; // offset tris verts from 012, 023 to 123, 130 if concave
     return fv[orient][(vert + n)&3];
 };
 
@@ -984,11 +984,6 @@ bool insideva(vtxarray *va, vec &v)
 
 void renderq(int w, int h)
 {
-    int si[] = { 1, 0, 0 }; //{ 0, 0, 0, 0, 2, 2};
-    int ti[] = { 2, 2, 1 }; //{ 2, 2, 1, 1, 1, 1};
-    //float sc[] = { 8.0f, 8.0f, -8.0f, 8.0f, 8.0f, -8.0f};
-    //float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
-
     glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_COLOR_ARRAY);
 
@@ -1051,10 +1046,15 @@ void renderq(int w, int h)
             {
                 if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys)
                 {
+                    static int si[] = { 1, 0, 0 }; //{ 0, 0, 0, 0, 2, 2};
+                    static int ti[] = { 2, 2, 1 }; //{ 2, 2, 1, 1, 1, 1};
+                    //float sc[] = { 8.0f, 8.0f, -8.0f, 8.0f, 8.0f, -8.0f};
+                    //float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
+
                     GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     s[si[l]] = 8.0f/tex->xs;
                     GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                    t[ti[l]] = (l >= 1 ? -8.0f : 8.0f)/tex->ys;
+                    t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/tex->ys;
 
                     if(renderpath==R_FIXEDFUNCTION)
                     {
