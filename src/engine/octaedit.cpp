@@ -70,7 +70,7 @@ void toggleedit()
     if(!editmode && !cc->allowedittoggle()) return;         // not in most multiplayer modes
     if(!(editmode = !editmode))
     {
-        player->state = CS_ALIVE;                           
+        player->state = CS_ALIVE;
         cl->entinmap(player, false);                        // find spawn closest to current floating pos
     }
     else
@@ -445,26 +445,39 @@ void mpeditheight(int dir, int mode, selinfo &sel, bool local)
     int seldir = dc ? -dir : dir;
     selinfo t = sel;
 
+    if(sel.orient != O_TOP) return; // only this orient for now
+
     sel.s[R[d]] = 2;
     sel.s[C[d]] = 2;
     sel.s[D[d]] = 1;
-    sel.o[R[d]] += sel.corner&1 ? 0 : -sel.grid;
-    sel.o[C[d]] += sel.corner&2 ? 0 : -sel.grid;
+    sel.o[R[d]] -= sel.corner&1 ? 0 : sel.grid;
+    sel.o[C[d]] -= sel.corner&2 ? 0 : sel.grid;
+
+    int solid = 0, solidground = 0;
+    if(dir<0) loopxy(sel)
+    {
+        if(blockcube(x, y, 0, sel, -sel.grid).faces[d]==F_SOLID)
+            solid++;
+        if(blockcube(x, y, 1, sel, -sel.grid).faces[d]==F_SOLID)
+            solidground++;
+    };
+
+    if(solid==4)
+    {
+        sel.o[D[d]] += sel.grid*seldir;
+    }
+    else loopxy(sel)
+        if(!isempty(blockcube(x, y, -1, sel, -sel.grid)))
+            return;
 
     loopselxyz(
         if(c.children) { solidfaces(c); discardchildren(c); };
+        if(solid==4 || (isempty(c) && solidground==4))
+            c.faces[R[d]] = c.faces[C[d]] = F_SOLID;
+        else if(isempty(c)) continue;
 
         uint bak = c.faces[d];
-
-        if(mode==1)
-        {
-            loopj(4) linkedpush(c, d, 1-x, 1-y, dc, seldir);
-            loopj(2) linkedpush(c, d, x, 1-y, dc, seldir);
-            loopj(2) linkedpush(c, d, 1-x, y, dc, seldir);
-            linkedpush(c, d, x, y, dc, seldir);
-        }
-        else
-            linkedpush(c, d, 1-x, 1-y, dc, seldir);
+        linkedpush(c, d, 1-x, 1-y, dc, seldir);
 
         optiface((uchar *)&c.faces[d], c);
         if(!isvalidcube(c))
