@@ -1008,12 +1008,20 @@ float vadist(vtxarray *va, vec &p)
 
 void addvisibleva(vtxarray *va, vec &cv)
 {
-    va->next     = visibleva;
-    visibleva    = va;
     va->distance = int(vadist(va, camera1->o)); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
     va->curlod   = lodsize==0 || va->distance<loddistance ? 0 : 1;
     vtris       += (va->curlod ? va->l1 : va->l0).tris;
     vverts      += va->verts;
+
+    vtxarray **prev = &visibleva, *cur = visibleva;
+    while(cur && va->distance > cur->distance)
+    {
+        prev = &cur->next;
+        cur = cur->next;
+    };
+
+    va->next = *prev;
+    *prev = va;
 };
 
 void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
