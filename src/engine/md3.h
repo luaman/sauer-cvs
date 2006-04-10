@@ -608,7 +608,7 @@ struct md3 : model
     char *name() { return loadname; };
 };
 
-void md3loadmodel(char *model)
+void md3load(char *model)
 {
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
     s_sprintfd(filename)("%s/%s", basedir, model);
@@ -650,7 +650,7 @@ void md3link(char *parentno, char *childno, char *tagname)
     if(!loadingmd3->md3models[parent].link(&loadingmd3->md3models[child], tagname)) conoutf("could not link model %s", loadingmd3->loadname);
 };
 
-COMMAND(md3loadmodel, ARG_1STR);
+COMMAND(md3load, ARG_1STR);
 COMMAND(md3skin, ARG_2STR);
 COMMAND(md3anim, ARG_5STR);
 COMMAND(md3link, ARG_3STR);
