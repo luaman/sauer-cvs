@@ -122,7 +122,7 @@ struct md3model
     animstate *previous, *current;
     bool loaded;
        
-    md3model() : loaded(false), anims(0), lastanimswitchtime(0), previous(0), current(0), spheretree(0)
+    md3model() : loaded(false), anims(0), links(0), frames(0), tags(0), lastanimswitchtime(0), previous(0), current(0), spheretree(0)
     {
     };
     
@@ -134,7 +134,7 @@ struct md3model
             DELETEA(meshes[i].uv);
             DELETEA(meshes[i].normals);
         };
-        if(links) free(links);
+        DELETEA(links);
         DELETEA(tags);
         DELETEA(anims);
         DELETEA(frames);
@@ -273,7 +273,7 @@ struct md3model
         fseek(f, header.ofs_tags, SEEK_SET);
         fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
         
-        links = (md3model **) malloc(sizeof(md3model) * header.numtags);
+        links = new md3model *[header.numtags];
         loopi(header.numtags) links[i] = NULL;
 
         int mesh_offset = ftell(f);
