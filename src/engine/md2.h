@@ -468,6 +468,10 @@ struct md2 : model
                         glNormal3f(ip(n1, n2, x), ip(n1, n2, y), ip(n1, n2, z));
                         glVertex3f(ip(v1, v2, x), ip(v1, v2, y), ip(v1, v2, z));
                     };
+                    #undef ipn
+                    #undef ip
+                    #undef ipv
+                    #undef ipa
 			    };
 
 			    xtraverts += numVertex;
@@ -519,6 +523,7 @@ struct md2 : model
                     };
                 };
             };
+            #undef ifnload    
             loadingmd2 = this;
             s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
             if(!execfile(name3))

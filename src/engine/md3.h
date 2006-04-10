@@ -122,7 +122,7 @@ struct md3model
     animstate *previous, *current;
     bool loaded;
        
-    md3model() : loaded(false), anims(0), links(0), frames(0), tags(0), lastanimswitchtime(0), previous(0), current(0), spheretree(0)
+    md3model() : anims(0), links(0), frames(0), tags(0), spheretree(0), lastanimswitchtime(0), previous(0), current(0), loaded(false)
     {
     };
     
@@ -424,7 +424,6 @@ struct md3model
                             if(mesh.uv) 
                                 glTexCoord2f(mesh.uv[index].x, mesh.uv[index].y);
                             
-                            #undef ip
                             #define ip(p1, p2, t) (p1+t*(p2-p1))
                             #define ip_v(p1, p2, c, t) ip(p1->c, p2->c, t)
                             
@@ -454,7 +453,7 @@ struct md3model
                                 glVertex3f( ip_v(vert1, vert2, x, cur.t),
                                             ip_v(vert1, vert2, y, cur.t),
                                             ip_v(vert1, vert2, z, cur.t));
-                            }
+                            };
                         };
                     };
                 glEnd();
@@ -501,6 +500,10 @@ struct md3model
                 link->render(anim, varseed, speed, basetime);
             glPopMatrix();
         };
+        #undef ip_ai_tag
+        #undef ip
+        #undef ip_v
+        #undef ip_v_ai
     };
 };
 
@@ -636,7 +639,7 @@ void md3anim(char *anim, char *startframe, char *range, char *loop, char *fps)
 {
     if(!loadingmd3 || !loadingmd3->md3models.length()) { conoutf("not loading an md3"); return; };
     md3model &mdl = loadingmd3->md3models.last();
-    int speed = fps[0] ? atoi(fps) : 20.0f;
+    int speed = fps[0] ? atoi(fps) : 20;
     int num = findanim(anim);
     if(num<0) { conoutf("could not find animation %s", anim); return; };
     mdl.setanim(num, atoi(startframe), atoi(range), atoi(loop)!=0 ? 1:0, speed);
