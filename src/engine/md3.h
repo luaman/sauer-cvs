@@ -590,7 +590,7 @@ struct md3 : model
                     };
                 };
             };
-            if(tex) loopv(mdl.meshes) mdl.meshes[i].skin = tex;
+            if(tex!=crosshair) loopv(mdl.meshes) mdl.meshes[i].skin = tex;
         };
         
         loadingmd3 = NULL;
