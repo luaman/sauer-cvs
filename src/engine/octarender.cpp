@@ -1098,7 +1098,7 @@ bool insideva(vtxarray *va, const vec &v)
 };
 
 
-#define MAXQUERY 1024
+#define MAXQUERY 2048
 
 struct queryframe
 {
@@ -1228,6 +1228,10 @@ void drawmmqueries(cube *c, const ivec &o, int size)
             octaentities *ents = c[j].ents;
             ents->prevquery = ents->query;
             ents->query = NULL;
+            vec center(co.x, co.y, co.z);
+            float radius = size/2.0f;
+            center.add(radius);
+            if(isvisiblesphere(radius*SQRT3, center) == VFC_NOT_VISIBLE) continue;
             loopv(ents->list) if(et->getents()[i]->type == ET_MAPMODEL)
             {
                 ents->query = newquery(ents);
@@ -1384,7 +1388,7 @@ void renderq(int w, int h)
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 
-    drawmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize/2);
+    if(oqfrags > 0) drawmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize/2);
 };
 
 void rendermaterials()
