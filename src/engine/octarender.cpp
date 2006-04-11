@@ -845,7 +845,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
-VARF(vacubesize, 128, 16*1024, 16*1024, allchanged());
+VARF(vacubesize, 128, 1024, 16*1024, allchanged());
 
 int recalcprogress = 0;
 #define progress(s)     if((recalcprogress++&0x7FF)==0) show_out_of_renderloop_progress(recalcprogress/(float)allocnodes, s);
