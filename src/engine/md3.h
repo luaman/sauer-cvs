@@ -5,13 +5,6 @@ struct md3;
 
 string basedir; // necessary for relative path's
 
-enum // md3 animations
-{
-    BOTH_DEATH1 = 0, BOTH_DEAD1, BOTH_DEATH2, BOTH_DEAD2, BOTH_DEATH3, BOTH_DEAD3,
-    TORSO_GESTURE, TORSO_ATTACK, TORSO_ATTACK2, TORSO_DROP, TORSO_RAISE, TORSO_STAND, TORSO_STAND2,
-    LEGS_WALKCR, LEGS_WALK, LEGS_RUN, LEGS_BACK, LEGS_SWIM, LEGS_JUMP, LEGS_LAND, LEGS_JUMPB, LEGS_LANDB, LEGS_IDLE, LEGS_IDLECR, LEGS_TURN
-};
-
 enum { MDL_LOWER = 0, MDL_UPPER, MDL_HEAD };
 
 struct vec2
@@ -247,7 +240,7 @@ struct md3model
         {
             md3model *mdl = links[i];
             if(!mdl) continue;
-            vec dummy; // fixme
+            vec dummy;
             radius += mdl->boundsphere_recv(frame, dummy);
         };
         return radius;
@@ -577,8 +570,10 @@ struct md3 : model
                 s_sprintf(name1)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
                 if(!mdl.load(path(name1))) return false;
             };
+            
+            Texture *tex;
             s_sprintfd(name2)("packages/models/%s/skin.jpg", loadname);
-            #define ifnload if((mdl.meshes[0].skin = textureload(name2, 0, false, true, false))==crosshair)
+            #define ifnload if((tex = textureload(name2, 0, false, true, false))==crosshair)
             ifnload
             {
                 strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg
@@ -595,11 +590,7 @@ struct md3 : model
                     };
                 };
             };
-            
-            s_sprintf(basedir)("packages/models/%s", pname);
-            
-            s_sprintfd(name3)("packages/models/%s/md3.cfg", pname);
-            execfile(name3);        
+            if(tex) loopv(mdl.meshes) mdl.meshes[i].skin = tex;
         };
         
         loadingmd3 = NULL;
@@ -616,7 +607,7 @@ void md3load(char *model)
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
     s_sprintfd(filename)("%s/%s", basedir, model);
     md3model &mdl = loadingmd3->md3models.add();
-    if(!mdl.load(path(filename))) printf("could not load %s\n", filename); // further error handling is in md3::load()
+    if(!mdl.load(path(filename))) printf("could not load %s\n", filename); // further error handling in md3::load()
 };
 
 void md3skin(char *objname, char *skin)
