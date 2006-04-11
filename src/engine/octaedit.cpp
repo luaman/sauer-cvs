@@ -26,6 +26,7 @@ ivec cor, lastcor;
 ivec cur, lastcur;
 
 bool editmode = false;
+bool heightmode = false;
 bool havesel = false;
 bool dragging = false;
 
@@ -42,7 +43,7 @@ VARF(gridpower, 2, 3, 16,
 
 void editdrag(bool on)
 {
-    if(dragging = on)
+    if(dragging = on && !heightmode)
     {
         cancelsel();
         if(cor[0]<0) return;
@@ -79,12 +80,10 @@ void toggleedit()
         player->state = CS_EDITING;
     };
     cancelsel();
+    heightmode = false;
     keyrepeat(editmode);
     editing = editmode;
 };
-
-COMMAND(reorient, ARG_NONE);
-COMMANDN(edittoggle, toggleedit, ARG_NONE);
 
 bool noedit()
 {
@@ -98,6 +97,18 @@ bool noedit()
     if(!viewable) conoutf("selection not in view");
     return !viewable;
 };
+
+void toggleheight()
+{
+     if(noedit()) return;
+     heightmode = !heightmode;
+     cancelsel();
+};
+
+COMMAND(reorient, ARG_NONE);
+COMMANDN(edittoggle, toggleedit, ARG_NONE);
+COMMANDN(heighttoggle, toggleheight, ARG_NONE);
+
 
 ///////// selection support /////////////
 
@@ -155,16 +166,19 @@ void cursorupdate()
     };
     lusize = gridsize;
 
-    float xi  = v.x + (ray.x/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // x intersect of xz plane
-    float zi  = v.z + (ray.z/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // z intersect of xz plane
-    float zi2 = v.z + (ray.z/ray.x) * (lu.x - v.x + (ray.x<0 ? gridsize : 0)); // z intersect of yz plane
-    bool xside = (ray.x<0 && xi<lu.x+gridsize) || (ray.x>0 && xi>lu.x);
-    bool zside = (ray.z<0 && zi<lu.z+gridsize) || (ray.z>0 && zi>lu.z);
-    bool z2side= (ray.z<0 && zi2<lu.z+gridsize)|| (ray.z>0 && zi2>lu.z);
+    if(!heightmode)
+    {
+        float xi  = v.x + (ray.x/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // x intersect of xz plane
+        float zi  = v.z + (ray.z/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // z intersect of xz plane
+        float zi2 = v.z + (ray.z/ray.x) * (lu.x - v.x + (ray.x<0 ? gridsize : 0)); // z intersect of yz plane
+        bool xside = (ray.x<0 && xi<lu.x+gridsize) || (ray.x>0 && xi>lu.x);
+        bool zside = (ray.z<0 && zi<lu.z+gridsize) || (ray.z>0 && zi>lu.z);
+        bool z2side= (ray.z<0 && zi2<lu.z+gridsize)|| (ray.z>0 && zi2>lu.z);
 
-    if(xside && zside) orient = (ray.y>0 ? O_BACK : O_FRONT);
-    else if(z2side) orient = (ray.x>0 ? O_LEFT : O_RIGHT);
-    else orient = (ray.z>0 ? O_BOTTOM : O_TOP);
+        if(xside && zside) orient = (ray.y>0 ? O_BACK : O_FRONT);
+        else if(z2side) orient = (ray.x>0 ? O_LEFT : O_RIGHT);
+        else orient = (ray.z>0 ? O_BOTTOM : O_TOP);
+    };
 
     cur = lu;
     int g2 = gridsize/2;
@@ -225,7 +239,10 @@ void cursorupdate()
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glLineWidth(1);
-    glColor3ub(120,120,120); // cursor
+    if(heightmode)
+        glColor3ub(0, 200, 0);
+    else
+        glColor3ub(120, 120, 120); // cursor
     boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     if(havesel)
     {
@@ -443,10 +460,8 @@ void mpeditheight(int dir, int mode, selinfo &sel, bool local)
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
-    selinfo t = sel;
 
-    if(sel.orient != O_TOP) return; // only this orient for now
-
+    ivec o = sel.o;
     sel.s[R[d]] = 2;
     sel.s[C[d]] = 2;
     sel.s[D[d]] = 1;
@@ -454,21 +469,23 @@ void mpeditheight(int dir, int mode, selinfo &sel, bool local)
     sel.o[C[d]] -= sel.corner&2 ? 0 : sel.grid;
 
     int solid = 0, solidground = 0;
-    if(dir<0) loopxy(sel)
+    loopxy(sel)
     {
-        if(blockcube(x, y, 0, sel, -sel.grid).faces[d]==F_SOLID)
-            solid++;
-        if(blockcube(x, y, 1, sel, -sel.grid).faces[d]==F_SOLID)
-            solidground++;
+        if(dir<0)
+        {
+            if(blockcube(x, y, 0, sel, -sel.grid).faces[d]==F_SOLID)
+                solid++;
+            if(blockcube(x, y, 1, sel, -sel.grid).faces[d]==F_SOLID)
+                solidground++;
+        }
+        else if(!isempty(blockcube(x, y, -1, sel, -sel.grid)))
+            return;
     };
 
     if(solid==4)
     {
         sel.o[D[d]] += sel.grid*seldir;
-    }
-    else loopxy(sel)
-        if(!isempty(blockcube(x, y, -1, sel, -sel.grid)))
-            return;
+    };
 
     loopselxyz(
         if(c.children) { solidfaces(c); discardchildren(c); };
@@ -483,16 +500,8 @@ void mpeditheight(int dir, int mode, selinfo &sel, bool local)
         if(!isvalidcube(c))
             c.faces[d] = bak;
     );
-    sel = t;
+    sel.o = o;
 };
-
-void editheight(int dir, int mode)
-{
-    if(noedit() || havesel) return;
-    mpeditheight(dir, mode, sel, true);
-};
-
-COMMAND(editheight, ARG_2INT);
 
 void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
@@ -562,7 +571,10 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int dir, int mode)
 {
     if(noedit()) return;
-    mpeditface(dir, mode, sel, true);
+    if(heightmode)
+        mpeditheight(dir, mode, sel, true);
+    else
+        mpeditface(dir, mode, sel, true);
 };
 
 COMMAND(editface, ARG_2INT);
