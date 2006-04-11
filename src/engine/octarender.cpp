@@ -1209,6 +1209,8 @@ bool checkmmqueries(cube *c, const ivec &o, int size, const ivec &bo, const ivec
     
 bool mmoccluded(const vec &bo, const vec &br)
 {   
+    vec center(vec(br).div(2).add(bo));
+    if(camera1->o.dist(center) <= octaentsize) return false; 
     ivec io(int(bo.x), int(bo.y), int(bo.z)), ir(int(br.x+1), int(br.y+1), int(br.z+1));            
     return checkmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, io, ir);
 };
