@@ -119,7 +119,7 @@ void gl_init(int w, int h)
     char *exts = (char *)glGetString(GL_EXTENSIONS);
     
     if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
-        fatal("no texture_env_combine extension! (your video card is WAY too old)");
+        fatal("No texture_env_combine extension! (your video card is WAY too old)");
 
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
     glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
@@ -127,7 +127,7 @@ void gl_init(int w, int h)
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object"))
     {
-        conoutf("WARNING: no vertex_buffer_object extension! (geometry heavy maps will be SLOW)");
+        conoutf("WARNING: No vertex_buffer_object extension! (geometry heavy maps will be SLOW)");
     }
     else
     {
@@ -136,16 +136,18 @@ void gl_init(int w, int h)
         glBufferData_    = (PFNGLBUFFERDATAARBPROC)   getprocaddress("glBufferDataARB");
         glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
-        conoutf("Using GL_ARB_vertex_buffer_object extensions");
+        conoutf("Using GL_ARB_vertex_buffer_object extensions.");
     };
 
     if(forcenoshaders || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
     {
-        conoutf("WARNING: no shader support! using fixed function fallback (no fancy visuals for you)");
+        conoutf("WARNING: No shader support! Using fixed function fallback. (no fancy visuals for you)");
         renderpath = R_FIXEDFUNCTION;
         const char *vendor = (const char *)glGetString(GL_VENDOR);
         if(strstr(vendor, "ATI")) ati_texgen_bug = 1;
         else if(strstr(vendor, "NVIDIA")) nvidia_texgen_bug = 1;
+        if(ati_texgen_bug) conoutf("WARNING: Using ATI texgen bug workaround. (use \"/ati_texgen_bug 0\" to disable)");
+        if(nvidia_texgen_bug) conoutf("WARNING: Using NVIDIA texgen bug workaround. (use \"/nvidia_texgen_bug 0\" to disable)");
     }
     else
     {
@@ -155,7 +157,7 @@ void gl_init(int w, int h)
         glProgramEnvParameter4f_ =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");
         glProgramEnvParameter4fv_ = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
         renderpath = R_ASMSHADER;
-        conoutf("rendering using the OpenGL 1.5 assembly shader path");
+        conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
         glEnable(GL_VERTEX_PROGRAM_ARB);
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
     };
@@ -173,10 +175,10 @@ void gl_init(int w, int h)
             glEndQuery_ =          (PFNGLENDQUERYARBPROC)         getprocaddress("glEndQueryARB");
             glGetQueryObjectuiv_ = (PFNGLGETQUERYOBJECTUIVARBPROC)getprocaddress("glGetQueryObjectuivARB");
             hasOQ = true;
-            conoutf("Using GL_ARB_occlusion_query extensions");
+            conoutf("Using GL_ARB_occlusion_query extensions.");
         };
     };
-
+    if(!hasOQ) conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
 
 
     purgetextures();

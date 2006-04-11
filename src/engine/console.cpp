@@ -39,7 +39,6 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     {
         s_strcpy(cl.cref, sf);
     };
-    puts(cl.cref);
 };
 
 extern int scr_w;
@@ -47,6 +46,7 @@ extern int scr_w;
 void conoutf(const char *s, ...)
 {
     s_sprintfdv(sf, s);
+    puts(sf);
     s = sf;
     int n = 0, visible;
     while(visible = text_visible(s, 4*scr_w - FONTH)) // cut strings to fit on screen
