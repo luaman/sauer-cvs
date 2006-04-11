@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false;
+bool hasVBO = false, hasOQ = false;
 int renderpath;
 
 void purgetextures();
@@ -24,6 +24,12 @@ PFNGLPROGRAMSTRINGARBPROC          glProgramString_ = NULL;
 PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_ = NULL;
 PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_ = NULL;
 
+PFNGLGENQUERIESARBPROC        glGenQueries_ = NULL;
+PFNGLDELETEQUERIESARBPROC     glDeleteQueries_ = NULL;
+PFNGLBEGINQUERYARBPROC        glBeginQuery_ = NULL;
+PFNGLENDQUERYARBPROC          glEndQuery_ = NULL;
+PFNGLGETQUERYIVARBPROC        glGetQueryiv_ = NULL;
+PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_ = NULL;
 
 hashtable<char *, Shader> shaders;
 Shader *curshader = NULL;
@@ -153,6 +159,25 @@ void gl_init(int w, int h)
         glEnable(GL_VERTEX_PROGRAM_ARB);
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
     };
+
+    if(strstr(exts, "GL_ARB_occlusion_query"))
+    {
+        GLint bits;
+        glGetQueryiv_ = (PFNGLGETQUERYIVARBPROC)getprocaddress("glGetQueryivARB");
+        glGetQueryiv_(GL_SAMPLES_PASSED_ARB, GL_QUERY_COUNTER_BITS_ARB, &bits);
+        if(bits)
+        {
+            glGenQueries_ =        (PFNGLGENQUERIESARBPROC)       getprocaddress("glGenQueriesARB");
+            glDeleteQueries_ =     (PFNGLDELETEQUERIESARBPROC)    getprocaddress("glDeleteQueriesARB");
+            glBeginQuery_ =        (PFNGLBEGINQUERYARBPROC)       getprocaddress("glBeginQueryARB");
+            glEndQuery_ =          (PFNGLENDQUERYARBPROC)         getprocaddress("glEndQueryARB");
+            glGetQueryObjectuiv_ = (PFNGLGETQUERYOBJECTUIVARBPROC)getprocaddress("glGetQueryObjectuivARB");
+            hasOQ = true;
+            conoutf("Using GL_ARB_occlusion_query extensions");
+        };
+    };
+
+
 
     purgetextures();
 

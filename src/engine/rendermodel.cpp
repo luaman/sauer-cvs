@@ -150,7 +150,8 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         center.add(vec(x, y, z));
         if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
-    }
+        if(mmoccluded(vec(center).sub(radius), vec(radius, radius, radius).mul(2))) return;
+    };
     m->setskin(tex);  
     if(teammate) glColor3f(1, 0.2f, 0.2f); // VERY TEMP, find a better teammate display
     else glColor3fv(color.v);

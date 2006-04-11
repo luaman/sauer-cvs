@@ -734,6 +734,8 @@ vtxarray *newva(int x, int y, int z, int size)
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->explicitsky = explicitsky;
     va->skyarea = skyarea;
+    va->occluded = 0;
+    va->query = NULL;
     wverts += va->verts = verts.length();
     wtris  += va->l0.tris;
     allocva++;
@@ -843,6 +845,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
+
 int recalcprogress = 0;
 #define progress(s)     if((recalcprogress++&0x7FF)==0) show_out_of_renderloop_progress(recalcprogress/(float)allocnodes, s);
 
@@ -967,6 +970,7 @@ void allchanged()
     show_out_of_renderloop_progress(0, "clearing VBOs...");
     vaclearc(worldroot);
     memset(cstats, 0, sizeof(cstat)*32);
+    resetqueries();
     octarender();
     printcstats();
 };
@@ -1010,8 +1014,6 @@ void addvisibleva(vtxarray *va, vec &cv)
 {
     va->distance = int(vadist(va, camera1->o)); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
     va->curlod   = lodsize==0 || va->distance<loddistance ? 0 : 1;
-    vtris       += (va->curlod ? va->l1 : va->l0).tris;
-    vverts      += va->verts;
 
     vtxarray **prev = &visibleva, *cur = visibleva;
     while(cur && va->distance > cur->distance)
@@ -1027,7 +1029,6 @@ void addvisibleva(vtxarray *va, vec &cv)
 void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
 {
     visibleva = NULL;
-    vtris = vverts = 0;
 
     // Calculate view frustrum: Only changes if resize, but...
     float fov = getvar("fov");
@@ -1090,9 +1091,112 @@ void setupTMU()
 
 VAR(showva, 0, 0, 1);
 
-bool insideva(vtxarray *va, vec &v)
+bool insideva(vtxarray *va, const vec &v)
 {
     return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
+};
+
+
+#define MAXQUERY 1024
+
+struct queryframe
+{
+    int cur, max;
+    occludequery queries[MAXQUERY];
+};
+
+static queryframe queryframes[2] = {{0, 0}, {0, 0}};
+static uint flipquery = 0;
+
+void flipqueries()
+{
+    flipquery = (flipquery + 1) % 2;
+    queryframe &qf = queryframes[flipquery];
+    loopi(qf.cur) qf.queries[i].owner = NULL;
+    qf.cur = 0;
+};
+
+occludequery *newquery(void *owner)
+{
+    queryframe &qf = queryframes[flipquery];
+    if(qf.cur >= qf.max)
+    {
+        if(qf.max >= MAXQUERY) return NULL;
+        glGenQueries_(1, &qf.queries[qf.max++].id);
+    };
+    occludequery *query = &qf.queries[qf.cur++];
+    query->owner = owner;
+    query->fragments = -1;
+    return query;
+};
+
+void resetqueries()
+{
+    loopi(2) loopj(queryframes[i].max) queryframes[i].queries[j].owner = NULL;
+};
+
+VAR(oqfrags, 0, 16, 64);
+
+bool checkquery(occludequery *query)
+{
+    GLuint fragments;
+    if(query->fragments >= 0) fragments = query->fragments;
+    else
+    {
+        glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, (GLuint *)&fragments);
+        query->fragments = fragments;
+    };
+    return fragments < oqfrags;
+};
+
+void drawquery(const ivec &bo, const ivec &br)
+{
+    glBegin(GL_QUADS);
+    
+    loopi(6) loopj(4)
+    {
+        const ivec &cc = *(const ivec *)cubecoords[fv[i][j]];
+        glVertex3i(cc[0] ? bo.x+br.x : bo.x,
+                   cc[1] ? bo.y+br.y : bo.y,
+                   cc[2] ? bo.z+br.z : bo.z);
+    };
+
+    glEnd();
+
+    xtraverts += 24;
+};  
+
+extern int octaentsize;
+
+bool checkmmqueries(cube *c, const ivec &o, int size, const ivec &bo, const ivec &br)
+{
+    loopoctabox(o, size, bo, br)
+    {
+        if(c[i].va)
+        {
+            vtxarray *va = c[i].va;
+            if(insideva(va, camera1->o)) return false;
+            if(va->occluded > 1 && va->query && va->query->owner == va) continue;
+        };
+        if(c[i].ents)
+        {
+            octaentities *ents = c[i].ents;
+            if(ents->query && ents->query->owner == ents) return checkquery(ents->query);
+            return false;
+        };
+        if(c[i].children && size > octaentsize)
+        {
+            ivec co(i, o.x, o.y, o.z, size);
+            if(!checkmmqueries(c[i].children, co, size>>1, bo, br)) return false;
+        }
+    };
+    return true;
+};
+    
+bool mmoccluded(const vec &bo, const vec &br)
+{   
+    ivec io(int(bo.x), int(bo.y), int(bo.z)), ir(int(br.x+1), int(br.y+1), int(br.z+1));            
+    return checkmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, io, ir);
 };
 
 void renderq(int w, int h)
@@ -1101,8 +1205,6 @@ void renderq(int w, int h)
     //glEnableClientState(GL_COLOR_ARRAY);
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
-
-    vtxarray *va = visibleva;
 
     int showvas = 0;
 
@@ -1121,9 +1223,43 @@ void renderq(int w, int h)
 
     Shader *curshader = NULL;
 
-    while(va)
+    flipqueries();
+
+    vtris = vverts = 0;
+
+    for(vtxarray *va = visibleva; va; va = va->next)
     {
         glColor3f(1, 1, 1);
+
+        if(hasOQ && oqfrags > 0 && va != visibleva)
+        {
+            if(va->query && va->query->owner == va)
+            {
+                if(!insideva(va, camera1->o) && checkquery(va->query))
+                {
+                    if(va->occluded <= 1) ++va->occluded;
+                    va->query = newquery(va);
+                    glDepthMask(GL_FALSE);
+                    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                    glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
+                    drawquery(ivec(va->x, va->y, va->z), ivec(va->size, va->size, va->size));
+                    glEndQuery_(GL_SAMPLES_PASSED_ARB);
+                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                    glDepthMask(GL_TRUE);
+                    continue;
+                };
+            };
+
+            va->query = newquery(va);
+        }
+        else va->query = NULL;
+    
+        if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
+        va->occluded = 0;
+
+        vtris += (va->curlod ? va->l1 : va->l0).tris;
+        vverts += va->verts;
+
         if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
 
         if (hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
@@ -1200,10 +1336,10 @@ void renderq(int w, int h)
                 glde++;
             };
         };
-        va = va->next;
+        if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
     };
 
-    if (hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
 
     glActiveTexture_(GL_TEXTURE1_ARB);
@@ -1227,7 +1363,7 @@ void rendermaterials()
     while(va)
     {
         lodlevel &lod = va->l0;
-        if(lod.matsurfs) rendermatsurfs(lod.matbuf, lod.matsurfs);
+        if(lod.matsurfs && va->occluded <= 1) rendermatsurfs(lod.matbuf, lod.matsurfs);
         va = va->next;
     };
 
@@ -1240,7 +1376,7 @@ void rendermaterials()
         while(va)
         {
             lodlevel &lod = va->l0;
-            if(lod.matsurfs) rendermatgrid(lod.matbuf, lod.matsurfs);
+            if(lod.matsurfs && va->occluded <= 1) rendermatgrid(lod.matbuf, lod.matsurfs);
             va = va->next;
         };
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

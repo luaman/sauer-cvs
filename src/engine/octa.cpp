@@ -180,7 +180,7 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
     return lookupcube(x, y, z, rsize);
 };
 
-uchar octantrectangleoverlap(ivec &c, int size, ivec &o, ivec &s)
+uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s)
 {
     uchar p = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
 	ivec v(c);

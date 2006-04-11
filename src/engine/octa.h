@@ -24,6 +24,13 @@ struct lodlevel
     int tris, texs, matsurfs, sky;
 };
 
+struct occludequery
+{
+    void *owner;
+    GLuint id;
+    int fragments;
+};
+
 struct vtxarray
 {
     lodlevel l0, l1;
@@ -34,6 +41,8 @@ struct vtxarray
     uint vbufGL;        // VBO buffer ID
     int x, y, z, size;  // location and size of cube.
     ivec min, max;      // BB
+    uint occluded;
+    occludequery *query;
 };
 
 struct surfaceinfo
@@ -55,6 +64,9 @@ struct clipplanes
 struct octaentities
 {
     vector<int> list;
+    occludequery *query;
+
+    octaentities() : query(0) {};
 };
 
 struct cube

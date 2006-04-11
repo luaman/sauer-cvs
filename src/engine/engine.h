@@ -50,6 +50,13 @@ extern PFNGLBINDBUFFERARBPROC    glBindBuffer_;
 extern PFNGLBUFFERDATAARBPROC    glBufferData_;
 extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_;
 
+extern PFNGLGENQUERIESARBPROC        glGenQueries_;
+extern PFNGLDELETEQUERIESARBPROC     glDeleteQueries_;
+extern PFNGLBEGINQUERYARBPROC        glBeginQuery_;
+extern PFNGLENDQUERYARBPROC          glEndQuery_;
+extern PFNGLGETQUERYIVARBPROC        glGetQueryiv_;
+extern PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_;
+
 #define FONTH 64
 
 extern dynent *player;
@@ -74,7 +81,7 @@ extern iclientcom      *cc;
 extern icliententities *et;
 
 // rendergl
-extern bool hasVBO;
+extern bool hasVBO, hasOQ;
 extern void gl_init(int w, int h);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
@@ -101,7 +108,7 @@ extern cube &lookupcube(int tx, int ty, int tz, int tsize = 0);
 extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient);
 extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
-extern uchar octantrectangleoverlap(ivec &c, int size, ivec &o, ivec &s);
+extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s);
 
 
 // octaedit
@@ -137,6 +144,9 @@ extern int visibleorient(cube &c, int orient);
 extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
 extern void remipworld(); 
+extern void resetqueries();
+extern bool checkquery(occludequery *query);
+extern bool mmoccluded(const vec &bo, const vec &br);
 
 // water
 extern int showmat;
