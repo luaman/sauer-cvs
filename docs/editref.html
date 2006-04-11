@@ -23,9 +23,19 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 		This is the main editing command. D is the direction of the action, -1 for 
 		towards you, 1 for away from you. N=0 to push all corners in the white box. N=1 
 		create or destroy cubes. N=2 push or pull a corner you are pointing at.
-		<pre>editheight D</pre>
+		<pre>editheight D (OBSOLETE)</pre>
 		Similar to editface N=2, but pushes all four corners surronding the pointed-at 
 		vertex.
+		<pre>heighttoggle</pre>
+		Toggles height map mode on and off. In this mode, the editface commands are 
+		replaced with an editheight style command. As a bonus to editheight, you can
+		also pull up a vertex from a flat side of a cube. Unlike Cube, the edited cubes 
+		are not treated special, so you can later tweak the terrain like you would any 
+		other cube.
+		<br><br>
+		While in height map mode, the cursor will turn green and its orientation will be
+		locked until the mode is switched off again. Like every other command, 
+		terrain editing can be done using any orientation.
 		<pre>edittex D</pre>
 		Changes the texture on current selection by browsing through a list of textures 
 		directly shown on the cubes. D is the direction you want to cycle the textures 
