@@ -759,7 +759,7 @@ void vaclearc(cube *c)
     {
         if(c[i].va) destroyva(c[i].va);
         c[i].va = NULL;
-        if (c[i].children) vaclearc(c[i].children);
+        if(c[i].children) vaclearc(c[i].children);
     };
 };
 
@@ -1109,6 +1109,11 @@ struct queryframe
 static queryframe queryframes[2] = {{0, 0}, {0, 0}};
 static uint flipquery = 0;
 
+int getnumqueries()
+{
+    return queryframes[flipquery].cur;
+};
+
 void flipqueries()
 {
     flipquery = (flipquery + 1) % 2;
@@ -1150,8 +1155,12 @@ bool checkquery(occludequery *query)
     return fragments < oqfrags;
 };
 
-void drawquery(const ivec &bo, const ivec &br)
+void drawquery(occludequery *query, const ivec &bo, const ivec &br)
 {
+    glDepthMask(GL_FALSE);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
+
     glBegin(GL_QUADS);
     
     loopi(6) loopj(4)
@@ -1165,6 +1174,10 @@ void drawquery(const ivec &bo, const ivec &br)
     glEnd();
 
     xtraverts += 24;
+
+    glEndQuery_(GL_SAMPLES_PASSED_ARB);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
 };  
 
 extern int octaentsize;
@@ -1176,13 +1189,12 @@ bool checkmmqueries(cube *c, const ivec &o, int size, const ivec &bo, const ivec
         if(c[i].va)
         {
             vtxarray *va = c[i].va;
-            if(insideva(va, camera1->o)) return false;
             if(va->occluded > 1 && va->query && va->query->owner == va) continue;
         };
         if(c[i].ents)
         {
             octaentities *ents = c[i].ents;
-            if(ents->query && ents->query->owner == ents) return checkquery(ents->query);
+            if(ents->prevquery && ents->prevquery->owner == ents && checkquery(ents->prevquery)) continue;
             return false;
         };
         if(c[i].children && size > octaentsize)
@@ -1190,6 +1202,7 @@ bool checkmmqueries(cube *c, const ivec &o, int size, const ivec &bo, const ivec
             ivec co(i, o.x, o.y, o.z, size);
             if(!checkmmqueries(c[i].children, co, size>>1, bo, br)) return false;
         }
+        else return false;
     };
     return true;
 };
@@ -1198,6 +1211,33 @@ bool mmoccluded(const vec &bo, const vec &br)
 {   
     ivec io(int(bo.x), int(bo.y), int(bo.z)), ir(int(br.x+1), int(br.y+1), int(br.z+1));            
     return checkmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, io, ir);
+};
+
+void drawmmqueries(cube *c, const ivec &o, int size)
+{
+    loopj(8)
+    {
+        ivec co(j, o.x, o.y, o.z, size);
+        if(c[j].va)
+        {
+            vtxarray *va = c[j].va;
+            if(va->occluded > 1 && va->query && va->query->owner == va) continue;
+        };
+        if(c[j].ents)
+        {
+            octaentities *ents = c[j].ents;
+            ents->prevquery = ents->query;
+            ents->query = NULL;
+            loopv(ents->list) if(et->getents()[i]->type == ET_MAPMODEL)
+            {
+                ents->query = newquery(ents);
+                if(ents->query) drawquery(ents->query, co, ivec(size, size, size));
+                break;
+            };
+            continue;
+        };
+        if(c[j].children && size > octaentsize) drawmmqueries(c[j].children, co, size>>1);
+    };
 };
 
 void renderq(int w, int h)
@@ -1240,13 +1280,7 @@ void renderq(int w, int h)
                 {
                     if(va->occluded <= 1) ++va->occluded;
                     va->query = newquery(va);
-                    glDepthMask(GL_FALSE);
-                    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-                    glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
-                    drawquery(ivec(va->x, va->y, va->z), ivec(va->size, va->size, va->size));
-                    glEndQuery_(GL_SAMPLES_PASSED_ARB);
-                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-                    glDepthMask(GL_TRUE);
+                    if(va->query) drawquery(va->query, ivec(va->x, va->y, va->z), ivec(va->size, va->size, va->size));
                     continue;
                 };
             };
@@ -1349,6 +1383,8 @@ void renderq(int w, int h)
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
+
+    drawmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize/2);
 };
 
 void rendermaterials()

@@ -64,9 +64,9 @@ struct clipplanes
 struct octaentities
 {
     vector<int> list;
-    occludequery *query;
+    occludequery *query, *prevquery;
 
-    octaentities() : query(0) {};
+    octaentities() : query(0), prevquery(0) {};
 };
 
 struct cube

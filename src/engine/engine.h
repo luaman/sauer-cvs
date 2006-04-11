@@ -145,6 +145,7 @@ extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
 extern void remipworld(); 
 extern void resetqueries();
+extern int getnumqueries();
 extern bool checkquery(occludequery *query);
 extern bool mmoccluded(const vec &bo, const vec &br);
 
