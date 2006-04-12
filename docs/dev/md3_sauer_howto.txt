@@ -1,110 +1,147 @@
-MD3 in Sauerbraten v2006_01_31
+MD3
 ==
 
-
-Sauerbraten supports now md3 player models and monsters, but no md3 mapmodels yet.
-This doc describes how to get those models to work. Jump to section 7 if you need a
-sample md3 model that works out of the box.
-
-1.  Create the directory "yourmd3" in sauerbraten/packages/models/monster
+There are two different ways to use an md3 model in Sauerbraten:
 
 
-2.  Create the file animation.cfg in sauerbraten/packages/models/monster/yourmd3
-    This file holds the information for the animation frames, fps, etc.
+1.  md3 without configuration    
+
+Go this way if your md3 has no animations (static) and takes only one texture.
+   
+Your md3 files must be located in a directory in packages/models/.
+
+You must provide a skin (either skin.jpg or skin.png) and the md3 itself (tris.md3).
+
+If either of these files is not found, Sauerbraten will search the parent directory for them. For example, if for the flags/red model, the tris.md3 is not found in packages/models/flags/red/, then it will look for tris.md3 in packages/models/flags/. This allows the sharing of skins and geometry.
 
 
-3.  Use the command "md3animation" in the "animation.cfg" file to specify each 
-    animation of your model.
+2.  md3 with configuration
 
-    Usage:  md3animation FIRST_FRAME NUM_FRAMES LOOPING FRAMES FPS
-    
-    Your "animation.cfg" could now look like this:
-    
-    // animation config file
-    // sex	m
-    // headoffset	-8 0 -1
-    // footsteps	boot
-    // first frame, num frames, looping frames, frames per second
-    md3animation	0	30	0	20		// BOTH_DEATH1
-    md3animation    30	1	0	25		// BOTH_DEAD1
-    md3animation    31	29	0	15		// BOTH_DEATH2
-    md3animation    60	1	0	25		// BOTH_DEAD2
-    md3animation    61	29	0	15		// BOTH_DEATH3
-    md3animation    90	1	0	25		// BOTH_DEAD3
-    md3animation    91	40	0	18		// TORSO_GESTURE
-    md3animation    131	6	0	15		// TORSO_ATTACK		(MUST NOT CHANGE -- hand animation is synced to this)
-    md3animation    137	6	0	15		// TORSO_ATTACK2	(MUST NOT CHANGE -- hand animation is synced to this)
-    md3animation    143	5	0	20		// TORSO_DROP		(MUST NOT CHANGE -- hand animation is synced to this)
-    md3animation    148	4	0	20		// TORSO_RAISE		(MUST NOT CHANGE -- hand animation is synced to this)
-    md3animation    152	1	0	15		// TORSO_STAND
-    md3animation    153	1	0	15		// TORSO_STAND2
-    md3animation    154	9	9	15		// LEGS_WALKCR
-    md3animation    163	13	13	16		// LEGS_WALK
-    md3animation    177	10	10	18		// LEGS_RUN
-    md3animation    188	11	11	20		// LEGS_BACK
-    md3animation    199	11	11	15		// LEGS_SWIM
-    md3animation    210	8	0	15		// LEGS_JUMP
-    md3animation    218	1	0	15		// LEGS_LAND
-    md3animation    219	8	0	12		// LEGS_JUMPB
-    md3animation    226	1	0	15		// LEGS_LANDB
-    md3animation    227	30	30	30		// LEGS_IDLE
-    md3animation    257	1	1	15		// LEGS_IDLECR
-    md3animation    258	7	7	15		// LEGS_TURN
+You need to set up your md3 this way if it has animations, multiple skins, or if you want to make use of other configuration possibilities.
+
+You must place a md3.cfg text-file in a directory in packages/models/. This file specifies which models should be loaded, linked, etc.
+
+The following commands may be used in the md3.cfg:
 
 
-4.  Your model should consist of these submodels, placed in the "yourmd3" directory:
+md3load model_path
     
-    head.md3
-    upper.md3
-    lower.md3
-    
-    For each of them create a SUBMODEL_default.cfg
-    As example, head_default.cfg, etc.
-    
-    
-5.  In the SUBMODEL_default.cfg, you can use the command "md3skin" to specify the 
-    skin you want to assign to each mesh of the submodel.
-    
-    Usage:  md3skin MESH_NAME REL_SKIN_PATH
-    
-    As example, I placed the skin "default_h.jpg" into the "yourmd3" directory.
-    To assign it to the head part of my model, I put this line into "head_default.cfg":
-    
-    md3skin h_head ./default_h.jpg
-    
-    This assigns the "default_h.jpg" skin to the "h_head" mesh of the "head.md3" submodel.
-    
-  
-6.  To test the model ingame, you can replace a monster with it:
+    This command loads the first part of your model. As example, this could be the head.md3 of a playermodel.
+    "name_path" is the path to the md3 file to load, its recursive to the location of the md3.cfg.
 
-    In sauerbraten/packages/models/monster/ rename "ogro" to "ogro_bak".
-    
-    Then rename "yourmd3" to "ogro" and start Sauerbraten. You can now test the model by
-    typing 
-        
-    /dmsp aard3
-    
-    If you replaced the ogro model, you could also try
-    
-    /thirdperson 1
-    
-    
-7.  You can get a working sample model at 
 
-    http://sprintf.org/sauerbraten/md3_sample.tar.bz2
+md3skin mesh skin_path
+
+    This loads a texture and assigns it to a mesh of the last loaded model (md3load).
+    "mesh" is the name of the mesh you want to assign the texture to.
+    "skin_path" is the path to the texture, its recursive to the location of the md3.cfg.
+
+
+md3anim anim frame numframes loop fps
+
+    This assigns a new animation to the last loaded model (md3load).
+
+    "anim" is the name of the animation to define. 
+    Any of the following names may be used:
+        dying
+        dead
+        pain
+        idle
+        idle attack
+        run
+        run attack
+        edit
+        lag
+        jump
+        jump attack
+        gun shoot
+        gun idle
+
+    "frame" is the frame number the animation starts at.
+    "numframes" is the number of frames in the animation.
+    "loop" is currently ignored.
+    "fps" frames per second the animation should run at.
+
+    Example: md3anim "jump attack" 131 6 0 15
+        Defines a "jump attack" animation starting at frame 131 with 6 frames and running at 15 frames per second.
+
+
+md3link parent child tag
+
+    This links two models together.
+    Every model you load with md3load has an ID. The first model you load has the ID 0, the second has the ID 1, and so on, those ID's are now used to identify the models and link them together.
+    "parent" the ID of the parent model.
+    "child" to ID of the child model.
+    "tag" name of the tag that specifies at which vertex the models should be linked.
+
+    Hint: Make sure you understand the difference between the parent and child model. Rendering starts at model 0 (first loaded model) and then continues with model 0's children, etc. Imagine a tree, model 0 is the root if it.
     
-    Uncompress that file and copy the folder to sauerbraten/packages/models/monster/ and
-    rename it as described in section 6.
-    
-    
-    
-Adrian 'driAn' Henke, 01.31.2006
-drian@sprintf.org
-    
-    
-    
-        
-     
-    
-    
-    
+
+mdlcullface N
+    If N is 0, backface culling is disabled for this model. Otherwise, backface culling is enabled. Default = 1.
+
+mdlspec SI
+    SI is the specular intensity (not given or 0 gives the default of 100, good for metal/plastics and anything shiny, use
+    lower values like 50 for wood etc, -1 means off entirely)
+
+mdlshader SH
+    SH is the name of the shader to use for rendering the model. Default is "stdmodel".
+
+mdlambient A
+    A is the percent of the ambient light that should be used for shading. Not given or 0 gives the default of 30%, -1 means
+    no ambient.
+
+mdlscale S
+    Scale the model's size to be S percent of its default size.
+
+mdltrans X Y Z
+    Translate the model's center by (X, Y, Z), where X/Y/Z are in Sauer units (may use floating point).
+
+
+----
+
+Sample md3.cfg file, used for a playermodel:
+
+md3load lower.md3 // model no. 0
+md3skin l_lower ./default_l.png
+
+md3anim dying           0   30  0   20
+md3anim dead            30  1   0   25
+md3anim run             114 10  0   18
+md3anim "run attack"    114 10  0   18
+md3anim idle            164 30  30  30
+md3anim "idle attack"   164 30  30  30
+md3anim jump            147	8	0	15
+md3anim "jump attack"   147	8	0	15
+
+
+md3load upper.md3 // model no. 1
+md3skin u_torso ./default.png
+
+md3anim dying           0   30  0   20
+md3anim dead            30  1   0   25
+md3anim lag             91  40  0   18
+md3anim edit             91  40  0   18
+md3anim "idle attack"   131 6   0   15
+md3anim "run attack"    131 6   0   15
+md3anim "jump attack"   131 6   0   15
+md3anim jump            143 5   0   20
+md3anim idle            152 1   0   15
+md3anim run             152 1   0   15
+md3anim pain            152 1   0   15
+
+
+md3load head.md3 // model no. 2
+md3skin h_head ./default_h.png
+
+
+md3link 0 1 tag_torso
+md3link 1 2 tag_head
+
+mdlspec 50
+mdlscale 20         // 20 percent of the original size
+mdltrans 0 0 -1.5   // lower the model a bit
+
+----
+
+
