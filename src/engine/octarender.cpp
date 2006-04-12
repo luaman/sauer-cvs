@@ -1008,8 +1008,8 @@ int isvisiblesphere(float rad, const vec &cv)
 int isvisiblecube(const vec &o, int size)
 {
     vec center(o);
-    center.add(size/2);
-    return isvisiblesphere(size*SQRT3/2, center);
+    center.add(size/2.0f);
+    return isvisiblesphere(size*SQRT3/2.0f, center);
 };
 
 float vadist(vtxarray *va, vec &p)
@@ -1177,19 +1177,6 @@ void drawbb(const ivec &bo, const ivec &br)
     xtraverts += 24;
 };
 
-void clipbb(ivec &bo, ivec &br, const ivec &o, int size)
-{
-    loopi(3)
-    {
-        if(bo[i] < o[i])
-        {
-            br[i] = max(0, bo[i]+br[i] - o[i]);
-            bo[i] = o[i];
-        };
-        if(bo[i]+br[i] > o[i]+size) br[i] = max(0, o[i]+size - bo[i]);
-    };
-};
-        
 void drawquery(occludequery *query, const ivec &bo, const ivec &br)
 {
     glDepthMask(GL_FALSE);
@@ -1249,6 +1236,7 @@ void rendermapmodels(cube *c, const ivec &o, int size)
 };
                         
 VAR(oqmm, 0, 1, 1);
+
 extern bool getmmboundingbox(extentity &e, ivec &o, ivec &r);
 
 void rendermapmodels()
@@ -1271,6 +1259,8 @@ void rendermapmodels()
         };
         if(!occluded || ents->query)
         {
+            ivec bbmin(ents->o), bbmax(ents->o);
+            bbmin.add(ents->size);
             loopv(ents->list)
             {
                 extentity &e = *et->getents()[ents->list[i]];
@@ -1280,8 +1270,11 @@ void rendermapmodels()
                     ivec bo, br;
                     if(getmmboundingbox(e, bo, br))
                     {
-                        clipbb(bo, br, ents->o, ents->size);
-                        drawbb(bo, br);
+                        loopj(3)
+                        {
+                            bbmin[j] = min(bbmin[j], bo[j]);
+                            bbmax[j] = max(bbmax[j], bo[j]+br[j]);
+                        };
                     };
                 } 
                 else if(!e.rendered)
@@ -1290,6 +1283,15 @@ void rendermapmodels()
                     rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, true);
                     e.rendered = true;
                 };
+            };
+            if(occluded)
+            {
+                loopj(3)
+                {
+                    bbmin[j] = max(bbmin[j], ents->o[j]);
+                    bbmax[j] = min(bbmax[j], ents->o[j]+ents->size);
+                };
+                drawbb(bbmin, bbmax.sub(bbmin));
             };
         };
         if(ents->query)
