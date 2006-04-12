@@ -1589,7 +1589,7 @@ int midedge(const ivec &a, const ivec &b, int xd, int yd, bool &perfect)
     return crossy ? 8 : min(max(y, 0), 16);
 };
 
-bool subdividecube(cube &c, bool fullcheck)
+bool subdividecube(cube &c, bool fullcheck, bool brighten)
 {
     if(c.children) return true;
     cube *ch = c.children = newcubes(F_SOLID);
@@ -1651,6 +1651,7 @@ bool subdividecube(cube &c, bool fullcheck)
         emptyfaces(ch[i]);
         perfect=false;
     };
+    loopi(8) if(!isempty(ch[i])) brightencube(ch[i]);
     return perfect;
 };
 
@@ -1687,7 +1688,7 @@ bool remip(cube &c, int x, int y, int z, int size)
     cube n = c;
     forcemip(n);
     n.children = NULL;
-    if(!subdividecube(n, false))
+    if(!subdividecube(n, false, false))
         { freeocta(n.children); return false; }
 
     cube *nh = n.children;

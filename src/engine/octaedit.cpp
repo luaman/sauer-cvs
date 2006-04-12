@@ -276,6 +276,7 @@ void readychanges(block3 &b, cube *c, ivec &cor, int size)
             {
                 solidfaces(c[i]);
                 discardchildren(c[i]);
+                brightencube(c[i]);
             }
             else readychanges(b, c[i].children, o, size/2);
         }
