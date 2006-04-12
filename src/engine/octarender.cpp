@@ -846,6 +846,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
 VARF(vacubesize, 128, 1024, 16*1024, allchanged());
+VARF(vacubemin, 0, 0, 256*256, allchanged());
 
 int recalcprogress = 0;
 #define progress(s)     if((recalcprogress++&0x7FF)==0) show_out_of_renderloop_progress(recalcprogress/(float)allocnodes, s);
@@ -863,7 +864,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
         if(c[i].va) {}//count += vacubemax+1;       // since must already have more then max cubes
         else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi+1);
         else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        if(count > vacubemax || size == vacubesize || size == hdr.worldsize/2) setva(c[i], o.x, o.y, o.z, size, csi);
+        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || size == hdr.worldsize/2) setva(c[i], o.x, o.y, o.z, size, csi);
         else ccount += count;
     };
 
