@@ -1235,7 +1235,7 @@ void rendermapmodels(cube *c, const ivec &o, int size)
     };
 };
                         
-VAR(oqmm, 0, 1, 1);
+VAR(oqmm, 0, 0, 1);
 
 extern bool getmmboundingbox(extentity &e, ivec &o, ivec &r);
 
