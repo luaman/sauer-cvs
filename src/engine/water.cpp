@@ -271,7 +271,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
          glDisable(GL_TEXTURE_2D);
          glColor3f(0.3f, 0.15f, 0.0f);
          notextureshader->set();
-         matloop(MAT_GLASS, drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, 0.01f));
+         matloop(MAT_GLASS, drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, 0.1f));
     }
     else
     {
@@ -294,7 +294,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                 lastmat = m.material;
                 glColor3ubv(blendcols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat]);
             };
-            drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, 0.01f);
+            drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, -0.1f);
         };
         glDepthMask(GL_FALSE);
     };
@@ -320,7 +320,7 @@ void rendermatgrid(materialsurface *matbuf, int matsurfs)
             lastmat = m.material;
             glColor3ubv(cols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat]);
         };
-        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, 0.01f);
+        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, -0.1f);
     };
 };
 

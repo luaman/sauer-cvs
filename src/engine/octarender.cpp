@@ -1060,6 +1060,11 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     {
         vtxarray &v = *valist[i];
         if(isvisiblecube(vec(v.x, v.y, v.z), v.size)!=VFC_NOT_VISIBLE) addvisibleva(&v);
+        else
+        {
+            v.occluded = 0;
+            v.query = NULL;
+        };
     };
 };
 
@@ -1103,7 +1108,7 @@ bool insideva(vtxarray *va, const vec &v)
 };
 
 
-#define MAXQUERY 2048
+#define MAXQUERY 4096
 
 struct queryframe
 {
@@ -1246,7 +1251,7 @@ void rendermapmodels(cube *c, const ivec &o, int size)
     };
 };
                         
-VAR(oqmm, 0, 0, 1);
+VAR(oqmm, 0, 1, 1);
 
 extern bool getmmboundingbox(extentity &e, ivec &o, ivec &r);
 
@@ -1518,9 +1523,9 @@ void drawface(int orient, int x, int y, int z, int size, float offset)
     loopi(4)
     {
         int coord = fv[orient][i];
-        glVertex3f(cubecoords[coord][0]*(size-2*xoffset)/8+x+xoffset,
-                   cubecoords[coord][1]*(size-2*yoffset)/8+y+yoffset,
-                   cubecoords[coord][2]*(size-2*zoffset)/8+z+zoffset);
+        glVertex3f(cubecoords[coord][0]*size/8+x+xoffset,
+                   cubecoords[coord][1]*size/8+y+yoffset,
+                   cubecoords[coord][2]*size/8+z+zoffset);
     };
     glEnd();
 
