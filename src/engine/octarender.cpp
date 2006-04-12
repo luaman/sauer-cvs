@@ -1164,17 +1164,28 @@ void drawbb(const ivec &bo, const ivec &br)
 {
     glBegin(GL_QUADS);
 
-    loopi(6) loopj(4)
+    loopi(6)
     {
-        const ivec &cc = *(const ivec *)cubecoords[fv[i][j]];
-        glVertex3i(cc[0] ? bo.x+br.x : bo.x,
-                   cc[1] ? bo.y+br.y : bo.y,
-                   cc[2] ? bo.z+br.z : bo.z);
+        int dim = dimension(i), coord = dimcoord(i);
+
+        if(coord)
+        {
+            if(camera1->o[dim] < bo[dim] + br[dim]) continue;
+        }
+        else if(camera1->o[dim] > bo[dim]) continue;
+
+        loopj(4)
+        {
+            const ivec &cc = *(const ivec *)cubecoords[fv[i][j]];
+            glVertex3i(cc[0] ? bo.x+br.x : bo.x,
+                       cc[1] ? bo.y+br.y : bo.y,
+                       cc[2] ? bo.z+br.z : bo.z);
+        };
+
+        xtraverts += 4;
     };
 
     glEnd();
-
-    xtraverts += 24;
 };
 
 void drawquery(occludequery *query, const ivec &bo, const ivec &br)
