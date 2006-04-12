@@ -1274,23 +1274,20 @@ void rendermapmodels()
             loopv(ents->list)
             {
                 extentity &e = *et->getents()[ents->list[i]];
-                if(e.type == ET_MAPMODEL && !e.rendered)
+                if(e.type != ET_MAPMODEL) continue;
+                if(occluded)
                 {
-                       
-                    if(occluded)
+                    ivec bo, br;
+                    if(getmmboundingbox(e, bo, br))
                     {
-                        ivec bo, br;
-                        if(getmmboundingbox(e, bo, br))
-                        {
-                            clipbb(bo, br, ents->o, ents->size);
-                            drawbb(bo, br);
-                        };
-                    } 
-                    else
-                    {
-                        mapmodelinfo &mmi = getmminfo(e.attr2);
-                        rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, true);
+                        clipbb(bo, br, ents->o, ents->size);
+                        drawbb(bo, br);
                     };
+                } 
+                else if(!e.rendered)
+                {
+                    mapmodelinfo &mmi = getmminfo(e.attr2);
+                    rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, true);
                     e.rendered = true;
                 };
             };
