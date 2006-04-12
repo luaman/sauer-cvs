@@ -150,6 +150,7 @@ struct ivec
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };
     ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; };
     ivec &add(int n) { x += n; y += n; z += n; return *this; };
+    ivec &sub(const ivec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; };
 };
 
 struct svec
