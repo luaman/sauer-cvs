@@ -986,7 +986,7 @@ float vfcDfog;  // far plane culling distance (fog limit).
 
 vtxarray *visibleva;
 
-int isvisiblesphere(float rad, vec &cv)
+int isvisiblesphere(float rad, const vec &cv)
 {
     int v = VFC_FULL_VISIBLE;
     float dist;
@@ -1005,13 +1005,20 @@ int isvisiblesphere(float rad, vec &cv)
     return v;
 };
 
+int isvisiblecube(const vec &o, int size)
+{
+    vec center(o);
+    center.add(size/2);
+    return isvisiblesphere(size*SQRT3/2, center);
+};
+
 float vadist(vtxarray *va, vec &p)
 {
     if(va->min.x>va->max.x) return 10000;   // box contains only sky/water
     return p.dist_to_bb(va->min.tovec(), va->max.tovec());
 };
 
-void addvisibleva(vtxarray *va, vec &cv)
+void addvisibleva(vtxarray *va)
 {
     va->distance = int(vadist(va, camera1->o)); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
     va->curlod   = lodsize==0 || va->distance<loddistance ? 0 : 1;
@@ -1052,9 +1059,7 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     loopv(valist)
     {
         vtxarray &v = *valist[i];
-        vec cv(v.x, v.y, v.z);
-        cv.add(v.size/2.0f);
-        if(isvisiblesphere(v.size*SQRT3/2, cv)!=VFC_NOT_VISIBLE) addvisibleva(&v, cv);
+        if(isvisiblecube(vec(v.x, v.y, v.z), v.size)!=VFC_NOT_VISIBLE) addvisibleva(&v);
     };
 };
 
@@ -1155,14 +1160,10 @@ bool checkquery(occludequery *query)
     return fragments < oqfrags;
 };
 
-void drawquery(occludequery *query, const ivec &bo, const ivec &br)
+void drawbb(const ivec &bo, const ivec &br)
 {
-    glDepthMask(GL_FALSE);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
-
     glBegin(GL_QUADS);
-    
+
     loopi(6) loopj(4)
     {
         const ivec &cc = *(const ivec *)cubecoords[fv[i][j]];
@@ -1174,6 +1175,28 @@ void drawquery(occludequery *query, const ivec &bo, const ivec &br)
     glEnd();
 
     xtraverts += 24;
+};
+
+void clipbb(ivec &bo, ivec &br, const ivec &o, int size)
+{
+    loopi(3)
+    {
+        if(bo[i] < o[i])
+        {
+            br[i] = max(0, bo[i]+br[i] - o[i]);
+            bo[i] = o[i];
+        };
+        if(bo[i]+br[i] > o[i]+size) br[i] = max(0, o[i]+size - bo[i]);
+    };
+};
+        
+void drawquery(occludequery *query, const ivec &bo, const ivec &br)
+{
+    glDepthMask(GL_FALSE);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
+
+    drawbb(bo, br);
 
     glEndQuery_(GL_SAMPLES_PASSED_ARB);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -1182,68 +1205,106 @@ void drawquery(occludequery *query, const ivec &bo, const ivec &br)
 
 extern int octaentsize;
 
-bool checkmmqueries(cube *c, const ivec &o, int size, const ivec &bo, const ivec &br)
-{
-    loopoctabox(o, size, bo, br)
-    {
-        if(c[i].va)
-        {
-            vtxarray *va = c[i].va;
-            if(va->occluded > 1 && va->query && va->query->owner == va) continue;
-        };
-        if(c[i].ents)
-        {
-            octaentities *ents = c[i].ents;
-            if(ents->prevquery && ents->prevquery->owner == ents && checkquery(ents->prevquery)) continue;
-            return false;
-        };
-        if(c[i].children && size > octaentsize)
-        {
-            ivec co(i, o.x, o.y, o.z, size);
-            if(!checkmmqueries(c[i].children, co, size>>1, bo, br)) return false;
-        }
-        else return false;
-    };
-    return true;
-};
-    
-bool mmoccluded(const vec &bo, const vec &br)
-{   
-    vec center(vec(br).div(2).add(bo));
-    if(camera1->o.dist(center) <= octaentsize) return false; 
-    ivec io(int(bo.x), int(bo.y), int(bo.z)), ir(int(br.x+1), int(br.y+1), int(br.z+1));            
-    return checkmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, io, ir);
-};
+static octaentities *visibleents;
 
-void drawmmqueries(cube *c, const ivec &o, int size)
+void rendermapmodels(cube *c, const ivec &o, int size)
 {
     loopj(8)
     {
-        ivec co(j, o.x, o.y, o.z, size);
+        ivec co(j, o.x, o.y, o.z, size); 
+        
         if(c[j].va)
         {
             vtxarray *va = c[j].va;
-            if(va->occluded > 1 && va->query && va->query->owner == va) continue;
+            if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue;
+            else if(va->occluded > 1 && va->query && va->query->owner == va) continue;
         };
         if(c[j].ents)
         {
             octaentities *ents = c[j].ents;
-            ents->prevquery = ents->query;
-            ents->query = NULL;
-            vec center(co.x, co.y, co.z);
-            float radius = size/2.0f;
-            center.add(radius);
-            if(isvisiblesphere(radius*SQRT3, center) == VFC_NOT_VISIBLE) continue;
-            loopv(ents->list) if(et->getents()[i]->type == ET_MAPMODEL)
+            if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue;
+
+            ents->o = co;
+            ents->size = size;
+
+            loopv(ents->list)
             {
-                ents->query = newquery(ents);
-                if(ents->query) drawquery(ents->query, co, ivec(size, size, size));
-                break;
+                extentity &e = *et->getents()[ents->list[i]];
+                e.rendered = false;
             };
-            continue;
+
+            ents->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
+            octaentities **prev = &visibleents, *cur = visibleents;
+            while(cur && ents->distance > cur->distance)
+            {
+                prev = &cur->next;
+                cur = cur->next;
+            };
+
+            ents->next = *prev;
+            *prev = ents;
         };
-        if(c[j].children && size > octaentsize) drawmmqueries(c[j].children, co, size>>1);
+        if(c[j].children && size > octaentsize) rendermapmodels(c[j].children, co, size>>1);
     };
+};
+                        
+VAR(oqmm, 0, 1, 1);
+extern bool getmmboundingbox(extentity &e, ivec &o, ivec &r);
+
+void rendermapmodels()
+{
+    visibleents = NULL;
+    rendermapmodels(worldroot, ivec(0, 0, 0), hdr.worldsize>>1);
+
+    for(octaentities *ents = visibleents; ents; ents = ents->next)
+    {
+        bool occluded = ents->query && ents->query->owner == ents && checkquery(ents->query);
+        ents->query = oqfrags > 0 && oqmm ? newquery(ents) : NULL;
+        if(ents->query)
+        {
+            if(occluded)
+            {
+                glDepthMask(GL_FALSE);
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            };
+            glBeginQuery_(GL_SAMPLES_PASSED_ARB, ents->query->id);
+        };
+        if(!occluded || ents->query)
+        {
+            loopv(ents->list)
+            {
+                extentity &e = *et->getents()[ents->list[i]];
+                if(e.type == ET_MAPMODEL && !e.rendered)
+                {
+                       
+                    if(occluded)
+                    {
+                        ivec bo, br;
+                        if(getmmboundingbox(e, bo, br))
+                        {
+                            clipbb(bo, br, ents->o, ents->size);
+                            drawbb(bo, br);
+                        };
+                    } 
+                    else
+                    {
+                        mapmodelinfo &mmi = getmminfo(e.attr2);
+                        rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, true);
+                    };
+                    e.rendered = true;
+                };
+            };
+        };
+        if(ents->query)
+        {
+            glEndQuery_(GL_SAMPLES_PASSED_ARB);
+            if(occluded)
+            {
+                glDepthMask(GL_TRUE);
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            };
+        };
+    };        
 };
 
 void renderq(int w, int h)
@@ -1389,8 +1450,6 @@ void renderq(int w, int h)
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
-
-    if(oqfrags > 0) drawmmqueries(worldroot, ivec(0, 0, 0), hdr.worldsize/2);
 };
 
 void rendermaterials()

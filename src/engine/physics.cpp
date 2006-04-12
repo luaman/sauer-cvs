@@ -57,11 +57,12 @@ VAR(octaentsize, 0, 128, 1024);
 
 void freeoctaentities(cube &c)
 {
-    if(!c.ents) return;
-    while(!c.ents->list.empty())
-        removeoctaentity(c.ents->list.pop());
-    delete c.ents;
-    c.ents = NULL;
+    while(c.ents && !c.ents->list.empty()) removeoctaentity(c.ents->list.pop());
+    if(c.ents)
+    {
+        delete c.ents;
+        c.ents = NULL;
+    };
 };
 
 void traverseoctaentity(bool add, int id, cube *c, ivec &cor, int size, ivec &bo, ivec &br)
@@ -77,8 +78,11 @@ void traverseoctaentity(bool add, int id, cube *c, ivec &cor, int size, ivec &bo
             c[i].ents->list.add(id);
         }
         else if(c[i].ents)
+        {
             c[i].ents->list.removeobj(id);
-
+            if(c[i].ents->list.empty()) freeoctaentities(c[i]);
+        };
+        if(c[i].ents) c[i].ents->query = NULL;
     };
 };
 
@@ -87,7 +91,7 @@ bool getmmboundingbox(extentity &e, ivec &o, ivec &r)
     if(e.type!=ET_MAPMODEL) return false;
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi) return false;
-    model *m = loadmodel(mmi.name);
+    model *m = loadmodel(NULL, e.attr2);
     if(!m) return false;
     vec center;
     float radius = m->boundsphere(0, center);

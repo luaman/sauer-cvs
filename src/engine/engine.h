@@ -116,9 +116,10 @@ extern void editdrag(bool on);
 extern void cancelsel();
 extern void render_texture_panel();
 
-// rendercubes
+// octarender
 extern bool subdividecube(cube &c, bool fullcheck=true);
 extern void octarender();
+extern void rendermapmodels();
 extern void renderq(int w, int h);
 extern void allchanged();
 extern void rendermaterials();
@@ -126,7 +127,6 @@ extern void rendersky();
 extern void drawface(int orient, int x, int y, int z, int size, float offset);
 extern void converttovectorworld();
 
-// octarender
 extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va);
@@ -136,7 +136,7 @@ extern void calcverts(cube &c, int x, int y, int z, int size, svec *verts, bool 
 extern uint faceedges(cube &c, int orient);
 extern bool collapsedface(uint cfe);
 extern bool touchingface(cube &c, int orient);
-extern int isvisiblesphere(float rad, vec &cv);
+extern int isvisiblesphere(float rad, const vec &cv);
 extern int genclipplane(cube &c, int i, svec *v, plane *clip);
 extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p);
 extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR, bool lodcube = false);
@@ -146,8 +146,6 @@ extern void precacheall();
 extern void remipworld(); 
 extern void resetqueries();
 extern int getnumqueries();
-extern bool checkquery(occludequery *query);
-extern bool mmoccluded(const vec &bo, const vec &br);
 
 // water
 extern int showmat;
