@@ -345,7 +345,8 @@ int main(int argc, char **argv)
         static int curmillis = 0;
         int millis = SDL_GetTicks();
         limitfps(millis, curmillis);
-        curtime = (millis-curmillis)*gamespeed/100;
+        int elapsed = millis-curmillis;
+        curtime = elapsed*gamespeed/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
         if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis); 
@@ -366,7 +367,7 @@ int main(int argc, char **argv)
         serverslice(time(NULL), 0);
         
         frames++;
-        fps = (gamespeed*10.0f/curtime+fps*10)/11;
+        fps = (1000.0f/elapsed+fps*10)/11;
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
         
         extern void updatevol(); updatevol();
