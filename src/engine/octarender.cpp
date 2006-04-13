@@ -29,7 +29,7 @@ struct vechash
 
     int access(const svec &v, short tu, short tv)
     {
-        const uchar *iv = (uchar *)&v;
+        const uchar *iv = (const uchar *)&v;
         uint h = 5381;
         loopl(sizeof(v)) h = ((h<<5)+h)^iv[l];
         h = h&(size-1);
