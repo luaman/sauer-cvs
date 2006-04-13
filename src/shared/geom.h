@@ -158,11 +158,6 @@ struct ivec
     void mask(int n) { x &= n; y &= n; z &= n; }; 
 };
 
-#define SVEC_INT  14
-#define SVEC_FRAC 1
-#define SVEC_BITS (SVEC_INT + SVEC_FRAC)
-#define SVEC_MASK ((1<<SVEC_INT)-1)
-
 struct svec
 {
     union
@@ -173,15 +168,22 @@ struct svec
 
     svec() {};
     svec(short x, short y, short z) : x(x), y(y), z(z) {};
-    svec(int x, int y, int z) : x((x&SVEC_MASK)<<SVEC_FRAC), y((y&SVEC_MASK)<<SVEC_FRAC), z((z&SVEC_MASK)<<SVEC_FRAC) {};
-    svec(const int *i) : x((i[0]&SVEC_MASK)<<SVEC_FRAC), y((i[1]&SVEC_MASK)<<SVEC_FRAC), z((i[2]&SVEC_MASK)<<SVEC_FRAC) {};
 
     void add(const svec &o) { x += o.x; y += o.y; z += o.z; };
-    void mask(int f) { f <<= SVEC_FRAC; f |= (1<<SVEC_FRAC)-1; x &= f; y &= f; z &= f; }; 
     void mul(int f) { x *= f; y *= f; z *= f; };
     void div(int f) { x /= f; y /= f; z /= f; };
-
-    vec tovec() const                    { return vec(x, y, z).div(1<<SVEC_FRAC); };   
-    vec tovec(int x, int y, int z) const { vec t = tovec(); t.x += x&~SVEC_MASK; t.y += y&~SVEC_MASK; t.z += z&~SVEC_MASK; return t; };
-    vec tovec(const ivec &o) const       { return tovec(o.x, o.y, o.z); };
 };
+
+struct bvec
+{
+    union
+    {
+        struct { char x, y, z; };
+        char v[3];
+    };
+
+    bvec() {};
+    bvec(char x, char y, char z) : x(x), y(y), z(z) {};
+    bvec(const vec &v) { vec n(v); n.normalize(); x = char(n.x*CHAR_MAX); y = char(n.y*CHAR_MAX); z = char(n.z*CHAR_MAX); };
+};
+

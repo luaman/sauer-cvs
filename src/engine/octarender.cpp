@@ -27,7 +27,7 @@ struct vechash
     vechash() { clear(); };
     void clear() { loopi(size) table[i] = -1; chain.setsize(0); };
 
-    int access(const svec &v, short tu, short tv)
+    int access(const vvec &v, short tu, short tv)
     {
         const uchar *iv = (const uchar *)&v;
         uint h = 5381;
@@ -39,7 +39,7 @@ struct vechash
             if(c.x==v.x && c.y==v.y && c.z==v.z && c.u==tu && c.v==tv) return i;
         };
         vertex &n = verts.add();
-        ((svec &)n) = v;
+        ((vvec &)n) = v;
         n.u = tu;
         n.v = tv;
         chain.add(table[h]);
@@ -51,7 +51,7 @@ vechash vh;
 
 int vert(int x, int y, int z, short lmu, short lmv)
 {
-    return vh.access(svec(x, y, z), lmu, lmv);
+    return vh.access(vvec(x, y, z), lmu, lmv);
 };
 
 uchar &edgelookup(cube &c, const ivec &p, int dim)
@@ -264,8 +264,8 @@ void genfacevecs(cube &c, int orient, const ivec &pos, int size, bool solid, fac
             x = edgeval(c, cc, C[dim], cc[C[dim]]);
             y = edgeval(c, cc, R[dim], cc[R[dim]]);
         };
-        f.x = x*size/(8>>SVEC_FRAC)+(pos[C[dim]]<<SVEC_FRAC);
-        f.y = y*size/(8>>SVEC_FRAC)+(pos[R[dim]]<<SVEC_FRAC);
+        f.x = x*size/(8>>VVEC_FRAC)+(pos[C[dim]]<<VVEC_FRAC);
+        f.y = y*size/(8>>VVEC_FRAC)+(pos[R[dim]]<<VVEC_FRAC);
     };
 };
 
@@ -337,9 +337,9 @@ bool insideface(const facevec *p, int nump, const facevec *o)
 
 int clipfacevecs(const facevec *o, int cx, int cy, int size, facevec *rvecs)
 {
-    cx <<= SVEC_FRAC;
-    cy <<= SVEC_FRAC;
-    size <<= SVEC_FRAC;
+    cx <<= VVEC_FRAC;
+    cy <<= VVEC_FRAC;
+    size <<= VVEC_FRAC;
 
     int r = 0;
     loopi(4)
@@ -419,22 +419,22 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
     return !occludesface(o, opposite(orient), lu, lusize, ivec(x, y, z), size, mat, cf);
 };
 
-void calcvert(cube &c, int x, int y, int z, int size, svec &v, int i, bool solid)
+void calcvert(cube &c, int x, int y, int z, int size, vvec &v, int i, bool solid)
 {
     ivec vv;
     if(solid || isentirelysolid(c)) vv = cubecoords[i];
     else genvectorvert(cubecoords[i], c, vv);
-    v = svec(vv.v);
+    v = vvec(vv.v);
     // avoid overflow
     if(size>=8) v.mul(size/8);
     else v.div(8/size);
     // mask off any excess from position
-    svec offset(x, y, z);
-    offset.mask((1<<(SVEC_INT-1))-1);
+    vvec offset(x, y, z);
+    offset.mask((1<<(VVEC_INT-1))-1);
     v.add(offset);
 };
 
-void calcverts(cube &c, int x, int y, int z, int size, svec *verts, bool *usefaces, int *vertused, bool lodcube)
+void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube)
 {
     loopi(8) vertused[i] = 0;
     loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
@@ -490,7 +490,7 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 {
     int vertused[8];
     bool usefaces[6];
-    svec sv[8];
+    vvec sv[8];
     vec v[8];
     vec mx(x, y, z), mn(x+size, y+size, z+size);
     calcverts(c, x, y, z, size, sv, usefaces, vertused, false);
@@ -641,7 +641,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             }
             else u = v = 0;
             int coord = faceverts(c,i,k), index;
-            svec rv;
+            vvec rv;
             calcvert(c, x, y, z, size, rv, coord);
             index = vh.access(rv, u, v);
 
@@ -687,7 +687,7 @@ void genskyverts(cube &c, int x, int y, int z, int size)
         loopk(4)
         {
             int coord = faceverts(c, orient, 3 - k), index;
-            svec rv;
+            vvec rv;
             calcvert(c, x, y, z, size, rv, coord, true);
             index = vh.access(rv, 0, 0);
             l0.skyindices.add(index);
@@ -810,7 +810,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
 
 void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 {
-    ASSERT(size <= 1<<(SVEC_INT-1));
+    ASSERT(size <= 1<<(VVEC_INT-1));
 
     if(verts.length())                                 // since reseting is a bit slow
     {
@@ -838,7 +838,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
-VARF(vacubesize, 128, 512, 1<<(SVEC_INT-1), allchanged());
+VARF(vacubesize, 128, 512, 1<<(VVEC_INT-1), allchanged());
 VARF(vacubemin, 0, 256, 256*256, allchanged());
 
 int recalcprogress = 0;
@@ -857,7 +857,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
         if(c[i].va) {}//count += vacubemax+1;       // since must already have more then max cubes
         else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi+1);
         else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || size == min(1<<(SVEC_INT-1), hdr.worldsize/2)) setva(c[i], o.x, o.y, o.z, size, csi);
+        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || size == min(1<<(VVEC_INT-1), hdr.worldsize/2)) setva(c[i], o.x, o.y, o.z, size, csi);
         else ccount += count;
     };
 
@@ -1066,14 +1066,14 @@ void setorigin(vtxarray *va, bool init)
 {
     static ivec origin;
     ivec o(va->x, va->y, va->z);
-    o.mask(~((1<<(SVEC_INT-1))-1));
+    o.mask(~((1<<(VVEC_INT-1))-1));
     if(init || o != origin)
     {
         origin = o;
         glPopMatrix();
         glPushMatrix();
         glTranslatef(o.x, o.y, o.z);
-        static const float scale = 1.0f/(1<<SVEC_FRAC);
+        static const float scale = 1.0f/(1<<VVEC_FRAC);
         glScalef(scale, scale, scale);
     };
 };
@@ -1217,11 +1217,11 @@ void drawquery(occludequery *query, vtxarray *va)
     glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
 
     ivec origin(va->x, va->y, va->z);
-    origin.mask(~((1<<(SVEC_INT-1))-1));
+    origin.mask(~((1<<(VVEC_INT-1))-1));
 
-    drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<SVEC_FRAC), 
-           ivec(va->size, va->size, va->size).mul(1<<SVEC_FRAC),
-           vec(camera1->o).sub(origin.tovec()).mul(1<<SVEC_FRAC));
+    drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC), 
+           ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
+           vec(camera1->o).sub(origin.tovec()).mul(1<<VVEC_FRAC));
 
     glEndQuery_(GL_SAMPLES_PASSED_ARB);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -1449,9 +1449,9 @@ void renderq(int w, int h)
                     //float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
 
                     GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                    s[si[l]] = 8.0f/(tex->xs<<SVEC_FRAC);
+                    s[si[l]] = 8.0f/(tex->xs<<VVEC_FRAC);
                     GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                    t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/(tex->ys<<SVEC_FRAC);
+                    t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/(tex->ys<<VVEC_FRAC);
 
                     if(renderpath==R_FIXEDFUNCTION)
                     {
@@ -1716,7 +1716,7 @@ bool remip(cube &c, int x, int y, int z, int size)
     };
 
     if(!perfect) return false;
-    if(size > 1<<(SVEC_INT-1)) return true;
+    if(size > 1<<(VVEC_INT-1)) return true;
 
     cube n = c;
     forcemip(n);

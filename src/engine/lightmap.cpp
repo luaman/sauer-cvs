@@ -536,12 +536,12 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         };
         freesurfaces(c);
     };
-    svec sverts[8];
+    vvec vvecs[8];
     bool usefaces[6];
     int vertused[8];
-    calcverts(c, cx, cy, cz, size, sverts, usefaces, vertused, lodcube);
+    calcverts(c, cx, cy, cz, size, vvecs, usefaces, vertused, lodcube);
     vec verts[8];
-    loopi(8) if(vertused[i]) verts[i] = sverts[i].tovec(cx, cy, cz);
+    loopi(8) if(vertused[i]) verts[i] = vvecs[i].tovec(cx, cy, cz);
     loopi(6) if(usefaces[i])
     {
         CHECK_PROGRESS(return);
