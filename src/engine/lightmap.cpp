@@ -536,10 +536,12 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         };
         freesurfaces(c);
     };
-    svec verts[8];
+    svec sverts[8];
     bool usefaces[6];
     int vertused[8];
-    calcverts(c, cx, cy, cz, size, verts, usefaces, vertused, lodcube);
+    calcverts(c, cx, cy, cz, size, sverts, usefaces, vertused, lodcube);
+    vec verts[8];
+    loopi(8) if(vertused[i]) verts[i] = sverts[i].tovec(cx, cy, cz);
     loopi(6) if(usefaces[i])
     {
         CHECK_PROGRESS(return);
@@ -552,10 +554,10 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!numplanes || !find_lights(c, cx, cy, cz, size, planes, numplanes))
             continue;
 
-        vec v0(verts[faceverts(c, i, 0)].tovec()),
-            v1(verts[faceverts(c, i, 1)].tovec()),
-            v2(verts[faceverts(c, i, 2)].tovec()),
-            v3(verts[faceverts(c, i, 3)].tovec());
+        vec v0(verts[faceverts(c, i, 0)]),
+            v1(verts[faceverts(c, i, 1)]),
+            v2(verts[faceverts(c, i, 2)]),
+            v3(verts[faceverts(c, i, 3)]);
         uchar texcoords[8];
         if(!setup_surface(planes, numplanes, v0, v1, v2, v3, texcoords))
             continue;

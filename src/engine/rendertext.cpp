@@ -222,7 +222,7 @@ void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
     xtraverts += 4;
 }
 
-void draw_envbox(int t, int w)
+void draw_envbox(int w)
 {
     if(!sky[0]) fatal("no skybox");
 

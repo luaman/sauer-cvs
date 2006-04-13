@@ -383,7 +383,7 @@ void drawskybox(int farplane, bool limited)
     glRotated(90.0, 1.0, 0.0, 0.0);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
-    draw_envbox(14, farplane/2);
+    draw_envbox(farplane/2);
     if(limited) glDepthFunc(GL_LESS);
     transplayer();
 

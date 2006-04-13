@@ -140,18 +140,28 @@ struct ivec
         y = cy+((i&2)>>1)*size;
         z = cz+((i&4)>>2)*size;
     };
-    vec tovec() { return vec(x, y, z); };
-    int toint() { return (x>0?1:0) + (y>0?2:0) + (z>0?4:0); };
+    vec tovec() const { return vec(x, y, z); };
+    int toint() const { return (x>0?1:0) + (y>0?2:0) + (z>0?4:0); };
 
     int &operator[](int i)       { return v[i]; };
     int  operator[](int i) const { return v[i]; };
 
     //int idx(int i) { return v[i]; };
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; };
+    bool operator!=(const ivec &v) const { return x!=v.x || y!=v.y || z!=v.z; };
     ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; };
+    ivec &div(int n) { x /= n; y /= n; z /= n; return *this; };
     ivec &add(int n) { x += n; y += n; z += n; return *this; };
+    ivec &add(const ivec &v) { x += v.x; y += v.y; z += v.z; return *this; };
     ivec &sub(const ivec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; };
+
+    void mask(int n) { x &= n; y &= n; z &= n; }; 
 };
+
+#define SVEC_INT  14
+#define SVEC_FRAC 1
+#define SVEC_BITS (SVEC_INT + SVEC_FRAC)
+#define SVEC_MASK ((1<<SVEC_INT)-1)
 
 struct svec
 {
@@ -162,11 +172,16 @@ struct svec
     };
 
     svec() {};
-    svec(short _x, short _y, short _z) : x(_x), y(_y), z(_z) {};
-    svec(int *i) : x(i[0]), y(i[1]), z(i[2]) {};
+    svec(short x, short y, short z) : x(x), y(y), z(z) {};
+    svec(int x, int y, int z) : x((x&SVEC_MASK)<<SVEC_FRAC), y((y&SVEC_MASK)<<SVEC_FRAC), z((z&SVEC_MASK)<<SVEC_FRAC) {};
+    svec(const int *i) : x((i[0]&SVEC_MASK)<<SVEC_FRAC), y((i[1]&SVEC_MASK)<<SVEC_FRAC), z((i[2]&SVEC_MASK)<<SVEC_FRAC) {};
 
     void add(const svec &o) { x += o.x; y += o.y; z += o.z; };
-    void mul(int f)   { x *= f;   y *= f;   z *= f;   };
-    void div(int f)   { x /= f;   y /= f;   z /= f;   };
-    vec tovec() const { return vec(x, y, z); };   
+    void mask(int f) { f <<= SVEC_FRAC; f |= (1<<SVEC_FRAC)-1; x &= f; y &= f; z &= f; }; 
+    void mul(int f) { x *= f; y *= f; z *= f; };
+    void div(int f) { x /= f; y /= f; z /= f; };
+
+    vec tovec() const                    { return vec(x, y, z).div(1<<SVEC_FRAC); };   
+    vec tovec(int x, int y, int z) const { vec t = tovec(); t.x += x&~SVEC_MASK; t.y += y&~SVEC_MASK; t.z += z&~SVEC_MASK; return t; };
+    vec tovec(const ivec &o) const       { return tovec(o.x, o.y, o.z); };
 };

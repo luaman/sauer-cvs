@@ -33,7 +33,7 @@ bool dragging = false;
 void forcenextundo() { lastsel.orient = -1; };
 void cancelsel()     { havesel = false; forcenextundo(); };
 
-VARF(gridpower, 2, 3, 16,
+VARF(gridpower, 2, 3, SVEC_INT-1,
 {
     if(dragging) return;
     gridsize = 1<<gridpower;

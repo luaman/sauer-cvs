@@ -195,6 +195,16 @@ COMMAND(dropent, ARG_NONE);
 COMMAND(entmove, ARG_2INT);
 COMMAND(entproperty, ARG_2INT);
 
+void split_world(cube *c, int size)
+{
+    if(size < 1<<SVEC_INT) return;
+    loopi(8)
+    {
+        if(!c[i].children) c[i].children = newcubes(isempty(c[i]) ? F_EMPTY : F_SOLID);
+        split_world(c[i].children, size>>1);
+    };
+};
+               
 void empty_world(int factor, bool force)    // main empty world creation routine, if passed factor -1 will enlarge old world by 1
 {
     if(!force && !editmode) return conoutf("newmap only allowed in edit mode");
@@ -202,9 +212,9 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
-    if (!hdr.worldsize || !factor) hdr.worldsize = 256*16;
-    else if(factor>0) hdr.worldsize = 1 << (factor<10 ? 10 : (factor>15 ? 15 : factor));
-    if (factor<0 && hdr.worldsize < 1<<15)
+    if(!hdr.worldsize || !factor) hdr.worldsize = 1<<11;
+    else if(factor>0) hdr.worldsize = 1 << (factor<10 ? 10 : (factor>20 ? 20 : factor));
+    if(factor<0 && hdr.worldsize < 1<<20)
     {
         hdr.worldsize *= 2;
         cube *c = newcubes(F_SOLID);
@@ -228,6 +238,8 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         estartmap("base/unnamed");
         player->o.z += player->eyeheight+1;
     };
+
+    if(hdr.worldsize > 1<<SVEC_INT) split_world(worldroot, hdr.worldsize>>1);
 
     resetlightmaps();
     clearlights();
