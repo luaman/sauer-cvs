@@ -48,10 +48,4 @@ enum
 
 #define isclipped(mat) ((mat) >= MAT_CLIP && (mat) < MAT_NOCLIP)
 
-#ifdef SHORT_TEXCOORD
 struct vertex : svec { short u, v; };
-typedef short tcoord;
-#else
-struct vertex : svec { float u, v; };
-typedef float tcoord;
-#endif

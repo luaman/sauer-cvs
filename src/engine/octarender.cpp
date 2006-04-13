@@ -27,7 +27,7 @@ struct vechash
     vechash() { clear(); };
     void clear() { loopi(size) table[i] = -1; chain.setsize(0); };
 
-    int access(const svec &v, tcoord tu, tcoord tv)
+    int access(const svec &v, short tu, short tv)
     {
         const uchar *iv = (uchar *)&v;
         uint h = 5381;
@@ -49,7 +49,7 @@ struct vechash
 
 vechash vh;
 
-int vert(int x, int y, int z, tcoord lmu, tcoord lmv)
+int vert(int x, int y, int z, short lmu, short lmv)
 {
     return vh.access(svec(x, y, z), lmu, lmv);
 };
@@ -633,16 +633,11 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 
         loopk(4)
         {
-            tcoord u, v;
+            short u, v;
             if(c.surfaces && c.surfaces[i].lmid >= LMID_RESERVED)
             {
-#ifdef SHORT_TEXCOORD
                 u = short((c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) * SHRT_MAX/LM_PACKW);
                 v = short((c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) * SHRT_MAX/LM_PACKH);
-#else
-                u = (c.surfaces[i].x + (c.surfaces[i].texcoords[k*2] / 255.0f) * (c.surfaces[i].w - 1) + 0.5f) / LM_PACKW;
-                v = (c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) / LM_PACKH;
-#endif
             }
             else u = v = 0;
             int coord = faceverts(c,i,k), index;
@@ -1368,12 +1363,10 @@ void renderq(int w, int h)
     setupTMU();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     
-#ifdef SHORT_TEXCOORD
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     glScalef(1.0f/SHRT_MAX, 1.0f/SHRT_MAX, 1.0f);
     glMatrixMode(GL_MODELVIEW);
-#endif
 
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
@@ -1421,11 +1414,7 @@ void renderq(int w, int h)
         glVertexPointer(3, GL_SHORT, sizeof(vertex), &(va->vbuf[0].x));
 
         glClientActiveTexture_(GL_TEXTURE1_ARB);
-#ifdef SHORT_TEXCOORD
         glTexCoordPointer(2, GL_SHORT, sizeof(vertex), &(va->vbuf[0].u));
-#else
-        glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].u));
-#endif
         glClientActiveTexture_(GL_TEXTURE0_ARB);
 
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
