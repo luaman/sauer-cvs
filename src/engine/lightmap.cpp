@@ -204,7 +204,8 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
                 continue;
         };
         float intensity = -normal.dot(ray) * attenuation;
-        if(intensity < 0) intensity = 1.0;
+        if(intensity < 0) 
+            continue;
         r += intensity * float(light.attr2);
         g += intensity * float(light.attr3);
         b += intensity * float(light.attr4);
@@ -231,7 +232,7 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
 
 VAR(adaptivesample, 0, 1, 1);
 
-bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec &normal, const vec &ustep, const vec &vstep)
+bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec *p, const vec *n, int numv, const vec &ustep, const vec &vstep)
 {
     static uchar mincolor[3], maxcolor[3];
     static float aacoords[8][2] =
@@ -253,6 +254,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     vec offsets[8];
     loopi(8) loopj(3) offsets[i][j] = aacoords[i][0]*ustep[j] + aacoords[i][1]*vstep[j];
 
+    lerpvert lv[4];
+    calclerpverts(origin, p, n, ustep, vstep, lv, numv);
+
     if(y1 == 0)
     {
         memset(mincolor, 255, 3);
@@ -263,11 +267,18 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
 
     vec *sample = samples;
     int aasample = min(1 << aalights, 4);
-    for(uint y = y1; y < y2; ++y, v.add(vstep)) {
-        vec u = v;
-        for(uint x = 0; x < lm_w; ++x, u.add(ustep)) {
+    lerpbounds start, end;
+    initlerpbounds(n, lv, numv, start, end);
+    for(uint y = y1; y < y2; ++y, v.add(vstep)) 
+    {
+        vec normal, nstep;
+        lerpnormal(n, y-y1, lv, numv, start, end, normal, nstep);
+        
+        vec u(v);
+        for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
+        {
             CHECK_PROGRESS(return false);
-            generate_lumel(tolerance, lights, u, normal, *sample);
+            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample);
             sample += aasample;
         };
         sample += aasample;
@@ -275,22 +286,30 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
     v = origin;
     sample = samples;
     int stride = aasample*(lm_w+1);
-    for(uint y = y1; y < y2; ++y, v.add(vstep)) {
-        vec u = v;
-        for(uint x = 0; x < lm_w; ++x, u.add(ustep)) {
+    initlerpbounds(n, lv, numv, start, end);
+    for(uint y = y1; y < y2; ++y, v.add(vstep)) 
+    {
+        vec normal, nstep;
+        lerpnormal(n, y-y1, lv, numv, start, end, normal, nstep);
+
+        vec u(v);
+        for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
+        {
             vec &center = *sample++;
             if(adaptivesample && x > 0 && x+1 < lm_w && y > y1 && y+1 < y2 && !lumel_sample(center, aasample, stride))
                 loopi(aasample-1) *sample++ = center;
             else
             {
+                vec n(normal);
+                n.normalize();
                 loopi(aasample-1)
-                    generate_lumel(tolerance, lights, vec(u).add(offsets[i+1]), normal, *sample++);
+                    generate_lumel(tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++);
                 if(aalights==3) 
                 {
                     loopi(4)
                     {
                         vec s;
-                        generate_lumel(tolerance, lights, vec(u).add(offsets[i+4]), normal, s);
+                        generate_lumel(tolerance, lights, vec(u).add(offsets[i+4]), n, s);
                         center.add(s);
                     };
                     center.div(5);
@@ -299,25 +318,39 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const vec
         };
         if(aasample>1)
         {
-            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1]);
+            vec n(normal);
+            n.normalize();
+            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), n, sample[1]);
             if(aasample>2)
-                generate_lumel(tolerance, lights, vec(u).add(offsets[3]), normal, sample[3]);
+                generate_lumel(tolerance, lights, vec(u).add(offsets[3]), n, sample[3]);
         };
         sample += aasample;
     };
-    if(aasample>1) for(uint x = 0; x <= lm_w; ++x, v.add(ustep)) {
-        CHECK_PROGRESS(return false);
-        generate_lumel(tolerance, lights, vec(v).add(offsets[1]), normal, sample[1]);
-        if(aasample>2)
-            generate_lumel(tolerance, lights, vec(v).add(offsets[2]), normal, sample[2]);
-        sample += aasample;
+
+    if(aasample>1)
+    {
+        vec normal, nstep;
+        lerpnormal(n, y2-y1, lv, numv, start, end, normal, nstep);
+
+        for(uint x = 0; x <= lm_w; ++x, v.add(ustep), normal.add(nstep)) 
+        {
+            CHECK_PROGRESS(return false);
+            vec n(normal);
+            n.normalize();
+            generate_lumel(tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
+            if(aasample>2)
+                generate_lumel(tolerance, lights, vec(v).add(offsets[2]), n, sample[2]);
+            sample += aasample;
+        };
     };
-    
+
     sample = samples;
     float weight = 1.0f / (1.0f + 4.0f*aalights),
           cweight = weight * (aalights==3 ? 5.0f : 1.0f);
-    for(uint y = y1; y < y2; ++y) {
-        for(uint x = 0; x < lm_w; ++x, lumel += 3) {
+    for(uint y = y1; y < y2; ++y) 
+    {
+        for(uint x = 0; x < lm_w; ++x, lumel += 3) 
+        {
             vec l(0, 0, 0);
             const vec &center = *sample++;
             loopi(aasample-1) l.add(*sample++);
@@ -404,20 +437,20 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
     return lights1.length() || lights2.length();
 }
 
-bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v3, uchar texcoords[8])
+bool setup_surface(plane planes[2], int numplanes, const vec p[4], const vec n[4], uchar texcoords[8])
 {
     vec u, v, s, t;
     if(numplanes < 2)
     {
-        u = (v0 == v1 ? v2 : v1);
-        u.sub(v0);
+        u = (p[0] == p[1] ? p[2] : p[1]);
+        u.sub(p[0]);
         u.normalize();
         v.cross(planes[0], u);
     }
     else
     {
-        u = v2;
-        u.sub(v0);
+        u = p[2];
+        u.sub(p[0]);
         u.normalize();
         v.cross(u, planes[0]);
         t.cross(planes[1], u);
@@ -426,7 +459,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     #define COORDMINMAX(u, v, vert) \
     { \
         vec tovert = vert; \
-        tovert.sub(v0); \
+        tovert.sub(p[0]); \
         float u ## coord = u.dot(tovert), \
               v ## coord = v.dot(tovert); \
         u ## min = min(u ## coord, u ## min); \
@@ -438,16 +471,16 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     float umin(0.0f), umax(0.0f),
           vmin(0.0f), vmax(0.0f),
           tmin(0.0f), tmax(0.0f);
-    COORDMINMAX(u, v, v1)
-    COORDMINMAX(u, v, v2)
+    COORDMINMAX(u, v, p[1])
+    COORDMINMAX(u, v, p[2])
     if(numplanes < 2)
     {
-        COORDMINMAX(u, v, v3)
+        COORDMINMAX(u, v, p[3])
     }
     else
     {
-        COORDMINMAX(u, t, v2)
-        COORDMINMAX(u, t, v3)
+        COORDMINMAX(u, t, p[2])
+        COORDMINMAX(u, t, p[3])
     };
 
     int scale = int(min(umax - umin, vmax - vmin));
@@ -466,7 +499,7 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     lm_w = max(LM_MINW, min(LM_MAXW, ul));
     lm_h = max(LM_MINH, min(LM_MAXH, vl + tl));
 
-    vec origin1(v0), uo(u), vo(v);
+    vec origin1(p[0]), uo(u), vo(v);
     uo.mul(umin);
     if(numplanes < 2) vo.mul(vmin);
     else
@@ -480,16 +513,18 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
     ustep.mul((umax - umin) / (lm_w - 1));
     uint split = vl * lm_h / (vl + tl);
     vstep.mul((vmax - vmin) / (split - 1));
-    if(!generate_lightmap(lpu, 0, split, origin1, planes[0], ustep, vstep))
+    if(!generate_lightmap(lpu, 0, split, origin1, p, n, numplanes > 1 ? 3 : 4, ustep, vstep))
         return false;
     vec origin2;
     if(numplanes > 1)
     {
         vec tstep(t);
         tstep.mul(tmax / (lm_h - split - 1));
-        origin2 = v0;
+        origin2 = p[0];
         origin2.add(uo);
-        if(!generate_lightmap(lpu, split, lm_h, origin2, planes[1], ustep, tstep))
+        vec p2[3] = {p[0], p[2], p[3]}, 
+            n2[3] = {n[0], n[2], n[3]};
+        if(!generate_lightmap(lpu, split, lm_h, origin2, p2, n2, 3, ustep, tstep))
             return false;
     };
 
@@ -505,18 +540,18 @@ bool setup_surface(plane planes[2], int numplanes, vec v0, vec v1, vec v2, vec v
 
     float uscale = 255.0f / float(umax - umin),
           vscale = 255.0f / float(vmax - vmin) * float(split) / float(lm_h);
-    CALCVERT(origin1, u, v, 0, 0, v0)
-    CALCVERT(origin1, u, v, 0, 1, v1)
-    CALCVERT(origin1, u, v, 0, 2, v2)
+    CALCVERT(origin1, u, v, 0, 0, p[0])
+    CALCVERT(origin1, u, v, 0, 1, p[1])
+    CALCVERT(origin1, u, v, 0, 2, p[2])
     if(numplanes < 2) 
     {
-        CALCVERT(origin1, u, v, 0, 3, v3)
+        CALCVERT(origin1, u, v, 0, 3, p[3])
     }
     else
     {
         uchar toffset = (uchar)(255.0 * float(split) / float(lm_h));
         float tscale = 255.0f / float(tmax - tmin) * float(lm_h - split) / float(lm_h);
-        CALCVERT(origin2, u, t, toffset, 3, v3)
+        CALCVERT(origin2, u, t, toffset, 3, p[3])
     };
     return true;
 };
@@ -554,12 +589,15 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!numplanes || !find_lights(c, cx, cy, cz, size, planes, numplanes))
             continue;
 
-        vec v0(verts[faceverts(c, i, 0)]),
-            v1(verts[faceverts(c, i, 1)]),
-            v2(verts[faceverts(c, i, 2)]),
-            v3(verts[faceverts(c, i, 3)]);
+        vec v[4], n[4];
+        loopj(4)
+        {
+            int index = faceverts(c, i, j);
+            v[j] = verts[index];
+            ASSERT(findnormal(ivec(cx, cy, cz), i, vvecs[index], n[j]));
+        };
         uchar texcoords[8];
-        if(!setup_surface(planes, numplanes, v0, v1, v2, v3, texcoords))
+        if(!setup_surface(planes, numplanes, v, n, texcoords))
             continue;
 
         CHECK_PROGRESS(return);
@@ -629,7 +667,9 @@ void calclight(int quality)
     canceled = false;
     check_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
+    calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
+    clearnormals();
     if(timer) SDL_RemoveTimer(timer);
     uint total = 0, lumels = 0;
     loopv(lightmaps)
@@ -675,7 +715,9 @@ void patchlight()
     canceled = false;
     check_progress = false;
     SDL_TimerID timer = SDL_AddTimer(500, calclight_timer, NULL);
+    calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
+    clearnormals();
     if(timer) SDL_RemoveTimer(timer);
     loopv(lightmaps)
     {

@@ -59,3 +59,25 @@ extern void resetlightmaps();
 extern void newsurfaces(cube &c);
 extern void freesurfaces(cube &c);
 extern void brightencube(cube &c);
+
+struct lerpvert
+{
+    int vert;
+    float u, v;
+};
+    
+struct lerpbounds
+{
+    const lerpvert *min;
+    const lerpvert *max;
+    float u, ustep;
+    vec normal, nstep;
+};
+
+extern void calcnormals();
+extern void clearnormals();
+extern bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r);
+extern void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ustep, const vec &vstep, lerpvert *lv, int &numv);
+extern void initlerpbounds(const vec *n, lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end);
+extern void lerpnormal(const vec *n, float v, lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep);
+
