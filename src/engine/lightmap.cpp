@@ -594,7 +594,17 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         {
             int index = faceverts(c, i, j);
             v[j] = verts[index];
-            ASSERT(findnormal(ivec(cx, cy, cz), i, vvecs[index], n[j]));
+            if(lodcube || !findnormal(ivec(cx, cy, cz), i, vvecs[index], n[j]))
+            {
+                if(numplanes < 2 || j == 1) n[j] = planes[0];
+                else if(j == 3) n[j] = planes[1];
+                else
+                {
+                    n[j] = planes[0];
+                    n[j].add(planes[1]);
+                    n[j].normalize();
+                };
+            };    
         };
         uchar texcoords[8];
         if(!setup_surface(planes, numplanes, v, n, texcoords))
