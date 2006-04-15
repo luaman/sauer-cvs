@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="sauerbraten"
 	ProjectGUID="{06594C6D-6DA9-49DC-9A91-8F47221DDCFD}"
+	RootNamespace="sauerbraten"
 	>
 	<Platforms>
 		<Platform
@@ -403,6 +404,10 @@
 				</File>
 				<File
 					RelativePath="..\engine\lightmap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\engine\normal.cpp"
 					>
 				</File>
 				<File

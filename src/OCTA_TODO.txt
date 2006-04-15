@@ -19,6 +19,7 @@ aard (e = eihrul (or gilt) could do it):
 - refactor octarender.cpp
 - make sure correct CVS files are flagged as binary? | switch to SVN?
 - maxmodelradiusdistance should not cull players and flags
+- profile for memory usage (devpartner?) | if md2 buffers are a lot, can remove it
 - doors that work nicely with OC?
 - add PITCH to specular computation
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
