@@ -277,10 +277,14 @@ N = registersound name V</pre>
 		cubes will not properly cast shadows on surfaces that are already lit. It is 
 		recommended you do a "calclight" on your map before you publish it with 
 		"savemap".
-		<pre>fullbright  B</pre>
+		<pre>fullbright B</pre>
 		This variable controls whether the map will be shown with lighting disabled. 
 		Fullbright 1 will disable lighting, whereas 0 will enable lighting. (Default = 
 		0)
+        <pre>lerpangle A</pre>
+        Default = 50. This variable controls whether surface normals are interpolated for
+        lighting. If the angle between two surfaces' normals is less than A, then normals
+        will be interpolated between them.
 		<pre>lightprecision P</pre>
 		Default = 32. This is the most important variable for tweaking the lighting, it 
 		determines what the resolution of the lightmap is. As such has a BIG effect on 
@@ -355,6 +359,8 @@ N = registersound name V</pre>
 "bullets"
 "rockets"
 "riflerounds"
+"grenades"
+"cartridges"
 "health"
 "healthboost"
 "greenarmour"
