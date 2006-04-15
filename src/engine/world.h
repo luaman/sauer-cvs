@@ -23,7 +23,8 @@ struct header                   // map file format header
     uchar ambient;
     uchar watercolour[3];
     uchar mapwlod;
-    uchar ureserved[3];
+    uchar lerpangle;
+    uchar ureserved[2];
     int reserved[5];
     char maptitle[128];
     uchar texlist[256];

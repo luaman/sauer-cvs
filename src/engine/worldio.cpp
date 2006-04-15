@@ -217,6 +217,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("lodsize", hdr.mapwlod);
     setvar("ambient", hdr.ambient);
     setvar("fullbright", 0);
+    setvar("lerpangle", hdr.lerpangle);
 
     show_out_of_renderloop_progress(0, "clearing world...");
     freeocta(worldroot);
