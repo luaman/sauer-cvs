@@ -325,14 +325,17 @@ int clipfacevec(const facevec &o, const facevec &dir, int cx, int cy, int size, 
 
 bool insideface(const facevec *p, int nump, const facevec *o)
 {
+    int bounds = 0;
     loopi(4)
     {
         const facevec &cur = o[i], &next = o[(i+1)%4];
+        if(cur == next) continue;
         facevec dir(next.x-cur.x, next.y-cur.y);
         int offset = dir.x*cur.y - dir.y*cur.x;
         loopj(nump) if(dir.x*p[j].y - dir.y*p[j].x > offset) return false;
+        bounds++;
     };
-    return true;
+    return bounds>=3;
 };
 
 int clipfacevecs(const facevec *o, int cx, int cy, int size, facevec *rvecs)
@@ -345,6 +348,7 @@ int clipfacevecs(const facevec *o, int cx, int cy, int size, facevec *rvecs)
     loopi(4)
     {
         const facevec &cur = o[i], &next = o[(i+1)%4];
+        if(cur == next) continue;
         facevec dir(next.x-cur.x, next.y-cur.y);
         r += clipfacevec(cur, dir, cx, cy, size, &rvecs[r]);
     };
@@ -371,7 +375,7 @@ bool occludesface(cube &c, int orient, const ivec &o, int size, const ivec &vo, 
          facevec cf[8];
          int numc = clipfacevecs(vf, o[C[dim]], o[R[dim]], size, cf);
          if(numc < 3) return true;
-         if(isempty(c)) return false;
+         if(isempty(c) || !touchingface(c, orient)) return false;
          facevec of[4];
          genfacevecs(c, orient, o, size, false, of);
          return insideface(cf, numc, of); 
@@ -1727,10 +1731,10 @@ bool remip(cube &c, int x, int y, int z, int size)
     cube *nh = n.children;
     loopi(8)
     {
-        if (ch[i].faces[0] != nh[i].faces[0] ||
-            ch[i].faces[1] != nh[i].faces[1] ||
-            ch[i].faces[2] != nh[i].faces[2] ||
-            ch[i].material != mat)
+        if(ch[i].faces[0] != nh[i].faces[0] ||
+           ch[i].faces[1] != nh[i].faces[1] ||
+           ch[i].faces[2] != nh[i].faces[2] ||
+           ch[i].material != mat)
             { freeocta(nh); return false; }
 
         if(isempty(ch[i]) && isempty(nh[i])) continue;
