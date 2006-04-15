@@ -1179,7 +1179,7 @@ bool checkquery(occludequery *query)
         glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, (GLuint *)&fragments);
         query->fragments = fragments;
     };
-    return fragments < oqfrags;
+    return fragments < (uint)oqfrags;
 };
 
 void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o)
@@ -1383,7 +1383,7 @@ void renderq(int w, int h)
     {
         setorigin(va, va == visibleva);
 
-        glColor3f(1, 1, 1);
+        glColor4f(1, 1, 1, 1);
 
         if(hasOQ && oqfrags > 0 && va != visibleva)
         {
@@ -1408,7 +1408,7 @@ void renderq(int w, int h)
         vtris += (va->curlod ? va->l1 : va->l0).tris;
         vverts += va->verts;
 
-        if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor3f(1, showvas/3.0f, 1-showvas/3.0f); showvas++; };
+        if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, GL_SHORT, sizeof(vertex), &(va->vbuf[0].x));

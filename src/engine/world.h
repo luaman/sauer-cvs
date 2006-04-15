@@ -70,3 +70,4 @@ struct vvec : svec
 };
 
 struct vertex : vvec { short u, v; };
+
