@@ -211,7 +211,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
     if(hdr.version>MAPVERSION) fatal("this map requires a newer version of sauerbraten");
     if(!hdr.ambient) hdr.ambient = 25;
-    if(hdr.version<12) hdr.lerpangle = 50;
+    if(hdr.version<13) hdr.lerpangle = 50;
     setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
     setvar("lighterror", hdr.maple ? hdr.maple : 8);
     setvar("lightlod", hdr.mapllod);
