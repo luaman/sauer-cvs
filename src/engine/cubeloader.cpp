@@ -52,7 +52,8 @@ struct cubeloader
     void create_ent(c_persistent_entity &ce)
     {
         if(ce.type==14) return;    // FIXME
-        if(ce.type>=7) ce.type++;
+        if(ce.type>=7) ce.type++;  // grenade ammo
+        if(ce.type>=8) ce.type++;  // pistol ammo
         extentity &e = *et->newentity();
         et->getents().add(&e);
         e.type = ce.type;

@@ -18,6 +18,7 @@ struct entities : icliententities
             {5,     15,    S_ITEMAMMO,   "RL"},
             {5,     15,    S_ITEMAMMO,   "RI"},
             {10,    30,    S_ITEMAMMO,   "GL"},
+            {20,    80,    S_ITEMAMMO,   "PI"},
             {25,    100,   S_ITEMHEALTH, "H"},
             {10,    1000,  S_ITEMHEALTH, "MH"},
             {100,   100,   S_ITEMARMOUR, "GA"},
@@ -72,7 +73,7 @@ struct entities : icliententities
                 {
                     static char *entmdlnames[] =
                     {
-                        "shells", "bullets", "rockets", "rrounds", "grenades", "health", "boost",
+                        "shells", "bullets", "rockets", "rrounds", "grenades", "cartridges", "health", "boost",
                         "g_armour", "y_armour", "quad", "teleporter",
                     };
 
@@ -122,12 +123,13 @@ struct entities : icliententities
         };
         switch(ents[n]->type)
         {
-            case I_SHELLS:   radditem(n, d->ammo[GUN_SG]); break;
-            case I_BULLETS:  radditem(n, d->ammo[GUN_CG]); break;
-            case I_ROCKETS:  radditem(n, d->ammo[GUN_RL]); break;
-            case I_ROUNDS:   radditem(n, d->ammo[GUN_RIFLE]); break;
-            case I_GRENADES: radditem(n, d->ammo[GUN_GL]); break;
-            case I_HEALTH:   radditem(n, d->health); break;
+            case I_SHELLS:     radditem(n, d->ammo[GUN_SG]); break;
+            case I_BULLETS:    radditem(n, d->ammo[GUN_CG]); break;
+            case I_ROCKETS:    radditem(n, d->ammo[GUN_RL]); break;
+            case I_ROUNDS:     radditem(n, d->ammo[GUN_RIFLE]); break;
+            case I_GRENADES:   radditem(n, d->ammo[GUN_GL]); break;
+            case I_CARTRIDGES: radditem(n, d->ammo[GUN_PISTOL]); break;
+            case I_HEALTH:     radditem(n, d->health); break;
 
             case I_BOOST:
                 d->maxhealth += 10;
@@ -193,13 +195,14 @@ struct entities : icliententities
         int ammo = np*4;
         switch(ents[n]->type)
         {
-            case I_SHELLS:   additem(n, d->ammo[GUN_SG], ammo); break;
-            case I_BULLETS:  additem(n, d->ammo[GUN_CG], ammo); break;
-            case I_ROCKETS:  additem(n, d->ammo[GUN_RL], ammo); break;
-            case I_ROUNDS:   additem(n, d->ammo[GUN_RIFLE], ammo); break;
-            case I_GRENADES: additem(n, d->ammo[GUN_GL], ammo); break;
-            case I_HEALTH:   additem(n, d->health,  np*5); break;
-            case I_BOOST:    additem(n, d->health,  60); break;
+            case I_SHELLS:     additem(n, d->ammo[GUN_SG], ammo); break;
+            case I_BULLETS:    additem(n, d->ammo[GUN_CG], ammo); break;
+            case I_ROCKETS:    additem(n, d->ammo[GUN_RL], ammo); break;
+            case I_ROUNDS:     additem(n, d->ammo[GUN_RIFLE], ammo); break;
+            case I_GRENADES:   additem(n, d->ammo[GUN_GL], ammo); break;
+            case I_CARTRIDGES: additem(n, d->ammo[GUN_PISTOL], ammo); break;
+            case I_HEALTH:     additem(n, d->health,  np*5); break;
+            case I_BOOST:      additem(n, d->health,  60); break;
 
             case I_GREENARMOUR:
                 // (100h/100g only absorbs 200 damage)
@@ -322,7 +325,7 @@ struct entities : icliententities
         static const char *entnames[] =
         {
             "none?", "light", "playerstart",
-            "shells", "bullets", "rockets", "riflerounds", "grenades",
+            "shells", "bullets", "rockets", "riflerounds", "grenades", "cartridges",
             "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
             "teleport", "teledest",
             "mapmodel", "monster", "trigger", "jumppad",
@@ -341,6 +344,10 @@ struct entities : icliententities
         if(getmapversion() <= 10)
         {
             if(e.type >= I_GRENADES) e.type++;
+        };
+        if(getmapversion() <= 12)
+        {
+            if(e.type >= I_CARTRIDGES) e.type++;
         };
     };
 

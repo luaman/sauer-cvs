@@ -9,7 +9,7 @@ enum                            // static entity types
     NOTUSED = ET_EMPTY,         // entity slot not in use in map
     LIGHT = ET_LIGHT,           // lightsource, attr1 = radius, attr2 = intensity
     PLAYERSTART,                // attr1 = angle
-    I_SHELLS, I_BULLETS, I_ROCKETS, I_ROUNDS, I_GRENADES,
+    I_SHELLS, I_BULLETS, I_ROCKETS, I_ROUNDS, I_GRENADES, I_CARTRIDGES,
     I_HEALTH, I_BOOST,
     I_GREENARMOUR, I_YELLOWARMOUR,
     I_QUAD,
