@@ -17,11 +17,9 @@ eihrul:
 aard (e = eihrul (or gilt) could do it):
 - optimize model shader - very expensive for hudgun - make specialized no specularity shader for trees
 - refactor octarender.cpp
-- add pistol ammo box
 - make sure correct CVS files are flagged as binary? | switch to SVN?
 - maxmodelradiusdistance should not cull players and flags
 - doors that work nicely with OC?
-- VBO verts are 24 bytes, remove the next ptr, make UVs shorts or bytes? scale world 2x to make it fit entirely in short
 - add PITCH to specular computation
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - can't select last 3 textures in list
