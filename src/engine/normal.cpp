@@ -39,7 +39,7 @@ inline unsigned int hthash (const nkey &k)
 
 hashtable<nkey, nval> normals;
 
-VARF(lerpangle, 0, 50, 180, hdr.lerpangle = lerpangle);
+VARF(lerpangle, 0, 44, 180, hdr.lerpangle = lerpangle);
 
 void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface)
 {
