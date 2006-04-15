@@ -113,11 +113,9 @@ void addnormals(cube &c, const ivec &o, int size)
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);
         if(!numplanes) continue;
-        int q[4];
         loopj(4)
         {
             int index = faceverts(c, i, j);
-            q[j] = index;
             vvec &v = vvecs[index];
             vec n;
             if(numplanes < 2 || j == 1) n = planes[0];
@@ -135,6 +133,7 @@ void addnormals(cube &c, const ivec &o, int size)
 
 void calcnormals()
 {
+    if(!lerpangle) return;
     loopi(8) addnormals(worldroot[i], ivec(i, 0, 0, 0, hdr.worldsize/2), hdr.worldsize/2);
 };
 
@@ -151,7 +150,7 @@ void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ust
     loopj(numv)
     {
         if(j && (p[j] == p[j-1] || (j == numv-1 && p[j] == p[0]))) continue;
-        vec dir(p[i]);
+        vec dir(p[j]);
         dir.sub(origin);
         lv[i].vert = j;
         lv[i].u = ustep.dot(dir)/ul;
@@ -167,6 +166,11 @@ void setlerpstep(const vec *n, float v, lerpbounds &bounds)
     {
         bounds.nstep = vec(0, 0, 0);
         bounds.normal = n[bounds.min->vert];
+        if(n[bounds.min->vert] != n[bounds.max->vert])
+        {
+            bounds.normal.add(n[bounds.max->vert]);
+            bounds.normal.normalize();
+        };
         bounds.ustep = 0;
         bounds.u = bounds.min->u;
         return;
@@ -197,8 +201,8 @@ void initlerpbounds(const vec *n, lerpvert *lv, int numv, lerpbounds &start, ler
     else if(first->u <= second->u) { start.min = first; end.min = second; }
     else { start.min = second; end.min = first; };
 
-    start.max = &lv[(start.min->vert+numv-1)%numv];
-    end.max = &lv[(end.min->vert+1)%numv];
+    start.max = (start.min == lv ? &lv[numv-1] : start.min-1);
+    end.max = (end.min == &lv[numv-1] ? lv : end.min+1);
 
     setlerpstep(n, 0, start);
     setlerpstep(n, 0, end);
@@ -208,7 +212,7 @@ void updatelerpbounds(const vec *n, float v, lerpvert *lv, int numv, lerpbounds 
 {
     if(v >= start.max->v)
     {
-        lerpvert *next = &lv[(start.min->vert+numv-1)%numv];
+        const lerpvert *next = (start.max == lv ? &lv[numv-1] : start.max-1);
         if(next->v > start.max->v)
         {
             start.min = start.max;
@@ -218,7 +222,7 @@ void updatelerpbounds(const vec *n, float v, lerpvert *lv, int numv, lerpbounds 
     };
     if(v >= end.max->v)
     {
-        lerpvert *next = &lv[(end.min->vert+1)%numv];
+        const lerpvert *next = (end.max == &lv[numv-1] ? lv : end.max+1);
         if(next->v > end.max->v)
         {
             end.min = end.max;
@@ -236,6 +240,7 @@ void lerpnormal(const vec *n, float v, lerpvert *lv, int numv, lerpbounds &start
     {
         nstep = vec(0, 0, 0);
         normal = start.normal;
+        normal.add(end.normal);
         normal.normalize();
     }
     else

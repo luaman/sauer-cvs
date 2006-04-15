@@ -437,7 +437,7 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
     return lights1.length() || lights2.length();
 }
 
-bool setup_surface(plane planes[2], int numplanes, const vec p[4], const vec n[4], uchar texcoords[8])
+bool setup_surface(plane planes[2], int numplanes, const vec p[4], const vec n[4], const vec n2[3], uchar texcoords[8])
 {
     vec u, v, s, t;
     if(numplanes < 2)
@@ -522,8 +522,7 @@ bool setup_surface(plane planes[2], int numplanes, const vec p[4], const vec n[4
         tstep.mul(tmax / (lm_h - split - 1));
         origin2 = p[0];
         origin2.add(uo);
-        vec p2[3] = {p[0], p[2], p[3]}, 
-            n2[3] = {n[0], n[2], n[3]};
+        vec p2[3] = {p[0], p[2], p[3]}; 
         if(!generate_lightmap(lpu, split, lm_h, origin2, p2, n2, 3, ustep, tstep))
             return false;
     };
@@ -589,25 +588,20 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!numplanes || !find_lights(c, cx, cy, cz, size, planes, numplanes))
             continue;
 
-        vec v[4], n[4];
+        vec v[4], n[4], n2[3];
         loopj(4)
         {
             int index = faceverts(c, i, j);
             v[j] = verts[index];
             if(lodcube || !findnormal(ivec(cx, cy, cz), i, vvecs[index], n[j]))
             {
-                if(numplanes < 2 || j == 1) n[j] = planes[0];
-                else if(j == 3) n[j] = planes[1];
-                else
-                {
-                    n[j] = planes[0];
-                    n[j].add(planes[1]);
-                    n[j].normalize();
-                };
-            };    
+                n[j] = planes[0];
+                if(numplanes >= 2 && j != 1) n2[j > 1 ? j-1 : j] = planes[1];
+            }
+            else if(numplanes >= 2 && j != 1) n2[j > 1 ? j-1 : j] = n[j];    
         };
         uchar texcoords[8];
-        if(!setup_surface(planes, numplanes, v, n, texcoords))
+        if(!setup_surface(planes, numplanes, v, n, n2, texcoords))
             continue;
 
         CHECK_PROGRESS(return);
