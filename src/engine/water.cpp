@@ -193,6 +193,29 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
     };
 };
 
+void renderwaterfall(materialsurface &m, Texture *t)
+{
+    float xf = 8.0f/t->xs;
+    float yf = 8.0f/t->ys;
+    float d = 16.0f*lastmillis/1000.0f;
+    int dim = dimension(m.orient);
+
+    ivec o(m.o);
+    if(dimcoord(m.orient)) o[dim] += m.size;
+    glBegin(GL_POLYGON);
+    loopi(4)
+    {
+        ivec v(o);
+        if(i == 1 || i == 2) v[dim^1] += m.size;
+        if(i <= 1) v.z += m.size;
+        glTexCoord2f(xf*v[dim^1], yf*(v.z+d));
+        glVertex3i(v.x, v.y, v.z);
+    };
+    glEnd();
+
+    xtraverts += 4;
+};
+
 int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 {
     switch(c.material)
@@ -202,7 +225,7 @@ int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 
     case MAT_WATER:
         if(visibleface(c, orient, x, y, z, size, MAT_WATER))
-            return (orient == O_TOP ? MATSURF_VISIBLE : MATSURF_EDIT_ONLY);
+            return (orient != O_BOTTOM ? MATSURF_VISIBLE : MATSURF_EDIT_ONLY);
         break;
 
     case MAT_GLASS:
@@ -263,7 +286,8 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
          #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
          defaultshader->set();
          matloop(MAT_WATER,
-             if(renderwaterlod(m.o.x, m.o.y, m.o.z + m.size, m.size, t) >= (uint)m.size * 2)
+             if(m.orient != O_TOP) renderwaterfall(m, t); 
+             else if(renderwaterlod(m.o.x, m.o.y, m.o.z + m.size, m.size, t) >= (uint)m.size * 2)
                  renderwater(m.size, m.o.x, m.o.y, m.o.z + m.size, m.size, t);
          );
 
