@@ -41,14 +41,14 @@ hashtable<nkey, nval> normals;
 
 VARF(lerpangle, 0, 44, 180, hdr.lerpangle = lerpangle);
 
-void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface)
+void addnormal(const ivec &origin, int orient, const vvec &offset, int plane, const vec &surface)
 {
     nkey key(origin, offset);
     nval &val = normals[key];
     if(!val.normals) val.normals = new vector<normal>;
 
     vec pos(offset.tovec(origin));
-    uchar face = orient<<3;
+    uchar face = (orient<<3) | (plane<<6);
     if(origin.x >= pos.x) face |= 1;
     if(origin.y >= pos.y) face |= 2;
     if(origin.z >= pos.z) face |= 4;
@@ -58,7 +58,7 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
     loopv(*val.normals)
     {
         normal &o = (*val.normals)[i];
-        if(n.surface.dot(o.surface) > cos(lerpangle*RAD))
+        if((n.face&0x3F) != (o.face&0x3F) && n.surface.dot(o.surface) > cos(lerpangle*RAD))
         {
             o.average.add(n.surface);
             n.average.add(o.surface);
@@ -67,24 +67,37 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
     val.normals->add(n);
 };
 
-bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
+bool findnormal(const ivec &origin, int orient, const vvec &offset, int plane, vec &r)
 {
     nkey key(origin, offset);
     nval *val = normals.access(key);
     if(!val || !val->normals) return false;
 
     vec pos(offset.tovec(origin));
-    uchar face = orient<<3;
+    uchar face = (orient<<3) | ((plane <= 1 ? plane : 0) << 6);
     if(origin.x >= pos.x) face |= 1;
     if(origin.y >= pos.y) face |= 2;
     if(origin.z >= pos.z) face |= 4;
 
+    uchar mask = (plane <= 1 ? 0xFF : 0x3F);
     loopv(*val->normals)
     {
         normal &n = (*val->normals)[i];
-        if(n.face == face)
+        if((n.face&mask) == (face&mask))
         {
             r = vec(n.average);
+            if(plane > 1)
+            {
+                loopj((*val->normals).length() - (i+1))
+                {
+                    normal &o = (*val->normals)[i+1+j];
+                    if((o.face&mask) == (face&mask))
+                    {
+                        r.add(o.average);
+                        break;
+                    };
+                };
+            };
             r.normalize();
             return true;
         };
@@ -118,15 +131,8 @@ void addnormals(cube &c, const ivec &o, int size)
             int index = faceverts(c, i, j);
             vvec &v = vvecs[index];
             vec n;
-            if(numplanes < 2 || j == 1) n = planes[0];
-            else if(j == 3) n = planes[1];
-            else
-            {
-                n = planes[0];
-                n.add(planes[1]);
-                n.normalize();
-            };
-            addnormal(o, i, v, n);       
+            if(numplanes < 2 || j != 3) addnormal(o, i, v, 0, planes[0]);
+            if(numplanes >= 2 && j != 1) addnormal(o, i, v, 1, planes[1]);
         };
     };
 };
@@ -149,10 +155,14 @@ void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ust
     int i = 0;
     loopj(numv)
     {
-        if(j && (p[j] == p[j-1] || (j == numv-1 && p[j] == p[0]))) continue;
+        if(j)
+        {
+            if(p[j] == p[j-1] && n[j] == n[j-1]) continue;
+            if(j == numv-1 && p[j] == p[0] && n[j] == n[0]) continue;
+        };
         vec dir(p[j]);
         dir.sub(origin);
-        lv[i].vert = j;
+        lv[i].normal = n[j];
         lv[i].u = ustep.dot(dir)/ul;
         lv[i].v = vstep.dot(dir)/vl;
         i++;
@@ -160,15 +170,15 @@ void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ust
     numv = i;
 };
 
-void setlerpstep(const vec *n, float v, lerpbounds &bounds)
+void setlerpstep(float v, lerpbounds &bounds)
 {
     if(bounds.min->v + 1 > bounds.max->v)
     {
         bounds.nstep = vec(0, 0, 0);
-        bounds.normal = n[bounds.min->vert];
-        if(n[bounds.min->vert] != n[bounds.max->vert])
+        bounds.normal = bounds.min->normal;
+        if(bounds.min->normal != bounds.max->normal)
         {
-            bounds.normal.add(n[bounds.max->vert]);
+            bounds.normal.add(bounds.max->normal);
             bounds.normal.normalize();
         };
         bounds.ustep = 0;
@@ -176,39 +186,39 @@ void setlerpstep(const vec *n, float v, lerpbounds &bounds)
         return;
     };
 
-    bounds.nstep = n[bounds.max->vert];
-    bounds.nstep.sub(n[bounds.min->vert]);
+    bounds.nstep = bounds.max->normal;
+    bounds.nstep.sub(bounds.min->normal);
     bounds.nstep.div(bounds.max->v-bounds.min->v);
 
     bounds.normal = bounds.nstep;
     bounds.normal.mul(v - bounds.min->v);
-    bounds.normal.add(n[bounds.min->vert]);
+    bounds.normal.add(bounds.min->normal);
 
     bounds.ustep = (bounds.max->u-bounds.min->u) / (bounds.max->v-bounds.min->v);
     bounds.u = bounds.ustep * (v-bounds.min->v) + bounds.min->u;
 };
 
-void initlerpbounds(const vec *n, lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end)
+void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end)
 {
-    lerpvert *first = &lv[0], *second = 0;
+    const lerpvert *first = &lv[0], *second = NULL;
     loopi(numv-1)
     {
-        if(lv[i+1].v <= first->v) { second = first; first = &lv[i+1]; }
-        else if(!second) second = &lv[i+1];
+        if(lv[i+1].v < first->v) { second = first; first = &lv[i+1]; }
+        else if(!second || lv[i+1].v < second->v) second = &lv[i+1];
     };
 
     if(int(first->v) < int(second->v)) { start.min = end.min = first; }
-    else if(first->u <= second->u) { start.min = first; end.min = second; }
-    else { start.min = second; end.min = first; };
+    else if(first->u > second->u) { start.min = second; end.min = first; }
+    else { start.min = first; end.min = second; };
 
     start.max = (start.min == lv ? &lv[numv-1] : start.min-1);
     end.max = (end.min == &lv[numv-1] ? lv : end.min+1);
 
-    setlerpstep(n, 0, start);
-    setlerpstep(n, 0, end);
+    setlerpstep(0, start);
+    setlerpstep(0, end);
 };
 
-void updatelerpbounds(const vec *n, float v, lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end)
+void updatelerpbounds(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end)
 {
     if(v >= start.max->v)
     {
@@ -217,7 +227,7 @@ void updatelerpbounds(const vec *n, float v, lerpvert *lv, int numv, lerpbounds 
         {
             start.min = start.max;
             start.max = next;
-            setlerpstep(n, v, start);
+            setlerpstep(v, start);
         };
     };
     if(v >= end.max->v)
@@ -227,14 +237,14 @@ void updatelerpbounds(const vec *n, float v, lerpvert *lv, int numv, lerpbounds 
         {
             end.min = end.max;
             end.max = next;
-            setlerpstep(n, v, end);
+            setlerpstep(v, end);
         };
     };
 };
 
-void lerpnormal(const vec *n, float v, lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep)
+void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep)
 {   
-    updatelerpbounds(n, v, lv, numv, start, end);
+    updatelerpbounds(v, lv, numv, start, end);
 
     if(start.u + 1 > end.u)
     {

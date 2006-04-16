@@ -62,8 +62,11 @@ extern void brightencube(cube &c);
 
 struct lerpvert
 {
-    int vert;
+    vec normal;
     float u, v;
+
+    bool operator==(const lerpvert &l) const { return u == l.u && v == l.v; };
+    bool operator!=(const lerpvert &l) const { return u != l.u || v != l.v; };
 };
     
 struct lerpbounds
@@ -76,8 +79,8 @@ struct lerpbounds
 
 extern void calcnormals();
 extern void clearnormals();
-extern bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r);
+extern bool findnormal(const ivec &origin, int orient, const vvec &offset, int plane, vec &r);
 extern void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ustep, const vec &vstep, lerpvert *lv, int &numv);
-extern void initlerpbounds(const vec *n, lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end);
-extern void lerpnormal(const vec *n, float v, lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep);
+extern void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end);
+extern void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep);
 
