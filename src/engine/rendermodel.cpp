@@ -157,7 +157,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
     if(m->shader) m->shader->set();
     else
     {
-        if(!modelshader) modelshader = lookupshaderbyname("stdmodel");
+        if(!modelshader) modelshader = lookupshaderbyname(m->spec>=1 ? "stdmodel" : "nospecmodel");
         modelshader->set();
     };
     if(renderpath!=R_FIXEDFUNCTION)
