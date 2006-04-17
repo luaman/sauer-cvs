@@ -1254,6 +1254,12 @@ void findvisibleents(cube *c, const ivec &o, int size)
             if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue;
 
             bool occluded = ents->query && ents->query->owner == ents && checkquery(ents->query);
+            if(occluded)
+            {
+                if(camera1->o.x >= co.x && camera1->o.y >= co.y && camera1->o.z >= co.z &&
+                   camera1->o.x < co.x+size && camera1->o.y < co.y+size && camera1->o.z < co.y+size)
+                    occluded = false;
+            };
             if(!occluded)
             {
                 int visible = 0;
