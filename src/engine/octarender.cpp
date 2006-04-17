@@ -1173,6 +1173,7 @@ void resetqueries()
 };
 
 VAR(oqfrags, 0, 16, 64);
+VAR(oqdist, 0, 256, 1024);
 
 bool checkquery(occludequery *query)
 {
@@ -1430,17 +1431,14 @@ void renderq(int w, int h)
 
         glColor4f(1, 1, 1, 1);
 
-        if(hasOQ && oqfrags > 0 && va != visibleva)
+        if(hasOQ && oqfrags > 0 && va != visibleva && va->distance > oqdist)
         {
-            if(va->query && va->query->owner == va)
+            if(va->query && va->query->owner == va && checkquery(va->query))
             {
-                if(!insideva(va, camera1->o) && checkquery(va->query))
-                {
-                    if(va->occluded <= 1) ++va->occluded;
-                    va->query = newquery(va);
-                    if(va->query) drawquery(va->query, va); 
-                    continue;
-                };
+                if(va->occluded <= 1) ++va->occluded;
+                va->query = newquery(va);
+                if(va->query) drawquery(va->query, va); 
+                continue;
             };
 
             va->query = newquery(va);
