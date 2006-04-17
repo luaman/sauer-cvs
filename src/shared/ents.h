@@ -17,8 +17,10 @@ struct entity                                   // persistent map entity
 
 struct extentity : entity                       // part of the entity that doesn't get saved to disk
 {
-    uchar spawned, inoctanode, rendered;        // the only dynamic state of a map entity
+    uchar spawned, inoctanode, visible;        // the only dynamic state of a map entity
     vec color, dir;
+
+    extentity() : visible(false) {};
 };
 
 //extern vector<extentity *> ents;                // map entities

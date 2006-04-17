@@ -1129,7 +1129,7 @@ bool insideva(vtxarray *va, const vec &v)
 };
 
 
-#define MAXQUERY 4096
+#define MAXQUERY 2048
 
 struct queryframe
 {
@@ -1234,14 +1234,14 @@ void drawquery(occludequery *query, vtxarray *va)
 
 extern int octaentsize;
 
-static octaentities *visibleents;
+static octaentities *visibleents, **lastvisibleents;
 
-void rendermapmodels(cube *c, const ivec &o, int size)
+void findvisibleents(cube *c, const ivec &o, int size)
 {
     loopj(8)
     {
         ivec co(j, o.x, o.y, o.z, size); 
-        
+
         if(c[j].va)
         {
             vtxarray *va = c[j].va;
@@ -1253,43 +1253,83 @@ void rendermapmodels(cube *c, const ivec &o, int size)
             octaentities *ents = c[j].ents;
             if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue;
 
+            bool occluded = ents->query && ents->query->owner == ents && checkquery(ents->query);
+            if(!occluded)
+            {
+                int visible = 0;
+                loopv(ents->list)
+                {
+                    extentity &e = *et->getents()[ents->list[i]];
+                    if(e.visible) continue;
+                    e.visible = true;
+                    ++visible;
+                };
+                if(!visible) continue;
+            };
+
             ents->o = co;
             ents->size = size;
-
-            loopv(ents->list)
+            if(occluded)
             {
-                extentity &e = *et->getents()[ents->list[i]];
-                e.rendered = false;
-            };
+                ents->distance = -1;
 
-            ents->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
-            octaentities **prev = &visibleents, *cur = visibleents;
-            while(cur && ents->distance > cur->distance)
+                ents->next = NULL;
+                *lastvisibleents = ents;
+                lastvisibleents = &ents->next;
+            }
+            else
             {
-                prev = &cur->next;
-                cur = cur->next;
-            };
+                ents->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
 
-            ents->next = *prev;
-            *prev = ents;
+                octaentities **prev = &visibleents, *cur = visibleents;
+                while(cur && cur->distance >= 0 && ents->distance > cur->distance)
+                {
+                    prev = &cur->next;
+                    cur = cur->next;
+                };
+
+                if(*prev == NULL) lastvisibleents = &ents->next; 
+                ents->next = *prev;
+                *prev = ents;
+            };
         };
-        if(c[j].children && size > octaentsize) rendermapmodels(c[j].children, co, size>>1);
+        if(c[j].children && size > octaentsize) findvisibleents(c[j].children, co, size>>1);
     };
 };
                         
-VAR(oqmm, 0, 1, 1);
+VAR(oqmm, 0, 4, 8);
 
 extern bool getmmboundingbox(extentity &e, ivec &o, ivec &r);
 
 void rendermapmodels()
 {
     visibleents = NULL;
-    rendermapmodels(worldroot, ivec(0, 0, 0), hdr.worldsize>>1);
+    lastvisibleents = &visibleents;
+    findvisibleents(worldroot, ivec(0, 0, 0), hdr.worldsize>>1);
+
+    static int visible = 0;
 
     for(octaentities *ents = visibleents; ents; ents = ents->next)
     {
-        bool occluded = ents->query && ents->query->owner == ents && checkquery(ents->query);
-        ents->query = oqfrags > 0 && oqmm ? newquery(ents) : NULL;
+        bool occluded = ents->distance < 0;
+        if(!occluded) 
+        {
+            bool hasmodels = false;
+            loopv(ents->list)
+            {
+                extentity &e = *et->getents()[ents->list[i]];
+                if(e.type != ET_MAPMODEL) continue;
+                if(!e.visible) continue;
+                hasmodels = true;
+                break;
+            };
+            if(!hasmodels) continue;
+        };   
+
+        if(!oqfrags || !oqmm) ents->query = NULL;
+        else if(!occluded && (++visible % oqmm)) ents->query = NULL;
+        else ents->query = newquery(ents);
+
         if(ents->query)
         {
             if(occluded)
@@ -1319,11 +1359,11 @@ void rendermapmodels()
                         };
                     };
                 } 
-                else if(!e.rendered)
+                else if(e.visible)
                 {
                     mapmodelinfo &mmi = getmminfo(e.attr2);
                     rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, true, true);
-                    e.rendered = true;
+                    e.visible = false;
                 };
             };
             if(occluded)
