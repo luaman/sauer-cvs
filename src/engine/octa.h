@@ -70,7 +70,7 @@ struct octaentities
     ivec o;
     int size;
 
-    octaentities() : query(0) {};
+    octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
 };
 
 struct cube

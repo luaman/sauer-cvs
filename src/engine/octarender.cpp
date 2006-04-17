@@ -1236,6 +1236,12 @@ extern int octaentsize;
 
 static octaentities *visibleents, **lastvisibleents;
 
+bool insideoctaents(const octaentities *ents, const vec &o)
+{
+    return o.x >= ents->o.x && o.y >= ents->o.y && o.z >= ents->o.z &&
+           o.x < ents->o.x+ents->size && o.y < ents->o.y+ents->size && o.z < ents->o.z+ents->size;
+};
+
 void findvisibleents(cube *c, const ivec &o, int size)
 {
     loopj(8)
@@ -1246,35 +1252,14 @@ void findvisibleents(cube *c, const ivec &o, int size)
         {
             vtxarray *va = c[j].va;
             if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue;
-            else if(va->occluded > 1 && va->query && va->query->owner == va) continue;
+            else if(va->occluded > 1 && va->query && va->query->owner == va) continue; 
         };
         if(c[j].ents)
         {
             octaentities *ents = c[j].ents;
-            if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue;
+            if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue; 
 
             bool occluded = ents->query && ents->query->owner == ents && checkquery(ents->query);
-            if(occluded)
-            {
-                if(camera1->o.x >= co.x && camera1->o.y >= co.y && camera1->o.z >= co.z &&
-                   camera1->o.x < co.x+size && camera1->o.y < co.y+size && camera1->o.z < co.y+size)
-                    occluded = false;
-            };
-            if(!occluded)
-            {
-                int visible = 0;
-                loopv(ents->list)
-                {
-                    extentity &e = *et->getents()[ents->list[i]];
-                    if(e.visible) continue;
-                    e.visible = true;
-                    ++visible;
-                };
-                if(!visible) continue;
-            };
-
-            ents->o = co;
-            ents->size = size;
             if(occluded)
             {
                 ents->distance = -1;
@@ -1285,6 +1270,16 @@ void findvisibleents(cube *c, const ivec &o, int size)
             }
             else
             {
+                int visible = 0;
+                loopv(ents->list)
+                {
+                    extentity &e = *et->getents()[ents->list[i]];
+                    if(e.visible) continue;
+                    e.visible = true;
+                    ++visible;
+                };
+                if(!visible) continue;
+
                 ents->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
 
                 octaentities **prev = &visibleents, *cur = visibleents;
@@ -1332,7 +1327,7 @@ void rendermapmodels()
             if(!hasmodels) continue;
         };   
 
-        if(!oqfrags || !oqmm) ents->query = NULL;
+        if(!oqfrags || !oqmm || insideoctaents(ents, camera1->o)) ents->query = NULL;
         else if(!occluded && (++visible % oqmm)) ents->query = NULL;
         else ents->query = newquery(ents);
 

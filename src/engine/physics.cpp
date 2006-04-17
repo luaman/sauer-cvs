@@ -74,7 +74,7 @@ void traverseoctaentity(bool add, int id, cube *c, ivec &cor, int size, ivec &bo
             traverseoctaentity(add, id, c[i].children, o, size>>1, bo, br);
         else if(add)
         {
-            if(!c[i].ents) c[i].ents = new octaentities();
+            if(!c[i].ents) c[i].ents = new octaentities(o, size);
             c[i].ents->list.add(id);
         }
         else if(c[i].ents)
