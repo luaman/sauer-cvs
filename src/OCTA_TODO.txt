@@ -15,7 +15,6 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
-- optimize model shader - very expensive for hudgun - make specialized no specularity shader for trees
 - refactor octarender.cpp
 - make sure correct CVS files are flagged as binary? | switch to SVN?
 - maxmodelradiusdistance should not cull players and flags

@@ -157,7 +157,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
     if(m->shader) m->shader->set();
     else
     {
-        if(!modelshader) modelshader = lookupshaderbyname(m->spec>=1 ? "stdmodel" : "nospecmodel");
+        if(!modelshader) modelshader = lookupshaderbyname(m->spec>=1 ? "stdppmodel" : "nospecpvmodel");
         modelshader->set();
     };
     if(renderpath!=R_FIXEDFUNCTION)
@@ -175,6 +175,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         vec ambient = vec(color).mul(m->ambient);
         loopi(3) ambient[i] = max(ambient[i], 0.2f);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, ambient.x, ambient.y, ambient.z, 1);
+        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, ambient.x, ambient.y, ambient.z, 1);         // FIXME, set these on a per shader basis
 
     };
     if(!m->cullface) glDisable(GL_CULL_FACE);
