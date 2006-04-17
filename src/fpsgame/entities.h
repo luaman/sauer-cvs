@@ -18,7 +18,7 @@ struct entities : icliententities
             {5,     15,    S_ITEMAMMO,   "RL"},
             {5,     15,    S_ITEMAMMO,   "RI"},
             {10,    30,    S_ITEMAMMO,   "GL"},
-            {20,    80,    S_ITEMAMMO,   "PI"},
+            {30,    120,   S_ITEMAMMO,   "PI"},
             {25,    100,   S_ITEMHEALTH, "H"},
             {10,    1000,  S_ITEMHEALTH, "MH"},
             {100,   100,   S_ITEMARMOUR, "GA"},
@@ -39,7 +39,7 @@ struct entities : icliententities
     
     void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_STATIC, int basetime = 0, float speed = 10.0f)
     {
-        rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, false, speed, basetime, NULL, true);
+        rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, false, speed, basetime, NULL, true, true);
     };
 
     void renderentities()

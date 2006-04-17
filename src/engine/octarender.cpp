@@ -1322,7 +1322,7 @@ void rendermapmodels()
                 else if(!e.rendered)
                 {
                     mapmodelinfo &mmi = getmminfo(e.attr2);
-                    rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, true);
+                    rendermodel(e.color, e.dir, mmi.name, ANIM_STATIC, 0, e.attr4, e.o.x, e.o.y, e.o.z+mmi.zoff+e.attr3, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, true, true);
                     e.rendered = true;
                 };
             };

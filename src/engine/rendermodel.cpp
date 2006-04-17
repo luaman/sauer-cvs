@@ -139,16 +139,16 @@ void clear_md2s()
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, bool cull)
+void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, bool cullany, bool culldist)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
-    if(cull)
+    if(cullany)
     {
         vec center;
         float radius = m->boundsphere(0/*frame*/, center);   // FIXME
         center.add(vec(x, y, z));
-        if(center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
+        if(culldist && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     };
     m->setskin(tex);  

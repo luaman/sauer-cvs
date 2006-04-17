@@ -15,17 +15,12 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
-- refactor octarender.cpp
-- make sure correct CVS files are flagged as binary? | switch to SVN?
-- maxmodelradiusdistance should not cull players and flags
-- profile for memory usage (devpartner?) | if md2 buffers are a lot, can remove it
 - doors that work nicely with OC?
 - add PITCH to specular computation
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - can't select last 3 textures in list
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - (e) bouncing gib particles
-- finish up grenade launcher (skin? doc?)
 - (e) set textures when extruding
 - water shader
 - monster spawner ammo - add egg model
@@ -34,14 +29,15 @@ aard (e = eihrul (or gilt) could do it):
 - (e) new multiplayer model.. md3?
 - (e) keybinds per mode: editing/game
 - player spawn sound
+- profile for memory usage (devpartner?) | if md2 buffers are a lot, can remove it
+- refactor octarender.cpp & others
+- make sure correct CVS files are flagged as binary? | switch to SVN?
 
-- maybe make game code closed source to stop people making little ripoff games? what about ripoffs that only replace media?
 - fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
   -> switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
 
-- check VFC on entities is optimal
 - start with rpg mode | clientside only, simplify
 
 - make start of flares etc spawn out further from the player
@@ -103,7 +99,6 @@ aard (e = eihrul (or gilt) could do it):
 - fix variance in framerate?
 - landscape generation and tools (see wiki)
 - render entities at distance as sprites
-- try out hardware occlusion queries before portals
 - sort the order of rendering mapmodels, so as to factor out glbindbuffer
 - SP: add pistol ammo box... make monster use it? hmmm not more hitscan
 - switch to new fmod api & 3d sound? not available for bsd? openal?
