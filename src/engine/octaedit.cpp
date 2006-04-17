@@ -26,7 +26,6 @@ ivec cor, lastcor;
 ivec cur, lastcur;
 
 bool editmode = false;
-bool heightmode = false;
 bool havesel = false;
 bool dragging = false;
 
@@ -43,7 +42,7 @@ VARF(gridpower, 2, 3, VVEC_INT-1,
 
 void editdrag(bool on)
 {
-    if(dragging = on && !heightmode)
+    if(dragging = on)
     {
         cancelsel();
         if(cor[0]<0) return;
@@ -80,7 +79,6 @@ void toggleedit()
         player->state = CS_EDITING;
     };
     cancelsel();
-    heightmode = false;
     keyrepeat(editmode);
     editing = editmode;
 };
@@ -98,16 +96,8 @@ bool noedit()
     return !viewable;
 };
 
-void toggleheight()
-{
-     if(noedit()) return;
-     heightmode = !heightmode;
-     cancelsel();
-};
-
 COMMAND(reorient, ARG_NONE);
 COMMANDN(edittoggle, toggleedit, ARG_NONE);
-COMMANDN(heighttoggle, toggleheight, ARG_NONE);
 
 
 ///////// selection support /////////////
@@ -145,6 +135,17 @@ bool selectcorners = false;
 void selcorners(bool isdown) { selectcorners = isdown; editdrag(isdown); };
 COMMAND(selcorners, ARG_DOWN);
 
+uchar cursorcolor[3] = {120, 120, 120};
+
+void setcursorcolor(int r, int g, int b)
+{
+    cursorcolor[0] = max(0, min(r, 255));
+    cursorcolor[1] = max(0, min(g, 255));
+    cursorcolor[2] = max(0, min(b, 255));
+};
+
+COMMANDN(cursorcolor, setcursorcolor, ARG_3INT);
+
 void cursorupdate()
 {
     vec ray(worldpos), v(player->o);
@@ -166,19 +167,16 @@ void cursorupdate()
     };
     lusize = gridsize;
 
-    if(!heightmode)
-    {
-        float xi  = v.x + (ray.x/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // x intersect of xz plane
-        float zi  = v.z + (ray.z/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // z intersect of xz plane
-        float zi2 = v.z + (ray.z/ray.x) * (lu.x - v.x + (ray.x<0 ? gridsize : 0)); // z intersect of yz plane
-        bool xside = (ray.x<0 && xi<lu.x+gridsize) || (ray.x>0 && xi>lu.x);
-        bool zside = (ray.z<0 && zi<lu.z+gridsize) || (ray.z>0 && zi>lu.z);
-        bool z2side= (ray.z<0 && zi2<lu.z+gridsize)|| (ray.z>0 && zi2>lu.z);
+    float xi  = v.x + (ray.x/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // x intersect of xz plane
+    float zi  = v.z + (ray.z/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // z intersect of xz plane
+    float zi2 = v.z + (ray.z/ray.x) * (lu.x - v.x + (ray.x<0 ? gridsize : 0)); // z intersect of yz plane
+    bool xside = (ray.x<0 && xi<lu.x+gridsize) || (ray.x>0 && xi>lu.x);
+    bool zside = (ray.z<0 && zi<lu.z+gridsize) || (ray.z>0 && zi>lu.z);
+    bool z2side= (ray.z<0 && zi2<lu.z+gridsize)|| (ray.z>0 && zi2>lu.z);
 
-        if(xside && zside) orient = (ray.y>0 ? O_BACK : O_FRONT);
-        else if(z2side) orient = (ray.x>0 ? O_LEFT : O_RIGHT);
-        else orient = (ray.z>0 ? O_BOTTOM : O_TOP);
-    };
+    if(xside && zside) orient = (ray.y>0 ? O_BACK : O_FRONT);
+    else if(z2side) orient = (ray.x>0 ? O_LEFT : O_RIGHT);
+    else orient = (ray.z>0 ? O_BOTTOM : O_TOP);
 
     cur = lu;
     int g2 = gridsize/2;
@@ -239,10 +237,7 @@ void cursorupdate()
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glLineWidth(1);
-    if(heightmode)
-        glColor3ub(0, 200, 0);
-    else
-        glColor3ub(120, 120, 120); // cursor
+    glColor3ubv(cursorcolor);
     boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     if(havesel)
     {
@@ -504,6 +499,14 @@ void mpeditheight(int dir, int mode, selinfo &sel, bool local)
     sel.o = o;
 };
 
+void editheight(int dir, int mode)
+{
+    if(noedit()) return;
+    mpeditheight(dir, mode, sel, true);
+};
+
+COMMAND(editheight, ARG_2INT);
+
 void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_FACE, dir, mode);
@@ -572,10 +575,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int dir, int mode)
 {
     if(noedit()) return;
-    if(heightmode)
-        mpeditheight(dir, mode, sel, true);
-    else
-        mpeditface(dir, mode, sel, true);
+    mpeditface(dir, mode, sel, true);
 };
 
 COMMAND(editface, ARG_2INT);
