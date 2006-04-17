@@ -688,6 +688,7 @@ void calclight(int quality)
     canceled = false;
     check_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
+    show_out_of_renderloop_progress(0, "computing normals...");
     calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
@@ -736,6 +737,7 @@ void patchlight()
     canceled = false;
     check_progress = false;
     SDL_TimerID timer = SDL_AddTimer(500, calclight_timer, NULL);
+    show_out_of_renderloop_progress(0, "computing normals...");
     calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
