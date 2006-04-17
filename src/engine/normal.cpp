@@ -41,14 +41,14 @@ hashtable<nkey, nval> normals;
 
 VARF(lerpangle, 0, 44, 180, hdr.lerpangle = lerpangle);
 
-void addnormal(const ivec &origin, int orient, const vvec &offset, int plane, const vec &surface)
+void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface)
 {
     nkey key(origin, offset);
     nval &val = normals[key];
     if(!val.normals) val.normals = new vector<normal>;
 
     vec pos(offset.tovec(origin));
-    uchar face = (orient<<3) | (plane<<6);
+    uchar face = orient<<3;
     if(origin.x >= pos.x) face |= 1;
     if(origin.y >= pos.y) face |= 2;
     if(origin.z >= pos.z) face |= 4;
@@ -58,7 +58,7 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, int plane, co
     loopv(*val.normals)
     {
         normal &o = (*val.normals)[i];
-        if((n.face&0x3F) != (o.face&0x3F) && n.surface.dot(o.surface) > cos(lerpangle*RAD))
+        if(n.face != o.face && n.surface.dot(o.surface) > cos(lerpangle*RAD))
         {
             o.average.add(n.surface);
             n.average.add(o.surface);
@@ -67,37 +67,24 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, int plane, co
     val.normals->add(n);
 };
 
-bool findnormal(const ivec &origin, int orient, const vvec &offset, int plane, vec &r)
+bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
 {
     nkey key(origin, offset);
     nval *val = normals.access(key);
     if(!val || !val->normals) return false;
 
     vec pos(offset.tovec(origin));
-    uchar face = (orient<<3) | ((plane <= 1 ? plane : 0) << 6);
+    uchar face = orient<<3;
     if(origin.x >= pos.x) face |= 1;
     if(origin.y >= pos.y) face |= 2;
     if(origin.z >= pos.z) face |= 4;
 
-    uchar mask = (plane <= 1 ? 0xFF : 0x3F);
     loopv(*val->normals)
     {
         normal &n = (*val->normals)[i];
-        if((n.face&mask) == (face&mask))
+        if(n.face == face)
         {
             r = vec(n.average);
-            if(plane > 1)
-            {
-                loopj((*val->normals).length() - (i+1))
-                {
-                    normal &o = (*val->normals)[i+1+j];
-                    if((o.face&mask) == (face&mask))
-                    {
-                        r.add(o.average);
-                        break;
-                    };
-                };
-            };
             r.normalize();
             return true;
         };
@@ -130,9 +117,15 @@ void addnormals(cube &c, const ivec &o, int size)
         {
             int index = faceverts(c, i, j);
             vvec &v = vvecs[index];
-            vec n;
-            if(numplanes < 2 || j != 3) addnormal(o, i, v, 0, planes[0]);
-            if(numplanes >= 2 && j != 1) addnormal(o, i, v, 1, planes[1]);
+            if(numplanes < 2 || j == 1) addnormal(o, i, v, planes[0]);
+            else if(j == 3) addnormal(o, i, v, planes[1]);
+            else
+            {
+                vec n(planes[0]);
+                n.add(planes[1]);
+                n.normalize();
+                addnormal(o, i, v, n);
+            };
         };
     };
 };

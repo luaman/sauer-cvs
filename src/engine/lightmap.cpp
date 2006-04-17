@@ -232,7 +232,7 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
 
 VAR(adaptivesample, 0, 1, 1);
 
-bool generate_lightmap(float lpu, uint x1, uint x2, const vec &origin, const lerpvert *lv, int numv, const vec &ustep, const vec &vstep)
+bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const lerpvert *lv, int numv, const vec &ustep, const vec &vstep)
 {
     static uchar mincolor[3], maxcolor[3];
     static float aacoords[8][2] =
@@ -248,12 +248,12 @@ bool generate_lightmap(float lpu, uint x1, uint x2, const vec &origin, const ler
         {-0.6f, -0.3f},
     };
     float tolerance = 0.5 / lpu;
-    vector<entity *> &lights = (x1 == 0 ? lights1 : lights2);
+    vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     vec offsets[8];
     loopi(8) loopj(3) offsets[i][j] = aacoords[i][0]*ustep[j] + aacoords[i][1]*vstep[j];
 
-    if(x1 == 0)
+    if(y1 == 0)
     {
         memset(mincolor, 255, 3);
         memset(maxcolor, 0, 3);
@@ -262,37 +262,37 @@ bool generate_lightmap(float lpu, uint x1, uint x2, const vec &origin, const ler
     static vec samples [4*(LM_MAXW+1)*(LM_MAXH+1)];
 
     int aasample = min(1 << aalights, 4);
-    vec *sample = &samples[aasample*x1];
     int stride = aasample*(lm_w+1);
+    vec *sample = &samples[stride*y1];
     lerpbounds start, end;
     initlerpbounds(lv, numv, start, end);
-    for(uint y = 0; y < lm_h; ++y, v.add(vstep)) 
+    for(uint y = y1; y < y2; ++y, v.add(vstep)) 
     {
         vec normal, nstep;
         lerpnormal(y, lv, numv, start, end, normal, nstep);
         
         vec u(v);
-        for(uint x = x1; x < x2; ++x, u.add(ustep), normal.add(nstep)) 
+        for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             CHECK_PROGRESS(return false);
             generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample);
             sample += aasample;
         };
-        sample += stride - aasample*(x2-x1);
+        sample += aasample;
     };
     v = origin;
-    sample = &samples[aasample*x1];
+    sample = &samples[stride*y1];
     initlerpbounds(lv, numv, start, end);
-    for(uint y = 0; y < lm_h; ++y, v.add(vstep)) 
+    for(uint y = y1; y < y2; ++y, v.add(vstep)) 
     {
         vec normal, nstep;
         lerpnormal(y, lv, numv, start, end, normal, nstep);
 
         vec u(v);
-        for(uint x = x1; x < x2; ++x, u.add(ustep), normal.add(nstep)) 
+        for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             vec &center = *sample++;
-            if(adaptivesample && x > x1 && x+1 < x2 && y > 0 && y+1 < lm_h && !lumel_sample(center, aasample, stride))
+            if(adaptivesample && x > 0 && x+1 < lm_w && y > y1 && y+1 < y2 && !lumel_sample(center, aasample, stride))
                 loopi(aasample-1) *sample++ = center;
             else
             {
@@ -312,45 +312,38 @@ bool generate_lightmap(float lpu, uint x1, uint x2, const vec &origin, const ler
                 };
             };
         };
-        if(x2 == lm_w && aasample > 1)
+        if(aasample > 1)
         {
             normal.normalize();
             generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1]);
             if(aasample > 2)
                 generate_lumel(tolerance, lights, vec(u).add(offsets[3]), normal, sample[3]);
         };
-        sample += stride - aasample*(x2-x1);
+        sample += aasample;
     };
 
-    if(aasample>1)
+    if(y2 == lm_h)
     {
-        vec normal, nstep;
-        lerpnormal(lm_h, lv, numv, start, end, normal, nstep);
-
-        for(uint x = x1; x < x2; ++x, v.add(ustep), normal.add(nstep)) 
+        if(aasample > 1)
         {
-            CHECK_PROGRESS(return false);
-            vec n(normal);
-            n.normalize();
-            generate_lumel(tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
-            if(aasample>2)
-                generate_lumel(tolerance, lights, vec(v).add(offsets[2]), n, sample[2]);
-            sample += aasample;
-        };
-        if(x2 == lm_w)
-        {
-            normal.normalize();
-            generate_lumel(tolerance, lights, vec(v).add(offsets[1]), normal, sample[1]);
-            if(aasample>2)
-                generate_lumel(tolerance, lights, vec(v).add(offsets[2]), normal, sample[2]);
-        };
-    };
+            vec normal, nstep;
+            lerpnormal(lm_h, lv, numv, start, end, normal, nstep);
 
-    if(x2 == lm_w)
-    {
+            for(uint x = 0; x <= lm_w; ++x, v.add(ustep), normal.add(nstep))
+            {
+                CHECK_PROGRESS(return false);
+                vec n(normal);
+                n.normalize();
+                generate_lumel(tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
+                if(aasample > 2)
+                    generate_lumel(tolerance, lights, vec(v).add(offsets[2]), n, sample[2]);
+                sample += aasample;
+            }; 
+        };
+
         sample = samples;
         float weight = 1.0f / (1.0f + 4.0f*aalights),
-              cweight = weight * (aalights==3 ? 5.0f : 1.0f);
+              cweight = weight * (aalights == 3 ? 5.0f : 1.0f);
         uchar *lumel = lm;
         for(uint y = 0; y < lm_h; ++y) 
         {
@@ -359,16 +352,16 @@ bool generate_lightmap(float lpu, uint x1, uint x2, const vec &origin, const ler
                 vec l(0, 0, 0);
                 const vec &center = *sample++;
                 loopi(aasample-1) l.add(*sample++);
-                if(aasample>1)
+                if(aasample > 1)
                 {
                     l.add(sample[1]);
-                    if(aasample>2) l.add(sample[3]);
+                    if(aasample > 2) l.add(sample[3]);
                 };
                 vec *next = sample + stride - aasample;
-                if(aasample>1)
+                if(aasample > 1)
                 {
                     l.add(next[1]);
-                    if(aasample>2) l.add(next[2]);
+                    if(aasample > 2) l.add(next[2]);
                     l.add(next[aasample+1]);
                 };
 
@@ -473,17 +466,16 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
     }
     else
     {
-        if(p[2] == p[0]) return false;
-        v = p[2];
-        v.sub(p[0]);
-        v.normalize();
-        u.cross(v, planes[0]);
-        t.cross(planes[1], v);
+        u = p[2];
+        u.sub(p[0]);
+        u.normalize();
+        v.cross(u, planes[0]);
+        t.cross(planes[1], u);
 
         COORDMINMAX(u, v, 0, 1);
         COORDMINMAX(u, v, 0, 2);
-        COORDMINMAX(t, v, 0, 2);
-        COORDMINMAX(t, v, 0, 3);
+        COORDMINMAX(u, t, 0, 2);
+        COORDMINMAX(u, t, 0, 3);
     };
 
     int scale = int(min(umax - umin, vmax - vmin));
@@ -492,58 +484,58 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
     uint ul((uint)ceil((umax - umin + 1) * lpu)),
          vl((uint)ceil((vmax - vmin + 1) * lpu)),
          tl(0);
-    ul = max(LM_MINW, ul);
+    vl = max(LM_MINW, vl);
     if(n2)
     {
         tl = (uint)ceil((tmax + 1) * lpu);
         tl = max(LM_MINW, tl);
     };
-    lm_w = min(LM_MAXW, ul + tl);
-    lm_h = max(LM_MINH, min(LM_MAXH, vl));
+    lm_w = max(LM_MINW, min(LM_MAXW, ul));
+    lm_h = min(LM_MAXH, vl + tl);
 
     vec origin1(p[0]), origin2, uo(u), vo(v);
-    vo.mul(vmin);
+    uo.mul(umin);
     if(!n2)
     {
-        uo.mul(umin);
+        vo.mul(vmin);
     }
     else
     {
-        uo.mul(umax);
-        u.mul(-1);
+        vo.mul(vmax);
+        v.mul(-1);
     };
     origin1.add(uo);
     origin1.add(vo);
     
     vec ustep(u), vstep(v);
-    uint split = ul * lm_w / (ul + tl);
-    ustep.mul((umax - umin) / (split - 1));
-    vstep.mul((vmax - vmin) / (lm_h - 1));
+    ustep.mul((umax - umin) / (lm_w - 1));
+    uint split = vl * lm_h / (vl + tl);
+    vstep.mul((vmax - vmin) / (split - 1));
     if(!n2)
     {
         lerpvert lv[4];
         int numv = 4;
         calclerpverts(origin1, p, n, ustep, vstep, lv, numv);
 
-        if(!generate_lightmap(lpu, 0, lm_w, origin1, lv, numv, ustep, vstep))
+        if(!generate_lightmap(lpu, 0, lm_h, origin1, lv, numv, ustep, vstep))
             return false;
     }
     else
     {
         origin2 = p[0];
-        origin2.add(vo);
+        origin2.add(uo);
         vec tstep(t);
-        tstep.mul(tmax / (lm_w - split - 1));
+        tstep.mul(tmax / (lm_h - split - 1));
 
-        vec p1[5] = {p[0], p[1], p[2], p[2], p[0]},
-            p2[5] = {p[0], p[0], p[2], p[2], p[3]};
-        lerpvert lv1[5], lv2[5];
-        int numv1 = 5, numv2 = 5;
+        vec p1[3] = {p[0], p[1], p[2]},
+            p2[3] = {p[0], p[2], p[3]};
+        lerpvert lv1[3], lv2[3];
+        int numv1 = 3, numv2 = 3;
         calclerpverts(origin1, p1, n, ustep, vstep, lv1, numv1);
-        calclerpverts(origin2, p2, n2, tstep, vstep, lv2, numv2);
+        calclerpverts(origin2, p2, n2, ustep, tstep, lv2, numv2);
 
         if(!generate_lightmap(lpu, 0, split, origin1, lv1, numv1, ustep, vstep) ||
-           !generate_lightmap(lpu, split, lm_w, origin2, lv2, numv2, tstep, vstep))
+           !generate_lightmap(lpu, split, lm_h, origin2, lv2, numv2, ustep, tstep))
             return false;
     };
 
@@ -553,12 +545,12 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
         tovert.sub(origin); \
         float u ## coord = u.dot(tovert), \
               v ## coord = v.dot(tovert); \
-        texcoords[vert*2] = offset + uchar(u ## coord * u ## scale); \
-        texcoords[vert*2+1] = uchar(v ## coord * v ## scale); \
+        texcoords[vert*2] = uchar(u ## coord * u ## scale); \
+        texcoords[vert*2+1] = offset + uchar(v ## coord * v ## scale); \
     };
 
-    float uscale = 255.0f / float(umax - umin) * float(split) / float(lm_w),
-          vscale = 255.0f / float(vmax - vmin);
+    float uscale = 255.0f / float(umax - umin),
+          vscale = 255.0f / float(vmax - vmin) * float(split) / float(lm_h);
     CALCVERT(origin1, u, v, 0, 0)
     CALCVERT(origin1, u, v, 0, 1)
     CALCVERT(origin1, u, v, 0, 2)
@@ -568,9 +560,9 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
     }
     else
     {
-        uchar toffset = uchar(255.0 * float(split) / float(lm_w));
-        float tscale = 255.0f / float(tmax - tmin) * float(lm_w - split) / float(lm_w);
-        CALCVERT(origin2, t, v, toffset, 3)
+        uchar toffset = uchar(255.0 * float(split) / float(lm_h));
+        float tscale = 255.0f / float(tmax - tmin) * float(lm_h - split) / float(lm_h);
+        CALCVERT(origin2, u, t, toffset, 3)
     };
     return true;
 };
@@ -608,28 +600,21 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!numplanes || !find_lights(c, cx, cy, cz, size, planes, numplanes))
             continue;
 
-        vec v[4], n[5], n2[5];
-        loopj(5) n[j] = planes[0];
-        if(numplanes >= 2) loopj(5) n2[j] = planes[1];
-        if(!lodcube) loopj(4)
+        vec v[4], n[4], n2[3];
+        loopj(4) n[j] = planes[0];
+        if(numplanes >= 2) loopj(3) n[j] = planes[1];
+        loopj(4)
         {
             int index = faceverts(c, i, j);
             const vvec &vv = vvecs[index];
             v[j] = verts[index];
-            if(numplanes < 2 || j != 3) findnormal(ivec(cx, cy, cz), i, vv, 0, n[j]);
-            if(numplanes >= 2 && j != 1)
+            if(lodcube) continue;
+            if(numplanes < 2 || j == 1) findnormal(ivec(cx, cy, cz), i, vv, n[j]);
+            else
             {
-                findnormal(ivec(cx, cy, cz), i, vv, 1, n2[j >= 2 ? j+1 : j]);
-                if(j == 0)
-                {
-                    findnormal(ivec(cx, cy, cz), i, vv, 2, n[4]);
-                    n2[1] = n[4];
-                };
-                if(j == 2)
-                {
-                    findnormal(ivec(cx, cy, cz), i, vv, 2, n[3]);
-                    n2[2] = n[3];
-                };
+                findnormal(ivec(cx, cy, cz), i, vv, n2[j >= 2 ? j-1 : j]);
+                if(j == 0) n[0] = n2[0];
+                else if(j == 2) n[2] = n2[1];
             };
         };
         uchar texcoords[8];
