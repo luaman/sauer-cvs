@@ -49,11 +49,6 @@ struct vechash
 
 vechash vh;
 
-int vert(int x, int y, int z, short lmu, short lmv)
-{
-    return vh.access(vvec(x, y, z), lmu, lmv);
-};
-
 uchar &edgelookup(cube &c, const ivec &p, int dim)
 {
    return c.edges[dim*4 +(p[C[dim]]>>3)*2 +(p[R[dim]]>>3)];
@@ -432,10 +427,7 @@ void calcvert(cube &c, int x, int y, int z, int size, vvec &v, int i, bool solid
     // avoid overflow
     if(size>=8) v.mul(size/8);
     else v.div(8/size);
-    // mask off any excess from position
-    vvec offset(x, y, z);
-    offset.mask((1<<(VVEC_INT-1))-1);
-    v.add(offset);
+    v.add(vvec(x, y, z));
 };
 
 void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube)
@@ -814,7 +806,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
 
 void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 {
-    ASSERT(size <= 1<<(VVEC_INT-1));
+    ASSERT(size <= VVEC_INT_MASK+1);
 
     if(verts.length())                                 // since reseting is a bit slow
     {
@@ -842,7 +834,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
-VARF(vacubesize, 128, 512, 1<<(VVEC_INT-1), allchanged());
+VARF(vacubesize, 128, 512, VVEC_INT_MASK+1, allchanged());
 VARF(vacubemin, 0, 256, 256*256, allchanged());
 
 int recalcprogress = 0;
@@ -861,7 +853,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
         if(c[i].va) {}//count += vacubemax+1;       // since must already have more then max cubes
         else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi+1);
         else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || size == min(1<<(VVEC_INT-1), hdr.worldsize/2)) setva(c[i], o.x, o.y, o.z, size, csi);
+        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || size == min(VVEC_INT_MASK+1, hdr.worldsize/2)) setva(c[i], o.x, o.y, o.z, size, csi);
         else ccount += count;
     };
 
@@ -1060,6 +1052,7 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
         if(isvisiblecube(vec(v.x, v.y, v.z), v.size)!=VFC_NOT_VISIBLE) addvisibleva(&v);
         else
         {
+            v.distance = -1;
             v.occluded = 0;
             v.query = NULL;
         };
@@ -1070,7 +1063,7 @@ void setorigin(vtxarray *va, bool init)
 {
     static ivec origin;
     ivec o(va->x, va->y, va->z);
-    o.mask(~((1<<(VVEC_INT-1))-1));
+    o.mask(~VVEC_INT_MASK);
     if(init || o != origin)
     {
         origin = o;
@@ -1089,11 +1082,10 @@ void rendersky()
     int sky = 0;
     glPushMatrix();
 
-    loopv(valist)
+    for(vtxarray *va = visibleva; va; va = va->next)
     {
-        vtxarray *va = valist[i];
         lodlevel &lod = va->l0;
-        if(!lod.sky) continue;
+        if(!lod.sky || va->distance < 0 || va->occluded > 1) continue;
 
         setorigin(va, !sky++);
 
@@ -1222,7 +1214,7 @@ void drawquery(occludequery *query, vtxarray *va)
     glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
 
     ivec origin(va->x, va->y, va->z);
-    origin.mask(~((1<<(VVEC_INT-1))-1));
+    origin.mask(~VVEC_INT_MASK);
 
     drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC), 
            ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
@@ -1252,8 +1244,7 @@ void findvisibleents(cube *c, const ivec &o, int size)
         if(c[j].va)
         {
             vtxarray *va = c[j].va;
-            if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue;
-            else if(va->occluded > 1 && va->query && va->query->owner == va) continue; 
+            if(va->distance < 0 || va->occluded > 1) continue;
         };
         if(c[j].ents)
         {
@@ -1390,15 +1381,12 @@ void rendermapmodels()
     };        
 };
 
-void renderq(int w, int h)
+void renderq()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_COLOR_ARRAY);
 
-    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
-
     int showvas = 0;
-
 
     setupTMU();
 
@@ -1552,12 +1540,10 @@ void rendermaterials()
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
 
-    vtxarray *va = visibleva;
-    while(va)
+    for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
         if(lod.matsurfs && va->occluded <= 1) rendermatsurfs(lod.matbuf, lod.matsurfs);
-        va = va->next;
     };
 
     if(editmode && showmat)
@@ -1565,12 +1551,10 @@ void rendermaterials()
         glDisable(GL_BLEND);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glLineWidth(1);
-        va = visibleva;
-        while(va)
+        for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->l0;
             if(lod.matsurfs && va->occluded <= 1) rendermatgrid(lod.matbuf, lod.matsurfs);
-            va = va->next;
         };
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     };
@@ -1759,7 +1743,7 @@ bool remip(cube &c, int x, int y, int z, int size)
     };
 
     if(!perfect) return false;
-    if(size > 1<<(VVEC_INT-1)) return true;
+    if(size > VVEC_INT_MASK+1) return true;
 
     cube n = c;
     forcemip(n);

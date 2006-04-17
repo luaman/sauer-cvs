@@ -466,6 +466,8 @@ void gl_drawframe(int w, int h, float curfps)
     
     xtravertsva = xtraverts = glde = 0;
 
+    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
+
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / ((hdr.worldsize>>4)*(hdr.worldsize>>4)*6) < 9);
 
     if(limitsky) drawskybox(farplane, true);
@@ -478,7 +480,7 @@ void gl_drawframe(int w, int h, float curfps)
     glEnable(GL_TEXTURE_GEN_T);
     if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
 
-    renderq(w, h);
+    renderq();
 
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);

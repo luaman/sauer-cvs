@@ -197,7 +197,7 @@ COMMAND(entproperty, ARG_2INT);
 
 void split_world(cube *c, int size)
 {
-    if(size < 1<<VVEC_INT) return;
+    if(size <= VVEC_INT_MASK+1) return;
     loopi(8)
     {
         if(!c[i].children) c[i].children = newcubes(isempty(c[i]) ? F_EMPTY : F_SOLID);
@@ -239,7 +239,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         player->o.z += player->eyeheight+1;
     };
 
-    if(hdr.worldsize > 1<<VVEC_INT) split_world(worldroot, hdr.worldsize>>1);
+    if(hdr.worldsize > VVEC_INT_MASK+1) split_world(worldroot, hdr.worldsize>>1);
 
     resetlightmaps();
     clearlights();

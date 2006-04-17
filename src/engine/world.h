@@ -53,7 +53,7 @@ enum
 #define VVEC_FRAC 1
 #define VVEC_BITS (VVEC_INT + VVEC_FRAC)
 
-#define VVEC_INT_MASK     ((1<<VVEC_INT)-1)
+#define VVEC_INT_MASK     ((1<<(VVEC_INT-1))-1)
 #define VVEC_INT_COORD(n) (((n)&VVEC_INT_MASK)<<VVEC_FRAC)
 
 struct vvec : svec

@@ -117,10 +117,11 @@ extern void cancelsel();
 extern void render_texture_panel();
 
 // octarender
+extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h);
 extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
 extern void octarender();
 extern void rendermapmodels();
-extern void renderq(int w, int h);
+extern void renderq();
 extern void allchanged();
 extern void rendermaterials();
 extern void rendersky();
