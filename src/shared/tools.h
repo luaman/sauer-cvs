@@ -253,7 +253,7 @@ template <class K, class T> struct hashtable
         return NULL;
     };
 
-    T *access(const K &key, T *data = NULL)
+    T *access(const K &key, const T *data = NULL)
     {
         chain *c = find(key, data != NULL);
         if(data) c->data = *data;

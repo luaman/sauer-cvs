@@ -31,12 +31,12 @@ PFNGLENDQUERYARBPROC          glEndQuery_ = NULL;
 PFNGLGETQUERYIVARBPROC        glGetQueryiv_ = NULL;
 PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_ = NULL;
 
-hashtable<char *, Shader> shaders;
+hashtable<const char *, Shader> shaders;
 Shader *curshader = NULL;
 Shader *defaultshader = NULL;
 Shader *notextureshader = NULL;
 
-Shader *lookupshaderbyname(char *name) { return shaders.access(name); };
+Shader *lookupshaderbyname(const char *name) { return shaders.access(name); };
 
 void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
 {
