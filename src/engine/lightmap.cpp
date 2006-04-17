@@ -602,7 +602,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 
         vec v[4], n[4], n2[3];
         loopj(4) n[j] = planes[0];
-        if(numplanes >= 2) loopj(3) n[j] = planes[1];
+        if(numplanes >= 2) loopj(3) n2[j] = planes[1];
         loopj(4)
         {
             int index = faceverts(c, i, j);
