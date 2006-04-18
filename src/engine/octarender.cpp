@@ -1057,6 +1057,11 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     };
 };
 
+bool insideva(vtxarray *va, const vec &v)
+{
+    return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
+};
+
 void setorigin(vtxarray *va, bool init)
 {
     static ivec origin;
@@ -1083,7 +1088,8 @@ void rendersky()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(!lod.sky || va->distance < 0 || va->occluded > 1) continue;
+        if(!lod.sky) continue;
+        if(va->occluded > 1 && !insideva(va, camera1->o)) continue;
 
         setorigin(va, !sky++);
 
@@ -1112,12 +1118,6 @@ void setupTMU()
 };
 
 VAR(showva, 0, 0, 1);
-
-bool insideva(vtxarray *va, const vec &v)
-{
-    return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
-};
-
 
 #define MAXQUERY 2048
 
