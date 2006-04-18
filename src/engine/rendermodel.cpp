@@ -5,6 +5,7 @@
 
 VARP(animationinterpolationtime, 0, 150, 1000);
 Shader *modelshader = NULL;
+Shader *modelshadernospec = NULL;
 model *loadingmodel = NULL;
 
 #include "md2.h"
@@ -149,7 +150,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         float radius = m->boundsphere(0/*frame*/, center);   // FIXME
         center.add(vec(x, y, z));
         if(culldist && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
-        if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
+        if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
     };
     m->setskin(tex);  
     if(teammate) glColor3f(1, 0.2f, 0.2f); // VERY TEMP, find a better teammate display
@@ -157,8 +158,9 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
     if(m->shader) m->shader->set();
     else
     {
-        if(!modelshader) modelshader = lookupshaderbyname(m->spec>=1 ? "stdppmodel" : "nospecpvmodel");
-        modelshader->set();
+        if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
+        if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
+        (m->spec>=0.01f ? modelshader : modelshadernospec)->set();
     };
     if(renderpath!=R_FIXEDFUNCTION)
     {

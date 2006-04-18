@@ -409,6 +409,14 @@
 				<File
 					RelativePath="..\engine\normal.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\octa.cpp"

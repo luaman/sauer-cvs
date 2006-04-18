@@ -15,6 +15,9 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
+- play sessions
+- rpg design doc
+- spec maps
 - doors that work nicely with OC?
 - add PITCH to specular computation
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
