@@ -334,7 +334,7 @@ int main(int argc, char **argv)
     log("localconnect");
     localconnect();
     cc->gameconnect(false);
-    cc->changemap("metl3");
+    cc->changemap("curvedm");
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
