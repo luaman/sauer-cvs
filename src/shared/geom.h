@@ -69,6 +69,12 @@ struct plane : vec
     bool operator==(const plane &p) const { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
     bool operator!=(const plane &p) const { return x!=p.x || y!=p.y || z!=p.z || offset!=p.offset; };
     
+    void toplane(const vec &n, const vec &p)
+    {
+        *(vec *)this = n;
+        offset = -dot(p);
+    };
+
     void toplane(const vec &a, const vec &b, const vec &c)
     {
         cross(vec(b).sub(a), vec(c).sub(a));

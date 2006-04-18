@@ -149,7 +149,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         float radius = m->boundsphere(0/*frame*/, center);   // FIXME
         center.add(vec(x, y, z));
         if(culldist && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
-        if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
+        if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
     };
     m->setskin(tex);  
     if(teammate) glColor3f(1, 0.2f, 0.2f); // VERY TEMP, find a better teammate display

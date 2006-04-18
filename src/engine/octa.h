@@ -148,6 +148,7 @@ enum
 {
     VFC_FULL_VISIBLE = 0,
     VFC_PART_VISIBLE,
+    VFC_FOGGED,
     VFC_NOT_VISIBLE
 };
 

@@ -777,7 +777,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
     if(!isempty(c))
     {
         gencubeverts(c, cx, cy, cz, size, csi, lodcube);
-
+        
         if(cx<bbmin.x) bbmin.x = cx;
         if(cy<bbmin.y) bbmin.y = cy;
         if(cz<bbmin.z) bbmin.z = cz;
@@ -970,8 +970,7 @@ COMMANDN(recalc, allchanged, ARG_NONE);
 
 ///////// view frustrum culling ///////////////////////
 
-vec   vfcV[5];  // perpindictular vectors to view frustrum bounding planes
-float vfcD[5];  // Distance of player1 from culling planes.
+plane vfcP[5];  // perpindictular vectors to view frustrum bounding planes
 float vfcDfog;  // far plane culling distance (fog limit).
 
 vtxarray *visibleva;
@@ -983,14 +982,14 @@ int isvisiblesphere(float rad, const vec &cv)
 
     loopi(5)
     {
-        dist = vfcV[i].dot(cv) - vfcD[i];
-        if (dist < -rad) return VFC_NOT_VISIBLE;
-        if (dist < rad) v = VFC_PART_VISIBLE;
+        dist = vfcP[i].dist(cv);
+        if(dist < -rad) return VFC_NOT_VISIBLE;
+        if(dist < rad) v = VFC_PART_VISIBLE;
     };
 
-    dist = vfcV[0].dot(cv) - vfcD[0] - vfcDfog;
-    if (dist > rad) return VFC_PART_VISIBLE;  //VFC_NOT_VISIBLE;    // culling when fog is closer than size of world results in HOM
-    if (dist > -rad) v = VFC_PART_VISIBLE;
+    dist = vfcP[0].dist(cv) - vfcDfog;
+    if(dist > rad) return VFC_FOGGED;  //VFC_NOT_VISIBLE;    // culling when fog is closer than size of world results in HOM
+    if(dist > -rad) v = VFC_PART_VISIBLE;
 
     return v;
 };
@@ -1038,12 +1037,11 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     float pitch = player->pitch * RAD;
     float pitchp = (player->pitch + vpyo) * RAD;
     float pitchm = (player->pitch - vpyo) * RAD;
-    vfcV[0] = vec(yaw,  pitch);  // back/far plane
-    vfcV[1] = vec(yawp, pitch);  // left plane
-    vfcV[2] = vec(yawm, pitch);  // right plane
-    vfcV[3] = vec(yaw,  pitchp); // top plane
-    vfcV[4] = vec(yaw,  pitchm); // bottom plane
-    loopi(5) vfcD[i] = vfcV[i].dot(camera1->o);
+    vfcP[0].toplane(vec(yaw,  pitch), camera1->o);  // back/far plane
+    vfcP[1].toplane(vec(yawp, pitch), camera1->o);  // left plane
+    vfcP[2].toplane(vec(yawm, pitch), camera1->o);  // right plane
+    vfcP[3].toplane(vec(yaw,  pitchp), camera1->o); // top plane
+    vfcP[4].toplane(vec(yaw,  pitchm), camera1->o); // bottom plane
     vfcDfog = getvar("fog");
 
     loopv(valist)
@@ -1229,12 +1227,6 @@ extern int octaentsize;
 
 static octaentities *visibleents, **lastvisibleents;
 
-bool insideoctaents(const octaentities *ents, const vec &o)
-{
-    return o.x >= ents->o.x && o.y >= ents->o.y && o.z >= ents->o.z &&
-           o.x < ents->o.x+ents->size && o.y < ents->o.y+ents->size && o.z < ents->o.z+ents->size;
-};
-
 void findvisibleents(cube *c, const ivec &o, int size)
 {
     loopj(8)
@@ -1319,7 +1311,7 @@ void rendermapmodels()
             if(!hasmodels) continue;
         };   
 
-        if(!oqfrags || !oqmm || insideoctaents(ents, camera1->o)) ents->query = NULL;
+        if(!oqfrags || !oqmm || !ents->distance) ents->query = NULL;
         else if(!occluded && (++visible % oqmm)) ents->query = NULL;
         else ents->query = newquery(ents);
 
@@ -1432,14 +1424,17 @@ void renderq()
             va->query = newquery(va);
         }
         else va->query = NULL;
-    
-        if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
-        va->occluded = 0;
+        va->occluded = 0;    
 
-        vtris += (va->curlod ? va->l1 : va->l0).tris;
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(!lod.texs) continue;
+
+        vtris += lod.tris;
         vverts += va->verts;
 
         if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
+
+        if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, GL_SHORT, sizeof(vertex), &(va->vbuf[0].x));
@@ -1447,8 +1442,6 @@ void renderq()
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_SHORT, sizeof(vertex), &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
-
-        lodlevel &lod = va->curlod ? va->l1 : va->l0;
 
         unsigned short *ebuf = lod.ebuf;
         int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
