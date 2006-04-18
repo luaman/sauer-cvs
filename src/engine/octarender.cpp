@@ -1057,7 +1057,7 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     };
 };
 
-bool insideva(vtxarray *va, const vec &v)
+bool insideva(const vtxarray *va, const vec &v)
 {
     return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
 };
@@ -1088,8 +1088,7 @@ void rendersky()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(!lod.sky) continue;
-        if(va->occluded > 1 && !insideva(va, camera1->o)) continue;
+        if(!lod.sky || va->occluded > 1) continue;
 
         setorigin(va, !sky++);
 
@@ -1411,7 +1410,7 @@ void renderq()
 
         glColor4f(1, 1, 1, 1);
 
-        if(hasOQ && oqfrags > 0 && va != visibleva && va->distance > oqdist)
+        if(hasOQ && oqfrags > 0 && va->distance > oqdist && !insideva(va, camera1->o))
         {
             if(va->query && va->query->owner == va && checkquery(va->query))
             {
