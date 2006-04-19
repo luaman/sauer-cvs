@@ -131,8 +131,11 @@ extern void updatephysstate(physent *d);
 extern void playsound(int n, vec *loc = 0);
 extern void initsound();
 
-// rendermd2
-extern void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, bool cullany, bool culldist);
+// rendermodel
+
+enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2 };
+
+extern void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d = NULL, int cull = MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
 extern void abovemodel(vec &o, const char *mdl);
 extern mapmodelinfo &getmminfo(int i);
 

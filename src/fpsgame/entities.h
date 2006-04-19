@@ -39,7 +39,7 @@ struct entities : icliententities
     
     void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_STATIC, int basetime = 0, float speed = 10.0f)
     {
-        rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, false, speed, basetime, NULL, true, true);
+        rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, false, speed, basetime);
     };
 
     void renderentities()

@@ -14,7 +14,7 @@ void cleanup(char *msg)         // single program exit point;
     extern void clear_command(); clear_command();
     extern void clear_console(); clear_console(); 
     extern void clear_menus();   clear_menus();
-    extern void clear_md2s();    clear_md2s();
+    extern void clear_mdls();    clear_mdls();
     extern void clear_sound();   clear_sound();
     if(msg)
     {

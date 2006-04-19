@@ -65,13 +65,13 @@ void freeoctaentities(cube &c)
     };
 };
 
-void traverseoctaentity(bool add, int id, cube *c, ivec &cor, int size, ivec &bo, ivec &br)
+void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br)
 {
     loopoctabox(cor, size, bo, br)
     {
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children != NULL && size > octaentsize)
-            traverseoctaentity(add, id, c[i].children, o, size>>1, bo, br);
+            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br);
         else if(add)
         {
             if(!c[i].ents) c[i].ents = new octaentities(o, size);
@@ -119,7 +119,7 @@ void addoctaentity(int id)
     extentity &e = *et->getents()[id];
     if(e.inoctanode || !getmmboundingbox(e, o, r)) return;
     e.inoctanode = true;
-    traverseoctaentity(true, id, worldroot, orig, hdr.worldsize>>1, o, r);
+    modifyoctaentity(true, id, worldroot, orig, hdr.worldsize>>1, o, r);
 };
 
 void removeoctaentity(int id)
@@ -128,7 +128,7 @@ void removeoctaentity(int id)
     extentity &e = *et->getents()[id];
     if(!e.inoctanode || !getmmboundingbox(e, o, r)) return;
     e.inoctanode = false;
-    traverseoctaentity(false, id, worldroot, orig, hdr.worldsize>>1, o, r);
+    modifyoctaentity(false, id, worldroot, orig, hdr.worldsize>>1, o, r);
 };
 
 void entitiesinoctanodes()

@@ -133,24 +133,49 @@ model *loadmodel(const char *name, int i)
     return m;
 };
 
-void clear_md2s()
+void clear_mdls()
 {
     enumerate((&mdllookup), model *, m, delete *m);
 };
 
+bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
+{
+    loopoctabox(o, size, bo, br)
+    {
+        ivec co(i, o.x, o.y, o.z, size);
+        if(c[i].va)
+        {
+            vtxarray *va = c[i].va;
+            if(va->distance < 0 || va->occluded > 1) continue;
+        };
+        if(c[i].children && bboccluded(bo, br, c[i].children, co, size>>1)) continue;
+        return false;
+    };
+    return true;
+};
+
+bool modeloccluded(const vec &center, float radius)
+{
+    int br = int(radius*2)+1;
+    return bboccluded(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br), worldroot, ivec(0, 0, 0), hdr.worldsize/2);
+};
+
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, bool cullany, bool culldist)
+VAR(oqmdl, 0, 1, 1);
+
+void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, int cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
-    if(cullany)
+    if(cull)
     {
         vec center;
         float radius = m->boundsphere(0/*frame*/, center);   // FIXME
         center.add(vec(x, y, z));
-        if(culldist && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
-        if(isvisiblesphere(radius, center) == VFC_NOT_VISIBLE) return;
+        if((cull&MDL_CULL_DIST) && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
+        if((cull&MDL_CULL_VFC) && isvisiblesphere(radius, center) >= VFC_FOGGED) return;
+        if(oqmdl && (cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     };
     m->setskin(tex);  
     if(teammate) glColor3f(1, 0.2f, 0.2f); // VERY TEMP, find a better teammate display
