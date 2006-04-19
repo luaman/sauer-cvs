@@ -4,7 +4,6 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
-- add monster culling. maybe item culling if its fast
 - test capture mode more... fix bugs
 - map up/download etc
 - water physics close to surface
