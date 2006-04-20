@@ -222,7 +222,7 @@ int findanim(const char *name)
     return -1;
 };
 
-Texture *probeskin(const char *dir, const char *altdir) // model skin sharing
+Texture *loadskin(const char *dir, const char *altdir) // model skin sharing
 {
     Texture *skin;
     s_sprintfd(skinpath)("packages/models/%s/skin.jpg", dir);

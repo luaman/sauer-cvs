@@ -501,7 +501,7 @@ struct md2 : model
                 s_sprintf(name1)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
                 if(!load(path(name1))) { delete[] pname; return false; };
             };
-            if((skin = probeskin(loadname, pname)) == crosshair) conoutf("could not load model skin for %s", name1);
+            if((skin = loadskin(loadname, pname)) == crosshair) conoutf("could not load model skin for %s", name1);
             loadingmd2 = this;
             s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
             if(!execfile(name3))

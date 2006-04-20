@@ -566,7 +566,7 @@ struct md3 : model
                 s_sprintf(name1)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
                 mdl.load(path(name1));
             };
-            Texture *skin = probeskin(loadname, pname);
+            Texture *skin = loadskin(loadname, pname);
             if(skin!=crosshair) loopv(mdl.meshes) mdl.meshes[i].skin = skin;
             else conoutf("could not load model skin for %s", name1);
         };

@@ -51,11 +51,12 @@ struct QuadNode
         materialsurface &m = *matbuf++;
         m.material = mat;
         m.orient = orient;
-        m.size = size;
+        m.csize = size;
+        m.rsize = size;
         int dim = dimension(orient);
-        m.o[dim] = z-dimcoord(orient)*size;
-        m.o[(dim+1)%3] = x;
-        m.o[(dim+2)%3] = y;
+        m.o[C[dim]] = x;
+        m.o[R[dim]] = y;
+        m.o[dim] = z;
     };
 
     void genmatsurfs(uchar mat, uchar orient, int z, materialsurface *&matbuf) 
@@ -200,14 +201,12 @@ void renderwaterfall(materialsurface &m, Texture *t)
     float d = 16.0f*lastmillis/1000.0f;
     int dim = dimension(m.orient);
 
-    ivec o(m.o);
-    if(dimcoord(m.orient)) o[dim] += m.size;
     glBegin(GL_POLYGON);
     loopi(4)
     {
-        ivec v(o);
-        if(i == 1 || i == 2) v[dim^1] += m.size;
-        if(i <= 1) v.z += m.size;
+        ivec v(m.o);
+        if(i == 1 || i == 2) v[dim^1] += m.csize;
+        if(i <= 1) v.z += m.rsize;
         glTexCoord2f(xf*v[dim^1], yf*(v.z+d));
         glVertex3i(v.x, v.y, v.z);
     };
@@ -247,9 +246,7 @@ int matsurfcmp(const materialsurface *x, const materialsurface *y)
     if(x->material > y->material) return 1;
     if(x->orient < y->orient) return -1;
     if(x->orient > y->orient) return 1;
-    int dim = dimension(x->orient), 
-        xc = x->o[dim]+dimcoord(x->orient)*x->size, 
-        yc = y->o[dim]+dimcoord(y->orient)*y->size;
+    int dim = dimension(x->orient), xc = x->o[dim], yc = y->o[dim];
     if(xc < yc) return -1;
     if(xc > yc) return 1;
     return 0;
@@ -258,6 +255,24 @@ int matsurfcmp(const materialsurface *x, const materialsurface *y)
 void sortmatsurfs(materialsurface *matsurf, int matsurfs)
 {
     qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
+};
+
+void drawface(int orient, int x, int y, int z, int csize, int rsize, float offset)
+{
+    int dim = dimension(orient), c = C[dim], r = R[dim];
+    glBegin(GL_POLYGON);
+    loopi(4)
+    {
+        int coord = fv[orient][i];
+        float v[3] = {float(x), float(y), float(z)};
+        v[c] += cubecoords[coord][c]/8*csize;
+        v[r] += cubecoords[coord][r]/8*rsize;
+        v[dim] += dimcoord(orient) ? -offset : offset;
+        glVertex3fv(v);
+    };
+    glEnd();
+
+    xtraverts += 4;
 };
 
 void watercolour(int r, int g, int b)
@@ -287,15 +302,15 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
          defaultshader->set();
          matloop(MAT_WATER,
              if(m.orient != O_TOP) renderwaterfall(m, t); 
-             else if(renderwaterlod(m.o.x, m.o.y, m.o.z + m.size, m.size, t) >= (uint)m.size * 2)
-                 renderwater(m.size, m.o.x, m.o.y, m.o.z + m.size, m.size, t);
+             else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, t) >= (uint)m.csize * 2)
+                 renderwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, t);
          );
 
          glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
          glDisable(GL_TEXTURE_2D);
          glColor3f(0.3f, 0.15f, 0.0f);
          notextureshader->set();
-         matloop(MAT_GLASS, drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, 0.1f));
+         matloop(MAT_GLASS, drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f));
     }
     else
     {
@@ -318,7 +333,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                 lastmat = m.material;
                 glColor3ubv(blendcols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat]);
             };
-            drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, -0.1f);
+            drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
         };
         glDepthMask(GL_FALSE);
     };
@@ -344,7 +359,7 @@ void rendermatgrid(materialsurface *matbuf, int matsurfs)
             lastmat = m.material;
             glColor3ubv(cols[lastmat >= MAT_EDIT ? lastmat-MAT_EDIT : lastmat]);
         };
-        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.size, -0.1f);
+        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
     };
 };
 
@@ -357,11 +372,11 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
     while(cur < end)
     {
          materialsurface *start = cur++;
-         int dim = dimension(start->orient), coord = dimcoord(start->orient);
+         int dim = dimension(start->orient);
          while(cur < end && 
                cur->material == start->material && 
                cur->orient == start->orient && 
-               cur->o[dim]+coord*cur->size == start->o[dim]+coord*start->size)
+               cur->o[dim] == start->o[dim])
             ++cur;
          if(cur-start<4) 
          {
@@ -370,10 +385,9 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
          }
          else
          {
-            int xdim = (dim+1)%3, ydim = (dim+2)%3;
             QuadNode vmats(0, 0, hdr.worldsize);
-            loopi(cur-start) vmats.insert(start[i].o[xdim], start[i].o[ydim], start[i].size);
-            vmats.genmatsurfs(start->material, start->orient, start->o[dim]+coord*start->size, matbuf);
+            loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
+            vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
          };
     };
     return matsurfs - (end-matbuf);

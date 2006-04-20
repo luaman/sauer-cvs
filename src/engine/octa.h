@@ -12,7 +12,7 @@ struct materialsurface
     uchar material;
     uchar orient;
     ivec o;
-    int size;
+    int csize, rsize;
 };
 
 struct lodlevel

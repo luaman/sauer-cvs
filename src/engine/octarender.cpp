@@ -795,7 +795,8 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
             int vis = visiblematerial(c, i, cx, cy, cz, size);
             if(vis != MATSURF_NOT_VISIBLE)
             {
-                materialsurface matsurf = {vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material, i, ivec(cx, cy, cz), size};
+                materialsurface matsurf = {vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material, i, ivec(cx, cy, cz), size, size};
+                if(dimcoord(i)) matsurf.o[dimension(i)] += size;
                 l0.matsurfs.add(matsurf);
             };
         };
@@ -1557,31 +1558,6 @@ void rendermaterials()
     glDepthMask(GL_TRUE);
 
     defaultshader->set();
-};
-
-void drawface(int orient, int x, int y, int z, int size, float offset)
-{
-    float xoffset = 0.0f, yoffset = 0.0f, zoffset = 0.0f;
-    switch(orient)
-    {
-        case O_BOTTOM: zoffset = offset; break;
-        case O_TOP: zoffset = -offset; break;
-        case O_BACK: yoffset = offset; break;
-        case O_FRONT: yoffset = -offset; break;
-        case O_LEFT: xoffset = offset; break;
-        case O_RIGHT: xoffset = -offset; break;
-    };
-    glBegin(GL_POLYGON);
-    loopi(4)
-    {
-        int coord = fv[orient][i];
-        glVertex3f(cubecoords[coord].x/8*size+x+xoffset,
-                   cubecoords[coord].y/8*size+y+yoffset,
-                   cubecoords[coord].z/8*size+z+zoffset);
-    };
-    glEnd();
-
-    xtraverts += 4;
 };
 
 void writeobj(char *name)

@@ -125,7 +125,6 @@ extern void renderq();
 extern void allchanged();
 extern void rendermaterials();
 extern void rendersky();
-extern void drawface(int orient, int x, int y, int z, int size, float offset);
 extern void converttovectorworld();
 
 extern void vaclearc(cube *c);
@@ -197,7 +196,7 @@ extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 
 // rendermodel
 extern model *loadmodel(const char *name, int i = -1);
 extern int findanim(const char *name);
-extern Texture *probeskin(const char *dir, const char *altdir);
+extern Texture *loadskin(const char *dir, const char *altdir);
 
 // particles
 extern void particleinit();
