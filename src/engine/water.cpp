@@ -393,39 +393,27 @@ int mergematr(materialsurface *m, int sz, materialsurface &n)
     return 0;
 };
 
-int mergematc(materialsurface *m, int sz, materialsurface &n)
+int mergematc(materialsurface &m, materialsurface &n)
 {
     int dim = dimension(n.orient), c = C[dim], r = R[dim];
-    for(int i = sz-1; i >= 0; --i)
+    if(m.o[r] == n.o[r] && m.rsize == n.rsize && m.o[c] + m.csize == n.o[c])
     {
-        int merged = 0;
-        if(m[i].o[r] + m[i].rsize != n.o[r] + n.rsize) break;
-        if(n.o[c] + n.csize == m[i].o[c] && n.o[r] == m[i].o[r])
-        {
-            n.csize += m[i].csize;
-            memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
-            ++merged;
-        };
-        if(m[i].o[c] + m[i].csize == n.o[c] && m[i].o[r] == n.o[r])
-        {
-            n.o[c] = m[i].o[c];
-            n.csize += m[i].csize;
-            memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
-            ++merged;
-        };
-        if(merged) return merged;
+        n.o[c] = m.o[c];
+        n.csize += m.csize;
+        return 1;
     };
     return 0;
 };
 
 int mergemat(materialsurface *m, int sz, materialsurface &n)
 {
-    for(bool merged = false;; merged = true)
+    for(bool merged = false; sz; merged = true)
     {
         int rmerged = mergematr(m, sz, n);
         sz -= rmerged;
         if(!rmerged && merged) break;
-        int cmerged = mergematc(m, sz, n);
+        if(!sz) break;
+        int cmerged = mergematc(m[sz-1], n);
         sz -= cmerged;
         if(!cmerged) break;
     };
