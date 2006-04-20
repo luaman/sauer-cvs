@@ -550,15 +550,11 @@ struct md3 : model
     bool load()
     {
         if(loaded) return true;
-        
+        md3models.setsize(0);
         loadingmd3 = this;
         s_sprintf(basedir)("packages/models/%s", loadname);
 
-        string pname;
-        char *p = strrchr(loadname, '/');
-        if(!p) p = loadname;
-        s_strncpy(pname, loadname, p-loadname+1);
-        
+        char *pname = parentdir(loadname);
         s_sprintfd(cfgname)("packages/models/%s/md3.cfg", loadname);
         if(!execfile(cfgname))
         {
@@ -568,36 +564,19 @@ struct md3 : model
             if(!mdl.load(path(name1)))
             {
                 s_sprintf(name1)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
-                if(!mdl.load(path(name1))) return false;
+                mdl.load(path(name1));
             };
-            
-            Texture *tex;
-            s_sprintfd(name2)("packages/models/%s/skin.jpg", loadname);
-            #define ifnload if((tex = textureload(name2, 0, false, true, false))==crosshair)
-            ifnload
-            {
-                strcpy(name2+strlen(name2)-3, "png");                       // try png if no jpg
-                ifnload
-                {
-                    s_sprintf(name2)("packages/models/%s/skin.jpg", pname);    // try jpg in the parent folder (skin sharing)
-                    ifnload                                          
-                    {
-                        strcpy(name2+strlen(name2)-3, "png");               // and png again
-                        ifnload
-                        {
-                            conoutf("could not load model skin for %s", name1);
-                        };
-                    };
-                };
-            };
-            if(tex!=crosshair) loopv(mdl.meshes) mdl.meshes[i].skin = tex;
+            Texture *skin = probeskin(loadname, pname);
+            if(skin!=crosshair) loopv(mdl.meshes) mdl.meshes[i].skin = skin;
+            else conoutf("could not load model skin for %s", name1);
         };
         
+        delete[] pname;
         loadingmd3 = NULL;
         if(md3models.length() <= 0) return false;        
         loopv(md3models) if(!md3models[i].loaded) return false;
         return loaded = true;
-    }
+    };
     
     char *name() { return loadname; };
 };

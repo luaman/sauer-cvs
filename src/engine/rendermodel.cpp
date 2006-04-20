@@ -222,3 +222,23 @@ int findanim(const char *name)
     return -1;
 };
 
+Texture *probeskin(const char *dir, const char *altdir) // model skin sharing
+{
+    Texture *skin;
+    s_sprintfd(skinpath)("packages/models/%s/skin.jpg", dir);
+    #define ifnload if((skin = textureload(skinpath, 0, false, true, false))==crosshair)
+    ifnload
+    {
+        strcpy(skinpath+strlen(skinpath)-3, "png");                       // try png if no jpg
+        ifnload
+        {
+            s_sprintf(skinpath)("packages/models/%s/skin.jpg", altdir);    // try jpg in the parent folder (skin sharing)
+            ifnload                                          
+            {
+                strcpy(skinpath+strlen(skinpath)-3, "png");               // and png again
+                ifnload return skin;
+            };
+        };
+    };
+    return skin;
+};
