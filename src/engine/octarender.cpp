@@ -407,6 +407,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
         if(isentirelysolid(o)) return false;
         if(mat != MAT_AIR && o.material == mat) return false;
         if(isempty(o) || !touchingface(o, opposite(orient))) return true;
+        if(faceedges(o, opposite(orient)) == F_SOLID) return false;
         facevec cf[4], of[4];
         genfacevecs(c, orient, ivec(x, y, z), size, mat != MAT_AIR, cf);
         genfacevecs(o, opposite(orient), lu, lusize, false, of);

@@ -1,77 +1,6 @@
 #include "pch.h"
 #include "engine.h"
 
-struct QuadNode
-{
-    int x, y, size;
-    uint filled;
-    QuadNode *child[4];
-
-    QuadNode(int x, int y, int size) : x(x), y(y), size(size), filled(0) { loopi(4) child[i] = 0; };
-
-    void clear()
-    {
-        loopi(4) DELETEP(child[i]);
-    };
-
-    ~QuadNode()
-    {
-        clear();
-    };
-
-    void insert(int mx, int my, int msize)
-    {
-        if(size == msize)
-        {
-            filled = 0xF;
-            return;
-        };
-        int csize = size>>1, i = 0;
-        if(mx >= x+csize) i |= 1;
-        if(my >= y+csize) i |= 2;
-        if(csize == msize)
-        {
-            filled |= (1 << i);
-            return;
-        };
-        if(!child[i]) child[i] = new QuadNode(i&1 ? x+csize : x, i&2 ? y+csize : y, csize);
-        child[i]->insert(mx, my, msize);
-        loopj(4) if(child[j])
-        {
-            if(child[j]->filled == 0xF)
-            {
-                DELETEP(child[j]);
-                filled |= (1 << j);
-            };
-        };
-    };
-
-    void genmatsurf(uchar mat, uchar orient, int x, int y, int z, int size, materialsurface *&matbuf)
-    {
-        materialsurface &m = *matbuf++;
-        m.material = mat;
-        m.orient = orient;
-        m.csize = size;
-        m.rsize = size;
-        int dim = dimension(orient);
-        m.o[C[dim]] = x;
-        m.o[R[dim]] = y;
-        m.o[dim] = z;
-    };
-
-    void genmatsurfs(uchar mat, uchar orient, int z, materialsurface *&matbuf) 
-    {
-        if(filled == 0xF) genmatsurf(mat, orient, x, y, z, size, matbuf);
-        else if(filled) 
-        {
-            int csize = size>>1;
-            loopi(4) if(filled & (1 << i)) 
-                genmatsurf(mat, orient, i&1 ? x+csize : x, i&2 ? y+csize : y, z, csize, matbuf);
-        };
-        loopi(4) if(child[i]) child[i]->genmatsurfs(mat, orient, z, matbuf);
-    };
-};
-
 VARP(watersubdiv, 0, 2, 3);
 VARP(waterlod, 0, 1, 3);
 
@@ -194,21 +123,24 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
     };
 };
 
-void renderwaterfall(materialsurface &m, Texture *t)
+void renderwaterfall(materialsurface &m, Texture *t, float offset)
 {
     float xf = 8.0f/t->xs;
     float yf = 8.0f/t->ys;
     float d = 16.0f*lastmillis/1000.0f;
-    int dim = dimension(m.orient);
+    int dim = dimension(m.orient), 
+        csize = C[dim]==2 ? m.rsize : m.csize,
+        rsize = R[dim]==2 ? m.rsize : m.csize;
 
     glBegin(GL_POLYGON);
     loopi(4)
     {
-        ivec v(m.o);
-        if(i == 1 || i == 2) v[dim^1] += m.csize;
-        if(i <= 1) v.z += m.rsize;
+        vec v(m.o.tovec());
+        v[dim] += dimcoord(m.orient) ? -offset : offset; 
+        if(i == 1 || i == 2) v[dim^1] += csize;
+        if(i <= 1) v.z += rsize;
         glTexCoord2f(xf*v[dim^1], yf*(v.z+d));
-        glVertex3i(v.x, v.y, v.z);
+        glVertex3fv(v.v);
     };
     glEnd();
 
@@ -264,11 +196,11 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
     loopi(4)
     {
         int coord = fv[orient][i];
-        float v[3] = {float(x), float(y), float(z)};
+        vec v(x, y, z);
         v[c] += cubecoords[coord][c]/8*csize;
         v[r] += cubecoords[coord][r]/8*rsize;
         v[dim] += dimcoord(orient) ? -offset : offset;
-        glVertex3fv(v);
+        glVertex3fv(v.v);
     };
     glEnd();
 
@@ -301,7 +233,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
          #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
          defaultshader->set();
          matloop(MAT_WATER,
-             if(m.orient != O_TOP) renderwaterfall(m, t); 
+             if(m.orient != O_TOP) renderwaterfall(m, t, 0.1f); 
              else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, t) >= (uint)m.csize * 2)
                  renderwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, t);
          );
@@ -363,6 +295,153 @@ void rendermatgrid(materialsurface *matbuf, int matsurfs)
     };
 };
 
+struct QuadNode
+{
+    int x, y, size;
+    uint filled;
+    QuadNode *child[4];
+
+    QuadNode(int x, int y, int size) : x(x), y(y), size(size), filled(0) { loopi(4) child[i] = 0; };
+
+    void clear()
+    {
+        loopi(4) DELETEP(child[i]);
+    };
+
+    ~QuadNode()
+    {
+        clear();
+    };
+
+    void insert(int mx, int my, int msize)
+    {
+        if(size == msize)
+        {
+            filled = 0xF;
+            return;
+        };
+        int csize = size>>1, i = 0;
+        if(mx >= x+csize) i |= 1;
+        if(my >= y+csize) i |= 2; 
+        if(csize == msize) 
+        {
+            filled |= (1 << i);
+            return;
+        };
+        if(!child[i]) child[i] = new QuadNode(i&1 ? x+csize : x, i&2 ? y+csize : y, csize);
+        child[i]->insert(mx, my, msize);
+        loopj(4) if(child[j])
+        { 
+            if(child[j]->filled == 0xF)
+            {
+                DELETEP(child[j]);
+                filled |= (1 << j);
+            };
+        };
+    };
+    
+    void genmatsurf(uchar mat, uchar orient, int x, int y, int z, int size, materialsurface *&matbuf)
+    {
+        materialsurface &m = *matbuf++;
+        m.material = mat; 
+        m.orient = orient;
+        m.csize = size;
+        m.rsize = size;
+        int dim = dimension(orient);
+        m.o[C[dim]] = x;
+        m.o[R[dim]] = y;
+        m.o[dim] = z;
+    };
+
+    void genmatsurfs(uchar mat, uchar orient, int z, materialsurface *&matbuf)
+    {
+        if(filled == 0xF) genmatsurf(mat, orient, x, y, z, size, matbuf);
+        else if(filled)
+        {
+            int csize = size>>1; 
+            loopi(4) if(filled & (1 << i))  
+                genmatsurf(mat, orient, i&1 ? x+csize : x, i&2 ? y+csize : y, z, csize, matbuf);
+        };
+        loopi(4) if(child[i]) child[i]->genmatsurfs(mat, orient, z, matbuf);
+    };
+};
+
+int mergematcmp(const materialsurface *x, const materialsurface *y)
+{
+    int dim = dimension(x->orient), c = C[dim], r = R[dim];
+    if(x->o[r] + x->rsize < y->o[r] + y->rsize) return -1;
+    if(x->o[r] + x->rsize > y->o[r] + y->rsize) return 1;
+    if(x->o[c] < y->o[c]) return -1;
+    if(x->o[c] > y->o[c]) return 1;
+    return 0;
+};
+
+int mergematr(materialsurface *m, int sz, materialsurface &n)
+{
+    int dim = dimension(n.orient), c = C[dim], r = R[dim];
+    for(int i = sz-1; i >= 0; --i)
+    {
+        if(m[i].o[r] + m[i].rsize < n.o[r]) break;
+        if(m[i].o[r] + m[i].rsize == n.o[r] && m[i].o[c] == n.o[c] && m[i].csize == n.csize)
+        {
+            n.o[r] = m[i].o[r];
+            n.rsize += m[i].rsize;
+            memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
+            return 1;
+        }; 
+    };
+    return 0;
+};
+
+int mergematc(materialsurface *m, int sz, materialsurface &n)
+{
+    int dim = dimension(n.orient), c = C[dim], r = R[dim];
+    for(int i = sz-1; i >= 0; --i)
+    {
+        int merged = 0;
+        if(m[i].o[r] + m[i].rsize != n.o[r] + n.rsize) break;
+        if(n.o[c] + n.csize == m[i].o[c] && n.o[r] == m[i].o[r])
+        {
+            n.csize += m[i].csize;
+            memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
+            ++merged;
+        };
+        if(m[i].o[c] + m[i].csize == n.o[c] && m[i].o[r] == n.o[r])
+        {
+            n.o[c] = m[i].o[c];
+            n.csize += m[i].csize;
+            memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
+            ++merged;
+        };
+        if(merged) return merged;
+    };
+    return 0;
+};
+
+int mergemat(materialsurface *m, int sz, materialsurface &n)
+{
+    for(bool merged = false;; merged = true)
+    {
+        int rmerged = mergematr(m, sz, n);
+        sz -= rmerged;
+        if(!rmerged && merged) break;
+        int cmerged = mergematc(m, sz, n);
+        sz -= cmerged;
+        if(!cmerged) break;
+    };
+    m[sz++] = n;
+    return sz;
+};
+
+int mergemats(materialsurface *m, int sz)
+{
+    qsort(m, sz, sizeof(materialsurface), (int (*)(const void *, const void *))mergematcmp);
+
+    int nsz = 0;
+    loopi(sz) nsz = mergemat(m, nsz, m[i]);
+    return nsz;
+};
+    
 VARF(optmats, 0, 1, 1, allchanged());
                 
 int optimizematsurfs(materialsurface *matbuf, int matsurfs)
@@ -378,6 +457,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->orient == start->orient && 
                cur->o[dim] == start->o[dim])
             ++cur;
+         materialsurface *oldbuf = matbuf;
          if(cur-start<4) 
          {
             memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
@@ -389,6 +469,8 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
             loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
             vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
          };
+         if(start->material != MAT_WATER || start->orient != O_TOP) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
+         
     };
     return matsurfs - (end-matbuf);
 };
