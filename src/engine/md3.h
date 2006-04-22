@@ -22,7 +22,7 @@ struct md3frame
 struct md3tag
 {
     char name[64];
-    float pos[3];
+    vec pos;
     float rotation[3][3];
 };
 
@@ -94,7 +94,7 @@ struct md3mesh
     GLuint vbufGL;
     ushort *vbufi;
     int vbufi_len;
-    md3mesh() : vbufGL(0), vbufi(0) {};
+    md3mesh() : vbufGL(0), vbufi(0), skin(crosshair) {};
     ~md3mesh() 
     {
         DELETEA(vbufi);
@@ -164,8 +164,8 @@ struct md3model
         previous = prev;
     };
 
-    void genvar() // generate vbo for each mesh
-    {
+    void genvar() // generate vbo's for each mesh
+    {   
         vector<ushort> idxs;
         vector<md2::md2_vvert> verts;
         
@@ -227,6 +227,27 @@ struct md3model
         return spheretree;
     };
     
+    void scaleverts(const float scale, vec *translate) 
+    {
+        if(!loaded) return;
+        loopv(meshes)
+        {
+            md3mesh &m = meshes[i];
+            loopj(numframes*m.numvertices) 
+            {
+                vec &v = m.vertices[j];
+                v.mul(scale);
+                if(translate) v.add(*translate);
+            };
+        };
+        loopi(numframes*numtags) 
+        {
+            vec &v = tags[i].pos;
+            v.mul(scale);
+            if(translate) v.add(*translate);            
+        };
+    };
+    
     float boundsphere_recv(int frame, vec &center)
     {
         md3frame &frm = frames[frame];
@@ -236,14 +257,39 @@ struct md3model
         center.div(2.0f);
         center.add(min);
         
-        loopi(numtags) // adds the rad's of all linked models, unexact but fast
+        float biggest_radius = 0.0f;
+        loopi(numtags)
         {
             md3model *mdl = links[i];
-            if(!mdl) continue;
-            vec dummy;
-            radius += mdl->boundsphere_recv(frame, dummy);
+            md3tag *tag = &tags[frame*numtags+i];
+            if(!mdl || !tag) continue;
+            vec child_center;
+            float r = mdl->boundsphere_recv(frame, child_center);
+            biggest_radius = max(r, biggest_radius);
+            child_center.add(vec(tag->pos));
+            center.add(child_center);
+            center.div(2.0f);
         };
-        return radius;
+        return radius + biggest_radius; // add the rad of the biggest child
+    };
+
+    float above_recv(int frame) // assumes models are stacked in a row
+    {
+        md3frame &frm = frames[frame];
+        vec min = frm.min_bounds;
+        vec max = frm.max_bounds;
+        float above = max.z-min.z;
+        
+        float highest = 0.0f;
+        loopi(numtags)
+        {
+            md3model *mdl = links[i];
+            md3tag *tag = &tags[frame*numtags+i];
+            if(!mdl || !tag) continue;
+            float a = mdl->above_recv(frame)+tag->pos.z;
+            highest = max(a, highest);
+        };
+        return above + highest;
     };
 
     bool load(char *path)
@@ -265,6 +311,7 @@ struct md3model
         numtags = header.numtags;
         fseek(f, header.ofs_tags, SEEK_SET);
         fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
+        loopi(header.numframes*header.numtags) swap(float, tags[i].pos.x, tags[i].pos.y); // fixme some shiny day
         
         links = new md3model *[header.numtags];
         loopi(header.numtags) links[i] = NULL;
@@ -295,15 +342,15 @@ struct md3model
             mesh.normals = new vec[mheader.numframes * mheader.numvertices];
             loopj(mheader.numframes * mheader.numvertices) // transform to our own structure
             {
-                mesh.vertices[j].x = vertices[j].vertex[0]/64.0f;
-                mesh.vertices[j].y = vertices[j].vertex[1]/64.0f;
+                mesh.vertices[j].y = vertices[j].vertex[0]/64.0f;
+                mesh.vertices[j].x = vertices[j].vertex[1]/64.0f;
                 mesh.vertices[j].z = vertices[j].vertex[2]/64.0f;
 
                 float lat = (vertices[j].normal&255)*PI2/255.0f; // decode vertex normals
                 float lng = ((vertices[j].normal>>8)&255)*PI2/255.0f;
                 mesh.normals[j].x = cos(lat)*sin(lng);
                 mesh.normals[j].y = sin(lat)*cos(lng);
-                mesh.normals[j].z = cos(lng);
+                mesh.normals[j].z = -cos(lng);
             };
             
             mesh.numvertices = mheader.numvertices;
@@ -328,7 +375,7 @@ struct md3model
                 md3animinfo &a = anims[anim][varseed%anims[anim].length()];
                 ai.frame = a.frame;
                 ai.range = a.range;
-                ai.speed = speed*100.0f/(1000.0f/(float)a.fps);
+                ai.speed = speed < 0.01f ? 1000.0f/(float)a.fps : speed;
             }
             else
             {
@@ -382,7 +429,7 @@ struct md3model
 
             glBindTexture(GL_TEXTURE_2D, mesh.skin->gl);
             
-            if(hasVBO && anim==ANIM_STATIC && meshes[0].vbufGL) // vbo's for static stuff
+            if(hasVBO && anim==ANIM_STATIC && meshes[i].vbufGL) // vbo's for static stuff
             {           
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
                 glEnableClientState(GL_VERTEX_ARRAY);
@@ -468,8 +515,8 @@ struct md3model
             md3model *link = links[i];
             if(!link) continue;
             GLfloat matrix[16] = {0}; // fixme: un-obfuscate it!
-            md3tag *tag1 = &tags[cur.fr1 * numtags + i];
-            md3tag *tag2 = &tags[cur.fr2 * numtags + i];
+            md3tag *tag1 = &tags[cur.fr1*numtags+i];
+            md3tag *tag2 = &tags[cur.fr2*numtags+i];
             
             if(doai)
             {
@@ -520,9 +567,14 @@ struct md3 : model
     
     float boundsphere(int frame, vec &center) 
     { 
-        if(!md3models.length()) return 0;
-        float bs = md3models[0].boundsphere_recv(frame, center);
-        return bs*scale;
+        if(!loaded) return 0.0f;
+        return md3models[0].boundsphere_recv(frame, center);
+    };
+    
+    float above(int frame) // assumes models are stacked
+    {
+        if(!loaded) return 0.0f;
+        return md3models[0].above_recv(frame);
     };
     
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
@@ -531,15 +583,11 @@ struct md3 : model
         
         glPushMatrix();
         
-        glTranslatef(x+translate.x, y+translate.y, z+translate.z);
+        glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
-        glScalef(scale, scale, scale);
         
-        glCullFace(GL_BACK);
         if(md3models.length()==3 && d) loopi(2) md3models[i].setanimstate(&d->lastanimswitchtime[i], &d->current[i], &d->prev[i]);
-        glCullFace(GL_FRONT);
-        
         md3models[0].render(anim, varseed, speed, basetime);
         
         glPopMatrix();
@@ -551,30 +599,37 @@ struct md3 : model
     {
         if(loaded) return true;
         md3models.setsize(0);
-        loadingmd3 = this;
         s_sprintf(basedir)("packages/models/%s", loadname);
 
         char *pname = parentdir(loadname);
         s_sprintfd(cfgname)("packages/models/%s/md3.cfg", loadname);
-        if(!execfile(cfgname))
-        {
-            md3model &mdl = md3models.add();
         
+        loadingmd3 = this;
+        if(execfile(cfgname)) // configured md3, will call the md3* commands below
+        {
+            delete[] pname;
+            loadingmd3 = NULL;
+            if(md3models.length() <= 0) return false;        
+            loopv(md3models) if(!md3models[i].loaded) return false;
+        }
+        else // md3 without configuration, try default tris and skin
+        {
+            loadingmd3 = NULL;
+            md3model &mdl = md3models.add();
+            
             s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
             if(!mdl.load(path(name1)))
             {
                 s_sprintf(name1)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
-                mdl.load(path(name1));
+                if(!mdl.load(path(name1))) { delete[] pname; return false; };
             };
             Texture *skin = loadskin(loadname, pname);
             if(skin!=crosshair) loopv(mdl.meshes) mdl.meshes[i].skin = skin;
-            else conoutf("could not load model skin for %s", name1);
+            else printf("could not load model skin for %s", name1);
         };
+        loopv(md3models) md3models[i].scaleverts(scale/4.0f, !i ? &translate : NULL );
         
-        delete[] pname;
-        loadingmd3 = NULL;
-        if(md3models.length() <= 0) return false;        
-        loopv(md3models) if(!md3models[i].loaded) return false;
+        md3model &first = md3models[0];
         return loaded = true;
     };
     
@@ -586,7 +641,7 @@ void md3load(char *model)
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
     s_sprintfd(filename)("%s/%s", basedir, model);
     md3model &mdl = loadingmd3->md3models.add();
-    if(!mdl.load(path(filename))) printf("could not load %s\n", filename); // further error handling in md3::load()
+    if(!mdl.load(path(filename))) printf("could not load %s\n", filename); // ignore failure
 };
 
 void md3skin(char *objname, char *skin)
@@ -600,7 +655,7 @@ void md3skin(char *objname, char *skin)
         if(strcmp(mesh->name, objname) == 0)
         {
             s_sprintfd(path)("%s/%s", basedir, skin);
-            mesh->skin = textureload(path, 0, false, true, false); 
+            mesh->skin = textureload(path, 0, false, true, false);
         };
     };
 };
