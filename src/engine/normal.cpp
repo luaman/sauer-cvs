@@ -41,7 +41,7 @@ hashtable<nkey, nval> normals;
 
 VARF(lerpangle, 0, 44, 180, hdr.lerpangle = lerpangle);
 
-void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface)
+void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface, bool add = true)
 {
     nkey key(origin, offset);
     nval &val = normals[key];
@@ -64,7 +64,7 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
             n.average.add(o.surface);
         };
     };
-    val.normals->add(n);
+    if(add) val.normals->add(n);
 };
 
 bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
@@ -92,6 +92,9 @@ bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
     return false;
 };
 
+VAR(lerpsubdiv, 0, 2, 4);
+VAR(lerpsubdivsize, 4, 4, 128);
+
 void addnormals(cube &c, const ivec &o, int size)
 {
     CHECK_CALCLIGHT_PROGRESS(return);
@@ -117,11 +120,34 @@ void addnormals(cube &c, const ivec &o, int size)
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);
         if(!numplanes) continue;
+        int subdiv = 0;
+        if(lerpsubdiv && size > lerpsubdivsize && faceedges(c, i) == F_SOLID)
+        {
+            subdiv = 1<<lerpsubdiv;
+            while(size/subdiv < lerpsubdivsize) subdiv >>= 1; 
+        };
         loopj(4)
         {
             int index = faceverts(c, i, j);
-            vvec &v = vvecs[index];
-            if(numplanes < 2 || j == 1) addnormal(o, i, v, planes[0]);
+            const vvec &v = vvecs[index];
+            if(numplanes < 2)
+            {
+                addnormal(o, i, v, planes[0]);
+                if(subdiv >= 2)
+                {
+                    const vvec &v2 = vvecs[faceverts(c, i, (j+1)%4)];
+                    vvec dv(v2);
+                    dv.sub(v);
+                    dv.div(subdiv);
+                    vvec vs(v);
+                    loopk(subdiv - 1)
+                    {
+                        vs.add(dv);
+                        addnormal(o, i, vs, planes[0], false);
+                    };
+                };
+            }
+            else if(j == 1) addnormal(o, i, v, planes[0]);
             else if(j == 3) addnormal(o, i, v, planes[1]);
             else
             {

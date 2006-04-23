@@ -211,7 +211,12 @@ void load_world(char *mname)        // still supports all map formats that have 
     if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
     if(hdr.version>MAPVERSION) fatal("this map requires a newer version of sauerbraten");
     if(!hdr.ambient) hdr.ambient = 25;
-    if(hdr.version<13) hdr.lerpangle = 44;
+    if(!hdr.lerpsubdivsize)
+    {
+        hdr.lerpangle = 44;
+        hdr.lerpsubdiv = 2;
+        hdr.lerpsubdivsize = 4;
+    };
     setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
     setvar("lighterror", hdr.maple ? hdr.maple : 8);
     setvar("lightlod", hdr.mapllod);
@@ -219,6 +224,8 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("ambient", hdr.ambient);
     setvar("fullbright", 0);
     setvar("lerpangle", hdr.lerpangle);
+    setvar("lerpsubdiv", hdr.lerpsubdiv);
+    setvar("lerpsubdivsize", hdr.lerpsubdivsize);
 
     show_out_of_renderloop_progress(0, "clearing world...");
     freeocta(worldroot);
