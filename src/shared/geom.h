@@ -176,6 +176,7 @@ struct svec
     svec(short x, short y, short z) : x(x), y(y), z(z) {};
 
     void add(const svec &o) { x += o.x; y += o.y; z += o.z; };
+    void sub(const svec &o) { x -= o.x; y -= o.y; z -= o.z; };
     void mul(int f) { x *= f; y *= f; z *= f; };
     void div(int f) { x /= f; y /= f; z /= f; };
 };
