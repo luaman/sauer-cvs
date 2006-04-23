@@ -213,7 +213,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     if(!hdr.ambient) hdr.ambient = 25;
     if(!hdr.lerpsubdivsize)
     {
-        hdr.lerpangle = 44;
+        if(!hdr.lerpangle) hdr.lerpangle = 44;
         hdr.lerpsubdiv = 2;
         hdr.lerpsubdivsize = 4;
     };
