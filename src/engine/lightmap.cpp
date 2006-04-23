@@ -193,19 +193,18 @@ void generate_lumel(const float tolerance, const vector<entity *> &lights, const
         float mag = ray.magnitude(),
               attenuation = 1.0;
         if(light.attr1)
+        {
             attenuation -= mag / float(light.attr1);
-        ray.mul(1.0 / mag);
-        if(attenuation <= 0.0)
-            continue;
+            if(attenuation <= 0.0) continue;
+        };
+        ray.mul(1.0f / mag);
         if(shadows)
         {
             float dist = raycube(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows ? RAY_POLY : 0));
-            if(dist < mag - tolerance)
-                continue;
+            if(dist < mag - tolerance) continue;
         };
         float intensity = -normal.dot(ray) * attenuation;
-        if(intensity < 0) 
-            continue;
+        if(intensity < 0) continue;
         r += intensity * float(light.attr2);
         g += intensity * float(light.attr3);
         b += intensity * float(light.attr4);
@@ -230,6 +229,7 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
     return false;
 };
 
+VAR(edgetolerance, 1, 4, 8);
 VAR(adaptivesample, 0, 1, 1);
 
 bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const lerpvert *lv, int numv, const vec &ustep, const vec &vstep)
@@ -296,16 +296,23 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 loopi(aasample-1) *sample++ = center;
             else
             {
+#define EDGE_TOLERANCE(i) \
+    ((!x && aacoords[i][0] < 0) \
+     || (x+1==lm_w && aacoords[i][0] > 0) \
+     || (!y && aacoords[i][1] < 0) \
+     || (y+1==lm_h && aacoords[i][1] > 0) \
+     ? edgetolerance : 1)
+
                 vec n(normal);
                 n.normalize();
                 loopi(aasample-1)
-                    generate_lumel(tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++);
+                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++);
                 if(aalights == 3) 
                 {
                     loopi(4)
                     {
                         vec s;
-                        generate_lumel(tolerance, lights, vec(u).add(offsets[i+4]), n, s);
+                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, s);
                         center.add(s);
                     };
                     center.div(5);
@@ -317,7 +324,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
             normal.normalize();
             generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1]);
             if(aasample > 2)
-                generate_lumel(tolerance, lights, vec(u).add(offsets[3]), normal, sample[3]);
+                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, sample[3]);
         };
         sample += aasample;
     };
@@ -334,9 +341,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 CHECK_PROGRESS(return false);
                 vec n(normal);
                 n.normalize();
-                generate_lumel(tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
+                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
                 if(aasample > 2)
-                    generate_lumel(tolerance, lights, vec(v).add(offsets[2]), n, sample[2]);
+                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, sample[2]);
                 sample += aasample;
             }; 
         };
