@@ -242,7 +242,7 @@ struct fpsclient : igameclient
         if(m_capture) pick = cpc.pickspawn(d->team);
         if(pick<0)
         {
-            int r = fixspawn-->0 ? 3 : rnd(10)+1;
+            int r = fixspawn-->0 ? 2 : rnd(10)+1;
             loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
             pick = spawncycle;
         };
