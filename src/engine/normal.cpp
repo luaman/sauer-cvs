@@ -94,6 +94,8 @@ bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
 
 void addnormals(cube &c, const ivec &o, int size)
 {
+    CHECK_CALCLIGHT_PROGRESS(return);
+
     if(c.children)
     {
         size >>= 1;
@@ -110,6 +112,8 @@ void addnormals(cube &c, const ivec &o, int size)
     loopi(8) if(vertused[i]) verts[i] = vvecs[i].tovec(o);
     loopi(6) if(usefaces[i])
     {
+        CHECK_CALCLIGHT_PROGRESS(return);
+
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);
         if(!numplanes) continue;

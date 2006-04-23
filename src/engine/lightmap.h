@@ -84,3 +84,15 @@ extern void calclerpverts(const vec &origin, const vec *p, const vec *n, const v
 extern void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end);
 extern void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep);
 
+#define CHECK_CALCLIGHT_PROGRESS(exit) \
+    if(check_calclight_progress) \
+    { \
+        show_calclight_progress(); \
+        if(calclight_canceled) exit; \
+    };
+
+extern bool calclight_canceled;
+extern volatile bool check_calclight_progress;
+
+extern void show_calclight_progress();
+

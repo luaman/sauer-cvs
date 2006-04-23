@@ -14,19 +14,13 @@ int shadows = 1;
 int mmshadows = 0;
 int aalights = 3;
  
-static uchar lm [3 * LM_MAXW * LM_MAXH];
+static uchar lm[3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<entity *> lights1, lights2;
 static uint progress = 0, total_surfaces = 0;
-static bool canceled = false;
-static volatile bool check_progress = false;
 
-#define CHECK_PROGRESS(exit) \
-    if(check_progress) \
-    { \
-        show_calclight_progress(); \
-        if(canceled) exit; \
-    };
+bool calclight_canceled = false;
+volatile bool check_calclight_progress = false;
 
 void check_calclight_canceled()
 {
@@ -37,18 +31,18 @@ void check_calclight_canceled()
         {
         case SDL_KEYDOWN:
             if(event.key.keysym.sym == SDLK_ESCAPE)
-                canceled = true;
+                calclight_canceled = true;
             break;
         };
     };
-    if(!canceled) check_progress = false;
+    if(!calclight_canceled) check_calclight_progress = false;
 };
 
 static int curlumels = 0;
 
 void show_calclight_progress()
 {
-    if(canceled) return;
+    if(calclight_canceled) return;
 
     int lumels = curlumels;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
@@ -274,7 +268,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         vec u(v);
         for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
-            CHECK_PROGRESS(return false);
+            CHECK_CALCLIGHT_PROGRESS(return false);
             generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample);
             sample += aasample;
         };
@@ -338,7 +332,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
 
             for(uint x = 0; x <= lm_w; ++x, v.add(ustep), normal.add(nstep))
             {
-                CHECK_PROGRESS(return false);
+                CHECK_CALCLIGHT_PROGRESS(return false);
                 vec n(normal);
                 n.normalize();
                 generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
@@ -597,7 +591,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     loopi(8) if(vertused[i]) verts[i] = vvecs[i].tovec(cx, cy, cz);
     loopi(6) if(usefaces[i])
     {
-        CHECK_PROGRESS(return);
+        CHECK_CALCLIGHT_PROGRESS(return);
         if(!lodcube) progress++;
         if(c.texture[i] == DEFAULT_SKY) continue;
         if(size >= hdr.mapwlod) progress++;
@@ -628,7 +622,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!setup_surface(planes, v, n, numplanes >= 2 ? n2 : NULL, texcoords))
             continue;
 
-        CHECK_PROGRESS(return);
+        CHECK_CALCLIGHT_PROGRESS(return);
         if(!c.surfaces)
             newsurfaces(c);
         surfaceinfo &surface = c.surfaces[i];
@@ -641,7 +635,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
-    CHECK_PROGRESS(return);
+    CHECK_CALCLIGHT_PROGRESS(return);
 
     loopi(8)
     {
@@ -662,7 +656,7 @@ void resetlightmaps()
 
 static Uint32 calclight_timer(Uint32 interval, void *param)
 {
-    check_progress = true;
+    check_calclight_progress = true;
     return interval;
 };
     
@@ -692,8 +686,8 @@ void calclight(int quality)
         total_surfaces += va->explicitsky;
         total_surfaces += va->l1.tris/2;
     };
-    canceled = false;
-    check_progress = false;
+    calclight_canceled = false;
+    check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
     show_out_of_renderloop_progress(0, "computing normals...");
     calcnormals();
@@ -711,7 +705,7 @@ void calclight(int quality)
     initlights();
     computescreen("lighting done...");
     allchanged();
-    if(canceled == true)
+    if(calclight_canceled)
         conoutf("calclight aborted");
     else
         conoutf("generated %d lightmaps using %d%% of %d textures",
@@ -741,8 +735,8 @@ void patchlight()
         lumels -= lightmaps[i].lumels;
     };
     curlumels = lumels;
-    canceled = false;
-    check_progress = false;
+    calclight_canceled = false;
+    check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(500, calclight_timer, NULL);
     show_out_of_renderloop_progress(0, "computing normals...");
     calcnormals();
@@ -756,7 +750,7 @@ void patchlight()
     };
     initlights();
     allchanged();
-    if(canceled == true)
+    if(calclight_canceled)
         conoutf("patchlight aborted");
     else
         conoutf("patched %d lightmaps using %d%% of %d textures",
