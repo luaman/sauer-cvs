@@ -155,7 +155,7 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
 {
     if(noedit()) return;
     int type = findtype(what);
-    extentity *e = et->newentity(player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
+    extentity *e = et->newentity(true, player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
     if(entdrop) dropentity(*e);
     et->getents().add(e);
     int i = et->getents().length()-1;
@@ -259,7 +259,7 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
     if(et->getents().length()<=i)
     {
         while(et->getents().length()<i) et->getents().add(et->newentity())->type = ET_EMPTY;
-        extentity *e = et->newentity(o, type, attr1, attr2, attr3, attr4);
+        extentity *e = et->newentity(local, o, type, attr1, attr2, attr3, attr4);
         et->getents().add(e);
         lightent(*e);
     }

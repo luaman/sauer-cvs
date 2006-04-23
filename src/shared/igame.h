@@ -9,7 +9,7 @@ struct icliententities
     virtual void writeent(entity &e) = 0;
     virtual void readent(entity &e) = 0;
     virtual float dropheight(entity &e) = 0;
-    virtual extentity *newentity(const vec &o, int type, int v1, int v2, int v3, int v4) = 0;
+    virtual extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4) = 0;
     virtual extentity *newentity() = 0;
     virtual vector<extentity *> &getents() = 0;
 };

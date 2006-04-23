@@ -291,7 +291,7 @@ struct entities : icliententities
 
     extentity *newentity() { return new fpsentity(); };
 
-    extentity *newentity(const vec &o, int type, int v1, int v2, int v3, int v4)
+    extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
     {
         fpsentity &e = *new fpsentity();
         e.o = o;
@@ -305,7 +305,7 @@ struct entities : icliententities
         e.spawned = false;
 		e.inoctanode = false;
         e.color = vec(1, 1, 1);
-        switch(type)
+        if(local) switch(type)
         {
             case MAPMODEL:
                 e.attr4 = e.attr3;
