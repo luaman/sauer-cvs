@@ -283,8 +283,17 @@ N = registersound name V</pre>
 		0)
         <pre>lerpangle A</pre>
         Default = 44. This variable controls whether surface normals are interpolated for
-        lighting. If the angle between two surfaces' normals is less than A, then normals
-        will be interpolated between them.
+        lighting. Normals are sampled at each vertex of the surface. If the angle between 
+        two surfaces' normals (which meet at a vertex) is less than A, then the resulting
+        normal will be the average of the two. Normals are then later interpolated between
+        the normals at the vertexes of a surface.
+        <pre>lerpsubdiv N</pre>
+        Default = 2. This allows more normals to be sampled at points along an edge between 
+        two vertexes of a surface. 2^N-1 extra normals will be sampled along the edge, i.e.
+        the edge is split in half for every increment of N.
+        <pre>lerpsubdivsize N</pre>
+        Default = 4. This sets the minimum size to which an edge may be subdivided. Edges
+        smaller than N or edge sections smaller than N will not be sampled.
 		<pre>lightprecision P</pre>
 		Default = 32. This is the most important variable for tweaking the lighting, it 
 		determines what the resolution of the lightmap is. As such has a BIG effect on 
