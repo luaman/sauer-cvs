@@ -94,7 +94,7 @@ struct md3mesh
     GLuint vbufGL;
     ushort *vbufi;
     int vbufi_len;
-    md3mesh() : vbufGL(0), vbufi(0), skin(crosshair) {};
+    md3mesh() : skin(crosshair), vbufGL(0), vbufi(0) {};
     ~md3mesh() 
     {
         DELETEA(vbufi);
@@ -629,7 +629,6 @@ struct md3 : model
         };
         loopv(md3models) md3models[i].scaleverts(scale/4.0f, !i ? &translate : NULL );
         
-        md3model &first = md3models[0];
         return loaded = true;
     };
     
