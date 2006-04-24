@@ -406,7 +406,7 @@ struct captureserv : capturestate
         if(sv.minremain<0) return;
         endcheck();
         int t = secs-sv.lastsec;
-        if(t<1 || sv.minremain<0) return;
+        if(t<1) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
