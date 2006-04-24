@@ -41,7 +41,7 @@ hashtable<nkey, nval> normals;
 
 VARF(lerpangle, 0, 44, 180, hdr.lerpangle = lerpangle);
 
-void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface, bool add = true)
+void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface)
 {
     nkey key(origin, offset);
     nval &val = normals[key];
@@ -64,7 +64,7 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
             n.average.add(o.surface);
         };
     };
-    if(add) val.normals->add(n);
+    val.normals->add(n);
 };
 
 bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
@@ -143,7 +143,7 @@ void addnormals(cube &c, const ivec &o, int size)
                     loopk(subdiv - 1)
                     {
                         vs.add(dv);
-                        addnormal(o, i, vs, planes[0], false);
+                        addnormal(o, i, vs, planes[0]);
                     };
                 };
             }
