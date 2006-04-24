@@ -1,3 +1,16 @@
+
+from the testing session:
+- kurts weird geometry bug: http://www.fidnet.com/~kesler/screenshot_486017.jpg
+- ATI float vs short issue
+- font black outlines
+- kurt map bases above eachother
+- multiplayer related:
+<Aardappel> I am but a ghost to the other players... who appear to be playing normally
+<Aardappel> well, I see others walking around, but cant really pickup items, and kill anyone
+<Aardappel> theres an enemy flag here and I can't capture it
+- lots of disconnects
+- need to find other way to end capture round
+
 gilt:
 - LOD: improved lod-remip
 - other tools that are geared towards easier editing of heightfields/terrain/rocks

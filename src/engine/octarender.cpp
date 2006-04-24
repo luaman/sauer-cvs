@@ -39,7 +39,10 @@ struct vechash
             if(c.x==v.x && c.y==v.y && c.z==v.z && c.u==tu && c.v==tv) return i;
         };
         vertex &n = verts.add();
-        ((vvec &)n) = v;
+        //((vvec &)n) = v;
+        n.x = v.x;
+        n.y = v.y;
+        n.z = v.z;
         n.u = tu;
         n.v = tv;
         chain.add(table[h]);
@@ -1095,7 +1098,7 @@ void rendersky()
         setorigin(va, !sky++);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, GL_SHORT, sizeof(vertex), &(va->vbuf[0].x));
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_QUADS, lod.sky, GL_UNSIGNED_SHORT, lod.skybuf);
         glde++;
@@ -1438,7 +1441,7 @@ void renderq()
         if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, GL_SHORT, sizeof(vertex), &(va->vbuf[0].x));
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
 
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_SHORT, sizeof(vertex), &(va->vbuf[0].u));
