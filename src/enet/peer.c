@@ -541,7 +541,7 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
         if (channel -> incomingReliableSequenceNumber >= 0xF000 && reliableSequenceNumber < 0x1000)
             reliableSequenceNumber += 0x10000;
         
-        if (reliableSequenceNumber < channel -> incomingReliableSequenceNumber ||
+        if (reliableSequenceNumber <= channel -> incomingReliableSequenceNumber ||
             (channel -> incomingReliableSequenceNumber < 0x1000 && (reliableSequenceNumber & 0xFFFF) >= 0xF000))
           goto freePacket;
     }
@@ -575,7 +575,7 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
        if (channel -> incomingUnreliableSequenceNumber >= 0xF000 && unreliableSequenceNumber < 0x1000)
            unreliableSequenceNumber += 0x10000;
         
-       if (unreliableSequenceNumber < channel -> incomingUnreliableSequenceNumber ||
+       if (unreliableSequenceNumber <= channel -> incomingUnreliableSequenceNumber ||
            (channel -> incomingUnreliableSequenceNumber < 0x1000 && (unreliableSequenceNumber & 0xFFFF) >= 0xF000))
          goto freePacket;
 
