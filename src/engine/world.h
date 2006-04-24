@@ -69,5 +69,5 @@ struct vvec : svec
     vec tovec(const ivec &o) const       { return tovec(o.x, o.y, o.z); };
 };
 
-struct vertex : vec { short u, v; };
-
+struct vertex : vvec { short u, v; };
+struct fvertex : vec { short u, v; };

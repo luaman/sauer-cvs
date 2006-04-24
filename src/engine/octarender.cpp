@@ -39,10 +39,7 @@ struct vechash
             if(c.x==v.x && c.y==v.y && c.z==v.z && c.u==tu && c.v==tv) return i;
         };
         vertex &n = verts.add();
-        //((vvec &)n) = v;
-        n.x = v.x;
-        n.y = v.y;
-        n.z = v.z;
+        ((vvec &)n) = v;
         n.u = tu;
         n.v = tv;
         chain.add(table[h]);
@@ -697,6 +694,22 @@ void genskyverts(cube &c, int x, int y, int z, int size)
 
 ////////// Vertex Arrays //////////////
 
+VARF(floatvtx, 0, 0, 1, allchanged());
+
+void genfloatverts(fvertex *f)
+{
+    loopi(verts.length())
+    {
+        const vertex &v = verts[i];
+        f->x = v.x;
+        f->y = v.y;
+        f->z = v.z;
+        f->u = v.u;
+        f->v = v.v;
+        f++;
+    };
+};
+
 int allocva = 0;
 int wtris = 0, wverts = 0, vtris = 0, vverts = 0, glde = 0;
 vector<vtxarray *> valist;
@@ -705,20 +718,29 @@ vtxarray *newva(int x, int y, int z, int size)
 {
     l0.optimize();
     int allocsize = sizeof(vtxarray) + l0.size() + l1.size();
-    if(!hasVBO) allocsize += verts.length()*sizeof(vertex); // length of vertex buffer
+    int bufsize = verts.length()*(floatvtx ? sizeof(fvertex) : sizeof(vertex));
+    if(!hasVBO) allocsize += bufsize; // length of vertex buffer
     vtxarray *va = (vtxarray *)new uchar[allocsize];
     char *buf = l1.setup(va->l1, l0.setup(va->l0, (char *)(va+1)));
     if(hasVBO && verts.length())
     {
         glGenBuffers_(1, (GLuint*)&(va->vbufGL));
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length() * sizeof(vertex), verts.getbuf(), GL_STATIC_DRAW_ARB);
+        if(floatvtx)
+        {
+            fvertex *f = new fvertex[verts.length()];
+            genfloatverts(f);
+            glBufferData_(GL_ARRAY_BUFFER_ARB, bufsize, f, GL_STATIC_DRAW_ARB);
+            delete[] f;
+        }
+        else glBufferData_(GL_ARRAY_BUFFER_ARB, bufsize, verts.getbuf(), GL_STATIC_DRAW_ARB);
         va->vbuf = 0; // Offset in VBO
     }
     else
     {
         va->vbuf = (vertex *)buf;
-        memcpy(va->vbuf, verts.getbuf(), verts.length()*sizeof(vertex));
+        if(floatvtx) genfloatverts((fvertex *)buf);
+        else memcpy(va->vbuf, verts.getbuf(), bufsize);
     };
 
     va->allocsize = allocsize;
@@ -1098,7 +1120,7 @@ void rendersky()
         setorigin(va, !sky++);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
+        glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_QUADS, lod.sky, GL_UNSIGNED_SHORT, lod.skybuf);
         glde++;
@@ -1441,10 +1463,10 @@ void renderq()
         if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), &(va->vbuf[0].x));
+        glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
         glClientActiveTexture_(GL_TEXTURE1_ARB);
-        glTexCoordPointer(2, GL_SHORT, sizeof(vertex), &(va->vbuf[0].u));
+        glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf) [0].u) : &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
 
         unsigned short *ebuf = lod.ebuf;

@@ -144,7 +144,8 @@ void gl_init(int w, int h)
         conoutf("WARNING: No shader support! Using fixed function fallback. (no fancy visuals for you)");
         renderpath = R_FIXEDFUNCTION;
         const char *vendor = (const char *)glGetString(GL_VENDOR);
-        if(strstr(vendor, "ATI")) ati_texgen_bug = 1;
+        extern int floatvtx;
+        if(strstr(vendor, "ATI")) ati_texgen_bug = floatvtx = 1;
         else if(strstr(vendor, "NVIDIA")) nvidia_texgen_bug = 1;
         if(ati_texgen_bug) conoutf("WARNING: Using ATI texgen bug workaround. (use \"/ati_texgen_bug 0\" to disable)");
         if(nvidia_texgen_bug) conoutf("WARNING: Using NVIDIA texgen bug workaround. (use \"/nvidia_texgen_bug 0\" to disable)");
