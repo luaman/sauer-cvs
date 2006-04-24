@@ -159,26 +159,32 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
     SDL_GL_SwapBuffers();
 }
 
-#ifndef WIN32
 void fullscreen()
 {
+#ifdef WIN32
+    conoutf("\"fullscreen\" command not supported on this platform. Use the -t command-line option.");
+#else
     SDL_WM_ToggleFullScreen(screen);
     SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
+#endif
 }
 
 void screenres(int w, int h, int bpp = 0)
 {
+#ifdef WIN32
+    conoutf("\"screenres\" command not supported on this platform. Use the -w and -h command-line options.");
+#else
     SDL_Surface *surf = SDL_SetVideoMode(w, h, bpp, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
     scr_w = w;
     scr_h = h;
     screen = surf;
     glViewport(0, 0, w, h);
+#endif
 }
 
 COMMAND(fullscreen, ARG_NONE);
 COMMAND(screenres, ARG_3INT);
-#endif
 
 void keyrepeat(bool on)
 {
@@ -199,10 +205,6 @@ struct sleepcmd
 
 vector<sleepcmd> sleepcmds;
 ICOMMAND(sleep, 2, { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s_strcpy(s.command, args[1]); });
-
-/*int sleepwait = 0;
-string sleepcmd;
-ICOMMAND(sleep, 2, { sleepwait = atoi(args[0])+lastmillis; s_strcpy(sleepcmd, args[1]); });*/
 
 void estartmap(char *name)
 {
