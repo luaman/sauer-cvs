@@ -311,6 +311,7 @@ template <class K, class T> struct hashtable
             table[i] = NULL;
             numelems = 0;
         };
+        chunkremain = 0;
         for(chainchunk *chunk; lastchunk; lastchunk = chunk)
         {
             chunk = lastchunk->next;
