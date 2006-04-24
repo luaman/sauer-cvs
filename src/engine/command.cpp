@@ -40,23 +40,6 @@ void alias(char *name, char *action)
 
 COMMAND(alias, ARG_2STR);
 
-void unalias(char *name)
-{
-    /*
-    idents->access(name);
-    ident *i = idents->access(name);
-    if(i && i->_type==ID_ALIAS)
-    {
-        idents->remove(name);
-        DELETEA(i->_name);
-        DELETEA(i->_action);
-    };
-    */
-    alias(name, "");    // can be moved to script
-};
-
-COMMAND(unalias, ARG_1STR);
-        
 // variable's and commands are registered through globals, see cube.h
 
 int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
@@ -100,8 +83,9 @@ char *parseexp(char *&p, int right);
     string oldaction; \
     char *hasalias = getalias(name); \
     if(hasalias) s_strcpy(oldaction, hasalias); \
+    else oldaction[0] = '\0'; \
     body; \
-    if(hasalias) alias(name, oldaction); else unalias(name); \
+    alias(name, oldaction); \
 }
 
 void domacro(char *&p)
