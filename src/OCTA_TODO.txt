@@ -5,11 +5,10 @@ from the testing session:
 - font black outlines
 - kurt map bases above eachother
 - multiplayer related:
-<Aardappel> I am but a ghost to the other players... who appear to be playing normally
-<Aardappel> well, I see others walking around, but cant really pickup items, and kill anyone
-<Aardappel> theres an enemy flag here and I can't capture it
+- intermission scoreboard not there? or intermission starts early?
 - lots of disconnects
 - need to find other way to end capture round
+- NaN velocity
 
 gilt:
 - LOD: improved lod-remip
