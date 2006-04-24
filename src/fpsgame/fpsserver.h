@@ -149,7 +149,7 @@ struct fpsserver : igameserver
             sents[i].spawned = false;
             sents[i].spawnsecs = sec;
             send2(true, sender, SV_ITEMACC, i);
-            if(minremain > 0 && sents[i].type == I_BOOST) findscore(sender, true).maxhealth += 10;
+            if(minremain>=0 && sents[i].type == I_BOOST) findscore(sender, true).maxhealth += 10;
         };
     };
 
@@ -328,7 +328,7 @@ struct fpsserver : igameserver
             case SV_FRAGS:
             {
                 int frags = getint(p);    
-                if(minremain > 0) findscore(sender, true).frags = frags;
+                if(minremain>=0) findscore(sender, true).frags = frags;
                 break;
             };
                 

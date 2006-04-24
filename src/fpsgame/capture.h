@@ -366,7 +366,7 @@ struct captureserv : capturestate
     
     void movebases(const char *team, const vec &oldpos, const vec &newpos)
     {
-        if(!team[0] || sv.minremain<=0) return;
+        if(!team[0] || sv.minremain<0) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -403,10 +403,10 @@ struct captureserv : capturestate
 
     void updatescores(int secs)
     {
-        if(sv.minremain<=0) return;
+        if(sv.minremain<0) return;
         endcheck();
         int t = secs-sv.lastsec;
-        if(t<1 || sv.minremain<=0) return;
+        if(t<1 || sv.minremain<0) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
