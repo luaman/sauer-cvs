@@ -218,24 +218,39 @@ inline bool htcmp(const char *x, const char *y)
 
 template <class K, class T> struct hashtable
 {
-    struct chain { chain *next; K key; T data; };
+    enum { CHUNKSIZE = 16 };
+
+    struct chain      { T data; K key;    chain      *next; };
+    struct chainchunk { chain chunks[CHUNKSIZE]; chainchunk *next; };
 
     int size;
     int numelems;
     chain **table;
     chain *enumc;
 
+    int chunkremain;
+    chainchunk *lastchunk;
+
     hashtable(int size = 1<<10)
       : size(size)
     {
         numelems = 0;
+        chunkremain = 0;
+        lastchunk = NULL;
         table = new chain *[size];
         for(int i = 0; i<size; i++) table[i] = NULL;
     };
 
     chain *insert(const K &key, unsigned int h)
     {
-        chain *c = new chain;
+        if(!chunkremain)
+        {
+            chainchunk *chunk = new chainchunk;
+            chunk->next = lastchunk;
+            lastchunk = chunk;
+            chunkremain = CHUNKSIZE;
+        }
+        chain *c = &lastchunk->chunks[--chunkremain];
         c->key = key;
         c->next = table[h]; 
         table[h] = c;
@@ -266,7 +281,7 @@ template <class K, class T> struct hashtable
     {
         return find(key, true)->data;
     };
-
+/*
     bool remove(const K &key)
     {
         unsigned int h = hthash(key)&(size-1); 
@@ -282,19 +297,25 @@ template <class K, class T> struct hashtable
         };
         return false;
     };
-        
+      */  
     void clear()
     {
         loopi(size)
         {
+            /*
             for(chain *c = table[i], *next; c; c = next) 
             { 
                 next = c->next; 
                 delete c; 
-            };
+            };*/
             table[i] = NULL;
             numelems = 0;
         };
+        for(chainchunk *chunk; lastchunk; lastchunk = chunk)
+        {
+            chunk = lastchunk->next;
+            delete lastchunk;
+        }
     };
 };
 

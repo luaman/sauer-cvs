@@ -42,6 +42,8 @@ COMMAND(alias, ARG_2STR);
 
 void unalias(char *name)
 {
+    /*
+    idents->access(name);
     ident *i = idents->access(name);
     if(i && i->_type==ID_ALIAS)
     {
@@ -49,6 +51,8 @@ void unalias(char *name)
         DELETEA(i->_name);
         DELETEA(i->_action);
     };
+    */
+    alias(name, "");    // can be moved to script
 };
 
 COMMAND(unalias, ARG_1STR);

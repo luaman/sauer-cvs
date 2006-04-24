@@ -15,6 +15,9 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
+- allow specifying more textures per slot
+- add textures
+- new SP respawn system
 - play sessions
 - rpg design doc
 - spec maps
