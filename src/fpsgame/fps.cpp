@@ -267,14 +267,10 @@ struct fpsclient : igameclient
         if(player1->state==CS_DEAD)
         { 
             player1->attacking = false;
-            if(m_capture)
+            if(m_capture && lastmillis-player1->lastaction<cpc.RESPAWNSECS*1000)
             {
-                if(!cpc.hasbases(player1->team)) { conoutf("team %s has no bases!", player1->team); return; };
-                if(lastmillis-player1->lastaction<cpc.RESPAWNSECS*1000)
-                {
-                    conoutf("you must wait %d seconds before respawn!", cpc.RESPAWNSECS-(lastmillis-player1->lastaction)/1000);
-                    return;
-                };
+                conoutf("you must wait %d seconds before respawn!", cpc.RESPAWNSECS-(lastmillis-player1->lastaction)/1000);
+                return;
             };
             if(m_arena) { conoutf("waiting for new round to start..."); return; };
             if(m_sp) { nextmode = gamemode; cc.changemap(clientmap); return; };    // if we die in SP we try the same map again

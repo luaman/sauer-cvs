@@ -452,31 +452,30 @@ struct captureserv : capturestate
 
     void endcheck()
     {
-        bool oneteam = true;
         const char *lastteam = NULL;
-        int dead = 0;
 
-        loopv(sv.clients)
+        loopv(bases)
         {
-            fpsserver::clientinfo *ci = sv.clients[i];
-            if(!ci || ci->spectator) continue;
-            if(ci->state==CS_DEAD && !hasbases(ci->team))
+            baseinfo &b = bases[i];
+            if(b.owner[0])
             {
-                dead++;
-                continue;
-            };
-            if(!lastteam) lastteam = ci->team;
-            else if(strcmp(lastteam, ci->team))
+                if(!lastteam) lastteam = b.owner;
+                else if(strcmp(lastteam, b.owner))
+                {
+                    lastteam = false;
+                    break;
+                };
+            }
+            else
             {
-                oneteam = false;
+                lastteam = false;
                 break;
-            };
+            }
         };
 
-        if(!dead) return;
-        else if(!lastteam) sv.sendservmsg("everyone died!");
-        else if(oneteam) { s_sprintfd(msg)("team %s is last man standing", lastteam); sv.sendservmsg(msg); }
-        else return;
+        if(!lastteam) return;
+        s_sprintfd(msg)("team %s captured all bases", lastteam); 
+        sv.sendservmsg(msg);
         sv.startintermission(); 
     };
 };
