@@ -1,11 +1,25 @@
 #include "pch.h"
 #include "engine.h"
 
+#define NORMAL_BITS 11
+
+struct nvec : svec
+{
+    nvec(const vec &v) : svec(short(v.x*(1<<NORMAL_BITS)), short(v.y*(1<<NORMAL_BITS)), short(v.z*(1<<NORMAL_BITS))) {};
+    
+    float dot(const nvec &o) const
+    {
+        return (float(x)*float(o.x) + float(y)*float(o.y) + float(z)*float(o.z))/(1<<(2*NORMAL_BITS));
+    };
+
+    vec tovec() const { return vec(x, y, z).normalize(); };
+};
+        
 struct normal
 {
     uchar face;
-    vec surface;
-    vec average;
+    nvec surface;
+    nvec average;
 };
 
 struct nkey
@@ -84,8 +98,7 @@ bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
         normal &n = (*val->normals)[i];
         if(n.face == face)
         {
-            r = vec(n.average);
-            r.normalize();
+            r = n.average.tovec();
             return true;
         };
     };

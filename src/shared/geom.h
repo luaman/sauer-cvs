@@ -191,6 +191,6 @@ struct bvec
 
     bvec() {};
     bvec(char x, char y, char z) : x(x), y(y), z(z) {};
-    bvec(const vec &v) { vec n(v); n.normalize(); x = char(n.x*CHAR_MAX); y = char(n.y*CHAR_MAX); z = char(n.z*CHAR_MAX); };
+    bvec(const vec &v) : x(char(v.x*CHAR_MAX)), y(char(v.y*CHAR_MAX)), z(char(v.z*CHAR_MAX)) {};
 };
 
