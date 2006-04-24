@@ -1466,7 +1466,7 @@ void renderq()
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
         glClientActiveTexture_(GL_TEXTURE1_ARB);
-        glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf) [0].u) : &(va->vbuf[0].u));
+        glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
 
         unsigned short *ebuf = lod.ebuf;

@@ -550,17 +550,21 @@ void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
                 else if(d->vel.z > 0) d->vel.z = 0.0f;
                 d->gravity = vec(0, 0, 0);
             }
-            else if(!d->gravity.iszero())
+            else
             {
-                vec g;
-                slopegravity(-d->gravity.z, floor, g);
-                if(d->physstate == PHYS_FALL || d->floor != floor)
+                float gmag = d->gravity.magnitude();
+                if(gmag > 1e-4f)
                 {
-                    float gmag = d->gravity.magnitude(), c = d->gravity.dot(floor)/gmag;
-                    g.normalize();
-                    g.mul(min(1.0f+c, 1.0f)*gmag);
+                    vec g;
+                    slopegravity(-d->gravity.z, floor, g);
+                    if(d->physstate == PHYS_FALL || d->floor != floor)
+                    {
+                        float c = d->gravity.dot(floor)/gmag;
+                        g.normalize();
+                        g.mul(min(1.0f+c, 1.0f)*gmag);
+                    };
+                    d->gravity = g;
                 };
-                d->gravity = g;
             };
         };
     };
@@ -691,7 +695,7 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
     else
     {
         if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
-       {
+        {
             if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
             {
                 floor = wall;
