@@ -253,39 +253,39 @@ the game "battlefield 1942" and the "onslaught" mode of unreal 2004:
 "bases" are placed thruout the map
 <p>
 
-a base can be in 2 states: captured or neutral. When captured, it is
+A base can be in 2 states: captured or neutral. When captured, it is
 captured by a certain team. This is shown
 by the texture its rendered with (red means enemy captured, blue means
 your team, grey means neutral). The model can be a flag, or whatever.
 <p>
 
-a neutral base can be converted to your team by standing next to
+A neutral base can be converted to your team by standing next to
 it for N seconds (N = 10 or so) within a certain radius. Multiple players speed up
 the process proportionally. The time accumulated to N is counted by the server as soon
 as the first player enters the radius,
 and reset to 0 immediately once all players of the initial team leave the radius.
 <p>
 
-a base of the enemy color can be converted to neutral in exactly the same way.
+A base of the enemy color can be converted to neutral in exactly the same way.
 (so often it is a 2 step process to take over a base).
 <p>
 
-current team name and capture status is shown above the base using a text particle.
+Current team name and capture status is shown above the base using a text particle.
 <p>
 
-at the spawn of a map, all bases are neutral, and all players spawn at normal player spawns,
+At the spawn of a map, all bases are neutral, and all players spawn at normal player spawns,
 and try to capture whatever they can. Once bases are captured, players will
 spawn at spawnpoints close to whichever of their bases is closest to an enemy base.
 spawning will be preferred at bases which are not currently being captured by an enemy.
 <p>
 
-if a player dies, they wait M seconds before they can respawn again (M = 20 or so).
-if you have no bases left (the enemy has captured yours, or at least made em neutral)
-you can't spawn at all and have to wait for remaining players to recapture a base.
-if all bases are gone and all players dead, your team loses and the match is over.
+If a player dies, they wait M seconds before they can respawn again (M = 20 or so).
+If you have no bases left (the enemy has captured yours, or at least made em neutral)
+you will spawn at random spawnpoints. 
 <p>
 
-Alternatively, if this doesn't happen, at the timelimit the team that wins is the team
+If all bases are captured by one team, then that team wins the game automaticaly. Alternatively, 
+if this doesn't happen, at the timelimit the team that wins is the team
 that has held the most bases for the most amount of time (1 point per X seconds for every
 base in your color).
 <p>
