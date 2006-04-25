@@ -82,7 +82,9 @@ struct fpsclient : igameclient
             }
             else
             {
-                d->health = 256;
+                d->health = 100;
+                d->armour = 100;
+                d->armourtype = A_GREEN;
                 if(m_tarena || m_capture)
                 {
                     d->ammo[GUN_PISTOL] = 80;
