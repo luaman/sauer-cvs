@@ -3,7 +3,6 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
-- test capture mode more... fix bugs
 - map up/download etc
 - water physics close to surface
 - add a spotlight (ask me)
@@ -18,8 +17,10 @@ aard (e = eihrul (or gilt) could do it):
 - report to ATI: float vs short issue
 - font black outlines
 - kurt map bases above eachother
+- more mapmodels in the menus
+- texture lists
+- seperate list for capture maps
 - allow specifying more textures per slot
-- add textures
 - new SP respawn system
 - play sessions
 - rpg design doc
