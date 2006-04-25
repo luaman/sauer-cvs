@@ -492,6 +492,7 @@ struct clientcom : iclientcom
             case SV_EDITM: 
             case SV_FLIP:
             case SV_ROTATE:
+            case SV_REPLACE:
             {
                 selinfo sel;
                 sel.o.x = getint(p); sel.o.y = getint(p); sel.o.z = getint(p);
