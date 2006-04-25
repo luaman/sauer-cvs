@@ -83,19 +83,20 @@ void drawarrow(int dir, int x, int y, int size, float r = 1.0f, float g = 1.0f, 
     defaultshader->set();
 };
 
+#define MAXMENU 17
+
 bool rendermenu(int scr_w, int scr_h)
 {
     if(vmenu<0) { menustack.setsize(0); return false; };
     if(vmenu==1) refreshservers();
     gmenu &m = menus[vmenu];
     s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
-    int maxmenu = 17, offset =0;
-    int mdisp = m.items.length(), cdisp = mdisp;
+    int offset = 0, mdisp = m.items.length(), cdisp = mdisp;
     if(vmenu)
     {
-        offset = m.menusel - (m.menusel%maxmenu);
-        mdisp = min(mdisp, maxmenu);
-        cdisp = min(cdisp - offset, maxmenu);
+        offset = m.menusel - (m.menusel%MAXMENU);
+        mdisp = min(mdisp, MAXMENU);
+        cdisp = min(cdisp - offset, MAXMENU);
     };
     int w = 0;
     loopv(m.items)
@@ -114,12 +115,12 @@ bool rendermenu(int scr_w, int scr_h)
     if(vmenu)
     {
         if(offset>0) drawarrow(1, x+w+FONTH/2*3-FONTH*5/6, y-FONTH*5/6, FONTH*2/3);
-        if(offset+maxmenu<m.items.length()) drawarrow(0, x+w+FONTH/2*3-FONTH*5/6, y+h+FONTH/6, FONTH*2/3);
+        if(offset+MAXMENU<m.items.length()) drawarrow(0, x+w+FONTH/2*3-FONTH*5/6, y+h+FONTH/6, FONTH*2/3);
     };
     y += FONTH*2;
     if(vmenu)
     {
-        int bh = y+(m.menusel%maxmenu)*step;
+        int bh = y+(m.menusel%MAXMENU)*step;
         blendbox(x-FONTH, bh-10, x+w+FONTH, bh+FONTH+10, false);
     };
     loopj(cdisp)
@@ -163,6 +164,7 @@ bool menukey(int code, bool isdown)
     int menusel = menus[vmenu].menusel;
     if(isdown)
     {
+        int n = menus[vmenu].items.length();
         if(code==SDLK_ESCAPE || code==-3)
         {
             menuset(-1);
@@ -171,9 +173,12 @@ bool menukey(int code, bool isdown)
         }
         else if(code==SDLK_UP || code==-4) menusel--;
         else if(code==SDLK_DOWN || code==-5) menusel++;
-        else if(code==SDLK_PAGEUP) menusel-=16;
-        else if(code==SDLK_PAGEDOWN) menusel+=16;
-        int n = menus[vmenu].items.length();
+        else if(code==SDLK_PAGEUP) menusel-=MAXMENU;
+        else if(code==SDLK_PAGEDOWN)
+        {
+            if(menusel+MAXMENU>=n && menusel/MAXMENU != (n-1)/MAXMENU) menusel = n-1;
+            else menusel += MAXMENU;
+        }; 
         if(menusel<0) menusel = n-1;
         else if(menusel>=n) menusel = 0;
         menus[vmenu].menusel = menusel;
