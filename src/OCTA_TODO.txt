@@ -19,7 +19,6 @@ aard (e = eihrul (or gilt) could do it):
 - kurt map bases above eachother
 - more mapmodels in the menus
 - texture lists
-- seperate list for capture maps
 - allow specifying more textures per slot
 - new SP respawn system
 - play sessions
