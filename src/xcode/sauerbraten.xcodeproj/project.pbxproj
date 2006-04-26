@@ -21,6 +21,7 @@
 		B92DC0FD09D08CF9008219BD /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */; };
 		B92DC0FE09D08CF9008219BD /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FB09D08CF9008219BD /* SDL.framework */; };
 		B92DC11409D08FA1008219BD /* shaders.h in Headers */ = {isa = PBXBuildFile; fileRef = B92DC11309D08FA1008219BD /* shaders.h */; };
+		B93EF27709FFD5DC0006A398 /* normal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B93EF27609FFD5DC0006A398 /* normal.cpp */; };
 		B941988C09207E810029DAD1 /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
 		B941988D09207E810029DAD1 /* engine.h in Headers */ = {isa = PBXBuildFile; fileRef = B9419820092076920029DAD1 /* engine.h */; };
 		B941988E09207E810029DAD1 /* lightmap.h in Headers */ = {isa = PBXBuildFile; fileRef = B9419822092076920029DAD1 /* lightmap.h */; };
@@ -137,6 +138,7 @@
 		B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_mixer.framework; path = /Library/Frameworks/SDL_mixer.framework; sourceTree = "<absolute>"; };
 		B92DC0FB09D08CF9008219BD /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/SDL.framework; sourceTree = "<absolute>"; };
 		B92DC11309D08FA1008219BD /* shaders.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = shaders.h; sourceTree = "<group>"; };
+		B93EF27609FFD5DC0006A398 /* normal.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = normal.cpp; sourceTree = "<group>"; };
 		B941981C092076920029DAD1 /* client.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
 		B941981D092076920029DAD1 /* command.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = command.cpp; sourceTree = "<group>"; };
 		B941981E092076920029DAD1 /* console.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = console.cpp; sourceTree = "<group>"; };
@@ -336,6 +338,7 @@
 				B9419824092076920029DAD1 /* md2.h */,
 				B9419825092076920029DAD1 /* md3.h */,
 				B9419826092076920029DAD1 /* menus.cpp */,
+				B93EF27609FFD5DC0006A398 /* normal.cpp */,
 				B9419827092076920029DAD1 /* octa.cpp */,
 				B9419828092076920029DAD1 /* octa.h */,
 				B9419829092076920029DAD1 /* octaedit.cpp */,
@@ -653,6 +656,7 @@
 				B90ADD7309B344D800A5B00B /* protocol.c in Sources */,
 				B90ADD7609B344D800A5B00B /* unix.c in Sources */,
 				B903576809D093AF002C9DC7 /* spheretree.cpp in Sources */,
+				B93EF27709FFD5DC0006A398 /* normal.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -718,6 +722,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
 				SECTORDER_FLAGS = "";
+				STRIP_INSTALLED_PRODUCT = NO;
 				WARNING_CFLAGS = "";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -727,12 +732,13 @@
 		B94198C809207E810029DAD1 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
+				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(USER_LIBRARY_DIR)/Frameworks",
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = (
@@ -745,6 +751,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
 				SECTORDER_FLAGS = "";
+				STRIP_INSTALLED_PRODUCT = NO;
 				WARNING_CFLAGS = "";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -754,7 +761,7 @@
 		B94198EB09207F510029DAD1 /* Deployment-Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
+				COPY_PHASE_STRIP = NO;
 				DEPLOYMENT_LOCATION = YES;
 				DEPLOYMENT_POSTPROCESSING = YES;
 				DSTROOT = /;
@@ -763,6 +770,7 @@
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = (
@@ -775,6 +783,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = sauerbraten;
 				SECTORDER_FLAGS = "";
+				STRIP_INSTALLED_PRODUCT = NO;
 				WARNING_CFLAGS = "";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
