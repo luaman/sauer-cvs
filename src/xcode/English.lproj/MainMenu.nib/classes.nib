@@ -3,9 +3,13 @@
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
         {
             ACTIONS = {playAction = id; }; 
-            CLASS = MyObject; 
+            CLASS = Launcher; 
             LANGUAGE = ObjC; 
-            OUTLETS = {fullscreen = NSButtonCell; resolutions = NSPopUpButton; }; 
+            OUTLETS = {
+                fullscreen = NSButtonCell; 
+                resolutions = NSPopUpButton; 
+                shader = NSButtonCell; 
+            }; 
             SUPERCLASS = NSObject; 
         }
     ); 
