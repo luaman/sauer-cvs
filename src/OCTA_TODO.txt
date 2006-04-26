@@ -18,7 +18,7 @@ aard (e = eihrul (or gilt) could do it):
 - font black outlines
 - kurt map bases above eachother
 - more mapmodels in the menus
-- texture lists
+- texture lists (g_pack etc) / remove 256 limit
 - allow specifying more textures per slot
 - new SP respawn system
 - play sessions
