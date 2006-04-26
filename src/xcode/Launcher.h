@@ -1,12 +1,12 @@
-/* MyObject */
-
 #import <Cocoa/Cocoa.h>
 
-@interface MyObject : NSObject
+@interface Launcher : NSObject
 {
     IBOutlet NSPopUpButton *resolutions;
     IBOutlet NSButtonCell *fullscreen;
-
+    IBOutlet NSButtonCell *shader;
 }
+
 - (IBAction)playAction:(id)sender;
+
 @end
