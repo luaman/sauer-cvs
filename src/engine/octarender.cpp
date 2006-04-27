@@ -1446,7 +1446,7 @@ void renderq()
             if(va->query && va->query->owner == va && checkquery(va->query))
             {
                 va->query = newquery(va);
-                va->occluded = (va->prevvfc == VFC_FULL_VISIBLE ? OCCLUDE_BB+oqpartial : min(va->occluded+1, OCCLUDE_BB+oqpartial));
+                va->occluded = (va->prevvfc == VFC_FULL_VISIBLE ? OCCLUDE_BB+oqpartial-(va->occluded ? 0 : 1) : min(va->occluded+1, OCCLUDE_BB+oqpartial));
                 if(va->occluded >= OCCLUDE_BB+oqpartial-1)  
                 {
                     if(va->query) drawquery(va->query, va); 
