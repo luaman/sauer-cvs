@@ -1337,7 +1337,7 @@ void rendermapmodels()
             if(!hasmodels) continue;
         };   
 
-        if(!oqfrags || !oqmm || !ents->distance) ents->query = NULL;
+        if(!hasOQ || !oqfrags || !oqmm || !ents->distance) ents->query = NULL;
         else if(!occluded && (++visible % oqmm)) ents->query = NULL;
         else ents->query = newquery(ents);
 
