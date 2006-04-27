@@ -747,7 +747,7 @@ vtxarray *newva(int x, int y, int z, int size)
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->explicitsky = explicitsky;
     va->skyarea = skyarea;
-    va->curvfc = VFC_NOT_VISIBLE;
+    va->prevvfc = va->curvfc = VFC_NOT_VISIBLE;
     va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
     wverts += va->verts = verts.length();
@@ -1075,16 +1075,14 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     loopv(valist)
     {
         vtxarray &v = *valist[i];
-        int vfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);    
-        if(vfc!=VFC_NOT_VISIBLE) addvisibleva(&v);
+        v.prevvfc = v.curvfc;
+        v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);    
+        if(v.curvfc!=VFC_NOT_VISIBLE) addvisibleva(&v);
         else
         {
-            v.distance = -1;
             v.occluded = OCCLUDE_NOTHING;
             v.query = NULL;
         };
-        v.prevvfc = v.curvfc;
-        v.curvfc = vfc;
     };
 };
 
@@ -1194,7 +1192,7 @@ void resetqueries()
     loopi(2) loopj(queryframes[i].max) queryframes[i].queries[j].owner = NULL;
 };
 
-VAR(oqfrags, 0, 16, 64);
+VAR(oqfrags, 0, 8, 64);
 VAR(oqdist, 0, 32, 1024);
 
 bool checkquery(occludequery *query)
@@ -1268,12 +1266,12 @@ void findvisibleents(cube *c, const ivec &o, int size)
         if(c[j].va)
         {
             vtxarray *va = c[j].va;
-            if(va->distance < 0 || va->occluded >= OCCLUDE_BB+oqpartial) continue;
+            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB+oqpartial) continue;
         };
         if(c[j].ents)
         {
             octaentities *ents = c[j].ents;
-            if(isvisiblecube(co.tovec(), size) == VFC_NOT_VISIBLE) continue; 
+            if(isvisiblecube(co.tovec(), size) >= VFC_FOGGED) continue; 
 
             bool occluded = ents->query && ents->query->owner == ents && checkquery(ents->query);
             if(occluded)
@@ -1449,15 +1447,17 @@ void renderq()
             {
                 va->occluded = !va->occluded ? OCCLUDE_GEOM : (va->prevvfc == VFC_FULL_VISIBLE ? OCCLUDE_BB+oqpartial : min(va->occluded+1, OCCLUDE_BB+oqpartial));
                 va->query = newquery(va);
-                if(va->occluded >= OCCLUDE_BB+oqpartial)  
+                if(va->prevvfc == VFC_FULL_VISIBLE || va->occluded >= OCCLUDE_BB+oqpartial-1)  
                 {
                     if(va->query) drawquery(va->query, va); 
                     continue;
                 };
             }
-            else va->occluded = OCCLUDE_NOTHING;
-
-            va->query = newquery(va);
+            else 
+            {
+                va->query = newquery(va);
+                va->occluded = OCCLUDE_NOTHING;
+            };
         }
         else 
         {
