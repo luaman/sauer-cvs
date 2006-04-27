@@ -176,7 +176,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     };
     m->setskin(tex);  
-    if(teammate) glColor3f(1, 0.2f, 0.2f); // VERY TEMP, find a better teammate display
+    if(teammate) glColor3f(0.2f, 1, 0.2f); // VERY TEMP, find a better teammate display
     else glColor3fv(color.v);
     if(m->shader) m->shader->set();
     else
