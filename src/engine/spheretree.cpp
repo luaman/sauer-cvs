@@ -11,7 +11,7 @@ struct SphereBranch : SphereTree
         n.sub(child1->center);
         float dist = n.magnitude();
 
-        radius = (child1->radius + child2->radius + dist) / 2;
+        radius = (child1->radius + child2->radius + dist) / 2 + 0.001f;
 
         center = child1->center;
         if(dist)

@@ -56,6 +56,8 @@
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="false"
+				FloatingPointModel="0"
+				FloatingPointExceptions="false"
 				DisableLanguageExtensions="false"
 				ForceConformanceInForLoopScope="true"
 				UsePrecompiledHeader="0"
