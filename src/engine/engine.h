@@ -144,6 +144,7 @@ extern int visibleorient(cube &c, int orient);
 extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
 extern void remipworld(); 
+extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);
 extern void resetqueries();
 extern int getnumqueries();
 

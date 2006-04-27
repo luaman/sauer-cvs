@@ -138,22 +138,6 @@ void clear_mdls()
     enumerate((&mdllookup), model *, m, delete *m);
 };
 
-bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
-{
-    loopoctabox(o, size, bo, br)
-    {
-        ivec co(i, o.x, o.y, o.z, size);
-        if(c[i].va)
-        {
-            vtxarray *va = c[i].va;
-            if(va->distance < 0 || va->occluded > 1) continue;
-        };
-        if(c[i].children && bboccluded(bo, br, c[i].children, co, size>>1)) continue;
-        return false;
-    };
-    return true;
-};
-
 bool modeloccluded(const vec &center, float radius)
 {
     int br = int(radius*2)+1;

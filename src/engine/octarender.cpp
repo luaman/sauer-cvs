@@ -1403,6 +1403,22 @@ void rendermapmodels()
     };        
 };
 
+bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
+{
+    loopoctabox(o, size, bo, br)
+    {
+        ivec co(i, o.x, o.y, o.z, size);
+        if(c[i].va) 
+        {
+            vtxarray *va = c[i].va;
+            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB+oqpartial) continue;
+        };
+        if(c[i].children && bboccluded(bo, br, c[i].children, co, size>>1)) continue;
+        return false;
+    };
+    return true;
+};
+
 void renderq()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1446,7 +1462,8 @@ void renderq()
             if(va->query && va->query->owner == va && checkquery(va->query))
             {
                 va->query = newquery(va);
-                va->occluded = (va->prevvfc == VFC_FULL_VISIBLE ? OCCLUDE_BB+oqpartial-(va->occluded ? 0 : 1) : min(va->occluded+1, OCCLUDE_BB+oqpartial));
+                if(va->prevvfc == VFC_FULL_VISIBLE) va->occluded = OCCLUDE_BB+oqpartial-(va->occluded ? 0 : 1);
+                else va->occluded = min(va->occluded+1, OCCLUDE_BB+oqpartial);
                 if(va->occluded >= OCCLUDE_BB+oqpartial-1)  
                 {
                     if(va->query) drawquery(va->query, va); 
