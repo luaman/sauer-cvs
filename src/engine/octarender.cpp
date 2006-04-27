@@ -747,7 +747,8 @@ vtxarray *newva(int x, int y, int z, int size)
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->explicitsky = explicitsky;
     va->skyarea = skyarea;
-    va->occluded = 0;
+    va->curvfc = VFC_NOT_VISIBLE;
+    va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
     wverts += va->verts = verts.length();
     wtris  += va->l0.tris;
@@ -1074,13 +1075,16 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     loopv(valist)
     {
         vtxarray &v = *valist[i];
-        if(isvisiblecube(vec(v.x, v.y, v.z), v.size)!=VFC_NOT_VISIBLE) addvisibleva(&v);
+        int vfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);    
+        if(vfc!=VFC_NOT_VISIBLE) addvisibleva(&v);
         else
         {
             v.distance = -1;
-            v.occluded = 0;
+            v.occluded = OCCLUDE_NOTHING;
             v.query = NULL;
         };
+        v.prevvfc = v.curvfc;
+        v.curvfc = vfc;
     };
 };
 
@@ -1088,6 +1092,8 @@ bool insideva(const vtxarray *va, const vec &v)
 {
     return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
 };
+
+VAR(oqpartial, 0, 10, 100);
 
 void setorigin(vtxarray *va, bool init)
 {
@@ -1115,7 +1121,7 @@ void rendersky()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(!lod.sky || va->occluded > 1) continue;
+        if(!lod.sky || va->occluded >= OCCLUDE_BB+oqpartial) continue;
 
         setorigin(va, !sky++);
 
@@ -1189,7 +1195,7 @@ void resetqueries()
 };
 
 VAR(oqfrags, 0, 16, 64);
-VAR(oqdist, 0, 256, 1024);
+VAR(oqdist, 0, 32, 1024);
 
 bool checkquery(occludequery *query)
 {
@@ -1262,7 +1268,7 @@ void findvisibleents(cube *c, const ivec &o, int size)
         if(c[j].va)
         {
             vtxarray *va = c[j].va;
-            if(va->distance < 0 || va->occluded > 1) continue;
+            if(va->distance < 0 || va->occluded >= OCCLUDE_BB+oqpartial) continue;
         };
         if(c[j].ents)
         {
@@ -1441,16 +1447,23 @@ void renderq()
         {
             if(va->query && va->query->owner == va && checkquery(va->query))
             {
-                if(va->occluded <= 1) ++va->occluded;
+                va->occluded = !va->occluded ? OCCLUDE_GEOM : (va->prevvfc == VFC_FULL_VISIBLE ? OCCLUDE_BB+oqpartial : min(va->occluded+1, OCCLUDE_BB+oqpartial));
                 va->query = newquery(va);
-                if(va->query) drawquery(va->query, va); 
-                continue;
-            };
+                if(va->occluded >= OCCLUDE_BB+oqpartial)  
+                {
+                    if(va->query) drawquery(va->query, va); 
+                    continue;
+                };
+            }
+            else va->occluded = OCCLUDE_NOTHING;
 
             va->query = newquery(va);
         }
-        else va->query = NULL;
-        va->occluded = 0;    
+        else 
+        {
+            va->query = NULL;
+            va->occluded = OCCLUDE_NOTHING;    
+        };
 
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs) continue;
@@ -1562,7 +1575,7 @@ void rendermaterials()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(lod.matsurfs && va->occluded <= 1) rendermatsurfs(lod.matbuf, lod.matsurfs);
+        if(lod.matsurfs && va->occluded < OCCLUDE_BB+oqpartial) rendermatsurfs(lod.matbuf, lod.matsurfs);
     };
 
     if(editmode && showmat)
@@ -1573,7 +1586,7 @@ void rendermaterials()
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->l0;
-            if(lod.matsurfs && va->occluded <= 1) rendermatgrid(lod.matbuf, lod.matsurfs);
+            if(lod.matsurfs && va->occluded < OCCLUDE_BB+oqpartial) rendermatgrid(lod.matbuf, lod.matsurfs);
         };
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     };

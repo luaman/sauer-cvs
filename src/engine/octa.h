@@ -31,6 +31,13 @@ struct occludequery
     int fragments;
 };
 
+enum
+{
+    OCCLUDE_NOTHING = 0,
+    OCCLUDE_GEOM,
+    OCCLUDE_BB
+};
+
 struct vtxarray
 {
     lodlevel l0, l1;
@@ -41,7 +48,7 @@ struct vtxarray
     uint vbufGL;        // VBO buffer ID
     int x, y, z, size;  // location and size of cube.
     ivec min, max;      // BB
-    uint occluded;
+    uchar prevvfc, curvfc, occluded;
     occludequery *query;
 };
 
