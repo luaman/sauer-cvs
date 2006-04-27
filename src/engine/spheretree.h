@@ -12,7 +12,7 @@ struct SphereTree
         float v = tocenter.dot(ray), 
               inside = radius*radius - tocenter.squaredlen(),
               d = inside + v*v;
-        if(d < 0) return true;
+        if(d < 0) return false;
         v -= sqrt(d);
         if(v > maxdist || (v < 0 && inside < 0)) return false;
         return true;
