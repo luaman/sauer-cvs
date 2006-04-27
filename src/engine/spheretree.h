@@ -22,14 +22,15 @@ struct SphereTree
 
     virtual bool intersect(const vec &o, const vec &ray, float maxdist, float &dist) const
     {
-       vec tocenter(center);
-       tocenter.sub(o);
-       float b = ray.dot(tocenter),
-             c = radius*radius - tocenter.squaredlen(),
-             d = b*b + c;
+       vec fromcenter(o);
+       fromcenter.sub(center);
+       float b = ray.dot(fromcenter),
+             c = fromcenter.squaredlen() - radius*radius,
+             d = b*b - c;
+       if(c <= 0) return true;
        if(d < 0) return false;
        d = sqrt(d);
-       float f1 = b+d, f2 = b-d;
+       float f1 = d-b, f2 = -(d+b);
        if((f1 < 0 || f1 > maxdist) && (f2 < 0 || f2 > maxdist)) return false;
        return true;
     };
