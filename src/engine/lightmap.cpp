@@ -690,9 +690,11 @@ void calclight(int quality)
     check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
     show_out_of_renderloop_progress(0, "computing normals...");
+    Uint32 start = SDL_GetTicks();
     calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
+    Uint32 end = SDL_GetTicks();
     if(timer) SDL_RemoveTimer(timer);
     uint total = 0, lumels = 0;
     loopv(lightmaps)
@@ -708,10 +710,11 @@ void calclight(int quality)
     if(calclight_canceled)
         conoutf("calclight aborted");
     else
-        conoutf("generated %d lightmaps using %d%% of %d textures",
+        conoutf("generated %d lightmaps using %d%% of %d textures (%.1f seconds)",
             total,
             lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
-            lightmaps.length());
+            lightmaps.length(),
+            (end - start) / 1000.0f);
 };
 
 COMMAND(calclight, ARG_1INT);
