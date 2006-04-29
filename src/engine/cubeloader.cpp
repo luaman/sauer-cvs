@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "engine.h"
 
+VAR(importcuberemip, 0, 1024, 2048);
+
 struct cubeloader
 {
     enum                              // block types, order matters!
@@ -48,6 +50,8 @@ struct cubeloader
     int ssize;
     int x0, x1, y0, y1, z0, z1;
     c_sqr *o[4];
+    int lastremip;
+    int progress;
 
     void create_ent(c_persistent_entity &ce)
     {
@@ -164,6 +168,8 @@ struct cubeloader
     {
         preprocess_cubes();
         boundingbox();
+        lastremip = allocnodes;
+        progress = 0;
         for(int x = x0-1; x<=x1+1; x++) for(int y = y0-1; y<=y1+1; y++)
         {
             c_sqr &s = world[x+y*ssize];
@@ -203,6 +209,17 @@ struct cubeloader
                 case C_FHF: hf(x, y, floor-1, 1, -1, cap); break;
                 case C_CHF: hf(x, y, ceil, 0, 1, cap); break;
             };
+            if(importcuberemip && (allocnodes - lastremip) * 8 > importcuberemip * 1024)
+            {
+                remipworld();
+                lastremip = allocnodes;
+            };
+            if((progress++&0x7F)==0)
+            {
+                float bar2 = float((y1-y0+2)*(x-x0+1) + y-y0+1) / float((y1-y0+2)*(x1-x0+2));
+                s_sprintfd(text2)("%d%%", int(bar2*100));
+                show_out_of_renderloop_progress(0, "creating cubes...", bar2, text2);
+            };
         };
     };
 
@@ -221,6 +238,8 @@ struct cubeloader
         endianswap(&hdr.version, sizeof(int), 4);
         if(strncmp(hdr.head, "CUBE", 4)!=0) fatal("while reading map: header malformatted");
         if(hdr.version>5) fatal("this map requires a newer version of cube");
+        s_sprintfd(cs)("importing %s", cgzname);
+        computescreen(cs);
         if(hdr.version>=4)
         {
             gzread(f, &hdr.waterlevel, sizeof(int)*16);

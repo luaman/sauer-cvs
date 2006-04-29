@@ -133,8 +133,11 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
 
     glBegin(GL_QUADS);
 
-    bar(1,    4, 0, 0,    0.8f);
-    bar(bar1, 4, 0, 0.5f, 1);
+    if(text1)
+    {
+        bar(1,    4, 0, 0,    0.8f);
+        bar(bar1, 4, 0, 0.5f, 1);
+    };
 
     if(bar2>0)
     {
@@ -148,7 +151,7 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
     glEnable(GL_TEXTURE_2D); 
     defaultshader->set();
     
-    draw_text(text1, 70, 4*FONTH + FONTH/2);
+    if(text1) draw_text(text1, 70, 4*FONTH + FONTH/2);
     if(bar2>0) draw_text(text2, 70, 6*FONTH + FONTH/2);
     
     glDisable(GL_TEXTURE_2D);

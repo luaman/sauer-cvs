@@ -673,8 +673,8 @@ void calclight(int quality)
         case -2: shadows = 0; aalights = 0; mmshadows = 0; break;
         default: conoutf("valid range for calclight quality is -2..2"); return;
     };
-    remipworld();
     computescreen("computing lightmaps... (esc to abort)");
+    remipworld();
     resetlightmaps();
     clear_lmids(worldroot);
     curlumels = 0;
