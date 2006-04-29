@@ -22,8 +22,8 @@ struct clientcom : iclientcom
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, IARG_CONC, self->toserver(args[0]));
-        CCOMMAND(clientcom, name, 1, { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
-        CCOMMAND(clientcom, team, 1, { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
+        CCOMMAND(clientcom, name, 1, if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
+        CCOMMAND(clientcom, team, 1, if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
         CCOMMAND(clientcom, map, 1, self->changemap(args[0]));
         CCOMMAND(clientcom, kick, 1, self->kick(args[0]));
         CCOMMAND(clientcom, spectator, 2, self->togglespectator(args[0], args[1]));
@@ -236,7 +236,7 @@ struct clientcom : iclientcom
         char text[MAXTRANS];
         int cn = -1, type;
         fpsent *d = NULL;
-        bool mapchanged = false;
+        bool mapchanged = false, inited = false;
 
         while(p<end) switch(type = getint(p))
         {
@@ -288,6 +288,7 @@ struct clientcom : iclientcom
                 d->state = state;
                 updatephysstate(d);
                 updatepos(d);
+                inited = false;
                 break;
             };
 
@@ -348,6 +349,7 @@ struct clientcom : iclientcom
                 d->lifesequence = getint(p);
                 d->maxhealth = getint(p);
                 d->frags = getint(p);
+                inited = true;
                 break;
             };
 
@@ -439,7 +441,7 @@ struct clientcom : iclientcom
                     };
                 };
                 playsound(S_DIE1+rnd(2), &d->o);
-                d->lifesequence++;
+                if(!inited) d->lifesequence++;
                 break;
             };
 
@@ -467,7 +469,7 @@ struct clientcom : iclientcom
                 getint(p);
                 char *name = cl.et.itemname(i);
                 if(name) particle_text(d->abovehead(), name, 9);
-                if(cl.et.ents[i]->type==I_BOOST) d->maxhealth += 10;
+                if(cl.et.ents[i]->type==I_BOOST && !inited) d->maxhealth += 10;
                 break;
             };
 

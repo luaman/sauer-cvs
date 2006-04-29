@@ -136,10 +136,10 @@ int lastupdate = 0;
 
 bool netmapstart() { return clienthost!=NULL; };
 
-void sendpackettoserv(void *packet)
+void sendpackettoserv(ENetPacket *packet)
 {
-    if(clienthost) { enet_host_broadcast(clienthost, 0, (ENetPacket *)packet); enet_host_flush(clienthost); }
-    else localclienttoserver((ENetPacket *)packet);
+    if(clienthost) { enet_host_broadcast(clienthost, 0, packet); enet_host_flush(clienthost); }
+    else localclienttoserver(packet);
 };
 
 void c2sinfo(dynent *d)                     // send update to the server

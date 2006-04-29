@@ -121,7 +121,7 @@ void loadc(gzFile f, cube &c)
         mask &= 0x7F;
         if(mask)
         {
-            c.surfaces = new surfaceinfo[6];
+            newsurfaces(c);
             loopi(6)
             {
                 if(mask & (1 << i))
