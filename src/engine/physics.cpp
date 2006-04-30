@@ -53,90 +53,6 @@ void freeclipplanes(cube &c)
     c.clip = NULL;
 };
 
-VAR(octaentsize, 0, 128, 1024);
-
-void freeoctaentities(cube &c)
-{
-    while(c.ents && !c.ents->list.empty()) removeoctaentity(c.ents->list.pop());
-    if(c.ents)
-    {
-        delete c.ents;
-        c.ents = NULL;
-    };
-};
-
-void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br)
-{
-    loopoctabox(cor, size, bo, br)
-    {
-        ivec o(i, cor.x, cor.y, cor.z, size);
-        if(c[i].children != NULL && size > octaentsize)
-            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br);
-        else if(add)
-        {
-            if(!c[i].ents) c[i].ents = new octaentities(o, size);
-            c[i].ents->list.add(id);
-        }
-        else if(c[i].ents)
-        {
-            c[i].ents->list.removeobj(id);
-            if(c[i].ents->list.empty()) freeoctaentities(c[i]);
-        };
-        if(c[i].ents) c[i].ents->query = NULL;
-    };
-};
-
-bool getmmboundingbox(extentity &e, ivec &o, ivec &r)
-{
-    if(e.type!=ET_MAPMODEL) return false;
-    mapmodelinfo &mmi = getmminfo(e.attr2);
-    if(!&mmi) return false;
-    model *m = loadmodel(NULL, e.attr2);
-    if(!m) return false;
-    vec center;
-    float radius = m->boundsphere(0, center);
-    o.x = int(e.o.x+center.x-radius);
-    o.y = int(e.o.y+center.y-radius);
-    o.z = int(e.o.z+center.z-radius)+mmi.zoff+e.attr3;
-    r.x = r.y = r.z = int(2.0f*radius);
-#if 0
-    if(!&mmi || !mmi.h || !mmi.rad) return false;
-    r.x = r.y = mmi.rad*2;
-    r.z = mmi.h;
-    r.add(2);
-    o.x = int(e.o.x)-mmi.rad;
-    o.y = int(e.o.y)-mmi.rad;
-    o.z = int(e.o.z)+mmi.zoff+e.attr3;
-#endif
-    return true;
-};
-
-ivec orig(0,0,0);
-
-void addoctaentity(int id)
-{
-    ivec o, r;
-    extentity &e = *et->getents()[id];
-    if(e.inoctanode || !getmmboundingbox(e, o, r)) return;
-    e.inoctanode = true;
-    modifyoctaentity(true, id, worldroot, orig, hdr.worldsize>>1, o, r);
-};
-
-void removeoctaentity(int id)
-{
-    ivec o, r;
-    extentity &e = *et->getents()[id];
-    if(!e.inoctanode || !getmmboundingbox(e, o, r)) return;
-    e.inoctanode = false;
-    modifyoctaentity(false, id, worldroot, orig, hdr.worldsize>>1, o, r);
-};
-
-void entitiesinoctanodes()
-{
-    loopv(et->getents())
-        addoctaentity(i);
-};
-
 /////////////////////////  ray - cube collision ///////////////////////////////////////////////
 
 static inline void pushvec(vec &o, const vec &ray, float dist)
@@ -163,27 +79,6 @@ bool pointincube(const clipplanes &p, const vec &v)
     return true;
 };
 
-bool rayboxintersect(const vec &o, const vec &ray, const vec &bo, const vec &br, float &dist)
-{
-// TODO: make this faster if possible
-    loopi(3)
-    {
-        float a = ray[i], f;
-        if(a < 0) f = (bo[i]+br[i]-o[i])/a;
-        else if(a > 0) f = (bo[i]-br[i]-o[i])/a;
-        else continue;
-        if(f <= 0) continue;
-        vec d(o);
-        pushvec(d, ray, f+0.1f);
-        if(pointinbox(d, bo, br))
-        {
-            dist = f+0.1f;
-            return true;
-        };
-    };
-    return false;
-};
-
 bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 {
     clipplanes &p = *c.clip;
@@ -207,35 +102,18 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
     return false;
 };
 
-static inline bool inlist(int id, octaentities *last)
-{
-    if(last!=NULL) loopv(last->list) if(id==last->list[i]) return true;
-    return false;
-};
-
 static float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
     float dist = 1e16f;
     if(oc == last || oc == NULL) return dist;
     const vector<extentity *> &ents = et->getents();
-    loopv(oc->list) if(!inlist(oc->list[i], last))
+    loopv(oc->mapmodels) if(!last || !last->hasmapmodel(oc->mapmodels[i]))
     {
         float f;
         ivec bo, br;
-        extentity &e = *ents[oc->list[i]];
-        if(!e.inoctanode || e.type!=ET_MAPMODEL || &e==t) continue;
-        if((mode&RAY_POLY) == RAY_BB)
-        {
-            if(!getmmboundingbox(e, bo, br)) continue;
-            vec vbo(bo.v), vbr(br.v);
-            vbr.mul(0.5f);
-            vbo.add(vbr);
-            if(!rayboxintersect(o, ray, vbo, vbr, f)) continue;
-        }
-        else
-        {
-            if(!mmintersect(e, o, ray, radius, mode, f)) continue;
-        };
+        extentity &e = *ents[oc->mapmodels[i]];
+        if(!e.inoctanode || &e==t) continue;
+        if(!mmintersect(e, o, ray, radius, mode, f)) continue;
         dist = min(dist, f);
     };
     return dist;
@@ -294,7 +172,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
             if(lc->ents && (mode&RAY_POLY) && dent > 1e15f)
             {
                 dent = disttoent(lc->ents, oclast, o, ray, radius, mode, t);
-                if(mode&RAY_SHADOW && dent < 1e15f) return min(dent, dist);
+                if((mode&RAY_SHADOW) && dent < 1e15f) return min(dent, dist);
                 oclast = lc->ents;
             };
             if(lc->children==NULL) break;
@@ -411,10 +289,9 @@ bool plcollide(physent *d, const vec &dir, physent *o)    // collide with player
 bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
 {
     const vector<extentity *> &ents = et->getents();
-    loopv(oc.list)
+    loopv(oc.mapmodels)
     {
-        entity &e = *ents[oc.list[i]];
-        if(e.type!=ET_MAPMODEL) continue;
+        entity &e = *ents[oc.mapmodels[i]];
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(!&mmi || !mmi.h || !mmi.rad) continue;
         vec o(e.o);
@@ -478,7 +355,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
     return false;
 };
 
-bool octacollide(physent *d, const vec &dir, float cutoff, ivec &bo, ivec &bs, cube *c, ivec &cor, int size) // collide with octants
+bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const ivec &bs, cube *c, const ivec &cor, int size) // collide with octants
 {
     loopoctabox(cor, size, bo, bs)
     {
@@ -504,7 +381,7 @@ bool collide(physent *d, const vec &dir, float cutoff)
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
     bs.add(2);  // guard space for rounding errors
-    if(!octacollide(d, dir, cutoff, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
+    if(!octacollide(d, dir, cutoff, bo, bs, worldroot, ivec(0, 0, 0), hdr.worldsize>>1)) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
     int numdyns = cl->numdynents();

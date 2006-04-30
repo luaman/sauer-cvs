@@ -70,7 +70,7 @@ struct clipplanes
 
 struct octaentities
 {
-    vector<int> list;
+    vector<int> mapmodels;
     occludequery *query;
     octaentities *next;
     int distance;
@@ -78,6 +78,12 @@ struct octaentities
     int size;
 
     octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
+
+    bool hasmapmodel(int id) const
+    { 
+        loopv(mapmodels) if(id==mapmodels[i]) return true; 
+        return false; 
+    };
 };
 
 struct cube

@@ -5,6 +5,120 @@
 
 header hdr;
 
+VAR(octaentsize, 0, 128, 1024);
+
+static void removeoctaentity(int id);
+
+void freeoctaentities(cube &c)
+{
+    while(c.ents && !c.ents->mapmodels.empty()) removeoctaentity(c.ents->mapmodels.pop());
+    if(c.ents)
+    {
+        delete c.ents;
+        c.ents = NULL;
+    };
+};
+
+void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br)
+{
+    loopoctabox(cor, size, bo, br)
+    {
+        ivec o(i, cor.x, cor.y, cor.z, size);
+        if(c[i].children != NULL && size > octaentsize)
+            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br);
+        else if(add)
+        {
+            if(!c[i].ents) c[i].ents = new octaentities(o, size);
+            switch(et->getents()[id]->type)
+            {
+                case ET_MAPMODEL:
+                    c[i].ents->mapmodels.add(id);
+                    break;
+            };
+        }
+        else if(c[i].ents)
+        {
+            switch(et->getents()[id]->type)
+            {
+                case ET_MAPMODEL:
+                    c[i].ents->mapmodels.removeobj(id);
+                    break;
+            };
+            if(c[i].ents->mapmodels.empty()) freeoctaentities(c[i]);
+        };
+        if(c[i].ents) c[i].ents->query = NULL;
+    };
+};
+
+bool getentboundingbox(extentity &e, ivec &o, ivec &r)
+{
+    switch(e.type)
+    {
+        case ET_MAPMODEL:
+        {
+            mapmodelinfo &mmi = getmminfo(e.attr2);
+            if(!&mmi) return false;
+            model *m = loadmodel(NULL, e.attr2);
+            if(!m) return false;
+            vec center;
+            float radius = m->boundsphere(0, center);
+            o.x = int(e.o.x+center.x-radius);
+            o.y = int(e.o.y+center.y-radius);
+            o.z = int(e.o.z+center.z-radius)+mmi.zoff+e.attr3;
+            r.x = r.y = r.z = int(2.0f*radius);
+            break;
+        };
+        default:
+            return false;
+    };
+#if 0
+    if(!&mmi || !mmi.h || !mmi.rad) return false;
+    r.x = r.y = mmi.rad*2;
+    r.z = mmi.h;
+    r.add(2);
+    o.x = int(e.o.x)-mmi.rad;
+    o.y = int(e.o.y)-mmi.rad;
+    o.z = int(e.o.z)+mmi.zoff+e.attr3;
+#endif
+    return true;
+};
+
+static void addoctaentity(int id)
+{
+    ivec o, r;
+    extentity &e = *et->getents()[id];
+    if(e.inoctanode || !getentboundingbox(e, o, r)) return;
+    e.inoctanode = true;
+    modifyoctaentity(true, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
+};
+
+static void removeoctaentity(int id)
+{
+    ivec o, r;
+    extentity &e = *et->getents()[id];
+    if(!e.inoctanode || !getentboundingbox(e, o, r)) return;
+    e.inoctanode = false;
+    modifyoctaentity(false, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
+};
+
+void entitiesinoctanodes()
+{
+    loopv(et->getents()) addoctaentity(i);
+};
+
+static void removeentity(int i, extentity &e)
+{
+    removeoctaentity(i);
+    if(e.type == ET_LIGHT) clearlightcache(i);
+};
+
+static void addentity(int i, extentity &e)
+{
+    addoctaentity(i);
+    if(e.type == ET_LIGHT) clearlightcache(i);
+    else lightent(e);
+};
+
 int closestent()        // used for delent and edit mode ent display
 {
     if(!editmode) return -1;
@@ -28,21 +142,19 @@ int closestent()        // used for delent and edit mode ent display
 void entproperty(int prop, int amount)
 {
     if(noedit()) return;
-    int e = closestent();
-    if(e<0) return;
-	removeoctaentity(e);
-    if(e == ET_LIGHT) clearlightcache(e);
+    int i = closestent();
+    if(i<0) return;
+    extentity &e = *et->getents()[i];
+    removeentity(i, e);
     switch(prop)
     {
-        case 0: et->getents()[e]->attr1 += amount; break;
-        case 1: et->getents()[e]->attr2 += amount; break;
-        case 2: et->getents()[e]->attr3 += amount; break;
-        case 3: et->getents()[e]->attr4 += amount; break;
+        case 0: e.attr1 += amount; break;
+        case 1: e.attr2 += amount; break;
+        case 2: e.attr3 += amount; break;
+        case 3: e.attr4 += amount; break;
     };
-	addoctaentity(e);
-    if(e == ET_LIGHT) clearlightcache(e);
-    else lightent(*et->getents()[e]);
-    et->editent(e);
+	addentity(i, e);
+    et->editent(i);
 };
 
 
@@ -51,27 +163,23 @@ void entmove(int dir, int dist)
     if(noedit()) return;
     int i = closestent();
     if(i<0||dir<0||dir>2) return;
-	removeoctaentity(i);
     extentity &e = *et->getents()[i];
-    if(e.type==ET_LIGHT) clearlightcache(i);
+    removeentity(i, e);
     e.o[dir] += dist;
-	addoctaentity(i);
-    if(e.type==ET_LIGHT) clearlightcache(i);
-    else lightent(e);
+    addentity(i, e);
     et->editent(i);
 };
 
 void delent()
 {
     if(noedit()) return;
-    int e = closestent();
-    if(e<0) { conoutf("no more entities"); return; };
-    int t = et->getents()[e]->type;
-    removeoctaentity(e);
-    if(t==ET_LIGHT) clearlightcache(e);
-    conoutf("%s entity deleted", et->entname(t));
-    et->getents()[e]->type = ET_EMPTY;
-    et->editent(e);
+    int i = closestent();
+    if(i<0) { conoutf("no more entities"); return; };
+    extentity &e = *et->getents()[i];
+    conoutf("%s entity deleted", et->entname(e.type));
+    removeentity(i, e);
+    e.type = ET_EMPTY;
+    et->editent(i);
 };
 
 int findtype(char *what)
@@ -151,13 +259,10 @@ void dropent()
     if(noedit()) return;
     int i = closestent();
     if(i<0) return;
-	removeoctaentity(i);
     extentity &e = *et->getents()[i];
-    if(e.type == ET_LIGHT) clearlightcache(i);
+    removeentity(i, e);
     dropentity(e);	
-	addoctaentity(i);
-    if(e.type == ET_LIGHT) clearlightcache(i);
-    else lightent(e);
+    addentity(i, e);
     et->editent(i);
 };
 
@@ -169,9 +274,7 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
     if(entdrop) dropentity(*e);
     et->getents().add(e);
     int i = et->getents().length()-1;
-	addoctaentity(i);
-    if(type == ET_LIGHT) clearlightcache(i);
-    else lightent(*e);
+    addentity(i, *e);
     et->editent(i);
 };
 
@@ -184,15 +287,14 @@ void clearents(char *name)
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
     {
-        entity &e = *ents[i];
+        extentity &e = *ents[i];
         if(e.type==type)
         {
-            removeoctaentity(i);
+            removeentity(i, e);
             e.type = ET_EMPTY;
             et->editent(i);
         };
     };
-    clearlightcache();
 };
 
 COMMAND(clearents, ARG_1STR);
@@ -276,24 +378,17 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
         while(et->getents().length()<i) et->getents().add(et->newentity())->type = ET_EMPTY;
         extentity *e = et->newentity(local, o, type, attr1, attr2, attr3, attr4);
         et->getents().add(e);
-        if(type == ET_LIGHT) clearlightcache(i);
-        else lightent(*e);
+        addentity(i, *e);
     }
     else
     {
         extentity &e = *et->getents()[i];
-        if(e.o!=o) removeoctaentity(i);
-        if(e.type == ET_LIGHT && (e.o!=o || type != ET_LIGHT)) clearlightcache(i);
+        removeentity(i, e);
         e.type = type;
-        if(e.o!=o)
-        {
-            if(type == ET_LIGHT) clearlightcache(i);
-            else lightent(e);
-        };
         e.o = o;
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
+        addentity(i, e);
     };
-    addoctaentity(i);
 };
 
 int getworldsize() { return hdr.worldsize; };

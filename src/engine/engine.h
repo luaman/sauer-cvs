@@ -187,10 +187,9 @@ extern void computescreen(char *text);
 extern void mousemove(int dx, int dy);
 extern bool pointincube(const clipplanes &p, const vec &v);
 
+// world
 extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);
-extern void removeoctaentity(int id);
-extern void addoctaentity(int id);
 
 // lightmap
 extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 = 0, char *text2 = NULL);

@@ -1285,9 +1285,9 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
             else
             {
                 int visible = 0;
-                loopv(oe->list)
+                loopv(oe->mapmodels)
                 {
-                    extentity &e = *ents[oe->list[i]];
+                    extentity &e = *ents[oe->mapmodels[i]];
                     if(e.visible) continue;
                     e.visible = true;
                     ++visible;
@@ -1314,7 +1314,7 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
                         
 VAR(oqmm, 0, 4, 8);
 
-extern bool getmmboundingbox(extentity &e, ivec &o, ivec &r);
+extern bool getentboundingbox(extentity &e, ivec &o, ivec &r);
 
 void rendermapmodels()
 {
@@ -1332,10 +1332,9 @@ void rendermapmodels()
         if(!occluded) 
         {
             bool hasmodels = false;
-            loopv(oe->list)
+            loopv(oe->mapmodels)
             {
-                extentity &e = *ents[oe->list[i]];
-                if(e.type != ET_MAPMODEL) continue;
+                extentity &e = *ents[oe->mapmodels[i]];
                 if(!e.visible) continue;
                 hasmodels = true;
                 break;
@@ -1360,14 +1359,13 @@ void rendermapmodels()
         {
             ivec bbmin(oe->o), bbmax(oe->o);
             bbmin.add(oe->size);
-            loopv(oe->list)
+            loopv(oe->mapmodels)
             {
-                extentity &e = *ents[oe->list[i]];
-                if(e.type != ET_MAPMODEL) continue;
+                extentity &e = *ents[oe->mapmodels[i]];
                 if(occluded)
                 {
                     ivec bo, br;
-                    if(getmmboundingbox(e, bo, br))
+                    if(getentboundingbox(e, bo, br))
                     {
                         loopj(3)
                         {
