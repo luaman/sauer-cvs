@@ -784,15 +784,13 @@ void alloctexids()
     for(int i = lmtexids.length(); i<lightmaps.length()+LMID_RESERVED; i++) glGenTextures(1, &lmtexids.add());
 };
 
-#define MAXLCSIZE 16
-
-VARF(lightcachesize, 1, MAXLCSIZE/2, MAXLCSIZE, clearlightcache());
+#define LCSIZE 16
 
 struct lightcacheentry
 {
     bool filled;
     vector<int> lights;
-} lightcache[MAXLCSIZE*MAXLCSIZE*MAXLCSIZE];
+} lightcache[LCSIZE*LCSIZE*LCSIZE];
 
 void clearlightcache(int e)
 {
@@ -805,7 +803,7 @@ void clearlightcache(int e)
         o = light.o;
     };
 
-    int size = hdr.worldsize / lightcachesize;
+    int size = hdr.worldsize / LCSIZE;
     lightcacheentry *lce = lightcache;
     for(int cx = 0; cx < hdr.worldsize; cx += size)
     for(int cy = 0; cy < hdr.worldsize; cy += size)
@@ -823,11 +821,11 @@ void clearlightcache(int e)
 
 const vector<int> &checklightcache(const vec &target)
 {
-    float scale = float(lightcachesize) / float(hdr.worldsize);
-    lightcacheentry &lce = lightcache[int(target.x*scale)*MAXLCSIZE*MAXLCSIZE + int(target.y*scale)*MAXLCSIZE + int(target.z*scale)];
+    float scale = float(LCSIZE) / float(hdr.worldsize);
+    lightcacheentry &lce = lightcache[int(target.x*scale)*LCSIZE*LCSIZE + int(target.y*scale)*LCSIZE + int(target.z*scale)];
     if(lce.filled) return lce.lights;
 
-    int size = hdr.worldsize / lightcachesize, cx = int(target.x) & ~(size-1), cy = int(target.y) & ~(size-1), cz = int(target.z) & ~(size-1);
+    int size = hdr.worldsize / LCSIZE, cx = int(target.x) & ~(size-1), cy = int(target.y) & ~(size-1), cz = int(target.z) & ~(size-1);
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
     {
