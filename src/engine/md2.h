@@ -120,12 +120,11 @@ struct md2 : model
     GLuint vbufGL;
     ushort *vbufi;
     int vbufi_len;
-    SphereTree *spheretree;
     vector<md2_anim> *anims;
 
     md2_header header;
     
-    md2(const char *name) : loaded(false), vbufGL(0), vbufi(0), spheretree(0), anims(0)
+    md2(const char *name) : loaded(false), vbufGL(0), vbufi(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -293,7 +292,7 @@ struct md2 : model
         glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
-    SphereTree *collisiontree()
+    SphereTree *setspheretree()
     {
         if(spheretree) return spheretree;
         if(!mverts[0]) scaleverts(0);

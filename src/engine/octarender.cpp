@@ -1257,7 +1257,7 @@ extern int octaentsize;
 
 static octaentities *visibleents, **lastvisibleents;
 
-void findvisibleents(cube *c, const ivec &o, int size)
+void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *> &ents)
 {
     loopj(8)
     {
@@ -1270,45 +1270,45 @@ void findvisibleents(cube *c, const ivec &o, int size)
         };
         if(c[j].ents)
         {
-            octaentities *ents = c[j].ents;
+            octaentities *oe = c[j].ents;
             if(isvisiblecube(co.tovec(), size) >= VFC_FOGGED) continue; 
 
-            bool occluded = ents->query && ents->query->owner == ents && checkquery(ents->query);
+            bool occluded = oe->query && oe->query->owner == oe && checkquery(oe->query);
             if(occluded)
             {
-                ents->distance = -1;
+                oe->distance = -1;
 
-                ents->next = NULL;
-                *lastvisibleents = ents;
-                lastvisibleents = &ents->next;
+                oe->next = NULL;
+                *lastvisibleents = oe;
+                lastvisibleents = &oe->next;
             }
             else
             {
                 int visible = 0;
-                loopv(ents->list)
+                loopv(oe->list)
                 {
-                    extentity &e = *et->getents()[ents->list[i]];
+                    extentity &e = *ents[oe->list[i]];
                     if(e.visible) continue;
                     e.visible = true;
                     ++visible;
                 };
                 if(!visible) continue;
 
-                ents->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
+                oe->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
 
                 octaentities **prev = &visibleents, *cur = visibleents;
-                while(cur && cur->distance >= 0 && ents->distance > cur->distance)
+                while(cur && cur->distance >= 0 && oe->distance > cur->distance)
                 {
                     prev = &cur->next;
                     cur = cur->next;
                 };
 
-                if(*prev == NULL) lastvisibleents = &ents->next; 
-                ents->next = *prev;
-                *prev = ents;
+                if(*prev == NULL) lastvisibleents = &oe->next; 
+                oe->next = *prev;
+                *prev = oe;
             };
         };
-        if(c[j].children && size > octaentsize) findvisibleents(c[j].children, co, size>>1);
+        if(c[j].children && size > octaentsize) findvisibleents(c[j].children, co, size>>1, ents);
     };
 };
                         
@@ -1318,21 +1318,23 @@ extern bool getmmboundingbox(extentity &e, ivec &o, ivec &r);
 
 void rendermapmodels()
 {
+    const vector<extentity *> &ents = et->getents();
+    
     visibleents = NULL;
     lastvisibleents = &visibleents;
-    findvisibleents(worldroot, ivec(0, 0, 0), hdr.worldsize>>1);
+    findvisibleents(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, ents);
 
     static int visible = 0;
 
-    for(octaentities *ents = visibleents; ents; ents = ents->next)
+    for(octaentities *oe = visibleents; oe; oe = oe->next)
     {
-        bool occluded = ents->distance < 0;
+        bool occluded = oe->distance < 0;
         if(!occluded) 
         {
             bool hasmodels = false;
-            loopv(ents->list)
+            loopv(oe->list)
             {
-                extentity &e = *et->getents()[ents->list[i]];
+                extentity &e = *ents[oe->list[i]];
                 if(e.type != ET_MAPMODEL) continue;
                 if(!e.visible) continue;
                 hasmodels = true;
@@ -1341,26 +1343,26 @@ void rendermapmodels()
             if(!hasmodels) continue;
         };   
 
-        if(!hasOQ || !oqfrags || !oqmm || !ents->distance) ents->query = NULL;
-        else if(!occluded && (++visible % oqmm)) ents->query = NULL;
-        else ents->query = newquery(ents);
+        if(!hasOQ || !oqfrags || !oqmm || !oe->distance) oe->query = NULL;
+        else if(!occluded && (++visible % oqmm)) oe->query = NULL;
+        else oe->query = newquery(oe);
 
-        if(ents->query)
+        if(oe->query)
         {
             if(occluded)
             {
                 glDepthMask(GL_FALSE);
                 glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
             };
-            glBeginQuery_(GL_SAMPLES_PASSED_ARB, ents->query->id);
+            glBeginQuery_(GL_SAMPLES_PASSED_ARB, oe->query->id);
         };
-        if(!occluded || ents->query)
+        if(!occluded || oe->query)
         {
-            ivec bbmin(ents->o), bbmax(ents->o);
-            bbmin.add(ents->size);
-            loopv(ents->list)
+            ivec bbmin(oe->o), bbmax(oe->o);
+            bbmin.add(oe->size);
+            loopv(oe->list)
             {
-                extentity &e = *et->getents()[ents->list[i]];
+                extentity &e = *ents[oe->list[i]];
                 if(e.type != ET_MAPMODEL) continue;
                 if(occluded)
                 {
@@ -1385,13 +1387,13 @@ void rendermapmodels()
             {
                 loopj(3)
                 {
-                    bbmin[j] = max(bbmin[j], ents->o[j]);
-                    bbmax[j] = min(bbmax[j], ents->o[j]+ents->size);
+                    bbmin[j] = max(bbmin[j], oe->o[j]);
+                    bbmax[j] = min(bbmax[j], oe->o[j]+oe->size);
                 };
                 drawbb(bbmin, bbmax.sub(bbmin));
             };
         };
-        if(ents->query)
+        if(oe->query)
         {
             glEndQuery_(GL_SAMPLES_PASSED_ARB);
             if(occluded)

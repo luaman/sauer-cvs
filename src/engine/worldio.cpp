@@ -155,20 +155,21 @@ void save_world(char *mname)
     if(!f) { conoutf("could not write map to %s", cgzname); return; };
     hdr.version = MAPVERSION;
     hdr.numents = 0;
-    loopv(et->getents()) if(et->getents()[i]->type!=ET_EMPTY) hdr.numents++;
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
     hdr.lightmaps = lightmaps.length();
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
-    loopv(et->getents())
+    loopv(ents)
     {
-        if(et->getents()[i]->type!=ET_EMPTY)
+        if(ents[i]->type!=ET_EMPTY)
         {
-            entity tmp = *et->getents()[i];
+            entity tmp = *ents[i];
             endianswap(&tmp.o, sizeof(int), 3);
             endianswap(&tmp.attr1, sizeof(short), 5);
             gzwrite(f, &tmp, sizeof(entity));
-            et->writeent(*et->getents()[i]);
+            et->writeent(*ents[i]);
         };
     };
 
@@ -231,12 +232,13 @@ void load_world(char *mname)        // still supports all map formats that have 
     freeocta(worldroot);
 
     show_out_of_renderloop_progress(0, "loading entities...");
-    et->getents().setsize(0);
+    vector<extentity *> &ents = et->getents();
+    ents.setsize(0);
 
     loopi(hdr.numents)
     {
         extentity &e = *et->newentity();
-        et->getents().add(&e);
+        ents.add(&e);
         gzread(f, &e, sizeof(entity));
         endianswap(&e.o, sizeof(int), 3);
         endianswap(&e.attr1, sizeof(short), 5);
@@ -292,9 +294,9 @@ void load_world(char *mname)        // still supports all map formats that have 
 
     precacheall();
 
-    loopv(et->getents())
+    loopv(ents)
     {
-        extentity &e = *et->getents()[i];
+        extentity &e = *ents[i];
         if(e.type==ET_MAPMODEL)
         {
             mapmodelinfo &mmi = getmminfo(e.attr2);

@@ -139,24 +139,19 @@ void entitiesinoctanodes()
 
 /////////////////////////  ray - cube collision ///////////////////////////////////////////////
 
-void pushvec(vec &o, const vec &ray, float dist)
+static inline void pushvec(vec &o, const vec &ray, float dist)
 {
     vec d(ray);
     d.mul(dist);
     o.add(d);
 };
 
-bool pointoverbox(const vec &v, const vec &bo, const vec &br)
+static inline bool pointinbox(const vec &v, const vec &bo, const vec &br)
 {
     return v.x <= bo.x+br.x &&
            v.x >= bo.x-br.x &&
            v.y <= bo.y+br.y &&
-           v.y >= bo.y-br.y;
-};
-
-bool pointinbox(const vec &v, const vec &bo, const vec &br)
-{
-    return pointoverbox(v, bo, br) &&
+           v.y >= bo.y-br.y &&
            v.z <= bo.z+br.z &&
            v.z >= bo.z-br.z;
 };
@@ -212,21 +207,22 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
     return false;
 };
 
-bool inlist(int id, octaentities *last)
+static inline bool inlist(int id, octaentities *last)
 {
     if(last!=NULL) loopv(last->list) if(id==last->list[i]) return true;
     return false;
 };
 
-float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
+static float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
     float dist = 1e16f;
     if(oc == last || oc == NULL) return dist;
+    const vector<extentity *> &ents = et->getents();
     loopv(oc->list) if(!inlist(oc->list[i], last))
     {
         float f;
         ivec bo, br;
-        extentity &e = *et->getents()[oc->list[i]];
+        extentity &e = *ents[oc->list[i]];
         if(!e.inoctanode || e.type!=ET_MAPMODEL || &e==t) continue;
         if((mode&RAY_POLY) == RAY_BB)
         {
@@ -414,9 +410,10 @@ bool plcollide(physent *d, const vec &dir, physent *o)    // collide with player
 
 bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
 {
+    const vector<extentity *> &ents = et->getents();
     loopv(oc.list)
     {
-        entity &e = *et->getents()[oc.list[i]];
+        entity &e = *ents[oc.list[i]];
         if(e.type!=ET_MAPMODEL) continue;
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(!&mmi || !mmi.h || !mmi.rad) continue;
@@ -510,7 +507,8 @@ bool collide(physent *d, const vec &dir, float cutoff)
     if(!octacollide(d, dir, cutoff, bo, bs, worldroot, orig, hdr.worldsize>>1)) return false; // collide with world
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
-    loopi(cl->numdynents())
+    int numdyns = cl->numdynents();
+    loopi(numdyns)
     {
         dynent *o = cl->iterdynents(i);
         if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d->type!=ENT_CAMERA) && !plcollide(d, dir, o)) return false;

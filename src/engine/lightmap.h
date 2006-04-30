@@ -9,10 +9,10 @@ struct PackNode
 {
     PackNode *child1, *child2;
     ushort x, y, w, h;
-    bool packed;
+    int available;
 
-    PackNode() : child1(0), child2(0), x(0), y(0), w(LM_PACKW), h(LM_PACKH), packed(false) {};
-    PackNode(ushort x, ushort y, ushort w, ushort h) : child1(0), child2(0), x(x), y(y), w(w), h(h), packed(false) {};
+    PackNode() : child1(0), child2(0), x(0), y(0), w(LM_PACKW), h(LM_PACKH), available(min(LM_PACKW, LM_PACKH)) {};
+    PackNode(ushort x, ushort y, ushort w, ushort h) : child1(0), child2(0), x(x), y(y), w(w), h(h), available(min(w, h)) {};
 
     void clear()
     {
@@ -43,7 +43,7 @@ struct LightMap
     void finalize()
     {
         packroot.clear();
-        packroot.packed = true;
+        packroot.available = 0;
     };
 
     bool insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th);
@@ -55,6 +55,7 @@ enum { LMID_AMBIENT = 0, LMID_BRIGHT, LMID_RESERVED };
 
 extern void clearlights();
 extern void initlights();
+extern void clearlightcache(int e = -1);
 extern void resetlightmaps();
 extern void newsurfaces(cube &c);
 extern void freesurfaces(cube &c);
@@ -84,15 +85,19 @@ extern void calclerpverts(const vec &origin, const vec *p, const vec *n, const v
 extern void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end);
 extern void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep);
 
-#define CHECK_CALCLIGHT_PROGRESS(exit) \
+#define CHECK_CALCLIGHT_PROGRESS(exit, show_calclight_progress) \
     if(check_calclight_progress) \
     { \
-        show_calclight_progress(); \
+        if(!calclight_canceled) \
+        { \
+            show_calclight_progress(); \
+            check_calclight_canceled(); \
+        }; \
         if(calclight_canceled) exit; \
     };
 
 extern bool calclight_canceled;
 extern volatile bool check_calclight_progress;
 
-extern void show_calclight_progress();
+extern void check_calclight_canceled();
 

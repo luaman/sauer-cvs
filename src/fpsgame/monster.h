@@ -137,16 +137,16 @@ struct monsterset
                 case M_SLEEP:                       // state classic sp monster start in, wait for visual contact
                 {
                     if(editmode) break;          
-                    vec target;
-                    if(enemylos(target))
+                    normalise(enemyyaw);
+                    float angle = (float)fabs(enemyyaw-yaw);
+                    if(dist<32                   // the better the angle to the player, the further the monster can see/hear
+                    ||(dist<64 && angle<135)
+                    ||(dist<128 && angle<90)
+                    ||(dist<256 && angle<45)
+                    || angle<10)
                     {
-                        normalise(enemyyaw);
-                        float angle = (float)fabs(enemyyaw-yaw);
-                        if(dist<32                   // the better the angle to the player, the further the monster can see/hear
-                        ||(dist<64 && angle<135)
-                        ||(dist<128 && angle<90)
-                        ||(dist<256 && angle<45)
-                        || angle<10)
+                        vec target;
+                        if(enemylos(target))
                         {
                             transition(M_HOME, 1, 500, 200);
                             playsound(S_GRUNT1+rnd(2), &o);

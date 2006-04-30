@@ -110,12 +110,11 @@ struct md3model
     md3frame *frames;
     md3tag *tags;
     int numframes, numtags;
-    SphereTree *spheretree;
     int *lastanimswitchtime;
     animstate *previous, *current;
     bool loaded;
        
-    md3model() : anims(0), links(0), frames(0), tags(0), spheretree(0), lastanimswitchtime(0), previous(0), current(0), loaded(false)
+    md3model() : anims(0), links(0), frames(0), tags(0), lastanimswitchtime(0), previous(0), current(0), loaded(false)
     {
     };
     
@@ -208,9 +207,8 @@ struct md3model
         };
     };
     
-    SphereTree *collisiontree() // untested
+    SphereTree *spheretree() // untested
     {
-        if(spheretree) return spheretree;
         vector<triangle> tris;
         loopv(meshes)
         {
@@ -223,8 +221,7 @@ struct md3model
                 tri.c = mesh.vertices[mesh.triangles[j].vertexindices[2]];
             }
         }
-        spheretree = buildspheretree(tris.length(), tris.getbuf());
-        return spheretree;
+        return buildspheretree(tris.length(), tris.getbuf());
     };
     
     void scaleverts(const float scale, vec *translate) 
@@ -576,7 +573,14 @@ struct md3 : model
         if(!loaded) return 0.0f;
         return md3models[0].above_recv(frame);
     };
-    
+   
+    SphereTree *setspheretree()
+    {
+        if(spheretree) return spheretree;
+        spheretree = md3models[0].spheretree();
+        return spheretree;
+    };
+
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
     {
         if(!loaded) return;

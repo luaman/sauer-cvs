@@ -42,8 +42,6 @@ static int curlumels = 0;
 
 void show_calclight_progress()
 {
-    if(calclight_canceled) return;
-
     int lumels = curlumels;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
     float bar1 = float(progress) / float(total_surfaces),
@@ -53,26 +51,25 @@ void show_calclight_progress()
     s_sprintfd(text2)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100));
 
     show_out_of_renderloop_progress(bar1, text1, bar2, text2);
-
-    check_calclight_canceled();
 };
+
+#define CHECK_PROGRESS(exit) CHECK_CALCLIGHT_PROGRESS(exit, show_calclight_progress)
 
 bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
 {
-    if(packed || w < tw || h < th)
+    if((available < tw && available < th) || w < tw || h < th)
         return false;
     if(child1)
     {
         bool inserted = child1->insert(tx, ty, tw, th) ||
                         child2->insert(tx, ty, tw, th);
-        packed = child1->packed && child2->packed;
-        if(packed)      
-            clear();
+        available = max(child1->available, child2->available);
+        if(!available) clear();
         return inserted;    
     };
     if(w == tw && h == th)
     {
-        packed = true;
+        available = 0;
         tx = x;
         ty = y;
         return true;
@@ -89,7 +86,9 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
         child2 = new PackNode(x, y + th, w, h - th);
     };
 
-    return child1->insert(tx, ty, tw, th);
+    bool inserted = child1->insert(tx, ty, tw, th);
+    available = max(child1->available, child2->available);
+    return inserted;
 };
 
 bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
@@ -268,7 +267,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         vec u(v);
         for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
-            CHECK_CALCLIGHT_PROGRESS(return false);
+            CHECK_PROGRESS(return false);
             generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample);
             sample += aasample;
         };
@@ -332,7 +331,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
 
             for(uint x = 0; x <= lm_w; ++x, v.add(ustep), normal.add(nstep))
             {
-                CHECK_CALCLIGHT_PROGRESS(return false);
+                CHECK_PROGRESS(return false);
                 vec n(normal);
                 n.normalize();
                 generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
@@ -408,9 +407,10 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
 {
     lights1.setsize(0);
     lights2.setsize(0);
-    loopv(et->getents())
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
     {
-        entity &light = *et->getents()[i];
+        entity &light = *ents[i];
         if(light.type != ET_LIGHT) continue;
 
         int radius = light.attr1;
@@ -591,7 +591,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     loopi(8) if(vertused[i]) verts[i] = vvecs[i].tovec(cx, cy, cz);
     loopi(6) if(usefaces[i])
     {
-        CHECK_CALCLIGHT_PROGRESS(return);
+        CHECK_PROGRESS(return);
         if(!lodcube) progress++;
         if(c.texture[i] == DEFAULT_SKY) continue;
         if(size >= hdr.mapwlod) progress++;
@@ -622,7 +622,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!setup_surface(planes, v, n, numplanes >= 2 ? n2 : NULL, texcoords))
             continue;
 
-        CHECK_CALCLIGHT_PROGRESS(return);
+        CHECK_PROGRESS(return);
         if(!c.surfaces)
             newsurfaces(c);
         surfaceinfo &surface = c.surfaces[i];
@@ -635,7 +635,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
-    CHECK_CALCLIGHT_PROGRESS(return);
+    CHECK_PROGRESS(return);
 
     loopi(8)
     {
@@ -689,7 +689,6 @@ void calclight(int quality)
     calclight_canceled = false;
     check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
-    show_out_of_renderloop_progress(0, "computing normals...");
     Uint32 start = SDL_GetTicks();
     calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
@@ -785,14 +784,82 @@ void alloctexids()
     for(int i = lmtexids.length(); i<lightmaps.length()+LMID_RESERVED; i++) glGenTextures(1, &lmtexids.add());
 };
 
+#define MAXLCSIZE 16
+
+VARF(lightcachesize, 1, MAXLCSIZE/2, MAXLCSIZE, clearlightcache());
+
+struct lightcacheentry
+{
+    bool filled;
+    vector<int> lights;
+} lightcache[MAXLCSIZE*MAXLCSIZE*MAXLCSIZE];
+
+void clearlightcache(int e)
+{
+    vec o(0, 0, 0);
+    int radius = hdr.worldsize;
+    if(e >= 0)
+    {
+        entity &light = *et->getents()[e];
+        if(light.attr1) radius = light.attr1;
+        o = light.o;
+    };
+
+    int size = hdr.worldsize / lightcachesize;
+    lightcacheentry *lce = lightcache;
+    for(int cx = 0; cx < hdr.worldsize; cx += size)
+    for(int cy = 0; cy < hdr.worldsize; cy += size)
+    for(int cz = 0; cz < hdr.worldsize; cz += size, lce++)
+    {
+        if(o.x + radius < cx || o.x - radius > cx + size ||
+           o.y + radius < cy || o.y - radius > cy + size ||
+           o.z + radius < cz || o.z - radius > cz + size)
+            continue;
+
+        lce->filled = false;
+        lce->lights.setsize(0);
+    };
+};
+
+const vector<int> &checklightcache(const vec &target)
+{
+    float scale = float(lightcachesize) / float(hdr.worldsize);
+    lightcacheentry &lce = lightcache[int(target.x*scale)*MAXLCSIZE*MAXLCSIZE + int(target.y*scale)*MAXLCSIZE + int(target.z*scale)];
+    if(lce.filled) return lce.lights;
+
+    int size = hdr.worldsize / lightcachesize, cx = int(target.x) & ~(size-1), cy = int(target.y) & ~(size-1), cz = int(target.z) & ~(size-1);
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        entity &light = *ents[i];
+        if(light.type != ET_LIGHT) continue;
+
+        int radius = light.attr1;
+        if(radius > 0)
+        {
+            if(light.o.x + radius < cx || light.o.x - radius > cx + size ||
+               light.o.y + radius < cy || light.o.y - radius > cy + size ||
+               light.o.z + radius < cz || light.o.z - radius > cz + size)
+                continue;
+        };
+        lce.lights.add(i);
+    };
+
+    lce.filled = true;
+    return lce.lights;
+};
+
+
 void clearlights()
 {
     uchar bright[3] = { 128, 128, 128 };
     alloctexids();
     loopi(lightmaps.length() + LMID_RESERVED) createtexture(lmtexids[i], 1, 1, bright, false, false);
-    loopv(et->getents()) 
+    clearlightcache();
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents) 
     {
-        extentity &e = *et->getents()[i];
+        extentity &e = *ents[i];
         e.color = vec(1, 1, 1);
         e.dir = vec(0, 0, 1);
     };
@@ -813,7 +880,8 @@ void lightent(extentity &e, float height)
 
 void updateentlighting()
 {
-    loopv(et->getents()) lightent(*et->getents()[i]);
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents) lightent(*ents[i]);
 };
 
 void initlights()
@@ -829,6 +897,7 @@ void initlights()
     uchar bright[3] = { 128, 128, 128 };
     createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
     loopi(lightmaps.length()) createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
+    clearlightcache();
     updateentlighting();
 };
 
@@ -842,9 +911,11 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)
     };
 
     color = dir = vec(0, 0, 0);
-    loopv(et->getents())
+    const vector<extentity *> &ents = et->getents();
+    const vector<int> &lights = checklightcache(target);
+    loopv(lights)
     {
-        entity &e = *et->getents()[i];
+        entity &e = *ents[lights[i]];
         if(e.type != ET_LIGHT)
             continue;
     
@@ -872,6 +943,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)
 
         dir.add(vec(e.o).sub(target).mul(intensity/mag));
     };
+
     color.x = min(1, max(0.4f, color.x));
     color.y = min(1, max(0.4f, color.y));
     color.z = min(1, max(0.4f, color.z));

@@ -108,9 +108,19 @@ bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
 VAR(lerpsubdiv, 0, 2, 4);
 VAR(lerpsubdivsize, 4, 4, 128);
 
+static uint progress = 0;
+
+void show_calcnormals_progress()
+{
+    float bar1 = float(progress) / float(wtris/2);
+    show_out_of_renderloop_progress(bar1, "computing normals...");
+};
+
+#define CHECK_PROGRESS(exit) CHECK_CALCLIGHT_PROGRESS(exit, show_calcnormals_progress)
+
 void addnormals(cube &c, const ivec &o, int size)
 {
-    CHECK_CALCLIGHT_PROGRESS(return);
+    CHECK_PROGRESS(return);
 
     if(c.children)
     {
@@ -128,7 +138,9 @@ void addnormals(cube &c, const ivec &o, int size)
     loopi(8) if(vertused[i]) verts[i] = vvecs[i].tovec(o);
     loopi(6) if(usefaces[i])
     {
-        CHECK_CALCLIGHT_PROGRESS(return);
+        CHECK_PROGRESS(return);
+        if(c.texture[i] == DEFAULT_SKY) continue;
+        progress++;
 
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);

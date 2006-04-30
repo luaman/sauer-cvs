@@ -171,8 +171,7 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     if(yaw != 0) yawray(yo, yray, yaw);
     model *m = loadmodel(NULL, e.attr2);
     if(!m) return false;
-    SphereTree *ct = m->collisiontree();
-    if(!ct) return false;
-    return ct->intersect(yo, yray, maxdist, dist);
+    if(!m->spheretree && !m->setspheretree()) return false;
+    return m->spheretree->intersect(yo, yray, maxdist, dist);
 };
 

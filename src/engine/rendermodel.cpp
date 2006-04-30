@@ -146,7 +146,7 @@ bool modeloccluded(const vec &center, float radius)
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, int cull)
+void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, int cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -159,6 +159,7 @@ void rendermodel(const vec &color, const vec &dir, const char *mdl, int anim, in
         if((cull&MDL_CULL_VFC) && isvisiblesphere(radius, center) >= VFC_FOGGED) return;
         if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     };
+    if(d) lightreaching(d->o, color, dir);
     m->setskin(tex);  
     if(teammate) glColor3f(0.2f, 1, 0.2f); // VERY TEMP, find a better teammate display
     else glColor3fv(color.v);

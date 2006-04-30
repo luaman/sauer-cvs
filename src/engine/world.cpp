@@ -10,9 +10,10 @@ int closestent()        // used for delent and edit mode ent display
     if(!editmode) return -1;
     int best = -1;
     float bdist = 99999;
-    loopv(et->getents())
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
     {
-        entity &e = *et->getents()[i];
+        entity &e = *ents[i];
         if(e.type==ET_EMPTY) continue;
         float dist = e.o.dist(player->o);
         if(dist<bdist)
@@ -30,6 +31,7 @@ void entproperty(int prop, int amount)
     int e = closestent();
     if(e<0) return;
 	removeoctaentity(e);
+    if(e == ET_LIGHT) clearlightcache(e);
     switch(prop)
     {
         case 0: et->getents()[e]->attr1 += amount; break;
@@ -38,6 +40,8 @@ void entproperty(int prop, int amount)
         case 3: et->getents()[e]->attr4 += amount; break;
     };
 	addoctaentity(e);
+    if(e == ET_LIGHT) clearlightcache(e);
+    else lightent(*et->getents()[e]);
     et->editent(e);
 };
 
@@ -61,6 +65,7 @@ void delent()
     int e = closestent();
     if(e<0) { conoutf("no more entities"); return; };
     int t = et->getents()[e]->type;
+    if(t==ET_LIGHT) clearlightcache(e);
     conoutf("%s entity deleted", et->entname(t));
     et->getents()[e]->type = ET_EMPTY;
     et->editent(e);
@@ -145,9 +150,11 @@ void dropent()
     if(i<0) return;
 	removeoctaentity(i);
     extentity &e = *et->getents()[i];
+    if(e.type == ET_LIGHT) clearlightcache(i);
     dropentity(e);	
 	addoctaentity(i);
-    lightent(e);
+    if(e.type == ET_LIGHT) clearlightcache(i);
+    else lightent(e);
     et->editent(i);
 };
 
@@ -160,7 +167,8 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
     et->getents().add(e);
     int i = et->getents().length()-1;
 	addoctaentity(i);
-    lightent(*e);
+    if(type == ET_LIGHT) clearlightcache(i);
+    else lightent(*e);
     et->editent(i);
 };
 
@@ -170,23 +178,26 @@ void clearents(char *name)
 {
     int type = findtype(name);
     if(noedit() || multiplayer()) return;
-    loopv(et->getents())
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
     {
-        entity &e = *et->getents()[i];
+        entity &e = *ents[i];
         if(e.type==type)
         {
             e.type = ET_EMPTY;
             et->editent(i);
         };
     };
+    clearlightcache();
 };
 
 COMMAND(clearents, ARG_1STR);
 
 int findentity(int type, int index)
 {
-    for(int i = index; i<et->getents().length(); i++) if(et->getents()[i]->type==type) return i;
-    loopj(index) if(et->getents()[j]->type==type) return j;
+    const vector<extentity *> &ents = et->getents();
+    for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
+    loopj(index) if(ents[j]->type==type) return j;
     return -1;
 };
 
@@ -261,13 +272,19 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
         while(et->getents().length()<i) et->getents().add(et->newentity())->type = ET_EMPTY;
         extentity *e = et->newentity(local, o, type, attr1, attr2, attr3, attr4);
         et->getents().add(e);
-        lightent(*e);
+        if(type == ET_LIGHT) clearlightcache(i);
+        else lightent(*e);
     }
     else
     {
         extentity &e = *et->getents()[i];
+        if(e.type == ET_LIGHT && (e.o!=o || type != ET_LIGHT)) clearlightcache(i);
         e.type = type;
-        if(e.o!=o) lightent(e);
+        if(e.o!=o)
+        {
+            if(type == ET_LIGHT) clearlightcache(i);
+            else lightent(e);
+        };
         e.o = o;
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
     };
