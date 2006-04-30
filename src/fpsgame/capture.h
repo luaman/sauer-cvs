@@ -51,6 +51,11 @@ struct capturestate
             return false;
         };
 
+        bool steal(const char *team)
+        {
+            return !enemy[0] && strcmp(owner, team);
+        };
+            
         bool leave(const char *team)
         {
             if(strcmp(enemy, team)) return false;
@@ -350,20 +355,18 @@ struct captureserv : capturestate
         scoresec = 0;
     };
 
-    void orphanedbase(int i, const char *team)
+    void stealbase(int n, const char *team)
     {
-        baseinfo &b = bases[i];
+        baseinfo &b = bases[n];
         loopv(sv.clients)
         {
             fpsserver::clientinfo *ci = sv.clients[i];
-            if(!ci->spectator && ci->state==CS_ALIVE && ci->team[0] && strcmp(ci->team, team) && insidebase(b, ci->o))
-            {
-                if(b.enter(ci->team) || b.owner[0]) break;
-            };
+            if(!ci->spectator && ci->state==CS_ALIVE && ci->team[0] && !strcmp(ci->team, team) && insidebase(b, ci->o))
+                b.enter(ci->team);
         };
-        sendbaseinfo(i);
+        sendbaseinfo(n);
     };
-    
+
     void movebases(const char *team, const vec &oldpos, const vec &newpos)
     {
         if(!team[0] || sv.minremain<0) return;
@@ -372,8 +375,9 @@ struct captureserv : capturestate
             baseinfo &b = bases[i];
             bool leave = insidebase(b, oldpos),
                  enter = insidebase(b, newpos);
-            if(leave && !enter && b.leave(team)) orphanedbase(i, team);
+            if(leave && !enter && b.leave(team)) sendbaseinfo(i);
             else if(enter && !leave && b.enter(team)) sendbaseinfo(i);
+            else if(leave && enter && b.steal(team)) stealbase(i, team);
         };
     };
 
