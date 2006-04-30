@@ -533,12 +533,12 @@ struct sortval
      usvector dims[3];
 };
 
-inline bool htcmp(const sortkey &x, const sortkey &y)
+static inline bool htcmp(const sortkey &x, const sortkey &y)
 {
     return x.tex == y.tex && x.lmid == y.lmid;
 };
 
-inline unsigned int hthash(const sortkey &k)
+static inline unsigned int hthash(const sortkey &k)
 {
     return k.tex + k.lmid*9741;
 };

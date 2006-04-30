@@ -41,12 +41,12 @@ struct nval
     nval() : normals(0) {};
 };
 
-inline bool htcmp(const nkey &x, const nkey &y)
+static inline bool htcmp(const nkey &x, const nkey &y)
 {
     return x.v == y.v;
 };
 
-inline unsigned int hthash (const nkey &k)
+static inline unsigned int hthash (const nkey &k)
 {
     return k.v.x^k.v.y^k.v.z;
 };

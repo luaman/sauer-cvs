@@ -6,14 +6,14 @@ VARP(waterlod, 0, 1, 3);
 
 int wx1, wy1, wx2, wy2, wsize;
 
-inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
+static inline void vertw(float v1, float v2, float v3, float t1, float t2, float t)
 {
     glTexCoord2f(t1, t2);
     glVertex3f(v1, v2, v3-1.1f-(float)sin((v1-wx1)/wsize*(v2-wy1)/wsize*(v1-wx2)*(v2-wy2)*59/23+t)*0.8f);
 };
 
-inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
-inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; };
+static inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
+static inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; };
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 

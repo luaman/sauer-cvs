@@ -16,7 +16,7 @@ int aalights = 3;
  
 static uchar lm[3 * LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
-static vector<entity *> lights1, lights2;
+static vector<const entity *> lights1, lights2;
 static uint progress = 0, total_surfaces = 0;
 
 bool calclight_canceled = false;
@@ -123,7 +123,7 @@ void insert_lightmap(ushort &x, ushort &y, ushort &lmid)
     lmid = lightmaps.length() - 1 + LMID_RESERVED;
 };
 
-inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
+static inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
 {
     if(lm_w != y->w || lm_h != y->h) return false;
     uchar *xdata = lm,
@@ -139,7 +139,7 @@ inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
     return true;
 };
     
-inline uint hthash (surfaceinfo *info)
+static inline uint hthash (surfaceinfo *info)
 {
     uint hash = lm_w + (lm_h<<8);
     uchar *color = lm;
@@ -175,12 +175,12 @@ void pack_lightmap(surfaceinfo &surface)
     else insert_lightmap(surface.x, surface.y, surface.lmid);
 };
 
-void generate_lumel(const float tolerance, const vector<entity *> &lights, const vec &target, const vec &normal, vec &sample)
+void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample)
 {
     float r = 0, g = 0, b = 0;
     loopv(lights)
     {
-        entity &light = *lights[i];
+        const entity &light = *lights[i];
         vec ray = target;
         ray.sub(light.o);
         float mag = ray.magnitude(),
@@ -241,7 +241,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         {-0.6f, -0.3f},
     };
     float tolerance = 0.5 / lpu;
-    vector<entity *> &lights = (y1 == 0 ? lights1 : lights2);
+    vector<const entity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     vec offsets[8];
     loopi(8) loopj(3) offsets[i][j] = aacoords[i][0]*ustep[j] + aacoords[i][1]*vstep[j];
@@ -403,10 +403,48 @@ void clear_lmids(cube *c)
     };
 };
 
-bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
+#define LCSIZE 16
+
+struct lightcacheentry
 {
-    lights1.setsize(0);
-    lights2.setsize(0);
+    bool filled;
+    vector<int> lights;
+} lightcache[LCSIZE*LCSIZE*LCSIZE];
+
+void clearlightcache(int e)
+{
+    vec o(0, 0, 0);
+    int radius = hdr.worldsize;
+    if(e >= 0)
+    {
+        entity &light = *et->getents()[e];
+        if(light.attr1) radius = light.attr1;
+        o = light.o;
+    };
+
+    int size = hdr.worldsize / LCSIZE;
+    lightcacheentry *lce = lightcache;
+    for(int cx = 0; cx < hdr.worldsize; cx += size)
+    for(int cy = 0; cy < hdr.worldsize; cy += size)
+    for(int cz = 0; cz < hdr.worldsize; cz += size, lce++)
+    {
+        if(o.x + radius < cx || o.x - radius > cx + size ||
+           o.y + radius < cy || o.y - radius > cy + size ||
+           o.z + radius < cz || o.z - radius > cz + size)
+            continue;
+
+        lce->filled = false;
+        lce->lights.setsize(0);
+    };
+};
+
+const vector<int> &checklightcache(int x, int y, int z)
+{
+    int size = hdr.worldsize / LCSIZE;
+    lightcacheentry &lce = lightcache[x/size*LCSIZE*LCSIZE + y/size*LCSIZE + z/size];
+    if(lce.filled) return lce.lights;
+
+    int cx = x & ~(size-1), cy = y & ~(size-1), cz = z & ~(size-1);
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
     {
@@ -421,19 +459,57 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
                light.o.z + radius < cz || light.o.z - radius > cz + size)
                 continue;
         };
+        lce.lights.add(i);
+    };
 
-        float dist = planes[0].dist(light.o);
+    lce.filled = true;
+    return lce.lights;
+};
+
+static inline void addlight(const entity &light, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
+{
+    int radius = light.attr1;
+    if(radius > 0)
+    {
+        if(light.o.x + radius < cx || light.o.x - radius > cx + size ||
+           light.o.y + radius < cy || light.o.y - radius > cy + size ||
+           light.o.z + radius < cz || light.o.z - radius > cz + size)
+            return;
+    };
+
+    float dist = planes[0].dist(light.o);
+    if(dist >= 0.0 && (!radius || dist < float(radius)))
+       lights1.add(&light);
+    if(numplanes > 1)
+    {
+        dist = planes[1].dist(light.o);
         if(dist >= 0.0 && (!radius || dist < float(radius)))
-           lights1.add(&light);
-        if(numplanes > 1)
+        lights2.add(&light);
+    };
+}; 
+
+bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
+{
+    lights1.setsize(0);
+    lights2.setsize(0);
+    const vector<extentity *> &ents = et->getents();
+    if(size <= hdr.worldsize/LCSIZE)
+    {
+        const vector<int> &lights = checklightcache(cx, cy, cz);
+        loopv(lights)
         {
-            dist = planes[1].dist(light.o);
-            if(dist >= 0.0 && (!radius || dist < float(radius)))
-                lights2.add(&light);
+            const entity &light = *ents[lights[i]];
+            addlight(light, cx, cy, cz, size, planes, numplanes);
         };
+    }
+    else loopv(ents)
+    {
+        const entity &light = *ents[i];
+        if(light.type != ET_LIGHT) continue;
+        addlight(light, cx, cy, cz, size, planes, numplanes);
     };
     return lights1.length() || lights2.length();
-}
+};
 
 bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, uchar texcoords[8])
 {
@@ -784,70 +860,6 @@ void alloctexids()
     for(int i = lmtexids.length(); i<lightmaps.length()+LMID_RESERVED; i++) glGenTextures(1, &lmtexids.add());
 };
 
-#define LCSIZE 16
-
-struct lightcacheentry
-{
-    bool filled;
-    vector<int> lights;
-} lightcache[LCSIZE*LCSIZE*LCSIZE];
-
-void clearlightcache(int e)
-{
-    vec o(0, 0, 0);
-    int radius = hdr.worldsize;
-    if(e >= 0)
-    {
-        entity &light = *et->getents()[e];
-        if(light.attr1) radius = light.attr1;
-        o = light.o;
-    };
-
-    int size = hdr.worldsize / LCSIZE;
-    lightcacheentry *lce = lightcache;
-    for(int cx = 0; cx < hdr.worldsize; cx += size)
-    for(int cy = 0; cy < hdr.worldsize; cy += size)
-    for(int cz = 0; cz < hdr.worldsize; cz += size, lce++)
-    {
-        if(o.x + radius < cx || o.x - radius > cx + size ||
-           o.y + radius < cy || o.y - radius > cy + size ||
-           o.z + radius < cz || o.z - radius > cz + size)
-            continue;
-
-        lce->filled = false;
-        lce->lights.setsize(0);
-    };
-};
-
-const vector<int> &checklightcache(const vec &target)
-{
-    float scale = float(LCSIZE) / float(hdr.worldsize);
-    lightcacheentry &lce = lightcache[int(target.x*scale)*LCSIZE*LCSIZE + int(target.y*scale)*LCSIZE + int(target.z*scale)];
-    if(lce.filled) return lce.lights;
-
-    int size = hdr.worldsize / LCSIZE, cx = int(target.x) & ~(size-1), cy = int(target.y) & ~(size-1), cz = int(target.z) & ~(size-1);
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents)
-    {
-        entity &light = *ents[i];
-        if(light.type != ET_LIGHT) continue;
-
-        int radius = light.attr1;
-        if(radius > 0)
-        {
-            if(light.o.x + radius < cx || light.o.x - radius > cx + size ||
-               light.o.y + radius < cy || light.o.y - radius > cy + size ||
-               light.o.z + radius < cz || light.o.z - radius > cz + size)
-                continue;
-        };
-        lce.lights.add(i);
-    };
-
-    lce.filled = true;
-    return lce.lights;
-};
-
-
 void clearlights()
 {
     uchar bright[3] = { 128, 128, 128 };
@@ -910,7 +922,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)
 
     color = dir = vec(0, 0, 0);
     const vector<extentity *> &ents = et->getents();
-    const vector<int> &lights = checklightcache(target);
+    const vector<int> &lights = checklightcache(int(target.x), int(target.y), int(target.z));
     loopv(lights)
     {
         entity &e = *ents[lights[i]];
