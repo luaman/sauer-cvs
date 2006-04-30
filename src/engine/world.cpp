@@ -53,9 +53,11 @@ void entmove(int dir, int dist)
     if(i<0||dir<0||dir>2) return;
 	removeoctaentity(i);
     extentity &e = *et->getents()[i];
+    if(e.type==ET_LIGHT) clearlightcache(i);
     e.o[dir] += dist;
 	addoctaentity(i);
-    lightent(e);
+    if(e.type==ET_LIGHT) clearlightcache(i);
+    else lightent(e);
     et->editent(i);
 };
 
@@ -65,6 +67,7 @@ void delent()
     int e = closestent();
     if(e<0) { conoutf("no more entities"); return; };
     int t = et->getents()[e]->type;
+    removeoctaentity(e);
     if(t==ET_LIGHT) clearlightcache(e);
     conoutf("%s entity deleted", et->entname(t));
     et->getents()[e]->type = ET_EMPTY;
@@ -184,6 +187,7 @@ void clearents(char *name)
         entity &e = *ents[i];
         if(e.type==type)
         {
+            removeoctaentity(i);
             e.type = ET_EMPTY;
             et->editent(i);
         };
@@ -278,6 +282,7 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
     else
     {
         extentity &e = *et->getents()[i];
+        if(e.o!=o) removeoctaentity(i);
         if(e.type == ET_LIGHT && (e.o!=o || type != ET_LIGHT)) clearlightcache(i);
         e.type = type;
         if(e.o!=o)
