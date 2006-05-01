@@ -45,7 +45,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="1"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
+				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="true"
 				AdditionalIncludeDirectories="..\enet\include;..\include;..\engine;..\fpsgame;..\shared"

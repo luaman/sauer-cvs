@@ -60,7 +60,7 @@ void savec(cube *c, gzFile f)
                 gzputc(f, OCTSAV_NORMAL);
                 gzwrite(f, c[i].edges, 12);
             };
-            gzwrite(f, c[i].texture, 6);
+            gzwrite(f, c[i].texture, sizeof(c[i].texture));
             //loopj(3) gzputc(f, 0); //gzwrite(f, c[i].colour, 3);
             // save surface info for lighting
             if(!c[i].surfaces)
@@ -111,7 +111,8 @@ void loadc(gzFile f, cube &c)
         default:
             fatal("garbage in map");
     };
-    gzread(f, c.texture, 6);
+    ushort temptex;
+    loopi(6) c.texture[i] = hdr.version<14 ? gzgetc(f) : (gzread(f, &temptex, sizeof(ushort)), temptex);
     if(hdr.version < 7) loopi(3) gzgetc(f); //gzread(f, c.colour, 3);
     else
     {
@@ -188,9 +189,9 @@ void swapXZ(cube *c)
 {	
 	loopi(8) 
 	{
-		swap(uint,  c[i].faces[0],   c[i].faces[2]);
-		swap(uchar, c[i].texture[0], c[i].texture[4]);
-		swap(uchar, c[i].texture[1], c[i].texture[5]);
+		swap(uint,   c[i].faces[0],   c[i].faces[2]);
+		swap(ushort, c[i].texture[0], c[i].texture[4]);
+		swap(ushort, c[i].texture[1], c[i].texture[5]);
 		if(c[i].surfaces)
 		{
 			swap(surfaceinfo, c[i].surfaces[0], c[i].surfaces[4]);

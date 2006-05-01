@@ -3,6 +3,8 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- test speed on mpsp5/4 with monsters
+- linux ATI oq crashes workaround?
 - map up/download etc
 - water physics close to surface
 - add a spotlight (ask me)
@@ -13,6 +15,10 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
+- water at the edges never waves?
+- add "join team red / blue" menu after connecting to a capture mode game
+- fix lifesequence
+- fanatics crash on large list of textures?
 - kurts weird geometry bug: http://www.fidnet.com/~kesler/screenshot_486017.jpg
 - report to ATI: float vs short issue
 - font black outlines

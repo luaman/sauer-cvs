@@ -144,7 +144,7 @@ SphereTree *buildspheretree(int numtris, const triangle *tris)
 static void yawray(vec &o, vec &ray, float angle)
 {
     angle *= RAD;
-    float c = cos(angle), s = sin(angle),
+    float c = cosf(angle), s = sinf(angle),
           ox = o.x, oy = o.y,
           rx = ox+ray.x, ry = oy+ray.y;
     o.x = ox*c - oy*s;

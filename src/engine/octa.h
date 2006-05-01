@@ -95,7 +95,7 @@ struct cube
                             // see documentation jpgs for more info.
         uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
     };
-    uchar texture[6];       // one for each face. same order as orient.
+    ushort texture[6];      // one for each face. same order as orient.
     uchar material;         // empty-space material
     uchar visible;          // visible faces of the cube
     vtxarray *va;           // vertex array for children, or NULL

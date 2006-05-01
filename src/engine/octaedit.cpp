@@ -715,7 +715,7 @@ uint mflip(uint face) { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((fa
 
 void flipcube(cube &c, int dim)
 {
-    swap(uchar, c.texture[dim*2], c.texture[dim*2+1]);
+    swap(ushort, c.texture[dim*2], c.texture[dim*2+1]);
     c.faces[D[dim]] = dflip(c.faces[D[dim]]);
     c.faces[C[dim]] = cflip(c.faces[C[dim]]);
     c.faces[R[dim]] = rflip(c.faces[R[dim]]);
