@@ -296,9 +296,9 @@ void cleardynentcache()
     if(!dynentframe) dynentframe = 1;
 };
 
-VARF(dynentsize, 64, 256, 1024, cleardynentcache());
+VARF(dynentsize, 6, 8, 12, cleardynentcache());
 
-#define DYNENTHASH(x, y) ((((x^y)<<8) + ((x^y)>>8)) & (DYNENTCACHESIZE - 1))
+#define DYNENTHASH(x, y) (((((x)^(y))<<5) + (((x)^(y))>>5)) & (DYNENTCACHESIZE - 1))
 
 const vector<physent *> &checkdynentcache(int x, int y)
 {
@@ -308,13 +308,13 @@ const vector<physent *> &checkdynentcache(int x, int y)
     dec.y = y;
     dec.frame = dynentframe;
     dec.dynents.setsize(0);
-    int numdyns = cl->numdynents(), dx = x*dynentsize, dy = y*dynentsize;
+    int numdyns = cl->numdynents(), dsize = 1<<dynentsize, dx = x<<dynentsize, dy = y<<dynentsize;
     loopi(numdyns)
     {
         dynent *d = cl->iterdynents(i);
         if(!d || d->state != CS_ALIVE || 
-           d->o.x+d->radius <= dx || d->o.x-d->radius >= dx+dynentsize ||
-           d->o.y+d->radius <= dy || d->o.y-d->radius >= dy+dynentsize)
+           d->o.x+d->radius <= dx || d->o.x-d->radius >= dx+dsize ||
+           d->o.y+d->radius <= dy || d->o.y-d->radius >= dy+dsize)
             continue;
         dec.dynents.add(d);
     };
@@ -323,8 +323,8 @@ const vector<physent *> &checkdynentcache(int x, int y)
 
 void updatedynentcache(physent *d)
 {
-    for(int x = int((d->o.x-d->radius)/dynentsize), ex = int((d->o.x+d->radius)/dynentsize); x <= ex; x++)
-    for(int y = int((d->o.y-d->radius)/dynentsize), ey = int((d->o.y+d->radius)/dynentsize); y <= ey; y++)
+    for(int x = int(max(d->o.x-d->radius, 0))>>dynentsize, ex = int(min(d->o.x+d->radius, hdr.worldsize-1))>>dynentsize; x <= ex; x++)
+    for(int y = int(max(d->o.y-d->radius, 0))>>dynentsize, ey = int(min(d->o.y+d->radius, hdr.worldsize-1))>>dynentsize; y <= ey; y++)
     {
         dynentcacheentry &dec = dynentcache[DYNENTHASH(x, y)];
         if(dec.x != x || dec.y != y || dec.frame != dynentframe || dec.dynents.findindex(d) >= 0) continue;
@@ -335,8 +335,8 @@ void updatedynentcache(physent *d)
 bool plcollide(physent *d, const vec &dir)    // collide with player or monster
 {
     if(d->state != CS_ALIVE) return true;
-    for(int x = int((d->o.x-d->radius)/dynentsize), ex = int((d->o.x+d->radius)/dynentsize); x <= ex; x++)
-    for(int y = int((d->o.y-d->radius)/dynentsize), ey = int((d->o.y+d->radius)/dynentsize); y <= ey; y++)
+    for(int x = int(max(d->o.x-d->radius, 0))>>dynentsize, ex = int(min(d->o.x+d->radius, hdr.worldsize-1))>>dynentsize; x <= ex; x++)
+    for(int y = int(max(d->o.y-d->radius, 0))>>dynentsize, ey = int(min(d->o.y+d->radius, hdr.worldsize-1))>>dynentsize; y <= ey; y++)
     {
         const vector<physent *> &dynents = checkdynentcache(x, y);
         loopv(dynents)

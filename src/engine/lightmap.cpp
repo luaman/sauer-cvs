@@ -403,22 +403,25 @@ void clear_lmids(cube *c)
     };
 };
 
-#define LCGRID 64
-#define LCMINSIZE 128
+#define LIGHTCACHESIZE 1024
 
 struct lightcacheentry
 {
-    bool filled;
+    int x, y;
     vector<int> lights;
-} lightcache[LCGRID*LCGRID];
+} lightcache[1024];
+
+#define LIGHTCACHEHASH(x, y) (((((x)^(y))<<5) + (((x)^(y))>>5)) & (LIGHTCACHESIZE - 1))
+
+VARF(lightcachesize, 6, 8, 12, clearlightcache());
 
 void clearlightcache(int e)
 {
     if(e < 0 || !et->getents()[e]->attr1)
     {
-        for(lightcacheentry *lce = lightcache; lce < &lightcache[LCGRID*LCGRID]; lce++)
+        for(lightcacheentry *lce = lightcache; lce < &lightcache[LIGHTCACHESIZE]; lce++)
         {
-            lce->filled = false;
+            lce->x = -1;
             lce->lights.setsize(0);
         };
     }
@@ -426,12 +429,12 @@ void clearlightcache(int e)
     {
         const entity &light = *et->getents()[e];
         int radius = light.attr1;
-        int size = max(hdr.worldsize / LCGRID, LCMINSIZE);
-        for(int x = max(int((light.o.x-radius)/size), 0), ex = min(int((light.o.x+radius)/size), LCGRID-1); x <= ex; x++)
-        for(int y = max(int((light.o.y-radius)/size), 0), ey = min(int((light.o.y+radius)/size), LCGRID-1); y <= ey; y++)
+        for(int x = int(max(light.o.x-radius, 0))>>lightcachesize, ex = int(min(light.o.x+radius, hdr.worldsize-1))>>lightcachesize; x <= ex; x++)
+        for(int y = int(max(light.o.y-radius, 0))>>lightcachesize, ey = int(min(light.o.y+radius, hdr.worldsize-1))>>lightcachesize; y <= ey; y++)
         {
-            lightcacheentry &lce = lightcache[x*LCGRID + y];
-            lce.filled = false;
+            lightcacheentry &lce = lightcache[LIGHTCACHEHASH(x, y)];
+            if(lce.x != x || lce.y != y) continue;
+            lce.x = -1;
             lce.lights.setsize(0);
         };
     };
@@ -439,28 +442,31 @@ void clearlightcache(int e)
 
 const vector<int> &checklightcache(int x, int y)
 {
-    int size = max(hdr.worldsize / LCGRID, LCMINSIZE);
-    lightcacheentry &lce = lightcache[x/size*LCGRID + y/size];
-    if(lce.filled) return lce.lights;
+    x >>= lightcachesize;
+    y >>= lightcachesize; 
+    lightcacheentry &lce = lightcache[LIGHTCACHEHASH(x, y)];
+    if(lce.x == x && lce.y == y) return lce.lights;
 
-    int cx = x & ~(size-1), cy = y & ~(size-1);
+    lce.lights.setsize(0);
+    int csize = 1<<lightcachesize, cx = x<<lightcachesize, cy = y<<lightcachesize;
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
     {
-        entity &light = *ents[i];
+        const extentity &light = *ents[i];
         if(light.type != ET_LIGHT) continue;
 
         int radius = light.attr1;
         if(radius > 0)
         {
-            if(light.o.x + radius < cx || light.o.x - radius > cx + size ||
-               light.o.y + radius < cy || light.o.y - radius > cy + size)
+            if(light.o.x + radius < cx || light.o.x - radius > cx + csize ||
+               light.o.y + radius < cy || light.o.y - radius > cy + csize)
                 continue;
         };
         lce.lights.add(i);
     };
 
-    lce.filled = true;
+    lce.x = x;
+    lce.y = y;
     return lce.lights;
 };
 
@@ -491,7 +497,7 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
     lights1.setsize(0);
     lights2.setsize(0);
     const vector<extentity *> &ents = et->getents();
-    if(size <= max(hdr.worldsize/LCGRID, LCMINSIZE))
+    if(size <= 1<<lightcachesize)
     {
         const vector<int> &lights = checklightcache(cx, cy);
         loopv(lights)
