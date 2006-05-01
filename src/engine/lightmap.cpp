@@ -403,7 +403,7 @@ void clear_lmids(cube *c)
     };
 };
 
-#define LCSIZE 32
+#define LCSIZE 64
 
 struct lightcacheentry
 {
