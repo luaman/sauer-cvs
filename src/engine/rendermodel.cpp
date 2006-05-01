@@ -135,7 +135,7 @@ model *loadmodel(const char *name, int i)
 
 void clear_mdls()
 {
-    enumerate((&mdllookup), model *, m, delete *m);
+    enumerate(mdllookup, model *, m, delete m);
 };
 
 bool modeloccluded(const vec &center, float radius)

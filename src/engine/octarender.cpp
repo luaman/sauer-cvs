@@ -584,10 +584,10 @@ struct lodcollect
         enumeratekt(indices, sortkey, k, sortval, t,
             lod.eslist[list].texture = k.tex;
             lod.eslist[list].lmid = k.lmid;
-            loopl(3) if(lod.eslist[list].length[l] = t->dims[l].length())
+            loopl(3) if(lod.eslist[list].length[l] = t.dims[l].length())
             {
-                memcpy(ebuf, t->dims[l].getbuf(), t->dims[l].length() * sizeof(ushort));
-                ebuf += t->dims[l].length();
+                memcpy(ebuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
+                ebuf += t.dims[l].length();
             };
             ++list;
         );

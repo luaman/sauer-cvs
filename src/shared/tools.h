@@ -230,6 +230,11 @@ inline bool htcmp(const char *x, const char *y)
 
 template <class K, class T> struct hashtable
 {
+    typedef K key;
+    typedef const K const_key;
+    typedef T value;
+    typedef const T const_value;
+
     enum { CHUNKSIZE = 16 };
 
     struct chain      { T data; K key;    chain      *next; };
@@ -332,8 +337,8 @@ template <class K, class T> struct hashtable
     };
 };
 
-#define enumeratekt(ht,k,e,t,f,b) loopi(ht.size)  for(hashtable<k,t>::chain *enumc = ht.table[i]; enumc;     enumc = enumc->next)         { const k &e = enumc->key; t *f = &enumc->data; b; }
-#define enumerate(ht,t,e,b)       loopi(ht->size) for(ht->enumc = ht->table[i];                   ht->enumc; ht->enumc = ht->enumc->next) { t *e = &ht->enumc->data; b; }
+#define enumeratekt(ht,k,e,t,f,b) loopi((ht).size)  for(hashtable<k,t>::chain *enumc = (ht).table[i]; enumc; enumc = enumc->next) { hashtable<k,t>::const_key &e = enumc->key; t &f = enumc->data; b; }
+#define enumerate(ht,t,e,b)       loopi((ht).size) for((ht).enumc = (ht).table[i]; (ht).enumc; (ht).enumc = (ht).enumc->next) { t &e = (ht).enumc->data; b; }
 
 inline char *newstring(const char *s, size_t l) { return s_strncpy(new char[l+1], s, l+1); };
 inline char *newstring(const char *s)           { return newstring(s, strlen(s));          };

@@ -193,7 +193,7 @@ void calcnormals()
 
 void clearnormals()
 {
-    enumerate((&normals), nval, val, delete val->normals);
+    enumerate(normals, nval, val, delete val.normals);
     normals.clear();
 };
 

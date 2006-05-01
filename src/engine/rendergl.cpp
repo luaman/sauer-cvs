@@ -263,7 +263,7 @@ Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg
 void cleangl()
 {
     if(qsphere) gluDeleteQuadric(qsphere);
-    enumerate((&textures), Texture, t, { delete[] textures.enumc->key; t; });
+    enumeratekt(textures, char *, k, Texture, t, { delete[] k; });
     textures.clear();
 };
 

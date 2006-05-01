@@ -16,7 +16,7 @@ identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
 void clear_command()
 {
-    enumerate(idents, ident, i, if(i->_type==ID_ALIAS) { DELETEA(i->_name); DELETEA(i->_action); });
+    enumerate(*idents, ident, i, if(i._type==ID_ALIAS) { DELETEA(i._name); DELETEA(i._action); });
     if(idents) idents->clear();
 };
 
@@ -318,8 +318,8 @@ struct filesval
     char *dir, *ext;
     vector<char *> files;
 
-    filesval(char *dir, char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {};
-    ~filesval() { DELETEA(dir); DELETEA(ext); };
+    filesval(const char *dir, const char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {};
+    ~filesval() { DELETEA(dir); DELETEA(ext); loopv(files) DELETEA(files[i]); files.setsize(0); };
 };
 
 static inline bool htcmp(const fileskey &x, const fileskey &y)
@@ -356,8 +356,9 @@ void addcomplete(char *command, char *dir, char *ext)
     filesval **val = completefiles.access(key);
     if(!val)
     {
-        val = &completefiles[key];
-        *val = new filesval(dir, ext);
+        filesval *f = new filesval(dir, ext);
+        val = &completefiles[fileskey(f->dir, f->ext)];
+        *val = f;
     };
     filesval **hasfiles = completions.access(command);
     if(hasfiles) *hasfiles = *val;
@@ -446,10 +447,10 @@ void complete(char *s)
     }
     else // complete using command names
     {
-        enumerate(idents, ident, id,
-            if(strncmp(id->_name, s+1, completesize)==0 &&
-               strcmp(id->_name, lastcomplete) > 0 && (!nextcomplete || strcmp(id->_name, nextcomplete) < 0))
-                nextcomplete = id->_name;
+        enumerate(*idents, ident, id,
+            if(strncmp(id._name, s+1, completesize)==0 &&
+               strcmp(id._name, lastcomplete) > 0 && (!nextcomplete || strcmp(id._name, nextcomplete) < 0))
+                nextcomplete = id._name;
         );
     };
     if(nextcomplete)
@@ -484,20 +485,23 @@ void writecfg()
     fprintf(f, "// automatically written on exit, do not modify\n// delete this file to have defaults.cfg overwrite these settings\n// modify settings in game, or put settings in autoexec.cfg to override anything\n\n");
     cc->writeclientinfo(f);
     fprintf(f, "\n");
-    enumerate(idents, ident, id,
-        if(id->_type==ID_VAR && id->_persist)
+    enumerate(*idents, ident, id,
+        if(id._type==ID_VAR && id._persist)
         {
-            fprintf(f, "%s %d\n", id->_name, *id->_storage);
+            fprintf(f, "%s %d\n", id._name, *id._storage);
         };
     );
     fprintf(f, "\n");
     writebinds(f);
     fprintf(f, "\n");
-    enumerate(idents, ident, id,
-        if(id->_type==ID_ALIAS && !strstr(id->_name, "nextmap_"))
+    enumerate(*idents, ident, id,
+        if(id._type==ID_ALIAS && !strstr(id._name, "nextmap_"))
         {
-            fprintf(f, "alias \"%s\" [%s]\n", id->_name, id->_action);
+            fprintf(f, "alias \"%s\" [%s]\n", id._name, id._action);
         };
+    );
+    enumeratekt(completions, char *, k, filesval *, v,
+        if(v) fprintf(f, "complete \"%s\" \"%s\" \"%s\"\n", k, v->dir, v->ext ? v->ext : "*");
     );
     fclose(f);
 };
