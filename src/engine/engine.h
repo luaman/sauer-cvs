@@ -116,7 +116,7 @@ extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, cons
 // octaedit
 extern void editdrag(bool on);
 extern void cancelsel();
-extern void render_texture_panel();
+extern void render_texture_panel(int w, int h);
 
 // octarender
 extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h);

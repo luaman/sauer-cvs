@@ -863,13 +863,16 @@ void editmat(char *name)
 
 COMMAND(editmat, ARG_1STR);
 
-void render_texture_panel()
+void render_texture_panel(int w, int h)
 {
     if((texpaneltimer -= curtime)>0 && editmode)
     {
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glLoadIdentity();  
+        int width = w*1800/h;
+        glOrtho(0, width, 1800, 0, -1, 1);
         int y = 50, gap = 10;
 
         loopi(7)
@@ -881,7 +884,7 @@ void render_texture_panel()
                 float sx = min(1, tex->xs/(float)tex->ys), sy = min(1, tex->ys/(float)tex->xs);
                 glBindTexture(GL_TEXTURE_2D, tex->gl);
                 glColor4f(0, 0, 0, texpaneltimer/1000.0f);
-                int x = (i == 3 ? 2070 : 2100), r = s;
+                int x = width-s-50, r = s;
                 loopj(2)
                 {
                     glBegin(GL_QUADS);

@@ -256,7 +256,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         };
         
         cl->gameplayhud(w, h);
-        render_texture_panel();
+        render_texture_panel(w, h);
     };
         
     glDisable(GL_BLEND);
