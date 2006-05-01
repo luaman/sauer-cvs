@@ -194,6 +194,12 @@ template <class T> struct vector
         buf[i] = e;
         return buf[i];
     };
+
+    int findindex(const T &e)
+    {
+        loopi(ulen) if(buf[i] == e) return i;
+        return -1;
+    };
 };
 
 typedef vector<char *> cvector;
