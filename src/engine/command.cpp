@@ -371,7 +371,7 @@ void buildfilenames(filesval *f)
 {
     int extsize = f->ext ? strlen(f->ext)+1 : 0;
     #if defined(WIN32)
-    s_printfd(pathname)("%s\\*.%s", f->dir, f->ext ? f->ext : "*");
+    s_sprintfd(pathname)("%s\\*.%s", f->dir, f->ext ? f->ext : "*");
     WIN32_FIND_DATA	FindFileData;
     HANDLE Find = FindFirstFile(path(pathname), &FindFileData);
     if(Find != INVALID_HANDLE_VALUE)
