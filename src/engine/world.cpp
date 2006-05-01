@@ -4,6 +4,7 @@
 #include "engine.h"
 
 header hdr;
+vector<ushort> texmru;
 
 VAR(octaentsize, 0, 128, 1024);
 
@@ -321,7 +322,7 @@ void split_world(cube *c, int size)
         split_world(c[i].children, size>>1);
     };
 };
-               
+
 void empty_world(int factor, bool force)    // main empty world creation routine, if passed factor -1 will enlarge old world by 1
 {
     if(!force && !editmode) return conoutf("newmap only allowed in edit mode");
@@ -347,7 +348,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
         hdr.mapllod = 0;
         hdr.lightmaps = 0;
         memset(hdr.reserved, 0, sizeof(hdr.reserved));
-        loopi(256) hdr.texlist[i] = i;
+        texmru.setsize(0);
         et->getents().setsize(0);
 		freeocta(worldroot);
         worldroot = newcubes(F_EMPTY);

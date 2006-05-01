@@ -612,10 +612,7 @@ void tofronttex()                                       // maintain most recentl
     int c = curtexindex;
     if(c>=0)
     {
-        uchar *p = hdr.texlist;
-        int t = p[c];
-        for(int a = c-1; a>=0; a--) p[a+1] = p[a];
-        p[0] = t;
+        texmru.insert(0, texmru.remove(c));
         curtexindex = -1;
     };
 };
@@ -658,23 +655,34 @@ void mpedittex(int tex, int allfaces, selinfo &sel, bool local)
     loopselxyz(edittexcube(c, tex, allfaces ? -1 : sel.orient, findrep));
 };
 
+void filltexlist()
+{
+    if(texmru.length()!=curtexnum)
+    {
+        loopv(texmru) if(texmru[i]>=curtexnum) texmru.remove(i--);
+        loopi(curtexnum) if(texmru.find(i)<0) texmru.add(i);
+    };
+};
+
 void edittex(int dir)
 {
     if(noedit()) return;
+    filltexlist();
     texpaneltimer = 5000;
     if(!(lastsel==sel)) tofronttex();
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
     curtexindex = i = min(max(i, 0), curtexnum-1);
-    int t = lasttex = hdr.texlist[i];
+    int t = lasttex = texmru[i];
     mpedittex(t, allfaces, sel, true);
 };
 
 void gettex()
 {
     if(noedit()) return;
+    filltexlist();
     loopxyz(sel, sel.grid, curtexindex = c.texture[sel.orient]);
-    loopi(curtexnum) if(hdr.texlist[i]==curtexindex)
+    loopi(curtexnum) if(texmru[i]==curtexindex)
     {
         curtexindex = i;
         tofronttex();
@@ -867,9 +875,9 @@ void render_texture_panel()
         loopi(7)
         {
             int s = (i == 3 ? 285 : 220), ti = curtexindex+i-3;
-            if(ti>=0 && ti<256)
+            if(ti>=0 && ti<curtexnum)
             {
-                Texture *tex = lookuptexture(hdr.texlist[ti]);
+                Texture *tex = lookuptexture(texmru[ti]);
                 float sx = min(1, tex->xs/(float)tex->ys), sy = min(1, tex->ys/(float)tex->xs);
                 glBindTexture(GL_TEXTURE_2D, tex->gl);
                 glColor4f(0, 0, 0, texpaneltimer/1000.0f);

@@ -181,6 +181,12 @@ template <class T> struct vector
         ulen--;
         return e;
     };
+
+    int find(const T &o)
+    {
+        loopi(ulen) if(buf[i]==o) return i;
+        return -1;
+    }
     
     void removeobj(const T &o)
     {

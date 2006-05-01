@@ -64,6 +64,7 @@ extern dynent *player;
 extern physent *camera1;                // special ent that acts as camera, same object as player1 in FPS mode
 
 extern header hdr;                      // current map header
+extern vector<ushort> texmru;
 extern vec worldpos;                    // current target of the crosshair in the world
 extern int xtraverts, xtravertsva;
 extern vector<vertex> verts;                   // the vertex array for all world rendering

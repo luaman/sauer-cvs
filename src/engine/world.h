@@ -26,7 +26,6 @@ struct header                   // map file format header
     uchar lerpangle, lerpsubdiv, lerpsubdivsize;
     int reserved[5];
     char maptitle[128];
-    uchar texlist[256];
 };
 
 enum                            // cube empty-space materials

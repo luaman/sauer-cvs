@@ -6,8 +6,6 @@
 bool hasVBO = false, hasOQ = false;
 int renderpath;
 
-void purgetextures();
-
 GLUquadricObj *qsphere = NULL;
 
 PFNGLGENBUFFERSARBPROC    glGenBuffers_    = NULL;
@@ -184,9 +182,6 @@ void gl_init(int w, int h)
     };
     if(!hasOQ) conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
 
-
-    purgetextures();
-
     if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
     gluQuadricDrawStyle(qsphere, GLU_FILL);
     gluQuadricOrientation(qsphere, GLU_OUTSIDE);
@@ -291,22 +286,17 @@ struct Slot
     Shader *shader;
 };
 
-Slot slots[256];
-
-void purgetextures()
-{
-    loopi(256) { slots[i].t = NULL; slots[i].name[0] = 0; };
-};
+vector<Slot> slots;
 
 int curtexnum = 0;
 
-void texturereset() { curtexnum = 0; };
+void texturereset() { curtexnum = 0; slots.setsize(0); };
 
 void texture(char *__dummy, char *name, char *rot)
 {
     int num = curtexnum++;    
-    if(num<0 || num>=256) return;
-    Slot &s = slots[num];
+    if(num<0 || num>=0x10000) return;
+    Slot &s = slots.add();
     s.t = NULL;
     s.rotation = atoi(rot);
     s.shader = curshader;
@@ -319,13 +309,14 @@ COMMAND(texture, ARG_3STR);
 
 Texture *lookuptexture(int slot)
 {
+    if(slot>=slots.length()) return crosshair;
     Slot &s = slots[slot];
     if(s.t) return s.t;
     s_sprintfd(name)("packages/%s", s.name);
     return s.t = textureload(name, s.rotation);
 };
 
-Shader *lookupshader(int slot) { return slots[slot].shader; };
+Shader *lookupshader(int slot) { return slot<slots.length() ? slots[slot].shader : defaultshader; };
 
 VARFP(gamma, 30, 100, 300,
 {

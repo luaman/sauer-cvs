@@ -35,6 +35,20 @@ void setnames(char *fname)
     path(bakname);
 };
 
+ushort readushort(gzFile f)
+{
+    ushort t;
+    gzread(f, &t, sizeof(ushort));
+    endianswap(&t, sizeof(ushort), 1);
+    return t;
+}
+
+void writeushort(gzFile f, ushort u)
+{
+    endianswap(&u, sizeof(ushort), 1);
+    gzwrite(f, &u, sizeof(ushort));
+}
+
 // save map as .cgz file. uses 2 layers of compression: first does simple run-length
 // encoding and leaves out data for certain kinds of cubes, then zlib removes the
 // last bits of redundancy. Both passes contribute greatly to the miniscule map sizes.
@@ -60,8 +74,7 @@ void savec(cube *c, gzFile f)
                 gzputc(f, OCTSAV_NORMAL);
                 gzwrite(f, c[i].edges, 12);
             };
-            gzwrite(f, c[i].texture, sizeof(c[i].texture));
-            //loopj(3) gzputc(f, 0); //gzwrite(f, c[i].colour, 3);
+            loopj(6) writeushort(f, c[i].texture[j]);
             // save surface info for lighting
             if(!c[i].surfaces)
             {
@@ -94,6 +107,8 @@ void savec(cube *c, gzFile f)
 
 cube *loadchildren(gzFile f);
 
+
+
 void loadc(gzFile f, cube &c)
 {
     bool haschildren = false;
@@ -111,8 +126,7 @@ void loadc(gzFile f, cube &c)
         default:
             fatal("garbage in map");
     };
-    ushort temptex;
-    loopi(6) c.texture[i] = hdr.version<14 ? gzgetc(f) : (gzread(f, &temptex, sizeof(ushort)), temptex);
+    loopi(6) c.texture[i] = hdr.version<14 ? gzgetc(f) : readushort(f);
     if(hdr.version < 7) loopi(3) gzgetc(f); //gzread(f, c.colour, 3);
     else
     {
@@ -162,6 +176,8 @@ void save_world(char *mname)
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
+    writeushort(f, texmru.length());
+    loopv(texmru) writeushort(f, texmru[i]);
     loopv(ents)
     {
         if(ents[i]->type!=ET_EMPTY)
@@ -230,6 +246,20 @@ void load_world(char *mname)        // still supports all map formats that have 
     setvar("lerpsubdivsize", hdr.lerpsubdivsize);
 
     show_out_of_renderloop_progress(0, "clearing world...");
+
+    texmru.setsize(0);
+    if(hdr.version<14)
+    {
+        uchar oldtl[256];
+        gzread(f, oldtl, sizeof(oldtl));
+        loopi(256) texmru.add(oldtl[i]);
+    }
+    else
+    {
+        ushort nummru = readushort(f);
+        loopi(nummru) texmru.add(readushort(f));
+    };
+
     freeocta(worldroot);
 
     show_out_of_renderloop_progress(0, "loading entities...");
