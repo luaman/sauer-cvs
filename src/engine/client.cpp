@@ -18,7 +18,7 @@ bool multiplayer(bool msg)
 void setrate(int rate)
 {
    if(!clienthost || connecting) return;
-   enet_host_bandwidth_limit (clienthost, rate, rate);
+   enet_host_bandwidth_limit(clienthost, rate, rate);
 };
 
 VARF(rate, 0, 0, 25000, setrate(rate));
@@ -47,7 +47,7 @@ void connects(char *servername)
     {
         addserver(servername);
         conoutf("attempting to connect to %s", servername);
-        if(enet_address_set_host(&address, servername) < 0)
+        if(!resolverwait(servername, &address))
         {
             conoutf("could not resolve server %s", servername);
             return;

@@ -302,8 +302,7 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
     if(ad.host==ENET_HOST_ANY)
     {
         printf("looking up %s...\n", hostname);
-        enet_address_set_host(&ad, hostname);
-        if(ad.host==ENET_HOST_ANY) return;
+        if(!resolverwait(hostname, &ad)) return;
     };
     if(mssock!=ENET_SOCKET_NULL) enet_socket_destroy(mssock);
     mssock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, NULL);
@@ -505,7 +504,7 @@ void initserver(bool dedicated)
     if(dedicated)
     {
         ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
-        if(*ip && enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
+        if(*ip && !resolverwait(ip, &address)) printf("WARNING: server ip not resolved");
         serverhost = enet_host_create(&address, MAXCLIENTS, 0, uprate);
         if(!serverhost) fatal("could not create server host\n");
         loopi(MAXCLIENTS) serverhost->peers[i].data = (void *)-1;

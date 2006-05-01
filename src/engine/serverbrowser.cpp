@@ -10,22 +10,25 @@
 struct resolverthread
 {
     SDL_Thread *thread;
-    char *query;
+    const char *query;
     int starttime;
 };
 
 struct resolverresult
 {
-    char *query;
+    const char *query;
     ENetAddress address;
 };
 
 vector<resolverthread> resolverthreads;
-vector<char *> resolverqueries;
+vector<const char *> resolverqueries;
 vector<resolverresult> resolverresults;
 SDL_mutex *resolvermutex;
-SDL_sem *resolversem;
-int resolverlimit = 1000;
+SDL_sem *querysem;
+SDL_cond *resultcond;
+
+#define RESOLVERTHREADS 1
+#define RESOLVERLIMIT 1000
 
 int resolverloop(void * data)
 {
@@ -33,9 +36,9 @@ int resolverloop(void * data)
     for(;;)
     {
 #ifdef __APPLE__
-		while (SDL_SemWaitTimeout(resolversem, 10) == SDL_MUTEX_TIMEDOUT) pthread_testcancel();		
+		while (SDL_SemWaitTimeout(querysem, 10) == SDL_MUTEX_TIMEDOUT) pthread_testcancel();		
 #else
-		SDL_SemWait(resolversem);
+		SDL_SemWait(querysem);
 #endif
 		SDL_LockMutex(resolvermutex);
         if(resolverqueries.empty())
@@ -55,23 +58,23 @@ int resolverloop(void * data)
         rt->query = NULL;
         rt->starttime = 0;
         SDL_UnlockMutex(resolvermutex);
+        SDL_CondBroadcast(resultcond);
     };
     return 0;
 };
 
-void resolverinit(int threads, int limit)
+void resolverinit()
 {
-    resolverlimit = limit;
-    resolversem = SDL_CreateSemaphore(0);
     resolvermutex = SDL_CreateMutex();
+    querysem = SDL_CreateSemaphore(0);
+    resultcond = SDL_CreateCond();
 
-    while(threads > 0)
+    loopi(RESOLVERTHREADS)
     {
         resolverthread &rt = resolverthreads.add();
         rt.query = NULL;
         rt.starttime = 0;
         rt.thread = SDL_CreateThread(resolverloop, &rt);
-        --threads;
     };
 };
 
@@ -91,7 +94,7 @@ void resolverclear()
     SDL_LockMutex(resolvermutex);
     resolverqueries.setsize(0);
     resolverresults.setsize(0);
-    while (SDL_SemTryWait(resolversem) == 0);
+    while(SDL_SemTryWait(querysem) == 0);
     loopv(resolverthreads)
     {
         resolverthread &rt = resolverthreads[i];
@@ -100,22 +103,24 @@ void resolverclear()
     SDL_UnlockMutex(resolvermutex);
 };
 
-void resolverquery(char *name)
+void resolverquery(const char *name)
 {
+    if(resolverthreads.empty()) resolverinit();
+
     SDL_LockMutex(resolvermutex);
     resolverqueries.add(name);
-    SDL_SemPost(resolversem);
+    SDL_SemPost(querysem);
     SDL_UnlockMutex(resolvermutex);
 };
 
-bool resolvercheck(char **name, ENetAddress *address)
+bool resolvercheck(const char **name, ENetAddress *address)
 {
     SDL_LockMutex(resolvermutex);
     if(!resolverresults.empty())
     {
         resolverresult &rr = resolverresults.pop();
         *name = rr.query;
-        *address = rr.address;
+        address->host = rr.address.host;
         SDL_UnlockMutex(resolvermutex);
         return true;
     };
@@ -124,7 +129,7 @@ bool resolvercheck(char **name, ENetAddress *address)
         resolverthread &rt = resolverthreads[i];
         if(rt.query)
         {
-            if(lastmillis - rt.starttime > resolverlimit)        
+            if(lastmillis - rt.starttime > RESOLVERLIMIT)        
             {
                 resolverstop(rt, true);
                 *name = rt.query;
@@ -135,6 +140,64 @@ bool resolvercheck(char **name, ENetAddress *address)
     };
     SDL_UnlockMutex(resolvermutex);
     return false;
+};
+
+static Uint32 resolverwait_timer(Uint32 interval, int *timeout)
+{
+    *timeout += interval;
+    SDL_CondBroadcast(resultcond);
+    return *timeout <= RESOLVERLIMIT ? interval : 0;
+};
+
+bool resolverwait(const char *name, ENetAddress *address)
+{
+    if(resolverthreads.empty()) resolverinit();
+
+#ifndef STANDALONE
+    s_sprintfd(text)("resolving %s... (esc to abort)", name);
+    show_out_of_renderloop_progress(0, text);
+#endif
+
+    SDL_LockMutex(resolvermutex);
+    resolverqueries.add(name);
+    SDL_SemPost(querysem);
+    int timeout = 0;
+    bool resolved = false;
+    SDL_TimerID timer = SDL_AddTimer(250, (SDL_NewTimerCallback)resolverwait_timer, &timeout);
+    for(;;) 
+    {
+        SDL_CondWait(resultcond, resolvermutex);
+        loopv(resolverresults) if(resolverresults[i].query == name) 
+        {
+            address->host = resolverresults[i].address.host;
+            resolverresults.remove(i);
+            resolved = true;
+            break;
+        };
+        if(resolved) break;
+    
+#ifndef STANDALONE
+        show_out_of_renderloop_progress(min(float(timeout)/RESOLVERLIMIT, 1), text);
+        SDL_Event event;
+        while(SDL_PollEvent(&event))
+        {
+            if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) timeout = RESOLVERLIMIT + 1;
+        };
+#endif
+
+        if(timeout > RESOLVERLIMIT) break;    
+    };
+    if(timer) SDL_RemoveTimer(timer);
+    if(!resolved && timeout > RESOLVERLIMIT)
+    {
+        loopv(resolverthreads)
+        {
+            resolverthread &rt = resolverthreads[i];
+            if(rt.query == name) { resolverstop(rt, true); break; };
+        };
+    };
+    SDL_UnlockMutex(resolvermutex);
+    return resolved;
 };
 
 struct serverinfo
@@ -187,7 +250,7 @@ void pingservers()
   
 void checkresolver()
 {
-    char *name = NULL;
+    const char *name = NULL;
     ENetAddress addr = { ENET_HOST_ANY, sv->serverinfoport() };
     while(resolvercheck(&name, &addr))
     {
@@ -269,11 +332,7 @@ void refreshservers()
 
 void servermenu()
 {
-    if(pingsock == ENET_SOCKET_NULL)
-    {
-        pingsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, NULL);
-        resolverinit(1, 1000);
-    };
+    if(pingsock == ENET_SOCKET_NULL) pingsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, NULL);
     resolverclear();
     loopv(servers) resolverquery(servers[i].name);
     refreshservers();

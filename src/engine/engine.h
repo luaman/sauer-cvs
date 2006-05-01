@@ -164,9 +164,12 @@ extern void initserver(bool dedicated);
 extern void cleanupserver();
 extern void serverslice(int seconds, unsigned int timeout);
 extern uchar *retrieveservers(uchar *buf, int buflen);
-extern void localclienttoserver(struct _ENetPacket *);
+extern void localclienttoserver(ENetPacket *);
 extern void localconnect();
 extern bool serveroption(char *opt);
+
+// serverbrowser
+extern bool resolverwait(const char *name, ENetAddress *address);
 
 // client
 extern void localdisconnect();
