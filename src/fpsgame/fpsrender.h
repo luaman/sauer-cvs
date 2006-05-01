@@ -35,9 +35,7 @@ struct fpsrender
         {
             renderclient(cl, d, isteam(cl.player1->team, d->team), "monster/ogro", 1.0f, M_NONE);
             s_strcpy(d->info, d->name);
-            if(d->state==CS_LAGGED) s_strcat(d->info, " (LAGGED)");
-            else if(d->state == CS_EDITING) s_strcat(d->info, " (EDITING)");
-            else if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); };
+            if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); };
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, 11, 1);
         };
         if(isthirdperson()) renderclient(cl, cl.player1, false, "monster/ogro", 1.0f, M_NONE);
