@@ -403,19 +403,20 @@ void clear_lmids(cube *c)
     };
 };
 
-#define LCSIZE 64
+#define LCGRID 64
+#define LCMINSIZE 128
 
 struct lightcacheentry
 {
     bool filled;
     vector<int> lights;
-} lightcache[LCSIZE*LCSIZE];
+} lightcache[LCGRID*LCGRID];
 
 void clearlightcache(int e)
 {
     if(e < 0 || !et->getents()[e]->attr1)
     {
-        for(lightcacheentry *lce = lightcache; lce < &lightcache[LCSIZE*LCSIZE]; lce++)
+        for(lightcacheentry *lce = lightcache; lce < &lightcache[LCGRID*LCGRID]; lce++)
         {
             lce->filled = false;
             lce->lights.setsize(0);
@@ -425,11 +426,11 @@ void clearlightcache(int e)
     {
         const entity &light = *et->getents()[e];
         int radius = light.attr1;
-        int size = hdr.worldsize / LCSIZE;
-        for(int x = max(int((light.o.x-radius)/size), 0), ex = min(int((light.o.x+radius)/size), LCSIZE-1); x <= ex; x++)
-        for(int y = max(int((light.o.y-radius)/size), 0), ey = min(int((light.o.y+radius)/size), LCSIZE-1); y <= ey; y++)
+        int size = max(hdr.worldsize / LCGRID, LCMINSIZE);
+        for(int x = max(int((light.o.x-radius)/size), 0), ex = min(int((light.o.x+radius)/size), LCGRID-1); x <= ex; x++)
+        for(int y = max(int((light.o.y-radius)/size), 0), ey = min(int((light.o.y+radius)/size), LCGRID-1); y <= ey; y++)
         {
-            lightcacheentry &lce = lightcache[x*LCSIZE + y];
+            lightcacheentry &lce = lightcache[x*LCGRID + y];
             lce.filled = false;
             lce.lights.setsize(0);
         };
@@ -438,8 +439,8 @@ void clearlightcache(int e)
 
 const vector<int> &checklightcache(int x, int y)
 {
-    int size = hdr.worldsize / LCSIZE;
-    lightcacheentry &lce = lightcache[x/size*LCSIZE + y/size];
+    int size = max(hdr.worldsize / LCGRID, LCMINSIZE);
+    lightcacheentry &lce = lightcache[x/size*LCGRID + y/size];
     if(lce.filled) return lce.lights;
 
     int cx = x & ~(size-1), cy = y & ~(size-1);
@@ -490,7 +491,7 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
     lights1.setsize(0);
     lights2.setsize(0);
     const vector<extentity *> &ents = et->getents();
-    if(size <= hdr.worldsize/LCSIZE)
+    if(size <= max(hdr.worldsize/LCGRID, LCMINSIZE))
     {
         const vector<int> &lights = checklightcache(cx, cy);
         loopv(lights)
