@@ -14,8 +14,6 @@ typedef hashtable<char *, ident> identtable;
 
 identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
-vector<char *> mapnames;          // contains all legal mapnames in packages/base/
-
 void clear_command()
 {
     enumerate(idents, ident, i, if(i->_type==ID_ALIAS) { DELETEA(i->_name); DELETEA(i->_action); });
@@ -307,37 +305,96 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
 
 // tab-completion of all idents and base maps
 
+struct fileskey
+{
+    const char *dir, *ext;
+
+    fileskey() {};
+    fileskey(const char *dir, const char *ext) : dir(dir), ext(ext) {};
+};
+
+struct filesval
+{
+    char *dir, *ext;
+    vector<char *> files;
+
+    filesval(char *dir, char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {};
+    ~filesval() { DELETEA(dir); DELETEA(ext); };
+};
+
+static inline bool htcmp(const fileskey &x, const fileskey &y)
+{
+    return !strcmp(x.dir, y.dir) && (x.ext == y.ext || (x.ext && y.ext && !strcmp(x.ext, y.ext)));
+};
+
+static inline uint hthash(const fileskey &k)
+{
+    return hthash(k.dir);
+};
+
+static hashtable<fileskey, filesval *> completefiles;
+static hashtable<char *, filesval *> completions;
+
 int completesize = 0;
 string lastcomplete;
 
 void resetcomplete() { completesize = 0; }
 
-int mapnamecmp(char **x, char **y)
+void addcomplete(char *command, char *dir, char *ext)
 {
-    return strcmp(*x, *y);
+    if(!dir[0])
+    {
+        filesval **hasfiles = completions.access(command);
+        if(hasfiles) *hasfiles = NULL;
+        return;
+    };
+    int dirlen = strlen(dir);
+    while(dirlen > 0 && (dir[dirlen-1] == '/' || dir[dirlen-1] == '\\'))
+        dir[--dirlen] = '\0';
+    if(strchr(ext, '*')) ext[0] = '\0';
+    fileskey key(dir, ext[0] ? ext : NULL);
+    filesval **val = completefiles.access(key);
+    if(!val)
+    {
+        val = &completefiles[key];
+        *val = new filesval(dir, ext);
+    };
+    filesval **hasfiles = completions.access(command);
+    if(hasfiles) *hasfiles = *val;
+    else completions[newstring(command)] = *val;
 };
 
-void buildmapnames()
+COMMANDN(complete, addcomplete, ARG_3STR);
+
+void buildfilenames(filesval *f)
 {
+    int extsize = f->ext ? strlen(f->ext)+1 : 0;
     #if defined(WIN32)
+    s_printfd(pathname)("%s\\*.%s", f->dir, f->ext ? f->ext : "*");
     WIN32_FIND_DATA	FindFileData;
-    HANDLE Find = FindFirstFile("packages\\base\\*.ogz", &FindFileData);
+    HANDLE Find = FindFirstFile(path(pathname), &FindFileData);
     if(Find != INVALID_HANDLE_VALUE)
     {
         do {
-            mapnames.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - 4));
+            f->files.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - extsize));
         } while(FindNextFile(Find, &FindFileData));
     }
     #elif defined(__GNUC__)
-    DIR *d = opendir("packages/base");;
-    struct dirent *dir;
-    int namelength;
+    string pathname;
+    s_strcpy(pathname, f->dir);
+    DIR *d = opendir(path(pathname));
     if(d)
     {
+        struct dirent *dir;
         while((dir = readdir(d)) != NULL)
         {
-            namelength = strlen(dir->d_name) - 4;
-            if(namelength > 0 && strncmp(dir->d_name+namelength, ".ogz", 4)==0)  mapnames.add(newstring(dir->d_name, namelength));
+            if(!f->ext) f->files.add(newstring(dir->d_name));
+            else
+            {
+                int namelength = strlen(dir->d_name) - extsize;
+                if(namelength > 0 && dir->d_name[namelength] == '.' && strncmp(dir->d_name+namelength+1, f->ext, extsize-1)==0)
+                    f->files.add(newstring(dir->d_name, namelength));
+            };
         };
         closedir(d);
     }
@@ -358,20 +415,36 @@ void complete(char *s)
     };
     if(!s[1]) return;
     if(!completesize) { completesize = (int)strlen(s)-1; lastcomplete[0] = '\0'; };
-    char *prefix = "/", 
-         *nextcomplete = NULL;
-    if(completesize >= 4 && strncmp(s,"/map ", 5)==0)           // complete a mapname in packages/base/ instead of a command
+
+    filesval *f = NULL;
+    if(completesize)
     {
-        prefix = "/map ";
-        if(mapnames.empty()) buildmapnames();
-        loopi(mapnames.length())
+        char *end = strchr(s, ' ');
+        if(end)
         {
-            if(strncmp(mapnames[i], s+5, completesize-4)==0 && 
-               strcmp(mapnames[i], lastcomplete) > 0 && (!nextcomplete || strcmp(mapnames[i], nextcomplete) < 0))
-                nextcomplete = mapnames[i];
+            string command;
+            s_strncpy(command, s+1, min(end-s, sizeof(command)));
+            filesval **hasfiles = completions.access(command);
+            if(hasfiles) f = *hasfiles;
+        };
+    };
+
+    char *nextcomplete = NULL;
+    string prefix;
+    s_strcpy(prefix, "/");
+    if(f) // complete using filenames
+    {
+        int commandsize = strchr(s, ' ')+1-s; 
+        s_strncpy(prefix, s, min(commandsize+1, sizeof(prefix)));
+        if(f->files.empty()) buildfilenames(f);
+        loopi(f->files.length())
+        {
+            if(strncmp(f->files[i], s+commandsize, completesize+1-commandsize)==0 && 
+               strcmp(f->files[i], lastcomplete) > 0 && (!nextcomplete || strcmp(f->files[i], nextcomplete) < 0))
+                nextcomplete = f->files[i];
         };
     }
-    else
+    else // complete using command names
     {
         enumerate(idents, ident, id,
             if(strncmp(id->_name, s+1, completesize)==0 &&

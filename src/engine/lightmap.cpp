@@ -123,11 +123,10 @@ void insert_lightmap(ushort &x, ushort &y, ushort &lmid)
     lmid = lightmaps.length() - 1 + LMID_RESERVED;
 };
 
-static inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
+static inline bool htcmp(const surfaceinfo *x, const surfaceinfo *y)
 {
     if(lm_w != y->w || lm_h != y->h) return false;
-    uchar *xdata = lm,
-          *ydata = lightmaps[y->lmid - LMID_RESERVED].data + 3*(y->x + y->y*LM_PACKW);
+    const uchar *xdata = lm, *ydata = lightmaps[y->lmid - LMID_RESERVED].data + 3*(y->x + y->y*LM_PACKW);
     loopi((int)lm_h)
     {
         loopj((int)lm_w)
@@ -139,10 +138,10 @@ static inline bool htcmp (surfaceinfo *x, surfaceinfo *y)
     return true;
 };
     
-static inline uint hthash (surfaceinfo *info)
+static inline uint hthash(const surfaceinfo *info)
 {
     uint hash = lm_w + (lm_h<<8);
-    uchar *color = lm;
+    const uchar *color = lm;
     loopi((int)(lm_w*lm_h))
     {
        hash ^= (color[0] + (color[1] << 8) + (color[2] << 16));
