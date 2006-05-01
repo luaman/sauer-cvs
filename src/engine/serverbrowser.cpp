@@ -153,10 +153,8 @@ bool resolverwait(const char *name, ENetAddress *address)
 {
     if(resolverthreads.empty()) resolverinit();
 
-#ifndef STANDALONE
     s_sprintfd(text)("resolving %s... (esc to abort)", name);
     show_out_of_renderloop_progress(0, text);
-#endif
 
     SDL_LockMutex(resolvermutex);
     resolverqueries.add(name);
@@ -176,14 +174,12 @@ bool resolverwait(const char *name, ENetAddress *address)
         };
         if(resolved) break;
     
-#ifndef STANDALONE
         show_out_of_renderloop_progress(min(float(timeout)/RESOLVERLIMIT, 1), text);
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
             if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) timeout = RESOLVERLIMIT + 1;
         };
-#endif
 
         if(timeout > RESOLVERLIMIT) break;    
     };

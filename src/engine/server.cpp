@@ -295,19 +295,36 @@ void sendpongs()        // reply all server info requests
     };
 };      
 
+#ifdef STANDALONE
+bool resolverwait(const char *name, ENetAddress *address)
+{
+    return enet_address_set_host(address, name) >= 0;
+};
+#endif
+
 ENetSocket mssock = ENET_SOCKET_NULL;
 
 void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *agent)
 {
+    if(mssock!=ENET_SOCKET_NULL)
+    {
+        enet_socket_destroy(mssock);
+        mssock = ENET_SOCKET_NULL;
+    };
     if(ad.host==ENET_HOST_ANY)
     {
         printf("looking up %s...\n", hostname);
         if(!resolverwait(hostname, &ad)) return;
     };
-    if(mssock!=ENET_SOCKET_NULL) enet_socket_destroy(mssock);
     mssock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, NULL);
     if(mssock==ENET_SOCKET_NULL) { printf("could not open socket\n"); return; };
-    if(enet_socket_connect(mssock, &ad)<0) { printf("could not connect\n"); return; };
+    if(enet_socket_connect(mssock, &ad)<0) 
+    { 
+        printf("could not connect\n"); 
+        enet_socket_destroy(mssock);
+        mssock = ENET_SOCKET_NULL;
+        return; 
+    };
     ENetBuffer buf;
     s_sprintfd(httpget)("GET %s HTTP/1.0\nHost: %s\nReferer: %s\nUser-Agent: %s\n\n", req, hostname, ref, agent);
     buf.data = httpget;
@@ -316,7 +333,7 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
     enet_socket_send(mssock, NULL, &buf, 1);
 };  
 
-void httpgetrecieve(ENetBuffer &buf)
+void httpgetreceive(ENetBuffer &buf)
 {
     if(mssock==ENET_SOCKET_NULL) return;
     unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
@@ -361,7 +378,7 @@ void updatemasterserver()
 void checkmasterreply()
 {
     bool busy = mssock!=ENET_SOCKET_NULL;
-    httpgetrecieve(masterb);
+    httpgetreceive(masterb);
     if(busy && mssock==ENET_SOCKET_NULL) printf("masterserver reply: %s\n", stripheader(masterrep));
 }; 
 
@@ -373,7 +390,7 @@ uchar *retrieveservers(uchar *buf, int buflen)
     buf[0] = 0;
     eb.data = buf;
     eb.dataLength = buflen-1;
-    while(mssock!=ENET_SOCKET_NULL) httpgetrecieve(eb);
+    while(mssock!=ENET_SOCKET_NULL) httpgetreceive(eb);
     return stripheader(buf);
 };
 
