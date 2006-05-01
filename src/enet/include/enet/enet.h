@@ -364,15 +364,14 @@ ENET_API void enet_time_set (enet_uint32);
 
 /** @defgroup socket ENet socket functions
     @{
-    @ingroup private
 */
-extern ENetSocket enet_socket_create (ENetSocketType, const ENetAddress *);
-extern ENetSocket enet_socket_accept (ENetSocket, ENetAddress *);
-extern int        enet_socket_connect (ENetSocket, const ENetAddress *);
-extern int        enet_socket_send (ENetSocket, const ENetAddress *, const ENetBuffer *, size_t);
-extern int        enet_socket_receive (ENetSocket, ENetAddress *, ENetBuffer *, size_t);
-extern int        enet_socket_wait (ENetSocket, enet_uint32 *, enet_uint32);
-extern void       enet_socket_destroy (ENetSocket);
+ENET_API ENetSocket enet_socket_create (ENetSocketType, const ENetAddress *);
+ENET_API ENetSocket enet_socket_accept (ENetSocket, ENetAddress *);
+ENET_API int        enet_socket_connect (ENetSocket, const ENetAddress *);
+ENET_API int        enet_socket_send (ENetSocket, const ENetAddress *, const ENetBuffer *, size_t);
+ENET_API int        enet_socket_receive (ENetSocket, ENetAddress *, ENetBuffer *, size_t);
+ENET_API int        enet_socket_wait (ENetSocket, enet_uint32 *, enet_uint32);
+ENET_API void       enet_socket_destroy (ENetSocket);
 
 /** @} */
 
