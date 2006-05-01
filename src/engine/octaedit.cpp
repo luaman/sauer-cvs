@@ -340,6 +340,7 @@ void freeblock(block3 *b)
 
 struct undoblock { int *g; block3 *b; };
 vector<undoblock> undos;                                // unlimited undo
+vector<undoblock> redos;
 VARP(undomegs, 0, 1, 10);                                // bounded by n megs
 
 void freeundo(undoblock u)
@@ -373,6 +374,7 @@ void pruneundos(int maxremain)                          // bound memory
         if(t>maxremain) freeundo(undos.remove(i)); else p = t;
     };
     //conoutf("undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
+    while(!redos.empty()) { freeundo(redos.pop()); };
 };
 
 void makeundo()                                         // stores state of selected cubes before editing
@@ -385,21 +387,26 @@ void makeundo()                                         // stores state of selec
     pruneundos(undomegs<<20);
 };
 
-void editundo()                                         // undoes last action
+void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
 {
     if(noedit() || multiplayer()) return;
-    if(undos.empty()) { conoutf("nothing more to undo"); return; };
-    undoblock u = undos.pop();
+    if(a.empty()) { conoutf("nothing more to %s", s); return; };
+    undoblock u = a.pop();
     sel.o = u.b->o;
     sel.s = u.b->s;
     sel.grid = u.b->grid;
     sel.orient = u.b->orient;
+    undoblock r = { selgridmap(), blockcopy(sel, -sel.grid)};
+    b.add(r);
     pasteundo(u);
     freeundo(u);
     changed(sel);
     reorient();
     forcenextundo();
 };
+
+void editundo() { swapundo(undos, redos, "undo"); };
+void editredo() { swapundo(redos, undos, "redo"); };
 
 block3 *copybuf=NULL;
 void copy()
@@ -424,6 +431,7 @@ void paste()
 COMMAND(copy, ARG_NONE);
 COMMAND(paste, ARG_NONE);
 COMMANDN(undo, editundo, ARG_NONE);
+COMMANDN(redo, editredo, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 
@@ -870,7 +878,7 @@ void render_texture_panel(int w, int h)
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glLoadIdentity();  
+        glLoadIdentity();
         int width = w*1800/h;
         glOrtho(0, width, 1800, 0, -1, 1);
         int y = 50, gap = 10;
