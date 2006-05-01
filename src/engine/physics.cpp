@@ -278,12 +278,79 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     return collideonly;
 };
 
-bool plcollide(physent *d, const vec &dir, physent *o)    // collide with player or monster
+#define DYNENTCACHESIZE 1024
+
+static uint dynentframe = 0;
+
+static struct dynentcacheentry
 {
-    if(d->state!=CS_ALIVE || o->state!=CS_ALIVE) return true;
-    if(rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight)) return true;
-    hitplayer = true;
-    return false;
+    int x, y;
+    uint frame;
+    vector<physent *> dynents;
+} dynentcache[DYNENTCACHESIZE];
+
+void cleardynentcache()
+{
+    dynentframe++;
+    if(!dynentframe || dynentframe == 1) loopi(DYNENTCACHESIZE) dynentcache[i].frame = 0;
+    if(!dynentframe) dynentframe = 1;
+};
+
+VARF(dynentsize, 64, 256, 1024, cleardynentcache());
+
+#define DYNENTHASH(x, y) ((((x^y)<<8) + ((x^y)>>8)) & (DYNENTCACHESIZE - 1))
+
+const vector<physent *> &checkdynentcache(int x, int y)
+{
+    dynentcacheentry &dec = dynentcache[DYNENTHASH(x, y)];
+    if(dec.x == x && dec.y == y && dec.frame == dynentframe) return dec.dynents;
+    dec.x = x;
+    dec.y = y;
+    dec.frame = dynentframe;
+    dec.dynents.setsize(0);
+    int numdyns = cl->numdynents(), dx = x*dynentsize, dy = y*dynentsize;
+    loopi(numdyns)
+    {
+        dynent *d = cl->iterdynents(i);
+        if(!d || d->state != CS_ALIVE || 
+           d->o.x+d->radius <= dx || d->o.x-d->radius >= dx+dynentsize ||
+           d->o.y+d->radius <= dy || d->o.y-d->radius >= dy+dynentsize)
+            continue;
+        dec.dynents.add(d);
+    };
+    return dec.dynents;
+};
+
+void updatedynentcache(physent *d)
+{
+    for(int x = int((d->o.x-d->radius)/dynentsize), ex = int((d->o.x+d->radius)/dynentsize); x <= ex; x++)
+    for(int y = int((d->o.y-d->radius)/dynentsize), ey = int((d->o.y+d->radius)/dynentsize); y <= ey; y++)
+    {
+        dynentcacheentry &dec = dynentcache[DYNENTHASH(x, y)];
+        if(dec.x != x || dec.y != y || dec.frame != dynentframe || dec.dynents.findindex(d) >= 0) continue;
+        dec.dynents.add(d);
+    };
+};
+
+bool plcollide(physent *d, const vec &dir)    // collide with player or monster
+{
+    if(d->state != CS_ALIVE) return true;
+    for(int x = int((d->o.x-d->radius)/dynentsize), ex = int((d->o.x+d->radius)/dynentsize); x <= ex; x++)
+    for(int y = int((d->o.y-d->radius)/dynentsize), ey = int((d->o.y+d->radius)/dynentsize); y <= ey; y++)
+    {
+        const vector<physent *> &dynents = checkdynentcache(x, y);
+        loopv(dynents)
+        {
+            physent *o = dynents[i]; 
+            if(d->o.reject(o->o, 20.0f) || o==d || (o==player && d->type==ENT_CAMERA)) continue;
+            if(!rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight))
+            {
+                hitplayer = true;
+                return false;
+            };
+        };
+    };
+    return true;
 };
 
 bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
@@ -382,16 +449,7 @@ bool collide(physent *d, const vec &dir, float cutoff)
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
     bs.add(2);  // guard space for rounding errors
     if(!octacollide(d, dir, cutoff, bo, bs, worldroot, ivec(0, 0, 0), hdr.worldsize>>1)) return false; // collide with world
-    // this loop can be a performance bottleneck with many monster on a slow cpu,
-    // should replace with a blockmap but seems mostly fast enough
-    int numdyns = cl->numdynents();
-    loopi(numdyns)
-    {
-        dynent *o = cl->iterdynents(i);
-        if(o && !d->o.reject(o->o, 20.0f) && o!=d && (o!=player || d->type!=ENT_CAMERA) && !plcollide(d, dir, o)) return false;
-    };
-
-    return true;
+    return plcollide(d, dir);
 };
 
 void slopegravity(float g, const vec &slope, vec &gvec)
@@ -771,6 +829,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     {
         physicsrepeat = 1;
     };
+    cleardynentcache();
 };
 
 void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool floating, int curtime)
@@ -895,6 +954,8 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
             cl->physicstrigger(pl, local, -1, 0);
         };
     };
+
+    updatedynentcache(pl);
 
     if(!pl->timeinair && pl->physstate >= PHYS_FLOOR && pl->vel.squaredlen() < 1e-4f && pl->gravity.iszero()) pl->moving = false;
 
