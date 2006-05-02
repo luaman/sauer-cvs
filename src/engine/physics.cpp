@@ -955,7 +955,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         };
     };
 
-    updatedynentcache(pl);
+    if(pl->state==CS_ALIVE) updatedynentcache(pl);
 
     if(!pl->timeinair && pl->physstate >= PHYS_FLOOR && pl->vel.squaredlen() < 1e-4f && pl->gravity.iszero()) pl->moving = false;
 

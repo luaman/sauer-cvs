@@ -126,6 +126,7 @@ extern void dropenttofloor(entity *e);
 extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
 extern bool intersect(physent *d, vec &from, vec &to);
 extern void updatephysstate(physent *d);
+extern void cleardynentcache();
 
 // sound
 extern void playsound(int n, vec *loc = 0);

@@ -262,6 +262,7 @@ struct monsterset
     void monsterclear(int gamemode)     // called after map start of when toggling edit mode to reset/spawn all monsters to initial state
     {
         loopv(monsters) delete monsters[i]; 
+        cleardynentcache();
         monsters.setsize(0);
         numkilled = 0;
         monstertotal = 0;

@@ -58,6 +58,7 @@ struct clientcom : iclientcom
         currentmaster = -1;
         spectator = false;
         loopv(cl.players) DELETEP(cl.players[i]);
+        cleardynentcache();
     };
 
     bool allowedittoggle()
@@ -358,6 +359,7 @@ struct clientcom : iclientcom
                 if(cn >= cl.players.length() || !(d = cl.players[cn])) break;
                 conoutf("player %s disconnected", d->name); 
                 DELETEP(cl.players[cn]);
+                cleardynentcache();
                 if(currentmaster==cn) currentmaster = -1;
                 break;
 
