@@ -89,7 +89,7 @@ void addmapmodel(char *rad, char *h, char *zoff, char *name, char *shadow)
 
 void mapmodelreset() { mapmodels.setsize(0); };
 
-mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i].info : *(mapmodelinfo *)0; };
+mapmodelinfo &getmminfo(int i) { return i>=0 && i<mapmodels.length() ? mapmodels[i].info : *(mapmodelinfo *)0; };
 
 COMMANDN(mapmodel, addmapmodel, ARG_5STR);
 COMMAND(mapmodelreset, ARG_NONE);
@@ -102,7 +102,7 @@ model *loadmodel(const char *name, int i)
 {
     if(!name)
     {
-        if(i>=mapmodels.length()) return NULL;
+        if(i<0 || i>=mapmodels.length()) return NULL;
         mapmodel &mm = mapmodels[i];
         if(mm.m) return mm.m;
         name = mm.info.name;
