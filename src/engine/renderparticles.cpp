@@ -136,6 +136,7 @@ void render_particles(int time)
                 glTranslatef(xoff, yoff, 50);
                 draw_text(t, 0, 0, pt.r, pt.g, pt.b, blend);
                 glPopMatrix();
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             };
 
             if((p->fade -= time)<0)

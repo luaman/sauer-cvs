@@ -3,6 +3,8 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
+- water at the edges never waves?
 - map up/download etc
 - water physics close to surface
 - add a spotlight (ask me)
@@ -13,7 +15,7 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
-- water at the edges never waves?
+- spec skin!
 - add "join team red / blue" menu after connecting to a capture mode game
 - fanatics crash on large list of textures?
 - report to ATI: float vs short issue

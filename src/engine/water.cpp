@@ -225,7 +225,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     {
          glEnable(GL_TEXTURE_2D);
          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-         uchar wcol[4] = { 128, 128, 128, 128 };
+         uchar wcol[4] = { 128, 128, 128, 192 };
          if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
          glColor4ubv(wcol);
          Texture *t = lookuptexture(DEFAULT_LIQUID);
