@@ -80,7 +80,9 @@ typedef enum
    /** packet will not be sequenced with other packets
      * not supported for reliable packets
      */
-   ENET_PACKET_FLAG_UNSEQUENCED = (1 << 1)
+   ENET_PACKET_FLAG_UNSEQUENCED = (1 << 1),
+   /** packet will not allocate data, and user must supply it instead */
+   ENET_PACKET_FLAG_NO_ALLOCATE = (1 << 2)
 } ENetPacketFlag;
 
 /**
