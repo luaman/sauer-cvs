@@ -426,7 +426,7 @@ struct md3model
 
             glBindTexture(GL_TEXTURE_2D, mesh.skin->gl);
             
-            if(hasVBO && anim==ANIM_STATIC && meshes[i].vbufGL) // vbo's for static stuff
+            if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
             {           
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
                 glEnableClientState(GL_VERTEX_ARRAY);

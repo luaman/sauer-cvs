@@ -372,7 +372,7 @@ struct md2 : model
             ai.speed = speed;
         };
         loopi(ai.range) if(!mverts[ai.frame+i]) scaleverts(ai.frame+i);
-        if(hasVBO && !vbufGL && anim==ANIM_STATIC) genvar();
+        if(hasVBO && !vbufGL && ai.frame==0 && ai.range==1) genvar();
         
         if(d)
         {
@@ -398,7 +398,7 @@ struct md2 : model
             glAlphaFunc(GL_GREATER, 0.9f);
         };
         
-        if(hasVBO && vbufGL && anim==ANIM_STATIC)
+        if(hasVBO && vbufGL && ai.frame==0 && ai.range==1)
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
             glEnableClientState(GL_VERTEX_ARRAY);
