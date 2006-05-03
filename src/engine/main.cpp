@@ -283,16 +283,13 @@ int main(int argc, char **argv)
     //SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     //#endif
 
-    if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|par)<0) fatal("Unable to initialize SDL");
+    if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_AUDIO|par)<0) fatal("Unable to initialize SDL");
 
     log("enet");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
 
     initserver(dedicated);  // never returns if dedicated
       
-    log("video: sdl");
-    if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0) fatal("Unable to initialize SDL Video");
-
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     screen = SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|SDL_RESIZABLE|fs);
