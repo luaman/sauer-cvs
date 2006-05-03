@@ -147,7 +147,7 @@ struct md3model
 
     void setanim(int num, int frame, int range, bool loop, int fps)
     {
-        if(!anims) anims = new vector<md3animinfo>[ANIM_STATIC+1];
+        if(!anims) anims = new vector<md3animinfo>[ANIM_MAPMODEL+1];
         md3animinfo &anim = anims[num].add();
         anim.frame = frame;
         anim.range = range;
@@ -203,7 +203,7 @@ struct md3model
             
             glGenBuffers_(1, &m.vbufGL);
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, m.vbufGL);
-            glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+            glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_MAPMODEL_DRAW_ARB);
         };
     };
     
@@ -388,7 +388,7 @@ struct md3model
             ai.speed = speed;
         };
 
-        if(hasVBO && !meshes[0].vbufGL && anim==ANIM_STATIC) genvar();
+        if(hasVBO && !meshes[0].vbufGL && anim==ANIM_MAPMODEL) genvar();
         
         bool isdynent = lastanimswitchtime && previous && current;
         

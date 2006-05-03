@@ -289,7 +289,7 @@ struct md2 : model
         
         glGenBuffers_(1, &vbufGL);
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
-        glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+        glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_MAPMODEL_DRAW_ARB);
     };
 
     SphereTree *setspheretree()
@@ -344,7 +344,7 @@ struct md2 : model
         static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 7,  6, 0, };
         static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  18, 1, 1, };
         static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14, 15 };
-        assert(anim<=ANIM_STATIC);
+        assert(anim<=ANIM_MAPMODEL);
         animstate ai;
         ai.basetime = basetime;
         if(anims)
@@ -522,7 +522,7 @@ struct md2 : model
 
     void setanim(int num, int frame, int range, float speed)
     {
-        if(!anims) anims = new vector<md2_anim>[ANIM_STATIC+1];
+        if(!anims) anims = new vector<md2_anim>[ANIM_MAPMODEL+1];
         md2_anim &anim = anims[num].add();
         anim.frame = frame;
         anim.range = range;
