@@ -25,6 +25,7 @@ aard (e = eihrul (or gilt) could do it):
 - allow specifying more textures per slot
 - new SP respawn system
 - play sessions
+- integrate fmodex (to get both panning and stereo ogg on windows?)
 - rpg design doc
 - spec maps
 - doors that work nicely with OC?

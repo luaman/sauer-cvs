@@ -206,9 +206,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     defaultshader->set();
 
     glLoadIdentity();
-    glOrtho(0, w*4, h*4, 0, -1, 1);
+    glOrtho(0, w*3, h*3, 0, -1, 1);
 
-    int abovegameplayhud = h*4*1650/1800-FONTH*3/2; // hack
+    int abovegameplayhud = h*3*1650/1800-FONTH*3/2; // hack
 
     char *command = getcurcommand();
     //char *playername = cl->gamepointat(worldpos);
@@ -235,17 +235,17 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             };
             */
             float chsize = (float)crosshairsize*w/600;
-            glTexCoord2d(0.0, 0.0); glVertex2f(w*2 - chsize, h*2 - chsize);
-            glTexCoord2d(1.0, 0.0); glVertex2f(w*2 + chsize, h*2 - chsize);
-            glTexCoord2d(1.0, 1.0); glVertex2f(w*2 + chsize, h*2 + chsize);
-            glTexCoord2d(0.0, 1.0); glVertex2f(w*2 - chsize, h*2 + chsize);
+            glTexCoord2d(0.0, 0.0); glVertex2f(w*1.5f - chsize, h*1.5f - chsize);
+            glTexCoord2d(1.0, 0.0); glVertex2f(w*1.5f + chsize, h*1.5f - chsize);
+            glTexCoord2d(1.0, 1.0); glVertex2f(w*1.5f + chsize, h*1.5f + chsize);
+            glTexCoord2d(0.0, 1.0); glVertex2f(w*1.5f - chsize, h*1.5f + chsize);
             glEnd();
         };
     
         renderconsole(w, h);
         if(!hidestats)
         {
-            draw_textf("fps %d", w*4-5*FONTH, h*4-100, curfps);
+            draw_textf("fps %d", w*3-5*FONTH, h*3-100, curfps);
 
             if(editmode)
             {

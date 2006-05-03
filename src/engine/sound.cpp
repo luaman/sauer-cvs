@@ -21,9 +21,10 @@ struct soundloc { vec loc; bool inuse; int sound; } soundlocs[MAXCHAN];
     void *stream = NULL;    // TODO
 #else
     #include "fmod.h"
-    #define MAXVOL 255
     FMUSIC_MODULE *mod = NULL;
     FSOUND_STREAM *stream = NULL;
+
+    #define MAXVOL 255
     int musicchan;
 #endif
 

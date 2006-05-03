@@ -73,9 +73,9 @@ void renderconsole(int w, int h)                   // render buffer taking into 
 {
     if(fullconsole)
     {
-        int numl = h*4/3/FONTH;
+        int numl = h*3/3/FONTH;
         int offset = min(conskip, max(conlines.length() - numl, 0));
-        blendbox(0, 0, w*4, (numl+1)*FONTH, true);
+        blendbox(0, 0, w*3, (numl+1)*FONTH, true);
         loopi(numl) draw_text(offset+i>=conlines.length() ? "" : conlines[offset+i].cref, FONTH/2, FONTH*(numl-i-1)+FONTH/2); 
     }
     else     

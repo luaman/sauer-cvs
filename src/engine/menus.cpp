@@ -87,7 +87,9 @@ void drawarrow(int dir, int x, int y, int size, float r = 1.0f, float g = 1.0f, 
 
 bool rendermenu(int scr_w, int scr_h)
 {
+
     if(vmenu<0) { menustack.setsize(0); return false; };
+
     if(vmenu==1) refreshservers();
     gmenu &m = menus[vmenu];
     s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
@@ -106,28 +108,29 @@ bool rendermenu(int scr_w, int scr_h)
     };
     int tw = text_width(title);
     if(tw>w) w = tw;
-    int step = FONTH/4*5;
+    int step = FONTH;
     int h = (mdisp+2)*step;
-    int y = (scr_h*4-h)/2;
-    int x = (scr_w*4-w)/2;
-    blendbox(x-FONTH/2*3, y-FONTH, x+w+FONTH/2*3, y+h+FONTH, true);
+    int y = (scr_h*3-h)/2;
+    int x = (scr_w*3-w)/2;
+    blendbox(x-FONTH, y-FONTH/2, x+w+FONTH, y+h+FONTH/2, true);
     draw_text(title, x, y);
     if(vmenu)
     {
-        if(offset>0) drawarrow(1, x+w+FONTH/2*3-FONTH*5/6, y-FONTH*5/6, FONTH*2/3);
-        if(offset+MAXMENU<m.items.length()) drawarrow(0, x+w+FONTH/2*3-FONTH*5/6, y+h+FONTH/6, FONTH*2/3);
+        if(offset>0)                        drawarrow(1, x+w+FONTH-FONTH*5/6, y-FONTH/3, FONTH*2/3);
+        if(offset+MAXMENU<m.items.length()) drawarrow(0, x+w+FONTH-FONTH*5/6, y+h-FONTH/2, FONTH*2/3);
     };
     y += FONTH*2;
     if(vmenu)
     {
         int bh = y+(m.menusel%MAXMENU)*step;
-        blendbox(x-FONTH, bh-10, x+w+FONTH, bh+FONTH+10, false);
+        blendbox(x-FONTH/2, bh-4, x+w+FONTH/2, bh+FONTH+4, false);
     };
     loopj(cdisp)
     {
         draw_text(m.items[offset+j].text, x, y);
         y += step;
     };
+
     return true;
 };
 

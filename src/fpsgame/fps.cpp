@@ -494,9 +494,9 @@ struct fpsclient : igameclient
             draw_text("SPECTATOR", 10, 827);
             return;
         };
-        draw_textf("%d",  90, 827, player1->health);
-        if(player1->armour) draw_textf("%d", 390, 827, player1->armour);
-        draw_textf("%d", 690, 827, player1->ammo[player1->gunselect]);
+        draw_textf("%d",  90, 822, player1->health);
+        if(player1->armour) draw_textf("%d", 390, 822, player1->armour);
+        draw_textf("%d", 690, 822, player1->ammo[player1->gunselect]);
 
         glLoadIdentity();    
         glOrtho(0, w*1800/h, 1800, 0, -1, 1);

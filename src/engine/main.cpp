@@ -85,7 +85,7 @@ void computescreen(char *text)
         glLoadIdentity();
         glMatrixMode(GL_PROJECTION);    
         glLoadIdentity();
-        glOrtho(0, scr_w*4, scr_h*4, 0, -1, 1);
+        glOrtho(0, scr_w*3, scr_h*3, 0, -1, 1);
         glClearColor(0.15f, 0.15f, 0.15f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
@@ -128,7 +128,7 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
     glMatrixMode(GL_PROJECTION);    
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, scr_w*4, scr_h*4, 0, -1, 1);
+    glOrtho(0, scr_w*3, scr_h*3, 0, -1, 1);
     notextureshader->set();
 
     glBegin(GL_QUADS);
