@@ -29,6 +29,9 @@ bool editmode = false;
 bool havesel = false;
 bool dragging = false;
 
+selinfo hsel;   // heightmap stuff
+int *hmap = NULL;
+
 void forcenextundo() { lastsel.orient = -1; };
 void cancelsel()     { havesel = false; forcenextundo(); };
 
@@ -250,6 +253,11 @@ void cursorupdate()
         glColor3ub(0,0,40);     // 3D selection box
         loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
     };
+    if(hmap != NULL)
+    {
+        glColor3ub(0,200,0);   // heightmap outline
+        loopi(6) { d=dimension(i); boxs(d, hsel.o[R[d]], hsel.o[C[d]], hsel.s[R[d]]*hsel.grid, hsel.s[C[d]]*hsel.grid, hsel.o[d]+dimcoord(i)*hsel.s[D[d]]*hsel.grid); };
+    };
     glDisable(GL_BLEND);
 };
 
@@ -432,6 +440,137 @@ COMMAND(copy, ARG_NONE);
 COMMAND(paste, ARG_NONE);
 COMMANDN(undo, editundo, ARG_NONE);
 COMMANDN(redo, editredo, ARG_NONE);
+
+///////////// height maps ////////////////
+
+void clearheightmap()
+{
+    if(hmap != NULL) delete[] hmap;
+    hmap = NULL;
+};
+
+void getheightmap()
+{
+    hsel = sel;
+    int d = dimension(hsel.orient);
+    int dc = dimcoord(hsel.orient);
+    int w = hsel.s[R[d]] + 1;
+    int l = hsel.s[C[d]] + 1;
+    int h = hsel.s[D[d]];
+
+    clearheightmap();
+    hmap = new int[w*l];
+    loop(x, w) loop(y, l)
+        hmap[x+y*w] = 0;
+
+    loopselxyz(         // simply take the heighest points
+        if(c.children) { solidfaces(c); discardchildren(c); };
+        if(isempty(c)) continue;
+        loopi(2) loopj(2)
+            hmap[x+i+(y+j)*w] = max((h-z)*8 + edgeget(cubeedge(c, d, i, j), dc), hmap[x+i+(y+j)*w]);
+    );
+};
+
+void setheightmap()
+{
+    if(hmap == NULL) return;
+    selinfo t = sel;
+    sel = hsel;
+    int d = dimension(hsel.orient);
+    int dc = dimcoord(hsel.orient);
+    int w = hsel.s[R[d]] + 1;
+    int h = hsel.s[D[d]];
+
+    loopselxyz(
+        if(c.children) { discardchildren(c); };
+
+        solidfaces(c);
+        loopi(2) loopj(2)
+            edgeset(cubeedge(c, d, i, j), dc, max(0, min(8, hmap[x+i+(y+j)*w] - (h-z)*8)));
+
+        optiface((uchar *)&c.faces[d], c);
+    );
+    sel = t;
+};
+
+void cubifyheightmap()     // pull up heighfields to where they don't cross cube boundaries
+{
+    if(hmap == NULL) return;
+    int d = dimension(hsel.orient);
+    int w = hsel.s[R[d]] + 1;
+    int l = hsel.s[C[d]] + 1;
+    for(;;)
+    {
+        bool changed = false;
+        loop(x, w-1)
+        {
+            loop(y, l-1)
+            {
+                int *o[4];
+                loopi(2) loopj(2) o[i+j*2] = hmap+x+i+(y+j)*w;
+                int best = 0xFFFF;
+                loopi(4) if(*o[i]<best) best = *o[i];
+                int bottom = (best&(~7))+8;
+                loopj(4) if(*o[j]>bottom) { *o[j] = bottom; changed = true; };
+            };
+        };
+        if(!changed) break;
+    };
+};
+
+void fullgetheightmap()
+{
+    int d = dimension(sel.orient);
+    sel.s[D[d]] = hdr.worldsize / sel.grid;
+    sel.o[D[d]] = 0;
+    getheightmap();
+    cubifyheightmap();
+    setheightmap();
+    cancelsel();
+};
+
+void printheightmap()
+{
+    if(hmap == NULL) return;
+    int d = dimension(hsel.orient);
+    int w = hsel.s[R[d]] + 1;
+    conoutf("Heightmap");
+    loop(y, hsel.s[C[d]] + 1)
+    {
+        loop(x, w)
+            printf("%d\t", hmap[x+y*w]);
+        printf("\n");
+    };
+};
+
+void edithmap(int dir)
+{
+    if(hmap == NULL) return;
+    if(sel.orient != hsel.orient || sel.grid != hsel.grid) return;
+    int d = dimension(sel.orient);
+
+    int w = hsel.s[R[d]] + 1;
+    int x = (sel.o[R[d]] - hsel.o[R[d]]) / sel.grid + 1 - (sel.corner&1 ? 0 : 1);
+    int y = (sel.o[C[d]] - hsel.o[C[d]]) / sel.grid + 1 - (sel.corner&2 ? 0 : 1);
+
+    if(x<0 || y<0 || x>hsel.s[R[d]] || y>hsel.s[C[d]]) return;
+
+    hmap[x+y*w] -= dir;
+
+    hmap[x+y*w] = max(0, min(hmap[x+y*w], 8+8*hsel.s[D[d]]));
+
+    cubifyheightmap();
+    setheightmap();
+};
+
+COMMAND(edithmap, ARG_1INT);
+
+COMMAND(getheightmap, ARG_NONE);
+COMMAND(setheightmap, ARG_NONE);
+COMMAND(clearheightmap, ARG_NONE);
+COMMAND(printheightmap, ARG_NONE);
+COMMAND(fullgetheightmap, ARG_NONE);
+COMMAND(cubifyheightmap, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 
