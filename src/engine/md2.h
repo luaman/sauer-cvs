@@ -289,7 +289,7 @@ struct md2 : model
         
         glGenBuffers_(1, &vbufGL);
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
-        glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_MAPMODEL_DRAW_ARB);
+        glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
     };
 
     SphereTree *setspheretree()
