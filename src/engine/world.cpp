@@ -102,22 +102,23 @@ static void removeoctaentity(int id)
     modifyoctaentity(false, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
 };
 
-void entitiesinoctanodes()
-{
-    loopv(et->getents()) addoctaentity(i);
-};
-
 static void removeentity(int i, extentity &e)
 {
     removeoctaentity(i);
     if(e.type == ET_LIGHT) clearlightcache(i);
 };
-
+    
 static void addentity(int i, extentity &e)
-{
+{   
     addoctaentity(i);
     if(e.type == ET_LIGHT) clearlightcache(i);
     else lightent(e);
+};
+
+void entitiesinoctanodes()
+{
+    vector<extentity *> &ents = et->getents();
+    loopv(ents) addentity(i, *ents[i]);
 };
 
 int closestent()        // used for delent and edit mode ent display
