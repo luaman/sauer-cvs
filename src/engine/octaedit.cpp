@@ -543,32 +543,90 @@ void printheightmap()
     };
 };
 
+const int MAXBRUSH = 51;
+const int BCENTER = 25;
+int brush[MAXBRUSH][MAXBRUSH];
+
+void selectbrush(int b)
+{
+    loopi(MAXBRUSH) loopj(MAXBRUSH)
+        brush[i][j] = 0;
+
+    switch (b)
+    {
+    case 0: break;
+    case 1: brush[BCENTER][BCENTER] = 1; break;
+    case 2: brush[BCENTER][BCENTER] = 2;
+            brush[BCENTER][BCENTER+1] = 1;
+            brush[BCENTER][BCENTER-1] = 1;
+            brush[BCENTER+1][BCENTER] = 1;
+            brush[BCENTER-1][BCENTER] = 1; break;
+    case 3: brush[BCENTER][BCENTER] = 4;
+            brush[BCENTER][BCENTER+1] = 2;
+            brush[BCENTER][BCENTER-1] = 2;
+            brush[BCENTER+1][BCENTER] = 2;
+            brush[BCENTER-1][BCENTER] = 2;
+            brush[BCENTER][BCENTER+2] = 1;
+            brush[BCENTER][BCENTER-2] = 1;
+            brush[BCENTER+2][BCENTER] = 1;
+            brush[BCENTER-2][BCENTER] = 1;
+            brush[BCENTER+1][BCENTER+1] = 1;
+            brush[BCENTER+1][BCENTER-1] = 1;
+            brush[BCENTER-1][BCENTER+1] = 1;
+            brush[BCENTER-1][BCENTER-1] = 1; break;
+    };
+};
+
 void edithmap(int dir)
 {
     if(hmap == NULL) return;
     if(sel.orient != hsel.orient || sel.grid != hsel.grid) return;
-    int d = dimension(sel.orient);
 
+    int d = dimension(sel.orient);
     int w = hsel.s[R[d]] + 1;
-    int x = (sel.o[R[d]] - hsel.o[R[d]]) / sel.grid + 1 - (sel.corner&1 ? 0 : 1);
-    int y = (sel.o[C[d]] - hsel.o[C[d]]) / sel.grid + 1 - (sel.corner&2 ? 0 : 1);
+    int x = (sel.o[R[d]] - hsel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0);
+    int y = (sel.o[C[d]] - hsel.o[C[d]]) / sel.grid + (sel.corner&2 ? 1 : 0);
 
     if(x<0 || y<0 || x>hsel.s[R[d]] || y>hsel.s[C[d]]) return;
 
-    hmap[x+y*w] -= dir;
+    int a = min(BCENTER, w - x);
+    int b = min(BCENTER, hsel.s[C[d]]+1 - y);
+    int m = x>BCENTER ? 0 : BCENTER - x;
+    int n = y>BCENTER ? 0 : BCENTER - y;
+    int o = x>BCENTER ? BCENTER : x;
+    int p = y>BCENTER ? BCENTER : y;
 
-    hmap[x+y*w] = max(0, min(hmap[x+y*w], 8+8*hsel.s[D[d]]));
+    loopi(a+o) loopj(b+p)
+    {
+        int index = x+i-o+(y+j-p)*w;
+        hmap[index] -= brush[i+m][j+n]*dir;
+        hmap[index] = max(0, min(hmap[index], 8+8*hsel.s[D[d]]));
+    };
 
     cubifyheightmap();
     setheightmap();
 };
 
+void printbrush()
+{
+    if(hmap == NULL) return;
+    conoutf("Brush");
+    loop(y, MAXBRUSH)
+    {
+        loop(x, MAXBRUSH)
+            printf("%d\t", brush[x][y]);
+        printf("\n");
+    };
+};
+
+COMMAND(selectbrush, ARG_1INT);
 COMMAND(edithmap, ARG_1INT);
 
 COMMAND(getheightmap, ARG_NONE);
 COMMAND(setheightmap, ARG_NONE);
 COMMAND(clearheightmap, ARG_NONE);
 COMMAND(printheightmap, ARG_NONE);
+COMMAND(printbrush, ARG_NONE);
 COMMAND(fullgetheightmap, ARG_NONE);
 COMMAND(cubifyheightmap, ARG_NONE);
 
