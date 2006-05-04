@@ -1193,7 +1193,7 @@ void resetqueries()
 };
 
 VAR(oqfrags, 0, 8, 64);
-VAR(oqdist, 0, 128, 1024);
+VAR(oqdist, 0, 256, 1024);
 
 bool checkquery(occludequery *query)
 {
