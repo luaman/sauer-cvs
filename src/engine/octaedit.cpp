@@ -504,11 +504,12 @@ void getheightmap()
     int w = hsel.s[R[d]] + 1;
     int l = hsel.s[C[d]] + 1;
     int h = hsel.s[D[d]] + hsel.o[D[d]]/hsel.grid;
+    int lo = 8 * hsel.o[D[d]] / hsel.grid;
 
     clearheightmap();
     hmap = new int[w*l];
     loop(x, w) loop(y, l)
-        hmap[x+y*w] = 0;
+        hmap[x+y*w] = lo;
 
     loopselxyz(         // simply take the heighest points
         if(c.children) { solidfaces(c); discardchildren(c); };
