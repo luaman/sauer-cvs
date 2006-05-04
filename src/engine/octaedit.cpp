@@ -449,28 +449,6 @@ void clearheightmap()
     hmap = NULL;
 };
 
-void getheightmap()
-{
-    hsel = sel;
-    int d = dimension(hsel.orient);
-    int dc = dimcoord(hsel.orient);
-    int w = hsel.s[R[d]] + 1;
-    int l = hsel.s[C[d]] + 1;
-    int h = hsel.s[D[d]];
-
-    clearheightmap();
-    hmap = new int[w*l];
-    loop(x, w) loop(y, l)
-        hmap[x+y*w] = 0;
-
-    loopselxyz(         // simply take the heighest points
-        if(c.children) { solidfaces(c); discardchildren(c); };
-        if(isempty(c)) continue;
-        loopi(2) loopj(2)
-            hmap[x+i+(y+j)*w] = max((h-z)*8 + edgeget(cubeedge(c, d, i, j), dc), hmap[x+i+(y+j)*w]);
-    );
-};
-
 void setheightmap()
 {
     if(hmap == NULL) return;
@@ -479,14 +457,14 @@ void setheightmap()
     int d = dimension(hsel.orient);
     int dc = dimcoord(hsel.orient);
     int w = hsel.s[R[d]] + 1;
-    int h = hsel.s[D[d]];
+    int h = hsel.s[D[d]] + hsel.o[D[d]]/hsel.grid;
 
     loopselxyz(
         if(c.children) { discardchildren(c); };
 
         solidfaces(c);
         loopi(2) loopj(2)
-            edgeset(cubeedge(c, d, i, j), dc, max(0, min(8, hmap[x+i+(y+j)*w] - (h-z)*8)));
+            edgeset(cubeedge(c, d, i, j), dc, max(0, min(8, hmap[x+i+(y+j)*w] - (h-z-1)*8)));
 
         optiface((uchar *)&c.faces[d], c);
     );
@@ -518,12 +496,27 @@ void cubifyheightmap()     // pull up heighfields to where they don't cross cube
     };
 };
 
-void fullgetheightmap()
+void getheightmap()
 {
-    int d = dimension(sel.orient);
-    sel.s[D[d]] = hdr.worldsize / sel.grid;
-    sel.o[D[d]] = 0;
-    getheightmap();
+    hsel = sel;
+    int d = dimension(hsel.orient);
+    int dc = dimcoord(hsel.orient);
+    int w = hsel.s[R[d]] + 1;
+    int l = hsel.s[C[d]] + 1;
+    int h = hsel.s[D[d]] + hsel.o[D[d]]/hsel.grid;
+
+    clearheightmap();
+    hmap = new int[w*l];
+    loop(x, w) loop(y, l)
+        hmap[x+y*w] = 0;
+
+    loopselxyz(         // simply take the heighest points
+        if(c.children) { solidfaces(c); discardchildren(c); };
+        if(isempty(c)) continue;
+        loopi(2) loopj(2)
+            hmap[x+i+(y+j)*w] = max((h-z-1)*8 + edgeget(cubeedge(c, d, i, j), dc), hmap[x+i+(y+j)*w]);
+    );
+
     cubifyheightmap();
     setheightmap();
     cancelsel();
@@ -595,12 +588,17 @@ void edithmap(int dir)
     int n = y>BCENTER ? 0 : BCENTER - y;
     int o = x>BCENTER ? BCENTER : x;
     int p = y>BCENTER ? BCENTER : y;
+    int lo = 8 * hsel.o[D[d]] / sel.grid;
+    int hi = lo + 8 * hsel.s[D[d]];
+    int himax = 8 * hdr.worldsize / sel.grid;
 
     loopi(a+o) loopj(b+p)
     {
         int index = x+i-o+(y+j-p)*w;
         hmap[index] -= brush[i+m][j+n]*dir;
-        hmap[index] = max(0, min(hmap[index], 8+8*hsel.s[D[d]]));
+        hmap[index] = max(0, min(hmap[index], himax));
+        while(hmap[index] > hi) { hi += 8; hsel.s[D[d]] += 1; };
+        while(hmap[index] < lo) { lo -= 8; hsel.s[D[d]] += 1; hsel.o[D[d]] -= sel.grid; };
     };
 
     cubifyheightmap();
@@ -627,7 +625,6 @@ COMMAND(setheightmap, ARG_NONE);
 COMMAND(clearheightmap, ARG_NONE);
 COMMAND(printheightmap, ARG_NONE);
 COMMAND(printbrush, ARG_NONE);
-COMMAND(fullgetheightmap, ARG_NONE);
 COMMAND(cubifyheightmap, ARG_NONE);
 
 ///////////// main cube edit ////////////////
