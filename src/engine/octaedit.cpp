@@ -255,8 +255,12 @@ void cursorupdate()
     };
     if(hmap != NULL)
     {
-        glColor3ub(0,200,0);   // heightmap outline
-        loopi(6) { d=dimension(i); boxs(d, hsel.o[R[d]], hsel.o[C[d]], hsel.s[R[d]]*hsel.grid, hsel.s[C[d]]*hsel.grid, hsel.o[d]+dimcoord(i)*hsel.s[D[d]]*hsel.grid); };
+        glColor3ub(0,200,0);
+        d = dimension(hsel.orient);
+        loop(x, 2) loop(y, 2) // corners
+            boxs(d, hsel.o[R[d]]+x*(hsel.us(R[d])-hsel.grid), hsel.o[C[d]]+y*(hsel.us(C[d])-hsel.grid), hsel.grid, hsel.grid, hsel.o[d]+dimcoord(hsel.orient)*hsel.us(d));
+        loopi(6) // heightmap outline
+            { d=dimension(i); boxs(d, hsel.o[R[d]], hsel.o[C[d]], hsel.s[R[d]]*hsel.grid, hsel.s[C[d]]*hsel.grid, hsel.o[d]+dimcoord(i)*hsel.s[D[d]]*hsel.grid); };
     };
     glDisable(GL_BLEND);
 };
@@ -496,6 +500,16 @@ void cubifyheightmap()     // pull up heighfields to where they don't cross cube
     };
 };
 
+void heightmapper(int *hm, int d, int dc, int w, int h)  // simply take the heighest points
+{
+    loopselxyz(
+        if(c.children) { solidfaces(c); discardchildren(c); };
+        if(isempty(c)) continue;
+        loopi(2) loopj(2)
+            hm[x+i+(y+j)*w] = max(hm[x+i+(y+j)*w], (h-z-1)*8 + edgeget(cubeedge(c, d, i, j), dc));
+    );
+};
+
 void getheightmap()
 {
     hsel = sel;
@@ -511,13 +525,7 @@ void getheightmap()
     loop(x, w) loop(y, l)
         hmap[x+y*w] = lo;
 
-    loopselxyz(         // simply take the heighest points
-        if(c.children) { solidfaces(c); discardchildren(c); };
-        if(isempty(c)) continue;
-        loopi(2) loopj(2)
-            hmap[x+i+(y+j)*w] = max((h-z-1)*8 + edgeget(cubeedge(c, d, i, j), dc), hmap[x+i+(y+j)*w]);
-    );
-
+    heightmapper(hmap, d, dc, w, h);
     cubifyheightmap();
     setheightmap();
     cancelsel();
@@ -537,39 +545,70 @@ void printheightmap()
     };
 };
 
-const int MAXBRUSH = 51;
-const int BCENTER = 25;
+const int MAXBRUSH = 50;
 int brush[MAXBRUSH][MAXBRUSH];
+VAR(brushx, 0, 25, MAXBRUSH);
+VAR(brushy, 0, 25, MAXBRUSH);
 
-void selectbrush(int b)
+void clearbrush()
 {
     loopi(MAXBRUSH) loopj(MAXBRUSH)
         brush[i][j] = 0;
-
-    switch (b)
-    {
-    case 0: break;
-    case 1: brush[BCENTER][BCENTER] = 1; break;
-    case 2: brush[BCENTER][BCENTER] = 2;
-            brush[BCENTER][BCENTER+1] = 1;
-            brush[BCENTER][BCENTER-1] = 1;
-            brush[BCENTER+1][BCENTER] = 1;
-            brush[BCENTER-1][BCENTER] = 1; break;
-    case 3: brush[BCENTER][BCENTER] = 4;
-            brush[BCENTER][BCENTER+1] = 2;
-            brush[BCENTER][BCENTER-1] = 2;
-            brush[BCENTER+1][BCENTER] = 2;
-            brush[BCENTER-1][BCENTER] = 2;
-            brush[BCENTER][BCENTER+2] = 1;
-            brush[BCENTER][BCENTER-2] = 1;
-            brush[BCENTER+2][BCENTER] = 1;
-            brush[BCENTER-2][BCENTER] = 1;
-            brush[BCENTER+1][BCENTER+1] = 1;
-            brush[BCENTER+1][BCENTER-1] = 1;
-            brush[BCENTER-1][BCENTER+1] = 1;
-            brush[BCENTER-1][BCENTER-1] = 1; break;
-    };
 };
+
+void brushvert(int x, int y, int v)
+{
+    if(x<0 || y<0 || x>=MAXBRUSH || y>=MAXBRUSH) return;
+    brush[x][y] = v;
+};
+
+int getxcursor() { int d = dimension(sel.orient); return (sel.o[R[d]] - hsel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0); };
+int getycursor() { int d = dimension(sel.orient); return (sel.o[C[d]] - hsel.o[C[d]]) / sel.grid + (sel.corner&2 ? 1 : 0); };
+
+void genbrush()
+{
+    selinfo t = sel;
+    sel = hsel;
+    int d = dimension(sel.orient);
+    int w = sel.s[R[d]] + 1;
+    int h = sel.s[D[d]];
+    if(w>MAXBRUSH || h>MAXBRUSH) return conoutf("Selection is too big to generate brush");
+
+    clearbrush();
+    int b[MAXBRUSH*MAXBRUSH];
+    loopi(MAXBRUSH*MAXBRUSH) b[i] = 0;
+    heightmapper(b, d, dimcoord(sel.orient), MAXBRUSH, h);
+    loop(x, w) loop(y, sel.s[C[d]]+1)
+    {
+        brush[x][y] = 8*h - b[x+y*MAXBRUSH];
+    };
+    sel = t;
+    brushx = max(0, min(MAXBRUSH, getxcursor()));
+    brushy = max(0, min(MAXBRUSH, getycursor()));
+};
+
+void printbrush(const char *name)
+{
+    printf("alias brush_xxx [\n  alias brushname ");
+    printf("\"%s\"\n  clearbrush\n  ", name);
+    printf("brushhandle %d %d\n", brushx, brushy);
+    loop(y, MAXBRUSH)
+    {
+        int last = 0;
+        loop(x, MAXBRUSH) if(brush[x][y]!=0) last = x+1;
+        if(last<=0) continue;
+        printf("  bv %d %d \"", y, last);
+        loop(x, last)
+            printf("%d ", brush[x][y]);
+        printf("\"\n");
+    };
+    printf("]\n");
+};
+
+COMMAND(clearbrush, ARG_NONE);
+COMMAND(brushvert, ARG_3INT);
+COMMAND(genbrush, ARG_NONE);
+COMMAND(printbrush, ARG_1STR);
 
 void edithmap(int dir)
 {
@@ -578,25 +617,25 @@ void edithmap(int dir)
 
     int d = dimension(sel.orient);
     int w = hsel.s[R[d]] + 1;
-    int x = (sel.o[R[d]] - hsel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0);
-    int y = (sel.o[C[d]] - hsel.o[C[d]]) / sel.grid + (sel.corner&2 ? 1 : 0);
+    int x = getxcursor();
+    int y = getycursor();
 
     if(x<0 || y<0 || x>hsel.s[R[d]] || y>hsel.s[C[d]]) return;
 
-    int a = min(BCENTER, w - x);
-    int b = min(BCENTER, hsel.s[C[d]]+1 - y);
-    int m = x>BCENTER ? 0 : BCENTER - x;
-    int n = y>BCENTER ? 0 : BCENTER - y;
-    int o = x>BCENTER ? BCENTER : x;
-    int p = y>BCENTER ? BCENTER : y;
+    int bx = x>brushx ? 0 : brushx - x;
+    int by = y>brushy ? 0 : brushy - y;
+    int sx = x>brushx ? brushx : x;
+    int sy = y>brushy ? brushy : y;
+    int ex = min(MAXBRUSH - brushx, w - x);
+    int ey = min(MAXBRUSH - brushy, hsel.s[C[d]]+1 - y);
     int lo = 8 * hsel.o[D[d]] / sel.grid;
     int hi = lo + 8 * hsel.s[D[d]];
     int himax = 8 * hdr.worldsize / sel.grid;
 
-    loopi(a+o) loopj(b+p)
+    loopi(sx+ex) loopj(sy+ey)
     {
-        int index = x+i-o+(y+j-p)*w;
-        hmap[index] -= brush[i+m][j+n]*dir;
+        int index = x+i-sx+(y+j-sy)*w;
+        hmap[index] -= brush[i+bx][j+by]*dir;
         hmap[index] = max(0, min(hmap[index], himax));
         while(hmap[index] > hi) { hi += 8; hsel.s[D[d]] += 1; };
         while(hmap[index] < lo) { lo -= 8; hsel.s[D[d]] += 1; hsel.o[D[d]] -= sel.grid; };
@@ -606,27 +645,10 @@ void edithmap(int dir)
     setheightmap();
 };
 
-void printbrush()
-{
-    if(hmap == NULL) return;
-    conoutf("Brush");
-    loop(y, MAXBRUSH)
-    {
-        loop(x, MAXBRUSH)
-            printf("%d\t", brush[x][y]);
-        printf("\n");
-    };
-};
-
-COMMAND(selectbrush, ARG_1INT);
 COMMAND(edithmap, ARG_1INT);
-
 COMMAND(getheightmap, ARG_NONE);
-COMMAND(setheightmap, ARG_NONE);
 COMMAND(clearheightmap, ARG_NONE);
 COMMAND(printheightmap, ARG_NONE);
-COMMAND(printbrush, ARG_NONE);
-COMMAND(cubifyheightmap, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 
