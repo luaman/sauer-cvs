@@ -12,7 +12,7 @@ void cleanup(char *msg)         // single program exit point;
     SDL_ShowCursor(1);
     freeocta(worldroot);
     extern void clear_command(); clear_command();
-    extern void clear_console(); clear_console(); 
+    extern void clear_console(); clear_console();
     extern void clear_menus();   clear_menus();
     extern void clear_mdls();    clear_mdls();
     extern void clear_sound();   clear_sound();
@@ -81,15 +81,15 @@ void computescreen(char *text)
 {
     loopi(2)
     {
-        glMatrixMode(GL_MODELVIEW);    
+        glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        glMatrixMode(GL_PROJECTION);    
+        glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(0, scr_w*3, scr_h*3, 0, -1, 1);
         glClearColor(0.15f, 0.15f, 0.15f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
-        glEnable(GL_TEXTURE_2D); 
+        glEnable(GL_TEXTURE_2D);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
         draw_text(text, 70, 2*FONTH + FONTH/2);
@@ -123,9 +123,9 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
     if(!inbetweenframes) return;
 
     clientkeepalive();      // make sure our connection doesn't time out while loading maps etc.
-    
+
     glDisable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);    
+    glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
     glOrtho(0, scr_w*3, scr_h*3, 0, -1, 1);
@@ -144,16 +144,16 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
         bar(1,    6, 0.5f,  0, 0);
         bar(bar2, 6, 0.75f, 0, 0);
     };
-    
+
     glEnd();
 
     glEnable(GL_BLEND);
-    glEnable(GL_TEXTURE_2D); 
+    glEnable(GL_TEXTURE_2D);
     defaultshader->set();
-    
+
     if(text1) draw_text(text1, 70, 4*FONTH + FONTH/2);
     if(bar2>0) draw_text(text2, 70, 6*FONTH + FONTH/2);
-    
+
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 
@@ -253,12 +253,12 @@ int main(int argc, char **argv)
 
     bool dedicated = false;
     int fs = SDL_FULLSCREEN, par = 0;
-    
+
     islittleendian = *((char *)&islittleendian);
-    
+
     #define log(s) puts("init: " s)
     log("sdl");
-    
+
     for(int i = 1; i<argc; i++)
     {
         if(argv[i][0]=='-') switch(argv[i][1])
@@ -272,13 +272,13 @@ int main(int argc, char **argv)
         }
         else conoutf("unknown commandline argument");
     };
-    
+
     #ifdef _DEBUG
     par = SDL_INIT_NOPARACHUTE;
     fs = 0;
-    SetEnvironmentVariable("SDL_DEBUG", "1"); 
+    SetEnvironmentVariable("SDL_DEBUG", "1");
     #endif
-    
+
     //#ifdef WIN32
     //SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     //#endif
@@ -289,7 +289,7 @@ int main(int argc, char **argv)
     if(enet_initialize()<0) fatal("Unable to initialise network module");
 
     initserver(dedicated);  // never returns if dedicated
-      
+
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     screen = SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|SDL_RESIZABLE|fs);
@@ -314,14 +314,14 @@ int main(int argc, char **argv)
     computescreen("initializing...");
     inbetweenframes = true;
     particleinit();
- 
+
     log("world");
     player = cl->iterdynents(0);
     empty_world(7, true);
 
     log("sound");
     initsound();
-        
+
     log("cfg");
     newmenu("frags\tpj\tping\tteam\tname");
     newmenu("ping\tplr\tserver");
@@ -329,6 +329,7 @@ int main(int argc, char **argv)
 //    exec("data/default_map_settings.cfg");
     exec("data/menus.cfg");
     exec("data/sounds.cfg");
+    exec("data/brush.cfg");
     exec("servers.cfg");
     if(!execfile("config.cfg")) exec("data/defaults.cfg");
     exec("autoexec.cfg");
@@ -351,10 +352,10 @@ int main(int argc, char **argv)
         curtime = elapsed*gamespeed/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
-        if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis); 
-        loopv(sleepcmds) 
-        { 
-            sleepcmd &s = sleepcmds[i]; 
+        if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
+        loopv(sleepcmds)
+        {
+            sleepcmd &s = sleepcmds[i];
             if(s.millis && lastmillis>s.millis)
             {
                 execute(s.command);
@@ -362,16 +363,16 @@ int main(int argc, char **argv)
                 i--;
             };
         };
-        
+
         lastmillis += curtime;
         curmillis = millis;
-        
+
         serverslice(time(NULL), 0);
-        
+
         frames++;
         fps = (1000.0f/elapsed+fps*10)/11;
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
-        
+
         extern void updatevol(); updatevol();
 
         inbetweenframes = false;
@@ -389,15 +390,15 @@ int main(int argc, char **argv)
                 case SDL_QUIT:
                     quit();
                     break;
-                    
+
                 #ifndef WIN32
                 case SDL_VIDEORESIZE:
                     screenres(event.resize.w, event.resize.h);
                     break;
                 #endif
-                
-                case SDL_KEYDOWN: 
-                case SDL_KEYUP: 
+
+                case SDL_KEYDOWN:
+                case SDL_KEYUP:
                     keypress(event.key.keysym.sym, event.key.state==SDL_PRESSED, event.key.keysym.unicode);
                     break;
 
