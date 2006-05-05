@@ -455,7 +455,6 @@ void clearheightmap()
 
 void setheightmap()
 {
-    if(hmap == NULL) return;
     selinfo t = sel;
     sel = hsel;
     int d = dimension(hsel.orient);
@@ -477,7 +476,6 @@ void setheightmap()
 
 void cubifyheightmap()     // pull up heighfields to where they don't cross cube boundaries
 {
-    if(hmap == NULL) return;
     int d = dimension(hsel.orient);
     int w = hsel.s[R[d]] + 1;
     int l = hsel.s[C[d]] + 1;
@@ -512,6 +510,7 @@ void heightmapper(int *hm, int d, int dc, int w, int h)  // simply take the heig
 
 void getheightmap()
 {
+    if(noedit() || multiplayer()) return;
     hsel = sel;
     int d = dimension(hsel.orient);
     int dc = dimcoord(hsel.orient);
@@ -567,6 +566,7 @@ int getycursor() { int d = dimension(sel.orient); return (sel.o[C[d]] - hsel.o[C
 
 void genbrush()
 {
+    if(hmap == NULL) return;
     selinfo t = sel;
     sel = hsel;
     int d = dimension(sel.orient);
@@ -612,7 +612,7 @@ COMMAND(printbrush, ARG_1STR);
 
 void edithmap(int dir)
 {
-    if(hmap == NULL) return;
+    if(noedit() || multiplayer() || hmap == NULL) return;
     if(sel.orient != hsel.orient || sel.grid != hsel.grid) return;
 
     int d = dimension(sel.orient);
