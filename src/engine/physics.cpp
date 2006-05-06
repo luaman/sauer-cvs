@@ -119,10 +119,6 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
     return dist;
 };
 
-bool passthroughcube = false;
-void passthrough(bool isdown) { passthroughcube = isdown; };
-COMMAND(passthrough, ARG_DOWN);
-
 float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)
 {
     ray.normalize();
@@ -185,7 +181,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
         {
             if(((mode&RAY_CLIPMAT) && isclipped(c.material) && c.material != MAT_CLIP) ||
                 ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
-                (lsize==size && !isempty(c) && !passthroughcube) ||
+                (!(mode&RAY_PASS) && lsize==size && !isempty(c)) ||
                 isentirelysolid(c) ||
                 dent < dist ||
                 last==&c)

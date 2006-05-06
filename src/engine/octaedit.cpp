@@ -138,6 +138,10 @@ bool selectcorners = false;
 void selcorners(bool isdown) { selectcorners = isdown; editdrag(isdown); };
 COMMAND(selcorners, ARG_DOWN);
 
+bool passthroughcube = false;
+void passthrough(bool isdown) { passthroughcube = isdown; };
+COMMAND(passthrough, ARG_DOWN);
+
 uchar cursorcolor[3] = {120, 120, 120};
 
 void setcursorcolor(int r, int g, int b)
@@ -153,7 +157,7 @@ void cursorupdate()
 {
     vec ray(worldpos), v(player->o);
     ray.sub(player->o);
-    raycubepos(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0) | RAY_SKIPFIRST, gridsize);
+    raycubepos(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0) | (passthroughcube ? RAY_PASS : 0) | RAY_SKIPFIRST, gridsize);
 
     lookupcube(int(v.x), int(v.y), int(v.z));
     if(lusize>gridsize)
