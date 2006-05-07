@@ -215,7 +215,6 @@ void estartmap(char *name)
     gamespeed = 100;
     sleepcmds.setsize(0);
     cancelsel();
-    clearheightmap();
     pruneundos();
     setvar("wireframe", 0);
     cl->startmap(name);

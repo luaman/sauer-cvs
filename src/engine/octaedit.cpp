@@ -29,11 +29,16 @@ bool editmode = false;
 bool havesel = false;
 bool dragging = false;
 
-selinfo hsel;   // heightmap stuff
-int *hmap = NULL;
+int *hmap = NULL; // heightmap
+
+void clearheightmap()
+{
+    if(hmap != NULL) delete[] hmap;
+    hmap = NULL;
+};
 
 void forcenextundo() { lastsel.orient = -1; };
-void cancelsel()     { havesel = false; forcenextundo(); };
+void cancelsel()     { havesel = false; clearheightmap(); forcenextundo(); };
 
 VARF(gridpower, 2, 3, VVEC_INT-1,
 {
@@ -226,7 +231,7 @@ void cursorupdate()
         sel.cy  &= 1;
         havesel = true;
     }
-    else if(!havesel)
+    else if(!havesel && hmap == NULL)
     {
         sel.o = lu;
         sel.s.x = sel.s.y = sel.s.z = 1;
@@ -246,7 +251,16 @@ void cursorupdate()
     glLineWidth(1);
     glColor3ubv(cursorcolor);
     boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
-    if(havesel)
+    if(hmap != NULL)
+    {
+        glColor3ub(0,200,0);
+        d = dimension(sel.orient);
+        loop(x, 2) loop(y, 2) // corners
+            boxs(d, sel.o[R[d]]+x*(sel.us(R[d])-sel.grid), sel.o[C[d]]+y*(sel.us(C[d])-sel.grid), sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+        loopi(6) // heightmap outline
+            { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.s[R[d]]*sel.grid, sel.s[C[d]]*sel.grid, sel.o[d]+dimcoord(i)*sel.s[D[d]]*sel.grid); };
+    }
+    else if(havesel)
     {
         glColor3ub(20,20,20);   // grid
         loopxy(sel) boxs(d, sel.o[R[d]]+x*sel.grid, sel.o[C[d]]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
@@ -256,15 +270,6 @@ void cursorupdate()
         boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(0,0,40);     // 3D selection box
         loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
-    };
-    if(hmap != NULL)
-    {
-        glColor3ub(0,200,0);
-        d = dimension(hsel.orient);
-        loop(x, 2) loop(y, 2) // corners
-            boxs(d, hsel.o[R[d]]+x*(hsel.us(R[d])-hsel.grid), hsel.o[C[d]]+y*(hsel.us(C[d])-hsel.grid), hsel.grid, hsel.grid, hsel.o[d]+dimcoord(hsel.orient)*hsel.us(d));
-        loopi(6) // heightmap outline
-            { d=dimension(i); boxs(d, hsel.o[R[d]], hsel.o[C[d]], hsel.s[R[d]]*hsel.grid, hsel.s[C[d]]*hsel.grid, hsel.o[d]+dimcoord(i)*hsel.s[D[d]]*hsel.grid); };
     };
     glDisable(GL_BLEND);
 };
@@ -451,20 +456,12 @@ COMMANDN(redo, editredo, ARG_NONE);
 
 ///////////// height maps ////////////////
 
-void clearheightmap()
-{
-    if(hmap != NULL) delete[] hmap;
-    hmap = NULL;
-};
-
 void setheightmap()
 {
-    selinfo t = sel;
-    sel = hsel;
-    int d = dimension(hsel.orient);
-    int dc = dimcoord(hsel.orient);
-    int w = hsel.s[R[d]] + 1;
-    int h = hsel.s[D[d]] + hsel.o[D[d]]/hsel.grid;
+    int d = dimension(sel.orient);
+    int dc = dimcoord(sel.orient);
+    int w = sel.s[R[d]] + 1;
+    int h = sel.s[D[d]] + sel.o[D[d]]/sel.grid;
 
     loopselxyz(
         if(c.children) { discardchildren(c); };
@@ -475,14 +472,13 @@ void setheightmap()
 
         optiface((uchar *)&c.faces[d], c);
     );
-    sel = t;
 };
 
 void cubifyheightmap()     // pull up heighfields to where they don't cross cube boundaries
 {
-    int d = dimension(hsel.orient);
-    int w = hsel.s[R[d]] + 1;
-    int l = hsel.s[C[d]] + 1;
+    int d = dimension(sel.orient);
+    int w = sel.s[R[d]] + 1;
+    int l = sel.s[C[d]] + 1;
     for(;;)
     {
         bool changed = false;
@@ -515,13 +511,12 @@ void heightmapper(int *hm, int d, int dc, int w, int h)  // simply take the heig
 void getheightmap()
 {
     if(noedit() || multiplayer()) return;
-    hsel = sel;
-    int d = dimension(hsel.orient);
-    int dc = dimcoord(hsel.orient);
-    int w = hsel.s[R[d]] + 1;
-    int l = hsel.s[C[d]] + 1;
-    int h = hsel.s[D[d]] + hsel.o[D[d]]/hsel.grid;
-    int lo = 8 * hsel.o[D[d]] / hsel.grid;
+    int d = dimension(sel.orient);
+    int dc = dimcoord(sel.orient);
+    int w = sel.s[R[d]] + 1;
+    int l = sel.s[C[d]] + 1;
+    int h = sel.s[D[d]] + sel.o[D[d]]/sel.grid;
+    int lo = 8 * sel.o[D[d]] / sel.grid;
 
     clearheightmap();
     hmap = new int[w*l];
@@ -531,16 +526,15 @@ void getheightmap()
     heightmapper(hmap, d, dc, w, h);
     cubifyheightmap();
     setheightmap();
-    cancelsel();
 };
 
 void printheightmap()
 {
     if(hmap == NULL) return;
-    int d = dimension(hsel.orient);
-    int w = hsel.s[R[d]] + 1;
+    int d = dimension(sel.orient);
+    int w = sel.s[R[d]] + 1;
     conoutf("Heightmap");
-    loop(y, hsel.s[C[d]] + 1)
+    loop(y, sel.s[C[d]] + 1)
     {
         loop(x, w)
             printf("%d\t", hmap[x+y*w]);
@@ -565,14 +559,12 @@ void brushvert(int x, int y, int v)
     brush[x][y] = v;
 };
 
-int getxcursor() { int d = dimension(sel.orient); return (sel.o[R[d]] - hsel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0); };
-int getycursor() { int d = dimension(sel.orient); return (sel.o[C[d]] - hsel.o[C[d]]) / sel.grid + (sel.corner&2 ? 1 : 0); };
+int getxcursor() { int d = dimension(sel.orient); return (cur[R[d]] - sel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0); };
+int getycursor() { int d = dimension(sel.orient); return (cur[C[d]] - sel.o[C[d]]) / sel.grid + (sel.corner&2 ? 1 : 0); };
 
 void genbrush()
 {
     if(hmap == NULL) return;
-    selinfo t = sel;
-    sel = hsel;
     int d = dimension(sel.orient);
     int w = sel.s[R[d]] + 1;
     int h = sel.s[D[d]];
@@ -586,7 +578,6 @@ void genbrush()
     {
         brush[x][y] = 8*h - b[x+y*MAXBRUSH];
     };
-    sel = t;
     brushx = max(0, min(MAXBRUSH, getxcursor()));
     brushy = max(0, min(MAXBRUSH, getycursor()));
 };
@@ -616,24 +607,24 @@ COMMAND(printbrush, ARG_1STR);
 
 void edithmap(int dir)
 {
-    if(noedit() || multiplayer() || hmap == NULL) return;
-    if(sel.orient != hsel.orient || sel.grid != hsel.grid) return;
+    if(multiplayer() || hmap == NULL) return;
+    if(!(lastsel==sel)) getheightmap();
 
     int d = dimension(sel.orient);
-    int w = hsel.s[R[d]] + 1;
+    int w = sel.s[R[d]] + 1;
     int x = getxcursor();
     int y = getycursor();
 
-    if(x<0 || y<0 || x>hsel.s[R[d]] || y>hsel.s[C[d]]) return;
+    if(x<0 || y<0 || x>sel.s[R[d]] || y>sel.s[C[d]]) return;
 
     int bx = x>brushx ? 0 : brushx - x;
     int by = y>brushy ? 0 : brushy - y;
     int sx = x>brushx ? brushx : x;
     int sy = y>brushy ? brushy : y;
     int ex = min(MAXBRUSH - brushx, w - x);
-    int ey = min(MAXBRUSH - brushy, hsel.s[C[d]]+1 - y);
-    int lo = 8 * hsel.o[D[d]] / sel.grid;
-    int hi = lo + 8 * hsel.s[D[d]];
+    int ey = min(MAXBRUSH - brushy, sel.s[C[d]]+1 - y);
+    int lo = 8 * sel.o[D[d]] / sel.grid;
+    int hi = lo + 8 * sel.s[D[d]];
     int himax = 8 * hdr.worldsize / sel.grid;
 
     loopi(sx+ex) loopj(sy+ey)
@@ -641,8 +632,8 @@ void edithmap(int dir)
         int index = x+i-sx+(y+j-sy)*w;
         hmap[index] -= brush[i+bx][j+by]*dir;
         hmap[index] = max(0, min(hmap[index], himax));
-        while(hmap[index] > hi) { hi += 8; hsel.s[D[d]] += 1; };
-        while(hmap[index] < lo) { lo -= 8; hsel.s[D[d]] += 1; hsel.o[D[d]] -= sel.grid; };
+        while(hmap[index] > hi) { hi += 8; sel.s[D[d]] += 1; };
+        while(hmap[index] < lo) { lo -= 8; sel.s[D[d]] += 1; sel.o[D[d]] -= sel.grid; };
     };
 
     cubifyheightmap();
@@ -681,57 +672,12 @@ void linkedpush(cube &c, int d, int x, int y, int dc, int dir)
 
 void mpeditheight(int dir, int mode, selinfo &sel, bool local)
 {
-    if(local) cl->edittrigger(sel, EDIT_HEIGHT, dir, mode);
-    int d = dimension(sel.orient);
-    int dc = dimcoord(sel.orient);
-    int seldir = dc ? -dir : dir;
-
-    ivec o = sel.o;
-    sel.s[R[d]] = 2;
-    sel.s[C[d]] = 2;
-    sel.s[D[d]] = 1;
-    sel.o[R[d]] -= sel.corner&1 ? 0 : sel.grid;
-    sel.o[C[d]] -= sel.corner&2 ? 0 : sel.grid;
-
-    int solid = 0, solidground = 0;
-    loopxy(sel)
-    {
-        if(dir<0)
-        {
-            if(blockcube(x, y, 0, sel, -sel.grid).faces[d]==F_SOLID)
-                solid++;
-            if(blockcube(x, y, 1, sel, -sel.grid).faces[d]==F_SOLID)
-                solidground++;
-        }
-        else if(!isempty(blockcube(x, y, -1, sel, -sel.grid)))
-            return;
-    };
-
-    if(solid==4)
-    {
-        sel.o[D[d]] += sel.grid*seldir;
-    };
-
-    loopselxyz(
-        if(c.children) { solidfaces(c); discardchildren(c); };
-        if(solid==4 || (isempty(c) && solidground==4))
-            c.faces[R[d]] = c.faces[C[d]] = F_SOLID;
-        else if(isempty(c)) continue;
-
-        uint bak = c.faces[d];
-        linkedpush(c, d, 1-x, 1-y, dc, seldir);
-
-        optiface((uchar *)&c.faces[d], c);
-        if(!isvalidcube(c))
-            c.faces[d] = bak;
-    );
-    sel.o = o;
+    return;
 };
 
 void editheight(int dir, int mode)
 {
-    if(noedit()) return;
-    mpeditheight(dir, mode, sel, true);
+    return;
 };
 
 COMMAND(editheight, ARG_2INT);
@@ -804,7 +750,10 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int dir, int mode)
 {
     if(noedit()) return;
-    mpeditface(dir, mode, sel, true);
+    if(hmap == NULL)
+        mpeditface(dir, mode, sel, true);
+    else
+        edithmap(dir);
 };
 
 COMMAND(editface, ARG_2INT);
@@ -1014,7 +963,7 @@ void mpflip(selinfo &sel, bool local)
 
 void flip()
 {
-    if(noedit()) return;
+    if(noedit() || hmap!=NULL) return;
     mpflip(sel, true);
 };
 
@@ -1042,7 +991,7 @@ void mprotate(int cw, selinfo &sel, bool local)
 
 void rotate(int cw)
 {
-    if(noedit()) return;
+    if(noedit() || hmap!=NULL) return;
     mprotate(cw, sel, true);
 };
 
