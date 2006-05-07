@@ -549,6 +549,8 @@ void getheightmap()
     setheightmap();
 };
 
+COMMAND(getheightmap, ARG_NONE);
+
 const int MAXBRUSH = 50;
 int brush[MAXBRUSH][MAXBRUSH];
 VAR(brushx, 0, 25, MAXBRUSH);
@@ -575,7 +577,7 @@ void genbrush()
     int d = dimension(sel.orient);
     int w = sel.s[R[d]] + 1;
     int h = sel.s[D[d]];
-    if(w>MAXBRUSH || h>MAXBRUSH) return conoutf("Selection is too big to generate brush");
+    if(w>=MAXBRUSH || h>=MAXBRUSH) return conoutf("Selection is too big to generate brush");
 
     clearbrush();
     int b[MAXBRUSH*MAXBRUSH];
@@ -643,10 +645,6 @@ void edithmap(int dir)
     cubifyheightmap();
     setheightmap();
 };
-
-COMMAND(edithmap, ARG_1INT);
-COMMAND(getheightmap, ARG_NONE);
-COMMAND(clearheightmap, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 
