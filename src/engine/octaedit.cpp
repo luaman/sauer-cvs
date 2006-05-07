@@ -549,20 +549,6 @@ void getheightmap()
     setheightmap();
 };
 
-void printheightmap()
-{
-    if(hmap == NULL) return;
-    int d = dimension(sel.orient);
-    int w = sel.s[R[d]] + 1;
-    conoutf("Heightmap");
-    loop(y, sel.s[C[d]] + 1)
-    {
-        loop(x, w)
-            printf("%d\t", hmap[x+y*w]);
-        printf("\n");
-    };
-};
-
 const int MAXBRUSH = 50;
 int brush[MAXBRUSH][MAXBRUSH];
 VAR(brushx, 0, 25, MAXBRUSH);
@@ -661,7 +647,6 @@ void edithmap(int dir)
 COMMAND(edithmap, ARG_1INT);
 COMMAND(getheightmap, ARG_NONE);
 COMMAND(clearheightmap, ARG_NONE);
-COMMAND(printheightmap, ARG_NONE);
 
 ///////////// main cube edit ////////////////
 
