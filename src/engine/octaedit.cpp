@@ -1085,8 +1085,8 @@ void editmat(char *name)
         {
             mpeditmat(materials[i].id, sel, true);
             return;
-        }
-    }
+        };
+    };
     conoutf("unknown material \"%s\"", name);
 };
 
@@ -1128,10 +1128,10 @@ void render_texture_panel(int w, int h)
                     x += 5;
                     y += 5;
                 };
-            }
+            };
             y += s+gap;
-        }
+        };
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
-    }
-}
+    };
+};
