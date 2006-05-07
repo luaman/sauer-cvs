@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>Sauerbraten History</title>
-<style type="text/css">		
+<style type="text/css">
 body          { margin: 50px 11%; width: 80%;  background-color: #302c28; color: #ffffff; font-family: verdana,"trebuchet ms","zurich bt",tahoma,arial,helvetica,sans-serif; font-size: 8pt; }
 a             { text-decoration: underline; color: #ffbb00; }
 a:visited     { color: #ff9900; }
@@ -14,10 +14,15 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
     <body>
         <div>Sauerbraten Change History</div>
         <ul>
+        <li> removed obsolete editheight command</li>
+        <li> added powerful new heightmap mode! use getheightmap command [default H key] when there is a selection box to activate. see editref.html for more info.</li>
+        <li> added selectbrush modifier [default J key] that switches between brushes defined in data/brush.cfg</li>
+        <li> added genbrush [default K key] to use current heightmap as brush. see data/brush.cfg for more info.</li>
+        <li> editable brushes for heightmap mode. see data/brush.cfg for more info. </li>
         <li> capture gameplay mode fixes
         <li> ip address lookups now use the concurrent resolver
-		<li> added redo command</li>
-        <li> made importcube remip while importing to save memory 
+        <li> added redo command [default I key] </li>
+        <li> made importcube remip while importing to save memory
         <li> removed some lighting/physics bottlenecks in SP mode
         <li> removed 256 textures per map limit (is now 64k)</li>
         <li> fixed incorrect mapmodel shadows on Windows
@@ -37,7 +42,6 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         <li> added pistol ammo (ent type "cartridges")
         <li> added linearly-interpolated normals for lighting (controlled by "lerpangle", "lerpsubdiv", and "lerpsubdivsize" vars)
         <li> added HW occlusion culling support (requires NV GeForce3-class hardware or better)
-		<li> height map mode. will hopefully allow for easier terrain editing.
         <li> reduced overdraw dramatically
         <li> reduced size of vertex data by using short instead of float</li>
         <li> removed ZYX order inconistency from math classes</li>
@@ -99,19 +103,19 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
             <li> multiplayer enemies show firing/pain animations
             <li> weapon pushback (esp for rockets) now works over the network, and for monsters
             <li> reduced ammo you can carry from 5 to 3 boxes each, and increased ammo respawn times by 33%.
-            <li> machinegun now has mild inaccuracy at distance 
+            <li> machinegun now has mild inaccuracy at distance
             <li> fixed shotgun (all rays are now individual so you can hit multiple targets optimally, better spread pattern, slightly wider)
             <li> fixed all hitscan weapons not stopping at first target
             <li> fixed RL splash damage, now does more damage in radius and rocket jumps work better
-            <li> masterserver functionality restored 
+            <li> masterserver functionality restored
             <li> added flare particles to help emphasize hitscan weapons
             <li> interpretation of cubes edges switched from 'edgepan' to 'vector'
-			<li> passthrough command. normally cubes of equal size to the grid are given priority when selecting; 
-			passthrough removes this priority while held down. (default key: LCTRL)
-		    <li> fixed ghost/disconnection problems in multiplayer
-		    <li> "allfaces" var for texturing all faces at once
-		    <li> "writeobj" command writes a sauer level out as .obj file for potential use in other apps.
-		    <li> added "text particles": small bits of text that can float in 3d space. Currently used for damage numbers (red) and other gameplay events (green).
+            <li> passthrough command. normally cubes of equal size to the grid are given priority when selecting;
+            passthrough removes this priority while held down. (default key: LCTRL)
+            <li> fixed ghost/disconnection problems in multiplayer
+            <li> "allfaces" var for texturing all faces at once
+            <li> "writeobj" command writes a sauer level out as .obj file for potential use in other apps.
+            <li> added "text particles": small bits of text that can float in 3d space. Currently used for damage numbers (red) and other gameplay events (green).
             <li> gameplay changes: pistol damage 40 -> 25
             <li> "mastermode" for having easy, cheater-free multiplayer games with the people you want.
             read the section "Cheating & Multiplayer" in game.html to learn how to use it.
