@@ -461,14 +461,17 @@ void setheightmap()
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int w = sel.s[R[d]] + 1;
-    int h = sel.s[D[d]] + sel.o[D[d]]/sel.grid;
+    int h = (dc ? sel.s[D[d]] : 0) + (dc ? sel.o[D[d]] : hdr.worldsize - sel.o[D[d]]) / sel.grid;
 
     loopselxyz(
         if(c.children) { discardchildren(c); };
 
         solidfaces(c);
         loopi(2) loopj(2)
-            edgeset(cubeedge(c, d, i, j), dc, max(0, min(8, hmap[x+i+(y+j)*w] - (h-z-1)*8)));
+        {
+            int e = max(0, min(8, hmap[x+i+(y+j)*w] - (h-z-1)*8));
+            edgeset(cubeedge(c, d, i, j), dc, dc ? e : 8-e);
+        };
 
         optiface((uchar *)&c.faces[d], c);
     );
@@ -504,26 +507,44 @@ void heightmapper(int *hm, int d, int dc, int w, int h)  // simply take the heig
         if(c.children) { solidfaces(c); discardchildren(c); };
         if(isempty(c)) continue;
         loopi(2) loopj(2)
-            hm[x+i+(y+j)*w] = max(hm[x+i+(y+j)*w], (h-z-1)*8 + edgeget(cubeedge(c, d, i, j), dc));
+        {
+            int a = x+i+(y+j)*w;
+            int e = edgeget(cubeedge(c, d, i, j), dc);
+            hm[a] = max(hm[a], (h-z-1)*8 + (dc ? e : 8-e));
+        };
     );
+};
+
+void getlimits(int &d, int &dc, int &w, int &l, int &lo, int &hi, int &himax)
+{
+    d = dimension(sel.orient);
+    dc = dimcoord(sel.orient);
+    w = sel.s[R[d]] + 1;
+    l = sel.s[C[d]] + 1;
+    lo = 8 * (sel.o[D[d]] / sel.grid);
+    hi = 8 * (sel.s[D[d]]) + lo;
+    himax = 8 * hdr.worldsize / sel.grid;
+
+    if(!dc)
+    {
+        swap(int, hi, lo);
+        hi = himax - hi;
+        lo = himax - lo;
+    };
 };
 
 void getheightmap()
 {
     if(noedit() || multiplayer()) return;
-    int d = dimension(sel.orient);
-    int dc = dimcoord(sel.orient);
-    int w = sel.s[R[d]] + 1;
-    int l = sel.s[C[d]] + 1;
-    int h = sel.s[D[d]] + sel.o[D[d]]/sel.grid;
-    int lo = 8 * sel.o[D[d]] / sel.grid;
+    int d, dc, w, l, lo, hi, himax;
+    getlimits(d, dc, w, l, lo, hi, himax);
 
     clearheightmap();
     hmap = new int[w*l];
     loop(x, w) loop(y, l)
         hmap[x+y*w] = lo;
 
-    heightmapper(hmap, d, dc, w, h);
+    heightmapper(hmap, d, dc, w, hi / 8);
     cubifyheightmap();
     setheightmap();
 };
@@ -610,30 +631,27 @@ void edithmap(int dir)
     if(multiplayer() || hmap == NULL) return;
     if(!(lastsel==sel)) getheightmap();
 
-    int d = dimension(sel.orient);
-    int w = sel.s[R[d]] + 1;
+    int d, dc, w, l, lo, hi, himax;
+    getlimits(d, dc, w, l, lo, hi, himax);
     int x = getxcursor();
     int y = getycursor();
 
-    if(x<0 || y<0 || x>sel.s[R[d]] || y>sel.s[C[d]]) return;
+    if(x<0 || y<0 || x>=w || y>=l) return;
 
     int bx = x>brushx ? 0 : brushx - x;
     int by = y>brushy ? 0 : brushy - y;
     int sx = x>brushx ? brushx : x;
     int sy = y>brushy ? brushy : y;
     int ex = min(MAXBRUSH - brushx, w - x);
-    int ey = min(MAXBRUSH - brushy, sel.s[C[d]]+1 - y);
-    int lo = 8 * sel.o[D[d]] / sel.grid;
-    int hi = lo + 8 * sel.s[D[d]];
-    int himax = 8 * hdr.worldsize / sel.grid;
+    int ey = min(MAXBRUSH - brushy, l - y);
 
     loopi(sx+ex) loopj(sy+ey)
     {
         int index = x+i-sx+(y+j-sy)*w;
         hmap[index] -= brush[i+bx][j+by]*dir;
         hmap[index] = max(0, min(hmap[index], himax));
-        while(hmap[index] > hi) { hi += 8; sel.s[D[d]] += 1; };
-        while(hmap[index] < lo) { lo -= 8; sel.s[D[d]] += 1; sel.o[D[d]] -= sel.grid; };
+        while(hmap[index] > hi) { hi += 8; sel.s[D[d]] += 1; if(!dc) sel.o[D[d]] -= sel.grid; };
+        while(hmap[index] < lo) { lo -= 8; sel.s[D[d]] += 1; if(dc)  sel.o[D[d]] -= sel.grid; };
     };
 
     cubifyheightmap();
