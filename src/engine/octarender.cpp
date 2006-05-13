@@ -651,7 +651,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 bool skyoccluded(cube &c, int orient)
 {
     if(isempty(c)) return false;
-    if(c.texture[orient] == DEFAULT_SKY) return true;
+//    if(c.texture[orient] == DEFAULT_SKY) return true;
     if(touchingface(c, orient) && faceedges(c, orient) == F_SOLID) return true;
     return false;
 };
