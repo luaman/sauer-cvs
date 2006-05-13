@@ -324,39 +324,30 @@ void split_world(cube *c, int size)
     };
 };
 
-void empty_world(int factor, bool force)    // main empty world creation routine, if passed factor -1 will enlarge old world by 1
+void empty_world(int scale, bool force)    // main empty world creation routine
 {
     if(!force && !editmode) return conoutf("newmap only allowed in edit mode");
 
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
-    if(!hdr.worldsize || !factor) hdr.worldsize = 1<<11;
-    else if(factor>0) hdr.worldsize = 1 << (factor<10 ? 10 : (factor>20 ? 20 : factor));
-    if(factor<0 && hdr.worldsize < 1<<20)
-    {
-        hdr.worldsize *= 2;
-        cube *c = newcubes(F_SOLID);
-        c[0].children = worldroot;
-        worldroot = c;
-    }
-    else
-    {
-        s_strncpy(hdr.maptitle, "Untitled Map by Unknown", 128);
-        hdr.waterlevel = -100000;
-        hdr.maple = 8;
-        hdr.mapprec = 32;
-        hdr.mapllod = 0;
-        hdr.lightmaps = 0;
-        memset(hdr.reserved, 0, sizeof(hdr.reserved));
-        texmru.setsize(0);
-        et->getents().setsize(0);
-		freeocta(worldroot);
-        worldroot = newcubes(F_EMPTY);
-        loopi(4) solidfaces(worldroot[i]);
-        estartmap("base/unnamed");
-        player->o.z += player->eyeheight+1;
-    };
+    if(!hdr.worldsize && scale<=0) hdr.worldsize = 1<<11;
+    else hdr.worldsize = 1 << (scale<10 ? 10 : (scale>20 ? 20 : scale));
+
+    s_strncpy(hdr.maptitle, "Untitled Map by Unknown", 128);
+    hdr.waterlevel = -100000;
+    hdr.maple = 8;
+    hdr.mapprec = 32;
+    hdr.mapllod = 0;
+    hdr.lightmaps = 0;
+    memset(hdr.reserved, 0, sizeof(hdr.reserved));
+    texmru.setsize(0);
+    et->getents().setsize(0);
+    freeocta(worldroot);
+    worldroot = newcubes(F_EMPTY);
+    loopi(4) solidfaces(worldroot[i]);
+    estartmap("base/unnamed");
+    player->o.z += player->eyeheight+1;
 
     if(hdr.worldsize > VVEC_INT_MASK+1) split_world(worldroot, hdr.worldsize>>1);
 
@@ -367,11 +358,26 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     execfile("data/default_map_settings.cfg");
 };
 
-void mapenlarge()  { empty_world(-1, false); };
 void newmap(int i) { empty_world(i, false); };
 
-COMMAND(mapenlarge, ARG_NONE);
+void mapenlarge()
+{ 
+    if(!editmode) return conoutf("mapenlarge only allowed in edit mode");
+    if(hdr.worldsize >= 1<<20) return;
+
+    hdr.worldsize *= 2;
+    cube *c = newcubes(F_EMPTY);
+    c[0].children = worldroot;
+    loopi(3) solidfaces(c[i+1]);
+    worldroot = c;
+
+    if(hdr.worldsize > VVEC_INT_MASK+1) split_world(worldroot, hdr.worldsize>>1);
+
+    allchanged();
+};
+
 COMMAND(newmap, ARG_1INT);
+COMMAND(mapenlarge, ARG_NONE);
 
 void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local)
 {
