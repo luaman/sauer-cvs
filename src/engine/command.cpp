@@ -348,7 +348,7 @@ void addcomplete(char *command, char *dir, char *ext)
         if(hasfiles) *hasfiles = NULL;
         return;
     };
-    int dirlen = strlen(dir);
+    int dirlen = (int)strlen(dir);
     while(dirlen > 0 && (dir[dirlen-1] == '/' || dir[dirlen-1] == '\\'))
         dir[--dirlen] = '\0';
     if(strchr(ext, '*')) ext[0] = '\0';
@@ -369,7 +369,7 @@ COMMANDN(complete, addcomplete, ARG_3STR);
 
 void buildfilenames(filesval *f)
 {
-    int extsize = f->ext ? strlen(f->ext)+1 : 0;
+    int extsize = f->ext ? (int)strlen(f->ext)+1 : 0;
     #if defined(WIN32)
     s_sprintfd(pathname)("%s\\*.%s", f->dir, f->ext ? f->ext : "*");
     WIN32_FIND_DATA	FindFileData;

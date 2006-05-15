@@ -1,3 +1,44 @@
+(can go into docs once we're done... functionality is as close to Cube's as possible with some small changes):
+
+newent trigger N T O
+
+Creates a trigger of type T that when touched, triggers N. Types:
+
+A trigger of type T affecting everything with tag N when triggered in game. The following trigger types are available:
+
+0: switch once       - carrot model                    - dissapears              - rumble sound - (sound alerts the player something has opened)
+1: switch once       - invisible                       - dissapears              - rumble sound - (radius is small, so can only be used in small areas that the player is sure to touch)
+2: switch once       - carrot model spinning very fast - dissapears              - rumble sound - (ends the map and triggers the intermission)
+3: switch once       - invisible                       - dissapears              - no sound     -
+4: switch once       - wall switch model               - animates to green state - rumble sound - (O is orientation, 0..3)
+5: switch many times - floor lever model               - animates                - rumble sound - (O is orientation, 0..3)
+
+Triggering N can currently do 2 things, if available: trigger a mapmodel marked with N (see mapmodel types),
+and execute the alias "level_trigger_N" where N is the trigger number. This means you can add any scripting you can do
+through the available commands, by simply putting aliases of this kind in the level .cfg file. For example, to print a message when the user hits trigger 1:
+
+alias level_trigger_1 "echo A door opened nearby" 
+
+
+
+newent mapmodel N Z T A
+
+(N Z T explained elsewhere) A is the animation type:
+
+0: don't animate, always display just frame 0 like most mapmodels
+1: animate always (loop)
+2: start animated, toggle when triggered
+3: start not animated, toggle when triggered
+4: door: opened by approach, stays open afterwards
+5: door: opened by approach, closes after 5 seconds
+6: door: opened by trigger, closed by trigger. When approached closed, prints to console: "This door is triggered elsewhere".
+
+
+
+
+
+
+
 gilt:
 - LOD: improved lod-remip
 - "editing not in view" sometimes obstructs editing
@@ -15,9 +56,15 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
+- deleted dg textures?
+- trigger/mapmodel types
+- 3d sprites?
+- print out some kind of stack trace upon client crash?
+- ways of doing menu - context sensitive etc
+- make allfaces std key - editing only keys?
 - spec skin!
 - add "join team red / blue" menu after connecting to a capture mode game
-- fanatics crash on large list of textures?
+- fanatics crash on large list of textures? - presumably fixed?
 - report to ATI: float vs short issue
 - font black outlines
 - kurt map bases above eachother
@@ -46,6 +93,11 @@ aard (e = eihrul (or gilt) could do it):
 - refactor octarender.cpp & others
 - make sure correct CVS files are flagged as binary? | switch to SVN?
 
+[22:28] <Nieb> http://www.snieb.com/dg_blood_01.png
+[22:28] <Nieb> http://www.snieb.com/dg_blood_01.png
+[22:28] <Nieb> http://www.snieb.com/dg_blood_02.png
+[22:28] <Nieb> http://www.snieb.com/dg_blood_03.png
+
 - fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
@@ -72,6 +124,8 @@ aard (e = eihrul (or gilt) could do it):
 - add hidden ID to your name so that you can claim nicknames on a server?
 
 - experiment with physics speedup features
+
+- allow cubes to be marked as "curved", so we can make large landscape chunks look more smooth, octagon towers look round etc, as a closeup LOD level?
 
 - make 3rd person weapons show... how to make an axe swing rather than go back and forth?
 - better attack anim? with weapon maybe | add vwep?

@@ -301,6 +301,7 @@ struct weaponstate
     {
         playsound(guns[gun].sound, d==player1 ? NULL : &d->o);
         int pspeed = 25;
+        vec behind = vec(from).sub(to).normalize().mul(4).add(from);
         switch(gun)
         {
             case GUN_FIST:
@@ -311,7 +312,7 @@ struct weaponstate
                 loopi(SGRAYS)
                 {
                     particle_splash(0, 20, 250, sg[i]);
-                    particle_flare(from, sg[i], 300);
+                    particle_flare(behind, sg[i], 300);
                 };
                 break;
             };
@@ -321,7 +322,7 @@ struct weaponstate
             {
                 particle_splash(0, 200, 250, to);
                 //particle_trail(1, 10, from, to);
-                vec lower = from;
+                vec lower = behind;
                 lower.z -= 2;
                 particle_flare(lower, to, 600);
                 break;
