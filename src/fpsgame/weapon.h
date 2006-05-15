@@ -299,9 +299,6 @@ struct weaponstate
 
     void shootv(int gun, vec &from, vec &to, fpsent *d, bool local)     // create visual effect from a shot
     {
-        int *a = 0;
-        *a = 1;
-
         playsound(guns[gun].sound, d==player1 ? NULL : &d->o);
         int pspeed = 25;
         vec behind = vec(from).sub(to).normalize().mul(4).add(from);
