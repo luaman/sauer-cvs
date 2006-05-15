@@ -599,39 +599,11 @@ music name ondone</pre>
     and others "once".<br />
     All types &gt;0 are snapped to 15 degree angles for orientation.&nbsp;<br />
         <br>
-        <br>
         <pre>"monster" N</pre>
         A monster, currently N = 0..4 (see gameplay docs). Monster entities will be
         spawned when in classic single player mode, and will attack you when you come
         into view. yaw is taken from the current camera yaw.
         <br>
-        <br>
-        <pre>"trigger" N T</pre>
-        A trigger of type T affecting all cubes with tag N when triggered in game (see
-        "edittag" on how to set tags on cubes). Triggers are rendered as a carrot
-        which, when "eaten", trigger an event (only once). The following trigger types
-        are available:
-        <br>
-        <br>
-        0: doesn't do anything currently
-        <br>
-        <br>
-        1: invisible: same as 0 but without the carrot. Since the trigger radius is
-        fairly small, be sure to place them in tiny hallways and other areas you are
-        sure the player will pass through.
-        <br>
-        <br>
-        2: end of map marker. Ends the map and triggers the intermission. carrot spins
-        wildly.
-        <br>
-        <br>
-        Scripting: each trigger automatically executes the alias "level_trigger_N"
-        where N is the trigger number. This means you can add any scripting you can do
-        through the available commands, by simply putting aliases of this kind in the
-        level .cfg file. For example, to print a message when the user hits trigger 1:
-        <br>
-        <br>
-        alias level_trigger_1 "echo A door opened nearby"
         <br>
         <br>
         Entities are shown in editmode by blue sparklies, and the closest one is

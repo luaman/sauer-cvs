@@ -16,7 +16,7 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
-- deleted dg textures?
+- try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
 - trigger/mapmodel types
 - 3d sprites?
 - print out some kind of stack trace upon client crash?

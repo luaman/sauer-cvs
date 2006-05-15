@@ -517,7 +517,7 @@ void initserver(bool dedicated)
     if(!mid) mid = master;
     s_strcpy(masterpath, mid);
     s_strncpy(masterbase, master, mid-master+1);
-    
+
     if(dedicated)
     {
         ENetAddress address = { ENET_HOST_ANY, sv->serverport() };

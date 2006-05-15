@@ -18,10 +18,9 @@ void cleanup(char *msg)         // single program exit point;
     extern void clear_sound();   clear_sound();
     if(msg)
     {
+        printf(msg);
         #ifdef WIN32
         MessageBox(NULL, msg, "sauerbraten fatal error", MB_OK|MB_SYSTEMMODAL);
-        #else
-        printf(msg);
         #endif
     };
     SDL_Quit();
@@ -243,12 +242,41 @@ void limitfps(int &millis, int curmillis)
     };
 };
 
+#if defined(WIN32) && !defined(_DEBUG)
+void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
+{
+    EXCEPTION_RECORD *er = ep->ExceptionRecord;
+    CONTEXT *context = ep->ContextRecord;
+    string out, t;
+    s_sprintf(out)("Sauerbraten Win32 Exception: 0x%x [0x%x]\n\n", er->ExceptionCode, er->ExceptionCode==EXCEPTION_ACCESS_VIOLATION ? er->ExceptionInformation[1] : -1);
+    STACKFRAME sf = {{context->Eip, 0, AddrModeFlat}, {}, {context->Ebp, 0, AddrModeFlat}, {context->Esp, 0, AddrModeFlat}, 0};
+    SymInitialize(GetCurrentProcess(), NULL, TRUE);
+
+    while(::StackWalk(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(), GetCurrentThread(), &sf, context, NULL, ::SymFunctionTableAccess, ::SymGetModuleBase, NULL))
+    {
+        struct { IMAGEHLP_SYMBOL sym; string n; } si = { { sizeof( IMAGEHLP_SYMBOL ), 0, 0, 0, sizeof(string) } };
+        IMAGEHLP_LINE li = { sizeof( IMAGEHLP_LINE ) };
+        DWORD off;
+        if(SymGetSymFromAddr(GetCurrentProcess(), (DWORD)sf.AddrPC.Offset, &off, &si.sym) && SymGetLineFromAddr(GetCurrentProcess(), (DWORD)sf.AddrPC.Offset, &off, &li))
+        {
+            char *del = strrchr(li.FileName, '\\');
+            s_sprintf(t)("%s - %s [%d]\n", si.sym.Name, del ? del + 1 : li.FileName, li.LineNumber);
+            s_strcat(out, t);
+        };
+    };
+    fatal(out);
+};
+#endif
+
 bool inbetweenframes = false;
 
 int main(int argc, char **argv)
 {
     #ifdef WIN32
     //atexit((void (__cdecl *)(void))_CrtDumpMemoryLeaks);
+    #ifndef _DEBUG
+    __try {
+    #endif
     #endif
 
     bool dedicated = false;
@@ -417,10 +445,10 @@ int main(int argc, char **argv)
                         if(event.motion.x == scr_w / 2 && event.motion.y == scr_h / 2) break;
                         SDL_WarpMouse(scr_w / 2, scr_h / 2);
                     };
-#ifndef WIN32
+                    #ifndef WIN32
                     if((screen->flags&SDL_FULLSCREEN) || grabmouse)
-#endif
-                        mousemove(event.motion.xrel, event.motion.yrel);
+                    #endif
+                    mousemove(event.motion.xrel, event.motion.yrel);
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
@@ -436,4 +464,8 @@ int main(int argc, char **argv)
     writeservercfg();
     cleanup(NULL);
     return 0;
+
+    #if defined(WIN32) && !defined(_DEBUG)
+    } __except(stackdumper(0, GetExceptionInformation()), EXCEPTION_CONTINUE_SEARCH) { return 0; };
+    #endif
 };
