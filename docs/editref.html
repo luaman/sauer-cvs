@@ -228,8 +228,7 @@ music name ondone</pre>
         looping the song if ondone is missing. Example:
         <br>
         <code>music "songs/music.ogg" [ echo "Song dong playing!" ]</code>
-        <pre>
-N = registersound name V</pre>
+        <pre>N = registersound name V</pre>
         Registers sound "name" with cube (see for example data/sounds.cfg). This
         command returns the sound number N, which is assigned from 0 onwards, and which
         can be used with "sound" command below. if the sound was already registered,
@@ -408,11 +407,197 @@ N = registersound name V</pre>
         creates a teleport connection, teleports are linked to a teledest with the same
         N (of which there should be exactly one). N can be 0..255. The teledest uses
         the current camera yaw.
-        <pre>"mapmodel" N</pre>
-        A map model, i.e. an object rendered as md2 which you collide against but has
-        no behaviour/movement. N determines which mapmodel you want, currently there is
-        only one, a tree (N = 0). yaw of the model is taken from the current camera
-        yaw.
+        <pre>"mapmodel" N Type Trigger Texture</pre>
+        A map model, i.e. an object rendered as md2/md3 which you collide against, cast
+    shadows etc. N determines which mapmodel you want, this depends on "mapmodel" declarations
+    in the maps cfg file. Yaw of the model is taken from the current camera yaw. Type
+    specifies mapmodel behaviour such as triggers, see table below. Trigger is the trigger
+    number, 0 means no trigger. If the mapmodel has a trigger action, the action will
+    execute if this number is triggered. For all other models, this number specifies
+    what trigger to activate, and in addition, the alias "<span style="font-family: Courier New">level_trigger_Trigger</span>"
+    will be executed, where Trigger is substituted accordingly (this allows you to script
+    additional actions upon a trigger, i.e. put this into your map cfg file to print
+    a message: <span style="font-family: Courier New">alias level_trigger_1 "echo A door
+        opened nearby"</span>).<br />
+    <br />
+    <table border="1" cellpadding="2" cellspacing="0">
+        <tr>
+            <td style="width: 38px; height: 13px">
+                Type</td>
+            <td style="width: 61px; height: 13px">
+                Triggerable action</td>
+            <td style="width: 61px; height: 13px">
+                Trigger how often</td>
+            <td style="width: 61px; height: 13px">
+                Sound</td>
+            <td style="width: 486px; height: 13px">
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 13px">
+                0</td>
+            <td style="width: 61px; height: 13px">
+            </td>
+            <td style="width: 61px; height: 13px">
+                N</td>
+            <td style="width: 61px; height: 13px">
+            </td>
+            <td style="width: 486px; height: 13px">
+                don't animate, always display just frame 0</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 11px">
+                1</td>
+            <td style="width: 61px; height: 11px">
+            </td>
+            <td style="width: 61px; height: 11px">
+                N</td>
+            <td style="width: 61px; height: 11px">
+            </td>
+            <td style="width: 486px; height: 11px">
+                animate always (loop)</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 3px">
+                2</td>
+            <td style="width: 61px; height: 3px">
+            </td>
+            <td style="width: 61px; height: 3px">
+                1</td>
+            <td style="width: 61px; height: 3px">
+                rumble</td>
+            <td style="width: 486px; height: 3px">
+                animate once when touched for the first time only (best for switches, use switch/lever
+                models)</td>
+        </tr>
+        <tr>
+            <td style="width: 38px;">
+                3</td>
+            <td style="width: 61px;">
+            </td>
+            <td style="width: 61px;">
+                N</td>
+            <td style="width: 61px;">
+                rumble</td>
+            <td style="width: 486px;">
+                animate when touched every time</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 12px">
+                4</td>
+            <td style="width: 61px; height: 12px">
+                toggle</td>
+            <td style="width: 61px; height: 12px">
+                0</td>
+            <td style="width: 61px; height: 12px">
+            </td>
+            <td style="width: 486px; height: 12px">
+                start animated</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 12px">
+                5</td>
+            <td style="width: 61px; height: 12px">
+                toggle</td>
+            <td style="width: 61px; height: 12px">
+                0</td>
+            <td style="width: 61px; height: 12px">
+            </td>
+            <td style="width: 486px; height: 12px">
+                start not animated, toggle when triggered</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 13px">
+                6</td>
+            <td style="width: 61px; height: 13px">
+            </td>
+            <td style="width: 61px; height: 13px">
+                1</td>
+            <td style="width: 61px; height: 13px">
+                door?</td>
+            <td style="width: 486px; height: 13px">
+                door: opened by approach, stays open afterwards (use door specific models)</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 13px">
+                7</td>
+            <td style="width: 61px; height: 13px">
+            </td>
+            <td style="width: 61px; height: 13px">
+                N</td>
+            <td style="width: 61px; height: 13px">
+                door?</td>
+            <td style="width: 486px; height: 13px">
+                door: opened by approach, closes after 5 seconds</td>
+        </tr>
+        <tr>
+            <td style="width: 38px">
+                8</td>
+            <td style="width: 61px">
+                open/close</td>
+            <td style="width: 61px">
+                0/N</td>
+            <td style="width: 61px">
+            </td>
+            <td style="width: 486px">
+                door: trigger operated. When approached closed, prints to console: "This door is
+                triggered elsewhere".</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 13px">
+                9</td>
+            <td style="width: 61px; height: 13px">
+            </td>
+            <td style="width: 61px; height: 13px">
+                1</td>
+            <td style="width: 61px; height: 13px">
+                rumble</td>
+            <td style="width: 486px; height: 13px">
+                invisible</td>
+        </tr>
+        <tr>
+            <td style="width: 38px">
+                10</td>
+            <td style="width: 61px">
+            </td>
+            <td style="width: 61px">
+                1</td>
+            <td style="width: 61px">
+            </td>
+            <td style="width: 486px">
+                invisible</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 13px">
+                11</td>
+            <td style="width: 61px; height: 13px">
+            </td>
+            <td style="width: 61px; height: 13px">
+                1</td>
+            <td style="width: 61px; height: 13px">
+                end?</td>
+            <td style="width: 486px; height: 13px">
+                Animate once when touched, END LEVEL</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 13px">
+                12</td>
+            <td style="width: 61px; height: 13px">
+            </td>
+            <td style="width: 61px; height: 13px">
+                1</td>
+            <td style="width: 61px; height: 13px">
+                rumble</td>
+            <td style="width: 486px; height: 13px">
+                Animate once when touched, become invisible after (good for triggers that look more
+                like pickups, such as the carrot).</td>
+        </tr>
+    </table>
+    <br />
+    Be careful when using "switch many" for thing that affect gameplay, such as opening
+    doors, as it can be confusing. Best is to reserve a particular model to mean "many"
+    and others "once".<br />
+    All types &gt;0 are snapped to 15 degree angles for orientation.&nbsp;<br />
         <br>
         <br>
         <pre>"monster" N</pre>
