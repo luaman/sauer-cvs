@@ -112,8 +112,8 @@ void bar(float bar, int o, float r, float g, float b)
         int side = 50;
         glColor3f(r, g, b);
         glVertex2f(side,                      o*FONTH);
-        glVertex2f(bar*(scr_w*4-2*side)+side, o*FONTH);
-        glVertex2f(bar*(scr_w*4-2*side)+side, (o+2)*FONTH);
+        glVertex2f(bar*(scr_w*3-2*side)+side, o*FONTH);
+        glVertex2f(bar*(scr_w*3-2*side)+side, (o+2)*FONTH);
         glVertex2f(side,                      (o+2)*FONTH);
 };
 
