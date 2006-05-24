@@ -456,6 +456,14 @@ COMMANDN(redo, editredo, ARG_NONE);
 
 ///////////// height maps ////////////////
 
+void pushside(cube &c, int d, int x, int y, int z)
+{
+    ivec a;
+    getcubevector(c, d, x, y, z, a);
+    a[R[d]] = 8 - a[R[d]];
+    setcubevector(c, d, x, y, z, a);
+};
+
 void setheightmap()
 {
     int d = dimension(sel.orient);
@@ -469,7 +477,13 @@ void setheightmap()
         solidfaces(c);
         loopi(2) loopj(2)
         {
-            int e = max(0, min(8, hmap[x+i+(y+j)*w] - (h-z-1)*8));
+            int e = min(8, hmap[x+i+(y+j)*w] - (h-z-1)*8);
+            if(e<0)
+            {
+                e=0;
+                pushside(c, d, i, j, 0);
+                pushside(c, d, i, j, 1);
+            };
             edgeset(cubeedge(c, d, i, j), dc, dc ? e : 8-e);
         };
 
@@ -494,6 +508,8 @@ void cubifyheightmap()     // pull up heighfields to where they don't cross cube
                 int best = 0xFFFF;
                 loopi(4) if(*o[i]<best) best = *o[i];
                 int bottom = (best&(~7))+8;
+                if((*o[0]==*o[3] && *o[0]==bottom) ||
+                   (*o[1]==*o[2] && *o[1]==bottom)) bottom += 8;
                 loopj(4) if(*o[j]>bottom) { *o[j] = bottom; changed = true; };
             };
         };
@@ -571,48 +587,46 @@ void brushvert(int x, int y, int v)
 int getxcursor() { int d = dimension(sel.orient); return (cur[R[d]] - sel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0); };
 int getycursor() { int d = dimension(sel.orient); return (cur[C[d]] - sel.o[C[d]]) / sel.grid + (sel.corner&2 ? 1 : 0); };
 
-void genbrush()
+void copybrush()
 {
     if(hmap == NULL) return;
-    int d = dimension(sel.orient);
-    int w = sel.s[R[d]] + 1;
-    int h = sel.s[D[d]];
-    if(w>=MAXBRUSH || h>=MAXBRUSH) return conoutf("Selection is too big to generate brush");
-
+    int d, dc, w, l, lo, hi, himax; getlimits(d, dc, w, l, lo, hi, himax);
+    if(w>=MAXBRUSH || l>=MAXBRUSH) return conoutf("Selection is too big to generate brush");
     clearbrush();
-    int b[MAXBRUSH*MAXBRUSH];
-    loopi(MAXBRUSH*MAXBRUSH) b[i] = 0;
-    heightmapper(b, d, dimcoord(sel.orient), MAXBRUSH, h);
-    loop(x, w) loop(y, sel.s[C[d]]+1)
-    {
-        brush[x][y] = 8*h - b[x+y*MAXBRUSH];
-    };
+    loop(x, w) loop(y, l)
+        brush[x][y] = hi - hmap[x+y*w];
     brushx = max(0, min(MAXBRUSH, getxcursor()));
     brushy = max(0, min(MAXBRUSH, getycursor()));
 };
 
-void printbrush(const char *name)
+void savebrush(const char *name)
 {
-    printf("alias brush_xxx [\n  alias brushname ");
-    printf("\"%s\"\n  clearbrush\n  ", name);
-    printf("brushhandle %d %d\n", brushx, brushy);
+    FILE *f = fopen("mybrushes.cfg", "a");
+    if(!f) return;
+    execute("alias brushmax (+ $brushmax 1)");
+    fprintf(f, "alias brushmax %s\n", getalias("brushmax"));
+    fprintf(f, "alias brush_%s [\n  alias brushname ", getalias("brushmax"));
+    fprintf(f, "\"%s\"\n  clearbrush\n  ", name);
+    fprintf(f, "brushhandle %d %d\n", brushx, brushy);
     loop(y, MAXBRUSH)
     {
         int last = 0;
         loop(x, MAXBRUSH) if(brush[x][y]!=0) last = x+1;
         if(last<=0) continue;
-        printf("  bv %d %d \"", y, last);
+        fprintf(f, "  bv %d %d \"", y, last);
         loop(x, last)
-            printf("%d ", brush[x][y]);
-        printf("\"\n");
+            fprintf(f, "%d ", brush[x][y]);
+        fprintf(f, "\"\n");
     };
-    printf("]\n");
+    fprintf(f, "]\n\n");
+    conoutf("Brush \"%s\" saved", name);
+    fclose(f);
 };
 
 COMMAND(clearbrush, ARG_NONE);
 COMMAND(brushvert, ARG_3INT);
-COMMAND(genbrush, ARG_NONE);
-COMMAND(printbrush, ARG_1STR);
+COMMAND(copybrush, ARG_NONE);
+COMMAND(savebrush, ARG_1STR);
 
 void edithmap(int dir)
 {

@@ -358,6 +358,7 @@ int main(int argc, char **argv)
     exec("data/menus.cfg");
     exec("data/sounds.cfg");
     exec("data/brush.cfg");
+    execfile("mybrushes.cfg");
     exec("servers.cfg");
     if(!execfile("config.cfg")) exec("data/defaults.cfg");
     exec("autoexec.cfg");
