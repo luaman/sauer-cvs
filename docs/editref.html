@@ -47,15 +47,14 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         Along with the 2D map, all brushes also have a handle. This handle is a reference
         point on the 2D map which defines where the brush is relative to the editing cursor.
         These two variables define the brush handle's coordinates.
-        <pre>genbrush</pre>
+        <pre>copybrush</pre>
         This command [default K] copies the current heightmap mode selection and
         saves it as a new brush. The current location of the cursor will turn into the
         new handle of the brush.
-        <pre>printbrush name</pre>
-        This will printout to the standard output the current brush in script format.
-        This script can then be saved to the data/brush.cfg file for example, and used
-        whenever you want. This is usually used after genbrush. The brush can also be named
-        for easy reference later.
+        <pre>savebrush name</pre>
+        This will save the current brush in script format. This script will be saved in 
+		a file called mybrushes.cfg file for example. This is usually used after copybrush.
+		The brush can also be named for easy reference later.
         <pre>selectbrush D</pre>
         This is not an actual engine command, but rather an alias which is defined
         in data/brush.cfg. It is to be used as a modifier [default J], and switches between the
