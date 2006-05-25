@@ -30,9 +30,18 @@ bool havesel = false;
 bool dragging = false;
 
 int *hmap = NULL; // heightmap
+ushort *htex = NULL; // textures for heightmap
+ushort htexture = 0; // single texture for heightmap
+
+void clearheighttexture()
+{
+    if(htex != NULL) delete[] htex;
+    htex = NULL;
+};
 
 void clearheightmap()
 {
+    clearheighttexture();
     if(hmap != NULL) delete[] hmap;
     hmap = NULL;
 };
@@ -487,6 +496,7 @@ void setheightmap()
             edgeset(cubeedge(c, d, i, j), dc, dc ? e : 8-e);
         };
 
+        c.texture[sel.orient] = (htex ? htex[x+y*w] : htexture);
         optiface((uchar *)&c.faces[d], c);
     );
 };
@@ -517,20 +527,6 @@ void cubifyheightmap()     // pull up heighfields to where they don't cross cube
     };
 };
 
-void heightmapper(int *hm, int d, int dc, int w, int h)  // simply take the heighest points
-{
-    loopselxyz(
-        if(c.children) { solidfaces(c); discardchildren(c); };
-        if(isempty(c)) continue;
-        loopi(2) loopj(2)
-        {
-            int a = x+i+(y+j)*w;
-            int e = edgeget(cubeedge(c, d, i, j), dc);
-            hm[a] = max(hm[a], (h-z-1)*8 + (dc ? e : 8-e));
-        };
-    );
-};
-
 void getlimits(int &d, int &dc, int &w, int &l, int &lo, int &hi, int &himax)
 {
     d = dimension(sel.orient);
@@ -549,18 +545,44 @@ void getlimits(int &d, int &dc, int &w, int &l, int &lo, int &hi, int &himax)
     };
 };
 
-void getheightmap()
+void createheightmap()
 {
-    if(noedit() || multiplayer()) return;
     int d, dc, w, l, lo, hi, himax;
     getlimits(d, dc, w, l, lo, hi, himax);
 
     clearheightmap();
     hmap = new int[w*l];
+    htex = new ushort[w*l];
     loop(x, w) loop(y, l)
+    {
         hmap[x+y*w] = lo;
+        htex[x+y*w] = 0;
+    };
 
-    heightmapper(hmap, d, dc, w, hi / 8);
+    int h = hi / 8;
+    loopxyz(sel, sel.grid,
+        if(c.children) { solidfaces(c); discardchildren(c); };
+        if(!htex[x+y*w] && z == sel.s[D[d]]-1) htex[x+y*w] = c.texture[sel.orient];
+        if(isempty(c)) continue;
+        if(!htex[x+y*w]) htex[x+y*w] = c.texture[sel.orient];
+
+        loopi(2) loopj(2)
+        {
+            int a = x+i+(y+j)*w;
+            int e = edgeget(cubeedge(c, d, i, j), dc);
+            e = (h-z-1)*8 + (dc ? e : 8-e);
+            if(e > hmap[a])     // simply take the heighest points
+            {
+                hmap[a] = e;
+            };
+        };
+    );
+};
+
+void getheightmap()
+{
+    if(noedit() || multiplayer()) return;
+    createheightmap();
     cubifyheightmap();
     setheightmap();
 };
@@ -631,7 +653,7 @@ COMMAND(savebrush, ARG_1STR);
 void edithmap(int dir)
 {
     if(multiplayer() || hmap == NULL) return;
-    if(!(lastsel==sel)) getheightmap();
+    if(!(lastsel==sel)) createheightmap();
 
     int d, dc, w, l, lo, hi, himax;
     getlimits(d, dc, w, l, lo, hi, himax);
@@ -866,7 +888,8 @@ void edittex(int dir)
     int i = curtexindex;
     i = i<0 ? 0 : i+dir;
     curtexindex = i = min(max(i, 0), curtexnum-1);
-    int t = lasttex = texmru[i];
+    int t = lasttex = htexture = texmru[i];
+    clearheighttexture();
     mpedittex(t, allfaces, sel, true);
 };
 
