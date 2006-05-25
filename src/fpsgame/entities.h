@@ -190,7 +190,7 @@ struct entities : icliententities
     void pickup(int n, fpsent *d)
     {
         int np = 1;
-        loopv(cl.players) if(cl.players[i]) np++;
+        loopv(cl.players) if(cl.players[i] && cl.players[i]->state!=CS_SPECTATOR) np++;
         np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
         int ammo = np*4;
         switch(ents[n]->type)
