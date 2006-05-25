@@ -252,7 +252,7 @@ struct entities : icliententities
 
     void checkitems()
     {
-        if(editmode) return;
+        if(editmode || cl.cc.spectator) return;
         itemstats[I_HEALTH-I_SHELLS].max = cl.player1->maxhealth;
         vec o = cl.player1->o;
         o.z -= cl.player1->eyeheight;
