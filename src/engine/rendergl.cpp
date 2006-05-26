@@ -259,7 +259,6 @@ Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg
     return t;
 };
 
-
 void cleangl()
 {
     if(qsphere) gluDeleteQuadric(qsphere);
@@ -385,6 +384,52 @@ void drawskybox(int farplane, bool limited)
     glEnable(GL_FOG);
 };
 
+Shader *fsshader = NULL;
+GLuint rendertarget = 0;
+
+void setfullscreenshader(char *name)
+{
+    if(!*name)
+    {
+        fsshader = NULL;
+    }
+    else
+    {
+        Shader *s = lookupshaderbyname(name);
+        if(!s) return conoutf("no such fullscreen shader: %s", name);
+        fsshader = s;
+        if(!rendertarget)
+        {
+            glGenTextures(1, &rendertarget);
+            extern int scr_w, scr_h;
+            void *temp = malloc(scr_w*scr_h*3);
+            createtexture(rendertarget, scr_w, scr_h, temp, true, false, 24);
+            free(temp);
+        };
+        conoutf("now rendering with: %s", name);
+    };
+};
+
+COMMAND(setfullscreenshader, ARG_1STR);
+
+void renderfullscreenshader(int w, int h)
+{
+    if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
+
+    glBindTexture(GL_TEXTURE_2D, rendertarget);
+    //glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
+    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, w, h, 0);
+    ASSERT(glGetError()==GL_NO_ERROR);
+    fsshader->set();
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex3f(-1, -1, 0);
+    glTexCoord2f(1, 0); glVertex3f( 1, -1, 0);
+    glTexCoord2f(1, 1); glVertex3f( 1,  1, 0);
+    glTexCoord2f(0, 1); glVertex3f(-1,  1, 0);
+    glEnd();
+};
+
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
 physent *camera1 = NULL;
@@ -507,6 +552,9 @@ void gl_drawframe(int w, int h, float curfps)
     render_particles(curtime);
 
     glDisable(GL_CULL_FACE);
+
+    renderfullscreenshader(w, h);
+
     glDisable(GL_TEXTURE_2D);
     notextureshader->set();
 

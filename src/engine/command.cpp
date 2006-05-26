@@ -112,7 +112,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
                 continue;
             };
             char *ident = p;
-            while(isalnum(*p)) p++;
+            while(isalnum(*p) || *p=='_') p++;
             c = *p;
             *p = 0;
             char *alias = getalias(ident);
