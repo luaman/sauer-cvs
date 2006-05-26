@@ -37,7 +37,7 @@ md3skin mesh skin_path
     "skin_path" is the path to the texture, its recursive to the location of the md3.cfg.
 
 
-md3anim anim frame numframes loop fps
+md3anim anim frame numframes speed
 
     This assigns a new animation to the last loaded model (md3load).
 
@@ -59,11 +59,10 @@ md3anim anim frame numframes loop fps
 
     "frame" is the frame number the animation starts at.
     "numframes" is the number of frames in the animation.
-    "loop" is currently ignored.
-    "fps" frames per second the animation should run at.
+    "speed" is the relative speed to run the animation at. This is optional and defaults to 100.
 
-    Example: md3anim "jump attack" 131 6 0 15
-        Defines a "jump attack" animation starting at frame 131 with 6 frames and running at 15 frames per second.
+    Example: md3anim "jump attack" 131 6 15
+        Defines a "jump attack" animation starting at frame 131 with 6 frames and running at 15% speed.
 
 
 md3link parent child tag
