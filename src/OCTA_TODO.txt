@@ -26,7 +26,7 @@ aard (e = eihrul (or gilt) could do it):
 - add "join team red / blue" menu after connecting to a capture mode game
 - faster movement
 - more cube map ports?
-- fullscreen postprocessing
+- make more fullscreen postprocessing effects, bloom in particular
 - think about ways to make dynamicly modifying geometry in gameplay make sense
 - fanatics crash on large list of textures? - presumably fixed?
 - report to ATI: float vs short issue

@@ -384,8 +384,9 @@ void drawskybox(int farplane, bool limited)
     glEnable(GL_FOG);
 };
 
-Shader *fsshader = NULL;
-GLuint rendertarget = 0;
+const int NUMSCALE = 7;
+Shader *fsshader = NULL, *scaleshader = NULL;
+GLuint rendertarget[NUMSCALE];
 
 void setfullscreenshader(char *name)
 {
@@ -398,12 +399,24 @@ void setfullscreenshader(char *name)
         Shader *s = lookupshaderbyname(name);
         if(!s) return conoutf("no such fullscreen shader: %s", name);
         fsshader = s;
-        if(!rendertarget)
+        string ssname;
+        s_strcpy(ssname, name);
+        s_strcat(ssname, "_scale");
+        scaleshader = lookupshaderbyname(ssname);
+        static bool rtinit = false;
+        if(!rtinit)
         {
-            glGenTextures(1, &rendertarget);
+            rtinit = true;
+            glGenTextures(NUMSCALE, rendertarget);
             extern int scr_w, scr_h;
-            void *temp = malloc(scr_w*scr_h*3);
-            createtexture(rendertarget, scr_w, scr_h, temp, true, false, 24);
+            int w = scr_w, h = scr_h;
+            void *temp = malloc(w*h*3);
+            loopi(NUMSCALE)
+            {
+                createtexture(rendertarget[i], w, h, temp, true, false, 24); 
+                w /= 2;
+                h /= 2;
+            };
             free(temp);
         };
         conoutf("now rendering with: %s", name);
@@ -412,22 +425,50 @@ void setfullscreenshader(char *name)
 
 COMMAND(setfullscreenshader, ARG_1STR);
 
-void renderfullscreenshader(int w, int h)
+void renderfsquad(int w, int h, Shader *s)
 {
-    if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
-
-    glBindTexture(GL_TEXTURE_2D, rendertarget);
-    //glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, w, h, 0);
-    ASSERT(glGetError()==GL_NO_ERROR);
-    fsshader->set();
-
+    s->set();
+    glViewport(0, 0, w, h);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, -1.0f/w, -1.0f/h, 0, 0);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1,  1.0f/w, -1.0f/h, 0, 0);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, -1.0f/w,  1.0f/h, 0, 0);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3,  1.0f/w,  1.0f/h, 0, 0);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0); glVertex3f(-1, -1, 0);
     glTexCoord2f(1, 0); glVertex3f( 1, -1, 0);
     glTexCoord2f(1, 1); glVertex3f( 1,  1, 0);
     glTexCoord2f(0, 1); glVertex3f(-1,  1, 0);
     glEnd();
+}
+
+void renderfullscreenshader(int w, int h)
+{
+    if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
+    int nw = w, nh = h, n = 0;
+
+    loopi(NUMSCALE)
+    {
+        glBindTexture(GL_TEXTURE_2D, rendertarget[i]);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, nw, nh);
+        if(i>=NUMSCALE-1 || !scaleshader) break;
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, w/nw, w/nw, w/nw, 1);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, n, n, n, 1); n++;
+        renderfsquad(nw /= 2, nh /= 2, scaleshader);
+    };
+
+    loopi(NUMSCALE)
+    {
+        glActiveTexture_(GL_TEXTURE0_ARB+i);
+        glBindTexture(GL_TEXTURE_2D, rendertarget[i]);
+    };
+    renderfsquad(w, h, fsshader);
+
+    glActiveTexture_(GL_TEXTURE0_ARB);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
 };
 
 VAR(thirdperson, 0, 0, 1);
