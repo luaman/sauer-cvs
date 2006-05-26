@@ -41,7 +41,6 @@ struct md3animinfo
 {
     int frame;
     int range;
-    bool loop;
     float speed;
 };
 
@@ -145,13 +144,12 @@ struct md3model
         return false;
     };
 
-    void setanim(int num, int frame, int range, bool loop, float speed)
+    void setanim(int num, int frame, int range, float speed)
     {
         if(!anims) anims = new vector<md3animinfo>[ANIM_MAPMODEL+1];
         md3animinfo &anim = anims[num].add();
         anim.frame = frame;
         anim.range = range;
-        anim.loop = loop;
         anim.speed = speed;
     };
     
@@ -663,14 +661,14 @@ void md3skin(char *objname, char *skin)
     };
 };
 
-void md3anim(char *anim, char *startframe, char *range, char *loop, char *s)
+void md3anim(char *anim, char *startframe, char *range, char *s)
 {
     if(!loadingmd3 || !loadingmd3->md3models.length()) { conoutf("not loading an md3"); return; };
     md3model &mdl = loadingmd3->md3models.last();
     float speed = s[0] ? atof(s) : 100.0f;
     int num = findanim(anim);
     if(num<0) { conoutf("could not find animation %s", anim); return; };
-    mdl.setanim(num, atoi(startframe), atoi(range), atoi(loop)!=0 ? 1:0, speed);
+    mdl.setanim(num, atoi(startframe), atoi(range), speed);
 };
 
 void md3link(char *parentno, char *childno, char *tagname)
