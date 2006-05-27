@@ -174,6 +174,7 @@ void cursorupdate()
     raycubepos(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0) | (passthroughcube ? RAY_PASS : 0) | RAY_SKIPFIRST, gridsize);
 
     lookupcube(int(v.x), int(v.y), int(v.z));
+    int mag = lusize / gridsize;
     if(lusize>gridsize)
     {
         lu.x += ((int)v.x-lu.x)/gridsize*gridsize;
@@ -254,6 +255,7 @@ void cursorupdate()
     sel.corner = (cor[R[d]]-lu[R[d]]/g2)+(cor[C[d]]-lu[C[d]]/g2)*2;
     selchildcount = 0;
     countselchild(worldroot, origin, hdr.worldsize/2);
+    if(mag>1 && selchildcount==1) selchildcount = -mag;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
