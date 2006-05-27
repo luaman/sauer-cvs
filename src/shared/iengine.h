@@ -6,14 +6,14 @@ extern void lightreaching(const vec &target, vec &color, vec &dir, extentity *e 
 enum { RAY_BB = 1, RAY_POLY = 3, RAY_ALPHAPOLY = 7, RAY_CLIPMAT = 16, RAY_SKIPFIRST = 32, RAY_EDITMAT = 64, RAY_SHADOW = 128, RAY_PASS = 256 };
 
 extern float raycube   (const vec &o, vec &ray,           float radius = 0, int mode = RAY_CLIPMAT, int size = 0, extentity *t = 0);
-extern float raycubepos(const vec &o, vec &ray, vec &hit, float radius = 0, int mode = RAY_CLIPMAT, int size = 0); 
+extern float raycubepos(const vec &o, vec &ray, vec &hit, float radius = 0, int mode = RAY_CLIPMAT, int size = 0);
 extern bool isthirdperson();
 
 extern void settexture(const char *name);
 
 // octaedit
 
-enum { EDIT_HEIGHT = 0, EDIT_FACE, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_ROTATE, EDIT_REPLACE };
+enum { EDIT_HEIGHT = 0, EDIT_FACE, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_COPY, EDIT_PASTE, EDIT_ROTATE, EDIT_REPLACE };
 
 struct selinfo
 {
@@ -26,6 +26,9 @@ struct selinfo
     bool operator==(const selinfo &sel) const { return o==sel.o && s==sel.s && grid==sel.grid && orient==sel.orient; };
 };
 
+struct editinfo;
+
+extern void freeeditinfo(editinfo *e);
 extern void cursorupdate();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();
@@ -35,6 +38,8 @@ extern void mpeditface(int dir, int mode, selinfo &sel, bool local);
 extern void mpedittex(int tex, int allfaces, selinfo &sel, bool local);
 extern void mpeditmat(int matid, selinfo &sel, bool local);
 extern void mpflip(selinfo &sel, bool local);
+extern void mpcopy(editinfo *&e, selinfo &sel, bool local);
+extern void mppaste(editinfo *&e, selinfo &sel, bool local);
 extern void mprotate(int cw, selinfo &sel, bool local);
 extern void mpreplacetex(int oldtex, int newtex, int orient, selinfo &sel, bool local);
 

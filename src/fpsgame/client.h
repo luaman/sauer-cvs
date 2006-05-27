@@ -10,7 +10,7 @@ struct clientcom : iclientcom
     string toservermap;
     bool senditemstoserver;     // after a map change, since server doesn't have map data
     int lastping;
-    
+
     bool connected, remote;
     int clientnum;
 
@@ -66,7 +66,7 @@ struct clientcom : iclientcom
         bool allow = !connected || !remote || cl.gamemode==1;
         if(!allow) conoutf("editing in multiplayer requires coopedit mode (1)");
         if(allow && spectator) return false;
-        return allow; 
+        return allow;
     };
 
     int clientnumof(dynent *d)
@@ -78,7 +78,7 @@ struct clientcom : iclientcom
         };
         return -1;
     };
-    
+
     int parseplayer(const char *arg)
     {
         char *end;
@@ -94,7 +94,7 @@ struct clientcom : iclientcom
     };
 
     void kick(const char *arg)
-    { 
+    {
         if(!remote) return;
         int i = parseplayer(arg);
         if(i>=0 && i!=clientnum) addmsg(1, 2, SV_KICK, i);
@@ -125,7 +125,7 @@ struct clientcom : iclientcom
         loopi(num-1) msg.add(va_arg(marker, int));
         va_end(marker);
     };
-    
+
     void sendpacketclient(uchar *&p, bool &reliable, dynent *d)
     {
         bool serveriteminitdone = false;
@@ -211,7 +211,7 @@ struct clientcom : iclientcom
         // update the position of other clients in the game in our world
         // don't care if he's in the scenery or other players,
         // just don't overlap with our client
-        
+
         const float r = player1->radius+d->radius;
         const float dx = player1->o.x-d->o.x;
         const float dy = player1->o.y-d->o.y;
@@ -273,7 +273,7 @@ struct clientcom : iclientcom
                 d->vel.z = getint(p)/DVELF;
                 int physstate = getint(p);
                 d->physstate = physstate & 0x0F;
-                if(physstate&0x10) 
+                if(physstate&0x10)
                 {
                     d->gravity.x = getint(p)/DVELF;
                     d->gravity.y = getint(p)/DVELF;
@@ -282,7 +282,7 @@ struct clientcom : iclientcom
                 else d->gravity = vec(0, 0, 0);
                 int f = getint(p);
                 d->strafe = (f&3)==3 ? -1 : f&3;
-                f >>= 2; 
+                f >>= 2;
                 d->move = (f&3)==3 ? -1 : f&3;
                 int state = (f>>2)&7;
                 if(state==CS_DEAD && d->state!=CS_DEAD) d->lastaction = cl.lastmillis;
@@ -301,22 +301,22 @@ struct clientcom : iclientcom
                 sgetstr(text, p);
                 s_sprintfd(ds)("@%s", &text);
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
-                conoutf("%s:\f %s", d->name, &text); 
+                conoutf("%s:\f %s", d->name, &text);
                 break;
 
-            case SV_MAPCHANGE:     
+            case SV_MAPCHANGE:
                 sgetstr(text, p);
                 changemapserv(text, getint(p));
                 mapchanged = true;
                 break;
-            
+
             case SV_ITEMLIST:
             {
                 int n;
                 if(mapchanged) { senditemstoserver = false; cl.et.resetspawns(); };
-                while((n = getint(p))!=-1) 
-                { 
-                    if(mapchanged) cl.et.setspawn(n, true); 
+                while((n = getint(p))!=-1)
+                {
+                    if(mapchanged) cl.et.setspawn(n, true);
                     getint(p); // type
                 };
                 break;
@@ -341,9 +341,9 @@ struct clientcom : iclientcom
                 }
                 else                    // new client
                 {
-                    c2sinit = false;    // send new players my info again 
+                    c2sinit = false;    // send new players my info again
                     conoutf("connected: %s", &text);
-                }; 
+                };
                 s_strcpy(d->name, text);
                 sgetstr(text, p);
                 s_strcpy(d->team, text);
@@ -357,7 +357,7 @@ struct clientcom : iclientcom
             case SV_CDIS:
                 cn = getint(p);
                 if(cn >= cl.players.length() || !(d = cl.players[cn])) break;
-                conoutf("player %s disconnected", d->name); 
+                conoutf("player %s disconnected", d->name);
                 DELETEP(cl.players[cn]);
                 cleardynentcache();
                 if(currentmaster==cn) currentmaster = -1;
@@ -381,7 +381,7 @@ struct clientcom : iclientcom
                 break;
             };
 
-            case SV_DAMAGE:             
+            case SV_DAMAGE:
             {
                 int target = getint(p);
                 int damage = getint(p);
@@ -480,7 +480,7 @@ struct clientcom : iclientcom
                 int i = getint(p);
                 cl.et.setspawn(i, true);
                 if(i>=cl.et.ents.length()) break;
-                playsound(S_ITEMSPAWN, &cl.et.ents[i]->o); 
+                playsound(S_ITEMSPAWN, &cl.et.ents[i]->o);
                 char *name = cl.et.itemname(i);
                 if(name) particle_text(cl.et.ents[i]->o, name, 9);
                 break;
@@ -489,12 +489,14 @@ struct clientcom : iclientcom
             case SV_ITEMACC:            // server acknowledges that I picked up this item
                 cl.et.realpickup(getint(p), player1);
                 break;
-            
+
             case SV_EDITH:              // coop editing messages
-            case SV_EDITF: 
-            case SV_EDITT: 
-            case SV_EDITM: 
+            case SV_EDITF:
+            case SV_EDITT:
+            case SV_EDITM:
             case SV_FLIP:
+            case SV_COPY:
+            case SV_PASTE:
             case SV_ROTATE:
             case SV_REPLACE:
             {
@@ -507,11 +509,13 @@ struct clientcom : iclientcom
                 int dir, mode, tex, newtex, orient, mat, allfaces;
                 switch(type)
                 {
-                    case SV_EDITH: dir = getint(p); mode = getint(p); mpeditheight(dir, mode, sel, false); break; 
+                    case SV_EDITH: dir = getint(p); mode = getint(p); mpeditheight(dir, mode, sel, false); break;
                     case SV_EDITF: dir = getint(p); mode = getint(p); mpeditface(dir, mode, sel, false); break;
                     case SV_EDITT: tex = getint(p); allfaces = getint(p); mpedittex(tex, allfaces, sel, false); break;
-                    case SV_EDITM: mat = getint(p); mpeditmat(mat, sel, false); break; 
+                    case SV_EDITM: mat = getint(p); mpeditmat(mat, sel, false); break;
                     case SV_FLIP: mpflip(sel, false); break;
+                    case SV_COPY: if(d) mpcopy(d->edit, sel, false); break;
+                    case SV_PASTE:if(d) mppaste(d->edit, sel, false); break;
                     case SV_ROTATE: dir = getint(p); mprotate(dir, sel, false); break;
                     case SV_REPLACE: tex = getint(p); newtex = getint(p); orient = getint(p); mpreplacetex(tex, newtex, orient, sel, false); break;
                 };
@@ -523,12 +527,12 @@ struct clientcom : iclientcom
                 float x = getint(p)/DMF, y = getint(p)/DMF, z = getint(p)/DMF;
                 int type = getint(p);
                 int attr1 = getint(p), attr2 = getint(p), attr3 = getint(p), attr4 = getint(p);
-                
+
                 mpeditent(i, vec(x, y, z), type, attr1, attr2, attr3, attr4, false);
                 break;
             };
 
-            case SV_PONG: 
+            case SV_PONG:
                 addmsg(0, 2, SV_CLIENTPING, player1->ping = (player1->ping*5+cl.lastmillis-getint(p))/6);
                 break;
 
@@ -548,11 +552,11 @@ struct clientcom : iclientcom
                 sgetstr(text, p);
                 conoutf("%s", text);
                 break;
-                
+
             case SV_CURRENTMASTER:
                 currentmaster = getint(p);
                 break;
-                
+
             case SV_PING:
             case SV_MASTERMODE:
             case SV_KICK:

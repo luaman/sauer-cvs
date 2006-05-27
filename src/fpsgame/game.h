@@ -45,12 +45,14 @@ struct fpsent : dynent
     bool attacking;
     int ammo[NUMGUNS];
     int frags;
-    
+    editinfo *edit;
+
     string name, team, info;
-    
-    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), maxhealth(100), lastpain(0), frags(0)
+
+    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), maxhealth(100), lastpain(0), frags(0), edit(NULL)
                { name[0] = team[0] = info[0] = 0; respawn(); };
-    
+    ~fpsent() { if(edit) freeeditinfo(edit); };
+
     void respawn()
     {
         reset();
@@ -59,7 +61,7 @@ struct fpsent : dynent
         armourtype = A_BLUE;
         quadmillis = gunwait = lastaction = 0;
         lastattackgun = gunselect = GUN_PISTOL;
-        attacking = false; 
+        attacking = false;
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
     };
@@ -116,9 +118,9 @@ enum
     SV_MAPCHANGE, SV_ITEMSPAWN, SV_ITEMPICKUP, SV_DENIED,
     SV_PING, SV_PONG, SV_CLIENTPING, SV_GAMEMODE,
     SV_TIMEUP, SV_MAPRELOAD, SV_ITEMACC,
-    SV_SERVMSG, SV_ITEMLIST, SV_RESUME, 
-    SV_EDITENT, SV_EDITH, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_ROTATE, SV_REPLACE,
-    SV_MASTERMODE, SV_KICK, SV_CURRENTMASTER, SV_SPECTATOR, 
+    SV_SERVMSG, SV_ITEMLIST, SV_RESUME,
+    SV_EDITENT, SV_EDITH, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_COPY, SV_PASTE, SV_ROTATE, SV_REPLACE,
+    SV_MASTERMODE, SV_KICK, SV_CURRENTMASTER, SV_SPECTATOR,
     SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO,
 };
 

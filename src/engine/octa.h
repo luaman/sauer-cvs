@@ -80,9 +80,9 @@ struct octaentities
     octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
 
     bool hasmapmodel(int id) const
-    { 
-        loopv(mapmodels) if(id==mapmodels[i]) return true; 
-        return false; 
+    {
+        loopv(mapmodels) if(id==mapmodels[i]) return true;
+        return false;
     };
 };
 
@@ -112,6 +112,12 @@ struct block3
     block3(const selinfo &sel) : o(sel.o), s(sel.s), grid(sel.grid), orient(sel.orient) {};
     cube *c()           { return (cube *)(this+1); };
     int size()    const { return s.x*s.y*s.z; };
+};
+
+struct editinfo
+{
+	block3 *copy;
+	editinfo() : copy(NULL) {};
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)

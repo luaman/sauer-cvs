@@ -438,25 +438,38 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
 void editundo() { swapundo(undos, redos, "undo"); };
 void editredo() { swapundo(redos, undos, "redo"); };
 
-block3 *copybuf=NULL;
-void copy()
+editinfo *localedit=NULL;
+
+void freeeditinfo(editinfo *e)
 {
-    if(noedit() || multiplayer()) return;
-    if(copybuf) freeblock(copybuf);
+    if(e->copy) freeblock(e->copy);
+    delete e;
+};
+
+void mpcopy(editinfo *&e, selinfo &sel, bool local)
+{
+    if(local) cl->edittrigger(sel, EDIT_COPY);
+    if(e==NULL) e = new editinfo;
+    if(e->copy) freeblock(e->copy);
     forcenextundo();
     makeundo(); // guard against subdivision
-    copybuf = blockcopy(block3(sel), sel.grid);
+    e->copy = blockcopy(block3(sel), sel.grid);
     editundo();
 };
 
-void paste()
+void mppaste(editinfo *&e, selinfo &sel, bool local)
 {
-    if(noedit() || multiplayer() || copybuf==NULL) return;
-    sel.s = copybuf->s;
-    sel.orient = copybuf->orient;
-    cube *s = copybuf->c();
+    if(e==NULL) return;
+    if(e->copy==NULL) return;
+    if(local) cl->edittrigger(sel, EDIT_PASTE);
+    sel.s = e->copy->s;
+    sel.orient = e->copy->orient;
+    cube *s = e->copy->c();
     loopselxyz(pastecube(*s++, c));
 };
+
+void copy()  { if(noedit()) return; mpcopy(localedit, sel, true); };
+void paste() { if(noedit()) return; mppaste(localedit, sel, true); };
 
 COMMAND(copy, ARG_NONE);
 COMMAND(paste, ARG_NONE);
@@ -571,10 +584,7 @@ void createheightmap()
             int a = x+i+(y+j)*w;
             int e = edgeget(cubeedge(c, d, i, j), dc);
             e = (h-z-1)*8 + (dc ? e : 8-e);
-            if(e > hmap[a])     // simply take the heighest points
-            {
-                hmap[a] = e;
-            };
+            hmap[a] = max(hmap[a], e);// simply take the heighest points
         };
     );
 };
@@ -712,13 +722,6 @@ void mpeditheight(int dir, int mode, selinfo &sel, bool local)
     return;
 };
 
-void editheight(int dir, int mode)
-{
-    return;
-};
-
-COMMAND(editheight, ARG_2INT);
-
 void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_FACE, dir, mode);
@@ -748,7 +751,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
             uchar *p = (uchar *)&c.faces[d];
 
             if(mode==2)
-                linkedpush(c, d, sel.corner&1, sel.corner>>1, dc, seldir); // coner command
+                linkedpush(c, d, sel.corner&1, sel.corner>>1, dc, seldir); // corner command
             else
             {
                 loop(mx,2) loop(my,2)                                       // pull/push edges command
@@ -769,7 +772,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
                 uint newbak = c.faces[d];
                 uchar *m = (uchar *)&bak;
                 uchar *n = (uchar *)&newbak;
-                loopk(4) if(n[k] != m[k]) // try to find partial solution
+                loopk(4) if(n[k] != m[k]) // tries to find partial edit that is valid
                 {
                     c.faces[d] = bak;
                     c.edges[d*4+k] = n[k];

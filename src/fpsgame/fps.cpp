@@ -24,13 +24,13 @@ struct fpsclient : igameclient
     #include "entities.h"
     #include "client.h"
     #include "capture.h"
-        
+
     int nextmode, gamemode;         // nextmode becomes gamemode after next map load
     bool intermission;
     int lastmillis;
     string clientmap;
     int arenarespawnwait, arenadetectwait;
-    int spawncycle, fixspawn; 
+    int spawncycle, fixspawn;
     int spawngun1, spawngun2;
 
     fpsent *player1;                // our client
@@ -56,7 +56,7 @@ struct fpsclient : igameclient
 
     iclientcom      *getcom()  { return &cc; };
     icliententities *getents() { return &et; };
-    
+
     char *getclientmap() { return clientmap; };
 
     void rendergame() { fr.rendergame(*this, gamemode); };
@@ -126,7 +126,7 @@ struct fpsclient : igameclient
         loopv(players)
         {
             fpsent *o = players[i];
-            if(!o) continue; 
+            if(!o) continue;
             if(intersect(o, player1->o, worldpos)) return o;
         };
         return NULL;
@@ -179,7 +179,7 @@ struct fpsclient : igameclient
     };
 
     void otherplayers()
-    {   
+    {
         loopv(players) if(players[i])
         {
             const int lagtime = lastmillis-players[i]->lastupdate;
@@ -191,7 +191,7 @@ struct fpsclient : igameclient
             if(lagtime && players[i]->state==CS_ALIVE && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
         };
     };
-        
+
     void updateworld(vec &pos, int curtime, int lm)        // main game update loop
     {
         lastmillis = lm;
@@ -262,12 +262,12 @@ struct fpsclient : igameclient
         entinmap(d, true);
         spawnstate(d);
         d->state = cc.spectator ? CS_SPECTATOR : CS_ALIVE;
-    };  
+    };
 
     void respawn()
     {
         if(player1->state==CS_DEAD)
-        { 
+        {
             player1->attacking = false;
             if(m_capture && lastmillis-player1->lastaction<cpc.RESPAWNSECS*1000)
             {
@@ -457,7 +457,7 @@ struct fpsclient : igameclient
     void drawhudgun()
     {
         if(!hudgun() || editmode || player1->state==CS_SPECTATOR) return;
-        
+
         int rtime = ws.reloadtime(player1->gunselect);
         if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
         {
@@ -487,7 +487,7 @@ struct fpsclient : igameclient
 
     void gameplayhud(int w, int h)
     {
-        glLoadIdentity();    
+        glLoadIdentity();
         glOrtho(0, w*900/h, 900, 0, -1, 1);
         if(player1->state==CS_SPECTATOR)
         {
@@ -498,7 +498,7 @@ struct fpsclient : igameclient
         if(player1->armour) draw_textf("%d", 390, 822, player1->armour);
         draw_textf("%d", 690, 822, player1->ammo[player1->gunselect]);
 
-        glLoadIdentity();    
+        glLoadIdentity();
         glOrtho(0, w*1800/h, 1800, 0, -1, 1);
 
         glDisable(GL_BLEND);
@@ -517,6 +517,8 @@ struct fpsclient : igameclient
         switch(op)
         {
             case EDIT_FLIP:
+            case EDIT_COPY:
+            case EDIT_PASTE:
             {
                 cc.addmsg(1, 14, SV_EDITH + op,
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
