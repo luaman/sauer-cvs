@@ -18,7 +18,7 @@ cube *newcubes(uint face)
         setfaces(*c, face);
         c->surfaces = NULL;
         c->clip = NULL;
-		c->ents = NULL;
+        c->ents = NULL;
         loopl(6)
         {
             c->texture[l] = 2+l;
@@ -49,7 +49,7 @@ void discardchildren(cube &c)
     c.va = NULL;
     freesurfaces(c);
     freeclipplanes(c);
-	freeoctaentities(c);
+    freeoctaentities(c);
     if(c.children)
     {
         freeocta(c.children);
@@ -93,7 +93,7 @@ COMMAND(printcube, ARG_NONE);
 bool isvalidcube(cube &c)
 {
     clipplanes p;
-	genclipplanes(c, 0, 0, 0, 256, p);
+    genclipplanes(c, 0, 0, 0, 256, p);
     loopi(8) // test that cube is convex
     {
         vvec v;
@@ -136,7 +136,7 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
     int size = hdr.worldsize;
     int x = 0, y = 0, z = 0;
     cube *c = worldroot;
-	luperfect = true;
+    luperfect = true;
     for(;;)
     {
         size >>= 1;
@@ -153,7 +153,11 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
             if(isempty(*c))
             {
                 c->children = newcubes(F_EMPTY);
-                loopi(8) loopl(6) c->children[i].texture[l] = c->texture[l];
+                loopi(8)
+                {
+                    loopl(6) c->children[i].texture[l] = c->texture[l];
+                    c->children[i].material = c->material;
+                };
             }
             else if(!subdividecube(*c)) luperfect = false;
         };
@@ -183,8 +187,8 @@ cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
 uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s)
 {
     uchar p = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
-	ivec v(c);
-	v.add(size);
+    ivec v(c);
+    v.add(size);
     if(v.z <= o.z)     p &= 0xF0; // not in a -ve Z octant
     if(v.z >= o.z+s.z) p &= 0x0F; // not in a +ve Z octant
     if(v.y <= o.y)     p &= 0xCC; // not in a -ve Y octant
