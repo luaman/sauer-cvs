@@ -459,8 +459,8 @@ void slopegravity(float g, const vec &slope, vec &gvec)
 void slideagainst(physent *d, vec &dir, const vec &obstacle)
 {
     vec wdir(obstacle), wvel(obstacle);
-    wdir.z = wvel.z = 0.0f;
-    if(obstacle.z < 0.0f && dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
+    wdir.z = wvel.z = d->physstate >= PHYS_SLOPE ? 0.0f : min(obstacle.z, 0.0f);
+//    if(obstacle.z < 0.0f && dir.z > 0.0f) dir.z = d->vel.z = 0.0f;
     wdir.mul(obstacle.dot(dir));
     wvel.mul(obstacle.dot(d->vel));
     dir.sub(wdir);
