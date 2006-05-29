@@ -237,11 +237,11 @@ music name ondone</pre>
         Plays sound N, see data/sounds.cfg for default sounds, and use registersound to
         register your own. for example, <code>sound 0</code> and <code>sound (registersound
             "aard/jump")</code>both play the standard jump sound.
-        <pre>mapmodel R H Z N SH</pre>
+        <pre>mapmodel R H T N SH</pre>
         <P>
             registers a mapmodel that can be placed in maps using <code><font size="2">newent
                     mapmodel</font></code> (see newent). N is the name, R is the square
-            radius, H the height, Z the initial Z-offset above ground, and SH toggles whether the it
+            radius, H the height, T the texture slot to skin the model with (0 for default skin), and SH toggles whether the it
             will cast shadows (not given or 1 casts shadows, 0 has no shadows). The radius R and height
             H define the collision bounding box of the model (if either is 0, players won't collide
             with the mapmodel). Name N is the name of a folder inside packages/models folder, e.g.
@@ -251,7 +251,7 @@ music name ondone</pre>
             <br>
             Example: <code><font size="2">mapmodel 4 32 0 "tree1"</font></code>
             <br>
-            This map model is loaded from packages/models/tree1/. It has a collision box 8x8x32 in size (x=2*R, y=2*R, z=H). It is flat on the ground (Z-offset = 0).
+            This map model is loaded from packages/models/tree1/. It has a collision box 8x8x32 in size (x=2*R, y=2*R, z=H). It uses the model's default skin (texture slot=0).
             It casts shadows (default).</P>
         <PRE>importcube N</PRE>
         <P>imports a cube map (.cgz) and converts it to sauerbraten's map format. N is the
@@ -406,7 +406,7 @@ music name ondone</pre>
         creates a teleport connection, teleports are linked to a teledest with the same
         N (of which there should be exactly one). N can be 0..255. The teledest uses
         the current camera yaw.
-        <pre>"mapmodel" N Type Trigger Texture</pre>
+        <pre>"mapmodel" N Type Trigger</pre>
         A map model, i.e. an object rendered as md2/md3 which you collide against, cast
     shadows etc. N determines which mapmodel you want, this depends on "mapmodel" declarations
     in the maps cfg file. Yaw of the model is taken from the current camera yaw. Type
