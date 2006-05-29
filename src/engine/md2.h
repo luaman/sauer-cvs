@@ -337,14 +337,15 @@ struct md2 : model
         return spheretree;
     };
 
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
+    void render(int animinfo, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
     {
         //                      0              3              6   7   8   9   10        12  13
         //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S
         static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 7,  6, 0, };
         static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  18, 1, 1, };
-        static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14, 15 };
-        assert(anim<=ANIM_MAPMODEL);
+        static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14, 15, 15, 15 };
+        int anim = animinfo&ANIM_INDEX;
+        assert(anim<NUMANIMS);
         animstate ai;
         ai.basetime = basetime;
         if(anims)
@@ -370,6 +371,11 @@ struct md2 : model
             ai.frame = _frame[n];
             ai.range = _range[n];
             ai.speed = speed;
+        };
+        if(animinfo&(ANIM_START|ANIM_END))
+        {
+            if(animinfo&ANIM_END) ai.frame += ai.range-1;
+            ai.range = 1;
         };
         loopi(ai.range) if(!mverts[ai.frame+i]) scaleverts(ai.frame+i);
         if(hasVBO && !vbufGL && ai.frame==0 && ai.range==1) genvar();
@@ -522,7 +528,7 @@ struct md2 : model
 
     void setanim(int num, int frame, int range, float speed)
     {
-        if(!anims) anims = new vector<md2_anim>[ANIM_MAPMODEL+1];
+        if(!anims) anims = new vector<md2_anim>[NUMANIMS];
         md2_anim &anim = anims[num].add();
         anim.frame = frame;
         anim.range = range;

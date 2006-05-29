@@ -146,7 +146,7 @@ struct md3model
 
     void setanim(int num, int frame, int range, float speed)
     {
-        if(!anims) anims = new vector<md3animinfo>[ANIM_MAPMODEL+1];
+        if(!anims) anims = new vector<md3animinfo>[NUMANIMS];
         md3animinfo &anim = anims[num].add();
         anim.frame = frame;
         anim.range = range;
@@ -358,9 +358,10 @@ struct md3model
         return loaded=true;
     };
     
-    void render(int anim, int varseed, float speed, int basetime)
+    void render(int animinfo, int varseed, float speed, int basetime)
     {
         if(meshes.length() <= 0) return;
+        int anim = animinfo&ANIM_INDEX;
         animstate ai;
         ai.basetime = basetime;
         if(anims)
@@ -385,8 +386,13 @@ struct md3model
             ai.range = 1;
             ai.speed = speed;
         };
+        if(animinfo&(ANIM_START|ANIM_END))
+        {
+            if(animinfo&ANIM_END) ai.frame += ai.range-1;
+            ai.range = 1;
+        };
 
-        if(hasVBO && !meshes[0].vbufGL && anim==ANIM_MAPMODEL) genvar();
+        if(hasVBO && !meshes[0].vbufGL && ai.frame==0 && ai.range==1) genvar();
         
         bool isdynent = lastanimswitchtime && previous && current;
         
