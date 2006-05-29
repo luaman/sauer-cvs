@@ -93,9 +93,17 @@ struct md2 : model
 		    fr1 = (int)(time/a.speed);
 		    frac1 = (time-fr1*a.speed)/a.speed;
 		    frac2 = 1-frac1;
-		    fr1 = fr1%a.range+a.frame;
-		    fr2 = fr1+1;
-		    if(fr2>=a.frame+a.range) fr2 = a.frame;
+            if(a.anim&ANIM_LOOP)
+            {
+		        fr1 = fr1%a.range+a.frame;
+		        fr2 = fr1+1;
+		        if(fr2>=a.frame+a.range) fr2 = a.frame;
+            }
+            else
+            {
+                fr1 = min(fr1, a.range-1)+a.frame;
+                fr2 = min(fr1+1, a.frame+a.range-1);
+            };
 		};
     };
 
@@ -104,8 +112,6 @@ struct md2 : model
         int frame, range;
         float speed;
     };
-
-    bool aneq(animstate &a, animstate &o) { return a.frame==o.frame && a.range==o.range && a.basetime==o.basetime && a.speed==o.speed; };
 
     int* glcommands;
     char* frames;
@@ -347,6 +353,7 @@ struct md2 : model
         int anim = animinfo&ANIM_INDEX;
         assert(anim<NUMANIMS);
         animstate ai;
+        ai.anim = animinfo;
         ai.basetime = basetime;
         if(anims)
         {
@@ -383,7 +390,7 @@ struct md2 : model
         if(d)
         {
             if(d->lastanimswitchtime[0]==-1) { d->current[0] = ai; d->lastanimswitchtime[0] = lastmillis-animationinterpolationtime*2; }
-            else if(!aneq(d->current[0],ai))
+            else if(d->current[0] != ai)
             {
                 if(lastmillis-d->lastanimswitchtime[0]>animationinterpolationtime/2) d->prev[0] = d->current[0];
                 d->current[0] = ai;

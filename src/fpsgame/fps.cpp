@@ -465,7 +465,7 @@ struct fpsclient : igameclient
         }
         else
         {
-            drawhudmodel(ANIM_GUNIDLE, 100, 0);
+            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP, 100, 0);
         };
     };
 

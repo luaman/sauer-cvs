@@ -49,14 +49,22 @@ struct md3anpos
     int fr1, fr2;
     float t;
             
-    void setframes(animstate *ai)
+    void setframes(const animstate &ai)
     { 
-	    int time = lastmillis-ai->basetime;
-	    fr1 = (int)(time/ai->speed); // round to full frames
-	    t = (time-fr1*ai->speed)/ai->speed; // progress of the frame, value from 0.0f to 1.0f
-	    fr1 = fr1%ai->range+ai->frame;
-	    fr2 = fr1+1;
-	    if(fr2>=ai->frame+ai->range) fr2 = ai->frame;
+	    int time = lastmillis-ai.basetime;
+	    fr1 = (int)(time/ai.speed); // round to full frames
+	    t = (time-fr1*ai.speed)/ai.speed; // progress of the frame, value from 0.0f to 1.0f
+        if(ai.anim&ANIM_LOOP)
+        {
+            fr1 = fr1%ai.range+ai.frame;
+            fr2 = fr1+1;
+            if(fr2>=ai.frame+ai.range) fr2 = ai.frame;
+        }
+        else
+        {
+            fr1 = min(fr1, ai.range-1)+ai.frame;
+            fr2 = min(fr1+1, ai.frame+ai.range-1);
+        };
 	};
 };
 
@@ -103,17 +111,16 @@ struct md3mesh
 
 struct md3model
 {
+    int index;
     vector<md3mesh> meshes;
     vector<md3animinfo> *anims;
     md3model **links;
     md3frame *frames;
     md3tag *tags;
     int numframes, numtags;
-    int *lastanimswitchtime;
-    animstate *previous, *current;
     bool loaded;
        
-    md3model() : anims(0), links(0), frames(0), tags(0), lastanimswitchtime(0), previous(0), current(0), loaded(false)
+    md3model() : anims(0), links(0), frames(0), tags(0), loaded(false)
     {
     };
     
@@ -131,16 +138,13 @@ struct md3model
         DELETEA(frames);
     };
     
-    bool aneq(animstate &a, animstate &o) { return a.frame==o.frame && a.range==o.range/* && a.basetime==o.basetime && a.speed==o.speed*/; };
-    
     bool link(md3model *link, char *tag)
     {
-        loopi(numtags)
-            if(strcmp(tags[i].name, tag) == 0)
-                {
-                    links[i] = link;
-                    return true;
-                };
+        loopi(numtags) if(!strcmp(tags[i].name, tag))
+        {
+            links[i] = link;
+            return true;
+        };
         return false;
     };
 
@@ -153,14 +157,6 @@ struct md3model
         anim.speed = speed;
     };
     
-    void setanimstate(int *lastanimswitch, animstate *cur, animstate *prev)
-    {
-        if(!lastanimswitch || !cur || !prev) return;
-        lastanimswitchtime = lastanimswitch;
-        current = cur;
-        previous = prev;
-    };
-
     void genvar() // generate vbo's for each mesh
     {   
         vector<ushort> idxs;
@@ -217,8 +213,8 @@ struct md3model
                 tri.a = mesh.vertices[mesh.triangles[j].vertexindices[0]];
                 tri.b = mesh.vertices[mesh.triangles[j].vertexindices[1]];
                 tri.c = mesh.vertices[mesh.triangles[j].vertexindices[2]];
-            }
-        }
+            };
+        };
         return buildspheretree(tris.length(), tris.getbuf());
     };
     
@@ -358,11 +354,12 @@ struct md3model
         return loaded=true;
     };
     
-    void render(int animinfo, int varseed, float speed, int basetime)
+    void render(int animinfo, int varseed, float speed, int basetime, dynent *d)
     {
         if(meshes.length() <= 0) return;
         int anim = animinfo&ANIM_INDEX;
         animstate ai;
+        ai.anim = animinfo;
         ai.basetime = basetime;
         if(anims)
         {
@@ -394,28 +391,28 @@ struct md3model
 
         if(hasVBO && !meshes[0].vbufGL && ai.frame==0 && ai.range==1) genvar();
         
-        bool isdynent = lastanimswitchtime && previous && current;
-        
-        if(isdynent)
+        if(d && index<2)
         {
-            if(*lastanimswitchtime==-1) { *current = ai; *lastanimswitchtime = lastmillis-animationinterpolationtime*2; }
-            else if(!aneq(*current,ai))
+            if(d->lastanimswitchtime[index]==-1) { d->current[index] = ai; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
+            else if(d->current[0] != ai)
             {
-                if(lastmillis-*lastanimswitchtime>animationinterpolationtime/2) *previous = *current;
-                *current = ai;
-                *lastanimswitchtime = lastmillis;
+                if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
+                d->current[index] = ai;
+                d->lastanimswitchtime[index] = lastmillis;
             };
         };
-        
+
         md3anpos prev, cur;
-        cur.setframes(isdynent ? current : &ai);
+        cur.setframes(d && index<2 ? d->current[index] : ai);
         
-        bool doai = isdynent && lastmillis-*lastanimswitchtime<animationinterpolationtime;
-        
-        if(doai) prev.setframes(previous);
         float ai_t;
-        if(doai) ai_t = (lastmillis-*lastanimswitchtime)/(float)animationinterpolationtime;
-        
+        bool doai = d && index<2 && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
+        if(doai)
+        {
+            prev.setframes(d->prev[index]);
+            ai_t = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
+        };
+
         loopv(meshes)
         {            
             md3mesh &mesh = meshes[i];
@@ -515,7 +512,7 @@ struct md3model
         {
             md3model *link = links[i];
             if(!link) continue;
-            GLfloat matrix[16] = {0}; // fixme: un-obfuscate it!
+            GLfloat matrix[16]; // fixme: un-obfuscate it!
             md3tag *tag1 = &tags[cur.fr1*numtags+i];
             md3tag *tag2 = &tags[cur.fr2*numtags+i];
             
@@ -538,7 +535,7 @@ struct md3model
             matrix[15] = 1.0f;
             glPushMatrix();
                 glMultMatrixf(matrix);
-                link->render(anim, varseed, speed, basetime);
+                link->render(anim, varseed, speed, basetime, d);
             glPopMatrix();
         };
         #undef ip_ai_tag
@@ -595,8 +592,7 @@ struct md3 : model
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
         
-        if(md3models.length()==3 && d) loopi(2) md3models[i].setanimstate(&d->lastanimswitchtime[i], &d->current[i], &d->prev[i]);
-        md3models[0].render(anim, varseed, speed, basetime);
+        md3models[0].render(anim, varseed, speed, basetime, d);
         
         glPopMatrix();
     };
@@ -624,7 +620,7 @@ struct md3 : model
         {
             loadingmd3 = NULL;
             md3model &mdl = md3models.add();
-            
+            mdl.index = 0; 
             s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
             if(!mdl.load(path(name1)))
             {
@@ -633,7 +629,7 @@ struct md3 : model
             };
             Texture *skin = loadskin(loadname, pname);
             if(skin!=crosshair) loopv(mdl.meshes) mdl.meshes[i].skin = skin;
-            else printf("could not load model skin for %s", name1);
+            else conoutf("could not load model skin for %s", name1);
         };
         loopv(md3models) md3models[i].scaleverts(scale/4.0f, !i ? &translate : NULL );
         
@@ -648,7 +644,8 @@ void md3load(char *model)
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
     s_sprintfd(filename)("%s/%s", basedir, model);
     md3model &mdl = loadingmd3->md3models.add();
-    if(!mdl.load(path(filename))) printf("could not load %s\n", filename); // ignore failure
+    mdl.index = loadingmd3->md3models.length()-1;
+    if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
 };
 
 void md3skin(char *objname, char *skin)

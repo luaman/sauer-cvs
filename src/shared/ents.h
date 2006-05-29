@@ -30,13 +30,17 @@ struct animstate                                // used for animation blending o
     int anim, frame, range, basetime;
     float speed;
     animstate() : anim(0), frame(0), range(0), basetime(0), speed(100.0f) { };
+
+    bool operator==(const animstate &o) const { return frame==o.frame && range==o.range && basetime==o.basetime && speed==o.speed; };
+    bool operator!=(const animstate &o) const { return frame!=o.frame || range!=o.range || basetime!=o.basetime || speed!=o.speed; };
 };
 
 enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_PAIN, ANIM_IDLE, ANIM_IDLE_ATTACK, ANIM_RUN, ANIM_RUN_ATTACK, ANIM_EDIT, ANIM_LAG, ANIM_JUMP, ANIM_JUMP_ATTACK, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_MAPMODEL, ANIM_TRIGGER, ANIM_RESET_TRIGGER, NUMANIMS };
 
 #define ANIM_INDEX      0xFF
-#define ANIM_START      (1<<8)
-#define ANIM_END        (1<<9)
+#define ANIM_LOOP       (1<<8)
+#define ANIM_START      (1<<9)
+#define ANIM_END        (1<<10)
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING, CS_SPECTATOR };
 
