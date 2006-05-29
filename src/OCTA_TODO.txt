@@ -3,6 +3,7 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
 - finish door/trigger functionality
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
 - water at the edges never waves?
@@ -16,7 +17,9 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
+- use http://developer.apple.com/graphicsimaging/opengl/extensions/ext_texture_rectangle.html
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
+- seperate edit binds?
 - trigger/mapmodel types
 - 3d sprites?
 - print out some kind of stack trace upon client crash?
