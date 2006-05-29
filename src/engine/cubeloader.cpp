@@ -55,20 +55,25 @@ struct cubeloader
 
     void create_ent(c_persistent_entity &ce)
     {
-//        if(ce.type==14) return;    // FIXME
         if(ce.type>=7) ce.type++;  // grenade ammo
         if(ce.type>=8) ce.type++;  // pistol ammo
+        if(ce.type==16) ce.type = ET_MAPMODEL;
+        else if(ce.type>=ET_MAPMODEL && ce.type<16) ce.type++;
         extentity &e = *et->newentity();
         et->getents().add(&e);
         e.type = ce.type;
         e.spawned = false;
         e.inoctanode = false;
-        e.o = vec(ce.x*4+hdr.worldsize/4, ce.y*4+hdr.worldsize/4, ce.z*4+hdr.worldsize/2);
+        e.o = vec(ce.x*4+hdr.worldsize/4, ce.y*4+hdr.worldsize/4, (ce.z+ce.attr3)*4+hdr.worldsize/2);
         e.color[0] = e.color[1] = e.color[2] = 255;
         e.attr1 = ce.attr1;
         e.attr2 = ce.attr2;
-        e.attr3 = ce.attr3;
-        e.attr4 = ce.attr4;
+        if(e.type == ET_MAPMODEL) e.attr3 = e.attr4 = 0;
+        else
+        {
+            e.attr3 = ce.attr3;
+            e.attr4 = ce.attr4;
+        };
         e.attr5 = 0;
     };
 

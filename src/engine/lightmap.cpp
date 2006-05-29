@@ -885,7 +885,7 @@ void lightent(extentity &e, float height)
     {
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(&mmi)
-            height = float((mmi.h ? mmi.h : height) + mmi.zoff + e.attr3);
+            height = float((mmi.h ? mmi.h : height) + e.attr3);
     };
     vec target(e.o.x, e.o.y, e.o.z + height);
     lightreaching(target, e.color, e.dir, &e);

@@ -78,9 +78,9 @@ struct mapmodel
 
 vector<mapmodel> mapmodels;
 
-void addmapmodel(char *rad, char *h, char *zoff, char *name, char *shadow)
+void addmapmodel(char *rad, char *h, char *tex, char *name, char *shadow)
 {
-    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), shadow[0] ? atoi(shadow) : 1 };
+    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(tex), shadow[0] ? atoi(shadow) : 1 };
     s_strcpy(mmi.name, name);
     mapmodel &mm = mapmodels.add();
     mm.info = mmi;

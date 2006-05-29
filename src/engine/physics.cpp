@@ -357,10 +357,8 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
         entity &e = *ents[oc.mapmodels[i]];
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(!&mmi || !mmi.h || !mmi.rad) continue;
-        vec o(e.o);
-        o.z += float(mmi.zoff+e.attr3);
         float radius = float(mmi.rad);
-        if(!rectcollide(d, dir, o, radius, radius, float(mmi.h), 0.0f)) return false;
+        if(!rectcollide(d, dir, e.o, radius, radius, float(mmi.h), 0.0f)) return false;
     };
     return true;
 };

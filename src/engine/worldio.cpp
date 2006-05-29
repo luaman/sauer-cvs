@@ -276,6 +276,11 @@ void load_world(char *mname)        // still supports all map formats that have 
         e.spawned = false;
         e.inoctanode = false;
         et->readent(e);
+        if(hdr.version <= 14 && e.type >= ET_MAPMODEL && e.type <= 16)
+        {
+            if(e.type == 16) e.type = ET_MAPMODEL;
+            else e.type++;
+        };
         if(!insideworld(e.o))
         {
             if(e.type != ET_LIGHT)
@@ -283,6 +288,12 @@ void load_world(char *mname)        // still supports all map formats that have 
                 conoutf("warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
                 //et->getents().pop();
             };
+        };
+        if(hdr.version <= 14 && e.type == ET_MAPMODEL)
+        {
+            e.o.z += e.attr3;
+            if(e.attr4) conoutf("warning: mapmodel ent (index %d) uses texture slot %d", i, e.attr4);
+            e.attr3 = e.attr4 = 0;
         };
     };
 

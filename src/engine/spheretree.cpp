@@ -161,12 +161,9 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi) return false;
     if(mode&RAY_SHADOW && !mmi.shadow) return false;
-    vec eo(e.o);
-    float zoff = float(mmi.zoff+e.attr3);
-    eo.z += zoff;
     float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
     vec yo(o);
-    yo.sub(eo);
+    yo.sub(e.o);
     vec yray(ray);
     if(yaw != 0) yawray(yo, yray, yaw);
     model *m = loadmodel(NULL, e.attr2);

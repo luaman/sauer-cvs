@@ -324,11 +324,11 @@ struct entities : icliententities
     {
         static const char *entnames[] =
         {
-            "none?", "light", "playerstart",
+            "none?", "light", "mapmodel", "playerstart",
             "shells", "bullets", "rockets", "riflerounds", "grenades", "cartridges",
             "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
             "teleport", "teledest",
-            "mapmodel", "monster", "trigger", "jumppad",
+            "monster", "trigger", "jumppad",
             "base",
             "", "", "", "", "",
         };
@@ -341,13 +341,14 @@ struct entities : icliententities
 
     void readent(entity &e)     // read from disk, and init
     {
-        if(getmapversion() <= 10)
+        int ver = getmapversion();
+        if(ver <= 10)
         {
-            if(e.type >= I_GRENADES) e.type++;
+            if(e.type >= 7) e.type++;
         };
-        if(getmapversion() <= 12)
+        if(ver <= 12)
         {
-            if(e.type >= I_CARTRIDGES) e.type++;
+            if(e.type >= 8) e.type++;
         };
     };
 

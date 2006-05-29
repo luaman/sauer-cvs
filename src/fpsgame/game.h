@@ -8,6 +8,7 @@ enum                            // static entity types
 {
     NOTUSED = ET_EMPTY,         // entity slot not in use in map
     LIGHT = ET_LIGHT,           // lightsource, attr1 = radius, attr2 = intensity
+    MAPMODEL = ET_MAPMODEL,     // attr1 = angle, attr2 = idx
     PLAYERSTART,                // attr1 = angle
     I_SHELLS, I_BULLETS, I_ROCKETS, I_ROUNDS, I_GRENADES, I_CARTRIDGES,
     I_HEALTH, I_BOOST,
@@ -15,7 +16,6 @@ enum                            // static entity types
     I_QUAD,
     TELEPORT,                   // attr1 = idx
     TELEDEST,                   // attr1 = angle, attr2 = idx
-    MAPMODEL = ET_MAPMODEL,     // attr1 = angle, attr2 = idx
     MONSTER,                    // attr1 = angle, attr2 = monstertype
     CARROT,                     // attr1 = tag, attr2 = type
     JUMPPAD,                    // attr1 = zpush, attr2 = ypush, attr3 = xpush
@@ -126,5 +126,5 @@ enum
 
 #define SAUERBRATEN_SERVER_PORT 28785
 #define SAUERBRATEN_SERVINFO_PORT 28786
-#define PROTOCOL_VERSION 248            // bump when protocol changes
+#define PROTOCOL_VERSION 249            // bump when protocol changes
 
