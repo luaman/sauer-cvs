@@ -72,7 +72,7 @@ struct entities : icliententities
 
     void trigger(extentity &e)
     {
-        if(e.attr4==29) cl.ms.endsp(false);
+        if(e.attr3==29) cl.ms.endsp(false);
     };
 
     void baseammo(int gun) { cl.player1->ammo[gun] = itemstats[gun-1].add*2; };
