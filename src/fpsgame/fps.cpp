@@ -409,11 +409,6 @@ struct fpsclient : igameclient
         sb.showscores(false);
         intermission = false;
         conoutf("game mode is %s", fpsserver::modestr(gamemode));
-        loopi(256)
-        {
-            s_sprintfd(aliasname)("level_trigger_%d", i);     // can this be done smarter?
-            if(identexists(aliasname)) alias(aliasname, "");
-        };
     };
 
     void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)

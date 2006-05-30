@@ -233,6 +233,7 @@ extern int triggertypes[NUMTRIGGERTYPES];
 
 extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);
+extern void clearleveltriggers();
 
 // lightmap
 extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 = 0, char *text2 = NULL);

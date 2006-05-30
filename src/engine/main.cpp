@@ -217,6 +217,7 @@ void estartmap(char *name)
     pruneundos();
     setvar("wireframe", 0);
     cl->startmap(name);
+    clearleveltriggers();
 };
 
 VAR(maxfps, 5, 200, 500);

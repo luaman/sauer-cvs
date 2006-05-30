@@ -447,6 +447,15 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
     };
 };
 
+void clearleveltriggers()
+{
+    loopi(256)
+    {
+        s_sprintfd(aliasname)("level_trigger_%d", i);     // can this be done smarter?
+        if(identexists(aliasname)) alias(aliasname, "");
+    };
+};
+
 void doleveltrigger(int trigger, char *state)
 {
     s_sprintfd(aliasname)("level_trigger_%d", trigger);
