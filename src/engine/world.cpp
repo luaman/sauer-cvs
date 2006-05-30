@@ -437,7 +437,7 @@ void unlocktriggers(int tag)
     {
         extentity &e = *ents[i]; 
         if(e.type != ET_MAPMODEL || !e.attr3) continue;
-        if(e.attr4 == tag && e.triggerstate == TRIGGER_RESET && checktype(e.attr3, TRIG_LOCKED))
+        if(e.attr4 == tag && e.triggerstate == TRIGGER_RESET && checktriggertype(e.attr3, TRIG_LOCKED))
         {
             e.triggerstate = TRIGGERING;
             e.lasttrigger = lastmillis;
