@@ -439,10 +439,21 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
         if(e.type != ET_MAPMODEL || !e.attr3) continue;
         if(e.attr4 == tag && e.triggerstate == oldstate && checktriggertype(e.attr3, TRIG_LOCKED))
         {
+            if(newstate == TRIGGER_RESETTING && checktriggertype(e.attr3, TRIG_COLLIDE) && overlapsdynent(e.o, 20)) continue;
             e.triggerstate = newstate;
             e.lasttrigger = lastmillis;
             if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
         };
+    };
+};
+
+void doleveltrigger(int trigger, char *state)
+{
+    s_sprintfd(aliasname)("level_trigger_%d", trigger);
+    if(identexists(aliasname))
+    {
+        alias("triggerstate", state);
+        execute(aliasname);
     };
 };
 
@@ -469,17 +480,13 @@ void checktriggers()
                     };
                     if(checktriggertype(e.attr3, TRIG_DISAPPEAR)) e.triggerstate = TRIGGER_DISAPPEARED;
                     else if(e.triggerstate==TRIGGERING && checktriggertype(e.attr3, TRIG_TOGGLE)) e.triggerstate = TRIGGERED;
-                    else
-                    {
-                        e.triggerstate = TRIGGER_RESET;
-                        if(checktriggertype(e.attr3, TRIG_AUTO_RESET|TRIG_MANY|TRIG_LOCKED)) e.lasttrigger = 0;
-                    };
+                    else e.triggerstate = TRIGGER_RESET;
                 };
                 break;
             case TRIGGER_RESET:
                 if(e.lasttrigger)
                 {
-                    if(checktriggertype(e.attr3, TRIG_LOCKED) && e.o.dist(o)-player->radius>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12))
+                    if(checktriggertype(e.attr3, TRIG_AUTO_RESET|TRIG_MANY|TRIG_LOCKED) && e.o.dist(o)-player->radius>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12))
                         e.lasttrigger = 0;
                     break;
                 }
@@ -487,12 +494,7 @@ void checktriggers()
                 else if(checktriggertype(e.attr3, TRIG_LOCKED))
                 {
                     if(!e.attr4) break;
-                    s_sprintfd(aliasname)("level_trigger_%d", e.attr4);
-                    if(identexists(aliasname))
-                    {
-                        alias("triggerstate", "-1");
-                        execute(aliasname);
-                    };
+                    doleveltrigger(e.attr4, "-1");
                     e.lasttrigger = lastmillis;
                     break;
                 };
@@ -500,34 +502,29 @@ void checktriggers()
                 e.lasttrigger = lastmillis; 
                 if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
                 et->trigger(e);
-                if(e.attr4)
-                {
-                    s_sprintfd(aliasname)("level_trigger_%d", e.attr4);
-                    if(identexists(aliasname))
-                    {
-                        alias("triggerstate", "1");
-                        execute(aliasname);
-                    };
-                };
+                if(e.attr4) doleveltrigger(e.attr4, "1");
                 break;
             case TRIGGERED:
-                if(e.o.dist(o)-player->radius<(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12) ? checktriggertype(e.attr3, TRIG_MANY) : (checktriggertype(e.attr3, TRIG_AUTO_RESET) && lastmillis-e.lasttrigger>=6000))
+                if(e.o.dist(o)-player->radius<(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12))
                 {
-                    if(checktriggertype(e.attr3, TRIG_COLLIDE) && overlapsdynent(e.o, 20)) break;
-                    e.triggerstate = TRIGGER_RESETTING;
-                    e.lasttrigger = lastmillis;
-                    if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
-                    et->trigger(e);
-                    if(e.attr4)
-                    {
-                        s_sprintfd(aliasname)("level_trigger_%d", e.attr4);
-                        if(identexists(aliasname))
-                        {
-                            alias("triggerstate", "0");
-                            execute(aliasname);
-                        };
-                    };
-                };
+                    if(e.lasttrigger) break;
+                }
+                else if(checktriggertype(e.attr3, TRIG_AUTO_RESET))
+                {
+                    if(lastmillis-e.lasttrigger<6000) break;
+                }
+                else if(checktriggertype(e.attr3, TRIG_MANY))
+                {
+                    e.lasttrigger = 0;
+                    break;
+                }
+                else break;
+                if(checktriggertype(e.attr3, TRIG_COLLIDE) && overlapsdynent(e.o, 20)) break;
+                e.triggerstate = TRIGGER_RESETTING;
+                e.lasttrigger = lastmillis;
+                if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
+                et->trigger(e);
+                if(e.attr4) doleveltrigger(e.attr4, "0");
                 break;
         };
     };
