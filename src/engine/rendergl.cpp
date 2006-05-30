@@ -300,8 +300,7 @@ COMMAND(texture, ARG_3STR);
 
 Slot &lookuptexture(int slot)
 {
-    if(slot>=slots.length()) return slots[0];
-    Slot &s = slots[slot];
+    Slot &s = slots[slot>=slots.length() ? 0 : slot];
     if(!s.loaded)
     {
         loopv(s.sts)
