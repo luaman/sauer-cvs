@@ -373,7 +373,7 @@ void freeblock(block3 *b)
 struct undoblock { int *g; block3 *b; };
 vector<undoblock> undos;                                // unlimited undo
 vector<undoblock> redos;
-VARP(undomegs, 0, 1, 10);                                // bounded by n megs
+VARP(undomegs, 0, 5, 100);                              // bounded by n megs
 
 void freeundo(undoblock u)
 {
@@ -444,8 +444,10 @@ editinfo *localedit=NULL;
 
 void freeeditinfo(editinfo *e)
 {
+    if(!e) return;
     if(e->copy) freeblock(e->copy);
     delete e;
+    e = NULL;
 };
 
 void mpcopy(editinfo *&e, selinfo &sel, bool local)
@@ -453,10 +455,11 @@ void mpcopy(editinfo *&e, selinfo &sel, bool local)
     if(local) cl->edittrigger(sel, EDIT_COPY);
     if(e==NULL) e = new editinfo;
     if(e->copy) freeblock(e->copy);
-    forcenextundo();
-    makeundo(); // guard against subdivision
+    undoblock u = { selgridmap(), blockcopy(sel, -sel.grid)};  // guard against subdivision
     e->copy = blockcopy(block3(sel), sel.grid);
-    editundo();
+    pasteundo(u);
+    freeundo(u);
+    changed(sel);
 };
 
 void mppaste(editinfo *&e, selinfo &sel, bool local)
