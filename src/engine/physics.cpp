@@ -328,6 +328,21 @@ void updatedynentcache(physent *d)
     };
 };
 
+bool overlapsdynent(const vec &o, float radius)
+{
+    for(int x = int(max(o.x-radius, 0))>>dynentsize, ex = int(min(o.x+radius, hdr.worldsize-1))>>dynentsize; x <= ex; x++)
+    for(int y = int(max(o.y-radius, 0))>>dynentsize, ey = int(min(o.y+radius, hdr.worldsize-1))>>dynentsize; y <= ey; y++)
+    {
+        const vector<physent *> &dynents = checkdynentcache(x, y);
+        loopv(dynents)
+        {
+            physent *d = dynents[i];
+            if(o.dist(d->o)-d->radius < radius) return true;
+        };
+    };
+    return false;
+};
+
 bool plcollide(physent *d, const vec &dir)    // collide with player or monster
 {
     if(d->state != CS_ALIVE) return true;

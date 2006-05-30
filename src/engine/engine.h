@@ -190,6 +190,7 @@ extern void computescreen(char *text);
 // physics
 extern void mousemove(int dx, int dy);
 extern bool pointincube(const clipplanes &p, const vec &v);
+extern bool overlapsdynent(const vec &o, float radius);
 
 // world
 enum
