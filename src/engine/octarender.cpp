@@ -1288,7 +1288,7 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
                 loopv(oe->mapmodels)
                 {
                     extentity &e = *ents[oe->mapmodels[i]];
-                    if(e.visible) continue;
+                    if(e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
                     e.visible = true;
                     ++visible;
                 };
@@ -1334,8 +1334,8 @@ void rendermapmodels()
             bool hasmodels = false;
             loopv(oe->mapmodels)
             {
-                extentity &e = *ents[oe->mapmodels[i]];
-                if(!e.visible) continue;
+                const extentity &e = *ents[oe->mapmodels[i]];
+                if(!e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
                 hasmodels = true;
                 break;
             };
@@ -1362,6 +1362,7 @@ void rendermapmodels()
             loopv(oe->mapmodels)
             {
                 extentity &e = *ents[oe->mapmodels[i]];
+                if(e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED) continue;
                 if(occluded)
                 {
                     ivec bo, br;
@@ -1376,8 +1377,16 @@ void rendermapmodels()
                 } 
                 else if(e.visible)
                 {
+                    int anim = ANIM_MAPMODEL|ANIM_LOOP, basetime = 0;
+                    if(e.attr3) switch(e.triggerstate)
+                    {
+                        case TRIGGER_RESET: anim = ANIM_TRIGGER|ANIM_START; break;
+                        case TRIGGERING: anim = ANIM_TRIGGER; basetime = e.lasttrigger; break;
+                        case TRIGGERED: anim = ANIM_TRIGGER|ANIM_END; break;
+                        case TRIGGER_RESETTING: anim = ANIM_RESET_TRIGGER; basetime = e.lasttrigger; break;
+                    };
                     mapmodelinfo &mmi = getmminfo(e.attr2);
-                    rendermodel(e.color, e.dir, mmi.name, ANIM_MAPMODEL|ANIM_LOOP, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, 0, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
+                    rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
                     e.visible = false;
                 };
             };

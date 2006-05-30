@@ -85,6 +85,15 @@ struct entities : icliententities
         };
     };
 
+    void rumble(const extentity &e)
+    {
+        playsound(S_RUMBLE, &e.o);
+    };
+
+    void trigger(extentity &e)
+    {
+    };
+
     void trigger(int tag, int type, bool savegame)
     {
         if(!tag) return;

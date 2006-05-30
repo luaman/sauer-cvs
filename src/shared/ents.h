@@ -15,12 +15,22 @@ struct entity                                   // persistent map entity
     uchar reserved;
 };
 
+enum
+{
+    TRIGGER_RESET = 0,
+    TRIGGERING,
+    TRIGGERED,
+    TRIGGER_RESETTING,
+    TRIGGER_DISAPPEARED
+};
+
 struct extentity : entity                       // part of the entity that doesn't get saved to disk
 {
-    uchar spawned, inoctanode, visible;        // the only dynamic state of a map entity
+    uchar spawned, inoctanode, visible, triggerstate;        // the only dynamic state of a map entity
     vec color, dir;
+    int lasttrigger;
 
-    extentity() : visible(false) {};
+    extentity() : visible(false), triggerstate(TRIGGER_RESET), lasttrigger(0) {};
 };
 
 //extern vector<extentity *> ents;                // map entities

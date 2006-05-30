@@ -184,7 +184,7 @@ void clear_sound()
 
 VAR(stereo, 0, 1, 1);
 
-void updatechanvol(int chan, vec *loc, int sound)
+void updatechanvol(int chan, const vec *loc, int sound)
 {
     int vol = soundvol, pan = 255/2;
     if(loc)
@@ -209,7 +209,7 @@ void updatechanvol(int chan, vec *loc, int sound)
     #endif
 };  
 
-void newsoundloc(int chan, vec *loc, int sound)
+void newsoundloc(int chan, const vec *loc, int sound)
 {
     ASSERT(chan>=0 && chan<MAXCHAN);
     soundlocs[chan].loc = *loc;
@@ -238,7 +238,7 @@ void updatevol()
 
 int soundsatonce = 0, lastsoundmillis = 0;
 
-void playsound(int n, vec *loc)
+void playsound(int n, const vec *loc)
 {
     if(nosound) return;
     if(!soundvol) return;

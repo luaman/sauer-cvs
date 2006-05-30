@@ -216,6 +216,7 @@ struct fpsclient : igameclient
         {
             moveplayer(player1, 20, true);
             et.checkitems();
+            if(m_classicsp) checktriggers();
         };
         if(cc.clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
     };

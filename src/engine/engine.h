@@ -192,6 +192,23 @@ extern void mousemove(int dx, int dy);
 extern bool pointincube(const clipplanes &p, const vec &v);
 
 // world
+enum
+{   
+    TRIG_COLLIDE    = 1<<0,
+    TRIG_TOGGLE     = 1<<1,
+    TRIG_ONCE       = 0<<2,
+    TRIG_MANY       = 1<<2,
+    TRIG_DISAPPEAR  = 1<<3,
+    TRIG_AUTO_RESET = 1<<4,
+    TRIG_RUMBLE     = 1<<5
+};
+
+#define NUMTRIGGERTYPES 16
+
+extern int triggertypes[NUMTRIGGERTYPES];
+
+#define checktriggertype(type, flag) (triggertypes[(type) & (NUMTRIGGERTYPES-1)] & (flag))
+
 extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);
 

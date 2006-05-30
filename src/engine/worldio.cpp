@@ -261,6 +261,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     };
 
     freeocta(worldroot);
+    worldroot = NULL;
 
     show_out_of_renderloop_progress(0, "loading entities...");
     vector<extentity *> &ents = et->getents();

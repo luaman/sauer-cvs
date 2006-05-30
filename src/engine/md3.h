@@ -535,7 +535,7 @@ struct md3model
             matrix[15] = 1.0f;
             glPushMatrix();
                 glMultMatrixf(matrix);
-                link->render(anim, varseed, speed, basetime, d);
+                link->render(animinfo, varseed, speed, basetime, d);
             glPopMatrix();
         };
         #undef ip_ai_tag

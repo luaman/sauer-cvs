@@ -399,3 +399,84 @@ bool insideworld(const vec &o)
     return true;
 };
 
+int triggertypes[NUMTRIGGERTYPES] =
+{
+    0,
+    TRIG_ONCE,
+    TRIG_RUMBLE,
+    TRIG_TOGGLE,
+    TRIG_TOGGLE | TRIG_RUMBLE,
+    TRIG_MANY,
+    TRIG_MANY | TRIG_RUMBLE, 
+    TRIG_MANY | TRIG_TOGGLE,
+    TRIG_MANY | TRIG_TOGGLE | TRIG_RUMBLE,
+    TRIG_COLLIDE | TRIG_TOGGLE,
+    TRIG_COLLIDE | TRIG_TOGGLE | TRIG_AUTO_RESET,
+    TRIG_DISAPPEAR,
+    TRIG_DISAPPEAR | TRIG_RUMBLE,
+    0, 0, 0 /* reserved */
+};
+
+void checktriggers()
+{
+    if(player->state != CS_ALIVE) return;
+    vec o(player->o);
+    o.z -= player->eyeheight;
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        if(e.type != ET_MAPMODEL || !e.attr3) continue;
+        switch(e.triggerstate)
+        {
+            case TRIGGERING:
+            case TRIGGER_RESETTING:
+                if(lastmillis-e.lasttrigger>=1000) 
+                {
+                    if(checktriggertype(e.attr3, TRIG_DISAPPEAR)) e.triggerstate = TRIGGER_DISAPPEARED;
+                    else if(e.triggerstate==TRIGGERING && checktriggertype(e.attr3, TRIG_TOGGLE)) e.triggerstate = TRIGGERED;
+                    else
+                    {
+                        e.triggerstate = TRIGGER_RESET;
+                        if(checktriggertype(e.attr3, TRIG_AUTO_RESET|TRIG_MANY)) e.lasttrigger = 0;
+                    };
+                };
+                break;
+            case TRIGGER_RESET:
+                if(e.lasttrigger || e.o.dist(o)>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 24 : 12)) break;
+                e.triggerstate = TRIGGERING;
+                e.lasttrigger = lastmillis; 
+                if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
+                et->trigger(e);
+                if(e.attr4)
+                {
+                    s_sprintfd(aliasname)("level_trigger_%d", e.attr4);
+                    if(identexists(aliasname))
+                    {
+                        alias("triggerstate", "1");
+                        execute(aliasname);
+                    };
+                };
+                break;
+            case TRIGGERED:
+                if((e.o.dist(o)<(checktriggertype(e.attr3, TRIG_COLLIDE) ? 24 : 12) && checktriggertype(e.attr3, TRIG_MANY)) || (checktriggertype(e.attr3, TRIG_AUTO_RESET) && lastmillis-e.lasttrigger>=6000))
+                {
+                    e.triggerstate = TRIGGER_RESETTING;
+                    e.lasttrigger = lastmillis;
+                    if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
+                    et->trigger(e);
+                    if(e.attr4)
+                    {
+                        s_sprintfd(aliasname)("level_trigger_%d", e.attr4);
+                        if(identexists(aliasname))
+                        {
+                            alias("triggerstate", "0");
+                            execute(aliasname);
+                        };
+                    };
+                };
+                break;
+        };
+    };
+};
+

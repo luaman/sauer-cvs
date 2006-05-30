@@ -38,6 +38,7 @@ int familysize(cube &c)
 
 void freeocta(cube *c)
 {
+    if(!c) return;
     loopi(8) discardchildren(c[i]);
     delete[] c;
     allocnodes--;

@@ -86,6 +86,7 @@ extern void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int a
 extern int getworldsize();
 extern int getmapversion();
 extern bool insideworld(const vec &o);
+extern void checktriggers();
 
 // main
 struct igame;
@@ -134,7 +135,7 @@ extern void updatephysstate(physent *d);
 extern void cleardynentcache();
 
 // sound
-extern void playsound(int n, vec *loc = 0);
+extern void playsound(int n, const vec *loc = 0);
 extern void initsound();
 
 // rendermodel
