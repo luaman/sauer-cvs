@@ -430,16 +430,16 @@ void resettriggers()
     };
 };
 
-void unlocktriggers(int tag)
+void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGERING)
 {
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
     {
         extentity &e = *ents[i]; 
         if(e.type != ET_MAPMODEL || !e.attr3) continue;
-        if(e.attr4 == tag && e.triggerstate == TRIGGER_RESET && checktriggertype(e.attr3, TRIG_LOCKED))
+        if(e.attr4 == tag && e.triggerstate == oldstate && checktriggertype(e.attr3, TRIG_LOCKED))
         {
-            e.triggerstate = TRIGGERING;
+            e.triggerstate = newstate;
             e.lasttrigger = lastmillis;
         };
     };
@@ -461,7 +461,11 @@ void checktriggers()
             case TRIGGER_RESETTING:
                 if(lastmillis-e.lasttrigger>=1000) 
                 {
-                    if(e.triggerstate == TRIGGERING && e.attr4) unlocktriggers(e.attr4);
+                    if(e.attr4)
+                    {
+                        if(e.triggerstate == TRIGGERING) unlocktriggers(e.attr4);
+                        else unlocktriggers(e.attr4, TRIGGERED, TRIGGER_RESETTING);
+                    };
                     if(checktriggertype(e.attr3, TRIG_DISAPPEAR)) e.triggerstate = TRIGGER_DISAPPEARED;
                     else if(e.triggerstate==TRIGGERING && checktriggertype(e.attr3, TRIG_TOGGLE)) e.triggerstate = TRIGGERED;
                     else
