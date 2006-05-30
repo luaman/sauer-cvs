@@ -410,9 +410,9 @@ int triggertypes[NUMTRIGGERTYPES] =
     TRIG_MANY | TRIG_RUMBLE, 
     TRIG_MANY | TRIG_TOGGLE,
     TRIG_MANY | TRIG_TOGGLE | TRIG_RUMBLE,
-    TRIG_COLLIDE | TRIG_TOGGLE,
-    TRIG_COLLIDE | TRIG_TOGGLE | TRIG_AUTO_RESET,
-    TRIG_COLLIDE | TRIG_TOGGLE | TRIG_LOCKED,
+    TRIG_COLLIDE | TRIG_TOGGLE | TRIG_RUMBLE,
+    TRIG_COLLIDE | TRIG_TOGGLE | TRIG_AUTO_RESET | TRIG_RUMBLE,
+    TRIG_COLLIDE | TRIG_TOGGLE | TRIG_LOCKED | TRIG_RUMBLE,
     TRIG_DISAPPEAR,
     TRIG_DISAPPEAR | TRIG_RUMBLE,
     0, 0 /* reserved */
@@ -441,6 +441,7 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
         {
             e.triggerstate = newstate;
             e.lasttrigger = lastmillis;
+            if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
         };
     };
 };
