@@ -29,6 +29,8 @@ md2anim name frame numframes speed
         jump attack
         gun shoot
         gun idle
+        mapmodel
+        trigger
 
     "frame" is the frame number the animation starts at.
     "numframes" is the number of frames in the animation.
