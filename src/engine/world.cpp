@@ -417,6 +417,18 @@ int triggertypes[NUMTRIGGERTYPES] =
     0, 0, 0 /* reserved */
 };
 
+void resettriggers()
+{
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        if(e.type != ET_MAPMODEL || !e.attr3) continue;
+        e.triggerstate = TRIGGER_RESET;
+        e.lasttrigger = 0;
+    };
+};
+
 void checktriggers()
 {
     if(player->state != CS_ALIVE) return;

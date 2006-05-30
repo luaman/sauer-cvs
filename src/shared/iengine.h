@@ -86,6 +86,7 @@ extern void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int a
 extern int getworldsize();
 extern int getmapversion();
 extern bool insideworld(const vec &o);
+extern void resettriggers();
 extern void checktriggers();
 
 // main

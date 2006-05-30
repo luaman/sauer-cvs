@@ -104,6 +104,11 @@ struct md2 : model
                 fr1 = min(fr1, a.range-1)+a.frame;
                 fr2 = min(fr1+1, a.frame+a.range-1);
             };
+            if(a.anim&ANIM_REVERSE)
+            {
+                fr1 = (a.frame+a.range-1)-(fr1-a.frame);
+                fr2 = (a.frame+a.range-1)-(fr2-a.frame);
+            };
 		};
     };
 
@@ -349,7 +354,7 @@ struct md2 : model
         //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S
         static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 7,  6, 0, };
         static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  18, 1, 1, };
-        static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14, 15, 15, 15 };
+        static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14, 15, 15 };
         int anim = animinfo&ANIM_INDEX;
         assert(anim<NUMANIMS);
         animstate ai;

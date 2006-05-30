@@ -65,6 +65,11 @@ struct md3anpos
             fr1 = min(fr1, ai.range-1)+ai.frame;
             fr2 = min(fr1+1, ai.frame+ai.range-1);
         };
+        if(ai.anim&ANIM_REVERSE)
+        {
+            fr1 = (ai.frame+ai.range-1)-(fr1-ai.frame);
+            fr2 = (ai.frame+ai.range-1)-(fr2-ai.frame);
+        };
 	};
 };
 

@@ -1383,7 +1383,7 @@ void rendermapmodels()
                         case TRIGGER_RESET: anim = ANIM_TRIGGER|ANIM_START; break;
                         case TRIGGERING: anim = ANIM_TRIGGER; basetime = e.lasttrigger; break;
                         case TRIGGERED: anim = ANIM_TRIGGER|ANIM_END; break;
-                        case TRIGGER_RESETTING: anim = ANIM_RESET_TRIGGER; basetime = e.lasttrigger; break;
+                        case TRIGGER_RESETTING: anim = ANIM_TRIGGER|ANIM_REVERSE; basetime = e.lasttrigger; break;
                     };
                     mapmodelinfo &mmi = getmminfo(e.attr2);
                     rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
