@@ -412,20 +412,19 @@ music name ondone</pre>
     shadows etc. N determines which mapmodel you want, this depends on "mapmodel" declarations
     in the maps cfg file. Yaw of the model is taken from the current camera yaw. Type
     specifies mapmodel behaviour such as triggers, see table below. Trigger is the trigger
-    number, 0 means no trigger. If the mapmodel has a trigger action, the action will
-    execute if this number is triggered. For all other models, this number specifies
-    what trigger to activate, and in addition, the alias "<span style="font-family: Courier New">level_trigger_Trigger</span>"
+    number, 0 means no trigger. This number specifies what trigger to activate, and in addition, 
+    the alias "<span style="font-family: Courier New">level_trigger_Trigger</span>"
     will be executed, where Trigger is substituted accordingly (this allows you to script
     additional actions upon a trigger, i.e. put this into your map cfg file to print
     a message: <span style="font-family: Courier New">alias level_trigger_1 "echo A door
-        opened nearby"</span>).<br />
+        opened nearby"</span>). The alias "<span style="font-family: Courier New">triggerstate</span>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.<br />
     <br />
     <table border="1" cellpadding="2" cellspacing="0">
         <tr>
             <td style="width: 38px; height: 13px">
                 Type</td>
             <td style="width: 61px; height: 13px">
-                Triggerable action</td>
+                Trigger states</td>
             <td style="width: 61px; height: 13px">
                 Trigger how often</td>
             <td style="width: 61px; height: 13px">
@@ -439,23 +438,23 @@ music name ondone</pre>
             <td style="width: 61px; height: 13px">
             </td>
             <td style="width: 61px; height: 13px">
-                N</td>
+                0</td>
             <td style="width: 61px; height: 13px">
             </td>
             <td style="width: 486px; height: 13px">
-                don't animate, always display just frame 0</td>
+                loops mapmodel animation</td>
         </tr>
         <tr>
-            <td style="width: 38px; height: 11px">
+            <td style="width: 38px; height: 3px">
                 1</td>
-            <td style="width: 61px; height: 11px">
+            <td style="width: 61px; height: 3px">
             </td>
-            <td style="width: 61px; height: 11px">
-                N</td>
-            <td style="width: 61px; height: 11px">
+            <td style="width: 61px; height: 3px">
+                1</td>
+            <td style="width: 61px; height: 3px">
             </td>
-            <td style="width: 486px; height: 11px">
-                animate always (loop)</td>
+            <td style="width: 486px; height: 3px">
+                do trigger animation when touched for the first time only and return to starting position (best for switches, use switch/lever models)</td>
         </tr>
         <tr>
             <td style="width: 38px; height: 3px">
@@ -467,130 +466,151 @@ music name ondone</pre>
             <td style="width: 61px; height: 3px">
                 rumble</td>
             <td style="width: 486px; height: 3px">
-                animate once when touched for the first time only (best for switches, use switch/lever
-                models)</td>
+                same as above but with sound</td>
         </tr>
         <tr>
             <td style="width: 38px;">
                 3</td>
             <td style="width: 61px;">
-            </td>
+                toggle (0 and 1) </td>
             <td style="width: 61px;">
-                N</td>
+                1</td>
+            <td style="width: 61px;">
+            </td>
+            <td style="width: 486px;">
+                do trigger animation when touched for the first time only and stay in toggled position (best for switches, use switch/lever models)</td>
+        </tr>
+        <tr>
+            <td style="width: 38px;">
+                4</td>
+            <td style="width: 61px;">
+                toggle (0 and 1) </td>
+            <td style="width: 61px;">
+                1</td>
             <td style="width: 61px;">
                 rumble</td>
             <td style="width: 486px;">
-                animate when touched every time</td>
+                same as above but with sound</td>
         </tr>
         <tr>
-            <td style="width: 38px; height: 12px">
-                4</td>
-            <td style="width: 61px; height: 12px">
-                toggle</td>
-            <td style="width: 61px; height: 12px">
-                0</td>
-            <td style="width: 61px; height: 12px">
-            </td>
-            <td style="width: 486px; height: 12px">
-                start animated</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 12px">
+            <td style="width: 38px; height: 3px">
                 5</td>
-            <td style="width: 61px; height: 12px">
-                toggle</td>
-            <td style="width: 61px; height: 12px">
-                0</td>
-            <td style="width: 61px; height: 12px">
+            <td style="width: 61px; height: 3px">
             </td>
-            <td style="width: 486px; height: 12px">
-                start not animated, toggle when triggered</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 13px">
-                6</td>
-            <td style="width: 61px; height: 13px">
-            </td>
-            <td style="width: 61px; height: 13px">
-                1</td>
-            <td style="width: 61px; height: 13px">
-                door?</td>
-            <td style="width: 486px; height: 13px">
-                door: opened by approach, stays open afterwards (use door specific models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 13px">
-                7</td>
-            <td style="width: 61px; height: 13px">
-            </td>
-            <td style="width: 61px; height: 13px">
+            <td style="width: 61px; height: 3px">
                 N</td>
-            <td style="width: 61px; height: 13px">
-                door?</td>
-            <td style="width: 486px; height: 13px">
-                door: opened by approach, closes after 5 seconds</td>
+            <td style="width: 61px; height: 3px">
+            </td>
+            <td style="width: 486px; height: 3px">
+                do trigger animation when touched every time and return to starting position (best for switches, use switch/lever models)</td>
         </tr>
         <tr>
-            <td style="width: 38px">
-                8</td>
-            <td style="width: 61px">
-                open/close</td>
-            <td style="width: 61px">
-                0/N</td>
-            <td style="width: 61px">
+            <td style="width: 38px; height: 3px">
+                6</td>
+            <td style="width: 61px; height: 3px">
             </td>
-            <td style="width: 486px">
-                door: trigger operated. When approached closed, prints to console: "This door is
-                triggered elsewhere".</td>
+            <td style="width: 61px; height: 3px">
+                N</td>
+            <td style="width: 61px; height: 3px">
+                rumble</td>
+            <td style="width: 486px; height: 3px">
+                same as above but with sound</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 3px">
+                7</td>
+            <td style="width: 61px; height: 3px">
+                toggle (0 and 1) </td>
+            <td style="width: 61px; height: 3px">
+                N</td>
+            <td style="width: 61px; height: 3px">
+            </td>
+            <td style="width: 486px; height: 3px">
+                do trigger animation when touched every time and toggle positions (best for reversible switches, use switch/lever models)</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 3px">
+                8</td>
+            <td style="width: 61px; height: 3px">
+                toggle (0 and 1)</td>
+            <td style="width: 61px; height: 3px">
+                N</td>
+            <td style="width: 61px; height: 3px">
+                rumble</td>
+            <td style="width: 486px; height: 3px">
+                same as above but with sound</td>
         </tr>
         <tr>
             <td style="width: 38px; height: 13px">
                 9</td>
             <td style="width: 61px; height: 13px">
-            </td>
+                closed/open (0 and 1)</td>
             <td style="width: 61px; height: 13px">
                 1</td>
             <td style="width: 61px; height: 13px">
-                rumble</td>
+                door?</td>
             <td style="width: 486px; height: 13px">
-                invisible</td>
-        </tr>
-        <tr>
-            <td style="width: 38px">
-                10</td>
-            <td style="width: 61px">
-            </td>
-            <td style="width: 61px">
-                1</td>
-            <td style="width: 61px">
-            </td>
-            <td style="width: 486px">
-                invisible</td>
+                opened by approach first time only, stays open afterwards. Collides while closed. (use door specific models)</td>
         </tr>
         <tr>
             <td style="width: 38px; height: 13px">
-                11</td>
+                10</td>
             <td style="width: 61px; height: 13px">
-            </td>
+                closed/open (0 and 1)</td>
             <td style="width: 61px; height: 13px">
-                1</td>
+                N</td>
             <td style="width: 61px; height: 13px">
-                end?</td>
+                door?</td>
             <td style="width: 486px; height: 13px">
-                Animate once when touched, END LEVEL</td>
+                opened by approach every time, closes after 5 seconds. Collides while closed. (use door specific models)</td>
+        </tr>
+        <tr>
+            <td style="width: 38px">
+                11</td>
+            <td style="width: 61px">
+                locked (-1) </td>
+            <td style="width: 61px">
+                0/N</td>
+            <td style="width: 61px">
+                door?</td>
+            <td style="width: 486px">
+                opened/closed only by associated trigger. When approached while closed, collides and invokes level trigger with triggerstate -1. (use door specific models)</td>
         </tr>
         <tr>
             <td style="width: 38px; height: 13px">
                 12</td>
             <td style="width: 61px; height: 13px">
-            </td>
+                disappear (0)</td>
             <td style="width: 61px; height: 13px">
                 1</td>
             <td style="width: 61px; height: 13px">
-                rumble</td>
+            </td>
             <td style="width: 486px; height: 13px">
-                Animate once when touched, become invisible after (good for triggers that look more
-                like pickups, such as the carrot).</td>
+                do trigger animation once when touched, disappear after (good for triggers that look more like pickups, such as the carrot)</td>
+        </tr>
+        <tr>
+            <td style="width: 38px">
+                13</td>
+            <td style="width: 61px">
+                disappear (0)</td>
+            <td style="width: 61px">
+                1</td>
+            <td style="width: 61px">
+                rumble</td>
+            <td style="width: 486px">
+                same as above but with sound</td>
+        </tr>
+        <tr>
+            <td style="width: 38px; height: 13px">
+                29</td>
+            <td style="width: 61px; height: 13px">
+                disappear (0)</td>
+            <td style="width: 61px; height: 13px">
+                1</td>
+            <td style="width: 61px; height: 13px">
+                end?</td>
+            <td style="width: 486px; height: 13px">
+                FPS specific. END LEVEL</td>
         </tr>
     </table>
     <br />
