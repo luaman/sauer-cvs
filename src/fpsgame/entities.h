@@ -54,6 +54,11 @@ struct entities : icliententities
             };
 
             extentity &e = *ents[i];
+            if(e.type==CARROT)
+            {
+                renderent(e, "carrot", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
+                continue;
+            };
             if(!e.spawned && e.type!=TELEPORT) continue;
             if(e.type<I_SHELLS || e.type>TELEPORT) continue;
             renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
@@ -297,7 +302,7 @@ struct entities : icliententities
             "shells", "bullets", "rockets", "riflerounds", "grenades", "cartridges",
             "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
             "teleport", "teledest",
-            "monster", "trigger", "jumppad",
+            "monster", "carrot", "jumppad",
             "base",
             "", "", "", "", "",
         };
