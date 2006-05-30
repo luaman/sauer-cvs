@@ -472,13 +472,19 @@ void checktriggers()
                     else
                     {
                         e.triggerstate = TRIGGER_RESET;
-                        if(checktriggertype(e.attr3, TRIG_AUTO_RESET|TRIG_MANY)) e.lasttrigger = 0;
+                        if(checktriggertype(e.attr3, TRIG_AUTO_RESET|TRIG_MANY|TRIG_LOCKED)) e.lasttrigger = 0;
                     };
                 };
                 break;
             case TRIGGER_RESET:
-                if(e.lasttrigger || e.o.dist(o)-player->radius>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12)) break;
-                if(checktriggertype(e.attr3, TRIG_LOCKED))
+                if(e.lasttrigger)
+                {
+                    if(checktriggertype(e.attr3, TRIG_LOCKED) && e.o.dist(o)-player->radius>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12))
+                        e.lasttrigger = 0;
+                    break;
+                }
+                else if(e.o.dist(o)-player->radius>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12)) break;
+                else if(checktriggertype(e.attr3, TRIG_LOCKED))
                 {
                     if(!e.attr4) break;
                     s_sprintfd(aliasname)("level_trigger_%d", e.attr4);
