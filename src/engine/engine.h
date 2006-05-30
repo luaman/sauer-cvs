@@ -25,8 +25,9 @@ struct model
     float scale;
     vec translate;
     SphereTree *spheretree;
+    bool masked;
     
-    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), scale(1.0f), translate(0, 0, 0), spheretree(0) {};
+    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), scale(1.0f), translate(0, 0, 0), spheretree(0), masked(false) {};
     virtual ~model() {};
     virtual float boundsphere(int frame, vec &center) = 0;
     virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d) = 0;
@@ -220,7 +221,7 @@ extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 
 // rendermodel
 extern model *loadmodel(const char *name, int i = -1);
 extern int findanim(const char *name);
-extern Texture *loadskin(const char *dir, const char *altdir);
+extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m);
 
 // particles
 extern void particleinit();

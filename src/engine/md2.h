@@ -126,7 +126,7 @@ struct md2 : model
     char *loadname;
     bool loaded;
     
-    Texture *skin;
+    Texture *skin, *masks;
     
     GLuint vbufGL;
     ushort *vbufi;
@@ -518,7 +518,8 @@ struct md2 : model
                 s_sprintf(name1)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
                 if(!load(path(name1))) { delete[] pname; return false; };
             };
-            if((skin = loadskin(loadname, pname)) == crosshair) conoutf("could not load model skin for %s", name1);
+            loadskin(loadname, pname, skin, masks, this);
+            if(skin == crosshair) conoutf("could not load model skin for %s", name1);
             loadingmd2 = this;
             s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
             if(!execfile(name3))
@@ -536,6 +537,12 @@ struct md2 : model
     void setskin(int tex)
     {
         glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : skin)->gl);
+        if(masked)
+        {
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glBindTexture(GL_TEXTURE_2D, masks->gl);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        };
     };
 
     void setanim(int num, int frame, int range, float speed)

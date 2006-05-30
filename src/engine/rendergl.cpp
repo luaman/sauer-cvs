@@ -446,6 +446,7 @@ void renderfullscreenshader(int w, int h)
     if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
+    //glEnable(GL_TEXTURE_RECTANGLE_EXT);
 
     int nw = w, nh = h, n = 0;
 

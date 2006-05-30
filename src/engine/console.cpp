@@ -99,35 +99,41 @@ void renderconsole(int w, int h)                   // render buffer taking into 
 struct keym
 {
      int code;
-     char *name, *action; 
+     char *name, *action, *editaction; 
 
-    ~keym() { DELETEA(name); DELETEA(action); };
+    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); };
 };
 
 vector<keym> keyms;                                 
 
-void keymap(char *code, char *key, char *action)
+void keymap(char *code, char *key)
 {
     keym &km = keyms.add();
     km.code = atoi(code);
     km.name = newstring(key);
-    km.action = newstringbuf(action);
+    km.action = newstringbuf("");
+    km.editaction = newstringbuf("");
 };
 
-COMMAND(keymap, ARG_3STR);
+COMMAND(keymap, ARG_2STR);
 
-void bindkey(char *key, char *action)
+void bindkey(char *key, char *action, bool edit)
 {
     for(char *x = key; *x; x++) *x = toupper(*x);
     loopv(keyms) if(strcmp(keyms[i].name, key)==0)
     {
-        s_strcpy(keyms[i].action, action);
+        if(edit) s_strcpy(keyms[i].editaction, action);
+        else     s_strcpy(keyms[i].action,     action);
         return;
     };
     conoutf("unknown key \"%s\"", key);   
 };
 
-COMMANDN(bind, bindkey, ARG_2STR);
+void bindnorm(char *key, char *action) { bindkey(key, action, false); };
+void bindedit(char *key, char *action) { bindkey(key, action, true);  };
+
+COMMANDN(bind,     bindnorm, ARG_2STR);
+COMMANDN(editbind, bindedit, ARG_2STR);
 
 void saycommand(char *init)                         // turns input to the command line on or off
 {
@@ -303,7 +309,7 @@ void keypress(int code, bool isdown, int cooked)
         loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
         {
             string temp;
-            s_strcpy(temp, keyms[i].action);
+            s_strcpy(temp, editmode && keyms[i].editaction[0] ? keyms[i].editaction: keyms[i].action);
             execute(temp, isdown); 
             return;
         };
@@ -324,6 +330,7 @@ void writebinds(FILE *f)
 {
     loopv(keyms)
     {
-        if(*keyms[i].action) fprintf(f, "bind \"%s\" [%s]\n", keyms[i].name, keyms[i].action);
+        if(*keyms[i].action)     fprintf(f, "bind \"%s\" [%s]\n",     keyms[i].name, keyms[i].action);
+        if(*keyms[i].editaction) fprintf(f, "editbind \"%s\" [%s]\n", keyms[i].name, keyms[i].editaction);
     };
 };

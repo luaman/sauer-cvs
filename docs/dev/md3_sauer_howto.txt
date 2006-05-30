@@ -11,6 +11,7 @@ Go this way if your md3 has no animations (static) and takes only one texture.
 Your md3 files must be located in a directory in packages/models/.
 
 You must provide a skin (either skin.jpg or skin.png) and the md3 itself (tris.md3).
+Optionally you may provide a masks.jpg that holds a specmap in the R channel, a glowmap in the G channel, and a black B channel (future use). The engine will apply it automatically.
 
 If either of these files is not found, Sauerbraten will search the parent directory for them. For example, if for the flags/red model, the tris.md3 is not found in packages/models/flags/red/, then it will look for tris.md3 in packages/models/flags/. This allows the sharing of skins and geometry.
 
@@ -30,11 +31,12 @@ md3load model_path
     "name_path" is the path to the md3 file to load, its recursive to the location of the md3.cfg.
 
 
-md3skin mesh skin_path
+md3skin mesh skin_path masks_path
 
     This loads a texture and assigns it to a mesh of the last loaded model (md3load).
     "mesh" is the name of the mesh you want to assign the texture to.
     "skin_path" is the path to the texture, its recursive to the location of the md3.cfg.
+    The optional "masks_path" sets a texture for spec/glow maps as above.
 
 
 md3anim anim frame numframes speed

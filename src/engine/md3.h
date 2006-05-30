@@ -101,12 +101,12 @@ struct md3mesh
     
     vec2 *uv;
     int numtriangles, numvertices;
-    Texture *skin;
+    Texture *skin, *masks;
     
     GLuint vbufGL;
     ushort *vbufi;
     int vbufi_len;
-    md3mesh() : skin(crosshair), vbufGL(0), vbufi(0) {};
+    md3mesh() : skin(crosshair), masks(crosshair), vbufGL(0), vbufi(0) {};
     ~md3mesh() 
     {
         DELETEA(vbufi);
@@ -431,6 +431,12 @@ struct md3model
             };
 
             glBindTexture(GL_TEXTURE_2D, mesh.skin->gl);
+            if(mesh.masks!=crosshair)
+            {
+                glActiveTexture_(GL_TEXTURE1_ARB);
+                glBindTexture(GL_TEXTURE_2D, mesh.masks->gl);
+                glActiveTexture_(GL_TEXTURE0_ARB);
+            };
             
             if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
             {           
@@ -632,9 +638,14 @@ struct md3 : model
                 s_sprintf(name1)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
                 if(!mdl.load(path(name1))) { delete[] pname; return false; };
             };
-            Texture *skin = loadskin(loadname, pname);
-            if(skin!=crosshair) loopv(mdl.meshes) mdl.meshes[i].skin = skin;
-            else conoutf("could not load model skin for %s", name1);
+            Texture *skin, *masks;
+            loadskin(loadname, pname, skin, masks, this);
+            loopv(mdl.meshes)
+            {
+                mdl.meshes[i].skin  = skin;
+                mdl.meshes[i].masks = masks;
+            };
+            if(skin==crosshair) conoutf("could not load model skin for %s", name1);
         };
         loopv(md3models) md3models[i].scaleverts(scale/4.0f, !i ? &translate : NULL );
         
@@ -653,7 +664,7 @@ void md3load(char *model)
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
 };
 
-void md3skin(char *objname, char *skin)
+void md3skin(char *objname, char *skin, char *masks)
 {
     if(!objname || !skin) return;
     if(!loadingmd3 || !loadingmd3->md3models.length()) { conoutf("not loading an md3"); return; };
@@ -663,8 +674,14 @@ void md3skin(char *objname, char *skin)
         md3mesh *mesh = &mdl.meshes[i];
         if(strcmp(mesh->name, objname) == 0)
         {
-            s_sprintfd(path)("%s/%s", basedir, skin);
-            mesh->skin = textureload(path, 0, false, true, false);
+            s_sprintfd(spath)("%s/%s", basedir, skin);
+            mesh->skin = textureload(spath, 0, false, true, false);
+            if(*masks)
+            {
+                s_sprintfd(mpath)("%s/%s", basedir, masks);
+                mesh->masks = textureload(mpath, 0, false, true, false);
+                loadingmd3->masked = true;
+            };
         };
     };
 };
@@ -688,6 +705,6 @@ void md3link(char *parentno, char *childno, char *tagname)
 };
 
 COMMAND(md3load, ARG_1STR);
-COMMAND(md3skin, ARG_2STR);
+COMMAND(md3skin, ARG_3STR);
 COMMAND(md3anim, ARG_5STR);
 COMMAND(md3link, ARG_3STR);

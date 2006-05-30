@@ -4,6 +4,7 @@ gilt:
 
 eihrul:
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
+- make nearby closed doors render early so that they can contribute to OC?
 - finish door/trigger functionality
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
 - water at the edges never waves?
@@ -17,32 +18,23 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
-- use http://developer.apple.com/graphicsimaging/opengl/extensions/ext_texture_rectangle.html
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
-- seperate edit binds?
-- trigger/mapmodel types
 - 3d sprites?
-- print out some kind of stack trace upon client crash?
 - ways of doing menu - context sensitive etc
-- make allfaces std key - editing only keys?
 - spec skin!
 - add "join team red / blue" menu after connecting to a capture mode game
-- faster movement
-- more cube map ports?
-- make more fullscreen postprocessing effects, bloom in particular
-- think about ways to make dynamicly modifying geometry in gameplay make sense
-- fanatics crash on large list of textures? - presumably fixed?
-- report to ATI: float vs short issue
-- font black outlines
-- kurt map bases above eachother
-- more mapmodels in the menus
 - allow specifying more textures per slot
+- improve bloom
+- maconly? use http://developer.apple.com/graphicsimaging/opengl/extensions/ext_texture_rectangle.html
+- think about ways to make dynamicly modifying geometry in gameplay make sense
+- report to ATI: float vs short issue
+- more cube map ports?
+- faster movement
+- more mapmodels in the menus
 - new SP respawn system
 - play sessions
 - integrate fmodex (to get both panning and stereo ogg on windows?)
 - rpg design doc
-- spec maps
-- doors that work nicely with OC?
 - add PITCH to specular computation
 - update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - can't select last 3 textures in list

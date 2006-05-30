@@ -4,8 +4,11 @@
 #include "engine.h"
 
 VARP(animationinterpolationtime, 0, 150, 1000);
+
 Shader *modelshader = NULL;
 Shader *modelshadernospec = NULL;
+Shader *modelshadermasks = NULL;
+
 model *loadingmodel = NULL;
 
 #include "md2.h"
@@ -168,7 +171,9 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     {
         if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
         if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
-        (m->spec>=0.01f ? modelshader : modelshadernospec)->set();
+        if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
+        
+        (m->masked ? modelshadermasks : (m->spec>=0.01f ? modelshader : modelshadernospec))->set();
     };
     if(renderpath!=R_FIXEDFUNCTION)
     {
@@ -207,9 +212,11 @@ int findanim(const char *name)
     return -1;
 };
 
-Texture *loadskin(const char *dir, const char *altdir) // model skin sharing
+void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m) // model skin sharing
 {
-    Texture *skin;
+    s_sprintfd(maskspath)("packages/models/%s/masks.jpg", dir);
+    masks = textureload(maskspath, 0, false, true, false);
+    if(masks!=crosshair) m->masked = true;
     s_sprintfd(skinpath)("packages/models/%s/skin.jpg", dir);
     #define ifnload if((skin = textureload(skinpath, 0, false, true, false))==crosshair)
     ifnload
@@ -221,9 +228,8 @@ Texture *loadskin(const char *dir, const char *altdir) // model skin sharing
             ifnload                                          
             {
                 strcpy(skinpath+strlen(skinpath)-3, "png");               // and png again
-                ifnload return skin;
+                ifnload return;
             };
         };
     };
-    return skin;
 };

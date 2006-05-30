@@ -72,11 +72,14 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         <br>
         <br>
 		<div>General console commands and configuration</div>
-		<pre>bind K A</pre>
+		<pre>bind K A
+editbind K A
+</pre>
 		Binds key K to commands A (see console language below for what you can put in 
 		A). To find out what key names and their default bindings are, look at 
-		data/keymap.cfg, then add bind commands to your autoexec.cfg.
-		<pre>alias N A</pre>
+		data/keymap.cfg, then add bind commands to your autoexec.cfg. Editbind works much the same way, except
+    now the key is only available in edit mode (if no editbind is defined for a certain
+    key, it will use the normal binding).<pre>alias N A</pre>
 		Binds name N to commands A, after which you can use N as a shortcut for A. You 
 		may re-bind N as often as you like, and bind N again within the execution of A 
 		etc.
@@ -130,8 +133,8 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 		1000.
 		<pre>setfullscreenshader Name</pre>
 		Sets your favourite fullscreen shader. Active permanently once set. Use without name
-		argument to turn it off. Current example shaders: invert, gbr, sobel
-		<pre>screenshot</pre>
+		argument to turn it off. Current example shaders: invert, gbr, sobel, bloom
+    <pre>screenshot</pre>
 		Writes out "screenshotN.bmp", where N is the number of milliseconds since cube 
 		was launched (default key = F12).
 		<pre>musicvol n

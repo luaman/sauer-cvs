@@ -4,6 +4,7 @@ MD2
 Your md2 files must be located in a directory in packages/models/.
 
 You must provide a skin (either skin.jpg or skin.png) and the md2 itself (tris.md2).
+Optionally you may provide a masks.jpg that holds a specmap in the R channel, a glowmap in the G channel, and a black B channel (future use). The engine will apply it automatically.
 
 If either of these files is not found, Sauerbraten will search the parent directory for them. For example, if for the flags/red model, the tris.md2 is not found in packages/models/flags/red/, then it will look for tris.md2 in packages/models/flags/. This allows the sharing of skins and geometry.
 
