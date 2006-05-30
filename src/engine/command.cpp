@@ -14,12 +14,33 @@ typedef hashtable<char *, ident> identtable;
 
 identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
+bool overrideidents = false;
+
 void clear_command()
 {
     enumerate(*idents, ident, i, if(i._type==ID_ALIAS) { DELETEA(i._name); DELETEA(i._action); });
     if(idents) idents->clear();
 };
 
+void clearoverrides()
+{
+    enumerate(*idents, ident, i,
+        if(i._override!=NO_OVERRIDE)
+        {
+            switch(i._type)
+            {
+                case ID_ALIAS: 
+                    if(i._action[0]) i._action = exchangestr(i._action, ""); 
+                    break;
+                case ID_VAR: 
+                    *i._storage = i._override;
+                    if(i._fun) ((void (__cdecl *)())i._fun)();
+                    break;
+            };
+            i._override = NO_OVERRIDE;
+        });
+};
+                
 void alias(char *name, char *action)
 {
     ident *b = idents->access(name);
@@ -27,12 +48,15 @@ void alias(char *name, char *action)
     {
         name = newstring(name);
         ident b(ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action), true, NULL);
+        if(overrideidents) b._override = OVERRIDDEN;
         idents->access(name, &b);
     }
-    else
+    else if(b->_type!=ID_ALIAS) conoutf("cannot redefine builtin %s with an alias", name);
+    else if(overrideidents && b->_override == NO_OVERRIDE && b->_action[0]) conoutf("cannot override existing alias %s", name);        
+    else 
     {
-        if(b->_type==ID_ALIAS) b->_action = exchangestr(b->_action, action);
-        else conoutf("cannot redefine builtin %s with an alias", name);
+        b->_action = exchangestr(b->_action, action);
+        if(overrideidents) b->_override = OVERRIDDEN;
     };
 };
 
@@ -48,7 +72,7 @@ int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(),
     return cur;
 };
 
-void setvar(char *name, int i) { *idents->access(name)->_storage = i; };
+void setvar(char *name, int i) { *idents->access(name)->_storage = i; }; 
 int getvar(char *name) { return *idents->access(name)->_storage; };
 bool identexists(char *name) { return idents->access(name)!=NULL; };
 
@@ -191,6 +215,8 @@ void conc(char **w, int n, char *r, const char *sep = " ")
     };
 };
 
+VARN(numargs, _numargs, 0, 0, 25);
+
 int execute(char *p, bool isdown)               // all evaluation happens here, recursively
 {
     const int MAXWORDS = 25;                    // limit, remove
@@ -272,6 +298,15 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
                     else
                     {
+                        if(overrideidents)
+                        {
+                            if(id->_persist)
+                            {
+                                conoutf("cannot override persistent var %s", id->_name);
+                                break;
+                            };
+                            if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
+                        };
                         int i1 = atoi(w[1]);
                         if(i1<id->_min || i1>id->_max)
                         {
@@ -290,11 +325,12 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
                     alias(t, w[i]);
                 };
-                string t;
-                itoa(t, numargs-1);
-                alias("numargs", t);
+                _numargs = numargs-1;
                 char *action = newstring(id->_action);   // create new string here because alias could rebind itself
+                bool wasoverriding = overrideidents;
+                if(id->_override!=NO_OVERRIDE) overrideidents = true;
                 val = execute(action, isdown);
+                overrideidents = wasoverriding;
                 delete[] action;
                 break;
         };
@@ -342,6 +378,11 @@ void resetcomplete() { completesize = 0; }
 
 void addcomplete(char *command, char *dir, char *ext)
 {
+    if(overrideidents)
+    {
+        conoutf("cannot override complete %s", command);
+        return;
+    };
     if(!dir[0])
     {
         filesval **hasfiles = completions.access(command);
@@ -495,7 +536,7 @@ void writecfg()
     writebinds(f);
     fprintf(f, "\n");
     enumerate(*idents, ident, id,
-        if(id._type==ID_ALIAS && !strstr(id._name, "nextmap_"))
+        if(id._type==ID_ALIAS && id._override==NO_OVERRIDE && !strstr(id._name, "nextmap_") && id._action[0])
         {
             fprintf(f, "alias \"%s\" [%s]\n", id._name, id._action);
         };

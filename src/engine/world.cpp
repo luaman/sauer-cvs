@@ -319,6 +319,8 @@ void empty_world(int scale, bool force)    // main empty world creation routine
 {
     if(!force && !editmode) return conoutf("newmap only allowed in edit mode");
 
+    clearoverrides();
+
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
@@ -447,21 +449,14 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
     };
 };
 
-void clearleveltriggers()
-{
-    loopi(256)
-    {
-        s_sprintfd(aliasname)("level_trigger_%d", i);     // can this be done smarter?
-        if(identexists(aliasname)) alias(aliasname, "");
-    };
-};
+VAR(triggerstate, -1, 0, 1);
 
-void doleveltrigger(int trigger, char *state)
+void doleveltrigger(int trigger, int state)
 {
     s_sprintfd(aliasname)("level_trigger_%d", trigger);
     if(identexists(aliasname))
     {
-        alias("triggerstate", state);
+        triggerstate = state;
         execute(aliasname);
     };
 };
@@ -503,7 +498,7 @@ void checktriggers()
                 else if(checktriggertype(e.attr3, TRIG_LOCKED))
                 {
                     if(!e.attr4) break;
-                    doleveltrigger(e.attr4, "-1");
+                    doleveltrigger(e.attr4, -1);
                     e.lasttrigger = lastmillis;
                     break;
                 };
@@ -511,7 +506,7 @@ void checktriggers()
                 e.lasttrigger = lastmillis; 
                 if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
                 et->trigger(e);
-                if(e.attr4) doleveltrigger(e.attr4, "1");
+                if(e.attr4) doleveltrigger(e.attr4, 1);
                 break;
             case TRIGGERED:
                 if(e.o.dist(o)-player->radius<(checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12))
@@ -533,7 +528,7 @@ void checktriggers()
                 e.lasttrigger = lastmillis;
                 if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
                 et->trigger(e);
-                if(e.attr4) doleveltrigger(e.attr4, "0");
+                if(e.attr4) doleveltrigger(e.attr4, 0);
                 break;
         };
     };

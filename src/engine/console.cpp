@@ -108,6 +108,7 @@ vector<keym> keyms;
 
 void keymap(char *code, char *key)
 {
+    if(overrideidents) conoutf("cannot override keymap %s", code);
     keym &km = keyms.add();
     km.code = atoi(code);
     km.name = newstring(key);
@@ -119,6 +120,7 @@ COMMAND(keymap, ARG_2STR);
 
 void bindkey(char *key, char *action, bool edit)
 {
+    if(overrideidents) conoutf("cannot override %s \"%s\"", edit ? "editbind" : "bind", key);
     for(char *x = key; *x; x++) *x = toupper(*x);
     loopv(keyms) if(strcmp(keyms[i].name, key)==0)
     {

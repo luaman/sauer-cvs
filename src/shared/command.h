@@ -13,12 +13,15 @@ enum    // function signatures for script functions, see command.cpp
 
 enum { ID_VAR, ID_COMMAND, ID_ICOMMAND, ID_ALIAS };
 
+enum { NO_OVERRIDE = INT_MAX, OVERRIDDEN = 0 };
+
 template <class T> struct tident
 {
     int _type;           // one of ID_* above
     char *_name;
     int _min, _max;      // ID_VAR
     int *_storage;       // ID_VAR
+    int _override;       // either NO_OVERRIDE, OVERRIDDEN, or value
     void (*_fun)();      // ID_VAR, ID_COMMAND
     int _narg;           // ID_VAR, ID_COMMAND, ID_ICOMMAND
     char *_action;       // ID_ALIAS
@@ -27,7 +30,7 @@ template <class T> struct tident
     
     tident() {};
     tident(int t, char *n, int m, int x, int *s, void *f, int g, char *a, bool p, T *_s)
-        : _type(t), _name(n), _min(m), _max(x), _storage(s), _fun((void (__cdecl *)(void))f), _narg(g), _action(a), _persist(p), self(_s) {};
+        : _type(t), _name(n), _min(m), _max(x), _storage(s), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _narg(g), _action(a), _persist(p), self(_s) {};
     virtual ~tident() {};        
 
     tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; };        // force vtable copy, ugh
@@ -44,10 +47,14 @@ extern void addident(char *name, ident *id);
 // nasty macros for registering script functions, abuses globals to avoid excessive infrastructure
 #define COMMANDN(name, fun, nargs) static bool __dummy_##fun = addcommand(#name, (void (*)())fun, nargs)
 #define COMMAND(name, nargs) COMMANDN(name, name, nargs)
-#define VARP(name, min, cur, max) int name = variable(#name, min, cur, max, &name, NULL, true)
-#define VAR(name, min, cur, max)  int name = variable(#name, min, cur, max, &name, NULL, false)
-#define VARF(name, min, cur, max, body)  void var_##name(); int name = variable(#name, min, cur, max, &name, var_##name, false); void var_##name() { body; }
-#define VARFP(name, min, cur, max, body) void var_##name(); int name = variable(#name, min, cur, max, &name, var_##name, true); void var_##name() { body; }
+#define _VAR(name, global, min, cur, max, persist)  int global = variable(#name, min, cur, max, &global, NULL, persist)
+#define VARN(name, global, min, cur, max) _VAR(name, global, min, cur, max, false)
+#define VAR(name, min, cur, max) _VAR(name, name, min, cur, max, false)
+#define VARP(name, min, cur, max) _VAR(name, name, min, cur, max, true)
+#define _VARF(name, global, min, cur, max, body, persist)  void var_##name(); int global = variable(#name, min, cur, max, &global, var_##name, persist); void var_##name() { body; }
+#define VARFN(name, global, min, cur, max, body) _VARF(name, global, min, cur, max, body, false)
+#define VARF(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, false)
+#define VARFP(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, true)
 
 #define IARG_CONC -1
 #define IARG_BOTH -2

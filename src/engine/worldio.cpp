@@ -223,6 +223,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     setnames(mname);
     gzFile f = gzopen(cgzname, "rb9");
     if(!f) { conoutf("could not read map %s", cgzname); return; };
+    clearoverrides();
     computescreen(mname);
     gzread(f, &hdr, sizeof(header));
     endianswap(&hdr.version, sizeof(int), 16);
@@ -332,8 +333,10 @@ void load_world(char *mname)        // still supports all map formats that have 
     conoutf("%s", hdr.maptitle);
     estartmap(mname);
     execfile("data/default_map_settings.cfg");
+    overrideidents = true;
     execfile(pcfname);
     execfile(mcfname);
+    overrideidents = false;
 
     precacheall();
 

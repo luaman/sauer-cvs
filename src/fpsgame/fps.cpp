@@ -404,8 +404,6 @@ struct fpsclient : igameclient
         spawnplayer(player1);
         et.resetspawns();
         s_strcpy(clientmap, name);
-        setvar("fog", 4000);
-        setvar("fogcolour", 0x8099B3);
         sb.showscores(false);
         intermission = false;
         conoutf("game mode is %s", fpsserver::modestr(gamemode));
