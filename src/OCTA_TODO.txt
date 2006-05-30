@@ -7,6 +7,7 @@ eihrul:
 - make nearby closed doors render early so that they can contribute to OC?
 - finish door/trigger functionality
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
+- add "join team red / blue" menu after connecting to a capture mode game
 - water at the edges never waves?
 - map up/download etc
 - water physics close to surface
@@ -19,24 +20,22 @@ eihrul:
 
 aard (e = eihrul (or gilt) could do it):
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
-- 3d sprites?
 - ways of doing menu - context sensitive etc
-- spec skin!
-- add "join team red / blue" menu after connecting to a capture mode game
-- allow specifying more textures per slot
+- new SP respawn system
 - improve bloom
 - maconly? use http://developer.apple.com/graphicsimaging/opengl/extensions/ext_texture_rectangle.html
-- think about ways to make dynamicly modifying geometry in gameplay make sense
 - report to ATI: float vs short issue
 - more cube map ports?
 - faster movement
 - more mapmodels in the menus
-- new SP respawn system
 - play sessions
+- split some of the larger sourcecode files up
 - integrate fmodex (to get both panning and stereo ogg on windows?)
 - rpg design doc
+- 3d sprites?
+- think about ways to make dynamicly modifying geometry in gameplay make sense
 - add PITCH to specular computation
-- update web page | new screenshots | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
+- update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - can't select last 3 textures in list
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - (e) bouncing gib particles

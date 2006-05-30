@@ -1104,7 +1104,7 @@ void render_texture_panel(int w, int h)
             int s = (i == 3 ? 285 : 220), ti = curtexindex+i-3;
             if(ti>=0 && ti<curtexnum)
             {
-                Texture *tex = lookuptexture(texmru[ti]);
+                Texture *tex = lookuptexture(texmru[ti]).sts[0].t;
                 float sx = min(1, tex->xs/(float)tex->ys), sy = min(1, tex->ys/(float)tex->xs);
                 glBindTexture(GL_TEXTURE_2D, tex->gl);
                 glColor4f(0, 0, 0, texpaneltimer/1000.0f);

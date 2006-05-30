@@ -536,7 +536,7 @@ struct md2 : model
     
     void setskin(int tex)
     {
-        glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex) : skin)->gl);
+        glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex).sts[0].t : skin)->gl);
         if(masked)
         {
             glActiveTexture_(GL_TEXTURE1_ARB);

@@ -44,6 +44,25 @@ struct model
     };
 };
 
+// management of texture slots
+// each texture slot can have multople texture frames, of which currently only the first is used
+// additional frames can be used for various shaders
+
+struct Slot
+{
+    struct Tex
+    {
+        Texture *t;
+        string name;
+        int rotation;
+    };
+
+    vector<Tex> sts;             
+    Shader *shader;
+    bool loaded;
+};
+
+
 extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture_;
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_;
 
@@ -91,7 +110,7 @@ extern void gl_drawframe(int w, int h, float curfps);
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
 extern Texture *textureload(const char *tname, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true);
-extern Texture *lookuptexture(int tex);
+extern Slot    &lookuptexture(int tex);
 extern Shader  *lookupshader(int slot);
 extern Shader  *lookupshaderbyname(const char *name);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24);

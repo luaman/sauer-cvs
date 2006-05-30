@@ -1512,8 +1512,16 @@ void renderq()
         int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
         loopi(lod.texs)
         {
-            Texture *tex = lookuptexture(lod.eslist[i].texture);
+            Slot &slot = lookuptexture(lod.eslist[i].texture);
+            Texture *tex = slot.sts[0].t;
             glBindTexture(GL_TEXTURE_2D, tex->gl);
+
+            loopj(slot.sts.length()-1)
+            {
+                glActiveTexture_(GL_TEXTURE0_ARB+j+2);
+                glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
+                glActiveTexture_(GL_TEXTURE0_ARB);
+            };
 
             Shader *s = lookupshader(lod.eslist[i].texture);
             if(s!=curshader) (curshader = s)->set();

@@ -271,48 +271,47 @@ void settexture(const char *name)
     glBindTexture(GL_TEXTURE_2D, textureload(name)->gl);
 };
 
-
-
-// management of texture slots
-// each texture slot can have multople texture frames, of which currently only the first is used
-// additional frames can be used for various shaders
-
-struct Slot
-{
-    Texture *t;              
-    string name;
-    int rotation;
-    Shader *shader;
-};
-
 vector<Slot> slots;
 
 int curtexnum = 0;
 
 void texturereset() { curtexnum = 0; slots.setsize(0); };
 
-void texture(char *__dummy, char *name, char *rot)
+void texture(char *seqn, char *name, char *rot)
 {
-    int num = curtexnum++;    
-    if(num<0 || num>=0x10000) return;
-    Slot &s = slots.add();
-    s.t = NULL;
-    s.rotation = atoi(rot);
+    int seq = atoi(seqn);
+    if(!seq)
+    {
+        int num = curtexnum++;    
+        if(num<0 || num>=0x10000) return;
+    }
+    Slot &s = seq && curtexnum ? slots.last() : slots.add();
     s.shader = curshader;
-    s_strcpy(s.name, name);
-    path(s.name);
+    s.loaded = false;
+    Slot::Tex &st = s.sts.add();
+    st.rotation = atoi(rot);
+    st.t = NULL;
+    s_strcpy(st.name, name);
+    path(st.name);
 };
 
 COMMAND(texturereset, ARG_NONE);
 COMMAND(texture, ARG_3STR);
 
-Texture *lookuptexture(int slot)
+Slot &lookuptexture(int slot)
 {
-    if(slot>=slots.length()) return crosshair;
+    if(slot>=slots.length()) return slots[0];
     Slot &s = slots[slot];
-    if(s.t) return s.t;
-    s_sprintfd(name)("packages/%s", s.name);
-    return s.t = textureload(name, s.rotation);
+    if(!s.loaded)
+    {
+        loopv(s.sts)
+        {
+            s_sprintfd(name)("packages/%s", s.sts[i].name);
+            s.sts[i].t = textureload(name, s.sts[i].rotation);
+        };
+        s.loaded = true;
+    }
+    return s;
 };
 
 Shader *lookupshader(int slot) { return slot<slots.length() ? slots[slot].shader : defaultshader; };
