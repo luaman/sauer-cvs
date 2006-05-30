@@ -200,7 +200,8 @@ enum
     TRIG_MANY       = 1<<2,
     TRIG_DISAPPEAR  = 1<<3,
     TRIG_AUTO_RESET = 1<<4,
-    TRIG_RUMBLE     = 1<<5
+    TRIG_RUMBLE     = 1<<5,
+    TRIG_LOCKED     = 1<<6,
 };
 
 #define NUMTRIGGERTYPES 16

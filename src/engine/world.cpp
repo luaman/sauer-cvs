@@ -412,9 +412,10 @@ int triggertypes[NUMTRIGGERTYPES] =
     TRIG_MANY | TRIG_TOGGLE | TRIG_RUMBLE,
     TRIG_COLLIDE | TRIG_TOGGLE,
     TRIG_COLLIDE | TRIG_TOGGLE | TRIG_AUTO_RESET,
+    TRIG_COLLIDE | TRIG_TOGGLE | TRIG_LOCKED,
     TRIG_DISAPPEAR,
     TRIG_DISAPPEAR | TRIG_RUMBLE,
-    0, 0, 0 /* reserved */
+    0, 0 /* reserved */
 };
 
 void resettriggers()
@@ -426,6 +427,21 @@ void resettriggers()
         if(e.type != ET_MAPMODEL || !e.attr3) continue;
         e.triggerstate = TRIGGER_RESET;
         e.lasttrigger = 0;
+    };
+};
+
+void unlocktriggers(int tag)
+{
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i]; 
+        if(e.type != ET_MAPMODEL || !e.attr3) continue;
+        if(e.attr4 == tag && e.triggerstate == TRIGGER_RESET && checktype(e.attr3, TRIG_LOCKED))
+        {
+            e.triggerstate = TRIGGERING;
+            e.lasttrigger = lastmillis;
+        };
     };
 };
 
@@ -445,6 +461,7 @@ void checktriggers()
             case TRIGGER_RESETTING:
                 if(lastmillis-e.lasttrigger>=1000) 
                 {
+                    if(e.triggerstate == TRIGGERING && e.attr4) unlocktriggers(e.attr4);
                     if(checktriggertype(e.attr3, TRIG_DISAPPEAR)) e.triggerstate = TRIGGER_DISAPPEARED;
                     else if(e.triggerstate==TRIGGERING && checktriggertype(e.attr3, TRIG_TOGGLE)) e.triggerstate = TRIGGERED;
                     else
@@ -456,6 +473,18 @@ void checktriggers()
                 break;
             case TRIGGER_RESET:
                 if(e.lasttrigger || e.o.dist(o)>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 24 : 12)) break;
+                if(checktriggertype(e.attr3, TRIG_LOCKED))
+                {
+                    if(!e.attr4) break;
+                    s_sprintfd(aliasname)("level_trigger_%d", e.attr4);
+                    if(identexists(aliasname))
+                    {
+                        alias("triggerstate", "-1");
+                        execute(aliasname);
+                    };
+                    e.lasttrigger = lastmillis;
+                    break;
+                };
                 e.triggerstate = TRIGGERING;
                 e.lasttrigger = lastmillis; 
                 if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
