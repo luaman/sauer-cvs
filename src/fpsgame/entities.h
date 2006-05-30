@@ -47,41 +47,16 @@ struct entities : icliententities
         if(cl.lastmillis>triggertime+1000) triggertime = 0;
         loopv(ents)
         {
-            extentity &e = *ents[i];
-            switch(e.type)
+            static char *entmdlnames[] =
             {
-                case CARROT:
-                    switch(e.attr2)
-                    {
-                        case 1:
-                        case 3:
-                            continue;
-
-                        case 2:
-                        case 0:
-                            if(!e.spawned) continue;
-                            renderent(e, "carrot", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
-                            break;
-                        
-                        //FIXME special anim consts
-                        //case 4: renderent(e, "switch2", 3,      (float)e.attr3*90, (!e.spawned && !triggertime) ? 1  : 0, (e.spawned || !triggertime) ? 1 : 2,  triggertime, 1050.0f);  break;
-                        //case 5: renderent(e, "switch1", -0.15f, (float)e.attr3*90, (!e.spawned && !triggertime) ? 30 : 0, (e.spawned || !triggertime) ? 1 : 30, triggertime, 35.0f); break;
-                    };
-                    break;
-
-                default:
-                {
-                    static char *entmdlnames[] =
-                    {
-                        "shells", "bullets", "rockets", "rrounds", "grenades", "cartridges", "health", "boost",
-                        "g_armour", "y_armour", "quad", "teleporter",
-                    };
-
-                    if(!e.spawned && e.type!=TELEPORT) continue;
-                    if(e.type<I_SHELLS || e.type>TELEPORT) continue;
-                    renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
-                }
+                "shells", "bullets", "rockets", "rrounds", "grenades", "cartridges", "health", "boost",
+                "g_armour", "y_armour", "quad", "teleporter",
             };
+
+            extentity &e = *ents[i];
+            if(!e.spawned && e.type!=TELEPORT) continue;
+            if(e.type<I_SHELLS || e.type>TELEPORT) continue;
+            renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
         };
     };
 
@@ -92,16 +67,7 @@ struct entities : icliententities
 
     void trigger(extentity &e)
     {
-    };
-
-    void trigger(int tag, int type, bool savegame)
-    {
-        if(!tag) return;
-        ///settag(tag, type);
-        if(!savegame) playsound(S_RUMBLE);
-        s_sprintfd(aliasname)("level_trigger_%d", tag);
-        if(identexists(aliasname)) execute(aliasname);
-        if(type==2) cl.ms.endsp(false);
+        if(e.attr4==28) cl.ms.endsp(false);
     };
 
     void baseammo(int gun) { cl.player1->ammo[gun] = itemstats[gun-1].add*2; };
@@ -227,12 +193,6 @@ struct entities : icliententities
                 additem(n, d->quadmillis, 60);
                 break;
                 
-            case CARROT:
-                ents[n]->spawned = false;
-                triggertime = cl.lastmillis;
-                trigger(ents[n]->attr1, ents[n]->attr2, false);  // needs to go over server for multiplayer
-                break;
-
             case TELEPORT:
             {
                 static int lastteleport = 0;
@@ -287,7 +247,7 @@ struct entities : icliententities
 
     void putitems(uchar *&p)            // puts items in network stream and also spawns them locally
     {
-        loopv(ents) if((ents[i]->type>=I_SHELLS && ents[i]->type<=I_QUAD) || ents[i]->type==CARROT)
+        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_QUAD)
         {
             putint(p, i);
             putint(p, ents[i]->type);
