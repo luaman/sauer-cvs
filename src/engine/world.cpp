@@ -476,7 +476,7 @@ void checktriggers()
                 };
                 break;
             case TRIGGER_RESET:
-                if(e.lasttrigger || e.o.dist(o)>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 24 : 12)) break;
+                if(e.lasttrigger || e.o.dist(o)>=(checktriggertype(e.attr3, TRIG_COLLIDE) ? 24 : 16)) break;
                 if(checktriggertype(e.attr3, TRIG_LOCKED))
                 {
                     if(!e.attr4) break;
@@ -504,7 +504,7 @@ void checktriggers()
                 };
                 break;
             case TRIGGERED:
-                if((e.o.dist(o)<(checktriggertype(e.attr3, TRIG_COLLIDE) ? 24 : 12) && checktriggertype(e.attr3, TRIG_MANY)) || (checktriggertype(e.attr3, TRIG_AUTO_RESET) && lastmillis-e.lasttrigger>=6000))
+                if((e.o.dist(o)<(checktriggertype(e.attr3, TRIG_COLLIDE) ? 24 : 16) && checktriggertype(e.attr3, TRIG_MANY)) || (checktriggertype(e.attr3, TRIG_AUTO_RESET) && lastmillis-e.lasttrigger>=6000))
                 {
                     e.triggerstate = TRIGGER_RESETTING;
                     e.lasttrigger = lastmillis;
