@@ -26,8 +26,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 #include <eh.h>
-//#include <psapi.h>
-//#include <cstddef>
 #include <dbghelp.h>
 #endif
 
@@ -35,6 +33,7 @@
 #include <SDL_image.h>
 #define NO_SDL_GLEXT
 #include <SDL_opengl.h>
+#include "GL/glext.h"
 
 #include <enet/enet.h>
 

@@ -431,10 +431,6 @@ void renderfsquad(int w, int h, Shader *s)
 {
     s->set();
     glViewport(0, 0, w, h);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, -1.0f, -1.0f, 0, 0);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1,  1.0f, -1.0f, 0, 0);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, -1.0f,  1.0f, 0, 0);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3,  1.0f,  1.0f, 0, 0);
     if(s==scaleshader)
     {
         w *= 2;
@@ -466,15 +462,13 @@ void renderfullscreenshader(int w, int h)
         fs_h = h;
     };
 
-    int nw = w, nh = h, n = 0;
+    int nw = w, nh = h;
 
     loopi(NUMSCALE)
     {
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
         glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, nw, nh);
         if(i>=NUMSCALE-1 || !scaleshader) break;
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, w/nw, w/nw, w/nw, 1);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, n, n, n, 1); n++;
         renderfsquad(nw /= 2, nh /= 2, scaleshader);
     };
 
