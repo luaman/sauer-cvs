@@ -134,7 +134,7 @@ void gl_init(int w, int h)
         glBufferData_    = (PFNGLBUFFERDATAARBPROC)   getprocaddress("glBufferDataARB");
         glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
-        conoutf("Using GL_ARB_vertex_buffer_object extensions.");
+        conoutf("Using GL_ARB_vertex_buffer_object extension.");
     };
 
     const char *vendor = (const char *)glGetString(GL_VENDOR);
