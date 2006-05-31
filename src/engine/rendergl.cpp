@@ -191,7 +191,8 @@ void gl_init(int w, int h)
         }
         else conoutf("WARNING: No texture rectangle support. (no full screen shaders)");
     };
-                    
+    if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
+
     if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
     gluQuadricDrawStyle(qsphere, GLU_FILL);
     gluQuadricOrientation(qsphere, GLU_OUTSIDE);
@@ -421,12 +422,14 @@ void setfullscreenshader(char *name)
             extern int scr_w, scr_h;
             int w = scr_w, h = scr_h;
             void *temp = malloc(w*h*3);
+            glEnable(GL_TEXTURE_RECTANGLE_ARB);
             loopi(NUMSCALE)
             {
                 createtexture(rendertarget[i], w, h, temp, true, false, 24, GL_TEXTURE_RECTANGLE_ARB); 
                 w /= 2;
                 h /= 2;
             };
+            glDisable(GL_TEXTURE_RECTANGLE_ARB);
             free(temp);
         };
         conoutf("now rendering with: %s", name);
@@ -439,15 +442,20 @@ void renderfsquad(int w, int h, Shader *s)
 {
     s->set();
     glViewport(0, 0, w, h);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, -1.0f/w, -1.0f/h, 0, 0);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1,  1.0f/w, -1.0f/h, 0, 0);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, -1.0f/w,  1.0f/h, 0, 0);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3,  1.0f/w,  1.0f/h, 0, 0);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, -1.0f, -1.0f, 0, 0);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1,  1.0f, -1.0f, 0, 0);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, -1.0f,  1.0f, 0, 0);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3,  1.0f,  1.0f, 0, 0);
+    if(s==scaleshader)
+    {
+        w *= 2;
+        h *= 2;
+    };
     glBegin(GL_QUADS);
-    glTexCoord2f(0, 0); glVertex3f(-1, -1, 0);
-    glTexCoord2f(1, 0); glVertex3f( 1, -1, 0);
-    glTexCoord2f(1, 1); glVertex3f( 1,  1, 0);
-    glTexCoord2f(0, 1); glVertex3f(-1,  1, 0);
+    glTexCoord2i(0, 0); glVertex3f(-1, -1, 0);
+    glTexCoord2i(w, 0); glVertex3f( 1, -1, 0);
+    glTexCoord2i(w, h); glVertex3f( 1,  1, 0);
+    glTexCoord2i(0, h); glVertex3f(-1,  1, 0);
     glEnd();
 };
 
@@ -470,14 +478,14 @@ void renderfullscreenshader(int w, int h)
         renderfsquad(nw /= 2, nh /= 2, scaleshader);
     };
 
-    loopi(NUMSCALE)
+    if(scaleshader) loopi(NUMSCALE)
     {
         glActiveTexture_(GL_TEXTURE0_ARB+i);
+        glEnable(GL_TEXTURE_RECTANGLE_ARB);
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
     };
     renderfsquad(w, h, fsshader);
 
-    glDisable(GL_TEXTURE_RECTANGLE_ARB);
     glActiveTexture_(GL_TEXTURE0_ARB);
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
