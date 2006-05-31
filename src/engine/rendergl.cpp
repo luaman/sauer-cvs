@@ -398,6 +398,7 @@ void drawskybox(int farplane, bool limited)
 const int NUMSCALE = 7;
 Shader *fsshader = NULL, *scaleshader = NULL;
 GLuint rendertarget[NUMSCALE];
+int fs_w = 0, fs_h = 0;
 
 void setfullscreenshader(char *name)
 {
@@ -419,18 +420,6 @@ void setfullscreenshader(char *name)
         {
             rtinit = true;
             glGenTextures(NUMSCALE, rendertarget);
-            extern int scr_w, scr_h;
-            int w = scr_w, h = scr_h;
-            void *temp = malloc(w*h*3);
-            glEnable(GL_TEXTURE_RECTANGLE_ARB);
-            loopi(NUMSCALE)
-            {
-                createtexture(rendertarget[i], w, h, temp, true, false, 24, GL_TEXTURE_RECTANGLE_ARB); 
-                w /= 2;
-                h /= 2;
-            };
-            glDisable(GL_TEXTURE_RECTANGLE_ARB);
-            free(temp);
         };
         conoutf("now rendering with: %s", name);
     };
@@ -462,9 +451,20 @@ void renderfsquad(int w, int h, Shader *s)
 void renderfullscreenshader(int w, int h)
 {
     if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
+
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
+
+    if(fs_w != w || fs_h != h)
+    {
+        char *pixels = new char[w*h*3];
+        loopi(NUMSCALE)
+            createtexture(rendertarget[i], w>>i, h>>i, pixels, true, false, 24, GL_TEXTURE_RECTANGLE_ARB);
+        delete[] pixels;
+        fs_w = w;
+        fs_h = h;
+    };
 
     int nw = w, nh = h, n = 0;
 
@@ -480,8 +480,8 @@ void renderfullscreenshader(int w, int h)
 
     if(scaleshader) loopi(NUMSCALE)
     {
-        glEnable(GL_TEXTURE_RECTANGLE_ARB);
         glActiveTexture_(GL_TEXTURE0_ARB+i);
+        glEnable(GL_TEXTURE_RECTANGLE_ARB);
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
     };
     renderfsquad(w, h, fsshader);
