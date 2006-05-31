@@ -98,29 +98,6 @@ void addident(char *name, ident *id)
 
 static vector<char> wordbuf;
 
-char *parseexp(char *&p, int right);
-
-#define savealias(name, body) \
-{ \
-    string oldaction; \
-    char *hasalias = getalias(name); \
-    if(hasalias) s_strcpy(oldaction, hasalias); \
-    else oldaction[0] = '\0'; \
-    body; \
-    alias(name, oldaction); \
-}
-
-void domacro(char *&p)
-{
-    savealias("s", 
-        alias("s", "");
-        char *macro = parseexp(p, ']');
-        execute(macro);
-        char *sub = getalias("s");
-        if(sub) while(*sub) wordbuf.add(*sub++);
-    );
-};
-
 char *parseexp(char *&p, int right)          // parse any nested set of () or []
 {
     int pos = wordbuf.length(), left = *p++;
@@ -132,7 +109,9 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         {
             if(*p=='[')
             {
-                domacro(p);
+                execute(parseexp(p, ']'));
+                char *sub = getalias("s");
+                if(sub) while(*sub) wordbuf.add(*sub++);
                 continue;
             };
             char *ident = p;
@@ -154,7 +133,9 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         };
         if(c==left) brak++;
         else if(c==right) brak--;
-        else if(!c) { p--; conoutf("missing \"%c\"", right); wordbuf.setsize(pos); return NULL; };
+        else if(!c) { p--;
+        conoutf("missing \"%c\"", right);
+        wordbuf.setsize(pos); return NULL; };
         wordbuf.add(c);
     };
     wordbuf.pop();
@@ -204,15 +185,18 @@ char *parseword(char *&p)                       // parse single argument, includ
     return s;
 };
 
-void conc(char **w, int n, char *r, const char *sep = " ")
+char *conc(char **w, int n, bool space)
 {
-    r[0] = 0;
-    for(int i = 0; i<n; i++)       
+    int len = space ? max(n-1, 0) : 0;
+    loopj(n) len += (int)strlen(w[j]);
+    char *r = newstring("", len);
+    loopi(n)       
     {
-        s_strcat(r, w[i]);  // make string-list out of all arguments
+        strcat(r, w[i]);  // make string-list out of all arguments
         if(i==n-1) break;
-        if(sep) s_strcat(r, sep);
+        if(space) strcat(r, " ");
     };
+    return r;
 };
 
 VARN(numargs, _numargs, 0, 0, 25);
@@ -254,7 +238,7 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                 {
                     default: if(isdown) id->run(w+1); break;
                     case IARG_BOTH: id->run((char **)isdown); break;
-                    case IARG_CONC:  if(isdown) { string r; conc(w+1, numargs-1, r); char *rr = r; id->run(&rr); }; break;
+                    case IARG_CONC:  if(isdown) { char *r = conc(w+1, numargs-1, true); id->run(&r); free(r); }; break;
                 };
                 break;
         
@@ -282,9 +266,9 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     case ARG_2EST: if(isdown) val = ((int (__cdecl *)(char *, char *))id->_fun)(w[1], w[2]); break;
                     case ARG_CONC: if(isdown)
                     {
-                        string r;               // limit, remove
-                        conc(w+1, numargs-1, r);
+                        char *r = conc(w+1, numargs-1, true);
                         ((void (__cdecl *)(char *))id->_fun)(r);
+                        free(r);
                         break;
                     };
                     case ARG_VARI: if(isdown) ((void (__cdecl *)(char **, int))id->_fun)(w+1, numargs-1); break;
@@ -565,16 +549,16 @@ void concat(char *s) { alias("s", s); };
 
 void concatword(char **args, int numargs)
 {
-    string s;
-    conc(args, numargs, s, NULL);
+    char *s = conc(args, numargs, false);
     concat(s);
+    free(s);
 };
 
 void format(char **args, int numargs)
 {
-    string s;
-    char *f = args[0], *r = s;
-    while(*f && r < s+sizeof(s)-1)
+    vector<char> s;
+    char *f = args[0];
+    while(*f)
     {
         int c = *f++;
         if(c == '%')
@@ -584,14 +568,14 @@ void format(char **args, int numargs)
             {
                 i -= '0';
                 const char *sub = i < numargs ? args[i] : "";
-                while(*sub && r < s+sizeof(s)-1) *r++ = *sub++;
+                while(*sub) s.add(*sub++);
             }
-            else *r++ = i;
+            else s.add(i);
         }
-        else *r++ = c;
+        else s.add(c);
     };
-    *r = '\0';
-    concat(s);
+    s.add('\0');
+    concat(s.getbuf());
 };
 
 int listlen(char *a)

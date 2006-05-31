@@ -288,6 +288,8 @@ void texture(char *seqn, char *name, char *rot)
     Slot &s = seq && curtexnum ? slots.last() : slots.add();
     s.shader = curshader;
     s.loaded = false;
+    if(seq!=s.sts.length()) conoutf("warning: illegal sequence number in texture command for slot %d", curtexnum);
+    if(seq>=8) conoutf("warning: too many textures in slot %d", curtexnum);
     Slot::Tex &st = s.sts.add();
     st.rotation = atoi(rot);
     st.t = NULL;

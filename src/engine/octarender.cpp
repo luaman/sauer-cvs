@@ -1452,6 +1452,9 @@ void renderq()
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 
+    loopi(8) { glActiveTexture_(GL_TEXTURE0_ARB+i); glEnable(GL_TEXTURE_2D); };
+    glActiveTexture_(GL_TEXTURE0_ARB);
+
     Shader *curshader = NULL;
 
     flipqueries();
@@ -1516,7 +1519,7 @@ void renderq()
             Texture *tex = slot.sts[0].t;
             glBindTexture(GL_TEXTURE_2D, tex->gl);
 
-            loopj(slot.sts.length()-1)
+            if(renderpath!=R_FIXEDFUNCTION) loopj(slot.sts.length()-1)  
             {
                 glActiveTexture_(GL_TEXTURE0_ARB+j+2);
                 glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
