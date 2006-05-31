@@ -109,7 +109,9 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         {
             if(*p=='[')
             {
-                execute(parseexp(p, ']'));
+                char *exp = parseexp(p, ']');
+                execute(exp);
+                free(exp);
                 char *sub = getalias("s");
                 if(sub) while(*sub) wordbuf.add(*sub++);
                 continue;
