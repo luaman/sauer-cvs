@@ -480,8 +480,8 @@ void renderfullscreenshader(int w, int h)
 
     if(scaleshader) loopi(NUMSCALE)
     {
-        glActiveTexture_(GL_TEXTURE0_ARB+i);
         glEnable(GL_TEXTURE_RECTANGLE_ARB);
+        glActiveTexture_(GL_TEXTURE0_ARB+i);
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
     };
     renderfsquad(w, h, fsshader);
