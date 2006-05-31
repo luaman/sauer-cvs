@@ -566,7 +566,12 @@ void format(char **args, int numargs)
         if(c == '%')
         {
             int i = *f++;
-            if(i >= '1' && i <= '9')
+            if(i == '0')
+            {
+                const char *sub = getalias("s");
+                if(sub) while(*sub) s.add(*sub++);
+            }
+            else if(i >= '1' && i <= '9')
             {
                 i -= '0';
                 const char *sub = i < numargs ? args[i] : "";

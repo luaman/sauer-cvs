@@ -259,7 +259,8 @@ strcmp A B</pre>
         <pre>format F V1..Vn</pre>
         substitutes the V values into the format string F and stores the result in "s".
         The format strings %1 through %9 are substituted with V1 through V9, respectively, and may be
-        used multiple times. %% will generate a single % character. Example:
+        used multiple times. %0 will substitute the previous value of the "s" alias. %% will generate a 
+        single % character. Example:
         <br>
         <code>format "%1 bottles of %2 on the %3, %1 bottles of %2!" 99 beer wall</code>
 		<pre>at S N</pre>
