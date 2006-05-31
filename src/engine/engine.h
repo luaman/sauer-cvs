@@ -79,6 +79,8 @@ extern PFNGLGETQUERYIVARBPROC        glGetQueryiv_;
 extern PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_;
 
 #define FONTH 64
+#define MINRESW 640
+#define MINRESH 480
 
 extern dynent *player;
 extern physent *camera1;                // special ent that acts as camera, same object as player1 in FPS mode

@@ -179,6 +179,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glMatrixMode(GL_MODELVIEW);    
     glLoadIdentity();
     
+    gettextres(w, h);
+
     glMatrixMode(GL_PROJECTION);    
     glLoadIdentity();
     glOrtho(0, w, h, 0, -1, 1);

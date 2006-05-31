@@ -78,13 +78,15 @@ COMMAND(quit, ARG_NONE);
 
 void computescreen(char *text)
 {
+    int w = scr_w, h = scr_h;
+    gettextres(w, h);
     loopi(2)
     {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0, scr_w*3, scr_h*3, 0, -1, 1);
+        glOrtho(0, w*3, h*3, 0, -1, 1);
         glClearColor(0.15f, 0.15f, 0.15f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
@@ -94,9 +96,9 @@ void computescreen(char *text)
         draw_text(text, 70, 2*FONTH + FONTH/2);
         settexture("data/sauer_logo_512_256.png");
         glLoadIdentity();
-        glOrtho(0, scr_w, scr_h, 0, -1, 1);
+        glOrtho(0, w, h, 0, -1, 1);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        int x = (scr_w-512)/2, y = (scr_h-256)/2;
+        int x = (w-512)/2, y = (h-256)/2;
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2i(x,     y);
         glTexCoord2f(1, 0); glVertex2i(x+512, y);
@@ -107,13 +109,13 @@ void computescreen(char *text)
     };
 };
 
-void bar(float bar, int o, float r, float g, float b)
+void bar(float bar, int w, int o, float r, float g, float b)
 {
         int side = 50;
         glColor3f(r, g, b);
         glVertex2f(side,                      o*FONTH);
-        glVertex2f(bar*(scr_w*3-2*side)+side, o*FONTH);
-        glVertex2f(bar*(scr_w*3-2*side)+side, (o+2)*FONTH);
+        glVertex2f(bar*(w*3-2*side)+side, o*FONTH);
+        glVertex2f(bar*(w*3-2*side)+side, (o+2)*FONTH);
         glVertex2f(side,                      (o+2)*FONTH);
 };
 
@@ -123,25 +125,28 @@ void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *
 
     clientkeepalive();      // make sure our connection doesn't time out while loading maps etc.
 
+    int w = scr_w, h = scr_h;
+    gettextres(w, h);
+
     glDisable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, scr_w*3, scr_h*3, 0, -1, 1);
+    glOrtho(0, w*3, h*3, 0, -1, 1);
     notextureshader->set();
 
     glBegin(GL_QUADS);
 
     if(text1)
     {
-        bar(1,    4, 0, 0,    0.8f);
-        bar(bar1, 4, 0, 0.5f, 1);
+        bar(1,    w, 4, 0, 0,    0.8f);
+        bar(bar1, w, 4, 0, 0.5f, 1);
     };
 
     if(bar2>0)
     {
-        bar(1,    6, 0.5f,  0, 0);
-        bar(bar2, 6, 0.75f, 0, 0);
+        bar(1,    w, 6, 0.5f,  0, 0);
+        bar(bar2, w, 6, 0.75f, 0, 0);
     };
 
     glEnd();

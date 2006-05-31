@@ -101,6 +101,23 @@ short char_coords[94][3] =
     { 419, 426, 34 },  //~  // coords
 };                     
 
+void gettextres(int &w, int &h)
+{
+    if(w < MINRESW || h < MINRESH)
+    {
+        if(MINRESW > w*MINRESH/h)
+        {
+            h = h*MINRESW/w;
+            w = MINRESW;
+        }
+        else
+        {
+            w = w*MINRESH/h;
+            h = MINRESH;
+        };
+    };
+};
+
 #define PIXELTAB (FONTH*4)
 
 int char_width(int c, int x = 0)
@@ -184,9 +201,9 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         
         xtraverts += 4;
         x += in_width  + 1;
-    }
+    };
     glEnd();
-}
+};
 
 Texture *sky[6] = { 0, 0, 0, 0, 0, 0 };
 
@@ -220,7 +237,7 @@ void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
     glTexCoord2f(s0, t0); glVertex3f(x0, y0, z0);
     glEnd();
     xtraverts += 4;
-}
+};
 
 void draw_envbox(int w)
 {
@@ -259,4 +276,4 @@ void draw_envbox(int w)
                     1.0f, 1.0f, +w, -w, -w, sky[5]->gl);
 
     glDepthMask(GL_TRUE);
-}
+};
