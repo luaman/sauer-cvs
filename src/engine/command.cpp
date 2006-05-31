@@ -105,7 +105,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     {
         int c = *p++;
         if(c=='\r') continue;               // hack
-        if(c=='@')
+        if(c=='@' && brak==1)
         {
             if(*p=='[')
             {
