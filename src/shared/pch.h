@@ -33,6 +33,7 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
+#define NO_SDL_GLEXT
 #include <SDL_opengl.h>
 
 #include <enet/enet.h>

@@ -113,7 +113,7 @@ extern Texture *textureload(const char *tname, int rot = 0, bool clamp = false, 
 extern Slot    &lookuptexture(int tex);
 extern Shader  *lookupshader(int slot);
 extern Shader  *lookupshaderbyname(const char *name);
-extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24);
+extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24, GLenum target = GL_TEXTURE_2D);
 extern void readmatrices();
 
 // octa

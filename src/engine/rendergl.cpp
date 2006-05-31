@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false;
+bool hasVBO = false, hasOQ = false, hasTR = false;
 int renderpath;
 
 GLUquadricObj *qsphere = NULL;
@@ -177,11 +177,21 @@ void gl_init(int w, int h)
             glEndQuery_ =          (PFNGLENDQUERYARBPROC)         getprocaddress("glEndQueryARB");
             glGetQueryObjectuiv_ = (PFNGLGETQUERYOBJECTUIVARBPROC)getprocaddress("glGetQueryObjectuivARB");
             hasOQ = true;
-            conoutf("Using GL_ARB_occlusion_query extensions.");
+            conoutf("Using GL_ARB_occlusion_query extension.");
         };
     };
     if(!hasOQ) conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
 
+    if(renderpath == R_ASMSHADER)
+    {
+        if(strstr(exts, "GL_ARB_texture_rectangle"))
+        {
+            hasTR = true;
+            conoutf("Using GL_ARB_texture_rectangle extension.");
+        }
+        else conoutf("WARNING: No texture rectangle support. (no full screen shaders)");
+    };
+                    
     if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
     gluQuadricDrawStyle(qsphere, GLU_FILL);
     gluQuadricOrientation(qsphere, GLU_OUTSIDE);
@@ -211,18 +221,18 @@ SDL_Surface *rotate(SDL_Surface *s)
     return d;
 };
 
-void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp)
+void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp, GLenum target)
 {
-    glBindTexture(GL_TEXTURE_2D, tnum);
+    glBindTexture(target, tnum);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR); 
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR); 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     int mode = bpp==24 ? GL_RGB : GL_RGBA;
-    if(mipit) { if(gluBuild2DMipmaps(GL_TEXTURE_2D, mode, w, h, mode, GL_UNSIGNED_BYTE, pixels)) fatal("could not build mipmaps"); }
-    else glTexImage2D(GL_TEXTURE_2D, 0, mode, w, h, 0, mode, GL_UNSIGNED_BYTE, pixels);
+    if(mipit) { if(gluBuild2DMipmaps(target, mode, w, h, mode, GL_UNSIGNED_BYTE, pixels)) fatal("could not build mipmaps"); }
+    else glTexImage2D(target, 0, mode, w, h, 0, mode, GL_UNSIGNED_BYTE, pixels);
 }
 
 hashtable<char *, Texture> textures;
@@ -390,7 +400,7 @@ GLuint rendertarget[NUMSCALE];
 
 void setfullscreenshader(char *name)
 {
-    if(!*name)
+    if(!hasTR || !*name)
     {
         fsshader = NULL;
     }
@@ -413,7 +423,7 @@ void setfullscreenshader(char *name)
             void *temp = malloc(w*h*3);
             loopi(NUMSCALE)
             {
-                createtexture(rendertarget[i], w, h, temp, true, false, 24); 
+                createtexture(rendertarget[i], w, h, temp, true, false, 24, GL_TEXTURE_RECTANGLE_ARB); 
                 w /= 2;
                 h /= 2;
             };
@@ -439,21 +449,21 @@ void renderfsquad(int w, int h, Shader *s)
     glTexCoord2f(1, 1); glVertex3f( 1,  1, 0);
     glTexCoord2f(0, 1); glVertex3f(-1,  1, 0);
     glEnd();
-}
+};
 
 void renderfullscreenshader(int w, int h)
 {
     if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
-    //glEnable(GL_TEXTURE_RECTANGLE_EXT);
+    glEnable(GL_TEXTURE_RECTANGLE_ARB);
 
     int nw = w, nh = h, n = 0;
 
     loopi(NUMSCALE)
     {
-        glBindTexture(GL_TEXTURE_2D, rendertarget[i]);
-        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, nw, nh);
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
+        glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, nw, nh);
         if(i>=NUMSCALE-1 || !scaleshader) break;
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, w/nw, w/nw, w/nw, 1);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, n, n, n, 1); n++;
@@ -463,10 +473,11 @@ void renderfullscreenshader(int w, int h)
     loopi(NUMSCALE)
     {
         glActiveTexture_(GL_TEXTURE0_ARB+i);
-        glBindTexture(GL_TEXTURE_2D, rendertarget[i]);
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
     };
     renderfsquad(w, h, fsshader);
 
+    glDisable(GL_TEXTURE_RECTANGLE_ARB);
     glActiveTexture_(GL_TEXTURE0_ARB);
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
