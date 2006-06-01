@@ -105,7 +105,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     {
         int c = *p++;
         if(c=='\r') continue;               // hack
-        if(c=='@')
+        if(left=='[' && c=='@')
         {
             int escape = 1;
             while(*p=='@') p++, escape++;
@@ -135,6 +135,14 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
                 ident--;
                 while(ident!=p) wordbuf.add(*ident++);
             };
+            continue;
+        };
+        if(c=='\"')
+        {
+            wordbuf.add(c);
+            char *end = p+strcspn(p, "\"\r\n\0");
+            while(p < end) wordbuf.add(*p++);
+            if(*p=='\"') wordbuf.add(*p++);
             continue;
         };
         if(c==left) brak++;
