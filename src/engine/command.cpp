@@ -557,6 +557,7 @@ void writecfg()
             fprintf(f, "alias \"%s\" [%s]\n", id._name, id._action);
         };
     );
+    fprintf(f, "\n");
     enumeratekt(completions, char *, k, filesval *, v,
         if(v) fprintf(f, "complete \"%s\" \"%s\" \"%s\"\n", k, v->dir, v->ext ? v->ext : "*");
     );
