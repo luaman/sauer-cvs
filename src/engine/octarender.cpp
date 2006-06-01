@@ -233,7 +233,7 @@ uint faceedges(cube &c, int orient)
 struct facevec
 {
     int x, y;
-    
+
     facevec() {};
     facevec(int x, int y) : x(x), y(y) {};
 
@@ -270,7 +270,7 @@ int clipfacevecy(const facevec &o, const facevec &dir, int cx, int cy, int size,
     {
         if(cx <= o.x || cx >= o.x+dir.x) return 0;
     }
-    else if(cx <= o.x+dir.x || cx >= o.x) return 0; 
+    else if(cx <= o.x+dir.x || cx >= o.x) return 0;
 
     int t = (o.y-cy) + (cx-o.x)*dir.y/dir.x;
     if(t <= 0 || t >= size) return 0;
@@ -285,7 +285,7 @@ int clipfacevecx(const facevec &o, const facevec &dir, int cx, int cy, int size,
     if(dir.y >= 0)
     {
         if(cy <= o.y || cy >= o.y+dir.y) return 0;
-    } 
+    }
     else if(cy <= o.y+dir.y || cy >= o.y) return 0;
 
     int t = (o.x-cx) + (cy-o.y)*dir.x/dir.y;
@@ -300,7 +300,7 @@ int clipfacevec(const facevec &o, const facevec &dir, int cx, int cy, int size, 
 {
     int r = 0;
 
-    if(o.x >= cx && o.x <= cx+size && 
+    if(o.x >= cx && o.x <= cx+size &&
        o.y >= cy && o.y <= cy+size &&
        ((o.x != cx && o.x != cx+size) || (o.y != cy && o.y != cy+size)))
     {
@@ -373,7 +373,7 @@ bool occludesface(cube &c, int orient, const ivec &o, int size, const ivec &vo, 
          if(isempty(c) || !touchingface(c, orient)) return false;
          facevec of[4];
          genfacevecs(c, orient, o, size, false, of);
-         return insideface(cf, numc, of); 
+         return insideface(cf, numc, of);
     };
 
     size >>= 1;
@@ -411,9 +411,9 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
         facevec cf[4], of[4];
         genfacevecs(c, orient, ivec(x, y, z), size, mat != MAT_AIR, cf);
         genfacevecs(o, opposite(orient), lu, lusize, false, of);
-        return !insideface(cf, 4, of);    
+        return !insideface(cf, 4, of);
     };
-    
+
     facevec cf[4];
     genfacevecs(c, orient, ivec(x, y, z), size, mat != MAT_AIR, cf);
     return !occludesface(o, opposite(orient), lu, lusize, ivec(x, y, z), size, mat, cf);
@@ -804,7 +804,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
     if(!isempty(c))
     {
         gencubeverts(c, cx, cy, cz, size, csi, lodcube);
-        
+
         if(cx<bbmin.x) bbmin.x = cx;
         if(cy<bbmin.y) bbmin.y = cy;
         if(cz<bbmin.z) bbmin.z = cz;
@@ -940,7 +940,10 @@ void forcemip(cube &c)
     };
 
     loopj(6)
-        c.texture[j] = getmippedtexture(ch, j);
+    {
+        int t = getmippedtexture(ch, j);
+        if(t) c.texture[j] = t;
+    };
 };
 
 void genlod(cube &c, int size)
@@ -1076,7 +1079,7 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     {
         vtxarray &v = *valist[i];
         v.prevvfc = v.curvfc;
-        v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);    
+        v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);
         if(v.curvfc!=VFC_NOT_VISIBLE) addvisibleva(&v);
         else
         {
@@ -1244,14 +1247,14 @@ void drawquery(occludequery *query, vtxarray *va)
     ivec origin(va->x, va->y, va->z);
     origin.mask(~VVEC_INT_MASK);
 
-    drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC), 
+    drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC),
            ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
            vec(camera1->o).sub(origin.tovec()).mul(1<<VVEC_FRAC));
 
     glEndQuery_(GL_SAMPLES_PASSED_ARB);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthMask(GL_TRUE);
-};  
+};
 
 extern int octaentsize;
 
@@ -1261,7 +1264,7 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
 {
     loopj(8)
     {
-        ivec co(j, o.x, o.y, o.z, size); 
+        ivec co(j, o.x, o.y, o.z, size);
 
         if(c[j].va)
         {
@@ -1271,7 +1274,7 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
         if(c[j].ents)
         {
             octaentities *oe = c[j].ents;
-            if(isvisiblecube(co.tovec(), size) >= VFC_FOGGED) continue; 
+            if(isvisiblecube(co.tovec(), size) >= VFC_FOGGED) continue;
 
             bool occluded = oe->query && oe->query->owner == oe && checkquery(oe->query);
             if(occluded)
@@ -1303,7 +1306,7 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
                     cur = cur->next;
                 };
 
-                if(*prev == NULL) lastvisibleents = &oe->next; 
+                if(*prev == NULL) lastvisibleents = &oe->next;
                 oe->next = *prev;
                 *prev = oe;
             };
@@ -1311,7 +1314,7 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
         if(c[j].children && size > octaentsize) findvisibleents(c[j].children, co, size>>1, ents);
     };
 };
-                        
+
 VAR(oqmm, 0, 4, 8);
 
 extern bool getentboundingbox(extentity &e, ivec &o, ivec &r);
@@ -1319,7 +1322,7 @@ extern bool getentboundingbox(extentity &e, ivec &o, ivec &r);
 void rendermapmodels()
 {
     const vector<extentity *> &ents = et->getents();
-    
+
     visibleents = NULL;
     lastvisibleents = &visibleents;
     findvisibleents(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, ents);
@@ -1329,7 +1332,7 @@ void rendermapmodels()
     for(octaentities *oe = visibleents; oe; oe = oe->next)
     {
         bool occluded = oe->distance < 0;
-        if(!occluded) 
+        if(!occluded)
         {
             bool hasmodels = false;
             loopv(oe->mapmodels)
@@ -1340,7 +1343,7 @@ void rendermapmodels()
                 break;
             };
             if(!hasmodels) continue;
-        };   
+        };
 
         if(!hasOQ || !oqfrags || !oqmm || !oe->distance) oe->query = NULL;
         else if(!occluded && (++visible % oqmm)) oe->query = NULL;
@@ -1374,7 +1377,7 @@ void rendermapmodels()
                             bbmax[j] = max(bbmax[j], bo[j]+br[j]);
                         };
                     };
-                } 
+                }
                 else if(e.visible)
                 {
                     int anim = ANIM_MAPMODEL|ANIM_LOOP, basetime = 0;
@@ -1409,7 +1412,7 @@ void rendermapmodels()
                 glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             };
         };
-    };        
+    };
 };
 
 bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
@@ -1417,7 +1420,7 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
     loopoctabox(o, size, bo, br)
     {
         ivec co(i, o.x, o.y, o.z, size);
-        if(c[i].va) 
+        if(c[i].va)
         {
             vtxarray *va = c[i].va;
             if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB+oqpartial) continue;
@@ -1443,7 +1446,7 @@ void renderq()
     glEnable(GL_TEXTURE_2D);
     setupTMU();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    
+
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     glScalef(1.0f/SHRT_MAX, 1.0f/SHRT_MAX, 1.0f);
@@ -1476,22 +1479,22 @@ void renderq()
                 va->query = newquery(va);
                 if(va->prevvfc == VFC_FULL_VISIBLE) va->occluded = OCCLUDE_BB+oqpartial-(va->occluded ? 0 : 1);
                 else va->occluded = min(va->occluded+1, OCCLUDE_BB+oqpartial);
-                if(va->occluded >= OCCLUDE_BB+oqpartial-1)  
+                if(va->occluded >= OCCLUDE_BB+oqpartial-1)
                 {
-                    if(va->query) drawquery(va->query, va); 
+                    if(va->query) drawquery(va->query, va);
                     continue;
                 };
             }
-            else 
+            else
             {
                 va->query = newquery(va);
                 va->occluded = OCCLUDE_NOTHING;
             };
         }
-        else 
+        else
         {
             va->query = NULL;
-            va->occluded = OCCLUDE_NOTHING;    
+            va->occluded = OCCLUDE_NOTHING;
         };
 
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1519,7 +1522,7 @@ void renderq()
             Texture *tex = slot.sts[0].t;
             glBindTexture(GL_TEXTURE_2D, tex->gl);
 
-            if(renderpath!=R_FIXEDFUNCTION) loopj(slot.sts.length()-1)  
+            if(renderpath!=R_FIXEDFUNCTION) loopj(slot.sts.length()-1)
             {
                 glActiveTexture_(GL_TEXTURE0_ARB+j+2);
                 glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
