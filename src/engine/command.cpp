@@ -8,7 +8,7 @@
 #endif
 
 void itoa(char *s, int i) { s_sprintf(s)("%d", i); };
-char *exchangestr(char *o, char *n) { delete[] o; return newstring(n); };
+char *exchangestr(char *o, const char *n) { delete[] o; return newstring(n); };
 
 typedef hashtable<char *, ident> identtable;
 
@@ -41,7 +41,7 @@ void clearoverrides()
         });
 };
                 
-void alias(char *name, char *action)
+void alias(char *name, const char *action)
 {
     ident *b = idents->access(name);
     if(!b) 
@@ -98,6 +98,45 @@ void addident(char *name, ident *id)
 
 static vector<char> wordbuf;
 
+char *parseexp(char *&p, int right);
+
+void parsemacro(char *&p, int level)
+{
+    int escape = 1;
+    while(*p=='@') p++, escape++;
+    if(level > escape)
+    {
+        while(escape--) wordbuf.add('@');
+        return;
+    };
+    if(*p=='[')
+    {
+        char *exp = parseexp(p, ']');
+        char *olds = getalias("s");
+        if(olds) olds = newstring(olds);
+        alias("s", "");
+        execute(exp);
+        delete[] exp;
+        char *sub = getalias("s");
+        while(*sub) wordbuf.add(*sub++);
+        alias("s", olds ? olds : "");
+        if(olds) delete[] olds;
+        return;
+    };
+    char *ident = p;
+    while(isalnum(*p) || *p=='_') p++;
+    int c = *p;
+    *p = 0;
+    char *alias = getalias(ident);
+    *p = c;
+    if(alias) while(*alias) wordbuf.add(*alias++);
+    else
+    {
+        ident--;
+        while(ident!=p) wordbuf.add(*ident++);
+    };
+};
+
 char *parseexp(char *&p, int right)          // parse any nested set of () or []
 {
     int pos = wordbuf.length(), left = *p++;
@@ -107,34 +146,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         if(c=='\r') continue;               // hack
         if(left=='[' && c=='@')
         {
-            int escape = 1;
-            while(*p=='@') p++, escape++;
-            if(brak > escape)
-            {
-                while(escape--) wordbuf.add('@');
-                continue;
-            };
-            if(*p=='[')
-            {
-                char *exp = parseexp(p, ']');
-                execute(exp);
-                free(exp);
-                char *sub = getalias("s");
-                if(sub) while(*sub) wordbuf.add(*sub++);
-                continue;
-            };
-            char *ident = p;
-            while(isalnum(*p) || *p=='_') p++;
-            c = *p;
-            *p = 0;
-            char *alias = getalias(ident);
-            *p = c;
-            if(alias) while(*alias) wordbuf.add(*alias++);
-            else
-            {
-                ident--;
-                while(ident!=p) wordbuf.add(*ident++);
-            };
+            parsemacro(p, brak);
             continue;
         };
         if(c=='\"')
@@ -256,7 +268,7 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                 {
                     default: if(isdown) id->run(w+1); break;
                     case IARG_BOTH: id->run((char **)isdown); break;
-                    case IARG_CONC:  if(isdown) { char *r = conc(w+1, numargs-1, true); id->run(&r); free(r); }; break;
+                    case IARG_CONC:  if(isdown) { char *r = conc(w+1, numargs-1, true); id->run(&r); delete[] r; }; break;
                 };
                 break;
         
@@ -286,7 +298,7 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     {
                         char *r = conc(w+1, numargs-1, true);
                         ((void (__cdecl *)(char *))id->_fun)(r);
-                        free(r);
+                        delete[] r;
                         break;
                     };
                     case ARG_VARI: if(isdown) ((void (__cdecl *)(char **, int))id->_fun)(w+1, numargs-1); break;
@@ -569,7 +581,7 @@ void concatword(char **args, int numargs)
 {
     char *s = conc(args, numargs, false);
     concat(s);
-    free(s);
+    delete[] s;
 };
 
 void format(char **args, int numargs)

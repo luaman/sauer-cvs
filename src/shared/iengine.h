@@ -54,7 +54,7 @@ extern void exec(char *cfgfile);
 extern bool execfile(char *cfgfile);
 extern void resetcomplete();
 extern void complete(char *s);
-extern void alias(char *name, char *action);
+extern void alias(char *name, const char *action);
 extern char *getalias(char *name);
 
 // console
