@@ -25,8 +25,6 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
-#include <eh.h>
-#include <dbghelp.h>
 #endif
 
 #include <SDL.h>
@@ -41,6 +39,8 @@
   #define _WINDOWS
   #ifndef __GNUC__
     #define ZLIB_DLL
+    #include <eh.h>
+    #include <dbghelp.h>
   #endif
 #endif
 #include <zlib.h>
