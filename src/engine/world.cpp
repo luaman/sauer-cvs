@@ -348,7 +348,9 @@ void empty_world(int scale, bool force)    // main empty world creation routine
     clearlights();
     allchanged();
 
+    overrideidents = true;
     execfile("data/default_map_settings.cfg");
+    overrideidents = false;
 };
 
 void newmap(int i) { empty_world(i, false); };

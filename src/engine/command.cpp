@@ -52,7 +52,8 @@ void alias(char *name, const char *action)
         idents->access(name, &b);
     }
     else if(b->_type!=ID_ALIAS) conoutf("cannot redefine builtin %s with an alias", name);
-    else if(overrideidents && b->_override == NO_OVERRIDE && b->_action[0]) conoutf("cannot override existing alias %s", name);        
+    else if(overrideidents && b->_override == NO_OVERRIDE && b->_action[0]) 
+            conoutf("cannot override existing alias %s", name);        
     else 
     {
         b->_action = exchangestr(b->_action, action);
@@ -538,7 +539,7 @@ void writecfg()
 {
     FILE *f = fopen("config.cfg", "w");
     if(!f) return;
-    fprintf(f, "// automatically written on exit, do not modify\n// delete this file to have defaults.cfg overwrite these settings\n// modify settings in game, or put settings in autoexec.cfg to override anything\n\n");
+    fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// delete this file to have defaults.cfg overwrite these settings\n// modify settings in game, or put settings in autoexec.cfg to override anything\n\n");
     cc->writeclientinfo(f);
     fprintf(f, "\n");
     enumerate(*idents, ident, id,

@@ -332,8 +332,8 @@ void load_world(char *mname)        // still supports all map formats that have 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);
     estartmap(mname);
-    execfile("data/default_map_settings.cfg");
     overrideidents = true;
+    execfile("data/default_map_settings.cfg");
     execfile(pcfname);
     execfile(mcfname);
     overrideidents = false;
