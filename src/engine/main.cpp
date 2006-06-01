@@ -366,7 +366,7 @@ int main(int argc, char **argv)
     execfile("mybrushes.cfg");
     exec("servers.cfg");
     if(!execfile("config.cfg")) exec("data/defaults.cfg");
-    exec("autoexec.cfg");
+    execfile("autoexec.cfg");
 
     log("localconnect");
     localconnect();
