@@ -14,7 +14,7 @@ typedef hashtable<char *, ident> identtable;
 
 identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
-bool overrideidents = false;
+bool overrideidents = false, persistidents = true;
 
 void clear_command()
 {
@@ -47,7 +47,7 @@ void alias(char *name, const char *action)
     if(!b) 
     {
         name = newstring(name);
-        ident b(ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action), true, NULL);
+        ident b(ID_ALIAS, name, 0, 0, 0, 0, 0, newstring(action), persistidents, NULL);
         if(overrideidents) b._override = OVERRIDDEN;
         idents->access(name, &b);
     }
@@ -57,6 +57,7 @@ void alias(char *name, const char *action)
     {
         b->_action = exchangestr(b->_action, action);
         if(overrideidents) b->_override = OVERRIDDEN;
+        else if(b->_persist != persistidents) b->_persist = persistidents;
     };
 };
 
@@ -550,7 +551,7 @@ void writecfg()
     writebinds(f);
     fprintf(f, "\n");
     enumerate(*idents, ident, id,
-        if(id._type==ID_ALIAS && id._override==NO_OVERRIDE && !strstr(id._name, "nextmap_") && id._action[0])
+        if(id._type==ID_ALIAS && id._persist && id._override==NO_OVERRIDE && !strstr(id._name, "nextmap_") && id._action[0])
         {
             fprintf(f, "alias \"%s\" [%s]\n", id._name, id._action);
         };

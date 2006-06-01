@@ -338,6 +338,7 @@ int main(int argc, char **argv)
     SDL_ShowCursor(0);
 
     log("console");
+    persistidents = false;
     exec("data/stdlib.cfg");
 
     log("gl");
@@ -365,6 +366,7 @@ int main(int argc, char **argv)
     exec("data/brush.cfg");
     execfile("mybrushes.cfg");
     exec("servers.cfg");
+    persistidents = true;
     if(!execfile("config.cfg")) exec("data/defaults.cfg");
     execfile("autoexec.cfg");
 

@@ -200,7 +200,7 @@ extern void connects(char *servername);
 extern void clientkeepalive();
 
 // command
-extern bool overrideidents;
+extern bool overrideidents, persistidents;
 
 extern void clearoverrides();
 extern void writecfg();
