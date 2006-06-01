@@ -69,7 +69,7 @@ struct monsterset
             vec ray(enemy->o);
             ray.sub(o);
             float mag = ray.magnitude();
-            float distance = raycubepos(o, ray, v, mag, RAY_POLY);
+            float distance = raycubepos(o, ray, v, mag, RAY_CLIPMAT|RAY_POLY);
             return distance >= mag; 
         };
 
