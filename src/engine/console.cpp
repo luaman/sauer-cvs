@@ -41,16 +41,20 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     };
 };
 
-extern int scr_w;
+extern int scr_w, scr_h;
 
 void conoutf(const char *s, ...)
 {
+    int w = scr_w, h = scr_h;
+    gettextres(w, h);
     s_sprintfdv(sf, s);
     puts(sf);
     s = sf;
     int n = 0, visible;
-    while(visible = text_visible(s, 4*scr_w - FONTH)) // cut strings to fit on screen
+    while(visible = text_visible(s, 3*w - FONTH)) // cut strings to fit on screen
     {
+        const char *newline = (const char *)memchr(s, '\n', visible);
+        if(newline) visible = newline+1-s;
         string t;
         s_strncpy(t, s, visible+1);
         conline(t, n++!=0);

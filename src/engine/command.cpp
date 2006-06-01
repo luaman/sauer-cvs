@@ -105,8 +105,15 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     {
         int c = *p++;
         if(c=='\r') continue;               // hack
-        if(c=='@' && brak==1)
+        if(c=='@')
         {
+            int escape = 1;
+            while(*p=='@') p++, escape++;
+            if(brak > escape)
+            {
+                while(escape--) wordbuf.add('@');
+                continue;
+            };
             if(*p=='[')
             {
                 char *exp = parseexp(p, ']');
@@ -122,10 +129,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
             *p = 0;
             char *alias = getalias(ident);
             *p = c;
-            if(alias)
-            {
-                while(*alias) wordbuf.add(*alias++);
-            }
+            if(alias) while(*alias) wordbuf.add(*alias++);
             else
             {
                 ident--;
@@ -135,9 +139,13 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         };
         if(c==left) brak++;
         else if(c==right) brak--;
-        else if(!c) { p--;
-        conoutf("missing \"%c\"", right);
-        wordbuf.setsize(pos); return NULL; };
+        else if(!c) 
+        { 
+            p--;
+            conoutf("missing \"%c\"", right);
+            wordbuf.setsize(pos); 
+            return NULL; 
+        };
         wordbuf.add(c);
     };
     wordbuf.pop();
