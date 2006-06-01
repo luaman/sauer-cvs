@@ -450,15 +450,15 @@ void freeeditinfo(editinfo *e)
     e = NULL;
 };
 
+// guard against subdivision
+#define protectsel(f) { undoblock _u = { selgridmap(), blockcopy(sel, -sel.grid)}; f; pasteundo(_u); freeundo(_u); } 
+
 void mpcopy(editinfo *&e, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_COPY);
     if(e==NULL) e = new editinfo;
     if(e->copy) freeblock(e->copy);
-    undoblock u = { selgridmap(), blockcopy(sel, -sel.grid)};  // guard against subdivision
-    e->copy = blockcopy(block3(sel), sel.grid);
-    pasteundo(u);
-    freeundo(u);
+    protectsel(e->copy = blockcopy(block3(sel), sel.grid));
     changed(sel);
 };
 
@@ -578,19 +578,21 @@ void createheightmap()
     };
 
     int h = hi / 8;
-    loopxyz(sel, sel.grid,
-        if(c.children) { solidfaces(c); discardchildren(c); };
-        if(!htex[x+y*w] && z == sel.s[D[d]]-1) htex[x+y*w] = c.texture[sel.orient];
-        if(isempty(c)) continue;
-        if(!htex[x+y*w]) htex[x+y*w] = c.texture[sel.orient];
+    protectsel(
+        loopxyz(sel, sel.grid,
+            if(c.children) { solidfaces(c); discardchildren(c); };
+            if(!htex[x+y*w] && z == sel.s[D[d]]-1) htex[x+y*w] = c.texture[sel.orient];
+            if(isempty(c)) continue;
+            if(!htex[x+y*w]) htex[x+y*w] = c.texture[sel.orient];
 
-        loopi(2) loopj(2)
-        {
-            int a = x+i+(y+j)*w;
-            int e = edgeget(cubeedge(c, d, i, j), dc);
-            e = (h-z-1)*8 + (dc ? e : 8-e);
-            hmap[a] = max(hmap[a], e);// simply take the heighest points
-        };
+            loopi(2) loopj(2)
+            {
+                int a = x+i+(y+j)*w;
+                int e = edgeget(cubeedge(c, d, i, j), dc);
+                e = (h-z-1)*8 + (dc ? e : 8-e);
+                hmap[a] = max(hmap[a], e);// simply take the heighest points
+            };
+        );
     );
 };
 
