@@ -19,10 +19,11 @@ eihrul:
 - add entity looping command?
 
 aard (e = eihrul (or gilt) could do it):
-- update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
-- ways of doing menu - context sensitive etc
 - new SP respawn system
+- start moving some stuff in their own headers
+- update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
+- ways of doing menu - context sensitive etc
 - improve bloom
 - maconly? use http://developer.apple.com/graphicsimaging/opengl/extensions/ext_texture_rectangle.html
 - report to ATI: float vs short issue
