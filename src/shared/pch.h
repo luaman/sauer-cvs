@@ -31,9 +31,7 @@
 #include <SDL_image.h>
 #define NO_SDL_GLEXT
 #include <SDL_opengl.h>
-#ifdef WIN32
 #include "GL/glext.h"
-#endif
 
 #include <enet/enet.h>
 
