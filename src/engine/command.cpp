@@ -51,14 +51,18 @@ void alias(char *name, const char *action)
         if(overrideidents) b._override = OVERRIDDEN;
         idents->access(name, &b);
     }
-    else if(b->_type!=ID_ALIAS) conoutf("cannot redefine builtin %s with an alias", name);
-    else if(overrideidents && b->_override == NO_OVERRIDE && b->_action[0]) 
-            conoutf("cannot override existing alias %s", name);        
+    else if(b->_type != ID_ALIAS) conoutf("cannot redefine builtin %s with an alias", name);
+//    else if(overrideidents && b->_override == NO_OVERRIDE && b->_action[0]) 
+//            conoutf("cannot override existing alias %s", name);        
     else 
     {
         b->_action = exchangestr(b->_action, action);
         if(overrideidents) b->_override = OVERRIDDEN;
-        else if(b->_persist != persistidents) b->_persist = persistidents;
+        else 
+        {
+            if(b->_override != NO_OVERRIDE) b->_override = NO_OVERRIDE;
+            if(b->_persist != persistidents) b->_persist = persistidents;
+        };
     };
 };
 
@@ -322,7 +326,8 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                                 break;
                             };
                             if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
-                        };
+                        }
+                        else if(id->_override!=NO_OVERRIDE) id->_override = NO_OVERRIDE;
                         int i1 = atoi(w[1]);
                         if(i1<id->_min || i1>id->_max)
                         {
