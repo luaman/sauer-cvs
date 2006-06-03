@@ -34,7 +34,6 @@
 #define __glext_h__
 #define NO_SDL_GLEXT
 #include <SDL_opengl.h>
-#undef GL_GLEXT_LEGACY
 #undef __glext_h__
 #include "GL/glext.h"
 
