@@ -84,31 +84,6 @@
 		B9CACA2509209A5800A13F04 /* sauerbraten.icns in Resources */ = {isa = PBXBuildFile; fileRef = B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXBuildStyle section */
-		4A9504CCFFE6A4B311CA0CBA /* Development */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				OPTIMIZATION_CFLAGS = "-O0";
-				ZERO_LINK = YES;
-			};
-			name = Development;
-		};
-		4A9504CDFFE6A4B311CA0CBA /* Deployment */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				ZERO_LINK = NO;
-			};
-			name = Deployment;
-		};
-/* End PBXBuildStyle section */
-
 /* Begin PBXContainerItemProxy section */
 		B96D0D780920980E00B6C936 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -187,7 +162,7 @@
 		B941984B092076920029DAD1 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
 		B941984C092076920029DAD1 /* tools.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = tools.cpp; sourceTree = "<group>"; };
 		B941984D092076920029DAD1 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
-		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D4C092096F200B6C936 /* launcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D570920970C00B6C936 /* Launcher.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Launcher.h; sourceTree = "<group>"; };
 		B96D0D580920970C00B6C936 /* Launcher.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Launcher.m; sourceTree = "<group>"; };
@@ -451,34 +426,6 @@
 			);
 			buildRules = (
 			);
-			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL.framework/Headers",
-					"$(LOCAL_LIBRARY_DIR)/Frameworks/SDL_image.framework/Headers",
-					../enet/include,
-					../include/,
-				);
-				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = ../enet;
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_LDFLAGS = (
-					"-framework",
-					SDL,
-					"-framework",
-					SDL_image,
-					"-framework",
-					SDL_mixer,
-					"-lz",
-				);
-				PRODUCT_NAME = sauerbraten;
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = "";
-				WRAPPER_EXTENSION = app;
-			};
 			dependencies = (
 				B96D0D790920980E00B6C936 /* PBXTargetDependency */,
 			);
@@ -498,61 +445,11 @@
 			);
 			buildRules = (
 			);
-			buildSettings = {
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
-				INFOPLIST_FILE = "launcher-Info.plist";
-				INSTALL_PATH = "$(USER_APPS_DIR)";
-				OPTIMIZATION_CFLAGS = "";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = (
-					"-framework",
-					Foundation,
-					"-framework",
-					AppKit,
-				);
-				OTHER_REZFLAGS = "";
-				PREBINDING = NO;
-				PRODUCT_NAME = launcher;
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
 			dependencies = (
 			);
 			name = launcher;
 			productName = launcher;
 			productReference = B96D0D4C092096F200B6C936 /* launcher.app */;
-			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
-<plist version=\"1.0\">
-<dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
-	<key>CFBundleExecutable</key>
-	<string>launcher</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.yourcompany.launcher</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>1.0</string>
-	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
-</dict>
-</plist>
-";
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -561,12 +458,6 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = B960CF35085F3CC7004FB142 /* Build configuration list for PBXProject "sauerbraten" */;
-			buildSettings = {
-			};
-			buildStyles = (
-				4A9504CCFFE6A4B311CA0CBA /* Development */,
-				4A9504CDFFE6A4B311CA0CBA /* Deployment */,
-			);
 			hasScannedForEncodings = 1;
 			mainGroup = 29B97314FDCFA39411CA2CEA /* sauerbraten */;
 			projectDirPath = "";
@@ -863,8 +754,8 @@
 		B96D0D51092096F300B6C936 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
@@ -894,7 +785,8 @@
 		B96D0D52092096F300B6C936 /* Deployment-Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
