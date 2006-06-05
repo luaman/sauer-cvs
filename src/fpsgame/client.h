@@ -629,6 +629,9 @@ struct clientcom : iclientcom
                 break;
             };
 
+            case SV_FORCEINTERMISSION:
+                break;
+
             default:
                 neterr("type");
                 return;

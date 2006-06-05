@@ -130,7 +130,7 @@ struct fpsserver : igameserver
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITH, 16, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 17, 
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3,
-            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 5,
+            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 5, SV_FORCEINTERMISSION, 1, 
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -374,6 +374,10 @@ struct fpsserver : igameserver
                 };
                 break;
             };
+
+            case SV_FORCEINTERMISSION:
+                startintermission();
+                break;
 
             default:
             {

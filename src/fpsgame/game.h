@@ -20,6 +20,7 @@ enum                            // static entity types
     CARROT,                     // attr1 = tag, attr2 = type
     JUMPPAD,                    // attr1 = zpush, attr2 = ypush, attr3 = xpush
     BASE,
+    RESPAWNPOINT,
     MAXENTTYPES
 };
 
@@ -44,12 +45,12 @@ struct fpsent : dynent
     int lastaction, lastattackgun;
     bool attacking;
     int ammo[NUMGUNS];
-    int frags;
+    int frags, deaths, totaldamage, totalshots;
     editinfo *edit;
 
     string name, team, info;
 
-    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), maxhealth(100), lastpain(0), frags(0), edit(NULL)
+    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), maxhealth(100), lastpain(0), frags(0), edit(NULL), deaths(0), totalshots(0), totaldamage(0)
                { name[0] = team[0] = info[0] = 0; respawn(); };
     ~fpsent() { freeeditinfo(edit); };
 
@@ -121,7 +122,7 @@ enum
     SV_SERVMSG, SV_ITEMLIST, SV_RESUME,
     SV_EDITENT, SV_EDITH, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_COPY, SV_PASTE, SV_ROTATE, SV_REPLACE,
     SV_MASTERMODE, SV_KICK, SV_CURRENTMASTER, SV_SPECTATOR,
-    SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO,
+    SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO, SV_FORCEINTERMISSION,
 };
 
 #define SAUERBRATEN_SERVER_PORT 28785

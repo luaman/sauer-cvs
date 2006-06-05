@@ -177,6 +177,7 @@ struct weaponstate
     void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel, bool isrl)
     {
         d->lastpain = cl.lastmillis;
+        at->totaldamage += damage;
         vel.mul(80*damage/d->weight);
         if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
         else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
@@ -447,7 +448,7 @@ struct weaponstate
             unitv.mul(shorten);
             to = from;
             to.add(unitv);
-        };   
+        };
         
         if(d->gunselect==GUN_SG) createrays(from, to);
         else if(d->gunselect==GUN_CG) offsetray(from, to, 1, to);
@@ -462,5 +463,6 @@ struct weaponstate
 
         d->gunwait = guns[d->gunselect].attackdelay;
 
+        d->totalshots += guns[d->gunselect].damage*(d->quadmillis ? 4 : 1)*(d->gunselect==GUN_SG ? SGRAYS : 1);
     };
 };

@@ -32,9 +32,12 @@ struct fpsclient : igameclient
     int arenarespawnwait, arenadetectwait;
     int spawncycle, fixspawn;
     int spawngun1, spawngun2;
+    int maptime;
+    int respawnent;
 
     fpsent *player1;                // our client
     vector<fpsent *> players;       // other clients
+    fpsent lastplayerstate;
 
     weaponstate ws;
     monsterset  ms;
@@ -47,7 +50,7 @@ struct fpsclient : igameclient
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
-          arenarespawnwait(0), arenadetectwait(0), spawncycle(-1), fixspawn(2),
+          arenarespawnwait(0), arenadetectwait(0), spawncycle(-1), fixspawn(2), maptime(0), respawnent(-1),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), gs(*this), et(*this), cc(*this), cpc(*this)
     {
@@ -195,6 +198,7 @@ struct fpsclient : igameclient
     void updateworld(vec &pos, int curtime, int lm)        // main game update loop
     {
         lastmillis = lm;
+        maptime += curtime;
         physicsframe();
         et.checkquad(curtime);
         if(m_arena) arenarespawn();
@@ -243,6 +247,7 @@ struct fpsclient : igameclient
     {
         int pick = -1;
         if(m_capture) pick = cpc.pickspawn(d->team);
+        if(respawnent>=0) pick = respawnent;
         if(pick<0)
         {
             int r = fixspawn-->0 ? 2 : rnd(10)+1;
@@ -276,7 +281,15 @@ struct fpsclient : igameclient
                 return;
             };
             if(m_arena) { conoutf("waiting for new round to start..."); return; };
-            if(m_sp) { nextmode = gamemode; cc.changemap(clientmap); return; };    // if we die in SP we try the same map again
+            if(m_dmsp) { nextmode = gamemode; cc.changemap(clientmap); return; };    // if we die in SP we try the same map again
+            if(m_classicsp)
+            {
+                respawnself();
+                conoutf("You wasted another life! The monsters stole your armour and some ammo...");
+                loopi(NUMGUNS) if((player1->ammo[i] = lastplayerstate.ammo[i])>5) player1->ammo[i] = max(player1->ammo[i]/3, 5); 
+                player1->ammo[GUN_PISTOL] = 80;
+                return;
+            }
             respawnself();
         };
     };
@@ -333,9 +346,11 @@ struct fpsclient : igameclient
             };
             sb.showscores(true);
             cc.addmsg(1, 2, SV_DIED, actor);
+            lastplayerstate = *player1;
             player1->lifesequence++;
             player1->attacking = false;
             player1->state = CS_DEAD;
+            player1->deaths++;
             player1->pitch = 0;
             player1->roll = 60;
             playsound(S_DIE1+rnd(2));
@@ -358,6 +373,22 @@ struct fpsclient : igameclient
             player1->attacking = false;
             conoutf("intermission:");
             conoutf("game has ended!");
+            conoutf("time taken: %f seconds on skill level %d", maptime/1000.0f, ms.skill());
+            int accuracy = player1->totaldamage*100/max(player1->totalshots, 1);
+            conoutf("player total damage dealt: %d, damage wasted: %d, accuracy(%%): %d", player1->totaldamage, player1->totalshots-player1->totaldamage, accuracy);   
+            conoutf("player frags: %d, deaths: %d", player1->frags, player1->deaths);
+            if(m_sp)
+            {
+                int score = (1000/(player1->deaths+1)+player1->frags*10-maptime/1000+accuracy+ms.skill()*25);
+                s_sprintfd(aname)("bestscore_%s", getclientmap());
+                char *bestsc = getalias(aname);
+                int bestscore = 0;
+                if(bestsc) bestscore = atoi(bestsc);
+                if(score>bestscore) bestscore = score;
+                s_sprintfd(nscore)("%d", bestscore);
+                alias(aname, nscore);
+                conoutf("TOTAL SCORE (1000/(deaths+1)+frags*10-seconds+accuracy+skill*25): %d (best sofar: %d)", score, bestscore);
+            }
             sb.showscores(true);
         }
         else if(timeremain > 0)
@@ -385,6 +416,7 @@ struct fpsclient : igameclient
 
     void startmap(char *name)   // called just after a map load
     {
+        respawnent = -1;
         spawncycle = 0;
         if(netmapstart() && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); };
         cc.mapstart();
@@ -398,6 +430,9 @@ struct fpsclient : igameclient
         loopv(players) if(players[i])
         {
             players[i]->frags = 0;
+            players[i]->deaths = 0;
+            players[i]->totaldamage = 0;
+            players[i]->totalshots = 0;
             players[i]->maxhealth = 100;
         };
 
@@ -406,7 +441,14 @@ struct fpsclient : igameclient
         s_strcpy(clientmap, name);
         sb.showscores(false);
         intermission = false;
+        maptime = 0;
         conoutf("game mode is %s", fpsserver::modestr(gamemode));
+        if(m_sp)
+        {
+            s_sprintfd(aname)("bestscore_%s", getclientmap());
+            char *best = getalias(aname);
+            if(best) conoutf("try to beat your best score sofar: %s", best);
+        };
     };
 
     void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)

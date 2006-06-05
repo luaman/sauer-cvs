@@ -18,9 +18,20 @@ eihrul:
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
 
+time taken: 456.274000 seconds
+player total damage dealt: 19412, damage wasted: 9573, accuracy(%): 66
+player frags: 99, deaths: 0
+TOTAL SCORE (1000/(deaths+1)+frags*10-seconds+accuracy): 1600 (best sofar: 1600)
+
 aard (e = eihrul (or gilt) could do it):
-- try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
 - new SP respawn system
+                // - accuracy
+                // - end of level trigger
+                // - end c/s
+                // - good docs
+- scripting: do "." for concatword so you could do easy (associative) arrays and tree structures?
+- too many aliases written to config.cfg?
+- try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
 - start moving some stuff in their own headers
 - update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - ways of doing menu - context sensitive etc

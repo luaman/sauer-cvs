@@ -54,9 +54,9 @@ struct entities : icliententities
             };
 
             extentity &e = *ents[i];
-            if(e.type==CARROT)
+            if(e.type==CARROT || e.type==RESPAWNPOINT)
             {
-                renderent(e, "carrot", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
+                renderent(e, e.type==CARROT ? "carrot" : "checkpoint", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
                 continue;
             };
             if(!e.spawned && e.type!=TELEPORT) continue;
@@ -207,6 +207,12 @@ struct entities : icliententities
                 break;
             };
 
+            case RESPAWNPOINT:
+                if(n==cl.respawnent) break;
+                cl.respawnent = n;
+                conoutf("respawn point set!");
+                break;
+
             case JUMPPAD:
             {
                 static int lastjumppad = 0;
@@ -234,7 +240,7 @@ struct entities : icliententities
         {
             extentity &e = *ents[i];
             if(e.type==NOTUSED) continue;
-            if(!e.spawned && e.type!=TELEPORT && e.type!=JUMPPAD) continue;
+            if(!e.spawned && e.type!=TELEPORT && e.type!=JUMPPAD && e.type!=RESPAWNPOINT) continue;
             float dist = e.o.dist(o);
             if(dist<(e.type==TELEPORT ? 16 : 12)) pickup(i, cl.player1);
         };
@@ -287,6 +293,7 @@ struct entities : icliententities
             case MONSTER:
             case TELEDEST:
                 e.attr2 = e.attr1;
+            case RESPAWNPOINT:
             case PLAYERSTART:
                 e.attr1 = (int)cl.player1->yaw;
                 break;
@@ -303,8 +310,8 @@ struct entities : icliententities
             "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
             "teleport", "teledest",
             "monster", "carrot", "jumppad",
-            "base",
-            "", "", "", "", "",
+            "base", "respawnpoint",
+            "", "", "", "",
         };
         return i>=0 && i<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
     };

@@ -6,6 +6,7 @@
 struct mitem
 {
     char *text, *action;
+    string eval;
     
     ~mitem() { if(text!=action) DELETEA(action); DELETEA(text); };
 };
@@ -103,7 +104,10 @@ bool rendermenu(int scr_w, int scr_h)
     int w = 0;
     loopv(m.items)
     {
-        int x = text_width(m.items[i].text);
+        string &s = m.items[i].eval;
+        s_strcpy(s, m.items[i].text);
+        if(s[0]=='^') { execute(s+1); s_strcpy(s, getalias("s")); };
+        int x = text_width(s);
         if(x>w) w = x;
     };
     int tw = text_width(title);
@@ -127,7 +131,7 @@ bool rendermenu(int scr_w, int scr_h)
     };
     loopj(cdisp)
     {
-        draw_text(m.items[offset+j].text, x, y);
+        draw_text(m.items[offset+j].eval, x, y);
         y += step;
     };
 

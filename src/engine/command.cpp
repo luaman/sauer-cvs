@@ -637,6 +637,12 @@ void at(char *s, char *pos)
     concat(s);
 };
 
+void getalias_(char *s)
+{
+    s = getalias(s);
+    concat(s ? s : "");
+};
+
 COMMAND(onrelease, ARG_DWN1);
 COMMAND(exec, ARG_1STR);
 COMMAND(concat, ARG_CONC);
@@ -644,6 +650,7 @@ COMMAND(concatword, ARG_VARI);
 COMMAND(format, ARG_VARI);
 COMMAND(at, ARG_2STR);
 COMMAND(listlen, ARG_1EST);
+COMMANDN(getalias, getalias_, ARG_1STR);
 
 int add(int a, int b)   { return a+b; };         COMMANDN(+, add, ARG_2EXP);
 int mul(int a, int b)   { return a*b; };         COMMANDN(*, mul, ARG_2EXP);

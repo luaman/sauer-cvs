@@ -289,10 +289,9 @@ struct monsterset
     void endsp(bool allkilled)
     {
         conoutf(allkilled ? "you have cleared the map!" : "you reached the exit!");
-        conoutf("score: %d kills in %d seconds", numkilled, (cl.lastmillis-mtimestart)/1000);
+        //conoutf("score: %d kills in %d seconds", numkilled, (cl.lastmillis-mtimestart)/1000);
         monstertotal = 0;
-        //BREAK
-        //startintermission();
+        cl.cc.addmsg(1, 1, SV_FORCEINTERMISSION);
     };
     
     void monsterkilled()

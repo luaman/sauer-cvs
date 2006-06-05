@@ -167,7 +167,9 @@ soundvol n</pre>
 menuitem A</pre>
 		Creates a new menuitem with description N and action A. if you only specify 1, 
 		then it will be used for both the description and the action. See 
-		data/menus.cfg for examples.
+		data/menus.cfg for examples. If N starts with the special character "^", then the name will
+		be evaluated as a command when being displayed, and the the variable "s" used as name. This
+		allows you to create menu items that depend on changing gamestate.
 		<pre>showmenu N</pre>
 		Displays the menu with name N previously defined, and allows the user to pick 
 		an item with the cursor keys. Upon pressing return, the associated action will 

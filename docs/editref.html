@@ -416,7 +416,7 @@ music name ondone</pre>
     a message: <span style="font-family: Courier New">alias level_trigger_1 "echo A door
         opened nearby"</span>). The alias "<span style="font-family: Courier New">triggerstate</span>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.<br />
     <br />
-    <table border="1" cellpadding="2" cellspacing="0">
+    <table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
         <tr>
             <td style="width: 38px; height: 13px">
                 Type</td>
@@ -620,7 +620,12 @@ music name ondone</pre>
         A monster, currently N = 0..4 (see gameplay docs). Monster entities will be
         spawned when in classic single player mode, and will attack you when you come
         into view. yaw is taken from the current camera yaw.
-        <br>
+    <br />
+
+    <pre>"respawnpoint"</pre>
+
+    A respawnpoint for classic SP mode (see "SP Respawning"). Place these spaced evenly in quieter areas between fights. Will actually work in
+    any game mode, just probably isn't helpful in DM.<br>
         <br>
         <br>
         Entities are shown in editmode by blue sparklies, and the closest one is

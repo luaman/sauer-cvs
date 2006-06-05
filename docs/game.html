@@ -313,12 +313,14 @@ but maybe without its already good enough.
 <div>Single Player Modes</div>
 There are two single player modes:
 <ul>
-<li>a classical progress-based monsters-wake-up-when-they-see-you mode which is very similar to Doom &amp; Quake, and is played on maps specifically designed for SP. Items don't respawn.</li>
-<LI>an arena style SP mode (akin to my "DMSP" mod for quake) which you play on DM maps: 10 seconds after the game starts monsters start spawning in (currently about 1 per second), which will immediately be angry at you. The map ends when they all have spawned and they are all killed (either by you or by their buddies ;). The number of monsters depends on the "skill" variable. Items respawn as in DM.</li>
+<li>
+    (mode -2, command "/sp &lt;map&gt;"): a classical progress-based monsters-wake-up-when-they-see-you mode which is very similar to Doom &amp; Quake, and is played on maps specifically designed for SP. Items don't respawn.</li>
+<LI>(mode -1, command "/dmsp &lt;map&gt;"):
+      an arena style SP mode (akin to my "DMSP" mod for quake) which you play on DM maps: 10 seconds after the game starts monsters start spawning in (currently about 1 per second), which will immediately be angry at you. The map ends when they all have spawned and they are all killed (either by you or by their buddies ;). The number of monsters depends on the "skill" variable. Items respawn as in DM.</li>
 </ul>
-The mode numbers for these are -2 and -1 respectively, but can most conveniently be set over the singleplayer menu. In both cases, the map ends when all monsters are killed. Coop play is not supported yet.
+The mode numbers for these are -2 and -1 respectively, but can most conveniently be set over the singleplayer menu. In both cases, the map ends when all monsters are killed, or an end of level trigger is hit if one is available. Coop play is not supported yet.
 <br><br>
-There are currently 5 monsters, with the following properties (sorted roughly in order of "threat" they pose:
+There are currently 8 monsters, with the following properties (sorted roughly in order of "threat" they pose:
 <br><br>
 <table border=1 cellspacing="0" cellpadding="4">
 <tr>
@@ -446,6 +448,59 @@ Stamina is the amount of damage taken before dying, speed is their movement spee
 Other important parameters: monsters will at most jump down 4 sauerbratens in height, unless their health is 100 or less, in which case they allways jump down.
 <br><br>
 As you can summise from the above, the keys to surviving in sauerbraten SP are: keep moving, preferably perpendicular to the monster line of sight, frequently&nbsp;move behind&nbsp;walls and back&nbsp;(this makes monsters search for you again, which delays them), and use monster infighting to your advantage.
+    <br />
+    <br />
+    <strong><span style="font-size: 10pt">SP Respawning<br />
+    </span></strong>
+    <br />
+    Classic SP works differently from most FPS games that employ a savegame based system
+    (as did Sauerbraten's predecessor, Cube). The problem with savegames is that they
+    take away any tension in gameplay, since you play without fear because you can make
+    frequent saves, and when you do have to reload, its just an annoyance (or frustration,
+    if you forgot to save for a while because it was going so well).<br />
+    <br />
+    Instead of savegames, sauerbraten employs a novel system based on respawnpoints
+    (not to be confused with checkpoints, which are just an annoying version of savegames). The major annoyance in other games comes from having to repeat the same thing, in Sauerbraten, you can die, and
+    still never have to repeat the same gameplay again, yet you still have strong motivation not to die. This brings back the tension in gameplay, without the frustration.<br />
+    <br />
+    
+    The way it works that when you die, the world stays AS IS. Dead monsters stay dead, and alive ones just continue at their current location.
+    You respawn, as if it were DM, at your last respawnpoint.
+    
+    Respawnpoints are entities placed by the level designers in various spots thruout the level, and the game remembers the last one you touched. You can touch these more than once.
+    
+    When you respawn, the evil monsters will have stolen your armour, and most of your ammo (currently they take 2/3rds, unless you have 5 or less, in which case they don't take anything).<br />
+    <br />
+    On the good side, you will have all your health back (and you have kept any healthboost
+    powerups!), and your starting supply of pistol ammo (see, the monsters are evil, but fair).
+    
+    The good thing is that this way, even though you are punished for dying, you are never stuck, since even if a group of monsters is very hard to overcome, they will be easier every time you try, since the dead ones stay dead (and the hurt ones stay hurt!).
+    You may have to work with your pistol more, but that is part of the tradeoff.
+    
+    An additional motivation to not die, is that deaths are the most important component in reaching a good score on a level. Every time you finish a level, you will see a printout like this (this is me on a leasurely play through sp3):
+    <br />
+    
+    <br />
+    <span style="font-family: Courier New">
+    time taken: 456.274000 seconds on skill level
+        3<br />
+    player total damage dealt: 19412, damage wasted: 9573, accuracy(%): 66<br />
+    player frags: 99, deaths: 0
+    <br />
+    TOTAL SCORE (1000/(deaths+1)+frags*10-seconds+accuracy+skill*25): 1675 (best sofar: 1675)</span><br />
+    <br />
+    
+    This gives you the stats of your game. The overal score is something that will be displayed in the menus next to the map name, so you can try and improve your best score, and compare to others. These score values are saved accross runs of the game
+    (in bestscore_&lt;mapname&gt; aliases).
+    The final formula has been tweaked such that:
+    <UL>
+    <li>The number of deaths has the biggest impact on your score. You want to have 0 deaths for a good score.</li>
+    <li>The second most important thing is frags, you want to make sure you have killed all monsters.</li>
+    <li>The third most important thing is probably time... finish the map as quickly as you can</li>
+    <li>another component is accuracy, which reflects shots fired compared to damage dealt (which is not the same as damage taken, i.e. it does not take into account if a rocket is mostly wasted because the monster only had 10 health).</li>
+    <li>the last component is skill, multiplied by 25. If more agressive monsters don't phase you, then you can score more by playing on skill 10.</li>
+    </UL>
+   
 
 
 <div>Effects of network code on gameplay</div>
