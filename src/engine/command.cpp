@@ -583,7 +583,7 @@ ICOMMAND(while, 2, while(execute(args[0])) execute(args[1]));    // can't get an
 
 void onrelease(bool on, char *body) { if(!on) execute(body); };
 
-void concat(char *s) { alias("s", s); };
+void concat(const char *s) { alias("s", s); };
 
 void concatword(char **args, int numargs)
 {

@@ -37,7 +37,7 @@ struct entities : icliententities
         return itemstats[t-I_SHELLS].name;
     };
     
-    void renderent(extentity &e, char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
+    void renderent(extentity &e, const char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
     {
         rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, false, speed, basetime);
     };
