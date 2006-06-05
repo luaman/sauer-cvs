@@ -385,7 +385,7 @@ struct fpsclient : igameclient
                 if(score>bestscore) bestscore = score;
                 s_sprintfd(nscore)("%d", bestscore);
                 alias(aname, nscore);
-                conoutf("TOTAL SCORE (1000/(deaths+1)+frags*10-seconds+accuracy+skill*25): %d (best sofar: %d)", score, bestscore);
+                conoutf("TOTAL SCORE (1000/(deaths+1)+frags*10-seconds+accuracy+skill*25): %d (best so far: %d)", score, bestscore);
             }
             sb.showscores(true);
         }
