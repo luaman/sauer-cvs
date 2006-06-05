@@ -570,7 +570,6 @@ struct fpsclient : igameclient
                    arg1);
                 break;
             };
-            case EDIT_HEIGHT:
             case EDIT_FACE:
             case EDIT_TEX:
             {

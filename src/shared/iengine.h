@@ -13,7 +13,7 @@ extern void settexture(const char *name);
 
 // octaedit
 
-enum { EDIT_HEIGHT = 0, EDIT_FACE, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_COPY, EDIT_PASTE, EDIT_ROTATE, EDIT_REPLACE };
+enum { EDIT_FACE = 0, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_COPY, EDIT_PASTE, EDIT_ROTATE, EDIT_REPLACE };
 
 struct selinfo
 {
