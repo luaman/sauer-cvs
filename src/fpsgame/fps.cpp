@@ -445,7 +445,7 @@ struct fpsclient : igameclient
         {
             s_sprintfd(aname)("bestscore_%s", getclientmap());
             char *best = getalias(aname);
-            if(best) conoutf("try to beat your best score sofar: %s", best);
+            if(best) conoutf("try to beat your best score so far: %s", best);
         };
     };
 

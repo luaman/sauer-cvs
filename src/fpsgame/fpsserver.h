@@ -79,15 +79,6 @@ struct fpsserver : igameserver
     vector<server_entity> sents;
     vector<score> scores;
 
-    void restoreserverstate(vector<extentity *> &ents)   // hack: called from savegame code, only works in SP
-    {
-        loopv(sents)
-        {
-            sents[i].spawned = ents[i]->spawned;
-            sents[i].spawnsecs = 0;
-        }; 
-    };
-
     score &findscore(int cn, bool insert)
     {
         uint ip = getclientip(cn);

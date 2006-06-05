@@ -85,8 +85,6 @@ extern fpsent *player1;                 // special client ent that receives inpu
 #define m_classicsp   (gamemode==-2)
 #define isteam(a,b)   (m_teammode && strcmp(a, b)==0)
 
-#define SAVEGAMEVERSION 2               // bump if fpsent changes or any other savegame data
-
 // hardcoded sounds, defined in sounds.cfg
 enum
 {

@@ -250,8 +250,6 @@ struct monsterset
 
     IVAR(skill, 1, 3, 10);
 
-    void restoremonsterstate() { loopv(monsters) if(monsters[i]->state==CS_DEAD) numkilled++; };        // for savegames
-
     void spawnmonster()     // spawn a random monster according to freq distribution in DMSP
     {
         int n = rnd(TOTMFREQ), type;
