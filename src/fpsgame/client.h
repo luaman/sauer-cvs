@@ -322,7 +322,7 @@ struct clientcom : iclientcom
             case SV_MAPRELOAD:          // server requests next map
             {
                 getint(p);
-                s_sprintfd(nextmapalias)("nextmap_%s", cl.getclientmap());
+                s_sprintfd(nextmapalias)("nextmap_%s%s", m_capture ? "capture_" : "", cl.getclientmap());
                 char *map = getalias(nextmapalias);     // look up map in the cycle
                 changemap(map ? map : cl.getclientmap());
                 break;
