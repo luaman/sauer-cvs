@@ -211,12 +211,16 @@ menuitem A</pre>
         <br>
         An alternative to $x is @x, which uses an alias as a macro. The difference is that @x 
         can be subtituted inside [] or () forms before they have ever been evaluated (at parse time), 
-        which makes them useful for composing strings or creating code on the fly. 
+        which makes them useful for composing strings or creating code on the fly. The @x form will be
+        substituted using the value of x at the time the enclosing [] is evaluated. You can add more @ prefixes
+        to move up more levels of []s, so @@x will move up two levels of []s and so on.
+        Example: alias x 0; if $cond [alias x 1; [alias x 2; echo @@x]] will echo 0, since the value of x at two levels up was used. 
         <br>
         <br>
         The form @[body] is similar to @x, except that body contains commands executed at parse time.
         The value of the s alias after body executes is substituted in for @[body]. The s alias is 
         initialized to "" before body executes and restored to its old value afterwards, for convenience.
+        You may use multiple @ prefixes as with the @x form.
         Example: @[alias s "Hello, World!"] will substitute itself with Hello, World!
 		<br>
 		<br>
