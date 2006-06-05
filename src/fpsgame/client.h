@@ -128,7 +128,6 @@ struct clientcom : iclientcom
 
     void sendpacketclient(uchar *&p, bool &reliable, dynent *d)
     {
-        bool serveriteminitdone = false;
         if(toservermap[0])                      // suggest server to change map
         {                                       // do this exclusively as map change may invalidate rest of update
             reliable = true;
@@ -170,7 +169,6 @@ struct clientcom : iclientcom
             putint(p, -1);
             if(m_capture) cl.cpc.sendbases(p);
             senditemstoserver = false;
-            serveriteminitdone = true;
         };
         if(ctext[0])    // player chat, not flood protected for now
         {
@@ -203,7 +201,6 @@ struct clientcom : iclientcom
             putint(p, cl.lastmillis);
             lastping = cl.lastmillis;
         };
-        if(serveriteminitdone) cl.gs.loadgamerest();  // hack
     };
 
     void updatepos(fpsent *d)

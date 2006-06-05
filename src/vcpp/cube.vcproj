@@ -1471,10 +1471,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\fpsgame\savegame.h"
-				>
-			</File>
-			<File
 				RelativePath="..\fpsgame\scoreboard.h"
 				>
 			</File>

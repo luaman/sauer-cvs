@@ -18,7 +18,6 @@ struct fpsclient : igameclient
     // these define classes local to fpsclient
     #include "weapon.h"
     #include "monster.h"
-    #include "savegame.h"
     #include "scoreboard.h"
     #include "fpsrender.h"
     #include "entities.h"
@@ -41,7 +40,6 @@ struct fpsclient : igameclient
 
     weaponstate ws;
     monsterset  ms;
-    gamesaver   gs;
     scoreboard  sb;
     fpsrender   fr;
     entities    et;
@@ -52,7 +50,7 @@ struct fpsclient : igameclient
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
           arenarespawnwait(0), arenadetectwait(0), spawncycle(-1), fixspawn(2), maptime(0), respawnent(-1),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), gs(*this), et(*this), cc(*this), cpc(*this)
+          ws(*this), ms(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(fpsclient, mode, 1, { self->cc.addmsg(1, 2, SV_GAMEMODE, self->nextmode = atoi(args[0])); });
     };
