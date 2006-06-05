@@ -161,7 +161,7 @@ cube *loadchildren(gzFile f)
     return c;
 };
 
-void save_world(char *mname)
+void save_world(char *mname, bool nolms = false)
 {
     if(!*mname) mname = cl->getclientmap();
     setnames(mname);
@@ -172,7 +172,7 @@ void save_world(char *mname)
     hdr.numents = 0;
     const vector<extentity *> &ents = et->getents();
     loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
-    hdr.lightmaps = lightmaps.length();
+    hdr.lightmaps = nolms ? 0 : lightmaps.length();
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
@@ -191,11 +191,11 @@ void save_world(char *mname)
     };
 
     savec(worldroot, f);
-    loopv(lightmaps)
+    if(!nolms) loopv(lightmaps)
     {
         LightMap &lm = lightmaps[i];
         gzwrite(f, lm.data, sizeof(lm.data));
-    }
+    };
 
     gzclose(f);
     conoutf("wrote map file %s", cgzname);
@@ -354,8 +354,9 @@ void load_world(char *mname)        // still supports all map formats that have 
 };
 
 void savecurrentmap() { save_world(cl->getclientmap()); };
+void savemap(char *mname) { save_world(mname); };
 
-COMMANDN(savemap, save_world, ARG_1STR);
+COMMAND(savemap, ARG_1STR);
 COMMAND(savecurrentmap, ARG_NONE);
 
 
