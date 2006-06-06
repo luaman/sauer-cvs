@@ -121,19 +121,18 @@ void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
     if(!editmode) return;
+    int ce = closestent();
+    if(ce<0) return;
     const vector<extentity *> &ents = et->getents();
+    entity &c = *ents[ce];
     loopv(ents)
     {
         entity &e = *ents[i];
         if(e.type==ET_EMPTY) continue;
+        if(e.o.dist(camera1->o)<128) particle_text(e.o, (char *)et->entname(e.type), &e==&c ? 13 : 11, 1);
         particle_splash(2, 2, 40, e.o);
     };
-    int e = closestent();
-    if(e>=0)
-    {
-        entity &c = *ents[e];
-        s_sprintf(closeent)("closest entity = %s (%d, %d, %d, %d)", et->entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
-    };
+    s_sprintf(closeent)("closest entity = %s (%d, %d, %d, %d)", et->entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
 };
 
 GLfloat mm[16];
@@ -213,10 +212,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     int abovegameplayhud = h*3*1650/1800-FONTH*3/2; // hack
 
     char *command = getcurcommand();
-    //char *playername = cl->gamepointat(worldpos);
-    if(command) rendercommand(FONTH/2, abovegameplayhud);
-    else if(closeent[0] && !hidehud) draw_text(closeent, FONTH/2, abovegameplayhud);
-    //else if(playername) draw_text(playername, FONTH/2, abovegameplayhud);
+    if(command) rendercommand(FONTH/2, abovegameplayhud - (editmode ? FONTH*4 : 0));
+    if(closeent[0] && !hidehud) draw_text(closeent, FONTH/2, abovegameplayhud);
 
     cl->renderscores();
     

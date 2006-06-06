@@ -1,3 +1,14 @@
+
+metlslime's editing suggestions:
+eihrul: ?
+- draw sky faces in editmode (like clip and water)
+gilt: ?
+- explicit entity selection using crosshair and left-click, just like cubes (shown as selected instead of "closest")
+- second edit mode for entities -- but this "mode" happens automatically whenever you have an entity selected, and reuses same keys and mousewheel movements when possible.
+- push/pull will move entity along ortho axis closest to current camera facing, in current gridsize increments
+- copy to copy selected entity, paste to paste either cubes or entities, depending on what was last copied.  Pasted entity to go near cursor, but snapped to closest grid point
+- command to more easily edit existing entities, perhaps by not forcing people to retype all parameters (e.g. "editent . . 250 ." to change the green value of a light)
+
 gilt:
 - extruding a cube, textures should be set to the surface texture, not the defaults
 - LOD: improved lod-remip
@@ -19,23 +30,15 @@ eihrul:
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
 
---- single player time score: ---
-time taken: 155 seconds
-time penalty for 1 deaths (1 minute each): 60 seconds
-time penalty for 21 monsters remaining (10 seconds each): 210 seconds
-time penalty for lower skill level (20 seconds each): 140 seconds
-time penalty for missed shots (1 seconds each %): 25 seconds
-TOTAL SCORE (time + time penalties): 590 (best so far: 590)
 
 aard:
-- make score based on seconds
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
 - update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - start moving some stuff in their own headers
 - ways of doing menu - context sensitive etc
 - rpg start
 - powerup announce | make both powerups not spawn on map start / not be in sync
-- new BAS sounds? | player spawn | sp respawn | menu clicks
+- new BAS sounds? | player spawn | sp respawn | menu clicks | specific door sound? | end of level | push button/trigger
 - improve bloom?
 - scripting: do "." for concatword so you could do easy (associative) arrays and tree structures?
 - report to ATI: float vs short issue

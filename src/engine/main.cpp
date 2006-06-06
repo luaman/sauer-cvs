@@ -3,8 +3,9 @@
 #include "pch.h"
 #include "engine.h"
 
-void cleanup(char *msg)         // single program exit point;
+void quit()                     // normal exit
 {
+    writeservercfg();
     disconnect(true);
     writecfg();
     cleangl();
@@ -16,28 +17,18 @@ void cleanup(char *msg)         // single program exit point;
     extern void clear_menus();   clear_menus();
     extern void clear_mdls();    clear_mdls();
     extern void clear_sound();   clear_sound();
-    if(msg)
-    {
-        printf(msg);
-        #ifdef WIN32
-        MessageBox(NULL, msg, "sauerbraten fatal error", MB_OK|MB_SYSTEMMODAL);
-        #endif
-    };
     SDL_Quit();
-    exit(1);
-};
-
-bool done = false;
-
-void quit()                     // normal exit
-{
-    done = true;
+    exit(0);
 };
 
 void fatal(char *s, char *o)    // failure exit
 {
     s_sprintfd(msg)("%s%s\n", s, o);
-    cleanup(msg);
+    printf(msg);
+    #ifdef WIN32
+        MessageBox(NULL, msg, "sauerbraten fatal error", MB_OK|MB_SYSTEMMODAL);
+    #endif
+    exit(1);
 };
 
 SDL_Surface *screen = NULL;
@@ -253,6 +244,7 @@ void limitfps(int &millis, int curmillis)
 #if defined(WIN32) && !defined(_DEBUG)
 void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
 {
+    if(!ep) fatal("unknown type");
     EXCEPTION_RECORD *er = ep->ExceptionRecord;
     CONTEXT *context = ep->ContextRecord;
     string out, t;
@@ -380,7 +372,7 @@ int main(int argc, char **argv)
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
-    while(!done)
+    for(;;)
     {
         static int frames = 0;
         static float fps = 10.0;
@@ -474,8 +466,8 @@ int main(int argc, char **argv)
             };
         };
     };
-    writeservercfg();
-    cleanup(NULL);
+    
+    ASSERT(0);   
     return 0;
 
     #if defined(WIN32) && !defined(_DEBUG)
