@@ -491,8 +491,7 @@ struct clientcom : iclientcom
                 cl.et.realpickup(getint(p), player1);
                 break;
 
-            case SV_EDITH:              // coop editing messages
-            case SV_EDITF:
+            case SV_EDITF:              // coop editing messages
             case SV_EDITT:
             case SV_EDITM:
             case SV_FLIP:
@@ -510,7 +509,6 @@ struct clientcom : iclientcom
                 int dir, mode, tex, newtex, orient, mat, allfaces;
                 switch(type)
                 {
-                    case SV_EDITH: dir = getint(p); mode = getint(p); mpeditheight(dir, mode, sel, false); break;
                     case SV_EDITF: dir = getint(p); mode = getint(p); mpeditface(dir, mode, sel, false); break;
                     case SV_EDITT: tex = getint(p); allfaces = getint(p); mpedittex(tex, allfaces, sel, false); break;
                     case SV_EDITM: mat = getint(p); mpeditmat(mat, sel, false); break;

@@ -724,11 +724,6 @@ void linkedpush(cube &c, int d, int x, int y, int dc, int dir)
     };
 };
 
-void mpeditheight(int dir, int mode, selinfo &sel, bool local)
-{
-    return;
-};
-
 void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_FACE, dir, mode);

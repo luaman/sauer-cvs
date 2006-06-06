@@ -554,7 +554,7 @@ struct fpsclient : igameclient
             case EDIT_COPY:
             case EDIT_PASTE:
             {
-                cc.addmsg(1, 14, SV_EDITH + op,
+                cc.addmsg(1, 14, SV_EDITF + op,
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner);
                 break;
@@ -562,7 +562,7 @@ struct fpsclient : igameclient
             case EDIT_MAT:
             case EDIT_ROTATE:
             {
-                cc.addmsg(1, 15, SV_EDITH + op,
+                cc.addmsg(1, 15, SV_EDITF + op,
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1);
@@ -571,7 +571,7 @@ struct fpsclient : igameclient
             case EDIT_FACE:
             case EDIT_TEX:
             {
-                cc.addmsg(1, 16, SV_EDITH + op,
+                cc.addmsg(1, 16, SV_EDITF + op,
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1, arg2);
@@ -579,7 +579,7 @@ struct fpsclient : igameclient
             };
             case EDIT_REPLACE:
             {
-                cc.addmsg(1, 17, SV_EDITH + op,
+                cc.addmsg(1, 17, SV_EDITF + op,
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1, arg2, arg3);
