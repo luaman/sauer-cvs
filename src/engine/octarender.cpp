@@ -557,6 +557,7 @@ struct lodcollect
     {
         curtris = 0;
         skyindices.setsize(0);
+        explicitskyindices.setsize(0);
         matsurfs.setsize(0);
     };
 
@@ -575,7 +576,7 @@ struct lodcollect
         lod.sky = skyindices.length();
         lod.explicitsky = explicitskyindices.length();
         memcpy(lod.skybuf, skyindices.getbuf(), lod.sky*sizeof(ushort));
-        memcpy(lod.skybuf+skyindices.length(), explicitskyindices.getbuf(), lod.explicitsky*sizeof(ushort));
+        memcpy(lod.skybuf+lod.sky, explicitskyindices.getbuf(), lod.explicitsky*sizeof(ushort));
 
         lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky+lod.explicitsky);
         lod.matsurfs = matsurfs.length();
