@@ -399,6 +399,7 @@ void drawskybox(int farplane, bool limited)
         {
             notextureshader->set();
 
+            glDepthFunc(GL_LEQUAL);
             glDisable(GL_TEXTURE_2D);
             glDepthMask(GL_FALSE);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
