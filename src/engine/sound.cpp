@@ -87,7 +87,7 @@ void initsound()
     nosound = false;
 };
 
-string musicdonecmd;
+char *musicdonecmd = NULL;
 
 void musicdone()
 {
@@ -99,7 +99,11 @@ void musicdone()
 #endif
     mod = NULL;
     stream = NULL;
-    if(musicdonecmd[0]) execute(musicdonecmd);
+    if(musicdonecmd)
+    {
+        execute(musicdonecmd);
+        DELETEA(musicdonecmd);
+    };
 };
 
 void music(char *name, char *cmd)
@@ -108,8 +112,8 @@ void music(char *name, char *cmd)
     stopsound();
     if(soundvol && musicvol)
     {
-        if(cmd[0]) s_strcpy(musicdonecmd, cmd);
-        else musicdonecmd[0] = 0;
+        DELETEA(musicdonecmd);
+        if(cmd[0]) musicdonecmd = newstring(cmd);
         string sn;
         s_strcpy(sn, "packages/");
         s_strcat(sn, name);

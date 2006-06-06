@@ -106,7 +106,7 @@ bool rendermenu(int scr_w, int scr_h)
     {
         string &s = m.items[i].eval;
         s_strcpy(s, m.items[i].text);
-        if(s[0]=='^') { execute(s+1); s_strcpy(s, getalias("s")); };
+        if(s[0]=='^') { execute(m.items[i].text+1); s_strcpy(s, getalias("s")); };
         int x = text_width(s);
         if(x>w) w = x;
     };
