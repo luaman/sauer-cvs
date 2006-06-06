@@ -36,7 +36,7 @@ void quit()                     // normal exit
 
 void fatal(char *s, char *o)    // failure exit
 {
-    s_sprintfd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
+    s_sprintfd(msg)("%s%s\n", s, o);
     cleanup(msg);
 };
 
@@ -212,11 +212,13 @@ struct sleepcmd
 
 vector<sleepcmd> sleepcmds;
 ICOMMAND(sleep, 2, { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s_strcpy(s.command, args[1]); });
+VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
 void estartmap(char *name)
 {
     ///if(!editmode) toggleedit();
     gamespeed = 100;
+    paused = 0;
     sleepcmds.setsize(0);
     cancelsel();
     pruneundos();
@@ -316,7 +318,7 @@ int main(int argc, char **argv)
     //SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     //#endif
 
-    if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_AUDIO|par)<0) fatal("Unable to initialize SDL");
+    if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_AUDIO|par)<0) fatal("Unable to initialize SDL: ", SDL_GetError());
 
     log("enet");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
@@ -326,7 +328,7 @@ int main(int argc, char **argv)
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     screen = SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|SDL_RESIZABLE|fs);
-    if(screen==NULL) fatal("Unable to create OpenGL screen");
+    if(screen==NULL) fatal("Unable to create OpenGL screen: ", SDL_GetError());
 
     log("video: misc");
     SDL_WM_SetCaption("sauerbraten engine", NULL);
@@ -373,7 +375,7 @@ int main(int argc, char **argv)
     log("localconnect");
     localconnect();
     cc->gameconnect(false);
-    cc->changemap("curvedm");
+    cc->changemap("metl2");
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
@@ -388,6 +390,7 @@ int main(int argc, char **argv)
         curtime = elapsed*gamespeed/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
+        if(paused) curtime = 0;
         if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
         loopv(sleepcmds)
         {

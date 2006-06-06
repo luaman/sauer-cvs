@@ -139,7 +139,7 @@ void render_particles(int time)
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             };
 
-            if((p->fade -= time)<0)
+            if((p->fade -= time)<=0)
             {
                 *pp = p->next;
                 p->next = parempty;
@@ -184,7 +184,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
         }
         while(x*x+y*y+z*z>radius*radius);
     	vec tmp =  vec((float)x, (float)y, (float)z);
-        newparticle(p, tmp, rnd(fade*3), type);
+        newparticle(p, tmp, rnd(fade*3)+1, type);
     };
 };
 

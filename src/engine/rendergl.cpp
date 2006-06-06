@@ -398,9 +398,10 @@ void drawskybox(int farplane, bool limited)
 const int NUMSCALE = 7;
 Shader *fsshader = NULL, *scaleshader = NULL;
 GLuint rendertarget[NUMSCALE];
+GLfloat fsparams[4];
 int fs_w = 0, fs_h = 0;
 
-void setfullscreenshader(char *name)
+void setfullscreenshader(char *name, char *x, char *y, char *z, char *w)
 {
     if(!hasTR || !*name)
     {
@@ -422,10 +423,14 @@ void setfullscreenshader(char *name)
             glGenTextures(NUMSCALE, rendertarget);
         };
         conoutf("now rendering with: %s", name);
+        fsparams[0] = atoi(x)/255.0f;
+        fsparams[1] = atoi(y)/255.0f;
+        fsparams[2] = atoi(z)/255.0f;
+        fsparams[3] = atoi(w)/255.0f;
     };
 };
 
-COMMAND(setfullscreenshader, ARG_1STR);
+COMMAND(setfullscreenshader, ARG_5STR);
 
 void renderfsquad(int w, int h, Shader *s)
 {
@@ -461,6 +466,8 @@ void renderfullscreenshader(int w, int h)
         fs_w = w;
         fs_h = h;
     };
+
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, fsparams[0], fsparams[1], fsparams[2], fsparams[3]);
 
     int nw = w, nh = h;
 

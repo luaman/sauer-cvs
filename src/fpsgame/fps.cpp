@@ -197,6 +197,7 @@ struct fpsclient : igameclient
     {
         lastmillis = lm;
         maptime += curtime;
+        if(!curtime) return;
         physicsframe();
         et.checkquad(curtime);
         if(m_arena) arenarespawn();

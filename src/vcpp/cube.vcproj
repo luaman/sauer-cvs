@@ -1298,6 +1298,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\data\stdlib.cfg"
+						>
+					</File>
+					<File
 						RelativePath="..\..\data\stdshader.cfg"
 						>
 					</File>

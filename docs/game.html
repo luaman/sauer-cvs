@@ -98,18 +98,21 @@ Frag counting is the same for all modes: 1 for a frag, -1 for a suicide or a tea
 <pre>skill N</pre>
 Sets the skill level (1-10) for single player modes. Default = 3. Affects number of monsters in DMSP mode, and general monster AI in all SP modes.
 
+<pre>servermenu</pre>
+Displays the server menu. The server menu contains the last N servers you connected to, sorted by ping (servers are pinged automatically when bringing up this menu). Just select one to connect again. If you connect to a server by typing "connect" manually, the server gets added here automatically. You can also add servers to "servers.cfg" manually.
+
+<pre>updatefrommaster</pre>
+contacts the masterserver and adds any new servers to the server list (written to servers.cfg on exit). (see also multiplayer menu).
+
+<pre>paused B</pre>
+wether the game is paused or not (default 0, default key F1 toggles).
+
 <!--
 None of this works right now but I assume these features will return.
 <pre>sendmap<br>
 getmap</pre>
 These two commands allow you to send other players maps they may not have while in multiplayer mode, and easily keep maps in sync while doing coop edit. "sendmap" reloads the current map you are on, then uploads it to the server and sends every other player a message about it. Other players can then simply type "getmap" to receive the current map, which is written to their local disk then reloaded. A second variant "sendmap name" is available which is particularly useful for coop editing, which first does a "savemap name" before performing the actual "sendmap". Thus in both cases you must already be on the map you 
 want to send before issuing the command! (in some multiplayer that requires voting). Also note that "getmap" operates on the last map send by some other player, whatever it is.
-
-<pre>servermenu</pre>
-Displays the server menu. The server menu contains the last N servers you connected to, sorted by ping (servers are pinged automatically when bringing up this menu). Just select one to connect again. If you connect to a server by typing "connect" manually, the server gets added here automatically. You can also add servers to "servers.cfg" manually.
-
-<pre>updatefrommaster</pre>
-contacts the masterserver and adds any new servers to the server list (written to servers.cfg on exit). (see also multiplayer menu).
 
 <pre>savegame F</pre>
 Saves the current state of game (map, state of entities, monsters, triggers, and your player) to a savegame file named F (these are placed in the "savegames" directory). Default key F8 is "savegame quicksave". Works only in classic singleplayer mode.

@@ -621,19 +621,20 @@ void format(char **args, int numargs)
     concat(s.getbuf());
 };
 
-int listlen(char *a)
+#define elementskip s += strspn(s += strcspn(s, "\n\t \0"), "\n\t ")
+
+int listlen(char *s)
 {
-    if(!*a) return 0;
     int n = 0;
-    while(*a) if(*a++==' ') n++;
-    return n+1;
+    for(; *s; n++) elementskip;
+    return n;
 };
 
 void at(char *s, char *pos)
 {
     int n = atoi(pos);
-    loopi(n) s += strspn(s += strcspn(s, " \0"), " ");
-    s[strcspn(s, " \0")] = 0;
+    loopi(n) elementskip;
+    s[strcspn(s, "\n\t \0")] = 0;
     concat(s);
 };
 

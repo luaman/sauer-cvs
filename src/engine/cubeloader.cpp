@@ -242,7 +242,7 @@ struct cubeloader
         gzread(f, &hdr, sizeof(c_header)-sizeof(int)*16);
         endianswap(&hdr.version, sizeof(int), 4);
         if(strncmp(hdr.head, "CUBE", 4)!=0) fatal("while reading map: header malformatted");
-        if(hdr.version>5) fatal("this map requires a newer version of cube");
+        if(hdr.version>5) fatal("this map requires a newer version of sauerbraten");
         s_sprintfd(cs)("importing %s", cgzname);
         computescreen(cs);
         if(hdr.version>=4)

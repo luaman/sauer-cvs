@@ -1,4 +1,5 @@
 gilt:
+- extruding a cube, textures should be set to the surface texture, not the defaults
 - LOD: improved lod-remip
 - "editing not in view" sometimes obstructs editing
 
@@ -18,32 +19,31 @@ eihrul:
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
 
-aard (e = eihrul (or gilt) could do it):
+aard:
+- put in new content.. 
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
-- improve bloom
 - update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - start moving some stuff in their own headers
 - ways of doing menu - context sensitive etc
 - rpg start
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - new BAS sounds? | player spawn | sp respawn | menu clicks
+- improve bloom?
 - scripting: do "." for concatword so you could do easy (associative) arrays and tree structures?
 - report to ATI: float vs short issue
 - more cube map ports?
 - faster movement
-- more mapmodels in the menus
 - play sessions
 - integrate fmodex (to get both panning and stereo ogg on windows?)
 - 3d sprites?
 - think about ways to make dynamicly modifying geometry in gameplay make sense
 - add PITCH to specular computation
 - can't select last 3 textures in list
-- (e) bouncing gib particles
-- (e) set textures when extruding
+- bouncing gib particles
 - water shader
 - monster spawner ammo - add egg model
 - iconic stats
-- (e) new multiplayer model.. md3?
+- new multiplayer model.. md3?
 - profile for memory usage (devpartner?) | if md2 buffers are a lot, can remove it
 - refactor octarender.cpp & others
 - make sure correct CVS files are flagged as binary? | switch to SVN?
@@ -74,7 +74,7 @@ aard (e = eihrul (or gilt) could do it):
 - draw not-spawned items in wireframe?
 - show quadded player with special rendering
 
-- (e) hex numbers
+- hex numbers
 - 3d menus
 - add hidden ID to your name so that you can claim nicknames on a server?
 

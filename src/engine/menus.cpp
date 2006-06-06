@@ -127,7 +127,7 @@ bool rendermenu(int scr_w, int scr_h)
     if(vmenu)
     {
         int bh = y+(m.menusel%MAXMENU)*step;
-        blendbox(x-FONTH/2, bh-4, x+w+FONTH/2, bh+FONTH+20, false);
+        blendbox(x-FONTH/2, bh, x+w+FONTH/2, bh+FONTH+8, false);
     };
     loopj(cdisp)
     {
