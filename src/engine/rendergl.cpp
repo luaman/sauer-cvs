@@ -364,6 +364,9 @@ VAR(fog, 16, 4000, 1000024);
 VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
 VARP(sparklyfix, 0, 1, 1);
+VAR(showsky, 0, 1, 1);
+
+extern int explicitsky, skyarea;
 
 void drawskybox(int farplane, bool limited)
 {
@@ -389,8 +392,27 @@ void drawskybox(int farplane, bool limited)
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
     draw_envbox(farplane/2);
-    if(limited) glDepthFunc(GL_LESS);
     transplayer();
+    if(limited) 
+    {
+        if(editmode && showsky)
+        {
+            notextureshader->set();
+
+            glDisable(GL_TEXTURE_2D);
+            glDepthMask(GL_FALSE);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glLineWidth(1);
+            glColor3f(0.5f, 0.0f, 0.5f);
+            rendersky(true);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDepthMask(GL_TRUE);
+            glEnable(GL_TEXTURE_2D);
+
+            defaultshader->set();
+        };
+        glDepthFunc(GL_LESS);
+    };
 
     glEnable(GL_FOG);
 };
@@ -527,8 +549,6 @@ void project(float fovy, float aspect, int farplane)
     gluPerspective(fovy, aspect, 0.54f, farplane);
     glMatrixMode(GL_MODELVIEW);
 };
-
-extern int explicitsky, skyarea;
 
 void gl_drawframe(int w, int h, float curfps)
 {

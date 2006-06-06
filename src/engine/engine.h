@@ -148,7 +148,7 @@ extern void rendermapmodels();
 extern void renderq();
 extern void allchanged();
 extern void rendermaterials();
-extern void rendersky();
+extern void rendersky(bool explicitonly = false);
 extern void converttovectorworld();
 
 extern void vaclearc(cube *c);

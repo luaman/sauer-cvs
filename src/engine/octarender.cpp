@@ -1115,7 +1115,7 @@ void setorigin(vtxarray *va, bool init)
     };
 };
 
-void rendersky()
+void rendersky(bool explicitonly)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -1125,16 +1125,17 @@ void rendersky()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(!(lod.sky+lod.explicitsky) || va->occluded >= OCCLUDE_BB+oqpartial) continue;
-
+        if(va->occluded >= OCCLUDE_BB+oqpartial || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
+        
         setorigin(va, !sky++);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
-        glDrawElements(GL_QUADS, lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, lod.skybuf);
+        glDrawElements(GL_QUADS, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
         glde++;
-        xtraverts += lod.sky+lod.explicitsky;
+        if(!explicitonly) xtraverts += lod.sky;
+        xtraverts += lod.explicitsky;
     };
 
     glPopMatrix();
