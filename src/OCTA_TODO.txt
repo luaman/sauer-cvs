@@ -1,7 +1,5 @@
 
 metlslime's editing suggestions:
-eihrul: ?
-- draw sky faces in editmode (like clip and water)
 gilt: ?
 - explicit entity selection using crosshair and left-click, just like cubes (shown as selected instead of "closest")
 - second edit mode for entities -- but this "mode" happens automatically whenever you have an entity selected, and reuses same keys and mousewheel movements when possible.
@@ -17,7 +15,6 @@ gilt:
 eihrul:
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
 - make nearby closed doors render early so that they can contribute to OC?
-- finish door/trigger functionality
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
 - add "join team red / blue" menu after connecting to a capture mode game
 - water at the edges never waves?

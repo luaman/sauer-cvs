@@ -360,7 +360,7 @@ int main(int argc, char **argv)
     exec("data/sounds.cfg");
     exec("data/brush.cfg");
     execfile("mybrushes.cfg");
-    exec("servers.cfg");
+    execfile("servers.cfg");
     persistidents = true;
     if(!execfile("config.cfg")) exec("data/defaults.cfg");
     execfile("autoexec.cfg");

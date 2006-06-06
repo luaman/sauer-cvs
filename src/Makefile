@@ -42,10 +42,13 @@ default: all
 
 all: libenet client server
 
-libenet:
+enet/Makefile:
+	cd enet; ./configure
+	
+libenet: enet/Makefile
 	-make -C enet/ all
 
-clean:
+clean: enet/Makefile
 	-rm -f $(SERVER_OBJS) $(CLIENT_OBJS) sauer_server sauer_client
 	-make -C enet/ clean
 
