@@ -102,9 +102,10 @@ void musicdone()
     stream = NULL;
     if(musicdonecmd)
     {
-        char *oldcmd = musicdonecmd;
-        execute(musicdonecmd);
-        if(oldcmd == musicdonecmd) DELETEA(musicdonecmd);
+        char *cmd = musicdonecmd;
+        musicdonecmd = NULL;
+        execute(cmd);
+        delete[] cmd;
     };
 };
 
