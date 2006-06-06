@@ -42,9 +42,12 @@ void setmusicvol(int musicvol)
 VARP(soundvol, 0, 255, 255);
 VARFP(musicvol, 0, 128, 255, setmusicvol(musicvol));
 
+char *musicdonecmd = NULL;
+
 void stopsound()
 {
     if(nosound) return;
+    DELETEA(musicdonecmd);
     if(mod)
     {
         #ifdef USE_MIXER
@@ -87,8 +90,6 @@ void initsound()
     nosound = false;
 };
 
-char *musicdonecmd = NULL;
-
 void musicdone()
 {
 #ifdef USE_MIXER
@@ -101,8 +102,9 @@ void musicdone()
     stream = NULL;
     if(musicdonecmd)
     {
+        char *oldcmd = musicdonecmd;
         execute(musicdonecmd);
-        DELETEA(musicdonecmd);
+        if(oldcmd == musicdonecmd) DELETEA(musicdonecmd);
     };
 };
 
@@ -112,7 +114,6 @@ void music(char *name, char *cmd)
     stopsound();
     if(soundvol && musicvol)
     {
-        DELETEA(musicdonecmd);
         if(cmd[0]) musicdonecmd = newstring(cmd);
         string sn;
         s_strcpy(sn, "packages/");

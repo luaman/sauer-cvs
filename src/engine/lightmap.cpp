@@ -820,9 +820,11 @@ void patchlight()
     check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(500, calclight_timer, NULL);
     show_out_of_renderloop_progress(0, "computing normals...");
+    Uint32 start = SDL_GetTicks();
     calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
+    Uint32 end = SDL_GetTicks();
     if(timer) SDL_RemoveTimer(timer);
     loopv(lightmaps)
     {
@@ -830,14 +832,16 @@ void patchlight()
         lumels += lightmaps[i].lumels;
     };
     initlights();
+    computescreen("lighting done...");
     allchanged();
     if(calclight_canceled)
         conoutf("patchlight aborted");
     else
-        conoutf("patched %d lightmaps using %d%% of %d textures",
+        conoutf("patched %d lightmaps using %d%% of %d textures (%.1f seconds)",
             total,
             lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
-            lightmaps.length()); 
+            lightmaps.length(),
+            (end - start) / 1000.0f); 
 };
 
 COMMAND(patchlight, ARG_NONE);
