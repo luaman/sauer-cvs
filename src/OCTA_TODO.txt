@@ -19,10 +19,16 @@ eihrul:
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
 
+--- single player time score: ---
+time taken: 155 seconds
+time penalty for 1 deaths (1 minute each): 60 seconds
+time penalty for 21 monsters remaining (10 seconds each): 210 seconds
+time penalty for lower skill level (20 seconds each): 140 seconds
+time penalty for missed shots (1 seconds each %): 25 seconds
+TOTAL SCORE (time + time penalties): 590 (best so far: 590)
+
 aard:
-- put in new content.. 
 - make score based on seconds
-- make projectiles recalc their target
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
 - update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - start moving some stuff in their own headers

@@ -372,21 +372,26 @@ struct fpsclient : igameclient
             player1->attacking = false;
             conoutf("intermission:");
             conoutf("game has ended!");
-            conoutf("time taken: %f seconds on skill level %d", maptime/1000.0f, ms.skill());
-            int accuracy = player1->totaldamage*100/max(player1->totalshots, 1);
-            conoutf("player total damage dealt: %d, damage wasted: %d, accuracy(%%): %d", player1->totaldamage, player1->totalshots-player1->totaldamage, accuracy);   
             conoutf("player frags: %d, deaths: %d", player1->frags, player1->deaths);
+            int accuracy = player1->totaldamage*100/max(player1->totalshots, 1);
+            conoutf("player total damage dealt: %d, damage wasted: %d, accuracy(%%): %d", player1->totaldamage, player1->totalshots-player1->totaldamage, accuracy);               
             if(m_sp)
             {
-                int score = (1000/(player1->deaths+1)+player1->frags*10-maptime/1000+accuracy+ms.skill()*25);
+                conoutf("--- single player time score: ---");
+                int pen, score = 0;
+                pen = maptime/1000;       score += pen; if(pen) conoutf("time taken: %d seconds", pen); 
+                pen = player1->deaths*60; score += pen; if(pen) conoutf("time penalty for %d deaths (1 minute each): %d seconds", player1->deaths, pen);
+                pen = ms.remain*10;       score += pen; if(pen) conoutf("time penalty for %d monsters remaining (10 seconds each): %d seconds", ms.remain, pen);
+                pen = (10-ms.skill())*20; score += pen; if(pen) conoutf("time penalty for lower skill level (20 seconds each): %d seconds", pen);
+                pen = 100-accuracy;       score += pen; if(pen) conoutf("time penalty for missed shots (1 second each %%): %d seconds", pen);
                 s_sprintfd(aname)("bestscore_%s", getclientmap());
                 char *bestsc = getalias(aname);
                 int bestscore = 0;
                 if(bestsc) bestscore = atoi(bestsc);
-                if(score>bestscore) bestscore = score;
+                if(score<bestscore) bestscore = score;
                 s_sprintfd(nscore)("%d", bestscore);
                 alias(aname, nscore);
-                conoutf("TOTAL SCORE (1000/(deaths+1)+frags*10-seconds+accuracy+skill*25): %d (best so far: %d)", score, bestscore);
+                conoutf("TOTAL SCORE (time + time penalties): %d seconds (best so far: %d seconds)", score, bestscore);
             }
             sb.showscores(true);
         }

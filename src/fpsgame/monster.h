@@ -246,7 +246,7 @@ struct monsterset
     
     vector<monster *> monsters;
     
-    int nextmonster, spawnremain, numkilled, monstertotal, mtimestart;
+    int nextmonster, spawnremain, numkilled, monstertotal, mtimestart, remain;
 
     IVAR(skill, 1, 3, 10);
 
@@ -257,7 +257,7 @@ struct monsterset
         monsters.add(new monster(type, rnd(360), M_SEARCH, 1000, 1, this));
     };
 
-    void monsterclear(int gamemode)     // called after map start of when toggling edit mode to reset/spawn all monsters to initial state
+    void monsterclear(int gamemode)     // called after map start or when toggling edit mode to reset/spawn all monsters to initial state
     {
         loopv(monsters) delete monsters[i]; 
         cleardynentcache();
@@ -265,6 +265,7 @@ struct monsterset
         numkilled = 0;
         monstertotal = 0;
         spawnremain = 0;
+        remain = 0;
         if(m_dmsp)
         {
             nextmonster = mtimestart = cl.lastmillis+10000;
@@ -287,7 +288,6 @@ struct monsterset
     void endsp(bool allkilled)
     {
         conoutf(allkilled ? "you have cleared the map!" : "you reached the exit!");
-        //conoutf("score: %d kills in %d seconds", numkilled, (cl.lastmillis-mtimestart)/1000);
         monstertotal = 0;
         cl.cc.addmsg(1, 1, SV_FORCEINTERMISSION);
     };
@@ -296,7 +296,7 @@ struct monsterset
     {
         numkilled++;
         cl.player1->frags = numkilled;
-        int remain = monstertotal-numkilled;
+        remain = monstertotal-numkilled;
         if(remain>0 && remain<=5) conoutf("only %d monster(s) remaining", remain);
     };
 
