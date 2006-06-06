@@ -249,7 +249,7 @@ struct fpsclient : igameclient
         if(respawnent>=0) pick = respawnent;
         if(pick<0)
         {
-            int r = fixspawn-->0 ? 6 : rnd(10)+1;
+            int r = fixspawn-->0 ? 5 : rnd(10)+1;
             loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
             pick = spawncycle;
         };
