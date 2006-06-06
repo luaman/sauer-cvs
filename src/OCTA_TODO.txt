@@ -21,6 +21,8 @@ eihrul:
 
 aard:
 - put in new content.. 
+- make score based on seconds
+- make projectiles recalc their target
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
 - update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - start moving some stuff in their own headers
