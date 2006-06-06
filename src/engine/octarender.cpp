@@ -547,10 +547,10 @@ struct lodcollect
 {
     hashtable<sortkey, sortval> indices;
     vector<materialsurface> matsurfs;
-    usvector skyindices;
+    usvector skyindices, explicitskyindices;
     int curtris;
 
-    int size() { return indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface); };
+    int size() { return indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface); };
 
     void clearidx() { indices.clear(); };
     void clear()
@@ -573,9 +573,11 @@ struct lodcollect
 
         lod.skybuf = lod.ebuf + 2*curtris;
         lod.sky = skyindices.length();
+        lod.explicitsky = explicitskyindices.length();
         memcpy(lod.skybuf, skyindices.getbuf(), lod.sky*sizeof(ushort));
+        memcpy(lod.skybuf+skyindices.length(), explicitskyindices.getbuf(), lod.explicitsky*sizeof(ushort));
 
-        lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky);
+        lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky+lod.explicitsky);
         lod.matsurfs = matsurfs.length();
         if(lod.matsurfs) memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
 
@@ -642,8 +644,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             calcvert(c, x, y, z, size, rv, coord);
             index = vh.access(rv, u, v);
 
-            if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.skyindices : l0.indices[key].dims[dimension(i)]).add(index);
-            if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.skyindices : l1.indices[key].dims[dimension(i)]).add(index);
+            if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)]).add(index);
+            if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)]).add(index);
         };
     };
 };
@@ -1122,16 +1124,16 @@ void rendersky()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(!lod.sky || va->occluded >= OCCLUDE_BB+oqpartial) continue;
+        if(!(lod.sky+lod.explicitsky) || va->occluded >= OCCLUDE_BB+oqpartial) continue;
 
         setorigin(va, !sky++);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
-        glDrawElements(GL_QUADS, lod.sky, GL_UNSIGNED_SHORT, lod.skybuf);
+        glDrawElements(GL_QUADS, lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, lod.skybuf);
         glde++;
-        xtraverts += lod.sky;
+        xtraverts += lod.sky+lod.explicitsky;
     };
 
     glPopMatrix();

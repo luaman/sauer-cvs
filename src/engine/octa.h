@@ -21,7 +21,7 @@ struct lodlevel
     ushort *ebuf;       // packed element indices buffer
     ushort *skybuf;     // skybox packed element indices buffer
     materialsurface *matbuf; // buffer of material surfaces
-    int tris, texs, matsurfs, sky;
+    int tris, texs, matsurfs, sky, explicitsky;
 };
 
 struct occludequery
