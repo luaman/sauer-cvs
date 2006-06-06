@@ -343,7 +343,7 @@ void load_world(char *mname)        // still supports all map formats that have 
     loopv(ents)
     {
         extentity &e = *ents[i];
-        if(e.type==ET_MAPMODEL)
+        if(e.type==ET_MAPMODEL && e.attr2 >= 0)
         {
             mapmodelinfo &mmi = getmminfo(e.attr2);
             if(!&mmi) conoutf("could not find map model: %d", e.attr2);
