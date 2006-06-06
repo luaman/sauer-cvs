@@ -206,12 +206,12 @@ int islittleendian = 1;
 struct sleepcmd
 {
     int millis;
-    string command;
+    char *command;
     sleepcmd() : millis(0) {};
 };
 
 vector<sleepcmd> sleepcmds;
-ICOMMAND(sleep, 2, { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s_strcpy(s.command, args[1]); });
+ICOMMAND(sleep, 2, { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s.command = newstring(args[1]); });
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
 void estartmap(char *name)
@@ -219,6 +219,7 @@ void estartmap(char *name)
     ///if(!editmode) toggleedit();
     gamespeed = 100;
     paused = 0;
+    loopv(sleepcmds) delete[] sleepcmds[i].command;
     sleepcmds.setsize(0);
     cancelsel();
     pruneundos();
@@ -398,6 +399,7 @@ int main(int argc, char **argv)
             if(s.millis && lastmillis>s.millis)
             {
                 execute(s.command);
+                delete[] s.command;
                 sleepcmds.remove(i);
                 i--;
             };

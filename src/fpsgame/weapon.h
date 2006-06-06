@@ -286,7 +286,7 @@ struct weaponstate
             {
                 if(dist<4)
                 {
-                    if(raycubepos(p->o, vec(p->to).sub(p->o), p->to, 0, RAY_CLIPMAT)>=4) continue;      // if original target was moving, reevaluate endpoint
+                    if(raycubepos(p->o, vec(p->to).sub(p->o), p->to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;      // if original target was moving, reevaluate endpoint
                     splash(p, v, NULL, qdam);
                 }
                 else
