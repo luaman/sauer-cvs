@@ -193,6 +193,10 @@ enum
     XFER_SEND, XFER_SEND_ACK, XFER_SEND_DATA,
 };
 
+extern void initserver(bool dedicated);
+extern void cleanupserver();
+extern void serverslice(int seconds, unsigned int timeout);
+
 extern uchar *retrieveservers(uchar *buf, int buflen);
 extern void localclienttoserver(ENetPacket *);
 extern void localconnect();
