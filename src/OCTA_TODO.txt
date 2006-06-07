@@ -1,13 +1,10 @@
-
-metlslime's editing suggestions:
-gilt: ?
-- explicit entity selection using crosshair and left-click, just like cubes (shown as selected instead of "closest")
-- second edit mode for entities -- but this "mode" happens automatically whenever you have an entity selected, and reuses same keys and mousewheel movements when possible.
-- push/pull will move entity along ortho axis closest to current camera facing, in current gridsize increments
-- copy to copy selected entity, paste to paste either cubes or entities, depending on what was last copied.  Pasted entity to go near cursor, but snapped to closest grid point
-- command to more easily edit existing entities, perhaps by not forcing people to retype all parameters (e.g. "editent . . 250 ." to change the green value of a light)
-
 gilt:
+- metlslime's editing suggestions:
+    - explicit entity selection using crosshair and left-click, just like cubes (shown as selected instead of "closest")
+    - second edit mode for entities -- but this "mode" happens automatically whenever you have an entity selected, and reuses same keys and mousewheel movements when possible.
+    - push/pull will move entity along ortho axis closest to current camera facing, in current gridsize increments
+    - copy to copy selected entity, paste to paste either cubes or entities, depending on what was last copied.  Pasted entity to go near cursor, but snapped to closest grid point
+    - command to more easily edit existing entities, perhaps by not forcing people to retype all parameters (e.g. "editent . . 250 ." to change the green value of a light)
 - extruding a cube, textures should be set to the surface texture, not the defaults
 - LOD: improved lod-remip
 - "editing not in view" sometimes obstructs editing
@@ -29,6 +26,8 @@ eihrul:
 
 
 aard:
+- speed?
+- $ vs @? other improvements? s returnval
 - try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
 - update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - start moving some stuff in their own headers
