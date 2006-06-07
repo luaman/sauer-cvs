@@ -297,7 +297,7 @@ int main(int argc, char **argv)
             case 'h': scr_h = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
             case 'f': extern bool forcenoshaders; forcenoshaders = true; break;
-            case 'l': load = &argv[i][2]; break;
+            case 'l': load = strstr(path(&argv[i][2]), "packages/"); if(load) load += 9; else load = &argv[i][2]; break;
             default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");
         }
         else conoutf("unknown commandline argument");
