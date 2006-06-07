@@ -55,7 +55,7 @@ void connects(char *servername)
     }
     else
     {
-        conoutf("attempting to connect over lan");
+        conoutf("attempting to connect over LAN");
         address.host = ENET_HOST_BROADCAST;
     };
 
@@ -63,7 +63,7 @@ void connects(char *servername)
 
     if(clienthost)
     {
-        enet_host_connect(clienthost, &address, 1); 
+        enet_host_connect(clienthost, &address, 2); 
         enet_host_flush(clienthost);
         connecting = lastmillis;
         connattempts = 0;

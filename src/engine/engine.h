@@ -182,9 +182,17 @@ extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
 
 // server
-extern void initserver(bool dedicated);
-extern void cleanupserver();
-extern void serverslice(int seconds, unsigned int timeout);
+
+#define XFER_CHUNK  4096
+
+enum 
+{ 
+    XFER_FAIL = 0,
+    XFER_INFO, XFER_INFO_DATA,
+    XFER_GET, XFER_GET_DATA,
+    XFER_SEND, XFER_SEND_ACK, XFER_SEND_DATA,
+};
+
 extern uchar *retrieveservers(uchar *buf, int buflen);
 extern void localclienttoserver(ENetPacket *);
 extern void localconnect();
