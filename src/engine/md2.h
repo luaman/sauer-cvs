@@ -536,11 +536,23 @@ struct md2 : model
     
     void setskin(int tex)
     {
-        glBindTexture(GL_TEXTURE_2D, (tex ? lookuptexture(tex).sts[0].t : skin)->gl);
+        GLuint s = skin->gl, m = masks->gl;
+        if(tex)
+        {
+            Slot &slot = lookuptexture(tex);
+            s = slot.sts[0].t->gl;
+            if(slot.sts.length() >= 2)
+            {
+                masked = true;
+                m = slot.sts[1].t->gl;
+            };
+        }
+        else if(masks == crosshair && masked) masked = false;
+        glBindTexture(GL_TEXTURE_2D, s);
         if(masked)
         {
             glActiveTexture_(GL_TEXTURE1_ARB);
-            glBindTexture(GL_TEXTURE_2D, masks->gl);
+            glBindTexture(GL_TEXTURE_2D, m);
             glActiveTexture_(GL_TEXTURE0_ARB);
         };
     };
