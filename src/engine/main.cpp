@@ -281,7 +281,8 @@ int main(int argc, char **argv)
 
     bool dedicated = false;
     int fs = SDL_FULLSCREEN, par = 0;
-
+    char *load = NULL;
+    
     islittleendian = *((char *)&islittleendian);
 
     #define log(s) puts("init: " s)
@@ -296,6 +297,7 @@ int main(int argc, char **argv)
             case 'h': scr_h = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
             case 'f': extern bool forcenoshaders; forcenoshaders = true; break;
+            case 'l': load = &argv[i][2]; break;
             default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");
         }
         else conoutf("unknown commandline argument");
@@ -368,7 +370,7 @@ int main(int argc, char **argv)
     log("localconnect");
     localconnect();
     cc->gameconnect(false);
-    cc->changemap("metl2");
+    cc->changemap(load ? load : "metl2");
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;

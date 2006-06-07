@@ -27,7 +27,7 @@ struct iclientcom
     virtual bool allowedittoggle() = 0;
     virtual void writeclientinfo(FILE *f) = 0;
     virtual void toserver(char *text) = 0;
-    virtual void changemap(char *name) = 0;
+    virtual void changemap(const char *name) = 0;
 };
 
 struct igameclient

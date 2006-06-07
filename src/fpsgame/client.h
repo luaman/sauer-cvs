@@ -633,7 +633,7 @@ struct clientcom : iclientcom
         };
     };
 
-    void changemapserv(char *name, int gamemode)        // forced map change from the server
+    void changemapserv(const char *name, int gamemode)        // forced map change from the server
     {
         cl.gamemode = gamemode;
         if(editmode && !allowedittoggle()) toggleedit();
@@ -641,7 +641,7 @@ struct clientcom : iclientcom
         if(m_capture) cl.cpc.setupbases();
     };
 
-    void changemap(char *name)                      // request map change, server may ignore
+    void changemap(const char *name)                      // request map change, server may ignore
     {
         if(!spectator || currentmaster==clientnum) s_strcpy(toservermap, name);
     };
