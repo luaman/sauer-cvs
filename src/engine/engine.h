@@ -209,8 +209,8 @@ extern void writecfg();
 extern void writebinds(FILE *f);
 
 // main
-extern void estartmap(char *name);
-extern void computescreen(char *text);
+extern void estartmap(const char *name);
+extern void computescreen(const char *text);
 
 // physics
 extern void mousemove(int dx, int dy);

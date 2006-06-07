@@ -418,7 +418,7 @@ struct fpsclient : igameclient
         cc.initclientnet();
     };
 
-    void startmap(char *name)   // called just after a map load
+    void startmap(const char *name)   // called just after a map load
     {
         respawnent = -1;
         spawncycle = 0;

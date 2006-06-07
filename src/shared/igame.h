@@ -44,7 +44,7 @@ struct igameclient
     virtual char *getclientmap() = 0;
     virtual void resetgamestate() = 0;
     virtual void worldhurts(physent *d, int damage) = 0;
-    virtual void startmap(char *name) = 0;
+    virtual void startmap(const char *name) = 0;
     virtual void gameplayhud(int w, int h) = 0;
     virtual void entinmap(dynent *d, bool froment) = 0;
     virtual void drawhudgun() = 0;

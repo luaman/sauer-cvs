@@ -11,7 +11,7 @@ void backup(char *name, char *backupname)
 
 string cgzname, bakname, pcfname, mcfname;
 
-void setnames(char *fname)
+void setnames(const char *fname)
 {
     string name, pakname, mapname;
     s_strncpy(name, fname, 100);
@@ -217,7 +217,7 @@ void swapXZ(cube *c)
 	};
 };
 
-void load_world(char *mname)        // still supports all map formats that have existed since the earliest cube betas!
+void load_world(const char *mname)        // still supports all map formats that have existed since the earliest cube betas!
 {
     int loadingstart = SDL_GetTicks();
     setnames(mname);

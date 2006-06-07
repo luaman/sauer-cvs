@@ -67,7 +67,7 @@ void screenshot()
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
 
-void computescreen(char *text)
+void computescreen(const char *text)
 {
     int w = scr_w, h = scr_h;
     gettextres(w, h);
@@ -205,7 +205,7 @@ vector<sleepcmd> sleepcmds;
 ICOMMAND(sleep, 2, { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s.command = newstring(args[1]); });
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
-void estartmap(char *name)
+void estartmap(const char *name)
 {
     ///if(!editmode) toggleedit();
     gamespeed = 100;
