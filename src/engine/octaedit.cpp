@@ -451,7 +451,7 @@ void freeeditinfo(editinfo *e)
 };
 
 // guard against subdivision
-#define protectsel(f) { undoblock _u = { selgridmap(), blockcopy(sel, -sel.grid)}; f; pasteundo(_u); freeundo(_u); } 
+#define protectsel(f) { undoblock _u = { selgridmap(), blockcopy(sel, -sel.grid)}; f; pasteundo(_u); freeundo(_u); }
 
 void mpcopy(editinfo *&e, selinfo &sel, bool local)
 {
@@ -745,8 +745,18 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
     loopselxyz(
         if(c.children) solidfaces(c);
         discardchildren(c);
-        if (mode==1)
-            { if (dir<0) { solidfaces(c); } else emptyfaces(c); }  // fill command
+        if(mode==1) // fill command
+        {
+            if(dir<0)
+            {
+                solidfaces(c);
+                cube &o = blockcube(x, y, 1, sel, -sel.grid);
+                loopi(6)
+                    c.texture[i] = o.texture[i];
+            }
+            else
+                emptyfaces(c);
+        }
         else
         {
             uint bak = c.faces[d];
