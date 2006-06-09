@@ -160,6 +160,7 @@ typedef enum
 enum
 {
    ENET_HOST_RECEIVE_BUFFER_SIZE          = 256 * 1024,
+   ENET_HOST_SEND_BUFFER_SIZE             = 256 * 1024,
    ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL  = 1000,
    ENET_HOST_DEFAULT_MTU                  = 1400,
 
