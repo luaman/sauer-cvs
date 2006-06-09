@@ -446,7 +446,7 @@ struct md3model
                 glEnableClientState(GL_NORMAL_ARRAY);
                 glNormalPointer(GL_FLOAT, sizeof(md2::md2_vvert), (void *)sizeof(vec));
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, sizeof(md2::md2_vvert), (void *)sizeof(vec));
+                glTexCoordPointer(2, GL_FLOAT, sizeof(md2::md2_vvert), (void *)(sizeof(vec)*2));
 
                 glDrawElements(GL_TRIANGLES, mesh.vbufi_len, GL_UNSIGNED_SHORT, mesh.vbufi);
                 
@@ -458,7 +458,7 @@ struct md3model
                 xtravertsva += mesh.numvertices;
             }
             else
-            {         
+            {
                 glBegin(GL_TRIANGLES);
                     loopj(mesh.numtriangles) // triangles
                     {
@@ -672,7 +672,7 @@ void md3skin(char *objname, char *skin, char *masks)
     loopv(mdl.meshes)
     {   
         md3mesh *mesh = &mdl.meshes[i];
-        if(strcmp(mesh->name, objname) == 0)
+        if(!strcmp(mesh->name, objname))
         {
             s_sprintfd(spath)("%s/%s", basedir, skin);
             mesh->skin = textureload(spath, 0, false, true, false);
