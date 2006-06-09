@@ -1146,9 +1146,10 @@ enet_protocol_send_reliable_outgoing_commands (ENetHost * host, ENetPeer * peer)
 
        if (outgoingCommand -> packet != NULL)
        {
-          if ((enet_uint16) (peer -> mtu - host -> packetSize) <
-                (enet_uint16) (commandSize + outgoingCommand -> fragmentLength) ||
-              peer -> reliableDataInTransit + outgoingCommand -> fragmentLength > peer -> windowSize)
+          if (peer -> reliableDataInTransit + outgoingCommand -> fragmentLength > peer -> windowSize)
+            break;
+
+          if ((enet_uint16) (peer -> mtu - host -> packetSize) < (enet_uint16) (commandSize + outgoingCommand -> fragmentLength))
           {
              host -> continueSending = 1;
 

@@ -124,6 +124,9 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
            ++ fragmentNumber,
              fragmentOffset += fragmentLength)
       {
+         if (packet -> dataLength - fragmentOffset < fragmentLength)
+           fragmentLength = packet -> dataLength - fragmentOffset;
+
          command.header.command = ENET_PROTOCOL_COMMAND_SEND_FRAGMENT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
          command.header.channelID = channelID;
          command.sendFragment.startSequenceNumber = startSequenceNumber;
@@ -132,9 +135,6 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
          command.sendFragment.fragmentNumber = ENET_HOST_TO_NET_32 (fragmentNumber);
          command.sendFragment.totalLength = ENET_HOST_TO_NET_32 (packet -> dataLength);
          command.sendFragment.fragmentOffset = ENET_NET_TO_HOST_32 (fragmentOffset);
-
-         if (packet -> dataLength - fragmentOffset < fragmentLength)
-           fragmentLength = packet -> dataLength - fragmentOffset;
 
          enet_peer_queue_outgoing_command (peer, & command, packet, fragmentOffset, fragmentLength);
       }
