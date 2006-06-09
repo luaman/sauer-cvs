@@ -63,7 +63,8 @@ struct fpsserver : igameserver
     int lastsec;
     int mastermode;
     int masterupdate;
-    
+    FILE *mapdata;
+
     vector<ban> bannedips;
     vector<clientinfo *> clients;
 
@@ -71,7 +72,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), cps(*this) {};
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), mapdata(NULL), cps(*this) {};
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
@@ -119,7 +120,7 @@ struct fpsserver : igameserver
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
-            SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 17, 
+            SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 17, SV_GETMAP, 1,
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3,
             SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 5, SV_FORCEINTERMISSION, 1, 
             -1
@@ -128,7 +129,7 @@ struct fpsserver : igameserver
         return -1;
     };
 
-    void sendservmsg(const char *s) { sendintstr(SV_SERVMSG, s); };
+    void sendservmsg(const char *s) { sendf(true, -1, "is", SV_SERVMSG, s); };
 
     void resetitems() { sents.setsize(0); cps.reset(); };
 
@@ -175,14 +176,14 @@ struct fpsserver : igameserver
     int checktype(int type, clientinfo *ci)
     {
         // spectators can only connect and talk
-        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING };
+        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING, SV_GETMAP };
         if(ci && ci->spectator && !ci->master)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
             return -1;
         };
         // only allow edit messages in coop-edit mode
-        if(type>=SV_EDITENT && type<=SV_REPLACE && gamemode!=1) return -1;
+        if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         return type;
     };
 
@@ -193,6 +194,7 @@ struct fpsserver : igameserver
         clientinfo *ci = sender>=0 ? ((clientinfo *)getinfo(sender)) : NULL;
         while(p<end) switch(checktype(type = getint(p), ci))
         {
+            case SV_SERVMSG:
             case SV_TEXT:
                 sgetstr(text, p);
                 break;
@@ -370,6 +372,15 @@ struct fpsserver : igameserver
                 startintermission();
                 break;
 
+            case SV_GETMAP:
+                if(mapdata)
+                {
+                    sendf(true, sender, "is", SV_SERVMSG, "server sending map...");
+                    sendfile(sender, mapdata);
+                }
+                else sendf(true, sender, "is", SV_SERVMSG, "no map to send"); 
+                break;
+
             default:
             {
                 int size = msgsizelookup(type);
@@ -545,5 +556,18 @@ struct fpsserver : igameserver
     {
         if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("[different protocol] %s", name);
         else s_sprintf(buf)("%d\t%d\t%s, %s: %s %s", ping, np, map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
+    };
+
+    void receivefile(int sender, uchar *data, int len)
+    {
+        if(gamemode != 1 || len > 1024*1024) return;
+        clientinfo *ci = (clientinfo *)getinfo(sender);
+        if(ci->spectator && !ci->master) return;
+        if(mapdata) { fclose(mapdata); mapdata = NULL; };
+        if(!len) return;
+        mapdata = tmpfile();
+        if(!mapdata) return;
+        fwrite(data, 1, len, mapdata);
+        sendservmsg("[map uploaded to server, \"getmap\" to receive it]");
     };
 };

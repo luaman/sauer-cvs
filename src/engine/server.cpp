@@ -94,12 +94,38 @@ struct client                   // server side version of "dynent" type
 
 vector<client *> clients;
 
-ENetHost * serverhost = NULL;
+ENetHost *serverhost = NULL;
 size_t bsend = 0, brec = 0;
 int laststatus = 0; 
 ENetSocket pongsock = ENET_SOCKET_NULL;
 
-#define MAXOBUF 100000
+void sendfile(int cn, FILE *file)
+{
+#ifndef STANDALONE
+    extern ENetHost *clienthost;
+#endif
+    if(cn < 0)
+    {
+#ifndef STANDALONE
+        if(!clienthost || clienthost->peers[0].state != ENET_PEER_STATE_CONNECTED) 
+#endif
+            return;
+    }
+    else if(cn >= clients.length() || clients[cn]->type != ST_TCPIP) return;
+
+    fseek(file, 0, SEEK_END);
+    int len = ftell(file);
+    ENetPacket *packet = enet_packet_create(NULL, len, ENET_PACKET_FLAG_RELIABLE);
+    rewind(file);
+    fread(packet->data, 1, len, file);
+
+    if(cn >= 0) enet_peer_send(clients[cn]->peer, 1, packet);
+#ifndef STANDALONE
+    else enet_peer_send(&clienthost->peers[0], 1, packet);
+#endif
+
+    if(!packet->referenceCount) enet_packet_destroy(packet);
+};
 
 void process(ENetPacket *packet, int sender);
 void multicast(ENetPacket *packet, int sender);
@@ -165,18 +191,6 @@ void send2(bool rel, int cn, int a, int b)
     sendn(rel, cn, 2, a, b);
 };
 
-void sendintstr(int i, const char *msg)
-{
-    ENetPacket *packet = enet_packet_create(NULL, _MAXDEFSTR+10, ENET_PACKET_FLAG_RELIABLE);
-    uchar *start = packet->data;
-    uchar *p = start;
-    putint(p, i);
-    sendstring(msg, p);
-    enet_packet_resize(packet, p-start);
-    multicast(packet, -1);
-    if(packet->referenceCount==0) enet_packet_destroy(packet);
-};
-
 char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode" };
 
 void disconnect_client(int n, int reason)
@@ -188,35 +202,6 @@ void disconnect_client(int n, int reason)
     clients[n]->type = ST_EMPTY;
     sv->sendservmsg(s);
 };
-
-string copyname;
-int copysize;
-uchar *copydata = NULL;
-
-void sendvmap(int n, string mapname, int mapsize, uchar *mapdata)
-{
-    if(mapsize <= 0 || mapsize > 256*256) return;
-    s_strcpy(copyname, mapname);
-    copysize = mapsize;
-    if(copydata) free(copydata);
-    copydata = new uchar[mapsize];
-    memcpy(copydata, mapdata, mapsize);
-}
-
-void recvmap(int n, int tag)
-{
-    if(!copydata) return;
-    ENetPacket *packet = enet_packet_create(NULL, MAXTRANS + copysize, ENET_PACKET_FLAG_RELIABLE);
-    uchar *start = packet->data;
-    uchar *p = start;
-    putint(p, tag);
-    sendstring(copyname, p);
-    putint(p, copysize);
-    memcpy(p, copydata, copysize);
-    p += copysize;
-    enet_packet_resize(packet, p-start);
-    send(n, packet);
-}
 
 void process(ENetPacket * packet, int sender)   // sender may be -1
 {
@@ -439,7 +424,11 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
         }
         case ENET_EVENT_TYPE_RECEIVE:
             brec += event.packet->dataLength;
-            process(event.packet, ((client *)event.peer->data)->num); 
+            switch(event.channelID)
+            {
+                case 0: process(event.packet, ((client *)event.peer->data)->num); break;
+                case 1: sv->receivefile(((client *)event.peer->data)->num, event.packet->data, (int)event.packet->dataLength); break;
+            }; 
             if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
             break;
 

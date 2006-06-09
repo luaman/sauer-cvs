@@ -161,7 +161,7 @@ cube *loadchildren(gzFile f)
     return c;
 };
 
-void save_world(char *mname, bool nolms = false)
+void save_world(char *mname, bool nolms)
 {
     if(!*mname) mname = cl->getclientmap();
     setnames(mname);

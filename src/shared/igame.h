@@ -23,6 +23,7 @@ struct iclientcom
     virtual void gamedisconnect() = 0;
     virtual void parsepacketclient(uchar *end, uchar *p) = 0;
     virtual void sendpacketclient(uchar *&p, bool &reliable, dynent *d) = 0;
+    virtual void receivefile(uchar *data, int len) = 0;
     virtual void gameconnect(bool _remote) = 0;
     virtual bool allowedittoggle() = 0;
     virtual void writeclientinfo(FILE *f) = 0;
@@ -78,6 +79,7 @@ struct igameserver
     virtual int serverport() = 0;
     virtual char *getdefaultmaster() = 0;
     virtual void sendservmsg(const char *s) = 0;
+    virtual void receivefile(int sender, uchar *data, int len) = 0;
 };
 
 struct igame

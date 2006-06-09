@@ -121,6 +121,7 @@ extern void particle_flare(const vec &p, const vec &dest, int fade);
 
 // worldio
 extern void load_world(const char *mname);
+extern void save_world(char *mname, bool nolms = false);
 
 // physics
 extern void moveplayer(physent *pl, int moveres, bool local);
@@ -151,10 +152,10 @@ extern mapmodelinfo &getmminfo(int i);
 enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE };
 
 extern void *getinfo(int i);
-extern void sendintstr(int i, const char *msg);
 extern void send2(bool rel, int cn, int a, int b);
 extern void sendn(bool rel, int cn, int n, ...);
 extern void sendf(bool rel, int cn, const char *format, ...);
+extern void sendfile(int cn, FILE *file);
 extern int getnumclients();
 extern uint getclientip(int n);
 extern void putint(uchar *&p, int n);

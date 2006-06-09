@@ -201,7 +201,11 @@ void gets2c()           // get updates from the server
          
         case ENET_EVENT_TYPE_RECEIVE:
             if(disconnecting) conoutf("attempting to disconnect...");
-            else localservertoclient(event.packet->data, (int)event.packet->dataLength);
+            else switch(event.channelID)
+            {
+                case 0: localservertoclient(event.packet->data, (int)event.packet->dataLength); break;
+                case 1: cc->receivefile(event.packet->data, (int)event.packet->dataLength); break;
+            };
             enet_packet_destroy(event.packet);
             break;
 

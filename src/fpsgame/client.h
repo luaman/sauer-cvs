@@ -28,6 +28,8 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, kick, 1, self->kick(args[0]));
         CCOMMAND(clientcom, spectator, 2, self->togglespectator(args[0], args[1]));
         CCOMMAND(clientcom, mastermode, 1, self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
+        CCOMMAND(clientcom, getmap, 0, self->getmap());
+        CCOMMAND(clientcom, sendmap, 0, self->sendmap());
     };
 
     void mapstart() { if(!spectator || currentmaster==clientnum) senditemstoserver = true; };
@@ -644,5 +646,44 @@ struct clientcom : iclientcom
     void changemap(const char *name)                      // request map change, server may ignore
     {
         if(!spectator || currentmaster==clientnum) s_strcpy(toservermap, name);
+    };
+
+    void receivefile(uchar *data, int len)
+    {
+        if(cl.gamemode!=1) return;
+        s_sprintfd(mname)("getmap_%d", cl.lastmillis);
+        s_sprintfd(fname)("packages/base/%s.ogz", mname);
+        FILE *map = fopen(fname, "wb");
+        if(!map) return;
+        conoutf("received map");
+        fwrite(data, 1, len, map);
+        fclose(map);
+        load_world(mname);
+        remove(fname);
+    };
+
+    void getmap()
+    {
+        if(cl.gamemode!=1) { conoutf("\"getmap\" only works in coopedit mode"); return; };
+        conoutf("getting map..."); 
+        addmsg(1, 1, SV_GETMAP);
+    };
+
+    void sendmap()
+    {
+        if(cl.gamemode!=1 || (spectator && currentmaster!=clientnum)) { conoutf("\"sendmap\" only works in coopedit mode"); return; };
+        conoutf("sending map...");
+        s_sprintfd(mname)("sendmap_%d", cl.lastmillis);
+        save_world(mname, true);
+        s_sprintfd(fname)("packages/base/%s.ogz", mname);
+        FILE *map = fopen(fname, "rb");
+        if(map)
+        {
+            fseek(map, 0, SEEK_END);
+            if(ftell(map) > 1024*1024) conoutf("map is too large");
+            else sendfile(-1, map);
+            fclose(map);
+        };
+        remove(fname);
     };
 };
