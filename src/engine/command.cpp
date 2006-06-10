@@ -125,9 +125,9 @@ void parsemacro(char *&p, int level)
         while(escape--) wordbuf.add('@');
         return;
     };
-    if(*p=='[')
+    if(*p=='(')
     {
-        char *exp = parseexp(p, ']');
+        char *exp = parseexp(p, ')');
         char *ret = executeret(exp);
         delete[] exp;
         if(ret)
