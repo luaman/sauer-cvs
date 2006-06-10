@@ -29,7 +29,7 @@ eihrul:
 
 aard:
 - links
-- $ vs @? other improvements? s returnval
+- $ vs @? old retvals in ;;; ? var stacks? [] for trees/arrays? other improvements? 
 - start moving some stuff in their own headers
 - ways of doing menu - context sensitive etc
 - rpg start
