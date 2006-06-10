@@ -169,13 +169,14 @@ COMMANDN(cursorcolor, setcursorcolor, ARG_3INT);
 
 void cursorupdate()
 {
-    if(!insideworld(worldpos))
-        return;
-    vec ray(worldpos), v;
+    vec target(worldpos);
+    if(!insideworld(target)) 
+        loopi(3) target[i] = max(min(target[i], hdr.worldsize), 0);
+    vec ray(target), v;
     ray.sub(player->o);
     if(raycubepos(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0) | (passthroughcube ? RAY_PASS : 0) | RAY_SKIPFIRST, gridsize)<0)
-        return;
-
+        v = target;
+        
     lookupcube(int(v.x), int(v.y), int(v.z));
     int mag = lusize / gridsize;
     if(lusize>gridsize)
