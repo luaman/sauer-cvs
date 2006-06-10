@@ -261,8 +261,8 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
             w[i] = "";
             if(i>numargs) continue;
             char *s = parseword(p);             // parse and evaluate exps
-            if(!s) { numargs = i; s = ""; };
-            w[i] = s;
+            if(s) w[i] = s;
+            else numargs = i;
         };
         
         p += strcspn(p, ";\n\0");
