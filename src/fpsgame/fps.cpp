@@ -385,7 +385,7 @@ struct fpsclient : igameclient
                 pen = (10-ms.skill())*20; score += pen; if(pen) conoutf("time penalty for lower skill level (20 seconds each): %d seconds", pen);
                 pen = 100-accuracy;       score += pen; if(pen) conoutf("time penalty for missed shots (1 second each %%): %d seconds", pen);
                 s_sprintfd(aname)("bestscore_%s", getclientmap());
-                char *bestsc = getalias(aname);
+                const char *bestsc = getalias(aname);
                 int bestscore = atoi(bestsc);
                 if(score<bestscore) bestscore = score;
                 s_sprintfd(nscore)("%d", bestscore);
@@ -449,7 +449,7 @@ struct fpsclient : igameclient
         if(m_sp)
         {
             s_sprintfd(aname)("bestscore_%s", getclientmap());
-            char *best = getalias(aname);
+            const char *best = getalias(aname);
             if(*best) conoutf("try to beat your best score so far: %s", best);
         };
     };

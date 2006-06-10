@@ -82,7 +82,7 @@ void setvar(char *name, int i) { *idents->access(name)->_storage = i; };
 int getvar(char *name) { return *idents->access(name)->_storage; };
 bool identexists(char *name) { return idents->access(name)!=NULL; };
 
-char *getalias(char *name)
+const char *getalias(char *name)
 {
     ident *i = idents->access(name);
     return i && i->_type==ID_ALIAS ? i->_action : "";
@@ -131,7 +131,7 @@ void parsemacro(char *&p, int level)
     while(isalnum(*p) || *p=='_') p++;
     int c = *p;
     *p = 0;
-    char *alias = getalias(ident);
+    const char *alias = getalias(ident);
     *p = c;
     while(*alias) wordbuf.add(*alias++);
 };
