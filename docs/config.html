@@ -218,10 +218,10 @@ menuitem A</pre>
         Example: x = 0; if $cond [x = 1; [x = 2; echo @@x]] will echo 0, since it uses the value of x at two levels up. 
         <br>
         <br>
-        The form @[body] is similar to @x, except that body contains commands executed at parse time.
-        The result value after body executes is substituted in for @[body]. 
+        The form @(body) is similar to @x, except that body contains commands executed at parse time.
+        The result value after body executes is substituted in for @(body). 
         You may use multiple @ prefixes as with the @x form.
-        Example: @[result "Hello, World!"] will substitute itself with Hello, World!
+        Example: @(result "Hello, World!") will substitute itself with Hello, World!
 		<br>
 		<br>
         The following commands are available for programming:

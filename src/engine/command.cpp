@@ -127,9 +127,7 @@ void parsemacro(char *&p, int level)
     };
     if(*p=='(')
     {
-        char *exp = parseexp(p, ')');
-        char *ret = executeret(exp);
-        delete[] exp;
+        char *ret = parseexp(p, ')');
         if(ret)
         {
             for(char *sub = ret; *sub; ) wordbuf.add(*sub++);
