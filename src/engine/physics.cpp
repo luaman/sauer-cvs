@@ -149,9 +149,9 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
         loopi(3) if(ray[i]!=0)
         {
             float d = (float(ray[i]>0?0:hdr.worldsize)-v[i])/ray[i];
-            if(d >= 0) disttoworld = min(disttoworld, 0.1f + d);
+            if(d<0) return (radius>0?radius:-1);
+            disttoworld = min(disttoworld, 0.1f + d);
         };
-        if(disttoworld>1e15f) return (radius>0?radius:disttoworld);
         pushvec(v, ray, disttoworld);
         dist += disttoworld;
     };
@@ -795,7 +795,7 @@ void dropenttofloor(entity *e)
     if(!insideworld(e->o)) return;
     vec v(0.0001f, 0.0001f, -1);
     v.normalize();
-    if(raycube(e->o, v) >= hdr.worldsize) return;
+    if(raycube(e->o, v, hdr.worldsize) >= hdr.worldsize) return;
     physent d;
     d.type = ENT_CAMERA;
     d.o = e->o;
