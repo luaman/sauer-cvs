@@ -593,7 +593,7 @@ void result(const char *s) { commandret = newstring(s); };
 void concatword(char **args, int numargs)
 {
     char *s = conc(args, numargs, false);
-    concat(s);
+    result(s);
     delete[] s;
 };
 
@@ -618,7 +618,7 @@ void format(char **args, int numargs)
         else s.add(c);
     };
     s.add('\0');
-    concat(s.getbuf());
+    result(s.getbuf());
 };
 
 #define elementskip s += strspn(s += strcspn(s, "\n\t \0"), "\n\t ")
@@ -635,12 +635,12 @@ void at(char *s, char *pos)
     int n = atoi(pos);
     loopi(n) elementskip;
     s[strcspn(s, "\n\t \0")] = 0;
-    concat(s);
+    result(s);
 };
 
 void getalias_(char *s)
 {
-    concat(getalias(s));
+    result(getalias(s));
 };
 
 COMMAND(onrelease, ARG_DWN1);
