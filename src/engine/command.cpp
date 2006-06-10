@@ -92,7 +92,7 @@ void setvar(char *name, int i) { *idents->access(name)->_storage = i; };
 int getvar(char *name) { return *idents->access(name)->_storage; };
 bool identexists(char *name) { return idents->access(name)!=NULL; };
 
-char *getalias(char *name)
+const char *getalias(char *name)
 {
     ident *i = idents->access(name);
     return i && i->_type==ID_ALIAS ? i->_action : "";
