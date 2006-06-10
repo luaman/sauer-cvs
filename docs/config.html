@@ -81,8 +81,7 @@ editbind K A
     now the key is only available in edit mode (if no editbind is defined for a certain
     key, it will use the normal binding).<pre>alias N A</pre>
 		Binds name N to commands A, after which you can use N as a shortcut for A. You 
-		may re-bind N as often as you like, and bind N again within the execution of A 
-		etc.
+		may re-bind N as often as you like, call it recursively etc. You may use N = A as a shortcut for alias.
 		<pre>quit</pre>
 		Quits without asking.
 		<pre>forward / backward / left / right</pre>
@@ -216,14 +215,13 @@ menuitem A</pre>
         which makes them useful for composing strings or creating code on the fly. The @x form will be
         substituted using the value of x at the time the enclosing [] is evaluated. You can add more @ prefixes
         to move up more levels of []s, so @@x will move up two levels of []s and so on.
-        Example: alias x 0; if $cond [alias x 1; [alias x 2; echo @@x]] will echo 0, since it uses the value of x at two levels up. 
+        Example: x = 0; if $cond [x = 1; [x = 2; echo @@x]] will echo 0, since it uses the value of x at two levels up. 
         <br>
         <br>
         The form @[body] is similar to @x, except that body contains commands executed at parse time.
-        The value of the s alias after body executes is substituted in for @[body]. The s alias is 
-        initialized to "" before body executes and restored to its old value afterwards, for convenience.
+        The result value after body executes is substituted in for @[body]. 
         You may use multiple @ prefixes as with the @x form.
-        Example: @[alias s "Hello, World!"] will substitute itself with Hello, World!
+        Example: @[result "Hello, World!"] will substitute itself with Hello, World!
 		<br>
 		<br>
         The following commands are available for programming:
@@ -257,7 +255,7 @@ strcmp A B</pre>
 		[], otherwise it would only be evaluated once. Example (same result as the 
 		"loop" example):
 		<br>
-		<code>alias i 0; while [ (&lt; $i 10) ] [ echo $i; alias i (+ $i 1) ]</code>
+		<code>i = 0; while [ (&lt; $i 10) ] [ echo $i; i = (+ $i 1) ]</code>
 		<pre>concat S...</pre>
 		concatenates all the arguments and returns the result
     <pre>concatword S...</pre>

@@ -54,8 +54,8 @@ extern void exec(char *cfgfile);
 extern bool execfile(char *cfgfile);
 extern void resetcomplete();
 extern void complete(char *s);
-extern void alias(char *name, const char *action);
-extern const char *getalias(char *name);
+extern void alias(char *name, char *action);
+extern char *getalias(char *name);
 
 // console
 extern void keypress(int code, bool isdown, int cooked);

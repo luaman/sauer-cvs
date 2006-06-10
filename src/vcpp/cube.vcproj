@@ -1279,6 +1279,10 @@
 					Name="cfg"
 					>
 					<File
+						RelativePath="..\..\data\brush.cfg"
+						>
+					</File>
+					<File
 						RelativePath="..\..\data\default_map_settings.cfg"
 						>
 					</File>
