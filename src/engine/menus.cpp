@@ -106,7 +106,11 @@ bool rendermenu(int scr_w, int scr_h)
     {
         string &s = m.items[i].eval;
         s_strcpy(s, m.items[i].text);
-        if(s[0]=='^') { execute(m.items[i].text+1); s_strcpy(s, getalias("s")); };
+        if(s[0]=='^')
+        {
+            char *ret = executeret(m.items[i].text+1);
+            if(ret) { s_strcpy(s, ret); delete[] ret; };
+        };
         int x = text_width(s);
         if(x>w) w = x;
     };
@@ -198,7 +202,7 @@ bool menukey(int code, bool isdown)
             if(vmenu==1) connects(getservername(menusel));
             menustack.add(vmenu);
             menuset(-1);
-            execute(action, true);
+            execute(action);
         };
     };
     return true;

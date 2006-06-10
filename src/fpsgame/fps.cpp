@@ -386,8 +386,7 @@ struct fpsclient : igameclient
                 pen = 100-accuracy;       score += pen; if(pen) conoutf("time penalty for missed shots (1 second each %%): %d seconds", pen);
                 s_sprintfd(aname)("bestscore_%s", getclientmap());
                 char *bestsc = getalias(aname);
-                int bestscore = 0;
-                if(bestsc) bestscore = atoi(bestsc);
+                int bestscore = atoi(bestsc);
                 if(score<bestscore) bestscore = score;
                 s_sprintfd(nscore)("%d", bestscore);
                 alias(aname, nscore);
@@ -451,7 +450,7 @@ struct fpsclient : igameclient
         {
             s_sprintfd(aname)("bestscore_%s", getclientmap());
             char *best = getalias(aname);
-            if(best) conoutf("try to beat your best score so far: %s", best);
+            if(*best) conoutf("try to beat your best score so far: %s", best);
         };
     };
 

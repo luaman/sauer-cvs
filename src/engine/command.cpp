@@ -85,7 +85,7 @@ bool identexists(char *name) { return idents->access(name)!=NULL; };
 char *getalias(char *name)
 {
     ident *i = idents->access(name);
-    return i && i->_type==ID_ALIAS ? i->_action : NULL;
+    return i && i->_type==ID_ALIAS ? i->_action : "";
 };
 
 bool addcommand(char *name, void (*fun)(), int narg)
@@ -118,15 +118,13 @@ void parsemacro(char *&p, int level)
     if(*p=='[')
     {
         char *exp = parseexp(p, ']');
-        char *olds = getalias("s");
-        if(olds) olds = newstring(olds);
-        alias("s", "");
-        execute(exp);
+        char *ret = executeret(exp);
         delete[] exp;
-        char *sub = getalias("s");
-        while(*sub) wordbuf.add(*sub++);
-        alias("s", olds ? olds : "");
-        if(olds) delete[] olds;
+        if(ret)
+        {
+            for(char *sub = ret; *sub; ) wordbuf.add(*sub++);
+            delete[] ret;
+        };
         return;
     };
     char *ident = p;
@@ -135,12 +133,7 @@ void parsemacro(char *&p, int level)
     *p = 0;
     char *alias = getalias(ident);
     *p = c;
-    if(alias) while(*alias) wordbuf.add(*alias++);
-    else
-    {
-        ident--;
-        while(ident!=p) wordbuf.add(*ident++);
-    };
+    while(*alias) wordbuf.add(*alias++);
 };
 
 char *parseexp(char *&p, int right)          // parse any nested set of () or []
@@ -178,9 +171,9 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     char *s = newstring(wordbuf.getbuf()+pos, wordbuf.length()-pos);
     if(left=='(')
     {
-        string t;
-        itoa(t, execute(s));                    // evaluate () exps directly, and substitute result
-        s = exchangestr(s, t);
+        char *ret = executeret(s);                    // evaluate () exps directly, and substitute result
+        delete[] s;
+        s = ret ? ret : newstring("");
     };
     wordbuf.setsize(pos);
     return s;
@@ -237,11 +230,13 @@ char *conc(char **w, int n, bool space)
 
 VARN(numargs, _numargs, 0, 0, 25);
 
-int execute(char *p, bool isdown)               // all evaluation happens here, recursively
+char *commandret = NULL;
+
+char *executeret(char *p, bool isdown)               // all evaluation happens here, recursively
 {
     const int MAXWORDS = 25;                    // limit, remove
     char *w[MAXWORDS];
-    int val = 0;
+    char *retval = NULL;
     for(bool cont = true; cont;)                // for each ; seperated statement
     {
         int numargs = MAXWORDS;
@@ -263,9 +258,10 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
         ident *id = idents->access(c);
         if(!id)
         {
-            val = atoi(c);
-            if(!val && *c!='0')
+            if(!atoi(c) && *c!='0')
                 conoutf("unknown command: %s", c);
+            if(retval) delete[] retval;
+            retval = newstring(c);
         }
         else switch(id->_type)
         {
@@ -276,9 +272,10 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     case IARG_BOTH: id->run((char **)isdown); break;
                     case IARG_CONC:  if(isdown) { char *r = conc(w+1, numargs-1, true); id->run(&r); delete[] r; }; break;
                 };
+                if(commandret) { retval = commandret; commandret = NULL; }
                 break;
         
-            case ID_COMMAND:                    // game defined commands       
+            case ID_COMMAND:                    // game defined commands    
                 switch(id->_narg)                // use very ad-hoc function signature, and just call it
                 { 
                     case ARG_1INT: if(isdown) ((void (__cdecl *)(int))id->_fun)(atoi(w[1])); break;
@@ -296,10 +293,6 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
 
                     case ARG_DOWN: ((void (__cdecl *)(bool))id->_fun)(isdown); break;
                     case ARG_DWN1: ((void (__cdecl *)(bool, char *))id->_fun)(isdown, w[1]); break;
-                    case ARG_1EXP: if(isdown) val = ((int (__cdecl *)(int))id->_fun)(execute(w[1])); break;
-                    case ARG_2EXP: if(isdown) val = ((int (__cdecl *)(int, int))id->_fun)(execute(w[1]), execute(w[2])); break;
-                    case ARG_1EST: if(isdown) val = ((int (__cdecl *)(char *))id->_fun)(w[1]); break;
-                    case ARG_2EST: if(isdown) val = ((int (__cdecl *)(char *, char *))id->_fun)(w[1], w[2]); break;
                     case ARG_CONC: if(isdown)
                     {
                         char *r = conc(w+1, numargs-1, true);
@@ -310,6 +303,7 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                     case ARG_VARI: if(isdown) ((void (__cdecl *)(char **, int))id->_fun)(w+1, numargs-1); break;
                     
                 };
+                if(commandret) { retval = commandret; commandret = NULL; }
                 break;
        
             case ID_VAR:                        // game defined variabled 
@@ -350,14 +344,23 @@ int execute(char *p, bool isdown)               // all evaluation happens here, 
                 char *action = newstring(id->_action);   // create new string here because alias could rebind itself
                 bool wasoverriding = overrideidents;
                 if(id->_override!=NO_OVERRIDE) overrideidents = true;
-                val = execute(action, isdown);
+                if(retval) delete[] retval;
+                retval = executeret(action, isdown);
                 overrideidents = wasoverriding;
                 delete[] action;
                 break;
         };
         loopj(numargs) delete[] w[j];
     };
-    return val;
+    return retval;
+};
+
+int execute(char *p, bool isdown)
+{
+    char *ret = executeret(p, isdown);
+    int i = 0; 
+    if(ret) { i = atoi(ret); delete[] ret; };
+    return i;
 };
 
 // tab-completion of all idents and base maps
@@ -575,15 +578,17 @@ COMMAND(writecfg, ARG_NONE);
 // () and [] expressions, any control construct can be defined trivially.
 
 void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); };
+void ints              (int v) { string b; itoa(b, v); commandret = newstring(b); };
 
-ICOMMAND(if, 3, execute(args[0][0]!='0' ? args[1] : args[2]));
+ICOMMAND(if, 3, commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
 
 ICOMMAND(loop, 2, { int t = atoi(args[0]); loopi(t) { intset("i", i); execute(args[1]); }; });
 ICOMMAND(while, 2, while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
 
 void onrelease(bool on, char *body) { if(!on) execute(body); };
 
-void concat(const char *s) { alias("s", s); };
+void concat(const char *s) { commandret = newstring(s); };
+void result(const char *s) { commandret = newstring(s); };
 
 void concatword(char **args, int numargs)
 {
@@ -602,12 +607,7 @@ void format(char **args, int numargs)
         if(c == '%')
         {
             int i = *f++;
-            if(i == '0')
-            {
-                const char *sub = getalias("s");
-                if(sub) while(*sub) s.add(*sub++);
-            }
-            else if(i >= '1' && i <= '9')
+            if(i >= '1' && i <= '9')
             {
                 i -= '0';
                 const char *sub = i < numargs ? args[i] : "";
@@ -623,11 +623,11 @@ void format(char **args, int numargs)
 
 #define elementskip s += strspn(s += strcspn(s, "\n\t \0"), "\n\t ")
 
-int listlen(char *s)
+void listlen(char *s)
 {
     int n = 0;
     for(; *s; n++) elementskip;
-    return n;
+    ints(n);
 };
 
 void at(char *s, char *pos)
@@ -640,31 +640,31 @@ void at(char *s, char *pos)
 
 void getalias_(char *s)
 {
-    s = getalias(s);
-    concat(s ? s : "");
+    concat(getalias(s));
 };
 
 COMMAND(onrelease, ARG_DWN1);
 COMMAND(exec, ARG_1STR);
 COMMAND(concat, ARG_CONC);
+COMMAND(result, ARG_1STR);
 COMMAND(concatword, ARG_VARI);
 COMMAND(format, ARG_VARI);
 COMMAND(at, ARG_2STR);
-COMMAND(listlen, ARG_1EST);
+COMMAND(listlen, ARG_1STR);
 COMMANDN(getalias, getalias_, ARG_1STR);
 
-int add(int a, int b)   { return a+b; };         COMMANDN(+, add, ARG_2EXP);
-int mul(int a, int b)   { return a*b; };         COMMANDN(*, mul, ARG_2EXP);
-int sub(int a, int b)   { return a-b; };         COMMANDN(-, sub, ARG_2EXP);
-int divi(int a, int b)  { return b ? a/b : 0; }; COMMANDN(div, divi, ARG_2EXP);
-int mod(int a, int b)   { return b ? a%b : 0; }; COMMAND(mod, ARG_2EXP);
-int equal(int a, int b) { return (int)(a==b); }; COMMANDN(=, equal, ARG_2EXP);
-int lt(int a, int b)    { return (int)(a<b); };  COMMANDN(<, lt, ARG_2EXP);
-int gt(int a, int b)    { return (int)(a>b); };  COMMANDN(>, gt, ARG_2EXP);
+void add(int a, int b)   { ints(a+b); };         COMMANDN(+, add, ARG_2INT);
+void mul(int a, int b)   { ints(a*b); };         COMMANDN(*, mul, ARG_2INT);
+void sub(int a, int b)   { ints(a-b); };         COMMANDN(-, sub, ARG_2INT);
+void divi(int a, int b)  { ints(b ? a/b : 0); }; COMMANDN(div, divi, ARG_2INT);
+void mod(int a, int b)   { ints(b ? a%b : 0); }; COMMAND(mod, ARG_2INT);
+void equal(int a, int b) { ints((int)(a==b)); }; COMMANDN(=, equal, ARG_2INT);
+void lt(int a, int b)    { ints((int)(a<b)); };  COMMANDN(<, lt, ARG_2INT);
+void gt(int a, int b)    { ints((int)(a>b)); };  COMMANDN(>, gt, ARG_2INT);
 
-int strcmpa(char *a, char *b) { return strcmp(a,b)==0; };  COMMANDN(strcmp, strcmpa, ARG_2EST);
+void rndn(int a)         { ints(a>0 ? rnd(a) : 0); };  COMMANDN(rnd, rndn, ARG_1INT);
 
-int rndn(int a)    { return a>0 ? rnd(a) : 0; };  COMMANDN(rnd, rndn, ARG_1EXP);
+void strcmpa(char *a, char *b) { ints(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, ARG_2INT);
 
 ICOMMAND(echo, IARG_CONC, conoutf("%s", args[0]));
 

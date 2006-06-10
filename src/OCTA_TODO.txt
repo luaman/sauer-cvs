@@ -10,6 +10,8 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- remove delay before doors start opening
+- better collision on doors (and maybe any rotated object, while we're at it).
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
 - make nearby closed doors render early so that they can contribute to OC?
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
@@ -26,16 +28,15 @@ eihrul:
 
 
 aard:
-- speed?
+- links
 - $ vs @? other improvements? s returnval
-- try stackdumper on non-programmer machines, requires pdb/map, libs? size of exe?
-- update web page | make description less technical (move to docs), present sauer as a freeware GAME, not as an engine (make clear only engine is OS). | change cube page to point people more clearly to sauer
 - start moving some stuff in their own headers
 - ways of doing menu - context sensitive etc
 - rpg start
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - new BAS sounds? | player spawn | sp respawn | menu clicks | specific door sound? | end of level | push button/trigger
-- improve bloom?
+- speed? seems slow at 1920
+- improve bloom? optimize it.
 - scripting: do "." for concatword so you could do easy (associative) arrays and tree structures?
 - report to ATI: float vs short issue
 - more cube map ports?

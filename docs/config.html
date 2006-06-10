@@ -259,23 +259,24 @@ strcmp A B</pre>
 		<br>
 		<code>alias i 0; while [ (&lt; $i 10) ] [ echo $i; alias i (+ $i 1) ]</code>
 		<pre>concat S...</pre>
-		concatenates all the arguments into alias "s"
-		<pre>concatword S...</pre>
+		concatenates all the arguments and returns the result
+    <pre>concatword S...</pre>
 		same as concat but without spaces between the elements.
         <pre>format F V1..Vn</pre>
-        substitutes the V values into the format string F and stores the result in "s".
-        The format strings %1 through %9 are substituted with V1 through V9, respectively, and may be
-        used multiple times. %0 will substitute the previous value of the "s" alias. %% will generate a 
+        substitutes the V values into the format string F and returns the result. The format strings %1 through %9 are substituted with V1 through V9, respectively, and may be
+        used multiple times. %% will generate a 
         single % character. Example:
         <br>
         <code>format "%1 bottles of %2 on the %3, %1 bottles of %2!" 99 beer wall</code>
 		<pre>at S N</pre>
-		grabs the Nth word out of string S and puts it into alias "s"
+		grabs the Nth word out of string S and returns the result
 		<pre>listlen L</pre>
 		returns the number of items in the list L
 		<pre>onrelease A</pre>
 		only executes A if the command is executed on the release of a key/button (must 
 		be in an action in a bind or an alias in a bind).
+		<pre> retval V</pre>
+		Normally the result of a [] block is the result of the last command in the block. If you want the result to be a particular variable or value, you can use e.g. "retval $i" etc.
 		<br>
 		<br>
 		<br>

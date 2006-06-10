@@ -299,7 +299,7 @@ void keypress(int code, bool isdown, int cooked)
                         vhistory.add(newstring(commandbuf));  // cap this?
                     };
                     histpos = vhistory.length();
-                    if(commandbuf[0]=='/') execute(commandbuf, true);
+                    if(commandbuf[0]=='/') execute(commandbuf);
                     else cc->toserver(commandbuf);
                 };
                 saycommand(NULL);
