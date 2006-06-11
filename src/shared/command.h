@@ -23,13 +23,13 @@ template <class T> struct tident
     void (*_fun)();      // ID_VAR, ID_COMMAND
     int _narg;           // ID_VAR, ID_COMMAND, ID_ICOMMAND
     char *_action;       // ID_ALIAS
-    bool _persist;
-    bool _isexecuting;
+    bool _persist;       // ID_VAR, ID_ALIAS
+    char *_isexecuting;  // ID_ALIAS
     T *self;
     
     tident() {};
     tident(int t, char *n, int m, int x, int *s, void *f, int g, char *a, bool p, T *_s)
-        : _type(t), _name(n), _min(m), _max(x), _storage(s), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _narg(g), _action(a), _persist(p), _isexecuting(false), self(_s) {};
+        : _type(t), _name(n), _min(m), _max(x), _storage(s), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _narg(g), _action(a), _persist(p), _isexecuting(0), self(_s) {};
     virtual ~tident() {};        
 
     tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; };        // force vtable copy, ugh

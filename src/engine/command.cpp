@@ -56,14 +56,9 @@ void aliasa(char *name, char *action)
         conoutf("cannot redefine builtin %s with an alias", name);
         delete[] action;
     }
-//    else if(b->_isexecuting)
-//    {
-//        conoutf("cannot redefine alias that is executing: %s", name);
-//        delete[] action;
-//    }
     else 
     {
-        delete[] b->_action;
+        if(b->_action != b->_isexecuting) delete[] b->_action;
         b->_action = action;
         if(overrideidents) b->_override = OVERRIDDEN;
         else 
@@ -362,12 +357,13 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                         w[i] = NULL;
                     };
                     _numargs = numargs-1;
-                    bool oldexecuting = id->_isexecuting;
-                    id->_isexecuting = true;
                     bool wasoverriding = overrideidents;
                     if(id->_override!=NO_OVERRIDE) overrideidents = true;
+                    char *wasexecuting = id->_isexecuting;
+                    id->_isexecuting = id->_action;
                     setretval(executeret(id->_action, isdown));
-                    id->_isexecuting = oldexecuting;
+                    if(id->_isexecuting != id->_action && id->_isexecuting != wasexecuting) delete[] id->_isexecuting;
+                    id->_isexecuting = wasexecuting;
                     overrideidents = wasoverriding;
                     break;
             };
