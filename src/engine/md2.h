@@ -577,5 +577,5 @@ void md2anim(char *anim, char *f, char *r, char *s)
     loadingmd2->setanim(num, frame, range, speed);
 };
 
-COMMAND(md2anim, ARG_4STR);
+COMMAND(md2anim, "ssss");
 

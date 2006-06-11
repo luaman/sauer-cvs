@@ -146,7 +146,7 @@ void music(char *name, char *cmd)
     };
 };
 
-COMMAND(music, ARG_2STR);
+COMMAND(music, "ss");
 
 struct sample
 {
@@ -174,7 +174,7 @@ int registersound(char *name, char *vol)
     return samples.length()-1;
 };
 
-COMMAND(registersound, ARG_2STR);
+COMMAND(registersound, "ss");
 
 void clear_sound()
 {
@@ -279,7 +279,7 @@ void playsound(int n, const vec *loc)
     #endif
 };
 
-void sound(int n) { playsound(n, NULL); };
-COMMAND(sound, ARG_1INT);
+void sound(int *n) { playsound(*n, NULL); };
+COMMAND(sound, "i");
 
 

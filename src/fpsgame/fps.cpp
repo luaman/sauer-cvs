@@ -52,7 +52,7 @@ struct fpsclient : igameclient
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), et(*this), cc(*this), cpc(*this)
     {
-        CCOMMAND(fpsclient, mode, 1, { self->cc.addmsg(1, 2, SV_GAMEMODE, self->nextmode = atoi(args[0])); });
+        CCOMMAND(fpsclient, mode, "s", { self->cc.addmsg(1, 2, SV_GAMEMODE, self->nextmode = atoi(args[0])); });
     };
 
     iclientcom      *getcom()  { return &cc; };

@@ -128,9 +128,9 @@ void trydisconnect()
     disconnect(0, !disconnecting);
 };
 
-COMMANDN(connect, connects, ARG_1STR);
-COMMAND(lanconnect, ARG_NONE);
-COMMANDN(disconnect, trydisconnect, ARG_NONE);
+COMMANDN(connect, connects, "s");
+COMMAND(lanconnect, "");
+COMMANDN(disconnect, trydisconnect, "");
 
 int lastupdate = 0;
 

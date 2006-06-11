@@ -47,7 +47,7 @@ void aliasa(char *name, char *action)
     if(!b) 
     {
         name = newstring(name);
-        ident b(ID_ALIAS, name, 0, 0, 0, 0, 0, action, persistidents, NULL);
+        ident b(ID_ALIAS, name, 0, 0, 0, 0, "", action, persistidents, NULL);
         if(overrideidents) b._override = OVERRIDDEN;
         idents->access(name, &b);
     }
@@ -71,14 +71,14 @@ void aliasa(char *name, char *action)
 
 void alias(char *name, char *action) { aliasa(name, newstring(action)); };
 
-COMMAND(alias, ARG_2STR);
+COMMAND(alias, "ss");
 
 // variable's and commands are registered through globals, see cube.h
 
 int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
 {
     if(!idents) idents = new identtable;
-    ident v(ID_VAR, name, min, max, storage, (void *)fun, 0, 0, persist, NULL);
+    ident v(ID_VAR, name, min, max, storage, (void *)fun, "", 0, persist, NULL);
     idents->access(name, &v);
     return cur;
 };
@@ -93,7 +93,7 @@ const char *getalias(char *name)
     return i && i->_type==ID_ALIAS ? i->_action : "";
 };
 
-bool addcommand(char *name, void (*fun)(), int narg)
+bool addcommand(char *name, void (*fun)(), char *narg)
 {
     if(!idents) idents = new identtable;
     ident c(ID_COMMAND, name, 0, 0, 0, (void *)fun, narg, 0, false, NULL);
@@ -245,7 +245,7 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
     const int MAXWORDS = 25;                    // limit, remove
     char *w[MAXWORDS];
     char *retval = NULL;
-    #define setretval(v) { if(retval) delete[] retval; char *rv = v; if(rv) retval = rv; commandret = NULL; }
+    #define setretval(v) { DELETEA(retval); char *rv = v; if(rv) retval = rv; commandret = NULL; }
     for(bool cont = true; cont;)                // for each ; seperated statement
     {
         int numargs = MAXWORDS;
@@ -281,47 +281,44 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
             else switch(id->_type)
             {
                 case ID_ICOMMAND:
-                    switch(id->_narg)
+                    switch(id->_narg[0])
                     {
                         default: if(isdown) id->run(w+1); break;
-                        case IARG_BOTH: id->run((char **)isdown); break;
-                        case IARG_CONC:  if(isdown) { char *r = conc(w+1, numargs-1, true); id->run(&r); delete[] r; }; break;
+                        case 'D': id->run((char **)isdown); break;
+                        case 'C': if(isdown) { char *r = conc(w+1, numargs-1, true); id->run(&r); delete[] r; }; break;
                     };
                     setretval(commandret);
                     break;
             
-                case ID_COMMAND:                    // game defined commands    
-                    switch(id->_narg)                // use very ad-hoc function signature, and just call it
-                    { 
-                        case ARG_1INT: if(isdown) ((void (__cdecl *)(int))id->_fun)(atoi(w[1])); break;
-                        case ARG_2INT: if(isdown) ((void (__cdecl *)(int, int))id->_fun)(atoi(w[1]), atoi(w[2])); break;
-                        case ARG_3INT: if(isdown) ((void (__cdecl *)(int, int, int))id->_fun)(atoi(w[1]), atoi(w[2]), atoi(w[3])); break;
-                        case ARG_4INT: if(isdown) ((void (__cdecl *)(int, int, int, int))id->_fun)(atoi(w[1]), atoi(w[2]), atoi(w[3]), atoi(w[4])); break;
-                        case ARG_NONE: if(isdown) ((void (__cdecl *)())id->_fun)(); break;
-                        case ARG_1STR: if(isdown) ((void (__cdecl *)(char *))id->_fun)(w[1]); break;
-                        case ARG_2STR: if(isdown) ((void (__cdecl *)(char *, char *))id->_fun)(w[1], w[2]); break;
-                        case ARG_3STR: if(isdown) ((void (__cdecl *)(char *, char *, char *))id->_fun)(w[1], w[2], w[3]); break;
-                        case ARG_4STR: if(isdown) ((void (__cdecl *)(char *, char *, char *, char *))id->_fun)(w[1], w[2], w[3], w[4]); break;
-                        case ARG_5STR: if(isdown) ((void (__cdecl *)(char *, char *, char *, char *, char *))id->_fun)(w[1], w[2], w[3], w[4], w[5]); break;
-                        case ARG_6STR: if(isdown) ((void (__cdecl *)(char *, char *, char *, char *, char *, char *))id->_fun)(w[1], w[2], w[3], w[4], w[5], w[6]); break;
-                        case ARG_7STR: if(isdown) ((void (__cdecl *)(char *, char *, char *, char *, char *, char *, char *))id->_fun)(w[1], w[2], w[3], w[4], w[5], w[6], w[7]); break;
-
-                        case ARG_DOWN: ((void (__cdecl *)(bool))id->_fun)(isdown); break;
-                        case ARG_DWN1: ((void (__cdecl *)(bool, char *))id->_fun)(isdown, w[1]); break;
-                        case ARG_CONC: if(isdown)
-                        {
-                            char *r = conc(w+1, numargs-1, true);
-                            ((void (__cdecl *)(char *))id->_fun)(r);
-                            delete[] r;
-                            break;
-                        };
-                        case ARG_VARI: if(isdown) ((void (__cdecl *)(char **, int))id->_fun)(w+1, numargs-1); break;
-                        
+                case ID_COMMAND:                     // game defined commands
+                {    
+                    void *v[MAXWORDS];
+                    int istor[MAXWORDS];
+                    int n = 0;
+                    for(char *a = id->_narg; *a; a++) switch(*a)
+                    {
+                        case 's':                                        v[n] = w[n+1];    n++; break;
+                        case 'i':               istor[n] = atoi(w[n+1]); v[n] = &istor[n]; n++; break;
+                        case 'D':               istor[n] = isdown;       v[n] = &istor[n]; n++; break;
+                        case 'V': v[n++] = w+1; istor[n] = numargs-1;    v[n] = &istor[n]; n++; break;
+                        case 'C': v[n++] = conc(w+1, numargs-1, true);                          break;
+                        default: fatal("builtin declared with illegal type");
                     };
+                    if(isdown || id->_narg[0]=='D') switch(n)
+                    {
+                        case 0: ((void (__cdecl *)()                                      )id->_fun)();                             break;
+                        case 1: ((void (__cdecl *)(void *)                                )id->_fun)(v[0]);                         break;
+                        case 2: ((void (__cdecl *)(void *, void *)                        )id->_fun)(v[0], v[1]);                   break;
+                        case 3: ((void (__cdecl *)(void *, void *, void *)                )id->_fun)(v[0], v[1], v[2]);             break;
+                        case 4: ((void (__cdecl *)(void *, void *, void *, void *)        )id->_fun)(v[0], v[1], v[2], v[3]);       break;
+                        case 5: ((void (__cdecl *)(void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4]); break;
+                        default: fatal("builtin declared with too many args (use V?)");
+                    };
+                    if(id->_narg[0]=='C') delete[] v[0];
                     setretval(commandret);
                     break;
-           
-                case ID_VAR:                        // game defined variabled 
+                };
+                case ID_VAR:                        // game defined variables 
                     if(isdown)
                     {
                         if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
@@ -448,7 +445,7 @@ void addcomplete(char *command, char *dir, char *ext)
     else completions[newstring(command)] = *val;
 };
 
-COMMANDN(complete, addcomplete, ARG_3STR);
+COMMANDN(complete, addcomplete, "sss");
 
 void buildfilenames(filesval *f)
 {
@@ -590,7 +587,7 @@ void writecfg()
     fclose(f);
 };
 
-COMMAND(writecfg, ARG_NONE);
+COMMAND(writecfg, "");
 
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.
@@ -598,22 +595,22 @@ COMMAND(writecfg, ARG_NONE);
 void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); };
 void ints              (int v) { string b; itoa(b, v); commandret = newstring(b); };
 
-ICOMMAND(if, 3, commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
+ICOMMAND(if, "sss", commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
 
-ICOMMAND(loop, 2, { int t = atoi(args[0]); loopi(t) { intset("i", i); execute(args[1]); }; });
-ICOMMAND(while, 2, while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
+ICOMMAND(loop, "ss", { int t = atoi(args[0]); loopi(t) { intset("i", i); execute(args[1]); }; });
+ICOMMAND(while, "ss", while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
 
-void onrelease(bool on, char *body) { if(!on) execute(body); };
+void onrelease(int *on, char *body) { if(!*on) execute(body); };
 
 void concat(const char *s) { commandret = newstring(s); };
 void result(const char *s) { commandret = newstring(s); };
 
-void concatword(char **args, int numargs)
+void concatword(char **args, int *numargs)
 {
-    commandret = conc(args, numargs, false);
+    commandret = conc(args, *numargs, false);
 };
 
-void format(char **args, int numargs)
+void format(char **args, int *numargs)
 {
     vector<char> s;
     char *f = args[0];
@@ -626,7 +623,7 @@ void format(char **args, int numargs)
             if(i >= '1' && i <= '9')
             {
                 i -= '0';
-                const char *sub = i < numargs ? args[i] : "";
+                const char *sub = i < *numargs ? args[i] : "";
                 while(*sub) s.add(*sub++);
             }
             else s.add(i);
@@ -659,28 +656,28 @@ void getalias_(char *s)
     result(getalias(s));
 };
 
-COMMAND(onrelease, ARG_DWN1);
-COMMAND(exec, ARG_1STR);
-COMMAND(concat, ARG_CONC);
-COMMAND(result, ARG_1STR);
-COMMAND(concatword, ARG_VARI);
-COMMAND(format, ARG_VARI);
-COMMAND(at, ARG_2STR);
-COMMAND(listlen, ARG_1STR);
-COMMANDN(getalias, getalias_, ARG_1STR);
+COMMAND(onrelease, "Ds");
+COMMAND(exec, "s");
+COMMAND(concat, "C");
+COMMAND(result, "s");
+COMMAND(concatword, "V");
+COMMAND(format, "V");
+COMMAND(at, "ss");
+COMMAND(listlen, "s");
+COMMANDN(getalias, getalias_, "s");
 
-void add(int a, int b)   { ints(a+b); };         COMMANDN(+, add, ARG_2INT);
-void mul(int a, int b)   { ints(a*b); };         COMMANDN(*, mul, ARG_2INT);
-void sub(int a, int b)   { ints(a-b); };         COMMANDN(-, sub, ARG_2INT);
-void divi(int a, int b)  { ints(b ? a/b : 0); }; COMMANDN(div, divi, ARG_2INT);
-void mod(int a, int b)   { ints(b ? a%b : 0); }; COMMAND(mod, ARG_2INT);
-void equal(int a, int b) { ints((int)(a==b)); }; COMMANDN(=, equal, ARG_2INT);
-void lt(int a, int b)    { ints((int)(a<b)); };  COMMANDN(<, lt, ARG_2INT);
-void gt(int a, int b)    { ints((int)(a>b)); };  COMMANDN(>, gt, ARG_2INT);
+void add  (int *a, int *b) { ints(*a + *b); };          COMMANDN(+, add, "ii");
+void mul  (int *a, int *b) { ints(*a * *b); };          COMMANDN(*, mul, "ii");
+void sub  (int *a, int *b) { ints(*a - *b); };          COMMANDN(-, sub, "ii");
+void divi (int *a, int *b) { ints(*b ? *a / *b : 0); }; COMMANDN(div, divi, "ii");
+void mod  (int *a, int *b) { ints(*b ? *a % *b : 0); }; COMMAND(mod, "ii");
+void equal(int *a, int *b) { ints((int)(*a == *b)); };  COMMANDN(=, equal, "ii");
+void lt   (int *a, int *b) { ints((int)(*a < *b)); };   COMMANDN(<, lt, "ii");
+void gt   (int *a, int *b) { ints((int)(*a > *b)); };   COMMANDN(>, gt, "ii");
 
-void rndn(int a)         { ints(a>0 ? rnd(a) : 0); };  COMMANDN(rnd, rndn, ARG_1INT);
+void rndn(int *a)          { ints(*a>0 ? rnd(*a) : 0); };  COMMANDN(rnd, rndn, "i");
 
-void strcmpa(char *a, char *b) { ints(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, ARG_2INT);
+void strcmpa(char *a, char *b) { ints(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, "ss");
 
-ICOMMAND(echo, IARG_CONC, conoutf("%s", args[0]));
+ICOMMAND(echo, "C", conoutf("%s", args[0]));
 

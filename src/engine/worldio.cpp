@@ -356,7 +356,7 @@ void load_world(const char *mname)        // still supports all map formats that
 void savecurrentmap() { save_world(cl->getclientmap()); };
 void savemap(char *mname) { save_world(mname); };
 
-COMMAND(savemap, ARG_1STR);
-COMMAND(savecurrentmap, ARG_NONE);
+COMMAND(savemap, "s");
+COMMAND(savecurrentmap, "");
 
 

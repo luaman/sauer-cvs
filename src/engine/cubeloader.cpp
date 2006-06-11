@@ -336,4 +336,4 @@ struct cubeloader
 };
 
 void importcube(char *name) { cubeloader().load_cube_world(name); };
-COMMAND(importcube, ARG_1STR);
+COMMAND(importcube, "s");

@@ -73,8 +73,8 @@ void setshader(char *name)
     else curshader = s;
 };
 
-COMMAND(shader, ARG_3STR);
-COMMAND(setshader, ARG_1STR);
+COMMAND(shader, "sss");
+COMMAND(setshader, "s");
 
 bool forcenoshaders = false;
 
@@ -308,8 +308,8 @@ void texture(char *seqn, char *name, char *rot)
     path(st.name);
 };
 
-COMMAND(texturereset, ARG_NONE);
-COMMAND(texture, ARG_3STR);
+COMMAND(texturereset, "");
+COMMAND(texture, "sss");
 
 Slot &lookuptexture(int slot)
 {
@@ -424,7 +424,7 @@ GLuint rendertarget[NUMSCALE];
 GLfloat fsparams[4];
 int fs_w = 0, fs_h = 0;
 
-void setfullscreenshader(char *name, char *x, char *y, char *z, char *w)
+void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
 {
     if(!hasTR || !*name)
     {
@@ -446,14 +446,14 @@ void setfullscreenshader(char *name, char *x, char *y, char *z, char *w)
             glGenTextures(NUMSCALE, rendertarget);
         };
         conoutf("now rendering with: %s", name);
-        fsparams[0] = atoi(x)/255.0f;
-        fsparams[1] = atoi(y)/255.0f;
-        fsparams[2] = atoi(z)/255.0f;
-        fsparams[3] = atoi(w)/255.0f;
+        fsparams[0] = *x/255.0f;
+        fsparams[1] = *y/255.0f;
+        fsparams[2] = *z/255.0f;
+        fsparams[3] = *w/255.0f;
     };
 };
 
-COMMAND(setfullscreenshader, ARG_5STR);
+COMMAND(setfullscreenshader, "siiii");
 
 void renderfsquad(int w, int h, Shader *s)
 {

@@ -741,9 +741,9 @@ static Uint32 calclight_timer(Uint32 interval, void *param)
     
 extern vector<vtxarray *> valist;
 
-void calclight(int quality)
+void calclight(int *quality)
 {
-    switch(quality)
+    switch(*quality)
     {
         case  2: shadows = 1; aalights = 3; mmshadows = 1; break;
         case  1: shadows = 1; aalights = 3; mmshadows = 0; break;
@@ -795,7 +795,7 @@ void calclight(int quality)
             (end - start) / 1000.0f);
 };
 
-COMMAND(calclight, ARG_1INT);
+COMMAND(calclight, "i");
 
 void patchlight()
 {
@@ -844,7 +844,7 @@ void patchlight()
             (end - start) / 1000.0f); 
 };
 
-COMMAND(patchlight, ARG_NONE);
+COMMAND(patchlight, "");
 
 VARF(fullbright, 0, 0, 1,
     if(fullbright)
@@ -1006,6 +1006,6 @@ void dumplms()
     };
 };
 
-COMMAND(dumplms, ARG_NONE);
+COMMAND(dumplms, "");
 
 

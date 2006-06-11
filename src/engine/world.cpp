@@ -132,33 +132,33 @@ int closestent()        // used for delent and edit mode ent display
     return bdist==99999 ? -1 : best;
 };
 
-void entproperty(int prop, int amount)
+void entproperty(int *prop, int *amount)
 {
     if(noedit()) return;
     int i = closestent();
     if(i<0) return;
     extentity &e = *et->getents()[i];
     removeentity(i, e);
-    switch(prop)
+    switch(*prop)
     {
-        case 0: e.attr1 += amount; break;
-        case 1: e.attr2 += amount; break;
-        case 2: e.attr3 += amount; break;
-        case 3: e.attr4 += amount; break;
+        case 0: e.attr1 += *amount; break;
+        case 1: e.attr2 += *amount; break;
+        case 2: e.attr3 += *amount; break;
+        case 3: e.attr4 += *amount; break;
     };
 	addentity(i, e);
     et->editent(i);
 };
 
 
-void entmove(int dir, int dist)
+void entmove(int *dir, int *dist)
 {
     if(noedit()) return;
     int i = closestent();
-    if(i<0||dir<0||dir>2) return;
+    if(i<0||*dir<0||*dir>2) return;
     extentity &e = *et->getents()[i];
     removeentity(i, e);
-    e.o[dir] += dist;
+    e.o[*dir] += *dist;
     addentity(i, e);
     et->editent(i);
 };
@@ -259,11 +259,11 @@ void dropent()
     et->editent(i);
 };
 
-void newent(char *what, char *a1, char *a2, char *a3, char *a4)
+void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit()) return;
     int type = findtype(what);
-    extentity *e = et->newentity(true, player->o, type, atoi(a1), atoi(a2), atoi(a3), atoi(a4));
+    extentity *e = et->newentity(true, player->o, type, *a1, *a2, *a3, *a4);
     if(entdrop) dropentity(*e);
     et->getents().add(e);
     int i = et->getents().length()-1;
@@ -271,7 +271,7 @@ void newent(char *what, char *a1, char *a2, char *a3, char *a4)
     et->editent(i);
 };
 
-COMMAND(newent, ARG_5STR);
+COMMAND(newent, "siiii");
 
 void clearents(char *name)
 {
@@ -290,7 +290,7 @@ void clearents(char *name)
     };
 };
 
-COMMAND(clearents, ARG_1STR);
+COMMAND(clearents, "s");
 
 int findentity(int type, int index)
 {
@@ -300,10 +300,10 @@ int findentity(int type, int index)
     return -1;
 };
 
-COMMAND(delent, ARG_NONE);
-COMMAND(dropent, ARG_NONE);
-COMMAND(entmove, ARG_2INT);
-COMMAND(entproperty, ARG_2INT);
+COMMAND(delent, "");
+COMMAND(dropent, "");
+COMMAND(entmove, "ii");
+COMMAND(entproperty, "ii");
 
 void split_world(cube *c, int size)
 {
@@ -353,7 +353,7 @@ void empty_world(int scale, bool force)    // main empty world creation routine
     overrideidents = false;
 };
 
-void newmap(int i) { empty_world(i, false); };
+void newmap(int *i) { empty_world(*i, false); };
 
 void mapenlarge()
 { 
@@ -371,8 +371,8 @@ void mapenlarge()
     allchanged();
 };
 
-COMMAND(newmap, ARG_1INT);
-COMMAND(mapenlarge, ARG_NONE);
+COMMAND(newmap, "i");
+COMMAND(mapenlarge, "");
 
 void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local)
 {

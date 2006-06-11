@@ -686,14 +686,14 @@ void md3skin(char *objname, char *skin, char *masks)
     };
 };
 
-void md3anim(char *anim, char *startframe, char *range, char *s)
+void md3anim(char *anim, int *startframe, int *range, char *s)
 {
     if(!loadingmd3 || !loadingmd3->md3models.length()) { conoutf("not loading an md3"); return; };
     md3model &mdl = loadingmd3->md3models.last();
     float speed = s[0] ? atof(s) : 100.0f;
     int num = findanim(anim);
     if(num<0) { conoutf("could not find animation %s", anim); return; };
-    mdl.setanim(num, atoi(startframe), atoi(range), speed);
+    mdl.setanim(num, *startframe, *range, speed);
 };
 
 void md3link(char *parentno, char *childno, char *tagname)
@@ -704,7 +704,7 @@ void md3link(char *parentno, char *childno, char *tagname)
     if(!loadingmd3->md3models[parent].link(&loadingmd3->md3models[child], tagname)) conoutf("could not link model %s", loadingmd3->loadname);
 };
 
-COMMAND(md3load, ARG_1STR);
-COMMAND(md3skin, ARG_3STR);
-COMMAND(md3anim, ARG_5STR);
-COMMAND(md3link, ARG_3STR);
+COMMAND(md3load, "s");
+COMMAND(md3skin, "sss");
+COMMAND(md3anim, "siis");
+COMMAND(md3link, "sss");

@@ -1000,7 +1000,7 @@ void allchanged()
     printcstats();
 };
 
-COMMANDN(recalc, allchanged, ARG_NONE);
+COMMANDN(recalc, allchanged, "");
 
 ///////// view frustrum culling ///////////////////////
 
@@ -1675,7 +1675,7 @@ void writeobj(char *name)
     allchanged();
 };
 
-COMMAND(writeobj, ARG_1STR);
+COMMAND(writeobj, "s");
 
 ////////// (re)mip //////////
 
@@ -1839,4 +1839,4 @@ void remipworld()
     entitiesinoctanodes();
 };
 
-COMMANDN(remip, remipworld, ARG_NONE);
+COMMANDN(remip, remipworld, "");

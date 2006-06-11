@@ -207,16 +207,16 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
     xtraverts += 4;
 };
 
-void watercolour(int r, int g, int b)
+void watercolour(int *r, int *g, int *b)
 {
-    hdr.watercolour[0] = r;
-    hdr.watercolour[1] = g;
-    hdr.watercolour[2] = b;
+    hdr.watercolour[0] = *r;
+    hdr.watercolour[1] = *g;
+    hdr.watercolour[2] = *b;
 };
 
 VAR(showmat, 0, 1, 1);
 
-COMMAND(watercolour, ARG_3INT);
+COMMAND(watercolour, "iii");
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {

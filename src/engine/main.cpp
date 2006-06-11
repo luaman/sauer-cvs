@@ -64,8 +64,8 @@ void screenshot()
     };
 };
 
-COMMAND(screenshot, ARG_NONE);
-COMMAND(quit, ARG_NONE);
+COMMAND(screenshot, "");
+COMMAND(quit, "");
 
 void computescreen(const char *text)
 {
@@ -167,22 +167,22 @@ void fullscreen()
 #endif
 }
 
-void screenres(int w, int h, int bpp = 0)
+void screenres(int *w, int *h, int *bpp = 0)
 {
 #ifdef WIN32
     conoutf("\"screenres\" command not supported on this platform. Use the -w and -h command-line options.");
 #else
-    SDL_Surface *surf = SDL_SetVideoMode(w, h, bpp, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
+    SDL_Surface *surf = SDL_SetVideoMode(*w, *h, *bpp, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
-    scr_w = w;
-    scr_h = h;
+    scr_w = *w;
+    scr_h = *h;
     screen = surf;
-    glViewport(0, 0, w, h);
+    glViewport(0, 0, *w, *h);
 #endif
 }
 
-COMMAND(fullscreen, ARG_NONE);
-COMMAND(screenres, ARG_3INT);
+COMMAND(fullscreen, "");
+COMMAND(screenres, "iii");
 
 void keyrepeat(bool on)
 {
@@ -202,7 +202,7 @@ struct sleepcmd
 };
 
 vector<sleepcmd> sleepcmds;
-ICOMMAND(sleep, 2, { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s.command = newstring(args[1]); });
+ICOMMAND(sleep, "ss", { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s.command = newstring(args[1]); });
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
 void estartmap(const char *name)

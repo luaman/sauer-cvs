@@ -221,7 +221,7 @@ void loadsky(char *basename)
     s_strcpy(lastsky, basename);
 };
 
-COMMAND(loadsky, ARG_1STR);
+COMMAND(loadsky, "s");
 
 void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
                      float s1, float t1, int x1, int y1, int z1,

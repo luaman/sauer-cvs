@@ -14,35 +14,35 @@ model *loadingmodel = NULL;
 #include "md2.h"
 #include "md3.h"
 
-void mdlcullface(int cullface)
+void mdlcullface(int *cullface)
 {
     if(!loadingmodel) { conoutf("not loading a model"); return; };
-    loadingmodel->cullface = cullface!=0;
+    loadingmodel->cullface = *cullface!=0;
 };
 
-COMMAND(mdlcullface, ARG_1INT);
+COMMAND(mdlcullface, "i");
 
-void mdlspec(int percent)
+void mdlspec(int *percent)
 {
     if(!loadingmodel) { conoutf("not loading a model"); return; };
     float spec = 1.0f; 
-    if(percent>0) spec = percent/100.0f;
-    else if(percent<0) spec = 0.0f;
+    if(*percent>0) spec = *percent/100.0f;
+    else if(*percent<0) spec = 0.0f;
     loadingmodel->spec = spec;
 };
 
-COMMAND(mdlspec, ARG_1INT);
+COMMAND(mdlspec, "i");
 
-void mdlambient(int percent)
+void mdlambient(int *percent)
 {
     if(!loadingmodel) { conoutf("not loading a model"); return; };
     float ambient = 0.3f;
-    if(percent>0) ambient = percent/100.0f;
-    else if(percent<0) ambient = 0.0f;
+    if(*percent>0) ambient = *percent/100.0f;
+    else if(*percent<0) ambient = 0.0f;
     loadingmodel->ambient = ambient;
 };
 
-COMMAND(mdlambient, ARG_1INT);
+COMMAND(mdlambient, "i");
 
 void mdlshader(char *shader)
 {
@@ -50,18 +50,18 @@ void mdlshader(char *shader)
     loadingmodel->shader = lookupshaderbyname(shader);
 };
 
-COMMAND(mdlshader, ARG_1STR);
+COMMAND(mdlshader, "s");
 
-void mdlscale(int percent)
+void mdlscale(int *percent)
 {
     if(!loadingmodel) { conoutf("not loading a model"); return; };
     float scale = 0.3f;
-    if(percent>0) scale = percent/100.0f;
-    else if(percent<0) scale = 0.0f;
+    if(*percent>0) scale = *percent/100.0f;
+    else if(*percent<0) scale = 0.0f;
     loadingmodel->scale = scale;
 };  
 
-COMMAND(mdlscale, ARG_1INT);
+COMMAND(mdlscale, "i");
 
 void mdltrans(char *x, char *y, char *z)
 {
@@ -69,7 +69,7 @@ void mdltrans(char *x, char *y, char *z)
     loadingmodel->translate = vec(atof(x), atof(y), atof(z));
 }; 
 
-COMMAND(mdltrans, ARG_3STR);
+COMMAND(mdltrans, "sss");
 
 // mapmodels
 
@@ -81,9 +81,9 @@ struct mapmodel
 
 vector<mapmodel> mapmodels;
 
-void addmapmodel(char *rad, char *h, char *tex, char *name, char *shadow)
+void addmapmodel(int *rad, int *h, int *tex, char *name, int *shadow)
 {
-    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(tex), shadow[0] ? atoi(shadow) : 1 };
+    mapmodelinfo mmi = { *rad, *h, *tex, *shadow ? *shadow : 1 };
     s_strcpy(mmi.name, name);
     mapmodel &mm = mapmodels.add();
     mm.info = mmi;
@@ -94,8 +94,8 @@ void mapmodelreset() { mapmodels.setsize(0); };
 
 mapmodelinfo &getmminfo(int i) { return i>=0 && i<mapmodels.length() ? mapmodels[i].info : *(mapmodelinfo *)0; };
 
-COMMANDN(mapmodel, addmapmodel, ARG_5STR);
-COMMAND(mapmodelreset, ARG_NONE);
+COMMANDN(mapmodel, addmapmodel, "iiisi");
+COMMAND(mapmodelreset, "");
 
 // model registry
 

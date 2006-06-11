@@ -113,8 +113,8 @@ bool noedit()
     return !viewable;
 };
 
-COMMAND(reorient, ARG_NONE);
-COMMANDN(edittoggle, toggleedit, ARG_NONE);
+COMMAND(reorient, "");
+COMMANDN(edittoggle, toggleedit, "");
 
 
 ///////// selection support /////////////
@@ -149,23 +149,23 @@ void countselchild(cube *c, ivec &cor, int size)
 };
 
 bool selectcorners = false;
-void selcorners(bool isdown) { selectcorners = isdown; editdrag(isdown); };
-COMMAND(selcorners, ARG_DOWN);
+void selcorners(int *isdown) { selectcorners = *isdown!=0; editdrag(*isdown!=0); };
+COMMAND(selcorners, "D");
 
 bool passthroughcube = false;
-void passthrough(bool isdown) { passthroughcube = isdown; };
-COMMAND(passthrough, ARG_DOWN);
+void passthrough(int *isdown) { passthroughcube = *isdown!=0; };
+COMMAND(passthrough, "D");
 
 uchar cursorcolor[3] = {120, 120, 120};
 
-void setcursorcolor(int r, int g, int b)
+void setcursorcolor(int *r, int *g, int *b)
 {
-    cursorcolor[0] = max(0, min(r, 255));
-    cursorcolor[1] = max(0, min(g, 255));
-    cursorcolor[2] = max(0, min(b, 255));
+    cursorcolor[0] = max(0, min(*r, 255));
+    cursorcolor[1] = max(0, min(*g, 255));
+    cursorcolor[2] = max(0, min(*b, 255));
 };
 
-COMMANDN(cursorcolor, setcursorcolor, ARG_3INT);
+COMMANDN(cursorcolor, setcursorcolor, "iii");
 
 void cursorupdate()
 {
@@ -480,10 +480,10 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
 void copy()  { if(noedit()) return; mpcopy(localedit, sel, true); };
 void paste() { if(noedit()) return; mppaste(localedit, sel, true); };
 
-COMMAND(copy, ARG_NONE);
-COMMAND(paste, ARG_NONE);
-COMMANDN(undo, editundo, ARG_NONE);
-COMMANDN(redo, editredo, ARG_NONE);
+COMMAND(copy, "");
+COMMAND(paste, "");
+COMMANDN(undo, editundo, "");
+COMMANDN(redo, editredo, "");
 
 ///////////// height maps ////////////////
 
@@ -608,7 +608,7 @@ void getheightmap()
     setheightmap();
 };
 
-COMMAND(getheightmap, ARG_NONE);
+COMMAND(getheightmap, "");
 
 const int MAXBRUSH = 50;
 int brush[MAXBRUSH][MAXBRUSH];
@@ -621,10 +621,10 @@ void clearbrush()
         brush[i][j] = 0;
 };
 
-void brushvert(int x, int y, int v)
+void brushvert(int *x, int *y, int *v)
 {
-    if(x<0 || y<0 || x>=MAXBRUSH || y>=MAXBRUSH) return;
-    brush[x][y] = v;
+    if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
+    brush[*x][*y] = *v;
 };
 
 int getxcursor() { int d = dimension(sel.orient); return (cur[R[d]] - sel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0); };
@@ -666,10 +666,10 @@ void savebrush(const char *name)
     fclose(f);
 };
 
-COMMAND(clearbrush, ARG_NONE);
-COMMAND(brushvert, ARG_3INT);
-COMMAND(copybrush, ARG_NONE);
-COMMAND(savebrush, ARG_1STR);
+COMMAND(clearbrush, "");
+COMMAND(brushvert, "iii");
+COMMAND(copybrush, "");
+COMMAND(savebrush, "s");
 
 void edithmap(int dir)
 {
@@ -803,16 +803,16 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
         sel.o[d] += sel.grid * seldir;
 };
 
-void editface(int dir, int mode)
+void editface(int *dir, int *mode)
 {
     if(noedit()) return;
     if(hmap == NULL)
-        mpeditface(dir, mode, sel, true);
+        mpeditface(*dir, *mode, sel, true);
     else
-        edithmap(dir);
+        edithmap(*dir);
 };
 
-COMMAND(editface, ARG_2INT);
+COMMAND(editface, "ii");
 
 void selextend()
 {
@@ -834,7 +834,7 @@ void selextend()
     reorient();
 }
 
-COMMAND(selextend, ARG_NONE);
+COMMAND(selextend, "");
 
 /////////// texture editing //////////////////
 
@@ -898,14 +898,14 @@ void filltexlist()
     };
 };
 
-void edittex(int dir)
+void edittex(int *dir)
 {
     if(noedit()) return;
     filltexlist();
     texpaneltimer = 5000;
     if(!(lastsel==sel)) tofronttex();
     int i = curtexindex;
-    i = i<0 ? 0 : i+dir;
+    i = i<0 ? 0 : i+*dir;
     curtexindex = i = min(max(i, 0), curtexnum-1);
     int t = lasttex = htexture = texmru[i];
     clearheighttexture();
@@ -925,8 +925,8 @@ void gettex()
     };
 };
 
-COMMAND(edittex, ARG_1INT);
-COMMAND(gettex, ARG_NONE);
+COMMAND(edittex, "i");
+COMMAND(gettex, "");
 
 void replacetexcube(cube &c, int oldtex, int newtex, int orient)
 {
@@ -948,7 +948,7 @@ void replace()
     mpreplacetex(reptex, lasttex, reporient, sel, true);
 };
 
-COMMAND(replace, ARG_NONE);
+COMMAND(replace, "");
 
 ////////// flip and rotate ///////////////
 uint dflip(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); };
@@ -1046,14 +1046,14 @@ void mprotate(int cw, selinfo &sel, bool local)
     changed(sel);
 };
 
-void rotate(int cw)
+void rotate(int *cw)
 {
     if(noedit() || hmap!=NULL) return;
-    mprotate(cw, sel, true);
+    mprotate(*cw, sel, true);
 };
 
-COMMAND(flip, ARG_NONE);
-COMMAND(rotate, ARG_1INT);
+COMMAND(flip, "");
+COMMAND(rotate, "i");
 
 struct material
 {
@@ -1096,7 +1096,7 @@ void editmat(char *name)
     conoutf("unknown material \"%s\"", name);
 };
 
-COMMAND(editmat, ARG_1STR);
+COMMAND(editmat, "s");
 
 void render_texture_panel(int w, int h)
 {

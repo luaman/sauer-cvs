@@ -21,15 +21,15 @@ struct clientcom : iclientcom
 
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
-        CCOMMAND(clientcom, say, IARG_CONC, self->toserver(args[0]));
-        CCOMMAND(clientcom, name, 1, if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
-        CCOMMAND(clientcom, team, 1, if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
-        CCOMMAND(clientcom, map, 1, self->changemap(args[0]));
-        CCOMMAND(clientcom, kick, 1, self->kick(args[0]));
-        CCOMMAND(clientcom, spectator, 2, self->togglespectator(args[0], args[1]));
-        CCOMMAND(clientcom, mastermode, 1, self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
-        CCOMMAND(clientcom, getmap, 0, self->getmap());
-        CCOMMAND(clientcom, sendmap, 0, self->sendmap());
+        CCOMMAND(clientcom, say, "C", self->toserver(args[0]));
+        CCOMMAND(clientcom, name, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
+        CCOMMAND(clientcom, team, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
+        CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
+        CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
+        CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
+        CCOMMAND(clientcom, mastermode, "s", self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
+        CCOMMAND(clientcom, getmap, "", self->getmap());
+        CCOMMAND(clientcom, sendmap, "", self->sendmap());
     };
 
     void mapstart() { if(!spectator || currentmaster==clientnum) senditemstoserver = true; };

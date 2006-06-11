@@ -788,7 +788,7 @@ void phystest()
     printf ("PHYS(cam): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[camera1->physstate], camera1->timeinair, camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z, camera1->gravity.x, camera1->gravity.y, camera1->gravity.z);
 }
 
-COMMAND(phystest, ARG_NONE);
+COMMAND(phystest, "");
 
 void dropenttofloor(entity *e)
 {
@@ -1031,15 +1031,15 @@ bool intersect(physent *d, vec &from, vec &to)   // if lineseg hits entity bound
         && p->z >= d->o.z-d->eyeheight;
 };
 
-#define dir(name,v,d,s,os) ICOMMAND(name, IARG_BOTH, { player->s = args!=NULL; player->v = player->s ? d : (player->os ? -(d) : 0); });
+#define dir(name,v,d,s,os) ICOMMAND(name, "D", { player->s = args!=NULL; player->v = player->s ? d : (player->os ? -(d) : 0); });
 
 dir(backward, move,   -1, k_down,  k_up);
 dir(forward,  move,    1, k_up,    k_down);
 dir(left,     strafe,  1, k_left,  k_right);
 dir(right,    strafe, -1, k_right, k_left);
 
-ICOMMAND(jump,   IARG_BOTH, { if(editmode) cancelsel(); else if(cl->canjump()) player->jumpnext = args!=NULL; });
-ICOMMAND(attack, IARG_BOTH, { if(editmode) editdrag(args!=NULL); else cl->doattack(args!=NULL); });
+ICOMMAND(jump,   "D", { if(editmode) cancelsel(); else if(cl->canjump()) player->jumpnext = args!=NULL; });
+ICOMMAND(attack, "D", { if(editmode) editdrag(args!=NULL); else cl->doattack(args!=NULL); });
 
 VARP(sensitivity, 0, 10, 1000);
 VARP(sensitivityscale, 1, 1, 100);

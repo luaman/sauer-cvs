@@ -89,7 +89,7 @@ void printcube()
     conoutf(" z  %.8x",c.faces[2]);
 };
 
-COMMAND(printcube, ARG_NONE);
+COMMAND(printcube, "");
 
 bool isvalidcube(cube &c)
 {

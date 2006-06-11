@@ -345,9 +345,9 @@ void updatefrommaster()
     servermenu();
 };
 
-COMMAND(addserver, ARG_1STR);
-COMMAND(servermenu, ARG_NONE);
-COMMAND(updatefrommaster, ARG_NONE);
+COMMAND(addserver, "s");
+COMMAND(servermenu, "");
+COMMAND(updatefrommaster, "");
 
 void writeservercfg()
 {

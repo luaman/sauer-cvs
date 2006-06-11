@@ -6,7 +6,7 @@ struct scoreboard
 
     scoreboard() : scoreson(false)
     {
-        CCOMMAND(scoreboard, showscores, IARG_BOTH, self->showscores(args!=NULL));
+        CCOMMAND(scoreboard, showscores, "D", self->showscores(args!=NULL));
     };
 
     void showscores(bool on)

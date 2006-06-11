@@ -15,13 +15,13 @@ bool saycommandon = false;
 string commandbuf;
 int commandpos = -1;
 
-void setconskip(int n)
+void setconskip(int *n)
 {
-    conskip += n;
+    conskip += *n;
     if(conskip<0) conskip = 0;
 };
 
-COMMANDN(conskip, setconskip, ARG_1INT);
+COMMANDN(conskip, setconskip, "i");
 
 void conline(const char *sf, bool highlight)        // add a line to the console buffer
 {
@@ -64,7 +64,7 @@ void conoutf(const char *s, ...)
 
 bool fullconsole = false;
 void toggleconsole() { fullconsole = !fullconsole; };
-COMMAND(toggleconsole, ARG_NONE);
+COMMAND(toggleconsole, "");
 
 void rendercommand(int x, int y)
 {
@@ -120,7 +120,7 @@ void keymap(char *code, char *key)
     km.editaction = newstringbuf("");
 };
 
-COMMAND(keymap, ARG_2STR);
+COMMAND(keymap, "ss");
 
 void bindkey(char *key, char *action, bool edit)
 {
@@ -138,8 +138,8 @@ void bindkey(char *key, char *action, bool edit)
 void bindnorm(char *key, char *action) { bindkey(key, action, false); };
 void bindedit(char *key, char *action) { bindkey(key, action, true);  };
 
-COMMANDN(bind,     bindnorm, ARG_2STR);
-COMMANDN(editbind, bindedit, ARG_2STR);
+COMMANDN(bind,     bindnorm, "ss");
+COMMANDN(editbind, bindedit, "ss");
 
 void saycommand(char *init)                         // turns input to the command line on or off
 {
@@ -152,8 +152,8 @@ void saycommand(char *init)                         // turns input to the comman
 
 void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); };
 
-COMMAND(saycommand, ARG_CONC);
-COMMAND(mapmsg, ARG_1STR);
+COMMAND(saycommand, "C");
+COMMAND(mapmsg, "s");
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -199,18 +199,18 @@ void pasteconsole()
 cvector vhistory;
 int histpos = 0;
 
-void history(int n)
+void history(int *n)
 {
     static bool rec = false;
-    if(!rec && n>=0 && n<vhistory.length())
+    if(!rec && *n>=0 && *n<vhistory.length())
     {
         rec = true;
-        execute(vhistory[vhistory.length()-n-1]);
+        execute(vhistory[vhistory.length()-*n-1]);
         rec = false;
     };
 };
 
-COMMAND(history, ARG_1INT);
+COMMAND(history, "i");
 
 void keypress(int code, bool isdown, int cooked)
 {

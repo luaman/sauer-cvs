@@ -1,13 +1,5 @@
 // script binding functionality
 
-enum    // function signatures for script functions, see command.cpp
-{
-    ARG_1INT, ARG_2INT, ARG_3INT, ARG_4INT,
-    ARG_NONE,
-    ARG_1STR, ARG_2STR, ARG_3STR, ARG_4STR, ARG_5STR, ARG_6STR, ARG_7STR,
-    ARG_DOWN, ARG_DWN1,
-    ARG_CONC, ARG_VARI
-};
 
 enum { ID_VAR, ID_COMMAND, ID_ICOMMAND, ID_ALIAS };
 
@@ -21,20 +13,20 @@ template <class T> struct tident
     int *_storage;       // ID_VAR
     int _override;       // either NO_OVERRIDE, OVERRIDDEN, or value
     void (*_fun)();      // ID_VAR, ID_COMMAND
-    int _narg;           // ID_VAR, ID_COMMAND, ID_ICOMMAND
+    char *_narg;         // ID_VAR, ID_COMMAND, ID_ICOMMAND
     char *_action;       // ID_ALIAS
     bool _persist;       // ID_VAR, ID_ALIAS
     char *_isexecuting;  // ID_ALIAS
     T *self;
     
     tident() {};
-    tident(int t, char *n, int m, int x, int *s, void *f, int g, char *a, bool p, T *_s)
+    tident(int t, char *n, int m, int x, int *s, void *f, char *g, char *a, bool p, T *_s)
         : _type(t), _name(n), _min(m), _max(x), _storage(s), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _narg(g), _action(a), _persist(p), _isexecuting(0), self(_s) {};
     virtual ~tident() {};        
 
     tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; };        // force vtable copy, ugh
     
-    int operator()() { return _narg; };
+    int operator()() { return (int)(size_t)_narg; };
     
     virtual void run(char **args) {};
 };
@@ -55,13 +47,10 @@ extern void addident(char *name, ident *id);
 #define VARF(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, false)
 #define VARFP(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, true)
 
-#define IARG_CONC -1
-#define IARG_BOTH -2
-
 // new style macros, have the body inline, and allow binds to happen anywhere, even inside class constructors, and access the surrounding class
 #define _COMMAND(t, ts, sv, tv, n, g, b) struct cmd_##n : tident<t> { cmd_##n(ts) : tident<t>(ID_ICOMMAND, #n, 0, 0, 0, 0, g, 0, false, sv) { addident(_name, (ident *)this); }; void run(char **args) { b; }; } icom_##n tv
 #define ICOMMAND(n, g, b) _COMMAND(void, , NULL, , n, g, b)
 #define CCOMMAND(t, n, g, b) _COMMAND(t, t *_s, _s, (this), n, g, b)
  
-#define IVAR(n, m, c, x)  struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, x, &_narg, 0, c, 0, false, NULL) { addident(_name, this); }; } n
+#define IVAR(n, m, c, x)  struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, x, (int *)&_narg, 0, (char *)c, 0, false, NULL) { addident(_name, this); }; } n
 //#define ICALL(n, a) { char *args[] = a; icom_##n.run(args); }

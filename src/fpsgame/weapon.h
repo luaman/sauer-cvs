@@ -32,7 +32,7 @@ struct weaponstate
         };
         guns = _guns;
         
-        CCOMMAND(weaponstate, weapon, 3,
+        CCOMMAND(weaponstate, weapon, "sss",
         {
             self->weaponswitch(args[0][0] ? atoi(args[0]) : -1,
                                args[1][0] ? atoi(args[1]) : -1,
