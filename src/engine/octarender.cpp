@@ -464,7 +464,7 @@ int genclipplane(cube &c, int orient, vec *v, plane *clip)
     else
     {
         ++planes;
-        clip[0].toplane(p[2], p[0], p[1]);
+        if(!clip[0].toplane(p[2], p[0], p[1])) clip[0].toplane(p[2], p[3], p[1]);
         if(p[3] != p[4] && p[3] != p[2] && faceconvexity(c, orient) != 0)
         {
             ++planes;

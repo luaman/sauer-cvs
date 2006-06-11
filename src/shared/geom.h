@@ -75,11 +75,14 @@ struct plane : vec
         offset = -dot(p);
     };
 
-    void toplane(const vec &a, const vec &b, const vec &c)
+    bool toplane(const vec &a, const vec &b, const vec &c)
     {
         cross(vec(b).sub(a), vec(c).sub(a));
-        normalize();
+        float mag = magnitude();
+        if(!mag) return false;
+        div(mag);
         offset = -dot(a);
+        return true;
     };
 
     float zintersect(const vec &p) const { return -(x*p.x+y*p.y+offset)/z; };
