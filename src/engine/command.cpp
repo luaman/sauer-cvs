@@ -56,11 +56,11 @@ void aliasa(char *name, char *action)
         conoutf("cannot redefine builtin %s with an alias", name);
         delete[] action;
     }
-    else if(b->_isexecuting)
-    {
-        conoutf("cannot redefine alias that is executing: %s", name);
-        delete[] action;
-    }
+//    else if(b->_isexecuting)
+//    {
+//        conoutf("cannot redefine alias that is executing: %s", name);
+//        delete[] action;
+//    }
     else 
     {
         delete[] b->_action;
