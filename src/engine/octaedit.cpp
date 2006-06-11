@@ -646,9 +646,9 @@ void savebrush(const char *name)
 {
     FILE *f = fopen("mybrushes.cfg", "a");
     if(!f) return;
-    execute("alias brushmax (+ $brushmax 1)");
-    fprintf(f, "alias brushmax %s\n", getalias("brushmax"));
-    fprintf(f, "alias brush_%s [\n  alias brushname ", getalias("brushmax"));
+    execute("brushmax = (+ $brushmax 1)");
+    fprintf(f, "brushmax = %s\n", getalias("brushmax"));
+    fprintf(f, "brush_%s = [\n brushname = ", getalias("brushmax"));
     fprintf(f, "\"%s\"\n  clearbrush\n  ", name);
     fprintf(f, "brushhandle %d %d\n", brushx, brushy);
     loop(y, MAXBRUSH)
