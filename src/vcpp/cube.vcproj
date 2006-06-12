@@ -1228,15 +1228,82 @@
 			</Filter>
 		</Filter>
 		<Filter
-			Name="Both"
+			Name="Common"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath="..\shared\command.h"
+				>
+			</File>
+			<File
+				RelativePath="..\shared\cube.h"
+				>
+			</File>
+			<File
+				RelativePath="..\shared\ents.h"
+				>
+			</File>
+			<File
+				RelativePath="..\shared\geom.h"
+				>
+			</File>
 			<File
 				RelativePath="..\shared\iengine.h"
 				>
 			</File>
 			<File
 				RelativePath="..\shared\igame.h"
+				>
+			</File>
+			<File
+				RelativePath="..\shared\pch.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\shared\pch.h"
+				>
+			</File>
+			<File
+				RelativePath="..\shared\tools.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\shared\tools.h"
 				>
 			</File>
 			<Filter
@@ -1313,115 +1380,44 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="common"
+				Name="eneth"
 				>
 				<File
-					RelativePath="..\shared\command.h"
+					RelativePath="..\enet\include\enet\enet.h"
 					>
 				</File>
 				<File
-					RelativePath="..\shared\cube.h"
+					RelativePath="..\enet\include\enet\list.h"
 					>
 				</File>
 				<File
-					RelativePath="..\shared\ents.h"
+					RelativePath="..\enet\include\enet\protocol.h"
 					>
 				</File>
 				<File
-					RelativePath="..\shared\geom.h"
+					RelativePath="..\enet\include\enet\time.h"
 					>
 				</File>
 				<File
-					RelativePath="..\shared\pch.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="1"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="1"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="1"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\shared\pch.h"
+					RelativePath="..\enet\include\enet\types.h"
 					>
 				</File>
 				<File
-					RelativePath="..\shared\tools.cpp"
+					RelativePath="..\enet\include\enet\unix.h"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\shared\tools.h"
+					RelativePath="..\enet\include\enet\utility.h"
 					>
 				</File>
-				<Filter
-					Name="eneth"
+				<File
+					RelativePath="..\enet\include\enet\win32.h"
 					>
-					<File
-						RelativePath="..\enet\include\enet\enet.h"
-						>
-					</File>
-					<File
-						RelativePath="..\enet\include\enet\list.h"
-						>
-					</File>
-					<File
-						RelativePath="..\enet\include\enet\protocol.h"
-						>
-					</File>
-					<File
-						RelativePath="..\enet\include\enet\time.h"
-						>
-					</File>
-					<File
-						RelativePath="..\enet\include\enet\types.h"
-						>
-					</File>
-					<File
-						RelativePath="..\enet\include\enet\unix.h"
-						>
-					</File>
-					<File
-						RelativePath="..\enet\include\enet\utility.h"
-						>
-					</File>
-					<File
-						RelativePath="..\enet\include\enet\win32.h"
-						>
-					</File>
-				</Filter>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
-			Name="Game"
+			Name="FPS"
 			>
 			<File
 				RelativePath="..\fpsgame\capture.h"
@@ -1487,6 +1483,10 @@
 				RelativePath="..\fpsgame\weapon.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="RPG"
+			>
 		</Filter>
 	</Files>
 	<Globals>

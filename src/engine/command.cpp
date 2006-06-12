@@ -302,7 +302,7 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                     int n = 0, wn = 0;
                     for(char *a = id->_narg; *a; a++) switch(*a)
                     {
-                        case 's':                                         v[n] = w[++wn];    n++; break;
+                        case 's':                                         v[n] = w[++wn];   n++; break;
                         case 'i':               istor[n] = atoi(w[++wn]); v[n] = &istor[n]; n++; break;
                         case 'D':               istor[n] = isdown;        v[n] = &istor[n]; n++; break;
                         case 'V': v[n++] = w+1; istor[n] = numargs-1;     v[n] = &istor[n]; n++; break;

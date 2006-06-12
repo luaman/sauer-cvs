@@ -343,7 +343,7 @@ struct clientcom : iclientcom
                     c2sinit = false;    // send new players my info again
                     conoutf("connected: %s", &text);
                     loopv(cl.players)   // clear copies since new player doesn't have them
-                        freeeditinfo(cl.players[i]->edit);
+                        if(cl.players[i]) freeeditinfo(cl.players[i]->edit);
                     extern editinfo *localedit;
                     freeeditinfo(localedit);
                 };
