@@ -21,6 +21,8 @@
 		B92DC0FD09D08CF9008219BD /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */; };
 		B92DC0FE09D08CF9008219BD /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FB09D08CF9008219BD /* SDL.framework */; };
 		B92DC11409D08FA1008219BD /* shaders.h in Headers */ = {isa = PBXBuildFile; fileRef = B92DC11309D08FA1008219BD /* shaders.h */; };
+		B930D0920A3D9BC700BDFB85 /* ConsoleView.m in Sources */ = {isa = PBXBuildFile; fileRef = B930D0910A3D9BC700BDFB85 /* ConsoleView.m */; };
+		B930D0D20A3DA92300BDFB85 /* map.icns in Resources */ = {isa = PBXBuildFile; fileRef = B930D0D10A3DA92300BDFB85 /* map.icns */; };
 		B93EF27709FFD5DC0006A398 /* normal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B93EF27609FFD5DC0006A398 /* normal.cpp */; };
 		B941988C09207E810029DAD1 /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
 		B941988D09207E810029DAD1 /* engine.h in Headers */ = {isa = PBXBuildFile; fileRef = B9419820092076920029DAD1 /* engine.h */; };
@@ -113,6 +115,9 @@
 		B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_mixer.framework; path = /Library/Frameworks/SDL_mixer.framework; sourceTree = "<absolute>"; };
 		B92DC0FB09D08CF9008219BD /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/SDL.framework; sourceTree = "<absolute>"; };
 		B92DC11309D08FA1008219BD /* shaders.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = shaders.h; sourceTree = "<group>"; };
+		B930D0900A3D9BC700BDFB85 /* ConsoleView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ConsoleView.h; sourceTree = "<group>"; };
+		B930D0910A3D9BC700BDFB85 /* ConsoleView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = ConsoleView.m; sourceTree = "<group>"; };
+		B930D0D10A3DA92300BDFB85 /* map.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = map.icns; sourceTree = "<group>"; };
 		B93EF27609FFD5DC0006A398 /* normal.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = normal.cpp; sourceTree = "<group>"; };
 		B941981C092076920029DAD1 /* client.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
 		B941981D092076920029DAD1 /* command.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = command.cpp; sourceTree = "<group>"; };
@@ -202,6 +207,8 @@
 			isa = PBXGroup;
 			children = (
 				B96D0D6C0920976E00B6C936 /* main.m */,
+				B930D0900A3D9BC700BDFB85 /* ConsoleView.h */,
+				B930D0910A3D9BC700BDFB85 /* ConsoleView.m */,
 				B96D0D570920970C00B6C936 /* Launcher.h */,
 				B96D0D580920970C00B6C936 /* Launcher.m */,
 				F5A47A9D01A0482F01D3D55B /* SDLMain.h */,
@@ -266,6 +273,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				B930D0D10A3DA92300BDFB85 /* map.icns */,
 				B9CACA14092099E700A13F04 /* sauerbraten-Info.plist */,
 				B9CACA12092099DF00A13F04 /* launcher-Info.plist */,
 				B96D0D5A0920971300B6C936 /* MainMenu.nib */,
@@ -487,6 +495,7 @@
 				B9CACA13092099DF00A13F04 /* launcher-Info.plist in Resources */,
 				B9CACA2509209A5800A13F04 /* sauerbraten.icns in Resources */,
 				B90357B509D09B9D002C9DC7 /* InfoPlist.strings in Resources */,
+				B930D0D20A3DA92300BDFB85 /* map.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -557,6 +566,7 @@
 			files = (
 				B96D0D590920970C00B6C936 /* Launcher.m in Sources */,
 				B96D0D6D0920976E00B6C936 /* main.m in Sources */,
+				B930D0920A3D9BC700BDFB85 /* ConsoleView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

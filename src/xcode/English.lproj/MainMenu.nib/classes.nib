@@ -1,15 +1,25 @@
 {
     IBClasses = (
+        {CLASS = ConsoleView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
+        {
+            CLASS = DisclosureController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {d1 = NSButton; d2 = NSButton; }; 
+            SUPERCLASS = NSObject; 
+        }, 
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
         {
-            ACTIONS = {playAction = id; }; 
+            ACTIONS = {helpAction = id; multiplayerAction = id; playAction = id; }; 
             CLASS = Launcher; 
             LANGUAGE = ObjC; 
             OUTLETS = {
-                fullscreen = NSButtonCell; 
-                occlusion = NSButtonCell; 
+                console = ConsoleView; 
+                fullscreen = NSButton; 
+                multiplayer = NSButton; 
+                occlusion = NSButton; 
                 resolutions = NSPopUpButton; 
-                shader = NSButtonCell; 
+                serverOptions = NSTextField; 
+                shader = NSButton; 
             }; 
             SUPERCLASS = NSObject; 
         }
