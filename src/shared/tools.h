@@ -174,6 +174,12 @@ template <class T> struct vector
         buf = (T *)_realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
     };
 
+    void remove(int i, int n)
+    {
+        for(int p = i+n; p<ulen; p++) buf[p-n] = buf[p];
+        ulen -= n;
+    };
+
     T remove(int i)
     {
         T e = buf[i];

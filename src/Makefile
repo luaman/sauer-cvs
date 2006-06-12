@@ -31,6 +31,7 @@ CLIENT_OBJS= \
 	engine/world.o \
 	engine/worldio.o \
 	fpsgame/fps.o \
+	rpggame/rpg.o
 
 SERVER_LIBS=-Lenet -lenet
 SERVER_OBJS= \

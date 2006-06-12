@@ -142,15 +142,12 @@ bool resolvercheck(const char **name, ENetAddress *address)
     return false;
 };
 
+bool resolverwait(const char *name, ENetAddress *address)
+{
 // TODO: this should be fixed
 #ifdef __APPLE__
-bool resolverwait(const char *name, ENetAddress *address)
-{
     return enet_address_set_host(address, name) >= 0;
-};
 #else
-bool resolverwait(const char *name, ENetAddress *address)
-{
     if(resolverthreads.empty()) resolverinit();
 
     s_sprintfd(text)("resolving %s... (esc to abort)", name);
@@ -193,8 +190,8 @@ bool resolverwait(const char *name, ENetAddress *address)
     };
     SDL_UnlockMutex(resolvermutex);
     return resolved;
-};
 #endif
+};
 
 struct serverinfo
 {

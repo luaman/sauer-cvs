@@ -111,25 +111,24 @@ struct clientcom : iclientcom
     };
 
     // collect c2s messages conveniently
-
-    vector<ivector> messages;
+    ivector messages;
 
     void addmsg(int rel, int num, int type, ...)
     {
         if(spectator && (currentmaster!=clientnum || type<SV_MASTERMODE)) return;
         if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
-        ivector &msg = messages.add();
-        msg.add(num);
-        msg.add(rel);
-        msg.add(type);
-        va_list marker;
-        va_start(marker, type);
-        loopi(num-1) msg.add(va_arg(marker, int));
-        va_end(marker);
+        messages.add(num);
+        messages.add(rel);
+        messages.add(type);
+        va_list args;
+        va_start(args, type);
+        loopi(num-1) messages.add(va_arg(args, int));
+        va_end(args);
     };
 
     void sendpacketclient(uchar *&p, bool &reliable, dynent *d)
     {
+        uchar *start = p;
         if(toservermap[0])                      // suggest server to change map
         {                                       // do this exclusively as map change may invalidate rest of update
             reliable = true;
@@ -190,14 +189,17 @@ struct clientcom : iclientcom
             putint(p, player1->maxhealth);
             putint(p, player1->frags);
         };
-        loopv(messages)     // send messages collected during the previous frames
+        int i = 0;
+        while(i < messages.length()) // send messages collected during the previous frames
         {
-            ivector &msg = messages[i];
-            if(msg[1]) reliable = true;
-            loopi(msg[0]) putint(p, msg[i+2]);
+            int num = messages[i];
+            if(p+5*num > start+MAXTRANS) break;
+            if(messages[i+1]) reliable = true;
+            i += 2;
+            loopj(num) putint(p, messages[i++]);
         };
-        messages.setsize(0);
-        if(cl.lastmillis-lastping>250)
+        messages.remove(0, i);
+        if(MAXTRANS-(p-start)>=10 && cl.lastmillis-lastping>250)
         {
             putint(p, SV_PING);
             putint(p, cl.lastmillis);
