@@ -297,13 +297,13 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                 {    
                     void *v[MAXWORDS];
                     int istor[MAXWORDS];
-                    int n = 0;
+                    int n = 0, wn = 0;
                     for(char *a = id->_narg; *a; a++) switch(*a)
                     {
-                        case 's':                                        v[n] = w[n+1];    n++; break;
-                        case 'i':               istor[n] = atoi(w[n+1]); v[n] = &istor[n]; n++; break;
-                        case 'D':               istor[n] = isdown;       v[n] = &istor[n]; n++; break;
-                        case 'V': v[n++] = w+1; istor[n] = numargs-1;    v[n] = &istor[n]; n++; break;
+                        case 's':                                         v[n] = w[++wn];    n++; break;
+                        case 'i':               istor[n] = atoi(w[++wn]); v[n] = &istor[n]; n++; break;
+                        case 'D':               istor[n] = isdown;        v[n] = &istor[n]; n++; break;
+                        case 'V': v[n++] = w+1; istor[n] = numargs-1;     v[n] = &istor[n]; n++; break;
                         case 'C': v[n++] = conc(w+1, numargs-1, true);                          break;
                         default: fatal("builtin declared with illegal type");
                     };
