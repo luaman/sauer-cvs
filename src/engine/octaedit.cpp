@@ -385,7 +385,7 @@ void freeundo(undoblock u)
     freeblock(u.b);
 };
 
-int *selgridmap()                                       // generates a map of the cube sizes at each grid point
+int *selgridmap(selinfo &sel)                           // generates a map of the cube sizes at each grid point
 {
     int *g = new int[sel.size()];
     loopxyz(sel, -sel.grid, (*g++ = lusize, c));
@@ -418,7 +418,7 @@ void makeundo()                                         // stores state of selec
     if(lastsel==sel) return;
     lastsel=sel;
     if(multiplayer(false)) return;
-    undoblock u = { selgridmap(), blockcopy(lastsel, -sel.grid)};
+    undoblock u = { selgridmap(sel), blockcopy(lastsel, -sel.grid)};
     undos.add(u);
     pruneundos(undomegs<<20);
 };
@@ -432,7 +432,7 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
     sel.s = u.b->s;
     sel.grid = u.b->grid;
     sel.orient = u.b->orient;
-    undoblock r = { selgridmap(), blockcopy(sel, -sel.grid)};
+    undoblock r = { selgridmap(sel), blockcopy(sel, -sel.grid)};
     b.add(r);
     pasteundo(u);
     freeundo(u);
@@ -455,7 +455,7 @@ void freeeditinfo(editinfo *&e)
 };
 
 // guard against subdivision
-#define protectsel(f) { undoblock _u = { selgridmap(), blockcopy(sel, -sel.grid)}; f; pasteundo(_u); freeundo(_u); }
+#define protectsel(f) { undoblock _u = { selgridmap(sel), blockcopy(sel, -sel.grid)}; f; pasteundo(_u); freeundo(_u); }
 
 void mpcopy(editinfo *&e, selinfo &sel, bool local)
 {
