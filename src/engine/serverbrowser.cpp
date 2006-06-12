@@ -142,13 +142,6 @@ bool resolvercheck(const char **name, ENetAddress *address)
     return false;
 };
 
-static Uint32 resolverwait_timer(Uint32 interval, int *timeout)
-{
-    *timeout += interval;
-    SDL_CondBroadcast(resultcond);
-    return *timeout <= RESOLVERLIMIT ? interval : 0;
-};
-
 bool resolverwait(const char *name, ENetAddress *address)
 {
     if(resolverthreads.empty()) resolverinit();
@@ -159,12 +152,11 @@ bool resolverwait(const char *name, ENetAddress *address)
     SDL_LockMutex(resolvermutex);
     resolverqueries.add(name);
     SDL_SemPost(querysem);
-    int timeout = 0;
+    int starttime = SDL_GetTicks(), timeout = 0;
     bool resolved = false;
-    SDL_TimerID timer = SDL_AddTimer(250, (SDL_NewTimerCallback)resolverwait_timer, &timeout);
     for(;;) 
     {
-        SDL_CondWait(resultcond, resolvermutex);
+        SDL_CondWaitTimeout(resultcond, resolvermutex, 250);
         loopv(resolverresults) if(resolverresults[i].query == name) 
         {
             address->host = resolverresults[i].address.host;
@@ -174,6 +166,7 @@ bool resolverwait(const char *name, ENetAddress *address)
         };
         if(resolved) break;
     
+        timeout = SDL_GetTicks() - starttime;
         show_out_of_renderloop_progress(min(float(timeout)/RESOLVERLIMIT, 1), text);
         SDL_Event event;
         while(SDL_PollEvent(&event))
@@ -183,7 +176,6 @@ bool resolverwait(const char *name, ENetAddress *address)
 
         if(timeout > RESOLVERLIMIT) break;    
     };
-    if(timer) SDL_RemoveTimer(timer);
     if(!resolved && timeout > RESOLVERLIMIT)
     {
         loopv(resolverthreads)
