@@ -305,7 +305,7 @@ struct md3model
         frames = new md3frame[header.numframes];
         fseek(f, header.ofs_frames, SEEK_SET);
         fread(frames, sizeof(md3frame), header.numframes, f);
-        loopi(header.numframes) endianswap(&frames[0].min_bounds, sizeof(float), 10);
+        loopi(header.numframes) endianswap(&frames[i].min_bounds, sizeof(float), 10);
 
         tags = new md3tag[header.numframes * header.numtags];
         numtags = header.numtags;
