@@ -28,7 +28,7 @@ struct md3tag
 
 struct md3vertex
 {
-    signed short vertex[3];
+    short vertex[3];
     short normal;
 };
 
@@ -296,6 +296,8 @@ struct md3model
         if(!f) return false;
         md3header header;
         fread(&header, sizeof(md3header), 1, f);
+        endianswap(&header.version, sizeof(int), 1);
+        endianswap(&header.flags, sizeof(int), 9);
         if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) // header check
         { conoutf("md3: corrupted header"); return false; };
         
@@ -303,11 +305,17 @@ struct md3model
         frames = new md3frame[header.numframes];
         fseek(f, header.ofs_frames, SEEK_SET);
         fread(frames, sizeof(md3frame), header.numframes, f);
+        loopi(header.numframes) endianswap(&frames[0].min_bounds, sizeof(float), 10);
+
         tags = new md3tag[header.numframes * header.numtags];
         numtags = header.numtags;
         fseek(f, header.ofs_tags, SEEK_SET);
         fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
-        loopi(header.numframes*header.numtags) swap(float, tags[i].pos.x, tags[i].pos.y); // fixme some shiny day
+        loopi(header.numframes*header.numtags)
+        {
+            endianswap(&tags[i].pos, sizeof(float), 10);
+            swap(float, tags[i].pos.x, tags[i].pos.y); // fixme some shiny day
+        };
         
         links = new md3model *[header.numtags];
         loopi(header.numtags) links[i] = NULL;
@@ -320,20 +328,25 @@ struct md3model
             md3meshheader mheader;
             fseek(f, mesh_offset, SEEK_SET);
             fread(&mheader, sizeof(md3meshheader), 1, f);
+            endianswap(&mheader.flags, sizeof(int), 10); 
             s_strncpy(mesh.name, mheader.name, 64);
              
             mesh.triangles = new md3triangle[mheader.numtriangles];
             fseek(f, mesh_offset + mheader.ofs_triangles, SEEK_SET);       
             fread(mesh.triangles, sizeof(md3triangle), mheader.numtriangles, f); // read the triangles
+            endianswap(mesh.triangles, sizeof(int), 3*mheader.numtriangles);
             mesh.numtriangles = mheader.numtriangles;
           
             mesh.uv = new vec2[mheader.numvertices];
             fseek(f, mesh_offset + mheader.ofs_uv , SEEK_SET); 
             fread(mesh.uv, sizeof(vec2), mheader.numvertices, f); // read the UV data
-            
+            endianswap(mesh.uv, sizeof(float), 2*mheader.numvertices);
+                            
             md3vertex *vertices = new md3vertex[mheader.numframes * mheader.numvertices];
             fseek(f, mesh_offset + mheader.ofs_vertices, SEEK_SET); 
             fread(vertices, sizeof(md3vertex), mheader.numframes * mheader.numvertices, f); // read the vertices
+            endianswap(vertices, sizeof(short), 4*mheader.numframes*mheader.numvertices);
+
             mesh.vertices = new vec[mheader.numframes * mheader.numvertices];
             mesh.normals = new vec[mheader.numframes * mheader.numvertices];
             loopj(mheader.numframes * mheader.numvertices) // transform to our own structure
