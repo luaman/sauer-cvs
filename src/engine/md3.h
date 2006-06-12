@@ -313,7 +313,7 @@ struct md3model
         fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
         loopi(header.numframes*header.numtags)
         {
-            endianswap(&tags[i].pos, sizeof(float), 10);
+            endianswap(&tags[i].pos, sizeof(float), 12);
             swap(float, tags[i].pos.x, tags[i].pos.y); // fixme some shiny day
         };
         
