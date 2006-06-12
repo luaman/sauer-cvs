@@ -29,7 +29,6 @@ eihrul:
 
 
 aard:
-- links
 - $ vs @? var stacks? [] for trees/arrays? other improvements? 
 - start moving some stuff in their own headers
 - ways of doing menu - context sensitive etc
