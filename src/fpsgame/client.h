@@ -626,6 +626,7 @@ struct clientcom : iclientcom
                 break;
             };
 
+            case SV_GETMAP:
             case SV_FORCEINTERMISSION:
                 break;
 
