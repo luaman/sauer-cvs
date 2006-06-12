@@ -150,7 +150,7 @@ struct captureclient : capturestate
 
     captureclient(fpsclient &cl) : cl(cl)
     {
-        CCOMMAND(captureclient, repammo, 0, self->sendammo()); 
+        CCOMMAND(captureclient, repammo, "", self->sendammo()); 
     };
     
     void sendammo()
