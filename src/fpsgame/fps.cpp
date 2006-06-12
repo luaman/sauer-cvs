@@ -592,6 +592,12 @@ struct fpsclient : igameclient
             };
         };
     };
+
+    // any data written into this vector will get saved with the map data. Must take care to do own versioning, and endianess if applicable. Will not get called when loading maps from other games, so provide defaults.
+    void writegamedata(vector<char> &extras) {};
+    void readgamedata(vector<char> &extras) {};
+
+    char *gameident() { return "fps"; };
 };
 
 REGISTERGAME(fpsgame, "fps", new fpsclient(), new fpsserver());

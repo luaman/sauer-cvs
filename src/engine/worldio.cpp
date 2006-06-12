@@ -176,6 +176,16 @@ void save_world(char *mname, bool nolms)
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
+    
+    gzputc(f, (int)strlen(cl->gameident()));
+    gzwrite(f, cl->gameident(), (int)strlen(cl->gameident())+1);
+    writeushort(f, et->extraentinfosize());
+    vector<char> extras;
+    cl->writegamedata(extras);
+    writeushort(f, extras.length());
+    gzwrite(f, extras.getbuf(), extras.length());
+    
+    
     writeushort(f, texmru.length());
     loopv(texmru) writeushort(f, texmru[i]);
     loopv(ents)
@@ -228,7 +238,7 @@ void load_world(const char *mname)        // still supports all map formats that
     gzread(f, &hdr, sizeof(header));
     endianswap(&hdr.version, sizeof(int), 16);
     if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
-    if(hdr.version>MAPVERSION) fatal("this map requires a newer version of sauerbraten");
+    if(hdr.version>MAPVERSION) fatal("this map requires a newer version of cube 2");
     if(!hdr.ambient) hdr.ambient = 25;
     if(!hdr.lerpsubdivsize)
     {
@@ -245,7 +255,30 @@ void load_world(const char *mname)        // still supports all map formats that
     setvar("lerpangle", hdr.lerpangle);
     setvar("lerpsubdiv", hdr.lerpsubdiv);
     setvar("lerpsubdivsize", hdr.lerpsubdivsize);
-
+    
+    string gametype;
+    s_strcpy(gametype, "fps");
+    bool samegame = true;
+    int eif = 0;
+    if(hdr.version>=16)
+    {
+        int len = gzgetc(f);
+        gzread(f, gametype, len+1);
+        eif = readushort(f);
+        int extrasize = readushort(f);
+        vector<char> extras;
+        loopj(extrasize) extras.add(gzgetc(f));
+        if(strcmp(gametype, cl->gameident())!=0)
+        {
+            samegame = false;
+            conoutf("WARNING: loading map from %s game, ignoring entities except for lights/mapmodels)", gametype);
+        }
+        else
+        {
+            cl->readgamedata(extras);
+        };   
+    };
+    
     show_out_of_renderloop_progress(0, "clearing world...");
 
     texmru.setsize(0);
@@ -277,7 +310,19 @@ void load_world(const char *mname)        // still supports all map formats that
         endianswap(&e.attr1, sizeof(short), 5);
         e.spawned = false;
         e.inoctanode = false;
-        et->readent(e);
+        if(samegame)
+        {
+            et->readent(e); 
+        }
+        else
+        {
+            loopj(eif) gzgetc(f);
+            if(e.type>=ET_GAMESPECIFIC || hdr.version<=14)
+            {
+                ents.pop();
+                continue;
+            };
+        };
         if(hdr.version <= 14 && e.type >= ET_MAPMODEL && e.type <= 16)
         {
             if(e.type == 16) e.type = ET_MAPMODEL;

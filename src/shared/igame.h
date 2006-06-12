@@ -6,6 +6,7 @@ struct icliententities
 
     virtual void editent(int i) = 0;
     virtual const char *entname(int i) = 0;
+    virtual int extraentinfosize() = 0;
     virtual void writeent(entity &e) = 0;
     virtual void readent(entity &e) = 0;
     virtual float dropheight(entity &e) = 0;
@@ -35,6 +36,8 @@ struct igameclient
 {
     virtual ~igameclient() {};
 
+    virtual char *gameident() = 0;
+
     virtual icliententities *getents() = 0;
     virtual iclientcom *getcom() = 0;
 
@@ -56,6 +59,8 @@ struct igameclient
     virtual int numdynents() = 0;
     virtual void renderscores() = 0;
     virtual void rendergame() = 0;
+    virtual void writegamedata(vector<char> &extras) = 0;
+    virtual void readgamedata(vector<char> &extras) = 0;
 }; 
  
 struct igameserver

@@ -3,9 +3,7 @@
 
 // ET_*: the only static entity types dictated by the engine... rest are gamecode dependent
 
-#define ET_EMPTY 0
-#define ET_LIGHT 1              
-#define ET_MAPMODEL 2
+enum { ET_EMPTY=0, ET_LIGHT, ET_MAPMODEL, ET_GAMESPECIFIC };
 
 struct entity                                   // persistent map entity
 {

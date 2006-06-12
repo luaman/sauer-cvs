@@ -315,8 +315,10 @@ struct entities : icliententities
         };
         return i>=0 && i<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
     };
+    
+    int extraentinfosize() { return 0; };       // size in bytes of what the 2 methods below read/write... so it can be skipped by other games
 
-    void writeent(entity &e)   // write any additional data to disk
+    void writeent(entity &e)   // write any additional data to disk (except for ET_ ents)
     {
     };
 

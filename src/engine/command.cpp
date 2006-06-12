@@ -245,7 +245,7 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
     const int MAXWORDS = 25;                    // limit, remove
     char *w[MAXWORDS];
     char *retval = NULL;
-    #define setretval(v) { DELETEA(retval); char *rv = v; if(rv) retval = rv; commandret = NULL; }
+    #define setretval(v) { char *rv = v; if(rv) retval = rv; commandret = NULL; }
     for(bool cont = true; cont;)                // for each ; seperated statement
     {
         int numargs = MAXWORDS;
@@ -264,6 +264,8 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
         if(*c=='/') c++;                        // strip irc-style command prefix
         if(!*c) continue;                       // empty statement
         
+        DELETEA(retval);
+
         if(w[1][0]=='=' && !w[1][1])
         {
             if(isdown)
