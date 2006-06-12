@@ -602,7 +602,7 @@ void ints              (int v) { string b; itoa(b, v); commandret = newstring(b)
 
 ICOMMAND(if, "sss", commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
 
-ICOMMAND(loop, "ss", { int t = atoi(args[0]); loopi(t) { intset("i", i); execute(args[1]); }; });
+ICOMMAND(loop, "sss", { int n = atoi(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); }; });
 ICOMMAND(while, "ss", while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
 
 void onrelease(int *on, char *body) { if(!*on) execute(body); };
