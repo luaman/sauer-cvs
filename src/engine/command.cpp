@@ -266,8 +266,11 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
         
         if(w[1][0]=='=' && !w[1][1])
         {
-            aliasa(c, w[2]);
-            w[2] = NULL;
+            if(isdown)
+            {
+                aliasa(c, w[2]);
+                w[2] = NULL;
+            };
         }
         else
         {     
@@ -314,7 +317,7 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                         case 5: ((void (__cdecl *)(void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4]); break;
                         default: fatal("builtin declared with too many args (use V?)");
                     };
-                    if(id->_narg[0]=='C') delete[] v[0];
+                    if(id->_narg[0]=='C') delete[] (char *)v[0];
                     setretval(commandret);
                     break;
                 };
@@ -634,21 +637,30 @@ void format(char **args, int *numargs)
     result(s.getbuf());
 };
 
-#define elementskip s += strspn(s += strcspn(s, "\n\t \0"), "\n\t ")
+#define whitespaceskip s += strspn(s, "\n\t ")
+#define elementskip *s=='"' ? (s += strspn(++s, "\"\n\0"), s += *s=='"') : s += strcspn(s, "\n\t \0")
 
 void listlen(char *s)
 {
     int n = 0;
-    for(; *s; n++) elementskip;
+    whitespaceskip;
+    for(; *s; n++) elementskip, whitespaceskip;
     ints(n);
 };
 
-void at(char *s, char *pos)
+void at(char *s, int *pos)
 {
-    int n = atoi(pos);
-    loopi(n) elementskip;
-    s[strcspn(s, "\n\t \0")] = 0;
-    result(s);
+    whitespaceskip;
+    loopi(*pos) elementskip, whitespaceskip;
+    char *e = s;
+    elementskip;
+    if(*e=='"') 
+    {
+        e++;
+        if(s[-1] == '"') --s;
+    };
+    *s = '\0';
+    result(e);
 };
 
 void getalias_(char *s)
@@ -662,7 +674,7 @@ COMMAND(concat, "C");
 COMMAND(result, "s");
 COMMAND(concatword, "V");
 COMMAND(format, "V");
-COMMAND(at, "ss");
+COMMAND(at, "si");
 COMMAND(listlen, "s");
 COMMANDN(getalias, getalias_, "s");
 

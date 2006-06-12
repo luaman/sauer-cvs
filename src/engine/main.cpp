@@ -172,7 +172,7 @@ void screenres(int *w, int *h, int *bpp = 0)
 #ifdef WIN32
     conoutf("\"screenres\" command not supported on this platform. Use the -w and -h command-line options.");
 #else
-    SDL_Surface *surf = SDL_SetVideoMode(*w, *h, *bpp, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
+    SDL_Surface *surf = SDL_SetVideoMode(*w, *h, bpp ? *bpp : 0, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
     scr_w = *w;
     scr_h = *h;
@@ -435,7 +435,7 @@ int main(int argc, char **argv)
 
                 #ifndef WIN32
                 case SDL_VIDEORESIZE:
-                    screenres(event.resize.w, event.resize.h);
+                    screenres(&event.resize.w, &event.resize.h);
                     break;
                 #endif
 
