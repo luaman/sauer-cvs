@@ -28,7 +28,7 @@ struct selinfo
 
 struct editinfo;
 
-extern void freeeditinfo(editinfo *e);
+extern void freeeditinfo(editinfo *&e);
 extern void cursorupdate();
 extern void pruneundos(int maxremain = 0);
 extern bool noedit();

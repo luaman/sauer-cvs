@@ -446,7 +446,7 @@ void editredo() { swapundo(redos, undos, "redo"); };
 
 editinfo *localedit=NULL;
 
-void freeeditinfo(editinfo *e)
+void freeeditinfo(editinfo *&e)
 {
     if(!e) return;
     if(e->copy) freeblock(e->copy);
