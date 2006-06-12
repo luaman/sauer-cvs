@@ -1,3 +1,4 @@
+
 enum { ETR_SPAWN = ET_GAMESPECIFIC, };
 
 struct rpgentity : extentity

@@ -49,10 +49,6 @@ void writeushort(gzFile f, ushort u)
     gzwrite(f, &u, sizeof(ushort));
 }
 
-// save map as .cgz file. uses 2 layers of compression: first does simple run-length
-// encoding and leaves out data for certain kinds of cubes, then zlib removes the
-// last bits of redundancy. Both passes contribute greatly to the miniscule map sizes.
-
 enum { OCTSAV_CHILDREN = 0, OCTSAV_EMPTY, OCTSAV_SOLID, OCTSAV_NORMAL, OCTSAV_LODCUBE };
 
 void savec(cube *c, gzFile f)
@@ -264,19 +260,19 @@ void load_world(const char *mname)        // still supports all map formats that
     {
         int len = gzgetc(f);
         gzread(f, gametype, len+1);
+    };
+    if(strcmp(gametype, cl->gameident())!=0)
+    {
+        samegame = false;
+        conoutf("WARNING: loading map from %s game, ignoring entities except for lights/mapmodels)", gametype);
+    };
+    if(hdr.version>=16)
+    {
         eif = readushort(f);
         int extrasize = readushort(f);
         vector<char> extras;
         loopj(extrasize) extras.add(gzgetc(f));
-        if(strcmp(gametype, cl->gameident())!=0)
-        {
-            samegame = false;
-            conoutf("WARNING: loading map from %s game, ignoring entities except for lights/mapmodels)", gametype);
-        }
-        else
-        {
-            cl->readgamedata(extras);
-        };   
+        if(samegame) cl->readgamedata(extras);
     };
     
     show_out_of_renderloop_progress(0, "clearing world...");
@@ -333,7 +329,6 @@ void load_world(const char *mname)        // still supports all map formats that
             if(e.type != ET_LIGHT)
             {
                 conoutf("warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
-                //et->getents().pop();
             };
         };
         if(hdr.version <= 14 && e.type == ET_MAPMODEL)
@@ -343,7 +338,7 @@ void load_world(const char *mname)        // still supports all map formats that
             e.attr3 = e.attr4 = 0;
         };
     };
-
+    
     show_out_of_renderloop_progress(0, "loading octree...");
     worldroot = loadchildren(f);
 
