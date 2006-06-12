@@ -245,6 +245,11 @@ struct captureclient : capturestate
         drawblips(x, y, s, 0, showenemies);
         drawblips(x, y, s, -1, showenemies);
         if(showenemies) drawblips(x, y, s, -2);
+        if(cl.player1->state == CS_DEAD)
+        {
+            int wait = max(0, RESPAWNSECS-(cl.lastmillis-cl.player1->lastaction)/1000);
+            draw_textf("%d", x+s/2-16, y+s/2-32, wait);
+        };
         glDisable(GL_BLEND);
     };
 
