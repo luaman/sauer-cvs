@@ -242,15 +242,18 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	[task setArguments:args];
 	[args release];
 	
+	BOOL okay = YES;
+	
 	NS_DURING
 		[task launch];
 		if(server==-1) [NSApp terminate:self];	//if there is a server then don't exit!
-		return YES;
 	NS_HANDLER
 		//NSLog(@"%@", localException);
 		NSRunAlertPanel(@"Error", @"Can't start Sauerbraten! Please move the directory containing Sauerbraten to a path that doesn't contain weird characters or start Sauerbraten manually.", @"OK", NULL, NULL);
-		return NO;
+		okay = NO;
 	NS_ENDHANDLER
+	
+	return okay;
 }
 
 - (IBAction)multiplayerAction:(id)sender { [self setServerActive:(server==-1)]; }
