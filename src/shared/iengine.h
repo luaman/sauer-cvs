@@ -136,11 +136,13 @@ extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m
 extern bool intersect(physent *d, vec &from, vec &to);
 extern void updatephysstate(physent *d);
 extern void cleardynentcache();
+extern void entinmap(dynent *d, int raise = 0);
+extern void findplayerspawn(dynent *d, int forceent = -1);
 
 // sound
-extern void playsound(int n, const vec *loc = 0);
+extern void playsound    (int n,   const vec *loc = NULL);
+extern void playsoundname(char *s, const vec *loc = NULL, int vol = 0);
 extern void initsound();
-
 // rendermodel
 
 enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2 };
@@ -148,6 +150,7 @@ enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2 };
 extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d = NULL, int cull = MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
 extern void abovemodel(vec &o, const char *mdl);
 extern mapmodelinfo &getmminfo(int i);
+extern void renderclient(dynent *d, bool team, char *mdlname, float scale, bool forceattack, int lastaction, int lastpain);
 
 // server
 enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE };

@@ -259,11 +259,41 @@ void dropent()
     et->editent(i);
 };
 
+extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
+{
+    extentity &e = *et->newentity();
+    e.o = o;
+    e.attr1 = v1;
+    e.attr2 = v2;
+    e.attr3 = v3;
+    e.attr4 = v4;
+    e.attr5 = 0;
+    e.type = type;
+    e.reserved = 0;
+    e.spawned = false;
+    e.inoctanode = false;
+    e.color = vec(1, 1, 1);
+    if(local)
+    {
+        switch(type)
+        {
+                case ET_MAPMODEL:
+                    e.attr4 = e.attr3;
+                    e.attr3 = e.attr2;
+                case ET_PLAYERSTART:
+                    e.attr1 = (int)player->yaw;
+                    break;
+        };
+        et->fixentity(e);
+    };
+    return &e;
+};
+
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit()) return;
     int type = findtype(what);
-    extentity *e = et->newentity(true, player->o, type, *a1, *a2, *a3, *a4);
+    extentity *e = newentity(true, player->o, type, *a1, *a2, *a3, *a4);
     if(entdrop) dropentity(*e);
     et->getents().add(e);
     int i = et->getents().length()-1;
@@ -296,6 +326,7 @@ int findentity(int type, int index)
 {
     const vector<extentity *> &ents = et->getents();
     for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
+    if(index>=ents.length()) index = 0;
     loopj(index) if(ents[j]->type==type) return j;
     return -1;
 };
@@ -304,6 +335,31 @@ COMMAND(delent, "");
 COMMAND(dropent, "");
 COMMAND(entmove, "ii");
 COMMAND(entproperty, "ii");
+
+int spawncycle = -1, fixspawn = 2;
+
+void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also used by monsters!
+{
+    int pick = forceent;
+    if(pick<0)
+    {
+        int r = fixspawn-->0 ? 5 : rnd(10)+1;
+        loopi(r) spawncycle = findentity(ET_PLAYERSTART, spawncycle+1);
+        pick = spawncycle;
+    };
+    if(pick!=-1)
+    {
+        d->o = et->getents()[pick]->o;
+        d->yaw = et->getents()[pick]->attr1;
+        d->pitch = 0;
+        d->roll = 0;
+    }
+    else
+    {
+        d->o.x = d->o.y = d->o.z = 0.5f*getworldsize();
+    };
+    entinmap(d, 12);
+};
 
 void split_world(cube *c, int size)
 {
@@ -379,7 +435,7 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
     if(et->getents().length()<=i)
     {
         while(et->getents().length()<i) et->getents().add(et->newentity())->type = ET_EMPTY;
-        extentity *e = et->newentity(local, o, type, attr1, attr2, attr3, attr4);
+        extentity *e = newentity(local, o, type, attr1, attr2, attr3, attr4);
         et->getents().add(e);
         addentity(i, *e);
     }

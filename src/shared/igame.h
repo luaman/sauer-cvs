@@ -12,7 +12,7 @@ struct icliententities
     virtual float dropheight(entity &e) = 0;
     virtual void rumble(const extentity &e) = 0;
     virtual void trigger(extentity &e) = 0;
-    virtual extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4) = 0;
+    virtual void fixentity(extentity &e) = 0;
     virtual extentity *newentity() = 0;
     virtual vector<extentity *> &getents() = 0;
 };
@@ -50,7 +50,6 @@ struct igameclient
     virtual void worldhurts(physent *d, int damage) = 0;
     virtual void startmap(const char *name) = 0;
     virtual void gameplayhud(int w, int h) = 0;
-    virtual void entinmap(dynent *d, bool froment) = 0;
     virtual void drawhudgun() = 0;
     virtual bool camerafixed() = 0;
     virtual bool canjump() = 0;

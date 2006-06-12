@@ -279,7 +279,7 @@ struct monsterset
                 monster *m = new monster(ents[i]->attr2, ents[i]->attr1, M_SLEEP, 100, 0, this);  
                 monsters.add(m);
                 m->o = ents[i]->o;
-                cl.entinmap(m, true);
+                entinmap(m, 12);
                 monstertotal++;
             };
         };
@@ -342,6 +342,10 @@ struct monsterset
 
     void monsterrender()
     {
-        loopv(monsters) cl.fr.renderclient(cl, monsters[i], false, monstertypes[monsters[i]->mtype].mdlname, monstertypes[monsters[i]->mtype].mscale/10.0f, monsters[i]->monsterstate);
+        loopv(monsters)
+        {
+            monster &m = *monsters[i];
+            renderclient(&m, false, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].mscale/10.0f, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
+        };
     };
 };

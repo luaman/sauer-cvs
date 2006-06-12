@@ -29,7 +29,6 @@ struct fpsclient : igameclient
     int lastmillis;
     string clientmap;
     int arenarespawnwait, arenadetectwait;
-    int spawncycle, fixspawn;
     int spawngun1, spawngun2;
     int maptime;
     int respawnent;
@@ -48,7 +47,7 @@ struct fpsclient : igameclient
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
-          arenarespawnwait(0), arenadetectwait(0), spawncycle(-1), fixspawn(2), maptime(0), respawnent(-1),
+          arenarespawnwait(0), arenadetectwait(0), maptime(0), respawnent(-1),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), et(*this), cc(*this), cpc(*this)
     {
@@ -224,47 +223,9 @@ struct fpsclient : igameclient
         if(cc.clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
     };
 
-    void entinmap(dynent *d, bool froment)    // brute force but effective way to find a free spawn spot in the map
-    {
-        if(froment) d->o.z += 12;
-        vec orig = d->o;
-        loopi(100)              // try max 100 times
-        {
-            extern bool inside;
-            if(collide(d) && !inside) return;
-            d->o = orig;
-            d->o.x += (rnd(21)-10)*i/5;  // increasing distance
-            d->o.y += (rnd(21)-10)*i/5;
-            d->o.z += (rnd(21)-10)*i/5;
-        };
-        conoutf("can't find entity spawn spot! (%d, %d)", d->o.x, d->o.y);
-        // leave ent at original pos, possibly stuck
-        d->o = orig;
-    };
-
     void spawnplayer(fpsent *d)   // place at random spawn. also used by monsters!
     {
-        int pick = -1;
-        if(m_capture) pick = cpc.pickspawn(d->team);
-        if(respawnent>=0) pick = respawnent;
-        if(pick<0)
-        {
-            int r = fixspawn-->0 ? 5 : rnd(10)+1;
-            loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
-            pick = spawncycle;
-        };
-        if(pick!=-1)
-        {
-            d->o = et.ents[pick]->o;
-            d->yaw = et.ents[pick]->attr1;
-            d->pitch = 0;
-            d->roll = 0;
-        }
-        else
-        {
-            d->o.x = d->o.y = d->o.z = 0.5f*getworldsize();
-        };
-        entinmap(d, true);
+        findplayerspawn(d, m_capture ? cpc.pickspawn(d->team) : (respawnent>=0 ? respawnent : -1));
         spawnstate(d);
         d->state = cc.spectator ? CS_SPECTATOR : CS_ALIVE;
     };
@@ -420,12 +381,10 @@ struct fpsclient : igameclient
     void startmap(const char *name)   // called just after a map load
     {
         respawnent = -1;
-        spawncycle = 0;
         if(netmapstart() && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); };
         cc.mapstart();
         ms.monsterclear(gamemode);
         ws.projreset();
-        spawncycle = -1;
 
         // reset perma-state
         player1->frags = 0;

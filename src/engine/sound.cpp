@@ -12,8 +12,6 @@ bool nosound = true;
 #define MAXCHAN 32
 #define SOUNDFREQ 22050
 
-struct soundloc { vec loc; bool inuse; int sound; } soundlocs[MAXCHAN];
-
 #ifdef USE_MIXER
     #include "SDL_mixer.h"
     #define MAXVOL MIX_MAX_VOLUME
@@ -28,15 +26,32 @@ struct soundloc { vec loc; bool inuse; int sound; } soundlocs[MAXCHAN];
     int musicchan;
 #endif
 
+struct sample
+{
+    char *name;
+    int vol;
+    int id;
+    #ifdef USE_MIXER
+            Mix_Chunk *sound;
+    #else
+            FSOUND_SAMPLE * sound;
+    #endif
+
+    sample() : name(NULL) {};
+    ~sample() { DELETEA(name); };
+};
+
+struct soundloc { vec loc; bool inuse; sample *s; } soundlocs[MAXCHAN];
+
 void setmusicvol(int musicvol)
 {
     if(nosound) return;
-#ifdef USE_MIXER
-    if(mod) Mix_VolumeMusic((musicvol*MAXVOL)/255);
-#else
-    if(mod) FMUSIC_SetMasterVolume(mod, musicvol);
-    else if(stream && musicchan>=0) FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255);
-#endif
+    #ifdef USE_MIXER
+        if(mod) Mix_VolumeMusic((musicvol*MAXVOL)/255);
+    #else
+        if(mod) FMUSIC_SetMasterVolume(mod, musicvol);
+        else if(stream && musicchan>=0) FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255);
+    #endif
 };
 
 VARP(soundvol, 0, 255, 255);
@@ -148,39 +163,31 @@ void music(char *name, char *cmd)
 
 COMMAND(music, "ss");
 
-struct sample
-{
-    char *name;
-    int vol;
-    #ifdef USE_MIXER
-    Mix_Chunk *sound;
-    #else
-    FSOUND_SAMPLE * sound;
-    #endif
+hashtable<char *, sample> samples;
+vector<sample *> samplevec;
 
-    ~sample() { delete[] name; };
+int findsound(char *name, int vol)
+{
+    sample *s = samples.access(name);
+    if(s) return s->id;
+    char *n = newstring(name);
+    s = &samples[n];
+    samplevec.add(s);
+    s->name = n;
+    s->sound = NULL;
+    s->vol = vol;
+    if(!s->vol) s->vol = 100;
+    return s->id = samplevec.length()-1;
 };
 
-vector<sample> samples;
-
-int registersound(char *name, char *vol)
-{
-    loopv(samples) if(strcmp(samples[i].name, name)==0) return i;
-    sample &s = samples.add();
-    s.name = newstring(name);
-    s.sound = NULL;
-    s.vol = atoi(vol);
-    if(!s.vol) s.vol = 100;
-    return samples.length()-1;
-};
-
+int registersound(char *name, char *vol) { return findsound(name, atoi(vol)); };
 COMMAND(registersound, "ss");
 
 void clear_sound()
 {
     if(nosound) return;
     stopsound();
-    samples.setsize(0);
+    samples.clear();
     #ifdef USE_MIXER
         Mix_CloseAudio();
     #else
@@ -190,7 +197,7 @@ void clear_sound()
 
 VAR(stereo, 0, 1, 1);
 
-void updatechanvol(int chan, const vec *loc, int sound)
+void updatechanvol(int chan, const vec *loc, int svol)
 {
     int vol = soundvol, pan = 255/2;
     if(loc)
@@ -205,7 +212,7 @@ void updatechanvol(int chan, const vec *loc, int sound)
             pan = int(255.9f*(0.5*sin(yaw)+0.5f)); // range is from 0 (left) to 255 (right)
         };
     };
-    vol = (vol*MAXVOL*samples[sound].vol)/255/255;
+    vol = (vol*MAXVOL*svol)/255/255;
     #ifdef USE_MIXER
         Mix_Volume(chan, vol);
         Mix_SetPanning(chan, 255-pan, pan);
@@ -215,12 +222,12 @@ void updatechanvol(int chan, const vec *loc, int sound)
     #endif
 };  
 
-void newsoundloc(int chan, const vec *loc, int sound)
+void newsoundloc(int chan, const vec *loc, sample *s)
 {
     ASSERT(chan>=0 && chan<MAXCHAN);
     soundlocs[chan].loc = *loc;
     soundlocs[chan].inuse = true;
-    soundlocs[chan].sound = sound;
+    soundlocs[chan].s = s;
 };
 
 void updatevol()
@@ -233,7 +240,7 @@ void updatevol()
         #else
             if(FSOUND_IsPlaying(i))
         #endif
-                updatechanvol(i, &soundlocs[i].loc, soundlocs[i].sound);
+                updatechanvol(i, &soundlocs[i].loc, soundlocs[i].s->vol);
             else soundlocs[i].inuse = false;
     };
 #ifndef USE_MIXER
@@ -251,33 +258,35 @@ void playsound(int n, const vec *loc)
     if(lastmillis==lastsoundmillis) soundsatonce++; else soundsatonce = 1;
     lastsoundmillis = lastmillis;
     if(soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss and in sp
-    if(n<0 || n>=samples.length()) { conoutf("unregistered sound: %d", n); return; };
+    if(n<0 || n>=samplevec.length()) { conoutf("unregistered sound: %d", n); return; };
 
-    if(!samples[n].sound)
+    if(!samplevec[n]->sound)
     {
-        s_sprintfd(buf)("packages/sounds/%s.wav", samples[n].name);
+        s_sprintfd(buf)("packages/sounds/%s.wav", samplevec[n]->name);
 
         #ifdef USE_MIXER
-            samples[n].sound = Mix_LoadWAV(path(buf));
+            samplevec[n]->sound = Mix_LoadWAV(path(buf));
         #else
-            samples[n].sound = FSOUND_Sample_Load(n, path(buf), FSOUND_LOOP_OFF, 0, 0);
+            samplevec[n]->sound = FSOUND_Sample_Load(n, path(buf), FSOUND_LOOP_OFF, 0, 0);
         #endif
 
-        if(!samples[n].sound) { conoutf("failed to load sample: %s", buf); return; };
+        if(!samplevec[n]->sound) { conoutf("failed to load sample: %s", buf); return; };
     };
 
     #ifdef USE_MIXER
-        int chan = Mix_PlayChannel(-1, samples[n].sound, 0);
+        int chan = Mix_PlayChannel(-1, samplevec[n]->sound, 0);
     #else
-        int chan = FSOUND_PlaySoundEx(FSOUND_FREE, samples[n].sound, NULL, true);
+        int chan = FSOUND_PlaySoundEx(FSOUND_FREE, samplevec[n]->sound, NULL, true);
     #endif
     if(chan<0) return;
-    if(loc) newsoundloc(chan, loc, n);
-    updatechanvol(chan, loc, n);
+    if(loc) newsoundloc(chan, loc, samplevec[n]);
+    updatechanvol(chan, loc, samplevec[n]->vol);
     #ifndef USE_MIXER
         FSOUND_SetPaused(chan, false);
     #endif
 };
+
+void playsoundname(char *s, const vec *loc, int vol) { playsound(findsound(s, vol), loc); }
 
 void sound(int *n) { playsound(*n, NULL); };
 COMMAND(sound, "i");

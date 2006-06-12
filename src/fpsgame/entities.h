@@ -160,7 +160,7 @@ struct entities : icliententities
                 d->yaw = ents[e]->attr1;
                 d->pitch = 0;
                 d->vel = vec(0, 0, 0);//vec(cosf(RAD*(d->yaw-90)), sinf(RAD*(d->yaw-90)), 0);
-                cl.entinmap(d, true);
+                entinmap(d, 12);
                 cl.playsoundc(S_TELEPORT);
                 break;
             };
@@ -271,34 +271,16 @@ struct entities : icliententities
 
     extentity *newentity() { return new fpsentity(); };
 
-    extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
+    void fixentity(extentity &e)
     {
-        fpsentity &e = *new fpsentity();
-        e.o = o;
-        e.attr1 = v1;
-        e.attr2 = v2;
-        e.attr3 = v3;
-        e.attr4 = v4;
-        e.attr5 = 0;
-        e.type = type;
-        e.reserved = 0;
-        e.spawned = false;
-		e.inoctanode = false;
-        e.color = vec(1, 1, 1);
-        if(local) switch(type)
+        switch(e.type)
         {
-            case MAPMODEL:
-                e.attr4 = e.attr3;
-                e.attr3 = e.attr2;
             case MONSTER:
             case TELEDEST:
                 e.attr2 = e.attr1;
             case RESPAWNPOINT:
-            case PLAYERSTART:
                 e.attr1 = (int)cl.player1->yaw;
-                break;
         };
-        return &e;
     };
 
     const char *entname(int i)
