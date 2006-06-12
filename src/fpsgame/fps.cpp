@@ -347,7 +347,7 @@ struct fpsclient : igameclient
                 pen = 100-accuracy;       score += pen; if(pen) conoutf("time penalty for missed shots (1 second each %%): %d seconds", pen);
                 s_sprintfd(aname)("bestscore_%s", getclientmap());
                 const char *bestsc = getalias(aname);
-                int bestscore = atoi(bestsc);
+                int bestscore = *bestsc ? atoi(bestsc) : score;
                 if(score<bestscore) bestscore = score;
                 s_sprintfd(nscore)("%d", bestscore);
                 alias(aname, nscore);
