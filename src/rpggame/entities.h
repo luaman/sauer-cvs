@@ -20,7 +20,6 @@ struct rpgentities : icliententities
     rpgentities(rpgclient &_cl) : cl(_cl), lastcreated(NULL)
     {
         CCOMMAND(rpgentities, spawnname, "s", if(self->lastcreated) s_strncpy(self->lastcreated->name, args[0], SPAWNNAMELEN));    
-
     };
 
     vector<extentity *> &getents() { return (vector<extentity *> &)ents; };
@@ -58,6 +57,10 @@ struct rpgentities : icliententities
     void startmap()
     {
         lastcreated = NULL;
-        loopv(ents) if(ents[i]->type==ETR_SPAWN) cl.os.spawn(ents[i]->name);
+        loopv(ents) if(ents[i]->type==ETR_SPAWN)
+        {
+            cl.os.spawn(ents[i]->name);
+            cl.os.placeinworld(ents[i]->o, ents[i]->attr1);      
+        };
     };
 };

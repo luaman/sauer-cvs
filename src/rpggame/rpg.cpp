@@ -16,7 +16,7 @@ struct rpgdummycom : iclientcom
     bool allowedittoggle() { return true; };
     void writeclientinfo(FILE *f) {};
     void toserver(char *text) {};
-    void changemap(const char *name) { load_world(name); };
+    void changemap(const char *name) { name = "rpgtest"; load_world(name); }; // TEMP!!! override start map
 };
 
 struct rpgdummyserver : igameserver
@@ -124,6 +124,7 @@ struct rpgclient : igameclient
     void rendergame()
     {
         if(isthirdperson()) renderclient(&player1, false, "monster/ogro", 1.0f, false, player1.lastaction, player1.lastpain);
+        os.render();
     };
 
     void writegamedata(vector<char> &extras) {};

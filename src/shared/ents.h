@@ -55,21 +55,12 @@ enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING, CS_SPECTATOR };
 
 enum { PHYS_FLOAT = 0, PHYS_FALL, PHYS_SLIDE, PHYS_SLOPE, PHYS_FLOOR, PHYS_STEP_UP, PHYS_STEP_DOWN, PHYS_BOUNCE };
 
-enum { ENT_PLAYER = 0, ENT_AI, ENT_CAMERA, ENT_BOUNCE, ENT_STATIC };
+enum { ENT_PLAYER = 0, ENT_AI, ENT_CAMERA, ENT_BOUNCE };
 
-struct staticent                                   // very minimal entity, origin + orientation, doesn't move
+struct physent                                  // base entity type, can be affected by physics
 {
-    vec o;
-    float yaw;
-    uchar type;                                 // one of ENT_* above
-    
-    staticent() : o(0, 0, 0), yaw(0), type(ENT_STATIC) {};
-};
-
-struct physent : staticent                         // base entity type, can be affected by physics
-{
-    vec vel, gravity;                           // origin, velocity, accumulated gravity
-    float pitch, roll;
+    vec o, vel, gravity;                        // origin, velocity, accumulated gravity
+    float yaw, pitch, roll;
     float maxspeed;                             // cubes per second, 100 for player
     int timeinair;
     float radius, eyeheight, aboveeye;          // bounding box size
@@ -83,11 +74,12 @@ struct physent : staticent                         // base entity type, can be a
 
     uchar physstate;                            // one of PHYS_* above
     uchar state;                                // one of CS_* above
+    uchar type;                                 // one of ENT_* above
 
-    physent() : pitch(0), roll(0), maxspeed(100), 
+    physent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
                radius(4.1f), eyeheight(14), aboveeye(1), 
-               inwater(false), blocked(false), moving(true), state(CS_ALIVE)
-               { reset(); type = ENT_PLAYER; };
+               inwater(false), blocked(false), moving(true), state(CS_ALIVE), type(ENT_PLAYER)
+               { reset(); };
                
     void reset()
     {
