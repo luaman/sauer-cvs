@@ -184,6 +184,7 @@ void save_world(char *mname, bool nolms)
     
     writeushort(f, texmru.length());
     loopv(texmru) writeushort(f, texmru[i]);
+    char *ebuf = new char[et->extraentinfosize()];
     loopv(ents)
     {
         if(ents[i]->type!=ET_EMPTY)
@@ -192,9 +193,11 @@ void save_world(char *mname, bool nolms)
             endianswap(&tmp.o, sizeof(int), 3);
             endianswap(&tmp.attr1, sizeof(short), 5);
             gzwrite(f, &tmp, sizeof(entity));
-            et->writeent(*ents[i]);
+            et->writeent(*ents[i], ebuf);
+            if(et->extraentinfosize()) gzwrite(f, ebuf, et->extraentinfosize());
         };
     };
+    delete[] ebuf;
 
     savec(worldroot, f);
     if(!nolms) loopv(lightmaps)
@@ -297,6 +300,7 @@ void load_world(const char *mname)        // still supports all map formats that
     vector<extentity *> &ents = et->getents();
     ents.setsize(0);
 
+    char *ebuf = new char[et->extraentinfosize()];
     loopi(hdr.numents)
     {
         extentity &e = *et->newentity();
@@ -308,7 +312,8 @@ void load_world(const char *mname)        // still supports all map formats that
         e.inoctanode = false;
         if(samegame)
         {
-            et->readent(e); 
+            if(et->extraentinfosize()) gzread(f, ebuf, et->extraentinfosize());
+            et->readent(e, ebuf); 
         }
         else
         {
@@ -338,7 +343,8 @@ void load_world(const char *mname)        // still supports all map formats that
             e.attr3 = e.attr4 = 0;
         };
     };
-    
+    delete[] ebuf;
+
     show_out_of_renderloop_progress(0, "loading octree...");
     worldroot = loadchildren(f);
 

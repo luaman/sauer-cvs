@@ -115,7 +115,20 @@ void renderspheres(int time)
     };
 };
 
-string closeent;
+string closeent, fullentname;
+
+char *entname(entity &e)
+{
+    s_strcpy(fullentname, "@");
+    s_strcat(fullentname, et->entname(e.type));
+    const char *einfo = et->entnameinfo(e);
+    if(*einfo)
+    {
+        s_strcat(fullentname, ": ");
+        s_strcat(fullentname, einfo);
+    };
+    return fullentname;
+};
 
 void renderents()       // show sparkly thingies for map entities in edit mode
 {
@@ -129,10 +142,13 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     {
         entity &e = *ents[i];
         if(e.type==ET_EMPTY) continue;
-        if(e.o.dist(camera1->o)<128) particle_text(e.o, (char *)et->entname(e.type), &e==&c ? 13 : 11, 1);
+        if(e.o.dist(camera1->o)<128)
+        {
+            particle_text(e.o, entname(e), &e==&c ? 13 : 11, 1);
+        };
         particle_splash(2, 2, 40, e.o);
     };
-    s_sprintf(closeent)("closest entity = %s (%d, %d, %d, %d)", et->entname(c.type), c.attr1, c.attr2, c.attr3, c.attr4);
+    s_sprintf(closeent)("closest entity = %s (%d, %d, %d, %d)", entname(c)+1, c.attr1, c.attr2, c.attr3, c.attr4);
 };
 
 GLfloat mm[16];

@@ -5,10 +5,11 @@ struct icliententities
     virtual ~icliententities() {};
 
     virtual void editent(int i) = 0;
+    virtual const char *entnameinfo(entity &e) = 0;
     virtual const char *entname(int i) = 0;
     virtual int extraentinfosize() = 0;
-    virtual void writeent(entity &e) = 0;
-    virtual void readent(entity &e) = 0;
+    virtual void writeent(entity &e, char *buf) = 0;
+    virtual void readent(entity &e, char *buf) = 0;
     virtual float dropheight(entity &e) = 0;
     virtual void rumble(const extentity &e) = 0;
     virtual void trigger(extentity &e) = 0;

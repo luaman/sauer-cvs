@@ -53,9 +53,11 @@ struct rpgent : dynent
 struct rpgclient : igameclient
 {
     #include "entities.h"
+    #include "rpgobjset.h"
 
     rpgentities et;
     rpgdummycom cc;
+    rpgobjset os;
     
     rpgent player1;
 
@@ -106,6 +108,7 @@ struct rpgclient : igameclient
     {
         s_strcpy(mapname, name);
         findplayerspawn(&player1);
+        et.startmap();
     };
     
     void gameplayhud(int w, int h) {};

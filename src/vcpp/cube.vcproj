@@ -1358,6 +1358,14 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\data\game_fps.cfg"
+						>
+					</File>
+					<File
+						RelativePath="..\..\data\game_rpg.cfg"
+						>
+					</File>
+					<File
 						RelativePath="..\..\data\keymap.cfg"
 						>
 					</File>
@@ -1518,6 +1526,10 @@
 						PrecompiledHeaderThrough="pch.h"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\rpggame\rpgobjset.h"
+				>
 			</File>
 		</Filter>
 	</Files>
