@@ -279,7 +279,7 @@ struct monsterset
                 monster *m = new monster(ents[i]->attr2, ents[i]->attr1, M_SLEEP, 100, 0, this);  
                 monsters.add(m);
                 m->o = ents[i]->o;
-                entinmap(m, 12);
+                entinmap(m);
                 monstertotal++;
             };
         };

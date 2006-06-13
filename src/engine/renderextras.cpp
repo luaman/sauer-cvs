@@ -237,24 +237,24 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     {
         if(!rendermenu(w, h) && player->state!=CS_SPECTATOR)
         {
-            glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
-            glBindTexture(GL_TEXTURE_2D, crosshair->gl);
-            glBegin(GL_QUADS);
-            glColor3ub(255,255,255);
-            /*
-            if(crosshairfx)
+            char *pointattext = cl->pointattext();
+            if(pointattext)
             {
-                if(player->gunwait) glColor3ub(128,128,128);
-                else if(player->health<=25) glColor3ub(255,0,0);
-                else if(player->health<=50) glColor3ub(255,128,0);
-            };
-            */
-            float chsize = (float)crosshairsize*w/600;
-            glTexCoord2d(0.0, 0.0); glVertex2f(w*1.5f - chsize, h*1.5f - chsize);
-            glTexCoord2d(1.0, 0.0); glVertex2f(w*1.5f + chsize, h*1.5f - chsize);
-            glTexCoord2d(1.0, 1.0); glVertex2f(w*1.5f + chsize, h*1.5f + chsize);
-            glTexCoord2d(0.0, 1.0); glVertex2f(w*1.5f - chsize, h*1.5f + chsize);
-            glEnd();
+                draw_textf(pointattext, w*1.5f-text_width(pointattext)/2, h*1.5f-FONTH/2);
+            }
+            else
+            {
+                glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+                glBindTexture(GL_TEXTURE_2D, crosshair->gl);
+                glBegin(GL_QUADS);
+                glColor3ub(255,255,255);
+                float chsize = (float)crosshairsize*w/600;
+                glTexCoord2d(0.0, 0.0); glVertex2f(w*1.5f - chsize, h*1.5f - chsize);
+                glTexCoord2d(1.0, 0.0); glVertex2f(w*1.5f + chsize, h*1.5f - chsize);
+                glTexCoord2d(1.0, 1.0); glVertex2f(w*1.5f + chsize, h*1.5f + chsize);
+                glTexCoord2d(0.0, 1.0); glVertex2f(w*1.5f - chsize, h*1.5f + chsize);
+                glEnd();            
+            }
         };
     
         renderconsole(w, h);

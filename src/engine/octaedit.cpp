@@ -88,7 +88,8 @@ void toggleedit()
     if(!(editmode = !editmode))
     {
         player->state = CS_ALIVE;
-        entinmap(player);                        // find spawn closest to current floating pos
+        player->o.z -= player->eyeheight;       // entinmap wants feet pos
+        entinmap(player);                       // find spawn closest to current floating pos
     }
     else
     {

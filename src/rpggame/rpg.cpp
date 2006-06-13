@@ -64,7 +64,7 @@ struct rpgclient : igameclient
     int lastmillis;
     string mapname;
 
-    rpgclient() : et(*this), lastmillis(0)
+    rpgclient() : et(*this), os(*this), lastmillis(0)
     {
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
     };
@@ -78,6 +78,7 @@ struct rpgclient : igameclient
         lastmillis = lm;
         if(!curtime) return;
         physicsframe();
+        os.update();
         if(player1.state==CS_DEAD)
         {
             player1.lastaction = lastmillis;
@@ -121,6 +122,7 @@ struct rpgclient : igameclient
     dynent *iterdynents(int i) { return i ? NULL : &player1; };
     int numdynents() { return 1; };
     void renderscores() {};
+    char *pointattext() { return os.pointingat ? os.pointingat->lastaction : NULL; };
 
     void rendergame()
     {

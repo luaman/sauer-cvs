@@ -358,7 +358,7 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
     {
         d->o.x = d->o.y = d->o.z = 0.5f*getworldsize();
     };
-    entinmap(d, 12);
+    entinmap(d);
 };
 
 void split_world(cube *c, int size)
