@@ -240,7 +240,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             char *pointattext = cl->pointattext();
             if(pointattext)
             {
-                draw_textf(pointattext, w*1.5f-text_width(pointattext)/2, h*1.5f-FONTH/2);
+                draw_textf(pointattext, int(w*1.5f-text_width(pointattext)/2), int(h*1.5f-FONTH/2));
             }
             else
             {

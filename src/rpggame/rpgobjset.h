@@ -17,8 +17,8 @@ struct rpgobj
     
     rpgobjset &os;
     
-    rpgobj(char *_name, rpgobjset &_os) : parent(NULL), sibling(NULL), inventory(NULL), ent(NULL),
-        name(_name), model(NULL), ai(false), lastaction(_os.action_take), os(_os) {};
+    rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL),
+        name(_name), model(NULL), lastaction(_os.action_take), ai(false), os(_os) {};
         
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 
@@ -60,6 +60,8 @@ struct rpgobj
 
 struct rpgobjset
 {
+    rpgclient &cl;
+
     vector<rpgobj *> set, stack;
     hashtable<char *, char *> names;
     rpgobj *pointingat;
@@ -67,8 +69,6 @@ struct rpgobjset
     char *action_take;
     char *action_attack;
     char *action_talk;
-    
-    rpgclient &cl;
     
     rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL),
         action_take  (stringpool("take")),
