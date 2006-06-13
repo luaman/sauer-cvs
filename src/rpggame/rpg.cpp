@@ -106,6 +106,7 @@ struct rpgclient : igameclient
     
     void startmap(const char *name)
     {
+        os.clearworld();
         s_strcpy(mapname, name);
         findplayerspawn(&player1);
         et.startmap();
