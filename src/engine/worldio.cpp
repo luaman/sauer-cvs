@@ -205,6 +205,7 @@ void save_world(char *mname, bool nolms)
     if(!nolms) loopv(lightmaps)
     {
         LightMap &lm = lightmaps[i];
+        gzputc(f, lm.type);
         gzwrite(f, lm.data, sizeof(lm.data));
     };
 
@@ -367,6 +368,7 @@ void load_world(const char *mname)        // still supports all map formats that
         {
             show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");
             LightMap &lm = lightmaps.add();
+            if(hdr.version >= 17) lm.type = gzgetc(f);
             gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
             lm.finalize();
         };
