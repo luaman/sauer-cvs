@@ -14,7 +14,9 @@ int shadows = 1;
 int mmshadows = 0;
 int aalights = 3;
  
+static int lmtype;
 static uchar lm[3 * LM_MAXW * LM_MAXH];
+static bvec lm_ray[LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<const entity *> lights1, lights2;
 static uint progress = 0, total_surfaces = 0;
@@ -93,7 +95,7 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
 
 bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
 {
-    if(!packroot.insert(tx, ty, tw, th))
+    if(type != LM_BUMPMAP1 && !packroot.insert(tx, ty, tw, th))
         return false;
 
     uchar *dst = data + 3 * tx + ty * 3 * LM_PACKW;
@@ -108,19 +110,28 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
     return true;
 };
 
-void insert_lightmap(ushort &x, ushort &y, ushort &lmid)
+void insert_lightmap(int type, ushort &x, ushort &y, ushort &lmid)
 {
     loopv(lightmaps)
     {
-        if(lightmaps[i].insert(x, y, lm, lm_w, lm_h))
+        if(lightmaps[i].type == type && lightmaps[i].insert(x, y, lm, lm_w, lm_h))
         {
             lmid = i + LMID_RESERVED;
+            if(type == LM_BUMPMAP0) ASSERT(lightmaps[i+1].insert(x, y, (uchar *)lm_ray, lm_w, lm_h));
             return;
         };
     };
 
-    ASSERT(lightmaps.add().insert(x, y, lm, lm_w, lm_h));
+    LightMap &l = lightmaps.add();
+    l.type = type;
+    ASSERT(l.insert(x, y, lm, lm_w, lm_h));
     lmid = lightmaps.length() - 1 + LMID_RESERVED;
+    if(type == LM_BUMPMAP0)
+    {
+        LightMap &r = lightmaps.add();
+        r.type = LM_BUMPMAP1;
+        ASSERT(r.insert(x, y, (uchar *)lm_ray, lm_w, lm_h));
+    };
 };
 
 static inline bool htcmp(const surfaceinfo *x, const surfaceinfo *y)
@@ -154,15 +165,15 @@ static hashtable<surfaceinfo *, surfaceinfo *> compressed;
 
 VAR(lightcompress, 0, 3, 6);
 
-void pack_lightmap(surfaceinfo &surface) 
+void pack_lightmap(int type, surfaceinfo &surface) 
 {
-    if((int)lm_w <= lightcompress && (int)lm_h <= lightcompress)
+    if(type == LM_NORMAL && (int)lm_w <= lightcompress && (int)lm_h <= lightcompress)
     {
         surfaceinfo **val = compressed.access(&surface);
         if(!val)
         {
             compressed[&surface] = &surface;
-            insert_lightmap(surface.x, surface.y, surface.lmid);
+            insert_lightmap(type, surface.x, surface.y, surface.lmid);
         }
         else
         {
@@ -171,12 +182,13 @@ void pack_lightmap(surfaceinfo &surface)
             surface.lmid = (*val)->lmid;
         };
     }
-    else insert_lightmap(surface.x, surface.y, surface.lmid);
+    else insert_lightmap(type, surface.x, surface.y, surface.lmid);
 };
 
-void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample)
+void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int center = -1)
 {
-    float r = 0, g = 0, b = 0;
+    vec avgray(0, 0, 0);
+    float r = 0, g = 0, b = 0, weights = 0;
     loopv(lights)
     {
         const entity &light = *lights[i];
@@ -195,11 +207,35 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
             float dist = raycube(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows ? RAY_POLY : 0));
             if(dist < mag - tolerance) continue;
         };
-        float intensity = -normal.dot(ray) * attenuation;
-        if(intensity < 0) continue;
+        float intensity;
+        switch(lmtype)
+        {
+            case LM_BUMPMAP0: 
+                intensity = attenuation; 
+                weights += attenuation;
+                if(center >= 0) avgray.add(ray.mul(attenuation));
+                break;
+            default:
+                intensity = -normal.dot(ray) * attenuation;
+                if(intensity < 0) continue;
+                break;
+        };
         r += intensity * float(light.attr2);
         g += intensity * float(light.attr3);
         b += intensity * float(light.attr4);
+    };
+    switch(lmtype)
+    {
+        case LM_BUMPMAP0:
+            if(weights)
+            {
+                r /= weights;
+                g /= weights;
+                b /= weights;
+                if(center >= 0) avgray.normalize();
+            };
+            if(center >= 0) lm_ray[center] = bvec(avgray);
+            break;
     };
     sample.x = min(255, max(ambient, r));
     sample.y = min(255, max(ambient, g));
@@ -267,7 +303,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             CHECK_PROGRESS(return false);
-            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample);
+            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, y*lm_w+x);
             sample += aasample;
         };
         sample += aasample;
@@ -699,11 +735,13 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
                 else if(j == 2) n[2] = n2[1];
             };
         };
+        lmtype = LM_NORMAL;
         if(!lodcube)
         {
             Shader *shader = lookupshader(c.texture[i]);
             if(shader->type == SHADER_BUMPMAP)
             {
+                lmtype = LM_BUMPMAP0;
                 newnormals(c);
                 c.normals[i].normals[0] = bvec(n[0]);
                 c.normals[i].normals[1] = bvec(n[1]);
@@ -721,7 +759,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         surface.w = lm_w;
         surface.h = lm_h;
         memcpy(surface.texcoords, texcoords, 8);
-        pack_lightmap(surface);
+        pack_lightmap(lmtype, surface);
     };
 };
 
