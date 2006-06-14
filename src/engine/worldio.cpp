@@ -89,13 +89,12 @@ void savec(cube *c, gzFile f)
                 gzputc(f, mask);
                 if(c[i].material != MAT_AIR)
                     gzputc(f, c[i].material);
-                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED)
+                loopj(6) if(mask & (1 << j))
                 {
                     surfaceinfo tmp = c[i].surfaces[j];
                     endianswap(&tmp.x, sizeof(ushort), 3);
                     gzwrite(f, &tmp, sizeof(surfaceinfo));
-                    if(c[i].normals && !c[i].normals[j].normals[0].iszero())
-                        gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
+                    if(c[i].normals) gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
                 };
             };
             if(c[i].children) savec(c[i].children, f);
