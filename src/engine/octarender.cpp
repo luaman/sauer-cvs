@@ -644,7 +644,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             int coord = faceverts(c,i,k), index;
             vvec rv;
             calcvert(c, x, y, z, size, rv, coord);
-            index = vh.access(rv, u, v, c.normals ? c.normals[i].normals[k] : bvec(0, 0, 0));
+            index = vh.access(rv, u, v, c.normals ? c.normals[i].normals[k] : bvec(128, 128, 128));
 
             if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)]).add(index);
             if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)]).add(index);
@@ -690,7 +690,7 @@ void genskyverts(cube &c, int x, int y, int z, int size)
             int coord = faceverts(c, orient, 3 - k), index;
             vvec rv;
             calcvert(c, x, y, z, size, rv, coord, true);
-            index = vh.access(rv, 0, 0, bvec(0, 0, 0));
+            index = vh.access(rv, 0, 0, bvec(128, 128, 128));
             l0.skyindices.add(index);
         };
     };
@@ -1435,8 +1435,8 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
 };
 
 
-float tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
-float binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
+float tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1, 0,0,0 }};
+float binormal[3][4] = { {  0,0, 1,0 }, { 0,0, 1,0 }, { 0,-1,0,0 }};
 //float normal  [3][4] = { { -1,0, 0,0 }, { 0,1, 0,0 }, { 0,0,1,0 }};    
 
 void renderq()
