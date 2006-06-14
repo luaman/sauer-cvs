@@ -194,13 +194,13 @@ struct bvec
 {
     union
     {
-        struct { char x, y, z; };
-        char v[3];
+        struct { uchar x, y, z; };
+        uchar v[3];
     };
 
     bvec() {};
-    bvec(char x, char y, char z) : x(x), y(y), z(z) {};
-    bvec(const vec &v) : x(char(v.x*CHAR_MAX)), y(char(v.y*CHAR_MAX)), z(char(v.z*CHAR_MAX)) {};
+    bvec(uchar x, uchar y, uchar z) : x(x), y(y), z(z) {};
+    bvec(const vec &v) : x((uchar)((v.x+1)*255/2)), y((uchar)((v.y+1)*255/2)), z((uchar)((v.z+1)*255/2)) {};
 
     bool operator==(const bvec &v) const { return x==v.x && y==v.y && z==v.z; };
     bool operator!=(const bvec &v) const { return x!=v.x || y!=v.y || z!=v.z; };
