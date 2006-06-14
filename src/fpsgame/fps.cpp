@@ -227,7 +227,7 @@ struct fpsclient : igameclient
     {
         findplayerspawn(d, m_capture ? cpc.pickspawn(d->team) : (respawnent>=0 ? respawnent : -1));
         spawnstate(d);
-        d->state = cc.spectator ? CS_SPECTATOR : CS_ALIVE;
+        d->state = cc.spectator ? CS_SPECTATOR : (editmode ? CS_EDITING : CS_ALIVE);
     };
 
     void respawn()
