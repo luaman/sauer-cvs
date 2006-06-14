@@ -708,7 +708,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
                 c.normals[i].normals[0] = bvec(n[0]);
                 c.normals[i].normals[1] = bvec(n[1]);
                 c.normals[i].normals[2] = bvec(n[2]);
-                c.normals[i].normals[3] = bvec(n2[2]);
+                c.normals[i].normals[3] = bvec(numplanes < 2 ? n[3] : n2[2]);
             };
         };
         uchar texcoords[8];
