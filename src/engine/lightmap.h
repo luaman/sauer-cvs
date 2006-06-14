@@ -28,17 +28,14 @@ struct PackNode
     bool insert(ushort &tx, ushort &ty, ushort tw, ushort th);
 };
 
-enum { LM_DEFAULT = 0, LM_RAY, LM_COLOR };
-
 struct LightMap
 {
     uchar data[3 * LM_PACKW * LM_PACKH];
-    int type;
     PackNode packroot;
     uint lightmaps, lumels;
     
     LightMap()
-     : type(0), lightmaps(0), lumels(0)
+     : lightmaps(0), lumels(0)
     {
         memset(data, 0, sizeof(data));
     };
