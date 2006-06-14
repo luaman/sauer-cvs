@@ -1537,15 +1537,15 @@ void renderq()
             Texture *tex = slot.sts[0].t;
             glBindTexture(GL_TEXTURE_2D, tex->gl);
 
+            Shader *s = lookupshader(lod.eslist[i].texture);
+            if(s!=curshader) (curshader = s)->set();
+
             if(renderpath!=R_FIXEDFUNCTION) loopj(slot.sts.length()-1)
             {
-                glActiveTexture_(GL_TEXTURE0_ARB+j+2);
+                glActiveTexture_(GL_TEXTURE0_ARB+j+(s->type==SHADER_NORMALSLMS ? 3 : 2));
                 glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
                 glActiveTexture_(GL_TEXTURE0_ARB);
             };
-
-            Shader *s = lookupshader(lod.eslist[i].texture);
-            if(s!=curshader) (curshader = s)->set();
 
             extern vector<GLuint> lmtexids;
             int curlm = lmtexids[lod.eslist[i].lmid];
