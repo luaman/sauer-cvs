@@ -411,7 +411,8 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
             };
             sample += aasample;
         };
-        if(int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
+        if(lmtype == LM_NORMAL &&
+           int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
            int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
            int(maxcolor[2]) - int(mincolor[2]) <= lighterror)
         {
