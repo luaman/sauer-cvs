@@ -224,9 +224,9 @@ struct md2 : model
         {
             uchar *cv = (uchar *)&cf->vertices[vi].vertex;
             vec &v = mverts[frame][vi];
-            v.x =  (cv[0]*cf->scale[0]+cf->translate[0])*sc + translate.x;
-            v.y = -(cv[1]*cf->scale[1]+cf->translate[1])*sc + translate.y;
-            v.z =  (cv[2]*cf->scale[2]+cf->translate[2])*sc + translate.z;
+            v.x =  (cv[0]*cf->scale[0]+cf->translate[0]+translate.x)*sc;
+            v.y = -(cv[1]*cf->scale[1]+cf->translate[1]+translate.y)*sc;
+            v.z =  (cv[2]*cf->scale[2]+cf->translate[2]+translate.z)*sc;
             float *normal = normaltable[cv[3]];
             vec &n = mnorms[frame][vi];
             n = vec(normal[0], -normal[1], normal[2]);
@@ -237,16 +237,16 @@ struct md2 : model
     {
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
         float sc = scale/4.0f;
-        return (cf->translate[2] + cf->scale[2]*255.0f)*sc + translate.z;
+        return (cf->translate[2] + cf->scale[2]*255.0f + translate.z)*sc;
     };
 
     float boundsphere(int frame, vec &center)
     {
         md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
         float sc = scale/4.0f;
-        loopi(3) center.v[i] = cf->translate[i];
+        loopi(3) center[i] = cf->translate[i];
+        center.add(vec(translate.x, -translate.y, translate.z));
         center.mul(sc);
-        center.add(translate);
         vec radius;
         loopi(3) radius.v[i] = cf->scale[i];
         radius.mul(0.5f*255.0f*sc);

@@ -98,7 +98,7 @@ mdlscale S
     Scale the model's size to be S percent of its default size.
 
 mdltrans X Y Z
-    Translate the model's center by (X, Y, Z), where X/Y/Z are in Sauer units (may use floating point).
+    Translate the model's center by (X, Y, Z), where X/Y/Z are in model units (may use floating point).
 
 
 ----

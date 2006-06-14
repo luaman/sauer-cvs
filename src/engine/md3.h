@@ -232,15 +232,15 @@ struct md3model
             loopj(numframes*m.numvertices) 
             {
                 vec &v = m.vertices[j];
-                v.mul(scale);
                 if(translate) v.add(*translate);
+                v.mul(scale);
             };
         };
         loopi(numframes*numtags) 
         {
             vec &v = tags[i].pos;
+            if(translate) v.add(*translate);
             v.mul(scale);
-            if(translate) v.add(*translate);            
         };
     };
     
