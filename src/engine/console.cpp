@@ -69,8 +69,8 @@ COMMAND(toggleconsole, "");
 void rendercommand(int x, int y)
 {
     s_sprintfd(s)("> %s", commandbuf);
-    draw_textf(s, x, y);
-    draw_textf("_", x + text_width(s, commandpos>=0 ? commandpos+2 : -1), y);
+    draw_text(s, x, y);
+    draw_text("_", x + text_width(s, commandpos>=0 ? commandpos+2 : -1), y);
 };
 
 void renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
