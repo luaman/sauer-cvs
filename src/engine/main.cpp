@@ -280,7 +280,7 @@ int main(int argc, char **argv)
     #endif
 
     bool dedicated = false;
-    int fs = SDL_FULLSCREEN, par = 0;
+    int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0;
     char *load = NULL;
     
     islittleendian = *((char *)&islittleendian);
@@ -295,6 +295,8 @@ int main(int argc, char **argv)
             case 'd': dedicated = true; break;
             case 'w': scr_w = atoi(&argv[i][2]); scr_h = scr_w*3/4; break;
             case 'h': scr_h = atoi(&argv[i][2]); break;
+            case 'z': depth = atoi(&argv[i][2]); break;
+            case 'b': bpp = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
             case 'f': extern bool forcenoshaders; forcenoshaders = true; break;
             case 'l': 
@@ -329,7 +331,8 @@ int main(int argc, char **argv)
 
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    screen = SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|SDL_RESIZABLE|fs);
+    if(depth) SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depth); 
+    screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|SDL_RESIZABLE|fs);
     if(screen==NULL) fatal("Unable to create OpenGL screen: ", SDL_GetError());
 
     log("video: misc");
