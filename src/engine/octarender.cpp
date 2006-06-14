@@ -891,8 +891,9 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     return ccount;
 };
 
-int getmippedtexture(cube *c, int orient)
+int getmippedtexture(cube &p, int orient)
 {
+    cube *c = p.children;
     int d = dimension(orient);
     int dc = dimcoord(orient);
     int tex[4] = {-1,-1,-1,-1};
@@ -915,7 +916,7 @@ int getmippedtexture(cube *c, int orient)
     loopk(4)
         if(tex[k]>0) return tex[k];
 
-    return 0;
+    return p.texture[orient];
 };
 
 void forcemip(cube &c)
@@ -943,10 +944,7 @@ void forcemip(cube &c)
     };
 
     loopj(6)
-    {
-        int t = getmippedtexture(ch, j);
-        if(t) c.texture[j] = t;
-    };
+        c.texture[j] = getmippedtexture(c, j);
 };
 
 void genlod(cube &c, int size)
@@ -1126,7 +1124,7 @@ void rendersky(bool explicitonly)
     {
         lodlevel &lod = va->l0;
         if(va->occluded >= OCCLUDE_BB+oqpartial || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
-        
+
         setorigin(va, !sky++);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
@@ -1793,6 +1791,9 @@ bool remip(cube &c, int x, int y, int z, int size)
         if(!remip(ch[i], o.x, o.y, o.z, size>>1)) perfect = false;
     };
 
+    loopj(6)
+        c.texture[j] = getmippedtexture(c, j); // parents get child texs regardless
+
     if(!perfect) return false;
     if(size > VVEC_INT_MASK+1) return true;
 
@@ -1823,7 +1824,6 @@ bool remip(cube &c, int x, int y, int z, int size)
     freeocta(nh);
     discardchildren(c);
     loopi(3) c.faces[i] = n.faces[i];
-    loopi(6) c.texture[i] = n.texture[i];
     c.material = mat;
     return true;
 };
