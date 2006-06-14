@@ -8,7 +8,7 @@ extern int renderpath;
 
 enum { R_FIXEDFUNCTION = 0, R_ASMSHADER, /* R_GLSLANG */ };
 
-enum { SHADER_DEFAULT = 0, SHADER_BUMPMAP };
+enum { SHADER_DEFAULT = 0, SHADER_NORMALSLMS };
 
 struct Shader
 {

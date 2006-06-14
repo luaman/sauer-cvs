@@ -10,7 +10,7 @@ struct monsterset
 
     struct monstertype      // see docs for how these values modify behaviour
     {
-        short gun, speed, health, freq, lag, rate, pain, loyalty, mscale, bscale, weight; 
+        short gun, speed, health, freq, lag, rate, pain, loyalty, bscale, weight; 
         short painsound, diesound;
         char *name, *mdlname;
     };   
@@ -232,14 +232,14 @@ struct monsterset
     {
         static monstertype _monstertypes[NUMMONSTERTYPES] =
         {   
-            { GUN_FIREBALL,  15, 100, 3, 0,   100, 800, 1, 10, 10,  90, S_PAINO, S_DIE1,   "an ogre",     "monster/ogro"    },
-            { GUN_CG,        18,  70, 2, 70,   10, 400, 2,  8,  8,  50, S_PAINR, S_DEATHR, "a rhino",     "monster/rhino"   },
-            { GUN_SG,        13, 120, 1, 100, 300, 400, 4, 14, 14, 115, S_PAINE, S_DEATHE, "ratamahatta", "monster/rat"     },
-            { GUN_RIFLE,     14, 200, 1, 80,  400, 300, 4, 18, 18, 145, S_PAINS, S_DEATHS, "a slith",     "monster/slith"   },
-            { GUN_RL,        12, 500, 1, 0,   200, 200, 6, 24, 24, 210, S_PAINB, S_DEATHB, "bauul",       "monster/bauul"   },
-            { GUN_BITE,      22,  50, 3, 0,   100, 400, 1, 12, 15,  75, S_PAINP, S_PIGGR2, "a hellpig",   "monster/hellpig" },
-            { GUN_ICEBALL,   11, 250, 1, 0,    10, 400, 6, 18, 18, 160, S_PAINH, S_DEATHH, "a knight",    "monster/knight"  },
-            { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 13, 10,  60, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin"  },
+            { GUN_FIREBALL,  15, 100, 3, 0,   100, 800, 1, 10,  90, S_PAINO, S_DIE1,   "an ogre",     "monster/ogro"    },
+            { GUN_CG,        18,  70, 2, 70,   10, 400, 2,  8,  50, S_PAINR, S_DEATHR, "a rhino",     "monster/rhino"   },
+            { GUN_SG,        13, 120, 1, 100, 300, 400, 4, 14, 115, S_PAINE, S_DEATHE, "ratamahatta", "monster/rat"     },
+            { GUN_RIFLE,     14, 200, 1, 80,  400, 300, 4, 18, 145, S_PAINS, S_DEATHS, "a slith",     "monster/slith"   },
+            { GUN_RL,        12, 500, 1, 0,   200, 200, 6, 24, 210, S_PAINB, S_DEATHB, "bauul",       "monster/bauul"   },
+            { GUN_BITE,      22,  50, 3, 0,   100, 400, 1, 15,  75, S_PAINP, S_PIGGR2, "a hellpig",   "monster/hellpig" },
+            { GUN_ICEBALL,   11, 250, 1, 0,    10, 400, 6, 18, 160, S_PAINH, S_DEATHH, "a knight",    "monster/knight"  },
+            { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 10,  60, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin"  },
         };
         monstertypes = _monstertypes;
     };
@@ -345,7 +345,7 @@ struct monsterset
         loopv(monsters)
         {
             monster &m = *monsters[i];
-            renderclient(&m, false, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].mscale/10.0f, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
+            renderclient(&m, false, monstertypes[m.mtype].mdlname, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
         };
     };
 };

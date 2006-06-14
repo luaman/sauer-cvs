@@ -1153,7 +1153,7 @@ void setupTMU()
     glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
 };
 
-VAR(showva, 0, 0, 1);
+//VAR(showva, 0, 0, 1);
 
 #define MAXQUERY 2048
 
@@ -1434,12 +1434,17 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
     return true;
 };
 
+
+float tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
+float binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
+//float normal  [3][4] = { { -1,0, 0,0 }, { 0,1, 0,0 }, { 0,0,1,0 }};    
+
 void renderq()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_COLOR_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
 
-    int showvas = 0;
+    //int showvas = 0;
 
     setupTMU();
 
@@ -1462,6 +1467,11 @@ void renderq()
     glActiveTexture_(GL_TEXTURE0_ARB);
 
     Shader *curshader = NULL;
+
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, (float *)&vec4(player->o, 1).mul(2));                        
+    };
 
     flipqueries();
 
@@ -1506,18 +1516,20 @@ void renderq()
         vtris += lod.tris;
         vverts += va->verts;
 
-        if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
+        //if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
 
         if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+        glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
 
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
 
-        unsigned short *ebuf = lod.ebuf;
+
+        ushort *ebuf = lod.ebuf;
         int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
         loopi(lod.texs)
         {
@@ -1549,11 +1561,9 @@ void renderq()
             {
                 if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys)
                 {
-                    static int si[] = { 1, 0, 0 }; //{ 0, 0, 0, 0, 2, 2};
-                    static int ti[] = { 2, 2, 1 }; //{ 2, 2, 1, 1, 1, 1};
-                    //float sc[] = { 8.0f, 8.0f, -8.0f, 8.0f, 8.0f, -8.0f};
-                    //float tc[] = { -8.0f, 8.0f, -8.0f, -8.0f, -8.0f, -8.0f};
-
+                    static int si[] = { 1, 0, 0 }; 
+                    static int ti[] = { 2, 2, 1 };
+ 
                     GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                     s[si[l]] = 8.0f/(tex->xs<<VVEC_FRAC);
                     GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -1584,12 +1594,19 @@ void renderq()
                     lastys = tex->ys;
                     lastl = l;
                 };
+                
+                if(s->type==SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION) 
+                {
+                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, tangent[l]);     
+                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, binormal[l]);                    
+                };
 
                 glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
                 ebuf += lod.eslist[i].length[l];  // Advance to next array.
                 glde++;
             };
         };
+          
         if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
     };
 
@@ -1597,6 +1614,7 @@ void renderq()
 
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);

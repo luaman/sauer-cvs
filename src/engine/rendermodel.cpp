@@ -236,11 +236,11 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-void renderclient(dynent *d, bool team, char *mdlname, float scale, bool forceattack, int lastaction, int lastpain)
+void renderclient(dynent *d, bool team, char *mdlname, bool forceattack, int lastaction, int lastpain)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
-    float mz = d->o.z-d->eyeheight+6*scale;     // for some reason, quake models floorlevel is 24 units below (0,0,0)
+    float mz = d->o.z-d->eyeheight;     
     int basetime = -((int)(size_t)d&0xFFF);
     bool attack = (forceattack || (d->type!=ENT_AI && lastmillis-lastaction<200));
     if(d->state==CS_DEAD)
@@ -260,7 +260,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool forceat
     {
         if(d->timeinair>100)            { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP|ANIM_END; }
         else if(!d->move && !d->strafe) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE|ANIM_LOOP; }
-        else                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN|ANIM_LOOP; speed = 5500/d->maxspeed*scale; };
+        else                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN|ANIM_LOOP; speed = 5500/d->maxspeed /* *scale */; };   // FIXME
         if(attack) basetime = lastaction;
     };
     vec color, dir;

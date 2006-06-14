@@ -29,6 +29,7 @@ eihrul:
 
 
 aard:
+- envmapping, non-suck water, bumptextures?
 - no dbghelp.dll on win98?
 - $ vs @? var stacks? [] for trees/arrays? other improvements? 
 - start moving some stuff in their own headers

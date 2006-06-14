@@ -11,7 +11,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="..\.."
-				CommandArguments="-t -w960 -h600"
+				CommandArguments="-t -w960 -h600 -lbumptest"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
@@ -39,7 +39,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="..\.."
-				CommandArguments="-t -w1280 -h800"
+				CommandArguments="-t -w1280 -h800 -grpg"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

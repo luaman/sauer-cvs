@@ -53,7 +53,7 @@ struct rpgobj
     void render()
     {
         if(!model) return;
-        if(ai) renderclient(ent, false, model, 1, false, 0, 0);
+        if(ai) renderclient(ent, false, model, false, 0, 0);
         else {};
     };
 };

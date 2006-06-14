@@ -58,7 +58,13 @@ struct vec
         center.add(extent); 
         return dist_to_aabox(center, extent);
     };
+};
 
+struct vec4 : vec
+{
+    float w;
+    vec4() : w(0) {};
+    vec4(vec &_v, float _w = 0) : w(_w) { *(vec *)this = _v; };
 };
 
 struct plane : vec

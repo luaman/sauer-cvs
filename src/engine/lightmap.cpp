@@ -740,7 +740,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!lodcube)
         {
             Shader *shader = lookupshader(c.texture[i]);
-            if(shader->type == SHADER_BUMPMAP)
+            if(shader->type == SHADER_NORMALSLMS)
             {
                 lmtype = LM_BUMPMAP0;
                 newnormals(c);
