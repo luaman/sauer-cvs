@@ -213,7 +213,7 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
             case LM_BUMPMAP0: 
                 intensity = attenuation; 
                 weights += attenuation;
-                if(center >= 0) avgray.add(ray.mul(attenuation));
+                if(center >= 0) avgray.add(ray.mul(-attenuation));
                 break;
             default:
                 intensity = -normal.dot(ray) * attenuation;
