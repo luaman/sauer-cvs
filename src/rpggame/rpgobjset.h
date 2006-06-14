@@ -56,6 +56,11 @@ struct rpgobj
         if(ai) renderclient(ent, false, model, false, 0, 0);
         else {};
     };
+    
+    void update(int curtime)
+    {
+        moveplayer(ent, 10, true, curtime);
+    };
 };
 
 struct rpgobjset
@@ -92,11 +97,15 @@ struct rpgobjset
         loopi(10) stack.add(&dummy);     // determines the stack depth
     };
     
-    void update()
+    void update(int curtime)
     {
         extern vec worldpos;
         pointingat = NULL;
-        loopv(set) if(intersect(set[i]->ent, cl.player1.o, worldpos)) { pointingat = set[i]; break; };
+        loopv(set)
+        {
+            if(!pointingat && intersect(set[i]->ent, cl.player1.o, worldpos)) pointingat = set[i]; 
+            set[i]->update(curtime);
+        };
         
     };
     

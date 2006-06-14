@@ -78,7 +78,7 @@ struct rpgclient : igameclient
         lastmillis = lm;
         if(!curtime) return;
         physicsframe();
-        os.update();
+        os.update(curtime);
         if(player1.state==CS_DEAD)
         {
             player1.lastaction = lastmillis;
