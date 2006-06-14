@@ -1548,11 +1548,16 @@ void renderq()
             };
 
             extern vector<GLuint> lmtexids;
-            int curlm = lmtexids[lod.eslist[i].lmid];
+            int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
             if(curlm!=lastlm)
             {
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, curlm);
+                if(s->type==SHADER_NORMALSLMS && lmid>=LMID_RESERVED && lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0)
+                {
+                    glActiveTexture_(GL_TEXTURE2_ARB);
+                    glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
+                };            
                 glActiveTexture_(GL_TEXTURE0_ARB);
                 lastlm = curlm;
             };
