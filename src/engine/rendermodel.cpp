@@ -240,7 +240,7 @@ void renderclient(dynent *d, bool team, char *mdlname, float scale, bool forceat
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
-    float mz = d->o.z-d->eyeheight+6.2f*scale;
+    float mz = d->o.z-d->eyeheight+6*scale;     // for some reason, quake models floorlevel is 24 units below (0,0,0)
     int basetime = -((int)(size_t)d&0xFFF);
     bool attack = (forceattack || (d->type!=ENT_AI && lastmillis-lastaction<200));
     if(d->state==CS_DEAD)
