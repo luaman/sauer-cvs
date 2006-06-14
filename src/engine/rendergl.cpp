@@ -53,12 +53,13 @@ void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
     };
 };
 
-void shader(char *name, char *vs, char *ps)
+void shader(int *type, char *name, char *vs, char *ps)
 {
     if(lookupshaderbyname(name)) return;
     char *rname = newstring(name);
     Shader &s = shaders[rname];
     s.name = rname;
+    s.type = *type;
     if(renderpath!=R_FIXEDFUNCTION)
     {
         compileshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
@@ -73,7 +74,7 @@ void setshader(char *name)
     else curshader = s;
 };
 
-COMMAND(shader, "sss");
+COMMAND(shader, "isss");
 COMMAND(setshader, "s");
 
 bool forcenoshaders = false;

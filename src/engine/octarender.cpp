@@ -27,7 +27,7 @@ struct vechash
     vechash() { clear(); };
     void clear() { loopi(size) table[i] = -1; chain.setsize(0); };
 
-    int access(const vvec &v, short tu, short tv)
+    int access(const vvec &v, short tu, short tv, const bvec &n)
     {
         const uchar *iv = (const uchar *)&v;
         uint h = 5381;
@@ -36,12 +36,13 @@ struct vechash
         for(int i = table[h]; i>=0; i = chain[i])
         {
             const vertex &c = verts[i];
-            if(c.x==v.x && c.y==v.y && c.z==v.z && c.u==tu && c.v==tv) return i;
+            if(c.x==v.x && c.y==v.y && c.z==v.z && c.u==tu && c.v==tv && c.n==n) return i;
         };
-        vertex &n = verts.add();
-        ((vvec &)n) = v;
-        n.u = tu;
-        n.v = tv;
+        vertex &vtx = verts.add();
+        ((vvec &)vtx) = v;
+        vtx.u = tu;
+        vtx.v = tv;
+        vtx.n = n;
         chain.add(table[h]);
         return table[h] = verts.length()-1;
     };
@@ -643,7 +644,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             int coord = faceverts(c,i,k), index;
             vvec rv;
             calcvert(c, x, y, z, size, rv, coord);
-            index = vh.access(rv, u, v);
+            index = vh.access(rv, u, v, c.normals ? c.normals[i].normals[k] : bvec(0, 0, 0));
 
             if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)]).add(index);
             if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)]).add(index);
@@ -689,7 +690,7 @@ void genskyverts(cube &c, int x, int y, int z, int size)
             int coord = faceverts(c, orient, 3 - k), index;
             vvec rv;
             calcvert(c, x, y, z, size, rv, coord, true);
-            index = vh.access(rv, 0, 0);
+            index = vh.access(rv, 0, 0, bvec(0, 0, 0));
             l0.skyindices.add(index);
         };
     };

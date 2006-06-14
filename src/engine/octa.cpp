@@ -17,6 +17,7 @@ cube *newcubes(uint face)
         c->va = NULL;
         setfaces(*c, face);
         c->surfaces = NULL;
+        c->normals = NULL;
         c->clip = NULL;
         c->ents = NULL;
         loopl(6)
@@ -49,6 +50,7 @@ void discardchildren(cube &c)
     if(c.va) destroyva(c.va);
     c.va = NULL;
     freesurfaces(c);
+    freenormals(c);
     freeclipplanes(c);
     freeoctaentities(c);
     if(c.children)

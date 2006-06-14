@@ -195,5 +195,10 @@ struct bvec
     bvec() {};
     bvec(char x, char y, char z) : x(x), y(y), z(z) {};
     bvec(const vec &v) : x(char(v.x*CHAR_MAX)), y(char(v.y*CHAR_MAX)), z(char(v.z*CHAR_MAX)) {};
+
+    bool operator==(const bvec &v) const { return x==v.x && y==v.y && z==v.z; };
+    bool operator!=(const bvec &v) const { return x!=v.x || y!=v.y || z!=v.z; };
+
+    bool iszero() const { return x==0 && y==0 && z==0; };
 };
 

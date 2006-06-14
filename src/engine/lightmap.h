@@ -85,6 +85,9 @@ extern void calclerpverts(const vec &origin, const vec *p, const vec *n, const v
 extern void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end);
 extern void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep);
 
+extern void newnormals(cube &c);
+extern void freenormals(cube &c);
+
 #define CHECK_CALCLIGHT_PROGRESS(exit, show_calclight_progress) \
     if(check_calclight_progress) \
     { \

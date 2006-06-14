@@ -8,9 +8,12 @@ extern int renderpath;
 
 enum { R_FIXEDFUNCTION = 0, R_ASMSHADER, /* R_GLSLANG */ };
 
+enum { SHADER_DEFAULT = 0, SHADER_BUMPMAP };
+
 struct Shader
 {
     char *name;
+    int type;
     GLuint vs, ps;
 
     void set()

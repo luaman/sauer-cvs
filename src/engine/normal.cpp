@@ -324,3 +324,17 @@ void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbo
     end.u += end.ustep;
 };
 
+void newnormals(cube &c)
+{
+    if(!c.normals)
+    {
+        c.normals = new surfacenormals[6];
+        memset(c.normals, 0, 6*sizeof(surfacenormals));
+    };
+};
+
+void freenormals(cube &c)
+{
+    DELETEA(c.normals);
+};
+

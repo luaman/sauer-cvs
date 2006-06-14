@@ -343,6 +343,7 @@ cube copycube(cube &src)
     cube c = src;
     c.va = NULL;                // src cube is responsible for va destruction
     c.surfaces = NULL;
+    c.normals = NULL;
     c.clip = NULL;
     c.ents = NULL;
     if(src.children)

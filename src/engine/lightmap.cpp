@@ -398,6 +398,7 @@ void clear_lmids(cube *c)
     loopi(8)
     {
         if(c[i].surfaces) freesurfaces(c[i]);
+        if(c[i].normals) freenormals(c[i]);
         if(c[i].children) clear_lmids(c[i].children);
     };
 };
@@ -661,6 +662,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
             return;
         };
         freesurfaces(c);
+        freenormals(c);
     };
     vvec vvecs[8];
     bool usefaces[6];
@@ -697,13 +699,24 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
                 else if(j == 2) n[2] = n2[1];
             };
         };
+        if(!lodcube)
+        {
+            Shader *shader = lookupshader(c.texture[i]);
+            if(shader->type == SHADER_BUMPMAP)
+            {
+                newnormals(c);
+                c.normals[i].normals[0] = bvec(n[0]);
+                c.normals[i].normals[1] = bvec(n[1]);
+                c.normals[i].normals[2] = bvec(n[2]);
+                c.normals[i].normals[3] = bvec(n2[2]);
+            };
+        };
         uchar texcoords[8];
         if(!setup_surface(planes, v, n, numplanes >= 2 ? n2 : NULL, texcoords))
             continue;
 
         CHECK_PROGRESS(return);
-        if(!c.surfaces)
-            newsurfaces(c);
+        newsurfaces(c);
         surfaceinfo &surface = c.surfaces[i];
         surface.w = lm_w;
         surface.h = lm_h;

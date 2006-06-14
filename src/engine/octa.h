@@ -59,6 +59,11 @@ struct surfaceinfo
     ushort x, y, lmid;
 };
 
+struct surfacenormals
+{
+    bvec normals[4];
+};
+
 struct clipplanes
 {
     vec o, r;
@@ -88,20 +93,21 @@ struct octaentities
 
 struct cube
 {
-    cube *children;         // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
+    cube *children;          // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
     union
     {
-        uchar edges[12];    // edges of the cube, each uchar is 2 4bit values denoting the range.
-                            // see documentation jpgs for more info.
-        uint faces[3];      // 4 edges of each dimension together representing 2 perpendicular faces
+        uchar edges[12];     // edges of the cube, each uchar is 2 4bit values denoting the range.
+                             // see documentation jpgs for more info.
+        uint faces[3];       // 4 edges of each dimension together representing 2 perpendicular faces
     };
-    ushort texture[6];      // one for each face. same order as orient.
-    uchar material;         // empty-space material
-    uchar visible;          // visible faces of the cube
-    vtxarray *va;           // vertex array for children, or NULL
-    clipplanes *clip;       // collision planes
-    surfaceinfo *surfaces;  // lighting info for each surface
-    octaentities *ents;     // list of map entites totally inside cube
+    ushort texture[6];       // one for each face. same order as orient.
+    uchar material;          // empty-space material
+    uchar visible;           // visible faces of the cube
+    vtxarray *va;            // vertex array for children, or NULL
+    clipplanes *clip;        // collision planes
+    surfaceinfo *surfaces;   // lighting info for each surface
+    surfacenormals *normals; // per-vertex normals for each surface
+    octaentities *ents;      // list of map entites totally inside cube
 };
 
 struct block3

@@ -8,7 +8,7 @@ enum                            // hardcoded texture numbers
     DEFAULT_CEIL
 };
 
-#define MAPVERSION 16           // bump if map format changes, see worldio.cpp
+#define MAPVERSION 17           // bump if map format changes, see worldio.cpp
 
 struct header                   // map file format header
 {
@@ -68,5 +68,5 @@ struct vvec : svec
     vec tovec(const ivec &o) const       { return tovec(o.x, o.y, o.z); };
 };
 
-struct vertex : vvec { short u, v; };
-struct fvertex : vec { short u, v; };
+struct vertex : vvec { short u, v; bvec n; };
+struct fvertex : vec { short u, v; bvec n; };

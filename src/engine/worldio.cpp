@@ -84,8 +84,8 @@ void savec(cube *c, gzFile f)
             }
             else
             {
-                uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0);
-                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED) mask |= 1 << j;
+                uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0) | (c[i].normals ? 0x40 : 0);
+                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED || (c[i].normals && !c[i].normals[j].normals[0].iszero())) mask |= 1 << j;
                 gzputc(f, mask);
                 if(c[i].material != MAT_AIR)
                     gzputc(f, c[i].material);
@@ -94,6 +94,8 @@ void savec(cube *c, gzFile f)
                     surfaceinfo tmp = c[i].surfaces[j];
                     endianswap(&tmp.x, sizeof(ushort), 3);
                     gzwrite(f, &tmp, sizeof(surfaceinfo));
+                    if(c[i].normals && !c[i].normals[j].normals[0].iszero())
+                        gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
                 };
             };
             if(c[i].children) savec(c[i].children, f);
@@ -129,10 +131,10 @@ void loadc(gzFile f, cube &c)
         uchar mask = gzgetc(f);
         if(mask & 0x80)
             c.material = gzgetc(f);
-        mask &= 0x7F;
-        if(mask)
+        if(mask & 0x3F)
         {
             newsurfaces(c);
+            if(mask & 0x40) newnormals(c);
             loopi(6)
             {
                 if(mask & (1 << i))
@@ -140,6 +142,7 @@ void loadc(gzFile f, cube &c)
                     gzread(f, &c.surfaces[i], sizeof(surfaceinfo));
                     endianswap(&c.surfaces[i].x, sizeof(ushort), 3);
                     if(hdr.version < 10) ++c.surfaces[i].lmid;
+                    if(mask & 0x40) gzread(f, &c.normals[i], sizeof(surfacenormals));
                 }
                 else
                     c.surfaces[i].lmid = LMID_AMBIENT;
