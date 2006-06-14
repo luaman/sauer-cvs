@@ -85,7 +85,7 @@ void savec(cube *c, gzFile f)
             else
             {
                 uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0) | (c[i].normals ? 0x40 : 0);
-                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED || (c[i].normals && !c[i].normals[j].normals[0].iszero())) mask |= 1 << j;
+                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED || (c[i].normals && c[i].normals[j].normals[0] != bvec(128, 128, 128))) mask |= 1 << j;
                 gzputc(f, mask);
                 if(c[i].material != MAT_AIR)
                     gzputc(f, c[i].material);

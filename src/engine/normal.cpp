@@ -329,7 +329,7 @@ void newnormals(cube &c)
     if(!c.normals)
     {
         c.normals = new surfacenormals[6];
-        memset(c.normals, 0, 6*sizeof(surfacenormals));
+        memset(c.normals, 128, 6*sizeof(surfacenormals));
     };
 };
 
