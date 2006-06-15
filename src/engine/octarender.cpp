@@ -1822,7 +1822,7 @@ bool remip(cube &c, int x, int y, int z, int size)
         c.texture[j] = getmippedtexture(c, j); // parents get child texs regardless
 
     if(!perfect) return false;
-    if(size > VVEC_INT_MASK+1) return true;
+    if(size<<1 > VVEC_INT_MASK+1) return true;
 
     cube n = c;
     forcemip(n);
