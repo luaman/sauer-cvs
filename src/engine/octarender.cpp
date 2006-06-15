@@ -1435,9 +1435,8 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
 };
 
 
-float tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1, 0,0,0 }};
-float binormal[3][4] = { {  0,0, 1,0 }, { 0,0, 1,0 }, { 0,-1,0,0 }};
-//float normal  [3][4] = { { -1,0, 0,0 }, { 0,1, 0,0 }, { 0,0,1,0 }};    
+float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1, 0,0,0 }};
+float orientation_binormal[3][4] = { {  0,0, 1,0 }, { 0,0, 1,0 }, { 0,-1,0,0 }};
 
 void renderq()
 {
@@ -1602,8 +1601,8 @@ void renderq()
                 
                 if(s->type==SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION) 
                 {
-                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, tangent[l]);     
-                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, binormal[l]);                    
+                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, orientation_tangent[l]);     
+                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, orientation_binormal[l]);                    
                 };
 
                 glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);

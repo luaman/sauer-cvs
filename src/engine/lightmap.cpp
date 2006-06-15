@@ -185,7 +185,7 @@ void pack_lightmap(int type, surfaceinfo &surface)
     else insert_lightmap(type, surface.x, surface.y, surface.lmid);
 };
 
-void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int center = -1)
+void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int dimension, int center = -1)
 {
     vec avgray(0, 0, 0);
     float r = 0, g = 0, b = 0, weights = 0;
@@ -234,6 +234,14 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
                 b /= weights;
                 if(center >= 0) avgray.normalize();
             };
+            
+            // transform to tangent space
+            extern float orientation_tangent [3][4];
+            extern float orientation_binormal[3][4];            
+            matrix m(vec((float *)&orientation_tangent[dimension]), vec((float *)&orientation_binormal[dimension]), normal);      
+            m.orthonormalize();
+            m.transform(avgray); 
+            
             if(center >= 0) lm_ray[center] = bvec(avgray);
             break;
     };
@@ -260,7 +268,7 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
 VAR(edgetolerance, 1, 4, 8);
 VAR(adaptivesample, 0, 1, 1);
 
-bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const lerpvert *lv, int numv, const vec &ustep, const vec &vstep)
+bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const lerpvert *lv, int numv, const vec &ustep, const vec &vstep, int dimension)
 {
     static uchar mincolor[3], maxcolor[3];
     static float aacoords[8][2] =
@@ -303,7 +311,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             CHECK_PROGRESS(return false);
-            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, y*lm_w+x);
+            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, dimension, y*lm_w+x);
             sample += aasample;
         };
         sample += aasample;
@@ -334,13 +342,13 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 vec n(normal);
                 n.normalize();
                 loopi(aasample-1)
-                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++);
+                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++, dimension);
                 if(aalights == 3) 
                 {
                     loopi(4)
                     {
                         vec s;
-                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, s);
+                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, s, dimension);
                         center.add(s);
                     };
                     center.div(5);
@@ -350,9 +358,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         if(aasample > 1)
         {
             normal.normalize();
-            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1]);
+            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1], dimension);
             if(aasample > 2)
-                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, sample[3]);
+                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, sample[3], dimension);
         };
         sample += aasample;
     };
@@ -369,9 +377,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 CHECK_PROGRESS(return false);
                 vec n(normal);
                 n.normalize();
-                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
+                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1], dimension);
                 if(aasample > 2)
-                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, sample[2]);
+                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, sample[2], dimension);
                 sample += aasample;
             }; 
         };
@@ -567,7 +575,7 @@ bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int
     return lights1.length() || lights2.length();
 };
 
-bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, uchar texcoords[8])
+bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, uchar texcoords[8], int dimension)
 {
     vec u, v, s, t;
     float umin(0.0f), umax(0.0f),
@@ -650,7 +658,7 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
         int numv = 4;
         calclerpverts(origin1, p, n, ustep, vstep, lv, numv);
 
-        if(!generate_lightmap(lpu, 0, lm_h, origin1, lv, numv, ustep, vstep))
+        if(!generate_lightmap(lpu, 0, lm_h, origin1, lv, numv, ustep, vstep, dimension))
             return false;
     }
     else
@@ -667,8 +675,8 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
         calclerpverts(origin1, p1, n, ustep, vstep, lv1, numv1);
         calclerpverts(origin2, p2, n2, ustep, tstep, lv2, numv2);
 
-        if(!generate_lightmap(lpu, 0, split, origin1, lv1, numv1, ustep, vstep) ||
-           !generate_lightmap(lpu, split, lm_h, origin2, lv2, numv2, ustep, tstep))
+        if(!generate_lightmap(lpu, 0, split, origin1, lv1, numv1, ustep, vstep, dimension) ||
+           !generate_lightmap(lpu, split, lm_h, origin2, lv2, numv2, ustep, tstep, dimension))
             return false;
     };
 
@@ -766,7 +774,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
             };
         };
         uchar texcoords[8];
-        if(!setup_surface(planes, v, n, numplanes >= 2 ? n2 : NULL, texcoords))
+        if(!setup_surface(planes, v, n, numplanes >= 2 ? n2 : NULL, texcoords, dimension(i)))
             continue;
 
         CHECK_PROGRESS(return);

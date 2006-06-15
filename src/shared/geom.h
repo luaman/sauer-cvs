@@ -9,6 +9,7 @@ struct vec
     vec() {};
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(int v[3]) : x(v[0]), y(v[1]), z(v[2]) {};
+    vec(float *v) : x(v[0]), y(v[1]), z(v[2]) {};
     
     vec(float yaw, float pitch) : x(sinf(yaw)*cosf(pitch)), y(-cosf(yaw)*cosf(pitch)), z(sinf(pitch)) {};
 
@@ -38,6 +39,7 @@ struct vec
 
     void rotate_around_z(float yaw) { *this = vec(cosf(yaw)*x-sinf(yaw)*y, cosf(yaw)*y+sinf(yaw)*x, z); };
 
+
     float dist_to_aabox(const vec &center, const vec &extent) const
     {
         float sqrdist = 0;
@@ -65,6 +67,22 @@ struct vec4 : vec
     float w;
     vec4() : w(0) {};
     vec4(vec &_v, float _w = 0) : w(_w) { *(vec *)this = _v; };
+};
+
+struct matrix
+{
+    vec X, Y, Z;
+    
+    matrix(const vec &_X, const vec &_Y, const vec &_Z) : X(_X), Y(_Y), Z(_Z) {};
+    
+    void transform(vec &o) { o = vec(o.dot(X), o.dot(Y), o.dot(Z)); };
+    
+    void orthonormalize()
+    {
+        X.sub(vec(Z).mul(Z.dot(X)));
+        Y.sub(vec(Z).mul(Z.dot(Y)))
+         .sub(vec(X).mul(X.dot(Y)));
+    };
 };
 
 struct plane : vec
