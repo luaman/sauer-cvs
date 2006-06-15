@@ -3,6 +3,48 @@
 #include "pch.h"
 #include "engine.h"
 
+
+void convertnormalheightspec(char *destfile, char *heightfile, char *normalfile, char *specfile)
+{
+    SDL_Surface *hs = IMG_Load(heightfile);
+    SDL_Surface *ns = IMG_Load(normalfile);
+    SDL_Surface *ss = IMG_Load(specfile);
+    SDL_Surface *s = hs ? hs : (ns ? ns : ss);
+    if(!s) return;
+    uchar def_n[] = { 255, 128, 128 };
+    uchar def_s[] = { 20, 20, 20 };
+    FILE *f = fopen(destfile, "wb");
+    if(f)
+    {
+        fwrite("\0\0\x02\0\0\0\0 \0\0\0\0", 1, 12, f);     // tga header
+        ushort dim[] = { s->w, s->h };
+        endianswap(dim, sizeof(ushort), 2);
+        fwrite(dim, sizeof(short), 2, f);
+        fwrite(" \0", 1, 2, f);
+        for(int y = s->h-1; y>=0; y--) loop(x, s->w) 
+        {
+            int off = (x+y*s->w)*3;
+            uchar *hd = hs ? (uchar *)hs->pixels+off : def_n;
+            uchar *nd = ns ? (uchar *)ns->pixels+off : def_n;
+            uchar *sd = ss ? (uchar *)ss->pixels+off : def_s;
+            #define S(x) x/255.0f*2-1
+            vec n(S(nd[0]), S(nd[1]), S(nd[2]));
+            vec h(S(hd[0]), S(hd[1]), S(hd[2]));
+            n.mul(2).add(h).normalize().add(1).div(2).mul(255);
+            int spec = (sd[0]+sd[1]+sd[2])/3*2;
+            uchar o[4] = { (uchar)n.x, (uchar)n.y, (uchar)n.z, (uchar)spec };
+            fwrite(o, 4, 1, f); 
+            #undef S
+        };
+        fclose(f);
+    };
+    if(hs) SDL_FreeSurface(hs);
+    if(ns) SDL_FreeSurface(ns);
+    if(ss) SDL_FreeSurface(ss);
+};
+
+COMMAND(convertnormalheightspec, "ssss");
+
 void box(block &b, float z1, float z2, float z3, float z4)
 {
     glBegin(GL_POLYGON);
