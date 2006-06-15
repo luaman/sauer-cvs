@@ -1529,7 +1529,7 @@ void renderq()
 
 
         ushort *ebuf = lod.ebuf;
-        int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
+        int lastlm = -1, lastsh = -1, lastxs = -1, lastys = -1, lastl = -1;
         loopi(lod.texs)
         {
             Slot &slot = lookuptexture(lod.eslist[i].texture);
@@ -1548,17 +1548,21 @@ void renderq()
 
             extern vector<GLuint> lmtexids;
             int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
-            if(curlm!=lastlm)
+            if(curlm!=lastlm || s->type!=lastsh)
             {
-                glActiveTexture_(GL_TEXTURE1_ARB);
-                glBindTexture(GL_TEXTURE_2D, curlm);
+                if(curlm!=lastlm)
+                {
+                    glActiveTexture_(GL_TEXTURE1_ARB);
+                    glBindTexture(GL_TEXTURE_2D, curlm);
+                    lastlm = curlm;
+                };
                 if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
                 {
                     glActiveTexture_(GL_TEXTURE2_ARB);
                     glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
                 };            
                 glActiveTexture_(GL_TEXTURE0_ARB);
-                lastlm = curlm;
+                lastsh = s->type;
             };
 
             loopl(3) if (lod.eslist[i].length[l])
