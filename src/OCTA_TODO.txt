@@ -29,6 +29,7 @@ eihrul:
 
 
 aard:
+- allow specifying clamp/mipmap for non-diffuse
 - envmapping, non-suck water, bumptextures?
 - no dbghelp.dll on win98?
 - $ vs @? var stacks? [] for trees/arrays? other improvements? 
