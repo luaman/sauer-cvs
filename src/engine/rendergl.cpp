@@ -403,11 +403,10 @@ void drawskybox(int farplane, bool limited)
             glDepthFunc(GL_LEQUAL);
             glDisable(GL_TEXTURE_2D);
             glDepthMask(GL_FALSE);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glLineWidth(1);
+            if(!wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glColor3f(0.5f, 0.0f, 0.5f);
             rendersky(true);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            if(!wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDepthMask(GL_TRUE);
             glEnable(GL_TEXTURE_2D);
 

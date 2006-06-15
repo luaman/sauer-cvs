@@ -264,7 +264,6 @@ void cursorupdate()
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    glLineWidth(1);
     glColor3ubv(cursorcolor);
     boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     if(hmap != NULL)

@@ -1651,7 +1651,6 @@ void rendermaterials()
     {
         glDisable(GL_BLEND);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glLineWidth(1);
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->l0;
