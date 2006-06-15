@@ -411,8 +411,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
             };
             sample += aasample;
         };
-        if(lmtype == LM_NORMAL &&
-           int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
+        if(int(maxcolor[0]) - int(mincolor[0]) <= lighterror &&
            int(maxcolor[1]) - int(mincolor[1]) <= lighterror &&
            int(maxcolor[2]) - int(mincolor[2]) <= lighterror)
         {
@@ -421,10 +420,26 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
             if(color[0] <= ambient + lighterror && 
                color[1] <= ambient + lighterror && 
                color[2] <= ambient + lighterror)
+            {
+                if(lmtype == LM_BUMPMAP0)
+                {
+                    memset(lm, ambient, 3);
+                    lm_w = 1;
+                    lm_h = 1;
+                    vec normal = lv[0].normal;
+                    loopi(numv-1) normal.add(lv[i+1].normal);
+                    normal.normalize();
+                    lm_ray[0] = bvec(normal);
+                    return true;
+                };
                 return false;
-            memcpy(lm, color, 3);
-            lm_w = 1;
-            lm_h = 1;
+            };
+            if(lmtype == LM_NORMAL)
+            {
+                memcpy(lm, color, 3);
+                lm_w = 1;
+                lm_h = 1;
+            };
         };
     };
     return true;
