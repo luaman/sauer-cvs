@@ -1470,6 +1470,7 @@ void renderq()
     if(renderpath!=R_FIXEDFUNCTION)
     {
         glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, (float *)&vec4(player->o, 1).mul(2));                        
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
     };
 
     flipqueries();
