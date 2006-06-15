@@ -1818,6 +1818,7 @@ bool remip(cube &c, int x, int y, int z, int size)
         if(!remip(ch[i], o.x, o.y, o.z, size>>1)) perfect = false;
     };
 
+    solidfaces(c); // so texmip is more consistent    
     loopj(6)
         c.texture[j] = getmippedtexture(c, j); // parents get child texs regardless
 
