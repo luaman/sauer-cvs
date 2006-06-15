@@ -228,7 +228,7 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
         case LM_BUMPMAP0:
             if(center >= 0)
             {
-                if(avgray.iszero()) lm_ray[center] = bvec(0, 0, 255);
+                if(avgray.iszero()) lm_ray[center] = bvec(128, 128, 128);
                 else
                 {
                     // transform to tangent space
@@ -931,7 +931,7 @@ void alloctexids()
 void clearlights()
 {
     uchar bright[3] = { 128, 128, 128 };
-    bvec front(0, 0, 255);
+    bvec nodir(128, 128, 128);
     alloctexids();
     loopi(lightmaps.length() + LMID_RESERVED)
     {
@@ -942,7 +942,7 @@ void clearlights()
                 createtexture(lmtexids[i], 1, 1, bright, false, false);
                 break;
             case LM_BUMPMAP1:
-                createtexture(lmtexids[i], 1, 1, &front, false, false);
+                createtexture(lmtexids[i], 1, 1, &nodir, false, false);
                 break;
         }
     };            
@@ -986,9 +986,9 @@ void initlights()
     createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, false, false);
     uchar bright[3] = { 128, 128, 128 };
     createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
-    bvec front(0, 0, 255);
-    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &front, false, false);
-    createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, false, false);
+    bvec nodir(128, 128, 128);
+    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &nodir, false, false);
+    createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &nodir, false, false);
     loopi(lightmaps.length()) createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     clearlightcache();
     updateentlighting();
