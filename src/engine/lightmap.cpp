@@ -234,15 +234,16 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
                 b /= weights;
                 if(center >= 0) avgray.normalize();
             };
-            
-            // transform to tangent space
-            extern float orientation_tangent [3][4];
-            extern float orientation_binormal[3][4];            
-            matrix m(vec((float *)&orientation_tangent[dimension]), vec((float *)&orientation_binormal[dimension]), normal);      
-            m.orthonormalize();
-            m.transform(avgray); 
-            
-            if(center >= 0) lm_ray[center] = bvec(avgray);
+            if(center >= 0)
+            {
+                // transform to tangent space
+                extern float orientation_tangent [3][4];
+                extern float orientation_binormal[3][4];            
+                matrix m(vec((float *)&orientation_tangent[dimension]), vec((float *)&orientation_binormal[dimension]), normal);      
+                m.orthonormalize();
+                m.transform(avgray); 
+                lm_ray[center] = bvec(avgray);
+            };
             break;
     };
     sample.x = min(255, max(ambient, r));
@@ -434,10 +435,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                     memset(lm, ambient, 3);
                     lm_w = 1;
                     lm_h = 1;
-                    vec normal = lv[0].normal;
-                    loopi(numv-1) normal.add(lv[i+1].normal);
-                    normal.normalize();
-                    lm_ray[0] = bvec(normal);
+                    lm_ray[0] = bvec(0, 0, 1);
                     return true;
                 };
                 return false;
