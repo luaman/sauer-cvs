@@ -141,6 +141,11 @@ void loadc(gzFile f, cube &c)
                     gzread(f, &c.surfaces[i], sizeof(surfaceinfo));
                     endianswap(&c.surfaces[i].x, sizeof(ushort), 3);
                     if(hdr.version < 10) ++c.surfaces[i].lmid;
+                    if(hdr.version < 18)
+                    {
+                        if(c.surfaces[i].lmid >= LMID_AMBIENT1) ++c.surfaces[i].lmid;
+                        if(c.surfaces[i].lmid >= LMID_BRIGHT1) ++c.surfaces[i].lmid;
+                    };
                     if(mask & 0x40) gzread(f, &c.normals[i], sizeof(surfacenormals));
                 }
                 else

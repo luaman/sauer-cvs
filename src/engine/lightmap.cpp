@@ -429,17 +429,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
             if(color[0] <= ambient + lighterror && 
                color[1] <= ambient + lighterror && 
                color[2] <= ambient + lighterror)
-            {
-                if(lmtype == LM_BUMPMAP0)
-                {
-                    memset(lm, ambient, 3);
-                    lm_w = 1;
-                    lm_h = 1;
-                    lm_ray[0] = bvec(0, 0, 255);
-                    return true;
-                };
                 return false;
-            };
             if(lmtype == LM_NORMAL)
             {
                 memcpy(lm, color, 3);
@@ -947,7 +937,7 @@ void clearlights()
     alloctexids();
     loopi(lightmaps.length() + LMID_RESERVED)
     {
-        switch(i < LMID_RESERVED ? LM_NORMAL : lightmaps[i-LMID_RESERVED].type)
+        switch(i < LMID_RESERVED ? (i&1 ? LM_BUMPMAP1 : LM_NORMAL) : lightmaps[i-LMID_RESERVED].type)
         {
             case LM_NORMAL:
             case LM_BUMPMAP0:
@@ -998,6 +988,9 @@ void initlights()
     createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, false, false);
     uchar bright[3] = { 128, 128, 128 };
     createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
+    bvec front(0, 0, 255);
+    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &front, false, false);
+    createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, false, false);
     loopi(lightmaps.length()) createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
     clearlightcache();
     updateentlighting();

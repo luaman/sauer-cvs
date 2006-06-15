@@ -1552,7 +1552,7 @@ void renderq()
             {
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, curlm);
-                if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && lmid>=LMID_RESERVED && lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0)
+                if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
                 {
                     glActiveTexture_(GL_TEXTURE2_ARB);
                     glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
