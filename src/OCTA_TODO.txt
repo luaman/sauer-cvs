@@ -29,6 +29,7 @@ eihrul:
 
 
 aard:
+- weird fps issue
 - allow specifying clamp/mipmap for non-diffuse
 - envmapping, non-suck water, bumptextures?
 - no dbghelp.dll on win98?

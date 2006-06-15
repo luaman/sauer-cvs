@@ -115,7 +115,10 @@ void gl_init(int w, int h)
     glCullFace(GL_FRONT);
     glEnable(GL_CULL_FACE);
 
+    const char *vendor = (const char *)glGetString(GL_VENDOR);
     char *exts = (char *)glGetString(GL_EXTENSIONS);
+    char *renderer = (char *)glGetString(GL_RENDERER);
+    conoutf("renderer: %s (%s)", renderer, vendor);
     
     if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
         fatal("No texture_env_combine extension! (your video card is WAY too old)");
@@ -138,7 +141,6 @@ void gl_init(int w, int h)
         conoutf("Using GL_ARB_vertex_buffer_object extension.");
     };
 
-    const char *vendor = (const char *)glGetString(GL_VENDOR);
     extern int floatvtx;
     if(strstr(vendor, "ATI")) floatvtx = 1;
     if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
