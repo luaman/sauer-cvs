@@ -435,7 +435,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                     memset(lm, ambient, 3);
                     lm_w = 1;
                     lm_h = 1;
-                    lm_ray[0] = bvec(0, 0, 1);
+                    lm_ray[0] = bvec(0, 0, 255);
                     return true;
                 };
                 return false;

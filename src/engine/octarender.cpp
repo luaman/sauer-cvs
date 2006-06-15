@@ -1462,7 +1462,7 @@ void renderq()
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 
-    loopi(8) { glActiveTexture_(GL_TEXTURE0_ARB+i); glEnable(GL_TEXTURE_2D); };
+    loopi(renderpath!=R_FIXEDFUNCTION ? 8 : 2) { glActiveTexture_(GL_TEXTURE0_ARB+i); glEnable(GL_TEXTURE_2D); };
     glActiveTexture_(GL_TEXTURE0_ARB);
 
     Shader *curshader = NULL;
@@ -1552,7 +1552,7 @@ void renderq()
             {
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, curlm);
-                if(s->type==SHADER_NORMALSLMS && lmid>=LMID_RESERVED && lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0)
+                if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && lmid>=LMID_RESERVED && lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0)
                 {
                     glActiveTexture_(GL_TEXTURE2_ARB);
                     glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
