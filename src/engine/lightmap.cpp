@@ -943,8 +943,21 @@ void alloctexids()
 void clearlights()
 {
     uchar bright[3] = { 128, 128, 128 };
+    bvec front(0, 0, 255);
     alloctexids();
-    loopi(lightmaps.length() + LMID_RESERVED) createtexture(lmtexids[i], 1, 1, bright, false, false);
+    loopi(lightmaps.length() + LMID_RESERVED)
+    {
+        switch(i < LMID_RESERVED ? LM_NORMAL : lightmaps[i-LMID_RESERVED].type)
+        {
+            case LM_NORMAL:
+            case LM_BUMPMAP0:
+                createtexture(lmtexids[i], 1, 1, bright, false, false);
+                break;
+            case LM_BUMPMAP1:
+                createtexture(lmtexids[i], 1, 1, &front, false, false);
+                break;
+        }
+    };            
     clearlightcache();
     const vector<extentity *> &ents = et->getents();
     loopv(ents) 
