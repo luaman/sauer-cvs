@@ -145,13 +145,23 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
 
     if(!insideworld(v))
     {
-        float disttoworld = 1e16f;
+        float disttoworld = 1e16f, exitworld = 1e16f;
         loopi(3) if(ray[i]!=0)
         {
-            float d = (float(ray[i]>0?0:hdr.worldsize)-v[i])/ray[i];
-            if(d<0) return (radius>0?radius:-1);
-            disttoworld = min(disttoworld, 0.1f + d);
+            float c = v[i];
+            if(c>=0 && c<hdr.worldsize)
+            {
+                float d = (float(ray[i]>0?hdr.worldsize:0)-c)/ray[i];
+                exitworld = min(exitworld, d);
+            }
+            else
+            { 
+                float d = (float(ray[i]>0?0:hdr.worldsize)-c)/ray[i];
+                if(d<0) return (radius>0?radius:-1);
+                disttoworld = min(disttoworld, 0.1f + d);
+            };
         };
+        if(disttoworld > exitworld) return (radius>0?radius:-1);
         pushvec(v, ray, disttoworld);
         dist += disttoworld;
     };
