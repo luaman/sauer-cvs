@@ -188,7 +188,7 @@ void pack_lightmap(int type, surfaceinfo &surface)
 void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int center = -1)
 {
     vec avgray(0, 0, 0);
-    float r = 0, g = 0, b = 0, weights = 0;
+    float r = 0, g = 0, b = 0;
     loopv(lights)
     {
         const entity &light = *lights[i];
@@ -212,7 +212,6 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
         {
             case LM_BUMPMAP0: 
                 intensity = attenuation; 
-                weights += attenuation;
                 if(center >= 0) avgray.add(ray.mul(-attenuation));
                 break;
             default:
@@ -227,22 +226,20 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
     switch(lmtype)
     {
         case LM_BUMPMAP0:
-            if(weights)
-            {
-                r /= weights;
-                g /= weights;
-                b /= weights;
-                if(center >= 0) avgray.normalize();
-            };
             if(center >= 0)
             {
-                // transform to tangent space
-                extern float orientation_tangent [3][4];
-                extern float orientation_binormal[3][4];            
-                matrix m(vec((float *)&orientation_tangent[dimension(lmorient)]), vec((float *)&orientation_binormal[dimension(lmorient)]), normal);      
-                m.orthonormalize();
-                m.transform(avgray); 
-                lm_ray[center] = weights ? bvec(avgray) : bvec(0, 0, 255);
+                if(avgray.iszero()) lm_ray[center] = bvec(0, 0, 255);
+                else
+                {
+                    // transform to tangent space
+                    extern float orientation_tangent [3][4];
+                    extern float orientation_binormal[3][4];            
+                    matrix m(vec((float *)&orientation_tangent[dimension(lmorient)]), vec((float *)&orientation_binormal[dimension(lmorient)]), normal);      
+                    m.orthonormalize();
+                    avgray.normalize();
+                    m.transform(avgray); 
+                    lm_ray[center] = bvec(avgray);
+                };
             };
             break;
     };
