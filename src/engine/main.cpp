@@ -298,7 +298,13 @@ int main(int argc, char **argv)
             case 'z': depth = atoi(&argv[i][2]); break;
             case 'b': bpp = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
-            case 'f': extern bool forcenoshaders; forcenoshaders = true; break;
+            case 'f': 
+            {
+                extern int shaderprecision; 
+                shaderprecision = atoi(&argv[i][2]); 
+                shaderprecision = min(max(shaderprecision, 0), 3);
+                break;
+            };
             case 'l': 
             {
                 char pkgdir[] = "packages/"; 
