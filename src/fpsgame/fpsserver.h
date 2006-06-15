@@ -19,6 +19,7 @@ struct fpsserver : igameserver
         int modevote;
         bool master;
         bool spectator;
+        bool local;
         vec o;
         int state;
         
@@ -35,6 +36,7 @@ struct fpsserver : igameserver
             team[0] = '\0';
             master = false;
             spectator = false;
+            local = false;
             mapchange();
         };
     };
@@ -175,6 +177,7 @@ struct fpsserver : igameserver
 
     int checktype(int type, clientinfo *ci)
     {
+        if(ci && ci->local) return type;
         // spectators can only connect and talk
         static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING, SV_GETMAP };
         if(ci && ci->spectator && !ci->master)
@@ -505,6 +508,7 @@ struct fpsserver : igameserver
     {
         clientinfo *ci = (clientinfo *)getinfo(n);
         ci->clientnum = n;
+        ci->local = true;
         clients.add(ci);
     };
 
