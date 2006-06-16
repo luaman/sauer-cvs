@@ -40,7 +40,7 @@ extern void mpflip(selinfo &sel, bool local);
 extern void mpcopy(editinfo *&e, selinfo &sel, bool local);
 extern void mppaste(editinfo *&e, selinfo &sel, bool local);
 extern void mprotate(int cw, selinfo &sel, bool local);
-extern void mpreplacetex(int oldtex, int newtex, int orient, selinfo &sel, bool local);
+extern void mpreplacetex(int oldtex, int newtex, selinfo &sel, bool local);
 
 // command
 extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);

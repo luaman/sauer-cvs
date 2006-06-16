@@ -851,7 +851,7 @@ void tofronttex()                                       // maintain most recentl
 };
 
 selinfo repsel;
-int reptex = -1, reporient = -1;
+int reptex = -1;
 
 void edittexcube(cube &c, int tex, int orient, bool &findrep)
 {
@@ -861,11 +861,7 @@ void edittexcube(cube &c, int tex, int orient, bool &findrep)
         int i = visibleorient(c, orient);
         if(findrep)
         {
-            if(reptex < 0)
-            {
-                reptex = c.texture[i];
-                reporient = orient;
-            }
+            if(reptex < 0) reptex = c.texture[i];
             else if(reptex != c.texture[i]) findrep = false;
         };
         c.texture[i] = tex;
@@ -881,7 +877,7 @@ void mpedittex(int tex, int allfaces, selinfo &sel, bool local)
     if(local)
     {
         cl->edittrigger(sel, EDIT_TEX, tex, allfaces);
-        if(allfaces || !(repsel == sel)) reptex = reporient = -1;
+        if(allfaces || !(repsel == sel)) reptex = -1;
         repsel = sel;
     };
     bool findrep = local && !allfaces && reptex < 0;
@@ -933,9 +929,9 @@ void replacetexcube(cube &c, int oldtex, int newtex)
     if(c.children) loopi(8) replacetexcube(c.children[i], oldtex, newtex);
 };
 
-void mpreplacetex(int oldtex, int newtex, int orient, selinfo &sel, bool local)
+void mpreplacetex(int oldtex, int newtex, selinfo &sel, bool local)
 {
-    if(local) cl->edittrigger(sel, EDIT_REPLACE, oldtex, newtex, orient);
+    if(local) cl->edittrigger(sel, EDIT_REPLACE, oldtex, newtex);
     loopi(8) replacetexcube(worldroot[i], oldtex, newtex); 
     allchanged();
 };
@@ -944,7 +940,7 @@ void replace()
 {
     if(noedit()) return;
     if(reptex < 0) { conoutf("can only replace after a texture edit"); return; };
-    mpreplacetex(reptex, lasttex, reporient, sel, true);
+    mpreplacetex(reptex, lasttex, sel, true);
 };
 
 COMMAND(replace, "");

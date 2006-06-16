@@ -520,7 +520,7 @@ struct clientcom : iclientcom
                     case SV_COPY: if(d) mpcopy(d->edit, sel, false); break;
                     case SV_PASTE: if(d) mppaste(d->edit, sel, false); break;
                     case SV_ROTATE: dir = getint(p); mprotate(dir, sel, false); break;
-                    case SV_REPLACE: tex = getint(p); newtex = getint(p); orient = getint(p); mpreplacetex(tex, newtex, orient, sel, false); break;
+                    case SV_REPLACE: tex = getint(p); newtex = getint(p); mpreplacetex(tex, newtex, sel, false); break;
                 };
                 break;
             };
