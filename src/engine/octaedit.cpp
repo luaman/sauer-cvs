@@ -937,7 +937,8 @@ void replacetexcube(cube &c, int oldtex, int newtex, int orient)
 void mpreplacetex(int oldtex, int newtex, int orient, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_REPLACE, oldtex, newtex, orient);
-    loopselxyz(replacetexcube(c, oldtex, newtex, orient));
+//    loopselxyz(replacetexcube(c, oldtex, newtex, orient));
+    loopi(8) replacetexcube(worldroot[i], oldtex, newtex, orient); 
 };
 
 void replace()
