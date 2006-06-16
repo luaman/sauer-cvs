@@ -16,7 +16,7 @@ int aalights = 3;
  
 static int lmtype, lmorient;
 static uchar lm[3 * LM_MAXW * LM_MAXH];
-static bvec lm_ray[LM_MAXW * LM_MAXH];
+static vec lm_ray[LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<const entity *> lights1, lights2;
 static uint progress = 0, total_surfaces = 0;
@@ -185,7 +185,7 @@ void pack_lightmap(int type, surfaceinfo &surface)
     else insert_lightmap(type, surface.x, surface.y, surface.lmid);
 };
 
-void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int center = -1)
+void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int x, int y)
 {
     vec avgray(0, 0, 0);
     float r = 0, g = 0, b = 0;
@@ -212,7 +212,7 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
         {
             case LM_BUMPMAP0: 
                 intensity = attenuation; 
-                if(center >= 0) avgray.add(ray.mul(-attenuation));
+                avgray.add(ray.mul(-attenuation));
                 break;
             default:
                 intensity = -normal.dot(ray) * attenuation;
@@ -226,21 +226,15 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
     switch(lmtype)
     {
         case LM_BUMPMAP0:
-            if(center >= 0)
-            {
-                if(avgray.iszero()) lm_ray[center] = bvec(128, 128, 128);
-                else
-                {
-                    // transform to tangent space
-                    extern float orientation_tangent [3][4];
-                    extern float orientation_binormal[3][4];            
-                    matrix m(vec((float *)&orientation_tangent[dimension(lmorient)]), vec((float *)&orientation_binormal[dimension(lmorient)]), normal);      
-                    m.orthonormalize();
-                    avgray.normalize();
-                    m.transform(avgray); 
-                    lm_ray[center] = bvec(avgray);
-                };
-            };
+            if(avgray.iszero()) break;
+            // transform to tangent space
+            extern float orientation_tangent[3][4];
+            extern float orientation_binormal[3][4];            
+            matrix m(vec((float *)&orientation_tangent[dimension(lmorient)]), vec((float *)&orientation_binormal[dimension(lmorient)]), normal);      
+            m.orthonormalize();
+            avgray.normalize();
+            m.transform(avgray); 
+            lm_ray[y*lm_w+x].add(avgray);
             break;
     };
     sample.x = min(255, max(ambient, r));
@@ -291,6 +285,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
     {
         memset(mincolor, 255, 3);
         memset(maxcolor, 0, 3);
+        if(lmtype == LM_BUMPMAP0) memset(lm_ray, 0, sizeof(lm_ray));
     };
 
     static vec samples [4*(LM_MAXW+1)*(LM_MAXH+1)];
@@ -309,7 +304,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             CHECK_PROGRESS(return false);
-            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, y*lm_w+x);
+            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, x, y);
             sample += aasample;
         };
         sample += aasample;
@@ -340,13 +335,13 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 vec n(normal);
                 n.normalize();
                 loopi(aasample-1)
-                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++);
+                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++, x, y);
                 if(aalights == 3) 
                 {
                     loopi(4)
                     {
                         vec s;
-                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, s);
+                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, s, x, y);
                         center.add(s);
                     };
                     center.div(5);
@@ -356,9 +351,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         if(aasample > 1)
         {
             normal.normalize();
-            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1]);
+            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1], lm_w-1, y);
             if(aasample > 2)
-                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, sample[3]);
+                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, sample[3], lm_w-1, y);
         };
         sample += aasample;
     };
@@ -375,9 +370,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 CHECK_PROGRESS(return false);
                 vec n(normal);
                 n.normalize();
-                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1]);
+                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1], min(x, lm_w-1), lm_h-1);
                 if(aasample > 2)
-                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, sample[2]);
+                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, sample[2], min(x, lm_w-1), lm_h-1);
                 sample += aasample;
             }; 
         };
@@ -386,9 +381,10 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         float weight = 1.0f / (1.0f + 4.0f*aalights),
               cweight = weight * (aalights == 3 ? 5.0f : 1.0f);
         uchar *lumel = lm;
+        vec *ray = lm_ray;
         for(uint y = 0; y < lm_h; ++y) 
         {
-            for(uint x = 0; x < lm_w; ++x, lumel += 3) 
+            for(uint x = 0; x < lm_w; ++x, lumel += 3, ++ray) 
             {
                 vec l(0, 0, 0);
                 const vec &center = *sample++;
@@ -413,6 +409,12 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 {
                     mincolor[k] = min(mincolor[k], lumel[k]);
                     maxcolor[k] = max(maxcolor[k], lumel[k]);
+                };
+
+                if(lmtype == LM_BUMPMAP0)
+                {
+                    if(!ray->iszero()) ray->normalize();
+                    ((bvec *)lm_ray)[ray-lm_ray] = bvec(*ray);
                 };
             };
             sample += aasample;
