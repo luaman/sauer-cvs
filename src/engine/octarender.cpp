@@ -1435,8 +1435,8 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
 };
 
 
-float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1, 0,0,0 }};
-float orientation_binormal[3][4] = { {  0,0, 1,0 }, { 0,0, 1,0 }, { 0,-1,0,0 }};
+float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
+float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 
 void renderq()
 {
