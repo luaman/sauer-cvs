@@ -24,6 +24,15 @@ struct Shader
     };
 };
 
+enum { SHPARAM_VERTEX = 0, SHPARAM_PIXEL };
+
+struct ShaderParam
+{
+    int type;
+    int index;
+    float val[4];
+};
+
 extern Shader *defaultshader;
 extern Shader *notextureshader;
 

@@ -59,6 +59,7 @@ struct Slot
 
     vector<Tex> sts;             
     Shader *shader;
+    vector<ShaderParam> params;
     bool loaded;
 };
 

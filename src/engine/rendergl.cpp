@@ -30,7 +30,8 @@ PFNGLGETQUERYIVARBPROC        glGetQueryiv_ = NULL;
 PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_ = NULL;
 
 hashtable<const char *, Shader> shaders;
-Shader *curshader = NULL;
+static Shader *curshader = NULL;
+static vector<ShaderParam> curparams;
 Shader *defaultshader = NULL;
 Shader *notextureshader = NULL;
 
@@ -76,6 +77,42 @@ void setshader(char *name)
 
 COMMAND(shader, "isss");
 COMMAND(setshader, "s");
+
+void setshaderparam(int type, int n, float x, float y, float z, float w)
+{
+    loopv(curparams)
+    {
+        ShaderParam &param = curparams[i];
+        if(param.index == n && param.type == type)
+        {
+            param.val[0] = x;
+            param.val[1] = y;
+            param.val[2] = z;
+            param.val[3] = w;
+        };
+    };
+    ShaderParam param = {type, n, {x, y, z, w}};
+    curparams.add(param);
+};
+
+void setvertexparam(int *n, float *x, float *y, float *z, float *w)
+{
+    setshaderparam(SHPARAM_VERTEX, *n, *x, *y, *z, *w);
+};
+
+void setpixelparam(int *n, float *x, float *y, float *z, float *w)
+{
+    setshaderparam(SHPARAM_PIXEL, *n, *x, *y, *z, *w);
+};
+
+void clearparams()
+{
+    curparams.setsize(0);
+};
+
+COMMAND(setvertexparam, "iffff");
+COMMAND(setpixelparam, "iffff");
+COMMAND(clearparams, "");
 
 VAR(shaderprecision, 0, 2, 3);
 

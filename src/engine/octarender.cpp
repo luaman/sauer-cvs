@@ -1555,6 +1555,12 @@ void renderq()
                 {
                     glActiveTexture_(GL_TEXTURE1_ARB);
                     glBindTexture(GL_TEXTURE_2D, curlm);
+                    if(renderpath!=R_FIXEDFUNCTION) loopvj(slot.params)
+                    {
+                        const ShaderParam &param = slot.params[i];
+                        if(param.type == SHPARAM_VERTEX) glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
+                        else glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
+                    };
                     lastlm = curlm;
                 };
                 if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
