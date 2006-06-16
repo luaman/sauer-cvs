@@ -151,35 +151,44 @@ void addnormals(cube &c, const ivec &o, int size)
             subdiv = 1<<lerpsubdiv;
             while(size/subdiv < lerpsubdivsize) subdiv >>= 1; 
         };
+        vec avg;
+        if(numplanes >= 2)
+        {
+            avg = planes[0];
+            avg.add(planes[1]);
+            avg.normalize();
+        };
+        int index = faceverts(c, i, 0);
         loopj(4)
         {
-            int index = faceverts(c, i, j);
             const vvec &v = vvecs[index];
-            if(numplanes < 2)
+            const vec &cur = numplanes < 2 || j == 1 ? planes[0] : (j == 3 ? planes[1] : avg);
+            addnormal(o, i, v, cur);
+            index = faceverts(c, i, (j+1)%4);
+            if(subdiv < 2) continue;
+            const vvec &v2 = vvecs[index];
+            vvec dv(v2);
+            dv.sub(v);
+            dv.div(subdiv);
+            vvec vs(v);
+            if(dv.iszero()) continue;
+            if(numplanes < 2) loopk(subdiv - 1)
             {
-                addnormal(o, i, v, planes[0]);
-                if(subdiv >= 2)
-                {
-                    const vvec &v2 = vvecs[faceverts(c, i, (j+1)%4)];
-                    vvec dv(v2);
-                    dv.sub(v);
-                    dv.div(subdiv);
-                    vvec vs(v);
-                    if(!dv.iszero()) loopk(subdiv - 1)
-                    {
-                        vs.add(dv);
-                        addnormal(o, i, vs, planes[0]);
-                    };
-                };
+                vs.add(dv);
+                addnormal(o, i, vs, planes[0]);
             }
-            else if(j == 1) addnormal(o, i, v, planes[0]);
-            else if(j == 3) addnormal(o, i, v, planes[1]);
             else
             {
-                vec n(planes[0]);
-                n.add(planes[1]);
-                n.normalize();
-                addnormal(o, i, v, n);
+                vec dn(j==0 ? planes[0] : (j == 2 ? planes[1] : avg));
+                dn.sub(cur);
+                dn.div(subdiv);
+                vec n(cur);
+                loopk(subdiv - 1)
+                {
+                    vs.add(dv);
+                    n.add(dn);
+                    addnormal(o, i, vs, vec(dn).normalize());
+                }
             };
         };
     };
