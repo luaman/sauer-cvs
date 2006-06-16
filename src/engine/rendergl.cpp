@@ -73,6 +73,7 @@ void setshader(char *name)
     Shader *s = lookupshaderbyname(name);
     if(!s) conoutf("no such shader: %s", name);
     else curshader = s;
+    curparams.setsize(0);
 };
 
 COMMAND(shader, "isss");
@@ -105,14 +106,8 @@ void setpixelparam(int *n, float *x, float *y, float *z, float *w)
     setshaderparam(SHPARAM_PIXEL, *n, *x, *y, *z, *w);
 };
 
-void clearparams()
-{
-    curparams.setsize(0);
-};
-
 COMMAND(setvertexparam, "iffff");
 COMMAND(setpixelparam, "iffff");
-COMMAND(clearparams, "");
 
 VAR(shaderprecision, 0, 2, 3);
 
