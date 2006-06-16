@@ -927,17 +927,17 @@ void gettex()
 COMMAND(edittex, "i");
 COMMAND(gettex, "");
 
-void replacetexcube(cube &c, int oldtex, int newtex, int orient)
+void replacetexcube(cube &c, int oldtex, int newtex)
 {
-    if(c.texture[orient] == oldtex) c.texture[orient] = newtex;
-    if(c.children) loopi(8) replacetexcube(c.children[i], oldtex, newtex, orient);
+    loopi(6) if(c.texture[i] == oldtex) c.texture[i] = newtex;
+    if(c.children) loopi(8) replacetexcube(c.children[i], oldtex, newtex);
 };
 
 void mpreplacetex(int oldtex, int newtex, int orient, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_REPLACE, oldtex, newtex, orient);
-//    loopselxyz(replacetexcube(c, oldtex, newtex, orient));
-    loopi(8) replacetexcube(worldroot[i], oldtex, newtex, orient); 
+    loopi(8) replacetexcube(worldroot[i], oldtex, newtex); 
+    allchanged();
 };
 
 void replace()
