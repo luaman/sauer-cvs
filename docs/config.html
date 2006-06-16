@@ -51,6 +51,11 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 		<br>
         -f forces the renderpath to the old fixed function pipeline (no shaders)
         <br>
+        -fN sets the shader precision to N (lower = faster). 0 disables shaders, 1 uses
+        the fastest/lowest precision the OpenGL driver offers, 2 is the default precision,
+        and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different 
+        card/driver combos.
+        <br>
         -lM loads map M on startup
         <br>
 		<br>
