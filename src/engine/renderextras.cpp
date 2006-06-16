@@ -4,7 +4,37 @@
 #include "engine.h"
 
 
-void convertnormalheightspec(char *destfile, char *heightfile, char *normalfile, char *specfile)
+void writetgaheader(FILE *f, SDL_Surface *s, int bits)
+{
+    fwrite("\0\0\x02\0\0\0\0 \0\0\0\0", 1, 12, f);     
+    ushort dim[] = { s->w, s->h };
+    endianswap(dim, sizeof(ushort), 2);
+    fwrite(dim, sizeof(short), 2, f);
+    fputc(bits, f);
+    fputc(0, f);
+}
+
+void flipnormalmapy(char *destfile, char *normalfile)           // RGB (jpg/png) -> BGR (tga)
+{
+    SDL_Surface *ns = IMG_Load(normalfile);
+    if(!ns) return;
+    FILE *f = fopen(destfile, "wb");
+    if(f)
+    {
+        writetgaheader(f, ns, 24);
+        for(int y = ns->h-1; y>=0; y--) loop(x, ns->w) 
+        {
+            uchar *nd = (uchar *)ns->pixels+(x+y*ns->w)*3;
+            fputc(nd[2], f);
+            fputc(255-nd[1], f);
+            fputc(nd[0], f);
+        };
+        fclose(f);
+    };
+    if(ns) SDL_FreeSurface(ns);
+};
+
+void convertnormalheightspec(char *destfile, char *heightfile, char *normalfile, char *specfile)    // BGR (tga) -> BGR (tga) (SDL loads TGA as BGR!)
 {
     SDL_Surface *hs = IMG_Load(heightfile);
     SDL_Surface *ns = IMG_Load(normalfile);
@@ -16,11 +46,7 @@ void convertnormalheightspec(char *destfile, char *heightfile, char *normalfile,
     FILE *f = fopen(destfile, "wb");
     if(f)
     {
-        fwrite("\0\0\x02\0\0\0\0 \0\0\0\0", 1, 12, f);     // tga header
-        ushort dim[] = { s->w, s->h };
-        endianswap(dim, sizeof(ushort), 2);
-        fwrite(dim, sizeof(short), 2, f);
-        fwrite(" \0", 1, 2, f);
+        writetgaheader(f, s, 32);
         for(int y = s->h-1; y>=0; y--) loop(x, s->w) 
         {
             int off = (x+y*s->w)*3;
@@ -43,6 +69,7 @@ void convertnormalheightspec(char *destfile, char *heightfile, char *normalfile,
     if(ss) SDL_FreeSurface(ss);
 };
 
+COMMAND(flipnormalmapy, "ss");
 COMMAND(convertnormalheightspec, "ssss");
 
 void box(block &b, float z1, float z2, float z3, float z4)
