@@ -929,8 +929,7 @@ COMMAND(gettex, "");
 
 void replacetexcube(cube &c, int oldtex, int newtex, int orient)
 {
-    int i = visibleorient(c, orient);
-    if(c.texture[i] == oldtex) c.texture[i] = newtex;
+    if(c.texture[orient] == oldtex) c.texture[orient] = newtex;
     if(c.children) loopi(8) replacetexcube(c.children[i], oldtex, newtex, orient);
 };
 
