@@ -133,6 +133,7 @@ template <class T> struct vector
     vector<T> &operator=(const vector<T> &v)
     {
         loopv(v) add(v[i]);
+        return *this;
     };
 
     T &add(const T &x)
