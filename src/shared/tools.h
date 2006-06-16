@@ -109,6 +109,9 @@ extern void endianswap(void *, int, int);
 extern void seedMT(uint seed);
 extern uint randomMT(void);
 
+#define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
+#define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
+#define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
 template <class T> struct vector
 {
@@ -125,8 +128,12 @@ template <class T> struct vector
 
     ~vector() { setsize(0); delete[] (uchar *)buf; };
 
-    vector(vector<T> &v);
-    void operator=(vector<T> &v);
+    vector(const vector<T> &v);
+    
+    vector<T> &operator=(const vector<T> &v)
+    {
+        loopv(v) add(v[i]);
+    };
 
     T &add(const T &x)
     {
@@ -217,10 +224,6 @@ template <class T> struct vector
 typedef vector<char *> cvector;
 typedef vector<int> ivector;
 typedef vector<ushort> usvector;
-
-#define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
-#define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
-#define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
 inline unsigned int hthash(const char * key)
 {

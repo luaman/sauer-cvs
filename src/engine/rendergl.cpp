@@ -61,6 +61,8 @@ void shader(int *type, char *name, char *vs, char *ps)
     Shader &s = shaders[rname];
     s.name = rname;
     s.type = *type;
+    loopv(curparams) s.defaultparams.add(curparams[i]);
+    curparams.setsize(0);
     if(renderpath!=R_FIXEDFUNCTION)
     {
         compileshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
@@ -84,12 +86,13 @@ void setshaderparam(int type, int n, float x, float y, float z, float w)
     loopv(curparams)
     {
         ShaderParam &param = curparams[i];
-        if(param.index == n && param.type == type)
+        if(param.type == type && param.index == n)
         {
             param.val[0] = x;
             param.val[1] = y;
             param.val[2] = z;
             param.val[3] = w;
+            return;
         };
     };
     ShaderParam param = {type, n, {x, y, z, w}};
@@ -335,6 +338,7 @@ void texture(char *seqn, char *name, char *rot)
     }
     Slot &s = seq && curtexnum ? slots.last() : slots.add();
     s.shader = curshader;
+    if(s.params.empty()) loopv(curparams) s.params.add(curparams[i]);
     s.loaded = false;
     if(seq!=s.sts.length()) conoutf("warning: illegal sequence number in texture command for slot %d", curtexnum);
     if(seq>=8) conoutf("warning: too many textures in slot %d", curtexnum);
