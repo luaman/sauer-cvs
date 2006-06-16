@@ -116,9 +116,11 @@ void gl_init(int w, int h)
     glEnable(GL_CULL_FACE);
 
     const char *vendor = (const char *)glGetString(GL_VENDOR);
-    char *exts = (char *)glGetString(GL_EXTENSIONS);
-    char *renderer = (char *)glGetString(GL_RENDERER);
-    conoutf("renderer: %s (%s)", renderer, vendor);
+    const char *exts = (char *)glGetString(GL_EXTENSIONS);
+    const char *renderer = (char *)glGetString(GL_RENDERER);
+    const char *version = (char *)glGetString(GL_VERSION);
+    conoutf("Renderer: %s (%s)", renderer, vendor);
+    conoutf("Driver: %s", version);
     
     if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
         fatal("No texture_env_combine extension! (your video card is WAY too old)");
