@@ -146,7 +146,7 @@ void addnormals(cube &c, const ivec &o, int size)
         int numplanes = genclipplane(c, i, verts, planes);
         if(!numplanes) continue;
         int subdiv = 0;
-        if(lerpsubdiv && size > lerpsubdivsize && faceedges(c, i) == F_SOLID)
+        if(lerpsubdiv && size > lerpsubdivsize) // && faceedges(c, i) == F_SOLID)
         {
             subdiv = 1<<lerpsubdiv;
             while(size/subdiv < lerpsubdivsize) subdiv >>= 1; 
@@ -165,7 +165,7 @@ void addnormals(cube &c, const ivec &o, int size)
                     dv.sub(v);
                     dv.div(subdiv);
                     vvec vs(v);
-                    loopk(subdiv - 1)
+                    if(!dv.iszero()) loopk(subdiv - 1)
                     {
                         vs.add(dv);
                         addnormal(o, i, vs, planes[0]);
@@ -188,6 +188,7 @@ void addnormals(cube &c, const ivec &o, int size)
 void calcnormals()
 {
     if(!lerpangle) return;
+    progress = 0;
     loopi(8) addnormals(worldroot[i], ivec(i, 0, 0, 0, hdr.worldsize/2), hdr.worldsize/2);
 };
 

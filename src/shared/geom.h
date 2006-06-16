@@ -206,6 +206,8 @@ struct svec
     void sub(const svec &o) { x -= o.x; y -= o.y; z -= o.z; };
     void mul(int f) { x *= f; y *= f; z *= f; };
     void div(int f) { x /= f; y /= f; z /= f; };
+
+    bool iszero() const { return x==0 && y==0 && z==0; };
 };
 
 struct bvec
