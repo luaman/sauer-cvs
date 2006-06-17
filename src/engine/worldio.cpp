@@ -74,24 +74,24 @@ void savec(cube *c, gzFile f)
                 gzwrite(f, c[i].edges, 12);
             };
             loopj(6) writeushort(f, c[i].texture[j]);
+            uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0) | (c[i].normals ? 0x40 : 0);
+            if(c[i].normals) loopj(6) if(c[i].normals[j].normals[0] != bvec(128, 128, 128)) mask |= 1 << j;
             // save surface info for lighting
             if(!c[i].surfaces)
             {
-                if(c[i].material != MAT_AIR)
+                gzputc(f, mask);
+                if(c[i].material != MAT_AIR) gzputc(f, c[i].material);
+                if(c[i].normals) loopj(6) if(mask & (1 << j))
                 {
-                    gzputc(f, 0x80);
-                    gzputc(f, c[i].material);
-                }
-                else
-                    gzputc(f, 0);
+                    loopk(sizeof(surfaceinfo)) gzputc(f, 0);
+                    gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
+                }; 
             }
             else
             {
-                uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0) | (c[i].normals ? 0x40 : 0);
-                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED || (c[i].normals && c[i].normals[j].normals[0] != bvec(128, 128, 128))) mask |= 1 << j;
+                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED) mask |= 1 << j;
                 gzputc(f, mask);
-                if(c[i].material != MAT_AIR)
-                    gzputc(f, c[i].material);
+                if(c[i].material != MAT_AIR) gzputc(f, c[i].material);
                 loopj(6) if(mask & (1 << j))
                 {
                     surfaceinfo tmp = c[i].surfaces[j];
@@ -131,10 +131,10 @@ void loadc(gzFile f, cube &c)
     else
     {
         uchar mask = gzgetc(f);
-        if(mask & 0x80)
-            c.material = gzgetc(f);
+        if(mask & 0x80) c.material = gzgetc(f);
         if(mask & 0x3F)
         {
+            uchar lit = 0;
             newsurfaces(c);
             if(mask & 0x40) newnormals(c);
             loopi(6)
@@ -151,9 +151,10 @@ void loadc(gzFile f, cube &c)
                     };
                     if(mask & 0x40) gzread(f, &c.normals[i], sizeof(surfacenormals));
                 }
-                else
-                    c.surfaces[i].lmid = LMID_AMBIENT;
+                else c.surfaces[i].lmid = LMID_AMBIENT;
+                if(c.surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
             };
+            if(!lit) freesurfaces(c);
         };
     };
     c.children = (haschildren ? loadchildren(f) : NULL);
