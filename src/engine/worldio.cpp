@@ -11,6 +11,8 @@ void backup(char *name, char *backupname)
 
 string cgzname, bakname, pcfname, mcfname;
 
+VARP(savebak, 0, 2, 2);
+
 void setnames(const char *fname)
 {
     string name, pakname, mapname;
@@ -27,7 +29,8 @@ void setnames(const char *fname)
         s_strcpy(mapname, name);
     };
     s_sprintf(cgzname)("packages/%s/%s.ogz",      pakname, mapname);
-    s_sprintf(bakname)("packages/%s/%s_%d.BAK",   pakname, mapname, lastmillis);
+    if(savebak==1) s_sprintf(bakname)("packages/%s/%s.BAK", pakname, mapname);
+    else s_sprintf(bakname)("packages/%s/%s_%d.BAK", pakname, mapname, lastmillis);
     s_sprintf(pcfname)("packages/%s/package.cfg", pakname);
     s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, mapname);
 
@@ -168,7 +171,7 @@ void save_world(char *mname, bool nolms)
 {
     if(!*mname) mname = cl->getclientmap();
     setnames(mname);
-    backup(cgzname, bakname);
+    if(savebak) backup(cgzname, bakname);
     gzFile f = gzopen(cgzname, "wb9");
     if(!f) { conoutf("could not write map to %s", cgzname); return; };
     hdr.version = MAPVERSION;
