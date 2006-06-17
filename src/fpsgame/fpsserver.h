@@ -356,18 +356,17 @@ struct fpsserver : igameserver
             case SV_SPECTATOR:
             {
                 int spectator = getint(p), val = getint(p);
-                if((ci->master && spectator>=0 && spectator<getnumclients()) || spectator==sender)
+                if(!ci->master && spectator!=sender) return false;
+                if(spectator<0 || spectator>=getnumclients()) return false;
+                clientinfo *spinfo = (clientinfo *)getinfo(spectator);
+                if(!spinfo) return false;
+                if(!spinfo->spectator && val)
                 {
-                    clientinfo *spinfo = (clientinfo *)getinfo(spectator);
-                    if(!spinfo) break;
-                    if(!spinfo->spectator && val)
-                    {
-                        spinfo->state = CS_SPECTATOR;
-                        if(m_capture) cps.leavebases(spinfo->team, spinfo->o);
-                    };
-                    spinfo->spectator = val!=0;
-                    sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
+                    spinfo->state = CS_SPECTATOR;
+                    if(m_capture) cps.leavebases(spinfo->team, spinfo->o);
                 };
+                spinfo->spectator = val!=0;
+                sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
                 break;
             };
 
