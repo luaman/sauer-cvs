@@ -994,7 +994,9 @@ void convertlightmap(LightMap &lmc, LightMap &lml)
     };
 };
 
-VAR(convertlms, 0, 1, 1);
+void initlights();
+
+VARF(convertlms, 0, 1, 1, initlights());
 
 void initlights()
 {
