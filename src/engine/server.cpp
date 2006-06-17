@@ -200,6 +200,7 @@ void disconnect_client(int n, int reason)
     enet_peer_disconnect(clients[n]->peer, reason);
     sv->clientdisconnect(n);
     clients[n]->type = ST_EMPTY;
+    clients[n]->peer->data = NULL;
     sv->sendservmsg(s);
 };
 
@@ -421,25 +422,29 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             if(!(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
             else disconnect_client(c.num, reason);
             break;
-        }
+        };
         case ENET_EVENT_TYPE_RECEIVE:
+        {
             brec += event.packet->dataLength;
-            switch(event.channelID)
+            client *c = (client *)event.peer->data;
+            if(c) switch(event.channelID)
             {
-                case 0: process(event.packet, ((client *)event.peer->data)->num); break;
-                case 1: sv->receivefile(((client *)event.peer->data)->num, event.packet->data, (int)event.packet->dataLength); break;
+                case 0: process(event.packet, c->num); break;
+                case 1: sv->receivefile(c->num, event.packet->data, (int)event.packet->dataLength); break;
             }; 
             if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
             break;
-
+        };
         case ENET_EVENT_TYPE_DISCONNECT: 
-            if(!event.peer->data) break;
-            int num = ((client *)event.peer->data)->num;
-            printf("disconnected client (%s)\n", clients[num]->hostname);
-            sv->clientdisconnect(num);
-            clients[num]->type = ST_EMPTY;
+        {
+            client *c = (client *)event.peer->data;
+            if(!c) break;
+            printf("disconnected client (%s)\n", c->hostname);
+            sv->clientdisconnect(c->num);
+            c->type = ST_EMPTY;
             event.peer->data = NULL;
             break;
+        };
     };
 };
 

@@ -47,11 +47,11 @@ enet/Makefile:
 	cd enet; ./configure
 	
 libenet: enet/Makefile
-	-make -C enet/ all
+	$(MAKE) -C enet/ all
 
 clean: enet/Makefile
-	-rm -f $(SERVER_OBJS) $(CLIENT_OBJS) sauer_server sauer_client
-	-make -C enet/ clean
+	-$(RM) $(SERVER_OBJS) $(CLIENT_OBJS) sauer_server sauer_client
+	$(MAKE) -C enet/ clean
 
 engine/server-standalone.o:
 	$(CXX) $(CXXFLAGS) -DSTANDALONE -c -o engine/server-standalone.o engine/server.cpp

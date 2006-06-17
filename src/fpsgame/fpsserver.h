@@ -194,7 +194,7 @@ struct fpsserver : igameserver
     {
         char text[MAXTRANS];
         int cn = -1, type;
-        clientinfo *ci = sender>=0 ? ((clientinfo *)getinfo(sender)) : NULL;
+        clientinfo *ci = sender>=0 ? (clientinfo *)getinfo(sender) : NULL;
         while(p<end) switch(type = checktype(getint(p), ci))
         {
             case SV_SERVMSG:

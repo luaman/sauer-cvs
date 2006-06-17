@@ -30,18 +30,21 @@ CLIENT_OBJS= \
 	engine/world.o \
 	engine/worldio.o \
 	fpsgame/fps.o \
-
+	rpggame/rpg.o
 
 default: all
 
 all: client
 
-libenet:
-	-mingw32-make -C enet/ all
+enet/Makefile:
+	cd enet; ./configure
+
+libenet: enet/Makefile
+	$(MAKE) -C enet/ all
 
 clean:
-	rm -f $(CLIENT_OBJS)
-	-make -C enet/ clean
+	-$(RM) $(CLIENT_OBJS)
+	$(MAKE) -C enet/ clean
 
 client: $(CLIENT_OBJS)
 	$(CXX) $(CXXFLAGS) -o ../bin/sauerbraten-mingw.exe $(CLIENT_OBJS) $(CLIENT_LIBS)
