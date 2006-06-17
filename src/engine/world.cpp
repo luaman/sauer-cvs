@@ -280,6 +280,7 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
                 case ET_MAPMODEL:
                     e.attr4 = e.attr3;
                     e.attr3 = e.attr2;
+                    e.attr2 = e.attr1;
                 case ET_PLAYERSTART:
                     e.attr1 = (int)player->yaw;
                     break;
