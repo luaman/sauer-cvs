@@ -226,5 +226,7 @@ struct bvec
     bool operator!=(const bvec &v) const { return x!=v.x || y!=v.y || z!=v.z; };
 
     bool iszero() const { return x==0 && y==0 && z==0; };
+
+    vec tovec() const { return vec(x*(2.0f/255.0f)-1.0f, y*(2.0f/255.0f)-1.0f, z*(2.0f/255.0f)-1.0f); };
 };
 

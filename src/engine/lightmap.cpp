@@ -792,6 +792,7 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 
 void resetlightmaps()
 {
+    loopv(lightmaps) DELETEA(lightmaps[i].converted);
     lightmaps.setsize(0);
     compressed.clear();
 };
@@ -976,6 +977,25 @@ void updateentlighting()
     loopv(ents) lightent(*ents[i]);
 };
 
+void convertlightmap(LightMap &lmc, LightMap &lml)
+{
+    lmc.converted = new uchar[3 * LM_PACKW * LM_PACKH];
+    uchar *conv = lmc.converted;
+    const bvec *l = (const bvec *)lml.data;
+    for(const uchar *c = lmc.data, *end = &lmc.data[sizeof(lmc.data)]; c < end; c += 3, l++, conv += 3)
+    {
+        int z = int(l->z)*2 - 255,
+            r = (int(c[0]) * z) / 255,
+            g = (int(c[1]) * z) / 255,
+            b = (int(c[2]) * z) / 255;
+        conv[0] = max(r, ambient);
+        conv[1] = max(g, ambient);
+        conv[2] = max(b, ambient);
+    };
+};
+
+VAR(convertlms, 0, 1, 1);
+
 void initlights()
 {
     if(fullbright)
@@ -992,7 +1012,17 @@ void initlights()
     createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
     bvec front(128, 128, 255);
     createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, false, false);
-    loopi(lightmaps.length()) createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, lightmaps[i].data, false, false);
+    loopi(lightmaps.length()) 
+    {
+        LightMap &lm = lightmaps[i];
+        uchar *data = lm.data;
+        if(convertlms && renderpath == R_FIXEDFUNCTION && lm.type == LM_BUMPMAP0)
+        {
+            if(!lm.converted) convertlightmap(lm, lightmaps[i+1]);
+            data = lm.converted;
+        };
+        createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, false, false);
+    };
     clearlightcache();
     updateentlighting();
 };

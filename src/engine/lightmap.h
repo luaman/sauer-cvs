@@ -32,13 +32,13 @@ enum { LM_NORMAL = 0, LM_BUMPMAP0, LM_BUMPMAP1 };
 
 struct LightMap
 {
-    uchar data[3 * LM_PACKW * LM_PACKH];
+    uchar data[3 * LM_PACKW * LM_PACKH], *converted;
     int type;
     PackNode packroot;
     uint lightmaps, lumels;
     
     LightMap()
-     : type(LM_NORMAL), lightmaps(0), lumels(0)
+     : converted(0), type(LM_NORMAL), lightmaps(0), lumels(0)
     {
         memset(data, 0, sizeof(data));
     };
