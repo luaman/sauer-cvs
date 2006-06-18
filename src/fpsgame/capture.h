@@ -156,9 +156,13 @@ struct captureclient : capturestate
     void sendammo()
     {
         fpsent *target = cl.pointatplayer();
-        if(!target || strcmp(target->team, cl.player1->team) || cl.player1->o.dist(target->o) > REPAMMODIST) return;
+        if(!target || strcmp(target->team, cl.player1->team) || cl.player1->o.dist(target->o) > REPAMMODIST) 
+        {
+            conoutf("no teammate in range");
+            return;
+        };
         conoutf("replenished %s's ammo", target->name);
-        cl.cc.addmsg(1, 5, SV_REPAMMO, cl.cc.clientnum, cl.cc.clientnumof(target), cl.spawngun1, cl.spawngun2);
+        cl.cc.addmsg(1, 4, SV_REPAMMO, cl.cc.clientnumof(target), cl.spawngun1, cl.spawngun2);
     };
 
     void recvammo(fpsent *from, int gun1, int gun2)

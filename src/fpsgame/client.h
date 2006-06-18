@@ -295,10 +295,12 @@ struct clientcom : iclientcom
             };
 
             case SV_SOUND:
+                if(!d) return;
                 playsound(getint(p), &d->o);
                 break;
 
             case SV_TEXT:
+                if(!d) return;
                 sgetstr(text, p);
                 s_sprintfd(ds)("@%s", &text);
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
@@ -334,6 +336,7 @@ struct clientcom : iclientcom
 
             case SV_INITC2S:            // another client either connected or changed name/team
             {
+                if(!d) return;
                 sgetstr(text, p);
                 if(d->name[0])          // already connected
                 {
@@ -370,6 +373,7 @@ struct clientcom : iclientcom
 
             case SV_SHOT:
             {
+                if(!d) return;
                 int gun = getint(p);
                 vec s, e;
                 s.x = getint(p)/DMF;
@@ -388,6 +392,7 @@ struct clientcom : iclientcom
 
             case SV_DAMAGE:
             {
+                if(!d) return;
                 int target = getint(p);
                 int damage = getint(p);
                 int ls = getint(p);
@@ -412,6 +417,7 @@ struct clientcom : iclientcom
 
             case SV_DIED:
             {
+                if(!d) return;
                 int actor = getint(p);
                 if(actor==cn)
                 {
@@ -454,8 +460,9 @@ struct clientcom : iclientcom
 
             case SV_FRAGS:
             {
-                s_sprintfd(ds)("@%d", cl.players[cn]->frags = getint(p));
-                particle_text(cl.players[cn]->abovehead(), ds, 9);
+                if(!d) return;
+                s_sprintfd(ds)("@%d", d->frags = getint(p));
+                particle_text(d->abovehead(), ds, 9);
                 break;
             };
 
@@ -471,6 +478,7 @@ struct clientcom : iclientcom
 
             case SV_ITEMPICKUP:
             {
+                if(!d) return;
                 int i = getint(p);
                 getint(p);
                 if(!cl.et.ents.inrange(i)) break;
@@ -505,6 +513,7 @@ struct clientcom : iclientcom
             case SV_ROTATE:
             case SV_REPLACE:
             {
+                if(!d) return;
                 selinfo sel;
                 sel.o.x = getint(p); sel.o.y = getint(p); sel.o.z = getint(p);
                 sel.s.x = getint(p); sel.s.y = getint(p); sel.s.z = getint(p);
@@ -527,6 +536,7 @@ struct clientcom : iclientcom
             };
             case SV_EDITENT:            // coop edit of ent
             {
+                if(!d) return;
                 int i = getint(p);
                 float x = getint(p)/DMF, y = getint(p)/DMF, z = getint(p)/DMF;
                 int type = getint(p);
@@ -541,7 +551,8 @@ struct clientcom : iclientcom
                 break;
 
             case SV_CLIENTPING:
-                cl.players[cn]->ping = getint(p);
+                if(!d) return;
+                d->ping = getint(p);
                 break;
 
             case SV_GAMEMODE:
@@ -622,10 +633,10 @@ struct clientcom : iclientcom
 
             case SV_REPAMMO:
             {
-                int from = getint(p), target = getint(p), gun1 = getint(p), gun2 = getint(p);
+                if(!d) return;
+                int target = getint(p), gun1 = getint(p), gun2 = getint(p);
                 int gamemode = cl.gamemode;
-                fpsent *f = cl.getclient(from);
-                if(m_capture && target==clientnum && f) cl.cpc.recvammo(f, gun1, gun2);
+                if(m_capture && target==clientnum) cl.cpc.recvammo(d, gun1, gun2);
                 break;
             };
 
