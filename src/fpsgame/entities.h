@@ -267,7 +267,7 @@ struct entities : icliententities
     };
 
     void resetspawns() { loopv(ents) ents[i]->spawned = false; };
-    void setspawn(int i, bool on) { if(i<ents.length()) ents[i]->spawned = on; };
+    void setspawn(int i, bool on) { if(ents.inrange(i)) ents[i]->spawned = on; };
 
     extentity *newentity() { return new fpsentity(); };
 

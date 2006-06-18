@@ -282,7 +282,7 @@ struct captureclient : capturestate
                 
     void updatebase(int i, const char *owner, const char *enemy, int converted)
     {
-        if(i < 0 || i >= bases.length()) return;
+        if(!bases.inrange(i)) return;
         baseinfo &b = bases[i];
         if(owner[0])
         {

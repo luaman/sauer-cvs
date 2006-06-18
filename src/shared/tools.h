@@ -150,6 +150,8 @@ template <class T> struct vector
         return buf[ulen++];
     };
 
+    bool inrange(int i) const { return i>=0 && i<ulen; };
+
     T &pop() { return buf[--ulen]; };
     T &last() { return buf[ulen-1]; };
     void drop() { buf[--ulen].~T(); };

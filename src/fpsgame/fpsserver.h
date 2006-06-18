@@ -137,7 +137,7 @@ struct fpsserver : igameserver
 
     void pickup(int i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
     {
-        if(i>=sents.length()) return;
+        if(!sents.inrange(i)) return;
         if(sents[i].spawned)
         {
             sents[i].spawned = false;

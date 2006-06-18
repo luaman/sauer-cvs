@@ -85,7 +85,7 @@ struct clientcom : iclientcom
     {
         char *end;
         int n = strtol(arg, &end, 10);
-        if(n<0 || n>=cl.players.length()) return -1;
+        if(!cl.players.inrange(n)) return -1;
         if(*arg && !*end) return n;
         loopi(cl.numdynents())
         {
@@ -361,7 +361,7 @@ struct clientcom : iclientcom
 
             case SV_CDIS:
                 cn = getint(p);
-                if(cn >= cl.players.length() || !(d = cl.players[cn])) break;
+                if(!cl.players.inrange(cn) || !(d = cl.players[cn])) break;
                 conoutf("player %s disconnected", d->name);
                 DELETEP(cl.players[cn]);
                 cleardynentcache();
@@ -472,8 +472,9 @@ struct clientcom : iclientcom
             case SV_ITEMPICKUP:
             {
                 int i = getint(p);
-                cl.et.setspawn(i, false);
                 getint(p);
+                if(!cl.et.ents.inrange(i)) break;
+                cl.et.setspawn(i, false);
                 char *name = cl.et.itemname(i);
                 if(name) particle_text(d->abovehead(), name, 9);
                 if(cl.et.ents[i]->type==I_BOOST && !inited) d->maxhealth += 10;
@@ -483,8 +484,8 @@ struct clientcom : iclientcom
             case SV_ITEMSPAWN:
             {
                 int i = getint(p);
+                if(!cl.et.ents.inrange(i)) break;
                 cl.et.setspawn(i, true);
-                if(i>=cl.et.ents.length()) break;
                 playsound(S_ITEMSPAWN, &cl.et.ents[i]->o);
                 char *name = cl.et.itemname(i);
                 if(name) particle_text(cl.et.ents[i]->o, name, 9);
