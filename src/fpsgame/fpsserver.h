@@ -179,7 +179,7 @@ struct fpsserver : igameserver
     {
         if(ci && ci->local) return type;
         // spectators can only connect and talk
-        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_CDIS, SV_PING, SV_GETMAP };
+        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_PING, SV_GETMAP };
         if(ci && ci->spectator && !ci->master)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
@@ -188,7 +188,7 @@ struct fpsserver : igameserver
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
-        static int servtypes[] = { SV_MAPRELOAD };
+        static int servtypes[] = { SV_MAPRELOAD, SV_SERVMSG, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     };
