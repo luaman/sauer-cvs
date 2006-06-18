@@ -187,6 +187,9 @@ struct fpsserver : igameserver
         };
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
+        // server only messages
+        static int servtypes[] = { SV_MAPRELOAD };
+        if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     };
 
