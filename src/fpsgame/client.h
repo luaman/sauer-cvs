@@ -510,7 +510,7 @@ struct clientcom : iclientcom
                 sel.grid = getint(p); sel.orient = getint(p);
                 sel.cx = getint(p); sel.cxs = getint(p); sel.cy = getint(p), sel.cys = getint(p);
                 sel.corner = getint(p);
-                int dir, mode, tex, newtex, orient, mat, allfaces;
+                int dir, mode, tex, newtex, mat, allfaces;
                 switch(type)
                 {
                     case SV_EDITF: dir = getint(p); mode = getint(p); mpeditface(dir, mode, sel, false); break;
