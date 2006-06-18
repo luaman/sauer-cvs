@@ -371,7 +371,7 @@ struct fpsserver : igameserver
             };
 
             case SV_FORCEINTERMISSION:
-                startintermission();
+                if(m_sp) startintermission();
                 break;
 
             case SV_GETMAP:
