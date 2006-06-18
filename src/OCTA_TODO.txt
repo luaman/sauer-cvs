@@ -29,6 +29,8 @@ eihrul:
 
 
 aard:
+- shader docs
+- default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
 - weird fps issue
 - allow specifying clamp/mipmap for non-diffuse
 - envmapping, non-suck water, bumptextures?
