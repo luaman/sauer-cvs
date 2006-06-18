@@ -327,8 +327,7 @@ int findentity(int type, int index)
 {
     const vector<extentity *> &ents = et->getents();
     for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
-//    if(index>=ents.length()) index = 0;
-    loopj(index) if(ents[j]->type==type) return j;
+    loopj(min(index, ents.length())) if(ents[j]->type==type) return j;
     return -1;
 };
 
