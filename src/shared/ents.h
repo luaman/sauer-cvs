@@ -98,12 +98,17 @@ struct dynent : physent                         // animated characters, or chara
 
     dynent() : physent() { reset(); loopi(2) lastanimswitchtime[i] = -1; };
                
+    void stopmoving()
+    {
+        k_left = k_right = k_up = k_down = jumpnext = false;
+        move = strafe = 0;
+    };
+        
     void reset()
     {
         physent::reset();
-        k_left = k_right = k_up = k_down = jumpnext = false;
+        stopmoving();
     };
-
 };
 
 
