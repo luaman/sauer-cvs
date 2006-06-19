@@ -383,7 +383,8 @@ void texturecombine(Slot &s)
         {
             if(s.sts.length() < 2) break;
             Texture *d = s.sts[1].t;
-            if(d==crosshair || d->bpp!=32 || d->xs>t->xs || d->ys>t->ys) break;
+            // make sure decal tiles perfectly onto base texture
+            if(d==crosshair || d->bpp!=32 || (t->xs%d->xs) || (t->ys%d->ys)) break;
             uchar *decal = new uchar[4*d->xs*d->ys];
             glBindTexture(GL_TEXTURE_2D, d->gl);
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, decal);
