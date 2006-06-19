@@ -224,7 +224,7 @@ paste</pre>
         defines a shader NAME with vertex shader VS and pixel shader PS (both in ARB OpenGL 1.5 assembly format). See data/stdshader.cfg for examples.
         These definitions can be put in map cfg files or anywhere else, and will only be compiled once.
         TYPE indicates what resources the shader provides, or what backup method should be used if the graphics card does not support shaders.
-        TYPE is either 0 for default shader, 1 for bumpmapped shader, or 2 for bumpmapped shader with glowmap.
+        TYPE is either 0 for default shader, 1 for decal shader, 2 for bumpmapped shader, or 3 for bumpmapped shader with glowmap.
         Requires DX9 / shader 2 class hardware (radeon 9500 or better, geforce 5200 or better) to run (older hardware will default to basic rendering).
         <pre>setshader NAME</pre>
         Sets a previously defined shader as the current shader. Any following texture slots (see "texture" command) will have this shader
