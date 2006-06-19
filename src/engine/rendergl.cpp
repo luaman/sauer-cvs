@@ -386,6 +386,7 @@ void texturecombine(Slot &s)
             if(g==crosshair || t->xs!=g->xs || t->ys!=g->ys || t->bpp!=g->bpp) break;
             ShaderParam *color = findshaderparam(s, SHPARAM_PIXEL, 0);
             if(!color) break;
+            puts("blending");
             uchar *glow = new uchar[g->bpp/8*g->xs*g->ys];
             glBindTexture(GL_TEXTURE_2D, g->gl);
             glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, glow);
@@ -396,13 +397,11 @@ void texturecombine(Slot &s)
                 dst++;
                 src++;
             };
-            delete[] glow;
             modified = true;
             break;
         };
     };
     if(modified) createtexture(t->gl, t->xs, t->ys, data, false, true, t->bpp);
-    delete[] data;
 };
 
 Slot &lookuptexture(int slot)
