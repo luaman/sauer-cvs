@@ -1544,7 +1544,7 @@ void renderq()
             {
                 loopj(slot.sts.length()-1)
                 {
-                    glActiveTexture_(GL_TEXTURE0_ARB+j+(s->type==SHADER_NORMALSLMS ? 3 : 2));
+                    glActiveTexture_(GL_TEXTURE0_ARB+j+(s->type>=SHADER_NORMALSLMS ? 3 : 2));
                     glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
                     glActiveTexture_(GL_TEXTURE0_ARB);
                 };
@@ -1584,7 +1584,7 @@ void renderq()
                     glBindTexture(GL_TEXTURE_2D, curlm);
                     lastlm = curlm;
                 };
-                if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
+                if(renderpath!=R_FIXEDFUNCTION && s->type>=SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
                 {
                     glActiveTexture_(GL_TEXTURE2_ARB);
                     glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
@@ -1631,7 +1631,7 @@ void renderq()
                     lastl = l;
                 };
                 
-                if(s->type==SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION) 
+                if(s->type>=SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION) 
                 {
                     glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, orientation_tangent[l]);     
                     glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, orientation_binormal[l]);                    

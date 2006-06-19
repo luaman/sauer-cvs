@@ -337,7 +337,7 @@ void texture(char *seqn, char *name, char *rot)
         if(num<0 || num>=0x10000) return;
     }
     Slot &s = seq && curtexnum ? slots.last() : slots.add();
-    s.shader = curshader;
+    s.shader = curshader ? curshader : defaultshader;
     if(s.params.empty()) loopv(curparams) s.params.add(curparams[i]);
     s.loaded = false;
     if(seq!=s.sts.length()) conoutf("warning: illegal sequence number in texture command for slot %d", curtexnum);
@@ -352,6 +352,59 @@ void texture(char *seqn, char *name, char *rot)
 COMMAND(texturereset, "");
 COMMAND(texture, "sss");
 
+ShaderParam *findshaderparam(Slot &s, int type, int index)
+{
+    loopv(s.params)
+    {
+        ShaderParam &param = s.params[i];
+        if(param.type==type && param.index==index) return &param;
+    };
+    loopv(s.shader->defaultparams)
+    {
+        ShaderParam &param = s.shader->defaultparams[i];
+        if(param.type==type && param.index==index) return &param;
+    };
+    return NULL;
+};
+ 
+void texturecombine(Slot &s)
+{
+    if(s.shader->type<=SHADER_NORMALSLMS || s.sts.empty()) return;
+    Texture *t = s.sts[0].t;
+    if(t==crosshair) return;
+    uchar *data = new uchar[t->bpp/8*t->xs*t->ys]; 
+    GLenum format = t->bpp==24 ? GL_RGB : GL_RGBA;
+    glBindTexture(GL_TEXTURE_2D, t->gl);
+    glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, data);
+    bool modified = false;
+    switch(s.shader->type)
+    {
+        case SHADER_NORMALSLMSGLOW:
+        {
+            if(s.sts.length() < 3) break;
+            Texture *g = s.sts[2].t;
+            if(g==crosshair || t->xs!=g->xs || t->ys!=g->ys || t->bpp!=g->bpp) break;
+            ShaderParam *color = findshaderparam(s, SHPARAM_PIXEL, 0);
+            if(!color) break;
+            uchar *glow = new uchar[g->bpp/8*g->xs*g->ys];
+            glBindTexture(GL_TEXTURE_2D, g->gl);
+            glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, glow);
+            uchar *dst = data, *src = glow;
+            loopi(t->ys) loopj(t->xs) loopk(t->bpp/8)
+            {
+                *dst = min(255, int(*dst) + int(*src * color->val[k]));    
+                dst++;
+                src++;
+            };
+            delete[] glow;
+            modified = true;
+            break;
+        };
+    };
+    if(modified) createtexture(t->gl, t->xs, t->ys, data, false, true, t->bpp);
+    delete[] data;
+};
+
 Slot &lookuptexture(int slot)
 {
     Slot &s = slots[slot>=slots.length() ? 0 : slot];
@@ -362,6 +415,7 @@ Slot &lookuptexture(int slot)
             s_sprintfd(name)("packages/%s", s.sts[i].name);
             s.sts[i].t = textureload(name, s.sts[i].rotation);
         };
+        if(renderpath==R_FIXEDFUNCTION) texturecombine(s);
         s.loaded = true;
     }
     return s;
