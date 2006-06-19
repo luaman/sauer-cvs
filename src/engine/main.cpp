@@ -352,12 +352,12 @@ int main(int argc, char **argv)
 
     log("console");
     persistidents = false;
-    exec("data/stdlib.cfg");
+    if(!execfile("data/stdlib.cfg")) fatal("cannot find data files (you are running from the wrong folder, try .bat file in the main folder)");   // this is the first file we load.
 
     log("gl");
     gl_init(scr_w, scr_h);
     crosshair = textureload(newstring("data/crosshair.png"));
-    if(!crosshair) fatal("could not find core textures (run the .bat, not the .exe)");
+    if(!crosshair) fatal("could not find core textures");
     computescreen("initializing...");
     inbetweenframes = true;
     particleinit();

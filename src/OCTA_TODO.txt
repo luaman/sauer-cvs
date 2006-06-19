@@ -29,15 +29,18 @@ eihrul:
 
 
 aard:
+- add sounds
+- add textures to std cfg/history, idbase? readmes
 - shader docs
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
 - weird fps issue
 - allow specifying clamp/mipmap for non-diffuse
 - envmapping, non-suck water, bumptextures?
 - no dbghelp.dll on win98?
+- ways of doing menu - context sensitive etc
+- fake rigid-body sphere only?
 - $ vs @? var stacks? [] for trees/arrays? other improvements? 
 - start moving some stuff in their own headers
-- ways of doing menu - context sensitive etc
 - rpg start
 - powerup announce | make both powerups not spawn on map start / not be in sync
 - new BAS sounds? | player spawn | sp respawn | menu clicks | specific door sound? | end of level | push button/trigger
