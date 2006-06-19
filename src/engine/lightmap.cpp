@@ -1108,10 +1108,11 @@ void dumplms()
         {
             for(int idx = 0; idx<LM_PACKH; idx++)
             {
-                char *dest = (char *)temp->pixels+3*LM_PACKW*idx;
-                memcpy(dest, (char *)lightmaps[i].data+3*LM_PACKW*(LM_PACKH-1-idx), 3*LM_PACKW);
+                uchar *dest = (uchar *)temp->pixels+temp->pitch*idx;
+                memcpy(dest, lightmaps[i].data+3*LM_PACKW*(LM_PACKH-1-idx), 3*LM_PACKW);
             };
-            s_sprintfd(buf)("lightmap_%s_%d.bmp", cl->getclientmap(), i);
+            char *map = cl->getclientmap(), *name = strrchr(map, '/');
+            s_sprintfd(buf)("lightmap_%s_%d.bmp", name ? name+1 : map, i);
             SDL_SaveBMP(temp, buf);
         };
         SDL_FreeSurface(temp);
