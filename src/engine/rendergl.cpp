@@ -369,7 +369,7 @@ ShaderParam *findshaderparam(Slot &s, int type, int index)
  
 void texturecombine(Slot &s)
 {
-    if(s.shader->type<=SHADER_NORMALSLMS || s.sts.empty()) return;
+    if(s.shader->type==SHADER_DEFAULT || s.shader->type==SHADER_NORMALSLMS || s.sts.empty()) return;
     Texture *t = s.sts[0].t;
     if(t==crosshair) return;
     uchar *data = new uchar[t->bpp/8*t->xs*t->ys]; 
@@ -383,22 +383,22 @@ void texturecombine(Slot &s)
         {
             if(s.sts.length() < 2) break;
             Texture *d = s.sts[1].t;
-            if(d==crosshair || t->xs!=d->xs || t->ys!=d->ys || d->bpp!=32) break;
-            uchar *decal = new uchar[d->bpp/8*d->xs*d->ys];
+            if(d==crosshair || d->bpp!=32 || d->xs>t->xs || d->ys>t->ys) break;
+            uchar *decal = new uchar[4*d->xs*d->ys];
             glBindTexture(GL_TEXTURE_2D, d->gl);
-            glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, decal);
-            uchar *dst = data, *src = decal;
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, decal);
+            uchar *dst = data;
             loopi(t->ys) loopj(t->xs)
             {
+                uchar *src = &decal[4*((i%d->ys)*d->xs + (j%d->xs))];
                 uchar a = src[3];
                 loopk(3)
                 {
-                    *dst = min(255, (int(*src)*int(a) + int(*dst)*int(255 - a))/255);
+                    *dst = (int(*src)*int(a) + int(*dst)*int(255-a))/255;
                     dst++;
                     src++;
                 };
                 if(t->bpp==32) dst++;
-                src++;
             };
             delete[] decal;
             modified = true;
