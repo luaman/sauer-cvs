@@ -366,7 +366,9 @@ ShaderParam *findshaderparam(Slot &s, int type, int index)
     };
     return NULL;
 };
- 
+
+VAR(texcombine, 0, 1, 1);
+
 void texturecombine(Slot &s)
 {
     if(s.shader->type==SHADER_DEFAULT || s.shader->type==SHADER_NORMALSLMS || s.sts.empty()) return;
@@ -441,7 +443,7 @@ Slot &lookuptexture(int slot)
             s_sprintfd(name)("packages/%s", s.sts[i].name);
             s.sts[i].t = textureload(name, s.sts[i].rotation);
         };
-        if(renderpath==R_FIXEDFUNCTION) texturecombine(s);
+        if(texcombine && renderpath==R_FIXEDFUNCTION) texturecombine(s);
         s.loaded = true;
     }
     return s;
