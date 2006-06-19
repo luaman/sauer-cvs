@@ -379,6 +379,32 @@ void texturecombine(Slot &s)
     bool modified = false;
     switch(s.shader->type)
     {
+        case SHADER_DECAL:
+        {
+            if(s.sts.length() < 2) break;
+            Texture *d = s.sts[1].t;
+            if(d==crosshair || t->xs!=d->xs || t->ys!=d->ys || d->bpp!=32) break;
+            uchar *decal = new uchar[d->bpp/8*d->xs*d->ys];
+            glBindTexture(GL_TEXTURE_2D, d->gl);
+            glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, decal);
+            uchar *dst = data, *src = decal;
+            loopi(t->ys) loopj(t->xs)
+            {
+                uchar a = src[3];
+                loopk(3)
+                {
+                    *dst = min(255, (int(*src)*int(a) + int(*dst)*int(255 - a))/255);
+                    dst++;
+                    src++;
+                };
+                if(t->bpp==32) dst++;
+                src++;
+            };
+            delete[] decal;
+            modified = true;
+            break;
+        };
+
         case SHADER_NORMALSLMSGLOW:
         {
             if(s.sts.length() < 3) break;
@@ -386,7 +412,6 @@ void texturecombine(Slot &s)
             if(g==crosshair || t->xs!=g->xs || t->ys!=g->ys || t->bpp!=g->bpp) break;
             ShaderParam *color = findshaderparam(s, SHPARAM_PIXEL, 0);
             if(!color) break;
-            puts("blending");
             uchar *glow = new uchar[g->bpp/8*g->xs*g->ys];
             glBindTexture(GL_TEXTURE_2D, g->gl);
             glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, glow);
@@ -397,11 +422,13 @@ void texturecombine(Slot &s)
                 dst++;
                 src++;
             };
+            delete[] glow;
             modified = true;
             break;
         };
     };
     if(modified) createtexture(t->gl, t->xs, t->ys, data, false, true, t->bpp);
+    delete[] data;
 };
 
 Slot &lookuptexture(int slot)
