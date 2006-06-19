@@ -298,8 +298,8 @@ int sicompare(const serverinfo *a, const serverinfo *b)
 {
     bool ac = sv->servercompatible(a->name, a->sdesc, a->map, a->ping, a->attr, a->numplayers),
          bc = sv->servercompatible(b->name, b->sdesc, b->map, b->ping, b->attr, b->numplayers);
-    if(bc>ac) return -1;   
-    if(ac>bc) return 1;
+    if(ac>bc) return -1;
+    if(bc>ac) return 1;   
     if(a->ping>b->ping) return 1;
     if(a->ping<b->ping) return -1;
     return strcmp(a->name, b->name);
