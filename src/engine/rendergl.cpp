@@ -417,13 +417,13 @@ void texturecombine(Slot &s)
         {
             if(s.sts.length() < 3) break;
             Texture *g = s.sts[2].t;
-            if(g==crosshair || t->xs!=g->xs || t->ys!=g->ys || t->bpp!=g->bpp) break;
+            if(g==crosshair || t->xs!=g->xs || t->ys!=g->ys || t->bpp<g->bpp) break;
             ShaderParam *color = findshaderparam(s, SHPARAM_PIXEL, 0);
             if(!color) break;
             readtex(g, glow);
             writetex(t, data,
                 sourcetex(src, g, glow);
-                loopk(t->bpp/8) dst[k] = min(255, int(dst[k]) + int(src[k] * color->val[k]));    
+                loopk(g->bpp/8) dst[k] = min(255, int(dst[k]) + int(src[k] * color->val[k]));    
             );
             delete[] glow;
             modified = true;
