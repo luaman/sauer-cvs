@@ -498,7 +498,7 @@ void initgame(char *game)
     };
 }
 
-int uprate = 0;
+int uprate = 0, maxclients = 0;
 char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
 
@@ -516,7 +516,7 @@ void initserver(bool dedicated)
     {
         ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
         if(*ip && !resolverwait(ip, &address)) printf("WARNING: server ip not resolved");
-        serverhost = enet_host_create(&address, MAXCLIENTS, 0, uprate);
+        serverhost = enet_host_create(&address, maxclients > 0 ? min(maxclients, MAXCLIENTS) : MAXCLIENTS, 0, uprate);
         if(!serverhost) fatal("could not create server host\n");
         loopi(MAXCLIENTS) serverhost->peers[i].data = (void *)-1;
         address.port = sv->serverinfoport();
@@ -543,6 +543,7 @@ bool serveroption(char *opt)
     switch(opt[1])
     {
         case 'u': uprate = atoi(opt+2); return true;
+        case 'c': maxclients = atoi(opt+2); return true;
         case 'n': sdesc = opt+2; return true;
         case 'i': ip = opt+2; return true;
         case 'm': master = opt+2; return true;
@@ -562,4 +563,3 @@ int main(int argc, char* argv[])
     return 0;
 };
 #endif
-
