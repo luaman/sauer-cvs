@@ -504,7 +504,7 @@ struct fpsserver : igameserver
         resetitems();
     };
     
-    void setmaster(clientinfo *ci, bool val, string pass)
+    void setmaster(clientinfo *ci, bool val, char *pass)
     {
         if(val) 
         {
