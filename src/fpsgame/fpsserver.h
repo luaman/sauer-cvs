@@ -564,11 +564,13 @@ struct fpsserver : igameserver
 
     void serverinforeply(uchar *&p)
     {
+        extern int maxclients;
         putint(p, clients.length());
-        putint(p, 3);                   // number of attrs following
+        putint(p, 4);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // a // generic attributes, passed back below
         putint(p, gamemode);            // b
         putint(p, minremain);           // c
+        putint(p, maxclients);
         sendstring(smapname, p);
         sendstring(serverdesc, p);
     };
@@ -580,8 +582,15 @@ struct fpsserver : igameserver
 
     void serverinfostr(char *buf, const char *name, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
+        extern int maxclients;
         if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("[different protocol] %s", name);
-        else s_sprintf(buf)("%d\t%d\t%s, %s: %s %s", ping, np, map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
+        else 
+        {
+            string numcl;
+            if(attr.length()>=4 && attr[3]!=MAXCLIENTS) s_sprintf(numcl)("%d/%d", np, attr[3]);
+            else s_sprintf(numcl)("%d", np);
+            s_sprintf(buf)("%d\t%s\t%s, %s: %s %s", ping, numcl, map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
+        };
     };
 
     void receivefile(int sender, uchar *data, int len)
