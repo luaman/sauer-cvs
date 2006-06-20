@@ -3,15 +3,16 @@
 #include "pch.h"
 #include "engine.h"
 #include "SDL_thread.h"
+
 #ifdef __APPLE__
-#include <pthread.h>
+#define BROKEN_SDL_KILLTHREAD 1
 #endif
 
 struct resolverthread
 {
     SDL_Thread *thread;
     const char *query;
-    int starttime;
+    int starttime, killtime;
 };
 
 struct resolverresult
@@ -33,15 +34,16 @@ SDL_cond *resultcond;
 int resolverloop(void * data)
 {
     resolverthread *rt = (resolverthread *)data;
-    for(;;)
+    int killtime = lastmillis;
+    while(killtime < rt->killtime)
     {
-#ifdef __APPLE__
-		while (SDL_SemWaitTimeout(querysem, 10) == SDL_MUTEX_TIMEDOUT) pthread_testcancel();		
+#ifdef BROKEN_SDL_KILLTHREAD
+        while(SDL_SemWaitTimeout(querysem, 10) == SDL_MUTEX_TIMEDOUT) if(killtime < rt->killtime) return 0;
 #else
 		SDL_SemWait(querysem);
 #endif
 		SDL_LockMutex(resolvermutex);
-        if(resolverqueries.empty())
+        if(killtime < rt->killtime || resolverqueries.empty())
         {
             SDL_UnlockMutex(resolvermutex);
             continue;
@@ -52,6 +54,11 @@ int resolverloop(void * data)
         ENetAddress address = { ENET_HOST_ANY, sv->serverinfoport() };
         enet_address_set_host(&address, rt->query);
         SDL_LockMutex(resolvermutex);
+        if(killtime < rt->killtime)
+        {
+            SDL_UnlockMutex(resolvermutex);
+            break;
+        };
         resolverresult &rr = resolverresults.add();
         rr.query = rt->query;
         rr.address = address;
@@ -74,6 +81,7 @@ void resolverinit()
         resolverthread &rt = resolverthreads.add();
         rt.query = NULL;
         rt.starttime = 0;
+        rt.killtime = 0;
         rt.thread = SDL_CreateThread(resolverloop, &rt);
     };
 };
@@ -81,7 +89,10 @@ void resolverinit()
 void resolverstop(resolverthread &rt, bool restart)
 {
     SDL_LockMutex(resolvermutex);
+    rt.killtime = lastmillis;
+#ifndef BROKEN_SDL_KILLTHREAD
     SDL_KillThread(rt.thread);
+#endif
     rt.query = NULL;
     rt.starttime = 0;
     rt.thread = NULL;
@@ -144,10 +155,6 @@ bool resolvercheck(const char **name, ENetAddress *address)
 
 bool resolverwait(const char *name, ENetAddress *address)
 {
-// TODO: this should be fixed
-#ifdef __APPLE__
-    return enet_address_set_host(address, name) >= 0;
-#else
     if(resolverthreads.empty()) resolverinit();
 
     s_sprintfd(text)("resolving %s... (esc to abort)", name);
@@ -190,7 +197,6 @@ bool resolverwait(const char *name, ENetAddress *address)
     };
     SDL_UnlockMutex(resolvermutex);
     return resolved;
-#endif
 };
 
 struct serverinfo
