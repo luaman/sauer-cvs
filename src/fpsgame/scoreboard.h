@@ -39,7 +39,7 @@ struct scoreboard
                 string name;
                 if(showclientnum) s_sprintf(name)("%s \f(%d)", o->name, !i ? cl.cc.clientnum : i-1);
                 else s_strcpy(name, o->name);
-                if(o->state == CS_SPECTATOR) s_sprintf(scorelines.add().s)("SPECTATOR\t\t\t%s%s", master, o->name);
+                if(o->state == CS_SPECTATOR) s_sprintf(scorelines.add().s)("SPECTATOR\t\t\t%s%s", master, name);
                 else
                 {
                     s_sprintfd(lag)("%d", o->plag);

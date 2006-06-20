@@ -292,7 +292,7 @@ struct captureclient : capturestate
         {
             if(strcmp(b.owner, owner)) { conoutf("%s captured base %d", owner, i); playsound(S_V_BASECAP); };
         }
-        else if(b.owner[0]) { conoutf("%s lost base %d", b.owner, i); playsound(S_V_BASECAP); };
+        else if(b.owner[0]) { conoutf("%s lost base %d", b.owner, i); playsound(S_V_BASELOST); };
         s_strcpy(b.owner, owner);
         s_strcpy(b.enemy, enemy);
         b.converted = converted;

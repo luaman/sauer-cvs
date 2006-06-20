@@ -25,7 +25,7 @@ struct rpgdummyserver : igameserver
 
     void *newinfo() { return NULL; };
     void resetinfo(void *ci) {};
-    void serverinit(char *sdesc) {};
+    void serverinit(char *sdesc, char *adminpass) {};
     void clientdisconnect(int n) {};
     int clientconnect(int n, uint ip) { return DISC_NONE; };
     void localdisconnect(int n) {};

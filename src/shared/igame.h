@@ -70,7 +70,7 @@ struct igameserver
 
     virtual void *newinfo() = 0;
     virtual void resetinfo(void *ci) = 0;
-    virtual void serverinit(char *sdesc) = 0;
+    virtual void serverinit(char *sdesc, char *adminpass) = 0;
     virtual void clientdisconnect(int n) = 0;
     virtual int clientconnect(int n, uint ip) = 0;
     virtual void localdisconnect(int n) = 0;

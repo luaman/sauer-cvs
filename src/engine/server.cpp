@@ -499,7 +499,7 @@ void initgame(char *game)
 }
 
 int uprate = 0;
-char *sdesc = "", *ip = "", *master = NULL;
+char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
 
 void initserver(bool dedicated)
@@ -524,7 +524,7 @@ void initserver(bool dedicated)
         if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
     };
 
-    sv->serverinit(sdesc);
+    sv->serverinit(sdesc, adminpass);
 
     if(dedicated)       // do not return, this becomes main loop
     {
@@ -547,6 +547,7 @@ bool serveroption(char *opt)
         case 'i': ip = opt+2; return true;
         case 'm': master = opt+2; return true;
         case 'g': game = opt+2; return true;
+        case 'p': adminpass = opt+2; return true;
         default: return false;
     };
     

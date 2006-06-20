@@ -14,6 +14,7 @@ struct clientcom : iclientcom
     bool connected, remote;
     int clientnum;
 
+    string setmaster;
     int currentmaster;
     bool spectator;
 
@@ -28,6 +29,7 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
         CCOMMAND(clientcom, mastermode, "s", self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
+        CCOMMAND(clientcom, setmaster, "s", s_strcpy(self->setmaster, args[0]));
         CCOMMAND(clientcom, getmap, "", self->getmap());
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
     };
@@ -188,6 +190,13 @@ struct clientcom : iclientcom
             putint(p, player1->lifesequence);
             putint(p, player1->maxhealth);
             putint(p, player1->frags);
+        };
+        if(setmaster[0])
+        {
+            putint(p, SV_SETMASTER);
+            putint(p, setmaster[1] ? 1 : atoi(setmaster));
+            sendstring(setmaster[1] ? setmaster : "", p);
+            setmaster[0] = '\0';
         };
         int i = 0;
         while(i < messages.length()) // send messages collected during the previous frames

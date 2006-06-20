@@ -64,7 +64,9 @@ struct fpsserver : igameserver
     bool mapreload;
     int lastsec;
     int mastermode;
-    int masterupdate;
+    int currentmaster;
+    bool masterupdate;
+    string masterpass;
     FILE *mapdata;
 
     vector<ban> bannedips;
@@ -74,7 +76,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), masterupdate(-1), mapdata(NULL), cps(*this) {};
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), cps(*this) { masterpass[0] = '\0'; };
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
@@ -123,7 +125,7 @@ struct fpsserver : igameserver
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_GETMAP, 1,
-            SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3,
+            SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0,
             SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4, SV_FORCEINTERMISSION, 1, 
             -1
         };
@@ -179,7 +181,7 @@ struct fpsserver : igameserver
     {
         if(ci && ci->local) return type;
         // spectators can only connect and talk
-        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_PING, SV_GETMAP };
+        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_PING, SV_CLIENTPING, SV_GETMAP };
         if(ci && ci->spectator && !ci->master)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
@@ -386,6 +388,15 @@ struct fpsserver : igameserver
                 else sendf(true, sender, "is", SV_SERVMSG, "no map to send"); 
                 break;
 
+            case SV_SETMASTER:
+            {
+                int val = getint(p);
+                sgetstr(text, p);
+                setmaster(ci, val!=0, text);
+                // don't broadcast the master password
+                return false;
+            };
+
             default:
             {
                 int size = msgsizelookup(type);
@@ -455,8 +466,8 @@ struct fpsserver : igameserver
         
         while(bannedips.length() && bannedips[0].time+4*60*60<lastsec) bannedips.remove(0);
         
-        if(masterupdate>=0) { send2(true, -1, SV_CURRENTMASTER, masterupdate); masterupdate = -1; };
-        
+        if(masterupdate) { send2(true, -1, SV_CURRENTMASTER, currentmaster); masterupdate = false; }; 
+    
         if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
         {
@@ -474,38 +485,32 @@ struct fpsserver : igameserver
         };
     };
 
-    void serverinit(char *sdesc)
+    void serverinit(char *sdesc, char *adminpass)
     {
         s_strcpy(serverdesc, sdesc);
+        if(adminpass) printf("adminpass: %s\n", adminpass), s_strcpy(masterpass, adminpass);
         resetvotes();
         smapname[0] = 0;
         resetitems();
     };
     
-    void findmaster()
+    void setmaster(clientinfo *ci, bool val, string pass)
     {
-        loopv(clients)
+        if(val) 
         {
-            clientinfo *ci = clients[i];
-            if(ci->spectator && !ci->master) continue;
-            masterupdate = ci->clientnum;
-            if(ci->master) return;
-            ci->master = true;
-            mastermode = MM_OPEN;   // reset after master leaves or server clears
-            return;
-        };
+            loopv(clients) if(clients[i]->master)
+            {
+                if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->master = false;
+                else return;
+            };
+        }        
+        else if(!ci->master) return;
+        ci->master = val;
         mastermode = MM_OPEN;
-        if(clients.length()) // spectators can become master if server is empty
-        {
-            clients[0]->master = true;
-            masterupdate = clients[0]->clientnum;
-        }
-        else
-        {
-            bannedips.setsize(0);
-        };
+        currentmaster = val ? ci->clientnum : -1;
+        masterupdate = true;
     };
-    
+
     void localconnect(int n)
     {
         clientinfo *ci = (clientinfo *)getinfo(n);
@@ -529,7 +534,7 @@ struct fpsserver : igameserver
         loopv(bannedips) if(bannedips[i].ip==ip) return DISC_IPBAN;
         if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
         if(mastermode>=MM_LOCKED) ci->spectator = true;
-        findmaster();
+        if(currentmaster>=0) masterupdate = true;
         return DISC_NONE;
     };
 
@@ -539,7 +544,7 @@ struct fpsserver : igameserver
         if(m_capture) cps.leavebases(ci->team, ci->o);
         send2(true, -1, SV_CDIS, n); 
         clients.removeobj(ci);
-        findmaster();  
+        if(clients.empty()) bannedips.setsize(0); // bans clear when server empties
     };
 
     char *servername() { return "sauerbratenserver"; };
