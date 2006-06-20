@@ -280,13 +280,16 @@ hashtable<char *, Texture> textures;
 
 Texture *crosshair = NULL; // used as default, ensured to be loaded
 
-Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg)
+Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg, bool unique)
 {
+    static int unum = 0;
     string rname, tname;
     s_strcpy(tname, name);
     s_strcpy(rname, path(tname));
-    if(rot) { s_sprintfd(rnum)("_%d", rot); s_strcat(rname, rnum); };
 
+    if(unique) { s_sprintfd(usuffix)("_#%d", ++unum); s_strcat(rname, usuffix); }
+    else if(rot) { s_sprintfd(rnum)("_R%d", rot); s_strcat(rname, rnum); };
+    
     Texture *t = textures.access(rname);
     if(t) return t;
 
@@ -367,15 +370,29 @@ ShaderParam *findshaderparam(Slot &s, int type, int index)
     return NULL;
 };
 
+#define readtex(t, data) \
+    uchar *data = new uchar[t->bpp/8*t->xs*t->ys]; \
+    glBindTexture(GL_TEXTURE_2D, t->gl); \
+    glGetTexImage(GL_TEXTURE_2D, 0, t->bpp==24 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data); \
+
+#define writetex(t, data, body) \
+    { \
+        uchar *dst = data; \
+        loop(y, t->ys) loop(x, t->xs) \
+        { \
+            body; \
+            dst += t->bpp/8; \
+        } \
+    }
+
+#define sourcetex(src, s, data) uchar *src = &data[(s->bpp/8)*((y%s->ys)*s->xs + (x%s->xs))];
+
 void texturecombine(Slot &s)
 {
     if(s.shader->type==SHADER_DEFAULT || s.shader->type==SHADER_NORMALSLMS || s.sts.empty()) return;
     Texture *t = s.sts[0].t;
     if(t==crosshair) return;
-    uchar *data = new uchar[t->bpp/8*t->xs*t->ys]; 
-    GLenum format = t->bpp==24 ? GL_RGB : GL_RGBA;
-    glBindTexture(GL_TEXTURE_2D, t->gl);
-    glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, data);
+    readtex(t, data);
     bool modified = false;
     switch(s.shader->type)
     {
@@ -385,22 +402,12 @@ void texturecombine(Slot &s)
             Texture *d = s.sts[1].t;
             // make sure decal tiles perfectly onto base texture
             if(d==crosshair || d->bpp!=32 || (t->xs%d->xs) || (t->ys%d->ys)) break;
-            uchar *decal = new uchar[4*d->xs*d->ys];
-            glBindTexture(GL_TEXTURE_2D, d->gl);
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, decal);
-            uchar *dst = data;
-            loopi(t->ys) loopj(t->xs)
-            {
-                uchar *src = &decal[4*((i%d->ys)*d->xs + (j%d->xs))];
+            readtex(d, decal);
+            writetex(t, data,
+                sourcetex(src, d, decal);
                 uchar a = src[3];
-                loopk(3)
-                {
-                    *dst = (int(*src)*int(a) + int(*dst)*int(255-a))/255;
-                    dst++;
-                    src++;
-                };
-                if(t->bpp==32) dst++;
-            };
+                loopk(3) dst[k] = (int(src[k])*int(a) + int(dst[k])*int(255-a))/255;
+            );
             delete[] decal;
             modified = true;
             break;
@@ -413,16 +420,11 @@ void texturecombine(Slot &s)
             if(g==crosshair || t->xs!=g->xs || t->ys!=g->ys || t->bpp!=g->bpp) break;
             ShaderParam *color = findshaderparam(s, SHPARAM_PIXEL, 0);
             if(!color) break;
-            uchar *glow = new uchar[g->bpp/8*g->xs*g->ys];
-            glBindTexture(GL_TEXTURE_2D, g->gl);
-            glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, glow);
-            uchar *dst = data, *src = glow;
-            loopi(t->ys) loopj(t->xs) loopk(t->bpp/8)
-            {
-                *dst = min(255, int(*dst) + int(*src * color->val[k]));    
-                dst++;
-                src++;
-            };
+            readtex(g, glow);
+            writetex(t, data,
+                sourcetex(src, g, glow);
+                loopk(t->bpp/8) dst[k] = min(255, int(dst[k]) + int(src[k] * color->val[k]));    
+            );
             delete[] glow;
             modified = true;
             break;
@@ -437,12 +439,13 @@ Slot &lookuptexture(int slot)
     Slot &s = slots[slot>=slots.length() ? 0 : slot];
     if(!s.loaded)
     {
+        bool combine = renderpath==R_FIXEDFUNCTION && (s.shader->type==SHADER_DECAL || s.shader->type==SHADER_NORMALSLMSGLOW);
         loopv(s.sts)
         {
             s_sprintfd(name)("packages/%s", s.sts[i].name);
-            s.sts[i].t = textureload(name, s.sts[i].rotation);
+            s.sts[i].t = textureload(name, s.sts[i].rotation, false, true, true, combine);
         };
-        if(renderpath==R_FIXEDFUNCTION) texturecombine(s);
+        if(combine) texturecombine(s);
         s.loaded = true;
     }
     return s;
