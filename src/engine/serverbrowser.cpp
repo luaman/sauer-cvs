@@ -29,7 +29,7 @@ SDL_sem *querysem;
 SDL_cond *resultcond;
 
 #define RESOLVERTHREADS 1
-#define RESOLVERLIMIT 1000
+#define RESOLVERLIMIT 3000
 
 int resolverloop(void * data)
 {
