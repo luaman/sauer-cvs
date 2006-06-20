@@ -11,6 +11,7 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- implement "setmaster N" command
 - remove delay before doors start opening
 - better collision on doors (and maybe any rotated object, while we're at it).
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
@@ -30,7 +31,7 @@ eihrul:
 
 aard:
 - add sounds
-- add textures to std cfg/history, idbase? readmes
+- add textures to std cfg/history, idbase? combine textures ? readmes
 - shader docs
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
 - weird fps issue

@@ -155,6 +155,7 @@ struct fpsclient : igameclient
             {
                 arenarespawnwait = 0;
                 conoutf("new round starting... fight!");
+                playsound(S_V_FIGHT);
                 respawnself();
             };
         }

@@ -304,7 +304,7 @@ struct monsterset
     {
         if(m_dmsp && spawnremain && cl.lastmillis>nextmonster)
         {
-            if(spawnremain--==monstertotal) conoutf("The invasion has begun!");
+            if(spawnremain--==monstertotal) { conoutf("The invasion has begun!"); playsound(S_V_FIGHT); };
             nextmonster = cl.lastmillis+1000;
             spawnmonster();
         };
