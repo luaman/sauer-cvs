@@ -76,7 +76,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), cps(*this) { masterpass[0] = '\0'; };
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), cps(*this) {};
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
@@ -498,7 +498,7 @@ struct fpsserver : igameserver
     void serverinit(char *sdesc, char *adminpass)
     {
         s_strcpy(serverdesc, sdesc);
-        if(adminpass) printf("adminpass: %s\n", adminpass), s_strcpy(masterpass, adminpass);
+        s_strcpy(masterpass, adminpass ? adminpass : "");
         resetvotes();
         smapname[0] = 0;
         resetitems();
