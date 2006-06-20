@@ -35,7 +35,7 @@ int resolverloop(void * data)
 {
     resolverthread *rt = (resolverthread *)data;
     int killtime = lastmillis;
-    while(killtime < rt->killtime)
+    while(killtime >= rt->killtime)
     {
 #ifdef BROKEN_SDL_KILLTHREAD
         while(SDL_SemWaitTimeout(querysem, 10) == SDL_MUTEX_TIMEDOUT) if(killtime < rt->killtime) return 0;
