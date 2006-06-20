@@ -126,7 +126,7 @@ struct fpsserver : igameserver
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_GETMAP, 1,
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0,
-            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4, SV_FORCEINTERMISSION, 1, 
+            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -143,6 +143,7 @@ struct fpsserver : igameserver
         if(sents[i].spawned)
         {
             sents[i].spawned = false;
+            if(sents[i].type==I_QUAD || sents[i].type==I_BOOST) sec += rnd(40)-20;
             sents[i].spawnsecs = sec;
             send2(true, sender, SV_ITEMACC, i);
             if(minremain>=0 && sents[i].type == I_BOOST) findscore(sender, true).maxhealth += 10;
@@ -251,7 +252,8 @@ struct fpsserver : igameserver
                     if(notgotitems)
                     {
                         while(sents.length()<=n) sents.add(se);
-                        sents[n].spawned = true;
+                        if(gamemode>=0 && (sents[n].type==I_QUAD || sents[n].type==I_BOOST)) sents[n].spawnsecs = rnd(60)+20;
+                        else sents[n].spawned = true;
                     };
                 };
                 notgotitems = false;
@@ -452,11 +454,19 @@ struct fpsserver : igameserver
     {
         loopv(sents)        // spawn entities when timer reached
         {
-            if(sents[i].spawnsecs && (sents[i].spawnsecs -= seconds-lastsec)<=0)
+            if(sents[i].spawnsecs)
             {
-                sents[i].spawnsecs = 0;
-                sents[i].spawned = true;
-                send2(true, -1, SV_ITEMSPAWN, i);
+                sents[i].spawnsecs -= seconds-lastsec;
+                if(sents[i].spawnsecs<=0)
+                {
+                    sents[i].spawnsecs = 0;
+                    sents[i].spawned = true;
+                    send2(true, -1, SV_ITEMSPAWN, i);
+                }
+                else if(sents[i].spawnsecs==10 && seconds-lastsec && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
+                {
+                    send2(true, -1, SV_ANNOUNCE, sents[i].type);
+                };
             };
         };
         

@@ -11,7 +11,6 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
-- implement "setmaster N" command
 - remove delay before doors start opening
 - better collision on doors (and maybe any rotated object, while we're at it).
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
@@ -43,7 +42,6 @@ aard:
 - $ vs @? var stacks? [] for trees/arrays? other improvements? 
 - start moving some stuff in their own headers
 - rpg start
-- powerup announce | make both powerups not spawn on map start / not be in sync
 - new BAS sounds? | player spawn | sp respawn | menu clicks | specific door sound? | end of level | push button/trigger
 - speed? seems slow at 1920
 - improve bloom? optimize it.

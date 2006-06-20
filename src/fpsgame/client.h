@@ -652,6 +652,14 @@ struct clientcom : iclientcom
             case SV_GETMAP:
             case SV_FORCEINTERMISSION:
                 break;
+                
+            case SV_ANNOUNCE:
+            {
+                int t = getint(p);
+                if     (t==I_QUAD)  { playsound(S_V_QUAD10);  conoutf("quad damage will spawn in 10 seconds!"); }
+                else if(t==I_BOOST) { playsound(S_V_BOOST10); conoutf("+10 health will spawn in 10 seconds!"); };
+                break;
+            };
 
             default:
                 neterr("type");
