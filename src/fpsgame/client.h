@@ -310,12 +310,14 @@ struct clientcom : iclientcom
                 break;
 
             case SV_TEXT:
+            {
                 if(!d) return;
                 sgetstr(text, p);
                 s_sprintfd(ds)("@%s", &text);
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
                 conoutf("%s:\f %s", d->name, &text);
                 break;
+            };
 
             case SV_MAPCHANGE:
                 sgetstr(text, p);

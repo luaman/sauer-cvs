@@ -324,7 +324,7 @@ void keypress(int code, bool isdown, int cooked)
 
 char *getcurcommand()
 {
-    return saycommandon ? commandbuf : NULL;
+    return saycommandon ? commandbuf : (char *)NULL;
 };
 
 void clear_console()

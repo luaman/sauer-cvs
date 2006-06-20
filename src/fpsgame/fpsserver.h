@@ -573,7 +573,7 @@ struct fpsserver : igameserver
         sendstring(serverdesc, p);
     };
 
-    bool servercompatible(const char *name, const char *sdec, const char *map, int ping, const vector<int> &attr, int np)
+    bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np)
     {
         return attr.length() && attr[0]==PROTOCOL_VERSION;
     };

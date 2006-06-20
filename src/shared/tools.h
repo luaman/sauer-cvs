@@ -72,7 +72,6 @@ typedef unsigned int uint;
 #define _MAXDEFSTR 260
 typedef char string[_MAXDEFSTR];
 
-
 inline void formatstring(char *d, const char *fmt, va_list v) { _vsnprintf(d, _MAXDEFSTR, fmt, v); d[_MAXDEFSTR-1] = 0; };
 inline char *s_strncpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[m-1] = 0; return d; };
 inline char *s_strcpy(char *d, const char *s) { return s_strncpy(d,s,_MAXDEFSTR); };

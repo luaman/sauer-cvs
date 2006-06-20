@@ -294,7 +294,7 @@ void checkpings()
     };
 };
 
-int sicompare(const serverinfo *a, const serverinfo *b)
+int sicompare(serverinfo *a, serverinfo *b)
 {
     bool ac = sv->servercompatible(a->name, a->sdesc, a->map, a->ping, a->attr, a->numplayers),
          bc = sv->servercompatible(b->name, b->sdesc, b->map, b->ping, b->attr, b->numplayers);

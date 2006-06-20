@@ -192,7 +192,7 @@ char *lookup(char *n)                           // find value of ident reference
     ident *id = idents->access(n+1);
     if(id) switch(id->_type)
     {
-        case ID_VAR: string t; itoa(t, *(id->_storage)); return exchangestr(n, t);
+        case ID_VAR: { string t; itoa(t, *(id->_storage)); return exchangestr(n, t); };
         case ID_ALIAS: return exchangestr(n, id->_action);
     };
     conoutf("unknown alias lookup: %s", n+1);

@@ -35,7 +35,7 @@ struct rpgdummyserver : igameserver
     void welcomepacket(uchar *&p, int n) {};
     void serverinforeply(uchar *&p) {};
     void serverupdate(int seconds) {};
-    bool servercompatible(const char *name, const char *sdec, const char *map, int ping, const vector<int> &attr, int np) { return false; };
+    bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np) { return false; };
     void serverinfostr(char *buf, const char *name, const char *desc, const char *map, int ping, const vector<int> &attr, int np) {};
     int serverinfoport() { return 0; };
     int serverport() { return 0; };
