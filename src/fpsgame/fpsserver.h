@@ -582,7 +582,6 @@ struct fpsserver : igameserver
 
     void serverinfostr(char *buf, const char *name, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
-        extern int maxclients;
         if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("[different protocol] %s", name);
         else 
         {
