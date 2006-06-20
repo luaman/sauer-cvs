@@ -38,6 +38,7 @@ struct clientcom : iclientcom
 
     void initclientnet()
     {
+        setmaster[0] = 0;
         ctext[0] = 0;
         toservermap[0] = 0;
     };
