@@ -45,6 +45,7 @@ int resolverloop(void * data)
 		SDL_LockMutex(resolvermutex);
         if(killtime < rt->killtime || resolverqueries.empty())
         {
+            if(!resolverqueries.empty()) SDL_SemPost(querysem);
             SDL_UnlockMutex(resolvermutex);
             continue;
         };
