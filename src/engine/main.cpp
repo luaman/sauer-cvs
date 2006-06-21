@@ -110,7 +110,7 @@ void bar(float bar, int w, int o, float r, float g, float b)
         glVertex2f(side,                      (o+2)*FONTH);
 };
 
-void show_out_of_renderloop_progress(float bar1, char *text1, float bar2, char *text2)   // also used during loading
+void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, const char *text2)   // also used during loading
 {
     if(!inbetweenframes) return;
 

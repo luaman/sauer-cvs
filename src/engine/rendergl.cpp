@@ -280,37 +280,44 @@ hashtable<char *, Texture> textures;
 
 Texture *crosshair = NULL; // used as default, ensured to be loaded
 
-Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg, bool unique)
+static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false, bool mipit = true)
 {
-    static int unum = 0;
+    Texture *t = &textures[newstring(rname)];
+    s_strcpy(t->name, rname);
+    t->bpp = s->format->BitsPerPixel;
+    t->xs = s->w;
+    t->ys = s->h;
+    glGenTextures(1, &t->gl);
+    createtexture(t->gl, t->xs, t->ys, s->pixels, clamp, mipit, t->bpp);
+    SDL_FreeSurface(s);
+    return t;
+};
+
+static SDL_Surface *texturedata(const char *tname, int rot, bool msg = true)
+{
+    show_out_of_renderloop_progress(0, tname);
+
+    SDL_Surface *s = IMG_Load(tname);
+    if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; };
+    int bpp = s->format->BitsPerPixel;
+    if(bpp!=24 && bpp!=32) { SDL_FreeSurface(s); conoutf("texture must be 24 or 32 bpp: %s", tname); return NULL; };
+    loopi(rot) s = rotate(s); // lazy
+    return s;
+};
+
+Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg)
+{
     string rname, tname;
     s_strcpy(tname, name);
-    s_strcpy(rname, path(tname));
+    s_strcpy(rname, name);
 
-    if(unique) { s_sprintfd(usuffix)("_#%d", ++unum); s_strcat(rname, usuffix); }
-    else if(rot) { s_sprintfd(rnum)("_R%d", rot); s_strcat(rname, rnum); };
+    if(rot) { s_sprintfd(rnum)("#%d", rot); s_strcat(rname, rnum); };
     
     Texture *t = textures.access(rname);
     if(t) return t;
 
-    show_out_of_renderloop_progress(0, tname);  
-
-    SDL_Surface *s = IMG_Load(tname);
-    if(!s) { if(msg) conoutf("could not load texture %s", tname); return crosshair; };
-    int bpp = s->format->BitsPerPixel;
-    if(bpp!=24 && bpp!=32) { SDL_FreeSurface(s); conoutf("texture must be 24 or 32 bpp: %s", tname); return crosshair; };
-    
-    t = &textures[newstring(rname)];
-    s_strcpy(t->name, rname);
-    glGenTextures(1, &t->gl);
-    t->bpp = bpp;
-
-    loopi(rot) s = rotate(s); // lazy!
-    createtexture(t->gl, s->w, s->h, s->pixels, clamp, mipit, t->bpp);
-    t->xs = s->w;
-    t->ys = s->h;
-    SDL_FreeSurface(s);
-    return t;
+    SDL_Surface *s = texturedata(path(tname), rot, msg);
+    return s ? newtexture(rname, s, clamp, mipit) : crosshair;
 };
 
 void cleangl()
@@ -331,21 +338,33 @@ int curtexnum = 0;
 
 void texturereset() { curtexnum = 0; slots.setsize(0); };
 
-void texture(char *seqn, char *name, char *rot)
+void texture(char *type, char *name, char *rot)
 {
-    int seq = atoi(seqn);
-    if(!seq)
+    if(curtexnum<0 || curtexnum>=0x10000) return;
+    struct { const char *name; int type; } types[] = 
     {
-        int num = curtexnum++;    
-        if(num<0 || num>=0x10000) return;
-    }
-    Slot &s = seq && curtexnum ? slots.last() : slots.add();
-    s.shader = curshader ? curshader : defaultshader;
+        {"c", TEX_DIFFUSE},
+        {"u", TEX_UNKNOWN},
+        {"d", TEX_DECAL},
+        {"n", TEX_NORMAL},
+        {"ns", TEX_NORMAL_SPEC},
+        {"g", TEX_GLOW},
+        {"s", TEX_SPEC},
+        {"z", TEX_DEPTH},
+    };
+    int tnum = -1;
+    loopi(sizeof(types)/sizeof(types[0])) if(!strcmp(types[i].name, type)) { tnum = i; break; };
+    if(tnum<0) tnum = atoi(type);
+    if(tnum==TEX_DIFFUSE) curtexnum++;
+    else if(!curtexnum) return;
+    Slot &s = tnum!=TEX_DIFFUSE ? slots.last() : slots.add();
+    if(tnum==TEX_DIFFUSE) s.shader = curshader ? curshader : defaultshader;
     if(s.params.empty()) loopv(curparams) s.params.add(curparams[i]);
     s.loaded = false;
-    if(seq!=s.sts.length()) conoutf("warning: illegal sequence number in texture command for slot %d", curtexnum);
-    if(seq>=8) conoutf("warning: too many textures in slot %d", curtexnum);
+    if(s.sts.length()>=8) conoutf("warning: too many textures in slot %d", curtexnum);
     Slot::Tex &st = s.sts.add();
+    st.type = tnum;
+    st.bound = true;
     st.rotation = atoi(rot);
     st.t = NULL;
     s_strcpy(st.name, name);
@@ -370,88 +389,152 @@ ShaderParam *findshaderparam(Slot &s, int type, int index)
     return NULL;
 };
 
-#define readtex(t, data) \
-    uchar *data = new uchar[t->bpp/8*t->xs*t->ys]; \
-    glBindTexture(GL_TEXTURE_2D, t->gl); \
-    glGetTexImage(GL_TEXTURE_2D, 0, t->bpp==24 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data); \
+static int findtextype(Slot &s, int type, int last = -1)
+{
+    for(int i = last+1; i<s.sts.length(); i++) if((type&(1<<s.sts[i].type)) && s.sts[i].bound) return i;
+    return -1;
+};
 
-#define writetex(t, data, body) \
+#define writetex(t, body) \
     { \
-        uchar *dst = data; \
-        loop(y, t->ys) loop(x, t->xs) \
+        uchar *dst = (uchar *)t->pixels; \
+        loop(y, t->h) loop(x, t->w) \
         { \
             body; \
-            dst += t->bpp/8; \
+            dst += t->format->BitsPerPixel/8; \
         } \
     }
 
-#define sourcetex(src, s, data) uchar *src = &data[(s->bpp/8)*((y%s->ys)*s->xs + (x%s->xs))];
+#define sourcetex(t, s) uchar *src = &((uchar *)s->pixels)[(s->format->BitsPerPixel/8)*((y%t->h)*s->w + (x%t->w))];
 
-void texturecombine(Slot &s)
+static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
 {
-    if(s.shader->type==SHADER_DEFAULT || s.shader->type==SHADER_NORMALSLMS || s.sts.empty()) return;
-    Texture *t = s.sts[0].t;
-    if(t==crosshair) return;
-    readtex(t, data);
-    bool modified = false;
-    switch(s.shader->type)
-    {
-        case SHADER_DECAL:
-        {
-            if(s.sts.length() < 2) break;
-            Texture *d = s.sts[1].t;
-            // make sure decal tiles perfectly onto base texture
-            if(d==crosshair || d->bpp!=32 || (t->xs%d->xs) || (t->ys%d->ys)) break;
-            readtex(d, decal);
-            writetex(t, data,
-                sourcetex(src, d, decal);
-                uchar a = src[3];
-                loopk(3) dst[k] = (int(src[k])*int(a) + int(dst[k])*int(255-a))/255;
-            );
-            delete[] decal;
-            modified = true;
-            break;
-        };
+    ShaderParam *cparam = findshaderparam(s, SHPARAM_PIXEL, 0);
+    float color[3] = {1, 1, 1};
+    if(cparam) memcpy(color, cparam->val, sizeof(color));     
+    writetex(c, 
+        sourcetex(c, g);
+        loopk(3) dst[k] = min(255, int(dst[k]) + int(src[k] * color[k]));
+    );
+};
+ 
+static void blenddecal(SDL_Surface *c, SDL_Surface *d)
+{
+    writetex(c,
+        sourcetex(c, d);
+        uchar a = src[3];
+        loopk(3) dst[k] = (int(src[k])*int(a) + int(dst[k])*int(255-a))/255;
+    );
+};
 
-        case SHADER_NORMALSLMSGLOW:
-        {
-            if(s.sts.length() < 3) break;
-            Texture *g = s.sts[2].t;
-            if(g==crosshair || t->xs!=g->xs || t->ys!=g->ys || t->bpp<g->bpp) break;
-            ShaderParam *color = findshaderparam(s, SHPARAM_PIXEL, 0);
-            if(!color) break;
-            readtex(g, glow);
-            writetex(t, data,
-                sourcetex(src, g, glow);
-                loopk(g->bpp/8) dst[k] = min(255, int(dst[k]) + int(src[k] * color->val[k]));    
-            );
-            delete[] glow;
-            modified = true;
+static void mergespec(SDL_Surface *c, SDL_Surface *s)
+{
+    writetex(c,
+        sourcetex(c, s);
+        dst[3] = (int(src[0]) + int(src[1]) + int(src[2]))/3*2; // FIXME: is this *2 needed?
+    );
+};
+
+static void mergedepth(SDL_Surface *c, SDL_Surface *z)
+{
+    writetex(c,
+        sourcetex(c, z);
+        dst[3] = src[0];
+    );
+};
+ 
+static void addname(vector<char> &key, const char *tname, int rot, bool combine = false)
+{
+    string rname;
+    s_strcpy(rname, tname);
+    if(rot) { s_sprintfd(rnum)("#%d", rot); s_strcpy(rname, rnum); };
+    if(combine) key.add('&');
+    const char *s = rname;
+    while(*s) key.add(*s++);
+};
+
+static void texcombine(Slot &s, Slot::Tex &t)
+{
+    vector<char> key;
+    s_sprintfd(tname)("packages/%s", t.name);
+    addname(key, path(tname), t.rotation);
+    SDL_Surface *ts = texturedata(path(tname), t.rotation);
+    switch(t.type)
+    {
+        case TEX_DIFFUSE:
+            if(renderpath!=R_FIXEDFUNCTION) break;
+            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW), i)) >= 0;)
+            {
+                Slot::Tex &b = s.sts[i];
+                b.bound = false;
+                s_sprintfd(bname)("packages/%s", b.name);
+                addname(key, path(bname), b.rotation, true);
+                if(!ts) continue;
+                SDL_Surface *bs = texturedata(path(bname), b.rotation);
+                if(!bs) continue;
+                if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
+                {
+                    case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
+                    case TEX_GLOW: addglow(ts, bs, s); break;
+                };
+                SDL_FreeSurface(bs);
+            };
             break;
-        };
+
+        case TEX_NORMAL:
+        case TEX_GLOW:
+        {
+            if(renderpath==R_FIXEDFUNCTION) break;
+            int i = findtextype(s, (1<<TEX_SPEC)|(1<<TEX_DEPTH));
+            if(i<0) break;
+            Slot::Tex &a = s.sts[i];
+            a.bound = false; 
+            s_sprintfd(aname)("packages/%s", a.name);
+            addname(key, path(aname), a.rotation, true);
+            if(!ts) break;
+            SDL_Surface *as = texturedata(path(aname), a.rotation);
+            if(!as) break;
+            if(ts->format->BitsPerPixel!=32)
+            {
+                SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, ts->w, ts->h, 32, ts->format->Rmask, ts->format->Gmask, ts->format->Bmask, ts->format->Amask);
+                if(!ns) fatal("create surface");
+                SDL_BlitSurface(ts, NULL, ns, NULL);
+                SDL_FreeSurface(ts);
+                ts = ns;
+            };               
+            switch(a.type)
+            {
+                case TEX_SPEC: mergespec(ts, as); break;
+                case TEX_DEPTH: mergedepth(ts, as); break;
+            };
+            SDL_FreeSurface(as);
+            break;
+        };                 
     };
-    if(modified) createtexture(t->gl, t->xs, t->ys, data, false, true, t->bpp);
-    delete[] data;
+    key.add('\0');
+    if(!ts) t.t = crosshair;
+    else
+    {
+        t.t = textures.access(key.getbuf());
+        if(t.t) SDL_FreeSurface(ts);
+        else t.t = newtexture(key.getbuf(), ts);
+    };
 };
 
 Slot &lookuptexture(int slot)
 {
-    Slot &s = slots[slot>=slots.length() ? 0 : slot];
-    if(!s.loaded)
+    Slot &s = slots[slots.inrange(slot) ? slot : 0];
+    if(s.loaded) return s;
+    loopv(s.sts)
     {
-        bool combine = renderpath==R_FIXEDFUNCTION && (s.shader->type==SHADER_DECAL || s.shader->type==SHADER_NORMALSLMSGLOW);
-        loopv(s.sts)
-        {
-            s_sprintfd(name)("packages/%s", s.sts[i].name);
-            s.sts[i].t = textureload(name, s.sts[i].rotation, false, true, true, combine);
-        };
-        if(combine) texturecombine(s);
-        s.loaded = true;
-    }
+        Slot::Tex &t = s.sts[i];
+        if(t.bound) texcombine(s, t);
+    };
+    s.loaded = true;
     return s;
 };
 
-Shader *lookupshader(int slot) { return slot<slots.length() ? slots[slot].shader : defaultshader; };
+Shader *lookupshader(int slot) { return slots.inrange(slot) ? slots[slot].shader : defaultshader; };
 
 VARFP(gamma, 30, 100, 300,
 {

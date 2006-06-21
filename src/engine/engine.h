@@ -48,13 +48,27 @@ struct model
 // each texture slot can have multople texture frames, of which currently only the first is used
 // additional frames can be used for various shaders
 
+enum
+{
+    TEX_DIFFUSE = 0,
+    TEX_UNKNOWN,
+    TEX_DECAL,
+    TEX_NORMAL,
+    TEX_NORMAL_SPEC,
+    TEX_GLOW,
+    TEX_SPEC,
+    TEX_DEPTH
+ };
+
 struct Slot
 {
     struct Tex
     {
+        int type;
         Texture *t;
         string name;
         int rotation;
+        bool bound;
     };
 
     vector<Tex> sts;             
@@ -112,7 +126,7 @@ extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
-extern Texture *textureload(const char *tname, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true, bool unique = false);
+extern Texture *textureload(const char *tname, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true);
 extern Slot    &lookuptexture(int tex);
 extern Shader  *lookupshader(int slot);
 extern Shader  *lookupshaderbyname(const char *name);
@@ -243,7 +257,7 @@ extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);
 
 // lightmap
-extern void show_out_of_renderloop_progress(float bar1, char *text1, float bar2 = 0, char *text2 = NULL);
+extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
 
 // rendermodel
 extern model *loadmodel(const char *name, int i = -1);

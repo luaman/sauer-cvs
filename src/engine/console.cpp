@@ -202,7 +202,7 @@ int histpos = 0;
 void history(int *n)
 {
     static bool rec = false;
-    if(!rec && *n>=0 && *n<vhistory.length())
+    if(!rec && vhistory.inrange(*n))
     {
         rec = true;
         execute(vhistory[vhistory.length()-*n-1]);

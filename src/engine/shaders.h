@@ -17,7 +17,7 @@ struct ShaderParam
     float val[4];
 };
 
-enum { SHADER_DEFAULT = 0, SHADER_DECAL, SHADER_NORMALSLMS, SHADER_NORMALSLMSGLOW };
+enum { SHADER_DEFAULT = 0, SHADER_NORMALSLMS };
 
 struct Shader
 {

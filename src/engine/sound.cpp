@@ -258,7 +258,7 @@ void playsound(int n, const vec *loc)
     if(lastmillis==lastsoundmillis) soundsatonce++; else soundsatonce = 1;
     lastsoundmillis = lastmillis;
     if(soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss and in sp
-    if(n<0 || n>=samplevec.length()) { conoutf("unregistered sound: %d", n); return; };
+    if(!samplevec.inrange(n)) { conoutf("unregistered sound: %d", n); return; };
 
     if(!samplevec[n]->sound)
     {

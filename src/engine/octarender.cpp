@@ -1530,53 +1530,17 @@ void renderq()
 
 
         ushort *ebuf = lod.ebuf;
-        int lastlm = -1, lastsh = -1, lastxs = -1, lastys = -1, lastl = -1;
+        int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
+        Slot *lastslot = NULL;
         loopi(lod.texs)
         {
             Slot &slot = lookuptexture(lod.eslist[i].texture);
             Texture *tex = slot.sts[0].t;
-            glBindTexture(GL_TEXTURE_2D, tex->gl);
-
-            Shader *s = lookupshader(lod.eslist[i].texture);
-            if(s!=curshader) (curshader = s)->set();
-
-            if(renderpath!=R_FIXEDFUNCTION) 
-            {
-                loopj(slot.sts.length()-1)
-                {
-                    glActiveTexture_(GL_TEXTURE0_ARB+j+(s->type>=SHADER_NORMALSLMS ? 3 : 2));
-                    glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
-                    glActiveTexture_(GL_TEXTURE0_ARB);
-                };
-                uint vertparams = 0, pixparams = 0;
-                loopvj(slot.params)
-                {
-                    const ShaderParam &param = slot.params[j];
-                    if(param.type == SHPARAM_VERTEX) 
-                    {
-                        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
-                        vertparams |= 1<<param.index;
-                    }
-                    else 
-                    {
-                        glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
-                        pixparams |= 1<<param.index;
-                    };
-                };
-                loopvj(s->defaultparams)
-                {
-                    const ShaderParam &param = s->defaultparams[j];
-                    if(param.type == SHPARAM_VERTEX) 
-                    {
-                        if(!(vertparams & (1<<param.index))) glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
-                    }
-                    else if(!(pixparams & (1<<param.index))) glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
-                };
-            };
-
+            Shader *s = slot.shader;
+            
             extern vector<GLuint> lmtexids;
             int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
-            if(curlm!=lastlm || s->type!=lastsh)
+            if(curlm!=lastlm || !lastslot || s->type!=lastslot->shader->type)
             {
                 if(curlm!=lastlm)
                 {
@@ -1584,13 +1548,55 @@ void renderq()
                     glBindTexture(GL_TEXTURE_2D, curlm);
                     lastlm = curlm;
                 };
-                if(renderpath!=R_FIXEDFUNCTION && s->type>=SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
+                if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
                 {
                     glActiveTexture_(GL_TEXTURE2_ARB);
                     glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
-                };            
+                };
                 glActiveTexture_(GL_TEXTURE0_ARB);
-                lastsh = s->type;
+            };
+
+            if(&slot!=lastslot)
+            {
+                glBindTexture(GL_TEXTURE_2D, tex->gl);
+                if(s!=curshader) (curshader = s)->set();
+
+                if(renderpath!=R_FIXEDFUNCTION) 
+                {
+                    int tmu = s->type==SHADER_NORMALSLMS ? 3 : 2;
+                    loopj(slot.sts.length()-1)
+                    {
+                        if(!slot.sts[j+1].bound) continue;
+                        glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
+                        glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
+                    };
+                    uint vertparams = 0, pixparams = 0;
+                    loopvj(slot.params)
+                    {
+                        const ShaderParam &param = slot.params[j];
+                        if(param.type == SHPARAM_VERTEX) 
+                        {
+                            glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
+                            vertparams |= 1<<param.index;
+                        }
+                        else 
+                        {
+                            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
+                            pixparams |= 1<<param.index;
+                        };
+                    };
+                    loopvj(s->defaultparams)
+                    {
+                        const ShaderParam &param = s->defaultparams[j];
+                        if(param.type == SHPARAM_VERTEX) 
+                        {
+                            if(!(vertparams & (1<<param.index))) glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
+                        }
+                        else if(!(pixparams & (1<<param.index))) glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
+                    };
+                    glActiveTexture_(GL_TEXTURE0_ARB);
+                };
+                lastslot = &slot;
             };
 
             loopl(3) if (lod.eslist[i].length[l])

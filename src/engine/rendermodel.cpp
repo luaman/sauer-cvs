@@ -92,7 +92,7 @@ void addmapmodel(int *rad, int *h, int *tex, char *name, int *shadow)
 
 void mapmodelreset() { mapmodels.setsize(0); };
 
-mapmodelinfo &getmminfo(int i) { return i>=0 && i<mapmodels.length() ? mapmodels[i].info : *(mapmodelinfo *)0; };
+mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i].info : *(mapmodelinfo *)0; };
 
 COMMANDN(mapmodel, addmapmodel, "iiisi");
 COMMAND(mapmodelreset, "");
@@ -105,7 +105,7 @@ model *loadmodel(const char *name, int i)
 {
     if(!name)
     {
-        if(i<0 || i>=mapmodels.length()) return NULL;
+        if(!mapmodels.inrange(i)) return NULL;
         mapmodel &mm = mapmodels[i];
         if(mm.m) return mm.m;
         name = mm.info.name;
@@ -132,7 +132,7 @@ model *loadmodel(const char *name, int i)
         loadingmodel = NULL;
         mdllookup.access(m->name(), &m);
     };
-    if(i>=0 && i<mapmodels.length() && !mapmodels[i].m) mapmodels[i].m = m;
+    if(mapmodels.inrange(i) && !mapmodels[i].m) mapmodels[i].m = m;
     return m;
 };
 
