@@ -4,15 +4,11 @@
 #include "engine.h"
 #include "SDL_thread.h"
 
-#ifdef __APPLE__
-#define BROKEN_SDL_KILLTHREAD 1
-#endif
-
 struct resolverthread
 {
     SDL_Thread *thread;
     const char *query;
-    int starttime, killtime;
+    int starttime;
 };
 
 struct resolverresult
@@ -25,8 +21,7 @@ vector<resolverthread> resolverthreads;
 vector<const char *> resolverqueries;
 vector<resolverresult> resolverresults;
 SDL_mutex *resolvermutex;
-SDL_sem *querysem;
-SDL_cond *resultcond;
+SDL_cond *querycond, *resultcond;
 
 #define RESOLVERTHREADS 1
 #define RESOLVERLIMIT 3000
@@ -34,39 +29,31 @@ SDL_cond *resultcond;
 int resolverloop(void * data)
 {
     resolverthread *rt = (resolverthread *)data;
-    int killtime = lastmillis;
-    while(killtime >= rt->killtime)
+    SDL_Thread *thread = rt->thread;
+    if(!thread || SDL_GetThreadID(thread) != SDL_ThreadID())
+        return 0;
+    while(thread == rt->thread)
     {
-#ifdef BROKEN_SDL_KILLTHREAD
-        while(SDL_SemWaitTimeout(querysem, 10) == SDL_MUTEX_TIMEDOUT) if(killtime < rt->killtime) return 0;
-#else
-		SDL_SemWait(querysem);
-#endif
-		SDL_LockMutex(resolvermutex);
-        if(killtime < rt->killtime || resolverqueries.empty())
-        {
-            if(!resolverqueries.empty()) SDL_SemPost(querysem);
-            SDL_UnlockMutex(resolvermutex);
-            continue;
-        };
+        SDL_LockMutex(resolvermutex);
+        while(resolverqueries.empty()) SDL_CondWait(querycond, resolvermutex);
         rt->query = resolverqueries.pop();
         rt->starttime = lastmillis;
         SDL_UnlockMutex(resolvermutex);
+
         ENetAddress address = { ENET_HOST_ANY, sv->serverinfoport() };
         enet_address_set_host(&address, rt->query);
+
         SDL_LockMutex(resolvermutex);
-        if(killtime < rt->killtime)
+        if(thread == rt->thread)
         {
-            SDL_UnlockMutex(resolvermutex);
-            break;
+            resolverresult &rr = resolverresults.add();
+            rr.query = rt->query;
+            rr.address = address;
+            rt->query = NULL;
+            rt->starttime = 0;
+            SDL_CondSignal(resultcond);
         };
-        resolverresult &rr = resolverresults.add();
-        rr.query = rt->query;
-        rr.address = address;
-        rt->query = NULL;
-        rt->starttime = 0;
         SDL_UnlockMutex(resolvermutex);
-        SDL_CondBroadcast(resultcond);
     };
     return 0;
 };
@@ -74,7 +61,7 @@ int resolverloop(void * data)
 void resolverinit()
 {
     resolvermutex = SDL_CreateMutex();
-    querysem = SDL_CreateSemaphore(0);
+    querycond = SDL_CreateCond();
     resultcond = SDL_CreateCond();
 
     loopi(RESOLVERTHREADS)
@@ -82,35 +69,36 @@ void resolverinit()
         resolverthread &rt = resolverthreads.add();
         rt.query = NULL;
         rt.starttime = 0;
-        rt.killtime = 0;
         rt.thread = SDL_CreateThread(resolverloop, &rt);
     };
 };
 
-void resolverstop(resolverthread &rt, bool restart)
+void resolverstop(resolverthread &rt)
 {
     SDL_LockMutex(resolvermutex);
-    rt.killtime = lastmillis;
-#ifndef BROKEN_SDL_KILLTHREAD
-    SDL_KillThread(rt.thread);
+    if(rt.query)
+    {
+#ifndef __APPLE__
+        SDL_KillThread(rt.thread);
 #endif
+        rt.thread = SDL_CreateThread(resolverloop, &rt);
+    };
     rt.query = NULL;
     rt.starttime = 0;
-    rt.thread = NULL;
-    if(restart) rt.thread = SDL_CreateThread(resolverloop, &rt);
     SDL_UnlockMutex(resolvermutex);
 }; 
 
 void resolverclear()
 {
+    if(resolverthreads.empty()) return;
+
     SDL_LockMutex(resolvermutex);
     resolverqueries.setsize(0);
     resolverresults.setsize(0);
-    while(SDL_SemTryWait(querysem) == 0);
     loopv(resolverthreads)
     {
         resolverthread &rt = resolverthreads[i];
-        resolverstop(rt, true);
+        resolverstop(rt);
     };
     SDL_UnlockMutex(resolvermutex);
 };
@@ -121,37 +109,33 @@ void resolverquery(const char *name)
 
     SDL_LockMutex(resolvermutex);
     resolverqueries.add(name);
-    SDL_SemPost(querysem);
+    SDL_CondSignal(querycond);
     SDL_UnlockMutex(resolvermutex);
 };
 
 bool resolvercheck(const char **name, ENetAddress *address)
 {
+    bool resolved = false;
     SDL_LockMutex(resolvermutex);
     if(!resolverresults.empty())
     {
         resolverresult &rr = resolverresults.pop();
         *name = rr.query;
         address->host = rr.address.host;
-        SDL_UnlockMutex(resolvermutex);
-        return true;
-    };
-    loopv(resolverthreads)
+        resolved = true;
+    }
+    else loopv(resolverthreads)
     {
         resolverthread &rt = resolverthreads[i];
-        if(rt.query)
+        if(rt.query && lastmillis - rt.starttime > RESOLVERLIMIT)        
         {
-            if(lastmillis - rt.starttime > RESOLVERLIMIT)        
-            {
-                resolverstop(rt, true);
-                *name = rt.query;
-                SDL_UnlockMutex(resolvermutex);
-                return true;
-            };
+            resolverstop(rt);
+            *name = rt.query;
+            resolved = true;
         };    
     };
     SDL_UnlockMutex(resolvermutex);
-    return false;
+    return resolved;
 };
 
 bool resolverwait(const char *name, ENetAddress *address)
@@ -163,7 +147,7 @@ bool resolverwait(const char *name, ENetAddress *address)
 
     SDL_LockMutex(resolvermutex);
     resolverqueries.add(name);
-    SDL_SemPost(querysem);
+    SDL_CondSignal(querycond);
     int starttime = SDL_GetTicks(), timeout = 0;
     bool resolved = false;
     for(;;) 
@@ -193,7 +177,7 @@ bool resolverwait(const char *name, ENetAddress *address)
         loopv(resolverthreads)
         {
             resolverthread &rt = resolverthreads[i];
-            if(rt.query == name) { resolverstop(rt, true); break; };
+            if(rt.query == name) { resolverstop(rt); break; };
         };
     };
     SDL_UnlockMutex(resolvermutex);

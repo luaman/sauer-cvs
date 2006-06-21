@@ -506,7 +506,6 @@ static void texcombine(Slot &s, Slot::Tex &t)
             a.bound = false; 
             s_sprintfd(aname)("packages/%s", a.name);
             addname(key, path(aname), a.rotation, true);
-            addparamsuffix(key, s, a);
             if(!ts) break;
             SDL_Surface *as = texturedata(aname, a.rotation);
             if(!as) break;
