@@ -29,7 +29,7 @@ eihrul:
 
 
 aard:
-- add sounds
+- pitch on hudgun specular
 - add textures to std cfg/history, idbase? combine textures ? readmes
 - shader docs
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
