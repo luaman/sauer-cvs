@@ -29,7 +29,9 @@ SDL_cond *querycond, *resultcond;
 int resolverloop(void * data)
 {
     resolverthread *rt = (resolverthread *)data;
+    SDL_LockMutex(resolvermutex);
     SDL_Thread *thread = rt->thread;
+    SDL_UnlockMutex(resolvermutex);
     if(!thread || SDL_GetThreadID(thread) != SDL_ThreadID())
         return 0;
     while(thread == rt->thread)
@@ -64,6 +66,7 @@ void resolverinit()
     querycond = SDL_CreateCond();
     resultcond = SDL_CreateCond();
 
+    SDL_LockMutex(resolvermutex);
     loopi(RESOLVERTHREADS)
     {
         resolverthread &rt = resolverthreads.add();
@@ -71,6 +74,7 @@ void resolverinit()
         rt.starttime = 0;
         rt.thread = SDL_CreateThread(resolverloop, &rt);
     };
+    SDL_UnlockMutex(resolvermutex);
 };
 
 void resolverstop(resolverthread &rt)
