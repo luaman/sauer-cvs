@@ -582,7 +582,7 @@ struct fpsserver : igameserver
 
     void serverinfostr(char *buf, const char *name, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
-        if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("[different protocol] %s", name);
+        if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("[%s protocol] %s", attr[0]<PROTOCOL_VERSION ? "older" : "newer", name);
         else 
         {
             string numcl;
