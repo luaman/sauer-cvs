@@ -211,7 +211,8 @@ void gets2c()           // get updates from the server
 
         case ENET_EVENT_TYPE_DISCONNECT:
             extern char *disc_reasons[];
-            if(!disconnecting || event.data) conoutf("server network error, disconnecting (%s) ...", disc_reasons[event.data]);
+            if(!disconnecting || event.data) 
+                conoutf("server network error, disconnecting (%s) ...", disc_reasons[event.data>=DISC_NONE && event.data<=DISC_PRIVATE ? event.data : DISC_NONE]);
             disconnect();
             return;
     }
