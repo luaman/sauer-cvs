@@ -27,7 +27,6 @@ eihrul:
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
 
-
 aard:
 - pitch on hudgun specular
 - add textures to std cfg/history, idbase? combine textures ? readmes
