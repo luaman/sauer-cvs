@@ -458,7 +458,7 @@ static void texcombine(Slot &s, Slot::Tex &t)
     vector<char> key;
     s_sprintfd(tname)("packages/%s", t.name);
     addname(key, path(tname), t.rotation);
-    SDL_Surface *ts = texturedata(path(tname), t.rotation);
+    SDL_Surface *ts = texturedata(tname, t.rotation);
     switch(t.type)
     {
         case TEX_DIFFUSE:
@@ -470,7 +470,7 @@ static void texcombine(Slot &s, Slot::Tex &t)
                 s_sprintfd(bname)("packages/%s", b.name);
                 addname(key, path(bname), b.rotation, true);
                 if(!ts) continue;
-                SDL_Surface *bs = texturedata(path(bname), b.rotation);
+                SDL_Surface *bs = texturedata(bname, b.rotation);
                 if(!bs) continue;
                 if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
                 {
@@ -492,7 +492,7 @@ static void texcombine(Slot &s, Slot::Tex &t)
             s_sprintfd(aname)("packages/%s", a.name);
             addname(key, path(aname), a.rotation, true);
             if(!ts) break;
-            SDL_Surface *as = texturedata(path(aname), a.rotation);
+            SDL_Surface *as = texturedata(aname, a.rotation);
             if(!as) break;
             if(ts->format->BitsPerPixel!=32)
             {
