@@ -1656,7 +1656,11 @@ void renderq()
 
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
-    if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_COLOR_ARRAY);
+    if(renderpath!=R_FIXEDFUNCTION) 
+    {
+        glDisableClientState(GL_COLOR_ARRAY);
+        loopi(6) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); };
+    };
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
