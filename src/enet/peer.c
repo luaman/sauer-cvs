@@ -400,7 +400,7 @@ enet_peer_disconnect_now (ENetPeer * peer, enet_uint32 data)
 
         command.header.command = ENET_PROTOCOL_COMMAND_DISCONNECT | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED;
         command.header.channelID = 0xFF;
-        command.disconnect.data = data;
+        command.disconnect.data = ENET_HOST_TO_NET_32 (data);
 
         enet_peer_queue_outgoing_command (peer, & command, NULL, 0, 0);
 
@@ -430,7 +430,7 @@ enet_peer_disconnect (ENetPeer * peer, enet_uint32 data)
 
     command.header.command = ENET_PROTOCOL_COMMAND_DISCONNECT;
     command.header.channelID = 0xFF;
-    command.disconnect.data = data;
+    command.disconnect.data = ENET_HOST_TO_NET_32 (data);
 
     if (peer -> state == ENET_PEER_STATE_CONNECTED)
       command.header.command |= ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;

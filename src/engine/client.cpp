@@ -86,7 +86,7 @@ void disconnect(int onlyclean, int async)
     {
         if(!connecting && !disconnecting) 
         {
-            enet_peer_disconnect(clienthost->peers, ENET_HOST_TO_NET_32(DISC_NONE));
+            enet_peer_disconnect(clienthost->peers, DISC_NONE);
             enet_host_flush(clienthost);
             disconnecting = lastmillis;
         };
@@ -211,7 +211,6 @@ void gets2c()           // get updates from the server
 
         case ENET_EVENT_TYPE_DISCONNECT:
             extern char *disc_reasons[];
-            event.data = ENET_NET_TO_HOST_32(event.data);
             if(event.data>DISC_PRIVATE) event.data = DISC_NONE;
             if(!disconnecting || event.data) conoutf("server network error, disconnecting (%s) ...", disc_reasons[event.data]);
             disconnect();

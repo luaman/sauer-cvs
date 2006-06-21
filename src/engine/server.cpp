@@ -197,7 +197,7 @@ void disconnect_client(int n, int reason)
 {
     s_sprintfd(s)("client (%s) disconnected because: %s\n", clients[n]->hostname, disc_reasons[reason]);
     puts(s);
-    enet_peer_disconnect(clients[n]->peer, ENET_HOST_TO_NET_32(reason));
+    enet_peer_disconnect(clients[n]->peer, reason);
     sv->clientdisconnect(n);
     clients[n]->type = ST_EMPTY;
     clients[n]->peer->data = NULL;

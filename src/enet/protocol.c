@@ -580,7 +580,7 @@ enet_protocol_handle_disconnect (ENetHost * host, ENetPeer * peer, const ENetPro
     else
       peer -> state = ENET_PEER_STATE_ZOMBIE;
 
-    peer -> disconnectData = command -> disconnect.data;
+    peer -> disconnectData = ENET_NET_TO_HOST_32 (command -> disconnect.data);
     return 0;
 }
 
