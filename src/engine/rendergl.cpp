@@ -445,12 +445,25 @@ static void mergedepth(SDL_Surface *c, SDL_Surface *z)
  
 static void addname(vector<char> &key, const char *tname, int rot, bool combine = false)
 {
-    string rname;
-    s_strcpy(rname, tname);
-    if(rot) { s_sprintfd(rnum)("#%d", rot); s_strcpy(rname, rnum); };
-    if(combine) key.add('&');
-    const char *s = rname;
-    while(*s) key.add(*s++);
+    for(const char *s = tname; *s; key.add(*s++));
+    if(rot) 
+    { 
+        s_sprintfd(rnum)("#%d", rot);
+        for(const char *s = rnum; *s; key.add(*s++));
+    };
+};
+
+static void addparamsuffix(vector<char> &key, Slot &s, Slot::Tex &t)
+{
+    switch(t.type)
+    {
+        case TEX_GLOW:
+        {
+            ShaderParam *cparam = findshaderparam(s, SHPARAM_PIXEL, 0);
+            s_sprintfd(suffix)("?%.2f,%.2f,%.2f", cparam ? cparam->val[0] : 1.0f, cparam ? cparam->val[1] : 1.0f, cparam ? cparam->val[2] : 1.0f);
+            for(const char *s = suffix; *s; key.add(*s++));
+        };
+    };
 };
 
 static void texcombine(Slot &s, Slot::Tex &t)
@@ -469,6 +482,7 @@ static void texcombine(Slot &s, Slot::Tex &t)
                 b.bound = false;
                 s_sprintfd(bname)("packages/%s", b.name);
                 addname(key, path(bname), b.rotation, true);
+                addparamsuffix(key, s, b);
                 if(!ts) continue;
                 SDL_Surface *bs = texturedata(bname, b.rotation);
                 if(!bs) continue;
@@ -491,6 +505,7 @@ static void texcombine(Slot &s, Slot::Tex &t)
             a.bound = false; 
             s_sprintfd(aname)("packages/%s", a.name);
             addname(key, path(aname), a.rotation, true);
+            addparamsuffix(key, s, a);
             if(!ts) break;
             SDL_Surface *as = texturedata(aname, a.rotation);
             if(!as) break;
