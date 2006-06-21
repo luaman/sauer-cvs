@@ -431,7 +431,7 @@ static void mergespec(SDL_Surface *c, SDL_Surface *s)
 {
     writetex(c,
         sourcetex(c, s);
-        dst[3] = (int(src[0]) + int(src[1]) + int(src[2]))/3*2; // FIXME: is this *2 needed?
+        dst[3] = (int(src[0]) + int(src[1]) + int(src[2]))/3;
     );
 };
 
