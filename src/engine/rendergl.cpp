@@ -445,6 +445,7 @@ static void mergedepth(SDL_Surface *c, SDL_Surface *z)
  
 static void addname(vector<char> &key, const char *tname, int rot, bool combine = false)
 {
+    if(combine) key.add('&');
     for(const char *s = tname; *s; key.add(*s++));
     if(rot) 
     { 
