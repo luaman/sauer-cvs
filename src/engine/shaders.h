@@ -10,6 +10,8 @@ enum { R_FIXEDFUNCTION = 0, R_ASMSHADER, /* R_GLSLANG */ };
 
 enum { SHPARAM_VERTEX = 0, SHPARAM_PIXEL };
 
+#define MAXSHADERPARAMS 10
+
 struct ShaderParam
 {
     int type;

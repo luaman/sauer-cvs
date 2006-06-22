@@ -83,6 +83,11 @@ COMMAND(setshader, "s");
 
 void setshaderparam(int type, int n, float x, float y, float z, float w)
 {
+    if(n<0 || n>=MAXSHADERPARAMS)
+    {
+        conoutf("shader param index must be 0..%d\n", MAXSHADERPARAMS-1);
+        return;
+    };
     loopv(curparams)
     {
         ShaderParam &param = curparams[i];

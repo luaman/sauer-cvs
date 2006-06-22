@@ -1479,6 +1479,24 @@ void renderq()
 
     glPushMatrix();
 
+    const ShaderParam *curvertparams[MAXSHADERPARAMS], *curpixparams[MAXSHADERPARAMS];
+    memset(curvertparams, 0, sizeof(curvertparams));
+    memset(curpixparams, 0, sizeof(curpixparams));
+
+#define setvertparam(param) \
+    { \
+        if(!curvertparams[param.index] || memcmp(curvertparams[param.index]->val, param.val, sizeof(param.val))) \
+            glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val); \
+        curvertparams[param.index] = &param; \
+    }
+
+#define setpixparam(param) \
+    { \
+        if(!curpixparams[param.index] || memcmp(curpixparams[param.index]->val, param.val, sizeof(param.val))) \
+            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val); \
+        curpixparams[param.index] = &param; \
+    }
+
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         setorigin(va, va == visibleva);
@@ -1531,7 +1549,6 @@ void renderq()
 
         ushort *ebuf = lod.ebuf;
         int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
-        uint vertdefaults = 0, pixdefaults = 0;
         Slot *lastslot = NULL;
         loopi(lod.texs)
         {
@@ -1565,11 +1582,12 @@ void renderq()
                 if(renderpath!=R_FIXEDFUNCTION) 
                 {
                     int tmu = s->type==SHADER_NORMALSLMS ? 3 : 2;
-                    loopj(slot.sts.length()-1)
+                    loopvj(slot.sts)
                     {
-                        if(slot.sts[j+1].combined>=0) continue;
+                        Slot::Tex &t = slot.sts[j];
+                        if(t.type==TEX_DIFFUSE || t.combined>=0) continue;
                         glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
-                        glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
+                        glBindTexture(GL_TEXTURE_2D, t.t->gl);
                     };
                     uint vertparams = 0, pixparams = 0;
                     loopvj(slot.params)
@@ -1577,37 +1595,23 @@ void renderq()
                         const ShaderParam &param = slot.params[j];
                         if(param.type == SHPARAM_VERTEX) 
                         {
-                            glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
+                            setvertparam(param);
                             vertparams |= 1<<param.index;
                         }
                         else 
                         {
-                            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
+                            setpixparam(param);
                             pixparams |= 1<<param.index;
                         };
-                    };
-                    if(!lastslot || s!=lastslot->shader) vertdefaults = pixdefaults = 0;
-                    else
-                    {
-                        vertdefaults &= ~vertparams;
-                        pixdefaults &= ~pixparams;
                     };
                     loopvj(s->defaultparams)
                     {
                         const ShaderParam &param = s->defaultparams[j];
                         if(param.type == SHPARAM_VERTEX) 
                         {
-                            if(!((vertparams|vertdefaults) & (1<<param.index))) 
-                            {
-                                glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
-                                vertdefaults |= 1<<param.index;
-                            };
+                            if(!(vertparams & (1<<param.index))) setvertparam(param);
                         }
-                        else if(!((pixparams|pixdefaults) & (1<<param.index))) 
-                        {
-                            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
-                            pixdefaults |= 1<<param.index;
-                        };
+                        else if(!(pixparams & (1<<param.index))) setpixparam(param);
                     };
                     glActiveTexture_(GL_TEXTURE0_ARB);
                 };
