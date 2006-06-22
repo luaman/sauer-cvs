@@ -228,6 +228,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	[args addObject:[NSString stringWithFormat:@"-w%@", [res objectAtIndex:0]]];
 	[args addObject:[NSString stringWithFormat:@"-h%@", [res objectAtIndex:1]]];
 	
+	[args addObject:@"-z32"];
+	
 	if([fullscreen state] == NSOffState) [args addObject:@"-t"];
 	if([shader state] == NSOffState) [args addObject:@"-f"];
 	if(filename)
