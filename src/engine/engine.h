@@ -68,7 +68,7 @@ struct Slot
         Texture *t;
         string name;
         int rotation;
-        bool bound;
+        int combined;
     };
 
     vector<Tex> sts;             

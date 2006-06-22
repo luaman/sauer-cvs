@@ -1566,7 +1566,7 @@ void renderq()
                     int tmu = s->type==SHADER_NORMALSLMS ? 3 : 2;
                     loopj(slot.sts.length()-1)
                     {
-                        if(!slot.sts[j+1].bound) continue;
+                        if(slot.sts[j+1].combined>=0) continue;
                         glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
                         glBindTexture(GL_TEXTURE_2D, slot.sts[j+1].t->gl);
                     };

@@ -543,7 +543,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
                     case TEX_DEPTH: mergedepth(ts, as); break;
                 };
                 SDL_FreeSurface(as);
-                break;
+                break; // only one combination
             };
             break;
     };
