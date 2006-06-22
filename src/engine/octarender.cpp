@@ -1585,7 +1585,7 @@ void renderq()
                             pixparams |= 1<<param.index;
                         };
                     };
-                    loopvj(s->defaultparams)
+                    if(!lastslot || s!=lastslot->shader || !lastslot->params.empty()) loopvj(s->defaultparams)
                     {
                         const ShaderParam &param = s->defaultparams[j];
                         if(param.type == SHPARAM_VERTEX) 
