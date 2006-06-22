@@ -364,7 +364,7 @@ void texture(char *type, char *name, char *rot)
     if(s.sts.length()>=8) conoutf("warning: too many textures in slot %d", curtexnum);
     Slot::Tex &st = s.sts.add();
     st.type = tnum;
-    st.bound = true;
+    st.combined = -1;
     st.rotation = atoi(rot);
     st.t = NULL;
     s_strcpy(st.name, name);
@@ -391,7 +391,7 @@ ShaderParam *findshaderparam(Slot &s, int type, int index)
 
 static int findtextype(Slot &s, int type, int last = -1)
 {
-    for(int i = last+1; i<s.sts.length(); i++) if((type&(1<<s.sts[i].type)) && s.sts[i].bound) return i;
+    for(int i = last+1; i<s.sts.length(); i++) if((type&(1<<s.sts[i].type)) && s.sts[i].combined<0) return i;
     return -1;
 };
 
@@ -467,33 +467,16 @@ static void addparamsuffix(vector<char> &key, Slot &s, Slot::Tex &t)
     };
 };
 
-static void texcombine(Slot &s, Slot::Tex &t)
+static void texcombine(Slot &s, int index, Slot::Tex &t)
 {
     vector<char> key;
     s_sprintfd(tname)("packages/%s", t.name);
     addname(key, path(tname), t.rotation);
-    SDL_Surface *ts = texturedata(tname, t.rotation);
     switch(t.type)
     {
         case TEX_DIFFUSE:
             if(renderpath!=R_FIXEDFUNCTION) break;
-            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW), i)) >= 0;)
-            {
-                Slot::Tex &b = s.sts[i];
-                b.bound = false;
-                s_sprintfd(bname)("packages/%s", b.name);
-                addname(key, path(bname), b.rotation, true);
-                addparamsuffix(key, s, b);
-                if(!ts) continue;
-                SDL_Surface *bs = texturedata(bname, b.rotation);
-                if(!bs) continue;
-                if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
-                {
-                    case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
-                    case TEX_GLOW: addglow(ts, bs, s); break;
-                };
-                SDL_FreeSurface(bs);
-            };
+            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW), i))>=0; s.sts[i].combined = index);
             break;
 
         case TEX_NORMAL:
@@ -501,39 +484,70 @@ static void texcombine(Slot &s, Slot::Tex &t)
         {
             if(renderpath==R_FIXEDFUNCTION) break;
             int i = findtextype(s, (1<<TEX_SPEC)|(1<<TEX_DEPTH));
-            if(i<0) break;
-            Slot::Tex &a = s.sts[i];
-            a.bound = false; 
-            s_sprintfd(aname)("packages/%s", a.name);
-            addname(key, path(aname), a.rotation, true);
-            if(!ts) break;
-            SDL_Surface *as = texturedata(aname, a.rotation);
-            if(!as) break;
-            if(ts->format->BitsPerPixel!=32)
-            {
-                SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, ts->w, ts->h, 32, ts->format->Rmask, ts->format->Gmask, ts->format->Bmask, ts->format->Amask);
-                if(!ns) fatal("create surface");
-                SDL_BlitSurface(ts, NULL, ns, NULL);
-                SDL_FreeSurface(ts);
-                ts = ns;
-            };               
-            switch(a.type)
-            {
-                case TEX_SPEC: mergespec(ts, as); break;
-                case TEX_DEPTH: mergedepth(ts, as); break;
-            };
-            SDL_FreeSurface(as);
+            if(i>=0) s.sts[i].combined = index;
             break;
         };                 
     };
-    key.add('\0');
-    if(!ts) t.t = crosshair;
-    else
+    loopv(s.sts)
     {
-        t.t = textures.access(key.getbuf());
-        if(t.t) SDL_FreeSurface(ts);
-        else t.t = newtexture(key.getbuf(), ts);
+        Slot::Tex &c = s.sts[i];
+        if(c.combined!=index) continue;
+        s_sprintfd(cname)("packages/%s", c.name);
+        addname(key, path(cname), c.rotation, true);
+        addparamsuffix(key, s, c);
+    };    
+    key.add('\0');
+    t.t = textures.access(key.getbuf());
+    if(t.t) return;
+    SDL_Surface *ts = texturedata(tname, t.rotation);
+    if(!ts) { t.t = crosshair; return; };
+    switch(t.type)
+    {
+        case TEX_DIFFUSE:
+            loopv(s.sts)
+            {
+                Slot::Tex &b = s.sts[i];
+                if(b.combined!=index) continue;
+                s_sprintfd(bname)("packages/%s", b.name);
+                SDL_Surface *bs = texturedata(path(bname), b.rotation);
+                if(!bs) continue;
+                if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
+                { 
+                    case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
+                    case TEX_GLOW: addglow(ts, bs, s); break;
+                };
+                SDL_FreeSurface(bs);
+            };
+            break;        
+
+        case TEX_NORMAL:
+        case TEX_GLOW:
+            loopv(s.sts)
+            {
+                Slot::Tex &a = s.sts[i];
+                if(a.combined!=index) continue;
+                s_sprintfd(aname)("packages/%s", a.name);
+                SDL_Surface *as = texturedata(path(aname), a.rotation);
+                if(!as) break;
+                if(ts->format->BitsPerPixel!=32)
+                {
+                    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, ts->w, ts->h, 32, ts->format->Rmask, ts->format->Gmask, ts->format->Bmask, ts->format->Amask);
+                    if(!ns) fatal("create surface");
+                    SDL_BlitSurface(ts, NULL, ns, NULL);
+                    SDL_FreeSurface(ts);
+                    ts = ns;
+                };
+                switch(a.type)
+                {
+                    case TEX_SPEC: mergespec(ts, as); break;
+                    case TEX_DEPTH: mergedepth(ts, as); break;
+                };
+                SDL_FreeSurface(as);
+                break;
+            };
+            break;
     };
+    t.t = newtexture(key.getbuf(), ts);
 };
 
 Slot &lookuptexture(int slot)
@@ -543,7 +557,7 @@ Slot &lookuptexture(int slot)
     loopv(s.sts)
     {
         Slot::Tex &t = s.sts[i];
-        if(t.bound) texcombine(s, t);
+        if(t.combined<0) texcombine(s, i, t);
     };
     s.loaded = true;
     return s;
