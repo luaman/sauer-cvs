@@ -338,6 +338,21 @@ int curtexnum = 0;
 
 void texturereset() { curtexnum = 0; slots.setsize(0); };
 
+ShaderParam *findshaderparam(Slot &s, int type, int index)
+{
+    loopv(s.params)
+    {
+        ShaderParam &param = s.params[i];
+        if(param.type==type && param.index==index) return &param;
+    };
+    loopv(s.shader->defaultparams)
+    {
+        ShaderParam &param = s.shader->defaultparams[i];
+        if(param.type==type && param.index==index) return &param;
+    };
+    return NULL;
+};
+
 void texture(char *type, char *name, char *rot)
 {
     if(curtexnum<0 || curtexnum>=0x10000) return;
@@ -358,8 +373,15 @@ void texture(char *type, char *name, char *rot)
     if(tnum==TEX_DIFFUSE) curtexnum++;
     else if(!curtexnum) return;
     Slot &s = tnum!=TEX_DIFFUSE ? slots.last() : slots.add();
-    if(tnum==TEX_DIFFUSE) s.shader = curshader ? curshader : defaultshader;
-    if(s.params.empty()) loopv(curparams) s.params.add(curparams[i]);
+    if(tnum==TEX_DIFFUSE)
+    {
+        s.shader = curshader ? curshader : defaultshader;
+        loopv(curparams)
+        {
+            ShaderParam &param = curparams[i], *defaultparam = findshaderparam(s, tnum, param.index);    
+            if(!defaultparam || memcmp(param.val, defaultparam->val, sizeof(param.val))) s.params.add(param);
+        };
+    };
     s.loaded = false;
     if(s.sts.length()>=8) conoutf("warning: too many textures in slot %d", curtexnum);
     Slot::Tex &st = s.sts.add();
@@ -373,21 +395,6 @@ void texture(char *type, char *name, char *rot)
 
 COMMAND(texturereset, "");
 COMMAND(texture, "sss");
-
-ShaderParam *findshaderparam(Slot &s, int type, int index)
-{
-    loopv(s.params)
-    {
-        ShaderParam &param = s.params[i];
-        if(param.type==type && param.index==index) return &param;
-    };
-    loopv(s.shader->defaultparams)
-    {
-        ShaderParam &param = s.shader->defaultparams[i];
-        if(param.type==type && param.index==index) return &param;
-    };
-    return NULL;
-};
 
 static int findtextype(Slot &s, int type, int last = -1)
 {
