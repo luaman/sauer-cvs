@@ -28,6 +28,7 @@ eihrul:
 - add entity looping command?
 
 aard:
+- fix the readme!
 - pitch on hudgun specular
 - add textures to std cfg/history, idbase? combine textures ? readmes
 - shader docs
