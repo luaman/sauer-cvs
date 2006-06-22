@@ -1531,6 +1531,7 @@ void renderq()
 
         ushort *ebuf = lod.ebuf;
         int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
+        uint vertdefaults = 0, pixdefaults = 0;
         Slot *lastslot = NULL;
         loopi(lod.texs)
         {
@@ -1585,14 +1586,28 @@ void renderq()
                             pixparams |= 1<<param.index;
                         };
                     };
-                    if(!lastslot || s!=lastslot->shader || !lastslot->params.empty()) loopvj(s->defaultparams)
+                    if(!lastslot || s!=lastslot->shader) vertdefaults = pixdefaults = 0;
+                    else
+                    {
+                        vertdefaults &= ~vertparams;
+                        pixdefaults &= ~pixparams;
+                    };
+                    loopvj(s->defaultparams)
                     {
                         const ShaderParam &param = s->defaultparams[j];
                         if(param.type == SHPARAM_VERTEX) 
                         {
-                            if(!(vertparams & (1<<param.index))) glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
+                            if(!((vertparams|vertdefaults) & (1<<param.index))) 
+                            {
+                                glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val);
+                                vertdefaults |= 1<<param.index;
+                            };
                         }
-                        else if(!(pixparams & (1<<param.index))) glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
+                        else if(!((pixparams|pixdefaults) & (1<<param.index))) 
+                        {
+                            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val);
+                            pixdefaults |= 1<<param.index;
+                        };
                     };
                     glActiveTexture_(GL_TEXTURE0_ARB);
                 };
