@@ -610,6 +610,6 @@ struct fpsserver : igameserver
         mapdata = tmpfile();
         if(!mapdata) return;
         fwrite(data, 1, len, mapdata);
-        sendservmsg("[map uploaded to server, \"getmap\" to receive it]");
+        sendservmsg("[map uploaded to server, \"/getmap\" to receive it]");
     };
 };
