@@ -11,7 +11,6 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
-- optimize redundant texture loading
 - remove delay before doors start opening
 - better collision on doors (and maybe any rotated object, while we're at it).
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
@@ -28,8 +27,9 @@ eihrul:
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
 
-aard:
+aard/everyone:
 - fix the readme!
+- spec/normal mipmapping? tune spec per texture? seperate luns textures. rotation doesn't always preserve normals? glowmaps in the texture browser
 - pitch on hudgun specular
 - add textures to std cfg/history, idbase? combine textures ? readmes
 - shader docs
