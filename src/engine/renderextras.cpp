@@ -34,43 +34,39 @@ void flipnormalmapy(char *destfile, char *normalfile)           // RGB (jpg/png)
     if(ns) SDL_FreeSurface(ns);
 };
 
-void convertnormalheightspec(char *destfile, char *heightfile, char *normalfile, char *specfile)    // BGR (tga) -> BGR (tga) (SDL loads TGA as BGR!)
+void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR (tga) (SDL loads TGA as BGR!)
 {
     SDL_Surface *hs = IMG_Load(heightfile);
     SDL_Surface *ns = IMG_Load(normalfile);
-    SDL_Surface *ss = IMG_Load(specfile);
-    SDL_Surface *s = hs ? hs : (ns ? ns : ss);
-    if(!s) return;
-    uchar def_n[] = { 255, 128, 128 };
-    uchar def_s[] = { 20, 20, 20 };
-    FILE *f = fopen(destfile, "wb");
-    if(f)
+    if(hs && ns)
     {
-        writetgaheader(f, s, 32);
-        for(int y = s->h-1; y>=0; y--) loop(x, s->w) 
+        uchar def_n[] = { 255, 128, 128 };
+        FILE *f = fopen(normalfile, "wb");
+        if(f)
         {
-            int off = (x+y*s->w)*3;
-            uchar *hd = hs ? (uchar *)hs->pixels+off : def_n;
-            uchar *nd = ns ? (uchar *)ns->pixels+off : def_n;
-            uchar *sd = ss ? (uchar *)ss->pixels+off : def_s;
-            #define S(x) x/255.0f*2-1
-            vec n(S(nd[0]), S(nd[1]), S(nd[2]));
-            vec h(S(hd[0]), S(hd[1]), S(hd[2]));
-            n.mul(2).add(h).normalize().add(1).div(2).mul(255);
-            int spec = (sd[0]+sd[1]+sd[2])/3*2;
-            uchar o[4] = { (uchar)n.x, (uchar)n.y, (uchar)n.z, (uchar)spec };
-            fwrite(o, 4, 1, f); 
-            #undef S
+            writetgaheader(f, ns, 24);
+            for(int y = ns->h-1; y>=0; y--) loop(x, ns->w) 
+            {
+                int off = (x+y*ns->w)*3;
+                uchar *hd = hs ? (uchar *)hs->pixels+off : def_n;
+                uchar *nd = ns ? (uchar *)ns->pixels+off : def_n;
+                #define S(x) x/255.0f*2-1
+                vec n(S(nd[0]), S(nd[1]), S(nd[2]));
+                vec h(S(hd[0]), S(hd[1]), S(hd[2]));
+                n.mul(2).add(h).normalize().add(1).div(2).mul(255);
+                uchar o[3] = { (uchar)n.x, (uchar)n.y, (uchar)n.z };
+                fwrite(o, 3, 1, f); 
+                #undef S
+            };
+            fclose(f);
         };
-        fclose(f);
     };
     if(hs) SDL_FreeSurface(hs);
     if(ns) SDL_FreeSurface(ns);
-    if(ss) SDL_FreeSurface(ss);
 };
 
 COMMAND(flipnormalmapy, "ss");
-COMMAND(convertnormalheightspec, "ssss");
+COMMAND(mergenormalmaps, "sss");
 
 void box(block &b, float z1, float z2, float z3, float z4)
 {

@@ -11,6 +11,7 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- optimize redundant texture loading
 - remove delay before doors start opening
 - better collision on doors (and maybe any rotated object, while we're at it).
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
