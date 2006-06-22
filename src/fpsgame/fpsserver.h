@@ -504,7 +504,7 @@ struct fpsserver : igameserver
         resetitems();
     };
     
-    void setmaster(clientinfo *ci, bool val, char *pass)
+    void setmaster(clientinfo *ci, bool val, const char *pass = "")
     {
         if(val) 
         {
@@ -551,6 +551,7 @@ struct fpsserver : igameserver
     void clientdisconnect(int n) 
     { 
         clientinfo *ci = (clientinfo *)getinfo(n);
+        if(ci->master) setmaster(ci, false);
         if(m_capture) cps.leavebases(ci->team, ci->o);
         send2(true, -1, SV_CDIS, n); 
         clients.removeobj(ci);
@@ -566,11 +567,12 @@ struct fpsserver : igameserver
     {
         extern int maxclients;
         putint(p, clients.length());
-        putint(p, 4);                   // number of attrs following
+        putint(p, 5);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // a // generic attributes, passed back below
         putint(p, gamemode);            // b
         putint(p, minremain);           // c
         putint(p, maxclients);
+        putint(p, mastermode);
         sendstring(smapname, p);
         sendstring(serverdesc, p);
     };
@@ -588,6 +590,12 @@ struct fpsserver : igameserver
             string numcl;
             if(attr.length()>=4 && attr[3]!=MAXCLIENTS) s_sprintf(numcl)("%d/%d", np, attr[3]);
             else s_sprintf(numcl)("%d", np);
+            if(attr.length()>=5) switch(attr[4])
+            {
+                case MM_LOCKED: s_strcat(numcl, " L"); break;
+                case MM_PRIVATE: s_strcat(numcl, " P"); break;
+            };
+            
             s_sprintf(buf)("%d\t%s\t%s, %s: %s %s", ping, numcl, map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
         };
     };

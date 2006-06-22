@@ -498,7 +498,7 @@ void initgame(char *game)
     };
 }
 
-int uprate = 0, maxclients = 0;
+int uprate = 0, maxclients = MAXCLIENTS;
 char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
 
