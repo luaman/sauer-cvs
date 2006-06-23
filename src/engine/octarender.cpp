@@ -591,7 +591,7 @@ struct lodcollect
         if(lod.matsurfs) memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
 
         vector<sortkey> keys;
-        enumeratekt(indices, sortkey, k, sortval, t, keys.add(k));
+        enumeratekt(indices, sortkey, k, sortval, t, (t,keys.add(k)));
         keys.sort(texsort);                
         ushort *ebuf = lod.ebuf;
         loopv(keys)

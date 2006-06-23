@@ -252,7 +252,7 @@ void gl_init(int w, int h)
     defaultshader->set();
 };
 
-SDL_Surface *rotate(SDL_Surface *s)
+SDL_Surface *rotate(SDL_Surface *s, bool rotatenormals, int numrots)
 {
     SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->h, s->w, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
     if(!d) fatal("create surface");
@@ -262,6 +262,12 @@ SDL_Surface *rotate(SDL_Surface *s)
         uchar *src = (uchar *)s->pixels+(y*s->w+x)*depth;
         uchar *dst = (uchar *)d->pixels+(x*s->h+(s->h-y)-1)*depth;
         loopi(depth) *dst++=*src++;
+        if(rotatenormals)
+        {
+            dst -= depth; if(numrots>1) *dst = 255-*dst;      // flip X   on normal when 180/270 degrees
+            dst++;        if(numrots<3) *dst = 255-*dst;      // flip Y   on normal when  90/180 degrees
+            if(numrots!=2) swap(uchar, *(dst-1), *dst);       // swap X/Y on normal when  90/270 degrees
+        };
     }; 
     SDL_FreeSurface(s);
     return d;
@@ -298,7 +304,7 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false
     return t;
 };
 
-static SDL_Surface *texturedata(const char *tname, int rot, bool msg = true)
+static SDL_Surface *texturedata(const char *tname, int rot, int type, bool msg = true)
 {
     show_out_of_renderloop_progress(0, tname);
 
@@ -306,11 +312,11 @@ static SDL_Surface *texturedata(const char *tname, int rot, bool msg = true)
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; };
     int bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { SDL_FreeSurface(s); conoutf("texture must be 24 or 32 bpp: %s", tname); return NULL; };
-    loopi(rot) s = rotate(s); // lazy
+    loopi(rot) s = rotate(s, (type==TEX_NORMAL || type==TEX_NORMAL_SPEC) && i==rot-1, rot); // lazy
     return s;
 };
 
-Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg)
+Texture *textureload(const char *name, int type, int rot, bool clamp, bool mipit, bool msg)
 {
     string rname, tname;
     s_strcpy(tname, name);
@@ -321,7 +327,7 @@ Texture *textureload(const char *name, int rot, bool clamp, bool mipit, bool msg
     Texture *t = textures.access(rname);
     if(t) return t;
 
-    SDL_Surface *s = texturedata(path(tname), rot, msg);
+    SDL_Surface *s = texturedata(path(tname), rot, type, msg);
     return s ? newtexture(rname, s, clamp, mipit) : crosshair;
 };
 
@@ -511,7 +517,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
     key.add('\0');
     t.t = textures.access(key.getbuf());
     if(t.t) return;
-    SDL_Surface *ts = texturedata(tname, t.rotation);
+    SDL_Surface *ts = texturedata(tname, t.rotation, t.type);
     if(!ts) { t.t = crosshair; return; };
     switch(t.type)
     {
@@ -521,7 +527,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
                 Slot::Tex &b = s.sts[i];
                 if(b.combined!=index) continue;
                 s_sprintfd(bname)("packages/%s", b.name);
-                SDL_Surface *bs = texturedata(path(bname), b.rotation);
+                SDL_Surface *bs = texturedata(path(bname), b.rotation, t.type);
                 if(!bs) continue;
                 if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
                 { 
@@ -539,7 +545,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
                 Slot::Tex &a = s.sts[i];
                 if(a.combined!=index) continue;
                 s_sprintfd(aname)("packages/%s", a.name);
-                SDL_Surface *as = texturedata(path(aname), a.rotation);
+                SDL_Surface *as = texturedata(path(aname), a.rotation, t.type);
                 if(!as) break;
                 if(ts->format->BitsPerPixel!=32)
                 {

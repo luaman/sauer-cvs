@@ -183,6 +183,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 
         vec camerapos = vec(player->o).sub(vec(x, y, z));
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
+        //camerapos.rotate_around_x(pitch*RAD);
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
 
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, m->spec, m->spec, m->spec, 0);
@@ -215,10 +216,10 @@ int findanim(const char *name)
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m) // model skin sharing
 {
     s_sprintfd(maskspath)("packages/models/%s/masks.jpg", dir);
-    masks = textureload(maskspath, 0, false, true, false);
+    masks = textureload(maskspath, TEX_UNKNOWN, 0, false, true, false);
     if(masks!=crosshair) m->masked = true;
     s_sprintfd(skinpath)("packages/models/%s/skin.jpg", dir);
-    #define ifnload if((skin = textureload(skinpath, 0, false, true, false))==crosshair)
+    #define ifnload if((skin = textureload(skinpath, TEX_UNKNOWN, 0, false, true, false))==crosshair)
     ifnload
     {
         strcpy(skinpath+strlen(skinpath)-3, "png");                       // try png if no jpg

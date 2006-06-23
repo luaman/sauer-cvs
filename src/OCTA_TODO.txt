@@ -29,16 +29,21 @@ eihrul:
 
 aard/everyone:
 - fix the readme!
-- spec/normal mipmapping? tune spec per texture? seperate luns textures. rotation doesn't always preserve normals? glowmaps in the texture browser
+- figure a way to make setting per texture params less expensive
+  * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
+- glowmaps in the texture browser -> messy
+- why rotated normals x8
+- weird fps issue
+
 - pitch on hudgun specular
-- add textures to std cfg/history, idbase? combine textures ? readmes
+- add textures to std cfg
 - shader docs
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
-- weird fps issue
-- allow specifying clamp/mipmap for non-diffuse
-- envmapping, non-suck water, bumptextures?
+- envmapping, non-suck water
 - no dbghelp.dll on win98?
+- better doc on the scripting language
 - ways of doing menu - context sensitive etc
+- spec/normal trilinear filtering?
 - fake rigid-body sphere only?
 - $ vs @? var stacks? [] for trees/arrays? other improvements? 
 - start moving some stuff in their own headers

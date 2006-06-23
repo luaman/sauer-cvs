@@ -688,11 +688,11 @@ void md3skin(char *objname, char *skin, char *masks)
         if(!strcmp(mesh->name, objname))
         {
             s_sprintfd(spath)("%s/%s", basedir, skin);
-            mesh->skin = textureload(spath, 0, false, true, false);
+            mesh->skin = textureload(spath, TEX_UNKNOWN, 0, false, true, false);
             if(*masks)
             {
                 s_sprintfd(mpath)("%s/%s", basedir, masks);
-                mesh->masks = textureload(mpath, 0, false, true, false);
+                mesh->masks = textureload(mpath, TEX_UNKNOWN, 0, false, true, false);
                 loadingmd3->masked = true;
             };
         };
