@@ -568,6 +568,13 @@ struct lodcollect
         matsurfs.setsize(optimizematsurfs(matsurfs.getbuf(), matsurfs.length()));
     };
 
+    static int texsort(const sortkey *x, const sortkey *y)
+    {
+        if(x->tex < y->tex) return -1;
+        if(x->tex > y->tex) return 1;
+        return 0;
+    };
+
     char *setup(lodlevel &lod, char *buf)
     {
         lod.eslist = (elementset *)buf;
@@ -583,18 +590,22 @@ struct lodcollect
         lod.matsurfs = matsurfs.length();
         if(lod.matsurfs) memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
 
+        vector<sortkey> keys;
+        enumeratekt(indices, sortkey, k, sortval, t, keys.add(k));
+        keys.sort(texsort);                
         ushort *ebuf = lod.ebuf;
-        int list = 0;
-        enumeratekt(indices, sortkey, k, sortval, t,
-            lod.eslist[list].texture = k.tex;
-            lod.eslist[list].lmid = k.lmid;
-            loopl(3) if(lod.eslist[list].length[l] = t.dims[l].length())
+        loopv(keys)
+        {
+            const sortkey &k = keys[i];
+            const sortval &t = indices[k];
+            lod.eslist[i].texture = k.tex;
+            lod.eslist[i].lmid = k.lmid;
+            loopl(3) if(lod.eslist[i].length[l] = t.dims[l].length())
             {
                 memcpy(ebuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
                 ebuf += t.dims[l].length();
             };
-            ++list;
-        );
+        };
 
         lod.texs = indices.numelems;
         lod.tris = curtris;
@@ -1469,7 +1480,7 @@ void renderq()
 
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, (float *)&vec4(player->o, 1).mul(2));                        
+        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(player->o, 1).mul(2).v);                        
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
     };
 
@@ -1545,7 +1556,6 @@ void renderq()
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
-
 
         ushort *ebuf = lod.ebuf;
         int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;

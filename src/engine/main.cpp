@@ -363,7 +363,7 @@ int main(int argc, char **argv)
     particleinit();
 
     log("world");
-    player = cl->iterdynents(0);
+    camera1 = player = cl->iterdynents(0);
     empty_world(7, true);
 
     log("sound");

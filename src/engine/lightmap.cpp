@@ -122,10 +122,10 @@ void insert_lightmap(int type, ushort &x, ushort &y, ushort &lmid)
         };
     };
 
+    lmid = lightmaps.length() + LMID_RESERVED;
     LightMap &l = lightmaps.add();
     l.type = type;
     ASSERT(l.insert(x, y, lm, lm_w, lm_h));
-    lmid = lightmaps.length() - 1 + LMID_RESERVED;
     if(type == LM_BUMPMAP0)
     {
         LightMap &r = lightmaps.add();
@@ -412,10 +412,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 };
 
                 if(lmtype == LM_BUMPMAP0)
-                {
-                    if(!ray->iszero()) ray->normalize();
-                    ((bvec *)lm_ray)[ray-lm_ray] = bvec(*ray);
-                };
+                    ((bvec *)lm_ray)[ray-lm_ray] = ray->iszero() ? bvec(128, 128, 255) : bvec(ray->normalize());
             };
             sample += aasample;
         };
@@ -1008,11 +1005,10 @@ void initlights()
     alloctexids();
     uchar unlit[3] = { ambient, ambient, ambient };
     createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, false, false);
-    bvec nodir(128, 128, 128);
-    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &nodir, false, false);
+    bvec front(128, 128, 255);
+    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &front, false, false);
     uchar bright[3] = { 128, 128, 128 };
     createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
-    bvec front(128, 128, 255);
     createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, false, false);
     loopi(lightmaps.length()) 
     {

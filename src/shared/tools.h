@@ -165,8 +165,10 @@ template <class T> struct vector
     void deletecontentsa() { while(!empty()) delete[] pop(); };
     
     T *getbuf() { return buf; };
+    const T *getbuf() const { return buf; };
 
-    void sort(void *cf) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf); };
+    template<class ST>
+    void sort(int (*cf)(ST *, ST *)) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf); };
 
     void *_realloc(void *p, int oldsize, int newsize)
     {

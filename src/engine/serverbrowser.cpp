@@ -305,7 +305,7 @@ void refreshservers()
     checkresolver();
     checkpings();
     if(lastmillis - lastinfo >= 5000) pingservers();
-    servers.sort((void *)sicompare);
+    servers.sort(sicompare);
     //int maxmenu = 16;
     loopv(servers)
     {
