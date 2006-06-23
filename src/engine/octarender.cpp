@@ -570,9 +570,14 @@ struct lodcollect
 
     static int texsort(const sortkey *x, const sortkey *y)
     {
+        if(x->tex == y->tex) return 0;
+        Slot &xs = lookuptexture(x->tex, false), &ys = lookuptexture(y->tex, false);
+        if(xs.shader < ys.shader) return -1;
+        if(xs.shader > ys.shader) return 1;
+        if(xs.params.length() < ys.params.length()) return -1;
+        if(xs.params.length() > ys.params.length()) return 1;
         if(x->tex < y->tex) return -1;
-        if(x->tex > y->tex) return 1;
-        return 0;
+        else return 1;
     };
 
     char *setup(lodlevel &lod, char *buf)

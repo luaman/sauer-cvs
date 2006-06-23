@@ -574,10 +574,10 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
     t.t = newtexture(key.getbuf(), ts);
 };
 
-Slot &lookuptexture(int slot)
+Slot &lookuptexture(int slot, bool load)
 {
     Slot &s = slots[slots.inrange(slot) ? slot : 0];
-    if(s.loaded) return s;
+    if(s.loaded || !load) return s;
     loopv(s.sts)
     {
         Slot::Tex &t = s.sts[i];

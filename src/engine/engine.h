@@ -127,7 +127,7 @@ extern void gl_drawframe(int w, int h, float curfps);
 extern void mipstats(int a, int b, int c);
 extern void addstrip(int tex, int start, int n);
 extern Texture *textureload(const char *tname, int type = TEX_UNKNOWN, int rot = 0, bool clamp = false, bool mipit = true, bool msg = true);
-extern Slot    &lookuptexture(int tex);
+extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern Shader  *lookupshaderbyname(const char *name);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24, GLenum target = GL_TEXTURE_2D);
