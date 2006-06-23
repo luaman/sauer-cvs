@@ -252,21 +252,27 @@ void gl_init(int w, int h)
     defaultshader->set();
 };
 
-SDL_Surface *rotate(SDL_Surface *s, bool rotatenormals, int numrots)
+SDL_Surface *rotate(SDL_Surface *s, int numrots, int type)
 {
-    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->h, s->w, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
+    numrots &= 3;
+    if(!numrots) return s;
+    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, numrots&1 ? s->h : s->w, numrots&1 ? s->w : s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
     if(!d) fatal("create surface");
     int depth = s->format->BitsPerPixel==24 ? 3 : 4;
     loop(y, s->h) loop(x, s->w)
     {
         uchar *src = (uchar *)s->pixels+(y*s->w+x)*depth;
-        uchar *dst = (uchar *)d->pixels+(x*s->h+(s->h-y)-1)*depth;
-        loopi(depth) *dst++=*src++;
-        if(rotatenormals)
+        int dx = x, dy = y;
+        if(numrots>1) dx = (s->w-1)-x;
+        if(numrots<3) dy = (s->h-1)-y;
+        if(numrots!=2) swap(int, dx, dy);
+        uchar *dst = (uchar *)d->pixels+(dy*d->w+dx)*depth;
+        loopi(depth) dst[i]=src[i];
+        if(type==TEX_NORMAL || type==TEX_NORMAL_SPEC)
         {
-            dst -= depth; if(numrots>1) *dst = 255-*dst;      // flip X   on normal when 180/270 degrees
-            dst++;        if(numrots<3) *dst = 255-*dst;      // flip Y   on normal when  90/180 degrees
-            if(numrots!=2) swap(uchar, *(dst-1), *dst);       // swap X/Y on normal when  90/270 degrees
+            if(numrots>1) dst[0] = 255-dst[0];      // flip X   on normal when 180/270 degrees
+            if(numrots<3) dst[1] = 255-dst[1];      // flip Y   on normal when  90/180 degrees
+            if(numrots!=2) swap(uchar, dst[0], dst[1]);       // swap X/Y on normal when  90/270 degrees
         };
     }; 
     SDL_FreeSurface(s);
@@ -312,7 +318,7 @@ static SDL_Surface *texturedata(const char *tname, int rot, int type, bool msg =
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; };
     int bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { SDL_FreeSurface(s); conoutf("texture must be 24 or 32 bpp: %s", tname); return NULL; };
-    loopi(rot) s = rotate(s, (type==TEX_NORMAL || type==TEX_NORMAL_SPEC) && i==rot-1, rot); // lazy
+    if(rot) s = rotate(s, rot, type);
     return s;
 };
 
@@ -527,7 +533,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
                 Slot::Tex &b = s.sts[i];
                 if(b.combined!=index) continue;
                 s_sprintfd(bname)("packages/%s", b.name);
-                SDL_Surface *bs = texturedata(path(bname), b.rotation, t.type);
+                SDL_Surface *bs = texturedata(path(bname), b.rotation, b.type);
                 if(!bs) continue;
                 if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
                 { 
@@ -545,7 +551,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
                 Slot::Tex &a = s.sts[i];
                 if(a.combined!=index) continue;
                 s_sprintfd(aname)("packages/%s", a.name);
-                SDL_Surface *as = texturedata(path(aname), a.rotation, t.type);
+                SDL_Surface *as = texturedata(path(aname), a.rotation, a.type);
                 if(!as) break;
                 if(ts->format->BitsPerPixel!=32)
                 {
