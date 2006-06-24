@@ -19,6 +19,7 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
 };
 
 selinfo sel = { 0 }, lastsel;
+int selent = -1;
 
 int orient = 0;
 int gridsize = 8;
@@ -47,7 +48,7 @@ void clearheightmap()
 };
 
 void forcenextundo() { lastsel.orient = -1; };
-void cancelsel()     { havesel = false; clearheightmap(); forcenextundo(); };
+void cancelsel()     { havesel = false; selent = -1; clearheightmap(); forcenextundo(); };
 
 VARF(gridpower, 2, 3, VVEC_INT-1,
 {
@@ -62,6 +63,9 @@ void editdrag(bool on)
     if(dragging = on)
     {
         cancelsel();
+        extern int rayent(const vec &o, vec &ray);
+        vec ray(worldpos); ray.sub(player->o);
+        selent = rayent(player->o, ray);
         if(cor[0]<0) return;
         lastcur = cur;
         lastcor = cor;
@@ -171,13 +175,13 @@ COMMANDN(cursorcolor, setcursorcolor, "iii");
 void cursorupdate()
 {
     vec target(worldpos);
-    if(!insideworld(target)) 
+    if(!insideworld(target))
         loopi(3) target[i] = max(min(target[i], hdr.worldsize), 0);
     vec ray(target), v;
     ray.sub(player->o);
     if(raycubepos(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0) | (passthroughcube ? RAY_PASS : 0) | RAY_SKIPFIRST, gridsize)<0)
         v = target;
-        
+
     lookupcube(int(v.x), int(v.y), int(v.z));
     int mag = lusize / gridsize;
     if(lusize>gridsize)
@@ -244,6 +248,8 @@ void cursorupdate()
 
         sel.cx  &= 1;
         sel.cy  &= 1;
+        extern void entdrag(const ivec &v, int d);
+        entdrag(cur, d);
         havesel = true;
     }
     else if(!havesel && hmap == NULL)
@@ -279,12 +285,15 @@ void cursorupdate()
     {
         glColor3ub(20,20,20);   // grid
         loopxy(sel) boxs(d, sel.o[R[d]]+x*sel.grid, sel.o[C[d]]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
-        glColor3ub(200,0,0);    // 0 reference
-        boxs(d, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
-        glColor3ub(200,200,200);// 2D selection box
-        boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
-        glColor3ub(0,0,40);     // 3D selection box
-        loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
+        if(selent<0)
+        {
+            glColor3ub(200,0,0);    // 0 reference
+            boxs(d, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
+            glColor3ub(200,200,200);// 2D selection box
+            boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+            glColor3ub(0,0,40);     // 3D selection box
+            loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
+        };
     };
     glDisable(GL_BLEND);
 };
@@ -805,10 +814,13 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int *dir, int *mode)
 {
     if(noedit()) return;
-    if(hmap == NULL)
-        mpeditface(*dir, *mode, sel, true);
-    else
+    extern void pushent(int *dir);
+    if(selent>=0)
+        pushent(dir);
+    else if(hmap)
         edithmap(*dir);
+    else
+        mpeditface(*dir, *mode, sel, true);
 };
 
 COMMAND(editface, "ii");
@@ -932,7 +944,7 @@ void replacetexcube(cube &c, int oldtex, int newtex)
 void mpreplacetex(int oldtex, int newtex, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_REPLACE, oldtex, newtex);
-    loopi(8) replacetexcube(worldroot[i], oldtex, newtex); 
+    loopi(8) replacetexcube(worldroot[i], oldtex, newtex);
     allchanged();
 };
 

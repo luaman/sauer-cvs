@@ -6,7 +6,7 @@
 
 void writetgaheader(FILE *f, SDL_Surface *s, int bits)
 {
-    fwrite("\0\0\x02\0\0\0\0 \0\0\0\0", 1, 12, f);     
+    fwrite("\0\0\x02\0\0\0\0 \0\0\0\0", 1, 12, f);
     ushort dim[] = { s->w, s->h };
     endianswap(dim, sizeof(ushort), 2);
     fwrite(dim, sizeof(short), 2, f);
@@ -22,7 +22,7 @@ void flipnormalmapy(char *destfile, char *normalfile)           // RGB (jpg/png)
     if(f)
     {
         writetgaheader(f, ns, 24);
-        for(int y = ns->h-1; y>=0; y--) loop(x, ns->w) 
+        for(int y = ns->h-1; y>=0; y--) loop(x, ns->w)
         {
             uchar *nd = (uchar *)ns->pixels+(x+y*ns->w)*3;
             fputc(nd[2], f);
@@ -45,7 +45,7 @@ void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR 
         if(f)
         {
             writetgaheader(f, ns, 24);
-            for(int y = ns->h-1; y>=0; y--) loop(x, ns->w) 
+            for(int y = ns->h-1; y>=0; y--) loop(x, ns->w)
             {
                 int off = (x+y*ns->w)*3;
                 uchar *hd = hs ? (uchar *)hs->pixels+off : def_n;
@@ -55,7 +55,7 @@ void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR 
                 vec h(S(hd[0]), S(hd[1]), S(hd[2]));
                 n.mul(2).add(h).normalize().add(1).div(2).mul(255);
                 uchar o[3] = { (uchar)n.x, (uchar)n.y, (uchar)n.z };
-                fwrite(o, 3, 1, f); 
+                fwrite(o, 3, 1, f);
                 #undef S
             };
             fclose(f);
@@ -199,21 +199,24 @@ void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
     if(!editmode) return;
-    int ce = closestent();
-    if(ce<0) return;
+    extern int selent;
     const vector<extentity *> &ents = et->getents();
-    entity &c = *ents[ce];
+    entity *c = NULL;
+    if(selent>=0) c = ents[selent];
     loopv(ents)
     {
         entity &e = *ents[i];
         if(e.type==ET_EMPTY) continue;
         if(e.o.dist(camera1->o)<128)
         {
-            particle_text(e.o, entname(e), &e==&c ? 13 : 11, 1);
+            particle_text(e.o, entname(e), &e==c ? 13 : 11, 1);
         };
         particle_splash(2, 2, 40, e.o);
     };
-    s_sprintf(closeent)("closest entity = %s (%d, %d, %d, %d)", entname(c)+1, c.attr1, c.attr2, c.attr3, c.attr4);
+    if(c)
+        s_sprintf(closeent)("selected entity = %s (%d, %d, %d, %d)", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
+    else
+        s_sprintf(closeent)("no entity selection");
 };
 
 GLfloat mm[16];
@@ -225,7 +228,7 @@ void aimat()
     glGetFloatv(GL_MODELVIEW_MATRIX, mm);
 
     setorient(vec(mm[0], mm[4], mm[8]), vec(mm[1], mm[5], mm[9]));
-    
+
     vec dir(0, 0, 0);
     vecfromyawpitch(player->yaw, player->pitch, 1, 0, dir, true);
     raycubepos(player->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
@@ -244,7 +247,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 {
     aimat();
     renderents();
-    
+
     if(editmode && !hidehud)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -255,13 +258,13 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     };
 
     glDisable(GL_DEPTH_TEST);
-    
-    glMatrixMode(GL_MODELVIEW);    
+
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    
+
     gettextres(w, h);
 
-    glMatrixMode(GL_PROJECTION);    
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, w, h, 0, -1, 1);
 
@@ -297,7 +300,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     if(closeent[0] && !hidehud) draw_text(closeent, FONTH/2, abovegameplayhud);
 
     cl->renderscores();
-    
+
     if(!hidehud)
     {
         if(!rendermenu(w, h) && player->state!=CS_SPECTATOR)
@@ -318,10 +321,10 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
                 glTexCoord2d(1.0, 0.0); glVertex2f(w*1.5f + chsize, h*1.5f - chsize);
                 glTexCoord2d(1.0, 1.0); glVertex2f(w*1.5f + chsize, h*1.5f + chsize);
                 glTexCoord2d(0.0, 1.0); glVertex2f(w*1.5f - chsize, h*1.5f + chsize);
-                glEnd();            
+                glEnd();
             }
         };
-    
+
         renderconsole(w, h);
         if(!hidestats)
         {
@@ -334,11 +337,11 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
                 draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length());
             };
         };
-        
+
         cl->gameplayhud(w, h);
         render_texture_panel(w, h);
     };
-        
+
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);

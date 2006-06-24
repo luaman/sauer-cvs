@@ -102,22 +102,55 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
     return false;
 };
 
+bool raysphereintersect(vec c, float radius, const vec &o, const vec &ray, float &dist)
+{
+    c.sub(o);
+    float v = c.dot(ray),
+          inside = radius*radius - c.squaredlen(),
+          d = inside + v*v;
+    if(inside<0 && d<0) return false;
+    dist += v - sqrt(d);
+    return true;
+};
+
+extern int entselradius;
+float hitentdist;
+int  hitent;
+
 static float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
-    float dist = 1e16f;
+    float dist = 1e16f, f;
     if(oc == last || oc == NULL) return dist;
     const vector<extentity *> &ents = et->getents();
-    loopv(oc->mapmodels) if(!last || !last->hasmapmodel(oc->mapmodels[i]))
-    {
-        float f;
-        ivec bo, br;
-        extentity &e = *ents[oc->mapmodels[i]];
-        if(!e.inoctanode || &e==t) continue;
-        if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
-        if(!mmintersect(e, o, ray, radius, mode, f)) continue;
-        dist = min(dist, f);
-    };
+    if((mode&RAY_POLY)==RAY_POLY)
+        loopv(oc->mapmodels) if(!last || last->mapmodels.find(oc->mapmodels[i])<0)
+        {
+            extentity &e = *ents[oc->mapmodels[i]];
+            if(!e.inoctanode || &e==t) continue;
+            if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
+            if(!mmintersect(e, o, ray, radius, mode, f)) continue;
+            if(f<dist) { hitentdist = dist = f; hitent = oc->mapmodels[i]; };
+        };
+    if((mode&RAY_ENTS)==RAY_ENTS)
+        loopv(oc->other) if(!last || last->other.find(oc->other[i])<0)
+        {
+            extentity &e = *ents[oc->other[i]];
+            if(!e.inoctanode || &e==t) continue;
+            if(!raysphereintersect(e.o, entselradius, o, ray, f)) continue;
+            if(f<dist) { hitentdist = dist = f; hitent = oc->other[i]; };
+        };
     return dist;
+};
+
+int rayent(const vec &o, vec &ray)
+{
+    ray.normalize();
+    hitentdist = 1e10f;
+    float d = raycube(o, ray, hitentdist, RAY_ENTS | RAY_POLY);
+    if(hitentdist <= d)
+        return hitent;
+    else
+        return -1;
 };
 
 float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)
@@ -155,7 +188,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
                 exitworld = min(exitworld, d);
             }
             else
-            { 
+            {
                 float d = (float(ray[i]>0?0:hdr.worldsize)-c)/ray[i];
                 if(d<0) return (radius>0?radius:-1);
                 disttoworld = min(disttoworld, 0.1f + d);
@@ -165,7 +198,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
         pushvec(v, ray, disttoworld);
         dist += disttoworld;
     };
-            
+
     int x = int(v.x), y = int(v.y), z = int(v.z);
     for(;;)
     {
@@ -176,7 +209,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
             if(z>=lo.z+lsize) { lo.z += lsize; lc += 4; };
             if(y>=lo.y+lsize) { lo.y += lsize; lc += 2; };
             if(x>=lo.x+lsize) { lo.x += lsize; lc += 1; };
-            if(lc->ents && (mode&RAY_POLY) && dent > 1e15f)
+            if(lc->ents && (mode&RAY_BB) && dent > 1e15f)
             {
                 dent = disttoent(lc->ents, oclast, o, ray, radius, mode, t);
                 if((mode&RAY_SHADOW) && dent < 1e15f) return min(dent, dist);
@@ -278,8 +311,8 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     }
     if(ax>ay && ax>az) TRYCOLLIDE(x, visible&(1<<O_LEFT), visible&(1<<O_RIGHT));
     if(ay>az) TRYCOLLIDE(y, visible&(1<<O_BACK), visible&(1<<O_FRONT));
-    TRYCOLLIDE(z, 
-        (d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/4.0f) && (visible&(1<<O_BOTTOM)), 
+    TRYCOLLIDE(z,
+        (d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/4.0f) && (visible&(1<<O_BOTTOM)),
         (d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/2.0f) && (visible&(1<<O_TOP)));
     if(collideonly) inside = true;
     return collideonly;
@@ -319,7 +352,7 @@ const vector<physent *> &checkdynentcache(int x, int y)
     loopi(numdyns)
     {
         dynent *d = cl->iterdynents(i);
-        if(!d || d->state != CS_ALIVE || 
+        if(!d || d->state != CS_ALIVE ||
            d->o.x+d->radius <= dx || d->o.x-d->radius >= dx+dsize ||
            d->o.y+d->radius <= dy || d->o.y-d->radius >= dy+dsize)
             continue;
@@ -363,7 +396,7 @@ bool plcollide(physent *d, const vec &dir)    // collide with player or monster
         const vector<physent *> &dynents = checkdynentcache(x, y);
         loopv(dynents)
         {
-            physent *o = dynents[i]; 
+            physent *o = dynents[i];
             if(d->o.reject(o->o, 20.0f) || o==d || (o==player && d->type==ENT_CAMERA)) continue;
             if(!rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight))
             {
@@ -419,7 +452,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
             float dist = f.dist(o) - (fabs(f.x*r)+fabs(f.y*r)+fabs(f.z*zr));
             if(dist > 0) return true;
             if(dist > m)
-            { 
+            {
                 if(!dir.iszero())
                 {
                     if(f.dot(dir) >= -cutoff) continue;
@@ -429,8 +462,8 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                         else if(dir.z > 0 && f.z < 0 && dist < -(d->eyeheight+d->aboveeye)/4.0f) continue;
                     };
                 };
-                w = &p.p[i]; 
-                m = dist; 
+                w = &p.p[i];
+                m = dist;
             };
         };
         wall = *w;
@@ -491,14 +524,14 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle)
     dir.sub(wdir);
     d->vel.sub(wvel);
 };
- 
+
 void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
 {
     if(d->physstate == PHYS_FALL || d->floor.z < FLOORZ)
     {
         if(landing)
         {
-            if(floor.z >= FLOORZ) 
+            if(floor.z >= FLOORZ)
             {
                 if(d->vel.z + d->gravity.z > 0) d->vel.add(d->gravity);
                 else if(d->vel.z > 0) d->vel.z = 0.0f;
@@ -523,7 +556,7 @@ void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
         };
     };
 
-    if(((d->physstate == PHYS_SLIDE || (d->physstate == PHYS_FALL && floor.z < 1.0f)) && landing) || 
+    if(((d->physstate == PHYS_SLIDE || (d->physstate == PHYS_FALL && floor.z < 1.0f)) && landing) ||
         (d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f))
     {
         if(floor.z > 0 && floor.z < WALLZ) { slideagainst(d, dir, floor); return; };
@@ -550,7 +583,7 @@ bool trystepup(physent *d, vec &dir, float maxstep)
         d->o.z += maxstep + 0.1f;
         if(!collide(d))
         {
-            d->o = old; 
+            d->o = old;
             return false;
         };
     };
@@ -559,7 +592,7 @@ bool trystepup(physent *d, vec &dir, float maxstep)
     d->o.z += dir.magnitude()*STEPSPEED;
     if(collide(d, vec(0, 0, 1)))
     {
-        if(d->physstate == PHYS_FALL) 
+        if(d->physstate == PHYS_FALL)
         {
             d->timeinair = 0;
             d->floor = vec(0, 0, 1);
@@ -704,7 +737,7 @@ bool move(physent *d, vec &dir)
         else d->o = old;
         /* can't step over the obstacle, so just slide against it */
         collided = true;
-    } 
+    }
     else if(inside && d->type != ENT_PLAYER)
     {
         d->o = old;
@@ -713,7 +746,7 @@ bool move(physent *d, vec &dir)
     };
     vec floor(0, 0, 0);
     bool slide = collided && obstacle.z < 1.0f,
-         found = findfloor(d, collided, obstacle, slide, floor); 
+         found = findfloor(d, collided, obstacle, slide, floor);
     if(slide)
     {
         slideagainst(d, dir, obstacle);
@@ -780,7 +813,7 @@ void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
     bo.sub(space);
     vec br(2*(obstacle->radius+d->radius), 2*(obstacle->radius+d->radius), obstacle->eyeheight+obstacle->aboveeye+d->eyeheight+d->aboveeye);
     br.add(space*2);
-    
+
     float mindist = 1e16f;
     loopi(3) if(dir[i] != 0)
     {
@@ -924,7 +957,7 @@ void modifygravity(physent *pl, bool water, float secs)
         float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
         slopegravity(GRAVITY*secs*c, pl->floor, g);
     };
-    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(4.0f); 
+    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(4.0f);
     else pl->gravity.add(g);
 };
 

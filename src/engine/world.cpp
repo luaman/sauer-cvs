@@ -7,12 +7,14 @@ header hdr;
 vector<ushort> texmru;
 
 VAR(octaentsize, 0, 128, 1024);
+VAR(entselradius, 1, 2, 10);
 
 static void removeoctaentity(int id);
 
 void freeoctaentities(cube &c)
 {
     while(c.ents && !c.ents->mapmodels.empty()) removeoctaentity(c.ents->mapmodels.pop());
+    while(c.ents && !c.ents->other.empty())     removeoctaentity(c.ents->other.pop());
     if(c.ents)
     {
         delete c.ents;
@@ -35,7 +37,10 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                 case ET_MAPMODEL:
                     c[i].ents->mapmodels.add(id);
                     break;
+                default:
+                    c[i].ents->other.add(id);
             };
+
         }
         else if(c[i].ents)
         {
@@ -44,8 +49,11 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                 case ET_MAPMODEL:
                     c[i].ents->mapmodels.removeobj(id);
                     break;
+                default:
+                    c[i].ents->other.removeobj(id);
             };
-            if(c[i].ents->mapmodels.empty()) freeoctaentities(c[i]);
+            if(c[i].ents->mapmodels.empty() && c[i].ents->other.empty())
+                freeoctaentities(c[i]);
         };
         if(c[i].ents) c[i].ents->query = NULL;
     };
@@ -70,7 +78,10 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
             break;
         };
         default:
-            return false;
+            o.x = int(e.o.x-entselradius);
+            o.y = int(e.o.y-entselradius);
+            o.z = int(e.o.z-entselradius);
+            r.x = r.y = r.z = entselradius;
     };
     return true;
 };
@@ -98,9 +109,9 @@ static void removeentity(int i, extentity &e)
     removeoctaentity(i);
     if(e.type == ET_LIGHT) clearlightcache(i);
 };
-    
+
 static void addentity(int i, extentity &e)
-{   
+{
     addoctaentity(i);
     if(e.type == ET_LIGHT) clearlightcache(i);
     else lightent(e);
@@ -111,6 +122,10 @@ void entitiesinoctanodes()
     vector<extentity *> &ents = et->getents();
     loopv(ents) addentity(i, *ents[i]);
 };
+
+extern int selent;
+extern selinfo sel;
+extern bool havesel, selectcorners;
 
 int closestent()        // used for delent and edit mode ent display
 {
@@ -135,7 +150,7 @@ int closestent()        // used for delent and edit mode ent display
 void entproperty(int *prop, int *amount)
 {
     if(noedit()) return;
-    int i = closestent();
+    int i = selent;
     if(i<0) return;
     extentity &e = *et->getents()[i];
     removeentity(i, e);
@@ -146,15 +161,29 @@ void entproperty(int *prop, int *amount)
         case 2: e.attr3 += *amount; break;
         case 3: e.attr4 += *amount; break;
     };
-	addentity(i, e);
+    addentity(i, e);
     et->editent(i);
 };
 
+void entdrag(const ivec &v, int d)
+{
+    if(noedit()) return;
+    int i = selent;
+    if(i<0) return;
+    extentity &e = *et->getents()[i];
+    if(e.o[R[d]] == v[R[d]] &&
+       e.o[C[d]] == v[C[d]]) return;
+    removeentity(i, e);
+    e.o[R[d]] = v[R[d]];
+    e.o[C[d]] = v[C[d]];
+    addentity(i, e);
+    et->editent(i);
+};
 
 void entmove(int *dir, int *dist)
 {
     if(noedit()) return;
-    int i = closestent();
+    int i = selent;
     if(i<0||*dir<0||*dir>2) return;
     extentity &e = *et->getents()[i];
     removeentity(i, e);
@@ -163,16 +192,27 @@ void entmove(int *dir, int *dist)
     et->editent(i);
 };
 
+void pushent(int *dir)
+{
+    int d = dimension(sel.orient);
+    int dist = sel.grid * *dir;
+    if(dimcoord(sel.orient)) dist = -dist;
+    entmove(&d, &dist);
+};
+
+COMMAND(pushent, "i");
+
 void delent()
 {
     if(noedit()) return;
-    int i = closestent();
+    int i = selent;
     if(i<0) { conoutf("no more entities"); return; };
     extentity &e = *et->getents()[i];
     conoutf("%s entity deleted", et->entname(e.type));
     removeentity(i, e);
     e.type = ET_EMPTY;
     et->editent(i);
+    cancelsel();
 };
 
 int findtype(char *what)
@@ -183,9 +223,6 @@ int findtype(char *what)
 }
 
 VAR(entdrop, 0, 1, 3);
-
-extern selinfo sel;
-extern bool havesel, selectcorners;
 
 bool dropentity(entity &e)
 {
@@ -254,7 +291,7 @@ void dropent()
     if(i<0) return;
     extentity &e = *et->getents()[i];
     removeentity(i, e);
-    dropentity(e);	
+    dropentity(e);
     addentity(i, e);
     et->editent(i);
 };
@@ -412,7 +449,7 @@ void empty_world(int scale, bool force)    // main empty world creation routine
 void newmap(int *i) { empty_world(*i, false); };
 
 void mapenlarge()
-{ 
+{
     if(!editmode) return conoutf("mapenlarge only allowed in edit mode");
     if(hdr.worldsize >= 1<<20) return;
 
@@ -467,7 +504,7 @@ int triggertypes[NUMTRIGGERTYPES] =
     TRIG_TOGGLE,
     TRIG_TOGGLE | TRIG_RUMBLE,
     TRIG_MANY,
-    TRIG_MANY | TRIG_RUMBLE, 
+    TRIG_MANY | TRIG_RUMBLE,
     TRIG_MANY | TRIG_TOGGLE,
     TRIG_MANY | TRIG_TOGGLE | TRIG_RUMBLE,
     TRIG_COLLIDE | TRIG_TOGGLE | TRIG_RUMBLE,
@@ -495,7 +532,7 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
     {
-        extentity &e = *ents[i]; 
+        extentity &e = *ents[i];
         if(e.type != ET_MAPMODEL || !e.attr3) continue;
         if(e.attr4 == tag && e.triggerstate == oldstate && checktriggertype(e.attr3, TRIG_LOCKED))
         {
@@ -533,7 +570,7 @@ void checktriggers()
         {
             case TRIGGERING:
             case TRIGGER_RESETTING:
-                if(lastmillis-e.lasttrigger>=1000) 
+                if(lastmillis-e.lasttrigger>=1000)
                 {
                     if(e.attr4)
                     {
@@ -561,7 +598,7 @@ void checktriggers()
                     break;
                 };
                 e.triggerstate = TRIGGERING;
-                e.lasttrigger = lastmillis; 
+                e.lasttrigger = lastmillis;
                 if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
                 et->trigger(e);
                 if(e.attr4) doleveltrigger(e.attr4, 1);

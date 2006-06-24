@@ -76,6 +76,7 @@ struct clipplanes
 struct octaentities
 {
     vector<int> mapmodels;
+    vector<int> other;
     occludequery *query;
     octaentities *next;
     int distance;
@@ -83,12 +84,6 @@ struct octaentities
     int size;
 
     octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
-
-    bool hasmapmodel(int id) const
-    {
-        loopv(mapmodels) if(id==mapmodels[i]) return true;
-        return false;
-    };
 };
 
 struct cube
@@ -122,8 +117,8 @@ struct block3
 
 struct editinfo
 {
-	block3 *copy;
-	editinfo() : copy(NULL) {};
+    block3 *copy;
+    editinfo() : copy(NULL) {};
 };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
@@ -157,11 +152,11 @@ const uint F_SOLID = 0x80808080;    // all edges in the range (0,8)
 
 enum
 {
-	O_LEFT = 0,
+    O_LEFT = 0,
     O_RIGHT,
     O_BACK,
     O_FRONT,
-	O_BOTTOM,
+    O_BOTTOM,
     O_TOP
 };
 
