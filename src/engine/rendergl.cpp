@@ -497,7 +497,7 @@ static void mergedepth(SDL_Surface *c, SDL_Surface *z)
     );
 };
  
-static void addname(vector<char> &key, Slot &s, Slot::Tex &t)
+static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
 {
     if(t.combined>=0) key.add('&');
     s_sprintfd(tname)("packages/%s", t.name);
@@ -516,7 +516,7 @@ static void addname(vector<char> &key, Slot &s, Slot::Tex &t)
     {
         case TEX_GLOW:
         {
-            ShaderParam *cparam = findshaderparam(s, SHPARAM_PIXEL, 0);
+            ShaderParam *cparam = findshaderparam(slot, SHPARAM_PIXEL, 0);
             s_sprintfd(suffix)("?%.2f,%.2f,%.2f", cparam ? cparam->val[0] : 1.0f, cparam ? cparam->val[1] : 1.0f, cparam ? cparam->val[2] : 1.0f);
             for(const char *s = suffix; *s; key.add(*s++));
         };

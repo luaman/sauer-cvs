@@ -645,7 +645,7 @@ void format(char **args, int *numargs)
 };
 
 #define whitespaceskip s += strspn(s, "\n\t ")
-#define elementskip *s=='"' ? (s += strcspn(++s, "\"\n\0"), s += *s=='"') : s += strcspn(s, "\n\t \0")
+#define elementskip *s=='"' ? (++s, s += strcspn(s, "\"\n\0"), s += *s=='"') : s += strcspn(s, "\n\t \0")
 
 void listlen(char *s)
 {
