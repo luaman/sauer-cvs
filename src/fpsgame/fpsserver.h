@@ -227,6 +227,7 @@ struct fpsserver : igameserver
             {
                 sgetstr(text, p);
                 int reqmode = getint(p);
+                if(!ci->local && !m_mp(reqmode)) reqmode = 0;
                 if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) return false;
                 mapreload = false;
                 gamemode = reqmode;
@@ -374,6 +375,13 @@ struct fpsserver : igameserver
                 };
                 spinfo->spectator = val!=0;
                 sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
+                break;
+            };
+
+            case SV_GAMEMODE:
+            {
+                int newmode = getint(p);
+                if(!ci->master || (!ci->local && !m_mp(newmode))) return false;
                 break;
             };
 

@@ -85,6 +85,8 @@ extern fpsent *player1;                 // special client ent that receives inpu
 #define m_classicsp   (gamemode==-2)
 #define isteam(a,b)   (m_teammode && strcmp(a, b)==0)
 
+#define m_mp(mode)       (mode>=0 && mode<=12)
+
 // hardcoded sounds, defined in sounds.cfg
 enum
 {

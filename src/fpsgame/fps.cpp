@@ -51,11 +51,18 @@ struct fpsclient : igameclient
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), et(*this), cc(*this), cpc(*this)
     {
-        CCOMMAND(fpsclient, mode, "s", { self->cc.addmsg(1, 2, SV_GAMEMODE, self->nextmode = atoi(args[0])); });
+        CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
     };
 
     iclientcom      *getcom()  { return &cc; };
     icliententities *getents() { return &et; };
+
+    void setmode(int mode)
+    {
+        if(cc.remote && !m_mp(mode)) { conoutf("mode %d not supported in multiplayer"); return; };
+        nextmode = mode;
+        if(cc.currentmaster==cc.clientnum) cc.addmsg(1, 2, SV_GAMEMODE, nextmode);
+    };
 
     char *getclientmap() { return clientmap; };
 
