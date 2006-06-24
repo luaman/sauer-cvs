@@ -359,9 +359,9 @@ Texture *textureload(const char *name, bool clamp, bool mipit, bool msg)
 {
     string tname;
     s_strcpy(tname, name);
-    Texture *t = textures.access(tname);
+    Texture *t = textures.access(path(tname));
     if(t) return t;
-    SDL_Surface *s = texturedata(path(tname), NULL, msg);
+    SDL_Surface *s = texturedata(tname, NULL, msg);
     return s ? newtexture(tname, s, clamp, mipit) : crosshair;
 };
 
