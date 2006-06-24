@@ -527,6 +527,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
 {
     vector<char> key;
     addname(key, s, t);
+    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE) { t.t = crosshair; return; };
     switch(t.type)
     {
         case TEX_DIFFUSE:
@@ -541,7 +542,6 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
         case TEX_NORMAL:
         case TEX_GLOW:
         {
-            if(renderpath==R_FIXEDFUNCTION) break;
             int i = findtextype(s, (1<<TEX_SPEC)|(1<<TEX_DEPTH));
             if(i<0) break;
             s.sts[i].combined = index;
