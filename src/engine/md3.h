@@ -3,7 +3,7 @@
 
 struct md3;
 
-string basedir; // necessary for relative path's
+string md3dir; // necessary for relative path's
 
 enum { MDL_LOWER = 0, MDL_UPPER, MDL_HEAD };
 
@@ -627,7 +627,7 @@ struct md3 : model
     {
         if(loaded) return true;
         md3models.setsize(0);
-        s_sprintf(basedir)("packages/models/%s", loadname);
+        s_sprintf(md3dir)("packages/models/%s", loadname);
 
         char *pname = parentdir(loadname);
         s_sprintfd(cfgname)("packages/models/%s/md3.cfg", loadname);
@@ -671,7 +671,7 @@ struct md3 : model
 void md3load(char *model)
 {
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
-    s_sprintfd(filename)("%s/%s", basedir, model);
+    s_sprintfd(filename)("%s/%s", md3dir, model);
     md3model &mdl = loadingmd3->md3models.add();
     mdl.index = loadingmd3->md3models.length()-1;
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
@@ -687,12 +687,12 @@ void md3skin(char *objname, char *skin, char *masks)
         md3mesh *mesh = &mdl.meshes[i];
         if(!strcmp(mesh->name, objname))
         {
-            s_sprintfd(spath)("%s/%s", basedir, skin);
-            mesh->skin = textureload(spath, TEX_UNKNOWN, 0, false, true, false);
+            s_sprintfd(spath)("%s/%s", md3dir, skin);
+            mesh->skin = textureload(spath, false, true, false);
             if(*masks)
             {
-                s_sprintfd(mpath)("%s/%s", basedir, masks);
-                mesh->masks = textureload(mpath, TEX_UNKNOWN, 0, false, true, false);
+                s_sprintfd(mpath)("%s/%s", md3dir, masks);
+                mesh->masks = textureload(mpath, false, true, false);
                 loadingmd3->masked = true;
             };
         };

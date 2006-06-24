@@ -252,7 +252,7 @@ void gl_init(int w, int h)
     defaultshader->set();
 };
 
-SDL_Surface *rotate(SDL_Surface *s, int numrots, int type)
+SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
 {
     numrots &= 3;
     if(!numrots) return s;
@@ -279,6 +279,28 @@ SDL_Surface *rotate(SDL_Surface *s, int numrots, int type)
     return d;
 };
 
+SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
+{
+    xoffset = max(xoffset, 0);
+    xoffset %= s->w;
+    yoffset = max(yoffset, 0); 
+    yoffset %= s->h;
+    if(!xoffset && !yoffset) return s;
+    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
+    if(!d) fatal("create surface");
+    int depth = s->format->BitsPerPixel==24 ? 3 : 4;
+    uchar *src = (uchar *)s->pixels;
+    loop(y, s->h)
+    {
+        uchar *dst = (uchar *)d->pixels+((y+yoffset)%d->h)*d->pitch;
+        memcpy(dst+xoffset*depth, src, (s->w-xoffset)*depth);
+        memcpy(dst, src+(s->w-xoffset)*depth, xoffset*depth);
+        src += s->pitch;
+    };
+    SDL_FreeSurface(s);
+    return d;
+};
+ 
 void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp, GLenum target)
 {
     glBindTexture(target, tnum);
@@ -310,31 +332,37 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false
     return t;
 };
 
-static SDL_Surface *texturedata(const char *tname, int rot, int type, bool msg = true)
+static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool msg = true)
 {
+    static string pname;
+    if(tex && !tname)
+    {
+        s_sprintf(pname)("packages/%s", tex->name);
+        tname = path(pname);
+    };
+    
     show_out_of_renderloop_progress(0, tname);
 
     SDL_Surface *s = IMG_Load(tname);
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; };
     int bpp = s->format->BitsPerPixel;
     if(bpp!=24 && bpp!=32) { SDL_FreeSurface(s); conoutf("texture must be 24 or 32 bpp: %s", tname); return NULL; };
-    if(rot) s = rotate(s, rot, type);
+    if(tex)
+    {
+        if(tex->rotation) s = texrotate(s, tex->rotation, tex->type);
+        if(tex->xoffset || tex->yoffset) s = texoffset(s, tex->xoffset, tex->yoffset);
+    };
     return s;
 };
 
-Texture *textureload(const char *name, int type, int rot, bool clamp, bool mipit, bool msg)
+Texture *textureload(const char *name, bool clamp, bool mipit, bool msg)
 {
-    string rname, tname;
+    string tname;
     s_strcpy(tname, name);
-    s_strcpy(rname, name);
-
-    if(rot) { s_sprintfd(rnum)("#%d", rot); s_strcat(rname, rnum); };
-    
-    Texture *t = textures.access(rname);
+    Texture *t = textures.access(tname);
     if(t) return t;
-
-    SDL_Surface *s = texturedata(path(tname), rot, type, msg);
-    return s ? newtexture(rname, s, clamp, mipit) : crosshair;
+    SDL_Surface *s = texturedata(path(tname), NULL, msg);
+    return s ? newtexture(tname, s, clamp, mipit) : crosshair;
 };
 
 void cleangl()
@@ -370,7 +398,7 @@ ShaderParam *findshaderparam(Slot &s, int type, int index)
     return NULL;
 };
 
-void texture(char *type, char *name, char *rot)
+void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
 {
     if(curtexnum<0 || curtexnum>=0x10000) return;
     struct { const char *name; int type; } types[] = 
@@ -404,14 +432,16 @@ void texture(char *type, char *name, char *rot)
     Slot::Tex &st = s.sts.add();
     st.type = tnum;
     st.combined = -1;
-    st.rotation = atoi(rot);
+    st.rotation = max(*rot, 0)&3;
+    st.xoffset = max(*xoffset, 0);
+    st.yoffset = max(*yoffset, 0);
     st.t = NULL;
     s_strcpy(st.name, name);
     path(st.name);
 };
 
 COMMAND(texturereset, "");
-COMMAND(texture, "sss");
+COMMAND(texture, "ssiii");
 
 static int findtextype(Slot &s, int type, int last = -1)
 {
@@ -467,19 +497,21 @@ static void mergedepth(SDL_Surface *c, SDL_Surface *z)
     );
 };
  
-static void addname(vector<char> &key, const char *tname, int rot, bool combine = false)
+static void addname(vector<char> &key, Slot &s, Slot::Tex &t)
 {
-    if(combine) key.add('&');
-    for(const char *s = tname; *s; key.add(*s++));
-    if(rot) 
-    { 
-        s_sprintfd(rnum)("#%d", rot);
+    if(t.combined>=0) key.add('&');
+    s_sprintfd(tname)("packages/%s", t.name);
+    for(const char *s = path(tname); *s; key.add(*s++));
+    if(t.rotation)
+    {
+        s_sprintfd(rnum)("#%d", t.rotation);
         for(const char *s = rnum; *s; key.add(*s++));
     };
-};
-
-static void addparamsuffix(vector<char> &key, Slot &s, Slot::Tex &t)
-{
+    if(t.xoffset || t.yoffset)
+    {
+        s_sprintfd(toffset)("+%d,%d", t.xoffset, t.yoffset);
+        for(const char *s = toffset; *s; key.add(*s++));
+    };
     switch(t.type)
     {
         case TEX_GLOW:
@@ -494,13 +526,16 @@ static void addparamsuffix(vector<char> &key, Slot &s, Slot::Tex &t)
 static void texcombine(Slot &s, int index, Slot::Tex &t)
 {
     vector<char> key;
-    s_sprintfd(tname)("packages/%s", t.name);
-    addname(key, path(tname), t.rotation);
+    addname(key, s, t);
     switch(t.type)
     {
         case TEX_DIFFUSE:
             if(renderpath!=R_FIXEDFUNCTION) break;
-            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW), i))>=0; s.sts[i].combined = index);
+            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW), i))>=0;)
+            {
+                s.sts[i].combined = index;
+                addname(key, s, s.sts[i]);
+            };
             break;
 
         case TEX_NORMAL:
@@ -508,22 +543,16 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
         {
             if(renderpath==R_FIXEDFUNCTION) break;
             int i = findtextype(s, (1<<TEX_SPEC)|(1<<TEX_DEPTH));
-            if(i>=0) s.sts[i].combined = index;
+            if(i<0) break;
+            s.sts[i].combined = index;
+            addname(key, s, s.sts[i]);
             break;
         };                 
     };
-    loopv(s.sts)
-    {
-        Slot::Tex &c = s.sts[i];
-        if(c.combined!=index) continue;
-        s_sprintfd(cname)("packages/%s", c.name);
-        addname(key, path(cname), c.rotation, true);
-        addparamsuffix(key, s, c);
-    };    
     key.add('\0');
     t.t = textures.access(key.getbuf());
     if(t.t) return;
-    SDL_Surface *ts = texturedata(tname, t.rotation, t.type);
+    SDL_Surface *ts = texturedata(NULL, &t);
     if(!ts) { t.t = crosshair; return; };
     switch(t.type)
     {
@@ -532,8 +561,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
             {
                 Slot::Tex &b = s.sts[i];
                 if(b.combined!=index) continue;
-                s_sprintfd(bname)("packages/%s", b.name);
-                SDL_Surface *bs = texturedata(path(bname), b.rotation, b.type);
+                SDL_Surface *bs = texturedata(NULL, &b);
                 if(!bs) continue;
                 if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
                 { 
@@ -550,8 +578,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
             {
                 Slot::Tex &a = s.sts[i];
                 if(a.combined!=index) continue;
-                s_sprintfd(aname)("packages/%s", a.name);
-                SDL_Surface *as = texturedata(path(aname), a.rotation, a.type);
+                SDL_Surface *as = texturedata(NULL, &a);
                 if(!as) break;
                 if(ts->format->BitsPerPixel!=32)
                 {
