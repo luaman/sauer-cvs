@@ -367,7 +367,7 @@ void updatedynentcache(physent *d)
     for(int y = int(max(d->o.y-d->radius, 0))>>dynentsize, ey = int(min(d->o.y+d->radius, hdr.worldsize-1))>>dynentsize; y <= ey; y++)
     {
         dynentcacheentry &dec = dynentcache[DYNENTHASH(x, y)];
-        if(dec.x != x || dec.y != y || dec.frame != dynentframe || dec.dynents.findindex(d) >= 0) continue;
+        if(dec.x != x || dec.y != y || dec.frame != dynentframe || dec.dynents.find(d) >= 0) continue;
         dec.dynents.add(d);
     };
 };
