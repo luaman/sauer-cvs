@@ -1570,7 +1570,7 @@ void renderq()
             Slot &slot = lookuptexture(lod.eslist[i].texture);
             Texture *tex = slot.sts[0].t;
             Shader *s = slot.shader;
-            
+           
             extern vector<GLuint> lmtexids;
             int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
             if(curlm!=lastlm || !lastslot || s->type!=lastslot->shader->type)

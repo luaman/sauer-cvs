@@ -386,7 +386,8 @@ void load_world(const char *mname)        // still supports all map formats that
 
     gzclose(f);
 
-    allchanged();
+// FIXME: need to load texture slots before VAs can be properly sorted    
+//    allchanged();
 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);
@@ -396,6 +397,8 @@ void load_world(const char *mname)        // still supports all map formats that
     execfile(pcfname);
     execfile(mcfname);
     overrideidents = false;
+
+    allchanged();
 
     precacheall();
 
