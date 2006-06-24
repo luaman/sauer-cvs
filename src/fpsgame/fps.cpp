@@ -59,7 +59,7 @@ struct fpsclient : igameclient
 
     void setmode(int mode)
     {
-        if(cc.remote && !m_mp(mode)) { conoutf("mode %d not supported in multiplayer"); return; };
+        if(cc.remote && !m_mp(mode)) { conoutf("mode %d not supported in multiplayer", mode); return; };
         nextmode = mode;
         if(cc.currentmaster==cc.clientnum) cc.addmsg(1, 2, SV_GAMEMODE, nextmode);
     };
