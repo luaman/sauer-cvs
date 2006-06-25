@@ -104,10 +104,10 @@ void toggleedit()
     editing = editmode;
 };
 
-bool noedit()
+bool noedit(bool view)
 {
     if(!editmode) { conoutf("operation only allowed in edit mode"); return true; };
-    if(sel.ent>=0) return false;
+    if(sel.ent>=0 || view) return false;
     vec o(sel.o.v);
     vec s(sel.s.v);
     s.mul(float(sel.grid) / 2.0f);
@@ -284,8 +284,8 @@ void cursorupdate()
         glColor3ub(40,40,40);
         loop(x, 6) loop(y, 6)
             boxs(d, e[R[d]]+(x-3)*sel.grid, e[C[d]]+(y-3)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
-    }
-    else if(hmap != NULL)
+    };
+    if(hmap != NULL)
     {
         glColor3ub(0,200,0);
         d = dimension(sel.orient);
@@ -293,8 +293,8 @@ void cursorupdate()
             boxs(d, sel.o[R[d]]+x*(sel.us(R[d])-sel.grid), sel.o[C[d]]+y*(sel.us(C[d])-sel.grid), sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         loopi(6) // heightmap outline
             { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.s[R[d]]*sel.grid, sel.s[C[d]]*sel.grid, sel.o[d]+dimcoord(i)*sel.s[D[d]]*sel.grid); };
-    }
-    else if(havesel)
+    };
+    if(havesel)
     {
         glColor3ub(20,20,20);   // grid
         loopxy(sel) boxs(d, sel.o[R[d]]+x*sel.grid, sel.o[C[d]]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
@@ -304,7 +304,7 @@ void cursorupdate()
         boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(0,0,40);     // 3D selection box
         loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
-};
+    };
     glDisable(GL_BLEND);
 };
 
@@ -497,9 +497,12 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
 {
     if(e==NULL) return;
     if(local) cl->edittrigger(sel, EDIT_PASTE);
-    extern void newentity(int type, int a1, int a2, int a3, int a4);
+    extern int newentity(int type, int a1, int a2, int a3, int a4);
     if(e->ent.type != ET_EMPTY)
-        newentity(e->ent.type, e->ent.attr1, e->ent.attr2, e->ent.attr3, e->ent.attr4);
+    {
+        int i = newentity(e->ent.type, e->ent.attr1, e->ent.attr2, e->ent.attr3, e->ent.attr4);
+        if(local) sel.ent = i;
+    };
     if(e->copy)
     {
         sel.s = e->copy->s;
@@ -634,7 +637,7 @@ void createheightmap()
 
 void getheightmap()
 {
-    if(noedit() || multiplayer()) return;
+    if(noedit() || multiplayer() || sel.ent>=0) return;
     createheightmap();
     cubifyheightmap();
     setheightmap();
@@ -851,7 +854,7 @@ COMMAND(editface, "ii");
 
 void selextend()
 {
-    if(noedit()) return;
+    if(noedit(true)) return;
     loopi(3)
     {
         if(cur[i]<sel.o[i])

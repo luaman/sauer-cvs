@@ -158,7 +158,7 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
             v.mul(dist);
             v.add(o);
             dest = v;
-            dest.round2(sel.grid);
+            dest.mask(~(sel.grid-1)); // snap
             e.o[R[d]] = entselsnap ? dest[R[d]] : v[R[d]];
             e.o[C[d]] = entselsnap ? dest[C[d]] : v[C[d]];
         };
@@ -270,7 +270,7 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
     return &e;
 };
 
-void newentity(int type, int a1, int a2, int a3, int a4)
+int newentity(int type, int a1, int a2, int a3, int a4)
 {
     extentity *e = newentity(true, player->o, type, a1, a2, a3, a4);
     if(multiplayer()) dropentity(*e, 2);
@@ -279,6 +279,7 @@ void newentity(int type, int a1, int a2, int a3, int a4)
     int i = et->getents().length()-1;
     addentity(i, *e);
     et->editent(i);
+	return i;
 };
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)

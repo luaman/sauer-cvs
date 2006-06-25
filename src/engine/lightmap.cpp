@@ -860,7 +860,7 @@ COMMAND(calclight, "i");
 
 void patchlight()
 {
-    if(noedit()) return;
+    if(noedit(true)) return;
     computescreen("patching lightmaps... (esc to abort)");
     progress = 0;
     total_surfaces = wtris/2;
@@ -910,7 +910,7 @@ COMMAND(patchlight, "");
 VARF(fullbright, 0, 0, 1,
     if(fullbright)
     {
-        if(noedit())
+        if(noedit(true))
         {
             fullbright = 0;
             initlights();

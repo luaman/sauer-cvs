@@ -207,7 +207,6 @@ struct ivec
     ivec &sub(const ivec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; };
 
     void mask(int n) { x &= n; y &= n; z &= n; };
-    void round2(int i) { add(i/2); mask(~(i-1)); };
 };
 
 struct svec

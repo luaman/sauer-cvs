@@ -626,7 +626,7 @@ VARFP(gamma, 30, 100, 300,
     };
 });
 
-VARF(wireframe, 0, 0, 1, if(noedit()) wireframe = 0);
+VARF(wireframe, 0, 0, 1, if(noedit(true)) wireframe = 0);
 
 void transplayer()
 {
