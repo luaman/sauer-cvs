@@ -157,10 +157,11 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
             vec v(ray);
             v.mul(dist);
             v.add(o);
-            dest = v;
+            ivec s = dest = v;
             dest.mask(~(sel.grid-1)); // snap
-            e.o[R[d]] = entselsnap ? dest[R[d]] : v[R[d]];
-            e.o[C[d]] = entselsnap ? dest[C[d]] : v[C[d]];
+            s.add(sel.grid/2).mask(~(sel.grid-1));
+            e.o[R[d]] = entselsnap ? s[R[d]] : v[R[d]];
+            e.o[C[d]] = entselsnap ? s[C[d]] : v[C[d]];
         };
     );
 };
@@ -279,7 +280,7 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     int i = et->getents().length()-1;
     addentity(i, *e);
     et->editent(i);
-	return i;
+    return i;
 };
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
