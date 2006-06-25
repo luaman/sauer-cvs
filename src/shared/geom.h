@@ -10,7 +10,7 @@ struct vec
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(int v[3]) : x(v[0]), y(v[1]), z(v[2]) {};
     vec(float *v) : x(v[0]), y(v[1]), z(v[2]) {};
-    
+
     vec(float yaw, float pitch) : x(sinf(yaw)*cosf(pitch)), y(-cosf(yaw)*cosf(pitch)), z(sinf(pitch)) {};
 
     float &operator[](int i)       { return v[i]; };
@@ -18,7 +18,7 @@ struct vec
 
     bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
     bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; }
-    
+
     bool iszero() const { return x==0 && y==0 && z==0; };
     float squaredlen() const { return x*x + y*y + z*z; };
     float dot(const vec &o) const { return x*o.x + y*o.y + z*o.z; };
@@ -39,7 +39,7 @@ struct vec
 
     void rotate_around_z(float yaw) { *this = vec(cosf(yaw)*x-sinf(yaw)*y, cosf(yaw)*y+sinf(yaw)*x, z); };
     //void rotate_around_x(float pit) { *this = vec(x, cosf(pit)*y-sinf(pit)*z, cosf(pit)*z+sinf(pit)*y); };
-    
+
     float dist_to_aabox(const vec &center, const vec &extent) const
     {
         float sqrdist = 0;
@@ -57,7 +57,7 @@ struct vec
         vec extent = max;
         extent.sub(min).div(2);
         vec center = min;
-        center.add(extent); 
+        center.add(extent);
         return dist_to_aabox(center, extent);
     };
 };
@@ -72,11 +72,11 @@ struct vec4 : vec
 struct matrix
 {
     vec X, Y, Z;
-    
+
     matrix(const vec &_X, const vec &_Y, const vec &_Z) : X(_X), Y(_Y), Z(_Z) {};
-    
+
     void transform(vec &o) { o = vec(o.dot(X), o.dot(Y), o.dot(Z)); };
-    
+
     void orthonormalize()
     {
         X.sub(vec(Z).mul(Z.dot(X)));
@@ -92,7 +92,15 @@ struct plane : vec
     float dist(const vec &p) const { return dot(p)+offset; };
     bool operator==(const plane &p) const { return x==p.x && y==p.y && z==p.z && offset==p.offset; };
     bool operator!=(const plane &p) const { return x!=p.x || y!=p.y || z!=p.z || offset!=p.offset; };
-    
+
+    plane() {};
+    plane(int d, float off)
+    {
+        x = y = z = 0.0f;
+        v[d] = 1.0f;
+        offset = -off;
+    };
+
     void toplane(const vec &n, const vec &p)
     {
         *(vec *)this = n;
@@ -109,8 +117,17 @@ struct plane : vec
         return true;
     };
 
+    bool rayintersect(const vec &o, const vec &ray, float &dist)
+    {
+        float cosalpha = dot(ray);
+        if(cosalpha==0) return false;
+        float deltac = offset+dot(o);
+        dist -= deltac/cosalpha;
+        return true;
+    };
+
     float zintersect(const vec &p) const { return -(x*p.x+y*p.y+offset)/z; };
-    float zdist(const vec &p) const { return p.z-zintersect(p); }; 
+    float zdist(const vec &p) const { return p.z-zintersect(p); };
 };
 
 struct triangle
@@ -127,19 +144,19 @@ struct triangle
 
 Sauerbraten uses 3 different linear coordinate systems
 which are oriented around each of the axis dimensions.
-    
+
 So any point within the game can be defined by four coordinates: (d, x, y, z)
-    
+
 d is the reference axis dimension
-x is the coordinate of the ROW dimension 
-y is the coordinate of the COL dimension 
+x is the coordinate of the ROW dimension
+y is the coordinate of the COL dimension
 z is the coordinate of the reference dimension (DEPTH)
 
 typically, if d is not used, then it is implicitly the Z dimension.
 ie: d=z => x=x, y=y, z=z
 
-**/ 
-    
+**/
+
 // DIM: X=0 Y=1 Z=2.
 const int D[3] = {0, 1, 2}; // depth
 const int R[3] = {1, 2, 0}; // row
@@ -188,7 +205,7 @@ struct ivec
     ivec &add(const ivec &v) { x += v.x; y += v.y; z += v.z; return *this; };
     ivec &sub(const ivec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; };
 
-    void mask(int n) { x &= n; y &= n; z &= n; }; 
+    void mask(int n) { x &= n; y &= n; z &= n; };
 };
 
 struct svec

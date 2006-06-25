@@ -202,7 +202,11 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     extern int selent;
     const vector<extentity *> &ents = et->getents();
     entity *c = NULL;
-    if(selent>=0) c = ents[selent];
+    if(selent>=0)
+    {
+        c = ents[selent];
+        s_sprintf(closeent)("%s (%d, %d, %d, %d)", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
+    };
     loopv(ents)
     {
         entity &e = *ents[i];
@@ -213,10 +217,6 @@ void renderents()       // show sparkly thingies for map entities in edit mode
         };
         particle_splash(2, 2, 40, e.o);
     };
-    if(c)
-        s_sprintf(closeent)("selected entity = %s (%d, %d, %d, %d)", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
-    else
-        s_sprintf(closeent)("no entity selection");
 };
 
 GLfloat mm[16];
@@ -297,8 +297,6 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     char *command = getcurcommand();
     if(command) rendercommand(FONTH/2, abovegameplayhud - (editmode ? FONTH*4 : 0));
-    if(closeent[0] && !hidehud) draw_text(closeent, FONTH/2, abovegameplayhud);
-
     cl->renderscores();
 
     if(!hidehud)
@@ -332,9 +330,10 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
             if(editmode)
             {
-                draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*3, selchildcount<0 ? "1/" : "", abs(selchildcount));
-                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
-                draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length());
+                if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud-FONTH*2);
+                else draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*2, selchildcount<0 ? "1/" : "", abs(selchildcount));
+                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
+                draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d", FONTH/2, abovegameplayhud, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length());
             };
         };
 

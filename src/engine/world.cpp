@@ -165,14 +165,19 @@ void entproperty(int *prop, int *amount)
     et->editent(i);
 };
 
-void entdrag(const ivec &v, int d)
+void entdrag(const vec &o, const vec &ray, int d)
 {
-    if(noedit()) return;
     int i = selent;
     if(i<0) return;
     extentity &e = *et->getents()[i];
-    if(e.o[R[d]] == v[R[d]] &&
-       e.o[C[d]] == v[C[d]]) return;
+    plane pl(d, e.o[D[d]]);
+    float dist = 0.0f;
+    if(!pl.rayintersect(o, ray, dist))
+        return;
+    vec v(ray);
+    v.mul(dist);
+    v.add(o);
+    if(e.o == v) return;
     removeentity(i, e);
     e.o[R[d]] = v[R[d]];
     e.o[C[d]] = v[C[d]];

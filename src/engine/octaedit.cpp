@@ -66,7 +66,7 @@ void editdrag(bool on)
         extern int rayent(const vec &o, vec &ray);
         vec ray(worldpos); ray.sub(player->o);
         selent = rayent(player->o, ray);
-        if(cor[0]<0) return;
+        if(cor[0]<0 || selent>=0) return;
         lastcur = cur;
         lastcor = cor;
         sel.grid = gridsize;
@@ -108,6 +108,7 @@ void toggleedit()
 bool noedit()
 {
     if(!editmode) { conoutf("operation only allowed in edit mode"); return true; };
+    if(selent>=0) return false;
     vec o(sel.o.v);
     vec s(sel.s.v);
     s.mul(float(sel.grid) / 2.0f);
@@ -219,38 +220,44 @@ void cursorupdate()
 
     if(dragging)
     {
-        sel.o.x = min(lastcur.x, cur.x);
-        sel.o.y = min(lastcur.y, cur.y);
-        sel.o.z = min(lastcur.z, cur.z);
-        sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
-        sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
-        sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
-
-        sel.cx   = min(cor[R[d]], lastcor[R[d]]);
-        sel.cy   = min(cor[C[d]], lastcor[C[d]]);
-        sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
-        sel.cys  = max(cor[C[d]], lastcor[C[d]]);
-
-        if(!selectcorners)
+        if(selent>=0)
         {
-            sel.cx &= ~1;
-            sel.cy &= ~1;
-            sel.cxs &= ~1;
-            sel.cys &= ~1;
-            sel.cxs -= sel.cx-2;
-            sel.cys -= sel.cy-2;
+            extern void entdrag(const vec &o, const vec &ray, int d);
+            entdrag(player->o, ray, d);
         }
         else
         {
-            sel.cxs -= sel.cx-1;
-            sel.cys -= sel.cy-1;
-        };
+            sel.o.x = min(lastcur.x, cur.x);
+            sel.o.y = min(lastcur.y, cur.y);
+            sel.o.z = min(lastcur.z, cur.z);
+            sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
+            sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
+            sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
 
-        sel.cx  &= 1;
-        sel.cy  &= 1;
-        extern void entdrag(const ivec &v, int d);
-        entdrag(cur, d);
-        havesel = true;
+            sel.cx   = min(cor[R[d]], lastcor[R[d]]);
+            sel.cy   = min(cor[C[d]], lastcor[C[d]]);
+            sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
+            sel.cys  = max(cor[C[d]], lastcor[C[d]]);
+
+            if(!selectcorners)
+            {
+                sel.cx &= ~1;
+                sel.cy &= ~1;
+                sel.cxs &= ~1;
+                sel.cys &= ~1;
+                sel.cxs -= sel.cx-2;
+                sel.cys -= sel.cy-2;
+            }
+            else
+            {
+                sel.cxs -= sel.cx-1;
+                sel.cys -= sel.cy-1;
+            };
+
+            sel.cx  &= 1;
+            sel.cy  &= 1;
+            havesel = true;
+        };
     }
     else if(!havesel && hmap == NULL)
     {
@@ -285,16 +292,13 @@ void cursorupdate()
     {
         glColor3ub(20,20,20);   // grid
         loopxy(sel) boxs(d, sel.o[R[d]]+x*sel.grid, sel.o[C[d]]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
-        if(selent<0)
-        {
-            glColor3ub(200,0,0);    // 0 reference
-            boxs(d, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
-            glColor3ub(200,200,200);// 2D selection box
-            boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
-            glColor3ub(0,0,40);     // 3D selection box
-            loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
-        };
-    };
+        glColor3ub(200,0,0);    // 0 reference
+        boxs(d, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
+        glColor3ub(200,200,200);// 2D selection box
+        boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+        glColor3ub(0,0,40);     // 3D selection box
+        loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
+};
     glDisable(GL_BLEND);
 };
 
