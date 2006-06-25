@@ -145,7 +145,9 @@ void entproperty(int *prop, int *amount)
     );
 };
 
-void entdrag(const vec &o, const vec &ray, int d)
+VAR(entselsnap, 0, 0, 1);
+
+void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
 {
     entedit(
         plane pl(d, e.o[D[d]]);
@@ -155,8 +157,10 @@ void entdrag(const vec &o, const vec &ray, int d)
             vec v(ray);
             v.mul(dist);
             v.add(o);
-            e.o[R[d]] = v[R[d]];
-            e.o[C[d]] = v[C[d]];
+            dest = v;
+            dest.round2(sel.grid);
+            e.o[R[d]] = entselsnap ? dest[R[d]] : v[R[d]];
+            e.o[C[d]] = entselsnap ? dest[C[d]] : v[C[d]];
         };
     );
 };

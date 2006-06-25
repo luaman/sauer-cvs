@@ -296,7 +296,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     int abovegameplayhud = h*3*1650/1800-FONTH*3/2; // hack
 
     char *command = getcurcommand();
-    if(command) rendercommand(FONTH/2, abovegameplayhud - (editmode ? FONTH*4 : 0));
+    if(command) rendercommand(FONTH/2, abovegameplayhud - (editmode ? FONTH*3 : 0));
     cl->renderscores();
 
     if(!hidehud)

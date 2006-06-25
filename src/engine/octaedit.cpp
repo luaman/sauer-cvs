@@ -216,13 +216,14 @@ void cursorupdate()
     cor.z = (int)v.z/g2;
     int od = dimension(orient);
     int d = dimension(sel.orient);
+    ivec e;
 
     if(dragging)
     {
         if(sel.ent>=0)
         {
-            extern void entdrag(const vec &o, const vec &ray, int d);
-            entdrag(player->o, ray, d);
+            extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest);
+            entdrag(player->o, ray, d, e);
         }
         else
         {
@@ -278,7 +279,13 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     glColor3ubv(cursorcolor);
     boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
-    if(hmap != NULL)
+    if(sel.ent>=0)
+    {
+        glColor3ub(40,40,40);
+        loop(x, 6) loop(y, 6)
+            boxs(d, e[R[d]]+(x-3)*sel.grid, e[C[d]]+(y-3)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
+    }
+    else if(hmap != NULL)
     {
         glColor3ub(0,200,0);
         d = dimension(sel.orient);
