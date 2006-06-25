@@ -339,7 +339,7 @@ struct fpsserver : igameserver
             case SV_MASTERMODE:
             {
                 int mm = getint(p);
-                if(ci->master)
+                if(ci->master && mm>=MM_OPEN && mm<=MM_PRIVATE)
                 {
                     mastermode = mm;
                     s_sprintfd(s)("mastermode is now %d", mastermode);
