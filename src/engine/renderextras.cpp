@@ -199,12 +199,12 @@ void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
     if(!editmode) return;
-    extern int selent;
+    extern selinfo sel;
     const vector<extentity *> &ents = et->getents();
     entity *c = NULL;
-    if(selent>=0)
+    if(sel.ent>=0)
     {
-        c = ents[selent];
+        c = ents[sel.ent];
         s_sprintf(closeent)("%s (%d, %d, %d, %d)", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
     };
     loopv(ents)

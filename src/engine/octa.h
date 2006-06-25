@@ -118,6 +118,7 @@ struct block3
 struct editinfo
 {
     block3 *copy;
+    extentity ent;
     editinfo() : copy(NULL) {};
 };
 

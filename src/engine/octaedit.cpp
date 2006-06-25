@@ -19,7 +19,6 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
 };
 
 selinfo sel = { 0 }, lastsel;
-int selent = -1;
 
 int orient = 0;
 int gridsize = 8;
@@ -48,7 +47,7 @@ void clearheightmap()
 };
 
 void forcenextundo() { lastsel.orient = -1; };
-void cancelsel()     { havesel = false; selent = -1; clearheightmap(); forcenextundo(); };
+void cancelsel()     { havesel = false; sel.ent = -1; clearheightmap(); forcenextundo(); };
 
 VARF(gridpower, 2, 3, VVEC_INT-1,
 {
@@ -65,8 +64,8 @@ void editdrag(bool on)
         cancelsel();
         extern int rayent(const vec &o, vec &ray);
         vec ray(worldpos); ray.sub(player->o);
-        selent = rayent(player->o, ray);
-        if(cor[0]<0 || selent>=0) return;
+        sel.ent = rayent(player->o, ray);
+        if(cor[0]<0 || sel.ent>=0) return;
         lastcur = cur;
         lastcor = cor;
         sel.grid = gridsize;
@@ -108,7 +107,7 @@ void toggleedit()
 bool noedit()
 {
     if(!editmode) { conoutf("operation only allowed in edit mode"); return true; };
-    if(selent>=0) return false;
+    if(sel.ent>=0) return false;
     vec o(sel.o.v);
     vec s(sel.s.v);
     s.mul(float(sel.grid) / 2.0f);
@@ -220,7 +219,7 @@ void cursorupdate()
 
     if(dragging)
     {
-        if(selent>=0)
+        if(sel.ent>=0)
         {
             extern void entdrag(const vec &o, const vec &ray, int d);
             entdrag(player->o, ray, d);
@@ -476,19 +475,31 @@ void mpcopy(editinfo *&e, selinfo &sel, bool local)
     if(local) cl->edittrigger(sel, EDIT_COPY);
     if(e==NULL) e = new editinfo;
     if(e->copy) freeblock(e->copy);
-    protectsel(e->copy = blockcopy(block3(sel), sel.grid));
-    changed(sel);
+    e->copy = NULL;
+    e->ent.type = ET_EMPTY;
+    if(sel.ent>=0)
+        e->ent = *et->getents()[sel.ent];
+    else
+    {
+        protectsel(e->copy = blockcopy(block3(sel), sel.grid));
+        changed(sel);
+    };
 };
 
 void mppaste(editinfo *&e, selinfo &sel, bool local)
 {
     if(e==NULL) return;
-    if(e->copy==NULL) return;
     if(local) cl->edittrigger(sel, EDIT_PASTE);
-    sel.s = e->copy->s;
-    sel.orient = e->copy->orient;
-    cube *s = e->copy->c();
-    loopselxyz(pastecube(*s++, c));
+    extern void newentity(int type, int a1, int a2, int a3, int a4);
+    if(e->ent.type != ET_EMPTY)
+        newentity(e->ent.type, e->ent.attr1, e->ent.attr2, e->ent.attr3, e->ent.attr4);
+    if(e->copy)
+    {
+        sel.s = e->copy->s;
+        sel.orient = e->copy->orient;
+        cube *s = e->copy->c();
+        loopselxyz(pastecube(*s++, c));
+    };
 };
 
 void copy()  { if(noedit()) return; mpcopy(localedit, sel, true); };
@@ -743,6 +754,11 @@ void linkedpush(cube &c, int d, int x, int y, int dc, int dir)
 void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_FACE, dir, mode);
+
+    extern void pushent(selinfo &sel, int dir);
+    if(sel.ent>=0)
+        return pushent(sel, dir);
+
     if(mode==1 && (sel.cx || sel.cy || sel.cxs&1 || sel.cys&1)) mode = 0;
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
@@ -818,10 +834,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int *dir, int *mode)
 {
     if(noedit()) return;
-    extern void pushent(int *dir);
-    if(selent>=0)
-        pushent(dir);
-    else if(hmap)
+     if(sel.ent<0 && hmap)
         edithmap(*dir);
     else
         mpeditface(*dir, *mode, sel, true);

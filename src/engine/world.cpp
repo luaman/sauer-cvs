@@ -63,6 +63,8 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
 {
     switch(e.type)
     {
+        case ET_EMPTY:
+            return false;
         case ET_MAPMODEL:
         {
             mapmodelinfo &mmi = getmminfo(e.attr2);
@@ -123,101 +125,59 @@ void entitiesinoctanodes()
     loopv(ents) addentity(i, *ents[i]);
 };
 
-extern int selent;
 extern selinfo sel;
 extern bool havesel, selectcorners;
 
-int closestent()        // used for delent and edit mode ent display
-{
-    if(!editmode) return -1;
-    int best = -1;
-    float bdist = 99999;
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents)
-    {
-        entity &e = *ents[i];
-        if(e.type==ET_EMPTY) continue;
-        float dist = e.o.dist(player->o);
-        if(dist<bdist)
-        {
-            best = i;
-            bdist = dist;
-        };
-    };
-    return bdist==99999 ? -1 : best;
-};
+
+#define entedit(f) { int _i = sel.ent; if(_i<0) return; extentity &e = *et->getents()[_i]; removeentity(_i, e); f; addentity(_i, e); et->editent(_i); }
 
 void entproperty(int *prop, int *amount)
 {
-    if(noedit()) return;
-    int i = selent;
-    if(i<0) return;
-    extentity &e = *et->getents()[i];
-    removeentity(i, e);
-    switch(*prop)
-    {
-        case 0: e.attr1 += *amount; break;
-        case 1: e.attr2 += *amount; break;
-        case 2: e.attr3 += *amount; break;
-        case 3: e.attr4 += *amount; break;
-    };
-    addentity(i, e);
-    et->editent(i);
+    if(noedit() || multiplayer()) return;
+    entedit(
+        switch(*prop)
+        {
+            case 0: e.attr1 += *amount; break;
+            case 1: e.attr2 += *amount; break;
+            case 2: e.attr3 += *amount; break;
+            case 3: e.attr4 += *amount; break;
+        }
+    );
 };
 
 void entdrag(const vec &o, const vec &ray, int d)
 {
-    int i = selent;
-    if(i<0) return;
-    extentity &e = *et->getents()[i];
-    plane pl(d, e.o[D[d]]);
-    float dist = 0.0f;
-    if(!pl.rayintersect(o, ray, dist))
-        return;
-    vec v(ray);
-    v.mul(dist);
-    v.add(o);
-    if(e.o == v) return;
-    removeentity(i, e);
-    e.o[R[d]] = v[R[d]];
-    e.o[C[d]] = v[C[d]];
-    addentity(i, e);
-    et->editent(i);
+    entedit(
+        plane pl(d, e.o[D[d]]);
+        float dist = 0.0f;
+        if(pl.rayintersect(o, ray, dist))
+        {
+            vec v(ray);
+            v.mul(dist);
+            v.add(o);
+            e.o[R[d]] = v[R[d]];
+            e.o[C[d]] = v[C[d]];
+        };
+    );
 };
 
-void entmove(int *dir, int *dist)
+void pushent(selinfo &sel, int dir)
 {
-    if(noedit()) return;
-    int i = selent;
-    if(i<0||*dir<0||*dir>2) return;
-    extentity &e = *et->getents()[i];
-    removeentity(i, e);
-    e.o[*dir] += *dist;
-    addentity(i, e);
-    et->editent(i);
-};
-
-void pushent(int *dir)
-{
-    int d = dimension(sel.orient);
-    int dist = sel.grid * *dir;
+    int dist = sel.grid * dir;
     if(dimcoord(sel.orient)) dist = -dist;
-    entmove(&d, &dist);
+    entedit(e.o[dimension(sel.orient)] += dist);
 };
-
-COMMAND(pushent, "i");
 
 void delent()
 {
-    if(noedit()) return;
-    int i = selent;
-    if(i<0) { conoutf("no more entities"); return; };
-    extentity &e = *et->getents()[i];
-    conoutf("%s entity deleted", et->entname(e.type));
-    removeentity(i, e);
-    e.type = ET_EMPTY;
-    et->editent(i);
-    cancelsel();
+    if(noedit() || multiplayer()) return;
+    entedit(
+        conoutf("%s entity deleted", et->entname(e.type));
+        e.type = ET_EMPTY;
+        et->editent(sel.ent);
+        cancelsel();
+        return;
+    );
 };
 
 int findtype(char *what)
@@ -229,17 +189,17 @@ int findtype(char *what)
 
 VAR(entdrop, 0, 1, 3);
 
-bool dropentity(entity &e)
+bool dropentity(entity &e, int drop = -1)
 {
-    float radius = 4.0f,
-          zspace = 4.0f;
+    vec radius(4.0f, 4.0f, 4.0f);
+    if(drop<0) drop = entdrop;
     if(e.type == ET_MAPMODEL)
     {
-        zspace = 0.0f;
+        radius.z = 0.0f;
         mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(&mmi && mmi.rad) radius = float(mmi.rad);
+        if(&mmi && mmi.rad) radius.x = radius.y = float(mmi.rad);
     };
-    switch(entdrop)
+    switch(drop)
     {
     case 1:
         if(e.type != ET_LIGHT)
@@ -247,11 +207,6 @@ bool dropentity(entity &e)
         break;
     case 2:
     case 3:
-        if(!havesel)
-        {
-            conoutf("can't drop entity without a selection");
-            return false;
-        };
         int cx = 0, cy = 0;
         if(sel.cxs == 1 && sel.cys == 1)
         {
@@ -259,30 +214,15 @@ bool dropentity(entity &e)
             cy = (sel.cy ? 1 : -1) * sel.grid / 2;
         }
         e.o = sel.o.v;
-        switch(sel.orient)
-        {
-        case O_BOTTOM:
-        case O_TOP:
-            e.o.x += sel.grid / 2 + cx;
-            e.o.y += sel.grid / 2 + cy;
-            if(entdrop == 2 && sel.orient == O_BOTTOM) e.o.z -= zspace;
-            else e.o.z += sel.grid + zspace;
-            break;
-        case O_BACK:
-        case O_FRONT:
-            e.o.x += sel.grid / 2 + cx;
-            e.o.z += sel.grid / 2 + cy;
-            if(sel.orient == O_BACK) e.o.y -= radius;
-            else e.o.y += sel.grid + radius;
-            break;
-        case O_LEFT:
-        case O_RIGHT:
-            e.o.y += sel.grid / 2 + cx;
-            e.o.z += sel.grid / 2 + cy;
-            if(sel.orient == O_LEFT) e.o.x -= radius;
-            else e.o.x += sel.grid + radius;
-        };
-        if(entdrop == 3)
+        int d = dimension(sel.orient), dc = dimcoord(sel.orient);
+        e.o[R[d]] += sel.grid / 2 + cx;
+        e.o[C[d]] += sel.grid / 2 + cy;
+        if(!dc)
+            e.o[D[d]] -= radius[D[d]];
+        else
+            e.o[D[d]] += sel.grid + radius[D[d]];
+
+        if(drop == 3)
             dropenttofloor(&e);
         break;
     };
@@ -292,13 +232,7 @@ bool dropentity(entity &e)
 void dropent()
 {
     if(noedit()) return;
-    int i = closestent();
-    if(i<0) return;
-    extentity &e = *et->getents()[i];
-    removeentity(i, e);
-    dropentity(e);
-    addentity(i, e);
-    et->editent(i);
+    entedit(dropentity(e));
 };
 
 extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
@@ -332,16 +266,22 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
     return &e;
 };
 
-void newent(char *what, int *a1, int *a2, int *a3, int *a4)
+void newentity(int type, int a1, int a2, int a3, int a4)
 {
-    if(noedit()) return;
-    int type = findtype(what);
-    extentity *e = newentity(true, player->o, type, *a1, *a2, *a3, *a4);
-    if(entdrop) dropentity(*e);
+    extentity *e = newentity(true, player->o, type, a1, a2, a3, a4);
+    if(multiplayer()) dropentity(*e, 2);
+    else if(entdrop)  dropentity(*e);
     et->getents().add(e);
     int i = et->getents().length()-1;
     addentity(i, *e);
     et->editent(i);
+};
+
+void newent(char *what, int *a1, int *a2, int *a3, int *a4)
+{
+    if(noedit()) return;
+    int type = findtype(what);
+    newentity(type, *a1, *a2, *a3, *a4);
 };
 
 COMMAND(newent, "siiii");
@@ -375,7 +315,6 @@ int findentity(int type, int index)
 
 COMMAND(delent, "");
 COMMAND(dropent, "");
-COMMAND(entmove, "ii");
 COMMAND(entproperty, "ii");
 
 int spawncycle = -1, fixspawn = 2;

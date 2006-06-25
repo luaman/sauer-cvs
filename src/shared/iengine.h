@@ -18,6 +18,7 @@ enum { EDIT_FACE = 0, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_COPY, EDIT_PASTE, EDIT
 
 struct selinfo
 {
+    int ent;
     int corner;
     int cx, cxs, cy, cys;
     ivec o, s;
@@ -81,7 +82,6 @@ extern void sgetstr(char *text, uchar *&p);
 
 // world
 extern void empty_world(int factor, bool force);
-extern int closestent();
 extern int findentity(int type, int index = 0);
 extern void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local);
 extern int getworldsize();
