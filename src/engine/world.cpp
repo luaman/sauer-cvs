@@ -290,8 +290,6 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
     newentity(type, *a1, *a2, *a3, *a4);
 };
 
-COMMAND(newent, "siiii");
-
 void clearents(char *name)
 {
     int type = findtype(name);
@@ -319,6 +317,31 @@ int findentity(int type, int index)
     return -1;
 };
 
+void replaceents(int *a1, int *a2, int *a3, int *a4)
+{
+    if(noedit() || multiplayer()) return;
+    const vector<extentity *> &ents = et->getents();
+    extentity &s = *ents[sel.ent];
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        if (e.type==s.type
+        &&  e.attr1==s.attr1
+        &&  e.attr2==s.attr2
+        &&  e.attr3==s.attr3
+        &&  e.attr4==s.attr4)
+        {
+            e.attr1=*a1;
+            e.attr2=*a2;
+            e.attr3=*a3;
+            e.attr4=*a4;
+            et->editent(i);
+        };
+    };
+};
+
+COMMAND(newent, "siiii");
+COMMAND(replaceents, "iiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
 COMMAND(entproperty, "ii");
