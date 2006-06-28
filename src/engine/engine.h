@@ -26,7 +26,7 @@ struct model
     vec translate;
     SphereTree *spheretree;
     bool masked;
-    
+
     model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), scale(1.0f), translate(0, 0, 0), spheretree(0), masked(false) {};
     virtual ~model() {};
     virtual float boundsphere(int frame, vec &center) = 0;
@@ -71,7 +71,7 @@ struct Slot
         int combined;
     };
 
-    vector<Tex> sts;             
+    vector<Tex> sts;
     Shader *shader;
     vector<ShaderParam> params;
     bool loaded;
@@ -149,6 +149,11 @@ extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
 extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s);
 
+// ents
+extern int rayent(const vec &o, vec &ray);
+extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest);
+extern int newentity(int type, int a1, int a2, int a3, int a4);
+extern void pushent(selinfo &sel, int dir);
 
 // octaedit
 extern void editdrag(bool on);
@@ -182,7 +187,7 @@ extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, ucha
 extern int visibleorient(cube &c, int orient);
 extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
-extern void remipworld(); 
+extern void remipworld();
 extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);
 extern void resetqueries();
 extern int getnumqueries();
@@ -236,7 +241,7 @@ extern bool overlapsdynent(const vec &o, float radius);
 
 // world
 enum
-{   
+{
     TRIG_COLLIDE    = 1<<0,
     TRIG_TOGGLE     = 1<<1,
     TRIG_ONCE       = 0<<2,

@@ -18,6 +18,22 @@ void boxs(int d, int x, int y, int xs, int ys, int z)
     glEnd();
 };
 
+void boxs3D(const ivec &o, const ivec &s, int g)
+{
+    loopi(6)
+    {
+        int d = dimension(i), dc = dimcoord(i);
+        boxs(d, o[R[d]], o[C[d]], g*s[R[d]], g*s[C[d]], o[d]+dc*g*s[d]);
+    };
+};
+
+void boxsgrid(const ivec &o, const ivec &s, int g, int orient)
+{
+    int d = dimension(orient), dc = dimcoord(orient);
+    loop(x, s[R[d]]) loop(y, s[C[d]])
+        boxs(d, o[R[d]]+x*g, o[C[d]]+y*g, g, g, o[d]+dc*g*s[d]);
+};
+
 selinfo sel = { 0 }, lastsel;
 
 int orient = 0;
@@ -25,6 +41,9 @@ int gridsize = 8;
 ivec cor, lastcor;
 ivec cur, lastcur;
 
+ivec movesel, movehandle;
+
+bool moving = false;
 bool editmode = false;
 bool havesel = false;
 bool dragging = false;
@@ -47,7 +66,7 @@ void clearheightmap()
 };
 
 void forcenextundo() { lastsel.orient = -1; };
-void cancelsel()     { havesel = false; sel.ent = -1; clearheightmap(); forcenextundo(); };
+void cancelsel()     { havesel = moving = false; sel.ent = -1; clearheightmap(); forcenextundo(); };
 
 VARF(gridpower, 2, 3, VVEC_INT-1,
 {
@@ -62,7 +81,6 @@ void editdrag(bool on)
     if(dragging = on)
     {
         cancelsel();
-        extern int rayent(const vec &o, vec &ray);
         vec ray(worldpos); ray.sub(player->o);
         sel.ent = rayent(player->o, ray);
         if(cor[0]<0 || sel.ent>=0) return;
@@ -178,7 +196,7 @@ void cursorupdate()
     if(!insideworld(target))
         loopi(3) target[i] = max(min(target[i], hdr.worldsize), 0);
     vec ray(target), v;
-    ray.sub(player->o);
+    ray.sub(player->o).normalize();
     if(raycubepos(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0) | (passthroughcube ? RAY_PASS : 0) | RAY_SKIPFIRST, gridsize)<0)
         v = target;
 
@@ -198,16 +216,7 @@ void cursorupdate()
     };
     lusize = gridsize;
 
-    float xi  = v.x + (ray.x/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // x intersect of xz plane
-    float zi  = v.z + (ray.z/ray.y) * (lu.y - v.y + (ray.y<0 ? gridsize : 0)); // z intersect of xz plane
-    float zi2 = v.z + (ray.z/ray.x) * (lu.x - v.x + (ray.x<0 ? gridsize : 0)); // z intersect of yz plane
-    bool xside = (ray.x<0 && xi<lu.x+gridsize) || (ray.x>0 && xi>lu.x);
-    bool zside = (ray.z<0 && zi<lu.z+gridsize) || (ray.z>0 && zi>lu.z);
-    bool z2side= (ray.z<0 && zi2<lu.z+gridsize)|| (ray.z>0 && zi2>lu.z);
-
-    if(xside && zside) orient = (ray.y>0 ? O_BACK : O_FRONT);
-    else if(z2side) orient = (ray.x>0 ? O_LEFT : O_RIGHT);
-    else orient = (ray.z>0 ? O_BOTTOM : O_TOP);
+    float t; rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t, orient); // to get orient
 
     cur = lu;
     int g2 = gridsize/2;
@@ -218,11 +227,33 @@ void cursorupdate()
     int d = dimension(sel.orient);
     ivec e;
 
-    if(dragging)
+    if(moving)
+    {
+        int dm = dimension(sel.orient), dmc = dimcoord(sel.orient);
+        plane pl(dm, movesel[D[dm]]+dmc*sel.grid*sel.s[D[dm]]);
+        float dist = 0.0f;
+        if(pl.rayintersect(player->o, ray, dist))
+        {
+            vec p(ray);
+            p.mul(dist);
+            p.add(player->o);
+            e = p;
+            e.mask(~(sel.grid-1));
+            if(!havesel)
+            {
+                movehandle = e;
+                movehandle.sub(sel.o);
+                havesel = true;
+            };
+            e.sub(movehandle);
+            movesel[R[d]] = e[R[d]];
+            movesel[C[d]] = e[C[d]];
+        };
+    }
+    else if(dragging)
     {
         if(sel.ent>=0)
         {
-            extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest);
             entdrag(player->o, ray, d, e);
         }
         else
@@ -279,11 +310,18 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     glColor3ubv(cursorcolor);
     boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
+    if(moving)
+    {
+        glColor3ub(10,10,10);   // grid
+        boxsgrid(movesel, sel.s, sel.grid, sel.orient);
+        glColor3ub(10,10,40);   // 3D selection box
+        boxs3D(movesel, sel.s, sel.grid);
+    };
     if(sel.ent>=0)
     {
         glColor3ub(40,40,40);
         loop(x, 6) loop(y, 6)
-            boxs(d, e[R[d]]+(x-3)*sel.grid, e[C[d]]+(y-3)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
+            boxs(dimension(sel.orient), e[R[d]]+(x-3)*sel.grid, e[C[d]]+(y-3)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
     };
     if(hmap != NULL)
     {
@@ -291,19 +329,19 @@ void cursorupdate()
         d = dimension(sel.orient);
         loop(x, 2) loop(y, 2) // corners
             boxs(d, sel.o[R[d]]+x*(sel.us(R[d])-sel.grid), sel.o[C[d]]+y*(sel.us(C[d])-sel.grid), sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
-        loopi(6) // heightmap outline
-            { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.s[R[d]]*sel.grid, sel.s[C[d]]*sel.grid, sel.o[d]+dimcoord(i)*sel.s[D[d]]*sel.grid); };
+        boxs3D(sel.o, sel.s, sel.grid);
     };
     if(havesel)
     {
+        d = dimension(sel.orient);
         glColor3ub(20,20,20);   // grid
-        loopxy(sel) boxs(d, sel.o[R[d]]+x*sel.grid, sel.o[C[d]]+y*sel.grid, sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+        boxsgrid(sel.o, sel.s, sel.grid, sel.orient);
         glColor3ub(200,0,0);    // 0 reference
         boxs(d, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
         glColor3ub(200,200,200);// 2D selection box
         boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         glColor3ub(0,0,40);     // 3D selection box
-        loopi(6) { d=dimension(i); boxs(d, sel.o[R[d]], sel.o[C[d]], sel.us(R[d]), sel.us(C[d]), sel.o[d]+dimcoord(i)*sel.us(d)); };
+        boxs3D(sel.o, sel.s, sel.grid);
     };
     glDisable(GL_BLEND);
 };
@@ -497,7 +535,6 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
 {
     if(e==NULL) return;
     if(local) cl->edittrigger(sel, EDIT_PASTE);
-    extern int newentity(int type, int a1, int a2, int a3, int a4);
     if(e->ent.type != ET_EMPTY)
     {
         int i = newentity(e->ent.type, e->ent.attr1, e->ent.attr2, e->ent.attr3, e->ent.attr4);
@@ -765,7 +802,6 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_FACE, dir, mode);
 
-    extern void pushent(selinfo &sel, int dir);
     if(sel.ent>=0)
         return pushent(sel, dir);
 
@@ -773,6 +809,12 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
+
+    if(moving)
+    {
+        movesel[d] += seldir*sel.grid;
+        return;
+    };
 
     if (mode==1)
     {
@@ -865,14 +907,53 @@ void selextend()
         else if(cur[i]>=sel.o[i]+sel.s[i]*sel.grid)
         {
             sel.s[i] = (cur[i]-sel.o[i])/sel.grid+1;
-        }
+        };
     };
 
     cursorupdate();
     reorient();
-}
+};
+
+void movecubes(selinfo &sel, ivec &o)
+{
+//  forcenextundo();
+    makeundo();
+    block3 *b = blockcopy(block3(sel), sel.grid);
+    loopxyz(*b, sel.grid, discardchildren(c); emptyfaces(c););
+    changed(sel);
+    sel.o = o;
+    cube *s = b->c();
+    loopselxyz(pastecube(*s++, c));
+};
+
+void editmove(int *isdown)
+{
+    if(noedit(true)) return;
+    if(*isdown!=0)
+    {
+        if(cur.x <  sel.o.x+sel.s.x*sel.grid
+        && cur.x >= sel.o.x
+        && cur.y <  sel.o.y+sel.s.y*sel.grid
+        && cur.y >= sel.o.y
+        && cur.z <  sel.o.z+sel.s.z*sel.grid
+        && cur.z >= sel.o.z)
+        {
+            reorient();
+            movesel = sel.o;
+            moving = true;
+            havesel = false;
+            return;
+        };
+    };
+    if(!moving) selextend();
+    else
+    if(movesel!=sel.o)
+        movecubes(sel, movesel);
+    moving = false;
+};
 
 COMMAND(selextend, "");
+COMMAND(editmove, "D");
 
 /////////// texture editing //////////////////
 
