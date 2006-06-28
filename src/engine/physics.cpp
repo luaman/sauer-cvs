@@ -102,17 +102,6 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
     return false;
 };
 
-bool raysphereintersect(vec c, float radius, const vec &o, const vec &ray, float &dist)
-{
-    c.sub(o);
-    float v = c.dot(ray),
-          inside = radius*radius - c.squaredlen(),
-          d = inside + v*v;
-    if(inside<0 && d<0) return false;
-    dist += v - sqrt(d);
-    return true;
-};
-
 extern int entselradius;
 float hitentdist;
 int  hitent;
@@ -145,9 +134,9 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
 int rayent(const vec &o, vec &ray)
 {
     ray.normalize();
-    hitentdist = 1e10f;
+    hitent = -1;
     float d = raycube(o, ray, hitentdist, RAY_ENTS | RAY_POLY);
-    if(hitentdist <= d)
+    if(hitentdist == d)
         return hitent;
     else
         return -1;

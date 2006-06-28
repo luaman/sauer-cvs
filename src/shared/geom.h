@@ -1,3 +1,4 @@
+
 struct vec
 {
     union
@@ -205,8 +206,7 @@ struct ivec
     ivec &add(int n) { x += n; y += n; z += n; return *this; };
     ivec &add(const ivec &v) { x += v.x; y += v.y; z += v.z; return *this; };
     ivec &sub(const ivec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; };
-
-    void mask(int n) { x &= n; y &= n; z &= n; };
+    ivec &mask(int n) { x &= n; y &= n; z &= n; return *this; };
 };
 
 struct svec
@@ -247,4 +247,10 @@ struct bvec
 
     vec tovec() const { return vec(x*(2.0f/255.0f)-1.0f, y*(2.0f/255.0f)-1.0f, z*(2.0f/255.0f)-1.0f); };
 };
+
+extern bool raysphereintersect(vec c, float radius, const vec &o, const vec &ray, float &dist);
+extern bool rayrectintersect(const ivec &b, const ivec &s, const vec &o, const vec &ray, float &dist, int &orient);
+
+
+
 

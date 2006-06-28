@@ -9,12 +9,12 @@ vector<ushort> texmru;
 VAR(octaentsize, 0, 128, 1024);
 VAR(entselradius, 1, 2, 10);
 
-static void removeoctaentity(int id);
+static void removeentity(int id);
 
 void freeoctaentities(cube &c)
 {
-    while(c.ents && !c.ents->mapmodels.empty()) removeoctaentity(c.ents->mapmodels.pop());
-    while(c.ents && !c.ents->other.empty())     removeoctaentity(c.ents->other.pop());
+    while(c.ents && !c.ents->mapmodels.empty()) removeentity(c.ents->mapmodels.pop());
+    while(c.ents && !c.ents->other.empty())     removeentity(c.ents->other.pop());
     if(c.ents)
     {
         delete c.ents;
@@ -88,48 +88,30 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
     return true;
 };
 
-static void addoctaentity(int id)
+static void drivemodifyoctaent(bool add, int id)
 {
     ivec o, r;
     extentity &e = *et->getents()[id];
-    if(e.inoctanode || !getentboundingbox(e, o, r)) return;
-    e.inoctanode = true;
-    modifyoctaentity(true, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
+    if(e.inoctanode==add || !getentboundingbox(e, o, r)) return;
+    e.inoctanode = add;
+    modifyoctaentity(add, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
+    if(e.type == ET_LIGHT) clearlightcache(id);
+    else if(add) lightent(e);
 };
 
-static void removeoctaentity(int id)
-{
-    ivec o, r;
-    extentity &e = *et->getents()[id];
-    if(!e.inoctanode || !getentboundingbox(e, o, r)) return;
-    e.inoctanode = false;
-    modifyoctaentity(false, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
-};
-
-static void removeentity(int i, extentity &e)
-{
-    removeoctaentity(i);
-    if(e.type == ET_LIGHT) clearlightcache(i);
-};
-
-static void addentity(int i, extentity &e)
-{
-    addoctaentity(i);
-    if(e.type == ET_LIGHT) clearlightcache(i);
-    else lightent(e);
-};
+static inline void addentity(int id)    { drivemodifyoctaent(true,  id); };
+static inline void removeentity(int id) { drivemodifyoctaent(false, id); };
 
 void entitiesinoctanodes()
 {
-    vector<extentity *> &ents = et->getents();
-    loopv(ents) addentity(i, *ents[i]);
+    loopv(et->getents()) addentity(i);
 };
 
 extern selinfo sel;
 extern bool havesel, selectcorners;
 
 
-#define entedit(f) { int _i = sel.ent; if(_i<0) return; extentity &e = *et->getents()[_i]; removeentity(_i, e); f; addentity(_i, e); et->editent(_i); }
+#define entedit(f) { int _i = sel.ent; if(_i<0) return; extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }
 
 void entproperty(int *prop, int *amount)
 {
@@ -157,11 +139,12 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
             vec v(ray);
             v.mul(dist);
             v.add(o);
-            ivec s = dest = v;
-            dest.mask(~(sel.grid-1)); // snap
-            s.add(sel.grid/2).mask(~(sel.grid-1));
-            e.o[R[d]] = entselsnap ? s[R[d]] : v[R[d]];
-            e.o[C[d]] = entselsnap ? s[C[d]] : v[C[d]];
+            dest = v;
+            int z = dest[d]&(~(sel.grid-1));
+            dest.add(sel.grid/2).mask(~(sel.grid-1));
+            dest[d] = z;
+            e.o[R[d]] = entselsnap ? dest[R[d]] : v[R[d]];
+            e.o[C[d]] = entselsnap ? dest[C[d]] : v[C[d]];
         };
     );
 };
@@ -278,7 +261,7 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     else if(entdrop)  dropentity(*e);
     et->getents().add(e);
     int i = et->getents().length()-1;
-    addentity(i, *e);
+    addentity(i);
     et->editent(i);
     return i;
 };
@@ -300,7 +283,7 @@ void clearents(char *name)
         extentity &e = *ents[i];
         if(e.type==type)
         {
-            removeentity(i, e);
+            removeentity(i);
             e.type = ET_EMPTY;
             et->editent(i);
         };
@@ -401,8 +384,8 @@ void empty_world(int scale, bool force)    // main empty world creation routine
     hdr.lightmaps = 0;
     memset(hdr.reserved, 0, sizeof(hdr.reserved));
     texmru.setsize(0);
-    et->getents().setsize(0);
     freeocta(worldroot);
+    et->getents().setsize(0);
     worldroot = newcubes(F_EMPTY);
     loopi(4) solidfaces(worldroot[i]);
     estartmap("base/unnamed");
@@ -447,16 +430,16 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
         while(et->getents().length()<i) et->getents().add(et->newentity())->type = ET_EMPTY;
         extentity *e = newentity(local, o, type, attr1, attr2, attr3, attr4);
         et->getents().add(e);
-        addentity(i, *e);
+        addentity(i);
     }
     else
     {
         extentity &e = *et->getents()[i];
-        removeentity(i, e);
+        removeentity(i);
         e.type = type;
         e.o = o;
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
-        addentity(i, e);
+        addentity(i);
     };
 };
 
