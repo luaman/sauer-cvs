@@ -878,7 +878,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
 
-    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / ((hdr.worldsize>>4)*(hdr.worldsize>>4)*6) < 9);
+    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
 
     if(limitsky) drawskybox(farplane, true);
 

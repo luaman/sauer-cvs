@@ -6,7 +6,7 @@ PLATFORM_PREFIX=linux
 CLIENT_LIBS=-Lenet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
 	shared/tools.o \
-	shared/geom.o \	
+	shared/geom.o \
 	engine/client.o	\
 	engine/command.o \
 	engine/console.o \
