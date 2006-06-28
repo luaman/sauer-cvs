@@ -241,7 +241,7 @@ void limitfps(int &millis, int curmillis)
     };
 };
 
-#if defined(WIN32) && !defined(_DEBUG)
+#if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
 void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
 {
     if(!ep) fatal("unknown type");
@@ -275,7 +275,9 @@ int main(int argc, char **argv)
     #ifdef WIN32
     //atexit((void (__cdecl *)(void))_CrtDumpMemoryLeaks);
     #ifndef _DEBUG
+    #ifndef __GNUC__
     __try {
+    #endif
     #endif
     #endif
 
@@ -493,7 +495,7 @@ int main(int argc, char **argv)
     ASSERT(0);   
     return 0;
 
-    #if defined(WIN32) && !defined(_DEBUG)
+    #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
     } __except(stackdumper(0, GetExceptionInformation()), EXCEPTION_CONTINUE_SEARCH) { return 0; };
     #endif
 };
