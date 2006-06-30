@@ -254,6 +254,7 @@ void cursorupdate()
     {
         if(sel.ent>=0)
         {
+            //sel.orient = orient;
             entdrag(player->o, ray, d, e);
         }
         else
@@ -320,8 +321,8 @@ void cursorupdate()
     if(sel.ent>=0)
     {
         glColor3ub(40,40,40);
-        loop(x, 6) loop(y, 6)
-            boxs(dimension(sel.orient), e[R[d]]+(x-3)*sel.grid, e[C[d]]+(y-3)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
+        loop(x, 4) loop(y, 4)
+            boxs(dimension(sel.orient), e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
     };
     if(hmap != NULL)
     {
@@ -432,17 +433,6 @@ void freeblock(block3 *b)
     delete[] b;
 };
 
-struct undoblock { int *g; block3 *b; };
-vector<undoblock> undos;                                // unlimited undo
-vector<undoblock> redos;
-VARP(undomegs, 0, 5, 100);                              // bounded by n megs
-
-void freeundo(undoblock u)
-{
-    delete[] u.g;
-    freeblock(u.b);
-};
-
 int *selgridmap(selinfo &sel)                           // generates a map of the cube sizes at each grid point
 {
     int *g = new int[sel.size()];
@@ -450,11 +440,71 @@ int *selgridmap(selinfo &sel)                           // generates a map of th
     return g-sel.size();
 };
 
+struct undoent { int i; vec o; };
+
+extern bool pointinsel(selinfo &sel, vec &o);
+
+undoent *copyents(selinfo &sel, int &n)
+{
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents) if(pointinsel(sel, ents[i]->o)) n++;
+    undoent *e = new undoent[n];
+    loopv(ents) if(pointinsel(sel, ents[i]->o))
+    {
+        e->i = i;
+        e->o = ents[i]->o;
+        e++;
+    };
+    return e-n;
+};
+
+struct undoblock
+{
+    int *g, n;
+    block3 *b;
+    undoent *e;
+
+    undoblock(selinfo &sel, bool ents)
+    {
+        g = NULL; b = NULL; e = NULL; n = 0;
+        if(sel.ent<0)
+        {
+            g = selgridmap(sel);
+            b = blockcopy(sel, -sel.grid);
+            if(ents) e = copyents(sel, n);
+        }
+        else
+        {
+            n = 1;
+            e = new undoent;
+            e->i = sel.ent;
+            e->o = et->getents()[sel.ent]->o;
+        };
+    };
+};
+
+vector<undoblock> undos;                                // unlimited undo
+vector<undoblock> redos;
+VARP(undomegs, 0, 5, 100);                              // bounded by n megs
+
+void freeundo(undoblock u)
+{
+    if(u.g) delete[] u.g;
+    if(u.b) freeblock(u.b);
+    if(u.e) delete[] u.e;
+};
+
+extern void pasteundoent(int i, vec &o);
+
 void pasteundo(undoblock &u)
 {
-    int *g = u.g;
-    cube *s = u.b->c();
-    loopxyz(*u.b, *g++, pastecube(*s++, c));
+    if(u.g)
+    {
+        int *g = u.g;
+        cube *s = u.b->c();
+        loopxyz(*u.b, *g++, pastecube(*s++, c));
+    };
+    loopi(u.n) pasteundoent(u.e[i].i, u.e[i].o);
 };
 
 void pruneundos(int maxremain)                          // bound memory
@@ -462,21 +512,27 @@ void pruneundos(int maxremain)                          // bound memory
     int t = 0, p = 0;
     loopvrev(undos)
     {
-        cube *q = undos[i].b->c();
-        t += undos[i].b->size()*sizeof(int);
-        loopj(undos[i].b->size()) t += familysize(*q++)*sizeof(cube);
+        undoblock &u = undos[i];
+        if(u.b)
+        {
+            cube *q = u.b->c();
+            t += u.b->size()*sizeof(int);
+            loopj(u.b->size())
+                t += familysize(*q++)*sizeof(cube);
+        };
+        t += u.n*sizeof(undoent);
         if(t>maxremain) freeundo(undos.remove(i)); else p = t;
     };
     //conoutf("undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
     while(!redos.empty()) { freeundo(redos.pop()); };
 };
 
-void makeundo()                                         // stores state of selected cubes before editing
+void makeundo(bool ents = false)                        // stores state of selected cubes before editing
 {
     if(lastsel==sel) return;
     lastsel=sel;
     if(multiplayer(false)) return;
-    undoblock u = { selgridmap(sel), blockcopy(lastsel, -sel.grid)};
+    undoblock u(sel, ents);
     undos.add(u);
     pruneundos(undomegs<<20);
 };
@@ -486,15 +542,20 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
     if(noedit() || multiplayer()) return;
     if(a.empty()) { conoutf("nothing more to %s", s); return; };
     undoblock u = a.pop();
-    sel.o = u.b->o;
-    sel.s = u.b->s;
-    sel.grid = u.b->grid;
-    sel.orient = u.b->orient;
-    undoblock r = { selgridmap(sel), blockcopy(sel, -sel.grid)};
+    if(u.b)
+    {
+        sel.o = u.b->o;
+        sel.s = u.b->s;
+        sel.grid = u.b->grid;
+        sel.orient = u.b->orient;
+        sel.ent = -1;
+    }
+    else sel.ent = u.e->i;
+    undoblock r(sel, true);
     b.add(r);
     pasteundo(u);
+    if(u.b) changed(sel);
     freeundo(u);
-    changed(sel);
     reorient();
     forcenextundo();
 };
@@ -513,7 +574,7 @@ void freeeditinfo(editinfo *&e)
 };
 
 // guard against subdivision
-#define protectsel(f) { undoblock _u = { selgridmap(sel), blockcopy(sel, -sel.grid)}; f; pasteundo(_u); freeundo(_u); }
+#define protectsel(f) { undoblock _u(sel, false); f; pasteundo(_u); freeundo(_u); }
 
 void mpcopy(editinfo *&e, selinfo &sel, bool local)
 {
@@ -800,11 +861,6 @@ void linkedpush(cube &c, int d, int x, int y, int dc, int dir)
 
 void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
-    if(local) cl->edittrigger(sel, EDIT_FACE, dir, mode);
-
-    if(sel.ent>=0)
-        return pushent(sel, dir);
-
     if(mode==1 && (sel.cx || sel.cy || sel.cxs&1 || sel.cys&1)) mode = 0;
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
@@ -815,6 +871,10 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
         movesel[d] += seldir*sel.grid;
         return;
     };
+    if(local)
+        cl->edittrigger(sel, EDIT_FACE, dir, mode);
+    if(sel.ent>=0)
+        return pushent(sel, dir);
 
     if (mode==1)
     {
@@ -885,8 +945,8 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 
 void editface(int *dir, int *mode)
 {
-    if(noedit()) return;
-     if(sel.ent<0 && hmap)
+    if(noedit(moving)) return;
+    if(sel.ent<0 && hmap)
         edithmap(*dir);
     else
         mpeditface(*dir, *mode, sel, true);
@@ -914,13 +974,17 @@ void selextend()
     reorient();
 };
 
+extern void entmove(selinfo &sel, ivec &o);
+
 void movecubes(selinfo &sel, ivec &o)
 {
 //  forcenextundo();
-    makeundo();
+
+    makeundo(true);
     block3 *b = blockcopy(block3(sel), sel.grid);
     loopxyz(*b, sel.grid, discardchildren(c); emptyfaces(c););
     changed(sel);
+    entmove(sel, o);
     sel.o = o;
     cube *s = b->c();
     loopselxyz(pastecube(*s++, c));
@@ -929,6 +993,7 @@ void movecubes(selinfo &sel, ivec &o)
 void editmove(int *isdown)
 {
     if(noedit(true)) return;
+    if(sel.ent>=0) return reorient();
     if(*isdown!=0)
     {
         if(cur.x <  sel.o.x+sel.s.x*sel.grid
@@ -1114,12 +1179,14 @@ void rotatecube(cube &c, int dim)   // rotates cube clockwise. see pics in cvs f
         loopi(8) rotatecube(c.children[i], dim);
     };
 };
+extern void entflip(selinfo &sel);
+extern void entrotate(selinfo &sel, int cw);
 
 void mpflip(selinfo &sel, bool local)
 {
     if(local) cl->edittrigger(sel, EDIT_FLIP);
     int zs = sel.s[dimension(sel.orient)];
-    makeundo();
+    makeundo(true);
     loopxy(sel)
     {
         loop(z,zs) flipcube(selcube(x, y, z), dimension(sel.orient));
@@ -1131,6 +1198,7 @@ void mpflip(selinfo &sel, bool local)
         };
     };
     changed(sel);
+    entflip(sel);
 };
 
 void flip()
@@ -1146,7 +1214,7 @@ void mprotate(int cw, selinfo &sel, bool local)
     if(!dimcoord(sel.orient)) cw = -cw;
     int &m = min(sel.s[C[dim]], sel.s[R[dim]]);
     int ss = m = max(sel.s[R[dim]], sel.s[C[dim]]);
-    makeundo();
+    makeundo(true);
     loop(z,sel.s[D[dim]]) loopi(cw>0 ? 1 : 3)
     {
         loopxy(sel) rotatecube(selcube(x,y,z), dim);
@@ -1159,6 +1227,7 @@ void mprotate(int cw, selinfo &sel, bool local)
         );
     };
     changed(sel);
+    entrotate(sel, cw);
 };
 
 void rotate(int *cw)

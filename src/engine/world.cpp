@@ -110,8 +110,14 @@ void entitiesinoctanodes()
 extern selinfo sel;
 extern bool havesel, selectcorners;
 
+extern void makeundo(bool ents = false);
+#define entediti(_i, f)  { if(_i<0) return; extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }
+#define entedit(f)       entediti(sel.ent, makeundo(); f)
 
-#define entedit(f) { int _i = sel.ent; if(_i<0) return; extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }
+void pasteundoent(int i, vec &o)
+{
+    entediti(i, e.o = o);
+};
 
 void entproperty(int *prop, int *amount)
 {
@@ -123,11 +129,65 @@ void entproperty(int *prop, int *amount)
             case 1: e.attr2 += *amount; break;
             case 2: e.attr3 += *amount; break;
             case 3: e.attr4 += *amount; break;
-        }
+        };
     );
 };
 
 VAR(entselsnap, 0, 0, 1);
+
+bool pointinsel(selinfo &sel, vec &o)
+{
+    return(o.x <= sel.o.x+sel.s.x*sel.grid
+        && o.x >= sel.o.x
+        && o.y <= sel.o.y+sel.s.y*sel.grid
+        && o.y >= sel.o.y
+        && o.z <= sel.o.z+sel.s.z*sel.grid
+        && o.z >= sel.o.z);
+};
+
+void entmove(selinfo &sel, ivec &o)
+{
+    vec s(o.v), a(sel.o.v); s.sub(a);
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        if(pointinsel(sel, e.o))
+            entediti(i, e.o.add(s));
+    };
+};
+
+void entflip(selinfo &sel)
+{
+    int d = sel.orient/2;
+    float mid = sel.s[d]*sel.grid/2+sel.o[d];
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        if(pointinsel(sel, e.o))
+            entediti(i, e.o[d] -= (e.o[d]-mid)*2);
+    };
+};
+
+void entrotate(selinfo &sel, int cw)
+{
+    int d = sel.orient/2, D = cw<0 ? R[d] : C[d];
+    float mid = sel.s[D]*sel.grid/2+sel.o[D];
+    vec s(sel.o.v);
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        if(pointinsel(sel, e.o))
+            entediti(i,
+                e.o[D] -= (e.o[D]-mid)*2;
+                e.o.sub(s);
+                swap(float, e.o[R[d]], e.o[C[d]]);
+                e.o.add(s);
+            );
+    };
+};
 
 void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
 {
