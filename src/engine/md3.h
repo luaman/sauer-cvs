@@ -311,11 +311,7 @@ struct md3model
         numtags = header.numtags;
         fseek(f, header.ofs_tags, SEEK_SET);
         fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
-        loopi(header.numframes*header.numtags)
-        {
-            endianswap(&tags[i].pos, sizeof(float), 12);
-            swap(float, tags[i].pos.x, tags[i].pos.y); // fixme some shiny day
-        };
+        loopi(header.numframes*header.numtags) endianswap(&tags[i].pos, sizeof(float), 12);
         
         links = new md3model *[header.numtags];
         loopi(header.numtags) links[i] = NULL;
@@ -335,7 +331,8 @@ struct md3model
             fseek(f, mesh_offset + mheader.ofs_triangles, SEEK_SET);       
             fread(mesh.triangles, sizeof(md3triangle), mheader.numtriangles, f); // read the triangles
             endianswap(mesh.triangles, sizeof(int), 3*mheader.numtriangles);
-            mesh.numtriangles = mheader.numtriangles;
+            loopj(mheader.numtriangles) { swap(int, mesh.triangles[j].vertexindices[0], mesh.triangles[j].vertexindices[2]); };
+			mesh.numtriangles = mheader.numtriangles;
           
             mesh.uv = new vec2[mheader.numvertices];
             fseek(f, mesh_offset + mheader.ofs_uv , SEEK_SET); 
@@ -351,15 +348,15 @@ struct md3model
             mesh.normals = new vec[mheader.numframes * mheader.numvertices];
             loopj(mheader.numframes * mheader.numvertices) // transform to our own structure
             {
-                mesh.vertices[j].y = vertices[j].vertex[0]/64.0f;
-                mesh.vertices[j].x = vertices[j].vertex[1]/64.0f;
+                mesh.vertices[j].x = vertices[j].vertex[0]/64.0f;
+                mesh.vertices[j].y = vertices[j].vertex[1]/64.0f;
                 mesh.vertices[j].z = vertices[j].vertex[2]/64.0f;
 
                 float lat = (vertices[j].normal&255)*PI2/255.0f; // decode vertex normals
                 float lng = ((vertices[j].normal>>8)&255)*PI2/255.0f;
-                mesh.normals[j].x = cos(lat)*sin(lng);
-                mesh.normals[j].y = sin(lat)*cos(lng);
-                mesh.normals[j].z = -cos(lng);
+                mesh.normals[j].y = -cos(lat)*sin(lng);
+                mesh.normals[j].x = -sin(lat)*sin(lng);
+                mesh.normals[j].z = cos(lng);
             };
             
             mesh.numvertices = mheader.numvertices;
@@ -536,7 +533,7 @@ struct md3model
         {
             md3model *link = links[i];
             if(!link) continue;
-            GLfloat matrix[16]; // fixme: un-obfuscate it!
+			GLfloat matrix[16] = {0};
             md3tag *tag1 = &tags[cur.fr1*numtags+i];
             md3tag *tag2 = &tags[cur.fr2*numtags+i];
             
