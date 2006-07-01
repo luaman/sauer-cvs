@@ -135,7 +135,7 @@ int rayent(const vec &o, vec &ray)
 {
     ray.normalize();
     hitent = -1;
-    float d = raycube(o, ray, hitentdist, RAY_ENTS | RAY_POLY);
+    float d = raycube(o, ray, hitentdist = 1e20f, RAY_ENTS | RAY_POLY);
     if(hitentdist == d)
         return hitent;
     else
