@@ -216,7 +216,7 @@ void cursorupdate()
     };
     lusize = gridsize;
 
-    float t; rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t, orient); // to get orient
+    float t = 0; rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t, orient); // to get orient
 
     cur = lu;
     int g2 = gridsize/2;
