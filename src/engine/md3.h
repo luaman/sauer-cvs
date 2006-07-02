@@ -352,8 +352,8 @@ struct md3model
                 mesh.vertices[j].y = vertices[j].vertex[1]/64.0f;
                 mesh.vertices[j].z = vertices[j].vertex[2]/64.0f;
 
-                float lat = (vertices[j].normal&255)*PI2/255.0f; // decode vertex normals
-                float lng = ((vertices[j].normal>>8)&255)*PI2/255.0f;
+                float lng = (vertices[j].normal&255)*PI2/255.0f; // decode vertex normals
+                float lat = ((vertices[j].normal>>8)&255)*PI2/255.0f;
                 mesh.normals[j].y = -cos(lat)*sin(lng);
                 mesh.normals[j].x = -sin(lat)*sin(lng);
                 mesh.normals[j].z = cos(lng);
