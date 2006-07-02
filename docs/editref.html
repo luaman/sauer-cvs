@@ -83,12 +83,25 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         <pre>reorient</pre>
         Change the side the white box is on to be the same as where you are currently
         pointing.
+        <pre>editmove</pre>
+        Moves a cube selection to another position. Activated by a 'drag-and-drop' style action.
+        The orientation of the selection will change depending on what side of the selection 
+        you try to hold onto. The selection will extend if the cursor is outside of the selection
+        when you try to hold onto the it.
+        <br><br>        
+        Movement fuctions similar to entity dragging; 
+        you can drag the selection across the 2D plane indicated by the cube orientation.
+        The scroll wheel (ie: editface) is used to change the depth of the selection. 
+        A ghost selection will indicate the new position of the selection.
+        <br><br>  
+        Moving a cubic selection will also move any entities within the selection.
         <pre>flip</pre>
         Flip (mirror) the selected cubes front to back relative to the side of the
-        white box.
+        white box. This will also flip the positions of any entites within the selection.
         <pre>rotate D</pre>
         Rotates the selection 90 degrees around the side of the white box.
         Automatically squares the selection if it isn't already.
+        This will also rotate the positions of any entites within the selection.
         <pre>undo</pre>
         Multi-level undo of any of the changes caused by the above operations (default
         key = z [also u]).
@@ -105,10 +118,17 @@ paste</pre>
         selection is not the same size as the copy, the corner of the red reference box
         will be used as the origin. If the current gridsize is changed from the copy,
         the pasted copy will be stretched by the same factor.
+
+        Copy will work on entities as well as cubes. However it does not work on both at the same time. 
+        So if you select a set of cubes, the entities within that selection will not
+        be copied over on a paste.
         <pre>replace</pre>
         Repeats the last texture edit across the whole map. Only those faces with
         textures matching the one that was last edited will be
         replaced.
+        <pre>replaceents value1 value2 value3 value4</pre>
+        Replaces the given values for the selected entity and all entities that are
+        equal to the selected entity. 
         <pre>newent type    value1 value2 value3 value4</pre>
         Adds a new entity where (x,y) is determined by the current selection (the red
         dot corner) and z by the camera height, of said type. Type is a string giving
@@ -116,9 +136,9 @@ paste</pre>
         on the entity). The types are defines below in the <a href="#entitytypes">Entity
             Types</a> section.
         <pre>delent</pre>
-        deletes the entity closest to the player
+        deletes the selected entity to the player
         <pre>dropent</pre>
-        Positions the closest entity according to the entdrop variable.
+        Positions the selected entity according to the entdrop variable.
         <pre>entdrop N</pre>
         variable controlling where entities created with "newent" will be placed.<br>
         N=0 place entities at your current eye position.<br>
@@ -293,7 +313,11 @@ music name ondone</pre>
         <PRE>passthrough</PRE>
         <P>normally cubes of equal size to the grid are given priority when selecting.
         passthrough removes this priority while held down so that the cube the cursor is directly on is selected.<P>
-
+        <pre>entselradius N</pre>
+        Sets the 'handle' size of entities when trying to select them. 
+        Larger sizes means it should be easier to select entities.
+        <pre>entselsnap 0/1</pre>
+        Turns on snap-to-grid while draggin entities.
         <div>Lighting Commands</div>
         <a name="lightingcommands"></a>
         <pre>calclight Q</pre>
