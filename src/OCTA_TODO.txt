@@ -1,11 +1,6 @@
 gilt:
 - metlslime's editing suggestions:
-    - explicit entity selection using crosshair and left-click, just like cubes (shown as selected instead of "closest")
-    - second edit mode for entities -- but this "mode" happens automatically whenever you have an entity selected, and reuses same keys and mousewheel movements when possible.
-    - push/pull will move entity along ortho axis closest to current camera facing, in current gridsize increments
-    - copy to copy selected entity, paste to paste either cubes or entities, depending on what was last copied.  Pasted entity to go near cursor, but snapped to closest grid point
     - command to more easily edit existing entities, perhaps by not forcing people to retype all parameters (e.g. "editent . . 250 ." to change the green value of a light)
-- extruding a cube, textures should be set to the surface texture, not the defaults. also for heightfields?
 - speed up heightfield recalc
 - LOD: improved lod-remip
 - "editing not in view" sometimes obstructs editing
