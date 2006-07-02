@@ -166,6 +166,7 @@ extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
 extern void octarender();
 extern void rendermapmodels();
 extern void renderq();
+extern void renderoutline();
 extern void allchanged();
 extern void rendermaterials();
 extern void rendersky(bool explicitonly = false);

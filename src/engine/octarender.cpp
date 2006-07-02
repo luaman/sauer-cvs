@@ -1454,7 +1454,7 @@ VAR(outline, 0, 0, 1);
 
 void renderoutline()
 {
-    if(!outline) return;
+    if(!editmode || !outline) return;
 
     notextureshader->set();
 
@@ -1463,6 +1463,7 @@ void renderoutline()
 
     glPushMatrix();
 
+    glDepthFunc(GL_LEQUAL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3f(0, 0, 0);
 
@@ -1483,7 +1484,8 @@ void renderoutline()
     };
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+    glDepthFunc(GL_LESS);
+    
     glPopMatrix();
 
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
