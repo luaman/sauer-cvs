@@ -1026,19 +1026,17 @@ void editmove(int *isdown)
     if(sel.ent>=0) { entmovingorient = *isdown; return reorient(); };
     if(*isdown!=0)
     {
+        selextend();
         vec v(cur.v); v.add(1);
         if(pointinsel(sel, v))
         {
-            reorient();
             movesel = sel.o;
             moving = true;
             havesel = false;
             return;
         };
     };
-    if(!moving) selextend();
-    else
-    if(movesel!=sel.o)
+    if(moving && movesel!=sel.o)
         mpmovecubes(movesel, sel, true);
     moving = false;
 };
