@@ -120,7 +120,7 @@ void moveent(int i, vec &o)
 
 void entproperty(int *prop, int *amount)
 {
-    if(noedit() || multiplayer()) return;
+    if(noedit()) return;
     entedit(
         switch(*prop)
         {
@@ -189,7 +189,7 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
 
 void delent()
 {
-    if(noedit() || multiplayer()) return;
+    if(noedit()) return;
     entedit(
         conoutf("%s entity deleted", et->entname(e.type));
         e.type = ET_EMPTY;
