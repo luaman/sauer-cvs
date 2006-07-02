@@ -1450,6 +1450,48 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
     return true;
 };
 
+VAR(outline, 0, 0, 1);
+
+void renderoutline()
+{
+    if(!outline) return;
+
+    notextureshader->set();
+
+    glDisable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glPushMatrix();
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glColor3f(0, 0, 0);
+
+    for(vtxarray *va = visibleva; va; va = va->next)
+    {
+        setorigin(va, va == visibleva);
+
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(!lod.texs || va->occluded >= OCCLUDE_BB+oqpartial) continue;
+
+        if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+        glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+
+        int quads = 0;
+        loopi(lod.texs) loopl(3) quads += lod.eslist[i].length[l];
+        glDrawElements(GL_QUADS, quads, GL_UNSIGNED_SHORT, lod.ebuf);
+        glde++;
+    };
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    glPopMatrix();
+
+    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_TEXTURE_2D);
+
+    defaultshader->set();
+};
 
 float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
 float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
