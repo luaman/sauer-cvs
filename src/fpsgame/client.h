@@ -524,6 +524,7 @@ struct clientcom : iclientcom
             case SV_PASTE:
             case SV_ROTATE:
             case SV_REPLACE:
+            case SV_MOVE:
             {
                 if(!d) return;
                 selinfo sel;
@@ -533,6 +534,7 @@ struct clientcom : iclientcom
                 sel.cx = getint(p); sel.cxs = getint(p); sel.cy = getint(p), sel.cys = getint(p);
                 sel.corner = getint(p);
                 int dir, mode, tex, newtex, mat, allfaces;
+                ivec moveo;
                 switch(type)
                 {
                     case SV_EDITF: dir = getint(p); mode = getint(p); mpeditface(dir, mode, sel, false); break;
@@ -543,6 +545,7 @@ struct clientcom : iclientcom
                     case SV_PASTE: if(d) mppaste(d->edit, sel, false); break;
                     case SV_ROTATE: dir = getint(p); mprotate(dir, sel, false); break;
                     case SV_REPLACE: tex = getint(p); newtex = getint(p); mpreplacetex(tex, newtex, sel, false); break;
+                    case SV_MOVE: moveo.x = getint(p); moveo.y = getint(p); moveo.z = getint(p); mpmovecubes(moveo, sel, false); break;
                 };
                 break;
             };
@@ -655,7 +658,7 @@ struct clientcom : iclientcom
             case SV_GETMAP:
             case SV_FORCEINTERMISSION:
                 break;
-                
+
             case SV_ANNOUNCE:
             {
                 int t = getint(p);
@@ -701,7 +704,7 @@ struct clientcom : iclientcom
     void getmap()
     {
         if(cl.gamemode!=1) { conoutf("\"getmap\" only works in coopedit mode"); return; };
-        conoutf("getting map..."); 
+        conoutf("getting map...");
         addmsg(1, 1, SV_GETMAP);
     };
 

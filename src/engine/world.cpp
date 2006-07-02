@@ -72,17 +72,16 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
             model *m = loadmodel(NULL, e.attr2);
             if(!m) return false;
             vec center;
-            float radius = m->boundsphere(0, center);
-            o.x = int(e.o.x+center.x-radius);
-            o.y = int(e.o.y+center.y-radius);
-            o.z = int(e.o.z+center.z-radius);
-            r.x = r.y = r.z = int(2.0f*radius);
+            int radius = int(m->boundsphere(0, center));
+            o = e.o;
+            o.add(center);
+            o.sub(radius);
+            r.x = r.y = r.z = radius*2;
             break;
         };
         default:
-            o.x = int(e.o.x-entselradius);
-            o.y = int(e.o.y-entselradius);
-            o.z = int(e.o.z-entselradius);
+            o = e.o;
+            o.sub(entselradius);
             r.x = r.y = r.z = entselradius;
     };
     return true;
@@ -114,7 +113,7 @@ extern void makeundo(bool ents = false);
 #define entediti(_i, f)  { if(_i<0) return; extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }
 #define entedit(f)       entediti(sel.ent, makeundo(); f)
 
-void pasteundoent(int i, vec &o)
+void moveent(int i, vec &o)
 {
     entediti(i, e.o = o);
 };
@@ -135,39 +134,21 @@ void entproperty(int *prop, int *amount)
 
 VAR(entselsnap, 0, 0, 1);
 
-bool pointinsel(selinfo &sel, vec &o)
-{
-    return(o.x <= sel.o.x+sel.s.x*sel.grid
-        && o.x >= sel.o.x
-        && o.y <= sel.o.y+sel.s.y*sel.grid
-        && o.y >= sel.o.y
-        && o.z <= sel.o.z+sel.s.z*sel.grid
-        && o.z >= sel.o.z);
-};
+vector<int> entids;
 
 void entmove(selinfo &sel, ivec &o)
 {
     vec s(o.v), a(sel.o.v); s.sub(a);
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents)
-    {
-        extentity &e = *ents[i];
-        if(pointinsel(sel, e.o))
-            entediti(i, e.o.add(s));
-    };
+    loopv(entids)
+       entediti(entids[i], e.o.add(s));
 };
 
 void entflip(selinfo &sel)
 {
     int d = sel.orient/2;
     float mid = sel.s[d]*sel.grid/2+sel.o[d];
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents)
-    {
-        extentity &e = *ents[i];
-        if(pointinsel(sel, e.o))
-            entediti(i, e.o[d] -= (e.o[d]-mid)*2);
-    };
+    loopv(entids)
+        entediti(entids[i], e.o[d] -= (e.o[d]-mid)*2);
 };
 
 void entrotate(selinfo &sel, int cw)
@@ -175,17 +156,14 @@ void entrotate(selinfo &sel, int cw)
     int d = sel.orient/2, D = cw<0 ? R[d] : C[d];
     float mid = sel.s[D]*sel.grid/2+sel.o[D];
     vec s(sel.o.v);
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents)
+    loopv(entids)
     {
-        extentity &e = *ents[i];
-        if(pointinsel(sel, e.o))
-            entediti(i,
-                e.o[D] -= (e.o[D]-mid)*2;
-                e.o.sub(s);
-                swap(float, e.o[R[d]], e.o[C[d]]);
-                e.o.add(s);
-            );
+        entediti(entids[i],
+            e.o[D] -= (e.o[D]-mid)*2;
+            e.o.sub(s);
+            swap(float, e.o[R[d]], e.o[C[d]]);
+            e.o.add(s);
+        );
     };
 };
 
@@ -207,13 +185,6 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
             e.o[C[d]] = entselsnap ? dest[C[d]] : v[C[d]];
         };
     );
-};
-
-void pushent(selinfo &sel, int dir)
-{
-    int dist = sel.grid * dir;
-    if(dimcoord(sel.orient)) dist = -dist;
-    entedit(e.o[dimension(sel.orient)] += dist);
 };
 
 void delent()

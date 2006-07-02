@@ -551,6 +551,14 @@ struct fpsclient : igameclient
                    arg1, arg2);
                 break;
             };
+            case EDIT_MOVE:
+            {
+                cc.addmsg(1, 17, SV_EDITF + op,
+                   sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                   sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
+                   arg1, arg2, arg3);
+                break;
+            };
         };
     };
 
