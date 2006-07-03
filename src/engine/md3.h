@@ -311,7 +311,11 @@ struct md3model
         numtags = header.numtags;
         fseek(f, header.ofs_tags, SEEK_SET);
         fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
-        loopi(header.numframes*header.numtags) endianswap(&tags[i].pos, sizeof(float), 12);
+        loopi(header.numframes*header.numtags) 
+		{
+			tags[i].pos.y = -tags[i].pos.y;
+			endianswap(&tags[i].pos, sizeof(float), 12);
+		}
         
         links = new md3model *[header.numtags];
         loopi(header.numtags) links[i] = NULL;
@@ -331,7 +335,6 @@ struct md3model
             fseek(f, mesh_offset + mheader.ofs_triangles, SEEK_SET);       
             fread(mesh.triangles, sizeof(md3triangle), mheader.numtriangles, f); // read the triangles
             endianswap(mesh.triangles, sizeof(int), 3*mheader.numtriangles);
-            loopj(mheader.numtriangles) { swap(int, mesh.triangles[j].vertexindices[0], mesh.triangles[j].vertexindices[2]); };
 			mesh.numtriangles = mheader.numtriangles;
           
             mesh.uv = new vec2[mheader.numvertices];
@@ -349,13 +352,13 @@ struct md3model
             loopj(mheader.numframes * mheader.numvertices) // transform to our own structure
             {
                 mesh.vertices[j].x = vertices[j].vertex[0]/64.0f;
-                mesh.vertices[j].y = vertices[j].vertex[1]/64.0f;
+                mesh.vertices[j].y = -vertices[j].vertex[1]/64.0f;
                 mesh.vertices[j].z = vertices[j].vertex[2]/64.0f;
 
                 float lng = (vertices[j].normal&255)*PI2/255.0f; // decode vertex normals
                 float lat = ((vertices[j].normal>>8)&255)*PI2/255.0f;
-                mesh.normals[j].y = -cos(lat)*sin(lng);
-                mesh.normals[j].x = -sin(lat)*sin(lng);
+				mesh.normals[j].x = cos(lat)*sin(lng);
+                mesh.normals[j].y = -sin(lat)*sin(lng);
                 mesh.normals[j].z = cos(lng);
             };
             
