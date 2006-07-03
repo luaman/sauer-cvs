@@ -1244,6 +1244,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\shared\geom.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\shared\geom.h"
 				>
 			</File>

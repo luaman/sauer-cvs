@@ -91,7 +91,7 @@ static void drivemodifyoctaent(bool add, int id)
 {
     ivec o, r;
     extentity &e = *et->getents()[id];
-    if(e.inoctanode==add || !getentboundingbox(e, o, r)) return;
+    if((e.inoctanode!=0)==add || !getentboundingbox(e, o, r)) return;
     e.inoctanode = add;
     modifyoctaentity(add, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
     if(e.type == ET_LIGHT) clearlightcache(id);

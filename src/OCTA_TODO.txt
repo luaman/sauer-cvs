@@ -34,7 +34,7 @@ aard/everyone:
 - add textures to std cfg
 - shader docs
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
-- envmapping, non-suck water
+- the eyecandy priority list: envmapping (metal/water), better bloom, motion blur, volumetric fog, character shadows, character bumpmaps? ...
 - no dbghelp.dll on win98?
 - better doc on the scripting language
 - ways of doing menu - context sensitive etc

@@ -1023,7 +1023,7 @@ void mpmovecubes(ivec &o, selinfo &sel, bool local)
 void editmove(int *isdown)
 {
     if(noedit(true)) return;
-    if(sel.ent>=0) { entmovingorient = *isdown; return reorient(); };
+    if(sel.ent>=0) { entmovingorient = *isdown!=0; return reorient(); };
     if(*isdown!=0)
     {
         selextend();
