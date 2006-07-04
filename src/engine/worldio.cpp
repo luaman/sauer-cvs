@@ -54,14 +54,14 @@ void writeushort(gzFile f, ushort u)
 
 enum { OCTSAV_CHILDREN = 0, OCTSAV_EMPTY, OCTSAV_SOLID, OCTSAV_NORMAL, OCTSAV_LODCUBE };
 
-void savec(cube *c, gzFile f)
+void savec(cube *c, gzFile f, bool nolms)
 {
     loopi(8)
     {
         if(c[i].children && !c[i].surfaces)
         {
             gzputc(f, OCTSAV_CHILDREN);
-            savec(c[i].children, f);
+            savec(c[i].children, f, nolms);
         }
         else
         {
@@ -74,14 +74,14 @@ void savec(cube *c, gzFile f)
                 gzwrite(f, c[i].edges, 12);
             };
             loopj(6) writeushort(f, c[i].texture[j]);
-            uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0) | (c[i].normals ? 0x40 : 0);
-            if(c[i].normals) loopj(6) if(c[i].normals[j].normals[0] != bvec(128, 128, 128)) mask |= 1 << j;
+            uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0) | (c[i].normals && !nolms ? 0x40 : 0);
+            if(c[i].normals && !nolms) loopj(6) if(c[i].normals[j].normals[0] != bvec(128, 128, 128)) mask |= 1 << j;
             // save surface info for lighting
-            if(!c[i].surfaces)
+            if(!c[i].surfaces || nolms)
             {
                 gzputc(f, mask);
                 if(c[i].material != MAT_AIR) gzputc(f, c[i].material);
-                if(c[i].normals) loopj(6) if(mask & (1 << j))
+                if(c[i].normals && !nolms) loopj(6) if(mask & (1 << j))
                 {
                     loopk(sizeof(surfaceinfo)) gzputc(f, 0);
                     gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
@@ -100,7 +100,7 @@ void savec(cube *c, gzFile f)
                     if(c[i].normals) gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
                 };
             };
-            if(c[i].children) savec(c[i].children, f);
+            if(c[i].children) savec(c[i].children, f, nolms);
         };
     };
 };
@@ -210,7 +210,7 @@ void save_world(char *mname, bool nolms)
     };
     delete[] ebuf;
 
-    savec(worldroot, f);
+    savec(worldroot, f, nolms);
     if(!nolms) loopv(lightmaps)
     {
         LightMap &lm = lightmaps[i];

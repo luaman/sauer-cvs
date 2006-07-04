@@ -646,7 +646,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             if(size>=lodsize) l1.curtris += 2;
         };
 
-        sortkey key(c.texture[i], (c.surfaces ? c.surfaces[i].lmid : LMID_AMBIENT));
+        extern vector<GLuint> lmtexids;
+        sortkey key(c.texture[i], (c.surfaces && lmtexids.inrange(c.surfaces[i].lmid) ? c.surfaces[i].lmid : LMID_AMBIENT));
 
         loopk(4)
         {
@@ -1463,6 +1464,7 @@ void renderoutline()
 
     glPushMatrix();
 
+    glDepthFunc(GL_LEQUAL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3f(0, 0, 0);
 
@@ -1483,7 +1485,8 @@ void renderoutline()
     };
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+    glDepthFunc(GL_LESS);
+    
     glPopMatrix();
 
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
