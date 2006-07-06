@@ -75,6 +75,8 @@ void resolverinit()
         rt.thread = SDL_CreateThread(resolverloop, &rt);
     };
     SDL_UnlockMutex(resolvermutex);
+
+    if(resolverthreads.empty()) fatal("could not initialize hostname resolver");
 };
 
 void resolverstop(resolverthread &rt)
