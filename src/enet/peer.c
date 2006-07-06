@@ -369,7 +369,7 @@ enet_peer_ping (ENetPeer * peer)
 {
     ENetProtocol command;
 
-    if (peer -> state != ENET_PEER_STATE_CONNECTED)
+    if (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER)
       return;
 
     command.header.command = ENET_PROTOCOL_COMMAND_PING | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
@@ -432,14 +432,14 @@ enet_peer_disconnect (ENetPeer * peer, enet_uint32 data)
     command.header.channelID = 0xFF;
     command.disconnect.data = ENET_HOST_TO_NET_32 (data);
 
-    if (peer -> state == ENET_PEER_STATE_CONNECTED)
+    if (peer -> state == ENET_PEER_STATE_CONNECTED || peer -> state == ENET_PEER_STATE_DISCONNECTING_LATER)
       command.header.command |= ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
     else
       command.header.command |= ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED;      
     
     enet_peer_queue_outgoing_command (peer, & command, NULL, 0, 0);
 
-    if (peer -> state == ENET_PEER_STATE_CONNECTED)
+    if (peer -> state == ENET_PEER_STATE_CONNECTED || peer -> state == ENET_PEER_STATE_DISCONNECTING_LATER)
       peer -> state = ENET_PEER_STATE_DISCONNECTING;
     else
     {

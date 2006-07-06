@@ -351,7 +351,7 @@ enet_protocol_handle_send_reliable (ENetHost * host, ENetPeer * peer, const ENet
     size_t dataLength;
 
     if (command -> header.channelID >= peer -> channelCount ||
-        peer -> state != ENET_PEER_STATE_CONNECTED)
+        (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER))
       return -1;
 
     dataLength = ENET_NET_TO_HOST_16 (command -> sendReliable.dataLength);
@@ -375,7 +375,7 @@ enet_protocol_handle_send_unsequenced (ENetHost * host, ENetPeer * peer, const E
     size_t dataLength;
 
     if (command -> header.channelID >= peer -> channelCount ||
-        peer -> state != ENET_PEER_STATE_CONNECTED)
+        (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER))
       return -1;
 
     dataLength = ENET_NET_TO_HOST_16 (command -> sendUnsequenced.dataLength);
@@ -416,7 +416,7 @@ enet_protocol_handle_send_unreliable (ENetHost * host, ENetPeer * peer, const EN
     size_t dataLength;
 
     if (command -> header.channelID >= peer -> channelCount ||
-        peer -> state != ENET_PEER_STATE_CONNECTED)
+        (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER))
       return -1;
 
     dataLength = ENET_NET_TO_HOST_16 (command -> sendUnreliable.dataLength);
@@ -446,7 +446,7 @@ enet_protocol_handle_send_fragment (ENetHost * host, ENetPeer * peer, const ENet
     ENetIncomingCommand * startCommand;
 
     if (command -> header.channelID >= peer -> channelCount ||
-        peer -> state != ENET_PEER_STATE_CONNECTED)
+        (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER))
       return -1;
 
     fragmentLength = ENET_NET_TO_HOST_16 (command -> sendFragment.dataLength);
@@ -568,7 +568,7 @@ enet_protocol_handle_disconnect (ENetHost * host, ENetPeer * peer, const ENetPro
     if (peer -> state == ENET_PEER_STATE_CONNECTION_SUCCEEDED)
         peer -> state = ENET_PEER_STATE_ZOMBIE;
     else
-    if (peer -> state != ENET_PEER_STATE_CONNECTED)
+    if (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER)
     {
         if (peer -> state == ENET_PEER_STATE_CONNECTION_PENDING) host -> recalculateBandwidthLimits = 1;
 

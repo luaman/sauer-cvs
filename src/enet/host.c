@@ -245,7 +245,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
          peer < & host -> peers [host -> peerCount];
          ++ peer)
     {
-        if (peer -> state != ENET_PEER_STATE_CONNECTED)
+        if (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER)
           continue;
 
         ++ peersTotal;
@@ -278,7 +278,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
         {
             enet_uint32 peerBandwidth;
             
-            if (peer -> state != ENET_PEER_STATE_CONNECTED ||
+            if ((peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER) ||
                 peer -> incomingBandwidth == 0 ||
                 peer -> outgoingBandwidthThrottleEpoch == timeCurrent)
               continue;
@@ -311,7 +311,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
          peer < & host -> peers [host -> peerCount];
          ++ peer)
     {
-        if (peer -> state != ENET_PEER_STATE_CONNECTED ||
+        if ((peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER) ||
             peer -> outgoingBandwidthThrottleEpoch == timeCurrent)
           continue;
 
@@ -341,7 +341,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
                 peer < & host -> peers [host -> peerCount];
                 ++ peer)
            {
-               if (peer -> state != ENET_PEER_STATE_CONNECTED ||
+               if ((peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER) ||
                    peer -> incomingBandwidthThrottleEpoch == timeCurrent)
                  continue;
 
@@ -361,7 +361,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
             peer < & host -> peers [host -> peerCount];
             ++ peer)
        {
-           if (peer -> state != ENET_PEER_STATE_CONNECTED)
+           if (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECTING_LATER)
              continue;
 
            command.header.command = ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
