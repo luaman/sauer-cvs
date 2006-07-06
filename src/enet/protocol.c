@@ -655,6 +655,13 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
 
        enet_protocol_notify_disconnect (host, peer, event);
        break;
+
+    case ENET_PEER_STATE_DISCONNECT_LATER:
+       if (enet_list_empty (& peer -> outgoingReliableCommands) &&
+           enet_list_empty (& peer -> outgoingUnreliableCommands) &&   
+           enet_list_empty (& peer -> sentReliableCommands))
+         enet_peer_disconnect (peer, peer -> disconnectData);
+       break;
     }
    
     return 0;
@@ -1061,6 +1068,12 @@ enet_protocol_send_unreliable_outgoing_commands (ENetHost * host, ENetPeer * pee
 
     host -> commandCount = command - host -> commands;
     host -> bufferCount = buffer - host -> buffers;
+
+    if (peer -> state == ENET_PEER_STATE_DISCONNECT_LATER && 
+        enet_list_empty (& peer -> outgoingReliableCommands) &&
+        enet_list_empty (& peer -> outgoingUnreliableCommands) && 
+        enet_list_empty (& peer -> sentReliableCommands))
+      enet_peer_disconnect (peer, peer -> disconnectData);
 }
 
 static int

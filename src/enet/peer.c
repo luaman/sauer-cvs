@@ -369,7 +369,7 @@ enet_peer_ping (ENetPeer * peer)
 {
     ENetProtocol command;
 
-    if (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECT_LATER)
+    if (peer -> state != ENET_PEER_STATE_CONNECTED)
       return;
 
     command.header.command = ENET_PROTOCOL_COMMAND_PING | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
@@ -457,11 +457,14 @@ enet_peer_disconnect (ENetPeer * peer, enet_uint32 data)
 void
 enet_peer_disconnect_later (ENetPeer * peer, enet_uint32 data)
 {   
-    if (peer -> state == ENET_PEER_STATE_DISCONNECT_LATER)
-      return;
-
-    if (peer -> state == ENET_PEER_STATE_CONNECTED)
-      peer -> state = ENET_PEER_STATE_DISCONNECT_LATER;
+    if ((peer -> state == ENET_PEER_STATE_CONNECTED || peer -> state == ENET_PEER_STATE_DISCONNECT_LATER) && 
+        ! (enet_list_empty (& peer -> outgoingReliableCommands) &&
+           enet_list_empty (& peer -> outgoingUnreliableCommands) && 
+           enet_list_empty (& peer -> sentReliableCommands)))
+    {
+        peer -> state = ENET_PEER_STATE_DISCONNECT_LATER;
+        peer -> disconnectData = data;
+    }
     else
       enet_peer_disconnect (peer, data);
 }
