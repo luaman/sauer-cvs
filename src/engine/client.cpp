@@ -86,7 +86,7 @@ void disconnect(int onlyclean, int async)
     {
         if(!connecting && !disconnecting) 
         {
-            enet_peer_disconnect(clienthost->peers, DISC_NONE);
+            enet_peer_disconnect_later(clienthost->peers, DISC_NONE);
             enet_host_flush(clienthost);
             disconnecting = lastmillis;
         };

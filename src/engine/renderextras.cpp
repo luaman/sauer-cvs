@@ -147,7 +147,7 @@ void renderspheres(int time)
         { 0.9f, 1.0f, 0.5f },
     };
 
-    if(!expltex) expltex = textureload(path(newstring("data/explosion.jpg")));
+    if(!expltex) expltex = textureload("data/explosion.jpg");
     loopv(spheres)
     {
         sphere &p = spheres[i];
