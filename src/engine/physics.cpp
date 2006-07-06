@@ -116,7 +116,7 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
         {
             extentity &e = *ents[oc->mapmodels[i]];
             if(!e.inoctanode || &e==t) continue;
-            if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
+            if(e.attr3 && (mode&RAY_ENTS)!=RAY_ENTS && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
             if(!mmintersect(e, o, ray, radius, mode, f)) continue;
             if(f<dist) { hitentdist = dist = f; hitent = oc->mapmodels[i]; };
         };
