@@ -83,11 +83,12 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
             o = e.o;
             o.sub(entselradius);
             r.x = r.y = r.z = entselradius;
+            break;
     };
     return true;
 };
 
-static void drivemodifyoctaent(bool add, int id)
+static void modifyoctaent(bool add, int id)
 {
     ivec o, r;
     extentity &e = *et->getents()[id];
@@ -98,8 +99,8 @@ static void drivemodifyoctaent(bool add, int id)
     else if(add) lightent(e);
 };
 
-static inline void addentity(int id)    { drivemodifyoctaent(true,  id); };
-static inline void removeentity(int id) { drivemodifyoctaent(false, id); };
+static inline void addentity(int id)    { modifyoctaent(true,  id); };
+static inline void removeentity(int id) { modifyoctaent(false, id); };
 
 void entitiesinoctanodes()
 {

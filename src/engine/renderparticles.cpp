@@ -22,12 +22,12 @@ Texture *parttexs[6];
 
 void particleinit()
 {
-    parttexs[0] = textureload(newstring("data/martin/base.png"));
-    parttexs[1] = textureload(newstring("data/martin/ball1.png"));
-    parttexs[2] = textureload(newstring("data/martin/smoke.png"));
-    parttexs[3] = textureload(newstring("data/martin/ball2.png"));
-    parttexs[4] = textureload(newstring("data/martin/ball3.png"));
-    parttexs[5] = textureload(newstring("data/flare.jpg"));
+    parttexs[0] = textureload("data/martin/base.png");
+    parttexs[1] = textureload("data/martin/ball1.png");
+    parttexs[2] = textureload("data/martin/smoke.png");
+    parttexs[3] = textureload("data/martin/ball2.png");
+    parttexs[4] = textureload("data/martin/ball3.png");
+    parttexs[5] = textureload("data/flare.jpg");
     loopi(MAXPARTYPES) parlist[i] = NULL;
 };
 
