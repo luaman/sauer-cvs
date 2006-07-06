@@ -148,7 +148,7 @@ typedef enum
    ENET_PEER_STATE_CONNECTION_PENDING          = 3,
    ENET_PEER_STATE_CONNECTION_SUCCEEDED        = 4,
    ENET_PEER_STATE_CONNECTED                   = 5,
-   ENET_PEER_STATE_DISCONNECTING_LATER         = 6,
+   ENET_PEER_STATE_DISCONNECT_LATER            = 6,
    ENET_PEER_STATE_DISCONNECTING               = 7,
    ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT    = 8,
    ENET_PEER_STATE_ZOMBIE                      = 9 
@@ -424,6 +424,7 @@ ENET_API void                enet_peer_ping (ENetPeer *);
 ENET_API void                enet_peer_reset (ENetPeer *);
 ENET_API void                enet_peer_disconnect (ENetPeer *, enet_uint32);
 ENET_API void                enet_peer_disconnect_now (ENetPeer *, enet_uint32);
+ENET_API void                enet_peer_disconnect_later (ENetPeer *, enet_uint32);
 ENET_API void                enet_peer_throttle_configure (ENetPeer *, enet_uint32, enet_uint32, enet_uint32);
 extern int                   enet_peer_throttle (ENetPeer *, enet_uint32);
 extern void                  enet_peer_reset_queues (ENetPeer *);
