@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Sam Lantinga
+    Copyright (C) 1997-2004 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -31,7 +31,7 @@
 #ifdef __BORLANDC__
 #pragma nopackwarning
 #endif
-#if (defined(__MWERKS__) && defined(macintosh))
+#if (defined(__MWERKS__) && defined(__MACOS__))
 #pragma options align=reset
 #pragma enumsalwaysint reset
 #else

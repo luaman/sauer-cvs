@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Sam Lantinga
+    Copyright (C) 1997-2004 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -31,42 +31,55 @@
 #endif
 #define _begin_code_h
 
-/* Make sure the correct platform symbols are defined */
-#if !defined(WIN32) && defined(_WIN32)
-#define WIN32
-#endif /* Windows */
-
 /* Some compilers use a special export keyword */
 #ifndef DECLSPEC
-# ifdef __BEOS__
+# if defined(__BEOS__)
 #  if defined(__GNUC__)
 #   define DECLSPEC	__declspec(dllexport)
 #  else
 #   define DECLSPEC	__declspec(export)
 #  endif
-# else
-# ifdef WIN32
+# elif defined(__WIN32__)
 #  ifdef __BORLANDC__
 #   ifdef BUILD_SDL
-#    define DECLSPEC __declspec(dllexport)
+#    define DECLSPEC 
 #   else
-#    define DECLSPEC __declspec(dllimport)
+#    define DECLSPEC	__declspec(dllimport)
 #   endif
 #  else
 #   define DECLSPEC	__declspec(dllexport)
 #  endif
+# elif defined(__OS2__)
+#  ifdef __WATCOMC__
+#   ifdef BUILD_SDL
+#    define DECLSPEC	__declspec(dllexport)
+#   else
+#    define DECLSPEC
+#   endif
+#  else
+#   define DECLSPEC
+#  endif
 # else
-#  define DECLSPEC
-# endif
+#  if defined(__GNUC__) && __GNUC__ >= 4
+#   define DECLSPEC	__attribute__ ((visibility("default")))
+#  else
+#   define DECLSPEC
+#  endif
 # endif
 #endif
 
 /* By default SDL uses the C calling convention */
 #ifndef SDLCALL
-#ifdef WIN32
+#if defined(__WIN32__) && !defined(__GNUC__)
 #define SDLCALL __cdecl
 #else
+#ifdef __OS2__
+/* But on OS/2, we use the _System calling convention */
+/* to be compatible with every compiler */
+#define SDLCALL _System
+#else
 #define SDLCALL
+#endif
 #endif
 #endif /* SDLCALL */
 
@@ -89,7 +102,7 @@
 #pragma nopackwarning
 #endif
 #pragma pack(push,4)
-#elif (defined(__MWERKS__) && defined(macintosh))
+#elif (defined(__MWERKS__) && defined(__MACOS__))
 #pragma options align=mac68k4byte
 #pragma enumsalwaysint on
 #endif /* Compiler needs structure packing set */
@@ -102,7 +115,8 @@
 /* Add any special compiler-specific cases here */
 #if defined(_MSC_VER) || defined(__BORLANDC__) || \
     defined(__DMC__) || defined(__SC__) || \
-    defined(__WATCOMC__) || defined(__LCC__)
+    defined(__WATCOMC__) || defined(__LCC__) || \
+    defined(__DECC)
 #ifndef __inline__
 #define __inline__	__inline
 #endif
@@ -133,4 +147,4 @@
 #define NULL ((void *)0)
 #endif
 #endif /* NULL */
-#endif /* ! MacOS X - breaks precompiled headers */
+#endif /* ! Mac OS X - breaks precompiled headers */
