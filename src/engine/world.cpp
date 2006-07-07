@@ -532,6 +532,14 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
     };
 };
 
+void trigger(int *tag, int *open)
+{
+    if(*open) unlocktriggers(*tag);
+    else unlocktriggers(*tag, TRIGGERED, TRIGGER_RESETTING);
+};
+
+COMMAND(trigger, "ii");
+
 VAR(triggerstate, -1, 0, 1);
 
 void doleveltrigger(int trigger, int state)
