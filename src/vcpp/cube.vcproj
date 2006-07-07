@@ -23,7 +23,7 @@
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			WholeProgramOptimization="0"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -1546,5 +1546,9 @@
 		</Filter>
 	</Files>
 	<Globals>
+		<Global
+			Name="DevPartner_IsInstrumented"
+			Value="0"
+		/>
 	</Globals>
 </VisualStudioProject>
