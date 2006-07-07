@@ -121,7 +121,7 @@ extern icliententities *et;
 
 // rendergl
 extern bool hasVBO, hasOQ;
-extern void gl_init(int w, int h);
+extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
 extern void mipstats(int a, int b, int c);

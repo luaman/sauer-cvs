@@ -363,7 +363,7 @@ int main(int argc, char **argv)
     if(!execfile("data/stdlib.cfg")) fatal("cannot find data files (you are running from the wrong folder, try .bat file in the main folder)");   // this is the first file we load.
 
     log("gl");
-    gl_init(scr_w, scr_h);
+    gl_init(scr_w, scr_h, bpp, depth, fsaa);
     crosshair = textureload(newstring("data/crosshair.png"));
     if(!crosshair) fatal("could not find core textures");
     computescreen("initializing...");

@@ -127,7 +127,7 @@ void *getprocaddress(const char *name)
 VAR(ati_texgen_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
 
-void gl_init(int w, int h)
+void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
     #define fogvalues 0.5f, 0.6f, 0.7f, 1.0f
 
@@ -237,6 +237,8 @@ void gl_init(int w, int h)
         else conoutf("WARNING: No texture rectangle support. (no full screen shaders)");
     };
     if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
+
+    if(fsaa) glEnable(GL_MULTISAMPLE);
 
     if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
     gluQuadricDrawStyle(qsphere, GLU_FILL);
