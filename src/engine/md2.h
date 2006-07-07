@@ -156,6 +156,7 @@ struct md2 : model
         DELETEA(vbufi);
         if(hasVBO && vbufGL) glDeleteBuffers_(1, &vbufGL);
         DELETEA(anims);
+        DELETEP(spheretree);
     };
     
     char *name() { return loadname; };

@@ -585,6 +585,7 @@ struct md3 : model
     ~md3()
     { 
         delete[] loadname;     
+        DELETEP(spheretree);
     };
     
     float boundsphere(int frame, vec &center) 
