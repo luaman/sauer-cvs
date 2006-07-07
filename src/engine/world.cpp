@@ -35,12 +35,12 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
             switch(et->getents()[id]->type)
             {
                 case ET_MAPMODEL:
-                    if(et->getents()[id]->attr2>=0)
+                    if(loadmodel(NULL, et->getents()[id]->attr2))
                     {
                         c[i].ents->mapmodels.add(id);
                         break;
                     };
-                    // invisible
+                    // invisible mapmodel
                 default:
                     c[i].ents->other.add(id);
                     break;
@@ -52,12 +52,12 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
             switch(et->getents()[id]->type)
             {
                 case ET_MAPMODEL:
-                    if(et->getents()[id]->attr2>=0)
+                    if(loadmodel(NULL, et->getents()[id]->attr2))
                     {
                         c[i].ents->mapmodels.removeobj(id);
                         break;
                     };
-                    // invisible
+                    // invisible mapmodel
                 default:
                     c[i].ents->other.removeobj(id);
                     break;
@@ -76,12 +76,10 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
         case ET_EMPTY:
             return false;
         case ET_MAPMODEL:
-            if(e.ettr2>=0)
+        {
+            model *m = loadmodel(NULL, e.attr2);
+            if(m)
             {
-                mapmodelinfo &mmi = getmminfo(e.attr2);
-                if(!&mmi) return false;
-                model *m = loadmodel(NULL, e.attr2);
-                if(!m) return false;
                 vec center;
                 int radius = int(m->boundsphere(0, center));
                 o = e.o;
@@ -90,7 +88,8 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
                 r.x = r.y = r.z = radius*2;
                 break;
             };
-            // invisible mapmodels use entselradius
+        };
+        // invisible mapmodels use entselradius
         default:
             o = e.o;
             o.sub(entselradius);

@@ -101,6 +101,9 @@ COMMAND(mapmodelreset, "");
 
 hashtable<const char *, model *> mdllookup;
 
+model *modelloaded(const char *name, int i)
+{
+        
 model *loadmodel(const char *name, int i)
 {
     if(!name)
