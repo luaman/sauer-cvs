@@ -532,9 +532,9 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
     };
 };
 
-void trigger(int *tag, int *open)
+void trigger(int *tag, int *state)
 {
-    if(*open) unlocktriggers(*tag);
+    if(*state) unlocktriggers(*tag);
     else unlocktriggers(*tag, TRIGGERED, TRIGGER_RESETTING);
 };
 
