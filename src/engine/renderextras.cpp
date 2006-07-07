@@ -195,6 +195,8 @@ char *entname(entity &e)
     return fullentname;
 };
 
+extern int closestent();
+
 void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
@@ -202,9 +204,11 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     extern selinfo sel;
     const vector<extentity *> &ents = et->getents();
     entity *c = NULL;
-    if(sel.ent>=0)
+    int s = sel.ent;
+    if(s<0) s = closestent();
+    if(s>=0)
     {
-        c = ents[sel.ent];
+        c = ents[s];
         s_sprintf(closeent)("%s (%d, %d, %d, %d)", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
     };
     loopv(ents)
@@ -296,7 +300,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     int abovegameplayhud = h*3*1650/1800-FONTH*3/2; // hack
 
     char *command = getcurcommand();
-    if(command) rendercommand(FONTH/2, abovegameplayhud - (editmode ? FONTH*3 : 0));
+    if(command) rendercommand(FONTH/2, abovegameplayhud - (editmode ? FONTH*4 : 0));
     cl->renderscores();
 
     if(!hidehud)
@@ -330,8 +334,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
             if(editmode)
             {
-                if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud-FONTH*2);
-                else draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*2, selchildcount<0 ? "1/" : "", abs(selchildcount));
+                if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud-FONTH*3);
+                draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*2, selchildcount<0 ? "1/" : "", abs(selchildcount));
                 draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
                 draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d", FONTH/2, abovegameplayhud, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length());
             };

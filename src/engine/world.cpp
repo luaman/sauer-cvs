@@ -121,9 +121,29 @@ void entitiesinoctanodes()
 extern selinfo sel;
 extern bool havesel, selectcorners;
 
+int closestent()        // used for delent and edit mode ent display
+{
+    if(!editmode) return -1;
+    int best = -1;
+    float bdist = 99999;
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        entity &e = *ents[i];
+        if(e.type==ET_EMPTY) continue;
+        float dist = e.o.dist(player->o);
+        if(dist<bdist)
+        {
+            best = i;
+            bdist = dist;
+        };
+    };
+    return bdist==99999 ? -1 : best;
+};
+
 extern void makeundo(bool ents = false);
-#define entediti(_i, f)  { if(_i<0) return; extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }
-#define entedit(f)       entediti(sel.ent, makeundo(); f)
+#define entediti(_i, f)  { if((_i)<0) return; extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }
+#define entedit(f)       { int t = sel.ent; if(t<0) sel.ent = closestent(); entediti(sel.ent, makeundo(); f; sel.ent = t;); }
 
 void moveent(int i, vec &o)
 {
@@ -346,24 +366,26 @@ int findentity(int type, int index)
 void replaceents(int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit() || multiplayer()) return;
+    entids.setsize(0);
     const vector<extentity *> &ents = et->getents();
     extentity &s = *ents[sel.ent];
     loopv(ents)
     {
         extentity &e = *ents[i];
-        if (e.type==s.type
-        &&  e.attr1==s.attr1
-        &&  e.attr2==s.attr2
-        &&  e.attr3==s.attr3
-        &&  e.attr4==s.attr4)
-        {
+        if(e.type==s.type
+        && e.attr1==s.attr1
+        && e.attr2==s.attr2
+        && e.attr3==s.attr3
+        && e.attr4==s.attr4)
+            entids.add(i);
+    };
+    makeundo();
+    loopv(entids)
+        entediti(entids[i],
             e.attr1=*a1;
             e.attr2=*a2;
             e.attr3=*a3;
-            e.attr4=*a4;
-            et->editent(i);
-        };
-    };
+            e.attr4=*a4;);
 };
 
 COMMAND(newent, "siiii");

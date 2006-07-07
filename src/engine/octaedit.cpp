@@ -76,13 +76,21 @@ VARF(gridpower, 2, 3, VVEC_INT-1,
     cancelsel();
 });
 
+bool entmovingorient = false;
+bool passthroughcube = false;
+void passthrough(int *isdown) { passthroughcube = *isdown!=0; };
+COMMAND(passthrough, "D");
+
 void editdrag(bool on)
 {
     if(dragging = on)
     {
         cancelsel();
-        vec ray(worldpos); ray.sub(player->o);
-        sel.ent = rayent(player->o, ray);
+        if(!passthroughcube)
+        {
+            vec ray(worldpos); ray.sub(player->o);
+            sel.ent = rayent(player->o, ray);
+        };
         if(cor[0]<0 || sel.ent>=0) return;
         lastcur = cur;
         lastcor = cor;
@@ -174,11 +182,6 @@ void countselchild(cube *c, ivec &cor, int size)
 bool selectcorners = false;
 void selcorners(int *isdown) { selectcorners = *isdown!=0; editdrag(*isdown!=0); };
 COMMAND(selcorners, "D");
-
-bool entmovingorient = false;
-bool passthroughcube = false;
-void passthrough(int *isdown) { passthroughcube = *isdown!=0; };
-COMMAND(passthrough, "D");
 
 uchar cursorcolor[3] = {120, 120, 120};
 
@@ -325,7 +328,7 @@ void cursorupdate()
         glColor3ub(10,10,40);   // 3D selection box
         boxs3D(movesel, sel.s, sel.grid);
     };
-    if(sel.ent>=0)
+    if(sel.ent>=0 && dragging)
     {
         glColor3ub(40,40,40);
         loop(x, 4) loop(y, 4)
@@ -447,7 +450,7 @@ int *selgridmap(selinfo &sel)                           // generates a map of th
     return g-sel.size();
 };
 
-struct undoent { int i; vec o; };
+struct undoent { int i; entity e; };
 
 bool pointinsel(selinfo &sel, vec &o)
 {
@@ -461,25 +464,23 @@ bool pointinsel(selinfo &sel, vec &o)
 
 extern vector<int> entids;
 
-int initentids(selinfo &sel)
+void initentids(selinfo &sel)
 {
     entids.setsize(0);
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
         if(pointinsel(sel, ents[i]->o))
             entids.add(i);
-    return entids.length();
 };
 
 struct undoent;
-undoent *copyents(selinfo &sel)
+undoent *copyents(int n)
 {
-    int n = entids.length();
     undoent *e = new undoent[n];
     loopv(entids)
     {
         e->i = entids[i];
-        e->o = et->getents()[entids[i]]->o;
+        e->e = *et->getents()[entids[i]];
         e++;
     };
     return e-n;
@@ -491,21 +492,21 @@ struct undoblock
     block3 *b;
     undoent *e;
 
-    undoblock(selinfo &sel, int n_)
+    undoblock(selinfo &sel)
     {
-        g = NULL; b = NULL; e = NULL; n = n_;
+        g = NULL; b = NULL; e = NULL; n = entids.length();
         if(sel.ent<0)
         {
             g = selgridmap(sel);
             b = blockcopy(sel, -sel.grid);
-            if(n) e = copyents(sel);
+            if(n) e = copyents(n);
         }
         else
         {
             n = 1;
             e = new undoent;
             e->i = sel.ent;
-            e->o = et->getents()[sel.ent]->o;
+            e->e = *et->getents()[sel.ent];
         };
     };
 };
@@ -529,7 +530,14 @@ void pasteundo(undoblock &u)
         cube *s = u.b->c();
         loopxyz(*u.b, *g++, pastecube(*s++, c));
     };
-    loopi(u.n) moveent(u.e[i].i, u.e[i].o);
+    loopi(u.n)
+    {
+        entity &e = *et->getents()[u.e[i].i];
+        vec o = e.o;
+        e = u.e[i].e;
+        e.o = o;
+        moveent(u.e[i].i, u.e[i].e.o);
+    };
 };
 
 void pruneundos(int maxremain)                          // bound memory
@@ -556,10 +564,9 @@ void makeundo(bool ents = false)                        // stores state of selec
 {
     if(lastsel==sel) return;
     lastsel=sel;
-    int n = 0;
-    if(ents) n = initentids(sel);
+    if(ents) initentids(sel);
     if(multiplayer(false)) return;
-    undoblock u(sel, n);
+    undoblock u(sel);
     undos.add(u);
     pruneundos(undomegs<<20);
 };
@@ -578,7 +585,7 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
         sel.ent = -1;
     }
     else sel.ent = u.e->i;
-    undoblock r(sel, true);
+    undoblock r(sel);
     b.add(r);
     pasteundo(u);
     if(u.b) changed(sel);
@@ -601,7 +608,7 @@ void freeeditinfo(editinfo *&e)
 };
 
 // guard against subdivision
-#define protectsel(f) { undoblock _u(sel, false); f; pasteundo(_u); freeundo(_u); }
+#define protectsel(f) { undoblock _u(sel); f; pasteundo(_u); freeundo(_u); }
 
 void mpcopy(editinfo *&e, selinfo &sel, bool local)
 {
@@ -610,7 +617,7 @@ void mpcopy(editinfo *&e, selinfo &sel, bool local)
     if(e->copy) freeblock(e->copy);
     e->copy = NULL;
     e->ent.type = ET_EMPTY;
-    if(sel.ent>=0)
+    if(sel.ent>=0 && dragging)
         e->ent = *et->getents()[sel.ent];
     else
     {
@@ -893,23 +900,26 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
 
-    if(moving)
+    if(local) 
     {
-        movesel[d] += seldir*sel.grid;
-        return;
+        if(moving)
+        {
+            movesel[d] += seldir*sel.grid;
+            return;
+        };
+
+        if(sel.ent>=0 && dragging)
+        {
+            vec v(et->getents()[sel.ent]->o);
+            v[d] += seldir*sel.grid;
+            moveent(sel.ent, v);
+            return;
+        };
+
+        cl->edittrigger(sel, EDIT_FACE, dir, mode);
     };
 
-    if(sel.ent>=0)
-    {
-        vec v(et->getents()[sel.ent]->o);
-        v[d] += seldir*sel.grid;
-        moveent(sel.ent, v);
-        return;
-    };
-
-    if(local) cl->edittrigger(sel, EDIT_FACE, dir, mode);
-
-    if (mode==1)
+    if(mode==1)
     {
         int h = sel.o[d]+dc*sel.grid;
         if((dir>0 == dc && h<=0) || (dir<0 == dc && h>=hdr.worldsize)) return;
@@ -1023,7 +1033,7 @@ void mpmovecubes(ivec &o, selinfo &sel, bool local)
 void editmove(int *isdown)
 {
     if(noedit(true)) return;
-    if(sel.ent>=0) { entmovingorient = *isdown!=0; reorient(); return; };
+    if(sel.ent>=0 && dragging) { entmovingorient = *isdown!=0; reorient(); return; };
     if(*isdown!=0)
     {
         selextend();
