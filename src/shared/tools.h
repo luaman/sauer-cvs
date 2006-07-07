@@ -159,7 +159,9 @@ template <class T> struct vector
     int length() const { return ulen; };
     T &operator[](int i) { ASSERT(i>=0 && i<ulen); return buf[i]; };
     const T &operator[](int i) const { ASSERT(i >= 0 && i<ulen); return buf[i]; };
-    void setsize(int i) { ASSERT(i<=ulen); while(ulen>i) drop(); };
+    
+    void setsize(int i)         { ASSERT(i<=ulen); while(ulen>i) drop(); };
+    void setsizenodelete(int i) { ASSERT(i<=ulen); ulen = i; };
     
     void deletecontentsp() { while(!empty()) delete   pop(); };
     void deletecontentsa() { while(!empty()) delete[] pop(); };
@@ -263,6 +265,11 @@ template <class K, class T> struct hashtable
         lastchunk = NULL;
         table = new chain *[size];
         for(int i = 0; i<size; i++) table[i] = NULL;
+    };
+
+    ~hashtable()
+    {
+        DELETEA(table);
     };
 
     chain *insert(const K &key, unsigned int h)

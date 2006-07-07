@@ -104,7 +104,7 @@ struct plane : vec
 
     void toplane(const vec &n, const vec &p)
     {
-        *(vec *)this = n;
+        x = n.x; y = n.y; z = n.z;
         offset = -dot(p);
     };
 

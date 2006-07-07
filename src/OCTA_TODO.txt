@@ -6,6 +6,7 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- improve smoothness of going up steps
 - remove delay before doors start opening
 - better collision on doors (and maybe any rotated object, while we're at it).
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
@@ -17,7 +18,6 @@ eihrul:
 - water physics close to surface
 - add a spotlight (ask me)
 - very fancy: test alpha on a polygon for ultra-quality raycube()
-- improve smoothness of going up steps
 - sound entities
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
@@ -34,7 +34,7 @@ aard/everyone:
 - add textures to std cfg
 - shader docs
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
-- the eyecandy priority list: envmapping (metal/water), better bloom, motion blur, volumetric fog, character shadows, character bumpmaps? ...
+- the eyecandy priority list: envmapping (water) / fake env (metal/glass), better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? ...
 - no dbghelp.dll on win98?
 - better doc on the scripting language
 - ways of doing menu - context sensitive etc

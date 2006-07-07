@@ -187,6 +187,7 @@ void clear_sound()
 {
     if(nosound) return;
     stopsound();
+    samplevec.setsizenodelete(0);
     samples.clear();
     #ifdef USE_MIXER
         Mix_CloseAudio();

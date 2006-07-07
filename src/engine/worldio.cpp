@@ -310,7 +310,7 @@ void load_world(const char *mname)        // still supports all map formats that
 
     show_out_of_renderloop_progress(0, "loading entities...");
     vector<extentity *> &ents = et->getents();
-    ents.setsize(0);
+    ents.deletecontentsp();
 
     char *ebuf = new char[et->extraentinfosize()];
     loopi(hdr.numents)
