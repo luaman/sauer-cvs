@@ -1,19 +1,26 @@
 #include "pch.h"
 #include "engine.h"
 
-void boxs(int d, int x, int y, int xs, int ys, int z)
+void boxs(int orient, int x, int y, int xs, int ys, int z)
 {
-    ivec m(d, x,    y,    z);
-    ivec n(d, x+xs, y,    z);
-    ivec o(d, x+xs, y+ys, z);
-    ivec p(d, x,    y+ys, z);
+    int d = dimension(orient);
+    float f = (dimcoord(orient)>0 ? 0.2f : -0.2f);
+    vec m(ivec(d, x,    y,    z).v);
+    vec n(ivec(d, x+xs, y,    z).v);
+    vec o(ivec(d, x+xs, y+ys, z).v);
+    vec p(ivec(d, x,    y+ys, z).v);
+
+    m[d] += f;
+    n[d] += f;
+    o[d] += f;
+    p[d] += f;
 
     glBegin(GL_POLYGON);
 
-    glVertex3i(m.x, m.y, m.z);
-    glVertex3i(n.x, n.y, n.z);
-    glVertex3i(o.x, o.y, o.z);
-    glVertex3i(p.x, p.y, p.z);
+    glVertex3f(m.x, m.y, m.z);
+    glVertex3f(n.x, n.y, n.z);
+    glVertex3f(o.x, o.y, o.z);
+    glVertex3f(p.x, p.y, p.z);
 
     glEnd();
 };
@@ -23,7 +30,7 @@ void boxs3D(const ivec &o, const ivec &s, int g)
     loopi(6)
     {
         int d = dimension(i), dc = dimcoord(i);
-        boxs(d, o[R[d]], o[C[d]], g*s[R[d]], g*s[C[d]], o[d]+dc*g*s[d]);
+        boxs(i, o[R[d]], o[C[d]], g*s[R[d]], g*s[C[d]], o[d]+dc*g*s[d]);
     };
 };
 
@@ -31,7 +38,7 @@ void boxsgrid(const ivec &o, const ivec &s, int g, int orient)
 {
     int d = dimension(orient), dc = dimcoord(orient);
     loop(x, s[R[d]]) loop(y, s[C[d]])
-        boxs(d, o[R[d]]+x*g, o[C[d]]+y*g, g, g, o[d]+dc*g*s[d]);
+        boxs(orient, o[R[d]]+x*g, o[C[d]]+y*g, g, g, o[d]+dc*g*s[d]);
 };
 
 selinfo sel = { 0 }, lastsel;
@@ -320,7 +327,7 @@ void cursorupdate()
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glColor3ubv(cursorcolor);
-    boxs(od, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
+    boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     if(moving)
     {
         glColor3ub(10,10,10);   // grid
@@ -332,26 +339,26 @@ void cursorupdate()
     {
         glColor3ub(40,40,40);
         loop(x, 4) loop(y, 4)
-            boxs(dimension(sel.orient), e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
+            boxs(sel.orient, e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
     };
     if(hmap != NULL)
     {
         glColor3ub(0,200,0);
         d = dimension(sel.orient);
         loop(x, 2) loop(y, 2) // corners
-            boxs(d, sel.o[R[d]]+x*(sel.us(R[d])-sel.grid), sel.o[C[d]]+y*(sel.us(C[d])-sel.grid), sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+            boxs(sel.orient, sel.o[R[d]]+x*(sel.us(R[d])-sel.grid), sel.o[C[d]]+y*(sel.us(C[d])-sel.grid), sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
         boxs3D(sel.o, sel.s, sel.grid);
-    };
-    if(havesel)
+    }
+    else if(havesel)
     {
         d = dimension(sel.orient);
         glColor3ub(20,20,20);   // grid
         boxsgrid(sel.o, sel.s, sel.grid, sel.orient);
         glColor3ub(200,0,0);    // 0 reference
-        boxs(d, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
+        boxs(sel.orient, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
         glColor3ub(200,200,200);// 2D selection box
-        boxs(d, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
-        glColor3ub(0,0,40);     // 3D selection box
+        boxs(sel.orient, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+        glColor3ub(0,0,120);     // 3D selection box
         boxs3D(sel.o, sel.s, sel.grid);
     };
     glDisable(GL_BLEND);
