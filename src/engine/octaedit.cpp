@@ -95,8 +95,11 @@ void editdrag(bool on)
         cancelsel();
         if(!passthroughcube)
         {
+            ivec t;
             vec ray(worldpos); ray.sub(player->o);
             sel.ent = rayent(player->o, ray);
+            if(sel.ent>=0) 
+                entdrag(player->o, ray, dimension(sel.orient), t, true);
         };
         if(cor[0]<0 || sel.ent>=0) return;
         lastcur = cur;
@@ -915,7 +918,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
             return;
         };
 
-        if(sel.ent>=0 && dragging)
+        if(sel.ent>=0)
         {
             vec v(et->getents()[sel.ent]->o);
             v[d] += seldir*sel.grid;

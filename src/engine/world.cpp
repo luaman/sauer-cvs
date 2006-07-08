@@ -185,7 +185,8 @@ void entflip(selinfo &sel)
 
 void entrotate(selinfo &sel, int cw)
 {
-    int d = sel.orient/2, D = cw<0 ? R[d] : C[d];
+    int d = sel.orient/2;
+    int D = cw<0 ? R[d] : C[d];
     float mid = sel.s[D]*sel.grid/2+sel.o[D];
     vec s(sel.o.v);
     loopv(entids)
@@ -199,7 +200,9 @@ void entrotate(selinfo &sel, int cw)
     };
 };
 
-void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
+vec enthandle;
+
+void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first)
 {
     entedit(
         plane pl(d, e.o[D[d]]);
@@ -209,6 +212,12 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest)
             vec v(ray);
             v.mul(dist);
             v.add(o);
+            if(first)
+            {
+                enthandle = v;
+                enthandle.sub(e.o);
+            };
+            v.sub(enthandle);
             dest = v;
             int z = dest[d]&(~(sel.grid-1));
             dest.add(sel.grid/2).mask(~(sel.grid-1));

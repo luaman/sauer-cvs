@@ -151,7 +151,7 @@ extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, cons
 
 // ents
 extern int rayent(const vec &o, vec &ray);
-extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest);
+extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first = false);
 extern int newentity(int type, int a1, int a2, int a3, int a4);
 extern void moveent(int i, vec &o);
 extern void entflip(selinfo &sel);
