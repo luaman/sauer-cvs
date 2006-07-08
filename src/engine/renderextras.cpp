@@ -205,7 +205,8 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     const vector<extentity *> &ents = et->getents();
     entity *c = NULL;
     int s = sel.ent;
-    if(s<0) s = closestent();
+    bool implicit = s<0;
+    if(implicit) s = closestent();
     if(s>=0)
     {
         c = ents[s];
@@ -217,7 +218,7 @@ void renderents()       // show sparkly thingies for map entities in edit mode
         if(e.type==ET_EMPTY) continue;
         if(e.o.dist(camera1->o)<128)
         {
-            particle_text(e.o, entname(e), &e==c ? 13 : 11, 1);
+            particle_text(e.o, entname(e), &e==c ? (implicit ? 14 : 13) : 11, 1);
         };
         particle_splash(2, 2, 40, e.o);
     };
@@ -334,10 +335,10 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
             if(editmode)
             {
-                if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud-FONTH*3);
-                draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*2, selchildcount<0 ? "1/" : "", abs(selchildcount));
-                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
-                draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d", FONTH/2, abovegameplayhud, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length());
+                draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*3, selchildcount<0 ? "1/" : "", abs(selchildcount));
+                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
+                draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length());
+                if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud);
             };
         };
 

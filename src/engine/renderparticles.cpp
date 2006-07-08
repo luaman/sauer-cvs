@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define MAXPARTYPES 14
+#define MAXPARTYPES 15
 
 struct particle
 {
@@ -81,6 +81,7 @@ void render_particles(int time)
         { 30, 200, 80,  0, -1, 2.0f },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
         { 255, 255, 255, 20, 4, 2.0f },  // 12 green small fireball3
         { 255, 75, 25,  0, -1, 2.0f },  // 13 TEXT RED, SMALL, NON-MOVING
+        { 180, 180, 180,  0, -1, 2.0f },  // 14 TEXT GREY, SMALL, NON-MOVING
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -133,7 +134,7 @@ void render_particles(int time)
                 char *t = p->text+(p->text[0]=='@');
                 float xoff = -text_width(t)/2;
                 float yoff = 0;
-                if(i!=11 && i!=13) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
+                if(i!=11 && i!=13 && i!=14) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
                 glTranslatef(xoff, yoff, 50);
                 draw_text(t, 0, 0, pt.r, pt.g, pt.b, blend);
                 glPopMatrix();

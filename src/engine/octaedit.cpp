@@ -624,7 +624,7 @@ void mpcopy(editinfo *&e, selinfo &sel, bool local)
     if(e->copy) freeblock(e->copy);
     e->copy = NULL;
     e->ent.type = ET_EMPTY;
-    if(sel.ent>=0 && dragging)
+    if(sel.ent>=0)
         e->ent = *et->getents()[sel.ent];
     else
     {
