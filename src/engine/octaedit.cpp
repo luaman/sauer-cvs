@@ -47,7 +47,7 @@ void boxsgrid(const ivec &o, const ivec &s, int g, int orient)
 
 selinfo sel = { 0 }, lastsel;
 
-int orient = 0;
+int orient = 0, _reorient = 0;
 int gridsize = 8;
 ivec cor, lastcor;
 ivec cur, lastcur;
@@ -117,9 +117,9 @@ void reorient()
 {
     sel.cx = 0;
     sel.cy = 0;
-    sel.cxs = sel.s[R[dimension(orient)]]*2;
-    sel.cys = sel.s[C[dimension(orient)]]*2;
-    sel.orient = orient;
+    sel.cxs = sel.s[R[dimension(_reorient)]]*2;
+    sel.cys = sel.s[C[dimension(_reorient)]]*2;
+    sel.orient = _reorient;
 };
 
 VAR(editing,0,0,1);
@@ -147,12 +147,19 @@ void toggleedit()
 bool noedit(bool view)
 {
     if(!editmode) { conoutf("operation only allowed in edit mode"); return true; };
-    if(sel.ent>=0 || view) return false;
-    vec o(sel.o.v);
-    vec s(sel.s.v);
-    s.mul(float(sel.grid) / 2.0f);
-    o.add(s);
-    float r = float(max(s.x, max(s.y, s.z)));
+    if(view) return false;
+    float r = 1.0f;
+    vec o, s;
+    if(sel.ent<0)
+    {
+        o = sel.o.v;
+        s = sel.s.v;
+        s.mul(float(sel.grid) / 2.0f);
+        o.add(s);
+        r = float(max(s.x, max(s.y, s.z)));
+    }
+    else 
+        o = et->getents()[sel.ent]->o;
     bool viewable = (isvisiblesphere(r, o) != VFC_NOT_VISIBLE);
     if(!viewable) conoutf("selection not in view");
     return !viewable;
@@ -237,10 +244,11 @@ void cursorupdate()
     lusize = gridsize;
 
     float t;
+    rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t=0, orient);
     if(!rayrectintersect(havesel && !passthroughcube ? sel.o : lu,
                          havesel && !passthroughcube ? ivec(sel.s).mul(sel.grid) : ivec(gridsize,gridsize,gridsize),
-                         player->o, ray, t=0, orient))
-        rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t=0, orient);
+                         player->o, ray, t=0, _reorient))
+        _reorient = orient;        
 
     cur = lu;
     int g2 = gridsize/2;
@@ -606,7 +614,7 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
     };
 };
 
-void copy()  { if(noedit()) return; mpcopy(localedit, sel, true); };
+void copy()  { if(noedit(true)) return; mpcopy(localedit, sel, true); };
 void paste() { if(noedit()) return; mppaste(localedit, sel, true); };
 
 COMMAND(copy, "");
