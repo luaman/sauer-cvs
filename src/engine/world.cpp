@@ -143,7 +143,7 @@ int closestent()        // used for delent and edit mode ent display
 
 extern void makeundo(bool ents = false);
 #define entediti(_i, f)  { if((_i)<0) return; extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }
-#define entedit(f)       { int t = sel.ent; if(t<0) sel.ent = closestent(); entediti(sel.ent, makeundo(); f; sel.ent = t;); }
+#define entedit(f)       { int t = sel.ent; if(t<0) sel.ent = closestent(); entediti(sel.ent, makeundo(); f;); if(t<0) sel.ent = t; }
 
 void moveent(int i, vec &o)
 {
