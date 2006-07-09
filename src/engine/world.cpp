@@ -141,19 +141,81 @@ int closestent()        // used for delent and edit mode ent display
     return bdist==99999 ? -1 : best;
 };
 
-extern void makeundo(bool ents = false);
-#define entediti(_i, f)  { if((_i)>=0) { extentity &e = *et->getents()[_i]; removeentity(_i); f; addentity(_i); et->editent(_i); }; }
-#define entedit(f)       { int t = sel.ent; if(t<0) t = closestent(); entediti(t, makeundo(); f;); }
-
-void moveent(int i, vec &o)
+bool pointinsel(selinfo &sel, vec &o)
 {
-    entediti(i, e.o = o);
+    return(o.x <= sel.o.x+sel.s.x*sel.grid
+        && o.x >= sel.o.x
+        && o.y <= sel.o.y+sel.s.y*sel.grid
+        && o.y >= sel.o.y
+        && o.z <= sel.o.z+sel.s.z*sel.grid
+        && o.z >= sel.o.z);
+};
+
+vector<int> entgroup;
+
+void initundoent(undoblock &u, int id)
+{
+    u.n = 0; u.e = NULL;
+    if(id<0)
+    {
+        u.n = entgroup.length();
+        if(u.n<=0) return;
+        u.e = new undoent[u.n];
+        loopv(entgroup)
+        {
+            u.e->i = entgroup[i];
+            u.e->e = *et->getents()[entgroup[i]];
+            u.e++;
+        };
+        u.e -= u.n;    
+    }
+    else
+    {
+        u.n = 1;
+        u.e = new undoent;
+        u.e->i = id;
+        u.e->e = *et->getents()[id];
+    };
+};
+
+void makeundoent(int id)
+{
+    undoblock u;
+    initundoent(u, id);
+    if(u.n) addundo(u);
+};
+
+extern bool undogoahead;
+
+#define realselent      (sel.ent<0 ? closestent() : sel.ent)
+// convenience macros implicitly define:
+// e         entity, currently edited ent
+// n         int,    index to currently edited ent
+#define entedit(i, f)   { int n = (i); if(n>=0) { entity &e = *et->getents()[n]; removeentity(n); f; addentity(n); et->editent(n); }; }
+#define selentedit(f)   { entedit(realselent, makeundoent(n); f); }
+#define setgroup(exp)   { entgroup.setsize(0); const vector<extentity *> &__ = et->getents(); loopv(__) { int n = i; entity &e = *__[n]; if(exp) entgroup.add(n); }; }
+#define groupeditpure(f){ loopv(entgroup) entedit(entgroup[i], f); }
+#define groupedit(f)    { makeundoent(-1); groupeditpure(f); }
+#define selgroupedit(f) { setgroup(pointinsel(sel, e.o)); if(undogoahead) makeundoent(-1); groupeditpure(f); }
+
+void copyundoents(undoblock &d, undoblock &s)
+{
+    entgroup.setsize(0);
+    loopi(s.n)
+        entgroup.add(s.e[i].i);
+    initundoent(d, -1);
+};
+
+void pasteundoents(undoblock &u)
+{
+    loopi(u.n)
+        entedit(u.e[i].i, e = u.e[i].e);
 };
 
 void entproperty(int *prop, int *amount)
 {
-    if(noedit()) return;
-    entedit(
+    if(noedit(true)) return;
+    selentedit(
         switch(*prop)
         {
             case 0: e.attr1 += *amount; break;
@@ -164,47 +226,40 @@ void entproperty(int *prop, int *amount)
     );
 };
 
-VAR(entselsnap, 0, 0, 1);
-
-vector<int> entids;
-
 void entmove(selinfo &sel, ivec &o)
 {
     vec s(o.v), a(sel.o.v); s.sub(a);
-    loopv(entids)
-       entediti(entids[i], e.o.add(s));
+    selgroupedit(e.o.add(s));
 };
 
 void entflip(selinfo &sel)
 {
     int d = sel.orient/2;
     float mid = sel.s[d]*sel.grid/2+sel.o[d];
-    loopv(entids)
-        entediti(entids[i], e.o[d] -= (e.o[d]-mid)*2);
+    selgroupedit(e.o[d] -= (e.o[d]-mid)*2);
 };
 
 void entrotate(selinfo &sel, int cw)
 {
     int d = sel.orient/2;
-    int D = cw<0 ? R[d] : C[d];
-    float mid = sel.s[D]*sel.grid/2+sel.o[D];
+    int dd = cw<0 ? R[d] : C[d];
+    float mid = sel.s[dd]*sel.grid/2+sel.o[dd];
     vec s(sel.o.v);
-    loopv(entids)
-    {
-        entediti(entids[i],
-            e.o[D] -= (e.o[D]-mid)*2;
-            e.o.sub(s);
-            swap(float, e.o[R[d]], e.o[C[d]]);
-            e.o.add(s);
-        );
-    };
+    selgroupedit(
+        e.o[dd] -= (e.o[dd]-mid)*2;
+        e.o.sub(s);
+        swap(float, e.o[R[d]], e.o[C[d]]);
+        e.o.add(s);
+    );
 };
 
 vec enthandle;
+VAR(entselsnap, 0, 0, 1);
 
 void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first)
 {
-    entedit(
+    entedit(sel.ent,
+        if(first) makeundoent(n);
         plane pl(d, e.o[D[d]]);
         float dist = 0.0f;
         if(pl.rayintersect(o, ray, dist))
@@ -228,13 +283,18 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first)
     );
 };
 
+void pushent(int d, int dist)
+{
+    entedit(sel.ent, e.o[d] += float(dist)); // used with entdrag; so, no undo
+};
+
 void delent()
 {
-    if(noedit()) return;
-    entedit(
+    if(noedit(true)) return;
+    selentedit(
         conoutf("%s entity deleted", et->entname(e.type));
         e.type = ET_EMPTY;
-        et->editent(sel.ent);
+        et->editent(n);
         cancelsel();
         return;
     );
@@ -291,8 +351,8 @@ bool dropentity(entity &e, int drop = -1)
 
 void dropent()
 {
-    if(noedit()) return;
-    entedit(dropentity(e));
+    if(noedit(true)) return;
+    selentedit(dropentity(e));
 };
 
 extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
@@ -328,19 +388,19 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
 
 int newentity(int type, int a1, int a2, int a3, int a4)
 {
-    extentity *e = newentity(true, player->o, type, a1, a2, a3, a4);
-    if(multiplayer()) dropentity(*e, 2);
-    else if(entdrop)  dropentity(*e);
-    et->getents().add(e);
+    extentity *t = newentity(true, player->o, ET_EMPTY, a1, a2, a3, a4);
+    if(multiplayer()) dropentity(*t, 2);
+    else if(entdrop)  dropentity(*t);
+    et->getents().add(t);
     int i = et->getents().length()-1;
-    addentity(i);
-    et->editent(i);
+    makeundoent(i);
+    entedit(i, e.type = type);
     return i;
 };
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
-    if(noedit()) return;
+    if(noedit(true)) return;
     int type = findtype(what);
     newentity(type, *a1, *a2, *a3, *a4);
 };
@@ -348,18 +408,10 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 void clearents(char *name)
 {
     int type = findtype(name);
-    if(noedit() || multiplayer()) return;
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents)
-    {
-        extentity &e = *ents[i];
-        if(e.type==type)
-        {
-            removeentity(i);
-            e.type = ET_EMPTY;
-            et->editent(i);
-        };
-    };
+    if(noedit(true) || multiplayer()) return;
+    setgroup(e.type==type);
+    groupedit(e.type = ET_EMPTY; et->editent(n); continue);
+    cancelsel();
 };
 
 COMMAND(clearents, "s");
@@ -372,33 +424,27 @@ int findentity(int type, int index)
     return -1;
 };
 
-void replaceents(int *a1, int *a2, int *a3, int *a4)
+void replaceents(char *what, int *a1, int *a2, int *a3, int *a4)
 {
-    if(noedit() || multiplayer()) return;
-    entids.setsize(0);
-    const vector<extentity *> &ents = et->getents();
-    extentity &s = *ents[sel.ent];
-    loopv(ents)
-    {
-        extentity &e = *ents[i];
-        if(e.type==s.type
-        && e.attr1==s.attr1
-        && e.attr2==s.attr2
-        && e.attr3==s.attr3
-        && e.attr4==s.attr4)
-            entids.add(i);
-    };
-    makeundo();
-    loopv(entids)
-        entediti(entids[i],
-            e.attr1=*a1;
-            e.attr2=*a2;
-            e.attr3=*a3;
-            e.attr4=*a4;);
+    if(noedit(true) || multiplayer()) return;
+    int t = realselent;
+    if(t<0) return;
+    entity &s = *et->getents()[t];
+    int type = findtype(what);
+    setgroup(e.type==s.type
+          && e.attr1==s.attr1
+          && e.attr2==s.attr2
+          && e.attr3==s.attr3
+          && e.attr4==s.attr4);
+    groupedit(e.type=type;
+              e.attr1=*a1;
+              e.attr2=*a2;
+              e.attr3=*a3;
+              e.attr4=*a4;);
 };
 
 COMMAND(newent, "siiii");
-COMMAND(replaceents, "iiii");
+COMMAND(replaceents, "siiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
 COMMAND(entproperty, "ii");

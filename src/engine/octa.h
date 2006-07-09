@@ -122,6 +122,9 @@ struct editinfo
     editinfo() : copy(NULL) {};
 };
 
+struct undoent   { int i; entity e; };
+struct undoblock { int *g, n; block3 *b; undoent *e; undoblock() : g(NULL), n(0), b(NULL), e(NULL) {}; };
+
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern ivec lu;
 extern int lusize;
