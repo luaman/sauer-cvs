@@ -10,10 +10,14 @@ void boxs(int orient, int x, int y, int xs, int ys, int z)
     vec o(ivec(d, x+xs, y+ys, z).v);
     vec p(ivec(d, x,    y+ys, z).v);
 
-    m[d] += f;
-    n[d] += f;
-    o[d] += f;
-    p[d] += f;
+    extern int outline;
+    if(outline==1)
+    {
+        m[d] += f;
+        n[d] += f;
+        o[d] += f;
+        p[d] += f;
+    };
 
     glBegin(GL_POLYGON);
 
