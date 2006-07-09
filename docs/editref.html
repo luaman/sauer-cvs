@@ -13,12 +13,20 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
     </head>
     <body>
         <div>Editing Related Console Commands</div>
-        <pre>sendmap</pre>
-        Saves the current map (without lightmaps) and sends it to the server so other clients may download it.
-        Only works in coopedit game mode.
-        <pre>getmap</pre>
-        Gets a map from the server if one is available. Automatically loads the map when done. Only works in coopedit
-        game mode.
+        
+        <br><br>
+
+        <a href="#editing">Editing</a>
+        <a href="#heightfield">Heightfield</a>
+        <a href="#entity">Entity</a>
+        <a href="#settings">Settings</a>
+        <a href="#map">Map and Config</a>
+        <a href="#lightingcommands">Lighting</a>
+        <a href="#entitytypes">Entity Types</a>
+        <a href="#hud">The HUD</a>
+        
+        <a name="editing"></a>        
+        <div>Editing</div>
         <pre>edittoggle</pre>
         Switches between map edit mode and normal (default key = e). In map edit mode
         you can select bits of the map by clicking or dragging your crosshair on the
@@ -28,43 +36,9 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         <pre>editface D N</pre>
         This is the main editing command. D is the direction of the action, -1 for
         towards you, 1 for away from you. N=0 to push all corners in the white box. N=1
-        create or destroy cubes. N=2 push or pull a corner you are pointing at.
-        <pre>getheightmap</pre>
-        This command will turn any selection into a heightmap mode selection [default H]. When this
-        happens the selection will turn green with the orientation and gridsize denoted
-        by four corner squares on one side of the selection. When the selection enters heightmap
-        mode, the cubes within the selection will mimic a heightmap and so the geometry within
-        the selection will be changed if it is not already of heightmap style.
-        <br><br>The point of heightmap mode is that all editface commands will now edit
-        the selected cubes using a brush instead of the default behaviour. The selection will
-        also dynamically resize itself in order to generate the entire heightmap. This obviously
-        means that it can overwrite cubes below and above it. Other then these changes
-        the selection functions exactly the same as the normal selection, which means you can copy it,
-        extend it, cancel it, etc. The only exceptions to this right now are the flip and
-        rotate commands. This type of selection cannot currently be used in coop edit.
-        <pre>clearbrush</pre>
-        This resets the current brush that is used during heightmap mode editing.
-        <pre>brushvert x y depth </pre>
-        A brush is a 2D map that describes the depth that the editface commands should
-        push into the cubes at various points. The first two parameters of brushvert are the X and Y
-        coordinates, respectively, of a vert on this 2D map. The last parameter
-        is used to set the depth.
-        <pre>brushx<br>brushy</pre>
-        Along with the 2D map, all brushes also have a handle. This handle is a reference
-        point on the 2D map which defines where the brush is relative to the editing cursor.
-        These two variables define the brush handle's coordinates.
-        <pre>copybrush</pre>
-        This command [default K] copies the current heightmap mode selection and
-        saves it as a new brush. The current location of the cursor will turn into the
-        new handle of the brush.
-        <pre>savebrush name</pre>
-        This will save the current brush in script format. This script will be saved in 
-		a file called mybrushes.cfg file for example. This is usually used after copybrush.
-		The brush can also be named for easy reference later.
-        <pre>selectbrush D</pre>
-        This is not an actual engine command, but rather an alias which is defined
-        in data/brush.cfg. It is to be used as a modifier [default J], and switches between the
-        various brushes that have been saved within that config file.
+        create or destroy cubes. N=2 push or pull a corner you are pointing at.       
+        <pre>gridpower N</pre>
+        Changes the size of the grid.        
         <pre>edittex D</pre>
         Changes the texture on current selection by browsing through a list of textures
         directly shown on the cubes. D is the direction you want to cycle the textures
@@ -78,23 +52,18 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         most frequently used textures will come first, and the most recently used
         texture is set immediately when you press the forward key for the type. These
         lists are saved with the map.
-        <pre>gridpower N</pre>
-        Changes the size of the grid.
+        <PRE>gettex</PRE>
+        <P>moves the texture on the current selection to the top of the texture list. Useful for quickly
+        texturing things using already textured geometry</P>        
+        <pre>selextend</pre>
+        Extend current selection to include the cursor.        
+        <PRE>passthrough</PRE>
+        normally cubes of equal size to the grid are given priority when selecting.
+        passthrough removes this priority while held down so that the cube the cursor is directly on is selected.   
+        Holding down passthrough will also give priority to cube over entities.
         <pre>reorient</pre>
         Change the side the white box is on to be the same as where you are currently
         pointing.
-        <pre>editmove</pre>
-        Moves a cube selection to another position. Activated by a 'drag-and-drop' style action.
-        The orientation of the selection will change depending on what side of the selection 
-        you try to hold onto. The selection will extend if the cursor is outside of the selection
-        when you try to hold onto the it.
-        <br><br>        
-        Movement fuctions similar to entity dragging; 
-        you can drag the selection across the 2D plane indicated by the cube orientation.
-        The scroll wheel (ie: editface) is used to change the depth of the selection. 
-        A ghost selection will indicate the new position of the selection.
-        <br><br>  
-        Moving a cubic selection will also move any entities within the selection.
         <pre>flip</pre>
         Flip (mirror) the selected cubes front to back relative to the side of the
         white box. This will also flip the positions of any entites within the selection.
@@ -107,11 +76,7 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         key = z [also u]).
         <pre>redo</pre>
         Multi-level redo of any of the changes caused by the above undo (default
-        key = i).
-        <pre>undomegs N</pre>
-        Sets the number of megabytes used for the undo buffer (default 1, max 10).
-        Undo's work for any size areas, so the amount of undo steps per megabyte is
-        more for small areas than for big ones.
+        key = i).      
         <pre>copy
 paste</pre>
         Copy copies the current selection into a buffer. For pasting, if the current
@@ -126,44 +91,18 @@ paste</pre>
         Repeats the last texture edit across the whole map. Only those faces with
         textures matching the one that was last edited will be
         replaced.
-        <pre>replaceents type value1 value2 value3 value4</pre>
-        Replaces the given values for the selected entity and all entities that are
-        equal to the selected entity. 
-        <pre>newent type    value1 value2 value3 value4</pre>
-        Adds a new entity where (x,y) is determined by the current selection (the red
-        dot corner) and z by the camera height, of said type. Type is a string giving
-        the type of entity, such as "light", and may optionally take values (depending
-        on the entity). The types are defines below in the <a href="#entitytypes">Entity
-            Types</a> section.
-        <pre>delent</pre>
-        deletes the selected entity to the player
-        <pre>dropent</pre>
-        Positions the selected entity according to the entdrop variable.
-        <pre>entdrop N</pre>
-        variable controlling where entities created with "newent" will be placed.<br>
-        N=0 place entities at your current eye position.<br>
-        N=1 drop entities to the floor beneath you. Lights, however, will be placed at
-        your current eye position as for N=0.<br>
-        N=2 place entities at the center of the currently selected cube face. If a
-        corner is selected, the entity will be placed at the corner vertex.<br>
-        N=3 behaves as with N=2, except all entities, including lights, will then
-        bedropped from that position to whatever floor lies beneath. This mode is
-        useful for placing objects on selected floors. Lights are also dropped to the
-        floor, unlike for N=1.
-        <pre>entproperty P A</pre>
-        Changes property P (0..3) of the closest entity by amount A. For example
-        "entproperty 0 2" when executed near a lightsource would increase its radius by
-        2.
-        <pre>clearents type</pre>
-        Deletes all entities of said type.
-        <pre>trigger T N</pre>
-        Sets the state of all locked triggers with tag T to N.
-        <pre>showsky B</pre>
-        This variable controls whether explicit sky polygons are outlined (in purple) in edit mode.
-        Default = 1.
-        <pre>outline B</pre>
-        This variable controls whether geometry boundaries (outlines) are shown.
-        Default = 0.
+        <pre>editmove</pre>
+        Moves a cube selection to another position. Activated by a 'drag-and-drop' style action.
+        The orientation of the selection will change depending on what side of the selection 
+        you try to hold onto. The selection will extend if the cursor is outside of the selection
+        when you try to hold onto the it.
+        <br><br>        
+        Movement fuctions similar to entity dragging; 
+        you can drag the selection across the 2D plane indicated by the cube orientation.
+        The scroll wheel (ie: editface) is used to change the depth of the selection. 
+        A ghost selection will indicate the new position of the selection.
+        <br><br>  
+        Moving a cubic selection will also move any entities within the selection.
         <pre>editmat</pre>
         Changes the type of material left behind when a cube is deleted. Currently the
         following types of materials are supported:
@@ -183,6 +122,107 @@ paste</pre>
             glass: a clip-like material with a blended surface. Glass also stops bullets.
             Shows cyan volume in edit mode.
         </ul>
+        <pre>recalc</pre>
+        Recalculates scene geometry. Shouldn't be needed under normal curcumstances.
+
+
+
+
+        <a name="heightfield"></a>        
+        <div>Heightfield</div>
+        <pre>getheightmap</pre>
+        This command will turn any selection into a heightmap mode selection [default H]. When this
+        happens the selection will turn green with the orientation and gridsize denoted
+        by four corner squares on one side of the selection. When the selection enters heightmap
+        mode, the cubes within the selection will mimic a heightmap and so the geometry within
+        the selection will be changed if it is not already of heightmap style.
+        <br><br>The point of heightmap mode is that all editface commands will now edit
+        the selected cubes using a brush instead of the default behaviour. The selection will
+        also dynamically resize itself in order to generate the entire heightmap. This obviously
+        means that it can overwrite cubes below and above it. Other then these changes
+        the selection functions exactly the same as the normal selection, which means you can copy it,
+        extend it, cancel it, etc. The only exceptions to this right now are the flip and
+        rotate commands. This type of selection cannot currently be used in coop edit.
+        <pre>selectbrush D</pre>
+        This is not an actual engine command, but rather an alias which is defined
+        in data/brush.cfg. It is to be used as a modifier [default J], and switches between the
+        various brushes that have been saved within that config file.
+        <pre>copybrush</pre>
+        This command [default K] copies the current heightmap mode selection and
+        saves it as a new brush. The current location of the cursor will turn into the
+        new handle of the brush.
+        <pre>savebrush name</pre>
+        This will save the current brush in script format. This script will be saved in 
+		a file called mybrushes.cfg file for example. This is usually used after copybrush.
+		The brush can also be named for easy reference later.
+        <pre>clearbrush</pre>
+        This resets the current brush that is used during heightmap mode editing.
+        <pre>brushvert x y depth </pre>
+        A brush is a 2D map that describes the depth that the editface commands should
+        push into the cubes at various points. The first two parameters of brushvert are the X and Y
+        coordinates, respectively, of a vert on this 2D map. The last parameter
+        is used to set the depth.
+        <pre>brushx<br>brushy</pre>
+        Along with the 2D map, all brushes also have a handle. This handle is a reference
+        point on the 2D map which defines where the brush is relative to the editing cursor.
+        These two variables define the brush handle's coordinates.
+
+
+
+        <a name="entity"></a>        
+        <div>Entity</div>
+        <pre>newent type    value1 value2 value3 value4</pre>
+        Adds a new entity where (x,y) is determined by the current selection (the red
+        dot corner) and z by the camera height, of said type. Type is a string giving
+        the type of entity, such as "light", and may optionally take values (depending
+        on the entity). The types are defines below in the <a href="#entitytypes">Entity
+            Types</a> section.
+        <pre>delent</pre>
+        deletes the selected entity to the player
+        <pre>entproperty P A</pre>
+        Changes property P (0..3) of the closest entity by amount A. For example
+        "entproperty 0 2" when executed near a lightsource would increase its radius by
+        2.
+        <pre>clearents type</pre>
+        Deletes all entities of said type.
+        <pre>replaceents type value1 value2 value3 value4</pre>
+        Replaces the given values for the selected entity and all entities that are
+        equal to the selected entity. 
+        <pre>entdrop N</pre>
+        variable controlling where entities created with "newent" will be placed.<br>
+        N=0 place entities at your current eye position.<br>
+        N=1 drop entities to the floor beneath you. Lights, however, will be placed at
+        your current eye position as for N=0.<br>
+        N=2 place entities at the center of the currently selected cube face. If a
+        corner is selected, the entity will be placed at the corner vertex.<br>
+        N=3 behaves as with N=2, except all entities, including lights, will then
+        bedropped from that position to whatever floor lies beneath. This mode is
+        useful for placing objects on selected floors. Lights are also dropped to the
+        floor, unlike for N=1.
+        <pre>dropent</pre>
+        Positions the selected entity according to the entdrop variable.
+        <pre>trigger T N</pre>
+        Sets the state of all locked triggers with tag T to N.
+                   
+        
+
+        <a name="settings"></a>        
+        <div>Settings</div>
+        <pre>undomegs N</pre>
+        Sets the number of megabytes used for the undo buffer (default 5, max 100).
+        Undo's work for any size areas, so the amount of undo steps per megabyte is
+        more for small areas than for big ones.
+        <pre>showsky B</pre>
+        This variable controls whether explicit sky polygons are outlined (in purple) in edit mode.
+        Default = 1.
+        <pre>outline B</pre>
+        This variable controls whether geometry boundaries (outlines) are shown.
+        Default = 0.
+        <PRE>wireframe 0/1</PRE>
+        <P>Turns on wireframe drawing of the map.</P>
+        <PRE>allfaces 0/1</PRE>
+        <P>when on, causes the texturing commands to apply the new texture to all sides of the selected cubes
+        rather than just the selected face.</P>
         <pre>showmat B</pre>
         This variables whether volumes are shown for invisible material surfaces in edit mode.
         Material volumes may also be selected while this is enabled. Default = 1.
@@ -190,11 +230,19 @@ paste</pre>
         This variables controls whether material rendering should be optimized by grouping materials
         into the largest possible surfaces. This will always make rendering faster, so the only reason
         to disable it is for testing. Default = 1.
-        <pre>watercolour R G B</pre>
-        Changes the blended color of all water to RGB. This may be used to simulate
-        various lighting conditions for water.
-        <pre>selextend</pre>
-        Extend current selection to include the cursor.
+        <pre>entselradius N</pre>
+        Sets the 'handle' size of entities when trying to select them. 
+        Larger sizes means it should be easier to select entities.
+        <pre>entselsnap 0/1</pre>
+        Turns on snap-to-grid while draggin entities.
+        
+
+
+
+
+
+        <a name="map"></a>        
+        <div>Map and Config</div>
         <pre>map name</pre>
         Loads up map "name" in the gamemode set previously by "mode". A map given as
         "blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to
@@ -213,6 +261,12 @@ paste</pre>
         reloads the current map. You can define what map follows a particular map by
         making an alias like (in the map script): <code>alias nextmap_blah1 blah2</code>
         (loads "blah2" after "blah1").
+        <pre>sendmap</pre>
+        Saves the current map (without lightmaps) and sends it to the server so other clients may download it.
+        Only works in coopedit game mode.
+        <pre>getmap</pre>
+        Gets a map from the server if one is available. Automatically loads the map when done. Only works in coopedit
+        game mode.        
         <pre>savemap name</pre>
         Saves the current map, using the same naming scheme as "map". makes a versioned
         backup (mapname_N.BAK) if a map by that name already exists, so you can never
@@ -228,13 +282,11 @@ paste</pre>
         <pre>newmap size</pre>
         Creates a new map of size^2 cubes (on the smallest grid size). 10 is a small
         map, 13 is a large map but it goes up to 16. Use <i>newmap -1</i> to double the
-        dimensions of the current map.
+        dimensions of the current map.        
         <pre>mapmsg "Title by Author"</pre>
         sets the map msg, which will be displayed when the map loads. Either use the
         above format, or simply "by Author" if the map has no particular title (always
         displayed after the map load msg).
-        <pre>recalc</pre>
-        Recalculates scene geometry. Shouldn't be needed under normal curcumstances.
         <pre>texturereset</pre>
         Sets the texture slot to 0 for the subsequent "texture" commands.
         <pre>texture subnum filename flags</pre>
@@ -245,6 +297,9 @@ paste</pre>
         primary diffuse texture, 1..N are available in the shader bound to
     texture units 2..N+1, unit 1 = the lightmap). Flags allow you to specify preprocessing on the image,
         currently only rotation (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW).
+        <pre>watercolour R G B</pre>
+        Changes the blended color of all water to RGB. This may be used to simulate
+        various lighting conditions for water.        
         <pre>shader TYPE NAME VS PS</pre>
         defines a shader NAME with vertex shader VS and pixel shader PS (both in ARB OpenGL 1.5 assembly format). See data/stdshader.cfg for examples.
         These definitions can be put in map cfg files or anywhere else, and will only be compiled once.
@@ -304,24 +359,27 @@ music name ondone</pre>
             map, you still have to do a /savecurrentmap which will create
             packages/cube/N.ogz. Reload the map to be able to pick up stuff. Waterlevel is
             also not supported, you will have to add water using the new material system.</P>
-        <PRE>wireframe 0/1</PRE>
-        <P>Turns on wireframe drawing of the map.</P>
-        <PRE>gettex</PRE>
-        <P>moves the texture on the current selection to the top of the texture list. Useful for quickly
-        texturing things using already textured geometry</P>
-                <PRE>allfaces 0/1</PRE>
-        <P>when on, causes the texturing commands to apply the new texture to all sides of the selected cubes
-        rather than just the selected face.</P>
-        <PRE>passthrough</PRE>
-        <P>normally cubes of equal size to the grid are given priority when selecting.
-        passthrough removes this priority while held down so that the cube the cursor is directly on is selected.<P>
-        <pre>entselradius N</pre>
-        Sets the 'handle' size of entities when trying to select them. 
-        Larger sizes means it should be easier to select entities.
-        <pre>entselsnap 0/1</pre>
-        Turns on snap-to-grid while draggin entities.
-        <div>Lighting Commands</div>
-        <a name="lightingcommands"></a>
+       <pre>lodsize N</pre>
+        Turn on world LOD (level of detail) for this map if N=32 (default is N=0, off).
+        The state of this command is saved with the map. N is the size of the blocks
+        that will be used for LOD, in theory you can use 16 or 64 as well, but this
+        usually just either just hurts performance, memory usage or visual quality. Use
+        32 unless you know exactly what you are doing. After setting this var, LOD will
+        only become apparent after a "recalc" (and "calclight") command. Turning LOD on
+        for a map is only useful on really large maps with lots of detail where you can
+        see for half a mile, on smaller maps it will have no effect and only wastes
+        memory / lightmap space. LOD works on entire vertex array blocks at a time, and
+        is dependent on the "loddistance" variable which the player can set to trade
+        off speed vs visual quality.
+        <pre>writeobj N</pre>
+        Writes out the current map as N.obj, so you could use sauerbraten as a generic modeller
+        with any program/engine that uses meshes. The meshes aren't very optimal and don't
+        have texture/lighting information.
+
+
+
+        <a name="lightingcommands"></a>        
+        <div>Lighting</div>
         <pre>calclight Q</pre>
         This calculates all lightmaps. Usually takes only a few seconds, depending on
         map size and settings. If you "savemap", the lightmap will be stored along with
@@ -399,24 +457,12 @@ music name ondone</pre>
         <pre>dumplms</pre>
         Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but
         mappers may find it interesting too.
-        <pre>lodsize N</pre>
-        Turn on world LOD (level of detail) for this map if N=32 (default is N=0, off).
-        The state of this command is saved with the map. N is the size of the blocks
-        that will be used for LOD, in theory you can use 16 or 64 as well, but this
-        usually just either just hurts performance, memory usage or visual quality. Use
-        32 unless you know exactly what you are doing. After setting this var, LOD will
-        only become apparent after a "recalc" (and "calclight") command. Turning LOD on
-        for a map is only useful on really large maps with lots of detail where you can
-        see for half a mile, on smaller maps it will have no effect and only wastes
-        memory / lightmap space. LOD works on entire vertex array blocks at a time, and
-        is dependent on the "loddistance" variable which the player can set to trade
-        off speed vs visual quality.
-        <pre>writeobj N</pre>
-        Writes out the current map as N.obj, so you could use sauerbraten as a generic modeller
-        with any program/engine that uses meshes. The meshes aren't very optimal and don't
-        have texture/lighting information.
+        
+
+        
+        
+        <a name="entitytypes"></a>        
         <div>Entity Types</div>
-        <a name="entitytypes"></a>
         <pre>"light" radius brightness
 "light" radius r g b</pre>
         If G and B are 0 the R value will be taken as brightness for a white light. A
@@ -670,8 +716,13 @@ music name ondone</pre>
         <br>
         Entities are shown in editmode by blue sparklies, and the closest one is
         indicated on the HUD.
+        
+
+
+
+        <a name="hud"></a>        
         <div>The HUD</div>
-        <a name="hud"></a>On the bottom right of the screen are a bunch of stats.
+        On the bottom left of the screen are a bunch of stats.
         You'll find out what they mean below.
         <ul>
             <li>
@@ -698,5 +749,9 @@ music name ondone</pre>
             <li>
                 evt: misc rendering effects. stuff like particles displayed, or text written on
                 screen.</li></ul>
+       <pre>hidestats 0/1</pre>
+       Turn on to hide the above stats
+       <pre>hidehud 0/1</pre>
+       Turn on to hide all HUD elements
     </body>
 </html>
