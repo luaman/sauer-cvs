@@ -134,22 +134,39 @@ void insert_lightmap(int type, ushort &x, ushort &y, ushort &lmid)
     };
 };
 
-static inline bool htcmp(const surfaceinfo *x, const surfaceinfo *y)
+struct compresskey 
+{ 
+    ushort x, y, lmid;
+    uchar w, h;
+
+    compresskey() {};
+    compresskey(const surfaceinfo &s) : x(s.x), y(s.y), lmid(s.lmid), w(s.w), h(s.h) {};
+};
+
+struct compressval 
+{ 
+    ushort x, y, lmid;
+
+    compressval() {};
+    compressval(const surfaceinfo &s) : x(s.x), y(s.y), lmid(s.lmid) {}; 
+};
+
+static inline bool htcmp(const compresskey &x, const compresskey &y)
 {
-    if(lm_w != y->w || lm_h != y->h) return false;
-    const uchar *xdata = lm, *ydata = lightmaps[y->lmid - LMID_RESERVED].data + 3*(y->x + y->y*LM_PACKW);
+    if(lm_w != y.w || lm_h != y.h) return false;
+    const uchar *xdata = lm, *ydata = lightmaps[y.lmid - LMID_RESERVED].data + 3*(y.x + y.y*LM_PACKW);
     loopi((int)lm_h)
     {
         loopj((int)lm_w)
         {
             loopk(3) if(*xdata++ != *ydata++) return false;
         };
-        ydata += 3*(LM_PACKW - y->w);
+        ydata += 3*(LM_PACKW - y.w);
     };    
     return true;
 };
     
-static inline uint hthash(const surfaceinfo *info)
+static inline uint hthash(const compresskey &k)
 {
     uint hash = lm_w + (lm_h<<8);
     const uchar *color = lm;
@@ -161,7 +178,7 @@ static inline uint hthash(const surfaceinfo *info)
     return hash;  
 };
 
-static hashtable<surfaceinfo *, surfaceinfo *> compressed;
+static hashtable<compresskey, compressval> compressed;
 
 VAR(lightcompress, 0, 3, 6);
 
@@ -169,17 +186,17 @@ void pack_lightmap(int type, surfaceinfo &surface)
 {
     if(type == LM_NORMAL && (int)lm_w <= lightcompress && (int)lm_h <= lightcompress)
     {
-        surfaceinfo **val = compressed.access(&surface);
+        compressval *val = compressed.access(compresskey());
         if(!val)
         {
-            compressed[&surface] = &surface;
             insert_lightmap(type, surface.x, surface.y, surface.lmid);
+            compressed[surface] = surface;
         }
         else
         {
-            surface.x = (*val)->x;
-            surface.y = (*val)->y;
-            surface.lmid = (*val)->lmid;
+            surface.x = val->x;
+            surface.y = val->y;
+            surface.lmid = val->lmid;
         };
     }
     else insert_lightmap(type, surface.x, surface.y, surface.lmid);
