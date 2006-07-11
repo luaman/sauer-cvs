@@ -204,6 +204,7 @@ struct ivec
     ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; };
     ivec &div(int n) { x /= n; y /= n; z /= n; return *this; };
     ivec &add(int n) { x += n; y += n; z += n; return *this; };
+    ivec &sub(int n) { x -= n; y -= n; z -= n; return *this; };
     ivec &add(const ivec &v) { x += v.x; y += v.y; z += v.z; return *this; };
     ivec &sub(const ivec &v) { x -= v.x; y -= v.y; z -= v.z; return *this; };
     ivec &mask(int n) { x &= n; y &= n; z &= n; return *this; };
