@@ -237,7 +237,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-void renderclient(dynent *d, bool team, char *mdlname, bool forceattack, int lastaction, int lastpain)
+void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, int lastaction, int lastpain)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
