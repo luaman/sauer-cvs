@@ -211,20 +211,6 @@ void pasteundoents(undoblock &u)
         entedit(u.e[i].i, e = u.e[i].e);
 };
 
-void entproperty(int *prop, int *amount)
-{
-    if(noedit(true)) return;
-    selentedit(
-        switch(*prop)
-        {
-            case 0: e.attr1 += *amount; break;
-            case 1: e.attr2 += *amount; break;
-            case 2: e.attr3 += *amount; break;
-            case 3: e.attr4 += *amount; break;
-        };
-    );
-};
-
 void entmove(selinfo &sel, ivec &o)
 {
     vec s(o.v), a(sel.o.v); s.sub(a);
@@ -451,7 +437,34 @@ COMMAND(newent, "siiii");
 COMMAND(replaceents, "siiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
-COMMAND(entproperty, "ii");
+
+void entattr(int *prop)
+{
+    int n = realselent;
+    switch(*prop)
+    {
+        case 0: ints(et->getents()[n]->attr1); break;
+        case 1: ints(et->getents()[n]->attr2); break;
+        case 2: ints(et->getents()[n]->attr3); break;
+        case 3: ints(et->getents()[n]->attr4); break;
+    };
+};
+
+void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
+{
+    if(noedit(true)) return;
+    int type = findtype(what);
+    selentedit(e.type=type;
+              e.attr1=*a1;
+              e.attr2=*a2;
+              e.attr3=*a3;
+              e.attr4=*a4;);
+};
+
+ICOMMAND(enttype, "", result(et->entname(et->getents()[realselent]->type)););
+COMMAND(entattr, "i");
+COMMANDN(entedit, enteditor, "siiii");
+
 
 int spawncycle = -1, fixspawn = 2;
 
