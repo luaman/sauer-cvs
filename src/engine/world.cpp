@@ -7,7 +7,7 @@ header hdr;
 vector<ushort> texmru;
 
 VAR(octaentsize, 0, 128, 1024);
-VAR(entselradius, 1, 2, 10);
+VAR(entselradius, 0, 2, 10);
 
 static void removeentity(int id);
 
@@ -120,6 +120,7 @@ void entitiesinoctanodes()
 
 extern selinfo sel;
 extern bool havesel, selectcorners;
+extern bool undogoahead;
 
 int closestent()        // used for delent and edit mode ent display
 {
@@ -184,8 +185,6 @@ void makeundoent(int id)
     initundoent(u, id);
     if(u.n) addundo(u);
 };
-
-extern bool undogoahead;
 
 #define realselent      (sel.ent<0 ? closestent() : sel.ent)
 // convenience macros implicitly define:
@@ -427,15 +426,20 @@ int findentity(int type, int index)
 void replaceents(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit(true) || multiplayer()) return;
+    int type = findtype(what);
     int t = realselent;
     if(t<0) return;
-    entity &s = *et->getents()[t];
-    int type = findtype(what);
-    setgroup(e.type==s.type
-          && e.attr1==s.attr1
-          && e.attr2==s.attr2
-          && e.attr3==s.attr3
-          && e.attr4==s.attr4);
+    entity &s = *et->getents()[t];                
+    if(havesel)
+    {
+        setgroup(pointinsel(sel, e.o));    
+    }
+    else
+        setgroup(e.type==s.type
+              && e.attr1==s.attr1
+              && e.attr2==s.attr2
+              && e.attr3==s.attr3
+              && e.attr4==s.attr4);
     groupedit(e.type=type;
               e.attr1=*a1;
               e.attr2=*a2;
