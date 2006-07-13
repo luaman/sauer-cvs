@@ -392,22 +392,15 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 
 void clearents(char *name)
 {
-    int type = findtype(name);
     if(noedit(true) || multiplayer()) return;
-    setgroup(e.type==type);
+    int type = (name[0]=='\0' ? -1 : findtype(name));
+    setgroup(type!=ET_EMPTY && (type<0 || e.type==type) && (!havesel || pointinsel(sel, e.o)));
     groupedit(e.type = ET_EMPTY; et->editent(n); continue);
+    conoutf("Cleared %d ents", entgroup.length());
     cancelsel();
 };
 
 COMMAND(clearents, "s");
-
-int findentity(int type, int index)
-{
-    const vector<extentity *> &ents = et->getents();
-    for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
-    loopj(min(index, ents.length())) if(ents[j]->type==type) return j;
-    return -1;
-};
 
 void replaceents(char *what, int *a1, int *a2, int *a3, int *a4)
 {
@@ -431,6 +424,7 @@ void replaceents(char *what, int *a1, int *a2, int *a3, int *a4)
               e.attr2=*a2;
               e.attr3=*a3;
               e.attr4=*a4;);
+    conoutf("Replaced %d ents", entgroup.length());
 };
 
 COMMAND(newent, "siiii");
@@ -440,8 +434,8 @@ COMMAND(dropent, "");
 
 void entattr(int *prop)
 {
-    int n = realselent;
-    switch(*prop)
+    int n = realselent;    
+    if(n>=0) switch(*prop)
     {
         case 0: ints(et->getents()[n]->attr1); break;
         case 1: ints(et->getents()[n]->attr2); break;
@@ -461,10 +455,18 @@ void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
               e.attr4=*a4;);
 };
 
-ICOMMAND(enttype, "", result(et->entname(et->getents()[realselent]->type)););
+ICOMMAND(enttype, "", if(realselent>=0) result(et->entname(et->getents()[realselent]->type)));
 COMMAND(entattr, "i");
 COMMANDN(entedit, enteditor, "siiii");
 
+
+int findentity(int type, int index)
+{
+    const vector<extentity *> &ents = et->getents();
+    for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
+    loopj(min(index, ents.length())) if(ents[j]->type==type) return j;
+    return -1;
+};
 
 int spawncycle = -1, fixspawn = 2;
 
