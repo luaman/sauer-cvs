@@ -19,7 +19,7 @@ struct rpgentities : icliententities
     ~rpgentities() {};
     rpgentities(rpgclient &_cl) : cl(_cl), lastcreated(NULL)
     {
-        CCOMMAND(rpgentities, spawnname, "s", if(self->lastcreated) s_strncpy(self->lastcreated->name, args[0], SPAWNNAMELEN));    
+        CCOMMAND(rpgentities, spawnname, "s", { if(self->lastcreated) s_strncpy(self->lastcreated->name, args[0], SPAWNNAMELEN); self->spawnfroment(*self->lastcreated); });    
     };
 
     vector<extentity *> &getents() { return (vector<extentity *> &)ents; };
@@ -54,13 +54,15 @@ struct rpgentities : icliententities
         };
     };
     
+    void spawnfroment(rpgentity &e)
+    {
+        cl.os.spawn(e.name);
+        cl.os.placeinworld(e.o, e.attr1);      
+    };
+    
     void startmap()
     {
         lastcreated = NULL;
-        loopv(ents) if(ents[i]->type==ETR_SPAWN)
-        {
-            cl.os.spawn(ents[i]->name);
-            cl.os.placeinworld(ents[i]->o, ents[i]->attr1);      
-        };
+        loopv(ents) if(ents[i]->type==ETR_SPAWN) spawnfroment(*ents[i]);
     };
 };
