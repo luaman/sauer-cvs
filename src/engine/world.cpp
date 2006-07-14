@@ -373,11 +373,11 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
 
 int newentity(int type, int a1, int a2, int a3, int a4)
 {
-    extentity *t = newentity(true, player->o, ET_EMPTY, a1, a2, a3, a4);
-    if(multiplayer()) dropentity(*t, 2);
-    else if(entdrop)  dropentity(*t);
+    extentity *t = newentity(true, player->o, type, a1, a2, a3, a4);
+    dropentity(*t);
     et->getents().add(t);
     int i = et->getents().length()-1;
+    e.type = ET_EMPTY;
     makeundoent(i);
     entedit(i, e.type = type);
     return i;
