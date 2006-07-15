@@ -26,6 +26,8 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
+- md3 rotation?
+- masterserver?
 - weird fps issue
 - pitch on hudgun specular
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
