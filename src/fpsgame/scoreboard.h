@@ -35,9 +35,9 @@ struct scoreboard
             fpsent *o = (fpsent *)cl.iterdynents(i);
             if(o && o->type!=ENT_AI)
             {
-                const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum)) ? "\f" : "";
+                const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum)) ? "\f0" : "";
                 string name;
-                if(showclientnum) s_sprintf(name)("%s \f(%d)", o->name, !i ? cl.cc.clientnum : i-1);
+                if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, !i ? cl.cc.clientnum : i-1);
                 else s_strcpy(name, o->name);
                 if(o->state == CS_SPECTATOR) s_sprintf(scorelines.add().s)("SPECTATOR\t\t\t%s%s", master, name);
                 else

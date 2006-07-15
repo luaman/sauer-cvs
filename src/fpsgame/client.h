@@ -5,7 +5,7 @@ struct clientcom : iclientcom
     bool c2sinit;       // whether we need to tell the other clients our stats
 
     string ctext;
-    void toserver(char *text) { conoutf("%s:\f %s", player1->name, text); s_strcpy(ctext, text); };
+    void toserver(char *text) { conoutf("%s:\f0 %s", player1->name, text); s_strcpy(ctext, text); };
 
     string toservermap;
     bool senditemstoserver;     // after a map change, since server doesn't have map data
@@ -315,7 +315,7 @@ struct clientcom : iclientcom
                 sgetstr(text, p);
                 s_sprintfd(ds)("@%s", &text);
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
-                conoutf("%s:\f %s", d->name, &text);
+                conoutf("%s:\f0 %s", d->name, &text);
                 break;
             };
 
@@ -433,7 +433,7 @@ struct clientcom : iclientcom
                 int actor = getint(p);
                 if(actor==cn)
                 {
-                    conoutf("%s suicided", d->name);
+                    conoutf("\f2%s suicided", d->name);
                 }
                 else if(actor==clientnum)
                 {
@@ -441,12 +441,12 @@ struct clientcom : iclientcom
                     if(isteam(player1->team, d->team))
                     {
                         frags = -1;
-                        conoutf("you fragged a teammate (%s)", d->name);
+                        conoutf("\f2you fragged a teammate (%s)", d->name);
                     }
                     else
                     {
                         frags = 1;
-                        conoutf("you fragged %s", d->name);
+                        conoutf("\f2you fragged %s", d->name);
                     };
                     addmsg(1, 2, SV_FRAGS, player1->frags += frags);
                 }
@@ -457,11 +457,11 @@ struct clientcom : iclientcom
                     {
                         if(isteam(a->team, d->name))
                         {
-                            conoutf("%s fragged his teammate (%s)", a->name, d->name);
+                            conoutf("\f2%s fragged his teammate (%s)", a->name, d->name);
                         }
                         else
                         {
-                            conoutf("%s fragged %s", a->name, d->name);
+                            conoutf("\f2%s fragged %s", a->name, d->name);
                         };
                     };
                 };
@@ -663,8 +663,8 @@ struct clientcom : iclientcom
             case SV_ANNOUNCE:
             {
                 int t = getint(p);
-                if     (t==I_QUAD)  { playsound(S_V_QUAD10);  conoutf("quad damage will spawn in 10 seconds!"); }
-                else if(t==I_BOOST) { playsound(S_V_BOOST10); conoutf("+10 health will spawn in 10 seconds!"); };
+                if     (t==I_QUAD)  { playsound(S_V_QUAD10);  conoutf("\f2quad damage will spawn in 10 seconds!"); }
+                else if(t==I_BOOST) { playsound(S_V_BOOST10); conoutf("\f2+10 health will spawn in 10 seconds!"); };
                 break;
             };
 

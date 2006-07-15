@@ -32,7 +32,8 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     if(highlight)                                   // show line in a different colour, for chat etc.
     {
         cl.cref[0] = '\f';
-        cl.cref[1] = 0;
+        cl.cref[1] = '0';
+        cl.cref[2] = 0;
         s_strcat(cl.cref, sf);
     }
     else

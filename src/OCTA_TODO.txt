@@ -70,6 +70,13 @@ aard/everyone:
 [22:28] <Nieb> http://www.snieb.com/dg_blood_02.png
 [22:28] <Nieb> http://www.snieb.com/dg_blood_03.png
 
+- ways to reduce server bandwidth in multiplayer
+  * reduce client packets from 30 to 20 per second  -> choppier movement of other players?
+  * make server batch position updates for multiple clients to lose packet overhead (UDP 8 + enet 16) -> introduce lag, but could save up to 50% bw with 5 players
+  * update positions less often for clients at distance/occluded
+  * use enet batching: would require server fps to be really low to make a difference
+  * mix absolute and delta packets depending on the amount of packet loss
+
 - fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes

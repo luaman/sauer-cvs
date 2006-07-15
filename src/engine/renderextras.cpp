@@ -210,7 +210,7 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     if(s>=0)
     {
         c = ents[s];
-        s_sprintf(closeent)("%s%s (%d, %d, %d, %d)", implicit ? "" : "\f", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
+        s_sprintf(closeent)("%s%s (%d, %d, %d, %d)", implicit ? "" : "\f0", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
     };
     loopv(ents)
     {

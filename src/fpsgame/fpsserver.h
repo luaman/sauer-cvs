@@ -596,7 +596,7 @@ struct fpsserver : igameserver
         else 
         {
             string numcl;
-            if(attr.length()>=4 && attr[3]!=MAXCLIENTS) s_sprintf(numcl)("%d/%d", np, attr[3]);
+            if(attr.length()>=4) s_sprintf(numcl)("%d/%d", np, attr[3]);
             else s_sprintf(numcl)("%d", np);
             if(attr.length()>=5) switch(attr[4])
             {

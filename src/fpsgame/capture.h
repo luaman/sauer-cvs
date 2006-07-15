@@ -158,10 +158,10 @@ struct captureclient : capturestate
         fpsent *target = cl.pointatplayer();
         if(!target || strcmp(target->team, cl.player1->team) || cl.player1->o.dist(target->o) > REPAMMODIST) 
         {
-            conoutf("no teammate in range");
+            conoutf("\f2no teammate in range");
             return;
         };
-        conoutf("replenished %s's ammo", target->name);
+        conoutf("\f2replenished %s's ammo", target->name);
         cl.cc.addmsg(1, 4, SV_REPAMMO, cl.cc.clientnumof(target), cl.spawngun1, cl.spawngun2);
     };
 
@@ -169,7 +169,7 @@ struct captureclient : capturestate
     {
         if(cl.spawngun1!=gun1 && cl.spawngun1!=gun2) cl.et.repammo(cl.spawngun1);
         if(cl.spawngun2!=gun1 && cl.spawngun2!=gun2) cl.et.repammo(cl.spawngun2);
-        conoutf("%s replenished your ammo", from->name);
+        conoutf("\f2%s replenished your ammo", from->name);
     };
 
     void renderbases()
@@ -290,9 +290,9 @@ struct captureclient : capturestate
         baseinfo &b = bases[i];
         if(owner[0])
         {
-            if(strcmp(b.owner, owner)) { conoutf("%s captured base %d", owner, i); playsound(S_V_BASECAP); };
+            if(strcmp(b.owner, owner)) { conoutf("\f2%s captured base %d", owner, i); playsound(S_V_BASECAP); };
         }
-        else if(b.owner[0]) { conoutf("%s lost base %d", b.owner, i); playsound(S_V_BASELOST); };
+        else if(b.owner[0]) { conoutf("\f2%s lost base %d", b.owner, i); playsound(S_V_BASELOST); };
         s_strcpy(b.owner, owner);
         s_strcpy(b.enemy, enemy);
         b.converted = converted;

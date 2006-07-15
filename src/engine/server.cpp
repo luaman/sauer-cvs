@@ -191,7 +191,7 @@ void send2(bool rel, int cn, int a, int b)
     sendn(rel, cn, 2, a, b);
 };
 
-char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode" };
+char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL (maxlients)" };
 
 void disconnect_client(int n, int reason)
 {
@@ -380,6 +380,10 @@ uchar *retrieveservers(uchar *buf, int buflen)
     return stripheader(buf);
 };
 
+int uprate = 0, maxclients = 4;
+char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
+char *game = "fps";
+
 void serverslice(int seconds, unsigned int timeout)   // main server update, called from main loop in sp, or from below in dedicated server
 {
     sv->serverupdate(seconds);
@@ -396,10 +400,11 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
         updmaster = seconds+60*60;
     };
     
+    nonlocalclients = 0;
+    loopv(clients) if(clients[i]->type==ST_TCPIP) nonlocalclients++;
+
     if(seconds-laststatus>60)   // display bandwidth stats, useful for server ops
     {
-        nonlocalclients = 0;
-        loopv(clients) if(clients[i]->type==ST_TCPIP) nonlocalclients++;
         laststatus = seconds;     
         if(nonlocalclients || bsend || brec) printf("status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, bsend/60.0f/1024, brec/60.0f/1024);
         bsend = brec = 0;
@@ -418,8 +423,8 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             char hn[1024];
             s_strcpy(c.hostname, (enet_address_get_host(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
             printf("client connected (%s)\n", c.hostname);
-            int reason;
-            if(!(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
+            int reason = DISC_MAXCLIENTS;
+            if(nonlocalclients<maxclients && !(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
             else disconnect_client(c.num, reason);
             break;
         };
@@ -498,10 +503,6 @@ void initgame(char *game)
     };
 }
 
-int uprate = 0, maxclients = MAXCLIENTS;
-char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
-char *game = "fps";
-
 void initserver(bool dedicated)
 {
     initgame(game);
@@ -516,9 +517,9 @@ void initserver(bool dedicated)
     {
         ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
         if(*ip && !resolverwait(ip, &address)) printf("WARNING: server ip not resolved");
-        serverhost = enet_host_create(&address, maxclients, 0, uprate);
+        serverhost = enet_host_create(&address, MAXCLIENTS, 0, uprate);
         if(!serverhost) fatal("could not create server host\n");
-        loopi(maxclients) serverhost->peers[i].data = (void *)-1;
+        loopi(MAXCLIENTS) serverhost->peers[i].data = (void *)-1;
         address.port = sv->serverinfoport();
         pongsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, &address);
         if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");

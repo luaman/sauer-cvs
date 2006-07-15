@@ -70,7 +70,7 @@ void connects(char *servername)
     }
     else
     {
-        conoutf("could not connect to server");
+        conoutf("\f3could not connect to server");
         disconnect();
     };
 };
@@ -161,7 +161,7 @@ void c2sinfo(dynent *d)                     // send update to the server
 
 void neterr(char *s)
 {
-    conoutf("illegal network message (%s)", s);
+    conoutf("\f3illegal network message (%s)", s);
     disconnect();
 };
 
@@ -183,7 +183,7 @@ void gets2c()           // get updates from the server
         ++connattempts; 
         if(connattempts > 3)
         {
-            conoutf("could not connect to server");
+            conoutf("\f3could not connect to server");
             disconnect();
             return;
         };
@@ -211,8 +211,8 @@ void gets2c()           // get updates from the server
 
         case ENET_EVENT_TYPE_DISCONNECT:
             extern char *disc_reasons[];
-            if(event.data>DISC_PRIVATE) event.data = DISC_NONE;
-            if(!disconnecting || event.data) conoutf("server network error, disconnecting (%s) ...", disc_reasons[event.data]);
+            if(event.data>DISC_MAXCLIENTS) event.data = DISC_NONE;
+            if(!disconnecting || event.data) conoutf("\f3server network error, disconnecting (%s) ...", disc_reasons[event.data]);
             disconnect();
             return;
     }

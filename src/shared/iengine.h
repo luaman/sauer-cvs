@@ -155,7 +155,7 @@ extern mapmodelinfo &getmminfo(int i);
 extern void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, int lastaction, int lastpain);
 
 // server
-enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE };
+enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS };
 
 extern void *getinfo(int i);
 extern void send2(bool rel, int cn, int a, int b);

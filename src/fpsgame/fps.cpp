@@ -161,7 +161,7 @@ struct fpsclient : igameclient
             if(arenarespawnwait<lastmillis)
             {
                 arenarespawnwait = 0;
-                conoutf("new round starting... fight!");
+                conoutf("\f2new round starting... fight!");
                 playsound(S_V_FIGHT);
                 if(!cc.spectator) respawnself();
             };
@@ -176,9 +176,9 @@ struct fpsclient : igameclient
             arenacount(player1, alive, dead, lastteam, oneteam);
             if(dead>0 && (alive<=1 || (m_teammode && oneteam)))
             {
-                conoutf("arena round is over! next round in 5 seconds...");
-                if(alive) conoutf("team %s is last man standing", lastteam);
-                else conoutf("everyone died!");
+                conoutf("\f2arena round is over! next round in 5 seconds...");
+                if(alive) conoutf("\f2team %s is last man standing", lastteam);
+                else conoutf("\f2everyone died!");
                 arenarespawnwait = lastmillis+5000;
                 arenadetectwait  = lastmillis+10000;
                 player1->roll = 0;
@@ -245,15 +245,15 @@ struct fpsclient : igameclient
             player1->attacking = false;
             if(m_capture && lastmillis-player1->lastaction<cpc.RESPAWNSECS*1000)
             {
-                conoutf("you must wait %d seconds before respawn!", cpc.RESPAWNSECS-(lastmillis-player1->lastaction)/1000);
+                conoutf("\f2you must wait %d seconds before respawn!", cpc.RESPAWNSECS-(lastmillis-player1->lastaction)/1000);
                 return;
             };
-            if(m_arena) { conoutf("waiting for new round to start..."); return; };
+            if(m_arena) { conoutf("\f2waiting for new round to start..."); return; };
             if(m_dmsp) { nextmode = gamemode; cc.changemap(clientmap); return; };    // if we die in SP we try the same map again
             if(m_classicsp)
             {
                 respawnself();
-                conoutf("You wasted another life! The monsters stole your armour and some ammo...");
+                conoutf("\f2You wasted another life! The monsters stole your armour and some ammo...");
                 loopi(NUMGUNS) if((player1->ammo[i] = lastplayerstate.ammo[i])>5) player1->ammo[i] = max(player1->ammo[i]/3, 5); 
                 player1->ammo[GUN_PISTOL] = 80;
                 return;
@@ -289,12 +289,12 @@ struct fpsclient : igameclient
         {
             if(actor==-2)
             {
-                conoutf("you got killed by %s!", &act->name);
+                conoutf("\f2you got killed by %s!", &act->name);
             }
             else if(actor==-1)
             {
                 actor = cc.clientnum;
-                conoutf("you suicided!");
+                conoutf("\f2you suicided!");
                 cc.addmsg(1, 2, SV_FRAGS, --player1->frags);
             }
             else
@@ -304,11 +304,11 @@ struct fpsclient : igameclient
                 {
                     if(isteam(a->team, player1->team))
                     {
-                        conoutf("you got fragged by a teammate (%s)", a->name);
+                        conoutf("\f2you got fragged by a teammate (%s)", a->name);
                     }
                     else
                     {
-                        conoutf("you got fragged by %s", a->name);
+                        conoutf("\f2you got fragged by %s", a->name);
                     };
                 };
             };
@@ -339,33 +339,33 @@ struct fpsclient : igameclient
         {
             intermission = true;
             player1->attacking = false;
-            conoutf("intermission:");
-            conoutf("game has ended!");
-            conoutf("player frags: %d, deaths: %d", player1->frags, player1->deaths);
+            conoutf("\f2intermission:");
+            conoutf("\f2game has ended!");
+            conoutf("\f2player frags: %d, deaths: %d", player1->frags, player1->deaths);
             int accuracy = player1->totaldamage*100/max(player1->totalshots, 1);
-            conoutf("player total damage dealt: %d, damage wasted: %d, accuracy(%%): %d", player1->totaldamage, player1->totalshots-player1->totaldamage, accuracy);               
+            conoutf("\f2player total damage dealt: %d, damage wasted: %d, accuracy(%%): %d", player1->totaldamage, player1->totalshots-player1->totaldamage, accuracy);               
             if(m_sp)
             {
-                conoutf("--- single player time score: ---");
+                conoutf("\f2--- single player time score: ---");
                 int pen, score = 0;
-                pen = maptime/1000;       score += pen; if(pen) conoutf("time taken: %d seconds", pen); 
-                pen = player1->deaths*60; score += pen; if(pen) conoutf("time penalty for %d deaths (1 minute each): %d seconds", player1->deaths, pen);
-                pen = ms.remain*10;       score += pen; if(pen) conoutf("time penalty for %d monsters remaining (10 seconds each): %d seconds", ms.remain, pen);
-                pen = (10-ms.skill())*20; score += pen; if(pen) conoutf("time penalty for lower skill level (20 seconds each): %d seconds", pen);
-                pen = 100-accuracy;       score += pen; if(pen) conoutf("time penalty for missed shots (1 second each %%): %d seconds", pen);
+                pen = maptime/1000;       score += pen; if(pen) conoutf("\f2time taken: %d seconds", pen); 
+                pen = player1->deaths*60; score += pen; if(pen) conoutf("\f2time penalty for %d deaths (1 minute each): %d seconds", player1->deaths, pen);
+                pen = ms.remain*10;       score += pen; if(pen) conoutf("\f2time penalty for %d monsters remaining (10 seconds each): %d seconds", ms.remain, pen);
+                pen = (10-ms.skill())*20; score += pen; if(pen) conoutf("\f2time penalty for lower skill level (20 seconds each): %d seconds", pen);
+                pen = 100-accuracy;       score += pen; if(pen) conoutf("\f2time penalty for missed shots (1 second each %%): %d seconds", pen);
                 s_sprintfd(aname)("bestscore_%s", getclientmap());
                 const char *bestsc = getalias(aname);
                 int bestscore = *bestsc ? atoi(bestsc) : score;
                 if(score<bestscore) bestscore = score;
                 s_sprintfd(nscore)("%d", bestscore);
                 alias(aname, nscore);
-                conoutf("TOTAL SCORE (time + time penalties): %d seconds (best so far: %d seconds)", score, bestscore);
+                conoutf("\f2TOTAL SCORE (time + time penalties): %d seconds (best so far: %d seconds)", score, bestscore);
             }
             sb.showscores(true);
         }
         else if(timeremain > 0)
         {
-            conoutf("time remaining: %d minutes", timeremain);
+            conoutf("\f2time remaining: %d minutes", timeremain);
         };
     };
 
@@ -412,12 +412,12 @@ struct fpsclient : igameclient
         sb.showscores(false);
         intermission = false;
         maptime = 0;
-        conoutf("game mode is %s", fpsserver::modestr(gamemode));
+        if(*name) conoutf("\f2game mode is %s", fpsserver::modestr(gamemode));
         if(m_sp)
         {
             s_sprintfd(aname)("bestscore_%s", getclientmap());
             const char *best = getalias(aname);
-            if(*best) conoutf("try to beat your best score so far: %s", best);
+            if(*best) conoutf("\f2try to beat your best score so far: %s", best);
         };
     };
 

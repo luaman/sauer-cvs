@@ -72,8 +72,9 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 		-nBobsInstagibServer
 		<br>
 		<br>
-        -cN sets the max number of clients to N. This is useful for servers running on slower
-        connections.
+        -cN sets the max number of clients to N. The default is 4. If you want to set it
+    higher, be aware that bandwidth usage almost doubles with each extra client, so
+    only do this if the server runs on a serious pipe (not your home DSL or Cable connect!).
         <br>
         <br>
         -pS sets the server's administrative password to S.
@@ -85,8 +86,7 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
 		<br>
 		-mM sets the master server to use for either server (registering) and client 
 		(updating) to M. M is the base url of the master server and has to end in a / 
-		and without a http:// prefix, the default is 
-		wouter.fov120.com/cube/masterserver/
+		and without a http:// prefix, the default is sauerbraten.org/masterserver/
         <br>
         <br>
 		<div>General console commands and configuration</div>

@@ -113,7 +113,7 @@ struct entities : icliententities
 
             case I_BOOST:
                 d->maxhealth += 10;
-                conoutf("you have a permanent +10 health bonus! (%d)", d->maxhealth);
+                conoutf("\f2you have a permanent +10 health bonus! (%d)", d->maxhealth);
                 playsound(S_V_BOOST);
                 radditem(n, d->health);
                 break;
@@ -130,7 +130,7 @@ struct entities : icliententities
 
             case I_QUAD:
                 radditem(n, d->quadmillis);
-                conoutf("you got the quad!");
+                conoutf("\f2you got the quad!");
                 playsound(S_V_QUAD);
                 break;
         };
@@ -212,7 +212,7 @@ struct entities : icliententities
             case RESPAWNPOINT:
                 if(n==cl.respawnent) break;
                 cl.respawnent = n;
-                conoutf("respawn point set!");
+                conoutf("\f2respawn point set!");
                 playsound(S_V_RESPAWNPOINT);
                 break;
 
@@ -255,7 +255,7 @@ struct entities : icliententities
         {
             cl.player1->quadmillis = 0;
             cl.playsoundc(S_PUPOUT);
-            conoutf("quad damage is over");
+            conoutf("\f2quad damage is over");
         };
     };
 

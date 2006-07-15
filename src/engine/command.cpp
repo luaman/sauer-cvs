@@ -698,5 +698,5 @@ void rndn(int *a)          { ints(*a>0 ? rnd(*a) : 0); };  COMMANDN(rnd, rndn, "
 
 void strcmpa(char *a, char *b) { ints(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, "ss");
 
-ICOMMAND(echo, "C", conoutf("%s", args[0]));
+ICOMMAND(echo, "C", conoutf("\f1%s", args[0]));
 

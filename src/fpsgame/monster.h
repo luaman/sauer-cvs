@@ -287,7 +287,7 @@ struct monsterset
 
     void endsp(bool allkilled)
     {
-        conoutf(allkilled ? "you have cleared the map!" : "you reached the exit!");
+        conoutf(allkilled ? "\f2you have cleared the map!" : "\f2you reached the exit!");
         monstertotal = 0;
         cl.cc.addmsg(1, 1, SV_FORCEINTERMISSION);
     };
@@ -297,14 +297,14 @@ struct monsterset
         numkilled++;
         cl.player1->frags = numkilled;
         remain = monstertotal-numkilled;
-        if(remain>0 && remain<=5) conoutf("only %d monster(s) remaining", remain);
+        if(remain>0 && remain<=5) conoutf("\f2only %d monster(s) remaining", remain);
     };
 
     void monsterthink(int curtime, int gamemode)
     {
         if(m_dmsp && spawnremain && cl.lastmillis>nextmonster)
         {
-            if(spawnremain--==monstertotal) { conoutf("The invasion has begun!"); playsound(S_V_FIGHT); };
+            if(spawnremain--==monstertotal) { conoutf("\f2The invasion has begun!"); playsound(S_V_FIGHT); };
             nextmonster = cl.lastmillis+1000;
             spawnmonster();
         };

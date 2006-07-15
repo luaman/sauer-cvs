@@ -377,7 +377,7 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     dropentity(*t);
     et->getents().add(t);
     int i = et->getents().length()-1;
-    e.type = ET_EMPTY;
+    t->type = ET_EMPTY;
     makeundoent(i);
     entedit(i, e.type = type);
     return i;
@@ -527,7 +527,7 @@ void empty_world(int scale, bool force)    // main empty world creation routine
     et->getents().setsize(0);
     worldroot = newcubes(F_EMPTY);
     loopi(4) solidfaces(worldroot[i]);
-    estartmap("base/unnamed");
+    estartmap("");
     player->o.z += player->eyeheight+1;
 
     if(hdr.worldsize > VVEC_INT_MASK+1) split_world(worldroot, hdr.worldsize>>1);
