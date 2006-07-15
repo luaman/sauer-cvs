@@ -14,6 +14,7 @@ struct rpgobj
     char *lastaction;   // last thing the player did with this object / default action
     
     bool ai;            // whether this object does its own thinking (npcs/monsters)
+    behaviour *beh;
     
     rpgobjset &os;
     

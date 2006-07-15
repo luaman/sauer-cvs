@@ -6,6 +6,7 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- shader docs
 - improve smoothness of going up steps
 - remove delay before doors start opening
 - better collision on doors (and maybe any rotated object, while we're at it).
@@ -21,22 +22,15 @@ eihrul:
 - sound entities
 - reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
-
-aard/everyone:
-- fix the readme!
 - figure a way to make setting per texture params less expensive
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
-- glowmaps in the texture browser -> messy
-- why rotated normals x8
-- weird fps issue
 
+aard/everyone:
+- weird fps issue
 - pitch on hudgun specular
-- add textures to std cfg
-- shader docs
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
 - the eyecandy priority list: envmapping (water) / fake env (metal/glass), better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? ...
-- no dbghelp.dll on win98?
-- better doc on the scripting language
+- better doc on the scripting language | beginners guide | wiki?
 - ways of doing menu - context sensitive etc
 - spec/normal trilinear filtering?
 - fake rigid-body sphere only?
@@ -63,6 +57,7 @@ aard/everyone:
 - new multiplayer model.. md3?
 - profile for memory usage (devpartner?) | if md2 buffers are a lot, can remove it
 - refactor octarender.cpp & others
+- glowmaps in the texture browser -> messy
 - make sure correct CVS files are flagged as binary? | switch to SVN?
 
 [22:28] <Nieb> http://www.snieb.com/dg_blood_01.png

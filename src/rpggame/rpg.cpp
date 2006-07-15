@@ -54,6 +54,7 @@ struct rpgent : dynent
 struct rpgclient : igameclient
 {
     #include "entities.h"
+    #include "behaviours.h"
     #include "rpgobjset.h"
 
     rpgentities et;

@@ -46,19 +46,54 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         FAQs/guides</a> etc<br>
 		<br>
 		Wouter van Oortmerssen aka Aardappel (wouter at&nbsp;gmx dot net)<div>Current Features</div>
+   <br />
+		Game features:
 		<ul>
-			<li>...            
-		</ul>
+			<li>
+    Oldskool fast &amp; intense gameplay (read: similar to Doom 2 / Quake 1)<li>Many multiplayer
+        gameplay modes, most in teamplay variants as well: deathmatch, instagib, efficiency,
+        tactics, capture (domination/battlefield style), coop edit (!)</li>
+
+    <li>Masterserver &amp; ingame server browser</li>
+    <li>Lag-free gameplay experience</li>
+    <li>Two singleplayer modes: DMSP (fight a monster invasion on any DM map), classic SP
+        (progression driven SP like other games)</li>
+    <li>7 weapons tuned for maximum satisfaction: double barrelled shogun, rocket launcher,
+        machine gun, rifle, grenade launcher, pistol, fist</li>
+</ul>
+		Engine features:
+		<ul>
+
+			<li>6 directional heightfield
+      in octree world structure allowing for instant easy in-game geometry editing (even
+      in multiplayer, coop edit)<li>rendering engine optimized for high geometry throughput,
+          supporting hardware occlusion culling</li>
+      <li>lightmap based lighting with accurate shadows from everything including mapmodels,
+          smooth lighting for faceted geometry, and fast compiles</li>
+      <li>pixel and vertex shader support, each model and world texture can have its own shader
+          assigned</li>
+      <li>robust physics written specifically for this world structure</li>
+      <li>loading of md2/md3 models for animated characters, weapons, items, world objects.</li>
+    <li>Network library designed for high speed games, client/server network system</li>
+
+    <li>small but complete configuration/scripting language</li>
+      <li>simple stereo positional sound system</li>
+      <li>particle engine, supporting text particles</li>
+      <li>Simplistic menu system, console, etc.</li>
+  </ul>
 		<div>
 			Authors</div>
-		<p>G a m e - D e s i g n : </p>
+
+		<p>G a m e &nbsp; &amp;&nbsp; E n g i n e&nbsp; D e s i g n : </p>
 		<ul>
 		  <li>Wouter  &quot;Aardappel&quot; van Oortmerssen</li>
     </ul>
+
 		<p>P r o g r a m m i n g :				</p>
 		<ul>
-		  <li>Wouter &quot;Aardappel&quot; van Oortmerssen : engine design/architecture, most of the code</li>
+		  <li>Wouter &quot;Aardappel&quot; van Oortmerssen : the majority of the code</li>
 		  <li>Lee &quot;Eihrul&quot; Salzman : enet networking library, *nix ports, and a lot of the general code, especially lightmaps/physics related </li>
+
 		  <li>Mike &quot;Gilt&quot; Dysart : general programming, especially editing/physics related</li>
     </ul>
 		<blockquote>
@@ -67,28 +102,33 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
  
           Julian Mayer  (MacOSX port) </p>
     </blockquote>
-		<p>L e v e l - D e s i g n :</p>
+
+		<p>L e v e l&nbsp; D e s i g n :</p>
 		<ul>
 		  <li>Kurt &quot;kdoom&quot; Kessler : most dm maps, k_rpg1</li>
           <li> Shane Nieb : nmp*, demomap </li>
+
           <li>Clarence &quot;sparr&quot; Risher : roughinery and others </li>
           <li>John &quot;metlslime&quot; fitzgibbons : metl* </li>
 	</ul>
 		<blockquote>
-		  <p>Additional maps by : Aardappel, driAn, Gilt, voot, shadow, staffy, JCDPC, ZappaZ, MakkE</p>
+		  <p>Additional maps by : Aardappel, driAn, Gilt, voot, shadow, staffy, JCDPC, ZappaZ, RatBoy</p>
+
     </blockquote>
 		<p>A r t :</p>
 		<ul>
-		  <li>MakkE : mapmodels</li>
-          <li> Dietmar &quot;dcp&quot; Pier :  mapmodels</li>
-	      <li> DarthVim :  hudguns models</li>
-	      <li>Sock (http://www.planetquake.com/simland) : egyptian &amp; tech textures</li>
+		  <li>MakkE : mapmodels, hudguns&nbsp;</li><li> Dietmar &quot;dcp&quot; Pier :  mapmodels, hudguns&nbsp;</li><li> DarthVim :  hudguns</li>
+
+    <li>Shane Nieb : hudguns</li>
+    <li>Sock (http://www.planetquake.com/simland) : egyptian &amp; tech textures</li>
 	      <li> Iikka "Fingers" Keranen (www.digital-eel.com/surface) : ikbase &amp; ik2k textures</li>
 	</ul>
 		<blockquote>
+
 		  <p>Additional art by: metlslime (textures), Than (textures), Remedy Entertainment Ltd (textures), Seth &amp; Ulrich Galbraith (GPL models), Brian "EvilBastard" Collins / Conrad / Magarnigal / Psionic / James Green / Andreas M&ouml;ller / Ryan Butts &amp; Jeramy Cooke (md2 models)</p>
     </blockquote>
-		<p>S o u n d / M u s i c : </p>
+		<p>S o u n d &nbsp;&nbsp; / &nbsp;&nbsp; M u s i c : </p>
+
 		<UL>
 		  <li>Marc &quot;Fanatic&quot; A. Pullen : soundtrack 
     </UL>
@@ -98,14 +138,49 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
           <li>Pushplay : documentation help 
           <li> The SDL team (www.libsdl.org) for their libraries
 		</UL>
+
 		<p>&nbsp;</p>
 		<div>License</div>
 		<p>The Sauerbraten game is freeware, you may freely distribute the 
 		Sauerbraten archive/installer <em>unmodified</em> on any media. You may re-compress using different archival formats suitable for your OS (i.e. zip/tgz/rpm/deb/dmg), any changes beyond that require my explicit permission.</p>
 		<p>You may play Sauerbraten for any purpose as long as you 
 	    don't blame me for any damages incurred.</p>
-		<p>You may produce new content for sauerbraten either as a &quot;custom map&quot; (.ogz/.cfg/textures etc) or as a &quot;mod&quot; (same, but with new exe), but you can only distribute this content as an add-on archive that contains NO existing sauerbraten content and installs into an existing sauerbraten installation without overwriting files. You explicitly may NOT repackage the game's media with your own content, only the engine is Open Source, the media that comes with the game comes with varying licenses from varying authors. If you wish to build your own game based on the sauerbraten engine, you therefore have to make it work <em>entirely</em> with either your own content, or content you have explicitly asked the authors permission for. </p>
+		<p>
+        If you want to produce new content with the sauerbraten engine, you have to be aware
+        that the source code may be Open Source, but the game and the media it consist of
+        have their individual licenses and copyrights. This means that you have roughly
+        3 options:
+        <ul>
+
+        <li>
+    
+        You may produce new content for the sauerbraten game, for example as a &quot;custom map&quot; (.ogz/.cfg/textures etc). Contributing to the original game is most welcome,
+        and the most productive way of working with sauerbraten.
+            <li>
+                If you want to create your own gameplay beyond what you can do with a map, the best
+                way to do this is as a &quot;mod&quot; (same as above, but with new executable that
+                incorporates your gameplay), that <em>requires an existing install of sauerbraten</em>,
+                and <em>installs only the new files</em> you created in parallel to the existing files.
+            <li>
+
+                If you insist on making a standalone game based on sauerbraten, do realize that 
+                <em>only the sourcecode</em>
+            is
+                yours to use freely (if you abide by the ZLIB license, see below), not the media.
+                You CANNOT simply redistribute the entire sauerbraten package with your modified
+                files, as the majority of game media is not yours to use freely (it is made by many
+            authors with a variety of licences and copyright restrictions). Unless you have
+                explicit permission from the authors, or the readme says explicitly "may be used
+                for any purpose" or similar language, it will be illegal to include in your standalone
+                game based on the sauerbraten engine (you may not assume that just because a file
+            has no explicit license, that it is free of copyright). Therefore, if you wish to produce a standalone
+                game, be prepared to make many of the maps, models, textures, sounds etc from scratch
+                yourself.</ul>
+        <p>
+            In this sense sauerbraten is similar to games like Quake (its code is Open Source,
+            but its media is not), it is a game that is meant
+            to be added to, not copied and used as a template. Sauerbraten is not meant to be a quick game
+            creation kit, it is a game.</p>
 		<p>If you wish to use the Sauerbraten 
-		  source code (ZLIB license), read the src/readme_source.txt file carefully.</p>
-</body>
+		  source code (ZLIB license) in any way, read the src/readme_source.txt file carefully.</p></body>
 </html>

@@ -1509,6 +1509,10 @@
 			Name="RPG"
 			>
 			<File
+				RelativePath="..\rpggame\behaviours.h"
+				>
+			</File>
+			<File
 				RelativePath="..\rpggame\entities.h"
 				>
 			</File>
