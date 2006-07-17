@@ -102,7 +102,7 @@ void editdrag(bool on)
             ivec t;
             vec ray(worldpos); ray.sub(player->o);
             sel.ent = rayent(player->o, ray);
-            if(sel.ent>=0) 
+            if(sel.ent>=0)
                 entdrag(player->o, ray, dimension(sel.orient), t, true);
         };
         if(cor[0]<0 || sel.ent>=0) return;
@@ -113,6 +113,8 @@ void editdrag(bool on)
     };
 };
 
+void createheightmap();
+
 void reorient()
 {
     sel.cx = 0;
@@ -120,6 +122,7 @@ void reorient()
     sel.cxs = sel.s[R[dimension(_reorient)]]*2;
     sel.cys = sel.s[C[dimension(_reorient)]]*2;
     sel.orient = _reorient;
+    if(hmap) createheightmap();
 };
 
 VAR(editing,0,0,1);
@@ -158,7 +161,7 @@ bool noedit(bool view)
         o.add(s);
         r = float(max(s.x, max(s.y, s.z)));
     }
-    else 
+    else
         o = et->getents()[sel.ent]->o;
     bool viewable = (isvisiblesphere(r, o) != VFC_NOT_VISIBLE);
     if(!viewable) conoutf("selection not in view");
@@ -245,10 +248,8 @@ void cursorupdate()
 
     float t;
     rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t=0, orient);
-    if(!rayrectintersect(havesel && !passthroughcube ? sel.o : lu,
-                         havesel && !passthroughcube ? ivec(sel.s).mul(sel.grid) : ivec(gridsize,gridsize,gridsize),
-                         player->o, ray, t=0, _reorient))
-        _reorient = orient;        
+    if(!rayrectintersect(sel.o, ivec(sel.s).mul(sel.grid), player->o, ray, t=0, _reorient))
+        _reorient = orient;
 
     cur = lu;
     int g2 = gridsize/2;
@@ -517,7 +518,7 @@ void pruneundos(int maxremain)                          // bound memory
 void initundocube(undoblock &u, selinfo &sel)
 {
     u.g = selgridmap(sel);
-    u.b = blockcopy(sel, -sel.grid);   
+    u.b = blockcopy(sel, -sel.grid);
 };
 
 void addundo(undoblock &u)
@@ -562,6 +563,7 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
     freeundo(u);
     reorient();
     forcenextundo();
+    clearheightmap();
 };
 
 void editundo() { swapundo(undos, redos, "undo"); };
@@ -632,20 +634,33 @@ void pushside(cube &c, int d, int x, int y, int z)
     setcubevector(c, d, x, y, z, a);
 };
 
-void setheightmap()
+void setheightmap(selinfo &b)
 {
     int d = dimension(sel.orient);
     int dc = dimcoord(sel.orient);
     int w = sel.s[R[d]] + 1;
     int h = (dc ? sel.s[D[d]] : 0) + (dc ? sel.o[D[d]] : hdr.worldsize - sel.o[D[d]]) / sel.grid;
 
-    loopselxyz(
-        if(c.children) { discardchildren(c); };
+    makeundo();
 
+    b.o[R[d]]  = max(sel.o[R[d]], b.o[R[d]]-sel.grid);
+    b.o[C[d]]  = max(sel.o[C[d]], b.o[C[d]]-sel.grid);
+    int sx     = (b.o[R[d]]-sel.o[R[d]])/sel.grid;
+    int sy     = (b.o[C[d]]-sel.o[C[d]])/sel.grid;
+    b.s[R[d]] -= sx-2;
+    b.s[C[d]] -= sy-2;
+    b.s[R[d]]  = max(0, min(b.s[R[d]], sel.s[R[d]]-sx));
+    b.s[C[d]]  = max(0, min(b.s[C[d]], sel.s[C[d]]-sy));
+
+    loopxyz(b, b.grid,
+
+        if(c.children)
+            discardchildren(c);
         solidfaces(c);
+
         loopi(2) loopj(2)
         {
-            int e = min(8, hmap[x+i+(y+j)*w] - (h-z-1)*8);
+            int e = min(8, hmap[x+sx+i+(y+sy+j)*w] - (h-z-1)*8);
             if(e<0)
             {
                 e=0;
@@ -655,12 +670,14 @@ void setheightmap()
             edgeset(cubeedge(c, d, i, j), dc, dc ? e : 8-e);
         };
 
-        c.texture[sel.orient] = (htex ? htex[x+y*w] : htexture);
+        c.texture[sel.orient] = (htex ? htex[x+sx+(y+sy)*w] : htexture);
         optiface((uchar *)&c.faces[d], c);
     );
+
+    changed(b);
 };
 
-void cubifyheightmap()     // pull up heighfields to where they don't cross cube boundaries
+void cubifyheightmap(selinfo &b)     // pull up heighfields to where they don't cross cube boundaries
 {
     int d = dimension(sel.orient);
     int w = sel.s[R[d]] + 1;
@@ -679,7 +696,15 @@ void cubifyheightmap()     // pull up heighfields to where they don't cross cube
                 int bottom = (best&(~7))+8;
                 if((*o[0]==*o[3] && *o[0]==bottom) ||
                    (*o[1]==*o[2] && *o[1]==bottom)) bottom += 8;
-                loopj(4) if(*o[j]>bottom) { *o[j] = bottom; changed = true; };
+                loopj(4) if(*o[j]>bottom)
+                {
+                    *o[j] = bottom;
+                    changed = true;
+                    b.o[R[d]] = min(b.o[R[d]], x*sel.grid+sel.o[R[d]]);
+                    b.o[C[d]] = min(b.o[C[d]], y*sel.grid+sel.o[C[d]]);
+                    b.s[R[d]] = max(b.s[R[d]], x+1);
+                    b.s[C[d]] = max(b.s[C[d]], y+1);
+                };
             };
         };
         if(!changed) break;
@@ -719,7 +744,8 @@ void createheightmap()
     };
 
     int h = hi / 8;
-    protectsel(
+    selinfo b(sel);
+    //protectsel(
         loopxyz(sel, sel.grid,
             if(c.children) { solidfaces(c); discardchildren(c); };
             if(!htex[x+y*w] && z == sel.s[D[d]]-1) htex[x+y*w] = c.texture[sel.orient];
@@ -734,15 +760,15 @@ void createheightmap()
                 hmap[a] = max(hmap[a], e);// simply take the heighest points
             };
         );
-    );
+    //);
+    cubifyheightmap(b);
+    setheightmap(b);
 };
 
 void getheightmap()
 {
     if(noedit() || multiplayer() || sel.ent>=0) return;
-    createheightmap();
-    cubifyheightmap();
-    setheightmap();
+    createheightmap();    
 };
 
 COMMAND(getheightmap, "");
@@ -751,17 +777,23 @@ const int MAXBRUSH = 50;
 int brush[MAXBRUSH][MAXBRUSH];
 VAR(brushx, 0, 25, MAXBRUSH);
 VAR(brushy, 0, 25, MAXBRUSH);
+int brushmaxx = 0;
+int brushmaxy = 0;
 
 void clearbrush()
 {
     loopi(MAXBRUSH) loopj(MAXBRUSH)
         brush[i][j] = 0;
-};
+    brushmaxx = 0;
+    brushmaxy = 0;
+ };
 
 void brushvert(int *x, int *y, int *v)
 {
     if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
     brush[*x][*y] = *v;
+    brushmaxx = max(brushmaxx, *x);
+    brushmaxy = max(brushmaxy, *y);
 };
 
 int getxcursor() { int d = dimension(sel.orient); return (cur[R[d]] - sel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0); };
@@ -809,7 +841,6 @@ COMMAND(savebrush, "s");
 void edithmap(int dir)
 {
     if(multiplayer() || hmap == NULL) return;
-    if(!(lastsel==sel)) createheightmap();
 
     int d, dc, w, l, lo, hi, himax;
     getlimits(d, dc, w, l, lo, hi, himax);
@@ -822,8 +853,8 @@ void edithmap(int dir)
     int by = y>brushy ? 0 : brushy - y;
     int sx = x>brushx ? brushx : x;
     int sy = y>brushy ? brushy : y;
-    int ex = min(MAXBRUSH - brushx, w - x);
-    int ey = min(MAXBRUSH - brushy, l - y);
+    int ex = min(brushmaxx - brushx, w - x);
+    int ey = min(brushmaxy - brushy, l - y);
 
     loopi(sx+ex) loopj(sy+ey)
     {
@@ -834,8 +865,17 @@ void edithmap(int dir)
         while(hmap[index] < lo) { lo -= 8; sel.s[D[d]] += 1; if(dc)  sel.o[D[d]] -= sel.grid; };
     };
 
-    cubifyheightmap();
-    setheightmap();
+    selinfo b;
+    b.o[D[d]] = sel.o[D[d]];
+    b.s[D[d]] = sel.s[D[d]];
+    b.o[C[d]] = sel.o[C[d]]+(y-sy)*sel.grid;
+    b.o[R[d]] = sel.o[R[d]]+(x-sx)*sel.grid;
+    b.s[C[d]] = y+ey;
+    b.s[R[d]] = x+ex;
+    b.grid   = sel.grid;
+    b.orient = sel.orient;
+    cubifyheightmap(b);
+    setheightmap(b);
 };
 
 ///////////// main cube edit ////////////////
@@ -870,7 +910,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
     int dc = dimcoord(sel.orient);
     int seldir = dc ? -dir : dir;
 
-    if(local) 
+    if(local)
     {
         if(moving)
         {
