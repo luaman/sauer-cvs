@@ -309,24 +309,16 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     {
         if(!rendermenu(w, h) && player->state!=CS_SPECTATOR)
         {
-            char *pointattext = cl->pointattext();
-            if(pointattext)
-            {
-                draw_textf(pointattext, int(w*1.5f-text_width(pointattext)/2), int(h*1.5f-FONTH/2));
-            }
-            else
-            {
-                glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
-                glBindTexture(GL_TEXTURE_2D, crosshair->gl);
-                glBegin(GL_QUADS);
-                glColor3ub(255,255,255);
-                float chsize = (float)crosshairsize*w/600;
-                glTexCoord2d(0.0, 0.0); glVertex2f(w*1.5f - chsize, h*1.5f - chsize);
-                glTexCoord2d(1.0, 0.0); glVertex2f(w*1.5f + chsize, h*1.5f - chsize);
-                glTexCoord2d(1.0, 1.0); glVertex2f(w*1.5f + chsize, h*1.5f + chsize);
-                glTexCoord2d(0.0, 1.0); glVertex2f(w*1.5f - chsize, h*1.5f + chsize);
-                glEnd();
-            }
+            glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+            glBindTexture(GL_TEXTURE_2D, crosshair->gl);
+            glBegin(GL_QUADS);
+            glColor3ub(255,255,255);
+            float chsize = (float)crosshairsize*w/600;
+            glTexCoord2d(0.0, 0.0); glVertex2f(w*1.5f - chsize, h*1.5f - chsize);
+            glTexCoord2d(1.0, 0.0); glVertex2f(w*1.5f + chsize, h*1.5f - chsize);
+            glTexCoord2d(1.0, 1.0); glVertex2f(w*1.5f + chsize, h*1.5f + chsize);
+            glTexCoord2d(0.0, 1.0); glVertex2f(w*1.5f - chsize, h*1.5f + chsize);
+            glEnd();
         };
 
         int coff = renderconsole(w, h);

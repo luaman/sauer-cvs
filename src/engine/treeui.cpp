@@ -7,28 +7,29 @@
 #include "pch.h"
 #include "engine.h"
 
-char *selectedstr = NULL; 
 bool actionon = false;
 int treemousebuttons = 0;
 int off = 0;
 
+char **ca = NULL;
+
 int nav = 0;
 char *prevname = NULL;
-
-void select(char *s) { selectedstr = s; };
 
 ICOMMAND(treeaction, "D", treemousebuttons |= (actionon = args!=NULL) ? TMB_DOWN : TMB_UP);
 ICOMMAND(treenav, "i", nav = atoi(args[0]));
 
+void settreeca(char **_ca) { ca = _ca; };
+
 int treebutton(char *name)
 {
-    if(!selectedstr) selectedstr = name;
-    bool sel = strcmp(selectedstr, name)==0;
+    if(!*ca) *ca = name;
+    bool sel = strcmp(*ca, name)==0;
 
     if(prevname)
     {
-        if(nav==-1 && sel) selectedstr = prevname;
-        if(nav==1 && strcmp(selectedstr, prevname)==0) { selectedstr = name; nav = 0; };
+        if(nav==-1 && sel) *ca = prevname;
+        if(nav==1 && strcmp(*ca, prevname)==0) { *ca = name; nav = 0; };
     };
     prevname = name;
 
@@ -45,10 +46,8 @@ void rendertreeui(int coff, int hoff)
     off = coff;
     
     cl->treemenu();
-    //enginetreemenu();
     
     treemousebuttons = 0;
-    //selectedstr = NULL;
     nav = 0;
 };
 

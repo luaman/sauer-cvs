@@ -109,6 +109,8 @@ struct dynent : physent                         // animated characters, or chara
         physent::reset();
         stopmoving();
     };
+
+    vec abovehead() { return vec(o).add(vec(0, 0, aboveeye+4)); };
 };
 
 

@@ -490,7 +490,6 @@ struct fpsclient : igameclient
     };
 
     void renderscores() { sb.render(*this, gamemode); };
-    char *pointattext() { return NULL; };
     
     void gameplayhud(int w, int h)
     {

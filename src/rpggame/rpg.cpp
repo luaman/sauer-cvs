@@ -65,8 +65,10 @@ struct rpgclient : igameclient
 
     int lastmillis;
     string mapname;
+    
+    char *curaction;
 
-    rpgclient() : et(*this), os(*this), lastmillis(0)
+    rpgclient() : et(*this), os(*this), lastmillis(0), curaction(NULL)
     {
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
     };
@@ -120,11 +122,10 @@ struct rpgclient : igameclient
     void drawhudgun() {};
     bool camerafixed() { return player1.state==CS_DEAD; };
     bool canjump() { return true; };
-    void doattack(bool on) { /*player1->attacking = on;*/ };
+    void doattack(bool on) { };
     dynent *iterdynents(int i) { return i ? NULL : &player1; };
     int numdynents() { return 1; };
     void renderscores() {};
-    char *pointattext() { return os.pointingat ? os.pointingat->lastaction : NULL; };
 
     void rendergame()
     {
@@ -134,9 +135,13 @@ struct rpgclient : igameclient
     
     void treemenu()
     {
+        settreeca(&curaction);
+        if(os.pointingat) os.pointingat->treemenu();
+        
         if(treebutton("attack")&TMB_PRESSED) { conoutf("attack"); };
-        if(treebutton("talk")&TMB_UP) { conoutf("talk"); };
-        if(treebutton("stuff")&TMB_UP) { conoutf("stuff"); };
+        if(treebutton("take")&TMB_UP) { conoutf("take"); };
+        if(treebutton("trade")&TMB_UP) { conoutf("trade"); };
+        if(treebutton("inventory")&TMB_UP) { conoutf("inventory"); };
     };
 
     void writegamedata(vector<char> &extras) {};

@@ -11,7 +11,16 @@ struct rpgobj
     char *name;         // name it was spawned as
     char *model;        // what to display it as
     
-    char *lastaction;   // last thing the player did with this object / default action
+    struct rpgaction
+    {
+        rpgaction *next;
+        char *initiate, *response, *script;
+        bool used;
+    };
+
+    char *curaction;   // last thing the player did with this object / default action
+    rpgaction *actions;
+    char *abovetext;
     
     bool ai;            // whether this object does its own thinking (npcs/monsters)
     behaviour *beh;
@@ -19,7 +28,7 @@ struct rpgobj
     rpgobjset &os;
     
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL),
-        name(_name), model(NULL), lastaction(_os.action_take), ai(false), os(_os) {};
+        name(_name), model(NULL), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), os(_os) {};
         
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 
@@ -56,11 +65,35 @@ struct rpgobj
         if(!model) return;
         if(ai) renderclient(ent, false, model, false, 0, 0);
         else {};
+        if(abovetext) particle_text(ent->abovehead(), abovetext, 11, 1);
     };
     
     void update(int curtime)
     {
         moveplayer(ent, 10, true, curtime);
+    };
+    
+    void addaction(char *initiate, char *response, char *script)
+    {
+        for(rpgaction *a = actions; a; a = a->next) if(strcmp(a->initiate, initiate)==0) return;
+        rpgaction *na = new rpgaction;
+        na->next = actions;
+        na->initiate = initiate;
+        na->response = response;
+        na->script = script;
+        na->used = false;
+        actions = na;
+        curaction = initiate;
+    };
+    
+    void treemenu()
+    {
+        settreeca(&curaction);
+        for(rpgaction *a = actions; a; a = a->next) if(treebutton(a->initiate)&TMB_UP)
+        {
+            if(*a->response) abovetext = a->response;
+            if(*a->script) { os.pushobj(this); execute(a->script); };
+        };
     };
 };
 
@@ -72,20 +105,14 @@ struct rpgobjset
     hashtable<char *, char *> names;
     rpgobj *pointingat;
     
-    char *action_take;
-    char *action_attack;
-    char *action_talk;
-    
-    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL),
-        action_take  (stringpool("take")),
-        action_attack(stringpool("attack")),
-        action_talk  (stringpool("talk"))
+    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL)
     {
-        CCOMMAND(rpgobjset, objmodel,   "s", self->stack[0]->model = self->stringpool(args[0]));    
-        CCOMMAND(rpgobjset, objspawn,   "s", self->spawn(args[0]));    
-        CCOMMAND(rpgobjset, objcontain, "",  { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0]); });    
-        CCOMMAND(rpgobjset, objpop,     "",  self->popobj());    
-        CCOMMAND(rpgobjset, objai,      "",  { self->stack[0]->ai = true; self->stack[0]->lastaction = self->action_talk; });    
+        CCOMMAND(rpgobjset, objmodel,   "s",   self->stack[0]->model = self->stringpool(args[0]));    
+        CCOMMAND(rpgobjset, objspawn,   "s",   self->spawn(self->stringpool(args[0])));    
+        CCOMMAND(rpgobjset, objcontain, "",    { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0]); });    
+        CCOMMAND(rpgobjset, objpop,     "",    self->popobj());    
+        CCOMMAND(rpgobjset, objai,      "",    { self->stack[0]->ai = true; });    
+        CCOMMAND(rpgobjset, objaction,  "sss", self->stack[0]->addaction(self->stringpool(args[0]), self->stringpool(args[1]), self->stringpool(args[2])));    
         clearworld();
     };
     
@@ -104,7 +131,12 @@ struct rpgobjset
         pointingat = NULL;
         loopv(set)
         {
-            if(!pointingat && intersect(set[i]->ent, cl.player1.o, worldpos)) pointingat = set[i]; 
+            float dist = cl.player1.o.dist(set[i]->ent->o);
+            if(dist>40) continue;
+            if(intersect(set[i]->ent, cl.player1.o, worldpos) && (!pointingat || cl.player1.o.dist(pointingat->ent->o)>dist))    
+            {    
+                pointingat = set[i]; 
+            };
             set[i]->update(curtime);
         };
         
@@ -112,7 +144,7 @@ struct rpgobjset
     
     void spawn(char *name)
     {
-        rpgobj *o = new rpgobj(name = stringpool(name), *this);
+        rpgobj *o = new rpgobj(name, *this);
         pushobj(o);
         s_sprintfd(aliasname)("spawn_%s", name);
         execute(aliasname);
