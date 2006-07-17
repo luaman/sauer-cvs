@@ -280,3 +280,6 @@ extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Textur
 
 // particles
 extern void particleinit();
+
+// treeui
+extern void rendertreeui(int coff, int hoff);

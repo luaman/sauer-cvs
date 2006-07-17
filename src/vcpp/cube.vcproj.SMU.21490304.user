@@ -11,7 +11,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="..\.."
-				CommandArguments="-t -w960 -h600 -lbumptest -a4"
+				CommandArguments="-t -w1024 -h768 -lbumptest -a4"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

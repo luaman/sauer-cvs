@@ -74,7 +74,7 @@ void rendercommand(int x, int y)
     draw_text("_", x + text_width(s, commandpos>=0 ? commandpos+2 : -1), y);
 };
 
-void renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
+int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
     if(fullconsole)
     {
@@ -82,6 +82,7 @@ void renderconsole(int w, int h)                   // render buffer taking into 
         int offset = min(conskip, max(conlines.length() - numl, 0));
         blendbox(0, 0, w*3, (numl+1)*FONTH, true);
         loopi(numl) draw_text(offset+i>=conlines.length() ? "" : conlines[offset+i].cref, FONTH/2, FONTH*(numl-i-1)+FONTH/2); 
+        return numl*FONTH+FONTH;
     }
     else     
     {
@@ -96,6 +97,7 @@ void renderconsole(int w, int h)                   // render buffer taking into 
         {
             draw_text(refs[j], FONTH/2, FONTH*(nd-j-1)+FONTH/2);
         };
+        return nd*FONTH+FONTH/2;
     };
 };
 

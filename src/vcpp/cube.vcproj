@@ -1036,6 +1036,18 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\treeui.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\engine\water.cpp"
 					>
 					<FileConfiguration

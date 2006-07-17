@@ -62,6 +62,7 @@ struct igameclient
     virtual void writegamedata(vector<char> &extras) = 0;
     virtual void readgamedata(vector<char> &extras) = 0;
     virtual char *pointattext() = 0;
+    virtual void treemenu() = 0;
 }; 
  
 struct igameserver

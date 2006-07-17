@@ -299,9 +299,10 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glOrtho(0, w*3, h*3, 0, -1, 1);
 
     int abovegameplayhud = h*3*1650/1800-FONTH*3/2; // hack
+    int hoff = abovegameplayhud - (editmode ? FONTH*4 : 0);
 
     char *command = getcurcommand();
-    if(command) rendercommand(FONTH/2, abovegameplayhud - (editmode ? FONTH*4 : 0));
+    if(command) rendercommand(FONTH/2, hoff); else hoff += FONTH;
     cl->renderscores();
 
     if(!hidehud)
@@ -328,7 +329,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             }
         };
 
-        renderconsole(w, h);
+        int coff = renderconsole(w, h);
+        
         if(!hidestats)
         {
             draw_textf("fps %d", w*3-5*FONTH, h*3-100, curfps);
@@ -342,6 +344,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         };
 
         if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud);
+        
+        rendertreeui(coff, hoff);
+        
         cl->gameplayhud(w, h);
         render_texture_panel(w, h);
     };

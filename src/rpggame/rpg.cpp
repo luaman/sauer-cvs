@@ -131,6 +131,13 @@ struct rpgclient : igameclient
         if(isthirdperson()) renderclient(&player1, false, "monster/ogro", false, player1.lastaction, player1.lastpain);
         os.render();
     };
+    
+    void treemenu()
+    {
+        if(treebutton("attack")&TMB_PRESSED) { conoutf("attack"); };
+        if(treebutton("talk")&TMB_UP) { conoutf("talk"); };
+        if(treebutton("stuff")&TMB_UP) { conoutf("stuff"); };
+    };
 
     void writegamedata(vector<char> &extras) {};
     void readgamedata(vector<char> &extras) {};

@@ -385,16 +385,23 @@ int main(int argc, char **argv)
     exec("data/menus.cfg");
     exec("data/sounds.cfg");
     exec("data/brush.cfg");
+    execfile("mybrushes.cfg");
+    execfile("servers.cfg");
+    
+    persistidents = true;
+    
+    if(!execfile("config.cfg")) exec("data/defaults.cfg");
+    execfile("autoexec.cfg");
+
+    persistidents = false;
+
     string gamecfgname;
     s_strcpy(gamecfgname, "data/game_");
     s_strcat(gamecfgname, cl->gameident());
     s_strcat(gamecfgname, ".cfg");
     exec(gamecfgname);
-    execfile("mybrushes.cfg");
-    execfile("servers.cfg");
+
     persistidents = true;
-    if(!execfile("config.cfg")) exec("data/defaults.cfg");
-    execfile("autoexec.cfg");
 
     log("localconnect");
     localconnect();

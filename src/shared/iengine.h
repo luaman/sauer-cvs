@@ -63,7 +63,7 @@ extern const char *getalias(char *name);
 // console
 extern void keypress(int code, bool isdown, int cooked);
 extern void rendercommand(int x, int y);
-extern void renderconsole(int w, int h);
+extern int renderconsole(int w, int h);
 extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 
@@ -182,3 +182,8 @@ extern bool multiplayer(bool msg = true);
 extern void neterr(char *s);
 extern void gets2c();
 extern bool netmapstart();
+
+// treeui
+
+enum { TMB_DOWN = 1, TMB_UP = 2, TMB_PRESSED = 4, TMB_EXPANDED = 8, TMB_COLLAPSED = 16, TMB_ROLLOVER = 32 };
+extern int treebutton(char *name);
