@@ -7,7 +7,7 @@ void quit()                     // normal exit
 {
     writeservercfg();
     disconnect(true);
-    writecfg();
+    if(strcmp(cl->gameident(), "fps")==0) writecfg();       // TEMP HACK: make other games not overwrite cfg
     cleangl();
     cleanupserver();
     SDL_ShowCursor(1);

@@ -41,16 +41,16 @@ int treebutton(char *name, char *texture)
         glBindTexture(GL_TEXTURE_2D, t->gl);
         glBegin(GL_QUADS);
         float size = 60;
-        float x = FONTH/2;
-        glTexCoord2d(0.0, 0.0); glVertex2f(x,      off);
-        glTexCoord2d(1.0, 0.0); glVertex2f(x+size, off);
-        glTexCoord2d(1.0, 1.0); glVertex2f(x+size, off+size);
-        glTexCoord2d(0.0, 1.0); glVertex2f(x,      off+size);
+        float x = FONTH/2, y = off+2;
+        glTexCoord2d(0.0, 0.0); glVertex2f(x,      y);
+        glTexCoord2d(1.0, 0.0); glVertex2f(x+size, y);
+        glTexCoord2d(1.0, 1.0); glVertex2f(x+size, y+size);
+        glTexCoord2d(0.0, 1.0); glVertex2f(x,      y+size);
         glEnd();
 
     };
 
-    draw_textf("%s%s", FONTH*2, off, sel ? "\f3" : "", name);
+    draw_textf("%s%s", FONTH*7/4, off, sel ? "\f3" : "", name);
     off += FONTH;
 
     return sel ? treemousebuttons|TMB_ROLLOVER : 0;
@@ -60,7 +60,7 @@ void rendertreeui(int coff, int hoff)
 {
     prevname = NULL;
     if(actionon) treemousebuttons |= TMB_PRESSED;
-    off = coff;
+    off = coff+20;
     
     cl->treemenu();
     

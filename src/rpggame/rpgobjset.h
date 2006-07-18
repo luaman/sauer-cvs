@@ -131,15 +131,14 @@ struct rpgobjset
         pointingat = NULL;
         loopv(set)
         {
+            set[i]->update(curtime);
+
             float dist = cl.player1.o.dist(set[i]->ent->o);
-            if(dist>40) continue;
-            if(intersect(set[i]->ent, cl.player1.o, worldpos) && (!pointingat || cl.player1.o.dist(pointingat->ent->o)>dist))    
+            if(dist<50 && intersect(set[i]->ent, cl.player1.o, worldpos) && (!pointingat || cl.player1.o.dist(pointingat->ent->o)>dist))    
             {    
                 pointingat = set[i]; 
             };
-            set[i]->update(curtime);
         };
-        
     };
     
     void spawn(char *name)
