@@ -1,6 +1,4 @@
 gilt:
-- metlslime's editing suggestions:
-    - command to more easily edit existing entities, perhaps by not forcing people to retype all parameters (e.g. "editent . . 250 ." to change the green value of a light)
 - speed up heightfield recalc
 - LOD: improved lod-remip
 - "editing not in view" sometimes obstructs editing
@@ -31,7 +29,7 @@ aard/everyone:
 - weird fps issue
 - pitch on hudgun specular
 - default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
-- the eyecandy priority list: envmapping (water) / fake env (metal/glass), better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? ...
+- the eyecandy priority list: envmapping (water) / fake env (metal/glass), better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
 - better doc on the scripting language | beginners guide | wiki?
 - ways of doing menu - context sensitive etc
 - spec/normal trilinear filtering?

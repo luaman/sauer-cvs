@@ -186,5 +186,5 @@ extern bool netmapstart();
 // treeui
 
 enum { TMB_DOWN = 1, TMB_UP = 2, TMB_PRESSED = 4, TMB_EXPANDED = 8, TMB_COLLAPSED = 16, TMB_ROLLOVER = 32 };
-extern int treebutton(char *name);
+extern int treebutton(char *name, char *texture);
 extern void settreeca(char **_ca);

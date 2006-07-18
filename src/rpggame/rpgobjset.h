@@ -89,7 +89,7 @@ struct rpgobj
     void treemenu()
     {
         settreeca(&curaction);
-        for(rpgaction *a = actions; a; a = a->next) if(treebutton(a->initiate)&TMB_UP)
+        for(rpgaction *a = actions; a; a = a->next) if(treebutton(a->initiate, "chat.jpg")&TMB_UP)
         {
             if(*a->response) abovetext = a->response;
             if(*a->script) { os.pushobj(this); execute(a->script); };

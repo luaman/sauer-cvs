@@ -21,7 +21,7 @@ ICOMMAND(treenav, "i", nav = atoi(args[0]));
 
 void settreeca(char **_ca) { ca = _ca; };
 
-int treebutton(char *name)
+int treebutton(char *name, char *texture)
 {
     if(!*ca) *ca = name;
     bool sel = strcmp(*ca, name)==0;
@@ -32,8 +32,25 @@ int treebutton(char *name)
         if(nav==1 && strcmp(*ca, prevname)==0) { *ca = name; nav = 0; };
     };
     prevname = name;
+    
+    if(texture)
+    {
+        s_sprintfd(tname)("packages/icons/%s", texture);
+        Texture *t = textureload(tname);
+        glColor3f(1, 1, 1);
+        glBindTexture(GL_TEXTURE_2D, t->gl);
+        glBegin(GL_QUADS);
+        float size = 60;
+        float x = FONTH/2;
+        glTexCoord2d(0.0, 0.0); glVertex2f(x,      off);
+        glTexCoord2d(1.0, 0.0); glVertex2f(x+size, off);
+        glTexCoord2d(1.0, 1.0); glVertex2f(x+size, off+size);
+        glTexCoord2d(0.0, 1.0); glVertex2f(x,      off+size);
+        glEnd();
 
-    draw_textf("C: %s%s", FONTH/2, off, sel ? "\f3" : "", name);
+    };
+
+    draw_textf("%s%s", FONTH*2, off, sel ? "\f3" : "", name);
     off += FONTH;
 
     return sel ? treemousebuttons|TMB_ROLLOVER : 0;

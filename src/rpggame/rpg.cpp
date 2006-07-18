@@ -138,10 +138,10 @@ struct rpgclient : igameclient
         settreeca(&curaction);
         if(os.pointingat) os.pointingat->treemenu();
         
-        if(treebutton("attack")&TMB_PRESSED) { conoutf("attack"); };
-        if(treebutton("take")&TMB_UP) { conoutf("take"); };
-        if(treebutton("trade")&TMB_UP) { conoutf("trade"); };
-        if(treebutton("inventory")&TMB_UP) { conoutf("inventory"); };
+        if(treebutton("attack", "sword.jpg")&TMB_PRESSED) { conoutf("attack"); };
+        if(treebutton("take", "hand.jpg")&TMB_UP) { conoutf("take"); };
+        if(treebutton("trade", "coins.jpg")&TMB_UP) { conoutf("trade"); };
+        if(treebutton("inventory", "chest.jpg")&TMB_UP) { conoutf("inventory"); };
     };
 
     void writegamedata(vector<char> &extras) {};
