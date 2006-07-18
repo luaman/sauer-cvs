@@ -570,6 +570,7 @@ void editundo() { swapundo(undos, redos, "undo"); };
 void editredo() { swapundo(redos, undos, "redo"); };
 
 editinfo *localedit=NULL;
+int entcopy = -1;
 
 void freeeditinfo(editinfo *&e)
 {
@@ -588,25 +589,14 @@ void mpcopy(editinfo *&e, selinfo &sel, bool local)
     if(e==NULL) e = new editinfo;
     if(e->copy) freeblock(e->copy);
     e->copy = NULL;
-    e->ent.type = ET_EMPTY;
-    if(sel.ent>=0)
-        e->ent = *et->getents()[sel.ent];
-    else
-    {
-        protectsel(e->copy = blockcopy(block3(sel), sel.grid));
-        changed(sel);
-    };
+    protectsel(e->copy = blockcopy(block3(sel), sel.grid));
+    changed(sel);
 };
 
 void mppaste(editinfo *&e, selinfo &sel, bool local)
 {
     if(e==NULL) return;
     if(local) cl->edittrigger(sel, EDIT_PASTE);
-    if(e->ent.type != ET_EMPTY)
-    {
-        int i = newentity(e->ent.type, e->ent.attr1, e->ent.attr2, e->ent.attr3, e->ent.attr4);
-        if(local) sel.ent = i;
-    };
     if(e->copy)
     {
         sel.s = e->copy->s;
@@ -616,8 +606,24 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
     };
 };
 
-void copy()  { if(noedit(true)) return; mpcopy(localedit, sel, true); };
-void paste() { if(noedit()) return; mppaste(localedit, sel, true); };
+void copy()  
+{ 
+    if(noedit(true)) return;
+    entcopy = -1;
+    if(sel.ent>=0)
+        entcopy = sel.ent;
+    else
+        mpcopy(localedit, sel, true); 
+};
+
+void paste() 
+{ 
+    if(noedit()) return; 
+    if(entcopy>=0)
+        sel.ent = copyent(entcopy);
+    else
+        mppaste(localedit, sel, true); 
+};
 
 COMMAND(copy, "");
 COMMAND(paste, "");
@@ -647,10 +653,8 @@ void setheightmap(selinfo &b)
     b.o[C[d]]  = max(sel.o[C[d]], b.o[C[d]]-sel.grid);
     int sx     = (b.o[R[d]]-sel.o[R[d]])/sel.grid;
     int sy     = (b.o[C[d]]-sel.o[C[d]])/sel.grid;
-    b.s[R[d]] -= sx-2;
-    b.s[C[d]] -= sy-2;
-    b.s[R[d]]  = max(0, min(b.s[R[d]], sel.s[R[d]]-sx));
-    b.s[C[d]]  = max(0, min(b.s[C[d]], sel.s[C[d]]-sy));
+    b.s[R[d]]  = max(0, min(b.s[R[d]]-sx+2, sel.s[R[d]]-sx));
+    b.s[C[d]]  = max(0, min(b.s[C[d]]-sy+2, sel.s[C[d]]-sy));
 
     loopxyz(b, b.grid,
 

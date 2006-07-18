@@ -155,7 +155,7 @@ extern void addundo(undoblock &u);
 // ents
 extern int rayent(const vec &o, vec &ray);
 extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first = false);
-extern int newentity(int type, int a1, int a2, int a3, int a4);
+extern int copyent(int n);
 extern void pushent(int d, int dist);
 extern void entflip(selinfo &sel);
 extern void entrotate(selinfo &sel, int cw);

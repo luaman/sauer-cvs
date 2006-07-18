@@ -383,6 +383,12 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     return i;
 };
 
+int copyent(int n)
+{
+    entity &e = *et->getents()[n];
+    return newentity(e.type, e.attr1, e.attr2, e.attr3, e.attr4);
+};
+
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit(true)) return;

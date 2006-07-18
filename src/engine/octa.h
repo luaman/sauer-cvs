@@ -118,7 +118,6 @@ struct block3
 struct editinfo
 {
     block3 *copy;
-    entity ent;
     editinfo() : copy(NULL) {};
 };
 
