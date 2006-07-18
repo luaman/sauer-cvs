@@ -108,7 +108,7 @@ int  hitent;
 
 static float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
-    float dist = 1e16f, f;
+    float dist = 1e16f, f = 0.0f;
     if(oc == last || oc == NULL) return dist;
     const vector<extentity *> &ents = et->getents();
     if((mode&RAY_POLY)==RAY_POLY)
@@ -271,7 +271,7 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
 bool inside, hitplayer; // whether an internal collision happened, whether the collision hit a player
 vec wall; // just the normal vectors.
 float walldistance;
-const float STAIRHEIGHT = 4.0f;
+const float STAIRHEIGHT = 4.1f;
 const float FLOORZ = 0.867f;
 const float SLOPEZ = 0.5f;
 const float WALLZ = 0.2f;
