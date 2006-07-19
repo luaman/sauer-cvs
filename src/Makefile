@@ -28,6 +28,7 @@ CLIENT_OBJS= \
 	engine/serverbrowser.o \
 	engine/spheretree.o \
 	engine/sound.o \
+	engine/treeui.o \
 	engine/water.o \
 	engine/world.o \
 	engine/worldio.o \
