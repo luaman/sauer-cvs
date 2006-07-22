@@ -615,7 +615,7 @@ struct md3 : model
 
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
     {
-        if(!loaded) return;
+        if(!loaded) return;        
         
         glPushMatrix();
 
