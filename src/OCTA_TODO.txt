@@ -24,11 +24,11 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
-- md3 rotation?
-- masterserver?
+- md3 crash?
 - weird fps issue
+- auto bounding boxes that can be overridden
+- experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions
 - pitch on hudgun specular
-- default low precion on gf5 // ALL Cards?, default bloom on gf6 & x800, default fancy map on any shader card?
 - the eyecandy priority list: envmapping (water) / fake env (metal/glass), better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
 - better doc on the scripting language | beginners guide | wiki?
 - ways of doing menu - context sensitive etc

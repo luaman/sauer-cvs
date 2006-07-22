@@ -94,6 +94,8 @@ struct rpgobj
             if(*a->response) abovetext = a->response;
             if(*a->script) { os.pushobj(this); execute(a->script); };
         };
+        if(!ai) if(treebutton("take", "hand.jpg")&TMB_UP) { conoutf("take"); };
+        if(ai) if(treebutton("trade", "coins.jpg")&TMB_UP) { conoutf("trade"); };
     };
 };
 

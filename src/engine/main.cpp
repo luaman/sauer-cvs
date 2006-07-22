@@ -406,7 +406,7 @@ int main(int argc, char **argv)
     log("localconnect");
     localconnect();
     cc->gameconnect(false);
-    cc->changemap(load ? load : "metl2");
+    cc->changemap(load ? load : "metl4");
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
