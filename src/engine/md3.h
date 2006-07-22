@@ -451,6 +451,12 @@ struct md3model
                 glActiveTexture_(GL_TEXTURE0_ARB);
             };
             
+			if(cur.fr1 < 0 || cur.fr1 >= numframes || cur.fr2 < 0 || cur.fr2 >= numframes)
+			{
+				conoutf("frame %d not available in md3\n", cur.fr2);
+				return;
+			};
+
             if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
             {           
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
@@ -471,7 +477,7 @@ struct md3model
                 xtravertsva += mesh.numvertices;
             }
             else
-            {
+            {			
                 glBegin(GL_TRIANGLES);
                     loopj(mesh.numtriangles) // triangles
                     {
@@ -612,7 +618,7 @@ struct md3 : model
         if(!loaded) return;
         
         glPushMatrix();
-        
+
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
