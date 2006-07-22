@@ -153,14 +153,7 @@ struct md3model
         return false;
     };
 
-    void setanim(int num, int frame, int range, float speed)
-    {
-        if(!anims) anims = new vector<md3animinfo>[NUMANIMS];
-        md3animinfo &anim = anims[num].add();
-        anim.frame = frame;
-        anim.range = range;
-        anim.speed = speed;
-    };
+    void setanim(int num, int frame, int range, float speed);
     
     void genvar() // generate vbo's for each mesh
     {   
@@ -451,12 +444,6 @@ struct md3model
                 glActiveTexture_(GL_TEXTURE0_ARB);
             };
             
-			if(cur.fr1 < 0 || cur.fr1 >= numframes || cur.fr2 < 0 || cur.fr2 >= numframes)
-			{
-				conoutf("frame %d not available in md3\n", cur.fr2);
-				return;
-			};
-
             if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
             {           
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
@@ -704,6 +691,16 @@ void md3skin(char *objname, char *skin, char *masks)
             };
         };
     };
+};
+
+void md3model::setanim(int num, int frame, int range, float speed)
+{
+    if(frame<0 || frame>=numframes || range<=0 || frame+range>numframes) { conoutf("invalid frame %d, range %d in %s md3", frame, range, loadingmd3->loadname); return; };
+    if(!anims) anims = new vector<md3animinfo>[NUMANIMS];
+    md3animinfo &anim = anims[num].add();
+    anim.frame = frame;
+    anim.range = range;
+    anim.speed = speed;
 };
 
 void md3anim(char *anim, int *startframe, int *range, char *s)

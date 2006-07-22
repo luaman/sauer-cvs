@@ -560,7 +560,7 @@ struct md2 : model
 
     void setanim(int num, int frame, int range, float speed)
     {
-        if(frame<0 || frame>=hdr.numframes || range<=0 || frame+range>hdr.numframes) { conoutf("invalid frame %d, range %d in %s md2", frame, range, loadname); return; };
+        if(frame<0 || frame>=header.numframes || range<=0 || frame+range>header.numframes) { conoutf("invalid frame %d, range %d in %s md2", frame, range, loadname); return; };
         if(!anims) anims = new vector<md2_anim>[NUMANIMS];
         md2_anim &anim = anims[num].add();
         anim.frame = frame;
