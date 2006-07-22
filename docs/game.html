@@ -282,7 +282,7 @@ spawn at spawnpoints close to whichever of their bases is closest to an enemy ba
 spawning will be preferred at bases which are not currently being captured by an enemy.
 <p>
 
-If a player dies, they wait M seconds before they can respawn again (M = 20 or so).
+If a player dies, they wait M seconds before they can respawn again (M = 10 or so).
 If you have no bases left (the enemy has captured yours, or at least made em neutral)
 you will spawn at random spawnpoints. 
 <p>
@@ -553,7 +553,7 @@ Hence Sauerbraten multiplayer has a very simple solution:
 There is no cheat protection at all. Nada.
 
 Servers operate in a so called "master mode" which allows people to easily and painlessly have games with people they know, without being disturbed by cheaters.
-The way it works is very simple: the first person to enter a server becomes the "master" of that server. The master has 4 commands at his disposal which other players have not:
+The way it works is very simple: the first person to enter a server and use the "setmaster" command becomes the "master" of that server. The master has 4 commands at his disposal which other players have not:
 
 <pre>setmaster B</pre>
 Attempts to set master status to B. 0 gives up master status, 1 claims master status, or the admin password may be specified to steal master status from the current master.
@@ -578,7 +578,7 @@ The important thing to see about these commands is that they don't prevent cheat
 <p>
 In the event that a cheater is the master, or someone is being abusive with his masters powers, you can simply leave the server and start a game somewhere else. There are usually more servers than players anyway, and more players than cheaters.
 <p>
-If the current master leaves the server, the next player in line will automatically be made the master. Mastermode will be reset to 0 when this happens (also when the server clears). At any time, all
+If the current master leaves the server, other players may attempt to claim master status. Mastermode will be reset to 0 when this happens (also when the server clears). At any time, all
 players will see who is the master in a game because his name is marked in a different colour on the scoreboard.
  
 
