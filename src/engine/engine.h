@@ -26,8 +26,10 @@ struct model
     vec translate;
     SphereTree *spheretree;
     bool masked;
+    
+    float bbrad, bbtofloor, bbtoceil;
 
-    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), scale(1.0f), translate(0, 0, 0), spheretree(0), masked(false) {};
+    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), scale(1.0f), translate(0, 0, 0), spheretree(0), masked(false), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
     virtual ~model() {};
     virtual float boundsphere(int frame, vec &center) = 0;
     virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d) = 0;
@@ -132,6 +134,10 @@ extern Shader  *lookupshader(int slot);
 extern Shader  *lookupshaderbyname(const char *name);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24, GLenum target = GL_TEXTURE_2D);
 extern void readmatrices();
+
+// renderextras
+extern void render3dbox(vec &o, float tofloor, float toceil, float radius);
+
 
 // octa
 extern cube *newcubes(uint face = F_EMPTY);
@@ -274,9 +280,9 @@ extern void freeoctaentities(cube &c);
 extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
 
 // rendermodel
-extern model *loadmodel(const char *name, int i = -1);
 extern int findanim(const char *name);
 extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m);
+extern model *loadmodel(const char *name, int i = -1);
 
 // particles
 extern void particleinit();

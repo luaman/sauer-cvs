@@ -14,9 +14,11 @@ model *loadingmodel = NULL;
 #include "md2.h"
 #include "md3.h"
 
+#define checkmdl if(!loadingmodel) { conoutf("not loading a model"); return; }
+
 void mdlcullface(int *cullface)
 {
-    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    checkmdl;
     loadingmodel->cullface = *cullface!=0;
 };
 
@@ -24,7 +26,7 @@ COMMAND(mdlcullface, "i");
 
 void mdlspec(int *percent)
 {
-    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    checkmdl;
     float spec = 1.0f; 
     if(*percent>0) spec = *percent/100.0f;
     else if(*percent<0) spec = 0.0f;
@@ -35,7 +37,7 @@ COMMAND(mdlspec, "i");
 
 void mdlambient(int *percent)
 {
-    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    checkmdl;
     float ambient = 0.3f;
     if(*percent>0) ambient = *percent/100.0f;
     else if(*percent<0) ambient = 0.0f;
@@ -46,7 +48,7 @@ COMMAND(mdlambient, "i");
 
 void mdlshader(char *shader)
 {
-    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    checkmdl;
     loadingmodel->shader = lookupshaderbyname(shader);
 };
 
@@ -54,7 +56,7 @@ COMMAND(mdlshader, "s");
 
 void mdlscale(int *percent)
 {
-    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    checkmdl;
     float scale = 0.3f;
     if(*percent>0) scale = *percent/100.0f;
     else if(*percent<0) scale = 0.0f;
@@ -65,11 +67,22 @@ COMMAND(mdlscale, "i");
 
 void mdltrans(char *x, char *y, char *z)
 {
-    if(!loadingmodel) { conoutf("not loading a model"); return; };
+    checkmdl;
     loadingmodel->translate = vec(atof(x), atof(y), atof(z));
 }; 
 
 COMMAND(mdltrans, "sss");
+
+void mdlbb(float *rad, float *tofloor, float *toceil)
+{
+    checkmdl;
+    loadingmodel->bbrad = *rad;
+    loadingmodel->bbtofloor = *tofloor;
+    loadingmodel->bbtoceil = *toceil;
+};
+
+COMMAND(mdlbb, "fff");
+
 
 // mapmodels
 
@@ -237,8 +250,11 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
+VAR(showcharacterboundingbox, 0, 0, 1);
+
 void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, int lastaction, int lastpain)
 {
+    if(showcharacterboundingbox) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
     float mz = d->o.z-d->eyeheight;     
@@ -268,3 +284,11 @@ void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, i
     rendermodel(color, dir, mdlname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, team, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST));
 };
 
+void setbbfrommodel(dynent *d, char *mdl)
+{
+    model *m = loadmodel(mdl); 
+    if(!m) return;
+    d->radius    = m->bbrad;
+    d->eyeheight = m->bbtofloor;
+    d->aboveeye  = m->bbtoceil;
+};

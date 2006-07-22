@@ -153,6 +153,7 @@ extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int var
 extern void abovemodel(vec &o, const char *mdl);
 extern mapmodelinfo &getmminfo(int i);
 extern void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, int lastaction, int lastpain);
+extern void setbbfrommodel(dynent *d, char *mdl);
 
 // server
 enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS };

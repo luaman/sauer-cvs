@@ -25,20 +25,21 @@ eihrul:
 
 aard/everyone:
 - md3 crash?
-- weird fps issue
+- weird fps issue.. maybe mobile?
 - auto bounding boxes that can be overridden
-- experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions
+- use setbb also for monsters
+- experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions | store intensity multiplier in alpha?
+- create an official map pack to reduce on the number of maps in the distribution
 - pitch on hudgun specular
 - the eyecandy priority list: envmapping (water) / fake env (metal/glass), better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
 - better doc on the scripting language | beginners guide | wiki?
-- ways of doing menu - context sensitive etc
-- spec/normal trilinear filtering?
+- new menu / for rpg and fps
+- spec/normal trilinear filtering? -> probably because of specmap mipmap averaging... luns specmaps are simply too subtle
 - fake rigid-body sphere only?
 - $ vs @? var stacks? [] for trees/arrays? other improvements? 
 - start moving some stuff in their own headers
 - rpg start
 - new BAS sounds? | player spawn | sp respawn | menu clicks | specific door sound? | end of level | push button/trigger
-- speed? seems slow at 1920
 - improve bloom? optimize it.
 - scripting: do "." for concatword so you could do easy (associative) arrays and tree structures?
 - report to ATI: float vs short issue

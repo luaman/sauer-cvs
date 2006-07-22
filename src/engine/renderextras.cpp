@@ -68,6 +68,38 @@ void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR 
 COMMAND(flipnormalmapy, "ss");
 COMMAND(mergenormalmaps, "sss");
 
+void render2dbox(vec &o, float x, float y, float z)
+{
+    glBegin(GL_POLYGON);
+    glVertex3f(o.x, o.y, o.z);
+    glVertex3f(o.x, o.y, o.z+z);
+    glVertex3f(o.x+x, o.y+y, o.z+z);
+    glVertex3f(o.x+x, o.y+y, o.z);
+    glEnd();
+};
+
+void render3dbox(vec &o, float tofloor, float toceil, float radius)
+{
+    vec c = o;
+    c.sub(vec(radius, radius, tofloor));
+    float w = radius*2;
+    float h = tofloor+toceil;
+    notextureshader->set();
+    glColor3f(1, 1, 1);
+    glDisable(GL_CULL_FACE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDepthMask(GL_FALSE);
+    render2dbox(c, w, 0, h);
+    render2dbox(c, 0, w, h);
+    c.add(vec(w, w, 0));
+    render2dbox(c, -w, 0, h);
+    render2dbox(c, 0, -w, h);
+    glDepthMask(GL_TRUE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
+    xtraverts += 16;
+};
+
 void box(block &b, float z1, float z2, float z3, float z4)
 {
     glBegin(GL_POLYGON);

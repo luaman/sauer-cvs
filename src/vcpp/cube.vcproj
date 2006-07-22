@@ -1387,10 +1387,6 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\data\game_rpg.cfg"
-						>
-					</File>
-					<File
 						RelativePath="..\..\data\keymap.cfg"
 						>
 					</File>
@@ -1526,6 +1522,10 @@
 			</File>
 			<File
 				RelativePath="..\rpggame\entities.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\data\game_rpg.cfg"
 				>
 			</File>
 			<File
