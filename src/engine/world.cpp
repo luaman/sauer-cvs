@@ -383,10 +383,18 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     return i;
 };
 
-int copyent(int n)
+int copyent(int i)
 {
-    entity &e = *et->getents()[n];
-    return newentity(e.type, e.attr1, e.attr2, e.attr3, e.attr4);
+    entity &c = *et->getents()[i];
+    if(sel.ent<0)
+        return newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4);
+    else
+        selentedit(e.type = c.type; 
+                   e.attr1 = c.attr1; 
+                   e.attr2 = c.attr2; 
+                   e.attr3 = c.attr3; 
+                   e.attr4 = c.attr4);
+    return sel.ent;
 };
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
@@ -417,7 +425,7 @@ void replaceents(char *what, int *a1, int *a2, int *a3, int *a4)
     entity &s = *et->getents()[t];                
     if(havesel)
     {
-        setgroup(pointinsel(sel, e.o));    
+        setgroup(type!=ET_EMPTY && pointinsel(sel, e.o));    
     }
     else
         setgroup(e.type==s.type

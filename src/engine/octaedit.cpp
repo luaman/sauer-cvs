@@ -560,10 +560,10 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
     b.add(r);
     pasteundo(u);
     if(u.b) changed(sel);
-    freeundo(u);
+    freeundo(u);    
+    clearheightmap();
     reorient();
     forcenextundo();
-    clearheightmap();
 };
 
 void editundo() { swapundo(undos, redos, "undo"); };
@@ -618,7 +618,7 @@ void copy()
 
 void paste() 
 { 
-    if(noedit()) return; 
+    if(noedit(entcopy>=0)) return; 
     if(entcopy>=0)
         sel.ent = copyent(entcopy);
     else
@@ -749,22 +749,21 @@ void createheightmap()
 
     int h = hi / 8;
     selinfo b(sel);
-    //protectsel(
-        loopxyz(sel, sel.grid,
-            if(c.children) { solidfaces(c); discardchildren(c); };
-            if(!htex[x+y*w] && z == sel.s[D[d]]-1) htex[x+y*w] = c.texture[sel.orient];
-            if(isempty(c)) continue;
-            if(!htex[x+y*w]) htex[x+y*w] = c.texture[sel.orient];
+    makeundo();
+    loopxyz(b, b.grid,
+        if(c.children) { solidfaces(c); discardchildren(c); };
+        if(!htex[x+y*w] && z == sel.s[D[d]]-1) htex[x+y*w] = c.texture[sel.orient];
+        if(isempty(c)) continue;
+        if(!htex[x+y*w]) htex[x+y*w] = c.texture[sel.orient];
 
-            loopi(2) loopj(2)
-            {
-                int a = x+i+(y+j)*w;
-                int e = edgeget(cubeedge(c, d, i, j), dc);
-                e = (h-z-1)*8 + (dc ? e : 8-e);
-                hmap[a] = max(hmap[a], e);// simply take the heighest points
-            };
-        );
-    //);
+        loopi(2) loopj(2)
+        {
+            int a = x+i+(y+j)*w;
+            int e = edgeget(cubeedge(c, d, i, j), dc);
+            e = (h-z-1)*8 + (dc ? e : 8-e);
+            hmap[a] = max(hmap[a], e);// simply take the heighest points
+        };
+    );
     cubifyheightmap(b);
     setheightmap(b);
 };
