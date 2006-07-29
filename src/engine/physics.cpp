@@ -210,27 +210,24 @@ float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentit
         };
 
         cube &c = *lc;
-        if(!(last==NULL && (mode&RAY_SKIPFIRST)))
+        if((!(mode&RAY_SKIPFIRST) || dist != 0) &&
+           (((mode&RAY_CLIPMAT) && isclipped(c.material) && c.material != MAT_CLIP) ||
+            ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
+            (!(mode&RAY_PASS) && lsize==size && !isempty(c)) ||
+            isentirelysolid(c) ||
+            dent < dist ||
+            last==&c))
         {
-            if(((mode&RAY_CLIPMAT) && isclipped(c.material) && c.material != MAT_CLIP) ||
-                ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
-                (!(mode&RAY_PASS) && lsize==size && !isempty(c)) ||
-                isentirelysolid(c) ||
-                dent < dist ||
-                last==&c)
-            {
-                if(last==&c && radius>0) dist = radius;
-                return min(dent, dist);
-            }
-            else if(!isempty(c))
-            {
-                float f = dist;
-                setcubeclip(c, lo.x, lo.y, lo.z, lsize);
-                if(raycubeintersect(c, v, ray, f))
-                {
+            if(last==&c && radius>0) dist = radius;
+            return min(dent, dist);
+        }
+        else if(!isempty(c))
+        {
+            float f = 0;
+            setcubeclip(c, lo.x, lo.y, lo.z, lsize);
+            if(raycubeintersect(c, v, ray, f))
+                if(!(mode&RAY_SKIPFIRST) || dist+f != 0)
                     return min(dent, dist+f);
-                };
-            };
         };
 
         float disttonext = 1e16f;
