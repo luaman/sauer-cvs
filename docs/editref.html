@@ -297,14 +297,14 @@ paste</pre>
         displayed after the map load msg).
         <pre>texturereset</pre>
         Sets the texture slot to 0 for the subsequent "texture" commands.
-        <pre>texture subnum filename flags</pre>
+        <pre>texture subnum filename ROT X Y</pre>
         Binds the texture indicated in filename to the current texture slot, then
         increments the slot number. This is for use in texture.cfg files only. subnum
         allows secondary textures to be specified for a single texture slot, for use in
         shaders and other features (0 is
         primary diffuse texture, 1..N are available in the shader bound to
-    texture units 2..N+1, unit 1 = the lightmap). Flags allow you to specify preprocessing on the image,
-        currently only rotation (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW).
+    texture units 2..N+1, unit 1 = the lightmap). ROT specifies preprocessing on the image,
+        currently only rotation (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW). X and Y are the X and Y offset in texels.
         <pre>watercolour R G B</pre>
         Changes the blended color of all water to RGB. This may be used to simulate
         various lighting conditions for water.        
