@@ -118,7 +118,7 @@ struct clientcom : iclientcom
 
     void addmsg(int rel, int num, int type, ...)
     {
-        if(spectator && (currentmaster!=clientnum || type<SV_MASTERMODE)) return;
+        if(spectator && type!=SV_GETMAP && (currentmaster!=clientnum || type<SV_MASTERMODE)) return;
         if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
         messages.add(num);
         messages.add(rel);
