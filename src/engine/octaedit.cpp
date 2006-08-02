@@ -795,8 +795,8 @@ void brushvert(int *x, int *y, int *v)
 {
     if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
     brush[*x][*y] = *v;
-    brushmaxx = max(brushmaxx, *x);
-    brushmaxy = max(brushmaxy, *y);
+    brushmaxx = max(brushmaxx, *x+1);
+    brushmaxy = max(brushmaxy, *y+1);
 };
 
 int getxcursor() { int d = dimension(sel.orient); return (cur[R[d]] - sel.o[R[d]]) / sel.grid + (sel.corner&1 ? 1 : 0); };
