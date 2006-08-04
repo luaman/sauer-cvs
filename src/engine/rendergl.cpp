@@ -529,6 +529,18 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
     };
 };
 
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+#define RMASK 0xff000000
+#define GMASK 0x00ff0000
+#define BMASK 0x0000ff00
+#define AMASK 0x000000ff
+#else
+#define RMASK 0x000000ff
+#define GMASK 0x0000ff00
+#define BMASK 0x00ff0000
+#define AMASK 0xff000000
+#endif
+
 static void texcombine(Slot &s, int index, Slot::Tex &t)
 {
     vector<char> key;
@@ -588,7 +600,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
                 if(!as) break;
                 if(ts->format->BitsPerPixel!=32)
                 {
-                    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, ts->w, ts->h, 32, ts->format->Rmask, ts->format->Gmask, ts->format->Bmask, ts->format->Amask);
+                    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, ts->w, ts->h, 32, RMASK, GMASK, BMASK, AMASK);
                     if(!ns) fatal("create surface");
                     SDL_BlitSurface(ts, NULL, ns, NULL);
                     SDL_FreeSurface(ts);
