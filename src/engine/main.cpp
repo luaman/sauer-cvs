@@ -192,8 +192,6 @@ void keyrepeat(bool on)
 
 VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 
-int islittleendian = 1;
-
 struct sleepcmd
 {
     int millis;
@@ -285,8 +283,6 @@ int main(int argc, char **argv)
     int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0, fsaa = 0;
     char *load = NULL;
     
-    islittleendian = *((char *)&islittleendian);
-
     #define log(s) puts("init: " s)
     log("sdl");
 

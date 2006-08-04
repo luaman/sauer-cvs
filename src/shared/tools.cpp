@@ -45,7 +45,7 @@ char *loadfile(char *fn, int *size)
 
 void endianswap(void *memory, int stride, int length)   // little endian as storage format
 {
-    if(*((char *)&stride)) return;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
     loop(w, length) loop(i, stride/2)
     {
         uchar *p = (uchar *)memory+w*stride;
@@ -53,6 +53,7 @@ void endianswap(void *memory, int stride, int length)   // little endian as stor
         p[i] = p[stride-i-1];
         p[stride-i-1] = t;
     };
+#endif
 }
 
 
