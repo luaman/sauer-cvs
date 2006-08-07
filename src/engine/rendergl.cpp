@@ -34,6 +34,7 @@ static Shader *curshader = NULL;
 static vector<ShaderParam> curparams;
 Shader *defaultshader = NULL;
 Shader *notextureshader = NULL;
+Shader *nocolorshader = NULL;
 
 Shader *lookupshaderbyname(const char *name) { return shaders.access(name); };
 
@@ -255,6 +256,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     exec("data/stdshader.cfg");
     defaultshader = lookupshaderbyname("default");
     notextureshader = lookupshaderbyname("notexture");
+    nocolorshader = lookupshaderbyname("nocolor");
     defaultshader->set();
 };
 

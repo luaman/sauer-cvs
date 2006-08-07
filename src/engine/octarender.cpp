@@ -1573,7 +1573,11 @@ void renderq()
                 else va->occluded = min(va->occluded+1, OCCLUDE_BB+oqpartial);
                 if(va->occluded >= OCCLUDE_BB+oqpartial-1)
                 {
-                    if(va->query) drawquery(va->query, va);
+                    if(va->query) 
+                    {
+                        if(curshader!=nocolorshader) (curshader = nocolorshader)->set();
+                        drawquery(va->query, va);
+                    };
                     continue;
                 };
             }
