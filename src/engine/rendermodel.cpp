@@ -94,9 +94,9 @@ struct mapmodel
 
 vector<mapmodel> mapmodels;
 
-void addmapmodel(int *rad, int *h, int *tex, char *name, int *shadow)
+void addmapmodel(int *rad, int *h, int *tex, char *name, char *shadow)
 {
-    mapmodelinfo mmi = { *rad, *h, *tex, *shadow ? *shadow : 1 };
+    mapmodelinfo mmi = { *rad, *h, *tex, *shadow ? atoi(shadow) : 1 };
     s_strcpy(mmi.name, name);
     mapmodel &mm = mapmodels.add();
     mm.info = mmi;
@@ -107,7 +107,7 @@ void mapmodelreset() { mapmodels.setsize(0); };
 
 mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i].info : *(mapmodelinfo *)0; };
 
-COMMANDN(mapmodel, addmapmodel, "iiisi");
+COMMANDN(mapmodel, addmapmodel, "iiiss");
 COMMAND(mapmodelreset, "");
 
 // model registry
