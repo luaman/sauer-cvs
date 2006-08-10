@@ -1499,6 +1499,177 @@ void renderoutline()
 float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
 float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 
+struct renderstate
+{
+    Shader *shader;
+    const ShaderParam *vertparams[MAXSHADERPARAMS], *pixparams[MAXSHADERPARAMS];
+
+    renderstate() : shader(NULL)
+    {
+        memset(vertparams, 0, sizeof(vertparams));
+        memset(pixparams, 0, sizeof(pixparams));
+    };
+};
+
+#define setvertparam(param) \
+    { \
+        if(!cur.vertparams[param.index] || memcmp(cur.vertparams[param.index]->val, param.val, sizeof(param.val))) \
+            glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val); \
+        cur.vertparams[param.index] = &param; \
+    }
+
+#define setpixparam(param) \
+    { \
+        if(!cur.pixparams[param.index] || memcmp(cur.pixparams[param.index]->val, param.val, sizeof(param.val))) \
+            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val); \
+        cur.pixparams[param.index] = &param; \
+    }
+
+void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
+{
+    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+    glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+    if(renderpath!=R_FIXEDFUNCTION) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+
+    glClientActiveTexture_(GL_TEXTURE1_ARB);
+    glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
+    glClientActiveTexture_(GL_TEXTURE0_ARB);
+
+    if(zfill)
+    {
+        if(cur.shader != nocolorshader) (cur.shader = nocolorshader)->set();
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        glde++;
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        return;
+    };
+    
+    ushort *ebuf = lod.ebuf;
+    int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
+    Slot *lastslot = NULL;
+    loopi(lod.texs)
+    {
+        Slot &slot = lookuptexture(lod.eslist[i].texture);
+        Texture *tex = slot.sts[0].t;
+        Shader *s = slot.shader;
+
+        extern vector<GLuint> lmtexids;
+        int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
+        if(curlm!=lastlm || !lastslot || s->type!=lastslot->shader->type)
+        {
+            if(curlm!=lastlm)
+            {
+                glActiveTexture_(GL_TEXTURE1_ARB);
+                glBindTexture(GL_TEXTURE_2D, curlm);
+                lastlm = curlm;
+            };
+            if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
+            {
+                glActiveTexture_(GL_TEXTURE2_ARB);
+                glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
+            };
+
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        };
+
+        if(&slot!=lastslot)
+        {
+            glBindTexture(GL_TEXTURE_2D, tex->gl);
+            if(s!=cur.shader) (cur.shader = s)->set();
+
+            if(renderpath!=R_FIXEDFUNCTION)
+            {
+                int tmu = s->type==SHADER_NORMALSLMS ? 3 : 2;
+                loopvj(slot.sts)
+                {
+                    Slot::Tex &t = slot.sts[j];
+                    if(t.type==TEX_DIFFUSE || t.combined>=0) continue;
+                    glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
+                    glBindTexture(GL_TEXTURE_2D, t.t->gl);
+                };
+                uint vertparams = 0, pixparams = 0;
+                loopvj(slot.params)
+                {
+                    const ShaderParam &param = slot.params[j];
+                    if(param.type == SHPARAM_VERTEX)
+                    {
+                        setvertparam(param);
+                        vertparams |= 1<<param.index;
+                    }
+                    else
+                    {
+                        setpixparam(param);
+                        pixparams |= 1<<param.index;
+                    };
+                };
+                loopvj(s->defaultparams)
+                {
+                    const ShaderParam &param = s->defaultparams[j];
+                    if(param.type == SHPARAM_VERTEX)
+                    {
+                        if(!(vertparams & (1<<param.index))) setvertparam(param);
+                    }
+                    else if(!(pixparams & (1<<param.index))) setpixparam(param);
+                };
+                glActiveTexture_(GL_TEXTURE0_ARB);
+            };
+            lastslot = &slot;
+        };
+
+        loopl(3) if (lod.eslist[i].length[l])
+        {
+            if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys)
+            {
+                static int si[] = { 1, 0, 0 };
+                static int ti[] = { 2, 2, 1 };
+
+                GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                s[si[l]] = 8.0f/(tex->xs<<VVEC_FRAC);
+                GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/(tex->ys<<VVEC_FRAC);
+
+                if(renderpath==R_FIXEDFUNCTION)
+                {
+                    glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+                    glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                    // KLUGE: workaround for buggy nvidia drivers
+                    // object planes are somehow invalid unless texgen is toggled
+                    extern int nvidia_texgen_bug;
+                    if(nvidia_texgen_bug)
+                    {
+                        glDisable(GL_TEXTURE_GEN_S);
+                        glDisable(GL_TEXTURE_GEN_T);
+                        glEnable(GL_TEXTURE_GEN_S);
+                        glEnable(GL_TEXTURE_GEN_T);
+                    };
+                }
+                else
+                {
+                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);     // have to pass in env, otherwise same problem as fixed function
+                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 1, t);
+                };
+
+                lastxs = tex->xs;
+                lastys = tex->ys;
+                lastl = l;
+            };
+
+            if(s->type>=SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
+            {
+                glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, orientation_tangent[l]);
+                glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, orientation_binormal[l]);
+            };
+
+            glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
+            ebuf += lod.eslist[i].length[l];  // Advance to next array.
+            glde++;
+        };
+    };
+};
+
+VAR(shadeonce, 0, 0, 1);
+
 void renderq()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1540,23 +1711,7 @@ void renderq()
 
     glPushMatrix();
 
-    const ShaderParam *curvertparams[MAXSHADERPARAMS], *curpixparams[MAXSHADERPARAMS];
-    memset(curvertparams, 0, sizeof(curvertparams));
-    memset(curpixparams, 0, sizeof(curpixparams));
-
-#define setvertparam(param) \
-    { \
-        if(!curvertparams[param.index] || memcmp(curvertparams[param.index]->val, param.val, sizeof(param.val))) \
-            glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val); \
-        curvertparams[param.index] = &param; \
-    }
-
-#define setpixparam(param) \
-    { \
-        if(!curpixparams[param.index] || memcmp(curpixparams[param.index]->val, param.val, sizeof(param.val))) \
-            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val); \
-        curpixparams[param.index] = &param; \
-    }
+    renderstate cur;
 
     for(vtxarray *va = visibleva; va; va = va->next)
     {
@@ -1603,136 +1758,23 @@ void renderq()
 
         if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
 
-        if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
-        if(renderpath!=R_FIXEDFUNCTION) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+        renderva(cur, va, lod, shadeonce);
 
-        glClientActiveTexture_(GL_TEXTURE1_ARB);
-        glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
-        glClientActiveTexture_(GL_TEXTURE0_ARB);
-
-        ushort *ebuf = lod.ebuf;
-        int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
-        Slot *lastslot = NULL;
-        loopi(lod.texs)
-        {
-            Slot &slot = lookuptexture(lod.eslist[i].texture);
-            Texture *tex = slot.sts[0].t;
-            Shader *s = slot.shader;
-           
-            extern vector<GLuint> lmtexids;
-            int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
-            if(curlm!=lastlm || !lastslot || s->type!=lastslot->shader->type)
-            {
-                if(curlm!=lastlm)
-                {
-                    glActiveTexture_(GL_TEXTURE1_ARB);
-                    glBindTexture(GL_TEXTURE_2D, curlm);
-                    lastlm = curlm;
-                };
-                if(renderpath!=R_FIXEDFUNCTION && s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
-                {
-                    glActiveTexture_(GL_TEXTURE2_ARB);
-                    glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
-                };
-                glActiveTexture_(GL_TEXTURE0_ARB);
-            };
-
-            if(&slot!=lastslot)
-            {
-                glBindTexture(GL_TEXTURE_2D, tex->gl);
-                if(s!=curshader) (curshader = s)->set();
-
-                if(renderpath!=R_FIXEDFUNCTION) 
-                {
-                    int tmu = s->type==SHADER_NORMALSLMS ? 3 : 2;
-                    loopvj(slot.sts)
-                    {
-                        Slot::Tex &t = slot.sts[j];
-                        if(t.type==TEX_DIFFUSE || t.combined>=0) continue;
-                        glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
-                        glBindTexture(GL_TEXTURE_2D, t.t->gl);
-                    };
-                    uint vertparams = 0, pixparams = 0;
-                    loopvj(slot.params)
-                    {
-                        const ShaderParam &param = slot.params[j];
-                        if(param.type == SHPARAM_VERTEX) 
-                        {
-                            setvertparam(param);
-                            vertparams |= 1<<param.index;
-                        }
-                        else 
-                        {
-                            setpixparam(param);
-                            pixparams |= 1<<param.index;
-                        };
-                    };
-                    loopvj(s->defaultparams)
-                    {
-                        const ShaderParam &param = s->defaultparams[j];
-                        if(param.type == SHPARAM_VERTEX) 
-                        {
-                            if(!(vertparams & (1<<param.index))) setvertparam(param);
-                        }
-                        else if(!(pixparams & (1<<param.index))) setpixparam(param);
-                    };
-                    glActiveTexture_(GL_TEXTURE0_ARB);
-                };
-                lastslot = &slot;
-            };
-
-            loopl(3) if (lod.eslist[i].length[l])
-            {
-                if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys)
-                {
-                    static int si[] = { 1, 0, 0 }; 
-                    static int ti[] = { 2, 2, 1 };
- 
-                    GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                    s[si[l]] = 8.0f/(tex->xs<<VVEC_FRAC);
-                    GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                    t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/(tex->ys<<VVEC_FRAC);
-
-                    if(renderpath==R_FIXEDFUNCTION)
-                    {
-                        glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
-                        glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
-                        // KLUGE: workaround for buggy nvidia drivers
-                        // object planes are somehow invalid unless texgen is toggled
-                        extern int nvidia_texgen_bug;
-                        if(nvidia_texgen_bug)
-                        {
-                            glDisable(GL_TEXTURE_GEN_S);
-                            glDisable(GL_TEXTURE_GEN_T);
-                            glEnable(GL_TEXTURE_GEN_S);
-                            glEnable(GL_TEXTURE_GEN_T);
-                        };
-                    }
-                    else
-                    {
-                        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);     // have to pass in env, otherwise same problem as fixed function
-                        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 1, t);
-                    };
-
-                    lastxs = tex->xs;
-                    lastys = tex->ys;
-                    lastl = l;
-                };
-                
-                if(s->type>=SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION) 
-                {
-                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, orientation_tangent[l]);     
-                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, orientation_binormal[l]);                    
-                };
-
-                glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
-                ebuf += lod.eslist[i].length[l];  // Advance to next array.
-                glde++;
-            };
-        };
-          
         if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
+    };
+
+    if(shadeonce) 
+    {
+        glDepthFunc(GL_LEQUAL);
+        for(vtxarray *va = visibleva; va; va = va->next)
+        {
+            if(va->occluded >= OCCLUDE_BB+oqpartial-1) continue;
+            setorigin(va, false);
+            lodlevel &lod = va->curlod ? va->l1 : va->l0;
+            if(!lod.texs) continue;
+            renderva(cur, va, lod);
+        };
+        glDepthFunc(GL_LESS);
     };
 
     glPopMatrix();
