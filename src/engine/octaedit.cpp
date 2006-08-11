@@ -170,7 +170,8 @@ bool noedit(bool view)
 
 COMMAND(reorient, "");
 COMMANDN(edittoggle, toggleedit, "");
-
+COMMAND(cancelsel, "");
+ICOMMAND(editdrag, "D", editdrag(args!=NULL));
 
 ///////// selection support /////////////
 
