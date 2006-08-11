@@ -1769,9 +1769,9 @@ void renderq()
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             if(va->occluded >= OCCLUDE_BB+oqpartial-1) continue;
-            setorigin(va, false);
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
             if(!lod.texs) continue;
+            setorigin(va, false);
             renderva(cur, va, lod);
         };
         glDepthFunc(GL_LESS);
