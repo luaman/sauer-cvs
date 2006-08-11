@@ -33,17 +33,20 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         cubes (using the "attack" command, normally MOUSE1), then use the commands
         below to modify the selection. While in edit mode, physics &amp; collision
         don't apply (noclip), and key repeat is ON.
+        <pre>editdrag</pre>
+        Select cubes and entities. (default: left mouse button)
+        <pre>cancelsel</pre>
+        Cancels out any explicit selection you currently have (default: space).
         <pre>editface D N</pre>
         This is the main editing command. D is the direction of the action, -1 for
         towards you, 1 for away from you. N=0 to push all corners in the white box. N=1
         create or destroy cubes. N=2 push or pull a corner you are pointing at.       
         <pre>gridpower N</pre>
-        Changes the size of the grid.        
+        Changes the size of the grid. (default: g + scrollwheel)
         <pre>edittex D</pre>
         Changes the texture on current selection by browsing through a list of textures
         directly shown on the cubes. D is the direction you want to cycle the textures
-        in (1 = forwards, -1 = backwards). By default bound to holding F and using the
-        mouse wheel.
+        in (1 = forwards, -1 = backwards). (default: y + scrollwheel)
         <br>
         <br>
         The way this works is slightly strange at first, but allows for very fast
@@ -54,29 +57,27 @@ pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
         lists are saved with the map.
         <PRE>gettex</PRE>
         <P>moves the texture on the current selection to the top of the texture list. Useful for quickly
-        texturing things using already textured geometry</P>        
+        texturing things using already textured geometry</P>  
         <pre>selextend</pre>
-        Extend current selection to include the cursor.        
+        Extend current selection to include the cursor. (default: b)  
         <PRE>passthrough</PRE>
         normally cubes of equal size to the grid are given priority when selecting.
         passthrough removes this priority while held down so that the cube the cursor is directly on is selected.   
-        Holding down passthrough will also give priority to cube over entities.
+        Holding down passthrough will also give priority to cube over entities. (default: ctrl)
         <pre>reorient</pre>
         Change the side the white box is on to be the same as where you are currently
-        pointing.
+        pointing. (default: shift)
         <pre>flip</pre>
         Flip (mirror) the selected cubes front to back relative to the side of the
-        white box. This will also flip the positions of any entites within the selection.
+        white box. This will also flip the positions of any entites within the selection. (default: x)
         <pre>rotate D</pre>
         Rotates the selection 90 degrees around the side of the white box.
         Automatically squares the selection if it isn't already.
-        This will also rotate the positions of any entites within the selection.
+        This will also rotate the positions of any entites within the selection. (default: r + scroll wheel)
         <pre>undo</pre>
-        Multi-level undo of any of the changes caused by the above operations (default
-        key = z [also u]).
+        Multi-level undo of any of the changes caused by the above operations (default: z [or u]).
         <pre>redo</pre>
-        Multi-level redo of any of the changes caused by the above undo (default
-        key = i).      
+        Multi-level redo of any of the changes caused by the above undo (default: i).      
         <pre>copy
 paste</pre>
         Copy copies the current selection into a buffer. For pasting, if the current
@@ -86,7 +87,7 @@ paste</pre>
 
         Copy will work on entities as well as cubes. However it does not work on both at the same time. 
         So if you select a set of cubes, the entities within that selection will not
-        be copied over on a paste.
+        be copied over on a paste. (default: c and v respectively)
         <pre>replace</pre>
         Repeats the last texture edit across the whole map. Only those faces with
         textures matching the one that was last edited will be
@@ -130,7 +131,7 @@ paste</pre>
         <a name="heightfield"></a>        
         <div>Heightfield</div>
         <pre>getheightmap</pre>
-        This command will turn any selection into a heightmap mode selection [default H]. When this
+        This command will turn any selection into a heightmap mode selection (default: H). When this
         happens the selection will turn green with the orientation and gridsize denoted
         by four corner squares on one side of the selection. When the selection enters heightmap
         mode, the cubes within the selection will mimic a heightmap and so the geometry within
@@ -144,10 +145,10 @@ paste</pre>
         rotate commands. This type of selection cannot currently be used in coop edit.
         <pre>selectbrush D</pre>
         This is not an actual engine command, but rather an alias which is defined
-        in data/brush.cfg. It is to be used as a modifier [default J], and switches between the
+        in data/brush.cfg. It is to be used as a modifier (default: J), and switches between the
         various brushes that have been saved within that config file.
         <pre>copybrush</pre>
-        This command [default K] copies the current heightmap mode selection and
+        This command (default: K) copies the current heightmap mode selection and
         saves it as a new brush. The current location of the cursor will turn into the
         new handle of the brush.
         <pre>savebrush name</pre>
@@ -177,7 +178,9 @@ paste</pre>
         on the entity). The types are defines below in the <a href="#entitytypes">Entity
             Types</a> section.
         <pre>entedit type    value1 value2 value3 value4</pre>
-        Change the type and attributes of the selected entity.        
+        Change the type and attributes of the selected entity.
+        <br><br>
+        To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
         <pre>delent</pre>
         deletes the selected entity to the player
         <pre>entproperty P A</pre>
@@ -189,6 +192,8 @@ paste</pre>
         <pre>replaceents type value1 value2 value3 value4</pre>
         Replaces the given values for the selected entity and all entities that are
         equal to the selected entity. 
+        <br><br>
+        To quickly bring up the replaceents command in the console press ',' (default: comma). It will come pre-filled with the values of the current entity selection.
         <pre>entdrop N</pre>
         variable controlling where entities created with "newent" will be placed.<br>
         N=0 place entities at your current eye position.<br>
@@ -242,7 +247,7 @@ paste</pre>
         Sets the 'handle' size of entities when trying to select them. 
         Larger sizes means it should be easier to select entities.
         <pre>entselsnap 0/1</pre>
-        Turns on snap-to-grid while draggin entities.
+        Turns on snap-to-grid while draggin entities. (default: 6)
         
 
 
