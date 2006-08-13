@@ -1697,8 +1697,6 @@ void renderq()
     loopi(renderpath!=R_FIXEDFUNCTION ? 8 : 2) { glActiveTexture_(GL_TEXTURE0_ARB+i); glEnable(GL_TEXTURE_2D); };
     glActiveTexture_(GL_TEXTURE0_ARB);
 
-    Shader *curshader = NULL;
-
     if(renderpath!=R_FIXEDFUNCTION)
     {
         glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(player->o, 1).mul(2).v);                        
@@ -1730,7 +1728,7 @@ void renderq()
                 {
                     if(va->query) 
                     {
-                        if(curshader!=nocolorshader) (curshader = nocolorshader)->set();
+                        if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
                         drawquery(va->query, va);
                     };
                     continue;
