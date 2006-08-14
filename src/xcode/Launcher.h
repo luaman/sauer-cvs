@@ -6,13 +6,18 @@
 {
     IBOutlet NSPopUpButton *resolutions;
     IBOutlet NSButton *fullscreen;
-    IBOutlet NSButton *shader;
+    IBOutlet NSSlider *shader;
 	IBOutlet NSButton *occlusion;
+	IBOutlet NSSlider *fsaa;
 	
 	IBOutlet NSButton *multiplayer;
 	IBOutlet ConsoleView *console;
 	IBOutlet NSTextField *serverOptions;
+
+	IBOutlet NSTextField *name;
+	IBOutlet NSTextField *team;
 	
+	IBOutlet NSArrayController *keys;
 @private
 	pid_t server;
 }
@@ -23,5 +28,6 @@
 
 - (IBAction)helpAction:(id)sender;
 
+- (IBAction)playRpg:(id)sender;
 
 @end

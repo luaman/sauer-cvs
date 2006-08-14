@@ -7,92 +7,6 @@
 #include <util.h> /* forkpty */
 
 #define kMaxDisplays	16
-#define MAX_BUFF		2000
-
-/* 
-* Read the 'oqfrags' param, will be set to empty string if file-not-found, or param-not-found
- * @NOTE ugly, but easily expanded for other things - name, team maybe?
- * @TODO fix potential buffer overflow in writing to oqfrags
- *
- */
-static void readAutoexec(const char *path, char *oqfrags)
-{
-	char buff[MAX_BUFF];
-	FILE *file = fopen(path, "r");
-	
-	if (file)
-	{
-		while (fgets(buff, MAX_BUFF, file) != NULL)
-		{
-			char *p = buff;		
-			
-			while ((*p != '\0') && (*p < ' ')) p++; //skipwhite
-			
-			if (strncmp(p, "oqfrags ", 8) == 0)
-			{
-				p+=8;
-				while ((*p != '\0') && (*p < ' ')) p++;//skipwhite
-				while (*p > ' ') *(oqfrags++) = *(p++);
-				break;
-			} 
-		}
-		fclose(file);
-	}
-	*oqfrags = '\0';
-}
-
-/* 
-* Updates the 'oqfrags' param (NULL will delete the param), will return 0 on success
- * - creates file if missing, preserves other lines if file already exists
- *
- */
-static int writeAutoexec(const char *path, char *oqfrags)
-{
-	char *oldpath;
-	//src will be non-null if the file exists
-	FILE *src = fopen(path, "r");
-	if(src) fclose(src);
-	
-	if(src)
-	{
-		oldpath = (char*)alloca(strlen(path+1));
-		strcpy(oldpath, path);
-		oldpath[strlen(oldpath)-4] = '\0';
-		strcat(oldpath, ".bak");
-		if(rename(path, oldpath) != 0) return -1; //can't update the file
-		src = fopen(oldpath, "r");
-	}
-	
-	FILE *dest = fopen(path, "w");
-	
-	if(dest)
-	{
-		if(src)
-		{ //copy lines across into new file
-			char buff[MAX_BUFF];
-			BOOL lf = NO;
-			while (fgets(buff, MAX_BUFF, src) != NULL)
-			{
-				char *p = buff;	
-				int len = strlen(buff) - 1;
-				lf = (len != -1) && (buff[len] == '\n');	
-				while ((*p != '\0') && (*p < ' ')) p++; //skipwhite 
-				if(strncmp(p, "oqfrags ", 8) == 0) continue; //skip line we want to update
-				fprintf(dest, buff);
-			}
-			if(!lf) fprintf(dest, "\n"); //ensure there is always a final LF
-		}
-		if(oqfrags) fprintf(dest, "oqfrags %s\n", oqfrags);
-		fclose(dest);
-	}
-	
-	if(src)
-	{
-		fclose(src);
-		unlink(oldpath); //delete old version
-	}	
-	return 0;
-}
 
 static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
@@ -109,6 +23,138 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 
 @implementation Launcher
+
+/* directory where the executable lives */
+-(NSString *)cwd {
+	return [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten"];
+}
+
+/* build key array from config data */
+-(NSArray *)getKeys:(NSDictionary *)dict 
+{	
+	NSMutableArray *arr = [[NSMutableArray alloc] init];
+	NSEnumerator *e = [dict keyEnumerator];
+	NSString *key;
+	while ((key = [e nextObject])) 
+	{
+		NSString *trig;
+		if([key hasPrefix:@"editbind"]) 
+			trig = [key substringFromIndex:9];
+		else if([key hasPrefix:@"bind"]) 
+			trig = [key substringFromIndex:5];
+		else 
+			continue;
+		[arr addObject:[NSDictionary dictionaryWithObjectsAndKeys: //keys used in nib
+			trig, @"key",
+			[key hasPrefix:@"editbind"]?@"edit":@"", @"mode",
+			[dict objectForKey:key], @"action",
+			nil]];
+	}
+	return arr;
+}
+
+
+/*
+ * extract a dictionary from the config files containing:
+ * - name, team, gamma, oqfrags strings
+ * - bind/editbind '.' key strings
+ */
+-(NSDictionary *)readConfigFiles 
+{
+	NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+	[dict setObject:@"" forKey:@"name"]; //ensure these entries are never nil
+	[dict setObject:@"" forKey:@"team"]; 
+		
+	NSString *files[] = {@"config.cfg", @"autoexec.cfg"};
+	int i;
+	for(i = 0; i < sizeof(files)/sizeof(NSString*); i++) 
+	{
+		NSString *file = [[self cwd] stringByAppendingPathComponent:files[i]];
+		NSArray *lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
+
+		if(i==0 && !lines)  // ugh - special case when first run...
+		{ 
+			file = [[self cwd] stringByAppendingPathComponent:@"data/defaults.cfg"];
+			lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
+		}
+		
+		NSString *line; 
+		NSEnumerator *e = [lines objectEnumerator];
+		while(line = [e nextObject]) 
+		{
+			NSRange r; // more flexible to do this manually rather than via NSScanner...
+			int j = 0;
+			while(j < [line length] && [line characterAtIndex:j] <= ' ') j++; //skip white
+			r.location = j;
+			while(j < [line length] && [line characterAtIndex:j] > ' ') j++; //until white
+			r.length = j - r.location;
+			NSString *type = [line substringWithRange:r];
+			
+			while(j < [line length] && [line characterAtIndex:j] <= ' ') j++; //skip white
+			if(j < [line length] && [line characterAtIndex:j] == '"') {
+				r.location = ++j;
+				while(j < [line length] && [line characterAtIndex:j] != '"') j++; //until close quote
+				r.length = (j++) - r.location;
+			} else {
+				r.location = j;
+				while(j < [line length] && [line characterAtIndex:j] > ' ') j++; //until white
+				r.length = j - r.location;
+			}
+			NSString *value = [line substringWithRange:r];
+
+			while(j < [line length] && [line characterAtIndex:j] <= ' ') j++; //skip white
+			NSString *remainder = [line substringFromIndex:j];
+			
+			if([type isEqual:@"name"] || [type isEqual:@"team"] || [type isEqual:@"gamma"] || [type isEqual:@"oqfrags"]) 
+				[dict setObject:value forKey:type];
+			else if([type isEqual:@"bind"] || [type isEqual:@"editbind"]) 
+				[dict setObject:remainder forKey:[NSString stringWithFormat:@"%@.%@", type,value]];
+		}
+	}
+	return dict;
+}
+
+-(void)updateAutoexecFile:(NSDictionary *)updates {
+	NSString *file = [[self cwd] stringByAppendingPathComponent:@"autoexec.cfg"];
+	//build the data 
+	NSString *result = nil;
+	NSArray *lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
+	if(lines) 
+	{
+		NSString *line; 
+		NSEnumerator *e = [lines objectEnumerator];
+		while(line = [e nextObject]) 
+		{
+			NSScanner *scanner = [NSScanner scannerWithString:line];
+			NSString *type;
+			if([scanner scanCharactersFromSet:[NSCharacterSet letterCharacterSet] intoString:&type])
+				if([updates objectForKey:type]) continue; //skip things declared in updates
+			result = (result) ? [NSString stringWithFormat:@"%@\n%@", result, line] : line;
+		}
+	}
+	NSEnumerator *e = [updates keyEnumerator];
+	NSString *type;
+	while(type = [e nextObject]) 
+	{
+		id value = [updates objectForKey:type];
+		if([type isEqual:@"name"] || [type isEqual:@"team"]) value = [NSString stringWithFormat:@"\"%@\"", value];
+		NSString *line = [NSString stringWithFormat:@"%@ %@", type, value];
+		result = (result) ? [NSString stringWithFormat:@"%@\n%@", result, line] : line;
+	}
+	//backup
+	NSFileManager *fm = [NSFileManager defaultManager];
+	NSString *backupfile = nil;
+	if([fm fileExistsAtPath:file]) {
+		backupfile = [file stringByAppendingString:@".bak"];
+		if(![fm movePath:file toPath:backupfile handler:nil]) return; //can't create backup
+	}	
+	//write the new file
+	if(![fm createFileAtPath:file contents:[result dataUsingEncoding:NSASCIIStringEncoding] attributes:nil]) return; //can't create new file		
+	//remove the backup
+	if(backupfile) [fm removeFileAtPath:backupfile handler:nil];
+}
+
+
 
 - (void)addResolutionsForDisplay:(CGDirectDisplayID)dspy 
 {
@@ -151,7 +197,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	} 
 	else
 	{	//START
-		NSString *cwd = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten"];
+		NSString *cwd = [self cwd];
 		NSArray *opts = [[serverOptions stringValue] componentsSeparatedByString:@" "];
 		
 		const char *childCwd  = [cwd fileSystemRepresentation];
@@ -217,26 +263,36 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	}
 }
 
+/*
+ * nil will just launch the fps game
+ * "-rpg" will launch the rpg demo
+ * otherwise we are specifying a map to play
+ */
 - (BOOL)playFile:(NSString*)filename
 {
 	NSArray *res = [[resolutions titleOfSelectedItem] componentsSeparatedByString:@" x "];	
 	NSMutableArray *args = [[NSMutableArray alloc] init];
-	NSString *cwd = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten"];
+	NSString *cwd = [self cwd];
 	
-	writeAutoexec([[cwd stringByAppendingPathComponent:@"autoexec.cfg"] fileSystemRepresentation], ([occlusion state] == NSOffState) ? "0" : NULL);
-	
+	//suppose could use this to update gamma and keys too, but can't be bothered...
+	[self updateAutoexecFile:[NSDictionary dictionaryWithObjectsAndKeys:
+		[NSNumber numberWithInt:([occlusion state] == NSOffState) ? 0 : 1], @"oqfrags",
+		[name stringValue], @"name",
+		[team stringValue], @"team",
+		nil]];
+
 	[args addObject:[NSString stringWithFormat:@"-w%@", [res objectAtIndex:0]]];
 	[args addObject:[NSString stringWithFormat:@"-h%@", [res objectAtIndex:1]]];
-	
-	[args addObject:@"-z32"];
+	[args addObject:@"-z32"]; 
 	
 	if([fullscreen state] == NSOffState) [args addObject:@"-t"];
-	if([shader state] == NSOffState) [args addObject:@"-f"];
-	if(filename)
-	{
-		if([filename hasSuffix:@".ogz"]) filename = [filename substringToIndex:[filename length]-4];
+	[args addObject:[NSString stringWithFormat:@"-a%d", [fsaa intValue]]];
+	[args addObject:[NSString stringWithFormat:@"-f%d", [shader intValue]]];
+	
+	if([filename isEqual:@"-rpg"])
+		[args addObject:@"-grpg"]; //demo the rpg game
+	else if(filename) 
 		[args addObject:[NSString stringWithFormat:@"-l%@",filename]];
-	}
 	
 	NSTask *task = [[NSTask alloc] init];
 	[task setCurrentDirectoryPath:cwd];
@@ -262,6 +318,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (IBAction)playAction:(id)sender { [self playFile:nil]; }
 
+- (IBAction)playRpg:(id)sender { [self playFile:@"-rpg"]; }
+
 - (IBAction)helpAction:(id)sender
 {
 	NSString *file = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"README.html"];
@@ -286,10 +344,12 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         [self addResolutionsForDisplay:display[i]];
 	[resolutions selectItemAtIndex: [[NSUserDefaults standardUserDefaults] integerForKey:@"resolution"]];
 	
-	char oqfrags[50];
-	NSString *cwd = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten"];
-	readAutoexec([[cwd stringByAppendingPathComponent:@"autoexec.cfg"] fileSystemRepresentation], oqfrags);
-	[occlusion setState:((strncmp(oqfrags, "0", 1) == 0) ? NSOffState : NSOnState)];
+	NSDictionary *dict = [self readConfigFiles];
+	
+	[keys addObjects:[self getKeys:dict]];
+	[occlusion setState:([[dict objectForKey:@"oqfrags"] intValue] == 0) ? NSOffState : NSOnState];
+	[name setStringValue:[dict objectForKey:@"name"]];
+	[team setStringValue:[dict objectForKey:@"team"]];
 	
 	[serverOptions setFocusRingType:NSFocusRingTypeNone];
 	
@@ -309,14 +369,16 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 //we register 'ogz' as a doc type
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
-	NSString *cwd = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten/packages"];
+	NSString *cwd = [[self cwd] stringByAppendingPathComponent:@"packages"];
 	if(![filename hasPrefix:cwd])
 	{
-		NSRunAlertPanel(@"Error", @"Can only load maps that are within the sauerbraten/packages/ folder.", @"OK", NULL, NULL);
+		if(NSRunAlertPanel(@"Can only load maps that are within the sauerbraten/packages/ folder.", @"Do you want to show this folder?", @"Ok", @"Cancel", nil))
+			[[NSWorkspace sharedWorkspace] selectFile:cwd inFileViewerRootedAtPath:@""];
 		//@TODO give user option to copy it into the packages folder?
 		return NO;
 	}
 	filename = [filename substringFromIndex:[cwd length]+1]; //+1 to skip the leading '/'
+	if([filename hasSuffix:@".ogz"]) filename = [filename substringToIndex:[filename length]-4]; //chop .ogz
 	return [self playFile:filename];
 }
 @end

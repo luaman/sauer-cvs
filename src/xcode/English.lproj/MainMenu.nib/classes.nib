@@ -9,17 +9,21 @@
         }, 
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
         {
-            ACTIONS = {helpAction = id; multiplayerAction = id; playAction = id; }; 
+            ACTIONS = {helpAction = id; multiplayerAction = id; playAction = id; playRpg = id; }; 
             CLASS = Launcher; 
             LANGUAGE = ObjC; 
             OUTLETS = {
                 console = ConsoleView; 
+                fsaa = NSSlider; 
                 fullscreen = NSButton; 
+                keys = NSArrayController; 
                 multiplayer = NSButton; 
+                name = NSTextField; 
                 occlusion = NSButton; 
                 resolutions = NSPopUpButton; 
                 serverOptions = NSTextField; 
-                shader = NSButton; 
+                shader = NSSlider; 
+                team = NSTextField; 
             }; 
             SUPERCLASS = NSObject; 
         }
