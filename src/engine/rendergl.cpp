@@ -189,7 +189,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     };
 
     extern int floatvtx;
-    if(strstr(vendor, "ATI")) floatvtx = 1;
+    if(strstr(vendor, "ATI") || strstr(vendor, "Tungsten")) floatvtx = 1;
     if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
 
     if(!shaderprecision || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
