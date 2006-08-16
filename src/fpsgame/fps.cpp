@@ -396,6 +396,9 @@ struct fpsclient : igameclient
 
         // reset perma-state
         player1->frags = 0;
+        player1->deaths = 0;
+        player1->totaldamage = 0;
+        player1->totalshots = 0;
         player1->maxhealth = 100;
         loopv(players) if(players[i])
         {
