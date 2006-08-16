@@ -1113,8 +1113,6 @@ bool insideva(const vtxarray *va, const vec &v)
     return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
 };
 
-VAR(oqpartial, 0, 10, 100);
-
 void setorigin(vtxarray *va, bool init)
 {
     static ivec origin;
@@ -1141,7 +1139,7 @@ void rendersky(bool explicitonly)
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(va->occluded >= OCCLUDE_BB+oqpartial || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
+        if(va->occluded >= OCCLUDE_BB || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
 
         setorigin(va, !sky++);
 
@@ -1216,7 +1214,6 @@ void resetqueries()
 };
 
 VAR(oqfrags, 0, 8, 64);
-VAR(oqdist, 0, 256, 1024);
 
 bool checkquery(occludequery *query)
 {
@@ -1289,7 +1286,7 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
         if(c[j].va)
         {
             vtxarray *va = c[j].va;
-            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB+oqpartial) continue;
+            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) continue;
         };
         if(c[j].ents)
         {
@@ -1443,7 +1440,7 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
         if(c[i].va)
         {
             vtxarray *va = c[i].va;
-            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB+oqpartial) continue;
+            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) continue;
         };
         if(c[i].children && bboccluded(bo, br, c[i].children, co, size>>1)) continue;
         return false;
@@ -1473,7 +1470,7 @@ void renderoutline()
         setorigin(va, va == visibleva);
 
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
-        if(!lod.texs || va->occluded >= OCCLUDE_BB+oqpartial) continue;
+        if(!lod.texs || va->occluded >= OCCLUDE_BB) continue;
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
@@ -1668,7 +1665,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     };
 };
 
-VAR(shadeonce, 0, 0, 1);
+VAR(zpass, 0, 1, 1);
 
 void renderq()
 {
@@ -1717,28 +1714,19 @@ void renderq()
 
         glColor4f(1, 1, 1, 1);
 
-        if(hasOQ && oqfrags > 0 && va->distance > oqdist && !insideva(va, camera1->o))
+        if(hasOQ && oqfrags && !insideva(va, camera1->o))
         {
-            if(va->query && va->query->owner == va && checkquery(va->query))
+            if(va->occluded >= OCCLUDE_GEOM)
             {
                 va->query = newquery(va);
-                if(va->prevvfc == VFC_FULL_VISIBLE) va->occluded = OCCLUDE_BB+oqpartial-(va->occluded ? 0 : 1);
-                else va->occluded = min(va->occluded+1, OCCLUDE_BB+oqpartial);
-                if(va->occluded >= OCCLUDE_BB+oqpartial-1)
+                if(va->query) 
                 {
-                    if(va->query) 
-                    {
-                        if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
-                        drawquery(va->query, va);
-                    };
-                    continue;
+                    if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
+                    drawquery(va->query, va);
                 };
+                continue;
             }
-            else
-            {
-                va->query = newquery(va);
-                va->occluded = OCCLUDE_NOTHING;
-            };
+            else va->query = newquery(va);
         }
         else
         {
@@ -1756,19 +1744,22 @@ void renderq()
 
         if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
 
-        renderva(cur, va, lod, shadeonce);
+        renderva(cur, va, lod, zpass);
 
         if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
     };
 
-    if(shadeonce) 
+    if(hasOQ && oqfrags) for(vtxarray *va = visibleva; va; va = va->next)
+    {
+        if(va->query && va->query->owner == va) va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
+    };
+    if(zpass) 
     {
         glDepthFunc(GL_LEQUAL);
         for(vtxarray *va = visibleva; va; va = va->next)
         {
-            if(va->occluded >= OCCLUDE_BB+oqpartial-1) continue;
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
-            if(!lod.texs) continue;
+            if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
             setorigin(va, false);
             renderva(cur, va, lod);
         };
@@ -1805,7 +1796,7 @@ void rendermaterials()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
-        if(lod.matsurfs && va->occluded < OCCLUDE_BB+oqpartial) rendermatsurfs(lod.matbuf, lod.matsurfs);
+        if(lod.matsurfs && va->occluded < OCCLUDE_BB) rendermatsurfs(lod.matbuf, lod.matsurfs);
     };
 
     if(editmode && showmat)
@@ -1815,7 +1806,7 @@ void rendermaterials()
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->l0;
-            if(lod.matsurfs && va->occluded < OCCLUDE_BB+oqpartial) rendermatgrid(lod.matbuf, lod.matsurfs);
+            if(lod.matsurfs && va->occluded < OCCLUDE_BB) rendermatgrid(lod.matbuf, lod.matsurfs);
         };
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     };
