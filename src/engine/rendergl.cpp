@@ -230,9 +230,14 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             conoutf("Using GL_ARB_occlusion_query extension.");
         };
     };
-    if(!hasOQ) conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
+    if(!hasOQ)
+    {
+        conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
+        extern int zpass;
+        if(renderpath==R_FIXEDFUNCTION) zpass = 0;
+    };
 
-    if(renderpath == R_ASMSHADER)
+    if(renderpath==R_ASMSHADER)
     {
         if(strstr(exts, "GL_ARB_texture_rectangle"))
         {
