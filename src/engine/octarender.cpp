@@ -1665,6 +1665,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     };
 };
 
+VAR(oqdist, 0, 256, 1024);
 VAR(zpass, 0, 1, 1);
 
 void renderq()
@@ -1714,7 +1715,7 @@ void renderq()
 
         glColor4f(1, 1, 1, 1);
 
-        if(hasOQ && oqfrags && !insideva(va, camera1->o))
+        if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
         {
             if(va->occluded >= OCCLUDE_GEOM)
             {
