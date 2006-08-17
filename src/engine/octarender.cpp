@@ -1730,14 +1730,20 @@ void renderq()
 
     renderstate cur;
 
+    glColor4f(1, 1, 1, 1);
+
     for(vtxarray *va = visibleva; va; va = va->next)
     {
-        setorigin(va, va == visibleva);
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(!lod.texs) continue;
 
-        glColor4f(1, 1, 1, 1);
+        setorigin(va, !cur.shader);
+
+        //glColor4f(1, 1, 1, 1);
 
         if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
         {
+            if(!zpass && va->query && va->query->owner == va) va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
             if(va->occluded >= OCCLUDE_GEOM)
             {
                 va->query = newquery(va);
@@ -1756,9 +1762,6 @@ void renderq()
             va->occluded = OCCLUDE_NOTHING;
         };
 
-        lodlevel &lod = va->curlod ? va->l1 : va->l0;
-        if(!lod.texs) continue;
-
         vtris += lod.tris;
         vverts += va->verts;
 
@@ -1771,17 +1774,18 @@ void renderq()
         if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
     };
 
-    if(hasOQ && oqfrags) for(vtxarray *va = visibleva; va; va = va->next)
-    {
-        if(va->query && va->query->owner == va) va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
-    };
     if(zpass) 
     {
         glDepthFunc(GL_LEQUAL);
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
-            if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
+            if(!lod.texs) continue;
+            if(va->query && va->query->owner == va)
+            {
+                va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
+                if(va->occluded >= OCCLUDE_GEOM) continue;
+            };
             setorigin(va, false);
             renderva(cur, va, lod);
         };
