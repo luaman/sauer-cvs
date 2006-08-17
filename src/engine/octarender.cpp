@@ -1057,12 +1057,18 @@ float vadist(vtxarray *va, vec &p)
     return p.dist_to_bb(va->min.tovec(), va->max.tovec());
 };
 
+#define VASORTSIZE 64
+
+static vtxarray *vasort[VASORTSIZE];
+
 void addvisibleva(vtxarray *va)
 {
     va->distance = int(vadist(va, camera1->o)); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
     va->curlod   = lodsize==0 || va->distance<loddistance ? 0 : 1;
 
-    vtxarray **prev = &visibleva, *cur = visibleva;
+    int hash = min(va->distance*VASORTSIZE/hdr.worldsize, VASORTSIZE-1);
+    vtxarray **prev = &vasort[hash], *cur = vasort[hash];
+
     while(cur && va->distance > cur->distance)
     {
         prev = &cur->next;
@@ -1073,9 +1079,22 @@ void addvisibleva(vtxarray *va)
     *prev = va;
 };
 
+void sortvas()
+{
+    visibleva = NULL; 
+    vtxarray **last = &visibleva;
+    loopi(VASORTSIZE) if(vasort[i])
+    {
+        vtxarray *va = vasort[i];
+        *last = va;
+        while(va->next) va = va->next;
+        last = &va->next;
+    };
+};
+
 void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
 {
-    visibleva = NULL;
+    memset(vasort, 0, sizeof(vasort));
 
     // Calculate view frustrum: Only changes if resize, but...
     float fov = getvar("fov");
@@ -1106,6 +1125,8 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
             v.query = NULL;
         };
     };
+
+    sortvas();
 };
 
 bool insideva(const vtxarray *va, const vec &v)
@@ -1275,11 +1296,11 @@ void drawquery(occludequery *query, vtxarray *va)
 
 extern int octaentsize;
 
-static octaentities *visibleents, **lastvisibleents;
+static octaentities *visiblemms, **lastvisiblemms;
 
-void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *> &ents)
+void findvisiblemms(cube *c, const ivec &o, int size, const vector<extentity *> &ents)
 {
-    loopj(8)
+    loopj(8) if(c[j].flags&CUBE_MAPMODELS)
     {
         ivec co(j, o.x, o.y, o.z, size);
 
@@ -1299,8 +1320,8 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
                 oe->distance = -1;
 
                 oe->next = NULL;
-                *lastvisibleents = oe;
-                lastvisibleents = &oe->next;
+                *lastvisiblemms = oe;
+                lastvisiblemms = &oe->next;
             }
             else
             {
@@ -1316,19 +1337,19 @@ void findvisibleents(cube *c, const ivec &o, int size, const vector<extentity *>
 
                 oe->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
 
-                octaentities **prev = &visibleents, *cur = visibleents;
+                octaentities **prev = &visiblemms, *cur = visiblemms;
                 while(cur && cur->distance >= 0 && oe->distance > cur->distance)
                 {
                     prev = &cur->next;
                     cur = cur->next;
                 };
 
-                if(*prev == NULL) lastvisibleents = &oe->next;
+                if(*prev == NULL) lastvisiblemms = &oe->next;
                 oe->next = *prev;
                 *prev = oe;
             };
         };
-        if(c[j].children && size > octaentsize) findvisibleents(c[j].children, co, size>>1, ents);
+        if(c[j].children && size > octaentsize) findvisiblemms(c[j].children, co, size>>1, ents);
     };
 };
 
@@ -1340,13 +1361,13 @@ void rendermapmodels()
 {
     const vector<extentity *> &ents = et->getents();
 
-    visibleents = NULL;
-    lastvisibleents = &visibleents;
-    findvisibleents(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, ents);
+    visiblemms = NULL;
+    lastvisiblemms = &visiblemms;
+    findvisiblemms(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, ents);
 
     static int visible = 0;
 
-    for(octaentities *oe = visibleents; oe; oe = oe->next)
+    for(octaentities *oe = visiblemms; oe; oe = oe->next)
     {
         bool occluded = oe->distance < 0;
         if(!occluded)

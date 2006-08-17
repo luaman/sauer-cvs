@@ -13,6 +13,7 @@ cube *newcubes(uint face)
     {
         c->material = MAT_AIR;
         c->visible = 0;
+        c->flags = 0;
         c->children = NULL;
         c->va = NULL;
         setfaces(*c, face);

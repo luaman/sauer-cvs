@@ -86,6 +86,11 @@ struct octaentities
     octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
 };
 
+enum
+{
+    CUBE_MAPMODELS = 1<<0, // whether the cube or any of its children have mapmodels
+};
+
 struct cube
 {
     cube *children;          // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
@@ -98,6 +103,8 @@ struct cube
     ushort texture[6];       // one for each face. same order as orient.
     uchar material;          // empty-space material
     uchar visible;           // visible faces of the cube
+    uchar flags;             // miscellaneous flags
+    uchar reserved;
     vtxarray *va;            // vertex array for children, or NULL
     clipplanes *clip;        // collision planes
     surfaceinfo *surfaces;   // lighting info for each surface

@@ -65,7 +65,13 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
             if(c[i].ents->mapmodels.empty() && c[i].ents->other.empty())
                 freeoctaentities(c[i]);
         };
-        if(c[i].ents) c[i].ents->query = NULL;
+        c[i].flags &= ~CUBE_MAPMODELS;
+        if(c[i].ents) 
+        {
+            c[i].ents->query = NULL;
+            if(c[i].ents->mapmodels.length()) c[i].flags |= CUBE_MAPMODELS;
+        };
+        if(c[i].children && !(c[i].flags&CUBE_MAPMODELS)) loopj(8) c[i].flags |= c[i].children[j].flags&CUBE_MAPMODELS;
     };
 };
 
