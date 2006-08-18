@@ -733,7 +733,7 @@ void genfloatverts(fvertex *f)
 
 int allocva = 0;
 int wtris = 0, wverts = 0, vtris = 0, vverts = 0, glde = 0;
-vector<vtxarray *> valist;
+vector<vtxarray *> valist, varoot;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
@@ -764,6 +764,8 @@ vtxarray *newva(int x, int y, int z, int size)
         else memcpy(va->vbuf, verts.getbuf(), bufsize);
     };
 
+    va->parent = NULL;
+    new (&va->children) vector<vtxarray *>;
     va->allocsize = allocsize;
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->explicitsky = explicitsky;
@@ -778,21 +780,33 @@ vtxarray *newva(int x, int y, int z, int size)
     return va;
 };
 
-void destroyva(vtxarray *va)
+void destroyva(vtxarray *va, bool reparent)
 {
     if(hasVBO && va->vbufGL) glDeleteBuffers_(1, (GLuint*)&(va->vbufGL));
     wverts -= va->verts;
     wtris -= va->l0.tris;
     allocva--;
     valist.removeobj(va);
-    delete[] va;
+    if(!va->parent) varoot.removeobj(va);
+    if(reparent)
+    {
+        if(va->parent) va->parent->children.removeobj(va);
+        loopv(va->children)
+        {
+            vtxarray *child = va->children[i];
+            child->parent = va->parent;
+            if(child->parent) child->parent->children.add(va);
+        };
+    };
+    va->children.~vector<vtxarray *>();
+    delete[] (uchar *)va;
 };
 
 void vaclearc(cube *c)
 {
     loopi(8)
     {
-        if(c[i].va) destroyva(c[i].va);
+        if(c[i].va) destroyva(c[i].va, false);
         c[i].va = NULL;
         if(c[i].children) vaclearc(c[i].children);
     };
@@ -897,12 +911,26 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     int ccount = 0;
     loopi(8)                                    // counting number of semi-solid/solid children cubes
     {
-        int count = 0;
+        int count = 0, childpos = varoot.length();
         ivec o(i, cx, cy, cz, size);
-        if(c[i].va) {}//count += vacubemax+1;       // since must already have more then max cubes
+        if(c[i].va) 
+        {
+            //count += vacubemax+1;       // since must already have more then max cubes
+            varoot.add(c[i].va);
+        }
         else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi+1);
         else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || size == min(VVEC_INT_MASK+1, hdr.worldsize/2)) setva(c[i], o.x, o.y, o.z, size, csi);
+        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || (count && size == min(VVEC_INT_MASK+1, hdr.worldsize/2))) 
+        {
+            setva(c[i], o.x, o.y, o.z, size, csi);
+            while(varoot.length() > childpos)
+            {
+                vtxarray *child = varoot.pop();
+                c[i].va->children.add(child);
+                child->parent = c[i].va;
+            };
+            varoot.add(c[i].va);
+        }
         else ccount += count;
     };
 
@@ -994,6 +1022,7 @@ void octarender()                               // creates va s for all leaf cub
     if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2);
 
     recalcprogress = 0;
+    varoot.setsizenodelete(0);
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2, 0);
 
     explicitsky = 0;
@@ -1079,7 +1108,7 @@ void addvisibleva(vtxarray *va)
     *prev = va;
 };
 
-void sortvas()
+void sortvisiblevas()
 {
     visibleva = NULL; 
     vtxarray **last = &visibleva;
@@ -1089,6 +1118,26 @@ void sortvas()
         *last = va;
         while(va->next) va = va->next;
         last = &va->next;
+    };
+};
+
+void findvisiblevas(vector<vtxarray *> &vas)
+{
+    loopv(vas)
+    {
+        vtxarray &v = *vas[i];
+        v.prevvfc = v.curvfc;
+        v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);
+        if(v.curvfc!=VFC_NOT_VISIBLE) 
+        {
+            addvisibleva(&v);
+            if(v.children.length()) findvisiblevas(v.children);
+        }
+        else
+        {
+            v.occluded = OCCLUDE_NOTHING;
+            v.query = NULL;
+        };
     };
 };
 
@@ -1113,20 +1162,8 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_
     vfcP[4].toplane(vec(yaw,  pitchm), camera1->o); // bottom plane
     vfcDfog = getvar("fog");
 
-    loopv(valist)
-    {
-        vtxarray &v = *valist[i];
-        v.prevvfc = v.curvfc;
-        v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);
-        if(v.curvfc!=VFC_NOT_VISIBLE) addvisibleva(&v);
-        else
-        {
-            v.occluded = OCCLUDE_NOTHING;
-            v.query = NULL;
-        };
-    };
-
-    sortvas();
+    findvisiblevas(varoot);
+    sortvisiblevas();
 };
 
 bool insideva(const vtxarray *va, const vec &v)
@@ -2046,26 +2083,21 @@ void remipworld()
 
 COMMANDN(remip, remipworld, "");
 
-void finddepth(cube *c, int *roots, int &total, int &maxdepth, int depth)
+void finddepth(vector<vtxarray *> &vas, int *roots, int &total, int &maxdepth, int depth)
 {
-    loopi(8)
+    loopv(vas)
     {
-        int cdepth = depth;
-        if(c[i].va)
-        {
-            cdepth++;
-            total++;
-            if(depth<=2) roots[depth]++;
-            maxdepth = max(maxdepth, cdepth);
-        };
-        if(c[i].children) finddepth(c[i].children, roots, total, maxdepth, cdepth);
+        total++;
+        if(depth<=2) roots[depth]++;
+        maxdepth = max(maxdepth, depth+1);
+        if(vas[i]->children.length()) finddepth(vas[i]->children, roots, total, maxdepth, depth+1);
     };
 };
 
 void vadepth()
 {
     int roots[3] = {0, 0, 0}, total = 0, maxdepth = 0;
-    finddepth(worldroot, roots, total, maxdepth, 0);
+    finddepth(varoot, roots, total, maxdepth, 0);
     printf("lvl 1: %d, lvl 2: %d, lvl 3: %d, total: %d, maxdepth: %d\n", roots[0], roots[1], roots[2], total, maxdepth);
 };
 

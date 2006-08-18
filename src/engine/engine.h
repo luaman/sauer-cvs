@@ -188,7 +188,7 @@ extern void converttovectorworld();
 
 extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
-extern void destroyva(vtxarray *va);
+extern void destroyva(vtxarray *va, bool reparent = true);
 extern int faceverts(cube &c, int orient, int vert);
 extern void calcvert(cube &c, int x, int y, int z, int size, vvec &vert, int i, bool solid = false);
 extern void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube);
