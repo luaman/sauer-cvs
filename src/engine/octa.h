@@ -35,7 +35,8 @@ enum
 {
     OCCLUDE_NOTHING = 0,
     OCCLUDE_GEOM,
-    OCCLUDE_BB
+    OCCLUDE_BB,
+    OCCLUDE_PARENT
 };
 
 struct vtxarray

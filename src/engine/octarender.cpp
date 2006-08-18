@@ -1781,7 +1781,16 @@ void renderq()
         if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
         {
             if(!zpass && va->query && va->query->owner == va) va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
-            if(va->occluded >= OCCLUDE_GEOM)
+            if(zpass && va->parent && (va->parent->occluded == OCCLUDE_PARENT || (va->parent->occluded >= OCCLUDE_BB && va->parent->query && va->parent->query->owner == va->parent && va->parent->query->fragments < 0)))
+            {
+                va->query = NULL;
+                if(va->occluded >= OCCLUDE_GEOM)
+                {
+                    va->occluded = OCCLUDE_PARENT;
+                    continue;
+                };
+            }
+            else if(va->occluded >= OCCLUDE_GEOM)
             {
                 va->query = newquery(va);
                 if(va->query) 
@@ -1818,11 +1827,18 @@ void renderq()
         {
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
             if(!lod.texs) continue;
-            if(va->query && va->query->owner == va)
+            if(va->parent && va->parent->occluded >= OCCLUDE_BB && (!va->parent->query || va->parent->query->fragments >= 0)) 
+            {
+                va->query = NULL;
+                va->occluded = OCCLUDE_BB;
+                continue;
+            }
+            else if(va->query)
             {
                 va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
                 if(va->occluded >= OCCLUDE_GEOM) continue;
-            };
+            }
+            else if(va->occluded == OCCLUDE_PARENT) va->occluded = OCCLUDE_NOTHING;
             setorigin(va, false);
             renderva(cur, va, lod);
         };
