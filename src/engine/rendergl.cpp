@@ -915,7 +915,7 @@ void gl_drawframe(int w, int h, float curfps)
     glEnable(GL_TEXTURE_GEN_T);
     if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
 
-    renderq();
+    rendergeom();
 
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);

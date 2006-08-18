@@ -1313,24 +1313,6 @@ void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o)
     glEnd();
 };
 
-void drawquery(occludequery *query, vtxarray *va)
-{
-    glDepthMask(GL_FALSE);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
-
-    ivec origin(va->x, va->y, va->z);
-    origin.mask(~VVEC_INT_MASK);
-
-    drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC),
-           ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
-           vec(camera1->o).sub(origin.tovec()).mul(1<<VVEC_FRAC));
-
-    glEndQuery_(GL_SAMPLES_PASSED_ARB);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
-};
-
 extern int octaentsize;
 
 static octaentities *visiblemms, **lastvisiblemms;
@@ -1528,14 +1510,12 @@ void renderoutline()
         setorigin(va, va == visibleva);
 
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
-        if(!lod.texs || va->occluded >= OCCLUDE_BB) continue;
+        if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
-        int quads = 0;
-        loopi(lod.texs) loopl(3) quads += lod.eslist[i].length[l];
-        glDrawElements(GL_QUADS, quads, GL_UNSIGNED_SHORT, lod.ebuf);
+        glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
     };
 
@@ -1556,10 +1536,11 @@ float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 
 struct renderstate
 {
+    bool colormask, depthmask;
     Shader *shader;
     const ShaderParam *vertparams[MAXSHADERPARAMS], *pixparams[MAXSHADERPARAMS];
 
-    renderstate() : shader(NULL)
+    renderstate() : colormask(true), depthmask(true), shader(NULL)
     {
         memset(vertparams, 0, sizeof(vertparams));
         memset(pixparams, 0, sizeof(pixparams));
@@ -1580,25 +1561,46 @@ struct renderstate
         cur.pixparams[param.index] = &param; \
     }
 
+void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
+{
+    if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
+    if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
+    if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); };
+
+    glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
+
+    ivec origin(va->x, va->y, va->z);
+    origin.mask(~VVEC_INT_MASK);
+
+    drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC),
+           ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
+           vec(camera1->o).sub(origin.tovec()).mul(1<<VVEC_FRAC));
+
+    glEndQuery_(GL_SAMPLES_PASSED_ARB);
+};
+
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
     glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
-    if(renderpath!=R_FIXEDFUNCTION) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
-
-    glClientActiveTexture_(GL_TEXTURE1_ARB);
-    glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
-    glClientActiveTexture_(GL_TEXTURE0_ARB);
+    if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
 
     if(zfill)
     {
         if(cur.shader != nocolorshader) (cur.shader = nocolorshader)->set();
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
         glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         return;
     };
+
+    if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
+    if(renderpath!=R_FIXEDFUNCTION) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n)
+: &(va->vbuf[0].n));
+
+    glClientActiveTexture_(GL_TEXTURE1_ARB);
+    glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
+    glClientActiveTexture_(GL_TEXTURE0_ARB);
     
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
@@ -1726,12 +1728,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 VAR(oqdist, 0, 256, 1024);
 VAR(zpass, 0, 1, 1);
 
-void renderq()
+void setupTMUs()
 {
-    glEnableClientState(GL_VERTEX_ARRAY);
     if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
-
-    //int showvas = 0;
 
     setupTMU();
 
@@ -1755,9 +1754,20 @@ void renderq()
 
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(player->o, 1).mul(2).v);                        
+        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(player->o, 1).mul(2).v);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
     };
+
+    glColor4f(1, 1, 1, 1);
+};
+
+void rendergeom()
+{
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    //int showvas = 0;
+
+    if(!zpass) setupTMUs();
 
     flipqueries();
 
@@ -1766,8 +1776,6 @@ void renderq()
     glPushMatrix();
 
     renderstate cur;
-
-    glColor4f(1, 1, 1, 1);
 
     for(vtxarray *va = visibleva; va; va = va->next)
     {
@@ -1793,11 +1801,7 @@ void renderq()
             else if(va->occluded >= OCCLUDE_GEOM)
             {
                 va->query = newquery(va);
-                if(va->query) 
-                {
-                    if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
-                    drawquery(va->query, va);
-                };
+                if(va->query)  renderquery(cur, va->query, va);
                 continue;
             }
             else va->query = newquery(va);
@@ -1808,8 +1812,11 @@ void renderq()
             va->occluded = OCCLUDE_NOTHING;
         };
 
-        vtris += lod.tris;
-        vverts += va->verts;
+        if(!zpass)
+        {
+            vtris += lod.tris;
+            vverts += va->verts;
+        };
 
         //if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
 
@@ -1820,8 +1827,11 @@ void renderq()
         if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
     };
 
+    if(!cur.colormask) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    if(!cur.depthmask) glDepthMask(GL_TRUE);
     if(zpass) 
     {
+        setupTMUs();
         glDepthFunc(GL_LEQUAL);
         for(vtxarray *va = visibleva; va; va = va->next)
         {
@@ -1839,6 +1849,10 @@ void renderq()
                 if(va->occluded >= OCCLUDE_GEOM) continue;
             }
             else if(va->occluded == OCCLUDE_PARENT) va->occluded = OCCLUDE_NOTHING;
+
+            vtris += lod.tris;
+            vverts += va->verts;
+
             setorigin(va, false);
             renderva(cur, va, lod);
         };

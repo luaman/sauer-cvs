@@ -179,7 +179,7 @@ extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, i
 extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
 extern void octarender();
 extern void rendermapmodels();
-extern void renderq();
+extern void rendergeom();
 extern void renderoutline();
 extern void allchanged();
 extern void rendermaterials();
