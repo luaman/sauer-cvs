@@ -2045,3 +2045,30 @@ void remipworld()
 };
 
 COMMANDN(remip, remipworld, "");
+
+void finddepth(cube *c, int *roots, int &total, int &maxdepth, int depth)
+{
+    loopi(8)
+    {
+        int cdepth = depth;
+        if(c[i].va)
+        {
+            cdepth++;
+            total++;
+            if(depth<=2) roots[depth]++;
+            maxdepth = max(maxdepth, cdepth);
+        };
+        if(c[i].children) finddepth(c[i].children, roots, total, maxdepth, cdepth);
+    };
+};
+
+void vadepth()
+{
+    int roots[3] = {0, 0, 0}, total = 0, maxdepth = 0;
+    finddepth(worldroot, roots, total, maxdepth, 0);
+    printf("lvl 1: %d, lvl 2: %d, lvl 3: %d, total: %d, maxdepth: %d\n", roots[0], roots[1], roots[2], total, maxdepth);
+};
+
+COMMAND(vadepth, "");
+
+       
