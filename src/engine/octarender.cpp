@@ -1505,18 +1505,21 @@ void renderoutline()
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3f(0, 0, 0);
 
+    int outlined = 0;
+    
     for(vtxarray *va = visibleva; va; va = va->next)
     {
-        setorigin(va, va == visibleva);
-
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
+
+        setorigin(va, !outlined++);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
+        xtravertsva += 2*lod.tris;
     };
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1536,11 +1539,11 @@ float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 
 struct renderstate
 {
-    bool colormask, depthmask;
+    bool originmat, colormask, depthmask;
     Shader *shader;
     const ShaderParam *vertparams[MAXSHADERPARAMS], *pixparams[MAXSHADERPARAMS];
 
-    renderstate() : colormask(true), depthmask(true), shader(NULL)
+    renderstate() : originmat(false), colormask(true), depthmask(true), shader(NULL)
     {
         memset(vertparams, 0, sizeof(vertparams));
         memset(pixparams, 0, sizeof(pixparams));
@@ -1563,6 +1566,8 @@ struct renderstate
 
 void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 {
+    setorigin(va, !cur.originmat);
+    cur.originmat = true;
     if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
     if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
     if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); };
@@ -1581,6 +1586,8 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
+    setorigin(va, !cur.originmat);
+    cur.originmat = true;
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
     glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
@@ -1591,6 +1598,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
         glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
+        xtravertsva += 2*lod.tris;
         return;
     };
 
@@ -1723,6 +1731,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             glde++;
         };
     };
+
+    vtris += lod.tris;
+    vverts += va->verts;
 };
 
 VAR(oqdist, 0, 256, 1024);
@@ -1782,8 +1793,6 @@ void rendergeom()
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs) continue;
 
-        setorigin(va, !cur.shader);
-
         //glColor4f(1, 1, 1, 1);
 
         if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
@@ -1801,7 +1810,7 @@ void rendergeom()
             else if(va->occluded >= OCCLUDE_GEOM)
             {
                 va->query = newquery(va);
-                if(va->query)  renderquery(cur, va->query, va);
+                if(va->query) renderquery(cur, va->query, va);
                 continue;
             }
             else va->query = newquery(va);
@@ -1810,12 +1819,6 @@ void rendergeom()
         {
             va->query = NULL;
             va->occluded = OCCLUDE_NOTHING;
-        };
-
-        if(!zpass)
-        {
-            vtris += lod.tris;
-            vverts += va->verts;
         };
 
         //if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
@@ -1850,10 +1853,6 @@ void rendergeom()
             }
             else if(va->occluded == OCCLUDE_PARENT) va->occluded = OCCLUDE_NOTHING;
 
-            vtris += lod.tris;
-            vverts += va->verts;
-
-            setorigin(va, false);
             renderva(cur, va, lod);
         };
         glDepthFunc(GL_LESS);
