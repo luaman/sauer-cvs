@@ -923,13 +923,16 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
         if(count > vacubemax || (count >= vacubemin && size == vacubesize) || (count && size == min(VVEC_INT_MASK+1, hdr.worldsize/2))) 
         {
             setva(c[i], o.x, o.y, o.z, size, csi);
-            while(varoot.length() > childpos)
+            if(c[i].va)
             {
-                vtxarray *child = varoot.pop();
-                c[i].va->children.add(child);
-                child->parent = c[i].va;
+                while(varoot.length() > childpos)
+                {
+                    vtxarray *child = varoot.pop();
+                    c[i].va->children.add(child);
+                    child->parent = c[i].va;
+                };
+                varoot.add(c[i].va);
             };
-            varoot.add(c[i].va);
         }
         else ccount += count;
     };
