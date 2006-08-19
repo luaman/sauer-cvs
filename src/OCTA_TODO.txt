@@ -24,7 +24,29 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
-- md3 crash?
+- change SF status from alpha
+- white lines in decal shader??
+- add gregors new textures
+- screenshots etc? new features in docs
+- specmap thats not same size as diffuse crash
+- SP monsters should wake up if monster within range gets shot
+- sparklies very bad on ATI, particularly deathtek / diff skybox
+- quad subdiv bad on ATI
+- spec from on side only on ATI?
+- audio effect for chat messages
+- crashes when people join?
+- write function to filter illegal characters out of names and server talk (colors etc)
+- bake normalmap on -f0? mildly?
+- clean up maps folder | maps without lightmaps?
+- better back to front rendering / experiment with Z only pass for world geometry only
+- stop scoreboard from popping up if menu on?
+- ensure modelshader can be set from model cfg
+- one vwep per model?
+- 2 levels of lightlod for huge maps
+- fillrate optimisation: automatically cut down surfaces to their visible size?
+- add wiki as static version to the distribution
+- surface merging?
+
 - weird fps issue.. maybe mobile?
 - auto bounding boxes that can be overridden
 - use setbb also for monsters
@@ -72,6 +94,8 @@ aard/everyone:
   * update positions less often for clients at distance/occluded
   * use enet batching: would require server fps to be really low to make a difference
   * mix absolute and delta packets depending on the amount of packet loss
+    * better than delta, can send just move/strafe/mousedelta for 3 out of 4 packets or so... needs improved physics prediction
+  * all the above could be scaled to get more intense with gradually higher player loads
 
 - fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris

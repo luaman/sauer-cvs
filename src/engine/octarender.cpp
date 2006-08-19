@@ -1828,7 +1828,7 @@ void rendergeom()
 
         if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
 
-        renderva(cur, va, lod, zpass);
+        renderva(cur, va, lod, zpass!=0);
 
         if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
     };
