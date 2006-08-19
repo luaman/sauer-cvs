@@ -1,6 +1,6 @@
 Description
 ===========
-Files in this folder:
+Files in this folder and subfolders:
 
 by "makkE"
 Markus Bekel
@@ -46,5 +46,17 @@ for the full legal code.
 
 visit creativecommons.org for general information and translations of the above documents. 
 
+=====================================================================================================
+  
 
+Note that this also includes the files in /cube/packages/models/makke
 
+and for the "highplane" skybox and "black.jpg" found in cube/packages/makke
+
+(!) EXEPTIONS TO THIS ARE (!) : 
+
+/cube/packages/makke/specialborder.jpg
+/cube/packages/makke/specialbrick.jpg
+
+These rely heavily on Ikka Keranens textures and remain his interlectual property according
+to his license.

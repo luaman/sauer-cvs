@@ -46,6 +46,8 @@ aard/everyone:
 - fillrate optimisation: automatically cut down surfaces to their visible size?
 - add wiki as static version to the distribution
 - surface merging?
+- add makke's new items
+- reduce spec 8 => 6
 
 - weird fps issue.. maybe mobile?
 - auto bounding boxes that can be overridden
