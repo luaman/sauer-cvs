@@ -99,7 +99,7 @@ struct entities : icliententities
         if(isthirdperson())
         {
             char *name = itemname(n);
-            if(name) particle_text(d->abovehead(), name, 9);
+            if(name) particle_text(d->abovehead(), name, 15);
         };
         switch(ents[n]->type)
         {

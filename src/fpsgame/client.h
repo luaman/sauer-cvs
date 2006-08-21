@@ -496,7 +496,7 @@ struct clientcom : iclientcom
                 if(!cl.et.ents.inrange(i)) break;
                 cl.et.setspawn(i, false);
                 char *name = cl.et.itemname(i);
-                if(name) particle_text(d->abovehead(), name, 9);
+                if(name) particle_text(d->abovehead(), name, 15);
                 if(cl.et.ents[i]->type==I_BOOST && !inited) d->maxhealth += 10;
                 break;
             };

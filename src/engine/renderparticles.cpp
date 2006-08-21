@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define MAXPARTYPES 15
+#define MAXPARTYPES 16
 
 struct particle
 {
@@ -68,7 +68,7 @@ void render_particles(int time)
     static struct parttype { uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
         { 180, 155, 75,  2,  0, 0.24f }, // yellow: sparks 
-        { 125, 125, 125, 20, 2, 0.6f }, // grey:   small smoke
+        { 125, 125, 125, 20, 2, 0.6f },  // grey:   small smoke
         { 50, 50, 255,   20, 0, 0.32f }, // blue:   edit mode entities
         { 255, 25, 25,   1,  2, 0.24f }, // red:    blood spats
         { 255, 200, 200, 20, 1, 4.8f  }, // yellow: fireball1
@@ -78,10 +78,11 @@ void render_particles(int time)
         { 255, 75, 25,   -8, -1, 4.0f }, // 8 TEXT RED
         { 50, 255, 100,  -8, -1, 4.0f }, // 9 TEXT GREEN
         { 255, 200, 100, 0,  5, 0.28f }, // 10 yellow flare
-        { 30, 200, 80,  0, -1, 2.0f },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+        { 30, 200, 80,  0, -1, 2.0f },   // 11 TEXT DARKGREEN, SMALL, NON-MOVING
         { 255, 255, 255, 20, 4, 2.0f },  // 12 green small fireball3
-        { 255, 75, 25,  0, -1, 2.0f },  // 13 TEXT RED, SMALL, NON-MOVING
-        { 180, 180, 180,  0, -1, 2.0f },  // 14 TEXT GREY, SMALL, NON-MOVING
+        { 255, 75, 25,  0, -1, 2.0f },   // 13 TEXT RED, SMALL, NON-MOVING
+        { 180, 180, 180,  0, -1, 2.0f }, // 14 TEXT GREY, SMALL, NON-MOVING
+        { 255, 200, 100, -8, -1, 4.0f }, // 15 TEXT YELLOW
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
