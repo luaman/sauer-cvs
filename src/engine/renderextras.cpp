@@ -160,6 +160,7 @@ struct sphere { vec o; float size, max; int type; };
 
 vector<sphere> spheres;
 Texture *expltex = NULL;
+Shader *explshader = NULL;
 
 void newsphere(vec &o, float max, int type)
 {
@@ -179,7 +180,9 @@ void renderspheres(int time)
         { 0.9f, 1.0f, 0.5f },
     };
 
+    if(!explshader) explshader = lookupshaderbyname("explosion");
     if(!expltex) expltex = textureload("data/explosion.jpg");
+    explshader->set();
     loopv(spheres)
     {
         sphere &p = spheres[i];
@@ -190,12 +193,15 @@ void renderspheres(int time)
         glBindTexture(GL_TEXTURE_2D, expltex->gl);
         glPushMatrix();
         float size = p.size/p.max;
-        glColor4f(pt.r, pt.g, pt.g, 1.0f-size);
+        if(renderpath!=R_FIXEDFUNCTION)
+        {
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, p.o.x, p.o.y, p.o.z, 0);
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, p.size, p.max, 0);
+        };
+        glColor4f(pt.r, pt.g, pt.g, 1.0f-size*size);
         glTranslatef(p.o.x, p.o.y, p.o.z);
         glRotatef(lastmillis/5.0f, 1, 1, 1);
         glScalef(p.size, p.size, p.size);
-        glCallList(1);
-        glScalef(0.8f, 0.8f, 0.8f);
         glCallList(1);
         glPopMatrix();
         xtraverts += 12*6*2;
@@ -210,6 +216,7 @@ void renderspheres(int time)
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     };
+    defaultshader->set();
 };
 
 string closeent, fullentname;
