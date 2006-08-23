@@ -124,7 +124,7 @@ struct monsterset
                 };
             };
             
-            float enemyyaw = -(float)atan2(enemy->o.x - o.x, enemy->o.y - o.y)/PI*180+180;
+            float enemyyaw = -(float)atan2(enemy->o.x - o.x, enemy->o.y - o.y)/RAD+180;
             
             switch(monsterstate)
             {
