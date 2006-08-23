@@ -127,7 +127,6 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = bouncers[i];
-            particle_splash(12, 1, 1, bnc.o);
             particle_splash(1, 2, 150, bnc.o);
             int rtime = time;
             while(rtime > 0)
@@ -232,10 +231,10 @@ struct weaponstate
         };
     };
 
-    void splash(projectile *p, vec &v, dynent *notthis, int qdam)
+    void splash(projectile &p, vec &v, dynent *notthis, int qdam)
     {
-        p->inuse = false;
-        if(p->gun!=GUN_RL)
+        p.inuse = false;
+        if(p.gun!=GUN_RL)
         {
             particle_splash(0, 100, 200, v);
             playsound(S_FEXPLODE, &v);
@@ -243,19 +242,19 @@ struct weaponstate
         }
         else
         {
-            explode(p->local, p->owner, v, notthis, qdam, GUN_RL);
+            explode(p.local, p.owner, v, notthis, qdam, GUN_RL);
         };
     };
 
-    void projdamage(fpsent *o, projectile *p, vec &v, int i, int qdam)
+    void projdamage(fpsent *o, projectile &p, vec &v, int i, int qdam)
     {
         if(o->state!=CS_ALIVE) return;
-        if(intersect(o, p->o, v))
+        if(intersect(o, p.o, v))
         {
             splash(p, v, o, qdam);
             vec dir;
             rocketdist(o, dir, v);
-            hit(i, qdam, o, p->owner, dir, p->gun==GUN_RL);
+            hit(i, qdam, o, p.owner, dir, p.gun==GUN_RL);
         }; 
     };
 
@@ -263,39 +262,47 @@ struct weaponstate
     {
         loopi(MAXPROJ)
         {
-            projectile *p = &projs[i];
-            if(!p->inuse) continue;
-            int qdam = guns[p->gun].damage*(p->owner->quadmillis ? 4 : 1);
-            if(p->owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
+            projectile &p = projs[i];
+            if(!p.inuse) continue;
+            int qdam = guns[p.gun].damage*(p.owner->quadmillis ? 4 : 1);
+            if(p.owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
             vec v;
-            float dist = p->to.dist(p->o, v);
-            float dtime = dist*1000/p->speed; 
+            float dist = p.to.dist(p.o, v);
+            float dtime = dist*1000/p.speed; 
             if(time > dtime) dtime = time;
             v.mul(time/dtime);
-            v.add(p->o);
-            if(p->local)
+            v.add(p.o);
+            if(p.local)
             {
                 loopi(cl.numdynents())
                 {
                     fpsent *o = (fpsent *)cl.iterdynents(i);
                     if(!o) continue;
-                    if(!o->o.reject(v, 10.0f) && p->owner!=o) projdamage(o, p, v, i-1, qdam);
+                    if(!o->o.reject(v, 10.0f) && p.owner!=o) projdamage(o, p, v, i-1, qdam);
                 };
             };
-            if(p->inuse)
+            if(p.inuse)
             {
                 if(dist<4)
                 {
-                    if(raycubepos(p->o, vec(p->to).sub(p->o), p->to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;      // if original target was moving, reevaluate endpoint
+                    if(raycubepos(p.o, vec(p.to).sub(p.o), p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;      // if original target was moving, reevaluate endpoint
                     splash(p, v, NULL, qdam);
                 }
                 else
                 {
-                    if(p->gun==GUN_RL) { /*dodynlight(p->o, v, 0, 255, p->owner);*/ particle_splash(5, 2, 300, v); }
-                    else { particle_splash(1, 2, 300, v); particle_splash(guns[p->gun].part, 1, 1, v); };
+                    if(p.gun==GUN_RL) 
+                    { 
+                        /*dodynlight(p.o, v, 0, 255, p.owner);*/ 
+                        particle_splash(5, 2, 300, v); 
+                    }
+                    else 
+                    { 
+                        particle_splash(1, 2, 300, v); 
+                        particle_splash(guns[p.gun].part, 1, 1, v); 
+                    };
                 };       
             };
-            p->o = v;
+            p.o = v;
         };
     };
 
@@ -466,4 +473,32 @@ struct weaponstate
 
         d->totalshots += guns[d->gunselect].damage*(d->quadmillis ? 4 : 1)*(d->gunselect==GUN_SG ? SGRAYS : 1);
     };
+
+    void renderprojectiles()
+    {
+        vec color, dir;
+        float yaw, pitch;
+        loopv(bouncers)
+        {
+            bouncent &bnc = bouncers[i];
+            lightreaching(bnc.o, color, dir);
+            vectoyawpitch(vec(bnc.vel).add(bnc.gravity), yaw, pitch);
+            rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
+        };
+        loopi(MAXPROJ)
+        {
+            projectile &p = projs[i];
+            if(!p.inuse || p.gun!=GUN_RL) continue;
+            vec v(p.to);
+            v.sub(p.o);
+            v.normalize();
+            // the amount of distance in front of the smoke trail needs to change if the model does
+            vectoyawpitch(v, yaw, pitch);
+            yaw += 90;
+            v.mul(3);
+            v.add(p.o);
+            lightreaching(v, color, dir);
+            rendermodel(color, dir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v.x, v.y, v.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
+        };
+    };  
 };

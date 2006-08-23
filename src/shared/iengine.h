@@ -145,8 +145,9 @@ extern void findplayerspawn(dynent *d, int forceent = -1);
 extern void playsound    (int n,   const vec *loc = NULL);
 extern void playsoundname(char *s, const vec *loc = NULL, int vol = 0);
 extern void initsound();
-// rendermodel
 
+
+// rendermodel
 enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2 };
 
 extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d = NULL, int cull = MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
@@ -154,6 +155,7 @@ extern void abovemodel(vec &o, const char *mdl);
 extern mapmodelinfo &getmminfo(int i);
 extern void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, int lastaction, int lastpain);
 extern void setbbfrommodel(dynent *d, char *mdl);
+extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 
 // server
 enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS };

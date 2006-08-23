@@ -292,3 +292,11 @@ void setbbfrommodel(dynent *d, char *mdl)
     d->eyeheight = m->bbtofloor;
     d->aboveeye  = m->bbtoceil;
 };
+
+void vectoyawpitch(const vec &v, float &yaw, float &pitch)
+{
+    yaw = -(float)atan2(v.x, v.y)/RAD + 180;
+    pitch = asin(v.z/v.magnitude())/RAD;
+};
+
+
