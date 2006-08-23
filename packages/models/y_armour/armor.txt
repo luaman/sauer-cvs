@@ -1,6 +1,7 @@
 Armor Model
 
 Copyright (C) 2000  Seth Galbraith
+Copyright (C) 2006 Markus "makkE" Bekel
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,3 +31,7 @@ First release
 8-17-00
 
 Corrected the order of the frames
+
+8-22-06
+
+Detail added and reskinned 
