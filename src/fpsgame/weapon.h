@@ -127,7 +127,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = bouncers[i];
-            particle_splash(5, 1, 150, bnc.o);
+            if(fabs(bnc.vel.z+bnc.gravity.z) > 5.0f) particle_splash(5, 1, 150, bnc.o);
             int rtime = time;
             while(rtime > 0)
             {
@@ -218,6 +218,7 @@ struct weaponstate
     void explode(bool local, fpsent *owner, vec &v, dynent *notthis, int qdam, int gun)
     {
         particle_splash(0, 200, 300, v);
+//        particle_splash(5, 10, 500, v);
         playsound(S_RLHIT, &v);
         newsphere(v, RL_DAMRAD, gun==GUN_RL ? 0 : 1);
         if(!local) return;
@@ -453,14 +454,15 @@ struct weaponstate
             shorten = barrier;
         if(shorten)
         {
-            unitv.mul(shorten);
-            to = from;
-            to.add(unitv);
+            to = unitv;
+            to.mul(shorten);
+            to.add(from);
         };
         
         if(d->gunselect==GUN_SG) createrays(from, to);
         else if(d->gunselect==GUN_CG) offsetray(from, to, 1, to);
-
+        else if(d->gunselect==GUN_RL) from.add(vec(unitv).mul(d->radius));
+            
         if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP);
 
         if(!guns[d->gunselect].projspeed) raydamage(from, to, d);
@@ -483,6 +485,7 @@ struct weaponstate
             bouncent &bnc = bouncers[i];
             lightreaching(bnc.o, color, dir);
             vectoyawpitch(vec(bnc.vel).add(bnc.gravity), yaw, pitch);
+            if(fabs(bnc.vel.z+bnc.gravity.z) > 1.5f) pitch += bnc.lifetime/2;
             rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
