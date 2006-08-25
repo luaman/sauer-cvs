@@ -461,7 +461,7 @@ struct weaponstate
         
         if(d->gunselect==GUN_SG) createrays(from, to);
         else if(d->gunselect==GUN_CG) offsetray(from, to, 1, to);
-        else if(d->gunselect==GUN_RL) from.add(vec(unitv).mul(d->radius));
+        else if(d->gunselect==GUN_RL) from.add(vec(unitv).mul(5));
             
         if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP);
 
