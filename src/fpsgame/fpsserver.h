@@ -210,10 +210,10 @@ struct fpsserver : igameserver
 
             case SV_INITC2S:
                 sgetstr(text, p);
-                s_strcpy(ci->name, text);
+                s_strncpy(ci->name, text, MAXNAMELEN+1);
                 sgetstr(text, p);
                 if(m_capture && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
-                s_strcpy(ci->team, text);
+                s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
                 {
                     score &sc = findscore(sender, false);

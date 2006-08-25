@@ -23,8 +23,8 @@ struct clientcom : iclientcom
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, "C", self->toserver(args[0]));
-        CCOMMAND(clientcom, name, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->name, args[0], 16); });
-        CCOMMAND(clientcom, team, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->team, args[0], 5);  });
+        CCOMMAND(clientcom, name, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->name, args[0], MAXNAMELEN+1); });
+        CCOMMAND(clientcom, team, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->team, args[0], MAXTEAMLEN+1);  });
         CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
@@ -364,9 +364,9 @@ struct clientcom : iclientcom
                     extern editinfo *localedit;
                     freeeditinfo(localedit);
                 };
-                s_strcpy(d->name, text);
+                s_strncpy(d->name, text, MAXNAMELEN+1);
                 sgetstr(text, p);
-                s_strcpy(d->team, text);
+                s_strncpy(d->team, text, MAXTEAMLEN+1);
                 d->lifesequence = getint(p);
                 d->maxhealth = getint(p);
                 d->frags = getint(p);
