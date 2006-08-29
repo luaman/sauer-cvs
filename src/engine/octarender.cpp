@@ -1766,11 +1766,7 @@ void setupTMUs()
     loopi(renderpath!=R_FIXEDFUNCTION ? 8 : 2) { glActiveTexture_(GL_TEXTURE0_ARB+i); glEnable(GL_TEXTURE_2D); };
     glActiveTexture_(GL_TEXTURE0_ARB);
 
-    if(renderpath!=R_FIXEDFUNCTION)
-    {
-        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(player->o, 1).mul(2).v);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
-    };
+    if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
 
     glColor4f(1, 1, 1, 1);
 };
@@ -1795,6 +1791,8 @@ void rendergeom()
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs) continue;
+
+        if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
 
         //glColor4f(1, 1, 1, 1);
 

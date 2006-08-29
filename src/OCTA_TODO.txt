@@ -24,6 +24,7 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
+- spec from on side only on ATI?
 - change SF status from alpha
 - white lines in decal shader??
 - add gregors new textures
@@ -32,7 +33,6 @@ aard/everyone:
 - SP monsters should wake up if monster within range gets shot
 - sparklies very bad on ATI, particularly deathtek / diff skybox
 - quad subdiv bad on ATI
-- spec from on side only on ATI?
 - audio effect for chat messages
 - crashes when people join?
 - write function to filter illegal characters out of names and server talk (colors etc)
@@ -48,6 +48,10 @@ aard/everyone:
 - surface merging?
 - add makke's new items
 - reduce spec 8 => 6
+- rockets thru walls? collision step?
+[18:46] Aardappel: - spawn the rocket out a bit further from the camera, sometimes it flashes too close
+[18:47] Aardappel: - make the grenade rotate a bit, I suggest making it rotate fast ast first then slow as it nears it explosion
+[18:48] Aardappel: - we could change the grenades trail to be more like the RL, but very light... as it is now, with the sparkies that doesn't look very good
 
 - weird fps issue.. maybe mobile?
 - auto bounding boxes that can be overridden
