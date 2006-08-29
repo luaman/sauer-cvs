@@ -1606,8 +1606,11 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     };
 
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
-    if(renderpath!=R_FIXEDFUNCTION) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n)
-: &(va->vbuf[0].n));
+    if(renderpath!=R_FIXEDFUNCTION) 
+    { 
+        glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
+    };
 
     glClientActiveTexture_(GL_TEXTURE1_ARB);
     glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
@@ -1791,8 +1794,6 @@ void rendergeom()
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs) continue;
-
-        if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
 
         //glColor4f(1, 1, 1, 1);
 
