@@ -203,6 +203,9 @@ void renderspheres(int time)
         glRotatef(lastmillis/5.0f, 1, 1, 1);
         glScalef(p.size, p.size, p.size);
         glCallList(1);
+        if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, p.o.z, p.o.x, p.o.y, 0);
+        glScalef(0.8f, 0.8f, 0.8f);
+        glCallList(1);
         glPopMatrix();
         xtraverts += 12*6*2;
         if(p.size>p.max)
