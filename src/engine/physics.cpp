@@ -774,7 +774,8 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
                 d->vel.mul(-elasticity);
             };
             break;
-        };
+        }
+        else if(hitplayer) break;
         d->o = old;
         vec dvel(d->vel), wvel(wall);
         dvel.add(d->gravity);
