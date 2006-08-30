@@ -94,6 +94,7 @@ struct weaponstate
     struct bouncent : physent
     {
         int lifetime;
+        float lastyaw, roll;
         bool local;
         fpsent *owner;
     };
@@ -110,6 +111,7 @@ struct weaponstate
         bnc.eyeheight = 2;
         bnc.aboveeye = 2;
         bnc.lifetime = 2000;
+        bnc.roll = 0;
         bnc.local = local;
         bnc.owner = owner;
 
@@ -128,6 +130,7 @@ struct weaponstate
         {
             bouncent &bnc = bouncers[i];
             if(vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) particle_splash(5, 1, 150, bnc.o);
+            vec old(bnc.o);
             int rtime = time;
             while(rtime > 0)
             {
@@ -141,6 +144,7 @@ struct weaponstate
                     break;
                 };
             };
+            bnc.roll += old.sub(bnc.o).magnitude()/(4*RAD);
         };
     };
 
@@ -486,13 +490,14 @@ struct weaponstate
             lightreaching(bnc.o, color, dir);
             vec vel(bnc.vel);
             vel.add(bnc.gravity);
-            if(vel.magnitude() <= 25.0f) yaw = pitch = 0;
+            if(vel.magnitude() <= 25.0f) yaw = bnc.lastyaw;
             else
             {
                 vectoyawpitch(vel, yaw, pitch);
                 yaw += 90;
-                pitch = bnc.lifetime/2;
+                bnc.lastyaw = yaw;
             };
+            pitch = -bnc.roll;
             rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
