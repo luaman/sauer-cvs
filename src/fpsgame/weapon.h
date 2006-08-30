@@ -486,7 +486,7 @@ struct weaponstate
             lightreaching(bnc.o, color, dir);
             vectoyawpitch(vec(bnc.vel).add(bnc.gravity), yaw, pitch);
             yaw += 90;
-            pitch = vec(bnc.vel).add(bnc.gravity).magnitude() > 20.0f ? bnc.lifetime/2 : 0;
+            pitch = vec(bnc.vel).add(bnc.gravity).magnitude() > 25.0f ? bnc.lifetime/2 : 0;
             rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
