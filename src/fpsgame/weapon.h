@@ -484,9 +484,15 @@ struct weaponstate
         {
             bouncent &bnc = bouncers[i];
             lightreaching(bnc.o, color, dir);
-            vectoyawpitch(vec(bnc.vel).add(bnc.gravity), yaw, pitch);
-            yaw += 90;
-            pitch = vec(bnc.vel).add(bnc.gravity).magnitude() > 25.0f ? bnc.lifetime/2 : 0;
+            vec vel(bnc.vel);
+            vel.add(bnc.gravity);
+            if(vel.magnitude() <= 25.0f) yaw = pitch = 0;
+            else
+            {
+                vectoyawpitch(vel, yaw, pitch);
+                yaw += 90;
+                pitch = bnc.lifetime/2;
+            };
             rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
