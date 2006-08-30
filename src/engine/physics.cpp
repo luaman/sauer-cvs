@@ -758,7 +758,7 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
     else d->gravity.z -= GRAVITY*secs;
     if(water) d->vel.mul(1.0f - secs/waterfric);
     vec old(d->o);
-    for(int i = 0; i < 2; i++)
+    loopi(2)
     {
         vec dir(d->vel);
         if(water) dir.mul(0.5f);
