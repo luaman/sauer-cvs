@@ -757,14 +757,24 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
     }
     else d->gravity.z -= GRAVITY*secs;
     if(water) d->vel.mul(1.0f - secs/waterfric);
-    vec dir(d->vel);
-    if(water) dir.mul(0.5f);
-    dir.add(d->gravity);
-    dir.mul(secs);
     vec old(d->o);
-    d->o.add(dir);
-    if(!collide(d, dir))
+    for(int i = 0; i < 2; i++)
     {
+        vec dir(d->vel);
+        if(water) dir.mul(0.5f);
+        dir.add(d->gravity);
+        dir.mul(secs);
+        d->o.add(dir);
+        if(collide(d, dir))
+        {
+            if(inside)
+            {
+                d->o = old;
+                d->gravity.mul(-elasticity);
+                d->vel.mul(-elasticity);
+            };
+            break;
+        };
         d->o = old;
         vec dvel(d->vel), wvel(wall);
         dvel.add(d->gravity);
@@ -774,12 +784,6 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         d->gravity.mul(k);
         d->vel.mul(k);
         d->vel.sub(wvel);
-    }
-    else if(inside)
-    {
-        d->o = old;
-        d->gravity.mul(-elasticity);
-        d->vel.mul(-elasticity);
     };
     if(d->physstate != PHYS_BOUNCE)
     {
