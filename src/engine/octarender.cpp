@@ -727,6 +727,7 @@ void genfloatverts(fvertex *f)
         f->z = v.z;
         f->u = v.u;
         f->v = v.v;
+        f->n = v.n;
         f++;
     };
 };
