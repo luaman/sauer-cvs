@@ -127,7 +127,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = bouncers[i];
-            if(fabs(bnc.vel.z+bnc.gravity.z) > 5.0f) particle_splash(5, 1, 150, bnc.o);
+            if(vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) particle_splash(5, 1, 150, bnc.o);
             int rtime = time;
             while(rtime > 0)
             {
@@ -485,7 +485,8 @@ struct weaponstate
             bouncent &bnc = bouncers[i];
             lightreaching(bnc.o, color, dir);
             vectoyawpitch(vec(bnc.vel).add(bnc.gravity), yaw, pitch);
-            if(fabs(bnc.vel.z+bnc.gravity.z) > 1.5f) pitch += bnc.lifetime/2;
+            yaw += 90;
+            pitch = vec(bnc.vel).add(bnc.gravity).magnitude() > 20.0f ? bnc.lifetime/2 : 0;
             rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
