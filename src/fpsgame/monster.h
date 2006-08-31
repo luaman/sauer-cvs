@@ -345,7 +345,7 @@ struct monsterset
         loopv(monsters)
         {
             monster &m = *monsters[i];
-            renderclient(&m, false, monstertypes[m.mtype].mdlname, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
+            renderclient(&m, monstertypes[m.mtype].mdlname, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
         };
     };
 };

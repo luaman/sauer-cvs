@@ -498,7 +498,7 @@ struct weaponstate
                 bnc.lastyaw = yaw;
             };
             pitch = -bnc.roll;
-            rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
+            rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
         {
@@ -513,7 +513,7 @@ struct weaponstate
             v.mul(3);
             v.add(p.o);
             lightreaching(v, color, dir);
-            rendermodel(color, dir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v.x, v.y, v.z, yaw, pitch, false, 10.0f, 0, NULL, 0);
+            rendermodel(color, dir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v.x, v.y, v.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
     };  
 };

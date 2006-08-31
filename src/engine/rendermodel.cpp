@@ -162,7 +162,7 @@ bool modeloccluded(const vec &center, float radius)
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, bool teammate, float speed, int basetime, dynent *d, int cull)
+void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -177,8 +177,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     };
     if(d) lightreaching(d->o, color, dir);
     m->setskin(tex);  
-    if(teammate) glColor3f(0.2f, 1, 0.2f); // VERY TEMP, find a better teammate display
-    else glColor3fv(color.v);
+    glColor3fv(color.v);
     if(m->shader) m->shader->set();
     else
     {
@@ -252,7 +251,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 VAR(showcharacterboundingbox, 0, 0, 1);
 
-void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, int lastaction, int lastpain)
+void renderclient(dynent *d, const char *mdlname, bool forceattack, int lastaction, int lastpain)
 {
     if(showcharacterboundingbox) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
     int anim = ANIM_IDLE|ANIM_LOOP;
@@ -281,7 +280,7 @@ void renderclient(dynent *d, bool team, const char *mdlname, bool forceattack, i
         if(attack) basetime = lastaction;
     };
     vec color, dir;
-    rendermodel(color, dir, mdlname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, team, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST));
+    rendermodel(color, dir, mdlname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST));
 };
 
 void setbbfrommodel(dynent *d, char *mdl)

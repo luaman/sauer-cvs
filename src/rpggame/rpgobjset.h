@@ -64,7 +64,7 @@ struct rpgobj
     void render()
     {
         if(!model) return;
-        if(ai) renderclient(ent, false, model, false, 0, 0);
+        if(ai) renderclient(ent, model, false, 0, 0);
         else {};
         if(abovetext) particle_text(ent->abovehead(), abovetext, 11, 1);
     };
