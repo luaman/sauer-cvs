@@ -484,7 +484,15 @@ static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
         loopk(3) dst[k] = min(255, int(dst[k]) + int(src[k] * color[k]));
     );
 };
- 
+
+static void addbump(SDL_Surface *c, SDL_Surface *n)
+{
+    writetex(c,
+        sourcetex(c, n);
+        loopk(3) dst[k] = int(dst[k])*(int(src[2])*2-255)/255;
+    );
+};
+
 static void blenddecal(SDL_Surface *c, SDL_Surface *d)
 {
     writetex(c,
@@ -557,7 +565,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
     {
         case TEX_DIFFUSE:
             if(renderpath!=R_FIXEDFUNCTION) break;
-            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW), i))>=0;)
+            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW)|(1<<TEX_NORMAL)|(1<<TEX_NORMAL_SPEC), i))>=0;)
             {
                 s.sts[i].combined = index;
                 addname(key, s, s.sts[i]);
@@ -592,6 +600,8 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
                 { 
                     case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
                     case TEX_GLOW: addglow(ts, bs, s); break;
+                    case TEX_NORMAL:
+                    case TEX_NORMAL_SPEC: addbump(ts, bs); break;
                 };
                 SDL_FreeSurface(bs);
             };
