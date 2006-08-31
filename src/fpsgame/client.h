@@ -23,8 +23,8 @@ struct clientcom : iclientcom
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, "C", self->toserver(args[0]));
-        CCOMMAND(clientcom, name, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->name, args[0], MAXNAMELEN+1); });
-        CCOMMAND(clientcom, team, "s", if(args[0][0]) { self->c2sinit = false; s_strncpy(self->player1->team, args[0], MAXTEAMLEN+1);  });
+        CCOMMAND(clientcom, name, "s", if(args[0][0]) { self->c2sinit = false; filtertext(self->player1->name, args[0], false, MAXNAMELEN); });
+        CCOMMAND(clientcom, team, "s", if(args[0][0]) { self->c2sinit = false; filtertext(self->player1->team, args[0], false, MAXTEAMLEN); });
         CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
@@ -32,6 +32,25 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, setmaster, "s", if(!self->spectator || self->currentmaster==self->clientnum) s_strcpy(self->setmaster, args[0]));
         CCOMMAND(clientcom, getmap, "", self->getmap());
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
+    };
+
+    static void filtertext(char *dst, const char *src, bool whitespace = true, int len = sizeof(string)-1)
+    {
+        for(int c = *src; c; c = *++src)
+        {
+            switch(c)
+            {
+            case '\f':
+                if(src[1]>='0' && src[1]<='3') ++src;
+                continue;
+            };
+            if(isprint(c) || (whitespace && isspace(c)))
+            {
+                *dst++ = c;
+                if(!--len) break;
+            };
+        };
+        *dst = '\0';
     };
 
     void mapstart() { if(!spectator || currentmaster==clientnum) senditemstoserver = true; };
@@ -313,6 +332,7 @@ struct clientcom : iclientcom
             {
                 if(!d) return;
                 sgetstr(text, p);
+                filtertext(text, text);
                 s_sprintfd(ds)("@%s", &text);
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
                 conoutf("%s:\f0 %s", d->name, &text);
@@ -350,6 +370,7 @@ struct clientcom : iclientcom
             {
                 if(!d) return;
                 sgetstr(text, p);
+                filtertext(text, text, false, MAXNAMELEN);
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text))
@@ -364,9 +385,9 @@ struct clientcom : iclientcom
                     extern editinfo *localedit;
                     freeeditinfo(localedit);
                 };
-                s_strncpy(d->name, text, MAXNAMELEN+1);
+                s_strcpy(d->name, text);
                 sgetstr(text, p);
-                s_strncpy(d->team, text, MAXTEAMLEN+1);
+                filtertext(d->team, text, false, MAXTEAMLEN);
                 d->lifesequence = getint(p);
                 d->maxhealth = getint(p);
                 d->frags = getint(p);
