@@ -445,7 +445,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
     Slot::Tex &st = s.sts.add();
     st.type = tnum;
     st.combined = -1;
-    st.rotation = max(*rot, 0)&3;
+    st.rotation = max(*rot, 0);
     st.xoffset = max(*xoffset, 0);
     st.yoffset = max(*yoffset, 0);
     st.t = NULL;
