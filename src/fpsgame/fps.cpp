@@ -101,10 +101,6 @@ struct fpsclient : igameclient
                     et.baseammo(spawngun2);
                     d->ammo[GUN_GL] += 5;
                 }
-                else if(m_arena)    // insta arena
-                {
-                    d->ammo[GUN_RIFLE] = 100;
-                }
                 else // efficiency
                 {
                     loopi(5) et.baseammo(i+1);
