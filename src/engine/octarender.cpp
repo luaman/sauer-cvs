@@ -1616,7 +1616,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     glClientActiveTexture_(GL_TEXTURE1_ARB);
     glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
     glClientActiveTexture_(GL_TEXTURE0_ARB);
-    
+
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
     Slot *lastslot = NULL;
@@ -1767,10 +1767,12 @@ void setupTMUs()
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 
-    loopi(renderpath!=R_FIXEDFUNCTION ? 8 : 2) { glActiveTexture_(GL_TEXTURE0_ARB+i); glEnable(GL_TEXTURE_2D); };
-    glActiveTexture_(GL_TEXTURE0_ARB);
-
-    if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); };
+        glActiveTexture_(GL_TEXTURE0_ARB);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
+    };
 
     glColor4f(1, 1, 1, 1);
 };
@@ -1868,7 +1870,7 @@ void rendergeom()
     if(renderpath!=R_FIXEDFUNCTION) 
     {
         glDisableClientState(GL_COLOR_ARRAY);
-        loopi(6) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); };
+        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); };
     };
 
     glActiveTexture_(GL_TEXTURE1_ARB);
