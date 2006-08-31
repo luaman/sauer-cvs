@@ -123,7 +123,7 @@ extern void particle_text(const vec &s, char *t, int type, int fade = 2000);
 extern void particle_flare(const vec &p, const vec &dest, int fade);
 
 // worldio
-extern void load_world(const char *mname);
+extern void load_world(const char *mname, const char *cname = NULL);
 extern void save_world(char *mname, bool nolms = false);
 
 // physics

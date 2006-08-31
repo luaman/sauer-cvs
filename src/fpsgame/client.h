@@ -691,6 +691,8 @@ struct clientcom : iclientcom
     void receivefile(uchar *data, int len)
     {
         if(cl.gamemode!=1) return;
+        string oldname;
+        s_strcpy(oldname, cl.getclientmap());
         s_sprintfd(mname)("getmap_%d", cl.lastmillis);
         s_sprintfd(fname)("packages/base/%s.ogz", mname);
         FILE *map = fopen(fname, "wb");
@@ -698,7 +700,7 @@ struct clientcom : iclientcom
         conoutf("received map");
         fwrite(data, 1, len, map);
         fclose(map);
-        load_world(mname);
+        load_world(mname, oldname);
         remove(fname);
     };
 

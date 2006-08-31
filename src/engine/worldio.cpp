@@ -13,26 +13,30 @@ string cgzname, bakname, pcfname, mcfname;
 
 VARP(savebak, 0, 2, 2);
 
-void setnames(const char *fname)
+void setnames(const char *fname, const char *cname = 0)
 {
-    string name, pakname, mapname;
-    s_strncpy(name, fname, 100);
+    if(!cname) cname = fname;
+    string name, pakname, mapname, cfgname;
+    s_strncpy(name, cname, 100);
     char *slash = strpbrk(name, "/\\");
     if(slash)
     {
         s_strncpy(pakname, name, slash-name+1);
-        s_strcpy(mapname, slash+1);
+        s_strcpy(cfgname, slash+1);
     }
     else
     {
         s_strcpy(pakname, "base");
-        s_strcpy(mapname, name);
+        s_strcpy(cfgname, name);
     };
-    s_sprintf(cgzname)("packages/%s/%s.ogz",      pakname, mapname);
-    if(savebak==1) s_sprintf(bakname)("packages/%s/%s.BAK", pakname, mapname);
-    else s_sprintf(bakname)("packages/%s/%s_%d.BAK", pakname, mapname, lastmillis);
+    if(strpbrk(fname, "/\\")) s_strcpy(mapname, fname);
+    else s_sprintf(mapname)("base/%s", fname);
+
+    s_sprintf(cgzname)("packages/%s.ogz", mapname);
+    if(savebak==1) s_sprintf(bakname)("packages/%s.BAK", mapname);
+    else s_sprintf(bakname)("packages/%s_%d.BAK", mapname, lastmillis);
     s_sprintf(pcfname)("packages/%s/package.cfg", pakname);
-    s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, mapname);
+    s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, cfgname);
 
     path(cgzname);
     path(bakname);
@@ -238,10 +242,10 @@ void swapXZ(cube *c)
 	};
 };
 
-void load_world(const char *mname)        // still supports all map formats that have existed since the earliest cube betas!
+void load_world(const char *mname, const char *cname)        // still supports all map formats that have existed since the earliest cube betas!
 {
     int loadingstart = SDL_GetTicks();
-    setnames(mname);
+    setnames(mname, cname);
     gzFile f = gzopen(cgzname, "rb9");
     if(!f) { conoutf("could not read map %s", cgzname); return; };
     clearoverrides();
@@ -391,7 +395,7 @@ void load_world(const char *mname)        // still supports all map formats that
 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);
-    estartmap(mname);
+    estartmap(cname ? cname : mname);
     overrideidents = true;
     execfile("data/default_map_settings.cfg");
     execfile(pcfname);
