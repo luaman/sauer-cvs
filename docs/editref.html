@@ -294,22 +294,22 @@ paste</pre>
         distributing it less messy.
         <pre>newmap size</pre>
         Creates a new map of size^2 cubes (on the smallest grid size). 10 is a small
-        map, 13 is a large map but it goes up to 16. Use <i>newmap -1</i> to double the
-        dimensions of the current map.        
+        map, 15 is a large map but it goes up to 20.
+        <pre>mapenlarge</pre>
+        Doubles the dimensions of the current map.        
         <pre>mapmsg "Title by Author"</pre>
         sets the map msg, which will be displayed when the map loads. Either use the
         above format, or simply "by Author" if the map has no particular title (always
         displayed after the map load msg).
         <pre>texturereset</pre>
         Sets the texture slot to 0 for the subsequent "texture" commands.
-        <pre>texture subnum filename ROT X Y</pre>
-        Binds the texture indicated in filename to the current texture slot, then
-        increments the slot number. This is for use in texture.cfg files only. subnum
+        <pre>texture TYPE FILENAME ROT X Y</pre>
+        Binds the texture indicated in FILENAME to the current texture slot, then
+        increments the slot number depending on TYPE. This is for use in texture.cfg files only. TYPE
         allows secondary textures to be specified for a single texture slot, for use in
-        shaders and other features (0 is
-        primary diffuse texture, 1..N are available in the shader bound to
-    texture units 2..N+1, unit 1 = the lightmap). ROT specifies preprocessing on the image,
-        currently only rotation (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW). X and Y are the X and Y offset in texels.
+        shaders and other features: 0 or "c" for primary diffuse texture (RGB), 1 or "u" for generic secondary texture, "d" for decals (RGBA), "n" for normal maps (XYZ), "g" for glow maps (RGB), "s" for specularity maps (grey-scale), "z" for depth maps (Z). 
+        Specifying the primary diffuse texture advances to the next texture slot as above, while secondary types fill additional texture units in the order specified in the .cfg file. Normal ("n") and glow ("g") maps will automatically be combined with specularity ("s") and depth ("z") maps, filling the unused A component, into one texture. Decal ("d") and glow ("g") maps will be blended into the diffuse texture if running without shaders. To disable this combining, specify secondary textures as generic with 1 or "u".
+        ROT specifies preprocessing on the image, currently only rotation and flipping (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW, 4 = X flip, 5 = Y flip). X and Y are the X and Y offset in texels.
         <pre>watercolour R G B</pre>
         Changes the blended color of all water to RGB. This may be used to simulate
         various lighting conditions for water.        

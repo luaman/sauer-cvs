@@ -267,25 +267,25 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
 SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
 {
-    numrots &= 3;
-    if(!numrots) return s;
-    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, numrots&1 ? s->h : s->w, numrots&1 ? s->w : s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
+    // 1..3 rotate through 90..270 degrees, 4 flips X, 5 flips Y 
+    if(numrots<1 || numrots>5) return s;
+    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, (numrots&5)==1 ? s->h : s->w, (numrots&5)==1 ? s->w : s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
     if(!d) fatal("create surface");
     int depth = s->format->BitsPerPixel==24 ? 3 : 4;
     loop(y, s->h) loop(x, s->w)
     {
         uchar *src = (uchar *)s->pixels+(y*s->w+x)*depth;
         int dx = x, dy = y;
-        if(numrots>1) dx = (s->w-1)-x;
-        if(numrots<3) dy = (s->h-1)-y;
-        if(numrots!=2) swap(int, dx, dy);
+        if(numrots>=2 && numrots<=4) dx = (s->w-1)-x;
+        if(numrots<=2 || numrots==5) dy = (s->h-1)-y;
+        if((numrots&5)==1) swap(int, dx, dy);
         uchar *dst = (uchar *)d->pixels+(dy*d->w+dx)*depth;
         loopi(depth) dst[i]=src[i];
         if(type==TEX_NORMAL || type==TEX_NORMAL_SPEC)
         {
-            if(numrots>1) dst[0] = 255-dst[0];      // flip X   on normal when 180/270 degrees
-            if(numrots<3) dst[1] = 255-dst[1];      // flip Y   on normal when  90/180 degrees
-            if(numrots!=2) swap(uchar, dst[0], dst[1]);       // swap X/Y on normal when  90/270 degrees
+            if(numrots>=2 && numrots<=4) dst[0] = 255-dst[0];      // flip X   on normal when 180/270 degrees
+            if(numrots<=2 || numrots==5) dst[1] = 255-dst[1];      // flip Y   on normal when  90/180 degrees
+            if((numrots&5)==1) swap(uchar, dst[0], dst[1]);       // swap X/Y on normal when  90/270 degrees
         };
     }; 
     SDL_FreeSurface(s);
