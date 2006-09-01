@@ -95,8 +95,9 @@ struct dynent : physent                         // animated characters, or chara
 
     animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
     int lastanimswitchtime[2];
-
-    dynent() { reset(); loopi(2) lastanimswitchtime[i] = -1; };
+    void *lastmodel;
+    
+    dynent() : lastmodel(NULL) { reset(); loopi(2) lastanimswitchtime[i] = -1; };
                
     void stopmoving()
     {

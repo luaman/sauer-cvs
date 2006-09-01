@@ -114,6 +114,8 @@ struct md3mesh
     };
 };
 
+struct md3;
+
 struct md3model
 {
     int index;
@@ -122,10 +124,11 @@ struct md3model
     md3model **links;
     md3frame *frames;
     md3tag *tags;
+    md3 *model;
     int numframes, numtags;
     bool loaded;
        
-    md3model() : anims(0), links(0), frames(0), tags(0), loaded(false)
+    md3model() : anims(0), links(0), frames(0), tags(0), model(0), loaded(false)
     {
     };
     
@@ -404,7 +407,7 @@ struct md3model
         
         if(d && index<2)
         {
-            if(d->lastanimswitchtime[index]==-1) { d->current[index] = ai; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
+            if(d->lastmodel!=model || d->lastanimswitchtime[index]==-1) { d->current[index] = ai; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
             else if(d->current[0] != ai)
             {
                 if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
@@ -613,6 +616,8 @@ struct md3 : model
         md3models[0].render(anim, varseed, speed, basetime, d);
         
         glPopMatrix();
+
+        if(d) d->lastmodel = this;
     };
     
     void setskin(int tex = 0) {};
@@ -639,6 +644,7 @@ struct md3 : model
             loadingmd3 = NULL;
             md3model &mdl = md3models.add();
             mdl.index = 0; 
+            mdl.model = this;
             s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
             if(!mdl.load(path(name1)))
             {
@@ -668,6 +674,7 @@ void md3load(char *model)
     s_sprintfd(filename)("%s/%s", md3dir, model);
     md3model &mdl = loadingmd3->md3models.add();
     mdl.index = loadingmd3->md3models.length()-1;
+    mdl.model = loadingmd3;
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
 };
 

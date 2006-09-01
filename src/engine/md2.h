@@ -395,7 +395,7 @@ struct md2 : model
         
         if(d)
         {
-            if(d->lastanimswitchtime[0]==-1) { d->current[0] = ai; d->lastanimswitchtime[0] = lastmillis-animationinterpolationtime*2; }
+            if(d->lastmodel!=this || d->lastanimswitchtime[0]==-1) { d->current[0] = ai; d->lastanimswitchtime[0] = lastmillis-animationinterpolationtime*2; }
             else if(d->current[0] != ai)
             {
                 if(lastmillis-d->lastanimswitchtime[0]>animationinterpolationtime/2) d->prev[0] = d->current[0];
@@ -506,6 +506,8 @@ struct md2 : model
 	    };
 
         glPopMatrix();
+
+        if(d) d->lastmodel = this;
     };
 
     bool load()
