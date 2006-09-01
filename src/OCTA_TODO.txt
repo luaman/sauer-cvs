@@ -25,7 +25,12 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
-- spec from on side only on ATI?
+- def:
+  * death needs to be more obvious (better sound/centerprint) more gibs/blood
+  * damageblend scaling var
+  * rocketexplosions smaller radius?
+  * settings/bind keys from menu
+  * brighter skin in MP?
 - change SF status from alpha
 - white lines in decal shader??
 - add gregors new textures
@@ -39,7 +44,6 @@ aard/everyone:
 - write function to filter illegal characters out of names and server talk (colors etc)
 - bake normalmap on -f0? mildly?
 - clean up maps folder | maps without lightmaps?
-- better back to front rendering / experiment with Z only pass for world geometry only
 - stop scoreboard from popping up if menu on?
 - ensure modelshader can be set from model cfg
 - one vwep per model?
@@ -51,8 +55,8 @@ aard/everyone:
 - reduce spec 8 => 6
 - rockets thru walls? collision step?
 [18:46] Aardappel: - spawn the rocket out a bit further from the camera, sometimes it flashes too close
-[18:47] Aardappel: - make the grenade rotate a bit, I suggest making it rotate fast ast first then slow as it nears it explosion
-[18:48] Aardappel: - we could change the grenades trail to be more like the RL, but very light... as it is now, with the sparkies that doesn't look very good
+
+
 
 - weird fps issue.. maybe mobile?
 - auto bounding boxes that can be overridden
@@ -78,17 +82,14 @@ aard/everyone:
 - integrate fmodex (to get both panning and stereo ogg on windows?)
 - 3d sprites?
 - think about ways to make dynamicly modifying geometry in gameplay make sense
-- add PITCH to specular computation
 - can't select last 3 textures in list
 - bouncing gib particles
-- water shader
 - monster spawner ammo - add egg model
 - iconic stats
 - new multiplayer model.. md3?
 - profile for memory usage (devpartner?) | if md2 buffers are a lot, can remove it
 - refactor octarender.cpp & others
 - glowmaps in the texture browser -> messy
-- make sure correct CVS files are flagged as binary? | switch to SVN?
 
 [22:28] <Nieb> http://www.snieb.com/dg_blood_01.png
 [22:28] <Nieb> http://www.snieb.com/dg_blood_01.png
@@ -109,14 +110,10 @@ aard/everyone:
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
   -> switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
 
-- start with rpg mode | clientside only, simplify
 
 - make start of flares etc spawn out further from the player
-- fix the two //BREAK : sp intermission | sp savegames
 - improve on cma render then add to sauer
 - new sounds: impact (diff materials + flesh) | flyby, both instant & projectile | soundspot / moving
-- start using md3 for new monsters/player models
-- fullscreen shader | bloom
 
 - better damage particles
 - new mapmodels/trees in menu -> new ones from last cube
@@ -131,34 +128,18 @@ aard/everyone:
 
 - experiment with physics speedup features
 
-- allow cubes to be marked as "curved", so we can make large landscape chunks look more smooth, octagon towers look round etc, as a closeup LOD level?
-
 - make 3rd person weapons show... how to make an axe swing rather than go back and forth?
 - better attack anim? with weapon maybe | add vwep?
 
-- triggers/doors for SP
-- think about simpler area based portals / combine with doors | automatically? compute portals of each VA? REALLY need some culling for monsters/items etc
-
-- find efficient solution for normals on world geometry, first just to compute smoother lighting, then for tangent space?
-- think of cheap way to have surface normals available.. can do tangent/bin globally? keep it all in worldspace? lights?
-  can do bumpmapping by simply having an "average tangentspace lightvector" LM and a "occlusion and attenuation color" LM,
-  then no list of lights and no tangent space vectors would be needed! superior to dot3 lightmaps really?
-  big problem is how to get a tangent space eye vector for spec?? 
-  to get accurate spec, we need per vertex sub, which can only ever be worldspace. best we can do is global TS.
-  -> do some tests to see what current state sorting amounts to, and what would happen if you'd swap
-
-- make health/armour/quad be available clientside, then add em to player floating text | team diff colour?
 - make wether you are hitting other player clearer - blip sounds like q3?
 - importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
-- select entities in parallel to geometry by picking | make editing more readable
-- 3rd person view seems to really slow fps on some systems still...
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
 - a multiplayer player still shows SG rays go thru target | hard to fix, is it really a problem?
 - players more visible?
 - 2 teams only
-- sound samples for N kills in a row | accuracy stats
+- sound samples for N kills in a row
 - sword?
 - think about doing other permanent powerups besides +10h
 - slowmo as gameplay feature?
@@ -167,12 +148,8 @@ aard/everyone:
 - system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
 - calclight while playing?
 - use of glBufferData() makes ATI driver crash on SDL_Exit()
-- gui framework
 - test errors / performance etc with devpartner
 - fix variance in framerate?
-- landscape generation and tools (see wiki)
 - render entities at distance as sprites
 - sort the order of rendering mapmodels, so as to factor out glbindbuffer
-- SP: add pistol ammo box... make monster use it? hmmm not more hitscan
-- switch to new fmod api & 3d sound? not available for bsd? openal?
 - blend screen when inside a cube
