@@ -416,6 +416,7 @@ struct clientcom : iclientcom
                 e.y = getint(p)/DMF;
                 e.z = getint(p)/DMF;
                 if(gun==GUN_SG) cl.ws.createrays(s, e);
+                d->gunselect = gun;
                 d->gunwait = 0;
                 d->lastaction = cl.lastmillis;
                 d->lastattackgun = d->gunselect;

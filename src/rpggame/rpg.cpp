@@ -129,7 +129,7 @@ struct rpgclient : igameclient
 
     void rendergame()
     {
-        if(isthirdperson()) renderclient(&player1, "monster/ogro", false, player1.lastaction, player1.lastpain);
+        if(isthirdperson()) renderclient(&player1, "monster/ogro", NULL, false, player1.lastaction, player1.lastpain);
         os.render();
     };
     

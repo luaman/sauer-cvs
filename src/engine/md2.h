@@ -132,6 +132,7 @@ struct md2 : model
     ushort *vbufi;
     int vbufi_len;
     vector<md2_anim> *anims;
+    vector<char *> vweps;
 
     md2_header header;
     
@@ -157,6 +158,7 @@ struct md2 : model
         if(hasVBO && vbufGL) glDeleteBuffers_(1, &vbufGL);
         DELETEA(anims);
         DELETEP(spheretree);
+        while(vweps.length()) delete[] vweps.pop();
     };
     
     char *name() { return loadname; };
@@ -172,7 +174,7 @@ struct md2 : model
         fread(&header, sizeof(md2_header), 1, file);
         endianswap(&header, sizeof(int), sizeof(md2_header)/sizeof(int));
 
-        if(header.magic!= 844121161 || header.version!=8) return false;
+        if(header.magic!=844121161 || header.version!=8) return false;
 
         frames = new char[header.framesize*header.numframes];
         if(frames==NULL) 
@@ -393,15 +395,17 @@ struct md2 : model
         loopi(ai.range) if(!mverts[ai.frame+i]) scaleverts(ai.frame+i);
         if(hasVBO && !vbufGL && ai.frame==0 && ai.range==1) genvar();
         
+        int index = vwep ? 1 : 0;
         if(d)
         {
-            if(d->lastmodel!=this || d->lastanimswitchtime[0]==-1) { d->current[0] = ai; d->lastanimswitchtime[0] = lastmillis-animationinterpolationtime*2; }
-            else if(d->current[0] != ai)
+            if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1) { d->current[index] = ai; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
+            else if(d->current[index] != ai)
             {
-                if(lastmillis-d->lastanimswitchtime[0]>animationinterpolationtime/2) d->prev[0] = d->current[0];
-                d->current[0] = ai;
-                d->lastanimswitchtime[0] = lastmillis;
+                if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
+                d->current[index] = ai;
+                d->lastanimswitchtime[index] = lastmillis;
             };
+            d->lastmodel[index] = this;
         };
 
         glPushMatrix ();
@@ -440,19 +444,19 @@ struct md2 : model
         {
         
             md2_anpos prev, current;
-            current.setframes(d ? d->current[0] : ai);
+            current.setframes(d ? d->current[index] : ai);
 		    vec *verts1 = mverts[current.fr1], *verts2 = mverts[current.fr2], *verts1p, *verts2p;
             vec *norms1 = mnorms[current.fr1], *norms2 = mnorms[current.fr2], *norms1p, *norms2p;
 		    float aifrac1, aifrac2;
-		    bool doai = d && lastmillis-d->lastanimswitchtime[0]<animationinterpolationtime;
+		    bool doai = d && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
 		    if(doai)
 		    {
-		        prev.setframes(d->prev[0]);
+		        prev.setframes(d->prev[index]);
 		        verts1p = mverts[prev.fr1];
 		        verts2p = mverts[prev.fr2];
                 norms1p = mnorms[prev.fr1];
                 norms2p = mnorms[prev.fr2];
-		        aifrac1 = (lastmillis-d->lastanimswitchtime[0])/(float)animationinterpolationtime;
+		        aifrac1 = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
 		        aifrac2 = 1-aifrac1;
 		    };
 
@@ -506,8 +510,6 @@ struct md2 : model
 	    };
 
         glPopMatrix();
-
-        if(d) d->lastmodel = this;
     };
 
     bool load()

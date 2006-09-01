@@ -73,6 +73,14 @@ void mdltrans(char *x, char *y, char *z)
 
 COMMAND(mdltrans, "sss");
 
+void mdlvwep(int *vwep)
+{
+    checkmdl;
+    loadingmodel->vwep = *vwep!=0;
+};
+
+COMMAND(mdlvwep, "i");
+
 void mdlbb(float *rad, float *tofloor, float *toceil)
 {
     checkmdl;
@@ -251,7 +259,18 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 VAR(showcharacterboundingbox, 0, 0, 1);
 
-void renderclient(dynent *d, const char *mdlname, bool forceattack, int lastaction, int lastpain)
+struct gunent : dynent
+{
+    int weight;                         // affects the effectiveness of hitpush
+    int lastupdate, plag, ping;
+    int lifesequence;                   // sequence id for each respawn, used in damage test
+    int health, armour, armourtype, quadmillis;
+    int maxhealth;
+    int lastpain;
+    int gunselect, gunwait;
+};
+
+void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain)
 {
     if(showcharacterboundingbox) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
     int anim = ANIM_IDLE|ANIM_LOOP;
@@ -281,6 +300,7 @@ void renderclient(dynent *d, const char *mdlname, bool forceattack, int lastacti
     };
     vec color, dir;
     rendermodel(color, dir, mdlname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST));
+    if(vwepname) rendermodel(color, dir, vwepname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST));
 };
 
 void setbbfrommodel(dynent *d, char *mdl)
