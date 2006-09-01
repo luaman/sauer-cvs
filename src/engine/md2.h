@@ -387,11 +387,19 @@ struct md2 : model
             ai.range = _range[n];
             ai.speed = speed;
         };
+        
         if(animinfo&(ANIM_START|ANIM_END))
         {
             if(animinfo&ANIM_END) ai.frame += ai.range-1;
             ai.range = 1;
         };
+
+        if(ai.frame+ai.range>header.numframes)
+        {
+            if(ai.frame>=header.numframes) return;
+            ai.range = header.numframes-ai.frame;
+        };
+
         loopi(ai.range) if(!mverts[ai.frame+i]) scaleverts(ai.frame+i);
         if(hasVBO && !vbufGL && ai.frame==0 && ai.range==1) genvar();
         

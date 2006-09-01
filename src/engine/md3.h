@@ -402,6 +402,12 @@ struct md3model
             ai.range = 1;
         };
 
+        if(ai.frame+ai.range>numframes)
+        {
+            if(ai.frame>=numframes) return;
+            ai.range = numframes-ai.frame;
+        };
+
         if(hasVBO && !meshes[0].vbufGL && ai.frame==0 && ai.range==1) genvar();
         
         if(d && index<2)
