@@ -64,7 +64,7 @@ Toggle between a more permanent and bigger console display and default, scroll o
 play the game normally with the larger console on.
 
 <pre>weapon a b c</pre>
-Tries to select weapons a, b &amp; c, in that order, if they have ammo (0 = fist, 1 = sg, 2 = cg, 3 = rl, 4 = rifle, 5 = gl). If none of the 3 indicated have any ammo, it will try the remaining weapons for one with ammo (in order 3/2/1/4/0) (the fist needs no ammo). You can use the weapon command with 0 to 3 arguments. 
+Tries to select weapons a, b &amp; c, in that order, if they have ammo (0 = fist, 1 = sg, 2 = cg, 3 = rl, 4 = rifle, 5 = gl, 6 = pistol). If none of the 3 indicated have any ammo, it will try the remaining weapons for one with ammo (in order 3/2/1/4/0) (the fist needs no ammo). You can use the weapon command with 0 to 3 arguments. 
 examples:
 <pre>weapon 2 1 0     // close up selection
 weapon 4 3 2     // far away selection
@@ -89,8 +89,10 @@ Set gameplay mode to N for the next game played (next map load). N can be:
 <li>2: a standard non teamplay game, meant for FFA and duel games.</li>
 <li>3: a standard teamplay game. will work with any number of teams with any number of players: you are allied with all players whose "team" setting is the same as yours. In general, all odd numbered modes (3/5/7/9) are the teamplay variant of the even mode preceding it.</li>
 <li>4/5: instagib mode. No items will spawn, but everyone will have 100 rifle rounds and 1 health.</li>
-<li>6/7: efficiency mode. No items will spawn, but everyone will get all weapons with full ammo, and a yellow armour + boost on respawn.</li>
-<li>8/9: arena mode. as efficiency mode, but now when you die you stay dead until one player remains. [note: this mode doesn't fully work yet]</li>
+<li>6/7: efficiency mode. No items will spawn, but everyone will get all weapons with full ammo, and green armour.</li>
+<li>8/9: arena mode. as efficiency mode, but now when you die you stay dead until one player remains.</li>
+<li>10/11: tactics arena mode. as arena mode, but now everyone will spawn with only base ammo for 2 random weapons and green armour.</li>
+<li>12: capture mode, see capture mode section below.</li> 
 <li>-1, -2: single player, see single player mode section below.</li>
 </ul>
 Frag counting is the same for all modes: 1 for a frag, -1 for a suicide or a teamkill. Timelimit for all games is 10 minutes, or 15 minutes for teamplay, and no timelimit for mode 1 (and mode 0 in a local game).
@@ -153,18 +155,6 @@ There are initially 5 weapons:
         <td>quake3 gauntlet</td>
     </tr>
     <tr>
-        <td>?</td>
-        <td> pistol</td>
-        <td>
-    25</td>
-        <td>
-    0.5</td>
-        <td>
-    50</td>
-        <td>
-    quake SG, but more precise</td>
-    </tr>
-    <tr>
         <td>1</td>
         <td>shotgun</td>
         <td>
@@ -198,7 +188,7 @@ There are initially 5 weapons:
         <td>quake2 RG</td>
     </tr>
     <tr>
-        <td>
+        <td>5
         </td>
         <td>
             grenade launcher</td>
@@ -211,13 +201,26 @@ There are initially 5 weapons:
         <td>
             any quake GL, except faster but less damaging</td>
     </tr>
+    <tr>
+        <td>6</td>
+        <td> pistol</td>
+        <td>
+    25</td>
+        <td>
+    0.5</td>
+        <td>
+    50</td>
+        <td>
+    quake SG, but more precise</td>
+    </tr>
+
 </table>
 <br>
 The player has available all weapons when he spawns, but no ammo for them (except 5 shells), 100 health, and 50 weak armour (20% absorbtion).
 <br><br>
 Items that can be picked up:
 <ul>
-<li>4 types of ammo (10 shells, 5 rockets, 20 bullets, 5 rifle rounds, 10 grenades, 30 pistol ammo) (to a max of 30/15/60/15/30/120,
+<li>6 types of ammo (10 shells, 5 rockets, 20 bullets, 5 rifle rounds, 10 grenades, 30 pistol ammo) (to a max of 30/15/60/15/30/120,
         respawn 12/9/6 seconds)</li>
 <li>health (adds 25 to a max of MAXHEALTH (initially 100), respawn 20/15/10 seconds)</li>
 <li>health boost (adds 10 to your MAXHEALTH until the end of the current map, respawn 60 seconds)</li><li>light armour (100, absorbs 40% of damage, respawn 20 seconds)</li>
