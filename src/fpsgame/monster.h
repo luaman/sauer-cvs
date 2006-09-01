@@ -239,7 +239,7 @@ struct monsterset
             { GUN_RL,        12, 500, 1, 0,   200, 200, 6, 24, 210, S_PAINB, S_DEATHB, "bauul",       "monster/bauul",      "monster/bauul/vwep"},
             { GUN_BITE,      22,  50, 3, 0,   100, 400, 1, 15,  75, S_PAINP, S_PIGGR2, "a hellpig",   "monster/hellpig",    NULL},
             { GUN_ICEBALL,   11, 250, 1, 0,    10, 400, 6, 18, 160, S_PAINH, S_DEATHH, "a knight",    "monster/knight",     "monster/knight/vwep"},
-            { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 10,  60, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin",     NULL},
+            { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 10,  60, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin",     "monster/goblin/vwep"},
         };
         monstertypes = _monstertypes;
     };
