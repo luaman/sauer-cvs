@@ -1380,10 +1380,35 @@ VAR(oqmm, 0, 4, 8);
 
 extern bool getentboundingbox(extentity &e, ivec &o, ivec &r);
 
+vector<extentity *> renderedmms;
+
+void rendermapmodel(extentity &e)
+{
+        int anim = ANIM_MAPMODEL|ANIM_LOOP, basetime = 0;
+        if(e.attr3) switch(e.triggerstate)
+        {
+            case TRIGGER_RESET: anim = ANIM_TRIGGER|ANIM_START; break;
+            case TRIGGERING: anim = ANIM_TRIGGER; basetime = e.lasttrigger; break;
+            case TRIGGERED: anim = ANIM_TRIGGER|ANIM_END; break;
+            case TRIGGER_RESETTING: anim = ANIM_TRIGGER|ANIM_REVERSE; basetime = e.lasttrigger; break;
+        };
+        mapmodelinfo &mmi = getmminfo(e.attr2);
+        if(&mmi) rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
+};
+
+extern bool reflecting;
+
 void rendermapmodels()
 {
+    if(reflecting)
+    {
+        loopv(renderedmms) rendermapmodel(*renderedmms[i]);
+        return;
+    };
+    
     const vector<extentity *> &ents = et->getents();
 
+    renderedmms.setsizenodelete(0);
     visiblemms = NULL;
     lastvisiblemms = &visiblemms;
     findvisiblemms(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, ents);
@@ -1441,16 +1466,8 @@ void rendermapmodels()
                 }
                 else if(e.visible)
                 {
-                    int anim = ANIM_MAPMODEL|ANIM_LOOP, basetime = 0;
-                    if(e.attr3) switch(e.triggerstate)
-                    {
-                        case TRIGGER_RESET: anim = ANIM_TRIGGER|ANIM_START; break;
-                        case TRIGGERING: anim = ANIM_TRIGGER; basetime = e.lasttrigger; break;
-                        case TRIGGERED: anim = ANIM_TRIGGER|ANIM_END; break;
-                        case TRIGGER_RESETTING: anim = ANIM_TRIGGER|ANIM_REVERSE; basetime = e.lasttrigger; break;
-                    };
-                    mapmodelinfo &mmi = getmminfo(e.attr2);
-                    if(&mmi) rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
+                    rendermapmodel(e);
+                    renderedmms.add(&e);
                     e.visible = false;
                 };
             };

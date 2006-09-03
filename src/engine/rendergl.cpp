@@ -1005,6 +1005,7 @@ void drawreflection(float z)
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
+    if(wreflect>3) rendermapmodels();
     if(wreflect>1) cl->rendergame();
     
     glDisable(GL_FOG);

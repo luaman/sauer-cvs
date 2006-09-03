@@ -518,37 +518,35 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 
 extern void setorigin(vtxarray *va, bool init);
 extern vtxarray *visibleva;
-extern int floatvtx;
 
-extern void renderva2(vtxarray *va, lodlevel &lod);
-
-vector<Reflection> reflections;
+Reflection reflections[MAXREFLECTIONS];
 GLuint reflectiondb = 0;
 
 Reflection *findreflection(int height)
 {
-    loopv(reflections)
+    loopi(MAXREFLECTIONS)
     {
         if(reflections[i].height==height) return &reflections[i];
     };
     return NULL;
 };
 
-void addreflection(int height)
+void addreflection(materialsurface &m)
 {
-    int free = -1;
-    loopv(reflections)
+    int height = m.o.z, free = -1;
+    loopi(MAXREFLECTIONS)
     {
         if(reflections[i].height==height) return;
         if(reflections[i].height<0 && free<0) free = i;
     };
-    if(free>=0)
+    if(free<0) return;
+    if(reflections[free].fb)
     {
         reflections[free].height = height;
         return;
     };
-    if(reflections.length()>=MAXREFLECTIONS) return;
-    Reflection &ref = reflections.add();
+    Reflection &ref = reflections[free];
+    ref.height = height;
     glGenFramebuffers_(1, &ref.fb);
     glGenTextures(1, &ref.tex);
     char *pixels = new char[REFLECT_WIDTH*REFLECT_HEIGHT*3];
@@ -575,20 +573,28 @@ void reflectwater()
 {
     if(!hasFBO || !wreflect) return;
 
-    loopv(reflections) reflections[i].height = -1;
+    static bool refinit = false;
+    if(!refinit)
+    {
+        loopi(MAXREFLECTIONS) reflections[i].fb = 0;
+        refinit = true;
+    };
+    
+    loopi(MAXREFLECTIONS) reflections[i].height = -1;
+
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
         if(!lod.matsurfs && va->occluded >= OCCLUDE_BB) continue;
         materialsurface *matbuf = lod.matbuf;
         int matsurfs = lod.matsurfs;
-        matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m.o.z));
+        matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
     };
     
-    if(reflections.empty() || reflections[0].height<0) return;
+    if(reflections[0].height<0) return;
 
     glViewport(0, 0, REFLECT_WIDTH, REFLECT_HEIGHT);
-    loopv(reflections)
+    loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
         if(ref.height<0) break;
