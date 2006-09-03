@@ -723,6 +723,9 @@ VARP(sparklyfix, 0, 1, 1);
 VAR(showsky, 0, 1, 1);
 
 extern int explicitsky, skyarea;
+extern bool reflecting;
+
+extern void setreflectionmatrix(float z);
 
 void drawskybox(int farplane, bool limited)
 {
@@ -745,10 +748,11 @@ void drawskybox(int farplane, bool limited)
     glRotated(player->pitch, -1.0, 0.0, 0.0);
     glRotated(player->yaw,   0.0, 1.0, 0.0);
     glRotated(90.0, 1.0, 0.0, 0.0);
+    if(reflecting) setreflectionmatrix(0);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
     draw_envbox(farplane/2);
-    transplayer();
+    if(!reflecting) transplayer();
     if(limited) 
     {
         if(editmode && showsky)
@@ -934,8 +938,6 @@ void project(float fovy, float aspect, int farplane)
     glMatrixMode(GL_MODELVIEW);
 };
 
-VAR(foo, 0, 0, 1);
-
 void setclipmatrix(float a, float b, float c, float d)
 {
     // transform the clip plane into camera space
@@ -997,8 +999,8 @@ void drawreflection(float z)
     glEnable(GL_TEXTURE_GEN_T);
     if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
 
-    extern void renderreflectedgeom();
-    renderreflectedgeom();
+    extern void renderreflectedgeom(float z);
+    renderreflectedgeom(z);
 
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
@@ -1020,14 +1022,7 @@ void drawreflection(float z)
     defaultshader->set();
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    glLoadIdentity();
-    glRotated(player->pitch, -1.0, 0.0, 0.0);
-    glRotated(player->yaw,   0.0, 1.0, 0.0);
-    glRotated(90.0, 1.0, 0.0, 0.0);
-    setreflectionmatrix(z);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    draw_envbox(farplane/2);
-    glEnable(GL_FOG);
+    drawskybox(farplane, false);
 
     glCullFace(GL_FRONT);
     reflecting = false;

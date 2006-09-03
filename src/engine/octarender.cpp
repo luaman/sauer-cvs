@@ -771,7 +771,7 @@ vtxarray *newva(int x, int y, int z, int size)
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->explicitsky = explicitsky;
     va->skyarea = skyarea;
-    va->prevvfc = va->curvfc = VFC_NOT_VISIBLE;
+    va->curvfc = VFC_NOT_VISIBLE;
     va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
     wverts += va->verts = verts.length();
@@ -1084,7 +1084,7 @@ int isvisiblecube(const vec &o, int size)
     return isvisiblesphere(size*SQRT3/2.0f, center);
 };
 
-float vadist(vtxarray *va, vec &p)
+float vadist(vtxarray *va, const vec &p)
 {
     if(va->min.x>va->max.x) return 10000;   // box contains only sky/water
     return p.dist_to_bb(va->min.tovec(), va->max.tovec());
@@ -1130,7 +1130,6 @@ void findvisiblevas(vector<vtxarray *> &vas)
     loopv(vas)
     {
         vtxarray &v = *vas[i];
-        v.prevvfc = v.curvfc;
         v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);
         if(v.curvfc!=VFC_NOT_VISIBLE) 
         {
@@ -1145,26 +1144,31 @@ void findvisiblevas(vector<vtxarray *> &vas)
     };
 };
 
+void setvfcP(int scr_w, int scr_h, float pyaw, float ppitch, const vec &camera)
+{
+    float fov = getvar("fov");
+    float vpxo = 90.0 - fov / 2.0;
+    float vpyo = 90.0 - (fov * (float) scr_h / scr_w) / 2;
+    float yaw = pyaw * RAD;
+    float yawp = (pyaw + vpxo) * RAD;
+    float yawm = (pyaw - vpxo) * RAD;
+    float pitch = ppitch * RAD;
+    float pitchp = (ppitch + vpyo) * RAD;
+    float pitchm = (ppitch - vpyo) * RAD;
+    vfcP[0].toplane(vec(yaw,  pitch), camera);  // back/far plane
+    vfcP[1].toplane(vec(yawp, pitch), camera);  // left plane
+    vfcP[2].toplane(vec(yawm, pitch), camera);  // right plane
+    vfcP[3].toplane(vec(yaw,  pitchp), camera); // top plane
+    vfcP[4].toplane(vec(yaw,  pitchm), camera); // bottom plane
+    vfcDfog = getvar("fog");
+};
+
 void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
 {
     memset(vasort, 0, sizeof(vasort));
 
     // Calculate view frustrum: Only changes if resize, but...
-    float fov = getvar("fov");
-    float vpxo = 90.0 - fov / 2.0;
-    float vpyo = 90.0 - (fov * (float) scr_h / scr_w) / 2;
-    float yaw = player->yaw * RAD;
-    float yawp = (player->yaw + vpxo) * RAD;
-    float yawm = (player->yaw - vpxo) * RAD;
-    float pitch = player->pitch * RAD;
-    float pitchp = (player->pitch + vpyo) * RAD;
-    float pitchm = (player->pitch - vpyo) * RAD;
-    vfcP[0].toplane(vec(yaw,  pitch), camera1->o);  // back/far plane
-    vfcP[1].toplane(vec(yawp, pitch), camera1->o);  // left plane
-    vfcP[2].toplane(vec(yawm, pitch), camera1->o);  // right plane
-    vfcP[3].toplane(vec(yaw,  pitchp), camera1->o); // top plane
-    vfcP[4].toplane(vec(yaw,  pitchm), camera1->o); // bottom plane
-    vfcDfog = getvar("fog");
+    setvfcP(scr_w, scr_h, player->yaw, player->pitch, camera1->o);
 
     findvisiblevas(varoot);
     sortvisiblevas();
@@ -1909,12 +1913,17 @@ void rendergeom()
 };
 
 extern int reflectdist;
+extern int scr_w, scr_h;
 
-void renderreflectedgeom()
+void renderreflectedgeom(float z)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     setupTMUs();
     glPushMatrix();
+
+    vec o(camera1->o);
+    o.z = z-(camera1->o.z-z);
+    setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
 
     renderstate cur;
 // FIXME: don't iterate over all the VAs, make sure they're sorted too!
@@ -1923,6 +1932,7 @@ void renderreflectedgeom()
         vtxarray *va = valist[i];
         lodlevel &lod = va->l0;
         if(!lod.texs) continue;
+        if(isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
         if(vadist(va, camera1->o) > reflectdist) continue;
         renderva(cur, va, lod);
     };

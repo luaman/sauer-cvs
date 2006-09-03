@@ -51,7 +51,7 @@ struct vtxarray
     uint vbufGL;        // VBO buffer ID
     int x, y, z, size;  // location and size of cube.
     ivec min, max;      // BB
-    uchar prevvfc, curvfc, occluded;
+    uchar curvfc, occluded;
     occludequery *query;
 };
 
