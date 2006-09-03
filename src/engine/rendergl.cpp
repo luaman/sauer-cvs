@@ -899,8 +899,9 @@ void renderfullscreenshader(int w, int h)
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
+bool reflecting = false;
 physent *camera1 = NULL;
-bool isthirdperson() { return player!=camera1; };
+bool isthirdperson() { return player!=camera1 || reflecting; };
 
 void recomputecamera()
 {
@@ -977,8 +978,12 @@ void setreflectionmatrix(float z)
     glMultMatrixf(ref);
 };
 
+extern int wreflect;
+
 void drawreflection(float z)
 {
+    reflecting = true;
+
     glClear(GL_DEPTH_BUFFER_BIT);
     glCullFace(GL_BACK);
 
@@ -1000,6 +1005,8 @@ void drawreflection(float z)
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
+    if(wreflect>1) cl->rendergame();
+    
     if(reflectclip) undoclipmatrix();
     defaultshader->set();
 
@@ -1015,6 +1022,7 @@ void drawreflection(float z)
     glEnable(GL_FOG);
 
     glCullFace(GL_FRONT);
+    reflecting = false;
 };
 
 void gl_drawframe(int w, int h, float curfps)
