@@ -111,8 +111,6 @@ void savec(cube *c, gzFile f, bool nolms)
 
 cube *loadchildren(gzFile f);
 
-
-
 void loadc(gzFile f, cube &c)
 {
     bool haschildren = false;

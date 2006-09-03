@@ -1,3 +1,4 @@
+// GL_ARB_vertex_program, GL_ARB_fragment_program
 extern PFNGLGENPROGRAMSARBPROC            glGenPrograms_;
 extern PFNGLBINDPROGRAMARBPROC            glBindProgram_;
 extern PFNGLPROGRAMSTRINGARBPROC          glProgramString;

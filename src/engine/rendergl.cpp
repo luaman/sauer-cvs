@@ -3,31 +3,47 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false, hasTR = false;
+bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false;
 int renderpath;
 
 GLUquadricObj *qsphere = NULL;
 
+// GL_ARB_vertex_buffer_object
 PFNGLGENBUFFERSARBPROC    glGenBuffers_    = NULL;
 PFNGLBINDBUFFERARBPROC    glBindBuffer_    = NULL;
 PFNGLBUFFERDATAARBPROC    glBufferData_    = NULL;
 PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_ = NULL;
 
+// GL_ARB_multitexture
 PFNGLACTIVETEXTUREARBPROC       glActiveTexture_       = NULL;
 PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_ = NULL;
 
-PFNGLGENPROGRAMSARBPROC            glGenPrograms_ = NULL;
-PFNGLBINDPROGRAMARBPROC            glBindProgram_ = NULL;
-PFNGLPROGRAMSTRINGARBPROC          glProgramString_ = NULL;
-PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_ = NULL;
+// GL_ARB_vertex_program, GL_ARB_fragment_program
+PFNGLGENPROGRAMSARBPROC            glGenPrograms_            = NULL;
+PFNGLBINDPROGRAMARBPROC            glBindProgram_            = NULL;
+PFNGLPROGRAMSTRINGARBPROC          glProgramString_          = NULL;
+PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_  = NULL;
 PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_ = NULL;
 
-PFNGLGENQUERIESARBPROC        glGenQueries_ = NULL;
-PFNGLDELETEQUERIESARBPROC     glDeleteQueries_ = NULL;
-PFNGLBEGINQUERYARBPROC        glBeginQuery_ = NULL;
-PFNGLENDQUERYARBPROC          glEndQuery_ = NULL;
-PFNGLGETQUERYIVARBPROC        glGetQueryiv_ = NULL;
+// GL_ARB_occlusion_query
+PFNGLGENQUERIESARBPROC        glGenQueries_        = NULL;
+PFNGLDELETEQUERIESARBPROC     glDeleteQueries_     = NULL;
+PFNGLBEGINQUERYARBPROC        glBeginQuery_        = NULL;
+PFNGLENDQUERYARBPROC          glEndQuery_          = NULL;
+PFNGLGETQUERYIVARBPROC        glGetQueryiv_        = NULL;
 PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_ = NULL;
+
+// GL_EXT_framebuffer_object
+PFNGLBINDRENDERBUFFEREXTPROC        glBindRenderbuffer_        = NULL;
+PFNGLDELETERENDERBUFFERSEXTPROC     glDeleteRenderbuffers_     = NULL;
+PFNGLGENFRAMEBUFFERSEXTPROC         glGenRenderbuffers_        = NULL;
+PFNGLRENDERBUFFERSTORAGEEXTPROC     glRenderbufferStorage_     = NULL;
+PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  glCheckFramebufferStatus_  = NULL;
+PFNGLBINDFRAMEBUFFEREXTPROC         glBindFramebuffer_         = NULL;
+PFNGLDELETEFRAMEBUFFERSEXTPROC      glDeleteFramebuffers_      = NULL;
+PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffers_         = NULL;
+PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2D_    = NULL;
+PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbuffer_ = NULL;
 
 hashtable<const char *, Shader> shaders;
 static Shader *curshader = NULL;
@@ -235,6 +251,22 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
         extern int zpass;
         if(renderpath==R_FIXEDFUNCTION) zpass = 0;
+    };
+
+    if(strstr(exts, "GL_EXT_framebuffer_object"))
+    {
+        glBindRenderbuffer_        = (PFNGLBINDRENDERBUFFEREXTPROC)       getprocaddress("glBindRenderbufferEXT");
+        glDeleteRenderbuffers_     = (PFNGLDELETERENDERBUFFERSEXTPROC)    getprocaddress("glDeleteRenderbuffersEXT");
+        glGenRenderbuffers_        = (PFNGLGENFRAMEBUFFERSEXTPROC)        getprocaddress("glGenRenderbuffersEXT");
+        glRenderbufferStorage_     = (PFNGLRENDERBUFFERSTORAGEEXTPROC)    getprocaddress("glRenderbufferStorageEXT");
+        glCheckFramebufferStatus_  = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) getprocaddress("glCheckFramebufferStatusEXT");
+        glBindFramebuffer_         = (PFNGLBINDFRAMEBUFFEREXTPROC)        getprocaddress("glBindFramebufferEXT");
+        glDeleteFramebuffers_      = (PFNGLDELETEFRAMEBUFFERSEXTPROC)     getprocaddress("glDeleteFramebuffersEXT");
+        glGenFramebuffers_         = (PFNGLGENFRAMEBUFFERSEXTPROC)        getprocaddress("glGenFramebuffersEXT");
+        glFramebufferTexture2D_    = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)   getprocaddress("glFramebufferTexture2DEXT");
+        glFramebufferRenderbuffer_ = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)getprocaddress("glFramebufferRenderbufferEXT");
+        hasFBO = true;
+        conoutf("Using GL_EXT_framebuffer_object extension.");
     };
 
     if(renderpath==R_ASMSHADER)
@@ -743,6 +775,7 @@ void drawskybox(int farplane, bool limited)
 const int NUMSCALE = 7;
 Shader *fsshader = NULL, *scaleshader = NULL;
 GLuint rendertarget[NUMSCALE];
+GLuint fsfb[NUMSCALE-1];
 GLfloat fsparams[4];
 int fs_w = 0, fs_h = 0;
 
@@ -766,6 +799,7 @@ void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
         {
             rtinit = true;
             glGenTextures(NUMSCALE, rendertarget);
+            if(hasFBO) glGenFramebuffers_(NUMSCALE-1, fsfb);
         };
         conoutf("now rendering with: %s", name);
         fsparams[0] = *x/255.0f;
@@ -794,6 +828,8 @@ void renderfsquad(int w, int h, Shader *s)
     glEnd();
 };
 
+VAR(fbo, 0, 0, 1);
+
 void renderfullscreenshader(int w, int h)
 {
     if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
@@ -810,6 +846,15 @@ void renderfullscreenshader(int w, int h)
         delete[] pixels;
         fs_w = w;
         fs_h = h;
+        if(fsfb[0])
+        {
+            loopi(NUMSCALE-1)
+            {
+                glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[i]);
+                glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, rendertarget[i+1], 0);
+            };
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
+        };
     };
 
     glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, fsparams[0], fsparams[1], fsparams[2], fsparams[3]);
@@ -820,8 +865,18 @@ void renderfullscreenshader(int w, int h)
     {
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
         glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, nw, nh);
-        if(i>=NUMSCALE-1 || !scaleshader) break;
+        if(i>=NUMSCALE-1 || !scaleshader || fsfb[0]) break;
         renderfsquad(nw /= 2, nh /= 2, scaleshader);
+    };
+    if(scaleshader && fsfb[0])
+    {
+        loopi(NUMSCALE-1)
+        {
+            if(i) glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[i]);
+            renderfsquad(nw /= 2, nh /= 2, scaleshader);
+        };
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     };
 
     if(scaleshader) loopi(NUMSCALE)
@@ -831,6 +886,12 @@ void renderfullscreenshader(int w, int h)
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
     };
     renderfsquad(w, h, fsshader);
+
+    if(scaleshader) loopi(NUMSCALE)
+    {
+        glActiveTexture_(GL_TEXTURE0_ARB+i);
+        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+    };
 
     glActiveTexture_(GL_TEXTURE0_ARB);
     glDepthMask(GL_TRUE);

@@ -79,20 +79,35 @@ struct Slot
 };
 
 
+// GL_ARB_multitexture
 extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture_;
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_;
 
+// GL_ARB_vertex_buffer_object
 extern PFNGLGENBUFFERSARBPROC    glGenBuffers_;
 extern PFNGLBINDBUFFERARBPROC    glBindBuffer_;
 extern PFNGLBUFFERDATAARBPROC    glBufferData_;
 extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_;
 
+// GL_ARB_occlusion_query
 extern PFNGLGENQUERIESARBPROC        glGenQueries_;
 extern PFNGLDELETEQUERIESARBPROC     glDeleteQueries_;
 extern PFNGLBEGINQUERYARBPROC        glBeginQuery_;
 extern PFNGLENDQUERYARBPROC          glEndQuery_;
 extern PFNGLGETQUERYIVARBPROC        glGetQueryiv_;
 extern PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_;
+
+// GL_EXT_framebuffer_object
+extern PFNGLBINDRENDERBUFFEREXTPROC        glBindRenderbuffer_;
+extern PFNGLDELETERENDERBUFFERSEXTPROC     glDeleteRenderbuffers_;
+extern PFNGLGENFRAMEBUFFERSEXTPROC         glGenRenderbuffers_;
+extern PFNGLRENDERBUFFERSTORAGEEXTPROC     glRenderbufferStorage_;
+extern PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  glCheckFramebufferStatus_;
+extern PFNGLBINDFRAMEBUFFEREXTPROC         glBindFramebuffer_;
+extern PFNGLDELETEFRAMEBUFFERSEXTPROC      glDeleteFramebuffers_;
+extern PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffers_;
+extern PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2D_;
+extern PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbuffer_;
 
 #define FONTH 64
 #define MINRESW 640
@@ -121,7 +136,7 @@ extern iclientcom      *cc;
 extern icliententities *et;
 
 // rendergl
-extern bool hasVBO, hasOQ;
+extern bool hasVBO, hasOQ, hasFBO;
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
