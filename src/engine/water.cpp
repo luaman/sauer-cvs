@@ -28,7 +28,7 @@ struct Reflection
 };
 Reflection *findreflection(int height);
 
-VAR(wreflect, 0, 3, 4);
+VARF(wreflect, 0, 3, 4, allchanged());
 
 void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 { 
@@ -47,14 +47,6 @@ void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
     
     ASSERT((wx1 & (subdiv - 1)) == 0);
     ASSERT((wy1 & (subdiv - 1)) == 0);
-
-    if(hasFBO && wreflect)
-    {
-        Reflection *ref = findreflection(z);
-        if(!ref) return;
-        glBindTexture(GL_TEXTURE_2D, ref->tex);
-        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 4, 0, 0, z, 0);
-    };
 
     for(int xx = wx1; xx<wx2; xx += subdiv)
     {
@@ -279,13 +271,26 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         {
             glBindTexture(GL_TEXTURE_2D, t->gl);
             defaultshader->set();
+            matloop(MAT_WATER,
+                if(m.orient==O_TOP && renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, t) >= (uint)m.csize * 2)
+                    renderwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, t);
+            );
+            glBindTexture(GL_TEXTURE_2D, t->gl);
+        }
+        else 
+        {
+            Reflection *ref;
+            watershader->set();
+            matloop(MAT_WATER, 
+                ref = findreflection(m.o.z);
+                if(ref)
+                {
+                    glBindTexture(GL_TEXTURE_2D, ref->tex);
+                    drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
+                };
+            );
         };
-        matloop(MAT_WATER,
-            if(m.orient==O_TOP && renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, t) >= (uint)m.csize * 2)
-                renderwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, t);
-        );
         glBindTexture(GL_TEXTURE_2D, t->gl);
-        #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
         defaultshader->set();
         matloop(MAT_WATER,
             if(m.orient!=O_TOP) renderwaterfall(m, t, 0.1f);
@@ -510,7 +515,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
             loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
             vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
          };
-         if(start->material != MAT_WATER || start->orient != O_TOP) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
+         if(start->material != MAT_WATER || start->orient != O_TOP || (wreflect && hasFBO)) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
          
     };
     return matsurfs - (end-matbuf);
