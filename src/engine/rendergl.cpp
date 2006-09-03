@@ -965,7 +965,7 @@ void undoclipmatrix()
     glMatrixMode(GL_MODELVIEW);
 };
 
-VAR(reflectclip, 0, 1, 1);
+VAR(reflectclip, 0, 0, 2);
 
 void setreflectionmatrix(float z)
 {
