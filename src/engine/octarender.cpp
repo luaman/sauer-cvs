@@ -1900,11 +1900,13 @@ void renderreflectedgeom()
     glPushMatrix();
 
     renderstate cur;
-    for(vtxarray *va = visibleva; va; va = va->next)
+// FIXME: don't iterate over all the VAs, make sure they're sorted too!
+    loopv(valist)
     {
-        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        vtxarray *va = valist[i];
+        lodlevel &lod = va->l0;
         if(!lod.texs) continue;
-        if(va->distance > reflectdist) continue;
+        if(vadist(va, camera1->o) > reflectdist) continue;
         renderva(cur, va, lod);
     };
 

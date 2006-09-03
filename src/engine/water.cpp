@@ -28,6 +28,8 @@ struct Reflection
 };
 Reflection *findreflection(int height);
 
+VAR(wreflect, 0, 1, 1);
+
 void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 { 
     float xf = 8.0f/t->xs;
@@ -46,7 +48,7 @@ void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
     ASSERT((wx1 & (subdiv - 1)) == 0);
     ASSERT((wy1 & (subdiv - 1)) == 0);
 
-    if(hasFBO)
+    if(hasFBO && wreflect)
     {
         Reflection *ref = findreflection(z);
         if(!ref) return;
@@ -256,7 +258,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         memcpy(tmp, tm, sizeof(tm));
         loopi(4) loopj(4) tm[j+i*4] = tmp[j]*mm[i*4] + tmp[j+4]*mm[i*4+1] + tmp[j+8]*mm[i*4+2] + tmp[j+12]*mm[i*4+3];
 
-        if(hasFBO)
+        if(hasFBO && wreflect)
         {
             if(!watershader) watershader = lookupshaderbyname("water");
             watershader->set();
@@ -273,7 +275,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         glColor4ubv(wcol);
         Texture *t = lookuptexture(DEFAULT_LIQUID).sts[0].t;
         #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
-        if(!hasFBO) 
+        if(!hasFBO || !wreflect) 
         {
             glBindTexture(GL_TEXTURE_2D, t->gl);
             defaultshader->set();
@@ -571,7 +573,7 @@ VAR(reflectdist, 0, 1000, 10000);
 
 void reflectwater()
 {
-    if(!hasFBO) return;
+    if(!hasFBO || !wreflect) return;
 
     loopv(reflections) reflections[i].height = -1;
     for(vtxarray *va = visibleva; va; va = va->next)
