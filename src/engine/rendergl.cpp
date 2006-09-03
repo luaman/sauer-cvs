@@ -1007,11 +1007,18 @@ void drawreflection(float z)
 
     if(wreflect>1) cl->rendergame();
     
+    glDisable(GL_FOG);
+
+    if(wreflect>2)
+    {
+        renderspheres(0);
+        render_particles(0);
+    };
+
     if(reflectclip) undoclipmatrix();
     defaultshader->set();
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    glDisable(GL_FOG);
     glLoadIdentity();
     glRotated(player->pitch, -1.0, 0.0, 0.0);
     glRotated(player->yaw,   0.0, 1.0, 0.0);

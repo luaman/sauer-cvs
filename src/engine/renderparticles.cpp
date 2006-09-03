@@ -59,6 +59,8 @@ vec right, up;
 
 void setorient(const vec &r, const vec &u) { right = r; up = u; };
 
+extern bool reflecting;
+
 void render_particles(int time)
 {
     glDepthMask(GL_FALSE);
@@ -143,7 +145,7 @@ void render_particles(int time)
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             };
 
-            if((p->fade -= time)<=0)
+            if(!reflecting && (p->fade -= time)<=0)
             {
                 *pp = p->next;
                 p->next = parempty;
@@ -152,7 +154,7 @@ void render_particles(int time)
             }
             else
             {
-                if(pt.gr)
+                if(!reflecting && pt.gr)
                 {
                     p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt.gr*2500);
                     vec a = p->d;

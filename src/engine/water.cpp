@@ -28,7 +28,7 @@ struct Reflection
 };
 Reflection *findreflection(int height);
 
-VAR(wreflect, 0, 2, 3);
+VAR(wreflect, 0, 3, 4);
 
 void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 { 

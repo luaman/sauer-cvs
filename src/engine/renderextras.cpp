@@ -172,6 +172,8 @@ void newsphere(vec &o, float max, int type)
     spheres.add(p);
 };
 
+extern bool reflecting;
+
 void renderspheres(int time)
 {
     static struct spheretype { float r, g, b; } spheretypes[2] =
@@ -208,13 +210,16 @@ void renderspheres(int time)
         glCallList(1);
         glPopMatrix();
         xtraverts += 12*6*2;
-        if(p.size>p.max)
+        if(!reflecting)
         {
-            spheres.remove(i);
-        }
-        else
-        {
-            p.size += time/25.0f;
+            if(p.size>p.max)
+            {
+                spheres.remove(i);
+            }
+            else
+            {
+                p.size += time/25.0f;
+            };
         };
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
