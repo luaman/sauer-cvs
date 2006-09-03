@@ -12,10 +12,21 @@ static inline void vertw(float v1, float v2, float v3, float t1, float t2, float
     glVertex3f(v1, v2, v3-1.1f-(float)sin((v1-wx1)/wsize*(v2-wy1)/wsize*(v1-wx2)*(v2-wy2)*59/23+t)*0.8f);
 };
 
-static inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; };
-static inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; };
+static inline float dx(float x) { return x + (float)sin(x*2+lastmillis/1000.0f)*0.04f; };
+static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; };
 
 // renders water for bounding rect area that contains water... simple but very inefficient
+
+#define MAXREFLECTIONS 4
+#define REFLECT_WIDTH 256
+#define REFLECT_HEIGHT 256
+struct Reflection
+{
+    GLuint fb;
+    GLuint tex;
+    int height;
+};
+Reflection *findreflection(int height);
 
 void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 { 
@@ -34,6 +45,14 @@ void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
     
     ASSERT((wx1 & (subdiv - 1)) == 0);
     ASSERT((wy1 & (subdiv - 1)) == 0);
+
+    if(hasFBO)
+    {
+        Reflection *ref = findreflection(z);
+        if(!ref) return;
+        glBindTexture(GL_TEXTURE_2D, ref->tex);
+        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 4, 0, 0, z, 0);
+    };
 
     for(int xx = wx1; xx<wx2; xx += subdiv)
     {
@@ -218,31 +237,63 @@ VAR(showmat, 0, 1, 1);
 
 COMMAND(watercolour, "iii");
 
+Shader *watershader = NULL;
+
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs) return;
     if(!editmode || !showmat)
     {
-         glEnable(GL_TEXTURE_2D);
-         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-         uchar wcol[4] = { 128, 128, 128, 192 };
-         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
-         glColor4ubv(wcol);
-         Texture *t = lookuptexture(DEFAULT_LIQUID).sts[0].t;
-         glBindTexture(GL_TEXTURE_2D, t->gl);
-         #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
-         defaultshader->set();
-         matloop(MAT_WATER,
-             if(m.orient != O_TOP) renderwaterfall(m, t, 0.1f); 
-             else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, t) >= (uint)m.csize * 2)
-                 renderwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, t);
-         );
+        GLfloat tm[16] = {0.5f, 0, 0, 0,
+                          0, 0.5f, 0, 0, 
+                          0, 0, 0.5f, 0,
+                          0.5f, 0.5f, 0.5f, 1};
+        GLfloat pm[16], mm[16], tmp[16];
+        glGetFloatv(GL_PROJECTION_MATRIX, pm);
+        glGetFloatv(GL_MODELVIEW_MATRIX, mm);
+        memcpy(tmp, tm, sizeof(tm)); 
+        loopi(4) loopj(4) tm[j+i*4] = tmp[j]*pm[i*4] + tmp[j+4]*pm[i*4+1] + tmp[j+8]*pm[i*4+2] + tmp[j+12]*pm[i*4+3];
+        memcpy(tmp, tm, sizeof(tm));
+        loopi(4) loopj(4) tm[j+i*4] = tmp[j]*mm[i*4] + tmp[j+4]*mm[i*4+1] + tmp[j+8]*mm[i*4+2] + tmp[j+12]*mm[i*4+3];
 
-         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-         glDisable(GL_TEXTURE_2D);
-         glColor3f(0.3f, 0.15f, 0.0f);
-         notextureshader->set();
-         matloop(MAT_GLASS, drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f));
+        if(hasFBO)
+        {
+            if(!watershader) watershader = lookupshaderbyname("water");
+            watershader->set();
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, tm[0], tm[4], tm[8], tm[12]);
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, tm[1], tm[5], tm[9], tm[13]);
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, tm[2], tm[6], tm[10], tm[14]);
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, tm[3], tm[7], tm[11], tm[15]);
+        };
+
+        glEnable(GL_TEXTURE_2D);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        uchar wcol[4] = { 128, 128, 128, 192 };
+        if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+        glColor4ubv(wcol);
+        Texture *t = lookuptexture(DEFAULT_LIQUID).sts[0].t;
+        #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
+        if(!hasFBO) 
+        {
+            glBindTexture(GL_TEXTURE_2D, t->gl);
+            defaultshader->set();
+        };
+        matloop(MAT_WATER,
+            if(m.orient==O_TOP && renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, t) >= (uint)m.csize * 2)
+                renderwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, t);
+        );
+        glBindTexture(GL_TEXTURE_2D, t->gl);
+        #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
+        defaultshader->set();
+        matloop(MAT_WATER,
+            if(m.orient!=O_TOP) renderwaterfall(m, t, 0.1f);
+        );
+
+        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+        glDisable(GL_TEXTURE_2D);
+        glColor3f(0.3f, 0.15f, 0.0f);
+        notextureshader->set();
+        matloop(MAT_GLASS, drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f));
     }
     else
     {
@@ -461,5 +512,97 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
          
     };
     return matsurfs - (end-matbuf);
+};
+
+extern void setorigin(vtxarray *va, bool init);
+extern vtxarray *visibleva;
+extern int floatvtx;
+
+extern void renderva2(vtxarray *va, lodlevel &lod);
+
+vector<Reflection> reflections;
+GLuint reflectiondb = 0;
+
+Reflection *findreflection(int height)
+{
+    loopv(reflections)
+    {
+        if(reflections[i].height==height) return &reflections[i];
+    };
+    return NULL;
+};
+
+void addreflection(int height)
+{
+    int free = -1;
+    loopv(reflections)
+    {
+        if(reflections[i].height==height) return;
+        if(reflections[i].height<0 && free<0) free = i;
+    };
+    if(free>=0)
+    {
+        reflections[free].height = height;
+        return;
+    };
+    if(reflections.length()>=MAXREFLECTIONS) return;
+    Reflection &ref = reflections.add();
+    glGenFramebuffers_(1, &ref.fb);
+    glGenTextures(1, &ref.tex);
+    char *pixels = new char[REFLECT_WIDTH*REFLECT_HEIGHT*3];
+    createtexture(ref.tex, REFLECT_WIDTH, REFLECT_HEIGHT, pixels, true, false, 24, GL_TEXTURE_2D);
+    delete[] pixels;
+    glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
+    glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref.tex, 0);
+    if(!reflectiondb)
+    {
+        glGenRenderbuffers_(1, &reflectiondb);
+        glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
+        glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, REFLECT_WIDTH, REFLECT_HEIGHT);
+    };
+    glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
+};
+
+extern vtxarray *visibleva;
+extern void drawreflection(float z);
+extern int scr_w, scr_h;
+
+VAR(reflectdist, 0, 1000, 10000);
+
+void reflectwater()
+{
+    if(!hasFBO) return;
+
+    loopv(reflections) reflections[i].height = -1;
+    for(vtxarray *va = visibleva; va; va = va->next)
+    {
+        lodlevel &lod = va->l0;
+        if(!lod.matsurfs && va->occluded >= OCCLUDE_BB) continue;
+        materialsurface *matbuf = lod.matbuf;
+        int matsurfs = lod.matsurfs;
+        matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m.o.z));
+    };
+    
+    if(reflections.empty() || reflections[0].height<0) return;
+
+    glViewport(0, 0, REFLECT_WIDTH, REFLECT_HEIGHT);
+    loopv(reflections)
+    {
+        Reflection &ref = reflections[i];
+        if(ref.height<0) break;
+    
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
+        glPushMatrix();
+
+        extern void drawreflection(float z);
+        drawreflection(ref.height);
+        
+        glPopMatrix();
+    };
+    
+    glViewport(0, 0, scr_w, scr_h);
+    glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
+
+    defaultshader->set();
 };
 

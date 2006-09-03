@@ -1777,6 +1777,31 @@ void setupTMUs()
     glColor4f(1, 1, 1, 1);
 };
 
+void cleanupTMUs()
+{
+    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        glDisableClientState(GL_COLOR_ARRAY);
+        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); };
+    };
+
+    glActiveTexture_(GL_TEXTURE1_ARB);
+    glClientActiveTexture_(GL_TEXTURE1_ARB);
+    glDisable(GL_TEXTURE_2D);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glActiveTexture_(GL_TEXTURE0_ARB);
+    glClientActiveTexture_(GL_TEXTURE0_ARB);
+};
+
+renderstate *foop;
+
+void renderva2(vtxarray *va, lodlevel &lod)
+{
+    renderva(*foop, va, lod);
+};
+
 void rendergeom()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1792,7 +1817,6 @@ void rendergeom()
     glPushMatrix();
 
     renderstate cur;
-
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1864,21 +1888,28 @@ void rendergeom()
     };
 
     glPopMatrix();
+    cleanupTMUs();
+};
 
-    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    if(renderpath!=R_FIXEDFUNCTION) 
+extern int reflectdist;
+
+void renderreflectedgeom()
+{
+    glEnableClientState(GL_VERTEX_ARRAY);
+    setupTMUs();
+    glPushMatrix();
+
+    renderstate cur;
+    for(vtxarray *va = visibleva; va; va = va->next)
     {
-        glDisableClientState(GL_COLOR_ARRAY);
-        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); };
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(!lod.texs) continue;
+        if(va->distance > reflectdist) continue;
+        renderva(cur, va, lod);
     };
 
-    glActiveTexture_(GL_TEXTURE1_ARB);
-    glClientActiveTexture_(GL_TEXTURE1_ARB);
-    glDisable(GL_TEXTURE_2D);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glActiveTexture_(GL_TEXTURE0_ARB);
-    glClientActiveTexture_(GL_TEXTURE0_ARB);
+    glPopMatrix();
+    cleanupTMUs();
 };
 
 void rendermaterials()

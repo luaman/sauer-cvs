@@ -253,7 +253,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         if(renderpath==R_FIXEDFUNCTION) zpass = 0;
     };
 
-    if(strstr(exts, "GL_EXT_framebuffer_object"))
+    if(renderpath==R_ASMSHADER && strstr(exts, "GL_EXT_framebuffer_object"))
     {
         glBindRenderbuffer_        = (PFNGLBINDRENDERBUFFEREXTPROC)       getprocaddress("glBindRenderbufferEXT");
         glDeleteRenderbuffers_     = (PFNGLDELETERENDERBUFFERSEXTPROC)    getprocaddress("glDeleteRenderbuffersEXT");
@@ -828,8 +828,6 @@ void renderfsquad(int w, int h, Shader *s)
     glEnd();
 };
 
-VAR(fbo, 0, 0, 1);
-
 void renderfullscreenshader(int w, int h)
 {
     if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
@@ -934,6 +932,90 @@ void project(float fovy, float aspect, int farplane)
     glMatrixMode(GL_MODELVIEW);
 };
 
+VAR(foo, 0, 0, 1);
+
+void setclipmatrix(float a, float b, float c, float d)
+{
+    // transform the clip plane into camera space
+    GLdouble clip[4] = {a, b, c, d};
+    glClipPlane(GL_CLIP_PLANE0, clip);
+    glGetClipPlane(GL_CLIP_PLANE0, clip);
+
+    GLfloat matrix[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, matrix);
+    float x = ((clip[0]<0 ? -1 : (clip[0]>0 ? 1 : 0)) + matrix[8]) / matrix[0],
+          y = ((clip[1]<0 ? -1 : (clip[1]>0 ? 1 : 0)) + matrix[9]) / matrix[5],
+          w = (1 + matrix[10]) / matrix[14], 
+          scale = 2 / (x*clip[0] + y*clip[1] - clip[2] + w*clip[3]);
+    matrix[2] = clip[0]*scale;
+    matrix[6] = clip[1]*scale; 
+    matrix[10] = clip[2]*scale + 1.0f;
+    matrix[14] = clip[3]*scale;
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadMatrixf(matrix);
+    glMatrixMode(GL_MODELVIEW);
+};
+
+void undoclipmatrix()
+{
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+};
+
+VAR(reflectclip, 0, 1, 1);
+
+void setreflectionmatrix(float z)
+{
+    GLfloat ref[16] = {1, 0, 0, 0,
+                       0, 1, 0, 0,
+                       0, 0, -1, 0,
+                       0, 0, 2*z, 1};
+    glMultMatrixf(ref);
+};
+
+void drawreflection(float z)
+{
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glCullFace(GL_BACK);
+
+    setreflectionmatrix(z);
+    if(reflectclip) setclipmatrix(0, 0, 1, -z);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
+
+    extern void renderreflectedgeom();
+    renderreflectedgeom();
+
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+
+    if(reflectclip) undoclipmatrix();
+    defaultshader->set();
+
+    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
+    glDisable(GL_FOG);
+    glLoadIdentity();
+    glRotated(player->pitch, -1.0, 0.0, 0.0);
+    glRotated(player->yaw,   0.0, 1.0, 0.0);
+    glRotated(90.0, 1.0, 0.0, 0.0);
+    setreflectionmatrix(z);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    draw_envbox(farplane/2);
+    glEnable(GL_FOG);
+
+    glCullFace(GL_FRONT);
+};
+
 void gl_drawframe(int w, int h, float curfps)
 {
     defaultshader->set();
@@ -1009,6 +1091,9 @@ void gl_drawframe(int w, int h, float curfps)
     project(65, aspect, farplane);
     if(!isthirdperson()) cl->drawhudgun();
     project(fovy, aspect, farplane);
+
+    extern void reflectwater();
+    reflectwater();
 
     defaultshader->set();
 
