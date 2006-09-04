@@ -752,7 +752,7 @@ void drawskybox(int farplane, bool limited)
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
     draw_envbox(farplane/2);
-    if(!reflecting) transplayer();
+    transplayer();
     if(limited) 
     {
         if(editmode && showsky)

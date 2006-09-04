@@ -162,7 +162,7 @@ Texture *texttex = NULL;
 
 void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
 {
-    if(!texttex) texttex = textureload(newstring("data/newerchars.png"));
+    if(!texttex) texttex = textureload("data/newerchars.png");
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, texttex->gl);

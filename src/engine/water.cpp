@@ -202,7 +202,7 @@ void sortmatsurfs(materialsurface *matsurf, int matsurfs)
     qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
 };
 
-void drawface(int orient, int x, int y, int z, int csize, int rsize, float offset)
+void drawface(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false)
 {
     int dim = dimension(orient), c = C[dim], r = R[dim];
     glBegin(GL_POLYGON);
@@ -213,6 +213,7 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
         v[c] += cubecoords[coord][c]/8*csize;
         v[r] += cubecoords[coord][r]/8*rsize;
         v[dim] += dimcoord(orient) ? -offset : offset;
+        if(usetc) glTexCoord2f(v[c]/8, v[r]/8);
         glVertex3fv(v.v);
     };
     glEnd();
@@ -232,34 +233,49 @@ VAR(showmat, 0, 1, 1);
 COMMAND(watercolour, "iii");
 
 Shader *watershader = NULL;
+Texture *waternormals = NULL;
+Texture *waterdudvs = NULL;
+
+void setprojtexmatrix()
+{
+    GLfloat tm[16] = {0.5f, 0, 0, 0,
+                      0, 0.5f, 0, 0,
+                      0, 0, 0.5f, 0,
+                      0.5f, 0.5f, 0.5f, 1};
+    GLfloat pm[16], mm[16], tmp[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, pm);
+    glGetFloatv(GL_MODELVIEW_MATRIX, mm);
+    memcpy(tmp, tm, sizeof(tm));
+    loopi(4) loopj(4) tm[j+i*4] = tmp[j]*pm[i*4] + tmp[j+4]*pm[i*4+1] + tmp[j+8]*pm[i*4+2] + tmp[j+12]*pm[i*4+3];
+    memcpy(tmp, tm, sizeof(tm));
+    loopi(4) loopj(4) tm[j+i*4] = tmp[j]*mm[i*4] + tmp[j+4]*mm[i*4+1] + tmp[j+8]*mm[i*4+2] + tmp[j+12]*mm[i*4+3];
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadMatrixf(tm);
+    glMatrixMode(GL_MODELVIEW);
+};
+
+void undoprojtexmatrix()
+{
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+};
+
+GLfloat wlight[3] = {0, 0, 1};
+
+void wl(float *x, float *y, float *z)
+{
+    wlight[0] = *x; wlight[1] = *y; wlight[2] = *z;
+};
+
+COMMAND(wl, "fff");
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs) return;
     if(!editmode || !showmat)
     {
-        GLfloat tm[16] = {0.5f, 0, 0, 0,
-                          0, 0.5f, 0, 0, 
-                          0, 0, 0.5f, 0,
-                          0.5f, 0.5f, 0.5f, 1};
-        GLfloat pm[16], mm[16], tmp[16];
-        glGetFloatv(GL_PROJECTION_MATRIX, pm);
-        glGetFloatv(GL_MODELVIEW_MATRIX, mm);
-        memcpy(tmp, tm, sizeof(tm)); 
-        loopi(4) loopj(4) tm[j+i*4] = tmp[j]*pm[i*4] + tmp[j+4]*pm[i*4+1] + tmp[j+8]*pm[i*4+2] + tmp[j+12]*pm[i*4+3];
-        memcpy(tmp, tm, sizeof(tm));
-        loopi(4) loopj(4) tm[j+i*4] = tmp[j]*mm[i*4] + tmp[j+4]*mm[i*4+1] + tmp[j+8]*mm[i*4+2] + tmp[j+12]*mm[i*4+3];
-
-        if(hasFBO && wreflect)
-        {
-            if(!watershader) watershader = lookupshaderbyname("water");
-            watershader->set();
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, tm[0], tm[4], tm[8], tm[12]);
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, tm[1], tm[5], tm[9], tm[13]);
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, tm[2], tm[6], tm[10], tm[14]);
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, tm[3], tm[7], tm[11], tm[15]);
-        };
-
         glEnable(GL_TEXTURE_2D);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         uchar wcol[4] = { 128, 128, 128, 192 };
@@ -279,16 +295,48 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         }
         else 
         {
+            if(!watershader) watershader = lookupshaderbyname("water");
+            if(!waternormals) waternormals = textureload("data/watern.jpg");
+            if(!waterdudvs) waterdudvs = textureload("data/waterdudv.jpg");
+
             Reflection *ref;
             watershader->set();
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, waternormals->gl);
+            watershader->set();
+            glActiveTexture_(GL_TEXTURE2_ARB);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, waterdudvs->gl);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, lastmillis, lastmillis, lastmillis, 0); 
+            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, wlight[0], wlight[1], wlight[2], 0);
+
+            setprojtexmatrix();
             matloop(MAT_WATER, 
-                ref = findreflection(m.o.z);
-                if(ref)
+                if(m.orient==O_TOP)
                 {
-                    glBindTexture(GL_TEXTURE_2D, ref->tex);
-                    drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
+                    ref = findreflection(m.o.z);
+                    if(ref)
+                    {
+                        glBindTexture(GL_TEXTURE_2D, ref->tex);
+                        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f, true);
+                    };
                 };
             );
+            undoprojtexmatrix();
+
+            glMatrixMode(GL_TEXTURE);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glDisable(GL_TEXTURE_2D);
+            glActiveTexture_(GL_TEXTURE2_ARB);
+            glDisable(GL_TEXTURE_2D);
+            glActiveTexture_(GL_TEXTURE0_ARB);
         };
         glBindTexture(GL_TEXTURE_2D, t->gl);
         defaultshader->set();
@@ -618,4 +666,13 @@ void reflectwater()
 
     defaultshader->set();
 };
+
+void pplanes()
+{
+     int k = 0;
+    loopi(MAXREFLECTIONS) if(reflections[k].height>=0) k++;
+    conoutf("planes: %d", k);
+};
+
+COMMAND(pplanes, "");
 
