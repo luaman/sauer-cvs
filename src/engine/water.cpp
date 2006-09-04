@@ -24,7 +24,7 @@ struct Reflection
 {
     GLuint fb;
     GLuint tex;
-    int height;
+    int height, lastupdate;
 };
 Reflection *findreflection(int height);
 
@@ -587,34 +587,41 @@ Reflection *findreflection(int height)
 
 void addreflection(materialsurface &m)
 {
-    int height = m.o.z, free = -1;
+    int height = m.o.z;
+    Reflection *free = NULL, *oldest = NULL;
     loopi(MAXREFLECTIONS)
     {
-        if(reflections[i].height==height) return;
-        if(reflections[i].height<0 && free<0) free = i;
+        if(reflections[i].height<0)
+        {
+            if(!free) free = &reflections[i];
+        }
+        else if(reflections[i].height==height) return;
+        else if(!oldest || reflections[i].lastupdate<oldest->lastupdate) oldest = &reflections[i];
     };
-    if(free<0) return;
-    if(reflections[free].fb)
+    if(!free)
     {
-        reflections[free].height = height;
-        return;
+        if(!oldest || oldest->lastupdate==lastmillis) return;
+        free = oldest;
     };
-    Reflection &ref = reflections[free];
-    ref.height = height;
-    glGenFramebuffers_(1, &ref.fb);
-    glGenTextures(1, &ref.tex);
-    char *pixels = new char[REFLECT_WIDTH*REFLECT_HEIGHT*3];
-    createtexture(ref.tex, REFLECT_WIDTH, REFLECT_HEIGHT, pixels, true, false, 24, GL_TEXTURE_2D);
-    delete[] pixels;
-    glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-    glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref.tex, 0);
-    if(!reflectiondb)
+    if(!free->fb)
     {
-        glGenRenderbuffers_(1, &reflectiondb);
-        glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
-        glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, REFLECT_WIDTH, REFLECT_HEIGHT);
+        glGenFramebuffers_(1, &free->fb);
+        glGenTextures(1, &free->tex);
+        char *pixels = new char[REFLECT_WIDTH*REFLECT_HEIGHT*3];
+        createtexture(free->tex, REFLECT_WIDTH, REFLECT_HEIGHT, pixels, true, false, 24, GL_TEXTURE_2D);
+        delete[] pixels;
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, free->fb);
+        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, free->tex, 0);
+        if(!reflectiondb)
+        {
+            glGenRenderbuffers_(1, &reflectiondb);
+            glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
+            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, REFLECT_WIDTH, REFLECT_HEIGHT);
+        };
+        glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
     };
-    glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
+    free->height = height;
+    free->lastupdate = lastmillis;
 };
 
 extern vtxarray *visibleva;
@@ -622,6 +629,7 @@ extern void drawreflection(float z);
 extern int scr_w, scr_h;
 
 VAR(reflectdist, 0, 1000, 10000);
+VAR(waterfps, 1, 50, 200);
 
 void reflectwater()
 {
@@ -630,12 +638,15 @@ void reflectwater()
     static bool refinit = false;
     if(!refinit)
     {
-        loopi(MAXREFLECTIONS) reflections[i].fb = 0;
+        loopi(MAXREFLECTIONS)
+        {
+            reflections[i].fb = 0;
+            reflections[i].height = -1;
+            reflections[i].lastupdate = 0;
+        };
         refinit = true;
     };
     
-    loopi(MAXREFLECTIONS) reflections[i].height = -1;
-
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
@@ -645,14 +656,16 @@ void reflectwater()
         matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
     };
     
-    if(reflections[0].height<0) return;
-
-    glViewport(0, 0, REFLECT_WIDTH, REFLECT_HEIGHT);
+    int refs = 0;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0) break;
+        if(ref.height<0 || (ref.lastupdate!=lastmillis && lastmillis-reflections[i].lastupdate < 1000.0f/waterfps)) continue;
     
+        if(!refs) glViewport(0, 0, REFLECT_WIDTH, REFLECT_HEIGHT);
+        refs++;
+        ref.lastupdate = lastmillis;
+
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
         glPushMatrix();
 
@@ -662,6 +675,7 @@ void reflectwater()
         glPopMatrix();
     };
     
+    if(!refs) return;
     glViewport(0, 0, scr_w, scr_h);
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
 
