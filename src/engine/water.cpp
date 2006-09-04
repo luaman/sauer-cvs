@@ -18,8 +18,6 @@ static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI
 // renders water for bounding rect area that contains water... simple but very inefficient
 
 #define MAXREFLECTIONS 8
-#define REFLECT_WIDTH 256
-#define REFLECT_HEIGHT 256
 struct Reflection
 {
     GLuint fb;
@@ -318,7 +316,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                     {
                         setprojtexmatrix(ref);
                         glBindTexture(GL_TEXTURE_2D, ref->tex);
-                        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f, true);
+                        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
                     };
                 };
             );
@@ -577,6 +575,30 @@ Reflection *findreflection(int height)
     return NULL;
 };
 
+void cleanreflections()
+{
+    loopi(MAXREFLECTIONS)
+    {
+        Reflection &ref = reflections[i];
+        if(ref.fb)
+        {
+            glDeleteFramebuffers_(1, &ref.fb);
+            ref.fb = 0;
+            glDeleteTextures(1, &ref.tex);
+            ref.tex = 0;
+            ref.height = -1;
+            ref.lastupdate = 0;
+        };
+    };
+    if(reflectiondb)
+    {
+        glDeleteRenderbuffers_(1, &reflectiondb);
+        reflectiondb = 0;
+    };
+};
+
+VARF(reflectsize, 6, 8, 10, cleanreflections());
+
 void addreflection(materialsurface &m)
 {
     int height = m.o.z;
@@ -599,8 +621,9 @@ void addreflection(materialsurface &m)
     {
         glGenFramebuffers_(1, &ref->fb);
         glGenTextures(1, &ref->tex);
-        char *pixels = new char[REFLECT_WIDTH*REFLECT_HEIGHT*3];
-        createtexture(ref->tex, REFLECT_WIDTH, REFLECT_HEIGHT, pixels, true, false, 24, GL_TEXTURE_2D);
+        int size = 1<<reflectsize;
+        char *pixels = new char[size*size*3];
+        createtexture(ref->tex, size, size, pixels, true, false, 24, GL_TEXTURE_2D);
         delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->fb);
         glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
@@ -608,7 +631,7 @@ void addreflection(materialsurface &m)
         {
             glGenRenderbuffers_(1, &reflectiondb);
             glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
-            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, REFLECT_WIDTH, REFLECT_HEIGHT);
+            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, size, size);
         };
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
     };
@@ -655,7 +678,7 @@ void reflectwater()
         Reflection &ref = reflections[i];
         if(ref.height<0 || (ref.lastupdate!=lastmillis && lastmillis-ref.lastupdate < 1000.0f/waterfps)) continue;
     
-        if(!refs) glViewport(0, 0, REFLECT_WIDTH, REFLECT_HEIGHT);
+        if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
 
         refs++;
         ref.lastupdate = lastmillis - (int)fmod(lastmillis-ref.lastupdate, 1000.0f/waterfps);
