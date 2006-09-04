@@ -466,7 +466,7 @@ void clear_lmids(cube *c)
 
 #define LIGHTCACHESIZE 1024
 
-struct lightcacheentry
+static struct lightcacheentry
 {
     int x, y;
     vector<int> lights;
@@ -476,8 +476,11 @@ struct lightcacheentry
 
 VARF(lightcachesize, 6, 8, 12, clearlightcache());
 
+static int globalcache;
+
 void clearlightcache(int e)
 {
+    if(e < 0 || globalcache==e) globalcache = -1;
     if(e < 0 || !et->getents()[e]->attr1)
     {
         for(lightcacheentry *lce = lightcache; lce < &lightcache[LIGHTCACHESIZE]; lce++)
@@ -1040,6 +1043,57 @@ void initlights()
     };
     clearlightcache();
     updateentlighting();
+};
+
+entity *globallight()
+{
+    const vector<extentity *> &ents = et->getents();
+    if(globalcache>=0) return ents[globalcache];
+    entity *global = NULL;
+    loopv(ents)
+    {
+        entity &e = *ents[i];    
+        if(e.type != ET_LIGHT) continue;
+        if(!e.attr1 || !global || (global->attr1 && e.attr1 > global->attr1))
+        {
+            global = &e;
+            globalcache = i;
+        };
+    };
+    return global;
+};
+
+entity *brightestlight(const vec &target)
+{
+    const vector<extentity *> &ents = et->getents();
+    const vector<int> &lights = checklightcache(int(target.x), int(target.y));
+    entity *brightest = NULL;
+    float bintensity = 0;
+    loopv(lights)
+    {
+        entity &e = *ents[lights[i]];
+        if(e.type != ET_LIGHT)
+            continue;
+
+        vec ray(target);
+        ray.sub(e.o);
+        float mag = ray.magnitude();
+        if(e.attr1 && mag >= float(e.attr1))
+            continue;
+
+        ray.div(mag);
+        if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY) < mag)
+            continue;
+        float intensity = 1.0;
+        if(e.attr1)
+            intensity -= mag / float(e.attr1);
+        if(!brightest || intensity > bintensity)
+        {
+            brightest = &e;
+            bintensity = intensity;
+        };
+    };
+    return brightest;
 };
 
 void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)

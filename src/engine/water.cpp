@@ -17,14 +17,15 @@ static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
-#define MAXREFLECTIONS 4
+#define MAXREFLECTIONS 8
 #define REFLECT_WIDTH 256
 #define REFLECT_HEIGHT 256
 struct Reflection
 {
     GLuint fb;
     GLuint tex;
-    int height, lastupdate;
+    int height, lastupdate, lasttm;
+    GLfloat tm[16];
 };
 Reflection *findreflection(int height);
 
@@ -236,40 +237,26 @@ Shader *watershader = NULL;
 Texture *waternormals = NULL;
 Texture *waterdudvs = NULL;
 
-void setprojtexmatrix()
+void setprojtexmatrix(Reflection *ref)
 {
-    GLfloat tm[16] = {0.5f, 0, 0, 0,
-                      0, 0.5f, 0, 0,
-                      0, 0, 0.5f, 0,
-                      0.5f, 0.5f, 0.5f, 1};
-    GLfloat pm[16], mm[16], tmp[16];
-    glGetFloatv(GL_PROJECTION_MATRIX, pm);
-    glGetFloatv(GL_MODELVIEW_MATRIX, mm);
-    memcpy(tmp, tm, sizeof(tm));
-    loopi(4) loopj(4) tm[j+i*4] = tmp[j]*pm[i*4] + tmp[j+4]*pm[i*4+1] + tmp[j+8]*pm[i*4+2] + tmp[j+12]*pm[i*4+3];
-    memcpy(tmp, tm, sizeof(tm));
-    loopi(4) loopj(4) tm[j+i*4] = tmp[j]*mm[i*4] + tmp[j+4]*mm[i*4+1] + tmp[j+8]*mm[i*4+2] + tmp[j+12]*mm[i*4+3];
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadMatrixf(tm);
-    glMatrixMode(GL_MODELVIEW);
+    if(ref->lasttm==lastmillis)
+    {
+        GLfloat tm[16] = {0.5f, 0, 0, 0,
+                          0, 0.5f, 0, 0,
+                          0, 0, 0.5f, 0,
+                          0.5f, 0.5f, 0.5f, 1};
+        GLfloat pm[16], mm[16];
+        glGetFloatv(GL_PROJECTION_MATRIX, pm);
+        glGetFloatv(GL_MODELVIEW_MATRIX, mm);
+
+        glLoadMatrixf(tm);
+        glMultMatrixf(pm);
+        glMultMatrixf(mm);
+
+        glGetFloatv(GL_TEXTURE_MATRIX, ref->tm);
+    } 
+    else glLoadMatrixf(ref->tm);
 };
-
-void undoprojtexmatrix()
-{
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-};
-
-vec wlight = vec(0.4f, 0.4f, 0.8f);
-
-void wl(float *x, float *y, float *z)
-{
-    wlight = vec(*x, *y, *z);
-};
-
-COMMAND(wl, "fff");
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
@@ -311,25 +298,30 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             glActiveTexture_(GL_TEXTURE0_ARB);
         
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0); 
-            wlight.normalize();
-            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, wlight.x, wlight.y, wlight.z, 0);
+            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0); 
 
-            setprojtexmatrix();
+            entity *light = globallight();
+            const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
+            const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient);
+            float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
+            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
+            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
+
+            glMatrixMode(GL_TEXTURE);
+            glPushMatrix();
             matloop(MAT_WATER, 
                 if(m.orient==O_TOP)
                 {
                     ref = findreflection(m.o.z);
                     if(ref)
                     {
+                        setprojtexmatrix(ref);
                         glBindTexture(GL_TEXTURE_2D, ref->tex);
                         drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f, true);
                     };
                 };
             );
-            undoprojtexmatrix();
-
-            glMatrixMode(GL_TEXTURE);
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
 
@@ -588,30 +580,30 @@ Reflection *findreflection(int height)
 void addreflection(materialsurface &m)
 {
     int height = m.o.z;
-    Reflection *free = NULL, *oldest = NULL;
+    Reflection *ref = NULL, *oldest = NULL;
     loopi(MAXREFLECTIONS)
     {
         if(reflections[i].height<0)
         {
-            if(!free) free = &reflections[i];
+            if(!ref) ref = &reflections[i];
         }
         else if(reflections[i].height==height) return;
         else if(!oldest || reflections[i].lastupdate<oldest->lastupdate) oldest = &reflections[i];
     };
-    if(!free)
+    if(!ref)
     {
         if(!oldest || oldest->lastupdate==lastmillis) return;
-        free = oldest;
+        ref = oldest;
     };
-    if(!free->fb)
+    if(!ref->fb)
     {
-        glGenFramebuffers_(1, &free->fb);
-        glGenTextures(1, &free->tex);
+        glGenFramebuffers_(1, &ref->fb);
+        glGenTextures(1, &ref->tex);
         char *pixels = new char[REFLECT_WIDTH*REFLECT_HEIGHT*3];
-        createtexture(free->tex, REFLECT_WIDTH, REFLECT_HEIGHT, pixels, true, false, 24, GL_TEXTURE_2D);
+        createtexture(ref->tex, REFLECT_WIDTH, REFLECT_HEIGHT, pixels, true, false, 24, GL_TEXTURE_2D);
         delete[] pixels;
-        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, free->fb);
-        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, free->tex, 0);
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->fb);
+        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
         if(!reflectiondb)
         {
             glGenRenderbuffers_(1, &reflectiondb);
@@ -620,8 +612,9 @@ void addreflection(materialsurface &m)
         };
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
     };
-    free->height = height;
-    free->lastupdate = lastmillis;
+    ref->height = height;
+    ref->lastupdate = lastmillis;
+    ref->lasttm = lastmillis;
 };
 
 extern vtxarray *visibleva;
@@ -629,7 +622,7 @@ extern void drawreflection(float z);
 extern int scr_w, scr_h;
 
 VAR(reflectdist, 0, 1000, 10000);
-VAR(waterfps, 1, 50, 200);
+VAR(waterfps, 1, 30, 200);
 
 void reflectwater()
 {
@@ -660,11 +653,13 @@ void reflectwater()
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || (ref.lastupdate!=lastmillis && lastmillis-reflections[i].lastupdate < 1000.0f/waterfps)) continue;
+        if(ref.height<0 || (ref.lastupdate!=lastmillis && lastmillis-ref.lastupdate < 1000.0f/waterfps)) continue;
     
         if(!refs) glViewport(0, 0, REFLECT_WIDTH, REFLECT_HEIGHT);
+
         refs++;
-        ref.lastupdate = lastmillis;
+        ref.lastupdate = lastmillis - (int)fmod(lastmillis-ref.lastupdate, 1000.0f/waterfps);
+        ref.lasttm = lastmillis;
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
         glPushMatrix();
@@ -681,13 +676,4 @@ void reflectwater()
 
     defaultshader->set();
 };
-
-void pplanes()
-{
-     int k = 0;
-    loopi(MAXREFLECTIONS) if(reflections[k].height>=0) k++;
-    conoutf("planes: %d", k);
-};
-
-COMMAND(pplanes, "");
 
