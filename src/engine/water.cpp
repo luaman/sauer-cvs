@@ -262,11 +262,11 @@ void undoprojtexmatrix()
     glMatrixMode(GL_MODELVIEW);
 };
 
-GLfloat wlight[3] = {0, 0, 1};
+vec wlight = vec(0.4f, 0.4f, 0.8f);
 
 void wl(float *x, float *y, float *z)
 {
-    wlight[0] = *x; wlight[1] = *y; wlight[2] = *z;
+    wlight = vec(*x, *y, *z);
 };
 
 COMMAND(wl, "fff");
@@ -311,8 +311,9 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             glActiveTexture_(GL_TEXTURE0_ARB);
         
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, lastmillis, lastmillis, lastmillis, 0); 
-            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, wlight[0], wlight[1], wlight[2], 0);
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0); 
+            wlight.normalize();
+            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, wlight.x, wlight.y, wlight.z, 0);
 
             setprojtexmatrix();
             matloop(MAT_WATER, 
