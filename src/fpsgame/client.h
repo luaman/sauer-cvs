@@ -444,7 +444,7 @@ struct clientcom : iclientcom
                     victim->lastpain = cl.lastmillis;
                     vec v = victim->abovehead();
                     playsound(S_PAIN1+rnd(5), &v);
-                    cl.ws.damageeffect(v, damage);
+                    cl.ws.damageeffect(v, damage, victim->vel, victim);
                 };
                 break;
             };
@@ -453,6 +453,8 @@ struct clientcom : iclientcom
             {
                 if(!d) return;
                 int actor = getint(p);
+                int damage = getint(p);
+                d->superdamage = getint(p);
                 if(actor==cn)
                 {
                     conoutf("\f2%s suicided", d->name);
@@ -487,6 +489,7 @@ struct clientcom : iclientcom
                         };
                     };
                 };
+                cl.ws.damageeffect(d->abovehead(), damage, d->vel, d); 
                 playsound(S_DIE1+rnd(2), &d->o);
                 if(!inited) d->lifesequence++;
                 break;

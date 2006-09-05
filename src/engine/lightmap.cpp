@@ -1099,7 +1099,7 @@ entity *brightestlight(const vec &target, const vec &dir)
     return brightest;
 };
 
-void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)
+void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float ambient)
 {
     if(fullbright)
     {
@@ -1142,9 +1142,9 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t)
         dir.add(vec(e.o).sub(target).mul(intensity/mag));
     };
 
-    color.x = min(1, max(0.4f, color.x));
-    color.y = min(1, max(0.4f, color.y));
-    color.z = min(1, max(0.4f, color.z));
+    color.x = min(1.5f, max(ambient, color.x));
+    color.y = min(1.5f, max(ambient, color.y));
+    color.z = min(1.5f, max(ambient, color.z));
     if(!dir.iszero()) dir.normalize();
 };
 

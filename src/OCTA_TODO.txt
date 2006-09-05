@@ -27,10 +27,6 @@ eihrul:
 aard/everyone:
 - def:
   * death needs to be more obvious (better sound/centerprint) more gibs/blood
-  * damageblend scaling var
-  * rocketexplosions smaller radius?
-  * settings/bind keys from menu
-  * brighter skin in MP?
 - change SF status from alpha
 - white lines in decal shader??
 - add gregors new textures
@@ -54,7 +50,8 @@ aard/everyone:
 - add makke's new items
 - reduce spec 8 => 6
 - rockets thru walls? collision step?
-[18:46] Aardappel: - spawn the rocket out a bit further from the camera, sometimes it flashes too close
+- shallow water splashing sound?
+- water in more maps (metl4?)
 
 
 

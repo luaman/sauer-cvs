@@ -1,9 +1,9 @@
 // the interface the game uses to access the engine
 
 extern void lightent(extentity &e, float height = 8.0f);
+extern void lightreaching(const vec &target, vec &color, vec &dir, extentity *e = 0, float ambient = 0.4f);
 extern entity *globallight(const vec &target = vec(0, 0, 0), const vec &dir = vec(0, 0, 0));
 extern entity *brightestlight(const vec &target = vec(0, 0, 0), const vec &dir = vec(0, 0, 0));
-extern void lightreaching(const vec &target, vec &color, vec &dir, extentity *e = 0);
 
 enum { RAY_BB = 1, RAY_POLY = 3, RAY_ALPHAPOLY = 7, RAY_ENTS = 9, RAY_CLIPMAT = 16, RAY_SKIPFIRST = 32, RAY_EDITMAT = 64, RAY_SHADOW = 128, RAY_PASS = 256 };
 
@@ -151,10 +151,10 @@ extern void initsound();
 // rendermodel
 enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2 };
 
-extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d = NULL, int cull = MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
+extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d = NULL, int cull = MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED, float ambient = 0.4f);
 extern void abovemodel(vec &o, const char *mdl);
 extern mapmodelinfo &getmminfo(int i);
-extern void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain);
+extern void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, float ambient = 0.4f);
 extern void setbbfrommodel(dynent *d, char *mdl);
 extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 

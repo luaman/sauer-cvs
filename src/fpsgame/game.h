@@ -45,6 +45,7 @@ struct fpsent : dynent
     int lastaction, lastattackgun;
     bool attacking;
     int ammo[NUMGUNS];
+    int superdamage;
     int frags, deaths, totaldamage, totalshots;
     editinfo *edit;
 
@@ -65,6 +66,7 @@ struct fpsent : dynent
         attacking = false;
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
+        superdamage = 0;
     };
 };
 
@@ -131,7 +133,7 @@ enum
 
 #define SAUERBRATEN_SERVER_PORT 28785
 #define SAUERBRATEN_SERVINFO_PORT 28786
-#define PROTOCOL_VERSION 250            // bump when protocol changes
+#define PROTOCOL_VERSION 251            // bump when protocol changes
 
 #define MAXNAMELEN 15
 #define MAXTEAMLEN 4

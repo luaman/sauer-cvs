@@ -217,6 +217,7 @@ struct monsterset
                 lastaction = cl.lastmillis;
                 playsound(monstertypes[mtype].diesound, &o);
                 ms->monsterkilled();
+                superdamage = -health;
             }
             else
             {
@@ -345,7 +346,7 @@ struct monsterset
         loopv(monsters)
         {
             monster &m = *monsters[i];
-            renderclient(&m, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].vwepname, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
+            if(m.state!=CS_DEAD || m.superdamage<50) renderclient(&m, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].vwepname, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
         };
     };
 };

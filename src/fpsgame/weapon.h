@@ -91,17 +91,20 @@ struct weaponstate
         };
     };
 
+    enum { BNC_GRENADE, BNC_GIBS, BNS_DEBRIS };
+
     struct bouncent : physent
     {
         int lifetime;
         float lastyaw, roll;
         bool local;
         fpsent *owner;
+        int bouncetype;
     };
 
     vector<bouncent> bouncers;
 
-    void newbouncer(vec &from, vec &to, bool local, fpsent *owner)
+    void newbouncer(vec &from, vec &to, bool local, fpsent *owner, int type, int lifetime, int speed)
     {
         bouncent &bnc = bouncers.add();
         bnc.reset();
@@ -110,15 +113,16 @@ struct weaponstate
         bnc.radius = 2;
         bnc.eyeheight = 2;
         bnc.aboveeye = 2;
-        bnc.lifetime = 2000;
+        bnc.lifetime = lifetime;
         bnc.roll = 0;
         bnc.local = local;
         bnc.owner = owner;
+        bnc.bouncetype = type;
 
         vec dir(to);
         dir.sub(from).normalize();
         bnc.vel = dir;
-        bnc.vel.mul(200.0f);
+        bnc.vel.mul(speed);
 
         avoidcollision(&bnc, dir, owner, 0.1f);
     };
@@ -129,7 +133,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = bouncers[i];
-            if(vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) particle_splash(5, 1, 150, bnc.o);
+            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) particle_splash(5, 1, 150, bnc.o);
             vec old(bnc.o);
             int rtime = time;
             while(rtime > 0)
@@ -138,8 +142,11 @@ struct weaponstate
                 rtime -= qtime;
                 if((bnc.lifetime -= qtime)<0 || bounce(&bnc, qtime/1000.0f, 0.6f))
                 {
-                    int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
-                    explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);
+                    if(bnc.bouncetype==BNC_GRENADE)
+                    {
+                        int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
+                        explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
+                    };
                     bouncers.remove(i--);
                     break;
                 };
@@ -170,11 +177,21 @@ struct weaponstate
         };
     };
     
-    void damageeffect(const vec &p, int damage)
+    void damageeffect(vec &p, int damage, vec &vel, fpsent *d)
     {
         particle_splash(3, damage, 1000, p);
         s_sprintfd(ds)("@%d", damage);
         particle_text(p, ds, 8);
+        if(d->superdamage) loopi(d->superdamage/25+1)
+        {
+            vec to = vel;
+            to.rotate_around_z((rnd(90)-45)*RAD);
+            if(to.z<0) to.z = -to.z;
+            to.add(p);
+            vec from = p;
+            from.y -= 16;
+            newbouncer(from, to, true, d, BNC_GIBS, rnd(500)+1500, rnd(50)+50);
+        };
     };
 
     void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel, bool isrl)
@@ -182,10 +199,11 @@ struct weaponstate
         d->lastpain = cl.lastmillis;
         at->totaldamage += damage;
         vel.mul(80*damage/d->weight);
+        d->superdamage = 0;
         if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
         else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
         else                     { if(isrl) vel.mul(2); cl.cc.addmsg(1, 7, SV_DAMAGE, target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
-        damageeffect(d->abovehead(), damage);
+        damageeffect(d->abovehead(), damage, vel, d);
     };
 
     void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
@@ -356,7 +374,7 @@ struct weaponstate
                 float dist = from.dist(to);
                 vec up = to;
                 up.z += dist/8;
-                newbouncer(from, up, local, d);
+                newbouncer(from, up, local, d, BNC_GRENADE, 2000, 200);
                 break;
             };
 
@@ -407,7 +425,7 @@ struct weaponstate
                 o = NULL;
                 loop(r, SGRAYS) if(!done[r] && (cl = intersectclosest(from, sg[r], n, d)))
                 {
-                    if((!o || o==cl) && (damage<cl->health+cl->armour || cl->type!=ENT_AI))
+                    if((!o || o==cl) /*&& (damage<cl->health+cl->armour || cl->type!=ENT_AI)*/)
                     {
                         damage += qdam;
                         o = cl;
@@ -498,7 +516,9 @@ struct weaponstate
                 bnc.lastyaw = yaw;
             };
             pitch = -bnc.roll;
-            rendermodel(color, dir, "projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, 10.0f, 0, NULL, 0);
+            char *mdl = "projectiles/grenade";
+            if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x10 ? "gibc" : "gibh";
+            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
         {

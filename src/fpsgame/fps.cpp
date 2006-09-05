@@ -309,7 +309,8 @@ struct fpsclient : igameclient
                 };
             };
             sb.showscores(true);
-            cc.addmsg(1, 2, SV_DIED, actor);
+            player1->superdamage = -player1->health;
+            cc.addmsg(1, 4, SV_DIED, actor, damage+ad, player1->superdamage);
             lastplayerstate = *player1;
             player1->lifesequence++;
             player1->attacking = false;

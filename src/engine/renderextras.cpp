@@ -162,11 +162,14 @@ vector<sphere> spheres;
 Texture *expltex = NULL;
 Shader *explshader = NULL;
 
+VARP(damagespherefactor, 0, 100, 200);
+
 void newsphere(vec &o, float max, int type)
 {
+    if(damagespherefactor<=10) return;
     sphere p;
     p.o = o;
-    p.max = max;
+    p.max = max*damagespherefactor/100;
     p.size = 4;
     p.type = type;
     spheres.add(p);
@@ -287,6 +290,7 @@ void aimat()
 };
 
 VARP(crosshairsize, 0, 15, 50);
+VARP(damageblendfactor, 0, 300, 1000);
 
 int dblend = 0;
 void damageblend(int n) { dblend += n; };
@@ -335,7 +339,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glVertex2i(0, h);
         glEnd();
         glDepthMask(GL_TRUE);
-        dblend -= curtime/3;
+        dblend -= curtime*100/damageblendfactor;
         if(dblend<0) dblend = 0;
     };
 
