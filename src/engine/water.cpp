@@ -677,7 +677,7 @@ extern int scr_w, scr_h;
 extern int oqfrags;
 
 VAR(reflectdist, 0, 1000, 10000);
-VAR(waterfps, 1, 30, 200);
+VAR(reflectfps, 1, 30, 200);
 
 int rplanes = 0;
 
