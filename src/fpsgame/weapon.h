@@ -177,7 +177,7 @@ struct weaponstate
         };
     };
     
-    void damageeffect(vec &p, int damage, vec &vel, fpsent *d)
+    void damageeffect(const vec &p, int damage, vec &vel, fpsent *d)
     {
         particle_splash(3, damage, 1000, p);
         s_sprintfd(ds)("@%d", damage);
@@ -516,7 +516,7 @@ struct weaponstate
                 bnc.lastyaw = yaw;
             };
             pitch = -bnc.roll;
-            char *mdl = "projectiles/grenade";
+            const char *mdl = "projectiles/grenade";
             if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x10 ? "gibc" : "gibh";
             rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
