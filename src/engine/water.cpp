@@ -29,7 +29,7 @@ struct Reflection
 };
 Reflection *findreflection(int height);
 
-VARF(reflectdetail, 0, 3, 4, { cleanreflections(); allchanged(); });
+VARF(reflectdetail, 0, 4, 4, { cleanreflections(); allchanged(); });
 
 void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 { 

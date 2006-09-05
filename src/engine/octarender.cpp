@@ -1394,28 +1394,50 @@ vector<extentity *> renderedmms;
 
 void rendermapmodel(extentity &e)
 {
-        int anim = ANIM_MAPMODEL|ANIM_LOOP, basetime = 0;
-        if(e.attr3) switch(e.triggerstate)
-        {
-            case TRIGGER_RESET: anim = ANIM_TRIGGER|ANIM_START; break;
-            case TRIGGERING: anim = ANIM_TRIGGER; basetime = e.lasttrigger; break;
-            case TRIGGERED: anim = ANIM_TRIGGER|ANIM_END; break;
-            case TRIGGER_RESETTING: anim = ANIM_TRIGGER|ANIM_REVERSE; basetime = e.lasttrigger; break;
-        };
-        mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(&mmi) rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
+    int anim = ANIM_MAPMODEL|ANIM_LOOP, basetime = 0;
+    if(e.attr3) switch(e.triggerstate)
+    {
+        case TRIGGER_RESET: anim = ANIM_TRIGGER|ANIM_START; break;
+        case TRIGGERING: anim = ANIM_TRIGGER; basetime = e.lasttrigger; break;
+        case TRIGGERED: anim = ANIM_TRIGGER|ANIM_END; break;
+        case TRIGGER_RESETTING: anim = ANIM_TRIGGER|ANIM_REVERSE; basetime = e.lasttrigger; break;
+    };
+    mapmodelinfo &mmi = getmminfo(e.attr2);
+    if(&mmi) rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
 };
 
-extern bool reflecting;
+extern int reflectdist;
+extern int scr_w, scr_h;
+
+void renderreflectedmapmodels(float z, bool refract)
+{
+    if(refract ? camera1->o.z < z : camera1->o.z >= z)
+    {
+        const vector<extentity *> &ents = et->getents();
+
+        plane oldvfcP[5];
+        memcpy(oldvfcP, vfcP, sizeof(vfcP));
+
+        vec o(camera1->o);
+        o.z = z-(camera1->o.z-z);
+        setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
+
+        loopv(ents)
+        {
+            extentity &e = *ents[i];
+            if(e.type!=ET_MAPMODEL || e.attr1<0 || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
+            if(e.o.dist(camera1->o)>reflectdist) continue;
+            rendermapmodel(e);
+        };
+
+        memcpy(vfcP, oldvfcP, sizeof(vfcP));
+    }
+    else loopv(renderedmms) rendermapmodel(*renderedmms[i]);
+
+};
 
 void rendermapmodels()
 {
-    if(reflecting)
-    {
-        loopv(renderedmms) rendermapmodel(*renderedmms[i]);
-        return;
-    };
-    
     const vector<extentity *> &ents = et->getents();
 
     renderedmms.setsizenodelete(0);
