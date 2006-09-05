@@ -990,7 +990,7 @@ void drawreflection(float z, bool refract)
 
         glCullFace(GL_BACK);
     };
-    if(reflectclip) setclipmatrix(0, 0, refract ? -1 : 1, refract ? z+4.0f : -z+4.0f);
+    if(reflectclip) setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -1007,12 +1007,6 @@ void drawreflection(float z, bool refract)
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
-    if(reflectclip)
-    {
-        undoclipmatrix();
-        setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
-    };
-           
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
