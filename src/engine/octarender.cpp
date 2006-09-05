@@ -1914,6 +1914,22 @@ void rendergeom()
 extern int reflectdist;
 extern int scr_w, scr_h;
 
+void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z)
+{
+    loopv(vas)
+    {
+        vtxarray *va = valist[i];
+        lodlevel &lod = va->l0;
+        if(lod.texs)
+        {
+            if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+            if(vadist(va, camera1->o) > reflectdist) continue;
+            renderva(cur, va, lod);
+        };
+        if(va->children.length()) renderreflectedvas(cur, va->children, z); 
+    };
+};
+
 void renderreflectedgeom(float z)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1930,16 +1946,7 @@ void renderreflectedgeom(float z)
         o.z = z-(camera1->o.z-z);
         setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
 
-// FIXME: don't iterate over all the VAs, make sure they're sorted too!
-        loopv(valist)
-        {
-            vtxarray *va = valist[i];
-            lodlevel &lod = va->l0;
-            if(!lod.texs) continue;
-            if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
-            if(vadist(va, camera1->o) > reflectdist) continue;
-            renderva(cur, va, lod);
-        };
+        renderreflectedvas(cur, varoot, z);
 
         memcpy(vfcP, oldvfcP, sizeof(vfcP));
     }
