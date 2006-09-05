@@ -371,6 +371,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
 
+    cleanreflections();
     resetlightmaps();
     if(hdr.version < 7 || !hdr.lightmaps) clearlights();
     else

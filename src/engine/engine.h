@@ -231,6 +231,7 @@ extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
+extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();
 

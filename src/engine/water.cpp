@@ -664,11 +664,8 @@ void addreflection(materialsurface &m)
     };
     rplanes++;
     ref->lastused = lastmillis;
-    if(lastmillis>=ref->nextupdate)
-    {
-        ref->matsurfs.setsizenodelete(0);
-        ref->matsurfs.add(&m);
-    };
+    ref->matsurfs.setsizenodelete(0);
+    if(lastmillis>=ref->nextupdate) ref->matsurfs.add(&m);
 };
 
 extern vtxarray *visibleva;
