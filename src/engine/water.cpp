@@ -263,8 +263,9 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     {
         glEnable(GL_TEXTURE_2D);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        uchar wcol[4] = { 128, 128, 128, 192 };
+        uchar wcol[4] = { 20, 80, 80, 192 };
         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+        else if(!hasFBO || !wreflect) loopi(3) wcol[0] = 128;
         glColor4ubv(wcol);
         Texture *t = lookuptexture(DEFAULT_LIQUID).sts[0].t;
         #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }

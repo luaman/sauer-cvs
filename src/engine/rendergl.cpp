@@ -985,7 +985,7 @@ void drawreflection(float z)
 
         glCullFace(GL_BACK);
     };
-    if(reflectclip) setclipmatrix(0, 0, 1, -z+1.0f);
+    if(reflectclip) setclipmatrix(0, 0, 1, -z+2.0f);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
