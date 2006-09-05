@@ -733,7 +733,7 @@ VAR(maxreflect, 2, 4, 10);
 
 void drawreflections()
 {
-    int refs = 0, watermillis = 1000/waterfps;
+    int refs = 0, watermillis = 1000/reflectfps;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
