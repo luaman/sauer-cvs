@@ -190,8 +190,8 @@ int matsurfcmp(const materialsurface *x, const materialsurface *y)
 {
     if(x->material < y->material) return -1;
     if(x->material > y->material) return 1;
-    if(x->orient < y->orient) return -1;
-    if(x->orient > y->orient) return 1;
+    if(x->orient > y->orient) return -1;
+    if(x->orient < y->orient) return 1;
     int dim = dimension(x->orient), xc = x->o[dim], yc = y->o[dim];
     if(xc < yc) return -1;
     if(xc > yc) return 1;
