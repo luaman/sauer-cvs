@@ -1936,7 +1936,7 @@ void renderreflectedgeom(float z)
             vtxarray *va = valist[i];
             lodlevel &lod = va->l0;
             if(!lod.texs) continue;
-            if(isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+            if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };
@@ -1949,7 +1949,7 @@ void renderreflectedgeom(float z)
         {
             lodlevel &lod = va->l0;
             if(!lod.texs) continue;
-            if(va->occluded >= OCCLUDE_GEOM) continue;
+            if(va->z > z || va->occluded >= OCCLUDE_GEOM) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };
