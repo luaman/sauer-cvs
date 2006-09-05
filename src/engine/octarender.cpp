@@ -1914,7 +1914,7 @@ void rendergeom()
 extern int reflectdist;
 extern int scr_w, scr_h;
 
-void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z)
+void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract)
 {
     loopv(vas)
     {
@@ -1922,22 +1922,22 @@ void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z)
         lodlevel &lod = va->l0;
         if(lod.texs)
         {
-            if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+            if((refract ? va->z > z : va->z+va->size <= z) || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };
-        if(va->children.length()) renderreflectedvas(cur, va->children, z); 
+        if(va->children.length()) renderreflectedvas(cur, va->children, z, refract); 
     };
 };
 
-void renderreflectedgeom(float z)
+void renderreflectedgeom(float z, bool refract)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     setupTMUs();
     glPushMatrix();
 
     renderstate cur;
-    if(camera1->o.z >= z)
+    if(refract ? camera1->o.z < z : camera1->o.z >= z)
     {
         plane oldvfcP[5];
         memcpy(oldvfcP, vfcP, sizeof(vfcP));
@@ -1946,7 +1946,7 @@ void renderreflectedgeom(float z)
         o.z = z-(camera1->o.z-z);
         setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
 
-        renderreflectedvas(cur, varoot, z);
+        renderreflectedvas(cur, varoot, z, refract);
 
         memcpy(vfcP, oldvfcP, sizeof(vfcP));
     }

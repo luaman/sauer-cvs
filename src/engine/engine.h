@@ -146,7 +146,7 @@ extern Texture *textureload(const char *name, bool clamp = false, bool mipit = t
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern Shader  *lookupshaderbyname(const char *name);
-extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp = 24, GLenum target = GL_TEXTURE_2D);
+extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
 extern void readmatrices();
 
 // renderextras

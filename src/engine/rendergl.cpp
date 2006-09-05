@@ -347,7 +347,7 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     return d;
 };
  
-void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, int bpp, GLenum target)
+void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component, GLenum target)
 {
     glBindTexture(target, tnum);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -356,9 +356,15 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR); 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    int mode = bpp==24 ? GL_RGB : GL_RGBA;
-    if(mipit) { if(gluBuild2DMipmaps(target, mode, w, h, mode, GL_UNSIGNED_BYTE, pixels)) fatal("could not build mipmaps"); }
-    else glTexImage2D(target, 0, mode, w, h, 0, mode, GL_UNSIGNED_BYTE, pixels);
+    GLenum format = component, type = GL_UNSIGNED_BYTE;
+    switch(component)
+    {
+        case GL_DEPTH_COMPONENT:
+            type = GL_FLOAT;
+            break;
+    };
+    if(mipit) { if(gluBuild2DMipmaps(target, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
+    else glTexImage2D(target, 0, component, w, h, 0, format, type, pixels);
 }
 
 hashtable<char *, Texture> textures;
@@ -373,7 +379,7 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false
     t->xs = s->w;
     t->ys = s->h;
     glGenTextures(1, &t->gl);
-    createtexture(t->gl, t->xs, t->ys, s->pixels, clamp, mipit, t->bpp);
+    createtexture(t->gl, t->xs, t->ys, s->pixels, clamp, mipit, t->bpp==24 ? GL_RGB : GL_RGBA);
     SDL_FreeSurface(s);
     return t;
 };
@@ -843,7 +849,7 @@ void renderfullscreenshader(int w, int h)
     {
         char *pixels = new char[w*h*3];
         loopi(NUMSCALE)
-            createtexture(rendertarget[i], w>>i, h>>i, pixels, true, false, 24, GL_TEXTURE_RECTANGLE_ARB);
+            createtexture(rendertarget[i], w>>i, h>>i, pixels, true, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
         delete[] pixels;
         fs_w = w;
         fs_h = h;
@@ -971,13 +977,13 @@ VAR(reflectclip, 0, 1, 1);
 
 extern int reflectdetail;
 
-void drawreflection(float z)
+void drawreflection(float z, bool refract)
 {
     reflecting = true;
 
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    if(camera1->o.z >= z)
+    if(!refract && camera1->o.z >= z)
     {
         glPushMatrix();
         glTranslatef(0, 0, 2*z);
@@ -985,7 +991,7 @@ void drawreflection(float z)
 
         glCullFace(GL_BACK);
     };
-    if(reflectclip) setclipmatrix(0, 0, 1, -z+2.0f);
+    if(reflectclip) setclipmatrix(0, 0, refract ? -1 : 1, refract ? z+2.0f : -z+2.0f);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -994,8 +1000,8 @@ void drawreflection(float z)
     glEnable(GL_TEXTURE_GEN_T);
     if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
 
-    extern void renderreflectedgeom(float z);
-    renderreflectedgeom(z);
+    extern void renderreflectedgeom(float z, bool refract);
+    renderreflectedgeom(z, refract);
 
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
@@ -1017,10 +1023,10 @@ void drawreflection(float z)
     defaultshader->set();
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    if(camera1->o.z < z) reflecting = false;
+    if(!refract && camera1->o.z < z) reflecting = false;
     drawskybox(farplane, false);
 
-    if(camera1->o.z >= z)
+    if(!refract && camera1->o.z >= z)
     {
         glPopMatrix();
 

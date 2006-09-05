@@ -20,8 +20,8 @@ static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI
 #define MAXREFLECTIONS 16
 struct Reflection
 {
-    GLuint fb;
-    GLuint tex;
+    GLuint fb, refractfb;
+    GLuint tex, refractcolor, refractdepth;
     int height, nextupdate, lastupdate, lastused;
     GLfloat tm[16];
     occludequery *query;
@@ -233,7 +233,7 @@ VAR(showmat, 0, 1, 1);
 
 COMMAND(watercolour, "iii");
 
-Shader *watershader = NULL;
+Shader *watershader = NULL, *waterrefractshader = NULL;
 Texture *waternormals = NULL;
 Texture *waterdudvs = NULL;
 
@@ -257,6 +257,8 @@ void setprojtexmatrix(Reflection *ref)
     } 
     else glLoadMatrixf(ref->tm);
 };
+
+VAR(refract, 0, 0, 1);
 
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
@@ -284,6 +286,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         else 
         {
             if(!watershader) watershader = lookupshaderbyname("water");
+            if(!waterrefractshader) waterrefractshader = lookupshaderbyname("waterrefract");
             if(!waternormals) waternormals = textureload("data/watern.jpg");
             if(!waterdudvs) waterdudvs = textureload("data/waterdudv.jpg");
 
@@ -300,7 +303,6 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
             glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0); 
-
 #if 0
             entity *light = globallight();
             const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
@@ -328,7 +330,29 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 
                         setprojtexmatrix(ref);
                         glBindTexture(GL_TEXTURE_2D, ref->tex);
+                        if(refract && ref->refractfb)
+                        {
+                            glDisable(GL_BLEND);
+                            waterrefractshader->set();
+                            glActiveTexture_(GL_TEXTURE3_ARB);
+                            glEnable(GL_TEXTURE_2D);
+                            glBindTexture(GL_TEXTURE_2D, ref->refractcolor);
+                            glActiveTexture_(GL_TEXTURE4_ARB);
+                            glEnable(GL_TEXTURE_2D);
+                            glBindTexture(GL_TEXTURE_2D, ref->refractdepth);
+                        };
+
                         drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
+                
+                        if(ref->refractfb)
+                        {
+                            glDisable(GL_TEXTURE_2D);
+                            glActiveTexture_(GL_TEXTURE3_ARB);
+                            glDisable(GL_TEXTURE_2D);
+                            glActiveTexture_(GL_TEXTURE0_ARB);
+                            watershader->set();
+                            glEnable(GL_BLEND);
+                        };
                     };
                 };
             );
@@ -601,6 +625,15 @@ void cleanreflections()
             ref.height = -1;
             ref.lastupdate = 0;
         };
+        if(ref.refractfb)
+        {
+            glDeleteFramebuffers_(1, &ref.refractfb);
+            ref.refractfb = 0;
+            glDeleteTextures(1, &ref.refractcolor);
+            ref.refractcolor = 0;
+            glDeleteTextures(1, &ref.refractdepth);
+            ref.refractdepth = 0;
+        };
     };
     if(reflectiondb)
     {
@@ -644,7 +677,7 @@ void addreflection(materialsurface &m)
         glGenTextures(1, &ref->tex);
         int size = 1<<reflectsize;
         char *pixels = new char[size*size*3];
-        createtexture(ref->tex, size, size, pixels, true, false, 24, GL_TEXTURE_2D);
+        createtexture(ref->tex, size, size, pixels, true, false);
         delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->fb);
         glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
@@ -655,6 +688,23 @@ void addreflection(materialsurface &m)
             glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, size, size);
         };
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
+
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
+    };
+    if(refract && !ref->refractfb)
+    {
+        glGenFramebuffers_(1, &ref->refractfb);
+        glGenTextures(1, &ref->refractcolor);
+        glGenTextures(1, &ref->refractdepth);
+        int size = 1<<reflectsize;
+        char *pixels = new char[size*size*4];
+        createtexture(ref->refractcolor, size, size, pixels, true, false);
+        createtexture(ref->refractdepth, size, size, pixels, true, false, GL_DEPTH_COMPONENT);
+        delete[] pixels;
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->refractfb);
+        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->refractcolor, 0);
+        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, ref->refractdepth, 0);
+            
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     };
     if(ref->height!=height)
@@ -670,7 +720,7 @@ void addreflection(materialsurface &m)
 };
 
 extern vtxarray *visibleva;
-extern void drawreflection(float z);
+extern void drawreflection(float z, bool refract);
 extern int scr_w, scr_h;
 extern int oqfrags;
 
@@ -690,6 +740,7 @@ void queryreflections()
         loopi(MAXREFLECTIONS)
         {
             reflections[i].fb = 0;
+            reflections[i].refractfb = 0;
             reflections[i].height = -1;
             reflections[i].lastused = 0;
             reflections[i].query = NULL;
@@ -766,8 +817,13 @@ void drawreflections()
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
 
-        extern void drawreflection(float z);
-        drawreflection(ref.height);
+        drawreflection(ref.height, false);
+
+        if(refract && ref.refractfb)
+        {
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
+            drawreflection(ref.height, true);
+        };    
     };
     
     if(!refs) return;
