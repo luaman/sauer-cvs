@@ -218,6 +218,8 @@ extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
 extern void remipworld();
 extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);
+extern occludequery *newquery(void *owner);
+extern bool checkquery(occludequery *query, bool nowait = false);
 extern void resetqueries();
 extern int getnumqueries();
 
@@ -229,6 +231,8 @@ extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern void sortmatsurfs(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
+extern void queryreflections();
+extern void drawreflections();
 
 // server
 

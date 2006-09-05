@@ -138,7 +138,7 @@ extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie
 extern ivec lu;
 extern int lusize;
 extern bool luperfect;
-extern int wtris, wverts, vtris, vverts, glde;
+extern int wtris, wverts, vtris, vverts, glde, rplanes;
 extern int allocnodes, allocva, selchildcount;
 
 const uint F_EMPTY = 0;             // all edges in the range (0,0)

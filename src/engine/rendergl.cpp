@@ -969,7 +969,7 @@ void undoclipmatrix()
 
 VAR(reflectclip, 0, 1, 1);
 
-extern int wreflect;
+extern int reflectdetail;
 
 void drawreflection(float z)
 {
@@ -1002,12 +1002,12 @@ void drawreflection(float z)
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
-    if(wreflect>3) rendermapmodels();
-    if(wreflect>1) cl->rendergame();
+    if(reflectdetail>3) rendermapmodels();
+    if(reflectdetail>1) cl->rendergame();
     
     glDisable(GL_FOG);
 
-    if(wreflect>2)
+    if(reflectdetail>2)
     {
         renderspheres(0);
         render_particles(0);
@@ -1089,6 +1089,8 @@ void gl_drawframe(int w, int h, float curfps)
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
+    queryreflections();
+
     if(!wireframe) renderoutline();
 
     rendermapmodels();
@@ -1105,8 +1107,7 @@ void gl_drawframe(int w, int h, float curfps)
     if(!isthirdperson()) cl->drawhudgun();
     project(fovy, aspect, farplane);
 
-    extern void reflectwater();
-    reflectwater();
+    drawreflections();
 
     defaultshader->set();
 

@@ -1281,13 +1281,19 @@ void resetqueries()
 
 VAR(oqfrags, 0, 8, 64);
 
-bool checkquery(occludequery *query)
+bool checkquery(occludequery *query, bool nowait)
 {
     GLuint fragments;
     if(query->fragments >= 0) fragments = query->fragments;
     else
     {
-        glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, (GLuint *)&fragments);
+        if(nowait)
+        {
+            GLuint avail;
+            glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_AVAILABLE, &avail);
+            if(!avail) return false;
+        };
+        glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, &fragments);
         query->fragments = fragments;
     };
     return fragments < (uint)oqfrags;

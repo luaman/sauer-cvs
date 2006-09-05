@@ -22,12 +22,14 @@ struct Reflection
 {
     GLuint fb;
     GLuint tex;
-    int height, lastupdate, lasttm;
+    int height, nextupdate, lastupdate, lastused;
     GLfloat tm[16];
+    occludequery *query;
+    vector<materialsurface *> matsurfs;
 };
 Reflection *findreflection(int height);
 
-VARF(wreflect, 0, 3, 4, allchanged());
+VARF(reflectdetail, 0, 3, 4, allchanged());
 
 void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 { 
@@ -237,7 +239,7 @@ Texture *waterdudvs = NULL;
 
 void setprojtexmatrix(Reflection *ref)
 {
-    if(ref->lasttm==lastmillis)
+    if(ref->lastupdate==lastmillis)
     {
         GLfloat tm[16] = {0.5f, 0, 0, 0,
                           0, 0.5f, 0, 0,
@@ -265,11 +267,11 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         uchar wcol[4] = { 20, 80, 80, 192 };
         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
-        else if(!hasFBO || !wreflect) loopi(3) wcol[0] = 128;
+        else if(!hasFBO || !reflectdetail) loopi(3) wcol[0] = 128;
         glColor4ubv(wcol);
         Texture *t = lookuptexture(DEFAULT_LIQUID).sts[0].t;
         #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
-        if(!hasFBO || !wreflect) 
+        if(!hasFBO || !reflectdetail) 
         {
             glBindTexture(GL_TEXTURE_2D, t->gl);
             defaultshader->set();
@@ -299,6 +301,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
             glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0); 
 
+#if 0
             entity *light = globallight();
             const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
             const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient);
@@ -306,7 +309,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
             glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
             glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
-
+#endif
             glMatrixMode(GL_TEXTURE);
             glPushMatrix();
             matloop(MAT_WATER, 
@@ -315,6 +318,14 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                     ref = findreflection(m.o.z);
                     if(ref)
                     {
+            entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z));
+            const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
+            const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient);
+            float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
+            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
+            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
+
                         setprojtexmatrix(ref);
                         glBindTexture(GL_TEXTURE_2D, ref->tex);
                         drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
@@ -555,7 +566,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
             loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
             vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
          };
-         if(start->material != MAT_WATER || start->orient != O_TOP || (wreflect && hasFBO)) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
+         if(start->material != MAT_WATER || start->orient != O_TOP || (reflectdetail && hasFBO)) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
          
     };
     return matsurfs - (end-matbuf);
@@ -600,22 +611,31 @@ void cleanreflections()
 
 VARF(reflectsize, 6, 8, 10, cleanreflections());
 
+VAR(oqreflect, 0, 1, 1);
+
 void addreflection(materialsurface &m)
 {
     int height = m.o.z;
     Reflection *ref = NULL, *oldest = NULL;
     loopi(MAXREFLECTIONS)
     {
-        if(reflections[i].height<0)
+        Reflection &r = reflections[i];
+        if(r.height<0)
         {
-            if(!ref) ref = &reflections[i];
+            if(!ref) ref = &r;
         }
-        else if(reflections[i].height==height) return;
-        else if(!oldest || reflections[i].lastupdate<oldest->lastupdate) oldest = &reflections[i];
+        else if(r.height==height) 
+        {
+            if(lastmillis>=r.nextupdate) r.matsurfs.add(&m);
+            if(r.lastused==lastmillis) return;
+            ref = &r;
+            break;
+        }
+        else if(!oldest || r.lastused<oldest->lastused) oldest = &r;
     };
     if(!ref)
     {
-        if(!oldest || oldest->lastupdate==lastmillis) return;
+        if(!oldest || oldest->lastused==lastmillis) return;
         ref = oldest;
     };
     if(!ref->fb)
@@ -636,21 +656,35 @@ void addreflection(materialsurface &m)
         };
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
     };
-    ref->height = height;
-    ref->lastupdate = lastmillis;
-    ref->lasttm = lastmillis;
+    if(ref->height!=height)
+    {
+        ref->height = height;
+        ref->nextupdate = lastmillis;
+        ref->lastupdate = lastmillis;
+    };
+    rplanes++;
+    ref->lastused = lastmillis;
+    if(lastmillis>=ref->nextupdate)
+    {
+        ref->matsurfs.setsizenodelete(0);
+        ref->matsurfs.add(&m);
+    };
 };
 
 extern vtxarray *visibleva;
 extern void drawreflection(float z);
 extern int scr_w, scr_h;
+extern int oqfrags;
 
 VAR(reflectdist, 0, 1000, 10000);
 VAR(waterfps, 1, 30, 200);
 
-void reflectwater()
+int rplanes = 0;
+
+void queryreflections()
 {
-    if(!hasFBO || !wreflect) return;
+    rplanes = 0;
+    if(!hasFBO || !reflectdetail) return;
 
     static bool refinit = false;
     if(!refinit)
@@ -659,7 +693,8 @@ void reflectwater()
         {
             reflections[i].fb = 0;
             reflections[i].height = -1;
-            reflections[i].lastupdate = 0;
+            reflections[i].lastused = 0;
+            reflections[i].query = NULL;
         };
         refinit = true;
     };
@@ -673,17 +708,42 @@ void reflectwater()
         matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
     };
     
-    int refs = 0;
+    if(hasOQ && oqfrags && oqreflect) loopi(MAXREFLECTIONS)
+    {
+        Reflection &ref = reflections[i];
+        if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty()) continue;
+        ref.query = oqreflect ? newquery(&ref) : NULL;
+        if(!ref.query) continue;
+        nocolorshader->set();
+        glDepthMask(GL_FALSE);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glBeginQuery_(GL_SAMPLES_PASSED_ARB, ref.query->id);
+        loopvj(ref.matsurfs)
+        {
+            materialsurface &m = *ref.matsurfs[j];
+            drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f);
+        };
+        glEndQuery_(GL_SAMPLES_PASSED_ARB);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+    };
+};
+
+void drawreflections()
+{
+    int refs = 0, watermillis = 1000/waterfps;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || (ref.lastupdate!=lastmillis && lastmillis-ref.lastupdate < 1000.0f/waterfps)) continue;
-    
+        if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty()) continue;
+        if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query, true)) continue;
+
         if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
 
         refs++;
-        ref.lastupdate = lastmillis - (int)fmod(lastmillis-ref.lastupdate, 1000.0f/waterfps);
-        ref.lasttm = lastmillis;
+        if(lastmillis-ref.nextupdate>1000) ref.nextupdate = lastmillis+watermillis;
+        else while(ref.nextupdate<=lastmillis) ref.nextupdate += watermillis;
+        ref.lastupdate = lastmillis;
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
 
