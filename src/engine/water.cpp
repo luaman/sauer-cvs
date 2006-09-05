@@ -712,6 +712,7 @@ void queryreflections()
         ref.query = oqreflect ? newquery(&ref) : NULL;
         if(!ref.query) continue;
         nocolorshader->set();
+        if(camera1->o.z < ref.height) glCullFace(GL_BACK);
         glDepthMask(GL_FALSE);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         glBeginQuery_(GL_SAMPLES_PASSED_ARB, ref.query->id);
@@ -723,7 +724,10 @@ void queryreflections()
         glEndQuery_(GL_SAMPLES_PASSED_ARB);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
+        if(camera1->o.z < ref.height) glCullFace(GL_FRONT);
     };
+
+    defaultshader->set();
 };
 
 VAR(maxreflect, 2, 4, 10);
