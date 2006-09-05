@@ -685,7 +685,7 @@ void addreflection(materialsurface &m)
         {
             glGenRenderbuffers_(1, &reflectiondb);
             glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
-            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, size, size);
+            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, size, size);
         };
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
 
