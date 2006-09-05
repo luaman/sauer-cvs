@@ -1918,7 +1918,7 @@ void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z)
 {
     loopv(vas)
     {
-        vtxarray *va = valist[i];
+        vtxarray *va = vas[i];
         lodlevel &lod = va->l0;
         if(lod.texs)
         {
