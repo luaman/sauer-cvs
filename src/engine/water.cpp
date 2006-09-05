@@ -17,7 +17,7 @@ static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
-#define MAXREFLECTIONS 8
+#define MAXREFLECTIONS 16
 struct Reflection
 {
     GLuint fb;
@@ -318,13 +318,13 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                     ref = findreflection(m.o.z);
                     if(ref)
                     {
-            entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z));
-            const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
-            const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient);
-            float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
-            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
-            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
+                        entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z));
+                        const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
+                        const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient);
+                        float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
+                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
+                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
+                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
 
                         setprojtexmatrix(ref);
                         glBindTexture(GL_TEXTURE_2D, ref->tex);
@@ -729,6 +729,8 @@ void queryreflections()
     };
 };
 
+VAR(maxreflect, 2, 4, 10);
+
 void drawreflections()
 {
     int refs = 0, watermillis = 1000/waterfps;
@@ -739,8 +741,9 @@ void drawreflections()
         if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query, true)) continue;
 
         if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
-
-        refs++;
+        
+        if(refs++>maxreflect) continue;
+        
         if(lastmillis-ref.nextupdate>1000) ref.nextupdate = lastmillis+watermillis;
         else while(ref.nextupdate<=lastmillis) ref.nextupdate += watermillis;
         ref.lastupdate = lastmillis;
