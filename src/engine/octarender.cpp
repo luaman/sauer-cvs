@@ -1930,6 +1930,9 @@ void renderreflectedgeom(float z)
     renderstate cur;
     if(camera1->o.z >= z)
     {
+        plane oldvfcP[5];
+        memcpy(oldvfcP, vfcP, sizeof(vfcP));
+        
         vec o(camera1->o);
         o.z = z-(camera1->o.z-z);
         setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
@@ -1944,6 +1947,8 @@ void renderreflectedgeom(float z)
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };
+
+        memcpy(vfcP, oldvfcP, sizeof(vfcP));
     }
     else
     {

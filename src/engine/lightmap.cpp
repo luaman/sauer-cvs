@@ -1045,7 +1045,7 @@ void initlights()
     updateentlighting();
 };
 
-entity *globallight()
+entity *globallight(const vec &target, const vec &dir)
 {
     const vector<extentity *> &ents = et->getents();
     if(globalcache>=0) return ents[globalcache];
@@ -1056,14 +1056,17 @@ entity *globallight()
         if(e.type != ET_LIGHT) continue;
         if(!e.attr1 || !global || (global->attr1 && e.attr1 > global->attr1))
         {
-            global = &e;
-            globalcache = i;
+            if(vec(e.o).sub(target).dot(dir)>=0)
+            {
+                global = &e;
+                globalcache = i;
+            };
         };
     };
     return global;
 };
 
-entity *brightestlight(const vec &target)
+entity *brightestlight(const vec &target, const vec &dir)
 {
     const vector<extentity *> &ents = et->getents();
     const vector<int> &lights = checklightcache(int(target.x), int(target.y));
@@ -1072,7 +1075,7 @@ entity *brightestlight(const vec &target)
     loopv(lights)
     {
         entity &e = *ents[lights[i]];
-        if(e.type != ET_LIGHT)
+        if(e.type != ET_LIGHT || vec(e.o).sub(target).dot(dir)<0)
             continue;
 
         vec ray(target);

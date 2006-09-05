@@ -320,7 +320,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                     {
                         entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z), vec(0, 0, 1));
                         const vec &lightpos = light ? light->o : vec(m.o.x+m.csize/2, m.o.y+m.csize/2, hdr.worldsize);
-                        const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient);
+                        const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient).div(255.0f);
                         float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
