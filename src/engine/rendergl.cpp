@@ -1008,6 +1008,12 @@ void drawreflection(float z, bool refract)
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
+    if(reflectclip)
+    {
+        undoclipmatrix();
+        setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
+    };
+           
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectdetail>3) renderreflectedmapmodels(z, refract);
     if(reflectdetail>1) cl->rendergame();
