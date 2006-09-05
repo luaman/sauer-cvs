@@ -302,7 +302,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             glActiveTexture_(GL_TEXTURE0_ARB);
         
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
-            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0); 
+            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0); 
 #if 0
             entity *light = globallight();
             const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
