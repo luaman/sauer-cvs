@@ -1105,15 +1105,6 @@ void gl_drawframe(int w, int h, float curfps)
     if(!isthirdperson()) cl->drawhudgun();
     project(fovy, aspect, farplane);
 
-    glDisable(GL_FOG);
-
-    defaultshader->set();
-
-    renderspheres(curtime);
-    render_particles(curtime);
-
-    glEnable(GL_FOG);
-
     extern void reflectwater();
     reflectwater();
 
@@ -1122,6 +1113,10 @@ void gl_drawframe(int w, int h, float curfps)
     rendermaterials();
 
     glDisable(GL_FOG);
+
+    renderspheres(curtime);
+    render_particles(curtime);
+
     glDisable(GL_CULL_FACE);
 
     renderfullscreenshader(w, h);
