@@ -1822,13 +1822,6 @@ void cleanupTMUs()
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 };
 
-renderstate *foop;
-
-void renderva2(vtxarray *va, lodlevel &lod)
-{
-    renderva(*foop, va, lod);
-};
-
 void rendergeom()
 {
     glEnableClientState(GL_VERTEX_ARRAY);

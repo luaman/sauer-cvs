@@ -1025,8 +1025,9 @@ void drawreflection(float z)
         glPopMatrix();
 
         glCullFace(GL_FRONT);
-        reflecting = false;
     };
+    
+    reflecting = false;
 };
 
 void gl_drawframe(int w, int h, float curfps)

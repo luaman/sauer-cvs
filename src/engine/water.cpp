@@ -655,6 +655,7 @@ void addreflection(materialsurface &m)
             glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, size, size);
         };
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     };
     if(ref->height!=height)
     {
@@ -705,16 +706,27 @@ void queryreflections()
         matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
     };
     
-    if(hasOQ && oqfrags && oqreflect) loopi(MAXREFLECTIONS)
+    if(!hasOQ || !oqfrags || !oqreflect) return;
+    int refs = 0;
+    loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty()) continue;
-        ref.query = oqreflect ? newquery(&ref) : NULL;
+        if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty())
+        {
+            ref.query = NULL;
+            continue;
+        };
+        ref.query = newquery(&ref);
         if(!ref.query) continue;
-        nocolorshader->set();
+
+        if(!refs)
+        {
+            nocolorshader->set();
+            glDepthMask(GL_FALSE);
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        };
+        refs++;
         if(camera1->o.z < ref.height) glCullFace(GL_BACK);
-        glDepthMask(GL_FALSE);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         glBeginQuery_(GL_SAMPLES_PASSED_ARB, ref.query->id);
         loopvj(ref.matsurfs)
         {
@@ -722,12 +734,15 @@ void queryreflections()
             drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f);
         };
         glEndQuery_(GL_SAMPLES_PASSED_ARB);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDepthMask(GL_TRUE);
         if(camera1->o.z < ref.height) glCullFace(GL_FRONT);
     };
 
-    defaultshader->set();
+    if(refs)
+    {
+        defaultshader->set();
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+    };
 };
 
 VAR(maxreflect, 2, 4, 10);
@@ -743,7 +758,7 @@ void drawreflections()
 
         if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
         
-        if(refs++>maxreflect) continue;
+        if(refs++>maxreflect) break;
         
         if(lastmillis-ref.nextupdate>1000) ref.nextupdate = lastmillis+watermillis;
         else while(ref.nextupdate<=lastmillis) ref.nextupdate += watermillis;
