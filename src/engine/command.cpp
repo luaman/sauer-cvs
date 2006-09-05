@@ -159,12 +159,18 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
             if(*p=='\"') wordbuf.add(*p++);
             continue;
         };
+        if(c=='/' && *p=='/')
+        {
+            p += strcspn(p, "\n\0");
+            continue;
+        };
+            
         if(c==left) brak++;
         else if(c==right) brak--;
         else if(!c) 
         { 
             p--;
-            conoutf("missing \"%c\"", right);
+            conoutf("missing \"%c\": %s\nVS:\n %s\n", right, p-256, p);
             wordbuf.setsize(pos); 
             return NULL; 
         };
@@ -201,8 +207,12 @@ char *lookup(char *n)                           // find value of ident reference
 
 char *parseword(char *&p)                       // parse single argument, including expressions
 {
-    p += strspn(p, " \t\r");
-    if(p[0]=='/' && p[1]=='/') p += strcspn(p, "\n\0");  
+    for(;;)
+    {
+        p += strspn(p, " \t\r");
+        if(p[0]!='/' || p[1]!='/') break;
+        p += strcspn(p, "\n\0");  
+    };
     if(*p=='\"')
     {
         p++;
@@ -215,7 +225,12 @@ char *parseword(char *&p)                       // parse single argument, includ
     if(*p=='(') return parseexp(p, ')');
     if(*p=='[') return parseexp(p, ']');
     char *word = p;
-    p += strcspn(p, "; \t\r\n\0");
+    for(;;)
+    {
+        p += strcspn(p, "/; \t\r\n\0");
+        if(p[0]!='/' || p[1]=='/') break;
+        p += 2;
+    };
     if(p-word==0) return NULL;
     char *s = newstring(word, p-word);
     if(*s=='$') return lookup(s);               // substitute variables

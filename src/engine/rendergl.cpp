@@ -974,8 +974,7 @@ void undoclipmatrix()
 };
 
 VAR(reflectclip, 0, 1, 1);
-
-extern int reflectdetail;
+VAR(reflectmms, 0, 1, 1);
 
 void drawreflection(float z, bool refract)
 {
@@ -1015,16 +1014,13 @@ void drawreflection(float z, bool refract)
     };
            
     extern void renderreflectedmapmodels(float z, bool refract);
-    if(reflectdetail>3) renderreflectedmapmodels(z, refract);
-    if(reflectdetail>1) cl->rendergame();
+    if(reflectmms) renderreflectedmapmodels(z, refract);
+    cl->rendergame();
     
     glDisable(GL_FOG);
 
-    if(reflectdetail>2)
-    {
-        renderspheres(0);
-        render_particles(0);
-    };
+    renderspheres(0);
+    render_particles(0);
 
     if(reflectclip) undoclipmatrix();
     defaultshader->set();
