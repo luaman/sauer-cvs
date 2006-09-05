@@ -725,8 +725,6 @@ VAR(showsky, 0, 1, 1);
 extern int explicitsky, skyarea;
 extern bool reflecting;
 
-extern void setreflectionmatrix(float z);
-
 void drawskybox(int farplane, bool limited)
 {
     glDisable(GL_FOG);
@@ -748,7 +746,7 @@ void drawskybox(int farplane, bool limited)
     glRotated(player->pitch, -1.0, 0.0, 0.0);
     glRotated(player->yaw,   0.0, 1.0, 0.0);
     glRotated(90.0, 1.0, 0.0, 0.0);
-    if(reflecting) setreflectionmatrix(0);
+    if(reflecting) glScalef(1, 1, -1);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
     draw_envbox(farplane/2);
@@ -971,15 +969,6 @@ void undoclipmatrix()
 
 VAR(reflectclip, 0, 1, 1);
 
-void setreflectionmatrix(float z)
-{
-    GLfloat ref[16] = {1, 0, 0, 0,
-                       0, 1, 0, 0,
-                       0, 0, -1, 0,
-                       0, 0, 2*z, 1};
-    glMultMatrixf(ref);
-};
-
 extern int wreflect;
 
 void drawreflection(float z)
@@ -987,9 +976,15 @@ void drawreflection(float z)
     reflecting = true;
 
     glClear(GL_DEPTH_BUFFER_BIT);
-    glCullFace(GL_BACK);
 
-    setreflectionmatrix(z);
+    if(camera1->o.z >= z)
+    {
+        glPushMatrix();
+        glTranslatef(0, 0, 2*z);
+        glScalef(1, 1, -1);
+
+        glCullFace(GL_BACK);
+    };
     if(reflectclip) setclipmatrix(0, 0, 1, -z+1.0f);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
@@ -1022,10 +1017,16 @@ void drawreflection(float z)
     defaultshader->set();
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
+    if(camera1->o.z < z) reflecting = false;
     drawskybox(farplane, false);
 
-    glCullFace(GL_FRONT);
-    reflecting = false;
+    if(camera1->o.z >= z)
+    {
+        glPopMatrix();
+
+        glCullFace(GL_FRONT);
+        reflecting = false;
+    };
 };
 
 void gl_drawframe(int w, int h, float curfps)
@@ -1104,6 +1105,15 @@ void gl_drawframe(int w, int h, float curfps)
     if(!isthirdperson()) cl->drawhudgun();
     project(fovy, aspect, farplane);
 
+    glDisable(GL_FOG);
+
+    defaultshader->set();
+
+    renderspheres(curtime);
+    render_particles(curtime);
+
+    glEnable(GL_FOG);
+
     extern void reflectwater();
     reflectwater();
 
@@ -1112,10 +1122,6 @@ void gl_drawframe(int w, int h, float curfps)
     rendermaterials();
 
     glDisable(GL_FOG);
-
-    renderspheres(curtime);
-    render_particles(curtime);
-
     glDisable(GL_CULL_FACE);
 
     renderfullscreenshader(w, h);

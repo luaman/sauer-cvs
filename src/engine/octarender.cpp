@@ -1921,20 +1921,34 @@ void renderreflectedgeom(float z)
     setupTMUs();
     glPushMatrix();
 
-    vec o(camera1->o);
-    o.z = z-(camera1->o.z-z);
-    setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
-
     renderstate cur;
-// FIXME: don't iterate over all the VAs, make sure they're sorted too!
-    loopv(valist)
+    if(camera1->o.z >= z)
     {
-        vtxarray *va = valist[i];
-        lodlevel &lod = va->l0;
-        if(!lod.texs) continue;
-        if(isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
-        if(vadist(va, camera1->o) > reflectdist) continue;
-        renderva(cur, va, lod);
+        vec o(camera1->o);
+        o.z = z-(camera1->o.z-z);
+        setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
+
+// FIXME: don't iterate over all the VAs, make sure they're sorted too!
+        loopv(valist)
+        {
+            vtxarray *va = valist[i];
+            lodlevel &lod = va->l0;
+            if(!lod.texs) continue;
+            if(isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+            if(vadist(va, camera1->o) > reflectdist) continue;
+            renderva(cur, va, lod);
+        };
+    }
+    else
+    {
+        for(vtxarray *va = visibleva; va; va = va->next)
+        {
+            lodlevel &lod = va->l0;
+            if(!lod.texs) continue;
+            if(va->occluded >= OCCLUDE_GEOM) continue;
+            if(vadist(va, camera1->o) > reflectdist) continue;
+            renderva(cur, va, lod);
+        };
     };
 
     glPopMatrix();

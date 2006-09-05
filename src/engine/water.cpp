@@ -685,12 +685,9 @@ void reflectwater()
         ref.lasttm = lastmillis;
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-        glPushMatrix();
 
         extern void drawreflection(float z);
         drawreflection(ref.height);
-        
-        glPopMatrix();
     };
     
     if(!refs) return;
