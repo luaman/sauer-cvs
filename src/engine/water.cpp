@@ -827,7 +827,7 @@ void drawreflections()
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
         drawreflection(ref.height+offset, false);
 
-        if(waterrefract && ref.refractfb)
+        if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
             drawreflection(ref.height+offset, true);
