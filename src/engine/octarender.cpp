@@ -1959,7 +1959,7 @@ void renderreflectedgeom(float z, bool refract)
     glPushMatrix();
 
     renderstate cur;
-    if(refract ? camera1->o.z < z : camera1->o.z >= z)
+    if(!refract && camera1->o.z >= z)
     {
         plane oldvfcP[5];
         memcpy(oldvfcP, vfcP, sizeof(vfcP));
@@ -1978,7 +1978,7 @@ void renderreflectedgeom(float z, bool refract)
         {
             lodlevel &lod = va->l0;
             if(!lod.texs) continue;
-            if(va->z > z || va->occluded >= OCCLUDE_GEOM) continue;
+            if((refract && camera1->o.z >= z ? va->z > z : va->z+va->size <= z) || va->occluded >= OCCLUDE_GEOM) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };

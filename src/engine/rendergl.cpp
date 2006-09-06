@@ -990,7 +990,7 @@ void drawreflection(float z, bool refract)
 
         glCullFace(GL_BACK);
     };
-    if(reflectclip) setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
+    if(reflectclip) setclipmatrix(0, 0, refract ? -1 : 1, refract ? z+1.0f : -z+1.0f);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -1107,15 +1107,15 @@ void gl_drawframe(int w, int h, float curfps)
 
     if(!limitsky) drawskybox(farplane, false);
 
-    project(65, aspect, farplane);
-    if(!isthirdperson()) cl->drawhudgun();
-    project(fovy, aspect, farplane);
-
     drawreflections();
 
     defaultshader->set();
 
     rendermaterials();
+
+    project(65, aspect, farplane);
+    if(!isthirdperson()) cl->drawhudgun();
+    project(fovy, aspect, farplane);
 
     glDisable(GL_FOG);
 
