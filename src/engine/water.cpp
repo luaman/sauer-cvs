@@ -26,6 +26,7 @@ struct Reflection
     GLfloat tm[16];
     occludequery *query;
     vector<materialsurface *> matsurfs;
+    entity *light;
 };
 Reflection *findreflection(int height);
 
@@ -333,7 +334,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                     ref = findreflection(m.o.z);
                     if(ref)
                     {
-                        entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z), vec(0, 0, 1));
+                        entity *light = ref->light;
                         const vec &lightpos = light ? light->o : vec(m.o.x+m.csize/2, m.o.y+m.csize/2, hdr.worldsize);
                         const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient).div(255.0f);
                         float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
@@ -816,12 +817,19 @@ void drawreflections()
         
         if(refs++>maxreflect) break;
         
+        ref.light = NULL;
+        loopvj(ref.matsurfs)
+        {
+           materialsurface &m = *ref.matsurfs[j];
+           entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z), vec(0, 0, 1));
+           if(!light) continue;
+           if(!ref.light || !light->attr1 || (ref.light->attr1 && light->attr1 > ref.light->attr1)) ref.light = light;
+        };
         if(lastmillis-ref.nextupdate>1000) ref.nextupdate = lastmillis+watermillis;
         else while(ref.nextupdate<=lastmillis) ref.nextupdate += watermillis;
         ref.lastupdate = lastmillis;
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-
         drawreflection(ref.height, false);
 
         if(waterdetail==3 && ref.refractfb)
