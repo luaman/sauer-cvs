@@ -995,7 +995,25 @@ void drawreflection(float z, bool refract)
     reflecting = true;
     if(refract) refracting = true;
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    float oldfogstart, oldfogend, oldfogcolor[4], oldclearcolor[4]; 
+    if(refract)
+    {
+        glGetFloatv(GL_FOG_START, &oldfogstart);
+        glGetFloatv(GL_FOG_END, &oldfogend);
+        glGetFloatv(GL_FOG_COLOR, oldfogcolor);
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, oldclearcolor);
+
+        uchar wcol[3] = { 20, 80, 80 };
+        if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+
+        glFogi(GL_FOG_START, 30);
+        glFogi(GL_FOG_END, 300);
+        float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
+        glFogfv(GL_FOG_COLOR, fogc);
+        glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+    };
+
+    glClear((refract ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
 
     if(!refract && camera1->o.z >= z)
     {
@@ -1041,13 +1059,21 @@ void drawreflection(float z, bool refract)
     defaultshader->set();
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    drawskybox(farplane, false, !refract && camera1->o.z >= z);
+    if(!refract) drawskybox(farplane, false, camera1->o.z >= z);
 
     if(!refract && camera1->o.z >= z)
     {
         glPopMatrix();
 
         glCullFace(GL_FRONT);
+    };
+
+    if(refract)
+    {
+        glFogf(GL_FOG_START, oldfogstart);
+        glFogf(GL_FOG_END, oldfogend);
+        glFogfv(GL_FOG_COLOR, oldfogcolor);
+        glClearColor(oldclearcolor[0], oldclearcolor[1], oldclearcolor[2], oldclearcolor[3]);
     };
     
     refracting = false;
