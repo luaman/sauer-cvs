@@ -246,36 +246,43 @@ void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
     xtraverts += 4;
 };
 
-void draw_envbox(int w)
+void draw_envbox(int w, int zclip)
 {
+    if(zclip > w) return;
+    else if(zclip < 0) zclip = w;
+    else zclip = -zclip;
+
     if(!sky[0]) fatal("no skybox");
+
+    float vclip = float(zclip + w) / float(2*w);
 
     glDepthMask(GL_FALSE);
 
-    draw_envbox_aux(1.0f, 1.0f, -w, -w,  w,
-                    0.0f, 1.0f,  w, -w,  w,
+    draw_envbox_aux(1.0f, vclip, -w, -w,  zclip,
+                    0.0f, vclip,  w, -w,  zclip,
                     0.0f, 0.0f,  w, -w, -w,
                     1.0f, 0.0f, -w, -w, -w, sky[0]->gl);
 
-    draw_envbox_aux(1.0f, 1.0f, +w,  w,  w,
-                    0.0f, 1.0f, -w,  w,  w,
+    draw_envbox_aux(1.0f, vclip, +w,  w,  zclip,
+                    0.0f, vclip, -w,  w,  zclip,
                     0.0f, 0.0f, -w,  w, -w,
                     1.0f, 0.0f, +w,  w, -w, sky[1]->gl);
 
     draw_envbox_aux(0.0f, 0.0f, -w, -w, -w,
                     1.0f, 0.0f, -w,  w, -w,
-                    1.0f, 1.0f, -w,  w,  w,
-                    0.0f, 1.0f, -w, -w,  w, sky[2]->gl);
+                    1.0f, vclip, -w,  w,  zclip,
+                    0.0f, vclip, -w, -w,  zclip, sky[2]->gl);
 
-    draw_envbox_aux(1.0f, 1.0f, +w, -w,  w,
-                    0.0f, 1.0f, +w,  w,  w,
+    draw_envbox_aux(1.0f, vclip, +w, -w,  zclip,
+                    0.0f, vclip, +w,  w,  zclip,
                     0.0f, 0.0f, +w,  w, -w,
                     1.0f, 0.0f, +w, -w, -w, sky[3]->gl);
 
-    draw_envbox_aux(0.0f, 1.0f, -w,  w,  w,
-                    0.0f, 0.0f, +w,  w,  w,
-                    1.0f, 0.0f, +w, -w,  w,
-                    1.0f, 1.0f, -w, -w,  w, sky[4]->gl);
+    if(w <= zclip)
+        draw_envbox_aux(0.0f, 1.0f, -w,  w,  w,
+                        0.0f, 0.0f, +w,  w,  w,
+                        1.0f, 0.0f, +w, -w,  w,
+                        1.0f, 1.0f, -w, -w,  w, sky[4]->gl);
 
     draw_envbox_aux(0.0f, 1.0f, +w,  w, -w,
                     0.0f, 0.0f, -w,  w, -w,

@@ -745,7 +745,7 @@ VAR(showsky, 0, 1, 1);
 
 extern int explicitsky, skyarea;
 
-void drawskybox(int farplane, bool limited, bool reflected = false)
+void drawskybox(int farplane, bool limited, int zclip = -1, bool reflected = false)
 {
     glDisable(GL_FOG);
 
@@ -769,7 +769,7 @@ void drawskybox(int farplane, bool limited, bool reflected = false)
     if(reflected) glScalef(1, 1, -1);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
-    draw_envbox(farplane/2);
+    draw_envbox(farplane/2, zclip);
     transplayer();
     if(limited) 
     {
@@ -1060,7 +1060,7 @@ void drawreflection(float z, bool refract)
     defaultshader->set();
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    if(!refract) drawskybox(farplane, false, camera1->o.z >= z);
+    if(!refract) drawskybox(farplane, false, int(z), camera1->o.z >= z);
 
     if(!refract && camera1->o.z >= z)
     {

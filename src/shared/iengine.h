@@ -105,7 +105,7 @@ extern void draw_text(const char *str, int left, int top, int r = 255, int g = 2
 extern void draw_textf(const char *fstr, int left, int top, ...);
 extern int text_width(const char *str, int limit = -1);
 extern int text_visible(const char *str, int max);
-extern void draw_envbox(int fogdist);
+extern void draw_envbox(int fogdist, int zclip = -1);
 
 // renderextras
 extern void dot(int x, int y, float z);
