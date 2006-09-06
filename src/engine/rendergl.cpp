@@ -71,6 +71,8 @@ void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
     };
 };
 
+VAR(shaderdetail, 0, 3, 3);
+
 void shader(int *type, char *name, char *vs, char *ps)
 {
     if(lookupshaderbyname(name)) return;
@@ -79,6 +81,7 @@ void shader(int *type, char *name, char *vs, char *ps)
     s.name = rname;
     s.type = *type;
     s.fastshader = NULL;
+    s.fastdetail = -1;
     loopv(curparams) s.defaultparams.add(curparams[i]);
     curparams.setsize(0);
     if(renderpath!=R_FIXEDFUNCTION)
@@ -96,18 +99,19 @@ void setshader(char *name)
     curparams.setsize(0);
 };
 
-void fastshader(char *nice, char *fast)
+void fastshader(char *nice, char *fast, int *detail)
 {
     Shader *ns = lookupshaderbyname(nice);
     if(!ns) conoutf("no such shader: %s", nice);
     Shader *fs = lookupshaderbyname(fast);
     if(!fs) conoutf("no such shader: %s", fast);
     ns->fastshader = fs;
+    ns->fastdetail = *detail;
 };
 
 COMMAND(shader, "isss");
 COMMAND(setshader, "s");
-COMMAND(fastshader, "ss");
+COMMAND(fastshader, "ssi");
 
 void setshaderparam(int type, int n, float x, float y, float z, float w)
 {

@@ -22,6 +22,8 @@ struct ShaderParam
 
 enum { SHADER_DEFAULT = 0, SHADER_NORMALSLMS };
 
+extern int shaderdetail;
+
 struct Shader
 {
     char *name;
@@ -29,12 +31,19 @@ struct Shader
     GLuint vs, ps;
     vector<ShaderParam> defaultparams;
     Shader *fastshader;
+    int fastdetail;
+
+    void bindprograms()
+    {
+        glBindProgram_(GL_VERTEX_PROGRAM_ARB,   vs);
+        glBindProgram_(GL_FRAGMENT_PROGRAM_ARB, ps);
+    };
 
     void set()
     {
         if(renderpath==R_FIXEDFUNCTION) return;
-        glBindProgram_(GL_VERTEX_PROGRAM_ARB,   vs);
-        glBindProgram_(GL_FRAGMENT_PROGRAM_ARB, ps);
+        if(fastshader && shaderdetail <= fastdetail) fastshader->bindprograms();
+        else bindprograms();
     };
 };
 

@@ -1637,8 +1637,6 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     glEndQuery_(GL_SAMPLES_PASSED_ARB);
 };
 
-VAR(shaderdetail, 0, 1, 1);
-
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
     setorigin(va, !cur.originmat);
@@ -1676,8 +1674,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         Slot &slot = lookuptexture(lod.eslist[i].texture);
         Texture *tex = slot.sts[0].t;
         Shader *s = slot.shader;
-
-        if(!shaderdetail && s->fastshader) s = s->fastshader;
 
         extern vector<GLuint> lmtexids;
         int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
