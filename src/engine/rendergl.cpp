@@ -989,6 +989,7 @@ void undoclipmatrix()
 
 VAR(reflectclip, 0, 1, 1);
 VAR(reflectmms, 0, 1, 1);
+VAR(refractfog, 10, 150, 10000);
 
 void drawreflection(float z, bool refract)
 {
@@ -1006,8 +1007,8 @@ void drawreflection(float z, bool refract)
         uchar wcol[3] = { 20, 80, 80 };
         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
 
-        glFogi(GL_FOG_START, 30);
-        glFogi(GL_FOG_END, 300);
+        glFogi(GL_FOG_START, 0);
+        glFogi(GL_FOG_END, refractfog);
         float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
         glFogfv(GL_FOG_COLOR, fogc);
         glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);

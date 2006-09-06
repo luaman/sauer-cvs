@@ -21,7 +21,7 @@ static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI
 struct Reflection
 {
     GLuint fb, refractfb;
-    GLuint tex, refractcolor, refractdepth;
+    GLuint tex, refracttex;
     int height, nextupdate, lastupdate, lastused;
     GLfloat tm[16];
     occludequery *query;
@@ -281,7 +281,6 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                 if(m.orient==O_TOP && renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, t) >= (uint)m.csize * 2)
                     renderwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, t);
             );
-            glBindTexture(GL_TEXTURE_2D, t->gl);
         }
         else 
         {
@@ -308,8 +307,6 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             {
                 glDisable(GL_BLEND);
                 glActiveTexture_(GL_TEXTURE3_ARB);
-                glEnable(GL_TEXTURE_2D);
-                glActiveTexture_(GL_TEXTURE4_ARB);
                 glEnable(GL_TEXTURE_2D);
                 glActiveTexture_(GL_TEXTURE0_ARB);
             };
@@ -343,9 +340,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         if(waterrefract)
                         {
                             glActiveTexture_(GL_TEXTURE3_ARB);
-                            glBindTexture(GL_TEXTURE_2D, ref->refractcolor);
-                            glActiveTexture_(GL_TEXTURE4_ARB);
-                            glBindTexture(GL_TEXTURE_2D, ref->refractdepth);
+                            glBindTexture(GL_TEXTURE_2D, ref->refracttex);
                             glActiveTexture_(GL_TEXTURE0_ARB);
                         };
 
@@ -358,17 +353,22 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 
             if(waterrefract)
             {
-                glActiveTexture_(GL_TEXTURE1_ARB);
+                glActiveTexture_(GL_TEXTURE3_ARB);
                 glDisable(GL_TEXTURE_2D);
-                glActiveTexture_(GL_TEXTURE2_ARB);
-                glDisable(GL_TEXTURE_2D);
-                glActiveTexture_(GL_TEXTURE0_ARB);
                 glEnable(GL_BLEND);
             };    
+
+            loopi(2)
+            {
+                glActiveTexture_(GL_TEXTURE1_ARB+i);
+                glDisable(GL_TEXTURE_2D);
+            };
+            glActiveTexture(GL_TEXTURE0_ARB);
+
+            glBindTexture(GL_TEXTURE_2D, t->gl);
+            defaultshader->set();
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         };
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glBindTexture(GL_TEXTURE_2D, t->gl);
-        defaultshader->set();
         matloop(MAT_WATER,
             if(m.orient!=O_TOP) renderwaterfall(m, t, 0.1f);
         );
@@ -631,10 +631,8 @@ void cleanreflections()
         {
             glDeleteFramebuffers_(1, &ref.refractfb);
             ref.refractfb = 0;
-            glDeleteTextures(1, &ref.refractcolor);
-            ref.refractcolor = 0;
-            glDeleteTextures(1, &ref.refractdepth);
-            ref.refractdepth = 0;
+            glDeleteTextures(1, &ref.refracttex);
+            ref.refracttex = 0;
         };
     };
     if(reflectiondb)
@@ -696,16 +694,14 @@ void addreflection(materialsurface &m)
     if(waterrefract && !ref->refractfb)
     {
         glGenFramebuffers_(1, &ref->refractfb);
-        glGenTextures(1, &ref->refractcolor);
-        glGenTextures(1, &ref->refractdepth);
+        glGenTextures(1, &ref->refracttex);
         int size = 1<<reflectsize;
-        char *pixels = new char[size*size*4];
-        createtexture(ref->refractcolor, size, size, pixels, true, false);
-        createtexture(ref->refractdepth, size, size, pixels, true, false, GL_DEPTH_COMPONENT);
+        char *pixels = new char[size*size*3];
+        createtexture(ref->refracttex, size, size, pixels, true, false);
         delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->refractfb);
-        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->refractcolor, 0);
-        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, ref->refractdepth, 0);
+        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->refracttex, 0);
+        glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
             
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     };
