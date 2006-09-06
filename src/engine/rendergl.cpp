@@ -729,9 +729,8 @@ VARP(sparklyfix, 0, 1, 1);
 VAR(showsky, 0, 1, 1);
 
 extern int explicitsky, skyarea;
-extern bool reflecting;
 
-void drawskybox(int farplane, bool limited)
+void drawskybox(int farplane, bool limited, bool reflected = false)
 {
     glDisable(GL_FOG);
 
@@ -752,7 +751,7 @@ void drawskybox(int farplane, bool limited)
     glRotated(player->pitch, -1.0, 0.0, 0.0);
     glRotated(player->yaw,   0.0, 1.0, 0.0);
     glRotated(90.0, 1.0, 0.0, 0.0);
-    if(reflecting) glScalef(1, 1, -1);
+    if(reflected) glScalef(1, 1, -1);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
     draw_envbox(farplane/2);
@@ -907,9 +906,9 @@ void renderfullscreenshader(int w, int h)
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
-bool reflecting = false;
+extern bool reflecting, refracting;
 physent *camera1 = NULL;
-bool isthirdperson() { return player!=camera1 || reflecting; };
+bool isthirdperson() { return player!=camera1 || (reflecting && !refracting); };
 
 void recomputecamera()
 {
@@ -979,6 +978,7 @@ VAR(reflectmms, 0, 1, 1);
 void drawreflection(float z, bool refract)
 {
     reflecting = true;
+    if(refract) refracting = true;
 
     glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -1007,6 +1007,12 @@ void drawreflection(float z, bool refract)
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
+    if(reflectclip)
+    {
+        undoclipmatrix();
+        setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
+    };
+
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
@@ -1020,8 +1026,7 @@ void drawreflection(float z, bool refract)
     defaultshader->set();
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    if(!refract && camera1->o.z < z) reflecting = false;
-    drawskybox(farplane, false);
+    drawskybox(farplane, false, !refract && camera1->o.z >= z);
 
     if(!refract && camera1->o.z >= z)
     {
@@ -1030,6 +1035,7 @@ void drawreflection(float z, bool refract)
         glCullFace(GL_FRONT);
     };
     
+    refracting = false;
     reflecting = false;
 };
 

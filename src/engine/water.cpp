@@ -341,7 +341,6 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
-
                         setprojtexmatrix(ref);
                         glBindTexture(GL_TEXTURE_2D, ref->tex);
                         if(waterdetail==3)
@@ -804,9 +803,12 @@ void queryreflections()
 
 VAR(maxreflect, 2, 4, 10);
 
+bool reflecting = false, refracting = false;
+
 void drawreflections()
 {
     int refs = 0, watermillis = 1000/reflectfps;
+    float offset = -1.1f;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
@@ -821,7 +823,7 @@ void drawreflections()
         loopvj(ref.matsurfs)
         {
            materialsurface &m = *ref.matsurfs[j];
-           entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z), vec(0, 0, 1));
+           entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z+offset), vec(0, 0, 1));
            if(!light) continue;
            if(!ref.light || !light->attr1 || (ref.light->attr1 && light->attr1 > ref.light->attr1)) ref.light = light;
         };
@@ -830,12 +832,12 @@ void drawreflections()
         ref.lastupdate = lastmillis;
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-        drawreflection(ref.height, false);
+        drawreflection(ref.height+offset, false);
 
         if(waterdetail==3 && ref.refractfb)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
-            drawreflection(ref.height, true);
+            drawreflection(ref.height+offset, true);
         };    
     };
     
