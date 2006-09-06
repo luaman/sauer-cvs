@@ -1637,7 +1637,7 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     glEndQuery_(GL_SAMPLES_PASSED_ARB);
 };
 
-VAR(bumpdetail, 0, 1, 1);
+VAR(shaderdetail, 0, 1, 1);
 
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
@@ -1677,12 +1677,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         Texture *tex = slot.sts[0].t;
         Shader *s = slot.shader;
 
-        if(!bumpdetail && s->type==SHADER_NORMALSLMS)
-        {
-            static Shader *bumpfastshader = NULL;
-            if(!bumpfastshader) bumpfastshader = lookupshaderbyname("bumpnospecworld");
-            s = bumpfastshader;
-        };
+        if(!shaderdetail && s->fastshader) s = s->fastshader;
 
         extern vector<GLuint> lmtexids;
         int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];

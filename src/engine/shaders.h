@@ -28,6 +28,7 @@ struct Shader
     int type;
     GLuint vs, ps;
     vector<ShaderParam> defaultparams;
+    Shader *fastshader;
 
     void set()
     {
