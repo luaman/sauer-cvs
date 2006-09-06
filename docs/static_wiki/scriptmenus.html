@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <title>cube &raquo; scriptmenus</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h2 id="toc0">Menu configuration and personalization</h2>
+For example the menu structure is compeletly organized in data/menus.cfg,<br />
+so - providing a backup of a working copy - you can edit it to fit your needs.<br />
+If you think that is too much of a hassle, then there are several menu translations and ScriptPAKs that further modify your menu on <a class="wiki_link_ext" href="http://www.quadropolis.us" rel="nofollow">quadropolis</a>.<br />
+<br />
+<hr />
+<br />
+The respective commands for menu construction are:<br />
+<br />
+
+<pre><code>newmenu N</code></pre>
+
+Creates a new menu with name N. All following menuitem commands will apply to this menu<br />
+<br />
+
+<pre><code>menuitem N A
+menuitem A</code></pre>
+
+Creates a new menuitem with description N and action A. if you only specify 1, then it will be used for both the description and the action. See data/menus.cfg for examples. If N starts with the special character &quot;^&quot;, then the name will be evaluated as a command when being displayed, and the the variable &quot;s&quot; used as name. This allows you to create menu items that depend on changing gamestate.<br />
+<br />
+
+<pre><code>showmenu N</code></pre>
+
+Displays the menu with name N previously defined, and allows the user to pick an item with the cursor keys. Upon pressing return, the associated action will be executed. pressing ESC will cancel the menu.<br />
+<br />
+<hr />
+<br />
+To show you how easy things can be done : some examples<br />
+<br />
+
+<ul>
+    <li>sure you can switch your team by menu,</li>
+</ul>
+
+  but what about more options? What about switching between complete identities?<br />
+  <a class="wiki_link" href="scriptdemo_personamenu.html">a persona switcher via menu</a><br />
+<br />
+
+<ul>
+    <li>An even less elaborate example,</li>
+</ul>
+
+  If you're annoyed at &quot;e&quot; toggling editmode just about every time you get hectic during a game ...<br />
+  ... then try out something like this :<br />
+  <a class="wiki_link" href="scriptdemo_keyboardswitch.html">keyboard layout switcher</a>
+    </div>
+  </body>
+</html>

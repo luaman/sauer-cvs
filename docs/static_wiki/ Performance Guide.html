@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <title>cube &raquo;  Performance Guide</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+Things you can change that either affect your performance or your visual quality, in order of importance:<br />
+<br />
+
+<ol>
+    <li>Your resolution has the largest effect on performance. Change it in the .bat or .sh file in the main folder (the -w and -h options, try 640 480 for example). If you get bad FPS, taking this down will have immediate effects.</li>
+    <li>Shaders: unless you have the latest and greatest card, shaders will hurt your fps. Turn them off by adding the flag -f0 to your commandline. Note that if your card doesn't support them, they will be turned off automatically already</li>
+    <li>Antialiasing: -a4 will look fantastic, especially at the lower resolutions, but for max performance should be left at the default -a0</li>
+    <li>Full screen shaders: do not turn full screen shaders like bloom on (in the menu) unless you have one of the latest cards.</li>
+    <li>Turn off vertical sync (in the driver options) for slightly less hickup in FPS (at the cost of potential visual tearing)</li>
+    <li>Colour Depth: Changing to -b16 (16 bits per pixel) can give you quite a performance boost on older hardware. If you use -b16 , be sure to use -z24 too. (24bit depth buffer won´t hurt your performance, but setting it to 16 will lead to bad visuals, flickering lines and sparks mostly.) Most graphics card automatically change to 16bit depth buffering when using 16-bit colour depth, so make sure you use -z24 to prevent this.</li>
+</ol>
+
+
+    </div>
+  </body>
+</html>

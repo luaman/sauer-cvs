@@ -1,0 +1,131 @@
+<html>
+  <head>
+    <title>cube &raquo; Beginners Guide</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+On this page you will get information about your first steps into the project.<br />
+<br />
+
+<ol>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#prepreq">preparations &amp; requirements</a> : GFX, O/S, WiP status</li>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#download">download walk-through</a> : even if unused to sourceforge.net</li>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#unpacking">unpacking</a> (where to)</li>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#autoexec">basic configuration</a> : autoexec.cfg</li>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#firstrun">first run</a></li>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#introSP">a look at SP</a></li>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#introMP">a look at MP</a></li>
+    <li><a class="wiki_link" href="Beginners%20Guide.html#introRPG">a look at RPG</a></li>
+</ol>
+
+<br />
+<br />
+<h2 id="toc0"><a name="prepreq"></a>preparations/requirements</h2>
+When you decide to try out Sauerbraten you should be aware of your operating system, your current graphics chipset (manufacturer and card name) and that this project is still &quot;Work in Progress&quot;!<br />
+<br />
+Due to <strong>platform dependencies</strong> some stuff works differently depending on your O/S (operating system).<br />
+For example on linux users can dynamically change their screen resolution, on Win32 this isn't possible.<br />
+<br />
+If you are running linux you should be sure that you have set up your system sufficiently to play,<br />
+running &quot;glxgears -info&quot; can help and having other OpenGL and/or SDL based applications already working is a solid basis to encourage you to proceed here.<br />
+<br />
+Be prepared that some <strong>graphics cards</strong> have problems running with the default configuration.<br />
+You should then try to use all toggles to reduce rendering complexity and work yourself up.<br />
+Some example combinations:<br />
+
+<ul>
+    <li>[max. compatibility] : -w640 -h480 -b8 -z8 -a0 -f</li>
+    <li>[nVidia bpp/z-buffer] : -w1024 -h768 -b16 -z24 -a1 -f1</li>
+    <li>[full fledged] : -f3 -a4 -b24 -z24 -w1600 -h1200</li>
+</ul>
+
+<br />
+First try running the game out-of-the-box,<br />
+but in the long run you will want to optimize your setup to your hardware and personal preferences.<br />
+There is a <a class="wiki_link" href="%20Performance%20Guide.html">plethora of settings</a> for you to do this.<br />
+<br />
+<h2 id="toc1"><a name="download"></a>download walk-through</h2>
+Click on the <a class="wiki_link_ext" href="https://sourceforge.net/project/showfiles.php?group_id=102911" rel="nofollow">appropriate download link</a> and select your mirror to download the installation file.<br />
+Currently official clients exist for Win32, *Nix and OS X.<br />
+Pick a local mirror.<br />
+<br />
+<h2 id="toc2"><a name="unpacking"></a>unpacking</h2>
+
+<ul>
+    <li>There is an installer wrapper for <strong>Win32</strong>, execute and follow the well known set of dialogs.</li>
+    <li>On <strong>*Nix</strong> untar to your favourite location (say /usr/local/sauerbraten), chmod the binaries +x if required.</li>
+    <li><strong>Mac OS</strong> : <u>TODO</u> but should be pretty straight forward</li>
+</ul>
+
+<br />
+<h2 id="toc3"><a name="autoexec"></a>basic configuration</h2>
+Manage your configuration via the &quot;<strong>autoexec.cfg</strong>&quot;.<br />
+If the file does not exist in your base installation folder then create it.<br />
+Two lines are a bare minimum:<br />
+
+<pre><code>name &quot;GameName&quot;
+team &quot;Team&quot;</code></pre>
+
+<br />
+name is capped off at 15 characters, team at 4.<br />
+<br />
+The autoexec.cfg is executed once upon start of the engine.<br />
+Then the engine looks for <strong>config.cfg</strong> and either executes this, if found, or recreates one from data/defaults.cfg.<br />
+This is important to know in case of the game suddenly being stubborn about something. The symptom usually is something like a keybinding (that used to work) no longer being functional - in such cases : <em>quit the game, remove config.cfg (rename/delete) and restart the engine.</em><br />
+<br />
+For a more complex setup you might like to try the <a class="wiki_link_ext" href="http://quadropolis.us/node/263" rel="nofollow">meATpAk [0.6x</a>], which gives you more elaborate menus, a keyboard layout switcher and loads of scripts to use as gamer, mapper or scripter.<br />
+<br />
+<h2 id="toc4"><a name="firstrun"></a>first run</h2>
+
+<ul>
+    <li>Win32 : run the sauerbraten.bat</li>
+    <li>*Nix : run the ./sauerbraten_unix script from the base installation folder</li>
+    <li>OS X : TODO</li>
+</ul>
+
+There are some external docs till this wiki contains those infos too :<br />
+<a class="wiki_link_ext" href="http://members.iinet.net.au/%7Epassarello/newbieguide.html" rel="nofollow">Passa's (Win32) NewbieGuide</a><br />
+and<br />
+<a class="wiki_link_ext" href="http://www.quadropolis.us/node/249" rel="nofollow">MeatROme's &quot;Getting Started&quot; Guide</a><br />
+<br />
+<a name="introSP"></a><br />
+<h2 id="toc5">a look at SP</h2>
+The SinglePlayer (SP) modes of Sauerbraten enable you to play offline against a range of monsters.<br />
+Start your SP game via the menu or set your mode and an appropriate map by hand.<br />
+Beware that the so-called <tt>Episode 1</tt> does not currently contain monsters. It is still WiP!<br />
+The single maps for basic SP (<tt>mode -2</tt>) <em>do have</em> monsters, though;<br />
+and you can play (almost) any map in DMSP mode against a horde of monsters matching your <tt>skill</tt> level.<br />
+<br />
+In the basic SP mode (<tt>mode -2</tt>) which works more or less like in every other FPS - <br />
+you can pick up items only once and monsters stay killed;<br />
+progress is controlled with respawn-points. <br />
+Touching a respawn-point will set your next spawn to that location.<br />
+If you get fragged by the monsters you will respawn inside the map, <br />
+having lost all armour and some ammo, ...<br />
+...but at least your previous incarnation has cleared the way a little.<br />
+Your score is calculated as seconds you took to complete the map. <br />
+Deaths, monsters left, accuracy, and a basic modifier for skill setting all get taken into account.<br />
+<br />
+The SP DeathMatch mode (DMSP) will work on any map - but some just won't cut it - <br />
+and will pit you against a number of monsters (10x skill) spawning at random points. <br />
+If you die in this mode the ordeal repeats - either you beat the horde or you don't - it's a DeathMatch!<br />
+<br />
+<h2 id="toc6"><a name="introMP"></a>a look at MP</h2>
+The integrated server browser is available via the multiplayer menu, be sure to regularly update from master server.<br />
+The list is sorted by ping for your convenience.<br />
+A &quot;<strong>P</strong>&quot; next to the number of players indicates a <strong>private server</strong> and &quot;<strong>L</strong>&quot; stands for <strong>locked server</strong>. (see mastermodes [<u>TODO</u>:link])<br />
+<br />
+<h2 id="toc7"><a name="introRPG"></a>a look at RPG</h2>
+This is still <em>very much</em> WiP!<br />
+You can have a look at what's cooking by running with a -grpg parameter included.<br />
+So far only some NPC models are visible and the action menu is visible and ready for use,<br />
+only the actions simply output their name and don't really do anything yet. Stay tuned for further progress ...<br />
+<br />
+<hr />
+<br />
+And more stuff would go here.
+    </div>
+  </body>
+</html>

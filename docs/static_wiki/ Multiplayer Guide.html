@@ -1,0 +1,122 @@
+<html>
+  <head>
+    <title>cube &raquo;  Multiplayer Guide</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h2 id="toc0">Online Games</h2>
+
+<ol>
+    <li><a class="wiki_link" href="%20Multiplayer%20Guide.html#client">client</a> :Multiplayer games connect your local client to a server.</li>
+    <li><a class="wiki_link" href="%20Multiplayer%20Guide.html#server">server</a> :You can even (try to) host a server yourself.</li>
+    <li><a class="wiki_link" href="%20Multiplayer%20Guide.html#LAN">LAN</a> :special behaviour in your local network.</li>
+</ol>
+
+<br />
+<a name="client"></a><br />
+<h2 id="toc1">Multiplayer Introduction</h2>
+Before you start to play on the interwebs you should have taken some time to setup your game.<br />
+Apart from having an appropriate graphics setup for maximum fps to keep the game fluid while online (see <a class="wiki_link" href="%20Performance%20Guide.html">Performace Guide</a>) you should have <u><em>changed your name and team</em></u> in your <strong><a class="wiki_link" href="Beginners%20Guide.html#autoexec">autoexec</a>.cfg</strong>.<br />
+When running the game you can go to the multiplayer menu, get an <strong>update from the master server</strong> and will then see the currently running games available to join to.<br />
+The <strong>server browser</strong> displays enough basic information about a respective game to help you choose the right server for yourself.<br />
+Take note of indicators for <strong>private</strong> and <strong>locked</strong> mastermodes (&quot;<strong>P</strong>&quot; or &quot;<strong>L</strong>&quot; next to number of players).<br />
+<br />
+The game runs in a range of different modes.<br />
+Internally the are mapped to the indexes [-2 .. 0 .. 12], with the &lt;0 modes being the SP modes.<br />
+The current modes are :<br />
+
+<ul>
+    <li>0 : ffa/default</li>
+    <li>1 : coopedit</li>
+    <li>2 : ffa/duel</li>
+    <li>3 : teamplay</li>
+    <li>4 : instagib</li>
+    <li>5 : instagib team</li>
+    <li>6 : efficiency</li>
+    <li>7 : efficiency team</li>
+    <li>8 : insta arena</li>
+    <li>9 : insta clan arena</li>
+    <li>10 : tactics arena</li>
+    <li>11 : tactics clan arena</li>
+    <li>12 : capture</li>
+</ul>
+
+<br />
+Do not worry, there a some nice aliases defined to keep you from remembering these numbers off by heart.<br />
+There are far more modes available than in most FPS games, so there should be a type of game for any player preference.<br />
+<br />
+When playing online you can change the current mode and current map being played by voting for a new game.<br />
+This is done either via the menu or by simply typing the command to the console (which is easier to show here).<br />
+
+<pre><code>/insta curvedm</code></pre>
+
+or in full :<br />
+
+<pre><code>/mode 4; map curvedm</code></pre>
+
+will vote for an instagib match on the map &quot;Curves That Kill&quot;.<br />
+Votes are passed either by &gt;50% agreement from all players or by the master forcing the vote (see mastermodes [<u>TODO</u>:link]<br />
+<br />
+If you are voting for a team mode it is strongly suggested to take care of an appropriate team setup (balanced?) before passing the vote!<br />
+In team mode your mates are teinted green - so only shoot the Ogro's that look the same as ever!<br />
+<br />
+The modes all have their own little special flavour so you have, in theory, 15 different games instead of just one ;)<br />
+With exception of the Capture mode you can play any mode on any of the maps available, although some may be better suited to one mode more than another.<br />
+In the <strong>FFA</strong> modes everything is &quot;as usual&quot; with items spawning and respawning and players just fragging away. Actually ffa/default and ffa/duel aren't really any different modes.<br />
+<strong>Instagib</strong> is your classic 1-shot-1-kill type of game, no items spawn in this mode - it's just movement and aiming that can keep you alive longer than your enemy. Players respawn when being killed. Your only weapons are a rifle with 100 shots, and your fist - which does for quick frags when up close to your enemy, since it's &quot;rate of fire&quot; is more rapid.<br />
+In the <strong>efficiency</strong> modes you spawn with a random subset of ammunition, thus giving you a temporary assignment (especially in team mode) or simply forcing a certain tactical approach on you. Players respawn when being killed.<br />
+The <strong>arena</strong> modes differ from their respective basic modes (tactics is based on efficiency) by players not respawning directly after being fragged.<br />
+Rather each round will only end when a <em>last-man-standing</em> has beaten all other players, then a new round starts.<br />
+Currently you are completely motionless when fragged and waiting for a new round to start.<br />
+Finally the <strong>capture</strong> mode has a completely different approach: for starters, frags are not counted at all.<br />
+The goal is to keep certain bases under your control for as long as possible, this grants points per team.<br />
+When you die you will stay in limbo for 10 seconds before attempting to spawn next to one of your teams bases.<br />
+You have lost if you have no bases captured at this point or when your opposing team manages to hold all bases at any one moment in time.<br />
+<br />
+<a name="server"></a><br />
+<h2 id="toc2">Hosting a Server</h2>
+<br />
+<h3 id="toc3">Setup</h3>
+If you want to host your own server you should be sure to have setup your network accordingly.<br />
+To enable access from a WAN (read internet) your routing needs to forward the games ports (see below);<br />
+for LAN gaming see the following paragraph.<br />
+<br />
+<h3 id="toc4">Player VS. Speed</h3>
+A home DSL connection upstream is rumoured to be sufficient to host a 4-player-server, this is currently standard for a server without stating another number in the passed parameters.<br />
+<br />
+<a name="server-config"></a><br />
+<h3 id="toc5">Configuration</h3>
+For a complete list of parameters always check the documentation (doc/config.html Section:&quot;command line options&quot;).<br />
+If you are unsure as how to setup your network &amp; firewall correctly here are some useful hints.<br />
+We can't explain every little detail about this complex subject and encourage you to use the rest of the interwebs for additional help!<br />
+Take note of possibility to set a master-password, <br />
+which will give you master even though somebody else already is master. Because you know the servers password. Use comand line param <tt>-p$$$</tt> for this - with <strong>$$$</strong> your password - this is never sent to other clients.<br />
+<br />
+<a name="private-server"></a><br />
+<h3 id="toc6">PUBLIC or PRIVATE</h3>
+If you do not want your server to be listed on the masterserver's list - which everybody gets when updating their list -<br />
+then simply point it to a non-working masterserver, most common would be <tt>-mlocalhost</tt>.<br />
+<br />
+<a name="masterserver-ping"></a><br />
+<h3 id="toc7">Router &amp; Ping Responce</h3>
+On the forum a lot of router issues were resolved by pointing to portforward.com,<br />
+sadly a number of ISPs seem to hand out routers that are incapable of forwarding ports - if you have been given such a device you will, sadly, not be able to host a server.<br />
+The ports you need to forward (or DNAT) to your local box (running the server) are<br />
+<strong>28785</strong> and <strong>28786</strong>. Only UDP is sufficient.<br />
+TCP is only used for outgoing connections via port 80 for the masterserver update of the client.<br />
+If you get a message like &quot;<em>server did not respond to ping</em>&quot; your ports aren't being forwarded correctly yet.<br />
+<br />
+<a name="LAN"></a><br />
+<h2 id="toc8">Playing over LAN</h2>
+On your LAN the limit of players will probably depend on processing power of the hosting server.<br />
+The clients can use<br />
+
+<pre><code>/lanconnect</code></pre>
+
+to connect to this server easily; to easily manage this with large number of players you might take some time to keybind and/or integrate this into the menu for all players.<br />
+Look at scripting/menu modification documentation (as soon as it's written) for help on this.
+    </div>
+  </body>
+</html>

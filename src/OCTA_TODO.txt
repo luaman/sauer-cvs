@@ -25,9 +25,10 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
-- def:
-  * death needs to be more obvious (better sound/centerprint) more gibs/blood
-- change SF status from alpha
+- before release: update static wiki
+
+- death needs to be more obvious (better sound/centerprint) 
+- debris particles (makke?)
 - white lines in decal shader??
 - add gregors new textures
 - screenshots etc? new features in docs
@@ -45,10 +46,7 @@ aard/everyone:
 - one vwep per model?
 - 2 levels of lightlod for huge maps
 - fillrate optimisation: automatically cut down surfaces to their visible size?
-- add wiki as static version to the distribution
 - surface merging?
-- add makke's new items
-- reduce spec 8 => 6
 - rockets thru walls? collision step?
 - shallow water splashing sound?
 - water in more maps (metl4?)

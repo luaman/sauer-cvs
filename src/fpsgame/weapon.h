@@ -190,7 +190,7 @@ struct weaponstate
             to.add(p);
             vec from = p;
             from.y -= 16;
-            newbouncer(from, to, true, d, BNC_GIBS, rnd(500)+1500, rnd(50)+50);
+            newbouncer(from, to, true, d, BNC_GIBS, rnd(1000)+2000, rnd(50)+50);
         };
     };
 
@@ -517,7 +517,7 @@ struct weaponstate
             };
             pitch = -bnc.roll;
             const char *mdl = "projectiles/grenade";
-            if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x10 ? "gibc" : "gibh";
+            if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x40 ? "gibc" : "gibh";
             rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)

@@ -1,0 +1,194 @@
+<html>
+  <head>
+    <title>cube &raquo; Editing Methods</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0">Editing Methods</h1>
+
+<ul>
+    <li><a class="wiki_link" href="Editing%20Methods.html#intro">Introduction</a></li>
+</ul>
+
+
+<ol>
+    <li><a class="wiki_link" href="Editing%20Methods.html#i-basics">basics</a></li>
+    <li><a class="wiki_link" href="Editing%20Methods.html#i-geom">geometry</a></li>
+    <li><a class="wiki_link" href="Editing%20Methods.html#i-ents">entities</a></li>
+</ol>
+
+
+<ul>
+    <li><a class="wiki_link" href="Editing%20Methods.html#walkthru">Walk Through 101</a></li>
+</ul>
+
+<br />
+<a name="intro"></a><br />
+<h2 id="toc1">Introduction</h2>
+<br />
+<br />
+<a name="i-basics"></a><br />
+<h3 id="toc2">basics</h3>
+To get started with Sauerbraten editing, you will first need to be<br />
+aquainted with the key mappings. The easiest thing to do here, is<br />
+simply print out this file found in<br />
+<strong><em>\Sauerbraten\data\defaults.cfg</em></strong>. Aside from any autoexec.cfg<br />
+edits you use, this file contains everything you'll need to get editing fast.<br />
+<br />
+These pages will assume you are running a default keymapping if telling you about a key binding,<br />
+take a look at the <a class="wiki_link" href="Scripting.html">scripting section</a> if you want to adapt your bindings.<br />
+<br />
+Using a wheel-mouse is highly recommended and the default bindings assume one is used!<br />
+<br />
+<a name="i-geom"></a><br />
+<h3 id="toc3">geometry</h3>
+<br />
+
+<ul>
+    <li>mousewheel bindings</li>
+</ul>
+
+
+<ol>
+    <li><tt>MW + Y</tt> : select texture for face</li>
+    <li><tt>MW + F</tt> : push current face into cube</li>
+    <li><tt>MW + Q</tt> : push current corner into cube</li>
+    <li><tt>MW + R</tt> : rotate cube <em>(along current faces normal)</em></li>
+</ol>
+
+
+<ul>
+    <li>single keypress bindings :</li>
+</ul>
+
+
+<ol>
+    <li><tt>C</tt>, <tt>V</tt> : copy / paste <em>(use +/- X gridsize for scaling)</em></li>
+    <li><tt>X</tt> : mirror cube <em>(along current faces plane)</em></li>
+    <li><tt>BACKSPACE</tt> : delete entity</li>
+</ol>
+
+<br />
+<a name="i-ents"></a><br />
+<h3 id="toc4">entities</h3>
+create entities via menu or by manually calling <tt>newent NAME [arg1 [arg2 [arg3 [arg4]]]]</tt><br />
+drag entities by their sparkly along plane closest to current FOV.<br />
+modify a certain property of your selected (or closest) ent via <tt>MW + 4</tt> and select the appropriate property (0..3) via <tt>MW + 3</tt> <em>(2006-07-22 requires <a class="wiki_link_ext" href="http://www.quadropolis.us/node/300" rel="nofollow">this patch</a></em><br />
+<br />
+<a name="walkthru"></a><br />
+<h2 id="toc5">Walk Through 101</h2>
+
+<ul>
+    <li>Abbreviations : <tt>MW - MouseWheel</tt></li>
+    <li>Conventions : <tt>'X' - key X</tt></li>
+    <li>Dimensions : <tt><em>Width</em> x <em>Depth</em> x <em>Height</em></tt> ...are, of course, always relative to your current viewport, unless explicitly noted otherwise!</li>
+</ul>
+
+<br />
+<br />
+<br />
+run sauerbraten<br />
+open console (either press 'BACKQUOTE' or first 'T' and then '/')<br />
+
+<pre><code>gamma 150</code></pre>
+
+then <tt>edittoggle</tt> (or press 'E')<br />
+now enter<br />
+
+<pre><code>newmap</code></pre>
+
+FYI : the resulting &quot;map&quot; is an octree half-filled.<br />
+<br />
+From here on you will start to build your own map layout.<br />
+<br />
+Turn your camera view downwards<br />
+scale up grid by 2 : <tt>G+MW</tt><br />
+delete a cube downwards by simply scrolling away from you<br />
+and delete another one next to that<br />
+fly into the hole and <tt>edittoggle</tt> (or 'E')<br />
+run around - get a feel for the size<br />
+<tt>edittoggle</tt> (or 'E')<br />
+fly out of the hole<br />
+lengthen the corridor by 2 cubes,<br />
+Your corridor should have dimensions of 1x4x1,<br />
+with orientation depending on your position and selection of first cube, etc.<br />
+<br />
+turn it into a square of corridors<br />
+
+<pre><code>a top-down view of your square,
+with x as deleted cubes
+ xxxx
+ x  x
+ x  x
+ xxxx</code></pre>
+
+select this top-down square of cubes into a 6x6 selection of the top<br />
+adapt the texture : <tt>Y+MW</tt> - brick<br />
+select from outermost back face of corridor ...<br />
+...to off-center side of square : 1x5x4<br />
+<tt>Y+MW</tt> - brick<br />
+and repeat for all 4 wall orientations.<br />
+<img src="files/wt101i_1x4x5.jpg" alt="wt101i_1x4x5.jpg" /><br />
+fly into square<br />
+scale down grid by 2 : <tt>G+MW</tt><br />
+HxWxD:3x2x5 cubes from center of any inner wall<br />
+turn corner (left or right)<br />
+repeat 3x2x5 inwards<br />
+
+<pre><code>savemap wt101
+map wt101</code></pre>
+
+orientation will be same as when changing the map,<br />
+but spawn will replace you at the coordinates (0,0,0)<br />
+where exactly this is in relation to the square of corridors<br />
+...let's call it : an atrium<br />
+depends very much on your personal execution of this walk-through!<br />
+<br />
+You can select a specific starting point by placing your first entity.<br />
+What every map should have at least on of.<br />
+A <tt>playerstart</tt><br />
+
+<pre><code>newent playerstart</code></pre>
+
+(or use editing menu)<br />
+orientation taken from your LOS as the editing camera position at creation time<br />
+[LOS:line-of-sight]<br />
+
+<pre><code>entproperty N D</code></pre>
+
+with N the property index (0..3) and D the delta (..-2,-1,0,+1,+2..)<br />
+
+<pre><code>savecurrentmap
+map wt101
+map wt101
+map wt101</code></pre>
+
+<br />
+... and now be warned :<br />
+
+<ul>
+    <li>mapping can burn a lot of your time.</li>
+    <li>keep backups</li>
+    <li>and adhere to playability standards</li>
+</ul>
+
+<br />
+when you've done tinkering around and<br />
+getting to grips with your tools;<br />
+tried to build some stuff -<br />
+just to really get a feel for resulting scale,<br />
+after endless hours refining just one corner of your layout -<br />
+you might want to read something like this <a class="wiki_link_ext" href="http://www.cliffyb.com/art-sci-ld.html" rel="nofollow">article on mapping</a>, to <u>get the most</u> <strong><u>out of your work</u> into</strong> <em>something being a great map</em>.<br />
+Also don't hesitate to really closely examine how architectural stuff and visual impressions are done by others.<br />
+Use 'E' on any part of a map you like to find out &quot;<em>how they did it</em>&quot;.<br />
+Just don't save over the originals!<br />
+<br />
+You will most surely want to use a lot of <tt>gamespeed 10</tt> up to <tt>gamesspeed 1000</tt><br />
+to sharpen or slur your movement precision -<br />
+depending on wether you need to zoom across your RPG map toward some distant location<br />
+or are fine tuning minmal gridsize stuff.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>cube &raquo; scripting</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0">Introduction</h1>
+Your local documentation (README.html ff.) holds all the commands you can use,<br />
+use it as reference for your current release.<br />
+<br />
+With scripting you can achieve a lot more personalized Sauerbraten experience;<br />
+in most cases some simple copy-and-paste will do the trick.<br />
+But this guide aims at showing some easy techniques to empower gamers and mappers alike.<br />
+<br />
+Any files you find in your game directory (and subdirs) ending in &quot;.cfg&quot; should contain CubeScript.<br />
+Check them out to see what the engine already does via scripting ... and how!<br />
+<br />
+To automatically run scripting on engine start you need only place them in a file called *autoexec.cfg* in your base game directory.<br />
+If anything /funny/ happens - like key bindings not working anymore - you should be prepared to move (or even delete) your *config.cfg* (also in the base game directory). This file is also executed upon engine start and is useful to keep values from one run to the next, but this may result in bogus data being saved and so can require the mentioned removal to return to a clean setup.<br />
+It will be written at every clean exit and if it doesn't exist will contain whatever is in *./data/defaults.cfg* - so never modify _that_ file!<br />
+<br />
+Without being a programmer you might find a lot of this stuff too complicated for your taste,<br />
+but do not despair! There are some examples on these pages to help you achieve a lot of goals and there are also quite a few scripts ready for download on <a class="wiki_link_ext" href="http://www.quadropolis.us" rel="nofollow">quadropolis</a>.<br />
+<br />
+But if you really want to get the most out of the engine it is suggested that you at least getting familiar with some basics of the scripting capabilities!<br />
+Try reading this <a class="wiki_link" href="scripting101.html">scripting primer</a> to see what fundamental know-how this is and how easy it is.<br />
+<br />
+<h2 id="toc1">Syntax</h2>
+The basic command structures of CubeScript are explained on the <a class="wiki_link" href="scriptsyntax.html">syntax</a> page<br />
+<br />
+<h2 id="toc2">Map Configuration</h2>
+Scripting for maps is explained on the <a class="wiki_link" href="mapcfg.html">Map Configuration page</a>.<br />
+<br />
+<h2 id="toc3">Menu Personalization</h2>
+Scripting for menus is explained on the <a class="wiki_link" href="scriptmenus.html">menu personalization page</a>.
+    </div>
+  </body>
+</html>
