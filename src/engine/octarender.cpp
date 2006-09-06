@@ -1637,6 +1637,9 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     glEndQuery_(GL_SAMPLES_PASSED_ARB);
 };
 
+extern bool reflecting;
+VAR(reflectdetail, 0, 1, 1);
+
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
     setorigin(va, !cur.originmat);
@@ -1674,6 +1677,13 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         Slot &slot = lookuptexture(lod.eslist[i].texture);
         Texture *tex = slot.sts[0].t;
         Shader *s = slot.shader;
+
+        if(reflecting && !reflectdetail && s->type==SHADER_NORMALSLMS)
+        {
+            static Shader *bumpfastshader = NULL;
+            if(!bumpfastshader) bumpfastshader = lookupshaderbyname("bumpnospecworld");
+            s = bumpfastshader;
+        };
 
         extern vector<GLuint> lmtexids;
         int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
