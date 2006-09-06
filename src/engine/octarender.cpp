@@ -766,7 +766,7 @@ vtxarray *newva(int x, int y, int z, int size)
     };
 
     va->parent = NULL;
-    new (&va->children) vector<vtxarray *>;
+    va->children = new vector<vtxarray *>;
     va->allocsize = allocsize;
     va->x = x; va->y = y; va->z = z; va->size = size;
     va->explicitsky = explicitsky;
@@ -791,15 +791,15 @@ void destroyva(vtxarray *va, bool reparent)
     if(!va->parent) varoot.removeobj(va);
     if(reparent)
     {
-        if(va->parent) va->parent->children.removeobj(va);
-        loopv(va->children)
+        if(va->parent) va->parent->children->removeobj(va);
+        loopv((*va->children))
         {
-            vtxarray *child = va->children[i];
+            vtxarray *child = (*va->children)[i];
             child->parent = va->parent;
-            if(child->parent) child->parent->children.add(va);
+            if(child->parent) child->parent->children->add(va);
         };
     };
-    va->children.~vector<vtxarray *>();
+    delete va->children;
     delete[] (uchar *)va;
 };
 
@@ -929,7 +929,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
                 while(varoot.length() > childpos)
                 {
                     vtxarray *child = varoot.pop();
-                    c[i].va->children.add(child);
+                    c[i].va->children->add(child);
                     child->parent = c[i].va;
                 };
                 varoot.add(c[i].va);
@@ -1134,7 +1134,7 @@ void findvisiblevas(vector<vtxarray *> &vas)
         if(v.curvfc!=VFC_NOT_VISIBLE) 
         {
             addvisibleva(&v);
-            if(v.children.length()) findvisiblevas(v.children);
+            if(v.children->length()) findvisiblevas(*v.children);
         }
         else
         {
@@ -1948,7 +1948,7 @@ void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };
-        if(va->children.length()) renderreflectedvas(cur, va->children, z, refract); 
+        if(va->children->length()) renderreflectedvas(cur, *va->children, z, refract); 
     };
 };
 
@@ -2231,7 +2231,7 @@ void finddepth(vector<vtxarray *> &vas, int *roots, int &total, int &maxdepth, i
         total++;
         if(depth<=2) roots[depth]++;
         maxdepth = max(maxdepth, depth+1);
-        if(vas[i]->children.length()) finddepth(vas[i]->children, roots, total, maxdepth, depth+1);
+        if(vas[i]->children->length()) finddepth(*vas[i]->children, roots, total, maxdepth, depth+1);
     };
 };
 

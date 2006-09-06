@@ -358,7 +358,6 @@ inline char *newstring(const char *s, size_t l) { return s_strncpy(new char[l+1]
 inline char *newstring(const char *s)           { return newstring(s, strlen(s));          };
 inline char *newstringbuf(const char *s)        { return newstring(s, _MAXDEFSTR-1);       };
 
-
 #ifndef __GNUC__
 #ifdef _DEBUG
 //#define _CRTDBG_MAP_ALLOC

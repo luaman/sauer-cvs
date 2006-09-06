@@ -27,31 +27,26 @@ eihrul:
 aard/everyone:
 - before release: update static wiki
 
-- death needs to be more obvious (better sound/centerprint) 
 - debris particles (makke?)
-- white lines in decal shader??
+- get kurt to fix decal textures
 - add gregors new textures
+- water in more maps (metl4?)
+
+- death needs to be more obvious (better sound/centerprint) 
 - screenshots etc? new features in docs
 - specmap thats not same size as diffuse crash
-- SP monsters should wake up if monster within range gets shot
 - sparklies very bad on ATI, particularly deathtek / diff skybox
 - quad subdiv bad on ATI
 - audio effect for chat messages
 - crashes when people join?
-- write function to filter illegal characters out of names and server talk (colors etc)
 - bake normalmap on -f0? mildly?
 - clean up maps folder | maps without lightmaps?
-- stop scoreboard from popping up if menu on?
 - ensure modelshader can be set from model cfg
-- one vwep per model?
 - 2 levels of lightlod for huge maps
 - fillrate optimisation: automatically cut down surfaces to their visible size?
 - surface merging?
 - rockets thru walls? collision step?
 - shallow water splashing sound?
-- water in more maps (metl4?)
-
-
 
 - weird fps issue.. maybe mobile?
 - auto bounding boxes that can be overridden

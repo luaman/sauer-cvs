@@ -34,6 +34,7 @@ void clear_menus()
 
 void menuset(int menu)
 {
+    if(!menu && vmenu>=0) return;
     if((vmenu = menu)>=1) player->stopmoving();
     if(vmenu==1) menus[1].menusel = 0;
 };

@@ -143,7 +143,8 @@ struct monsterset
                     ||(dist<64 && angle<135)
                     ||(dist<128 && angle<90)
                     ||(dist<256 && angle<45)
-                    || angle<10)
+                    || angle<10
+                    || (ms->monsterhurt && o.dist(ms->monsterhurtpos)<128))
                     {
                         vec target;
                         if(enemylos(target))
@@ -210,6 +211,8 @@ struct monsterset
             {
                 anger = 0;
                 enemy = d;
+                ms->monsterhurt = true;
+                ms->monsterhurtpos = o;
             };
             if((health -= damage)<=0)
             {
@@ -248,6 +251,9 @@ struct monsterset
     vector<monster *> monsters;
     
     int nextmonster, spawnremain, numkilled, monstertotal, mtimestart, remain;
+    
+    bool monsterhurt;
+    vec monsterhurtpos;
 
     IVAR(skill, 1, 3, 10);
 
@@ -267,6 +273,7 @@ struct monsterset
         monstertotal = 0;
         spawnremain = 0;
         remain = 0;
+        monsterhurt = false;
         if(m_dmsp)
         {
             nextmonster = mtimestart = cl.lastmillis+10000;
@@ -326,6 +333,8 @@ struct monsterset
             };
         };
         
+        bool monsterwashurt = monsterhurt;
+        
         loopv(monsters)
         {
             if(monsters[i]->state==CS_ALIVE) monsters[i]->monsteraction(curtime);
@@ -339,6 +348,8 @@ struct monsterset
                 };
             }
         };
+        
+        if(monsterwashurt) monsterhurt = false;
     };
 
     void monsterrender()

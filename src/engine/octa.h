@@ -42,7 +42,7 @@ enum
 struct vtxarray
 {
     vtxarray *parent;
-    vector<vtxarray *> children;
+    vector<vtxarray *> *children;
     lodlevel l0, l1;
     vertex *vbuf;       // vertex buffer
     vtxarray *next;     // linked list of visible VOBs
