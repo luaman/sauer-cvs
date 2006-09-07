@@ -6,17 +6,10 @@ grabinput
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-	<head>
-		<title>Sauerbraten Command Reference</title>
-<style type="text/css">		
-body          { margin: 50px 11%; width: 80%;  background-color: #302c28; color: #ffffff; font-family: verdana,"trebuchet ms","zurich bt",tahoma,arial,helvetica,sans-serif; font-size: 8pt; }
-a             { text-decoration: underline; color: #ffbb00; }
-a:visited     { color: #ff9900; }
-a:hover       { color: #ff9900; }
-div           { margin: 40px 0px 4px 0px; padding: 1px; background-color: #662222; font-size: 120%; font-weight: bold; }
-pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
-</style>
-	</head>
+<head>
+<title>Sauerbraten Command Reference</title>
+<link rel="stylesheet" type="text/css" href="style.css" />
+</head>
 <body>
 
 <div>Gameplay Related Console Commands</div>
@@ -73,10 +66,6 @@ weapon 0         // humiliate selection :)
 weapon           // just switch to anything with ammo
 </pre>
 In any selection, it will skip whichever weapon you have currently selected, so executing a weapon command repeatedly toggles between the two best weapons with ammo within a given selection. default keys 0 to 4 select the corresponding weapons, with sensible default alternatives, middle mouse button is a simple weapon switch.
-
-<pre>maxfps N</pre>
-Sets the max number of fps. Default 200. Useful if you have a recent machine that
-    can run the engine at close to 1000 fps, or if you want to test. If you set maxfps to exactly or a simple ratio of your monitor's refresh rate, you may experience tearing. maxfps is not a replacement for vsync.
 
 <pre>gamespeed P</pre>
 Sets the gamespeed in percent, i.e. 50 is playing in slowmotion at half the speed. does not work in multiplayer. for entertainment purposes only :)
@@ -136,89 +125,89 @@ Official game storyline: "You kill stuff. The End."  <b>All of the following is 
 There are initially 5 weapons:
 <br><br>
 <table BORDER=1 cellSpacing="0" cellPadding="4">
-    <tr>
-        <td>num</td>
-        <td>name</td>
-        <td>damage</td>
-        <td>reload</td>
-        <td>dam/sec</td>
-        <td>technically similar to</td>
-    </tr>
-    <tr>
-        <td><font size="-5">&nbsp;</font></td>
-        <td><font size="-5">&nbsp;</font></td>
-        <td><font size="-5">&nbsp;</font></td>
-        <td><font size="-5">&nbsp;</font></td>
-        <td><font size="-5">&nbsp;</font></td>
-        <td><font size="-5">&nbsp;</font></td>
-    </tr>
-    <tr>
-        <td>0</td>
-        <td>fist</td>
-        <td>50</td>
-        <td>0.25sec</td>
-        <td>200</td>
-        <td>quake3 gauntlet</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>shotgun</td>
-        <td>
-    20x10</td>
-        <td>1.4sec</td>
-        <td>143</td>
-        <td>doom2 SSG (wide angle, but less than in doom2)</td>
-    </tr>
-    <tr>
-        <td>2</td>
-        <td>chaingun</td>
-        <td>30</td>
-        <td>0.1sec</td>
-        <td>300</td>
-        <td>quake LG (mild spread at distance)</td>
-    </tr>
-    <tr>
-        <td>3</td>
-        <td>rocket launcher</td>
-        <td>120</td>
-        <td>0.8sec</td>
-        <td>150</td>
-        <td>quake RL (splash damage)</td>
-    </tr>
-    <tr>
-        <td>4</td>
-        <td>rifle</td>
-        <td>100</td>
-        <td>1.5sec</td>
-        <td>66</td>
-        <td>quake2 RG</td>
-    </tr>
-    <tr>
-        <td>5
-        </td>
-        <td>
-            grenade launcher</td>
-        <td>
-    75</td>
-        <td>
-            0.5sec</td>
-        <td>
-            100</td>
-        <td>
-            any quake GL, except faster but less damaging</td>
-    </tr>
-    <tr>
-        <td>6</td>
-        <td> pistol</td>
-        <td>
-    25</td>
-        <td>
-    0.5</td>
-        <td>
-    50</td>
-        <td>
-    quake SG, but more precise</td>
-    </tr>
+<tr>
+<td>num</td>
+<td>name</td>
+<td>damage</td>
+<td>reload</td>
+<td>dam/sec</td>
+<td>technically similar to</td>
+</tr>
+<tr>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+</tr>
+<tr>
+<td>0</td>
+<td>fist</td>
+<td>50</td>
+<td>0.25sec</td>
+<td>200</td>
+<td>quake3 gauntlet</td>
+</tr>
+<tr>
+<td>1</td>
+<td>shotgun</td>
+<td>
+20x10</td>
+<td>1.4sec</td>
+<td>143</td>
+<td>doom2 SSG (wide angle, but less than in doom2)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>chaingun</td>
+<td>30</td>
+<td>0.1sec</td>
+<td>300</td>
+<td>quake LG (mild spread at distance)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>rocket launcher</td>
+<td>120</td>
+<td>0.8sec</td>
+<td>150</td>
+<td>quake RL (splash damage)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>rifle</td>
+<td>100</td>
+<td>1.5sec</td>
+<td>66</td>
+<td>quake2 RG</td>
+</tr>
+<tr>
+<td>5
+</td>
+<td>
+grenade launcher</td>
+<td>
+75</td>
+<td>
+0.5sec</td>
+<td>
+100</td>
+<td>
+any quake GL, except faster but less damaging</td>
+</tr>
+<tr>
+<td>6</td>
+<td> pistol</td>
+<td>
+25</td>
+<td>
+0.5</td>
+<td>
+50</td>
+<td>
+quake SG, but more precise</td>
+</tr>
 
 </table>
 <br>
@@ -227,7 +216,7 @@ The player has available all weapons when he spawns, but no ammo for them (excep
 Items that can be picked up:
 <ul>
 <li>6 types of ammo (10 shells, 5 rockets, 20 bullets, 5 rifle rounds, 10 grenades, 30 pistol ammo) (to a max of 30/15/60/15/30/120,
-        respawn 12/9/6 seconds)</li>
+respawn 12/9/6 seconds)</li>
 <li>health (adds 25 to a max of MAXHEALTH (initially 100), respawn 20/15/10 seconds)</li>
 <li>health boost (adds 10 to your MAXHEALTH until the end of the current map, respawn 60 seconds)</li><li>light armour (100, absorbs 40% of damage, respawn 20 seconds)</li>
 <li>heavy armour (200, absorbs 60% of damage, respawn 20 seconds)</li>
@@ -326,9 +315,9 @@ but maybe without its already good enough.
 There are two single player modes:
 <ul>
 <li>
-    (mode -2, command "/sp &lt;map&gt;"): a classical progress-based monsters-wake-up-when-they-see-you mode which is very similar to Doom &amp; Quake, and is played on maps specifically designed for SP. Items don't respawn.</li>
+(mode -2, command "/sp &lt;map&gt;"): a classical progress-based monsters-wake-up-when-they-see-you mode which is very similar to Doom &amp; Quake, and is played on maps specifically designed for SP. Items don't respawn.</li>
 <LI>(mode -1, command "/dmsp &lt;map&gt;"):
-      an arena style SP mode (akin to my "DMSP" mod for quake) which you play on DM maps: 10 seconds after the game starts monsters start spawning in (currently about 1 per second), which will immediately be angry at you. The map ends when they all have spawned and they are all killed (either by you or by their buddies ;). The number of monsters depends on the "skill" variable. Items respawn as in DM.</li>
+an arena style SP mode (akin to my "DMSP" mod for quake) which you play on DM maps: 10 seconds after the game starts monsters start spawning in (currently about 1 per second), which will immediately be angry at you. The map ends when they all have spawned and they are all killed (either by you or by their buddies ;). The number of monsters depends on the "skill" variable. Items respawn as in DM.</li>
 </ul>
 The mode numbers for these are -2 and -1 respectively, but can most conveniently be set over the singleplayer menu. In both cases, the map ends when all monsters are killed, or an end of level trigger is hit if one is available. Coop play is not supported yet.
 <br><br>
@@ -336,114 +325,114 @@ There are currently 8 monsters, with the following properties (sorted roughly in
 <br><br>
 <table border=1 cellspacing="0" cellpadding="4">
 <tr>
-    <td>gun used</td>
-    <td>model</td>
-    <td>damage</td>
-    <td>stamina</td>
-    <td>speed</td>
-    <td>freq</td>
-    <td>lag</td>
-    <td>rate</td>
-    <td>loyalty</td>
+<td>gun used</td>
+<td>model</td>
+<td>damage</td>
+<td>stamina</td>
+<td>speed</td>
+<td>freq</td>
+<td>lag</td>
+<td>rate</td>
+<td>loyalty</td>
 </tr>
 <tr>
-    <td><font size="-5">&nbsp;</font></td>
-    <td><font size="-5">&nbsp;</font></td>
-    <td><font size="-5">&nbsp;</font></td>
-    <td><font size="-5">&nbsp;</font></td>
-    <td><font size="-5">&nbsp;</font></td>
-    <td><font size="-5">&nbsp;</font></td>
-    <td></td>
-    <td></td>
-    <td></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td><font size="-5">&nbsp;</font></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
-    <td>fireball</td>
-    <td>ogro</td>
-    <td>5</td>
-    <td>100</td>
-    <td>14</td>
-    <td>3</td>
-    <td>0</td>
-    <td>10</td>
-    <td>1</td>
+<td>fireball</td>
+<td>ogro</td>
+<td>5</td>
+<td>100</td>
+<td>14</td>
+<td>3</td>
+<td>0</td>
+<td>10</td>
+<td>1</td>
 </tr>
 <tr>
-    <td>chaingun</td>
-    <td>rhino</td>
-    <td>7</td>
-    <td>70</td>
-    <td>18</td>
-    <td>2</td>
-    <td>70</td>
-    <td>1</td>
-    <td>2</td>
+<td>chaingun</td>
+<td>rhino</td>
+<td>7</td>
+<td>70</td>
+<td>18</td>
+<td>2</td>
+<td>70</td>
+<td>1</td>
+<td>2</td>
 </tr>
 <tr>
-    <td>shotgun</td>
-    <td>ratamahatta</td>
-    <td>50</td>
-    <td>120</td>
-    <td>12</td>
-    <td>1</td>
-    <td>100</td>
-    <td>30</td>
-    <td>4</td>
+<td>shotgun</td>
+<td>ratamahatta</td>
+<td>50</td>
+<td>120</td>
+<td>12</td>
+<td>1</td>
+<td>100</td>
+<td>30</td>
+<td>4</td>
 </tr>
 <tr>
-    <td>rifle</td>
-    <td>slith</td>
-    <td>25</td>
-    <td>200</td>
-    <td>12</td>
-    <td>1</td>
-    <td>80</td>
-    <td>40</td>
-    <td>4</td>
+<td>rifle</td>
+<td>slith</td>
+<td>25</td>
+<td>200</td>
+<td>12</td>
+<td>1</td>
+<td>80</td>
+<td>40</td>
+<td>4</td>
 </tr>
 <tr>
-    <td>rocket launcher</td>
-    <td>bauul</td>
-    <td>30</td>
-    <td>500</td>
-    <td>10</td>
-    <td>1</td>
-    <td>0</td>
-    <td>20</td>
-    <td>6</td>
+<td>rocket launcher</td>
+<td>bauul</td>
+<td>30</td>
+<td>500</td>
+<td>10</td>
+<td>1</td>
+<td>0</td>
+<td>20</td>
+<td>6</td>
 </tr>
 <tr>
-    <td>bite</td>
-    <td>hellpig</td>
-    <td>12</td>
-    <td>50</td>
-    <td>22</td>
-    <td>3</td>
-    <td>0</td>
-    <td>10</td>
-    <td>1</td>
+<td>bite</td>
+<td>hellpig</td>
+<td>12</td>
+<td>50</td>
+<td>22</td>
+<td>3</td>
+<td>0</td>
+<td>10</td>
+<td>1</td>
 </tr>
 <tr>
-    <td>iceball</td>
-    <td>knight</td>
-    <td>10</td>
-    <td>250</td>
-    <td>8</td>
-    <td>1</td>
-    <td>0</td>
-    <td>1</td>
-    <td>6</td>
+<td>iceball</td>
+<td>knight</td>
+<td>10</td>
+<td>250</td>
+<td>8</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>6</td>
 </tr>
 <tr>
-    <td>slimeball</td>
-    <td>goblin</td>
-    <td>7</td>
-    <td>100</td>
-    <td>12</td>
-    <td>1</td>
-    <td>0</td>
-    <td>20</td>
-    <td>2</td>
+<td>slimeball</td>
+<td>goblin</td>
+<td>7</td>
+<td>100</td>
+<td>12</td>
+<td>1</td>
+<td>0</td>
+<td>20</td>
+<td>2</td>
 </tr>
 </table>
 <br>
@@ -460,67 +449,67 @@ Stamina is the amount of damage taken before dying, speed is their movement spee
 Other important parameters: monsters will at most jump down 4 sauerbratens in height, unless their health is 100 or less, in which case they allways jump down.
 <br><br>
 As you can summise from the above, the keys to surviving in sauerbraten SP are: keep moving, preferably perpendicular to the monster line of sight, frequently&nbsp;move behind&nbsp;walls and back&nbsp;(this makes monsters search for you again, which delays them), and use monster infighting to your advantage.
-    <br />
-    <br />
-    <strong><span style="font-size: 10pt">SP Respawning<br />
-    </span></strong>
-    <br />
-    Classic SP works differently from most FPS games that employ a savegame based system
-    (as did Sauerbraten's predecessor, Cube). The problem with savegames is that they
-    take away any tension in gameplay, since you play without fear because you can make
-    frequent saves, and when you do have to reload, its just an annoyance (or frustration,
-    if you forgot to save for a while because it was going so well).<br />
-    <br />
-    Instead of savegames, sauerbraten employs a novel system based on respawnpoints
-    (not to be confused with checkpoints, which are just an annoying version of savegames). The major annoyance in other games comes from having to repeat the same thing, in Sauerbraten, you can die, and
-    still never have to repeat the same gameplay again, yet you still have strong motivation not to die. This brings back the tension in gameplay, without the frustration.<br />
-    <br />
-    
-    The way it works that when you die, the world stays AS IS. Dead monsters stay dead, and alive ones just continue at their current location.
-    You respawn, as if it were DM, at your last respawnpoint.
-    
-    Respawnpoints are entities placed by the level designers in various spots thruout the level, and the game remembers the last one you touched. You can touch these more than once.
-    
-    When you respawn, the evil monsters will have stolen your armour, and most of your ammo (currently they take 2/3rds, unless you have 5 or less, in which case they don't take anything).<br />
-    <br />
-    On the good side, you will have all your health back (and you have kept any healthboost
-    powerups!), and your starting supply of pistol ammo (see, the monsters are evil, but fair).
-    
-    The good thing is that this way, even though you are punished for dying, you are never stuck, since even if a group of monsters is very hard to overcome, they will be easier every time you try, since the dead ones stay dead (and the hurt ones stay hurt!).
-    You may have to work with your pistol more, but that is part of the tradeoff.<br />
-    <br />
-    
-    An additional motivation to not die, is that deaths are the most important component in reaching a good score on a level. Every time you finish a level, you will see a printout like this:
-    <br />
-    
-    <br />
-    <span style="font-family: Courier New">--- single player time score: ---
-        <br />
-    time taken: 155 seconds
-        <br />
-        time penalty for 1 deaths (1 minute each): 60 seconds
-        <br />
-        time penalty for 21 monsters remaining (10 seconds each): 210 seconds
-        <br />
-        time penalty for lower skill level (20 seconds each): 140 seconds
-        <br />
-        time penalty for missed shots (1 second each %): 25 seconds
-        <br />
-    TOTAL SCORE (time + time penalties): 590 seconds (best so far: 423 seconds)<br />
-    </span>
-    <br />
-    
-    This gives you the stats of your game. The overal score is something that will be displayed in the menus next to the map name, so you can try and improve your best score, and compare to others. These score values are saved accross runs of the game
-    (in bestscore_&lt;mapname&gt; aliases).
-    The final formula has been tweaked such that:
-    <UL>
-    <li>The number of deaths has the biggest impact on your score. You want to have 0 deaths for a good score.</li>
-    <li>The second most important thing is frags, you want to make sure you have killed all monsters.</li>
-    <li>The third most important thing is probably time... finish the map as quickly as you can</li>
-    <li>another component is accuracy, which reflects shots fired compared to damage dealt (which is not the same as damage taken, i.e. it does not take into account if a rocket is mostly wasted because the monster only had 10 health).</li>
-    <li>the last component is skill. If more agressive monsters don't phase you, then you can score more by playing on skill 10.</li>
-    </UL>
-   
+<br />
+<br />
+<strong><span style="font-size: 10pt">SP Respawning<br />
+</span></strong>
+<br />
+Classic SP works differently from most FPS games that employ a savegame based system
+(as did Sauerbraten's predecessor, Cube). The problem with savegames is that they
+take away any tension in gameplay, since you play without fear because you can make
+frequent saves, and when you do have to reload, its just an annoyance (or frustration,
+if you forgot to save for a while because it was going so well).<br />
+<br />
+Instead of savegames, sauerbraten employs a novel system based on respawnpoints
+(not to be confused with checkpoints, which are just an annoying version of savegames). The major annoyance in other games comes from having to repeat the same thing, in Sauerbraten, you can die, and
+still never have to repeat the same gameplay again, yet you still have strong motivation not to die. This brings back the tension in gameplay, without the frustration.<br />
+<br />
+
+The way it works that when you die, the world stays AS IS. Dead monsters stay dead, and alive ones just continue at their current location.
+You respawn, as if it were DM, at your last respawnpoint.
+
+Respawnpoints are entities placed by the level designers in various spots thruout the level, and the game remembers the last one you touched. You can touch these more than once.
+
+When you respawn, the evil monsters will have stolen your armour, and most of your ammo (currently they take 2/3rds, unless you have 5 or less, in which case they don't take anything).<br />
+<br />
+On the good side, you will have all your health back (and you have kept any healthboost
+powerups!), and your starting supply of pistol ammo (see, the monsters are evil, but fair).
+
+The good thing is that this way, even though you are punished for dying, you are never stuck, since even if a group of monsters is very hard to overcome, they will be easier every time you try, since the dead ones stay dead (and the hurt ones stay hurt!).
+You may have to work with your pistol more, but that is part of the tradeoff.<br />
+<br />
+
+An additional motivation to not die, is that deaths are the most important component in reaching a good score on a level. Every time you finish a level, you will see a printout like this:
+<br />
+
+<br />
+<span style="font-family: Courier New">--- single player time score: ---
+<br />
+time taken: 155 seconds
+<br />
+time penalty for 1 deaths (1 minute each): 60 seconds
+<br />
+time penalty for 21 monsters remaining (10 seconds each): 210 seconds
+<br />
+time penalty for lower skill level (20 seconds each): 140 seconds
+<br />
+time penalty for missed shots (1 second each %): 25 seconds
+<br />
+TOTAL SCORE (time + time penalties): 590 seconds (best so far: 423 seconds)<br />
+</span>
+<br />
+
+This gives you the stats of your game. The overal score is something that will be displayed in the menus next to the map name, so you can try and improve your best score, and compare to others. These score values are saved accross runs of the game
+(in bestscore_&lt;mapname&gt; aliases).
+The final formula has been tweaked such that:
+<UL>
+<li>The number of deaths has the biggest impact on your score. You want to have 0 deaths for a good score.</li>
+<li>The second most important thing is frags, you want to make sure you have killed all monsters.</li>
+<li>The third most important thing is probably time... finish the map as quickly as you can</li>
+<li>another component is accuracy, which reflects shots fired compared to damage dealt (which is not the same as damage taken, i.e. it does not take into account if a rocket is mostly wasted because the monster only had 10 health).</li>
+<li>the last component is skill. If more agressive monsters don't phase you, then you can score more by playing on skill 10.</li>
+</UL>
+
 
 
 <div>Effects of network code on gameplay</div>
@@ -531,17 +520,17 @@ The benefits of this are that the effects of lag are minimised, and someone on a
 <br><br>
 It is impossible to completely hide lag however, and these are some of the effects that can still show lag if you or someone you play with has a high ping / bad connection:
 <ul>
-    <li>if the connection has packetloss. There is no direct indicator of packetloss, instead the "packet jump" figure is provided on the hud (use "showscores"). Packet jump says as much as the amount of milliseconds that pass between updates from the indicated player. If it is extremely variable, or is high(&gt;80) then your gameplay may be hampered (players jumping from place to place). Ideally it is a steady 40 or lower. A consistent packet jump is more vital to gameplay than ping.
-    <br><br>
-    Sauerbraten uses player prediction based on extrapolation using the physics model, in an attempt to be both as up to date as possible w.r.t. to the game state, and as realistic w.r.t. to physics. However, under packet loss this model breaks down and player movement becomes choppy.</li>
-    <li>if ping is high (either yours or someone you play with), some actions may appear lagged. The effect of ping is generally that the players in a game are effectively playing more and more seperate games, as someone with a high ping is "playing in the past". The local effects of this are masked out by client side movement &amp; aim, but may become noticable across players:
-    <ul>
-        <li>you may get hit by someone even though you are already out of his view. This is because he is aiming at your movements of a while ago, and his hits take a while to arrive back at you. You may therefore be hit by gunfire up to his lag + your lag milliseconds after you leave his FOV.</li>
-        <li>item pickup: you may be denied an item if you try to pick it up at virtually the same time as someone else (server decides who was "first"). Item pickup is server side, only when you hear the sound effect have you actually picked up the item.</li>
-        <li>players dying appears lagged. This will improve.</li>
-    </ul>
-    </li>
-    <li>if a player is severely lagged (or you are) he temporarily becomes a "ghost" that cannot be hit (if &gt;1sec packet jump).</li>
+<li>if the connection has packetloss. There is no direct indicator of packetloss, instead the "packet jump" figure is provided on the hud (use "showscores"). Packet jump says as much as the amount of milliseconds that pass between updates from the indicated player. If it is extremely variable, or is high(&gt;80) then your gameplay may be hampered (players jumping from place to place). Ideally it is a steady 40 or lower. A consistent packet jump is more vital to gameplay than ping.
+<br><br>
+Sauerbraten uses player prediction based on extrapolation using the physics model, in an attempt to be both as up to date as possible w.r.t. to the game state, and as realistic w.r.t. to physics. However, under packet loss this model breaks down and player movement becomes choppy.</li>
+<li>if ping is high (either yours or someone you play with), some actions may appear lagged. The effect of ping is generally that the players in a game are effectively playing more and more seperate games, as someone with a high ping is "playing in the past". The local effects of this are masked out by client side movement &amp; aim, but may become noticable across players:
+<ul>
+<li>you may get hit by someone even though you are already out of his view. This is because he is aiming at your movements of a while ago, and his hits take a while to arrive back at you. You may therefore be hit by gunfire up to his lag + your lag milliseconds after you leave his FOV.</li>
+<li>item pickup: you may be denied an item if you try to pick it up at virtually the same time as someone else (server decides who was "first"). Item pickup is server side, only when you hear the sound effect have you actually picked up the item.</li>
+<li>players dying appears lagged. This will improve.</li>
+</ul>
+</li>
+<li>if a player is severely lagged (or you are) he temporarily becomes a "ghost" that cannot be hit (if &gt;1sec packet jump).</li>
 </ul>
 
 <div>Cheating & Multiplayer</div>
@@ -589,7 +578,7 @@ In the event that a cheater is the master, or someone is being abusive with his 
 <p>
 If the current master leaves the server, other players may attempt to claim master status. Mastermode will be reset to 0 when this happens (also when the server clears). At any time, all
 players will see who is the master in a game because his name is marked in a different colour on the scoreboard.
- 
+
 
 
 </body>

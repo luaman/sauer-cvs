@@ -1,310 +1,495 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-	<head>
-		<title>Sauerbraten Configuration</title>
-<style type="text/css">		
-body          { margin: 50px 11%; width: 80%;  background-color: #302c28; color: #ffffff; font-family: verdana,"trebuchet ms","zurich bt",tahoma,arial,helvetica,sans-serif; font-size: 8pt; }
-a             { text-decoration: underline; color: #ffbb00; }
-a:visited     { color: #ff9900; }
-a:hover       { color: #ff9900; }
-div           { margin: 40px 0px 4px 0px; padding: 1px; background-color: #662222; font-size: 120%; font-weight: bold; }
-pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
-</style>
-	</head>
-	<body>
-		<div>Instructions for running Sauerbraten
-		</div>
-		For windows: install, and run the sauerbraten.bat. For linux: gunzip, run <i>chmod 
-			+x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>. Needs a decent 
-		&amp; compliant OpenGL implementation. before you do, you may want to look at 
-		the config which is in "autoexec.cfg" and which should be fairly familiar if 
-		you ever played a quake style game. If you want to rebind your keys, see the 
-		"bind" command below. Press ESC to go into the menu with many useful commands, 
-		but will not rewrite the config file for you. Sauerbraten derives its 
-		simplicity from some rather brute force rendering methods, and as such it needs 
-		a beefy machine to get good visual quality. It runs best with "vertical sync" 
-		OFF and at high refresh rates (you may get excessive LOD/FPS variance 
-		otherwise).
-		<div>Command line options
-		</div>
-		-d runs a dedicated server
-		<br>
-		<br>
-		Default is a non-dedicated server with only a single client. Dedicated servers 
-		run in the shell only (no graphics), with increased priority yet use very 
-		little cpu time &amp; memory, so you can run one in the background, or at the 
-		same time with a client if you want to host a game (which is usually better 
-		than using a listen server). Cube servers need to be restarted every 3 weeks, 
-		otherwise atleast one game will not have correct timing. Servers port are fixed 
-		at 28785 (UDP) and 28786 (UDP), currently.
-		<br>
-		<br>
-		-wX sets desired screen width to X, default is -w640
-		<br>
-		-hY sets desired screen height to Y, default is -h480
-		<br>
-        -bN sets desired bits per pixel to N
-        <br>
-        -zN sets desired z-buffer precision to N bits
-        <br>
-        -aN sets desired FSAA to N samples, i.e. -a4 is 4xFSAA
-        <br>
-		-t runs windowed
-		<br>
-        -f forces the renderpath to the old fixed function pipeline (no shaders)
-        <br>
-        -fN sets the shader precision to N (lower = faster). 0 disables shaders, 1 uses
-        the fastest/lowest precision the OpenGL driver offers, 2 is the default precision,
-        and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different 
-        card/driver combos.
-        <br>
-        -lM loads map M on startup
-        <br>
-		<br>
-		-uN sets the server upstream bandwidth to N bytes per second. only set this 
-		parameter if you know what you are doing, specifying a wrong value is worse 
-		than not specifying it at all.
-		<br>
-		<br>
-		-nN sets the server description, for people pinging the server. usually does 
-		not need to be set if you have a descriptive domain name already, but if you 
-		set it, keep it short as it may otherwise be truncated, i.e. 
-		-nBobsInstagibServer
-		<br>
-		<br>
-        -cN sets the max number of clients to N. The default is 4. If you want to set it
-    higher, be aware that bandwidth usage almost doubles with each extra client, so
-    only do this if the server runs on a serious pipe (not your home DSL or Cable connect!).
-        <br>
-        <br>
-        -pS sets the server's administrative password to S.
-        <br>
-        <br>
-		-iIP sets the server ip to IP. this option is only useful for people running on 
-		machines with multiple network interfaces.
-		<br>
-		<br>
-		-mM sets the master server to use for either server (registering) and client 
-		(updating) to M. M is the base url of the master server and has to end in a / 
-		and without a http:// prefix, the default is sauerbraten.org/masterserver/
-        <br>
-        <br>
-		<div>General console commands and configuration</div>
-		<pre>bind K A
+
+<head>
+<title>Sauerbraten Configuration</title>
+<link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+
+<body>
+
+<h1>Instructions for Running Sauerbraten</h1>
+
+<p>
+<ul>
+<li>For Windows: Install, edit, then run sauerbraten.bat.</li>
+<li>For GNU/Linux: gunzip, run <i>chmod +x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>.
+Needs a decent and compliant OpenGL implementation.</li>
+</ul>
+</p>
+
+<p>
+Before you start, you may want to look at the default configuration in "config/defaults.cfg", which should
+be fairly familiar if you ever played a Quake style game.
+</p>
+
+<p>
+If you want to rebind your keys, see the "bind" command below. Press ESC to go into the menu with many useful commands.
+Sauerbraten derives its simplicity from some rather brute force rendering methods, and as such it needs 
+a beefy machine to get good visual quality. It runs best with vertical sync (vsync) set to OFF and at high
+refresh rates (otherwise, you may get excessive LOD/FPS variance).
+</p>
+
+<h1>Command Line Options</h1>
+
+<p>
+<pre>-d</pre>
+This starts Sauerbraten as a dedicatated server. The default is a non-dedicated server with only a single client in graphical'
+mode. Dedicated servers run in the shell only (no graphics), with increased priority yet use very little cpu time and memory,
+so you can run one in the background, or at the same time with a client if you want to host a game (which is usually better 
+than using a listen server). Cube servers need to be restarted every 3 weeks, otherwise atleast one game will not have correct
+timing. Servers port are fixed 	at 28785 (UDP) and 28786 (UDP), currently.
+</p>
+
+<p>
+<pre>-wN</pre>
+Sets desired screen width to N (default: 640).
+</p>
+
+<p>
+<pre>-hN</pre>
+Sets desired screen width to N (default: 480).
+</p>
+
+<p>
+<pre>-bN</pre>
+Sets desired bits per pixel to N.
+</p>
+
+<p>
+<pre>-zN</pre>
+Sets desired z-buffer precision to N bits.
+</p>
+
+<p>
+<pre>-aN</pre>
+Sets desired FSAA to N samples, i.e. -a4 is 4xFSAA
+</p>
+
+<p>
+<pre>-t</pre>
+Sets Sauerbaten to run windowed.
+</p>
+
+<p>
+<pre>-f</pre>
+Forces the renderpath to the old fixed function pipeline (no shaders).
+</p>
+
+<p>
+<pre>-fN</pre>
+Sets the shader precision to N (lower = faster). 0 disables shaders, 1 uses the fastest/lowest precision the OpenGL
+driver offers, 2 is the default precision, and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different 
+card/driver combos.
+</p>
+
+<p>
+<pre>-lS</pre>
+Loads map S on startup (default: base/metl4).
+</p>
+
+<p>
+<pre>-uN</pre>
+Sets the server upstream bandwidth to N bytes per second. Only set this parameter if you know what you are doing,
+specifying a wrong value is worse than not specifying it at all.
+</p>
+
+<p>
+<pre>-nN</pre>
+Sets the server description, for people pinging the server. usually does not need to be set if you have a descriptive
+domain name already, but if you set it, keep it short as it may otherwise be truncated (example: -n"Bobs Instagib Server").
+</p>
+
+<p>
+<pre>-cN</pre>
+Sets the max number of clients to N. The default is 4. If you want to set it higher, be aware that bandwidth usage almost
+doubles with each extra client, so only do this if the server runs on a serious pipe (not your home DSL or Cable connection).
+</p>
+
+<p>
+<pre>-pS</pre>
+Sets the server's administrative password to S.
+</p>
+
+<p>
+<pre>-iS</pre>
+Sets the server ip to S. This option is only useful for people running on machines with multiple network interfaces.
+</p>
+
+<p>
+<pre>-mS</pre>
+Sets the master server to use for either server (registering) and client (updating) to S. Be aware, this is the base url
+of the master server and has to end in a "/" and without a "http://" prefix (default: sauerbraten.org/masterserver/).
+</p>
+
+<h1>General Console Commands and Configuration</h1>
+
+<p>
+<pre>
+bind K A
 editbind K A
 </pre>
-		Binds key K to commands A (see console language below for what you can put in 
-		A). To find out what key names and their default bindings are, look at 
-		data/keymap.cfg, then add bind commands to your autoexec.cfg. Editbind works much the same way, except
-    now the key is only available in edit mode (if no editbind is defined for a certain
-    key, it will use the normal binding).<pre>alias N A</pre>
-		Binds name N to commands A, after which you can use N as a shortcut for A. You 
-		may re-bind N as often as you like, call it recursively etc. You may use N = A as a shortcut for alias.
-		<pre>quit</pre>
-		Quits without asking.
-		<pre>forward / backward / left / right</pre>
-		Move you in said direction (defaults to cursor keys).
-		<pre>attack</pre>
-		Fires the current weapon. default = left mouse
-		<pre>jump</pre>
-		Triggers a jump. default key space &amp; right mouse.
-		<pre>invmouse B</pre>
-		Sets mouse to "flight sim" mode if B is not 0
-		<pre>sensitivity S</pre>
-		Sets mouse sensitivity (default = 10). should be a similar number to quake.
-		<pre>sensitivityscale S</pre>
-		Scales the effect of an increase or decrease in the sensitivity value. The 
-		larger the value, the smaller the difference between sensitivity values. 
-		(default = 1)
-		<pre>fov N</pre>
-		Sets your FOV to 10..150.
-		<pre>fog N</pre>
-		Sets fog distance to N (default currently 160). You can do this for tweaking 
-		the visual effect of the fog, or if you are on a slow machine, setting the fog 
-		to a low value can also be a very effective way to increase fps (if you are 
-		geometry limited). Try out different values on big maps / maps which give you 
-		low fps.
-		<pre>fogcolour N</pre>
-		The colour of the fog, as a decimal integer from 0..16777215, representing the converted hexidecimal
-		value "0xRRGGBB" where R is red, G is green, and B is blue values (default: 8427955 (0x8099B3)).
-		<pre>loddistance N</pre>
-		Sets the distance at which world vertex array blocks are rendered at a higher 
-		LOD (level of detail). The lower this value, the more geometry popup you will 
-		see, but the faster it may render. Every system has a different&nbsp;optimal 
-		value, experiment. This variable only has an effect for large scale maps where 
-		the level designer has turned on LOD using the "lodsize" variable.&nbsp;
-		<pre>watersubdiv N</pre>
-		Determines the subdivision of the water surface in maps, which can greatly 
-		affect fps on slow machines. Must be a power of 2: 4 is the default, 8 is 
-		recommended for people on slow machines, 2 is nice for fast machines, and 1 is 
-		quite OTT. See the edit reference for more information on how to add the water material to your levels.
-		<pre>waterlod N</pre>
-		Sets the precision level of the water LOD (Level of Detail) from 0..3, where 0 is the lowest and 3 is the highest setting
-		(default: 1).
-		<pre>waterreflect B</pre>
-		Enables or disables water reflections, only works if your card supports GL_EXT_framebuffer_object and you don't run with
-		the fixed function pixel pipeline (default: 1).
-		<pre>waterrefract B</pre>
-		Enables or disables water refractions, (default: 0).
-		<pre>reflectdist N</pre>
-		Sets the maximum distance geometry/objects can be at to be in a reflection from 0..10000 (default: 2000).
-		<pre>maxparticles N</pre>
-		Sets the maximum number of particles rendered at any one time. If more 
-		particles are generated than this number, the oldest ones are culled, so you 
-		can safely set this number relatively low without loss of information. default 
-		1000.
-		<pre>setfullscreenshader Name</pre>
-		Sets your favourite fullscreen shader. Active permanently once set. Use without name
-		argument to turn it off. Current example shaders: invert, gbr, sobel, bloom
-		<pre>screenshot</pre>
-		Writes out "screenshotN.bmp", where N is the number of milliseconds since the game was launched (default key: F12).
-		<pre>musicvol N
+Binds key K to commands A (see console language below for what you can put in A). To find out what key names and their default
+bindings are, look at data/keymap.cfg, then add bind commands to your autoexec.cfg. Editbind works much the same way, except
+now the key is only available in edit mode (if no editbind is defined for a certain key, it will use the normal binding).
+</p>
+
+<p>
+<pre>alias N A</pre>
+Binds name N to commands A, after which you can use N as a shortcut for A. You 
+may re-bind N as often as you like, call it recursively etc. You may use N = A as a shortcut for alias.
+</p>
+
+<p>
+<pre>quit</pre>
+Quits without asking.
+</p>
+
+<p>
+<pre>
+forward
+backward
+left
+right
+</pre>
+Move you in said direction (default key: up down left right, w s a d).
+</p>
+
+<p>
+<pre>attack</pre>
+Fires the current weapon (default key: left mouse).
+</p>
+
+<p>
+<pre>jump</pre>
+Triggers a jump (default key: space, right mouse).
+</p>
+
+<p>
+<pre>invmouse B</pre>
+Toggles mouse between regular and inverted (flight sim) mode (default: 0 (uninverted)).
+</p>
+
+<p>
+<pre>sensitivity S</pre>
+Sets mouse sensitivity (default: 10). The feel of which should be a similar number to Quake.
+</p>
+
+<p>
+<pre>sensitivityscale S</pre>
+Scales the effect of an increase or decrease in the sensitivity value. The larger the value, the smaller the difference
+between sensitivity values (default: 1).
+</p>
+
+<p>
+<pre>maxfps N</pre>
+Sets the max number of FPS (Frames per Second). Useful if you have a recent machine that can run the engine at close to 1000FPS,
+or if you want to test. If you set maxfps to exactly or a simple ratio of your monitor's refresh rate, you may experience tearing.
+Be aware that maxfps is not a replacement for vsync (default: 200).
+</p>
+
+<p>
+<pre>fov N</pre>
+Sets your FOV to 10..150.
+</p>
+
+<p>
+<pre>fog N</pre>
+Sets fog distance to N (default currently 160). You can do this for tweaking 
+the visual effect of the fog, or if you are on a slow machine, setting the fog 
+to a low value can also be a very effective way to increase fps (if you are 
+geometry limited). Try out different values on big maps / maps which give you low fps.
+</p>
+
+<p>
+<pre>fogcolour N</pre>
+The colour of the fog, as a decimal integer from 0..16777215, representing the converted hexidecimal
+value "0xRRGGBB" where R is red, G is green, and B is blue values (default: 8427955 (0x8099B3)).
+</p>
+
+<p>
+<pre>loddistance N</pre>
+Sets the distance at which world vertex array blocks are rendered at a higher 
+LOD (level of detail). The lower this value, the more geometry popup you will 
+see, but the faster it may render. Every system has a different&nbsp;optimal 
+value, experiment. This variable only has an effect for large scale maps where 
+the level designer has turned on LOD using the "lodsize" variable.&nbsp;
+</p>
+
+<p>
+<pre>watersubdiv N</pre>
+Determines the subdivision of the water surface in maps, which can greatly 
+affect fps on slow machines. Must be a power of 2: 4 is the default, 8 is 
+recommended for people on slow machines, 2 is nice for fast machines, and 1 is 
+quite OTT. See the edit reference for more information on how to add the water material to your levels.
+</p>
+
+<p>
+<pre>waterlod N</pre>
+Sets the precision level of the water LOD (Level of Detail) from 0..3, where 0 is the lowest and 3 is the highest setting
+(default: 1).
+</p>
+
+<p>
+<pre>waterreflect B</pre>
+Enables or disables water reflections, only works if your card supports GL_EXT_framebuffer_object and you don't run with
+the fixed function pipeline (default: 1).
+</p>
+
+<p>
+<pre>waterrefract B</pre>
+Enables or disables water refractions, (default: 0).
+</p>
+
+<p>
+<pre>reflectdist N</pre>
+Sets the maximum distance geometry/objects can be at to be in a reflection from 0..10000 (default: 2000).
+</p>
+
+<p>
+<pre>reflectfps N</pre>
+Sets the amount of times per second the reflections are updated from 1..200 (default: 30). Use this if you would like to
+improve the speed of reflections on fast machines, or to reduce to gain more speed for other operations. Be aware that setting
+this to a value higher than "maxfps" has no effect.
+</p>
+
+<p>
+<pre>maxreflect N</pre>
+Sets the maximum number of reflection surfaces that can be visible at once from 2..10 (default: 4). Any surfaces exceeding this
+limit will not be given reflections on their surfaces.
+</p>
+
+<p>
+<pre>maxparticles N</pre>
+Sets the maximum number of particles rendered at any one time. If more 
+particles are generated than this number, the oldest ones are culled, so you 
+can safely set this number relatively low without loss of information (default: 1000).
+</p>
+
+<p>
+<pre>setfullscreenshader Name</pre>
+Sets your favourite fullscreen shader. Active permanently once set. Use without name
+argument to turn it off. Current example shaders: invert, gbr, sobel, bloom
+</p>
+
+<p>
+<pre>screenshot</pre>
+Writes out "screenshotN.bmp", where N is the number of milliseconds since the game was launched (default key: F12).
+</p>
+
+<p>
+<pre>musicvol N
 soundvol N</pre>
-		Sets the music/sound volume from 0..255.
-		<pre>soundbufferlen N</pre>
-		Sets the sound buffer length in bytes, tweak this if you experience stuttering or lagging sound (default: 512).
-		<pre>gamma n</pre>
-		Sets the hardware gamma value to n percent (default 100). May not work if your 
-		card/driver doesn't support it.
-		<pre>hidestats b</pre>
-		Turns on/off display of fps/rendering stats on the HUD (default = 1).
-		<pre>hidehud b</pre>
-		Turns on/off the entire hud display, which includes rendering stats, ammo, and 
-		echoed text. (default = 0)
-		<pre>maxroll n</pre>
-		Sets the maximum value your display will roll on strafing (0..20, default = 3)
-		<pre>crosshairsize n</pre>
-		Sets the size of your crosshair, 0 being off (default = 3)
-		<pre>crosshairfx b</pre>
-		Turns on or of crosshair effects (default 1). when on, the crosshair will go 
-		grey when the weapon is reloading, orange when health &lt;= 50, or red when 
-		&lt;=25.
-		<pre>exec C</pre>
-		Executes all commands in config file C.
-		<pre>newmenu N</pre>
-		Creates a new menu with name N. All following menuitem commands will apply to 
-		this menu
-		<pre>menuitem N A
-menuitem A</pre>
-		Creates a new menuitem with description N and action A. if you only specify 1, 
-		then it will be used for both the description and the action. See 
-		data/menus.cfg for examples. If N starts with the special character "^", then the name will
-		be evaluated as a command when being displayed, and the the variable "s" used as name. This
-		allows you to create menu items that depend on changing gamestate.
-		<pre>showmenu N</pre>
-		Displays the menu with name N previously defined, and allows the user to pick 
-		an item with the cursor keys. Upon pressing return, the associated action will 
-		be executed. pressing ESC will cancel the menu.
-		<pre>history N</pre>
-		Executes the Nth command in the command line history. For example, binding 
-		"history 0" to a key allows you to quickly repeat the last command typed in 
-		(useful for placing many identical entities etc.)
-		<pre>keymap K N A</pre>
-		Sets up the keymap for key code K with name N and default action A. You should 
-		never have to use this command manually, use "bind" instead.
-		<div>
-    CubeScript&nbsp;</div>
-		Cube's console language is similar to console languages of other games (e.g. 
-		Quake), but is a bit more powerful in that it is a full programming 
-		language.
-		<br>
-		<br>
-		What is similar to quake is the basic command structure: commands consist of 
-		the command itself, followed by any number of arguments seperated by 
-		whitespace. you can use "" to quote strings with whitespace in them (such as 
-		the actions in bind/alias), and whereever a command is required you can also 
-		use ; to sequence multiple commands in one.
-		<br>
-		<br>
-		What is new compared to quake is that you can evaluate aliases and expressions. 
-		You can substitute the value of an alias as an argument by prefixing it with a 
-		"$" sign, i.e.: <code>echo The current value of x is $x</code> You can even 
-		substitute the values of console variables this way, i.e $fov gives the current 
-		fov. Some aliases are set automatically, for example $arg1 to $argN are set if 
-		you supply arguments when you execute an alias.
-        <br>
-        <br>
-		An alternative re two alternatives to "" for quoting a string: () and []. They work in
-        the same way as "", with the difference that they can be nested infinitely, and
-        that they may contain linefeeds (useful for larger scripts). () is different
-        from [] in that it evaluates the commands contained in it _before_ it evaluates
-        the surrounding command, and substitutes the results. () bracketed strings are
-        called expressions, and [] bracketed strings may be thought of as blocks.
-        <br>
-        <br>
-        An alternative to $x is @x, which uses an alias as a macro. The difference is that @x 
-        can be subtituted inside [] or () forms before they have ever been evaluated (at parse time), 
-        which makes them useful for composing strings or creating code on the fly. The @x form will be
-        substituted using the value of x at the time the enclosing [] is evaluated. You can add more @ prefixes
-        to move up more levels of []s, so @@x will move up two levels of []s and so on.
-        Example: x = 0; if $cond [x = 1; [x = 2; echo @@x]] will echo 0, since it uses the value of x at two levels up. 
-        <br>
-        <br>
-        The form @(body) is similar to @x, except that body contains commands executed at parse time.
-        The result value after body executes is substituted in for @(body). 
-        You may use multiple @ prefixes as with the @x form.
-        Example: @(result "Hello, World!") will substitute itself with Hello, World!
-		<br>
-		<br>
-        The following commands are available for programming:
-		<pre>+ A B
+Sets the music/sound volume from 0..255.
+</p>
+
+<p>
+<pre>soundbufferlen N</pre>
+Sets the sound buffer length in bytes, tweak this if you experience stuttering or lagging sound (default: 512).
+</p>
+
+<p>
+<pre>gamma N</pre>
+Sets the hardware gamma value to N percent (default: 100). May not work if your card/driver doesn't support it.
+</p>
+
+<p>
+<pre>hidestats B</pre>
+Toggles display of fps/rendering stats on the HUD (default: 1).
+</p>
+
+<p>
+<pre>hidehud B</pre>
+Toggles the entire hud display, which includes rendering stats, ammo, and echoed text (default: 0).
+</p>
+
+<p>
+<pre>maxroll N</pre>
+Sets the maximum value your display will roll on strafing from 0..20 (default: 3)
+</p>
+
+<p>
+<pre>crosshairsize N</pre>
+Sets the size of your crosshair, 0 being off (default: 3).
+</p>
+
+<p>
+<pre>crosshairfx B</pre>
+Toggles crosshair effects (default: 1). When on, the crosshair will go grey when the weapon is reloading, orange when health &lt;= 50,
+or red when &lt;=25.
+</p>
+
+<p>
+<pre>exec S</pre>
+Executes all commands in config file S.
+</p>
+
+<p>
+<pre>newmenu S</pre>
+Creates a new menu with name S. All following menuitem commands will apply to this menu.
+</p>
+
+<p>
+<pre>
+menuitem S A
+menuitem A
+</pre>
+Creates a new menuitem with the name S, which will execute A when selected. If you only specify one parameter, then it will be used for both.
+See "data/menus.cfg" for the defaults. If N starts with the special character "^", then the name will be evaluated as a command when
+being displayed, and the the variable "S" used as name. This allows you to create menu items that depend on changing gamestate.
+</p>
+
+<p>
+<pre>showmenu N</pre>
+Displays the menu with name N previously defined, and allows the user to pick an item with the cursor keys. Upon pressing return,
+the associated action will be executed. pressing ESC will cancel the menu.
+</p>
+
+<p>
+<pre>history N</pre>
+Executes the Nth command in the command line history. For example, binding "history 0" to a key allows you to quickly repeat the
+last command typed in (useful for placing many identical entities etc.)
+</p>
+
+<p>
+<pre>keymap K N A</pre>
+Sets up the keymap for key code K with name N and default action A. You should 
+never have to use this command manually, use "bind" instead.
+
+<h1>CubeScript</h1>
+
+<p>
+Cube's console language is similar to console languages of other games (e.g. Quake), but is a bit more powerful in that it is a
+full programming language.
+</p>
+
+<p>
+What is similar to quake is the basic command structure: commands consist of 
+the command itself, followed by any number of arguments seperated by 
+whitespace. you can use "" to quote strings with whitespace in them (such as 
+the actions in bind/alias), and whereever a command is required you can also 
+use ; to sequence multiple commands in one.
+</p>
+
+<p>
+What is new compared to quake is that you can evaluate aliases and expressions. 
+You can substitute the value of an alias as an argument by prefixing it with a 
+"$" sign, (example: echo The current value of x is $x). You can even 
+substitute the values of console variables this way, i.e $fov gives the current 
+fov. Some aliases are set automatically, for example $arg1 to $argN are set if 
+you supply arguments when you execute an alias.
+</p>
+
+<p>
+An alternative re two alternatives to "" for quoting a string: () and []. They work in
+the same way as "", with the difference that they can be nested infinitely, and
+that they may contain linefeeds (useful for larger scripts). () is different
+from [] in that it evaluates the commands contained in it _before_ it evaluates
+the surrounding command, and substitutes the results. () bracketed strings are
+called expressions, and [] bracketed strings may be thought of as blocks.
+</p>
+
+<p>
+An alternative to $x is @x, which uses an alias as a macro. The difference is that @x 
+can be subtituted inside [] or () forms before they have ever been evaluated (at parse time), 
+which makes them useful for composing strings or creating code on the fly. The @x form will be
+substituted using the value of x at the time the enclosing [] is evaluated. You can add more @ prefixes
+to move up more levels of []s, so @@x will move up two levels of []s and so on.
+Example: x = 0; if $cond [x = 1; [x = 2; echo @@x]] will echo 0, since it uses the value of x at two levels up. 
+</p>
+
+<p>
+The form @(body) is similar to @x, except that body contains commands executed at parse time.
+The result value after body executes is substituted in for @(body). 
+You may use multiple @ prefixes as with the @x form.
+Example: @(result "Hello, World!") will substitute itself with Hello, World!
+</p>
+
+<p>
+The following commands are available for programming:
+</p>
+
+<p>
+<pre>
++ A B
 - A B
 * A B
 div A B
-mod A B</pre>
-		(add, substract, multiply, divide, modulo): these all work like the integer 
-		operators from other languages. Example:
-		<br>
-		<code>echo x squared is (* $x $x)</code>
-		<pre>= A B
+mod A B
+</pre>
+(add, substract, multiply, divide, modulo): these all work like the integer 
+operators from other languages (example: echo x squared is (* $x $x)).
+</p>
+
+<p>
+<pre>
+= A B
 &lt; A B
 &gt; A B
-strcmp A B</pre>
-		(equals, lessthan, greaterthan, stringcompare): comparison operators that 
-		return 1 for true and 0 for false.
-		<pre>if cond true false</pre>
-		executes the true or false&nbsp;part depending on wether cond is "0" or 
-		something else. Example:
-		<br>
-		<code>if (&lt; $x 10) [ echo "x is" $x ] [ echo "x is too big" ]</code>
-		<pre>loop I N body</pre>
-		evaluates body N times, and sets the alias I from 0 to N-1 for every 
-		iteration. Example:
-		<br>
-		<code>loop i 10 [ echo $i ]</code>
-		<pre>while cond body</pre>
-		evaluates body while cond evaluates to true. Note that cond here has to have 
-		[], otherwise it would only be evaluated once. Example (same result as the 
-		"loop" example):
-		<br>
-		<code>i = 0; while [ (&lt; $i 10) ] [ echo $i; i = (+ $i 1) ]</code>
-		<pre>concat S...</pre>
-		concatenates all the arguments and returns the result
-    <pre>concatword S...</pre>
-		same as concat but without spaces between the elements.
-        <pre>format F V1..Vn</pre>
-        substitutes the V values into the format string F and returns the result. The format strings %1 through %9 are substituted with V1 through V9, respectively, and may be
-        used multiple times. %% will generate a 
-        single % character. Example:
-        <br>
-        <code>format "%1 bottles of %2 on the %3, %1 bottles of %2!" 99 beer wall</code>
-		<pre>at S N</pre>
-		grabs the Nth word out of string S and returns the result
-		<pre>listlen L</pre>
-		returns the number of items in the list L
-		<pre>onrelease A</pre>
-		only executes A if the command is executed on the release of a key/button (must 
-		be in an action in a bind or an alias in a bind).
-		<pre> retval V</pre>
-		Normally the result of a [] block is the result of the last command in the block. If you want the result to be a particular variable or value, you can use e.g. "retval $i" etc.
-		<br>
-		<br>
-		<br>
-		variables that are only really useful when used as value:
-		<pre>$editing</pre>
-		true when in edit mode
+strcmp A B
+</pre>
+(equals, lessthan, greaterthan, stringcompare): comparison operators that return 1 for true and 0 for false.
+</p>
 
+<p>
+<pre>if cond true false</pre>
+Executes the true or false&nbsp;part depending on wether cond is "0" or 
+something else (example: if (&lt; $x 10) [ echo "x is" $x ] [ echo "x is too big" ]).
+</p>
 
+<p>
+<pre>loop I N body</pre>
+Evaluates body N times, and sets the alias I from 0 to N-1 for every iteration (example: loop i 10 [ echo $i ]).
+</p>
 
+<p>
+<pre>while cond body</pre>
+Evaluates body while cond evaluates to true. Note that cond here has to have [], otherwise it would only be evaluated once
+(example: i = 0; while [ (&lt; $i 10) ] [ echo $i; i = (+ $i 1) ]).
+</p>
+
+<p>
+<pre>concat S...</pre>
+Concatenates all the arguments and returns the result
+</p>
+
+<p>
+<pre>concatword S...</pre>
+Same as concat but without spaces between the elements.
+</p>
+
+<p>
+<pre>format F V1..Vn</pre>
+Substitutes the V values into the format string F and returns the result. The format strings %1 through %9 are substituted with V1 through V9, respectively, and may be
+used multiple times. %% will generate a single % character (example: format "%1 bottles of %2 on the %3, %1 bottles of %2!" 99 beer wall).
+</p>
+
+<p>
+<pre>at S N</pre>
+Grabs the Nth word out of string S and returns the result
+</p>
+
+<p>
+<pre>listlen L</pre>
+Returns the number of items in the list L
+</p>
+
+<p>
+<pre>onrelease A</pre>
+Only executes A if the command is executed on the release of a key/button (must be in an action in a bind or an alias in a bind).
+</p>
+
+<p>
+<pre>retval V</pre>
+Normally the result of a [] block is the result of the last command in the block. If you want the result to be a particular
+variable or value, you can use e.g. "retval $i" etc.
+</p>
+
+<p>Variables that are only really useful when used as value:</p>
+
+<p>
+<pre>$editing</pre>
+This is true when in edit mode.
+</p>
 </body>
 </html>

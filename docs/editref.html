@@ -1,483 +1,475 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-    <head>
-        <title>Sauerbraten Mapping Command Reference</title>
-<style type="text/css">
-body          { margin: 50px 11%; width: 80%;  background-color: #302c28; color: #ffffff; font-family: verdana,"trebuchet ms","zurich bt",tahoma,arial,helvetica,sans-serif; font-size: 8pt; }
-a             { text-decoration: underline; color: #ffbb00; }
-a:visited     { color: #ff9900; }
-a:hover       { color: #ff9900; }
-div           { margin: 40px 0px 4px 0px; padding: 1px; background-color: #662222; font-size: 120%; font-weight: bold; }
-pre           { margin: 15pt 0pt 3pt 20pt; font-family: monospace; }
-</style>
-    </head>
-    <body>
-        <div>Editing Related Console Commands</div>
-        
-        <br><br>
+<head>
+<title>Sauerbraten Mapping Command Reference</title>
+<link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+<div>Editing Related Console Commands</div>
 
-        <a href="#editing">Editing</a>
-        <a href="#heightfield">Heightfield</a>
-        <a href="#entity">Entity</a>
-        <a href="#settings">Settings</a>
-        <a href="#map">Map and Config</a>
-        <a href="#lightingcommands">Lighting</a>
-        <a href="#entitytypes">Entity Types</a>
-        <a href="#hud">The HUD</a>
-        
-        <a name="editing"></a>        
-        <div>Editing</div>
-        <pre>edittoggle</pre>
-        Switches between map edit mode and normal (default key = e). In map edit mode
-        you can select bits of the map by clicking or dragging your crosshair on the
-        cubes (using the "attack" command, normally MOUSE1), then use the commands
-        below to modify the selection. While in edit mode, physics &amp; collision
-        don't apply (noclip), and key repeat is ON.
-        <pre>editdrag</pre>
-        Select cubes and entities. (default: left mouse button)
-        <pre>cancelsel</pre>
-        Cancels out any explicit selection you currently have (default: space).
-        <pre>editface D N</pre>
-        This is the main editing command. D is the direction of the action, -1 for
-        towards you, 1 for away from you. N=0 to push all corners in the white box. N=1
-        create or destroy cubes. N=2 push or pull a corner you are pointing at.       
-        <pre>gridpower N</pre>
-        Changes the size of the grid. (default: g + scrollwheel)
-        <pre>edittex D</pre>
-        Changes the texture on current selection by browsing through a list of textures
-        directly shown on the cubes. D is the direction you want to cycle the textures
-        in (1 = forwards, -1 = backwards). (default: y + scrollwheel)
-        <br>
-        <br>
-        The way this works is slightly strange at first, but allows for very fast
-        texture assignment. All textures are in a list. and each time a texture is
-        used, it is moved to the top of the list. So after a bit of editing, all your
-        most frequently used textures will come first, and the most recently used
-        texture is set immediately when you press the forward key for the type. These
-        lists are saved with the map.
-        <PRE>gettex</PRE>
-        <P>moves the texture on the current selection to the top of the texture list. Useful for quickly
-        texturing things using already textured geometry</P>  
-        <pre>selextend</pre>
-        Extend current selection to include the cursor. (default: b)  
-        <PRE>passthrough</PRE>
-        normally cubes of equal size to the grid are given priority when selecting.
-        passthrough removes this priority while held down so that the cube the cursor is directly on is selected.   
-        Holding down passthrough will also give priority to cube over entities. (default: ctrl)
-        <pre>reorient</pre>
-        Change the side the white box is on to be the same as where you are currently
-        pointing. (default: shift)
-        <pre>flip</pre>
-        Flip (mirror) the selected cubes front to back relative to the side of the
-        white box. This will also flip the positions of any entites within the selection. (default: x)
-        <pre>rotate D</pre>
-        Rotates the selection 90 degrees around the side of the white box.
-        Automatically squares the selection if it isn't already.
-        This will also rotate the positions of any entites within the selection. (default: r + scroll wheel)
-        <pre>undo</pre>
-        Multi-level undo of any of the changes caused by the above operations (default: z [or u]).
-        <pre>redo</pre>
-        Multi-level redo of any of the changes caused by the above undo (default: i).      
-        <pre>copy
+<br><br>
+
+<a href="#editing">Editing</a>
+<a href="#heightfield">Heightfield</a>
+<a href="#entity">Entity</a>
+<a href="#settings">Settings</a>
+<a href="#map">Map and Config</a>
+<a href="#lightingcommands">Lighting</a>
+<a href="#entitytypes">Entity Types</a>
+<a href="#hud">The HUD</a>
+
+<a name="editing"></a>        
+<div>Editing</div>
+<pre>edittoggle</pre>
+Switches between map edit mode and normal (default key = e). In map edit mode
+you can select bits of the map by clicking or dragging your crosshair on the
+cubes (using the "attack" command, normally MOUSE1), then use the commands
+below to modify the selection. While in edit mode, physics &amp; collision
+don't apply (noclip), and key repeat is ON.
+<pre>editdrag</pre>
+Select cubes and entities. (default: left mouse button)
+<pre>cancelsel</pre>
+Cancels out any explicit selection you currently have (default: space).
+<pre>editface D N</pre>
+This is the main editing command. D is the direction of the action, -1 for
+towards you, 1 for away from you. N=0 to push all corners in the white box. N=1
+create or destroy cubes. N=2 push or pull a corner you are pointing at.       
+<pre>gridpower N</pre>
+Changes the size of the grid. (default: g + scrollwheel)
+<pre>edittex D</pre>
+Changes the texture on current selection by browsing through a list of textures
+directly shown on the cubes. D is the direction you want to cycle the textures
+in (1 = forwards, -1 = backwards). (default: y + scrollwheel)
+<br>
+<br>
+The way this works is slightly strange at first, but allows for very fast
+texture assignment. All textures are in a list. and each time a texture is
+used, it is moved to the top of the list. So after a bit of editing, all your
+most frequently used textures will come first, and the most recently used
+texture is set immediately when you press the forward key for the type. These
+lists are saved with the map.
+<PRE>gettex</PRE>
+<P>moves the texture on the current selection to the top of the texture list. Useful for quickly
+texturing things using already textured geometry</P>  
+<pre>selextend</pre>
+Extend current selection to include the cursor. (default: b)  
+<PRE>passthrough</PRE>
+normally cubes of equal size to the grid are given priority when selecting.
+passthrough removes this priority while held down so that the cube the cursor is directly on is selected.   
+Holding down passthrough will also give priority to cube over entities. (default: ctrl)
+<pre>reorient</pre>
+Change the side the white box is on to be the same as where you are currently
+pointing. (default: shift)
+<pre>flip</pre>
+Flip (mirror) the selected cubes front to back relative to the side of the
+white box. This will also flip the positions of any entites within the selection. (default: x)
+<pre>rotate D</pre>
+Rotates the selection 90 degrees around the side of the white box.
+Automatically squares the selection if it isn't already.
+This will also rotate the positions of any entites within the selection. (default: r + scroll wheel)
+<pre>undo</pre>
+Multi-level undo of any of the changes caused by the above operations (default: z [or u]).
+<pre>redo</pre>
+Multi-level redo of any of the changes caused by the above undo (default: i).      
+<pre>copy
 paste</pre>
-        Copy copies the current selection into a buffer. For pasting, if the current
-        selection is not the same size as the copy, the corner of the red reference box
-        will be used as the origin. If the current gridsize is changed from the copy,
-        the pasted copy will be stretched by the same factor.
+Copy copies the current selection into a buffer. For pasting, if the current
+selection is not the same size as the copy, the corner of the red reference box
+will be used as the origin. If the current gridsize is changed from the copy,
+the pasted copy will be stretched by the same factor.
 
-        Copy will work on entities as well as cubes. However it does not work on both at the same time. 
-        So if you select a set of cubes, the entities within that selection will not
-        be copied over on a paste. (default: c and v respectively)
-        <pre>replace</pre>
-        Repeats the last texture edit across the whole map. Only those faces with
-        textures matching the one that was last edited will be
-        replaced.        
-        <pre>editmat</pre>
-        Changes the type of material left behind when a cube is deleted. Currently the
-        following types of materials are supported:
-        <ul>
-            <li>
-            air: the default material, has no effect.
-            <li>
-            water: acts as you would expect. Only renders from the top, so treat it like
-            real water and keep all 4 sides contained. Shows blue volume in edit mode.
-            <li>
-            clip: an invisible wall that blocks players movement but not bullets. Is
-            ideally used to keep players "in bounds" in a map. Can be used sparingly to
-            smooth out the flow around decoration. Shows red volume in edit mode.
-            <li>
-            noclip: cubes are always treated as empty in physics. Shows green volume in edit mode.
-            <li>
-            glass: a clip-like material with a blended surface. Glass also stops bullets.
-            Shows cyan volume in edit mode.
-        </ul>
-        <pre>recalc</pre>
-        Recalculates scene geometry. Shouldn't be needed under normal curcumstances.
-        <pre>editmove</pre>
-        Experimental. Moves a cube selection to another position. Activated by a 'drag-and-drop' style action.
-        The orientation of the selection will change depending on what side of the selection 
-        you try to hold onto. The selection will extend if the cursor is outside of the selection
-        when you try to hold onto the it.
-        <br><br>        
-        Movement fuctions similar to entity dragging; 
-        you can drag the selection across the 2D plane indicated by the cube orientation.
-        The scroll wheel (ie: editface) is used to change the depth of the selection. 
-        A ghost selection will indicate the new position of the selection.
-        <br><br>  
-        Moving a cubic selection will also move any entities within the selection.
-
-
-
-        <a name="heightfield"></a>        
-        <div>Heightfield</div>
-        <pre>getheightmap</pre>
-        This command will turn any selection into a heightmap mode selection (default: H). When this
-        happens the selection will turn green with the orientation and gridsize denoted
-        by four corner squares on one side of the selection. When the selection enters heightmap
-        mode, the cubes within the selection will mimic a heightmap and so the geometry within
-        the selection will be changed if it is not already of heightmap style.
-        <br><br>The point of heightmap mode is that all editface commands will now edit
-        the selected cubes using a brush instead of the default behaviour. The selection will
-        also dynamically resize itself in order to generate the entire heightmap. This obviously
-        means that it can overwrite cubes below and above it. Other then these changes
-        the selection functions exactly the same as the normal selection, which means you can copy it,
-        extend it, cancel it, etc. The only exceptions to this right now are the flip and
-        rotate commands. This type of selection cannot currently be used in coop edit.
-        <pre>selectbrush D</pre>
-        This is not an actual engine command, but rather an alias which is defined
-        in data/brush.cfg. It is to be used as a modifier (default: J), and switches between the
-        various brushes that have been saved within that config file.
-        <pre>copybrush</pre>
-        This command (default: K) copies the current heightmap mode selection and
-        saves it as a new brush. The current location of the cursor will turn into the
-        new handle of the brush.
-        <pre>savebrush name</pre>
-        This will save the current brush in script format. This script will be saved in 
-		a file called mybrushes.cfg file for example. This is usually used after copybrush.
-		The brush can also be named for easy reference later.
-        <pre>clearbrush</pre>
-        This resets the current brush that is used during heightmap mode editing.
-        <pre>brushvert x y depth </pre>
-        A brush is a 2D map that describes the depth that the editface commands should
-        push into the cubes at various points. The first two parameters of brushvert are the X and Y
-        coordinates, respectively, of a vert on this 2D map. The last parameter
-        is used to set the depth.
-        <pre>brushx<br>brushy</pre>
-        Along with the 2D map, all brushes also have a handle. This handle is a reference
-        point on the 2D map which defines where the brush is relative to the editing cursor.
-        These two variables define the brush handle's coordinates.
+Copy will work on entities as well as cubes. However it does not work on both at the same time. 
+So if you select a set of cubes, the entities within that selection will not
+be copied over on a paste. (default: c and v respectively)
+<pre>replace</pre>
+Repeats the last texture edit across the whole map. Only those faces with
+textures matching the one that was last edited will be
+replaced.        
+<pre>editmat</pre>
+Changes the type of material left behind when a cube is deleted. Currently the
+following types of materials are supported:
+<ul>
+<li>
+air: the default material, has no effect.
+<li>
+water: acts as you would expect. Only renders from the top, so treat it like
+real water and keep all 4 sides contained. Shows blue volume in edit mode.
+<li>
+clip: an invisible wall that blocks players movement but not bullets. Is
+ideally used to keep players "in bounds" in a map. Can be used sparingly to
+smooth out the flow around decoration. Shows red volume in edit mode.
+<li>
+noclip: cubes are always treated as empty in physics. Shows green volume in edit mode.
+<li>
+glass: a clip-like material with a blended surface. Glass also stops bullets.
+Shows cyan volume in edit mode.
+</ul>
+<pre>recalc</pre>
+Recalculates scene geometry. Shouldn't be needed under normal curcumstances.
+<pre>editmove</pre>
+Experimental. Moves a cube selection to another position. Activated by a 'drag-and-drop' style action.
+The orientation of the selection will change depending on what side of the selection 
+you try to hold onto. The selection will extend if the cursor is outside of the selection
+when you try to hold onto the it.
+<br><br>        
+Movement fuctions similar to entity dragging; 
+you can drag the selection across the 2D plane indicated by the cube orientation.
+The scroll wheel (ie: editface) is used to change the depth of the selection. 
+A ghost selection will indicate the new position of the selection.
+<br><br>  
+Moving a cubic selection will also move any entities within the selection.
 
 
 
-        <a name="entity"></a>        
-        <div>Entity</div>
-        <pre>newent type    value1 value2 value3 value4</pre>
-        Adds a new entity where (x,y) is determined by the current selection (the red
-        dot corner) and z by the camera height, of said type. Type is a string giving
-        the type of entity, such as "light", and may optionally take values (depending
-        on the entity). The types are defines below in the <a href="#entitytypes">Entity
-            Types</a> section.
-        <pre>entedit type    value1 value2 value3 value4</pre>
-        Change the type and attributes of the selected entity.
-        <br><br>
-        To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
-        <pre>delent</pre>
-        deletes the selected entity to the player
-        <pre>entproperty P A</pre>
-        Changes property P (0..3) of the closest entity by amount A. For example
-        "entproperty 0 2" when executed near a lightsource would increase its radius by
-        2.
-        <pre>clearents type</pre>
-        Deletes all entities of said type.
-        <pre>replaceents type value1 value2 value3 value4</pre>
-        Replaces the given values for the selected entity and all entities that are
-        equal to the selected entity. 
-        <br><br>
-        To quickly bring up the replaceents command in the console press ',' (default: comma). It will come pre-filled with the values of the current entity selection.
-        <pre>entdrop N</pre>
-        variable controlling where entities created with "newent" will be placed.<br>
-        N=0 place entities at your current eye position.<br>
-        N=1 drop entities to the floor beneath you. Lights, however, will be placed at
-        your current eye position as for N=0.<br>
-        N=2 place entities at the center of the currently selected cube face. If a
-        corner is selected, the entity will be placed at the corner vertex.<br>
-        N=3 behaves as with N=2, except all entities, including lights, will then
-        bedropped from that position to whatever floor lies beneath. This mode is
-        useful for placing objects on selected floors. Lights are also dropped to the
-        floor, unlike for N=1.
-        <pre>dropent</pre>
-        Positions the selected entity according to the entdrop variable.
-        <pre>trigger T N</pre>
-        Sets the state of all locked triggers with tag T to N.
-        <pre>enttype</pre>
-        Returns a string for scripts that has the 'type' of the selected entity.
-        <pre>entattr N</pre>
-        Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
+<a name="heightfield"></a>        
+<div>Heightfield</div>
+<pre>getheightmap</pre>
+This command will turn any selection into a heightmap mode selection (default: H). When this
+happens the selection will turn green with the orientation and gridsize denoted
+by four corner squares on one side of the selection. When the selection enters heightmap
+mode, the cubes within the selection will mimic a heightmap and so the geometry within
+the selection will be changed if it is not already of heightmap style.
+<br><br>The point of heightmap mode is that all editface commands will now edit
+the selected cubes using a brush instead of the default behaviour. The selection will
+also dynamically resize itself in order to generate the entire heightmap. This obviously
+means that it can overwrite cubes below and above it. Other then these changes
+the selection functions exactly the same as the normal selection, which means you can copy it,
+extend it, cancel it, etc. The only exceptions to this right now are the flip and
+rotate commands. This type of selection cannot currently be used in coop edit.
+<pre>selectbrush D</pre>
+This is not an actual engine command, but rather an alias which is defined
+in data/brush.cfg. It is to be used as a modifier (default: J), and switches between the
+various brushes that have been saved within that config file.
+<pre>copybrush</pre>
+This command (default: K) copies the current heightmap mode selection and
+saves it as a new brush. The current location of the cursor will turn into the
+new handle of the brush.
+<pre>savebrush name</pre>
+This will save the current brush in script format. This script will be saved in 
+a file called mybrushes.cfg file for example. This is usually used after copybrush.
+The brush can also be named for easy reference later.
+<pre>clearbrush</pre>
+This resets the current brush that is used during heightmap mode editing.
+<pre>brushvert x y depth </pre>
+A brush is a 2D map that describes the depth that the editface commands should
+push into the cubes at various points. The first two parameters of brushvert are the X and Y
+coordinates, respectively, of a vert on this 2D map. The last parameter
+is used to set the depth.
+<pre>brushx<br>brushy</pre>
+Along with the 2D map, all brushes also have a handle. This handle is a reference
+point on the 2D map which defines where the brush is relative to the editing cursor.
+These two variables define the brush handle's coordinates.
 
-        <a name="settings"></a>        
-        <div>Settings</div>
-        <pre>undomegs N</pre>
-        Sets the number of megabytes used for the undo buffer (default 5, max 100).
-        Undo's work for any size areas, so the amount of undo steps per megabyte is
-        more for small areas than for big ones.
-        <pre>showsky B</pre>
-        This variable controls whether explicit sky polygons are outlined (in purple) in edit mode.
-        Default = 1.
-        <pre>outline B</pre>
-        This variable controls whether geometry boundaries (outlines) are shown.
-        Default = 0.
-        <PRE>wireframe 0/1</PRE>
-        <P>Turns on wireframe drawing of the map.</P>
-        <PRE>allfaces 0/1</PRE>
-        <P>when on, causes the texturing commands to apply the new texture to all sides of the selected cubes
-        rather than just the selected face.</P>
-        <pre>showmat B</pre>
-        This variables whether volumes are shown for invisible material surfaces in edit mode.
-        Material volumes may also be selected while this is enabled. Default = 1.
-        <pre>optmats B</pre>
-        This variables controls whether material rendering should be optimized by grouping materials
-        into the largest possible surfaces. This will always make rendering faster, so the only reason
-        to disable it is for testing. Default = 1.
-        <pre>entselradius N</pre>
-        Sets the 'handle' size of entities when trying to select them. 
-        Larger sizes means it should be easier to select entities.
-        <pre>entselsnap 0/1</pre>
-        Turns on snap-to-grid while draggin entities. (default: 6)
-        
-        <a name="map"></a>        
-        <div>Map and Config</div>
-        <pre>map name</pre>
-        Loads up map "name" in the gamemode set previously by "mode". A map given as
-        "blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to
-        "packages/mypackage/blah.cgz". The menu has a set of maps that can be loaded.
-        See also map in the gameplay docs.
-        <br>
-        <br>
-        At every map load, "data/default_map_settings.cfg" is loaded which sets up all
-        texture definitions etc. Everything defined in there can be overridden per
-        package or per map by creating a "package.cfg" or "mapname.cfg" which contains
-        whatever you want to do differently from the default. It can also set up
-        triggers scripts per map etc.
-        <br>
-        <br>
-        When the map finishes it will load the next map when one is defined, otherwise
-        reloads the current map. You can define what map follows a particular map by
-        making an alias like (in the map script): <code>alias nextmap_blah1 blah2</code>
-        (loads "blah2" after "blah1").
-        <pre>sendmap</pre>
-        Saves the current map (without lightmaps) and sends it to the server so other clients may download it.
-        Only works in coopedit game mode.
-        <pre>getmap</pre>
-        Gets a map from the server if one is available. Automatically loads the map when done. Only works in coopedit
-        game mode.        
-        <pre>savemap name
+
+
+<a name="entity"></a>        
+<div>Entity</div>
+<pre>newent type    value1 value2 value3 value4</pre>
+Adds a new entity where (x,y) is determined by the current selection (the red
+dot corner) and z by the camera height, of said type. Type is a string giving
+the type of entity, such as "light", and may optionally take values (depending
+on the entity). The types are defines below in the <a href="#entitytypes">Entity
+Types</a> section.
+<pre>entedit type    value1 value2 value3 value4</pre>
+Change the type and attributes of the selected entity.
+<br><br>
+To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
+<pre>delent</pre>
+deletes the selected entity to the player
+<pre>entproperty P A</pre>
+Changes property P (0..3) of the closest entity by amount A. For example
+"entproperty 0 2" when executed near a lightsource would increase its radius by
+2.
+<pre>clearents type</pre>
+Deletes all entities of said type.
+<pre>replaceents type value1 value2 value3 value4</pre>
+Replaces the given values for the selected entity and all entities that are
+equal to the selected entity. 
+<br><br>
+To quickly bring up the replaceents command in the console press ',' (default: comma). It will come pre-filled with the values of the current entity selection.
+<pre>entdrop N</pre>
+variable controlling where entities created with "newent" will be placed.<br>
+N=0 place entities at your current eye position.<br>
+N=1 drop entities to the floor beneath you. Lights, however, will be placed at
+your current eye position as for N=0.<br>
+N=2 place entities at the center of the currently selected cube face. If a
+corner is selected, the entity will be placed at the corner vertex.<br>
+N=3 behaves as with N=2, except all entities, including lights, will then
+bedropped from that position to whatever floor lies beneath. This mode is
+useful for placing objects on selected floors. Lights are also dropped to the
+floor, unlike for N=1.
+<pre>dropent</pre>
+Positions the selected entity according to the entdrop variable.
+<pre>trigger T N</pre>
+Sets the state of all locked triggers with tag T to N.
+<pre>enttype</pre>
+Returns a string for scripts that has the 'type' of the selected entity.
+<pre>entattr N</pre>
+Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
+
+<a name="settings"></a>        
+<div>Settings</div>
+<pre>undomegs N</pre>
+Sets the number of megabytes used for the undo buffer (default 5, max 100).
+Undo's work for any size areas, so the amount of undo steps per megabyte is
+more for small areas than for big ones.
+<pre>showsky B</pre>
+This variable controls whether explicit sky polygons are outlined (in purple) in edit mode.
+Default = 1.
+<pre>outline B</pre>
+This variable controls whether geometry boundaries (outlines) are shown.
+Default = 0.
+<PRE>wireframe 0/1</PRE>
+<P>Turns on wireframe drawing of the map.</P>
+<PRE>allfaces 0/1</PRE>
+<P>when on, causes the texturing commands to apply the new texture to all sides of the selected cubes
+rather than just the selected face.</P>
+<pre>showmat B</pre>
+This variables whether volumes are shown for invisible material surfaces in edit mode.
+Material volumes may also be selected while this is enabled. Default = 1.
+<pre>optmats B</pre>
+This variables controls whether material rendering should be optimized by grouping materials
+into the largest possible surfaces. This will always make rendering faster, so the only reason
+to disable it is for testing. Default = 1.
+<pre>entselradius N</pre>
+Sets the 'handle' size of entities when trying to select them. 
+Larger sizes means it should be easier to select entities.
+<pre>entselsnap 0/1</pre>
+Turns on snap-to-grid while draggin entities. (default: 6)
+
+<a name="map"></a>        
+<div>Map and Config</div>
+<pre>map name</pre>
+Loads up map "name" in the gamemode set previously by "mode". A map given as
+"blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to
+"packages/mypackage/blah.cgz". The menu has a set of maps that can be loaded.
+See also map in the gameplay docs.
+<br>
+<br>
+At every map load, "data/default_map_settings.cfg" is loaded which sets up all
+texture definitions etc. Everything defined in there can be overridden per
+package or per map by creating a "package.cfg" or "mapname.cfg" which contains
+whatever you want to do differently from the default. It can also set up
+triggers scripts per map etc.
+<br>
+<br>
+When the map finishes it will load the next map when one is defined, otherwise
+reloads the current map. You can define what map follows a particular map by
+making an alias like (in the map script): <code>alias nextmap_blah1 blah2</code>
+(loads "blah2" after "blah1").
+<pre>sendmap</pre>
+Saves the current map (without lightmaps) and sends it to the server so other clients may download it.
+Only works in coopedit game mode.
+<pre>getmap</pre>
+Gets a map from the server if one is available. Automatically loads the map when done. Only works in coopedit
+game mode.        
+<pre>savemap name
 savecurrentmap</pre>
-        Saves the current map, using the same naming scheme as "map". Makes a versioned
-        backup to "mapname_N.BAK" if a map by that name already exists, so you can never
-        lose a map. With "savemap", if you leave out the "name" argument, it is saved under the current map name.
-        With "savecurrentmap", the map is saved with the name determined by the current game.
-        <br>
-        <br>
-        Where you store a map depends on the complexity of what you are creating: if
-        its a single map (maybe with its own .cfg) then the "base" package is the best
-        place. If its multiple maps or a map with new media (textures etc.) its better
-        to store it in its own package (a directory under "packages"), which makes
-        distributing it less messy.
-        <pre>newmap size</pre>
-        Creates a new map of size^2 cubes (on the smallest grid size). 10 is a small
-        map, 15 is a large map but it goes up to 20.
-        <pre>mapenlarge</pre>
-        Doubles the dimensions of the current map.        
-        <pre>mapmsg "Title by Author"</pre>
-        sets the map msg, which will be displayed when the map loads. Either use the
-        above format, or simply "by Author" if the map has no particular title (always
-        displayed after the map load msg).
-        <pre>texturereset</pre>
-        Sets the texture slot to 0 for the subsequent "texture" commands.
-        <pre>texture TYPE FILENAME ROT X Y</pre>
-        Binds the texture indicated in FILENAME to the current texture slot, then
-        increments the slot number depending on TYPE. This is for use in texture.cfg files only. TYPE
-        allows secondary textures to be specified for a single texture slot, for use in
-        shaders and other features: 0 or "c" for primary diffuse texture (RGB), 1 or "u" for generic secondary texture, "d" for decals (RGBA), "n" for normal maps (XYZ), "g" for glow maps (RGB), "s" for specularity maps (grey-scale), "z" for depth maps (Z). 
-        Specifying the primary diffuse texture advances to the next texture slot as above, while secondary types fill additional texture units in the order specified in the .cfg file. Normal ("n") and glow ("g") maps will automatically be combined with specularity ("s") and depth ("z") maps, filling the unused A component, into one texture. Decal ("d") and glow ("g") maps will be blended into the diffuse texture if running without shaders. To disable this combining, specify secondary textures as generic with 1 or "u".
-        ROT specifies preprocessing on the image, currently only rotation and flipping (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW, 4 = X flip, 5 = Y flip). X and Y are the X and Y offset in texels.
-        <pre>watercolour R G B</pre>
-        Changes the blended color of all water to RGB. This may be used to simulate
-        various lighting conditions for water.        
-        <pre>shader TYPE NAME VS PS</pre>
-        defines a shader NAME with vertex shader VS and pixel shader PS (both in ARB OpenGL 1.5 assembly format). See data/stdshader.cfg for examples.
-        These definitions can be put in map cfg files or anywhere else, and will only be compiled once.
-        TYPE indicates what resources the shader provides, or what backup method should be used if the graphics card does not support shaders.
-        TYPE is either 0 for default shader, 1 for decal shader, 2 for bumpmapped shader, or 3 for bumpmapped shader with glowmap.
-        Requires DX9 / shader 2 class hardware (radeon 9500 or better, geforce 5200 or better) to run (older hardware will default to basic rendering).
-        <pre>setshader NAME</pre>
-        Sets a previously defined shader as the current shader. Any following texture slots (see "texture" command) will have this shader
-        attached to it.
-        <pre>music name
+Saves the current map, using the same naming scheme as "map". Makes a versioned
+backup to "mapname_N.BAK" if a map by that name already exists, so you can never
+lose a map. With "savemap", if you leave out the "name" argument, it is saved under the current map name.
+With "savecurrentmap", the map is saved with the name determined by the current game.
+<br>
+<br>
+Where you store a map depends on the complexity of what you are creating: if
+its a single map (maybe with its own .cfg) then the "base" package is the best
+place. If its multiple maps or a map with new media (textures etc.) its better
+to store it in its own package (a directory under "packages"), which makes
+distributing it less messy.
+<pre>newmap size</pre>
+Creates a new map of size^2 cubes (on the smallest grid size). 10 is a small
+map, 15 is a large map but it goes up to 20.
+<pre>mapenlarge</pre>
+Doubles the dimensions of the current map.        
+<pre>mapmsg "Title by Author"</pre>
+sets the map msg, which will be displayed when the map loads. Either use the
+above format, or simply "by Author" if the map has no particular title (always
+displayed after the map load msg).
+<pre>texturereset</pre>
+Sets the texture slot to 0 for the subsequent "texture" commands.
+<pre>texture TYPE FILENAME ROT X Y</pre>
+Binds the texture indicated in FILENAME to the current texture slot, then
+increments the slot number depending on TYPE. This is for use in texture.cfg files only. TYPE
+allows secondary textures to be specified for a single texture slot, for use in
+shaders and other features: 0 or "c" for primary diffuse texture (RGB), 1 or "u" for generic secondary texture, "d" for decals (RGBA), "n" for normal maps (XYZ), "g" for glow maps (RGB), "s" for specularity maps (grey-scale), "z" for depth maps (Z). 
+Specifying the primary diffuse texture advances to the next texture slot as above, while secondary types fill additional texture units in the order specified in the .cfg file. Normal ("n") and glow ("g") maps will automatically be combined with specularity ("s") and depth ("z") maps, filling the unused A component, into one texture. Decal ("d") and glow ("g") maps will be blended into the diffuse texture if running without shaders. To disable this combining, specify secondary textures as generic with 1 or "u".
+ROT specifies preprocessing on the image, currently only rotation and flipping (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW, 4 = X flip, 5 = Y flip). X and Y are the X and Y offset in texels.
+<pre>watercolour R G B</pre>
+Changes the blended color of all water to RGB. This may be used to simulate various lighting conditions for water.        
+<pre>shader TYPE NAME VS PS</pre>
+defines a shader NAME with vertex shader VS and pixel shader PS (both in ARB OpenGL 1.5 assembly format). See data/stdshader.cfg for examples.
+These definitions can be put in map cfg files or anywhere else, and will only be compiled once.
+TYPE indicates what resources the shader provides, or what backup method should be used if the graphics card does not support shaders.
+TYPE is either 0 for default shader, 1 for decal shader, 2 for bumpmapped shader, or 3 for bumpmapped shader with glowmap.
+Requires DX9 / shader 2 class hardware (radeon 9500 or better, geforce 5200 or better) to run (older hardware will default to basic rendering).
+<pre>setshader NAME</pre>
+Sets a previously defined shader as the current shader. Any following texture slots (see "texture" command) will have this shader
+attached to it.
+<pre>music name
 music name ondone</pre>
-        Plays song "name" (with "packages" as base dir). This command is best used from
-        map cfg files or triggers. Evaluates ondone when the song is finished, or just keeps
-        looping the song if ondone is missing. Example:
-        <br>
-        <code>music "songs/music.ogg" [ echo "Song dong playing!" ]</code>
-        <pre>N = registersound name V</pre>
-        Registers sound "name" with cube (see for example data/sounds.cfg). This
-        command returns the sound number N, which is assigned from 0 onwards, and which
-        can be used with "sound" command below. if the sound was already registered,
-        its existing index is returned. registersound does not actually load the sound,
-        this is done on first play. V is volume adjustment, if not specified (0), it is the default 100, valid
-    range is 1-255.<pre>sound N</pre>
-        Plays sound N, see data/sounds.cfg for default sounds, and use registersound to
-        register your own. for example, <code>sound 0</code> and <code>sound (registersound
-            "aard/jump")</code>both play the standard jump sound.
-        <pre>mapmodel R H T N SH</pre>
-        <P>
-            registers a mapmodel that can be placed in maps using <code><font size="2">newent
-                    mapmodel</font></code> (see newent). N is the name, R is the square
-            radius, H the height, T the texture slot to skin the model with (0 for default skin), and SH toggles whether the it
-            will cast shadows (not given or 1 casts shadows, 0 has no shadows). The radius R and height
-            H define the collision bounding box of the model (if either is 0, players won't collide
-            with the mapmodel). Name N is the name of a folder inside packages/models folder, e.g.
-            "hudguns/rifle". Loaded from that folder are: tris.md2 and skin.jpg (and if not available,
-            skin.png, or the same from the parent folder to allow skin sharing).
-            <br>
-            <br>
-            Example: <code><font size="2">mapmodel 4 32 0 "tree1"</font></code>
-            <br>
-            This map model is loaded from packages/models/tree1/. It has a collision box 8x8x32 in size (x=2*R, y=2*R, z=H). It uses the model's default skin (texture slot=0).
-            It casts shadows (default).</P>
-        <PRE>importcube N</PRE>
-        <P>imports a cube map (.cgz) and converts it to sauerbraten's map format. N is the
-            name of the map, without the .cgz. The map file must reside in packages/cube,
-            which is because that folder has a package.cfg that sets the default cube
-            textures. If the cube map in question has a custom texture list, it will have
-            to be adapted manually. Currently converts everything relatively faithfully,
-            except heighfields which are converted as best as possible but not always
-            accurately. Slopes tend to work faultlessly, landscape style stuff is usuable,
-            but curves/arches are problematic, and may have to be redone. All entities are
-            converted though mapmodels may not be present, and light entities are useless
-            because of their 2d nature, so probably the first thing to do after converting
-            a map is /clearents light, and place some new lights. Pickups and other items
-            may spawn inside the walls because they have no proper Z value, you may have to
-            correct these manually. The importcube command does not automatically save the
-            map, you still have to do a /savecurrentmap which will create
-            packages/cube/N.ogz. Reload the map to be able to pick up stuff. Waterlevel is
-            also not supported, you will have to add water using the new material system.</P>
-       <pre>lodsize N</pre>
-        Turn on world LOD (level of detail) for this map if N=32 (default is N=0, off).
-        The state of this command is saved with the map. N is the size of the blocks
-        that will be used for LOD, in theory you can use 16 or 64 as well, but this
-        usually just either just hurts performance, memory usage or visual quality. Use
-        32 unless you know exactly what you are doing. After setting this var, LOD will
-        only become apparent after a "recalc" (and "calclight") command. Turning LOD on
-        for a map is only useful on really large maps with lots of detail where you can
-        see for half a mile, on smaller maps it will have no effect and only wastes
-        memory / lightmap space. LOD works on entire vertex array blocks at a time, and
-        is dependent on the "loddistance" variable which the player can set to trade
-        off speed vs visual quality.
-        <pre>writeobj N</pre>
-        Writes out the current map as N.obj, so you could use sauerbraten as a generic modeller
-        with any program/engine that uses meshes. The meshes aren't very optimal and don't
-        have texture/lighting information.
+Plays song "name" (with "packages" as base dir). This command is best used from
+map cfg files or triggers. Evaluates ondone when the song is finished, or just keeps
+looping the song if ondone is missing. Example:
+<br>
+<code>music "songs/music.ogg" [ echo "Song dong playing!" ]</code>
+<pre>N = registersound name V</pre>
+Registers sound "name" with cube (see for example data/sounds.cfg). This
+command returns the sound number N, which is assigned from 0 onwards, and which
+can be used with "sound" command below. if the sound was already registered,
+its existing index is returned. registersound does not actually load the sound,
+this is done on first play. V is volume adjustment, if not specified (0), it is the default 100, valid
+range is 1-255.<pre>sound N</pre>
+Plays sound N, see data/sounds.cfg for default sounds, and use registersound to
+register your own. for example, <code>sound 0</code> and <code>sound (registersound
+"aard/jump")</code>both play the standard jump sound.
+<pre>mapmodel R H T N SH</pre>
+<P>
+registers a mapmodel that can be placed in maps using <code><font size="2">newent
+mapmodel</font></code> (see newent). N is the name, R is the square
+radius, H the height, T the texture slot to skin the model with (0 for default skin), and SH toggles whether the it
+will cast shadows (not given or 1 casts shadows, 0 has no shadows). The radius R and height
+H define the collision bounding box of the model (if either is 0, players won't collide
+with the mapmodel). Name N is the name of a folder inside packages/models folder, e.g.
+"hudguns/rifle". Loaded from that folder are: tris.md2 and skin.jpg (and if not available,
+skin.png, or the same from the parent folder to allow skin sharing).
+<br>
+<br>
+Example: <code><font size="2">mapmodel 4 32 0 "tree1"</font></code>
+<br>
+This map model is loaded from packages/models/tree1/. It has a collision box 8x8x32 in size (x=2*R, y=2*R, z=H). It uses the model's default skin (texture slot=0).
+It casts shadows (default).</P>
+<PRE>importcube N</PRE>
+<P>imports a cube map (.cgz) and converts it to sauerbraten's map format. N is the
+name of the map, without the .cgz. The map file must reside in packages/cube,
+which is because that folder has a package.cfg that sets the default cube
+textures. If the cube map in question has a custom texture list, it will have
+to be adapted manually. Currently converts everything relatively faithfully,
+except heighfields which are converted as best as possible but not always
+accurately. Slopes tend to work faultlessly, landscape style stuff is usuable,
+but curves/arches are problematic, and may have to be redone. All entities are
+converted though mapmodels may not be present, and light entities are useless
+because of their 2d nature, so probably the first thing to do after converting
+a map is /clearents light, and place some new lights. Pickups and other items
+may spawn inside the walls because they have no proper Z value, you may have to
+correct these manually. The importcube command does not automatically save the
+map, you still have to do a /savecurrentmap which will create
+packages/cube/N.ogz. Reload the map to be able to pick up stuff. Waterlevel is
+also not supported, you will have to add water using the new material system.</P>
+<pre>lodsize N</pre>
+Turn on world LOD (level of detail) for this map if N=32 (default is N=0, off).
+The state of this command is saved with the map. N is the size of the blocks
+that will be used for LOD, in theory you can use 16 or 64 as well, but this
+usually just either just hurts performance, memory usage or visual quality. Use
+32 unless you know exactly what you are doing. After setting this var, LOD will
+only become apparent after a "recalc" (and "calclight") command. Turning LOD on
+for a map is only useful on really large maps with lots of detail where you can
+see for half a mile, on smaller maps it will have no effect and only wastes
+memory / lightmap space. LOD works on entire vertex array blocks at a time, and
+is dependent on the "loddistance" variable which the player can set to trade
+off speed vs visual quality.
+<pre>writeobj N</pre>
+Writes out the current map as N.obj, so you could use sauerbraten as a generic modeller
+with any program/engine that uses meshes. The meshes aren't very optimal and don't
+have texture/lighting information.
 
 
 
-        <a name="lightingcommands"></a>        
-        <div>Lighting</div>
-        <pre>calclight Q</pre>
-        This calculates all lightmaps. Usually takes only a few seconds, depending on
-        map size and settings. If you "savemap", the lightmap will be stored along with
-        it. Q is these predefined quality settinsg:
-        <ul>
-        <li>2: 8x anti aliasing, shadows for mapmodels also (maximum quality, very slow)</li>
-        <li>1: 8x anti aliasing, world shadows only (better lighting quality for huge maps, slow)</li>
-        <li>0: 4x anti aliasing, world shadows only (default, good enough for most maps)</li>
-        <li>-1: no anti aliasing, but still shadowed (good for shadow previews)</li>
-        <li>-2: no anti aliasing and no shadows (VERY fast, good for lighting previews)</li>
-        </ul>
-        <pre>patchlight</pre>
-        This will calculate lightmaps for any newly created cubes. This will generally
-        be much quicker than doing a "calclight", and so is very useful when editing.
-        However, it will make very inefficient use of lightmap textures, and any new
-        cubes will not properly cast shadows on surfaces that are already lit. It is
-        recommended you do a "calclight" on your map before you publish it with
-        "savemap".
-        <pre>fullbright B</pre>
-        This variable controls whether the map will be shown with lighting disabled.
-        Fullbright 1 will disable lighting, whereas 0 will enable lighting. (Default =
-        0)
-        <pre>lerpangle A</pre>
-        Default = 44. This variable controls whether surface normals are interpolated for
-        lighting. Normals are sampled at each vertex of the surface. If the angle between
-        two surfaces' normals (which meet at a vertex) is less than A, then the resulting
-        normal will be the average of the two. Normals are then later interpolated between
-        the normals at the vertexes of a surface.
-        <pre>lerpsubdiv N</pre>
-        Default = 2. This allows more normals to be sampled at points along an edge between
-        two vertexes of a surface. 2^N-1 extra normals will be sampled along the edge, i.e.
-        the edge is split in half for every increment of N.
-        <pre>lerpsubdivsize N</pre>
-        Default = 4. This sets the minimum size to which an edge may be subdivided. Edges
-        smaller than N or edge sections smaller than N will not be sampled.
-        <pre>lightprecision P</pre>
-        Default = 32. This is the most important variable for tweaking the lighting, it
-        determines what the resolution of the lightmap is. As such has a BIG effect on
-        calculation time, video memory usage, and map file size. The default is good
-        for most maps, you may go as low as 16 if you are lighting a really small map
-        and love hard shadows, and for bigger maps you may need to set it to 64 or so
-        to get reasonable memory usage.
-        <br>
-        <br>
-        The number to watch out for is the number of lightmaps generated which are
-        shown on the HUD (and also as output after a calclight). 1 or 2 lightmap
-        textures is very good, over 10 lightmap textures is excessive.
-        <br>
-        <br>
-        The map file size is for 90% determined by the lightmaps, so tweak this value
-        to get an acceptable quality to size ratio. Look at the size of the map files,
-        sometimes a slightly higher lightprecision can halve the size of your .ogz.
-        <br>
-        <br>
-        Every surface matters, even though sauerbraten attempts to compress surfaces
-        with a uniform lightvalue, it is always a good ideas to delete parts of the
-        world that are not part of your map. Lightprecision, lighterror, and lightlod
-        are stored as part of map files.
-        <pre>lighterror E</pre>
-        There should be little reason to tweak this. If in your map you can see visible
-        polygon boundaries caused by lighting, you can try stepping this down to 6 or 4
-        to improve quality at the expense of lightmap space. If you have an insanely
-        large map and looking for ways to reduce file size, increasing error up to 16
-        may help. (Default = 8)
-        <pre>lightlod D</pre>
-        Default = 0. This will double the resolution of lightmaps (cut the
-        lightprecision in half) if size of the surface being lit is smaller than 2^D
-        units. This allows large maps to have pockets of detailed lighting without
-        using a high resolution over everything.
-        <br>
-        <br>
-        NOTE: if you feel like using this, test it thoroughly. On medium or small sized
-        detailed maps, this command wastes space, use lightlod 0. Lightlod &gt; 0 is
-        only useful for huge maps
-        <pre>dumplms</pre>
-        Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but
-        mappers may find it interesting too.
-        
+<a name="lightingcommands"></a>        
+<div>Lighting</div>
+<pre>calclight Q</pre>
+This calculates all lightmaps. Usually takes only a few seconds, depending on
+map size and settings. If you "savemap", the lightmap will be stored along with
+it. Q is these predefined quality settinsg:
+<ul>
+<li>2: 8x anti aliasing, shadows for mapmodels also (maximum quality, very slow)</li>
+<li>1: 8x anti aliasing, world shadows only (better lighting quality for huge maps, slow)</li>
+<li>0: 4x anti aliasing, world shadows only (default, good enough for most maps)</li>
+<li>-1: no anti aliasing, but still shadowed (good for shadow previews)</li>
+<li>-2: no anti aliasing and no shadows (VERY fast, good for lighting previews)</li>
+</ul>
+<pre>patchlight</pre>
+This will calculate lightmaps for any newly created cubes. This will generally
+be much quicker than doing a "calclight", and so is very useful when editing.
+However, it will make very inefficient use of lightmap textures, and any new
+cubes will not properly cast shadows on surfaces that are already lit. It is
+recommended you do a "calclight" on your map before you publish it with
+"savemap".
+<pre>fullbright B</pre>
+This variable controls whether the map will be shown with lighting disabled.
+Fullbright 1 will disable lighting, whereas 0 will enable lighting. (Default =
+0)
+<pre>lerpangle A</pre>
+Default = 44. This variable controls whether surface normals are interpolated for
+lighting. Normals are sampled at each vertex of the surface. If the angle between
+two surfaces' normals (which meet at a vertex) is less than A, then the resulting
+normal will be the average of the two. Normals are then later interpolated between
+the normals at the vertexes of a surface.
+<pre>lerpsubdiv N</pre>
+Default = 2. This allows more normals to be sampled at points along an edge between
+two vertexes of a surface. 2^N-1 extra normals will be sampled along the edge, i.e.
+the edge is split in half for every increment of N.
+<pre>lerpsubdivsize N</pre>
+Default = 4. This sets the minimum size to which an edge may be subdivided. Edges
+smaller than N or edge sections smaller than N will not be sampled.
+<pre>lightprecision P</pre>
+Default = 32. This is the most important variable for tweaking the lighting, it
+determines what the resolution of the lightmap is. As such has a BIG effect on
+calculation time, video memory usage, and map file size. The default is good
+for most maps, you may go as low as 16 if you are lighting a really small map
+and love hard shadows, and for bigger maps you may need to set it to 64 or so
+to get reasonable memory usage.
+<br>
+<br>
+The number to watch out for is the number of lightmaps generated which are
+shown on the HUD (and also as output after a calclight). 1 or 2 lightmap
+textures is very good, over 10 lightmap textures is excessive.
+<br>
+<br>
+The map file size is for 90% determined by the lightmaps, so tweak this value
+to get an acceptable quality to size ratio. Look at the size of the map files,
+sometimes a slightly higher lightprecision can halve the size of your .ogz.
+<br>
+<br>
+Every surface matters, even though sauerbraten attempts to compress surfaces
+with a uniform lightvalue, it is always a good ideas to delete parts of the
+world that are not part of your map. Lightprecision, lighterror, and lightlod
+are stored as part of map files.
+<pre>lighterror E</pre>
+There should be little reason to tweak this. If in your map you can see visible
+polygon boundaries caused by lighting, you can try stepping this down to 6 or 4
+to improve quality at the expense of lightmap space. If you have an insanely
+large map and looking for ways to reduce file size, increasing error up to 16
+may help. (Default = 8)
+<pre>lightlod D</pre>
+Default = 0. This will double the resolution of lightmaps (cut the
+lightprecision in half) if size of the surface being lit is smaller than 2^D
+units. This allows large maps to have pockets of detailed lighting without
+using a high resolution over everything.
+<br>
+<br>
+NOTE: if you feel like using this, test it thoroughly. On medium or small sized
+detailed maps, this command wastes space, use lightlod 0. Lightlod &gt; 0 is
+only useful for huge maps
+<pre>dumplms</pre>
+Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but
+mappers may find it interesting too.
 
-        
-        
-        <a name="entitytypes"></a>        
-        <div>Entity Types</div>
-        <pre>"light" radius brightness
+
+
+
+<a name="entitytypes"></a>        
+<div>Entity Types</div>
+<pre>"light" radius brightness
 "light" radius r g b</pre>
-        If G and B are 0 the R value will be taken as brightness for a white light. A
-        good radius for a small wall light is 64, for a middle sized room 128... for a
-        sun probably more like 1000. Lights with a radius of 0 do not attenuate and may
-        be more appropriate for simulating sunlight or ambient light; however, this
-        comes at the cost of slightly greater map file sizes. See the <a href="#lightingcommands">
-            lighting commands</a> for an indepth list of all lighting related commands.
-        <pre>"playerstart"</pre>
-        Spawn spot, yaw is taken from the current camera yaw.
-        <pre>"shells"
+If G and B are 0 the R value will be taken as brightness for a white light. A
+good radius for a small wall light is 64, for a middle sized room 128... for a
+sun probably more like 1000. Lights with a radius of 0 do not attenuate and may
+be more appropriate for simulating sunlight or ambient light; however, this
+comes at the cost of slightly greater map file sizes. See the <a href="#lightingcommands">
+lighting commands</a> for an indepth list of all lighting related commands.
+<pre>"playerstart"</pre>
+Spawn spot, yaw is taken from the current camera yaw.
+<pre>"shells"
 "bullets"
 "rockets"
 "riflerounds"
@@ -488,274 +480,274 @@ music name ondone</pre>
 "greenarmour"
 "yellowarmour"
 "quaddamage"</pre>
-        A variety of pickup-able items, see <a href="./game.html">here</a>.
-        <pre>"teleport" N
+A variety of pickup-able items, see <a href="./game.html">here</a>.
+<pre>"teleport" N
 "teledest" N</pre>
-        creates a teleport connection, teleports are linked to a teledest with the same
-        N (of which there should be exactly one). N can be 0..255. The teledest uses
-        the current camera yaw.
-        <pre>"mapmodel" N Type Trigger</pre>
-        A map model, i.e. an object rendered as md2/md3 which you collide against, cast
-    shadows etc. N determines which mapmodel you want, this depends on "mapmodel" declarations
-    in the maps cfg file. Yaw of the model is taken from the current camera yaw. Type
-    specifies mapmodel behaviour such as triggers, see table below. Trigger is the trigger
-    number, 0 means no trigger. This number specifies what trigger to activate, and in addition, 
-    the alias "<span style="font-family: Courier New">level_trigger_Trigger</span>"
-    will be executed, where Trigger is substituted accordingly (this allows you to script
-    additional actions upon a trigger, i.e. put this into your map cfg file to print
-    a message: <span style="font-family: Courier New">alias level_trigger_1 "echo A door
-        opened nearby"</span>). The alias "<span style="font-family: Courier New">triggerstate</span>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.<br />
-    <br />
-    <table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
-        <tr>
-            <td style="width: 38px; height: 13px">
-                Type</td>
-            <td style="width: 61px; height: 13px">
-                Trigger states</td>
-            <td style="width: 61px; height: 13px">
-                Trigger how often</td>
-            <td style="width: 61px; height: 13px">
-                Sound</td>
-            <td style="width: 486px; height: 13px">
-            </td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 13px">
-                0</td>
-            <td style="width: 61px; height: 13px">
-            </td>
-            <td style="width: 61px; height: 13px">
-                0</td>
-            <td style="width: 61px; height: 13px">
-            </td>
-            <td style="width: 486px; height: 13px">
-                loops mapmodel animation</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 3px">
-                1</td>
-            <td style="width: 61px; height: 3px">
-            </td>
-            <td style="width: 61px; height: 3px">
-                1</td>
-            <td style="width: 61px; height: 3px">
-            </td>
-            <td style="width: 486px; height: 3px">
-                do trigger animation when touched for the first time only and return to starting position (best for switches, use switch/lever models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 3px">
-                2</td>
-            <td style="width: 61px; height: 3px">
-            </td>
-            <td style="width: 61px; height: 3px">
-                1</td>
-            <td style="width: 61px; height: 3px">
-                rumble</td>
-            <td style="width: 486px; height: 3px">
-                same as above but with sound</td>
-        </tr>
-        <tr>
-            <td style="width: 38px;">
-                3</td>
-            <td style="width: 61px;">
-                toggle (0/1) </td>
-            <td style="width: 61px;">
-                1</td>
-            <td style="width: 61px;">
-            </td>
-            <td style="width: 486px;">
-                do trigger animation when touched for the first time only and stay in toggled position (best for switches, use switch/lever models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px;">
-                4</td>
-            <td style="width: 61px;">
-                toggle (0/1) </td>
-            <td style="width: 61px;">
-                1</td>
-            <td style="width: 61px;">
-                rumble</td>
-            <td style="width: 486px;">
-                same as above but with sound</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 3px">
-                5</td>
-            <td style="width: 61px; height: 3px">
-            </td>
-            <td style="width: 61px; height: 3px">
-                N</td>
-            <td style="width: 61px; height: 3px">
-            </td>
-            <td style="width: 486px; height: 3px">
-                do trigger animation when touched every time and return to starting position (best for switches, use switch/lever models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 3px">
-                6</td>
-            <td style="width: 61px; height: 3px">
-            </td>
-            <td style="width: 61px; height: 3px">
-                N</td>
-            <td style="width: 61px; height: 3px">
-                rumble</td>
-            <td style="width: 486px; height: 3px">
-                same as above but with sound</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 3px">
-                7</td>
-            <td style="width: 61px; height: 3px">
-                toggle (0/1) </td>
-            <td style="width: 61px; height: 3px">
-                N</td>
-            <td style="width: 61px; height: 3px">
-            </td>
-            <td style="width: 486px; height: 3px">
-                do trigger animation when touched every time and toggle positions (best for reversible switches, use switch/lever models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 3px">
-                8</td>
-            <td style="width: 61px; height: 3px">
-                toggle (0/1)</td>
-            <td style="width: 61px; height: 3px">
-                N</td>
-            <td style="width: 61px; height: 3px">
-                rumble</td>
-            <td style="width: 486px; height: 3px">
-                same as above but with sound</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 13px">
-                9</td>
-            <td style="width: 61px; height: 13px">
-                closed/open (0/1)</td>
-            <td style="width: 61px; height: 13px">
-                1</td>
-            <td style="width: 61px; height: 13px">
-                door?</td>
-            <td style="width: 486px; height: 13px">
-                opened by approach first time only, stays open afterwards. Collides while closed. (use door specific models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 13px">
-                10</td>
-            <td style="width: 61px; height: 13px">
-                closed/open (0/1)</td>
-            <td style="width: 61px; height: 13px">
-                N</td>
-            <td style="width: 61px; height: 13px">
-                door?</td>
-            <td style="width: 486px; height: 13px">
-                opened by approach every time, closes after 5 seconds. Collides while closed. (use door specific models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px">
-                11</td>
-            <td style="width: 61px">
-                locked (-1) </td>
-            <td style="width: 61px">
-                0/N</td>
-            <td style="width: 61px">
-                door?</td>
-            <td style="width: 486px">
-                opened/closed only by associated trigger. When approached while closed, collides and invokes level trigger with triggerstate -1. (use door specific models)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 13px">
-                12</td>
-            <td style="width: 61px; height: 13px">
-                disappear (0)</td>
-            <td style="width: 61px; height: 13px">
-                1</td>
-            <td style="width: 61px; height: 13px">
-            </td>
-            <td style="width: 486px; height: 13px">
-                do trigger animation once when touched, disappear after (good for triggers that look more like pickups, such as the carrot)</td>
-        </tr>
-        <tr>
-            <td style="width: 38px">
-                13</td>
-            <td style="width: 61px">
-                disappear (0)</td>
-            <td style="width: 61px">
-                1</td>
-            <td style="width: 61px">
-                rumble</td>
-            <td style="width: 486px">
-                same as above but with sound</td>
-        </tr>
-        <tr>
-            <td style="width: 38px; height: 13px">
-                29</td>
-            <td style="width: 61px; height: 13px">
-                disappear (0)</td>
-            <td style="width: 61px; height: 13px">
-                1</td>
-            <td style="width: 61px; height: 13px">
-                end?</td>
-            <td style="width: 486px; height: 13px">
-                FPS specific. END LEVEL</td>
-        </tr>
-    </table>
-    <br />
-    Be careful when using "switch many" for thing that affect gameplay, such as opening
-    doors, as it can be confusing. Best is to reserve a particular model to mean "many"
-    and others "once".<br />
-    All types &gt;0 are snapped to 15 degree angles for orientation.&nbsp;<br />
-        <br>
-        <pre>"monster" N</pre>
-        A monster, currently N = 0..4 (see gameplay docs). Monster entities will be
-        spawned when in classic single player mode, and will attack you when you come
-        into view. yaw is taken from the current camera yaw.
-    <br />
+creates a teleport connection, teleports are linked to a teledest with the same
+N (of which there should be exactly one). N can be 0..255. The teledest uses
+the current camera yaw.
+<pre>"mapmodel" N Type Trigger</pre>
+A map model, i.e. an object rendered as md2/md3 which you collide against, cast
+shadows etc. N determines which mapmodel you want, this depends on "mapmodel" declarations
+in the maps cfg file. Yaw of the model is taken from the current camera yaw. Type
+specifies mapmodel behaviour such as triggers, see table below. Trigger is the trigger
+number, 0 means no trigger. This number specifies what trigger to activate, and in addition, 
+the alias "<span style="font-family: Courier New">level_trigger_Trigger</span>"
+will be executed, where Trigger is substituted accordingly (this allows you to script
+additional actions upon a trigger, i.e. put this into your map cfg file to print
+a message: <span style="font-family: Courier New">alias level_trigger_1 "echo A door
+opened nearby"</span>). The alias "<span style="font-family: Courier New">triggerstate</span>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.<br />
+<br />
+<table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
+<tr>
+<td style="width: 38px; height: 13px">
+Type</td>
+<td style="width: 61px; height: 13px">
+Trigger states</td>
+<td style="width: 61px; height: 13px">
+Trigger how often</td>
+<td style="width: 61px; height: 13px">
+Sound</td>
+<td style="width: 486px; height: 13px">
+</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 13px">
+0</td>
+<td style="width: 61px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+0</td>
+<td style="width: 61px; height: 13px">
+</td>
+<td style="width: 486px; height: 13px">
+loops mapmodel animation</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 3px">
+1</td>
+<td style="width: 61px; height: 3px">
+</td>
+<td style="width: 61px; height: 3px">
+1</td>
+<td style="width: 61px; height: 3px">
+</td>
+<td style="width: 486px; height: 3px">
+do trigger animation when touched for the first time only and return to starting position (best for switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 3px">
+2</td>
+<td style="width: 61px; height: 3px">
+</td>
+<td style="width: 61px; height: 3px">
+1</td>
+<td style="width: 61px; height: 3px">
+rumble</td>
+<td style="width: 486px; height: 3px">
+same as above but with sound</td>
+</tr>
+<tr>
+<td style="width: 38px;">
+3</td>
+<td style="width: 61px;">
+toggle (0/1) </td>
+<td style="width: 61px;">
+1</td>
+<td style="width: 61px;">
+</td>
+<td style="width: 486px;">
+do trigger animation when touched for the first time only and stay in toggled position (best for switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td style="width: 38px;">
+4</td>
+<td style="width: 61px;">
+toggle (0/1) </td>
+<td style="width: 61px;">
+1</td>
+<td style="width: 61px;">
+rumble</td>
+<td style="width: 486px;">
+same as above but with sound</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 3px">
+5</td>
+<td style="width: 61px; height: 3px">
+</td>
+<td style="width: 61px; height: 3px">
+N</td>
+<td style="width: 61px; height: 3px">
+</td>
+<td style="width: 486px; height: 3px">
+do trigger animation when touched every time and return to starting position (best for switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 3px">
+6</td>
+<td style="width: 61px; height: 3px">
+</td>
+<td style="width: 61px; height: 3px">
+N</td>
+<td style="width: 61px; height: 3px">
+rumble</td>
+<td style="width: 486px; height: 3px">
+same as above but with sound</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 3px">
+7</td>
+<td style="width: 61px; height: 3px">
+toggle (0/1) </td>
+<td style="width: 61px; height: 3px">
+N</td>
+<td style="width: 61px; height: 3px">
+</td>
+<td style="width: 486px; height: 3px">
+do trigger animation when touched every time and toggle positions (best for reversible switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 3px">
+8</td>
+<td style="width: 61px; height: 3px">
+toggle (0/1)</td>
+<td style="width: 61px; height: 3px">
+N</td>
+<td style="width: 61px; height: 3px">
+rumble</td>
+<td style="width: 486px; height: 3px">
+same as above but with sound</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 13px">
+9</td>
+<td style="width: 61px; height: 13px">
+closed/open (0/1)</td>
+<td style="width: 61px; height: 13px">
+1</td>
+<td style="width: 61px; height: 13px">
+door?</td>
+<td style="width: 486px; height: 13px">
+opened by approach first time only, stays open afterwards. Collides while closed. (use door specific models)</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 13px">
+10</td>
+<td style="width: 61px; height: 13px">
+closed/open (0/1)</td>
+<td style="width: 61px; height: 13px">
+N</td>
+<td style="width: 61px; height: 13px">
+door?</td>
+<td style="width: 486px; height: 13px">
+opened by approach every time, closes after 5 seconds. Collides while closed. (use door specific models)</td>
+</tr>
+<tr>
+<td style="width: 38px">
+11</td>
+<td style="width: 61px">
+locked (-1) </td>
+<td style="width: 61px">
+0/N</td>
+<td style="width: 61px">
+door?</td>
+<td style="width: 486px">
+opened/closed only by associated trigger. When approached while closed, collides and invokes level trigger with triggerstate -1. (use door specific models)</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 13px">
+12</td>
+<td style="width: 61px; height: 13px">
+disappear (0)</td>
+<td style="width: 61px; height: 13px">
+1</td>
+<td style="width: 61px; height: 13px">
+</td>
+<td style="width: 486px; height: 13px">
+do trigger animation once when touched, disappear after (good for triggers that look more like pickups, such as the carrot)</td>
+</tr>
+<tr>
+<td style="width: 38px">
+13</td>
+<td style="width: 61px">
+disappear (0)</td>
+<td style="width: 61px">
+1</td>
+<td style="width: 61px">
+rumble</td>
+<td style="width: 486px">
+same as above but with sound</td>
+</tr>
+<tr>
+<td style="width: 38px; height: 13px">
+29</td>
+<td style="width: 61px; height: 13px">
+disappear (0)</td>
+<td style="width: 61px; height: 13px">
+1</td>
+<td style="width: 61px; height: 13px">
+end?</td>
+<td style="width: 486px; height: 13px">
+FPS specific. END LEVEL</td>
+</tr>
+</table>
+<br />
+Be careful when using "switch many" for thing that affect gameplay, such as opening
+doors, as it can be confusing. Best is to reserve a particular model to mean "many"
+and others "once".<br />
+All types &gt;0 are snapped to 15 degree angles for orientation.&nbsp;<br />
+<br>
+<pre>"monster" N</pre>
+A monster, currently N = 0..4 (see gameplay docs). Monster entities will be
+spawned when in classic single player mode, and will attack you when you come
+into view. yaw is taken from the current camera yaw.
+<br />
 
-    <pre>"respawnpoint"</pre>
+<pre>"respawnpoint"</pre>
 
-    A respawnpoint for classic SP mode (see "SP Respawning"). Place these spaced evenly in quieter areas between fights. Will actually work in
-    any game mode, just probably isn't helpful in DM.<br>
-        <br>
-        <br>
-        Entities are shown in editmode by blue sparklies, and the closest one is
-        indicated on the HUD.
-        
-
+A respawnpoint for classic SP mode (see "SP Respawning"). Place these spaced evenly in quieter areas between fights. Will actually work in
+any game mode, just probably isn't helpful in DM.<br>
+<br>
+<br>
+Entities are shown in editmode by blue sparklies, and the closest one is
+indicated on the HUD.
 
 
-        <a name="hud"></a>        
-        <div>The HUD</div>
-        On the bottom left of the screen are a bunch of stats.
-        You'll find out what they mean below.
-        <ul>
-            <li>
-            cube: the number of cubes in the current selection. Only the visible (leaf)
-            cubes are counted.
-            <li>
-            fps: frames per second
-            <li>
-            ond: number of cubes in the system. This includes parent cubes, copied cubes,
-            and undos.
-            <li>
-            va: number of vertex arrays used to store vertecies in the map. you probably
-            don't need to use this.
-            <li>
-            vtr: number of triangles currently being displayed. will be a useful stat when
-            culling is done.
-            <li>
-            vvt: number of vertecies currently being displayed. again, useful when culling
-            is done.
-            <li>
-            tri: number of triangles in the entire map
-            <li>
-            wvt: number of vertecies in the entire map
-            <li>
-                evt: misc rendering effects. stuff like particles displayed, or text written on
-                screen.</li></ul>
-       <pre>hidestats 0/1</pre>
-       Turn on to hide the above stats
-       <pre>hidehud 0/1</pre>
-       Turn on to hide all HUD elements
-    </body>
+
+
+<a name="hud"></a>        
+<div>The HUD</div>
+On the bottom left of the screen are a bunch of stats.
+You'll find out what they mean below.
+<ul>
+<li>
+cube: the number of cubes in the current selection. Only the visible (leaf)
+cubes are counted.
+<li>
+fps: frames per second
+<li>
+ond: number of cubes in the system. This includes parent cubes, copied cubes,
+and undos.
+<li>
+va: number of vertex arrays used to store vertecies in the map. you probably
+don't need to use this.
+<li>
+vtr: number of triangles currently being displayed. will be a useful stat when
+culling is done.
+<li>
+vvt: number of vertecies currently being displayed. again, useful when culling
+is done.
+<li>
+tri: number of triangles in the entire map
+<li>
+wvt: number of vertecies in the entire map
+<li>
+evt: misc rendering effects. stuff like particles displayed, or text written on
+screen.</li></ul>
+<pre>hidestats 0/1</pre>
+Turn on to hide the above stats
+<pre>hidehud 0/1</pre>
+Turn on to hide all HUD elements
+</body>
 </html>
