@@ -15,8 +15,6 @@ static inline void vertw(float v1, float v2, float v3, float t1, float t2, float
 static inline float dx(float x) { return x + (float)sin(x*2+lastmillis/1000.0f)*0.04f; };
 static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; };
 
-// renders water for bounding rect area that contains water... simple but very inefficient
-
 #define MAXREFLECTIONS 16
 struct Reflection
 {
@@ -32,6 +30,9 @@ Reflection *findreflection(int height);
 
 VARF(waterreflect, 0, 1, 1, { cleanreflections(); allchanged(); });
 VAR(waterrefract, 0, 0, 1);
+VAR(reflectdist, 0, 2000, 10000);
+
+// renders water for bounding rect area that contains water... simple but very inefficient
 
 void renderwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 { 
@@ -363,7 +364,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                 glActiveTexture_(GL_TEXTURE1_ARB+i);
                 glDisable(GL_TEXTURE_2D);
             };
-            glActiveTexture(GL_TEXTURE0_ARB);
+            glActiveTexture_(GL_TEXTURE0_ARB);
 
             glBindTexture(GL_TEXTURE_2D, t->gl);
             defaultshader->set();
@@ -722,7 +723,6 @@ extern void drawreflection(float z, bool refract);
 extern int scr_w, scr_h;
 extern int oqfrags;
 
-VAR(reflectdist, 0, 1000, 10000);
 VAR(reflectfps, 1, 30, 200);
 
 int rplanes = 0;

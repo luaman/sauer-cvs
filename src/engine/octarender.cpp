@@ -1944,9 +1944,14 @@ void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool
         lodlevel &lod = va->l0;
         if(lod.texs)
         {
-            if((refract ? va->z > z : va->z+va->size <= z) || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+            if(va->curvfc == VFC_FOGGED || (refract ? va->z > z : va->z+va->size <= z) || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
-            renderva(cur, va, lod);
+            if(va->curvfc == VFC_FULL_VISIBLE)
+            {
+                if(va->occluded >= OCCLUDE_BB) continue;
+                if(va->occluded < OCCLUDE_GEOM) renderva(cur, va, lod);
+            } 
+            else renderva(cur, va, lod);
         };
         if(va->children->length()) renderreflectedvas(cur, *va->children, z, refract); 
     };
@@ -1978,7 +1983,7 @@ void renderreflectedgeom(float z, bool refract)
         {
             lodlevel &lod = va->l0;
             if(!lod.texs) continue;
-            if((refract && camera1->o.z >= z ? va->z > z : va->z+va->size <= z) || va->occluded >= OCCLUDE_GEOM) continue;
+            if(va->curvfc == VFC_FOGGED || (refract && camera1->o.z >= z ? va->z > z : va->z+va->size <= z) || va->occluded >= OCCLUDE_GEOM) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };

@@ -745,7 +745,7 @@ VAR(showsky, 0, 1, 1);
 
 extern int explicitsky, skyarea;
 
-void drawskybox(int farplane, bool limited, int zclip = -1, bool reflected = false)
+void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = false)
 {
     glDisable(GL_FOG);
 
@@ -769,7 +769,7 @@ void drawskybox(int farplane, bool limited, int zclip = -1, bool reflected = fal
     if(reflected) glScalef(1, 1, -1);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
-    draw_envbox(farplane/2, zclip);
+    draw_envbox(farplane/2, float(zclip)/float(hdr.worldsize));
     transplayer();
     if(limited) 
     {
@@ -989,7 +989,7 @@ void undoclipmatrix()
 
 VAR(reflectclip, 0, 1, 1);
 VAR(reflectmms, 0, 1, 1);
-VAR(refractfog, 10, 150, 10000);
+VAR(refractfog, 10, 200, 10000);
 
 void drawreflection(float z, bool refract)
 {
@@ -997,21 +997,32 @@ void drawreflection(float z, bool refract)
     if(refract) refracting = true;
 
     float oldfogstart, oldfogend, oldfogcolor[4], oldclearcolor[4]; 
-    if(refract)
+
+    if(refract || camera1->o.z < z)
     {
         glGetFloatv(GL_FOG_START, &oldfogstart);
         glGetFloatv(GL_FOG_END, &oldfogend);
         glGetFloatv(GL_FOG_COLOR, oldfogcolor);
         glGetFloatv(GL_COLOR_CLEAR_VALUE, oldclearcolor);
 
-        uchar wcol[3] = { 20, 80, 80 };
-        if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+        if(refract)
+        {
+            uchar wcol[3] = { 20, 80, 80 };
+            if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
 
-        glFogi(GL_FOG_START, 0);
-        glFogi(GL_FOG_END, refractfog);
-        float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
-        glFogfv(GL_FOG_COLOR, fogc);
-        glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+            glFogf(GL_FOG_START, 0);
+            glFogf(GL_FOG_END, refractfog);
+            float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
+            glFogfv(GL_FOG_COLOR, fogc);
+            glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+        }
+        else
+        {
+            glFogi(GL_FOG_START, (fog+64)/8);
+            glFogi(GL_FOG_END, fog);
+            float fogc[4] = { (fogcolour>>16)/256.0f, ((fogcolour>>8)&255)/256.0f, (fogcolour&255)/256.0f, 1.0f };
+            glFogfv(GL_FOG_COLOR, fogc);
+        };
     };
 
     glClear((refract ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
@@ -1069,7 +1080,7 @@ void drawreflection(float z, bool refract)
         glCullFace(GL_FRONT);
     };
 
-    if(refract)
+    if(refract || camera1->o.z < z)
     {
         glFogf(GL_FOG_START, oldfogstart);
         glFogf(GL_FOG_END, oldfogend);
