@@ -214,11 +214,6 @@ paste</pre>
         <pre>entattr N</pre>
         Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
 
-
-
-                   
-        
-
         <a name="settings"></a>        
         <div>Settings</div>
         <pre>undomegs N</pre>
@@ -249,11 +244,6 @@ paste</pre>
         <pre>entselsnap 0/1</pre>
         Turns on snap-to-grid while draggin entities. (default: 6)
         
-
-
-
-
-
         <a name="map"></a>        
         <div>Map and Config</div>
         <pre>map name</pre>
@@ -280,11 +270,12 @@ paste</pre>
         <pre>getmap</pre>
         Gets a map from the server if one is available. Automatically loads the map when done. Only works in coopedit
         game mode.        
-        <pre>savemap name</pre>
-        Saves the current map, using the same naming scheme as "map". makes a versioned
-        backup (mapname_N.BAK) if a map by that name already exists, so you can never
-        lose a map. If you leave out the "name" argument, it is saved under the current
-        map name.
+        <pre>savemap name
+savecurrentmap</pre>
+        Saves the current map, using the same naming scheme as "map". Makes a versioned
+        backup to "mapname_N.BAK" if a map by that name already exists, so you can never
+        lose a map. With "savemap", if you leave out the "name" argument, it is saved under the current map name.
+        With "savecurrentmap", the map is saved with the name determined by the current game.
         <br>
         <br>
         Where you store a map depends on the complexity of what you are creating: if

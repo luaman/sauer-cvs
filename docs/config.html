@@ -124,6 +124,9 @@ editbind K A
 		to a low value can also be a very effective way to increase fps (if you are 
 		geometry limited). Try out different values on big maps / maps which give you 
 		low fps.
+		<pre>fogcolour N</pre>
+		The colour of the fog, as a decimal integer from 0..16777215, representing the converted hexidecimal
+		value "0xRRGGBB" where R is red, G is green, and B is blue values (default: 8427955 (0x8099B3)).
 		<pre>loddistance N</pre>
 		Sets the distance at which world vertex array blocks are rendered at a higher 
 		LOD (level of detail). The lower this value, the more geometry popup you will 
@@ -134,9 +137,18 @@ editbind K A
 		Determines the subdivision of the water surface in maps, which can greatly 
 		affect fps on slow machines. Must be a power of 2: 4 is the default, 8 is 
 		recommended for people on slow machines, 2 is nice for fast machines, and 1 is 
-		quite OTT. See "waterlevel" (edit reference) on how to add water to your own 
-		levels.
-		<pre>maxparticles N  </pre>
+		quite OTT. See the edit reference for more information on how to add the water material to your levels.
+		<pre>waterlod N</pre>
+		Sets the precision level of the water LOD (Level of Detail) from 0..3, where 0 is the lowest and 3 is the highest setting
+		(default: 1).
+		<pre>waterreflect B</pre>
+		Enables or disables water reflections, only works if your card supports GL_EXT_framebuffer_object and you don't run with
+		the fixed function pixel pipeline (default: 1).
+		<pre>waterrefract B</pre>
+		Enables or disables water refractions, (default: 0).
+		<pre>reflectdist N</pre>
+		Sets the maximum distance geometry/objects can be at to be in a reflection from 0..10000 (default: 2000).
+		<pre>maxparticles N</pre>
 		Sets the maximum number of particles rendered at any one time. If more 
 		particles are generated than this number, the oldest ones are culled, so you 
 		can safely set this number relatively low without loss of information. default 
@@ -144,14 +156,13 @@ editbind K A
 		<pre>setfullscreenshader Name</pre>
 		Sets your favourite fullscreen shader. Active permanently once set. Use without name
 		argument to turn it off. Current example shaders: invert, gbr, sobel, bloom
-    <pre>screenshot</pre>
-		Writes out "screenshotN.bmp", where N is the number of milliseconds since cube 
-		was launched (default key = F12).
-		<pre>musicvol n
-soundvol n</pre>
-		Sets the music/sound volume from 0 to 255
-		<pre>soundbufferlen n      </pre>
-		(default 512) tweak this if you experience stuttering or lagging sound
+		<pre>screenshot</pre>
+		Writes out "screenshotN.bmp", where N is the number of milliseconds since the game was launched (default key: F12).
+		<pre>musicvol N
+soundvol N</pre>
+		Sets the music/sound volume from 0..255.
+		<pre>soundbufferlen N</pre>
+		Sets the sound buffer length in bytes, tweak this if you experience stuttering or lagging sound (default: 512).
 		<pre>gamma n</pre>
 		Sets the hardware gamma value to n percent (default 100). May not work if your 
 		card/driver doesn't support it.
