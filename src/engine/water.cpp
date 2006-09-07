@@ -338,7 +338,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
                         setprojtexmatrix(ref);
-                        if(waterreflect) glBindTexture(GL_TEXTURE_2D, ref->tex);
+                        if(waterreflect || waterrefract) glBindTexture(GL_TEXTURE_2D, ref->tex);
                         if(waterrefract)
                         {
                             glActiveTexture_(GL_TEXTURE3_ARB);
