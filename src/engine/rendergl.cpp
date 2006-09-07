@@ -989,8 +989,20 @@ void undoclipmatrix()
 
 VAR(reflectclip, 0, 1, 1);
 VAR(reflectmms, 0, 1, 1);
-VAR(refractfog, 10, 200, 10000);
+VAR(refractfog, 1, 150, 10000);
 
+void setfogplane(float z = 0)
+{
+    float fogplane[4] = {1, 0, 0, 0};
+    if(z)
+    {
+        fogplane[0] = 0;
+        fogplane[2] = 0.5f;
+        fogplane[3] = -z;
+    };  
+    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 9, fogplane);
+};
+ 
 void drawreflection(float z, bool refract)
 {
     reflecting = true;
@@ -1015,6 +1027,7 @@ void drawreflection(float z, bool refract)
             float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
             glFogfv(GL_FOG_COLOR, fogc);
             glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+            setfogplane(z);
         }
         else
         {
@@ -1082,6 +1095,7 @@ void drawreflection(float z, bool refract)
 
     if(refract || camera1->o.z < z)
     {
+        if(refract) setfogplane();
         glFogf(GL_FOG_START, oldfogstart);
         glFogf(GL_FOG_END, oldfogend);
         glFogfv(GL_FOG_COLOR, oldfogcolor);
@@ -1117,6 +1131,8 @@ void gl_drawframe(int w, int h, float curfps)
         glFogi(GL_FOG_START, 0);
         glFogi(GL_FOG_END, (fog+96)/8);
     };
+
+    if(renderpath==R_ASMSHADER) setfogplane();
     
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
