@@ -28,7 +28,7 @@ struct Reflection
 };
 Reflection *findreflection(int height);
 
-VARF(waterreflect, 0, 1, 1, { cleanreflections(); allchanged(); });
+VAR(waterreflect, 0, 1, 1);
 VAR(waterrefract, 0, 0, 1);
 VAR(reflectdist, 0, 2000, 10000);
 
@@ -236,7 +236,7 @@ VAR(showmat, 0, 1, 1);
 
 COMMAND(watercolour, "iii");
 
-Shader *watershader = NULL, *waterrefractshader = NULL;
+Shader *watershader = NULL, *waterreflectshader = NULL, *waterrefractshader = NULL;
 Texture *waternormals = NULL;
 Texture *waterdudvs = NULL;
 
@@ -269,11 +269,11 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         glEnable(GL_TEXTURE_2D);
         uchar wcol[4] = { 20, 80, 80, 192 };
         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
-        else if(!hasFBO || !waterreflect) loopi(3) wcol[i] = 128;
+        else if(!hasFBO || renderpath==R_FIXEDFUNCTION) loopi(3) wcol[i] = 128;
         glColor4ubv(wcol);
         Texture *t = lookuptexture(DEFAULT_LIQUID).sts[0].t;
         #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
-        if(!hasFBO || !waterreflect) 
+        if(!hasFBO || renderpath==R_FIXEDFUNCTION)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glBindTexture(GL_TEXTURE_2D, t->gl);
@@ -287,12 +287,13 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         {
             glBlendFunc(GL_ONE, GL_SRC_ALPHA);
             if(!watershader) watershader = lookupshaderbyname("water");
+            if(!waterreflectshader) waterreflectshader = lookupshaderbyname("waterreflect");
             if(!waterrefractshader) waterrefractshader = lookupshaderbyname("waterrefract");
             if(!waternormals) waternormals = textureload("data/watern.jpg");
             if(!waterdudvs) waterdudvs = textureload("data/waterdudv.jpg");
 
             Reflection *ref;
-            (waterrefract ? waterrefractshader : watershader)->set();
+            (waterrefract ? waterrefractshader : (waterreflect ? waterreflectshader : watershader))->set();
             glActiveTexture_(GL_TEXTURE1_ARB);
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, waternormals->gl);
@@ -337,7 +338,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
                         setprojtexmatrix(ref);
-                        glBindTexture(GL_TEXTURE_2D, ref->tex);
+                        if(waterreflect) glBindTexture(GL_TEXTURE_2D, ref->tex);
                         if(waterrefract)
                         {
                             glActiveTexture_(GL_TEXTURE3_ARB);
@@ -593,7 +594,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
             loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
             vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
          };
-         if(start->material != MAT_WATER || start->orient != O_TOP || (waterreflect && hasFBO)) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
+         if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath==R_ASMSHADER)) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
          
     };
     return matsurfs - (end-matbuf);
@@ -730,7 +731,7 @@ int rplanes = 0;
 void queryreflections()
 {
     rplanes = 0;
-    if(!hasFBO || !waterreflect) return;
+    if(!hasFBO || renderpath==R_FIXEDFUNCTION) return;
 
     static bool refinit = false;
     if(!refinit)
@@ -755,7 +756,7 @@ void queryreflections()
         matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
     };
     
-    if(!hasOQ || !oqfrags || !oqreflect) return;
+    if(!hasOQ || !oqfrags || !oqreflect || (!waterreflect && !waterrefract)) return;
     int refs = 0;
     loopi(MAXREFLECTIONS)
     {
@@ -808,10 +809,6 @@ void drawreflections()
         if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty()) continue;
         if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query, true)) continue;
 
-        if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
-        
-        if(refs++>maxreflect) break;
-        
         ref.light = NULL;
         loopvj(ref.matsurfs)
         {
@@ -820,13 +817,23 @@ void drawreflections()
            if(!light) continue;
            if(!ref.light || !light->attr1 || (ref.light->attr1 && light->attr1 > ref.light->attr1)) ref.light = light;
         };
+
+        if(waterreflect || waterrefract)
+        {
+            if(refs>maxreflect) continue;
+            if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
+        };
+        refs++;
+        
         if(lastmillis-ref.nextupdate>1000) ref.nextupdate = lastmillis+watermillis;
         else while(ref.nextupdate<=lastmillis) ref.nextupdate += watermillis;
         ref.lastupdate = lastmillis;
 
-        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-        drawreflection(ref.height+offset, false);
-
+        if(waterreflect || waterrefract)
+        {
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
+            drawreflection(ref.height+offset, false);
+        };
         if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
@@ -834,7 +841,7 @@ void drawreflections()
         };    
     };
     
-    if(!refs) return;
+    if(!refs || (!waterrefract && !waterreflect)) return;
     glViewport(0, 0, scr_w, scr_h);
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
 
