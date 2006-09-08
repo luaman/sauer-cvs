@@ -210,6 +210,16 @@ struct ivec
     ivec &mask(int n) { x &= n; y &= n; z &= n; return *this; };
 };
 
+inline bool htcmp(const ivec &x, const ivec &y)
+{
+    return x == y;
+};  
+
+inline unsigned int hthash (const ivec &k)
+{
+    return k.x^k.y^k.z;
+};  
+
 struct svec
 {
     union

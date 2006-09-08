@@ -1041,6 +1041,8 @@ void octarender()                               // creates va s for all leaf cub
         explicitsky += va->explicitsky;
         skyarea += va->skyarea;
     };
+
+    setupmatsurfs();
 };
 
 void allchanged()

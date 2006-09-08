@@ -110,6 +110,7 @@ extern uint randomMT(void);
 
 #define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
 #define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
+#define loopvk(v)   if(false) {} else for(int k = 0; k<(v).length(); k++)
 #define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
 template <class T> struct vector
@@ -237,6 +238,16 @@ inline bool htcmp(const char *x, const char *y)
     return !strcmp(x, y);
 };
 
+inline unsigned int hthash(int key)
+{   
+    return key;
+};
+
+inline bool htcmp(int x, int y)
+{
+    return x==y;
+};
+
 template <class K, class T> struct hashtable
 {
     typedef K key;
@@ -353,6 +364,46 @@ template <class K, class T> struct hashtable
 
 #define enumeratekt(ht,k,e,t,f,b) loopi((ht).size)  for(hashtable<k,t>::chain *enumc = (ht).table[i]; enumc; enumc = enumc->next) { hashtable<k,t>::const_key &e = enumc->key; t &f = enumc->data; b; }
 #define enumerate(ht,t,e,b)       loopi((ht).size) for((ht).enumc = (ht).table[i]; (ht).enumc; (ht).enumc = (ht).enumc->next) { t &e = (ht).enumc->data; b; }
+
+struct unionfind
+{
+    struct ufval
+    {
+        int rank, next;
+
+        ufval() : rank(0), next(-1) {};
+    };
+    
+    vector<ufval> ufvals;
+
+    int find(int k)
+    {
+        if(k>=ufvals.length()) return k;
+        while(ufvals[k].next>=0) k = ufvals[k].next;
+        return k;
+    };
+    
+    int compressfind(int k)
+    {
+        if(ufvals[k].next<0) return k;
+        return ufvals[k].next = compressfind(ufvals[k].next);
+    };
+    
+    void unite (int x, int y)
+    {
+        while(ufvals.length() <= max(x, y)) ufvals.add();
+        x = compressfind(x);
+        y = compressfind(y);
+        if(x==y) return;
+        ufval &xval = ufvals[x], &yval = ufvals[y];
+        if(xval.rank < yval.rank) xval.next = y;
+        else
+        {
+            yval.next = x;
+            if(xval.rank==yval.rank) yval.rank++;
+        };
+    };
+};
 
 inline char *newstring(const char *s, size_t l) { return s_strncpy(new char[l+1], s, l+1); };
 inline char *newstring(const char *s)           { return newstring(s, strlen(s));          };

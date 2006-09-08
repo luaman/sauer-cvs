@@ -31,6 +31,7 @@ Reflection *findreflection(int height);
 VAR(waterreflect, 0, 1, 1);
 VAR(waterrefract, 0, 0, 1);
 VAR(reflectdist, 0, 2000, 10000);
+VAR(refractfog, 0, 150, 10000);
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
@@ -261,8 +262,6 @@ void setprojtexmatrix(Reflection *ref)
     else glLoadMatrixf(ref->tm);
 };
 
-VARF(refractfog, 0, 150, 10000, { if(!waterrefract) allchanged(); });
-
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs) return;
@@ -333,7 +332,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                     if(ref)
                     {
                         entity *light = ref->light;
-                        const vec &lightpos = light ? light->o : vec(m.o.x+m.csize/2, m.o.y+m.csize/2, hdr.worldsize);
+                        const vec &lightpos = light ? light->o : vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, hdr.worldsize);
                         const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient).div(255.0f);
                         float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
@@ -576,8 +575,6 @@ int mergemats(materialsurface *m, int sz)
     
 VARF(optmats, 0, 1, 1, allchanged());
 
-extern int refractfog;
-
 int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!optmats) return matsurfs;
@@ -605,19 +602,56 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
          };
          if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath==R_ASMSHADER)) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
     };
-    for(cur = end-matsurfs; cur < end; cur++)
-    {
-        if(cur->material==MAT_WATER && cur->orient==O_TOP)
-        {
-            cur->info = (short) raycube(vec(cur->o.x+cur->csize/2, cur->o.y+cur->rsize/2, cur->o.z-1.1f), vec(0, 0, -1), 2*refractfog);
-        };
-    };
-
     return matsurfs - (end-matbuf);
 };
 
-extern void setorigin(vtxarray *va, bool init);
-extern vtxarray *visibleva;
+extern vector<vtxarray *> valist;
+
+void setupmatsurfs()
+{
+    vector<materialsurface *> water;
+    hashtable<ivec, int> watersets;
+    vector<float> waterdepths;
+    unionfind uf;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        lodlevel &lod = va->l0;
+        loopj(lod.matsurfs)
+        {
+            materialsurface &m = lod.matbuf[j];
+            if(m.material==MAT_WATER && m.orient==O_TOP)
+            {
+                m.info = water.length();
+                loopvk(water)
+                {
+                    materialsurface &n = *water[k];
+                    if(m.o.z!=n.o.z) continue;
+                    if(n.o.x+n.rsize==m.o.x || m.o.x+m.rsize==n.o.x)
+                    {
+                        if(n.o.y+n.csize<=m.o.y || n.o.y>=m.o.y+m.csize) uf.unite(m.info, n.info);
+                    }
+                    else if(n.o.y+n.csize==m.o.y || m.o.y+m.csize==n.o.y)
+                    {
+                        if(n.o.x+n.rsize<=m.o.x && n.o.x>=m.o.x+m.rsize) uf.unite(m.info, n.info);
+                    };
+                };
+                water.add(&m);
+                float depth = raycube(vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, m.o.z-1.1f), vec(0, 0, -1), 10000);
+                waterdepths.add(depth);
+            };
+        };
+    };
+    loopv(waterdepths)
+    {
+        int root = uf.find(i);
+        waterdepths[root] = max(waterdepths[root], waterdepths[i]);
+    };
+    loopv(water)
+    {
+        water[i]->info = (short)waterdepths[uf.find(i)];
+    };
+};
 
 Reflection reflections[MAXREFLECTIONS];
 GLuint reflectiondb = 0;
