@@ -642,14 +642,23 @@ void setupmatsurfs()
             };
         };
     };
+    int numroots = 0;
     loopv(waterdepths)
     {
         int root = uf.find(i);
+        if(root==i) { ++numroots; continue; };
         waterdepths[root] = max(waterdepths[root], waterdepths[i]);
     };
-    loopv(water)
+    int numwater = 0;
+    loopv(valist) 
     {
-        water[i]->info = (short)waterdepths[uf.find(i)];
+        vtxarray *va = valist[i];
+        lodlevel &lod = va->l0;
+        loopj(lod.matsurfs) 
+        {
+            materialsurface &m = lod.matbuf[j];
+            if(m.material==MAT_WATER && m.orient==O_TOP) m.info = (short)waterdepths[uf.find(numwater++)];
+        };
     };
 };
 
