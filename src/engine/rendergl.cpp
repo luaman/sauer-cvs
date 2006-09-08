@@ -1020,21 +1020,19 @@ void drawreflection(float z, bool refract)
     reflecting = true;
     if(refract) refracting = true;
 
-    float oldfogstart, oldfogend, oldfogcolor[4], oldclearcolor[4]; 
+    float oldfogstart, oldfogend, oldfogcolor[4];
 
     if(refract || camera1->o.z < z)
     {
         glGetFloatv(GL_FOG_START, &oldfogstart);
         glGetFloatv(GL_FOG_END, &oldfogend);
         glGetFloatv(GL_FOG_COLOR, oldfogcolor);
-        glGetFloatv(GL_COLOR_CLEAR_VALUE, oldclearcolor);
 
         if(refract)
         {
             glFogi(GL_FOG_START, 0);
             glFogi(GL_FOG_END, refractfog);
             glFogfv(GL_FOG_COLOR, fogc);
-            glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
             setfogplane(z);
         }
         else
@@ -1046,7 +1044,7 @@ void drawreflection(float z, bool refract)
         };
     };
 
-    glClear((refract ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     if(!refract && camera1->o.z >= z)
     {
@@ -1112,7 +1110,6 @@ void drawreflection(float z, bool refract)
         glFogf(GL_FOG_START, oldfogstart);
         glFogf(GL_FOG_END, oldfogend);
         glFogfv(GL_FOG_COLOR, oldfogcolor);
-        glClearColor(oldclearcolor[0], oldclearcolor[1], oldclearcolor[2], oldclearcolor[3]);
     };
     
     refracting = false;
