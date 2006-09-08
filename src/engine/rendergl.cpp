@@ -1004,7 +1004,7 @@ void setfogplane(float z = 0)
     glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 9, fogplane);
 };
  
-void drawreflection(float z, bool refract)
+void drawreflection(float z, bool refract, bool clear)
 {
     uchar wcol[3] = { 20, 80, 80 };
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
@@ -1044,7 +1044,8 @@ void drawreflection(float z, bool refract)
         };
     };
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    if(clear) glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+    glClear((clear ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
 
     if(!refract && camera1->o.z >= z)
     {

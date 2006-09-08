@@ -2235,24 +2235,3 @@ void remipworld()
 
 COMMANDN(remip, remipworld, "");
 
-void finddepth(vector<vtxarray *> &vas, int *roots, int &total, int &maxdepth, int depth)
-{
-    loopv(vas)
-    {
-        total++;
-        if(depth<=2) roots[depth]++;
-        maxdepth = max(maxdepth, depth+1);
-        if(vas[i]->children->length()) finddepth(*vas[i]->children, roots, total, maxdepth, depth+1);
-    };
-};
-
-void vadepth()
-{
-    int roots[3] = {0, 0, 0}, total = 0, maxdepth = 0;
-    finddepth(varoot, roots, total, maxdepth, 0);
-    printf("lvl 1: %d, lvl 2: %d, lvl 3: %d, total: %d, maxdepth: %d\n", roots[0], roots[1], roots[2], total, maxdepth);
-};
-
-COMMAND(vadepth, "");
-
-       

@@ -642,23 +642,14 @@ void setupmatsurfs()
             };
         };
     };
-    int numroots = 0;
     loopv(waterdepths)
     {
         int root = uf.find(i);
-        if(root==i) { ++numroots; continue; };
         waterdepths[root] = max(waterdepths[root], waterdepths[i]);
     };
-    int numwater = 0;
-    loopv(valist) 
+    loopv(water)
     {
-        vtxarray *va = valist[i];
-        lodlevel &lod = va->l0;
-        loopj(lod.matsurfs) 
-        {
-            materialsurface &m = lod.matbuf[j];
-            if(m.material==MAT_WATER && m.orient==O_TOP) m.info = (short)waterdepths[uf.find(numwater++)];
-        };
+        water[i]->info = (short)waterdepths[uf.find(i)];
     };
 };
 
@@ -779,7 +770,7 @@ void addreflection(materialsurface &m)
 };
 
 extern vtxarray *visibleva;
-extern void drawreflection(float z, bool refract);
+extern void drawreflection(float z, bool refract, bool clear);
 extern int scr_w, scr_h;
 extern int oqfrags;
 
@@ -868,10 +859,12 @@ void drawreflections()
         if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty()) continue;
         if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query, true)) continue;
 
+        bool hasbottom = true;
         ref.light = NULL;
         loopvj(ref.matsurfs)
         {
            materialsurface &m = *ref.matsurfs[j];
+           if(m.info>=10000) hasbottom = false;
            entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z+offset), vec(0, 0, 1));
            if(!light) continue;
            if(!ref.light || !light->attr1 || (ref.light->attr1 && light->attr1 > ref.light->attr1)) ref.light = light;
@@ -891,12 +884,12 @@ void drawreflections()
         if(waterreflect || waterrefract)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-            drawreflection(ref.height+offset, false);
+            drawreflection(ref.height+offset, false, false);
         };
         if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
-            drawreflection(ref.height+offset, true);
+            drawreflection(ref.height+offset, true, !hasbottom);
         };    
     };
     
