@@ -858,17 +858,17 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool 
 };
 
 VARP(maxroll, 0, 3, 20);
+VAR(minframetime, 5, 10, 20);
 
 int physicsfraction = 0, physicsrepeat = 0;
-const int MINFRAMETIME = 20; // physics always simulated at 50fps or better
 
 void physicsframe()          // optimally schedule physics frames inside the graphics frames
 {
-    if(curtime>=MINFRAMETIME)
+    if(curtime>=minframetime)
     {
         int faketime = curtime+physicsfraction;
-        physicsrepeat = faketime/MINFRAMETIME;
-        physicsfraction = faketime-physicsrepeat*MINFRAMETIME;
+        physicsrepeat = faketime/minframetime;
+        physicsfraction = faketime-physicsrepeat*minframetime;
     }
     else
     {
@@ -1032,7 +1032,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
 void moveplayer(physent *pl, int moveres, bool local)
 {
-    loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
+    loopi(physicsrepeat) moveplayer(pl, moveres, local, min(curtime, minframetime));
     if(pl->o.z<0 && pl->state==CS_ALIVE) cl->worldhurts(pl, 400);
 };
 
