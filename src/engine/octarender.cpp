@@ -1801,6 +1801,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 VAR(oqdist, 0, 256, 1024);
 VAR(zpass, 0, 1, 1);
 
+extern int nvidia_envparam_bug;
+
 void setupTMUs()
 {
     if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
@@ -1827,6 +1829,7 @@ void setupTMUs()
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); };
         glActiveTexture_(GL_TEXTURE0_ARB);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
+        if(nvidia_envparam_bug) glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 10, 0, 0, 0, 0);
     };
 
     glColor4f(1, 1, 1, 1);

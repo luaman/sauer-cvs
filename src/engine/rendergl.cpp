@@ -159,6 +159,7 @@ void *getprocaddress(const char *name)
 
 VAR(ati_texgen_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
+VAR(nvidia_envparam_bug, 0, 0, 1);
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
@@ -231,8 +232,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         renderpath = R_FIXEDFUNCTION;
         if(strstr(vendor, "ATI") && !shaderprecision) ati_texgen_bug = 1;
         else if(strstr(vendor, "NVIDIA")) nvidia_texgen_bug = 1;
-        if(ati_texgen_bug) conoutf("WARNING: Using ATI texgen bug workaround. (use \"/ati_texgen_bug 0\" to disable)");
-        if(nvidia_texgen_bug) conoutf("WARNING: Using NVIDIA texgen bug workaround. (use \"/nvidia_texgen_bug 0\" to disable)");
+        if(ati_texgen_bug) conoutf("WARNING: Using ATI texgen bug workaround. (use \"/ati_texgen_bug 0\" to disable if unnecessary)");
+        if(nvidia_texgen_bug) conoutf("WARNING: Using NVIDIA texgen bug workaround. (use \"/nvidia_texgen_bug 0\" to disable if unnecessary)");
     }
     else
     {
@@ -245,6 +246,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
         glEnable(GL_VERTEX_PROGRAM_ARB);
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
+        if(strstr(vendor, "NVIDIA")) nvidia_envparam_bug = 1;
+        if(nvidia_envparam_bug) conoutf("WARNING: Using NVIDIA env param bug workaround. (use \"/nvidia_envparam_bug 0\" to disable if unnecessary)");
     };
 
     if(strstr(exts, "GL_ARB_occlusion_query"))
