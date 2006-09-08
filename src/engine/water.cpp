@@ -629,11 +629,11 @@ void setupmatsurfs()
                     if(m.o.z!=n.o.z) continue;
                     if(n.o.x+n.rsize==m.o.x || m.o.x+m.rsize==n.o.x)
                     {
-                        if(n.o.y+n.csize<=m.o.y || n.o.y>=m.o.y+m.csize) uf.unite(m.info, n.info);
+                        if(n.o.y+n.csize>m.o.y && n.o.y<m.o.y+m.csize) uf.unite(m.info, n.info);
                     }
                     else if(n.o.y+n.csize==m.o.y || m.o.y+m.csize==n.o.y)
                     {
-                        if(n.o.x+n.rsize<=m.o.x && n.o.x>=m.o.x+m.rsize) uf.unite(m.info, n.info);
+                        if(n.o.x+n.rsize>m.o.x && n.o.x<m.o.x+m.rsize) uf.unite(m.info, n.info);
                     };
                 };
                 water.add(&m);

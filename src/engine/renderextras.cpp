@@ -336,7 +336,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         {
             getwatercolour(wcol);
             float maxc = max(wcol[0], max(wcol[1], wcol[2]));
-            glColor3f(wcol[0]/maxc, wcol[1]/maxc, wcol[2]/maxc); 
+            float wblend[3];
+            loopi(3) wblend[i] = wcol[i] / min(32 + maxc*7/8, 255);
+            glColor3fv(wblend);
             //glColor3f(0.1f, 0.5f, 1.0f);
         };
         glVertex2i(0, 0);
