@@ -17,7 +17,8 @@ PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_ = NULL;
 // GL_ARB_multitexture
 PFNGLACTIVETEXTUREARBPROC       glActiveTexture_       = NULL;
 PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_ = NULL;
-
+PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2f_     = NULL;
+ 
 // GL_ARB_vertex_program, GL_ARB_fragment_program
 PFNGLGENPROGRAMSARBPROC            glGenPrograms_            = NULL;
 PFNGLBINDPROGRAMARBPROC            glBindProgram_            = NULL;
@@ -204,6 +205,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
     glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
     glClientActiveTexture_ = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
+    glMultiTexCoord2f_     = (PFNGLMULTITEXCOORD2FARBPROC)    getprocaddress("glMultiTexCoord2fARB");
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object"))
     {

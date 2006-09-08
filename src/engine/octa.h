@@ -7,12 +7,29 @@ struct elementset
     int length[3];
 };
 
+struct surfaceinfo;
+
 struct materialsurface
 {
     ivec o;
     int csize, rsize;
-    short info;
+    union
+    {
+        short index;
+        short depth;
+    };
     uchar material, orient;
+    surfaceinfo *light;
+};
+
+inline bool htcmp(const materialsurface &x, const materialsurface &y)
+{
+    return x.o == y.o && x.csize == y.csize && x.material == y.material && x.orient == y.orient;
+};
+
+inline uint hthash(const materialsurface &m)
+{
+    return m.o.x^m.o.y^m.o.z^m.csize^m.rsize^m.material^m.orient;
 };
 
 struct lodlevel

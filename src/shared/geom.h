@@ -101,6 +101,7 @@ struct plane : vec
         v[d] = 1.0f;
         offset = -off;
     };
+    plane(float a, float b, float c, float d) : vec(a, b, c), offset(d) {};
 
     void toplane(const vec &n, const vec &p)
     {

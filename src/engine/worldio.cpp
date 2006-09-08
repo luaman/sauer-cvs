@@ -170,6 +170,8 @@ cube *loadchildren(gzFile f)
     return c;
 };
 
+extern hashtable<materialsurface, surfaceinfo> materiallight;
+
 void save_world(char *mname, bool nolms)
 {
     if(!*mname) mname = cl->getclientmap();
@@ -179,6 +181,7 @@ void save_world(char *mname, bool nolms)
     if(!f) { conoutf("could not write map to %s", cgzname); return; };
     hdr.version = MAPVERSION;
     hdr.numents = 0;
+    hdr.matlight = nolms ? 0 : materiallight.numelems;
     const vector<extentity *> &ents = et->getents();
     loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
     hdr.lightmaps = nolms ? 0 : lightmaps.length();
@@ -213,11 +216,28 @@ void save_world(char *mname, bool nolms)
     delete[] ebuf;
 
     savec(worldroot, f, nolms);
-    if(!nolms) loopv(lightmaps)
+    if(!nolms) 
     {
-        LightMap &lm = lightmaps[i];
-        gzputc(f, lm.type);
-        gzwrite(f, lm.data, sizeof(lm.data));
+        enumeratekt(materiallight, materialsurface, m, surfaceinfo, s,
+            materialsurface tmpm = m;
+            endianswap(&tmpm.o, sizeof(int), 3);
+            endianswap(&tmpm.csize, sizeof(int), 1);
+            endianswap(&tmpm.rsize, sizeof(int), 1);
+            gzputc(f, tmpm.material);
+            gzputc(f, tmpm.orient);
+            gzwrite(f, &tmpm.o, 3*sizeof(int));
+            gzwrite(f, &tmpm.csize, sizeof(int));
+            gzwrite(f, &tmpm.rsize, sizeof(int));
+            surfaceinfo tmps = s;
+            endianswap(&tmps.x, sizeof(ushort), 3);
+            gzwrite(f, &tmps, sizeof(surfaceinfo));
+        ); 
+        loopv(lightmaps)
+        {
+            LightMap &lm = lightmaps[i];
+            gzputc(f, lm.type);
+            gzwrite(f, lm.data, sizeof(lm.data));
+        };
     };
 
     gzclose(f);
@@ -376,6 +396,22 @@ void load_world(const char *mname, const char *cname)        // still supports a
     if(hdr.version < 7 || !hdr.lightmaps) clearlights();
     else
     {
+        endianswap(&hdr.matlight, sizeof(int), 1);
+        loopi(hdr.matlight)
+        {
+            materialsurface m;
+            m.material = gzgetc(f);
+            m.orient = gzgetc(f);
+            gzread(f, &m.o, 3*sizeof(int));
+            endianswap(&m.o, sizeof(int), 3);
+            gzread(f, &m.csize, sizeof(int));
+            endianswap(&m.csize, sizeof(int), 1);
+            gzread(f, &m.rsize, sizeof(int));
+            endianswap(&m.rsize, sizeof(int), 1);
+            surfaceinfo &s = materiallight[m];
+            gzread(f, &s, sizeof(surfaceinfo));
+            endianswap(&s.x, sizeof(ushort), 3);
+        }; 
         loopi(hdr.lightmaps)
         {
             show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");

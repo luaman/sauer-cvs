@@ -13,8 +13,11 @@ VARF(ambient, 1, 25, 64, hdr.ambient = ambient);
 int shadows = 1;
 int mmshadows = 0;
 int aalights = 3;
- 
+
+hashtable<materialsurface, surfaceinfo> materiallight;
+
 static int lmtype, lmorient;
+extern bool showambient = true;
 static uchar lm[3 * LM_MAXW * LM_MAXH];
 static vec lm_ray[LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
@@ -254,9 +257,15 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
             lm_ray[y*lm_w+x].add(avgray);
             break;
     };
-    sample.x = min(255, max(ambient, r));
-    sample.y = min(255, max(ambient, g));
-    sample.z = min(255, max(ambient, b));
+    if(showambient)
+    {
+        r = max(r, ambient);
+        g = max(g, ambient);
+        b = max(b, ambient);
+    };
+    sample.x = min(255, r);
+    sample.y = min(255, g);
+    sample.z = min(255, b);
 };
 
 bool lumel_sample(const vec &sample, int aasample, int stride)
@@ -439,9 +448,11 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         {
             uchar color[3];
             loopk(3) color[k] = (int(maxcolor[k]) + int(mincolor[k])) / 2;
-            if(color[0] <= ambient + lighterror && 
-               color[1] <= ambient + lighterror && 
-               color[2] <= ambient + lighterror)
+            int shadowcolor = showambient ? ambient : 0;
+            if(showambient &&
+               color[0] <= shadowcolor + lighterror && 
+               color[1] <= shadowcolor + lighterror && 
+               color[2] <= shadowcolor + lighterror)
                 return false;
             if(lmtype == LM_NORMAL)
             {
@@ -476,11 +487,8 @@ static struct lightcacheentry
 
 VARF(lightcachesize, 6, 8, 12, clearlightcache());
 
-static int globalcache;
-
 void clearlightcache(int e)
 {
-    if(e < 0 || globalcache==e) globalcache = -1;
     if(e < 0 || !et->getents()[e]->attr1)
     {
         for(lightcacheentry *lce = lightcache; lce < &lightcache[LIGHTCACHESIZE]; lce++)
@@ -556,7 +564,7 @@ static inline void addlight(const entity &light, int cx, int cy, int cz, int siz
     };
 }; 
 
-bool find_lights(cube &c, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
+bool find_lights(int cx, int cy, int cz, int size, plane planes[2], int numplanes)
 {
     lights1.setsize(0);
     lights2.setsize(0);
@@ -743,7 +751,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);
-        if(!numplanes || !find_lights(c, cx, cy, cz, size, planes, numplanes))
+        if(!numplanes || !find_lights(cx, cy, cz, size, planes, numplanes))
             continue;
 
         vec v[4], n[4], n2[3];
@@ -765,6 +773,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         };
         lmtype = LM_NORMAL;
         lmorient = i;
+        showambient = true;
         if(!lodcube)
         {
             Shader *shader = lookupshader(c.texture[i]);
@@ -807,11 +816,50 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
     }; 
 };
 
+extern vector<vtxarray *> valist;
+
+void generate_materiallight()
+{
+    lmtype = LM_BUMPMAP0;
+    showambient = false;
+    loopv(valist)
+    {
+        CHECK_PROGRESS(return);
+        vtxarray *va = valist[i];
+        lodlevel &lod = va->l0;
+        loopj(lod.matsurfs)
+        {
+            materialsurface &m = lod.matbuf[j];
+            m.light = NULL;
+            if(m.material==MAT_WATER && m.orient==O_TOP)
+            {
+                m.light = materiallight.access(m);
+                if(m.light) continue;
+                CHECK_PROGRESS(return);
+                plane zplane(0, 0, 1, -m.o.z);
+                if(!find_lights(va->x, va->y, va->z, va->size, &zplane, 1)) continue;
+                static vec n[4] = { vec(0, 0, 1), vec(0, 0, 1), vec(0, 0, 1), vec(0, 0, 1) }; 
+                vec v[4];
+                loopk(4) v[k] = vec(m.o.x+m.rsize*cubecoords[fv[O_TOP][k]].x/8, m.o.y+m.csize*cubecoords[fv[O_TOP][k]].y/8, m.o.z-1.1f);
+                uchar texcoords[8];
+                if(!setup_surface(&zplane, v, n, NULL, texcoords)) continue;
+                surfaceinfo &s = materiallight[m];
+                s.w = lm_w;
+                s.h = lm_h;
+                memcpy(s.texcoords, texcoords, 8);
+                pack_lightmap(lmtype, s);
+                m.light = &s;
+            };
+        };
+    };
+};
+
 void resetlightmaps()
 {
     loopv(lightmaps) DELETEA(lightmaps[i].converted);
     lightmaps.setsize(0);
     compressed.clear();
+    materiallight.clear();
 };
 
 static Uint32 calclight_timer(Uint32 interval, void *param)
@@ -853,6 +901,7 @@ void calclight(int *quality)
     calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
+    generate_materiallight();
     Uint32 end = SDL_GetTicks();
     if(timer) SDL_RemoveTimer(timer);
     uint total = 0, lumels = 0;
@@ -905,6 +954,7 @@ void patchlight()
     calcnormals();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
+    generate_materiallight();
     Uint32 end = SDL_GetTicks();
     if(timer) SDL_RemoveTimer(timer);
     loopv(lightmaps)
@@ -1043,60 +1093,6 @@ void initlights()
     };
     clearlightcache();
     updateentlighting();
-};
-
-entity *globallight(const vec &target, const vec &dir)
-{
-    const vector<extentity *> &ents = et->getents();
-    if(globalcache>=0) return ents[globalcache];
-    entity *global = NULL;
-    loopv(ents)
-    {
-        entity &e = *ents[i];    
-        if(e.type != ET_LIGHT) continue;
-        if(!e.attr1 || !global || (global->attr1 && e.attr1 > global->attr1))
-        {
-            if(vec(e.o).sub(target).dot(dir)>=0)
-            {
-                global = &e;
-                globalcache = i;
-            };
-        };
-    };
-    return global;
-};
-
-entity *brightestlight(const vec &target, const vec &dir)
-{
-    const vector<extentity *> &ents = et->getents();
-    const vector<int> &lights = checklightcache(int(target.x), int(target.y));
-    entity *brightest = NULL;
-    float bintensity = 0;
-    loopv(lights)
-    {
-        entity &e = *ents[lights[i]];
-        if(e.type != ET_LIGHT || vec(e.o).sub(target).dot(dir)<0)
-            continue;
-
-        vec ray(target);
-        ray.sub(e.o);
-        float mag = ray.magnitude();
-        if(e.attr1 && mag >= float(e.attr1))
-            continue;
-
-        ray.div(mag);
-        if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY) < mag)
-            continue;
-        float intensity = 1.0;
-        if(e.attr1)
-            intensity -= mag / float(e.attr1);
-        if(!brightest || intensity > bintensity)
-        {
-            brightest = &e;
-            bintensity = intensity;
-        };
-    };
-    return brightest;
 };
 
 void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float ambient)

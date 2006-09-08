@@ -207,7 +207,7 @@ void sortmatsurfs(materialsurface *matsurf, int matsurfs)
     qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
 };
 
-void drawface(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false)
+void drawface(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false, surfaceinfo *s = NULL)
 {
     int dim = dimension(orient), c = C[dim], r = R[dim];
     glBegin(GL_POLYGON);
@@ -218,7 +218,10 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
         v[c] += cubecoords[coord][c]/8*csize;
         v[r] += cubecoords[coord][r]/8*rsize;
         v[dim] += dimcoord(orient) ? -offset : offset;
-        if(usetc) glTexCoord2f(v[c]/8, v[r]/8);
+        if(usetc) glMultiTexCoord2f_(GL_TEXTURE0_ARB, v[c]/8, v[r]/8);
+        if(s) glMultiTexCoord2f_(GL_TEXTURE1_ARB, 
+                (s->x + (s->texcoords[i*2] / 255.0f) * (s->w - 1) + 0.5f) / LM_PACKW, 
+                (s->y + (s->texcoords[i*2 + 1] / 255.0f) * (s->h - 1) + 0.5f) / LM_PACKH);
         glVertex3fv(v.v);
     };
     glEnd();
@@ -309,20 +312,15 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             if(waterrefract)
             {
                 glDisable(GL_BLEND);
-                glActiveTexture_(GL_TEXTURE3_ARB);
+                glActiveTexture_(GL_TEXTURE5_ARB);
                 glEnable(GL_TEXTURE_2D);
-                glActiveTexture_(GL_TEXTURE0_ARB);
             };
+            glActiveTexture_(GL_TEXTURE3_ARB);
+            glEnable(GL_TEXTURE_2D);
+            glActiveTexture_(GL_TEXTURE4_ARB);
+            glEnable(GL_TEXTURE_2D);
+            glActiveTexture_(GL_TEXTURE0_ARB);
 
-#if 0
-            entity *light = globallight();
-            const vec &lightpos = light ? light->o : vec(0, 0, hdr.worldsize);
-            const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient);
-            float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
-            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
-            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
-#endif
             glMatrixMode(GL_TEXTURE);
             glPushMatrix();
             matloop(MAT_WATER, 
@@ -331,42 +329,36 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                     ref = findreflection(m.o.z);
                     if(ref)
                     {
-                        entity *light = ref->light;
-                        const vec &lightpos = light ? light->o : vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, hdr.worldsize);
-                        const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient).div(255.0f);
-                        float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
-                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
-                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
-                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
                         setprojtexmatrix(ref);
                         if(waterreflect || waterrefract) glBindTexture(GL_TEXTURE_2D, ref->tex);
+                        
+                        extern vector<GLuint> lmtexids;
+                        int lmid = m.light && lmtexids.inrange(m.light->lmid) ? m.light->lmid : LMID_AMBIENT;
                         if(waterrefract)
                         {
-                            glActiveTexture_(GL_TEXTURE3_ARB);
+                            glActiveTexture_(GL_TEXTURE5_ARB);
                             glBindTexture(GL_TEXTURE_2D, ref->refracttex);
-                            glActiveTexture_(GL_TEXTURE0_ARB);
                         }
                         else
                         {
-                            float depth = !waterfog ? 1.0f : min(0.75f*m.info/waterfog, 0.95f);
-                            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, depth, 1.0f-depth, 0, 0);
+                            float depth = !waterfog ? 1.0f : min(0.75f*m.depth/waterfog, 0.95f);
+                            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, depth, 1.0f-depth, 0, 0);
                         }; 
-
-                        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
+                        glActiveTexture_(GL_TEXTURE3_ARB);
+                        glBindTexture(GL_TEXTURE_2D, lmtexids[lmid]);
+                        glActiveTexture_(GL_TEXTURE4_ARB);
+                        glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
+                        glActiveTexture_(GL_TEXTURE0_ARB);
+                        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true, m.light);
                     };
                 };
             );
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
 
-            if(waterrefract)
-            {
-                glActiveTexture_(GL_TEXTURE3_ARB);
-                glDisable(GL_TEXTURE_2D);
-                glEnable(GL_BLEND);
-            };    
+            if(waterrefract) glEnable(GL_BLEND);
 
-            loopi(2)
+            loopi(5)
             {
                 glActiveTexture_(GL_TEXTURE1_ARB+i);
                 glDisable(GL_TEXTURE_2D);
@@ -606,6 +598,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 };
 
 extern vector<vtxarray *> valist;
+extern hashtable<materialsurface, surfaceinfo> materiallight;
 
 void setupmatsurfs()
 {
@@ -620,20 +613,21 @@ void setupmatsurfs()
         loopj(lod.matsurfs)
         {
             materialsurface &m = lod.matbuf[j];
+            m.light = materiallight.access(m); 
             if(m.material==MAT_WATER && m.orient==O_TOP)
             {
-                m.info = water.length();
+                m.index = water.length();
                 loopvk(water)
                 {
                     materialsurface &n = *water[k];
                     if(m.o.z!=n.o.z) continue;
                     if(n.o.x+n.rsize==m.o.x || m.o.x+m.rsize==n.o.x)
                     {
-                        if(n.o.y+n.csize>m.o.y && n.o.y<m.o.y+m.csize) uf.unite(m.info, n.info);
+                        if(n.o.y+n.csize>m.o.y && n.o.y<m.o.y+m.csize) uf.unite(m.index, n.index);
                     }
                     else if(n.o.y+n.csize==m.o.y || m.o.y+m.csize==n.o.y)
                     {
-                        if(n.o.x+n.rsize>m.o.x && n.o.x<m.o.x+m.rsize) uf.unite(m.info, n.info);
+                        if(n.o.x+n.rsize>m.o.x && n.o.x<m.o.x+m.rsize) uf.unite(m.index, n.index);
                     };
                 };
                 water.add(&m);
@@ -649,7 +643,7 @@ void setupmatsurfs()
     };
     loopv(water)
     {
-        water[i]->info = (short)waterdepths[uf.find(i)];
+        water[i]->depth = (short)waterdepths[uf.find(i)];
     };
 };
 
@@ -806,7 +800,7 @@ void queryreflections()
         matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
     };
     
-    if(!hasOQ || !oqfrags || !oqreflect || (!waterreflect && !waterrefract)) return;
+    if((editmode && showmat) || !hasOQ || !oqfrags || !oqreflect || (!waterreflect && !waterrefract)) return;
     int refs = 0;
     loopi(MAXREFLECTIONS)
     {
@@ -851,6 +845,7 @@ bool reflecting = false, refracting = false;
 
 void drawreflections()
 {
+    if(editmode && showmat) return;
     int refs = 0, watermillis = 1000/reflectfps;
     float offset = -1.1f;
     loopi(MAXREFLECTIONS)
@@ -864,10 +859,7 @@ void drawreflections()
         loopvj(ref.matsurfs)
         {
            materialsurface &m = *ref.matsurfs[j];
-           if(m.info>=10000) hasbottom = false;
-           entity *light = brightestlight(vec(m.o.x+m.csize/2, m.o.y+m.rsize/2, m.o.z+offset), vec(0, 0, 1));
-           if(!light) continue;
-           if(!ref.light || !light->attr1 || (ref.light->attr1 && light->attr1 > ref.light->attr1)) ref.light = light;
+           if(m.depth>=10000) hasbottom = false;
         };
 
         if(waterreflect || waterrefract)
