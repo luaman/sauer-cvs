@@ -990,7 +990,7 @@ void undoclipmatrix()
 VAR(reflectclip, 0, 1, 1);
 VAR(reflectmms, 0, 1, 1);
 
-extern int refractfog;
+extern int waterfog;
 
 void setfogplane(float z = 0)
 {
@@ -1006,11 +1006,10 @@ void setfogplane(float z = 0)
  
 void drawreflection(float z, bool refract, bool clear)
 {
-    uchar wcol[3] = { 20, 80, 80 };
-    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+    getwatercolour(wcol);
     float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
 
-    if(refract && !refractfog)
+    if(refract && !waterfog)
     {
         glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -1031,7 +1030,7 @@ void drawreflection(float z, bool refract, bool clear)
         if(refract)
         {
             glFogi(GL_FOG_START, 0);
-            glFogi(GL_FOG_END, refractfog);
+            glFogi(GL_FOG_END, waterfog);
             glFogfv(GL_FOG_COLOR, fogc);
             setfogplane(z);
         }
@@ -1081,7 +1080,7 @@ void drawreflection(float z, bool refract, bool clear)
     if(refract) 
     {
         setfogplane();
-        glFogi(GL_FOG_END, refractfog*3/2);
+        glFogi(GL_FOG_END, waterfog*3/2);
     };
 
     extern void renderreflectedmapmodels(float z, bool refract);
@@ -1137,10 +1136,13 @@ void gl_drawframe(int w, int h, float curfps)
 
     if(underwater)
     {
+        getwatercolour(wcol);
+        float fogwc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
+        glFogfv(GL_FOG_COLOR, fogwc);
         fovy += (float)sin(lastmillis/1000.0)*2.0f;
         aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
         glFogi(GL_FOG_START, 0);
-        glFogi(GL_FOG_END, (fog+96)/8);
+        glFogi(GL_FOG_END, waterfog*4);//(fog+96)/8);
     };
 
     if(renderpath==R_ASMSHADER) setfogplane();

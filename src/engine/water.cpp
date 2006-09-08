@@ -31,7 +31,7 @@ Reflection *findreflection(int height);
 VAR(waterreflect, 0, 1, 1);
 VAR(waterrefract, 0, 0, 1);
 VAR(reflectdist, 0, 2000, 10000);
-VAR(refractfog, 0, 150, 10000);
+VAR(waterfog, 0, 150, 10000);
 
 // renders water for bounding rect area that contains water... simple but very inefficient
 
@@ -268,7 +268,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
     if(!editmode || !showmat)
     {
         glEnable(GL_TEXTURE_2D);
-        uchar wcol[4] = { 20, 80, 80, 192 };
+        uchar wcol[4] = { 20, 70, 80, 192 };
         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
         else if(!hasFBO || renderpath==R_FIXEDFUNCTION) loopi(3) wcol[i] = 128;
         glColor4ubv(wcol);
@@ -348,7 +348,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         }
                         else
                         {
-                            float depth = !refractfog ? 1.0f : min(0.75f*m.info/refractfog, 0.95f);
+                            float depth = !waterfog ? 1.0f : min(0.75f*m.info/waterfog, 0.95f);
                             glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, depth, 1.0f-depth, 0, 0);
                         }; 
 

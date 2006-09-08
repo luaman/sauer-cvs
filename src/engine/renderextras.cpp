@@ -329,10 +329,16 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     if(dblend || underwater)
     {
         glDepthMask(GL_FALSE);
-        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
         glBegin(GL_QUADS);
-        if(dblend) glColor3d(0.0f, 0.9f, 0.9f);
-        else glColor3d(0.9f, 0.5f, 0.0f);
+        if(dblend) glColor3f(1.0f, 0.1f, 0.1f);
+        else 
+        {
+            getwatercolour(wcol);
+            float maxc = max(wcol[0], max(wcol[1], wcol[2]));
+            glColor3f(wcol[0]/maxc, wcol[1]/maxc, wcol[2]/maxc); 
+            //glColor3f(0.1f, 0.5f, 1.0f);
+        };
         glVertex2i(0, 0);
         glVertex2i(w, 0);
         glVertex2i(w, h);

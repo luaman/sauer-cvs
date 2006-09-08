@@ -224,6 +224,11 @@ extern void resetqueries();
 extern int getnumqueries();
 
 // water
+
+#define getwatercolour(wcol) \
+    uchar wcol[3] = { 20, 70, 80 }; \
+    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+
 extern int showmat;
 
 extern int visiblematerial(cube &, int orient, int x, int y, int z, int size);
