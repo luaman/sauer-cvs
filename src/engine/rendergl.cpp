@@ -1031,8 +1031,8 @@ void drawreflection(float z, bool refract)
 
         if(refract)
         {
-            glFogf(GL_FOG_START, 0);
-            glFogf(GL_FOG_END, refractfog);
+            glFogi(GL_FOG_START, 0);
+            glFogi(GL_FOG_END, refractfog);
             glFogfv(GL_FOG_COLOR, fogc);
             glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
             setfogplane(z);
@@ -1079,7 +1079,11 @@ void drawreflection(float z, bool refract)
 //        setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
 //    };
 
-    if(refract) setfogplane();
+    if(refract) 
+    {
+        setfogplane();
+        glFogi(GL_FOG_END, refractfog*3/2);
+    };
 
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
