@@ -17,46 +17,60 @@ grabinput
 The following commands can be applied in the game by pressing T, and then typing <i>/commandname</i>.  The backquote key (`) is a shortcut for having the / typed for you.  To have these commands applied automatically before the game starts open the autoexec.cfg file and add them there, without the /.  <i>Name</i> and <i>team</i> in particular should be changed there.
 
 <pre>map M</pre>
+<p>
 Loads a map. If connected to a multiplayer server, votes to load this map (others will have to&nbsp;type "map M" as well to agree with loading this map).&nbsp;To vote for a map with a specific mode, set the mode before you issue the map command (see multiplayer menu). See also map in the editref.
 
 <pre>name yourname</pre>
+<p>
 Used for multiplayer, sets the name other players will know you as.
 
 <pre>team teamname</pre>
+<p>
 Determines who are your teammates in any team game mode (truncated to 4 characters, case sensitive).
 
 <pre>say text...</pre>
+<p>
 Outputs text to all players, as if you typed it.
 
 <pre>echo text...</pre>
+<p>
 Outputs text to the console.  Most useful for scripts.
 
 <pre>saycommand P...</pre>
+<p>
 This puts a prompt on screen where you can type stuff into, which will capture  all keystrokes until you press return (or esc to cancel). You may press tab to autocomplete commands/aliases/variables, and up/down keys to browse the command history. If what you typed started with a "/", the rest of it will be executed as a command, otherwise its something you "say" to all players. default key = T for talk, ` for commands. If P is prefix to insert to the buffer, (default key ` inserts a /).
 
 <pre>connect serverip</pre>
+<p>
 Connects to a server, e.g. "connect fov120.com". You can paste an address from the clipboard with ctrl+v.  A master server browser will soon follow.
 
 <pre>lanconnect</pre>
+<p>
 Connects to any server on the local area network by broadcasting the connection request.
 
 <pre>disconnect</pre>
+<p>
 Leave the server.
 
 <pre>rate N</pre>
+<p>
 Sets your clients maximum downstream bandwidth to N bytes per second. Leaving it at 0 (the default) means the server will dynamically try to do the best thing, this is recommended for players who don't have a clue what their bandwidth is (setting your rate unoptimally is worse than not setting it all). Modem players (56k)&nbsp;could try rate 4000 and tweak from there, dsl players can try rate 6000-10000. Note that the more players on a server, the more critical the effect of your rate.
 
 <pre>showscores</pre>
+<p>
 +showscores turns display of scores (name/frags/network) on and -showscores turns it off. Default key = tab
 
 <pre>conskip N</pre>
+<p>
 Allows you to browse through the console history, by offsetting the console  output by N. Default key keypad - scrolls into the history (conskip 1) and keypad + resets the history (conskip -1000).
 
 <pre>toggleconsole</pre>
+<p>
 Toggle between a more permanent and bigger console display and default, scroll off the screen variety. Unlike other games, you can
 play the game normally with the larger console on.
 
 <pre>weapon a b c</pre>
+<p>
 Tries to select weapons a, b &amp; c, in that order, if they have ammo (0 = fist, 1 = sg, 2 = cg, 3 = rl, 4 = rifle, 5 = gl, 6 = pistol). If none of the 3 indicated have any ammo, it will try the remaining weapons for one with ammo (in order 3/2/1/4/0) (the fist needs no ammo). You can use the weapon command with 0 to 3 arguments. 
 examples:
 <pre>weapon 2 1 0     // close up selection
@@ -65,12 +79,15 @@ weapon 3 2 1     // medium distance selection
 weapon 0         // humiliate selection :)
 weapon           // just switch to anything with ammo
 </pre>
+<p>
 In any selection, it will skip whichever weapon you have currently selected, so executing a weapon command repeatedly toggles between the two best weapons with ammo within a given selection. default keys 0 to 4 select the corresponding weapons, with sensible default alternatives, middle mouse button is a simple weapon switch.
 
 <pre>gamespeed P</pre>
+<p>
 Sets the gamespeed in percent, i.e. 50 is playing in slowmotion at half the speed. does not work in multiplayer. for entertainment purposes only :)
 
 <pre>mode N</pre>
+<p>
 Set gameplay mode to N for the next game played (next map load). N can be:
 <ul>
 <li>0: "ffa" / "default" mode. This is the default normal ffa game, and can also be used as "prewar" while setting up teams / voting for the next game.&nbsp;</li>
@@ -87,34 +104,43 @@ Set gameplay mode to N for the next game played (next map load). N can be:
 Frag counting is the same for all modes: 1 for a frag, -1 for a suicide or a teamkill. Timelimit for all games is 10 minutes, or 15 minutes for teamplay, and no timelimit for mode 1 (and mode 0 in a local game).
 
 <pre>skill N</pre>
+<p>
 Sets the skill level (1-10) for single player modes. Default = 3. Affects number of monsters in DMSP mode, and general monster AI in all SP modes.
 
 <pre>servermenu</pre>
+<p>
 Displays the server menu. The server menu contains the last N servers you connected to, sorted by ping (servers are pinged automatically when bringing up this menu). Just select one to connect again. If you connect to a server by typing "connect" manually, the server gets added here automatically. You can also add servers to "servers.cfg" manually.
 
 <pre>updatefrommaster</pre>
+<p>
 contacts the masterserver and adds any new servers to the server list (written to servers.cfg on exit). (see also multiplayer menu).
 
 <pre>paused B</pre>
+<p>
 wether the game is paused or not (default 0, default key F1 toggles).
 
 <pre>damageblendfactor F</pre>
+<p>
 the higher F, the longer the screen will stay red when you are damaged.
 
 <pre>damagespherefactor F</pre>
+<p>
 the higher F, the bigger the spheres drawn from rocket and grenade explosions. 100 = the same as the actual damage radius (default).
 
 <!--
 None of this works right now but I assume these features will return.
 <pre>sendmap<br>
 getmap</pre>
+<p>
 These two commands allow you to send other players maps they may not have while in multiplayer mode, and easily keep maps in sync while doing coop edit. "sendmap" reloads the current map you are on, then uploads it to the server and sends every other player a message about it. Other players can then simply type "getmap" to receive the current map, which is written to their local disk then reloaded. A second variant "sendmap name" is available which is particularly useful for coop editing, which first does a "savemap name" before performing the actual "sendmap". Thus in both cases you must already be on the map you 
 want to send before issuing the command! (in some multiplayer that requires voting). Also note that "getmap" operates on the last map send by some other player, whatever it is.
 
 <pre>savegame F</pre>
+<p>
 Saves the current state of game (map, state of entities, monsters, triggers, and your player) to a savegame file named F (these are placed in the "savegames" directory). Default key F8 is "savegame quicksave". Works only in classic singleplayer mode.
 
 <pre>loadgame F</pre>
+<p>
 restores a previously saved game named F. Default key F9 is "loadgame quicksave".&nbsp;You cannot load savegames from different versions of the&nbsp;map, different versions&nbsp;of sauerbraten, or different cpu architectures.&nbsp;-->
 
 
@@ -554,8 +580,10 @@ Servers operate in a so called "master mode" which allows people to easily and p
 The way it works is very simple: the first person to enter a server and use the "setmaster" command becomes the "master" of that server. The master has 4 commands at his disposal which other players have not:
 
 <pre>setmaster B</pre>
+<p>
 Attempts to set master status to B. 0 gives up master status, 1 claims master status, or the admin password may be specified to steal master status from the current master.
 <pre>mastermode N</pre>
+<p>
 Sets the server to master mode N. N can be (ranging from very open to very private):
 <ul>
 <li>0 (open): anyone can enter the server. This is the default mode. It is good for games with random people, if no cheaters appear to be around.</li>
@@ -565,11 +593,13 @@ Sets the server to master mode N. N can be (ranging from very open to very priva
 </ul> 
 
 <pre>kick N</pre>
+<p>
 Kick's the player with client number N (displayed in parentheses next to name) off the server, and bans his ip until 4 hours or the server is empty. You can't kick yourself. N may also just be the player's name.
 This command is useful when you started playing an open game, and a cheater joins. Additionally you can move to a higher mastermode for additional protection.
 Don't use this command for anything other than cheaters or people otherwise obstructing games.
 <pre>spectator B
 spectator B N</pre>
+<p>
 Sets whether a player is a spectator (B=1 to enable, 0 to disable). N is specified as for kick. A player can voluntarily make himself a spectator, but only the current master can make other players spectators.
 <p>
 The important thing to see about these commands is that they don't prevent cheating, nor are necessarily a fair way of adminning a server. They just make it real easy to have fun games with friends without being disturbed by cheaters or people you don't want to play with.
