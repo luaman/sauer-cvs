@@ -261,6 +261,8 @@ void setprojtexmatrix(Reflection *ref)
     else glLoadMatrixf(ref->tm);
 };
 
+VARF(refractfog, 0, 150, 10000, { if(!waterrefract) allchanged(); });
+
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs) return;
@@ -344,7 +346,12 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                             glActiveTexture_(GL_TEXTURE3_ARB);
                             glBindTexture(GL_TEXTURE_2D, ref->refracttex);
                             glActiveTexture_(GL_TEXTURE0_ARB);
-                        };
+                        }
+                        else
+                        {
+                            float depth = !refractfog ? 1.0f : min(0.75f*m.info/refractfog, 0.95f);
+                            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, depth, 1.0f-depth, 0, 0);
+                        }; 
 
                         drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
                     };
@@ -568,7 +575,9 @@ int mergemats(materialsurface *m, int sz)
 };
     
 VARF(optmats, 0, 1, 1, allchanged());
-                
+
+extern int refractfog;
+
 int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!optmats) return matsurfs;
@@ -595,8 +604,15 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
             vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
          };
          if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath==R_ASMSHADER)) matbuf = oldbuf + mergemats(oldbuf, matbuf - oldbuf);
-         
     };
+    for(cur = end-matsurfs; cur < end; cur++)
+    {
+        if(cur->material==MAT_WATER && cur->orient==O_TOP)
+        {
+            cur->info = (short) raycube(vec(cur->o.x+cur->csize/2, cur->o.y+cur->rsize/2, cur->o.z-1.1f), vec(0, 0, -1), 2*refractfog);
+        };
+    };
+
     return matsurfs - (end-matbuf);
 };
 

@@ -989,7 +989,8 @@ void undoclipmatrix()
 
 VAR(reflectclip, 0, 1, 1);
 VAR(reflectmms, 0, 1, 1);
-VAR(refractfog, 1, 150, 10000);
+
+extern int refractfog;
 
 void setfogplane(float z = 0)
 {
@@ -1005,6 +1006,17 @@ void setfogplane(float z = 0)
  
 void drawreflection(float z, bool refract)
 {
+    uchar wcol[3] = { 20, 80, 80 };
+    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+    float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
+
+    if(refract && !refractfog)
+    {
+        glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        return;
+    };
+
     reflecting = true;
     if(refract) refracting = true;
 
@@ -1019,12 +1031,8 @@ void drawreflection(float z, bool refract)
 
         if(refract)
         {
-            uchar wcol[3] = { 20, 80, 80 };
-            if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
-
             glFogf(GL_FOG_START, 0);
             glFogf(GL_FOG_END, refractfog);
-            float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
             glFogfv(GL_FOG_COLOR, fogc);
             glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
             setfogplane(z);
@@ -1071,6 +1079,8 @@ void drawreflection(float z, bool refract)
 //        setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
 //    };
 
+    if(refract) setfogplane();
+
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
@@ -1095,7 +1105,6 @@ void drawreflection(float z, bool refract)
 
     if(refract || camera1->o.z < z)
     {
-        if(refract) setfogplane();
         glFogf(GL_FOG_START, oldfogstart);
         glFogf(GL_FOG_END, oldfogend);
         glFogfv(GL_FOG_COLOR, oldfogcolor);

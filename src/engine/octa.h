@@ -9,10 +9,10 @@ struct elementset
 
 struct materialsurface
 {
-    uchar material;
-    uchar orient;
     ivec o;
     int csize, rsize;
+    short info;
+    uchar material, orient;
 };
 
 struct lodlevel

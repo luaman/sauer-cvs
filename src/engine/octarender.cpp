@@ -858,9 +858,13 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
             int vis = visiblematerial(c, i, cx, cy, cz, size);
             if(vis != MATSURF_NOT_VISIBLE)
             {
-                materialsurface matsurf = {vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material, i, ivec(cx, cy, cz), size, size};
-                if(dimcoord(i)) matsurf.o[dimension(i)] += size;
-                l0.matsurfs.add(matsurf);
+                materialsurface m;
+                m.material = (vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material);
+                m.orient = i;
+                m.o = ivec(cx, cy, cz);
+                m.csize = m.rsize = size;
+                if(dimcoord(i)) m.o[dimension(i)] += size;
+                l0.matsurfs.add(m);
             };
         };
     };

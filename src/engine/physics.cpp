@@ -152,7 +152,7 @@ float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, in
     return dist;
 };
 
-float raycube(const vec &o, vec &ray, float radius, int mode, int size, extentity *t)
+float raycube(const vec &o, const vec &ray, float radius, int mode, int size, extentity *t)
 {
     octaentities *oclast = NULL;
     float dist = 0, dent = 1e16f;
