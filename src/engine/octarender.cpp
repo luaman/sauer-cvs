@@ -1480,7 +1480,6 @@ void renderreflectedmapmodels(float z, bool refract)
         restorevfcP();
     }
     else loopv(renderedmms) rendermapmodel(*renderedmms[i]);
-
 };
 
 void rendermapmodels()
