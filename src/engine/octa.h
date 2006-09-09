@@ -7,8 +7,6 @@ struct elementset
     int length[3];
 };
 
-struct surfaceinfo;
-
 struct materialsurface
 {
     ivec o;
@@ -19,7 +17,7 @@ struct materialsurface
         short depth;
     };
     uchar material, orient;
-    surfaceinfo *light;
+    entity *light;
 };
 
 inline bool htcmp(const materialsurface &x, const materialsurface &y)

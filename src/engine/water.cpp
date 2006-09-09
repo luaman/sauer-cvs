@@ -207,7 +207,7 @@ void sortmatsurfs(materialsurface *matsurf, int matsurfs)
     qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
 };
 
-void drawface(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false, surfaceinfo *s = NULL)
+void drawface(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false)
 {
     int dim = dimension(orient), c = C[dim], r = R[dim];
     glBegin(GL_POLYGON);
@@ -218,10 +218,7 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
         v[c] += cubecoords[coord][c]/8*csize;
         v[r] += cubecoords[coord][r]/8*rsize;
         v[dim] += dimcoord(orient) ? -offset : offset;
-        if(usetc) glMultiTexCoord2f_(GL_TEXTURE0_ARB, v[c]/8, v[r]/8);
-        if(s) glMultiTexCoord2f_(GL_TEXTURE1_ARB, 
-                (s->x + (s->texcoords[i*2] / 255.0f) * (s->w - 1) + 0.5f) / LM_PACKW, 
-                (s->y + (s->texcoords[i*2 + 1] / 255.0f) * (s->h - 1) + 0.5f) / LM_PACKH);
+        if(usetc) glTexCoord2f(v[c]/8, v[r]/8);
         glVertex3fv(v.v);
     };
     glEnd();
@@ -312,14 +309,10 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             if(waterrefract)
             {
                 glDisable(GL_BLEND);
-                glActiveTexture_(GL_TEXTURE5_ARB);
+                glActiveTexture_(GL_TEXTURE3_ARB);
                 glEnable(GL_TEXTURE_2D);
+                glActiveTexture_(GL_TEXTURE0_ARB);
             };
-            glActiveTexture_(GL_TEXTURE3_ARB);
-            glEnable(GL_TEXTURE_2D);
-            glActiveTexture_(GL_TEXTURE4_ARB);
-            glEnable(GL_TEXTURE_2D);
-            glActiveTexture_(GL_TEXTURE0_ARB);
 
             glMatrixMode(GL_TEXTURE);
             glPushMatrix();
@@ -332,33 +325,40 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         setprojtexmatrix(ref);
                         if(waterreflect || waterrefract) glBindTexture(GL_TEXTURE_2D, ref->tex);
                         
-                        extern vector<GLuint> lmtexids;
-                        int lmid = m.light ? m.light->lmid : LMID_DARK;
+                        entity *light = ref->light;
+                        const vec &lightpos = light ? light->o : vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, hdr.worldsize);
+                        const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient).div(255.0f);
+                        float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
+                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
+                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
+                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
+
                         if(waterrefract)
                         {
-                            glActiveTexture_(GL_TEXTURE5_ARB);
+                            glActiveTexture_(GL_TEXTURE3_ARB);
                             glBindTexture(GL_TEXTURE_2D, ref->refracttex);
+                            glActiveTexture_(GL_TEXTURE0_ARB);
                         }
                         else
                         {
                             float depth = !waterfog ? 1.0f : min(0.75f*m.depth/waterfog, 0.95f);
-                            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, depth, 1.0f-depth, 0, 0);
+                            glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, depth, 1.0f-depth, 0, 0);
                         }; 
-                        glActiveTexture_(GL_TEXTURE3_ARB);
-                        glBindTexture(GL_TEXTURE_2D, lmtexids[lmid]);
-                        glActiveTexture_(GL_TEXTURE4_ARB);
-                        glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
-                        glActiveTexture_(GL_TEXTURE0_ARB);
-                        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true, m.light);
+                        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
                     };
                 };
             );
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
 
-            if(waterrefract) glEnable(GL_BLEND);
+            if(waterrefract)
+            {
+                glEnable(GL_BLEND);
+                glActiveTexture_(GL_TEXTURE3_ARB);
+                glDisable(GL_TEXTURE_2D);
+            };
 
-            loopi(5)
+            loopi(2)
             {
                 glActiveTexture_(GL_TEXTURE1_ARB+i);
                 glDisable(GL_TEXTURE_2D);
@@ -598,7 +598,6 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 };
 
 extern vector<vtxarray *> valist;
-extern hashtable<materialsurface, surfaceinfo> materiallight;
 
 void setupmatsurfs()
 {
@@ -613,7 +612,6 @@ void setupmatsurfs()
         loopj(lod.matsurfs)
         {
             materialsurface &m = lod.matbuf[j];
-            m.light = materiallight.access(m); 
             if(m.material==MAT_WATER && m.orient==O_TOP)
             {
                 m.index = water.length();
@@ -631,7 +629,9 @@ void setupmatsurfs()
                     };
                 };
                 water.add(&m);
-                float depth = raycube(vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, m.o.z-1.1f), vec(0, 0, -1), 10000);
+                vec center(m.o.x+m.rsize/2, m.o.y+m.csize/2, m.o.z-1.1f);
+                m.light = brightestlight(center, vec(0, 0, 1));
+                float depth = raycube(center, vec(0, 0, -1), 10000);
                 waterdepths.add(depth);
             };
         };
@@ -639,11 +639,16 @@ void setupmatsurfs()
     loopv(waterdepths)
     {
         int root = uf.find(i);
+        if(i==root) continue;
+        materialsurface &m = *water[i], &n = *water[root];
+        if(m.light && (!m.light->attr1 || !n.light || (n.light->attr1 && m.light->attr1 > n.light->attr1))) n.light = m.light;
         waterdepths[root] = max(waterdepths[root], waterdepths[i]);
     };
     loopv(water)
     {
-        water[i]->depth = (short)waterdepths[uf.find(i)];
+        int root = uf.find(i);
+        water[i]->light = water[root]->light;
+        water[i]->depth = (short)waterdepths[root];
     };
 };
 

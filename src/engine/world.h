@@ -24,8 +24,7 @@ struct header                   // map file format header
     uchar watercolour[3];
     uchar mapwlod;
     uchar lerpangle, lerpsubdiv, lerpsubdivsize;
-    int matlight;
-    int reserved[4];
+    int reserved[5];
     char maptitle[128];
 };
 
