@@ -753,17 +753,18 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
 
     if(limited)
     {
-        notextureshader->set();
+        nocolorshader->set();
 
         glDisable(GL_TEXTURE_2D);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        rendersky();
+        rendersky(false, reflected ? zclip : 0);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glEnable(GL_TEXTURE_2D);
 
         defaultshader->set();
     };
 
+    glPushMatrix();
     glLoadIdentity();
     glRotated(player->pitch, -1.0, 0.0, 0.0);
     glRotated(player->yaw,   0.0, 1.0, 0.0);
@@ -772,10 +773,10 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
     draw_envbox(farplane/2, float(zclip)/float(hdr.worldsize));
-    transplayer();
+    glPopMatrix();
     if(limited) 
     {
-        if(editmode && showsky)
+        if(!reflected && editmode && showsky)
         {
             notextureshader->set();
 
@@ -1059,6 +1060,11 @@ void drawreflection(float z, bool refract, bool clear)
 
         glCullFace(GL_BACK);
     };
+
+    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
+    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
+    if(!refract && limitsky) drawskybox(farplane, true, int(z), camera1->o.z >= z);
+
     if(reflectclip) setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
@@ -1089,8 +1095,7 @@ void drawreflection(float z, bool refract, bool clear)
     if(reflectclip) undoclipmatrix();
     defaultshader->set();
 
-    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    if(!refract) drawskybox(farplane, false, int(z), camera1->o.z >= z);
+    if(!refract && !limitsky) drawskybox(farplane, true, int(z), camera1->o.z >= z);
 
     if(!refract && camera1->o.z >= z)
     {
@@ -1156,7 +1161,6 @@ void gl_drawframe(int w, int h, float curfps)
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
 
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
-
     if(limitsky) drawskybox(farplane, true);
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);

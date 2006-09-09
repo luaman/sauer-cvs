@@ -1169,6 +1169,23 @@ void setvfcP(int scr_w, int scr_h, float pyaw, float ppitch, const vec &camera)
     vfcDfog = getvar("fog");
 };
 
+plane oldvfcP[5];
+
+void reflectvfcP(float z)
+{
+    memcpy(oldvfcP, vfcP, sizeof(vfcP));
+
+    vec o(camera1->o);
+    o.z = z-(camera1->o.z-z);
+    extern int scr_w, scr_h;
+    setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
+};
+
+void restorevfcP()
+{
+    memcpy(vfcP, oldvfcP, sizeof(vfcP));
+};
+
 void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
 {
     memset(vasort, 0, sizeof(vasort));
@@ -1185,14 +1202,20 @@ bool insideva(const vtxarray *va, const vec &v)
     return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
 };
 
-void setorigin(vtxarray *va, bool init)
+static ivec vaorigin;
+
+void resetorigin()
 {
-    static ivec origin;
+    vaorigin = ivec(-1, -1, -1);
+};
+
+void setorigin(vtxarray *va)
+{
     ivec o(va->x, va->y, va->z);
     o.mask(~VVEC_INT_MASK);
-    if(init || o != origin)
+    if(o != vaorigin)
     {
-        origin = o;
+        vaorigin = o;
         glPopMatrix();
         glPushMatrix();
         glTranslatef(o.x, o.y, o.z);
@@ -1201,27 +1224,53 @@ void setorigin(vtxarray *va, bool init)
     };
 };
 
-void rendersky(bool explicitonly)
+void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
+{
+    setorigin(va);
+
+    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+    glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+
+    glDrawElements(GL_QUADS, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
+    glde++;
+
+    if(!explicitonly) xtraverts += lod.sky;
+    xtraverts += lod.explicitsky;
+};
+
+void renderreflectedskyvas(vector<vtxarray *> &vas, float z)
+{
+    loopv(vas)
+    {
+        vtxarray *va = vas[i];
+        lodlevel &lod = va->l0;
+        if(va->curvfc == VFC_FULL_VISIBLE && va->occluded >= OCCLUDE_BB) continue;
+        if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) == VFC_NOT_VISIBLE) continue;
+        if(lod.sky+lod.explicitsky) renderskyva(va, lod);
+        if(va->children->length()) renderreflectedskyvas(*va->children, z);
+    };
+};
+
+void rendersky(bool explicitonly, float zreflect)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
 
-    int sky = 0;
     glPushMatrix();
 
-    for(vtxarray *va = visibleva; va; va = va->next)
+    resetorigin();
+
+    if(zreflect)
+    {
+        reflectvfcP(zreflect);
+        renderreflectedskyvas(varoot, zreflect);
+        restorevfcP();
+    }
+    else for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->l0;
         if(va->occluded >= OCCLUDE_BB || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
 
-        setorigin(va, !sky++);
-
-        if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
-
-        glDrawElements(GL_QUADS, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
-        glde++;
-        if(!explicitonly) xtraverts += lod.sky;
-        xtraverts += lod.explicitsky;
+        renderskyva(va, lod, explicitonly);
     };
 
     glPopMatrix();
@@ -1413,7 +1462,6 @@ void rendermapmodel(extentity &e)
 };
 
 extern int reflectdist;
-extern int scr_w, scr_h;
 
 void renderreflectedmapmodels(float z, bool refract)
 {
@@ -1421,13 +1469,7 @@ void renderreflectedmapmodels(float z, bool refract)
     {
         const vector<extentity *> &ents = et->getents();
 
-        plane oldvfcP[5];
-        memcpy(oldvfcP, vfcP, sizeof(vfcP));
-
-        vec o(camera1->o);
-        o.z = z-(camera1->o.z-z);
-        setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
-
+        reflectvfcP(z);
         loopv(ents)
         {
             extentity &e = *ents[i];
@@ -1435,8 +1477,7 @@ void renderreflectedmapmodels(float z, bool refract)
             if(e.o.dist(camera1->o)>reflectdist) continue;
             rendermapmodel(e);
         };
-
-        memcpy(vfcP, oldvfcP, sizeof(vfcP));
+        restorevfcP();
     }
     else loopv(renderedmms) rendermapmodel(*renderedmms[i]);
 
@@ -1564,14 +1605,13 @@ void renderoutline()
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3f(0, 0, 0);
 
-    int outlined = 0;
-    
+    resetorigin();    
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
 
-        setorigin(va, !outlined++);
+        setorigin(va);
 
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
@@ -1598,11 +1638,11 @@ float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 
 struct renderstate
 {
-    bool originmat, colormask, depthmask;
+    bool colormask, depthmask;
     Shader *shader;
     const ShaderParam *vertparams[MAXSHADERPARAMS], *pixparams[MAXSHADERPARAMS];
 
-    renderstate() : originmat(false), colormask(true), depthmask(true), shader(NULL)
+    renderstate() : colormask(true), depthmask(true), shader(NULL)
     {
         memset(vertparams, 0, sizeof(vertparams));
         memset(pixparams, 0, sizeof(pixparams));
@@ -1625,8 +1665,7 @@ struct renderstate
 
 void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 {
-    setorigin(va, !cur.originmat);
-    cur.originmat = true;
+    setorigin(va);
     if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
     if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
     if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); };
@@ -1645,8 +1684,7 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
-    setorigin(va, !cur.originmat);
-    cur.originmat = true;
+    setorigin(va);
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
     glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
@@ -1864,6 +1902,8 @@ void rendergeom()
 
     glPushMatrix();
 
+    resetorigin();
+
     renderstate cur;
     for(vtxarray *va = visibleva; va; va = va->next)
     {
@@ -1939,9 +1979,6 @@ void rendergeom()
     cleanupTMUs();
 };
 
-extern int reflectdist;
-extern int scr_w, scr_h;
-
 void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract)
 {
     loopv(vas)
@@ -1969,19 +2006,14 @@ void renderreflectedgeom(float z, bool refract)
     setupTMUs();
     glPushMatrix();
 
+    resetorigin();
+
     renderstate cur;
     if(!refract && camera1->o.z >= z)
     {
-        plane oldvfcP[5];
-        memcpy(oldvfcP, vfcP, sizeof(vfcP));
-        
-        vec o(camera1->o);
-        o.z = z-(camera1->o.z-z);
-        setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
-
+        reflectvfcP(z);
         renderreflectedvas(cur, varoot, z, refract);
-
-        memcpy(vfcP, oldvfcP, sizeof(vfcP));
+        restorevfcP();
     }
     else
     {
