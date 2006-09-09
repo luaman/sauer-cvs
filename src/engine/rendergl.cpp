@@ -1095,7 +1095,7 @@ void drawreflection(float z, bool refract, bool clear)
     if(reflectclip) undoclipmatrix();
     defaultshader->set();
 
-    if(!refract && !limitsky) drawskybox(farplane, true, int(z), camera1->o.z >= z);
+    if(!refract && !limitsky) drawskybox(farplane, false, int(z), camera1->o.z >= z);
 
     if(!refract && camera1->o.z >= z)
     {
