@@ -10,60 +10,74 @@
 
 <h1>Instructions for Running Sauerbraten</h1>
 
-<p>
 <ul>
 <li>For Windows: Install, edit, then run sauerbraten.bat.</li>
-<li>For GNU/Linux: gunzip, run <i>chmod +x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>.
-Needs a decent and compliant OpenGL implementation.</li>
+<li>For GNU/Linux: gunzip, <i>chmod +x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>. Needs a decent and compliant OpenGL implementation.</li>
 </ul>
-</p>
 
 <p>
-Before you start, you may want to look at the default configuration in "config/defaults.cfg", which should
-be fairly familiar if you ever played a Quake style game.
-</p>
-
-<p>
-If you want to rebind your keys, see the "bind" command below. Press ESC to go into the menu with many useful commands.
 Sauerbraten derives its simplicity from some rather brute force rendering methods, and as such it needs 
 a beefy machine to get good visual quality. It runs best with vertical sync (vsync) set to OFF and at high
 refresh rates (otherwise, you may get excessive LOD/FPS variance).
+</p>
+
+
+<h1>Before You Start</h1>
+
+<p>
+Take some time to read the rest of this document, as it describes options and commands that may be crucial to a successful
+experience with Sauerbraten.
+</p>
+
+<p>
+You may want to look at the default configuration file "defaults.cfg" located in the "config" directory (which should look fairly
+familiar if you've ever played a Quake style game). Should you wish to change any settings <i>before you start</i>, create a file
+name "config.cfg" and set them there. Alternatively, if you would like to override settings (now, and in the future), use the file
+named "autoexec.cfg".
+</p>
+
+<p>
+Binding keys, as well as performance and gameplay related settings are documented below, these commands can be used in
+both the console and configuration scripts. In addition, you can also press "ESC" to go into the menu, which will provide
+you with an interface for navigating some (not all) of the commands.
 </p>
 
 <h1>Command Line Options</h1>
 
 <pre>-d</pre>
 <p>
-This starts Sauerbraten as a dedicatated server. The default is a non-dedicated server with only a single client in graphical'
+This starts Sauerbraten as a dedicatated server. The default is a non-dedicated server with only a single client in graphical
 mode. Dedicated servers run in the shell only (no graphics), with increased priority yet use very little cpu time and memory,
 so you can run one in the background, or at the same time with a client if you want to host a game (which is usually better 
-than using a listen server). Cube servers need to be restarted every 3 weeks, otherwise atleast one game will not have correct
-timing. Servers port are fixed 	at 28785 (UDP) and 28786 (UDP), currently.
+than using a listen server). Servers use the ports 28785 (UDP) and 28786 (UDP).
+</p>
+<p>
+<i>Note: Servers need to be restarted every 3 weeks, otherwise at least one game will not have correct timing.</i>
 </p>
 
 <pre>-wN</pre>
 <p>
-Sets desired screen width to N (default: 640).
+Sets the screen resolution width to N (default: 640).
 </p>
 
 <pre>-hN</pre>
 <p>
-Sets desired screen width to N (default: 480).
+Sets the screen resolution height to N (default: 480).
 </p>
 
 <pre>-bN</pre>
 <p>
-Sets desired bits per pixel to N.
+Sets the screen to N bits per pixel.
 </p>
 
 <pre>-zN</pre>
 <p>
-Sets desired z-buffer precision to N bits.
+Sets the z-buffer precision to N bits. This should be at least 24 or you may experience depth problems.
 </p>
 
 <pre>-aN</pre>
 <p>
-Sets desired FSAA to N samples, i.e. -a4 is 4xFSAA
+Sets FSAA (Full Scene AntiAliasing) to N samples, i.e. -a4 is 4xFSAA
 </p>
 
 <pre>-t</pre>
@@ -71,16 +85,18 @@ Sets desired FSAA to N samples, i.e. -a4 is 4xFSAA
 Sets Sauerbaten to run windowed.
 </p>
 
-<pre>-f</pre>
+<pre>
+-f
+-fN
+</pre>
 <p>
-Forces the renderpath to the old fixed function pipeline (no shaders).
+When used alone, "-f" forces the renderpath to the old fixed function pipeline (no shaders), otherwise it sets the shader precision
+to N (lower = faster). 0 disables shaders, 1 uses the fastest/lowest precision the OpenGL driver offers, 2 is the default precision,
+and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different card/driver combos.
 </p>
-
-<pre>-fN</pre>
 <p>
-Sets the shader precision to N (lower = faster). 0 disables shaders, 1 uses the fastest/lowest precision the OpenGL
-driver offers, 2 is the default precision, and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different 
-card/driver combos.
+If your setup is considered weak, "-f2" will fall back to "-f1" automatically, unless you use "-f3". Weak renderers include (but not limited to): "GeForce FX",
+"Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome".
 </p>
 
 <pre>-lS</pre>
@@ -106,11 +122,6 @@ Sets the max number of clients to N. The default is 4. If you want to set it hig
 doubles with each extra client, so only do this if the server runs on a serious pipe (not your home DSL or Cable connection).
 </p>
 
-<pre>-pS</pre>
-<p>
-Sets the server's administrative password to S.
-</p>
-
 <pre>-iS</pre>
 <p>
 Sets the server ip to S. This option is only useful for people running on machines with multiple network interfaces.
@@ -120,6 +131,16 @@ Sets the server ip to S. This option is only useful for people running on machin
 <p>
 Sets the master server to use for either server (registering) and client (updating) to S. Be aware, this is the base url
 of the master server and has to end in a "/" and without a "http://" prefix (default: sauerbraten.org/masterserver/).
+</p>
+
+<pre>-gS</pre>
+<p>
+Start playing using gametype S (default: fps). This is currently used to access Eisenstern, Sauerbratens RPG game (use: -grpg).
+</p>
+
+<pre>-pS</pre>
+<p>
+Sets the server's administrative password to S.
 </p>
 
 <h1>General Console Commands and Configuration</h1>
