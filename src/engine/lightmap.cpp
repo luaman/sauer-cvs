@@ -17,7 +17,7 @@ int aalights = 3;
 hashtable<materialsurface, surfaceinfo> materiallight;
 
 static int lmtype, lmorient;
-extern bool showambient = true;
+static bool showambient = true;
 static uchar lm[3 * LM_MAXW * LM_MAXH];
 static vec lm_ray[LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
@@ -870,6 +870,24 @@ static Uint32 calclight_timer(Uint32 interval, void *param)
     
 extern vector<vtxarray *> valist;
 
+void resetprogress()
+{
+    progress = 0;
+    total_surfaces = wtris/2;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        total_surfaces += va->explicitsky;
+        total_surfaces += va->l1.tris/2;
+        lodlevel &lod = va->l0;
+        loopj(lod.matsurfs)
+        {
+            materialsurface &m = lod.matbuf[j];
+            if(m.material==MAT_WATER && m.orient==O_TOP) ++total_surfaces;
+        };
+    };
+};
+
 void calclight(int *quality)
 {
     switch(*quality)
@@ -886,14 +904,7 @@ void calclight(int *quality)
     resetlightmaps();
     clear_lmids(worldroot);
     curlumels = 0;
-    progress = 0;
-    total_surfaces = wtris/2;
-    loopv(valist)
-    {
-        vtxarray *va = valist[i];
-        total_surfaces += va->explicitsky;
-        total_surfaces += va->l1.tris/2;
-    };
+    resetprogress();
     calclight_canceled = false;
     check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
@@ -931,14 +942,7 @@ void patchlight()
 {
     if(noedit(true)) return;
     computescreen("patching lightmaps... (esc to abort)");
-    progress = 0;
-    total_surfaces = wtris/2;
-    loopv(valist)
-    {
-        vtxarray *va = valist[i];
-        total_surfaces += va->explicitsky;
-        total_surfaces += va->l1.tris/2;
-    };
+    resetprogress();
     int total = 0, lumels = 0;
     loopv(lightmaps)
     {
