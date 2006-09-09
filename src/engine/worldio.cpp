@@ -151,6 +151,10 @@ void loadc(gzFile f, cube &c)
                         if(c.surfaces[i].lmid >= LMID_AMBIENT1) ++c.surfaces[i].lmid;
                         if(c.surfaces[i].lmid >= LMID_BRIGHT1) ++c.surfaces[i].lmid;
                     };
+                    if(hdr.version < 19)
+                    {
+                        if(c.surfaces[i].lmid >= LMID_DARK) c.surfaces[i].lmid += 2;
+                    };
                     if(mask & 0x40) gzread(f, &c.normals[i], sizeof(surfacenormals));
                 }
                 else c.surfaces[i].lmid = LMID_AMBIENT;

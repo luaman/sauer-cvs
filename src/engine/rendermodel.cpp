@@ -170,6 +170,9 @@ bool modeloccluded(const vec &center, float radius)
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
+extern float refracting;
+extern int waterfog;
+
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, float ambient)
 {
     model *m = loadmodel(mdl); 
@@ -180,7 +183,11 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         float radius = m->boundsphere(0/*frame*/, center);   // FIXME
         center.add(vec(x, y, z));
         if((cull&MDL_CULL_DIST) && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
-        if((cull&MDL_CULL_VFC) && isvisiblesphere(radius, center) >= VFC_FOGGED) return;
+        if(cull&MDL_CULL_VFC)
+        {
+            if(refracting && center.z+radius<refracting-waterfog) return;
+            if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
+        };
         if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     };
     if(d) lightreaching(d->o, color, dir, 0, ambient);
@@ -207,6 +214,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
 
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, m->spec, m->spec, m->spec, 0);
+        if(refracting) setfogplane(1, refracting - z);
 
         vec ambient = vec(color).mul(m->ambient);
         loopi(3) ambient[i] = max(ambient[i], 0.2f);

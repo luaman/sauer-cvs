@@ -149,6 +149,7 @@ extern Shader  *lookupshader(int slot);
 extern Shader  *lookupshaderbyname(const char *name);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
 extern void readmatrices();
+extern void setfogplane(float scale = 0, float z = 0);
 
 // renderextras
 extern void render3dbox(vec &o, float tofloor, float toceil, float radius);

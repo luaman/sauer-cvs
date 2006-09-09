@@ -54,7 +54,7 @@ struct LightMap
 
 extern vector<LightMap> lightmaps;
 
-enum { LMID_AMBIENT = 0, LMID_AMBIENT1, LMID_BRIGHT, LMID_BRIGHT1, LMID_RESERVED };
+enum { LMID_AMBIENT = 0, LMID_AMBIENT1, LMID_BRIGHT, LMID_BRIGHT1, LMID_DARK, LMID_DARK1, LMID_RESERVED };
 
 extern void clearlights();
 extern void initlights();

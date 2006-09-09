@@ -1080,6 +1080,9 @@ void initlights()
     uchar bright[3] = { 128, 128, 128 };
     createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
     createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, false, false);
+    uchar dark[3] = { 0, 0, 0 };
+    createtexture(lmtexids[LMID_DARK], 1, 1, dark, false, false);
+    createtexture(lmtexids[LMID_DARK1], 1, 1, &front, false, false);
     loopi(lightmaps.length()) 
     {
         LightMap &lm = lightmaps[i];

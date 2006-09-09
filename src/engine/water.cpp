@@ -333,7 +333,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         if(waterreflect || waterrefract) glBindTexture(GL_TEXTURE_2D, ref->tex);
                         
                         extern vector<GLuint> lmtexids;
-                        int lmid = m.light && lmtexids.inrange(m.light->lmid) ? m.light->lmid : LMID_AMBIENT;
+                        int lmid = m.light ? m.light->lmid : LMID_DARK;
                         if(waterrefract)
                         {
                             glActiveTexture_(GL_TEXTURE5_ARB);
@@ -841,7 +841,8 @@ void queryreflections()
 
 VAR(maxreflect, 2, 4, 10);
 
-bool reflecting = false, refracting = false;
+bool reflecting = false;
+float refracting = 0;
 
 void drawreflections()
 {

@@ -159,7 +159,6 @@ void *getprocaddress(const char *name)
 
 VAR(ati_texgen_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
-VAR(nvidia_envparam_bug, 0, 0, 1);
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
@@ -246,8 +245,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
         glEnable(GL_VERTEX_PROGRAM_ARB);
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        if(strstr(vendor, "NVIDIA")) nvidia_envparam_bug = 1;
-        if(nvidia_envparam_bug) conoutf("WARNING: Using NVIDIA env param bug workaround. (use \"/nvidia_envparam_bug 0\" to disable if unnecessary)");
     };
 
     if(strstr(exts, "GL_ARB_occlusion_query"))
@@ -926,7 +923,8 @@ void renderfullscreenshader(int w, int h)
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
-extern bool reflecting, refracting;
+extern bool reflecting;
+extern float refracting;
 physent *camera1 = NULL;
 bool isthirdperson() { return player!=camera1 || (reflecting && !refracting); };
 
@@ -997,18 +995,20 @@ VAR(reflectmms, 0, 1, 1);
 
 extern int waterfog;
 
-void setfogplane(float z = 0)
+void setfogplane(float scale, float z)
 {
     float fogplane[4] = {1, 0, 0, 0};
-    if(z)
+    if(scale)
     {
         fogplane[0] = 0;
-        fogplane[2] = 0.5f;
+        fogplane[2] = scale;
         fogplane[3] = -z;
     };  
     glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 9, fogplane);
 };
- 
+
+float foggy = 0;
+
 void drawreflection(float z, bool refract, bool clear)
 {
     getwatercolour(wcol);
@@ -1022,7 +1022,7 @@ void drawreflection(float z, bool refract, bool clear)
     };
 
     reflecting = true;
-    if(refract) refracting = true;
+    if(refract) refracting = z;
 
     float oldfogstart, oldfogend, oldfogcolor[4];
 
@@ -1037,7 +1037,7 @@ void drawreflection(float z, bool refract, bool clear)
             glFogi(GL_FOG_START, 0);
             glFogi(GL_FOG_END, waterfog);
             glFogfv(GL_FOG_COLOR, fogc);
-            setfogplane(z);
+            setfogplane(0.5f, z);
         }
         else
         {
@@ -1076,22 +1076,11 @@ void drawreflection(float z, bool refract, bool clear)
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
-//    if(reflectclip)
-//    {
-//        undoclipmatrix();
-//        setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
-//    };
-
-    if(refract) 
-    {
-        setfogplane();
-        glFogi(GL_FOG_END, waterfog*3/2);
-    };
-
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
-    
+
+    setfogplane();
     glDisable(GL_FOG);
 
     renderspheres(0);
@@ -1117,7 +1106,7 @@ void drawreflection(float z, bool refract, bool clear)
         glFogfv(GL_FOG_COLOR, oldfogcolor);
     };
     
-    refracting = false;
+    refracting = 0;
     reflecting = false;
 };
 
