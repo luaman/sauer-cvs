@@ -271,12 +271,12 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
         glEnable(GL_TEXTURE_2D);
         uchar wcol[4] = { 20, 70, 80, 192 };
         if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
-        else if(!hasFBO || renderpath==R_FIXEDFUNCTION) loopi(3) wcol[i] = 128;
         glColor4ubv(wcol);
         Texture *t = lookuptexture(DEFAULT_LIQUID).sts[0].t;
         #define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
         if(!hasFBO || renderpath==R_FIXEDFUNCTION)
         {
+            glColor4ub(128, 128, 128, 192);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glBindTexture(GL_TEXTURE_2D, t->gl);
             defaultshader->set();
