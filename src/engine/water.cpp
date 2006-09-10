@@ -24,7 +24,6 @@ struct Reflection
     GLfloat tm[16];
     occludequery *query;
     vector<materialsurface *> matsurfs;
-    entity *light;
 };
 Reflection *findreflection(int height);
 
@@ -262,6 +261,8 @@ void setprojtexmatrix(Reflection *ref)
     else glLoadMatrixf(ref->tm);
 };
 
+VAR(waterspec, 0, 150, 1000);
+
 void rendermatsurfs(materialsurface *matbuf, int matsurfs)
 {
     if(!matsurfs) return;
@@ -325,13 +326,13 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         setprojtexmatrix(ref);
                         if(waterreflect || waterrefract) glBindTexture(GL_TEXTURE_2D, ref->tex);
                         
-                        entity *light = ref->light;
+                        entity *light = m.light;
                         const vec &lightpos = light ? light->o : vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, hdr.worldsize);
-                        const vec &lightcol = light ? vec(light->attr2, light->attr3, light->attr4).div(255.0f) : vec(hdr.ambient, hdr.ambient, hdr.ambient).div(255.0f);
                         float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
+                        const vec &lightcol = (light ? vec(light->attr2, light->attr3, light->attr4) : vec(hdr.ambient, hdr.ambient, hdr.ambient)).div(255.0f).mul(waterspec/100.0f);
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
-                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, lightrad);
+                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, 0);
 
                         if(waterrefract)
                         {
@@ -861,7 +862,6 @@ void drawreflections()
         if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query, true)) continue;
 
         bool hasbottom = true;
-        ref.light = NULL;
         loopvj(ref.matsurfs)
         {
            materialsurface &m = *ref.matsurfs[j];
