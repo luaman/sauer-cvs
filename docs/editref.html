@@ -460,10 +460,9 @@ ROT specifies preprocessing on the image, currently only rotation and flipping (
 
 <pre>fog N</pre>
 <p>
-Sets fog distance to N (default currently 160). You can do this for tweaking 
-the visual effect of the fog, or if you are on a slow machine, setting the fog 
-to a low value can also be a very effective way to increase fps (if you are 
-geometry limited). Try out different values on big maps / maps which give you low fps.
+Sets fog distance to N (default: 160). You can do this for tweaking the visual effect of the fog, or if you are on a slow machine,
+setting the fog to a low value can also be a very effective way to increase fps (if you are geometry limited). Try out different
+values on big maps or maps which give you low fps.
 </p>
 
 <p>
@@ -471,8 +470,8 @@ geometry limited). Try out different values on big maps / maps which give you lo
 
 <pre>fogcolour N</pre>
 <p>
-The colour of the fog, as a decimal integer from 0..16777215, representing the converted hexidecimal
-value "0xRRGGBB" where R is red, G is green, and B is blue values (default: 8427955 (0x8099B3)).
+The colour of the fog, which may be represetned as a decimal integer from 0..16777215, or a hexidecimal value from 0x000000..0xFFFFFF
+(note the "0x") in "0xRRGGBB" format, where R is red, G is green, and B is blue values (default: 8427955 (0x8099B3)).
 </p>
 
 <p>
@@ -480,7 +479,7 @@ value "0xRRGGBB" where R is red, G is green, and B is blue values (default: 8427
 
 <pre>waterfog N</pre>
 <p>
-Sets the distance at which water fogs, from 1..10000 (default: 150).
+Sets the distance beneath the surface of water at which it fogs, from 1..10000 (default: 150).
 </p>
 
 <p>
@@ -488,7 +487,7 @@ Sets the distance at which water fogs, from 1..10000 (default: 150).
 
 <pre>watercolour R G B</pre>
 <p>
-Sets the the colour of refracted water fog to the specified R G B value from 0..255 (default: 20 80 80).
+Sets the the colour of fog inside the water to the specified R G B value from 0..255 (default: 20 80 80). Used to give water some colour.
 </p>
 
 </p>
