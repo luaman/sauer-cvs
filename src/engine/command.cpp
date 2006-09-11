@@ -253,6 +253,8 @@ char *conc(char **w, int n, bool space)
 
 VARN(numargs, _numargs, 0, 0, 25);
 
+#define parseint(s) strtol((s), NULL, 0)
+
 char *commandret = NULL;
 
 char *executeret(char *p, bool isdown)               // all evaluation happens here, recursively
@@ -294,7 +296,7 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
             ident *id = idents->access(c);
             if(!id)
             {
-                if(!atoi(c) && *c!='0')
+                if(!parseint(c) && *c!='0')
                     conoutf("unknown command: %s", c);
                 setretval(newstring(c));
             }
@@ -321,12 +323,12 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                     int n = 0, wn = 0;
                     for(char *a = id->_narg; *a; a++) switch(*a)
                     {
-                        case 's':                                           v[n] = w[++wn];    n++; break;
-                        case 'i':               nstor[n].i = atoi(w[++wn]); v[n] = &nstor[n].i; n++; break;
-                        case 'f':               nstor[n].f = atof(w[++wn]); v[n] = &nstor[n].f; n++; break;
-                        case 'D':               nstor[n].i = isdown;        v[n] = &nstor[n].i; n++; break;
-                        case 'V': v[n++] = w+1; nstor[n].i = numargs-1;     v[n] = &nstor[n].i; n++; break;
-                        case 'C': v[n++] = conc(w+1, numargs-1, true);                          break;
+                        case 's':                                               v[n] = w[++wn];     n++; break;
+                        case 'i':               nstor[n].i = parseint(w[++wn]); v[n] = &nstor[n].i; n++; break;
+                        case 'f':               nstor[n].f = atof(w[++wn]);     v[n] = &nstor[n].f; n++; break;
+                        case 'D':               nstor[n].i = isdown;            v[n] = &nstor[n].i; n++; break;
+                        case 'V': v[n++] = w+1; nstor[n].i = numargs-1;         v[n] = &nstor[n].i; n++; break;
+                        case 'C': v[n++] = conc(w+1, numargs-1, true);                                   break;
                         default: fatal("builtin declared with illegal type");
                     };
                     if(isdown || id->_narg[0]=='D') switch(n)
@@ -359,7 +361,7 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                                 if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
                             }
                             else if(id->_override!=NO_OVERRIDE) id->_override = NO_OVERRIDE;
-                            int i1 = atoi(w[1]);
+                            int i1 = parseint(w[1]);
                             if(i1<id->_min || i1>id->_max)
                             {
                                 i1 = i1<id->_min ? id->_min : id->_max;                // clamp to valid range
@@ -399,7 +401,7 @@ int execute(char *p, bool isdown)
 {
     char *ret = executeret(p, isdown);
     int i = 0; 
-    if(ret) { i = atoi(ret); delete[] ret; };
+    if(ret) { i = parseint(ret); delete[] ret; };
     return i;
 };
 
@@ -622,7 +624,7 @@ void ints              (int v) { string b; itoa(b, v); commandret = newstring(b)
 
 ICOMMAND(if, "sss", commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
 
-ICOMMAND(loop, "sss", { int n = atoi(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); }; });
+ICOMMAND(loop, "sss", { int n = parseint(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); }; });
 ICOMMAND(while, "ss", while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
 
 void onrelease(int *on, char *body) { if(!*on) execute(body); };
