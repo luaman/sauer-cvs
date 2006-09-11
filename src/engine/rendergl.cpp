@@ -72,7 +72,7 @@ void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
     };
 };
 
-VAR(shaderdetail, 0, 3, 3);
+VARP(shaderdetail, 0, 3, 3);
 
 void shader(int *type, char *name, char *vs, char *ps)
 {

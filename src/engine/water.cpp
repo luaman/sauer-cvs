@@ -27,9 +27,9 @@ struct Reflection
 };
 Reflection *findreflection(int height);
 
-VAR(waterreflect, 0, 1, 1);
-VAR(waterrefract, 0, 0, 1);
-VAR(reflectdist, 0, 2000, 10000);
+VARP(waterreflect, 0, 1, 1);
+VARP(waterrefract, 0, 0, 1);
+VARP(reflectdist, 0, 2000, 10000);
 VAR(waterfog, 0, 150, 10000);
 
 // renders water for bounding rect area that contains water... simple but very inefficient
@@ -232,7 +232,7 @@ void watercolour(int *r, int *g, int *b)
     hdr.watercolour[2] = *b;
 };
 
-VAR(showmat, 0, 1, 1);
+VARP(showmat, 0, 1, 1);
 
 COMMAND(watercolour, "iii");
 
@@ -694,7 +694,7 @@ void cleanreflections()
     };
 };
 
-VARF(reflectsize, 6, 8, 10, cleanreflections());
+VARFP(reflectsize, 6, 8, 10, cleanreflections());
 
 VAR(oqreflect, 0, 1, 1);
 
@@ -774,7 +774,7 @@ extern void drawreflection(float z, bool refract, bool clear);
 extern int scr_w, scr_h;
 extern int oqfrags;
 
-VAR(reflectfps, 1, 30, 200);
+VARP(reflectfps, 1, 30, 200);
 
 int rplanes = 0;
 
@@ -845,7 +845,7 @@ void queryreflections()
     };
 };
 
-VAR(maxreflect, 2, 4, 10);
+VARP(maxreflect, 2, 4, 10);
 
 bool reflecting = false;
 float refracting = 0;
