@@ -418,7 +418,8 @@ struct fpsclient : igameclient
             s_sprintfd(aname)("bestscore_%s", getclientmap());
             const char *best = getalias(aname);
             if(*best) conoutf("\f2try to beat your best score so far: %s", best);
-        };
+        }
+        else if(netmapstart() && m_teammode) showmenu("team");
     };
 
     void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)

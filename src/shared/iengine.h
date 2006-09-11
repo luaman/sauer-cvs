@@ -74,6 +74,7 @@ extern void menumanual(int m, int n, char *text);
 extern void sortmenu(int start, int num);
 extern bool menukey(int code, bool isdown);
 extern void newmenu(char *name);
+extern void showmenu(char *name);
 
 // serverbrowser
 extern void addserver(char *servername);
