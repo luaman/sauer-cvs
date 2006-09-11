@@ -4,9 +4,6 @@ struct clientcom : iclientcom
 
     bool c2sinit;       // whether we need to tell the other clients our stats
 
-    string ctext;
-    void toserver(char *text) { conoutf("%s:\f0 %s", player1->name, text); s_strcpy(ctext, text); };
-
     string toservermap;
     bool senditemstoserver;     // after a map change, since server doesn't have map data
     int lastping;
@@ -14,7 +11,6 @@ struct clientcom : iclientcom
     bool connected, remote;
     int clientnum;
 
-    string setmaster;
     int currentmaster;
     bool spectator;
 
@@ -28,8 +24,8 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
-        CCOMMAND(clientcom, mastermode, "s", self->addmsg(SV_MASTERMODE, "ri", atoi(args[0])));
-        CCOMMAND(clientcom, setmaster, "s", if(!self->spectator || self->currentmaster==self->clientnum) s_strcpy(self->setmaster, args[0]));
+        CCOMMAND(clientcom, mastermode, "s", if(self->remote) self->addmsg(SV_MASTERMODE, "ri", atoi(args[0])));
+        CCOMMAND(clientcom, setmaster, "s", self->setmaster(args[0]));
         CCOMMAND(clientcom, setteam, "s", self->setteam(args[0], args[1]));
         CCOMMAND(clientcom, getmap, "", self->getmap());
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
@@ -58,8 +54,6 @@ struct clientcom : iclientcom
 
     void initclientnet()
     {
-        setmaster[0] = 0;
-        ctext[0] = 0;
         toservermap[0] = 0;
     };
 
@@ -132,6 +126,16 @@ struct clientcom : iclientcom
         if(i>=0 && i!=clientnum) addmsg(SV_SETTEAM, "ris", i, arg2);
     };
 
+    void setmaster(const char *arg)
+    {
+        if(!remote || !arg[0]) return;
+        int val = 1;
+        const char *passwd = "";
+        if(!arg[1] && isdigit(arg[0])) val = atoi(arg); 
+        else passwd = arg;
+        addmsg(SV_SETMASTER, "ris", val, passwd);
+    };
+
     void togglespectator(const char *arg1, const char *arg2)
     {
         if(!remote) return;
@@ -171,6 +175,8 @@ struct clientcom : iclientcom
         loopi(len) messages.add(buf[i]);
     };
 
+    void toserver(char *text) { conoutf("%s:\f0 %s", player1->name, text); addmsg(SV_TEXT, "rs", text); };
+
     void sendpacketclient(uchar *&p, bool &reliable, dynent *d)
     {
         uchar *start = p;
@@ -183,7 +189,7 @@ struct clientcom : iclientcom
             putint(p, cl.nextmode);
             return;
         }
-        if(!spectator || !c2sinit || ctext[0])
+        if(!spectator || !c2sinit || messages.length())
         {
             putint(p, SV_POS);
             putint(p, clientnum);
@@ -216,13 +222,6 @@ struct clientcom : iclientcom
             if(m_capture) cl.cpc.sendbases(p);
             senditemstoserver = false;
         };
-        if(ctext[0])    // player chat, not flood protected for now
-        {
-            reliable = true;
-            putint(p, SV_TEXT);
-            sendstring(ctext, p);
-            ctext[0] = 0;
-        };
         if(!c2sinit)    // tell other clients who I am
         {
             reliable = true;
@@ -233,13 +232,6 @@ struct clientcom : iclientcom
             putint(p, player1->lifesequence);
             putint(p, player1->maxhealth);
             putint(p, player1->frags);
-        };
-        if(setmaster[0])
-        {
-            putint(p, SV_SETMASTER);
-            putint(p, setmaster[1] ? 1 : atoi(setmaster));
-            sendstring(setmaster[1] ? setmaster : "", p);
-            setmaster[0] = '\0';
         };
         int i = 0;
         while(i < messages.length()) // send messages collected during the previous frames
@@ -357,8 +349,11 @@ struct clientcom : iclientcom
                 if(!d) return;
                 sgetstr(text, p);
                 filtertext(text, text);
-                s_sprintfd(ds)("@%s", &text);
-                if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) particle_text(d->abovehead(), ds, 9);
+                if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) 
+                {
+                    s_sprintfd(ds)("@%s", &text);
+                    particle_text(d->abovehead(), ds, 9);
+                };
                 conoutf("%s:\f0 %s", d->name, &text);
                 break;
             };
