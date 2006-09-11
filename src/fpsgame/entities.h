@@ -143,7 +143,7 @@ struct entities : icliententities
         if(v<itemstats[ents[i]->type-I_SHELLS].max)                              // don't pick up if not needed
         {
             int gamemode = cl.gamemode;
-            cl.cc.addmsg(1, 3, SV_ITEMPICKUP, i, m_classicsp ? 100000 : spawnsec);     // first ask the server for an ack
+            cl.cc.addmsg(SV_ITEMPICKUP, "rii", i, m_classicsp ? 100000 : spawnsec);     // first ask the server for an ack
             ents[i]->spawned = false;                                            // even if someone else gets it first
         };
     };
@@ -331,7 +331,7 @@ struct entities : icliententities
             int gamemode = cl.gamemode;
             if(m_capture) cl.cpc.setupbases();
         };
-        cl.cc.addmsg(1, 10, SV_EDITENT, i, (int)(e.o.x*DMF), (int)(e.o.y*DMF), (int)(e.o.z*DMF), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
+        cl.cc.addmsg(SV_EDITENT, "ri9", i, (int)(e.o.x*DMF), (int)(e.o.y*DMF), (int)(e.o.z*DMF), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
     };
 
     float dropheight(entity &e)

@@ -61,7 +61,7 @@ struct fpsclient : igameclient
     {
         if(cc.remote && !m_mp(mode)) { conoutf("mode %d not supported in multiplayer", mode); return; };
         nextmode = mode;
-        if(cc.currentmaster==cc.clientnum) cc.addmsg(1, 2, SV_GAMEMODE, nextmode);
+        if(cc.currentmaster==cc.clientnum) cc.addmsg(SV_GAMEMODE, "ri", nextmode);
     };
 
     char *getclientmap() { return clientmap; };
@@ -291,7 +291,7 @@ struct fpsclient : igameclient
             {
                 actor = cc.clientnum;
                 conoutf("\f2you suicided!");
-                cc.addmsg(1, 2, SV_FRAGS, --player1->frags);
+                cc.addmsg(SV_FRAGS, "ri", --player1->frags);
             }
             else
             {
@@ -310,7 +310,7 @@ struct fpsclient : igameclient
             };
             sb.showscores(true);
             player1->superdamage = -player1->health;
-            cc.addmsg(1, 4, SV_DIED, actor, damage+ad, player1->superdamage);
+            cc.addmsg(SV_DIED, "ri3", actor, damage+ad, player1->superdamage);
             lastplayerstate = *player1;
             player1->lifesequence++;
             player1->attacking = false;
@@ -429,7 +429,7 @@ struct fpsclient : igameclient
         else if(floorlevel<0) { if(local) playsoundc(S_LAND); else if(d->type==ENT_AI) playsound(S_LAND, &d->o); };
     };
 
-    void playsoundc(int n) { cc.addmsg(0, 2, SV_SOUND, n); playsound(n); };
+    void playsoundc(int n) { cc.addmsg(SV_SOUND, "i", n); playsound(n); };
 
     int numdynents() { return 1+players.length()+ms.monsters.length(); };
 
@@ -526,7 +526,7 @@ struct fpsclient : igameclient
             case EDIT_COPY:
             case EDIT_PASTE:
             {
-                cc.addmsg(1, 14, SV_EDITF + op,
+                cc.addmsg(SV_EDITF + op, "ri9i4",
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner);
                 break;
@@ -534,7 +534,7 @@ struct fpsclient : igameclient
             case EDIT_MAT:
             case EDIT_ROTATE:
             {
-                cc.addmsg(1, 15, SV_EDITF + op,
+                cc.addmsg(SV_EDITF + op, "ri9i5",
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1);
@@ -544,7 +544,7 @@ struct fpsclient : igameclient
             case EDIT_TEX:
             case EDIT_REPLACE:
             {
-                cc.addmsg(1, 16, SV_EDITF + op,
+                cc.addmsg(SV_EDITF + op, "ri9i6",
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1, arg2);
@@ -552,7 +552,7 @@ struct fpsclient : igameclient
             };
             case EDIT_MOVE:
             {
-                cc.addmsg(1, 17, SV_EDITF + op,
+                cc.addmsg(SV_EDITF + op, "ri9i7",
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1, arg2, arg3);

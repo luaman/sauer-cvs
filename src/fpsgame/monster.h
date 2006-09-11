@@ -297,7 +297,7 @@ struct monsterset
     {
         conoutf(allkilled ? "\f2you have cleared the map!" : "\f2you reached the exit!");
         monstertotal = 0;
-        cl.cc.addmsg(1, 1, SV_FORCEINTERMISSION);
+        cl.cc.addmsg(SV_FORCEINTERMISSION, "r");
     };
     
     void monsterkilled()

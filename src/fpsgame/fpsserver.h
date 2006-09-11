@@ -125,7 +125,7 @@ struct fpsserver : igameserver
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_MOVE, 17, SV_GETMAP, 1,
-            SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0,
+            SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
             SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
             -1
         };
@@ -377,6 +377,19 @@ struct fpsserver : igameserver
                 sendn(true, sender, 3, SV_SPECTATOR, spectator, val);
                 break;
             };
+
+            case SV_SETTEAM:
+            {
+                int who = getint(p);
+                sgetstr(text, p);
+                if(!ci->master || who<0 || who>=getnumclients()) return false;
+                clientinfo *wi = (clientinfo *)getinfo(who);
+                if(!wi) return false;
+                if(m_capture && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->o);
+                s_strncpy(wi->team, text, MAXTEAMLEN+1);
+                sendf(true, sender, "iis", SV_SETTEAM, who, text);
+                break;
+            }; 
 
             case SV_GAMEMODE:
             {

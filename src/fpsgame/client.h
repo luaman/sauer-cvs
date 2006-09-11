@@ -28,8 +28,9 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
-        CCOMMAND(clientcom, mastermode, "s", self->addmsg(1, 2, SV_MASTERMODE, atoi(args[0])));
+        CCOMMAND(clientcom, mastermode, "s", self->addmsg(SV_MASTERMODE, "ri", atoi(args[0])));
         CCOMMAND(clientcom, setmaster, "s", if(!self->spectator || self->currentmaster==self->clientnum) s_strcpy(self->setmaster, args[0]));
+        CCOMMAND(clientcom, setteam, "s", self->setteam(args[0], args[1]));
         CCOMMAND(clientcom, getmap, "", self->getmap());
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
     };
@@ -121,7 +122,14 @@ struct clientcom : iclientcom
     {
         if(!remote) return;
         int i = parseplayer(arg);
-        if(i>=0 && i!=clientnum) addmsg(1, 2, SV_KICK, i);
+        if(i>=0 && i!=clientnum) addmsg(SV_KICK, "ri", i);
+    };
+
+    void setteam(const char *arg1, const char *arg2)
+    {
+        if(!remote) return;
+        int i = parseplayer(arg1);
+        if(i>=0 && i!=clientnum) addmsg(SV_SETTEAM, "ris", i, arg2);
     };
 
     void togglespectator(const char *arg1, const char *arg2)
@@ -129,26 +137,37 @@ struct clientcom : iclientcom
         if(!remote) return;
         int i = arg2[0] ? parseplayer(arg2) : clientnum,
             val = atoi(arg1);
-        if(i>=0) addmsg(1, 3, SV_SPECTATOR, i, val);
+        if(i>=0) addmsg(SV_SPECTATOR, "rii", i, val);
     };
 
     // collect c2s messages conveniently
     vector<uchar> messages;
 
-    void addmsg(int rel, int num, int type, ...)
+    void addmsg(int type, const char *fmt = NULL, ...)
     {
         if(spectator && type!=SV_GETMAP && (currentmaster!=clientnum || type<SV_MASTERMODE)) return;
-        if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
         static uchar buf[MAXTRANS];
         uchar *p = buf;
         putint(p, type);
-        va_list args;
-        va_start(args, type);
-        loopi(num-1) putint(p, va_arg(args, int));
-        va_end(args);
+        int numi = 0, nums = 0;
+        bool reliable = false;
+        if(fmt)
+        {
+            va_list args;
+            va_start(args, fmt);
+            while(*fmt) switch(*fmt++)
+            {
+                case 'r': reliable = true;
+                case 'i': loopi(isdigit(*fmt) ? *fmt++-'0': 1) putint(p, va_arg(args, int)); numi++; break;
+                case 's': sendstring(va_arg(args, const char *), p); nums++; break;
+            };
+            va_end(args);
+        }; 
+        int num = nums?0:numi;
+        if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
         int len = p-buf;
         messages.add(len&0xFF);
-        messages.add((len>>8)|(rel ? 0x80 : 0));
+        messages.add((len>>8)|(reliable ? 0x80 : 0));
         loopi(len) messages.add(buf[i]);
     };
 
@@ -477,7 +496,7 @@ struct clientcom : iclientcom
                         frags = 1;
                         conoutf("\f2you fragged %s", d->name);
                     };
-                    addmsg(1, 2, SV_FRAGS, player1->frags += frags);
+                    addmsg(SV_FRAGS, "ri", player1->frags += frags);
                 }
                 else
                 {
@@ -593,7 +612,7 @@ struct clientcom : iclientcom
             };
 
             case SV_PONG:
-                addmsg(0, 2, SV_CLIENTPING, player1->ping = (player1->ping*5+cl.lastmillis-getint(p))/6);
+                addmsg(SV_CLIENTPING, "i", player1->ping = (player1->ping*5+cl.lastmillis-getint(p))/6);
                 break;
 
             case SV_CLIENTPING:
@@ -641,6 +660,18 @@ struct clientcom : iclientcom
                     s->state = CS_SPECTATOR;
                 }
                 else if(s->state==CS_SPECTATOR) s->state = CS_ALIVE;
+                break;
+            };
+
+            case SV_SETTEAM:
+            {
+                int wn = getint(p);
+                sgetstr(text, p);
+                fpsent *w;
+                if(wn==clientnum) w = player1;
+                else w = cl.getclient(wn);
+                if(!w) return;
+                filtertext(w->team, text, false, MAXTEAMLEN);
                 break;
             };
 
@@ -738,7 +769,7 @@ struct clientcom : iclientcom
     {
         if(cl.gamemode!=1) { conoutf("\"getmap\" only works in coopedit mode"); return; };
         conoutf("getting map...");
-        addmsg(1, 1, SV_GETMAP);
+        addmsg(SV_GETMAP, "r");
     };
 
     void sendmap()
