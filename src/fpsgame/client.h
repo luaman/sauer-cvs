@@ -153,7 +153,7 @@ struct clientcom : iclientcom
         static uchar buf[MAXTRANS];
         uchar *p = buf;
         putint(p, type);
-        int numi = 0, nums = 0;
+        int numi = 1, nums = 0;
         bool reliable = false;
         if(fmt)
         {
@@ -161,8 +161,14 @@ struct clientcom : iclientcom
             va_start(args, fmt);
             while(*fmt) switch(*fmt++)
             {
-                case 'r': reliable = true;
-                case 'i': loopi(isdigit(*fmt) ? *fmt++-'0': 1) putint(p, va_arg(args, int)); numi++; break;
+                case 'r': reliable = true; break;
+                case 'i': 
+                {
+                    int n = isdigit(*fmt) ? *fmt++-'0' : 1;
+                    loopi(n) putint(p, va_arg(args, int));
+                    numi += n;
+                    break;
+                };
                 case 's': sendstring(va_arg(args, const char *), p); nums++; break;
             };
             va_end(args);
