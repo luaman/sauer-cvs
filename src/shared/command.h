@@ -10,18 +10,32 @@ template <class T> struct tident
     int _type;           // one of ID_* above
     char *_name;
     int _min, _max;      // ID_VAR
-    int *_storage;       // ID_VAR
     int _override;       // either NO_OVERRIDE, OVERRIDDEN, or value
     void (*_fun)();      // ID_VAR, ID_COMMAND
-    char *_narg;         // ID_VAR, ID_COMMAND, ID_ICOMMAND
-    char *_action;       // ID_ALIAS
+    union
+    {
+        char *_narg;     // ID_COMMAND, ID_ICOMMAND
+        int _val;        // ID_VAR
+        char *_action;   // ID_ALIAS
+    };
     bool _persist;       // ID_VAR, ID_ALIAS
-    char *_isexecuting;  // ID_ALIAS
+    union
+    {
+        char *_isexecuting;  // ID_ALIAS
+        int *_storage;       // ID_VAR
+    };
     T *self;
     
     tident() {};
-    tident(int t, char *n, int m, int x, int *s, void *f, char *g, char *a, bool p, T *_s)
-        : _type(t), _name(n), _min(m), _max(x), _storage(s), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _narg(g), _action(a), _persist(p), _isexecuting(0), self(_s) {};
+    // ID_VAR
+    tident(int t, char *n, int m, int c, int x, int *s, void *f = NULL, bool p = false)
+        : _type(t), _name(n), _min(m), _max(x), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _val(c), _persist(p), _storage(s) {};
+    // ID_ALIAS
+    tident(int t, char *n, char *a, bool p)
+        : _type(t), _name(n), _override(NO_OVERRIDE), _action(a), _persist(p) {};
+    // ID_COMMAND, ID_ICOMMAND
+    tident(int t, char *n, char *narg, void *f = NULL, T *_s = NULL)
+        : _type(t), _name(n), _fun((void (__cdecl *)(void))f), _narg(narg), self(_s) {};
     virtual ~tident() {};        
 
     tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; };        // force vtable copy, ugh
@@ -50,9 +64,9 @@ extern void result(const char *s);
 #define VARFP(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, true)
 
 // new style macros, have the body inline, and allow binds to happen anywhere, even inside class constructors, and access the surrounding class
-#define _COMMAND(t, ts, sv, tv, n, g, b) struct cmd_##n : tident<t> { cmd_##n(ts) : tident<t>(ID_ICOMMAND, #n, 0, 0, 0, 0, g, 0, false, sv) { addident(_name, (ident *)this); }; void run(char **args) { b; }; } icom_##n tv
+#define _COMMAND(t, ts, sv, tv, n, g, b) struct cmd_##n : tident<t> { cmd_##n(ts) : tident<t>(ID_ICOMMAND, #n, g, NULL, sv) { addident(_name, (ident *)this); }; void run(char **args) { b; }; } icom_##n tv
 #define ICOMMAND(n, g, b) _COMMAND(void, , NULL, , n, g, b)
 #define CCOMMAND(t, n, g, b) _COMMAND(t, t *_s, _s, (this), n, g, b)
  
-#define IVAR(n, m, c, x)  struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, x, (int *)&_narg, 0, (char *)c, 0, false, NULL) { addident(_name, this); }; } n
+#define IVAR(n, m, c, x)  struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val) { addident(_name, this); }; } n
 //#define ICALL(n, a) { char *args[] = a; icom_##n.run(args); }

@@ -133,19 +133,23 @@ struct clientcom : iclientcom
     };
 
     // collect c2s messages conveniently
-    ivector messages;
+    vector<uchar> messages;
 
     void addmsg(int rel, int num, int type, ...)
     {
         if(spectator && type!=SV_GETMAP && (currentmaster!=clientnum || type<SV_MASTERMODE)) return;
         if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
-        messages.add(num);
-        messages.add(rel);
-        messages.add(type);
+        static uchar buf[MAXTRANS];
+        uchar *p = buf;
+        putint(p, type);
         va_list args;
         va_start(args, type);
-        loopi(num-1) messages.add(va_arg(args, int));
+        loopi(num-1) putint(p, va_arg(args, int));
         va_end(args);
+        int len = p-buf;
+        messages.add(len&0xFF);
+        messages.add((len>>8)|(rel ? 0x80 : 0));
+        loopi(len) messages.add(buf[i]);
     };
 
     void sendpacketclient(uchar *&p, bool &reliable, dynent *d)
@@ -221,11 +225,12 @@ struct clientcom : iclientcom
         int i = 0;
         while(i < messages.length()) // send messages collected during the previous frames
         {
-            int num = messages[i];
-            if(p+5*num > start+MAXTRANS) break;
-            if(messages[i+1]) reliable = true;
-            i += 2;
-            loopj(num) putint(p, messages[i++]);
+            int len = messages[i] | ((messages[i+1]&0x7F)<<8);
+            if(p+len > start+MAXTRANS) break;
+            if(messages[i+1]&0x80) reliable = true;
+            memcpy(p, &messages[i+2], len);
+            p += len;
+            i += 2 + len;
         };
         messages.remove(0, i);
         if(MAXTRANS-(p-start)>=10 && cl.lastmillis-lastping>250)
