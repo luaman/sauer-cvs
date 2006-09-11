@@ -214,6 +214,12 @@ Be aware that maxfps is not a replacement for vsync (default: 200).
 Sets your FOV to 10..150.
 </p>
 
+<pre>shaderdetail N</pre>
+<p>
+This sets the level of detail shaders should use, for N=3 is highest, and N=0 is lowest. Lower settings will give speedups
+on slower hardware.
+</p>
+
 <pre>loddistance N</pre>
 <p>
 Sets the distance at which world vertex array blocks are rendered at a higher 
@@ -229,12 +235,14 @@ Determines the subdivision of the water surface in maps, which can greatly
 affect fps on slow machines. Must be a power of 2: 4 is the default, 8 is 
 recommended for people on slow machines, 2 is nice for fast machines, and 1 is 
 quite OTT. See the edit reference for more information on how to add the water material to your levels.
+NOTE: This only effects water with shaders disabled!
 </p>
 
 <pre>waterlod N</pre>
 <p>
 Sets the precision level of the water LOD (Level of Detail) from 0..3, where 0 is the lowest and 3 is the highest setting
 (default: 1).
+NOTE: This only effects water with shaders disabled!
 </p>
 
 <pre>waterreflect B</pre>

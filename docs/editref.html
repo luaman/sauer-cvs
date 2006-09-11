@@ -474,7 +474,9 @@ The colour of the fog, which may be represetned as a decimal integer from 0..167
 (note the "0x") in "0xRRGGBB" format, where R is red, G is green, and B is blue values (default: 8427955 (0x8099B3)).
 </p>
 
+<pre>waterspec N</pre>
 <p>
+This sets the percentage of light water shows as specularity (default: 150).
 </p>
 
 <pre>waterfog N</pre>
@@ -505,6 +507,11 @@ Requires DX9 / shader 2 class hardware (radeon 9500 or better, geforce 5200 or b
 <p>
 Sets a previously defined shader as the current shader. Any following texture slots (see "texture" command) will have this shader
 attached to it.
+</p>
+
+<pre>fastshader NICE FAST N</pre>
+<p>
+Associates shader FAST so that it will run in place of shader NICE if shaderdetail is less than or equal to N.
 </p>
 
 <pre>music name
