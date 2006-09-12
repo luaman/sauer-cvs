@@ -150,7 +150,7 @@ void setpixelparam(int *n, float *x, float *y, float *z, float *w)
 COMMAND(setvertexparam, "iffff");
 COMMAND(setpixelparam, "iffff");
 
-VAR(shaderprecision, 0, 2, 3);
+VAR(shaderprecision, 0, 1, 3);
 
 void *getprocaddress(const char *name)
 {
