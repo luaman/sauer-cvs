@@ -719,7 +719,7 @@ VARF(floatvtx, 0, 0, 1, allchanged());
 
 void genfloatverts(fvertex *f)
 {
-    loopi(verts.length())
+    loopv(verts)
     {
         const vertex &v = verts[i];
         f->x = v.x;
