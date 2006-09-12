@@ -447,10 +447,24 @@ void settexture(const char *name)
 };
 
 vector<Slot> slots;
+Slot materialslots[MAT_EDIT];
 
-int curtexnum = 0;
+int curtexnum = 0, curmatslot = -1;
 
-void texturereset() { curtexnum = 0; slots.setsize(0); };
+void texturereset()
+{ 
+    curtexnum = 0; 
+    slots.setsize(0); 
+};
+
+COMMAND(texturereset, "");
+
+void materialreset()
+{
+    loopi(MAT_EDIT) materialslots[i].reset();
+};
+
+COMMAND(materialreset, "");
 
 ShaderParam *findshaderparam(Slot &s, int type, int index)
 {
@@ -481,12 +495,17 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
         {"s", TEX_SPEC},
         {"z", TEX_DEPTH},
     };
-    int tnum = -1;
+    int tnum = -1, matslot = findmaterial(type);
     loopi(sizeof(types)/sizeof(types[0])) if(!strcmp(types[i].name, type)) { tnum = i; break; };
     if(tnum<0) tnum = atoi(type);
-    if(tnum==TEX_DIFFUSE) curtexnum++;
+    if(tnum==TEX_DIFFUSE)
+    {
+        if(matslot>=0) curmatslot = matslot;
+        else curmatslot = -1, curtexnum++;
+    }
+    else if(curmatslot>=0) matslot=curmatslot;
     else if(!curtexnum) return;
-    Slot &s = tnum!=TEX_DIFFUSE ? slots.last() : slots.add();
+    Slot &s = matslot>=0 ? materialslots[matslot] : (tnum!=TEX_DIFFUSE ? slots.last() : slots.add());
     if(tnum==TEX_DIFFUSE)
     {
         s.shader = curshader ? curshader : defaultshader;
@@ -509,7 +528,6 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
     path(st.name);
 };
 
-COMMAND(texturereset, "");
 COMMAND(texture, "ssiii");
 
 static int findtextype(Slot &s, int type, int last = -1)
@@ -694,7 +712,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
 
 Slot &lookuptexture(int slot, bool load)
 {
-    Slot &s = slots[slots.inrange(slot) ? slot : 0];
+    Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots[slots.inrange(slot) ? slot : 0]);
     if(s.loaded || !load) return s;
     loopv(s.sts)
     {
@@ -705,7 +723,7 @@ Slot &lookuptexture(int slot, bool load)
     return s;
 };
 
-Shader *lookupshader(int slot) { return slots.inrange(slot) ? slots[slot].shader : defaultshader; };
+Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); };
 
 VARFP(gamma, 30, 100, 300,
 {
