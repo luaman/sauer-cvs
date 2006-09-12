@@ -9,8 +9,5 @@ all SDL libs, do a ldd for details).
 The servers need NO libs, no external files, no sound or video,
 just run it :) Server port is fixed at 28765, currently.
 
-Make sure to chmod +x these binaries and the cube_unix script
+Make sure to chmod +x these binaries and the sauerbraten_unix script
 before running them.
-
-eihrul
-eihrul@tunes.org
