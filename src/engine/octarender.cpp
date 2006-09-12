@@ -2034,12 +2034,14 @@ void renderreflectedgeom(float z, bool refract)
 
 void rendermaterials()
 {
-    notextureshader->set();
-
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
-    glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
+
+    renderwater();
+
+    notextureshader->set();
+    glDisable(GL_TEXTURE_2D);
 
     for(vtxarray *va = visibleva; va; va = va->next)
     {
@@ -2059,8 +2061,8 @@ void rendermaterials()
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     };
 
-    glDisable(GL_BLEND);
     glEnable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
 

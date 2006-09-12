@@ -252,6 +252,7 @@ extern void setupmatsurfs();
 extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();
+extern void renderwater();
 
 // server
 
