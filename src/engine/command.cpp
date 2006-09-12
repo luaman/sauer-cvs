@@ -107,7 +107,7 @@ void addident(char *name, ident *id)
     idents->access(name, id);
 };
 
-static vector<vector<char>> wordbufs;
+static vector<vector<char> > wordbufs;
 static int bufnest = 0;
 
 char *parseexp(char *&p, int right);
