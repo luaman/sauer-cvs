@@ -104,6 +104,7 @@ extern PFNGLDELETEQUERIESARBPROC     glDeleteQueries_;
 extern PFNGLBEGINQUERYARBPROC        glBeginQuery_;
 extern PFNGLENDQUERYARBPROC          glEndQuery_;
 extern PFNGLGETQUERYIVARBPROC        glGetQueryiv_;
+extern PFNGLGETQUERYOBJECTIVARBPROC  glGetQueryObjectiv_;
 extern PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_;
 
 // GL_EXT_framebuffer_object

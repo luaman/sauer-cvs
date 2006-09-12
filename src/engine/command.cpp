@@ -170,7 +170,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         else if(!c) 
         { 
             p--;
-            conoutf("missing \"%c\": %s\nVS:\n %s\n", right, p-256, p);
+            conoutf("missing \"%c\"");
             wordbuf.setsize(pos); 
             return NULL; 
         };

@@ -1344,8 +1344,8 @@ bool checkquery(occludequery *query, bool nowait)
     {
         if(nowait)
         {
-            GLuint avail;
-            glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_AVAILABLE, &avail);
+            GLint avail;
+            glGetQueryObjectiv_(query->id, GL_QUERY_RESULT_AVAILABLE, &avail);
             if(!avail) return false;
         };
         glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, &fragments);

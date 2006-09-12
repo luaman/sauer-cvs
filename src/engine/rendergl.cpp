@@ -32,6 +32,7 @@ PFNGLDELETEQUERIESARBPROC     glDeleteQueries_     = NULL;
 PFNGLBEGINQUERYARBPROC        glBeginQuery_        = NULL;
 PFNGLENDQUERYARBPROC          glEndQuery_          = NULL;
 PFNGLGETQUERYIVARBPROC        glGetQueryiv_        = NULL;
+PFNGLGETQUERYOBJECTIVARBPROC  glGetQueryObjectiv_  = NULL;
 PFNGLGETQUERYOBJECTUIVARBPROC glGetQueryObjectuiv_ = NULL;
 
 // GL_EXT_framebuffer_object
@@ -258,6 +259,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             glDeleteQueries_ =     (PFNGLDELETEQUERIESARBPROC)    getprocaddress("glDeleteQueriesARB");
             glBeginQuery_ =        (PFNGLBEGINQUERYARBPROC)       getprocaddress("glBeginQueryARB");
             glEndQuery_ =          (PFNGLENDQUERYARBPROC)         getprocaddress("glEndQueryARB");
+            glGetQueryObjectiv_ =  (PFNGLGETQUERYOBJECTIVARBPROC) getprocaddress("glGetQueryObjectivARB");
             glGetQueryObjectuiv_ = (PFNGLGETQUERYOBJECTUIVARBPROC)getprocaddress("glGetQueryObjectuivARB");
             hasOQ = true;
             conoutf("Using GL_ARB_occlusion_query extension.");

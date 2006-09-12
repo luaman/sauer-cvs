@@ -878,7 +878,7 @@ void drawreflections()
     {
         Reflection &ref = reflections[i];
         if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty()) continue;
-        if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query, true)) continue;
+        if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query)) continue;
 
         bool hasbottom = true;
         loopvj(ref.matsurfs)
