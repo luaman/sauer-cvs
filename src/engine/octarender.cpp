@@ -1698,6 +1698,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         return;
     };
 
+    extern float refracting;
+    if(refracting) setfogplane(0.5f, refracting - (va->z & ~VVEC_INT_MASK));
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
     if(renderpath!=R_FIXEDFUNCTION) 
     { 

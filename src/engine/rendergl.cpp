@@ -1059,7 +1059,6 @@ void drawreflection(float z, bool refract, bool clear)
             glFogi(GL_FOG_START, 0);
             glFogi(GL_FOG_END, waterfog);
             glFogfv(GL_FOG_COLOR, fogc);
-            setfogplane(0.5f, z);
         }
         else
         {
