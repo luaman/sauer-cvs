@@ -830,7 +830,7 @@ void queryreflections()
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || ref.nextupdate>lastmillis || ref.matsurfs.empty())
+        if(ref.height<0 || ref.lastused<lastmillis || ref.nextupdate>lastmillis || ref.matsurfs.empty())
         {
             ref.query = NULL;
             continue;
