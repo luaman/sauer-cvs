@@ -388,7 +388,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         };
         glBindTexture(GL_TEXTURE_2D, s.sts[1].t->gl);
-        glColor4ub(128, 128, 128, 192);
+        if(!(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2])) glColor4ub(128, 128, 128, 192);
         matloop(MAT_WATER,
             if(m.orient!=O_TOP) renderwaterfall(m, s.sts[1].t, 0.1f);
         );
