@@ -332,11 +332,15 @@ void renderwater()
     {
         Reflection &ref = reflections[i];
         if(ref.height<0 || ref.lastused<lastmillis || ref.matsurfs.empty()) continue;
-        if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query)) continue;
+
+        if(waterreflect || waterrefract)
+        {
+            if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query)) continue;
+            glBindTexture(GL_TEXTURE_2D, ref.tex);
+        };
 
         setprojtexmatrix(ref);
 
-        if(waterreflect || waterrefract) glBindTexture(GL_TEXTURE_2D, ref.tex);
         if(waterrefract)
         {
             glActiveTexture_(GL_TEXTURE3_ARB);
