@@ -361,6 +361,7 @@ void rendermatsurfs(materialsurface *matbuf, int matsurfs)
                         else
                         {
                             float depth = !waterfog ? 1.0f : min(0.75f*m.depth/waterfog, 0.95f);
+                            if(!waterreflect && !waterrefract) depth = max(depth, 0.7f);
                             glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, depth, 1.0f-depth, 0, 0);
                         }; 
                         drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
