@@ -197,7 +197,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     
     // default to low precision shaders on certain cards, can be overridden with -f3
     char *weakcards[] = { "GeForce FX", "Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome", NULL }; 
-    if(shaderprecision==2) for(char **wc = weakcards; *wc; wc++) if(strstr(renderer, *wc)) shaderprecision = 1;
+//    if(shaderprecision==2) for(char **wc = weakcards; *wc; wc++) if(strstr(renderer, *wc)) shaderprecision = 1;
     
     if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
         fatal("No texture_env_combine extension! (your video card is WAY too old)");
