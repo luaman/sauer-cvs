@@ -76,6 +76,14 @@ struct Slot
     Shader *shader;
     vector<ShaderParam> params;
     bool loaded;
+
+    void reset()
+    {
+        sts.setsize(0);
+        shader = NULL;
+        params.setsize(0);
+        loaded = false;
+    };
 };
 
 
@@ -233,6 +241,7 @@ extern int getnumqueries();
 
 extern int showmat;
 
+extern int findmaterial(const char *name);
 extern int visiblematerial(cube &, int orient, int x, int y, int z, int size);
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);

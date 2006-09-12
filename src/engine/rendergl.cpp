@@ -501,7 +501,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
     if(tnum==TEX_DIFFUSE)
     {
         if(matslot>=0) curmatslot = matslot;
-        else curmatslot = -1, curtexnum++;
+        else { curmatslot = -1; curtexnum++; };
     }
     else if(curmatslot>=0) matslot=curmatslot;
     else if(!curtexnum) return;

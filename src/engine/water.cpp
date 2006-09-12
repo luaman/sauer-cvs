@@ -50,7 +50,7 @@ struct Reflection
 Reflection *findreflection(int height);
 
 VARP(waterreflect, 0, 1, 1);
-VARP(waterrefract, 0, 0, 1);
+VARP(waterrefract, 0, 1, 1);
 VARP(reflectdist, 0, 2000, 10000);
 VAR(waterfog, 0, 150, 10000);
 

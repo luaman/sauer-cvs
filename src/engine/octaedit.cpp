@@ -1283,19 +1283,6 @@ void rotate(int *cw)
 COMMAND(flip, "");
 COMMAND(rotate, "i");
 
-struct material
-{
-    const char *name;
-    uchar id;
-} materials [] =
-{
-    {"air", MAT_AIR},
-    {"water", MAT_WATER},
-    {"clip", MAT_CLIP},
-    {"glass", MAT_GLASS},
-    {"noclip", MAT_NOCLIP},
-};
-
 void setmat(cube &c, uchar mat)
 {
     if(c.children)
@@ -1313,15 +1300,9 @@ void mpeditmat(int matid, selinfo &sel, bool local)
 void editmat(char *name)
 {
     if(noedit()) return;
-    loopi(sizeof(materials)/sizeof(material))
-    {
-        if(!strcmp(materials[i].name, name))
-        {
-            mpeditmat(materials[i].id, sel, true);
-            return;
-        };
-    };
-    conoutf("unknown material \"%s\"", name);
+    int id = findmaterial(name);
+    if(id<0) { conoutf("unknown material \"%s\"", name); return; };
+    mpeditmat(id, sel, true);
 };
 
 COMMAND(editmat, "s");
