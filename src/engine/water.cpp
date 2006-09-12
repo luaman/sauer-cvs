@@ -336,7 +336,7 @@ void renderwater()
 
         setprojtexmatrix(ref);
 
-        if(waterreflect) glBindTexture(GL_TEXTURE_2D, ref.tex);
+        if(waterreflect || waterrefract) glBindTexture(GL_TEXTURE_2D, ref.tex);
         if(waterrefract)
         {
             glActiveTexture_(GL_TEXTURE3_ARB);
