@@ -203,7 +203,7 @@ void renderspheres(int time)
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, p.o.x, p.o.y, p.o.z, 0);
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, p.size, p.max, 0);
         };
-        glColor4f(pt.r, pt.g, pt.g, 1.0f-size*size);
+        glColor4f(pt.r, pt.g, pt.b, 1.0f-size*size);
         glTranslatef(p.o.x, p.o.y, p.o.z);
         glRotatef(lastmillis/5.0f, 1, 1, 1);
         glScalef(p.size, p.size, p.size);
