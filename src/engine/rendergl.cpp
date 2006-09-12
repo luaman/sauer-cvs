@@ -1029,8 +1029,6 @@ void setfogplane(float scale, float z)
     glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 9, fogplane);
 };
 
-float foggy = 0;
-
 void drawreflection(float z, bool refract, bool clear)
 {
     getwatercolour(wcol);
