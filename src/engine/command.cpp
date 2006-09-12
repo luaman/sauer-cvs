@@ -107,11 +107,12 @@ void addident(char *name, ident *id)
     idents->access(name, id);
 };
 
-static vector<char> wordbuf;
+static vector<vector<char>> wordbufs;
+static int bufnest = 0;
 
 char *parseexp(char *&p, int right);
 
-void parsemacro(char *&p, int level)
+void parsemacro(char *&p, int level, vector<char> &wordbuf)
 {
     int escape = 1;
     while(*p=='@') p++, escape++;
@@ -141,14 +142,16 @@ void parsemacro(char *&p, int level)
 
 char *parseexp(char *&p, int right)          // parse any nested set of () or []
 {
-    int pos = wordbuf.length(), left = *p++;
+    if(bufnest++>=wordbufs.length()) wordbufs.add();
+    vector<char> &wordbuf = wordbufs[bufnest-1];
+    int left = *p++;
     for(int brak = 1; brak; )
     {
         int c = *p++;
         if(c=='\r') continue;               // hack
         if(left=='[' && c=='@')
         {
-            parsemacro(p, brak);
+            parsemacro(p, brak, wordbuf);
             continue;
         };
         if(c=='\"')
@@ -170,8 +173,9 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         else if(!c) 
         { 
             p--;
-            conoutf("missing \"%c\"");
-            wordbuf.setsize(pos); 
+            conoutf("missing \"%c\"", right);
+            wordbuf.setsize(0); 
+            bufnest--;
             return NULL; 
         };
         wordbuf.add(c);
@@ -181,15 +185,16 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     if(left=='(')
     {
         wordbuf.add(0);
-        char *ret = executeret(wordbuf.getbuf()+pos);                    // evaluate () exps directly, and substitute result
+        char *ret = executeret(wordbuf.getbuf());                    // evaluate () exps directly, and substitute result
         wordbuf.pop();
         s = ret ? ret : newstring("");
     }
     else
     {
-        s = newstring(wordbuf.getbuf()+pos, wordbuf.length()-pos);
+        s = newstring(wordbuf.getbuf(), wordbuf.length());
     };
-    wordbuf.setsize(pos);
+    wordbuf.setsize(0);
+    bufnest--;
     return s;
 };
 
