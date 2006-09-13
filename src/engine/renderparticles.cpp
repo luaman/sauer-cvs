@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define MAXPARTYPES 17
+#define MAXPARTYPES 21
 
 struct particle
 {
@@ -11,7 +11,11 @@ struct particle
     int fade, type;
     int millis;
     particle *next;
-    char *text;         // will call delete[] on this only if it starts with an @
+    union
+    {
+        char *text;         // will call delete[] on this only if it starts with an @
+        int val;
+    };
 };
 
 particle *parlist[MAXPARTYPES], *parempty = NULL;
@@ -86,6 +90,10 @@ void render_particles(int time)
         { 180, 180, 180,  0, -1, 2.0f }, // 14 TEXT GREY, SMALL, NON-MOVING
         { 255, 200, 100, -8, -1, 4.0f }, // 15 TEXT YELLOW
         { 100, 150, 255, 0, -1, 2.0f },  // 16 TEXT BLUE, SMALL, NON-MOVING
+        { 255, 25, 25, 0, -1, 2.0f },    // 17 METER RED, SMALL, NON-MOVING
+        { 50, 50, 255, 0, -1, 2.0f },    // 18 METER BLUE, SMALL, NON-MOVING
+        { 255, 25, 25, 0, -1, 2.0f },    // 19 METER RED vs. BLUE, SMALL, NON-MOVING
+        { 50, 50, 255, 0, -1, 2.0f },    // 20 METER BLUE vs. RED, SMALL, NON-MOVING
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -135,12 +143,43 @@ void render_particles(int time)
                 glRotatef(camera1->pitch-90, 1, 0, 0);
                 float scale = pt.sz/80.0f;
                 glScalef(-scale, scale, -scale);
-                char *t = p->text+(p->text[0]=='@');
-                float xoff = -text_width(t)/2;
-                float yoff = 0;
-                if(i!=11 && i!=13 && i!=14 && i!=16) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
-                glTranslatef(xoff, yoff, 50);
-                draw_text(t, 0, 0, pt.r, pt.g, pt.b, blend);
+                if(i>=17 && i<=20)
+                {
+                    float right = 8*FONTH, left = p->val*right/100.0f;
+                    glDisable(GL_BLEND);
+                    glDisable(GL_TEXTURE_2D);
+                    notextureshader->set();
+
+                    glTranslatef(-right/2.0f, 0, 0);
+                
+                    glBegin(GL_QUADS);
+                    glColor3ub(pt.r, pt.g, pt.b);
+                    glVertex2f(0, 0);
+                    glVertex2f(left, 0);
+                    glVertex2f(left, FONTH);
+                    glVertex2f(0, FONTH);
+
+                    if(i>=19) glColor3ub(parttypes[i-1].r, parttypes[i-1].g, parttypes[i-1].b);
+                    else glColor3ub(0, 0, 0);
+                    glVertex2f(left, 0);
+                    glVertex2f(right, 0);
+                    glVertex2f(right, FONTH);
+                    glVertex2f(left, FONTH);
+                    glEnd();
+
+                    defaultshader->set();
+                    glEnable(GL_TEXTURE_2D);
+                    glEnable(GL_BLEND);
+                }
+                else
+                {
+                    char *t = p->text+(p->text[0]=='@');
+                    float xoff = -text_width(t)/2;
+                    float yoff = 0;
+                    if(i!=11 && i!=13 && i!=14 && i!=16) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
+                    glTranslatef(xoff, yoff, 50);
+                    draw_text(t, 0, 0, pt.r, pt.g, pt.b, blend);
+                };
                 glPopMatrix();
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             };
@@ -149,7 +188,7 @@ void render_particles(int time)
             {
                 *pp = p->next;
                 p->next = parempty;
-                if(p->text && p->text[0]=='@') delete[] p->text;
+                if(i<=16 && p->text && p->text[0]=='@') delete[] p->text;
                 parempty = p;
             }
             else
@@ -213,6 +252,12 @@ void particle_text(const vec &s, char *t, int type, int fade)
     if(t[0]=='@') t = newstring(t);
     particle *p = newparticle(s, vec(0, 0, 1), fade, type);
     p->text = t;
+};
+
+void particle_meter(const vec &s, int val, int type, int fade)
+{
+    particle *p = newparticle(s, vec(0, 0, 1), fade, type);
+    p->val = val;
 };
 
 void particle_flare(const vec &p, const vec &dest, int fade)

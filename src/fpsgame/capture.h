@@ -183,17 +183,33 @@ struct captureclient : capturestate
                 baseinfo &b = bases[j++];
                 const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
                 rendermodel(e->color, e->dir, flagname, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, e->o.x, e->o.y, e->o.z, 0, 0, 10.0f, 0, NULL, MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+                int ttype = 11, mtype = -1;
                 if(b.owner[0])
                 {
-                    if(b.enemy[0]) s_sprintf(b.info)("%s vs. %s (%d)", b.owner, b.enemy, b.converted);
-                    else s_sprintf(b.info)("%s", b.owner);
+                    bool isowner = !strcmp(b.owner, cl.player1->team);
+                    if(b.enemy[0])
+                    {
+                        s_sprintf(b.info)("\f%d%s \f0vs. \f%d%s", isowner ? 3 : 1, b.enemy, isowner ? 1 : 3, b.owner);
+                        mtype = isowner ? 19 : 20; 
+                    }
+                    else { s_sprintf(b.info)("%s", b.owner); ttype = isowner ? 16 : 13; };
                 }
-                else if(b.enemy[0]) s_sprintf(b.info)("%s (%d)", b.enemy, b.converted); 
+                else if(b.enemy[0])
+                {
+                    s_sprintf(b.info)("%s", b.enemy);
+                    if(strcmp(b.enemy, cl.player1->team)) { ttype = 13; mtype = 17; }
+                    else { ttype = 16; mtype = 18; };
+                }
                 else b.info[0] = '\0';
                 vec above(e->o);
                 abovemodel(above, flagname);
                 above.z += 2.0f;
-                particle_text(above, b.info, 11, 1);
+                particle_text(above, b.info, ttype, 1);
+                if(mtype>=0)
+                {
+                    above.z += 3.0f;
+                    particle_meter(above, b.converted, mtype, 1);
+                };
             };
         };
     };
