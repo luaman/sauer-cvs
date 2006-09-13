@@ -290,6 +290,8 @@ VAR(oqreflect, 0, 1, 1);
 
 extern int oqfrags;
 
+VAR(q, 0, 0, 1);
+
 void renderwater()
 {
     if(editmode && showmat) return;
@@ -859,9 +861,9 @@ void queryreflections()
             nocolorshader->set();
             glDepthMask(GL_FALSE);
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            glDisable(GL_CULL_FACE);
         };
         refs++;
-        if(camera1->o.z < ref.height) glCullFace(GL_BACK);
         glBeginQuery_(GL_SAMPLES_PASSED_ARB, ref.query->id);
         loopvj(ref.matsurfs)
         {
@@ -869,14 +871,14 @@ void queryreflections()
             drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f);
         };
         glEndQuery_(GL_SAMPLES_PASSED_ARB);
-        if(camera1->o.z < ref.height) glCullFace(GL_FRONT);
     };
 
     if(refs)
     {
         defaultshader->set();
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glEnable(GL_CULL_FACE);
     };
 };
 
