@@ -632,11 +632,11 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
 #define AMASK 0xff000000
 #endif
 
-static void texcombine(Slot &s, int index, Slot::Tex &t)
+static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
     vector<char> key;
     addname(key, s, t);
-    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE) { t.t = crosshair; return; };
+    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && !forceload) { t.t = crosshair; return; };
     switch(t.type)
     {
         case TEX_DIFFUSE:
@@ -651,6 +651,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t)
         case TEX_NORMAL:
         case TEX_GLOW:
         {
+            if(renderpath!=R_ASMSHADER) break;
             int i = findtextype(s, (1<<TEX_SPEC)|(1<<TEX_DEPTH));
             if(i<0) break;
             s.sts[i].combined = index;
@@ -719,7 +720,7 @@ Slot &lookuptexture(int slot, bool load)
     loopv(s.sts)
     {
         Slot::Tex &t = s.sts[i];
-        if(t.combined<0) texcombine(s, i, t);
+        if(t.combined<0) texcombine(s, i, t, slot<0 && slot>-MAT_EDIT);
     };
     s.loaded = true;
     return s;
