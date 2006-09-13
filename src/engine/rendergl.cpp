@@ -548,7 +548,7 @@ static int findtextype(Slot &s, int type, int last = -1)
         } \
     }
 
-#define sourcetex(t, s) uchar *src = &((uchar *)s->pixels)[(s->format->BitsPerPixel/8)*((y%t->h)*s->w + (x%t->w))];
+#define sourcetex(s) uchar *src = &((uchar *)s->pixels)[(s->format->BitsPerPixel/8)*((y%s->h)*s->w + (x%s->w))];
 
 static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
 {
@@ -556,7 +556,7 @@ static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
     float color[3] = {1, 1, 1};
     if(cparam) memcpy(color, cparam->val, sizeof(color));     
     writetex(c, 
-        sourcetex(c, g);
+        sourcetex(g);
         loopk(3) dst[k] = min(255, int(dst[k]) + int(src[k] * color[k]));
     );
 };
@@ -564,7 +564,7 @@ static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
 static void addbump(SDL_Surface *c, SDL_Surface *n)
 {
     writetex(c,
-        sourcetex(c, n);
+        sourcetex(n);
         loopk(3) dst[k] = int(dst[k])*(int(src[2])*2-255)/255;
     );
 };
@@ -572,7 +572,7 @@ static void addbump(SDL_Surface *c, SDL_Surface *n)
 static void blenddecal(SDL_Surface *c, SDL_Surface *d)
 {
     writetex(c,
-        sourcetex(c, d);
+        sourcetex(d);
         uchar a = src[3];
         loopk(3) dst[k] = (int(src[k])*int(a) + int(dst[k])*int(255-a))/255;
     );
@@ -581,7 +581,7 @@ static void blenddecal(SDL_Surface *c, SDL_Surface *d)
 static void mergespec(SDL_Surface *c, SDL_Surface *s)
 {
     writetex(c,
-        sourcetex(c, s);
+        sourcetex(s);
         dst[3] = (int(src[0]) + int(src[1]) + int(src[2]))/3;
     );
 };
@@ -589,7 +589,7 @@ static void mergespec(SDL_Surface *c, SDL_Surface *s)
 static void mergedepth(SDL_Surface *c, SDL_Surface *z)
 {
     writetex(c,
-        sourcetex(c, z);
+        sourcetex(z);
         dst[3] = src[0];
     );
 };
