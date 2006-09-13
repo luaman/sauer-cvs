@@ -381,6 +381,9 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
         case GL_DEPTH_COMPONENT:
             type = GL_FLOAT;
             break;
+        case GL_RGB8:
+            format = GL_RGB;
+            break;
     };
     if(mipit) { if(gluBuild2DMipmaps(target, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
     else glTexImage2D(target, 0, component, w, h, 0, format, type, pixels);
