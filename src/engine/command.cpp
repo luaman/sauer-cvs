@@ -292,7 +292,7 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
         {
             if(isdown)
             {
-                aliasa(c, w[2]);
+                aliasa(c, numargs>2 ? w[2] : newstring(""));
                 w[2] = NULL;
             };
         }
