@@ -468,7 +468,7 @@ struct fpsserver : igameserver
         };
         if(minremain>=0)
         {
-            while(seconds>mapend-minremain*60) minremain--;
+            do minremain--; while(lastsec>mapend-minremain*60);
             send2(true, -1, SV_TIMEUP, minremain+1);
         };
     };
