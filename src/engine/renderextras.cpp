@@ -175,7 +175,7 @@ void newsphere(vec &o, float max, int type)
     spheres.add(p);
 };
 
-extern bool reflecting;
+extern float reflecting;
 
 void renderspheres(int time)
 {

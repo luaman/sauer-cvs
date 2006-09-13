@@ -170,8 +170,8 @@ bool modeloccluded(const vec &center, float radius)
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
-extern float refracting;
-extern int waterfog;
+extern float reflecting, refracting;
+extern int waterfog, reflectdist;
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, float ambient)
 {
@@ -185,7 +185,9 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if((cull&MDL_CULL_DIST) && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(cull&MDL_CULL_VFC)
         {
-            if(refracting && center.z+radius<refracting-waterfog) return;
+            if(reflecting && center.z+radius<=reflecting) return;
+            if(refracting && (center.z+radius<refracting-waterfog || center.z-radius>=refracting)) return;
+            if((reflecting || refracting) && center.dist(camera1->o)-radius>reflectdist) return;
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
         };
         if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;

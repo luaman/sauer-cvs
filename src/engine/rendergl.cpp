@@ -945,8 +945,7 @@ void renderfullscreenshader(int w, int h)
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
-extern bool reflecting;
-extern float refracting;
+extern float reflecting, refracting;
 physent *camera1 = NULL;
 bool isthirdperson() { return player!=camera1 || (reflecting && !refracting); };
 
@@ -1041,7 +1040,7 @@ void drawreflection(float z, bool refract, bool clear)
         return;
     };
 
-    reflecting = true;
+    reflecting = z;
     if(refract) refracting = z;
 
     float oldfogstart, oldfogend, oldfogcolor[4];
@@ -1130,7 +1129,7 @@ void drawreflection(float z, bool refract, bool clear)
     };
     
     refracting = 0;
-    reflecting = false;
+    reflecting = 0;
 };
 
 void gl_drawframe(int w, int h, float curfps)

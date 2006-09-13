@@ -880,8 +880,7 @@ void queryreflections()
 
 VARP(maxreflect, 1, 3, 8);
 
-bool reflecting = false;
-float refracting = 0;
+float reflecting = 0, refracting = 0;
 
 void drawreflections()
 {

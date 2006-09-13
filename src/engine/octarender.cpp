@@ -1474,7 +1474,6 @@ void renderreflectedmapmodels(float z, bool refract)
         {
             extentity &e = *ents[i];
             if(e.type!=ET_MAPMODEL || e.attr1<0 || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
-            if(e.o.dist(camera1->o)>reflectdist) continue;
             rendermapmodel(e);
         };
         restorevfcP();
@@ -1988,14 +1987,16 @@ void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool
         lodlevel &lod = va->l0;
         if(lod.texs)
         {
-            if(va->curvfc == VFC_FOGGED || (refract ? va->z > z : va->z+va->size <= z) || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+            if(va->curvfc == VFC_FOGGED || va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
-            if(va->curvfc == VFC_FULL_VISIBLE)
+            bool render = true;
+            if(va->max.z <= z) render = false;
+            else if(va->curvfc == VFC_FULL_VISIBLE)
             {
                 if(va->occluded >= OCCLUDE_BB) continue;
-                if(va->occluded < OCCLUDE_GEOM) renderva(cur, va, lod);
-            } 
-            else renderva(cur, va, lod);
+                if(va->occluded >= OCCLUDE_GEOM) render = false;
+            };
+            if(render) renderva(cur, va, lod);
         };
         if(va->children->length()) renderreflectedvas(cur, *va->children, z, refract); 
     };
@@ -2022,7 +2023,7 @@ void renderreflectedgeom(float z, bool refract)
         {
             lodlevel &lod = va->l0;
             if(!lod.texs) continue;
-            if(va->curvfc == VFC_FOGGED || (refract && camera1->o.z >= z ? va->z > z : va->z+va->size <= z) || va->occluded >= OCCLUDE_GEOM) continue;
+            if(va->curvfc == VFC_FOGGED || (refract && camera1->o.z >= z ? va->min.z > z : va->max.z <= z) || va->occluded >= OCCLUDE_GEOM) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };

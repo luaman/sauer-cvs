@@ -59,7 +59,7 @@ vec right, up;
 
 void setorient(const vec &r, const vec &u) { right = r; up = u; };
 
-extern bool reflecting;
+extern float reflecting;
 
 void render_particles(int time)
 {
