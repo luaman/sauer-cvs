@@ -763,6 +763,7 @@ void addreflection(materialsurface &m)
         glGenTextures(1, &ref->tex);
         int size = 1<<reflectsize;
         char *pixels = new char[size*size*3];
+        memset(pixels, 0, size*size*3);
         createtexture(ref->tex, size, size, pixels, true, false);
         delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->fb);
@@ -783,6 +784,7 @@ void addreflection(materialsurface &m)
         glGenTextures(1, &ref->refracttex);
         int size = 1<<reflectsize;
         char *pixels = new char[size*size*3];
+        memset(pixels, 0, size*size*3);
         createtexture(ref->refracttex, size, size, pixels, true, false);
         delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->refractfb);
