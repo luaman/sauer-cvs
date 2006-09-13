@@ -7,7 +7,7 @@ opengl, glu, sdl, sdl_image, sdl_mixer, png, jpeg, zlib (1.2.1 for
 all SDL libs, do a ldd for details).
 
 The servers need NO libs, no external files, no sound or video,
-just run it :) Server port is fixed at 28765, currently.
+just run it :) Server ports are fixed at UDP 28785 and UDP 28786, currently.
 
 Make sure to chmod +x these binaries and the sauerbraten_unix script
 before running them.
