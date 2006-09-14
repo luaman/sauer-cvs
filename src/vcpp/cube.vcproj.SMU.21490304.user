@@ -39,7 +39,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="..\.."
-				CommandArguments="-t -w1280 -h800 -a4 -gfps"
+				CommandArguments="-t -w1280 -h800 -a4 -grpg"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

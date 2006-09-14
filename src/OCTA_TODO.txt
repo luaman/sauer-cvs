@@ -31,8 +31,6 @@ aard/everyone:
 
 - debris particles (makke?)
 - get kurt to fix decal textures
-- add gregors new textures
-- water in more maps (metl4?)
 
 - death needs to be more obvious (better sound/centerprint) 
 - screenshots etc? new features in docs

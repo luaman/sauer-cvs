@@ -49,6 +49,7 @@ struct rpgent : dynent
     int lastaction, lastpain;
     
     rpgent() : lastaction(0), lastpain(0) {};
+    
 };
 
 struct rpgclient : igameclient
@@ -119,7 +120,28 @@ struct rpgclient : igameclient
     
     void gameplayhud(int w, int h) {};
     
-    void drawhudgun() {};
+    void drawhudmodel(int anim, float speed, int base)
+    {
+        vec color, dir;
+        lightreaching(player1.o, color, dir);
+        rendermodel(color, dir, "hudguns/fist", anim, 0, 0, player1.o.x, player1.o.y, player1.o.z, player1.yaw+90, player1.pitch, speed, base, NULL, 0);
+    };
+
+    void drawhudgun()
+    {
+        if(editmode) return;
+
+        int rtime = 250;
+        if(lastmillis-player1.lastaction<rtime)
+        {
+            drawhudmodel(ANIM_GUNSHOOT, rtime/17.0f, player1.lastaction);
+        }
+        else
+        {
+            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP, 100, 0);
+        };
+    };
+
     bool camerafixed() { return player1.state==CS_DEAD; };
     bool canjump() { return true; };
     void doattack(bool on) { };
@@ -141,7 +163,17 @@ struct rpgclient : igameclient
             os.pointingat->treemenu();
         };
         
-        if(treebutton("attack", "sword.jpg")&TMB_PRESSED) { conoutf("attack"); };
+        if(treebutton("attack", "sword.jpg")&TMB_PRESSED)
+        {
+            if(lastmillis-player1.lastaction>250)
+            {
+                player1.lastaction = lastmillis;
+                if(os.pointingat)
+                {
+                    os.pointingat->attacked(player1);
+                };
+            } 
+        };
         if(treebutton("inventory", "chest.jpg")&TMB_UP) { conoutf("inventory"); };
     };
 
