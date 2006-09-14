@@ -736,6 +736,7 @@ VARFP(reflectsize, 6, 8, 10, cleanreflections());
 
 void addreflection(materialsurface &m)
 {
+    static GLenum fboFormat = GL_RGB;
     int height = m.o.z;
     Reflection *ref = NULL, *oldest = NULL;
     loopi(MAXREFLECTIONS)
@@ -764,12 +765,7 @@ void addreflection(materialsurface &m)
         glGenFramebuffers_(1, &ref->fb);
         glGenTextures(1, &ref->tex);
         int size = 1<<reflectsize;
-        char *pixels = new char[size*size*3];
-        memset(pixels, 0, size*size*3);
-        createtexture(ref->tex, size, size, pixels, true, false, GL_RGB8);
-        delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->fb);
-        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
         if(!reflectiondb)
         {
             glGenRenderbuffers_(1, &reflectiondb);
@@ -777,6 +773,18 @@ void addreflection(materialsurface &m)
             glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, size, size);
         };
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
+
+        char *pixels = new char[size*size*3];
+        memset(pixels, 0, size*size*3);
+        createtexture(ref->tex, size, size, pixels, true, false, fboFormat);
+        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
+        if(fboFormat==GL_RGB && glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)!=GL_FRAMEBUFFER_COMPLETE_EXT)
+        {
+            fboFormat = GL_RGB8;
+            createtexture(ref->tex, size, size, pixels, true, false, fboFormat);
+            glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
+        };
+        delete[] pixels;
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     };
@@ -787,7 +795,7 @@ void addreflection(materialsurface &m)
         int size = 1<<reflectsize;
         char *pixels = new char[size*size*3];
         memset(pixels, 0, size*size*3);
-        createtexture(ref->refracttex, size, size, pixels, true, false, GL_RGB8);
+        createtexture(ref->refracttex, size, size, pixels, true, false, fboFormat);
         delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->refractfb);
         glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->refracttex, 0);
