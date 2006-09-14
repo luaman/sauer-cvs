@@ -136,25 +136,25 @@ int lastupdate = 0;
 
 bool netmapstart() { return clienthost!=NULL; };
 
-void sendpackettoserv(ENetPacket *packet)
+void sendpackettoserv(ENetPacket *packet, int chan)
 {
-    if(clienthost) { enet_host_broadcast(clienthost, 0, packet); enet_host_flush(clienthost); }
-    else localclienttoserver(packet);
+    if(clienthost) { enet_host_broadcast(clienthost, chan, packet); enet_host_flush(clienthost); }
+    else localclienttoserver(chan, packet);
 };
 
-void c2sinfo(dynent *d)                     // send update to the server
+void c2sinfo(dynent *d, int rate)                     // send update to the server
 {
-    if(lastmillis-lastupdate<33) return;    // don't update faster than 30fps
+    if(lastmillis-lastupdate<rate) return;    // don't update faster than 30fps
     ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, 0);
     uchar *start = packet->data;
     uchar *p = start;
     bool reliable = false;
-    cc->sendpacketclient(p, reliable, d);
+    int chan = cc->sendpacketclient(p, reliable, d);
     if(reliable) packet->flags = ENET_PACKET_FLAG_RELIABLE;
     if(packet)
     {
         enet_packet_resize(packet, p-start);
-        sendpackettoserv(packet);
+        sendpackettoserv(packet, chan);
     };
     lastupdate = lastmillis;
 };
@@ -165,9 +165,9 @@ void neterr(char *s)
     disconnect();
 };
 
-void localservertoclient(uchar *buf, int len)   // processes any updates from the server
+void localservertoclient(int chan, uchar *buf, int len)   // processes any updates from the server
 {
-    cc->parsepacketclient(buf+len, buf);
+    cc->parsepacketclient(chan, buf+len, buf);
 };
 
 void clientkeepalive() { if(clienthost) enet_host_service(clienthost, NULL, 0); };
@@ -201,11 +201,7 @@ void gets2c()           // get updates from the server
          
         case ENET_EVENT_TYPE_RECEIVE:
             if(disconnecting) conoutf("attempting to disconnect...");
-            else switch(event.channelID)
-            {
-                case 0: localservertoclient(event.packet->data, (int)event.packet->dataLength); break;
-                case 1: cc->receivefile(event.packet->data, (int)event.packet->dataLength); break;
-            };
+            else localservertoclient(event.channelID, event.packet->data, (int)event.packet->dataLength); break;
             enet_packet_destroy(event.packet);
             break;
 

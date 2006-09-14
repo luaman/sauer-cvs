@@ -4,7 +4,6 @@ struct clientcom : iclientcom
 
     bool c2sinit;       // whether we need to tell the other clients our stats
 
-    string toservermap;
     bool senditemstoserver;     // after a map change, since server doesn't have map data
     int lastping;
 
@@ -54,7 +53,6 @@ struct clientcom : iclientcom
 
     void initclientnet()
     {
-        toservermap[0] = 0;
     };
 
     void writeclientinfo(FILE *f)
@@ -183,18 +181,9 @@ struct clientcom : iclientcom
 
     void toserver(char *text) { conoutf("%s:\f0 %s", player1->name, text); addmsg(SV_TEXT, "rs", text); };
 
-    void sendpacketclient(uchar *&p, bool &reliable, dynent *d)
+    int sendpacketclient(uchar *&p, bool &reliable, dynent *d)
     {
         uchar *start = p;
-        if(toservermap[0])                      // suggest server to change map
-        {                                       // do this exclusively as map change may invalidate rest of update
-            reliable = true;
-            putint(p, SV_MAPCHANGE);
-            sendstring(toservermap, p);
-            toservermap[0] = 0;
-            putint(p, cl.nextmode);
-            return;
-        }
         if(!spectator || !c2sinit || messages.length())
         {
             putint(p, SV_POS);
@@ -250,12 +239,13 @@ struct clientcom : iclientcom
             i += 2 + len;
         };
         messages.remove(0, i);
-        if(MAXTRANS-(p-start)>=10 && cl.lastmillis-lastping>250)
+        if(!spectator && MAXTRANS-(p-start)>=10 && cl.lastmillis-lastping>250)
         {
             putint(p, SV_PING);
             putint(p, cl.lastmillis);
             lastping = cl.lastmillis;
         };
+        return 0;
     };
 
     void updatepos(fpsent *d)
@@ -283,32 +273,13 @@ struct clientcom : iclientcom
         };
     };
 
-    void parsepacketclient(uchar *end, uchar *p)   // processes any updates from the server
+    void parsepositions(uchar *p, uchar *end)
     {
-        int gamemode = cl.gamemode;
-        char text[MAXTRANS];
         int cn = -1, type;
         fpsent *d = NULL;
-        bool mapchanged = false, inited = false;
 
         while(p<end) switch(type = getint(p))
         {
-            case SV_INITS2C:                    // welcome messsage from the server
-            {
-                cn = getint(p);
-                int prot = getint(p);
-                if(prot!=PROTOCOL_VERSION)
-                {
-                    conoutf("you are using a different game protocol (you: %d, server: %d)", PROTOCOL_VERSION, prot);
-                    disconnect();
-                    return;
-                };
-                toservermap[0] = 0;
-                clientnum = cn;                 // we are now fully connected
-                if(!getint(p)) s_strcpy(toservermap, cl.getclientmap());   // we are the first client on this server, set map
-                break;
-            };
-
             case SV_POS:                        // position of another client
             {
                 cn = getint(p);
@@ -323,7 +294,7 @@ struct clientcom : iclientcom
                 d->vel.x = getint(p)/DVELF;
                 d->vel.y = getint(p)/DVELF;
                 d->vel.z = getint(p)/DVELF;
-                int physstate = getint(p);
+                int physstate = getint(p); 
                 d->physstate = physstate & 0x0F;
                 if(physstate&0x10)
                 {
@@ -341,7 +312,60 @@ struct clientcom : iclientcom
                 d->state = state;
                 updatephysstate(d);
                 updatepos(d);
-                inited = false;
+                break;
+            };
+
+            default:
+                neterr("type");
+                return;
+        };
+    };
+
+    void parsepacketclient(int chan, uchar *end, uchar *p)   // processes any updates from the server
+    {
+        switch(chan)
+        {
+            case 0: 
+                if(*p==SV_POS) parsepositions(p, end); 
+                else parsemessages(-1, NULL, p, end);
+                break;
+            case 1: 
+                while(p<end)
+                {
+                    int cn = *p++;
+                    fpsent *d = cl.getclient(cn);
+                    int len = *p++;
+                    len += *p++<<8;
+                    if(d) parsemessages(cn, d, p, p+len);
+                    p += len;
+                };
+                break;
+            case 2: 
+                receivefile(p, end-p); 
+                break;
+        };
+    };
+
+    void parsemessages(int cn, fpsent *d, uchar *p, uchar *end)
+    {
+        int gamemode = cl.gamemode;
+        char text[MAXTRANS];
+        int type;
+        bool mapchanged = false, inited = false;
+
+        while(p<end) switch(type = getint(p))
+        {
+            case SV_INITS2C:                    // welcome messsage from the server
+            {
+                int mycn = getint(p), prot = getint(p);
+                if(prot!=PROTOCOL_VERSION)
+                {
+                    conoutf("you are using a different game protocol (you: %d, server: %d)", PROTOCOL_VERSION, prot);
+                    disconnect();
+                    return;
+                };
+                clientnum = mycn;                 // we are now fully connected
+                if(!getint(p)) changemap(cl.getclientmap());   // we are the first client on this server, set map
                 break;
             };
 
@@ -638,12 +662,6 @@ struct clientcom : iclientcom
                 currentmaster = getint(p);
                 break;
 
-            case SV_PING:
-            case SV_MASTERMODE:
-            case SV_KICK:
-                getint(p);
-                break;
-
             case SV_SPECTATOR:
             {
                 int sn = getint(p), val = getint(p);
@@ -673,16 +691,6 @@ struct clientcom : iclientcom
                 else w = cl.getclient(wn);
                 if(!w) return;
                 filtertext(w->team, text, false, MAXTEAMLEN);
-                break;
-            };
-
-            case SV_BASES:
-            {
-                while(getint(p)!=-1)
-                {
-                    getint(p);
-                    getint(p);
-                };
                 break;
             };
 
@@ -718,10 +726,6 @@ struct clientcom : iclientcom
                 break;
             };
 
-            case SV_GETMAP:
-            case SV_FORCEINTERMISSION:
-                break;
-
             case SV_ANNOUNCE:
             {
                 int t = getint(p);
@@ -747,7 +751,7 @@ struct clientcom : iclientcom
 
     void changemap(const char *name)                      // request map change, server may ignore
     {
-        if(!spectator || currentmaster==clientnum) s_strcpy(toservermap, name);
+        if(!spectator || currentmaster==clientnum) addmsg(SV_MAPCHANGE, "rsi", name, cl.nextmode);
     };
 
     void receivefile(uchar *data, int len)
@@ -785,7 +789,7 @@ struct clientcom : iclientcom
         {
             fseek(map, 0, SEEK_END);
             if(ftell(map) > 1024*1024) conoutf("map is too large");
-            else sendfile(-1, map);
+            else sendfile(-1, 2, map);
             fclose(map);
         };
         remove(fname);

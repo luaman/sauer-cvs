@@ -163,10 +163,9 @@ extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS };
 
 extern void *getinfo(int i);
-extern void send2(bool rel, int cn, int a, int b);
-extern void sendn(bool rel, int cn, int n, ...);
-extern void sendf(bool rel, int cn, const char *format, ...);
-extern void sendfile(int cn, FILE *file);
+extern void sendf(int cn, int chan, const char *format, ...);
+extern void sendfile(int cn, int chan, FILE *file);
+extern void sendpacket(int cn, int chan, ENetPacket *packet);
 extern int getnumclients();
 extern uint getclientip(int n);
 extern void putint(uchar *&p, int n);
@@ -175,12 +174,10 @@ extern void putuint(uchar *&p, int n);
 extern int getuint(uchar *&p);
 extern void sendstring(const char *t, uchar *&p);
 extern void disconnect_client(int n, int reason);
-extern void sendvmap(int n, string mapname, int mapsize, uchar *mapdata);
-extern void recvmap(int n, int tag);
 extern bool hasnonlocalclients();
 
 // client
-extern void c2sinfo(dynent *d);
+extern void c2sinfo(dynent *d, int rate = 33);
 extern void disconnect(int onlyclean = 0, int async = 0);
 extern bool isconnected();
 extern bool multiplayer(bool msg = true);

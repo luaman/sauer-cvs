@@ -261,7 +261,7 @@ extern void cleanupserver();
 extern void serverslice(int seconds, unsigned int timeout);
 
 extern uchar *retrieveservers(uchar *buf, int buflen);
-extern void localclienttoserver(ENetPacket *);
+extern void localclienttoserver(int chan, ENetPacket *);
 extern void localconnect();
 extern bool serveroption(char *opt);
 
@@ -270,7 +270,7 @@ extern bool resolverwait(const char *name, ENetAddress *address);
 
 // client
 extern void localdisconnect();
-extern void localservertoclient(uchar *buf, int len);
+extern void localservertoclient(int chan, uchar *buf, int len);
 extern void connects(char *servername);
 extern void clientkeepalive();
 

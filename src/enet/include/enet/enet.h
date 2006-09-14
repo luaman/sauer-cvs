@@ -105,6 +105,7 @@ typedef struct _ENetPacket
    enet_uint32          flags;           /**< bitwise or of ENetPacketFlag constants */
    enet_uint8 *         data;            /**< allocated data for packet */
    size_t               dataLength;      /**< length of data */
+   enet_uint32 *        useCounter;      /**< pointer to user reference counter for ENET_PACKET_FLAG_NO_ALLOCATE */
 } ENetPacket;
 
 typedef struct _ENetAcknowledgement

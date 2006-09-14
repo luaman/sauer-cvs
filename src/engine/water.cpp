@@ -766,14 +766,6 @@ void addreflection(materialsurface &m)
         glGenTextures(1, &ref->tex);
         int size = 1<<reflectsize;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->fb);
-        if(!reflectiondb)
-        {
-            glGenRenderbuffers_(1, &reflectiondb);
-            glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
-            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, size, size);
-        };
-        glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
-
         char *pixels = new char[size*size*3];
         memset(pixels, 0, size*size*3);
         createtexture(ref->tex, size, size, pixels, true, false, fboFormat);
@@ -785,6 +777,14 @@ void addreflection(materialsurface &m)
             glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
         };
         delete[] pixels;
+
+        if(!reflectiondb)
+        {
+            glGenRenderbuffers_(1, &reflectiondb);
+            glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
+            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, size, size);
+        };
+        glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     };

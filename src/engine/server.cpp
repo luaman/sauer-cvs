@@ -5,7 +5,7 @@
 #include "engine.h" 
 
 #ifdef STANDALONE
-void localservertoclient(uchar *buf, int len) {};
+void localservertoclient(int chan, uchar *buf, int len) {};
 void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); };
 #endif
 
@@ -99,7 +99,7 @@ size_t bsend = 0, brec = 0;
 int laststatus = 0; 
 ENetSocket pongsock = ENET_SOCKET_NULL;
 
-void sendfile(int cn, FILE *file)
+void sendfile(int cn, int chan, FILE *file)
 {
 #ifndef STANDALONE
     extern ENetHost *clienthost;
@@ -119,76 +119,63 @@ void sendfile(int cn, FILE *file)
     rewind(file);
     fread(packet->data, 1, len, file);
 
-    if(cn >= 0) enet_peer_send(clients[cn]->peer, 1, packet);
+    if(cn >= 0) enet_peer_send(clients[cn]->peer, chan, packet);
 #ifndef STANDALONE
-    else enet_peer_send(&clienthost->peers[0], 1, packet);
+    else enet_peer_send(&clienthost->peers[0], chan, packet);
 #endif
 
     if(!packet->referenceCount) enet_packet_destroy(packet);
 };
 
-void process(ENetPacket *packet, int sender);
-void multicast(ENetPacket *packet, int sender);
+void process(ENetPacket *packet, int sender, int chan);
+void multicast(ENetPacket *packet, int sender, int chan);
 //void disconnect_client(int n, int reason);
 
 void *getinfo(int i)    { return clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
 int getnumclients()     { return clients.length(); };
 uint getclientip(int n) { return clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; };
 
-void send(int n, ENetPacket *packet)
+void sendpacket(int n, int chan, ENetPacket *packet)
 {
     switch(clients[n]->type)
     {
         case ST_TCPIP:
         {
-            enet_peer_send(clients[n]->peer, 0, packet);
+            enet_peer_send(clients[n]->peer, chan, packet);
             bsend += packet->dataLength;
             break;
         };
 
         case ST_LOCAL:
-            localservertoclient(packet->data, (int)packet->dataLength);
+            localservertoclient(chan, packet->data, (int)packet->dataLength);
             break;
     };
 };
 
-void sendn(bool rel, int cn, int n, ...)
+void sendf(int cn, int chan, const char *format, ...)
 {
-    ENetPacket *packet = enet_packet_create(NULL, 32, rel ? ENET_PACKET_FLAG_RELIABLE : 0);
-    uchar *start = packet->data;
-    uchar *p = start;
-    va_list args;
-    va_start(args, n);
-    while(n-- > 0) putint(p, va_arg(args, int));
-    va_end(args);
-    enet_packet_resize(packet, p-start);
-    if(cn<0) process(packet, -1);
-    else send(cn, packet);
-    if(packet->referenceCount==0) enet_packet_destroy(packet);
-};
-
-void sendf(bool rel, int cn, const char *format, ...)
-{
-    ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, rel ? ENET_PACKET_FLAG_RELIABLE : 0);
+    bool reliable = false;
+    if(*format=='r') { reliable = true; ++format; };
+    ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
     uchar *start = packet->data;
     uchar *p = start;
     va_list args;
     va_start(args, format);
     while(*format) switch(*format++)
     {
-        case 'i': putint(p, va_arg(args, int)); break;
+        case 'i': 
+        {
+            int n = isdigit(*format) ? *format++-'0' : 1;
+            loopi(n) putint(p, va_arg(args, int));
+            break;
+        };
         case 's': sendstring(va_arg(args, const char *), p); break;
     };
     va_end(args);
     enet_packet_resize(packet, p-start);
-    if(cn<0) process(packet, -1);
-    else send(cn, packet);
+    if(cn<0) process(packet, -1, chan);
+    else sendpacket(cn, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
-};
-
-void send2(bool rel, int cn, int a, int b)
-{
-    sendn(rel, cn, 2, a, b);
 };
 
 char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL (maxlients)" };
@@ -204,15 +191,14 @@ void disconnect_client(int n, int reason)
     sv->sendservmsg(s);
 };
 
-void process(ENetPacket * packet, int sender)   // sender may be -1
+void process(ENetPacket * packet, int sender, int chan)   // sender may be -1
 {
     uchar *end = packet->data+packet->dataLength;
     uchar *p = packet->data;
 
-    if(!sv->parsepacket(sender, p, end)) return;
+    sv->parsepacket(sender, chan, p, end);
 
     if(p>end) { disconnect_client(sender, DISC_EOP); return; };
-    multicast(packet, sender);
 };
 
 void send_welcome(int n)
@@ -220,26 +206,25 @@ void send_welcome(int n)
     ENetPacket * packet = enet_packet_create (NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
     uchar *p = start;
-    
-    sv->welcomepacket(p, n);
+    int chan = sv->welcomepacket(p, n);
     
     enet_packet_resize(packet, p-start);
-    send(n, packet);
+    sendpacket(n, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
-void multicast(ENetPacket *packet, int sender)
+void multicast(ENetPacket *packet, int sender, int chan)
 {
     loopv(clients)
     {
         if(i==sender) continue;
-        send(i, packet);
+        sendpacket(i, chan, packet);
     };
 };
 
-void localclienttoserver(ENetPacket *packet)
+void localclienttoserver(int chan, ENetPacket *packet)
 {
-    process(packet, 0);
+    process(packet, 0, chan);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
@@ -432,11 +417,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
         {
             brec += event.packet->dataLength;
             client *c = (client *)event.peer->data;
-            if(c) switch(event.channelID)
-            {
-                case 0: process(event.packet, c->num); break;
-                case 1: sv->receivefile(c->num, event.packet->data, (int)event.packet->dataLength); break;
-            }; 
+            if(c) process(event.packet, c->num, event.channelID);
             if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
             break;
         };
@@ -451,6 +432,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             break;
         };
     };
+    if(sv->sendpackets()) enet_host_flush(serverhost);
 };
 
 void cleanupserver()
