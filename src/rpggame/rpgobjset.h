@@ -59,7 +59,7 @@ struct rpgobj
     {
         for(rpgobj **l = &inventory; *l; )
             if(*l==o) *l = o->sibling;
-            else l = &o->sibling;
+            else l = &(*l)->sibling;
     };
 
     void placeinworld(vec &pos, float yaw)
@@ -222,6 +222,7 @@ struct rpgobjset
     void take(rpgobj *worldobj, rpgobj *newowner)
     {
         set.removeobj(worldobj);
+        DELETEP(worldobj->ent);
         newowner->add(worldobj, false);
     };
     
