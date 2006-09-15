@@ -8,7 +8,7 @@ struct fpsrender
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
-            const char *mdlname = m_teammode ? (isteam(cl.player1->team, d->team) ? "monster/ogro/blue" : "monster/ogro/red") : "monster/ogro";
+            const char *mdlname = m_teammode ? (isteam(cl.player1->team, d->team) ? "monster/ogro/blue" : "monster/ogro/red") : "monster/ogro/red" /* "monster/ogro" */;
             const char *vwepname = d->gunselect<sizeof(vweps)/sizeof(vweps[0]) ? vweps[d->gunselect] : NULL;
             if(d->state!=CS_DEAD || d->superdamage<50) renderclient(d, mdlname, vwepname, false, d->lastaction, d->lastpain, 1);
             s_strcpy(d->info, d->name);
