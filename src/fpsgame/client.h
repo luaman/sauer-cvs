@@ -493,7 +493,7 @@ struct clientcom : iclientcom
                     victim->lastpain = cl.lastmillis;
                     vec v = victim->abovehead();
                     playsound(S_PAIN1+rnd(5), &v);
-                    cl.ws.damageeffect(v, damage, victim->vel, victim);
+                    cl.ws.damageeffect(v, damage, victim);
                 };
                 break;
             };
@@ -538,7 +538,7 @@ struct clientcom : iclientcom
                         };
                     };
                 };
-                cl.ws.damageeffect(d->abovehead(), damage, d->vel, d); 
+                cl.ws.superdamageeffect(d->abovehead(), d->vel, d); 
                 playsound(S_DIE1+rnd(2), &d->o);
                 if(!inited) d->lifesequence++;
                 break;

@@ -273,13 +273,13 @@ struct fpsserver : igameserver
             delete ws;
             expired++;
         };
-        worldstates.remove(0, expired);
-        if(clients.length()<=1) return false;
+        if(expired) worldstates.remove(0, expired);
+        if(clients.empty()) return false;
         enet_uint32 curtime = enet_time_get()-lastsend;
         if(curtime<33) return false;
         buildworldstate(*worldstates.add(new worldstate));
         lastsend += curtime - (curtime%33);
-        return true;
+        return worldstates.last()->uses>0;
     };
 
     void parsepacket(int sender, int chan, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
