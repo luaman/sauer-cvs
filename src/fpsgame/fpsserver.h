@@ -284,6 +284,7 @@ struct fpsserver : igameserver
 
     void parsepacket(int sender, int chan, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
     {
+        if(sender<0) return;
         if(chan==2)
         {
             receivefile(sender, p, end-p);
