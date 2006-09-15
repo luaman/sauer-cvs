@@ -186,26 +186,31 @@ struct clientcom : iclientcom
         uchar *start = p;
         if(!spectator || !c2sinit || messages.length())
         {
-            putint(p, SV_POS);
-            putint(p, clientnum);
-            putuint(p, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
-            putuint(p, (int)(d->o.y*DMF));
-            putuint(p, (int)(d->o.z*DMF));
-            putuint(p, (int)d->yaw);
-            putint(p, (int)d->pitch);
-            putint(p, (int)d->roll);
-            putint(p, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
-            putint(p, (int)(d->vel.y*DVELF));
-            putint(p, (int)(d->vel.z*DVELF));
-            putint(p, (int)d->physstate | (!d->gravity.iszero()<<4));
+            // send position updates separately so as to not stall out aiming
+            ENetPacket *packet = enet_packet_create (NULL, 100, 0);
+            uchar *q = packet->data; 
+            putint(q, SV_POS);
+            putint(q, clientnum);
+            putuint(q, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
+            putuint(q, (int)(d->o.y*DMF));
+            putuint(q, (int)(d->o.z*DMF));
+            putuint(q, (int)d->yaw);
+            putint(q, (int)d->pitch);
+            putint(q, (int)d->roll);
+            putint(q, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
+            putint(q, (int)(d->vel.y*DVELF));
+            putint(q, (int)(d->vel.z*DVELF));
+            putint(q, (int)d->physstate | (!d->gravity.iszero()<<4));
             if(!d->gravity.iszero())
             {
-                putint(p, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
-                putint(p, (int)(d->gravity.y*DVELF));
-                putint(p, (int)(d->gravity.z*DVELF));
+                putint(q, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
+                putint(q, (int)(d->gravity.y*DVELF));
+                putint(q, (int)(d->gravity.z*DVELF));
             };
             // pack rest in 1 byte: strafe:2, move:2, state:3, reserved:1
-            putint(p, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<4) );
+            putint(q, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<4) );
+            enet_packet_resize(packet, q-(uchar *)packet->data);
+            sendpackettoserv(packet, 0);
         };
         if(senditemstoserver)
         {
@@ -245,7 +250,7 @@ struct clientcom : iclientcom
             putint(p, cl.lastmillis);
             lastping = cl.lastmillis;
         };
-        return 0;
+        return 1;
     };
 
     void updatepos(fpsent *d)

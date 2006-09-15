@@ -138,25 +138,24 @@ bool netmapstart() { return clienthost!=NULL; };
 
 void sendpackettoserv(ENetPacket *packet, int chan)
 {
-    if(clienthost) { enet_host_broadcast(clienthost, chan, packet); enet_host_flush(clienthost); }
+    if(clienthost) enet_host_broadcast(clienthost, chan, packet);
     else localclienttoserver(chan, packet);
 };
 
 void c2sinfo(dynent *d, int rate)                     // send update to the server
 {
     if(lastmillis-lastupdate<rate) return;    // don't update faster than 30fps
+    lastupdate = lastmillis;
     ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, 0);
     uchar *start = packet->data;
     uchar *p = start;
     bool reliable = false;
     int chan = cc->sendpacketclient(p, reliable, d);
+    if(p==start) { enet_packet_destroy(packet); return; };
     if(reliable) packet->flags = ENET_PACKET_FLAG_RELIABLE;
-    if(packet)
-    {
-        enet_packet_resize(packet, p-start);
-        sendpackettoserv(packet, chan);
-    };
-    lastupdate = lastmillis;
+    enet_packet_resize(packet, p-start);
+    sendpackettoserv(packet, chan);
+    if(clienthost) enet_host_flush(clienthost);
 };
 
 void neterr(char *s)

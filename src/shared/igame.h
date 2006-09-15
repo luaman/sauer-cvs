@@ -75,7 +75,7 @@ struct igameserver
     virtual void localdisconnect(int n) = 0;
     virtual void localconnect(int n) = 0;
     virtual char *servername() = 0;
-    virtual void parsepacket(int sender, int chan, uchar *&p, uchar *end) = 0;
+    virtual void parsepacket(int sender, int chan, bool reliable, uchar *&p, uchar *end) = 0;
     virtual bool sendpackets() = 0;
     virtual int welcomepacket(uchar *&p, int n) = 0;
     virtual void serverinforeply(uchar *&p) = 0;

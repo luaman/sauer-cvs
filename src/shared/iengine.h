@@ -178,6 +178,7 @@ extern bool hasnonlocalclients();
 
 // client
 extern void c2sinfo(dynent *d, int rate = 33);
+extern void sendpackettoserv(ENetPacket *packet, int chan);
 extern void disconnect(int onlyclean = 0, int async = 0);
 extern bool isconnected();
 extern bool multiplayer(bool msg = true);

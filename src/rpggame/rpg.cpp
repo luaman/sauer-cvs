@@ -30,7 +30,7 @@ struct rpgdummyserver : igameserver
     void localdisconnect(int n) {};
     void localconnect(int n) {};
     char *servername() { return "foo"; };
-    void parsepacket(int sender, int chan, uchar *&p, uchar *end) { p = end; };
+    void parsepacket(int sender, int chan, bool reliable, uchar *&p, uchar *end) { p = end; };
     bool sendpackets() { return false; };
     int welcomepacket(uchar *&p, int n) { return -1; };
     void serverinforeply(uchar *&p) {};

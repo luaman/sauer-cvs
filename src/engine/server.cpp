@@ -191,12 +191,12 @@ void disconnect_client(int n, int reason)
     sv->sendservmsg(s);
 };
 
-void process(ENetPacket * packet, int sender, int chan)   // sender may be -1
+void process(ENetPacket *packet, int sender, int chan)   // sender may be -1
 {
     uchar *end = packet->data+packet->dataLength;
     uchar *p = packet->data;
 
-    sv->parsepacket(sender, chan, p, end);
+    sv->parsepacket(sender, chan, (packet->flags&ENET_PACKET_FLAG_RELIABLE)!=0, p, end);
 
     if(p>end) { disconnect_client(sender, DISC_EOP); return; };
 };

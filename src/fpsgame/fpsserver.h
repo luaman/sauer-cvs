@@ -83,12 +83,13 @@ struct fpsserver : igameserver
     vector<ban> bannedips;
     vector<clientinfo *> clients;
     vector<worldstate *> worldstates;
+    bool reliablemessages;
 
     captureserv cps;
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), cps(*this) {};
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {};
 
     void *newinfo() { return new clientinfo; };
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
@@ -253,7 +254,7 @@ struct fpsserver : igameserver
             {
                 packet = enet_packet_create(&ws.messages[ci.messageoffset<0 ? 0 : ci.messageoffset+3+ci.messages.length()], 
                                             ci.messageoffset<0 ? msize : msize-3-ci.messages.length(), 
-                                            ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_NO_ALLOCATE);
+                                            (reliablemessages ? ENET_PACKET_FLAG_RELIABLE : 0) | ENET_PACKET_FLAG_NO_ALLOCATE);
                 packet->useCounter = &ws.uses;
                 ++ws.uses;
                 sendpacket(ci.clientnum, 1, packet);
@@ -261,6 +262,7 @@ struct fpsserver : igameserver
             };
             ci.messages.setsizenodelete(0);
         };
+        reliablemessages = false;
     };
 
     bool sendpackets()
@@ -282,7 +284,7 @@ struct fpsserver : igameserver
         return worldstates.last()->uses>0;
     };
 
-    void parsepacket(int sender, int chan, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
+    void parsepacket(int sender, int chan, bool reliable, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
     {
         if(sender<0) return;
         if(chan==2)
@@ -290,6 +292,7 @@ struct fpsserver : igameserver
             receivefile(sender, p, end-p);
             return;
         };
+        if(reliable) reliablemessages = true;
         char text[MAXTRANS];
         int cn = -1, type;
         clientinfo *ci = sender>=0 ? (clientinfo *)getinfo(sender) : NULL;
@@ -312,7 +315,7 @@ struct fpsserver : igameserver
                 int physstate = getint(p);
                 if(physstate&0x10) loopi(3) getint(p);
                 int state = (getint(p)>>4) & 0x7;
-                if(ci->spectator && state!=CS_SPECTATOR) return;
+                if(ci->spectator && state!=CS_SPECTATOR) break;
                 if(m_capture)
                 {
                     if(ci->state==CS_ALIVE)
