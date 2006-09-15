@@ -173,7 +173,7 @@ void sendf(int cn, int chan, const char *format, ...)
     };
     va_end(args);
     enet_packet_resize(packet, p-start);
-    if(cn<0) process(packet, -1, chan);
+    if(cn<0) multicast(packet, -1, chan);
     else sendpacket(cn, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };

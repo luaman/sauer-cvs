@@ -446,7 +446,6 @@ struct fpsserver : igameserver
                     s_sprintfd(s)("mastermode is now %d", mastermode);
                     sendservmsg(s);
                 };
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
                 break;
             };
             

@@ -365,7 +365,7 @@ struct clientcom : iclientcom
                     return;
                 };
                 clientnum = mycn;                 // we are now fully connected
-                if(!getint(p)) changemap(cl.getclientmap());   // we are the first client on this server, set map
+                if(!getint(p) && cl.getclientmap()[0]) changemap(cl.getclientmap());   // we are the first client on this server, set map
                 break;
             };
 
