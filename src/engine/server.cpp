@@ -365,7 +365,7 @@ uchar *retrieveservers(uchar *buf, int buflen)
     return stripheader(buf);
 };
 
-int uprate = 0, maxclients = 4;
+int uprate = 0, maxclients = 6;
 char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
 
