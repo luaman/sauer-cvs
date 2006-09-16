@@ -248,24 +248,25 @@ int findanim(const char *name)
 
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m) // model skin sharing
 {
-    s_sprintfd(maskspath)("packages/models/%s/masks.jpg", dir);
-    masks = textureload(maskspath, false, true, false);
-    if(masks!=crosshair) m->masked = true;
-    s_sprintfd(skinpath)("packages/models/%s/skin.jpg", dir);
-    #define ifnload if((skin = textureload(skinpath, false, true, false))==crosshair)
-    ifnload
-    {
-        strcpy(skinpath+strlen(skinpath)-3, "png");                       // try png if no jpg
-        ifnload
-        {
-            s_sprintf(skinpath)("packages/models/%s/skin.jpg", altdir);    // try jpg in the parent folder (skin sharing)
-            ifnload                                          
-            {
-                strcpy(skinpath+strlen(skinpath)-3, "png");               // and png again
-                ifnload return;
-            };
-        };
-    };
+#define ifnoload(tex, path) if((tex = textureload(path, false, true, false))==crosshair)
+#define tryload(tex, path, name, success, fail) \
+    s_sprintfd(path)("packages/models/%s/%s.jpg", dir, name); \
+    ifnoload(tex, path) \
+    { \
+        strcpy(path+strlen(path)-3, "png"); \
+        ifnoload(tex, path) \
+        { \
+            s_sprintf(path)("packages/models/%s/%s.jpg", altdir, name); \
+            ifnoload(tex, path) \
+            { \
+                strcpy(path+strlen(path)-3, "png"); \
+                ifnoload(tex, path) fail; \
+            } else success; \
+        } else success; \
+    } else success;
+        
+    tryload(masks, maskspath, "masks", m->masked = true, );
+    tryload(skin, skinpath, "skin", , return);
 };
 
 // convenient function that covers the usual anims for players/monsters/npcs
