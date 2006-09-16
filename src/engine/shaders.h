@@ -50,3 +50,6 @@ struct Shader
 extern Shader *defaultshader;
 extern Shader *notextureshader;
 extern Shader *nocolorshader;
+
+extern Shader *lookupshaderbyname(const char *name);
+

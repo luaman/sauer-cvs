@@ -17,6 +17,8 @@ struct Texture
 
 struct SphereTree;
 
+enum { MDL_MD2 = 1, MDL_MD3 };
+
 struct model
 {
     Shader *shader;
@@ -31,10 +33,11 @@ struct model
     model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
     virtual ~model() {};
     virtual float boundsphere(int frame, vec &center) = 0;
-    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, const char *vwepmdl = NULL) = 0;
+    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl = NULL) = 0;
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
     virtual char *name() = 0;
+    virtual int type() = 0;
     virtual SphereTree *setspheretree() { return 0; };
 
     virtual float above(int frame = 0)
@@ -42,6 +45,31 @@ struct model
         vec center;
         float rad = boundsphere(frame, center);
         return center.z + rad;
+    };
+
+    void setshader()
+    {
+        if(renderpath==R_FIXEDFUNCTION) return;
+
+        if(shader) shader->set();
+        else
+        {
+            static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL;            
+
+            if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
+            if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
+            if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
+
+            (masked ? modelshadermasks : (spec>=0.01f ? modelshader : modelshadernospec))->set();
+        };
+
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, spec, spec, spec, 0);
+
+        GLfloat color[4];
+        glGetFloatv(GL_CURRENT_COLOR, color);
+        vec diffuse = vec(color).mul(ambient);
+        loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
+        glProgramEnvParameter4f_(spec>=0.01f ? GL_FRAGMENT_PROGRAM_ARB : GL_VERTEX_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
     };
 };
 
@@ -155,7 +183,6 @@ extern void addstrip(int tex, int start, int n);
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
-extern Shader  *lookupshaderbyname(const char *name);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
 extern void readmatrices();
 extern void setfogplane(float scale = 0, float z = 0);

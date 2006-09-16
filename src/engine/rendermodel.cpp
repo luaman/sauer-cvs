@@ -5,10 +5,6 @@
 
 VARP(animationinterpolationtime, 0, 150, 1000);
 
-Shader *modelshader = NULL;
-Shader *modelshadernospec = NULL;
-Shader *modelshadermasks = NULL;
-
 model *loadingmodel = NULL;
 
 #include "md2.h"
@@ -198,15 +194,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(d) lightreaching(d->o, color, dir, 0, ambient);
     m->setskin(tex);  
     glColor3fv(color.v);
-    if(m->shader) m->shader->set();
-    else
-    {
-        if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
-        if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
-        if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
-        
-        (m->masked ? modelshadermasks : (m->spec>=0.01f ? modelshader : modelshadernospec))->set();
-    };
+    m->setshader();
     if(renderpath!=R_FIXEDFUNCTION)
     {
         vec rdir(dir);
@@ -218,17 +206,18 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         //camerapos.rotate_around_x(pitch*RAD);
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
 
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, m->spec, m->spec, m->spec, 0);
         if(refracting) setfogplane(1, refracting - z);
-
-        vec ambient = vec(color).mul(m->ambient);
-        loopi(3) ambient[i] = max(ambient[i], 0.2f);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, ambient.x, ambient.y, ambient.z, 1);
-        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, ambient.x, ambient.y, ambient.z, 1);         // FIXME, set these on a per shader basis
-
     };
+
+    model *vwep = NULL;
+    if(vwepmdl)
+    {
+        vwep = loadmodel(vwepmdl);
+        if(vwep->type()!=m->type()) vwep = NULL;
+    };
+
     if(!m->cullface) glDisable(GL_CULL_FACE);
-    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwepmdl);
+    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 };
 
@@ -313,7 +302,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
         if(attack) basetime = lastaction;
     };
     vec color, dir;
-    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), ambient, vwepname);
+    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), ambient, vwepname);
 };
 
 void setbbfrommodel(dynent *d, char *mdl)

@@ -118,6 +118,7 @@ struct md3;
 
 struct md3model
 {
+    md3 *model;
     int index;
     vector<md3mesh> meshes;
     vector<md3animinfo> *anims;
@@ -368,208 +369,7 @@ struct md3model
         return loaded=true;
     };
     
-    void render(int animinfo, int varseed, float speed, int basetime, dynent *d)
-    {
-        if(meshes.length() <= 0) return;
-        int anim = animinfo&ANIM_INDEX;
-        animstate ai;
-        ai.anim = animinfo;
-        ai.basetime = basetime;
-        if(anims)
-        {
-            if(anims[anim].length())
-            {
-                md3animinfo &a = anims[anim][varseed%anims[anim].length()];
-                ai.frame = a.frame;
-                ai.range = a.range;
-                ai.speed = speed*100.0f/a.speed;
-            }
-            else
-            {
-                ai.frame = 0;
-                ai.range = 1;
-                ai.speed = speed;
-            };
-        }
-        else
-        {
-            ai.frame = 0;
-            ai.range = 1;
-            ai.speed = speed;
-        };
-        if(animinfo&(ANIM_START|ANIM_END))
-        {
-            if(animinfo&ANIM_END) ai.frame += ai.range-1;
-            ai.range = 1;
-        };
-
-        if(ai.frame+ai.range>numframes)
-        {
-            if(ai.frame>=numframes) return;
-            ai.range = numframes-ai.frame;
-        };
-
-        if(hasVBO && !meshes[0].vbufGL && ai.frame==0 && ai.range==1) genvar();
-        
-        if(d && index<2)
-        {
-            if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1) { d->current[index] = ai; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
-            else if(d->current[0] != ai)
-            {
-                if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
-                d->current[index] = ai;
-                d->lastanimswitchtime[index] = lastmillis;
-            };
-            d->lastmodel[index] = this;
-        };
-
-        md3anpos prev, cur;
-        cur.setframes(d && index<2 ? d->current[index] : ai);
-        
-        float ai_t;
-        bool doai = d && index<2 && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
-        if(doai)
-        {
-            prev.setframes(d->prev[index]);
-            ai_t = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
-        };
-
-        loopv(meshes)
-        {            
-            md3mesh &mesh = meshes[i];
-
-            if(mesh.skin && mesh.skin->bpp==32) // transparent skins
-            {
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                glEnable(GL_ALPHA_TEST);
-                glAlphaFunc(GL_GREATER, 0.9f);
-            };
-
-            glBindTexture(GL_TEXTURE_2D, mesh.skin->gl);
-            if(mesh.masks!=crosshair)
-            {
-                glActiveTexture_(GL_TEXTURE1_ARB);
-                glBindTexture(GL_TEXTURE_2D, mesh.masks->gl);
-                glActiveTexture_(GL_TEXTURE0_ARB);
-            };
-            
-            if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
-            {           
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
-                glEnableClientState(GL_VERTEX_ARRAY);
-                glVertexPointer(3, GL_FLOAT, sizeof(md2::md2_vvert), 0);
-                glEnableClientState(GL_NORMAL_ARRAY);
-                glNormalPointer(GL_FLOAT, sizeof(md2::md2_vvert), (void *)sizeof(vec));
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, sizeof(md2::md2_vvert), (void *)(sizeof(vec)*2));
-
-                glDrawElements(GL_TRIANGLES, mesh.vbufi_len, GL_UNSIGNED_SHORT, mesh.vbufi);
-                
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                glDisableClientState(GL_NORMAL_ARRAY);
-                glDisableClientState(GL_VERTEX_ARRAY);
-                
-                xtravertsva += mesh.numvertices;
-            }
-            else
-            {			
-                glBegin(GL_TRIANGLES);
-                    loopj(mesh.numtriangles) // triangles
-                    {
-                        loopk(3) // vertices
-                        {   
-                            int index = mesh.triangles[j].vertexindices[k];
-                            vec *vert1 = &mesh.vertices[index + cur.fr1 * mesh.numvertices];
-                            vec *vert2 = &mesh.vertices[index + cur.fr2 * mesh.numvertices];
-                            vec *norm1 = &mesh.normals[index + cur.fr1 * mesh.numvertices];
-                            vec *norm2 = &mesh.normals[index + cur.fr2 * mesh.numvertices];
-                            
-                            if(mesh.uv) 
-                                glTexCoord2f(mesh.uv[index].x, mesh.uv[index].y);
-                            
-                            #define ip(p1, p2, t) (p1+t*(p2-p1))
-                            #define ip_v(p1, p2, c, t) ip(p1->c, p2->c, t)
-                            
-                            if(doai)
-                            {
-                                vec *vert1p = &mesh.vertices[index + prev.fr1 * mesh.numvertices];
-                                vec *vert2p = &mesh.vertices[index + prev.fr2 * mesh.numvertices];
-                                vec *norm1p = &mesh.normals[index + prev.fr1 * mesh.numvertices];
-                                vec *norm2p = &mesh.normals[index + prev.fr2 * mesh.numvertices]; 
-                                
-                                #define ip_v_ai(v, c) ip( ip_v(v##1p, v##2p, c, prev.t), ip_v(v##1, v##2, c, cur.t), ai_t)
-                                
-                                glNormal3f( ip_v_ai(norm, x),
-                                            ip_v_ai(norm, y),
-                                            ip_v_ai(norm, z));
-
-                                glVertex3f( ip_v_ai(vert, x),
-                                            ip_v_ai(vert, y),
-                                            ip_v_ai(vert, z));
-                            }
-                            else 
-                            {
-                                glNormal3f( ip_v(norm1, norm2, x, cur.t),
-                                            ip_v(norm1, norm2, y, cur.t),
-                                            ip_v(norm1, norm2, z, cur.t));
-                                            
-                                glVertex3f( ip_v(vert1, vert2, x, cur.t),
-                                            ip_v(vert1, vert2, y, cur.t),
-                                            ip_v(vert1, vert2, z, cur.t));
-                            };
-                        };
-                    };
-                glEnd();
-                
-                xtraverts += mesh.numvertices;
-            };
-            
-            if(mesh.skin && mesh.skin->bpp==32)
-	        {
-                glDisable(GL_ALPHA_TEST);
-	            glDisable(GL_BLEND);
-            };
-        };                
-
-        #define ip_ai_tag(c) ip( ip( tag1p->c, tag2p->c, prev.t), ip( tag1->c, tag2->c, cur.t), ai_t)
-
-        loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
-        {
-            md3model *link = links[i];
-            if(!link) continue;
-			GLfloat matrix[16] = {0};
-            md3tag *tag1 = &tags[cur.fr1*numtags+i];
-            md3tag *tag2 = &tags[cur.fr2*numtags+i];
-            
-            if(doai)
-            {
-                md3tag *tag1p = &tags[prev.fr1 * numtags + i];
-                md3tag *tag2p = &tags[prev.fr2 * numtags + i];
-                loopj(3) matrix[j] = ip_ai_tag(rotation[0][j]); // rotation
-                loopj(3) matrix[4 + j] = ip_ai_tag(rotation[1][j]);
-                loopj(3) matrix[8 + j] = ip_ai_tag(rotation[2][j]);
-                loopj(3) matrix[12 + j] = ip_ai_tag(pos[j]); // position      
-            }
-            else
-            {
-                loopj(3) matrix[j] = ip(tag1->rotation[0][j], tag2->rotation[0][j], cur.t); // rotation
-                loopj(3) matrix[4 + j] = ip(tag1->rotation[1][j], tag2->rotation[1][j], cur.t);
-                loopj(3) matrix[8 + j] = ip(tag1->rotation[2][j], tag2->rotation[2][j], cur.t);
-                loopj(3) matrix[12 + j] = ip(tag1->pos[j], tag2->pos[j], cur.t); // position
-            };
-            matrix[15] = 1.0f;
-            glPushMatrix();
-                glMultMatrixf(matrix);
-                link->render(animinfo, varseed, speed, basetime, d);
-            glPopMatrix();
-        };
-        #undef ip_ai_tag
-        #undef ip
-        #undef ip_v
-        #undef ip_v_ai
-    };
+    void render(int animinfo, int varseed, float speed, int basetime, dynent *d);
 };
 
 md3 *loadingmd3 = NULL;
@@ -590,7 +390,9 @@ struct md3 : model
         delete[] loadname;     
         DELETEP(spheretree);
     };
-    
+   
+    int type() { return MDL_MD3; };
+
     float boundsphere(int frame, vec &center) 
     { 
         if(!loaded) return 0.0f;
@@ -616,7 +418,7 @@ struct md3 : model
 		return NULL;
 	};
 
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, const char *vwepmdl)
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl)
     {
         if(!loaded) return;
 
@@ -625,13 +427,9 @@ struct md3 : model
 			md3model *torso = findmodel("tag_weapon");
 			if(torso)
 			{
-				md3 *m = (md3 *) loadmodel(vwepmdl);
-				if(m)
-				{
-					md3model *vwep = (md3model *) &m->md3models[0];
-					vwep->index = md3models.length();
-					torso->link(vwep, "tag_weapon");
-				}
+			    md3model &vwep = ((md3 *)vwepmdl)->md3models[0];
+				vwep.index = md3models.length();
+				torso->link(&vwep, "tag_weapon");
 			};
 		};
 
@@ -666,6 +464,7 @@ struct md3 : model
         {
             loadingmd3 = NULL;
             md3model &mdl = md3models.add();
+            mdl.model = this;
             mdl.index = 0; 
             s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
             if(!mdl.load(path(name1)))
@@ -690,11 +489,220 @@ struct md3 : model
     char *name() { return loadname; };
 };
 
+void md3model::render(int animinfo, int varseed, float speed, int basetime, dynent *d)
+{
+    if(meshes.length() <= 0) return;
+    int anim = animinfo&ANIM_INDEX;
+    animstate ai;
+    ai.anim = animinfo;
+    ai.basetime = basetime;
+    if(anims)
+    {
+        if(anims[anim].length())
+        {
+            md3animinfo &a = anims[anim][varseed%anims[anim].length()];
+            ai.frame = a.frame;
+            ai.range = a.range;
+            ai.speed = speed*100.0f/a.speed;
+        }
+        else
+        {
+            ai.frame = 0;
+            ai.range = 1;
+            ai.speed = speed;
+        };
+    }
+    else
+    {
+        ai.frame = 0;
+        ai.range = 1;
+        ai.speed = speed;
+    };
+    if(animinfo&(ANIM_START|ANIM_END))
+    {
+        if(animinfo&ANIM_END) ai.frame += ai.range-1;
+        ai.range = 1;
+    };
+
+    if(ai.frame+ai.range>numframes)
+    {
+        if(ai.frame>=numframes) return;
+        ai.range = numframes-ai.frame;
+    };
+
+    if(hasVBO && !meshes[0].vbufGL && ai.frame==0 && ai.range==1) genvar();
+
+    if(d && index<2)
+    {
+        if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1) { d->current[index] = ai; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
+        else if(d->current[0] != ai)
+        {
+            if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
+            d->current[index] = ai;
+            d->lastanimswitchtime[index] = lastmillis;
+        };
+        d->lastmodel[index] = this;
+    };
+
+    md3anpos prev, cur;
+    cur.setframes(d && index<2 ? d->current[index] : ai);
+
+    float ai_t;
+    bool doai = d && index<2 && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
+    if(doai)
+    {
+        prev.setframes(d->prev[index]);
+        ai_t = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
+    };
+
+    loopv(meshes)
+    {
+        md3mesh &mesh = meshes[i];
+
+        if(mesh.skin && mesh.skin->bpp==32) // transparent skins
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_ALPHA_TEST);
+            glAlphaFunc(GL_GREATER, 0.9f);
+        };
+
+        glBindTexture(GL_TEXTURE_2D, mesh.skin->gl);
+        if(mesh.masks!=crosshair)
+        {
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glBindTexture(GL_TEXTURE_2D, mesh.masks->gl);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        };
+
+        if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
+        {
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(3, GL_FLOAT, sizeof(md2::md2_vvert), 0);
+            glEnableClientState(GL_NORMAL_ARRAY);
+            glNormalPointer(GL_FLOAT, sizeof(md2::md2_vvert), (void *)sizeof(vec));
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(md2::md2_vvert), (void *)(sizeof(vec)*2));
+
+            glDrawElements(GL_TRIANGLES, mesh.vbufi_len, GL_UNSIGNED_SHORT, mesh.vbufi);
+
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+
+            xtravertsva += mesh.numvertices;
+        }
+        else
+        {
+            glBegin(GL_TRIANGLES);
+                loopj(mesh.numtriangles) // triangles
+                {
+                    loopk(3) // vertices
+                    {
+                        int index = mesh.triangles[j].vertexindices[k];
+                        vec *vert1 = &mesh.vertices[index + cur.fr1 * mesh.numvertices];
+                        vec *vert2 = &mesh.vertices[index + cur.fr2 * mesh.numvertices];
+                        vec *norm1 = &mesh.normals[index + cur.fr1 * mesh.numvertices];
+                        vec *norm2 = &mesh.normals[index + cur.fr2 * mesh.numvertices];
+
+                        if(mesh.uv)
+                            glTexCoord2f(mesh.uv[index].x, mesh.uv[index].y);
+
+                        #define ip(p1, p2, t) (p1+t*(p2-p1))
+                        #define ip_v(p1, p2, c, t) ip(p1->c, p2->c, t)
+
+                        if(doai)
+                        {
+                            vec *vert1p = &mesh.vertices[index + prev.fr1 * mesh.numvertices];
+                            vec *vert2p = &mesh.vertices[index + prev.fr2 * mesh.numvertices];
+                            vec *norm1p = &mesh.normals[index + prev.fr1 * mesh.numvertices];
+                            vec *norm2p = &mesh.normals[index + prev.fr2 * mesh.numvertices];
+
+                            #define ip_v_ai(v, c) ip( ip_v(v##1p, v##2p, c, prev.t), ip_v(v##1, v##2, c, cur.t), ai_t)
+
+                            glNormal3f( ip_v_ai(norm, x),
+                                        ip_v_ai(norm, y),
+                                        ip_v_ai(norm, z));
+
+                            glVertex3f( ip_v_ai(vert, x),
+                                        ip_v_ai(vert, y),
+                                        ip_v_ai(vert, z));
+                        }
+                        else
+                        {
+                            glNormal3f( ip_v(norm1, norm2, x, cur.t),
+                                        ip_v(norm1, norm2, y, cur.t),
+                                        ip_v(norm1, norm2, z, cur.t));
+
+                            glVertex3f( ip_v(vert1, vert2, x, cur.t),
+                                        ip_v(vert1, vert2, y, cur.t),
+                                        ip_v(vert1, vert2, z, cur.t));
+                        };
+                    };
+                };
+            glEnd();
+
+            xtraverts += mesh.numvertices;
+        };
+
+        if(mesh.skin && mesh.skin->bpp==32)
+        {
+            glDisable(GL_ALPHA_TEST);
+            glDisable(GL_BLEND);
+        };
+    };
+
+    #define ip_ai_tag(c) ip( ip( tag1p->c, tag2p->c, prev.t), ip( tag1->c, tag2->c, cur.t), ai_t)
+
+    loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
+    {
+        md3model *link = links[i];
+        if(!link) continue;
+
+        if(link->model!=model) link->model->setshader();
+
+        GLfloat matrix[16] = {0};
+        md3tag *tag1 = &tags[cur.fr1*numtags+i];
+        md3tag *tag2 = &tags[cur.fr2*numtags+i];
+
+        if(doai)
+        {
+            md3tag *tag1p = &tags[prev.fr1 * numtags + i];
+            md3tag *tag2p = &tags[prev.fr2 * numtags + i];
+            loopj(3) matrix[j] = ip_ai_tag(rotation[0][j]); // rotation
+            loopj(3) matrix[4 + j] = ip_ai_tag(rotation[1][j]);
+            loopj(3) matrix[8 + j] = ip_ai_tag(rotation[2][j]);
+            loopj(3) matrix[12 + j] = ip_ai_tag(pos[j]); // position      
+        }
+        else
+        {
+            loopj(3) matrix[j] = ip(tag1->rotation[0][j], tag2->rotation[0][j], cur.t); // rotation
+            loopj(3) matrix[4 + j] = ip(tag1->rotation[1][j], tag2->rotation[1][j], cur.t);
+            loopj(3) matrix[8 + j] = ip(tag1->rotation[2][j], tag2->rotation[2][j], cur.t);
+            loopj(3) matrix[12 + j] = ip(tag1->pos[j], tag2->pos[j], cur.t); // position
+        };
+        matrix[15] = 1.0f;
+        glPushMatrix();
+            glMultMatrixf(matrix);
+            link->render(animinfo, varseed, speed, basetime, d);
+        glPopMatrix();
+
+        if(link->model!=model && i+1<numtags) model->setshader();
+    };
+    #undef ip_ai_tag
+    #undef ip
+    #undef ip_v
+    #undef ip_v_ai
+};
+
 void md3load(char *model)
 {
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
     s_sprintfd(filename)("%s/%s", md3dir, model);
     md3model &mdl = loadingmd3->md3models.add();
+    mdl.model = loadingmd3;
     mdl.index = loadingmd3->md3models.length()-1;
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
 };
