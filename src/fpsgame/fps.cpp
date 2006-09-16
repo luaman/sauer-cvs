@@ -89,7 +89,7 @@ struct fpsclient : igameclient
             }
             else
             {
-                d->health = 100;
+                //d->health = 100;
                 d->armour = 100;
                 d->armourtype = A_GREEN;
                 if(m_tarena || m_capture)

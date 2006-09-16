@@ -186,7 +186,7 @@ struct weaponstate
 
     void superdamageeffect(const vec &p, vec &vel, fpsent *d)
     {
-        if(d->superdamage) loopi(d->superdamage/25+1)
+        if(d->superdamage) loopi(min(d->superdamage/25, 40)+1)
         {
             vec to = vel;
             to.rotate_around_z((rnd(90)-45)*RAD);
