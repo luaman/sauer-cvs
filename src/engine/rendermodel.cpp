@@ -173,7 +173,7 @@ VARP(maxmodelradiusdistance, 10, 80, 1000);
 extern float reflecting, refracting;
 extern int waterfog, reflectdist;
 
-void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, float ambient)
+void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, float ambient, const char *vwepmdl)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -228,7 +228,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 
     };
     if(!m->cullface) glDisable(GL_CULL_FACE);
-    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d);
+    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwepmdl);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 };
 
@@ -312,8 +312,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
         if(attack) basetime = lastaction;
     };
     vec color, dir;
-                 rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), ambient);
-    if(vwepname) rendermodel(color, dir, vwepname, anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), ambient);
+    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), ambient, vwepname);
 };
 
 void setbbfrommodel(dynent *d, char *mdl)

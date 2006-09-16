@@ -31,7 +31,7 @@ struct model
     model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
     virtual ~model() {};
     virtual float boundsphere(int frame, vec &center) = 0;
-    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d) = 0;
+    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, const char *vwepmdl = NULL) = 0;
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
     virtual char *name() = 0;

@@ -241,6 +241,7 @@ struct md3model
     
     float boundsphere_recv(int frame, vec &center)
     {
+		if(frame>=numframes || frame<0) frame = 0;
         md3frame &frm = frames[frame];
         vec min = frm.min_bounds;
         vec max = frm.max_bounds;
@@ -609,18 +610,36 @@ struct md3 : model
         return spheretree;
     };
 
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
-    {
-        if(!loaded) return;        
-        
-        glPushMatrix();
+	md3model *findmodel(char *tag)
+	{
+		loopv(md3models) loopj(md3models[i].numtags) if(!strcmp(md3models[i].tags[j].name, tag)) return &(md3models[i]);
+		return NULL;
+	};
 
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, const char *vwepmdl)
+    {
+        if(!loaded) return;
+
+		if(vwepmdl) // cross link the vwep to this model
+		{
+			md3model *torso = findmodel("tag_weapon");
+			if(torso)
+			{
+				md3 *m = (md3 *) loadmodel(vwepmdl);
+				if(m)
+				{
+					md3model *vwep = (md3model *) &m->md3models[0];
+					vwep->index = md3models.length();
+					torso->link(vwep, "tag_weapon");
+				}
+			};
+		};
+
+        glPushMatrix();
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
-        
         md3models[0].render(anim, varseed, speed, basetime, d);
-        
         glPopMatrix();
     };
     

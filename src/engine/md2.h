@@ -351,7 +351,7 @@ struct md2 : model
         return spheretree;
     };
 
-    void render(int animinfo, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d)
+    void render(int animinfo, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, const char *vwepmdl)
     {
         //                      0              3              6   7   8   9   10        12  13
         //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S
@@ -518,6 +518,12 @@ struct md2 : model
 	    };
 
         glPopMatrix();
+
+		if(vwepmdl)
+		{
+			md2 *vwep = (md2 *) loadmodel(vwepmdl);
+			if(vwep) vwep->render(animinfo, varseed, speed, basetime, x, y, z, yaw, pitch, d, NULL);
+		};
     };
 
     bool load()
