@@ -493,7 +493,10 @@ enet_protocol_handle_send_fragment (ENetHost * host, ENetPeer * peer, const ENet
     if (currentCommand == enet_list_end (& channel -> incomingReliableCommands))
     {
        ENetProtocol hostCommand = * command;
-       
+       ENetPacket * packet = enet_packet_create (NULL, totalLength, ENET_PACKET_FLAG_RELIABLE);
+       if (packet == NULL)
+         return -1;
+
        hostCommand.header.reliableSequenceNumber = startSequenceNumber;
        hostCommand.sendFragment.startSequenceNumber = startSequenceNumber;
        hostCommand.sendFragment.dataLength = fragmentLength;
@@ -501,10 +504,6 @@ enet_protocol_handle_send_fragment (ENetHost * host, ENetPeer * peer, const ENet
        hostCommand.sendFragment.fragmentCount = fragmentCount;
        hostCommand.sendFragment.fragmentOffset = fragmentOffset;
        hostCommand.sendFragment.totalLength = totalLength;
-
-       ENetPacket * packet = enet_packet_create (NULL, totalLength, ENET_PACKET_FLAG_RELIABLE);
-       if (packet == NULL)
-         return -1;
 
        startCommand = enet_peer_queue_incoming_command (peer, & hostCommand, packet, fragmentCount);
     }
