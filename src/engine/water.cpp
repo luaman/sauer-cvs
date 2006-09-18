@@ -903,7 +903,7 @@ void drawreflections()
     float offset = -1.1f;
     loopi(MAXREFLECTIONS)
     {
-        Reflection &ref = reflections[(++n+i)%MAXREFLECTIONS];
+        Reflection &ref = reflections[++n%MAXREFLECTIONS];
         if(ref.height<0 || ref.lastused<lastmillis || ref.matsurfs.empty()) continue;
         if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query)) continue;
 
@@ -922,7 +922,7 @@ void drawreflections()
 
         refs++;
         ref.lastupdate = lastmillis;
-        lastdrawn = i;
+        lastdrawn = n;
 
         if(waterreflect || waterrefract)
         {
