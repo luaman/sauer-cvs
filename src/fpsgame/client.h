@@ -147,7 +147,17 @@ struct clientcom : iclientcom
 
     void addmsg(int type, const char *fmt = NULL, ...)
     {
-        if(spectator && type!=SV_GETMAP && (currentmaster!=clientnum || type<SV_MASTERMODE)) return;
+        if(spectator && (currentmaster!=clientnum || type<SV_MASTERMODE))
+        {
+            static int spectypes[] = { SV_GETMAP, SV_TEXT };
+            bool allowed = false;
+            loopi(sizeof(spectypes)/sizeof(spectypes[0])) if(type!=spectypes[i]) 
+            {
+                allowed = true;
+                break;
+            };
+            if(!allowed) return;
+        };
         static uchar buf[MAXTRANS];
         uchar *p = buf;
         putint(p, type);
