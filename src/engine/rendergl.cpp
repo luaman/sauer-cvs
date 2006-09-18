@@ -790,7 +790,7 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
 
     glPushMatrix();
     glLoadIdentity();
-    glRotatef(player->roll,0.0,0.0,1.0);
+//    glRotatef(player->roll,0.0,0.0,1.0);
     glRotated(player->pitch, -1.0, 0.0, 0.0);
     glRotated(player->yaw,   0.0, 1.0, 0.0);
     glRotated(90.0, 1.0, 0.0, 0.0);
