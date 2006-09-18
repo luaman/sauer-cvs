@@ -21,11 +21,16 @@ enet_packet_create (const void * data, size_t dataLength, enet_uint32 flags)
 {
     ENetPacket * packet = (ENetPacket *) enet_malloc (sizeof (ENetPacket));
 
-    if(flags & ENET_PACKET_FLAG_NO_ALLOCATE)
+    if (flags & ENET_PACKET_FLAG_NO_ALLOCATE)
       packet -> data = (enet_uint8 *) data;
     else
     {
        packet -> data = (enet_uint8 *) enet_malloc (dataLength);
+       if (packet -> data == NULL)
+       {
+          enet_free (packet);
+          return NULL;
+       };
 
        if (data != NULL)
          memcpy (packet -> data, data, dataLength);
@@ -72,6 +77,9 @@ enet_packet_resize (ENetPacket * packet, size_t dataLength)
     }
 
     newData = (enet_uint8 *) enet_malloc (dataLength);
+    if (newData == NULL)
+      return -1;
+
     memcpy (newData, packet -> data, packet -> dataLength);
     enet_free (packet -> data);
     
