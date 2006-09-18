@@ -868,7 +868,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     {
         int faketime = curtime+physicsfraction;
         physicsrepeat = faketime/minframetime;
-        physicsfraction = faketime-physicsrepeat*minframetime;
+        physicsfraction = faketime%minframetime;
     }
     else
     {

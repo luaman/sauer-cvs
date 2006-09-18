@@ -887,7 +887,7 @@ void queryreflections()
     };
 };
 
-VARP(maxreflect, 1, 2, 8);
+VARP(maxreflect, 1, 1, 8);
 
 float reflecting = 0, refracting = 0;
 
