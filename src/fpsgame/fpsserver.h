@@ -186,7 +186,7 @@ struct fpsserver : igameserver
         s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", ci->name, modestr(reqmode), map);
         sendservmsg(msg);
         if(yes/(float)(yes+no) <= 0.5f && !(ci->master && mastermode>=MM_VETO)) return false;
-        sendservmsg(mastermode>=MM_VETO ? "vote passed by master" : "vote passed by majority");
+        sendservmsg(mastermode>=MM_VETO && ci->master ? "vote passed by master" : "vote passed by majority");
         resetvotes();
         return true;    
     };
