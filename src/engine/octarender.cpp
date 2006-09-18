@@ -1102,10 +1102,11 @@ static vtxarray *vasort[VASORTSIZE];
 
 void addvisibleva(vtxarray *va)
 {
-    va->distance = int(vadist(va, camera1->o)); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
+    float dist = vadist(va, camera1->o);
+    va->distance = int(dist); /*cv.dist(camera1->o) - va->size*SQRT3/2*/
     va->curlod   = lodsize==0 || va->distance<loddistance ? 0 : 1;
 
-    int hash = min(va->distance*VASORTSIZE/hdr.worldsize, VASORTSIZE-1);
+    int hash = min(int(dist*VASORTSIZE/hdr.worldsize), VASORTSIZE-1);
     vtxarray **prev = &vasort[hash], *cur = vasort[hash];
 
     while(cur && va->distance > cur->distance)
