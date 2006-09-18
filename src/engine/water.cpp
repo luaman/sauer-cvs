@@ -42,7 +42,7 @@ struct Reflection
 {
     GLuint fb, refractfb;
     GLuint tex, refracttex;
-    int height, nextupdate, lastupdate, lastused;
+    int height, lastupdate, lastused;
     GLfloat tm[16];
     occludequery *query;
     vector<materialsurface *> matsurfs;
@@ -803,12 +803,7 @@ void addreflection(materialsurface &m)
             
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     };
-    if(ref->height!=height)
-    {
-        ref->height = height;
-        ref->nextupdate = lastmillis;
-        ref->lastupdate = lastmillis;
-    };
+    if(ref->height!=height) ref->height = height;
     rplanes++;
     ref->lastused = lastmillis;
     ref->matsurfs.setsizenodelete(0);
@@ -822,6 +817,8 @@ extern int scr_w, scr_h;
 VARP(reflectfps, 1, 30, 200);
 
 int rplanes = 0;
+
+static int lastreflectframe = 0;
 
 void queryreflections()
 {
@@ -852,11 +849,11 @@ void queryreflections()
     };
     
     if((editmode && showmat) || !hasOQ || !oqfrags || !oqreflect || (!waterreflect && !waterrefract)) return;
-    int refs = 0;
+    int refs = 0, watermillis = 1000/reflectfps;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || ref.lastused<lastmillis || ref.nextupdate>lastmillis || ref.matsurfs.empty())
+        if(ref.height<0 || ref.lastused<lastmillis || lastmillis-lastreflectframe<watermillis || ref.matsurfs.empty())
         {
             ref.query = NULL;
             continue;
@@ -890,19 +887,24 @@ void queryreflections()
     };
 };
 
-VARP(maxreflect, 1, 3, 8);
+VARP(maxreflect, 1, 2, 8);
 
 float reflecting = 0, refracting = 0;
 
 void drawreflections()
 {
     if(editmode && showmat) return;
-    int refs = 0, watermillis = 1000/reflectfps;
+    int watermillis = 1000/reflectfps;
+    if(lastmillis-lastreflectframe<watermillis) return;
+    lastreflectframe = lastmillis-(lastmillis%watermillis);
+
+    static int lastdrawn = 0;
+    int refs = 0, n = lastdrawn;
     float offset = -1.1f;
     loopi(MAXREFLECTIONS)
     {
-        Reflection &ref = reflections[i];
-        if(ref.height<0 || ref.lastused<lastmillis || ref.nextupdate>lastmillis || ref.matsurfs.empty()) continue;
+        Reflection &ref = reflections[(++n+i)%MAXREFLECTIONS];
+        if(ref.height<0 || ref.lastused<lastmillis || ref.matsurfs.empty()) continue;
         if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query)) continue;
 
         bool hasbottom = true;
@@ -917,11 +919,10 @@ void drawreflections()
             if(refs>maxreflect) continue;
             if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
         };
+
         refs++;
-        
-        if(lastmillis-ref.nextupdate>1000) ref.nextupdate = lastmillis+watermillis;
-        else while(ref.nextupdate<=lastmillis) ref.nextupdate += watermillis;
         ref.lastupdate = lastmillis;
+        lastdrawn = i;
 
         if(waterreflect || waterrefract)
         {
