@@ -1190,7 +1190,7 @@ void gl_drawframe(int w, int h, float curfps)
         fovy += (float)sin(lastmillis/1000.0)*2.0f;
         aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
         glFogi(GL_FOG_START, 0);
-        glFogi(GL_FOG_END, max(waterfog*4, 32));//(fog+96)/8);
+        glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
 
     if(renderpath==R_ASMSHADER) setfogplane();

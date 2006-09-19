@@ -1638,11 +1638,12 @@ float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 
 struct renderstate
 {
-    bool colormask, depthmask;
+    bool colormask, depthmask, texture;
+    float fogplane;
     Shader *shader;
     const ShaderParam *vertparams[MAXSHADERPARAMS], *pixparams[MAXSHADERPARAMS];
 
-    renderstate() : colormask(true), depthmask(true), shader(NULL)
+    renderstate() : colormask(true), depthmask(true), texture(true), fogplane(-1), shader(NULL)
     {
         memset(vertparams, 0, sizeof(vertparams));
         memset(pixparams, 0, sizeof(pixparams));
@@ -1700,8 +1701,47 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     };
 
     extern float refracting;
-    if(refracting) setfogplane(0.5f, refracting - (va->z & ~VVEC_INT_MASK));
+    if(refracting)
+    {
+        float fogplane = refracting - (va->z & ~VVEC_INT_MASK);
+        if(cur.fogplane!=fogplane)
+        {
+            cur.fogplane = fogplane;
+            setfogplane(0.5f, fogplane);
+        };
+    };
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
+
+    extern int waterfog;
+    if(refracting ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED)
+    {
+        static Shader *fogshader = NULL;
+        if(!fogshader) fogshader = lookupshaderbyname("fogworld");
+        if(fogshader!=cur.shader) (cur.shader = fogshader)->set();
+        if(cur.texture)
+        {
+            cur.texture = false;
+            glDisable(GL_TEXTURE_2D);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+            glDisable(GL_TEXTURE_2D);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        };
+        glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        glde++;
+        vtris += lod.tris;
+        vverts += va->verts;
+        return;
+    };
+
+    if(!cur.texture)
+    {
+        cur.texture = true;
+        glEnable(GL_TEXTURE_2D);
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        glEnable(GL_TEXTURE_2D);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    };
+
     if(renderpath!=R_FIXEDFUNCTION) 
     { 
         glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
@@ -1888,6 +1928,7 @@ void cleanupTMUs()
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
+    glEnable(GL_TEXTURE_2D);
 };
 
 void rendergeom()
@@ -1949,8 +1990,8 @@ void rendergeom()
         if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
     };
 
-    if(!cur.colormask) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    if(!cur.depthmask) glDepthMask(GL_TRUE);
+    if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
+    if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
     if(zpass) 
     {
         setupTMUs();
