@@ -69,7 +69,8 @@ struct model
         glGetFloatv(GL_CURRENT_COLOR, color);
         vec diffuse = vec(color).mul(ambient);
         loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
-        glProgramEnvParameter4f_(spec>=0.01f ? GL_FRAGMENT_PROGRAM_ARB : GL_VERTEX_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
     };
 };
 
