@@ -1132,21 +1132,22 @@ void sortvisiblevas()
     };
 };
 
-void findvisiblevas(vector<vtxarray *> &vas)
+void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
 {
     loopv(vas)
     {
         vtxarray &v = *vas[i];
+        int prevvfc = resetocclude ? VFC_NOT_VISIBLE : v.curvfc;
         v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);
         if(v.curvfc!=VFC_NOT_VISIBLE) 
         {
             addvisibleva(&v);
-            if(v.children->length()) findvisiblevas(*v.children);
-        }
-        else
-        {
-            v.occluded = OCCLUDE_NOTHING;
-            v.query = NULL;
+            if(v.children->length()) findvisiblevas(*v.children, prevvfc==VFC_NOT_VISIBLE);
+            if(prevvfc==VFC_NOT_VISIBLE)
+            {
+                v.occluded = OCCLUDE_NOTHING;
+                v.query = NULL;
+            };
         };
     };
 };
@@ -1239,16 +1240,16 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
     xtraverts += lod.explicitsky;
 };
 
-void renderreflectedskyvas(vector<vtxarray *> &vas, float z)
+void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
 {
     loopv(vas)
     {
         vtxarray *va = vas[i];
         lodlevel &lod = va->l0;
-        if(va->curvfc == VFC_FULL_VISIBLE && va->occluded >= OCCLUDE_BB) continue;
+        if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
         if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) == VFC_NOT_VISIBLE) continue;
         if(lod.sky+lod.explicitsky) renderskyva(va, lod);
-        if(va->children->length()) renderreflectedskyvas(*va->children, z);
+        if(va->children->length()) renderreflectedskyvas(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
     };
 };
 
@@ -1980,7 +1981,7 @@ void rendergeom()
     cleanupTMUs();
 };
 
-void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract)
+void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract, bool vfc = true)
 {
     loopv(vas)
     {
@@ -1988,18 +1989,18 @@ void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool
         lodlevel &lod = va->l0;
         if(lod.texs)
         {
-            if(va->curvfc == VFC_FOGGED || va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+            if((vfc && va->curvfc == VFC_FOGGED) || va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
             if(vadist(va, camera1->o) > reflectdist) continue;
             bool render = true;
             if(va->max.z <= z) render = false;
-            else if(va->curvfc == VFC_FULL_VISIBLE)
+            else if(vfc && va->curvfc == VFC_FULL_VISIBLE)
             {
                 if(va->occluded >= OCCLUDE_BB) continue;
                 if(va->occluded >= OCCLUDE_GEOM) render = false;
             };
             if(render) renderva(cur, va, lod);
         };
-        if(va->children->length()) renderreflectedvas(cur, *va->children, z, refract); 
+        if(va->children->length()) renderreflectedvas(cur, *va->children, z, refract, vfc && va->curvfc != VFC_NOT_VISIBLE); 
     };
 };
 
