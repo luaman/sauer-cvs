@@ -517,7 +517,7 @@ struct clientcom : iclientcom
             {
                 if(!d) return;
                 int actor = getint(p);
-                int damage = getint(p);
+                getint(p); // damage
                 d->superdamage = getint(p);
                 if(actor==cn)
                 {

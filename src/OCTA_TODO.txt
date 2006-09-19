@@ -25,7 +25,19 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
+- new screenshots on the website!
+
+- memory leaks?
+- fog underwater
+- reflection near surface
+- revert to just one water plane?
+
 - before release: update static wiki
+- glow skins for the players
+- Mix_LoadMUS() crashes after being called many times?
+- get 22khz version of "base lost"
+
+- add parallax scaling parameter
 
 - new textures: philipk / gregor
 

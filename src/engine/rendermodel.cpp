@@ -254,8 +254,8 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
         } else success; \
     } else success;
         
-    tryload(masks, maskspath, "masks", m->masked = true, );
-    tryload(skin, skinpath, "skin", , return);
+    tryload(masks, maskspath, "masks", m->masked = true, {});
+    tryload(skin, skinpath, "skin", {}, return);
 };
 
 // convenient function that covers the usual anims for players/monsters/npcs
