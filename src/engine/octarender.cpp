@@ -215,21 +215,20 @@ int faceconvexity(cube &c, int orient)
     if(x < y) return -1;     // concave
     else if(x > y) return 1; // convex
     else return 0;           // flat
-
-#if 0
-    pl.toplane(v[0].tovec(), v[1].tovec(), v[2].tovec());
-
-    float dist = pl.dist(v[3].tovec());
-    if(dist > 1e-4) return -1;      // concave
-    else if(dist < -1e-4) return 1; // convex
-    else return 0;                  // flat
-#endif
 };
+
+int faceorder(cube &c, int orient)
+{   
+    uchar *edges = &c.edges[4*dimension(orient)];
+    uchar h[4];
+    loopi(4) h[i] = dimcoord(orient) ? edges[i]>>4 : 8-(edges[i]&0xF);
+    if(h[0]+h[3]<h[1]+h[2]) return 1;
+    else return 0;
+};  
 
 int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
 {
-    int n = ((faceconvexity(c, orient))<0) ? 1 : 0; // offset tris verts from 012, 023 to 123, 130 if concave
-    return fv[orient][(vert + n)&3];
+    return fv[orient][(vert + faceorder(c, orient))&3];
 };
 
 uint faceedges(cube &c, int orient)
@@ -559,7 +558,7 @@ struct lodcollect
     usvector skyindices, explicitskyindices;
     int curtris;
 
-    int size() { return indices.numelems*sizeof(elementset) + (2*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface); };
+    int size() { return indices.numelems*sizeof(elementset) + (3*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort) + matsurfs.length()*sizeof(materialsurface); };
 
     void clearidx() { indices.clear(); };
     void clear()
@@ -593,7 +592,7 @@ struct lodcollect
         lod.eslist = (elementset *)buf;
         lod.ebuf = (ushort *)(lod.eslist + indices.numelems);
 
-        lod.skybuf = lod.ebuf + 2*curtris;
+        lod.skybuf = lod.ebuf + 3*curtris;
         lod.sky = skyindices.length();
         lod.explicitsky = explicitskyindices.length();
         memcpy(lod.skybuf, skyindices.getbuf(), lod.sky*sizeof(ushort));
@@ -632,6 +631,16 @@ int explicitsky = 0, skyarea = 0;
 VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize);
 VAR(loddistance, 0, 2000, 100000);
 
+void addtriindexes(usvector &v, int index[4])
+{
+    v.add(index[0]);
+    v.add(index[1]);
+    v.add(index[2]);
+    v.add(index[0]);
+    v.add(index[2]);
+    v.add(index[3]);
+};
+
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 {
     bool useface[6];
@@ -657,6 +666,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
         extern vector<GLuint> lmtexids;
         sortkey key(c.texture[i], (c.surfaces && lmtexids.inrange(c.surfaces[i].lmid) ? c.surfaces[i].lmid : LMID_AMBIENT));
 
+        int index[6];
         loopk(4)
         {
             short u, v;
@@ -666,14 +676,13 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
                 v = short((c.surfaces[i].y + (c.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (c.surfaces[i].h - 1) + 0.5f) * SHRT_MAX/LM_PACKH);
             }
             else u = v = 0;
-            int coord = faceverts(c,i,k), index;
+            int coord = faceverts(c,i,k);
             vvec rv;
             calcvert(c, x, y, z, size, rv, coord);
-            index = vh.access(rv, u, v, c.normals ? c.normals[i].normals[k] : bvec(128, 128, 128));
-
-            if(!lodcube)      (c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)]).add(index);
-            if(size>=lodsize) (c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)]).add(index);
+            index[k] = vh.access(rv, u, v, c.normals ? c.normals[i].normals[k] : bvec(128, 128, 128));
         };
+        if(!lodcube) addtriindexes(c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)], index);
+        if(size>=lodsize) addtriindexes(c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)], index); 
     };
 };
 
@@ -697,7 +706,7 @@ int skyfaces(cube &c, int x, int y, int z, int size, int faces[6])
     return numfaces;
 };
 
-void genskyverts(cube &c, int x, int y, int z, int size)
+void genskyverts(cube &c, int x, int y, int z, int size, bool lodcube)
 {
     if(isentirelysolid(c)) return;
 
@@ -705,19 +714,20 @@ void genskyverts(cube &c, int x, int y, int z, int size)
         numfaces = skyfaces(c, x, y, z, size, faces);
     if(!numfaces) return;
 
-    skyarea += numfaces * (size>>4) * (size>>4);
+    if(!lodcube) skyarea += numfaces * (size>>4) * (size>>4);
 
     loopi(numfaces)
     {
-        int orient = faces[i];
+        int orient = faces[i], index[4];
         loopk(4)
         {
-            int coord = faceverts(c, orient, 3 - k), index;
+            int coord = faceverts(c, orient, 3 - k);
             vvec rv;
             calcvert(c, x, y, z, size, rv, coord, true);
-            index = vh.access(rv, 0, 0, bvec(128, 128, 128));
-            l0.skyindices.add(index);
+            index[k] = vh.access(rv, 0, 0, bvec(128, 128, 128));
         };
+        if(!lodcube) addtriindexes(l0.skyindices, index);
+        if(size>=lodsize) addtriindexes(l1.skyindices, index);
     };
 };
 
@@ -842,8 +852,8 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
 
         if(size!=lodsize) return;
         lodcube = true;
-    }
-    else genskyverts(c, cx, cy, cz, size);
+    };
+    if(!c.children || lodcube) genskyverts(c, cx, cy, cz, size, lodcube);
 
     if(!isempty(c))
     {
@@ -1241,11 +1251,11 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
     glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
-    glDrawElements(GL_QUADS, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
+    glDrawElements(GL_TRIANGLES, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
     glde++;
 
-    if(!explicitonly) xtraverts += lod.sky;
-    xtraverts += lod.explicitsky;
+    if(!explicitonly) xtraverts += lod.sky/3;
+    xtraverts += lod.explicitsky/3;
 };
 
 void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
@@ -1253,7 +1263,7 @@ void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
     loopv(vas)
     {
         vtxarray *va = vas[i];
-        lodlevel &lod = va->l0;
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
         if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) == VFC_NOT_VISIBLE) continue;
         if(lod.sky+lod.explicitsky) renderskyva(va, lod);
@@ -1277,7 +1287,7 @@ void rendersky(bool explicitonly, float zreflect)
     }
     else for(vtxarray *va = visibleva; va; va = va->next)
     {
-        lodlevel &lod = va->l0;
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(va->occluded >= OCCLUDE_BB || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
 
         renderskyva(va, lod, explicitonly);
@@ -1624,9 +1634,9 @@ void renderoutline()
         if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
-        glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
-        xtravertsva += 2*lod.tris;
+        xtravertsva += va->verts;
     };
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1702,9 +1712,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     {
         if(cur.shader != nocolorshader) (cur.shader = nocolorshader)->set();
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
-        glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
-        xtravertsva += 2*lod.tris;
+        xtravertsva += va->verts;
         return;
     };
 
@@ -1734,7 +1744,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             glDisable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE0_ARB);
         };
-        glDrawElements(GL_QUADS, 2*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
         vtris += lod.tris;
         vverts += va->verts;
@@ -1876,7 +1886,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, orientation_binormal[l]);
             };
 
-            glDrawElements(GL_QUADS, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
+            glDrawElements(GL_TRIANGLES, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
             ebuf += lod.eslist[i].length[l];  // Advance to next array.
             glde++;
         };
