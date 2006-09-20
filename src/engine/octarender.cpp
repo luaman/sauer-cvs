@@ -631,14 +631,24 @@ int explicitsky = 0, skyarea = 0;
 VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize);
 VAR(loddistance, 0, 2000, 100000);
 
-void addtriindexes(usvector &v, int index[4])
+int addtriindexes(usvector &v, int index[4])
 {
-    v.add(index[0]);
-    v.add(index[1]);
-    v.add(index[2]);
-    v.add(index[0]);
-    v.add(index[2]);
-    v.add(index[3]);
+    int tris = 0;
+    if(index[0]!=index[1] && index[0]!=index[2] && index[1]!=index[2])
+    {
+        tris++;
+        v.add(index[0]);
+        v.add(index[1]);
+        v.add(index[2]);
+    };
+    if(index[0]!=index[2] && index[0]!=index[3] && index[2]!=index[3])
+    {
+        tris++;
+        v.add(index[0]);
+        v.add(index[2]);
+        v.add(index[3]);
+    };
+    return tris;
 };
 
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
@@ -652,16 +662,6 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
     {
         if(touchingface(c, i)) c.visible |= 1<<i;
         cstats[csi].nface++;
-
-        if(c.texture[i] == DEFAULT_SKY)
-        {
-            if(!lodcube) ++explicitsky;
-        }
-        else
-        {
-            if(!lodcube) l0.curtris += 2;
-            if(size>=lodsize) l1.curtris += 2;
-        };
 
         extern vector<GLuint> lmtexids;
         sortkey key(c.texture[i], (c.surfaces && lmtexids.inrange(c.surfaces[i].lmid) ? c.surfaces[i].lmid : LMID_AMBIENT));
@@ -681,8 +681,17 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             calcvert(c, x, y, z, size, rv, coord);
             index[k] = vh.access(rv, u, v, c.normals ? c.normals[i].normals[k] : bvec(128, 128, 128));
         };
-        if(!lodcube) addtriindexes(c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)], index);
-        if(size>=lodsize) addtriindexes(c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)], index); 
+        if(!lodcube)
+        {
+            int tris = addtriindexes(c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)], index);
+            if(c.texture[i] == DEFAULT_SKY) explicitsky += tris;
+            else l0.curtris += tris;
+        };
+        if(size>=lodsize)
+        {
+            int tris = addtriindexes(c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)], index); 
+            if(c.texture[i] != DEFAULT_SKY) l1.curtris += tris;
+        };
     };
 };
 
