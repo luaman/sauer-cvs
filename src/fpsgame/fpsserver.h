@@ -340,7 +340,7 @@ struct fpsserver : igameserver
                 sgetstr(text, p);
                 s_strncpy(ci->name, text, MAXNAMELEN+1);
                 sgetstr(text, p);
-                if(m_capture && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
+                if(m_capture && !ci->spectator && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
                 {
