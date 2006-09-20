@@ -46,7 +46,7 @@ void show_calclight_progress()
 {
     int lumels = curlumels;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
-    float bar1 = float(progress) / float(total_surfaces),
+    float bar1 = float(min(progress, total_surfaces)) / float(total_surfaces),
           bar2 = lightmaps.length() ? float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH) : 0;
           
     s_sprintfd(text1)("%d%%", int(bar1 * 100));
@@ -715,10 +715,10 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     {
         loopi(6) if(c.surfaces[i].lmid >= LMID_RESERVED)
         {
-            loopj(6) if(visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
+            loopj(6) if(c.texture[j] != DEFAULT_SKY && visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
             {
-                if(!lodcube) ++progress;
-                if(c.texture[i] != DEFAULT_SKY && size >= hdr.mapwlod) ++progress;
+                if(!lodcube) progress++;
+                if(size >= hdr.mapwlod) progress++;
             };
             return;
         };
@@ -734,8 +734,8 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     loopi(6) if(usefaces[i])
     {
         CHECK_PROGRESS(return);
-        if(!lodcube) progress++;
         if(c.texture[i] == DEFAULT_SKY) continue;
+        if(!lodcube) progress++;
         if(size >= hdr.mapwlod) progress++;
 
         plane planes[2];
@@ -824,11 +824,11 @@ extern vector<vtxarray *> valist;
 void resetprogress()
 {
     progress = 0;
-    total_surfaces = wtris/2;
+    total_surfaces = 0;
     loopv(valist)
     {
         vtxarray *va = valist[i];
-        total_surfaces += va->explicitsky;
+        total_surfaces += va->l0.tris/2;
         total_surfaces += va->l1.tris/2;
     };
 };
