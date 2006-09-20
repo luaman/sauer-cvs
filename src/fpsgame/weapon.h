@@ -208,6 +208,7 @@ struct weaponstate
         else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
         else                     { if(isrl) vel.mul(2); cl.cc.addmsg(SV_DAMAGE, "ri6", target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
         damageeffect(d->abovehead(), damage, d);
+        if(d->type==ENT_AI && d->state==CS_DEAD) cl.ws.superdamageeffect(d->abovehead(), d->vel, d);
     };
 
     void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
