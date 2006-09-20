@@ -25,7 +25,7 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
-- new screenshots on the website!
+- social cheating solution
 
 - memory leaks?
 - fog underwater
