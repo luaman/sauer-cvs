@@ -221,6 +221,7 @@ struct monsterset
                 playsound(monstertypes[mtype].diesound, &o);
                 ms->monsterkilled();
                 superdamage = -health;
+                cl.ws.superdamageeffect(abovehead(), vel, this);
             }
             else
             {
