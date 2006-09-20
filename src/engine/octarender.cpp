@@ -209,13 +209,21 @@ int faceconvexity(cube &c, int orient)
 
     loopi(4) genvectorvert(cubecoords[fv[orient][i]], c, v[i]);
 
+    ivec n;
+    n.cross(v[1].sub(v[0]), v[2].sub(v[0]));
+    int x = n.dot(v[0]), y = n.dot(v[3]);
+    if(x < y) return -1;     // concave
+    else if(x > y) return 1; // convex
+    else return 0;           // flat
+
+#if 0
     pl.toplane(v[0].tovec(), v[1].tovec(), v[2].tovec());
 
     float dist = pl.dist(v[3].tovec());
     if(dist > 1e-4) return -1;      // concave
     else if(dist < -1e-4) return 1; // convex
     else return 0;                  // flat
-
+#endif
 };
 
 int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
