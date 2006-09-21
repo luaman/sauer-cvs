@@ -449,37 +449,12 @@ void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefac
 int genclipplane(cube &c, int orient, vec *v, plane *clip)
 {
     int planes = 0;
-    vec p[5];
-    loopk(5) p[k] = v[faceverts(c,orient,k&3)];
+    vec p[4];
+    loopk(4) p[k] = v[faceverts(c,orient,k)];
 
-    if(p[0] == p[1])
-    {
-        if(p[2] != p[3])
-        {
-            ++planes;
-            clip[0].toplane(p[2], p[3], p[1]);
-        };
-    }
-    else
-    if(p[1] == p[2])
-    {
-        if(p[3] != p[0])
-        {
-             ++planes;
-             clip[0].toplane(p[2], p[3], p[0]);
-        };
-    }
-    else
-    {
-        ++planes;
-        if(!clip[0].toplane(p[2], p[0], p[1])) clip[0].toplane(p[2], p[3], p[1]);
-        if(p[3] != p[4] && p[3] != p[2] && faceconvexity(c, orient) != 0)
-        {
-            ++planes;
-            clip[1].toplane(p[3], p[4], p[2]);
-        };
-    };
-
+    if(p[0]==p[2]) return 0;
+    if(p[0]!=p[1] && p[1]!=p[2]) clip[planes++].toplane(p[0], p[1], p[2]);
+    if(p[0]!=p[3] && p[2]!=p[3] && (!planes || faceconvexity(c, orient))) clip[planes++].toplane(p[0], p[2], p[3]);
     return planes;
 };
 

@@ -87,8 +87,8 @@ enum
     TEX_NORMAL_SPEC,
     TEX_GLOW,
     TEX_SPEC,
-    TEX_DEPTH
- };
+    TEX_DEPTH,
+};
 
 struct Slot
 {
