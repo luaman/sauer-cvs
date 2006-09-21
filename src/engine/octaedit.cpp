@@ -601,9 +601,11 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
     if(e->copy)
     {
         sel.s = e->copy->s;
+        int o = sel.orient;
         sel.orient = e->copy->orient;
         cube *s = e->copy->c();
         loopselxyz(pastecube(*s++, c));
+        sel.orient = o;
     };
 };
 
@@ -617,17 +619,29 @@ void copy()
         mpcopy(localedit, sel, true); 
 };
 
-void paste() 
+void paste(int *isdown) 
 { 
     if(noedit(entcopy>=0)) return; 
-    if(entcopy>=0)
-        sel.ent = copyent(entcopy);
+    if(*isdown!=0)
+    {
+        if(entcopy<0 && localedit && localedit->copy)
+        {
+            sel.s = localedit->copy->s;
+            havesel = true;
+            reorient();
+        };
+    }
     else
-        mppaste(localedit, sel, true); 
+    {        
+        if(entcopy>=0)
+            sel.ent = copyent(entcopy);
+        else if(havesel)
+            mppaste(localedit, sel, true); 
+    };
 };
 
 COMMAND(copy, "");
-COMMAND(paste, "");
+COMMAND(paste, "D");
 COMMANDN(undo, editundo, "");
 COMMANDN(redo, editredo, "");
 
