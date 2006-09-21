@@ -27,15 +27,14 @@ struct SphereBranch : SphereTree
         DELETEP(child2);
     };
 
-    bool intersect(const vec &o, const vec &ray, float maxdist, float &dist) const
+    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist) const
     {
-        if(!SphereTree::intersect(o, ray, maxdist, dist)) return false;
         return child1->intersect(o, ray, maxdist, dist) ||
                child2->intersect(o, ray, maxdist, dist);
     };
 };  
 
-static bool raytriintersect(const vec &o, const vec &ray, float maxdist, const triangle &tri, float &dist)
+static inline bool raytriintersect(const vec &o, const vec &ray, float maxdist, const triangle &tri, float &dist)
 {
     vec edge1(tri.b), edge2(tri.c);
     edge1.sub(tri.a);
@@ -74,9 +73,8 @@ struct SphereLeaf : SphereTree
         radius = max(r1, max(r2, r3));
     };
     
-    bool intersect(const vec &o, const vec &ray, float maxdist, float &dist) const
+    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist) const
     {
-        if(!SphereTree::intersect(o, ray, maxdist, dist)) return false;
         return raytriintersect(o, ray, maxdist, tri, dist);
     };
 
@@ -141,7 +139,7 @@ SphereTree *buildspheretree(int numtris, const triangle *tris)
     return root;
 };
 
-static void yawray(vec &o, vec &ray, float angle)
+static inline void yawray(vec &o, vec &ray, float angle)
 {
     angle *= RAD;
     float c = cosf(angle), s = sinf(angle),
@@ -159,14 +157,15 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(!&mmi) return false;
     if(mode&RAY_SHADOW && !mmi.shadow) return false;
-    float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
-    vec yo(o);
-    yo.sub(e.o);
-    vec yray(ray);
-    if(yaw != 0) yawray(yo, yray, yaw);
     model *m = loadmodel(NULL, e.attr2);
     if(!m) return false;
     if(!m->spheretree && !m->setspheretree()) return false;
-    return m->spheretree->intersect(yo, yray, maxdist, dist);
+    vec yo(o);
+    yo.sub(e.o);
+    if(!m->spheretree->shellintersect(yo, ray, maxdist)) return false;
+    float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
+    vec yray(ray);
+    if(yaw != 0) yawray(yo, yray, yaw);
+    return m->spheretree->childintersect(yo, yray, maxdist, dist);
 };
 
