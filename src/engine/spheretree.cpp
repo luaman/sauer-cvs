@@ -151,9 +151,7 @@ static void yawray(vec &o, vec &ray, float angle)
     o.y = oy*c + ox*s;
     ray.x = rx*c - ry*s - o.x;
     ray.y = ry*c + rx*s - o.y;
-#ifdef WIN32
-    ray.normalize();
-#endif
+    ray.checknormalized();
 };
 
 bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist, int mode, float &dist)

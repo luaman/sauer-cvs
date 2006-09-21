@@ -30,9 +30,10 @@ struct vec
     vec &sub(const vec &o)   { x -= o.x; y -= o.y; z -= o.z; return *this; };
     vec &sub(float f)        { x -= f; y -= f; z -= f; return *this; };
     vec &neg()               { return mul(-1); };
-    float magnitude() const  { return sqrtf(dot(*this)); };
+    float magnitude() const  { return sqrtf(squaredlen()); };
     vec &normalize()         { div(magnitude()); return *this; };
     bool isnormalized() const { float m = squaredlen(); return (m>0.99f && m<1.01f); };
+    void checknormalized() { float m = squaredlen(); if(m<=0.99f || m>=1.01f) div(sqrtf(m)); };
     float dist(const vec &e) const { vec t; return dist(e, t); };
     float dist(const vec &e, vec &t) const { t = *this; t.sub(e); return t.magnitude(); };
     bool reject(const vec &o, float max) { return x>o.x+max || x<o.x-max || y>o.y+max || y<o.y-max; };
