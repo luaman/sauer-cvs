@@ -7,9 +7,9 @@ struct nvec : svec
 {
     nvec(const vec &v) : svec(short(v.x*(1<<NORMAL_BITS)), short(v.y*(1<<NORMAL_BITS)), short(v.z*(1<<NORMAL_BITS))) {};
     
-    float dot(const nvec &o) const
+    float dot(const vec &o) const
     {
-        return (float(x)*float(o.x) + float(y)*float(o.y) + float(z)*float(o.z))/(1<<(2*NORMAL_BITS));
+        return x*o.x + y*o.y + z*o.z;
     };
 
     vec tovec() const { return vec(x, y, z).normalize(); };
@@ -36,9 +36,7 @@ struct nkey
 
 struct nval
 {
-    vector<normal> *normals;
-
-    nval() : normals(0) {};
+    vector<normal> normals;
 };
 
 static inline bool htcmp(const nkey &x, const nkey &y)
@@ -55,37 +53,38 @@ hashtable<nkey, nval> normals;
 
 VARF(lerpangle, 0, 44, 180, hdr.lerpangle = lerpangle);
 
+static float lerpthreshold = 0;
+
 void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface)
 {
     nkey key(origin, offset);
     nval &val = normals[key];
-    if(!val.normals) val.normals = new vector<normal>;
 
     vec pos(offset.tovec(origin));
     uchar face = orient<<3;
     if(origin.x >= pos.x) face |= 1;
     if(origin.y >= pos.y) face |= 2;
     if(origin.z >= pos.z) face |= 4;
-    loopv(*val.normals) if((*val.normals)[i].face == face) return;
+    loopv(val.normals) if(val.normals[i].face == face) return;
 
     normal n = {face, surface, surface};
-    loopv(*val.normals)
+    loopv(val.normals)
     {
-        normal &o = (*val.normals)[i];
-        if(n.face != o.face && n.surface.dot(o.surface) > cos(lerpangle*RAD))
+        normal &o = val.normals[i];
+        if(o.face != n.face && o.surface.dot(surface) > lerpthreshold)
         {
             o.average.add(n.surface);
             n.average.add(o.surface);
         };
     };
-    val.normals->add(n);
+    val.normals.add(n);
 };
 
 bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
 {
     nkey key(origin, offset);
     nval *val = normals.access(key);
-    if(!val || !val->normals) return false;
+    if(!val) return false;
 
     vec pos(offset.tovec(origin));
     uchar face = orient<<3;
@@ -93,9 +92,9 @@ bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
     if(origin.y >= pos.y) face |= 2;
     if(origin.z >= pos.z) face |= 4;
 
-    loopv(*val->normals)
+    loopv(val->normals)
     {
-        normal &n = (*val->normals)[i];
+        normal &n = val->normals[i];
         if(n.face == face)
         {
             r = n.average.tovec();
@@ -197,13 +196,13 @@ void addnormals(cube &c, const ivec &o, int size)
 void calcnormals()
 {
     if(!lerpangle) return;
+    lerpthreshold = (1<<NORMAL_BITS)*cos(lerpangle*RAD); 
     progress = 0;
     loopi(8) addnormals(worldroot[i], ivec(i, 0, 0, 0, hdr.worldsize/2), hdr.worldsize/2);
 };
 
 void clearnormals()
 {
-    enumerate(normals, nval, val, delete val.normals);
     normals.clear();
 };
 
