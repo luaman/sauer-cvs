@@ -187,7 +187,7 @@ void addnormals(cube &c, const ivec &o, int size)
                     vs.add(dv);
                     n.add(dn);
                     addnormal(o, i, vs, vec(dn).normalize());
-                }
+                };
             };
         };
     };
