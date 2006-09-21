@@ -105,9 +105,6 @@ void initsound()
     nosound = false;
 };
 
-bool musicdoneplaying = false;
-void musicdoneotherthread() { musicdoneplaying = true; };
-
 void musicdone()
 {
 #ifdef USE_MIXER
@@ -140,7 +137,6 @@ void music(char *name, char *cmd)
         #ifdef USE_MIXER
             if(mod = Mix_LoadMUS(path(sn)))
             {
-                Mix_HookMusicFinished(cmd[0] ? musicdoneotherthread : NULL);
                 Mix_PlayMusic(mod, cmd[0] ? 0 : -1);
                 Mix_VolumeMusic((musicvol*MAXVOL)/255);
             }
@@ -251,8 +247,7 @@ void updatevol()
     if(mod && FMUSIC_IsFinished(mod)) musicdone();
     else if(stream && !FSOUND_IsPlaying(musicchan)) musicdone();
 #else
-    if(musicdoneplaying) { musicdone(); musicdoneplaying = false; };
-
+    if(!Mix_PlayingMusic()) musicdone();
 #endif
 };
 
