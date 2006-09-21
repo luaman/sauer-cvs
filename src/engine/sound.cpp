@@ -247,7 +247,7 @@ void updatevol()
     if(mod && FMUSIC_IsFinished(mod)) musicdone();
     else if(stream && !FSOUND_IsPlaying(musicchan)) musicdone();
 #else
-    if(!Mix_PlayingMusic()) musicdone();
+    if(mod && !Mix_PlayingMusic()) musicdone();
 #endif
 };
 
