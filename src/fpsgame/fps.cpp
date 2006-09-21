@@ -519,6 +519,11 @@ struct fpsclient : igameclient
         if(m_capture) cpc.capturehud(w, h);
     };
 
+    void newmap(int size)
+    {
+        cc.addmsg(SV_NEWMAP, "ri", size);
+    };
+
     void edittrigger(const selinfo &sel, int op, int arg1, int arg2, int arg3)
     {
         switch(op)

@@ -116,7 +116,7 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
         {
             extentity &e = *ents[oc->mapmodels[i]];
             if(!e.inoctanode || &e==t) continue;
-            if(e.attr3 && (mode&RAY_ENTS)!=RAY_ENTS && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
+            if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED) && (mode&RAY_ENTS)!=RAY_ENTS) continue;
             if(!mmintersect(e, o, ray, radius, mode, f)) continue;
             if(f<dist) { hitentdist = dist = f; hitent = oc->mapmodels[i]; };
         };
@@ -210,7 +210,7 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
         };
 
         cube &c = *lc;
-        if((!(mode&RAY_SKIPFIRST) || dist != 0) &&
+        if((dist>0 || !(mode&RAY_SKIPFIRST)) &&
            (((mode&RAY_CLIPMAT) && isclipped(c.material) && c.material != MAT_CLIP) ||
             ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
             (!(mode&RAY_PASS) && lsize==size && !isempty(c)) ||
@@ -225,9 +225,8 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
         {
             float f = 0;
             setcubeclip(c, lo.x, lo.y, lo.z, lsize);
-            if(raycubeintersect(c, v, ray, f))
-                if(!(mode&RAY_SKIPFIRST) || dist+f != 0)
-                    return min(dent, dist+f);
+            if(raycubeintersect(c, v, ray, f) && (dist+f>0 || !(mode&RAY_SKIPFIRST)))
+                return min(dent, dist+f);
         };
 
         float disttonext = 1e16f;

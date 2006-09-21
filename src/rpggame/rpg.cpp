@@ -108,7 +108,8 @@ struct rpgclient : igameclient
     char *getclientmap() { return mapname; };
     void resetgamestate() {};
     void worldhurts(physent *d, int damage) {};
-    
+    void newmap(int size) {};
+
     void startmap(const char *name)
     {
         os.clearworld();

@@ -30,6 +30,7 @@ struct iclientcom
     virtual void writeclientinfo(FILE *f) = 0;
     virtual void toserver(char *text) = 0;
     virtual void changemap(const char *name) = 0;
+    virtual int numchannels() { return 1; };
 };
 
 struct igameclient
@@ -48,6 +49,7 @@ struct igameclient
     virtual char *getclientmap() = 0;
     virtual void resetgamestate() = 0;
     virtual void worldhurts(physent *d, int damage) = 0;
+    virtual void newmap(int size) = 0;
     virtual void startmap(const char *name) = 0;
     virtual void gameplayhud(int w, int h) = 0;
     virtual void drawhudgun() = 0;

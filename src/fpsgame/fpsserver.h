@@ -137,7 +137,7 @@ struct fpsserver : igameserver
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
-            SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_MOVE, 17, SV_GETMAP, 1,
+            SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_MOVE, 17, SV_NEWMAP, 2, SV_GETMAP, 1,
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
             SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
             -1
@@ -357,7 +357,7 @@ struct fpsserver : igameserver
                 sgetstr(text, p);
                 int reqmode = getint(p);
                 if(!ci->local && !m_mp(reqmode)) reqmode = 0;
-                if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) break;
+                if(gamemode!=1 && smapname[0] && !mapreload && !vote(text, reqmode, sender)) break;
                 mapreload = false;
                 gamemode = reqmode;
                 minremain = m_teammode ? 15 : 10;
@@ -518,6 +518,19 @@ struct fpsserver : igameserver
                 else sendf(sender, 0, "ris", SV_SERVMSG, "no map to send"); 
                 break;
 
+            case SV_NEWMAP:
+            {
+                int size = getint(p);
+                if(size>=0)
+                {
+                    smapname[0] = '\0';
+                    resetitems();
+                    notgotitems = notgotbases = false;
+                };
+                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                break;
+            };
+
             case SV_SETMASTER:
             {
                 int val = getint(p);
@@ -542,8 +555,8 @@ struct fpsserver : igameserver
         putint(p, SV_INITS2C);
         putint(p, n);
         putint(p, PROTOCOL_VERSION);
-        putint(p, smapname[0]);
-        if(smapname[0])
+        putint(p, gamemode==1 ? 1 : smapname[0]);
+        if(gamemode==1 || smapname[0])
         {
             putint(p, SV_MAPCHANGE);
             sendstring(smapname, p);

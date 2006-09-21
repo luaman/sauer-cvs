@@ -513,27 +513,30 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
     entinmap(d);
 };
 
-void split_world(cube *c, int size)
+void splitocta(cube *c, int size)
 {
     if(size <= VVEC_INT_MASK+1) return;
     loopi(8)
     {
         if(!c[i].children) c[i].children = newcubes(isempty(c[i]) ? F_EMPTY : F_SOLID);
-        split_world(c[i].children, size>>1);
+        splitocta(c[i].children, size>>1);
     };
 };
 
-void empty_world(int scale, bool force)    // main empty world creation routine
+bool emptymap(int scale, bool force)    // main empty world creation routine
 {
-    if(!force && !editmode) return conoutf("newmap only allowed in edit mode");
+    if(!force && !editmode) 
+    {
+        conoutf("newmap only allowed in edit mode");
+        return false;
+    };
 
     clearoverrides();
 
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
-    if(!hdr.worldsize && scale<=0) hdr.worldsize = 1<<11;
-    else hdr.worldsize = 1 << (scale<10 ? 10 : (scale>20 ? 20 : scale));
+    hdr.worldsize = 1 << (scale<10 ? 10 : (scale>20 ? 20 : scale));
 
     s_strncpy(hdr.maptitle, "Untitled Map by Unknown", 128);
     hdr.waterlevel = -100000;
@@ -550,7 +553,7 @@ void empty_world(int scale, bool force)    // main empty world creation routine
     estartmap("");
     player->o.z += player->eyeheight+1;
 
-    if(hdr.worldsize > VVEC_INT_MASK+1) split_world(worldroot, hdr.worldsize>>1);
+    if(hdr.worldsize > VVEC_INT_MASK+1) splitocta(worldroot, hdr.worldsize>>1);
 
     resetlightmaps();
     clearlights();
@@ -559,14 +562,18 @@ void empty_world(int scale, bool force)    // main empty world creation routine
     overrideidents = true;
     execfile("data/default_map_settings.cfg");
     overrideidents = false;
+
+    return true;
 };
 
-void newmap(int *i) { empty_world(*i, false); };
-
-void mapenlarge()
+bool enlargemap(bool force)
 {
-    if(!editmode) return conoutf("mapenlarge only allowed in edit mode");
-    if(hdr.worldsize >= 1<<20) return;
+    if(!force && !editmode)
+    {
+        conoutf("mapenlarge only allowed in edit mode");
+        return false;
+    };
+    if(hdr.worldsize >= 1<<20) return false;
 
     hdr.worldsize *= 2;
     cube *c = newcubes(F_EMPTY);
@@ -574,11 +581,15 @@ void mapenlarge()
     loopi(3) solidfaces(c[i+1]);
     worldroot = c;
 
-    if(hdr.worldsize > VVEC_INT_MASK+1) split_world(worldroot, hdr.worldsize>>1);
+    if(hdr.worldsize > VVEC_INT_MASK+1) splitocta(worldroot, hdr.worldsize>>1);
 
     allchanged();
+
+    return true;
 };
 
+void newmap(int *i) { if(emptymap(*i, false)) cl->newmap(max(*i, 0)); };
+void mapenlarge() { if(enlargemap(false)) cl->newmap(-1); };
 COMMAND(newmap, "i");
 COMMAND(mapenlarge, "");
 

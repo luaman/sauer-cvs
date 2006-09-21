@@ -63,7 +63,7 @@ void connects(char *servername)
 
     if(clienthost)
     {
-        enet_host_connect(clienthost, &address, 2); 
+        enet_host_connect(clienthost, &address, cc->numchannels()); 
         enet_host_flush(clienthost);
         connecting = lastmillis;
         connattempts = 0;

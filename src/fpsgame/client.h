@@ -30,6 +30,8 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
     };
 
+    int numchannels() { return 3; };
+
     static void filtertext(char *dst, const char *src, bool whitespace = true, int len = sizeof(string)-1)
     {
         for(int c = *src; c; c = *++src)
@@ -380,7 +382,7 @@ struct clientcom : iclientcom
                     return;
                 };
                 clientnum = mycn;                 // we are now fully connected
-                if(!getint(p) && cl.getclientmap()[0]) changemap(cl.getclientmap());   // we are the first client on this server, set map
+                if(!getint(p) && (cl.gamemode==1 || cl.getclientmap()[0])) changemap(cl.getclientmap());   // we are the first client on this server, set map
                 break;
             };
 
@@ -749,6 +751,14 @@ struct clientcom : iclientcom
                 break;
             };
 
+            case SV_NEWMAP:
+            {
+                int size = getint(p);
+                if(size>=0) emptymap(size, true);
+                else enlargemap(true);
+                break;
+            };
+
             default:
                 neterr("type");
                 return;
@@ -760,7 +770,8 @@ struct clientcom : iclientcom
         if(remote && !m_mp(gamemode)) gamemode = 0;
         cl.gamemode = gamemode;
         if(editmode && !allowedittoggle()) toggleedit();
-        load_world(name);
+        if(gamemode==1 && !name[0]) emptymap(0, true);
+        else load_world(name);
         if(m_capture) cl.cpc.setupbases();
     };
 
@@ -781,7 +792,7 @@ struct clientcom : iclientcom
         conoutf("received map");
         fwrite(data, 1, len, map);
         fclose(map);
-        load_world(mname, oldname);
+        load_world(mname, oldname[0] ? oldname : NULL);
         remove(fname);
     };
 
@@ -806,7 +817,8 @@ struct clientcom : iclientcom
             if(ftell(map) > 1024*1024) conoutf("map is too large");
             else sendfile(-1, 2, map);
             fclose(map);
-        };
+        }
+        else conoutf("could not read map");
         remove(fname);
     };
 };
