@@ -112,7 +112,7 @@ static uint progress = 0;
 
 void show_calcnormals_progress()
 {
-    float bar1 = float(progress) / float(wtris/2);
+    float bar1 = float(min(progress, wtris/2)) / float(wtris/2);
     show_out_of_renderloop_progress(bar1, "computing normals...");
 };
 
