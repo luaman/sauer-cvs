@@ -77,7 +77,15 @@ void clearheightmap()
 };
 
 void forcenextundo() { lastsel.orient = -1; };
-void cancelsel()     { havesel = moving = false; sel.ent = -1; clearheightmap(); forcenextundo(); };
+
+void cancelsel()
+{
+    if(g3d_windowhit(false, false)) return;
+    havesel = moving = false;
+    sel.ent = -1;
+    clearheightmap();
+    forcenextundo();
+};
 
 VARF(gridpower, 2, 3, VVEC_INT-1,
 {
@@ -94,6 +102,7 @@ COMMAND(passthrough, "D");
 
 void editdrag(bool on)
 {
+    if(g3d_windowhit(on, true)) return; 
     if(dragging = on)
     {
         cancelsel();

@@ -1071,7 +1071,7 @@ dir(forward,  move,    1, k_up,    k_down);
 dir(left,     strafe,  1, k_left,  k_right);
 dir(right,    strafe, -1, k_right, k_left);
 
-ICOMMAND(jump,   "D", { if(g3d_windowhit(false, false)) { if(args==NULL) showmenu(NULL); } else if(cl->canjump()) player->jumpnext = args!=NULL; });
+ICOMMAND(jump,   "D", { if(!g3d_windowhit(args!=NULL, false)) if(cl->canjump()) player->jumpnext = args!=NULL; });
 ICOMMAND(attack, "D", { if(!g3d_windowhit(args!=NULL, true)) cl->doattack(args!=NULL); });
 
 VARP(sensitivity, 0, 10, 1000);
