@@ -715,6 +715,14 @@ void mod  (int *a, int *b) { ints(*b ? *a % *b : 0); }; COMMAND(mod, "ii");
 void equal(int *a, int *b) { ints((int)(*a == *b)); };  COMMANDN(=, equal, "ii");
 void lt   (int *a, int *b) { ints((int)(*a < *b)); };   COMMANDN(<, lt, "ii");
 void gt   (int *a, int *b) { ints((int)(*a > *b)); };   COMMANDN(>, gt, "ii");
+void xora (int *a, int *b) { ints(*a ^ *b); };          COMMANDN(^, xora, "ii");
+void nota (int *a)         { ints(*a == 0); };          COMMANDN(!, nota, "i");
+
+void anda (char *a, char *b) { if(execute(a)!=0) ints(execute(b)!=0); else ints(0); };
+void ora  (char *a, char *b) { if(execute(a)==0) ints(execute(b)!=0); else ints(1); };
+
+COMMANDN(&&, anda, "ss");
+COMMANDN(||, ora, "ss");
 
 void rndn(int *a)          { ints(*a>0 ? rnd(*a) : 0); };  COMMANDN(rnd, rndn, "i");
 
