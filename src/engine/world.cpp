@@ -160,6 +160,20 @@ bool pointinsel(selinfo &sel, vec &o)
 
 vector<int> entgroup;
 
+void toggleselent(int id)
+{
+    int i = entgroup.find(id);
+    if(i < 0)
+        entgroup.add(id);
+    else
+        entgroup.remove(i);
+}
+
+bool haveselent()
+{
+    return entgroup.length() > 0;
+}
+
 void initundoent(undoblock &u, int id)
 {
     u.n = 0; u.e = NULL;
@@ -196,7 +210,8 @@ void makeundoent(int id)
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
-#define entedit(i, f)   { int n = (i); if(n>=0) { entity &e = *et->getents()[n]; removeentity(n); f; addentity(n); et->editent(n); }; }
+#define entfocus(i, f)  { int n = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
+#define entedit(i, f)   { entfocus(i, removeentity(n); f; addentity(n); et->editent(n)); }
 #define selentedit(f)   { entedit(realselent, makeundoent(n); f); }
 #define setgroup(exp)   { entgroup.setsize(0); const vector<extentity *> &__ = et->getents(); loopv(__) { int n = i; entity &e = *__[n]; if(exp) entgroup.add(n); }; }
 #define groupeditpure(f){ loopv(entgroup) entedit(entgroup[i], f); }
@@ -282,12 +297,10 @@ void pushent(int d, int dist)
 void delent()
 {
     if(noedit(true)) return;
-    selentedit(
-        conoutf("%s entity deleted", et->entname(e.type));
+    groupedit(
         e.type = ET_EMPTY;
         et->editent(n);
-        cancelsel();
-        return;
+        continue;
     );
 };
 
@@ -410,75 +423,38 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
     newentity(type, *a1, *a2, *a3, *a4);
 };
 
-void clearents(char *name)
-{
-    if(noedit(true) || multiplayer()) return;
-    int type = (name[0]=='\0' ? -1 : findtype(name));
-    setgroup(type!=ET_EMPTY && (type<0 || e.type==type) && (!havesel || pointinsel(sel, e.o)));
-    groupedit(e.type = ET_EMPTY; et->editent(n); continue);
-    conoutf("Cleared %d ents", entgroup.length());
-    cancelsel();
-};
-
-COMMAND(clearents, "s");
-
-void replaceents(char *what, int *a1, int *a2, int *a3, int *a4)
-{
-    if(noedit(true) || multiplayer()) return;
-    int type = findtype(what);
-    int t = realselent;
-    if(t<0) return;
-    entity &s = *et->getents()[t];                
-    if(havesel)
-    {
-        setgroup(type!=ET_EMPTY && pointinsel(sel, e.o));    
-    }
-    else
-        setgroup(e.type==s.type
-              && e.attr1==s.attr1
-              && e.attr2==s.attr2
-              && e.attr3==s.attr3
-              && e.attr4==s.attr4);
-    groupedit(e.type=type;
-              e.attr1=*a1;
-              e.attr2=*a2;
-              e.attr3=*a3;
-              e.attr4=*a4;);
-    conoutf("Replaced %d ents", entgroup.length());
-};
-
 COMMAND(newent, "siiii");
-COMMAND(replaceents, "siiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
 
-void entattr(int *prop)
+void eattr(int *prop)
 {
-    int n = realselent;    
-    if(n>=0) switch(*prop)
+    entfocus(realselent, switch(*prop)
     {
-        case 0: ints(et->getents()[n]->attr1); break;
-        case 1: ints(et->getents()[n]->attr2); break;
-        case 2: ints(et->getents()[n]->attr3); break;
-        case 3: ints(et->getents()[n]->attr4); break;
-    };
+        case 0: ints(e.attr1); break;
+        case 1: ints(e.attr2); break;
+        case 2: ints(e.attr3); break;
+        case 3: ints(e.attr4); break;
+    });
 };
 
 void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit(true)) return;
     int type = findtype(what);
-    selentedit(e.type=type;
+    groupedit(e.type=type;
               e.attr1=*a1;
               e.attr2=*a2;
               e.attr3=*a3;
               e.attr4=*a4;);
 };
 
-ICOMMAND(enttype, "", if(realselent>=0) result(et->entname(et->getents()[realselent]->type)));
-COMMAND(entattr, "i");
+ICOMMAND(egrouplen, "", ints(entgroup.length()));
+ICOMMAND(esel,      "s",setgroup(e.type != ET_EMPTY && (sel.ent = n) && execute(args[0])));
+ICOMMAND(insel,     "", entfocus(realselent, ints(havesel && pointinsel(sel, e.o))));
+ICOMMAND(et,        "", entfocus(realselent, result(et->entname(e.type))));
+COMMANDN(ea, eattr, "i");
 COMMANDN(entedit, enteditor, "siiii");
-
 
 int findentity(int type, int index)
 {
