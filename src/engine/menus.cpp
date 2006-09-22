@@ -28,6 +28,7 @@ int vmenu = -1;
 ivector menustack;
 
 vec menupos;
+int menustart = 0;
 
 void clear_menus()
 {
@@ -37,7 +38,11 @@ void clear_menus()
 void menuset(int menu)
 {
     if(!menu && vmenu>=0) return;
-    if(menu>=0 && vmenu<0) menupos = vec(worldpos).sub(player->o).set(2, 0).normalize().mul(32).add(player->o).sub(vec(0, 0, player->eyeheight-1));
+    if(menu>=0 && vmenu<0)
+    {
+        menupos = vec(worldpos).sub(player->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1));
+        menustart = lastmillis;
+    };
     if((vmenu = menu)>0) {};//player->stopmoving();
     if(vmenu==1) menus[1].menusel = 0;
 };
@@ -241,7 +246,7 @@ void g3d_mainmenu()
     };
     loopi(2)
     {
-        g3d_start(i!=0, menupos);
+        g3d_start(i!=0, menupos, menustart);
         g3d_text(title, 0xAAFFAA);
         loopj(m.items.length()) if(g3d_button(m.items[j].eval, 0xFFFFFF)&G3D_UP)
         {

@@ -358,7 +358,7 @@ extern void rendertreeui(int coff, int hoff);
 
 // 3dgui
 extern void g3d_render();
-extern void g3d_start(bool renderpass, vec &origin);
+extern void g3d_start(bool renderpass, vec &origin, int starttime);
 extern void g3d_end();
 extern int g3d_text(char *text, int color);
 extern int g3d_button(char *text, int color);
