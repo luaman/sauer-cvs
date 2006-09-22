@@ -27,6 +27,8 @@ int vmenu = -1;
 
 ivector menustack;
 
+vec menupos;
+
 void clear_menus()
 {
     menus.setsize(0); //FIXME
@@ -35,16 +37,25 @@ void clear_menus()
 void menuset(int menu)
 {
     if(!menu && vmenu>=0) return;
-    if((vmenu = menu)>=1) player->stopmoving();
+    if(menu>=0 && vmenu<0) menupos = vec(worldpos).sub(player->o).set(2, 0).normalize().mul(32).add(player->o).sub(vec(0, 0, player->eyeheight-1));
+    if((vmenu = menu)>0) {};//player->stopmoving();
     if(vmenu==1) menus[1].menusel = 0;
 };
 
 void showmenu(char *name)
 {
-    loopv(menus) if(i>1 && strcmp(menus[i].name, name)==0)
+    if(vmenu<0 && name)
     {
-        menuset(i);
-        return;
+        loopv(menus) if(i>1 && strcmp(menus[i].name, name)==0)
+        {
+            menuset(i);
+            return;
+        };    
+    }
+    else
+    {
+        menuset(-1);
+        if(!menustack.empty()) menuset(menustack.pop());
     };
 };
 
@@ -85,13 +96,14 @@ void drawarrow(int dir, int x, int y, int size, float r = 1.0f, float g = 1.0f, 
     defaultshader->set();
 };
 
+/*
+
 #define MAXMENU 17
 
 bool rendermenu(int scr_w, int scr_h)
 {
 
     if(vmenu<0) { menustack.setsize(0); return false; };
-
     if(vmenu==1) refreshservers();
     gmenu &m = menus[vmenu];
     s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
@@ -139,9 +151,9 @@ bool rendermenu(int scr_w, int scr_h)
         draw_text(m.items[offset+j].eval, x, y);
         y += step;
     };
-
     return true;
 };
+*/
 
 void newmenu(char *name)
 {
@@ -170,6 +182,7 @@ COMMAND(menuitem, "ss");
 COMMAND(showmenu, "s");
 COMMAND(newmenu, "s");
 
+/*
 bool menukey(int code, bool isdown)
 {
     if(vmenu<=0) return false;
@@ -208,3 +221,37 @@ bool menukey(int code, bool isdown)
     };
     return true;
 };
+*/
+
+void g3d_mainmenu()
+{
+    if(vmenu<0) { menustack.setsize(0); return; };
+    if(vmenu==1) refreshservers();
+    gmenu &m = menus[vmenu];
+    s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
+    loopv(m.items)
+    {
+        string &s = m.items[i].eval;
+        s_strcpy(s, m.items[i].text);
+        if(s[0]=='^')
+        {
+            char *ret = executeret(m.items[i].text+1);
+            if(ret) { s_strcpy(s, ret); delete[] ret; };
+        };
+    };
+    loopi(2)
+    {
+        g3d_start(i!=0, menupos);
+        g3d_text(title, 0xAAFFAA);
+        loopj(m.items.length()) if(g3d_button(m.items[j].eval, 0xFFFFFF)&G3D_UP)
+        {
+            char *action = m.items[j].action;
+            if(vmenu==1) connects(getservername(j));
+            menustack.add(vmenu);
+            menuset(-1);
+            execute(action);
+        };
+        g3d_end();
+    };
+};
+

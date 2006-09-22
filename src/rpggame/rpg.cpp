@@ -163,7 +163,7 @@ struct rpgclient : igameclient
             os.pointingat->treemenu();
         };
         
-        if(treebutton("attack", "sword.jpg")&TMB_PRESSED)
+        if(treebutton("attack", "sword.jpg")&G3D_PRESSED)
         {
             if(lastmillis-player1.lastaction>250)
             {
@@ -174,7 +174,7 @@ struct rpgclient : igameclient
                 };
             } 
         };
-        if(treebutton("inventory", "chest.jpg")&TMB_UP) { conoutf("inventory"); };
+        if(treebutton("inventory", "chest.jpg")&G3D_UP) { conoutf("inventory"); };
     };
 
     void writegamedata(vector<char> &extras) {};

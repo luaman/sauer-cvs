@@ -856,6 +856,18 @@
 				Name="render"
 				>
 				<File
+					RelativePath="..\engine\3dgui.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\engine\md2.h"
 					>
 				</File>

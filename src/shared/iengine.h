@@ -68,11 +68,11 @@ extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 
 // menus
-extern bool rendermenu(int scr_w, int scr_h);
+//extern bool rendermenu(int scr_w, int scr_h);
 extern void menuset(int menu);
 extern void menumanual(int m, int n, char *text);
 extern void sortmenu(int start, int num);
-extern bool menukey(int code, bool isdown);
+//extern bool menukey(int code, bool isdown);
 extern void newmenu(char *name);
 extern void showmenu(char *name);
 
@@ -189,6 +189,10 @@ extern bool netmapstart();
 
 // treeui
 
-enum { TMB_DOWN = 1, TMB_UP = 2, TMB_PRESSED = 4, TMB_EXPANDED = 8, TMB_COLLAPSED = 16, TMB_ROLLOVER = 32 };
 extern int treebutton(char *name, char *texture);
 extern void settreeca(char **_ca);
+
+// 3dgui
+
+enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
+

@@ -4,6 +4,7 @@ gilt:
 - "editing not in view" sometimes obstructs editing
 
 eihrul:
+- shadow bugs on demomap?
 - allow master to set teams, and make 2 team mode for capture
 - shader docs
 - improve smoothness of going up steps

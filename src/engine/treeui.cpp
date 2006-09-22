@@ -16,7 +16,7 @@ char **ca = NULL;
 int nav = 0;
 char *prevname = NULL;
 
-ICOMMAND(treeaction, "D", treemousebuttons |= (actionon = args!=NULL) ? TMB_DOWN : TMB_UP);
+ICOMMAND(treeaction, "D", treemousebuttons |= (actionon = args!=NULL) ? G3D_DOWN : G3D_UP);
 ICOMMAND(treenav, "i", nav = atoi(args[0]));
 
 void settreeca(char **_ca) { ca = _ca; };
@@ -53,13 +53,13 @@ int treebutton(char *name, char *texture)
     draw_textf("%s%s", FONTH*7/4, off, sel ? "\f3" : "", name);
     off += FONTH;
 
-    return sel ? treemousebuttons|TMB_ROLLOVER : 0;
+    return sel ? treemousebuttons|G3D_ROLLOVER : 0;
 };
 
 void rendertreeui(int coff, int hoff)
 {
     prevname = NULL;
-    if(actionon) treemousebuttons |= TMB_PRESSED;
+    if(actionon) treemousebuttons |= G3D_PRESSED;
     off = coff+20;
     
     cl->treemenu();

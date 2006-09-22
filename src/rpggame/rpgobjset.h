@@ -144,12 +144,12 @@ struct rpgobj
     void treemenu()
     {
         settreeca(&curaction);
-        for(rpgaction *a = actions; a; a = a->next) if(treebutton(a->initiate, "chat.jpg")&TMB_UP)
+        for(rpgaction *a = actions; a; a = a->next) if(treebutton(a->initiate, "chat.jpg")&G3D_UP)
         {
             if(*a->script) { os.pushobj(this); execute(a->script); };
         };
-        if(!ai) if(treebutton("take", "hand.jpg")&TMB_UP) { os.take(this, os.playerobj); };
-        if(ai) if(treebutton("trade", "coins.jpg")&TMB_UP) { conoutf("trade"); };
+        if(!ai) if(treebutton("take", "hand.jpg")&G3D_UP) { os.take(this, os.playerobj); };
+        if(ai) if(treebutton("trade", "coins.jpg")&G3D_UP) { conoutf("trade"); };
     };
 };
 

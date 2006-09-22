@@ -16,6 +16,8 @@ struct vec
 
     float &operator[](int i)       { return v[i]; };
     float  operator[](int i) const { return v[i]; };
+    
+    vec &set(int i, float f) { v[i] = f; return *this; };
 
     bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
     bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; }
@@ -265,6 +267,6 @@ struct bvec
 extern bool raysphereintersect(vec c, float radius, const vec &o, const vec &ray, float &dist);
 extern bool rayrectintersect(const ivec &b, const ivec &s, const vec &o, const vec &ray, float &dist, int &orient);
 
-
-
+enum { INTERSECT_NONE, INTERSECT_OVERLAP, INTERSECT_BEFORESTART, INTERSECT_MIDDLE, INTERSECT_AFTEREND };
+extern int intersect_plane_line(vec &linestart, vec &linestop, vec &planeorig, vec &planenormal, vec &intersectionpoint);
 

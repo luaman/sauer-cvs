@@ -10,8 +10,8 @@
 			>
 			<DebugSettings
 				Command="$(TargetPath)"
-				WorkingDirectory="..\.."
-				CommandArguments="-t -w800 -h480 -lbumptest -a4"
+				WorkingDirectory="C:\w\sauerbraten"
+				CommandArguments="-t -w1280 -h800 -a4"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
@@ -38,8 +38,8 @@
 			>
 			<DebugSettings
 				Command="$(TargetPath)"
-				WorkingDirectory="..\.."
-				CommandArguments="-t -w1280 -h800 -a4 -grpg"
+				WorkingDirectory="C:\w\sauerbraten"
+				CommandArguments="-t -w1280 -h800 -a4"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

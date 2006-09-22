@@ -1208,7 +1208,7 @@ void gl_drawframe(int w, int h, float curfps)
     xtravertsva = xtraverts = glde = 0;
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
-
+    
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
     if(limitsky) drawskybox(farplane, true);
 
@@ -1248,6 +1248,10 @@ void gl_drawframe(int w, int h, float curfps)
 
     rendermaterials();
 
+    defaultshader->set();
+
+    g3d_render();
+
     project(65, aspect, farplane);
     if(!isthirdperson()) cl->drawhudgun();
     project(fovy, aspect, farplane);
@@ -1260,7 +1264,7 @@ void gl_drawframe(int w, int h, float curfps)
     glDisable(GL_CULL_FACE);
 
     renderfullscreenshader(w, h);
-
+    
     glDisable(GL_TEXTURE_2D);
     notextureshader->set();
 

@@ -313,7 +313,7 @@ void keypress(int code, bool isdown, int cooked)
             };
         };
     }
-    else if(!menukey(code, isdown))                 // keystrokes go to menu
+    else //if(!menukey(code, isdown))                 // keystrokes go to menu
     {
         loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
         {

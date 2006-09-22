@@ -38,3 +38,14 @@ bool rayrectintersect(const ivec &b, const ivec &s, const vec &o, const vec &ray
     return false;
 };
 
+int intersect_plane_line(vec &linestart, vec &linestop, vec &planeorig, vec &planenormal, vec &intersectionpoint)
+{
+    vec u = linestop;  u.sub(linestart);
+    vec w = linestart; w.sub(planeorig);
+    float d = planenormal.dot(u);
+    float n = -planenormal.dot(w);
+    if(fabs(d)<0.000001) return n==0 ? INTERSECT_OVERLAP : INTERSECT_NONE;                 
+    float si = n/d;
+    intersectionpoint = u.mul(si).add(linestart);              
+    return si<0 ? INTERSECT_BEFORESTART : (si>1 ? INTERSECT_AFTEREND : INTERSECT_MIDDLE);
+};
