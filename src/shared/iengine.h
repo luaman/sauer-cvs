@@ -196,3 +196,7 @@ extern void settreeca(char **_ca);
 
 enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
 
+extern void g3d_start(bool renderpass, vec &origin, int starttime);
+extern void g3d_end();
+extern int g3d_text(char *text, int color, char *icon = NULL);
+extern int g3d_button(char *text, int color, char *icon = NULL);

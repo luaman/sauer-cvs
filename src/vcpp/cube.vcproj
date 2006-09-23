@@ -1569,7 +1569,15 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\rpggame\rpgobj.h"
+				>
+			</File>
+			<File
 				RelativePath="..\rpggame\rpgobjset.h"
+				>
+			</File>
+			<File
+				RelativePath="..\rpggame\stubs.h"
 				>
 			</File>
 		</Filter>

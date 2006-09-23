@@ -9,7 +9,7 @@ static int xsize, ysize, cury, curx, intersects, hitx, hity, mousebuttons = 0;
 bool g3d_windowhit(bool on, bool act)
 {
     if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
-    else if(!on) showmenu(NULL);
+    else if(!on && windowhit) showmenu(NULL);
     return windowhit;
 };
 
@@ -81,25 +81,44 @@ void g3d_end()
     };
 };
 
-int g3d_text(char *text, int color)
+int g3d_text(char *text, int color, char *icon)
 {
-    return g3d_button(text, color);
+    return g3d_button(text, color, icon);
 };
 
-int g3d_button(char *text, int color)
+int g3d_button(char *text, int color, char *icon)
 {
     if(!renderpass)
     {
         ysize += FONTH;
         int slen = text_width(text);
+        if(icon) slen += 70;
         xsize = max(xsize, slen);    
     }
     else
     {
         bool hit = intersects>=INTERSECT_MIDDLE && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
         if(hit && color==0xFFFFFF) color = 0xFF0000;    // hack
+
+        if(icon)
+        {
+            s_sprintfd(tname)("packages/icons/%s", icon);
+            Texture *t = textureload(tname);
+            glColor3f(1, 1, 1);
+            glBindTexture(GL_TEXTURE_2D, t->gl);
+            glBegin(GL_QUADS);
+            float size = 60;
+            glTexCoord2d(0.0, 0.0); glVertex2f(curx,      cury);
+            glTexCoord2d(1.0, 0.0); glVertex2f(curx+size, cury);
+            glTexCoord2d(1.0, 1.0); glVertex2f(curx+size, cury+size);
+            glTexCoord2d(0.0, 1.0); glVertex2f(curx,      cury+size);
+            glEnd();
+            curx += size+10;
+        };
+
         draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
         cury += FONTH;
+        curx = -xsize/2;
         return hit ? mousebuttons|G3D_ROLLOVER : 0;
     };
     return false;
