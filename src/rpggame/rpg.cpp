@@ -46,8 +46,9 @@ struct rpgdummyserver : igameserver
 struct rpgent : dynent
 {
     int lastaction, lastpain;
+    bool attacking;
     
-    rpgent() : lastaction(0), lastpain(0) {};
+    rpgent() : lastaction(0), lastpain(0), attacking(false) {};
     
 };
 
@@ -91,7 +92,15 @@ struct rpgclient : igameclient
         {
             moveplayer(&player1, 20, true);
             checktriggers();
-        };
+            if(player1.attacking && lastmillis-player1.lastaction>250)
+            {
+                player1.lastaction = lastmillis;
+                if(os.pointingat)
+                {
+                    os.pointingat->attacked(player1);
+                };
+            };
+        };        
     };
     
     void initclient() {};
@@ -144,7 +153,7 @@ struct rpgclient : igameclient
 
     bool camerafixed() { return player1.state==CS_DEAD; };
     bool canjump() { return true; };
-    void doattack(bool on) { };
+    void doattack(bool on) { player1.attacking = on; };
     dynent *iterdynents(int i) { return i ? NULL : &player1; };
     int numdynents() { return 1; };
     void renderscores() {};
@@ -165,17 +174,11 @@ struct rpgclient : igameclient
         
         if(treebutton("attack", "sword.jpg")&G3D_PRESSED)
         {
-            if(lastmillis-player1.lastaction>250)
-            {
-                player1.lastaction = lastmillis;
-                if(os.pointingat)
-                {
-                    os.pointingat->attacked(player1);
-                };
-            } 
         };
         if(treebutton("inventory", "chest.jpg")&G3D_UP) { conoutf("inventory"); };
     };
+    
+    void g3d_gamemenus() { os.g3d_npcmenus(); };
 
     void writegamedata(vector<char> &extras) {};
     void readgamedata(vector<char> &extras) {};

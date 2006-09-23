@@ -28,10 +28,12 @@ struct rpgobj
     behaviour *beh;
     int health;
     
+    int menutime;
+    
     rpgobjset &os;
     
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL),
-        name(_name), model(NULL), loot(false), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), os(_os) {};
+        name(_name), model(NULL), loot(false), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), os(_os), menutime(0) {};
         
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 
@@ -87,6 +89,9 @@ struct rpgobj
     void update(int curtime)
     {
         moveplayer(ent, 10, true, curtime);
+        float dist = ent->o.dist(os.cl.player1.o);
+        if(!menutime && dist<64) menutime = os.cl.lastmillis;
+        else if(dist>256) menutime = 0;
     };
     
     void addaction(char *initiate, char *script)
@@ -150,6 +155,12 @@ struct rpgobj
         };
         if(!ai) if(treebutton("take", "hand.jpg")&G3D_UP) { os.take(this, os.playerobj); };
         if(ai) if(treebutton("trade", "coins.jpg")&G3D_UP) { conoutf("trade"); };
+    };
+    
+    void g3d_menu()
+    {
+        if(!menutime) return;
+        
     };
 };
 
@@ -248,8 +259,6 @@ struct rpgobjset
         return name;
     };
     
-    void render()
-    {
-        loopv(set) set[i]->render();
-    };
+    void render()       { loopv(set) set[i]->render();   };
+    void g3d_npcmenus() { loopv(set) set[i]->g3d_menu(); }; 
 };
