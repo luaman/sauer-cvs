@@ -6,6 +6,7 @@ CLIENT_LIBS=-Llib.mingw -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -l
 CLIENT_OBJS= \
 	shared/tools.o \
 	shared/geom.o \
+	engine/3dgui.o \
 	engine/client.o \
 	engine/command.o \
 	engine/console.o \
