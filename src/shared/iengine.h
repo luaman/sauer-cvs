@@ -18,14 +18,13 @@ enum { EDIT_FACE = 0, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_COPY, EDIT_PASTE, EDIT
 
 struct selinfo
 {
-    int ent;
     int corner;
     int cx, cxs, cy, cys;
     ivec o, s;
     int grid, orient;
     int size() const    { return s.x*s.y*s.z; };
     int us(int d) const { return s[d]*grid; };
-    bool operator==(const selinfo &sel) const { return ent==sel.ent && o==sel.o && s==sel.s && grid==sel.grid && orient==sel.orient; };
+    bool operator==(const selinfo &sel) const { return o==sel.o && s==sel.s && grid==sel.grid && orient==sel.orient; };
 };
 
 struct editinfo;

@@ -174,6 +174,8 @@ extern igameserver     *sv;
 extern iclientcom      *cc;
 extern icliententities *et;
 
+extern vector<int> entgroup;
+
 // rendergl
 extern bool hasVBO, hasOQ, hasFBO;
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
@@ -212,9 +214,11 @@ extern bool pointinsel(selinfo &sel, vec &o);
 extern void addundo(undoblock &u);
 
 // ents
+extern bool haveselent();
+extern void toggleselent(int id);
 extern int rayent(const vec &o, vec &ray);
 extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first = false);
-extern int copyent(int n);
+extern void copyent(int n);
 extern void pushent(int d, int dist);
 extern void entflip(selinfo &sel);
 extern void entrotate(selinfo &sel, int cw);

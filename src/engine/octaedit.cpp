@@ -82,7 +82,7 @@ void cancelsel()
 {
     if(g3d_windowhit(false, false)) return;
     havesel = moving = false;
-    sel.ent = -1;
+    entgroup.setsize(0);
     clearheightmap();
     forcenextundo();
 };
@@ -102,7 +102,7 @@ COMMAND(passthrough, "D");
 
 void editdrag(bool on)
 {
-    if(g3d_windowhit(on, true)) return; 
+    if(g3d_windowhit(on, true)) return;
     if(dragging = on)
     {
         cancelsel();
@@ -110,11 +110,14 @@ void editdrag(bool on)
         {
             ivec t;
             vec ray(worldpos); ray.sub(player->o);
-            sel.ent = rayent(player->o, ray);
-            if(sel.ent>=0)
+            int n = rayent(player->o, ray);
+            if(n>=0)
+            {
+                toggleselent(n);
                 entdrag(player->o, ray, dimension(sel.orient), t, true);
+            };
         };
-        if(cor[0]<0 || sel.ent>=0) return;
+        if(cor[0]<0 || haveselent()) return;
         lastcur = cur;
         lastcor = cor;
         sel.grid = gridsize;
@@ -159,19 +162,14 @@ void toggleedit()
 bool noedit(bool view)
 {
     if(!editmode) { conoutf("operation only allowed in edit mode"); return true; };
-    if(view) return false;
+    if(view || haveselent()) return false;
     float r = 1.0f;
     vec o, s;
-    if(sel.ent<0)
-    {
-        o = sel.o.v;
-        s = sel.s.v;
-        s.mul(float(sel.grid) / 2.0f);
-        o.add(s);
-        r = float(max(s.x, max(s.y, s.z)));
-    }
-    else
-        o = et->getents()[sel.ent]->o;
+    o = sel.o.v;
+    s = sel.s.v;
+    s.mul(float(sel.grid) / 2.0f);
+    o.add(s);
+    r = float(max(s.x, max(s.y, s.z)));
     bool viewable = (isvisiblesphere(r, o) != VFC_NOT_VISIBLE);
     if(!viewable) conoutf("selection not in view");
     return !viewable;
@@ -295,7 +293,7 @@ void cursorupdate()
     }
     else if(dragging)
     {
-        if(sel.ent>=0)
+        if(haveselent())
         {
             if(entmovingorient) d = dimension(sel.orient = orient);
             entdrag(player->o, ray, d, e);
@@ -361,7 +359,7 @@ void cursorupdate()
         glColor3ub(10,10,40);   // 3D selection box
         boxs3D(movesel, sel.s, sel.grid);
     };
-    if(sel.ent>=0 && dragging)
+    if(haveselent() && dragging)
     {
         glColor3ub(40,40,40);
         loop(x, 4) loop(y, 4)
@@ -562,7 +560,6 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
         sel.s = u.b->s;
         sel.grid = u.b->grid;
         sel.orient = u.b->orient;
-        sel.ent = -1;
     };
     undoblock r;
     if(u.g) initundocube(r, sel);
@@ -570,7 +567,7 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
     b.add(r);
     pasteundo(u);
     if(u.b) changed(sel);
-    freeundo(u);    
+    freeundo(u);
     clearheightmap();
     reorient();
     forcenextundo();
@@ -618,19 +615,19 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
     };
 };
 
-void copy()  
-{ 
+void copy()
+{
     if(noedit(true)) return;
     entcopy = -1;
-    if(sel.ent>=0)
-        entcopy = sel.ent;
+    if(haveselent())
+        entcopy = entgroup.last();
     else
-        mpcopy(localedit, sel, true); 
+        mpcopy(localedit, sel, true);
 };
 
-void paste(int *isdown) 
-{ 
-    if(noedit(entcopy>=0)) return; 
+void paste(int *isdown)
+{
+    if(noedit(entcopy>=0)) return;
     if(*isdown!=0)
     {
         if(entcopy<0 && localedit && localedit->copy)
@@ -641,11 +638,11 @@ void paste(int *isdown)
         };
     }
     else
-    {        
+    {
         if(entcopy>=0)
-            sel.ent = copyent(entcopy);
+            copyent(entcopy);
         else if(havesel)
-            mppaste(localedit, sel, true); 
+            mppaste(localedit, sel, true);
     };
 };
 
@@ -794,8 +791,8 @@ void createheightmap()
 
 void getheightmap()
 {
-    if(noedit() || multiplayer() || sel.ent>=0) return;
-    createheightmap();    
+    if(noedit() || multiplayer() || haveselent()) return;
+    createheightmap();
 };
 
 COMMAND(getheightmap, "");
@@ -945,7 +942,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
             return;
         };
 
-        if(sel.ent>=0)
+        if(haveselent())
         {
             pushent(d, seldir*sel.grid);
             return;
@@ -1024,7 +1021,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int *dir, int *mode)
 {
     if(noedit(moving)) return;
-    if(sel.ent<0 && hmap)
+    if(!haveselent() && hmap)
         edithmap(*dir);
     else
         mpeditface(*dir, *mode, sel, true);
@@ -1068,7 +1065,7 @@ void mpmovecubes(ivec &o, selinfo &sel, bool local)
 void editmove(int *isdown)
 {
     if(noedit(true)) return;
-    if(sel.ent>=0 && dragging) { entmovingorient = *isdown!=0; reorient(); return; };
+    if(haveselent() && dragging) { entmovingorient = *isdown!=0; reorient(); return; };
     if(*isdown!=0)
     {
         selextend();

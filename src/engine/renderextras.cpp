@@ -253,24 +253,46 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     if(!editmode) return;
     extern selinfo sel;
     const vector<extentity *> &ents = et->getents();
+
+    bool implicit = !haveselent();
     entity *c = NULL;
-    int s = sel.ent;
-    bool implicit = s<0;
-    if(implicit) s = closestent();
-    if(s>=0)
+    int s;
+    if(entgroup.length() > 1)
     {
-        c = ents[s];
-        s_sprintf(closeent)("%s%s (%d, %d, %d, %d)", implicit ? "" : "\f0", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
+        s_sprintf(closeent)("%d entities selected", entgroup.length());        
+    }    
+    else
+    {
+        if(implicit)
+            s = closestent();
+        else
+            s = entgroup[0];
+        if(s>=0)
+        {
+            c = ents[s];
+            s_sprintf(closeent)("%s%s (%d, %d, %d, %d)", implicit ? "" : "\f0", entname(*c)+1, c->attr1, c->attr2, c->attr3, c->attr4);
+            if(!implicit)
+                c = NULL;
+        };
     };
+
     loopv(ents)
     {
         entity &e = *ents[i];
         if(e.type==ET_EMPTY) continue;
         if(e.o.dist(camera1->o)<128)
         {
-            particle_text(e.o, entname(e), &e==c ? (implicit ? 14 : 13) : 11, 1);
+            particle_text(e.o, entname(e), &e==c ? 14 : 11, 1);
         };
         particle_splash(2, 2, 40, e.o);
+    };
+    loopv(entgroup)
+    {
+        entity &e = *ents[entgroup[i]];
+        if(e.o.dist(camera1->o)<128)
+        {
+            particle_text(e.o, entname(e), 13, 1);
+        };
     };
 };
 
@@ -332,7 +354,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glBlendFunc(GL_ZERO, GL_SRC_COLOR);
         glBegin(GL_QUADS);
         if(dblend) glColor3f(1.0f, 0.1f, 0.1f);
-        else 
+        else
         {
             getwatercolour(wcol);
             float maxc = max(wcol[0], max(wcol[1], wcol[2]));
@@ -381,7 +403,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         };
 
         int coff = renderconsole(w, h);
-        
+
         if(!hidestats)
         {
             draw_textf("fps %d", w*3-5*FONTH, h*3-100, curfps);
@@ -395,9 +417,9 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         };
 
         if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud);
-        
+
         rendertreeui(coff, hoff);
-        
+
         cl->gameplayhud(w, h);
         render_texture_panel(w, h);
     };

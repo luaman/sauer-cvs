@@ -174,56 +174,45 @@ bool haveselent()
     return entgroup.length() > 0;
 }
 
-void initundoent(undoblock &u, int id)
+void initundoent(undoblock &u)
 {
     u.n = 0; u.e = NULL;
-    if(id<0)
+    u.n = entgroup.length();
+    if(u.n<=0) return;
+    u.e = new undoent[u.n];
+    loopv(entgroup)
     {
-        u.n = entgroup.length();
-        if(u.n<=0) return;
-        u.e = new undoent[u.n];
-        loopv(entgroup)
-        {
-            u.e->i = entgroup[i];
-            u.e->e = *et->getents()[entgroup[i]];
-            u.e++;
-        };
-        u.e -= u.n;    
-    }
-    else
-    {
-        u.n = 1;
-        u.e = new undoent;
-        u.e->i = id;
-        u.e->e = *et->getents()[id];
+        u.e->i = entgroup[i];
+        u.e->e = *et->getents()[entgroup[i]];
+        u.e++;
     };
+    u.e -= u.n;    
 };
 
-void makeundoent(int id)
+void makeundoent()
 {
     undoblock u;
-    initundoent(u, id);
+    initundoent(u);
     if(u.n) addundo(u);
 };
 
-#define realselent      (sel.ent<0 ? closestent() : sel.ent)
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
+#define implicitent(f)  { if(entgroup.length()==0) { entgroup.add(closestent()); f; entgroup.setsize(0); } else f; }
 #define entfocus(i, f)  { int n = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; addentity(n); et->editent(n)); }
-#define selentedit(f)   { entedit(realselent, makeundoent(n); f); }
 #define setgroup(exp)   { entgroup.setsize(0); const vector<extentity *> &__ = et->getents(); loopv(__) { int n = i; entity &e = *__[n]; if(exp) entgroup.add(n); }; }
 #define groupeditpure(f){ loopv(entgroup) entedit(entgroup[i], f); }
-#define groupedit(f)    { makeundoent(-1); groupeditpure(f); }
-#define selgroupedit(f) { setgroup(pointinsel(sel, e.o)); if(undogoahead) makeundoent(-1); groupeditpure(f); }
+#define groupedit(f)    { implicitent(makeundoent(); groupeditpure(f)); }
+#define selgroupedit(f) { setgroup(pointinsel(sel, e.o)); if(undogoahead) makeundoent(); groupeditpure(f); }
 
 void copyundoents(undoblock &d, undoblock &s)
 {
     entgroup.setsize(0);
     loopi(s.n)
         entgroup.add(s.e[i].i);
-    initundoent(d, -1);
+    initundoent(d);
 };
 
 void pasteundoents(undoblock &u)
@@ -264,8 +253,9 @@ VAR(entselsnap, 0, 0, 1);
 
 void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first)
 {
-    entedit(sel.ent,
-        if(first) makeundoent(n);
+    float r = 0, c = 0;
+
+    entfocus(entgroup.last(),
         plane pl(d, e.o[D[d]]);
         float dist = 0.0f;
         if(pl.rayintersect(o, ray, dist))
@@ -283,15 +273,20 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first)
             int z = dest[d]&(~(sel.grid-1));
             dest.add(sel.grid/2).mask(~(sel.grid-1));
             dest[d] = z;
-            e.o[R[d]] = entselsnap ? dest[R[d]] : v[R[d]];
-            e.o[C[d]] = entselsnap ? dest[C[d]] : v[C[d]];
-        };
+            r = entselsnap ? dest[R[d]] : v[R[d]];
+            c = entselsnap ? dest[C[d]] : v[C[d]];
+        }
+        else
+            return;
     );
+
+    if(first) makeundoent();
+    groupeditpure(e.o[R[d]] = r; e.o[C[d]] = c);   
 };
 
 void pushent(int d, int dist)
 {
-    entedit(sel.ent, e.o[d] += float(dist)); // used with entdrag; so, no undo
+    groupeditpure(e.o[d] += float(dist)); // used with entdrag; so, no undo
 };
 
 void delent()
@@ -302,6 +297,7 @@ void delent()
         et->editent(n);
         continue;
     );
+    cancelsel();
 };
 
 int findtype(char *what)
@@ -356,7 +352,7 @@ bool dropentity(entity &e, int drop = -1)
 void dropent()
 {
     if(noedit(true)) return;
-    selentedit(dropentity(e));
+    groupedit(dropentity(e));
 };
 
 extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
@@ -397,23 +393,23 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     et->getents().add(t);
     int i = et->getents().length()-1;
     t->type = ET_EMPTY;
-    makeundoent(i);
+    toggleselent(i);
+    makeundoent();
     entedit(i, e.type = type);
     return i;
 };
 
-int copyent(int i)
+void copyent(int i)
 {
     entity &c = *et->getents()[i];
-    if(sel.ent<0)
-        return newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4);
+    if(!haveselent())
+        toggleselent(newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4));
     else
-        selentedit(e.type = c.type; 
+        groupedit( e.type = c.type; 
                    e.attr1 = c.attr1; 
                    e.attr2 = c.attr2; 
                    e.attr3 = c.attr3; 
                    e.attr4 = c.attr4);
-    return sel.ent;
 };
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
@@ -427,9 +423,11 @@ COMMAND(newent, "siiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
 
+int efocus = -1;
+
 void eattr(int *prop)
 {
-    entfocus(realselent, switch(*prop)
+    entfocus(efocus, switch(*prop)
     {
         case 0: ints(e.attr1); break;
         case 1: ints(e.attr2); break;
@@ -449,10 +447,10 @@ void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
               e.attr4=*a4;);
 };
 
-ICOMMAND(egrouplen, "", ints(entgroup.length()));
-ICOMMAND(esel,      "s",setgroup(e.type != ET_EMPTY && (sel.ent = n) && execute(args[0])));
-ICOMMAND(insel,     "", entfocus(realselent, ints(havesel && pointinsel(sel, e.o))));
-ICOMMAND(et,        "", entfocus(realselent, result(et->entname(e.type))));
+ICOMMAND(esellen,   "", ints(entgroup.length()));
+ICOMMAND(esel,      "s",setgroup(e.type != ET_EMPTY && (efocus = n) >= 0 && execute(args[0]) > 0));
+ICOMMAND(insel,     "", entfocus(efocus, ints(havesel && pointinsel(sel, e.o))));
+ICOMMAND(et,        "", entfocus(efocus, result(et->entname(e.type))));
 COMMANDN(ea, eattr, "i");
 COMMANDN(entedit, enteditor, "siiii");
 
