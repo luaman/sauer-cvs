@@ -33,7 +33,7 @@ struct rpgobj
     rpgobjset &os;
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL),
-        name(_name), model(NULL), loot(false), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), os(_os), menutime(0) {};
+        name(_name), model(NULL), loot(false), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), menutime(0), os(_os) {};
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 
