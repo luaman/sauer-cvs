@@ -100,7 +100,7 @@ struct tiger
         state[2] = c;
     };
 
-    static void hash(const uchar *str, int length, hashval &val)
+    static void hash(const uchar *str, size_t length, hashval &val)
     {
         static bool init = false;
         if(!init) { gensboxes(); init = true; }; 
@@ -111,7 +111,7 @@ struct tiger
         val.chunks[1] = 0xFEDCBA9876543210ULL;
         val.chunks[2] = 0xF096A5B4C3B2E187ULL;
 
-        int i = length, j;
+        uint i = length, j;
         for(; i >= 64; i -= 64, str += 8)
         {
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN

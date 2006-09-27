@@ -7,7 +7,7 @@
 
 static int parsedigits(ushort *digits, const char *s)
 {
-    int slen = strlen(s), len = (slen+2*sizeof(ushort)-1)/(2*sizeof(ushort));
+    size_t slen = strlen(s), len = (slen+2*sizeof(ushort)-1)/(2*sizeof(ushort));
     memset(digits, 0, len*sizeof(ushort));
     loopi(slen)
     {
@@ -500,7 +500,7 @@ struct ecpoint
     void write(vector<uchar> &buf)
     {
         static const gfield halfP(gfield(gfield::P).rshift(1));
-        buf.add((y > halfP ? 0x80 : 0) | x.len*sizeof(gfield::digit));
+        buf.add((uchar)((y > halfP ? 0x80 : 0) | x.len*sizeof(gfield::digit)));
         x.writedigits(buf);
     };
 
