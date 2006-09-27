@@ -147,23 +147,12 @@ struct rpgobj
         };
     };
 
-    void treemenu()
-    {
-        settreeca(&curaction);
-        for(rpgaction *a = actions; a; a = a->next) if(treebutton(a->initiate, "chat.jpg")&G3D_UP)
-        {
-            if(*a->script) { os.pushobj(this); execute(a->script); };
-        };
-        if(!ai) if(treebutton("take", "hand.jpg")&G3D_UP) { os.take(this, os.playerobj); };
-        if(ai) if(treebutton("trade", "coins.jpg")&G3D_UP) { conoutf("trade"); };
-    };
-
     void g3d_menu()
     {
         if(!menutime) return;
         loopi(2)
         {
-            g3d_start(i!=0, vec(ent->o).add(vec(0, 0, 2)), menutime);
+            g3d_start(i!=0, vec(ent->o).add(vec(0, 0, 2)), menutime, 0.02f);
             if(abovetext) g3d_text(abovetext, 0xDDFFDD);
             for(rpgaction *a = actions; a; a = a->next) if(g3d_button(a->initiate, 0xFFFFFF, "chat.jpg")&G3D_UP)
             {

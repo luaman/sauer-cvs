@@ -634,6 +634,18 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\crypto.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\engine\server.cpp"
 					>
 					<FileConfiguration
@@ -1046,18 +1058,6 @@
 				<File
 					RelativePath="..\engine\spheretree.h"
 					>
-				</File>
-				<File
-					RelativePath="..\engine\treeui.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\water.cpp"

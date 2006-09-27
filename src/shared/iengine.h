@@ -186,16 +186,11 @@ extern void neterr(char *s);
 extern void gets2c();
 extern bool netmapstart();
 
-// treeui
-
-extern int treebutton(char *name, char *texture);
-extern void settreeca(char **_ca);
-
 // 3dgui
 
 enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
 
-extern void g3d_start(bool renderpass, vec &origin, int starttime);
+extern void g3d_start(bool renderpass, vec &origin, int starttime, float basescale);
 extern void g3d_end();
 extern int g3d_text(char *text, int color, char *icon = NULL);
 extern int g3d_button(char *text, int color, char *icon = NULL);

@@ -127,20 +127,6 @@ struct rpgclient : igameclient
         os.render();
     };
     
-    void treemenu()
-    {
-        settreeca(&curaction);
-        if(os.pointingat)
-        {
-            os.pointingat->treemenu();
-        };
-        
-        if(treebutton("attack", "sword.jpg")&G3D_PRESSED)
-        {
-        };
-        if(treebutton("inventory", "chest.jpg")&G3D_UP) { conoutf("inventory"); };
-    };
-    
     void g3d_gamemenus() { os.g3d_npcmenus(); };
 
     void writegamedata(vector<char> &extras) {};

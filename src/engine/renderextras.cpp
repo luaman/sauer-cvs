@@ -402,7 +402,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             glEnd();
         };
 
-        int coff = renderconsole(w, h);
+        /*int coff = */ renderconsole(w, h);
+        // can render stuff below console output here        
 
         if(!hidestats)
         {
@@ -417,8 +418,6 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         };
 
         if(closeent[0]) draw_text(closeent, FONTH/2, abovegameplayhud);
-
-        rendertreeui(coff, hoff);
 
         cl->gameplayhud(w, h);
         render_texture_panel(w, h);

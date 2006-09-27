@@ -1,5 +1,8 @@
 // creates multiple gui windows that float inside the 3d world
 
+// special feature is that its mostly *modeless*: you can use this menu while playing, without turning menus on or off
+// implementationwise, it is *stateless*: it keeps no internal gui structure, hit tests are instant, usage & implementation is greatly simplified
+
 #include "pch.h"
 #include "engine.h"
 
@@ -32,10 +35,10 @@ void g3d_render()
     glDepthFunc(GL_LESS);
 };
 
-void g3d_start(bool _renderpass, vec &origin, int starttime)
+void g3d_start(bool _renderpass, vec &origin, int starttime, float basescale)
 {
     renderpass = _renderpass;
-    float scale = 0.04f*min((lastmillis-starttime)/300.0f, 1.0f);
+    float scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
     vec intersectionpoint;
     if(!renderpass)
     {

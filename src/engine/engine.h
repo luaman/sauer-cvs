@@ -357,9 +357,6 @@ extern model *loadmodel(const char *name, int i = -1);
 // particles
 extern void particleinit();
 
-// treeui
-extern void rendertreeui(int coff, int hoff);
-
 // 3dgui
 extern void g3d_render();
 extern bool g3d_windowhit(bool on, bool act);
