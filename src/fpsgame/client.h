@@ -18,8 +18,8 @@ struct clientcom : iclientcom
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, "C", self->toserver(args[0]));
-        CCOMMAND(clientcom, name, "s", if(args[0][0]) { self->c2sinit = false; filtertext(self->player1->name, args[0], false, MAXNAMELEN); });
-        CCOMMAND(clientcom, team, "s", if(args[0][0]) { self->c2sinit = false; filtertext(self->player1->team, args[0], false, MAXTEAMLEN); });
+        CCOMMAND(clientcom, name, "s", self->switchname(args[0]));
+        CCOMMAND(clientcom, team, "s", self->switchteam(args[0]));
         CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
@@ -28,6 +28,26 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, setteam, "s", self->setteam(args[0], args[1]));
         CCOMMAND(clientcom, getmap, "", self->getmap());
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
+    };
+
+    void switchname(const char *name)
+    {
+        if(name[0]) 
+        { 
+            c2sinit = false; 
+            filtertext(player1->name, name, false, MAXNAMELEN);
+        }
+        else conoutf("your name is: %s", player1->name);
+    };
+
+    void switchteam(const char *team)
+    {
+        if(team[0]) 
+        { 
+            c2sinit = false; 
+            filtertext(player1->team, team, false, MAXTEAMLEN);
+        }
+        else conoutf("your team is: %s", player1->team);
     };
 
     int numchannels() { return 3; };
