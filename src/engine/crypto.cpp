@@ -5,7 +5,7 @@
 
 /* Elliptic curve cryptography based on NIST DSS prime curves. */
 
-static int readdigits(ushort *digits, const char *s)
+static int parsedigits(ushort *digits, const char *s)
 {
     int slen = strlen(s), len = (slen+2*sizeof(ushort)-1)/(2*sizeof(ushort));
     memset(digits, 0, len*sizeof(ushort));
@@ -19,7 +19,7 @@ static int readdigits(ushort *digits, const char *s)
     return len;
 };
 
-static void writedigits(const ushort *digits, int len, FILE *out)
+static void printdigits(const ushort *digits, int len, FILE *out)
 {
     loopi(len) fprintf(out, "%.4x", digits[len-i-1]);
 };
@@ -37,12 +37,36 @@ template<int BI_DIGITS> struct bigint
 
     bigint() {};
     bigint(digit n) { if(n) { len = 1; digits[0] = n; } else len = 0; };
-    bigint(const char *s) { len = readdigits(digits, s); };
+    bigint(const char *s) { len = parsedigits(digits, s); };
     template<int Y_SIZE> bigint(const bigint<Y_SIZE> &y) { *this = y; };
 
     void zero() { len = 0; };
 
-    void write(FILE *out) const { writedigits(digits, len, out); };
+    void print(FILE *out) const { printdigits(digits, len, out); };
+
+    void writedigits(vector<uchar> &buf) const
+    {
+        loopi(len)
+        {
+            digit d = digits[i];
+            loopj(sizeof(digit))
+            {
+                buf.add(d&0xFF);
+                d >>= 8;
+            };
+        };
+    };
+
+    void readdigits(const vector<uchar> &buf, int offset, int newlen)
+    {
+        len = newlen;
+        loopi(len)
+        {
+            digit d = 0;
+            loopj(sizeof(digit)) d |= buf[offset+i*sizeof(digit)+j]<<(j*8);
+            digits[i] = d;
+        };
+    };
  
     template<int Y_SIZE> bigint &operator=(const bigint<Y_SIZE> &y)
     {
@@ -225,8 +249,9 @@ struct gfield : gfint
     {
         if(x < y)
         {
-            gfint::add(x, P);
-            gfint::sub(*this, y);
+            gfint tmp; /* necessary if this==&y, using this instead would clobber y */
+            tmp.add(x, P);
+            gfint::sub(tmp, y);
         }
         else gfint::sub(x, y);
         return *this;
@@ -245,7 +270,7 @@ struct gfield : gfint
 
     template<int X_DIGITS, int Y_DIGITS> gfield &mul(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
-        bigint<2*GF_DIGITS> result;
+        bigint<X_DIGITS+Y_DIGITS> result;
         result.mul(x, y);
         reduce(result);
         return *this;
@@ -410,22 +435,31 @@ struct ecpoint
 
     void add(const ecpoint &q)
     {
-        gfield l;
-        if(*this!=q)
+        if(q.x.iszero() && q.y.iszero()) return;
+        if(x.iszero() && y.iszero()) { *this = q; return; };
+
+        gfield l, tmp;
+        if(x!=q.x)
         {
-            l.invert(gfield().sub(q.x, x));
-            l.mul(gfield().sub(q.y, y));
+            l.invert(tmp.sub(q.x, x));
+            l.mul(tmp.sub(q.y, y));
+        }
+        else if(y==q.y)
+        {
+            static const bigint<1> three(3);
+            l.invert(tmp.add(y, y));
+            l.mul(tmp.square(x).mul(three).sub(three));
         }
         else
         {
-            static const bigint<1> three(3);
-            l.invert(gfield().add(y, y));
-            l.mul(gfield().square(x).mul(three).sub(three));
+            x.zero();
+            y.zero();
+            return;
         };
             
         gfield x3;
         x3.square(l).sub(x).sub(q.x);
-        y.sub(gfield().sub(x, x3).mul(l), y);
+        y.sub(tmp.sub(x, x3).mul(l), y);
         x = x3;
     };
 
@@ -435,23 +469,46 @@ struct ecpoint
         y.zero();
         for(int i = q.numbits()-1; i >= 0; i--)
         {
+            ecpoint dz = *this;
             add(*this);
+            gfield oldy(y);
+            ecpoint qz = *this;
             if(q.hasbit(i)) add(p);
+            if(oldy.iszero()==0 && y.iszero())
+            {
+                puts("HERE");
+                dz.add(dz);
+                if(q.hasbit(i)) dz.add(p);
+            };
         };
     };
-    template<int Q_DIGITS> void mul(const bigint<Q_DIGITS> q) { mul(ecpoint(*this), q); };
+    template<int Q_DIGITS> void mul(const bigint<Q_DIGITS> q) { ecpoint tmp(*this); mul(tmp, q); };
 
     bool calcy(int ybit)
     {
         static const bigint<1> three(3);
-        gfield t;
-        t.square(x).mul(x).sub(gfield().mul(three, x)).add(B);
+        gfield y2, tmp;
+        y2.square(x).mul(x).sub(tmp.mul(three, x)).add(B);
 
-        if(!y.sqrt(t)) { y.zero(); return false; };
+        if(!y.sqrt(y2)) { y.zero(); return false; };
 
         static const gfield halfP(gfield(gfield::P).rshift(1));
         if(ybit ? y <= halfP : y > halfP) y.neg(); 
         return true;
+    };
+
+    void write(vector<uchar> &buf)
+    {
+        static const gfield halfP(gfield(gfield::P).rshift(1));
+        buf.add((y > halfP ? 0x80 : 0) | x.len*sizeof(gfield::digit));
+        x.writedigits(buf);
+    };
+
+    void read(const vector<uchar> &buf)
+    {
+        int len = buf[0]&0x7F, ybit = buf[0]>>7;
+        x.readdigits(buf, 1, len/sizeof(gfield::digit));
+        calcy(ybit);
     };
 };
 
@@ -494,63 +551,125 @@ ecpoint ecpoint::base = {
 #error Unsupported GF
 #endif
 
-void testcrypt(char *s)
+void testgf(char *s)
 {
     bigint<64> p(gfield::P);
-    printf("p: "); p.write(stdout); putchar('\n');
+    printf("p: "); p.print(stdout); putchar('\n');
     p.rshift(3);
-    printf("p/2^3: "); p.write(stdout); putchar('\n');
+    printf("p/2^3: "); p.print(stdout); putchar('\n');
     p.rshift(32);
-    printf("p/2^35: "); p.write(stdout); putchar('\n');
+    printf("p/2^35: "); p.print(stdout); putchar('\n');
     p.rshift(64);
-    printf("p/2^99: "); p.write(stdout); putchar('\n');
+    printf("p/2^99: "); p.print(stdout); putchar('\n');
 
     bigint<64> one(1), t32(1), t64(1), t96(1), t128(1), t192(1), t224(1), t256(1), t384(1), t521(1), p192, p224, p256, p384, p521;
-    t32.lshift(32); printf("2^%d: ", t32.numbits()-1); t32.write(stdout); putchar('\n');
-    t64.lshift(64); printf("2^%d: ", t64.numbits()-1); t64.write(stdout); putchar('\n');
-    t96.lshift(96); printf("2^%d: ", t96.numbits()-1); t96.write(stdout); putchar('\n');
-    t128.lshift(128); printf("2^%d: ", t128.numbits()-1); t128.write(stdout); putchar('\n');
-    t192.lshift(192); printf("2^%d: ", t192.numbits()-1); t192.write(stdout); putchar('\n');
-    t224.lshift(224); printf("2^%d: ", t224.numbits()-1); t224.write(stdout); putchar('\n');
-    t256.lshift(256); printf("2^%d: ", t256.numbits()-1); t256.write(stdout); putchar('\n');
-    t384.lshift(384); printf("2^%d: ", t384.numbits()-1); t384.write(stdout); putchar('\n');
-    t521.lshift(521); printf("2^%d: ", t521.numbits()-1); t521.write(stdout); putchar('\n');
+    t32.lshift(32); printf("2^%d: ", t32.numbits()-1); t32.print(stdout); putchar('\n');
+    t64.lshift(64); printf("2^%d: ", t64.numbits()-1); t64.print(stdout); putchar('\n');
+    t96.lshift(96); printf("2^%d: ", t96.numbits()-1); t96.print(stdout); putchar('\n');
+    t128.lshift(128); printf("2^%d: ", t128.numbits()-1); t128.print(stdout); putchar('\n');
+    t192.lshift(192); printf("2^%d: ", t192.numbits()-1); t192.print(stdout); putchar('\n');
+    t224.lshift(224); printf("2^%d: ", t224.numbits()-1); t224.print(stdout); putchar('\n');
+    t256.lshift(256); printf("2^%d: ", t256.numbits()-1); t256.print(stdout); putchar('\n');
+    t384.lshift(384); printf("2^%d: ", t384.numbits()-1); t384.print(stdout); putchar('\n');
+    t521.lshift(521); printf("2^%d: ", t521.numbits()-1); t521.print(stdout); putchar('\n');
 
     p192.sub(t192, t64); p192.sub(one);
-    printf("p192: "); p192.write(stdout); putchar('\n');
+    printf("p192: "); p192.print(stdout); putchar('\n');
     p224.sub(t224, t96); p224.add(one);
-    printf("p224: "); p224.write(stdout); putchar('\n');
+    printf("p224: "); p224.print(stdout); putchar('\n');
     p256.sub(t256, t224); p256.add(t192); p256.add(t96); p256.sub(one);
-    printf("p256: "); p256.write(stdout); putchar('\n');
+    printf("p256: "); p256.print(stdout); putchar('\n');
     p384.sub(t384, t128); p384.sub(t96); p384.add(t32); p384.sub(one);
-    printf("p384: "); p384.write(stdout); putchar('\n');
+    printf("p384: "); p384.print(stdout); putchar('\n');
     p521.sub(t521, one);
-    printf("p521: "); p521.write(stdout); putchar('\n');
+    printf("p521: "); p521.print(stdout); putchar('\n');
 
     gfield n(s);
-    printf("n: "); n.write(stdout); putchar('\n');
+    printf("n: "); n.print(stdout); putchar('\n');
     n = gfield(s).pow(bigint<1>(2));
-    printf("n^2: "); n.write(stdout); putchar('\n');
+    printf("n^2: "); n.print(stdout); putchar('\n');
     n = gfield(s).pow(bigint<1>(5));
-    printf("n^5: "); n.write(stdout); putchar('\n');
+    printf("n^5: "); n.print(stdout); putchar('\n');
     n = gfield(s).pow(bigint<1>(100));
-    printf("n^100: "); n.write(stdout); putchar('\n');
+    printf("n^100: "); n.print(stdout); putchar('\n');
     n = gfield(s).pow(bigint<1>(10000));
-    printf("n^10000: "); n.write(stdout); putchar('\n');
+    printf("n^10000: "); n.print(stdout); putchar('\n');
     n = gfield(s);
     if(!n.sqrt()) puts("no square root!");
-    else { printf("sqrt(n): "); n.write(stdout); putchar('\n'); };
+    else { printf("sqrt(n): "); n.print(stdout); putchar('\n'); };
 
     gfield x(s);
-    printf("x: "); x.write(stdout); putchar('\n');
+    printf("x: "); x.print(stdout); putchar('\n');
     x.invert();
-    printf("1/x: "); x.write(stdout); putchar('\n');
+    printf("1/x: "); x.print(stdout); putchar('\n');
     x.mul(gfield(s));
-    printf("(1/x)*x: "); x.write(stdout); putchar('\n');
+    printf("(1/x)*x: "); x.print(stdout); putchar('\n');
     x.sub(gfield(42));
-    printf("(1/x)*x-42: "); x.write(stdout); putchar('\n');
+    printf("(1/x)*x-42: "); x.print(stdout); putchar('\n');
 };
 
-COMMAND(testcrypt, "s");
+COMMAND(testgf, "s");
 
+void testcurve(char *s)
+{
+    tiger::hashval hash;
+    tiger::hash((uchar *)s, strlen(s), hash);
+
+    printf("hashing: %s to: ", s);
+    loopi(sizeof(hash.bytes)) printf("%.2x", hash.bytes[sizeof(hash.bytes)-i-1]);
+    putchar('\n');
+    bigint<8*sizeof(hash.bytes)/GF_DIGIT_BITS> privkey;
+    memcpy(privkey.digits, hash.bytes, sizeof(privkey.digits));
+    privkey.len = 8*sizeof(hash.bytes)/GF_DIGIT_BITS;
+    privkey.shrink();
+    printf("private key: "); privkey.print(stdout); putchar('\n');
+
+    ecpoint c(ecpoint::base);
+    printf("base.x: "); c.x.print(stdout); putchar('\n');
+    printf("base.y: "); c.y.print(stdout); putchar('\n');
+
+    c.mul(privkey);
+    vector<uchar> pubkey;
+    c.write(pubkey);
+
+    printf("out.x: "); c.x.print(stdout); putchar('\n');
+    printf("out.y: "); c.y.print(stdout); putchar('\n');
+
+    printf("public key: ");
+    loopv(pubkey) printf("%.2x", pubkey[pubkey.length()-i-1]);
+    putchar('\n');
+
+    ecpoint q;
+    q.read(pubkey);
+
+    printf("in.x: "); q.x.print(stdout); putchar('\n');
+    printf("in.y: "); q.y.print(stdout); putchar('\n');
+
+    if(q==c) puts("key serialized OK");
+    else puts("key serialization FAILED");
+
+    /* encrypts with pubkey and "random" session, msg is transmitted, secret is withheld and used as cipher key */
+    gfint session(time(NULL));
+    c = ecpoint::base;
+    c.mul(session);
+    vector<uchar> msg;
+    c.write(msg);
+
+    q.read(pubkey);
+    q.mul(session);
+    gfint secret(q.x);
+    printf("encrypted secret: "); secret.print(stdout); putchar('\n');
+    printf("encrypted message: "); loopv(msg) printf("%.2x", msg[msg.length()-i-1]); putchar('\n');
+
+    /* decrypt transmitted msg with privkey to find secret cipher key */
+    q.read(msg);
+    q.mul(privkey);
+    printf("decrypted secret: "); q.x.print(stdout); putchar('\n');
+    if(q.x==secret) puts("secret decrypted OK");
+    else puts("secret decryption FAILED");
+
+    putchar('\n');
+};
+
+COMMAND(testcurve, "s");
     
