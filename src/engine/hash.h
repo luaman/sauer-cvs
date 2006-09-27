@@ -169,9 +169,9 @@ struct xtea
         chunk y = src->chunks[0], z = src->chunks[1], sum = 0;
         loopi(32)
         {
-            y += ((z<<4) ^ (z>>5)) + z ^ sum + key.chunks[sum&3];
+            y += (((z<<4) ^ (z>>5)) + z) ^ (sum + key.chunks[sum&3]);
             sum += 0x9E3779B9;
-            z += ((y<<4) ^ (y>>5)) + y ^ sum + key.chunks[(sum>>11) & 3];
+            z += (((y<<4) ^ (y>>5)) + y) ^ (sum + key.chunks[(sum>>11) & 3]);
         };
         dst->chunks[0] = y;
         dst->chunks[1] = z;
@@ -183,9 +183,9 @@ struct xtea
 
         loopi(32)
         {
-            z -= ((y <<4) ^ (y >> 5)) + y ^ sum + key.chunks[(sum>>11) & 3];
+            z -= (((y <<4) ^ (y >> 5)) + y) ^ (sum + key.chunks[(sum>>11) & 3]);
             sum -= 0x9E3779B9;
-            y -= ((z <<4) ^ (z >> 5)) + z ^ sum + key.chunks[sum&3];
+            y -= (((z <<4) ^ (z >> 5)) + z) ^ (sum + key.chunks[sum&3]);
         };
 
         dst->chunks[0] = y;
