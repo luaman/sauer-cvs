@@ -127,6 +127,7 @@ void entitiesinoctanodes()
 extern selinfo sel;
 extern bool havesel, selectcorners;
 extern bool undogoahead;
+int efocus = -1;
 
 int closestent()        // used for delent and edit mode ent display
 {
@@ -145,7 +146,7 @@ int closestent()        // used for delent and edit mode ent display
             bdist = dist;
         };
     };
-    return bdist==99999 ? -1 : best;
+    return efocus = (bdist==99999 ? -1 : best);
 };
 
 bool pointinsel(selinfo &sel, vec &o)
@@ -200,9 +201,9 @@ void makeundoent()
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
 #define implicitent(f)  { if(entgroup.length()==0) { entgroup.add(closestent()); f; entgroup.setsize(0); } else f; }
-#define entfocus(i, f)  { int n = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
+#define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; addentity(n); et->editent(n)); }
-#define setgroup(exp)   { entgroup.setsize(0); const vector<extentity *> &__ = et->getents(); loopv(__) { int n = i; entity &e = *__[n]; if(exp) entgroup.add(n); }; }
+#define setgroup(exp)   { entgroup.setsize(0); loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
 #define groupeditpure(f){ loopv(entgroup) entedit(entgroup[i], f); }
 #define groupedit(f)    { implicitent(makeundoent(); groupeditpure(f)); }
 #define selgroupedit(f) { setgroup(pointinsel(sel, e.o)); if(undogoahead) makeundoent(); groupeditpure(f); }
@@ -423,8 +424,6 @@ COMMAND(newent, "siiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
 
-int efocus = -1;
-
 void eattr(int *prop)
 {
     entfocus(efocus, switch(*prop)
@@ -448,7 +447,7 @@ void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
 };
 
 ICOMMAND(esellen,   "", ints(entgroup.length()));
-ICOMMAND(esel,      "s",setgroup(e.type != ET_EMPTY && (efocus = n) >= 0 && execute(args[0]) > 0));
+ICOMMAND(esel,      "s",setgroup(e.type != ET_EMPTY && execute(args[0]) > 0));
 ICOMMAND(insel,     "", entfocus(efocus, ints(havesel && pointinsel(sel, e.o))));
 ICOMMAND(et,        "", entfocus(efocus, result(et->entname(e.type))));
 COMMANDN(ea, eattr, "i");
