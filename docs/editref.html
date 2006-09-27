@@ -307,12 +307,27 @@ Positions the selected entity according to the entdrop variable.
 Sets the state of all locked triggers with tag T to N.
 </p>
 
-<pre>enttype</pre>
+<pre>esel X</pre>
+<p>
+Takes an boolean expression as argument. Selects all entities that evaluate to true for the given expression.
+</p>
+
+<pre>esellen</pre>
+<p>
+Returns the number of entities in the current selection.
+</p>
+
+<pre>insel</pre>
+<p>
+Returns true if the selected entity is inside the blue explicit selection box. Implicit cube selections don't count.
+</p>
+
+<pre>et</pre>
 <p>
 Returns a string for scripts that has the 'type' of the selected entity.
 </p>
 
-<pre>entattr N</pre>
+<pre>ea N</pre>
 <p>
 Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
 
