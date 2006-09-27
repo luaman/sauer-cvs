@@ -146,3 +146,52 @@ struct tiger
 
 tiger::chunk tiger::sboxes[4*256];
 
+/* Based on XTEA by David Wheeler and Roger Needham */
+
+struct xtea
+{
+    typedef uint chunk;
+
+    union key
+    {
+        uchar bytes[16];
+        chunk chunks[4];
+    };
+
+    union block
+    {
+        uchar bytes[8];
+        chunk chunks[2];
+    };
+
+    static void encrypt(block *dst, const block *src, const key &key)
+    {
+        chunk y = src->chunks[0], z = src->chunks[1], sum = 0;
+        loopi(32)
+        {
+            y += ((z<<4) ^ (z>>5)) + z ^ sum + key.chunks[sum&3];
+            sum += 0x9E3779B9;
+            z += ((y<<4) ^ (y>>5)) + y ^ sum + key.chunks[(sum>>11) & 3];
+        };
+        dst->chunks[0] = y;
+        dst->chunks[1] = z;
+    };
+
+    static void decrypt(block *dst, const block *src, const key &key)
+    {
+        chunk y = src->chunks[0], z = src->chunks[1], sum = 0xC6EF3720;
+
+        loopi(32)
+        {
+            z -= ((y <<4) ^ (y >> 5)) + y ^ sum + key.chunks[(sum>>11) & 3];
+            sum -= 0x9E3779B9;
+            y -= ((z <<4) ^ (z >> 5)) + z ^ sum + key.chunks[sum&3];
+        };
+
+        dst->chunks[0] = y;
+        dst->chunks[1] = z;
+    };
+};
+
+
+

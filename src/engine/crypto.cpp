@@ -661,12 +661,23 @@ void testcurve(char *s)
     printf("encrypted secret: "); secret.print(stdout); putchar('\n');
     printf("encrypted message: "); loopv(msg) printf("%.2x", msg[msg.length()-i-1]); putchar('\n');
 
+    xtea::block b;
+    b.chunks[0] = randomMT();
+    b.chunks[1] = randomMT();
+    printf("random: %.8x%.8x\n", b.chunks[1], b.chunks[0]);
+    xtea::encrypt(&b, &b, *(xtea::key *)secret.digits);
+    printf("xtea random: %.8x%.8x\n", b.chunks[1], b.chunks[0]);
+
+
     /* decrypt transmitted msg with privkey to find secret cipher key */
     q.read(msg);
     q.mul(privkey);
     printf("decrypted secret: "); q.x.print(stdout); putchar('\n');
     if(q.x==secret) puts("secret decrypted OK");
     else puts("secret decryption FAILED");
+
+    xtea::decrypt(&b, &b, *(xtea::key *)q.x.digits);
+    printf("de-xtea random: %.8x%.8x\n", b.chunks[1], b.chunks[0]);
 
     putchar('\n');
 };
