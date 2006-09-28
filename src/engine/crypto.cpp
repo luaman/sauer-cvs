@@ -218,9 +218,6 @@ typedef bigint<GF_DIGITS+1> gfint;
  */
 struct gfield : gfint
 {
-    typedef ushort digit;
-    typedef uint dbldigit;
-
     gfield() {};
     gfield(digit n) : gfint(n) {};
     gfield(const char *s) : gfint(s) {};
