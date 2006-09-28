@@ -209,9 +209,7 @@ template<int BI_DIGITS> struct bigint
 };
 
 #define GF_BITS         192
-#define GF_DIGIT_BITS   16
-#define GF_DIGIT_MASK   ((1<<GF_DIGIT_BITS)-1)
-#define GF_DIGITS       ((GF_BITS+GF_DIGIT_BITS-1)/GF_DIGIT_BITS)
+#define GF_DIGITS       ((GF_BITS+BI_DIGIT_BITS-1)/BI_DIGIT_BITS)
 
 typedef bigint<GF_DIGITS+1> gfint;
 
@@ -284,32 +282,32 @@ struct gfield : gfint
         memcpy(digits, result.digits, len*sizeof(digit));
         shrink();
 
-        if(result.len > 192/GF_DIGIT_BITS)
+        if(result.len > 192/BI_DIGIT_BITS)
         {
             gfield s;
-            memcpy(s.digits, &result.digits[192/GF_DIGIT_BITS], min(result.len-192/GF_DIGIT_BITS, 64/GF_DIGIT_BITS)*sizeof(digit));
-            if(result.len < 256/GF_DIGIT_BITS) memset(&s.digits[result.len-192/GF_DIGIT_BITS], 0, (256/GF_DIGIT_BITS-result.len)*sizeof(digit));
-            memcpy(&s.digits[64/GF_DIGIT_BITS], s.digits, 64/GF_DIGIT_BITS*sizeof(digit));
-            s.len = 128/GF_DIGIT_BITS;
+            memcpy(s.digits, &result.digits[192/BI_DIGIT_BITS], min(result.len-192/BI_DIGIT_BITS, 64/BI_DIGIT_BITS)*sizeof(digit));
+            if(result.len < 256/BI_DIGIT_BITS) memset(&s.digits[result.len-192/BI_DIGIT_BITS], 0, (256/BI_DIGIT_BITS-result.len)*sizeof(digit));
+            memcpy(&s.digits[64/BI_DIGIT_BITS], s.digits, 64/BI_DIGIT_BITS*sizeof(digit));
+            s.len = 128/BI_DIGIT_BITS;
             s.shrink();
             add(s);
 
-            if(result.len > 256/GF_DIGIT_BITS)
+            if(result.len > 256/BI_DIGIT_BITS)
             {
-                memset(s.digits, 0, 64/GF_DIGIT_BITS*sizeof(digit));
-                memcpy(&s.digits[64/GF_DIGIT_BITS], &result.digits[256/GF_DIGIT_BITS], min(result.len-256/GF_DIGIT_BITS, 64/GF_DIGIT_BITS)*sizeof(digit));
-                if(result.len < 320/GF_DIGIT_BITS) memset(&s.digits[result.len+(64-256)/GF_DIGIT_BITS], 0, (320/GF_DIGIT_BITS-result.len)*sizeof(digit));
-                memcpy(&s.digits[128/GF_DIGIT_BITS], &s.digits[64/GF_DIGIT_BITS], 64/GF_DIGIT_BITS*sizeof(digit));
+                memset(s.digits, 0, 64/BI_DIGIT_BITS*sizeof(digit));
+                memcpy(&s.digits[64/BI_DIGIT_BITS], &result.digits[256/BI_DIGIT_BITS], min(result.len-256/BI_DIGIT_BITS, 64/BI_DIGIT_BITS)*sizeof(digit));
+                if(result.len < 320/BI_DIGIT_BITS) memset(&s.digits[result.len+(64-256)/BI_DIGIT_BITS], 0, (320/BI_DIGIT_BITS-result.len)*sizeof(digit));
+                memcpy(&s.digits[128/BI_DIGIT_BITS], &s.digits[64/BI_DIGIT_BITS], 64/BI_DIGIT_BITS*sizeof(digit));
                 s.len = GF_DIGITS;
                 s.shrink();
                 add(s);
 
-                if(result.len > 320/GF_DIGIT_BITS)
+                if(result.len > 320/BI_DIGIT_BITS)
                 {
-                    memcpy(s.digits, &result.digits[320/GF_DIGIT_BITS], min(result.len-320/GF_DIGIT_BITS, 64/GF_DIGIT_BITS)*sizeof(digit));
-                    if(result.len < 384/GF_DIGIT_BITS) memset(&s.digits[result.len-320/GF_DIGIT_BITS], 0, (384/GF_DIGIT_BITS-result.len)*sizeof(digit));
-                    memcpy(&s.digits[64/GF_DIGIT_BITS], s.digits, 64/GF_DIGIT_BITS*sizeof(digit));
-                    memcpy(&s.digits[128/GF_DIGIT_BITS], s.digits, 64/GF_DIGIT_BITS*sizeof(digit));
+                    memcpy(s.digits, &result.digits[320/BI_DIGIT_BITS], min(result.len-320/BI_DIGIT_BITS, 64/BI_DIGIT_BITS)*sizeof(digit));
+                    if(result.len < 384/BI_DIGIT_BITS) memset(&s.digits[result.len-320/BI_DIGIT_BITS], 0, (384/BI_DIGIT_BITS-result.len)*sizeof(digit));
+                    memcpy(&s.digits[64/BI_DIGIT_BITS], s.digits, 64/BI_DIGIT_BITS*sizeof(digit));
+                    memcpy(&s.digits[128/BI_DIGIT_BITS], s.digits, 64/BI_DIGIT_BITS*sizeof(digit));
                     s.len = GF_DIGITS;
                     s.shrink();
                     add(s);
@@ -618,9 +616,9 @@ void testcurve(char *s)
     printf("hashing: %s to: ", s);
     loopi(sizeof(hash.bytes)) printf("%.2x", hash.bytes[sizeof(hash.bytes)-i-1]);
     putchar('\n');
-    bigint<8*sizeof(hash.bytes)/GF_DIGIT_BITS> privkey;
+    bigint<8*sizeof(hash.bytes)/BI_DIGIT_BITS> privkey;
     memcpy(privkey.digits, hash.bytes, sizeof(privkey.digits));
-    privkey.len = 8*sizeof(hash.bytes)/GF_DIGIT_BITS;
+    privkey.len = 8*sizeof(hash.bytes)/BI_DIGIT_BITS;
     privkey.shrink();
     printf("private key: "); privkey.print(stdout); putchar('\n');
 
