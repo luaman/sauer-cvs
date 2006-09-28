@@ -40,7 +40,7 @@ template<int BI_DIGITS> struct bigint
     bigint() {};
     bigint(digit n) { if(n) { len = 1; digits[0] = n; } else len = 0; };
     bigint(const char *s) { len = parsedigits(digits, BI_DIGITS, s); shrink(); };
-    template<int Y_SIZE> bigint(const bigint<Y_SIZE> &y) { *this = y; };
+    template<int Y_DIGITS> bigint(const bigint<Y_DIGITS> &y) { *this = y; };
 
     void zero() { len = 0; };
 
@@ -70,7 +70,7 @@ template<int BI_DIGITS> struct bigint
         };
     };
  
-    template<int Y_SIZE> bigint &operator=(const bigint<Y_SIZE> &y)
+    template<int Y_DIGITS> bigint &operator=(const bigint<Y_DIGITS> &y)
     {
         len = y.len;
         memcpy(digits, y.digits, len*sizeof(digit));
@@ -224,9 +224,9 @@ struct gfield : gfint
     gfield(digit n) : gfint(n) {};
     gfield(const char *s) : gfint(s) {};
 
-    template<int Y_SIZE> gfield(const bigint<Y_SIZE> &y) : gfint(y) {};
+    template<int Y_DIGITS> gfield(const bigint<Y_DIGITS> &y) : gfint(y) {};
     
-    template<int Y_SIZE> gfield &operator=(const bigint<Y_SIZE> &y)
+    template<int Y_DIGITS> gfield &operator=(const bigint<Y_DIGITS> &y)
     { 
         gfint::operator=(y);
         return *this;
