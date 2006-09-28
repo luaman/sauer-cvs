@@ -5,15 +5,17 @@
 
 /* Elliptic curve cryptography based on NIST DSS prime curves. */
 
-static int parsedigits(ushort *digits, const char *s)
+static int parsedigits(ushort *digits, int maxlen, const char *s)
 {
     size_t slen = strlen(s), len = (slen+2*sizeof(ushort)-1)/(2*sizeof(ushort));
+    if(len>maxlen) return 0;
     memset(digits, 0, len*sizeof(ushort));
     loopi(slen)
     {
         int c = s[slen-i-1];
         if(isalpha(c)) c = toupper(c) - 'A' + 10;
-        else c -= '0';
+        else if(isdigit(c)) c -= '0';
+        else return 0;
         digits[i/(2*sizeof(ushort))] |= c<<(4*(i%(2*sizeof(ushort)))); 
     };
     return len;
@@ -37,7 +39,7 @@ template<int BI_DIGITS> struct bigint
 
     bigint() {};
     bigint(digit n) { if(n) { len = 1; digits[0] = n; } else len = 0; };
-    bigint(const char *s) { len = parsedigits(digits, s); shrink(); };
+    bigint(const char *s) { len = parsedigits(digits, BI_DIGITS, s); shrink(); };
     template<int Y_SIZE> bigint(const bigint<Y_SIZE> &y) { *this = y; };
 
     void zero() { len = 0; };
