@@ -37,7 +37,7 @@ template<int BI_DIGITS> struct bigint
 
     bigint() {};
     bigint(digit n) { if(n) { len = 1; digits[0] = n; } else len = 0; };
-    bigint(const char *s) { len = parsedigits(digits, s); };
+    bigint(const char *s) { len = parsedigits(digits, s); shrink(); };
     template<int Y_SIZE> bigint(const bigint<Y_SIZE> &y) { *this = y; };
 
     void zero() { len = 0; };
