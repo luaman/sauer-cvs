@@ -234,7 +234,7 @@ void cursorupdate()
     vec ray(target), v;
     ray.sub(player->o).normalize();
     if(raycubepos(player->o, ray, v, 0, RAY_SKIPFIRST
-        | (passthroughcube ? RAY_PASS : (havesel ? RAY_ENTS : 0))
+        | (passthroughcube ? RAY_PASS : 0)
         | (editmode && showmat ? RAY_EDITMAT : 0), gridsize)<0)
         v = target;
 
