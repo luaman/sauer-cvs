@@ -434,22 +434,16 @@ struct ecpoint
         if(x.iszero() && y.iszero()) { *this = q; return; };
 
         gfield l, tmp;
-        if(x!=q.x)
+        if(*this!=q)
         {
             l.invert(tmp.sub(q.x, x));
             l.mul(tmp.sub(q.y, y));
         }
-        else if(y==q.y)
+        else
         {
             static const bigint<1> three(3);
             l.invert(tmp.add(y, y));
             l.mul(tmp.square(x).mul(three).sub(three));
-        }
-        else
-        {
-            x.zero();
-            y.zero();
-            return;
         };
             
         gfield x3;
@@ -464,17 +458,8 @@ struct ecpoint
         y.zero();
         for(int i = q.numbits()-1; i >= 0; i--)
         {
-            ecpoint dz = *this;
             add(*this);
-            gfield oldy(y);
-            ecpoint qz = *this;
             if(q.hasbit(i)) add(p);
-            if(oldy.iszero()==0 && y.iszero())
-            {
-                puts("HERE");
-                dz.add(dz);
-                if(q.hasbit(i)) dz.add(p);
-            };
         };
     };
     template<int Q_DIGITS> void mul(const bigint<Q_DIGITS> q) { ecpoint tmp(*this); mul(tmp, q); };
