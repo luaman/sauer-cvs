@@ -59,13 +59,13 @@ struct vtxarray
     vtxarray *parent;
     vector<vtxarray *> *children;
     lodlevel l0, l1;
-    vertex *vbuf;       // vertex buffer
-    vtxarray *next;     // linked list of visible VOBs
-    int allocsize;      // size of allocated memory for this va
+    vertex *vbuf;           // vertex buffer
+    vtxarray *next, *rnext; // linked list of visible VOBs
+    int allocsize;          // size of allocated memory for this va
     int verts, explicitsky, skyarea, curlod, distance;
-    uint vbufGL;        // VBO buffer ID
-    int x, y, z, size;  // location and size of cube.
-    ivec min, max;      // BB
+    uint vbufGL;            // VBO buffer ID
+    int x, y, z, size;      // location and size of cube.
+    ivec min, max;          // BB
     uchar curvfc, occluded;
     occludequery *query, *rquery;
 };
