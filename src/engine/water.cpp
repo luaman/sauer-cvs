@@ -243,7 +243,6 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
         glVertex3fv(v.v);
     };
     glEnd();
-
     xtraverts += 4;
 };
 
@@ -289,8 +288,6 @@ GLuint reflectiondb = 0;
 VAR(oqwater, 0, 1, 1);
 
 extern int oqfrags;
-
-VAR(q, 0, 0, 1);
 
 void renderwater()
 {
@@ -891,6 +888,37 @@ VARP(maxreflect, 1, 1, 8);
 
 float reflecting = 0, refracting = 0;
 
+void maskreflection(Reflection &ref, float offset, bool reflect)
+{
+    glClearDepth(0);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClearDepth(1);
+    glDepthRange(1, 1);
+    glDepthFunc(GL_ALWAYS);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+    nocolorshader->set();
+    if(reflect)
+    {
+        glPushMatrix();
+        glTranslatef(0, 0, 2*ref.height);
+        glScalef(1, 1, -1);
+    };
+    loopv(ref.matsurfs)
+    {
+        materialsurface &m = *ref.matsurfs[i];
+        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -offset);
+    };
+    if(reflect) glPopMatrix();
+    defaultshader->set();
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_2D);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthFunc(GL_LESS);
+    glDepthRange(0, 1);
+};
+
 void drawreflections()
 {
     if(editmode && showmat) return;
@@ -927,11 +955,13 @@ void drawreflections()
         if(waterreflect || waterrefract)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
+            maskreflection(ref, offset-1e-4f, camera1->o.z >= ref.height+offset);
             drawreflection(ref.height+offset, false, false);
         };
         if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
+            maskreflection(ref, offset+1e-4f, false);
             drawreflection(ref.height+offset, true, !hasbottom);
         };    
     };

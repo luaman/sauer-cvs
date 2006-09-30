@@ -805,6 +805,8 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
 
     if(limited)
     {
+        if(zclip) glDepthRange(0.999f, 0.999f);
+
         nocolorshader->set();
 
         glDisable(GL_TEXTURE_2D);
@@ -824,11 +826,12 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     glRotated(90.0, 1.0, 0.0, 0.0);
     if(reflected) glScalef(1, 1, -1);
     glColor3f(1.0f, 1.0f, 1.0f);
-    if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : GL_GEQUAL);
+    if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
     draw_envbox(farplane/2, float(zclip)/float(hdr.worldsize));
     glPopMatrix();
     if(limited) 
     {
+        if(zclip) glDepthRange(0, 1);
         if(!reflected && editmode && showsky)
         {
             notextureshader->set();
@@ -1098,8 +1101,11 @@ void drawreflection(float z, bool refract, bool clear)
         };
     };
 
-    if(clear) glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
-    glClear((clear ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
+    if(clear)
+    {
+        glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    };
 
     if(!refract && camera1->o.z >= z)
     {
