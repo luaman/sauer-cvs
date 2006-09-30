@@ -776,6 +776,7 @@ vtxarray *newva(int x, int y, int z, int size)
     va->curvfc = VFC_NOT_VISIBLE;
     va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
+    va->rquery = NULL;
     wverts += va->verts = verts.length();
     wtris  += va->l0.tris;
     allocva++;
@@ -1339,6 +1340,9 @@ void resetqueries()
 };
 
 VAR(oqfrags, 0, 8, 64);
+VAR(oqreflect, 0, 4, 64);
+
+extern float reflecting, refracting;
 
 bool checkquery(occludequery *query, bool nowait)
 {
@@ -1355,7 +1359,7 @@ bool checkquery(occludequery *query, bool nowait)
         glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, &fragments);
         query->fragments = fragments;
     };
-    return fragments < (uint)oqfrags;
+    return fragments < (uint)(reflecting ? oqreflect : oqfrags);
 };
 
 void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o)
@@ -1678,9 +1682,12 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     ivec origin(va->x, va->y, va->z);
     origin.mask(~VVEC_INT_MASK);
 
+    vec camera(camera1->o);
+    if(reflecting && !refracting) camera.z = reflecting;
+
     drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC),
            ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
-           vec(camera1->o).sub(origin.tovec()).mul(1<<VVEC_FRAC));
+           vec(camera).sub(origin.tovec()).mul(1<<VVEC_FRAC));
 
     glEndQuery_(GL_SAMPLES_PASSED_ARB);
 };
@@ -1702,7 +1709,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         return;
     };
 
-    extern float refracting;
     if(refracting)
     {
         float fogplane = refracting - (va->z & ~VVEC_INT_MASK);
@@ -2024,16 +2030,16 @@ void rendergeom()
     cleanupTMUs();
 };
 
-void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract, bool vfc = true)
+void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract, vector<vtxarray *> &visible, bool vfc = true)
 {
+    bool doOQ = hasOQ && oqreflect;
     loopv(vas)
     {
         vtxarray *va = vas[i];
-        lodlevel &lod = va->l0;
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(lod.texs)
         {
             if((vfc && va->curvfc == VFC_FOGGED) || va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
-            if(vadist(va, camera1->o) > reflectdist) continue;
             bool render = true;
             if(va->max.z <= z) render = false;
             else if(vfc && va->curvfc == VFC_FULL_VISIBLE)
@@ -2041,9 +2047,24 @@ void renderreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool
                 if(va->occluded >= OCCLUDE_BB) continue;
                 if(va->occluded >= OCCLUDE_GEOM) render = false;
             };
-            if(render) renderva(cur, va, lod);
+            if(render)
+            {
+                va->rquery = doOQ ? newquery(&va->rquery) : NULL;
+                if(!va->rquery && vadist(va, camera1->o) > reflectdist) continue;
+                if(doOQ && (va->occluded >= OCCLUDE_BB || !vfc || va->curvfc == VFC_NOT_VISIBLE))
+                {
+                    if(va->rquery) renderquery(cur, va->rquery, va);
+                }
+                else if(!doOQ || va->rquery)
+                {
+                    if(va->rquery) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->rquery->id);
+                    renderva(cur, va, lod, doOQ);
+                    if(va->rquery) glEndQuery_(GL_SAMPLES_PASSED_ARB);
+                };
+                if(doOQ) visible.add(va);
+            };
         };
-        if(va->children->length()) renderreflectedvas(cur, *va->children, z, refract, vfc && va->curvfc != VFC_NOT_VISIBLE); 
+        if(va->children->length()) renderreflectedvas(cur, *va->children, z, refract, visible, vfc && va->curvfc != VFC_NOT_VISIBLE);
     };
 };
 
@@ -2059,7 +2080,22 @@ void renderreflectedgeom(float z, bool refract)
     if(!refract && camera1->o.z >= z)
     {
         reflectvfcP(z);
-        renderreflectedvas(cur, varoot, z, refract);
+        vector<vtxarray *> vas;
+        renderreflectedvas(cur, varoot, z, refract, vas);
+        if(hasOQ && oqreflect)
+        {
+            glDepthFunc(GL_LEQUAL);
+            if(!cur.colormask) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            if(!cur.depthmask) glDepthMask(GL_TRUE);
+            loopv(vas)
+            {
+                vtxarray *va = vas[i];
+                if(va->rquery && checkquery(va->rquery)) continue;
+                lodlevel &lod = va->curlod ? va->l1 : va->l0; 
+                renderva(cur, va, lod);
+            };
+            glDepthFunc(GL_LESS);
+        };
         restorevfcP();
     }
     else
@@ -2069,7 +2105,7 @@ void renderreflectedgeom(float z, bool refract)
             lodlevel &lod = va->l0;
             if(!lod.texs) continue;
             if(va->curvfc == VFC_FOGGED || (refract && camera1->o.z >= z ? va->min.z > z : va->max.z <= z) || va->occluded >= OCCLUDE_GEOM) continue;
-            if(vadist(va, camera1->o) > reflectdist) continue;
+            //if(vadist(va, camera1->o) > reflectdist) continue;
             renderva(cur, va, lod);
         };
     };

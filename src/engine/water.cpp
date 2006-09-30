@@ -286,7 +286,7 @@ VAR(waterspec, 0, 150, 1000);
 Reflection reflections[MAXREFLECTIONS];
 GLuint reflectiondb = 0;
 
-VAR(oqreflect, 0, 1, 1);
+VAR(oqwater, 0, 1, 1);
 
 extern int oqfrags;
 
@@ -337,7 +337,7 @@ void renderwater()
 
         if(waterreflect || waterrefract)
         {
-            if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query)) continue;
+            if(hasOQ && oqfrags && oqwater && ref.query && checkquery(ref.query)) continue;
             glBindTexture(GL_TEXTURE_2D, ref.tex);
         };
 
@@ -848,7 +848,7 @@ void queryreflections()
         matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
     };
     
-    if((editmode && showmat) || !hasOQ || !oqfrags || !oqreflect || (!waterreflect && !waterrefract)) return;
+    if((editmode && showmat) || !hasOQ || !oqfrags || !oqwater || (!waterreflect && !waterrefract)) return;
     int refs = 0, watermillis = 1000/reflectfps;
     loopi(MAXREFLECTIONS)
     {
@@ -905,7 +905,7 @@ void drawreflections()
     {
         Reflection &ref = reflections[++n%MAXREFLECTIONS];
         if(ref.height<0 || ref.lastused<lastmillis || ref.matsurfs.empty()) continue;
-        if(hasOQ && oqfrags && oqreflect && ref.query && checkquery(ref.query)) continue;
+        if(hasOQ && oqfrags && oqwater && ref.query && checkquery(ref.query)) continue;
 
         bool hasbottom = true;
         loopvj(ref.matsurfs)

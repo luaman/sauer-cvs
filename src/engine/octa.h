@@ -67,7 +67,7 @@ struct vtxarray
     int x, y, z, size;  // location and size of cube.
     ivec min, max;      // BB
     uchar curvfc, occluded;
-    occludequery *query;
+    occludequery *query, *rquery;
 };
 
 struct surfaceinfo

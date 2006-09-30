@@ -1044,7 +1044,7 @@ void undoclipmatrix()
 };
 
 VAR(reflectclip, 0, 1, 1);
-VAR(reflectmms, 0, 1, 1);
+VARP(reflectmms, 0, 1, 1);
 
 extern int waterfog;
 
