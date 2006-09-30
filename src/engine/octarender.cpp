@@ -2088,7 +2088,7 @@ void renderreflectedgeom(float z, bool refract)
         for(vtxarray *va = visible; va; va = va->rnext)
         {
             va->rquery = doOQ ? newquery(&va->rquery) : NULL;
-            if(!va->rquery && va->distance > reflectdist) continue;
+            if(!va->rquery && va->distance > reflectdist) break;
             if(doOQ && (va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE))
             {
                 if(va->rquery) renderquery(cur, va->rquery, va);
@@ -2123,7 +2123,7 @@ void renderreflectedgeom(float z, bool refract)
             lodlevel &lod = va->l0;
             if(!lod.texs) continue;
             if(va->curvfc == VFC_FOGGED || (refract && camera1->o.z >= z ? va->min.z > z : va->max.z <= z) || va->occluded >= OCCLUDE_GEOM) continue;
-            if(!oqfrags && vadist(va, camera1->o) > reflectdist) continue;
+            if(!oqfrags && va->distance > reflectdist) break;
             renderva(cur, va, lod);
         };
     };
