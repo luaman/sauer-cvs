@@ -955,13 +955,13 @@ void drawreflections()
         if(waterreflect || waterrefract)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-            maskreflection(ref, offset-1e-4f, camera1->o.z >= ref.height+offset);
+            maskreflection(ref, offset+1e-4f, camera1->o.z >= ref.height+offset);
             drawreflection(ref.height+offset, false, false);
         };
         if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
-            maskreflection(ref, offset+1e-4f, false);
+            maskreflection(ref, offset-1e-4f, false);
             drawreflection(ref.height+offset, true, !hasbottom);
         };    
     };
