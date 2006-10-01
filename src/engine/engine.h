@@ -208,9 +208,19 @@ extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
 extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s);
 extern void forcemip(cube &c);
-
-extern bool pointinsel(selinfo &sel, vec &o);
-extern void addundo(undoblock &u);
+extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
+extern int faceverts(cube &c, int orient, int vert);
+extern void calcvert(cube &c, int x, int y, int z, int size, vvec &vert, int i, bool solid = false);
+extern void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube);
+extern uint faceedges(cube &c, int orient);
+extern bool collapsedface(uint cfe);
+extern bool touchingface(cube &c, int orient);
+extern int genclipplane(cube &c, int i, vec *v, plane *clip);
+extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p);
+extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR, bool lodcube = false);
+extern int visibleorient(cube &c, int orient);
+extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
+extern void remipworld();
 
 // ents
 extern bool haveselent();
@@ -229,10 +239,10 @@ extern void pasteundoents(undoblock &u);
 extern void editdrag(bool on);
 extern void cancelsel();
 extern void render_texture_panel(int w, int h);
+extern void addundo(undoblock &u);
 
 // octarender
 extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h);
-extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
 extern void octarender();
 extern void rendermapmodels();
 extern void rendergeom();
@@ -245,20 +255,8 @@ extern void converttovectorworld();
 extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va, bool reparent = true);
-extern int faceverts(cube &c, int orient, int vert);
-extern void calcvert(cube &c, int x, int y, int z, int size, vvec &vert, int i, bool solid = false);
-extern void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube);
-extern uint faceedges(cube &c, int orient);
-extern bool collapsedface(uint cfe);
-extern bool touchingface(cube &c, int orient);
 extern int isvisiblesphere(float rad, const vec &cv);
-extern int genclipplane(cube &c, int i, vec *v, plane *clip);
-extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p);
-extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR, bool lodcube = false);
-extern int visibleorient(cube &c, int orient);
-extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void precacheall();
-extern void remipworld();
 extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);
 extern occludequery *newquery(void *owner);
 extern bool checkquery(occludequery *query, bool nowait = false);
@@ -343,6 +341,7 @@ extern int triggertypes[NUMTRIGGERTYPES];
 
 extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);
+extern bool pointinsel(selinfo &sel, vec &o);
 
 // lightmap
 extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);

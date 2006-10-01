@@ -424,4 +424,448 @@ void remipworld()
 };
 
 COMMANDN(remip, remipworld, "");
- 
+
+uchar &edgelookup(cube &c, const ivec &p, int dim)
+{
+   return c.edges[dim*4 +(p[C[dim]]>>3)*2 +(p[R[dim]]>>3)];
+};
+
+int edgeval(cube &c, const ivec &p, int dim, int coord)
+{
+    return edgeget(edgelookup(c,p,dim), coord);
+};  
+    
+void genvertp(cube &c, ivec &p1, ivec &p2, ivec &p3, plane &pl)
+{
+    int dim = 0;
+    if(p1.y==p2.y && p2.y==p3.y) dim = 1;
+    else if(p1.z==p2.z && p2.z==p3.z) dim = 2;
+
+    int coord = p1[dim];
+    
+    ivec v1(p1), v2(p2), v3(p3);
+    v1[D[dim]] = edgeval(c, p1, dim, coord);
+    v2[D[dim]] = edgeval(c, p2, dim, coord);
+    v3[D[dim]] = edgeval(c, p3, dim, coord);
+    
+    pl.toplane(v1.tovec(), v2.tovec(), v3.tovec());
+};
+    
+bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest)
+{
+    vec &t1 = dest, t2, t3, t4;
+    t1.cross(pl1, pl2); t4 = t1; t1.mul(pl3.offset);
+    t2.cross(pl3, pl1);          t2.mul(pl2.offset);
+    t3.cross(pl2, pl3);          t3.mul(pl1.offset);
+    t1.add(t2);
+    t1.add(t3);
+    t1.mul(-1);
+    float d = t4.dot(pl3);
+    if(d==0) return false;
+    t1.div(d);
+    return true;
+};
+
+void genedgespanvert(ivec &p, cube &c, vec &v)
+{
+    ivec p1(8-p.x, p.y, p.z);
+    ivec p2(p.x, 8-p.y, p.z);
+    ivec p3(p.x, p.y, 8-p.z);
+
+    cube s;
+    solidfaces(s);
+
+    plane plane1, plane2, plane3;
+    genvertp(c, p, p1, p2, plane1);
+    genvertp(c, p, p2, p3, plane2);
+    genvertp(c, p, p3, p1, plane3);
+    if(plane1==plane2) genvertp(s, p, p1, p2, plane1);
+    if(plane1==plane3) genvertp(s, p, p1, p2, plane1);
+    if(plane2==plane3) genvertp(s, p, p2, p3, plane2);
+
+    ASSERT(threeplaneintersect(plane1, plane2, plane3, v));
+    //ASSERT(v.x>=0 && v.x<=8);
+    //ASSERT(v.y>=0 && v.y<=8);
+    //ASSERT(v.z>=0 && v.z<=8);
+    v.x = max(0, min(8, v.x));
+    v.y = max(0, min(8, v.y));
+    v.z = max(0, min(8, v.z));
+};
+
+void edgespan2vectorcube(cube &c)
+{   
+    vec v;
+
+    if(c.children) loopi(8) edgespan2vectorcube(c.children[i]);
+
+    if(isentirelysolid(c) || isempty(c)) return;
+
+    cube n = c;
+
+    loop(x,2) loop(y,2) loop(z,2)
+    {
+        ivec p(8*x, 8*y, 8*z);
+        genedgespanvert(p, c, v);
+
+        edgeset(cubeedge(n, 0, y, z), x, int(v.x+0.49f));
+        edgeset(cubeedge(n, 1, z, x), y, int(v.y+0.49f));
+        edgeset(cubeedge(n, 2, x, y), z, int(v.z+0.49f));
+    };
+
+    c = n;
+};
+
+void converttovectorworld()
+{
+    conoutf("WARNING: old map, use savecurrentmap");
+    loopi(8) edgespan2vectorcube(worldroot[i]);
+};
+
+void genvectorvert(const ivec &p, cube &c, ivec &v)
+{
+    v.x = edgeval(c, p, 0, p.x);
+    v.y = edgeval(c, p, 1, p.y);
+    v.z = edgeval(c, p, 2, p.z);
+};
+
+const ivec cubecoords[8] = // verts of bounding cube
+{
+    ivec(8, 8, 0),
+    ivec(0, 8, 0),
+    ivec(0, 8, 8),
+    ivec(8, 8, 8),
+    ivec(8, 0, 8),
+    ivec(0, 0, 8),
+    ivec(0, 0, 0),
+    ivec(8, 0, 0),
+};
+
+const ushort fv[6][4] = // indexes for cubecoords, per each vert of a face orientation
+{
+    { 2, 1, 6, 5 },
+    { 3, 4, 7, 0 },
+    { 4, 5, 6, 7 },
+    { 1, 2, 3, 0 },
+    { 6, 1, 0, 7 },
+    { 5, 4, 3, 2 },
+};
+
+const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
+{//1st face,2nd face
+    { 4, 5, 8, 10 },
+    { 6, 7, 9, 11 },
+    { 0, 2, 8, 9  },
+    { 1, 3, 10,11 },
+    { 0, 1, 4, 6 },
+    { 2, 3, 5, 7 },
+};
+
+bool touchingface(cube &c, int orient)
+{
+    uint face = c.faces[dimension(orient)];
+    return dimcoord(orient) ? (face&0xF0F0F0F0)==0x80808080 : (face&0x0F0F0F0F)==0;
+};
+
+int faceconvexity(cube &c, int orient)
+{
+   /* // fast approximation
+    vec v[4];
+    int d = dimension(orient);
+    loopi(4) vertrepl(c, *(ivec *)cubecoords[fv[orient][i]], v[i], d, dimcoord(orient));
+    int n = (int)(v[0][d] - v[1][d] + v[2][d] - v[3][d]);
+    if (!dimcoord(orient)) n *= -1;
+    return n; // returns +ve if convex when tris are verts 012, 023. -ve for concave.
+    */
+    // slow perfect
+    ivec v[4];
+    plane pl;
+
+    if(touchingface(c, orient)) return 0;
+
+    loopi(4) genvectorvert(cubecoords[fv[orient][i]], c, v[i]);
+
+    ivec n;
+    n.cross(v[1].sub(v[0]), v[2].sub(v[0]));
+    int x = n.dot(v[0]), y = n.dot(v[3]);
+    if(x < y) return -1;     // concave
+    else if(x > y) return 1; // convex
+    else return 0;           // flat
+};
+
+int faceorder(cube &c, int orient)
+{
+    uchar *edges = &c.edges[4*dimension(orient)];
+    uchar h[4];
+    loopi(4) h[i] = dimcoord(orient) ? edges[i]>>4 : 8-(edges[i]&0xF);
+    if(h[0]+h[3]<h[1]+h[2]) return 1;
+    else return 0;
+};
+
+int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
+{
+    return fv[orient][(vert + faceorder(c, orient))&3];
+};
+
+uint faceedges(cube &c, int orient)
+{
+    uchar edges[4];
+    loopk(4) edges[k] = c.edges[faceedgesidx[orient][k]];
+    return *(uint *)edges;
+};
+
+struct facevec
+{
+    int x, y;
+
+    facevec() {};
+    facevec(int x, int y) : x(x), y(y) {};
+
+    bool operator==(const facevec &f) const { return x == f.x && y == f.y; };
+};
+
+void genfacevecs(cube &c, int orient, const ivec &pos, int size, bool solid, facevec *fvecs)
+{
+    int dim = dimension(orient), coord = dimcoord(orient);
+    const ushort *fvo = fv[orient];
+    loopi(4)
+    {
+        const ivec &cc = cubecoords[fvo[i]];
+        facevec &f = fvecs[coord ? i : 3 - i];
+        int x, y;
+        if(solid)
+        {
+            x = cc[C[dim]];
+            y = cc[R[dim]];
+        }
+        else
+        {
+            x = edgeval(c, cc, C[dim], cc[C[dim]]);
+            y = edgeval(c, cc, R[dim], cc[R[dim]]);
+        };
+        f.x = x*size/(8>>VVEC_FRAC)+(pos[C[dim]]<<VVEC_FRAC);
+        f.y = y*size/(8>>VVEC_FRAC)+(pos[R[dim]]<<VVEC_FRAC);
+    };
+};
+
+int clipfacevecy(const facevec &o, const facevec &dir, int cx, int cy, int size, facevec &r)
+{
+    if(dir.x >= 0)
+    {
+        if(cx <= o.x || cx >= o.x+dir.x) return 0;
+    }
+    else if(cx <= o.x+dir.x || cx >= o.x) return 0;
+
+    int t = (o.y-cy) + (cx-o.x)*dir.y/dir.x;
+    if(t <= 0 || t >= size) return 0;
+
+    r.x = cx;
+    r.y = cy + t;
+    return 1;
+};
+
+int clipfacevecx(const facevec &o, const facevec &dir, int cx, int cy, int size, facevec &r)
+{
+    if(dir.y >= 0)
+    {
+        if(cy <= o.y || cy >= o.y+dir.y) return 0;
+    }
+    else if(cy <= o.y+dir.y || cy >= o.y) return 0;
+
+    int t = (o.x-cx) + (cy-o.y)*dir.x/dir.y;
+    if(t <= 0 || t >= size) return 0;
+
+    r.x = cx + t;
+    r.y = cy;
+    return 1;
+};
+
+int clipfacevec(const facevec &o, const facevec &dir, int cx, int cy, int size, facevec *rvecs)
+{
+    int r = 0;
+
+    if(o.x >= cx && o.x <= cx+size &&
+       o.y >= cy && o.y <= cy+size &&
+       ((o.x != cx && o.x != cx+size) || (o.y != cy && o.y != cy+size)))
+    {
+        rvecs[0].x = o.x;
+        rvecs[0].y = o.y;
+        r++;
+    };
+
+    r += clipfacevecx(o, dir, cx, cy, size, rvecs[r]);
+    r += clipfacevecx(o, dir, cx, cy+size, size, rvecs[r]);
+    r += clipfacevecy(o, dir, cx, cy, size, rvecs[r]);
+    r += clipfacevecy(o, dir, cx+size, cy, size, rvecs[r]);
+
+    ASSERT(r <= 2);
+    return r;
+};
+
+bool insideface(const facevec *p, int nump, const facevec *o)
+{
+    int bounds = 0;
+    loopi(4)
+    {
+        const facevec &cur = o[i], &next = o[(i+1)%4];
+        if(cur == next) continue;
+        facevec dir(next.x-cur.x, next.y-cur.y);
+        int offset = dir.x*cur.y - dir.y*cur.x;
+        loopj(nump) if(dir.x*p[j].y - dir.y*p[j].x > offset) return false;
+        bounds++;
+    };
+    return bounds>=3;
+};
+
+int clipfacevecs(const facevec *o, int cx, int cy, int size, facevec *rvecs)
+{   
+    cx <<= VVEC_FRAC;
+    cy <<= VVEC_FRAC;
+    size <<= VVEC_FRAC;
+
+    int r = 0;
+    loopi(4)
+    {
+        const facevec &cur = o[i], &next = o[(i+1)%4];
+        if(cur == next) continue; 
+        facevec dir(next.x-cur.x, next.y-cur.y); 
+        r += clipfacevec(cur, dir, cx, cy, size, &rvecs[r]);
+    };
+    facevec corner[4] = {facevec(cx, cy), facevec(cx+size, cy), facevec(cx+size, cy+size), facevec(cx, cy+size)};
+    loopi(4) if(insideface(&corner[i], 1, o)) rvecs[r++] = corner[i];
+    ASSERT(r <= 8);
+    return r;
+};
+
+bool collapsedface(uint cfe)
+{   
+    return ((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
+           ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F);
+};  
+    
+bool occludesface(cube &c, int orient, const ivec &o, int size, const ivec &vo, int vsize, uchar vmat, const facevec *vf)
+{
+    int dim = dimension(orient);
+    if(!c.children)
+    {
+         if(isentirelysolid(c)) return true;
+         if(vmat != MAT_AIR && c.material == vmat) return true;
+         if(touchingface(c, orient) && faceedges(c, orient) == F_SOLID) return true;
+         facevec cf[8];
+         int numc = clipfacevecs(vf, o[C[dim]], o[R[dim]], size, cf);
+         if(numc < 3) return true;
+         if(isempty(c) || !touchingface(c, orient)) return false;
+         facevec of[4];
+         genfacevecs(c, orient, o, size, false, of);
+         return insideface(cf, numc, of);
+    };
+
+    size >>= 1;
+    int coord = dimcoord(orient);
+    loopi(8) if(octacoord(dim, i) == coord)
+    {
+        if(!occludesface(c.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, vo, vsize, vmat, vf)) return false;
+    };
+
+    return true;
+};
+
+bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, bool lodcube)
+{
+    uint cfe = faceedges(c, orient);
+    if(mat != MAT_AIR)
+    {
+        if(cfe==F_SOLID && touchingface(c, orient)) return false;
+    }
+    else
+    {
+        if(!touchingface(c, orient)) return true;
+        if(collapsedface(cfe)) return false;
+    };
+
+    cube &o = neighbourcube(x, y, z, size, -size, orient);
+    if(&o==&c) return false;
+
+    if(lusize > size || (lusize == size && (!o.children || lodcube)))
+    {
+        if(isentirelysolid(o)) return false;
+        if(mat != MAT_AIR && (o.material == mat || (mat == MAT_WATER && o.material == MAT_GLASS))) return false;
+        if(isempty(o) || !touchingface(o, opposite(orient))) return true;
+        if(faceedges(o, opposite(orient)) == F_SOLID) return false;
+        facevec cf[4], of[4];
+        genfacevecs(c, orient, ivec(x, y, z), size, mat != MAT_AIR, cf);
+        genfacevecs(o, opposite(orient), lu, lusize, false, of);
+        return !insideface(cf, 4, of);
+    };
+
+    facevec cf[4];
+    genfacevecs(c, orient, ivec(x, y, z), size, mat != MAT_AIR, cf);
+    return !occludesface(o, opposite(orient), lu, lusize, ivec(x, y, z), size, mat, cf);
+};
+
+void calcvert(cube &c, int x, int y, int z, int size, vvec &v, int i, bool solid)
+{
+    ivec vv;
+    if(solid || isentirelysolid(c)) vv = cubecoords[i];
+    else genvectorvert(cubecoords[i], c, vv);
+    v = vvec(vv.v);
+    // avoid overflow
+    if(size>=8) v.mul(size/8);
+    else v.div(8/size);
+    v.add(vvec(x, y, z));
+};
+
+void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube)
+{
+    loopi(8) vertused[i] = 0;
+    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
+    loopi(8) if(vertused[i]) calcvert(c, x, y, z, size, verts[i], i);
+};
+
+int genclipplane(cube &c, int orient, vec *v, plane *clip)
+{
+    int planes = 0;
+    vec p[4];
+    loopk(4) p[k] = v[faceverts(c,orient,k)];
+
+    if(p[0]==p[2]) return 0;
+    if(p[0]!=p[1] && p[1]!=p[2]) clip[planes++].toplane(p[0], p[1], p[2]);
+    if(p[0]!=p[3] && p[2]!=p[3] && (!planes || faceconvexity(c, orient))) clip[planes++].toplane(p[0], p[2], p[3]);
+    return planes;
+};
+
+void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
+{
+    int vertused[8];
+    bool usefaces[6];
+    vvec sv[8];
+    vec v[8];
+    vec mx(x, y, z), mn(x+size, y+size, z+size);
+    calcverts(c, x, y, z, size, sv, usefaces, vertused, false);
+
+    loopi(8)
+    {
+        if(!vertused[i]) // need all verts for proper box
+            calcvert(c, x, y, z, size, sv[i], i);
+
+        v[i] = sv[i].tovec(x, y, z);
+
+        loopj(3) // generate tight bounding box
+        {
+            mn[j] = min(mn[j], v[i].v[j]);
+            mx[j] = max(mx[j], v[i].v[j]);
+        };
+    };
+
+    p.r = mx;     // radius of box
+    p.r.sub(mn);
+    p.r.mul(0.5f);
+    p.o = mn;     // center of box
+    p.o.add(p.r);
+
+    p.size = 0;
+    loopi(6) if(usefaces[i] && !touchingface(c, i)) // generate actual clipping planes
+    {
+        p.size += genclipplane(c, i, v, &p.p[p.size]);
+    };
+};
+
