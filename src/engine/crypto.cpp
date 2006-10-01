@@ -65,8 +65,9 @@ template<int BI_DIGITS> struct bigint
         loopi(len)
         {
             digit d = 0;
-            loopj(sizeof(digit)) d |= buf[offset+i*sizeof(digit)+j]<<(j*8);
+            loopj(sizeof(digit)) if(buf.inrange(offset+j)) d |= buf[offset+j]<<(j*8);
             digits[i] = d;
+            offset += sizeof(digit);
         };
     };
  
@@ -528,14 +529,15 @@ struct ecjacobian
     void write(vector<uchar> &buf)
     {
         normalize();
-        buf.add((uchar)((y.hasbit(0) ? 0x80 : 0) | x.len*sizeof(gfield::digit)));
+        buf.add(y.hasbit(0) ? 0x80 : 0);
         x.writedigits(buf);
+        buf[0] |= buf.length()-1;
     };
 
     void read(const vector<uchar> &buf)
     {
         int len = buf[0]&0x7F, ybit = buf[0]>>7;
-        x.readdigits(buf, 1, len/sizeof(gfield::digit));
+        x.readdigits(buf, 1, (len+sizeof(gfield::digit)-1)/sizeof(gfield::digit));
         calcy(ybit);
         z = bigint<1>(1);
     };
