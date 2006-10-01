@@ -230,18 +230,18 @@ void loadsky(char *basename)
 
 COMMAND(loadsky, "s");
 
-void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
-                     float s1, float t1, int x1, int y1, int z1,
-                     float s2, float t2, int x2, int y2, int z2,
-                     float s3, float t3, int x3, int y3, int z3,
-                     int texture)
+void draw_envbox_face(float s0, float t0, int x0, int y0, int z0,
+                      float s1, float t1, int x1, int y1, int z1,
+                      float s2, float t2, int x2, int y2, int z2,
+                      float s3, float t3, int x3, int y3, int z3,
+                      GLuint texture)
 {
     glBindTexture(GL_TEXTURE_2D, texture);
     glBegin(GL_QUADS);
-    glTexCoord2f(s3, t3); glVertex3f(x3, y3, z3);
-    glTexCoord2f(s2, t2); glVertex3f(x2, y2, z2);
-    glTexCoord2f(s1, t1); glVertex3f(x1, y1, z1);
-    glTexCoord2f(s0, t0); glVertex3f(x0, y0, z0);
+    glTexCoord2f(s3, t3); glVertex3i(x3, y3, z3);
+    glTexCoord2f(s2, t2); glVertex3i(x2, y2, z2);
+    glTexCoord2f(s1, t1); glVertex3i(x1, y1, z1);
+    glTexCoord2f(s0, t0); glVertex3i(x0, y0, z0);
     glEnd();
     xtraverts += 4;
 };
@@ -255,36 +255,36 @@ void draw_envbox(int w, float zclip)
 
     glDepthMask(GL_FALSE);
 
-    draw_envbox_aux(1.0f, vclip, -w, -w,  z,
-                    0.0f, vclip,  w, -w,  z,
-                    0.0f, 0.0f,  w, -w, -w,
-                    1.0f, 0.0f, -w, -w, -w, sky[0]->gl);
+    draw_envbox_face(1.0f, vclip, -w, -w,  z,
+                     0.0f, vclip,  w, -w,  z,
+                     0.0f, 0.0f,  w, -w, -w,
+                     1.0f, 0.0f, -w, -w, -w, sky[0]->gl);
 
-    draw_envbox_aux(1.0f, vclip, +w,  w,  z,
-                    0.0f, vclip, -w,  w,  z,
-                    0.0f, 0.0f, -w,  w, -w,
-                    1.0f, 0.0f, +w,  w, -w, sky[1]->gl);
+    draw_envbox_face(1.0f, vclip, +w,  w,  z,
+                     0.0f, vclip, -w,  w,  z,
+                     0.0f, 0.0f, -w,  w, -w,
+                     1.0f, 0.0f, +w,  w, -w, sky[1]->gl);
 
-    draw_envbox_aux(0.0f, 0.0f, -w, -w, -w,
-                    1.0f, 0.0f, -w,  w, -w,
-                    1.0f, vclip, -w,  w,  z,
-                    0.0f, vclip, -w, -w,  z, sky[2]->gl);
+    draw_envbox_face(0.0f, 0.0f, -w, -w, -w,
+                     1.0f, 0.0f, -w,  w, -w,
+                     1.0f, vclip, -w,  w,  z,
+                     0.0f, vclip, -w, -w,  z, sky[2]->gl);
 
-    draw_envbox_aux(1.0f, vclip, +w, -w,  z,
-                    0.0f, vclip, +w,  w,  z,
-                    0.0f, 0.0f, +w,  w, -w,
-                    1.0f, 0.0f, +w, -w, -w, sky[3]->gl);
+    draw_envbox_face(1.0f, vclip, +w, -w,  z,
+                     0.0f, vclip, +w,  w,  z,
+                     0.0f, 0.0f, +w,  w, -w,
+                     1.0f, 0.0f, +w, -w, -w, sky[3]->gl);
 
     if(!zclip)
-        draw_envbox_aux(0.0f, 1.0f, -w,  w,  w,
-                        0.0f, 0.0f, +w,  w,  w,
-                        1.0f, 0.0f, +w, -w,  w,
-                        1.0f, 1.0f, -w, -w,  w, sky[4]->gl);
+        draw_envbox_face(0.0f, 1.0f, -w,  w,  w,
+                         0.0f, 0.0f, +w,  w,  w,
+                         1.0f, 0.0f, +w, -w,  w,
+                         1.0f, 1.0f, -w, -w,  w, sky[4]->gl);
 
-    draw_envbox_aux(0.0f, 1.0f, +w,  w, -w,
-                    0.0f, 0.0f, -w,  w, -w,
-                    1.0f, 0.0f, -w, -w, -w,
-                    1.0f, 1.0f, +w, -w, -w, sky[5]->gl);
+    draw_envbox_face(0.0f, 1.0f, +w,  w, -w,
+                     0.0f, 0.0f, -w,  w, -w,
+                     1.0f, 0.0f, -w, -w, -w,
+                     1.0f, 1.0f, +w, -w, -w, sky[5]->gl);
 
     glDepthMask(GL_TRUE);
 };
