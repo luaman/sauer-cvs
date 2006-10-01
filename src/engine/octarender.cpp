@@ -546,7 +546,6 @@ struct lodcollect
 
     void optimize()
     {
-        sortmatsurfs(matsurfs.getbuf(), matsurfs.length());
         matsurfs.setsize(optimizematsurfs(matsurfs.getbuf(), matsurfs.length()));
     };
 
@@ -1044,7 +1043,7 @@ void octarender()                               // creates va s for all leaf cub
         skyarea += va->skyarea;
     };
 
-    setupmatsurfs();
+    setupmaterials();
 };
 
 void allchanged()
