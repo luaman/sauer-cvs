@@ -2031,7 +2031,7 @@ void rendergeom()
 
 void findreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract, vtxarray *&visible, bool vfc = true)
 {
-    bool doOQ = hasOQ && oqreflect;
+    bool doOQ = hasOQ && oqfrags && oqreflect;
     loopv(vas)
     {
         vtxarray *va = vas[i];
@@ -2084,7 +2084,7 @@ void renderreflectedgeom(float z, bool refract)
         reflectvfcP(z);
         vtxarray *visible = NULL;
         findreflectedvas(cur, varoot, z, refract, visible);
-        bool doOQ = hasOQ && oqreflect;
+        bool doOQ = hasOQ && oqfrags && oqreflect;
         for(vtxarray *va = visible; va; va = va->rnext)
         {
             va->rquery = doOQ ? newquery(&va->rquery) : NULL;
