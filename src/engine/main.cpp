@@ -184,6 +184,16 @@ void screenres(int *w, int *h, int *bpp = 0)
 COMMAND(fullscreen, "");
 COMMAND(screenres, "iii");
 
+VARFP(gamma, 30, 100, 300,
+{
+    float f = gamma/100.0f;
+    if(SDL_SetGamma(f,f,f)==-1)
+    {
+        conoutf("Could not set gamma (card/driver doesn't support it?)");
+        conoutf("sdl: %s", SDL_GetError());
+    };
+});
+
 void keyrepeat(bool on)
 {
     SDL_EnableKeyRepeat(on ? SDL_DEFAULT_REPEAT_DELAY : 0,

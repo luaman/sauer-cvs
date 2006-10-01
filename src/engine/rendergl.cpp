@@ -759,16 +759,6 @@ Slot &lookuptexture(int slot, bool load)
 
 Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); };
 
-VARFP(gamma, 30, 100, 300,
-{
-    float f = gamma/100.0f;
-    if(SDL_SetGamma(f,f,f)==-1)
-    {
-        conoutf("Could not set gamma (card/driver doesn't support it?)");
-        conoutf("sdl: %s", SDL_GetError());
-    };
-});
-
 VARF(wireframe, 0, 0, 1, if(noedit(true)) wireframe = 0);
 
 void transplayer()
