@@ -163,6 +163,7 @@ extern vector<vertex> verts;                   // the vertex array for all world
 extern int curtexnum;
 extern const ivec cubecoords[8];
 extern const ushort fv[6][4];
+extern const uchar faceedgesidx[6][4];
 extern Texture *crosshair;
 extern bool inbetweenframes;
 
@@ -181,13 +182,10 @@ extern bool hasVBO, hasOQ, hasFBO;
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
-extern void mipstats(int a, int b, int c);
-extern void addstrip(int tex, int start, int n);
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
-extern void readmatrices();
 extern void setfogplane(float scale = 0, float z = 0);
 
 // renderextras
@@ -209,6 +207,7 @@ extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
 extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
 extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s);
+extern void forcemip(cube &c);
 
 extern bool pointinsel(selinfo &sel, vec &o);
 extern void addundo(undoblock &u);
@@ -275,7 +274,7 @@ extern int getnumqueries();
 extern int showmat;
 
 extern int findmaterial(const char *name);
-extern int visiblematerial(cube &, int orient, int x, int y, int z, int size);
+extern void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurface> &matsurfs);
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);

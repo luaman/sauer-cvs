@@ -458,14 +458,6 @@ int genclipplane(cube &c, int orient, vec *v, plane *clip)
     return planes;
 };
 
-bool flataxisface(cube &c, int orient)
-{
-    uint face = c.faces[dimension(orient)];
-    if(dimcoord(orient)) face >>= 4;
-    face &= 0x0F0F0F0F;
-    return face == 0x01010101*(face&0x0F);
-};
-
 void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 {
     int vertused[8];
@@ -852,23 +844,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
 
     if(lodcube) return;
 
-    if(c.material != MAT_AIR)
-    {
-        loopi(6)
-        {
-            int vis = visiblematerial(c, i, cx, cy, cz, size);
-            if(vis != MATSURF_NOT_VISIBLE)
-            {
-                materialsurface m;
-                m.material = (vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material);
-                m.orient = i;
-                m.o = ivec(cx, cy, cz);
-                m.csize = m.rsize = size;
-                if(dimcoord(i)) m.o[dimension(i)] += size;
-                l0.matsurfs.add(m);
-            };
-        };
-    };
+    if(c.material != MAT_AIR) genmatsurfs(c, cx, cy, cz, size, l0.matsurfs);
 
     cstats[csi].nleaf++;
 };
@@ -909,7 +885,6 @@ VARF(vacubemin, 0, 128, 256*256, allchanged());
 int recalcprogress = 0;
 #define progress(s)     if((recalcprogress++&0x7FF)==0) show_out_of_renderloop_progress(recalcprogress/(float)allocnodes, s);
 
-
 int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
 {
     progress("recalculating geometry...");
@@ -946,62 +921,6 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     return ccount;
 };
 
-int getmippedtexture(cube &p, int orient)
-{
-    cube *c = p.children;
-    int d = dimension(orient);
-    int dc = dimcoord(orient);
-    int tex[4] = {-1,-1,-1,-1};
-    loop(x,2) loop(y,2)
-    {
-        int n = octaindex(d, x, y, dc);
-        if(isempty(c[n]))
-            n = oppositeocta(d, n);
-        if(isempty(c[n]))
-            continue;
-
-        loopk(3)
-            if(tex[k] == c[n].texture[orient])
-                return tex[k];
-
-        if(c[n].texture[orient] > 0) // assume 0 is sky. favour non-sky tex
-            tex[x*2+y] = c[n].texture[orient];
-    };
-
-    loopk(4)
-        if(tex[k]>0) return tex[k];
-
-    return p.texture[orient];
-};
-
-void forcemip(cube &c)
-{
-    cube *ch = c.children;
-
-    loopi(8) loopj(8)
-    {
-        int n = i^(j==3 ? 4 : (j==4 ? 3 : j));
-        if(!isempty(ch[n])) // breadth first search for cube near vert
-        {
-            ivec v, p(i);
-            getcubevector(ch[n], 2, p.x, p.y, p.z, v);
-
-            loopk(3) // adjust vert to parent size
-            {
-                if(octacoord(k, n) == 1)
-                    v[k] += 8;
-                v[k] >>= 1;
-            };
-
-            setcubevector(c, 2, p.x, p.y, p.z, v);
-            break;
-        };
-    };
-
-    loopj(6)
-        c.texture[j] = getmippedtexture(c, j);
-};
-
 void genlod(cube &c, int size)
 {
     if(!c.children || c.va) return;
@@ -1021,9 +940,6 @@ void genlod(cube &c, int size)
 
     emptyfaces(c);
 };
-
-void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
-void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
 
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
@@ -1057,6 +973,9 @@ void allchanged()
 };
 
 COMMANDN(recalc, allchanged, "");
+
+void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
+void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
 
 ///////// view frustrum culling ///////////////////////
 
@@ -1998,6 +1917,7 @@ void rendergeom()
 
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
+
     if(zpass) 
     {
         setupTMUs();
@@ -2201,171 +2121,3 @@ void writeobj(char *name)
 };
 
 COMMAND(writeobj, "s");
-
-////////// (re)mip //////////
-
-int midedge(const ivec &a, const ivec &b, int xd, int yd, bool &perfect)
-{
-    int ax = a[xd], bx = b[xd];
-    int ay = a[yd], by = b[yd];
-    if(ay==by) return ay;
-    if(ax==bx) { perfect = false; return ay; };
-    bool crossx = (ax<8 && bx>8) || (ax>8 && bx<8);
-    bool crossy = (ay<8 && by>8) || (ay>8 && by<8);
-    if(crossy && !crossx) { midedge(a,b,yd,xd,perfect); return 8; }; // to test perfection
-    if(ax<=8 && bx<=8) return ax>bx ? ay : by;
-    if(ax>=8 && bx>=8) return ax<bx ? ay : by;
-    int risex = (by-ay)*(8-ax)*256;
-    int s = risex/(bx-ax);
-    int y = s/256 + ay;
-    if(((abs(s)&0xFF)!=0) || // ie: rounding error
-        (crossy && y!=8) ||
-        (y<0 || y>16)) perfect = false;
-    return crossy ? 8 : min(max(y, 0), 16);
-};
-
-bool subdividecube(cube &c, bool fullcheck, bool brighten)
-{
-    if(c.children) return true;
-    cube *ch = c.children = newcubes(F_SOLID);
-    bool perfect = true, p1, p2;
-    ivec v[8];
-    loopi(8)
-    {
-        ivec p(i);
-        getcubevector(c, 2, p.x, p.y, p.z, v[i]);
-        v[i].mul(2);
-        ch[i].material = c.material;
-    };
-
-    loopj(6)
-    {
-        int d = dimension(j);
-        int z = dimcoord(j);
-        int e[3][3];
-        ivec *v1[2][2];
-        loop(y, 2) loop(x, 2)
-            v1[x][y] = v+octaindex(d, x, y, z);
-
-        loop(y, 3) loop(x, 3)       // gen edges
-        {
-            if(x==1 && y==1)        // center
-            {
-                int c1 = midedge(*v1[0][0], *v1[1][1], R[d], d, p1 = perfect);
-                int c2 = midedge(*v1[0][1], *v1[1][0], R[d], d, p2 = perfect);
-                e[x][y] = z ? max(c1,c2) : min(c1,c2);
-                perfect = e[x][y]==c1 ? p1 : p2;
-            }
-            else if(((x+y)&1)==0)   // corner
-                e[x][y] = (*v1[x>>1][y>>1])[d];
-            else                    // edge
-            {
-                int a = min(x, y), b = x&1;
-                e[x][y] = midedge(*v1[a][a], *v1[a^b][a^(1-b)], x==1?R[d]:C[d], d, perfect);
-            };
-        };
-
-        loopi(8)
-        {
-            ivec o(i);
-            ch[i].texture[j] = c.texture[j];
-            loop(y, 2) loop(x, 2) // assign child edges
-            {
-                int ce = e[x+o[R[d]]][y+o[C[d]]];
-                if(o[D[d]]) ce -= 8;
-                ce = min(max(ce, 0), 8);
-                uchar &f = cubeedge(ch[i], d, x, y);
-                edgeset(f, z, ce);
-            };
-        };
-    };
-
-    validatec(ch, hdr.worldsize);
-    if(fullcheck) loopi(8) if(!isvalidcube(ch[i])) // not so good...
-    {
-        emptyfaces(ch[i]);
-        perfect=false;
-    };
-    loopi(8) if(!isempty(ch[i])) brightencube(ch[i]);
-    return perfect;
-};
-
-bool crushededge(uchar e, int dc) { return dc ? e==0 : e==0x88; };
-
-int visibleorient(cube &c, int orient)
-{
-    loopi(2) loopj(2)
-    {
-        int a = faceedgesidx[orient][i*2 + 0];
-        int b = faceedgesidx[orient][i*2 + 1];
-        if(crushededge(c.edges[a],j) &&
-           crushededge(c.edges[b],j) &&
-           touchingface(c, orient)) return ((a>>2)<<1) + j;
-    };
-    return orient;
-};
-
-bool remip(cube &c, int x, int y, int z, int size)
-{
-    cube *ch = c.children;
-    if(!ch) return true;
-    bool perfect = true;
-    uchar mat = ch[0].material;
-
-    loopi(8)
-    {
-        ivec o(i, x, y, z, size);
-        if(!remip(ch[i], o.x, o.y, o.z, size>>1)) perfect = false;
-    };
-
-    solidfaces(c); // so texmip is more consistent    
-    loopj(6)
-        c.texture[j] = getmippedtexture(c, j); // parents get child texs regardless
-
-    if(!perfect) return false;
-    if(size<<1 > VVEC_INT_MASK+1) return true;
-
-    cube n = c;
-    forcemip(n);
-    n.children = NULL;
-    if(!subdividecube(n, false, false))
-        { freeocta(n.children); return false; }
-
-    cube *nh = n.children;
-    loopi(8)
-    {
-        if(ch[i].faces[0] != nh[i].faces[0] ||
-           ch[i].faces[1] != nh[i].faces[1] ||
-           ch[i].faces[2] != nh[i].faces[2] ||
-           ch[i].material != mat)
-            { freeocta(nh); return false; }
-
-        if(isempty(ch[i]) && isempty(nh[i])) continue;
-
-        ivec o(i, x, y, z, size);
-        loop(orient, 6)
-            if(visibleface(ch[i], orient, o.x, o.y, o.z, size) &&
-                ch[i].texture[orient] != n.texture[orient])
-                { freeocta(nh); return false; }
-    };
-
-    freeocta(nh);
-    discardchildren(c);
-    loopi(3) c.faces[i] = n.faces[i];
-    c.material = mat;
-    return true;
-};
-
-void remipworld()
-{
-    loopi(8)
-    {
-        ivec o(i, 0, 0, 0, hdr.worldsize>>1);
-        remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2);
-    };
-    allchanged();
-    entitiesinoctanodes();
-};
-
-COMMANDN(remip, remipworld, "");
-
