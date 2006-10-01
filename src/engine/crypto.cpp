@@ -665,4 +665,21 @@ void testcurve(char *s)
 };
 
 COMMAND(testcurve, "s");
-    
+
+void testcm(int *n)
+{
+    gfint privkey((gfint::digit)0);
+    bigint<1> one((bigint<1>::digit)1);
+    Uint32 start = SDL_GetTicks();
+    loopi(*n)
+    {
+        ecpoint c(ecpoint::base);
+        c.mul(privkey);
+        privkey.add(one);
+    };
+    Uint32 end = SDL_GetTicks();
+    printf("searched %d keys in %f seconds\n", *n, (float(end)-float(start))/1000.0f);
+};
+
+COMMAND(testcm, "i");
+
