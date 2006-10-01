@@ -102,13 +102,12 @@ template<int BI_DIGITS> struct bigint
         int maxlen = max(x.len, y.len), i;
         for(i = 0; i < y.len || carry; i++)
         {
-             if(i >= maxlen) maxlen++;
              carry += (i < x.len ? (dbldigit)x.digits[i] : 0) + (i < y.len ? (dbldigit)y.digits[i] : 0);
              digits[i] = (digit)carry;
              carry >>= BI_DIGIT_BITS;
         };
         if(i < x.len && this != &x) memcpy(&digits[i], &x.digits[i], (x.len - i)*sizeof(digit));
-        len = maxlen;
+        len = max(i, maxlen);
         return *this;
     };
     template<int Y_DIGITS> bigint &add(const bigint<Y_DIGITS> &y) { return add(*this, y); };
@@ -245,6 +244,17 @@ struct gfield : gfint
         return *this;
     };
     template<int Y_DIGITS> gfield &add(const bigint<Y_DIGITS> &y) { return add(*this, y); };
+
+    template<int X_DIGITS> gfield &mul2(const bigint<X_DIGITS> &x) { return add(x, x); }; 
+    gfield &mul2() { return mul2(*this); };
+
+    template<int X_DIGITS> gfield &div2(const bigint<X_DIGITS> &x) 
+    {
+        if(hasbit(0)) { gfint::add(x, P); rshift(1); } 
+        else rshift(x, 1);
+        return *this;
+    };
+    gfield &div2() { return div2(*this); };
 
     template<int X_DIGITS, int Y_DIGITS> gfield &sub(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -428,53 +438,65 @@ struct ecjacobian
 {
     static const gfield B;
     static const ecjacobian base;
+    static const ecjacobian origin;
 
     gfield x, y, z;
 
     ecjacobian() {};
     ecjacobian(const gfield &x, const gfield &y) : x(x), y(y), z(bigint<1>(1)) {};
+    ecjacobian(const gfield &x, const gfield &y, const gfield &z) : x(x), y(y), z(z) {};
 
     void mul2()
     {
         if(z.iszero()) return;
-
-        gfield a, b, c, d, tmp, tmp2;
-        tmp.square(y);
-        tmp.add(tmp);
-        a.add(x, x).mul(tmp);
-        b.square(tmp).add(b);
-        tmp2.sub(x, tmp.square(z));
-        tmp.add(x).mul(tmp2);
-        c.add(tmp, tmp).add(tmp);
-        d.square(c).sub(a).sub(a);
-
+        else if(y.iszero()) { *this = origin; return; };
+        gfield a, b, c, d;
+        d.sub(x, c.square(z));
+        d.mul(c.add(x));
+        c.mul2(d).add(d);
         z.mul(y).add(z);
-        x = d;
-        y = a.sub(d).mul(c).sub(b);
+        a.square(y);
+        b.mul2(a);
+        d.mul2(x).mul(b);
+        x.square(c).sub(d).sub(d);
+        a.square(b).add(a);
+        y.sub(d, x).mul(c).sub(a);
     };
 
     void add(const ecjacobian &q)
     {
         if(q.z.iszero()) return;
-        else if(z.iszero()) { *this = q; return; }
-        ASSERT(q.z.isone());
-
-        gfield c, d, tmp, tmp2, tmp3;
-        tmp.square(z);
-        c.mul(q.x, tmp).sub(x);
-        d.mul(q.y, tmp).mul(z).sub(y);
-
-        z.mul(c);
-        tmp.square(c);
-        tmp2.mul(x, tmp);
-        tmp3.mul(c, tmp);
-        x.add(tmp2, tmp2).add(tmp3).sub(tmp.square(d), x);
-        y.mul(tmp3).sub(tmp.sub(tmp2, x).mul(d), y);
+        else if(z.iszero()) { *this = q; return; };
+        gfield a, b, c, d, e, f;
+        a.square(z);
+        b.mul(q.y, a).mul(z);
+        a.mul(q.x);
+        if(q.z.isone())
+        {
+            c.add(x, a);
+            d.add(y, b);
+            a.sub(x, a);
+            b.sub(y, b);
+        }
+        else
+        {
+            f.mul(y, e.square(q.z)).mul(q.z);
+            e.mul(x);
+            c.add(e, a);
+            d.add(f, b);
+            a.sub(e, a);
+            b.sub(f, b);
+        };
+        if(a.iszero()) { if(b.iszero()) mul2(); else *this = origin; return; };
+        if(!q.z.isone()) z.mul(q.z);
+        z.mul(a);
+        x.square(b).sub(f.mul(c, e.square(a)));
+        y.sub(f, x).sub(x).mul(b).sub(e.mul(a).mul(d)).div2();
     };
  
     template<int Q_DIGITS> void mul(const ecjacobian &p, const bigint<Q_DIGITS> q)
     {
-        x.zero(); y.zero(); z.zero();
+        *this = origin;
         for(int i = q.numbits()-1; i >= 0; i--)
         {
             mul2();
@@ -494,23 +516,19 @@ struct ecjacobian
         z = bigint<1>(1);
     };
 
-    bool calcy(int ybit)
+    bool calcy(bool ybit)
     {
         gfield y2, tmp;
         y2.square(x).mul(x).sub(tmp.add(x, x).add(x)).add(B);
-
         if(!y.sqrt(y2)) { y.zero(); return false; };
-
-        static const gfield halfP(gfield(gfield::P).rshift(1));
-        if(ybit ? y <= halfP : y > halfP) y.neg(); 
+        if(y.hasbit(0) != ybit) y.neg();
         return true;
     };
     
     void write(vector<uchar> &buf)
     {
-        static const gfield halfP(gfield(gfield::P).rshift(1));
         normalize();
-        buf.add((uchar)((y > halfP ? 0x80 : 0) | x.len*sizeof(gfield::digit)));
+        buf.add((uchar)((y.hasbit(0) ? 0x80 : 0) | x.len*sizeof(gfield::digit)));
         x.writedigits(buf);
     };
 
@@ -522,6 +540,8 @@ struct ecjacobian
         z = bigint<1>(1);
     };
 };
+
+const ecjacobian ecjacobian::origin(gfield((gfield::digit)1), gfield((gfield::digit)1), gfield((gfield::digit)0));
 
 #if GF_BITS==192
 const gfield gfield::P("fffffffffffffffffffffffffffffffeffffffffffffffff");
