@@ -78,6 +78,7 @@ template<int BI_DIGITS> struct bigint
     };
 
     bool iszero() const { return !len; };
+    bool isone() const { return len==1 && digits[0]==1; };
 
     int numbits() const
     {
@@ -98,14 +99,15 @@ template<int BI_DIGITS> struct bigint
     template<int X_DIGITS, int Y_DIGITS> bigint &add(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
         dbldigit carry = 0;
-        int maxlen = max(x.len, y.len);
-        for(int i = 0; i < y.len || carry; i++)
+        int maxlen = max(x.len, y.len), i;
+        for(i = 0; i < y.len || carry; i++)
         {
              if(i >= maxlen) maxlen++;
              carry += (i < x.len ? (dbldigit)x.digits[i] : 0) + (i < y.len ? (dbldigit)y.digits[i] : 0);
              digits[i] = (digit)carry;
              carry >>= BI_DIGIT_BITS;
         };
+        if(i < x.len && this != &x) memcpy(&digits[i], &x.digits[i], (x.len - i)*sizeof(digit));
         len = maxlen;
         return *this;
     };
@@ -115,12 +117,14 @@ template<int BI_DIGITS> struct bigint
     {
         ASSERT(x >= y);
         dbldigit borrow = 0;
-        for(int i = 0; i < y.len || borrow; i++)
+        int i;
+        for(i = 0; i < y.len || borrow; i++)
         {
              borrow = (1<<BI_DIGIT_BITS) + (dbldigit)x.digits[i] - (i<y.len ? (dbldigit)y.digits[i] : 0) - borrow;
              digits[i] = (digit)borrow;
              borrow = (borrow>>BI_DIGIT_BITS)^1;
         };
+        if(i < x.len && this != &x) memcpy(&digits[i], &x.digits[i], (x.len - i)*sizeof(digit));
         len = x.len;
         shrink();
         return *this;
@@ -232,7 +236,7 @@ struct gfield : gfint
         return *this;
     };
 
-    static gfield P;
+    static const gfield P;
 
     template<int X_DIGITS, int Y_DIGITS> gfield &add(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -420,57 +424,80 @@ struct gfield : gfint
     bool sqrt() { return sqrt(*this); };
 };
 
-struct ecpoint
+struct ecjacobian
 {
-    static gfield B;
-    static ecpoint base;
+    static const gfield B;
+    static const ecjacobian base;
 
-    gfield x, y;
+    gfield x, y, z;
 
-    bool operator==(const ecpoint &q) const { return x==q.x && y==q.y; };
-    bool operator!=(const ecpoint &q) const { return !(*this==q); };
+    ecjacobian() {};
+    ecjacobian(const gfield &x, const gfield &y) : x(x), y(y), z(bigint<1>(1)) {};
 
-    void add(const ecpoint &q)
+    void mul2()
     {
-        if(q.x.iszero() && q.y.iszero()) return;
-        if(x.iszero() && y.iszero()) { *this = q; return; };
+        if(z.iszero()) return;
 
-        gfield l, tmp;
-        if(*this!=q)
-        {
-            l.invert(tmp.sub(q.x, x));
-            l.mul(tmp.sub(q.y, y));
-        }
-        else
-        {
-            static const bigint<1> three(3);
-            l.invert(tmp.add(y, y));
-            l.mul(tmp.square(x).mul(three).sub(three));
-        };
-            
-        gfield x3;
-        x3.square(l).sub(x).sub(q.x);
-        y.sub(tmp.sub(x, x3).mul(l), y);
-        x = x3;
+        gfield a, b, c, d, tmp, tmp2;
+        tmp.square(y);
+        tmp.add(tmp);
+        a.add(x, x).mul(tmp);
+        b.square(tmp).add(b);
+        tmp2.sub(x, tmp.square(z));
+        tmp.add(x).mul(tmp2);
+        c.add(tmp, tmp).add(tmp);
+        d.square(c).sub(a).sub(a);
+
+        z.mul(y).add(z);
+        x = d;
+        y = a.sub(d).mul(c).sub(b);
     };
 
-    template<int Q_DIGITS> void mul(const ecpoint &p, const bigint<Q_DIGITS> q)
+    void add(const ecjacobian &q)
     {
-        x.zero();
-        y.zero();
+        if(q.z.iszero()) return;
+        else if(z.iszero()) { *this = q; return; }
+        ASSERT(q.z.isone());
+
+        gfield c, d, tmp, tmp2, tmp3;
+        tmp.square(z);
+        c.mul(q.x, tmp).sub(x);
+        d.mul(q.y, tmp).mul(z).sub(y);
+
+        z.mul(c);
+        tmp.square(c);
+        tmp2.mul(x, tmp);
+        tmp3.mul(c, tmp);
+        x.add(tmp2, tmp2).add(tmp3).sub(tmp.square(d), x);
+        y.mul(tmp3).sub(tmp.sub(tmp2, x).mul(d), y);
+    };
+ 
+    template<int Q_DIGITS> void mul(const ecjacobian &p, const bigint<Q_DIGITS> q)
+    {
+        x.zero(); y.zero(); z.zero();
         for(int i = q.numbits()-1; i >= 0; i--)
         {
-            add(*this);
+            mul2();
             if(q.hasbit(i)) add(p);
         };
     };
-    template<int Q_DIGITS> void mul(const bigint<Q_DIGITS> q) { ecpoint tmp(*this); mul(tmp, q); };
+    template<int Q_DIGITS> void mul(const bigint<Q_DIGITS> q) { ecjacobian tmp(*this); mul(tmp, q); };
+
+    void normalize()
+    {
+        if(z.iszero() || z.isone()) return;
+        gfield tmp;
+        z.invert();
+        tmp.square(z);
+        x.mul(tmp);
+        y.mul(tmp).mul(z);
+        z = bigint<1>(1);
+    };
 
     bool calcy(int ybit)
     {
-        static const bigint<1> three(3);
         gfield y2, tmp;
-        y2.square(x).mul(x).sub(tmp.mul(three, x)).add(B);
+        y2.square(x).mul(x).sub(tmp.add(x, x).add(x)).add(B);
 
         if(!y.sqrt(y2)) { y.zero(); return false; };
 
@@ -478,10 +505,11 @@ struct ecpoint
         if(ybit ? y <= halfP : y > halfP) y.neg(); 
         return true;
     };
-
+    
     void write(vector<uchar> &buf)
     {
         static const gfield halfP(gfield(gfield::P).rshift(1));
+        normalize();
         buf.add((uchar)((y > halfP ? 0x80 : 0) | x.len*sizeof(gfield::digit)));
         x.writedigits(buf);
     };
@@ -491,44 +519,45 @@ struct ecpoint
         int len = buf[0]&0x7F, ybit = buf[0]>>7;
         x.readdigits(buf, 1, len/sizeof(gfield::digit));
         calcy(ybit);
+        z = bigint<1>(1);
     };
 };
 
 #if GF_BITS==192
-gfield gfield::P("fffffffffffffffffffffffffffffffeffffffffffffffff");
-gfield ecpoint::B("64210519e59c80e70fa7e9ab72243049feb8deecc146b9b1");
-ecpoint ecpoint::base = {
+const gfield gfield::P("fffffffffffffffffffffffffffffffeffffffffffffffff");
+const gfield ecjacobian::B("64210519e59c80e70fa7e9ab72243049feb8deecc146b9b1");
+const ecjacobian ecjacobian::base(
     gfield("188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012"),
     gfield("07192b95ffc8da78631011ed6b24cdd573f977a11e794811")
-};
+);
 #elif GF_BITS==224
-gfield gfield::P("ffffffffffffffffffffffffffffffff000000000000000000000001");
-gfield ecpoint::B("b4050a850c04b3abf54132565044b0b7d7bfd8ba270b39432355ffb4");
-ecpoint ecpoint::base = {
+const gfield gfield::P("ffffffffffffffffffffffffffffffff000000000000000000000001");
+const gfield ecjacobian::B("b4050a850c04b3abf54132565044b0b7d7bfd8ba270b39432355ffb4");
+const ecjacobian ecjacobian::base(
     gfield("b70e0cbd6bb4bf7f321390b94a03c1d356c21122343280d6115c1d21"),
     gfield("bd376388b5f723fb4c22dfe6cd4375a05a07476444d5819985007e34"),
-};
+);
 #elif GF_BITS==256
-gfield gfield::P("ffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
-gfield ecpoint::B("5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b");
-ecpoint ecpoint::base = {
+const gfield gfield::P("ffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
+const gfield ecjacobian::B("5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b");
+const ecjacobian ecjacobian::base(
     gfield("6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"),
     gfield("4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5"),
-};
+);
 #elif GF_BITS==384
-gfield gfield::P("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff");
-gfield ecpoint::B("b3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aef");
-ecpoint ecpoint::base = {
+const gfield gfield::P("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff");
+const gfield ecjacobian::B("b3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aef");
+const ecjacobian ecjacobian::base(
     gfield("aa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7"),
     gfield("3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f"),
-};
+);
 #elif GF_BITS==521
-gfield gfield::P("1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-gfield ecpoint::B("051953eb968e1c9a1f929a21a0b68540eea2da725b99b315f3b8b489918ef109e156193951ec7e937b1652c0bd3bb1bf073573df883d2c34f1ef451fd46b503f00");
-ecpoint ecpoint::base = {
+const gfield gfield::P("1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+const gfield ecjacobian::B("051953eb968e1c9a1f929a21a0b68540eea2da725b99b315f3b8b489918ef109e156193951ec7e937b1652c0bd3bb1bf073573df883d2c34f1ef451fd46b503f00");
+const ecjacobian ecjacobian::base(
     gfield("c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66"),
     gfield("11839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650")
-};
+);
 #else
 #error Unsupported GF
 #endif
@@ -606,7 +635,7 @@ void testcurve(char *s)
     privkey.shrink();
     printf("private key: "); privkey.print(stdout); putchar('\n');
 
-    ecpoint c(ecpoint::base);
+    ecjacobian c(ecjacobian::base);
     printf("base.x: "); c.x.print(stdout); putchar('\n');
     printf("base.y: "); c.y.print(stdout); putchar('\n');
 
@@ -621,24 +650,25 @@ void testcurve(char *s)
     loopv(pubkey) printf("%.2x", pubkey[pubkey.length()-i-1]);
     putchar('\n');
 
-    ecpoint q;
+    ecjacobian q;
     q.read(pubkey);
 
     printf("in.x: "); q.x.print(stdout); putchar('\n');
     printf("in.y: "); q.y.print(stdout); putchar('\n');
 
-    if(q==c) puts("key serialized OK");
+    if(q.x==c.x && q.y==c.y) puts("key serialized OK");
     else puts("key serialization FAILED");
 
     /* encrypts with pubkey and "random" session, msg is transmitted, secret is withheld and used as cipher key */
     gfint session(time(NULL));
-    c = ecpoint::base;
+    c = ecjacobian::base;
     c.mul(session);
     vector<uchar> msg;
     c.write(msg);
 
     q.read(pubkey);
     q.mul(session);
+    q.normalize();
     gfint secret(q.x);
     printf("encrypted secret: "); secret.print(stdout); putchar('\n');
     printf("encrypted message: "); loopv(msg) printf("%.2x", msg[msg.length()-i-1]); putchar('\n');
@@ -654,6 +684,7 @@ void testcurve(char *s)
     /* decrypt transmitted msg with privkey to find secret cipher key */
     q.read(msg);
     q.mul(privkey);
+    q.normalize();
     printf("decrypted secret: "); q.x.print(stdout); putchar('\n');
     if(q.x==secret) puts("secret decrypted OK");
     else puts("secret decryption FAILED");
@@ -665,21 +696,4 @@ void testcurve(char *s)
 };
 
 COMMAND(testcurve, "s");
-
-void testcm(int *n)
-{
-    gfint privkey((gfint::digit)0);
-    bigint<1> one((bigint<1>::digit)1);
-    Uint32 start = SDL_GetTicks();
-    loopi(*n)
-    {
-        ecpoint c(ecpoint::base);
-        c.mul(privkey);
-        privkey.add(one);
-    };
-    Uint32 end = SDL_GetTicks();
-    printf("searched %d keys in %f seconds\n", *n, (float(end)-float(start))/1000.0f);
-};
-
-COMMAND(testcm, "i");
 
