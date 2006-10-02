@@ -191,7 +191,7 @@ struct fpsserver : igameserver
             clientinfo *ci = clients[i];
             if(ci->score.timeplayed<0) continue;
             float rank = float(ci->score.frags)/float(max(ci->score.timeplayed, 1));
-            if(!best || rank > bestrank) best = ci;
+            if(!best || rank > bestrank) { best = ci; bestrank = rank; };
         };
         if(best) best->score.timeplayed = -1;
         return best;
@@ -204,24 +204,28 @@ struct fpsserver : igameserver
         float teamrank[2] = {0, 0};
         for(int round = 0, remaining = clients.length(); remaining; round++)
         {
-            int first = round&1, second = (round+1)&1;
+            int first = round&1, second = (round+1)&1, selected = 0;
             while(teamrank[first] <= teamrank[second])
             {
                 float rank;
                 clientinfo *ci = choosebestclient(rank);
                 if(!ci) break;
+                if(selected && rank<=0) break;    
                 team[first].add(ci);
                 teamrank[first] += rank;
-                remaining--;
+                selected++;
+                if(rank<=0) break;
             };
+            remaining -= selected;
         };
         loopi(sizeof(team)/sizeof(team[0]))
         {
             loopvj(team[i])
             {
                 clientinfo *ci = team[i][j];
+                if(!strcmp(ci->team, teamnames[i])) continue;
                 s_strncpy(ci->team, teamnames[i], MAXTEAMLEN+1);
-                sendf(ci->clientnum, 0, "riis", SV_SETTEAM, ci->clientnum, teamnames[i]);
+                sendf(-1, 0, "riis", SV_SETTEAM, ci->clientnum, teamnames[i]);
             };
         };
     };
