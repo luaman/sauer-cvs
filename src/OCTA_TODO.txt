@@ -13,7 +13,6 @@ eihrul:
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
 - make nearby closed doors render early so that they can contribute to OC?
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
-- add "join team red / blue" menu after connecting to a capture mode game
 - water at the edges never waves?
 - map up/download etc
 - water physics close to surface
@@ -29,12 +28,8 @@ aard/everyone:
 - social cheating solution
 
 - memory leaks?
-- fog underwater
-- reflection near surface
-- revert to just one water plane?
 
 - before release: update static wiki
-- glow skins for the players
 - Mix_LoadMUS() crashes after being called many times?
 - get 22khz version of "base lost"
 
@@ -86,7 +81,6 @@ aard/everyone:
 - 3d sprites?
 - think about ways to make dynamicly modifying geometry in gameplay make sense
 - can't select last 3 textures in list
-- bouncing gib particles
 - monster spawner ammo - add egg model
 - iconic stats
 - new multiplayer model.. md3?
@@ -101,9 +95,8 @@ aard/everyone:
 
 - ways to reduce server bandwidth in multiplayer
   * reduce client packets from 30 to 20 per second  -> choppier movement of other players?
-  * make server batch position updates for multiple clients to lose packet overhead (UDP 8 + enet 16) -> introduce lag, but could save up to 50% bw with 5 players
+  * (DONE) make server batch position updates for multiple clients to lose packet overhead (UDP 8 + enet 16) -> introduce lag, but could save up to 50% bw with 5 players
   * update positions less often for clients at distance/occluded
-  * use enet batching: would require server fps to be really low to make a difference
   * mix absolute and delta packets depending on the amount of packet loss
     * better than delta, can send just move/strafe/mousedelta for 3 out of 4 packets or so... needs improved physics prediction
   * all the above could be scaled to get more intense with gradually higher player loads
@@ -111,8 +104,6 @@ aard/everyone:
 - fix polygons being rendered on top of eachother
   * quick fix: rotate indices of quads that produce coplanar tris
   * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
-  -> switch to tri lists instead of quad lists, and do manual triangulation to make surface bulge only -> also for physics
-
 
 - make start of flares etc spawn out further from the player
 - improve on cma render then add to sauer
@@ -140,7 +131,6 @@ aard/everyone:
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
 - a multiplayer player still shows SG rays go thru target | hard to fix, is it really a problem?
-- players more visible?
 - 2 teams only
 - sound samples for N kills in a row
 - sword?
