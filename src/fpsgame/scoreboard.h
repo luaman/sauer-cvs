@@ -17,16 +17,27 @@ struct scoreboard
 
     struct sline { string s; };
 
+    struct teamscore
+    {
+        char *team;
+        int score;
+        teamscore() {};
+        teamscore(char *s, int n) : team(s), score(n) {};
+    };
+
+    static int teamscorecmp(const teamscore *x, const teamscore *y)
+    {
+        if(x->score > y->score) return -1;
+        if(x->score < y->score) return 1;
+        return 0;
+    };
+
     void render(fpsclient &cl, int gamemode)
     {
         if(!scoreson) return;
 
         vector<sline> scorelines;
-
-        const int maxteams = 4;
-        char *teamname[maxteams];
-        int teamscore[maxteams], teamsused;
-        string teamscores;
+        vector<teamscore> teamscores;
         bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.cc.clientnum;
 
         scorelines.setsize(0);
@@ -52,40 +63,36 @@ struct scoreboard
         sortmenu(0, scorelines.length());
         if(m_teammode)
         {
-            teamsused = 0;
             if(m_capture)
             {
                 loopv(cl.cpc.scores) if(cl.cpc.scores[i].total)
-                {
-                    teamname[teamsused] = cl.cpc.scores[i].team;
-                    teamscore[teamsused++] = cl.cpc.scores[i].total;
-                    if(teamsused>=maxteams) break;
-                };
+                    teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
             }
             else loopi(cl.numdynents()) 
             {
                 fpsent *o = (fpsent *)cl.iterdynents(i);
                 if(o && o->type!=ENT_AI && o->frags)
                 {
-                    loopi(teamsused) if(strcmp(teamname[i], o->team)==0) { teamscore[i] += o->frags; goto out; };
-                    if(teamsused<maxteams)
-                    {
-                        teamname[teamsused] = o->team;
-                        teamscore[teamsused++] = o->frags;
-                    };
-                    out:;
+                    teamscore *ts = NULL;
+                    loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; };
+                    if(!ts) teamscores.add(teamscore(o->team, o->frags));
+                    else ts->score += o->frags;
                 };
             };
-            if(teamsused)
+            teamscores.sort(teamscorecmp);
+            while(teamscores.length() && teamscores.last().score <= 0) teamscores.drop();
+            if(teamscores.length())
             {
-                teamscores[0] = 0;
-                loopj(teamsused)
+                string teamline;
+                teamline[0] = 0;
+                loopvj(teamscores)
                 {
-                    s_sprintfd(s)("[ %s: %d ]", teamname[j], teamscore[j]);
-                    s_strcat(teamscores, s);
+                    if(j >= 4) break;
+                    s_sprintfd(s)("[ %s: %d ]", teamscores[j].team, teamscores[j].score);
+                    s_strcat(teamline, s);
                 };
                 menumanual(0, scorelines.length(), "");
-                menumanual(0, scorelines.length()+1, teamscores);
+                menumanual(0, scorelines.length()+1, teamline);
             };
         };
     };
