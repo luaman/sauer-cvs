@@ -29,6 +29,7 @@ struct fpsserver : igameserver
 
         void mapchange()
         {
+            mapvote[0] = 0;
             o = vec(-1e10f, -1e10f, -1e10f);
             state = -1;
         };
@@ -133,9 +134,9 @@ struct fpsserver : igameserver
         { 
             SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 0, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
             SV_DIED, 4, SV_DAMAGE, 7, SV_SHOT, 8, SV_FRAGS, 2,
-            SV_MAPCHANGE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
-            SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2, SV_GAMEMODE, 2,
-            SV_TIMEUP, 2, SV_MAPRELOAD, 2, SV_ITEMACC, 2,
+            SV_MAPCHANGE, 0, SV_MAPVOTE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
+            SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2,
+            SV_TIMEUP, 2, SV_MAPRELOAD, 1, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_MOVE, 17, SV_NEWMAP, 2, SV_GETMAP, 1,
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
@@ -163,32 +164,89 @@ struct fpsserver : igameserver
         };
     };
 
-    void resetvotes()
-    {
-        loopv(clients) clients[i]->mapvote[0] = 0;
-    };
-
-    bool vote(char *map, int reqmode, int sender)
+    void vote(char *map, int reqmode, int sender)
     {
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(ci->spectator && !ci->master) return false;
+        if(ci->spectator && !ci->master) return;
         s_strcpy(ci->mapvote, map);
         ci->modevote = reqmode;
-        int yes = 0, no = 0; 
+        if(!ci->mapvote[0]) return;
+        if(ci->local || mapreload || (ci->master && mastermode>=MM_VETO))
+        {
+            if(!ci->local && !mapreload) 
+            {
+                s_sprintfd(msg)("master forced %s on map %s", modestr(reqmode), map);
+                sendservmsg(msg);
+            };
+            sendf(-1, 0, "risi", SV_MAPCHANGE, ci->mapvote, ci->modevote);
+            changemap(ci->mapvote, ci->modevote);
+        }
+        else 
+        {
+            s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", ci->name, modestr(reqmode), map);
+            sendservmsg(msg);
+            checkvotes();
+        };
+    };
+
+    void changemap(const char *s, int mode)
+    {
+        mapreload = false;
+        gamemode = mode;
+        minremain = m_teammode ? 15 : 10;
+        mapend = lastsec+minremain*60;
+        interm = 0;
+        s_strcpy(smapname, s);
+        resetitems();
+        notgotitems = true;
+        notgotbases = m_capture;
+        scores.setsize(0);
+        loopv(clients) clients[i]->mapchange();
+    };
+
+    struct votecount
+    {
+        char *map;
+        int mode, count;
+        votecount() {};
+        votecount(char *s, int n) : map(s), mode(n), count(0) {};
+    };
+
+    void checkvotes(bool force = false)
+    {
+        vector<votecount> votes;
+        int maxvotes = 0;
         loopv(clients)
         {
             clientinfo *oi = clients[i];
             if(oi->spectator && !oi->master) continue;
-            if(oi->mapvote[0]) { if(strcmp(oi->mapvote, map)==0 && oi->modevote==reqmode) yes++; else no++; }
-            else no++;
+            maxvotes++;
+            if(!oi->mapvote[0]) continue;
+            votecount *vc = NULL;
+            loopvj(votes) if(!strcmp(oi->mapvote, votes[j].map) && oi->modevote==votes[j].mode)
+            { 
+                vc = &votes[j];
+                break;
+            };
+            if(!vc) vc = &votes.add(votecount(oi->mapvote, oi->modevote));
+            vc->count++;
         };
-        if(yes==1 && no==0) return true;  // single player
-        s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", ci->name, modestr(reqmode), map);
-        sendservmsg(msg);
-        if(yes/(float)(yes+no) <= 0.5f && !(ci->master && mastermode>=MM_VETO)) return false;
-        sendservmsg(mastermode>=MM_VETO && ci->master ? "vote passed by master" : "vote passed by majority");
-        resetvotes();
-        return true;    
+        votecount *best = NULL;
+        loopv(votes) if(!best || votes[i].count > best->count) best = &votes[i];
+        if(force || (best && best->count > maxvotes/2))
+        {
+            if(best) 
+            { 
+                if(maxvotes > 1) sendservmsg(force ? "vote passed by default" : "vote passed by majority");
+                sendf(-1, 0, "risi", SV_MAPCHANGE, best->map, best->mode);
+                changemap(best->map, best->mode); 
+            }
+            else if(clients.length()) 
+            {
+                mapreload = true;
+                sendf(-1, 0, "ri", SV_MAPRELOAD);
+            };
+        };
     };
 
     int checktype(int type, clientinfo *ci)
@@ -352,28 +410,17 @@ struct fpsserver : igameserver
                 loopi(p-curmsg) ci->messages.add(curmsg[i]);
                 break;
 
+            case SV_MAPVOTE:
             case SV_MAPCHANGE:
             {
                 sgetstr(text, p);
                 int reqmode = getint(p);
+                if(type!=SV_MAPVOTE && !mapreload) break;
                 if(!ci->local && !m_mp(reqmode)) reqmode = 0;
-                if(gamemode!=1 && smapname[0] && !mapreload && !vote(text, reqmode, sender)) break;
-                mapreload = false;
-                gamemode = reqmode;
-                minremain = m_teammode ? 15 : 10;
-                mapend = lastsec+minremain*60;
-                interm = 0;
-                s_strcpy(smapname, text);
-                resetitems();
-                notgotitems = true;
-                notgotbases = m_capture;
-                scores.setsize(0);
-                loopv(clients) clients[i]->mapchange();
-                sendf(sender, 0, "risi", SV_MAPCHANGE, smapname, reqmode);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                vote(text, reqmode, sender);
                 break;
             };
-            
+
             case SV_ITEMLIST:
             {
                 int n;
@@ -497,14 +544,6 @@ struct fpsserver : igameserver
                 break;
             }; 
 
-            case SV_GAMEMODE:
-            {
-                int newmode = getint(p);
-                if(!ci->master || (!ci->local && !m_mp(newmode))) break;
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
-                break;
-            };
-
             case SV_FORCEINTERMISSION:
                 if(m_sp) startintermission();
                 break;
@@ -552,11 +591,12 @@ struct fpsserver : igameserver
 
     int welcomepacket(uchar *&p, int n)
     {
+        int hasmap = (gamemode==1 && clients.length()) || smapname[0];
         putint(p, SV_INITS2C);
         putint(p, n);
         putint(p, PROTOCOL_VERSION);
-        putint(p, gamemode==1 ? 1 : smapname[0]);
-        if(gamemode==1 || smapname[0])
+        putint(p, hasmap);
+        if(hasmap)
         {
             putint(p, SV_MAPCHANGE);
             sendstring(smapname, p);
@@ -627,16 +667,7 @@ struct fpsserver : igameserver
         if(interm && seconds>interm)
         {
             interm = 0;
-            loopv(clients)
-            {
-                sendf(clients[i]->clientnum, 0, "ri2", SV_MAPRELOAD, 0);    // ask a client to trigger map reload
-                mapreload = true;
-                break;
-            };
-            if(!mapreload)  // mapchange on empty server: reset server state
-            {
-                smapname[0] = 0;
-            };
+            checkvotes(true);
         };
     };
 
@@ -644,7 +675,6 @@ struct fpsserver : igameserver
     {
         s_strcpy(serverdesc, sdesc);
         s_strcpy(masterpass, adminpass ? adminpass : "");
-        resetvotes();
         smapname[0] = 0;
         resetitems();
     };
@@ -701,6 +731,7 @@ struct fpsserver : igameserver
         sendf(-1, 0, "ri2", SV_CDIS, n); 
         clients.removeobj(ci);
         if(clients.empty()) bannedips.setsize(0); // bans clear when server empties
+        else checkvotes();
     };
 
     char *servername() { return "sauerbratenserver"; };
