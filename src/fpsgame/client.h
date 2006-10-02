@@ -402,7 +402,7 @@ struct clientcom : iclientcom
                     return;
                 };
                 clientnum = mycn;                 // we are now fully connected
-                if(!getint(p) && (cl.gamemode==1 || cl.getclientmap()[0])) changemap(cl.getclientmap());   // we are the first client on this server, set map
+                if(!getint(p) && (cl.gamemode==1 || cl.getclientmap()[0])) changemap(cl.getclientmap()); // we are the first client on this server, set map
                 break;
             };
 
@@ -445,10 +445,9 @@ struct clientcom : iclientcom
 
             case SV_MAPRELOAD:          // server requests next map
             {
-                getint(p);
                 s_sprintfd(nextmapalias)("nextmap_%s%s", m_capture ? "capture_" : "", cl.getclientmap());
                 const char *map = getalias(nextmapalias);     // look up map in the cycle
-                changemap(*map ? map : cl.getclientmap());
+                addmsg(SV_MAPCHANGE, "rsi", *map ? map : cl.getclientmap(), cl.nextmode);
                 break;
             };
 
@@ -682,10 +681,6 @@ struct clientcom : iclientcom
                 d->ping = getint(p);
                 break;
 
-            case SV_GAMEMODE:
-                cl.nextmode = getint(p);
-                break;
-
             case SV_TIMEUP:
                 cl.timeupdate(getint(p));
                 break;
@@ -795,11 +790,11 @@ struct clientcom : iclientcom
         if(m_capture) cl.cpc.setupbases();
     };
 
-    void changemap(const char *name)                      // request map change, server may ignore
+    void changemap(const char *name) // request map change, server may ignore
     {
-        if(!spectator || currentmaster==clientnum) addmsg(SV_MAPCHANGE, "rsi", name, cl.nextmode);
+        if(!spectator || currentmaster==clientnum) addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
     };
-
+        
     void receivefile(uchar *data, int len)
     {
         if(cl.gamemode!=1) return;

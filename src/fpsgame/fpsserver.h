@@ -232,7 +232,7 @@ struct fpsserver : igameserver
             vc->count++;
         };
         votecount *best = NULL;
-        loopv(votes) if(!best || votes[i].count > best->count) best = &votes[i];
+        loopv(votes) if(!best || votes[i].count > best->count || (votes[i].count == best->count && rnd(2))) best = &votes[i];
         if(force || (best && best->count > maxvotes/2))
         {
             if(best) 
