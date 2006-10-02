@@ -299,7 +299,12 @@ struct fpsserver : igameserver
         uint ip = getclientip(ci->clientnum);
         if(!insert) loopv(clients)
         {
-            if(i != ci->clientnum && getclientip(clients[i]->clientnum) == ip && !strcmp(clients[i]->name, ci->name)) return clients[i]->score;
+            if(i != ci->clientnum && getclientip(clients[i]->clientnum) == ip && !strcmp(clients[i]->name, ci->name))
+            {
+                enet_uint32 gamestart = enet_time_get();
+                clients[i]->score.timeplayed += gamestart - clients[i]->gamestart;
+                clients[i]->gamestart = gamestart;
+                return clients[i]->score;
         };
         loopv(scores)
         {
