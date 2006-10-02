@@ -125,11 +125,16 @@ template <class T> struct vector
         buf = (T *)new uchar[alen*sizeof(T)];
         ulen = 0;
     };
+    vector(const vector<T> &v)
+    {
+        alen = v.length();
+        buf = (T *)new uchar[alen*sizeof(T)];
+        ulen = 0;
+        *this = v;
+    };
 
     ~vector() { setsize(0); delete[] (uchar *)buf; };
 
-    vector(const vector<T> &v);
-    
     vector<T> &operator=(const vector<T> &v)
     {
         loopv(v) add(v[i]);
@@ -186,6 +191,11 @@ template <class T> struct vector
     {
         int olen = alen;
         buf = (T *)_realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
+    };
+
+    void reserve(int i)
+    {
+        while(alen-ulen < i) vrealloc();
     };
 
     void remove(int i, int n)

@@ -11,17 +11,33 @@ struct fpsserver : igameserver
         char spawned;
     };
 
+    struct clientscore
+    {
+        int maxhealth, frags, timeplayed;
+ 
+        void reset() 
+        { 
+            maxhealth = 100;
+            frags = timeplayed = 0; 
+        };
+    };
+
+    struct savedscore : clientscore
+    {
+        uint ip;
+        string name;
+    };
+
     struct clientinfo
     {
         int clientnum;
-        string name, team;
-        string mapvote;
+        string name, team, mapvote;
         int modevote;
-        bool master;
-        bool spectator;
-        bool local;
+        bool master, spectator, local;
         vec o;
         int state;
+        clientscore score;
+        enet_uint32 gamestart;
         vector<uchar> position, servmessages, messages;
         int positionoffset, messageoffset;
 
@@ -29,6 +45,7 @@ struct fpsserver : igameserver
 
         void mapchange()
         {
+            score.reset();
             mapvote[0] = 0;
             o = vec(-1e10f, -1e10f, -1e10f);
             state = -1;
@@ -36,10 +53,8 @@ struct fpsserver : igameserver
 
         void reset()
         {
-            team[0] = '\0';
-            master = false;
-            spectator = false;
-            local = false;
+            name[0] = team[0] = 0;
+            master = spectator = local = false;
             position.setsizenodelete(0);
             messages.setsizenodelete(0);
             mapchange();
@@ -50,14 +65,6 @@ struct fpsserver : igameserver
     {
         enet_uint32 uses;
         vector<uchar> positions, messages;
-    };
-
-    struct score
-    {
-        uint ip;
-        string name;
-        int maxhealth;
-        int frags;
     };
 
     struct ban
@@ -96,26 +103,8 @@ struct fpsserver : igameserver
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
     
     vector<server_entity> sents;
-    vector<score> scores;
+    vector<savedscore> scores;
 
-    score &findscore(int cn, bool insert)
-    {
-        uint ip = getclientip(cn);
-        clientinfo *ci = (clientinfo *)getinfo(cn);
-        loopv(scores)
-        {
-            score &sc = scores[i];
-            if(sc.ip == ip && !strcmp(sc.name, ci->name)) return sc;
-        };
-        if(!insert) return *(score *)0;
-        score &sc = scores.add();
-        sc.ip = ip;
-        s_strcpy(sc.name, ci->name);
-        sc.maxhealth = 100;
-        sc.frags = 0;
-        return sc;
-    };
-    
     static const char *modestr(int n)
     {
         static const char *modenames[] =
@@ -160,7 +149,11 @@ struct fpsserver : igameserver
             if(sents[i].type==I_QUAD || sents[i].type==I_BOOST) sec += rnd(40)-20;
             sents[i].spawnsecs = sec;
             sendf(sender, 0, "ri2", SV_ITEMACC, i);
-            if(minremain>=0 && sents[i].type == I_BOOST) findscore(sender, true).maxhealth += 10;
+            if(minremain>=0 && sents[i].type == I_BOOST)
+            {
+                clientinfo *ci = (clientinfo *)getinfo(sender);
+                ci->score.maxhealth += 10;
+            };
         };
     };
 
@@ -189,6 +182,87 @@ struct fpsserver : igameserver
         };
     };
 
+    clientinfo *choosebestclient(float &bestrank)
+    {
+        clientinfo *best = NULL;
+        bestrank = -1;
+        loopv(clients)
+        {
+            clientinfo *ci = clients[i];
+            if(ci->score.timeplayed<0) continue;
+            float rank = float(ci->score.frags)/float(max(ci->score.timeplayed, 1));
+            if(!best || rank > bestrank) best = ci;
+        };
+        if(best) best->score.timeplayed = -1;
+        return best;
+    };  
+
+    void autoteam()
+    {
+        const char *teamnames[2] = {"good", "evil"};
+        vector<clientinfo *> team[2];
+        float teamrank[2] = {0, 0};
+        for(int round = 0, remaining = clients.length(); remaining; round++)
+        {
+            int first = round&1, second = (round+1)&1;
+            while(teamrank[first] <= teamrank[second])
+            {
+                float rank;
+                clientinfo *ci = choosebestclient(rank);
+                if(!ci) break;
+                team[first].add(ci);
+                teamrank[first] += rank;
+                remaining--;
+            };
+        };
+        loopi(sizeof(team)/sizeof(team[0]))
+        {
+            loopvj(team[i])
+            {
+                clientinfo *ci = team[i][j];
+                s_strncpy(ci->team, teamnames[i], MAXTEAMLEN+1);
+                sendf(ci->clientnum, 0, "riis", SV_SETTEAM, ci->clientnum, teamnames[i]);
+            };
+        };
+    };
+
+    struct teamscore
+    {
+        const char *team;
+        float rank;
+        int clients;
+    };
+
+    const char *chooseworstteam(const char *suggest)
+    {
+        vector<teamscore> teamscores;
+        enet_uint32 curtime = enet_time_get();
+        loopv(clients)
+        {
+            clientinfo *ci = clients[i];
+            if(!ci->team[0]) continue;
+            ci->score.timeplayed += curtime - ci->gamestart;
+            ci->gamestart = curtime;
+            teamscore *ts = NULL;
+            loopvj(teamscores) if(!strcmp(teamscores[j].team, ci->team)) { ts = &teamscores[j]; break; };
+            if(!ts) { ts = &teamscores.add(); ts->team = ci->team; ts->rank = 0; ts->clients = 0; };
+            ts->rank += float(ci->score.frags)/float(max(ci->score.timeplayed, 1));
+            ts->clients++;
+        };
+        if(teamscores.length()==1)
+        {
+            if(suggest[0] && strcmp(teamscores[0].team, suggest)) return NULL;
+            return strcmp(teamscores[0].team, "good") ? "good" : "evil";
+        };
+        teamscore *worst = NULL;
+        loopv(teamscores)
+        {
+            teamscore &ts = teamscores[i];
+            if(!worst || ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
+        };
+        return worst ? worst->team : NULL;
+    };
+
     void changemap(const char *s, int mode)
     {
         mapreload = false;
@@ -201,7 +275,45 @@ struct fpsserver : igameserver
         notgotitems = true;
         notgotbases = m_capture;
         scores.setsize(0);
-        loopv(clients) clients[i]->mapchange();
+        enet_uint32 gamestart = enet_time_get();
+        loopv(clients)
+        {
+            clientinfo *ci = clients[i];
+            ci->score.timeplayed += gamestart - ci->gamestart;
+        };
+        if(m_teammode) autoteam();
+        loopv(clients)
+        {
+            clientinfo *ci = clients[i];
+            ci->mapchange();
+            ci->gamestart = gamestart;
+        };
+    };
+
+    clientscore &findscore(clientinfo *ci, bool insert)
+    {
+        uint ip = getclientip(ci->clientnum);
+        if(!insert) loopv(clients)
+        {
+            if(i != ci->clientnum && getclientip(clients[i]->clientnum) == ip && !strcmp(clients[i]->name, ci->name)) return clients[i]->score;
+        };
+        loopv(scores)
+        {
+            savedscore &sc = scores[i];
+            if(sc.ip == ip && !strcmp(sc.name, ci->name)) return sc;
+        };
+        if(!insert) return *(clientscore *)0;
+        savedscore &sc = scores.add();
+        sc.reset();
+        sc.ip = ip;
+        s_strcpy(sc.name, ci->name);
+        return sc;
+    };
+
+    void savescore(clientinfo *ci)
+    {
+        clientscore &sc = findscore(ci, true);
+        sc = ci->score;
     };
 
     struct votecount
@@ -267,8 +379,32 @@ struct fpsserver : igameserver
         return type;
     };
 
-    void buildworldstate(worldstate &ws)
+    static void freecallback(ENetPacket *packet)
     {
+        extern igameserver *sv;
+        ((fpsserver *)sv)->cleanworldstate(packet);
+    };
+
+    void cleanworldstate(ENetPacket *packet)
+    {
+        loopv(worldstates)
+        {
+            worldstate *ws = worldstates[i];
+            if(packet->data >= ws->positions.getbuf() && packet->data <= &ws->positions.last()) ws->uses--;
+            else if(packet->data >= ws->messages.getbuf() && packet->data <= &ws->messages.last()) ws->uses--;
+            else continue;
+            if(!ws->uses)
+            {
+                delete ws;
+                worldstates.remove(i);
+            };
+            break;
+        };
+    };
+
+    bool buildworldstate()
+    {
+        worldstate &ws = *new worldstate;
         loopv(clients)
         {
             clientinfo &ci = *clients[i];
@@ -301,10 +437,9 @@ struct fpsserver : igameserver
                 packet = enet_packet_create(&ws.positions[ci.positionoffset<0 ? 0 : ci.positionoffset+ci.position.length()], 
                                             ci.positionoffset<0 ? psize : psize-ci.position.length(), 
                                             ENET_PACKET_FLAG_NO_ALLOCATE);
-                packet->useCounter = &ws.uses; 
-                ++ws.uses;
                 sendpacket(ci.clientnum, 0, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
+                else { ++ws.uses; packet->freeCallback = freecallback; };
             };
             ci.position.setsizenodelete(0);
 
@@ -313,33 +448,33 @@ struct fpsserver : igameserver
                 packet = enet_packet_create(&ws.messages[ci.messageoffset<0 ? 0 : ci.messageoffset+3+ci.messages.length()], 
                                             ci.messageoffset<0 ? msize : msize-3-ci.messages.length(), 
                                             (reliablemessages ? ENET_PACKET_FLAG_RELIABLE : 0) | ENET_PACKET_FLAG_NO_ALLOCATE);
-                packet->useCounter = &ws.uses;
-                ++ws.uses;
                 sendpacket(ci.clientnum, 1, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
+                else { ++ws.uses; packet->freeCallback = freecallback; };
             };
             ci.messages.setsizenodelete(0);
         };
         reliablemessages = false;
+        if(!ws.uses) 
+        {
+            delete &ws;
+            return false;
+        }
+        else 
+        {
+            worldstates.add(&ws); 
+            return true;
+        };
     };
 
     bool sendpackets()
     {
-        int expired = 0;
-        loopv(worldstates)
-        {
-            worldstate *ws = worldstates[i];
-            if(ws->uses) break;
-            delete ws;
-            expired++;
-        };
-        if(expired) worldstates.remove(0, expired);
         if(clients.empty()) return false;
         enet_uint32 curtime = enet_time_get()-lastsend;
         if(curtime<33) return false;
-        buildworldstate(*worldstates.add(new worldstate));
+        bool flush = buildworldstate();
         lastsend += curtime - (curtime%33);
-        return worldstates.last()->uses>0;
+        return flush;
     };
 
     void parsepacket(int sender, int chan, bool reliable, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
@@ -395,20 +530,41 @@ struct fpsserver : igameserver
                 break;
 
             case SV_INITC2S:
+            {
+                bool newclient = false;
+                if(!ci->name[0])
+                {
+                    newclient = true;
+                    clientscore &sc = findscore(ci, false);
+                    if(&sc) sendf(-1, 0, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
+                };
                 sgetstr(text, p);
-                s_strncpy(ci->name, text, MAXNAMELEN+1);
+                s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
+                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                curmsg = p;
                 sgetstr(text, p);
+                if(newclient && m_teammode)
+                {
+                    const char *worst = chooseworstteam(text);
+                    if(worst)
+                    {
+                        s_strcpy(text, worst);
+                        sendf(sender, 0, "riis", SV_SETTEAM, sender, worst);
+                        ci->messages.reserve(2*strlen(worst)+1);
+                        uchar *buf = &ci->messages.last()+1, *bufpos = buf;
+                        sendstring(worst, bufpos);
+                        ci->messages.ulen += bufpos-buf;
+                        curmsg = p;
+                    };
+                };
                 if(m_capture && !ci->spectator && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
-                {
-                    score &sc = findscore(sender, false);
-                    if(&sc) sendf(-1, 0, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
-                };
                 getint(p);
                 getint(p);
                 loopi(p-curmsg) ci->messages.add(curmsg[i]);
                 break;
+            };
 
             case SV_MAPVOTE:
             case SV_MAPCHANGE:
@@ -482,7 +638,7 @@ struct fpsserver : igameserver
             case SV_FRAGS:
             {
                 int frags = getint(p);    
-                if(minremain>=0) findscore(sender, true).frags = frags;
+                if(minremain>=0) ci->score.frags = frags;
                 loopi(p-curmsg) ci->messages.add(curmsg[i]);
                 break;
             };
@@ -720,6 +876,7 @@ struct fpsserver : igameserver
         if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
         if(mastermode>=MM_LOCKED) ci->spectator = true;
         if(currentmaster>=0) masterupdate = true;
+        ci->gamestart = enet_time_get();
         return DISC_NONE;
     };
 
@@ -728,6 +885,8 @@ struct fpsserver : igameserver
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(ci->master) setmaster(ci, false);
         if(m_capture) cps.leavebases(ci->team, ci->o);
+        ci->score.timeplayed += enet_time_get() - ci->gamestart; 
+        savescore(ci);
         sendf(-1, 0, "ri2", SV_CDIS, n); 
         clients.removeobj(ci);
         if(clients.empty()) bannedips.setsize(0); // bans clear when server empties
