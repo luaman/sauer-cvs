@@ -609,10 +609,14 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
         glTranslatef(0, 0, 2*ref.height);
         glScalef(1, 1, -1);
     };
+    int border = 2;
     loopv(ref.matsurfs)
     {
         materialsurface &m = *ref.matsurfs[i];
-        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -offset);
+        ivec o(m.o);
+        o[R[dimension(m.orient)]] -= border;
+        o[C[dimension(m.orient)]] -= border;
+        drawface(m.orient, o.x, o.y, o.z, m.csize+2*border, m.rsize+2*border, -offset);
     };
     if(reflect) glPopMatrix();
     defaultshader->set();
