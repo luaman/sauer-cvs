@@ -1000,7 +1000,7 @@ void rendermapmodels()
                 glDepthMask(GL_FALSE);
                 glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
             };
-            glBeginQuery_(GL_SAMPLES_PASSED_ARB, oe->query->id);
+            startquery(oe->query);
         };
         if(!occluded || oe->query)
         {
@@ -1041,7 +1041,7 @@ void rendermapmodels()
         };
         if(oe->query)
         {
-            glEndQuery_(GL_SAMPLES_PASSED_ARB);
+            endquery(oe->query);
             if(occluded)
             {
                 glDepthMask(GL_TRUE);
@@ -1150,7 +1150,7 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
     if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); };
 
-    glBeginQuery_(GL_SAMPLES_PASSED_ARB, query->id);
+    startquery(query);
 
     ivec origin(va->x, va->y, va->z);
     origin.mask(~VVEC_INT_MASK);
@@ -1162,7 +1162,7 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
            ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
            vec(camera).sub(origin.tovec()).mul(1<<VVEC_FRAC));
 
-    glEndQuery_(GL_SAMPLES_PASSED_ARB);
+    endquery(query);
 };
 
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
@@ -1464,11 +1464,11 @@ void rendergeom()
 
         //if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
 
-        if(va->query) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->query->id);
+        if(va->query) startquery(va->query);
 
         renderva(cur, va, lod, zpass!=0);
 
-        if(va->query) glEndQuery_(GL_SAMPLES_PASSED_ARB);
+        if(va->query) endquery(va->query);
     };
 
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
@@ -1570,10 +1570,10 @@ void renderreflectedgeom(float z, bool refract)
             }
             else if(!doOQ || va->rquery)
             {
-                if(va->rquery) glBeginQuery_(GL_SAMPLES_PASSED_ARB, va->rquery->id);
+                if(va->rquery) startquery(va->rquery);
                 lodlevel &lod = va->curlod ? va->l1 : va->l0;
                 renderva(cur, va, lod, doOQ);
-                if(va->rquery) glEndQuery_(GL_SAMPLES_PASSED_ARB);
+                if(va->rquery) endquery(va->rquery);
             };
         };            
         if(doOQ)

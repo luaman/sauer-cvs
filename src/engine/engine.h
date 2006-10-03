@@ -263,6 +263,14 @@ extern bool checkquery(occludequery *query, bool nowait = false);
 extern void resetqueries();
 extern int getnumqueries();
 
+#define startquery(query) { glBeginQuery_(GL_SAMPLES_PASSED_ARB, (query)->id); }
+#define endquery(query) \
+    { \
+        glEndQuery_(GL_SAMPLES_PASSED_ARB); \
+        extern int ati_oq_bug; \
+        if(ati_oq_bug) glFlush(); \
+    }
+
 // water
 
 #define getwatercolour(wcol) \

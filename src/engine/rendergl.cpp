@@ -159,6 +159,7 @@ void *getprocaddress(const char *name)
 }
 
 VAR(ati_texgen_bug, 0, 0, 1);
+VAR(ati_oq_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
@@ -263,6 +264,10 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             glGetQueryObjectuiv_ = (PFNGLGETQUERYOBJECTUIVARBPROC)getprocaddress("glGetQueryObjectuivARB");
             hasOQ = true;
             conoutf("Using GL_ARB_occlusion_query extension.");
+#if defined(__APPLE__) && SDL_BYTEORDER == SDL_BIG_ENDIAN
+            if(strstr(vendor, "ATI")) ati_oq_bug = 1; 
+#endif            
+            if(ati_oq_bug) conoutf("WARNING: Using ATI occlusion query bug workaround. (use \"/ati_oq_bug 0\" to disable if unnecessary)");
         };
     };
     if(!hasOQ)

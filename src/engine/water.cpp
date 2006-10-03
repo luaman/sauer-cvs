@@ -570,13 +570,13 @@ void queryreflections()
             glDisable(GL_CULL_FACE);
         };
         refs++;
-        glBeginQuery_(GL_SAMPLES_PASSED_ARB, ref.query->id);
+        startquery(ref.query);
         loopvj(ref.matsurfs)
         {
             materialsurface &m = *ref.matsurfs[j];
             drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f);
         };
-        glEndQuery_(GL_SAMPLES_PASSED_ARB);
+        endquery(ref.query);
     };
 
     if(refs)
