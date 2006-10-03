@@ -1412,11 +1412,11 @@ void cleanupTMUs()
     glEnable(GL_TEXTURE_2D);
 };
 
+//VAR(showva, 0, 0, 1);
+
 void rendergeom()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
-
-    //int showvas = 0;
 
     if(!zpass) setupTMUs();
 
@@ -1433,13 +1433,14 @@ void rendergeom()
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs) continue;
-
-        //glColor4f(1, 1, 1, 1);
-
         if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
         {
-            if(!zpass && va->query && va->query->owner == va) va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
-            if(zpass && va->parent && (va->parent->occluded == OCCLUDE_PARENT || (va->parent->occluded >= OCCLUDE_BB && va->parent->query && va->parent->query->owner == va->parent && va->parent->query->fragments < 0)))
+            if(!zpass && va->query && va->query->owner == va) 
+                va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
+            if(zpass && va->parent && 
+               (va->parent->occluded == OCCLUDE_PARENT || 
+                (va->parent->occluded >= OCCLUDE_BB && 
+                 va->parent->query && va->parent->query->owner == va->parent && va->parent->query->fragments < 0)))
             {
                 va->query = NULL;
                 if(va->occluded >= OCCLUDE_GEOM)
@@ -1462,7 +1463,6 @@ void rendergeom()
             va->occluded = OCCLUDE_NOTHING;
         };
 
-        //if(showva && editmode && insideva(va, worldpos)) { /*if(!showvas) conoutf("distance = %d", va->distance);*/ glColor4f(1, showvas/3.0f, 1-showvas/3.0f, 1); showvas++; };
 
         if(va->query) startquery(va->query);
 
@@ -1478,6 +1478,7 @@ void rendergeom()
     {
         setupTMUs();
         glDepthFunc(GL_LEQUAL);
+//        int showvas = 0;
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1494,6 +1495,14 @@ void rendergeom()
                 if(va->occluded >= OCCLUDE_GEOM) continue;
             }
             else if(va->occluded == OCCLUDE_PARENT) va->occluded = OCCLUDE_NOTHING;
+#if 0
+            if(showva && editmode)
+            {
+                if(insideva(va, worldpos)) glColor3f(1, showvas/3.0f, 1-showvas/3.0f);
+                else glColor3f(1, 1, 1);
+                showvas++;
+            };
+#endif
 
             renderva(cur, va, lod);
         };
