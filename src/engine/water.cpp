@@ -889,7 +889,7 @@ int mergemat(materialsurface *m, int sz, materialsurface &n)
 
 int mergemats(materialsurface *m, int sz)
 {
-    qsort(m, sz, sizeof(materialsurface), (int (*)(const void *, const void *))mergematcmp);
+    qsort(m, sz, sizeof(materialsurface), (int (__cdecl *)(const void *, const void *))mergematcmp);
 
     int nsz = 0;
     loopi(sz) nsz = mergemat(m, nsz, m[i]);
@@ -910,7 +910,7 @@ int matsurfcmp(const materialsurface *x, const materialsurface *y)
     
 void sortmatsurfs(materialsurface *matsurf, int matsurfs)
 {
-    qsort(matsurf, matsurfs, sizeof(materialsurface), (int (*)(const void*, const void*))matsurfcmp);
+    qsort(matsurf, matsurfs, sizeof(materialsurface), (int (__cdecl *)(const void*, const void*))matsurfcmp);
 };
 
 VARF(optmats, 0, 1, 1, allchanged());

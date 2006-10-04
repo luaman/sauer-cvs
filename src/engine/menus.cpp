@@ -40,7 +40,7 @@ void menuset(int menu)
     if(!menu && vmenu>=0) return;
     if(menu>=0 && vmenu<0)
     {
-        menupos = vec(worldpos).sub(player->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1));
+        menupos = vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1));
         menustart = lastmillis;
     };
     if((vmenu = menu)>0) {};//player->stopmoving();
@@ -75,7 +75,7 @@ int menucompare(mitem *a, mitem *b)
 
 void sortmenu(int start, int num)
 {
-    qsort(&menus[0].items[start], num, sizeof(mitem), (int (__cdecl *)(const void *,const void *))menucompare);
+    menus[0].items.sort(menucompare, start, num);
 };
 
 void newmenu(char *name)
