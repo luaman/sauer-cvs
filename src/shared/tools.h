@@ -176,7 +176,7 @@ template <class T> struct vector
     const T *getbuf() const { return buf; };
 
     template<class ST>
-    void sort(int (__cdecl *cf)(ST *, ST *)) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf); };
+    void sort(int (__cdecl *cf)(ST *, ST *), int i = 0, int n = ulen) { qsort(&buf[i], n, sizeof(T), (int (__cdecl *)(const void *,const void *))cf); };
 
     void *_realloc(void *p, int oldsize, int newsize)
     {
