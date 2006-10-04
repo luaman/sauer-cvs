@@ -13,13 +13,13 @@
             CLASS = Launcher; 
             LANGUAGE = ObjC; 
             OUTLETS = {
+                advancedOptions = NSTextField; 
                 console = ConsoleView; 
                 fsaa = NSSlider; 
                 fullscreen = NSButton; 
                 keys = NSArrayController; 
                 multiplayer = NSButton; 
                 name = NSTextField; 
-                occlusion = NSButton; 
                 resolutions = NSPopUpButton; 
                 serverOptions = NSTextField; 
                 shader = NSSlider; 

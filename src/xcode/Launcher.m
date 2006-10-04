@@ -56,7 +56,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 /*
  * extract a dictionary from the config files containing:
- * - name, team, gamma, oqfrags strings
+ * - name, team, gamma strings
  * - bind/editbind '.' key strings
  */
 -(NSDictionary *)readConfigFiles 
@@ -105,7 +105,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 			while(j < [line length] && [line characterAtIndex:j] <= ' ') j++; //skip white
 			NSString *remainder = [line substringFromIndex:j];
 			
-			if([type isEqual:@"name"] || [type isEqual:@"team"] || [type isEqual:@"gamma"] || [type isEqual:@"oqfrags"]) 
+			if([type isEqual:@"name"] || [type isEqual:@"team"] || [type isEqual:@"gamma"]) 
 				[dict setObject:value forKey:type];
 			else if([type isEqual:@"bind"] || [type isEqual:@"editbind"]) 
 				[dict setObject:remainder forKey:[NSString stringWithFormat:@"%@.%@", type,value]];
@@ -276,7 +276,6 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	
 	//suppose could use this to update gamma and keys too, but can't be bothered...
 	[self updateAutoexecFile:[NSDictionary dictionaryWithObjectsAndKeys:
-		[NSNumber numberWithInt:([occlusion state] == NSOffState) ? 0 : 1], @"oqfrags",
 		[name stringValue], @"name",
 		[team stringValue], @"team",
 		nil]];
@@ -293,6 +292,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 		[args addObject:@"-grpg"]; //demo the rpg game
 	else if(filename) 
 		[args addObject:[NSString stringWithFormat:@"-l%@",filename]];
+	
+	[args addObjectsFromArray:[[advancedOptions stringValue] componentsSeparatedByString:@" "]];
 	
 	NSTask *task = [[NSTask alloc] init];
 	[task setCurrentDirectoryPath:cwd];
@@ -347,11 +348,12 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	NSDictionary *dict = [self readConfigFiles];
 	
 	[keys addObjects:[self getKeys:dict]];
-	[occlusion setState:([[dict objectForKey:@"oqfrags"] intValue] == 0) ? NSOffState : NSOnState];
+
 	[name setStringValue:[dict objectForKey:@"name"]];
 	[team setStringValue:[dict objectForKey:@"team"]];
 	
 	[serverOptions setFocusRingType:NSFocusRingTypeNone];
+	[advancedOptions setFocusRingType:NSFocusRingTypeNone];
 	
 	server = -1;
 	

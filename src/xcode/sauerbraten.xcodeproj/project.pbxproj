@@ -21,7 +21,6 @@
 		B90ADD7309B344D800A5B00B /* protocol.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3109B344D800A5B00B /* protocol.c */; };
 		B90ADD7609B344D800A5B00B /* unix.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3409B344D800A5B00B /* unix.c */; };
 		B918C87D0A90EFA0009683DE /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B918C87C0A90EFA0009683DE /* geom.cpp */; };
-		B918C8800A90EFB5009683DE /* treeui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B918C87F0A90EFB5009683DE /* treeui.cpp */; };
 		B918C8B20A90F30C009683DE /* behaviours.h in Headers */ = {isa = PBXBuildFile; fileRef = B918C8AE0A90F30C009683DE /* behaviours.h */; };
 		B918C8B30A90F30C009683DE /* entities.h in Headers */ = {isa = PBXBuildFile; fileRef = B918C8AF0A90F30C009683DE /* entities.h */; };
 		B918C8B40A90F30C009683DE /* rpg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B918C8B00A90F30C009683DE /* rpg.cpp */; };
@@ -123,7 +122,6 @@
 		B90ADD3109B344D800A5B00B /* protocol.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = protocol.c; sourceTree = "<group>"; };
 		B90ADD3409B344D800A5B00B /* unix.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = unix.c; sourceTree = "<group>"; };
 		B918C87C0A90EFA0009683DE /* geom.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = geom.cpp; sourceTree = "<group>"; };
-		B918C87F0A90EFB5009683DE /* treeui.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = treeui.cpp; sourceTree = "<group>"; };
 		B918C8AE0A90F30C009683DE /* behaviours.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = behaviours.h; sourceTree = "<group>"; };
 		B918C8AF0A90F30C009683DE /* entities.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = entities.h; sourceTree = "<group>"; };
 		B918C8B00A90F30C009683DE /* rpg.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = rpg.cpp; sourceTree = "<group>"; };
@@ -183,7 +181,7 @@
 		B941984B092076920029DAD1 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
 		B941984C092076920029DAD1 /* tools.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = tools.cpp; sourceTree = "<group>"; };
 		B941984D092076920029DAD1 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
-		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D4C092096F200B6C936 /* launcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D570920970C00B6C936 /* Launcher.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Launcher.h; sourceTree = "<group>"; };
 		B96D0D580920970C00B6C936 /* Launcher.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Launcher.m; sourceTree = "<group>"; };
@@ -370,7 +368,6 @@
 				B9419833092076920029DAD1 /* sound.cpp */,
 				B903576609D093AF002C9DC7 /* spheretree.cpp */,
 				B903576709D093AF002C9DC7 /* spheretree.h */,
-				B918C87F0A90EFB5009683DE /* treeui.cpp */,
 				B9419834092076920029DAD1 /* water.cpp */,
 				B9419835092076920029DAD1 /* world.cpp */,
 				B9419836092076920029DAD1 /* world.h */,
@@ -594,7 +591,6 @@
 				B903576809D093AF002C9DC7 /* spheretree.cpp in Sources */,
 				B93EF27709FFD5DC0006A398 /* normal.cpp in Sources */,
 				B918C87D0A90EFA0009683DE /* geom.cpp in Sources */,
-				B918C8800A90EFB5009683DE /* treeui.cpp in Sources */,
 				B918C8B40A90F30C009683DE /* rpg.cpp in Sources */,
 				668185240AD0284E0072F968 /* 3dgui.cpp in Sources */,
 				668185260AD028630072F968 /* crypto.cpp in Sources */,

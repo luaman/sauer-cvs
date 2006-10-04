@@ -7,12 +7,12 @@
     IBOutlet NSPopUpButton *resolutions;
     IBOutlet NSButton *fullscreen;
     IBOutlet NSSlider *shader;
-	IBOutlet NSButton *occlusion;
 	IBOutlet NSSlider *fsaa;
-	
 	IBOutlet NSButton *multiplayer;
 	IBOutlet ConsoleView *console;
 	IBOutlet NSTextField *serverOptions;
+	IBOutlet NSTextField *advancedOptions;
+	
 
 	IBOutlet NSTextField *name;
 	IBOutlet NSTextField *team;
