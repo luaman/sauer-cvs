@@ -224,6 +224,8 @@ typedef bigint<GF_DIGITS+1> gfint;
  */
 struct gfield : gfint
 {
+    static const gfield P;
+
     gfield() {};
     gfield(digit n) : gfint(n) {};
     gfield(const char *s) : gfint(s) {};
@@ -235,8 +237,6 @@ struct gfield : gfint
         gfint::operator=(y);
         return *this;
     };
-
-    static const gfield P;
 
     template<int X_DIGITS, int Y_DIGITS> gfield &add(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
