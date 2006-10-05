@@ -192,6 +192,8 @@ enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
 
 struct g3d_gui
 {
+    virtual ~g3d_gui() {};
+
     virtual void start(int starttime, float basescale) = 0;
     virtual void end() = 0;
     virtual int text(char *text, int color, char *icon = NULL) = 0;
@@ -200,6 +202,8 @@ struct g3d_gui
 
 struct g3d_callback
 {
+    virtual ~g3d_callback() {};
+
     virtual void gui(g3d_gui &g, bool firstpass) = 0;
 };
 
