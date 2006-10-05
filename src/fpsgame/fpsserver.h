@@ -564,7 +564,7 @@ struct fpsserver : igameserver
                         ci->messages.reserve(2*strlen(worst)+1);
                         uchar *buf = &ci->messages.last()+1, *bufpos = buf;
                         sendstring(worst, bufpos);
-                        ci->messages.ulen += bufpos-buf;
+                        ci->messages.ulen += int(bufpos-buf);
                         curmsg = p;
                     };
                 };
