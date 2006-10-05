@@ -114,7 +114,7 @@ struct fpsserver : igameserver
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
             "capture",
         };
-        return (n>=-2 && n+2<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+2] : "unknown";
+        return (n>=-2 && size_t(n+2)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+2] : "unknown";
     };
 
     static char msgsizelookup(int msg)

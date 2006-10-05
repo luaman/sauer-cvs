@@ -301,7 +301,7 @@ struct entities : icliententities
             "base", "respawnpoint",
             "", "", "", "",
         };
-        return i>=0 && i<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
+        return i>=0 && size_t(i)<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
     };
     
     int extraentinfosize() { return 0; };       // size in bytes of what the 2 methods below read/write... so it can be skipped by other games
