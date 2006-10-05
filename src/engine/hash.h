@@ -30,8 +30,8 @@ struct tiger
 #endif
         loopi(1024) loop(col, 8) ((uchar *)&sboxes[i])[col] = i&0xFF;
         
-        uint abc = 2;
-        loop(pass, 5) loopi(256) for(size_t sb = 0; sb < 1024; sb += 256)
+        int abc = 2;
+        loop(pass, 5) loopi(256) for(int sb = 0; sb < 1024; sb += 256)
         {
             abc++;
             if(abc >= 3) { abc = 0; compress((chunk *)temp, state); };
@@ -100,7 +100,7 @@ struct tiger
         state[2] = c;
     };
 
-    static void hash(const uchar *str, size_t length, hashval &val)
+    static void hash(const uchar *str, int length, hashval &val)
     {
         static bool init = false;
         if(!init) { gensboxes(); init = true; }; 
@@ -111,7 +111,7 @@ struct tiger
         val.chunks[1] = 0xFEDCBA9876543210ULL;
         val.chunks[2] = 0xF096A5B4C3B2E187ULL;
 
-        size_t i = length;
+        int i = length;
         for(; i >= 64; i -= 64, str += 8)
         {
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -122,7 +122,7 @@ struct tiger
 #endif
         };
 
-        size_t j;
+        int j;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
         for(j = 0; j < i; j++) temp[j^7] = str[j];
         temp[j^7] = 0x01;
