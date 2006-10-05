@@ -32,7 +32,7 @@ void showgui(char *name)
 
 void guibutton(char *name, char *action, char *icon)
 {
-    if(cgui && cgui->button(name, 0xFFFFFF, *icon ? icon : "blue_button")&G3D_UP) s_strcpy(executelater, *action ? action : name);
+    if(cgui && cgui->button(name, 0xFFFFFF, *icon ? icon : (strstr(action, "showgui") ? "blue_button" : "green_button"))&G3D_UP) s_strcpy(executelater, *action ? action : name);
 };
 
 void guitext(char *name)
