@@ -84,7 +84,7 @@ struct gui : g3d_gui
             int slen = text_width(text);
             if(icon) slen += 70;
             xsize = max(xsize, slen);    
-            return false;
+            return 0;
         }
         else
         {
