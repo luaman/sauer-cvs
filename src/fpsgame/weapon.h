@@ -444,7 +444,7 @@ struct weaponstate
                 if(!raysleft) break;
             };
         }
-        else if(o = intersectclosest(from, to, i, d))
+        else if((o = intersectclosest(from, to, i, d)))
         {
             hitpush(i, qdam, o, d, from, to);
             shorten(from, o->o, to);

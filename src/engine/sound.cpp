@@ -135,19 +135,19 @@ void music(char *name, char *cmd)
         s_strcpy(sn, "packages/");
         s_strcat(sn, name);
         #ifdef USE_MIXER
-            if(mod = Mix_LoadMUS(path(sn)))
+            if((mod = Mix_LoadMUS(path(sn))))
             {
                 Mix_PlayMusic(mod, cmd[0] ? 0 : -1);
                 Mix_VolumeMusic((musicvol*MAXVOL)/255);
             }
         #else
-            if(mod = FMUSIC_LoadSong(path(sn)))
+            if((mod = FMUSIC_LoadSong(path(sn))))
             {
                 FMUSIC_PlaySong(mod);
                 FMUSIC_SetMasterVolume(mod, musicvol);
                 FMUSIC_SetLooping(mod, cmd[0] ? FALSE : TRUE);
             }
-            else if(stream = FSOUND_Stream_Open(path(sn), cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0))
+            else if((stream = FSOUND_Stream_Open(path(sn), cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0)))
             {
                 musicchan = FSOUND_Stream_Play(FSOUND_FREE, stream);
                 if(musicchan>=0) { FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(musicchan, false); };

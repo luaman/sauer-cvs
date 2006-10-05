@@ -108,7 +108,7 @@ void render_particles(int time)
             glColor3ub(pt.r, pt.g, pt.b);
         };
         
-        for(particle *p, **pp = &parlist[i]; p = *pp;)
+        for(particle *p, **pp = &parlist[i]; (p = *pp);)
         {   
             int blend = p->fade*255/(lastmillis-p->millis+p->fade);
             if(pt.tex>=0)  

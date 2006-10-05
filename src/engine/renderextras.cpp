@@ -251,7 +251,6 @@ void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
     if(!editmode) return;
-    extern selinfo sel;
     const vector<extentity *> &ents = et->getents();
 
     bool implicit = !haveselent();

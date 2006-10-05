@@ -134,7 +134,7 @@ struct lodcollect
             const sortval &t = indices[k];
             lod.eslist[i].texture = k.tex;
             lod.eslist[i].lmid = k.lmid;
-            loopl(3) if(lod.eslist[i].length[l] = t.dims[l].length())
+            loopl(3) if((lod.eslist[i].length[l] = t.dims[l].length()))
             {
                 memcpy(ebuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
                 ebuf += t.dims[l].length();

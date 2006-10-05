@@ -1151,7 +1151,7 @@ void freesurfaces(cube &c)
 void dumplms()
 {
     SDL_Surface *temp;
-    if(temp = SDL_CreateRGBSurface(SDL_SWSURFACE, LM_PACKW, LM_PACKH, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0))
+    if((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, LM_PACKW, LM_PACKH, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)))
     {
         loopv(lightmaps)
         {

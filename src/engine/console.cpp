@@ -52,7 +52,7 @@ void conoutf(const char *s, ...)
     puts(sf);
     s = sf;
     int n = 0, visible;
-    while(visible = text_visible(s, 3*w - FONTH)) // cut strings to fit on screen
+    while((visible = text_visible(s, 3*w - FONTH))) // cut strings to fit on screen
     {
         const char *newline = (const char *)memchr(s, '\n', visible);
         if(newline) visible = newline+1-s;
@@ -188,7 +188,7 @@ void pasteconsole()
     {
         cbend = (char *)memchr(cbline, '\0', &cb[cbsize] - cbline);
         if(!cbend) cbend = &cb[cbsize];
-        if(commandlen + cbend - cbline + 1 > sizeof(commandbuf)) cbend = cbline + sizeof(commandbuf) - commandlen - 1;
+        if(size_t(commandlen + cbend - cbline + 1) > sizeof(commandbuf)) cbend = cbline + sizeof(commandbuf) - commandlen - 1;
         memcpy(&commandbuf[commandlen], cbline, cbend - cbline);
         commandlen += cbend - cbline;
         commandbuf[commandlen] = '\n';
