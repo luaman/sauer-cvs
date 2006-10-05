@@ -5,7 +5,7 @@
 
 /* Elliptic curve cryptography based on NIST DSS prime curves. */
 
-static int parsedigits(ushort *digits, int maxlen, const char *s)
+static size_t parsedigits(ushort *digits, size_t maxlen, const char *s)
 {
     size_t slen = strlen(s), len = (slen+2*sizeof(ushort)-1)/(2*sizeof(ushort));
     if(len>maxlen) return 0;
@@ -21,7 +21,7 @@ static int parsedigits(ushort *digits, int maxlen, const char *s)
     return len;
 };
 
-static void printdigits(const ushort *digits, int len, FILE *out)
+static void printdigits(const ushort *digits, size_t len, FILE *out)
 {
     loopi(len) fprintf(out, "%.4x", digits[len-i-1]);
 };
@@ -34,7 +34,7 @@ template<int BI_DIGITS> struct bigint
     typedef ushort digit;
     typedef uint dbldigit;
 
-    int len;
+    size_t len;
     digit digits[BI_DIGITS];
 
     bigint() {};
@@ -59,7 +59,7 @@ template<int BI_DIGITS> struct bigint
         };
     };
 
-    void readdigits(const vector<uchar> &buf, int offset, int newlen)
+    void readdigits(const vector<uchar> &buf, size_t offset, size_t newlen)
     {
         len = newlen;
         loopi(len)
@@ -81,10 +81,10 @@ template<int BI_DIGITS> struct bigint
     bool iszero() const { return !len; };
     bool isone() const { return len==1 && digits[0]==1; };
 
-    int numbits() const
+    uint numbits() const
     {
         if(!len) return 0;
-        int bits = len*BI_DIGIT_BITS;
+        uint bits = len*BI_DIGIT_BITS;
         digit last = digits[len-1], mask = 1<<(BI_DIGIT_BITS-1);
         while(mask)
         {
@@ -95,12 +95,12 @@ template<int BI_DIGITS> struct bigint
         return 0;
     };
 
-    bool hasbit(int n) const { return n/BI_DIGIT_BITS < len && ((digits[n/BI_DIGIT_BITS]>>(n%BI_DIGIT_BITS))&1); };
+    bool hasbit(uint n) const { return n/BI_DIGIT_BITS < len && ((digits[n/BI_DIGIT_BITS]>>(n%BI_DIGIT_BITS))&1); };
 
     template<int X_DIGITS, int Y_DIGITS> bigint &add(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
         dbldigit carry = 0;
-        int maxlen = max(x.len, y.len), i;
+        size_t maxlen = max(x.len, y.len), i;
         for(i = 0; i < y.len || carry; i++)
         {
              carry += (i < x.len ? (dbldigit)x.digits[i] : 0) + (i < y.len ? (dbldigit)y.digits[i] : 0);
@@ -117,7 +117,7 @@ template<int BI_DIGITS> struct bigint
     {
         ASSERT(x >= y);
         dbldigit borrow = 0;
-        int i;
+        size_t i;
         for(i = 0; i < y.len || borrow; i++)
         {
              borrow = (1<<BI_DIGIT_BITS) + (dbldigit)x.digits[i] - (i<y.len ? (dbldigit)y.digits[i] : 0) - borrow;
@@ -156,7 +156,7 @@ template<int BI_DIGITS> struct bigint
     template<int X_DIGITS> bigint &rshift(const bigint<X_DIGITS> &x, uint n)
     {
         if(!len || !n) return *this;
-        uint dig = (n-1)/BI_DIGIT_BITS;
+        size_t dig = (n-1)/BI_DIGIT_BITS;
         n = ((n-1) % BI_DIGIT_BITS)+1;
         digit carry = x.digits[dig]>>n;
         loopi(len-dig-1)
@@ -175,10 +175,10 @@ template<int BI_DIGITS> struct bigint
     template<int X_DIGITS> bigint &lshift(const bigint<X_DIGITS> &x, uint n)
     {
         if(!len || !n) return *this;
-        uint dig = n/BI_DIGIT_BITS;
+        size_t dig = n/BI_DIGIT_BITS;
         n %= BI_DIGIT_BITS;
         digit carry = 0;
-        for(int i = len-1; i >= 0; i--)
+        for(int i = int(len)-1; i>=0; i--)
         {
             digit tmp = x.digits[i];
             digits[i+dig] = (tmp<<n) | carry;
@@ -194,7 +194,7 @@ template<int BI_DIGITS> struct bigint
     template<int Y_DIGITS> bool operator==(const bigint<Y_DIGITS> &y) const
     {
         if(len!=y.len) return false;
-        for(int i = len-1; i>=0; i--) if(digits[i]!=y.digits[i]) return false;
+        for(int i = int(len)-1; i>=0; i--) if(digits[i]!=y.digits[i]) return false;
         return true;
     };
     template<int Y_DIGITS> bool operator!=(const bigint<Y_DIGITS> &y) const { return !(*this==y); };
@@ -202,7 +202,7 @@ template<int BI_DIGITS> struct bigint
     {
         if(len<y.len) return true;
         if(len>y.len) return false;
-        for(int i = len-1; i>=0; i--)
+        for(int i = int(len)-1; i>=0; i--)
         {
             if(digits[i]<y.digits[i]) return true;
             if(digits[i]>y.digits[i]) return false;
@@ -344,7 +344,7 @@ struct gfield : gfint
             digits[0] = 1; 
             if(!y.len) return *this;
         };
-        for(int i = 1, j = y.numbits(); i < j; i++)
+        for(uint i = 1, j = y.numbits(); i < j; i++)
         {
             a.square();
             if(y.hasbit(i)) mul(a);
@@ -536,7 +536,8 @@ struct ecjacobian
 
     void read(const vector<uchar> &buf)
     {
-        int len = buf[0]&0x7F, ybit = buf[0]>>7;
+        size_t len = buf[0]&0x7F;
+        bool ybit = (buf[0]>>7)!=0;
         x.readdigits(buf, 1, (len+sizeof(gfield::digit)-1)/sizeof(gfield::digit));
         calcy(ybit);
         z = bigint<1>(1);

@@ -30,8 +30,8 @@ struct tiger
 #endif
         loopi(1024) loop(col, 8) ((uchar *)&sboxes[i])[col] = i&0xFF;
         
-        int abc = 2;
-        loop(pass, 5) loopi(256) for(int sb = 0; sb < 1024; sb += 256)
+        uint abc = 2;
+        loop(pass, 5) loopi(256) for(size_t sb = 0; sb < 1024; sb += 256)
         {
             abc++;
             if(abc >= 3) { abc = 0; compress((chunk *)temp, state); };
@@ -84,7 +84,7 @@ struct tiger
        sb2[((c)>>(5*8))&0xFF] ^ sb1[((c)>>(7*8))&0xFF] ; \
       b *= mul;
 
-            int mul = !pass_no ? 5 : (pass_no==1 ? 7 : 9);
+            uint mul = !pass_no ? 5 : (pass_no==1 ? 7 : 9);
             round(a, b, c, x0) round(b, c, a, x1) round(c, a, b, x2) round(a, b, c, x3)
             round(b, c, a, x4) round(c, a, b, x5) round(a, b, c, x6) round(b, c, a, x7)
  
@@ -111,7 +111,7 @@ struct tiger
         val.chunks[1] = 0xFEDCBA9876543210ULL;
         val.chunks[2] = 0xF096A5B4C3B2E187ULL;
 
-        uint i = length, j;
+        size_t i = length;
         for(; i >= 64; i -= 64, str += 8)
         {
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -122,6 +122,7 @@ struct tiger
 #endif
         };
 
+        size_t j;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
         for(j = 0; j < i; j++) temp[j^7] = str[j];
         temp[j^7] = 0x01;
