@@ -23,7 +23,11 @@ void showgui(char *name)
         menustart = lastmillis;
         guistack.add(newstring(name));
     }
-    else if(!guistack.empty()) delete[] guistack.pop(); 
+    else if(!guistack.empty()) 
+    {
+        delete[] guistack.pop(); 
+        menustart = lastmillis;
+    };
 };
 
 void guibutton(char *name, char *action, char *icon)
