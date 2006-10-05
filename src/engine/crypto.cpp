@@ -649,7 +649,7 @@ COMMAND(testgf, "s");
 void testcurve(char *s)
 {
     tiger::hashval hash;
-    tiger::hash((uchar *)s, strlen(s), hash);
+    tiger::hash((uchar *)s, (int)strlen(s), hash);
 
     printf("hashing: %s to: ", s);
     loopi(sizeof(hash.bytes)) printf("%.2x", hash.bytes[sizeof(hash.bytes)-i-1]);
