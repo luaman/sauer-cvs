@@ -126,8 +126,9 @@ int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
 
 bool g3d_windowhit(bool on, bool act)
 {
+    extern void cleargui(int *n);
     if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
-    else if(!on && windowhit) showgui(NULL);
+    else if(!on && windowhit) cleargui(NULL);
     return windowhit!=NULL;
 };
 

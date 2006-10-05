@@ -15,19 +15,23 @@ void newgui(char *name, char *contents) { guis[newstring(name)] = newstring(cont
 
 vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
 
-void showgui(char *name)
+void cleargui(int *n)
 {
-    if(name && (guistack.empty() || strcmp(name, "main")))
+    int clear = guistack.length();
+    if(!n || *n>0) clear = min(clear, !n ? 1 : *n);
+    loopi(clear) delete[] guistack.pop();
+    if(!guistack.empty())
     {
-        menupos = menuinfrontofplayer();
-        menustart = lastmillis;
-        guistack.add(newstring(name));
-    }
-    else if(!guistack.empty()) 
-    {
-        delete[] guistack.pop(); 
         menustart = lastmillis;
     };
+    if(n) intret(clear);
+};
+
+void showgui(char *name)
+{
+    menupos = menuinfrontofplayer();
+    menustart = lastmillis;
+    guistack.add(newstring(name));
 };
 
 void guibutton(char *name, char *action, char *icon)
@@ -42,14 +46,19 @@ void guitext(char *name)
 
 void guiservers()
 {
-    extern void refreshservers(g3d_gui *cgui);
-    if(cgui) refreshservers(cgui); 
+    extern const char *showservers(g3d_gui *cgui);
+    if(cgui) 
+    {
+        const char *name = showservers(cgui); 
+        if(name) s_sprintf(executelater)("cleargui;connect %s", name);
+    };
 };
 
 COMMAND(newgui, "ss");
 COMMAND(guibutton, "sss");
 COMMAND(guitext, "s");
 COMMAND(guiservers, "s");
+COMMAND(cleargui, "i");
 COMMAND(showgui, "s");
 
 static struct mainmenucallback : g3d_callback

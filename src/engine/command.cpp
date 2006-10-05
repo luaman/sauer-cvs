@@ -625,13 +625,14 @@ COMMAND(writecfg, "");
 // () and [] expressions, any control construct can be defined trivially.
 
 void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); };
-void ints              (int v) { string b; itoa(b, v); commandret = newstring(b); };
+void intret            (int v) { string b; itoa(b, v); commandret = newstring(b); };
 
 ICOMMAND(if, "sss", commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
 
 ICOMMAND(loop, "sss", { int n = parseint(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); }; });
 ICOMMAND(while, "ss", while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
 
+void onpress(int *on, char *body) { if(*on) execute(body); };
 void onrelease(int *on, char *body) { if(!*on) execute(body); };
 
 void concat(const char *s) { commandret = newstring(s); };
@@ -674,7 +675,7 @@ void listlen(char *s)
     int n = 0;
     whitespaceskip;
     for(; *s; n++) elementskip, whitespaceskip;
-    ints(n);
+    intret(n);
 };
 
 void at(char *s, int *pos)
@@ -697,6 +698,7 @@ void getalias_(char *s)
     result(getalias(s));
 };
 
+COMMAND(onpress, "Ds");
 COMMAND(onrelease, "Ds");
 COMMAND(exec, "s");
 COMMAND(concat, "C");
@@ -707,26 +709,26 @@ COMMAND(at, "si");
 COMMAND(listlen, "s");
 COMMANDN(getalias, getalias_, "s");
 
-void add  (int *a, int *b) { ints(*a + *b); };          COMMANDN(+, add, "ii");
-void mul  (int *a, int *b) { ints(*a * *b); };          COMMANDN(*, mul, "ii");
-void sub  (int *a, int *b) { ints(*a - *b); };          COMMANDN(-, sub, "ii");
-void divi (int *a, int *b) { ints(*b ? *a / *b : 0); }; COMMANDN(div, divi, "ii");
-void mod  (int *a, int *b) { ints(*b ? *a % *b : 0); }; COMMAND(mod, "ii");
-void equal(int *a, int *b) { ints((int)(*a == *b)); };  COMMANDN(=, equal, "ii");
-void lt   (int *a, int *b) { ints((int)(*a < *b)); };   COMMANDN(<, lt, "ii");
-void gt   (int *a, int *b) { ints((int)(*a > *b)); };   COMMANDN(>, gt, "ii");
-void xora (int *a, int *b) { ints(*a ^ *b); };          COMMANDN(^, xora, "ii");
-void nota (int *a)         { ints(*a == 0); };          COMMANDN(!, nota, "i");
+void add  (int *a, int *b) { intret(*a + *b); };          COMMANDN(+, add, "ii");
+void mul  (int *a, int *b) { intret(*a * *b); };          COMMANDN(*, mul, "ii");
+void sub  (int *a, int *b) { intret(*a - *b); };          COMMANDN(-, sub, "ii");
+void divi (int *a, int *b) { intret(*b ? *a / *b : 0); }; COMMANDN(div, divi, "ii");
+void mod  (int *a, int *b) { intret(*b ? *a % *b : 0); }; COMMAND(mod, "ii");
+void equal(int *a, int *b) { intret((int)(*a == *b)); };  COMMANDN(=, equal, "ii");
+void lt   (int *a, int *b) { intret((int)(*a < *b)); };   COMMANDN(<, lt, "ii");
+void gt   (int *a, int *b) { intret((int)(*a > *b)); };   COMMANDN(>, gt, "ii");
+void xora (int *a, int *b) { intret(*a ^ *b); };          COMMANDN(^, xora, "ii");
+void nota (int *a)         { intret(*a == 0); };          COMMANDN(!, nota, "i");
 
-void anda (char *a, char *b) { if(execute(a)!=0) ints(execute(b)!=0); else ints(0); };
-void ora  (char *a, char *b) { if(execute(a)==0) ints(execute(b)!=0); else ints(1); };
+void anda (char *a, char *b) { if(execute(a)!=0) intret(execute(b)!=0); else intret(0); };
+void ora  (char *a, char *b) { if(execute(a)==0) intret(execute(b)!=0); else intret(1); };
 
 COMMANDN(&&, anda, "ss");
 COMMANDN(||, ora, "ss");
 
-void rndn(int *a)          { ints(*a>0 ? rnd(*a) : 0); };  COMMANDN(rnd, rndn, "i");
+void rndn(int *a)          { intret(*a>0 ? rnd(*a) : 0); };  COMMANDN(rnd, rndn, "i");
 
-void strcmpa(char *a, char *b) { ints(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, "ss");
+void strcmpa(char *a, char *b) { intret(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, "ss");
 
 ICOMMAND(echo, "C", conoutf("\f1%s", args[0]));
 

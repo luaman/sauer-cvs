@@ -428,10 +428,10 @@ void eattr(int *prop)
 {
     entfocus(efocus, switch(*prop)
     {
-        case 0: ints(e.attr1); break;
-        case 1: ints(e.attr2); break;
-        case 2: ints(e.attr3); break;
-        case 3: ints(e.attr4); break;
+        case 0: intret(e.attr1); break;
+        case 1: intret(e.attr2); break;
+        case 2: intret(e.attr3); break;
+        case 3: intret(e.attr4); break;
     });
 };
 
@@ -446,10 +446,10 @@ void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
               e.attr4=*a4;);
 };
 
-ICOMMAND(esellen,   "", ints(entgroup.length()));
-ICOMMAND(esel,      "s",setgroup(e.type != ET_EMPTY && execute(args[0]) > 0));
-ICOMMAND(insel,     "", entfocus(efocus, ints(havesel && pointinsel(sel, e.o))));
-ICOMMAND(et,        "", entfocus(efocus, result(et->entname(e.type))));
+ICOMMAND(esellen,   "",  intret(entgroup.length()));
+ICOMMAND(esel,      "s", setgroup(e.type != ET_EMPTY && execute(args[0]) > 0));
+ICOMMAND(insel,     "",  entfocus(efocus, intret(havesel && pointinsel(sel, e.o))));
+ICOMMAND(et,        "",  entfocus(efocus, result(et->entname(e.type))));
 COMMANDN(ea, eattr, "i");
 COMMANDN(entedit, enteditor, "siiii");
 

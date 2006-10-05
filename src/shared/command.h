@@ -48,7 +48,7 @@ template <class T> struct tident
 typedef tident<void> ident;
 
 extern void addident(char *name, ident *id);
-extern void ints(int v);
+extern void intret(int v);
 extern void result(const char *s);
 
 // nasty macros for registering script functions, abuses globals to avoid excessive infrastructure

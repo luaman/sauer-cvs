@@ -188,13 +188,15 @@ bool resolverwait(const char *name, ENetAddress *address)
     return resolved;
 };
 
+enum { UNRESOLVED = 0, RESOLVING, RESOLVED };
+
 struct serverinfo
 {
     string name;
     string full;
     string map;
     string sdesc;
-    int numplayers, ping;
+    int numplayers, ping, resolved;
     vector<int> attr;
     ENetAddress address;
 };
@@ -214,12 +216,14 @@ void addserver(char *servername)
     si.ping = 999;
     si.map[0] = 0;
     si.sdesc[0] = 0;
+    si.resolved = UNRESOLVED;
     si.address.host = ENET_HOST_ANY;
     si.address.port = sv->serverinfoport();
 };
 
 void pingservers()
 {
+    if(pingsock == ENET_SOCKET_NULL) pingsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, NULL);
     ENetBuffer buf;
     uchar ping[MAXTRANS];
     uchar *p;
@@ -238,16 +242,29 @@ void pingservers()
   
 void checkresolver()
 {
+    int resolving = 0;
+    loopv(servers)
+    {
+        serverinfo &si = servers[i];
+        if(si.resolved == RESOLVED) continue;
+        if(si.address.host == ENET_HOST_ANY)
+        {
+            if(si.resolved == UNRESOLVED) { si.resolved = RESOLVING; resolverquery(si.name); };
+            resolving++;
+        };
+    };
+    if(!resolving) return;
+
     const char *name = NULL;
     ENetAddress addr = { ENET_HOST_ANY, sv->serverinfoport() };
     while(resolvercheck(&name, &addr))
     {
-        if(addr.host == ENET_HOST_ANY) continue;
         loopv(servers)
         {
             serverinfo &si = servers[i];
             if(name == si.name)
             {
+                si.resolved = RESOLVED; 
                 si.address = addr;
                 addr.host = ENET_HOST_ANY;
                 break;
@@ -258,6 +275,7 @@ void checkresolver()
 
 void checkpings()
 {
+    if(pingsock==ENET_SOCKET_NULL) return;
     unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
     ENetBuffer buf;
     ENetAddress addr;
@@ -300,13 +318,16 @@ int sicompare(serverinfo *a, serverinfo *b)
     return strcmp(a->name, b->name);
 };
 
-void refreshservers(g3d_gui *cgui)
+void refreshservers()
 {
+    static int lastrefresh = 0;
+    if(lastrefresh==lastmillis) return;
+    lastrefresh = lastmillis;
+
     checkresolver();
     checkpings();
     if(lastmillis - lastinfo >= 5000) pingservers();
     servers.sort(sicompare);
-    int maxmenu = 25;
     loopv(servers)
     {
         serverinfo &si = servers[i];
@@ -319,17 +340,21 @@ void refreshservers(g3d_gui *cgui)
             s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "[waiting for response] %s" : "[unknown host] %s\t", si.name);
         };
         si.full[60] = 0; // cut off too long server descriptions
-        if(cgui) cgui->text(si.full, 0xDDFFDD, "server");
-        if(!--maxmenu) return;
     };
 };
 
-void servermenu()
+const char *showservers(g3d_gui *cgui)
 {
-    if(pingsock == ENET_SOCKET_NULL) pingsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, NULL);
-    resolverclear();
-    loopv(servers) resolverquery(servers[i].name);
-    refreshservers(NULL);
+    refreshservers();
+    const char *name = NULL;
+    int maxmenu = 20;
+    loopv(servers)
+    {
+        serverinfo &si = servers[i];
+        if(cgui->button(si.full, 0xDDFFDD, "server")&G3D_UP) name = si.name;
+        if(!--maxmenu) break;
+    };
+    return name;
 };
 
 void updatefrommaster()
@@ -339,11 +364,10 @@ void updatefrommaster()
     uchar *reply = retrieveservers(buf, MAXUPD);
     if(!*reply || strstr((char *)reply, "<html>") || strstr((char *)reply, "<HTML>")) conoutf("master server not replying");
     else execute((char *)reply);
-    servermenu();
+    refreshservers();
 };
 
 COMMAND(addserver, "s");
-COMMAND(servermenu, "");
 COMMAND(updatefrommaster, "");
 
 void writeservercfg()
