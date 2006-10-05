@@ -7,7 +7,9 @@
 
 static size_t parsedigits(ushort *digits, size_t maxlen, const char *s)
 {
-    size_t slen = strlen(s), len = (slen+2*sizeof(ushort)-1)/(2*sizeof(ushort));
+    size_t slen = 0;
+    while(isxdigit(s[slen])) slen++;
+    size_t len = (slen+2*sizeof(ushort)-1)/(2*sizeof(ushort));
     if(len>maxlen) return 0;
     memset(digits, 0, len*sizeof(ushort));
     loopi(slen)
