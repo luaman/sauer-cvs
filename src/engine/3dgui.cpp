@@ -70,10 +70,10 @@ struct gui : g3d_gui
         };
     };
 
-    int text  (const char *text, int color, const char *icon) { return buttont(text, color, icon, false); };
-    int button(const char *text, int color, const char *icon) { return buttont(text, color, icon, true);  };
+    int text  (const char *text, int color, const char *icon) { return buttont(text, color, icon, -1); };
+    int button(const char *text, int color, const char *icon) { return buttont(text, color, icon, 0xFF0000);  };
 
-    int buttont(const char *text, int color, const char *icon, bool clickable)
+    int buttont(const char *text, int color, const char *icon, int hitcolor)
     {
         if(layoutpass)
         {
@@ -86,7 +86,7 @@ struct gui : g3d_gui
         else
         {
             bool hit = windowhit==this && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
-            if(hit && clickable) color = 0xFF0000; 
+            if(hit && hitcolor>=0) color = hitcolor;
 
             if(icon)
             {
