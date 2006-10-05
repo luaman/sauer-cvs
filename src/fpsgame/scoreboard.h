@@ -43,7 +43,7 @@ struct scoreboard : g3d_callback
     {
         g.start(menustart, 0.04f);
         
-        g.text("frags\tpj\tping\tteam\tname", 0xFFFF80);
+        g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
 
         vector<teamscore> teamscores;
         bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.cc.clientnum;
@@ -73,7 +73,7 @@ struct scoreboard : g3d_callback
                 s_sprintfd(lag)("%d", o->plag);
                 s_sprintf(line)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, name);
             };
-            g.text(line, 0xFFFFDD);
+            g.text(line, 0xFFFFDD, "ogro");
         };
 
         if(m_teammode)

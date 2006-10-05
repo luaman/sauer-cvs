@@ -90,7 +90,7 @@ struct gui : g3d_gui
 
             if(icon)
             {
-                s_sprintfd(tname)("packages/icons/%s", icon);
+                s_sprintfd(tname)("packages/icons/%s.jpg", icon);
                 Texture *t = textureload(tname);
                 glColor3f(1, 1, 1);
                 glBindTexture(GL_TEXTURE_2D, t->gl);

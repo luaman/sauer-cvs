@@ -319,7 +319,7 @@ void refreshservers(g3d_gui *cgui)
             s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "[waiting for response] %s" : "[unknown host] %s\t", si.name);
         };
         si.full[60] = 0; // cut off too long server descriptions
-        if(cgui) cgui->text(si.full, 0xDDFFDD, "info.jpg");
+        if(cgui) cgui->text(si.full, 0xDDFFDD, "server");
         if(!--maxmenu) return;
     };
 };

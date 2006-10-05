@@ -151,12 +151,12 @@ struct rpgobj : g3d_callback
     {
         g.start(menutime, 0.02f);
         if(abovetext) g.text(abovetext, 0xDDFFDD);
-        for(rpgaction *a = actions; a; a = a->next) if(g.button(a->initiate, 0xFFFFFF, "chat.jpg")&G3D_UP)
+        for(rpgaction *a = actions; a; a = a->next) if(g.button(a->initiate, 0xFFFFFF, "chat")&G3D_UP)
         {
             if(*a->script) { os.pushobj(this); execute(a->script); };
         };
-        if(!ai) if(g.button("take", 0xFFFFFF, "hand.jpg")&G3D_UP) { os.take(this, os.playerobj); };
-        if(ai) if(g.button("trade", 0xFFFFFF, "coins.jpg")&G3D_UP) { conoutf("trade"); };
+        if(!ai) if(g.button("take", 0xFFFFFF, "hand")&G3D_UP) { os.take(this, os.playerobj); };
+        if(ai) if(g.button("trade", 0xFFFFFF, "coins")&G3D_UP) { conoutf("trade"); };
         g.end();
     };
 

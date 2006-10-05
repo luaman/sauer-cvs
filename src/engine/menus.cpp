@@ -26,14 +26,14 @@ void showgui(char *name)
     else if(!guistack.empty()) delete[] guistack.pop(); 
 };
 
-void guibutton(char *name, char *action)
+void guibutton(char *name, char *action, char *icon)
 {
-    if(cgui && cgui->button(name, 0xFFFFFF, "sword.jpg")&G3D_UP) s_strcpy(executelater, *action ? action : name);
+    if(cgui && cgui->button(name, 0xFFFFFF, *icon ? icon : "sauer")&G3D_UP) s_strcpy(executelater, *action ? action : name);
 };
 
 void guitext(char *name)
 {
-    if(cgui) cgui->text(name, 0xDDFFDD, "info.jpg");
+    if(cgui) cgui->text(name, 0xDDFFDD, "info");
 };
 
 void guiservers()
@@ -43,7 +43,7 @@ void guiservers()
 };
 
 COMMAND(newgui, "ss");
-COMMAND(guibutton, "ss");
+COMMAND(guibutton, "sss");
 COMMAND(guitext, "s");
 COMMAND(guiservers, "s");
 COMMAND(showgui, "s");
