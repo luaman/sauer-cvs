@@ -323,6 +323,9 @@ extern void writebinds(FILE *f);
 extern void estartmap(const char *name);
 extern void computescreen(const char *text);
 
+// menu
+extern void menuprocess();
+
 // physics
 extern void mousemove(int dx, int dy);
 extern bool pointincube(const clipplanes &p, const vec &v);

@@ -428,7 +428,9 @@ int main(int argc, char **argv)
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
         if(paused) curtime = 0;
+        
         if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
+        
         loopv(sleepcmds)
         {
             sleepcmd &s = sleepcmds[i];
@@ -440,6 +442,8 @@ int main(int argc, char **argv)
                 i--;
             };
         };
+        
+        menuprocess();
 
         lastmillis += curtime;
         curmillis = millis;

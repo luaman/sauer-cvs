@@ -646,6 +646,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\hash.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\server.cpp"
 					>
 					<FileConfiguration

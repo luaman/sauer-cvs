@@ -1,6 +1,6 @@
 struct rpgobjset;
 
-struct rpgobj
+struct rpgobj : g3d_callback
 {
     rpgobj *parent;     // container object, if not top level
     rpgobj *inventory;  // contained objects, if any
@@ -146,21 +146,23 @@ struct rpgobj
             };
         };
     };
+    
+    void gui(g3d_gui &g, bool firstpass)
+    {
+        g.start(menutime, 0.02f);
+        if(abovetext) g.text(abovetext, 0xDDFFDD);
+        for(rpgaction *a = actions; a; a = a->next) if(g.button(a->initiate, 0xFFFFFF, "chat.jpg")&G3D_UP)
+        {
+            if(*a->script) { os.pushobj(this); execute(a->script); };
+        };
+        if(!ai) if(g.button("take", 0xFFFFFF, "hand.jpg")&G3D_UP) { os.take(this, os.playerobj); };
+        if(ai) if(g.button("trade", 0xFFFFFF, "coins.jpg")&G3D_UP) { conoutf("trade"); };
+        g.end();
+    };
 
     void g3d_menu()
     {
         if(!menutime) return;
-        loopi(2)
-        {
-            g3d_start(i!=0, vec(ent->o).add(vec(0, 0, 2)), menutime, 0.02f);
-            if(abovetext) g3d_text(abovetext, 0xDDFFDD);
-            for(rpgaction *a = actions; a; a = a->next) if(g3d_button(a->initiate, 0xFFFFFF, "chat.jpg")&G3D_UP)
-            {
-                if(*a->script) { os.pushobj(this); execute(a->script); };
-            };
-            if(!ai) if(g3d_button("take", 0xFFFFFF, "hand.jpg")&G3D_UP) { os.take(this, os.playerobj); };
-            if(ai) if(g3d_button("trade", 0xFFFFFF, "coins.jpg")&G3D_UP) { conoutf("trade"); };
-            g3d_end();
-        };
+        g3d_addgui(this, vec(ent->o).add(vec(0, 0, 2)));
     };
 };

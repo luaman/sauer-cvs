@@ -114,7 +114,7 @@ struct rpgclient : igameclient
         };
     };
 
-    bool camerafixed() { return player1.state==CS_DEAD; };
+    bool camerafixed() { return false; /*player1.state==CS_DEAD;*/ };
     bool canjump() { return true; };
     void doattack(bool on) { player1.attacking = on; };
     dynent *iterdynents(int i) { return i ? NULL : &player1; };

@@ -190,7 +190,17 @@ extern bool netmapstart();
 
 enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
 
-extern void g3d_start(bool renderpass, vec &origin, int starttime, float basescale);
-extern void g3d_end();
-extern int g3d_text(char *text, int color, char *icon = NULL);
-extern int g3d_button(char *text, int color, char *icon = NULL);
+struct g3d_gui
+{
+    virtual void start(int starttime, float basescale) = 0;
+    virtual void end() = 0;
+    virtual int text(char *text, int color, char *icon = NULL) = 0;
+    virtual int button(char *text, int color, char *icon = NULL) = 0;
+};
+
+struct g3d_callback
+{
+    virtual void gui(g3d_gui &g, bool firstpass) = 0;
+};
+
+extern void g3d_addgui(g3d_callback *cb, vec &origin);

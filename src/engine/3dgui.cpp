@@ -6,8 +6,127 @@
 #include "pch.h"
 #include "engine.h"
 
-static bool renderpass, windowhit, actionon = false;
-static int xsize, ysize, cury, curx, intersects, hitx, hity, mousebuttons = 0;
+static bool layoutpass, windowhit, actionon = false;
+static int mousebuttons = 0;
+
+static g3d_gui *lastintersected, *curintersected;
+
+struct gui : g3d_gui
+{
+    g3d_callback *cb;
+    vec origin;
+    float dist;
+    int xsize, ysize, hitx, hity, intersects, cury, curx;
+    
+    void start(int starttime, float basescale)
+    {
+        float scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
+        if(layoutpass)
+        {
+            xsize = ysize = 0;
+            vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize();
+            vec intersectionpoint;
+            intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
+            vec xaxis(-planenormal.y, planenormal.x, 0);
+            vec intersectionvec = vec(intersectionpoint).sub(origin);
+            hitx = (int)(xaxis.dot(intersectionvec)/scale);
+            hity = -(int)(intersectionvec.z/scale);
+        } 
+        else
+        {
+            cury = -ysize;
+            curx = -xsize/2;
+            if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
+            {
+                windowhit = true;
+                curintersected = this;
+            };
+            //if(windowhit) particle_splash(0, 1, 100, intersectionpoint);
+            glPushMatrix();
+            glTranslatef(origin.x, origin.y, origin.z);
+            glRotatef(camera1->yaw-180, 0, 0, 1);
+            glRotatef(-90, 1, 0, 0);
+            glScalef(-scale, scale, scale);
+
+            Texture *t = textureload("packages/tech1soc/s128-01c.jpg");
+            glColor4f(1, 1, 1, 0.85f);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glBindTexture(GL_TEXTURE_2D, t->gl);
+            glBegin(GL_QUADS);
+            int border = FONTH, x = curx-border, y = cury-border, xs = xsize+2*border, ys = ysize+2*border;
+            glTexCoord2d(0.0, 0.0); glVertex2i(x,    y);
+            glTexCoord2d(1.0, 0.0); glVertex2i(x+xs, y);
+            glTexCoord2d(1.0, 1.0); glVertex2i(x+xs, y+ys);
+            glTexCoord2d(0.0, 1.0); glVertex2i(x,    y+ys);
+            glEnd();
+        };
+    };
+
+    void end()
+    {
+        if(!layoutpass)
+        {
+            glPopMatrix();
+        };
+    };
+
+    int text(char *text, int color, char *icon)
+    {
+        return button(text, color, icon);
+    };
+
+    int button(char *text, int color, char *icon)
+    {
+        if(layoutpass)
+        {
+            ysize += FONTH;
+            int slen = text_width(text);
+            if(icon) slen += 70;
+            xsize = max(xsize, slen);    
+            return false;
+        }
+        else
+        {
+            bool hit = intersects>=INTERSECT_MIDDLE && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
+            if(hit && color==0xFFFFFF) color = 0xFF0000;    // hack
+
+            if(icon)
+            {
+                s_sprintfd(tname)("packages/icons/%s", icon);
+                Texture *t = textureload(tname);
+                glColor3f(1, 1, 1);
+                glBindTexture(GL_TEXTURE_2D, t->gl);
+                glBegin(GL_QUADS);
+                float size = 60;
+                glTexCoord2d(0.0, 0.0); glVertex2f(curx,      cury);
+                glTexCoord2d(1.0, 0.0); glVertex2f(curx+size, cury);
+                glTexCoord2d(1.0, 1.0); glVertex2f(curx+size, cury+size);
+                glTexCoord2d(0.0, 1.0); glVertex2f(curx,      cury+size);
+                glEnd();
+                curx += size+10;
+            };
+
+            draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
+            cury += FONTH;
+            curx = -xsize/2;
+            return hit && lastintersected==this ? mousebuttons|G3D_ROLLOVER : 0;
+        };
+    };
+
+ 
+};
+
+static vector<gui> guis;
+
+void g3d_addgui(g3d_callback *cb, vec &origin)
+{
+    gui &g = guis.add();
+    g.cb = cb;
+    g.origin = origin;
+    g.dist = camera1->o.dist(origin);
+};
+
+int g3d_sort(gui *a, gui *b) { return (int)(a->dist<b->dist)*2-1; };
 
 bool g3d_windowhit(bool on, bool act)
 {
@@ -24,106 +143,24 @@ void g3d_render()
     
     windowhit = false;
     if(actionon) mousebuttons |= G3D_PRESSED;
+    guis.setsize(0);
+    lastintersected = curintersected;
+    curintersected = NULL;
 
-    // call all places in the engine that may want to render a gui from here
+    // call all places in the engine that may want to render a gui from here, they call g3d_addgui()
     g3d_mainmenu();
     cl->g3d_gamemenus();
+    
+    guis.sort(g3d_sort);
+    
+    loopv(guis)
+    {
+        loopj(2) guis[i].cb->gui(guis[i], layoutpass = j==0);
+    };
 
     mousebuttons = 0;
 
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
-};
-
-void g3d_start(bool _renderpass, vec &origin, int starttime, float basescale)
-{
-    renderpass = _renderpass;
-    float scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
-    vec intersectionpoint;
-    if(!renderpass)
-    {
-        xsize = ysize = 0;
-        vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize();
-        intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
-        vec xaxis(-planenormal.y, planenormal.x, 0);
-        vec intersectionvec = vec(intersectionpoint).sub(origin);
-        hitx = (int)(xaxis.dot(intersectionvec)/scale);
-        hity = -(int)(intersectionvec.z/scale);
-    } 
-    else
-    {
-        cury = -ysize;
-        curx = -xsize/2;
-        if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0) windowhit = true;
-        if(windowhit) particle_splash(0, 1, 100, intersectionpoint);
-        glPushMatrix();
-        glTranslatef(origin.x, origin.y, origin.z);
-        glRotatef(camera1->yaw-180, 0, 0, 1);
-        glRotatef(-90, 1, 0, 0);
-        glScalef(-scale, scale, scale);
- 
-        Texture *t = textureload("packages/tech1soc/s128-01c.jpg");
-        glColor4f(1, 1, 1, 0.8f);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glBindTexture(GL_TEXTURE_2D, t->gl);
-        glBegin(GL_QUADS);
-        int border = FONTH, x = curx-border, y = cury-border, xs = xsize+2*border, ys = ysize+2*border;
-        glTexCoord2d(0.0, 0.0); glVertex2i(x,    y);
-        glTexCoord2d(1.0, 0.0); glVertex2i(x+xs, y);
-        glTexCoord2d(1.0, 1.0); glVertex2i(x+xs, y+ys);
-        glTexCoord2d(0.0, 1.0); glVertex2i(x,    y+ys);
-        glEnd();
-    };
-};
-
-void g3d_end()
-{
-    if(renderpass)
-    {
-        glPopMatrix();
-    };
-};
-
-int g3d_text(char *text, int color, char *icon)
-{
-    return g3d_button(text, color, icon);
-};
-
-int g3d_button(char *text, int color, char *icon)
-{
-    if(!renderpass)
-    {
-        ysize += FONTH;
-        int slen = text_width(text);
-        if(icon) slen += 70;
-        xsize = max(xsize, slen);    
-    }
-    else
-    {
-        bool hit = intersects>=INTERSECT_MIDDLE && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
-        if(hit && color==0xFFFFFF) color = 0xFF0000;    // hack
-
-        if(icon)
-        {
-            s_sprintfd(tname)("packages/icons/%s", icon);
-            Texture *t = textureload(tname);
-            glColor3f(1, 1, 1);
-            glBindTexture(GL_TEXTURE_2D, t->gl);
-            glBegin(GL_QUADS);
-            float size = 60;
-            glTexCoord2d(0.0, 0.0); glVertex2f(curx,      cury);
-            glTexCoord2d(1.0, 0.0); glVertex2f(curx+size, cury);
-            glTexCoord2d(1.0, 1.0); glVertex2f(curx+size, cury+size);
-            glTexCoord2d(0.0, 1.0); glVertex2f(curx,      cury+size);
-            glEnd();
-            curx += size+10;
-        };
-
-        draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
-        cury += FONTH;
-        curx = -xsize/2;
-        return hit ? mousebuttons|G3D_ROLLOVER : 0;
-    };
-    return false;
 };
 

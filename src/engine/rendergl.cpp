@@ -778,7 +778,7 @@ void transplayer()
     glRotatef(-90, 1, 0, 0);
     glScalef(1, -1, 1);
 
-    glTranslatef(-camera1->o.x, -camera1->o.y, (player->state==CS_DEAD ? player->eyeheight-0.8f : 0)-camera1->o.z);   
+    glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);   
 
 };
 
@@ -977,12 +977,13 @@ VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
 extern float reflecting, refracting;
 physent *camera1 = NULL;
-bool isthirdperson() { return player!=camera1 || (reflecting && !refracting); };
+bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (reflecting && !refracting); };
 
 void recomputecamera()
 {
-    if(editmode || !thirdperson)
+    if((editmode || !thirdperson) && player->state!=CS_DEAD)
     {
+        //if(camera1->state==CS_DEAD) camera1->o.z -= camera1->eyeheight-0.8f;
         camera1 = player;
     }
     else

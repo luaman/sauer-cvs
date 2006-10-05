@@ -107,35 +107,50 @@ COMMAND(newmenu, "s");
 
 void refreshservers();
 
+int pickedmenu = -1, pickeditem;
+
+struct mainmenucallback : g3d_callback
+{
+    void gui(g3d_gui &g, bool firstpass)
+    {
+        gmenu &m = menus[vmenu];
+        s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
+        if(firstpass) loopv(m.items)
+        {
+            string &s = m.items[i].eval;
+            s_strcpy(s, m.items[i].text);
+            if(s[0]=='^')
+            {
+                char *ret = executeret(m.items[i].text+1);      
+                if(ret) { s_strcpy(s, ret); delete[] ret; };
+            };
+        };
+        g.start(menustart, 0.04f);
+        g.text(title, 0xAAFFAA);
+        loopj(m.items.length()) if(g.button(m.items[j].eval, 0xFFFFFF)&G3D_UP)
+        {
+            pickedmenu = vmenu;
+            pickeditem = j;
+        };
+        g.end();
+    };
+};
+
+void menuprocess()
+{
+    if(pickedmenu<0) return;
+    if(pickedmenu==1) connects(getservername(pickeditem));
+    menustack.add(vmenu);
+    menuset(-1);
+    execute(menus[pickedmenu].items[pickeditem].action);
+    pickedmenu = -1;
+};
+
 void g3d_mainmenu()
 {
     if(vmenu<0) { menustack.setsize(0); return; };
     if(vmenu==1) refreshservers();
-    gmenu &m = menus[vmenu];
-    s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
-    loopv(m.items)
-    {
-        string &s = m.items[i].eval;
-        s_strcpy(s, m.items[i].text);
-        if(s[0]=='^')
-        {
-            char *ret = executeret(m.items[i].text+1);
-            if(ret) { s_strcpy(s, ret); delete[] ret; };
-        };
-    };
-    loopi(2)
-    {
-        g3d_start(i!=0, menupos, menustart, 0.04f);
-        g3d_text(title, 0xAAFFAA);
-        loopj(m.items.length()) if(g3d_button(m.items[j].eval, 0xFFFFFF)&G3D_UP)
-        {
-            char *action = m.items[j].action;
-            if(vmenu==1) connects(getservername(j));
-            menustack.add(vmenu);
-            menuset(-1);
-            execute(action);
-        };
-        g3d_end();
-    };
+    static mainmenucallback mmcb;
+    g3d_addgui(&mmcb, menupos);
 };
 

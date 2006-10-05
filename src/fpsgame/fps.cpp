@@ -265,7 +265,7 @@ struct fpsclient : igameclient
         if(player1->attacking = on) respawn();
     };
 
-    bool camerafixed() { return player1->state==CS_DEAD || intermission; };
+    bool camerafixed() { return /*player1->state==CS_DEAD ||*/ intermission; };
     bool canjump() { if(!intermission) respawn(); return !intermission; };
 
     // damage arriving from the network, monsters, yourself, all ends up here.
@@ -316,7 +316,7 @@ struct fpsclient : igameclient
             player1->state = CS_DEAD;
             player1->deaths++;
             player1->pitch = 0;
-            player1->roll = 60;
+            player1->roll = 0;
             playsound(S_DIE1+rnd(2));
             vec vel = player1->vel;
             spawnstate(player1);
@@ -499,9 +499,12 @@ struct fpsclient : igameclient
             draw_text("SPECTATOR", 10, 827);
             return;
         };
-        draw_textf("%d",  90, 822, player1->health);
-        if(player1->armour) draw_textf("%d", 390, 822, player1->armour);
-        draw_textf("%d", 690, 822, player1->ammo[player1->gunselect]);
+        draw_textf("%d",  90, 822, player1->state==CS_DEAD ? 0 : player1->health);
+        if(player1->state!=CS_DEAD)
+        {
+            if(player1->armour) draw_textf("%d", 390, 822, player1->armour);
+            draw_textf("%d", 690, 822, player1->ammo[player1->gunselect]);        
+        };
 
         glLoadIdentity();
         glOrtho(0, w*1800/h, 1800, 0, -1, 1);
@@ -509,12 +512,15 @@ struct fpsclient : igameclient
         glDisable(GL_BLEND);
 
         drawicon(192, 0, 20, 1650);
-        if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
-        int g = player1->gunselect;
-        int r = 64;
-        if(g==GUN_PISTOL) { g = 4; r = 0; };
-        drawicon((float)(g*64), (float)r, 1220, 1650);
-        if(m_capture) cpc.capturehud(w, h);
+        if(player1->state!=CS_DEAD)
+        {
+            if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
+            int g = player1->gunselect;
+            int r = 64;
+            if(g==GUN_PISTOL) { g = 4; r = 0; };
+            drawicon((float)(g*64), (float)r, 1220, 1650);
+            if(m_capture) cpc.capturehud(w, h);
+        };
     };
 
     void newmap(int size)
