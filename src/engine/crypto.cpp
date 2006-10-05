@@ -65,7 +65,7 @@ template<size_t BI_DIGITS> struct bigint
         loopi(len)
         {
             digit d = 0;
-            loopj(sizeof(digit)) if(buf.inrange(offset+j)) d |= buf[offset+j]<<(j*8);
+            loopj(sizeof(digit)) if(buf.inrange(offset+size_t(j))) d |= buf[offset+size_t(j)]<<(j*8);
             digits[i] = d;
             offset += sizeof(digit);
         };
@@ -158,7 +158,7 @@ template<size_t BI_DIGITS> struct bigint
         if(!len || !n) return *this;
         size_t dig = (n-1)/BI_DIGIT_BITS;
         n = ((n-1) % BI_DIGIT_BITS)+1;
-        digit carry = x.digits[dig]>>n;
+        digit carry = digit(x.digits[dig]>>n);
         loopi(len-dig-1)
         {
             digit tmp = x.digits[i+dig+1];
