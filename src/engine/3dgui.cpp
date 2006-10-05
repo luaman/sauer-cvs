@@ -6,42 +6,29 @@
 #include "pch.h"
 #include "engine.h"
 
-static bool layoutpass, windowhit, actionon = false;
+static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
-
-static g3d_gui *lastintersected, *curintersected;
+static g3d_gui *windowhit = NULL;
 
 struct gui : g3d_gui
 {
     g3d_callback *cb;
-    vec origin;
-    float dist;
-    int xsize, ysize, hitx, hity, intersects, cury, curx;
+    vec origin, intersectionpoint;
+    float dist, scale;
+    int xsize, ysize, hitx, hity, cury, curx;
     
     void start(int starttime, float basescale)
     {
-        float scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
+        scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
         if(layoutpass)
         {
             xsize = ysize = 0;
-            vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize();
-            vec intersectionpoint;
-            intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
-            vec xaxis(-planenormal.y, planenormal.x, 0);
-            vec intersectionvec = vec(intersectionpoint).sub(origin);
-            hitx = (int)(xaxis.dot(intersectionvec)/scale);
-            hity = -(int)(intersectionvec.z/scale);
         } 
         else
         {
             cury = -ysize;
             curx = -xsize/2;
-            if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
-            {
-                windowhit = true;
-                curintersected = this;
-            };
-            //if(windowhit) particle_splash(0, 1, 100, intersectionpoint);
+            if(windowhit==this) particle_splash(0, 1, 100, intersectionpoint);
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
             glRotatef(camera1->yaw-180, 0, 0, 1);
@@ -64,7 +51,21 @@ struct gui : g3d_gui
 
     void end()
     {
-        if(!layoutpass)
+        if(layoutpass)
+        {
+            if(windowhit) return;
+            vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize();
+            int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
+            vec xaxis(-planenormal.y, planenormal.x, 0);
+            vec intersectionvec = vec(intersectionpoint).sub(origin);
+            hitx = (int)(xaxis.dot(intersectionvec)/scale);
+            hity = -(int)(intersectionvec.z/scale);
+            if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
+            {
+                windowhit = this;
+            };
+        }
+        else
         {
             glPopMatrix();
         };
@@ -87,7 +88,7 @@ struct gui : g3d_gui
         }
         else
         {
-            bool hit = intersects>=INTERSECT_MIDDLE && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
+            bool hit = windowhit==this && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
             if(hit && color==0xFFFFFF) color = 0xFF0000;    // hack
 
             if(icon)
@@ -97,7 +98,7 @@ struct gui : g3d_gui
                 glColor3f(1, 1, 1);
                 glBindTexture(GL_TEXTURE_2D, t->gl);
                 glBegin(GL_QUADS);
-                float size = 60;
+                int size = 60;
                 glTexCoord2d(0.0, 0.0); glVertex2f(curx,      cury);
                 glTexCoord2d(1.0, 0.0); glVertex2f(curx+size, cury);
                 glTexCoord2d(1.0, 1.0); glVertex2f(curx+size, cury+size);
@@ -109,11 +110,9 @@ struct gui : g3d_gui
             draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
             cury += FONTH;
             curx = -xsize/2;
-            return hit && lastintersected==this ? mousebuttons|G3D_ROLLOVER : 0;
+            return hit ? mousebuttons|G3D_ROLLOVER : 0;
         };
     };
-
- 
 };
 
 static vector<gui> guis;
@@ -126,13 +125,13 @@ void g3d_addgui(g3d_callback *cb, vec &origin)
     g.dist = camera1->o.dist(origin);
 };
 
-int g3d_sort(gui *a, gui *b) { return (int)(a->dist<b->dist)*2-1; };
+int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
 
 bool g3d_windowhit(bool on, bool act)
 {
     if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
     else if(!on && windowhit) showmenu(NULL);
-    return windowhit;
+    return windowhit!=NULL;
 };
 
 void g3d_render()   
@@ -141,11 +140,9 @@ void g3d_render()
     glDepthFunc(GL_ALWAYS);
     glEnable(GL_BLEND);
     
-    windowhit = false;
+    windowhit = NULL;
     if(actionon) mousebuttons |= G3D_PRESSED;
     guis.setsize(0);
-    lastintersected = curintersected;
-    curintersected = NULL;
 
     // call all places in the engine that may want to render a gui from here, they call g3d_addgui()
     g3d_mainmenu();
@@ -153,10 +150,10 @@ void g3d_render()
     
     guis.sort(g3d_sort);
     
-    loopv(guis)
-    {
-        loopj(2) guis[i].cb->gui(guis[i], layoutpass = j==0);
-    };
+    layoutpass = true;
+    loopv(guis) guis[i].cb->gui(guis[i], true);
+    layoutpass = false;
+    loopvrev(guis) guis[i].cb->gui(guis[i], false);
 
     mousebuttons = 0;
 
