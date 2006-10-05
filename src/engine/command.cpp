@@ -536,7 +536,7 @@ void complete(char *s)
         if(end)
         {
             string command;
-            s_strncpy(command, s+1, min(end-s, sizeof(command)));
+            s_strncpy(command, s+1, min(size_t(end-s), sizeof(command)));
             filesval **hasfiles = completions.access(command);
             if(hasfiles) f = *hasfiles;
         };
@@ -548,7 +548,7 @@ void complete(char *s)
     if(f) // complete using filenames
     {
         int commandsize = strchr(s, ' ')+1-s; 
-        s_strncpy(prefix, s, min(commandsize+1, sizeof(prefix)));
+        s_strncpy(prefix, s, min(size_t(commandsize+1), sizeof(prefix)));
         if(f->files.empty()) buildfilenames(f);
         loopi(f->files.length())
         {
