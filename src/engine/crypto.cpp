@@ -81,10 +81,10 @@ template<size_t BI_DIGITS> struct bigint
     bool iszero() const { return !len; };
     bool isone() const { return len==1 && digits[0]==1; };
 
-    uint numbits() const
+    size_t numbits() const
     {
         if(!len) return 0;
-        uint bits = len*BI_DIGIT_BITS;
+        size_t bits = len*BI_DIGIT_BITS;
         digit last = digits[len-1], mask = 1<<(BI_DIGIT_BITS-1);
         while(mask)
         {
@@ -95,7 +95,7 @@ template<size_t BI_DIGITS> struct bigint
         return 0;
     };
 
-    bool hasbit(uint n) const { return n/BI_DIGIT_BITS < len && ((digits[n/BI_DIGIT_BITS]>>(n%BI_DIGIT_BITS))&1); };
+    bool hasbit(size_t n) const { return n/BI_DIGIT_BITS < len && ((digits[n/BI_DIGIT_BITS]>>(n%BI_DIGIT_BITS))&1); };
 
     template<size_t X_DIGITS, size_t Y_DIGITS> bigint &add(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -153,7 +153,7 @@ template<size_t BI_DIGITS> struct bigint
         return *this;
     };
 
-    template<size_t X_DIGITS> bigint &rshift(const bigint<X_DIGITS> &x, uint n)
+    template<size_t X_DIGITS> bigint &rshift(const bigint<X_DIGITS> &x, size_t n)
     {
         if(!len || !n) return *this;
         size_t dig = (n-1)/BI_DIGIT_BITS;
@@ -170,9 +170,9 @@ template<size_t BI_DIGITS> struct bigint
         shrink();
         return *this;
     };
-    bigint &rshift(uint n) { return rshift(*this, n); };
+    bigint &rshift(size_t n) { return rshift(*this, n); };
 
-    template<size_t X_DIGITS> bigint &lshift(const bigint<X_DIGITS> &x, uint n)
+    template<size_t X_DIGITS> bigint &lshift(const bigint<X_DIGITS> &x, size_t n)
     {
         if(!len || !n) return *this;
         size_t dig = n/BI_DIGIT_BITS;
@@ -189,7 +189,7 @@ template<size_t BI_DIGITS> struct bigint
         if(dig) memset(digits, 0, dig*sizeof(digit));
         return *this;
     };
-    bigint &lshift(uint n) { return lshift(*this, n); };
+    bigint &lshift(size_t n) { return lshift(*this, n); };
 
     template<size_t Y_DIGITS> bool operator==(const bigint<Y_DIGITS> &y) const
     {
@@ -344,7 +344,7 @@ struct gfield : gfint
             digits[0] = 1; 
             if(!y.len) return *this;
         };
-        for(uint i = 1, j = y.numbits(); i < j; i++)
+        for(size_t i = 1, j = y.numbits(); i < j; i++)
         {
             a.square();
             if(y.hasbit(i)) mul(a);

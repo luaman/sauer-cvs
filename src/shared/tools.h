@@ -155,6 +155,7 @@ template <class T> struct vector
         return buf[ulen++];
     };
 
+    bool inrange(size_t i) const { return i<size_t(ulen); };
     bool inrange(int i) const { return i>=0 && i<ulen; };
 
     T &pop() { return buf[--ulen]; };
