@@ -498,7 +498,7 @@ struct ecjacobian
     template<size_t Q_DIGITS> void mul(const ecjacobian &p, const bigint<Q_DIGITS> q)
     {
         *this = origin;
-        for(int i = q.numbits()-1; i >= 0; i--)
+        for(int i = int(q.numbits())-1; i >= 0; i--)
         {
             mul2();
             if(q.hasbit(i)) add(p);

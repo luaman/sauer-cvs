@@ -194,9 +194,9 @@ template <class T> struct vector
         buf = (T *)_realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
     };
 
-    void reserve(int i)
+    void reserve(size_t i)
     {
-        while(alen-ulen < i) vrealloc();
+        while(size_t(alen-ulen) < i) vrealloc();
     };
 
     void remove(int i, int n)
