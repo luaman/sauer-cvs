@@ -359,7 +359,7 @@ struct gfield : gfint
         gfint u(x), v(P), A((gfint::digit)1), C((gfint::digit)0);
         while(!u.iszero())
         {
-            int ushift = 0, ashift = 0;
+            size_t ushift = 0, ashift = 0;
             while(!u.hasbit(ushift))
             {
                 ushift++;
@@ -372,7 +372,7 @@ struct gfield : gfint
             };
             if(ushift) u.rshift(ushift);
             if(ashift) A.rshift(ashift);
-            int vshift = 0, cshift = 0;
+            size_t vshift = 0, cshift = 0;
             while(!v.hasbit(vshift))
             {
                 vshift++;
