@@ -49,7 +49,7 @@ struct fpsclient : igameclient
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
           arenarespawnwait(0), arenadetectwait(0), maptime(0), respawnent(-1),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), et(*this), cc(*this), cpc(*this), sb(*this)
+          ws(*this), ms(*this), sb(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
     };

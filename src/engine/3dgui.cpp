@@ -70,10 +70,10 @@ struct gui : g3d_gui
         };
     };
 
-    int text  (char *text, int color, char *icon) { return buttont(text, color, icon, false); };
-    int button(char *text, int color, char *icon) { return buttont(text, color, icon, true);  };
+    int text  (const char *text, int color, const char *icon) { return buttont(text, color, icon, false); };
+    int button(const char *text, int color, const char *icon) { return buttont(text, color, icon, true);  };
 
-    int buttont(char *text, int color, char *icon, bool clickable)
+    int buttont(const char *text, int color, const char *icon, bool clickable)
     {
         if(layoutpass)
         {

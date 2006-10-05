@@ -191,8 +191,8 @@ struct g3d_gui
 
     virtual void start(int starttime, float basescale) = 0;
     virtual void end() = 0;
-    virtual int text(char *text, int color, char *icon = NULL) = 0;
-    virtual int button(char *text, int color, char *icon = NULL) = 0;
+    virtual int text(const char *text, int color, const char *icon = NULL) = 0;
+    virtual int button(const char *text, int color, const char *icon = NULL) = 0;
 };
 
 struct g3d_callback
