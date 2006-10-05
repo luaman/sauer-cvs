@@ -14,7 +14,6 @@ void quit()                     // normal exit
     freeocta(worldroot);
     extern void clear_command(); clear_command();
     extern void clear_console(); clear_console();
-    extern void clear_menus();   clear_menus();
     extern void clear_mdls();    clear_mdls();
     extern void clear_sound();   clear_sound();
     SDL_Quit();
@@ -384,8 +383,6 @@ int main(int argc, char **argv)
     initsound();
 
     log("cfg");
-    newmenu("frags\tpj\tping\tteam\tname");
-    newmenu("ping\tplr\tserver");
     exec("data/keymap.cfg");
 //    exec("data/default_map_settings.cfg");
     exec("data/menus.cfg");

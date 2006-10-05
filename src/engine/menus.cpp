@@ -3,154 +3,82 @@
 #include "pch.h"
 #include "engine.h"
 
-struct mitem
+static vec menupos;
+static int menustart = 0;
+static g3d_gui *cgui = NULL;
+
+static hashtable<char *, char *> guis;
+static vector<char *> guistack;
+static string executelater;
+
+void newgui(char *name, char *contents) { guis[newstring(name)] = newstring(contents); };
+
+vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
+
+void showgui(char *name)
 {
-    char *text, *action;
-    string eval;
-    
-    ~mitem() { if(text!=action) DELETEA(action); DELETEA(text); };
-};
-
-struct gmenu
-{
-    char *name;
-    vector<mitem> items;
-    int mwidth;
-    int menusel;
-    
-    ~gmenu() { DELETEA(name); };
-};
-
-vector<gmenu> menus;
-
-int vmenu = -1;
-
-ivector menustack;
-
-vec menupos;
-int menustart = 0;
-
-void clear_menus()
-{
-    menus.setsize(0); //FIXME
-};
-
-void menuset(int menu)
-{
-    if(!menu && vmenu>=0) return;
-    if(menu>=0 && vmenu<0)
+    if(name && (guistack.empty() || strcmp(name, "main")))
     {
-        menupos = vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1));
+        menupos = menuinfrontofplayer();
         menustart = lastmillis;
-    };
-    if((vmenu = menu)>0) {};//player->stopmoving();
-    if(vmenu==1) menus[1].menusel = 0;
-};
-
-void showmenu(char *name)
-{
-    if(vmenu<0 && name)
-    {
-        loopv(menus) if(i>1 && strcmp(menus[i].name, name)==0)
-        {
-            menuset(i);
-            return;
-        };    
+        guistack.add(newstring(name));
     }
-    else
-    {
-        menuset(-1);
-        if(!menustack.empty()) menuset(menustack.pop());
-    };
+    else if(!guistack.empty()) delete[] guistack.pop(); 
 };
 
-int menucompare(mitem *a, mitem *b)
+void guibutton(char *name, char *action)
 {
-    int x = atoi(a->text);
-    int y = atoi(b->text);
-    if(x>y) return -1;
-    if(x<y) return 1;
-    return 0;
+    if(cgui && cgui->button(name, 0xFFFFFF, "sword.jpg")&G3D_UP) s_strcpy(executelater, *action ? action : name);
 };
 
-void sortmenu(int start, int num)
+void guitext(char *name)
 {
-    menus[0].items.sort(menucompare, start, num);
+    if(cgui) cgui->text(name, 0xDDFFDD, "info.jpg");
 };
 
-void newmenu(char *name)
+void guiservers()
 {
-    gmenu &menu = menus.add();
-    menu.name = newstring(name);
-    menu.menusel = 0;
+    extern void refreshservers(g3d_gui *cgui);
+    if(cgui) refreshservers(cgui); 
 };
 
-void menumanual(int m, int n, char *text)
-{
-    if(!n) menus[m].items.setsize(0);
-    mitem &mitem = menus[m].items.add();
-    mitem.text = newstring(text);
-    mitem.action = mitem.text;
-}
+COMMAND(newgui, "ss");
+COMMAND(guibutton, "ss");
+COMMAND(guitext, "s");
+COMMAND(guiservers, "s");
+COMMAND(showgui, "s");
 
-void menuitem(char *text, char *action)
-{
-    gmenu &menu = menus.last();
-    mitem &mi = menu.items.add();
-    mi.text = newstring(text);
-    mi.action = action[0] ? newstring(action) : mi.text;
-};
-
-COMMAND(menuitem, "ss");
-COMMAND(showmenu, "s");
-COMMAND(newmenu, "s");
-
-void refreshservers();
-
-int pickedmenu = -1, pickeditem;
-
-struct mainmenucallback : g3d_callback
+static struct mainmenucallback : g3d_callback
 {
     void gui(g3d_gui &g, bool firstpass)
     {
-        gmenu &m = menus[vmenu];
-        s_sprintfd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
-        if(firstpass) loopv(m.items)
-        {
-            string &s = m.items[i].eval;
-            s_strcpy(s, m.items[i].text);
-            if(s[0]=='^')
-            {
-                char *ret = executeret(m.items[i].text+1);      
-                if(ret) { s_strcpy(s, ret); delete[] ret; };
-            };
-        };
+        if(guistack.empty()) return;
+        char *name = guistack.last();
+        char *contents = guis[name];
+        if(!contents) return;
+        s_sprintfd(title)("[ %s menu ]", name);
         g.start(menustart, 0.04f);
         g.text(title, 0xAAFFAA);
-        loopj(m.items.length()) if(g.button(m.items[j].eval, 0xFFFFFF)&G3D_UP)
-        {
-            pickedmenu = vmenu;
-            pickeditem = j;
-        };
+        cgui = &g;
+        execute(contents);
+        cgui = NULL;
         g.end();
     };
-};
+} mmcb;
 
 void menuprocess()
 {
-    if(pickedmenu<0) return;
-    if(pickedmenu==1) connects(getservername(pickeditem));
-    menustack.add(vmenu);
-    menuset(-1);
-    execute(menus[pickedmenu].items[pickeditem].action);
-    pickedmenu = -1;
+    if(executelater[0])
+    {
+        int level = guistack.length();
+        execute(executelater);
+        executelater[0] = 0;
+        if(level==guistack.length()) guistack.deletecontentsa();
+    };
 };
 
 void g3d_mainmenu()
 {
-    if(vmenu<0) { menustack.setsize(0); return; };
-    if(vmenu==1) refreshservers();
-    static mainmenucallback mmcb;
-    g3d_addgui(&mmcb, menupos);
+    if(!guistack.empty()) g3d_addgui(&mmcb, menupos);
 };
 

@@ -383,7 +383,6 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     char *command = getcurcommand();
     if(command) rendercommand(FONTH/2, hoff); else hoff += FONTH;
-    cl->renderscores();
 
     if(!hidehud)
     {

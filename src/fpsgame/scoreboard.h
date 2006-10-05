@@ -1,18 +1,20 @@
-// creation of scoreboard pseudo-menu
+// creation of scoreboard
 
-struct scoreboard
+struct scoreboard : g3d_callback
 {
     bool scoreson;
-
-    scoreboard() : scoreson(false)
+    vec menupos;
+    int menustart;
+    fpsclient &cl;
+    
+    scoreboard(fpsclient &_cl) : scoreson(false), cl(_cl)
     {
         CCOMMAND(scoreboard, showscores, "D", self->showscores(args!=NULL));
     };
 
     void showscores(bool on)
     {
-        scoreson = on;
-        menuset(((int)on)-1);
+        if(scoreson = on) { menupos = menuinfrontofplayer(); menustart = cl.lastmillis; };
     };
 
     struct sline { string s; };
@@ -31,36 +33,49 @@ struct scoreboard
         if(x->score < y->score) return 1;
         return 0;
     };
-
-    void render(fpsclient &cl, int gamemode)
+    
+    static int playersort(const fpsent **a, const fpsent **b)
     {
-        if(!scoreson) return;
+        return (int)((*a)->frags<(*b)->frags)*2-1;
+    };
 
-        vector<sline> scorelines;
+    void gui(g3d_gui &g, bool firstpass)
+    {
+        g.start(menustart, 0.04f);
+        
+        g.text("frags\tpj\tping\tteam\tname", 0xFFFF80);
+
         vector<teamscore> teamscores;
         bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.cc.clientnum;
+        int gamemode = cl.gamemode;
+        
+        vector<fpsent *> sbplayers;
 
-        scorelines.setsize(0);
         loopi(cl.numdynents()) 
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && o->type!=ENT_AI)
+            if(o && o->type!=ENT_AI) sbplayers.add(o);
+        };
+        
+        sbplayers.sort(playersort);
+        
+        loopv(sbplayers) 
+        {
+            fpsent *o = sbplayers[i];
+            const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum)) ? "\f0" : "";
+            string name;
+            if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, !i ? cl.cc.clientnum : i-1);
+            else s_strcpy(name, o->name);
+            string line;
+            if(o->state == CS_SPECTATOR) s_sprintf(line)("SPECTATOR\t\t\t%s%s", master, name);
+            else
             {
-                const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum)) ? "\f0" : "";
-                string name;
-                if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, !i ? cl.cc.clientnum : i-1);
-                else s_strcpy(name, o->name);
-                if(o->state == CS_SPECTATOR) s_sprintf(scorelines.add().s)("SPECTATOR\t\t\t%s%s", master, name);
-                else
-                {
-                    s_sprintfd(lag)("%d", o->plag);
-                    s_sprintf(scorelines.add().s)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, name);
-                };
-                menumanual(0, scorelines.length()-1, scorelines.last().s); 
-            }
+                s_sprintfd(lag)("%d", o->plag);
+                s_sprintf(line)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, name);
+            };
+            g.text(line, 0xFFFFDD);
         };
 
-        sortmenu(0, scorelines.length());
         if(m_teammode)
         {
             if(m_capture)
@@ -91,9 +106,15 @@ struct scoreboard
                     s_sprintfd(s)("[ %s: %d ]", teamscores[j].team, teamscores[j].score);
                     s_strcat(teamline, s);
                 };
-                menumanual(0, scorelines.length(), "");
-                menumanual(0, scorelines.length()+1, teamline);
+                g.text(teamline, 0xFFFF40);
             };
         };
+        
+        g.end();
+    };
+    
+    void show()
+    {
+        if(scoreson) g3d_addgui(this, menupos);
     };
 };

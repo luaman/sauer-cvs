@@ -28,7 +28,6 @@ struct gui : g3d_gui
         {
             cury = -ysize;
             curx = -xsize/2;
-            if(windowhit==this) particle_splash(0, 1, 100, intersectionpoint);
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
             glRotatef(camera1->yaw-180, 0, 0, 1);
@@ -71,12 +70,10 @@ struct gui : g3d_gui
         };
     };
 
-    int text(char *text, int color, char *icon)
-    {
-        return button(text, color, icon);
-    };
+    int text  (char *text, int color, char *icon) { return buttont(text, color, icon, false); };
+    int button(char *text, int color, char *icon) { return buttont(text, color, icon, true);  };
 
-    int button(char *text, int color, char *icon)
+    int buttont(char *text, int color, char *icon, bool clickable)
     {
         if(layoutpass)
         {
@@ -89,7 +86,7 @@ struct gui : g3d_gui
         else
         {
             bool hit = windowhit==this && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
-            if(hit && color==0xFFFFFF) color = 0xFF0000;    // hack
+            if(hit && clickable) color = 0xFF0000; 
 
             if(icon)
             {
@@ -130,7 +127,7 @@ int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
 bool g3d_windowhit(bool on, bool act)
 {
     if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
-    else if(!on && windowhit) showmenu(NULL);
+    else if(!on && windowhit) showgui(NULL);
     return windowhit!=NULL;
 };
 

@@ -1080,7 +1080,6 @@ VARP(invmouse, 0, 0, 1);
 
 void mousemove(int dx, int dy)
 {
-    if(cl->camerafixed()) return;
     const float SENSF = 33.0f;     // try match quake sens
     player->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
     player->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);

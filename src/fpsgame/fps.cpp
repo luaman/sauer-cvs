@@ -49,7 +49,7 @@ struct fpsclient : igameclient
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
           arenarespawnwait(0), arenadetectwait(0), maptime(0), respawnent(-1),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), et(*this), cc(*this), cpc(*this)
+          ws(*this), ms(*this), et(*this), cc(*this), cpc(*this), sb(*this)
     {
         CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
     };
@@ -265,7 +265,6 @@ struct fpsclient : igameclient
         if(player1->attacking = on) respawn();
     };
 
-    bool camerafixed() { return /*player1->state==CS_DEAD ||*/ intermission; };
     bool canjump() { if(!intermission) respawn(); return !intermission; };
 
     // damage arriving from the network, monsters, yourself, all ends up here.
@@ -487,9 +486,7 @@ struct fpsclient : igameclient
         glTexCoord2f(tx,        ty+1/2.0f); glVertex2i(x,   y+s);
         glEnd();
     };
-
-    void renderscores() { sb.render(*this, gamemode); };
-    
+  
     void gameplayhud(int w, int h)
     {
         glLoadIdentity();
@@ -571,7 +568,7 @@ struct fpsclient : igameclient
         };
     };
     
-    void g3d_gamemenus() {};
+    void g3d_gamemenus() { sb.show(); };
 
     // any data written into this vector will get saved with the map data. Must take care to do own versioning, and endianess if applicable. Will not get called when loading maps from other games, so provide defaults.
     void writegamedata(vector<char> &extras) {};

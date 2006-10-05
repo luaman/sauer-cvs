@@ -67,13 +67,8 @@ extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 
 // menus
-//extern bool rendermenu(int scr_w, int scr_h);
-extern void menuset(int menu);
-extern void menumanual(int m, int n, char *text);
-extern void sortmenu(int start, int num);
-//extern bool menukey(int code, bool isdown);
-extern void newmenu(char *name);
-extern void showmenu(char *name);
+extern vec menuinfrontofplayer();
+extern void showgui(char *name);
 
 // serverbrowser
 extern void addserver(char *servername);

@@ -300,13 +300,13 @@ int sicompare(serverinfo *a, serverinfo *b)
     return strcmp(a->name, b->name);
 };
 
-void refreshservers()
+void refreshservers(g3d_gui *cgui)
 {
     checkresolver();
     checkpings();
     if(lastmillis - lastinfo >= 5000) pingservers();
     servers.sort(sicompare);
-    //int maxmenu = 16;
+    int maxmenu = 25;
     loopv(servers)
     {
         serverinfo &si = servers[i];
@@ -319,8 +319,8 @@ void refreshservers()
             s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "[waiting for response] %s" : "[unknown host] %s\t", si.name);
         };
         si.full[60] = 0; // cut off too long server descriptions
-        menumanual(1, i, si.full);
-//        if(!--maxmenu) return;
+        if(cgui) cgui->text(si.full, 0xDDFFDD, "info.jpg");
+        if(!--maxmenu) return;
     };
 };
 
@@ -329,8 +329,7 @@ void servermenu()
     if(pingsock == ENET_SOCKET_NULL) pingsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, NULL);
     resolverclear();
     loopv(servers) resolverquery(servers[i].name);
-    refreshservers();
-    menuset(1);
+    refreshservers(NULL);
 };
 
 void updatefrommaster()
