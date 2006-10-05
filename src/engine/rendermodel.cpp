@@ -262,17 +262,6 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 VAR(showcharacterboundingbox, 0, 0, 1);
 
-struct gunent : dynent
-{
-    int weight;                         // affects the effectiveness of hitpush
-    int lastupdate, plag, ping;
-    int lifesequence;                   // sequence id for each respawn, used in damage test
-    int health, armour, armourtype, quadmillis;
-    int maxhealth;
-    int lastpain;
-    int gunselect, gunwait;
-};
-
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, float ambient)
 {
     if(showcharacterboundingbox) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
