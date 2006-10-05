@@ -431,6 +431,8 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             event.peer->data = NULL;
             break;
         };
+        default:
+            break;
     };
     if(sv->sendpackets()) enet_host_flush(serverhost);
 };
