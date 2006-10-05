@@ -162,8 +162,8 @@ template<size_t BI_DIGITS> struct bigint
         loopi(len-dig-1)
         {
             digit tmp = x.digits[i+dig+1];
-            digits[i] = (tmp<<(BI_DIGIT_BITS-n)) | carry;
-            carry = tmp>>n;
+            digits[i] = digit((tmp<<(BI_DIGIT_BITS-n)) | carry);
+            carry = digit(tmp>>n);
         };
         digits[len-dig-1] = carry;
         len -= dig + (n>>BI_DIGIT_BITS);
@@ -181,8 +181,8 @@ template<size_t BI_DIGITS> struct bigint
         for(int i = int(len)-1; i>=0; i--)
         {
             digit tmp = x.digits[i];
-            digits[i+dig] = (tmp<<n) | carry;
-            carry = tmp>>(BI_DIGIT_BITS-n);
+            digits[i+dig] = digit((tmp<<n) | carry);
+            carry = digit(tmp>>(BI_DIGIT_BITS-n));
         };
         len += dig;
         if(carry) digits[len++] = carry;
