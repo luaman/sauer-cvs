@@ -262,8 +262,7 @@ VARN(numargs, _numargs, 0, 0, 25);
 
 char *commandret = NULL;
 
-extern char *keypressed;
-extern void onrelease(char *s);
+extern const char *addreleaseaction(const char *s);
 
 char *executeret(char *p)               // all evaluation happens here, recursively
 {
@@ -312,12 +311,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     switch(id->_narg[0])
                     {
                         default: id->run(w+1); break;
-                        case 'D': 
-                        {
-                            if(keypressed) onrelease(id->_name); 
-                            id->run((char **)keypressed); 
-                            break;
-                        };
+                        case 'D': id->run((char **)addreleaseaction(id->_name)); break;
                         case 'C': 
                         { 
                             char *r = conc(w+1, numargs-1, true); 
@@ -341,19 +335,12 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     int n = 0, wn = 0;
                     for(char *a = id->_narg; *a; a++) switch(*a)
                     {
-                        case 's':                                               v[n] = w[++wn];     n++; break;
-                        case 'i':               nstor[n].i = parseint(w[++wn]); v[n] = &nstor[n].i; n++; break;
-                        case 'f':               nstor[n].f = atof(w[++wn]);     v[n] = &nstor[n].f; n++; break;
-                        case 'D':
-                        {
-                            if(keypressed) onrelease(id->_name);
-                            nstor[n].i = keypressed ? 1 : 0;
-                            v[n] = &nstor[n].i;
-                            n++;
-                            break;
-                        };
-                        case 'V': v[n++] = w+1; nstor[n].i = numargs-1;         v[n] = &nstor[n].i; n++; break;
-                        case 'C': v[n++] = conc(w+1, numargs-1, true);                                   break;
+                        case 's':                                 v[n] = w[++wn];     n++; break;
+                        case 'i': nstor[n].i = parseint(w[++wn]); v[n] = &nstor[n].i; n++; break;
+                        case 'f': nstor[n].f = atof(w[++wn]);     v[n] = &nstor[n].f; n++; break;
+                        case 'D': nstor[n].i = addreleaseaction(id->_name) ? 1 : 0; v[n] = &nstor[n].i; n++; break;
+                        case 'V': v[n++] = w+1; nstor[n].i = numargs-1; v[n] = &nstor[n].i; n++; break;
+                        case 'C': v[n++] = conc(w+1, numargs-1, true);  break;
                         default: fatal("builtin declared with illegal type");
                     };
                     switch(n)

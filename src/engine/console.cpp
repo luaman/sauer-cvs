@@ -106,9 +106,9 @@ int renderconsole(int w, int h)                   // render buffer taking into a
 struct keym
 {
      int code;
-     char *name, *action, *editaction; 
+     char *name, *action, *editaction, *releaseaction; 
 
-    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); };
+    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); DELETEA(releaseaction); };
 };
 
 vector<keym> keyms;                                 
@@ -121,11 +121,13 @@ void keymap(char *code, char *key)
     km.name = newstring(key);
     km.action = newstring("");
     km.editaction = newstring("");
+    km.releaseaction = NULL;
 };
 
 COMMAND(keymap, "ss");
 
-char *keypressed = NULL, *keyaction = NULL;
+keym *keypressed = NULL;
+char *keyaction = NULL;
 
 void bindkey(char *key, char *action, bool edit)
 {
@@ -218,24 +220,26 @@ void history(int *n)
 
 COMMAND(history, "i");
 
-struct releaseaction
+const char *addreleaseaction(const char *s)
 {
-    const char *key;
+    if(!keypressed) return NULL;
     char *action;
+    if(keypressed->releaseaction)
+    {
+        action = newstring(strlen(keypressed->releaseaction)+strlen(s));
+        s_strcpy(action, keypressed->releaseaction);
+        s_strcat(action, ";");
+        s_strcat(action, s);
+        DELETEA(keypressed->releaseaction);
+    }
+    else action = newstring(s);
+    keypressed->releaseaction = action;
+    return keypressed->name;
 };
-static vector<releaseaction> releaseactions;
 
 void onrelease(char *s)
 {
-    if(!keypressed) return;
-    loopv(releaseactions)
-    {
-        releaseaction &ra = releaseactions[i];
-        if(ra.key==keypressed && !strcmp(ra.action, s)) return;
-    };
-    releaseaction &ra = releaseactions.add();
-    ra.key = keypressed;
-    ra.action = newstring(s); 
+    addreleaseaction(s);
 };
 
 COMMAND(onrelease, "s");
@@ -347,20 +351,16 @@ void keypress(int code, bool isdown, int cooked)
             {
                 char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
                 keyaction = action;
-                keypressed = k.name;
+                keypressed = &k;
+                if(k.releaseaction) DELETEA(k.releaseaction);
                 execute(keyaction); 
                 keypressed = NULL;
                 if(keyaction!=action) delete[] keyaction;
             }
-            else loopv(releaseactions)
+            else if(k.releaseaction)
             {
-                releaseaction &ra = releaseactions[i];
-                if(ra.key==k.name)
-                {
-                    execute(ra.action);
-                    delete[] ra.action;
-                    releaseactions.remove(i--);
-                };
+                execute(k.releaseaction);
+                DELETEA(k.releaseaction);
             };
             return;
         };

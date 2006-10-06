@@ -416,7 +416,8 @@ struct unionfind
     };
 };
 
-inline char *newstring(const char *s, size_t l) { return s_strncpy(new char[l+1], s, l+1); };
+inline char *newstring(size_t l)                { return new char[l+1]; };
+inline char *newstring(const char *s, size_t l) { return s_strncpy(newstring(l), s, l+1); };
 inline char *newstring(const char *s)           { return newstring(s, strlen(s));          };
 inline char *newstringbuf(const char *s)        { return newstring(s, _MAXDEFSTR-1);       };
 
