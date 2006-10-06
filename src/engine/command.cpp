@@ -262,6 +262,9 @@ VARN(numargs, _numargs, 0, 0, 25);
 
 char *commandret = NULL;
 
+extern char *keypressed;
+extern void onrelease(char *s);
+
 char *executeret(char *p)               // all evaluation happens here, recursively
 {
     const int MAXWORDS = 25;                    // limit, remove
@@ -311,8 +314,6 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         default: id->run(w+1); break;
                         case 'D': 
                         {
-                            extern char *keypressed;
-                            extern void onrelease(char *s);
                             if(keypressed) onrelease(id->_name); 
                             id->run((char **)keypressed); 
                             break;
@@ -343,6 +344,14 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         case 's':                                               v[n] = w[++wn];     n++; break;
                         case 'i':               nstor[n].i = parseint(w[++wn]); v[n] = &nstor[n].i; n++; break;
                         case 'f':               nstor[n].f = atof(w[++wn]);     v[n] = &nstor[n].f; n++; break;
+                        case 'D':
+                        {
+                            if(keypressed) onrelease(id->_name);
+                            nstor[n].i = keypressed ? 1 : 0;
+                            v[n] = &nstor[n].i;
+                            n++;
+                            break;
+                        };
                         case 'V': v[n++] = w+1; nstor[n].i = numargs-1;         v[n] = &nstor[n].i; n++; break;
                         case 'C': v[n++] = conc(w+1, numargs-1, true);                                   break;
                         default: fatal("builtin declared with illegal type");
