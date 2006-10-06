@@ -226,10 +226,8 @@ const char *addreleaseaction(const char *s)
     char *action;
     if(keypressed->releaseaction)
     {
-        action = newstring(strlen(keypressed->releaseaction)+strlen(s));
-        s_strcpy(action, keypressed->releaseaction);
-        s_strcat(action, ";");
-        s_strcat(action, s);
+        action = newstring(strlen(keypressed->releaseaction)+1+strlen(s));
+        sprintf(action, "%s;%s", keypressed->releaseaction, s);
         DELETEA(keypressed->releaseaction);
     }
     else action = newstring(s);
@@ -352,7 +350,7 @@ void keypress(int code, bool isdown, int cooked)
                 char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
                 keyaction = action;
                 keypressed = &k;
-                if(k.releaseaction) DELETEA(k.releaseaction);
+                DELETEA(k.releaseaction);
                 execute(keyaction); 
                 keypressed = NULL;
                 if(keyaction!=action) delete[] keyaction;
