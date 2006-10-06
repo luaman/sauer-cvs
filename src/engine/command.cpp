@@ -262,7 +262,7 @@ VARN(numargs, _numargs, 0, 0, 25);
 
 char *commandret = NULL;
 
-char *executeret(char *p, bool isdown)               // all evaluation happens here, recursively
+char *executeret(char *p)               // all evaluation happens here, recursively
 {
     const int MAXWORDS = 25;                    // limit, remove
     char *w[MAXWORDS];
@@ -290,11 +290,8 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
 
         if(w[1][0]=='=' && !w[1][1])
         {
-            if(isdown)
-            {
-                aliasa(c, numargs>2 ? w[2] : newstring(""));
-                w[2] = NULL;
-            };
+            aliasa(c, numargs>2 ? w[2] : newstring(""));
+            w[2] = NULL;
         }
         else
         {     
@@ -308,15 +305,30 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
             else switch(id->_type)
             {
                 case ID_ICOMMAND:
+                {
                     switch(id->_narg[0])
                     {
-                        default: if(isdown) id->run(w+1); break;
-                        case 'D': id->run((char **)isdown); break;
-                        case 'C': if(isdown) { char *r = conc(w+1, numargs-1, true); id->run(&r); delete[] r; }; break;
+                        default: id->run(w+1); break;
+                        case 'D': 
+                        {
+                            extern char *keypressed;
+                            extern void onrelease(char *s);
+                            if(keypressed) onrelease(id->_name); 
+                            id->run((char **)keypressed); 
+                            break;
+                        };
+                        case 'C': 
+                        { 
+                            char *r = conc(w+1, numargs-1, true); 
+                            id->run(&r); 
+                            delete[] r; 
+                            break;
+                        };
                     };
                     setretval(commandret);
                     break;
-            
+                };
+
                 case ID_COMMAND:                     // game defined commands
                 {    
                     void *v[MAXWORDS];
@@ -331,12 +343,11 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                         case 's':                                               v[n] = w[++wn];     n++; break;
                         case 'i':               nstor[n].i = parseint(w[++wn]); v[n] = &nstor[n].i; n++; break;
                         case 'f':               nstor[n].f = atof(w[++wn]);     v[n] = &nstor[n].f; n++; break;
-                        case 'D':               nstor[n].i = isdown;            v[n] = &nstor[n].i; n++; break;
                         case 'V': v[n++] = w+1; nstor[n].i = numargs-1;         v[n] = &nstor[n].i; n++; break;
                         case 'C': v[n++] = conc(w+1, numargs-1, true);                                   break;
                         default: fatal("builtin declared with illegal type");
                     };
-                    if(isdown || id->_narg[0]=='D') switch(n)
+                    switch(n)
                     {
                         case 0: ((void (__cdecl *)()                                      )id->_fun)();                             break;
                         case 1: ((void (__cdecl *)(void *)                                )id->_fun)(v[0]);                         break;
@@ -350,35 +361,34 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                     setretval(commandret);
                     break;
                 };
+
                 case ID_VAR:                        // game defined variables 
-                    if(isdown)
+                    if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
+                    else
                     {
-                        if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
-                        else
+                        if(overrideidents)
                         {
-                            if(overrideidents)
+                            if(id->_persist)
                             {
-                                if(id->_persist)
-                                {
-                                    conoutf("cannot override persistent var %s", id->_name);
-                                    break;
-                                };
-                                if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
-                            }
-                            else if(id->_override!=NO_OVERRIDE) id->_override = NO_OVERRIDE;
-                            int i1 = parseint(w[1]);
-                            if(i1<id->_min || i1>id->_max)
-                            {
-                                i1 = i1<id->_min ? id->_min : id->_max;                // clamp to valid range
-                                conoutf("valid range for %s is %d..%d", c, id->_min, id->_max);
-                            }
-                            *id->_storage = i1;
-                            if(id->_fun) ((void (__cdecl *)())id->_fun)();            // call trigger function if available
-                        };
+                                conoutf("cannot override persistent var %s", id->_name);
+                                break;
+                            };
+                            if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
+                        }
+                        else if(id->_override!=NO_OVERRIDE) id->_override = NO_OVERRIDE;
+                        int i1 = parseint(w[1]);
+                        if(i1<id->_min || i1>id->_max)
+                        {
+                            i1 = i1<id->_min ? id->_min : id->_max;                // clamp to valid range
+                            conoutf("valid range for %s is %d..%d", c, id->_min, id->_max);
+                        }
+                        *id->_storage = i1;
+                        if(id->_fun) ((void (__cdecl *)())id->_fun)();            // call trigger function if available
                     };
                     break;
                     
                 case ID_ALIAS:                              // alias, also used as functions and (global) variables
+                {
                     for(int i = 1; i<numargs; i++)
                     {
                         s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
@@ -390,11 +400,12 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
                     if(id->_override!=NO_OVERRIDE) overrideidents = true;
                     char *wasexecuting = id->_isexecuting;
                     id->_isexecuting = id->_action;
-                    setretval(executeret(id->_action, isdown));
+                    setretval(executeret(id->_action));
                     if(id->_isexecuting != id->_action && id->_isexecuting != wasexecuting) delete[] id->_isexecuting;
                     id->_isexecuting = wasexecuting;
                     overrideidents = wasoverriding;
                     break;
+                };
             };
         };
         loopj(numargs) if(w[j]) delete[] w[j];
@@ -402,9 +413,9 @@ char *executeret(char *p, bool isdown)               // all evaluation happens h
     return retval;
 };
 
-int execute(char *p, bool isdown)
+int execute(char *p)
 {
-    char *ret = executeret(p, isdown);
+    char *ret = executeret(p);
     int i = 0; 
     if(ret) { i = parseint(ret); delete[] ret; };
     return i;
@@ -632,9 +643,6 @@ ICOMMAND(if, "sss", commandret = executeret(args[0][0]!='0' ? args[1] : args[2])
 ICOMMAND(loop, "sss", { int n = parseint(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); }; });
 ICOMMAND(while, "ss", while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
 
-void onpress(int *on, char *body) { if(*on) execute(body); };
-void onrelease(int *on, char *body) { if(!*on) execute(body); };
-
 void concat(const char *s) { commandret = newstring(s); };
 void result(const char *s) { commandret = newstring(s); };
 
@@ -698,8 +706,6 @@ void getalias_(char *s)
     result(getalias(s));
 };
 
-COMMAND(onpress, "Ds");
-COMMAND(onrelease, "Ds");
 COMMAND(exec, "s");
 COMMAND(concat, "C");
 COMMAND(result, "s");

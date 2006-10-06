@@ -119,11 +119,13 @@ void keymap(char *code, char *key)
     keym &km = keyms.add();
     km.code = atoi(code);
     km.name = newstring(key);
-    km.action = newstringbuf("");
-    km.editaction = newstringbuf("");
+    km.action = newstring("");
+    km.editaction = newstring("");
 };
 
 COMMAND(keymap, "ss");
+
+char *keypressed = NULL, *keyaction = NULL;
 
 void bindkey(char *key, char *action, bool edit)
 {
@@ -131,8 +133,9 @@ void bindkey(char *key, char *action, bool edit)
     for(char *x = key; *x; x++) *x = toupper(*x);
     loopv(keyms) if(strcmp(keyms[i].name, key)==0)
     {
-        if(edit) s_strcpy(keyms[i].editaction, action);
-        else     s_strcpy(keyms[i].action,     action);
+        char *&binding = edit ? keyms[i].editaction : keyms[i].action;
+        if(!keypressed || keyaction!=binding) delete[] binding;
+        binding = newstring(action);
         return;
     };
     conoutf("unknown key \"%s\"", key);   
@@ -215,6 +218,28 @@ void history(int *n)
 
 COMMAND(history, "i");
 
+struct releaseaction
+{
+    const char *key;
+    char *action;
+};
+static vector<releaseaction> releaseactions;
+
+void onrelease(char *s)
+{
+    if(!keypressed) return;
+    loopv(releaseactions)
+    {
+        releaseaction &ra = releaseactions[i];
+        if(ra.key==keypressed && !strcmp(ra.action, s)) return;
+    };
+    releaseaction &ra = releaseactions.add();
+    ra.key = keypressed;
+    ra.action = newstring(s); 
+};
+
+COMMAND(onrelease, "s");
+
 void keypress(int code, bool isdown, int cooked)
 {
     if(saycommandon)                                // keystrokes go to commandline
@@ -229,7 +254,7 @@ void keypress(int code, bool isdown, int cooked)
 
                 case SDLK_DELETE:
                 {
-                   int len = (int)strlen(commandbuf);
+                    int len = (int)strlen(commandbuf);
                     if(commandpos<0) break;
                     memmove(&commandbuf[commandpos], &commandbuf[commandpos+1], len - commandpos);    
                     resetcomplete();
@@ -317,9 +342,26 @@ void keypress(int code, bool isdown, int cooked)
     {
         loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
         {
-            string temp;
-            s_strcpy(temp, editmode && keyms[i].editaction[0] ? keyms[i].editaction: keyms[i].action);
-            execute(temp, isdown); 
+            keym &k = keyms[i];
+            if(isdown)
+            {
+                char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
+                keyaction = action;
+                keypressed = k.name;
+                execute(keyaction); 
+                keypressed = NULL;
+                if(keyaction!=action) delete[] keyaction;
+            }
+            else loopv(releaseactions)
+            {
+                releaseaction &ra = releaseactions[i];
+                if(ra.key==k.name)
+                {
+                    execute(ra.action);
+                    delete[] ra.action;
+                    releaseactions.remove(i--);
+                };
+            };
             return;
         };
     };
