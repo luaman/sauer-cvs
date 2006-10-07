@@ -234,6 +234,7 @@ char *parseword(char *&p)                       // parse single argument, includ
     {
         p += strcspn(p, "/; \t\r\n\0");
         if(p[0]!='/' || p[1]=='/') break;
+        else if(p[1]=='\0') { p++; break; };
         p += 2;
     };
     if(p-word==0) return NULL;
