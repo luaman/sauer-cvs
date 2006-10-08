@@ -723,8 +723,8 @@ void gt   (int *a, int *b) { intret((int)(*a > *b)); };   COMMANDN(>, gt, "ii");
 void xora (int *a, int *b) { intret(*a ^ *b); };          COMMANDN(^, xora, "ii");
 void nota (int *a)         { intret(*a == 0); };          COMMANDN(!, nota, "i");
 
-void anda (char *a, char *b) { if(execute(a)!=0) intret(execute(b)!=0); else intret(0); };
-void ora  (char *a, char *b) { if(execute(a)==0) intret(execute(b)!=0); else intret(1); };
+void anda (char *a, char *b) { intret(execute(a)!=0 && execute(b)!=0); };
+void ora  (char *a, char *b) { intret(execute(a)!=0 || execute(b)!=0); };
 
 COMMANDN(&&, anda, "ss");
 COMMANDN(||, ora, "ss");
