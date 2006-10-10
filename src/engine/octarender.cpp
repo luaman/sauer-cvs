@@ -891,17 +891,20 @@ static vector<octaentities *> reflectedmms, renderedmms;
 
 void findreflectedmms(vector<vtxarray *> &vas, float z, bool vfc = true)
 {
+    bool doOQ = hasOQ && oqfrags && oqreflect;
     loopv(vas)
     {
         vtxarray *va = vas[i];
-        if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
-        if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
-        if(!vfc || va->curvfc == VFC_NOT_VISIBLE || va->occluded >= OCCLUDE_BB)
+        int curvfc = vfc ? va->curvfc : VFC_NOT_VISIBLE;
+        if(curvfc >= VFC_FOGGED || (curvfc == VFC_FULL_VISIBLE && va->occluded >= OCCLUDE_BB)) continue;
+        if(isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+        if(va->z+va->size <= z || va->distance > reflectdist) continue;
+        if(curvfc == VFC_NOT_VISIBLE || va->occluded >= OCCLUDE_BB)
         {
-            if(hasOQ && oqfrags && oqreflect && va->rquery && checkquery(va->rquery)) continue;
+            if(doOQ && va->rquery && checkquery(va->rquery)) continue;
         };
         if(va->mapmodels) loopv(*va->mapmodels) reflectedmms.add((*va->mapmodels)[i]);
-        if(va->children->length()) findreflectedmms(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
+        if(va->children->length()) findreflectedmms(*va->children, z, curvfc != VFC_NOT_VISIBLE);
     };
 };
 
@@ -1665,43 +1668,6 @@ void rendersky(bool explicitonly, float zreflect)
 
     if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
-};
-
-void rendermaterials()
-{
-    glDepthMask(GL_FALSE);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-
-    renderwater();
-
-    notextureshader->set();
-    glDisable(GL_TEXTURE_2D);
-
-    for(vtxarray *va = visibleva; va; va = va->next)
-    {
-        lodlevel &lod = va->l0;
-        if(lod.matsurfs && va->occluded < OCCLUDE_BB) rendermatsurfs(lod.matbuf, lod.matsurfs);
-    };
-
-    if(editmode && showmat)
-    {
-        glDisable(GL_BLEND);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        for(vtxarray *va = visibleva; va; va = va->next)
-        {
-            lodlevel &lod = va->l0;
-            if(lod.matsurfs && va->occluded < OCCLUDE_BB) rendermatgrid(lod.matbuf, lod.matsurfs);
-        };
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    };
-
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glDepthMask(GL_TRUE);
-
-    defaultshader->set();
 };
 
 void writeobj(char *name)

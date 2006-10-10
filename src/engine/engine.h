@@ -248,7 +248,6 @@ extern void rendermapmodels();
 extern void rendergeom();
 extern void renderoutline();
 extern void allchanged();
-extern void rendermaterials();
 extern void rendersky(bool explicitonly = false, float zreflect = 0);
 extern void converttovectorworld();
 
@@ -289,6 +288,7 @@ extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();
 extern void renderwater();
+extern void rendermaterials();
 
 // server
 

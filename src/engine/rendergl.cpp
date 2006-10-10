@@ -1246,8 +1246,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     drawreflections();
 
-    defaultshader->set();
-
+    renderwater();
     rendermaterials();
 
     defaultshader->set();

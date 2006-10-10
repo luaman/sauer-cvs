@@ -17,6 +17,7 @@ struct materialsurface
         short depth;
     };
     uchar material, orient;
+    float dist;
     entity *light;
 };
 
