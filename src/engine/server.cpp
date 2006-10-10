@@ -178,7 +178,7 @@ void sendf(int cn, int chan, const char *format, ...)
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
-char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL (maxlients)" };
+char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL (maxclients)" };
 
 void disconnect_client(int n, int reason)
 {
