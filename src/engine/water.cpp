@@ -323,6 +323,7 @@ void renderwater()
     glBindTexture(GL_TEXTURE_2D, s.sts[3].t->gl);
     if(waterrefract)
     {
+        glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
         glActiveTexture_(GL_TEXTURE3_ARB);
         glEnable(GL_TEXTURE_2D);
@@ -382,6 +383,7 @@ void renderwater()
 
     if(waterrefract)
     {
+        glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glActiveTexture_(GL_TEXTURE3_ARB);
         glDisable(GL_TEXTURE_2D);
