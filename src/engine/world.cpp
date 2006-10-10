@@ -22,13 +22,13 @@ void freeoctaentities(cube &c)
     };
 };
 
-void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br)
+void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br, vtxarray *va = NULL)
 {
     loopoctabox(cor, size, bo, br)
     {
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children != NULL && size > octaentsize)
-            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br);
+            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br, c[i].va ? c[i].va : va);
         else if(add)
         {
             if(!c[i].ents) c[i].ents = new octaentities(o, size);
@@ -37,6 +37,11 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                 case ET_MAPMODEL:
                     if(loadmodel(NULL, et->getents()[id]->attr2))
                     {
+                        if(va && c[i].ents->mapmodels.empty()) 
+                        {
+                            if(!va->mapmodels) va->mapmodels = new vector<octaentities *>;
+                            va->mapmodels->add(c[i].ents);
+                        };
                         c[i].ents->mapmodels.add(id);
                         break;
                     };
@@ -55,6 +60,11 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                     if(loadmodel(NULL, et->getents()[id]->attr2))
                     {
                         c[i].ents->mapmodels.removeobj(id);
+                        if(va && c[i].ents->mapmodels.empty())
+                        {
+                            va->mapmodels->removeobj(c[i].ents);
+                            if(va->mapmodels->empty()) DELETEP(va->mapmodels);
+                        };
                         break;
                     };
                     // invisible mapmodel
@@ -65,13 +75,7 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
             if(c[i].ents->mapmodels.empty() && c[i].ents->other.empty())
                 freeoctaentities(c[i]);
         };
-        c[i].flags &= ~CUBE_MAPMODELS;
-        if(c[i].ents) 
-        {
-            c[i].ents->query = NULL;
-            if(c[i].ents->mapmodels.length()) c[i].flags |= CUBE_MAPMODELS;
-        };
-        if(c[i].children && !(c[i].flags&CUBE_MAPMODELS)) loopj(8) c[i].flags |= c[i].children[j].flags&CUBE_MAPMODELS;
+        if(c[i].ents) c[i].ents->query = NULL;
     };
 };
 

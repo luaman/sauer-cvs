@@ -10,7 +10,7 @@ struct elementset
 struct materialsurface
 {
     ivec o;
-    int csize, rsize;
+    ushort csize, rsize;
     union
     {
         short index;
@@ -36,6 +36,21 @@ struct occludequery
     int fragments;
 };
 
+struct vtxarray;
+
+struct octaentities
+{
+    vector<int> mapmodels;
+    vector<int> other;
+    occludequery *query;
+    octaentities *next;
+    int distance;
+    ivec o;
+    int size;
+
+    octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
+};
+
 enum
 {
     OCCLUDE_NOTHING = 0,
@@ -58,6 +73,7 @@ struct vtxarray
     ivec min, max;          // BB
     uchar curvfc, occluded;
     occludequery *query, *rquery;
+    vector<octaentities *> *mapmodels;
 };
 
 struct surfaceinfo
@@ -79,24 +95,6 @@ struct clipplanes
     plane p[12];
     clipplanes *next, *prev;
     clipplanes **backptr;
-};
-
-struct octaentities
-{
-    vector<int> mapmodels;
-    vector<int> other;
-    occludequery *query;
-    octaentities *next;
-    int distance;
-    ivec o;
-    int size;
-
-    octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
-};
-
-enum
-{
-    CUBE_MAPMODELS = 1<<0, // whether the cube or any of its children have mapmodels
 };
 
 struct cube

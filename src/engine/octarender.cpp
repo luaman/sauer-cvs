@@ -323,6 +323,7 @@ vtxarray *newva(int x, int y, int z, int size)
     va->curvfc = VFC_NOT_VISIBLE;
     va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
+    va->mapmodels = NULL;
     wverts += va->verts = verts.length();
     wtris  += va->l0.tris;
     allocva++;
@@ -348,7 +349,8 @@ void destroyva(vtxarray *va, bool reparent)
             if(child->parent) child->parent->children->add(va);
         };
     };
-    delete va->children;
+    if(va->mapmodels) delete va->mapmodels;
+    if(va->children) delete va->children;
     delete[] (uchar *)va;
 };
 
@@ -362,7 +364,8 @@ void vaclearc(cube *c)
     };
 };
 
-ivec bbmin, bbmax;
+static ivec bbmin, bbmax;
+static vector<octaentities *> vamms;
 
 void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates vertices and indices ready to be put into a va
 {
@@ -400,6 +403,8 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
 
     if(lodcube) return;
 
+    if(c.ents && c.ents->mapmodels.length()) vamms.add(c.ents);
+
     if(c.material != MAT_AIR) genmatsurfs(c, cx, cy, cz, size, l0.matsurfs);
 
     cstats[csi].nleaf++;
@@ -416,6 +421,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
         vh.clear();
         l0.clear();
         l1.clear();
+        vamms.setsize(0);
     };
 
     bbmin = ivec(cx+size, cy+size, cz+size);
@@ -428,6 +434,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
         c.va = newva(cx, cy, cz, size);
         c.va->min = bbmin;
         c.va->max = bbmax;
+        if(vamms.length()) c.va->mapmodels = new vector<octaentities *>(vamms);
     };
 
     l0.clearidx();
@@ -702,61 +709,6 @@ void setorigin(vtxarray *va)
     };
 };
 
-void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
-{
-    setorigin(va);
-
-    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-    glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
-
-    glDrawElements(GL_TRIANGLES, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
-    glde++;
-
-    if(!explicitonly) xtraverts += lod.sky/3;
-    xtraverts += lod.explicitsky/3;
-};
-
-void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
-{
-    loopv(vas)
-    {
-        vtxarray *va = vas[i];
-        lodlevel &lod = va->curlod ? va->l1 : va->l0;
-        if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
-        if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) == VFC_NOT_VISIBLE) continue;
-        if(lod.sky+lod.explicitsky) renderskyva(va, lod);
-        if(va->children->length()) renderreflectedskyvas(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
-    };
-};
-
-void rendersky(bool explicitonly, float zreflect)
-{
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glPushMatrix();
-
-    resetorigin();
-
-    if(zreflect)
-    {
-        reflectvfcP(zreflect);
-        renderreflectedskyvas(varoot, zreflect);
-        restorevfcP();
-    }
-    else for(vtxarray *va = visibleva; va; va = va->next)
-    {
-        lodlevel &lod = va->curlod ? va->l1 : va->l0;
-        if(va->occluded >= OCCLUDE_BB || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
-
-        renderskyva(va, lod, explicitonly);
-    };
-
-    glPopMatrix();
-
-    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-};
-
 void setupTMU()
 {
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
@@ -867,21 +819,15 @@ extern int octaentsize;
 
 static octaentities *visiblemms, **lastvisiblemms;
 
-void findvisiblemms(cube *c, const ivec &o, int size, const vector<extentity *> &ents)
+void findvisiblemms(const vector<extentity *> &ents)
 {
-    loopj(8) if(c[j].flags&CUBE_MAPMODELS)
+    for(vtxarray *va = visibleva; va; va = va->next)
     {
-        ivec co(j, o.x, o.y, o.z, size);
-
-        if(c[j].va)
+        if(!va->mapmodels || va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) continue;
+        loopv(*va->mapmodels)
         {
-            vtxarray *va = c[j].va;
-            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) continue;
-        };
-        if(c[j].ents)
-        {
-            octaentities *oe = c[j].ents;
-            if(isvisiblecube(co.tovec(), size) >= VFC_FOGGED) continue;
+            octaentities *oe = (*va->mapmodels)[i];
+            if(isvisiblecube(oe->o.tovec(), oe->size) >= VFC_FOGGED) continue;
 
             bool occluded = oe->query && oe->query->owner == oe && checkquery(oe->query);
             if(occluded)
@@ -904,7 +850,7 @@ void findvisiblemms(cube *c, const ivec &o, int size, const vector<extentity *> 
                 };
                 if(!visible) continue;
 
-                oe->distance = int(camera1->o.dist_to_bb(co.tovec(), co.tovec().add(size)));
+                oe->distance = int(camera1->o.dist_to_bb(oe->o.tovec(), oe->o.tovec().add(oe->size)));
 
                 octaentities **prev = &visiblemms, *cur = visiblemms;
                 while(cur && cur->distance >= 0 && oe->distance > cur->distance)
@@ -918,15 +864,12 @@ void findvisiblemms(cube *c, const ivec &o, int size, const vector<extentity *> 
                 *prev = oe;
             };
         };
-        if(c[j].children && size > octaentsize) findvisiblemms(c[j].children, co, size>>1, ents);
     };
 };
 
 VAR(oqmm, 0, 4, 8);
 
 extern bool getentboundingbox(extentity &e, ivec &o, ivec &r);
-
-vector<extentity *> renderedmms;
 
 void rendermapmodel(extentity &e)
 {
@@ -944,34 +887,73 @@ void rendermapmodel(extentity &e)
 
 extern int reflectdist;
 
+static vector<octaentities *> reflectedmms, renderedmms;
+
+void findreflectedmms(vector<vtxarray *> &vas, float z, bool vfc = true)
+{
+    loopv(vas)
+    {
+        vtxarray *va = vas[i];
+        if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
+        if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+        if(!vfc || va->curvfc == VFC_NOT_VISIBLE || va->occluded >= OCCLUDE_BB)
+        {
+            if(hasOQ && oqfrags && oqreflect && va->rquery && checkquery(va->rquery)) continue;
+        };
+        if(va->mapmodels) loopv(*va->mapmodels) reflectedmms.add((*va->mapmodels)[i]);
+        if(va->children->length()) findreflectedmms(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
+    };
+};
+
 void renderreflectedmapmodels(float z, bool refract)
 {
-    if(refract ? camera1->o.z < z : camera1->o.z >= z)
-    {
-        const vector<extentity *> &ents = et->getents();
+    bool reflected = !refract && camera1->o.z >= z;
+    vector<octaentities *> &mms = reflected ? reflectedmms : renderedmms;
+    const vector<extentity *> &ents = et->getents();
 
+    if(reflected)
+    {
         reflectvfcP(z);
-        loopv(ents)
+        reflectedmms.setsize(0);
+        findreflectedmms(varoot, z);
+    };
+    loopv(mms)
+    {
+        octaentities *oe = mms[i];
+        if(refract ? oe->o.z > z : oe->o.z+oe->size <= z) continue;
+        if(reflected && isvisiblecube(oe->o.tovec(), oe->size) >= VFC_FOGGED) continue;
+        loopv(oe->mapmodels)
         {
-            extentity &e = *ents[i];
-            if(e.type!=ET_MAPMODEL || e.attr1<0 || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
-            rendermapmodel(e);
+           extentity &e = *ents[oe->mapmodels[i]];
+           if(e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
+           e.visible = true;
         };
-        restorevfcP();
-    }
-    else loopv(renderedmms) rendermapmodel(*renderedmms[i]);
+    };
+    loopv(mms)
+    {
+        octaentities *oe = mms[i];
+        loopv(oe->mapmodels)
+        {
+           extentity &e = *ents[oe->mapmodels[i]];
+           if(!e.visible) continue;
+           rendermapmodel(e);
+           e.visible = false;
+        };
+    };
+    if(reflected) restorevfcP();
 };
 
 void rendermapmodels()
 {
     const vector<extentity *> &ents = et->getents();
 
-    renderedmms.setsizenodelete(0);
     visiblemms = NULL;
     lastvisiblemms = &visiblemms;
-    findvisiblemms(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, ents);
+    findvisiblemms(ents);
 
-    static int visible = 0;
+    static int skipoq = 0;
+
+    renderedmms.setsize(0);
 
     for(octaentities *oe = visiblemms; oe; oe = oe->next)
     {
@@ -990,7 +972,7 @@ void rendermapmodels()
         };
 
         if(!hasOQ || !oqfrags || !oqmm || !oe->distance) oe->query = NULL;
-        else if(!occluded && (++visible % oqmm)) oe->query = NULL;
+        else if(!occluded && (++skipoq % oqmm)) oe->query = NULL;
         else oe->query = newquery(oe);
 
         if(oe->query)
@@ -1006,6 +988,7 @@ void rendermapmodels()
         {
             ivec bbmin(oe->o), bbmax(oe->o);
             bbmin.add(oe->size);
+            bool rendered = false;
             loopv(oe->mapmodels)
             {
                 extentity &e = *ents[oe->mapmodels[i]];
@@ -1024,8 +1007,8 @@ void rendermapmodels()
                 }
                 else if(e.visible)
                 {
+                    if(!rendered) { renderedmms.add(oe); rendered = true; };
                     rendermapmodel(e);
-                    renderedmms.add(&e);
                     e.visible = false;
                 };
             };
@@ -1157,9 +1140,22 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 
     vec camera(camera1->o);
     if(reflecting && !refracting) camera.z = reflecting;
+    
+    ivec bbmin, bbmax;
+    if(va->children || va->mapmodels || va->l0.matsurfs || va->l0.sky || va->l0.explicitsky)
+    {
+        bbmin = ivec(va->x, va->y, va->z);
+        bbmax = ivec(va->size, va->size, va->size);
+    }
+    else
+    {
+        bbmin = va->min;
+        bbmax = va->max;
+        bbmax.sub(bbmin);
+    };
 
-    drawbb(ivec(va->x, va->y, va->z).sub(origin).mul(1<<VVEC_FRAC),
-           ivec(va->size, va->size, va->size).mul(1<<VVEC_FRAC),
+    drawbb(bbmin.sub(origin).mul(1<<VVEC_FRAC),
+           bbmax.mul(1<<VVEC_FRAC),
            vec(camera).sub(origin.tovec()).mul(1<<VVEC_FRAC));
 
     endquery(query);
@@ -1614,6 +1610,61 @@ void renderreflectedgeom(float z, bool refract)
 
     glPopMatrix();
     cleanupTMUs();
+};
+
+void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
+{
+    setorigin(va);
+
+    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+    glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+
+    glDrawElements(GL_TRIANGLES, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
+    glde++;
+
+    if(!explicitonly) xtraverts += lod.sky/3;
+    xtraverts += lod.explicitsky/3;
+};
+
+void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
+{
+    loopv(vas)
+    {
+        vtxarray *va = vas[i];
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
+        if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) == VFC_NOT_VISIBLE) continue;
+        if(lod.sky+lod.explicitsky) renderskyva(va, lod);
+        if(va->children->length()) renderreflectedskyvas(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
+    };
+};
+
+void rendersky(bool explicitonly, float zreflect)
+{
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glPushMatrix();
+
+    resetorigin();
+
+    if(zreflect)
+    {
+        reflectvfcP(zreflect);
+        renderreflectedskyvas(varoot, zreflect);
+        restorevfcP();
+    }
+    else for(vtxarray *va = visibleva; va; va = va->next)
+    {
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(va->occluded >= OCCLUDE_BB || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
+
+        renderskyva(va, lod, explicitonly);
+    };
+
+    glPopMatrix();
+
+    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
 };
 
 void rendermaterials()
