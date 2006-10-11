@@ -887,38 +887,26 @@ void rendermapmodel(extentity &e)
 
 extern int reflectdist;
 
-static vector<octaentities *> reflectedmms, renderedmms;
+static vector<octaentities *> renderedmms;
 
-void findreflectedmms(vector<vtxarray *> &vas, float z, bool vfc = true)
-{
-    bool doOQ = hasOQ && oqfrags && oqreflect;
-    loopv(vas)
-    {
-        vtxarray *va = vas[i];
-        int curvfc = vfc ? va->curvfc : VFC_NOT_VISIBLE;
-        if(curvfc >= VFC_FOGGED || (curvfc == VFC_FULL_VISIBLE && va->occluded >= OCCLUDE_BB)) continue;
-        if(isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
-        if(va->z+va->size <= z || va->distance > reflectdist) continue;
-        if(curvfc == VFC_NOT_VISIBLE || va->occluded >= OCCLUDE_BB)
-        {
-            if(doOQ && va->rquery && checkquery(va->rquery)) continue;
-        };
-        if(va->mapmodels) loopv(*va->mapmodels) reflectedmms.add((*va->mapmodels)[i]);
-        if(va->children->length()) findreflectedmms(*va->children, z, curvfc != VFC_NOT_VISIBLE);
-    };
-};
+vtxarray *reflectedva;
 
 void renderreflectedmapmodels(float z, bool refract)
 {
     bool reflected = !refract && camera1->o.z >= z;
+    vector<octaentities *> reflectedmms;
     vector<octaentities *> &mms = reflected ? reflectedmms : renderedmms;
     const vector<extentity *> &ents = et->getents();
 
     if(reflected)
     {
         reflectvfcP(z);
-        reflectedmms.setsize(0);
-        findreflectedmms(varoot, z);
+        for(vtxarray *va = reflectedva; va; va = va->rnext)
+        {
+            if(!va->mapmodels || va->distance > reflectdist) continue;
+            if((va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) && va->rquery && checkquery(va->rquery)) continue;
+            loopv(*va->mapmodels) reflectedmms.add((*va->mapmodels)[i]);
+        };
     };
     loopv(mms)
     {
@@ -1512,27 +1500,26 @@ void rendergeom()
     cleanupTMUs();
 };
 
-void findreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool refract, vtxarray *&visible, bool vfc = true)
+void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc = true)
 {
     bool doOQ = hasOQ && oqfrags && oqreflect;
     loopv(vas)
     {
         vtxarray *va = vas[i];
-        lodlevel &lod = va->curlod ? va->l1 : va->l0;
-        if((vfc && va->curvfc == VFC_FOGGED) || va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
+        if(!vfc) va->curvfc = VFC_NOT_VISIBLE;
+        if(va->curvfc == VFC_FOGGED || va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) >= VFC_FOGGED) continue;
         bool render = true;
-        if(!lod.texs || va->max.z <= z) render = false;
-        else if(vfc && va->curvfc == VFC_FULL_VISIBLE)
+        if(va->curvfc == VFC_FULL_VISIBLE)
         {
             if(va->occluded >= OCCLUDE_BB) continue;
             if(va->occluded >= OCCLUDE_GEOM) render = false;
         };
         if(render)
         {
-            if(!vfc) va->curvfc = VFC_NOT_VISIBLE;
             if(va->curvfc == VFC_NOT_VISIBLE) va->distance = (int)vadist(va, camera1->o);
             if(!doOQ && va->distance > reflectdist) continue;
-            vtxarray *vprev = NULL, *vcur = visible;
+            va->rquery = NULL;
+            vtxarray *vprev = NULL, *vcur = reflectedva;
             while(vcur && va->distance > vcur->distance)
             {
                 vprev = vcur;
@@ -1545,11 +1532,11 @@ void findreflectedvas(renderstate &cur, vector<vtxarray *> &vas, float z, bool r
             }
             else
             {
-                va->rnext = visible;
-                visible = va;
+                va->rnext = reflectedva;
+                reflectedva = va;
             };
         };
-        if(va->children->length()) findreflectedvas(cur, *va->children, z, refract, visible, vfc && va->curvfc != VFC_NOT_VISIBLE);
+        if(va->children->length()) findreflectedvas(*va->children, z, refract, va->curvfc != VFC_NOT_VISIBLE);
     };
 };
 
@@ -1565,34 +1552,37 @@ void renderreflectedgeom(float z, bool refract)
     if(!refract && camera1->o.z >= z)
     {
         reflectvfcP(z);
-        vtxarray *visible = NULL;
-        findreflectedvas(cur, varoot, z, refract, visible);
+        reflectedva = NULL;
+        findreflectedvas(varoot, z, refract);
         bool doOQ = hasOQ && oqfrags && oqreflect;
-        for(vtxarray *va = visible; va; va = va->rnext)
+        for(vtxarray *va = reflectedva; va; va = va->rnext)
         {
-            va->rquery = doOQ ? newquery(&va->rquery) : NULL;
-            if(!doOQ && va->distance > reflectdist) break;
-            else if(doOQ && (va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE))
+            lodlevel &lod = va->curlod ? va->l1 : va->l0;
+            if(!lod.texs || va->max.z <= z) continue;
+            if(doOQ)
             {
-                if(va->rquery) renderquery(cur, va->rquery, va);
-            }
-            else if(!doOQ || va->rquery)
-            {
-                if(va->rquery) startquery(va->rquery);
-                lodlevel &lod = va->curlod ? va->l1 : va->l0;
-                renderva(cur, va, lod, doOQ);
-                if(va->rquery) endquery(va->rquery);
+                va->rquery = newquery(&va->rquery);
+                if(!va->rquery) continue;
+                if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE)
+                {
+                    renderquery(cur, va->rquery, va);
+                    continue;
+                };
             };
+            if(va->rquery) startquery(va->rquery);
+            renderva(cur, va, lod, doOQ);
+            if(va->rquery) endquery(va->rquery);
         };            
         if(doOQ)
         {
             glDepthFunc(GL_LEQUAL);
             if(!cur.colormask) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             if(!cur.depthmask) glDepthMask(GL_TRUE);
-            for(vtxarray *va = visible; va; va = va->rnext)
+            for(vtxarray *va = reflectedva; va; va = va->rnext)
             {
+                lodlevel &lod = va->curlod ? va->l1 : va->l0;
+                if(!lod.texs || va->max.z <= z) continue;
                 if(va->rquery && checkquery(va->rquery)) continue;
-                lodlevel &lod = va->curlod ? va->l1 : va->l0; 
                 renderva(cur, va, lod);
             };
             glDepthFunc(GL_LESS);

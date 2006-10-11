@@ -243,6 +243,8 @@ extern void addundo(undoblock &u);
 
 // octarender
 extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h);
+extern void reflectvfcP(float z);
+extern void restorevfcP();
 extern void octarender();
 extern void rendermapmodels();
 extern void rendergeom();
