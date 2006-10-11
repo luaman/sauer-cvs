@@ -453,9 +453,9 @@ struct md2 : model
         
             md2_anpos prev, current;
             current.setframes(d ? d->current[index] : ai);
-		    vec *verts1 = mverts[current.fr1], *verts2 = mverts[current.fr2], *verts1p, *verts2p;
-            vec *norms1 = mnorms[current.fr1], *norms2 = mnorms[current.fr2], *norms1p, *norms2p;
-		    float aifrac1, aifrac2;
+		    vec *verts1 = mverts[current.fr1], *verts2 = mverts[current.fr2], *verts1p = NULL, *verts2p = NULL;
+            vec *norms1 = mnorms[current.fr1], *norms2 = mnorms[current.fr2], *norms1p = NULL, *norms2p = NULL;
+		    float aifrac1 = 1, aifrac2 = 0;
 		    bool doai = d && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
 		    if(doai)
 		    {

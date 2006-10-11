@@ -417,7 +417,7 @@ struct weaponstate
         int qdam = guns[d->gunselect].damage;
         if(d->quadmillis) qdam *= 4;
         if(d->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
-        int i, n;
+        int i = -1, n = -1;
         fpsent *o, *cl;
         if(d->gunselect==GUN_SG)
         {
