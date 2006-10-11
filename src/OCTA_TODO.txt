@@ -26,7 +26,7 @@ eihrul:
 
 aard/everyone:
 - social cheating solution
-
+- reduce maps
 - memory leaks?
 
 - before release: update static wiki
