@@ -9,19 +9,6 @@ vector<ushort> texmru;
 VAR(octaentsize, 0, 128, 1024);
 VAR(entselradius, 0, 2, 10);
 
-static void removeentity(int id);
-
-void freeoctaentities(cube &c)
-{
-    while(c.ents && !c.ents->mapmodels.empty()) removeentity(c.ents->mapmodels.pop());
-    while(c.ents && !c.ents->other.empty())     removeentity(c.ents->other.pop());
-    if(c.ents)
-    {
-        delete c.ents;
-        c.ents = NULL;
-    };
-};
-
 void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br, vtxarray *va = NULL)
 {
     loopoctabox(cor, size, bo, br)
@@ -122,6 +109,17 @@ static void modifyoctaent(bool add, int id)
 
 static inline void addentity(int id)    { modifyoctaent(true,  id); };
 static inline void removeentity(int id) { modifyoctaent(false, id); };
+
+void freeoctaentities(cube &c)
+{
+    while(c.ents && !c.ents->mapmodels.empty()) removeentity(c.ents->mapmodels.pop());
+    while(c.ents && !c.ents->other.empty())     removeentity(c.ents->other.pop());
+    if(c.ents)
+    {
+        delete c.ents;
+        c.ents = NULL;
+    };
+};
 
 void entitiesinoctanodes()
 {
