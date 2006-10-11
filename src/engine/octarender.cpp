@@ -910,7 +910,7 @@ void renderreflectedmapmodels(float z, bool refract)
     loopv(mms)
     {
         octaentities *oe = mms[i];
-        if(refract ? oe->o.z > z : oe->o.z+oe->size <= z) continue;
+        if(refract ? oe->o.z >= z : oe->o.z+oe->size <= z) continue;
         if(reflected && isvisiblecube(oe->o.tovec(), oe->size) >= VFC_FOGGED) continue;
         loopv(oe->mapmodels)
         {

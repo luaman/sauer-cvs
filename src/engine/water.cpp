@@ -711,20 +711,24 @@ static int editmatcmp(const materialsurface ** x, const materialsurface ** y)
     return 0;
 };
 
-void sortmaterials(vector<materialsurface *> &vismats)
+extern vtxarray *reflectedva;
+
+void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract)
 {
-    bool doreflect = hasFBO && renderpath==R_ASMSHADER;
+    bool reflected = zclip && !refract && camera1->o.z >= zclip;
+    bool vertwater = !hasFBO || renderpath==R_FIXEDFUNCTION;
     const vec &o = camera1->o;
-    for(vtxarray *va = visibleva; va; va = va->next)
+    for(vtxarray *va = reflected ? reflectedva : visibleva; va; va = reflected ? va->rnext : va->next)
     {
         lodlevel &lod = va->l0;
         if(!lod.matsurfs || va->occluded >= OCCLUDE_BB) continue;
+        if(zclip && (refract ? va->z >= zclip : va->z+va->size <= zclip)) continue;
         loopi(lod.matsurfs)
         {
             materialsurface &m = lod.matbuf[i];
             if(!editmode || !showmat)
             {
-                if(doreflect && m.material==MAT_WATER && m.orient==O_TOP) continue;
+                if(!vertwater && m.material==MAT_WATER && m.orient==O_TOP) continue;
                 if(m.material>=MAT_EDIT) continue;
             };
             vismats.add(&m);
@@ -773,10 +777,10 @@ void rendermatgrid(vector<materialsurface *> &vismats)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 };
 
-void rendermaterials()
+void rendermaterials(float zclip, bool refract)
 {
     vector<materialsurface *> vismats;
-    sortmaterials(vismats);
+    sortmaterials(vismats, zclip, refract);
     if(vismats.empty()) return;
 
     if(!editmode || !showmat) glDepthMask(GL_FALSE);

@@ -1137,6 +1137,8 @@ void drawreflection(float z, bool refract, bool clear)
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
 
+    rendermaterials(z, refract);
+
     setfogplane();
     glDisable(GL_FOG);
 

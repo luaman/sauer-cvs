@@ -290,7 +290,7 @@ extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();
 extern void renderwater();
-extern void rendermaterials();
+extern void rendermaterials(float zclip = 0, bool refract = false);
 
 // server
 
