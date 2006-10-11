@@ -904,7 +904,6 @@ void renderreflectedmapmodels(float z, bool refract)
         for(vtxarray *va = reflectedva; va; va = va->rnext)
         {
             if(!va->mapmodels || va->distance > reflectdist) continue;
-            if((va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) && va->rquery && checkquery(va->rquery)) continue;
             loopv(*va->mapmodels) reflectedmms.add((*va->mapmodels)[i]);
         };
     };
@@ -1578,11 +1577,15 @@ void renderreflectedgeom(float z, bool refract)
             glDepthFunc(GL_LEQUAL);
             if(!cur.colormask) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             if(!cur.depthmask) glDepthMask(GL_TRUE);
-            for(vtxarray *va = reflectedva; va; va = va->rnext)
+            for(vtxarray **prevva = &reflectedva, *va = reflectedva; va; prevva = &va->rnext, va = va->rnext)
             {
                 lodlevel &lod = va->curlod ? va->l1 : va->l0;
                 if(!lod.texs || va->max.z <= z) continue;
-                if(va->rquery && checkquery(va->rquery)) continue;
+                if(va->rquery && checkquery(va->rquery)) 
+                {
+                    if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) *prevva = va->rnext;
+                    continue;
+                };
                 renderva(cur, va, lod);
             };
             glDepthFunc(GL_LESS);
