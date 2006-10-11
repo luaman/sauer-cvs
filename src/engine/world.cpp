@@ -60,7 +60,7 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                     if(loadmodel(NULL, et->getents()[id]->attr2))
                     {
                         c[i].ents->mapmodels.removeobj(id);
-                        if(va && c[i].ents->mapmodels.empty())
+                        if(va && va->mapmodels && c[i].ents->mapmodels.empty())
                         {
                             va->mapmodels->removeobj(c[i].ents);
                             if(va->mapmodels->empty()) DELETEP(va->mapmodels);
