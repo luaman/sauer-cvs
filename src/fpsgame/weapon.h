@@ -91,7 +91,7 @@ struct weaponstate
         };
     };
 
-    enum { BNC_GRENADE, BNC_GIBS, BNS_DEBRIS };
+    enum { BNC_GRENADE, BNC_GIBS, BNC_DEBRIS };
 
     struct bouncent : physent
     {
@@ -102,11 +102,11 @@ struct weaponstate
         int bouncetype;
     };
 
-    vector<bouncent> bouncers;
+    vector<bouncent *> bouncers;
 
     void newbouncer(vec &from, vec &to, bool local, fpsent *owner, int type, int lifetime, int speed)
     {
-        bouncent &bnc = bouncers.add();
+        bouncent &bnc = *(bouncers.add(new bouncent));
         bnc.reset();
         bnc.type = ENT_BOUNCE;
         bnc.o = from;
@@ -132,7 +132,7 @@ struct weaponstate
         static const int maxtime = 20; // run at least 50 times a second
         loopv(bouncers)
         {
-            bouncent &bnc = bouncers[i];
+            bouncent &bnc = *(bouncers[i]);
             if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) particle_splash(5, 1, 150, bnc.o);
             vec old(bnc.o);
             int rtime = time;
@@ -147,18 +147,20 @@ struct weaponstate
                         int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
                         explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
                     };
+                    delete &bnc;
                     bouncers.remove(i--);
-                    break;
+                    goto next;
                 };
             };
             bnc.roll += old.sub(bnc.o).magnitude()/(4*RAD);
+            next:;
         };
     };
 
     static const int MAXPROJ = 100;
     struct projectile { vec o, to; float speed; fpsent *owner; int gun; bool inuse, local; } projs[MAXPROJ];
 
-    void projreset() { loopi(MAXPROJ) projs[i].inuse = false; bouncers.setsize(0); };
+    void projreset() { loopi(MAXPROJ) projs[i].inuse = false; bouncers.deletecontentsp(); bouncers.setsize(0); };
 
     void newprojectile(vec &from, vec &to, float speed, bool local, fpsent *owner, int gun)
     {
@@ -183,19 +185,21 @@ struct weaponstate
         s_sprintfd(ds)("@%d", damage);
         particle_text(p, ds, 8);
     };
+    
+    void spawnbouncer(vec &p, vec &vel, fpsent *d, int type)
+    {
+        vec to = vel;
+        to.rotate_around_z((rnd(90)-45)*RAD);
+        if(to.z<0) to.z = -to.z;
+        to.add(p);
+        newbouncer(p, to, true, d, type, rnd(1000)+2000, rnd(50)+50);
+    };    
 
     void superdamageeffect(const vec &p, vec &vel, fpsent *d)
     {
-        if(d->superdamage) loopi(min(d->superdamage/25, 40)+1)
-        {
-            vec to = vel;
-            to.rotate_around_z((rnd(90)-45)*RAD);
-            if(to.z<0) to.z = -to.z;
-            to.add(p);
-            vec from = p;
-            from.y -= 16;
-            newbouncer(from, to, true, d, BNC_GIBS, rnd(1000)+2000, rnd(50)+50);
-        };
+        vec from = p;
+        from.y -= 16;
+        if(d->superdamage) loopi(min(d->superdamage/25, 40)+1) spawnbouncer(from, vel, d, BNC_GIBS);
     };
 
     void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel, bool isrl)
@@ -208,7 +212,7 @@ struct weaponstate
         else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
         else                     { if(isrl) vel.mul(2); cl.cc.addmsg(SV_DAMAGE, "ri6", target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
         damageeffect(d->abovehead(), damage, d);
-        if(d->type==ENT_AI && d->state==CS_DEAD) cl.ws.superdamageeffect(d->abovehead(), d->vel, d);
+        if(d->type==ENT_AI && d->state==CS_DEAD) superdamageeffect(d->abovehead(), d->vel, d);
     };
 
     void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
@@ -248,6 +252,9 @@ struct weaponstate
 //        particle_splash(5, 10, 500, v);
         playsound(S_RLHIT, &v);
         newsphere(v, RL_DAMRAD, gun==GUN_RL ? 0 : 1);
+        int numdebris = 50;//rnd(5)+1;
+        vec debrisvel = vec(owner->o).sub(v).normalize();
+        loopi(numdebris) spawnbouncer(vec(v).add(debrisvel), debrisvel, owner, BNC_DEBRIS);
         if(!local) return;
         loopi(cl.numdynents())
         {
@@ -509,7 +516,7 @@ struct weaponstate
         float yaw, pitch;
         loopv(bouncers)
         {
-            bouncent &bnc = bouncers[i];
+            bouncent &bnc = *(bouncers[i]);
             lightreaching(bnc.o, color, dir);
             vec vel(bnc.vel);
             vel.add(bnc.gravity);
@@ -522,7 +529,9 @@ struct weaponstate
             };
             pitch = -bnc.roll;
             const char *mdl = "projectiles/grenade";
+            string debrisname;
             if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x40 ? "gibc" : "gibh";
+            else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; };
             rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)

@@ -39,7 +39,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="C:\w\sauerbraten"
-				CommandArguments="-t -w1280 -h800 -a4 -grpg"
+				CommandArguments="-t -w1280 -h800 -a4"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
