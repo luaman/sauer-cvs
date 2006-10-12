@@ -15,54 +15,54 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
     {
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children != NULL && size > octaentsize)
-            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br, c[i].va ? c[i].va : va);
+            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br, c[i].ext && c[i].ext->va ? c[i].ext->va : va);
         else if(add)
         {
-            if(!c[i].ents) c[i].ents = new octaentities(o, size);
+            if(!c[i].ext || !c[i].ext->ents) ext(c[i]).ents = new octaentities(o, size);
             switch(et->getents()[id]->type)
             {
                 case ET_MAPMODEL:
                     if(loadmodel(NULL, et->getents()[id]->attr2))
                     {
-                        if(va && c[i].ents->mapmodels.empty()) 
+                        if(va && c[i].ext->ents->mapmodels.empty()) 
                         {
                             if(!va->mapmodels) va->mapmodels = new vector<octaentities *>;
-                            va->mapmodels->add(c[i].ents);
+                            va->mapmodels->add(c[i].ext->ents);
                         };
-                        c[i].ents->mapmodels.add(id);
+                        c[i].ext->ents->mapmodels.add(id);
                         break;
                     };
                     // invisible mapmodel
                 default:
-                    c[i].ents->other.add(id);
+                    c[i].ext->ents->other.add(id);
                     break;
             };
 
         }
-        else if(c[i].ents)
+        else if(c[i].ext && c[i].ext->ents)
         {
             switch(et->getents()[id]->type)
             {
                 case ET_MAPMODEL:
                     if(loadmodel(NULL, et->getents()[id]->attr2))
                     {
-                        c[i].ents->mapmodels.removeobj(id);
-                        if(va && va->mapmodels && c[i].ents->mapmodels.empty())
+                        c[i].ext->ents->mapmodels.removeobj(id);
+                        if(va && va->mapmodels && c[i].ext->ents->mapmodels.empty())
                         {
-                            va->mapmodels->removeobj(c[i].ents);
+                            va->mapmodels->removeobj(c[i].ext->ents);
                             if(va->mapmodels->empty()) DELETEP(va->mapmodels);
                         };
                         break;
                     };
                     // invisible mapmodel
                 default:
-                    c[i].ents->other.removeobj(id);
+                    c[i].ext->ents->other.removeobj(id);
                     break;
             };
-            if(c[i].ents->mapmodels.empty() && c[i].ents->other.empty())
+            if(c[i].ext->ents->mapmodels.empty() && c[i].ext->ents->other.empty())
                 freeoctaentities(c[i]);
         };
-        if(c[i].ents) c[i].ents->query = NULL;
+        if(c[i].ext && c[i].ext->ents) c[i].ext->ents->query = NULL;
     };
 };
 
@@ -112,12 +112,13 @@ static inline void removeentity(int id) { modifyoctaent(false, id); };
 
 void freeoctaentities(cube &c)
 {
-    while(c.ents && !c.ents->mapmodels.empty()) removeentity(c.ents->mapmodels.pop());
-    while(c.ents && !c.ents->other.empty())     removeentity(c.ents->other.pop());
-    if(c.ents)
+    if(!c.ext) return;
+    while(c.ext->ents && !c.ext->ents->mapmodels.empty()) removeentity(c.ext->ents->mapmodels.pop());
+    while(c.ext->ents && !c.ext->ents->other.empty())     removeentity(c.ext->ents->other.pop());
+    if(c.ext->ents)
     {
-        delete c.ents;
-        c.ents = NULL;
+        delete c.ext->ents;
+        c.ext->ents = NULL;
     };
 };
 

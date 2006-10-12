@@ -128,14 +128,13 @@ struct md2 : model
     
     Texture *skin, *masks;
     
-    GLuint vbufGL;
-    ushort *vbufi;
-    int vbufi_len;
+    GLuint vbufGL, ebufGL;
+    int ebuflen;
     vector<md2_anim> *anims;
 
     md2_header header;
     
-    md2(const char *name) : loaded(false), vbufGL(0), vbufi(0), anims(0)
+    md2(const char *name) : loaded(false), vbufGL(0), ebufGL(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -153,8 +152,11 @@ struct md2 : model
         };
         delete[] mverts;
         delete[] mnorms;
-        DELETEA(vbufi);
-        if(hasVBO && vbufGL) glDeleteBuffers_(1, &vbufGL);
+        if(hasVBO)
+        {
+            if(vbufGL) glDeleteBuffers_(1, &vbufGL);
+            if(ebufGL) glDeleteBuffers_(1, &ebufGL);
+        };
         DELETEA(anims);
         DELETEP(spheretree);
     };
@@ -298,12 +300,14 @@ struct md2 : model
 			else { loopj(numvertex-2) loopk(3) idxs.add(tidxs[j&1 && k ? j+(1-(k-1))+1 : j+k]); };
         };
         
-        vbufi = new ushort[vbufi_len = idxs.length()];
-        memcpy(vbufi, idxs.getbuf(), sizeof(ushort)*vbufi_len);
-        
         glGenBuffers_(1, &vbufGL);
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
         glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+
+        glGenBuffers_(1, &ebufGL);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, ebufGL);
+        glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
+        ebuflen = idxs.length();
     };
 
     SphereTree *setspheretree()
@@ -432,6 +436,7 @@ struct md2 : model
         if(hasVBO && vbufGL && ai.frame==0 && ai.range==1)
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, ebufGL);
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, sizeof(md2_vvert), 0);
             glEnableClientState(GL_NORMAL_ARRAY);
@@ -439,11 +444,12 @@ struct md2 : model
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexCoordPointer(2, GL_FLOAT, sizeof(md2_vvert), (void *)(sizeof(vec)*2));
 
-            glDrawElements(GL_TRIANGLES, vbufi_len, GL_UNSIGNED_SHORT, vbufi);
+            glDrawElements(GL_TRIANGLES, ebuflen, GL_UNSIGNED_SHORT, 0);
             
             xtravertsva += header.numvertices;
             
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
             glDisableClientState(GL_VERTEX_ARRAY);

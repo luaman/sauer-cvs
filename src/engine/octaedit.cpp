@@ -395,10 +395,14 @@ void readychanges(block3 &b, cube *c, ivec &cor, int size)
     loopoctabox(cor, size, b.o, b.s)
     {
         ivec o(i, cor.x, cor.y, cor.z, size);
-        if(c[i].va)             // removes va s so that octarender will recreate
+        if(c[i].ext)
         {
-            destroyva(c[i].va);
-            c[i].va = NULL;
+            if(c[i].ext->va)             // removes va s so that octarender will recreate
+            {
+                destroyva(c[i].ext->va);
+                c[i].ext->va = NULL;
+            };
+            freeoctaentities(c[i]);
         };
         if(c[i].children)
         {
@@ -411,7 +415,6 @@ void readychanges(block3 &b, cube *c, ivec &cor, int size)
             else readychanges(b, c[i].children, o, size/2);
         }
         else brightencube(c[i]);
-        freeoctaentities(c[i]);
     };
 };
 
@@ -439,16 +442,13 @@ void changed(const block3 &sel)
 cube copycube(cube &src)
 {
     cube c = src;
-    c.va = NULL;                // src cube is responsible for va destruction
-    c.surfaces = NULL;
-    c.normals = NULL;
-    c.clip = NULL;
-    c.ents = NULL;
+    c.ext = NULL; // src cube is responsible for va destruction
     if(src.children)
     {
         c.children = newcubes(F_EMPTY);
         loopi(8) c.children[i] = copycube(src.children[i]);
-    };
+    }
+    else if(src.ext && src.ext->material!=MAT_AIR) ext(c).material = src.ext->material;
     return c;
 };
 
@@ -1307,8 +1307,8 @@ void setmat(cube &c, uchar mat)
 {
     if(c.children)
         loopi(8) setmat(c.children[i], mat);
-    else
-        c.material = mat;
+    else if(mat!=MAT_AIR) ext(c).material = mat;
+    else if(c.ext) c.ext->material = MAT_AIR;
 };
 
 void mpeditmat(int matid, selinfo &sel, bool local)

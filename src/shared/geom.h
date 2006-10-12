@@ -220,7 +220,7 @@ inline bool htcmp(const ivec &x, const ivec &y)
     return x == y;
 };  
 
-inline unsigned int hthash (const ivec &k)
+inline unsigned int hthash(const ivec &k)
 {
     return k.x^k.y^k.z;
 };  
@@ -235,6 +235,9 @@ struct svec
 
     svec() {};
     svec(short x, short y, short z) : x(x), y(y), z(z) {};
+
+    short &operator[](int i)       { return v[i]; };
+    short  operator[](int i) const { return v[i]; };
 
     void add(const svec &o) { x += o.x; y += o.y; z += o.z; };
     void sub(const svec &o) { x -= o.x; y -= o.y; z -= o.z; };
@@ -255,6 +258,9 @@ struct bvec
     bvec() {};
     bvec(uchar x, uchar y, uchar z) : x(x), y(y), z(z) {};
     bvec(const vec &v) : x((uchar)((v.x+1)*255/2)), y((uchar)((v.y+1)*255/2)), z((uchar)((v.z+1)*255/2)) {};
+
+    uchar &operator[](int i)       { return v[i]; };
+    uchar  operator[](int i) const { return v[i]; };
 
     bool operator==(const bvec &v) const { return x==v.x && y==v.y && z==v.z; };
     bool operator!=(const bvec &v) const { return x!=v.x || y!=v.y || z!=v.z; };

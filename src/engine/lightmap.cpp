@@ -458,8 +458,11 @@ void clear_lmids(cube *c)
 {
     loopi(8)
     {
-        if(c[i].surfaces) freesurfaces(c[i]);
-        if(c[i].normals) freenormals(c[i]);
+        if(c[i].ext)
+        {
+            if(c[i].ext->surfaces) freesurfaces(c[i]);
+            if(c[i].ext->normals) freenormals(c[i]);
+        };
         if(c[i].children) clear_lmids(c[i].children);
     };
 };
@@ -711,9 +714,9 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
 
 void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 {
-    if(c.surfaces)
+    if(c.ext && c.ext->surfaces)
     {
-        loopi(6) if(c.surfaces[i].lmid >= LMID_RESERVED)
+        loopi(6) if(c.ext->surfaces[i].lmid >= LMID_RESERVED)
         {
             loopj(6) if(c.texture[j] != DEFAULT_SKY && visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
             {
@@ -769,10 +772,11 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
             {
                 lmtype = LM_BUMPMAP0;
                 newnormals(c);
-                c.normals[i].normals[0] = bvec(n[0]);
-                c.normals[i].normals[1] = bvec(n[1]);
-                c.normals[i].normals[2] = bvec(n[2]);
-                c.normals[i].normals[3] = bvec(numplanes < 2 ? n[3] : n2[2]);
+                surfacenormals *cn = c.ext->normals;
+                cn[i].normals[0] = bvec(n[0]);
+                cn[i].normals[1] = bvec(n[1]);
+                cn[i].normals[2] = bvec(n[2]);
+                cn[i].normals[3] = bvec(numplanes < 2 ? n[3] : n2[2]);
             };
         };
         uchar texcoords[8];
@@ -781,7 +785,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 
         CHECK_PROGRESS(return);
         newsurfaces(c);
-        surfaceinfo &surface = c.surfaces[i];
+        surfaceinfo &surface = c.ext->surfaces[i];
         surface.w = lm_w;
         surface.h = lm_h;
         memcpy(surface.texcoords, texcoords, 8);
@@ -1129,23 +1133,24 @@ entity *brightestlight(const vec &target, const vec &dir)
 
 void brightencube(cube &c)
 {
-    if(c.surfaces) memset(c.surfaces, 0, 6*sizeof(surfaceinfo));
+    if(c.ext && c.ext->surfaces) memset(c.ext->surfaces, 0, 6*sizeof(surfaceinfo));
     else newsurfaces(c);
-    loopi(6) c.surfaces[i].lmid = LMID_BRIGHT;
+    loopi(6) c.ext->surfaces[i].lmid = LMID_BRIGHT;
 };
         
 void newsurfaces(cube &c)
 {
-    if(!c.surfaces)
+    if(!c.ext) newcubeext(c);
+    if(!c.ext->surfaces)
     {
-        c.surfaces = new surfaceinfo[6];
-        memset(c.surfaces, 0, 6*sizeof(surfaceinfo));
+        c.ext->surfaces = new surfaceinfo[6];
+        memset(c.ext->surfaces, 0, 6*sizeof(surfaceinfo));
     };
 };
 
 void freesurfaces(cube &c)
 {
-    DELETEA(c.surfaces);
+    if(c.ext) DELETEA(c.ext->surfaces);
 };
 
 void dumplms()

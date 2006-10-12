@@ -6,21 +6,30 @@
 cube *worldroot = newcubes(F_SOLID);
 int allocnodes = 0;
 
+cubeext *newcubeext(cube &c)
+{
+    if(c.ext) return c.ext;
+    c.ext = new cubeext;
+    c.ext->material = MAT_AIR;
+    c.ext->visible = 0;
+    c.ext->merged = 0;
+    c.ext->mergeorigin = 0;
+    c.ext->va = NULL;
+    c.ext->clip = NULL;
+    c.ext->surfaces = NULL;
+    c.ext->normals = NULL;
+    c.ext->ents = NULL;
+    return c.ext;
+};
+
 cube *newcubes(uint face)
 {
     cube *c = new cube[8];
     loopi(8)
     {
-        c->material = MAT_AIR;
-        c->visible = 0;
-        c->flags = 0;
         c->children = NULL;
-        c->va = NULL;
+        c->ext = NULL;
         setfaces(*c, face);
-        c->surfaces = NULL;
-        c->normals = NULL;
-        c->clip = NULL;
-        c->ents = NULL;
         loopl(6)
         {
             c->texture[l] = 2+l;
@@ -46,14 +55,23 @@ void freeocta(cube *c)
     allocnodes--;
 };
 
+void freecubeext(cube &c)
+{
+    DELETEP(c.ext);
+};
+
 void discardchildren(cube &c)
 {
-    if(c.va) destroyva(c.va);
-    c.va = NULL;
-    freesurfaces(c);
-    freenormals(c);
-    freeclipplanes(c);
-    freeoctaentities(c);
+    if(c.ext)
+    {
+        if(c.ext->va) destroyva(c.ext->va);
+        c.ext->va = NULL;
+        freesurfaces(c);
+        freenormals(c);
+        freeclipplanes(c);
+        freeoctaentities(c);
+        freecubeext(c);
+    };
     if(c.children)
     {
         freeocta(c.children);
@@ -156,11 +174,12 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
             if(tsize<=0) break;
             if(isempty(*c))
             {
+                int mat = c->ext ? c->ext->material : MAT_AIR;
                 c->children = newcubes(F_EMPTY);
                 loopi(8)
                 {
                     loopl(6) c->children[i].texture[l] = c->texture[l];
-                    c->children[i].material = c->material;
+                    if(mat!=MAT_AIR) ext(c->children[i]).material = mat;
                 };
             }
             else if(!subdividecube(*c)) luperfect = false;
@@ -285,13 +304,14 @@ bool subdividecube(cube &c, bool fullcheck, bool brighten)
     if(c.children) return true;
     cube *ch = c.children = newcubes(F_SOLID);
     bool perfect = true, p1, p2;
+    int mat = c.ext ? c.ext->material : MAT_AIR; 
     ivec v[8];
     loopi(8)
     {
         ivec p(i);
         getcubevector(c, 2, p.x, p.y, p.z, v[i]);
         v[i].mul(2);
-        ch[i].material = c.material;
+        if(mat!=MAT_AIR) ext(ch[i]).material = mat;
     };
 
     loopj(6)
@@ -366,7 +386,7 @@ bool remip(cube &c, int x, int y, int z, int size)
     cube *ch = c.children;
     if(!ch) return true;
     bool perfect = true;
-    uchar mat = ch[0].material;
+    uchar mat = ch[0].ext ? ch[0].ext->material : MAT_AIR;
 
     loopi(8)
     {
@@ -393,7 +413,7 @@ bool remip(cube &c, int x, int y, int z, int size)
         if(ch[i].faces[0] != nh[i].faces[0] ||
            ch[i].faces[1] != nh[i].faces[1] ||
            ch[i].faces[2] != nh[i].faces[2] ||
-           ch[i].material != mat)
+           (ch[i].ext ? ch[i].ext->material : MAT_AIR) != mat)
             { freeocta(nh); return false; }
 
         if(isempty(ch[i]) && isempty(nh[i])) continue;
@@ -408,7 +428,7 @@ bool remip(cube &c, int x, int y, int z, int size)
     freeocta(nh);
     discardchildren(c);
     loopi(3) c.faces[i] = n.faces[i];
-    c.material = mat;
+    if(mat!=MAT_AIR) ext(c).material = mat;
     return true;
 };
 
@@ -420,7 +440,6 @@ void remipworld()
         remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2);
     };
     allchanged();
-    entitiesinoctanodes();
 };
 
 COMMANDN(remip, remipworld, "");
@@ -558,6 +577,14 @@ const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
     { 1, 3, 10,11 },
     { 0, 1, 4, 6 },
     { 2, 3, 5, 7 },
+};
+
+bool flataxisface(cube &c, int orient)
+{
+    uint face = c.faces[dimension(orient)];
+    if(dimcoord(orient)) face >>= 4;
+    face &= 0x0F0F0F0F;
+    return face == 0x01010101*(face&0x0F);
 };
 
 bool touchingface(cube &c, int orient)
@@ -748,7 +775,7 @@ bool occludesface(cube &c, int orient, const ivec &o, int size, const ivec &vo, 
     if(!c.children)
     {
          if(isentirelysolid(c)) return true;
-         if(vmat != MAT_AIR && c.material == vmat) return true;
+         if(vmat != MAT_AIR && c.ext && c.ext->material == vmat) return true;
          if(touchingface(c, orient) && faceedges(c, orient) == F_SOLID) return true;
          facevec cf[8];
          int numc = clipfacevecs(vf, o[C[dim]], o[R[dim]], size, cf);
@@ -788,7 +815,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
     if(lusize > size || (lusize == size && (!o.children || lodcube)))
     {
         if(isentirelysolid(o)) return false;
-        if(mat != MAT_AIR && (o.material == mat || (mat == MAT_WATER && o.material == MAT_GLASS))) return false;
+        if(mat != MAT_AIR && o.ext && (o.ext->material == mat || (mat == MAT_WATER && o.ext->material == MAT_GLASS))) return false;
         if(isempty(o) || !touchingface(o, opposite(orient))) return true;
         if(faceedges(o, opposite(orient)) == F_SOLID) return false;
         facevec cf[4], of[4];

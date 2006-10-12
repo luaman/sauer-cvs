@@ -362,8 +362,8 @@ template <class K, class T> struct hashtable
                 delete c; 
             };*/
             table[i] = NULL;
-            numelems = 0;
         };
+        numelems = 0;
         chunkremain = 0;
         for(chainchunk *chunk; lastchunk; lastchunk = chunk)
         {

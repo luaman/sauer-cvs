@@ -62,7 +62,7 @@ void savec(cube *c, gzFile f, bool nolms)
 {
     loopi(8)
     {
-        if(c[i].children && !c[i].surfaces)
+        if(c[i].children && (!c[i].ext || !c[i].ext->surfaces))
         {
             gzputc(f, OCTSAV_CHILDREN);
             savec(c[i].children, f, nolms);
@@ -78,30 +78,41 @@ void savec(cube *c, gzFile f, bool nolms)
                 gzwrite(f, c[i].edges, 12);
             };
             loopj(6) writeushort(f, c[i].texture[j]);
-            uchar mask = (c[i].material != MAT_AIR ? 0x80 : 0) | (c[i].normals && !nolms ? 0x40 : 0);
-            if(c[i].normals && !nolms) loopj(6) if(c[i].normals[j].normals[0] != bvec(128, 128, 128)) mask |= 1 << j;
+            uchar mask = 0;
+            if(c[i].ext)
+            {
+                if(c[i].ext->material != MAT_AIR) mask |= 0x80;
+                if(c[i].ext->normals && !nolms)
+                {
+                    mask |= 0x40;
+                    loopj(6) if(c[i].ext->normals[j].normals[0] != bvec(128, 128, 128)) mask |= 1 << j;
+                };
+            };
             // save surface info for lighting
-            if(!c[i].surfaces || nolms)
+            if(!c[i].ext || !c[i].ext->surfaces || nolms)
             {
                 gzputc(f, mask);
-                if(c[i].material != MAT_AIR) gzputc(f, c[i].material);
-                if(c[i].normals && !nolms) loopj(6) if(mask & (1 << j))
+                if(c[i].ext)
                 {
-                    loopk(sizeof(surfaceinfo)) gzputc(f, 0);
-                    gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
-                }; 
+                    if(c[i].ext->material != MAT_AIR) gzputc(f, c[i].ext->material);
+                    if(c[i].ext->normals && !nolms) loopj(6) if(mask & (1 << j))
+                    {
+                        loopk(sizeof(surfaceinfo)) gzputc(f, 0);
+                        gzwrite(f, &c[i].ext->normals[j], sizeof(surfacenormals));
+                    }; 
+                };
             }
             else
             {
-                loopj(6) if(c[i].surfaces[j].lmid >= LMID_RESERVED) mask |= 1 << j;
+                loopj(6) if(c[i].ext->surfaces[j].lmid >= LMID_RESERVED) mask |= 1 << j;
                 gzputc(f, mask);
-                if(c[i].material != MAT_AIR) gzputc(f, c[i].material);
+                if(c[i].ext->material != MAT_AIR) gzputc(f, c[i].ext->material);
                 loopj(6) if(mask & (1 << j))
                 {
-                    surfaceinfo tmp = c[i].surfaces[j];
+                    surfaceinfo tmp = c[i].ext->surfaces[j];
                     endianswap(&tmp.x, sizeof(ushort), 3);
                     gzwrite(f, &tmp, sizeof(surfaceinfo));
-                    if(c[i].normals) gzwrite(f, &c[i].normals[j], sizeof(surfacenormals));
+                    if(c[i].ext->normals) gzwrite(f, &c[i].ext->normals[j], sizeof(surfacenormals));
                 };
             };
             if(c[i].children) savec(c[i].children, f, nolms);
@@ -133,7 +144,7 @@ void loadc(gzFile f, cube &c)
     else
     {
         uchar mask = gzgetc(f);
-        if(mask & 0x80) c.material = gzgetc(f);
+        if(mask & 0x80) ext(c).material = gzgetc(f);
         if(mask & 0x3F)
         {
             uchar lit = 0;
@@ -143,22 +154,22 @@ void loadc(gzFile f, cube &c)
             {
                 if(mask & (1 << i))
                 {
-                    gzread(f, &c.surfaces[i], sizeof(surfaceinfo));
-                    endianswap(&c.surfaces[i].x, sizeof(ushort), 3);
-                    if(hdr.version < 10) ++c.surfaces[i].lmid;
+                    gzread(f, &c.ext->surfaces[i], sizeof(surfaceinfo));
+                    endianswap(&c.ext->surfaces[i].x, sizeof(ushort), 3);
+                    if(hdr.version < 10) ++c.ext->surfaces[i].lmid;
                     if(hdr.version < 18)
                     {
-                        if(c.surfaces[i].lmid >= LMID_AMBIENT1) ++c.surfaces[i].lmid;
-                        if(c.surfaces[i].lmid >= LMID_BRIGHT1) ++c.surfaces[i].lmid;
+                        if(c.ext->surfaces[i].lmid >= LMID_AMBIENT1) ++c.ext->surfaces[i].lmid;
+                        if(c.ext->surfaces[i].lmid >= LMID_BRIGHT1) ++c.ext->surfaces[i].lmid;
                     };
                     if(hdr.version < 19)
                     {
-                        if(c.surfaces[i].lmid >= LMID_DARK) c.surfaces[i].lmid += 2;
+                        if(c.ext->surfaces[i].lmid >= LMID_DARK) c.ext->surfaces[i].lmid += 2;
                     };
-                    if(mask & 0x40) gzread(f, &c.normals[i], sizeof(surfacenormals));
+                    if(mask & 0x40) gzread(f, &c.ext->normals[i], sizeof(surfacenormals));
                 }
-                else c.surfaces[i].lmid = LMID_AMBIENT;
-                if(c.surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
+                else c.ext->surfaces[i].lmid = LMID_AMBIENT;
+                if(c.ext->surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
             };
             if(!lit) freesurfaces(c);
         };
@@ -235,10 +246,10 @@ void swapXZ(cube *c)
 		swap(uint,   c[i].faces[0],   c[i].faces[2]);
 		swap(ushort, c[i].texture[0], c[i].texture[4]);
 		swap(ushort, c[i].texture[1], c[i].texture[5]);
-		if(c[i].surfaces)
+		if(c[i].ext && c[i].ext->surfaces)
 		{
-			swap(surfaceinfo, c[i].surfaces[0], c[i].surfaces[4]);
-			swap(surfaceinfo, c[i].surfaces[1], c[i].surfaces[5]);
+			swap(surfaceinfo, c[i].ext->surfaces[0], c[i].ext->surfaces[4]);
+			swap(surfaceinfo, c[i].ext->surfaces[1], c[i].ext->surfaces[5]);
 		};
 		if(c[i].children) swapXZ(c[i].children);
 	};
@@ -406,7 +417,6 @@ void load_world(const char *mname, const char *cname)        // still supports a
     overrideidents = false;
 
     allchanged();
-
     precacheall();
 
     loopv(ents)
@@ -419,6 +429,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
             else if(!loadmodel(mmi.name)) conoutf("could not load model: %s", mmi.name);
         };
     };
+
     entitiesinoctanodes();
 };
 

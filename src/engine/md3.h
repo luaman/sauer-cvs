@@ -103,14 +103,16 @@ struct md3mesh
     int numtriangles, numvertices;
     Texture *skin, *masks;
     
-    GLuint vbufGL;
-    ushort *vbufi;
-    int vbufi_len;
-    md3mesh() : skin(crosshair), masks(crosshair), vbufGL(0), vbufi(0) {};
+    GLuint vbufGL, ebufGL;
+    int ebuflen;
+    md3mesh() : skin(crosshair), masks(crosshair), vbufGL(0), ebufGL(0) {};
     ~md3mesh() 
     {
-        DELETEA(vbufi);
-        if(hasVBO && vbufGL) glDeleteBuffers_(1, &vbufGL);
+        if(hasVBO)
+        {
+            if(vbufGL) glDeleteBuffers_(1, &vbufGL);
+            if(ebufGL) glDeleteBuffers_(1, &ebufGL);
+        };
     };
 };
 
@@ -193,12 +195,14 @@ struct md3model
                 };                    
             };
             
-            m.vbufi = new ushort[m.vbufi_len = idxs.length()];
-            memcpy(m.vbufi, idxs.getbuf(), sizeof(ushort)*m.vbufi_len);
-            
             glGenBuffers_(1, &m.vbufGL);
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, m.vbufGL);
             glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+
+            glGenBuffers_(1, &m.ebufGL);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, m.ebufGL);
+            glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
+            m.ebuflen = idxs.length();
         };
     };
     
@@ -578,6 +582,7 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
         if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh.ebufGL);
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, sizeof(md2::md2_vvert), 0);
             glEnableClientState(GL_NORMAL_ARRAY);
@@ -585,9 +590,10 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexCoordPointer(2, GL_FLOAT, sizeof(md2::md2_vvert), (void *)(sizeof(vec)*2));
 
-            glDrawElements(GL_TRIANGLES, mesh.vbufi_len, GL_UNSIGNED_SHORT, mesh.vbufi);
+            glDrawElements(GL_TRIANGLES, mesh.ebuflen, GL_UNSIGNED_SHORT, 0);
 
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
             glDisableClientState(GL_VERTEX_ARRAY);

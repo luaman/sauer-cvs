@@ -24,33 +24,33 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
         clipcache[0].prev = clipcache+MAXCLIPPLANES-1;
         nextclip = clipcache;
     };
-    if(c.clip != NULL)
+    if(c.ext && c.ext->clip != NULL)
     {
-        if(nextclip == c.clip) return;
-        clipplanes *&n = c.clip->next;
-        clipplanes *&p = c.clip->prev;
+        if(nextclip == c.ext->clip) return;
+        clipplanes *&n = c.ext->clip->next;
+        clipplanes *&p = c.ext->clip->prev;
         n->prev = p;
         p->next = n;
         n = nextclip;
         p = nextclip->prev;
-        n->prev = c.clip;
-        p->next = c.clip;
+        n->prev = c.ext->clip;
+        p->next = c.ext->clip;
     }
     else
     {
         if(nextclip->backptr != NULL) *(nextclip->backptr) = NULL;
-        nextclip->backptr = &c.clip;
-        c.clip = nextclip;
-        genclipplanes(c, x, y, z, size, *c.clip);
+        nextclip->backptr = &ext(c).clip;
+        c.ext->clip = nextclip;
+        genclipplanes(c, x, y, z, size, *c.ext->clip);
         nextclip = nextclip->next;
     };
 };
 
 void freeclipplanes(cube &c)
 {
-    if(!c.clip) return;
-    c.clip->backptr = NULL;
-    c.clip = NULL;
+    if(!c.ext || !c.ext->clip) return;
+    c.ext->clip->backptr = NULL;
+    c.ext->clip = NULL;
 };
 
 /////////////////////////  ray - cube collision ///////////////////////////////////////////////
@@ -81,7 +81,7 @@ bool pointincube(const clipplanes &p, const vec &v)
 
 bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 {
-    clipplanes &p = *c.clip;
+    clipplanes &p = *c.ext->clip;
     if(pointincube(p, o)) { dist = 0; return true; };
 
     loopi(p.size)
@@ -198,11 +198,11 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
             if(z>=lo.z+lsize) { lo.z += lsize; lc += 4; };
             if(y>=lo.y+lsize) { lo.y += lsize; lc += 2; };
             if(x>=lo.x+lsize) { lo.x += lsize; lc += 1; };
-            if(lc->ents && (mode&RAY_BB) && dent > 1e15f)
+            if(lc->ext && lc->ext->ents && (mode&RAY_BB) && dent > 1e15f)
             {
-                dent = disttoent(lc->ents, oclast, o, ray, radius, mode, t);
+                dent = disttoent(lc->ext->ents, oclast, o, ray, radius, mode, t);
                 if((mode&RAY_SHADOW) && dent < 1e15f) return min(dent, dist);
-                oclast = lc->ents;
+                oclast = lc->ext->ents;
             };
             if(lc->children==NULL) break;
             lc = lc->children;
@@ -211,8 +211,8 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
 
         cube &c = *lc;
         if((dist>0 || !(mode&RAY_SKIPFIRST)) &&
-           (((mode&RAY_CLIPMAT) && isclipped(c.material) && c.material != MAT_CLIP) ||
-            ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
+           (((mode&RAY_CLIPMAT) && c.ext && isclipped(c.ext->material) && c.ext->material != MAT_CLIP) ||
+            ((mode&RAY_EDITMAT) && c.ext && c.ext->material != MAT_AIR) ||
             (!(mode&RAY_PASS) && lsize==size && !isempty(c)) ||
             isentirelysolid(c) ||
             dent < dist ||
@@ -410,23 +410,23 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
 
 bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
-    if(isentirelysolid(c) || ((d->type<ENT_CAMERA || c.material != MAT_CLIP) && isclipped(c.material)))
+    if(isentirelysolid(c) || (c.ext && (d->type<ENT_CAMERA || c.ext->material != MAT_CLIP) && isclipped(c.ext->material)))
     {
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
         vec r = vec(s2, s2, s2);
-        return rectcollide(d, dir, o, r.x, r.y, r.z, r.z, isentirelysolid(c) ? c.visible : 0xFF);
+        return rectcollide(d, dir, o, r.x, r.y, r.z, r.z, isentirelysolid(c) ? (c.ext ? c.ext->visible : 0) : 0xFF);
     };
 
     setcubeclip(c, x, y, z, size);
-    clipplanes &p = *c.clip;
+    clipplanes &p = *c.ext->clip;
 
     float r = d->radius,
           zr = (d->aboveeye+d->eyeheight)/2;
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
 
-    if(rectcollide(d, dir, p.o, p.r.x, p.r.y, p.r.z, p.r.z, c.visible, !p.size)) return true;
+    if(rectcollide(d, dir, p.o, p.r.x, p.r.y, p.r.z, p.r.z, c.ext->visible, !p.size)) return true;
 
     if(p.size)
     {
@@ -465,13 +465,13 @@ bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const
 {
     loopoctabox(cor, size, bo, bs)
     {
-        if(c[i].ents) if(!mmcollide(d, dir, *c[i].ents)) return false;
+        if(c[i].ext && c[i].ext->ents) if(!mmcollide(d, dir, *c[i].ext->ents)) return false;
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children)
         {
             if(!octacollide(d, dir, cutoff, bo, bs, c[i].children, o, size>>1)) return false;
         }
-        else if(c[i].material!=MAT_NOCLIP && (!isempty(c[i]) || ((d->type<ENT_CAMERA || c[i].material != MAT_CLIP) && isclipped(c[i].material))))
+        else if(c[i].ext && c[i].ext->material!=MAT_NOCLIP && (!isempty(c[i]) || ((d->type<ENT_CAMERA || c[i].ext->material != MAT_CLIP) && isclipped(c[i].ext->material))))
         {
             if(!cubecollide(d, dir, cutoff, c[i], o.x, o.y, o.z, size)) return false;
         };
@@ -748,7 +748,8 @@ bool move(physent *d, vec &dir)
 
 bool bounce(physent *d, float secs, float elasticity, float waterfric)
 {
-    bool water = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z)).material == MAT_WATER;
+    cube &c = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z));
+    bool water = c.ext && c.ext->material == MAT_WATER;
     if(water)
     {
         if(d->vel.z > 0 && d->vel.z + d->gravity.z < 0) d->vel.z = 0.0f;
@@ -814,15 +815,6 @@ void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
     if(mindist >= 0.0f && mindist < 1e15f) d->o.add(vec(dir).mul(mindist));
 };
 
-void phystest()
-{
-    static const char *states[] = {"float", "fall", "slide", "slope", "floor", "step up", "step down", "bounce"};
-    printf ("PHYS(pl): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[player->physstate], player->timeinair, player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z, player->gravity.x, player->gravity.y, player->gravity.z);
-    printf ("PHYS(cam): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[camera1->physstate], camera1->timeinair, camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z, camera1->gravity.x, camera1->gravity.y, camera1->gravity.z);
-}
-
-COMMAND(phystest, "");
-
 void dropenttofloor(entity *e)
 {
     if(!insideworld(e->o)) return;
@@ -839,6 +831,15 @@ void dropenttofloor(entity *e)
     loopi(hdr.worldsize) if(!move(&d, v)) break;
     e->o = d.o;
 };
+
+void phystest()
+{
+    static const char *states[] = {"float", "fall", "slide", "slope", "floor", "step up", "step down", "bounce"};
+    printf ("PHYS(pl): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[player->physstate], player->timeinair, player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z, player->gravity.x, player->gravity.y, player->gravity.z);
+    printf ("PHYS(cam): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[camera1->physstate], camera1->timeinair, camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z, camera1->gravity.x, camera1->gravity.y, camera1->gravity.z);
+}
+
+COMMAND(phystest, "");
 
 void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating)
 {
@@ -957,7 +958,8 @@ void modifygravity(physent *pl, bool water, float secs)
 
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
-    bool water = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z)).material == MAT_WATER;
+    cube &c = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z));
+    bool water = c.ext && c.ext->material == MAT_WATER;
     bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state==CS_SPECTATOR;
     float secs = curtime/1000.f;
 
@@ -1020,7 +1022,8 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
     if(pl->type!=ENT_CAMERA)
     {
-        const bool inwater = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1).material == MAT_WATER;
+        cube &c = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1);
+        bool inwater = c.ext && c.ext->material == MAT_WATER;
         if(!pl->inwater && inwater) cl->physicstrigger(pl, local, 0, -1);
         else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = inwater;

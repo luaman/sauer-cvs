@@ -1178,7 +1178,8 @@ void gl_drawframe(int w, int h, float curfps)
 
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
-    bool underwater = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f)).material == MAT_WATER;
+    cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
+    bool underwater = c.ext && c.ext->material == MAT_WATER;
     
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);

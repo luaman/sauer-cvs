@@ -23,10 +23,11 @@ struct materialsurface
 
 struct lodlevel
 {
-    elementset *eslist; // List of element indces sets (range) per texture
-    ushort *ebuf;       // packed element indices buffer
-    ushort *skybuf;     // skybox packed element indices buffer
+    elementset *eslist;      // List of element indces sets (range) per texture
+    ushort *ebuf;            // packed element indices buffer
+    ushort *skybuf;          // skybox packed element indices buffer
     materialsurface *matbuf; // buffer of material surfaces
+    GLuint ebufGL, skybufGL;  // element index VBO
     int tris, texs, matsurfs, sky, explicitsky;
 };
 
@@ -69,7 +70,7 @@ struct vtxarray
     vtxarray *next, *rnext; // linked list of visible VOBs
     int allocsize;          // size of allocated memory for this va
     int verts, explicitsky, skyarea, curlod, distance;
-    uint vbufGL;            // VBO buffer ID
+    GLuint vbufGL;            // VBO buffer ID
     int x, y, z, size;      // location and size of cube.
     ivec min, max;          // BB
     uchar curvfc, occluded;
@@ -98,6 +99,19 @@ struct clipplanes
     clipplanes **backptr;
 };
 
+struct cubeext
+{
+    uchar material;          // empty-space material
+    uchar visible;           // visible faces of the cube
+    uchar merged;            // merged faces of the cube
+    uchar mergeorigin;       // whether this face describes a larger merged face
+    vtxarray *va;            // vertex array for children, or NULL
+    clipplanes *clip;        // collision planes
+    surfaceinfo *surfaces;   // lighting info for each surface
+    surfacenormals *normals; // per-vertex normals for each surface
+    octaentities *ents;      // list of map entites totally inside cube
+};  
+
 struct cube
 {
     cube *children;          // points to 8 cube structures which are its children, or NULL. -Z first, then -Y, -X
@@ -108,15 +122,13 @@ struct cube
         uint faces[3];       // 4 edges of each dimension together representing 2 perpendicular faces
     };
     ushort texture[6];       // one for each face. same order as orient.
-    uchar material;          // empty-space material
-    uchar visible;           // visible faces of the cube
-    uchar flags;             // miscellaneous flags
-    uchar reserved;
-    vtxarray *va;            // vertex array for children, or NULL
-    clipplanes *clip;        // collision planes
-    surfaceinfo *surfaces;   // lighting info for each surface
-    surfacenormals *normals; // per-vertex normals for each surface
-    octaentities *ents;      // list of map entites totally inside cube
+    cubeext *ext;            // extended info for the cube
+};
+
+static inline cubeext &ext(cube &c)
+{
+    extern cubeext *newcubeext(cube &c);
+    return *(c.ext ? c.ext : newcubeext(c));
 };
 
 struct block3

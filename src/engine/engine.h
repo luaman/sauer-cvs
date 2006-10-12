@@ -194,6 +194,7 @@ extern void render3dbox(vec &o, float tofloor, float toceil, float radius);
 
 // octa
 extern cube *newcubes(uint face = F_EMPTY);
+extern cubeext *newcubeext(cube &c);
 extern void getcubevector(cube &c, int d, int x, int y, int z, ivec &p);
 extern void setcubevector(cube &c, int d, int x, int y, int z, ivec &p);
 extern int familysize(cube &c);

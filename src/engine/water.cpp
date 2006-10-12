@@ -893,7 +893,7 @@ int findmaterial(const char *name)
 
 int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 {
-    switch(c.material)
+    if(c.ext) switch(c.ext->material)
     {
     case MAT_AIR:
          break;
@@ -909,7 +909,7 @@ int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
         break;
     
     default:
-        if(visibleface(c, orient, x, y, z, size, c.material))
+        if(visibleface(c, orient, x, y, z, size, c.ext->material))
             return MATSURF_EDIT_ONLY;
         break;
     };
@@ -924,7 +924,7 @@ void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurfa
         if(vis != MATSURF_NOT_VISIBLE)
         {
             materialsurface m;
-            m.material = (vis == MATSURF_EDIT_ONLY ? c.material+MAT_EDIT : c.material);
+            m.material = (vis == MATSURF_EDIT_ONLY ? c.ext->material+MAT_EDIT : c.ext->material);
             m.orient = i;
             m.o = ivec(cx, cy, cz);
             m.csize = m.rsize = size;
