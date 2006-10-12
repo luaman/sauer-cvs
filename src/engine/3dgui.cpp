@@ -26,25 +26,46 @@ struct gui : g3d_gui
         } 
         else
         {
-            cury = -ysize;
+            cury = -ysize; 
             curx = -xsize/2;
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
-            glRotatef(camera1->yaw-180, 0, 0, 1);
-            glRotatef(-90, 1, 0, 0);
-            glScalef(-scale, scale, scale);
+            glRotatef(/*camera1->roll*-5 +*/camera1->yaw-180, 0, 0, 1); //roll - kinda cute effect, makes the menu 'flutter' as we straff left/right
+            glRotatef(/*camera1->pitch*/-90, 1, 0, 0); // pitch the top/bottom towards us
+			glScalef(-scale, scale, scale);
 
-            Texture *t = textureload("packages/tech1soc/s128-01c.jpg");
-            glColor4f(1, 1, 1, 0.85f);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glBindTexture(GL_TEXTURE_2D, t->gl);
-            glBegin(GL_QUADS);
-            int border = FONTH, x = curx-border, y = cury-border, xs = xsize+2*border, ys = ysize+2*border;
-            glTexCoord2d(0.0, 0.0); glVertex2i(x,    y);
-            glTexCoord2d(1.0, 0.0); glVertex2i(x+xs, y);
-            glTexCoord2d(1.0, 1.0); glVertex2i(x+xs, y+ys);
-            glTexCoord2d(0.0, 1.0); glVertex2i(x,    y+ys);
+			//rounded rectangle
+			Texture *t = textureload("packages/subverse/chunky_rock.jpg"); //something a little more distinctive
+			const int texsize = 100; //size of texture
+			const float DEG2RAD = 3.14159f/180;
+			int border = FONTH;
+			int xs[] = {curx + xsize, curx, curx, curx + xsize}; 
+			int ys[] = {cury + ysize, cury + ysize, cury, cury};
+			
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glColor4f(1, 1, 1, 0.70f);
+			glBindTexture(GL_TEXTURE_2D, t->gl);
+            glBegin(GL_TRIANGLE_FAN); 
+			for(int i = 0; i < 360; i += 10) { 
+				float x = xs[i/90] + cos(i*DEG2RAD)*border;
+				float y = ys[i/90] + sin(i*DEG2RAD)*border;
+				glTexCoord2d((x+border-curx)/(texsize+border*2), (y+border-cury)/(texsize+border*2));
+				glVertex2f(x, y);
+			}
             glEnd();
+			
+			//solid black outline
+			notextureshader->set();
+			glLineWidth(3);
+			glColor4f(0.00, 0.00, 0.00, 1.0);
+			glBegin(GL_LINE_LOOP);
+			for(int i = 0; i < 360; i += 10) {
+				float degInRad = i*DEG2RAD;
+				glVertex2f(xs[i/90] + cos(degInRad)*border, ys[i/90] + sin(degInRad)*border);
+			}
+            glEnd();
+            glLineWidth(1);
+			defaultshader->set();
         };
     };
 
@@ -70,10 +91,10 @@ struct gui : g3d_gui
         };
     };
 
-    int text  (const char *text, int color, const char *icon) { return buttont(text, color, icon, -1); };
-    int button(const char *text, int color, const char *icon) { return buttont(text, color, icon, 0xFF0000);  };
+    int text  (const char *text, int color, const char *icon) { return buttont(text, color, icon, false); };
+    int button(const char *text, int color, const char *icon) { return buttont(text, color, icon, true);  };
 
-    int buttont(const char *text, int color, const char *icon, int hitcolor)
+    int buttont(const char *text, int color, const char *icon, bool clickable)
     {
         if(layoutpass)
         {
@@ -86,7 +107,7 @@ struct gui : g3d_gui
         else
         {
             bool hit = windowhit==this && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
-            if(hit && hitcolor>=0) color = hitcolor;
+            if(hit && clickable) color = 0xFF0000; 
 
             if(icon)
             {
@@ -158,4 +179,5 @@ void g3d_render()
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
 };
+
 

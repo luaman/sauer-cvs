@@ -25,6 +25,9 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
+- make body stop spinning on death
+- border gfx & tabs for ui
+
 - social cheating solution
 - reduce maps
 - memory leaks?

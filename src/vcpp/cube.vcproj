@@ -342,6 +342,10 @@
 				RelativePath="..\engine\engine.h"
 				>
 			</File>
+			<File
+				RelativePath=".\sauerbraten.rc"
+				>
+			</File>
 			<Filter
 				Name="world"
 				>
@@ -1329,6 +1333,10 @@
 			</File>
 			<File
 				RelativePath="..\shared\pch.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
