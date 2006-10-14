@@ -568,7 +568,7 @@ struct fpsserver : igameserver
                         curmsg = p;
                     };
                 };
-                if(m_capture && !ci->spectator && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
+                if(m_capture && !ci->spectator && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
                 getint(p);
