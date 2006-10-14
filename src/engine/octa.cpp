@@ -1141,7 +1141,13 @@ void genmergedverts(cube &cu, int orient, const ivec &co, int size, const mergei
         vv[i][dim] = short(dc);
     };
 
-    if(p) *p = plane(n.tovec().div(64), float(offset)/(64<<VVEC_FRAC));
+    if(p) 
+    {
+        vec pn(n.tovec());
+        float mag = pn.magnitude();
+        pn.div(mag);
+        *p = plane(pn, offset/(mag*(1<<VVEC_FRAC)));
+    };
 };
 
 int calcmergedsize(int orient, const ivec &co, int size, const mergeinfo &m, const vvec *vv)
