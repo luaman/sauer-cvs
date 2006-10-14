@@ -37,7 +37,6 @@ struct gui : g3d_gui
 			//rounded rectangle
 			Texture *t = textureload("packages/subverse/chunky_rock.jpg"); //something a little more distinctive
 			const int texsize = 100; //size of texture
-			const float DEG2RAD = 3.14159f/180;
 			int border = FONTH;
 			int xs[] = {curx + xsize, curx, curx, curx + xsize}; 
 			int ys[] = {cury + ysize, cury + ysize, cury, cury};
@@ -47,8 +46,8 @@ struct gui : g3d_gui
 			glBindTexture(GL_TEXTURE_2D, t->gl);
             glBegin(GL_TRIANGLE_FAN); 
 			for(int i = 0; i < 360; i += 10) { 
-				float x = xs[i/90] + cos(i*DEG2RAD)*border;
-				float y = ys[i/90] + sin(i*DEG2RAD)*border;
+				float x = xs[i/90] + cos(i*RAD)*border;
+				float y = ys[i/90] + sin(i*RAD)*border;
 				glTexCoord2d((x+border-curx)/(texsize+border*2), (y+border-cury)/(texsize+border*2));
 				glVertex2f(x, y);
 			}
@@ -60,8 +59,7 @@ struct gui : g3d_gui
 			glColor4f(0.00, 0.00, 0.00, 1.0);
 			glBegin(GL_LINE_LOOP);
 			for(int i = 0; i < 360; i += 10) {
-				float degInRad = i*DEG2RAD;
-				glVertex2f(xs[i/90] + cos(degInRad)*border, ys[i/90] + sin(degInRad)*border);
+				glVertex2f(xs[i/90] + cos(i*RAD)*border, ys[i/90] + sin(i*RAD)*border);
 			}
             glEnd();
             glLineWidth(1);
