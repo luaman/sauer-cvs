@@ -43,25 +43,20 @@ struct vec
     void rotate_around_z(float yaw) { *this = vec(cosf(yaw)*x-sinf(yaw)*y, cosf(yaw)*y+sinf(yaw)*x, z); };
     //void rotate_around_x(float pit) { *this = vec(x, cosf(pit)*y-sinf(pit)*z, cosf(pit)*z+sinf(pit)*y); };
 
-    float dist_to_aabox(const vec &center, const vec &extent) const
+    template<class T> float dist_to_bb(const T &min, const T &max) const
     {
         float sqrdist = 0;
         loopi(3)
         {
-            float closest = (*this)[i]-center[i];
-            if     (closest<-extent[i]) { float delta = closest+extent[i]; sqrdist += delta*delta; }
-            else if(closest> extent[i]) { float delta = closest-extent[i]; sqrdist += delta*delta; };
+            if     (v[i] < min[i]) { float delta = v[i]-min[i]; sqrdist += delta*delta; }
+            else if(v[i] > max[i]) { float delta = max[i]-v[i]; sqrdist += delta*delta; };
         };
         return sqrtf(sqrdist);
     };
 
-    float dist_to_bb(const vec &min, const vec &max) const
+    template<class T, class S> float dist_to_bb(const T &o, S size) const
     {
-        vec extent = max;
-        extent.sub(min).div(2);
-        vec center = min;
-        center.add(extent);
-        return dist_to_aabox(center, extent);
+        return dist_to_bb(o, T(o).add(size));
     };
 };
 

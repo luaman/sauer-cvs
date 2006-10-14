@@ -759,10 +759,11 @@ int isvisiblecube(const vec &o, int size)
     return isvisiblesphere(size*SQRT3/2.0f, center);
 };
 
+
 float vadist(vtxarray *va, const vec &p)
 {
     if(va->min.x>va->max.x) return 10000;   // box contains only sky/water
-    return p.dist_to_bb(va->min.tovec(), va->max.tovec());
+    return p.dist_to_bb(va->min, va->max);
 };
 
 #define VASORTSIZE 64
@@ -1034,7 +1035,7 @@ void findvisiblemms(const vector<extentity *> &ents)
                 };
                 if(!visible) continue;
 
-                oe->distance = int(camera1->o.dist_to_bb(oe->o.tovec(), oe->o.tovec().add(oe->size)));
+                oe->distance = int(camera1->o.dist_to_bb(oe->o, oe->size));
 
                 octaentities **prev = &visiblemms, *cur = visiblemms;
                 while(cur && cur->distance >= 0 && oe->distance > cur->distance)
@@ -1722,22 +1723,14 @@ void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc =
             if(va->curvfc == VFC_NOT_VISIBLE) va->distance = (int)vadist(va, camera1->o);
             if(!doOQ && va->distance > reflectdist) continue;
             va->rquery = NULL;
-            vtxarray *vprev = NULL, *vcur = reflectedva;
+            vtxarray **vprev = &reflectedva, *vcur = reflectedva;
             while(vcur && va->distance > vcur->distance)
             {
-                vprev = vcur;
+                vprev = &vcur->rnext;
                 vcur = vcur->rnext;
             };
-            if(vprev)
-            {
-                va->rnext = vprev->rnext;
-                vprev->rnext = va;
-            }
-            else
-            {
-                va->rnext = reflectedva;
-                reflectedva = va;
-            };
+            va->rnext = *vprev;
+            *vprev = va;
         };
         if(va->children->length()) findreflectedvas(*va->children, z, refract, va->curvfc != VFC_NOT_VISIBLE);
     };
