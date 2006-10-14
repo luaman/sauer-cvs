@@ -1013,7 +1013,10 @@ static hashtable<cfkey, cfval> cfaces;
 
 int gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &offset, cubeface &cf)
 {   
-    if(faceedges(cu, orient)!=F_SOLID || faceconvexity(cu, orient)) return false;
+    uchar cfe[4];
+    *(uint *)cfe = faceedges(cu, orient);
+    if(cfe[0]!=cfe[1] || cfe[2]!=cfe[3] || (cfe[0]>>4)==(cfe[0]&0xF) || (cfe[2]>>4)==(cfe[2]&0xF)) return false;
+    if(faceconvexity(cu, orient)) return false;
 
     cf.c = &cu;
 
@@ -1049,6 +1052,16 @@ int gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &of
     v[1].sub(v[0]);
     v[2].sub(v[0]);
     n.cross(v[1], v[2]);
+
+    // reduce the normal as much as possible without resorting to floating point
+    if(!n[c] && !n[r]) n[dim] /= abs(n[dim]);
+    else if((!n[c] && n[dim] == n[r]) || (!n[r] && n[dim] == n[c])) n.div(abs(n[dim]));
+    else while(n[0]&1==0 && n[0]&1==0 && n[0]&1==0)
+    {
+        n[0] >>= 1;
+        n[1] >>= 1;
+        n[2] >>= 1;
+    };
 
     v[3].add(vo);
     offset = -n.dot(v[3]);
