@@ -826,12 +826,12 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     glPopMatrix();
     if(limited) 
     {
+        glDepthFunc(GL_LESS);
         if(zclip) glDepthRange(0, 1);
         if(!reflected && editmode && showsky)
         {
             notextureshader->set();
 
-            glDepthFunc(GL_LEQUAL);
             glDisable(GL_TEXTURE_2D);
             glDepthMask(GL_FALSE);
             if(!wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -843,7 +843,6 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
 
             defaultshader->set();
         };
-        glDepthFunc(GL_LESS);
     };
 
     glEnable(GL_FOG);

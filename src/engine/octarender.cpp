@@ -1238,7 +1238,6 @@ void renderoutline()
 
     glPushMatrix();
 
-    glDepthFunc(GL_LEQUAL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3ub((outline>>16)&0xFF, (outline>>8)&0xFF, outline&0xFF);
 
@@ -1263,7 +1262,6 @@ void renderoutline()
     };
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDepthFunc(GL_LESS);
     
     glPopMatrix();
 
