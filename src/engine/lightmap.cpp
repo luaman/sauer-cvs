@@ -762,8 +762,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
             loopj(4)
             {
                 v[j] = mv[j].tovec(mo);
-                if(!findnormal(mo, i, mv[j], n[j]))
-                    n[j] = planes[0];
+                if(!findnormal(mo, i, mv[j], n[j], j)) n[j] = planes[0];
             };
         }
         else

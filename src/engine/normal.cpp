@@ -60,11 +60,11 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
     nkey key(origin, offset);
     nval &val = normals[key];
 
-    vec pos(offset.tovec(origin));
     uchar face = orient<<3;
-    if(origin.x >= pos.x) face |= 1;
-    if(origin.y >= pos.y) face |= 2;
-    if(origin.z >= pos.z) face |= 4;
+    int dim = dimension(orient), r = R[dim], c = C[dim], originr = origin[r]<<VVEC_FRAC, originc = origin[c]<<VVEC_FRAC;
+    if(originr >= int(offset[r])+(originr&(~VVEC_INT_MASK<<1))) face |= 1;
+    if(originc >= int(offset[c])+(originc&(~VVEC_INT_MASK<<1))) face |= 2;
+
     loopv(val.normals) if(val.normals[i].face == face) return;
 
     normal n = {face, surface, surface};
@@ -80,24 +80,34 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
     val.normals.add(n);
 };
 
-bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &r)
+bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &v, int index)
 {
     nkey key(origin, offset);
     nval *val = normals.access(key);
     if(!val) return false;
 
-    vec pos(offset.tovec(origin));
     uchar face = orient<<3;
-    if(origin.x >= pos.x) face |= 1;
-    if(origin.y >= pos.y) face |= 2;
-    if(origin.z >= pos.z) face |= 4;
+    int dim = dimension(orient), r = R[dim], c = C[dim];
+
+    if(index>=0)
+    {
+        const ivec &coords = cubecoords[fv[orient][index]];
+        if(!coords[r]) face |= 1;
+        if(!coords[c]) face |= 2;
+    }
+    else
+    {
+        int originr = origin[r]<<VVEC_FRAC, originc = origin[c]<<VVEC_FRAC;
+        if(originr >= int(offset[r])+(originr&(~VVEC_INT_MASK<<1))) face |= 1;
+        if(originc >= int(offset[c])+(originc&(~VVEC_INT_MASK<<1))) face |= 2;
+    }
 
     loopv(val->normals)
     {
         normal &n = val->normals[i];
         if(n.face == face)
         {
-            r = n.average.tovec();
+            v = n.average.tovec();
             return true;
         };
     };

@@ -384,6 +384,8 @@ int visibleorient(cube &c, int orient)
     return orient;
 };
 
+VAR(mipvis, 0, 0, 1);
+
 bool remip(cube &c, int x, int y, int z, int size)
 {
     if(c.ext)
@@ -417,6 +419,7 @@ bool remip(cube &c, int x, int y, int z, int size)
         { freeocta(n.children); return false; }
 
     cube *nh = n.children;
+    uchar vis[6] = {0, 0, 0, 0, 0, 0}; 
     loopi(8)
     {
         if(ch[i].faces[0] != nh[i].faces[0] ||
@@ -429,9 +432,17 @@ bool remip(cube &c, int x, int y, int z, int size)
 
         ivec o(i, x, y, z, size);
         loop(orient, 6)
-            if(visibleface(ch[i], orient, o.x, o.y, o.z, size) &&
-                ch[i].texture[orient] != n.texture[orient])
-                { freeocta(nh); return false; }
+            if(visibleface(ch[i], orient, o.x, o.y, o.z, size))
+            {
+                if(ch[i].texture[orient] != n.texture[orient]) { freeocta(nh); return false; }
+                vis[orient] |= 1<<i;
+            };
+    };
+    if(mipvis) loop(orient, 6)
+    {
+        int mask = 0;
+        loop(x, 2) loop(y, 2) mask |= 1<<octaindex(dimension(orient), x, y, dimcoord(orient));
+        if(vis[orient]&mask && (vis[orient]&mask)!=mask) { freeocta(nh); return false; };
     };
 
     freeocta(nh);
