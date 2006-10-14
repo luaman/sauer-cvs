@@ -25,7 +25,7 @@ struct vechash
     vector<int> chain;
 
     vechash() { clear(); };
-    void clear() { loopi(size) table[i] = -1; chain.setsize(0); };
+    void clear() { loopi(size) table[i] = -1; chain.setsizenodelete(0); };
 
     int access(const vvec &v, short tu, short tv, const bvec &n)
     {
@@ -88,14 +88,14 @@ struct lodcollect
     void clear()
     {
         curtris = 0;
-        skyindices.setsize(0);
-        explicitskyindices.setsize(0);
-        matsurfs.setsize(0);
+        skyindices.setsizenodelete(0);
+        explicitskyindices.setsizenodelete(0);
+        matsurfs.setsizenodelete(0);
     };
 
     void optimize()
     {
-        texs.setsize(0);
+        texs.setsizenodelete(0);
         enumeratekt(indices, sortkey, k, sortval, t,
             loopl(3) if(t.dims[l].length())
             {
@@ -571,13 +571,14 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
     if(verts.length())                                 // since reseting is a bit slow
     {
-        verts.setsize(0);
+        verts.setsizenodelete(0);
         explicitsky = skyarea = 0;
         vh.clear();
         l0.clear();
         l1.clear();
-        vamms.setsize(0);
     };
+
+    vamms.setsizenodelete(0);
 
     bbmin = ivec(cx+size, cy+size, cz+size);
     bbmax = ivec(cx, cy, cz);
@@ -1018,7 +1019,6 @@ void findvisiblemms(const vector<extentity *> &ents)
                 oe->distance = -1;
 
                 oe->next = NULL;
-                if(lastvisiblemms==&oe->next) *(int *)0 = 0;
                 *lastvisiblemms = oe;
                 lastvisiblemms = &oe->next;
             }
@@ -1045,10 +1045,7 @@ void findvisiblemms(const vector<extentity *> &ents)
 
                 if(*prev == NULL) lastvisiblemms = &oe->next;
                 oe->next = *prev;
-                if(oe->next == oe || prev == &oe->next)
-                    puts("HERE");
                 *prev = oe;
-                if(oe->next == oe) *(int *)0 = 0;
             };
         };
     };
@@ -1130,7 +1127,7 @@ void rendermapmodels()
 
     static int skipoq = 0;
 
-    renderedmms.setsize(0);
+    renderedmms.setsizenodelete(0);
 
     for(octaentities *oe = visiblemms; oe; oe = oe->next)
     {
