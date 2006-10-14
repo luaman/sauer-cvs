@@ -720,8 +720,8 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         {
             loopj(6) if(c.texture[j] != DEFAULT_SKY && visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
             {
-                if(!lodcube) progress++;
-                if(size >= hdr.mapwlod) progress++;
+                if(!lodcube && (!c.ext || c.ext->mergeorigin&(1<<i) || !(c.ext->merged&(1<<i)))) progress++;
+                if(hdr.mapwlod && size >= hdr.mapwlod) progress++;
             };
             return;
         };
@@ -734,33 +734,59 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     calcverts(c, cx, cy, cz, size, vvecs, usefaces, vertused, lodcube);
     vec verts[8];
     loopi(8) if(vertused[i]) verts[i] = vvecs[i].tovec(cx, cy, cz);
+    int mergeindex = 0;
     loopi(6) if(usefaces[i])
     {
         CHECK_PROGRESS(return);
         if(c.texture[i] == DEFAULT_SKY) continue;
-        if(!lodcube) progress++;
-        if(size >= hdr.mapwlod) progress++;
+        if(!lodcube && (!c.ext || c.ext->mergeorigin&(1<<i) || !(c.ext->merged&(1<<i)))) progress++;
+        if(hdr.mapwlod && size >= hdr.mapwlod) progress++;
 
         plane planes[2];
-        int numplanes = genclipplane(c, i, verts, planes);
-        if(!numplanes || !find_lights(cx, cy, cz, size, planes, numplanes))
-            continue;
-
         vec v[4], n[4], n2[3];
-        loopj(4) n[j] = planes[0];
-        if(numplanes >= 2) loopj(3) n2[j] = planes[1];
-        loopj(4)
+        int numplanes;
+
+        if(!lodcube && c.ext && c.ext->merged&(1<<i))
         {
-            int index = faceverts(c, i, j);
-            const vvec &vv = vvecs[index];
-            v[j] = verts[index];
-            if(lodcube) continue;
-            if(numplanes < 2 || j == 1) findnormal(ivec(cx, cy, cz), i, vv, n[j]);
-            else
+            if(!(c.ext->mergeorigin&(1<<i))) continue;
+            const mergeinfo &m = c.ext->merges[mergeindex++];
+            vvec mv[4];
+            ivec mo(cx, cy, cz);
+            genmergedverts(c, i, mo, size, m, mv, planes);
+
+            numplanes = 1;
+            int msz = calcmergedsize(i, mo, size, m, mv);
+            mo.mask(~((1<<msz)-1));
+            if(!find_lights(mo.x, mo.y, mo.z, 1<<msz, planes, numplanes)) continue;
+
+            loopj(4)
             {
-                findnormal(ivec(cx, cy, cz), i, vv, n2[j >= 2 ? j-1 : j]);
-                if(j == 0) n[0] = n2[0];
-                else if(j == 2) n[2] = n2[1];
+                v[j] = mv[j].tovec(mo);
+                if(!findnormal(mo, i, mv[j], n[j]))
+                    n[j] = planes[0];
+            };
+        }
+        else
+        {
+            numplanes = genclipplane(c, i, verts, planes);
+            if(!numplanes || !find_lights(cx, cy, cz, size, planes, numplanes))
+                continue;
+
+            loopj(4) n[j] = planes[0];
+            if(numplanes >= 2) loopj(3) n2[j] = planes[1];
+            loopj(4)
+            {
+                int index = faceverts(c, i, j);
+                const vvec &vv = vvecs[index];
+                v[j] = verts[index];
+                if(lodcube) continue;
+                if(numplanes < 2 || j == 1) findnormal(ivec(cx, cy, cz), i, vv, n[j]);
+                else
+                {
+                    findnormal(ivec(cx, cy, cz), i, vv, n2[j >= 2 ? j-1 : j]);
+                    if(j == 0) n[0] = n2[0];
+                    else if(j == 2) n[2] = n2[1];
+                };
             };
         };
         lmtype = LM_NORMAL;

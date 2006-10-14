@@ -69,12 +69,14 @@ void savec(cube *c, gzFile f, bool nolms)
         }
         else
         {
-            if(c[i].children) gzputc(f, OCTSAV_LODCUBE);
-            else if(isempty(c[i])) gzputc(f, OCTSAV_EMPTY);
-            else if(isentirelysolid(c[i])) gzputc(f, OCTSAV_SOLID);
+            int oflags = 0;
+            if(c[i].ext && c[i].ext->merged) oflags |= 0x80;
+            if(c[i].children) gzputc(f, oflags | OCTSAV_LODCUBE);
+            else if(isempty(c[i])) gzputc(f, oflags | OCTSAV_EMPTY);
+            else if(isentirelysolid(c[i])) gzputc(f, oflags | OCTSAV_SOLID);
             else
             {
-                gzputc(f, OCTSAV_NORMAL);
+                gzputc(f, oflags | OCTSAV_NORMAL);
                 gzwrite(f, c[i].edges, 12);
             };
             loopj(6) writeushort(f, c[i].texture[j]);
@@ -115,6 +117,21 @@ void savec(cube *c, gzFile f, bool nolms)
                     if(c[i].ext->normals) gzwrite(f, &c[i].ext->normals[j], sizeof(surfacenormals));
                 };
             };
+            if(c[i].ext && c[i].ext->merged)
+            {
+                gzputc(f, c[i].ext->merged | (c[i].ext->mergeorigin ? 0x80 : 0));
+                if(c[i].ext->mergeorigin)
+                {
+                    gzputc(f, c[i].ext->mergeorigin);
+                    int index = 0;
+                    loopj(6) if(c[i].ext->mergeorigin&(1<<j))
+                    {
+                        mergeinfo tmp = c[i].ext->merges[index++];
+                        endianswap(&tmp, sizeof(ushort), 4);
+                        gzwrite(f, &tmp, sizeof(mergeinfo));
+                    };
+                };
+            };
             if(c[i].children) savec(c[i].children, f, nolms);
         };
     };
@@ -125,7 +142,8 @@ cube *loadchildren(gzFile f);
 void loadc(gzFile f, cube &c)
 {
     bool haschildren = false;
-    switch(gzgetc(f))
+    int octsav = gzgetc(f);
+    switch(octsav&0x7)
     {
         case OCTSAV_CHILDREN:
             c.children = loadchildren(f);
@@ -173,6 +191,29 @@ void loadc(gzFile f, cube &c)
             };
             if(!lit) freesurfaces(c);
         };
+        if(hdr.version >= 20)
+        {
+            if(octsav&0x80)
+            {
+                int merged = gzgetc(f);
+                ext(c).merged = merged&0x3F;
+                if(merged&0x80)
+                {
+                    c.ext->mergeorigin = gzgetc(f);
+                    int nummerges = 0;
+                    loopi(6) if(c.ext->mergeorigin&(1<<i)) nummerges++;
+                    if(nummerges)
+                    {
+                        c.ext->merges = new mergeinfo[nummerges];
+                        loopi(nummerges)
+                        {
+                            gzread(f, &c.ext->merges[i], sizeof(mergeinfo));
+                            endianswap(&c.ext->merges[i], sizeof(ushort), 4);
+                        };
+                    };
+                };
+            };    
+        };                
     };
     c.children = (haschildren ? loadchildren(f) : NULL);
 };

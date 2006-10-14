@@ -11,7 +11,7 @@ void boxs(int orient, int x, int y, int xs, int ys, int z)
     vec p(ivec(d, x,    y+ys, z).v);
 
     extern int outline;
-    if(outline==1)
+    if(outline)
     {
         m[d] += f;
         n[d] += f;
@@ -399,8 +399,10 @@ void readychanges(block3 &b, cube *c, ivec &cor, int size)
         {
             if(c[i].ext->va)             // removes va s so that octarender will recreate
             {
+                int hasmerges = c[i].ext->va->hasmerges;
                 destroyva(c[i].ext->va);
                 c[i].ext->va = NULL;
+                if(hasmerges) invalidatemerges(c[i]);
             };
             freeoctaentities(c[i]);
         };

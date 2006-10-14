@@ -13,7 +13,7 @@ void printcstats()
 {
     if(showcstats) loopi(32)
     {
-        if(!cstats[i].size) break;
+        if(!cstats[i].size) continue;
         conoutf("%d: %d faces, %d leafs, %d nodes", cstats[i].size, cstats[i].nface, cstats[i].nleaf, cstats[i].nnode);
     };
 };
@@ -217,49 +217,54 @@ int addtriindexes(usvector &v, int index[4])
     return tris;
 };
 
+void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, surfaceinfo *surface, surfacenormals *normals)
+{
+    int index[4];
+    loopk(4)
+    {
+        short u, v;
+        if(surface && surface->lmid >= LMID_RESERVED)
+        {
+            u = short((surface->x + (surface->texcoords[k*2] / 255.0f) * (surface->w - 1) + 0.5f) * SHRT_MAX/LM_PACKW);
+            v = short((surface->y + (surface->texcoords[k*2 + 1] / 255.0f) * (surface->h - 1) + 0.5f) * SHRT_MAX/LM_PACKH);
+        }
+        else u = v = 0;
+        index[k] = vh.access(vv[k], u, v, normals ? normals->normals[k] : bvec(128, 128, 128));
+    };
+
+    extern vector<GLuint> lmtexids;
+    sortkey key(texture, surface && lmtexids.inrange(surface->lmid) ? surface->lmid : LMID_AMBIENT);
+    if(!lodcube)
+    {
+        int tris = addtriindexes(texture == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(orient)], index);
+        if(texture == DEFAULT_SKY) explicitsky += tris;
+        else l0.curtris += tris;
+    };
+    if(lodsize && size>=lodsize)
+    {
+        int tris = addtriindexes(texture == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(orient)], index);
+        if(texture != DEFAULT_SKY) l1.curtris += tris;
+    };
+};
+
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 {
-    bool useface[6];
-
     freeclipplanes(c);                          // physics planes based on rendering
 
-    loopi(6) if(useface[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube))
+    loopi(6) if(visibleface(c, i, x, y, z, size, MAT_AIR, lodcube))
     {
-        if(!c.ext) ext(c).visible = 0;
         cubeext &e = ext(c);
 
+        // this is necessary for physics to work, even if the face is merged
         if(touchingface(c, i)) e.visible |= 1<<i;
+
+        if(!lodcube && e.merged&(1<<i)) continue;
+
         cstats[csi].nface++;
 
-        extern vector<GLuint> lmtexids;
-        sortkey key(c.texture[i], (e.surfaces && lmtexids.inrange(e.surfaces[i].lmid) ? e.surfaces[i].lmid : LMID_AMBIENT));
-
-        int index[6];
-        loopk(4)
-        {
-            short u, v;
-            if(e.surfaces && e.surfaces[i].lmid >= LMID_RESERVED)
-            {
-                u = short((e.surfaces[i].x + (e.surfaces[i].texcoords[k*2] / 255.0f) * (e.surfaces[i].w - 1) + 0.5f) * SHRT_MAX/LM_PACKW);
-                v = short((e.surfaces[i].y + (e.surfaces[i].texcoords[k*2 + 1] / 255.0f) * (e.surfaces[i].h - 1) + 0.5f) * SHRT_MAX/LM_PACKH);
-            }
-            else u = v = 0;
-            int coord = faceverts(c,i,k);
-            vvec rv;
-            calcvert(c, x, y, z, size, rv, coord);
-            index[k] = vh.access(rv, u, v, e.normals ? e.normals[i].normals[k] : bvec(128, 128, 128));
-        };
-        if(!lodcube)
-        {
-            int tris = addtriindexes(c.texture[i] == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(i)], index);
-            if(c.texture[i] == DEFAULT_SKY) explicitsky += tris;
-            else l0.curtris += tris;
-        };
-        if(size>=lodsize)
-        {
-            int tris = addtriindexes(c.texture[i] == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(i)], index); 
-            if(c.texture[i] != DEFAULT_SKY) l1.curtris += tris;
-        };
+        vvec vv[4];
+        loopk(4) calcvert(c, x, y, z, size, vv[k], faceverts(c, i, k));
+        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL);
     };
 };
 
@@ -304,7 +309,7 @@ void genskyverts(cube &c, int x, int y, int z, int size, bool lodcube)
             index[k] = vh.access(rv, 0, 0, bvec(128, 128, 128));
         };
         if(!lodcube) addtriindexes(l0.skyindices, index);
-        if(size>=lodsize) addtriindexes(l1.skyindices, index);
+        if(lodsize && size>=lodsize) addtriindexes(l1.skyindices, index);
     };
 };
 
@@ -372,6 +377,7 @@ vtxarray *newva(int x, int y, int z, int size)
     va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
     va->mapmodels = NULL;
+    va->hasmerges = 0;
     wverts += va->verts = verts.length();
     wtris  += va->l0.tris;
     allocva++;
@@ -394,7 +400,7 @@ void destroyva(vtxarray *va, bool reparent)
     if(reparent)
     {
         if(va->parent) va->parent->children->removeobj(va);
-        loopv((*va->children))
+        loopv(*va->children)
         {
             vtxarray *child = (*va->children)[i];
             child->parent = va->parent;
@@ -422,6 +428,85 @@ void vaclearc(cube *c)
 static ivec bbmin, bbmax;
 static vector<octaentities *> vamms;
 
+struct mergedface
+{   
+    mergedface *next;
+    uchar orient;
+    ushort tex;
+    vvec v[4];
+    surfaceinfo *surface;
+    surfacenormals *normals;
+};  
+
+struct mflist
+{
+    mergedface *first, *last;
+    int count;
+};
+
+static int vahasmerges = 0, vamergemax = 0;
+static mflist vamerges[VVEC_INT];
+
+void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
+{
+    if(!c.ext || !c.ext->merges) return;
+    int index = 0;
+    loopi(6) if(c.ext->mergeorigin & (1<<i))
+    {
+        mergeinfo &m = c.ext->merges[index++];
+        mergedface mf;
+        mf.orient = i;
+        mf.tex = c.texture[i];
+        mf.surface = c.ext->surfaces ? &c.ext->surfaces[i] : NULL;
+        mf.normals = c.ext->normals ? &c.ext->normals[i] : NULL;
+        genmergedverts(c, i, co, size, m, mf.v);
+        int level = calcmergedsize(i, co, size, m, mf.v);
+        if(level > minlevel)
+        {
+            mergedface &nf = *new mergedface;
+            nf = mf;
+            mflist &mfl = vamerges[level];
+            nf.next = mfl.first;
+            mfl.first = &nf;
+            if(!mfl.last) mfl.last = &nf;
+            mfl.count++;
+            vamergemax = max(vamergemax, level);
+            vahasmerges |= MERGE_ORIGIN;
+        };
+    };
+};
+
+void findmergedfaces(cube &c, const ivec &co, int size, int csi, int minlevel)
+{
+    if(c.ext && c.ext->va && !(c.ext->va->hasmerges&MERGE_ORIGIN)) return;
+    if(c.children)
+    {
+        loopi(8)
+        {
+            ivec o(i, co.x, co.y, co.z, size/2); 
+            findmergedfaces(c.children[i], o, size/2, csi-1, minlevel);
+        };
+    }
+    else if(c.ext && c.ext->merges) genmergedfaces(c, co, size, minlevel);
+};
+
+void addmergedverts(int level)
+{
+    mflist &mfl = vamerges[level];
+    if(!mfl.count) return;
+    while(mfl.count)
+    {
+        mergedface &mf = *mfl.first;
+        mfl.first = mf.next;
+        if(mfl.last == &mf) mfl.last = NULL;
+        addcubeverts(mf.orient, 1<<level, false, mf.v, mf.tex, mf.surface, mf.normals);
+        delete &mf;
+        mfl.count--;
+        cstats[level].nface++;
+        vahasmerges |= MERGE_USE;
+    };
+};
+
 void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates vertices and indices ready to be put into a va
 {
     //if(size<=16) return;
@@ -436,8 +521,10 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         loopi(8)
         {
             ivec o(i, cx, cy, cz, size/2);
-            rendercube(c.children[i], o.x, o.y, o.z, size/2, csi+1);
+            rendercube(c.children[i], o.x, o.y, o.z, size/2, csi-1);
         };
+
+        if(csi < VVEC_INT && vamerges[csi].count) addmergedverts(csi);
 
         if(size!=lodsize)
         {
@@ -469,7 +556,11 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
     {
         if(c.ext->ents && c.ext->ents->mapmodels.length()) vamms.add(c.ext->ents);
         if(c.ext->material != MAT_AIR) genmatsurfs(c, cx, cy, cz, size, l0.matsurfs);
+        if(c.ext->merges) genmergedfaces(c, ivec(cx, cy, cz), size);
+        if(c.ext->merged & ~c.ext->mergeorigin) vahasmerges |= MERGE_PART;
     };
+
+    if(csi < VVEC_INT && vamerges[csi].count) addmergedverts(csi);
 
     cstats[csi].nleaf++;
 };
@@ -495,10 +586,12 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
     if(verts.length())
     {
-        ext(c).va = newva(cx, cy, cz, size);
-        c.ext->va->min = bbmin;
-        c.ext->va->max = bbmax;
-        if(vamms.length()) c.ext->va->mapmodels = new vector<octaentities *>(vamms);
+        vtxarray *va = newva(cx, cy, cz, size);
+        ext(c).va = va;
+        va->min = bbmin;
+        va->max = bbmax;
+        if(vamms.length()) va->mapmodels = new vector<octaentities *>(vamms);
+        va->hasmerges = vahasmerges;
     };
 
     l0.clearidx();
@@ -516,19 +609,23 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
 {
     progress("recalculating geometry...");
     static int faces[6];
-    int ccount = 0;
+    int ccount = 0, cmergemax = vamergemax, chasmerges = vahasmerges;
     loopi(8)                                    // counting number of semi-solid/solid children cubes
     {
         int count = 0, childpos = varoot.length();
         ivec o(i, cx, cy, cz, size);
+        vamergemax = 0;
+        vahasmerges = 0;
         if(c[i].ext && c[i].ext->va) 
         {
             //count += vacubemax+1;       // since must already have more then max cubes
             varoot.add(c[i].ext->va);
+            if(c[i].ext->va->hasmerges&MERGE_ORIGIN) findmergedfaces(c[i], ivec(cx, cy, cz), size, csi, csi);
         }
-        else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi+1);
+        else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi-1);
         else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        if(count > vacubemax || (count >= vacubemin && size == vacubesize) || (count && size == min(VVEC_INT_MASK+1, hdr.worldsize/2))) 
+        int tcount = count + (csi < VVEC_INT ? vamerges[csi].count : 0);
+        if(tcount > vacubemax || (tcount >= vacubemin && size == vacubesize) || (tcount && size == min(VVEC_INT_MASK+1, hdr.worldsize/2))) 
         {
             setva(c[i], o.x, o.y, o.z, size, csi);
             if(c[i].ext && c[i].ext->va)
@@ -540,10 +637,31 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
                     child->parent = c[i].ext->va;
                 };
                 varoot.add(c[i].ext->va);
+                if(vamergemax > size)
+                {
+                    cmergemax = max(cmergemax, vamergemax);
+                    vahasmerges |= vahasmerges&~MERGE_USE;
+                };
+                continue;
             };
-        }
-        else ccount += count;
+        };
+        if(csi < VVEC_INT-1 && vamerges[csi].count)
+        {
+            mflist &mfl = vamerges[csi], &nfl = vamerges[csi+1];
+            mfl.last->next = nfl.first;
+            nfl.first = mfl.first; 
+            if(!nfl.last) nfl.last = mfl.last;
+            mfl.first = mfl.last = 0;
+            nfl.count += mfl.count;
+            mfl.count = 0;
+        };
+        cmergemax = max(cmergemax, vamergemax);
+        chasmerges |= vahasmerges;
+        ccount += count;
     };
+
+    vamergemax = cmergemax;
+    vahasmerges = chasmerges;
 
     return ccount;
 };
@@ -573,9 +691,12 @@ void octarender()                               // creates va s for all leaf cub
     recalcprogress = 0;
     if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2);
 
+    int csi = 0;
+    while(1<<csi < hdr.worldsize) csi++;
+
     recalcprogress = 0;
     varoot.setsizenodelete(0);
-    updateva(worldroot, 0, 0, 0, hdr.worldsize/2, 0);
+    updateva(worldroot, 0, 0, 0, hdr.worldsize/2, csi-1);
 
     explicitsky = 0;
     skyarea = 0;
@@ -897,6 +1018,7 @@ void findvisiblemms(const vector<extentity *> &ents)
                 oe->distance = -1;
 
                 oe->next = NULL;
+                if(lastvisiblemms==&oe->next) *(int *)0 = 0;
                 *lastvisiblemms = oe;
                 lastvisiblemms = &oe->next;
             }
@@ -923,7 +1045,10 @@ void findvisiblemms(const vector<extentity *> &ents)
 
                 if(*prev == NULL) lastvisiblemms = &oe->next;
                 oe->next = *prev;
+                if(oe->next == oe || prev == &oe->next)
+                    puts("HERE");
                 *prev = oe;
+                if(oe->next == oe) *(int *)0 = 0;
             };
         };
     };
@@ -1102,7 +1227,7 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
     return true;
 };
 
-VAR(outline, 0, 0, 1);
+VAR(outline, 0, 0, 0xFFFFFF);
 
 void renderoutline()
 {
@@ -1117,7 +1242,7 @@ void renderoutline()
 
     glDepthFunc(GL_LEQUAL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glColor3f(0, 0, 0);
+    glColor3ub((outline>>16)&0xFF, (outline>>8)&0xFF, outline&0xFF);
 
     resetorigin();    
     for(vtxarray *va = visibleva; va; va = va->next)
@@ -1472,7 +1597,9 @@ void cleanupTMUs()
     glEnable(GL_TEXTURE_2D);
 };
 
-//VAR(showva, 0, 0, 1);
+#ifdef SHOWVA
+VAR(showva, 0, 0, 1);
+#endif
 
 void rendergeom()
 {
@@ -1538,7 +1665,9 @@ void rendergeom()
     {
         setupTMUs();
         glDepthFunc(GL_LEQUAL);
-//        int showvas = 0;
+#ifdef SHOWVA
+        int showvas = 0;
+#endif
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1555,12 +1684,16 @@ void rendergeom()
                 if(va->occluded >= OCCLUDE_GEOM) continue;
             }
             else if(va->occluded == OCCLUDE_PARENT) va->occluded = OCCLUDE_NOTHING;
-#if 0
-            if(showva && editmode)
+
+#ifdef SHOWVA
+            if(showva && editmode && renderpath==R_FIXEDFUNCTION)
             {
-                if(insideva(va, worldpos)) glColor3f(1, showvas/3.0f, 1-showvas/3.0f);
+                if(insideva(va, worldpos)) 
+                {
+                    glColor3f(1, showvas/3.0f, 1-showvas/3.0f);
+                    showvas++;
+                }
                 else glColor3f(1, 1, 1);
-                showvas++;
             };
 #endif
 

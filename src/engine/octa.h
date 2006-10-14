@@ -61,6 +61,13 @@ enum
     OCCLUDE_PARENT
 };
 
+enum
+{
+    MERGE_ORIGIN = 1<<0,
+    MERGE_PART   = 1<<1,
+    MERGE_USE    = 1<<2
+};
+
 struct vtxarray
 {
     vtxarray *parent;
@@ -76,6 +83,7 @@ struct vtxarray
     uchar curvfc, occluded;
     occludequery *query, *rquery;
     vector<octaentities *> *mapmodels;
+    int hasmerges;
 };
 
 struct surfaceinfo
@@ -99,6 +107,11 @@ struct clipplanes
     clipplanes **backptr;
 };
 
+struct mergeinfo
+{
+    ushort u1, u2, v1, v2;
+};
+
 struct cubeext
 {
     uchar material;          // empty-space material
@@ -110,6 +123,7 @@ struct cubeext
     surfaceinfo *surfaces;   // lighting info for each surface
     surfacenormals *normals; // per-vertex normals for each surface
     octaentities *ents;      // list of map entites totally inside cube
+    mergeinfo *merges;       // bounds of merged surfaces
 };  
 
 struct cube

@@ -9,13 +9,14 @@ vector<ushort> texmru;
 VAR(octaentsize, 0, 128, 1024);
 VAR(entselradius, 0, 2, 10);
 
-void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br, vtxarray *va = NULL)
+void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br, vtxarray *lastva = NULL)
 {
     loopoctabox(cor, size, bo, br)
     {
         ivec o(i, cor.x, cor.y, cor.z, size);
+        vtxarray *va = c[i].ext && c[i].ext->va ? c[i].ext->va : lastva;
         if(c[i].children != NULL && size > octaentsize)
-            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br, c[i].ext && c[i].ext->va ? c[i].ext->va : va);
+            modifyoctaentity(add, id, c[i].children, o, size>>1, bo, br, va);
         else if(add)
         {
             if(!c[i].ext || !c[i].ext->ents) ext(c[i]).ents = new octaentities(o, size);
@@ -59,7 +60,7 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                     c[i].ext->ents->other.removeobj(id);
                     break;
             };
-            if(c[i].ext->ents->mapmodels.empty() && c[i].ext->ents->other.empty())
+            if(c[i].ext->ents->mapmodels.empty() && c[i].ext->ents->other.empty()) 
                 freeoctaentities(c[i]);
         };
         if(c[i].ext && c[i].ext->ents) c[i].ext->ents->query = NULL;
