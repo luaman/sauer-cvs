@@ -149,7 +149,7 @@ void addnormals(cube &c, const ivec &o, int size)
     {
         CHECK_PROGRESS(return);
         if(c.texture[i] == DEFAULT_SKY) continue;
-        progress++;
+        if(!c.ext || c.ext->mergeorigin&(1<<i) || !(c.ext->merged&(1<<i)) progress++;
 
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);

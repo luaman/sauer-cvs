@@ -400,25 +400,6 @@ Texture *crosshair = NULL; // used as default, ensured to be loaded
 
 VARP(halftex, 0, 0, 12);
 
-static void texreduce(SDL_Surface *s)
-{
-    uint c = s->format->BitsPerPixel/8, rh = s->h/2, rw = s->w/2;
-    uchar *src = (uchar *)s->pixels, *dst = (uchar *)s->pixels;
-    loopi(rh) 
-    {
-        loopj(rw)
-        {
-            int vals[4] = {0, 0, 0, 0};
-            loopk(c) vals[k] += int(src[k]) + int(src[k+s->pitch]);
-            src += c;
-            loopk(c) vals[k] += int(src[k]) + int(src[k+s->pitch]);
-            src += c;
-            loopk(c) *dst++ = (uchar)(vals[k]/4);
-        };
-        src += s->pitch;
-    };
-};
-
 static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false, bool mipit = true)
 {
     Texture *t = &textures[newstring(rname)];
@@ -428,11 +409,13 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false
     t->ys = s->h;
     glGenTextures(1, &t->gl);
     int w = t->xs, h = t->ys;
-    if(halftex && (w >= (1<<halftex) || h >= (1<<halftex)) && !(w%2) && !(h%2))
+    if(halftex && (w >= (1<<halftex) || h >= (1<<halftex)))
     {
-        texreduce(s);
-        w /= 2;
-        h /= 2;
+        if(!gluScaleImage(t->bpp==24 ? GL_RGB : GL_RGBA, w, h, GL_UNSIGNED_BYTE, s->pixels, w/2, h/2, GL_UNSIGNED_BYTE, s->pixels))
+        {
+            w /= 2;
+            h /= 2;
+        };
     }; 
     createtexture(t->gl, w, h, s->pixels, clamp, mipit, t->bpp==24 ? GL_RGB : GL_RGBA);
     SDL_FreeSurface(s);
