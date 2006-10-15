@@ -9,7 +9,7 @@ static g3d_gui *cgui = NULL;
 
 static hashtable<char *, char *> guis;
 static vector<char *> guistack;
-static string executelater;
+static vector<char *> executelater;
 static bool clearlater = false;
 
 vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
@@ -40,7 +40,7 @@ void guibutton(char *name, char *action, char *icon)
 {
     if(cgui && cgui->button(name, GUI_BUTTON_COLOR, *icon ? icon : (strstr(action, "showgui") ? "blue_button" : "green_button"))&G3D_UP) 
     {
-        s_strcpy(executelater, *action ? action : name);
+        executelater.add(newstring(*action ? action : name));
         clearlater = true;
     };
 };
@@ -49,7 +49,7 @@ void guiimage(char *path, char *action)
 {
     if(cgui && cgui->image(path)&G3D_UP && *action)
     {
-        s_strcpy(executelater, action);
+        executelater.add(newstring(action));
         clearlater = true;
     };
 };
@@ -72,15 +72,13 @@ void guibar()
 static void updateval(char *var, int val, char *onchange)
 {
     ident *id = getident(var);
+    string assign;
     if(!id) return;
-    else if(id->_type==ID_VAR) s_sprintf(executelater)("%s %d", var, val);
-    else if(id->_type==ID_ALIAS) s_sprintf(executelater)("%s = %d", var, val);
+    else if(id->_type==ID_VAR) s_sprintf(assign)("%s %d", var, val);
+    else if(id->_type==ID_ALIAS) s_sprintf(assign)("%s = %d", var, val);
     else return;
-    if(onchange[0]) 
-    {
-        s_strcat(executelater, ";");
-        s_strcat(executelater, onchange);
-    };
+    executelater.add(newstring(assign));
+    if(onchange[0]) executelater.add(newstring(onchange)); 
 };
 
 static int getval(char *var)
@@ -162,7 +160,8 @@ void guiservers()
         const char *name = showservers(cgui); 
         if(name)
         {
-            s_sprintf(executelater)("connect %s", name);
+            s_sprintfd(connect)("connect %s", name);
+            executelater.add(newstring(connect));
             clearlater = true;
         };
     };
@@ -203,11 +202,13 @@ static struct mainmenucallback : g3d_callback
 void menuprocess()
 {
     int level = guistack.length();
-    if(executelater[0])
+    loopv(executelater)
     {
-        execute(executelater);
-        executelater[0] = 0;
+        
+        execute(executelater[i]);
+        delete[] executelater[i];
     };
+    executelater.setsizenodelete(0);
     if(clearlater)
     {
         if(level==guistack.length()) guistack.deletecontentsa();
