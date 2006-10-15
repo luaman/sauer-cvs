@@ -156,13 +156,16 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     SDL_GL_SwapBuffers();
 }
 
-void fullscreen()
+void setfullscreen(bool enable)
 {
 #ifdef WIN32
-    conoutf("\"fullscreen\" command not supported on this platform. Use the -t command-line option.");
+    conoutf("\"fullscreen\" variable not supported on this platform. Use the -t command-line option.");
 #else
-    SDL_WM_ToggleFullScreen(screen);
-    SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
+    if(enable == !(screen->flags&SDL_FULLSCREEN))
+    {
+        SDL_WM_ToggleFullScreen(screen);
+        SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
+    };
 #endif
 }
 
@@ -180,7 +183,7 @@ void screenres(int *w, int *h, int *bpp = 0)
 #endif
 }
 
-COMMAND(fullscreen, "");
+VARF(fullscreen, 0, 0, 1, setfullscreen(fullscreen));
 COMMAND(screenres, "iii");
 
 VARFP(gamma, 30, 100, 300,
@@ -353,6 +356,8 @@ int main(int argc, char **argv)
     };
     screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|SDL_RESIZABLE|fs);
     if(screen==NULL) fatal("Unable to create OpenGL screen: ", SDL_GetError());
+
+    fullscreen = fs!=0;
 
     log("video: misc");
     SDL_WM_SetCaption("sauerbraten engine", NULL);
