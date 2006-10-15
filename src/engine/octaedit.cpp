@@ -80,7 +80,6 @@ void forcenextundo() { lastsel.orient = -1; };
 
 void cancelsel()
 {
-    if(g3d_windowhit(false, false)) return;
     havesel = moving = false;
     entgroup.setsize(0);
     clearheightmap();
@@ -177,7 +176,7 @@ bool noedit(bool view)
 
 COMMAND(reorient, "");
 COMMANDN(edittoggle, toggleedit, "");
-COMMAND(cancelsel, "");
+ICOMMAND(cancelsel, "", { if(!g3d_windowhit(false, false)) cancelsel(); });
 ICOMMAND(editdrag, "D", editdrag(args!=NULL));
 
 ///////// selection support /////////////
