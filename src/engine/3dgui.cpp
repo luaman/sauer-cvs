@@ -114,7 +114,7 @@ struct gui : g3d_gui
         if(!t) return 0;
         if(!layoutpass)
         {
-			icon_(t, curx, cury, IMAGE_SIZE, ishit(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW) && actionon);
+			icon_(t, curx, cury, IMAGE_SIZE, ishit(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW));
         };
         return layout(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW);
 	};
@@ -165,14 +165,14 @@ struct gui : g3d_gui
 		};
 	};
 	
-	void icon_(Texture *t, int x, int y, int size, bool shadowed) 
+	void icon_(Texture *t, int x, int y, int size, bool hit) 
     {
 		float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
 		float xs = t->xs*scale;
 		float ys = t->ys*scale;
 		float xo = x + (size-xs)/2;
 		float yo = y + (size-ys)/2;
-		if(shadowed) 
+		if(hit && actionon) 
 		{
 			notextureshader->set();
 			glColor3f(0,0,0);
@@ -184,7 +184,7 @@ struct gui : g3d_gui
 			glEnd();
 			defaultshader->set();	
 		};
-		glColor3f(1, shadowed?0.5f:1, shadowed?0.5f:1);
+		glColor3f(1, hit?0.5f:1, hit?0.5f:1);
 		glBindTexture(GL_TEXTURE_2D, t->gl);
 		glBegin(GL_QUADS);
 		glTexCoord2i(0, 0); glVertex2f(xo,    yo);
@@ -239,7 +239,7 @@ struct gui : g3d_gui
             if(icon)
             {
                 s_sprintfd(tname)("packages/icons/%s.jpg", icon);
-                icon_(textureload(tname), x, cury, ICON_SIZE, clickable && hit && actionon);
+                icon_(textureload(tname), x, cury, ICON_SIZE, clickable && hit);
 				x += ICON_SIZE;
             };
 			
