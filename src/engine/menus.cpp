@@ -79,16 +79,12 @@ void guislider(char *var)
 
 void guicheckbox(char *name, char *var)
 {
-    if(!cgui) return;
-    bool enable = getvar(var)!=0;
-    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "cross")&G3D_UP) updatevar(var, !enable);
+    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "cross")&G3D_UP) updatevar(var, !getvar(var));
 };
 
 void guiradio(char *name, char *var, int *n)
 {
-    if(!cgui) return;
-    bool enable = getvar(var)==*n;
-    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "empty")&G3D_UP && !enable) updatevar(var, *n);
+    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "empty")&G3D_UP && getvar(var)!=*n) updatevar(var, *n);
 };
 
 void guilist(char *contents)
