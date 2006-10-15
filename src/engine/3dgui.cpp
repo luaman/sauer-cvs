@@ -21,9 +21,16 @@ struct gui : g3d_gui
         int parent, w, h;
     };
 
-    vector<list> lists;
+    int nextlist;
+
+    static vector<list> lists;
     static float hitx, hity;
-    static int curdepth, curlist, nextlist, xsize, ysize, curx, cury;
+    static int curdepth, curlist, xsize, ysize, curx, cury;
+
+    static void reset()
+    {
+        lists.setsize(0);
+    };
 
     bool ishorizontal() const { return curdepth&1; };
     bool isvertical() const { return !ishorizontal(); };
@@ -257,9 +264,9 @@ struct gui : g3d_gui
 		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
         curdepth = -1;
         curlist = -1;
-        nextlist = 0;
         pushlist();
-        if(!layoutpass)
+        if(layoutpass) nextlist = curlist;
+        else
         {
             cury = -ysize; 
             curx = -xsize/2;
@@ -270,15 +277,16 @@ struct gui : g3d_gui
 			glScalef(-scale, scale, scale);
 
 			//rounded rectangle
-			//Texture *t = textureload("packages/subverse/chunky_rock.jpg"); //something a little more distinctive
-			Texture *t = textureload("packages/rorschach/1r_plain_met02.jpg");
+			static Texture *t = NULL;
+            if(!t) t = textureload("packages/rorschach/1r_plain_met02.jpg");
+            //if(!t) t = textureload("packages/subverse/chunky_rock.jpg"); //something a little more distinctive;
 			int border = FONTH;
 			int xs[] = {curx + xsize, curx, curx, curx + xsize}; 
 			int ys[] = {cury + ysize, cury + ysize, cury, cury};
-			float scale = max(t->xs, t->ys)*500.0; //scale and preserve aspect ratio
+			float scale = max(t->xs, t->ys)*500.0f; //scale and preserve aspect ratio
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			
-			glColor4f(1, 1, 1, 0.70f);
+			glColor4f(1, 1, 1, 0.7f);
 			glBindTexture(GL_TEXTURE_2D, t->gl);
             //notextureshader->set();
 			
@@ -294,7 +302,7 @@ struct gui : g3d_gui
 			
 			//solid black outline
 			notextureshader->set();
-			glColor4f(0.00, 0.00, 0.00, 1.0);
+			glColor4f(0, 0, 0, 1.0f);
 			glBegin(GL_LINE_LOOP);
 			for(int i = 0; i < 360; i += 10)
 				glVertex2f(xs[i/90] + cos(i*RAD)*border, ys[i/90] + sin(i*RAD)*border);
@@ -324,6 +332,10 @@ struct gui : g3d_gui
     };
 };
 
+vector<gui::list> gui::lists;
+float gui::hitx, gui::hity;
+int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
+
 static vector<gui> guis;
 
 void g3d_addgui(g3d_callback *cb, vec &origin)
@@ -333,9 +345,6 @@ void g3d_addgui(g3d_callback *cb, vec &origin)
     g.origin = origin;
     g.dist = camera1->o.dist(origin);
 };
-
-float gui::hitx, gui::hity;
-int gui::curdepth, gui::curlist, gui::nextlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
 
@@ -355,6 +364,7 @@ void g3d_render()
     
     windowhit = NULL;
     if(actionon) mousebuttons |= G3D_PRESSED;
+    gui::reset();
     guis.setsize(0);
 
     // call all places in the engine that may want to render a gui from here, they call g3d_addgui()
