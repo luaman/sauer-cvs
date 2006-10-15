@@ -28,6 +28,7 @@ aard/everyone:
 - finish debris
 - make body stop spinning on death
 - border gfx & tabs for ui
+- before next release: calclight all maps
 
 - social cheating solution
 - reduce maps
