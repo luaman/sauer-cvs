@@ -158,15 +158,17 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
 
 void setfullscreen(bool enable)
 {
-#ifdef WIN32
-    conoutf("\"fullscreen\" variable not supported on this platform. Use the -t command-line option.");
-#else
     if(enable == !(screen->flags&SDL_FULLSCREEN))
     {
+#ifndef WIN32
+        conoutf("\"fullscreen\" variable not supported on this platform. Use the -t command-line option.");
+        extern int fullscreen;
+        fullscreen = !enable;
+#else
         SDL_WM_ToggleFullScreen(screen);
         SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
-    };
 #endif
+    };
 }
 
 void screenres(int *w, int *h, int *bpp = 0)
@@ -184,6 +186,7 @@ void screenres(int *w, int *h, int *bpp = 0)
 }
 
 VARF(fullscreen, 0, 0, 1, setfullscreen(fullscreen));
+
 COMMAND(screenres, "iii");
 
 VARFP(gamma, 30, 100, 300,
