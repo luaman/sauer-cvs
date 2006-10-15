@@ -237,7 +237,7 @@ struct lodcollect
                     firstlmid = lastlmid;
                 };
             }
-            else if(lastlmid!=LMID_AMBIENT)
+            else if(k.lmid==LMID_AMBIENT && lastlmid!=LMID_AMBIENT)
             {
                 sortval &t = indices[k];
                 if(t.unlit<=0) t.unlit = lastlmid;
@@ -246,6 +246,7 @@ struct lodcollect
         if(firstlmid!=LMID_AMBIENT && firstlit > 0) loopi(firstlit)
         {
             sortkey &k = texs[i];
+            if(k.lmid!=LMID_AMBIENT) continue;
             sortval &t = indices[k];
             t.unlit = firstlmid;
         }; 
