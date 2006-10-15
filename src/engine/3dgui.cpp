@@ -150,15 +150,17 @@ struct gui : g3d_gui
 			if(hit) color = 0xFF0000;	
 			if(hit && actionon) draw_text(label, px+SHADOW, py+SHADOW, 0, 0, 0);
 			draw_text(label, px, py, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
-			if(hit && actionon) {
+			if(hit && actionon) 
+            {
                 int vnew = 1+vmax-vmin;
                 if(ishorizontal()) vnew = (vnew*(y+ysize-hity))/ysize;
                 else vnew = (vnew*(hitx-x))/xsize;
                 vnew += vmin;
-				if(vnew != v) {
+				if(vnew != v) 
+                {
                     extern void guiupdatevar(const char *name, int v);
 					guiupdatevar(name, vnew);
-				}
+				};
 			};
 		};
 	};

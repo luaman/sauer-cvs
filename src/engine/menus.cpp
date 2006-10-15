@@ -10,10 +10,11 @@ static g3d_gui *cgui = NULL;
 static hashtable<char *, char *> guis;
 static vector<char *> guistack;
 static string executelater;
+static bool clearlater = false;
 
 void guiupdatevar(const char *name, int v) 
 {
-	s_sprintfd(executelater)("%s %d", name, v);
+	s_sprintf(executelater)("%s %d", name, v);
 };
 
 vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
@@ -37,12 +38,20 @@ void cleargui(int *n)
 //@DOC name and icon are optional
 void guibutton(char *name, char *action, char *icon)
 {
-    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, *icon ? icon : (strstr(action, "showgui") ? "blue_button" : "green_button"))&G3D_UP) s_strcpy(executelater, *action ? action : name);
+    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, *icon ? icon : (strstr(action, "showgui") ? "blue_button" : "green_button"))&G3D_UP) 
+    {
+        s_strcpy(executelater, *action ? action : name);
+        clearlater = true;
+    };
 };
 
 void guiimage(char *path, char *action)
 {
-    if(cgui && cgui->image(path)&G3D_UP && *action) s_strcpy(executelater, action);
+    if(cgui && cgui->image(path)&G3D_UP && *action)
+    {
+        s_strcpy(executelater, action);
+        clearlater = true;
+    };
 };
 
 void guitext(char *name)
@@ -124,7 +133,11 @@ void guiservers()
     if(cgui) 
     {
         const char *name = showservers(cgui); 
-        if(name) s_sprintf(executelater)("cleargui;connect %s", name);
+        if(name)
+        {
+            s_sprintf(executelater)("connect %s", name);
+            clearlater = true;
+        };
     };
 };
 
@@ -161,12 +174,16 @@ static struct mainmenucallback : g3d_callback
 
 void menuprocess()
 {
+    int level = guistack.length();
     if(executelater[0])
     {
-        int level = guistack.length();
         execute(executelater);
         executelater[0] = 0;
+    };
+    if(clearlater)
+    {
         if(level==guistack.length()) guistack.deletecontentsa();
+        clearlater = false;
     };
 };
 
