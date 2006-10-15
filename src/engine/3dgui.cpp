@@ -10,124 +10,317 @@ static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
 static g3d_gui *windowhit = NULL;
 
+#define SHADOW 4
+#define IMAGE_SIZE 120
+#define ICON_SIZE 60
+
 struct gui : g3d_gui
 {
-    g3d_callback *cb;
-    vec origin, intersectionpoint;
-    float dist, scale;
-    int xsize, ysize, hitx, hity, cury, curx;
-    
-    void start(int starttime, float basescale)
+    struct list
     {
-        scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
+        int parent, w, h;
+    };
+
+    vector<list> lists;
+    static int curlist, nextlist, xsize, ysize, hitx, hity, curx, cury;
+
+    bool ishorizontal() const { return curlist&1; };
+    bool isvertical() const { return !ishorizontal(); };
+
+    void pushlist()
+    {
         if(layoutpass)
         {
+            if(curlist>=0)
+            {
+                lists[curlist].w = xsize;
+                lists[curlist].h = ysize;
+            };
+            lists.add().parent = curlist; 
+            curlist = lists.length()-1;
             xsize = ysize = 0;
-        } 
+        }
         else
+        {
+            curlist = nextlist++;
+            xsize = lists[curlist].w;
+            ysize = lists[curlist].h;
+        };
+    };
+
+    void poplist()
+    {
+        list &l = lists[curlist];
+        if(layoutpass)
+        {
+            l.w = xsize;
+            l.h = ysize;
+        };
+        curlist = l.parent;
+        if(curlist>=0)
+        {
+            xsize = lists[curlist].w;
+            ysize = lists[curlist].h;
+            if(layoutpass) layout(l.w, l.h);
+            else if(ishorizontal()) cury -= l.w;
+            else curx -= l.h;
+        };
+    };
+
+    int text  (const char *text, int color, const char *icon) { return button_(text, color, icon, false, false); };
+    int button(const char *text, int color, const char *icon) { return button_(text, color, icon, true, false);  };
+	int title (const char *text, int color, const char *icon) {	return button_(text, color, icon, false, true); };
+	void separator(int color) { line_(color, 5); };
+
+    int layout(int w, int h)
+    {
+        if(layoutpass)
+        {
+            if(ishorizontal())
+            {
+                xsize += w;
+                ysize = max(ysize, h);
+            }
+            else
+            {
+                xsize = max(xsize, w);
+                ysize += h;
+            };
+            return 0;
+        }
+        else
+        {
+            bool hit = ishit(w, h);
+            if(ishorizontal()) curx += w;
+            else cury += h;
+            return hit ? mousebuttons|G3D_ROLLOVER : 0;
+        };
+    };
+
+    bool ishit(int w, int h, int x = curx, int y = cury)
+    {
+        if(ishorizontal()) h = ysize;
+        else w = xsize;
+        return windowhit==this && hitx>=x && hity>=y && hitx<x+w && hity<y+h;
+    };
+
+	//one day to replace render_texture_panel()...?
+	int image(const char *path)
+    {
+        Texture *t = textureload(path);
+        if(!t) return 0;
+        if(!layoutpass)
+        {
+			icon_(t, curx, cury, IMAGE_SIZE, ishit(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW) && actionon);
+        };
+        return layout(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW);
+	};
+	
+	void slider(char *name, int color) 
+    {
+		int x = curx;
+		int y = cury;
+		line_(color, 2);
+		if(!layoutpass) 
+		{
+			int vmin = getvarmin(name);
+			int vmax = getvarmax(name);
+			int v =  getvar(name);
+			s_sprintfd(label)("%d", v);
+			int w = text_width(label);
+			
+			bool hit;
+			int px, py;
+			if(ishorizontal()) 
+			{
+				hit = ishit(FONTH, ysize, x, y);
+				px = x + (FONTH-w)/2;
+				py = y + (ysize-FONTH) - ((ysize-FONTH)*(v-vmin))/(vmax-vmin); //zero at the bottom
+			}
+			else
+			{
+				hit = ishit(xsize, FONTH, x, y);
+				px = x + ((xsize-w)*(v-vmin))/(vmax-vmin);
+				py = y;
+			};
+			
+			if(hit) color = 0xFF0000;	
+			if(hit && actionon) draw_text(label, px+SHADOW, py+SHADOW, 0, 0, 0);
+			draw_text(label, px, py, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
+			if(hit && actionon) {
+                int vnew = 1+vmax-vmin;
+                if(ishorizontal()) vnew = (vnew*(y+ysize-hity))/ysize;
+                else vnew = (vnew*(hitx-x))/xsize;
+                vnew += vmin;
+				if(vnew != v) {
+                    extern void guiupdatevar(const char *name, int v);
+					guiupdatevar(name, vnew);
+				}
+			};
+		};
+	};
+	
+	void icon_(Texture *t, int x, int y, int size, bool shadowed) 
+    {
+		float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
+		float xs = t->xs*scale;
+		float ys = t->ys*scale;
+		float xo = x + (size-xs)/2;
+		float yo = y + (size-ys)/2;
+		if(shadowed) 
+		{
+			notextureshader->set();
+			glColor3f(0,0,0);
+			glBegin(GL_QUADS);
+			glVertex2f(xo+SHADOW,    yo+SHADOW);
+			glVertex2f(xo+xs+SHADOW, yo+SHADOW);
+			glVertex2f(xo+xs+SHADOW, yo+ys+SHADOW);
+			glVertex2f(xo+SHADOW,    yo+ys+SHADOW);
+			glEnd();
+			defaultshader->set();	
+		};
+		glColor3f(1, shadowed?0.5f:1, shadowed?0.5f:1);
+		glBindTexture(GL_TEXTURE_2D, t->gl);
+		glBegin(GL_QUADS);
+		glTexCoord2i(0, 0); glVertex2f(xo,    yo);
+		glTexCoord2i(1, 0); glVertex2f(xo+xs, yo);
+		glTexCoord2i(1, 1); glVertex2f(xo+xs, yo+ys);
+		glTexCoord2i(0, 1); glVertex2f(xo,    yo+ys);
+		glEnd();
+	};
+	
+	void line_(int color, int size)
+	{		
+		if(!layoutpass)
+        {
+			notextureshader->set();
+			glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
+			glBegin(GL_QUADS);
+			if(ishorizontal()) 
+			{
+				glVertex2f(curx + FONTH/2 - size, cury);
+				glVertex2f(curx + FONTH/2 + size, cury);
+				glVertex2f(curx + FONTH/2 + size, cury + ysize);
+				glVertex2f(curx + FONTH/2 - size, cury + ysize);
+			} 
+			else 
+			{
+				glVertex2f(curx,       cury + FONTH/2 - size);
+				glVertex2f(curx+xsize, cury + FONTH/2 - size);
+				glVertex2f(curx+xsize, cury + FONTH/2 + size);
+				glVertex2f(curx,       cury + FONTH/2 + size);
+			};
+			glEnd();
+			defaultshader->set();	
+		};
+        layout(ishorizontal() ? FONTH : 0, ishorizontal() ? 0 : FONTH);
+    };
+	
+    int button_(const char *text, int color, const char *icon, bool clickable, bool center)
+    {
+		const int padding = 10;
+		int w = 0;
+		if(icon) w += ICON_SIZE;
+		if(icon && text) w += padding;
+		if(text) w += text_width(text);
+		
+        if(!layoutpass)
+        {
+			bool hit = ishit(w, FONTH);
+			if(hit && clickable) color = 0xFF0000;	
+			int x = curx;	
+			if(isvertical() && center) x += (xsize-w)/2;
+
+            if(icon)
+            {
+                s_sprintfd(tname)("packages/icons/%s.jpg", icon);
+                icon_(textureload(tname), x, cury, ICON_SIZE, clickable && hit && actionon);
+				x += ICON_SIZE;
+            };
+			
+			if(icon && text) x += padding;
+			
+			if(text) 
+			{
+				if(center || (hit && clickable && actionon)) draw_text(text, x+SHADOW, cury+SHADOW, 0, 0, 0);
+				draw_text(text, x, cury, color>>16, (color>>8)&0xFF, color&0xFF);
+			};
+        };
+        return layout(w, FONTH);
+    };
+		
+	vec origin;
+    float dist, scale;
+	g3d_callback *cb;
+    
+    void start(int starttime, float basescale)
+    {	
+		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
+        curlist = -1;
+        nextlist = 0;
+        pushlist();
+        if(!layoutpass)
         {
             cury = -ysize; 
             curx = -xsize/2;
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
-            glRotatef(/*camera1->roll*-5 +*/camera1->yaw-180, 0, 0, 1); //roll - kinda cute effect, makes the menu 'flutter' as we straff left/right
+            glRotatef(/*camera1->roll*-5+*/camera1->yaw-180, 0, 0, 1); //roll - kinda cute effect, makes the menu 'flutter' as we straff left/right
             glRotatef(/*camera1->pitch*/-90, 1, 0, 0); // pitch the top/bottom towards us
 			glScalef(-scale, scale, scale);
 
 			//rounded rectangle
-			Texture *t = textureload("packages/subverse/chunky_rock.jpg"); //something a little more distinctive
-			const int texsize = 100; //size of texture
+			//Texture *t = textureload("packages/subverse/chunky_rock.jpg"); //something a little more distinctive
+			Texture *t = textureload("packages/rorschach/1r_plain_met02.jpg");
 			int border = FONTH;
 			int xs[] = {curx + xsize, curx, curx, curx + xsize}; 
 			int ys[] = {cury + ysize, cury + ysize, cury, cury};
-			
+			float scale = max(t->xs, t->ys)*500.0; //scale and preserve aspect ratio
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			
 			glColor4f(1, 1, 1, 0.70f);
 			glBindTexture(GL_TEXTURE_2D, t->gl);
-            glBegin(GL_TRIANGLE_FAN); 
-			for(int i = 0; i < 360; i += 10) { 
+            //notextureshader->set();
+			
+			glBegin(GL_TRIANGLE_FAN); 
+			for(int i = 0; i < 360; i += 10) 
+			{ 
 				float x = xs[i/90] + cos(i*RAD)*border;
 				float y = ys[i/90] + sin(i*RAD)*border;
-				glTexCoord2d((x+border-curx)/(texsize+border*2), (y+border-cury)/(texsize+border*2));
+				glTexCoord2d((x+border-curx)*t->xs/scale,(y+border-cury)*t->ys/scale);
 				glVertex2f(x, y);
-			}
+			};
             glEnd();
 			
 			//solid black outline
 			notextureshader->set();
-			glLineWidth(3);
 			glColor4f(0.00, 0.00, 0.00, 1.0);
 			glBegin(GL_LINE_LOOP);
-			for(int i = 0; i < 360; i += 10) {
+			for(int i = 0; i < 360; i += 10)
 				glVertex2f(xs[i/90] + cos(i*RAD)*border, ys[i/90] + sin(i*RAD)*border);
-			}
             glEnd();
-            glLineWidth(1);
-			defaultshader->set();
+            defaultshader->set();
         };
     };
 
     void end()
     {
-        if(layoutpass)
+		if(layoutpass)
         {
             if(windowhit) return;
-            vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize();
+            vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
             int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
-            vec xaxis(-planenormal.y, planenormal.x, 0);
-            vec intersectionvec = vec(intersectionpoint).sub(origin);
+            vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
             hitx = (int)(xaxis.dot(intersectionvec)/scale);
             hity = -(int)(intersectionvec.z/scale);
             if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
-            {
-                windowhit = this;
-            };
+				windowhit = this;
         }
         else
         {
             glPopMatrix();
         };
-    };
-
-    int text  (const char *text, int color, const char *icon) { return buttont(text, color, icon, false); };
-    int button(const char *text, int color, const char *icon) { return buttont(text, color, icon, true);  };
-
-    int buttont(const char *text, int color, const char *icon, bool clickable)
-    {
-        if(layoutpass)
-        {
-            ysize += FONTH;
-            int slen = text_width(text);
-            if(icon) slen += 70;
-            xsize = max(xsize, slen);    
-            return 0;
-        }
-        else
-        {
-            bool hit = windowhit==this && hitx>=curx && hity>=cury && hitx<curx+xsize && hity<cury+FONTH;
-            if(hit && clickable) color = 0xFF0000; 
-
-            if(icon)
-            {
-                s_sprintfd(tname)("packages/icons/%s.jpg", icon);
-                Texture *t = textureload(tname);
-                glColor3f(1, 1, 1);
-                glBindTexture(GL_TEXTURE_2D, t->gl);
-                glBegin(GL_QUADS);
-                int size = 60;
-                glTexCoord2d(0.0, 0.0); glVertex2f(curx,      cury);
-                glTexCoord2d(1.0, 0.0); glVertex2f(curx+size, cury);
-                glTexCoord2d(1.0, 1.0); glVertex2f(curx+size, cury+size);
-                glTexCoord2d(0.0, 1.0); glVertex2f(curx,      cury+size);
-                glEnd();
-                curx += size+10;
-            };
-
-            draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
-            cury += FONTH;
-            curx = -xsize/2;
-            return hit ? mousebuttons|G3D_ROLLOVER : 0;
-        };
+        poplist();
     };
 };
 
@@ -140,6 +333,8 @@ void g3d_addgui(g3d_callback *cb, vec &origin)
     g.origin = origin;
     g.dist = camera1->o.dist(origin);
 };
+
+int gui::curlist, gui::nextlist, gui::xsize, gui::ysize, gui::hitx, gui::hity, gui::curx, gui::cury;
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
 

@@ -46,8 +46,10 @@ extern void mpmovecubes(ivec &o, selinfo &sel, bool local);
 
 // command
 extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
-extern void setvar(char *name, int i);
+extern void setvar(char *name, int i, bool dofunc = false);
 extern int getvar(char *name);
+extern int getvarmin(char *name);
+extern int getvarmax(char *name);
 extern bool identexists(char *name);
 extern bool addcommand(char *name, void (*fun)(), char *narg);
 extern int execute(char *p);
@@ -193,6 +195,14 @@ struct g3d_gui
     virtual void end() = 0;
     virtual int text(const char *text, int color, const char *icon = NULL) = 0;
     virtual int button(const char *text, int color, const char *icon = NULL) = 0;
+
+    virtual void pushlist() {};
+    virtual void poplist() {};
+
+     virtual int title(const char *text, int color, const char *icon = NULL) = 0;
+     virtual int image(const char *path) = 0;
+     virtual void slider(char *name, int color) = 0;
+     virtual void separator(int color) = 0;
 };
 
 struct g3d_callback

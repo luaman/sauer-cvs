@@ -83,8 +83,30 @@ int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(),
     return cur;
 };
 
-void setvar(char *name, int i) { *idents->access(name)->_storage = i; }; 
-int getvar(char *name) { return *idents->access(name)->_storage; };
+#define GETVAR(id, name, retval) \
+    ident *id = idents->access(name); \
+    if(!id || id->_type!=ID_VAR) return retval;
+void setvar(char *name, int i, bool dofunc) 
+{ 
+    GETVAR(id, name, );
+    *id->_storage = i; 
+    if(dofunc && id->_fun) ((void (__cdecl *)())id->_fun)();
+}; 
+int getvar(char *name) 
+{ 
+    GETVAR(id, name, 0);
+    return *id->_storage;
+};
+int getvarmin(char *name) 
+{ 
+    GETVAR(id, name, 0);
+    return id->_min;
+};
+int getvarmax(char *name) 
+{ 
+    GETVAR(id, name, 0);
+    return id->_max;
+};
 bool identexists(char *name) { return idents->access(name)!=NULL; };
 
 const char *getalias(char *name)
