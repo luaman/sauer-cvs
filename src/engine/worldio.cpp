@@ -445,7 +445,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
             {
                 int type = gzgetc(f);
                 lm.type = type&0xF;
-                if(type&0x80)
+                if(hdr.version >= 20 && type&0x80)
                 {
                     lm.unlitx = readushort(f);
                     lm.unlity = readushort(f);
