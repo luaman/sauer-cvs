@@ -69,11 +69,11 @@ static void updatevar(const char *var, int val)
     s_sprintf(executelater)("%s %d", var, val);
 };
  
-void guislider(char *var)
+void guislider(char *var, int *min, int *max)
 {
 	if(!cgui) return;
-    int oldval = getvar(var), val = oldval, min = getvarmin(var), max = getvarmax(var);
-    cgui->slider(val, min, max, GUI_TITLE_COLOR);
+    int oldval = getvar(var), val = oldval, vmin = *max ? *min : getvarmin(var), vmax = *max ? *max : getvarmax(var);
+    cgui->slider(val, vmin, vmax, GUI_TITLE_COLOR);
     if(val != oldval) updatevar(var, val);
 };
 
@@ -156,7 +156,7 @@ COMMAND(guilist, "s");
 COMMAND(guititle, "s");
 COMMAND(guibar,"");
 COMMAND(guiimage,"ss");
-COMMAND(guislider,"s");
+COMMAND(guislider,"sii");
 COMMAND(guiradio,"ssi");
 COMMAND(guicheckbox, "ssii");
 
