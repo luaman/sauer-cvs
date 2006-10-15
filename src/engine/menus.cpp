@@ -72,16 +72,22 @@ void guibar()
 static void updateval(char *var, int val, char *onchange)
 {
     ident *id = getident(var);
-    if(id->_type==ID_VAR) s_sprintf(executelater)("%s %d", var, val);
+    if(!id) return;
+    else if(id->_type==ID_VAR) s_sprintf(executelater)("%s %d", var, val);
     else if(id->_type==ID_ALIAS) s_sprintf(executelater)("%s = %d", var, val);
     else return;
-    if(onchange[0]) s_strcat(executelater, onchange);
+    if(onchange[0]) 
+    {
+        s_strcat(executelater, ";");
+        s_strcat(executelater, onchange);
+    };
 };
 
 static int getval(char *var)
 {
     ident *id = getident(var);
-    if(id->_type==ID_VAR) return *id->_storage;
+    if(!id) return 0;
+    else if(id->_type==ID_VAR) return *id->_storage;
     else if(id->_type==ID_ALIAS) return atoi(id->_action);
     else return 0;
 };
