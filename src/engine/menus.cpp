@@ -12,11 +12,6 @@ static vector<char *> guistack;
 static string executelater;
 static bool clearlater = false;
 
-void guiupdatevar(const char *name, int v) 
-{
-	s_sprintf(executelater)("%s %d", name, v);
-};
-
 vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
 
 void cleargui(int *n)
@@ -70,23 +65,31 @@ void guibar()
 };
 
 //@TODO supply label + labels for max&min, flag for logarithmic?
+static void updatevar(const char *var, int val)
+{
+    s_sprintf(executelater)("%s %d", var, val);
+};
+ 
 void guislider(char *var)
 {
-	if(cgui) cgui->slider(var, GUI_TITLE_COLOR);
+	if(!cgui) return;
+    int oldval = getvar(var), val = oldval, min = getvarmin(var), max = getvarmax(var);
+    cgui->slider(val, min, max, GUI_TITLE_COLOR);
+    if(val != oldval) updatevar(var, val);
 };
 
 void guicheckbox(char *name, char *var)
 {
     if(!cgui) return;
     bool enable = getvar(var)!=0;
-    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "cross")&G3D_UP) guiupdatevar(var, !enable);
+    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "cross")&G3D_UP) updatevar(var, !enable);
 };
 
 void guiradio(char *name, char *var, int *n)
 {
     if(!cgui) return;
     bool enable = getvar(var)==*n;
-    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "empty")&G3D_UP && !enable) guiupdatevar(var, *n);
+    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "empty")&G3D_UP && !enable) updatevar(var, *n);
 };
 
 void guilist(char *contents)
