@@ -18,6 +18,127 @@ void printcstats()
     };
 };
 
+VARF(floatvtx, 0, 0, 1, allchanged());
+
+void genfloatverts(fvertex *f)
+{
+    loopv(verts)
+    {
+        const vertex &v = verts[i];
+        f->x = v.x;
+        f->y = v.y;
+        f->z = v.z;
+        f->u = v.u;
+        f->v = v.v;
+        f->n = v.n;
+        f++;
+    };
+};
+
+struct vboinfo
+{
+    int uses;
+};
+
+hashtable<GLuint, vboinfo> vbos;
+
+VAR(printvbo, 0, 0, 1);
+VARF(vbosize, 0, 0, 1024*1024, allchanged());
+
+enum
+{
+    VBO_VBUF = 0,
+    VBO_EBUF_L0,
+    VBO_EBUF_L1,
+    VBO_SKYBUF_L0,
+    VBO_SKYBUF_L1,
+    NUMVBO
+};
+
+static vector<char> vbodata[NUMVBO];
+static vector<vtxarray *> vbovas[NUMVBO];
+
+void destroyvbo(GLuint vbo)
+{
+    vboinfo &vbi = vbos[vbo];
+    if(vbi.uses <= 0) return;
+    vbi.uses--;
+    if(!vbi.uses) glDeleteBuffers_(1, &vbo);
+};
+
+void genvbo(int type, void *buf, int len, vtxarray **vas, int numva)
+{
+    GLuint vbo;
+    glGenBuffers_(1, &vbo);
+    GLenum target = type==VBO_VBUF ? GL_ARRAY_BUFFER_ARB : GL_ELEMENT_ARRAY_BUFFER_ARB;
+    glBindBuffer_(target, vbo);
+    glBufferData_(target, len, buf, GL_STATIC_DRAW_ARB);
+    glBindBuffer_(target, 0);
+    
+    vboinfo &vbi = vbos[vbo]; 
+    vbi.uses = numva;
+    
+    if(printvbo) conoutf("vbo %d: type %d, size %d, %d uses", vbo, type, len, numva);
+
+    loopi(numva)
+    {
+        vtxarray *va = vas[i];
+        switch(type)
+        {
+            case VBO_VBUF: va->vbufGL = vbo; break;
+            case VBO_EBUF_L0: va->l0.ebufGL = vbo; break;
+            case VBO_EBUF_L1: va->l1.ebufGL = vbo; break;
+            case VBO_SKYBUF_L0: va->l0.skybufGL = vbo; break;
+            case VBO_SKYBUF_L1: va->l1.skybufGL = vbo; break;
+        };
+    };
+};
+
+void flushvbo(int type = -1)
+{
+    if(type < 0)
+    {
+        loopi(NUMVBO) flushvbo(i);
+        return;
+    };
+
+    vector<char> &data = vbodata[type];
+    if(data.empty()) return;
+    vector<vtxarray *> &vas = vbovas[type];
+    genvbo(type, data.getbuf(), data.length(), vas.getbuf(), vas.length());
+    data.setsizenodelete(0);
+    vas.setsizenodelete(0);
+};
+
+void *addvbo(vtxarray *va, int type, void *buf, int len)
+{
+    int minsize = type==VBO_VBUF ? min(vbosize, int(floatvtx ? sizeof(fvertex) : sizeof(vertex)) << 16) : vbosize;
+
+    if(len >= minsize)
+    {
+        genvbo(type, buf, len, &va, 1);
+        return 0;
+    };
+
+    vector<char> &data = vbodata[type];
+    vector<vtxarray *> &vas = vbovas[type];
+
+    if(data.length() && data.length() + len > minsize) flushvbo(type);
+
+    data.reserve(len);
+
+    int offset = data.length();
+    data.reserve(len);
+    memcpy(&data.getbuf()[offset], buf, len);
+    data.ulen += len;
+
+    vas.add(va); 
+
+    if(data.length() >= minsize) flushvbo(type);
+
+    return (void *)offset;
+};
+ 
 struct vechash
 {
     static const int size = 1<<16;
@@ -57,11 +178,16 @@ struct sortkey
      sortkey(uint tex, uint lmid)
       : tex(tex), lmid(lmid)
      {};
+
+     bool operator==(const sortkey &o) const { return tex==o.tex && lmid==o.lmid; };
 };
 
 struct sortval
 {
+     int unlit;
      usvector dims[3];
+
+     sortval() : unlit(0) {};
 };
 
 static inline bool htcmp(const sortkey &x, const sortkey &y)
@@ -81,6 +207,7 @@ struct lodcollect
     vector<materialsurface> matsurfs;
     usvector skyindices, explicitskyindices;
     int curtris;
+    uint offsetindices;
 
     int size() { return texs.length()*sizeof(elementset) + (hasVBO ? 0 : (3*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort)) + matsurfs.length()*sizeof(materialsurface); };
 
@@ -88,22 +215,102 @@ struct lodcollect
     void clear()
     {
         curtris = 0;
+        offsetindices = 0;
         skyindices.setsizenodelete(0);
         explicitskyindices.setsizenodelete(0);
         matsurfs.setsizenodelete(0);
     };
 
+    void remapunlit(vector<sortkey> &unlit)
+    {
+        uint lastlmid = LMID_AMBIENT, firstlmid = LMID_AMBIENT;
+        int firstlit = -1;
+        loopv(texs)
+        {
+            sortkey &k = texs[i];
+            if(k.lmid>=LMID_RESERVED) 
+            {
+                lastlmid = lightmaps[k.lmid-LMID_RESERVED].unlitx>=0 ? k.lmid : LMID_AMBIENT;
+                if(firstlit<0)
+                {
+                    firstlit = i;
+                    firstlmid = lastlmid;
+                };
+            }
+            else if(lastlmid!=LMID_AMBIENT)
+            {
+                sortval &t = indices[k];
+                if(t.unlit<=0) t.unlit = lastlmid;
+            };
+        };
+        if(firstlmid!=LMID_AMBIENT && firstlit > 0) loopi(firstlit)
+        {
+            sortkey &k = texs[i];
+            sortval &t = indices[k];
+            t.unlit = firstlmid;
+        }; 
+        loopv(unlit)
+        {
+            sortkey &k = unlit[i];
+            sortval &t = indices[k];
+            if(t.unlit<=0) continue; 
+            LightMap &lm = lightmaps[t.unlit-LMID_RESERVED];
+            short u = short((lm.unlitx + 0.5f) * SHRT_MAX/LM_PACKW), 
+                  v = short((lm.unlity + 0.5f) * SHRT_MAX/LM_PACKH);
+            loopl(3) if(t.dims[l].length()) loopvj(t.dims[l])
+            {
+                int index = t.dims[l][j];
+                vertex &vtx = verts[index];
+                if(!vtx.u && !vtx.v)
+                {
+                    vtx.u = u;
+                    vtx.v = v;
+                }
+                else if(vtx.u != u && vtx.v != v) t.dims[l][j] = vh.access((vvec &)vtx, u, v, vtx.n);
+            };
+        };
+        loopv(unlit)
+        {
+            sortkey &k = unlit[i];
+            sortval &t = indices[k];
+            sortkey mkey(k.tex, t.unlit); 
+            sortval *mval = indices.access(mkey);
+            if(!mval) continue;
+            loopl(3) if(t.dims[l].length()) loopvj(t.dims[l]) mval->dims[l].add(t.dims[l][j]);
+        };
+    };
+                    
     void optimize()
     {
+        vector<sortkey> unlit;
+
         texs.setsizenodelete(0);
         enumeratekt(indices, sortkey, k, sortval, t,
-            loopl(3) if(t.dims[l].length())
+            loopl(3) if(t.dims[l].length() && t.unlit<=0)
             {
+                if(k.lmid>=LMID_RESERVED && lightmaps[k.lmid-LMID_RESERVED].unlitx>=0)
+                {
+                    sortkey ukey(k.tex, LMID_AMBIENT);
+                    sortval *uval = indices.access(ukey);
+                    if(uval && uval->unlit<=0)
+                    {
+                        if(uval->unlit<0) texs.removeobj(ukey);
+                        else unlit.add(ukey);
+                        uval->unlit = k.lmid;
+                    };
+                }
+                else if(k.lmid==LMID_AMBIENT)
+                {
+                    unlit.add(k);
+                    t.unlit = -1;
+                };
                 texs.add(k);
                 break;
             };
         );
         texs.sort(texsort);
+
+        remapunlit(unlit);
 
         matsurfs.setsize(optimizematsurfs(matsurfs.getbuf(), matsurfs.length()));
     };
@@ -120,7 +327,7 @@ struct lodcollect
         else return 1;
     };
 
-    char *setup(lodlevel &lod, char *buf)
+    char *setup(vtxarray *va, lodlevel &lod, char *buf)
     {
         lod.eslist = (elementset *)buf;
 
@@ -150,9 +357,14 @@ struct lodcollect
 
             if(skybuf)
             {
+#if 1
+                if(offsetindices) loopi(lod.sky+lod.explicitsky) skybuf[i] += offsetindices;
+                lod.skybuf = (ushort *)addvbo(va, &lod==&va->l0 ? VBO_SKYBUF_L0 : VBO_SKYBUF_L1, skybuf, (lod.sky+lod.explicitsky)*sizeof(ushort));
+#else
                 glGenBuffers_(1, &lod.skybufGL);
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.skybufGL);
                 glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, (lod.sky+lod.explicitsky)*sizeof(ushort), skybuf, GL_STATIC_DRAW_ARB);
+#endif
                 delete[] skybuf;
             }
             else lod.skybufGL = 0;
@@ -169,7 +381,7 @@ struct lodcollect
                 const sortkey &k = texs[i];
                 const sortval &t = indices[k];
                 lod.eslist[i].texture = k.tex;
-                lod.eslist[i].lmid = k.lmid;
+                lod.eslist[i].lmid = t.unlit>0 ? t.unlit : k.lmid;
                 loopl(3) if((lod.eslist[i].length[l] = t.dims[l].length()))
                 {
                     memcpy(curbuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
@@ -178,9 +390,14 @@ struct lodcollect
             };
             if(hasVBO)
             {
+#if 1
+                if(offsetindices) loopi(3*curtris) ebuf[i] += offsetindices;
+                lod.ebuf = (ushort *)addvbo(va, &lod==&va->l0 ? VBO_EBUF_L0 : VBO_EBUF_L1, ebuf, 3*curtris*sizeof(ushort));
+#else
                 glGenBuffers_(1, &lod.ebufGL);
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
                 glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, 3*curtris*sizeof(ushort), ebuf, GL_STATIC_DRAW_ARB);
+#endif
                 delete[] ebuf;
             };
         }
@@ -189,8 +406,7 @@ struct lodcollect
         lod.tris = curtris;
         return (char *)(lod.matbuf+lod.matsurfs);
     };
-}
-l0, l1;
+} l0, l1;
 
 int explicitsky = 0, skyarea = 0;
 
@@ -315,23 +531,6 @@ void genskyverts(cube &c, int x, int y, int z, int size, bool lodcube)
 
 ////////// Vertex Arrays //////////////
 
-VARF(floatvtx, 0, 0, 1, allchanged());
-
-void genfloatverts(fvertex *f)
-{
-    loopv(verts)
-    {
-        const vertex &v = verts[i];
-        f->x = v.x;
-        f->y = v.y;
-        f->z = v.z;
-        f->u = v.u;
-        f->v = v.v;
-        f->n = v.n;
-        f++;
-    };
-};
-
 int allocva = 0;
 int wtris = 0, wverts = 0, vtris = 0, vverts = 0, glde = 0;
 vector<vtxarray *> valist, varoot;
@@ -344,9 +543,22 @@ vtxarray *newva(int x, int y, int z, int size)
     int bufsize = verts.length()*(floatvtx ? sizeof(fvertex) : sizeof(vertex));
     if(!hasVBO) allocsize += bufsize; // length of vertex buffer
     vtxarray *va = (vtxarray *)new uchar[allocsize];
-    char *buf = l1.setup(va->l1, l0.setup(va->l0, (char *)(va+1)));
     if(hasVBO && verts.length())
     {
+#if 1
+        void *vbuf;
+        if(floatvtx)
+        {
+            fvertex *f = new fvertex[verts.length()];
+            genfloatverts(f);
+            vbuf = (vertex *)addvbo(va, VBO_VBUF, f, bufsize); 
+            delete[] f;
+        }
+        else vbuf = (vertex *)addvbo(va, VBO_VBUF, verts.getbuf(), bufsize);
+        uint offset = uint(vbuf) / (floatvtx ? sizeof(fvertex) : sizeof(vertex)); 
+        l0.offsetindices = offset;
+        l1.offsetindices = offset;
+#else
         glGenBuffers_(1, &va->vbufGL);
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
         if(floatvtx)
@@ -357,9 +569,11 @@ vtxarray *newva(int x, int y, int z, int size)
             delete[] f;
         }
         else glBufferData_(GL_ARRAY_BUFFER_ARB, bufsize, verts.getbuf(), GL_STATIC_DRAW_ARB);
+#endif
         va->vbuf = 0; // Offset in VBO
-    }
-    else
+    };
+    char *buf = l1.setup(va, va->l1, l0.setup(va, va->l0, (char *)(va+1)));
+    if(!hasVBO)
     {
         va->vbufGL = 0;
         va->vbuf = (vertex *)buf;
@@ -387,11 +601,11 @@ vtxarray *newva(int x, int y, int z, int size)
 
 void destroyva(vtxarray *va, bool reparent)
 {
-    if(va->vbufGL) glDeleteBuffers_(1, &va->vbufGL);
-    if(va->l0.ebufGL) glDeleteBuffers_(1, &va->l0.ebufGL);
-    if(va->l0.skybufGL) glDeleteBuffers_(1, &va->l0.skybufGL);
-    if(va->l1.ebufGL) glDeleteBuffers_(1, &va->l1.ebufGL);
-    if(va->l1.skybufGL) glDeleteBuffers_(1, &va->l0.skybufGL);
+    if(va->vbufGL) destroyvbo(va->vbufGL);
+    if(va->l0.ebufGL) destroyvbo(va->l0.ebufGL);
+    if(va->l0.skybufGL) destroyvbo(va->l0.skybufGL);
+    if(va->l1.ebufGL) destroyvbo(va->l1.ebufGL);
+    if(va->l1.skybufGL) destroyvbo(va->l1.skybufGL);
     wverts -= va->verts;
     wtris -= va->l0.tris;
     allocva--;
@@ -698,6 +912,7 @@ void octarender()                               // creates va s for all leaf cub
     recalcprogress = 0;
     varoot.setsizenodelete(0);
     updateva(worldroot, 0, 0, 0, hdr.worldsize/2, csi-1);
+    flushvbo();
 
     explicitsky = 0;
     skyarea = 0;
@@ -1242,6 +1457,7 @@ void renderoutline()
     glColor3ub((outline>>16)&0xFF, (outline>>8)&0xFF, outline&0xFF);
 
     resetorigin();    
+    GLuint vbufGL = 0, ebufGL = 0;
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1249,12 +1465,22 @@ void renderoutline()
 
         setorigin(va);
 
+        bool vbufchanged = true;
         if(hasVBO)
         {
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
+            if(vbufGL == va->vbufGL) vbufchanged = false;
+            else
+            {
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+                vbufGL = va->vbufGL;
+            };
+            if(ebufGL != lod.ebufGL)
+            {
+                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
+                ebufGL = lod.ebufGL;
+            };
         };
-        glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+        if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
@@ -1282,11 +1508,12 @@ float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 struct renderstate
 {
     bool colormask, depthmask, texture;
+    GLuint vbufGL, ebufGL;
     float fogplane;
     Shader *shader;
     const ShaderParam *vertparams[MAXSHADERPARAMS], *pixparams[MAXSHADERPARAMS];
 
-    renderstate() : colormask(true), depthmask(true), texture(true), fogplane(-1), shader(NULL)
+    renderstate() : colormask(true), depthmask(true), texture(true), vbufGL(0), ebufGL(0), fogplane(-1), shader(NULL)
     {
         memset(vertparams, 0, sizeof(vertparams));
         memset(pixparams, 0, sizeof(pixparams));
@@ -1345,12 +1572,22 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
     setorigin(va);
+    bool vbufchanged = true;
     if(hasVBO)
     {
-        glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
+        if(cur.vbufGL == va->vbufGL) vbufchanged = false;
+        else
+        {
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+            cur.vbufGL = va->vbufGL;
+        };
+        if(cur.ebufGL != lod.ebufGL)
+        {
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
+            cur.ebufGL = lod.ebufGL;
+        };
     };
-    glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+    if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
 
     if(zfill)
@@ -1406,13 +1643,16 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
     if(renderpath!=R_FIXEDFUNCTION) 
     { 
-        glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+        if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
     };
 
-    glClientActiveTexture_(GL_TEXTURE1_ARB);
-    glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
-    glClientActiveTexture_(GL_TEXTURE0_ARB);
+    if(vbufchanged)
+    {
+        glClientActiveTexture_(GL_TEXTURE1_ARB);
+        glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
+        glClientActiveTexture_(GL_TEXTURE0_ARB);
+    };
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
@@ -1576,7 +1816,11 @@ void setupTMUs()
 
 void cleanupTMUs()
 {
-    if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+    if(hasVBO) 
+    {
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+    };
     glDisableClientState(GL_VERTEX_ARRAY);
     if(renderpath!=R_FIXEDFUNCTION)
     {
@@ -1664,6 +1908,7 @@ void rendergeom()
 #ifdef SHOWVA
         int showvas = 0;
 #endif
+        cur.vbufGL = 0;
         for(vtxarray *va = visibleva; va; va = va->next)
         {
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1803,16 +2048,29 @@ void renderreflectedgeom(float z, bool refract)
     cleanupTMUs();
 };
 
+static GLuint skyvbufGL, skyebufGL;
+
 void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
 {
     setorigin(va);
 
+    bool vbufchanged = true;
     if(hasVBO)
     {
-        glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.skybufGL);
+        if(skyvbufGL == va->vbufGL) vbufchanged = false;
+        else
+        {
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+            glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+            skyvbufGL = va->vbufGL;
+        };
+        if(skyebufGL != lod.skybufGL)
+        {
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.skybufGL);
+            skyebufGL = lod.skybufGL;
+        };
     };
-    glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+    if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
     glDrawElements(GL_TRIANGLES, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
     glde++;
@@ -1842,6 +2100,8 @@ void rendersky(bool explicitonly, float zreflect)
 
     resetorigin();
 
+    skyvbufGL = skyebufGL = 0;
+ 
     if(zreflect)
     {
         reflectvfcP(zreflect);

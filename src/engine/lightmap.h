@@ -36,9 +36,10 @@ struct LightMap
     int type;
     PackNode packroot;
     uint lightmaps, lumels;
+    int unlitx, unlity; 
     
     LightMap()
-     : converted(0), type(LM_NORMAL), lightmaps(0), lumels(0)
+     : converted(0), type(LM_NORMAL), lightmaps(0), lumels(0), unlitx(-1), unlity(-1)
     {
         memset(data, 0, sizeof(data));
     };

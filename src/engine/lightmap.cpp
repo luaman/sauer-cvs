@@ -110,6 +110,28 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
     return true;
 };
 
+void insert_unlit(int i)
+{
+    LightMap &l = lightmaps[i];
+    if(l.type != LM_NORMAL && l.type != LM_BUMPMAP0)
+    {
+        l.unlitx = l.unlity = -1;
+        return;
+    };
+    ushort x, y;
+    uchar unlit[3] = { hdr.ambient, hdr.ambient, hdr.ambient };
+    if(l.insert(x, y, unlit, 1, 1))
+    {
+        if(l.type == LM_BUMPMAP0)
+        {
+            bvec front(128, 128, 255);
+            ASSERT(lightmaps[i+1].insert(x, y, front.v, 1, 1));
+        };
+        l.unlitx = x;
+        l.unlity = y;
+    };
+};
+
 void insert_lightmap(int type, ushort &x, ushort &y, ushort &lmid)
 {
     loopv(lightmaps)
@@ -891,6 +913,7 @@ void calclight(int *quality)
     uint total = 0, lumels = 0;
     loopv(lightmaps)
     {
+        insert_unlit(i);
         if(!editmode) lightmaps[i].finalize();
         total += lightmaps[i].lightmaps;
         lumels += lightmaps[i].lumels;

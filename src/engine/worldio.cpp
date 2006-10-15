@@ -272,7 +272,12 @@ void save_world(char *mname, bool nolms)
     if(!nolms) loopv(lightmaps)
     {
         LightMap &lm = lightmaps[i];
-        gzputc(f, lm.type);
+        gzputc(f, lm.type | (lm.unlitx>=0 ? 0x80 : 0));
+        if(lm.unlitx>=0)
+        {
+            writeushort(f, ushort(lm.unlitx));
+            writeushort(f, ushort(lm.unlity));
+        };
         gzwrite(f, lm.data, sizeof(lm.data));
     };
 
@@ -436,7 +441,16 @@ void load_world(const char *mname, const char *cname)        // still supports a
         {
             show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");
             LightMap &lm = lightmaps.add();
-            if(hdr.version >= 17) lm.type = gzgetc(f);
+            if(hdr.version >= 17)
+            {
+                int type = gzgetc(f);
+                lm.type = type&0xF;
+                if(type&0x80)
+                {
+                    lm.unlitx = readushort(f);
+                    lm.unlity = readushort(f);
+                };
+            };
             gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
             lm.finalize();
         };
