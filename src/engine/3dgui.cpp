@@ -119,17 +119,14 @@ struct gui : g3d_gui
         return layout(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW);
 	};
 	
-	void slider(char *name, int color) 
+	void slider(int &val, int vmin, int vmax, int color) 
     {
 		int x = curx;
 		int y = cury;
 		line_(color, 2);
 		if(!layoutpass) 
 		{
-			int vmin = getvarmin(name);
-			int vmax = getvarmax(name);
-			int v =  getvar(name);
-			s_sprintfd(label)("%d", v);
+			s_sprintfd(label)("%d", val);
 			int w = text_width(label);
 			
 			bool hit;
@@ -138,12 +135,12 @@ struct gui : g3d_gui
 			{
 				hit = ishit(FONTH, ysize, x, y);
 				px = x + (FONTH-w)/2;
-				py = y + (ysize-FONTH) - ((ysize-FONTH)*(v-vmin))/(vmax-vmin); //zero at the bottom
+				py = y + (ysize-FONTH) - ((ysize-FONTH)*(val-vmin))/(vmax-vmin); //zero at the bottom
 			}
 			else
 			{
 				hit = ishit(xsize, FONTH, x, y);
-				px = x + ((xsize-w)*(v-vmin))/(vmax-vmin);
+				px = x + ((xsize-w)*(val-vmin))/(vmax-vmin);
 				py = y;
 			};
 			
@@ -156,11 +153,7 @@ struct gui : g3d_gui
                 if(ishorizontal()) vnew = (vnew*(y+ysize-hity))/ysize;
                 else vnew = (vnew*(hitx-x))/xsize;
                 vnew += vmin;
-				if(vnew != v) 
-                {
-                    extern void guiupdatevar(const char *name, int v);
-					guiupdatevar(name, vnew);
-				};
+                if(vnew != val) val = vnew;
 			};
 		};
 	};

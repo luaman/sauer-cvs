@@ -64,7 +64,6 @@ void guibar()
     if(cgui) cgui->separator(GUI_TITLE_COLOR);
 };
 
-//@TODO supply label + labels for max&min, flag for logarithmic?
 static void updatevar(const char *var, int val)
 {
     s_sprintf(executelater)("%s %d", var, val);

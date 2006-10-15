@@ -199,10 +199,10 @@ struct g3d_gui
     virtual void pushlist() {};
     virtual void poplist() {};
 
-     virtual int title(const char *text, int color, const char *icon = NULL) = 0;
-     virtual int image(const char *path) = 0;
-     virtual void slider(char *name, int color) = 0;
-     virtual void separator(int color) = 0;
+    virtual int title(const char *text, int color, const char *icon = NULL) = 0;
+    virtual int image(const char *path) = 0;
+    virtual void slider(int &val, int vmin, int vmax, int color) = 0;
+    virtual void separator(int color) = 0;
 };
 
 struct g3d_callback
