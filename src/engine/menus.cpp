@@ -64,7 +64,6 @@ void guititle(char *name)
     if(cgui) cgui->title(name, GUI_TITLE_COLOR);
 };
 
-
 void guibar()
 {
     if(cgui) cgui->separator(GUI_TITLE_COLOR);
@@ -76,19 +75,18 @@ void guislider(char *var)
 	if(cgui) cgui->slider(var, GUI_TITLE_COLOR);
 };
 
+void guicheckbox(char *name, char *var)
+{
+    if(!cgui) return;
+    bool enable = getvar(var)!=0;
+    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "cross")&G3D_UP) guiupdatevar(var, !enable);
+};
+
 void guiradio(char *name, char *var, int *n)
 {
     if(!cgui) return;
-    if(*n<0)
-    {	//check box
-    	bool enable = getvar(var)!=0;
-    	if(cgui->button(name, GUI_BUTTON_COLOR, enable? "tick" : "cross")&G3D_UP) guiupdatevar(var, !enable);
-    }
-    else
-    {	//radio button
-    	bool enable = getvar(var)==*n;
-    	if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "empty")&G3D_UP && !enable) guiupdatevar(var, *n);
-    };
+    bool enable = getvar(var)==*n;
+    if(cgui->button(name, GUI_BUTTON_COLOR, enable ? "tick" : "empty")&G3D_UP && !enable) guiupdatevar(var, *n);
 };
 
 void guilist(char *contents)
@@ -154,6 +152,7 @@ COMMAND(guibar,"");
 COMMAND(guiimage,"ss");
 COMMAND(guislider,"s");
 COMMAND(guiradio,"ssi");
+COMMAND(guicheckbox, "ss");
 
 static struct mainmenucallback : g3d_callback
 {
