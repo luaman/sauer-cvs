@@ -1068,7 +1068,6 @@ void editmove(int *isdown)
     if(haveselent() && dragging) { entmovingorient = *isdown!=0; reorient(); return; };
     if(*isdown!=0)
     {
-        selextend();
         vec v(cur.v); v.add(1);
         if(pointinsel(sel, v))
         {
@@ -1077,10 +1076,12 @@ void editmove(int *isdown)
             havesel = false;
             return;
         };
-    };
-    if(moving && movesel!=sel.o)
+    }
+    else if(moving && movesel!=sel.o)
+    {
         mpmovecubes(movesel, sel, true);
-    moving = false;
+        moving = false;
+    };
 };
 
 COMMAND(selextend, "");
