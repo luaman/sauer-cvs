@@ -22,7 +22,8 @@ struct gui : g3d_gui
     };
 
     vector<list> lists;
-    static int curdepth, curlist, nextlist, xsize, ysize, hitx, hity, curx, cury;
+    static float hitx, hity;
+    static int curdepth, curlist, nextlist, xsize, ysize, curx, cury;
 
     bool ishorizontal() const { return curdepth&1; };
     bool isvertical() const { return !ishorizontal(); };
@@ -150,8 +151,8 @@ struct gui : g3d_gui
 			if(hit && actionon) 
             {
                 int vnew = 1+vmax-vmin;
-                if(ishorizontal()) vnew = (vnew*(y+ysize-hity))/ysize;
-                else vnew = (vnew*(hitx-x))/xsize;
+                if(ishorizontal()) vnew = int(vnew*(y+ysize-hity)/ysize);
+                else vnew = int(vnew*(hitx-x)/xsize);
                 vnew += vmin;
                 if(vnew != val) val = vnew;
 			};
@@ -310,8 +311,8 @@ struct gui : g3d_gui
             vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
             int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
             vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
-            hitx = (int)(xaxis.dot(intersectionvec)/scale);
-            hity = -(int)(intersectionvec.z/scale);
+            hitx = xaxis.dot(intersectionvec)/scale;
+            hity = -intersectionvec.z/scale;
             if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
 				windowhit = this;
         }
@@ -333,7 +334,8 @@ void g3d_addgui(g3d_callback *cb, vec &origin)
     g.dist = camera1->o.dist(origin);
 };
 
-int gui::curdepth, gui::curlist, gui::nextlist, gui::xsize, gui::ysize, gui::hitx, gui::hity, gui::curx, gui::cury;
+float gui::hitx, gui::hity;
+int gui::curdepth, gui::curlist, gui::nextlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
 
