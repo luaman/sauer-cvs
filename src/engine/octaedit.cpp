@@ -101,7 +101,6 @@ COMMAND(passthrough, "D");
 
 void editdrag(bool on)
 {
-    if(g3d_windowhit(on, true)) return;
     if(dragging = on)
     {
         cancelsel();
@@ -177,7 +176,7 @@ bool noedit(bool view)
 COMMAND(reorient, "");
 COMMANDN(edittoggle, toggleedit, "");
 ICOMMAND(cancelsel, "", { if(!g3d_windowhit(false, false)) cancelsel(); });
-ICOMMAND(editdrag, "D", editdrag(args!=NULL));
+ICOMMAND(editdrag, "D", { if(!g3d_windowhit(args!=NULL, true)) editdrag(args!=NULL); });
 
 ///////// selection support /////////////
 

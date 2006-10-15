@@ -14,16 +14,21 @@ static bool clearlater = false;
 
 vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(64).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
 
-void cleargui(int *n)
+int cleargui(int n = 0)
 {
     int clear = guistack.length();
-    if(!n || *n>0) clear = min(clear, !n ? 1 : *n);
+    if(n>0) clear = min(clear, n);
     loopi(clear) delete[] guistack.pop();
     if(!guistack.empty())
     {
         menustart = lastmillis;
     };
-    if(n) intret(clear);
+    return clear;
+};
+
+void cleargui_(int *n)
+{
+    intret(cleargui(*n));
 };
 
 #define GUI_TITLE_COLOR  0xAAFFAA
@@ -149,7 +154,7 @@ COMMAND(newgui, "ss");
 COMMAND(guibutton, "sss");
 COMMAND(guitext, "s");
 COMMAND(guiservers, "s");
-COMMAND(cleargui, "i");
+COMMANDN(cleargui, cleargui_, "i");
 COMMAND(showgui, "s");
 
 COMMAND(guilist, "s");
