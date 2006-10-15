@@ -106,9 +106,10 @@ int renderconsole(int w, int h)                   // render buffer taking into a
 struct keym
 {
      int code;
-     char *name, *action, *editaction, *releaseaction; 
+     char *name, *action, *editaction;
+     vector<char *> releaseactions; 
 
-    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); DELETEA(releaseaction); };
+    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); releaseactions.deletecontentsa(); };
 };
 
 vector<keym> keyms;                                 
@@ -121,7 +122,6 @@ void keymap(char *code, char *key)
     km.name = newstring(key);
     km.action = newstring("");
     km.editaction = newstring("");
-    km.releaseaction = NULL;
 };
 
 COMMAND(keymap, "ss");
@@ -223,15 +223,7 @@ COMMAND(history, "i");
 const char *addreleaseaction(const char *s)
 {
     if(!keypressed) return NULL;
-    char *action;
-    if(keypressed->releaseaction)
-    {
-        action = newstring(strlen(keypressed->releaseaction)+1+strlen(s));
-        sprintf(action, "%s;%s", keypressed->releaseaction, s);
-        DELETEA(keypressed->releaseaction);
-    }
-    else action = newstring(s);
-    keypressed->releaseaction = action;
+    keypressed->releaseactions.add(newstring(s));
     return keypressed->name;
 };
 
@@ -350,15 +342,15 @@ void keypress(int code, bool isdown, int cooked)
                 char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
                 keyaction = action;
                 keypressed = &k;
-                DELETEA(k.releaseaction);
+                k.releaseactions.deletecontentsa();
                 execute(keyaction); 
                 keypressed = NULL;
                 if(keyaction!=action) delete[] keyaction;
             }
-            else if(k.releaseaction)
+            else if(k.releaseactions.length())
             {
-                execute(k.releaseaction);
-                DELETEA(k.releaseaction);
+                loopv(k.releaseactions) execute(k.releaseactions[i]);
+                k.releaseactions.deletecontentsa();
             };
             return;
         };

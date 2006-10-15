@@ -202,13 +202,8 @@ static struct mainmenucallback : g3d_callback
 void menuprocess()
 {
     int level = guistack.length();
-    loopv(executelater)
-    {
-        
-        execute(executelater[i]);
-        delete[] executelater[i];
-    };
-    executelater.setsizenodelete(0);
+    loopv(executelater) execute(executelater[i]);
+    executelater.deletecontentsa();
     if(clearlater)
     {
         if(level==guistack.length()) guistack.deletecontentsa();
