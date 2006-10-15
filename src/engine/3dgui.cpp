@@ -22,9 +22,9 @@ struct gui : g3d_gui
     };
 
     vector<list> lists;
-    static int curlist, nextlist, xsize, ysize, hitx, hity, curx, cury;
+    static int curdepth, curlist, nextlist, xsize, ysize, hitx, hity, curx, cury;
 
-    bool ishorizontal() const { return curlist&1; };
+    bool ishorizontal() const { return curdepth&1; };
     bool isvertical() const { return !ishorizontal(); };
 
     void pushlist()
@@ -36,7 +36,8 @@ struct gui : g3d_gui
                 lists[curlist].w = xsize;
                 lists[curlist].h = ysize;
             };
-            lists.add().parent = curlist; 
+            list &l = lists.add();
+            l.parent = curlist;
             curlist = lists.length()-1;
             xsize = ysize = 0;
         }
@@ -46,6 +47,7 @@ struct gui : g3d_gui
             xsize = lists[curlist].w;
             ysize = lists[curlist].h;
         };
+        curdepth++;
     };
 
     void poplist()
@@ -57,13 +59,14 @@ struct gui : g3d_gui
             l.h = ysize;
         };
         curlist = l.parent;
+        curdepth--;
         if(curlist>=0)
         {
             xsize = lists[curlist].w;
             ysize = lists[curlist].h;
-            if(layoutpass) layout(l.w, l.h);
-            else if(ishorizontal()) cury -= l.w;
-            else curx -= l.h;
+            if(ishorizontal()) cury -= l.h;
+            else curx -= l.w;
+            layout(l.w, l.h);
         };
     };
 
@@ -256,6 +259,7 @@ struct gui : g3d_gui
     void start(int starttime, float basescale)
     {	
 		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
+        curdepth = -1;
         curlist = -1;
         nextlist = 0;
         pushlist();
@@ -334,7 +338,7 @@ void g3d_addgui(g3d_callback *cb, vec &origin)
     g.dist = camera1->o.dist(origin);
 };
 
-int gui::curlist, gui::nextlist, gui::xsize, gui::ysize, gui::hitx, gui::hity, gui::curx, gui::cury;
+int gui::curdepth, gui::curlist, gui::nextlist, gui::xsize, gui::ysize, gui::hitx, gui::hity, gui::curx, gui::cury;
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
 

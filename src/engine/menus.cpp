@@ -92,7 +92,12 @@ void guilist(char *contents)
 
 void newgui(char *name, char *contents) 
 { 
-	guis[newstring(name)] = newstring(contents); 
+    if(guis.access(name))
+    {
+        delete[] guis[name];
+        guis[name] = newstring(contents);
+    }
+    else guis[newstring(name)] = newstring(contents); 
 };
 
 void showgui(char *name)
