@@ -160,7 +160,7 @@ void setfullscreen(bool enable)
 {
     if(enable == !(screen->flags&SDL_FULLSCREEN))
     {
-#ifndef WIN32
+#ifdef WIN32
         conoutf("\"fullscreen\" variable not supported on this platform. Use the -t command-line option.");
         extern int fullscreen;
         fullscreen = !enable;
