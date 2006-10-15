@@ -108,6 +108,7 @@ int getvarmax(char *name)
     return id->_max;
 };
 bool identexists(char *name) { return idents->access(name)!=NULL; };
+ident *getident(char *name) { return idents->access(name); };
 
 const char *getalias(char *name)
 {

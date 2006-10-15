@@ -69,34 +69,46 @@ void guibar()
     if(cgui) cgui->separator(GUI_TITLE_COLOR);
 };
 
-static void updatevar(const char *var, int val)
+static void updateval(char *var, int val, char *onchange)
 {
-    s_sprintf(executelater)("%s %d", var, val);
-};
- 
-void guislider(char *var, int *min, int *max)
-{
-	if(!cgui) return;
-    int oldval = getvar(var), val = oldval, vmin = *max ? *min : getvarmin(var), vmax = *max ? *max : getvarmax(var);
-    cgui->slider(val, vmin, vmax, GUI_TITLE_COLOR);
-    if(val != oldval) updatevar(var, val);
+    ident *id = getident(var);
+    if(id->_type==ID_VAR) s_sprintf(executelater)("%s %d", var, val);
+    else if(id->_type==ID_ALIAS) s_sprintf(executelater)("%s = %d", var, val);
+    else return;
+    if(onchange[0]) s_strcat(executelater, onchange);
 };
 
-void guicheckbox(char *name, char *var, int *on, int *off)
+static int getval(char *var)
 {
-    bool enabled = getvar(var)!=*off;
+    ident *id = getident(var);
+    if(id->_type==ID_VAR) return *id->_storage;
+    else if(id->_type==ID_ALIAS) return atoi(id->_action);
+    else return 0;
+};
+
+void guislider(char *var, int *min, int *max, char *onchange)
+{
+	if(!cgui) return;
+    int oldval = getval(var), val = oldval, vmin = *max ? *min : getvarmin(var), vmax = *max ? *max : getvarmax(var);
+    cgui->slider(val, vmin, vmax, GUI_TITLE_COLOR);
+    if(val != oldval) updateval(var, val, onchange);
+};
+
+void guicheckbox(char *name, char *var, int *on, int *off, char *onchange)
+{
+    bool enabled = getval(var)!=*off;
     if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "tick" : "cross")&G3D_UP)
     {
-        updatevar(var, enabled ? *off : (*on || *off ? *on : 1));
+        updateval(var, enabled ? *off : (*on || *off ? *on : 1), onchange);
     };
 };
 
-void guiradio(char *name, char *var, int *n)
+void guiradio(char *name, char *var, int *n, char *onchange)
 {
-    bool enabled = getvar(var)==*n;
+    bool enabled = getval(var)==*n;
     if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "tick" : "empty")&G3D_UP)
     {
-        if(!enabled) updatevar(var, *n);
+        if(!enabled) updateval(var, *n, onchange);
     };
 };
 
@@ -161,9 +173,9 @@ COMMAND(guilist, "s");
 COMMAND(guititle, "s");
 COMMAND(guibar,"");
 COMMAND(guiimage,"ss");
-COMMAND(guislider,"sii");
-COMMAND(guiradio,"ssi");
-COMMAND(guicheckbox, "ssii");
+COMMAND(guislider,"siis");
+COMMAND(guiradio,"ssis");
+COMMAND(guicheckbox, "ssiis");
 
 static struct mainmenucallback : g3d_callback
 {

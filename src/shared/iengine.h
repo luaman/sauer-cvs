@@ -51,6 +51,7 @@ extern int getvar(char *name);
 extern int getvarmin(char *name);
 extern int getvarmax(char *name);
 extern bool identexists(char *name);
+extern ident *getident(char *name);
 extern bool addcommand(char *name, void (*fun)(), char *narg);
 extern int execute(char *p);
 extern char *executeret(char *p);
