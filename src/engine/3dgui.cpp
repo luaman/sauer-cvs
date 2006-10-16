@@ -315,14 +315,16 @@ struct gui : g3d_gui
     {
 		if(layoutpass)
         {
-            if(windowhit) return;
-            vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
-            int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
-            vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
-            hitx = xaxis.dot(intersectionvec)/scale;
-            hity = -intersectionvec.z/scale;
-            if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
-				windowhit = this;
+            if(!windowhit)
+            {
+                vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
+                int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
+                vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
+                hitx = xaxis.dot(intersectionvec)/scale;
+                hity = -intersectionvec.z/scale;
+                if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
+				    windowhit = this;
+            };
         }
         else
         {
