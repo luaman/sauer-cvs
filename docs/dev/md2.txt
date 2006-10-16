@@ -44,10 +44,10 @@ mdlcollide N
     If N is 0, collisions with the model are disabled. Default = 1.
 
 mdlbb RAD H
-mdlbb RAD HF HC
-    Sets the model's bounding box to radius RAD and height H (or HF+HC), where HF is the distance from the 
-    bottom to eyeheight, and HC is the distance from eyeheight to the top. If this is not set, a bounding box
-    is automatically generated from the model's geometry.
+mdlbb RAD H EYE
+    Sets the model's bounding box to radius RAD and height H. If this is not set, or RAD and H are 0, 
+    a bounding box is automatically generated from the model's geometry. EYE is fraction of the model's height
+    to be used as the eyeheight (default 0.9).
 
 mdlcullface N
     If N is 0, backface culling is disabled for this model. Otherwise, backface culling is enabled. Default = 1.
