@@ -235,6 +235,9 @@ struct svec
     short &operator[](int i)       { return v[i]; };
     short  operator[](int i) const { return v[i]; };
 
+    bool operator==(const svec &v) const { return x==v.x && y==v.y && z==v.z; };
+    bool operator!=(const svec &v) const { return x!=v.x || y!=v.y || z!=v.z; };
+
     void add(const svec &o) { x += o.x; y += o.y; z += o.z; };
     void sub(const svec &o) { x -= o.x; y -= o.y; z -= o.z; };
     void mul(int f) { x *= f; y *= f; z *= f; };
