@@ -390,7 +390,8 @@ struct md3 : model
         if(!loaded) return;
         vector<triangle> tris;
         md3models[0].gentris(frame, tris);
-        vec min, max;
+        if(tris.empty()) return;
+        vec min = tris[0].a, max = min;
         loopv(tris)
         {
             triangle &t = tris[i];

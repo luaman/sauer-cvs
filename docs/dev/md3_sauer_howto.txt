@@ -79,6 +79,14 @@ md3link parent child tag
 
     Hint: Make sure you understand the difference between the parent and child model. Rendering starts at model 0 (first loaded model) and then continues with model 0's children, etc. Imagine a tree, model 0 is the root if it.
     
+mdlcollide N
+    If N is 0, collisions with the model are disabled. Default = 1.
+
+mdlbb RAD H
+mdlbb RAD HF HC
+    Sets the model's bounding box to radius RAD and height H (or HF+HC), where HF is the distance from the 
+    bottom to eyeheight, and HC is the distance from eyeheight to the top. If this is not set, a bounding box
+    is automatically generated from the model's geometry.
 
 mdlcullface N
     If N is 0, backface culling is disabled for this model. Otherwise, backface culling is enabled. Default = 1.

@@ -40,6 +40,15 @@ md2anim name frame numframes speed
     Example: md2anim "run attack" 50 6 30
         Defines a "run attack" animation starting at frame 50 with 6 frames and running at 30% speed.      
 
+mdlcollide N
+    If N is 0, collisions with the model are disabled. Default = 1.
+
+mdlbb RAD H
+mdlbb RAD HF HC
+    Sets the model's bounding box to radius RAD and height H (or HF+HC), where HF is the distance from the 
+    bottom to eyeheight, and HC is the distance from eyeheight to the top. If this is not set, a bounding box
+    is automatically generated from the model's geometry.
+
 mdlcullface N
     If N is 0, backface culling is disabled for this model. Otherwise, backface culling is enabled. Default = 1.
 
