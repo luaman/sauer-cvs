@@ -232,18 +232,6 @@ struct md3model
             if(translate) v.add(*translate);
             v.mul(scale);
         };
-        loopi(numframes)
-        {
-            md3frame &frm = frames[i];
-            vec &min = frm.min_bounds, &max = frm.max_bounds;
-            if(translate)
-            {
-                min.add(*translate);
-                max.add(*translate);
-            };
-            min.mul(scale);
-            max.mul(scale);
-        };
     };
   
     void gentris(int frame, vector<triangle> &tris)
@@ -287,32 +275,6 @@ struct md3model
             };
             link->gentris(frame, tris, n);
         };
-    };
-
-    float boundsphere_recv(int frame, vec &center)
-    {
-		if(frame>=numframes || frame<0) frame = 0;
-        md3frame &frm = frames[frame];
-        vec min = frm.min_bounds;
-        vec max = frm.max_bounds;
-        float radius = max.dist(min, center)/2.0f;
-        center.div(2.0f);
-        center.add(min);
-        
-        float biggest_radius = 0.0f;
-        loopi(numtags)
-        {
-            md3model *mdl = links[i];
-            md3tag *tag = &tags[frame*numtags+i];
-            if(!mdl || !tag) continue;
-            vec child_center;
-            float r = mdl->boundsphere_recv(frame, child_center);
-            biggest_radius = max(r, biggest_radius);
-            child_center.add(vec(tag->pos));
-            center.add(child_center);
-            center.div(2.0f);
-        };
-        return radius + biggest_radius; // add the rad of the biggest child
     };
 
     bool load(char *path)

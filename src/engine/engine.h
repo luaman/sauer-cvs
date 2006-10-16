@@ -56,7 +56,7 @@ struct model
     {
         vec radius;
         boundbox(frame, center, radius);
-        return max(radius.x, max(radius.y, radius.z));
+        return radius.magnitude();
     };
 
     float above(int frame = 0)

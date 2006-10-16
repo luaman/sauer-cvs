@@ -1423,7 +1423,6 @@ void rendermapmodels()
             };
         };
     };
-    q = 0;
 };
 
 bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
