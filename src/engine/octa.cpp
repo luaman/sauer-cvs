@@ -1211,8 +1211,12 @@ void invalidatemerges(cube &c)
             destroyva(c.ext->va);
             c.ext->va = NULL;
         };
-        c.ext->merged = 0;
-        if(c.ext->merges) freemergeinfo(c);
+        if(c.ext->merged)
+        {
+            brightencube(c);
+            c.ext->merged = 0;
+            if(c.ext->merges) freemergeinfo(c);
+        };
     };
     if(c.children) loopi(8) invalidatemerges(c.children[i]);
 };
