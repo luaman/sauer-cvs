@@ -324,14 +324,16 @@ bool dropentity(entity &e, int drop = -1)
     if(drop<0) drop = entdrop;
     if(e.type == ET_MAPMODEL)
     {
-        radius.z = 0.0f;
         model *m = loadmodel(NULL, e.attr2);
         if(m)
         {
             vec center;
-            float rad = m->boundsphere(0, center);
-            if(rad) radius.x = radius.y = rad + max(fabs(center.x), fabs(center.y)); 
+            m->boundbox(0, center, radius);
+            rotatebb(center, radius, e.attr1);
+            radius.x += fabs(center.x);
+            radius.y += fabs(center.y);
         };
+        radius.z = 0.0f;
     };
     switch(drop)
     {
