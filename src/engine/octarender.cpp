@@ -258,7 +258,7 @@ struct lodcollect
             LightMap &lm = lightmaps[t.unlit-LMID_RESERVED];
             short u = short((lm.unlitx + 0.5f) * SHRT_MAX/LM_PACKW), 
                   v = short((lm.unlity + 0.5f) * SHRT_MAX/LM_PACKH);
-            loopl(3) if(t.dims[l].length()) loopvj(t.dims[l])
+            loopl(3) loopvj(t.dims[l])
             {
                 int index = t.dims[l][j];
                 vertex &vtx = verts[index];
@@ -267,17 +267,24 @@ struct lodcollect
                     vtx.u = u;
                     vtx.v = v;
                 }
-                else if(vtx.u != u && vtx.v != v) t.dims[l][j] = vh.access((vvec &)vtx, u, v, vtx.n);
+                else if(vtx.u != u && vtx.v != v) 
+                {
+                    // necessary to copy these in case vechash reallocates verts before copying vtx
+                    vvec vv = vtx;
+                    bvec n = vtx.n;
+                    t.dims[l][j] = vh.access(vv, u, v, n);
+                };
             };
         };
         loopv(unlit)
         {
             sortkey &k = unlit[i];
             sortval &t = indices[k];
+            if(t.unlit<=0) continue;
             sortkey mkey(k.tex, t.unlit); 
             sortval *mval = indices.access(mkey);
             if(!mval) continue;
-            loopl(3) if(t.dims[l].length()) loopvj(t.dims[l]) mval->dims[l].add(t.dims[l][j]);
+            loopl(3) loopvj(t.dims[l]) mval->dims[l].add(t.dims[l][j]);
         };
     };
                     
