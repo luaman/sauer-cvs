@@ -96,7 +96,7 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
         default:
             o = e.o;
             o.sub(entselradius);
-            r.x = r.y = r.z = entselradius;
+            r.x = r.y = r.z = entselradius*2;
             break;
     };
     return true;
