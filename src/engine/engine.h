@@ -23,7 +23,7 @@ struct model
 {
     Shader *shader;
     float spec, ambient;
-    bool cullface, masked, vwep;
+    bool collide, cullface, masked, vwep;
     float scale;
     vec translate;
     SphereTree *spheretree;
@@ -31,7 +31,7 @@ struct model
 
     float bbrad, bbtofloor, bbtoceil;
 
-    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
+    model() : shader(0), spec(1.0f), ambient(0.3f), collide(true), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
     virtual ~model() {};
     virtual void calcbb(int frame, vec &center, vec &radius) = 0;
     virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl = NULL) = 0;
@@ -385,9 +385,12 @@ extern bool pointinsel(selinfo &sel, vec &o);
 extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
 
 // rendermodel
+struct mapmodelinfo { string name; int tex; model *m; };
+
 extern int findanim(const char *name);
 extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m);
 extern model *loadmodel(const char *name, int i = -1);
+extern mapmodelinfo &getmminfo(int i);
 
 // particles
 extern void particleinit();

@@ -20,6 +20,14 @@ void mdlcullface(int *cullface)
 
 COMMAND(mdlcullface, "i");
 
+void mdlcollide(int *collide)
+{
+    checkmdl;
+    loadingmodel->collide = *collide!=0;
+};
+
+COMMAND(mdlcollide, "i");
+
 void mdlspec(int *percent)
 {
     checkmdl;
@@ -80,6 +88,8 @@ COMMAND(mdlvwep, "i");
 void mdlbb(float *rad, float *tofloor, float *toceil)
 {
     checkmdl;
+    loadingmodel->bbcenter = vec(0, 0, 0);
+    loadingmodel->bbradius = vec(*rad, *rad, *tofloor + *toceil);
     loadingmodel->bbrad = *rad;
     loadingmodel->bbtofloor = *tofloor;
     loadingmodel->bbtoceil = *toceil;
@@ -90,28 +100,27 @@ COMMAND(mdlbb, "fff");
 
 // mapmodels
 
-struct mapmodel
+vector<mapmodelinfo> mapmodels;
+
+void mmodel(char *name, int *tex)
 {
-    mapmodelinfo info;
-    model *m;
+    mapmodelinfo &mmi = mapmodels.add();
+    s_strcpy(mmi.name, name);
+    mmi.tex = *tex;
+    mmi.m = NULL;
 };
 
-vector<mapmodel> mapmodels;
-
-void addmapmodel(int *rad, int *h, int *tex, char *name, char *shadow)
+void mapmodelcompat(int *rad, int *h, int *tex, char *name, char *shadow)
 {
-    mapmodelinfo mmi = { *rad, *h, *tex, *shadow ? atoi(shadow) : 1 };
-    s_strcpy(mmi.name, name);
-    mapmodel &mm = mapmodels.add();
-    mm.info = mmi;
-    mm.m = NULL;
+    mmodel(name, tex);
 };
 
 void mapmodelreset() { mapmodels.setsize(0); };
 
-mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i].info : *(mapmodelinfo *)0; };
+mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i] : *(mapmodelinfo *)0; };
 
-COMMANDN(mapmodel, addmapmodel, "iiiss");
+COMMAND(mmodel, "si");
+COMMANDN(mapmodel, mapmodelcompat, "iiiss");
 COMMAND(mapmodelreset, "");
 
 // model registry
@@ -123,9 +132,9 @@ model *loadmodel(const char *name, int i)
     if(!name)
     {
         if(!mapmodels.inrange(i)) return NULL;
-        mapmodel &mm = mapmodels[i];
-        if(mm.m) return mm.m;
-        name = mm.info.name;
+        mapmodelinfo &mmi = mapmodels[i];
+        if(mmi.m) return mmi.m;
+        name = mmi.name;
     };
     model **mm = mdllookup.access(name);
     model *m;

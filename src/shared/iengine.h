@@ -152,7 +152,6 @@ enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2 };
 
 extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d = NULL, int cull = MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED, float ambient = 0.4f, const char *vwepmdl = NULL);
 extern void abovemodel(vec &o, const char *mdl);
-extern mapmodelinfo &getmminfo(int i);
 extern void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, float ambient = 0.4f);
 extern void setbbfrommodel(dynent *d, char *mdl);
 extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);

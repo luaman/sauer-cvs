@@ -326,20 +326,12 @@ bool dropentity(entity &e, int drop = -1)
     if(e.type == ET_MAPMODEL)
     {
         radius.z = 0.0f;
-        mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(&mmi)
+        model *m = loadmodel(NULL, e.attr2);
+        if(m)
         {
-            if(mmi.rad < 0)
-            {
-                model *m = loadmodel(NULL, e.attr2);
-                if(m)
-                {
-                    vec center;
-                    float rad = m->boundsphere(0, center);
-                    radius.x = radius.y = rad + max(fabs(center.x), fabs(center.y)); 
-                };
-            }
-            else if(mmi.rad) radius.x = radius.y = mmi.rad;
+            vec center;
+            float rad = m->boundsphere(0, center);
+            if(rad) radius.x = radius.y = rad + max(fabs(center.x), fabs(center.y)); 
         };
     };
     switch(drop)

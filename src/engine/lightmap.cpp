@@ -1030,8 +1030,8 @@ void lightent(extentity &e, float height)
     if(e.type==ET_LIGHT) return;
     if(e.type==ET_MAPMODEL)
     {
-        mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(&mmi && mmi.h) height = mmi.h*0.75f;
+        model *m = loadmodel(NULL, e.attr2);
+        if(m) height = m->above()*0.75f;
     };
     vec target(e.o.x, e.o.y, e.o.z + height);
     lightreaching(target, e.color, e.dir, &e);

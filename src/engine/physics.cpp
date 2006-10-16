@@ -429,19 +429,12 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
     {
         extentity &e = *ents[oc.mapmodels[i]];
         if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
-        mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(!&mmi || !mmi.h || !mmi.rad) continue;
-        vec center(0, 0, 0), radius(mmi.rad, mmi.rad, mmi.h);
-        if(mmi.rad < 0 || mmi.h < 0)
-        {
-            model *m = loadmodel(NULL, e.attr2);
-            if(m)
-            {
-                m->boundbox(0, center, radius);
-                center.z -= radius.z;
-                radius.z *= 2;
-            };
-        };
+        model *m = loadmodel(NULL, e.attr2);
+        if(!m || !m->collide) continue;
+        vec center, radius;
+        m->boundbox(0, center, radius);
+        center.z -= radius.z;
+        radius.z *= 2;
         rotatebb(center, radius, e.attr1);
         if(!rectcollide(d, dir, center.add(e.o), radius.x, radius.y, radius.z, 0)) return false;
     };
