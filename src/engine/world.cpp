@@ -80,7 +80,6 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
             {
                 vec center, radius;
                 m->boundbox(0, center, radius);
-                extern void rotatebb(vec &center, vec &radius, int yaw);
                 rotatebb(center, radius, e.attr1);
                 
                 o = e.o;

@@ -85,14 +85,12 @@ void mdlvwep(int *vwep)
 
 COMMAND(mdlvwep, "i");
 
-void mdlbb(float *rad, float *tofloor, float *toceil)
+void mdlbb(float *rad, float *h, float *eyeheight)
 {
     checkmdl;
-    loadingmodel->bbcenter = vec(0, 0, 0);
-    loadingmodel->bbradius = vec(*rad, *rad, *tofloor + *toceil);
-    loadingmodel->bbrad = *rad;
-    loadingmodel->bbtofloor = *tofloor;
-    loadingmodel->bbtoceil = *toceil;
+    loadingmodel->bbcenter = vec(0, 0, *h/2);
+    loadingmodel->bbradius = vec(*rad, *rad, *h/2);
+    loadingmodel->bbeyeheight = *eyeheight; 
 };
 
 COMMAND(mdlbb, "fff");
@@ -307,9 +305,11 @@ void setbbfrommodel(dynent *d, char *mdl)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
-    d->radius    = m->bbrad;
-    d->eyeheight = m->bbtofloor;
-    d->aboveeye  = m->bbtoceil;
+    vec center, radius;
+    m->boundbox(0, center, radius);
+    d->radius    = max(radius.x+fabs(center.x), radius.y+fabs(center.y));
+    d->eyeheight = (center.z-radius.z) + radius.z*2*m->bbeyeheight;
+    d->aboveeye  = radius.z*2*(1.0f-m->bbeyeheight);
 };
 
 void vectoyawpitch(const vec &v, float &yaw, float &pitch)

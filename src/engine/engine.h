@@ -28,10 +28,9 @@ struct model
     vec translate;
     SphereTree *spheretree;
     vec bbcenter, bbradius;
+    float bbeyeheight;
 
-    float bbrad, bbtofloor, bbtoceil;
-
-    model() : shader(0), spec(1.0f), ambient(0.3f), collide(true), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
+    model() : shader(0), spec(1.0f), ambient(0.3f), collide(true), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), bbeyeheight(0.9f) {};
     virtual ~model() {};
     virtual void calcbb(int frame, vec &center, vec &radius) = 0;
     virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl = NULL) = 0;
@@ -357,6 +356,7 @@ extern void menuprocess();
 extern void mousemove(int dx, int dy);
 extern bool pointincube(const clipplanes &p, const vec &v);
 extern bool overlapsdynent(const vec &o, float radius);
+extern void rotatebb(vec &center, vec &radius, int yaw);
 
 // world
 enum
