@@ -1043,7 +1043,7 @@ void updateentlighting()
     loopv(ents) lightent(*ents[i]);
 };
 
-void convertlightmap(LightMap &lmc, LightMap &lml)
+void convert_lightmap(LightMap &lmc, LightMap &lml)
 {
     lmc.converted = new uchar[3 * LM_PACKW * LM_PACKH];
     uchar *conv = lmc.converted;
@@ -1060,9 +1060,40 @@ void convertlightmap(LightMap &lmc, LightMap &lml)
     };
 };
 
-void initlights();
-
 VARF(convertlms, 0, 1, 1, initlights());
+
+static void find_unlit(int i)
+{
+    LightMap &lm = lightmaps[i];
+    if(lm.unlitx>=0) return;
+    else if(lm.type==LM_BUMPMAP0)
+    {
+        if(i+1>=lightmaps.length() || lightmaps[i+1].type!=LM_BUMPMAP1) return;
+    }
+    else if(lm.type!=LM_NORMAL) return;
+    uchar *data = lm.data;
+    loop(y, 2) loop(x, LM_PACKW)
+    {
+        if(!data[0] && !data[1] && !data[2])
+        {
+            data[0] = data[1] = data[2] = hdr.ambient;
+            if(lm.type==LM_BUMPMAP0) ((bvec *)lightmaps[i+1].data)[y*LM_PACKW + x] = bvec(128, 128, 255);
+            lm.unlitx = x;
+            lm.unlity = y;
+            return;
+        };
+        if(data[0]==hdr.ambient && data[1]==hdr.ambient && data[2]==hdr.ambient)
+        {
+            if(lm.type!=LM_BUMPMAP0 || ((bvec *)lightmaps[i+1].data)[y*LM_PACKW + x] == bvec(128, 128, 255))
+            {
+                lm.unlitx = x;
+                lm.unlity = y;
+                return;
+            };
+        };
+        data += 3;
+    };
+};
 
 void initlights()
 {
@@ -1082,15 +1113,16 @@ void initlights()
     uchar dark[3] = { 0, 0, 0 };
     createtexture(lmtexids[LMID_DARK], 1, 1, dark, false, false);
     createtexture(lmtexids[LMID_DARK1], 1, 1, &front, false, false);
-    loopi(lightmaps.length()) 
+    loopv(lightmaps)
     {
         LightMap &lm = lightmaps[i];
         uchar *data = lm.data;
         if(convertlms && renderpath == R_FIXEDFUNCTION && lm.type == LM_BUMPMAP0)
         {
-            if(!lm.converted) convertlightmap(lm, lightmaps[i+1]);
+            if(!lm.converted) convert_lightmap(lm, lightmaps[i+1]);
             data = lm.converted;
         };
+        if(lm.unlitx<0) find_unlit(i);
         createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, false, false);
     };
     clearlightcache();
