@@ -393,6 +393,35 @@ bool plcollide(physent *d, const vec &dir)    // collide with player or monster
     return true;
 };
 
+void rotatebb(vec &center, vec &radius, int yaw)
+{
+    yaw = (yaw+7)-(yaw+7)%15;
+    yaw = 180-yaw;
+    if(yaw<0) yaw += 360;
+    switch(yaw)
+    {
+        case 0: break;
+        case 180: 
+            center.x = -center.x;
+            center.y = -center.y;
+            break;
+        case 90:
+            swap(float, radius.x, radius.y);
+            swap(float, center.x, center.y);
+            center.x = -center.x;
+            break;
+        case 270: 
+            swap(float, radius.x, radius.y); 
+            swap(float, center.x, center.y);
+            center.y = -center.y;
+            break;
+        default: 
+            radius.x = radius.y = max(radius.x, radius.y) + max(fabs(center.x), fabs(center.y));
+            center.x = center.y = 0.0f;
+            break;
+    };
+};
+
 bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
 {
     const vector<extentity *> &ents = et->getents();
@@ -402,8 +431,19 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
         if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
         mapmodelinfo &mmi = getmminfo(e.attr2);
         if(!&mmi || !mmi.h || !mmi.rad) continue;
-        float radius = float(mmi.rad);
-        if(!rectcollide(d, dir, e.o, radius, radius, float(mmi.h), 0.0f)) return false;
+        vec center(0, 0, 0), radius(mmi.rad, mmi.rad, mmi.h);
+        if(mmi.rad < 0 || mmi.h < 0)
+        {
+            model *m = loadmodel(NULL, e.attr2);
+            if(m)
+            {
+                m->boundbox(0, center, radius);
+                center.z -= radius.z;
+                radius.z *= 2;
+            };
+        };
+        rotatebb(center, radius, e.attr1);
+        if(!rectcollide(d, dir, center.add(e.o), radius.x, radius.y, radius.z, 0)) return false;
     };
     return true;
 };

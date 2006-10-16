@@ -27,12 +27,13 @@ struct model
     float scale;
     vec translate;
     SphereTree *spheretree;
-    
+    vec bbcenter, bbradius;
+
     float bbrad, bbtofloor, bbtoceil;
 
-    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
+    model() : shader(0), spec(1.0f), ambient(0.3f), cullface(true), masked(false), vwep(false), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), bbrad(4.1f), bbtofloor(14), bbtoceil(1) {};
     virtual ~model() {};
-    virtual float boundsphere(int frame, vec &center) = 0;
+    virtual void calcbb(int frame, vec &center, vec &radius) = 0;
     virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl = NULL) = 0;
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
@@ -40,11 +41,29 @@ struct model
     virtual int type() = 0;
     virtual SphereTree *setspheretree() { return 0; };
 
-    virtual float above(int frame = 0)
+    void boundbox(int frame, vec &center, vec &radius)
     {
-        vec center;
-        float rad = boundsphere(frame, center);
-        return center.z + rad;
+        if(frame) calcbb(frame, center, radius);
+        else
+        {
+            if(bbradius.iszero()) calcbb(frame, bbcenter, bbradius);
+            center = bbcenter;
+            radius = bbradius;
+        };
+    };
+
+    float boundsphere(int frame, vec &center)
+    {
+        vec radius;
+        boundbox(frame, center, radius);
+        return max(radius.x, max(radius.y, radius.z));
+    };
+
+    float above(int frame = 0)
+    {
+        vec center, radius;
+        boundbox(frame, center, radius);
+        return center.z+radius.z;
     };
 
     void setshader()

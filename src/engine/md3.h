@@ -209,17 +209,7 @@ struct md3model
     SphereTree *spheretree() // untested
     {
         vector<triangle> tris;
-        loopv(meshes)
-        {
-            md3mesh &mesh = meshes[i];
-            loopj(mesh.numtriangles)
-            {
-                triangle &tri = tris.add();
-                tri.a = mesh.vertices[mesh.triangles[j].vertexindices[0]];
-                tri.b = mesh.vertices[mesh.triangles[j].vertexindices[1]];
-                tri.c = mesh.vertices[mesh.triangles[j].vertexindices[2]];
-            };
-        };
+        gentris(0, tris);
         return buildspheretree(tris.length(), tris.getbuf());
     };
     
@@ -242,8 +232,63 @@ struct md3model
             if(translate) v.add(*translate);
             v.mul(scale);
         };
+        loopi(numframes)
+        {
+            md3frame &frm = frames[i];
+            vec &min = frm.min_bounds, &max = frm.max_bounds;
+            if(translate)
+            {
+                min.add(*translate);
+                max.add(*translate);
+            };
+            min.mul(scale);
+            max.mul(scale);
+        };
     };
-    
+  
+    void gentris(int frame, vector<triangle> &tris)
+    {
+        float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
+        gentris(frame, tris, m);
+    };
+
+    void gentris(int frame, vector<triangle> &tris, float m[12])
+    {
+        loopv(meshes)
+        {
+            md3mesh &mesh = meshes[i];
+            loopj(mesh.numtriangles)
+            {
+                triangle &t = tris.add();
+                vec &a = mesh.vertices[mesh.triangles[j].vertexindices[0] + frame * mesh.numvertices],
+                    &b = mesh.vertices[mesh.triangles[j].vertexindices[1] + frame * mesh.numvertices],
+                    &c = mesh.vertices[mesh.triangles[j].vertexindices[2] + frame * mesh.numvertices];
+                loopi(3)
+                {
+                    t.a[i] = m[i]*a.x + m[i+3]*a.y + m[i+6]*a.z + m[i+9];
+                    t.b[i] = m[i]*b.x + m[i+3]*b.y + m[i+6]*b.z + m[i+9];
+                    t.c[i] = m[i]*c.x + m[i+3]*c.y + m[i+6]*c.z + m[i+9];
+                };
+            };
+        };
+        loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
+        {
+            md3model *link = links[i];
+            if(!link) continue;
+
+            md3tag &tag = tags[frame*numtags+i];
+            float n[12];
+            loop(y, 3)
+            {
+                n[y] = m[y]*tag.rotation[0][0] + m[y+3]*tag.rotation[0][1] + m[y+6]*tag.rotation[0][2];
+                n[3+y] = m[y]*tag.rotation[1][0] + m[y+3]*tag.rotation[1][1] + m[y+6]*tag.rotation[1][2];
+                n[6+y] = m[y]*tag.rotation[2][0] + m[y+3]*tag.rotation[2][1] + m[y+6]*tag.rotation[2][2];
+                n[9+y] = m[y]*tag.pos[0] + m[y+3]*tag.pos[1] + m[y+6]*tag.pos[2] + m[y+9];
+            };
+            link->gentris(frame, tris, n);
+        };
+    };
+
     float boundsphere_recv(int frame, vec &center)
     {
 		if(frame>=numframes || frame<0) frame = 0;
@@ -268,25 +313,6 @@ struct md3model
             center.div(2.0f);
         };
         return radius + biggest_radius; // add the rad of the biggest child
-    };
-
-    float above_recv(int frame) // assumes models are stacked in a row
-    {
-        md3frame &frm = frames[frame];
-        vec min = frm.min_bounds;
-        vec max = frm.max_bounds;
-        float above = max.z-min.z;
-        
-        float highest = 0.0f;
-        loopi(numtags)
-        {
-            md3model *mdl = links[i];
-            md3tag *tag = &tags[frame*numtags+i];
-            if(!mdl || !tag) continue;
-            float a = mdl->above_recv(frame)+tag->pos.z;
-            highest = max(a, highest);
-        };
-        return above + highest;
     };
 
     bool load(char *path)
@@ -397,16 +423,26 @@ struct md3 : model
    
     int type() { return MDL_MD3; };
 
-    float boundsphere(int frame, vec &center) 
+    void calcbb(int frame, vec &center, vec &radius) 
     { 
-        if(!loaded) return 0.0f;
-        return md3models[0].boundsphere_recv(frame, center);
-    };
-    
-    float above(int frame) // assumes models are stacked
-    {
-        if(!loaded) return 0.0f;
-        return md3models[0].above_recv(frame);
+        if(!loaded) return;
+        vector<triangle> tris;
+        md3models[0].gentris(frame, tris);
+        vec min, max;
+        loopv(tris)
+        {
+            triangle &t = tris[i];
+            loopj(3)
+            {
+                min[j] = min(min[j], min(t.a[j], min(t.b[j], t.c[j])));
+                max[j] = max(max[j], max(t.a[j], max(t.b[j], t.c[j])));
+            };
+        };
+        radius = max;
+        radius.sub(min);
+        radius.mul(0.5f);
+        center = min;
+        center.add(radius);
     };
    
     SphereTree *setspheretree()

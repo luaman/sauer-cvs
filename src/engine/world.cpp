@@ -78,12 +78,17 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
             model *m = loadmodel(NULL, e.attr2);
             if(m)
             {
-                vec center;
-                int radius = int(m->boundsphere(0, center));
+                vec center, radius;
+                m->boundbox(0, center, radius);
+                extern void rotatebb(vec &center, vec &radius, int yaw);
+                rotatebb(center, radius, e.attr1);
+                
                 o = e.o;
                 o.add(center);
-                o.sub(radius);
-                r.x = r.y = r.z = radius*2;
+                r = radius;
+                r.add(1);
+                o.sub(r);
+                r.mul(2);
                 break;
             };
         };
@@ -322,7 +327,20 @@ bool dropentity(entity &e, int drop = -1)
     {
         radius.z = 0.0f;
         mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(&mmi && mmi.rad) radius.x = radius.y = float(mmi.rad);
+        if(&mmi)
+        {
+            if(mmi.rad < 0)
+            {
+                model *m = loadmodel(NULL, e.attr2);
+                if(m)
+                {
+                    vec center;
+                    float rad = m->boundsphere(0, center);
+                    radius.x = radius.y = rad + max(fabs(center.x), fabs(center.y)); 
+                };
+            }
+            else if(mmi.rad) radius.x = radius.y = mmi.rad;
+        };
     };
     switch(drop)
     {

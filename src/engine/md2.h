@@ -238,26 +238,24 @@ struct md2 : model
         };
     };
 
-    float above(int frame)
+    void calcbb(int frame, vec &center, vec &radius)
     {
-        md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
-        float sc = scale/4.0f;
-        return (cf->translate[2] + cf->scale[2]*255.0f + translate.z)*sc;
-    };
-
-    float boundsphere(int frame, vec &center)
-    {
-        md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
-        float sc = scale/4.0f;
-        loopi(3) center[i] = cf->translate[i];
-        center.add(vec(translate.x, -translate.y, translate.z));
-        center.mul(sc);
-        vec radius;
-        loopi(3) radius.v[i] = cf->scale[i];
-        radius.mul(0.5f*255.0f*sc);
+        if(!mverts[frame]) scaleverts(frame);
+        vec min = mverts[frame][header.numvertices], max = min;
+        loopi(header.numvertices-1)
+        {
+            vec &v = mverts[frame][i];
+            loopi(3)
+            {
+                min[i] = min(min[i], v[i]);
+                max[i] = max(max[i], v[i]);
+            };
+        };
+        radius = max;
+        radius.sub(min);
+        radius.mul(0.5f);
+        center = min;
         center.add(radius);
-        center.y = -center.y;
-        return radius.magnitude();
     };
 
     void genvar()
