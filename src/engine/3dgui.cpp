@@ -143,8 +143,8 @@ struct gui : g3d_gui
 	void progress(int color, float percent) { autotab(); line_(color, FONTH*2/5, percent); };
 
 	//use to set min size (useful when you have progress bars)
-	void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); }
-	
+	void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); };
+
     int layout(int w, int h)
     {
         if(layoutpass)

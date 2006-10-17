@@ -202,7 +202,7 @@ static struct mainmenucallback : g3d_callback
         char *contents = guis[name];
         if(!contents) return;
 		cgui = &g;
-        cgui->start(menustart, 0.04f);
+        cgui->start(menustart, 0.04f, &menutab);
 		guitab(name);		
 		execute(contents);
         cgui->end();
@@ -224,6 +224,6 @@ void menuprocess()
 
 void g3d_mainmenu()
 {
-    if(!guistack.empty()) g3d_addgui(&mmcb, menupos, &menutab);
+    if(!guistack.empty()) g3d_addgui(&mmcb, menupos);
 };
 

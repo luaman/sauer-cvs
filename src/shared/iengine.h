@@ -191,7 +191,7 @@ struct g3d_gui
 {
     virtual ~g3d_gui() {};
 
-    virtual void start(int starttime, float basescale) = 0;
+    virtual void start(int starttime, float basescale, int *tab = NULL) = 0;
     virtual void end() = 0;
     virtual int text(const char *text, int color, const char *icon = NULL) = 0;
     virtual int button(const char *text, int color, const char *icon = NULL) = 0;
@@ -215,4 +215,4 @@ struct g3d_callback
     virtual void gui(g3d_gui &g, bool firstpass) = 0;
 };
 
-extern void g3d_addgui(g3d_callback *cb, vec &origin, int *tab=NULL);
+extern void g3d_addgui(g3d_callback *cb, vec &origin);
