@@ -14,6 +14,9 @@ static g3d_gui *windowhit = NULL;
 #define IMAGE_SIZE 120
 #define ICON_SIZE 60
 
+//dependent on screen resolution?
+#define TABHEIGHT_MAX 600
+
 struct gui : g3d_gui
 {
     struct list
@@ -32,11 +35,59 @@ struct gui : g3d_gui
         lists.setsize(0);
     };
 
+	static int ty, tx, tpos; //tracking tab size and position since uses different layout method...
+	
+	void autotab() { 
+		if(layoutpass && tpos == 0) tcurrent = NULL; //disable tabs because you didn't start with one
+		if(tcurrent && curdepth == 0 && (layoutpass?0:cury)+ysize > TABHEIGHT_MAX) tab(NULL, 0xAAFFAA); 
+	};
+	
+	bool visible() { return (!tcurrent || (tpos==*tcurrent) )&& !layoutpass; };
+
+	//tab is always at top of page
+	void tab(const char *name, int color) {
+		if(curdepth != 0) return;
+		if(tpos > 0) tx += FONTH;
+		tpos++; 
+		s_sprintfd(title)("%d", tpos);
+		if(!name) name = title;
+		int w = text_width(name);
+		if(layoutpass) 
+		{  
+			ty = max(ty, ysize); 
+			ysize = FONTH*1.5;
+		}
+		else 
+		{	
+			cury = -ysize;
+			bool hit = tcurrent && windowhit==this && hitx>=curx+tx && hity>=cury && hitx<curx+tx+w && hity<cury+FONTH;
+			if(hit) 
+			{	
+				*tcurrent = tpos; //so just roll-over to switch tab
+				color = 0xFF0000;
+			};
+			if(visible()) {
+				//@TODO fix by using skin!
+				notextureshader->set();
+				glColor4ub(0xFF, 0xFF, 0xFF, 0x60); 
+				glBegin(GL_QUADS);
+				rect_(curx+tx-FONTH/2, cury, w+FONTH, FONTH);
+				glEnd();
+				defaultshader->set();
+				
+				draw_text(name, curx+tx+SHADOW, cury+SHADOW, 0, 0, 0);
+			};
+			draw_text(name, curx+tx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
+			cury += FONTH*1.5;
+		};
+		tx += w; 
+	};
+	
     bool ishorizontal() const { return curdepth&1; };
     bool isvertical() const { return !ishorizontal(); };
 
     void pushlist()
-    {
+    {	
         if(layoutpass)
         {
             if(curlist>=0)
@@ -55,7 +106,7 @@ struct gui : g3d_gui
             xsize = lists[curlist].w;
             ysize = lists[curlist].h;
         };
-        curdepth++;
+        curdepth++;		
     };
 
     void poplist()
@@ -78,11 +129,16 @@ struct gui : g3d_gui
         };
     };
 
-    int text  (const char *text, int color, const char *icon) { return button_(text, color, icon, false, false); };
-    int button(const char *text, int color, const char *icon) { return button_(text, color, icon, true, false);  };
-	int title (const char *text, int color, const char *icon) {	return button_(text, color, icon, false, true); };
-	void separator(int color) { line_(color, 5); };
+    int text  (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, false); };
+    int button(const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, true, false); };
+	int title (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, true); };
+	
+	void separator(int color) { autotab(); line_(color, 5, 1.0); };
+	void progress(int color, float percent) { autotab(); line_(color, FONTH*0.4, percent); };
 
+	//use to set min size (useful when you have progress bars)
+	void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); }
+	
     int layout(int w, int h)
     {
         if(layoutpass)
@@ -104,7 +160,7 @@ struct gui : g3d_gui
             bool hit = ishit(w, h);
             if(ishorizontal()) curx += w;
             else cury += h;
-            return hit ? mousebuttons|G3D_ROLLOVER : 0;
+            return (hit && visible()) ? mousebuttons|G3D_ROLLOVER : 0;
         };
     };
 
@@ -120,19 +176,19 @@ struct gui : g3d_gui
     {
         Texture *t = textureload(path);
         if(!t) return 0;
-        if(!layoutpass)
-        {
+		autotab();
+        if(visible())
 			icon_(t, curx, cury, IMAGE_SIZE, ishit(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW));
-        };
         return layout(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW);
 	};
 	
 	void slider(int &val, int vmin, int vmax, int color) 
-    {
+    {	
+		autotab();
 		int x = curx;
 		int y = cury;
-		line_(color, 2);
-		if(!layoutpass) 
+		line_(color, 2, 1.0);
+		if(visible()) 
 		{
 			s_sprintfd(label)("%d", val);
 			int w = text_width(label);
@@ -165,7 +221,15 @@ struct gui : g3d_gui
 			};
 		};
 	};
-	
+
+	void rect_(float x, float y, float w, float h) 
+	{
+		glVertex2f(x ,    y);
+		glVertex2f(x + w, y);
+		glVertex2f(x + w, y + h);
+		glVertex2f(x,     y + h);
+	};
+		
 	void icon_(Texture *t, int x, int y, int size, bool hit) 
     {
 		float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
@@ -178,10 +242,7 @@ struct gui : g3d_gui
 			notextureshader->set();
 			glColor3f(0,0,0);
 			glBegin(GL_QUADS);
-			glVertex2f(xo+SHADOW,    yo+SHADOW);
-			glVertex2f(xo+xs+SHADOW, yo+SHADOW);
-			glVertex2f(xo+xs+SHADOW, yo+ys+SHADOW);
-			glVertex2f(xo+SHADOW,    yo+ys+SHADOW);
+			rect_(xo+SHADOW, yo+SHADOW, xs, ys);
 			glEnd();
 			defaultshader->set();	
 		};
@@ -195,27 +256,25 @@ struct gui : g3d_gui
 		glEnd();
 	};
 	
-	void line_(int color, int size)
+	void line_(int color, int size, float percent)
 	{		
-		if(!layoutpass)
+		if(visible())
         {
 			notextureshader->set();
-			glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
 			glBegin(GL_QUADS);
-			if(ishorizontal()) 
+			if(percent < 0.99) 
 			{
-				glVertex2f(curx + FONTH/2 - size, cury);
-				glVertex2f(curx + FONTH/2 + size, cury);
-				glVertex2f(curx + FONTH/2 + size, cury + ysize);
-				glVertex2f(curx + FONTH/2 - size, cury + ysize);
-			} 
-			else 
-			{
-				glVertex2f(curx,       cury + FONTH/2 - size);
-				glVertex2f(curx+xsize, cury + FONTH/2 - size);
-				glVertex2f(curx+xsize, cury + FONTH/2 + size);
-				glVertex2f(curx,       cury + FONTH/2 + size);
+				glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0x60);
+				if(ishorizontal()) 
+					rect_(curx + FONTH/2 - size, cury, size*2, ysize);
+				else
+					rect_(curx, cury + FONTH/2 - size, xsize, size*2);
 			};
+			glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
+			if(ishorizontal()) 
+				rect_(curx + FONTH/2 - size, cury + ysize*(1.0-percent), size*2, ysize*percent);
+			else 
+				rect_(curx, cury + FONTH/2 - size, xsize*percent, size*2);
 			glEnd();
 			defaultshader->set();	
 		};
@@ -230,7 +289,7 @@ struct gui : g3d_gui
 		if(icon && text) w += padding;
 		if(text) w += text_width(text);
 		
-        if(!layoutpass)
+        if(visible())
         {
 			bool hit = ishit(w, FONTH);
 			if(hit && clickable) color = 0xFF0000;	
@@ -258,12 +317,16 @@ struct gui : g3d_gui
 	vec origin;
     float dist, scale;
 	g3d_callback *cb;
-    
+    int *tcurrent; //use NULL to disable tabbing
+	
     void start(int starttime, float basescale)
     {	
 		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
         curdepth = -1;
         curlist = -1;
+		tpos = 0;
+		tx = 0;
+		ty = 0;	
         pushlist();
         if(layoutpass) nextlist = curlist;
         else
@@ -276,6 +339,7 @@ struct gui : g3d_gui
             glRotatef(/*camera1->pitch*/-90, 1, 0, 0); // pitch the top/bottom towards us
 			glScalef(-scale, scale, scale);
 
+			//@TODO replace all this by using skin!
 			//rounded rectangle
 			static Texture *t = NULL;
             if(!t) t = textureload("packages/rorschach/1r_plain_met02.jpg");
@@ -288,7 +352,6 @@ struct gui : g3d_gui
 			
 			glColor4f(1, 1, 1, 0.7f);
 			glBindTexture(GL_TEXTURE_2D, t->gl);
-            //notextureshader->set();
 			
 			glBegin(GL_TRIANGLE_FAN); 
 			for(int i = 0; i < 360; i += 10) 
@@ -314,7 +377,14 @@ struct gui : g3d_gui
     void end()
     {
 		if(layoutpass)
-        {
+        {	
+			xsize = max(tx, xsize);
+			ysize = max(ty, ysize);
+			if(tpos <= 1) 
+				tcurrent = NULL; //disable tabs
+			else if(tcurrent) 
+				*tcurrent = max(1, min(*tcurrent, tpos));
+				
             if(!windowhit)
             {
                 vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
@@ -337,14 +407,15 @@ struct gui : g3d_gui
 vector<gui::list> gui::lists;
 float gui::hitx, gui::hity;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
-
+int gui::ty, gui::tx, gui::tpos;
 static vector<gui> guis;
 
-void g3d_addgui(g3d_callback *cb, vec &origin)
+void g3d_addgui(g3d_callback *cb, vec &origin, int *tab)
 {
     gui &g = guis.add();
     g.cb = cb;
     g.origin = origin;
+	g.tcurrent = tab;
     g.dist = camera1->o.dist(origin);
 };
 

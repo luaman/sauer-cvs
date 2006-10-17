@@ -5,6 +5,7 @@
 
 static vec menupos;
 static int menustart = 0;
+static int menutab = 1;
 static g3d_gui *cgui = NULL;
 
 static hashtable<char *, char *> guis;
@@ -23,6 +24,7 @@ int cleargui(int n = 0)
     loopi(clear) delete[] guistack.pop();
     if(!guistack.empty())
     {
+		menutab = 1;
         menustart = lastmillis;
     };
     return clear;
@@ -64,6 +66,11 @@ void guitext(char *name)
 void guititle(char *name)
 {
     if(cgui) cgui->title(name, GUI_TITLE_COLOR);
+};
+
+void guitab(char *name)
+{
+    if(cgui) cgui->tab(name, GUI_TITLE_COLOR);
 };
 
 void guibar()
@@ -151,6 +158,7 @@ void showgui(char *name)
 	
 	menupos = menuinfrontofplayer();
 	menustart = lastmillis;
+	menutab = 1;
 	guistack.add(newstring(name));
 };
 
@@ -183,6 +191,7 @@ COMMAND(guiimage,"ss");
 COMMAND(guislider,"siis");
 COMMAND(guiradio,"ssis");
 COMMAND(guicheckbox, "ssiis");
+COMMAND(guitab, "s");
 
 static struct mainmenucallback : g3d_callback
 {
@@ -194,7 +203,7 @@ static struct mainmenucallback : g3d_callback
         if(!contents) return;
 		cgui = &g;
         cgui->start(menustart, 0.04f);
-		guititle(name);		
+		guitab(name);		
 		execute(contents);
         cgui->end();
 		cgui = NULL;
@@ -215,6 +224,6 @@ void menuprocess()
 
 void g3d_mainmenu()
 {
-    if(!guistack.empty()) g3d_addgui(&mmcb, menupos);
+    if(!guistack.empty()) g3d_addgui(&mmcb, menupos, &menutab);
 };
 
