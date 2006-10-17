@@ -241,7 +241,7 @@ struct md2 : model
     void calcbb(int frame, vec &center, vec &radius)
     {
         if(!mverts[frame]) scaleverts(frame);
-        vec min = mverts[frame][header.numvertices], max = min;
+        vec min = mverts[frame][header.numvertices-1], max = min;
         loopi(header.numvertices-1)
         {
             vec &v = mverts[frame][i];
