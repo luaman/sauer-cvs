@@ -254,7 +254,7 @@ struct weaponstate
         newsphere(v, RL_DAMRAD, gun==GUN_RL ? 0 : 1);
         int numdebris = 50;//rnd(5)+1;
         vec debrisvel = vec(owner->o).sub(v).normalize();
-        loopi(numdebris) spawnbouncer(vec(debrisvel).mul(8).add(v), debrisvel, owner, BNC_DEBRIS);
+        loopi(numdebris) spawnbouncer(vec(debrisvel).mul(4).add(v), debrisvel, owner, BNC_DEBRIS);
         if(!local) return;
         loopi(cl.numdynents())
         {
