@@ -127,7 +127,7 @@ void *addvbo(vtxarray *va, int type, void *buf, int len)
 
     data.reserve(len);
 
-    int offset = data.length();
+    size_t offset = data.length();
     data.reserve(len);
     memcpy(&data.getbuf()[offset], buf, len);
     data.ulen += len;
@@ -563,7 +563,7 @@ vtxarray *newva(int x, int y, int z, int size)
             delete[] f;
         }
         else vbuf = (vertex *)addvbo(va, VBO_VBUF, verts.getbuf(), bufsize);
-        uint offset = uint(vbuf) / (floatvtx ? sizeof(fvertex) : sizeof(vertex)); 
+        int offset = int(size_t(vbuf)) / (floatvtx ? sizeof(fvertex) : sizeof(vertex)); 
         l0.offsetindices = offset;
         l1.offsetindices = offset;
 #else

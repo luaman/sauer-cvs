@@ -185,7 +185,7 @@ void screenres(int *w, int *h, int *bpp = 0)
 #endif
 }
 
-VARF(fullscreen, 0, 0, 1, setfullscreen(fullscreen));
+VARF(fullscreen, 0, 0, 1, setfullscreen(fullscreen!=0));
 
 COMMAND(screenres, "iii");
 
