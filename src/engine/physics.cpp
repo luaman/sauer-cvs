@@ -830,21 +830,26 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
 
 void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
 {
-    vec bo(obstacle->o);
-    bo.x -= obstacle->radius+d->radius;
-    bo.y -= obstacle->radius+d->radius;
-    bo.z -= obstacle->eyeheight+d->aboveeye;
-    bo.sub(space);
-    vec br(2*(obstacle->radius+d->radius), 2*(obstacle->radius+d->radius), obstacle->eyeheight+obstacle->aboveeye+d->eyeheight+d->aboveeye);
-    br.add(space*2);
+    float rad = obstacle->radius+d->radius;
+    vec bbmin(obstacle->o);
+    bbmin.x -= rad;
+    bbmin.y -= rad;
+    bbmin.z -= obstacle->eyeheight+d->aboveeye;
+    bbmin.sub(space);
+    vec bbmax(obstacle->o);
+    bbmax.x += rad;
+    bbmax.y += rad;
+    bbmax.z += obstacle->aboveeye+d->eyeheight;
+    bbmax.add(space);
+
+    loopi(3) if(d->o[i] <= bbmin[i] || d->o[i] >= bbmax[i]) return;
 
     float mindist = 1e16f;
     loopi(3) if(dir[i] != 0)
     {
-        float dist = (bo[i] + (dir[i] > 0 ? br[i] : 0) - d->o[i]) / dir[i];
+        float dist = ((dir[i] > 0 ? bbmax[i] : bbmin[i]) - d->o[i]) / dir[i];
         mindist = min(mindist, dist);
     };
-
     if(mindist >= 0.0f && mindist < 1e15f) d->o.add(vec(dir).mul(mindist));
 };
 
