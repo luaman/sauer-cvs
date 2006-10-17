@@ -382,7 +382,7 @@ bool plcollide(physent *d, const vec &dir)    // collide with player or monster
         loopv(dynents)
         {
             physent *o = dynents[i];
-            if(d->o.reject(o->o, 20.0f) || o==d || (o==player && d->type==ENT_CAMERA)) continue;
+            if(o==d || (o==player && d->type==ENT_CAMERA)) continue;
             if(!rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight))
             {
                 hitplayer = true;
