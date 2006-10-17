@@ -532,7 +532,8 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
     hdr.mapprec = 32;
     hdr.mapllod = 0;
     hdr.lightmaps = 0;
-    memset(hdr.reserved, 0, sizeof(hdr.reserved));
+    memset(hdr.reserved1, 0, sizeof(hdr.reserved1));
+    memset(hdr.reserved2, 0, sizeof(hdr.reserved2));
     texmru.setsize(0);
     freeocta(worldroot);
     et->getents().setsize(0);

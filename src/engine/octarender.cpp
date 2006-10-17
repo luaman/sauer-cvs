@@ -1629,7 +1629,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         {
             cur.texture = false;
             glDisable(GL_TEXTURE_2D);
-            glActiveTexture_(GL_TEXTURE0_ARB);
+            glActiveTexture_(GL_TEXTURE1_ARB);
             glDisable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE0_ARB);
         };

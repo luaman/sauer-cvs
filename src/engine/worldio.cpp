@@ -322,6 +322,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     };
     setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
     setvar("lighterror", hdr.maple ? hdr.maple : 8);
+    setvar("bumperror", hdr.mapbe ? hdr.mapbe : 3);
     setvar("lightlod", hdr.mapllod);
     setvar("lodsize", hdr.mapwlod);
     setvar("ambient", hdr.ambient);

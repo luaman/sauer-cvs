@@ -5,6 +5,7 @@ vector<LightMap> lightmaps;
 
 VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
+VARF(bumperror, 1, 3, 16, hdr.mapbe = bumperror);
 VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VARF(worldlod, 0, 0, 1,  hdr.mapwlod = worldlod);
 VARF(ambient, 1, 25, 64, hdr.ambient = ambient);
@@ -104,7 +105,7 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
         memcpy(dst, src, 3 * tw);
         dst += 3 * LM_PACKW;
         src += 3 * tw;
-    }
+    };
     ++lightmaps;
     lumels += tw * th;
     return true;
@@ -176,15 +177,24 @@ struct compressval
 static inline bool htcmp(const compresskey &x, const compresskey &y)
 {
     if(lm_w != y.w || lm_h != y.h) return false;
-    const uchar *xdata = lm, *ydata = lightmaps[y.lmid - LMID_RESERVED].data + 3*(y.x + y.y*LM_PACKW);
-    loopi((int)lm_h)
+    LightMap &ylm = lightmaps[y.lmid - LMID_RESERVED];
+    if(lmtype != ylm.type) return false;
+    const uchar *xcolor = lm, *ycolor = ylm.data + 3*(y.x + y.y*LM_PACKW);
+    loopi(lm_h)
     {
-        loopj((int)lm_w)
+        loopj(lm_w)
         {
-            loopk(3) if(*xdata++ != *ydata++) return false;
+            loopk(3) if(*xcolor++ != *ycolor++) return false;
         };
-        ydata += 3*(LM_PACKW - y.w);
-    };    
+        ycolor += 3*(LM_PACKW - y.w);
+    };
+    if(lmtype != LM_BUMPMAP0) return true;
+    const bvec *xdir = (bvec *)lm_ray, *ydir = (bvec *)lightmaps[y.lmid+1 - LMID_RESERVED].data;
+    loopi(lm_h)
+    {
+        loopj(lm_w) if(*xdir++ != *ydir++) return false;
+        ydir += LM_PACKW - y.w;
+    };
     return true;
 };
     
@@ -192,7 +202,7 @@ static inline uint hthash(const compresskey &k)
 {
     uint hash = lm_w + (lm_h<<8);
     const uchar *color = lm;
-    loopi((int)(lm_w*lm_h))
+    loopi(lm_w*lm_h)
     {
        hash ^= (color[0] + (color[1] << 8) + (color[2] << 16));
        color += 3;
@@ -206,7 +216,7 @@ VAR(lightcompress, 0, 3, 6);
 
 void pack_lightmap(int type, surfaceinfo &surface) 
 {
-    if(type == LM_NORMAL && (int)lm_w <= lightcompress && (int)lm_h <= lightcompress)
+    if((int)lm_w <= lightcompress && (int)lm_h <= lightcompress)
     {
         compressval *val = compressed.access(compresskey());
         if(!val)
@@ -421,9 +431,10 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
               cweight = weight * (aalights == 3 ? 5.0f : 1.0f);
         uchar *lumel = lm;
         vec *ray = lm_ray;
-        for(uint y = 0; y < lm_h; ++y) 
+        bvec minray(255, 255, 255), maxray(0, 0, 0);
+        loop(y, lm_h)
         {
-            for(uint x = 0; x < lm_w; ++x, lumel += 3, ++ray) 
+            loop(x, lm_w)
             {
                 vec l(0, 0, 0);
                 const vec &center = *sample++;
@@ -449,9 +460,19 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                     mincolor[k] = min(mincolor[k], lumel[k]);
                     maxcolor[k] = max(maxcolor[k], lumel[k]);
                 };
+                lumel += 3;
 
                 if(lmtype == LM_BUMPMAP0)
-                    ((bvec *)lm_ray)[ray-lm_ray] = ray->iszero() ? bvec(128, 128, 255) : bvec(ray->normalize());
+                {
+                    bvec &n = ((bvec *)lm_ray)[ray-lm_ray];
+                    n = ray->iszero() ? bvec(128, 128, 255) : bvec(ray->normalize());
+                    loop(q, 3)
+                    {
+                        minray[q] = min(minray[q], n[q]);
+                        maxray[q] = max(maxray[q], n[q]);
+                    };
+                };
+                ray++;
             };
             sample += aasample;
         };
@@ -465,9 +486,13 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                color[1] <= ambient + lighterror && 
                color[2] <= ambient + lighterror)
                 return false;
-            if(lmtype == LM_NORMAL)
+            if(lmtype != LM_BUMPMAP0 || 
+                (int(maxray.x) - int(minray.x) <= bumperror &&
+                 int(maxray.y) - int(minray.z) <= bumperror &&
+                 int(maxray.z) - int(minray.z) <= bumperror))
             {
                 memcpy(lm, color, 3);
+                if(lmtype == LM_BUMPMAP0) loopk(3) ((bvec *)lm_ray)[0][k] = uchar((int(maxray[k])+int(minray[k]))/2);
                 lm_w = 1;
                 lm_h = 1;
             };
@@ -1116,13 +1141,13 @@ void initlights()
     loopv(lightmaps)
     {
         LightMap &lm = lightmaps[i];
+        if(lm.unlitx<0) find_unlit(i);
         uchar *data = lm.data;
         if(convertlms && renderpath == R_FIXEDFUNCTION && lm.type == LM_BUMPMAP0)
         {
             if(!lm.converted) convert_lightmap(lm, lightmaps[i+1]);
             data = lm.converted;
         };
-        if(lm.unlitx<0) find_unlit(i);
         createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, false, false);
     };
     clearlightcache();
