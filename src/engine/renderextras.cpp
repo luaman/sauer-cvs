@@ -78,22 +78,23 @@ void render2dbox(vec &o, float x, float y, float z)
     glEnd();
 };
 
-void render3dbox(vec &o, float tofloor, float toceil, float radius)
+void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradius)
 {
+    if(yradius<=0) yradius = xradius;
     vec c = o;
-    c.sub(vec(radius, radius, tofloor));
-    float w = radius*2;
+    c.sub(vec(xradius, yradius, tofloor));
+    float xsz = xradius*2, ysz = yradius*2;
     float h = tofloor+toceil;
     notextureshader->set();
     glColor3f(1, 1, 1);
     glDisable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDepthMask(GL_FALSE);
-    render2dbox(c, w, 0, h);
-    render2dbox(c, 0, w, h);
-    c.add(vec(w, w, 0));
-    render2dbox(c, -w, 0, h);
-    render2dbox(c, 0, -w, h);
+    render2dbox(c, xsz, 0, h);
+    render2dbox(c, 0, ysz, h);
+    c.add(vec(xsz, ysz, 0));
+    render2dbox(c, -xsz, 0, h);
+    render2dbox(c, 0, -ysz, h);
     glDepthMask(GL_TRUE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);

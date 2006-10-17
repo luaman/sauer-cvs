@@ -207,7 +207,7 @@ extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool
 extern void setfogplane(float scale = 0, float z = 0);
 
 // renderextras
-extern void render3dbox(vec &o, float tofloor, float toceil, float radius);
+extern void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradius = 0);
 
 
 // octa
