@@ -1279,8 +1279,6 @@ VAR(oqmm, 0, 4, 8);
 
 extern bool getentboundingbox(extentity &e, ivec &o, ivec &r);
 
-VAR(showmmboundingbox, 0, 0, 1);
-
 void rendermapmodel(extentity &e)
 {
     int anim = ANIM_MAPMODEL|ANIM_LOOP, basetime = 0;
@@ -1293,14 +1291,6 @@ void rendermapmodel(extentity &e)
     };
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(&mmi) rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
-    if(showmmboundingbox && mmi.m)
-    {
-        vec center, radius;
-        mmi.m->boundbox(0, center, radius);
-        rotatebb(center, radius, e.attr1);
-        center.add(e.o);
-        render3dbox(center, radius.z, radius.z, radius.x, radius.y);
-    };
 };
 
 extern int reflectdist;

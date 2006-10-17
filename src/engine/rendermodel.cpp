@@ -176,6 +176,8 @@ VARP(maxmodelradiusdistance, 10, 80, 1000);
 extern float reflecting, refracting;
 extern int waterfog, reflectdist;
 
+VAR(showboundingbox, 0, 0, 1);
+
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, float ambient, const char *vwepmdl)
 {
     model *m = loadmodel(mdl); 
@@ -198,6 +200,19 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         };
         if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     };
+    if(showboundingbox)
+    {
+        if(d) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
+        else if((anim&ANIM_INDEX)!=ANIM_GUNSHOOT && (anim&ANIM_INDEX)!=ANIM_GUNIDLE)
+        {
+            vec center, radius;
+            m->boundbox(0, center, radius);
+            rotatebb(center, radius, int(yaw));
+            center.add(vec(x, y, z));
+            render3dbox(center, radius.z, radius.z, radius.x, radius.y);
+        };
+    };
+
     if(d) lightreaching(d->o, color, dir, 0, ambient);
     m->setskin(tex);  
     glColor3fv(color.v);
@@ -267,11 +282,8 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-VAR(showcharacterboundingbox, 0, 0, 1);
-
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, float ambient)
 {
-    if(showcharacterboundingbox) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
     float mz = d->o.z-d->eyeheight;     
