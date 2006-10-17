@@ -165,7 +165,7 @@ void loadc(gzFile f, cube &c)
         if(mask & 0x80) ext(c).material = gzgetc(f);
         if(mask & 0x3F)
         {
-            uchar lit = 0;
+            uchar lit = 0, bright = 0;
             newsurfaces(c);
             if(mask & 0x40) newnormals(c);
             loopi(6)
@@ -187,9 +187,14 @@ void loadc(gzFile f, cube &c)
                     if(mask & 0x40) gzread(f, &c.ext->normals[i], sizeof(surfacenormals));
                 }
                 else c.ext->surfaces[i].lmid = LMID_AMBIENT;
-                if(c.ext->surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
+                if(c.ext->surfaces[i].lmid == LMID_BRIGHT) bright |= 1 << i;
+                else if(c.ext->surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
             };
-            if(!lit) freesurfaces(c);
+            if(!lit) 
+            {
+                freesurfaces(c);
+                if(bright) brightencube(c);
+            };
         };
         if(hdr.version >= 20)
         {

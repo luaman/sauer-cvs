@@ -1236,17 +1236,30 @@ entity *brightestlight(const vec &target, const vec &dir)
     return brightest;
 };
 
+static surfaceinfo brightsurfaces[6] =
+{
+    {{0}, 0, 0, 0, 0, LMID_BRIGHT},
+    {{0}, 0, 0, 0, 0, LMID_BRIGHT},
+    {{0}, 0, 0, 0, 0, LMID_BRIGHT},
+    {{0}, 0, 0, 0, 0, LMID_BRIGHT},
+    {{0}, 0, 0, 0, 0, LMID_BRIGHT},
+    {{0}, 0, 0, 0, 0, LMID_BRIGHT},
+};
+
 void brightencube(cube &c)
 {
-    if(c.ext && c.ext->surfaces) memset(c.ext->surfaces, 0, 6*sizeof(surfaceinfo));
-    else newsurfaces(c);
-    loopi(6) c.ext->surfaces[i].lmid = LMID_BRIGHT;
+    if(c.ext && c.ext->surfaces)
+    {
+        if(c.ext->surfaces==brightsurfaces) return;
+        freesurfaces(c);
+    };
+    ext(c).surfaces = brightsurfaces;
 };
         
 void newsurfaces(cube &c)
 {
     if(!c.ext) newcubeext(c);
-    if(!c.ext->surfaces)
+    if(!c.ext->surfaces || c.ext->surfaces==brightsurfaces)
     {
         c.ext->surfaces = new surfaceinfo[6];
         memset(c.ext->surfaces, 0, 6*sizeof(surfaceinfo));
@@ -1255,7 +1268,11 @@ void newsurfaces(cube &c)
 
 void freesurfaces(cube &c)
 {
-    if(c.ext) DELETEA(c.ext->surfaces);
+    if(c.ext)
+    {
+        if(c.ext->surfaces==brightsurfaces) c.ext->surfaces = NULL;
+        else DELETEA(c.ext->surfaces);
+    };
 };
 
 void dumplms()
