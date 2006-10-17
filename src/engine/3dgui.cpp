@@ -35,17 +35,22 @@ struct gui : g3d_gui
         lists.setsize(0);
     };
 
-	static int ty, tx, tpos; //tracking tab size and position since uses different layout method...
+	static int ty, tx, tpos, *tcurrent; //tracking tab size and position since uses different layout method...
 	
-	void autotab() { 
-		if(layoutpass && tpos == 0) tcurrent = NULL; //disable tabs because you didn't start with one
-		if(tcurrent && curdepth == 0 && (layoutpass?0:cury)+ysize > TABHEIGHT_MAX) tab(NULL, 0xAAFFAA); 
+	void autotab() 
+    { 
+        if(tcurrent)
+        {
+		    if(layoutpass && !tpos) tcurrent = NULL; //disable tabs because you didn't start with one
+		    if(!curdepth && (layoutpass ? 0 : cury) + ysize > TABHEIGHT_MAX) tab(NULL, 0xAAFFAA); 
+        };
 	};
 	
-	bool visible() { return (!tcurrent || (tpos==*tcurrent) )&& !layoutpass; };
+	bool visible() { return (!tcurrent || tpos==*tcurrent) && !layoutpass; };
 
 	//tab is always at top of page
-	void tab(const char *name, int color) {
+	void tab(const char *name, int color) 
+    {
 		if(curdepth != 0) return;
 		if(tpos > 0) tx += FONTH;
 		tpos++; 
@@ -55,7 +60,7 @@ struct gui : g3d_gui
 		if(layoutpass) 
 		{  
 			ty = max(ty, ysize); 
-			ysize = FONTH*1.5;
+			ysize = FONTH*3/2;
 		}
 		else 
 		{	
@@ -66,7 +71,8 @@ struct gui : g3d_gui
 				*tcurrent = tpos; //so just roll-over to switch tab
 				color = 0xFF0000;
 			};
-			if(visible()) {
+			if(visible()) 
+            {
 				//@TODO fix by using skin!
 				notextureshader->set();
 				glColor4ub(0xFF, 0xFF, 0xFF, 0x60); 
@@ -78,7 +84,7 @@ struct gui : g3d_gui
 				draw_text(name, curx+tx+SHADOW, cury+SHADOW, 0, 0, 0);
 			};
 			draw_text(name, curx+tx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
-			cury += FONTH*1.5;
+			cury += FONTH*3/2;
 		};
 		tx += w; 
 	};
@@ -133,8 +139,8 @@ struct gui : g3d_gui
     int button(const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, true, false); };
 	int title (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, true); };
 	
-	void separator(int color) { autotab(); line_(color, 5, 1.0); };
-	void progress(int color, float percent) { autotab(); line_(color, FONTH*0.4, percent); };
+	void separator(int color) { autotab(); line_(color, 5, 1); };
+	void progress(int color, float percent) { autotab(); line_(color, FONTH*2/5, percent); };
 
 	//use to set min size (useful when you have progress bars)
 	void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); }
@@ -262,7 +268,7 @@ struct gui : g3d_gui
         {
 			notextureshader->set();
 			glBegin(GL_QUADS);
-			if(percent < 0.99) 
+			if(percent < 0.99f) 
 			{
 				glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0x60);
 				if(ishorizontal()) 
@@ -272,7 +278,7 @@ struct gui : g3d_gui
 			};
 			glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
 			if(ishorizontal()) 
-				rect_(curx + FONTH/2 - size, cury + ysize*(1.0-percent), size*2, ysize*percent);
+				rect_(curx + FONTH/2 - size, cury + ysize*(1-percent), size*2, ysize*percent);
 			else 
 				rect_(curx, cury + FONTH/2 - size, xsize*percent, size*2);
 			glEnd();
@@ -317,20 +323,21 @@ struct gui : g3d_gui
 	vec origin;
     float dist, scale;
 	g3d_callback *cb;
-    int *tcurrent; //use NULL to disable tabbing
 	
-    void start(int starttime, float basescale)
+    void start(int starttime, float basescale, int *tab)
     {	
 		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
         curdepth = -1;
         curlist = -1;
 		tpos = 0;
 		tx = 0;
-		ty = 0;	
+		ty = 0;
+        tcurrent = tab;
         pushlist();
         if(layoutpass) nextlist = curlist;
         else
         {
+            if(tcurrent && !*tcurrent) tcurrent = NULL;
             cury = -ysize; 
             curx = -xsize/2;
             glPushMatrix();
@@ -380,10 +387,7 @@ struct gui : g3d_gui
         {	
 			xsize = max(tx, xsize);
 			ysize = max(ty, ysize);
-			if(tpos <= 1) 
-				tcurrent = NULL; //disable tabs
-			else if(tcurrent) 
-				*tcurrent = max(1, min(*tcurrent, tpos));
+            if(tcurrent) *tcurrent = tpos <= 1 ? 0 : max(1, min(*tcurrent, tpos));
 				
             if(!windowhit)
             {
@@ -407,15 +411,14 @@ struct gui : g3d_gui
 vector<gui::list> gui::lists;
 float gui::hitx, gui::hity;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
-int gui::ty, gui::tx, gui::tpos;
+int gui::ty, gui::tx, gui::tpos, *gui::tcurrent;
 static vector<gui> guis;
 
-void g3d_addgui(g3d_callback *cb, vec &origin, int *tab)
+void g3d_addgui(g3d_callback *cb, vec &origin)
 {
     gui &g = guis.add();
     g.cb = cb;
     g.origin = origin;
-	g.tcurrent = tab;
     g.dist = camera1->o.dist(origin);
 };
 
