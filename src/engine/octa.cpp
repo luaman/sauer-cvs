@@ -1011,7 +1011,35 @@ struct cfval
 
 static hashtable<cfkey, cfval> cfaces;
 
-int gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &offset, cubeface &cf)
+void mincubeface(cube &c, int orient, const ivec &o, int size, cubeface &cf)
+{
+    int dim = dimension(orient);
+    if(c.children)
+    {
+        size >>= 1;
+        int coord = dimcoord(orient);
+        loopi(8) if(octacoord(dim, i) == coord)
+            mincubeface(c.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, cf);
+    }
+    else if(isempty(c) || !touchingface(c, orient) || faceedges(c, orient) != F_SOLID)
+    {
+        int c = C[dim], r = R[dim], scale = size/(8>>VVEC_FRAC);
+        short uco = short((o[c]&VVEC_INT_MASK)<<VVEC_FRAC), vco = short((o[r]&VVEC_INT_MASK)<<VVEC_FRAC);
+        loopi(4)
+        {
+            const ivec &cc = cubecoords[fv[orient][i]];
+            short uc = short(cc[c]*scale)+uco, vc = short(cc[r]*scale)+vco;
+            cf.u1 = min(cf.u1, uc);
+            cf.u2 = max(cf.u2, uc);
+            cf.v1 = min(cf.v1, vc);
+            cf.v2 = max(cf.v2, vc);
+        };
+    };
+};
+
+VAR(minface, 0, 1, 1);
+
+bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &offset, cubeface &cf)
 {   
     uchar cfe[4];
     *(uint *)cfe = faceedges(cu, orient);
@@ -1023,7 +1051,6 @@ int gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &of
     ivec v[4];
     loopi(4) genvectorvert(cubecoords[faceverts(cu, orient, i)], cu, v[i]);
 
-    ASSERT(size >= 8>>VVEC_FRAC);
     int scale = size/(8>>VVEC_FRAC);
     v[3].mul(scale);
     int dim = dimension(orient), c = C[dim], r = R[dim];
@@ -1066,6 +1093,26 @@ int gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &of
     v[3].add(vo);
     offset = -n.dot(v[3]);
 
+    if(minface && touchingface(cu, orient))
+    {
+        cube &nc = neighbourcube(co.x, co.y, co.z, size, -size, orient);
+        if(nc.children)
+        {
+            cubeface mincf;
+            mincf.u1 = cf.u2;
+            mincf.u2 = cf.u1;
+            mincf.v1 = cf.v2;
+            mincf.v2 = cf.v1;
+            mincubeface(nc, opposite(orient), lu, lusize, mincf);
+            bool smaller = false;
+            if(mincf.u1 > cf.u1) { cf.u1 = mincf.u1; smaller = true; };
+            if(mincf.u2 < cf.u2) { cf.u2 = mincf.u2; smaller = true; };
+            if(mincf.v1 > cf.v1) { cf.v1 = mincf.v1; smaller = true; };
+            if(mincf.v2 < cf.v2) { cf.v2 = mincf.v2; smaller = true; };
+            if(smaller) cu.ext->merged |= 1<<orient;
+        };
+    };    
+
     return true;
 };
 
@@ -1073,9 +1120,9 @@ void addmergeinfo(cube &c, int orient, cubeface &cf)
 {
     if(!c.ext) newcubeext(c);
     int index = 0;
-    loopi(orient) if(c.ext->mergeorigin & (1<<i)) index++;
+    loopi(orient) if(c.ext->mergeorigin&(1<<i)) index++;
     int total = index;
-    loopi(6-orient-1) if(c.ext->mergeorigin & (1<<(i+orient+1))) total++;
+    loopi(6-orient-1) if(c.ext->mergeorigin&(1<<(i+orient+1))) total++;
     mergeinfo *m = new mergeinfo[total+1];
     if(index) memcpy(m, c.ext->merges, index*sizeof(mergeinfo));
     if(total>index) memcpy(&m[index+1], &c.ext->merges[index], (total-index)*sizeof(mergeinfo));
@@ -1109,12 +1156,17 @@ void genmergeinfo(cube *c = worldroot, const ivec &o = ivec(0, 0, 0), int size =
             c[i].ext->merged = 0;
         };
         if(c[i].children) genmergeinfo(c[i].children, co, size>>1);
-        else if(size < 1<<maxmerge && !isempty(c[i])) loopj(6) if(visibleface(c[i], j, co.x, co.y, co.z, size))
+        else if(!isempty(c[i])) loopj(6) if(visibleface(c[i], j, co.x, co.y, co.z, size))
         {
             cfkey k;
             cubeface cf;
             if(gencubeface(c[i], j, co, size, k.n, k.offset, cf))
             {
+                if(size >= 1<<maxmerge)
+                {
+                    if(c[i].ext && c[i].ext->merged&(1<<j)) addmergeinfo(c[i], j, cf);
+                    continue;
+                };
                 k.orient = j;
                 k.tex = c[i].texture[j];
                 cfaces[k].faces.add(cf);
@@ -1125,7 +1177,7 @@ void genmergeinfo(cube *c = worldroot, const ivec &o = ivec(0, 0, 0), int size =
             ASSERT(size <= 1<<maxmerge);
             enumeratekt(cfaces, cfkey, key, cfval, val,
                 val.faces.setsize(mergefaces(key.orient, val.faces.getbuf(), val.faces.length()));
-                loopvj(val.faces) if(val.faces[j].c->ext && val.faces[j].c->ext->merged & (1<<key.orient))
+                loopvj(val.faces) if(val.faces[j].c->ext && val.faces[j].c->ext->merged&(1<<key.orient))
                 {
                     addmergeinfo(*val.faces[j].c, key.orient, val.faces[j]);
                 };
