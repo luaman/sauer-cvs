@@ -600,6 +600,16 @@ const uchar faceedgesidx[6][4] = // ordered edges surrounding each orient
     { 2, 3, 5, 7 },
 };
 
+const uchar faceedgesrcidx[6][4] =
+{//0..1 = row edges, 2..3 = column edges
+    { 4,  5,  8, 10 },
+    { 6,  7,  9, 11 },
+    { 8,  9,  0, 2 },
+    { 10, 11, 1, 3 },
+    { 0,  1,  4, 6 },
+    { 2,  3,  5, 7 },
+};
+
 bool flataxisface(cube &c, int orient)
 {
     uint face = c.faces[dimension(orient)];
@@ -1011,30 +1021,43 @@ struct cfval
 
 static hashtable<cfkey, cfval> cfaces;
 
-void mincubeface(cube &c, int orient, const ivec &o, int size, cubeface &cf)
+void mincubeface(cube &cu, int orient, const ivec &o, int size, cubeface &cf)
 {
     int dim = dimension(orient);
-    if(c.children)
+    if(cu.children)
     {
         size >>= 1;
         int coord = dimcoord(orient);
         loopi(8) if(octacoord(dim, i) == coord)
-            mincubeface(c.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, cf);
-    }
-    else if(isempty(c) || !touchingface(c, orient) || faceedges(c, orient) != F_SOLID)
-    {
-        int c = C[dim], r = R[dim], scale = size/(8>>VVEC_FRAC);
-        short uco = short((o[c]&VVEC_INT_MASK)<<VVEC_FRAC), vco = short((o[r]&VVEC_INT_MASK)<<VVEC_FRAC);
-        loopi(4)
-        {
-            const ivec &cc = cubecoords[fv[orient][i]];
-            short uc = short(cc[c]*scale)+uco, vc = short(cc[r]*scale)+vco;
-            cf.u1 = min(cf.u1, uc);
-            cf.u2 = max(cf.u2, uc);
-            cf.v1 = min(cf.v1, vc);
-            cf.v2 = max(cf.v2, vc);
-        };
+            mincubeface(cu.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, cf);
+        return;
     };
+    int c = C[dim], r = R[dim];
+    short uco = short((o[c]&VVEC_INT_MASK)<<VVEC_FRAC), vco = short((o[r]&VVEC_INT_MASK)<<VVEC_FRAC);
+    short uc = short(size<<VVEC_FRAC)+uco, vc = short(size<<VVEC_FRAC)+vco;
+    if(!isempty(cu) && touchingface(cu, orient))
+    {
+        uchar r1 = cu.edges[faceedgesrcidx[orient][0]], r2 = cu.edges[faceedgesrcidx[orient][1]],
+              c1 = cu.edges[faceedgesrcidx[orient][2]], c2 = cu.edges[faceedgesrcidx[orient][3]];
+        short u1 = max(c1&0xF, c2&0xF), u2 = min(c1>>4, c2>>4),
+              v1 = max(r1&0xF, r2&0xF), v2 = min(r1>>4, r2>>4),
+              scale = short(size/(8>>VVEC_FRAC));
+        if(v2-v1==8)
+        {
+            if(u2-u1==8) return;
+            if(u1==0) uco = u2*scale+uco;
+            if(u2==8) uc = u1*scale+uco;
+        }
+        else if(u2-u1==8)
+        {
+            if(v1==0) vco = v2*scale+vco;
+            if(v2==8) vc = v1*scale+vco;
+        };    
+    };         
+    cf.u1 = min(cf.u1, uco);
+    cf.u2 = max(cf.u2, uc);
+    cf.v1 = min(cf.v1, vco);
+    cf.v2 = max(cf.v2, vc);
 };
 
 VAR(minface, 0, 1, 1);
@@ -1096,21 +1119,18 @@ bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &o
     if(minface && touchingface(cu, orient))
     {
         cube &nc = neighbourcube(co.x, co.y, co.z, size, -size, orient);
-        if(nc.children)
-        {
-            cubeface mincf;
-            mincf.u1 = cf.u2;
-            mincf.u2 = cf.u1;
-            mincf.v1 = cf.v2;
-            mincf.v2 = cf.v1;
-            mincubeface(nc, opposite(orient), lu, lusize, mincf);
-            bool smaller = false;
-            if(mincf.u1 > cf.u1) { cf.u1 = mincf.u1; smaller = true; };
-            if(mincf.u2 < cf.u2) { cf.u2 = mincf.u2; smaller = true; };
-            if(mincf.v1 > cf.v1) { cf.v1 = mincf.v1; smaller = true; };
-            if(mincf.v2 < cf.v2) { cf.v2 = mincf.v2; smaller = true; };
-            if(smaller) ext(cu).merged |= 1<<orient;
-        };
+        cubeface mincf;
+        mincf.u1 = cf.u2;
+        mincf.u2 = cf.u1;
+        mincf.v1 = cf.v2;
+        mincf.v2 = cf.v1;
+        mincubeface(nc, opposite(orient), lu, lusize, mincf);
+        bool smaller = false;
+        if(mincf.u1 > cf.u1) { cf.u1 = mincf.u1; smaller = true; };
+        if(mincf.u2 < cf.u2) { cf.u2 = mincf.u2; smaller = true; };
+        if(mincf.v1 > cf.v1) { cf.v1 = mincf.v1; smaller = true; };
+        if(mincf.v2 < cf.v2) { cf.v2 = mincf.v2; smaller = true; };
+        if(smaller) ext(cu).merged |= 1<<orient;
     };    
 
     return true;
@@ -1145,8 +1165,11 @@ void freemergeinfo(cube &c)
 
 VAR(maxmerge, 0, 8, VVEC_INT-1);
 
+static int genmergeprogress = 0; 
+
 void genmergeinfo(cube *c = worldroot, const ivec &o = ivec(0, 0, 0), int size = hdr.worldsize>>1)
 {
+    if((genmergeprogress++&0x7FF)==0) show_out_of_renderloop_progress(float(genmergeprogress)/allocnodes, "merging surfaces...");
     loopi(8)
     {
         ivec co(i, o.x, o.y, o.z, size);
@@ -1236,7 +1259,7 @@ int calcmergedsize(int orient, const ivec &co, int size, const mergeinfo &m, con
         d2 = max(d2, vv[i][dim]);
     };
     int bits = 0;
-    while(1<<bits <= size) ++bits;
+    while(1<<bits < size) ++bits;
     bits += VVEC_FRAC;
     ivec mo(co);
     mo.mask(VVEC_INT_MASK);
@@ -1275,6 +1298,7 @@ void invalidatemerges(cube &c)
 
 void calcmerges()
 {
+    genmergeprogress = 0;
     genmergeinfo();
 };
 

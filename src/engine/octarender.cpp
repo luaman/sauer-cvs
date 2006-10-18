@@ -670,6 +670,7 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
     loopi(6) if(c.ext->mergeorigin & (1<<i))
     {
         mergeinfo &m = c.ext->merges[index++];
+        if(m.u1>=m.u2 || m.v1>=m.v2) continue;
         mergedface mf;
         mf.orient = i;
         mf.tex = c.texture[i];

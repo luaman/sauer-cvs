@@ -466,10 +466,10 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 {
                     bvec &n = ((bvec *)lm_ray)[ray-lm_ray];
                     n = ray->iszero() ? bvec(128, 128, 255) : bvec(ray->normalize());
-                    loop(q, 3)
+                    loopk(3)
                     {
-                        minray[q] = min(minray[q], n[q]);
-                        maxray[q] = max(maxray[q], n[q]);
+                        minray[k] = min(minray[k], n[k]);
+                        maxray[k] = max(maxray[k], n[k]);
                     };
                 };
                 ray++;
@@ -931,6 +931,7 @@ void calclight(int *quality)
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
     Uint32 start = SDL_GetTicks();
     calcnormals();
+    show_calclight_progress();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
     Uint32 end = SDL_GetTicks();
@@ -977,6 +978,7 @@ void patchlight()
     show_out_of_renderloop_progress(0, "computing normals...");
     Uint32 start = SDL_GetTicks();
     calcnormals();
+    show_calclight_progress();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
     clearnormals();
     Uint32 end = SDL_GetTicks();
