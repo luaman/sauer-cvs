@@ -95,6 +95,13 @@ void mdlbb(float *rad, float *h, float *eyeheight)
 
 COMMAND(mdlbb, "fff");
 
+void mdlname()
+{
+    checkmdl;
+    result(loadingmodel->name());
+};
+
+COMMAND(mdlname, "");
 
 // mapmodels
 

@@ -741,8 +741,11 @@ void sub  (int *a, int *b) { intret(*a - *b); };          COMMANDN(-, sub, "ii")
 void divi (int *a, int *b) { intret(*b ? *a / *b : 0); }; COMMANDN(div, divi, "ii");
 void mod  (int *a, int *b) { intret(*b ? *a % *b : 0); }; COMMAND(mod, "ii");
 void equal(int *a, int *b) { intret((int)(*a == *b)); };  COMMANDN(=, equal, "ii");
+void nequal(int *a, int *b) { intret((int)(*a != *b)); }; COMMANDN(!=, nequal, "ii");
 void lt   (int *a, int *b) { intret((int)(*a < *b)); };   COMMANDN(<, lt, "ii");
 void gt   (int *a, int *b) { intret((int)(*a > *b)); };   COMMANDN(>, gt, "ii");
+void lte   (int *a, int *b) { intret((int)(*a <= *b)); }; COMMANDN(<=, lte, "ii");
+void gte   (int *a, int *b) { intret((int)(*a >= *b)); }; COMMANDN(>=, gte, "ii");
 void xora (int *a, int *b) { intret(*a ^ *b); };          COMMANDN(^, xora, "ii");
 void nota (int *a)         { intret(*a == 0); };          COMMANDN(!, nota, "i");
 
@@ -757,4 +760,6 @@ void rndn(int *a)          { intret(*a>0 ? rnd(*a) : 0); };  COMMANDN(rnd, rndn,
 void strcmpa(char *a, char *b) { intret(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, "ss");
 
 ICOMMAND(echo, "C", conoutf("\f1%s", args[0]));
+
+void strstra(char *a, char *b) { char *s = strstr(a, b); intret(s ? s-a : -1); }; COMMANDN(strstr, strstra, "ss");
 

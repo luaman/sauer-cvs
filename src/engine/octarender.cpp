@@ -157,7 +157,11 @@ struct vechash
         for(int i = table[h]; i>=0; i = chain[i])
         {
             const vertex &c = verts[i];
-            if(c.x==v.x && c.y==v.y && c.z==v.z && c.u==tu && c.v==tv && c.n==n) return i;
+            if(c.x==v.x && c.y==v.y && c.z==v.z && c.n==n)
+            {
+                 if(!tu && !tv) return i; 
+                 if(c.u==tu && c.v==tv) return i;
+            };
         };
         vertex &vtx = verts.add();
         ((vvec &)vtx) = v;
@@ -243,12 +247,11 @@ struct lodcollect
                 if(t.unlit<=0) t.unlit = lastlmid;
             };
         };
-        if(firstlmid!=LMID_AMBIENT && firstlit > 0) loopi(firstlit)
+        if(firstlmid!=LMID_AMBIENT) loopi(firstlit)
         {
             sortkey &k = texs[i];
             if(k.lmid!=LMID_AMBIENT) continue;
-            sortval &t = indices[k];
-            t.unlit = firstlmid;
+            indices[k].unlit = firstlmid;
         }; 
         loopv(unlit)
         {
@@ -260,14 +263,13 @@ struct lodcollect
                   v = short((lm.unlity + 0.5f) * SHRT_MAX/LM_PACKH);
             loopl(3) loopvj(t.dims[l])
             {
-                int index = t.dims[l][j];
-                vertex &vtx = verts[index];
+                vertex &vtx = verts[t.dims[l][j]];
                 if(!vtx.u && !vtx.v)
                 {
                     vtx.u = u;
                     vtx.v = v;
                 }
-                else if(vtx.u != u && vtx.v != v) 
+                else if(vtx.u != u || vtx.v != v) 
                 {
                     // necessary to copy these in case vechash reallocates verts before copying vtx
                     vvec vv = vtx;
@@ -275,16 +277,8 @@ struct lodcollect
                     t.dims[l][j] = vh.access(vv, u, v, n);
                 };
             };
-        };
-        loopv(unlit)
-        {
-            sortkey &k = unlit[i];
-            sortval &t = indices[k];
-            if(t.unlit<=0) continue;
-            sortkey mkey(k.tex, t.unlit); 
-            sortval *mval = indices.access(mkey);
-            if(!mval) continue;
-            loopl(3) loopvj(t.dims[l]) mval->dims[l].add(t.dims[l][j]);
+            sortval *dst = indices.access(sortkey(k.tex, t.unlit));
+            if(dst) loopl(3) loopvj(t.dims[l]) dst->dims[l].add(t.dims[l][j]);
         };
     };
                     

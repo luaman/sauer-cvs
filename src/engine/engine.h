@@ -45,7 +45,17 @@ struct model
         if(frame) calcbb(frame, center, radius);
         else
         {
-            if(bbradius.iszero()) calcbb(frame, bbcenter, bbradius);
+            
+            if(!bbradius.x || !bbradius.y || !bbradius.z)
+            {
+                vec c, r;
+                calcbb(0, c, r);
+                loopi(3) if(!bbradius[i])
+                {
+                    bbcenter[i] = c[i];
+                    bbradius[i] = r[i];
+                };
+            };
             center = bbcenter;
             radius = bbradius;
         };
