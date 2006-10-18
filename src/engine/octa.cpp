@@ -1109,7 +1109,7 @@ bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &o
             if(mincf.u2 < cf.u2) { cf.u2 = mincf.u2; smaller = true; };
             if(mincf.v1 > cf.v1) { cf.v1 = mincf.v1; smaller = true; };
             if(mincf.v2 < cf.v2) { cf.v2 = mincf.v2; smaller = true; };
-            if(smaller) cu.ext->merged |= 1<<orient;
+            if(smaller) ext(cu).merged |= 1<<orient;
         };
     };    
 
