@@ -70,7 +70,11 @@ struct fpsclient : igameclient
     void resetgamestate()
     {
         player1->health = player1->maxhealth;
-        if(m_classicsp) ms.monsterclear(gamemode);                 // all monsters back at their spawns for editing
+        if(m_classicsp) 
+        {
+            ms.monsterclear(gamemode);                 // all monsters back at their spawns for editing
+            resettriggers();
+        };
         ws.projreset();
     };
 
