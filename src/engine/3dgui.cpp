@@ -17,12 +17,6 @@ static g3d_gui *windowhit = NULL;
 //dependent on screen resolution?
 #define TABHEIGHT_MAX 600
 
-//chop skin into a grid
-static const int skiny[] = {0, 21, 34, 56, 104, 128};
-static const int skinx[] = {0, 22, 40, 105, 121, 135, 153, 214, 230, 256};
-//Note: skinx[2]-skinx[1] = skinx[6]-skinx[4]
-//      skinx[4]-skinx[3] = skinx[8]-skinx[7]
-
 //make coordinate relative to other side
 #define OFFSET 99999
 
@@ -338,6 +332,8 @@ struct gui : g3d_gui
         return layout(w, FONTH);
     };
 
+    static const int skinx[], skiny[];
+
 	void _patch(int tleft, int tright, int ttop, int tbottom, int vleft, int vright, int vtop, int vbottom) 
 	{
 		float in_left    = ((float) skinx[tleft]) / 256.0f;
@@ -359,7 +355,7 @@ struct gui : g3d_gui
 	vec origin;
     float dist, scale;
 	g3d_callback *cb;
-		
+
     void start(int starttime, float basescale, int *tab)
     {	
 		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
@@ -441,6 +437,11 @@ struct gui : g3d_gui
     };
 };
 
+//chop skin into a grid
+const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
+          gui::skinx[] = {0, 22, 40, 105, 121, 135, 153, 214, 230, 256};
+//Note: skinx[2]-skinx[1] = skinx[6]-skinx[4]
+//      skinx[4]-skinx[3] = skinx[8]-skinx[7]
 vector<gui::list> gui::lists;
 float gui::hitx, gui::hity;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
