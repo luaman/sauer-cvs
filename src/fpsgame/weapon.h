@@ -188,11 +188,16 @@ struct weaponstate
     
     void spawnbouncer(vec &p, vec &vel, fpsent *d, int type)
     {
+        /*
         vec to = vel;
-        to.rotate_around_z((rnd(90)-45)*RAD);
+        to.rotate_around_z((rnd(60)-30)*RAD);
         if(to.z<0) to.z = -to.z;
         to.add(p);
-        newbouncer(p, to, true, d, type, rnd(1000)+2000, rnd(50)+50);
+        */
+        vec to(rnd(100)-50, rnd(100)-50, rnd(100)-50);
+        to.normalize();
+        to.add(p);
+        newbouncer(p, to, true, d, type, rnd(1000)+1000, rnd(100)+20);
     };    
 
     void superdamageeffect(const vec &p, vec &vel, fpsent *d)
@@ -252,9 +257,10 @@ struct weaponstate
 //        particle_splash(5, 10, 500, v);
         playsound(S_RLHIT, &v);
         newsphere(v, RL_DAMRAD, gun==GUN_RL ? 0 : 1);
-        int numdebris = 50;//rnd(5)+1;
+        int maxdebris = 50;
+        int numdebris = rnd(maxdebris-5)+5;
         vec debrisvel = vec(owner->o).sub(v).normalize();
-        loopi(numdebris) spawnbouncer(vec(debrisvel).mul(4).add(v), debrisvel, owner, BNC_DEBRIS);
+        loopi(numdebris) spawnbouncer(vec(debrisvel).mul(8).add(v), debrisvel, owner, BNC_DEBRIS);
         if(!local) return;
         loopi(cl.numdynents())
         {
