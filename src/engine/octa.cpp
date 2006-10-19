@@ -1072,7 +1072,7 @@ bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &o
     cf.c = &cu;
 
     ivec v[4];
-    loopi(4) genvectorvert(cubecoords[faceverts(cu, orient, i)], cu, v[i]);
+    loopi(4) genvectorvert(cubecoords[fv[orient][i]], cu, v[i]);
 
     int scale = size/(8>>VVEC_FRAC);
     v[3].mul(scale);
@@ -1104,7 +1104,7 @@ bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &o
     n.cross(v[1], v[2]);
 
     // reduce the normal as much as possible without resorting to floating point
-    int mindim = -1, minval;
+    int mindim = -1, minval = 64;
     loopi(3) if(n[i])
     {
         int val = abs(n[i]);
