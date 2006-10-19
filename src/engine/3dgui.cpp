@@ -20,8 +20,6 @@ static g3d_gui *windowhit = NULL;
 //make coordinate relative to other side
 #define OFFSET 99999
 
-static Texture *skin = NULL;
-
 struct gui : g3d_gui
 {
     struct list
@@ -332,6 +330,7 @@ struct gui : g3d_gui
         return layout(w, FONTH);
     };
 
+    static Texture *skin;
     static const int skinx[], skiny[];
 
 	void _patch(int tleft, int tright, int ttop, int tbottom, int vleft, int vright, int vtop, int vbottom) 
@@ -437,6 +436,7 @@ struct gui : g3d_gui
     };
 };
 
+Texture *gui::skin = NULL;
 //chop skin into a grid
 const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
           gui::skinx[] = {0, 22, 40, 105, 121, 135, 153, 214, 230, 256};
