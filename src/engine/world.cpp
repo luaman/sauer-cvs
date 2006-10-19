@@ -316,7 +316,7 @@ int findtype(char *what)
     return ET_EMPTY;
 }
 
-VAR(entdrop, 0, 1, 3);
+VAR(entdrop, 0, 2, 3);
 
 bool dropentity(entity &e, int drop = -1)
 {
