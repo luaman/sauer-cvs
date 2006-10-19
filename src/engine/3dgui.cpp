@@ -17,6 +17,17 @@ static g3d_gui *windowhit = NULL;
 //dependent on screen resolution?
 #define TABHEIGHT_MAX 600
 
+//chop skin into a grid
+static const int skiny[] = {0, 21, 34, 56, 104, 128};
+static const int skinx[] = {0, 22, 40, 105, 121, 135, 153, 214, 230, 256};
+//Note: skinx[2]-skinx[1] = skinx[6]-skinx[4]
+//      skinx[4]-skinx[3] = skinx[8]-skinx[7]
+
+//make coordinate relative to other side
+#define OFFSET 99999
+
+static Texture *skin = NULL;
+
 struct gui : g3d_gui
 {
     struct list
@@ -52,7 +63,7 @@ struct gui : g3d_gui
 	void tab(const char *name, int color) 
     {
 		if(curdepth != 0) return;
-		if(tpos > 0) tx += FONTH;
+		if(tpos > 0) tx += (skinx[4]-skinx[3]) + (skinx[2]-skinx[1]);
 		tpos++; 
 		s_sprintfd(title)("%d", tpos);
 		if(!name) name = title;
@@ -71,18 +82,25 @@ struct gui : g3d_gui
 				*tcurrent = tpos; //so just roll-over to switch tab
 				color = 0xFF0000;
 			};
-			if(visible()) 
-            {
-				//@TODO fix by using skin!
-				notextureshader->set();
-				glColor4ub(0xFF, 0xFF, 0xFF, 0x60); 
-				glBegin(GL_QUADS);
-				rect_(curx+tx-FONTH/2, cury, w+FONTH, FONTH);
-				glEnd();
-				defaultshader->set();
-				
-				draw_text(name, curx+tx+SHADOW, cury+SHADOW, 0, 0, 0);
-			};
+			
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glColor4f(1, 1, 1, 0.7f);
+			glBindTexture(GL_TEXTURE_2D, skin->gl);
+			glBegin(GL_QUADS);
+			int ytop = cury + FONTH*3/2 - (skiny[3]-skiny[2]);
+			int offset = visible()?0:4;
+			_patch(2+offset,3+offset,1,2, curx+tx, curx+tx+w, cury, ytop); //middle
+			_patch(2+offset,3+offset,2,3, curx+tx, curx+tx+w, ytop, OFFSET); //bottom-middle
+			_patch(2+offset,3+offset,0,1, curx+tx, curx+tx+w, OFFSET, cury); //top-middle
+			_patch(1+offset,2+offset,1,2, OFFSET, curx+tx, cury, ytop); //left-middle
+			_patch(3+offset,4+offset,1,2, curx+tx+w, OFFSET , cury, ytop); //right-middle
+			_patch(1+offset,2+offset,2,3, OFFSET, curx+tx, ytop, OFFSET); //bottom-left
+			_patch(3+offset,4+offset,2,3, curx+tx+w, OFFSET, ytop, OFFSET); //bottom-right
+			_patch(1+offset,2+offset,0,1, OFFSET, curx+tx, OFFSET, cury); //top-left
+			_patch(3+offset,4+offset,0,1, curx+tx+w, OFFSET, OFFSET, cury); //top-right
+			glEnd();
+			
+			if(visible()) draw_text(name, curx+tx+SHADOW, cury+SHADOW, 0, 0, 0);
 			draw_text(name, curx+tx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
 			cury += FONTH*3/2;
 		};
@@ -319,18 +337,36 @@ struct gui : g3d_gui
         };
         return layout(w, FONTH);
     };
-		
+
+	void _patch(int tleft, int tright, int ttop, int tbottom, int vleft, int vright, int vtop, int vbottom) 
+	{
+		float in_left    = ((float) skinx[tleft]) / 256.0f;
+		float in_top     = ((float) skiny[ttop]) / 128.0f;
+		float in_right   = ((float) skinx[tright]) / 256.0f;
+		float in_bottom  = ((float) skiny[tbottom]) / 128.0f;
+		int w = skinx[tright] - skinx[tleft];
+		int h = skiny[tbottom] - skiny[ttop];
+		int out_left   = (vleft==OFFSET) ? (vright-w) : vleft;
+		int out_right  = (vright==OFFSET) ? (vleft+w) : vright;
+		int out_top    = (vtop==OFFSET) ? (vbottom-h) : vtop;
+		int out_bottom = (vbottom==OFFSET) ? (vtop+h) : vbottom;
+		glTexCoord2f(in_left,  in_top   ); glVertex2i(out_left,  out_top);
+		glTexCoord2f(in_right, in_top   ); glVertex2i(out_right, out_top);
+		glTexCoord2f(in_right, in_bottom); glVertex2i(out_right, out_bottom);
+		glTexCoord2f(in_left,  in_bottom); glVertex2i(out_left,  out_bottom);
+	};
+			
 	vec origin;
     float dist, scale;
 	g3d_callback *cb;
-	
+		
     void start(int starttime, float basescale, int *tab)
     {	
 		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
         curdepth = -1;
         curlist = -1;
 		tpos = 0;
-		tx = 0;
+		tx = skinx[2]-skinx[1];
 		ty = 0;
         tcurrent = tab;
         pushlist();
@@ -346,48 +382,34 @@ struct gui : g3d_gui
             glRotatef(/*camera1->pitch*/-90, 1, 0, 0); // pitch the top/bottom towards us
 			glScalef(-scale, scale, scale);
 
-			//@TODO replace all this by using skin!
-			//rounded rectangle
-			static Texture *t = NULL;
-            if(!t) t = textureload("packages/rorschach/1r_plain_met02.jpg");
-            //if(!t) t = textureload("packages/subverse/chunky_rock.jpg"); //something a little more distinctive;
-			int border = FONTH;
-			int xs[] = {curx + xsize, curx, curx, curx + xsize}; 
-			int ys[] = {cury + ysize, cury + ysize, cury, cury};
-			float scale = max(t->xs, t->ys)*500.0f; //scale and preserve aspect ratio
+			if(!skin) skin = textureload("data/guiskin.png");
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			
 			glColor4f(1, 1, 1, 0.7f);
-			glBindTexture(GL_TEXTURE_2D, t->gl);
-			
-			glBegin(GL_TRIANGLE_FAN); 
-			for(int i = 0; i < 360; i += 10) 
-			{ 
-				float x = xs[i/90] + cos(i*RAD)*border;
-				float y = ys[i/90] + sin(i*RAD)*border;
-				glTexCoord2d((x+border-curx)*t->xs/scale,(y+border-cury)*t->ys/scale);
-				glVertex2f(x, y);
-			};
-            glEnd();
-			
-			//solid black outline
-			notextureshader->set();
-			glColor4f(0, 0, 0, 1.0f);
-			glBegin(GL_LINE_LOOP);
-			for(int i = 0; i < 360; i += 10)
-				glVertex2f(xs[i/90] + cos(i*RAD)*border, ys[i/90] + sin(i*RAD)*border);
-            glEnd();
-            defaultshader->set();
+			glBindTexture(GL_TEXTURE_2D, skin->gl);
+			glBegin(GL_QUADS);
+			int ytop = cury;
+			if(tcurrent) ytop += FONTH*3/2;			
+			_patch(1,8,3,4, curx, curx+xsize, ytop, cury+ysize); //middle
+			_patch(1,8,4,5, curx, curx+xsize, cury+ysize, OFFSET); //bottom-middle
+			if(!tcurrent) _patch(4,5,2,3, curx, curx+xsize, OFFSET, cury);  //top-middle
+			_patch(0,1,3,4, OFFSET, curx, ytop, cury+ysize); //left-middle
+			_patch(8,9,3,4, curx+xsize, OFFSET, ytop, cury+ysize); //right-middle
+			_patch(0,1,4,5, OFFSET, curx, cury+ysize, OFFSET); //bottom-left
+			_patch(8,9,4,5, curx+xsize, OFFSET, cury+ysize, OFFSET); //bottom-right
+			_patch(0,1,2,3, OFFSET, curx, OFFSET, ytop); //top-left
+			_patch(8,9,2,3, curx+xsize, OFFSET, OFFSET, ytop); //top-right
+			glEnd();
         };
     };
 
     void end()
     {
+		tx += skinx[4]-skinx[3];
 		if(layoutpass)
         {	
 			xsize = max(tx, xsize);
 			ysize = max(ty, ysize);
-            if(tcurrent) *tcurrent = tpos <= 1 ? 0 : max(1, min(*tcurrent, tpos));
+			if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
 				
             if(!windowhit)
             {
@@ -402,6 +424,17 @@ struct gui : g3d_gui
         }
         else
         {
+			if(tcurrent)
+			{	
+				int ytop = -ysize + FONTH*3/2;
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glColor4f(1, 1, 1, 0.7f);
+				glBindTexture(GL_TEXTURE_2D, skin->gl);
+				glBegin(GL_QUADS);
+				_patch(4,5,2,3, curx+tx, curx+xsize, OFFSET, ytop); //top-middle
+				glEnd();
+			};
+			
             glPopMatrix();
         };
         poplist();
