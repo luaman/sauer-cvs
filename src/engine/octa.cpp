@@ -1021,7 +1021,7 @@ struct cfval
 
 static hashtable<cfkey, cfval> cfaces;
 
-void mincubeface(cube &cu, int orient, const ivec &o, int size, cubeface &cf)
+void mincubeface(cube &cu, int orient, const ivec &o, int size, cubeface &cf, const cubeface &orig)
 {
     int dim = dimension(orient);
     if(cu.children)
@@ -1029,35 +1029,44 @@ void mincubeface(cube &cu, int orient, const ivec &o, int size, cubeface &cf)
         size >>= 1;
         int coord = dimcoord(orient);
         loopi(8) if(octacoord(dim, i) == coord)
-            mincubeface(cu.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, cf);
+            mincubeface(cu.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, cf, orig);
         return;
     };
     int c = C[dim], r = R[dim];
     short uco = short((o[c]&VVEC_INT_MASK)<<VVEC_FRAC), vco = short((o[r]&VVEC_INT_MASK)<<VVEC_FRAC);
-    short uc = short(size<<VVEC_FRAC)+uco, vc = short(size<<VVEC_FRAC)+vco;
+    short uc1 = uco, vc1 = vco, uc2 = short(size<<VVEC_FRAC)+uco, vc2 = short(size<<VVEC_FRAC)+vco;
+    uc1 = max(uc1, orig.u1);
+    uc2 = min(uc2, orig.u2);
+    vc1 = max(vc1, orig.v1);
+    vc2 = min(vc2, orig.v2);
     if(!isempty(cu) && touchingface(cu, orient))
     {
         uchar r1 = cu.edges[faceedgesrcidx[orient][0]], r2 = cu.edges[faceedgesrcidx[orient][1]],
               c1 = cu.edges[faceedgesrcidx[orient][2]], c2 = cu.edges[faceedgesrcidx[orient][3]];
-        short u1 = max(c1&0xF, c2&0xF), u2 = min(c1>>4, c2>>4),
-              v1 = max(r1&0xF, r2&0xF), v2 = min(r1>>4, r2>>4),
-              scale = short(size/(8>>VVEC_FRAC));
-        if(v2-v1==8)
+        short scale = short(size/(8>>VVEC_FRAC)),
+              u1 = max(c1&0xF, c2&0xF)*scale+uco, u2 = min(c1>>4, c2>>4)*scale+uco,
+              v1 = max(r1&0xF, r2&0xF)*scale+vco, v2 = min(r1>>4, r2>>4)*scale+vco;
+        u1 = max(u1, orig.u1);
+        u2 = min(u2, orig.u2);
+        v1 = max(v1, orig.v1);
+        v2 = min(v2, orig.v2);
+        if(v2-v1==vc2-vc1)
         {
-            if(u2-u1==8) return;
-            if(u1==0) uco = u2*scale+uco;
-            if(u2==8) uc = u1*scale+uco;
+            if(u2-u1==uc2-uc1) return;
+            if(u1==uc1) uc1 = u2;
+            if(u2==uc2) uc2 = u1;
         }
-        else if(u2-u1==8)
+        else if(u2-u1==uc2-uc1)
         {
-            if(v1==0) vco = v2*scale+vco;
-            if(v2==8) vc = v1*scale+vco;
+            if(v1==vc1) vc1 = v2;
+            if(v2==vc2) vc2 = v1;
         };    
-    };         
-    cf.u1 = min(cf.u1, uco);
-    cf.u2 = max(cf.u2, uc);
-    cf.v1 = min(cf.v1, vco);
-    cf.v2 = max(cf.v2, vc);
+    };
+    if(uc1==uc2 || vc1==vc2) return;
+    cf.u1 = min(cf.u1, uc1);
+    cf.u2 = max(cf.u2, uc2);
+    cf.v1 = min(cf.v1, vc1);
+    cf.v2 = max(cf.v2, vc2);
 };
 
 VAR(minface, 0, 1, 1);
@@ -1138,7 +1147,7 @@ bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &o
         mincf.u2 = cf.u1;
         mincf.v1 = cf.v2;
         mincf.v2 = cf.v1;
-        mincubeface(nc, opposite(orient), lu, lusize, mincf);
+        mincubeface(nc, opposite(orient), lu, lusize, mincf, cf);
         bool smaller = false;
         if(mincf.u1 > cf.u1) { cf.u1 = mincf.u1; smaller = true; };
         if(mincf.u2 < cf.u2) { cf.u2 = mincf.u2; smaller = true; };
