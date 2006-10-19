@@ -78,12 +78,17 @@ void clearheightmap()
 
 void forcenextundo() { lastsel.orient = -1; };
 
-void cancelsel()
+void cancelcubesel()
 {
     havesel = moving = false;
-    entgroup.setsize(0);
     clearheightmap();
     forcenextundo();
+};
+
+void cancelsel()
+{
+    cancelcubesel();
+    entgroup.setsize(0);
 };
 
 VARF(gridpower, 2, 3, VVEC_INT-1,
@@ -94,28 +99,33 @@ VARF(gridpower, 2, 3, VVEC_INT-1,
     cancelsel();
 });
 
-bool entmovingorient = false;
 bool passthroughcube = false;
 void passthrough(int *isdown) { passthroughcube = *isdown!=0; };
 COMMAND(passthrough, "D");
+
+bool entdragplayerview()
+{
+    if(!passthroughcube)
+    {
+        ivec t;
+        vec ray(worldpos); ray.sub(player->o);
+        int n = rayent(player->o, ray);
+        if(n>=0)
+        {
+            toggleselent(n);
+            entdrag(player->o, ray, dimension(sel.orient), t, true);
+            return true;
+        };
+    };
+    return false;
+};
 
 void editdrag(bool on)
 {
     if(dragging = on)
     {
         cancelsel();
-        if(!passthroughcube)
-        {
-            ivec t;
-            vec ray(worldpos); ray.sub(player->o);
-            int n = rayent(player->o, ray);
-            if(n>=0)
-            {
-                toggleselent(n);
-                entdrag(player->o, ray, dimension(sel.orient), t, true);
-            };
-        };
-        if(cor[0]<0 || haveselent()) return;
+        if(entdragplayerview() || cor[0]<0) return;
         lastcur = cur;
         lastcor = cor;
         sel.grid = gridsize;
@@ -266,7 +276,11 @@ void cursorupdate()
     int d = dimension(sel.orient);
     ivec e;
 
-    if(moving)
+    if(haveselent() && dragging)
+    {
+        entdrag(player->o, ray, d, e);
+    }
+    else if(moving)
     {
         int dm = dimension(sel.orient), dmc = dimcoord(sel.orient);
         plane pl(dm, movesel[D[dm]]+dmc*sel.grid*sel.s[D[dm]]);
@@ -290,45 +304,37 @@ void cursorupdate()
         };
     }
     else if(dragging)
-    {
-        if(haveselent())
+    {  
+        sel.o.x = min(lastcur.x, cur.x);
+        sel.o.y = min(lastcur.y, cur.y);
+        sel.o.z = min(lastcur.z, cur.z);
+        sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
+        sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
+        sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
+
+        sel.cx   = min(cor[R[d]], lastcor[R[d]]);
+        sel.cy   = min(cor[C[d]], lastcor[C[d]]);
+        sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
+        sel.cys  = max(cor[C[d]], lastcor[C[d]]);
+
+        if(!selectcorners)
         {
-            if(entmovingorient) d = dimension(sel.orient = orient);
-            entdrag(player->o, ray, d, e);
+            sel.cx &= ~1;
+            sel.cy &= ~1;
+            sel.cxs &= ~1;
+            sel.cys &= ~1;
+            sel.cxs -= sel.cx-2;
+            sel.cys -= sel.cy-2;
         }
         else
         {
-            sel.o.x = min(lastcur.x, cur.x);
-            sel.o.y = min(lastcur.y, cur.y);
-            sel.o.z = min(lastcur.z, cur.z);
-            sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
-            sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
-            sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
-
-            sel.cx   = min(cor[R[d]], lastcor[R[d]]);
-            sel.cy   = min(cor[C[d]], lastcor[C[d]]);
-            sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
-            sel.cys  = max(cor[C[d]], lastcor[C[d]]);
-
-            if(!selectcorners)
-            {
-                sel.cx &= ~1;
-                sel.cy &= ~1;
-                sel.cxs &= ~1;
-                sel.cys &= ~1;
-                sel.cxs -= sel.cx-2;
-                sel.cys -= sel.cy-2;
-            }
-            else
-            {
-                sel.cxs -= sel.cx-1;
-                sel.cys -= sel.cy-1;
-            };
-
-            sel.cx  &= 1;
-            sel.cy  &= 1;
-            havesel = true;
+            sel.cxs -= sel.cx-1;
+            sel.cys -= sel.cy-1;
         };
+
+        sel.cx  &= 1;
+        sel.cy  &= 1;
+        havesel = true;
     }
     else if(!havesel && hmap == NULL)
     {
@@ -1032,6 +1038,8 @@ COMMAND(editface, "ii");
 void selextend()
 {
     if(noedit(true)) return;
+    if(entdragplayerview()) return;
+
     loopi(3)
     {
         if(cur[i]<sel.o[i])
@@ -1065,9 +1073,10 @@ void mpmovecubes(ivec &o, selinfo &sel, bool local)
 void editmove(int *isdown)
 {
     if(noedit(true)) return;
-    if(haveselent() && dragging) { entmovingorient = *isdown!=0; reorient(); return; };
+    if(haveselent()) { if(dragging = *isdown!=0) dragging = entdragplayerview(); return; };
     if(*isdown!=0)
     {
+        selextend();
         vec v(cur.v); v.add(1);
         if(pointinsel(sel, v))
         {
@@ -1078,10 +1087,8 @@ void editmove(int *isdown)
         };
     }
     else if(moving && movesel!=sel.o)
-    {
         mpmovecubes(movesel, sel, true);
-        moving = false;
-    };
+    moving = false;
 };
 
 COMMAND(selextend, "");

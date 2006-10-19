@@ -132,6 +132,7 @@ void entitiesinoctanodes()
     loopv(et->getents()) addentity(i);
 };
 
+extern void cancelcubesel();
 extern selinfo sel;
 extern bool havesel, selectcorners;
 extern bool undogoahead;
@@ -267,30 +268,28 @@ void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first)
     entfocus(entgroup.last(),
         plane pl(d, e.o[D[d]]);
         float dist = 0.0f;
-        if(pl.rayintersect(o, ray, dist))
-        {
-            vec v(ray);
-            v.mul(dist);
-            v.add(o);
-            if(first)
-            {
-                enthandle = v;
-                enthandle.sub(e.o);
-            };
-            v.sub(enthandle);
-            dest = v;
-            int z = dest[d]&(~(sel.grid-1));
-            dest.add(sel.grid/2).mask(~(sel.grid-1));
-            dest[d] = z;
-            r = entselsnap ? dest[R[d]] : v[R[d]];
-            c = entselsnap ? dest[C[d]] : v[C[d]];
-        }
-        else
+        if(!pl.rayintersect(o, ray, dist))
             return;
+        
+        vec v(ray);
+        v.mul(dist);
+        v.add(o);
+        if(first)
+        {
+            enthandle = v;
+            enthandle.sub(e.o);
+        };
+        v.sub(enthandle);
+        dest = v;
+        int z = dest[d]&(~(sel.grid-1));
+        dest.add(sel.grid/2).mask(~(sel.grid-1));
+        dest[d] = z;
+        r = (entselsnap ? dest[R[d]] : v[R[d]]) - e.o[R[d]];
+        c = (entselsnap ? dest[C[d]] : v[C[d]]) - e.o[C[d]];       
     );
 
     if(first) makeundoent();
-    groupeditpure(e.o[R[d]] = r; e.o[C[d]] = c);   
+    groupeditpure(e.o[R[d]] += r; e.o[C[d]] += c);   
 };
 
 void pushent(int d, int dist)
@@ -462,7 +461,7 @@ void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
 };
 
 ICOMMAND(esellen,   "",  intret(entgroup.length()));
-ICOMMAND(esel,      "s", setgroup(e.type != ET_EMPTY && execute(args[0]) > 0));
+ICOMMAND(esel,      "s", setgroup(e.type != ET_EMPTY && execute(args[0]) > 0); cancelcubesel());
 ICOMMAND(insel,     "",  entfocus(efocus, intret(havesel && pointinsel(sel, e.o))));
 ICOMMAND(et,        "",  entfocus(efocus, result(et->entname(e.type))));
 COMMANDN(ea, eattr, "i");
