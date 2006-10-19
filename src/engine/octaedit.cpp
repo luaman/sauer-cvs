@@ -1073,6 +1073,9 @@ void editmove(int *isdown)
     {
         if(!havesel) 
             moving = entdragplayerview();
+        else
+            entgroup.setsize(0);
+
         if(!haveselent())
         {
             selextend();
