@@ -927,11 +927,6 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
     };
 };
 
-struct cubeface : mergeinfo
-{
-    cube *c;
-};
-
 static int mergefacecmp(const cubeface *x, const cubeface *y)
 {
     if(x->v2 < y->v2) return -1;
@@ -948,8 +943,8 @@ static int mergefacev(int orient, cubeface *m, int sz, cubeface &n)
         if(m[i].v2 < n.v1) break;
         if(m[i].v2 == n.v1 && m[i].u1 == n.u1 && m[i].u2 == n.u2)
         {
-            ext(*m[i].c).merged |= 1<<orient;
-            ext(*n.c).merged |= 1<<orient;
+            if(m[i].c) ext(*m[i].c).merged |= 1<<orient;
+            if(n.c) ext(*n.c).merged |= 1<<orient;
             n.v1 = m[i].v1;
             memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(cubeface));
             return 1;
@@ -962,8 +957,8 @@ static int mergefaceu(int orient, cubeface &m, cubeface &n)
 {
     if(m.v1 == n.v1 && m.v2 == n.v2 && m.u2 == n.u1)
     {
-        ext(*m.c).merged |= 1<<orient;
-        ext(*n.c).merged |= 1<<orient;
+        if(m.c) ext(*m.c).merged |= 1<<orient;
+        if(n.c) ext(*n.c).merged |= 1<<orient;
         n.u1 = m.u1;
         return 1;
     };
@@ -986,7 +981,7 @@ static int mergeface(int orient, cubeface *m, int sz, cubeface &n)
     return sz;
 };
 
-static int mergefaces(int orient, cubeface *m, int sz)
+int mergefaces(int orient, cubeface *m, int sz)
 {   
     qsort(m, sz, sizeof(cubeface), (int (__cdecl *)(const void *, const void *))mergefacecmp);
 

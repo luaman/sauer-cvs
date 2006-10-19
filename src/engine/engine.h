@@ -256,6 +256,14 @@ extern int calcmergedsize(int orient, const ivec &co, int size, const mergeinfo 
 extern void invalidatemerges(cube &c);
 extern void calcmerges();
 
+struct cubeface : mergeinfo
+{
+    cube *c;
+};
+
+extern int mergefaces(int orient, cubeface *m, int sz);
+extern void mincubeface(cube &cu, int orient, const ivec &o, int size, const mergeinfo &orig, mergeinfo &cf);
+
 // ents
 extern bool haveselent();
 extern bool toggleselent(int id);

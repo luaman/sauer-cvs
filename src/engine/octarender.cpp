@@ -494,7 +494,7 @@ bool skyoccluded(cube &c, int orient)
     return false;
 };
 
-int skyfaces(cube &c, int x, int y, int z, int size, int faces[6])
+int hasskyfaces(cube &c, int x, int y, int z, int size, int faces[6])
 {
     int numfaces = 0;
     if(x == 0 && !skyoccluded(c, O_LEFT)) faces[numfaces++] = O_LEFT;
@@ -506,31 +506,81 @@ int skyfaces(cube &c, int x, int y, int z, int size, int faces[6])
     return numfaces;
 };
 
-void genskyverts(cube &c, int x, int y, int z, int size, bool lodcube)
+vector<cubeface> skyfaces[6][2];
+ 
+void minskyface(cube &cu, int orient, const ivec &co, int size, mergeinfo &orig)
+{   
+    mergeinfo mincf;
+    mincf.u1 = orig.u2;
+    mincf.u2 = orig.u1;
+    mincf.v1 = orig.v2;
+    mincf.v2 = orig.v1;
+    mincubeface(cu, orient, co, size, orig, mincf);
+    orig.u1 = max(mincf.u1, orig.u1);
+    orig.u2 = min(mincf.u2, orig.u2);
+    orig.v1 = max(mincf.v1, orig.v1);
+    orig.v2 = min(mincf.v2, orig.v2);
+};  
+
+void genskyfaces(cube &c, const ivec &o, int size, bool lodcube)
 {
     if(isentirelysolid(c)) return;
 
     int faces[6],
-        numfaces = skyfaces(c, x, y, z, size, faces);
+        numfaces = hasskyfaces(c, o.x, o.y, o.z, size, faces);
     if(!numfaces) return;
-
-    if(!lodcube) skyarea += numfaces * (size>>4) * (size>>4);
 
     loopi(numfaces)
     {
-        int orient = faces[i], index[4];
-        loopk(4)
+        int orient = faces[i], dim = dimension(orient);
+        cubeface m;
+        m.c = NULL;
+        m.u1 = (o[C[dim]]&VVEC_INT_MASK)<<VVEC_FRAC; 
+        m.u2 = ((o[C[dim]]&VVEC_INT_MASK)+size)<<VVEC_FRAC;
+        m.v1 = (o[R[dim]]&VVEC_INT_MASK)<<VVEC_FRAC;
+        m.v2 = ((o[R[dim]]&VVEC_INT_MASK)+size)<<VVEC_FRAC;
+        minskyface(c, orient, o, size, m);
+        if(m.u1 >= m.u2 || m.v1 >= m.v2) continue;
+        if(!lodcube) 
         {
-            int coord = faceverts(c, orient, 3 - k);
-            vvec rv;
-            calcvert(c, x, y, z, size, rv, coord, true);
-            index[k] = vh.access(rv, 0, 0, bvec(128, 128, 128));
+            skyarea += (int(m.u2-m.u1)*int(m.v2-m.v1) + (1<<(2*VVEC_FRAC))-1)>>(2*VVEC_FRAC);
+            skyfaces[orient][0].add(m);
         };
-        if(!lodcube) addtriindexes(l0.skyindices, index);
-        if(lodsize && size>=lodsize) addtriindexes(l1.skyindices, index);
+        if(lodsize && size>=lodsize) skyfaces[orient][1].add(m);
     };
 };
 
+void addskyverts(const ivec &o, int size)
+{
+    loopi(6)
+    {
+        int dim = dimension(i), c = C[dim], r = R[dim];
+        loopl(2)
+        {
+            vector<cubeface> &sf = skyfaces[i][l]; 
+            if(sf.empty()) continue;
+            sf.setsizenodelete(mergefaces(i, sf.getbuf(), sf.length()));
+            loopvj(sf)
+            {
+                mergeinfo &m = sf[j];
+                int index[4];
+                loopk(4)
+                {
+                    const ivec &coords = cubecoords[fv[i][3-k]];
+                    vvec vv;
+                    vv[dim] = (o[dim]&VVEC_INT_MASK)<<VVEC_FRAC;
+                    if(coords[dim]) vv[dim] += size<<VVEC_FRAC;
+                    vv[c] = coords[c] ? m.u2 : m.u1;
+                    vv[r] = coords[r] ? m.v2 : m.v1;
+                    index[k] = vh.access(vv, 0, 0, bvec(128, 128, 128));
+                };
+                addtriindexes((!l ? l0 : l1).skyindices, index);
+            };
+            sf.setsizenodelete(0);
+        };
+    };
+};
+                    
 ////////// Vertex Arrays //////////////
 
 int allocva = 0;
@@ -753,7 +803,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         };
         lodcube = true;
     };
-    if(!c.children || lodcube) genskyverts(c, cx, cy, cz, size, lodcube);
+    if(!c.children || lodcube) genskyfaces(c, ivec(cx, cy, cz), size, lodcube);
 
     if(!isempty(c))
     {
@@ -802,6 +852,8 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
     rendercube(c, cx, cy, cz, size, csi);
 
+    addskyverts(ivec(cx, cy, cz), size);
+
     if(verts.length())
     {
         vtxarray *va = newva(cx, cy, cz, size);
@@ -841,7 +893,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
             if(c[i].ext->va->hasmerges&MERGE_ORIGIN) findmergedfaces(c[i], ivec(cx, cy, cz), size, csi, csi);
         }
         else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi-1);
-        else if(!isempty(c[i]) || skyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
+        else if(!isempty(c[i]) || hasskyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
         int tcount = count + (csi < VVEC_INT ? vamerges[csi].count : 0);
         if(tcount > vacubemax || (tcount >= vacubemin && size == vacubesize) || (tcount && size == min(VVEC_INT_MASK+1, hdr.worldsize/2))) 
         {
