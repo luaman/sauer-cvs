@@ -70,7 +70,7 @@ struct gui : g3d_gui
 		else 
 		{	
 			cury = -ysize;
-			bool hit = tcurrent && windowhit==this && hitx>=curx+tx && hity>=cury && hitx<curx+tx+w && hity<cury+FONTH;
+			bool hit = tcurrent && windowhit==this && hitx>=curx+tx-(skinx[2]-skinx[1]) && hity>=cury && hitx<curx+tx+w+(skinx[4]-skinx[3]) && hity<cury+FONTH*3/2;
 			if(hit) 
 			{	
 				*tcurrent = tpos; //so just roll-over to switch tab
