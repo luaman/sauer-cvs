@@ -170,13 +170,14 @@ bool pointinsel(selinfo &sel, vec &o)
 
 vector<int> entgroup;
 
-void toggleselent(int id)
+bool toggleselent(int id)
 {
     int i = entgroup.find(id);
     if(i < 0)
         entgroup.add(id);
     else
         entgroup.remove(i);
+    return i < 0;
 }
 
 bool haveselent()
@@ -264,7 +265,7 @@ VAR(entselsnap, 0, 0, 1);
 void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first)
 {
     float r = 0, c = 0;
-
+    if(!haveselent()) return;
     entfocus(entgroup.last(),
         plane pl(d, e.o[D[d]]);
         float dist = 0.0f;

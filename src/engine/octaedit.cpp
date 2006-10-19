@@ -105,19 +105,15 @@ COMMAND(passthrough, "D");
 
 bool entdragplayerview()
 {
-    if(!passthroughcube)
-    {
-        ivec t;
-        vec ray(worldpos); ray.sub(player->o);
-        int n = rayent(player->o, ray);
-        if(n>=0)
-        {
-            toggleselent(n);
-            entdrag(player->o, ray, dimension(sel.orient), t, true);
-            return true;
-        };
-    };
-    return false;
+    if(passthroughcube) return false;
+    ivec t;
+    vec ray(worldpos); ray.sub(player->o);
+    int n = rayent(player->o, ray);
+    if((entgroup.length()==1 && n==entgroup.last()) || // don't deselect single selections
+       (n>=0 && toggleselent(n)))
+        entdrag(player->o, ray, dimension(sel.orient), t, true);
+    else return false;
+    return true;
 };
 
 void editdrag(bool on)
@@ -276,7 +272,7 @@ void cursorupdate()
     int d = dimension(sel.orient);
     ivec e;
 
-    if(haveselent() && dragging)
+    if(haveselent() && (dragging || moving))
     {
         entdrag(player->o, ray, d, e);
     }
@@ -356,14 +352,15 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     glColor3ubv(cursorcolor);
     boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
-    if(moving)
+    if(havesel && moving)
     {
         glColor3ub(10,10,10);   // grid
         boxsgrid(movesel, sel.s, sel.grid, sel.orient);
         glColor3ub(10,10,40);   // 3D selection box
         boxs3D(movesel, sel.s, sel.grid);
-    };
-    if(haveselent() && dragging)
+    }
+    else
+    if(haveselent() && (dragging || moving))
     {
         glColor3ub(40,40,40);
         loop(x, 4) loop(y, 4)
@@ -942,15 +939,15 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 
     if(local)
     {
-        if(moving)
-        {
-            movesel[d] += seldir*sel.grid;
-            return;
-        };
-
         if(haveselent())
         {
             pushent(d, seldir*sel.grid);
+            return;
+        };
+
+        if(moving)
+        {
+            movesel[d] += seldir*sel.grid;
             return;
         };
 
@@ -1037,9 +1034,9 @@ COMMAND(editface, "ii");
 
 void selextend()
 {
-    if(noedit(true)) return;
-    if(entdragplayerview()) return;
-
+    if(noedit(true)) return;    
+    if(!havesel)     entdragplayerview();
+    if(haveselent()) return;
     loopi(3)
     {
         if(cur[i]<sel.o[i])
@@ -1052,9 +1049,8 @@ void selextend()
             sel.s[i] = (cur[i]-sel.o[i])/sel.grid+1;
         };
     };
-
     cursorupdate();
-    reorient();
+    reorient();   
 };
 
 void mpmovecubes(ivec &o, selinfo &sel, bool local)
@@ -1073,22 +1069,24 @@ void mpmovecubes(ivec &o, selinfo &sel, bool local)
 void editmove(int *isdown)
 {
     if(noedit(true)) return;
-    if(haveselent()) { if(dragging = *isdown!=0) dragging = entdragplayerview(); return; };
     if(*isdown!=0)
     {
-        selextend();
-        vec v(cur.v); v.add(1);
-        if(pointinsel(sel, v))
+        if(!havesel) 
+            moving = entdragplayerview();
+        if(!haveselent())
         {
+            selextend();
             movesel = sel.o;
             moving = true;
-            havesel = false;
-            return;
+            havesel = false; // tell cursorupdate to create handle
         };
     }
-    else if(moving && movesel!=sel.o)
-        mpmovecubes(movesel, sel, true);
-    moving = false;
+    else
+    {
+        if(havesel && moving && movesel!=sel.o)
+            mpmovecubes(movesel, sel, true);
+        moving = false;
+    };
 };
 
 COMMAND(selextend, "");

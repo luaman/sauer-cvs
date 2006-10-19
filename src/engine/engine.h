@@ -258,7 +258,7 @@ extern void calcmerges();
 
 // ents
 extern bool haveselent();
-extern void toggleselent(int id);
+extern bool toggleselent(int id);
 extern int rayent(const vec &o, vec &ray);
 extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first = false);
 extern void copyent(int n);
