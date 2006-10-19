@@ -109,7 +109,7 @@ struct clipplanes
 
 struct mergeinfo
 {
-    ushort u1, u2, v1, v2;
+    short u1, u2, v1, v2;
 };
 
 struct cubeext

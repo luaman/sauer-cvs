@@ -805,7 +805,7 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     if(reflected) glScalef(1, 1, -1);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
-    draw_envbox(farplane/2, float(zclip)/float(hdr.worldsize));
+    draw_envbox(farplane/2, zclip ? (zclip+0.5f*(farplane-hdr.worldsize))/farplane : 0);
     glPopMatrix();
     if(limited) 
     {

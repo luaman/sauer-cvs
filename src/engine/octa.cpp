@@ -927,10 +927,9 @@ void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
     };
 };
 
-struct cubeface
+struct cubeface : mergeinfo
 {
     cube *c;
-    short u1, v1, u2, v2;
 };
 
 static int mergefacecmp(const cubeface *x, const cubeface *y)
@@ -1021,7 +1020,7 @@ struct cfval
 
 static hashtable<cfkey, cfval> cfaces;
 
-void mincubeface(cube &cu, int orient, const ivec &o, int size, cubeface &cf, const cubeface &orig)
+void mincubeface(cube &cu, int orient, const ivec &o, int size, const mergeinfo &orig, mergeinfo &cf)
 {
     int dim = dimension(orient);
     if(cu.children)
@@ -1029,7 +1028,7 @@ void mincubeface(cube &cu, int orient, const ivec &o, int size, cubeface &cf, co
         size >>= 1;
         int coord = dimcoord(orient);
         loopi(8) if(octacoord(dim, i) == coord)
-            mincubeface(cu.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, cf, orig);
+            mincubeface(cu.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, orig, cf);
         return;
     };
     int c = C[dim], r = R[dim];
@@ -1067,6 +1066,23 @@ void mincubeface(cube &cu, int orient, const ivec &o, int size, cubeface &cf, co
     cf.u2 = max(cf.u2, uc2);
     cf.v1 = min(cf.v1, vc1);
     cf.v2 = max(cf.v2, vc2);
+};
+
+bool mincubeface(cube &cu, int orient, const ivec &co, int size, mergeinfo &orig)
+{
+    cube &nc = neighbourcube(co.x, co.y, co.z, size, -size, orient);
+    mergeinfo mincf;
+    mincf.u1 = orig.u2;
+    mincf.u2 = orig.u1;
+    mincf.v1 = orig.v2;
+    mincf.v2 = orig.v1;
+    mincubeface(nc, opposite(orient), lu, lusize, orig, mincf);
+    bool smaller = false;
+    if(mincf.u1 > orig.u1) { orig.u1 = mincf.u1; smaller = true; };
+    if(mincf.u2 < orig.u2) { orig.u2 = mincf.u2; smaller = true; };
+    if(mincf.v1 > orig.v1) { orig.v1 = mincf.v1; smaller = true; };
+    if(mincf.v2 < orig.v2) { orig.v2 = mincf.v2; smaller = true; };
+    return smaller;
 };
 
 VAR(minface, 0, 1, 1);
@@ -1139,21 +1155,9 @@ bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &o
     v[3].add(vo);
     offset = -n.dot(v[3]);
 
-    if(minface && touchingface(cu, orient))
+    if(minface && touchingface(cu, orient) && mincubeface(cu, orient, co, size, cf))
     {
-        cube &nc = neighbourcube(co.x, co.y, co.z, size, -size, orient);
-        cubeface mincf;
-        mincf.u1 = cf.u2;
-        mincf.u2 = cf.u1;
-        mincf.v1 = cf.v2;
-        mincf.v2 = cf.v1;
-        mincubeface(nc, opposite(orient), lu, lusize, mincf, cf);
-        bool smaller = false;
-        if(mincf.u1 > cf.u1) { cf.u1 = mincf.u1; smaller = true; };
-        if(mincf.u2 < cf.u2) { cf.u2 = mincf.u2; smaller = true; };
-        if(mincf.v1 > cf.v1) { cf.v1 = mincf.v1; smaller = true; };
-        if(mincf.v2 < cf.v2) { cf.v2 = mincf.v2; smaller = true; };
-        if(smaller) ext(cu).merged |= 1<<orient;
+        ext(cu).merged |= 1<<orient;
     };    
 
     return true;

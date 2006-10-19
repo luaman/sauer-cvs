@@ -251,7 +251,7 @@ void draw_envbox(int w, float zclip)
     if(!sky[0]) fatal("no skybox");
 
     float vclip = 1-zclip;
-    int z = int((vclip-0.5f)*2*w);
+    int z = int(ceil(2*w*(vclip-0.5f)));
 
     glDepthMask(GL_FALSE);
 
