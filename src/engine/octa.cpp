@@ -1104,9 +1104,23 @@ bool gencubeface(cube &cu, int orient, const ivec &co, int size, ivec &n, int &o
     n.cross(v[1], v[2]);
 
     // reduce the normal as much as possible without resorting to floating point
-    if(!n[c] && !n[r]) n[dim] /= abs(n[dim]);
-    else if((!n[c] && n[dim] == n[r]) || (!n[r] && n[dim] == n[c])) n.div(abs(n[dim]));
-    else while((n[0]&1)==0 && (n[1]&1)==0 && (n[2]&1)==0)
+    int mindim = -1, minval;
+    loopi(3) if(n[i])
+    {
+        int val = abs(n[i]);
+        if(mindim < 0 || val < minval)
+        {
+            mindim = i;
+            minval = val;
+        };
+    };
+    if(!(n[R[mindim]]%minval) && !(n[C[mindim]]%minval))
+    {
+        n[mindim] /= minval;
+        n[R[mindim]] /= minval;
+        n[C[mindim]] /= minval;
+    };
+    while((n[0]&1)==0 && (n[1]&1)==0 && (n[2]&1)==0)
     {
         n[0] >>= 1;
         n[1] >>= 1;
