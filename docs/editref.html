@@ -36,6 +36,26 @@ don't apply (noclip), and key repeat is ON.
 Select cubes and entities. (default: left mouse button)
 </p>
 
+<pre>selcorners</pre>
+<p>
+Select the corners of cubes. (default: middle mouse button)
+</p>
+
+<pre>editmove</pre>
+<p>
+Moves a cube selection to another position. (default: right mouse button). Activated by a 'drag-and-drop' style action.
+The orientation of the selection will change depending on what side of the selection 
+you try to hold onto. The selection will extend if the cursor is outside of the selection
+when you try to hold onto the it. Editmove also supports extending entity selections as well.
+
+Movement fuctions similar to entity dragging; 
+you can drag the selection across the 2D plane indicated by the cube orientation.
+The scroll wheel (ie: editface) is used to change the depth of the selection. 
+A ghost selection will indicate the new position of the selection.
+
+Moving a cubic selection will also move any entities within the selection.
+</p>
+
 <pre>cancelsel</pre>
 <p>
 Cancels out any explicit selection you currently have (default: space).
@@ -74,14 +94,15 @@ texturing things using already textured geometry.
 
 <pre>selextend</pre>
 <p>
-Extend current selection to include the cursor. (default: b)  
+Extend current selection to include the cursor.
+Also supports extending entity selections. Click an entity to toggle it into the entity selection.
 </p>
 
 <pre>passthrough</pre>
 <p>
 normally cubes of equal size to the grid are given priority when selecting.
 passthrough removes this priority while held down so that the cube the cursor is directly on is selected.   
-Holding down passthrough will also give priority to cube over entities. (default: ctrl)
+Holding down passthrough will also give priority to cube over entities. (default: alt)
 </p>
 
 <pre>reorient</pre>
@@ -162,23 +183,8 @@ Shows cyan volume in edit mode.
 Recalculates scene geometry. Shouldn't be needed under normal curcumstances.
 </p>
 
-<pre>editmove</pre>
-<p>
-Experimental. Moves a cube selection to another position. Activated by a 'drag-and-drop' style action.
-The orientation of the selection will change depending on what side of the selection 
-you try to hold onto. The selection will extend if the cursor is outside of the selection
-when you try to hold onto the it.
-
-Movement fuctions similar to entity dragging; 
-you can drag the selection across the 2D plane indicated by the cube orientation.
-The scroll wheel (ie: editface) is used to change the depth of the selection. 
-A ghost selection will indicate the new position of the selection.
-
-Moving a cubic selection will also move any entities within the selection.
-
 <a name="heightfield"></a>        
 <h1>Heightfield</h1>
-</p>
 
 <pre>getheightmap</pre>
 <p>
@@ -200,7 +206,7 @@ rotate commands. This type of selection cannot currently be used in coop edit.
 <pre>selectbrush D</pre>
 <p>
 This is not an actual engine command, but rather an alias which is defined
-in data/brush.cfg. It is to be used as a modifier (default: J), and switches between the
+in data/brush.cfg. It is to be used as a modifier (default: B), and switches between the
 various brushes that have been saved within that config file.
 </p>
 
@@ -309,7 +315,10 @@ Sets the state of all locked triggers with tag T to N.
 
 <pre>esel X</pre>
 <p>
-Takes an boolean expression as argument. Selects all entities that evaluate to true for the given expression.
+Takes a boolean expression as argument. Selects all entities that evaluate to true for the given expression.<br>
+examples:<br>
+esel insel // select all entities in blue selection box<br>
+esel [ strcmp (et) "shells" ] // select all shells in map
 </p>
 
 <pre>esellen</pre>
