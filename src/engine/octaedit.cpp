@@ -47,7 +47,7 @@ void boxsgrid(const ivec &o, const ivec &s, int g, int orient)
 
 selinfo sel = { 0 }, lastsel;
 
-int orient = 0, _reorient = 0;
+int orient = 0;
 int gridsize = 8;
 ivec cor, lastcor;
 ivec cur, lastcur;
@@ -135,9 +135,9 @@ void reorient()
 {
     sel.cx = 0;
     sel.cy = 0;
-    sel.cxs = sel.s[R[dimension(_reorient)]]*2;
-    sel.cys = sel.s[C[dimension(_reorient)]]*2;
-    sel.orient = _reorient;
+    sel.cxs = sel.s[R[dimension(orient)]]*2;
+    sel.cys = sel.s[C[dimension(orient)]]*2;
+    sel.orient = orient;
     if(hmap) createheightmap();
 };
 
@@ -230,25 +230,13 @@ void setcursorcolor(int *r, int *g, int *b)
 
 COMMANDN(cursorcolor, setcursorcolor, "iii");
 
-void cursorupdate()
+void normalizelookupcube(int x, int y, int z)
 {
-    vec target(worldpos);
-    if(!insideworld(target))
-        loopi(3) target[i] = max(min(target[i], hdr.worldsize), 0);
-    vec ray(target), v;
-    ray.sub(player->o).normalize();
-    if(raycubepos(player->o, ray, v, 0, RAY_SKIPFIRST
-        | (passthroughcube ? RAY_PASS : 0)
-        | (editmode && showmat ? RAY_EDITMAT : 0), gridsize)<0)
-        v = target;
-
-    lookupcube(int(v.x), int(v.y), int(v.z));
-    int mag = lusize / gridsize;
     if(lusize>gridsize)
     {
-        lu.x += ((int)v.x-lu.x)/gridsize*gridsize;
-        lu.y += ((int)v.y-lu.y)/gridsize*gridsize;
-        lu.z += ((int)v.z-lu.z)/gridsize*gridsize;
+        lu.x += (x-lu.x)/gridsize*gridsize;
+        lu.y += (y-lu.y)/gridsize*gridsize;
+        lu.z += (z-lu.z)/gridsize*gridsize;
     }
     else if(gridsize>lusize)
     {
@@ -257,19 +245,29 @@ void cursorupdate()
         lu.z &= ~(gridsize-1);
     };
     lusize = gridsize;
+};
 
-    float t;
-    rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t=0, orient);
-    if(!rayrectintersect(sel.o, ivec(sel.s).mul(sel.grid), player->o, ray, t=0, _reorient))
-        _reorient = orient;
+void updateselection()
+{
+    sel.o.x = min(lastcur.x, cur.x);
+    sel.o.y = min(lastcur.y, cur.y);
+    sel.o.z = min(lastcur.z, cur.z);
+    sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
+    sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
+    sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
+};
 
-    cur = lu;
+void cursorupdate()
+{
+    if(sel.grid == 0) sel.grid = gridsize;
+
+    vec target(worldpos);
+    if(!insideworld(target)) loopi(3) 
+        target[i] = max(min(target[i], hdr.worldsize), 0);
+    vec ray(target);
+    ray.sub(player->o).normalize();
     int g2 = gridsize/2;
-    cor.x = (int)v.x/g2;
-    cor.y = (int)v.y/g2;
-    cor.z = (int)v.z/g2;
-    int od = dimension(orient);
-    int d = dimension(sel.orient);
+    int d = dimension(sel.orient), od = dimension(orient);
     ivec e;
 
     if(haveselent() && (dragging || moving))
@@ -299,60 +297,99 @@ void cursorupdate()
             movesel[C[d]] = e[C[d]];
         };
     }
-    else if(dragging)
+    else
     {  
-        sel.o.x = min(lastcur.x, cur.x);
-        sel.o.y = min(lastcur.y, cur.y);
-        sel.o.z = min(lastcur.z, cur.z);
-        sel.s.x = abs(lastcur.x-cur.x)/sel.grid+1;
-        sel.s.y = abs(lastcur.y-cur.y)/sel.grid+1;
-        sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
+        vec v;
+        ivec w;
+        float sdist = 0, wdist = 0, t;
+        bool hit = false;
 
-        sel.cx   = min(cor[R[d]], lastcor[R[d]]);
-        sel.cy   = min(cor[C[d]], lastcor[C[d]]);
-        sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
-        sel.cys  = max(cor[C[d]], lastcor[C[d]]);
-
-        if(!selectcorners)
+        wdist = raycubepos(player->o, ray, v, 0,  (editmode && showmat ? RAY_EDITMAT : 0)   // select cubes first
+                                                | (passthroughcube ? RAY_PASS : 0)
+                                                | RAY_SKIPFIRST, gridsize);
+        if(dragging) // update selection 
         {
-            sel.cx &= ~1;
-            sel.cy &= ~1;
-            sel.cxs &= ~1;
-            sel.cys &= ~1;
-            sel.cxs -= sel.cx-2;
-            sel.cys -= sel.cy-2;
-        }
-        else
-        {
-            sel.cxs -= sel.cx-1;
-            sel.cys -= sel.cy-1;
+            w = v;
+            lookupcube(w.x, w.y, w.z);
+            normalizelookupcube(w.x, w.y, w.z);
+            cur = lu;
+            updateselection();
         };
 
-        sel.cx  &= 1;
-        sel.cy  &= 1;
-        havesel = true;
-    }
-    else if(!havesel && hmap == NULL)
-    {
-        sel.o = lu;
-        sel.s.x = sel.s.y = sel.s.z = 1;
-        sel.cx = sel.cy = 0;
-        sel.cxs = sel.cys = 2;
-        sel.grid = gridsize;
-        sel.orient = orient;
-        d = od;
+        if(havesel && !passthroughcube)     // now try selecting the selection
+            if(hit = rayrectintersect(sel.o, ivec(sel.s).mul(sel.grid), player->o, ray, sdist, orient))
+                wdist = min(sdist, wdist);  // and choose the nearest of the two
+
+        v = ray;
+        v.mul(wdist+0.1f);
+        v.add(player->o);
+        w = v;
+        lookupcube(w.x, w.y, w.z);
+        int mag = lusize / gridsize;
+        normalizelookupcube(w.x, w.y, w.z);
+        if(!hit) rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t=0, orient); // just getting orient     
+        cur = lu;
+        cor = w;
+        cor.div(g2);
+        od = dimension(orient);
+        d = dimension(sel.orient);
+
+        if(dragging) 
+        {
+            updateselection();
+            sel.cx   = min(cor[R[d]], lastcor[R[d]]);
+            sel.cy   = min(cor[C[d]], lastcor[C[d]]);
+            sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
+            sel.cys  = max(cor[C[d]], lastcor[C[d]]);
+
+            if(!selectcorners)
+            {
+                sel.cx &= ~1;
+                sel.cy &= ~1;
+                sel.cxs &= ~1;
+                sel.cys &= ~1;
+                sel.cxs -= sel.cx-2;
+                sel.cys -= sel.cy-2;
+            }
+            else
+            {
+                sel.cxs -= sel.cx-1;
+                sel.cys -= sel.cy-1;
+            };
+
+            sel.cx  &= 1;
+            sel.cy  &= 1;
+            havesel = true;
+        }
+        else if(!havesel && hmap == NULL)
+        {
+            sel.o = lu;
+            sel.s.x = sel.s.y = sel.s.z = 1;
+            sel.cx = sel.cy = 0;
+            sel.cxs = sel.cys = 2;
+            sel.grid = gridsize;
+            sel.orient = orient;
+            d = od;
+        };
+
+        sel.corner = (cor[R[d]]-lu[R[d]]/g2)+(cor[C[d]]-lu[C[d]]/g2)*2;
+        selchildcount = 0;
+        countselchild(worldroot, origin, hdr.worldsize/2);
+        if(mag>1 && selchildcount==1) selchildcount = -mag;
     };
-
-    sel.corner = (cor[R[d]]-lu[R[d]]/g2)+(cor[C[d]]-lu[C[d]]/g2)*2;
-    selchildcount = 0;
-    countselchild(worldroot, origin, hdr.worldsize/2);
-    if(mag>1 && selchildcount==1) selchildcount = -mag;
-
+    
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    glColor3ubv(cursorcolor);
-    boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
-    if(havesel && moving)
+    
+    // cursors    
+    if(haveselent() && (dragging || moving))
+    {
+        glColor3ub(40,40,40);
+        loop(x, 4) loop(y, 4)
+            boxs(sel.orient, e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
+    }
+    else
+    if(moving)
     {
         glColor3ub(10,10,10);   // grid
         boxsgrid(movesel, sel.s, sel.grid, sel.orient);
@@ -360,12 +397,12 @@ void cursorupdate()
         boxs3D(movesel, sel.s, sel.grid);
     }
     else
-    if(haveselent() && (dragging || moving))
     {
-        glColor3ub(40,40,40);
-        loop(x, 4) loop(y, 4)
-            boxs(sel.orient, e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
+        glColor3ubv(cursorcolor);
+        boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     };
+
+    // selections
     if(hmap != NULL)
     {
         glColor3ub(0,200,0);
@@ -386,6 +423,7 @@ void cursorupdate()
         glColor3ub(0,0,120);     // 3D selection box
         boxs3D(sel.o, sel.s, sel.grid);
     };
+    
     glDisable(GL_BLEND);
 };
 
