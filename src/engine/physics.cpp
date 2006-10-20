@@ -432,7 +432,7 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
         model *m = loadmodel(NULL, e.attr2);
         if(!m || !m->collide) continue;
         vec center, radius;
-        m->boundbox(0, center, radius);
+        m->collisionbox(0, center, radius);
         center.z -= radius.z;
         radius.z *= 2;
         rotatebb(center, radius, e.attr1);

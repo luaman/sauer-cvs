@@ -88,9 +88,9 @@ COMMAND(mdlvwep, "i");
 void mdlbb(float *rad, float *h, float *eyeheight)
 {
     checkmdl;
-    loadingmodel->bbcenter = vec(0, 0, *h/2);
-    loadingmodel->bbradius = vec(*rad, *rad, *h/2);
-    loadingmodel->bbeyeheight = *eyeheight; 
+    loadingmodel->collideradius = *rad;
+    loadingmodel->collideheight = *h;
+    loadingmodel->eyeheight = *eyeheight; 
 };
 
 COMMAND(mdlbb, "fff");
@@ -183,7 +183,7 @@ VARP(maxmodelradiusdistance, 10, 80, 1000);
 extern float reflecting, refracting;
 extern int waterfog, reflectdist;
 
-VAR(showboundingbox, 0, 0, 1);
+VAR(showboundingbox, 0, 0, 2);
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, float ambient, const char *vwepmdl)
 {
@@ -213,7 +213,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         else if((anim&ANIM_INDEX)!=ANIM_GUNSHOOT && (anim&ANIM_INDEX)!=ANIM_GUNIDLE)
         {
             vec center, radius;
-            m->boundbox(0, center, radius);
+            if(showboundingbox==1) m->collisionbox(0, center, radius);
+            else m->boundbox(0, center, radius);
             rotatebb(center, radius, int(yaw));
             center.add(vec(x, y, z));
             render3dbox(center, radius.z, radius.z, radius.x, radius.y);
@@ -325,10 +326,10 @@ void setbbfrommodel(dynent *d, char *mdl)
     model *m = loadmodel(mdl); 
     if(!m) return;
     vec center, radius;
-    m->boundbox(0, center, radius);
+    m->collisionbox(0, center, radius);
     d->radius    = max(radius.x+fabs(center.x), radius.y+fabs(center.y));
-    d->eyeheight = (center.z-radius.z) + radius.z*2*m->bbeyeheight;
-    d->aboveeye  = radius.z*2*(1.0f-m->bbeyeheight);
+    d->eyeheight = (center.z-radius.z) + radius.z*2*m->eyeheight;
+    d->aboveeye  = radius.z*2*(1.0f-m->eyeheight);
 };
 
 void vectoyawpitch(const vec &v, float &yaw, float &pitch)
