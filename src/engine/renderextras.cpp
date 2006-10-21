@@ -390,15 +390,15 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         bool windowhit = g3d_windowhit(true, false);
         if(/*!rendermenu(w, h) && */windowhit || player->state!=CS_SPECTATOR)
         {
-            static Texture *hand = NULL;
-            if(!hand) hand = textureload("data/handcursor.png");
+            static Texture *cursor = NULL;
+            if(!cursor) cursor = textureload("data/guicursor.png");
             
             glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
             glColor3f(1, 1, 1);
             float chsize = (float)crosshairsize*w/300;
-            float x = w*1.5f - (windowhit?0:chsize/2.0f);
-            float y = h*1.5f - (windowhit?0:chsize/2.0f);
-            glBindTexture(GL_TEXTURE_2D, (windowhit?hand:crosshair)->gl);
+            float x = w*1.5f - (windowhit ? 0 : chsize/2.0f);
+            float y = h*1.5f - (windowhit ? 0 : chsize/2.0f);
+            glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->gl);
             glBegin(GL_QUADS);
             glTexCoord2d(0.0, 0.0); glVertex2f(x,          y);
             glTexCoord2d(1.0, 0.0); glVertex2f(x + chsize, y);
