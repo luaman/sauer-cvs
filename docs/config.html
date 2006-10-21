@@ -350,26 +350,6 @@ or red when &lt;=25.
 Executes all commands in config file S.
 </p>
 
-<pre>newmenu S</pre>
-<p>
-Creates a new menu with name S. All following menuitem commands will apply to this menu.
-</p>
-
-<pre>
-menuitem S A
-menuitem A
-</pre>
-<p>
-Creates a new menuitem with the name S, which will execute A when selected. If you only specify one parameter, then it will be used for both.
-See "data/menus.cfg" for the defaults. If N starts with the special character "^", then the name will be evaluated as a command when
-being displayed, and the the variable "S" used as name. This allows you to create menu items that depend on changing gamestate.
-</p>
-
-<pre>showmenu N</pre>
-<p>
-Displays the menu with name N previously defined, and allows the user to pick an item with the cursor keys. Upon pressing return,
-the associated action will be executed. pressing ESC will cancel the menu.
-</p>
 
 <pre>history N</pre>
 <p>
@@ -381,6 +361,103 @@ last command typed in (useful for placing many identical entities etc.)
 <p>
 Sets up the keymap for key code K with name N and default action A. You should 
 never have to use this command manually, use "bind" instead.
+
+
+<h1>3dGUI/Menu Commands</h1>
+
+<pre>menudistance</pre>
+<p>
+Sets the distance at which the menu is created in front of the player.
+</p>
+
+<pre>guiautotab</pre>
+<p>
+Sets the height of the gui before tabs are automatically generated.
+</p>
+
+<pre>clearmenu</pre>
+<p>
+Hides the menu.
+</p>
+
+<pre>showmenu N</pre>
+<p>
+Displays the menu with name N previously defined, and allows the user to pick and manipulate items with the cursor. Pressing ESC will cancel the menu.
+</p>
+
+<pre>newmenu S</pre>
+<p>
+Creates a new menu with name S. All the following 'gui' menuitem commands will apply to this menu.
+See "data/menus.cfg" for defaults.
+</p>
+
+<pre>
+guilist
+</pre>
+<p>
+Defines a menu item that is a group of menu items. The layout of each nested group will alternate - the top level (newmenu) is laid out vertically, 
+the first guilist will be laid out horizontally, the second guilist vertically, etc. This allows tables and lists to be created. The 
+layout direction also influences the display of items such as sliders, bars, progress bars, and struts.
+</p>
+
+<pre>
+guititle S
+</pre>
+<p>
+Creates a menu item with horizontally centered title S.
+</p>
+
+<pre>
+guibutton S A
+guibutton A
+</pre>
+<p>
+Creates a menu button with the name S, which will execute A when selected. If you only specify one parameter, then it will be used for both.
+The icon used will be a blue-button if A contains showmenu, otherwise it is a green button. Clicking a button will close the menu.
+</p>
+
+<pre>
+guiimage P A
+</pre>
+<p>
+Creates a menu image tile from the path P, which will execute A when selected. Clicking the image will close the menu.
+</p>
+<pre>
+guitext S
+</pre>
+<p>
+Creates a menu consisting of the text line S and an information icon.
+</p>
+
+<pre>
+guibar
+</pre>
+<p>
+Creates a vertical/horizontal menu bar. The orientation depends on the layout direction.
+</p>
+
+<pre>
+guislider V
+</pre>
+<p>
+Creates a vertical/horizontal menu slider that is bound to a variable V. The min/max bounds of the slider will be as defined by the data model of the variable. The orientation of the slider depends on the layout direction.
+</p>
+
+<pre>
+guicheck N V
+</pre>
+<p>
+Creates a menu checkbox with a label N that is bound to a variable V.
+</p>
+
+<pre>
+guiradio N V X
+</pre>
+<p>
+Creates a menu radio button with a label N that is bound to a variable V. The radio button is only ticked when the variable has value X, and 
+presing the button will update the variable to the value X.
+</p>
+
 
 <h1>CubeScript</h1>
 
