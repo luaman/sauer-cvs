@@ -569,7 +569,7 @@ struct fpsserver : igameserver
                         curmsg = p;
                     };
                 };
-                if(m_capture && !ci->spectator && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
+                if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
                 getint(p);
@@ -689,8 +689,8 @@ struct fpsserver : igameserver
                 if(!spinfo) break;
                 if(!spinfo->spectator && val)
                 {
+                    if(m_capture && spinfo->state==CS_ALIVE) cps.leavebases(spinfo->team, spinfo->o);
                     spinfo->state = CS_SPECTATOR;
-                    if(m_capture) cps.leavebases(spinfo->team, spinfo->o);
                 };
                 spinfo->spectator = val!=0;
                 sendf(sender, 0, "ri3", SV_SPECTATOR, spectator, val);
@@ -705,7 +705,7 @@ struct fpsserver : igameserver
                 if(!ci->master || who<0 || who>=getnumclients()) break;
                 clientinfo *wi = (clientinfo *)getinfo(who);
                 if(!wi) break;
-                if(m_capture && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->o);
+                if(m_capture && wi->state==CS_ALIVE && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->o);
                 s_strncpy(wi->team, text, MAXTEAMLEN+1);
                 sendf(sender, 0, "riis", SV_SETTEAM, who, text);
                 loopi(p-curmsg) ci->messages.add(curmsg[i]);
@@ -875,7 +875,7 @@ struct fpsserver : igameserver
     void localdisconnect(int n)
     {
         clientinfo *ci = (clientinfo *)getinfo(n);
-        if(m_capture) cps.leavebases(ci->team, ci->o);
+        if(m_capture && ci->state==CS_ALIVE) cps.leavebases(ci->team, ci->o);
         clients.removeobj(ci);
     };
 
@@ -896,7 +896,7 @@ struct fpsserver : igameserver
     { 
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(ci->master) setmaster(ci, false);
-        if(m_capture) cps.leavebases(ci->team, ci->o);
+        if(m_capture && spinfo->state==CS_ALIVE) cps.leavebases(ci->team, ci->o);
         ci->score.timeplayed += enet_time_get() - ci->gamestart; 
         savescore(ci);
         sendf(-1, 0, "ri2", SV_CDIS, n); 
