@@ -896,7 +896,7 @@ struct fpsserver : igameserver
     { 
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(ci->master) setmaster(ci, false);
-        if(m_capture && spinfo->state==CS_ALIVE) cps.leavebases(ci->team, ci->o);
+        if(m_capture && ci->state==CS_ALIVE) cps.leavebases(ci->team, ci->o);
         ci->score.timeplayed += enet_time_get() - ci->gamestart; 
         savescore(ci);
         sendf(-1, 0, "ri2", SV_CDIS, n); 

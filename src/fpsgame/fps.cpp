@@ -526,8 +526,8 @@ struct fpsclient : igameclient
             int r = 64;
             if(g==GUN_PISTOL) { g = 4; r = 0; };
             drawicon((float)(g*64), (float)r, 1220, 1650);
-            if(m_capture) cpc.capturehud(w, h);
         };
+        if(m_capture) cpc.capturehud(w, h);
     };
 
     void newmap(int size)
