@@ -14,6 +14,7 @@ struct scoreboard : g3d_callback
 
     void showscores(bool on)
     {
+        if(scoreson && on) return;
         if(scoreson = on) 
         {
 //            menupos = menuinfrontofplayer();
