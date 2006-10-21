@@ -8,14 +8,15 @@
 
 static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
-g3d_gui *windowhit = NULL; //use as global test to know if mouse is stolen by gui
+static g3d_gui *windowhit = NULL; //use as global test to know if mouse is stolen by gui
 
 #define SHADOW 4
 #define IMAGE_SIZE 120
 #define ICON_SIZE 60
+#define SKIN_SCALE 4
 
 //dependent on screen resolution?
-#define TABHEIGHT_MAX 600
+VARP(guiautotab, FONTH*6, FONTH*10, FONTH*40);
 
 struct gui : g3d_gui
 {
@@ -42,7 +43,7 @@ struct gui : g3d_gui
         if(tcurrent)
         {
             if(layoutpass && !tpos) tcurrent = NULL; //disable tabs because you didn't start with one
-            if(!curdepth && (layoutpass ? 0 : cury) + ysize > TABHEIGHT_MAX) tab(NULL, 0xAAFFAA); 
+            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab) tab(NULL, 0xAAFFAA); 
         };
     };
 
@@ -59,13 +60,13 @@ struct gui : g3d_gui
         if(layoutpass) 
         {  
             ty = max(ty, ysize); 
-            ysize = FONTH+(skiny[3]-skiny[2]);
+            ysize = FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
         }
         else 
         {	
             cury = -ysize;
-            int x = curx + tx + (skinx[2]-skinx[1]);
-            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1]) && hity>=cury && hitx<x+w+(skinx[4]-skinx[3]) && hity<cury+FONTH;
+            int x = curx + tx + (skinx[2]-skinx[1])*SKIN_SCALE;
+            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH;
             if(hit) 
             {	
                 *tcurrent = tpos; //roll-over to switch tab
@@ -78,9 +79,9 @@ struct gui : g3d_gui
             patchn_(x, x+w, cury, cury+FONTH, visible()?11:20, 9);
             glEnd();
             text_(name, x, cury, color, visible());
-            cury += FONTH+(skiny[3]-skiny[2]);
+            cury += FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
         };
-        tx += w + (skinx[4]-skinx[3]) + (skinx[2]-skinx[1]); 
+        tx += w + ((skinx[4]-skinx[3]) + (skinx[2]-skinx[1]))*SKIN_SCALE; 
     };
 
     bool ishorizontal() const { return curdepth&1; };
@@ -177,8 +178,7 @@ struct gui : g3d_gui
         Texture *t = textureload(path);
         if(!t) return 0;
         autotab();
-        if(visible())
-        icon_(t, curx, cury, IMAGE_SIZE, ishit(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW));
+        if(visible()) icon_(t, curx, cury, IMAGE_SIZE, ishit(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW));
         return layout(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW);
     };
 
@@ -322,11 +322,13 @@ struct gui : g3d_gui
         float in_top     = ((float) skiny[ttop]) / 128.0f;
         float in_right   = ((float) skinx[tright]) / 256.0f;
         float in_bottom  = ((float) skiny[tbottom]) / 128.0f;
-        int w = skinx[tright] - skinx[tleft];
-        int h = skiny[tbottom] - skiny[ttop];
+        int w = (skinx[tright] - skinx[tleft])*SKIN_SCALE;
+        int h = (skiny[tbottom] - skiny[ttop])*SKIN_SCALE;
         switch(mode & 0xF0) 
         {
-            //case 0x00: - stretched inside horizontal
+            case 0x00: //stretched inside horizontal
+                if((vright-vleft) < w) in_right = in_left + (vright-vleft)/(SKIN_SCALE*256.0f); //don't compress
+                break;
             case 0x10: vright = vleft; vleft-=w; break; //outside left
             case 0x20: vleft = vright; vright+=w; break; //outside right 
             case 0x30: vright = vleft+w; break; //inside left
@@ -334,7 +336,9 @@ struct gui : g3d_gui
         };
         switch(mode & 0x0F) 
         {
-            //case 0x00: - stretched inside vertical
+            case 0x00: //stretched inside vertical
+                if((vbottom-vtop) < h) in_bottom = in_top + (vbottom-vtop)/(SKIN_SCALE*128.0f); //don't compress
+                break;
             case 0x01: vbottom = vtop; vtop-=h; break;//outside top
             case 0x02: vtop = vbottom; vbottom+=h; break;//outside bottom
             case 0x03: vbottom = vtop+h; break; //inside top
@@ -390,7 +394,7 @@ struct gui : g3d_gui
             glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
             glBindTexture(GL_TEXTURE_2D, skin->gl);
             glBegin(GL_QUADS);
-            patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2]):0), cury+ysize, 0, tcurrent?8:9);
+            patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE:0), cury+ysize, 0, tcurrent?8:9);
             glEnd();
         };
     };
@@ -421,7 +425,7 @@ struct gui : g3d_gui
                 glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
                 glBindTexture(GL_TEXTURE_2D, skin->gl);
                 glBegin(GL_QUADS);
-                patchn_(curx+tx, curx+xsize, -ysize + FONTH+(skiny[3]-skiny[2]), cury+ysize, 8, 3);
+                patchn_(curx+tx, curx+xsize, -ysize + FONTH+(skiny[3]-skiny[2])*SKIN_SCALE, cury+ysize, 8, 3);
                 glEnd();
             };
             glPopMatrix();
