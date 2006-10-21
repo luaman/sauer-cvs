@@ -387,7 +387,8 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     if(!hidehud)
     {	
-        if(/*!rendermenu(w, h) && */player->state!=CS_SPECTATOR)
+        bool windowhit = g3d_windowhit(true, false);
+        if(/*!rendermenu(w, h) && */windowhit || player->state!=CS_SPECTATOR)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
 			glColor3f(1, 1, 1);
