@@ -311,9 +311,6 @@ enet_peer_reset (ENetPeer * peer)
     peer -> outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID;
     peer -> sessionID = 0;
 
-    peer -> address.host = ENET_HOST_ANY;
-    peer -> address.port = 0;
-
     peer -> state = ENET_PEER_STATE_DISCONNECTED;
 
     peer -> incomingBandwidth = 0;
