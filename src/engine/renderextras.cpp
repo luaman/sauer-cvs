@@ -386,11 +386,13 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     if(command) rendercommand(FONTH/2, hoff); else hoff += FONTH;
 
     if(!hidehud)
-    {
-        if(/*!rendermenu(w, h) && */player->state!=CS_SPECTATOR)
+    {	
+		extern void *windowhit;
+	
+        if(/*!rendermenu(w, h) && */windowhit || player->state!=CS_SPECTATOR)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
-            glColor3ub(255,255,255);
+			glColor3ub(255, 255, windowhit?0:255);
             float chsize = (float)crosshairsize*w/600;
             glBindTexture(GL_TEXTURE_2D, crosshair->gl);
             glBegin(GL_QUADS);

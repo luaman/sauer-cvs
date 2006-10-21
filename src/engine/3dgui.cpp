@@ -8,7 +8,7 @@
 
 static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
-static g3d_gui *windowhit = NULL;
+g3d_gui *windowhit = NULL; //use as global test to know if mouse is stolen by gui
 
 #define SHADOW 4
 #define IMAGE_SIZE 120
@@ -16,9 +16,6 @@ static g3d_gui *windowhit = NULL;
 
 //dependent on screen resolution?
 #define TABHEIGHT_MAX 600
-
-//make coordinate relative to other side
-#define OFFSET 99999
 
 struct gui : g3d_gui
 {
@@ -55,7 +52,6 @@ struct gui : g3d_gui
 	void tab(const char *name, int color) 
     {
 		if(curdepth != 0) return;
-		if(tpos > 0) tx += (skinx[4]-skinx[3]) + (skinx[2]-skinx[1]);
 		tpos++; 
 		s_sprintfd(title)("%d", tpos);
 		if(!name) name = title;
@@ -63,40 +59,28 @@ struct gui : g3d_gui
 		if(layoutpass) 
 		{  
 			ty = max(ty, ysize); 
-			ysize = FONTH*3/2;
+			ysize = FONTH+(skiny[3]-skiny[2]);
 		}
 		else 
 		{	
 			cury = -ysize;
-			bool hit = tcurrent && windowhit==this && hitx>=curx+tx-(skinx[2]-skinx[1]) && hity>=cury && hitx<curx+tx+w+(skinx[4]-skinx[3]) && hity<cury+FONTH*3/2;
+			int x = curx + tx + (skinx[2]-skinx[1]);
+			bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1]) && hity>=cury && hitx<x+w+(skinx[4]-skinx[3]) && hity<cury+FONTH;
 			if(hit) 
 			{	
-				*tcurrent = tpos; //so just roll-over to switch tab
+				*tcurrent = tpos; //roll-over to switch tab
 				color = 0xFF0000;
 			};
-			
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1, 1, 1, 0.7f);
+			glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
 			glBindTexture(GL_TEXTURE_2D, skin->gl);
 			glBegin(GL_QUADS);
-			int ytop = cury + FONTH*3/2 - (skiny[3]-skiny[2]);
-			int offset = visible()?0:4;
-			_patch(2+offset,3+offset,1,2, curx+tx, curx+tx+w, cury, ytop); //middle
-			_patch(2+offset,3+offset,2,3, curx+tx, curx+tx+w, ytop, OFFSET); //bottom-middle
-			_patch(2+offset,3+offset,0,1, curx+tx, curx+tx+w, OFFSET, cury); //top-middle
-			_patch(1+offset,2+offset,1,2, OFFSET, curx+tx, cury, ytop); //left-middle
-			_patch(3+offset,4+offset,1,2, curx+tx+w, OFFSET , cury, ytop); //right-middle
-			_patch(1+offset,2+offset,2,3, OFFSET, curx+tx, ytop, OFFSET); //bottom-left
-			_patch(3+offset,4+offset,2,3, curx+tx+w, OFFSET, ytop, OFFSET); //bottom-right
-			_patch(1+offset,2+offset,0,1, OFFSET, curx+tx, OFFSET, cury); //top-left
-			_patch(3+offset,4+offset,0,1, curx+tx+w, OFFSET, OFFSET, cury); //top-right
+			patchn_(x, x+w, cury, cury+FONTH, visible()?11:20, 9);
 			glEnd();
-			
-			if(visible()) draw_text(name, curx+tx+SHADOW, cury+SHADOW, 0, 0, 0);
-			draw_text(name, curx+tx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
-			cury += FONTH*3/2;
+			text_(name, x, cury, color, visible());
+			cury += FONTH+(skiny[3]-skiny[2]);
 		};
-		tx += w; 
+		tx += w + (skinx[4]-skinx[3]) + (skinx[2]-skinx[1]); 
 	};
 	
     bool ishorizontal() const { return curdepth&1; };
@@ -224,9 +208,8 @@ struct gui : g3d_gui
 				py = y;
 			};
 			
-			if(hit) color = 0xFF0000;	
-			if(hit && actionon) draw_text(label, px+SHADOW, py+SHADOW, 0, 0, 0);
-			draw_text(label, px, py, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
+			if(hit) color = 0xFF0000;
+			text_(label, px, py, color, hit && actionon);
 			if(hit && actionon) 
             {
                 int vnew = 1+vmax-vmin;
@@ -245,7 +228,13 @@ struct gui : g3d_gui
 		glVertex2f(x + w, y + h);
 		glVertex2f(x,     y + h);
 	};
-		
+	
+	void text_(const char *text, int x, int y, int color, bool shadow) 
+	{
+		if(shadow) draw_text(text, x+SHADOW, y+SHADOW, 0x00, 0x00, 0x00, 0xC0);
+		draw_text(text, x, y, color>>16, (color>>8)&0xFF, color&0xFF);
+	};
+	
 	void icon_(Texture *t, int x, int y, int size, bool hit) 
     {
 		float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
@@ -256,13 +245,13 @@ struct gui : g3d_gui
 		if(hit && actionon) 
 		{
 			notextureshader->set();
-			glColor3f(0,0,0);
+			glColor4ub(0x00, 0x00, 0x00, 0xC0);
 			glBegin(GL_QUADS);
 			rect_(xo+SHADOW, yo+SHADOW, xs, ys);
 			glEnd();
 			defaultshader->set();	
 		};
-		glColor3f(1, hit?0.5f:1, hit?0.5f:1);
+		glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
 		glBindTexture(GL_TEXTURE_2D, t->gl);
 		glBegin(GL_QUADS);
 		glTexCoord2i(0, 0); glVertex2f(xo,    yo);
@@ -318,22 +307,16 @@ struct gui : g3d_gui
                 icon_(textureload(tname), x, cury, ICON_SIZE, clickable && hit);
 				x += ICON_SIZE;
             };
-			
 			if(icon && text) x += padding;
-			
-			if(text) 
-			{
-				if(center || (hit && clickable && actionon)) draw_text(text, x+SHADOW, cury+SHADOW, 0, 0, 0);
-				draw_text(text, x, cury, color>>16, (color>>8)&0xFF, color&0xFF);
-			};
+			if(text) text_(text, x, cury, color, center || (hit && clickable && actionon));
         };
         return layout(w, FONTH);
     };
 
     static Texture *skin;
-    static const int skinx[], skiny[];
-
-	void _patch(int tleft, int tright, int ttop, int tbottom, int vleft, int vright, int vtop, int vbottom) 
+    static const int skinx[], skiny[], patch[][5];
+	
+	void patch_(int vleft, int vright, int vtop, int vbottom, int tleft, int tright, int ttop, int tbottom, int mode) 
 	{
 		float in_left    = ((float) skinx[tleft]) / 256.0f;
 		float in_top     = ((float) skiny[ttop]) / 128.0f;
@@ -341,16 +324,35 @@ struct gui : g3d_gui
 		float in_bottom  = ((float) skiny[tbottom]) / 128.0f;
 		int w = skinx[tright] - skinx[tleft];
 		int h = skiny[tbottom] - skiny[ttop];
-		int out_left   = (vleft==OFFSET) ? (vright-w) : vleft;
-		int out_right  = (vright==OFFSET) ? (vleft+w) : vright;
-		int out_top    = (vtop==OFFSET) ? (vbottom-h) : vtop;
-		int out_bottom = (vbottom==OFFSET) ? (vtop+h) : vbottom;
-		glTexCoord2f(in_left,  in_top   ); glVertex2i(out_left,  out_top);
-		glTexCoord2f(in_right, in_top   ); glVertex2i(out_right, out_top);
-		glTexCoord2f(in_right, in_bottom); glVertex2i(out_right, out_bottom);
-		glTexCoord2f(in_left,  in_bottom); glVertex2i(out_left,  out_bottom);
+		switch(mode & 0xF0) {
+			//case 0x00: - stretched inside horizontal
+			case 0x10: vright = vleft; vleft-=w; break; //outside left
+			case 0x20: vleft = vright; vright+=w; break; //outside right 
+			case 0x30: vright = vleft+w; break; //inside left
+			case 0x40: vleft = vright-w; break; //inside right
+		};
+		switch(mode & 0x0F) {
+			//case 0x00: - stretched inside vertical
+			case 0x01: vbottom = vtop; vtop-=h; break;//outside top
+			case 0x02: vtop = vbottom; vbottom+=h; break;//outside bottom
+			case 0x03: vbottom = vtop+h; break; //inside top
+			case 0x04: vtop = vbottom-h; break; //inside bottom
+		}
+		glTexCoord2f(in_left,  in_top   ); glVertex2i(vleft,  vtop);
+		glTexCoord2f(in_right, in_top   ); glVertex2i(vright, vtop);
+		glTexCoord2f(in_right, in_bottom); glVertex2i(vright, vbottom);
+		glTexCoord2f(in_left,  in_bottom); glVertex2i(vleft,  vbottom);
 	};
-			
+	
+	void patchn_(int vleft, int vright, int vtop, int vbottom, int start, int n) 
+	{
+		loopi(n)
+		{
+			const int *p = patch[start+i];
+			patch_(vleft, vright, vtop, vbottom, p[0], p[1], p[2], p[3], p[4]);
+		};
+	}; 
+		
 	vec origin;
     float dist;
 	g3d_callback *cb;
@@ -365,7 +367,7 @@ struct gui : g3d_gui
         curdepth = -1;
         curlist = -1;
 		tpos = 0;
-		tx = skinx[2]-skinx[1];
+		tx = 0;
 		ty = 0;
         tcurrent = tab;
         pushlist();
@@ -383,27 +385,16 @@ struct gui : g3d_gui
 
 			if(!skin) skin = textureload("data/guiskin.png");
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1, 1, 1, 0.7f);
+			glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
 			glBindTexture(GL_TEXTURE_2D, skin->gl);
 			glBegin(GL_QUADS);
-			int ytop = cury;
-			if(tcurrent) ytop += FONTH*3/2;			
-			_patch(1,8,3,4, curx, curx+xsize, ytop, cury+ysize); //middle
-			_patch(1,8,4,5, curx, curx+xsize, cury+ysize, OFFSET); //bottom-middle
-			if(!tcurrent) _patch(4,5,2,3, curx, curx+xsize, OFFSET, cury);  //top-middle
-			_patch(0,1,3,4, OFFSET, curx, ytop, cury+ysize); //left-middle
-			_patch(8,9,3,4, curx+xsize, OFFSET, ytop, cury+ysize); //right-middle
-			_patch(0,1,4,5, OFFSET, curx, cury+ysize, OFFSET); //bottom-left
-			_patch(8,9,4,5, curx+xsize, OFFSET, cury+ysize, OFFSET); //bottom-right
-			_patch(0,1,2,3, OFFSET, curx, OFFSET, ytop); //top-left
-			_patch(8,9,2,3, curx+xsize, OFFSET, OFFSET, ytop); //top-right
+			patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2]):0), cury+ysize, 0, tcurrent?8:9);
 			glEnd();
         };
     };
 
     void end()
     {
-		tx += skinx[4]-skinx[3];
 		if(layoutpass)
         {	
 			xsize = max(tx, xsize);
@@ -425,12 +416,11 @@ struct gui : g3d_gui
         {
 			if(tcurrent)
 			{	
-				int ytop = -ysize + FONTH*3/2;
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glColor4f(1, 1, 1, 0.7f);
+				glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
 				glBindTexture(GL_TEXTURE_2D, skin->gl);
 				glBegin(GL_QUADS);
-				_patch(4,5,2,3, curx+tx, curx+xsize, OFFSET, ytop); //top-middle
+				patchn_(curx+tx, curx+xsize, -ysize + FONTH+(skiny[3]-skiny[2]), cury+ysize, 8, 3);
 				glEnd();
 			};
 			
@@ -441,11 +431,47 @@ struct gui : g3d_gui
 };
 
 Texture *gui::skin = NULL;
+
 //chop skin into a grid
 const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
-          gui::skinx[] = {0, 22, 40, 105, 121, 135, 153, 214, 230, 256};
+          gui::skinx[] = {0, 22, 40, 105, 121, 135, 153, 214, 230, 256}, 
 //Note: skinx[2]-skinx[1] = skinx[6]-skinx[4]
-//      skinx[4]-skinx[3] = skinx[8]-skinx[7]
+//      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
+		  gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
+			{ 1,8,3,4, 0x00}, 
+			{ 1,8,4,5, 0x02},
+			{ 0,1,3,4, 0x10},
+			{ 8,9,3,4, 0x20},
+			{ 0,1,4,5, 0x12}, //{xstart, xend, ystart, yend,  mode} - where xstart,xend refer into skinx[], and ystart,yend refer into skiny[]
+			{ 8,9,4,5, 0x22},
+			{ 0,1,2,3, 0x11},
+			{ 8,9,2,3, 0x21},
+			
+			{ 4,5,2,3, 0x01},
+			{ 4,5,1,2, 0x00},
+			{ 4,5,0,1, 0x02},
+			
+			{ 2,3,1,2, 0x00}, 
+			{ 2,3,2,3, 0x02},
+			{ 1,2,1,2, 0x10},
+			{ 3,4,1,2, 0x20},
+			{ 1,2,2,3, 0x12},
+			{ 3,4,2,3, 0x22},
+			{ 1,2,0,1, 0x11},
+			{ 3,4,0,1, 0x21},
+			{ 2,3,0,1, 0x01},
+			
+			{ 6,7,1,2, 0x00}, 
+			{ 6,7,2,3, 0x02},
+			{ 5,6,1,2, 0x10},
+			{ 7,8,1,2, 0x20},
+			{ 5,6,2,3, 0x12},
+			{ 7,8,2,3, 0x22},
+			{ 5,6,0,1, 0x11},
+			{ 7,8,0,1, 0x21},
+			{ 6,7,0,1, 0x01}
+		  };
+
 vector<gui::list> gui::lists;
 float gui::scale, gui::hitx, gui::hity;
 bool gui::passthrough;
@@ -494,7 +520,7 @@ void g3d_render()
     loopvrev(guis) guis[i].cb->gui(guis[i], false);
 
     mousebuttons = 0;
-
+	
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
 };
