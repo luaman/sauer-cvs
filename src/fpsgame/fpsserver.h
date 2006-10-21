@@ -297,6 +297,7 @@ struct fpsserver : igameserver
     clientscore &findscore(clientinfo *ci, bool insert)
     {
         uint ip = getclientip(ci->clientnum);
+        if(!ip) return *(clientscore *)0;
         if(!insert) loopv(clients)
         {
             clientinfo *oi = clients[i];
@@ -324,7 +325,7 @@ struct fpsserver : igameserver
     void savescore(clientinfo *ci)
     {
         clientscore &sc = findscore(ci, true);
-        sc = ci->score;
+        if(&sc) sc = ci->score;
     };
 
     struct votecount

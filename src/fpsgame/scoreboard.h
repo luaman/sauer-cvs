@@ -46,7 +46,7 @@ struct scoreboard : g3d_callback
         g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
 
         vector<teamscore> teamscores;
-        bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.cc.clientnum;
+        bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.player1->clientnum;
         int gamemode = cl.gamemode;
         
         vector<fpsent *> sbplayers;
@@ -62,9 +62,9 @@ struct scoreboard : g3d_callback
         loopv(sbplayers) 
         {
             fpsent *o = sbplayers[i];
-            const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==i-1 || (!i && cl.cc.currentmaster==cl.cc.clientnum)) ? "\f0" : "";
+            const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==o->clientnum) ? "\f0" : "";
             string name;
-            if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, !i ? cl.cc.clientnum : i-1);
+            if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, o->clientnum);
             else s_strcpy(name, o->name);
             string line;
             if(o->state == CS_SPECTATOR) s_sprintf(line)("SPECTATOR\t\t\t%s%s", master, name);

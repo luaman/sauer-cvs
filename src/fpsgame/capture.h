@@ -162,7 +162,7 @@ struct captureclient : capturestate
             return;
         };
         conoutf("\f2replenished %s's ammo", target->name);
-        cl.cc.addmsg(SV_REPAMMO, "ri3", cl.cc.clientnumof(target), cl.spawngun1, cl.spawngun2);
+        cl.cc.addmsg(SV_REPAMMO, "ri3", target->clientnum, cl.spawngun1, cl.spawngun2);
     };
 
     void recvammo(fpsent *from, int gun1, int gun2)

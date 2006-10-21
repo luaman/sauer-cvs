@@ -8,14 +8,13 @@ struct clientcom : iclientcom
     int lastping;
 
     bool connected, remote;
-    int clientnum;
 
     int currentmaster;
     bool spectator;
 
     fpsent *player1;
 
-    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), clientnum(-1), currentmaster(-1), spectator(false), player1(_cl.player1)
+    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), currentmaster(-1), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, "C", self->toserver(args[0]));
         CCOMMAND(clientcom, name, "s", self->switchname(args[0]));
@@ -71,7 +70,7 @@ struct clientcom : iclientcom
         *dst = '\0';
     };
 
-    void mapstart() { if(!spectator || currentmaster==clientnum) senditemstoserver = true; };
+    void mapstart() { if(!spectator || currentmaster==player1->clientnum) senditemstoserver = true; };
 
     void initclientnet()
     {
@@ -91,7 +90,7 @@ struct clientcom : iclientcom
     void gamedisconnect()
     {
         connected = false;
-        clientnum = -1;
+        player1->clientnum = -1;
         c2sinit = false;
         player1->lifesequence = 0;
         currentmaster = -1;
@@ -108,16 +107,6 @@ struct clientcom : iclientcom
         return allow;
     };
 
-    int clientnumof(dynent *d)
-    {
-        loopi(cl.numdynents())
-        {
-            dynent *o = cl.iterdynents(i);
-            if(o == d) return i==0 ? clientnum : i-1;
-        };
-        return -1;
-    };
-
     int parseplayer(const char *arg)
     {
         char *end;
@@ -127,7 +116,7 @@ struct clientcom : iclientcom
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && !strcmp(arg, o->name)) return i==0 ? clientnum : i-1;
+            if(o && !strcmp(arg, o->name)) return o->clientnum;
         };
         return -1;
     };
@@ -136,14 +125,14 @@ struct clientcom : iclientcom
     {
         if(!remote) return;
         int i = parseplayer(arg);
-        if(i>=0 && i!=clientnum) addmsg(SV_KICK, "ri", i);
+        if(i>=0 && i!=player1->clientnum) addmsg(SV_KICK, "ri", i);
     };
 
     void setteam(const char *arg1, const char *arg2)
     {
         if(!remote) return;
         int i = parseplayer(arg1);
-        if(i>=0 && i!=clientnum) addmsg(SV_SETTEAM, "ris", i, arg2);
+        if(i>=0 && i!=player1->clientnum) addmsg(SV_SETTEAM, "ris", i, arg2);
     };
 
     void setmaster(const char *arg)
@@ -159,7 +148,7 @@ struct clientcom : iclientcom
     void togglespectator(const char *arg1, const char *arg2)
     {
         if(!remote) return;
-        int i = arg2[0] ? parseplayer(arg2) : clientnum,
+        int i = arg2[0] ? parseplayer(arg2) : player1->clientnum,
             val = atoi(arg1);
         if(i>=0) addmsg(SV_SPECTATOR, "rii", i, val);
     };
@@ -169,7 +158,7 @@ struct clientcom : iclientcom
 
     void addmsg(int type, const char *fmt = NULL, ...)
     {
-        if(spectator && (currentmaster!=clientnum || type<SV_MASTERMODE))
+        if(spectator && (currentmaster!=player1->clientnum || type<SV_MASTERMODE))
         {
             static int spectypes[] = { SV_GETMAP, SV_TEXT };
             bool allowed = false;
@@ -222,7 +211,7 @@ struct clientcom : iclientcom
             ENetPacket *packet = enet_packet_create (NULL, 100, 0);
             uchar *q = packet->data; 
             putint(q, SV_POS);
-            putint(q, clientnum);
+            putint(q, player1->clientnum);
             putuint(q, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
             putuint(q, (int)(d->o.y*DMF));
             putuint(q, (int)(d->o.z*DMF));
@@ -401,7 +390,7 @@ struct clientcom : iclientcom
                     disconnect();
                     return;
                 };
-                clientnum = mycn;                 // we are now fully connected
+                player1->clientnum = mycn;      // we are now fully connected
                 if(!getint(p) && (cl.gamemode==1 || cl.getclientmap()[0])) changemap(cl.getclientmap()); // we are the first client on this server, set map
                 break;
             };
@@ -520,7 +509,7 @@ struct clientcom : iclientcom
                 dir.y = getint(p)/DVELF;
                 dir.z = getint(p)/DVELF;
                 if(damage<=0) break;
-                if(target==clientnum)
+                if(target==player1->clientnum)
                 {
                     if(ls==player1->lifesequence) { cl.selfdamage(damage, cn, d); player1->vel.add(dir); };
                 }
@@ -545,7 +534,7 @@ struct clientcom : iclientcom
                 {
                     conoutf("\f2%s suicided", d->name);
                 }
-                else if(actor==clientnum)
+                else if(actor==player1->clientnum)
                 {
                     int frags;
                     if(isteam(player1->team, d->team))
@@ -592,7 +581,7 @@ struct clientcom : iclientcom
             case SV_RESUME:
             {
                 cn = getint(p);
-                d = (cn == clientnum ? player1 : cl.getclient(cn));
+                d = (cn == player1->clientnum ? player1 : cl.getclient(cn));
                 if(!d) return;
                 d->maxhealth = getint(p);
                 d->frags = getint(p);
@@ -698,7 +687,7 @@ struct clientcom : iclientcom
             {
                 int sn = getint(p), val = getint(p);
                 fpsent *s;
-                if(sn==clientnum)
+                if(sn==player1->clientnum)
                 {
                     spectator = val!=0;
                     s = player1;
@@ -719,7 +708,7 @@ struct clientcom : iclientcom
                 int wn = getint(p);
                 sgetstr(text, p);
                 fpsent *w;
-                if(wn==clientnum) w = player1;
+                if(wn==player1->clientnum) w = player1;
                 else w = cl.getclient(wn);
                 if(!w) return;
                 filtertext(w->team, text, false, MAXTEAMLEN);
@@ -754,7 +743,7 @@ struct clientcom : iclientcom
                 if(!d) return;
                 int target = getint(p), gun1 = getint(p), gun2 = getint(p);
                 int gamemode = cl.gamemode;
-                if(m_capture && target==clientnum) cl.cpc.recvammo(d, gun1, gun2);
+                if(m_capture && target==player1->clientnum) cl.cpc.recvammo(d, gun1, gun2);
                 break;
             };
 
@@ -792,7 +781,7 @@ struct clientcom : iclientcom
 
     void changemap(const char *name) // request map change, server may ignore
     {
-        if(!spectator || currentmaster==clientnum) addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
+        if(!spectator || currentmaster==player1->clientnum) addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
     };
         
     void receivefile(uchar *data, int len)
@@ -820,7 +809,7 @@ struct clientcom : iclientcom
 
     void sendmap()
     {
-        if(cl.gamemode!=1 || (spectator && currentmaster!=clientnum)) { conoutf("\"sendmap\" only works in coopedit mode"); return; };
+        if(cl.gamemode!=1 || (spectator && currentmaster!=player1->clientnum)) { conoutf("\"sendmap\" only works in coopedit mode"); return; };
         conoutf("sending map...");
         s_sprintfd(mname)("sendmap_%d", cl.lastmillis);
         save_world(mname, true);

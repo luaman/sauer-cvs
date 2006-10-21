@@ -131,9 +131,9 @@ void process(ENetPacket *packet, int sender, int chan);
 void multicast(ENetPacket *packet, int sender, int chan);
 //void disconnect_client(int n, int reason);
 
-void *getinfo(int i)    { return clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
+void *getinfo(int i)    { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
 int getnumclients()     { return clients.length(); };
-uint getclientip(int n) { return clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; };
+uint getclientip(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; };
 
 void sendpacket(int n, int chan, ENetPacket *packet)
 {

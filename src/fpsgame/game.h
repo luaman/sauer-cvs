@@ -36,7 +36,7 @@ enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  
 struct fpsent : dynent
 {
     int weight;                         // affects the effectiveness of hitpush
-    int lastupdate, plag, ping;
+    int clientnum, lastupdate, plag, ping;
     int lifesequence;                   // sequence id for each respawn, used in damage test
     int health, armour, armourtype, quadmillis;
     int maxhealth;
@@ -51,7 +51,7 @@ struct fpsent : dynent
 
     string name, team, info;
 
-    fpsent() : weight(100), lastupdate(0), plag(0), ping(0), lifesequence(0), maxhealth(100), lastpain(0), frags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL)
+    fpsent() : weight(100), clientnum(-1), lastupdate(0), plag(0), ping(0), lifesequence(0), maxhealth(100), lastpain(0), frags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL)
                { name[0] = team[0] = info[0] = 0; respawn(); };
     ~fpsent() { freeeditinfo(edit); };
 

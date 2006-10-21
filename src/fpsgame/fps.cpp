@@ -209,7 +209,7 @@ struct fpsclient : igameclient
         if(m_arena) arenarespawn();
         ws.moveprojectiles(curtime);
         ws.bounceupdate(curtime);
-        if(cc.clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos);     // only shoot when connected to server
+        if(player1->clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos);     // only shoot when connected to server
         gets2c();           // do this first, so we have most accurate information when our player moves
         otherplayers();
         ms.monsterthink(curtime, gamemode);
@@ -227,7 +227,7 @@ struct fpsclient : igameclient
             et.checkitems();
             if(m_classicsp) checktriggers();
         };
-        if(cc.clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
+        if(player1->clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
     };
 
     void spawnplayer(fpsent *d)   // place at random spawn. also used by monsters!
@@ -291,7 +291,7 @@ struct fpsclient : igameclient
             }
             else if(actor==-1)
             {
-                actor = cc.clientnum;
+                actor = player1->clientnum;
                 conoutf("\f2you suicided!");
                 cc.addmsg(SV_FRAGS, "ri", --player1->frags);
             }
@@ -376,7 +376,13 @@ struct fpsclient : igameclient
             return NULL;
         };
         while(cn>=players.length()) players.add(NULL);
-        return players[cn] ? players[cn] : (players[cn] = new fpsent());
+        if(!players[cn])
+        {
+            fpsent *d = new fpsent();
+            d->clientnum = cn;
+            players[cn] = d;
+        };
+        return players[cn];
     };
 
     void initclient()
