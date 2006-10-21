@@ -356,12 +356,12 @@ struct gui : g3d_gui
 	g3d_callback *cb;
 
     static float scale;
-    static bool expanded;
+    static bool passthrough;
 
-    void start(int starttime, float basescale, int *tab)
+    void start(int starttime, float basescale, int *tab, bool allowinput)
     {	
 		scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
-        expanded = scale>=basescale;
+        passthrough = scale<basescale || !allowinput;
         curdepth = -1;
         curlist = -1;
 		tpos = 0;
@@ -410,7 +410,7 @@ struct gui : g3d_gui
 			ysize = max(ty, ysize);
 			if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
 				
-            if(!windowhit && expanded)
+            if(!windowhit && !passthrough)
             {
                 vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
                 int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
@@ -448,7 +448,7 @@ const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
 //      skinx[4]-skinx[3] = skinx[8]-skinx[7]
 vector<gui::list> gui::lists;
 float gui::scale, gui::hitx, gui::hity;
-bool gui::expanded;
+bool gui::passthrough;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent;
 static vector<gui> guis;

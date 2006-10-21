@@ -14,7 +14,11 @@ struct scoreboard : g3d_callback
 
     void showscores(bool on)
     {
-        if(scoreson = on) { menupos = menuinfrontofplayer(); menustart = cl.lastmillis; };
+        if(scoreson = on) 
+        {
+//            menupos = menuinfrontofplayer();
+            menustart = cl.lastmillis;
+        };
     };
 
     struct sline { string s; };
@@ -41,7 +45,7 @@ struct scoreboard : g3d_callback
 
     void gui(g3d_gui &g, bool firstpass)
     {
-        g.start(menustart, 0.04f);
+        g.start(menustart, 0.04f, NULL, false);
         
         g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
 
@@ -115,6 +119,10 @@ struct scoreboard : g3d_callback
     
     void show()
     {
-        if(scoreson) g3d_addgui(this, menupos);
+        if(scoreson)
+        {
+            menupos = menuinfrontofplayer();
+            g3d_addgui(this, menupos);
+        };
     };
 };
