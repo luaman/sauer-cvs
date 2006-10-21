@@ -435,9 +435,9 @@ Texture *gui::skin = NULL;
 //chop skin into a grid
 const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
           gui::skinx[] = {0, 22, 40, 105, 121, 135, 153, 214, 230, 256}, 
-            //Note: skinx[2]-skinx[1] = skinx[6]-skinx[4]
-            //      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
-          gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
+//Note: skinx[2]-skinx[1] = skinx[6]-skinx[4]
+//      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
+gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
     { 1,8,3,4, 0x00}, 
     { 1,8,4,5, 0x02},
     { 0,1,3,4, 0x10},
