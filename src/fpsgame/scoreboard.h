@@ -16,7 +16,7 @@ struct scoreboard : g3d_callback
     {
         if(!scoreson && on)
         {
-//            menupos = menuinfrontofplayer();
+            menupos = menuinfrontofplayer();
             menustart = cl.lastmillis;
         };
         scoreson = on;
@@ -120,10 +120,6 @@ struct scoreboard : g3d_callback
     
     void show()
     {
-        if(scoreson)
-        {
-            menupos = menuinfrontofplayer();
-            g3d_addgui(this, menupos);
-        };
+        if(scoreson) g3d_addgui(this, menupos);
     };
 };
