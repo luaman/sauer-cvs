@@ -426,19 +426,18 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false
     Texture *t = &textures[newstring(rname)];
     s_strcpy(t->name, rname);
     t->bpp = s->format->BitsPerPixel;
-    t->xs = s->w;
-    t->ys = s->h;
+    t->w = t->xs = s->w;
+    t->h = t->ys = s->h;
     glGenTextures(1, &t->gl);
-    int w = t->xs, h = t->ys;
-    if(halftex && (w >= (1<<halftex) || h >= (1<<halftex)))
+    if(halftex && (t->w >= (1<<halftex) || t->h >= (1<<halftex)))
     {
-        if(!gluScaleImage(t->bpp==24 ? GL_RGB : GL_RGBA, w, h, GL_UNSIGNED_BYTE, s->pixels, w/2, h/2, GL_UNSIGNED_BYTE, s->pixels))
+        if(!gluScaleImage(t->bpp==24 ? GL_RGB : GL_RGBA, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels, t->w/2, t->h/2, GL_UNSIGNED_BYTE, s->pixels))
         {
-            w /= 2;
-            h /= 2;
+            t->w /= 2;
+            t->h /= 2;
         };
     }; 
-    createtexture(t->gl, w, h, s->pixels, clamp, mipit, t->bpp==24 ? GL_RGB : GL_RGBA);
+    createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, t->bpp==24 ? GL_RGB : GL_RGBA);
     SDL_FreeSurface(s);
     return t;
 };
@@ -476,22 +475,39 @@ Texture *textureload(const char *name, bool clamp, bool mipit, bool msg)
     return s ? newtexture(tname, s, clamp, mipit) : crosshair;
 };
 
+static struct cubemapside
+{
+    GLenum target;
+    const char *name;
+} cubemapsides[6] =
+{
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, "ft" },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, "bk" },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, "lf" },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, "rt" },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, "dn" },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, "up" },
+};
+
+GLuint cubemapfromsky()
+{
+    extern Texture *sky[6];
+    GLuint tex;
+    glGenTextures(1, &tex);
+    loopi(6)
+    {
+        uchar *pixels = new uchar[3*sky[i]->w*sky[i]->h];
+        glBindTexture(GL_TEXTURE_2D, sky[i]->gl);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        createtexture(!i ? tex : 0, sky[i]->w, sky[i]->h, pixels, true, true, GL_RGB, cubemapsides[i].target);
+        delete[] pixels;
+    };
+    return tex;
+};
+ 
 Texture *cubemapload(const char *name, bool mipit, bool msg)
 {
     if(!hasCM) return NULL;
-    static struct cubemapside
-    {
-        GLenum target;
-        const char *name;
-    } sides[6] =
-    {
-        { GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, "ft" },
-        { GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, "bk" },
-        { GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, "up" },
-        { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, "dn" },
-        { GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, "rt" },
-        { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, "lf" }
-    };
     string tname;
     s_strcpy(tname, name);
     Texture *t = textures.access(path(tname));
@@ -505,7 +521,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
         if(wildcard)
         {
             s_strncpy(sname, tname, wildcard-tname+1);
-            s_strcat(sname, sides[i].name);
+            s_strcat(sname, cubemapsides[i].name);
             s_strcat(sname, wildcard+1);
         };
         surface[i] = texturedata(sname, NULL, msg);
@@ -524,7 +540,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
     loopi(6)
     {
         SDL_Surface *s = surface[i];
-        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, true, mipit, s->format->BitsPerPixel==24 ? GL_RGB : GL_RGBA, sides[i].target);
+        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, true, mipit, s->format->BitsPerPixel==24 ? GL_RGB : GL_RGBA, cubemapsides[i].target);
         SDL_FreeSurface(s);
     };
     return t;

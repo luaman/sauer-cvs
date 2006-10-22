@@ -10,7 +10,7 @@
 
 struct Texture
 {
-    int xs, ys, bpp;
+    int xs, ys, w, h, bpp;
     GLuint gl;
     string name;
 };
@@ -215,6 +215,7 @@ extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
+extern GLuint cubemapfromsky();
 extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true);
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);

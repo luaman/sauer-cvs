@@ -839,11 +839,18 @@ void rendermaterials(float zclip, bool refract)
                         if(!cubemapped)
                         {
                             cubemapped = true;
-                            static Texture *glasscm = NULL;
-                            if(!glasscm) glasscm = cubemapload("packages/ik2k/env/iklake_*.jpg");
+                            static GLuint cmtex = 0;
+                            static Texture *lastsky = NULL;
+                            extern Texture *sky[6];
+                            if(!cmtex || lastsky!=sky[0])
+                            {
+                                if(cmtex) glDeleteTextures(1, &cmtex);
+                                cmtex = cubemapfromsky();
+                                lastsky = sky[0];
+                            };
                             glActiveTexture_(GL_TEXTURE1_ARB);
                             glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, glasscm->gl);
+                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cmtex);
                             glActiveTexture_(GL_TEXTURE0_ARB);
                             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
                         };
