@@ -710,17 +710,32 @@ void drawreflections()
 
 VARP(showmat, 0, 1, 1);
 
-static int vismatcmp(const materialsurface ** x, const materialsurface ** y)
-{
-    if((*x)->dist > (*y)->dist) return -1;
-    if((*x)->dist < (*y)->dist) return 1;
-    return 0;
-};
+static int visdim[3];
 
-static int editmatcmp(const materialsurface ** x, const materialsurface ** y)
+static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
 {
-    if((*x)->dist < (*y)->dist) return -1;
-    if((*x)->dist > (*y)->dist) return 1;
+    const materialsurface &x = **xm, &y = **ym;
+    int xdim = dimension(x.orient), ydim = dimension(y.orient);
+    loopi(3)
+    {
+        int dim = visdim[i], xmin, xmax, ymin, ymax;
+        xmin = xmax = x.o[dim];
+        if(dim==C[xdim]) xmax += x.csize;
+        else if(dim==R[xdim]) xmax += x.rsize;
+        ymin = ymax = y.o[dim];
+        if(dim==C[ydim]) ymax += y.csize;
+        else if(dim==R[ydim]) ymax += y.rsize;
+        if(xmax > ymin && ymax > xmin) continue;
+        int c = int(camera1->o[dim]);
+        if(c > xmin && c < xmax) return 1;
+        if(c > ymin && c < ymax) return -1;
+        xmin = abs(xmin - c);
+        xmax = abs(xmax - c);
+        ymin = abs(ymin - c);
+        ymax = abs(ymax - c);
+        if(max(xmin, xmax) <= min(ymin, ymax)) return 1;
+        else if(max(ymin, ymax) <= min(xmin, xmax)) return -1;
+    };
     return 0;
 };
 
@@ -728,9 +743,18 @@ extern vtxarray *reflectedva;
 
 void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract)
 {
+    extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
+    vec dir;
+    vecfromyawpitch(player->yaw, player->pitch, 1, 0, dir, true);
+    loopi(3) dir[i] = fabs(dir[i]);
+    if(dir.x > dir.y) { visdim[0] = 0; visdim[1] = 1; }
+    else { visdim[0] = 1; visdim[1] = 0; };
+    if(dir.z > dir[visdim[0]]) { visdim[2] = visdim[1]; visdim[1] = visdim[0]; visdim[0] = 2; }
+    else if(dir.z > dir[visdim[1]]) { visdim[2] = visdim[1]; visdim[1] = 2; }
+    else visdim[2] = 2;
+
     bool reflected = zclip && !refract && camera1->o.z >= zclip;
     bool vertwater = !hasFBO || renderpath==R_FIXEDFUNCTION;
-    const vec &o = camera1->o;
     for(vtxarray *va = reflected ? reflectedva : visibleva; va; va = reflected ? va->rnext : va->next)
     {
         lodlevel &lod = va->l0;
@@ -745,22 +769,9 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
                 if(m.material>=MAT_EDIT) continue;
             };
             vismats.add(&m);
-            int dim = dimension(m.orient), r = R[dim], c = C[dim];
-            vec p(m.o.tovec());
-            if(o[r] >= m.o[r])
-            {
-                if(o[r] < m.o[r] + m.rsize) p[r] = o[r];
-                else p[r] += m.rsize;
-            };
-            if(o[c] >= m.o[c])
-            {
-                if(o[c] < m.o[c] + m.csize) p[c] = o[c];
-                else p[c] += m.csize;
-            };
-            m.dist = o.dist(p);
         };
     };
-    vismats.sort(!editmode || !showmat ? vismatcmp : editmatcmp);
+    vismats.sort(vismatcmp);
 };
 
 void rendermatgrid(vector<materialsurface *> &vismats)
@@ -811,7 +822,7 @@ void rendermaterials(float zclip, bool refract)
 
     loopv(vismats)
     {
-        materialsurface &m = *vismats[i];
+        materialsurface &m = *vismats[editmode && showmat ? vismats.length()-1-i : i];
         int curmat = !editmode || !showmat || m.material>=MAT_EDIT ? m.material : m.material+MAT_EDIT;
         if(lastmat!=curmat || lastorient!=m.orient) 
         {
