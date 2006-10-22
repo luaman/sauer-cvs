@@ -158,7 +158,7 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
     float dist = 0, dent = 1e16f;
     cube *last = NULL;
     vec v = o;
-    if(ray==vec(0,0,0)) return dist;
+    if(ray.iszero()) return dist;
 
     static cube *levels[32];
     levels[0] = worldroot;

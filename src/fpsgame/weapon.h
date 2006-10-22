@@ -259,8 +259,9 @@ struct weaponstate
         newsphere(v, RL_DAMRAD, gun==GUN_RL ? 0 : 1);
         int maxdebris = 50;
         int numdebris = rnd(maxdebris-5)+5;
-        vec debrisvel = vec(owner->o).sub(v).normalize();
-        loopi(numdebris) spawnbouncer(vec(debrisvel).mul(8).add(v), debrisvel, owner, BNC_DEBRIS);
+        vec debrisvel = vec(owner->o).sub(v).normalize(), debrisorigin(v);
+        if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
+        loopi(numdebris) spawnbouncer(debrisorigin, debrisvel, owner, BNC_DEBRIS);
         if(!local) return;
         loopi(cl.numdynents())
         {
@@ -326,7 +327,8 @@ struct weaponstate
             {
                 if(dist<4)
                 {
-                    if(raycubepos(p.o, vec(p.to).sub(p.o), p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;      // if original target was moving, reevaluate endpoint
+                    if(p.o!=p.to && raycubepos(p.o, vec(p.to).sub(p.o), p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) 
+                        continue; // if original target was moving, reevaluate endpoint
                     splash(p, v, NULL, qdam);
                 }
                 else
