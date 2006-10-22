@@ -807,7 +807,7 @@ void rendermaterials(float zclip, bool refract)
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
     int lastorient = -1, lastmat = -1;
     Shader *curshader = NULL;
-    bool textured = true, begin = false;
+    bool textured = true, cubemapped = false, begin = false;
 
     loopv(vismats)
     {
@@ -832,12 +832,43 @@ void rendermaterials(float zclip, bool refract)
                     break;
                 
                 case MAT_GLASS:
-                    if(lastmat==MAT_GLASS) break;
+                    if(!hasCM && lastmat==MAT_GLASS) break;
                     if(begin) { glEnd(); begin = false; };
+                    if(hasCM)
+                    {
+                        if(!cubemapped)
+                        {
+                            cubemapped = true;
+                            static Texture *glasscm = NULL;
+                            if(!glasscm) glasscm = cubemapload("packages/ik2k/env/iklake_*.jpg");
+                            glActiveTexture_(GL_TEXTURE1_ARB);
+                            glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, glasscm->gl);
+                            glActiveTexture_(GL_TEXTURE0_ARB);
+                            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
+                        };
+                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1,
+                            dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
+                            dimension(m.orient)==1 ? dimcoord(m.orient)*2-1 : 0,
+                            dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0, 
+                            0); 
+                    };
+                    if(lastmat==MAT_GLASS) break;
                     if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
-                    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                    glColor3f(0.3f, 0.15f, 0.0f);
-                    if(curshader!=notextureshader) (curshader = notextureshader)->set();
+                    if(hasCM)
+                    {
+                        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+                        glColor3f(0, 0.5f, 1.0f);
+                        static Shader *glassshader = NULL;
+                        if(!glassshader) glassshader = lookupshaderbyname("glass");
+                        if(curshader!=glassshader) (curshader = glassshader)->set();
+                    }
+                    else
+                    {
+                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+                        glColor3f(0.3f, 0.15f, 0.0f);
+                        if(curshader!=notextureshader) (curshader = notextureshader)->set();
+                    };
                     break;
 
                 default:
@@ -896,6 +927,13 @@ void rendermaterials(float zclip, bool refract)
 
     glEnable(GL_CULL_FACE);
     if(!textured) glEnable(GL_TEXTURE_2D);
+
+    if(cubemapped)
+    {
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    };
 };
 
 struct material

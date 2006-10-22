@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false;
+bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false;
 int renderpath;
 
 GLUquadricObj *qsphere = NULL;
@@ -294,7 +294,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             hasFBO = true;
             conoutf("Using GL_EXT_framebuffer_object extension.");
         } 
-        else conoutf("WARNING: No framebuffer object support. (no reflections)");
+        else conoutf("WARNING: No framebuffer object support. (no reflective water)");
 
         if(strstr(exts, "GL_ARB_texture_rectangle"))
         {
@@ -302,6 +302,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             conoutf("Using GL_ARB_texture_rectangle extension.");
         }
         else conoutf("WARNING: No texture rectangle support. (no full screen shaders)");
+        if(strstr(exts, "GL_ARB_texture_cube_map"))
+        {
+            hasCM = true;
+            conoutf("Using GL_ARB_texture_cube_map extension.");
+        }
+        else conoutf("WARNING: No cube map texture support. (no reflective glass)");
     };
     if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
 
@@ -371,15 +377,30 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     return d;
 };
  
-void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component, GLenum target)
+void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component, GLenum subtarget)
 {
-    glBindTexture(target, tnum);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR); 
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    GLenum target = subtarget;
+    switch(subtarget)
+    {
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+            target = GL_TEXTURE_CUBE_MAP_ARB;
+            break;
+    };
+    if(tnum)
+    {
+        glBindTexture(target, tnum);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    };
     GLenum format = component, type = GL_UNSIGNED_BYTE;
     switch(component)
     {
@@ -390,9 +411,9 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
             format = GL_RGB;
             break;
     };
-    if(mipit) { if(gluBuild2DMipmaps(target, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
-    else glTexImage2D(target, 0, component, w, h, 0, format, type, pixels);
-}
+    if(mipit) { if(gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
+    else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
+};
 
 hashtable<char *, Texture> textures;
 
@@ -453,6 +474,60 @@ Texture *textureload(const char *name, bool clamp, bool mipit, bool msg)
     if(t) return t;
     SDL_Surface *s = texturedata(tname, NULL, msg);
     return s ? newtexture(tname, s, clamp, mipit) : crosshair;
+};
+
+Texture *cubemapload(const char *name, bool mipit, bool msg)
+{
+    if(!hasCM) return NULL;
+    static struct cubemapside
+    {
+        GLenum target;
+        const char *name;
+    } sides[6] =
+    {
+        { GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, "ft" },
+        { GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, "bk" },
+        { GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, "up" },
+        { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, "dn" },
+        { GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, "rt" },
+        { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, "lf" }
+    };
+    string tname;
+    s_strcpy(tname, name);
+    Texture *t = textures.access(path(tname));
+    if(t) return t;
+    char *wildcard = strchr(tname, '*');
+    SDL_Surface *surface[6];
+    string sname;
+    if(!wildcard) s_strcpy(sname, tname);
+    loopi(6)
+    {
+        if(wildcard)
+        {
+            s_strncpy(sname, tname, wildcard-tname+1);
+            s_strcat(sname, sides[i].name);
+            s_strcat(sname, wildcard+1);
+        };
+        surface[i] = texturedata(sname, NULL, msg);
+        if(!surface[i])
+        {
+            loopj(i) SDL_FreeSurface(surface[j]);
+            return NULL;
+        };
+    }; 
+    t = &textures[newstring(tname)];
+    s_strcpy(t->name, tname);
+    t->bpp = surface[0]->format->BitsPerPixel;
+    t->xs = surface[0]->w;
+    t->ys = surface[0]->h;
+    glGenTextures(1, &t->gl);
+    loopi(6)
+    {
+        SDL_Surface *s = surface[i];
+        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, true, mipit, s->format->BitsPerPixel==24 ? GL_RGB : GL_RGBA, sides[i].target);
+        SDL_FreeSurface(s);
+    };
+    return t;
 };
 
 void cleangl()

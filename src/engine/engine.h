@@ -210,11 +210,12 @@ extern icliententities *et;
 extern vector<int> entgroup;
 
 // rendergl
-extern bool hasVBO, hasOQ, hasFBO;
+extern bool hasVBO, hasOQ, hasFBO, hasCM;
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
+extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true);
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
