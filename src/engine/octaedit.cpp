@@ -968,6 +968,17 @@ void linkedpush(cube &c, int d, int x, int y, int dc, int dir)
     };
 };
 
+static uchar getmaterial(cube &c)
+{
+    if(c.children)
+    {
+        uchar mat = getmaterial(c.children[7]);
+        loopi(7) if(mat != getmaterial(c.children[i])) return MAT_AIR;
+        return mat;
+    };
+    return c.ext ? c.ext->material : MAT_AIR;
+};
+
 void mpeditface(int dir, int mode, selinfo &sel, bool local)
 {
     if(mode==1 && (sel.cx || sel.cy || sel.cxs&1 || sel.cys&1)) mode = 0;
@@ -1004,7 +1015,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 
     loopselxyz(
         if(c.children) solidfaces(c);
-        uchar mat = c.ext ? c.ext->material : MAT_AIR;
+        uchar mat = getmaterial(c);
         discardchildren(c);
         if(mat!=MAT_AIR) ext(c).material = mat;
         if(mode==1) // fill command
