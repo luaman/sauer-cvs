@@ -1004,7 +1004,9 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 
     loopselxyz(
         if(c.children) solidfaces(c);
+        uchar mat = c.ext ? c.ext->material : MAT_AIR;
         discardchildren(c);
+        if(mat!=MAT_AIR) ext(c).material = mat;
         if(mode==1) // fill command
         {
             if(dir<0)
