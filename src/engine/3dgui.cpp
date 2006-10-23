@@ -15,8 +15,7 @@ static g3d_gui *windowhit = NULL; //use as global test to know if mouse is stole
 #define ICON_SIZE 60
 #define SKIN_SCALE 4
 
-//dependent on screen resolution?
-VARP(guiautotab, FONTH*6, FONTH*10, FONTH*40);
+VARP(guiautotab, FONTH*6, FONTH*16, FONTH*40);
 
 struct gui : g3d_gui
 {
