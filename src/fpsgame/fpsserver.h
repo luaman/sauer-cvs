@@ -552,7 +552,7 @@ struct fpsserver : igameserver
                 };
                 getstring(text, p);
                 s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                loopi(p.length()-curmsg) ci->messages.add(p.buf[curmsg+i]);
                 curmsg = p.length();
                 getstring(text, p);
                 if(newclient && m_teammode)
