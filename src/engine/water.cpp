@@ -736,6 +736,8 @@ static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
         if(max(xmin, xmax) <= min(ymin, ymax)) return 1;
         else if(max(ymin, ymax) <= min(xmin, xmax)) return -1;
     };
+    if(x.material < y.material) return 1;
+    if(x.material > y.material) return -1;
     return 0;
 };
 
