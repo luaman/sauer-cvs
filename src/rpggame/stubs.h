@@ -3,8 +3,8 @@ struct rpgdummycom : iclientcom
     ~rpgdummycom() {};
 
     void gamedisconnect() {};
-    void parsepacketclient(int chan, uchar *end, uchar *p) {};
-    int sendpacketclient(uchar *&p, bool &reliable, dynent *d) { return -1; };
+    void parsepacketclient(int chan, ucharbuf &p) {};
+    int sendpacketclient(ucharbuf &p, bool &reliable, dynent *d) { return -1; };
     void gameconnect(bool _remote) {};
     bool allowedittoggle() { return true; };
     void writeclientinfo(FILE *f) {};
@@ -24,10 +24,10 @@ struct rpgdummyserver : igameserver
     void localdisconnect(int n) {};
     void localconnect(int n) {};
     char *servername() { return "foo"; };
-    void parsepacket(int sender, int chan, bool reliable, uchar *&p, uchar *end) { p = end; };
+    void parsepacket(int sender, int chan, bool reliable, ucharbuf &p) {};
     bool sendpackets() { return false; };
-    int welcomepacket(uchar *&p, int n) { return -1; };
-    void serverinforeply(uchar *&p) {};
+    int welcomepacket(ucharbuf &p, int n) { return -1; };
+    void serverinforeply(ucharbuf &p) {};
     void serverupdate(int seconds) {};
     bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np) { return false; };
     void serverinfostr(char *buf, const char *name, const char *desc, const char *map, int ping, const vector<int> &attr, int np) {};

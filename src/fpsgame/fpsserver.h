@@ -489,20 +489,20 @@ struct fpsserver : igameserver
         return flush;
     };
 
-    void parsepacket(int sender, int chan, bool reliable, uchar *&p, uchar *end)     // has to parse exactly each byte of the packet
+    void parsepacket(int sender, int chan, bool reliable, ucharbuf &p)     // has to parse exactly each byte of the packet
     {
         if(sender<0) return;
         if(chan==2)
         {
-            receivefile(sender, p, end-p);
+            receivefile(sender, p.buf, p.length());
             return;
         };
         if(reliable) reliablemessages = true;
         char text[MAXTRANS];
         int cn = -1, type;
         clientinfo *ci = sender>=0 ? (clientinfo *)getinfo(sender) : NULL;
-        uchar *curmsg;
-        while((curmsg = p)<end) switch(type = checktype(getint(p), ci))
+        int curmsg;
+        while((curmsg = p.length()) < p.maxlen) switch(type = checktype(getint(p), ci))
         {
             case SV_POS:
             {
@@ -532,13 +532,13 @@ struct fpsserver : igameserver
                 };
                 if(!notgotitems && !notgotbases) ci->state = state;
                 ci->position.setsizenodelete(0);
-                loopi(p-curmsg) ci->position.add(curmsg[i]);
+                while(curmsg<p.length()) ci->position.add(p.buf[curmsg++]);
                 break;
             };
 
             case SV_TEXT:
-                sgetstr(text, p);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                getstring(text, p);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
 
             case SV_INITC2S:
@@ -550,11 +550,11 @@ struct fpsserver : igameserver
                     clientscore &sc = findscore(ci, false);
                     if(&sc) sendf(-1, 0, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
                 };
-                sgetstr(text, p);
+                getstring(text, p);
                 s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
-                curmsg = p;
-                sgetstr(text, p);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                curmsg = p.length();
+                getstring(text, p);
                 if(newclient && m_teammode)
                 {
                     const char *worst = chooseworstteam(text);
@@ -563,10 +563,10 @@ struct fpsserver : igameserver
                         s_strcpy(text, worst);
                         sendf(sender, 0, "riis", SV_SETTEAM, sender, worst);
                         ci->messages.reserve(2*strlen(worst)+1);
-                        uchar *buf = &ci->messages.last()+1, *bufpos = buf;
-                        sendstring(worst, bufpos);
-                        ci->messages.ulen += int(bufpos-buf);
-                        curmsg = p;
+                        ucharbuf buf(&ci->messages.last()+1, ci->messages.alen-ci->messages.ulen);
+                        sendstring(worst, buf);
+                        ci->messages.ulen += buf.length();
+                        curmsg = p.length();
                     };
                 };
                 if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
@@ -574,14 +574,14 @@ struct fpsserver : igameserver
                 getint(p);
                 getint(p);
                 getint(p);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             };
 
             case SV_MAPVOTE:
             case SV_MAPCHANGE:
             {
-                sgetstr(text, p);
+                getstring(text, p);
                 int reqmode = getint(p);
                 if(type!=SV_MAPVOTE && !mapreload) break;
                 if(!ci->local && !m_mp(reqmode)) reqmode = 0;
@@ -607,17 +607,17 @@ struct fpsserver : igameserver
             };
 
             case SV_TEAMSCORE:
-                sgetstr(text, p);
+                getstring(text, p);
                 getint(p);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
 
             case SV_BASEINFO:
                 getint(p);
-                sgetstr(text, p);
-                sgetstr(text, p);
+                getstring(text, p);
+                getstring(text, p);
                 getint(p);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
 
             case SV_BASES:
@@ -639,7 +639,7 @@ struct fpsserver : igameserver
             {
                 int n = getint(p);
                 pickup(n, getint(p), sender);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             };
 
@@ -651,7 +651,7 @@ struct fpsserver : igameserver
             {
                 int frags = getint(p);    
                 if(minremain>=0) ci->score.frags = frags;
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             };
                 
@@ -694,21 +694,21 @@ struct fpsserver : igameserver
                 };
                 spinfo->spectator = val!=0;
                 sendf(sender, 0, "ri3", SV_SPECTATOR, spectator, val);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             };
 
             case SV_SETTEAM:
             {
                 int who = getint(p);
-                sgetstr(text, p);
+                getstring(text, p);
                 if(!ci->master || who<0 || who>=getnumclients()) break;
                 clientinfo *wi = (clientinfo *)getinfo(who);
                 if(!wi) break;
                 if(m_capture && wi->state==CS_ALIVE && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->o);
                 s_strncpy(wi->team, text, MAXTEAMLEN+1);
                 sendf(sender, 0, "riis", SV_SETTEAM, who, text);
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             }; 
 
@@ -734,14 +734,14 @@ struct fpsserver : igameserver
                     resetitems();
                     notgotitems = notgotbases = false;
                 };
-                loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             };
 
             case SV_SETMASTER:
             {
                 int val = getint(p);
-                sgetstr(text, p);
+                getstring(text, p);
                 setmaster(ci, val!=0, text);
                 // don't broadcast the master password
                 break;
@@ -752,12 +752,12 @@ struct fpsserver : igameserver
                 int size = msgsizelookup(type);
                 if(size==-1) { disconnect_client(sender, DISC_TAGT); return; };
                 loopi(size-1) getint(p);
-                if(ci) loopi(p-curmsg) ci->messages.add(curmsg[i]);
+                if(ci) while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
             };
         };
     };
 
-    int welcomepacket(uchar *&p, int n)
+    int welcomepacket(ucharbuf &p, int n)
     {
         int hasmap = (gamemode==1 && clients.length()) || smapname[0];
         putint(p, SV_INITS2C);
@@ -910,7 +910,7 @@ struct fpsserver : igameserver
     int serverport() { return SAUERBRATEN_SERVER_PORT; };
     char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; }; 
 
-    void serverinforeply(uchar *&p)
+    void serverinforeply(ucharbuf &p)
     {
         extern int maxclients;
         putint(p, clients.length());

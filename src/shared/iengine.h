@@ -77,7 +77,6 @@ extern void showgui(char *name);
 extern void addserver(char *servername);
 extern char *getservername(int n);
 extern void writeservercfg();
-extern void sgetstr(char *text, uchar *&p);
 
 // world
 extern bool emptymap(int factor, bool force);
@@ -165,11 +164,12 @@ extern void sendfile(int cn, int chan, FILE *file);
 extern void sendpacket(int cn, int chan, ENetPacket *packet);
 extern int getnumclients();
 extern uint getclientip(int n);
-extern void putint(uchar *&p, int n);
-extern int getint(uchar *&p);
-extern void putuint(uchar *&p, int n);
-extern int getuint(uchar *&p);
-extern void sendstring(const char *t, uchar *&p);
+extern void putint(ucharbuf &p, int n);
+extern int getint(ucharbuf &p);
+extern void putuint(ucharbuf &p, int n);
+extern int getuint(ucharbuf &p);
+extern void sendstring(const char *t, ucharbuf &p);
+extern void getstring(char *t, ucharbuf &p, int len = MAXTRANS);
 extern void disconnect_client(int n, int reason);
 extern bool hasnonlocalclients();
 

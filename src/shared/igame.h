@@ -23,8 +23,8 @@ struct iclientcom
     virtual ~iclientcom() {};
 
     virtual void gamedisconnect() = 0;
-    virtual void parsepacketclient(int chan, uchar *end, uchar *p) = 0;
-    virtual int sendpacketclient(uchar *&p, bool &reliable, dynent *d) = 0;
+    virtual void parsepacketclient(int chan, ucharbuf &p) = 0;
+    virtual int sendpacketclient(ucharbuf &p, bool &reliable, dynent *d) = 0;
     virtual void gameconnect(bool _remote) = 0;
     virtual bool allowedittoggle() = 0;
     virtual void writeclientinfo(FILE *f) = 0;
@@ -75,10 +75,10 @@ struct igameserver
     virtual void localdisconnect(int n) = 0;
     virtual void localconnect(int n) = 0;
     virtual char *servername() = 0;
-    virtual void parsepacket(int sender, int chan, bool reliable, uchar *&p, uchar *end) = 0;
+    virtual void parsepacket(int sender, int chan, bool reliable, ucharbuf &p) = 0;
     virtual bool sendpackets() = 0;
-    virtual int welcomepacket(uchar *&p, int n) = 0;
-    virtual void serverinforeply(uchar *&p) = 0;
+    virtual int welcomepacket(ucharbuf &p, int n) = 0;
+    virtual void serverinforeply(ucharbuf &p) = 0;
     virtual void serverupdate(int seconds) = 0;
     virtual bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np) = 0;
     virtual void serverinfostr(char *buf, const char *name, const char *desc, const char *map, int ping, const vector<int> &attr, int np) = 0;

@@ -421,6 +421,51 @@ inline char *newstring(const char *s, size_t l) { return s_strncpy(newstring(l),
 inline char *newstring(const char *s)           { return newstring(s, strlen(s));          };
 inline char *newstringbuf(const char *s)        { return newstring(s, _MAXDEFSTR-1);       };
 
+template <class T>
+struct databuf
+{
+    enum
+    {
+        OVERREAD  = 1<<0,
+        OVERWROTE = 1<<1
+    };
+
+    T *buf;
+    int len, maxlen;
+    uchar flags;
+
+    databuf(T *buf, int maxlen) : buf(buf), len(0), maxlen(maxlen), flags(0) {};
+
+    const T &get()
+    {
+        static T overreadval;
+        if(len<maxlen) return buf[len++];
+        flags |= OVERREAD;
+        return overreadval;
+    };
+
+    void put(const T &val)
+    {
+        if(len<maxlen) buf[len++] = val;
+        else flags |= OVERWROTE;
+    };
+
+    void put(const T *vals, int numvals)
+    {
+        if(maxlen-len<numvals) flags |= OVERWROTE;
+        memcpy(&buf[len], vals, min(maxlen-len, numvals)*sizeof(T));
+        len += min(maxlen-len, numvals);
+    };
+
+    int length() const { return len; };
+    int remaining() const { return maxlen-len; };
+    bool overread() const { return flags&OVERREAD; };
+    bool overwrote() const { return flags&OVERWROTE; };
+};
+
+typedef databuf<char> charbuf;
+typedef databuf<uchar> ucharbuf;
+
 #ifndef __GNUC__
 #ifdef _DEBUG
 //#define _CRTDBG_MAP_ALLOC

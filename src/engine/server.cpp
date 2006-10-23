@@ -11,71 +11,71 @@ void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); 
 
 // all network traffic is in 32bit ints, which are then compressed using the following simple scheme (assumes that most values are small).
 
-void putint(uchar *&p, int n)
+void putint(ucharbuf &p, int n)
 {
-    if(n<128 && n>-127) { *p++ = n; }
-    else if(n<0x8000 && n>=-0x8000) { *p++ = 0x80; *p++ = n; *p++ = n>>8; }
-    else { *p++ = 0x81; *p++ = n; *p++ = n>>8; *p++ = n>>16; *p++ = n>>24; };
+    if(n<128 && n>-127) p.put(n);
+    else if(n<0x8000 && n>=-0x8000) { p.put(0x80); p.put(n); p.put(n>>8); }
+    else { p.put(0x81); p.put(n); p.put(n>>8); p.put(n>>16); p.put(n>>24); };
 };
 
-int getint(uchar *&p)
+int getint(ucharbuf &p)
 {
-    int c = *((char *)p);
-    p++;
-    if(c==-128) { int n = *p++; n |= *((char *)p)<<8; p++; return n;}
-    else if(c==-127) { int n = *p++; n |= *p++<<8; n |= *p++<<16; return n|(*p++<<24); } 
+    int c = (char)p.get();
+    if(c==-128) { int n = p.get(); n |= char(p.get())<<8; return n; }
+    else if(c==-127) { int n = p.get(); n |= p.get()<<8; n |= p.get()<<16; return n|(p.get()<<24); } 
     else return c;
 };
 
 // much smaller encoding for unsigned integers up to 28 bits, but can handle signed
-void putuint(uchar *&p, int n)
+void putuint(ucharbuf &p, int n)
 {
     if(n < 0 || n >= (1<<21))
     {
-        *p++ = 0x80 | (n & 0x7F);
-        *p++ = 0x80 | ((n >> 7) & 0x7F);
-        *p++ = 0x80 | ((n >> 14) & 0x7F);
-        *p++ = ((n >> 21) & 0xFF);
+        p.put(0x80 | (n & 0x7F));
+        p.put(0x80 | ((n >> 7) & 0x7F));
+        p.put(0x80 | ((n >> 14) & 0x7F));
+        p.put(n >> 21);
     }
-    else if(n < (1<<7)) *p++ = n;
+    else if(n < (1<<7)) p.put(n);
     else if(n < (1<<14))
     {
-        *p++ = 0x80 | (n & 0x7F);
-        *p++ = n >> 7;
+        p.put(0x80 | (n & 0x7F));
+        p.put(n >> 7);
     }
     else 
     { 
-        *p++ = 0x80 | (n & 0x7F); 
-        *p++ = 0x80 | ((n >> 7) & 0x7F);
-        *p++ = n >> 14; 
+        p.put(0x80 | (n & 0x7F)); 
+        p.put(0x80 | ((n >> 7) & 0x7F));
+        p.put(n >> 14); 
     };
 };
 
-int getuint(uchar *&p)
+int getuint(ucharbuf &p)
 {
-    int n = *p++;
+    int n = p.get();
     if(n & 0x80)
     {
-        n += (*p++ << 7) - 0x80;
-        if(n & (1<<14)) n += (*p++ << 14) - (1<<14);
-        if(n & (1<<21)) n += (*p++ << 21) - (1<<21);
+        n += (p.get() << 7) - 0x80;
+        if(n & (1<<14)) n += (p.get() << 14) - (1<<14);
+        if(n & (1<<21)) n += (p.get() << 21) - (1<<21);
         if(n & (1<<28)) n |= 0xF0000000; 
     };
     return n;
 };
 
-void sendstring(const char *t, uchar *&p)
+void sendstring(const char *t, ucharbuf &p)
 {
     while(*t) putint(p, *t++);
     putint(p, 0);
 };
 
-void sgetstr(char *text, uchar *&p)    // text buffer must be size MAXTRANS
+void getstring(char *text, ucharbuf &p, int len)
 {
     char *t = text;
     do
     {
-        if(t-text==MAXTRANS) { *--t = 0; return; };
+        if(t>=&text[len]) { text[len-1] = 0; return; };
+        if(!p.remaining()) { *t = 0; return; }; 
         *t = getint(p);
     }
     while(*t++);
@@ -157,8 +157,7 @@ void sendf(int cn, int chan, const char *format, ...)
     bool reliable = false;
     if(*format=='r') { reliable = true; ++format; };
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
-    uchar *start = packet->data;
-    uchar *p = start;
+    ucharbuf p(packet->data, MAXTRANS);
     va_list args;
     va_start(args, format);
     while(*format) switch(*format++)
@@ -172,7 +171,7 @@ void sendf(int cn, int chan, const char *format, ...)
         case 's': sendstring(va_arg(args, const char *), p); break;
     };
     va_end(args);
-    enet_packet_resize(packet, p-start);
+    enet_packet_resize(packet, p.length());
     if(cn<0) multicast(packet, -1, chan);
     else sendpacket(cn, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
@@ -193,22 +192,17 @@ void disconnect_client(int n, int reason)
 
 void process(ENetPacket *packet, int sender, int chan)   // sender may be -1
 {
-    uchar *end = packet->data+packet->dataLength;
-    uchar *p = packet->data;
-
-    sv->parsepacket(sender, chan, (packet->flags&ENET_PACKET_FLAG_RELIABLE)!=0, p, end);
-
-    if(p>end) { disconnect_client(sender, DISC_EOP); return; };
+    ucharbuf p(packet->data, packet->dataLength);
+    sv->parsepacket(sender, chan, (packet->flags&ENET_PACKET_FLAG_RELIABLE)!=0, p);
+    if(p.overread()) { disconnect_client(sender, DISC_EOP); return; };
 };
 
 void send_welcome(int n)
 {
-    ENetPacket * packet = enet_packet_create (NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
-    uchar *start = packet->data;
-    uchar *p = start;
+    ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+    ucharbuf p(packet->data, MAXTRANS);
     int chan = sv->welcomepacket(p, n);
-    
-    enet_packet_resize(packet, p-start);
+    enet_packet_resize(packet, p.length());
     sendpacket(n, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 };
@@ -250,7 +244,7 @@ void sendpongs()        // reply all server info requests
 {
     ENetBuffer buf;
     ENetAddress addr;
-    uchar pong[MAXTRANS], *p;
+    uchar pong[MAXTRANS];
     int len;
     unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
     buf.data = pong;
@@ -259,9 +253,9 @@ void sendpongs()        // reply all server info requests
         buf.dataLength = sizeof(pong);
         len = enet_socket_receive(pongsock, &addr, &buf, 1);
         if(len < 0) return;
-        p = &pong[len];
+        ucharbuf p(&pong[len], MAXTRANS-len);
         sv->serverinforeply(p);
-        buf.dataLength = p - pong;
+        buf.dataLength = len + p.length();
         enet_socket_send(pongsock, &addr, &buf, 1);
     };
 };      

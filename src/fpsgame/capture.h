@@ -277,7 +277,7 @@ struct captureclient : capturestate
         glDisable(GL_BLEND);
     };
 
-    void sendbases(uchar *&p)
+    void sendbases(ucharbuf &p)
     {
         putint(p, SV_BASES);
         loopv(bases)
@@ -463,7 +463,7 @@ struct captureserv : capturestate
         sendf(-1, 0, "riissi", SV_BASEINFO, i, b.owner, b.enemy, b.converted);
     };
 
-    void initclient(uchar *&p)
+    void initclient(ucharbuf &p)
     {
         loopv(scores)
         {

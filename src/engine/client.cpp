@@ -147,13 +147,12 @@ void c2sinfo(dynent *d, int rate)                     // send update to the serv
     if(lastmillis-lastupdate<rate) return;    // don't update faster than 30fps
     lastupdate = lastmillis;
     ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, 0);
-    uchar *start = packet->data;
-    uchar *p = start;
+    ucharbuf p(packet->data, MAXTRANS);
     bool reliable = false;
     int chan = cc->sendpacketclient(p, reliable, d);
-    if(p==start) { enet_packet_destroy(packet); return; };
+    if(!p.length()) { enet_packet_destroy(packet); return; };
     if(reliable) packet->flags = ENET_PACKET_FLAG_RELIABLE;
-    enet_packet_resize(packet, p-start);
+    enet_packet_resize(packet, p.length());
     sendpackettoserv(packet, chan);
     if(clienthost) enet_host_flush(clienthost);
 };
@@ -166,7 +165,8 @@ void neterr(char *s)
 
 void localservertoclient(int chan, uchar *buf, int len)   // processes any updates from the server
 {
-    cc->parsepacketclient(chan, buf+len, buf);
+    ucharbuf p(buf, len);
+    cc->parsepacketclient(chan, p);
 };
 
 void clientkeepalive() { if(clienthost) enet_host_service(clienthost, NULL, 0); };

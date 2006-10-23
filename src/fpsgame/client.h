@@ -170,7 +170,7 @@ struct clientcom : iclientcom
             if(!allowed) return;
         };
         static uchar buf[MAXTRANS];
-        uchar *p = buf;
+        ucharbuf p(buf, MAXTRANS);
         putint(p, type);
         int numi = 1, nums = 0;
         bool reliable = false;
@@ -194,7 +194,7 @@ struct clientcom : iclientcom
         }; 
         int num = nums?0:numi;
         if(num!=fpsserver::msgsizelookup(type)) { s_sprintfd(s)("inconsistant msg size for %d (%d != %d)", type, num, fpsserver::msgsizelookup(type)); fatal(s); };
-        int len = p-buf;
+        int len = p.length();
         messages.add(len&0xFF);
         messages.add((len>>8)|(reliable ? 0x80 : 0));
         loopi(len) messages.add(buf[i]);
@@ -202,14 +202,13 @@ struct clientcom : iclientcom
 
     void toserver(char *text) { conoutf("%s:\f0 %s", player1->name, text); addmsg(SV_TEXT, "rs", text); };
 
-    int sendpacketclient(uchar *&p, bool &reliable, dynent *d)
+    int sendpacketclient(ucharbuf &p, bool &reliable, dynent *d)
     {
-        uchar *start = p;
         if(!spectator || !c2sinit || messages.length())
         {
             // send position updates separately so as to not stall out aiming
             ENetPacket *packet = enet_packet_create (NULL, 100, 0);
-            uchar *q = packet->data; 
+            ucharbuf q(packet->data, 100);
             putint(q, SV_POS);
             putint(q, player1->clientnum);
             putuint(q, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
@@ -230,7 +229,7 @@ struct clientcom : iclientcom
             };
             // pack rest in 1 byte: strafe:2, move:2, state:3, reserved:1
             putint(q, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<4) );
-            enet_packet_resize(packet, q-(uchar *)packet->data);
+            enet_packet_resize(packet, q.length());
             sendpackettoserv(packet, 0);
         };
         if(senditemstoserver)
@@ -258,14 +257,13 @@ struct clientcom : iclientcom
         while(i < messages.length()) // send messages collected during the previous frames
         {
             int len = messages[i] | ((messages[i+1]&0x7F)<<8);
-            if(p+len > start+MAXTRANS) break;
+            if(p.remaining() < len) break;
             if(messages[i+1]&0x80) reliable = true;
-            memcpy(p, &messages[i+2], len);
-            p += len;
+            p.put(&messages[i+2], len);
             i += 2 + len;
         };
         messages.remove(0, i);
-        if(!spectator && MAXTRANS-(p-start)>=10 && cl.lastmillis-lastping>250)
+        if(!spectator && p.remaining()>=10 && cl.lastmillis-lastping>250)
         {
             putint(p, SV_PING);
             putint(p, cl.lastmillis);
@@ -299,12 +297,12 @@ struct clientcom : iclientcom
         };
     };
 
-    void parsepositions(uchar *p, uchar *end)
+    void parsepositions(ucharbuf &p)
     {
         int cn = -1, type;
         fpsent *d = NULL;
 
-        while(p<end) switch(type = getint(p))
+        while(p.remaining()) switch(type = getint(p))
         {
             case SV_POS:                        // position of another client
             {
@@ -347,39 +345,40 @@ struct clientcom : iclientcom
         };
     };
 
-    void parsepacketclient(int chan, uchar *end, uchar *p)   // processes any updates from the server
+    void parsepacketclient(int chan, ucharbuf &p)   // processes any updates from the server
     {
         switch(chan)
         {
             case 0: 
-                if(*p==SV_POS) parsepositions(p, end); 
-                else parsemessages(-1, NULL, p, end);
+                if(p.buf[0]==SV_POS) parsepositions(p); 
+                else parsemessages(-1, NULL, p);
                 break;
             case 1: 
-                while(p<end)
+                while(p.remaining())
                 {
-                    int cn = *p++;
+                    int cn = p.get();
                     fpsent *d = cl.getclient(cn);
-                    int len = *p++;
-                    len += *p++<<8;
-                    if(d) parsemessages(cn, d, p, p+len);
-                    p += len;
+                    int len = p.get();
+                    len += p.get()<<8;
+                    ucharbuf q(&p.buf[p.len], min(len, p.maxlen-p.len));
+                    if(d) parsemessages(cn, d, q);
+                    p.len += min(len, p.maxlen-p.len);
                 };
                 break;
             case 2: 
-                receivefile(p, end-p); 
+                receivefile(p.buf, p.len);
                 break;
         };
     };
 
-    void parsemessages(int cn, fpsent *d, uchar *p, uchar *end)
+    void parsemessages(int cn, fpsent *d, ucharbuf &p)
     {
         int gamemode = cl.gamemode;
         char text[MAXTRANS];
         int type;
         bool mapchanged = false, inited = false;
 
-        while(p<end) switch(type = getint(p))
+        while(p.remaining()) switch(type = getint(p))
         {
             case SV_INITS2C:                    // welcome messsage from the server
             {
@@ -403,7 +402,7 @@ struct clientcom : iclientcom
             case SV_TEXT:
             {
                 if(!d) return;
-                sgetstr(text, p);
+                getstring(text, p);
                 filtertext(text, text);
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR) 
                 {
@@ -415,7 +414,7 @@ struct clientcom : iclientcom
             };
 
             case SV_MAPCHANGE:
-                sgetstr(text, p);
+                getstring(text, p);
                 changemapserv(text, getint(p));
                 mapchanged = true;
                 break;
@@ -443,7 +442,7 @@ struct clientcom : iclientcom
             case SV_INITC2S:            // another client either connected or changed name/team
             {
                 if(!d) return;
-                sgetstr(text, p);
+                getstring(text, p);
                 filtertext(text, text, false, MAXNAMELEN);
                 if(d->name[0])          // already connected
                 {
@@ -460,7 +459,7 @@ struct clientcom : iclientcom
                     freeeditinfo(localedit);
                 };
                 s_strcpy(d->name, text);
-                sgetstr(text, p);
+                getstring(text, p);
                 filtertext(d->team, text, false, MAXTEAMLEN);
                 d->lifesequence = getint(p);
                 d->maxhealth = getint(p);
@@ -675,7 +674,7 @@ struct clientcom : iclientcom
                 break;
 
             case SV_SERVMSG:
-                sgetstr(text, p);
+                getstring(text, p);
                 conoutf("%s", text);
                 break;
 
@@ -706,7 +705,7 @@ struct clientcom : iclientcom
             case SV_SETTEAM:
             {
                 int wn = getint(p);
-                sgetstr(text, p);
+                getstring(text, p);
                 fpsent *w;
                 if(wn==player1->clientnum) w = player1;
                 else w = cl.getclient(wn);
@@ -720,9 +719,9 @@ struct clientcom : iclientcom
                 int base = getint(p);
                 string owner, enemy;
                 int converted;
-                sgetstr(text, p);
+                getstring(text, p);
                 s_strcpy(owner, text);
-                sgetstr(text, p);
+                getstring(text, p);
                 s_strcpy(enemy, text);
                 converted = getint(p);
                 int gamemode = cl.gamemode;
@@ -732,7 +731,7 @@ struct clientcom : iclientcom
 
             case SV_TEAMSCORE:
             {
-                sgetstr(text, p);
+                getstring(text, p);
                 int total = getint(p), gamemode = cl.gamemode;
                 if(m_capture) cl.cpc.setscore(text, total);
                 break;
