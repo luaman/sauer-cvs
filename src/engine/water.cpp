@@ -365,7 +365,7 @@ void renderwater()
         {
             materialsurface &m = *ref.matsurfs[j];
 
-            entity *light = m.light;
+            entity *light = (m.light && m.light->type==ET_LIGHT ? m.light : NULL);
             if(light!=lastlight)
             {
                 if(begin) { glEnd(); begin = false; };
@@ -710,7 +710,8 @@ void drawreflections()
 
 VARP(showmat, 0, 1, 1);
 
-static int visdim[3];
+static int sortdim[3];
+static ivec sortorigin;
 
 static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
 {
@@ -718,7 +719,7 @@ static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
     int xdim = dimension(x.orient), ydim = dimension(y.orient);
     loopi(3)
     {
-        int dim = visdim[i], xmin, xmax, ymin, ymax;
+        int dim = sortdim[i], xmin, xmax, ymin, ymax;
         xmin = xmax = x.o[dim];
         if(dim==C[xdim]) xmax += x.csize;
         else if(dim==R[xdim]) xmax += x.rsize;
@@ -726,7 +727,7 @@ static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
         if(dim==C[ydim]) ymax += y.csize;
         else if(dim==R[ydim]) ymax += y.rsize;
         if(xmax > ymin && ymax > xmin) continue;
-        int c = int(camera1->o[dim]);
+        int c = sortorigin[dim];
         if(c > xmin && c < xmax) return 1;
         if(c > ymin && c < ymax) return -1;
         xmin = abs(xmin - c);
@@ -745,17 +746,16 @@ extern vtxarray *reflectedva;
 
 void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract)
 {
-    extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
-    vec dir;
-    vecfromyawpitch(player->yaw, player->pitch, 1, 0, dir, true);
-    loopi(3) dir[i] = fabs(dir[i]);
-    if(dir.x > dir.y) { visdim[0] = 0; visdim[1] = 1; }
-    else { visdim[0] = 1; visdim[1] = 0; };
-    if(dir.z > dir[visdim[0]]) { visdim[2] = visdim[1]; visdim[1] = visdim[0]; visdim[0] = 2; }
-    else if(dir.z > dir[visdim[1]]) { visdim[2] = visdim[1]; visdim[1] = 2; }
-    else visdim[2] = 2;
-
     bool reflected = zclip && !refract && camera1->o.z >= zclip;
+    sortorigin = ivec(camera1->o);
+    if(reflected) sortorigin.z = int(zclip - (camera1->o.z - zclip));
+    vec dir;
+    vecfromyawpitch(player->yaw, reflected ? -player->pitch : player->pitch, 1, 0, dir, true);
+    loopi(3) { dir[i] = fabs(dir[i]); sortdim[i] = i; };
+    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
+    if(dir[sortdim[1]] > dir[sortdim[0]]) swap(int, sortdim[1], sortdim[0]);
+    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
+
     bool vertwater = !hasFBO || renderpath==R_FIXEDFUNCTION;
     for(vtxarray *va = reflected ? reflectedva : visibleva; va; va = reflected ? va->rnext : va->next)
     {
