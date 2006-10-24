@@ -1032,7 +1032,11 @@ int isvisiblecube(const vec &o, int size)
 
 float vadist(vtxarray *va, const vec &p)
 {
-    if(va->min.x>va->max.x) return 10000;   // box contains only sky/water
+    if(va->min.x>va->max.x)
+    {
+        ivec o(va->x, va->y, va->z);
+        return p.dist_to_bb(o, ivec(o).add(va->size)); // box contains only sky/water
+    };
     return p.dist_to_bb(va->min, va->max);
 };
 

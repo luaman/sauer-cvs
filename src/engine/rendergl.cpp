@@ -1084,14 +1084,13 @@ void project(float fovy, float aspect, int farplane)
     glMatrixMode(GL_MODELVIEW);
 };
 
-void setclipmatrix(float a, float b, float c, float d)
+void genclipmatrix(float a, float b, float c, float d, GLfloat matrix[16])
 {
     // transform the clip plane into camera space
     GLdouble clip[4] = {a, b, c, d};
     glClipPlane(GL_CLIP_PLANE0, clip);
     glGetClipPlane(GL_CLIP_PLANE0, clip);
 
-    GLfloat matrix[16];
     glGetFloatv(GL_PROJECTION_MATRIX, matrix);
     float x = ((clip[0]<0 ? -1 : (clip[0]>0 ? 1 : 0)) + matrix[8]) / matrix[0],
           y = ((clip[1]<0 ? -1 : (clip[1]>0 ? 1 : 0)) + matrix[9]) / matrix[5],
@@ -1101,7 +1100,10 @@ void setclipmatrix(float a, float b, float c, float d)
     matrix[6] = clip[1]*scale; 
     matrix[10] = clip[2]*scale + 1.0f;
     matrix[14] = clip[3]*scale;
+};
 
+void setclipmatrix(GLfloat matrix[16])
+{
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadMatrixf(matrix);
@@ -1189,7 +1191,12 @@ void drawreflection(float z, bool refract, bool clear)
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
     if(!refract && limitsky) drawskybox(farplane, true, int(z), camera1->o.z >= z);
 
-    if(reflectclip) setclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z);
+    GLfloat clipmatrix[16];
+    if(reflectclip) 
+    {
+        genclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z, clipmatrix);
+        setclipmatrix(clipmatrix);
+    };
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -1210,6 +1217,14 @@ void drawreflection(float z, bool refract, bool clear)
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
 
+    if(!refract && !limitsky) 
+    {
+        if(reflectclip) undoclipmatrix();
+        defaultshader->set();
+        drawskybox(farplane, false, int(z), camera1->o.z >= z);
+        if(reflectclip) setclipmatrix(clipmatrix);
+    };
+
     rendermaterials(z, refract);
 
     setfogplane();
@@ -1220,8 +1235,6 @@ void drawreflection(float z, bool refract, bool clear)
 
     if(reflectclip) undoclipmatrix();
     defaultshader->set();
-
-    if(!refract && !limitsky) drawskybox(farplane, false, int(z), camera1->o.z >= z);
 
     if(!refract && camera1->o.z >= z)
     {
