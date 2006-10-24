@@ -299,6 +299,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	[task setCurrentDirectoryPath:cwd];
 	[task setLaunchPath:[cwd stringByAppendingPathComponent:@"sauerbraten.app/Contents/MacOS/sauerbraten"]];
 	[task setArguments:args];
+	[task setEnvironment:[NSDictionary dictionaryWithObjectsAndKeys: @"1", @"SDL_ENABLEAPPEVENTS", nil]]; // makes Command-H, Command-M and Command-Q work at least when not in fullscreen
 	[args release];
 	
 	BOOL okay = YES;
