@@ -481,10 +481,8 @@ void load_world(const char *mname, const char *cname)        // still supports a
     execfile(mcfname);
     overrideidents = false;
 
-    allchanged();
-    precacheall();
+    allchanged(true);
 
-    vec loc(hdr.worldsize/2, hdr.worldsize/2, hdr.worldsize/2);
     loopv(ents)
     {
         extentity &e = *ents[i];

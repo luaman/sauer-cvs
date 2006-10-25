@@ -121,7 +121,7 @@ static uint progress = 0;
 
 void show_calcnormals_progress()
 {
-    float bar1 = float(min(progress, (uint)wtris/2)) / float(wtris/2);
+    float bar1 = float(progress) / float(allocnodes);
     show_out_of_renderloop_progress(bar1, "computing normals...");
 };
 
@@ -133,6 +133,7 @@ void addnormals(cube &c, const ivec &o, int size)
 
     if(c.children)
     {
+        progress++;
         size >>= 1;
         loopi(8) addnormals(c.children[i], ivec(i, o.x, o.y, o.z, size), size);
         return;
@@ -149,7 +150,6 @@ void addnormals(cube &c, const ivec &o, int size)
     {
         CHECK_PROGRESS(return);
         if(c.texture[i] == DEFAULT_SKY) continue;
-        if(!c.ext || c.ext->mergeorigin&(1<<i) || !(c.ext->merged&(1<<i))) progress++;
 
         plane planes[2];
         int numplanes = genclipplane(c, i, verts, planes);
@@ -207,7 +207,7 @@ void calcnormals()
 {
     if(!lerpangle) return;
     lerpthreshold = (1<<NORMAL_BITS)*cos(lerpangle*RAD); 
-    progress = 0;
+    progress = 1;
     loopi(8) addnormals(worldroot[i], ivec(i, 0, 0, 0, hdr.worldsize/2), hdr.worldsize/2);
 };
 

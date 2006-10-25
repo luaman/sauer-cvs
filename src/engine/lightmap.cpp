@@ -20,7 +20,7 @@ static uchar lm[3 * LM_MAXW * LM_MAXH];
 static vec lm_ray[LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
 static vector<const entity *> lights1, lights2;
-static uint progress = 0, total_surfaces = 0;
+static uint progress = 0;
 
 bool calclight_canceled = false;
 volatile bool check_calclight_progress = false;
@@ -47,7 +47,7 @@ void show_calclight_progress()
 {
     int lumels = curlumels;
     loopv(lightmaps) lumels += lightmaps[i].lumels;
-    float bar1 = float(min(progress, total_surfaces)) / float(total_surfaces),
+    float bar1 = float(progress) / float(allocnodes),
           bar2 = lightmaps.length() ? float(lumels) / float(lightmaps.length() * LM_PACKW * LM_PACKH) : 0;
           
     s_sprintfd(text1)("%d%%", int(bar1 * 100));
@@ -765,11 +765,6 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     {
         loopi(6) if(c.ext->surfaces[i].lmid >= LMID_RESERVED)
         {
-            loopj(6) if(c.texture[j] != DEFAULT_SKY && visibleface(c, j, cx, cy, cz, size, MAT_AIR, lodcube))
-            {
-                if(!lodcube && (!c.ext || c.ext->mergeorigin&(1<<i) || !(c.ext->merged&(1<<i)))) progress++;
-                if(hdr.mapwlod && size >= hdr.mapwlod) progress++;
-            };
             return;
         };
         freesurfaces(c);
@@ -786,8 +781,6 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     {
         CHECK_PROGRESS(return);
         if(c.texture[i] == DEFAULT_SKY) continue;
-        if(!lodcube && (!c.ext || c.ext->mergeorigin&(1<<i) || !(c.ext->merged&(1<<i)))) progress++;
-        if(hdr.mapwlod && size >= hdr.mapwlod) progress++;
 
         plane planes[2];
         vec v[4], n[4], n2[3];
@@ -869,6 +862,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
     CHECK_PROGRESS(return);
 
+    progress++;
+
     loopi(8)
     {
         ivec o(i, cx, cy, cz, size);
@@ -897,18 +892,6 @@ static Uint32 calclight_timer(Uint32 interval, void *param)
     
 extern vector<vtxarray *> valist;
 
-void resetprogress()
-{
-    progress = 0;
-    total_surfaces = 0;
-    loopv(valist)
-    {
-        vtxarray *va = valist[i];
-        total_surfaces += va->l0.tris/2;
-        total_surfaces += va->l1.tris/2;
-    };
-};
-
 void calclight(int *quality)
 {
     switch(*quality)
@@ -925,7 +908,7 @@ void calclight(int *quality)
     resetlightmaps();
     clear_lmids(worldroot);
     curlumels = 0;
-    resetprogress();
+    progress = 0;
     calclight_canceled = false;
     check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
@@ -964,7 +947,7 @@ void patchlight()
 {
     if(noedit(true)) return;
     computescreen("patching lightmaps... (esc to abort)");
-    resetprogress();
+    progress = 0;
     int total = 0, lumels = 0;
     loopv(lightmaps)
     {

@@ -211,13 +211,22 @@ extern vector<int> entgroup;
 
 // rendergl
 extern bool hasVBO, hasOQ, hasFBO, hasCM;
+
+struct cubemapside
+{
+    GLenum target;
+    const char *name;
+};
+
+extern cubemapside cubemapsides[6];
+
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
 extern GLuint cubemapfromsky(int size);
 extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true);
-extern GLuint gencubemap(const vec &o, int size);
+extern void drawcubemap(int size, const vec &o, float yaw, float pitch);
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
@@ -298,7 +307,7 @@ extern void octarender();
 extern void rendermapmodels();
 extern void rendergeom();
 extern void renderoutline();
-extern void allchanged();
+extern void allchanged(bool load = false);
 extern void rendersky(bool explicitonly = false, float zreflect = 0);
 extern void converttovectorworld();
 
@@ -306,7 +315,6 @@ extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va, bool reparent = true);
 extern int isvisiblesphere(float rad, const vec &cv);
-extern void precacheall();
 extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);
 extern occludequery *newquery(void *owner);
 extern bool checkquery(occludequery *query, bool nowait = false);
@@ -334,7 +342,7 @@ extern void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materi
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
-extern void setupmaterials(bool clear);
+extern void setupmaterials(bool load = false);
 extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();

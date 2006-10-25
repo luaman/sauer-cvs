@@ -476,11 +476,7 @@ Texture *textureload(const char *name, bool clamp, bool mipit, bool msg)
     return s ? newtexture(tname, s, clamp, mipit) : crosshair;
 };
 
-static struct cubemapside
-{
-    GLenum target;
-    const char *name;
-} cubemapsides[6] =
+cubemapside cubemapsides[6] =
 {
     { GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, "ft" },
     { GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, "bk" },
@@ -1289,7 +1285,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
         glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
 
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);// | GL_COLOR_BUFFER_BIT);
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
@@ -1343,49 +1339,6 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     player->yaw = oldyaw;
     player->pitch = oldpitch;
     player->roll = oldroll;
-};
-
-GLuint gencubemap(const vec &o, int size)
-{
-    GLuint tex;
-    glGenTextures(1, &tex);
-    extern int scr_w, scr_h;
-    while(size > scr_w || size > scr_h) size /= 2;
-    glViewport(0, 0, size, size);
-    float yaw = 0, pitch = 0;
-    uchar *pixels = new uchar[3*size*size];
-    loopi(6)
-    {
-        const cubemapside &side = cubemapsides[i];
-        switch(side.target)
-        {
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: // ft
-                yaw = 0; pitch = 0; break;
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: // bk
-                yaw = 180; pitch = 0; break;
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: // lf
-                yaw = 270; pitch = 0; break;
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: // rt
-                yaw = 90; pitch = 0; break;
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: // dn
-                yaw = 90; pitch = -90; break;
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: // up
-                yaw = 90; pitch = 90; break;
-        };
-        drawcubemap(size, o, yaw, pitch);
-        glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        uchar *src = pixels, *dst = &pixels[3*size*size-3];
-        loop(y, size/2) loop(x, size)
-        {
-            loopk(3) swap(uchar, src[k], dst[k]);
-            src += 3;
-            dst -= 3;
-        };
-        createtexture(tex, size, size, pixels, true, true, GL_RGB5, side.target);
-    };
-    delete[] pixels;
-    glViewport(0, 0, scr_w, scr_h);
-    return tex;
 };
 
 void gl_drawframe(int w, int h, float curfps)

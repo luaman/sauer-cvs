@@ -1147,6 +1147,50 @@ void clearenvmaps()
     envmaps.setsize(0);
 };
 
+GLuint genenvmap(const vec &o)
+{
+    GLuint tex;
+    glGenTextures(1, &tex); 
+    extern int scr_w, scr_h;
+    int size = 1<<envmapsize;
+    while(size > scr_w || size > scr_h) size /= 2; 
+    glViewport(0, 0, size, size);
+    float yaw = 0, pitch = 0;
+    uchar *pixels = new uchar[3*size*size];
+    loopi(6)
+    {
+        const cubemapside &side = cubemapsides[i];
+        switch(side.target)
+        {
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: // ft
+                yaw = 0; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: // bk
+                yaw = 180; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: // lf
+                yaw = 270; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: // rt
+                yaw = 90; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: // dn
+                yaw = 90; pitch = -90; break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: // up
+                yaw = 90; pitch = 90; break;
+        };
+        drawcubemap(size, o, yaw, pitch);
+        glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        uchar *src = pixels, *dst = &pixels[3*size*size-3];
+        loop(y, size/2) loop(x, size)
+        {
+            loopk(3) swap(uchar, src[k], dst[k]);
+            src += 3;
+            dst -= 3;
+        };
+        createtexture(tex, size, size, pixels, true, true, GL_RGB5, side.target);
+    };
+    delete[] pixels;
+    glViewport(0, 0, scr_w, scr_h);
+    return tex;
+};
+
 void genenvmaps()
 {
     if(!hasCM || renderpath==R_FIXEDFUNCTION) return;
@@ -1163,9 +1207,9 @@ void genenvmaps()
     };
     loopv(envmaps)
     {
+        show_out_of_renderloop_progress(float(i)/float(envmaps.length()), "generating environment maps...");
         envmap &em = envmaps[i];
-        show_out_of_renderloop_progress(float(i)/envmaps.length(), "generating environment maps...");
-        em.tex = gencubemap(em.o, 1<<envmapsize);
+        em.tex = genenvmap(em.o);
     };
 };
 
@@ -1186,9 +1230,9 @@ GLuint closestenvmap(const vec &o, int radius)
     return mintex;
 };    
     
-void setupmaterials(bool clear)
+void setupmaterials(bool load)
 {
-    if(clear) genenvmaps();
+    if(load) genenvmaps();
     vector<materialsurface *> water;
     hashtable<ivec, int> watersets;
     vector<float> waterdepths;

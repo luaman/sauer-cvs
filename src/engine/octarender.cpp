@@ -996,7 +996,7 @@ void allchanged(bool load)
 
 void recalc()
 {
-    allchanged();
+    allchanged(true);
 };
 
 COMMAND(recalc, "");
