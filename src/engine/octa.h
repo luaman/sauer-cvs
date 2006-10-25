@@ -17,7 +17,11 @@ struct materialsurface
         short depth;
     };
     uchar material, orient;
-    entity *light;
+    union
+    {
+        entity *light;
+        GLuint tex;
+    };
 };
 
 struct lodlevel

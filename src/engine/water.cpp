@@ -820,13 +820,14 @@ void rendermaterials(float zclip, bool refract)
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
     int lastorient = -1, lastmat = -1;
     Shader *curshader = NULL;
-    bool textured = true, cubemapped = false, begin = false;
+    bool textured = true, begin = false;
+    GLuint cubemapped = 0;
 
     loopv(vismats)
     {
         materialsurface &m = *vismats[editmode && showmat ? vismats.length()-1-i : i];
         int curmat = !editmode || !showmat || m.material>=MAT_EDIT ? m.material : m.material+MAT_EDIT;
-        if(lastmat!=curmat || lastorient!=m.orient) 
+        if(lastmat!=curmat || lastorient!=m.orient || (curmat==MAT_GLASS && cubemapped && m.tex != cubemapped)) 
         {
             if(begin) { glEnd(); begin = false; };
             switch(curmat)
@@ -849,23 +850,14 @@ void rendermaterials(float zclip, bool refract)
                     if(begin) { glEnd(); begin = false; };
                     if(hasCM)
                     {
-                        if(!cubemapped)
+                        if(cubemapped != m.tex)
                         {
-                            cubemapped = true;
-                            static GLuint cmtex = 0;
-                            static Texture *lastsky = NULL;
-                            extern Texture *sky[6];
-                            if(!cmtex || lastsky!=sky[0])
-                            {
-                                if(cmtex) glDeleteTextures(1, &cmtex);
-                                cmtex = cubemapfromsky();
-                                lastsky = sky[0];
-                            };
                             glActiveTexture_(GL_TEXTURE1_ARB);
-                            glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cmtex);
+                            if(!cubemapped) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, m.tex);
                             glActiveTexture_(GL_TEXTURE0_ARB);
                             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
+                            cubemapped = m.tex;
                         };
                         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1,
                             dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
@@ -1131,8 +1123,66 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 
 extern vector<vtxarray *> valist;
 
-void setupmaterials()
+VARFP(envmapsize, 4, 6, 9, setupmaterials(true));
+VARFP(envmapradius, 0, 512, 10000, setupmaterials(false));
+
+struct envmap
 {
+    int id;
+    vec o;
+    GLuint tex;
+};
+
+static vector<envmap> envmaps;
+static GLuint skyenvmap = 0;
+
+void clearenvmaps()
+{
+    if(skyenvmap)
+    {
+        glDeleteTextures(1, &skyenvmap);
+        skyenvmap = 0;
+    };
+    loopv(envmaps) glDeleteTextures(1, &envmaps[i].tex);
+    envmaps.setsize(0);
+};
+
+void genenvmaps()
+{
+    clearenvmaps();
+    skyenvmap = cubemapfromsky(max(1<<envmapsize, 128));
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        const extentity &ent = *ents[i];
+        if(ent.type != ET_ENVMAP) continue;
+        envmap &em = envmaps.add();
+        em.id = i;
+        em.o = ent.o;
+        em.tex = gencubemap(em.o, 1<<envmapsize);
+    };
+};
+
+GLuint closestenvmap(const vec &o, int radius)
+{
+    GLuint mintex = 0;
+    float mindist = 1e16f;
+    loopv(envmaps)
+    {
+        envmap &em = envmaps[i];
+        float dist = em.o.dist(o);
+        if(dist < radius && dist < mindist)
+        {
+            mintex = em.tex;
+            mindist = dist;
+        };
+    };
+    return mintex;
+};    
+    
+void setupmaterials(bool clear)
+{
+    if(clear) genenvmaps();
     vector<materialsurface *> water;
     hashtable<ivec, int> watersets;
     vector<float> waterdepths;
@@ -1165,6 +1215,15 @@ void setupmaterials()
                 m.light = brightestlight(center, vec(0, 0, 1));
                 float depth = raycube(center, vec(0, 0, -1), 10000);
                 waterdepths.add(depth);
+            }
+            else if(m.material==MAT_GLASS && hasCM && renderpath==R_ASMSHADER)
+            {
+                int dim = dimension(m.orient);
+                vec center(m.o.tovec());
+                center[R[dim]] += m.rsize/2;
+                center[C[dim]] += m.csize/2;
+                m.tex = closestenvmap(center, envmapradius);
+                if(!m.tex) m.tex = skyenvmap;
             };
         };
     };
@@ -1183,4 +1242,5 @@ void setupmaterials()
         water[i]->depth = (short)waterdepths[root];
     };
 };
+
 

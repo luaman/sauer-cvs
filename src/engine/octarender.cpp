@@ -977,8 +977,6 @@ void octarender()                               // creates va s for all leaf cub
         explicitsky += va->explicitsky;
         skyarea += va->skyarea;
     };
-
-    setupmaterials();
 };
 
 void allchanged()
@@ -988,6 +986,7 @@ void allchanged()
     memset(cstats, 0, sizeof(cstat)*32);
     resetqueries();
     octarender();
+    setupmaterials(true);
     printcstats();
 };
 
@@ -1000,6 +999,7 @@ void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachete
 
 plane vfcP[5];  // perpindictular vectors to view frustrum bounding planes
 float vfcDfog;  // far plane culling distance (fog limit).
+int vfcw, vfch, vfcfov;
 
 vtxarray *visibleva;
 
@@ -1096,11 +1096,10 @@ void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
     };
 };
 
-void setvfcP(int scr_w, int scr_h, float pyaw, float ppitch, const vec &camera)
+void setvfcP(float pyaw, float ppitch, const vec &camera)
 {
-    float fov = getvar("fov");
-    float vpxo = 90.0 - fov / 2.0;
-    float vpyo = 90.0 - (fov * (float) scr_h / scr_w) / 2;
+    float vpxo = 90.0 - vfcfov / 2.0;
+    float vpyo = 90.0 - (vfcfov * float(vfch) / float(vfcw)) / 2;
     float yaw = pyaw * RAD;
     float yawp = (pyaw + vpxo) * RAD;
     float yawm = (pyaw - vpxo) * RAD;
@@ -1123,8 +1122,7 @@ void reflectvfcP(float z)
 
     vec o(camera1->o);
     o.z = z-(camera1->o.z-z);
-    extern int scr_w, scr_h;
-    setvfcP(scr_w, scr_h, player->yaw, -player->pitch, o);
+    setvfcP(player->yaw, -player->pitch, o);
 };
 
 void restorevfcP()
@@ -1132,12 +1130,16 @@ void restorevfcP()
     memcpy(vfcP, oldvfcP, sizeof(vfcP));
 };
 
-void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h)
+void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int fov)
 {
     memset(vasort, 0, sizeof(vasort));
 
+    vfcw = w;
+    vfch = h;
+    vfcfov = fov;
+
     // Calculate view frustrum: Only changes if resize, but...
-    setvfcP(scr_w, scr_h, player->yaw, player->pitch, camera1->o);
+    setvfcP(player->yaw, player->pitch, camera1->o);
 
     findvisiblevas(varoot);
     sortvisiblevas();

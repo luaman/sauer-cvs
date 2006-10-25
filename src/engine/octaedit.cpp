@@ -476,6 +476,7 @@ void changed(const block3 &sel)
     inbetweenframes = false;
     octarender();
     inbetweenframes = true;
+    setupmaterials(false);
     entitiesinoctanodes();
 };
 

@@ -408,6 +408,7 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
             type = GL_FLOAT;
             break;
         case GL_RGB8:
+        case GL_RGB5:
             format = GL_RGB;
             break;
     };
@@ -489,19 +490,23 @@ static struct cubemapside
     { GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, "up" },
 };
 
-GLuint cubemapfromsky()
+GLuint cubemapfromsky(int size)
 {
     extern Texture *sky[6];
+    if(!sky[0]) return 0;
     GLuint tex;
     glGenTextures(1, &tex);
+    uchar *scaled = new uchar[3*size*size];
     loopi(6)
     {
         uchar *pixels = new uchar[3*sky[i]->w*sky[i]->h];
         glBindTexture(GL_TEXTURE_2D, sky[i]->gl);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        createtexture(!i ? tex : 0, sky[i]->w, sky[i]->h, pixels, true, true, GL_RGB, cubemapsides[i].target);
+        gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, size, size, GL_UNSIGNED_BYTE, scaled);
+        createtexture(!i ? tex : 0, size, size, scaled, true, true, GL_RGB5, cubemapsides[i].target);
         delete[] pixels;
     };
+    delete[] scaled;
     return tex;
 };
  
@@ -1254,6 +1259,119 @@ void drawreflection(float z, bool refract, bool clear)
     reflecting = 0;
 };
 
+void drawcubemap(int size, const vec &o, float yaw, float pitch)
+{
+    vec oldo = player->o;
+    float oldyaw = player->yaw, oldpitch = player->pitch, oldroll = player->roll;
+    player->o = o;
+    player->yaw = yaw;
+    player->pitch = pitch;
+    player->roll = 0;
+    camera1 = player;
+
+    defaultshader->set();
+
+    float fogc[4] = { (fogcolour>>16)/256.0f, ((fogcolour>>8)&255)/256.0f, (fogcolour&255)/256.0f, 1.0f };
+    glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
+
+    project(90.0f, 1.0f, farplane);
+
+    transplayer();
+
+    glEnable(GL_TEXTURE_2D);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    xtravertsva = xtraverts = glde = 0;
+
+    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, size, size, 90);
+
+    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
+    if(limitsky) drawskybox(farplane, true);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
+
+    rendergeom();
+
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+
+//    queryreflections();
+
+    rendermapmodels();
+
+    defaultshader->set();
+
+    if(!limitsky) drawskybox(farplane, false);
+
+//    drawreflections();
+
+//    renderwater();
+//    rendermaterials();
+
+    glDisable(GL_TEXTURE_2D);
+
+    player->o = oldo;
+    player->yaw = oldyaw;
+    player->pitch = oldpitch;
+    player->roll = oldroll;
+};
+
+GLuint gencubemap(const vec &o, int size)
+{
+    GLuint tex;
+    glGenTextures(1, &tex);
+    extern int scr_w, scr_h;
+    while(size > scr_w || size > scr_h) size /= 2;
+    glViewport(0, 0, size, size);
+    float yaw = 0, pitch = 0;
+    uchar *pixels = new uchar[3*size*size];
+    loopi(6)
+    {
+        const cubemapside &side = cubemapsides[i];
+        switch(side.target)
+        {
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: // ft
+                yaw = 0; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: // bk
+                yaw = 180; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: // lf
+                yaw = 270; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: // rt
+                yaw = 90; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: // dn
+                yaw = 90; pitch = -90; break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: // up
+                yaw = 90; pitch = 90; break;
+        };
+        drawcubemap(size, o, yaw, pitch);
+        glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        uchar *src = pixels, *dst = &pixels[3*size*size-3];
+        loop(y, size/2) loop(x, size)
+        {
+            loopk(3) swap(uchar, src[k], dst[k]);
+            src += 3;
+            dst -= 3;
+        };
+        createtexture(tex, size, size, pixels, true, false, GL_RGB5, side.target);
+    };
+    delete[] pixels;
+    glViewport(0, 0, scr_w, scr_h);
+    return tex;
+};
+
 void gl_drawframe(int w, int h, float curfps)
 {
     defaultshader->set();
@@ -1284,7 +1402,7 @@ void gl_drawframe(int w, int h, float curfps)
         glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
 
-    if(renderpath==R_ASMSHADER) setfogplane();
+//    if(renderpath==R_ASMSHADER) setfogplane();
     
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
@@ -1298,7 +1416,7 @@ void gl_drawframe(int w, int h, float curfps)
     
     xtravertsva = xtraverts = glde = 0;
 
-    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h);
+    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, fov);
     
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
     if(limitsky) drawskybox(farplane, true);

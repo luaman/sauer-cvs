@@ -215,8 +215,9 @@ extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
-extern GLuint cubemapfromsky();
+extern GLuint cubemapfromsky(int size);
 extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true);
+extern GLuint gencubemap(const vec &o, int size);
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
@@ -290,7 +291,7 @@ extern void render_texture_panel(int w, int h);
 extern void addundo(undoblock &u);
 
 // octarender
-extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int scr_w, int scr_h);
+extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int fov);
 extern void reflectvfcP(float z);
 extern void restorevfcP();
 extern void octarender();
@@ -333,7 +334,7 @@ extern void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materi
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
-extern void setupmaterials();
+extern void setupmaterials(bool clear);
 extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();

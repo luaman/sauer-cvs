@@ -399,16 +399,20 @@ void load_world(const char *mname, const char *cname)        // still supports a
         else
         {
             loopj(eif) gzgetc(f);
-            if(e.type>=ET_GAMESPECIFIC || hdr.version<=14)
-            {
-                ents.pop();
-                continue;
-            };
         };
         if(hdr.version <= 14 && e.type >= ET_MAPMODEL && e.type <= 16)
         {
             if(e.type == 16) e.type = ET_MAPMODEL;
             else e.type++;
+        };
+        if(hdr.version <= 20 && e.type >= ET_ENVMAP) e.type++;
+        if(!samegame)
+        {
+            if(e.type>=ET_GAMESPECIFIC || hdr.version<=14)
+            {
+                ents.pop();
+                continue;
+            };
         };
         if(!insideworld(e.o))
         {
@@ -480,6 +484,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     allchanged();
     precacheall();
 
+    vec loc(hdr.worldsize/2, hdr.worldsize/2, hdr.worldsize/2);
     loopv(ents)
     {
         extentity &e = *ents[i];
