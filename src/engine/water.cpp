@@ -1124,7 +1124,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 extern vector<vtxarray *> valist;
 
 VARFP(envmapsize, 4, 7, 9, setupmaterials(true));
-VARFP(envmapradius, 0, 128, 10000, setupmaterials(false));
+VAR(envmapradius, 0, 128, 10000);
 
 struct envmap
 {
