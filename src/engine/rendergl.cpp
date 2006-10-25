@@ -1285,8 +1285,6 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
         getwatercolour(wcol);
         float fogwc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
         glFogfv(GL_FOG_COLOR, fogwc); 
-        fovy += (float)sin(lastmillis/1000.0)*2.0f;
-        aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
         glFogi(GL_FOG_START, 0);
         glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
