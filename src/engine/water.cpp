@@ -856,7 +856,7 @@ void rendermaterials(float zclip, bool refract)
                             if(!cubemapped) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
                             glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, m.tex);
                             glActiveTexture_(GL_TEXTURE0_ARB);
-                            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
+                            if(!cubemapped) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
                             cubemapped = m.tex;
                         };
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1,
@@ -1121,8 +1121,6 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
     return matsurfs - (end-matbuf);
 };
 
-extern vector<vtxarray *> valist;
-
 VARFP(envmapsize, 4, 7, 9, setupmaterials(true));
 VAR(envmapradius, 0, 128, 10000);
 
@@ -1235,7 +1233,9 @@ GLuint closestenvmap(const vec &o, int radius)
     };
     return mintex;
 };    
-    
+   
+extern vector<vtxarray *> valist;
+
 void setupmaterials(bool load)
 {
     if(load) genenvmaps();
