@@ -845,16 +845,15 @@ void transplayer()
 {
     glLoadIdentity();
 
-    glRotatef(player->roll,0.0,0.0,1.0);
-    glRotatef(player->pitch,-1.0,0.0,0.0);
-    glRotatef(player->yaw,0.0,1.0,0.0);
+    glRotatef(player->roll, 0, 0, 1);
+    glRotatef(player->pitch, -1, 0, 0);
+    glRotatef(player->yaw, 0, 1, 0);
 
     // move from RH to Z-up LH quake style worldspace
     glRotatef(-90, 1, 0, 0);
     glScalef(1, -1, 1);
 
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);   
-
 };
 
 VARP(fov, 10, 105, 150);
@@ -890,10 +889,10 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
 
     glPushMatrix();
     glLoadIdentity();
-    glRotatef(player->roll,0.0,0.0,1.0);
-    glRotated(player->pitch, -1.0, 0.0, 0.0);
-    glRotated(player->yaw,   0.0, 1.0, 0.0);
-    glRotated(90.0, 1.0, 0.0, 0.0);
+    glRotatef(player->roll, 0, 0, 1);
+    glRotatef(player->pitch, -1, 0, 0);
+    glRotatef(player->yaw, 0, 1, 0);
+    glRotatef(90.0, 1, 0, 0);
     if(reflected) glScalef(1, 1, -1);
     glColor3f(1.0f, 1.0f, 1.0f);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
@@ -1199,20 +1198,8 @@ void drawreflection(float z, bool refract, bool clear)
         setclipmatrix(clipmatrix);
     };
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
-
     extern void renderreflectedgeom(float z, bool refract);
     renderreflectedgeom(z, refract);
-
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
@@ -1255,27 +1242,14 @@ void drawreflection(float z, bool refract, bool clear)
     reflecting = 0;
 };
 
-void drawcubemap(int size, const vec &o, float yaw, float pitch)
+static void setfog(bool underwater)
 {
-    vec oldo = player->o;
-    float oldyaw = player->yaw, oldpitch = player->pitch, oldroll = player->roll;
-    player->o = o;
-    player->yaw = yaw;
-    player->pitch = pitch;
-    player->roll = 0;
-    camera1 = player;
-
-    defaultshader->set();
-
-    cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
-    bool underwater = c.ext && c.ext->material == MAT_WATER;
-    
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
     float fogc[4] = { (fogcolour>>16)/256.0f, ((fogcolour>>8)&255)/256.0f, (fogcolour&255)/256.0f, 1.0f };
     glFogfv(GL_FOG_COLOR, fogc);
     glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
-
+    
     if(underwater)
     {
         getwatercolour(wcol);
@@ -1284,6 +1258,24 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
         glFogi(GL_FOG_START, 0);
         glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
+};
+
+void drawcubemap(int size, const vec &o, float yaw, float pitch)
+{
+    vec oldo = player->o;
+    float oldroll = player->roll, oldyaw = player->yaw, oldpitch = player->pitch;
+    player->o = o;
+    player->roll = 0;
+    player->yaw = yaw;
+    player->pitch = pitch;
+    camera1 = player;
+
+    defaultshader->set();
+
+    cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
+    bool underwater = c.ext && c.ext->material == MAT_WATER;
+
+    setfog(underwater);    
 
     glClear(GL_DEPTH_BUFFER_BIT);// | GL_COLOR_BUFFER_BIT);
 
@@ -1304,21 +1296,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
     if(limitsky) drawskybox(farplane, true);
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
-
     rendergeom();
-
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
 //    queryreflections();
 
@@ -1336,9 +1314,9 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     glDisable(GL_TEXTURE_2D);
 
     player->o = oldo;
+    player->roll = oldroll;
     player->yaw = oldyaw;
     player->pitch = oldpitch;
-    player->roll = oldroll;
 };
 
 void gl_drawframe(int w, int h, float curfps)
@@ -1354,21 +1332,11 @@ void gl_drawframe(int w, int h, float curfps)
     cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
     bool underwater = c.ext && c.ext->material == MAT_WATER;
     
-    glFogi(GL_FOG_START, (fog+64)/8);
-    glFogi(GL_FOG_END, fog);
-    float fogc[4] = { (fogcolour>>16)/256.0f, ((fogcolour>>8)&255)/256.0f, (fogcolour&255)/256.0f, 1.0f };
-    glFogfv(GL_FOG_COLOR, fogc);
-    glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
-
+    setfog(underwater);
     if(underwater)
     {
-        getwatercolour(wcol);
-        float fogwc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
-        glFogfv(GL_FOG_COLOR, fogwc);
         fovy += (float)sin(lastmillis/1000.0)*2.0f;
         aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
-        glFogi(GL_FOG_START, 0);
-        glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
 
 //    if(renderpath==R_ASMSHADER) setfogplane();
@@ -1390,21 +1358,7 @@ void gl_drawframe(int w, int h, float curfps)
     bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
     if(limitsky) drawskybox(farplane, true);
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-    
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
-
     rendergeom();
-
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 
     queryreflections();
 

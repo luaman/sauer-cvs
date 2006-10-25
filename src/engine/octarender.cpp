@@ -1850,8 +1850,18 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 VAR(oqdist, 0, 256, 1024);
 VAR(zpass, 0, 1, 1);
 
+extern int ati_texgen_bug;
+
 void setupTMUs()
 {
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
+
     if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
 
     setupTMU();
@@ -1902,6 +1912,12 @@ void cleanupTMUs()
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
     glEnable(GL_TEXTURE_2D);
+
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 };
 
 #ifdef SHOWVA

@@ -1147,16 +1147,21 @@ void clearenvmaps()
     envmaps.setsize(0);
 };
 
+VAR(aaenvmap, 0, 1, 1);
+
 GLuint genenvmap(const vec &o)
 {
+    extern int scr_w, scr_h;
+    int rendersize = 1;
+    while(rendersize < scr_w && rendersize < scr_h) rendersize *= 2;
+    if(rendersize > scr_w || rendersize > scr_h) rendersize /= 2;
+    if(!aaenvmap && rendersize > 1<<envmapsize) rendersize = 1<<envmapsize;
+    int texsize = rendersize < 1<<envmapsize ? rendersize : 1<<envmapsize;
     GLuint tex;
     glGenTextures(1, &tex); 
-    extern int scr_w, scr_h;
-    int size = 1<<envmapsize;
-    while(size > scr_w || size > scr_h) size /= 2; 
-    glViewport(0, 0, size, size);
+    glViewport(0, 0, rendersize, rendersize);
     float yaw = 0, pitch = 0;
-    uchar *pixels = new uchar[3*size*size];
+    uchar *pixels = new uchar[3*rendersize*rendersize], *scaled = aaenvmap && texsize!=rendersize ? new uchar[3*texsize*texsize] : NULL;
     loopi(6)
     {
         const cubemapside &side = cubemapsides[i];
@@ -1175,18 +1180,20 @@ GLuint genenvmap(const vec &o)
             case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: // up
                 yaw = 90; pitch = 90; break;
         };
-        drawcubemap(size, o, yaw, pitch);
-        glReadPixels(0, 0, size, size, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        uchar *src = pixels, *dst = &pixels[3*size*size-3];
-        loop(y, size/2) loop(x, size)
+        drawcubemap(rendersize, o, yaw, pitch);
+        glReadPixels(0, 0, rendersize, rendersize, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        uchar *src = pixels, *dst = &pixels[3*rendersize*rendersize-3];
+        loop(y, rendersize/2) loop(x, rendersize)
         {
             loopk(3) swap(uchar, src[k], dst[k]);
             src += 3;
             dst -= 3;
         };
-        createtexture(tex, size, size, pixels, true, true, GL_RGB5, side.target);
+        if(scaled) gluScaleImage(GL_RGB, rendersize, rendersize, GL_UNSIGNED_BYTE, pixels, texsize, texsize, GL_UNSIGNED_BYTE, scaled);
+        createtexture(tex, texsize, texsize, scaled ? scaled : pixels, true, true, GL_RGB5, side.target);
     };
     delete[] pixels;
+    if(scaled) delete[] scaled;
     glViewport(0, 0, scr_w, scr_h);
     return tex;
 };
