@@ -979,21 +979,27 @@ void octarender()                               // creates va s for all leaf cub
     };
 };
 
-void allchanged()
+void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
+void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
+
+void allchanged(bool load)
 {
     show_out_of_renderloop_progress(0, "clearing VBOs...");
     vaclearc(worldroot);
     memset(cstats, 0, sizeof(cstat)*32);
     resetqueries();
     octarender();
-    setupmaterials(true);
+    if(load) precacheall();
+    setupmaterials(load);
     printcstats();
 };
 
-COMMANDN(recalc, allchanged, "");
+void recalc()
+{
+    allchanged();
+};
 
-void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
-void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
+COMMAND(recalc, "");
 
 ///////// view frustrum culling ///////////////////////
 
