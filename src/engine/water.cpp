@@ -1149,6 +1149,7 @@ void clearenvmaps()
 
 void genenvmaps()
 {
+    if(!hasCM || renderpath==R_FIXEDFUNCTION) return;
     clearenvmaps();
     skyenvmap = cubemapfromsky(max(1<<envmapsize, 128));
     const vector<extentity *> &ents = et->getents();

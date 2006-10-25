@@ -1271,8 +1271,26 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
     defaultshader->set();
 
+    cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
+    bool underwater = c.ext && c.ext->material == MAT_WATER;
+    
+    glFogi(GL_FOG_START, (fog+64)/8);
+    glFogi(GL_FOG_END, fog);
     float fogc[4] = { (fogcolour>>16)/256.0f, ((fogcolour>>8)&255)/256.0f, (fogcolour&255)/256.0f, 1.0f };
+    glFogfv(GL_FOG_COLOR, fogc);
     glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+
+    if(underwater)
+    {
+        getwatercolour(wcol);
+        float fogwc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
+        glFogfv(GL_FOG_COLOR, fogwc); 
+        fovy += (float)sin(lastmillis/1000.0)*2.0f;
+        aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
+        glFogi(GL_FOG_START, 0);
+        glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
+    };
+
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
