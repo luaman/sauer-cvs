@@ -1161,7 +1161,7 @@ GLuint genenvmap(const vec &o)
     glGenTextures(1, &tex); 
     glViewport(0, 0, rendersize, rendersize);
     float yaw = 0, pitch = 0;
-    uchar *pixels = new uchar[3*rendersize*rendersize], *scaled = aaenvmap && texsize!=rendersize ? new uchar[3*texsize*texsize] : NULL;
+    uchar *pixels = new uchar[3*rendersize*rendersize];
     loopi(6)
     {
         const cubemapside &side = cubemapsides[i];
@@ -1189,11 +1189,10 @@ GLuint genenvmap(const vec &o)
             src += 3;
             dst -= 3;
         };
-        if(scaled) gluScaleImage(GL_RGB, rendersize, rendersize, GL_UNSIGNED_BYTE, pixels, texsize, texsize, GL_UNSIGNED_BYTE, scaled);
-        createtexture(tex, texsize, texsize, scaled ? scaled : pixels, true, true, GL_RGB5, side.target);
+        if(texsize<rendersize) gluScaleImage(GL_RGB, rendersize, rendersize, GL_UNSIGNED_BYTE, pixels, texsize, texsize, GL_UNSIGNED_BYTE, pixels);
+        createtexture(tex, texsize, texsize, pixels, true, true, GL_RGB5, side.target);
     };
     delete[] pixels;
-    if(scaled) delete[] scaled;
     glViewport(0, 0, scr_w, scr_h);
     return tex;
 };
