@@ -70,19 +70,19 @@ void computescreen(const char *text)
 {
     int w = scr_w, h = scr_h;
     gettextres(w, h);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glClearColor(0.15f, 0.15f, 0.15f, 1);
     loopi(2)
     {
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(0, w*3, h*3, 0, -1, 1);
-        glClearColor(0.15f, 0.15f, 0.15f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
-        glEnable(GL_BLEND);
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
         draw_text(text, 70, 2*FONTH + FONTH/2);
         settexture("data/sauer_logo_512_256.png");
         glLoadIdentity();
@@ -97,16 +97,20 @@ void computescreen(const char *text)
         glEnd();
         SDL_GL_SwapBuffers();
     };
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 };
 
 void bar(float bar, int w, int o, float r, float g, float b)
 {
-        int side = 50;
-        glColor3f(r, g, b);
-        glVertex2f(side,                      o*FONTH);
-        glVertex2f(bar*(w*3-2*side)+side, o*FONTH);
-        glVertex2f(bar*(w*3-2*side)+side, (o+2)*FONTH);
-        glVertex2f(side,                      (o+2)*FONTH);
+    int side = 50;
+    glColor3f(r, g, b);
+    glVertex2f(side,                  o*FONTH);
+    glVertex2f(bar*(w*3-2*side)+side, o*FONTH);
+    glVertex2f(bar*(w*3-2*side)+side, (o+2)*FONTH);
+    glVertex2f(side,                  (o+2)*FONTH);
 };
 
 void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, const char *text2)   // also used during loading

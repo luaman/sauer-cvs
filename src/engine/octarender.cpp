@@ -2020,7 +2020,6 @@ void rendergeom()
                 else glColor3f(1, 1, 1);
             };
 #endif
-
             renderva(cur, va, lod);
         };
         glDepthFunc(GL_LESS);

@@ -1272,12 +1272,12 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
     defaultshader->set();
 
-    cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
+    cube &c = lookupcube(int(o.x), int(o.y), int(o.z));
     bool underwater = c.ext && c.ext->material == MAT_WATER;
 
     setfog(underwater);    
 
-    glClear(GL_DEPTH_BUFFER_BIT);// | GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
