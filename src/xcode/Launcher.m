@@ -293,7 +293,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	else if(filename) 
 		[args addObject:[NSString stringWithFormat:@"-l%@",filename]];
 	
-	[args addObjectsFromArray:[[advancedOptions stringValue] componentsSeparatedByString:@" "]];
+    if(![[advancedOptions stringValue] isEqual:@""])
+        [args addObjectsFromArray:[[advancedOptions stringValue] componentsSeparatedByString:@" "]];
 	
 	NSTask *task = [[NSTask alloc] init];
 	[task setCurrentDirectoryPath:cwd];
