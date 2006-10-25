@@ -338,7 +338,7 @@ void renderwater()
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
 
-    entity *lastlight = NULL;
+    entity *lastlight = (entity *)-1;
     int lastdepth = -1;
     loopi(MAXREFLECTIONS)
     {
@@ -366,16 +366,19 @@ void renderwater()
             materialsurface &m = *ref.matsurfs[j];
 
             entity *light = (m.light && m.light->type==ET_LIGHT ? m.light : NULL);
-            if(light!=lastlight)
+            if(!light || light!=lastlight)
             {
                 if(begin) { glEnd(); begin = false; };
                 const vec &lightpos = light ? light->o : vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, hdr.worldsize);
-                float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
-                const vec &lightcol = (light ? vec(light->attr2, light->attr3, light->attr4) : vec(hdr.ambient, hdr.ambient, hdr.ambient)).div(255.0f).mul(waterspec/100.0f);
                 glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
-                glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
-                glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, 0);
-                lastlight = light;
+                if(light!=lastlight)
+                {
+                    float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
+                    const vec &lightcol = (light ? vec(light->attr2, light->attr3, light->attr4) : vec(hdr.ambient, hdr.ambient, hdr.ambient)).div(255.0f).mul(waterspec/100.0f);
+                    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
+                    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, 0);
+                    lastlight = light;
+                };
             };
 
             if(!waterrefract && m.depth!=lastdepth)
