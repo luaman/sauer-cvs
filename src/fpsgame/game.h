@@ -10,7 +10,7 @@ enum                            // static entity types
     LIGHT = ET_LIGHT,           // lightsource, attr1 = radius, attr2 = intensity
     MAPMODEL = ET_MAPMODEL,     // attr1 = angle, attr2 = idx
     PLAYERSTART,                // attr1 = angle
-    ENVMAP = ET_ENVMAP,
+    ENVMAP = ET_ENVMAP,         // attr1 = radius
     I_SHELLS, I_BULLETS, I_ROCKETS, I_ROUNDS, I_GRENADES, I_CARTRIDGES,
     I_HEALTH, I_BOOST,
     I_GREENARMOUR, I_YELLOWARMOUR,

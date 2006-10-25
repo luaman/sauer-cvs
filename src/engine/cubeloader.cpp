@@ -324,6 +324,7 @@ struct cubeloader
         gzclose(f);
         create_cubes();
         remipworld();
+        allchanged();
         loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
         entitiesinoctanodes();
         clearlights();

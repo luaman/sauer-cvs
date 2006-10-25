@@ -1124,11 +1124,11 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 extern vector<vtxarray *> valist;
 
 VARFP(envmapsize, 4, 7, 9, setupmaterials(true));
-VARFP(envmapradius, 0, 256, 10000, setupmaterials(false));
+VARFP(envmapradius, 0, 128, 10000, setupmaterials(false));
 
 struct envmap
 {
-    int id;
+    int radius;
     vec o;
     GLuint tex;
 };
@@ -1158,8 +1158,13 @@ void genenvmaps()
         const extentity &ent = *ents[i];
         if(ent.type != ET_ENVMAP) continue;
         envmap &em = envmaps.add();
-        em.id = i;
+        em.radius = ent.attr1 ? ent.attr1 : envmapradius;
         em.o = ent.o;
+    };
+    loopv(envmaps)
+    {
+        envmap &em = envmaps[i];
+        show_out_of_renderloop_progress(float(i)/envmaps.length(), "generating environment maps...");
         em.tex = gencubemap(em.o, 1<<envmapsize);
     };
 };
@@ -1172,7 +1177,7 @@ GLuint closestenvmap(const vec &o, int radius)
     {
         envmap &em = envmaps[i];
         float dist = em.o.dist(o);
-        if(dist < radius && dist < mindist)
+        if(dist < em.radius && dist < mindist)
         {
             mintex = em.tex;
             mindist = dist;

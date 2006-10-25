@@ -460,10 +460,15 @@ void remipworld()
         remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2);
     };
     calcmerges();
+};
+
+void remip_()
+{
+    remipworld();
     allchanged();
 };
 
-COMMANDN(remip, remipworld, "");
+COMMANDN(remip, remip_, "");
 
 uchar &edgelookup(cube &c, const ivec &p, int dim)
 {
