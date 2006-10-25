@@ -859,7 +859,7 @@ void rendermaterials(float zclip, bool refract)
                             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
                             cubemapped = m.tex;
                         };
-                        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 1,
+                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1,
                             dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
                             dimension(m.orient)==1 ? dimcoord(m.orient)*2-1 : 0,
                             dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0, 
