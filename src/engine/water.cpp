@@ -1123,7 +1123,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 
 extern vector<vtxarray *> valist;
 
-VARFP(envmapsize, 4, 6, 9, setupmaterials(true));
+VARFP(envmapsize, 4, 7, 9, setupmaterials(true));
 VARFP(envmapradius, 0, 256, 10000, setupmaterials(false));
 
 struct envmap
@@ -1151,7 +1151,7 @@ void genenvmaps()
 {
     if(!hasCM || renderpath==R_FIXEDFUNCTION) return;
     clearenvmaps();
-    skyenvmap = cubemapfromsky(max(1<<envmapsize, 128));
+    skyenvmap = cubemapfromsky(1<<envmapsize);
     const vector<extentity *> &ents = et->getents();
     loopv(ents)
     {
