@@ -1381,7 +1381,7 @@ GLuint gencubemap(const vec &o, int size)
             src += 3;
             dst -= 3;
         };
-        createtexture(tex, size, size, pixels, true, false, GL_RGB5, side.target);
+        createtexture(tex, size, size, pixels, true, true, GL_RGB5, side.target);
     };
     delete[] pixels;
     glViewport(0, 0, scr_w, scr_h);
