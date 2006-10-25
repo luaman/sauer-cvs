@@ -503,7 +503,10 @@ int main(int argc, char **argv)
                 case SDL_MOUSEMOTION:
                     if(ignore) { ignore--; break; };
                     if(!(screen->flags&SDL_FULLSCREEN) && grabmouse)
-                    {
+                    {   
+                        #ifdef __APPLE__
+                        if(event.motion.y == 0) break;  //let mac users drag windows via the title bar
+                        #endif
                         if(event.motion.x == scr_w / 2 && event.motion.y == scr_h / 2) break;
                         SDL_WarpMouse(scr_w / 2, scr_h / 2);
                     };
