@@ -1328,6 +1328,8 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     camera1 = oldcamera;
 };
 
+VAR(hudgunfov, 10, 65, 150);
+
 void gl_drawframe(int w, int h, float curfps)
 {
     defaultshader->set();
@@ -1390,9 +1392,12 @@ void gl_drawframe(int w, int h, float curfps)
 
     g3d_render();
 
-    project(65, aspect, farplane);
-    if(!isthirdperson()) cl->drawhudgun();
-    project(fovy, aspect, farplane);
+    if(!isthirdperson()) 
+    {
+        project(hudgunfov, aspect, farplane);
+        cl->drawhudgun();
+        project(fovy, aspect, farplane);
+    };
 
     glDisable(GL_FOG);
 
