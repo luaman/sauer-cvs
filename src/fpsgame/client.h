@@ -507,7 +507,7 @@ struct clientcom : iclientcom
                 dir.x = getint(p)/DVELF;
                 dir.y = getint(p)/DVELF;
                 dir.z = getint(p)/DVELF;
-                if(damage<=0) break;
+                if(damage<=0 || damage>1000) break;
                 if(target==player1->clientnum)
                 {
                     if(ls==player1->lifesequence) { cl.selfdamage(damage, cn, d); player1->vel.add(dir); };
