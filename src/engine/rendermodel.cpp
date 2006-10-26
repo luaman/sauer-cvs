@@ -284,7 +284,11 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
         } else success; \
     } else success;
         
-    tryload(masks, maskspath, "masks", m->masked = true, {});
+    if(renderpath==R_FIXEDFUNCTION) masks = crosshair;
+    else
+    {
+        tryload(masks, maskspath, "masks", m->masked = true, {});
+    };
     tryload(skin, skinpath, "skin", {}, return);
 };
 
