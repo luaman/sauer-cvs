@@ -1265,6 +1265,8 @@ static void setfog(bool underwater)
         glFogi(GL_FOG_START, 0);
         glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
+
+    if(renderpath==R_ASMSHADER) setfogplane();
 };
 
 void drawcubemap(int size, const vec &o, float yaw, float pitch)
@@ -1346,8 +1348,6 @@ void gl_drawframe(int w, int h, float curfps)
         aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
     };
 
-//    if(renderpath==R_ASMSHADER) setfogplane();
-    
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
     project(fovy, aspect, farplane);
