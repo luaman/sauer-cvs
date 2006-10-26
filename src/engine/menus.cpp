@@ -145,6 +145,8 @@ void newgui(char *name, char *contents)
 
 void showgui(char *name)
 {
+    if(!guis.access(name)) return;
+
 	//jump back if gui is already showing
 	loopvrev(guistack)
     {
@@ -199,12 +201,12 @@ static struct mainmenucallback : g3d_callback
     {
         if(guistack.empty()) return;
         char *name = guistack.last();
-        char *contents = guis[name];
+        char **contents = guis.access(name);
         if(!contents) return;
 		cgui = &g;
         cgui->start(menustart, 0.04f, &menutab);
 		guitab(name);		
-		execute(contents);
+		execute(*contents);
         cgui->end();
 		cgui = NULL;
     };
