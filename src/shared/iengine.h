@@ -73,11 +73,6 @@ extern char *getcurcommand();
 extern vec menuinfrontofplayer();
 extern void showgui(char *name);
 
-// serverbrowser
-extern void addserver(char *servername);
-extern char *getservername(int n);
-extern void writeservercfg();
-
 // world
 extern bool emptymap(int factor, bool force);
 extern bool enlargemap(bool force);

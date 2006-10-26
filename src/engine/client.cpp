@@ -45,7 +45,7 @@ void connects(char *servername)
 
     if(servername)
     {
-        addserver(servername);
+        saveserver(servername);
         conoutf("attempting to connect to %s", servername);
         if(!resolverwait(servername, &address))
         {

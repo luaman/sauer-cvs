@@ -199,6 +199,7 @@ struct serverinfo
     int numplayers, ping, resolved;
     vector<int> attr;
     ENetAddress address;
+    bool save;
 };
 
 vector<serverinfo> servers;
@@ -209,7 +210,7 @@ char *getservername(int n) { return servers[n].name; };
 
 void addserver(char *servername)
 {
-    loopv(servers) if(strcmp(servers[i].name, servername)==0) return;
+    loopv(servers) if(!strcmp(servers[i].name, servername)) return;
     serverinfo &si = servers.add();
     s_strcpy(si.name, servername);
     si.full[0] = 0;
@@ -219,6 +220,17 @@ void addserver(char *servername)
     si.resolved = UNRESOLVED;
     si.address.host = ENET_HOST_ANY;
     si.address.port = sv->serverinfoport();
+    si.save = false;
+};
+
+void saveserver(char *servername)
+{
+    addserver(servername);
+    loopv(servers) if(!strcmp(servers[i].name, servername))
+    {
+        servers[i].save = true;
+        break;
+    };
 };
 
 void pingservers()
@@ -368,6 +380,7 @@ void updatefrommaster()
 };
 
 COMMAND(addserver, "s");
+COMMAND(saveserver, "s");
 COMMAND(updatefrommaster, "");
 
 void writeservercfg()
@@ -375,7 +388,7 @@ void writeservercfg()
     FILE *f = fopen("servers.cfg", "w");
     if(!f) return;
     fprintf(f, "// servers connected to are added here automatically\n\n");
-    loopvrev(servers) fprintf(f, "addserver %s\n", servers[i].name);
+    loopvrev(servers) if(servers[i].save) fprintf(f, "saveserver %s\n", servers[i].name);
     fclose(f);
 };
 
