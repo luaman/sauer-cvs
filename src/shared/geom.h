@@ -41,7 +41,7 @@ struct vec
     vec &cross(const vec &a, const vec &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; return *this; };
 
     void rotate_around_z(float yaw) { *this = vec(cosf(yaw)*x-sinf(yaw)*y, cosf(yaw)*y+sinf(yaw)*x, z); };
-    //void rotate_around_x(float pit) { *this = vec(x, cosf(pit)*y-sinf(pit)*z, cosf(pit)*z+sinf(pit)*y); };
+    void rotate_around_x(float pitch) { *this = vec(x, cosf(pitch)*y+sinf(pitch)*z, cosf(pitch)*z-sinf(pitch)*y); };
 
     template<class T> float dist_to_bb(const T &min, const T &max) const
     {
