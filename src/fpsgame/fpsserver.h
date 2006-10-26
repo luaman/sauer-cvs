@@ -301,7 +301,7 @@ struct fpsserver : igameserver
         if(!insert) loopv(clients)
         {
             clientinfo *oi = clients[i];
-            if(i != ci->clientnum && getclientip(oi->clientnum) == ip && !strcmp(oi->name, ci->name))
+            if(oi->clientnum != ci->clientnum && getclientip(oi->clientnum) == ip && !strcmp(oi->name, ci->name))
             {
                 enet_uint32 gamestart = enet_time_get();
                 oi->score.timeplayed += gamestart - oi->gamestart;
@@ -543,16 +543,15 @@ struct fpsserver : igameserver
 
             case SV_INITC2S:
             {
-                bool newclient = false;
-                if(!ci->name[0])
+                bool newclient = !ci->name[0];
+                getstring(text, p);
+                s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
+                if(newclient)
                 {
-                    newclient = true;
                     clientscore &sc = findscore(ci, false);
                     if(&sc) sendf(-1, 0, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
                 };
-                getstring(text, p);
-                s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
-                loopi(p.length()-curmsg) ci->messages.add(p.buf[curmsg+i]);
+                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 curmsg = p.length();
                 getstring(text, p);
                 if(newclient && m_teammode)
