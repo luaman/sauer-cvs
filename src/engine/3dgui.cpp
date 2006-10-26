@@ -8,7 +8,7 @@
 
 static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
-static g3d_gui *windowhit = NULL; //use as global test to know if mouse is stolen by gui
+static g3d_gui *windowhit = NULL;
 
 #define SHADOW 4
 #define IMAGE_SIZE 120
@@ -71,12 +71,7 @@ struct gui : g3d_gui
                 *tcurrent = tpos; //roll-over to switch tab
                 color = 0xFF0000;
             };
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
-            glBindTexture(GL_TEXTURE_2D, skin->gl);
-            glBegin(GL_QUADS);
             patchn_(x, x+w, cury, cury+FONTH, visible()?11:20, 9);
-            glEnd();
             text_(name, x, cury, color, visible());
             cury += FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
         };
@@ -351,11 +346,16 @@ struct gui : g3d_gui
 
     void patchn_(int vleft, int vright, int vtop, int vbottom, int start, int n) 
     {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
+        glBindTexture(GL_TEXTURE_2D, skin->gl);
+        glBegin(GL_QUADS);
         loopi(n)
         {
             const int *p = patch[start+i];
             patch_(vleft, vright, vtop, vbottom, p[0], p[1], p[2], p[3], p[4]);
         };
+        glEnd();
     }; 
 
     vec origin;
@@ -389,12 +389,7 @@ struct gui : g3d_gui
             glScalef(-scale, scale, scale);
         
             if(!skin) skin = textureload("data/guiskin.png");
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
-            glBindTexture(GL_TEXTURE_2D, skin->gl);
-            glBegin(GL_QUADS);
             patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE:0), cury+ysize, 0, tcurrent?8:9);
-            glEnd();
         };
     };
 
@@ -418,15 +413,7 @@ struct gui : g3d_gui
         }
         else
         {
-            if(tcurrent)
-            {	
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
-                glBindTexture(GL_TEXTURE_2D, skin->gl);
-                glBegin(GL_QUADS);
-                patchn_(curx+tx, curx+xsize, -ysize + FONTH+(skiny[3]-skiny[2])*SKIN_SCALE, cury+ysize, 8, 3);
-                glEnd();
-            };
+            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH, 8, 3);
             glPopMatrix();
         };
         poplist();
@@ -450,9 +437,9 @@ gui::patch[][5] = { //arguably this data can be compressed - it depends on what 
     { 0,1,2,3, 0x11},
     { 8,9,2,3, 0x21},
     
-    { 4,5,2,3, 0x01},
+    { 4,5,2,3, 0x02},
     { 4,5,1,2, 0x00},
-    { 4,5,0,1, 0x02},
+    { 4,5,0,1, 0x01},
     
     { 2,3,1,2, 0x00}, 
     { 2,3,2,3, 0x02},
