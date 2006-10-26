@@ -40,8 +40,9 @@ struct vec
     bool reject(const vec &o, float max) { return x>o.x+max || x<o.x-max || y>o.y+max || y<o.y-max; };
     vec &cross(const vec &a, const vec &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; return *this; };
 
-    void rotate_around_z(float yaw) { *this = vec(cosf(yaw)*x-sinf(yaw)*y, cosf(yaw)*y+sinf(yaw)*x, z); };
-    void rotate_around_x(float pitch) { *this = vec(x, cosf(pitch)*y+sinf(pitch)*z, cosf(pitch)*z-sinf(pitch)*y); };
+    void rotate_around_z(float angle) { *this = vec(cosf(angle)*x-sinf(angle)*y, cosf(angle)*y+sinf(angle)*x, z); };
+    void rotate_around_x(float angle) { *this = vec(x, cosf(angle)*y-sinf(angle)*z, cosf(angle)*z+sinf(angle)*y); };
+    void rotate_around_y(float angle) { *this = vec(cosf(angle)*x-sinf(angle)*z, y, cosf(angle)*z+sinf(angle)*x); };
 
     template<class T> float dist_to_bb(const T &min, const T &max) const
     {

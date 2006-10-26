@@ -229,12 +229,12 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     {
         vec rdir(dir);
         rdir.rotate_around_z((-yaw-180.0f)*RAD);
-        rdir.rotate_around_x(pitch*RAD);
+        rdir.rotate_around_y(-pitch*RAD);
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, rdir.x, rdir.y, rdir.z, 0);
 
         vec camerapos = vec(player->o).sub(vec(x, y, z));
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
-        camerapos.rotate_around_x(pitch*RAD);
+        camerapos.rotate_around_y(-pitch*RAD);
         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
 
         if(refracting) setfogplane(1, refracting - z);
