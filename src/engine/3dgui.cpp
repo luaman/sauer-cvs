@@ -71,7 +71,7 @@ struct gui : g3d_gui
                 *tcurrent = tpos; //roll-over to switch tab
                 color = 0xFF0000;
             };
-            patchn_(x, x+w, cury, cury+FONTH, visible()?11:20, 9);
+            patchn_(x, x+w, cury, cury+FONTH, visible()?12:21, 9);
             text_(name, x, cury, color, visible());
             cury += FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
         };
@@ -413,7 +413,7 @@ struct gui : g3d_gui
         }
         else
         {
-            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH, 8, 3);
+            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH, 9, 3);
             glPopMatrix();
         };
         poplist();
@@ -436,6 +436,7 @@ gui::patch[][5] = { //arguably this data can be compressed - it depends on what 
     { 8,9,4,5, 0x22},
     { 0,1,2,3, 0x11},
     { 8,9,2,3, 0x21},
+    { 4,5,2,3, 0x01},
     
     { 4,5,2,3, 0x02},
     { 4,5,1,2, 0x00},
