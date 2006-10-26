@@ -59,6 +59,17 @@ particle *newparticle(const vec &o, const vec &d, int fade, int type)
     return p;
 };
 
+enum
+{
+    PT_PART = 0,
+    PT_FLARE,
+    PT_EDIT,
+    PT_TEXT,
+    PT_TEXTUP,
+    PT_METER,
+    PT_METERVS
+};
+
 vec right, up;
 
 void setorient(const vec &r, const vec &u) { right = r; up = u; };
@@ -71,29 +82,29 @@ void render_particles(int time)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     
-    static struct parttype { uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
+    static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
-        { 180, 155, 75,  2,  0, 0.24f }, // yellow: sparks 
-        { 125, 125, 125, 20, 2, 0.6f },  // grey:   small smoke
-        { 50, 50, 255,   20, 0, 0.32f }, // blue:   edit mode entities
-        { 255, 25, 25,   1,  2, 0.24f }, // red:    blood spats
-        { 255, 200, 200, 20, 1, 4.8f  }, // yellow: fireball1
-        { 125, 125, 125, 20, 2, 2.4f  }, // grey:   big smoke   
-        { 255, 255, 255, 20, 3, 4.8f  }, // blue:   fireball2
-        { 255, 255, 255, 20, 4, 4.8f  }, // green:  big fireball3
-        { 255, 75, 25,   -8, -1, 4.0f }, // 8 TEXT RED
-        { 50, 255, 100,  -8, -1, 4.0f }, // 9 TEXT GREEN
-        { 255, 200, 100, 0,  5, 0.28f }, // 10 yellow flare
-        { 30, 200, 80,  0, -1, 2.0f },   // 11 TEXT DARKGREEN, SMALL, NON-MOVING
-        { 255, 255, 255, 20, 4, 2.0f },  // 12 green small fireball3
-        { 255, 75, 25,  0, -1, 2.0f },   // 13 TEXT RED, SMALL, NON-MOVING
-        { 180, 180, 180,  0, -1, 2.0f }, // 14 TEXT GREY, SMALL, NON-MOVING
-        { 255, 200, 100, -8, -1, 4.0f }, // 15 TEXT YELLOW
-        { 100, 150, 255, 0, -1, 2.0f },  // 16 TEXT BLUE, SMALL, NON-MOVING
-        { 255, 25, 25, 0, -1, 2.0f },    // 17 METER RED, SMALL, NON-MOVING
-        { 50, 50, 255, 0, -1, 2.0f },    // 18 METER BLUE, SMALL, NON-MOVING
-        { 255, 25, 25, 0, -1, 2.0f },    // 19 METER RED vs. BLUE, SMALL, NON-MOVING
-        { 50, 50, 255, 0, -1, 2.0f },    // 20 METER BLUE vs. RED, SMALL, NON-MOVING
+        { 0,          180, 155, 75,  2,  0, 0.24f }, // yellow: sparks 
+        { 0,          125, 125, 125, 20, 2, 0.6f },  // grey:   small smoke
+        { 0,          50, 50, 255,   20, 0, 0.32f }, // blue:   edit mode entities
+        { 0,          255, 25, 25,   1,  2, 0.24f }, // red:    blood spats
+        { 0,          255, 200, 200, 20, 1, 4.8f  }, // yellow: fireball1
+        { 0,          125, 125, 125, 20, 2, 2.4f  }, // grey:   big smoke   
+        { 0,          255, 255, 255, 20, 3, 4.8f  }, // blue:   fireball2
+        { 0,          255, 255, 255, 20, 4, 4.8f  }, // green:  big fireball3
+        { PT_TEXTUP,  255, 75, 25,   -8, -1, 4.0f }, // 8 TEXT RED
+        { PT_TEXTUP,  50, 255, 100,  -8, -1, 4.0f }, // 9 TEXT GREEN
+        { PT_FLARE,   255, 200, 100, 0,  5, 0.28f }, // 10 yellow flare
+        { PT_TEXT,    30, 200, 80,   0, -1, 2.0f },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+        { 0,          255, 255, 255, 20, 4, 2.0f },  // 12 green small fireball3
+        { PT_TEXT,    255, 75, 25,   0, -1, 2.0f },  // 13 TEXT RED, SMALL, NON-MOVING
+        { PT_TEXT,    180, 180, 180, 0, -1, 2.0f },  // 14 TEXT GREY, SMALL, NON-MOVING
+        { PT_TEXTUP,  255, 200, 100, -8, -1, 4.0f }, // 15 TEXT YELLOW
+        { PT_TEXT,    100, 150, 255, 0, -1, 2.0f },  // 16 TEXT BLUE, SMALL, NON-MOVING
+        { PT_METER,   255, 25, 25,   0, -1, 2.0f },  // 17 METER RED, SMALL, NON-MOVING
+        { PT_METER,   50, 50, 255,   0, -1, 2.0f },  // 18 METER BLUE, SMALL, NON-MOVING
+        { PT_METERVS, 255, 25, 25,   0, -1, 2.0f },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
+        { PT_METERVS, 50, 50, 255,   0, -1, 2.0f },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
     };
         
     loopi(MAXPARTYPES) if(parlist[i])
@@ -113,7 +124,7 @@ void render_particles(int time)
             int blend = p->fade*255/(lastmillis-p->millis+p->fade);
             if(pt.tex>=0)  
             {    
-                if(i==10)   // flares
+                if(pt.type==PT_FLARE)   // flares
                 {
                     glColor4ub(pt.r, pt.g, pt.b, blend);
 					vec dir1 = p->d, dir2 = p->d, c1, c2;
@@ -133,7 +144,7 @@ void render_particles(int time)
                     glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.y+( right.y-up.y)*sz, p->o.z+( right.z-up.z)*sz);
                     glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.y+(-right.y-up.y)*sz, p->o.z+(-right.z-up.z)*sz);
                 };
-                if(i!=2) xtraverts += 4;
+                if(pt.type!=PT_EDIT) xtraverts += 4;
             }
             else            // text
             {
@@ -143,7 +154,7 @@ void render_particles(int time)
                 glRotatef(camera1->pitch-90, 1, 0, 0);
                 float scale = pt.sz/80.0f;
                 glScalef(-scale, scale, -scale);
-                if(i>=17 && i<=20)
+                if(pt.type==PT_METER || pt.type==PT_METERVS)
                 {
                     float right = 8*FONTH, left = p->val*right/100.0f;
                     glDisable(GL_BLEND);
@@ -159,7 +170,7 @@ void render_particles(int time)
                     glVertex2f(left, FONTH);
                     glVertex2f(0, FONTH);
 
-                    if(i>=19) glColor3ub(parttypes[i-1].r, parttypes[i-1].g, parttypes[i-1].b);
+                    if(pt.type==PT_METERVS) glColor3ub(parttypes[i-1].r, parttypes[i-1].g, parttypes[i-1].b);
                     else glColor3ub(0, 0, 0);
                     glVertex2f(left, 0);
                     glVertex2f(right, 0);
@@ -176,7 +187,7 @@ void render_particles(int time)
                     char *t = p->text+(p->text[0]=='@');
                     float xoff = -text_width(t)/2;
                     float yoff = 0;
-                    if(i!=11 && i!=13 && i!=14 && i!=16) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
+                    if(pt.type==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
                     glTranslatef(xoff, yoff, 50);
                     draw_text(t, 0, 0, pt.r, pt.g, pt.b, blend);
                 };
@@ -188,7 +199,7 @@ void render_particles(int time)
             {
                 *pp = p->next;
                 p->next = parempty;
-                if(i<=16 && p->text && p->text[0]=='@') delete[] p->text;
+                if((pt.type==PT_TEXT || pt.type==PT_TEXTUP) && p->text && p->text[0]=='@') delete[] p->text;
                 parempty = p;
             }
             else
