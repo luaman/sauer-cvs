@@ -363,7 +363,6 @@ extern bool serveroption(char *opt);
 // serverbrowser
 extern bool resolverwait(const char *name, ENetAddress *address);
 extern void addserver(char *servername);
-extern void saveserver(char *servername);
 extern char *getservername(int n);
 extern void writeservercfg();
 
