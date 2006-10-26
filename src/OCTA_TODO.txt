@@ -5,7 +5,6 @@ gilt:
 
 eihrul:
 - shadow bugs on demomap?
-- allow master to set teams, and make 2 team mode for capture
 - shader docs
 - improve smoothness of going up steps
 - remove delay before doors start opening
@@ -26,7 +25,6 @@ eihrul:
 
 aard/everyone:
 - finish debris
-- make body stop spinning on death
 - border gfx & tabs for ui
 - before next release: calclight all maps
 
@@ -49,16 +47,12 @@ aard/everyone:
 - screenshots etc? new features in docs
 - specmap thats not same size as diffuse crash
 - sparklies very bad on ATI, particularly deathtek / diff skybox
-- quad subdiv bad on ATI
 - audio effect for chat messages
 - crashes when people join?
 - bake normalmap on -f0? mildly?
 - clean up maps folder | maps without lightmaps?
 - ensure modelshader can be set from model cfg
 - 2 levels of lightlod for huge maps
-- fillrate optimisation: automatically cut down surfaces to their visible size?
-- surface merging?
-- rockets thru walls? collision step?
 - shallow water splashing sound?
 
 - weird fps issue.. maybe mobile?

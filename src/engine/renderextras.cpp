@@ -307,8 +307,8 @@ void aimat()
     setorient(vec(mm[0], mm[4], mm[8]), vec(mm[1], mm[5], mm[9]));
 
     vec dir(0, 0, 0);
-    vecfromyawpitch(player->yaw, player->pitch, 1, 0, dir, true);
-    raycubepos(player->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
+    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, dir, true);
+    raycubepos(camera1->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
 };
 
 VARP(crosshairsize, 0, 15, 50);

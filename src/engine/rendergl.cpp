@@ -845,9 +845,9 @@ void transplayer()
 {
     glLoadIdentity();
 
-    glRotatef(player->roll, 0, 0, 1);
-    glRotatef(player->pitch, -1, 0, 0);
-    glRotatef(player->yaw, 0, 1, 0);
+    glRotatef(camera1->roll, 0, 0, 1);
+    glRotatef(camera1->pitch, -1, 0, 0);
+    glRotatef(camera1->yaw, 0, 1, 0);
 
     // move from RH to Z-up LH quake style worldspace
     glRotatef(-90, 1, 0, 0);
@@ -889,12 +889,12 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
 
     glPushMatrix();
     glLoadIdentity();
-    glRotatef(player->roll, 0, 0, 1);
-    glRotatef(player->pitch, -1, 0, 0);
-    glRotatef(player->yaw, 0, 1, 0);
-    glRotatef(90.0, 1, 0, 0);
+    glRotatef(camera1->roll, 0, 0, 1);
+    glRotatef(camera1->pitch, -1, 0, 0);
+    glRotatef(camera1->yaw, 0, 1, 0);
+    glRotatef(90, 1, 0, 0);
     if(reflected) glScalef(1, 1, -1);
-    glColor3f(1.0f, 1.0f, 1.0f);
+    glColor3f(1, 1, 1);
     if(limited) glDepthFunc(editmode || !insideworld(player->o) ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
     draw_envbox(farplane/2, zclip ? (zclip+0.5f*(farplane-hdr.worldsize))/farplane : 0);
     glPopMatrix();
@@ -1050,10 +1050,12 @@ VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
 extern float reflecting, refracting;
 physent *camera1 = NULL;
+bool deathcam = false;
 bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (reflecting && !refracting); };
 
 void recomputecamera()
 {
+    if(deathcam && player->state!=CS_DEAD) deathcam = false;
     if((editmode || !thirdperson) && player->state!=CS_DEAD)
     {
         //if(camera1->state==CS_DEAD) camera1->o.z -= camera1->eyeheight-0.8f;
@@ -1063,7 +1065,12 @@ void recomputecamera()
     {
         static physent tempcamera;
         camera1 = &tempcamera;
-        *camera1 = *player;
+        if(deathcam) camera1->o = player->o;
+        else
+        {
+            *camera1 = *player;
+            if(player->state==CS_DEAD) deathcam = true;
+        };
         camera1->reset();
         camera1->type = ENT_CAMERA;
         camera1->move = -1;
@@ -1262,14 +1269,17 @@ static void setfog(bool underwater)
 
 void drawcubemap(int size, const vec &o, float yaw, float pitch)
 {
-    vec oldo = player->o;
-    float oldroll = player->roll, oldyaw = player->yaw, oldpitch = player->pitch;
-    player->o = o;
-    player->roll = 0;
-    player->yaw = yaw;
-    player->pitch = pitch;
-    camera1 = player;
-
+    physent *oldcamera = camera1;
+    static physent cmcamera;
+    cmcamera = *player;
+    cmcamera.reset();
+    cmcamera.type = ENT_CAMERA;
+    cmcamera.o = o;
+    cmcamera.yaw = yaw;
+    cmcamera.pitch = pitch;
+    cmcamera.roll = 0;
+    camera1 = &cmcamera;
+   
     defaultshader->set();
 
     cube &c = lookupcube(int(o.x), int(o.y), int(o.z));
@@ -1313,10 +1323,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
     glDisable(GL_TEXTURE_2D);
 
-    player->o = oldo;
-    player->roll = oldroll;
-    player->yaw = oldyaw;
-    player->pitch = oldpitch;
+    camera1 = oldcamera;
 };
 
 void gl_drawframe(int w, int h, float curfps)

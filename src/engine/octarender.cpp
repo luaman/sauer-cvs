@@ -1128,7 +1128,7 @@ void reflectvfcP(float z)
 
     vec o(camera1->o);
     o.z = z-(camera1->o.z-z);
-    setvfcP(player->yaw, -player->pitch, o);
+    setvfcP(camera1->yaw, -camera1->pitch, o);
 };
 
 void restorevfcP()
@@ -1145,7 +1145,7 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int f
     vfcfov = fov;
 
     // Calculate view frustrum: Only changes if resize, but...
-    setvfcP(player->yaw, player->pitch, camera1->o);
+    setvfcP(camera1->yaw, camera1->pitch, camera1->o);
 
     findvisiblevas(varoot);
     sortvisiblevas();

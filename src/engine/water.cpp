@@ -753,7 +753,7 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
     sortorigin = ivec(camera1->o);
     if(reflected) sortorigin.z = int(zclip - (camera1->o.z - zclip));
     vec dir;
-    vecfromyawpitch(player->yaw, reflected ? -player->pitch : player->pitch, 1, 0, dir, true);
+    vecfromyawpitch(camera1->yaw, reflected ? -camera1->pitch : camera1->pitch, 1, 0, dir, true);
     loopi(3) { dir[i] = fabs(dir[i]); sortdim[i] = i; };
     if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
     if(dir[sortdim[1]] > dir[sortdim[0]]) swap(int, sortdim[1], sortdim[0]);

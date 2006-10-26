@@ -394,7 +394,7 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
                     e.attr3 = e.attr2;
                     e.attr2 = e.attr1;
                 case ET_PLAYERSTART:
-                    e.attr1 = (int)player->yaw;
+                    e.attr1 = (int)camera1->yaw;
                     break;
         };
         et->fixentity(e);

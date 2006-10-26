@@ -1122,13 +1122,18 @@ VARP(invmouse, 0, 0, 1);
 void mousemove(int dx, int dy)
 {
     const float SENSF = 33.0f;     // try match quake sens
-    player->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
-    player->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
+    camera1->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
+    camera1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
     const float MAXPITCH = 90.0f;
-    if(player->pitch>MAXPITCH) player->pitch = MAXPITCH;
-    if(player->pitch<-MAXPITCH) player->pitch = -MAXPITCH;
-    while(player->yaw<0.0f) player->yaw += 360.0f;
-    while(player->yaw>=360.0f) player->yaw -= 360.0f;
+    if(camera1->pitch>MAXPITCH) camera1->pitch = MAXPITCH;
+    if(camera1->pitch<-MAXPITCH) camera1->pitch = -MAXPITCH;
+    while(camera1->yaw<0.0f) camera1->yaw += 360.0f;
+    while(camera1->yaw>=360.0f) camera1->yaw -= 360.0f;
+    if(camera1!=player && player->state!=CS_DEAD)
+    {
+        player->yaw = camera1->yaw;
+        player->pitch = camera1->pitch;
+    };
 };
 
 void entinmap(dynent *d)        // brute force but effective way to find a free spawn spot in the map
