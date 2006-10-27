@@ -431,7 +431,7 @@ struct captureserv : capturestate
         if(!n) return;
         score &cs = findscore(team);
         cs.total += n;
-        sendf(-1, 0, "risi", SV_TEAMSCORE, team, cs.total);
+        sendf(-1, 1, "risi", SV_TEAMSCORE, team, cs.total);
     };
 
     void updatescores(int secs)
@@ -460,7 +460,7 @@ struct captureserv : capturestate
     void sendbaseinfo(int i)
     {
         baseinfo &b = bases[i];
-        sendf(-1, 0, "riissi", SV_BASEINFO, i, b.owner, b.enemy, b.converted);
+        sendf(-1, 1, "riissi", SV_BASEINFO, i, b.owner, b.enemy, b.converted);
     };
 
     void initclient(ucharbuf &p)

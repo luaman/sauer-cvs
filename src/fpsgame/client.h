@@ -49,7 +49,7 @@ struct clientcom : iclientcom
         else conoutf("your team is: %s", player1->team);
     };
 
-    int numchannels() { return 3; };
+    int numchannels() { return 4; };
 
     static void filtertext(char *dst, const char *src, bool whitespace = true, int len = sizeof(string)-1)
     {
@@ -350,10 +350,14 @@ struct clientcom : iclientcom
         switch(chan)
         {
             case 0: 
-                if(p.buf[0]==SV_POS) parsepositions(p); 
-                else parsemessages(-1, NULL, p);
+                parsepositions(p); 
                 break;
-            case 1: 
+
+            case 1:
+                parsemessages(-1, NULL, p);
+                break;
+
+            case 2: 
                 while(p.remaining())
                 {
                     int cn = p.get();
@@ -365,7 +369,8 @@ struct clientcom : iclientcom
                     p.len += min(len, p.maxlen-p.len);
                 };
                 break;
-            case 2: 
+
+            case 3: 
                 receivefile(p.buf, p.len);
                 break;
         };

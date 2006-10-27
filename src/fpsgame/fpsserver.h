@@ -136,7 +136,7 @@ struct fpsserver : igameserver
         return -1;
     };
 
-    void sendservmsg(const char *s) { sendf(-1, 0, "ris", SV_SERVMSG, s); };
+    void sendservmsg(const char *s) { sendf(-1, 1, "ris", SV_SERVMSG, s); };
 
     void resetitems() { sents.setsize(0); cps.reset(); };
 
@@ -148,7 +148,7 @@ struct fpsserver : igameserver
             sents[i].spawned = false;
             if(sents[i].type==I_QUAD || sents[i].type==I_BOOST) sec += rnd(40)-20;
             sents[i].spawnsecs = sec;
-            sendf(sender, 0, "ri2", SV_ITEMACC, i);
+            sendf(sender, 1, "ri2", SV_ITEMACC, i);
             if(minremain>=0 && sents[i].type == I_BOOST)
             {
                 clientinfo *ci = (clientinfo *)getinfo(sender);
@@ -171,7 +171,7 @@ struct fpsserver : igameserver
                 s_sprintfd(msg)("master forced %s on map %s", modestr(reqmode), map);
                 sendservmsg(msg);
             };
-            sendf(-1, 0, "risi", SV_MAPCHANGE, ci->mapvote, ci->modevote);
+            sendf(-1, 1, "risi", SV_MAPCHANGE, ci->mapvote, ci->modevote);
             changemap(ci->mapvote, ci->modevote);
         }
         else 
@@ -225,7 +225,7 @@ struct fpsserver : igameserver
                 clientinfo *ci = team[i][j];
                 if(!strcmp(ci->team, teamnames[i])) continue;
                 s_strncpy(ci->team, teamnames[i], MAXTEAMLEN+1);
-                sendf(-1, 0, "riis", SV_SETTEAM, ci->clientnum, teamnames[i]);
+                sendf(-1, 1, "riis", SV_SETTEAM, ci->clientnum, teamnames[i]);
             };
         };
     };
@@ -362,13 +362,13 @@ struct fpsserver : igameserver
             if(best) 
             { 
                 sendservmsg(force ? "vote passed by default" : "vote passed by majority");
-                sendf(-1, 0, "risi", SV_MAPCHANGE, best->map, best->mode);
+                sendf(-1, 1, "risi", SV_MAPCHANGE, best->map, best->mode);
                 changemap(best->map, best->mode); 
             }
             else if(clients.length()) 
             {
                 mapreload = true;
-                sendf(-1, 0, "ri", SV_MAPRELOAD);
+                sendf(-1, 1, "ri", SV_MAPRELOAD);
             };
         };
     };
@@ -460,7 +460,7 @@ struct fpsserver : igameserver
                 packet = enet_packet_create(&ws.messages[ci.messageoffset<0 ? 0 : ci.messageoffset+3+ci.messages.length()], 
                                             ci.messageoffset<0 ? msize : msize-3-ci.messages.length(), 
                                             (reliablemessages ? ENET_PACKET_FLAG_RELIABLE : 0) | ENET_PACKET_FLAG_NO_ALLOCATE);
-                sendpacket(ci.clientnum, 1, packet);
+                sendpacket(ci.clientnum, 2, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
                 else { ++ws.uses; packet->freeCallback = freecallback; };
             };
@@ -549,7 +549,7 @@ struct fpsserver : igameserver
                 if(newclient)
                 {
                     clientscore &sc = findscore(ci, false);
-                    if(&sc) sendf(-1, 0, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
+                    if(&sc) sendf(-1, 1, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
                 };
                 while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 curmsg = p.length();
@@ -560,7 +560,7 @@ struct fpsserver : igameserver
                     if(worst)
                     {
                         s_strcpy(text, worst);
-                        sendf(sender, 0, "riis", SV_SETTEAM, sender, worst);
+                        sendf(sender, 1, "riis", SV_SETTEAM, sender, worst);
                         ci->messages.reserve(2*strlen(worst)+1);
                         ucharbuf buf(&ci->messages.last()+1, ci->messages.alen-ci->messages.ulen);
                         sendstring(worst, buf);
@@ -643,7 +643,7 @@ struct fpsserver : igameserver
             };
 
             case SV_PING:
-                sendf(sender, 0, "i2", SV_PONG, getint(p));
+                sendf(sender, 1, "i2", SV_PONG, getint(p));
                 break;
 
             case SV_FRAGS:
@@ -692,7 +692,7 @@ struct fpsserver : igameserver
                     spinfo->state = CS_SPECTATOR;
                 };
                 spinfo->spectator = val!=0;
-                sendf(sender, 0, "ri3", SV_SPECTATOR, spectator, val);
+                sendf(sender, 1, "ri3", SV_SPECTATOR, spectator, val);
                 while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             };
@@ -706,7 +706,7 @@ struct fpsserver : igameserver
                 if(!wi) break;
                 if(m_capture && wi->state==CS_ALIVE && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->o);
                 s_strncpy(wi->team, text, MAXTEAMLEN+1);
-                sendf(sender, 0, "riis", SV_SETTEAM, who, text);
+                sendf(sender, 1, "riis", SV_SETTEAM, who, text);
                 while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             }; 
@@ -718,10 +718,10 @@ struct fpsserver : igameserver
             case SV_GETMAP:
                 if(mapdata)
                 {
-                    sendf(sender, 0, "ris", SV_SERVMSG, "server sending map...");
-                    sendfile(sender, 2, mapdata);
+                    sendf(sender, 1, "ris", SV_SERVMSG, "server sending map...");
+                    sendfile(sender, 3, mapdata);
                 }
-                else sendf(sender, 0, "ris", SV_SERVMSG, "no map to send"); 
+                else sendf(sender, 1, "ris", SV_SERVMSG, "no map to send"); 
                 break;
 
             case SV_NEWMAP:
@@ -783,7 +783,7 @@ struct fpsserver : igameserver
             putint(p, 1);
         };
         if(m_capture) cps.initclient(p);
-        return 0;
+        return 1;
     };
 
     void checkintermission()
@@ -796,7 +796,7 @@ struct fpsserver : igameserver
         if(minremain>=0)
         {
             do minremain--; while(lastsec>mapend-minremain*60);
-            sendf(-1, 0, "ri2", SV_TIMEUP, minremain+1);
+            sendf(-1, 1, "ri2", SV_TIMEUP, minremain+1);
         };
     };
 
@@ -813,11 +813,11 @@ struct fpsserver : igameserver
                 {
                     sents[i].spawnsecs = 0;
                     sents[i].spawned = true;
-                    sendf(-1, 0, "ri2", SV_ITEMSPAWN, i);
+                    sendf(-1, 1, "ri2", SV_ITEMSPAWN, i);
                 }
                 else if(sents[i].spawnsecs==10 && seconds-lastsec && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
                 {
-                    sendf(-1, 0, "ri2", SV_ANNOUNCE, sents[i].type);
+                    sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
                 };
             };
         };
@@ -828,7 +828,7 @@ struct fpsserver : igameserver
         
         while(bannedips.length() && bannedips[0].time+4*60*60<lastsec) bannedips.remove(0);
         
-        if(masterupdate) { sendf(-1, 0, "ri2", SV_CURRENTMASTER, currentmaster); masterupdate = false; }; 
+        if(masterupdate) { sendf(-1, 1, "ri2", SV_CURRENTMASTER, currentmaster); masterupdate = false; }; 
     
         if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
@@ -898,7 +898,7 @@ struct fpsserver : igameserver
         if(m_capture && ci->state==CS_ALIVE) cps.leavebases(ci->team, ci->o);
         ci->score.timeplayed += enet_time_get() - ci->gamestart; 
         savescore(ci);
-        sendf(-1, 0, "ri2", SV_CDIS, n); 
+        sendf(-1, 1, "ri2", SV_CDIS, n); 
         clients.removeobj(ci);
         if(clients.empty()) bannedips.setsize(0); // bans clear when server empties
         else checkvotes();
