@@ -107,10 +107,10 @@ void optiface(uchar *p, cube &c)
 void printcube()
 {
     cube &c = lookupcube(lu.x, lu.y, lu.z, 0); // assume this is cube being pointed at
-    conoutf("= %p =", &c);
-    conoutf(" x  %.8x",c.faces[0]);
-    conoutf(" y  %.8x",c.faces[1]);
-    conoutf(" z  %.8x",c.faces[2]);
+    conoutf("= %p = (%d, %d, %d) @ %d", &c, lu.x, lu.y, lu.z, lusize);
+    conoutf(" x  %.8x", c.faces[0]);
+    conoutf(" y  %.8x", c.faces[1]);
+    conoutf(" z  %.8x", c.faces[2]);
 };
 
 COMMAND(printcube, "");
@@ -1269,10 +1269,12 @@ void genmergedverts(cube &cu, int orient, const ivec &co, int size, const mergei
 
     if(p) 
     {
+        ivec po(co);
+        po.mask(~VVEC_INT_MASK);
         vec pn(n.tovec());
         float mag = pn.magnitude();
         pn.div(mag);
-        *p = plane(pn, offset/(mag*(1<<VVEC_FRAC)));
+        *p = plane(pn, (offset-(n.dot(po)<<VVEC_FRAC))/(mag*(1<<VVEC_FRAC)));
     };
 };
 
