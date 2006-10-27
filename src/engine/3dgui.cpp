@@ -347,15 +347,22 @@ struct gui : g3d_gui
     void patchn_(int vleft, int vright, int vtop, int vbottom, int start, int n) 
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColor4ub(0xFF, 0xFF, 0xFF, 0xB0);
         glBindTexture(GL_TEXTURE_2D, skin->gl);
         glBegin(GL_QUADS);
-        loopi(n)
-        {
-            const int *p = patch[start+i];
-            patch_(vleft, vright, vtop, vbottom, p[0], p[1], p[2], p[3], p[4]);
+        loopj(2)
+        {	
+            glDepthFunc(j?GL_LEQUAL:GL_GREATER);
+            glColor4ub(0xFF, 0xFF, 0xFF, j?0xB0:0x60); //ghost when its behind something in depth		
+            glBegin(GL_QUADS);
+            loopi(n)
+            {
+                const int *p = patch[start+i];
+                patch_(vleft, vright, vtop, vbottom, p[0], p[1], p[2], p[3], p[4]);
+            };
+            glEnd();
         };
         glEnd();
+        glDepthFunc(GL_ALWAYS);
     }; 
 
     vec origin;
@@ -383,9 +390,10 @@ struct gui : g3d_gui
             cury = -ysize; 
             curx = -xsize/2;
             glPushMatrix();
+            float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x)/RAD - 90;
             glTranslatef(origin.x, origin.y, origin.z);
-            glRotatef(/*camera1->roll*-5+*/camera1->yaw-180, 0, 0, 1); //roll - kinda cute effect, makes the menu 'flutter' as we straff left/right
-            glRotatef(/*camera1->pitch*/-90, 1, 0, 0); // pitch the top/bottom towards us
+            glRotatef(yaw, 0, 0, 1); 
+            glRotatef(-90, 1, 0, 0);
             glScalef(-scale, scale, scale);
         
             if(!skin) skin = textureload("data/guiskin.png");
@@ -402,7 +410,9 @@ struct gui : g3d_gui
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
             if(!windowhit && !passthrough)
             {
-                vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
+                //vec planenormal = vec(worldpos).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
+                vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
+                
                 int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
                 vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
                 hitx = xaxis.dot(intersectionvec)/scale;
@@ -492,6 +502,7 @@ void g3d_render()
 {
     glMatrixMode(GL_MODELVIEW);
     glDepthFunc(GL_ALWAYS);
+    glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     
     windowhit = NULL;
@@ -514,4 +525,5 @@ void g3d_render()
 	
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
 };
