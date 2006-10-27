@@ -61,7 +61,7 @@ aard/everyone:
 - experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions | store intensity multiplier in alpha?
 - create an official map pack to reduce on the number of maps in the distribution
 - pitch on hudgun specular
-- the eyecandy priority list: envmapping (water) / fake env (metal/glass), better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
+- the eyecandy priority list: better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
 - better doc on the scripting language | beginners guide | wiki?
 - new menu / for rpg and fps
 - spec/normal trilinear filtering? -> probably because of specmap mipmap averaging... luns specmaps are simply too subtle
