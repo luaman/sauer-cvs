@@ -158,7 +158,7 @@ void showgui(char *name)
 		};
     };
 	
-	menupos = menuinfrontofplayer();
+	if(guistack.empty()) menupos = menuinfrontofplayer();
 	menustart = lastmillis;
 	menutab = 1;
 	guistack.add(newstring(name));
