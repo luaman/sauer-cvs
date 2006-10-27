@@ -361,7 +361,6 @@ struct clientcom : iclientcom
                 while(p.remaining())
                 {
                     int cn = p.get();
-                    if(cn>=0x80) cn = (cn&0x7F) | (p.get()<<7);
                     fpsent *d = cl.getclient(cn);
                     int len = p.get();
                     len += p.get()<<8;

@@ -430,8 +430,7 @@ struct fpsserver : igameserver
             else
             {
                 ci.messageoffset = ws.messages.length();
-                ws.messages.add((ci.clientnum>=0x80 ? 0x80 : 0) | (ci.clientnum&0x7F));
-                if(ci.clientnum>=0x80) ws.messages.add(ci.clientnum>>7);
+                ws.messages.add(ci.clientnum);
                 ws.messages.add(ci.messages.length()&0xFF);
                 ws.messages.add(ci.messages.length()>>8);
                 loopvj(ci.messages) ws.messages.add(ci.messages[j]);
