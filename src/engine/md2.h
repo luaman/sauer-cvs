@@ -455,7 +455,7 @@ struct md2 : model
         };
     };
 
-    void calcanimstate(int animinfo, int varseed, float speed, int basetime, dynent *d, animstate &as)
+    bool calcanimstate(int animinfo, int varseed, float speed, int basetime, dynent *d, animstate &as)
     {
         //                      0              3              6   7   8   9   10        12  13
         //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S
@@ -499,14 +499,18 @@ struct md2 : model
 
         if(as.frame+as.range>header.numframes)
         {
-            if(as.frame>=header.numframes) return;
+            if(as.frame>=header.numframes) return false;
             as.range = header.numframes-as.frame;
         };
 
-        int index = vwep ? 1 : 0;
         if(d)
         {
-            if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1) { d->current[index] = as; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
+            int index = vwep ? 1 : 0;
+            if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1) 
+            { 
+                d->current[index] = as; 
+                d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; 
+            }
             else if(d->current[index] != as)
             {
                 if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
@@ -515,15 +519,23 @@ struct md2 : model
             };
             d->lastmodel[index] = this;
         };
+        return true;
     };
 
     void render(int animinfo, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl)
     {
         animstate as;
-        calcanimstate(animinfo, varseed, speed, basetime, d, as);
+        if(!calcanimstate(animinfo, varseed, speed, basetime, d, as)) return;
         loopi(as.range) if(!mverts[as.frame+i]) scaleverts(as.frame+i);
 
         if(hasVBO ? !vbufGL : !vbuf) genvar(header.numframes>1);
+
+        if(dynverts.length())
+        {
+            int index = vwep ? 1 : 0;
+            if(d) gendynverts(d->current[index], &d->prev[index], d->lastanimswitchtime[index]);
+            else gendynverts(as, NULL, 0);
+        };
         
         glPushMatrix ();
         glTranslatef(x, y, z);
@@ -538,13 +550,6 @@ struct md2 : model
             glAlphaFunc(GL_GREATER, 0.9f);
         };
        
-        if(dynverts.length())
-        {
-            int index = vwep ? 1 : 0;
-            if(d) gendynverts(d->current[index], &d->prev[index], d->lastanimswitchtime[index]);
-            else gendynverts(as, NULL, 0);
-        };
-        
         if(hasVBO)
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
