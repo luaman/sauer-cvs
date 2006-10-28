@@ -65,7 +65,7 @@ struct gui : g3d_gui
         {	
             cury = -ysize;
             int x = curx + tx + (skinx[2]-skinx[1])*SKIN_SCALE;
-            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH;
+            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
             if(hit) 
             {	
                 *tcurrent = tpos; //roll-over to switch tab
