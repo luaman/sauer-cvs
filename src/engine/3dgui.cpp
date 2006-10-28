@@ -65,7 +65,7 @@ struct gui : g3d_gui
         {	
             cury = -ysize;
             int x = curx + tx + (skinx[2]-skinx[1])*SKIN_SCALE;
-            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
+            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH+(skiny[3]-skiny[2])*SKIN_SCALE/2;
             if(hit) 
             {	
                 *tcurrent = tpos; //roll-over to switch tab
@@ -355,7 +355,7 @@ struct gui : g3d_gui
         loopj(2)
         {	
             glDepthFunc(j?GL_LEQUAL:GL_GREATER);
-            glColor4ub(0xFF, 0xFF, 0xFF, j?0xB0:0x60); //ghost when its behind something in depth		
+            glColor4f(j?modulate.x:1.0f, j?modulate.y:1.0f, j?modulate.z:1.0f, j?0.80f:0.35f); //ghost when its behind something in depth
             glBegin(GL_QUADS);
             loopi(n)
             {
@@ -366,6 +366,7 @@ struct gui : g3d_gui
         };
         glEnd();
         glDepthFunc(GL_ALWAYS);
+        //defaultshader->set();
     }; 
 
     vec origin;
@@ -374,6 +375,7 @@ struct gui : g3d_gui
 
     static float scale;
     static bool passthrough;
+    static vec modulate;
 
     void start(int starttime, float basescale, int *tab, bool allowinput)
     {	
@@ -392,11 +394,17 @@ struct gui : g3d_gui
             if(tcurrent && !*tcurrent) tcurrent = NULL;
             cury = -ysize; 
             curx = -xsize/2;
+
+            float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
-            glRotatef(atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x)/RAD - 90, 0, 0, 1); 
+            glRotatef(yaw/RAD, 0, 0, 1); 
             glRotatef(-90, 1, 0, 0);
             glScalef(-scale, scale, scale);
+        
+            vec dir;
+            lightreaching(origin, modulate, dir, 0, 0.5f); 
+            modulate.mul(1.3f + vec(yaw, 0.0f).dot(dir));
         
             if(!skin) skin = textureload("data/guiskin.png");
             patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE:0), cury+ysize, 0, tcurrent?8:9);
@@ -438,7 +446,7 @@ const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
 //Note: skinx[2]-skinx[1] = skinx[6]-skinx[5]
 //      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
 gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
-    { 1,8,3,4, 0x00}, 
+    { 1,8,3,4, 0x00}, //body
     { 1,8,4,5, 0x02},
     { 0,1,3,4, 0x10},
     { 8,9,3,4, 0x20},
@@ -448,11 +456,11 @@ gui::patch[][5] = { //arguably this data can be compressed - it depends on what 
     { 8,9,2,3, 0x21},
     { 4,5,2,3, 0x01},
     
-    { 4,5,2,3, 0x02},
+    { 4,5,2,3, 0x02}, //top overflow
     { 4,5,1,2, 0x00},
     { 4,5,0,1, 0x01},
     
-    { 2,3,1,2, 0x00}, 
+    { 2,3,1,2, 0x00}, //selected tab
     { 2,3,2,3, 0x02},
     { 1,2,1,2, 0x10},
     { 3,4,1,2, 0x20},
@@ -462,7 +470,7 @@ gui::patch[][5] = { //arguably this data can be compressed - it depends on what 
     { 3,4,0,1, 0x21},
     { 2,3,0,1, 0x01},
     
-    { 6,7,1,2, 0x00}, 
+    { 6,7,1,2, 0x00}, //deselected tab
     { 6,7,2,3, 0x02},
     { 5,6,1,2, 0x10},
     { 7,8,1,2, 0x20},
@@ -476,6 +484,7 @@ gui::patch[][5] = { //arguably this data can be compressed - it depends on what 
 vector<gui::list> gui::lists;
 float gui::scale, gui::hitx, gui::hity;
 bool gui::passthrough;
+vec gui::modulate;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent;
 static vector<gui> guis;
@@ -485,7 +494,7 @@ void g3d_addgui(g3d_callback *cb, vec &origin)
     gui &g = guis.add();
     g.cb = cb;
     g.origin = origin;
-    g.dist = camera1->o.dist(origin);
+    g.dist = camera1->o.dist(origin);    
 };
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
