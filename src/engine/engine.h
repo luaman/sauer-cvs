@@ -159,6 +159,7 @@ extern PFNGLBINDBUFFERARBPROC    glBindBuffer_;
 extern PFNGLMAPBUFFERARBPROC     glMapBuffer_;
 extern PFNGLUNMAPBUFFERARBPROC   glUnmapBuffer_;
 extern PFNGLBUFFERDATAARBPROC    glBufferData_;
+extern PFNGLBUFFERSUBDATAARBPROC glBufferSubData_;
 extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_;
 
 // GL_ARB_occlusion_query

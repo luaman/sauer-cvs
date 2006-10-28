@@ -14,6 +14,7 @@ PFNGLBINDBUFFERARBPROC    glBindBuffer_    = NULL;
 PFNGLMAPBUFFERARBPROC     glMapBuffer_     = NULL;
 PFNGLUNMAPBUFFERARBPROC   glUnmapBuffer_   = NULL;
 PFNGLBUFFERDATAARBPROC    glBufferData_    = NULL;
+PFNGLBUFFERSUBDATAARBPROC glBufferSubData_ = NULL;
 PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_ = NULL;
 
 // GL_ARB_multitexture
@@ -222,6 +223,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glMapBuffer_     = (PFNGLMAPBUFFERARBPROC)    getprocaddress("glMapBufferARB");
         glUnmapBuffer_   = (PFNGLUNMAPBUFFERARBPROC)  getprocaddress("glUnmapBufferARB");
         glBufferData_    = (PFNGLBUFFERDATAARBPROC)   getprocaddress("glBufferDataARB");
+        glBufferSubData_ = (PFNGLBUFFERSUBDATAARBPROC)getprocaddress("glBufferSubDataARB");
         glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
         conoutf("Using GL_ARB_vertex_buffer_object extension.");
