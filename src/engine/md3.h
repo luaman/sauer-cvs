@@ -181,7 +181,7 @@ struct md3model
                 	loopvj(verts) // check if it's already added
     				{
     				    md2::md2_vvert &v = verts[j];
-    				    if(v.u==m.uv[n].x && v.v==m.uv[n].y && v.pos==m.vertices[n]) { idxs.add(j); goto found; };
+    				    if(v.u==m.uv[n].x && v.v==m.uv[n].y && v.pos==m.vertices[n] && v.normal==m.normals[n]) { idxs.add(j); goto found; };
     				};
                     {
                         idxs.add(verts.length());
@@ -360,7 +360,64 @@ struct md3model
         
         return loaded=true;
     };
-    
+   
+    bool calcanimstate(int animinfo, int varseed, float speed, int basetime, dynent *d, animstate &as)
+    {
+        int anim = animinfo&ANIM_INDEX;
+        as.anim = animinfo;
+        as.basetime = basetime;
+        if(anims)
+        {
+            if(anims[anim].length())
+            {
+                md3animinfo &a = anims[anim][varseed%anims[anim].length()];
+                as.frame = a.frame;
+                as.range = a.range;
+                as.speed = speed*100.0f/a.speed;
+            }
+            else
+            {
+                as.frame = 0;
+                as.range = 1;
+                as.speed = speed;
+            };
+        }
+        else
+        {
+            as.frame = 0;
+            as.range = 1;
+            as.speed = speed;
+        };
+        if(animinfo&(ANIM_START|ANIM_END))
+        {
+            if(animinfo&ANIM_END) as.frame += as.range-1;
+            as.range = 1;
+        };
+
+        if(as.frame+as.range>numframes)
+        {
+            if(as.frame>=numframes) return false;
+            as.range = numframes-as.frame;
+        };
+
+        if(d && index<2)
+        {
+            if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1) 
+            {
+                d->current[index] = as; 
+                d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; 
+            }
+            else if(d->current[0] != as)
+            {
+                if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
+                d->current[index] = as;
+                d->lastanimswitchtime[index] = lastmillis;
+            };
+            d->lastmodel[index] = this;
+        };
+        return true;
+    };
+ 
     void render(int animinfo, int varseed, float speed, int basetime, dynent *d);
 };
 
@@ -495,60 +552,13 @@ struct md3 : model
 void md3model::render(int animinfo, int varseed, float speed, int basetime, dynent *d)
 {
     if(meshes.length() <= 0) return;
-    int anim = animinfo&ANIM_INDEX;
-    animstate ai;
-    ai.anim = animinfo;
-    ai.basetime = basetime;
-    if(anims)
-    {
-        if(anims[anim].length())
-        {
-            md3animinfo &a = anims[anim][varseed%anims[anim].length()];
-            ai.frame = a.frame;
-            ai.range = a.range;
-            ai.speed = speed*100.0f/a.speed;
-        }
-        else
-        {
-            ai.frame = 0;
-            ai.range = 1;
-            ai.speed = speed;
-        };
-    }
-    else
-    {
-        ai.frame = 0;
-        ai.range = 1;
-        ai.speed = speed;
-    };
-    if(animinfo&(ANIM_START|ANIM_END))
-    {
-        if(animinfo&ANIM_END) ai.frame += ai.range-1;
-        ai.range = 1;
-    };
+    animstate as;
+    if(!calcanimstate(animinfo, varseed, speed, basetime, d, as)) return;
 
-    if(ai.frame+ai.range>numframes)
-    {
-        if(ai.frame>=numframes) return;
-        ai.range = numframes-ai.frame;
-    };
-
-    if(hasVBO && !meshes[0].vbufGL && ai.frame==0 && ai.range==1) genvar();
-
-    if(d && index<2)
-    {
-        if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1) { d->current[index] = ai; d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2; }
-        else if(d->current[0] != ai)
-        {
-            if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
-            d->current[index] = ai;
-            d->lastanimswitchtime[index] = lastmillis;
-        };
-        d->lastmodel[index] = this;
-    };
+    if(hasVBO && !meshes[0].vbufGL && as.frame==0 && as.range==1) genvar();
 
     md3anpos prev, cur;
-    cur.setframes(d && index<2 ? d->current[index] : ai);
+    cur.setframes(d && index<2 ? d->current[index] : as);
 
     float ai_t;
     bool doai = d && index<2 && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
@@ -578,7 +588,7 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
             glActiveTexture_(GL_TEXTURE0_ARB);
         };
 
-        if(hasVBO && ai.frame==0 && ai.range==1 && meshes[i].vbufGL) // vbo's for static stuff
+        if(hasVBO && as.frame==0 && as.range==1 && meshes[i].vbufGL) // vbo's for static stuff
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh.ebufGL);
