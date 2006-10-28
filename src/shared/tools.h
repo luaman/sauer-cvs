@@ -224,6 +224,16 @@ template <class T> struct vector
         loopi(ulen) if(buf[i]==o) remove(i--);
     };
 
+    void replacewithlast(const T &o)
+    {
+        if(!ulen) return;
+        loopi(ulen-1) if(buf[i]==o)
+        {
+            buf[i] = buf[ulen-1];
+        };
+        ulen--;
+    };
+
     T &insert(int i, const T &e)
     {
         add(T());

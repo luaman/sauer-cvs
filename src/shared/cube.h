@@ -3,7 +3,7 @@
 #include "ents.h"
 #include "command.h"
 
-#define MAXCLIENTS 32                  // in a multiplayer game, can be arbitrarily changed
+#define MAXCLIENTS 256                  // in a multiplayer game, can be arbitrarily changed
 #define MAXTRANS 5000                  // max amount of data to swallow in 1 go
 
 extern bool editmode;
