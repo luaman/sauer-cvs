@@ -71,6 +71,7 @@ extern char *getcurcommand();
 
 // menus
 extern vec menuinfrontofplayer();
+extern void newgui(char *name, char *contents);
 extern void showgui(char *name);
 
 // world

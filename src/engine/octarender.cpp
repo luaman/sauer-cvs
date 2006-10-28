@@ -199,7 +199,7 @@ static inline bool htcmp(const sortkey &x, const sortkey &y)
     return x.tex == y.tex && x.lmid == y.lmid;
 };
 
-static inline unsigned int hthash(const sortkey &k)
+static inline uint hthash(const sortkey &k)
 {
     return k.tex + k.lmid*9741;
 };
@@ -2225,7 +2225,7 @@ void writeobj(char *name)
         {
             loopj(v.verts) fprintf(f, "v %d %d %d\n", verts[j].x, verts[j].y, verts[j].z);
             lodlevel &lod = v.curlod ? v.l1 : v.l0;
-            unsigned short *ebuf = lod.ebuf;
+            ushort *ebuf = lod.ebuf;
             loopi(lod.texs) loopl(3) loopj(lod.eslist[i].length[l]/4)
             {
                 fprintf(f, "f");

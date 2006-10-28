@@ -217,7 +217,7 @@ inline bool htcmp(const ivec &x, const ivec &y)
     return x == y;
 };  
 
-inline unsigned int hthash(const ivec &k)
+inline uint hthash(const ivec &k)
 {
     return k.x^k.y^k.z;
 };  

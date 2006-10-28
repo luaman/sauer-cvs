@@ -356,7 +356,7 @@ extern void rendermaterials(float zclip = 0, bool refract = false);
 
 extern void initserver(bool dedicated);
 extern void cleanupserver();
-extern void serverslice(int seconds, unsigned int timeout);
+extern void serverslice(int seconds, uint timeout);
 
 extern uchar *retrieveservers(uchar *buf, int buflen);
 extern void localclienttoserver(int chan, ENetPacket *);

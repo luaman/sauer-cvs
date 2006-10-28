@@ -275,7 +275,7 @@ void checkresolver()
 void checkpings()
 {
     if(pingsock==ENET_SOCKET_NULL) return;
-    unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
+    enet_uint32 events = ENET_SOCKET_WAIT_RECEIVE;
     ENetBuffer buf;
     ENetAddress addr;
     uchar ping[MAXTRANS];

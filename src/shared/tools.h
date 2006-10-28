@@ -237,9 +237,9 @@ typedef vector<char *> cvector;
 typedef vector<int> ivector;
 typedef vector<ushort> usvector;
 
-inline unsigned int hthash(const char * key)
+inline uint hthash(const char * key)
 {
-    unsigned int h = 5381;
+    uint h = 5381;
     for(int i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
     return h;
 };
@@ -249,7 +249,7 @@ inline bool htcmp(const char *x, const char *y)
     return !strcmp(x, y);
 };
 
-inline unsigned int hthash(int key)
+inline uint hthash(int key)
 {   
     return key;
 };
@@ -294,7 +294,7 @@ template <class K, class T> struct hashtable
         DELETEA(table);
     };
 
-    chain *insert(const K &key, unsigned int h)
+    chain *insert(const K &key, uint h)
     {
         if(!chunkremain)
         {
@@ -313,7 +313,7 @@ template <class K, class T> struct hashtable
 
     chain *find(const K &key, bool doinsert)
     {
-        unsigned int h = hthash(key)&(size-1);
+        uint h = hthash(key)&(size-1);
         for(chain *c = table[h]; c; c = c->next)
         {
             if(htcmp(key, c->key)) return c;
@@ -337,7 +337,7 @@ template <class K, class T> struct hashtable
 /*
     bool remove(const K &key)
     {
-        unsigned int h = hthash(key)&(size-1); 
+        uint h = hthash(key)&(size-1); 
         for(chain **p = &table[h], *c = table[h]; c; p = &c->next, c = c->next)
         {
             if(htcmp(key, c->key))

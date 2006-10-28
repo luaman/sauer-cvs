@@ -1008,7 +1008,7 @@ static inline bool htcmp(const cfkey &x, const cfkey &y)
     return x.orient == y.orient && x.tex == y.tex && x.n == y.n && x.offset == y.offset;
 };
 
-static inline unsigned int hthash(const cfkey &k)
+static inline uint hthash(const cfkey &k)
 {   
     return hthash(k.n)^k.offset^k.tex^k.orient;
 };

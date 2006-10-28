@@ -246,7 +246,7 @@ void sendpongs()        // reply all server info requests
     ENetAddress addr;
     uchar pong[MAXTRANS];
     int len;
-    unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
+    enet_uint32 events = ENET_SOCKET_WAIT_RECEIVE;
     buf.data = pong;
     while(enet_socket_wait(pongsock, &events, 0) >= 0 && events)
     {
@@ -301,7 +301,7 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
 void httpgetreceive(ENetBuffer &buf)
 {
     if(mssock==ENET_SOCKET_NULL) return;
-    unsigned int events = ENET_SOCKET_WAIT_RECEIVE;
+    enet_uint32 events = ENET_SOCKET_WAIT_RECEIVE;
     if(enet_socket_wait(mssock, &events, 0) >= 0 && events)
     {
         int len = enet_socket_receive(mssock, NULL, &buf, 1);
@@ -363,7 +363,7 @@ int uprate = 0, maxclients = 6;
 char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
 
-void serverslice(int seconds, unsigned int timeout)   // main server update, called from main loop in sp, or from below in dedicated server
+void serverslice(int seconds, uint timeout)   // main server update, called from main loop in sp, or from below in dedicated server
 {
     sv->serverupdate(seconds);
 

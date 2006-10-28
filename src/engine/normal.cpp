@@ -44,7 +44,7 @@ static inline bool htcmp(const nkey &x, const nkey &y)
     return x.v == y.v;
 };
 
-static inline unsigned int hthash (const nkey &k)
+static inline uint hthash(const nkey &k)
 {
     return k.v.x^k.v.y^k.v.z;
 };
