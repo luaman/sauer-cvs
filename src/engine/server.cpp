@@ -359,7 +359,9 @@ uchar *retrieveservers(uchar *buf, int buflen)
     return stripheader(buf);
 };
 
-int uprate = 0, maxclients = 6;
+#define DEFAULTCLIENTS 6
+
+int uprate = 0, maxclients = DEFAULTCLIENTS;
 char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
 
@@ -523,9 +525,12 @@ bool serveroption(char *opt)
     {
         case 'u': uprate = atoi(opt+2); return true;
         case 'c': 
-            maxclients = atoi(opt+2); 
-            maxclients = maxclients > 0 ? min(maxclients, MAXCLIENTS) : MAXCLIENTS; 
+        {
+            int clients = atoi(opt+2); 
+            if(clients > 0) maxclients = min(maxclients, MAXCLIENTS);
+            else maxclients = DEFAULTCLIENTS;
             return true;
+        };
         case 'n': sdesc = opt+2; return true;
         case 'i': ip = opt+2; return true;
         case 'm': master = opt+2; return true;

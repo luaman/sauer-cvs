@@ -911,7 +911,6 @@ struct fpsserver : igameserver
 
     void serverinforeply(ucharbuf &p)
     {
-        extern int maxclients;
         putint(p, clients.length());
         putint(p, 5);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // a // generic attributes, passed back below

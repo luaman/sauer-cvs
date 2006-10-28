@@ -29,6 +29,8 @@ struct selinfo
 
 struct editinfo;
 
+extern bool editmode;
+
 extern void freeeditinfo(editinfo *&e);
 extern void cursorupdate();
 extern void pruneundos(int maxremain = 0);
@@ -92,6 +94,8 @@ extern void fatal(char *s, char *o = "");
 extern void keyrepeat(bool on);
 extern void registergame(char *name, igame *ig);
 
+#define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); }; igameclient *newclient() { return c; }; igameserver *newserver() { return s; }; } reg_##t
+
 // rendertext
 extern void gettextres(int &w, int &h);
 extern void draw_text(const char *str, int left, int top, int r = 255, int g = 255, int b = 255, int a = 255);
@@ -152,6 +156,11 @@ extern void setbbfrommodel(dynent *d, char *mdl);
 extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 
 // server
+#define MAXCLIENTS 256                  // in a multiplayer game, can be arbitrarily changed
+#define MAXTRANS 5000                  // max amount of data to swallow in 1 go
+
+extern int maxclients;
+
 enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS };
 
 extern void *getinfo(int i);
