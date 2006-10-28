@@ -308,7 +308,8 @@ void aimat()
 
     vec dir(0, 0, 0);
     vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, dir, true);
-    raycubepos(camera1->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST);
+    if(raycubepos(camera1->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST) == -1)
+        worldpos = dir.mul(10).add(camera1->o); //otherwise 3dgui won't work when outside of map
 };
 
 VARP(crosshairsize, 0, 15, 50);
