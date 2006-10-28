@@ -1,5 +1,3 @@
-// md2.h: may contain traces of nehe code
-
 struct md2;
 
 md2 *loadingmd2 = 0;
