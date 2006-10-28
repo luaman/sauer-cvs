@@ -268,8 +268,7 @@ struct md2 : model
     {
         hashtable<ivec, int> dvhash;
         vector<md2_vvert> verts;
-        vector<ushort> idxs;
-        vector<ushort> tidxs;
+        vector<ushort> idxs, tidxs;
 
         dynverts.setsize(0);
         verts.setsize(0);
@@ -325,12 +324,12 @@ struct md2 : model
 			else { loopj(numvertex-2) loopk(3) idxs.add(tidxs[j&1 && k ? j+(1-(k-1))+1 : j+k]); };
         };
         
-        if(hasVBO) glGenBuffers_(1, &vbufGL);
-        if(dynvar) vbuf = new md2_vvert[dynverts.length()]; 
-        else if(hasVBO)
+        if(hasVBO) 
         {
+            glGenBuffers_(1, &vbufGL);
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
-            glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+            if(dynvar) glBufferData_(GL_ARRAY_BUFFER_ARB, dynverts.length()*sizeof(md2_vvert), NULL, GL_STREAM_DRAW_ARB);
+            else glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
         }
         else
         {
@@ -397,7 +396,7 @@ struct md2 : model
         return spheretree;
     };
 
-    void gendynverts(animstate &curai, animstate *prevai, int lastanimswitchtime)
+    void gendynverts(md2_vvert *vbuf, animstate &curai, animstate *prevai, int lastanimswitchtime)
     {
         md2_anpos prev, current;
         current.setframes(curai);
@@ -528,13 +527,6 @@ struct md2 : model
 
         if(hasVBO ? !vbufGL : !vbuf) genvar(header.numframes>1);
 
-        if(dynverts.length())
-        {
-            int index = vwep ? 1 : 0;
-            if(d) gendynverts(d->current[index], &d->prev[index], d->lastanimswitchtime[index]);
-            else gendynverts(as, NULL, 0);
-        };
-        
         glPushMatrix ();
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
@@ -547,23 +539,34 @@ struct md2 : model
             glEnable(GL_ALPHA_TEST);
             glAlphaFunc(GL_GREATER, 0.9f);
         };
-       
+
+#if 0
+        if(dynverts.empty()) 
+        {      
+#endif
         if(hasVBO)
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
-            if(dynverts.length()) glBufferData_(GL_ARRAY_BUFFER_ARB, dynverts.length()*sizeof(md2_vvert), vbuf, GL_STREAM_DRAW_ARB);
+            if(dynverts.length())
+            {
+                md2_vvert *mbuf = (md2_vvert *)glMapBuffer_(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+                int index = vwep ? 1 : 0;
+                if(d) gendynverts(mbuf, d->current[index], &d->prev[index], d->lastanimswitchtime[index]);
+                else gendynverts(mbuf, as, NULL, 0);
+                glUnmapBuffer_(GL_ARRAY_BUFFER_ARB);
+            };
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, ebufGL);
         };
         
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(md2_vvert), &(hasVBO ? (md2_vvert *)0 : vbuf)->pos);
+        glVertexPointer(3, GL_FLOAT, sizeof(md2_vvert), &vbuf->pos);
         glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, sizeof(md2_vvert), &(hasVBO ? (md2_vvert *)0 : vbuf)->normal);
+        glNormalPointer(GL_FLOAT, sizeof(md2_vvert), &vbuf->normal);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(md2_vvert), &(hasVBO ? (md2_vvert *)0 : vbuf)->u);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(md2_vvert), &vbuf->u);
 
         glDrawElements(GL_TRIANGLES, ebuflen, GL_UNSIGNED_SHORT, ebuf);
-            
+    
         xtravertsva += header.numvertices;
             
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -575,6 +578,72 @@ struct md2 : model
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
         };
+#if 0
+        }
+        else
+        {
+
+            int index = vwep ? 1 : 0;
+            md2_anpos prev, current;
+            current.setframes(d ? d->current[index] : as);
+            vec *verts1 = mverts[current.fr1], *verts2 = mverts[current.fr2], *verts1p, *verts2p;
+            vec *norms1 = mnorms[current.fr1], *norms2 = mnorms[current.fr2], *norms1p, *norms2p;
+            float aifrac1, aifrac2;
+            bool doai = d && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
+            if(doai)
+            {
+                prev.setframes(d->prev[index]);
+                verts1p = mverts[prev.fr1];
+                verts2p = mverts[prev.fr2];
+                norms1p = mnorms[prev.fr1];
+                norms2p = mnorms[prev.fr2];
+                aifrac1 = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
+                aifrac2 = 1-aifrac1;
+            };
+
+            for(int *command = glcommands; (*command)!=0;)
+            {
+                int numVertex = *command++;
+                if(numVertex>0) { glBegin(GL_TRIANGLE_STRIP); }
+                else            { glBegin(GL_TRIANGLE_FAN); numVertex = -numVertex; };
+
+                loopi(numVertex)
+                {
+                    float tu = *((float*)command++);
+                    float tv = *((float*)command++);
+                    glTexCoord2f(tu, tv);
+                    int vn = *command++;
+                    #define ipn(c)  (n1.c*current.frac2+n2.c*current.frac1)
+                    vec &n1 = norms1[vn], &n2 = norms2[vn];
+                    vec &v1 = verts1[vn], &v2 = verts2[vn];
+                    #define ip(v1, v2, c)  (v1.c*current.frac2+v2.c*current.frac1)
+                    #define ipv(v1, v2, c) (v1 ## p.c*prev.frac2+v2 ## p.c*prev.frac1)
+                    #define ipa(v1, v2, c) (ip(v1, v2, c)*aifrac1+ipv(v1, v2, c)*aifrac2)
+                    if(doai)
+                    {
+                        vec &n1p = norms1p[vn], &n2p = norms2p[vn];
+                        glNormal3f(ipa(n1, n2, x), ipa(n1, n2, y), ipa(n1, n2, z));
+                        vec &v1p = verts1p[vn], &v2p = verts2p[vn];
+                        glVertex3f(ipa(v1, v2, x), ipa(v1, v2, y), ipa(v1, v2, z));
+                    }
+                    else
+                    {
+                        glNormal3f(ip(n1, n2, x), ip(n1, n2, y), ip(n1, n2, z));
+                        glVertex3f(ip(v1, v2, x), ip(v1, v2, y), ip(v1, v2, z));
+                    };
+                    #undef ipn
+                    #undef ip
+                    #undef ipv
+                    #undef ipa
+                };
+
+                xtraverts += numVertex;
+
+                glEnd();
+            };
+
+        };
+#endif
 
 	    if(skin->bpp==32)
 	    {

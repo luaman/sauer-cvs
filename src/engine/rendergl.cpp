@@ -11,6 +11,8 @@ GLUquadricObj *qsphere = NULL;
 // GL_ARB_vertex_buffer_object
 PFNGLGENBUFFERSARBPROC    glGenBuffers_    = NULL;
 PFNGLBINDBUFFERARBPROC    glBindBuffer_    = NULL;
+PFNGLMAPBUFFERARBPROC     glMapBuffer_     = NULL;
+PFNGLUNMAPBUFFERARBPROC   glUnmapBuffer_   = NULL;
 PFNGLBUFFERDATAARBPROC    glBufferData_    = NULL;
 PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_ = NULL;
 
@@ -217,6 +219,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     {
         glGenBuffers_    = (PFNGLGENBUFFERSARBPROC)   getprocaddress("glGenBuffersARB");
         glBindBuffer_    = (PFNGLBINDBUFFERARBPROC)   getprocaddress("glBindBufferARB");
+        glMapBuffer_     = (PFNGLMAPBUFFERARBPROC)    getprocaddress("glMapBufferARB");
+        glUnmapBuffer_   = (PFNGLUNMAPBUFFERARBPROC)  getprocaddress("glUnmapBufferARB");
         glBufferData_    = (PFNGLBUFFERDATAARBPROC)   getprocaddress("glBufferDataARB");
         glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;

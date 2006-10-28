@@ -156,6 +156,8 @@ extern PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2f_;
 // GL_ARB_vertex_buffer_object
 extern PFNGLGENBUFFERSARBPROC    glGenBuffers_;
 extern PFNGLBINDBUFFERARBPROC    glBindBuffer_;
+extern PFNGLMAPBUFFERARBPROC     glMapBuffer_;
+extern PFNGLUNMAPBUFFERARBPROC   glUnmapBuffer_;
 extern PFNGLBUFFERDATAARBPROC    glBufferData_;
 extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_;
 
