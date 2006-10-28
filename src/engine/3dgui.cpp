@@ -14,6 +14,7 @@ static g3d_gui *windowhit = NULL;
 #define IMAGE_SIZE (2*FONTH-SHADOW)
 #define ICON_SIZE (FONTH-SHADOW)
 #define SKIN_SCALE 4
+#define INSERT (3*SKIN_SCALE)
 
 VARP(guiautotab, FONTH*6, FONTH*16, FONTH*40);
 
@@ -55,11 +56,11 @@ struct gui : g3d_gui
         tpos++; 
         s_sprintfd(title)("%d", tpos);
         if(!name) name = title;
-        int w = text_width(name);
+        int w = text_width(name) - 2*INSERT;
         if(layoutpass) 
         {  
             ty = max(ty, ysize); 
-            ysize = FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
+            ysize = FONTH+(skiny[3]-skiny[2])*SKIN_SCALE - 2*INSERT;
         }
         else 
         {	
@@ -71,9 +72,9 @@ struct gui : g3d_gui
                 *tcurrent = tpos; //roll-over to switch tab
                 color = 0xFF0000;
             };
-            patchn_(x, x+w, cury, cury+FONTH, visible()?12:21, 9);
-            text_(name, x, cury, color, visible());
-            cury += FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
+            patchn_(x, x+w, cury, cury+FONTH - 2*INSERT, visible()?12:21, 9);
+            text_(name, x-INSERT, cury-INSERT, color, visible());
+            cury += FONTH+(skiny[3]-skiny[2])*SKIN_SCALE - 2*INSERT;
         };
         tx += w + ((skinx[4]-skinx[3]) + (skinx[2]-skinx[1]))*SKIN_SCALE; 
     };
@@ -366,7 +367,6 @@ struct gui : g3d_gui
         };
         glEnd();
         glDepthFunc(GL_ALWAYS);
-        //defaultshader->set();
     }; 
 
     vec origin;
@@ -407,7 +407,7 @@ struct gui : g3d_gui
             modulate.mul(1.3f + vec(yaw, 0.0f).dot(dir));
         
             if(!skin) skin = textureload("data/guiskin.png");
-            patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE:0), cury+ysize, 0, tcurrent?8:9);
+            patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE-2*INSERT:0), cury+ysize, 0, tcurrent?8:9);
         };
     };
 
@@ -431,7 +431,7 @@ struct gui : g3d_gui
         }
         else
         {
-            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH, 9, 3);
+            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH-2*INSERT, 9, 3);
             glPopMatrix();
         };
         poplist();
@@ -442,7 +442,7 @@ Texture *gui::skin = NULL;
 
 //chop skin into a grid
 const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
-          gui::skinx[] = {0, 26, 40, 105, 117, 138, 152, 215, 227, 256}, 
+          gui::skinx[] = {0, 26, 37, 105, 117, 140, 151, 215, 227, 256}, 
 //Note: skinx[2]-skinx[1] = skinx[6]-skinx[5]
 //      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
 gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
