@@ -11,8 +11,8 @@ static int mousebuttons = 0;
 static g3d_gui *windowhit = NULL;
 
 #define SHADOW 4
-#define IMAGE_SIZE 120
-#define ICON_SIZE 60
+#define IMAGE_SIZE (2*FONTH-SHADOW)
+#define ICON_SIZE (FONTH-SHADOW)
 #define SKIN_SCALE 4
 
 VARP(guiautotab, FONTH*6, FONTH*16, FONTH*40);
@@ -30,14 +30,12 @@ struct gui : g3d_gui
     static float hitx, hity;
     static int curdepth, curlist, xsize, ysize, curx, cury;
 
-
     static void reset()
     {
         lists.setsize(0);
     };
 
     static int ty, tx, tpos, *tcurrent; //tracking tab size and position since uses different layout method...
-    static bool tlast; // true = last tab was a deselected tab
 
     void autotab() 
     { 
@@ -62,46 +60,22 @@ struct gui : g3d_gui
         {  
             ty = max(ty, ysize); 
             ysize = FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
-            tx += w; 
         }
         else 
         {	
             cury = -ysize;
-            bool vis = visible();
-            bool hit = false;
-            if(tcurrent && tpos < *tcurrent && !vis) //need to test hit twice because of tabs have varring position
-            {
-                int x = tx + (tlast?(skinx[7]-skinx[6]):(skinx[6]-skinx[5]))*SKIN_SCALE;
-                hit = tcurrent && windowhit==this && hitx>=x && hity>=cury && hitx<x+w && hity<cury+FONTH;
-                if(hit) vis = true;
-            };
-            if(vis)
-            {
-                if(tlast)
-                {
-                    patchn_(tx, tx, cury, cury+FONTH, 27, 3);
-                    tx += (skinx[9]-skinx[8])*SKIN_SCALE;
-                };
-                tx += (skinx[2]-skinx[1])*SKIN_SCALE;
-                patchn_(tx, tx+w, cury, cury+FONTH, 12, 9);
-            }
-            else 
-            {   
-                tx += (tlast?(skinx[7]-skinx[6]):(skinx[6]-skinx[5]))*SKIN_SCALE;
-                patchn_(tx, tx+w, cury, cury+FONTH, tlast?30:21, 6);
-            };
-            if(!hit) hit = tcurrent && windowhit==this && hitx>=tx && hity>=cury && hitx<tx+w && hity<cury+FONTH;
+            int x = curx + tx + (skinx[2]-skinx[1])*SKIN_SCALE;
+            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH;
             if(hit) 
-            {   
-                color = 0xFF0000;
+            {	
                 *tcurrent = tpos; //roll-over to switch tab
+                color = 0xFF0000;
             };
-            text_(name, tx, cury, color, vis);
-            tx += w;
-            if(vis) tx += (skinx[4]-skinx[3])*SKIN_SCALE;
+            patchn_(x, x+w, cury, cury+FONTH, visible()?12:21, 9);
+            text_(name, x, cury, color, visible());
             cury += FONTH+(skiny[3]-skiny[2])*SKIN_SCALE;
-            tlast = !vis;
         };
+        tx += w + ((skinx[4]-skinx[3]) + (skinx[2]-skinx[1]))*SKIN_SCALE; 
     };
 
     bool ishorizontal() const { return curdepth&1; };
@@ -247,6 +221,7 @@ struct gui : g3d_gui
         glVertex2f(x + w, y);
         glVertex2f(x + w, y + h);
         glVertex2f(x,     y + h);
+        xtraverts += 4;
     };
 
     void text_(const char *text, int x, int y, int color, bool shadow) 
@@ -279,6 +254,7 @@ struct gui : g3d_gui
         glTexCoord2i(1, 1); glVertex2f(xo+xs, yo+ys);
         glTexCoord2i(0, 1); glVertex2f(xo,    yo+ys);
         glEnd();
+        xtraverts += 4;
     };
 
     void line_(int color, int size, float percent)
@@ -351,8 +327,8 @@ struct gui : g3d_gui
                 break;
             case 0x10: vright = vleft; vleft-=w; break; //outside left
             case 0x20: vleft = vright; vright+=w; break; //outside right 
-            case 0x30: vright = vleft+w; break; //inside left
-            case 0x40: vleft = vright-w; break; //inside right
+            //case 0x30: vright = vleft+w; break; //inside left
+            //case 0x40: vleft = vright-w; break; //inside right
         };
         switch(mode & 0x0F) 
         {
@@ -361,13 +337,14 @@ struct gui : g3d_gui
                 break;
             case 0x01: vbottom = vtop; vtop-=h; break;//outside top
             case 0x02: vtop = vbottom; vbottom+=h; break;//outside bottom
-            case 0x03: vbottom = vtop+h; break; //inside top
-            case 0x04: vtop = vbottom-h; break; //inside bottom
+            //case 0x03: vbottom = vtop+h; break; //inside top
+            //case 0x04: vtop = vbottom-h; break; //inside bottom
         };
         glTexCoord2f(in_left,  in_top   ); glVertex2i(vleft,  vtop);
         glTexCoord2f(in_right, in_top   ); glVertex2i(vright, vtop);
         glTexCoord2f(in_right, in_bottom); glVertex2i(vright, vbottom);
         glTexCoord2f(in_left,  in_bottom); glVertex2i(vleft,  vbottom);
+        xtraverts += 4;
     };
 
     void patchn_(int vleft, int vright, int vtop, int vbottom, int start, int n) 
@@ -408,7 +385,6 @@ struct gui : g3d_gui
         tx = 0;
         ty = 0;
         tcurrent = tab;
-        tlast = false;
         pushlist();
         if(layoutpass) nextlist = curlist;
         else
@@ -416,13 +392,12 @@ struct gui : g3d_gui
             if(tcurrent && !*tcurrent) tcurrent = NULL;
             cury = -ysize; 
             curx = -xsize/2;
-            tx = curx;
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
             glRotatef(atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x)/RAD - 90, 0, 0, 1); 
             glRotatef(-90, 1, 0, 0);
             glScalef(-scale, scale, scale);
-           
+        
             if(!skin) skin = textureload("data/guiskin.png");
             patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE:0), cury+ysize, 0, tcurrent?8:9);
         };
@@ -432,15 +407,9 @@ struct gui : g3d_gui
     {
         if(layoutpass)
         {	
-            if(tcurrent)
-            {
-                if(tpos > 0) tx += ((skinx[2]-skinx[1])+(skinx[4]-skinx[3]))*SKIN_SCALE;
-                if(tpos > 1) tx += ((skinx[6]-skinx[5])+(skinx[9]-skinx[8]))*2*SKIN_SCALE;
-                if(tpos > 3) tx += (tpos-3)*(skinx[7]-skinx[6])*SKIN_SCALE;
-                *tcurrent = max(1, min(*tcurrent, tpos));
-            };
             xsize = max(tx, xsize);
             ysize = max(ty, ysize);
+            if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
             if(!windowhit && !passthrough)
             {
                 vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
@@ -454,14 +423,7 @@ struct gui : g3d_gui
         }
         else
         {
-            if(tcurrent)
-            {   if(tlast)
-                {
-                    patchn_(tx, tx, -ysize, -ysize + FONTH, 27, 3);
-                    tx += (skinx[9]-skinx[8])*SKIN_SCALE;
-                };
-                patchn_(tx, curx+xsize, -ysize, -ysize + FONTH, 9, 3);
-            };
+            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH, 9, 3);
             glPopMatrix();
         };
         poplist();
@@ -472,25 +434,25 @@ Texture *gui::skin = NULL;
 
 //chop skin into a grid
 const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
-          gui::skinx[] = {0, 22, 40, 105, 121, 135, 153, 158, 214, 230, 256}, 
+          gui::skinx[] = {0, 26, 40, 105, 117, 138, 152, 215, 227, 256}, 
 //Note: skinx[2]-skinx[1] = skinx[6]-skinx[5]
-//      skinx[4]-skinx[3] = skinx[9]-skinx[8]		 
+//      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
 gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
-    { 1,9,3,4, 0x00}, //body
-    { 1,9,4,5, 0x02},
+    { 1,8,3,4, 0x00}, 
+    { 1,8,4,5, 0x02},
     { 0,1,3,4, 0x10},
-    { 9,10,3,4, 0x20},
+    { 8,9,3,4, 0x20},
     { 0,1,4,5, 0x12}, //{xstart, xend, ystart, yend,  mode} - where xstart,xend refer into skinx[], and ystart,yend refer into skiny[]
-    { 9,10,4,5, 0x22},
+    { 8,9,4,5, 0x22},
     { 0,1,2,3, 0x11},
-    { 9,10,2,3, 0x21},
+    { 8,9,2,3, 0x21},
     { 4,5,2,3, 0x01},
     
-    { 4,5,2,3, 0x02}, //empty/end tab padding
+    { 4,5,2,3, 0x02},
     { 4,5,1,2, 0x00},
     { 4,5,0,1, 0x01},
     
-    { 2,3,1,2, 0x00}, //selected tab
+    { 2,3,1,2, 0x00}, 
     { 2,3,2,3, 0x02},
     { 1,2,1,2, 0x10},
     { 3,4,1,2, 0x20},
@@ -499,24 +461,16 @@ gui::patch[][5] = { //arguably this data can be compressed - it depends on what 
     { 1,2,0,1, 0x11},
     { 3,4,0,1, 0x21},
     { 2,3,0,1, 0x01},
-        
-    { 7,8,1,2, 0x00}, //deselected start tab
-    { 7,8,2,3, 0x02},
+    
+    { 6,7,1,2, 0x00}, 
+    { 6,7,2,3, 0x02},
     { 5,6,1,2, 0x10},
+    { 7,8,1,2, 0x20},
     { 5,6,2,3, 0x12},
+    { 7,8,2,3, 0x22},
     { 5,6,0,1, 0x11},
-    { 7,8,0,1, 0x01},
-
-    { 8,9,1,2, 0x20}, //deselected end tab
-    { 8,9,2,3, 0x22},
-    { 8,9,0,1, 0x21},
-     
-    { 7,8,1,2, 0x00}, //deselected cont tab
-    { 7,8,2,3, 0x02},
-    { 6,7,1,2, 0x10},
-    { 6,7,2,3, 0x12},
-    { 6,7,0,1, 0x11},
-    { 7,8,0,1, 0x01}
+    { 7,8,0,1, 0x21},
+    { 6,7,0,1, 0x01}
 };
 
 vector<gui::list> gui::lists;
@@ -524,7 +478,6 @@ float gui::scale, gui::hitx, gui::hity;
 bool gui::passthrough;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent;
-bool gui::tlast;
 static vector<gui> guis;
 
 void g3d_addgui(g3d_callback *cb, vec &origin)
