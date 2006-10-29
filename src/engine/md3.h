@@ -3,6 +3,8 @@
 
 struct md3;
 
+char *md3name = NULL;
+
 string md3dir; // necessary for relative path's
 
 enum { MDL_LOWER = 0, MDL_UPPER, MDL_HEAD };
@@ -252,7 +254,7 @@ struct md3model
                 tristrip ts;
                 ts.addtriangles(idxs.getbuf(), idxs.length()/3);
                 idxs.setsizenodelete(0);
-                ts.buildstrips(idxs, false);
+                ts.buildstrips(idxs);
                 m.vbuf = new md2::md2_vvert[m.numvertices];
                 m.ebuf = new ushort[idxs.length()];
                 memcpy(m.ebuf, idxs.getbuf(), idxs.length()*sizeof(ushort));
@@ -620,6 +622,8 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
     animstate as;
     if(!calcanimstate(animinfo, varseed, speed, basetime, d, as)) return;
 
+    md3name = model->loadname;
+
     if(hasVBO && !meshes[0].vbufGL && as.frame==0 && as.range==1) genvar(false);
     else if(!meshes[0].vbuf && (!hasVBO || as.frame!=0 || as.range!=1)) genvar(true);
 
@@ -678,21 +682,21 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
         else if(meshes[i].vbuf)
         {
             meshes[i].gendynverts(cur, doai ? &prev : NULL, ai_t);
-            int j = 0;
-            while(j<meshes[i].ebuflen) 
+            loopj(meshes[i].ebuflen)
             {
-                glBegin(GL_TRIANGLE_STRIP);
-                while(j<meshes[i].ebuflen)
+                ushort index = meshes[i].ebuf[j];
+                if(index>=tristrip::RESTART || !j)
                 {
-                    if(meshes[i].ebuf[j]==tristrip::UNUSED) { j++; break; };
-                    md2::md2_vvert &v = meshes[i].vbuf[meshes[i].ebuf[j]];
-                    glTexCoord2fv(&v.u);
-                    glNormal3fv(v.normal.v);
-                    glVertex3fv(v.pos.v);
-                    j++;
+                    if(j) glEnd();
+                    glBegin(index==tristrip::LIST ? GL_TRIANGLES : GL_TRIANGLE_STRIP);
+                    if(index>=tristrip::RESTART) continue;
                 };
-                glEnd();
+                md2::md2_vvert &v = meshes[i].vbuf[index];
+                glTexCoord2fv(&v.u);
+                glNormal3fv(v.normal.v);
+                glVertex3fv(v.pos.v);
             };
+            glEnd();
             xtraverts += mesh.numvertices;
         };
 

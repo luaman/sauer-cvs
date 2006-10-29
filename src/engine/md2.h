@@ -221,7 +221,7 @@ struct md2 : model
             mverts[j] = NULL;
             mnorms[j] = NULL;
         };
-        
+       
         return true;
     };
 
@@ -229,7 +229,7 @@ struct md2 : model
     {
         mverts[frame] = new vec[header.numvertices];
         mnorms[frame] = new vec[header.numvertices];
-        md2_frame *cf = (md2_frame *) ((char*)frames+header.framesize*frame);
+        md2_frame *cf = (md2_frame *)((char*)frames+header.framesize*frame);
         float sc = scale/4.0f;
         loop(vi, header.numvertices)
         {
@@ -337,7 +337,7 @@ struct md2 : model
             tristrip ts;
             ts.addtriangles(idxs.getbuf(), idxs.length()/3);
             idxs.setsizenodelete(0);
-            ts.buildstrips(idxs, false);
+            ts.buildstrips(idxs);
             ebuf = new ushort[idxs.length()];
             memcpy(ebuf, idxs.getbuf(), idxs.length()*sizeof(ushort));
         }
@@ -563,21 +563,21 @@ struct md2 : model
             int index = vwep ? 1 : 0;
             if(d) gendynverts(d->current[index], &d->prev[index], d->lastanimswitchtime[index]);
             else gendynverts(as, NULL, 0);
-            int i = 0;
-            while(i<ebuflen)
+            loopi(ebuflen)
             {
-                glBegin(GL_TRIANGLE_STRIP);
-                while(i<ebuflen)
+                ushort index = ebuf[i];
+                if(index>=tristrip::RESTART || !i)
                 {
-                    if(ebuf[i]==tristrip::UNUSED) { i++; break; };
-                    md2_vvert &v = vbuf[ebuf[i]];
-                    glTexCoord2fv(&v.u);
-                    glNormal3fv(v.normal.v);
-                    glVertex3fv(v.pos.v);
-                    i++;
+                    if(i) glEnd();
+                    glBegin(index==tristrip::LIST ? GL_TRIANGLES : GL_TRIANGLE_STRIP);
+                    if(index>=tristrip::RESTART) continue;
                 };
-                glEnd();
+                md2_vvert &v = vbuf[index];
+                glTexCoord2fv(&v.u);
+                glNormal3fv(v.normal.v);
+                glVertex3fv(v.pos.v);
             };
+            glEnd();
         };
 
         if(skin->bpp==32)

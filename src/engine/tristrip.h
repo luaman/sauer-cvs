@@ -5,9 +5,16 @@ struct tristrip
 {
     enum
     {
-        // must be larger than all other indices
-        REMOVED = 0xFFFE,
-        UNUSED  = 0xFFFF
+        // must be larger than all other triangle/vert indices
+        UNUSED  = 0xFFFE,
+        REMOVED = 0xFFFF
+    };
+
+    enum
+    {
+        // must be larger than all other vert indices
+        RESTART = 0xFFFE,
+        LIST    = 0xFFFF
     };
 
     struct triangle
@@ -16,13 +23,26 @@ struct tristrip
 
         bool link(ushort neighbor, ushort old = UNUSED)
         {
-            loopi(3) if(n[i]==old) { n[i] = neighbor; return true; };
+            loopi(3)
+            {
+                if(n[i]==neighbor) return false;
+                else if(n[i]==old) { n[i] = neighbor; return true; };
+            };
+            if(dbgts && old==UNUSED) conoutf("excessive links");
             return false;
         };    
-   
-        int numlinks() { int num = 0; loopi(3) if(n[i]!=UNUSED) num++; return num; };
+ 
+        void unlink(ushort neighbor, ushort unused = UNUSED)
+        {
+            loopi(3) if(n[i]==neighbor) n[i] = unused;
+        };
+ 
+        int numlinks() const { int num = 0; loopi(3) if(n[i]<UNUSED) num++; return num; };
 
-        bool hasvert(ushort idx) { loopi(3) if(v[i]==idx) return true; return false; };
+        bool hasvert(ushort idx) const { loopi(3) if(v[i]==idx) return true; return false; };
+        ushort diffvert(ushort v1, ushort v2) { loopi(3) if(v[i]!=v1 && v[i]!=v2) return v[i]; return UNUSED; };
+
+        bool haslink(ushort neighbor) const { loopi(3) if(n[i]==neighbor) return true; return false; };
     };
 
     vector<triangle> triangles;
@@ -68,7 +88,7 @@ struct tristrip
 
     void findconnectivity()
     {
-        hashtable<edge, edge> edges;
+        hashtable<edge, ushort> edges;
         nodes.setsizenodelete(0);
         loopv(triangles)
         {
@@ -79,44 +99,43 @@ struct tristrip
                 nodes[tri.v[j]]++;
 
                 edge e(tri.v[j], tri.v[j==2 ? 0 : j+1]);
-                edge *conn = edges.access(e);
-                if(conn) 
-                { 
-                    if(conn->to==UNUSED && tri.link(conn->from))
-                    {
-                        if(triangles[conn->from].link(i)) conn->link(i); 
-                        else
-                        {
-                            tri.link(UNUSED, conn->from);
-                        };
-                    };
+                ushort *owner = edges.access(e);
+                if(!owner) edges[e] = i;
+                else if(!tri.link(*owner))
+                {
+                    if(dbgts) conoutf("failed linkage 1: %d -> %d", *owner, i);
                 }
-                else edges[e] = edge(i, UNUSED); 
+                else if(!triangles[*owner].link(i))
+                {
+                    if(dbgts) conoutf("failed linkage 2: %d -> %d", *owner, i);
+                    tri.unlink(*owner);
+                };
             };
         };
         loopi(4) connectivity[i].setsizenodelete(0);
         loopv(triangles) connectivity[triangles[i].numlinks()].add(i);
+        if(dbgts) conoutf("no connections: %d", connectivity[0].length());
     };
 
     void removeconnectivity(ushort i)
     {
         triangle &tri = triangles[i];
-        loopj(3) if(tri.n[j]!=UNUSED)
+        loopj(3) if(tri.n[j]<UNUSED)
         {
             triangle &neighbor = triangles[tri.n[j]];
-            if(neighbor.n[0]==REMOVED) continue;
             int conn = neighbor.numlinks();
             bool linked = false;
-            loopk(3) if(neighbor.n[k]==i) { linked = true; neighbor.n[k] = UNUSED; break; };
+            loopk(3) if(neighbor.n[k]==i) { linked = true; neighbor.n[k] = REMOVED; break; };
             if(linked)
             {
                 connectivity[conn].replacewithlast(tri.n[j]);
                 connectivity[conn-1].add(tri.n[j]);
             };
         };
+        removenodes(i);
     };
 
-    bool remaining()
+    bool remaining() const
     {
         loopi(4) if(!connectivity[i].empty()) return true;
         return false;
@@ -124,7 +143,13 @@ struct tristrip
 
     ushort leastconnected()
     {
-        loopi(4) if(!connectivity[i].empty()) return connectivity[i].pop();
+        loopi(4) if(!connectivity[i].empty()) 
+        { 
+            ushort least = connectivity[i].pop();
+            removeconnectivity(least);
+            return least;
+
+        };
         return UNUSED;
     };
 
@@ -147,13 +172,12 @@ struct tristrip
         ushort next = UNUSED;
         int nextscore = 777;
         nextswap = false;
-        loopi(3) if(tri.n[i]!=UNUSED)
+        loopi(3) if(tri.n[i]<UNUSED)
         {
-            triangle &nexttri = triangles[tri.n[i]]; 
-            if(nexttri.n[0]==REMOVED) continue;
+            triangle &nexttri = triangles[tri.n[i]];
             int score = nexttri.numlinks();
-            bool swap = false;
-            if(v1 != UNUSED) 
+            bool swap = false; 
+            if(v1!=UNUSED) 
             {
                 if(!nexttri.hasvert(v1))
                 {
@@ -166,11 +190,11 @@ struct tristrip
             };
             if(score < nextscore) { next = tri.n[i]; nextswap = swap; nextscore = score; };
         };
-        tri.n[0] = REMOVED;
         if(next!=UNUSED) 
         {
+            tri.unlink(next, REMOVED);
             connectivity[triangles[next].numlinks()].replacewithlast(next);
-            removenodes(next);
+            removeconnectivity(next);
         };
         return next;
     };
@@ -179,43 +203,38 @@ struct tristrip
     {
         ushort prev = leastconnected();
         if(prev==UNUSED) return;
-        removenodes(prev);
-        removeconnectivity(prev);
+        triangle &first = triangles[prev];
         bool doswap;
-        ushort cur = nexttriangle(triangles[prev], doswap);
+        ushort cur = nexttriangle(first, doswap);
         if(cur==UNUSED)
         {
-            loopi(3) strip.add(triangles[prev].v[reverse && i>=1 ? 3-i : i]);
+            loopi(3) strip.add(first.v[reverse && i>=1 ? 3-i : i]);
             return;
         };
-        removeconnectivity(cur);
-        int from = findedge(triangles[prev], triangles[cur]);
-        int to = findedge(triangles[prev], triangles[cur], triangles[prev].v[from]);
+        int from = findedge(first, triangles[cur]), 
+            to = findedge(first, triangles[cur], first.v[from]);
         if(from+1!=to) swap(int, from, to); 
-        strip.add(triangles[prev].v[(to+1)%3]);
+        strip.add(first.v[(to+1)%3]);
         if(reverse) swap(int, from, to);
-        strip.add(triangles[prev].v[from]);
-        strip.add(triangles[prev].v[to]);
+        strip.add(first.v[from]);
+        strip.add(first.v[to]);
 
+        ushort v1 = first.v[to], v2 = first.v[from];
         while(cur!=UNUSED)
         {
             prev = cur;
-            ushort prev1 = strip.last(), prev2 = strip[strip.length()-2];
-            cur = nexttriangle(triangles[prev], doswap, prev1, prev2);
-            if(cur!=UNUSED) removeconnectivity(cur);
-            if(doswap) strip.add(prev2);
-            ushort v;
-            loopi(3)
-            {
-                v = triangles[prev].v[i];
-                if(v!=prev1 && v!=prev2) break;
-            };
+            cur = nexttriangle(triangles[prev], doswap, v1, v2);
+            if(doswap) strip.add(v2);
+            ushort v = triangles[prev].diffvert(v1, v2);
             strip.add(v);
+            if(!doswap) v2 = v1;
+            v1 = v;
         };
     };
 
-    void buildstrips(vector<ushort> &strips, bool degen)
+    void buildstrips(vector<ushort> &strips, bool prims = true, bool degen = false)
     {
+        vector<ushort> singles;
         findconnectivity();
         int numtris = 0, numstrips = 0;
         while(remaining())
@@ -225,15 +244,26 @@ struct tristrip
             buildstrip(strip, reverse);
             numstrips++;
             numtris += strip.length()-2;
+            if(strip.length()==1 && prims)
+            {
+                loopv(strip) singles.add(strip[i]);
+                continue;
+            };
             if(!strips.empty())
             {
                 if(degen) { strips.dup(); strips.add(strip[0]); }
-                else strips.add(UNUSED);
+                else strips.add(RESTART);
             };
             loopv(strip) strips.add(strip[i]);
         };
+        if(prims && !singles.empty())
+        {
+            strips.add(LIST);
+            loopv(singles) strips.add(singles[i]);
+        };
         if(dbgts) conoutf("strips = %d, tris = %d, inds = %d, merges = %d", numstrips, numtris, numtris + numstrips*2, (degen ? 2 : 1)*(numstrips-1));
     };
+
 };
 
 static inline uint hthash(const tristrip::edge &x) { return x.from^x.to; };

@@ -249,30 +249,45 @@ template <class T> struct vector
         buf[i] = e;
         return buf[i];
     };
+
+    void reverse()
+    {
+        loopi(ulen/2) swap(T, buf[i], buf[ulen-1-i]);
+    };
 };
 
 typedef vector<char *> cvector;
 typedef vector<int> ivector;
 typedef vector<ushort> usvector;
 
-inline uint hthash(const char * key)
+static inline uint hthash(const char *key)
 {
     uint h = 5381;
     for(int i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
     return h;
 };
 
-inline bool htcmp(const char *x, const char *y)
+static inline bool htcmp(const char *x, const char *y)
 {
     return !strcmp(x, y);
 };
 
-inline uint hthash(int key)
+static inline uint hthash(int key)
 {   
     return key;
 };
 
-inline bool htcmp(int x, int y)
+static inline bool htcmp(int x, int y)
+{
+    return x==y;
+};
+
+static inline uint hthash(uint key)
+{
+    return key;
+};
+
+static inline bool htcmp(uint x, uint y)
 {
     return x==y;
 };

@@ -162,7 +162,7 @@ struct clientcom : iclientcom
         {
             static int spectypes[] = { SV_GETMAP, SV_TEXT };
             bool allowed = false;
-            loopi(sizeof(spectypes)/sizeof(spectypes[0])) if(type!=spectypes[i]) 
+            loopi(sizeof(spectypes)/sizeof(spectypes[0])) if(type==spectypes[i]) 
             {
                 allowed = true;
                 break;
