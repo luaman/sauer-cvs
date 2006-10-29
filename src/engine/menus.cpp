@@ -142,10 +142,10 @@ void newgui(char *name, char *contents)
 void showgui(char *name)
 {
     int pos = guistack.find(name);
-    if(pos == -1) 
+    if(pos<0) 
     {   
         if(!guis.access(name)) return;
-        if(guistack.empty()) pos = -10;
+        if(guistack.empty()) menupos = menuinfrontofplayer();
         guistack.add(newstring(name));
     }
     else
@@ -153,7 +153,6 @@ void showgui(char *name)
         pos = guistack.length()-pos-1;
         loopi(pos) delete[] guistack.pop();
     };
-    if(pos == -10 || isvisiblesphere(10, menupos) >= VFC_FOGGED) menupos = menuinfrontofplayer();
     menutab = 1;
     menustart = lastmillis;    
 };
@@ -222,7 +221,7 @@ void g3d_mainmenu()
 {
     if(!guistack.empty()) 
     {   
-        if(camera1->o.dist(menupos) > menudistance*2) cleargui();
+        if(camera1->o.dist(menupos) > menudistance*3) cleargui();
         else g3d_addgui(&mmcb, menupos);
     };
 };
