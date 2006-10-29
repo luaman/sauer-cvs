@@ -22,11 +22,7 @@ int cleargui(int n = 0)
     int clear = guistack.length();
     if(n>0) clear = min(clear, n);
     loopi(clear) delete[] guistack.pop();
-    if(!guistack.empty())
-    {
-		menutab = 1;
-        menustart = lastmillis;
-    };
+    if(!guistack.empty()) showgui(guistack.last());
     return clear;
 };
 
@@ -145,23 +141,21 @@ void newgui(char *name, char *contents)
 
 void showgui(char *name)
 {
-    if(!guis.access(name)) return;
-
-	//jump back if gui is already showing
-	loopvrev(guistack)
+    int pos = guistack.find(name);
+    if(pos == -1) 
+    {   
+        if(!guis.access(name)) return;
+        if(guistack.empty()) pos = -10;
+        guistack.add(newstring(name));
+    }
+    else
     {
-		if(!strcmp(guistack[i], name)) 
-        {
-			int clear = guistack.length()-i;
-            loopi(clear) delete[] guistack.pop();
-			break;
-		};
+        pos = guistack.length()-pos-1;
+        loopi(pos) delete[] guistack.pop();
     };
-	
-	if(guistack.empty()) menupos = menuinfrontofplayer();
-	menustart = lastmillis;
-	menutab = 1;
-	guistack.add(newstring(name));
+    if(pos == -10 || isvisiblesphere(10, menupos) >= VFC_FOGGED) menupos = menuinfrontofplayer();
+    menutab = 1;
+    menustart = lastmillis;    
 };
 
 void guiservers()
@@ -226,6 +220,10 @@ void menuprocess()
 
 void g3d_mainmenu()
 {
-    if(!guistack.empty()) g3d_addgui(&mmcb, menupos);
+    if(!guistack.empty()) 
+    {   
+        if(camera1->o.dist(menupos) > menudistance*2) cleargui();
+        else g3d_addgui(&mmcb, menupos);
+    };
 };
 

@@ -352,7 +352,6 @@ struct gui : g3d_gui
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, skin->gl);
-        glBegin(GL_QUADS);
         loopj(2)
         {	
             glDepthFunc(j?GL_LEQUAL:GL_GREATER);
@@ -365,7 +364,6 @@ struct gui : g3d_gui
             };
             glEnd();
         };
-        glEnd();
         glDepthFunc(GL_ALWAYS);
     }; 
 
