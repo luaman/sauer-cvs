@@ -2,7 +2,10 @@ Description
 ===========
 Files in this folder:
 
-by "makkE"
+Model and Animation: 
+Shane Nieb
+
+Skin by "makkE"
 Markus Bekel
 e-mail: makk_e@web.de
 
