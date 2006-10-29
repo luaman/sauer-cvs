@@ -1,5 +1,3 @@
-// clientgame.cpp: core game related stuff
-
 #include "pch.h"
 
 #include "cube.h"
