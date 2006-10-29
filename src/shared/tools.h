@@ -137,6 +137,7 @@ template <class T> struct vector
 
     vector<T> &operator=(const vector<T> &v)
     {
+        setsize(0);
         loopv(v) add(v[i]);
         return *this;
     };
@@ -152,6 +153,13 @@ template <class T> struct vector
     {
         if(ulen==alen) vrealloc();
         new (&buf[ulen]) T;
+        return buf[ulen++];
+    };
+
+    T &dup()
+    {
+        if(ulen==alen) vrealloc();
+        new (&buf[ulen]) T(buf[ulen-1]);
         return buf[ulen++];
     };
 

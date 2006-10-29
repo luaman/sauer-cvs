@@ -98,20 +98,69 @@ struct md3mesh
     md3triangle *triangles;
     vec *vertices;
     vec *normals;
-    
     vec2 *uv;
     int numtriangles, numvertices;
     Texture *skin, *masks;
     
-    GLuint vbufGL, ebufGL;
-    int ebuflen;
-    md3mesh() : skin(crosshair), masks(crosshair), vbufGL(0), ebufGL(0) {};
+    GLuint ebufGL, vbufGL;
+    ushort *ebuf;
+    md2::md2_vvert *vbuf;
+    int vbufframe, ebuflen;
+    md3mesh() : skin(crosshair), masks(crosshair), ebufGL(0), vbufGL(0), ebuf(0), vbuf(0), vbufframe(-1) {};
     ~md3mesh() 
     {
         if(hasVBO)
         {
             if(vbufGL) glDeleteBuffers_(1, &vbufGL);
             if(ebufGL) glDeleteBuffers_(1, &ebufGL);
+        };
+        DELETEA(ebuf);
+        DELETEA(vbuf);
+    };
+
+    void gendynverts(md3anpos &cur, md3anpos *prev, float ai_t)
+    {
+        vec *vert1 = &vertices[cur.fr1 * numvertices],
+            *vert2 = &vertices[cur.fr2 * numvertices],
+            *norm1 = &normals[cur.fr1 * numvertices],
+            *norm2 = &normals[cur.fr2 * numvertices],
+            *vert1p = NULL, *vert2p = NULL, *norm1p = NULL, *norm2p = NULL;
+        if(prev)
+        {
+            vert1p = &vertices[prev->fr1 * numvertices];
+            vert2p = &vertices[prev->fr2 * numvertices];
+            norm1p = &normals[prev->fr1 * numvertices];
+            norm2p = &normals[prev->fr2 * numvertices];
+        }
+        else if(cur.fr1==cur.fr2)
+        {
+            if(cur.fr1==vbufframe) return;
+            vbufframe = cur.fr1;
+        };
+        loopi(numvertices) // vertices
+        {
+            md2::md2_vvert &v = vbuf[i];
+            if(uv)
+            {
+                v.u = uv[i].x;
+                v.v = uv[i].y;
+            };
+            #define ip(p1, p2, t) (p1+t*(p2-p1))
+            #define ip_v(p1, p2, c, t) ip(p1[i].c, p2[i].c, t)
+            if(prev)
+            {
+                #define ip_v_ai(v, c) ip( ip_v(v##1p, v##2p, c, prev->t), ip_v(v##1, v##2, c, cur.t), ai_t)
+                v.normal = vec(ip_v_ai(norm, x), ip_v_ai(norm, y), ip_v_ai(norm, z));
+                v.pos = vec(ip_v_ai(vert, x), ip_v_ai(vert, y), ip_v_ai(vert, z));
+            }
+            else
+            {
+                v.normal = vec(ip_v(norm1, norm2, x, cur.t), ip_v(norm1, norm2, y, cur.t), ip_v(norm1, norm2, z, cur.t));
+                v.pos = vec(ip_v(vert1, vert2, x, cur.t), ip_v(vert1, vert2, y, cur.t), ip_v(vert1, vert2, z, cur.t));
+            };
+            #undef ip
+            #undef ip_v
+            #undef ip_v_ai
         };
     };
 };
@@ -160,7 +209,7 @@ struct md3model
 
     void setanim(int num, int frame, int range, float speed);
     
-    void genvar() // generate vbo's for each mesh
+    void genvar(bool dyn) // generate vbo's for each mesh
     {   
         vector<ushort> idxs;
         vector<md2::md2_vvert> verts;
@@ -170,11 +219,12 @@ struct md3model
             idxs.setsize(0);
             verts.setsize(0);
             md3mesh &m = meshes[i];
-            
+
             loopl(m.numtriangles)
             {
                 md3triangle &t = m.triangles[l];
-                loopk(3)
+                if(dyn) loopk(3) idxs.add(t.vertexindices[k]);
+                else loopk(3)
                 {
                     int n = t.vertexindices[k];
                     
@@ -195,13 +245,27 @@ struct md3model
                 };                    
             };
             
-            glGenBuffers_(1, &m.vbufGL);
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, m.vbufGL);
-            glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
+            if(dyn)
+            {
+                tristrip ts;
+                ts.addtriangles(idxs.getbuf(), idxs.length()/3);
+                ts.findconnectivity();
+                idxs.setsizenodelete(0);
+                ts.buildstrips(idxs, false);
+                m.vbuf = new md2::md2_vvert[m.numvertices];
+                m.ebuf = new ushort[idxs.length()];
+                memcpy(m.ebuf, idxs.getbuf(), idxs.length()*sizeof(ushort));
+            }
+            else
+            {
+                glGenBuffers_(1, &m.vbufGL);
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, m.vbufGL);
+                glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
 
-            glGenBuffers_(1, &m.ebufGL);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, m.ebufGL);
-            glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
+                glGenBuffers_(1, &m.ebufGL);
+                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, m.ebufGL);
+                glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
+            };
             m.ebuflen = idxs.length();
         };
     };
@@ -555,12 +619,13 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
     animstate as;
     if(!calcanimstate(animinfo, varseed, speed, basetime, d, as)) return;
 
-    if(hasVBO && !meshes[0].vbufGL && as.frame==0 && as.range==1) genvar();
+    if(hasVBO && !meshes[0].vbufGL && as.frame==0 && as.range==1) genvar(false);
+    else if(!meshes[0].vbuf && (!hasVBO || as.frame!=0 || as.range!=1)) genvar(true);
 
     md3anpos prev, cur;
     cur.setframes(d && index<2 ? d->current[index] : as);
 
-    float ai_t;
+    float ai_t = 0;
     bool doai = d && index<2 && lastmillis-d->lastanimswitchtime[index]<animationinterpolationtime;
     if(doai)
     {
@@ -609,56 +674,24 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
 
             xtravertsva += mesh.numvertices;
         }
-        else
+        else if(meshes[i].vbuf)
         {
-            glBegin(GL_TRIANGLES);
-                loopj(mesh.numtriangles) // triangles
+            meshes[i].gendynverts(cur, doai ? &prev : NULL, ai_t);
+            int j = 0;
+            while(j<meshes[i].ebuflen) 
+            {
+                glBegin(GL_TRIANGLE_STRIP);
+                while(j<meshes[i].ebuflen)
                 {
-                    loopk(3) // vertices
-                    {
-                        int index = mesh.triangles[j].vertexindices[k];
-                        vec *vert1 = &mesh.vertices[index + cur.fr1 * mesh.numvertices];
-                        vec *vert2 = &mesh.vertices[index + cur.fr2 * mesh.numvertices];
-                        vec *norm1 = &mesh.normals[index + cur.fr1 * mesh.numvertices];
-                        vec *norm2 = &mesh.normals[index + cur.fr2 * mesh.numvertices];
-
-                        if(mesh.uv)
-                            glTexCoord2f(mesh.uv[index].x, mesh.uv[index].y);
-
-                        #define ip(p1, p2, t) (p1+t*(p2-p1))
-                        #define ip_v(p1, p2, c, t) ip(p1->c, p2->c, t)
-
-                        if(doai)
-                        {
-                            vec *vert1p = &mesh.vertices[index + prev.fr1 * mesh.numvertices];
-                            vec *vert2p = &mesh.vertices[index + prev.fr2 * mesh.numvertices];
-                            vec *norm1p = &mesh.normals[index + prev.fr1 * mesh.numvertices];
-                            vec *norm2p = &mesh.normals[index + prev.fr2 * mesh.numvertices];
-
-                            #define ip_v_ai(v, c) ip( ip_v(v##1p, v##2p, c, prev.t), ip_v(v##1, v##2, c, cur.t), ai_t)
-
-                            glNormal3f( ip_v_ai(norm, x),
-                                        ip_v_ai(norm, y),
-                                        ip_v_ai(norm, z));
-
-                            glVertex3f( ip_v_ai(vert, x),
-                                        ip_v_ai(vert, y),
-                                        ip_v_ai(vert, z));
-                        }
-                        else
-                        {
-                            glNormal3f( ip_v(norm1, norm2, x, cur.t),
-                                        ip_v(norm1, norm2, y, cur.t),
-                                        ip_v(norm1, norm2, z, cur.t));
-
-                            glVertex3f( ip_v(vert1, vert2, x, cur.t),
-                                        ip_v(vert1, vert2, y, cur.t),
-                                        ip_v(vert1, vert2, z, cur.t));
-                        };
-                    };
+                    if(meshes[i].ebuf[j]==tristrip::UNUSED) { j++; break; };
+                    md2::md2_vvert &v = meshes[i].vbuf[meshes[i].ebuf[j]];
+                    glTexCoord2fv(&v.u);
+                    glNormal3fv(v.normal.v);
+                    glVertex3fv(v.pos.v);
+                    j++;
                 };
-            glEnd();
-
+                glEnd();
+            };
             xtraverts += mesh.numvertices;
         };
 
@@ -669,6 +702,7 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
         };
     };
 
+    #define ip(p1, p2, t) (p1+t*(p2-p1))
     #define ip_ai_tag(c) ip( ip( tag1p->c, tag2p->c, prev.t), ip( tag1->c, tag2->c, cur.t), ai_t)
 
     loopi(numtags) // render the linked models - interpolate rotation and position of the 'link-tags'
@@ -708,8 +742,6 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
     };
     #undef ip_ai_tag
     #undef ip
-    #undef ip_v
-    #undef ip_v_ai
 };
 
 void md3load(char *model)
