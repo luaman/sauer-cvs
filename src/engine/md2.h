@@ -412,6 +412,7 @@ struct md2 : model
             norms2p = mnorms[prev.fr2];
             aifrac1 = (lastmillis-lastanimswitchtime)/(float)animationinterpolationtime;
             aifrac2 = 1-aifrac1;
+            vbufframe = -1;
         }
         else if(curas.range==1)
         {

@@ -131,6 +131,7 @@ struct md3mesh
             vert2p = &vertices[prev->fr2 * numvertices];
             norm1p = &normals[prev->fr1 * numvertices];
             norm2p = &normals[prev->fr2 * numvertices];
+            vbufframe = -1;
         }
         else if(cur.fr1==cur.fr2)
         {
