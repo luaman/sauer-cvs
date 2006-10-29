@@ -58,7 +58,11 @@ struct weaponstate
         else if(s!=GUN_PISTOL && ammo[GUN_PISTOL]) s = GUN_PISTOL;
         else                                       s = GUN_FIST;
 
-        if(s!=player1->gunselect) cl.playsoundc(S_WEAPLOAD);
+        if(s!=player1->gunselect) 
+        {
+            cl.cc.addmsg(SV_GUNSELECT, "ri", s);
+            playsound(S_WEAPLOAD, &player1->o);
+        };
         player1->gunselect = s;
     };
     

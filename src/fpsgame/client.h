@@ -582,6 +582,15 @@ struct clientcom : iclientcom
                 break;
             };
 
+            case SV_GUNSELECT:
+            {
+                if(!d) return;
+                int gun = getint(p);
+                d->gunselect = max(gun, 0);
+                playsound(S_WEAPLOAD, &d->o);
+                break;
+            };
+
             case SV_RESUME:
             {
                 cn = getint(p);
