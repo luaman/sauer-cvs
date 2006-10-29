@@ -695,9 +695,10 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
                 glTexCoord2fv(&v.u);
                 glNormal3fv(v.normal.v);
                 glVertex3fv(v.pos.v);
+                xtraverts++;
             };
             glEnd();
-            xtraverts += mesh.numvertices;
+            //xtraverts += mesh.numvertices;
         };
 
         if(mesh.skin && mesh.skin->bpp==32)

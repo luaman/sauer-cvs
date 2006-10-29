@@ -576,8 +576,10 @@ struct md2 : model
                 glTexCoord2fv(&v.u);
                 glNormal3fv(v.normal.v);
                 glVertex3fv(v.pos.v);
+                xtraverts++;
             };
             glEnd();
+            //xtraverts += header.numvertices; 
         };
 
         if(skin->bpp==32)
