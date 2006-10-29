@@ -136,7 +136,8 @@ struct md3mesh
         {
             if(cur.fr1==vbufframe) return;
             vbufframe = cur.fr1;
-        };
+        }
+        else vbufframe = -1;
         loopi(numvertices) // vertices
         {
             md2::md2_vvert &v = vbuf[i];
@@ -249,7 +250,6 @@ struct md3model
             {
                 tristrip ts;
                 ts.addtriangles(idxs.getbuf(), idxs.length()/3);
-                ts.findconnectivity();
                 idxs.setsizenodelete(0);
                 ts.buildstrips(idxs, false);
                 m.vbuf = new md2::md2_vvert[m.numvertices];

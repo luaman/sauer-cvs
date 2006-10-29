@@ -73,9 +73,11 @@ struct tristrip
         loopv(triangles)
         {
             triangle &tri = triangles[i];
-            loopj(3) { while(nodes.length()<=tri.v[j]) nodes.add(0); nodes[tri.v[j]]++; };
             loopj(3)
             {
+                while(nodes.length()<=tri.v[j]) nodes.add(0); 
+                nodes[tri.v[j]]++;
+
                 edge e(tri.v[j], tri.v[j==2 ? 0 : j+1]);
                 edge *conn = edges.access(e);
                 if(conn) 
@@ -214,6 +216,7 @@ struct tristrip
 
     void buildstrips(vector<ushort> &strips, bool degen)
     {
+        findconnectivity();
         int numtris = 0, numstrips = 0;
         while(remaining())
         {

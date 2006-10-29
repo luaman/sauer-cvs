@@ -336,7 +336,6 @@ struct md2 : model
         {
             tristrip ts;
             ts.addtriangles(idxs.getbuf(), idxs.length()/3);
-            ts.findconnectivity();
             idxs.setsizenodelete(0);
             ts.buildstrips(idxs, false);
             ebuf = new ushort[idxs.length()];
@@ -418,7 +417,8 @@ struct md2 : model
         {
             if(vbufframe==curas.frame) return;
             vbufframe = curas.frame;
-        };
+        }
+        else vbufframe = -1;
         loopv(dynverts)
         {
             md2_dvvert &dv = dynverts[i];
