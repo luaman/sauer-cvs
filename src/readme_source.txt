@@ -56,6 +56,11 @@ ready for testing and distribution. Do not come ask me for help in compiling
 or modifying the sources, if you can't figure out how to do this yourself
 you probably shouldn't be touching the files anyway.
 
+An alternative to visual studio for Windows is MinGW. In order to compile 
+using MinGW, copy Makefile.mingw from the mingw directory to the src directory.
+You can also optionally copy make.mingw.bat to the sauerbraten directory for an
+easy way to compile.
+
 The sauerbraten sources are very small, compact, and non redundant, so anyone
 wishing to modify the source code should be able to gain an overview of
 sauerbraten's inner workings by simply reading through the source code in its
