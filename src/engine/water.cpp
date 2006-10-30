@@ -1220,7 +1220,7 @@ void genenvmaps()
     };
 };
 
-GLuint closestenvmap(const vec &o, int radius)
+GLuint closestenvmap(const vec &o)
 {
     GLuint mintex = 0;
     float mindist = 1e16f;
@@ -1281,7 +1281,7 @@ void setupmaterials(bool load)
                 vec center(m.o.tovec());
                 center[R[dim]] += m.rsize/2;
                 center[C[dim]] += m.csize/2;
-                m.tex = closestenvmap(center, envmapradius);
+                m.tex = closestenvmap(center);
                 if(!m.tex) m.tex = skyenvmap;
             };
         };
