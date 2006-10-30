@@ -1,8 +1,8 @@
 #!/bin/sh
-# CUBE_DIR should refer to the directory in which Cube is placed.
-#CUBE_DIR=~/cube
-#CUBE_DIR=/usr/local/lib/cube
-CUBE_DIR=.
+# SAUER_DIR should refer to the directory in which Sauerbraten is placed.
+#SAUER_DIR=~/sauerbraten
+#SAUER_DIR=/usr/local/lib/sauerbraten
+SAUER_DIR=.
 
 # SYSTEM_NAME should be set to the name of your operating system.
 #SYSTEM_NAME=Linux
@@ -17,7 +17,7 @@ Linux)
   SYSTEM_PREFIX=linux_
   ;;
 *)
-  echo "Your operating system does not have a supported Cube client."
+  echo "Your operating system does not have a pre-compiled Sauerbraten client."
   exit 1
   ;;
 esac
@@ -26,15 +26,15 @@ case ${MACHINE_NAME} in
 i486|i586|i686)
   MACHINE_PREFIX=
   ;;
-ppc)
-  MACHINE_PREFIX=ppc_
-  ;;
+#ppc)
+#  MACHINE_PREFIX=ppc_
+#  ;;
 *)
-  echo "Your processor does not have a supported Cube client."
+  echo "Your processor does not have a pre-compiled Sauerbraten client."
   exit 1
   ;;
 esac
 
-cd ${CUBE_DIR}
-exec ${CUBE_DIR}/bin_unix/${MACHINE_PREFIX}${SYSTEM_PREFIX}client $*
+cd ${SAUER_DIR}
+exec ${SAUER_DIR}/bin_unix/${MACHINE_PREFIX}${SYSTEM_PREFIX}client $*
 
