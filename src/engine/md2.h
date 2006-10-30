@@ -132,16 +132,17 @@ struct md2 : model
     
     Texture *skin, *masks;
     
-    md2_vvert *vbuf;
-    ushort *ebuf;
-    GLuint vbufGL, ebufGL;
-    int vbufframe, ebuflen;
+    md2_vvert *dynbuf;
+    ushort *dynidx;
+    int dynframe, dynlen;
+    GLuint statbuf, statidx;
+    int statlen;
     vector<md2_anim> *anims;
     vector<md2_dvvert> dynverts;
 
     md2_header header;
     
-    md2(const char *name) : loaded(false), vbuf(0), ebuf(0), vbufGL(0), ebufGL(0), vbufframe(-1), anims(0)
+    md2(const char *name) : loaded(false), dynbuf(0), dynidx(0), dynframe(-1), statbuf(0), statidx(0), anims(0)
     {
         loadname = newstring(name);
     };
@@ -159,10 +160,10 @@ struct md2 : model
         };
         delete[] mverts;
         delete[] mnorms;
-        if(vbufGL) glDeleteBuffers_(1, &vbufGL);
-        if(ebufGL) glDeleteBuffers_(1, &ebufGL);
-        DELETEA(vbuf);
-        DELETEA(ebuf);
+        if(statbuf) glDeleteBuffers_(1, &statbuf);
+        if(statidx) glDeleteBuffers_(1, &statidx);
+        DELETEA(dynbuf);
+        DELETEA(dynidx);
         DELETEA(anims);
         DELETEP(spheretree);
     };
@@ -324,11 +325,11 @@ struct md2 : model
             else { loopj(numvertex-2) loopk(3) idxs.add(tidxs[j&1 && k ? j+(1-(k-1))+1 : j+k]); };
         };
         
-        if(dynvar) vbuf = new md2_vvert[dynverts.length()];
+        if(dynvar) dynbuf = new md2_vvert[dynverts.length()];
         else
         {
-            glGenBuffers_(1, &vbufGL);
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
+            glGenBuffers_(1, &statbuf);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
             glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
         };
 
@@ -338,16 +339,17 @@ struct md2 : model
             ts.addtriangles(idxs.getbuf(), idxs.length()/3);
             idxs.setsizenodelete(0);
             ts.buildstrips(idxs);
-            ebuf = new ushort[idxs.length()];
-            memcpy(ebuf, idxs.getbuf(), idxs.length()*sizeof(ushort));
+            dynidx = new ushort[idxs.length()];
+            memcpy(dynidx, idxs.getbuf(), idxs.length()*sizeof(ushort));
+            dynlen = idxs.length();
         }
         else
         {
-            glGenBuffers_(1, &ebufGL);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, ebufGL);
+            glGenBuffers_(1, &statidx);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
             glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
+            statlen = idxs.length();
         };
-        ebuflen = idxs.length();
     };
 
     SphereTree *setspheretree()
@@ -412,18 +414,18 @@ struct md2 : model
             norms2p = mnorms[prev.fr2];
             aifrac1 = (lastmillis-lastanimswitchtime)/(float)animationinterpolationtime;
             aifrac2 = 1-aifrac1;
-            vbufframe = -1;
+            dynframe = -1;
         }
         else if(curas.range==1)
         {
-            if(vbufframe==curas.frame) return;
-            vbufframe = curas.frame;
+            if(dynframe==curas.frame) return;
+            dynframe = curas.frame;
         }
-        else vbufframe = -1;
+        else dynframe = -1;
         loopv(dynverts)
         {
             md2_dvvert &dv = dynverts[i];
-            md2_vvert &vv = vbuf[i];
+            md2_vvert &vv = dynbuf[i];
             vv.u = dv.u;
             vv.v = dv.v;
             #define ip(v1, v2, c)  (v1[dv.vert].c*current.frac2+v2[dv.vert].c*current.frac1)
@@ -518,8 +520,8 @@ struct md2 : model
         if(!calcanimstate(animinfo, varseed, speed, basetime, d, as)) return;
         loopi(as.range) if(!mverts[as.frame+i]) scaleverts(as.frame+i);
 
-        if(hasVBO && !vbufGL && as.frame==0 && as.range==1) genvar(false);
-        else if(!vbuf && (!hasVBO || as.frame!=0 || as.range!=1)) genvar(true);
+        if(hasVBO && !statbuf && as.frame==0 && as.range==1) genvar(false);
+        else if(!dynbuf && (!hasVBO || as.frame!=0 || as.range!=1)) genvar(true);
 
         glPushMatrix ();
         glTranslatef(x, y, z);
@@ -534,10 +536,10 @@ struct md2 : model
             glAlphaFunc(GL_GREATER, 0.9f);
         };
 
-        if(hasVBO && as.frame==0 && as.range==1 && vbufGL)
+        if(hasVBO && as.frame==0 && as.range==1 && statbuf)
         {
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbufGL);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, ebufGL);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
 
             md2_vvert *vverts = 0;
             glEnableClientState(GL_VERTEX_ARRAY);
@@ -547,7 +549,7 @@ struct md2 : model
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexCoordPointer(2, GL_FLOAT, sizeof(md2_vvert), &vverts->u);
 
-            glDrawElements(GL_TRIANGLES, ebuflen, GL_UNSIGNED_SHORT, 0);
+            glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, 0);
 
             xtravertsva += header.numvertices;
 
@@ -558,21 +560,21 @@ struct md2 : model
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
         }
-        else if(vbuf)
+        else if(dynbuf)
         {
             int index = vwep ? 1 : 0;
             if(d) gendynverts(d->current[index], &d->prev[index], d->lastanimswitchtime[index]);
             else gendynverts(as, NULL, 0);
-            loopi(ebuflen)
+            loopi(dynlen)
             {
-                ushort index = ebuf[i];
+                ushort index = dynidx[i];
                 if(index>=tristrip::RESTART || !i)
                 {
                     if(i) glEnd();
                     glBegin(index==tristrip::LIST ? GL_TRIANGLES : GL_TRIANGLE_STRIP);
                     if(index>=tristrip::RESTART) continue;
                 };
-                md2_vvert &v = vbuf[index];
+                md2_vvert &v = dynbuf[index];
                 glTexCoord2fv(&v.u);
                 glNormal3fv(v.normal.v);
                 glVertex3fv(v.pos.v);

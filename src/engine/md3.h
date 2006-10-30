@@ -104,20 +104,21 @@ struct md3mesh
     int numtriangles, numvertices;
     Texture *skin, *masks;
     
-    GLuint ebufGL, vbufGL;
-    ushort *ebuf;
-    md2::md2_vvert *vbuf;
-    int vbufframe, ebuflen;
-    md3mesh() : skin(crosshair), masks(crosshair), ebufGL(0), vbufGL(0), ebuf(0), vbuf(0), vbufframe(-1) {};
+    md2::md2_vvert *dynbuf;
+    ushort *dynidx;
+    int dynframe, dynlen;
+    GLuint statbuf, statidx;
+    int statlen;
+    md3mesh() : skin(crosshair), masks(crosshair), dynbuf(0), dynidx(0), dynframe(-1), statbuf(0), statidx(0)  {};
     ~md3mesh() 
     {
         if(hasVBO)
         {
-            if(vbufGL) glDeleteBuffers_(1, &vbufGL);
-            if(ebufGL) glDeleteBuffers_(1, &ebufGL);
+            if(statbuf) glDeleteBuffers_(1, &statbuf);
+            if(statidx) glDeleteBuffers_(1, &statidx);
         };
-        DELETEA(ebuf);
-        DELETEA(vbuf);
+        DELETEA(dynidx);
+        DELETEA(dynbuf);
     };
 
     void gendynverts(md3anpos &cur, md3anpos *prev, float ai_t)
@@ -133,17 +134,17 @@ struct md3mesh
             vert2p = &vertices[prev->fr2 * numvertices];
             norm1p = &normals[prev->fr1 * numvertices];
             norm2p = &normals[prev->fr2 * numvertices];
-            vbufframe = -1;
+            dynframe = -1;
         }
         else if(cur.fr1==cur.fr2)
         {
-            if(cur.fr1==vbufframe) return;
-            vbufframe = cur.fr1;
+            if(cur.fr1==dynframe) return;
+            dynframe = cur.fr1;
         }
-        else vbufframe = -1;
+        else dynframe = -1;
         loopi(numvertices) // vertices
         {
-            md2::md2_vvert &v = vbuf[i];
+            md2::md2_vvert &v = dynbuf[i];
             if(uv)
             {
                 v.u = uv[i].x;
@@ -255,21 +256,22 @@ struct md3model
                 ts.addtriangles(idxs.getbuf(), idxs.length()/3);
                 idxs.setsizenodelete(0);
                 ts.buildstrips(idxs);
-                m.vbuf = new md2::md2_vvert[m.numvertices];
-                m.ebuf = new ushort[idxs.length()];
-                memcpy(m.ebuf, idxs.getbuf(), idxs.length()*sizeof(ushort));
+                m.dynbuf = new md2::md2_vvert[m.numvertices];
+                m.dynidx = new ushort[idxs.length()];
+                memcpy(m.dynidx, idxs.getbuf(), idxs.length()*sizeof(ushort));
+                m.dynlen = idxs.length();
             }
             else
             {
-                glGenBuffers_(1, &m.vbufGL);
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, m.vbufGL);
+                glGenBuffers_(1, &m.statbuf);
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, m.statbuf);
                 glBufferData_(GL_ARRAY_BUFFER_ARB, verts.length()*sizeof(md2::md2_vvert), verts.getbuf(), GL_STATIC_DRAW_ARB);
 
-                glGenBuffers_(1, &m.ebufGL);
-                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, m.ebufGL);
+                glGenBuffers_(1, &m.statidx);
+                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, m.statidx);
                 glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
+                m.statlen = idxs.length();
             };
-            m.ebuflen = idxs.length();
         };
     };
     
@@ -624,8 +626,8 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
 
     md3name = model->loadname;
 
-    if(hasVBO && !meshes[0].vbufGL && as.frame==0 && as.range==1) genvar(false);
-    else if(!meshes[0].vbuf && (!hasVBO || as.frame!=0 || as.range!=1)) genvar(true);
+    if(hasVBO && !meshes[0].statbuf && as.frame==0 && as.range==1) genvar(false);
+    else if(!meshes[0].dynbuf && (!hasVBO || as.frame!=0 || as.range!=1)) genvar(true);
 
     md3anpos prev, cur;
     cur.setframes(d && index<2 ? d->current[index] : as);
@@ -658,10 +660,10 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
             glActiveTexture_(GL_TEXTURE0_ARB);
         };
 
-        if(hasVBO && as.frame==0 && as.range==1 && meshes[i].vbufGL) // vbo's for static stuff
+        if(hasVBO && as.frame==0 && as.range==1 && meshes[i].statbuf) // vbo's for static stuff
         {
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.vbufGL);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh.ebufGL);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, mesh.statbuf);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh.statidx);
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, sizeof(md2::md2_vvert), 0);
             glEnableClientState(GL_NORMAL_ARRAY);
@@ -669,7 +671,7 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexCoordPointer(2, GL_FLOAT, sizeof(md2::md2_vvert), (void *)(sizeof(vec)*2));
 
-            glDrawElements(GL_TRIANGLES, mesh.ebuflen, GL_UNSIGNED_SHORT, 0);
+            glDrawElements(GL_TRIANGLES, mesh.statlen, GL_UNSIGNED_SHORT, 0);
 
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
@@ -679,19 +681,19 @@ void md3model::render(int animinfo, int varseed, float speed, int basetime, dyne
 
             xtravertsva += mesh.numvertices;
         }
-        else if(meshes[i].vbuf)
+        else if(meshes[i].dynbuf)
         {
             meshes[i].gendynverts(cur, doai ? &prev : NULL, ai_t);
-            loopj(meshes[i].ebuflen)
+            loopj(meshes[i].dynlen)
             {
-                ushort index = meshes[i].ebuf[j];
+                ushort index = meshes[i].dynidx[j];
                 if(index>=tristrip::RESTART || !j)
                 {
                     if(j) glEnd();
                     glBegin(index==tristrip::LIST ? GL_TRIANGLES : GL_TRIANGLE_STRIP);
                     if(index>=tristrip::RESTART) continue;
                 };
-                md2::md2_vvert &v = meshes[i].vbuf[index];
+                md2::md2_vvert &v = meshes[i].dynbuf[index];
                 glTexCoord2fv(&v.u);
                 glNormal3fv(v.normal.v);
                 glVertex3fv(v.pos.v);
