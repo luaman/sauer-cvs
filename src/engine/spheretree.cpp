@@ -158,6 +158,7 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     model *m = loadmodel(NULL, e.attr2);
     if(!m) return false;
     if(!m->spheretree && !m->setspheretree()) return false;
+    if(!maxdist) maxdist = 1e16f;
     vec yo(o);
     yo.sub(e.o);
     if(!m->spheretree->shellintersect(yo, ray, maxdist)) return false;
