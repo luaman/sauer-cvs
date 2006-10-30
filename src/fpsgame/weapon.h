@@ -14,6 +14,8 @@ struct weaponstate
 
     guninfo *guns;
     
+    IVAR(maxdebris, 10, 50, 1000);
+
     weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
         static guninfo _guns[NUMGUNS] =
@@ -192,12 +194,6 @@ struct weaponstate
     
     void spawnbouncer(vec &p, vec &vel, fpsent *d, int type)
     {
-        /*
-        vec to = vel;
-        to.rotate_around_z((rnd(60)-30)*RAD);
-        if(to.z<0) to.z = -to.z;
-        to.add(p);
-        */
         vec to(rnd(100)-50, rnd(100)-50, rnd(100)-50);
         to.normalize();
         to.add(p);
@@ -258,11 +254,9 @@ struct weaponstate
     void explode(bool local, fpsent *owner, vec &v, dynent *notthis, int qdam, int gun)
     {
         particle_splash(0, 200, 300, v);
-//        particle_splash(5, 10, 500, v);
         playsound(S_RLHIT, &v);
         newsphere(v, RL_DAMRAD, gun==GUN_RL ? 0 : 1);
-        int maxdebris = 50;
-        int numdebris = rnd(maxdebris-5)+5;
+        int numdebris = rnd(maxdebris()-5)+5;
         vec debrisvel = vec(owner->o).sub(v).normalize(), debrisorigin(v);
         if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
         loopi(numdebris) spawnbouncer(debrisorigin, debrisvel, owner, BNC_DEBRIS);

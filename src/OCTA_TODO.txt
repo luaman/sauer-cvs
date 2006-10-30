@@ -24,10 +24,9 @@ eihrul:
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 aard/everyone:
+- before next release: calclight all maps
 - maybe add a way to purge infrequent / not recently used textures? esp now with mapshots.
 - finish debris
-- border gfx & tabs for ui
-- before next release: calclight all maps
 
 - social cheating solution
 - reduce maps

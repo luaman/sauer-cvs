@@ -13,7 +13,7 @@ static vector<char *> guistack;
 static vector<char *> executelater;
 static bool clearlater = false;
 
-VARP(menudistance, 16, 80, 256);
+VARP(menudistance, 16, 64, 256);
 
 vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(menudistance).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
 
@@ -31,7 +31,7 @@ void cleargui_(int *n)
     intret(cleargui(*n));
 };
 
-#define GUI_TITLE_COLOR  0xAAFFAA
+#define GUI_TITLE_COLOR  0xFFDD88
 #define GUI_BUTTON_COLOR 0xFFFFFF
 #define GUI_TEXT_COLOR   0xDDFFDD
 
@@ -204,7 +204,7 @@ static struct mainmenucallback : g3d_callback
         char **contents = guis.access(name);
         if(!contents) return;
 		cgui = &g;
-        cgui->start(menustart, 0.04f, &menutab);
+        cgui->start(menustart, 0.03f, &menutab);
 		guitab(name);		
 		execute(*contents);
         cgui->end();

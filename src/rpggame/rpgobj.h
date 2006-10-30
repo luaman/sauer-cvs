@@ -18,7 +18,14 @@ struct rpgobj : g3d_callback
         bool used;
     };
 
-    bool loot;          // if parent dies, this object should drop to the ground
+    enum
+    {
+        IF_INVENTORY = 1,   // parent owns this object, will contribute to parent stats
+        IF_LOOT      = 2,   // if parent dies, this object should drop to the ground
+        IF_TRADE     = 4,   // parent has this item available for trade
+    };
+
+    int itemflags; 
 
     char *curaction;    // last thing the player did with this object / default action
     rpgaction *actions;
@@ -28,12 +35,15 @@ struct rpgobj : g3d_callback
     behaviour *beh;
     int health;
 
-    int menutime;
+    int menutime, menutab;
 
     rpgobjset &os;
+    
+    #define loopinventory() for(rpgobj *o = inventory; o; o = o->sibling)
+    #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
-    rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL),
-        name(_name), model(NULL), loot(false), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), menutime(0), os(_os) {};
+    rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), itemflags(IF_INVENTORY), 
+        name(_name), model(NULL), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), menutime(0), menutab(1), os(_os) {};
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 
@@ -49,12 +59,12 @@ struct rpgobj : g3d_callback
         parent = sibling = NULL;
     };
 
-    void add(rpgobj *o, bool loot)
+    void add(rpgobj *o, int itemflags)
     {
         o->sibling = inventory;
         o->parent = this;
         inventory = o;
-        o->loot = loot;
+        o->itemflags = itemflags;
     };
 
     void remove(rpgobj *o)
@@ -108,7 +118,7 @@ struct rpgobj : g3d_callback
 
     void droploot()
     {
-        for(rpgobj *o = inventory; o; o = o->sibling) if(o->loot)
+        loopinventorytype(IF_LOOT)
         {
             o->decontain();
             os.pushobj(o);
@@ -120,7 +130,7 @@ struct rpgobj : g3d_callback
 
     rpgobj *take(char *name)
     {
-        for(rpgobj *o = inventory; o; o = o->sibling) if(strcmp(o->name, name)==0)
+        loopinventory() if(strcmp(o->name, name)==0)
         {
             o->decontain();
             return o;
@@ -149,14 +159,31 @@ struct rpgobj : g3d_callback
     
     void gui(g3d_gui &g, bool firstpass)
     {
-        g.start(menutime, 0.02f);
+        g.start(menutime, 0.02f, &menutab);
+        g.tab(name, 0xFFFFFF);
         if(abovetext) g.text(abovetext, 0xDDFFDD);
+        
         for(rpgaction *a = actions; a; a = a->next) if(g.button(a->initiate, 0xFFFFFF, "chat")&G3D_UP)
         {
             if(*a->script) { os.pushobj(this); execute(a->script); };
         };
-        if(!ai) if(g.button("take", 0xFFFFFF, "hand")&G3D_UP) { os.take(this, os.playerobj); };
-        if(ai) if(g.button("trade", 0xFFFFFF, "coins")&G3D_UP) { conoutf("trade"); };
+        
+        if(!ai) if(g.button("take", 0xFFFFFF, "hand")&G3D_UP)
+        {
+            conoutf("\f2you take a %s (worth %d gold)", name, 10);
+            os.take(this, os.playerobj);
+        };
+        
+        int numtrade = 0;
+        if(ai) loopinventorytype(IF_TRADE)
+        {
+            if(!numtrade++) g.tab("trade", 0xDDDDDD);
+            if(g.button(o->name, 0xFFFFFF, "coins")&G3D_UP)
+            {
+                conoutf("\f2you bought %s for %d gold!", o->name, 10);
+            };
+        };
+        
         g.end();
     };
 

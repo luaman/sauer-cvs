@@ -11,7 +11,7 @@ struct rpgobjset
     {
         CCOMMAND(rpgobjset, r_model,   "s",   self->stack[0]->model = self->stringpool(args[0]));    
         CCOMMAND(rpgobjset, r_spawn,   "s",   self->spawn(self->stringpool(args[0])));    
-        CCOMMAND(rpgobjset, r_contain, "s",   { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0], atoi(args[0])!=0); });    
+        CCOMMAND(rpgobjset, r_contain, "s",   { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0], atoi(args[0])); });    
         CCOMMAND(rpgobjset, r_pop,     "",    self->popobj());    
         CCOMMAND(rpgobjset, r_ai,      "",    { self->stack[0]->ai = true; });    
         CCOMMAND(rpgobjset, r_say,     "s",   { self->stack[0]->abovetext = self->stringpool(args[0]); });    
