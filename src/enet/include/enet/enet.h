@@ -183,7 +183,7 @@ enum
    ENET_PEER_TIMEOUT_MINIMUM              = 5000,
    ENET_PEER_TIMEOUT_MAXIMUM              = 30000,
    ENET_PEER_PING_INTERVAL                = 500,
-   ENET_PEER_UNSEQUENCED_WINDOW_SIZE      = 4 * 32,
+   ENET_PEER_UNSEQUENCED_WINDOW_SIZE      = 4 * 32
 };
 
 typedef struct _ENetChannel

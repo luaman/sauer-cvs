@@ -1,5 +1,5 @@
 CXX=g++
-CXXOPTFLAGS=-Wall -fsigned-char	-O3 -fomit-frame-pointer
+CXXOPTFLAGS=-Wall -fsigned-char -O3 -fomit-frame-pointer
 CXXFLAGS=$(CXXOPTFLAGS)	-Ienet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
 
 PLATFORM_PREFIX=linux
