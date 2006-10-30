@@ -207,7 +207,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
         fatal("No texture_env_combine extension! (your video card is WAY too old)");
 
-    if(!strstr(exts, "GL_ARB_multitexture")) fatal("no multitexture extension!");
+    if(!strstr(exts, "GL_ARB_multitexture")) fatal("No multitexture extension!");
     glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
     glClientActiveTexture_ = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
     glMultiTexCoord2f_     = (PFNGLMULTITEXCOORD2FARBPROC)    getprocaddress("glMultiTexCoord2fARB");

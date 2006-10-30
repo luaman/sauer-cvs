@@ -1854,8 +1854,6 @@ extern int ati_texgen_bug;
 
 void setupTMUs()
 {
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glEnable(GL_TEXTURE_GEN_S);
@@ -1868,6 +1866,8 @@ void setupTMUs()
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
 
     glEnable(GL_TEXTURE_2D);
     setupTMU();
@@ -1907,8 +1907,12 @@ void cleanupTMUs()
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+
     glDisable(GL_TEXTURE_2D);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
     glEnable(GL_TEXTURE_2D);
@@ -1916,8 +1920,6 @@ void cleanupTMUs()
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
 };
 
 #ifdef SHOWVA
