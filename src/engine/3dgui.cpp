@@ -11,7 +11,6 @@ static int mousebuttons = 0;
 static g3d_gui *windowhit = NULL;
 
 #define SHADOW 4
-#define IMAGE_SIZE (2*FONTH-SHADOW)
 #define ICON_SIZE (FONTH-SHADOW)
 #define SKIN_SCALE 4
 #define INSERT (3*SKIN_SCALE)
@@ -168,13 +167,15 @@ struct gui : g3d_gui
     };
 
     //one day to replace render_texture_panel()...?
-    int image(const char *path)
+    int image(const char *path, float scale)
     {
         Texture *t = textureload(path);
         if(!t) return 0;
         autotab();
-        if(visible()) icon_(t, curx, cury, IMAGE_SIZE, ishit(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW));
-        return layout(IMAGE_SIZE+SHADOW, IMAGE_SIZE+SHADOW);
+        if(scale==0) scale = 1;
+        int size = (int)(scale*2*FONTH)-SHADOW;
+        if(visible()) icon_(t, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
+        return layout(size+SHADOW, size+SHADOW);
     };
 
     void slider(int &val, int vmin, int vmax, int color) 

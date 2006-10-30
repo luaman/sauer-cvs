@@ -38,16 +38,23 @@ void cleargui_(int *n)
 //@DOC name and icon are optional
 void guibutton(char *name, char *action, char *icon)
 {
-    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, *icon ? icon : (strstr(action, "showgui") ? "blue_button" : "green_button"))&G3D_UP) 
+    if(!cgui) return;
+    int ret = cgui->button(name, GUI_BUTTON_COLOR, *icon ? icon : (strstr(action, "showgui") ? "blue_button" : "green_button"));
+    if(ret&G3D_UP) 
     {
         executelater.add(newstring(*action ? action : name));
         clearlater = true;
+    }
+    else if(ret&G3D_ROLLOVER)
+    {
+        alias("guirollovername", name);
+        alias("guirolloveraction", action);
     };
 };
 
-void guiimage(char *path, char *action)
+void guiimage(char *path, char *action, float *scale)
 {
-    if(cgui && cgui->image(path)&G3D_UP && *action)
+    if(cgui && cgui->image(path, *scale)&G3D_UP && *action)
     {
         executelater.add(newstring(action));
         clearlater = true;
@@ -182,7 +189,7 @@ COMMAND(showgui, "s");
 COMMAND(guilist, "s");
 COMMAND(guititle, "s");
 COMMAND(guibar,"");
-COMMAND(guiimage,"ss");
+COMMAND(guiimage,"ssf");
 COMMAND(guislider,"siis");
 COMMAND(guiradio,"ssis");
 COMMAND(guicheckbox, "ssiis");

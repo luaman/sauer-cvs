@@ -206,7 +206,7 @@ struct g3d_gui
 
 	virtual void tab(const char *name, int color) = 0;
     virtual int title(const char *text, int color, const char *icon = NULL) = 0;
-    virtual int image(const char *path) = 0;
+    virtual int image(const char *path, float scale) = 0;
     virtual void slider(int &val, int vmin, int vmax, int color) = 0;
     virtual void separator(int color) = 0;
 	virtual void progress(int color, float percent) = 0;
