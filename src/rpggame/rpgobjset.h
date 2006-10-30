@@ -9,19 +9,20 @@ struct rpgobjset
     
     rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL)
     {
-        CCOMMAND(rpgobjset, r_model,   "s",   self->stack[0]->model = self->stringpool(args[0]));    
-        CCOMMAND(rpgobjset, r_spawn,   "s",   self->spawn(self->stringpool(args[0])));    
+        CCOMMAND(rpgobjset, r_model,   "s",   { self->stack[0]->model = self->stringpool(args[0]); });    
+        CCOMMAND(rpgobjset, r_spawn,   "s",   { self->spawn(self->stringpool(args[0])); });    
         CCOMMAND(rpgobjset, r_contain, "s",   { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0], atoi(args[0])); });    
-        CCOMMAND(rpgobjset, r_pop,     "",    self->popobj());    
+        CCOMMAND(rpgobjset, r_pop,     "",    { self->popobj(); });    
         CCOMMAND(rpgobjset, r_ai,      "",    { self->stack[0]->ai = true; });    
         CCOMMAND(rpgobjset, r_say,     "s",   { self->stack[0]->abovetext = self->stringpool(args[0]); });    
-        CCOMMAND(rpgobjset, r_action,  "ss",  self->stack[0]->addaction(self->stringpool(args[0]), self->stringpool(args[1])));    
-        CCOMMAND(rpgobjset, r_take,    "sss", self->takefromplayer(args[0], args[1], args[2]));    
-        CCOMMAND(rpgobjset, r_give,    "s",   self->givetoplayer(args[0]));    
+        CCOMMAND(rpgobjset, r_action,  "ss",  { self->stack[0]->addaction(self->stringpool(args[0]), self->stringpool(args[1])); });    
+        CCOMMAND(rpgobjset, r_take,    "sss", { self->takefromplayer(args[0], args[1], args[2]); });    
+        CCOMMAND(rpgobjset, r_give,    "s",   { self->givetoplayer(args[0]); });    
+        CCOMMAND(rpgobjset, r_worth,   "i",   { self->stack[0]->worth = atoi(args[0]); });    
+        CCOMMAND(rpgobjset, r_gold,    "i",   { self->stack[0]->gold  = atoi(args[0]); });    
         playerobj = new rpgobj("player", *this);
         playerobj->ent = &cl.player1;
         clearworld();
-        playerobj->scriptinit();
     };
     
     void clearworld()
@@ -30,6 +31,8 @@ struct rpgobjset
         set.deletecontentsp();
         stack.setsize(0);
         loopi(10) stack.add(playerobj);     // determines the stack depth
+        
+        playerobj->scriptinit();
     };
     
     void update(int curtime)
@@ -74,14 +77,22 @@ struct rpgobjset
     void takefromplayer(char *name, char *ok, char *notok)
     {
         rpgobj *o = playerobj->take(name);
-        if(o) stack[0]->add(o, false);
+        if(o)
+        {
+            stack[0]->add(o, false);
+            conoutf("\f2you hand over a %s", o->name);
+        };
         execute(o ? ok : notok);
     };
     
     void givetoplayer(char *name)
     {
         rpgobj *o = stack[0]->take(name);
-        if(o) playerobj->add(o, false);
+        if(o)
+        {
+            conoutf("\f2you receive a %s", o->name);
+            playerobj->add(o, false);
+        };
     };
     
     char *stringpool(char *name)

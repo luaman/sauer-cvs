@@ -34,6 +34,8 @@ struct rpgobj : g3d_callback
     bool ai;            // whether this object does its own thinking (npcs/monsters)
     behaviour *beh;
     int health;
+    int gold;           // how much money is owned by the object (mostly for npcs/player only)
+    int worth;          // base value when this object is sold by an npc (not necessarily when sold TO an npc)
 
     int menutime, menutab;
 
@@ -43,7 +45,7 @@ struct rpgobj : g3d_callback
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), itemflags(IF_INVENTORY), 
-        name(_name), model(NULL), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), menutime(0), menutab(1), os(_os) {};
+        name(_name), model(NULL), curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {};
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 
@@ -93,7 +95,6 @@ struct rpgobj : g3d_callback
             lightreaching(ent->o, color, dir);  // FIXME just once for nonmoving objects
             rendermodel(color, dir, model, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, ent->o.x, ent->o.y, ent->o.z, ent->yaw, 0, 0, 0);
         };
-        //if(abovetext) particle_text(ent->abovehead(), abovetext, 11, 1);
     };
 
     void update(int curtime)
@@ -157,34 +158,106 @@ struct rpgobj : g3d_callback
         };
     };
     
+    void guiaction(g3d_gui &g, rpgaction *a)
+    {
+        if(!a) return;
+        guiaction(g, a->next);
+        if(g.button(a->initiate, 0xFFFFFF, "chat")&G3D_UP)
+        {
+            if(*a->script) { os.pushobj(this); execute(a->script); };
+        };
+    };
+    
     void gui(g3d_gui &g, bool firstpass)
     {
         g.start(menutime, 0.02f, &menutab);
         g.tab(name, 0xFFFFFF);
         if(abovetext) g.text(abovetext, 0xDDFFDD);
         
-        for(rpgaction *a = actions; a; a = a->next) if(g.button(a->initiate, 0xFFFFFF, "chat")&G3D_UP)
-        {
-            if(*a->script) { os.pushobj(this); execute(a->script); };
-        };
+        guiaction(g, actions);
         
         if(!ai) if(g.button("take", 0xFFFFFF, "hand")&G3D_UP)
         {
-            conoutf("\f2you take a %s (worth %d gold)", name, 10);
+            conoutf("\f2you take a %s (worth %d gold)", name, worth);
             os.take(this, os.playerobj);
         };
         
-        int numtrade = 0;
-        if(ai) loopinventorytype(IF_TRADE)
+        if(ai)
         {
-            if(!numtrade++) g.tab("trade", 0xDDDDDD);
-            if(g.button(o->name, 0xFFFFFF, "coins")&G3D_UP)
+            int numtrade = 0;
+            string info = "";
+            loopinventorytype(IF_TRADE)
             {
-                conoutf("\f2you bought %s for %d gold!", o->name, 10);
+                if(!numtrade++) g.tab("buy", 0xDDDDDD);
+                int ret = g.button(o->name, 0xFFFFFF, "coins");
+                int price = o->worth;
+                if(ret&G3D_UP)
+                {
+                    if(os.playerobj->gold>=price)
+                    {
+                        conoutf("\f2you bought %s for %d gold", o->name, price);
+                        os.playerobj->gold -= price;
+                        gold += price;
+                        o->decontain();
+                        os.playerobj->add(o, IF_INVENTORY);
+                    }
+                    else
+                    {
+                        conoutf("\f2you cannot afford this item!");
+                    };
+                }
+                else if(ret&G3D_ROLLOVER)
+                {
+                    s_sprintf(info)("buy for %d gold (you have %d)", price, os.playerobj->gold);
+                };
+            };
+            if(numtrade)
+            {
+                g.text(info, 0xAAAAAA);   
+                g.tab("sell", 0xDDDDDD);
+                os.playerobj->invgui(g, this);
             };
         };
         
         g.end();
+    };
+    
+    void invgui(g3d_gui &g, rpgobj *seller = NULL)
+    {
+        string info = "";
+        loopinventory()
+        {
+            int ret = g.button(o->name, 0xFFFFFF, "coins");
+            int price = o->worth/2;
+            if(ret&G3D_UP)
+            {
+                if(seller)
+                {
+                    if(price>seller->gold)
+                    {
+                        conoutf("\f2%s cannot afford to buy %s from you!", seller->name, o->name);                    
+                    }
+                    else
+                    {
+                        conoutf("\f2you sold %s for %d gold", o->name, price);
+                        gold += price;
+                        seller->gold -= price;
+                        o->decontain();
+                        seller->add(o, IF_TRADE);                    
+                    };
+                }
+                else    // player wants to use this item
+                {
+                    conoutf("\f2using: %s", o->name);
+                };
+            }
+            else if(ret&G3D_ROLLOVER)
+            {
+                if(seller) s_sprintf(info)("sell for %d gold (you have %d)",      price, gold);
+                else       s_sprintf(info)("item is worth %d gold (you have %d)", price, gold);
+            };
+        };
+        g.text(info, 0xAAAAAA);   
     };
 
     void g3d_menu()

@@ -14,7 +14,7 @@ struct rpgent : dynent
     
 };
 
-struct rpgclient : igameclient
+struct rpgclient : igameclient, g3d_callback
 {
     #include "entities.h"
     #include "behaviours.h"
@@ -31,10 +31,14 @@ struct rpgclient : igameclient
     string mapname;
     
     char *curaction;
+    
+    int menutime, menutab;
+    vec menupos;
 
-    rpgclient() : et(*this), os(*this), lastmillis(0), curaction(NULL)
+    rpgclient() : et(*this), os(*this), lastmillis(0), curaction(NULL), menutime(0), menutab(1)
     {
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
+        CCOMMAND(rpgclient, showinventory, "", self->showinventory());    
     };
     ~rpgclient() {};
 
@@ -64,6 +68,27 @@ struct rpgclient : igameclient
                 };
             };
         };        
+    };
+    
+    void showinventory()
+    {
+        if(menutime)
+        {
+            menutime = 0;
+        }
+        else
+        {
+            menutime = lastmillis;
+            menupos  = menuinfrontofplayer();        
+        };
+    };
+
+    void gui(g3d_gui &g, bool firstpass)
+    {
+        g.start(menutime, 0.03f, &menutab);
+        g.tab("inventory", 0xFFFFF);
+        os.playerobj->invgui(g);
+        g.end();
     };
     
     void initclient() {};
@@ -125,7 +150,7 @@ struct rpgclient : igameclient
         os.render();
     };
     
-    void g3d_gamemenus() { os.g3d_npcmenus(); };
+    void g3d_gamemenus() { os.g3d_npcmenus(); if(menutime) g3d_addgui(this, menupos); };
 
     void writegamedata(vector<char> &extras) {};
     void readgamedata(vector<char> &extras) {};
