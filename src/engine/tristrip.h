@@ -148,7 +148,6 @@ struct tristrip
             ushort least = connectivity[i].pop();
             removeconnectivity(least);
             return least;
-
         };
         return UNUSED;
     };
@@ -244,7 +243,7 @@ struct tristrip
             buildstrip(strip, reverse);
             numstrips++;
             numtris += strip.length()-2;
-            if(strip.length()==1 && prims)
+            if(strip.length()==3 && prims)
             {
                 loopv(strip) singles.add(strip[i]);
                 continue;
