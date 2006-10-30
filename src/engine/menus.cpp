@@ -13,7 +13,7 @@ static vector<char *> guistack;
 static vector<char *> executelater;
 static bool clearlater = false;
 
-VARP(menudistance, 16, 64, 256);
+VARP(menudistance, 16, 80, 256);
 
 vec menuinfrontofplayer() { return vec(worldpos).sub(camera1->o).set(2, 0).normalize().mul(menudistance).add(player->o).sub(vec(0, 0, player->eyeheight-1)); }
 

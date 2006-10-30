@@ -169,8 +169,8 @@ struct gui : g3d_gui
     //one day to replace render_texture_panel()...?
     int image(const char *path, float scale)
     {
-        Texture *t = textureload(path);
-        if(!t) return 0;
+        Texture *t = textureload(path, false, true, false);
+        if(t==crosshair) return 0;
         autotab();
         if(scale==0) scale = 1;
         int size = (int)(scale*2*FONTH)-SHADOW;
