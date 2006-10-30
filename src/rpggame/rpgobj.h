@@ -25,7 +25,32 @@ struct rpgobj : g3d_callback
         IF_TRADE     = 4,   // parent has this item available for trade
     };
 
-    int itemflags; 
+    int itemflags;
+    
+    union               // stats attributed to its owner, added/multiplied on top of base values
+    {
+        float stats[18];    // must match vars below, blah  
+        struct
+        {
+            float meleepower,  meleefactor,  meleecrush;     // melee damage added, multiplied, pre-substracted
+            float rangedpower, rangedfactor, rangedcrush;   
+            float magicpower,  magicfactor,  magiccrush; 
+            
+            float defensepower, defensefactor;  // damage substracted, divided
+            
+            // example: meleedamage = (meleepower*meleefactor-min(defensepower-meleecrush, 0))/defensefactor
+            
+            float attackspeed;  // (100, *)
+            float movespeed;    // (100, *)
+            
+            float maxhp;        // (100, *)
+            float strength;     // (100, *) affects carrying capacity
+            
+            float tradeskill;   // (100, *) buying/selling gives less loss
+            float feared;       // (100, *) the more feared, the more blindly people will obey you, monsters may run away
+            float stealth;      // (100, *) affects npc fov/range when stealing items
+        };    
+    };
 
     char *curaction;    // last thing the player did with this object / default action
     rpgaction *actions;
