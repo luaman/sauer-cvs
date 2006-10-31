@@ -135,7 +135,7 @@ struct weaponstate
 
         avoidcollision(&bnc, dir, owner, 0.1f);
 
-        bnc.offset = owner==player1 ? hudgunorigin(type==BNC_GRENADE ? GUN_GL : -1, from, to, local) : from;
+        bnc.offset = hudgunorigin(type==BNC_GRENADE ? GUN_GL : -1, from, to, owner);
         bnc.offset.sub(bnc.o);
         bnc.offsetmillis = OFFSETMILLIS;
     };
@@ -185,7 +185,7 @@ struct weaponstate
             p->inuse = true;
             p->o = from;
             p->to = to;
-            p->offset = owner==player1 ? hudgunorigin(gun, from, to, local) : from;
+            p->offset = hudgunorigin(gun, from, to, owner);
             p->offset.sub(from);
             p->speed = speed;
             p->local = local;
@@ -360,17 +360,13 @@ struct weaponstate
         };
     };
 
-    vec hudgunorigin(int gun, const vec &from, const vec &to, bool local)
+    vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d)
     {
-        if(!local) return from;
+        if(d!=player1) return from;
         vec offset(from);
-        if(!cl.hudgun())
+        offset.add(vec(to).sub(from).normalize().mul(6));
+        if(cl.hudgun())
         {
-            if(gun==GUN_RL) offset.add(vec(to).sub(from).normalize().mul(5));
-        }
-        else
-        {
-            offset.add(vec(to).sub(from).normalize().mul(6.0f));
             offset.sub(vec(camup).mul(0.2f));
             offset.add(vec(camright).mul(0.8f));
         };
@@ -392,7 +388,7 @@ struct weaponstate
                 loopi(SGRAYS)
                 {
                     particle_splash(0, 20, 250, sg[i]);
-                    particle_flare(hudgunorigin(gun, behind, sg[i], local), sg[i], 300);
+                    particle_flare(hudgunorigin(gun, behind, sg[i], d), sg[i], 300);
                 };
                 break;
             };
@@ -402,7 +398,7 @@ struct weaponstate
             {
                 particle_splash(0, 200, 250, to);
                 //particle_trail(1, 10, from, to);
-                particle_flare(hudgunorigin(gun, behind, to, local), to, 600);
+                particle_flare(hudgunorigin(gun, behind, to, d), to, 600);
                 break;
             };
 
@@ -426,7 +422,7 @@ struct weaponstate
 
             case GUN_RIFLE: 
                 particle_splash(0, 200, 250, to);
-                particle_trail(1, 500, hudgunorigin(gun, from, to, local), to);
+                particle_trail(1, 500, hudgunorigin(gun, from, to, d), to);
                 break;
         };
     };
