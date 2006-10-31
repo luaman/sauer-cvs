@@ -126,7 +126,6 @@ struct fpsclient : igameclient
 
     fpsent *pointatplayer()
     {
-        extern vec worldpos;
         loopv(players)
         {
             fpsent *o = players[i];

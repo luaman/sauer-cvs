@@ -70,10 +70,6 @@ enum
     PT_METERVS
 };
 
-vec right, up;
-
-void setorient(const vec &r, const vec &u) { right = r; up = u; };
-
 extern float reflecting;
 
 void render_particles(int time)
@@ -139,10 +135,10 @@ void render_particles(int time)
                 }
                 else        // regular particles
                 {
-                    glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-right.x+up.x)*sz, p->o.y+(-right.y+up.y)*sz, p->o.z+(-right.z+up.z)*sz);
-                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( right.x+up.x)*sz, p->o.y+( right.y+up.y)*sz, p->o.z+( right.z+up.z)*sz);
-                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( right.x-up.x)*sz, p->o.y+( right.y-up.y)*sz, p->o.z+( right.z-up.z)*sz);
-                    glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-right.x-up.x)*sz, p->o.y+(-right.y-up.y)*sz, p->o.z+(-right.z-up.z)*sz);
+                    glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-camright.x+camup.x)*sz, p->o.y+(-camright.y+camup.y)*sz, p->o.z+(-camright.z+camup.z)*sz);
+                    glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( camright.x+camup.x)*sz, p->o.y+( camright.y+camup.y)*sz, p->o.z+( camright.z+camup.z)*sz);
+                    glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( camright.x-camup.x)*sz, p->o.y+( camright.y-camup.y)*sz, p->o.z+( camright.z-camup.z)*sz);
+                    glTexCoord2f(0.0, 0.0); glVertex3f(p->o.x+(-camright.x-camup.x)*sz, p->o.y+(-camright.y-camup.y)*sz, p->o.z+(-camright.z-camup.z)*sz);
                 };
                 if(pt.type!=PT_EDIT) xtraverts += 4;
             }

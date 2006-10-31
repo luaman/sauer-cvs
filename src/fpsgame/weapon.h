@@ -347,6 +347,16 @@ struct weaponstate
         };
     };
 
+    vec hudgunorigin(const vec &from, const vec &to, bool local)
+    {
+        if(!local || !cl.hudgun()) return from;
+        vec offset(from);
+        offset.add(vec(to).sub(from).normalize().mul(6.0f));
+        offset.sub(vec(camup).mul(0.2f));
+        offset.add(vec(camright).mul(0.8f));
+        return offset;
+    };
+
     void shootv(int gun, vec &from, vec &to, fpsent *d, bool local)     // create visual effect from a shot
     {
         playsound(guns[gun].sound, d==player1 ? NULL : &d->o);
@@ -362,7 +372,7 @@ struct weaponstate
                 loopi(SGRAYS)
                 {
                     particle_splash(0, 20, 250, sg[i]);
-                    particle_flare(behind, sg[i], 300);
+                    particle_flare(hudgunorigin(behind, sg[i], local), sg[i], 300);
                 };
                 break;
             };
@@ -372,9 +382,7 @@ struct weaponstate
             {
                 particle_splash(0, 200, 250, to);
                 //particle_trail(1, 10, from, to);
-                vec lower = behind;
-                lower.z -= 2;
-                particle_flare(lower, to, 600);
+                particle_flare(hudgunorigin(behind, to, local), to, 600);
                 break;
             };
 
@@ -398,7 +406,7 @@ struct weaponstate
 
             case GUN_RIFLE: 
                 particle_splash(0, 200, 250, to);
-                particle_trail(1, 500, from, to);
+                particle_trail(1, 500, hudgunorigin(from, to, local), to);
                 break;
         };
     };

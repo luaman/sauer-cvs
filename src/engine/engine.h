@@ -192,9 +192,8 @@ extern physent *camera1;                // special ent that acts as camera, same
 
 extern header hdr;                      // current map header
 extern vector<ushort> texmru;
-extern vec worldpos;                    // current target of the crosshair in the world
 extern int xtraverts, xtravertsva;
-extern vector<vertex> verts;                   // the vertex array for all world rendering
+extern vector<vertex> verts;            // the vertex array for all world rendering
 extern int curtexnum;
 extern const ivec cubecoords[8];
 extern const ushort fv[6][4];

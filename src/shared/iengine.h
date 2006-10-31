@@ -105,6 +105,7 @@ extern int text_visible(const char *str, int max);
 extern void draw_envbox(int fogdist, float zclip = 0.0f);
 
 // renderextras
+extern vec worldpos, camright, camup;
 extern void dot(int x, int y, float z);
 extern void newsphere(vec &o, float max, int type);
 extern void renderspheres(int time);

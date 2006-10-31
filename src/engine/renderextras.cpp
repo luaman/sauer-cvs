@@ -298,13 +298,14 @@ void renderents()       // show sparkly thingies for map entities in edit mode
 
 GLfloat mm[16];
 
-vec worldpos;
+vec worldpos, camright, camup;
 
 void aimat()
 {
     glGetFloatv(GL_MODELVIEW_MATRIX, mm);
 
-    setorient(vec(mm[0], mm[4], mm[8]), vec(mm[1], mm[5], mm[9]));
+    camright = vec(mm[0], mm[4], mm[8]);
+    camup = vec(mm[1], mm[5], mm[9]);
 
     vec dir(0, 0, 0);
     vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, dir, true);
