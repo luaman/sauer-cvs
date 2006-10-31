@@ -39,7 +39,7 @@ void cleargui_(int *n)
 void guibutton(char *name, char *action, char *icon)
 {
     if(!cgui) return;
-    int ret = cgui->button(name, GUI_BUTTON_COLOR, *icon ? icon : (strstr(action, "showgui") ? "blue_button" : "green_button"));
+    int ret = cgui->button(name, GUI_BUTTON_COLOR, *icon ? icon : (strstr(action, "showgui") ? "menu" : "action"));
     if(ret&G3D_UP) 
     {
         executelater.add(newstring(*action ? action : name));
@@ -113,7 +113,7 @@ void guislider(char *var, int *min, int *max, char *onchange)
 void guicheckbox(char *name, char *var, int *on, int *off, char *onchange)
 {
     bool enabled = getval(var)!=*off;
-    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "tick" : "cross")&G3D_UP)
+    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "checkbox_on" : "checkbox_off")&G3D_UP)
     {
         updateval(var, enabled ? *off : (*on || *off ? *on : 1), onchange);
     };
@@ -122,7 +122,7 @@ void guicheckbox(char *name, char *var, int *on, int *off, char *onchange)
 void guiradio(char *name, char *var, int *n, char *onchange)
 {
     bool enabled = getval(var)==*n;
-    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "tick" : "empty")&G3D_UP)
+    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "radio_on" : "radio_off")&G3D_UP)
     {
         if(!enabled) updateval(var, *n, onchange);
     };

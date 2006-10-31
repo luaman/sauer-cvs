@@ -42,7 +42,7 @@ struct gui : g3d_gui
         if(tcurrent)
         {
             if(layoutpass && !tpos) tcurrent = NULL; //disable tabs because you didn't start with one
-            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab) tab(NULL, 0xAAFFAA); 
+            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab) tab(NULL, 0xFFDD88); // FIXME, should match other tab colors
         };
     };
 
