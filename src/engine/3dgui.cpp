@@ -129,8 +129,8 @@ struct gui : g3d_gui
     int button(const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, true, false); };
     int title (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, true); };
 
-    void separator(int color) { autotab(); line_(color, 5, 1); };
-    void progress(int color, float percent) { autotab(); line_(color, FONTH*2/5, percent); };
+    void separator() { autotab(); line_(5); };
+    void progress(float percent) { autotab(); line_(FONTH*2/5, percent); };
 
     //use to set min size (useful when you have progress bars)
     void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); };
@@ -179,12 +179,12 @@ struct gui : g3d_gui
         return layout(size+SHADOW, size+SHADOW);
     };
 
-    void slider(int &val, int vmin, int vmax, int color) 
+    void slider(int &val, int vmin, int vmax, int color)
     {	
         autotab();
         int x = curx;
         int y = cury;
-        line_(color, 2, 1.0);
+        line_(10);
         if(visible()) 
         {
             s_sprintfd(label)("%d", val);
@@ -218,12 +218,18 @@ struct gui : g3d_gui
         };
     };
 
-    void rect_(float x, float y, float w, float h) 
+    void rect_(float x, float y, float w, float h, int usetc = -1) 
     {
+        int tc[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+      
+        if(usetc>=0) glTexCoord2iv(tc[usetc]); 
         glVertex2f(x ,    y);
+        if(usetc>=0) glTexCoord2iv(tc[(usetc+1)%4]);
         glVertex2f(x + w, y);
+        if(usetc>=0) glTexCoord2iv(tc[(usetc+2)%4]);
         glVertex2f(x + w, y + h);
-        glVertex2f(x,     y + h);
+        if(usetc>=0) glTexCoord2iv(tc[(usetc+3)%4]);
+        glVertex2f(x, y + h);
         xtraverts += 4;
     };
 
@@ -242,54 +248,54 @@ struct gui : g3d_gui
         float yo = y + (size-ys)/2;
         if(hit && actionon) 
         {
+            glDisable(GL_TEXTURE_2D);
             notextureshader->set();
             glColor4ub(0x00, 0x00, 0x00, 0xC0);
             glBegin(GL_QUADS);
             rect_(xo+SHADOW, yo+SHADOW, xs, ys);
             glEnd();
+            glEnable(GL_TEXTURE_2D);
             defaultshader->set();	
         };
         loopi(overlaid ? 2 : 1)
         {
             if(i==1)
             {
-                if(!overlay) overlay = textureload("data/guioverlay.png");
-                t = overlay;
+                if(!overlaytex) overlaytex = textureload("data/guioverlay.png");
+                t = overlaytex;
                 hit = false;
             };
             glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
             glBindTexture(GL_TEXTURE_2D, t->gl);
             glBegin(GL_QUADS);
-            glTexCoord2i(0, 0); glVertex2f(xo,    yo);
-            glTexCoord2i(1, 0); glVertex2f(xo+xs, yo);
-            glTexCoord2i(1, 1); glVertex2f(xo+xs, yo+ys);
-            glTexCoord2i(0, 1); glVertex2f(xo,    yo+ys);
+            rect_(xo, yo, xs, ys, 0);
             glEnd();
             xtraverts += 4;
         };
     };
 
-    void line_(int color, int size, float percent)
+    void line_(int size, float percent = 1.0f)
     {		
         if(visible())
         {
-            notextureshader->set();
+            if(!slidertex) slidertex = textureload("data/guislider.png");
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, slidertex->gl);
             glBegin(GL_QUADS);
             if(percent < 0.99f) 
             {
-                glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0x60);
+                glColor4ub(0xFF, 0xFF, 0xFF, 0x60);
                 if(ishorizontal()) 
-                    rect_(curx + FONTH/2 - size, cury, size*2, ysize);
+                    rect_(curx + FONTH/2 - size, cury, size*2, ysize, 0);
                 else
-                    rect_(curx, cury + FONTH/2 - size, xsize, size*2);
+                    rect_(curx, cury + FONTH/2 - size, xsize, size*2, 1);
             };
-            glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
+            glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
             if(ishorizontal()) 
-                rect_(curx + FONTH/2 - size, cury + ysize*(1-percent), size*2, ysize*percent);
+                rect_(curx + FONTH/2 - size, cury + ysize*(1-percent), size*2, ysize*percent, 0);
             else 
-                rect_(curx, cury + FONTH/2 - size, xsize*percent, size*2);
+                rect_(curx, cury + FONTH/2 - size, xsize*percent, size*2, 1);
             glEnd();
-            defaultshader->set();	
         };
         layout(ishorizontal() ? FONTH : 0, ishorizontal() ? 0 : FONTH);
     };
@@ -321,7 +327,7 @@ struct gui : g3d_gui
         return layout(w, FONTH);
     };
 
-    static Texture *skin, *overlay;
+    static Texture *skintex, *overlaytex, *slidertex;
     static const int skinx[], skiny[], patch[][5];
 
     void patch_(int vleft, int vright, int vtop, int vbottom, int tleft, int tright, int ttop, int tbottom, int mode) 
@@ -361,7 +367,8 @@ struct gui : g3d_gui
 
     void patchn_(int vleft, int vright, int vtop, int vbottom, int start, int n) 
     {
-        glBindTexture(GL_TEXTURE_2D, skin->gl);
+        if(!skintex) skintex = textureload("data/guiskin.png");
+        glBindTexture(GL_TEXTURE_2D, skintex->gl);
         loopj(2)
         {	
             glDepthFunc(j?GL_LEQUAL:GL_GREATER);
@@ -415,7 +422,6 @@ struct gui : g3d_gui
             lightreaching(origin, modulate, dir, 0, 0.5f); 
             modulate.mul(1.3f + vec(yaw, 0.0f).dot(dir));
         
-            if(!skin) skin = textureload("data/guiskin.png");
             patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE-2*INSERT:0), cury+ysize, 0, tcurrent?8:9);
         };
     };
@@ -447,7 +453,7 @@ struct gui : g3d_gui
     };
 };
 
-Texture *gui::skin = NULL, *gui::overlay = NULL;
+Texture *gui::skintex = NULL, *gui::overlaytex = NULL, *gui::slidertex = NULL;
 
 //chop skin into a grid
 const int gui::skiny[] = {0, 21, 34, 56, 104, 128},

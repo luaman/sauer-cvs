@@ -209,8 +209,8 @@ struct g3d_gui
     virtual int title(const char *text, int color, const char *icon = NULL) = 0;
     virtual int image(const char *path, float scale, bool overlaid = false) = 0;
     virtual void slider(int &val, int vmin, int vmax, int color) = 0;
-    virtual void separator(int color) = 0;
-	virtual void progress(int color, float percent) = 0;
+    virtual void separator() = 0;
+	virtual void progress(float percent) = 0;
 	virtual void strut(int size) = 0;
 };
 

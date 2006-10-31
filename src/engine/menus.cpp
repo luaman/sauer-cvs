@@ -78,7 +78,7 @@ void guitab(char *name)
 
 void guibar()
 {
-    if(cgui) cgui->separator(GUI_TITLE_COLOR);
+    if(cgui) cgui->separator();
 };
 
 static void updateval(char *var, int val, char *onchange)
