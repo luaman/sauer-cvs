@@ -35,14 +35,14 @@ struct gui : g3d_gui
         lists.setsize(0);
     };
 
-    static int ty, tx, tpos, *tcurrent; //tracking tab size and position since uses different layout method...
+    static int ty, tx, tpos, *tcurrent, tcolor; //tracking tab size and position since uses different layout method...
 
     void autotab() 
     { 
         if(tcurrent)
         {
             if(layoutpass && !tpos) tcurrent = NULL; //disable tabs because you didn't start with one
-            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab) tab(NULL, 0xFFDD88); // FIXME, should match other tab colors
+            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab) tab(NULL, tcolor); 
         };
     };
 
@@ -52,6 +52,7 @@ struct gui : g3d_gui
     void tab(const char *name, int color) 
     {
         if(curdepth != 0) return;
+        tcolor = color;
         tpos++; 
         s_sprintfd(title)("%d", tpos);
         if(!name) name = title;
@@ -386,6 +387,7 @@ struct gui : g3d_gui
         tx = 0;
         ty = 0;
         tcurrent = tab;
+        tcolor = 0xFFFFFF;
         pushlist();
         if(layoutpass) nextlist = curlist;
         else
@@ -485,7 +487,7 @@ float gui::scale, gui::hitx, gui::hity;
 bool gui::passthrough;
 vec gui::modulate;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
-int gui::ty, gui::tx, gui::tpos, *gui::tcurrent;
+int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
 static vector<gui> guis;
 
 void g3d_addgui(g3d_callback *cb, vec &origin)
