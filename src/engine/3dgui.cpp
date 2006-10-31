@@ -33,6 +33,7 @@ struct gui : g3d_gui
     static void reset()
     {
         lists.setsize(0);
+        tcolor = 0xDDDDDD;
     };
 
     static int ty, tx, tpos, *tcurrent, tcolor; //tracking tab size and position since uses different layout method...
@@ -387,7 +388,6 @@ struct gui : g3d_gui
         tx = 0;
         ty = 0;
         tcurrent = tab;
-        tcolor = 0xFFFFFF;
         pushlist();
         if(layoutpass) nextlist = curlist;
         else
