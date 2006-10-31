@@ -180,6 +180,8 @@ extern float reflecting;
 
 void renderspheres(int time)
 {
+    if(spheres.empty()) return;
+
     static struct spheretype { float r, g, b; } spheretypes[2] =
     {
         { 1.0f, 0.5f, 0.5f },
@@ -189,15 +191,14 @@ void renderspheres(int time)
     if(!explshader) explshader = lookupshaderbyname("explosion");
     if(!expltex) expltex = textureload("data/explosion.jpg");
     explshader->set();
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBindTexture(GL_TEXTURE_2D, expltex->gl);
     loopv(spheres)
     {
         sphere &p = spheres[i];
         spheretype &pt = spheretypes[p.type];
-        glDepthMask(GL_FALSE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-        glBindTexture(GL_TEXTURE_2D, expltex->gl);
-        glPushMatrix();
         float size = p.size/p.max;
         if(renderpath!=R_FIXEDFUNCTION)
         {
@@ -205,6 +206,7 @@ void renderspheres(int time)
             glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, p.size, p.max, 0);
         };
         glColor4f(pt.r, pt.g, pt.b, 1.0f-size*size);
+        glPushMatrix();
         glTranslatef(p.o.x, p.o.y, p.o.z);
         glRotatef(lastmillis/5.0f, 1, 1, 1);
         glScalef(p.size, p.size, p.size);
@@ -225,9 +227,9 @@ void renderspheres(int time)
                 p.size += time/25.0f;
             };
         };
-        glDisable(GL_BLEND);
-        glDepthMask(GL_TRUE);
     };
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
     defaultshader->set();
 };
 

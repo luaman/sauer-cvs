@@ -10,6 +10,7 @@ struct weaponstate
     static const int MONSTERDAMAGEFACTOR = 4;
     static const int SGRAYS = 20;
     static const int SGSPREAD = 4;
+    static const int OFFSETMILLIS = 500;
     vec sg[SGRAYS];
 
     guninfo *guns;
@@ -106,11 +107,13 @@ struct weaponstate
         bool local;
         fpsent *owner;
         int bouncetype;
+        vec offset;
+        int offsetmillis;
     };
 
     vector<bouncent *> bouncers;
 
-    void newbouncer(vec &from, vec &to, bool local, fpsent *owner, int type, int lifetime, int speed)
+    void newbouncer(const vec &from, const vec &to, bool local, fpsent *owner, int type, int lifetime, int speed)
     {
         bouncent &bnc = *(bouncers.add(new bouncent));
         bnc.reset();
@@ -124,6 +127,9 @@ struct weaponstate
         bnc.local = local;
         bnc.owner = owner;
         bnc.bouncetype = type;
+        bnc.offset = owner==player1 ? hudgunorigin(from, to, local) : from;
+        bnc.offset.sub(from);
+        bnc.offsetmillis = OFFSETMILLIS;
 
         vec dir(to);
         dir.sub(from).normalize();
@@ -159,16 +165,17 @@ struct weaponstate
                 };
             };
             bnc.roll += old.sub(bnc.o).magnitude()/(4*RAD);
+            bnc.offsetmillis = max(bnc.offsetmillis-time, 0);
             next:;
         };
     };
 
     static const int MAXPROJ = 100;
-    struct projectile { vec o, to; float speed; fpsent *owner; int gun; bool inuse, local; } projs[MAXPROJ];
+    struct projectile { vec o, to, offset; float speed; fpsent *owner; int gun; bool inuse, local; int offsetmillis; } projs[MAXPROJ];
 
     void projreset() { loopi(MAXPROJ) projs[i].inuse = false; bouncers.deletecontentsp(); bouncers.setsize(0); };
 
-    void newprojectile(vec &from, vec &to, float speed, bool local, fpsent *owner, int gun)
+    void newprojectile(const vec &from, const vec &to, float speed, bool local, fpsent *owner, int gun)
     {
         loopi(MAXPROJ)
         {
@@ -177,10 +184,13 @@ struct weaponstate
             p->inuse = true;
             p->o = from;
             p->to = to;
+            p->offset = owner==player1 ? hudgunorigin(from, to, local) : from;
+            p->offset.sub(from);
             p->speed = speed;
             p->local = local;
             p->owner = owner;
             p->gun = gun;
+            p->offsetmillis = OFFSETMILLIS;
             return;
         };
     };
@@ -202,9 +212,10 @@ struct weaponstate
 
     void superdamageeffect(const vec &p, vec &vel, fpsent *d)
     {
+        if(!d->superdamage) return;
         vec from = p;
         from.y -= 16;
-        if(d->superdamage) loopi(min(d->superdamage/25, 40)+1) spawnbouncer(from, vel, d, BNC_GIBS);
+        loopi(min(d->superdamage/25, 40)+1) spawnbouncer(from, vel, d, BNC_GIBS);
     };
 
     void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel, bool isrl)
@@ -304,6 +315,7 @@ struct weaponstate
         {
             projectile &p = projs[i];
             if(!p.inuse) continue;
+            p.offsetmillis = max(p.offsetmillis-time, 0);
             int qdam = guns[p.gun].damage*(p.owner->quadmillis ? 4 : 1);
             if(p.owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
             vec v;
@@ -531,7 +543,9 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = *(bouncers[i]);
-            lightreaching(bnc.o, color, dir);
+            vec pos(bnc.o);
+            pos.add(vec(bnc.offset).mul(bnc.offsetmillis/float(OFFSETMILLIS)));
+            lightreaching(pos, color, dir);
             vec vel(bnc.vel);
             vel.add(bnc.gravity);
             if(vel.magnitude() <= 25.0f) yaw = bnc.lastyaw;
@@ -546,20 +560,22 @@ struct weaponstate
             string debrisname;
             if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x40 ? "gibc" : "gibh";
             else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; };
-            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, bnc.o.x, bnc.o.y, bnc.o.z, yaw, pitch, 10.0f, 0, NULL, 0);
+            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos.x, pos.y, pos.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
         loopi(MAXPROJ)
         {
             projectile &p = projs[i];
             if(!p.inuse || p.gun!=GUN_RL) continue;
+            vec pos(p.o);
+            pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
             vec v(p.to);
-            v.sub(p.o);
+            v.sub(pos);
             v.normalize();
             // the amount of distance in front of the smoke trail needs to change if the model does
             vectoyawpitch(v, yaw, pitch);
             yaw += 90;
             v.mul(3);
-            v.add(p.o);
+            v.add(pos);
             lightreaching(v, color, dir);
             rendermodel(color, dir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v.x, v.y, v.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };

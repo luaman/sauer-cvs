@@ -74,10 +74,6 @@ extern float reflecting;
 
 void render_particles(int time)
 {
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    
     static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
         { 0,          180, 155, 75,  2,  0, 0.24f }, // yellow: sparks 
@@ -102,11 +98,20 @@ void render_particles(int time)
         { PT_METERVS, 255, 25, 25,   0, -1, 2.0f },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
         { PT_METERVS, 50, 50, 255,   0, -1, 2.0f },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
     };
-        
+       
+    bool enabled = false;
     loopi(MAXPARTYPES) if(parlist[i])
     {
         parttype &pt = parttypes[i];
         float sz = pt.sz*particlesize/100.0f; 
+
+        if(!enabled)
+        {
+            enabled = true;
+            glDepthMask(GL_FALSE);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        };
 
         if(pt.tex>=0)
         {
@@ -214,9 +219,12 @@ void render_particles(int time)
         
         if(pt.tex>=0) glEnd();
     };
-        
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
+
+    if(enabled)
+    {        
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
+    };
 };
 
 VARP(maxparticledistance, 256, 512, 4096);

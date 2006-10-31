@@ -1230,12 +1230,12 @@ void drawreflection(float z, bool refract, bool clear)
 
     setfogplane();
     glDisable(GL_FOG);
+    defaultshader->set();
 
     renderspheres(0);
     render_particles(0);
 
     if(reflectclip) undoclipmatrix();
-    defaultshader->set();
 
     if(!refract && camera1->o.z >= z)
     {
@@ -1406,7 +1406,8 @@ void gl_drawframe(int w, int h, float curfps)
     };
 
     glDisable(GL_FOG);
-
+    defaultshader->set();
+    
     renderspheres(curtime);
     render_particles(curtime);
 
