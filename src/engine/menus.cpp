@@ -52,9 +52,9 @@ void guibutton(char *name, char *action, char *icon)
     };
 };
 
-void guiimage(char *path, char *action, float *scale)
+void guiimage(char *path, char *action, float *scale, int *overlaid)
 {
-    if(cgui && cgui->image(path, *scale)&G3D_UP && *action)
+    if(cgui && cgui->image(path, *scale, *overlaid!=0)&G3D_UP && *action)
     {
         executelater.add(newstring(action));
         clearlater = true;
@@ -189,7 +189,7 @@ COMMAND(showgui, "s");
 COMMAND(guilist, "s");
 COMMAND(guititle, "s");
 COMMAND(guibar,"");
-COMMAND(guiimage,"ssf");
+COMMAND(guiimage,"ssfi");
 COMMAND(guislider,"siis");
 COMMAND(guiradio,"ssis");
 COMMAND(guicheckbox, "ssiis");

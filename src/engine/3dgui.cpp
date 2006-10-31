@@ -33,7 +33,6 @@ struct gui : g3d_gui
     static void reset()
     {
         lists.setsize(0);
-        tcolor = 0xDDDDDD;
     };
 
     static int ty, tx, tpos, *tcurrent, tcolor; //tracking tab size and position since uses different layout method...
@@ -169,14 +168,14 @@ struct gui : g3d_gui
     };
 
     //one day to replace render_texture_panel()...?
-    int image(const char *path, float scale)
+    int image(const char *path, float scale, bool overlaid)
     {
         Texture *t = textureload(path, false, true, false);
         if(t==crosshair) return 0;
         autotab();
         if(scale==0) scale = 1;
         int size = (int)(scale*2*FONTH)-SHADOW;
-        if(visible()) icon_(t, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
+        if(visible()) icon_(t, overlaid, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
         return layout(size+SHADOW, size+SHADOW);
     };
 
@@ -234,7 +233,7 @@ struct gui : g3d_gui
         draw_text(text, x, y, color>>16, (color>>8)&0xFF, color&0xFF);
     };
 
-    void icon_(Texture *t, int x, int y, int size, bool hit) 
+    void icon_(Texture *t, bool overlaid, int x, int y, int size, bool hit) 
     {
         float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
         float xs = t->xs*scale;
@@ -250,15 +249,24 @@ struct gui : g3d_gui
             glEnd();
             defaultshader->set();	
         };
-        glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
-        glBindTexture(GL_TEXTURE_2D, t->gl);
-        glBegin(GL_QUADS);
-        glTexCoord2i(0, 0); glVertex2f(xo,    yo);
-        glTexCoord2i(1, 0); glVertex2f(xo+xs, yo);
-        glTexCoord2i(1, 1); glVertex2f(xo+xs, yo+ys);
-        glTexCoord2i(0, 1); glVertex2f(xo,    yo+ys);
-        glEnd();
-        xtraverts += 4;
+        loopi(overlaid ? 2 : 1)
+        {
+            if(i==1)
+            {
+                if(!overlay) overlay = textureload("data/guioverlay.png");
+                t = overlay;
+                hit = false;
+            };
+            glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
+            glBindTexture(GL_TEXTURE_2D, t->gl);
+            glBegin(GL_QUADS);
+            glTexCoord2i(0, 0); glVertex2f(xo,    yo);
+            glTexCoord2i(1, 0); glVertex2f(xo+xs, yo);
+            glTexCoord2i(1, 1); glVertex2f(xo+xs, yo+ys);
+            glTexCoord2i(0, 1); glVertex2f(xo,    yo+ys);
+            glEnd();
+            xtraverts += 4;
+        };
     };
 
     void line_(int color, int size, float percent)
@@ -304,7 +312,7 @@ struct gui : g3d_gui
             if(icon)
             {
                 s_sprintfd(tname)("packages/icons/%s.jpg", icon);
-                icon_(textureload(tname), x, cury, ICON_SIZE, clickable && hit);
+                icon_(textureload(tname), false, x, cury, ICON_SIZE, clickable && hit);
                 x += ICON_SIZE;
             };
             if(icon && text) x += padding;
@@ -313,7 +321,7 @@ struct gui : g3d_gui
         return layout(w, FONTH);
     };
 
-    static Texture *skin;
+    static Texture *skin, *overlay;
     static const int skinx[], skiny[], patch[][5];
 
     void patch_(int vleft, int vright, int vtop, int vbottom, int tleft, int tright, int ttop, int tbottom, int mode) 
@@ -353,7 +361,6 @@ struct gui : g3d_gui
 
     void patchn_(int vleft, int vright, int vtop, int vbottom, int start, int n) 
     {
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, skin->gl);
         loopj(2)
         {	
@@ -388,6 +395,7 @@ struct gui : g3d_gui
         tx = 0;
         ty = 0;
         tcurrent = tab;
+        tcolor = 0xFFFFFF;
         pushlist();
         if(layoutpass) nextlist = curlist;
         else
@@ -439,7 +447,7 @@ struct gui : g3d_gui
     };
 };
 
-Texture *gui::skin = NULL;
+Texture *gui::skin = NULL, *gui::overlay = NULL;
 
 //chop skin into a grid
 const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
@@ -514,6 +522,7 @@ void g3d_render()
     glDepthFunc(GL_ALWAYS);
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     windowhit = NULL;
     if(actionon) mousebuttons |= G3D_PRESSED;
