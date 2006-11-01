@@ -60,21 +60,21 @@ struct gui : g3d_gui
         if(layoutpass) 
         {  
             ty = max(ty, ysize); 
-            ysize = FONTH+(skiny[3]-skiny[2])*SKIN_SCALE - 2*INSERT;
+            ysize = FONTH+(skiny[4]-skiny[2])*SKIN_SCALE - 2*INSERT;
         }
         else 
         {	
             cury = -ysize;
             int x = curx + tx + (skinx[2]-skinx[1])*SKIN_SCALE;
-            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH+(skiny[3]-skiny[2])*SKIN_SCALE/2;
+            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH+(skiny[4]-skiny[2])*SKIN_SCALE/2;
             if(hit) 
             {	
                 *tcurrent = tpos; //roll-over to switch tab
                 color = 0xFF0000;
             };
-            patchn_(x, x+w, cury, cury+FONTH - 2*INSERT, visible()?12:21, 9);
+            patchn_(x, x+w, cury, cury+FONTH - 2*INSERT, visible()?13:22, 9);
             text_(name, x-INSERT, cury-INSERT, color, visible());
-            cury += FONTH+(skiny[3]-skiny[2])*SKIN_SCALE - 2*INSERT;
+            cury += FONTH+(skiny[4]-skiny[2])*SKIN_SCALE - 2*INSERT;
         };
         tx += w + ((skinx[4]-skinx[3]) + (skinx[2]-skinx[1]))*SKIN_SCALE; 
     };
@@ -421,8 +421,11 @@ struct gui : g3d_gui
             vec dir;
             lightreaching(origin, modulate, dir, 0, 0.5f); 
             modulate.mul(1.3f + vec(yaw, 0.0f).dot(dir));
-        
-            patchn_(curx, curx+xsize, cury+(tcurrent?FONTH+(skiny[3]-skiny[2])*SKIN_SCALE-2*INSERT:0), cury+ysize, 0, tcurrent?8:9);
+       
+            int ystart = cury+(tcurrent?FONTH+(skiny[4]-skiny[2])*SKIN_SCALE-2*INSERT:0);
+            patchn_(curx, curx+xsize, ystart, max(ystart+(skiny[5]-skiny[4])*SKIN_SCALE, cury+ysize), 0, 9);
+            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH-2*INSERT, 10, 3);
+            else patchn_(curx, curx+xsize, cury-(skiny[4]-skiny[3])*SKIN_SCALE, cury+ysize, 9, 1);
         };
     };
 
@@ -433,6 +436,7 @@ struct gui : g3d_gui
             xsize = max(tx, xsize);
             ysize = max(ty, ysize);
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
+            else ysize = max(ysize, (skiny[5]-skiny[4])*SKIN_SCALE);
             if(!windowhit && !passthrough)
             {
                 vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
@@ -446,7 +450,6 @@ struct gui : g3d_gui
         }
         else
         {
-            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH-2*INSERT, 9, 3);
             glPopMatrix();
         };
         poplist();
@@ -456,44 +459,47 @@ struct gui : g3d_gui
 Texture *gui::skintex = NULL, *gui::overlaytex = NULL, *gui::slidertex = NULL;
 
 //chop skin into a grid
-const int gui::skiny[] = {0, 21, 34, 56, 104, 128},
-          gui::skinx[] = {0, 26, 37, 105, 117, 140, 151, 215, 227, 256}, 
+const int gui::skiny[] = {0, 21, 34, 48, 56, 104, 111, 128},
+          gui::skinx[] = {0, 23, 37, 105, 119, 137, 151, 215, 229, 256}, 
+
 //Note: skinx[2]-skinx[1] = skinx[6]-skinx[5]
 //      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
 gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
-    { 1,8,3,4, 0x00}, //body
-    { 1,8,4,5, 0x02},
-    { 0,1,3,4, 0x10},
-    { 8,9,3,4, 0x20},
-    { 0,1,4,5, 0x12}, //{xstart, xend, ystart, yend,  mode} - where xstart,xend refer into skinx[], and ystart,yend refer into skiny[]
-    { 8,9,4,5, 0x22},
-    { 0,1,2,3, 0x11},
-    { 8,9,2,3, 0x21},
-    { 4,5,2,3, 0x01},
+    {1,8,4,5, 0x00}, //body
+    {1,8,5,7, 0x02},
+    {0,1,4,5, 0x10},
+    {8,9,4,5, 0x20},
+    {0,1,5,7, 0x12}, //{xstart, xend, ystart, yend,  mode} - where xstart,xend refer into skinx[], and ystart,yend refer into skiny[]
+    {8,9,5,7, 0x22},
+    {1,8,3,4, 0x01},
+    {0,1,2,4, 0x11},
+    {8,9,2,4, 0x21},
+
+    {4,5,2,3, 0x01}, //no tabs
     
-    { 4,5,2,3, 0x02}, //top overflow
-    { 4,5,1,2, 0x00},
-    { 4,5,0,1, 0x01},
+    {4,5,2,3, 0x02}, //top overflow
+    {4,5,1,2, 0x00},
+    {4,5,0,1, 0x01},
     
-    { 2,3,1,2, 0x00}, //selected tab
-    { 2,3,2,3, 0x02},
-    { 1,2,1,2, 0x10},
-    { 3,4,1,2, 0x20},
-    { 1,2,2,3, 0x12},
-    { 3,4,2,3, 0x22},
-    { 1,2,0,1, 0x11},
-    { 3,4,0,1, 0x21},
-    { 2,3,0,1, 0x01},
+    {2,3,1,2, 0x00}, //selected tab
+    {2,3,2,3, 0x02},
+    {1,2,1,2, 0x10},
+    {3,4,1,2, 0x20},
+    {1,2,2,3, 0x12},
+    {3,4,2,3, 0x22},
+    {1,2,0,1, 0x11},
+    {3,4,0,1, 0x21},
+    {2,3,0,1, 0x01},
     
-    { 6,7,1,2, 0x00}, //deselected tab
-    { 6,7,2,3, 0x02},
-    { 5,6,1,2, 0x10},
-    { 7,8,1,2, 0x20},
-    { 5,6,2,3, 0x12},
-    { 7,8,2,3, 0x22},
-    { 5,6,0,1, 0x11},
-    { 7,8,0,1, 0x21},
-    { 6,7,0,1, 0x01}
+    {6,7,1,2, 0x00}, //deselected tab
+    {6,7,2,3, 0x02},
+    {5,6,1,2, 0x10},
+    {7,8,1,2, 0x20},
+    {5,6,2,3, 0x12},
+    {7,8,2,3, 0x22},
+    {5,6,0,1, 0x11},
+    {7,8,0,1, 0x21},
+    {6,7,0,1, 0x01}
 };
 
 vector<gui::list> gui::lists;
