@@ -430,7 +430,8 @@ struct gui : g3d_gui
         
             vec dir;
             lightreaching(origin, light, dir, 0, 0.5f); 
-            light.mul(1.3f + vec(yaw, 0.0f).dot(dir));
+            float intensity = vec(yaw, 0.0f).dot(dir);
+            light.mul(1.0f + max(intensity, 0));
        
             skin_(curx-skinx[2]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, ysize, 0, 9);
             if(!tcurrent) skin_(curx-skinx[5]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, 0, 9, 1);
