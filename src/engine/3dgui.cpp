@@ -443,8 +443,8 @@ struct gui : g3d_gui
         {	
             xsize = max(tx, xsize);
             ysize = max(ty, ysize);
+            ysize = max(ysize, (skiny[6]-skiny[5])*SKIN_SCALE);
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
-            else ysize = max(ysize, (skiny[6]-skiny[5])*SKIN_SCALE);
             if(!windowhit && !passthrough)
             {
                 vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
@@ -452,7 +452,7 @@ struct gui : g3d_gui
                 vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
                 hitx = xaxis.dot(intersectionvec)/scale;
                 hity = -intersectionvec.z/scale;
-                if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && /*hity>=-ysize && */ hitx<=xsize/2 && hity<=0)
+                if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hitx<=xsize/2 && hity<=0)
                 {
                     if(hity>=-ysize || (tcurrent && hity>=-ysize-(FONTH-2*INSERT)-((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE && hitx<=tx-xsize/2))
                         windowhit = this;
