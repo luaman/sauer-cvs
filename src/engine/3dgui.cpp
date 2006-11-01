@@ -12,6 +12,8 @@ static g3d_gui *windowhit = NULL;
 
 #define SHADOW 4
 #define ICON_SIZE (FONTH-SHADOW)
+#define SKIN_W 256
+#define SKIN_H 128
 #define SKIN_SCALE 4
 #define INSERT (3*SKIN_SCALE)
 
@@ -60,23 +62,27 @@ struct gui : g3d_gui
         if(layoutpass) 
         {  
             ty = max(ty, ysize); 
-            ysize = FONTH+(skiny[4]-skiny[2])*SKIN_SCALE - 2*INSERT;
+            ysize = 0;
         }
         else 
         {	
             cury = -ysize;
-            int x = curx + tx + (skinx[2]-skinx[1])*SKIN_SCALE;
-            bool hit = tcurrent && windowhit==this && hitx>=x-(skinx[2]-skinx[1])*SKIN_SCALE && hity>=cury && hitx<x+w+(skinx[4]-skinx[3])*SKIN_SCALE && hity<cury+FONTH+(skiny[4]-skiny[2])*SKIN_SCALE/2;
+            int h = FONTH-2*INSERT,
+                x1 = curx + tx,
+                x2 = x1 + w + ((skinx[3]-skinx[2]) + (skinx[5]-skinx[4]))*SKIN_SCALE,
+                y1 = cury - ((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE-h,
+                y2 = cury;
+            bool hit = tcurrent && windowhit==this && hitx>=x1 && hity>=y1 && hitx<x2 && hity<y2;
             if(hit) 
             {	
                 *tcurrent = tpos; //roll-over to switch tab
                 color = 0xFF0000;
             };
-            patchn_(x, x+w, cury, cury+FONTH - 2*INSERT, visible()?13:22, 9);
-            text_(name, x-INSERT, cury-INSERT, color, visible());
-            cury += FONTH+(skiny[4]-skiny[2])*SKIN_SCALE - 2*INSERT;
+            
+            skin_(x1-skinx[visible()?2:6]*SKIN_SCALE, y1-skiny[1]*SKIN_SCALE, w, h, visible()?10:19, 9);
+            text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, color, visible());
         };
-        tx += w + ((skinx[4]-skinx[3]) + (skinx[2]-skinx[1]))*SKIN_SCALE; 
+        tx += w + ((skinx[5]-skinx[4]) + (skinx[3]-skinx[2]))*SKIN_SCALE; 
     };
 
     bool ishorizontal() const { return curdepth&1; };
@@ -221,9 +227,8 @@ struct gui : g3d_gui
     void rect_(float x, float y, float w, float h, int usetc = -1) 
     {
         int tc[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
-      
         if(usetc>=0) glTexCoord2iv(tc[usetc]); 
-        glVertex2f(x ,    y);
+        glVertex2f(x, y);
         if(usetc>=0) glTexCoord2iv(tc[(usetc+1)%4]);
         glVertex2f(x + w, y);
         if(usetc>=0) glTexCoord2iv(tc[(usetc+2)%4]);
@@ -328,56 +333,61 @@ struct gui : g3d_gui
     };
 
     static Texture *skintex, *overlaytex, *slidertex;
-    static const int skinx[], skiny[], patch[][5];
+    static const int skinx[], skiny[];
+    static const struct patch { ushort left, right, top, bottom; uchar flags; } patches[];
 
-    void patch_(int vleft, int vright, int vtop, int vbottom, int tleft, int tright, int ttop, int tbottom, int mode) 
-    {
-        float in_left    = ((float) skinx[tleft]) / 256.0f;
-        float in_top     = ((float) skiny[ttop]) / 128.0f;
-        float in_right   = ((float) skinx[tright]) / 256.0f;
-        float in_bottom  = ((float) skiny[tbottom]) / 128.0f;
-        int w = (skinx[tright] - skinx[tleft])*SKIN_SCALE;
-        int h = (skiny[tbottom] - skiny[ttop])*SKIN_SCALE;
-        switch(mode & 0xF0) 
-        {
-            case 0x00: //stretched inside horizontal
-                if((vright-vleft) < w) in_right = in_left + (vright-vleft)/(SKIN_SCALE*256.0f); //don't compress
-                break;
-            case 0x10: vright = vleft; vleft-=w; break; //outside left
-            case 0x20: vleft = vright; vright+=w; break; //outside right 
-            //case 0x30: vright = vleft+w; break; //inside left
-            //case 0x40: vleft = vright-w; break; //inside right
-        };
-        switch(mode & 0x0F) 
-        {
-            case 0x00: //stretched inside vertical
-                if((vbottom-vtop) < h) in_bottom = in_top + (vbottom-vtop)/(SKIN_SCALE*128.0f); //don't compress
-                break;
-            case 0x01: vbottom = vtop; vtop-=h; break;//outside top
-            case 0x02: vtop = vbottom; vbottom+=h; break;//outside bottom
-            //case 0x03: vbottom = vtop+h; break; //inside top
-            //case 0x04: vtop = vbottom-h; break; //inside bottom
-        };
-        glTexCoord2f(in_left,  in_top   ); glVertex2i(vleft,  vtop);
-        glTexCoord2f(in_right, in_top   ); glVertex2i(vright, vtop);
-        glTexCoord2f(in_right, in_bottom); glVertex2i(vright, vbottom);
-        glTexCoord2f(in_left,  in_bottom); glVertex2i(vleft,  vbottom);
-        xtraverts += 4;
-    };
-
-    void patchn_(int vleft, int vright, int vtop, int vbottom, int start, int n) 
+    void skin_(int x, int y, int gapw, int gaph, int start, int n)//int vleft, int vright, int vtop, int vbottom, int start, int n) 
     {
         if(!skintex) skintex = textureload("data/guiskin.png");
         glBindTexture(GL_TEXTURE_2D, skintex->gl);
+        int gapx1 = INT_MAX, gapy1 = INT_MAX, gapx2 = INT_MAX, gapy2 = INT_MAX;
+        float wscale = 1.0f/(SKIN_W*SKIN_SCALE), hscale = 1.0f/(SKIN_H*SKIN_SCALE);
         loopj(2)
         {	
             glDepthFunc(j?GL_LEQUAL:GL_GREATER);
-            glColor4f(j?modulate.x:1.0f, j?modulate.y:1.0f, j?modulate.z:1.0f, j?0.80f:0.35f); //ghost when its behind something in depth
+            glColor4f(j?light.x:1.0f, j?light.y:1.0f, j?light.z:1.0f, j?0.80f:0.35f); //ghost when its behind something in depth
             glBegin(GL_QUADS);
             loopi(n)
             {
-                const int *p = patch[start+i];
-                patch_(vleft, vright, vtop, vbottom, p[0], p[1], p[2], p[3], p[4]);
+                const patch &p = patches[start+i];
+                int left = skinx[p.left]*SKIN_SCALE, right = skinx[p.right]*SKIN_SCALE,
+                    top = skiny[p.top]*SKIN_SCALE, bottom = skiny[p.bottom]*SKIN_SCALE;
+                float tleft = left*wscale, tright = right*wscale,
+                      ttop = top*hscale, tbottom = bottom*hscale;
+                if(p.flags&0x1)
+                {
+                    gapx1 = left;
+                    gapx2 = right;
+                    right = left + gapw;
+                    if(gapw<gapx2-gapx1) tright = right*wscale;
+                }
+                else if(left >= gapx2)
+                {
+                    left += gapw - (gapx2-gapx1);
+                    right += gapw - (gapx2-gapx1);
+                };
+                if(p.flags&0x10)
+                {
+                    gapy1 = top;
+                    gapy2 = bottom;
+                    bottom = top + gaph;
+                    if(gaph<gapy2-gapy1) tbottom = bottom*hscale;
+                }
+                else if(top >= gapy2)
+                {
+                    top += gaph - (gapy2-gapy1);
+                    bottom += gaph - (gapy2-gapy1);
+                };
+                if(left==right || top==bottom) continue;
+                glTexCoord2f(tleft, ttop);
+                glVertex2i(x+left, y+top);
+                glTexCoord2f(tright, ttop);
+                glVertex2i(x+right, y+top);
+                glTexCoord2f(tright, tbottom);
+                glVertex2i(x+right, y+bottom);
+                glTexCoord2f(tleft, tbottom);
+                glVertex2i(x+left, y+bottom);
+                xtraverts += 4;
             };
             glEnd();
         };
@@ -390,7 +400,7 @@ struct gui : g3d_gui
 
     static float scale;
     static bool passthrough;
-    static vec modulate;
+    static vec light;
 
     void start(int starttime, float basescale, int *tab, bool allowinput)
     {	
@@ -419,13 +429,11 @@ struct gui : g3d_gui
             glScalef(-scale, scale, scale);
         
             vec dir;
-            lightreaching(origin, modulate, dir, 0, 0.5f); 
-            modulate.mul(1.3f + vec(yaw, 0.0f).dot(dir));
+            lightreaching(origin, light, dir, 0, 0.5f); 
+            light.mul(1.3f + vec(yaw, 0.0f).dot(dir));
        
-            int ystart = cury+(tcurrent?FONTH+(skiny[4]-skiny[2])*SKIN_SCALE-2*INSERT:0);
-            patchn_(curx, curx+xsize, ystart, max(ystart+(skiny[5]-skiny[4])*SKIN_SCALE, cury+ysize), 0, 9);
-            if(tcurrent) patchn_(curx+tx, curx+xsize, -ysize, -ysize + FONTH-2*INSERT, 10, 3);
-            else patchn_(curx, curx+xsize, cury-(skiny[4]-skiny[3])*SKIN_SCALE, cury+ysize, 9, 1);
+            skin_(curx-skinx[2]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, ysize, 0, 9);
+            if(!tcurrent) skin_(curx-skinx[5]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, 0, 9, 1);
         };
     };
 
@@ -436,7 +444,7 @@ struct gui : g3d_gui
             xsize = max(tx, xsize);
             ysize = max(ty, ysize);
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
-            else ysize = max(ysize, (skiny[5]-skiny[4])*SKIN_SCALE);
+            else ysize = max(ysize, (skiny[6]-skiny[5])*SKIN_SCALE);
             if(!windowhit && !passthrough)
             {
                 vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
@@ -444,12 +452,16 @@ struct gui : g3d_gui
                 vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
                 hitx = xaxis.dot(intersectionvec)/scale;
                 hity = -intersectionvec.z/scale;
-                if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hity>=-ysize && hitx<=xsize/2 && hity<=0)
-                    windowhit = this;
+                if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && /*hity>=-ysize && */ hitx<=xsize/2 && hity<=0)
+                {
+                    if(hity>=-ysize || (tcurrent && hity>=-ysize-(FONTH-2*INSERT)-((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE && hitx<=tx-xsize/2))
+                        windowhit = this;
+                };
             };
         }
         else
         {
+            if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, 0, 9, 1);
             glPopMatrix();
         };
         poplist();
@@ -459,53 +471,51 @@ struct gui : g3d_gui
 Texture *gui::skintex = NULL, *gui::overlaytex = NULL, *gui::slidertex = NULL;
 
 //chop skin into a grid
-const int gui::skiny[] = {0, 21, 34, 48, 56, 104, 111, 128},
-          gui::skinx[] = {0, 23, 37, 105, 119, 137, 151, 215, 229, 256}, 
+const int gui::skiny[] = {0, 7, 21, 34, 48, 56, 104, 111, 128},
+          gui::skinx[] = {0, 11, 23, 37, 105, 119, 137, 151, 215, 229, 256};
+//Note: skinx[3]-skinx[2] = skinx[7]-skinx[6]
+//      skinx[5]-skinx[4] = skinx[9]-skinx[8]		 
+const gui::patch gui::patches[] = 
+{ //arguably this data can be compressed - it depends on what else needs to be skinned in the future
+    {1,2,3,5,  0},    // body
+    {2,9,4,5,  0x01},
+    {9,10,3,5, 0},
 
-//Note: skinx[2]-skinx[1] = skinx[6]-skinx[5]
-//      skinx[4]-skinx[3] = skinx[8]-skinx[7]		 
-gui::patch[][5] = { //arguably this data can be compressed - it depends on what else needs to be skinned in the future
-    {1,8,4,5, 0x00}, //body
-    {1,8,5,7, 0x02},
-    {0,1,4,5, 0x10},
-    {8,9,4,5, 0x20},
-    {0,1,5,7, 0x12}, //{xstart, xend, ystart, yend,  mode} - where xstart,xend refer into skinx[], and ystart,yend refer into skiny[]
-    {8,9,5,7, 0x22},
-    {1,8,3,4, 0x01},
-    {0,1,2,4, 0x11},
-    {8,9,2,4, 0x21},
+    {1,2,5,6,  0x10},
+    {2,9,5,6,  0x11},
+    {9,10,5,6, 0x10},
 
-    {4,5,2,3, 0x01}, //no tabs
-    
-    {4,5,2,3, 0x02}, //top overflow
-    {4,5,1,2, 0x00},
-    {4,5,0,1, 0x01},
-    
-    {2,3,1,2, 0x00}, //selected tab
-    {2,3,2,3, 0x02},
-    {1,2,1,2, 0x10},
-    {3,4,1,2, 0x20},
-    {1,2,2,3, 0x12},
-    {3,4,2,3, 0x22},
-    {1,2,0,1, 0x11},
-    {3,4,0,1, 0x21},
-    {2,3,0,1, 0x01},
-    
-    {6,7,1,2, 0x00}, //deselected tab
-    {6,7,2,3, 0x02},
-    {5,6,1,2, 0x10},
-    {7,8,1,2, 0x20},
-    {5,6,2,3, 0x12},
-    {7,8,2,3, 0x22},
-    {5,6,0,1, 0x11},
-    {7,8,0,1, 0x21},
-    {6,7,0,1, 0x01}
+    {1,2,6,8,  0},
+    {2,9,6,8,  0x01},
+    {9,10,6,8, 0},
+
+    {5,6,3,4, 0x01}, // top
+
+    {2,3,1,2, 0},    // selected tab
+    {3,4,1,2, 0x01},
+    {4,5,1,2, 0},
+    {2,3,2,3, 0x10},
+    {3,4,2,3, 0x11},
+    {4,5,2,3, 0x10},
+    {2,3,3,4, 0},
+    {3,4,3,4, 0x01},
+    {4,5,3,4, 0},
+
+    {6,7,1,2, 0},    // deselected tab
+    {7,8,1,2, 0x01},
+    {8,9,1,2, 0},
+    {6,7,2,3, 0x10},
+    {7,8,2,3, 0x11},
+    {8,9,2,3, 0x10},
+    {6,7,3,4, 0},
+    {7,8,3,4, 0x01},
+    {8,9,3,4, 0},
 };
 
 vector<gui::list> gui::lists;
 float gui::scale, gui::hitx, gui::hity;
 bool gui::passthrough;
-vec gui::modulate;
+vec gui::light;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
 static vector<gui> guis;
