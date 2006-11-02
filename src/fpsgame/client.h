@@ -220,13 +220,13 @@ struct clientcom : iclientcom
             putint(q, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(q, (int)(d->vel.y*DVELF));
             putint(q, (int)(d->vel.z*DVELF));
-            putint(q, (int)d->physstate | (!d->gravity.iszero()<<4));
-            if(!d->gravity.iszero())
+            putint(q, (int)d->physstate | (d->gravity.x || d->gravity.y ? 0x20 : 0) | (d->gravity.z ? 0x10 : 0));
+            if(d->gravity.x || d->gravity.y)
             {
                 putint(q, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
                 putint(q, (int)(d->gravity.y*DVELF));
-                putint(q, (int)(d->gravity.z*DVELF));
             };
+            if(d->gravity.z) putint(q, (int)(d->gravity.z*DVELF));
             // pack rest in 1 byte: strafe:2, move:2, state:3, reserved:1
             putint(q, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<4) );
             enet_packet_resize(packet, q.length());
@@ -320,13 +320,13 @@ struct clientcom : iclientcom
                 d->vel.z = getint(p)/DVELF;
                 int physstate = getint(p); 
                 d->physstate = physstate & 0x0F;
-                if(physstate&0x10)
+                d->gravity = vec(0, 0, 0);
+                if(physstate&0x20)
                 {
                     d->gravity.x = getint(p)/DVELF;
                     d->gravity.y = getint(p)/DVELF;
-                    d->gravity.z = getint(p)/DVELF;
-                }
-                else d->gravity = vec(0, 0, 0);
+                };
+                if(physstate&0x10) d->gravity.z = getint(p)/DVELF;
                 int f = getint(p);
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2;
