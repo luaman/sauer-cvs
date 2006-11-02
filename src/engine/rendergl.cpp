@@ -556,7 +556,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
 void cleangl()
 {
     if(qsphere) gluDeleteQuadric(qsphere);
-    enumeratekt(textures, char *, k, Texture, t, { delete[] k; t; });
+    enumeratekt(textures, char *, k, Texture, t, { delete[] k; (void)t; });
     textures.clear();
 };
 
