@@ -296,7 +296,6 @@ extern void copyundoents(undoblock &d, undoblock &s);
 extern void pasteundoents(undoblock &u);
 
 // octaedit
-extern void editdrag(bool on);
 extern void cancelsel();
 extern void render_texture_panel(int w, int h);
 extern void addundo(undoblock &u);

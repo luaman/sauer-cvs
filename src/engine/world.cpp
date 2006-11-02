@@ -132,7 +132,6 @@ void entitiesinoctanodes()
     loopv(et->getents()) addentity(i);
 };
 
-extern void cancelcubesel();
 extern selinfo sel;
 extern bool havesel, selectcorners;
 extern bool undogoahead;
@@ -215,8 +214,8 @@ void makeundoent()
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; addentity(n); et->editent(n)); }
 #define setgroup(exp)   { entgroup.setsize(0); loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
 #define groupeditpure(f){ loopv(entgroup) entedit(entgroup[i], f); }
-#define groupedit(f)    { implicitent(makeundoent(); groupeditpure(f)); }
-#define selgroupedit(f) { setgroup(pointinsel(sel, e.o)); if(undogoahead) makeundoent(); groupeditpure(f); }
+#define groupeditundo(f){ makeundoent(); groupeditpure(f); }
+#define groupedit(f)    { implicitent(groupeditundo(f)); }
 
 void copyundoents(undoblock &d, undoblock &s)
 {
@@ -235,14 +234,14 @@ void pasteundoents(undoblock &u)
 void entmove(selinfo &sel, ivec &o)
 {
     vec s(o.v), a(sel.o.v); s.sub(a);
-    selgroupedit(e.o.add(s));
+    groupeditundo(e.o.add(s));
 };
 
 void entflip(selinfo &sel)
 {
     int d = sel.orient/2;
     float mid = sel.s[d]*sel.grid/2+sel.o[d];
-    selgroupedit(e.o[d] -= (e.o[d]-mid)*2);
+    groupeditundo(e.o[d] -= (e.o[d]-mid)*2);
 };
 
 void entrotate(selinfo &sel, int cw)
@@ -251,7 +250,7 @@ void entrotate(selinfo &sel, int cw)
     int dd = cw<0 ? R[d] : C[d];
     float mid = sel.s[dd]*sel.grid/2+sel.o[dd];
     vec s(sel.o.v);
-    selgroupedit(
+    groupeditundo(
         e.o[dd] -= (e.o[dd]-mid)*2;
         e.o.sub(s);
         swap(float, e.o[R[d]], e.o[C[d]]);
@@ -462,8 +461,8 @@ void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
 };
 
 ICOMMAND(esellen,   "",  intret(entgroup.length()));
-ICOMMAND(esel,      "s", setgroup(e.type != ET_EMPTY && execute(args[0]) > 0); cancelcubesel());
-ICOMMAND(insel,     "",  entfocus(efocus, intret(havesel && pointinsel(sel, e.o))));
+ICOMMAND(esel,      "s", setgroup(e.type != ET_EMPTY && execute(args[0]) > 0));
+ICOMMAND(insel,     "",  entfocus(efocus, intret(pointinsel(sel, e.o))));
 ICOMMAND(et,        "",  entfocus(efocus, result(et->entname(e.type))));
 COMMANDN(ea, eattr, "i");
 COMMANDN(entedit, enteditor, "siiii");
