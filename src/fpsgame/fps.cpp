@@ -539,6 +539,7 @@ struct fpsclient : igameclient
             case EDIT_FLIP:
             case EDIT_COPY:
             case EDIT_PASTE:
+            case EDIT_DELCUBE:
             {
                 cc.addmsg(SV_EDITF + op, "ri9i4",
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
@@ -562,14 +563,6 @@ struct fpsclient : igameclient
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
                    arg1, arg2);
-                break;
-            };
-            case EDIT_MOVE:
-            {
-                cc.addmsg(SV_EDITF + op, "ri9i7",
-                   sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
-                   sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
-                   arg1, arg2, arg3);
                 break;
             };
         };
