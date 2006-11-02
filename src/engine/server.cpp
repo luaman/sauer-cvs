@@ -181,6 +181,7 @@ char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned
 
 void disconnect_client(int n, int reason)
 {
+    if(clients[n]->type!=ST_TCPIP) return;
     s_sprintfd(s)("client (%s) disconnected because: %s\n", clients[n]->hostname, disc_reasons[reason]);
     puts(s);
     enet_peer_disconnect(clients[n]->peer, reason);
