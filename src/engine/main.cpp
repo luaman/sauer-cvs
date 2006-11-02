@@ -396,6 +396,7 @@ int main(int argc, char **argv)
 
     log("cfg");
     exec("data/keymap.cfg");
+    exec("data/stdedit.cfg");
     exec("data/menus.cfg");
     exec("data/sounds.cfg");
     exec("data/brush.cfg");
