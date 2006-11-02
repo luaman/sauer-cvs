@@ -1,0 +1,1 @@
+bin\sauerbraten.exe -grpg -w1024 -h768 %1 %2 %3 %4 %5
