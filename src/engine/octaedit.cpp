@@ -75,8 +75,8 @@ VAR(selectcorners, 0, 0, 1);
 VARF(moving, 0, 0, 1,
     if(!moving) return;
     vec v(cur.v); v.add(1);
-    if(moving = pointinsel(sel, v))
-        havesel = false; // tell cursorupdate to create handle
+    moving = pointinsel(sel, v);
+    if(moving) havesel = false; // tell cursorupdate to create handle
 );
 
 void clearheighttexture()
@@ -96,7 +96,8 @@ void forcenextundo() { lastsel.orient = -1; };
 
 void cancelcubesel()
 {
-    havesel = moving = dragging = false;
+    havesel = false;
+    moving = dragging = 0;
     clearheightmap();
     forcenextundo();
 };
