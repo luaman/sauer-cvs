@@ -494,7 +494,7 @@ struct fpsserver : igameserver
         if(sender<0) return;
         if(chan==2)
         {
-            receivefile(sender, p.buf, p.length());
+            receivefile(sender, p.buf, p.maxlen);
             return;
         };
         if(reliable) reliablemessages = true;

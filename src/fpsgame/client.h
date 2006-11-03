@@ -371,7 +371,7 @@ struct clientcom : iclientcom
                 break;
 
             case 3: 
-                receivefile(p.buf, p.len);
+                receivefile(p.buf, p.maxlen);
                 break;
         };
     };
