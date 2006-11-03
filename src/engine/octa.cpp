@@ -1212,7 +1212,7 @@ void genmergeinfo(cube *c = worldroot, const ivec &o = ivec(0, 0, 0), int size =
             cubeface cf;
             if(gencubeface(c[i], j, co, size, k.n, k.offset, cf))
             {
-                if(size >= 1<<maxmerge)
+                if(size >= 1<<maxmerge || c == worldroot)
                 {
                     if(c[i].ext && c[i].ext->merged&(1<<j)) addmergeinfo(c[i], j, cf);
                     continue;
