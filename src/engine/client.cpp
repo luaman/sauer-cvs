@@ -146,8 +146,8 @@ void c2sinfo(dynent *d, int rate)                     // send update to the serv
 {
     if(lastmillis-lastupdate<rate) return;    // don't update faster than 30fps
     lastupdate = lastmillis;
-    ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, 0);
-    ucharbuf p(packet->data, MAXTRANS);
+    ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, 0);
+    ucharbuf p(packet->data, packet->dataLength);
     bool reliable = false;
     int chan = cc->sendpacketclient(p, reliable, d);
     if(!p.length()) { enet_packet_destroy(packet); return; };

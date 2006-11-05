@@ -158,7 +158,7 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);
     SDL_GL_SwapBuffers();
-}
+};
 
 void setfullscreen(bool enable)
 {
@@ -361,6 +361,12 @@ int main(int argc, char **argv)
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, fsaa);
     };
+    #ifdef WIN32
+        #ifdef SDL_RESIZABLE
+        #undef SDL_RESIZABLE
+        #endif
+        #define SDL_RESIZABLE 0
+    #endif
     screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|SDL_RESIZABLE|fs);
     if(screen==NULL) fatal("Unable to create OpenGL screen: ", SDL_GetError());
 

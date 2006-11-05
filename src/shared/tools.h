@@ -319,7 +319,7 @@ template <class K, class T> struct hashtable
         chunkremain = 0;
         lastchunk = NULL;
         table = new chain *[size];
-        for(int i = 0; i<size; i++) table[i] = NULL;
+        loopi(size) table[i] = NULL;
     };
 
     ~hashtable()

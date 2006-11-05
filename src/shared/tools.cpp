@@ -36,7 +36,7 @@ char *loadfile(char *fn, int *size)
     fclose(f);
     if(size_t(len)!=rlen)
     {
-        free(buf);
+        delete[] buf;
         return NULL;
     };
     if(size!=NULL) *size = len;
@@ -54,7 +54,7 @@ void endianswap(void *memory, int stride, int length)   // little endian as stor
         p[stride-i-1] = t;
     };
 #endif
-}
+};
 
 
 ////////////////////////// rnd numbers ////////////////////////////////////////

@@ -157,7 +157,7 @@ void sendf(int cn, int chan, const char *format, ...)
     bool reliable = false;
     if(*format=='r') { reliable = true; ++format; };
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
-    ucharbuf p(packet->data, MAXTRANS);
+    ucharbuf p(packet->data, packet->dataLength);
     va_list args;
     va_start(args, format);
     while(*format) switch(*format++)
@@ -201,7 +201,7 @@ void process(ENetPacket *packet, int sender, int chan)   // sender may be -1
 void send_welcome(int n)
 {
     ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
-    ucharbuf p(packet->data, MAXTRANS);
+    ucharbuf p(packet->data, packet->dataLength);
     int chan = sv->welcomepacket(p, n);
     enet_packet_resize(packet, p.length());
     sendpacket(n, chan, packet);
@@ -254,7 +254,7 @@ void sendpongs()        // reply all server info requests
         buf.dataLength = sizeof(pong);
         len = enet_socket_receive(pongsock, &addr, &buf, 1);
         if(len < 0) return;
-        ucharbuf p(&pong[len], MAXTRANS-len);
+        ucharbuf p(&pong[len], sizeof(pong)-len);
         sv->serverinforeply(p);
         buf.dataLength = len + p.length();
         enet_socket_send(pongsock, &addr, &buf, 1);

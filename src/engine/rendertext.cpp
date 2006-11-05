@@ -158,14 +158,14 @@ void draw_textf(const char *fstr, int left, int top, ...)
     draw_text(str, left, top);
 };
 
-Texture *texttex = NULL;
+static Texture *charstex = NULL;
 
 void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
 {
-    if(!texttex) texttex = textureload("data/newerchars.png");
+    if(!charstex) charstex = textureload("data/newerchars.png");
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBindTexture(GL_TEXTURE_2D, texttex->gl);
+    glBindTexture(GL_TEXTURE_2D, charstex->gl);
     glColor4ub(r, g, b, a);
     //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
