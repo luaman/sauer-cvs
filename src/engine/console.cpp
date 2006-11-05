@@ -163,10 +163,7 @@ void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); };
 COMMAND(saycommand, "C");
 COMMAND(mapmsg, "s");
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#else
+#if !defined(WIN32) && !defined(__APPLE__)
 #include <X11/Xlib.h>
 #include <SDL_syswm.h>
 #endif

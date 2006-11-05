@@ -497,7 +497,7 @@ void initserver(bool dedicated)
     if(dedicated)
     {
         ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
-        if(*ip && !resolverwait(ip, &address)) printf("WARNING: server ip not resolved");
+        if(*ip && enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
         serverhost = enet_host_create(&address, maxclients, 0, uprate);
         if(!serverhost) fatal("could not create server host\n");
         loopi(maxclients) serverhost->peers[i].data = (void *)-1;
