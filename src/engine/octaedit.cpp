@@ -62,7 +62,7 @@ ushort *htex = NULL; // textures for heightmap
 ushort htexture = 0; // single texture for heightmap
 
 VARF(dragging, 0, 0, 1,
-    if(g3d_windowhit(dragging, true)) return;
+    if(g3d_windowhit(dragging!=0, true)) return;
     if(!dragging || cor[0]<0) return;
     lastcur = cur;
     lastcor = cor;
@@ -1090,7 +1090,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 
 void editface(int *dir, int *mode)
 {
-    if(noedit(moving)) return;
+    if(noedit(moving!=0)) return;
     if(!haveselent() && hmap)
         edithmap(*dir);
     else
