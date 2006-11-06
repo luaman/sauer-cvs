@@ -250,8 +250,6 @@ struct clientcom : iclientcom
             sendstring(player1->name, p);
             sendstring(player1->team, p);
             putint(p, player1->lifesequence);
-            putint(p, player1->maxhealth);
-            putint(p, player1->frags);
         };
         int i = 0;
         while(i < messages.length()) // send messages collected during the previous frames
@@ -467,8 +465,6 @@ struct clientcom : iclientcom
                 getstring(text, p);
                 filtertext(d->team, text, false, MAXTEAMLEN);
                 d->lifesequence = getint(p);
-                d->maxhealth = getint(p);
-                d->frags = getint(p);
                 inited = true;
                 break;
             };

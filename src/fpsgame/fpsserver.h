@@ -572,8 +572,6 @@ struct fpsserver : igameserver
                 if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
-                getint(p);
-                getint(p);
                 while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 break;
             };
@@ -782,6 +780,16 @@ struct fpsserver : igameserver
             putint(p, SV_SPECTATOR);
             putint(p, n);
             putint(p, 1);
+        };
+        loopv(clients)
+        {
+           clientinfo *ci = clients[i];
+           if(ci->clientnum==n) continue;
+           if(ci->score.maxhealth==100 && !ci->score.frags) continue;
+           putint(p, SV_RESUME);
+           putint(p, ci->clientnum);
+           putint(p, ci->score.maxhealth);
+           putint(p, ci->score.frags);
         };
         if(m_capture) cps.initclient(p);
         return 1;
