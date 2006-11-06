@@ -226,7 +226,7 @@ struct gui : g3d_gui
 
     void rect_(float x, float y, float w, float h, int usetc = -1) 
     {
-        int tc[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+        GLint tc[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
         if(usetc>=0) glTexCoord2iv(tc[usetc]); 
         glVertex2f(x, y);
         if(usetc>=0) glTexCoord2iv(tc[(usetc+1)%4]);
