@@ -282,16 +282,6 @@ static inline bool htcmp(int x, int y)
     return x==y;
 };
 
-static inline uint hthash(uint key)
-{
-    return key;
-};
-
-static inline bool htcmp(uint x, uint y)
-{
-    return x==y;
-};
-
 template <class K, class T> struct hashtable
 {
     typedef K key;
