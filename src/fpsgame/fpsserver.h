@@ -38,7 +38,7 @@ struct fpsserver : igameserver
         int state;
         clientscore score;
         enet_uint32 gamestart;
-        vector<uchar> position, servmessages, messages;
+        vector<uchar> position, messages;
         int positionoffset, messageoffset;
 
         clientinfo() { reset(); };

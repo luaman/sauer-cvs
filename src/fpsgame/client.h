@@ -207,8 +207,8 @@ struct clientcom : iclientcom
         if(!spectator || !c2sinit || messages.length())
         {
             // send position updates separately so as to not stall out aiming
-            ENetPacket *packet = enet_packet_create (NULL, 100, 0);
-            ucharbuf q(packet->data, 100);
+            ENetPacket *packet = enet_packet_create(NULL, 100, 0);
+            ucharbuf q(packet->data, packet->dataLength);
             putint(q, SV_POS);
             putint(q, player1->clientnum);
             putuint(q, (int)(d->o.x*DMF));              // quantize coordinates to 1/4th of a cube, between 1 and 3 bytes
