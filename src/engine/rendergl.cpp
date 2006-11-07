@@ -6,8 +6,6 @@
 bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false;
 int renderpath;
 
-GLUquadricObj *qsphere = NULL;
-
 // GL_ARB_vertex_buffer_object
 PFNGLGENBUFFERSARBPROC    glGenBuffers_    = NULL;
 PFNGLBINDBUFFERARBPROC    glBindBuffer_    = NULL;
@@ -319,13 +317,15 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
     if(fsaa) glEnable(GL_MULTISAMPLE);
 
-    if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
+    GLUquadricObj *qsphere = gluNewQuadric();
+    if(!qsphere) fatal("glu sphere");
     gluQuadricDrawStyle(qsphere, GLU_FILL);
     gluQuadricOrientation(qsphere, GLU_OUTSIDE);
     gluQuadricTexture(qsphere, GL_TRUE);
     glNewList(1, GL_COMPILE);
     gluSphere(qsphere, 1, 12, 6);
     glEndList();
+    gluDeleteQuadric(qsphere);
 
     exec("data/stdshader.cfg");
     defaultshader = lookupshaderbyname("default");
@@ -430,8 +430,9 @@ VARP(maxtexsize, 0, 0, 1<<12);
 
 static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false, bool mipit = true)
 {
-    Texture *t = &textures[newstring(rname)];
-    s_strcpy(t->name, rname);
+    char *key = newstring(rname);
+    Texture *t = &textures[key];
+    t->name = key;
     t->bpp = s->format->BitsPerPixel;
     t->w = t->xs = s->w;
     t->h = t->ys = s->h;
@@ -556,8 +557,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
 
 void cleangl()
 {
-    if(qsphere) gluDeleteQuadric(qsphere);
-    enumeratekt(textures, char *, k, Texture, t, { delete[] k; (void)t; });
+    enumerate(textures, Texture, t, { delete[] t.name; });
     textures.clear();
 };
 

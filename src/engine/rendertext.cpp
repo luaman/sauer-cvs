@@ -158,10 +158,9 @@ void draw_textf(const char *fstr, int left, int top, ...)
     draw_text(str, left, top);
 };
 
-static Texture *charstex = NULL;
-
 void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
 {
+    static Texture *charstex = NULL;
     if(!charstex) charstex = textureload("data/newerchars.png");
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

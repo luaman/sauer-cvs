@@ -10,9 +10,9 @@
 
 struct Texture
 {
+    char *name;
     int xs, ys, w, h, bpp;
     GLuint gl;
-    string name;
 };
 
 struct SphereTree;
