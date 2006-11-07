@@ -366,10 +366,10 @@ void renderwater()
             materialsurface &m = *ref.matsurfs[j];
 
             entity *light = (m.light && m.light->type==ET_LIGHT ? m.light : NULL);
-            if(!light || light!=lastlight)
+            if(light!=lastlight)
             {
                 if(begin) { glEnd(); begin = false; };
-                const vec &lightpos = light ? light->o : vec(m.o.x+m.rsize/2, m.o.y+m.csize/2, hdr.worldsize);
+                const vec &lightpos = light ? light->o : vec(hdr.worldsize/2, hdr.worldsize/2, hdr.worldsize);
                 glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
                 if(light!=lastlight)
                 {
