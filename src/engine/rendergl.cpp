@@ -426,7 +426,7 @@ hashtable<char *, Texture> textures;
 
 Texture *crosshair = NULL; // used as default, ensured to be loaded
 
-VARP(halftex, 0, 0, 12);
+VARP(maxtexsize, 0, 0, 1<<12);
 
 static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false, bool mipit = true)
 {
@@ -436,12 +436,13 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false
     t->w = t->xs = s->w;
     t->h = t->ys = s->h;
     glGenTextures(1, &t->gl);
-    if(halftex && (t->w >= (1<<halftex) || t->h >= (1<<halftex)))
+    if(maxtexsize && (t->w > maxtexsize || t->h > maxtexsize))
     {
-        if(!gluScaleImage(t->bpp==24 ? GL_RGB : GL_RGBA, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels, t->w/2, t->h/2, GL_UNSIGNED_BYTE, s->pixels))
+        do { t->w /= 2; t->h /= 2; } while(t->w > maxtexsize || t->h > maxtexsize);
+        if(gluScaleImage(t->bpp==24 ? GL_RGB : GL_RGBA, t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels))
         {
-            t->w /= 2;
-            t->h /= 2;
+            t->w = t->xs;
+            t->h = t->ys;
         };
     }; 
     createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, t->bpp==24 ? GL_RGB : GL_RGBA);
