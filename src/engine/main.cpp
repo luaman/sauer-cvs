@@ -17,7 +17,7 @@ void quit()                     // normal exit
     extern void clear_mdls();    clear_mdls();
     extern void clear_sound();   clear_sound();
     SDL_Quit();
-    exit(0);
+    exit(EXIT_SUCCESS);
 };
 
 void fatal(char *s, char *o)    // failure exit
@@ -27,7 +27,7 @@ void fatal(char *s, char *o)    // failure exit
     #ifdef WIN32
         MessageBox(NULL, msg, "sauerbraten fatal error", MB_OK|MB_SYSTEMMODAL);
     #endif
-    exit(1);
+    exit(EXIT_FAILURE);
 };
 
 SDL_Surface *screen = NULL;
@@ -534,7 +534,7 @@ int main(int argc, char **argv)
     };
     
     ASSERT(0);   
-    return 0;
+    return EXIT_FAILURE;
 
     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
     } __except(stackdumper(0, GetExceptionInformation()), EXCEPTION_CONTINUE_SEARCH) { return 0; };

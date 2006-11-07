@@ -896,24 +896,6 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool 
 };
 
 VARP(maxroll, 0, 3, 20);
-VAR(minframetime, 5, 10, 20);
-
-int physicsfraction = 0, physicsrepeat = 0;
-
-void physicsframe()          // optimally schedule physics frames inside the graphics frames
-{
-    if(curtime>=minframetime)
-    {
-        int faketime = curtime+physicsfraction;
-        physicsrepeat = faketime/minframetime;
-        physicsfraction = faketime%minframetime;
-    }
-    else
-    {
-        physicsrepeat = 1;
-    };
-    cleardynentcache();
-};
 
 void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool floating, int curtime)
 {
@@ -1068,6 +1050,25 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     };
 
     return true;
+};
+
+VAR(minframetime, 5, 10, 20);
+
+int physicsfraction = 0, physicsrepeat = 0;
+
+void physicsframe()          // optimally schedule physics frames inside the graphics frames
+{
+    if(curtime>=minframetime)
+    {
+        int faketime = curtime+physicsfraction;
+        physicsrepeat = faketime/minframetime;
+        physicsfraction = faketime%minframetime;
+    }
+    else
+    {
+        physicsrepeat = 1;
+    };
+    cleardynentcache();
 };
 
 void moveplayer(physent *pl, int moveres, bool local)
