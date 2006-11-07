@@ -19,8 +19,8 @@ struct vec
     
     vec &set(int i, float f) { v[i] = f; return *this; };
 
-    bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; }
-    bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; }
+    bool operator==(const vec &o) const { return x == o.x && y == o.y && z == o.z; };
+    bool operator!=(const vec &o) const { return x != o.x || y != o.y || z != o.z; };
 
     bool iszero() const { return x==0 && y==0 && z==0; };
     float squaredlen() const { return x*x + y*y + z*z; };
