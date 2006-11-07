@@ -61,13 +61,13 @@ void rendervertwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 uint calcwatersubdiv(int x, int y, int z, uint size)
 {
     float dist;
-    if(player->o.x >= x && player->o.x < x + size &&
-       player->o.y >= y && player->o.y < y + size)
-        dist = fabs(player->o.z - float(z));
+    if(camera1->o.x >= x && camera1->o.x < x + size &&
+       camera1->o.y >= y && camera1->o.y < y + size)
+        dist = fabs(camera1->o.z - float(z));
     else
     {
         vec t(x + size/2, y + size/2, z + size/2);
-        dist = t.dist(player->o) - size*1.42f/2;
+        dist = t.dist(camera1->o) - size*1.42f/2;
     };
     uint subdiv = watersubdiv + int(dist) / (32 << waterlod);
     if(subdiv >= 8*sizeof(subdiv))

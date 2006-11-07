@@ -120,7 +120,7 @@ void gettextres(int &w, int &h)
 
 #define PIXELTAB (FONTH*4)
 
-int char_width(int c, int x = 0)
+int char_width(int c, int x)
 {
     if(c=='\t') x = (x+PIXELTAB)/PIXELTAB*PIXELTAB;
     else if(c==' ') x += FONTH/2;
