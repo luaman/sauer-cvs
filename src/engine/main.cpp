@@ -215,11 +215,17 @@ struct sleepcmd
 {
     int millis;
     char *command;
-    sleepcmd() : millis(0) {};
+};
+vector<sleepcmd> sleepcmds;
+
+void addsleep(int *msec, char *cmd)
+{
+    sleepcmd &s = sleepcmds.add(); 
+    s.millis=*msec+lastmillis; 
+    s.command = newstring(cmd); 
 };
 
-vector<sleepcmd> sleepcmds;
-ICOMMAND(sleep, "ss", { sleepcmd &s = sleepcmds.add(); s.millis=atoi(args[0])+lastmillis; s.command = newstring(args[1]); });
+COMMANDN(sleep, addsleep, "is");
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
 void estartmap(const char *name)
@@ -453,8 +459,7 @@ int main(int argc, char **argv)
             {
                 execute(s.command);
                 delete[] s.command;
-                sleepcmds.remove(i);
-                i--;
+                sleepcmds.remove(i--);
             };
         };
         
