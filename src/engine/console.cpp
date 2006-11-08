@@ -105,11 +105,10 @@ int renderconsole(int w, int h)                   // render buffer taking into a
 
 struct keym
 {
-     int code;
-     char *name, *action, *editaction;
-     vector<char *> releaseactions; 
+    int code;
+    char *name, *action, *editaction;
 
-    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); releaseactions.deletecontentsa(); };
+    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); };
 };
 
 vector<keym> keyms;                                 
@@ -217,10 +216,19 @@ void history(int *n)
 
 COMMAND(history, "i");
 
+struct releaseaction
+{
+    keym *key;
+    char *action;
+};
+vector<releaseaction> releaseactions;
+
 const char *addreleaseaction(const char *s)
 {
     if(!keypressed) return NULL;
-    keypressed->releaseactions.add(newstring(s));
+    releaseaction &ra = releaseactions.add();
+    ra.key = keypressed;
+    ra.action = newstring(s);
     return keypressed->name;
 };
 
@@ -334,22 +342,26 @@ void keypress(int code, bool isdown, int cooked)
         loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
         {
             keym &k = keyms[i];
+            loopv(releaseactions)
+            {
+                releaseaction &ra = releaseactions[i];
+                if(ra.key==&k)
+                {
+                    if(!isdown) execute(ra.action);
+                    delete[] ra.action;
+                    releaseactions.remove(i--);
+                };
+            };
             if(isdown)
             {
                 char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
                 keyaction = action;
                 keypressed = &k;
-                k.releaseactions.deletecontentsa();
                 execute(keyaction); 
                 keypressed = NULL;
                 if(keyaction!=action) delete[] keyaction;
-            }
-            else if(k.releaseactions.length())
-            {
-                loopv(k.releaseactions) execute(k.releaseactions[i]);
-                k.releaseactions.deletecontentsa();
             };
-            return;
+            break;
         };
     };
 };
