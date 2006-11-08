@@ -607,7 +607,6 @@ vtxarray *newva(int x, int y, int z, int size)
     vtxarray *va = (vtxarray *)new uchar[allocsize];
     if(hasVBO && verts.length())
     {
-#if 1
         void *vbuf;
         if(floatvtx)
         {
@@ -620,18 +619,6 @@ vtxarray *newva(int x, int y, int z, int size)
         int offset = int(size_t(vbuf)) / (floatvtx ? sizeof(fvertex) : sizeof(vertex)); 
         l0.offsetindices = offset;
         l1.offsetindices = offset;
-#else
-        glGenBuffers_(1, &va->vbufGL);
-        glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-        if(floatvtx)
-        {
-            fvertex *f = new fvertex[verts.length()];
-            genfloatverts(f);
-            glBufferData_(GL_ARRAY_BUFFER_ARB, bufsize, f, GL_STATIC_DRAW_ARB);
-            delete[] f;
-        }
-        else glBufferData_(GL_ARRAY_BUFFER_ARB, bufsize, verts.getbuf(), GL_STATIC_DRAW_ARB);
-#endif
         va->vbuf = 0; // Offset in VBO
     };
     char *buf = l1.setup(va, va->l1, l0.setup(va, va->l0, (char *)(va+1)));
