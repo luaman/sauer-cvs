@@ -11,13 +11,6 @@ struct rpgobj : g3d_callback
     char *name;         // name it was spawned as
     char *model;        // what to display it as
 
-    struct rpgaction
-    {
-        rpgaction *next;
-        char *initiate, *script;
-        bool used;
-    };
-
     enum
     {
         IF_INVENTORY = 1,   // parent owns this object, will contribute to parent stats
@@ -29,30 +22,43 @@ struct rpgobj : g3d_callback
     
     union               // stats attributed to its owner, added/multiplied on top of base values
     {
-        float stats[18];    // must match vars below, blah  
+        float stats[];    
         struct
         {
-            float meleepower,  meleefactor,  meleecrush;     // melee damage added, multiplied, pre-substracted
-            float rangedpower, rangedfactor, rangedcrush;   
-            float magicpower,  magicfactor,  magiccrush; 
+            #define NUMADDITIVE 7                           // additive stats come first, default value is 0
             
-            float defensepower, defensefactor;  // damage substracted, divided
+            float meleepower, rangedpower, magicpower;      // damage dealt, additive, usually set by weapons
+            float meleecrush, rangedcrush, magiccrush;      // damage that directly negates defense, substractive, special items only
+            float defensepower;                             // substract this amount from any incoming damage
             
-            // example: meleedamage = (meleepower*meleefactor-min(defensepower-meleecrush, 0))/defensefactor
+            #define NUMMULTIPLICATIVE 4                     // multiplicative stats default 1
             
-            float attackspeed;  // (100, *)
-            float movespeed;    // (100, *)
+            float meleefactor, rangedfactor, magicfactor;   // damage multiplier 
+            float defensefactor;                            // damage divisor
             
-            float maxhp;        // (100, *)
-            float strength;     // (100, *) affects carrying capacity
+            // example: meleedamage = (meleepower*meleefactor-max(defensepower-meleecrush, 0))/defensefactor
             
-            float tradeskill;   // (100, *) buying/selling gives less loss
-            float feared;       // (100, *) the more feared, the more blindly people will obey you, monsters may run away
-            float stealth;      // (100, *) affects npc fov/range when stealing items
+            #define NUMMULTIPLICATIVEBASE100 7              // base value for all the ones below is 100
+            
+            float attackspeed; 
+            float movespeed;    
+            
+            float maxhp;       
+            float strength;     // affects carrying capacity
+            
+            float tradeskill;   // buying/selling gives less loss
+            float feared;       // the more feared, the more blindly people will obey you, monsters may run away
+            float stealth;      // affects npc fov/range when stealing items
         };    
     };
 
-    char *curaction;    // last thing the player did with this object / default action
+    struct rpgaction
+    {
+        rpgaction *next;
+        char *initiate, *script;
+        bool used;
+    };
+
     rpgaction *actions;
     char *abovetext;
 
@@ -70,7 +76,7 @@ struct rpgobj : g3d_callback
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
-        curaction(NULL), actions(NULL), abovetext(NULL), ai(false), health(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {};
+        actions(NULL), abovetext(NULL), ai(false), health(100), gold(0), worth(1), menutime(0), menutab(1), os(_os), meleecrush(0) {};
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 
@@ -139,7 +145,6 @@ struct rpgobj : g3d_callback
         na->script = script;
         na->used = false;
         actions = na;
-        curaction = initiate;
     };
 
     void droploot()
@@ -187,9 +192,10 @@ struct rpgobj : g3d_callback
     {
         if(!a) return;
         guiaction(g, a->next);
-        if(g.button(a->initiate, 0xFFFFFF, "chat")&G3D_UP)
+        if(g.button(a->initiate, a->used ? 0xAAAAAA : 0xFFFFFF, "chat")&G3D_UP)
         {
             if(*a->script) { os.pushobj(this); execute(a->script); };
+            a->used = true;
         };
     };
     

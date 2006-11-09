@@ -29,13 +29,11 @@ struct rpgclient : igameclient, g3d_callback
 
     int lastmillis;
     string mapname;
-    
-    char *curaction;
-    
+      
     int menutime, menutab;
     vec menupos;
 
-    rpgclient() : et(*this), os(*this), lastmillis(0), curaction(NULL), menutime(0), menutab(1)
+    rpgclient() : et(*this), os(*this), lastmillis(0), menutime(0), menutab(1)
     {
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
         CCOMMAND(rpgclient, showinventory, "", self->showinventory());    

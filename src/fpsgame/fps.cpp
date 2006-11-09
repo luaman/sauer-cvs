@@ -50,6 +50,7 @@ struct fpsclient : igameclient
           ws(*this), ms(*this), sb(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
+        CCOMMAND(fpsclient, kill, "",  { self->selfdamage(self->player1->health+self->player1->armour, -1, self->player1); });
     };
 
     iclientcom      *getcom()  { return &cc; };

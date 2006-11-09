@@ -43,6 +43,7 @@ aard/everyone:
 - debris particles (makke?)
 - get kurt to fix decal textures
 
+
 - death needs to be more obvious (better sound/centerprint) 
 - screenshots etc? new features in docs
 - specmap thats not same size as diffuse crash
@@ -61,7 +62,12 @@ aard/everyone:
 - experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions | store intensity multiplier in alpha?
 - create an official map pack to reduce on the number of maps in the distribution
 - pitch on hudgun specular
+
 - the eyecandy priority list: reflective world shader | better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
+- simple rotational physics?
+- bots (level design placed waypoints?)
+- destructable geom
+
 - better doc on the scripting language | beginners guide | wiki?
 - new menu / for rpg and fps
 - spec/normal trilinear filtering? -> probably because of specmap mipmap averaging... luns specmaps are simply too subtle

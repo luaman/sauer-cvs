@@ -193,7 +193,7 @@ void disconnect_client(int n, int reason)
 
 void process(ENetPacket *packet, int sender, int chan)   // sender may be -1
 {
-    ucharbuf p(packet->data, packet->dataLength);
+    ucharbuf p(packet->data, (int)packet->dataLength);
     sv->parsepacket(sender, chan, (packet->flags&ENET_PACKET_FLAG_RELIABLE)!=0, p);
     if(p.overread()) { disconnect_client(sender, DISC_EOP); return; };
 };

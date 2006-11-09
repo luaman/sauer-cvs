@@ -881,8 +881,8 @@ COMMAND(phystest, "");
 
 void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating)
 {
-    m.x = move*cosf(RAD*(yaw-90));
-    m.y = move*sinf(RAD*(yaw-90));
+    m.x = move*sinf(RAD*(yaw));
+    m.y = move*-cosf(RAD*(yaw));
 
     if(floating)
     {
@@ -891,8 +891,8 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool 
         m.z = move*sinf(RAD*pitch);
     };
 
-    m.x += strafe*cosf(RAD*(yaw-180));
-    m.y += strafe*sinf(RAD*(yaw-180));
+    m.x += strafe*-cosf(RAD*(yaw));
+    m.y += strafe*-sinf(RAD*(yaw));
 };
 
 VARP(maxroll, 0, 3, 20);
