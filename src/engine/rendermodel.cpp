@@ -71,13 +71,13 @@ void mdlscale(int *percent)
 
 COMMAND(mdlscale, "i");
 
-void mdltrans(char *x, char *y, char *z)
+void mdltrans(float *x, float *y, float *z)
 {
     checkmdl;
-    loadingmodel->translate = vec(atof(x), atof(y), atof(z));
+    loadingmodel->translate = vec(x, y, z);
 }; 
 
-COMMAND(mdltrans, "sss");
+COMMAND(mdltrans, "fff");
 
 void mdlvwep(int *vwep)
 {

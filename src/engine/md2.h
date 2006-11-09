@@ -195,16 +195,22 @@ struct md2 : vertmodel
         void getdefaultanim(animstate &as, int anim, int varseed, float speed)
         {
             //                      0              3              6   7   8   9   10        12  13
-            //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI S
-            static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 7,  6, 0, };
-            static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  18, 1, 1, };
-            static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14, 15, 15 };
+            //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI
+            static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 7,  6 };
+            static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  18, 1 };
+            static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14 };
 
+            as.speed = speed;
+            if(anim >= sizeof(animfr)/sizeof(animfr[0]))
+            {
+                as.frame = 0;
+                as.range = 1;
+                return;
+            };
             int n = animfr[anim];
             if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
             as.frame = _frame[n];
             as.range = _range[n];
-            as.speed = speed;
         };
     };
 
