@@ -122,6 +122,21 @@ struct vertmodel : model
             };
         };
 
+        void calcbb(int frame, vec &bbmin, vec &bbmax, float m[12])
+        {
+            vert *fverts = &verts[frame*numverts];
+            loopj(numverts)
+            {
+                vec &v = fverts[j].pos; 
+                loopi(3)
+                {
+                    float c = m[i]*v.x + m[i+3]*v.y + m[i+6]*v.z + m[i+9];
+                    bbmin[i] = min(bbmin[i], c);
+                    bbmax[i] = max(bbmax[i], c);
+                };
+            };
+        };
+
         void gentris(int frame, vector<triangle> &out, float m[12])
         {
             vert *fverts = &verts[frame*numverts];
@@ -331,6 +346,35 @@ struct vertmodel : model
             loopv(meshes) meshes[i]->genva(dyn);
         };
             
+        void calctransform(tag &t, float m[12], float n[12])
+        {
+            loop(y, 3)
+            {
+                n[y] = m[y]*t.transform[0][0] + m[y+3]*t.transform[0][1] + m[y+6]*t.transform[0][2];
+                n[3+y] = m[y]*t.transform[1][0] + m[y+3]*t.transform[1][1] + m[y+6]*t.transform[1][2];
+                n[6+y] = m[y]*t.transform[2][0] + m[y+3]*t.transform[2][1] + m[y+6]*t.transform[2][2];
+                n[9+y] = m[y]*t.pos[0] + m[y+3]*t.pos[1] + m[y+6]*t.pos[2] + m[y+9];
+            };
+        };
+
+        void calcbb(int frame, vec &bbmin, vec &bbmax)
+        {
+            float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
+            calcbb(frame, bbmin, bbmax, m);
+        };
+
+        void calcbb(int frame, vec &bbmin, vec &bbmax, float m[12])
+        {
+            loopv(meshes) meshes[i]->calcbb(frame, bbmin, bbmax, m);
+            loopi(numtags) if(links[i])
+            {
+                tag &t = tags[frame*numtags+i];
+                float n[12];
+                calctransform(t, m, n);
+                links[i]->calcbb(frame, bbmin, bbmax, n);
+            };
+        };
+
         void gentris(int frame, vector<triangle> &tris)
         {
             float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
@@ -344,13 +388,7 @@ struct vertmodel : model
             {
                 tag &t = tags[frame*numtags+i];
                 float n[12];
-                loop(y, 3)
-                {
-                    n[y] = m[y]*t.transform[0][0] + m[y+3]*t.transform[0][1] + m[y+6]*t.transform[0][2];
-                    n[3+y] = m[y]*t.transform[1][0] + m[y+3]*t.transform[1][1] + m[y+6]*t.transform[1][2];
-                    n[6+y] = m[y]*t.transform[2][0] + m[y+3]*t.transform[2][1] + m[y+6]*t.transform[2][2];
-                    n[9+y] = m[y]*t.pos[0] + m[y+3]*t.pos[1] + m[y+6]*t.pos[2] + m[y+9];
-                };
+                calctransform(t, m, n);
                 links[i]->gentris(frame, tris, n);
             };
         };
@@ -537,23 +575,22 @@ struct vertmodel : model
 
     void calcbb(int frame, vec &center, vec &radius)
     {
-        vector<triangle> tris;
-        parts[0]->gentris(frame, tris);
-        if(tris.empty()) return;
-        vec min = tris[0].a, max = min;
-        loopv(tris)
+        if(!loaded) return;
+        vec bbmin(0, 0, 0), bbmax(0, 0, 0);
+        loopv(parts[0]->meshes)
         {
-            triangle &t = tris[i];
-            loopj(3)
+            mesh &m = *parts[0]->meshes[i];
+            if(m.numverts)
             {
-                min[j] = min(min[j], min(t.a[j], min(t.b[j], t.c[j])));
-                max[j] = max(max[j], max(t.a[j], max(t.b[j], t.c[j])));
+                bbmin = bbmax = m.verts[frame*m.numverts].pos;
+                break;
             };
         };
-        radius = max;
-        radius.sub(min);
+        parts[0]->calcbb(frame, bbmin, bbmax);
+        radius = bbmax;
+        radius.sub(bbmin);
         radius.mul(0.5f);
-        center = min;
+        center = bbmin;
         center.add(radius);
     };
 };
