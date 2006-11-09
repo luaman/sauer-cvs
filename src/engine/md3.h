@@ -73,7 +73,6 @@ struct md3 : vertmodel
                 fseek(f, header.ofs_tags, SEEK_SET);
                 md3tag tag;
                 
-                fread(tags, sizeof(md3tag), header.numframes * header.numtags, f);
                 loopi(header.numframes*header.numtags) 
                 {
                     fread(&tag, sizeof(md3tag), 1, f);
