@@ -20,38 +20,6 @@ struct rpgobj : g3d_callback
 
     int itemflags;
     
-    union               // stats attributed to its owner, added/multiplied on top of base values
-    {
-        float stats[];    
-        struct
-        {
-            #define NUMADDITIVE 7                           // additive stats come first, default value is 0
-            
-            float meleepower, rangedpower, magicpower;      // damage dealt, additive, usually set by weapons
-            float meleecrush, rangedcrush, magiccrush;      // damage that directly negates defense, substractive, special items only
-            float defensepower;                             // substract this amount from any incoming damage
-            
-            #define NUMMULTIPLICATIVE 4                     // multiplicative stats default 1
-            
-            float meleefactor, rangedfactor, magicfactor;   // damage multiplier 
-            float defensefactor;                            // damage divisor
-            
-            // example: meleedamage = (meleepower*meleefactor-max(defensepower-meleecrush, 0))/defensefactor
-            
-            #define NUMMULTIPLICATIVEBASE100 7              // base value for all the ones below is 100
-            
-            float attackspeed; 
-            float movespeed;    
-            
-            float maxhp;       
-            float strength;     // affects carrying capacity
-            
-            float tradeskill;   // buying/selling gives less loss
-            float feared;       // the more feared, the more blindly people will obey you, monsters may run away
-            float stealth;      // affects npc fov/range when stealing items
-        };    
-    };
-
     struct rpgaction
     {
         rpgaction *next;
@@ -70,13 +38,15 @@ struct rpgobj : g3d_callback
 
     int menutime, menutab;
 
+    stats st;
+
     rpgobjset &os;
     
     #define loopinventory() for(rpgobj *o = inventory; o; o = o->sibling)
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
-        actions(NULL), abovetext(NULL), ai(false), health(100), gold(0), worth(1), menutime(0), menutab(1), os(_os), meleecrush(0) {};
+        actions(NULL), abovetext(NULL), ai(false), health(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {};
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
 

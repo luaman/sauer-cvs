@@ -18,6 +18,7 @@ struct rpgclient : igameclient, g3d_callback
 {
     #include "entities.h"
     #include "behaviours.h"
+    #include "stats.h"
     #include "rpgobj.h"
     #include "rpgobjset.h"
 
