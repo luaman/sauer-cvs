@@ -99,7 +99,7 @@ struct md3 : vertmodel
                 m.numtris = mheader.numtriangles; 
                 m.tris = new tri[m.numtris];
                 fseek(f, mesh_offset + mheader.ofs_triangles, SEEK_SET);
-                loopj(mheader.numtriangles)
+                loopj(m.numtris)
                 {
                     md3triangle tri;
                     fread(&tri, sizeof(md3triangle), 1, f); // read the triangles
@@ -110,7 +110,7 @@ struct md3 : vertmodel
                 m.numtcverts = mheader.numvertices;
                 m.tcverts = new tcvert[m.numtcverts];
                 fseek(f, mesh_offset + mheader.ofs_uv , SEEK_SET); 
-                loopj(mheader.numvertices)
+                loopj(m.numtcverts)
                 {
                     fread(&m.tcverts[j].u, sizeof(float), 2, f); // read the UV data
                     endianswap(&m.tcverts[j].u, sizeof(float), 2);
@@ -120,7 +120,7 @@ struct md3 : vertmodel
                 m.numverts = mheader.numvertices;
                 m.verts = new vert[numframes*m.numverts];
                 fseek(f, mesh_offset + mheader.ofs_vertices, SEEK_SET); 
-                loopj(numframes*mheader.numvertices)
+                loopj(numframes*m.numverts)
                 {
                     md3vertex v;
                     fread(&v, sizeof(md3vertex), 1, f); // read the vertices
