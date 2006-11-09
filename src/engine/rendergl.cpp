@@ -163,6 +163,8 @@ VAR(ati_texgen_bug, 0, 0, 1);
 VAR(ati_oq_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
 
+VAR(maxtexsize, 0, 0, 1<<12);
+
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
     #define fogvalues 0.5f, 0.6f, 0.7f, 1.0f
@@ -315,6 +317,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     };
     if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
 
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxtexsize);
+
     if(fsaa) glEnable(GL_MULTISAMPLE);
 
     GLUquadricObj *qsphere = gluNewQuadric();
@@ -425,8 +429,6 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
 hashtable<char *, Texture> textures;
 
 Texture *crosshair = NULL; // used as default, ensured to be loaded
-
-VARP(maxtexsize, 0, 0, 1<<12);
 
 static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false, bool mipit = true)
 {

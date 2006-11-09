@@ -201,7 +201,7 @@ struct md2 : vertmodel
             static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14 };
 
             as.speed = speed;
-            if(anim >= sizeof(animfr)/sizeof(animfr[0]))
+            if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0]))
             {
                 as.frame = 0;
                 as.range = 1;

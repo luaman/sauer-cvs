@@ -249,16 +249,15 @@ void md3anim(char *anim, int *startframe, int *range, char *s)
     loadingmd3->parts.last()->setanim(num, *startframe, *range, speed);
 };
 
-void md3link(char *parentno, char *childno, char *tagname)
+void md3link(int *parent, int *child, char *tagname)
 {
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
-    int parent = atoi(parentno), child = atoi(childno);
-    if(max(parent, child) >= loadingmd3->parts.length() || min(parent, child) < 0) { conoutf("no models loaded to link"); return; };
-    if(!loadingmd3->parts[parent]->link(loadingmd3->parts[child], tagname)) conoutf("could not link model %s", loadingmd3->loadname);
+    if(max(*parent, *child) >= loadingmd3->parts.length() || min(*parent, *child) < 0) { conoutf("no models loaded to link"); return; };
+    if(!loadingmd3->parts[*parent]->link(loadingmd3->parts[*child], tagname)) conoutf("could not link model %s", loadingmd3->loadname);
 };
 
 COMMAND(md3load, "s");
 COMMAND(md3skin, "sss");
 COMMAND(md3anim, "siis");
-COMMAND(md3link, "sss");
+COMMAND(md3link, "iis");
             

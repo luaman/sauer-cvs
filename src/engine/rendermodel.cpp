@@ -74,7 +74,7 @@ COMMAND(mdlscale, "i");
 void mdltrans(float *x, float *y, float *z)
 {
     checkmdl;
-    loadingmodel->translate = vec(x, y, z);
+    loadingmodel->translate = vec(*x, *y, *z);
 }; 
 
 COMMAND(mdltrans, "fff");
