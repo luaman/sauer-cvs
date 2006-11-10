@@ -1,6 +1,6 @@
 CXX=g++
-CXXOPTFLAGS=-Wall -fsigned-char -O3 -fomit-frame-pointer
-CXXFLAGS=$(CXXOPTFLAGS)	-Ienet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
+CXXOPTFLAGS=-O3 -fomit-frame-pointer
+CXXFLAGS=$(CXXOPTFLAGS)	-Wall -fsigned-char -Ienet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
 
 PLATFORM_PREFIX=linux
 CLIENT_LIBS=-Lenet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 

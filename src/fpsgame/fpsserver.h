@@ -550,7 +550,11 @@ struct fpsserver : igameserver
                 if(newclient)
                 {
                     clientscore &sc = findscore(ci, false);
-                    if(&sc) sendf(-1, 1, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
+                    if(&sc) 
+                    {
+                        ci->score = sc;
+                        sendf(-1, 1, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
+                    };
                 };
                 while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
                 curmsg = p.length();

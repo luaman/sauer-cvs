@@ -1,6 +1,6 @@
 CXX=g++
-CXXOPTFLAGS=-Wall -fsigned-char -O3 -fomit-frame-pointer
-CXXFLAGS= $(CXXOPTFLAGS) -Ienet/include -Iinclude -Ishared -Iengine -Ifpsgame
+CXXOPTFLAGS=-O3 -fomit-frame-pointer
+CXXFLAGS= $(CXXOPTFLAGS) -Wall -fsigned-char -Ienet/include -Iinclude -Ishared -Iengine -Ifpsgame
 
 CLIENT_LIBS=-Llib.mingw -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lfmod -lz -lopengl32 -lglu32 -lws2_32 -lwinmm
 CLIENT_OBJS= \
