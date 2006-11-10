@@ -57,11 +57,9 @@ aard/everyone:
 - shallow water splashing sound?
 
 - weird fps issue.. maybe mobile?
-- auto bounding boxes that can be overridden
 - use setbb also for monsters
 - experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions | store intensity multiplier in alpha?
 - create an official map pack to reduce on the number of maps in the distribution
-- pitch on hudgun specular
 
 - the eyecandy priority list: reflective world shader | better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
 - simple rotational physics?
