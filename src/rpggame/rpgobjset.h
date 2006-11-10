@@ -20,6 +20,7 @@ struct rpgobjset
         CCOMMAND(rpgobjset, r_give,    "s",   { self->givetoplayer(args[0]); });    
         CCOMMAND(rpgobjset, r_worth,   "i",   { self->stack[0]->worth = atoi(args[0]); });    
         CCOMMAND(rpgobjset, r_gold,    "i",   { self->stack[0]->gold  = atoi(args[0]); });    
+        CCOMMAND(rpgobjset, r_stat,    "si",  { self->stack[0]->st.set(self->stringpool(args[0]), atoi(args[1])); });    
         playerobj = new rpgobj("player", *this);
         playerobj->ent = &cl.player1;
         clearworld();

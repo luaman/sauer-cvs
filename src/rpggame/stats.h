@@ -1,3 +1,4 @@
+
 struct stats
 {
     char **names;
@@ -38,20 +39,15 @@ struct stats
     };
 
     ~stats() { DELETEA(values); };
-
-    void reset()
-    {
-        if(!values)
-        {
-            for(char **n = names; *n; n += 2)
-                values = new float[(n-names)/2];
-        };
-        for(char **n = names; *n; n += 2) values[(n-names)/2] = n[1][1]=='0' ? 0 : 100;
-    };
+    
+    void alloc(bool ai) { char **n = names; while(*n) n += 2; values = new float[(n-names)/2]; init(ai); };
+    void init(bool ai)  { for(char **n = names; *n; n += 2) values[(n-names)/2] = n[1][1]=='0' ? 0 : (ai ? 100 : 0); };
+    void reset() { if(values) init(true); };
 
     void accumulate(stats &o)
     {
         if(!o.values) return;
+        alloc(true);
         for(char **n = names; *n; n += 2)
         {
             int i = (n-names)/2;
@@ -61,11 +57,48 @@ struct stats
         };
     };
 
-    float *stat(char *name)
+    int stat(char *name)
     {
-        if(!values) return NULL;
-        for(char **n = names; *n; n += 2) if(!strcmp(*n, name)) return &values[(n-names)/2];
-        return NULL;
+        for(char **n = names; *n; n += 2) if(!strcmp(*n, name)) return (n-names)/2;
+        return -1;
+    };
+    
+    void set(char *name, int val)
+    {
+        int i = stat(name);
+        if(i>=0)
+        {
+            if(!values) alloc(false);
+            values[i] = names[i*2+1][0]=='+' ? val : val/100.0f+1;
+        } 
+        else
+        {
+            conoutf("stat %s doesn't exist! (%.1f)", name, val);
+            return;
+        };
+    };
+    
+    void gui(g3d_gui &g, stats &o)
+    {
+        for(char **n = names; *n; n += 2)
+        {
+            float val = values[(n-names)/2];
+            if(n[1][1]=='0') { if(val==0) continue; }
+            else             { if(val==100) continue; };
+            s_sprintfd(s)("%s: %d", *n, (int)val);
+            g.text(s, 0xFFFFFF, "info");
+        };
+        // TEST
+        g.separator();
+        for(char **n = names; *n; n += 2)
+        {
+            float val = o.values[(n-names)/2];
+            if(n[1][1]=='0') { if(val==0) continue; }
+            else             { if(val==100) continue; };
+            s_sprintfd(s)("%s: %d", *n, (int)val);
+            g.text(s, 0xFFFFFF, "info");
+        };
+        
     };
 };
 

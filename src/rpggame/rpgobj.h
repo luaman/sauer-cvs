@@ -15,7 +15,7 @@ struct rpgobj : g3d_callback
     {
         IF_INVENTORY = 1,   // parent owns this object, will contribute to parent stats
         IF_LOOT      = 2,   // if parent dies, this object should drop to the ground
-        IF_TRADE     = 4,   // parent has this item available for trade
+        IF_TRADE     = 4,   // parent has this item available for trade, for player, all currently unused weapons etc are of this type
     };
 
     int itemflags;
@@ -25,6 +25,8 @@ struct rpgobj : g3d_callback
         rpgaction *next;
         char *initiate, *script;
         bool used;
+        
+        ~rpgaction() { DELETEP(next); }
     };
 
     rpgaction *actions;
@@ -48,7 +50,7 @@ struct rpgobj : g3d_callback
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
         actions(NULL), abovetext(NULL), ai(false), health(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {};
 
-    ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); };
+    ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); DELETEP(actions); };
 
     void scriptinit()
     {
@@ -68,6 +70,8 @@ struct rpgobj : g3d_callback
         o->parent = this;
         inventory = o;
         o->itemflags = itemflags;
+        
+        recalcstats();
     };
 
     void remove(rpgobj *o)
@@ -75,6 +79,14 @@ struct rpgobj : g3d_callback
         for(rpgobj **l = &inventory; *l; )
             if(*l==o) *l = o->sibling;
             else l = &(*l)->sibling;
+            
+        recalcstats();
+    };
+
+    void recalcstats()
+    {
+        st.reset();
+        loopinventorytype(IF_INVENTORY) st.accumulate(o->st);
     };
 
     void placeinworld(vec &pos, float yaw)
@@ -217,6 +229,11 @@ struct rpgobj : g3d_callback
                 g.text(info, 0xAAAAAA);   
                 g.tab("sell", 0xDDDDDD);
                 os.playerobj->invgui(g, this);
+            };
+            if(st.values)
+            {
+                g.tab("stats", 0xDDDDDD);
+                st.gui(g, os.playerobj->st);
             };
         };
         
