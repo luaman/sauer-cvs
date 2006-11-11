@@ -317,7 +317,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     };
     if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxtexsize);
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &maxtexsize);
 
     if(fsaa) glEnable(GL_MULTISAMPLE);
 
