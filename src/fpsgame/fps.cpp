@@ -267,7 +267,11 @@ struct fpsclient : igameclient
         if(player1->attacking = on) respawn();
     };
 
-    bool canjump() { if(!intermission) respawn(); return !intermission; };
+    bool canjump() 
+    { 
+        if(!intermission) respawn(); 
+        return player1->state!=CS_DEAD && !intermission; 
+    };
 
     // damage arriving from the network, monsters, yourself, all ends up here.
 
