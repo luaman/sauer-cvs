@@ -358,8 +358,8 @@ struct gui : g3d_gui
                 {
                     gapx1 = left;
                     gapx2 = right;
-                    right = left + gapw;
-                    if(gapw<gapx2-gapx1) tright = right*wscale;
+                    //right = left + gapw;
+                    //if(gapw<gapx2-gapx1) tright = right*wscale;
                 }
                 else if(left >= gapx2)
                 {
@@ -370,24 +370,45 @@ struct gui : g3d_gui
                 {
                     gapy1 = top;
                     gapy2 = bottom;
-                    bottom = top + gaph;
-                    if(gaph<gapy2-gapy1) tbottom = bottom*hscale;
+                    //bottom = top + gaph;
+                    //if(gaph<gapy2-gapy1) tbottom = bottom*hscale;
                 }
                 else if(top >= gapy2)
                 {
                     top += gaph - (gapy2-gapy1);
                     bottom += gaph - (gapy2-gapy1);
                 };
-                if(left==right || top==bottom) continue;
-                glTexCoord2f(tleft, ttop);
-                glVertex2i(x+left, y+top);
-                glTexCoord2f(tright, ttop);
-                glVertex2i(x+right, y+top);
-                glTexCoord2f(tright, tbottom);
-                glVertex2i(x+right, y+bottom);
-                glTexCoord2f(tleft, tbottom);
-                glVertex2i(x+left, y+bottom);
-                xtraverts += 4;
+                
+                //multiple tiled quads if necessary rather than a single stretched one
+                int ystep = bottom-top;
+                int yo = y+top;
+                while(ystep > 0) {
+                    if(p.flags&0x10 && yo+ystep-(y+top) > gaph) 
+                    {
+                        ystep = gaph+y+top-yo;
+                        tbottom = ttop+ystep*hscale;
+                    };
+                    int xstep = right-left;
+                    int xo = x+left;
+                    float tright2 = tright;
+                    while(xstep > 0) {
+                        if(p.flags&0x01 && xo+xstep-(x+left) > gapw) 
+                        {
+                            xstep = gapw+x+left-xo; 
+                            tright = tleft+xstep*wscale;
+                        };
+                        glTexCoord2f(tleft,  ttop);    glVertex2i(xo,       yo);
+                        glTexCoord2f(tright, ttop);    glVertex2i(xo+xstep, yo);
+                        glTexCoord2f(tright, tbottom); glVertex2i(xo+xstep, yo+ystep);
+                        glTexCoord2f(tleft,  tbottom); glVertex2i(xo,       yo+ystep);
+                        xtraverts += 4;
+                        if(!(p.flags&0x01)) break;
+                        xo += xstep;
+                    };
+                    tright = tright2;
+                    if(!(p.flags&0x10)) break;
+                    yo += ystep;
+                };
             };
             glEnd();
         };
@@ -462,7 +483,7 @@ struct gui : g3d_gui
         }
         else
         {
-            if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, 0, 9, 1);
+            if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, FONTH, 9, 1);
             glPopMatrix();
         };
         poplist();
