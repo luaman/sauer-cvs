@@ -62,7 +62,6 @@ ushort *htex = NULL; // textures for heightmap
 ushort htexture = 0; // single texture for heightmap
 
 VARF(dragging, 0, 0, 1,
-    if(g3d_windowhit(dragging!=0, true)) return;
     if(!dragging || cor[0]<0) return;
     lastcur = cur;
     lastcor = cor;
@@ -191,8 +190,8 @@ void selextend()
 };
 
 COMMANDN(edittoggle, toggleedit, "");
-ICOMMAND(ecancelsel, "", { if(!g3d_windowhit(false, false)) cancelentsel(); });
-ICOMMAND(cancelsel, "", { if(!g3d_windowhit(false, false)) cancelcubesel(); });
+COMMANDN(ecancelsel, cancelentsel, "");
+COMMANDN(cancelsel, cancelcubesel, "");
 COMMAND(reorient, "");
 COMMAND(selextend, "");
 
@@ -209,7 +208,7 @@ bool entdragplayerview()
     return true;
 };
 
-ICOMMAND(enttoggle, "",   { if(!g3d_windowhit(true, true)) intret(entdragplayerview()); });
+ICOMMAND(enttoggle, "", { intret(entdragplayerview()); });
 
 ///////// selection support /////////////
 

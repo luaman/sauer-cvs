@@ -241,7 +241,9 @@ COMMAND(onrelease, "s");
 
 void keypress(int code, bool isdown, int cooked)
 {
-    if(saycommandon)                                // keystrokes go to commandline
+    if(code==-1 && g3d_windowhit(isdown, true)) return; // 3D GUI mouse button intercept
+    else if(code==-3 && g3d_windowhit(isdown, false)) return;
+    else if(saycommandon)                                // keystrokes go to commandline
     {
         if(isdown)
         {
@@ -337,7 +339,7 @@ void keypress(int code, bool isdown, int cooked)
             };
         };
     }
-    else //if(!menukey(code, isdown))                 // keystrokes go to menu
+    else
     {
         loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
         {
