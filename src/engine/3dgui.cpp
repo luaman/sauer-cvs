@@ -6,6 +6,8 @@
 #include "pch.h"
 #include "engine.h"
 
+#define TILE 1
+
 static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
 static g3d_gui *windowhit = NULL;
