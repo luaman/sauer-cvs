@@ -213,6 +213,6 @@ void gets2c()           // get updates from the server
 
         default:
             break;
-    }
+    };
 };
 

@@ -358,8 +358,10 @@ struct gui : g3d_gui
                 {
                     gapx1 = left;
                     gapx2 = right;
-                    //right = left + gapw;
-                    //if(gapw<gapx2-gapx1) tright = right*wscale;
+#ifndef TILE
+                    right = left + gapw;
+                    if(gapw<gapx2-gapx1) tright = right*wscale;
+#endif
                 }
                 else if(left >= gapx2)
                 {
@@ -370,15 +372,18 @@ struct gui : g3d_gui
                 {
                     gapy1 = top;
                     gapy2 = bottom;
-                    //bottom = top + gaph;
-                    //if(gaph<gapy2-gapy1) tbottom = bottom*hscale;
+#ifndef TILE
+                    bottom = top + gaph;
+                    if(gaph<gapy2-gapy1) tbottom = bottom*hscale;
+#endif
                 }
                 else if(top >= gapy2)
                 {
                     top += gaph - (gapy2-gapy1);
                     bottom += gaph - (gapy2-gapy1);
                 };
-                
+               
+#ifdef TILE
                 //multiple tiled quads if necessary rather than a single stretched one
                 int ystep = bottom-top;
                 int yo = y+top;
@@ -409,6 +414,14 @@ struct gui : g3d_gui
                     if(!(p.flags&0x10)) break;
                     yo += ystep;
                 };
+#else
+                if(left==right || top==bottom) continue;
+                glTexCoord2f(tleft, ttop); glVertex2i(x+left, y+top);
+                glTexCoord2f(tright, ttop); glVertex2i(x+right, y+top);
+                glTexCoord2f(tright, tbottom); glVertex2i(x+right, y+bottom);
+                glTexCoord2f(tleft, tbottom); glVertex2i(x+left, y+bottom);
+                xtraverts += 4;
+#endif
             };
             glEnd();
         };
@@ -483,7 +496,11 @@ struct gui : g3d_gui
         }
         else
         {
+#ifdef TILE
             if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, FONTH, 9, 1);
+#else
+            if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, 0, 9, 1);
+#endif
             glPopMatrix();
         };
         poplist();

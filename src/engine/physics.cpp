@@ -1120,16 +1120,21 @@ VARP(sensitivity, 0, 10, 1000);
 VARP(sensitivityscale, 1, 1, 100);
 VARP(invmouse, 0, 0, 1);
 
-void mousemove(int dx, int dy)
+void fixcamerarange()
 {
-    const float SENSF = 33.0f;     // try match quake sens
-    camera1->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
-    camera1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
     const float MAXPITCH = 90.0f;
     if(camera1->pitch>MAXPITCH) camera1->pitch = MAXPITCH;
     if(camera1->pitch<-MAXPITCH) camera1->pitch = -MAXPITCH;
     while(camera1->yaw<0.0f) camera1->yaw += 360.0f;
     while(camera1->yaw>=360.0f) camera1->yaw -= 360.0f;
+};
+
+void mousemove(int dx, int dy)
+{
+    const float SENSF = 33.0f;     // try match quake sens
+    camera1->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
+    camera1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
+    fixcamerarange();
     if(camera1!=player && player->state!=CS_DEAD)
     {
         player->yaw = camera1->yaw;
