@@ -79,13 +79,13 @@ void mdltrans(float *x, float *y, float *z)
 
 COMMAND(mdltrans, "fff");
 
-void mdlvwep(int *vwep)
+void mdlshadow(int *shadow)
 {
     checkmdl;
-    loadingmodel->vwep = *vwep!=0;
+    loadingmodel->shadow = *shadow!=0;
 };
 
-COMMAND(mdlvwep, "i");
+COMMAND(mdlshadow, "i");
 
 void mdlbb(float *rad, float *h, float *eyeheight)
 {

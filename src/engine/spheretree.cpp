@@ -154,9 +154,9 @@ static inline void yawray(vec &o, vec &ray, float angle)
 
 bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist, int mode, float &dist)
 {
-    if(mode&RAY_SHADOW && checktriggertype(e.attr3, TRIG_COLLIDE|TRIG_DISAPPEAR)) return false;
     model *m = loadmodel(NULL, e.attr2);
     if(!m) return false;
+    if(mode&RAY_SHADOW && (!m->shadow || checktriggertype(e.attr3, TRIG_COLLIDE|TRIG_DISAPPEAR))) return false;
     if(!m->spheretree && !m->setspheretree()) return false;
     if(!maxdist) maxdist = 1e16f;
     vec yo(o);
