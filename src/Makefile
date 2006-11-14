@@ -2,7 +2,7 @@ CXX=g++
 CXXOPTFLAGS=-O3 -fomit-frame-pointer
 CXXFLAGS=$(CXXOPTFLAGS)	-Wall -fsigned-char -Ienet/include -I. -Ishared -Iengine -Ifpsgame `sdl-config --cflags`
 
-PLATFORM_PREFIX=linux
+PLATFORM_PREFIX=native
 CLIENT_LIBS=-Lenet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
 	shared/tools.o \

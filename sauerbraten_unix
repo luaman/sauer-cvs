@@ -1,7 +1,7 @@
 #!/bin/sh
 # SAUER_DIR should refer to the directory in which Sauerbraten is placed.
 #SAUER_DIR=~/sauerbraten
-#SAUER_DIR=/usr/local/lib/sauerbraten
+#SAUER_DIR=/usr/local/sauerbraten
 SAUER_DIR=.
 
 # SYSTEM_NAME should be set to the name of your operating system.
@@ -17,8 +17,7 @@ Linux)
   SYSTEM_PREFIX=linux_
   ;;
 *)
-  echo "Your operating system does not have a pre-compiled Sauerbraten client."
-  exit 1
+  SYSTEM_PREFIX=native_
   ;;
 esac
 
@@ -26,15 +25,27 @@ case ${MACHINE_NAME} in
 i486|i586|i686)
   MACHINE_PREFIX=
   ;;
-#ppc)
-#  MACHINE_PREFIX=ppc_
-#  ;;
 *)
-  echo "Your processor does not have a pre-compiled Sauerbraten client."
-  exit 1
+  MACHINE_PREFIX=
   ;;
 esac
 
-cd ${SAUER_DIR}
-exec ${SAUER_DIR}/bin_unix/${MACHINE_PREFIX}${SYSTEM_PREFIX}client $*
+if test -x ${SAUER_DIR}/bin_unix/native_client
+then
+  SYSTEM_PREFIX=native_
+  MACHINE_PREFIX=
+fi
+
+if test -x ${SAUER_DIR}/bin_unix/${MACHINE_PREFIX}${SYSTEM_PREFIX}client
+then
+  cd ${SAUER_DIR}
+  exec ${SAUER_DIR}/bin_unix/${MACHINE_PREFIX}${SYSTEM_PREFIX}client $*
+else
+  echo "Your platform does not have a pre-compiled Sauerbraten client."
+  echo "Please follow the following steps to build a native client:"
+  echo "1) Ensure you have the SDL, SDL-image, SDL-mixer, and OpenGL libraries installed."
+  echo "2) Change directory to src/ and type \"make install\"."
+  echo "3) If the build succeeds, return to this directory and run this script again."
+  exit 1
+fi
 
