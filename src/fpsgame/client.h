@@ -447,6 +447,7 @@ struct clientcom : iclientcom
                 if(!d) return;
                 getstring(text, p);
                 filtertext(text, text, false, MAXNAMELEN);
+                if(!text[0]) s_strcpy(text, "unnamed");
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text))
