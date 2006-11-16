@@ -377,7 +377,7 @@ struct clientcom : iclientcom
     void parsemessages(int cn, fpsent *d, ucharbuf &p)
     {
         int gamemode = cl.gamemode;
-        char text[MAXTRANS];
+        static char text[MAXTRANS];
         int type;
         bool mapchanged = false, inited = false;
 
