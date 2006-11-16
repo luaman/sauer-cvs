@@ -2,7 +2,6 @@
 
 #include "pch.h"
 #include "engine.h"
-#include <ctype.h>
 
 struct cline { char *cref; int outtime; };
 vector<cline> conlines;
