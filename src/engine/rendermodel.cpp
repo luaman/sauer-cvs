@@ -321,7 +321,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
     {
         if(d->timeinair>100)            { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP|ANIM_END; }
         else if(!d->move && !d->strafe) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE|ANIM_LOOP; }
-        else                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN|ANIM_LOOP; speed = 5500/d->maxspeed /* *scale */; };   // FIXME
+        else                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN|ANIM_LOOP; speed = 5500/d->maxspeed; };
         if(attack) basetime = lastaction;
     };
     vec color, dir;

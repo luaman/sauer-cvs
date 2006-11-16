@@ -221,11 +221,26 @@ vector<sleepcmd> sleepcmds;
 void addsleep(int *msec, char *cmd)
 {
     sleepcmd &s = sleepcmds.add(); 
-    s.millis=*msec+lastmillis; 
+    s.millis = *msec+lastmillis; 
     s.command = newstring(cmd); 
 };
 
 COMMANDN(sleep, addsleep, "is");
+
+void checksleep(int millis)
+{
+    loopv(sleepcmds)
+    {
+        sleepcmd &s = sleepcmds[i];
+        if(s.millis && millis>s.millis)
+        {
+            execute(s.command);
+            delete[] s.command; 
+            sleepcmds.remove(i--); 
+        };
+    };
+};
+
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
 void estartmap(const char *name)
@@ -451,22 +466,15 @@ int main(int argc, char **argv)
         if(paused) curtime = 0;
         
         if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
-        
-        loopv(sleepcmds)
-        {
-            sleepcmd &s = sleepcmds[i];
-            if(s.millis && lastmillis>s.millis)
-            {
-                execute(s.command);
-                delete[] s.command;
-                sleepcmds.remove(i--);
-            };
-        };
+       
+        checksleep(millis);
         
         menuprocess();
 
         lastmillis += curtime;
         curmillis = millis;
+
+        checksleep(lastmillis);
 
         serverslice(time(NULL), 0);
 
