@@ -94,7 +94,7 @@ void clearheightmap()
 
 void forcenextundo() { lastsel.orient = -1; };
 
-void cancelcubesel()
+void cubecancel()
 {
     havesel = false;
     moving = dragging = 0;
@@ -102,15 +102,15 @@ void cancelcubesel()
     forcenextundo();
 };
 
-void cancelentsel()
+void entcancel()
 {
     entgroup.setsize(0);
 };
 
 void cancelsel()
 {
-    cancelcubesel();
-    cancelentsel();
+    cubecancel();
+    entcancel();
 };
 
 VARF(gridpower, 2, 3, VVEC_INT-1,
@@ -191,8 +191,9 @@ void selextend()
 };
 
 COMMANDN(edittoggle, toggleedit, "");
-COMMANDN(entcancel, cancelentsel, "");
-COMMANDN(cancelsel, cancelcubesel, "");
+COMMAND(entcancel, "");
+COMMAND(cubecancel, "");
+COMMAND(cancelsel, "");
 COMMAND(reorient, "");
 COMMAND(selextend, "");
 
@@ -389,7 +390,7 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     
     // cursors    
-    //if(entmoving)
+    if(entmoving)
     {
         glColor3ub(40,40,40);
         loop(x, 4) loop(y, 4)
@@ -1061,14 +1062,18 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int *dir, int *mode)
 {
     if(noedit(moving!=0)) return;
-    int d = dimension(orient);
-    int s = dimcoord(orient) ? -*dir : *dir;
-    if(moving)
-        sel.o[d] += s*sel.grid;
-    else if(hmap)
+    if(hmap)
         edithmap(*dir);
     else
         mpeditface(*dir, *mode, sel, true);
+};
+
+void pushsel(int *dir)
+{
+    if(noedit(moving!=0)) return;
+    int d = dimension(orient);
+    int s = dimcoord(orient) ? -*dir : *dir;
+    sel.o[d] += s*sel.grid;
 };
 
 void mpdelcube(selinfo &sel, bool local)
@@ -1083,6 +1088,7 @@ void delcube()
     mpdelcube(sel, true);
 };
 
+COMMAND(pushsel, "i");
 COMMAND(editface, "ii");
 COMMAND(delcube, "");
 
