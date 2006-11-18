@@ -375,27 +375,27 @@ Sets the distance at which the menu is created in front of the player.
 Sets the height of the gui before tabs are automatically generated.
 </p>
 
-<pre>clearmenu</pre>
+<pre>cleargui</pre>
 <p>
 Hides the menu.
 </p>
 
-<pre>showmenu N</pre>
+<pre>showgui N</pre>
 <p>
 Displays the menu with name N previously defined, and allows the user to pick and manipulate items with the cursor. Pressing ESC will cancel the menu.
 </p>
 
-<pre>newmenu S</pre>
+<pre>newgui S</pre>
 <p>
 Creates a new menu with name S. All the following 'gui' menuitem commands will apply to this menu.
 See "data/menus.cfg" for defaults.
 </p>
 
 <pre>
-guilist
+guilist '[' ... ']'
 </pre>
 <p>
-Defines a menu item that is a group of menu items. The layout of each nested group will alternate - the top level (newmenu) is laid out vertically, 
+Defines a menu item that is a group of menu items. The layout of each nested group will alternate - the top level (newgui) is laid out vertically, 
 the first guilist will be laid out horizontally, the second guilist vertically, etc. This allows tables and lists to be created. The 
 layout direction also influences the display of items such as sliders, bars, progress bars, and struts.
 </p>
@@ -408,19 +408,18 @@ Creates a menu item with horizontally centered title S.
 </p>
 
 <pre>
-guibutton S A
-guibutton A
+guibutton [S] A
 </pre>
 <p>
 Creates a menu button with the name S, which will execute A when selected. If you only specify one parameter, then it will be used for both.
-The icon used will be a blue-button if A contains showmenu, otherwise it is a green button. Clicking a button will close the menu.
+The icon used will be a blue-button if A contains showgui, otherwise it is a green button. Clicking a button will close the menu.
 </p>
 
 <pre>
-guiimage P A
+guiimage P A S [O]
 </pre>
 <p>
-Creates a menu image tile from the path P, which will execute A when selected. Clicking the image will close the menu.
+Creates a menu image tile from the path P, which will execute A when selected. Clicking the image will close the menu. Uses image scale S and O=1 if an overlay is required.
 </p>
 <pre>
 guitext S
@@ -437,25 +436,28 @@ Creates a vertical/horizontal menu bar. The orientation depends on the layout di
 </p>
 
 <pre>
-guislider V
+guislider V [MIN MAX A]
 </pre>
 <p>
-Creates a vertical/horizontal menu slider that is bound to a variable V. The min/max bounds of the slider will be as defined by the data model of the variable. The orientation of the slider depends on the layout direction.
+Creates a vertical/horizontal menu slider that is bound to a variable V. The min/max bounds of the slider will be as defined by the data model of the variable unless explicitly specified. 
+An action A can also be specified for every slider change.
+The orientation of the slider depends on the layout direction.
 </p>
 
 <pre>
-guicheck N V
+guicheck N V [ON OFF A]
 </pre>
 <p>
-Creates a menu checkbox with a label N that is bound to a variable V.
+Creates a menu checkbox with a label N that is bound to a variable V. The default value are 0/1 unless supplied by ON/OFF. An action A can also be specified for every checkbox change.
 </p>
 
 <pre>
-guiradio N V X
+guiradio N V VAL [A]
 </pre>
 <p>
-Creates a menu radio button with a label N that is bound to a variable V. The radio button is only ticked when the variable has value X, and 
-presing the button will update the variable to the value X.
+Creates a menu radio button with a label N that is bound to a variable V. The radio button is only ticked when the variable has value VAL, and 
+presing the button will update the variable to the value VAL.
+An action A can also be specified for every radio button change.
 </p>
 
 <pre>
