@@ -286,12 +286,8 @@ extern void mincubeface(cube &cu, int orient, const ivec &o, int size, const mer
 extern bool haveselent();
 extern bool toggleselent(int id);
 extern int rayent(const vec &o, vec &ray);
-extern void entdrag(const vec &o, const vec &ray, int d, ivec &dest, bool first = false);
 extern void copyent(int n);
 extern void pushent(int d, int dist);
-extern void entflip(selinfo &sel);
-extern void entrotate(selinfo &sel, int cw);
-extern void entmove(selinfo &sel, ivec &o);
 extern void copyundoents(undoblock &d, undoblock &s);
 extern void pasteundoents(undoblock &u);
 

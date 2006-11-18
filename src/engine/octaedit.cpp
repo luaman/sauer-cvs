@@ -52,14 +52,15 @@ int gridsize = 8;
 ivec cor, lastcor;
 ivec cur, lastcur;
 
-ivec movehandle;
-
 bool editmode = false;
 bool havesel = false;
 
 int *hmap = NULL; // heightmap
 ushort *htex = NULL; // textures for heightmap
 ushort htexture = 0; // single texture for heightmap
+
+extern int entmoving;
+extern void entdrag(const vec &ray, int d, ivec &dest, bool first);
 
 VARF(dragging, 0, 0, 1,
     if(!dragging || cor[0]<0) return;
@@ -190,25 +191,10 @@ void selextend()
 };
 
 COMMANDN(edittoggle, toggleedit, "");
-COMMANDN(ecancelsel, cancelentsel, "");
+COMMANDN(entcancel, cancelentsel, "");
 COMMANDN(cancelsel, cancelcubesel, "");
 COMMAND(reorient, "");
 COMMAND(selextend, "");
-
-bool entdragplayerview()
-{
-    if(passthrough) return false;
-    ivec t;
-    vec ray(worldpos); ray.sub(player->o);
-    int n = rayent(player->o, ray);
-    if((entgroup.length()==1 && n==entgroup.last()) || // don't deselect single selections
-       (n>=0 && toggleselent(n)))
-        entdrag(player->o, ray, dimension(sel.orient), t, true);
-    else return false;
-    return true;
-};
-
-ICOMMAND(enttoggle, "", { intret(entdragplayerview()); });
 
 ///////// selection support /////////////
 
@@ -228,6 +214,8 @@ cube &blockcube(int x, int y, int z, const block3 &b, int rgrid) // looks up a w
 
 int selchildcount=0;
 ivec origin(0,0,0);
+
+ICOMMAND(havesel, "", intret(havesel ? selchildcount : 0));
 
 void countselchild(cube *c, ivec &cor, int size)
 {
@@ -268,6 +256,25 @@ void updateselection()
     sel.s.z = abs(lastcur.z-cur.z)/sel.grid+1;
 };
 
+void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, vec &dest, bool first)
+{
+    plane pl(d, off);
+    float dist = 0.0f;
+
+    if(pl.rayintersect(player->o, ray, dist))
+    {        
+        dest = ray;
+        dest.mul(dist);
+        dest.add(player->o);
+        if(first)
+        {
+            handle = dest;
+            handle.sub(o);
+        };
+        dest.sub(handle);
+    };
+};
+
 void cursorupdate()
 {
     if(sel.grid == 0) sel.grid = gridsize;
@@ -278,37 +285,20 @@ void cursorupdate()
     vec ray(target);
     ray.sub(player->o).normalize();
     int g2 = gridsize/2;
-    int d = dimension(sel.orient), 
+    int d = dimension(sel.orient),
+        dc = dimcoord(sel.orient),
         od = dimension(orient),
-        dc = dimcoord(sel.orient);
+        odc= dimcoord(orient);
     ivec e;
-
-    
-    if(haveselent() && (dragging || moving))
-    {
-        entdrag(player->o, ray, d, e);
-    }
-    else if(moving)
+               
+    if(moving)
     {       
-        plane pl(d, sel.o[D[d]]+dc*sel.grid*sel.s[D[d]]);
-        float dist = 0.0f;
-        if(pl.rayintersect(player->o, ray, dist))
-        {
-            vec p(ray);
-            p.mul(dist);
-            p.add(player->o);
-            e = p;
-            e.mask(~(sel.grid-1));
-            if(!havesel)
-            {
-                movehandle = e;
-                movehandle.sub(sel.o);
-                havesel = true;
-            };
-            e.sub(movehandle);
-            sel.o[R[d]] = e[R[d]];
-            sel.o[C[d]] = e[C[d]];
-        };
+        static vec v, handle;
+        editmoveplane(sel.o.tovec(), ray, od, sel.o[D[od]]+odc*sel.grid*sel.s[D[od]], handle, v, !havesel);
+        havesel = true;
+        (e = v.add(0.5f)).mask(~(sel.grid-1));
+        sel.o[R[od]] = e[R[od]];
+        sel.o[C[od]] = e[C[od]];
     }
     else 
     {  
@@ -390,29 +380,24 @@ void cursorupdate()
         countselchild(worldroot, origin, hdr.worldsize/2);
         if(mag>1 && selchildcount==1) selchildcount = -mag;
     };
+    if(entmoving)
+    {
+        entdrag(ray, d, e, false);
+    };
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     
     // cursors    
-    if(havesel && moving)
-    {
-        glColor3ub(10,10,10);   // grid
-        boxsgrid(sel.o, sel.s, sel.grid, sel.orient);
-        glColor3ub(10,10,40);   // 3D selection box
-        boxs3D(sel.o, sel.s, sel.grid);
-    }
-    else if(haveselent() && (dragging || moving))
+    //if(entmoving)
     {
         glColor3ub(40,40,40);
         loop(x, 4) loop(y, 4)
             boxs(sel.orient, e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
-    }
-    else    
-    {
-        glColor3ub(120,120,120);
-        boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
     };
+
+    glColor3ub(120,120,120);
+    boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
 
     // selections
     if(hmap != NULL)
@@ -1002,21 +987,7 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
     int seldir = dc ? -dir : dir;
 
     if(local)
-    {
-        if(haveselent())
-        {
-            pushent(d, seldir*sel.grid);
-            return;
-        };
-
-        if(moving)
-        {
-            sel.o[d] += seldir*sel.grid;
-            return;
-        };
-
         cl->edittrigger(sel, EDIT_FACE, dir, mode);
-    };
 
     if(mode==1)
     {
@@ -1090,7 +1061,11 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int *dir, int *mode)
 {
     if(noedit(moving!=0)) return;
-    if(!haveselent() && hmap)
+    int d = dimension(orient);
+    int s = dimcoord(orient) ? -*dir : *dir;
+    if(moving)
+        sel.o[d] += s*sel.grid;
+    else if(hmap)
         edithmap(*dir);
     else
         mpeditface(*dir, *mode, sel, true);
@@ -1287,7 +1262,6 @@ void mpflip(selinfo &sel, bool local)
         };
     };
     changed(sel);
-    entflip(sel);
 };
 
 void flip()
@@ -1316,7 +1290,6 @@ void mprotate(int cw, selinfo &sel, bool local)
         );
     };
     changed(sel);
-    entrotate(sel, cw);
 };
 
 void rotate(int *cw)
