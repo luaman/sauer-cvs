@@ -240,7 +240,7 @@ void entrotate(int *cw)
 {
     if(noedit(true)) return;
     int d = dimension(sel.orient);
-    int dd = *cw>0 ? R[d] : C[d];
+    int dd = *cw<0 == dimcoord(sel.orient) ? R[d] : C[d];
     float mid = sel.s[dd]*sel.grid/2+sel.o[dd];
     vec s(sel.o.v);
     groupeditundo(
