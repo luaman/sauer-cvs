@@ -31,6 +31,11 @@ below to modify the selection. While in edit mode, physics &amp; collision
 don't apply (noclip), and key repeat is ON.
 </p>
 
+<pre>dragging 0/1</pre>
+<p>
+Select cubes when set to 1. stop selection when set to 0
+</p>
+
 <pre>editdrag</pre>
 <p>
 Select cubes and entities. (default: left mouse button)
@@ -41,19 +46,17 @@ Select cubes and entities. (default: left mouse button)
 Select the corners of cubes. (default: middle mouse button)
 </p>
 
-<pre>editmove</pre>
+<pre>moving 0/1</pre>
 <p>
-Moves a cube selection to another position. (default: right mouse button). Activated by a 'drag-and-drop' style action.
-The orientation of the selection will change depending on what side of the selection 
-you try to hold onto. The selection will extend if the cursor is outside of the selection
-when you try to hold onto the it. Editmove also supports extending entity selections as well.
+set to 1 to turn on. when on, it will move the selection (cubes not included) to another position. 
+the plane on which it will move on is dependent on which side of the selection your cursor was on when 
+turned on. set to 0 to turn off moving. if cursor is not on selection when turned on, moving
+will automatically be turned off.
+</p>
 
-Movement fuctions similar to entity dragging; 
-you can drag the selection across the 2D plane indicated by the cube orientation.
-The scroll wheel (ie: editface) is used to change the depth of the selection. 
-A ghost selection will indicate the new position of the selection.
-
-Moving a cubic selection will also move any entities within the selection.
+<pre>editmovedrag</pre>
+<p>
+if cursor is in current cube selection, holding will move selection. otherwise will create new selection.
 </p>
 
 <pre>cancelsel</pre>
@@ -95,7 +98,6 @@ texturing things using already textured geometry.
 <pre>selextend</pre>
 <p>
 Extend current selection to include the cursor.
-Also supports extending entity selections. Click an entity to toggle it into the entity selection.
 </p>
 
 <pre>passthrough</pre>
@@ -114,14 +116,14 @@ pointing. (default: shift)
 <pre>flip</pre>
 <p>
 Flip (mirror) the selected cubes front to back relative to the side of the
-white box. This will also flip the positions of any entites within the selection. (default: x)
+white box. (default: x)
 </p>
 
 <pre>rotate D</pre>
 <p>
 Rotates the selection 90 degrees around the side of the white box.
 Automatically squares the selection if it isn't already.
-This will also rotate the positions of any entites within the selection. (default: r + scroll wheel)
+(default: r + scroll wheel)
 </p>
 
 <pre>undo</pre>
@@ -259,35 +261,38 @@ on the entity). The types are defines below in the <a href="#entitytypes">Entity
 Types</a> section.
 </p>
 
-<pre>entedit type    value1 value2 value3 value4</pre>
-<p>
-Change the type and attributes of the selected entity.
-To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
-</p>
-
 <pre>delent</pre>
 <p>
-deletes the selected entity to the player
+deletes the selected entities
 </p>
 
-<pre>entproperty P A</pre>
+<pre>entflip</pre>
 <p>
-Changes property P (0..3) of the closest entity by amount A. For example
-"entproperty 0 2" when executed near a lightsource would increase its radius by
-2.
+flip the selected entities. cube selection serves as both reference point and 
+orientation to flip around.
 </p>
 
-<pre>clearents type</pre>
+<pre>entpush D</pre>
 <p>
-Deletes all entities of said type.
+push the selected entities. cube selection serves as orientation to push towards.
 </p>
 
-<pre>replaceents type value1 value2 value3 value4</pre>
+<pre>entrotate D</pre>
 <p>
-Replaces the given values for the selected entity and all entities that are
-equal to the selected entity. 
-To quickly bring up the replaceents command in the console press ',' (default: comma). It will come pre-filled with the values of the current entity selection.
+rotate the selected entities. cube selection serves as both reference point and 
+orientation to rotate around.
 </p>
+
+<pre>entmoving 0/1</pre>
+<p>
+set to 1 to turn on. if an entity is under the cursor when turned on, the
+entity will get toggled selected/unselected. if selected, one can move the
+entity around using the cursor. if multiple entities are selected, they will 
+also move. the plane on which the entity will be moved is
+dependent on the orientation of the cube selection. set to 0 to turn off moving.
+if no entity is under the cursor when turned on, it will automatically turn off.
+</p>
+
 
 <pre>entdrop N</pre>
 <p>
@@ -313,22 +318,27 @@ Positions the selected entity according to the entdrop variable.
 Sets the state of all locked triggers with tag T to N.
 </p>
 
-<pre>esel X</pre>
+<pre>entselect X</pre>
 <p>
 Takes a boolean expression as argument. Selects all entities that evaluate to true for the given expression.<br>
 examples:<br>
-esel insel // select all entities in blue selection box<br>
-esel [ strcmp (et) "shells" ] // select all shells in map
+entselect insel // select all entities in blue selection box<br>
+entselect [ strcmp (et) "shells" ] // select all shells in map
 </p>
 
-<pre>esellen</pre>
+<pre>entcancel</pre>
+<p>
+deselect all entities
+</p>
+
+<pre>enthavesel</pre>
 <p>
 Returns the number of entities in the current selection.
 </p>
 
 <pre>insel</pre>
 <p>
-Returns true if the selected entity is inside the blue explicit selection box. Implicit cube selections don't count.
+Returns true if the selected entity is inside the cube selection
 </p>
 
 <pre>et</pre>
@@ -339,6 +349,36 @@ Returns a string for scripts that has the 'type' of the selected entity.
 <pre>ea N</pre>
 <p>
 Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
+
+<pre>entedit type    value1 value2 value3 value4</pre>
+<p>
+Change the type and attributes of the selected entity.
+To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
+</p>
+
+<pre>entproperty P A</pre>
+<p>
+Changes property P (0..3) of the closest entity by amount A. For example
+"entproperty 0 2" when executed near a lightsource would increase its radius by
+2.
+</p>
+
+<pre>entfind type</pre>
+<p>
+Select all entities of said type.
+</p>
+
+<pre>clearents type</pre>
+<p>
+Deletes all entities of said type.
+</p>
+
+<pre>replaceents type value1 value2 value3 value4</pre>
+<p>
+Replaces the given values for the selected entity and all entities that are
+equal to the selected entity. 
+To quickly bring up the replaceents command in the console press ',' (default: comma). It will come pre-filled with the values of the current entity selection.
+</p>
 
 <a name="settings"></a>        
 <h1>Settings</h1>
