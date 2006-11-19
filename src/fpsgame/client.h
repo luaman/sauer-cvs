@@ -379,7 +379,7 @@ struct clientcom : iclientcom
         int gamemode = cl.gamemode;
         static char text[MAXTRANS];
         int type;
-        bool mapchanged = false, inited = false;
+        bool mapchanged = false, inited = false, joining = false;
 
         while(p.remaining()) switch(type = getint(p))
         {
@@ -393,7 +393,8 @@ struct clientcom : iclientcom
                     return;
                 };
                 player1->clientnum = mycn;      // we are now fully connected
-                if(!getint(p) && (cl.gamemode==1 || cl.getclientmap()[0])) changemap(cl.getclientmap()); // we are the first client on this server, set map
+                if(getint(p)) joining = true;
+                else if(cl.gamemode==1 || cl.getclientmap()[0]) changemap(cl.getclientmap()); // we are the first client on this server, set map
                 break;
             };
 
@@ -419,6 +420,11 @@ struct clientcom : iclientcom
             case SV_MAPCHANGE:
                 getstring(text, p);
                 changemapserv(text, getint(p));
+                if(joining && m_arena)
+                {
+                    player1->state = CS_DEAD;
+                    cl.sb.showscores(true);
+                };
                 mapchanged = true;
                 break;
 
