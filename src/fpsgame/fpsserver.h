@@ -501,6 +501,11 @@ struct fpsserver : igameserver
         char text[MAXTRANS];
         int cn = -1, type;
         clientinfo *ci = sender>=0 ? (clientinfo *)getinfo(sender) : NULL;
+#ifdef STANDALONE
+#define QUEUE_MSG { while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]); }
+#else
+#define QUEUE_MSG
+#endif
         int curmsg;
         while((curmsg = p.length()) < p.maxlen) switch(type = checktype(getint(p), ci))
         {
@@ -532,14 +537,16 @@ struct fpsserver : igameserver
                     else if(state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
                 };
                 if(!notgotitems && !notgotbases) ci->state = state;
+#ifdef STANDALONE
                 ci->position.setsizenodelete(0);
                 while(curmsg<p.length()) ci->position.add(p.buf[curmsg++]);
+#endif
                 break;
             };
 
             case SV_TEXT:
                 getstring(text, p);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
 
             case SV_INITC2S:
@@ -547,6 +554,7 @@ struct fpsserver : igameserver
                 bool newclient = !ci->name[0];
                 getstring(text, p);
                 s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
+#ifdef STANDALONE
                 if(newclient)
                 {
                     clientscore &sc = findscore(ci, false);
@@ -556,9 +564,11 @@ struct fpsserver : igameserver
                         sendf(-1, 1, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
                     };
                 };
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+#endif
+                QUEUE_MSG;
                 curmsg = p.length();
                 getstring(text, p);
+#ifdef STANDALONE
                 if(newclient && m_teammode)
                 {
                     const char *worst = chooseworstteam(text);
@@ -573,10 +583,11 @@ struct fpsserver : igameserver
                         curmsg = p.length();
                     };
                 };
+#endif
                 if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
             };
 
@@ -611,7 +622,7 @@ struct fpsserver : igameserver
             case SV_TEAMSCORE:
                 getstring(text, p);
                 getint(p);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
 
             case SV_BASEINFO:
@@ -619,7 +630,7 @@ struct fpsserver : igameserver
                 getstring(text, p);
                 getstring(text, p);
                 getint(p);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
 
             case SV_BASES:
@@ -641,7 +652,7 @@ struct fpsserver : igameserver
             {
                 int n = getint(p);
                 pickup(n, getint(p), sender);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
             };
 
@@ -653,7 +664,7 @@ struct fpsserver : igameserver
             {
                 int frags = getint(p);    
                 if(minremain>=0) ci->score.frags = frags;
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
             };
                 
@@ -696,7 +707,7 @@ struct fpsserver : igameserver
                 };
                 spinfo->spectator = val!=0;
                 sendf(sender, 1, "ri3", SV_SPECTATOR, spectator, val);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
             };
 
@@ -710,7 +721,7 @@ struct fpsserver : igameserver
                 if(m_capture && wi->state==CS_ALIVE && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->o);
                 s_strncpy(wi->team, text, MAXTEAMLEN+1);
                 sendf(sender, 1, "riis", SV_SETTEAM, who, text);
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
             }; 
 
@@ -736,7 +747,7 @@ struct fpsserver : igameserver
                     resetitems();
                     notgotitems = notgotbases = false;
                 };
-                while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                QUEUE_MSG;
                 break;
             };
 
@@ -754,7 +765,8 @@ struct fpsserver : igameserver
                 int size = msgsizelookup(type);
                 if(size==-1) { disconnect_client(sender, DISC_TAGT); return; };
                 loopi(size-1) getint(p);
-                if(ci) while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]);
+                if(ci) QUEUE_MSG;
+                break;
             };
         };
     };
