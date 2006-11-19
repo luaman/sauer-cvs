@@ -890,9 +890,10 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
 {
     glDisable(GL_FOG);
 
+    extern int ati_skybox_bug;
     if(limited)
     {
-        if(zclip) glDepthRange(0.999f, 0.999f);
+        if(zclip && !ati_skybox_bug) glDepthRange(0.999f, 0.999f);
 
         nocolorshader->set();
 
@@ -913,14 +914,13 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     glRotatef(90, 1, 0, 0);
     if(reflected) glScalef(1, 1, -1);
     glColor3f(1, 1, 1);
-    extern int ati_skybox_bug;
     if(limited) glDepthFunc(editmode || !insideworld(camera1->o) || ati_skybox_bug ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
     draw_envbox(farplane/2, zclip ? (zclip+0.5f*(farplane-hdr.worldsize))/farplane : 0);
     glPopMatrix();
     if(limited) 
     {
         glDepthFunc(GL_LESS);
-        if(zclip) glDepthRange(0, 1);
+        if(zclip && !ati_skybox_bug) glDepthRange(0, 1);
         if(!reflected && editmode && showsky)
         {
             notextureshader->set();
@@ -939,6 +939,12 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     };
 
     glEnable(GL_FOG);
+};
+
+bool limitsky()
+{   
+    extern int ati_skybox_bug;
+    return explicitsky || (!ati_skybox_bug && sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
 };
 
 const int NUMSCALE = 7;
@@ -1214,8 +1220,7 @@ void drawreflection(float z, bool refract, bool clear)
     };
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
-    if(!refract && limitsky) drawskybox(farplane, true, int(z), camera1->o.z >= z);
+    if(!refract && limitsky()) drawskybox(farplane, true, int(z), camera1->o.z >= z);
 
     GLfloat clipmatrix[16];
     if(reflectclip) 
@@ -1231,7 +1236,7 @@ void drawreflection(float z, bool refract, bool clear)
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
 
-    if(!refract && !limitsky) 
+    if(!refract && !limitsky()) 
     {
         if(reflectclip) undoclipmatrix();
         defaultshader->set();
@@ -1324,8 +1329,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, size, size, 90);
 
-    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
-    if(limitsky) drawskybox(farplane, true);
+    if(limitsky()) drawskybox(farplane, true);
 
     rendergeom();
 
@@ -1335,7 +1339,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
     defaultshader->set();
 
-    if(!limitsky) drawskybox(farplane, false);
+    if(!limitsky()) drawskybox(farplane, false);
 
 //    drawreflections();
 
@@ -1383,8 +1387,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, fov);
     
-    bool limitsky = explicitsky || (sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
-    if(limitsky) drawskybox(farplane, true);
+    if(limitsky()) drawskybox(farplane, true);
 
     rendergeom();
 
@@ -1400,7 +1403,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     defaultshader->set();
 
-    if(!limitsky) drawskybox(farplane, false);
+    if(!limitsky()) drawskybox(farplane, false);
 
     drawreflections();
 
