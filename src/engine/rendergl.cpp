@@ -159,6 +159,7 @@ void *getprocaddress(const char *name)
     return SDL_GL_GetProcAddress(name);
 }
 
+VAR(ati_skybox_bug, 0, 0, 1);
 VAR(ati_texgen_bug, 0, 0, 1);
 VAR(ati_oq_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
@@ -230,7 +231,15 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     };
 
     extern int floatvtx;
-    if(strstr(vendor, "ATI") || strstr(vendor, "Tungsten")) floatvtx = 1;
+    if(strstr(vendor, "ATI"))
+    {
+        floatvtx = 1;
+        conoutf("WARNING: ATI cards may show garbage in skybox. (use \"/ati_skybox_bug 1\" to fix)");
+    }
+    else if(strstr(vendor, "Tungsten"))
+    {
+        floatvtx = 1;
+    };
     if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
 
     if(!shaderprecision || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
@@ -904,7 +913,8 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     glRotatef(90, 1, 0, 0);
     if(reflected) glScalef(1, 1, -1);
     glColor3f(1, 1, 1);
-    if(limited) glDepthFunc(editmode || !insideworld(camera1->o) ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
+    extern int ati_skybox_bug;
+    if(limited) glDepthFunc(editmode || !insideworld(camera1->o) || ati_skybox_bug ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
     draw_envbox(farplane/2, zclip ? (zclip+0.5f*(farplane-hdr.worldsize))/farplane : 0);
     glPopMatrix();
     if(limited) 
