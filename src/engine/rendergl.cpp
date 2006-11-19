@@ -159,7 +159,7 @@ void *getprocaddress(const char *name)
     return SDL_GL_GetProcAddress(name);
 }
 
-VAR(ati_skybox_bug, 0, 0, 1);
+VARP(ati_skybox_bug, 0, 0, 1);
 VAR(ati_texgen_bug, 0, 0, 1);
 VAR(ati_oq_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
