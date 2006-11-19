@@ -485,7 +485,7 @@ void addreflection(materialsurface &m)
         if(!oldest || oldest->lastused==lastmillis) return;
         ref = oldest;
     };
-    if(!ref->fb)
+    if((waterreflect || waterrefract) && !ref->fb)
     {
         glGenFramebuffers_(1, &ref->fb);
         glGenTextures(1, &ref->tex);
