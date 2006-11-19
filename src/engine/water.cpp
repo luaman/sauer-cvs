@@ -618,8 +618,15 @@ VARP(maxreflect, 1, 1, 8);
 
 float reflecting = 0, refracting = 0;
 
+VAR(maskreflect, 0, 1, 1);
+
 void maskreflection(Reflection &ref, float offset, bool reflect)
 {
+    if(!maskreflect)
+    {
+        glClear(GL_DEPTH_BUFFER_BIT);
+        return;
+    };
     glClearDepth(0);
     glClear(GL_DEPTH_BUFFER_BIT);
     glClearDepth(1);

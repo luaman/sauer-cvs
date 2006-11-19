@@ -172,7 +172,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
     glViewport(0, 0, w, h);
     glClearColor(fogvalues);
-    glClearDepth(1.0);
+    glClearDepth(1);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
@@ -180,7 +180,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     
     glEnable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogf(GL_FOG_DENSITY, 0.25);
+    glFogf(GL_FOG_DENSITY, 0.25f);
     glHint(GL_FOG_HINT, GL_NICEST);
     GLfloat fogcolor[4] = { fogvalues };
     glFogfv(GL_FOG_COLOR, fogcolor);
@@ -189,7 +189,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_POLYGON_OFFSET_LINE);
-    glPolygonOffset(-3.0, -3.0);
+    glPolygonOffset(-3.0f, -3.0f);
 
     glCullFace(GL_FRONT);
     glEnable(GL_CULL_FACE);
