@@ -573,6 +573,7 @@ struct weaponstate
             pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
             vec v(p.to);
             v.sub(pos);
+            if(v == vec(0,0,0)) continue;
             v.normalize();
             // the amount of distance in front of the smoke trail needs to change if the model does
             vectoyawpitch(v, yaw, pitch);
