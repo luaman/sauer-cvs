@@ -130,6 +130,7 @@ struct fpsserver : igameserver
             SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_DELCUBE, 14, SV_NEWMAP, 2, SV_GETMAP, 1,
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
             SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
+            SV_CLIENT, 0,
             -1
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
@@ -386,7 +387,7 @@ struct fpsserver : igameserver
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
-        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE };
+        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_CLIENT };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     };
@@ -430,9 +431,11 @@ struct fpsserver : igameserver
             else
             {
                 ci.messageoffset = ws.messages.length();
-                ws.messages.add(ci.clientnum);
-                ws.messages.add(ci.messages.length()&0xFF);
-                ws.messages.add(ci.messages.length()>>8);
+                ucharbuf p = ws.messages.reserve(16);
+                putint(p, SV_CLIENT);
+                putint(p, ci.clientnum);
+                putuint(p, ci.messages.length());
+                ws.messages.addbuf(p);
                 loopvj(ci.messages) ws.messages.add(ci.messages[j]);
             };
         };
@@ -460,7 +463,7 @@ struct fpsserver : igameserver
                 packet = enet_packet_create(&ws.messages[ci.messageoffset<0 ? 0 : ci.messageoffset+3+ci.messages.length()], 
                                             ci.messageoffset<0 ? msize : msize-3-ci.messages.length(), 
                                             (reliablemessages ? ENET_PACKET_FLAG_RELIABLE : 0) | ENET_PACKET_FLAG_NO_ALLOCATE);
-                sendpacket(ci.clientnum, 2, packet);
+                sendpacket(ci.clientnum, 1, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
                 else { ++ws.uses; packet->freeCallback = freecallback; };
             };
@@ -578,10 +581,9 @@ struct fpsserver : igameserver
                     {
                         s_strcpy(text, worst);
                         sendf(sender, 1, "riis", SV_SETTEAM, sender, worst);
-                        ci->messages.reserve(2*strlen(worst)+1);
-                        ucharbuf buf(&ci->messages.last()+1, ci->messages.alen-ci->messages.ulen);
+                        ucharbuf buf = ci->messages.reserve(2*strlen(worst)+1);
                         sendstring(worst, buf);
-                        ci->messages.ulen += buf.length();
+                        ci->messages.addbuf(buf);
                         curmsg = p.length();
                     };
                 };

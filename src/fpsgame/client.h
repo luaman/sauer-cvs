@@ -49,7 +49,7 @@ struct clientcom : iclientcom
         else conoutf("your team is: %s", player1->team);
     };
 
-    int numchannels() { return 4; };
+    int numchannels() { return 3; };
 
     static void filtertext(char *dst, const char *src, bool whitespace = true, int len = sizeof(string)-1)
     {
@@ -363,19 +363,6 @@ struct clientcom : iclientcom
                 break;
 
             case 2: 
-                while(p.remaining())
-                {
-                    int cn = p.get();
-                    fpsent *d = cl.getclient(cn);
-                    int len = p.get();
-                    len += p.get()<<8;
-                    ucharbuf q(&p.buf[p.len], min(len, p.maxlen-p.len));
-                    parsemessages(cn, d, q);
-                    p.len += min(len, p.maxlen-p.len);
-                };
-                break;
-
-            case 3: 
                 receivefile(p.buf, p.maxlen);
                 break;
         };
@@ -402,6 +389,14 @@ struct clientcom : iclientcom
                 player1->clientnum = mycn;      // we are now fully connected
                 if(getint(p)) joining = true;
                 else if(cl.gamemode==1 || cl.getclientmap()[0]) changemap(cl.getclientmap()); // we are the first client on this server, set map
+                break;
+            };
+
+            case SV_CLIENT:
+            {
+                int cn = getint(p), len = getuint(p);
+                ucharbuf q = p.subbuf(len);
+                parsemessages(cn, cl.getclient(cn), q);
                 break;
             };
 
