@@ -551,11 +551,13 @@ struct fpsserver : igameserver
 
             case SV_INITC2S:
             {
-                bool newclient = !ci->name[0];
+#ifdef STANDALONE
+                bool connected = !ci->name[0];
+#endif
                 getstring(text, p);
                 s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
 #ifdef STANDALONE
-                if(newclient)
+                if(connected)
                 {
                     clientscore &sc = findscore(ci, false);
                     if(&sc) 
@@ -569,7 +571,7 @@ struct fpsserver : igameserver
                 curmsg = p.length();
                 getstring(text, p);
 #ifdef STANDALONE
-                if(newclient && m_teammode)
+                if(connected && m_teammode)
                 {
                     const char *worst = chooseworstteam(text);
                     if(worst)

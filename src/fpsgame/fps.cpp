@@ -370,7 +370,7 @@ struct fpsclient : igameclient
         };
     };
 
-    fpsent *getclient(int cn)   // ensure valid entity
+    fpsent *newclient(int cn)   // ensure valid entity
     {
         if(cn<0 || cn>=MAXCLIENTS)
         {
@@ -385,6 +385,11 @@ struct fpsclient : igameclient
             players[cn] = d;
         };
         return players[cn];
+    };
+
+    fpsent *getclient(int cn)   // ensure valid entity
+    {
+        return players.inrange(cn) ? players[cn] : NULL;
     };
 
     void initclient()

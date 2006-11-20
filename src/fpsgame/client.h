@@ -297,35 +297,42 @@ struct clientcom : iclientcom
 
     void parsepositions(ucharbuf &p)
     {
-        int cn = -1, type;
-        fpsent *d = NULL;
-
+        int type;
         while(p.remaining()) switch(type = getint(p))
         {
             case SV_POS:                        // position of another client
             {
-                cn = getint(p);
-                d = cl.getclient(cn);
-                if(!d) return;
-                d->o.x = getuint(p)/DMF;
-                d->o.y = getuint(p)/DMF;
-                d->o.z = getuint(p)/DMF;
-                d->yaw = (float)getuint(p);
-                d->pitch = (float)getint(p);
-                d->roll = (float)getint(p);
-                d->vel.x = getint(p)/DVELF;
-                d->vel.y = getint(p)/DVELF;
-                d->vel.z = getint(p)/DVELF;
-                int physstate = getint(p); 
-                d->physstate = physstate & 0x0F;
-                d->gravity = vec(0, 0, 0);
+                int cn = getint(p);
+                vec o, vel, gravity;
+                float yaw, pitch, roll;
+                int physstate, f;
+                o.x = getuint(p)/DMF;
+                o.y = getuint(p)/DMF;
+                o.z = getuint(p)/DMF;
+                yaw = (float)getuint(p);
+                pitch = (float)getint(p);
+                roll = (float)getint(p);
+                vel.x = getint(p)/DVELF;
+                vel.y = getint(p)/DVELF;
+                vel.z = getint(p)/DVELF;
+                physstate = getint(p);
+                gravity = vec(0, 0, 0);
                 if(physstate&0x20)
                 {
-                    d->gravity.x = getint(p)/DVELF;
-                    d->gravity.y = getint(p)/DVELF;
+                    gravity.x = getint(p)/DVELF;
+                    gravity.y = getint(p)/DVELF;
                 };
-                if(physstate&0x10) d->gravity.z = getint(p)/DVELF;
-                int f = getint(p);
+                if(physstate&0x10) gravity.z = getint(p)/DVELF;
+                f = getint(p);
+                fpsent *d = cl.getclient(cn);
+                if(!d) continue;
+                d->o = o;
+                d->yaw = yaw;
+                d->pitch = pitch;
+                d->roll = roll;
+                d->vel = vel;
+                d->physstate = physstate & 0x0F;
+                d->gravity = gravity;       
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2;
                 d->move = (f&3)==3 ? -1 : f&3;
@@ -363,7 +370,7 @@ struct clientcom : iclientcom
                     int len = p.get();
                     len += p.get()<<8;
                     ucharbuf q(&p.buf[p.len], min(len, p.maxlen-p.len));
-                    if(d) parsemessages(cn, d, q);
+                    parsemessages(cn, d, q);
                     p.len += min(len, p.maxlen-p.len);
                 };
                 break;
@@ -450,7 +457,7 @@ struct clientcom : iclientcom
 
             case SV_INITC2S:            // another client either connected or changed name/team
             {
-                if(!d) return;
+                d = cl.newclient(cn);
                 getstring(text, p);
                 filtertext(text, text, false, MAXNAMELEN);
                 if(!text[0]) s_strcpy(text, "unnamed");
@@ -477,13 +484,16 @@ struct clientcom : iclientcom
             };
 
             case SV_CDIS:
-                cn = getint(p);
-                if(!cl.players.inrange(cn) || !(d = cl.players[cn])) break;
-                conoutf("player %s disconnected", d->name);
+            {
+                int cn = getint(p);
+                fpsent *d = cl.getclient(cn);
+                if(!d) break;
+                if(d->name[0]) conoutf("player %s disconnected", d->name);
                 DELETEP(cl.players[cn]);
                 cleardynentcache();
                 if(currentmaster==cn) currentmaster = -1;
                 break;
+            };
 
             case SV_SHOT:
             {
@@ -596,11 +606,13 @@ struct clientcom : iclientcom
 
             case SV_RESUME:
             {
-                cn = getint(p);
-                d = (cn == player1->clientnum ? player1 : cl.getclient(cn));
-                if(!d) return;
-                d->maxhealth = getint(p);
-                d->frags = getint(p);
+                int cn = getint(p);
+                fpsent *d = (cn == player1->clientnum ? player1 : cl.newclient(cn));
+                if(d)
+                {
+                    d->maxhealth = getint(p);
+                    d->frags = getint(p);
+                };
                 break;
             };
 
@@ -723,9 +735,7 @@ struct clientcom : iclientcom
             {
                 int wn = getint(p);
                 getstring(text, p);
-                fpsent *w;
-                if(wn==player1->clientnum) w = player1;
-                else w = cl.getclient(wn);
+                fpsent *w = wn==player1->clientnum ? player1 : cl.getclient(wn);
                 if(!w) return;
                 filtertext(w->team, text, false, MAXTEAMLEN);
                 break;
