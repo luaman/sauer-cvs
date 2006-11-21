@@ -54,6 +54,7 @@ struct rpgobj : g3d_callback
 
     void scriptinit()
     {
+        DELETEP(inventory);
         s_sprintfd(aliasname)("spawn_%s", name);
         execute(aliasname);
     }
