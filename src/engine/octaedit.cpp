@@ -287,7 +287,6 @@ void cursorupdate()
     ray.sub(player->o).normalize();
     int g2 = gridsize/2;
     int d = dimension(sel.orient),
-        dc = dimcoord(sel.orient),
         od = dimension(orient),
         odc= dimcoord(orient);
     ivec e;

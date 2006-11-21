@@ -507,7 +507,7 @@ struct fpsserver : igameserver
 #ifdef STANDALONE
 #define QUEUE_MSG { while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]); }
 #else
-#define QUEUE_MSG
+#define QUEUE_MSG void(0)
 #endif
         int curmsg;
         while((curmsg = p.length()) < p.maxlen) switch(type = checktype(getint(p), ci))
