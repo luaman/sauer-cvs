@@ -434,19 +434,6 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     return i;
 };
 
-void copyent(int i)
-{
-    entity &c = *et->getents()[i];
-    if(!haveselent())
-        enttoggle(newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4));
-    else
-        groupedit( e.type = c.type; 
-                   e.attr1 = c.attr1; 
-                   e.attr2 = c.attr2; 
-                   e.attr3 = c.attr3; 
-                   e.attr4 = c.attr4);
-};
-
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit(true)) return;
@@ -458,18 +445,7 @@ COMMAND(newent, "siiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
 
-void eattr(int *prop)
-{
-    entfocus(efocus, switch(*prop)
-    {
-        case 0: intret(e.attr1); break;
-        case 1: intret(e.attr2); break;
-        case 2: intret(e.attr3); break;
-        case 3: intret(e.attr4); break;
-    });
-};
-
-void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
+void entset(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit(true)) return;
     int type = findtype(what);
@@ -481,11 +457,12 @@ void enteditor(char *what, int *a1, int *a2, int *a3, int *a4)
 };
 
 ICOMMAND(enthavesel,"",  intret(entgroup.length()));
-ICOMMAND(entselect, "s", addgroup(e.type != ET_EMPTY && execute(args[0]) > 0));
+ICOMMAND(entselect, "s", addgroup(e.type != ET_EMPTY && entgroup.find(n)<0 && execute(args[0])>0));
+ICOMMAND(entloop,   "s", groupedit(execute(args[0])));
 ICOMMAND(insel,     "",  entfocus(efocus, intret(pointinsel(sel, e.o))));
-ICOMMAND(et,        "",  entfocus(efocus, result(et->entname(e.type))));
-COMMANDN(ea, eattr, "i");
-COMMANDN(entedit, enteditor, "siiii");
+ICOMMAND(entget,    "",  entfocus(efocus, s_sprintfd(s)("%s %d %d %d %d", et->entname(e.type), e.attr1, e.attr2, e.attr3, e.attr4);  result(s)));
+COMMAND(entset, "siiii");
+
 
 int findentity(int type, int index)
 {

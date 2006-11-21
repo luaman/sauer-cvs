@@ -617,7 +617,6 @@ void editundo() { swapundo(undos, redos, "undo"); };
 void editredo() { swapundo(redos, undos, "redo"); };
 
 editinfo *localedit=NULL;
-int entcopy = -1;
 
 void freeeditinfo(editinfo *&e)
 {
@@ -658,32 +657,23 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
 void copy()
 {
     if(noedit(true)) return;
-    entcopy = -1;
-    if(haveselent())
-        entcopy = entgroup.last();
-    else
-        mpcopy(localedit, sel, true);
+    mpcopy(localedit, sel, true);
 };
 
 void paste(int *isdown)
 {
-    if(noedit(entcopy>=0)) return;
+    if(noedit()) return;
     if(*isdown!=0)
     {
-        if(entcopy<0 && localedit && localedit->copy)
+        if(localedit && localedit->copy)
         {
             sel.s = localedit->copy->s;
             havesel = true;
             reorient();
         };
     }
-    else
-    {
-        if(entcopy>=0)
-            copyent(entcopy);
-        else if(havesel)
-            mppaste(localedit, sel, true);
-    };
+    else if(havesel)
+        mppaste(localedit, sel, true);
 };
 
 COMMAND(copy, "");
