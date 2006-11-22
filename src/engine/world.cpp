@@ -199,7 +199,7 @@ void makeundoent()
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
-#define implicitent(f)  { if(entgroup.length()==0) { entgroup.add(closestent()); f; entgroup.setsize(0); } else f; }
+#define implicitent(f)  { if(entgroup.empty()) { entgroup.add(closestent()); f; entgroup.setsize(0); } else f; }
 #define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; addentity(n); et->editent(n)); }
 #define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
@@ -458,7 +458,7 @@ void entset(char *what, int *a1, int *a2, int *a3, int *a4)
 
 ICOMMAND(enthavesel,"",  intret(entgroup.length()));
 ICOMMAND(entselect, "s", addgroup(e.type != ET_EMPTY && entgroup.find(n)<0 && execute(args[0])>0));
-ICOMMAND(entloop,   "s", groupedit((e,execute(args[0]))));
+ICOMMAND(entloop,   "s", groupedit(((void)e, execute(args[0]))));
 ICOMMAND(insel,     "",  entfocus(efocus, intret(pointinsel(sel, e.o))));
 ICOMMAND(entget,    "",  entfocus(efocus, s_sprintfd(s)("%s %d %d %d %d", et->entname(e.type), e.attr1, e.attr2, e.attr3, e.attr4);  result(s)));
 COMMAND(entset, "siiii");
