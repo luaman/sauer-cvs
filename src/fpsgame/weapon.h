@@ -256,10 +256,10 @@ struct weaponstate
     float rocketdist(fpsent *o, vec &dir, vec &v)
     {
         vec middle = o->o;
-        middle.z -= (o->aboveeye+o->eyeheight)/2;
+        middle.z += (o->aboveeye-o->eyeheight)/2;
         float dist = middle.dist(v, dir);
+        dir.div(dist);
         if(dist<0) dist = 0;
-        dir.normalize();
         return dist;
     };
 

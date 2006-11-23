@@ -737,7 +737,7 @@ struct fpsserver : igameserver
                 if(mapdata)
                 {
                     sendf(sender, 1, "ris", SV_SERVMSG, "server sending map...");
-                    sendfile(sender, 3, mapdata);
+                    sendfile(sender, 2, mapdata);
                 }
                 else sendf(sender, 1, "ris", SV_SERVMSG, "no map to send"); 
                 break;
