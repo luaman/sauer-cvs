@@ -127,7 +127,8 @@ struct databuf
     int len, maxlen;
     uchar flags;
 
-    databuf(T *buf, int maxlen) : buf(buf), len(0), maxlen(maxlen), flags(0) {};
+    template<class U> 
+    databuf(T *buf, U maxlen) : buf(buf), len(0), maxlen((int)maxlen), flags(0) {};
 
     const T &get()
     {
