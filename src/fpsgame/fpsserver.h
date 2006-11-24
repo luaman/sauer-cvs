@@ -504,11 +504,7 @@ struct fpsserver : igameserver
         char text[MAXTRANS];
         int cn = -1, type;
         clientinfo *ci = sender>=0 ? (clientinfo *)getinfo(sender) : NULL;
-#ifdef STANDALONE
-#define QUEUE_MSG { while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]); }
-#else
-#define QUEUE_MSG void(0)
-#endif
+#define QUEUE_MSG { if(!ci->local) while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]); }
         int curmsg;
         while((curmsg = p.length()) < p.maxlen) switch(type = checktype(getint(p), ci))
         {
@@ -530,6 +526,14 @@ struct fpsserver : igameserver
                 if(physstate&0x10) getint(p);
                 int state = (getint(p)>>4) & 0x7;
                 if(ci->spectator && state!=CS_SPECTATOR) break;
+                if(!ci->local)
+                {
+                    if(state!=CS_DEAD && state!=CS_ALIVE && (gamemode!=1 || state!=CS_EDITING))
+                    {
+                        disconnect_client(sender, DISC_TAGT);
+                        return;
+                    };
+                };
                 if(m_capture)
                 {
                     if(ci->state==CS_ALIVE)
@@ -540,10 +544,11 @@ struct fpsserver : igameserver
                     else if(state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
                 };
                 if(!notgotitems && !notgotbases) ci->state = state;
-#ifdef STANDALONE
-                ci->position.setsizenodelete(0);
-                while(curmsg<p.length()) ci->position.add(p.buf[curmsg++]);
-#endif
+                if(!ci->local)
+                {
+                    ci->position.setsizenodelete(0);
+                    while(curmsg<p.length()) ci->position.add(p.buf[curmsg++]);
+                };
                 break;
             };
 
@@ -554,13 +559,10 @@ struct fpsserver : igameserver
 
             case SV_INITC2S:
             {
-#ifdef STANDALONE
                 bool connected = !ci->name[0];
-#endif
                 getstring(text, p);
                 s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
-#ifdef STANDALONE
-                if(connected)
+                if(!ci->local && connected)
                 {
                     clientscore &sc = findscore(ci, false);
                     if(&sc) 
@@ -569,12 +571,10 @@ struct fpsserver : igameserver
                         sendf(-1, 1, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
                     };
                 };
-#endif
                 QUEUE_MSG;
                 curmsg = p.length();
                 getstring(text, p);
-#ifdef STANDALONE
-                if(connected && m_teammode)
+                if(!ci->local && connected && m_teammode)
                 {
                     const char *worst = chooseworstteam(text);
                     if(worst)
@@ -587,7 +587,6 @@ struct fpsserver : igameserver
                         curmsg = p.length();
                     };
                 };
-#endif
                 if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
