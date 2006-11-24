@@ -295,8 +295,14 @@ void cursorupdate()
     {       
         static vec v, handle;
         editmoveplane(sel.o.tovec(), ray, od, sel.o[D[od]]+odc*sel.grid*sel.s[D[od]], handle, v, !havesel);
-        havesel = true;
-        (e = v.add(0.5f)).mask(~(sel.grid-1));
+        if(!havesel)
+        {
+            v.add(handle);
+            (e = handle).mask(~(sel.grid-1));
+            v.sub(handle = e.v);
+            havesel = true;
+        };
+        (e = v).mask(~(sel.grid-1));
         sel.o[R[od]] = e[R[od]];
         sel.o[C[od]] = e[C[od]];
     }
@@ -396,8 +402,11 @@ void cursorupdate()
             boxs(sel.orient, e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
     };
 
-    glColor3ub(120,120,120);
-    boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
+    if(!moving)
+    {
+        glColor3ub(120,120,120);
+        boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
+    };
 
     // selections
     if(hmap != NULL)
