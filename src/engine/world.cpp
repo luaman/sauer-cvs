@@ -199,7 +199,7 @@ void makeundoent()
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
-#define implicitent(f)  { if(entgroup.empty()) { entgroup.add(closestent()); f; entgroup.setsize(0); } else f; }
+#define implicitent(f)  { if(entgroup.empty()) { int _ = closestent(); if(_>=0) { entgroup.add(_); f; entgroup.setsize(0); }; } else f; }
 #define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; addentity(n); et->editent(n)); }
 #define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
@@ -438,7 +438,8 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
     if(noedit(true)) return;
     int type = findtype(what);
-    newentity(type, *a1, *a2, *a3, *a4);
+    if(type != ET_EMPTY)
+        newentity(type, *a1, *a2, *a3, *a4);
 };
 
 COMMAND(newent, "siiii");
