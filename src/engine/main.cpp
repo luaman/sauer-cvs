@@ -234,8 +234,9 @@ void checksleep(int millis)
         sleepcmd &s = sleepcmds[i];
         if(s.millis && millis>s.millis)
         {
-            execute(s.command);
-            delete[] s.command; 
+            char *cmd = s.command; // execute might create more sleep commands
+            execute(cmd);
+            delete[] cmd; 
             sleepcmds.remove(i--); 
         };
     };
