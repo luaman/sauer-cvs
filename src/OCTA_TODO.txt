@@ -19,10 +19,7 @@ before next release:
 - add a spotlight
 - very fancy: test alpha on a polygon for ultra-quality raycube()
 - sound entities
-- reduce geometry by merging surfaces and lightmaps
 - add entity looping command?
-- figure a way to make setting per texture params less expensive
-  * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
 - speed up heightfield recalc
 - LOD: improved lod-remip?
@@ -44,10 +41,6 @@ before next release:
 - add parallax scaling parameter
 
 - new textures: philipk / gregor
-
-- debris particles (makke?)
-- get kurt to fix decal textures
-
 
 - death needs to be more obvious (better sound/centerprint) 
 - screenshots etc? new features in docs
@@ -120,21 +113,14 @@ before next release:
 - better damage particles
 - new mapmodels/trees in menu -> new ones from last cube
 - all cfg stuff in menu
-- skybox - roll
 - draw not-spawned items in wireframe?
 - show quadded player with special rendering
 
-- hex numbers
-- 3d menus
 - add hidden ID to your name so that you can claim nicknames on a server?
 
 - experiment with physics speedup features
 
-- make 3rd person weapons show... how to make an axe swing rather than go back and forth?
-- better attack anim? with weapon maybe | add vwep?
-
 - make wether you are hitting other player clearer - blip sounds like q3?
-- importcube takes insane amounts of memory on larger maps... needs progress bar, and mapsize independent of source map
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
