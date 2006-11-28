@@ -136,7 +136,15 @@ int char_width(int c, int x)
 int text_width(const char *str, int limit)
 {
     int x = 0;
-    for(int i = 0; str[i] && (limit<0 || i<limit); i++) x = char_width(str[i], x);
+    for(int i = 0; str[i] && (limit<0 ||i<limit); i++) 
+    {
+        if(str[i]=='\f')
+        {
+            i++;
+            continue;
+        };
+        x = char_width(str[i], x);
+    };
     return x;
 }
 
@@ -145,6 +153,11 @@ int text_visible(const char *str, int max)
     int i = 0, x = 0;
     while(str[i])
     {
+        if(str[i]=='\f')
+        {
+            i += 2;
+            continue;
+        };
         x = char_width(str[i], x);
         if(x > max) return i;
         ++i;
