@@ -1,13 +1,14 @@
-gilt:
-- speed up heightfield recalc
-- LOD: improved lod-remip
-- "editing not in view" sometimes obstructs editing
+before next release:
+- calclight all maps
+- gregors stuff
+- networking test
+- envmap docs
+- rpg stuff?
 
-eihrul:
-- shadow bugs on demomap?
-- shader docs
-- improve smoothness of going up steps
-- remove delay before doors start opening
+
+
+- improve smoothness of going up steps ?
+- remove delay before doors start opening ?
 - better collision on doors (and maybe any rotated object, while we're at it).
 - automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
 - make nearby closed doors render early so that they can contribute to OC?
@@ -15,7 +16,7 @@ eihrul:
 - water at the edges never waves?
 - map up/download etc
 - water physics close to surface
-- add a spotlight (ask me)
+- add a spotlight
 - very fancy: test alpha on a polygon for ultra-quality raycube()
 - sound entities
 - reduce geometry by merging surfaces and lightmaps
@@ -23,10 +24,14 @@ eihrul:
 - figure a way to make setting per texture params less expensive
   * limit the set per shader: only allow the shader ones to be set: wrap the defaults in at start
 
-aard/everyone:
-- before next release: calclight all maps
+- speed up heightfield recalc
+- LOD: improved lod-remip?
+- "editing not in view" sometimes obstructs editing
+
+
+
+
 - maybe add a way to purge infrequent / not recently used textures? esp now with mapshots.
-- finish debris
 
 - social cheating solution
 - reduce maps
