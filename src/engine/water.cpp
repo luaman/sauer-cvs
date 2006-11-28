@@ -335,8 +335,11 @@ void renderwater()
     glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
     glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
 
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
+    if(waterreflect || waterrefract)
+    {
+        glMatrixMode(GL_TEXTURE);
+        glPushMatrix();
+    };
 
     entity *lastlight = (entity *)-1;
     int lastdepth = -1;
@@ -349,9 +352,8 @@ void renderwater()
         {
             if(hasOQ && oqfrags && oqwater && ref.query && checkquery(ref.query)) continue;
             glBindTexture(GL_TEXTURE_2D, ref.tex);
+            setprojtexmatrix(ref);
         };
-
-        setprojtexmatrix(ref);
 
         if(waterrefract)
         {
@@ -395,8 +397,11 @@ void renderwater()
         if(begin) glEnd();
     };
 
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
+    if(waterreflect || waterrefract)
+    {
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+    };
 
     if(waterrefract)
     {
@@ -665,6 +670,7 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
 void drawreflections()
 {
     if(editmode && showmat) return;
+    if(!waterreflect && !waterrefract) return;
     int watermillis = 1000/reflectfps;
     if(lastmillis-lastreflectframe<watermillis) return;
     lastreflectframe = lastmillis-(lastmillis%watermillis);
@@ -685,31 +691,27 @@ void drawreflections()
            if(m.depth>=10000) hasbottom = false;
         };
 
-        if(waterreflect || waterrefract)
-        {
-            if(refs>maxreflect) continue;
-            if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
-        };
+        if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
 
         refs++;
         ref.lastupdate = lastmillis;
         lastdrawn = n;
 
-        if(waterreflect || waterrefract)
-        {
-            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-            maskreflection(ref, offset, camera1->o.z >= ref.height+offset);
-            drawreflection(ref.height+offset, false, false);
-        };
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
+        maskreflection(ref, offset, camera1->o.z >= ref.height+offset);
+        drawreflection(ref.height+offset, false, false);
+
         if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
             maskreflection(ref, offset, false);
             drawreflection(ref.height+offset, true, !hasbottom);
         };    
+
+        if(refs>=maxreflect) break;
     };
     
-    if(!refs || (!waterrefract && !waterreflect)) return;
+    if(!refs) return;
     glViewport(0, 0, scr_w, scr_h);
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
 
