@@ -187,7 +187,7 @@ extern int waterfog, reflectdist;
 
 VAR(showboundingbox, 0, 0, 2);
 
-void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, float ambient, const char *vwepmdl)
+void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
@@ -223,7 +223,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         };
     };
 
-    if(d) lightreaching(d->o, color, dir, 0, ambient);
+    if(d) lightreaching(d->o, color, dir);
     m->setskin(tex);  
     glColor3fv(color.v);
     m->setshader();
@@ -297,7 +297,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, float ambient)
+void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
@@ -325,7 +325,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
         if(attack) basetime = lastaction;
     };
     vec color, dir;
-    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), ambient, vwepname);
+    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), vwepname);
 };
 
 void setbbfrommodel(dynent *d, char *mdl)
