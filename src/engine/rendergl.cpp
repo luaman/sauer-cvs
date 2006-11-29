@@ -1149,7 +1149,7 @@ void undoclipmatrix()
     glMatrixMode(GL_MODELVIEW);
 };
 
-VAR(reflectclip, 0, 1, 1);
+VAR(reflectclip, 0, 6, 16);
 VARP(reflectmms, 0, 1, 1);
 
 extern int waterfog;
@@ -1225,7 +1225,18 @@ void drawreflection(float z, bool refract, bool clear)
     GLfloat clipmatrix[16];
     if(reflectclip) 
     {
-        genclipmatrix(0, 0, refract ? -1 : 1, refract ? z : -z, clipmatrix);
+        float zoffset = reflectclip/4.0f, zclip;
+        if(refract)
+        {
+            zclip = z+zoffset;
+            if(camera1->o.z<=zclip) zclip = z;
+        }
+        else
+        {
+            zclip = z-zoffset;
+            if(camera1->o.z>=zclip && camera1->o.z<=z+4.0f) zclip = z;
+        };
+        genclipmatrix(0, 0, refract ? -1 : 1, refract ? zclip : -zclip, clipmatrix);
         setclipmatrix(clipmatrix);
     };
 

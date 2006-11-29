@@ -623,11 +623,11 @@ VARP(maxreflect, 1, 1, 8);
 
 float reflecting = 0, refracting = 0;
 
-VAR(maskreflect, 0, 1, 1);
+VAR(maskreflect, 0, 2, 8);
 
 void maskreflection(Reflection &ref, float offset, bool reflect)
 {
-    if(!maskreflect)
+    if(!maskreflect || (reflect && camera1->o.z<ref.height+offset+4.0f))
     {
         glClear(GL_DEPTH_BUFFER_BIT);
         return;
@@ -647,7 +647,7 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
         glTranslatef(0, 0, 2*ref.height);
         glScalef(1, 1, -1);
     };
-    int border = 2;
+    int border = maskreflect;
     glBegin(GL_QUADS);
     loopv(ref.matsurfs)
     {
