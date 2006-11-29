@@ -1156,7 +1156,7 @@ void undoclipmatrix()
     glMatrixMode(GL_MODELVIEW);
 };
 
-VAR(reflectclip, 0, 6, 16);
+VAR(reflectclip, 0, 6, 64);
 VARP(reflectmms, 0, 1, 1);
 
 extern int waterfog;

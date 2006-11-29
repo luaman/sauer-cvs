@@ -623,7 +623,7 @@ VARP(maxreflect, 1, 1, 8);
 
 float reflecting = 0, refracting = 0;
 
-VAR(maskreflect, 0, 2, 8);
+VAR(maskreflect, 0, 2, 16);
 
 void maskreflection(Reflection &ref, float offset, bool reflect)
 {
