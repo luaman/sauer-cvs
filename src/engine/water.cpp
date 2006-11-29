@@ -232,8 +232,8 @@ struct Reflection
 };
 Reflection *findreflection(int height);
 
-VARP(waterreflect, 0, 1, 1);
-VARP(waterrefract, 0, 1, 1);
+VARFP(waterreflect, 0, 1, 1, cleanreflections());
+VARFP(waterrefract, 0, 1, 1, cleanreflections());
 VARP(reflectdist, 0, 2000, 10000);
 VAR(waterfog, 0, 150, 10000);
 
@@ -697,9 +697,12 @@ void drawreflections()
         ref.lastupdate = lastmillis;
         lastdrawn = n;
 
-        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
-        maskreflection(ref, offset, camera1->o.z >= ref.height+offset);
-        drawreflection(ref.height+offset, false, false);
+        if(waterreflect)
+        {
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
+            maskreflection(ref, offset, camera1->o.z >= ref.height+offset);
+            drawreflection(ref.height+offset, false, false);
+        };
 
         if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
