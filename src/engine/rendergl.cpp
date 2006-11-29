@@ -886,25 +886,40 @@ VAR(showsky, 0, 1, 1);
 
 extern int explicitsky, skyarea;
 
-void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = false)
+void drawskylimits(bool explicitonly, float zreflect)
+{
+    nocolorshader->set();
+
+    glDisable(GL_TEXTURE_2D);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    rendersky(explicitonly, zreflect);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glEnable(GL_TEXTURE_2D);
+
+    defaultshader->set();
+};
+
+void drawskyoutline()
+{
+    notextureshader->set();
+
+    glDisable(GL_TEXTURE_2D);
+    glDepthMask(GL_FALSE);
+    if(!wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glColor3f(0.5f, 0.0f, 0.5f);
+    rendersky(true);
+    if(!wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_TEXTURE_2D);
+
+    defaultshader->set();
+};
+
+void drawskybox(int farplane, bool limited, float zreflect = 0)
 {
     glDisable(GL_FOG);
 
-    extern int ati_skybox_bug;
-    if(limited)
-    {
-        if(zclip && !ati_skybox_bug) glDepthRange(0.999f, 0.999f);
-
-        nocolorshader->set();
-
-        glDisable(GL_TEXTURE_2D);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        rendersky(false, reflected ? zclip : 0);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glEnable(GL_TEXTURE_2D);
-
-        defaultshader->set();
-    };
+    if(limited && !zreflect) drawskylimits(false, 0);
 
     glPushMatrix();
     glLoadIdentity();
@@ -912,30 +927,22 @@ void drawskybox(int farplane, bool limited, int zclip = 0, bool reflected = fals
     glRotatef(camera1->pitch, -1, 0, 0);
     glRotatef(camera1->yaw, 0, 1, 0);
     glRotatef(90, 1, 0, 0);
-    if(reflected) glScalef(1, 1, -1);
+    if(zreflect && camera1->o.z>=zreflect) glScalef(1, 1, -1);
     glColor3f(1, 1, 1);
-    if(limited) glDepthFunc(editmode || !insideworld(camera1->o) || ati_skybox_bug ? GL_ALWAYS : (zclip && limited ? GL_EQUAL : GL_GEQUAL));
-    draw_envbox(farplane/2, zclip ? (zclip+0.5f*(farplane-hdr.worldsize))/farplane : 0);
+    extern int ati_skybox_bug;
+    if(limited) 
+    {
+        glDepthFunc(editmode || !insideworld(camera1->o) || ati_skybox_bug || zreflect ? GL_ALWAYS : GL_GEQUAL);
+        if(zreflect) glDepthMask(GL_FALSE);
+    };
+    draw_envbox(farplane/2, zreflect ? (zreflect+0.5f*(farplane-hdr.worldsize))/farplane : 0);
     glPopMatrix();
+
     if(limited) 
     {
         glDepthFunc(GL_LESS);
-        if(zclip && !ati_skybox_bug) glDepthRange(0, 1);
-        if(!reflected && editmode && showsky)
-        {
-            notextureshader->set();
-
-            glDisable(GL_TEXTURE_2D);
-            glDepthMask(GL_FALSE);
-            if(!wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glColor3f(0.5f, 0.0f, 0.5f);
-            rendersky(true);
-            if(!wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glDepthMask(GL_TRUE);
-            glEnable(GL_TEXTURE_2D);
-
-            defaultshader->set();
-        };
+        if(zreflect) glDepthMask(GL_TRUE);
+        else if(editmode && showsky) drawskyoutline();
     };
 
     glEnable(GL_FOG);
@@ -1220,7 +1227,7 @@ void drawreflection(float z, bool refract, bool clear)
     };
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-    if(!refract && limitsky()) drawskybox(farplane, true, int(z), camera1->o.z >= z);
+    //if(!refract && explicitsky) drawskybox(farplane, true, z);
 
     GLfloat clipmatrix[16];
     if(reflectclip) 
@@ -1240,6 +1247,8 @@ void drawreflection(float z, bool refract, bool clear)
         setclipmatrix(clipmatrix);
     };
 
+    //if(!refract && explicitsky) drawskylimits(true, z);
+
     extern void renderreflectedgeom(float z, bool refract);
     renderreflectedgeom(z, refract);
 
@@ -1247,11 +1256,11 @@ void drawreflection(float z, bool refract, bool clear)
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
 
-    if(!refract && !limitsky()) 
+    if(!refract /*&& !explicitsky*/) 
     {
         if(reflectclip) undoclipmatrix();
         defaultshader->set();
-        drawskybox(farplane, false, int(z), camera1->o.z >= z);
+        drawskybox(farplane, false, z);
         if(reflectclip) setclipmatrix(clipmatrix);
     };
 
