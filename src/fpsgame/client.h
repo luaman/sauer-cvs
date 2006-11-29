@@ -237,7 +237,7 @@ struct clientcom : iclientcom
             reliable = true;
             putint(p, SV_ITEMLIST);
             int gamemode = cl.gamemode;
-            if(!m_noitems) cl.et.putitems(p);
+            if(!m_noitems) cl.et.putitems(p, gamemode);
             putint(p, -1);
             if(m_capture) cl.cpc.sendbases(p);
             senditemstoserver = false;

@@ -259,10 +259,9 @@ struct entities : icliententities
         };
     };
 
-    void putitems(ucharbuf &p)            // puts items in network stream and also spawns them locally
+    void putitems(ucharbuf &p, int gamemode)            // puts items in network stream and also spawns them locally
     {
-        int gamemode = cl.gamemode;
-        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_QUAD)
+        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_QUAD && (!m_capture || ents[i]->type<I_SHELLS || ents[i]->type>I_CARTRIDGES))
         {
             putint(p, i);
             putint(p, ents[i]->type);
