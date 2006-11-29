@@ -4,84 +4,60 @@ before next release:
 - networking test
 - envmap docs
 - rpg stuff?
+- update static wiki
+- new textures: philipk / gregor -> in default list
+- get 22khz version of "base lost"
 
+after next release:
+- audio effect for chat messages | audio for gui events
+- texture selection window using new GUI
 
+- social cheating solution
 
 - improve smoothness of going up steps ?
 - remove delay before doors start opening ?
-- better collision on doors (and maybe any rotated object, while we're at it).
-- automatically not spawn ammo on capture maps so that they can be shared with dm maps -> ask nieb to change his maps
 - make nearby closed doors render early so that they can contribute to OC?
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
-- water at the edges never waves?
-- map up/download etc
 - water physics close to surface
-- add a spotlight
-- very fancy: test alpha on a polygon for ultra-quality raycube()
 - sound entities
 - add entity looping command?
 
-- speed up heightfield recalc
 - LOD: improved lod-remip?
 - "editing not in view" sometimes obstructs editing
 
-
-
-
 - maybe add a way to purge infrequent / not recently used textures? esp now with mapshots.
 
-- social cheating solution
 - reduce maps
 - memory leaks?
-
-- before release: update static wiki
 - Mix_LoadMUS() crashes after being called many times?
-- get 22khz version of "base lost"
 
 - add parallax scaling parameter
 
-- new textures: philipk / gregor
-
 - death needs to be more obvious (better sound/centerprint) 
-- screenshots etc? new features in docs
-- specmap thats not same size as diffuse crash
 - sparklies very bad on ATI, particularly deathtek / diff skybox
-- audio effect for chat messages
 - crashes when people join?
-- bake normalmap on -f0? mildly?
-- clean up maps folder | maps without lightmaps?
 - ensure modelshader can be set from model cfg
 - 2 levels of lightlod for huge maps
 - shallow water splashing sound?
 
-- weird fps issue.. maybe mobile?
 - use setbb also for monsters
 - experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions | store intensity multiplier in alpha?
-- create an official map pack to reduce on the number of maps in the distribution
 
 - the eyecandy priority list: reflective world shader | better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
-- simple rotational physics?
 - bots (level design placed waypoints?)
 - destructable geom
 
 - better doc on the scripting language | beginners guide | wiki?
-- new menu / for rpg and fps
-- spec/normal trilinear filtering? -> probably because of specmap mipmap averaging... luns specmaps are simply too subtle
 - fake rigid-body sphere only?
-- $ vs @? var stacks? [] for trees/arrays? other improvements? 
+- $ vs @? var stacks? [] for trees/arrays? other improvements? | do "." for concatword so you could do easy (associative) arrays and tree structures?
 - start moving some stuff in their own headers
-- rpg start
 - new BAS sounds? | player spawn | sp respawn | menu clicks | specific door sound? | end of level | push button/trigger
 - improve bloom? optimize it.
-- scripting: do "." for concatword so you could do easy (associative) arrays and tree structures?
 - report to ATI: float vs short issue
 - more cube map ports?
 - faster movement
-- play sessions
 - integrate fmodex (to get both panning and stereo ogg on windows?)
 - 3d sprites?
-- think about ways to make dynamicly modifying geometry in gameplay make sense
-- can't select last 3 textures in list
 - monster spawner ammo - add egg model
 - iconic stats
 - new multiplayer model.. md3?
@@ -89,34 +65,15 @@ before next release:
 - refactor octarender.cpp & others
 - glowmaps in the texture browser -> messy
 
-[22:28] <Nieb> http://www.snieb.com/dg_blood_01.png
-[22:28] <Nieb> http://www.snieb.com/dg_blood_01.png
-[22:28] <Nieb> http://www.snieb.com/dg_blood_02.png
-[22:28] <Nieb> http://www.snieb.com/dg_blood_03.png
-
-- ways to reduce server bandwidth in multiplayer
-  * reduce client packets from 30 to 20 per second  -> choppier movement of other players?
-  * (DONE) make server batch position updates for multiple clients to lose packet overhead (UDP 8 + enet 16) -> introduce lag, but could save up to 50% bw with 5 players
-  * update positions less often for clients at distance/occluded
-  * mix absolute and delta packets depending on the amount of packet loss
-    * better than delta, can send just move/strafe/mousedelta for 3 out of 4 packets or so... needs improved physics prediction
-  * all the above could be scaled to get more intense with gradually higher player loads
-
-- fix polygons being rendered on top of eachother
-  * quick fix: rotate indices of quads that produce coplanar tris
-  * better fix: generate exact faces (subdivided if need be) for faces touching neighbouring cubes
+- better blood http://www.snieb.com/dg_blood_01.png (and 2/3)
 
 - make start of flares etc spawn out further from the player
 - improve on cma render then add to sauer
 - new sounds: impact (diff materials + flesh) | flyby, both instant & projectile | soundspot / moving
 
-- better damage particles
-- new mapmodels/trees in menu -> new ones from last cube
 - all cfg stuff in menu
 - draw not-spawned items in wireframe?
 - show quadded player with special rendering
-
-- add hidden ID to your name so that you can claim nicknames on a server?
 
 - experiment with physics speedup features
 
@@ -130,13 +87,8 @@ before next release:
 - sword?
 - think about doing other permanent powerups besides +10h
 - slowmo as gameplay feature?
-- voice during multiplayer? -> easier to use ventrillo
-- give players identity to combat cheating by coupling to something like Steam?
-- system that does a calclight/savemap automatically for maps with no lighting, and and easy way to prune lighting information for release
 - calclight while playing?
 - use of glBufferData() makes ATI driver crash on SDL_Exit()
-- test errors / performance etc with devpartner
 - fix variance in framerate?
 - render entities at distance as sprites
-- sort the order of rendering mapmodels, so as to factor out glbindbuffer
 - blend screen when inside a cube
