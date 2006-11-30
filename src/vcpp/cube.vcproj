@@ -1398,6 +1398,10 @@
 						RelativePath="..\..\README.html"
 						>
 					</File>
+					<File
+						RelativePath="..\..\docs\rpg.html"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="cfg"

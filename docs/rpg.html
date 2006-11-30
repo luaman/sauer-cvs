@@ -12,7 +12,7 @@
 
 <ul>
 <li>For Windows: Install, edit, then run sauerbraten.bat.</li>
-<li>For Linux: gunzip, <i>chmod +x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>. Needs a decent and compliant OpenGL implementation.</li>
+<li>For GNU/Linux: gunzip, <i>chmod +x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>. Needs a decent and compliant OpenGL implementation.</li>
 </ul>
 
 <p>
@@ -85,7 +85,8 @@ Sets FSAA (Full Scene AntiAliasing) to N samples, i.e. -a4 is 4xFSAA
 Sets Sauerbaten to run windowed.
 </p>
 
-<pre>-f
+<pre>
+-f
 -fN
 </pre>
 <p>
@@ -144,7 +145,8 @@ Sets the server's administrative password to S.
 
 <h1>General Console Commands and Configuration</h1>
 
-<pre>bind K A
+<pre>
+bind K A
 editbind K A
 </pre>
 <p>
@@ -164,7 +166,8 @@ may re-bind N as often as you like, call it recursively etc. You may use N = A a
 Quits without asking.
 </p>
 
-<pre>forward
+<pre>
+forward
 backward
 left
 right
@@ -388,7 +391,8 @@ Creates a new menu with name S. All the following 'gui' menuitem commands will a
 See "data/menus.cfg" for defaults.
 </p>
 
-<pre>guilist '[' ... ']'
+<pre>
+guilist '[' ... ']'
 </pre>
 <p>
 Defines a menu item that is a group of menu items. The layout of each nested group will alternate - the top level (newgui) is laid out vertically, 
@@ -396,37 +400,43 @@ the first guilist will be laid out horizontally, the second guilist vertically, 
 layout direction also influences the display of items such as sliders, bars, progress bars, and struts.
 </p>
 
-<pre>guititle S
+<pre>
+guititle S
 </pre>
 <p>
 Creates a menu item with horizontally centered title S.
 </p>
 
-<pre>guibutton [S] A
+<pre>
+guibutton [S] A
 </pre>
 <p>
 Creates a menu button with the name S, which will execute A when selected. If you only specify one parameter, then it will be used for both.
 The icon used will be a blue-button if A contains showgui, otherwise it is a green button. Clicking a button will close the menu.
 </p>
 
-<pre>guiimage P A S [O]
+<pre>
+guiimage P A S [O]
 </pre>
 <p>
 Creates a menu image tile from the path P, which will execute A when selected. Clicking the image will close the menu. Uses image scale S and O=1 if an overlay is required.
 </p>
-<pre>guitext S
+<pre>
+guitext S
 </pre>
 <p>
 Creates a menu consisting of the text line S and an information icon.
 </p>
 
-<pre>guibar
+<pre>
+guibar
 </pre>
 <p>
 Creates a vertical/horizontal menu bar. The orientation depends on the layout direction.
 </p>
 
-<pre>guislider V [MIN MAX A]
+<pre>
+guislider V [MIN MAX A]
 </pre>
 <p>
 Creates a vertical/horizontal menu slider that is bound to a variable V. The min/max bounds of the slider will be as defined by the data model of the variable unless explicitly specified. 
@@ -434,13 +444,15 @@ An action A can also be specified for every slider change.
 The orientation of the slider depends on the layout direction.
 </p>
 
-<pre>guicheck N V [ON OFF A]
+<pre>
+guicheck N V [ON OFF A]
 </pre>
 <p>
 Creates a menu checkbox with a label N that is bound to a variable V. The default value are 0/1 unless supplied by ON/OFF. An action A can also be specified for every checkbox change.
 </p>
 
-<pre>guiradio N V VAL [A]
+<pre>
+guiradio N V VAL [A]
 </pre>
 <p>
 Creates a menu radio button with a label N that is bound to a variable V. The radio button is only ticked when the variable has value VAL, and 
@@ -448,7 +460,8 @@ presing the button will update the variable to the value VAL.
 An action A can also be specified for every radio button change.
 </p>
 
-<pre>guitab S
+<pre>
+guitab S
 </pre>
 <p>
 Creates a new menu tab with title S. Note: has no effect if used within a guilist.
@@ -507,7 +520,8 @@ Example: @(result "Hello, World!") will substitute itself with Hello, World!
 The following commands are available for programming:
 </p>
 
-<pre>+ A B
+<pre>
++ A B
 - A B
 * A B
 div A B
@@ -518,7 +532,8 @@ mod A B
 operators from other languages (example: echo x squared is (* $x $x)).
 </p>
 
-<pre>= A B
+<pre>
+= A B
 &lt; A B
 &gt; A B
 strcmp A B
@@ -527,7 +542,8 @@ strcmp A B
 (equals, lessthan, greaterthan, stringcompare): comparison operators that return 1 for true and 0 for false.
 </p>
 
-<pre>! A
+<pre>
+! A
 &amp&amp A B
 || A B
 ^  A B

@@ -9,6 +9,7 @@ before next release:
 - get 22khz version of "base lost"
 
 after next release:
+- make sure all bumpmaps are parallax
 - audio effect for chat messages | audio for gui events
 - texture selection window using new GUI
 
