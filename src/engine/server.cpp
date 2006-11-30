@@ -472,10 +472,10 @@ icliententities *et = NULL;
 
 void initgame(char *game)
 {
-    igame *ig = (*gamereg)[game];
-    if(!ig) fatal("cannot start game module", game);
-    sv = ig->newserver();
-    cl = ig->newclient();
+    igame **ig = gamereg->access(game);
+    if(!ig) fatal("cannot start game module: ", game);
+    sv = (*ig)->newserver();
+    cl = (*ig)->newclient();
     if(cl)
     {
         cc = cl->getcom();
