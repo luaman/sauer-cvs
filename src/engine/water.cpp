@@ -520,8 +520,9 @@ void addreflection(materialsurface &m)
             GLenum alts[] = { GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32 };
             loopi(sizeof(alts)/sizeof(alts[0]))
             {
+                dbFormat = alts[i];
                 glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
-                glRenderbufferStorage_(GL_RENDERBUFFER_EXT, alts[i], size, size);
+                glRenderbufferStorage_(GL_RENDERBUFFER_EXT, dbFormat, size, size);
                 glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
                 if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT) break;
             };
