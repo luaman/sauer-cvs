@@ -212,7 +212,7 @@ extern icliententities *et;
 extern vector<int> entgroup;
 
 // rendergl
-extern bool hasVBO, hasOQ, hasFBO, hasCM;
+extern bool hasVBO, hasOQ, hasFBO, hasCM, hasTC;
 
 struct cubemapside
 {
