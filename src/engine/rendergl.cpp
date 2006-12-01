@@ -369,7 +369,7 @@ SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
         if((numrots&5)==1) swap(int, dx, dy);
         uchar *dst = (uchar *)d->pixels+(dy*d->w+dx)*depth;
         loopi(depth) dst[i]=src[i];
-        if(type==TEX_NORMAL || type==TEX_NORMAL_SPEC)
+        if(type==TEX_NORMAL)
         {
             if(numrots>=2 && numrots<=4) dst[0] = 255-dst[0];      // flip X   on normal when 180/270 degrees
             if(numrots<=2 || numrots==5) dst[1] = 255-dst[1];      // flip Y   on normal when  90/180 degrees
@@ -639,7 +639,6 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
         {"u", TEX_UNKNOWN},
         {"d", TEX_DECAL},
         {"n", TEX_NORMAL},
-        {"ns", TEX_NORMAL_SPEC},
         {"g", TEX_GLOW},
         {"s", TEX_SPEC},
         {"z", TEX_DEPTH},
@@ -789,7 +788,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
         case TEX_DIFFUSE:
             if(renderpath==R_FIXEDFUNCTION)
             {
-                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW)|(1<<TEX_NORMAL)|(1<<TEX_NORMAL_SPEC), i))>=0;)
+                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW)|(1<<TEX_NORMAL), i))>=0;)
                 {
                     s.sts[i].combined = index;
                     addname(key, s, s.sts[i]);
@@ -800,7 +799,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
         case TEX_NORMAL:
         {
             if(renderpath!=R_ASMSHADER) break;
-            int i = findtextype(s, t.type==TEX_NORMAL ? (1<<TEX_SPEC) : (1<<TEX_DEPTH));
+            int i = findtextype(s, t.type==TEX_DIFFUSE ? (1<<TEX_SPEC) : (1<<TEX_DEPTH));
             if(i<0) break;
             s.sts[i].combined = index;
             addname(key, s, s.sts[i]);
@@ -827,8 +826,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                     { 
                         case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
                         case TEX_GLOW: addglow(ts, bs, s); break;
-                        case TEX_NORMAL:
-                        case TEX_NORMAL_SPEC: addbump(ts, bs); break;
+                        case TEX_NORMAL: addbump(ts, bs); break;
                     };
                     SDL_FreeSurface(bs);
                 };

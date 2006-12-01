@@ -116,7 +116,6 @@ enum
     TEX_UNKNOWN,
     TEX_DECAL,
     TEX_NORMAL,
-    TEX_NORMAL_SPEC,
     TEX_GLOW,
     TEX_SPEC,
     TEX_DEPTH,
