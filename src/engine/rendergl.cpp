@@ -426,9 +426,19 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
         case GL_DEPTH_COMPONENT:
             type = GL_FLOAT;
             break;
+
         case GL_RGB8:
         case GL_RGB5:
             format = GL_RGB;
+            //if(mipit) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            break;
+
+        case GL_RGB:
+            //if(mipit) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            break;
+
+        case GL_RGBA:
+            //if(mipit) component = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
             break;
     };
     if(mipit) { if(gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
@@ -769,19 +779,20 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
     switch(t.type)
     {
         case TEX_DIFFUSE:
-            if(renderpath!=R_FIXEDFUNCTION) break;
-            for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW)|(1<<TEX_NORMAL)|(1<<TEX_NORMAL_SPEC), i))>=0;)
+            if(renderpath==R_FIXEDFUNCTION)
             {
-                s.sts[i].combined = index;
-                addname(key, s, s.sts[i]);
-            };
-            break;
-
+                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW)|(1<<TEX_NORMAL)|(1<<TEX_NORMAL_SPEC), i))>=0;)
+                {
+                    s.sts[i].combined = index;
+                    addname(key, s, s.sts[i]);
+                };
+                break;
+            }; // fall through to shader case
+            
         case TEX_NORMAL:
-        case TEX_GLOW:
         {
             if(renderpath!=R_ASMSHADER) break;
-            int i = findtextype(s, (1<<TEX_SPEC)|(1<<TEX_DEPTH));
+            int i = findtextype(s, t.type==TEX_NORMAL ? (1<<TEX_SPEC) : (1<<TEX_DEPTH));
             if(i<0) break;
             s.sts[i].combined = index;
             addname(key, s, s.sts[i]);
@@ -796,25 +807,27 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
     switch(t.type)
     {
         case TEX_DIFFUSE:
-            loopv(s.sts)
+            if(renderpath==R_FIXEDFUNCTION)
             {
-                Slot::Tex &b = s.sts[i];
-                if(b.combined!=index) continue;
-                SDL_Surface *bs = texturedata(NULL, &b);
-                if(!bs) continue;
-                if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
-                { 
-                    case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
-                    case TEX_GLOW: addglow(ts, bs, s); break;
-                    case TEX_NORMAL:
-                    case TEX_NORMAL_SPEC: addbump(ts, bs); break;
+                loopv(s.sts)
+                {
+                    Slot::Tex &b = s.sts[i];
+                    if(b.combined!=index) continue;
+                    SDL_Surface *bs = texturedata(NULL, &b);
+                    if(!bs) continue;
+                    if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
+                    { 
+                        case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
+                        case TEX_GLOW: addglow(ts, bs, s); break;
+                        case TEX_NORMAL:
+                        case TEX_NORMAL_SPEC: addbump(ts, bs); break;
+                    };
+                    SDL_FreeSurface(bs);
                 };
-                SDL_FreeSurface(bs);
-            };
-            break;        
+                break;        
+            }; // fall through to shader case
 
         case TEX_NORMAL:
-        case TEX_GLOW:
             loopv(s.sts)
             {
                 Slot::Tex &a = s.sts[i];
