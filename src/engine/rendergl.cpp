@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false;
+bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -227,7 +227,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glBufferSubData_ = (PFNGLBUFFERSUBDATAARBPROC)getprocaddress("glBufferSubDataARB");
         glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
-        conoutf("Using GL_ARB_vertex_buffer_object extension.");
+        //conoutf("Using GL_ARB_vertex_buffer_object extension.");
     };
 
     extern int floatvtx;
@@ -278,7 +278,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             glGetQueryObjectiv_ =  (PFNGLGETQUERYOBJECTIVARBPROC) getprocaddress("glGetQueryObjectivARB");
             glGetQueryObjectuiv_ = (PFNGLGETQUERYOBJECTUIVARBPROC)getprocaddress("glGetQueryObjectuivARB");
             hasOQ = true;
-            conoutf("Using GL_ARB_occlusion_query extension.");
+            //conoutf("Using GL_ARB_occlusion_query extension.");
 #if defined(__APPLE__) && SDL_BYTEORDER == SDL_BIG_ENDIAN
             if(strstr(vendor, "ATI")) ati_oq_bug = 1; 
 #endif            
@@ -307,24 +307,30 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             glFramebufferTexture2D_    = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)   getprocaddress("glFramebufferTexture2DEXT");
             glFramebufferRenderbuffer_ = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)getprocaddress("glFramebufferRenderbufferEXT");
             hasFBO = true;
-            conoutf("Using GL_EXT_framebuffer_object extension.");
+            //conoutf("Using GL_EXT_framebuffer_object extension.");
         } 
         else conoutf("WARNING: No framebuffer object support. (no reflective water)");
 
         if(strstr(exts, "GL_ARB_texture_rectangle"))
         {
             hasTR = true;
-            conoutf("Using GL_ARB_texture_rectangle extension.");
+            //conoutf("Using GL_ARB_texture_rectangle extension.");
         }
         else conoutf("WARNING: No texture rectangle support. (no full screen shaders)");
         if(strstr(exts, "GL_ARB_texture_cube_map"))
         {
             hasCM = true;
-            conoutf("Using GL_ARB_texture_cube_map extension.");
+            //conoutf("Using GL_ARB_texture_cube_map extension.");
         }
         else conoutf("WARNING: No cube map texture support. (no reflective glass)");
     };
     if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
+
+    if(strstr(exts, "GL_EXT_texture_compression_s3tc"))
+    {
+        hasTC = true;
+        //conoutf("Using GL_EXT_texture_compression_s3tc extension.");
+    };
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
 
@@ -395,7 +401,9 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     SDL_FreeSurface(s);
     return d;
 };
- 
+
+VARP(mintexcompresssize, 0, 1<<10, 1<<12);
+
 void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component, GLenum subtarget)
 {
     GLenum target = subtarget;
@@ -430,15 +438,15 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
         case GL_RGB8:
         case GL_RGB5:
             format = GL_RGB;
-            //if(mipit) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            if(mipit && hasTC && min(w, h) >= mintexcompresssize) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
             break;
 
         case GL_RGB:
-            //if(mipit) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            if(mipit && hasTC && min(w, h) >= mintexcompresssize) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
             break;
 
         case GL_RGBA:
-            //if(mipit) component = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+            if(mipit && hasTC && min(w, h) >= mintexcompresssize) component = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
             break;
     };
     if(mipit) { if(gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
