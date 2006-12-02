@@ -395,7 +395,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         if(/*!rendermenu(w, h) && */windowhit || player->state!=CS_SPECTATOR)
         {
             static Texture *cursor = NULL;
-            if(!cursor) cursor = textureload("data/guicursor.png");
+            if(!cursor) cursor = textureload("data/guicursor.png", true, false);
             
             glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
             glColor3f(1, 1, 1);
