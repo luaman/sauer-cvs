@@ -136,8 +136,7 @@ Multi-level undo of any of the changes caused by the above operations (default: 
 Multi-level redo of any of the changes caused by the above undo (default: i).      
 </p>
 
-<pre>
-copy
+<pre>copy
 paste
 </pre>
 <p>
@@ -240,8 +239,7 @@ coordinates, respectively, of a vert on this 2D map. The last parameter
 is used to set the depth.
 </p>
 
-<pre>
-brushx
+<pre>brushx
 brushy
 </pre>
 <p>
@@ -748,6 +746,9 @@ Normal-mapped shader with specularity map and glow map.
 <td style="width: 61px; height: 13px">
 bumpparallaxworld</td>
 <td style="width: 200px; height: 13px">
+    <ul>
+        <li>2: Scale, Bias - Scales the heightmap offset</li>
+    </ul>
 </td>
 <td style="width: 200px; height: 13px">
 </td>
@@ -764,7 +765,8 @@ bumpspecparallaxworld</td>
 <td style="width: 200px; height: 13px">
   <ul>
         <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
-  </ul> 
+            <li>2: Scale, Bias - Scales the heightmap offset</li>
+        </ul> 
 </td>
 <td style="width: 200px; height: 13px">
 </td>
@@ -796,7 +798,8 @@ bumpparallaxglowworld</td>
 <td style="width: 200px; height: 13px">
   <ul>
         <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
-  </ul>
+            <li>2: Scale, Bias - Scales the heightmap offset</li>
+        </ul>
 </td>
 <td style="width: 200px; height: 13px">
 </td>
@@ -814,7 +817,8 @@ bumpspecparallaxglowworld</td>
   <ul>
         <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
         <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
-  </ul>
+            <li>2: Scale, Bias - Scales the heightmap offset</li>
+        </ul>
 </td>
 <td style="width: 200px; height: 13px">
 </td>
@@ -930,14 +934,15 @@ have texture/lighting information.
 
 
 <a name="lightingcommands"></a>        
-<h1>Lighting</h1>
 </p>
+<h1>Lighting</h1>
 
 <pre>calclight Q</pre>
 <p>
 This calculates all lightmaps. Usually takes only a few seconds, depending on
 map size and settings. If you "savemap", the lightmap will be stored along with
 it. Q is these predefined quality settinsg:
+</p>
 <ul>
 <li>2: 8x anti aliasing, shadows for mapmodels also (maximum quality, very slow)</li>
 <li>1: 8x anti aliasing, world shadows only (better lighting quality for huge maps, slow)</li>
@@ -945,7 +950,6 @@ it. Q is these predefined quality settinsg:
 <li>-1: no anti aliasing, but still shadowed (good for shadow previews)</li>
 <li>-2: no anti aliasing and no shadows (VERY fast, good for lighting previews)</li>
 </ul>
-</p>
 
 <pre>patchlight</pre>
 <p>
@@ -1040,8 +1044,8 @@ Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but
 mappers may find it interesting too.
 
 <a name="entitytypes"></a>        
-<h1>Entity Types</h1>
 </p>
+<h1>Entity Types</h1>
 
 <pre>"light" radius r g b</pre>
 <p>
@@ -1329,6 +1333,7 @@ Entities are shown in editmode by blue sparklies, and the closest one is
 indicated on the HUD.
 
 <a name="hud"></a>        
+</p>
 <h1>The HUD</h1>
 On the bottom left of the screen are a bunch of stats. You'll find out what they mean below.
 <ul>
@@ -1356,7 +1361,6 @@ wvt: number of vertecies in the entire map
 <li>
 evt: misc rendering effects. stuff like particles displayed, or text written on
 screen.</li></ul>
-</p>
 
 <pre>hidestats 0/1</pre>
 <p>

@@ -889,6 +889,10 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool 
         m.x *= cosf(RAD*pitch);
         m.y *= cosf(RAD*pitch);
         m.z = move*sinf(RAD*pitch);
+    }
+    else
+    {
+        m.z = 0;
     };
 
     m.x += strafe*-cosf(RAD*(yaw));

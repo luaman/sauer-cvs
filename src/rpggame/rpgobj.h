@@ -190,13 +190,15 @@ struct rpgobj : g3d_callback
         
         guiaction(g, actions);
         
-        if(!ai) if(g.button("take", 0xFFFFFF, "hand")&G3D_UP)
+        if(!ai)
         {
-            conoutf("\f2you take a %s (worth %d gold)", name, worth);
-            os.take(this, os.playerobj);
-        };
-        
-        if(ai)
+            if(g.button("take", 0xFFFFFF, "hand")&G3D_UP)
+            {
+                conoutf("\f2you take a %s (worth %d gold)", name, worth);
+                os.take(this, os.playerobj);
+            }
+        }
+        else
         {
             int numtrade = 0;
             string info = "";

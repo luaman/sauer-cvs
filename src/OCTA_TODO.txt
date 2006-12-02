@@ -1,13 +1,7 @@
 before next release:
-- nieb: finalize new heightmaps for bump sets -> texture lists
-- add parallax scaling parameter
-- gregors stuff
+- nieb: finalize new heightmaps for bump sets -> finetune parallax
 - networking test
-- envmap docs
-- rpg stuff?
 - update static wiki
-- new textures: philipk / gregor -> in default list
-- get 22khz version of "base lost"
 
 after next release:
 - make sure all bumpmaps are parallax
