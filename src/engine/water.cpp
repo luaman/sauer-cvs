@@ -832,6 +832,8 @@ void rendermatgrid(vector<materialsurface *> &vismats)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 };
 
+VARP(glassenv, 0, 1, 1);
+
 void rendermaterials(float zclip, bool refract)
 {
     vector<materialsurface *> vismats;
@@ -873,9 +875,9 @@ void rendermaterials(float zclip, bool refract)
                     break;
                 
                 case MAT_GLASS:
-                    if(!hasCM && lastmat==MAT_GLASS) break;
+                    if((!hasCM || !glassenv) && lastmat==MAT_GLASS) break;
                     if(begin) { glEnd(); begin = false; };
-                    if(hasCM)
+                    if(hasCM && glassenv)
                     {
                         if(cubemapped != m.tex)
                         {
@@ -894,7 +896,7 @@ void rendermaterials(float zclip, bool refract)
                     };
                     if(lastmat==MAT_GLASS) break;
                     if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
-                    if(hasCM)
+                    if(hasCM && glassenv)
                     {
                         glBlendFunc(GL_ONE, GL_SRC_ALPHA);
                         glColor3f(0, 0.5f, 1.0f);
