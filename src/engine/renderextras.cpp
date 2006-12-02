@@ -316,6 +316,7 @@ void aimat()
 };
 
 VARP(crosshairsize, 0, 15, 50);
+VARP(cursorsize, 0, 30, 50);
 VARP(damageblendfactor, 0, 300, 1000);
 
 int dblend = 0;
@@ -399,8 +400,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             
             glBlendFunc(GL_ONE, GL_ONE);
             glColor3f(1, 1, 1);
-            float chsize = (float)crosshairsize*w/300;
-            if(windowhit) chsize *= 2;
+            float chsize = (float)(windowhit ? cursorsize : crosshairsize)*w/300;
             float x = w*1.5f - (windowhit ? 0 : chsize/2.0f);
             float y = h*1.5f - (windowhit ? 0 : chsize/2.0f);
             glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->gl);
