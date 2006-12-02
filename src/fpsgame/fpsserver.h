@@ -39,7 +39,6 @@ struct fpsserver : igameserver
         clientscore score;
         enet_uint32 gamestart;
         vector<uchar> position, messages;
-        int positionoffset, messageoffset;
 
         clientinfo() { reset(); };
 
@@ -417,26 +416,28 @@ struct fpsserver : igameserver
 
     bool buildworldstate()
     {
+        static struct { int posoff, msgoff, msglen; } pkt[MAXCLIENTS];
         worldstate &ws = *new worldstate;
         loopv(clients)
         {
             clientinfo &ci = *clients[i];
-            if(ci.position.empty()) ci.positionoffset = -1;
+            if(ci.position.empty()) pkt[i].posoff = -1;
             else
             {
-                ci.positionoffset = ws.positions.length();
+                pkt[i].posoff = ws.positions.length();
                 loopvj(ci.position) ws.positions.add(ci.position[j]);
             };
-            if(ci.messages.empty()) ci.messageoffset = -1;
+            if(ci.messages.empty()) pkt[i].msgoff = -1;
             else
             {
-                ci.messageoffset = ws.messages.length();
+                pkt[i].msgoff = ws.messages.length();
                 ucharbuf p = ws.messages.reserve(16);
                 putint(p, SV_CLIENT);
                 putint(p, ci.clientnum);
                 putuint(p, ci.messages.length());
                 ws.messages.addbuf(p);
                 loopvj(ci.messages) ws.messages.add(ci.messages[j]);
+                pkt[i].msglen = ws.messages.length() - pkt[i].msgoff;
             };
         };
         int psize = ws.positions.length(), msize = ws.messages.length();
@@ -447,10 +448,10 @@ struct fpsserver : igameserver
         {
             clientinfo &ci = *clients[i];
             ENetPacket *packet;
-            if(psize && (ci.positionoffset<0 || psize-ci.position.length()>0))
+            if(psize && (pkt[i].posoff<0 || psize-ci.position.length()>0))
             {
-                packet = enet_packet_create(&ws.positions[ci.positionoffset<0 ? 0 : ci.positionoffset+ci.position.length()], 
-                                            ci.positionoffset<0 ? psize : psize-ci.position.length(), 
+                packet = enet_packet_create(&ws.positions[pkt[i].posoff<0 ? 0 : pkt[i].posoff+ci.position.length()], 
+                                            pkt[i].posoff<0 ? psize : psize-ci.position.length(), 
                                             ENET_PACKET_FLAG_NO_ALLOCATE);
                 sendpacket(ci.clientnum, 0, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
@@ -458,10 +459,10 @@ struct fpsserver : igameserver
             };
             ci.position.setsizenodelete(0);
 
-            if(msize && (ci.messageoffset<0 || msize-3-ci.messages.length()>0))
+            if(msize && (pkt[i].msgoff<0 || msize-pkt[i].msglen>0))
             {
-                packet = enet_packet_create(&ws.messages[ci.messageoffset<0 ? 0 : ci.messageoffset+3+ci.messages.length()], 
-                                            ci.messageoffset<0 ? msize : msize-3-ci.messages.length(), 
+                packet = enet_packet_create(&ws.messages[pkt[i].msgoff<0 ? 0 : pkt[i].msgoff+pkt[i].msglen], 
+                                            pkt[i].msgoff<0 ? msize : msize-pkt[i].msglen, 
                                             (reliablemessages ? ENET_PACKET_FLAG_RELIABLE : 0) | ENET_PACKET_FLAG_NO_ALLOCATE);
                 sendpacket(ci.clientnum, 1, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
