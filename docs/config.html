@@ -217,6 +217,16 @@ This sets the level of detail shaders should use, for N=3 is highest, and N=0 is
 on slower hardware.
 </p>
 
+<pre>maxtexsize N</pre>
+<p>
+This sets the maximum allow size of a texture in texture memory. If any texture's width or height is greater than N, the texture will be scaled down to be no more than NxN. This variable is not saved, and is reset on each run with the 3D card's texture size limit, so set this in your "autoexec.cfg" if you want to override it. Set this to a small value like 128 if your card has very little texture memory (i.e. 32 MB or less).
+</p>
+
+<pre>mintexcompresssize N</pre>
+<p>
+Any texture whose width or height is greater than or equal to N will be compressed using S3 texture compression, if available on your card. The default is set to 1024, so set this lower if your card supports S3TC and you have very little texture memory (i.e. 64 MB or less).
+<p>
+
 <pre>loddistance N</pre>
 <p>
 Sets the distance at which world vertex array blocks are rendered at a higher 
@@ -244,13 +254,14 @@ NOTE: This only effects water with shaders disabled!
 
 <pre>waterreflect B</pre>
 <p>
-Enables or disables water reflections, only works if your card supports GL_EXT_framebuffer_object and you don't run with
-the fixed function pipeline (default: 1).
+Enables or disables water reflections (default: 1).
+NOTE: Only works if your card supports GL_EXT_framebuffer_object and shaders.
 </p>
 
 <pre>waterrefract B</pre>
 <p>
-Enables or disables water refractions, (default: 1).
+Enables or disables water refractions. (default: 1).
+NOTE: Only works if your card supports GL_EXT_framebuffer_object and shaders.
 </p>
 
 <pre>reflectdist N</pre>
@@ -273,7 +284,7 @@ reflection rendering.
 
 <pre>maxreflect N</pre>
 <p>
-Sets the maximum number of reflection surfaces that can be visible at once from 1..8 (default: 3). Any surfaces exceeding this
+Sets the maximum number of reflection surfaces that can be visible at once from 1..8 (default: 1). Any surfaces exceeding this
 limit will not be given reflections on their surfaces.
 </p>
 
@@ -289,10 +300,12 @@ particles are generated than this number, the oldest ones are culled, so you
 can safely set this number relatively low without loss of information (default: 1000).
 </p>
 
-<pre>setfullscreenshader Name</pre>
+<pre>setfullscreenshader Name
+setfullscreenshader Name Param</pre>
 <p>
 Sets your favourite fullscreen shader. Active permanently once set. Use without name
-argument to turn it off. Current example shaders: invert, gbr, sobel, bloom
+argument to turn it off. Certain shaders like bloom require you to specify a parameter for the intensity.
+Current example shaders: bw, invert, gbr, sobel, bloom <intensity>
 </p>
 
 <pre>screenshot</pre>
