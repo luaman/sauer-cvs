@@ -85,6 +85,7 @@ struct clientcom : iclientcom
     {
         connected = true;
         remote = _remote;
+        if(editmode) toggleedit();
     };
 
     void gamedisconnect()

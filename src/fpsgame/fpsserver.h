@@ -529,7 +529,7 @@ struct fpsserver : igameserver
                 if(ci->spectator && state!=CS_SPECTATOR) break;
                 if(!ci->local)
                 {
-                    if(state!=CS_DEAD && state!=CS_ALIVE && (gamemode!=1 || state!=CS_EDITING))
+                    if(state!=CS_DEAD && state!=CS_ALIVE && state!=CS_SPECTATOR && (gamemode!=1 || state!=CS_EDITING))
                     {
                         disconnect_client(sender, DISC_TAGT);
                         return;
