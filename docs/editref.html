@@ -581,7 +581,7 @@ Associates shader FAST so that it will run in place of shader NICE if shaderdeta
 <pre>setshader NAME</pre>
 <p>
 Sets a previously defined shader as the current shader. Any following texture slots (see "texture" command) will have this shader
-attached to it. Any pixel or vertex parameters are reset to the shaders defaults when this command is used.
+attached to them. Any pixel or vertex parameters are reset to the shader's defaults when this command is used.
 </p>
 
 <pre>setpixelparam INDEX X Y Z W</pre>
@@ -849,7 +849,7 @@ Plays song "name" (with "packages" as base dir). This command is best used from
 map cfg files or triggers. Evaluates ondone when the song is finished, or just keeps
 looping the song if ondone is missing. Example:
 
-<code>music "songs/music.ogg" [ echo "Song dong playing!" ]</code>
+<code>music "songs/music.ogg" [ echo "Song done playing!" ]</code>
 </p>
 
 <pre>N = registersound name V</pre>
