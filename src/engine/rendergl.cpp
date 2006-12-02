@@ -428,7 +428,7 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     };
-    GLenum format = component, type = GL_UNSIGNED_BYTE;
+    GLenum format = component, type = GL_UNSIGNED_BYTE, compressed = component;
     switch(component)
     {
         case GL_DEPTH_COMPONENT:
@@ -438,19 +438,25 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
         case GL_RGB8:
         case GL_RGB5:
             format = GL_RGB;
-            if(mipit && hasTC && max(w, h) >= mintexcompresssize) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            if(mipit && hasTC && mintexcompresssize && max(w, h) >= mintexcompresssize) compressed = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
             break;
 
         case GL_RGB:
-            if(mipit && hasTC && max(w, h) >= mintexcompresssize) component = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            if(mipit && hasTC && mintexcompresssize && max(w, h) >= mintexcompresssize) compressed = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
             break;
 
         case GL_RGBA:
-            if(mipit && hasTC && max(w, h) >= mintexcompresssize) component = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            if(mipit && hasTC && mintexcompresssize && max(w, h) >= mintexcompresssize) compressed = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
             break;
     };
     //component = format == GL_RGB ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-    if(mipit) { if(gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
+    if(mipit) 
+    { 
+        if(gluBuild2DMipmaps(subtarget, compressed, w, h, format, type, pixels))
+        {
+            if(compressed==component || gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps");
+        };
+    }
     else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
 };
 
