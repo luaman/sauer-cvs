@@ -12,28 +12,28 @@ struct stats
         {   // stats attributed to its owner, added/multiplied on top of base values
             // additive stats, default value is 0
             
-            "meleepower",   0, "rangedpower", 0, "magicpower", 0,      // damage dealt, additive, usually set by weapons
-            "meleecrush",   0, "rangedcrush", 0, "magiccrush", 0,      // damage that directly negates defense, substractive, special items only
-            "defensepower", 0,                                         // substract this amount from any incoming damage, armour items
+            { "meleepower",   0 }, { "rangedpower", 0 }, { "magicpower", 0 },      // damage dealt, additive, usually set by weapons
+            { "meleecrush",   0 }, { "rangedcrush", 0 }, { "magiccrush", 0 },      // damage that directly negates defense, substractive, special items only
+            { "defensepower", 0 },                                         // substract this amount from any incoming damage, armour items
 
             // multiplicative stat, default value is 1, expressed in % in cfg
 
-            "meleefactor",   1, "rangedfactor", 1, "magicfactor", 1,   // damage multiplier 
-            "defensefactor", 1,                                              // damage divisor
+            { "meleefactor",   1 }, { "rangedfactor", 1 }, { "magicfactor", 1 },  // damage multiplier 
+            { "defensefactor", 1 },                                              // damage divisor
 
             // example: meleedamage = (meleepower*meleefactor-max(defensepower-meleecrush, 0))/defensefactor
 
-            "attackspeed", 1, 
-            "movespeed",   1,    
+            { "attackspeed", 1 },
+            { "movespeed",   1 },   
 
-            "maxhp",       1,       
-            "strength",    1,    // affects carrying capacity
+            { "maxhp",       1 },      
+            { "strength",    1 },   // affects carrying capacity
 
-            "tradeskill",  1,    // buying/selling gives less loss
-            "hostility",   1,    // if npc/monsters hostility is > than the players, they will attack you. Attacking/stealing adds hostility, and reduces over time
-            "feared",      1,    // the more feared, the more blindly people will obey you, monsters may run away
-            "stealth",     1,    // affects npc fov/range when stealing items
-            NULL, 0,
+            { "tradeskill",  1 },   // buying/selling gives less loss
+            { "hostility",   1 },   // if npc/monsters hostility is > than the players, they will attack you. Attacking/stealing adds hostility, and reduces over time
+            { "feared",      1 },   // the more feared, the more blindly people will obey you, monsters may run away
+            { "stealth",     1 },   // affects npc fov/range when stealing items
+            { NULL, 0 }
         };
         names = snames;
     };
