@@ -397,7 +397,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             static Texture *cursor = NULL;
             if(!cursor) cursor = textureload("data/guicursor.png", true, false);
             
-            glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+            glBlendFunc(GL_ONE, GL_ONE);
             glColor3f(1, 1, 1);
             float chsize = (float)crosshairsize*w/300;
             float x = w*1.5f - (windowhit ? 0 : chsize/2.0f);
