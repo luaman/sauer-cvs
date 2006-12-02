@@ -5,13 +5,23 @@ enum { ID_VAR, ID_COMMAND, ID_ICOMMAND, ID_ALIAS };
 
 enum { NO_OVERRIDE = INT_MAX, OVERRIDDEN = 0 };
 
+struct identstack
+{
+    char *action;
+    identstack *next;
+};
+
 template <class T> struct tident
 {
     int _type;           // one of ID_* above
     char *_name;
     int _min, _max;      // ID_VAR
     int _override;       // either NO_OVERRIDE, OVERRIDDEN, or value
-    void (*_fun)();      // ID_VAR, ID_COMMAND
+    union
+    {
+        void (*_fun)();      // ID_VAR, ID_COMMAND
+        identstack *_stack;  // ID_ALIAS
+    };
     union
     {
         char *_narg;     // ID_COMMAND, ID_ICOMMAND
@@ -32,7 +42,7 @@ template <class T> struct tident
         : _type(t), _name(n), _min(m), _max(x), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _val(c), _persist(p), _storage(s) {};
     // ID_ALIAS
     tident(int t, char *n, char *a, bool p)
-        : _type(t), _name(n), _override(NO_OVERRIDE), _action(a), _persist(p) {};
+        : _type(t), _name(n), _override(NO_OVERRIDE), _stack(NULL), _action(a), _persist(p) {};
     // ID_COMMAND, ID_ICOMMAND
     tident(int t, char *n, char *narg, void *f = NULL, T *_s = NULL)
         : _type(t), _name(n), _fun((void (__cdecl *)(void))f), _narg(narg), self(_s) {};

@@ -16,9 +16,22 @@ identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
 bool overrideidents = false, persistidents = true;
 
+void clearstack(ident &id)
+{
+    identstack *stack = id._stack;
+    while(stack)
+    {
+        delete[] stack->action;
+        identstack *tmp = stack;
+        stack = stack->next;
+        delete tmp;
+    };
+    id._stack = NULL;
+};
+
 void clear_command()
 {
-    enumerate(*idents, ident, i, if(i._type==ID_ALIAS) { DELETEA(i._name); DELETEA(i._action); });
+    enumerate(*idents, ident, i, if(i._type==ID_ALIAS) { DELETEA(i._name); DELETEA(i._action); if(i._stack) clearstack(i); });
     if(idents) idents->clear();
 };
 
@@ -40,7 +53,52 @@ void clearoverrides()
             i._override = NO_OVERRIDE;
         });
 };
-                
+
+void pushident(ident &id, char *val)
+{
+    identstack *stack = new identstack;
+    stack->action = id._action;
+    stack->next = id._stack;
+    id._stack = stack;
+    id._action = val;
+};
+
+void popident(ident &id)
+{
+    if(!id._stack) return;
+    if(id._action != id._isexecuting) delete[] id._action;
+    identstack *stack = id._stack;
+    id._action = stack->action;
+    id._stack = stack->next;
+    delete stack;
+};
+
+void pusha(char *name, char *action)
+{
+    ident *id = idents->access(name);
+    if(!id)
+    {
+        name = newstring(name);
+        ident init(ID_ALIAS, name, newstring(""), persistidents);
+        id = idents->access(name, &init);
+    };
+    pushident(*id, action);
+};
+
+void push(char *name, char *action)
+{
+    pusha(name, newstring(action));
+};
+
+void pop(char *name)
+{
+    ident *id = idents->access(name);
+    if(id) popident(*id);
+};
+
+COMMAND(push, "ss");
+COMMAND(pop, "s");
+
 void aliasa(char *name, char *action)
 {
     ident *b = idents->access(name);
@@ -412,7 +470,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     for(int i = 1; i<numargs; i++)
                     {
                         s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
-                        aliasa(t, w[i]);
+                        pusha(t, w[i]);
                         w[i] = NULL;
                     };
                     _numargs = numargs-1;
@@ -424,6 +482,11 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     if(id->_isexecuting != id->_action && id->_isexecuting != wasexecuting) delete[] id->_isexecuting;
                     id->_isexecuting = wasexecuting;
                     overrideidents = wasoverriding;
+                    for(int i = 1; i<numargs; i++)
+                    {
+                        s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
+                        pop(t);
+                    };
                     break;
                 };
             };
