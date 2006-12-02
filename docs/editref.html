@@ -587,14 +587,260 @@ attached to it. Any pixel or vertex parameters are reset to the shaders defaults
 <pre>setpixelparam INDEX X Y Z W</pre>
 <p>
 Overrides a pixel parameter for the current shader. Any following texture slots will use this pixel parameter until its value is set/reset by subsequent commands.
-INDEX is the index of a program environment parameter (program.env[10+INDEX]) to the pixel program of the current shader. It's value is set to the vector <X, Y, Z, W>. Coordinates that are not specified default to 0.
+INDEX is the index of a program environment parameter (program.env[10+INDEX]) to the pixel program of the current shader. It's value is set to the vector (X, Y, Z, W). Coordinates that are not specified default to 0.
 </p>
 
 <pre>setvertexparam INDEX X Y Z W</pre>
 <p>
 Overrides a vertex parameter for the current shader. Any following texture slots will use this vertex parameter until its value is set/reset by subsequent commands.
-INDEX is the index of a program environment parameter (program.env[10+INDEX]) to the vertex program of the current shader. It's value is set to the vector <X, Y, Z, W>. Coordinates that are not specified default to 0.
+INDEX is the index of a program environment parameter (program.env[10+INDEX]) to the vertex program of the current shader. It's value is set to the vector (X, Y, Z, W). Coordinates that are not specified default to 0.
 </p>
+<table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
+<tr>
+<td style="width: 61px; height: 13px">
+Shader</td>
+<td style="width: 100px; height: 13px">
+Pixel params</td>
+<td style="width: 100px; height: 13px">
+Vertex params</td>
+<td style="width: 61px; height: 13px">
+Texture slots</td>
+<td style="width: 486px; height: 13px">
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+stdworld</td>
+<td style="width: 100px; height: 13px">
+</td>
+<td style="width: 100px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c</td>
+<td style="width: 486px; height: 13px">
+The default lightmapped world shader. 
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+decalworld</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, d</td>
+<td style="width: 486px; height: 13px">
+Like stdworld, except alpha blends decal texture on diffuse texture.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+glowworld</td>
+<td style="width: 200px; height: 13px">
+  <ul><li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li></ul>
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, g</td>
+<td style="width: 486px; height: 13px">
+Like stdworld, except adds light from glow map.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpworld</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader without specularity (diffuse lighting only).  
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpglowworld</td>
+<td style="width: 200px; height: 13px">
+  <ul><li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li></ul>
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, g</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with glow map and without specularity.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecworld</td>
+<td style="width: 200px; height: 13px">
+  <ul><li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li></ul>
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with constant specularity factor.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecmapworld</td>
+<td style="width: 200px; height: 13px">
+same as above
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, s</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with specularity map.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecglowworld</td>
+<td style="width: 200px; height: 13px">
+  <ul>
+        <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
+        <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
+  </ul>
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, g</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with constant specularity factor and glow map.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecmapglowworld</td>
+<td style="width: 200px; height: 13px">
+same as above
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, s, g</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with specularity map and glow map.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecparallaxworld</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, z</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with height map and without specularity.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecparallaxworld</td>
+<td style="width: 200px; height: 13px">
+  <ul>
+        <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
+  </ul> 
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, z</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with constant specularity factor and height map.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecmapparallaxworld</td>
+<td style="width: 200px; height: 13px">
+same as above
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, s, z</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with specularity map and height map.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpparallaxglowworld</td>
+<td style="width: 200px; height: 13px">
+  <ul>
+        <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
+  </ul>
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, z, g</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with height and glow maps, and without specularity.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecparallaxglowworld</td>
+<td style="width: 200px; height: 13px">
+  <ul>
+        <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
+        <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
+  </ul>
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, z, g</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with constant specularity factor, and height and glow maps.
+</td>
+</tr>
+
+<tr>
+<td style="width: 61px; height: 13px">
+bumpspecmapparallaxglowworld</td>
+<td style="width: 200px; height: 13px">
+same as above
+</td>
+<td style="width: 200px; height: 13px">
+</td>
+<td style="width: 61px; height: 13px">
+c, n, s, z, g</td>
+<td style="width: 486px; height: 13px">
+Normal-mapped shader with specularity, height, and glow maps.
+</td>
+</tr>
+
+</table>
 
 <pre>music name
 music name ondone</pre>
