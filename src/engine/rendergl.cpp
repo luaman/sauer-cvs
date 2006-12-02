@@ -449,6 +449,7 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
             if(mipit && hasTC && max(w, h) >= mintexcompresssize) component = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
             break;
     };
+    //component = format == GL_RGB ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
     if(mipit) { if(gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps"); }
     else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
 };

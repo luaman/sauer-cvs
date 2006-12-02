@@ -1,5 +1,6 @@
 before next release:
-- calclight all maps
+- nieb: finalize new heightmaps for bump sets -> texture lists
+- add parallax scaling parameter
 - gregors stuff
 - networking test
 - envmap docs
@@ -31,8 +32,6 @@ after next release:
 - reduce maps
 - memory leaks?
 - Mix_LoadMUS() crashes after being called many times?
-
-- add parallax scaling parameter
 
 - death needs to be more obvious (better sound/centerprint) 
 - sparklies very bad on ATI, particularly deathtek / diff skybox

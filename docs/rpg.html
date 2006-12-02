@@ -2,616 +2,104 @@
 <html>
 
 <head>
-<title>Sauerbraten Configuration</title>
+<title>Sauerbraten RPG gameplay scripting</title>
 <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 
 <body>
 
-<h1>Instructions for Running Sauerbraten</h1>
+<h1>Gameplay Scripting</h1>
 
-<ul>
-<li>For Windows: Install, edit, then run sauerbraten.bat.</li>
-<li>For GNU/Linux: gunzip, <i>chmod +x sauerbraten_unix</i> and then <i>./sauerbraten_unix</i>. Needs a decent and compliant OpenGL implementation.</li>
-</ul>
 
 <p>
-Sauerbraten derives its simplicity from some rather brute force rendering methods, and as such it needs 
-a beefy machine to get good visual quality. It runs best with vertical sync (vsync) set to OFF and at high
-refresh rates (otherwise, you may get excessive LOD/FPS variance).
-</p>
-
-
-<h1>Before You Start</h1>
-
-<p>
-Take some time to read the rest of this document, as it describes options and commands that may be crucial to a successful
-experience with Sauerbraten.
-</p>
-
-<p>
-You may want to look at the default configuration file "defaults.cfg" located in the "config" directory (which should look fairly
-familiar if you've ever played a Quake style game). Should you wish to change any settings <i>before you start</i>, create a file
-name "config.cfg" and set them there. Alternatively, if you would like to override settings (now, and in the future), use the file
-named "autoexec.cfg".
-</p>
-
-<p>
-Binding keys, as well as performance and gameplay related settings are documented below, these commands can be used in
-both the console and configuration scripts. In addition, you can also press "ESC" to go into the menu, which will provide
-you with an interface for navigating some (not all) of the commands.
-</p>
-
-<h1>Command Line Options</h1>
-
-<pre>-d</pre>
-<p>
-This starts Sauerbraten as a dedicatated server. The default is a non-dedicated server with only a single client in graphical
-mode. Dedicated servers run in the shell only (no graphics), with increased priority yet use very little cpu time and memory,
-so you can run one in the background, or at the same time with a client if you want to host a game (which is usually better 
-than using a listen server). Servers use the ports 28785 (UDP) and 28786 (UDP).
-</p>
-<p>
-<i>Note: Servers need to be restarted every 3 weeks, otherwise at least one game will not have correct timing.</i>
-</p>
-
-<pre>-wN</pre>
-<p>
-Sets the screen resolution width to N (default: 640).
-</p>
-
-<pre>-hN</pre>
-<p>
-Sets the screen resolution height to N (default: 480).
-</p>
-
-<pre>-bN</pre>
-<p>
-Sets the screen to N bits per pixel.
-</p>
-
-<pre>-zN</pre>
-<p>
-Sets the z-buffer precision to N bits. This should be at least 24 or you may experience depth problems.
-</p>
-
-<pre>-aN</pre>
-<p>
-Sets FSAA (Full Scene AntiAliasing) to N samples, i.e. -a4 is 4xFSAA
-</p>
-
-<pre>-t</pre>
-<p>
-Sets Sauerbaten to run windowed.
-</p>
-
-<pre>
--f
--fN
-</pre>
-<p>
-When used alone, "-f" forces the renderpath to the old fixed function pipeline (no shaders), otherwise it sets the shader precision
-to N (lower = faster). 0 disables shaders, 1 uses the fastest/lowest precision the OpenGL driver offers, 2 is the default precision,
-and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different card/driver combos.
-</p>
-<p>
-If your setup is considered weak, "-f2" will fall back to "-f1" automatically, unless you use "-f3". Weak renderers include (but not limited to): "GeForce FX",
-"Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome".
-</p>
-
-<pre>-lS</pre>
-<p>
-Loads map S on startup (default: base/metl4).
-</p>
-
-<pre>-uN</pre>
-<p>
-Sets the server upstream bandwidth to N bytes per second. Only set this parameter if you know what you are doing,
-specifying a wrong value is worse than not specifying it at all.
-</p>
-
-<pre>-nN</pre>
-<p>
-Sets the server description, for people pinging the server. usually does not need to be set if you have a descriptive
-domain name already, but if you set it, keep it short as it may otherwise be truncated (example: -n"Bobs Instagib Server").
-</p>
-
-<pre>-cN</pre>
-<p>
-Sets the max number of clients to N. The default is 4. If you want to set it higher, be aware that bandwidth usage almost
-doubles with each extra client, so only do this if the server runs on a serious pipe (not your home DSL or Cable connection).
-</p>
-
-<pre>-iS</pre>
-<p>
-Sets the server ip to S. This option is only useful for people running on machines with multiple network interfaces.
-</p>
-
-<pre>-mS</pre>
-<p>
-Sets the master server to use for either server (registering) and client (updating) to S. Be aware, this is the base url
-of the master server and has to end in a "/" and without a "http://" prefix (default: sauerbraten.org/masterserver/).
-</p>
-
-<pre>-gS</pre>
-<p>
-Start playing using gametype S (default: fps). This is currently used to access Eisenstern, Sauerbratens RPG game (use: -grpg).
-</p>
-
-<pre>-pS</pre>
-<p>
-Sets the server's administrative password to S.
-</p>
-
-<h1>General Console Commands and Configuration</h1>
-
-<pre>
-bind K A
-editbind K A
-</pre>
-<p>
-Binds key K to commands A (see console language below for what you can put in A). To find out what key names and their default
-bindings are, look at data/keymap.cfg, then add bind commands to your autoexec.cfg. Editbind works much the same way, except
-now the key is only available in edit mode (if no editbind is defined for a certain key, it will use the normal binding).
-</p>
-
-<pre>alias N A</pre>
-<p>
-Binds name N to commands A, after which you can use N as a shortcut for A. You 
-may re-bind N as often as you like, call it recursively etc. You may use N = A as a shortcut for alias.
-</p>
-
-<pre>quit</pre>
-<p>
-Quits without asking.
-</p>
-
-<pre>
-forward
-backward
-left
-right
-</pre>
-<p>
-Move you in said direction (default key: up down left right, w s a d).
-</p>
-
-<pre>attack</pre>
-<p>
-Fires the current weapon (default key: left mouse).
-</p>
-
-<pre>jump</pre>
-<p>
-Triggers a jump (default key: space, right mouse).
-</p>
-
-<pre>invmouse B</pre>
-<p>
-Toggles mouse between regular and inverted (flight sim) mode (default: 0 (uninverted)).
-</p>
-
-<pre>sensitivity S</pre>
-<p>
-Sets mouse sensitivity (default: 10). The feel of which should be a similar number to Quake.
-</p>
-
-<pre>sensitivityscale S</pre>
-<p>
-Scales the effect of an increase or decrease in the sensitivity value. The larger the value, the smaller the difference
-between sensitivity values (default: 1).
-</p>
-
-<pre>maxfps N</pre>
-<p>
-Sets the max number of FPS (Frames per Second). Useful if you have a recent machine that can run the engine at close to 1000FPS,
-or if you want to test. If you set maxfps to exactly or a simple ratio of your monitor's refresh rate, you may experience tearing.
-Be aware that maxfps is not a replacement for vsync (default: 200).
-</p>
-
-<pre>fov N</pre>
-<p>
-Sets your FOV to 10..150.
-</p>
-
-<pre>shaderdetail N</pre>
-<p>
-This sets the level of detail shaders should use, for N=3 is highest, and N=0 is lowest. Lower settings will give speedups
-on slower hardware.
-</p>
-
-<pre>loddistance N</pre>
-<p>
-Sets the distance at which world vertex array blocks are rendered at a higher 
-LOD (level of detail). The lower this value, the more geometry popup you will 
-see, but the faster it may render. Every system has a different&nbsp;optimal 
-value, experiment. This variable only has an effect for large scale maps where 
-the level designer has turned on LOD using the "lodsize" variable.&nbsp;
-</p>
-
-<pre>watersubdiv N</pre>
-<p>
-Determines the subdivision of the water surface in maps, which can greatly 
-affect fps on slow machines. Must be a power of 2: 4 is the default, 8 is 
-recommended for people on slow machines, 2 is nice for fast machines, and 1 is 
-quite OTT. See the edit reference for more information on how to add the water material to your levels.
-NOTE: This only effects water with shaders disabled!
-</p>
-
-<pre>waterlod N</pre>
-<p>
-Sets the precision level of the water LOD (Level of Detail) from 0..3, where 0 is the lowest and 3 is the highest setting
-(default: 1).
-NOTE: This only effects water with shaders disabled!
-</p>
-
-<pre>waterreflect B</pre>
-<p>
-Enables or disables water reflections, only works if your card supports GL_EXT_framebuffer_object and you don't run with
-the fixed function pipeline (default: 1).
-</p>
-
-<pre>waterrefract B</pre>
-<p>
-Enables or disables water refractions, (default: 1).
-</p>
-
-<pre>reflectdist N</pre>
+The RPG is set up in a very open way such that all gameplay objects and behaviour can be modified in a script file,
+currently in data/game_rpg.cfg (this will change later to be on a per-map basis).
 <p>
-Sets the maximum distance geometry/objects can be at to be in a reflection from 0..10000 (default: 2000).
-</p>
-
-<pre>reflectfps N</pre>
-<p>
-Sets the amount of times per second the reflections are updated from 1..200 (default: 30). Use this if you would like to
-improve the speed of reflections on fast machines, or to reduce to gain more speed for other operations. Be aware that setting
-this to a value higher than "maxfps" has no effect.
-</p>
-
-<pre>reflectsize N</pre>
-<p>
-Sets the resolution of reflected surfaces (where the dimensions would measyre 2^N x 2^N), from 6..10 (default: 8). Lowering this value results
-in a grainier image, whereas increasing it results in a finer and mroe detailed image. This too should be used to fine tune the speed of
-reflection rendering.
-
-<pre>maxreflect N</pre>
-<p>
-Sets the maximum number of reflection surfaces that can be visible at once from 1..8 (default: 3). Any surfaces exceeding this
-limit will not be given reflections on their surfaces.
-</p>
-
-<pre>reflectmms B</pre>
-<p>
-Toggles whether map models are rendered in reflections (default: 1).
-</p>
-
-<pre>maxparticles N</pre>
-<p>
-Sets the maximum number of particles rendered at any one time. If more 
-particles are generated than this number, the oldest ones are culled, so you 
-can safely set this number relatively low without loss of information (default: 1000).
-</p>
-
-<pre>setfullscreenshader Name</pre>
-<p>
-Sets your favourite fullscreen shader. Active permanently once set. Use without name
-argument to turn it off. Current example shaders: invert, gbr, sobel, bloom
-</p>
-
-<pre>screenshot</pre>
-<p>
-Writes out "screenshotN.bmp", where N is the number of milliseconds since the game was launched (default key: F12).
-</p>
-
-<pre>musicvol N
-soundvol N</pre>
-<p>
-Sets the music/sound volume from 0..255.
-</p>
-
-<pre>soundbufferlen N</pre>
-<p>
-Sets the sound buffer length in bytes, tweak this if you experience stuttering or lagging sound (default: 512).
-</p>
-
-<pre>gamma N</pre>
-<p>
-Sets the hardware gamma value to N percent (default: 100). May not work if your card/driver doesn't support it.
-</p>
-
-<pre>hidestats B</pre>
-<p>
-Toggles display of fps/rendering stats on the HUD (default: 1).
-</p>
-
-<pre>hidehud B</pre>
-<p>
-Toggles the entire hud display, which includes rendering stats, ammo, and echoed text (default: 0).
-</p>
-
-<pre>maxroll N</pre>
-<p>
-Sets the maximum value your display will roll on strafing from 0..20 (default: 3)
-</p>
-
-<pre>crosshairsize N</pre>
-<p>
-Sets the size of your crosshair, 0 being off (default: 3).
-</p>
-
-<pre>crosshairfx B</pre>
-<p>
-Toggles crosshair effects (default: 1). When on, the crosshair will go grey when the weapon is reloading, orange when health &lt;= 50,
-or red when &lt;=25.
-</p>
-
-<pre>exec S</pre>
-<p>
-Executes all commands in config file S.
-</p>
-
-
-<pre>history N</pre>
-<p>
-Executes the Nth command in the command line history. For example, binding "history 0" to a key allows you to quickly repeat the
-last command typed in (useful for placing many identical entities etc.)
-</p>
-
-<pre>keymap K N A</pre>
-<p>
-Sets up the keymap for key code K with name N and default action A. You should 
-never have to use this command manually, use "bind" instead.
-
-
-<h1>3dGUI/Menu Commands</h1>
-
-<pre>menudistance D</pre>
-<p>
-Sets the distance at which the menu is created in front of the player.
-</p>
+This file simply lists all gameplay objects, which can then be placed in the level editor. For example, by writing:
 
-<pre>guiautotab H</pre>
-<p>
-Sets the height of the gui before tabs are automatically generated.
-</p>
-
-<pre>cleargui</pre>
-<p>
-Hides the menu.
-</p>
-
-<pre>showgui N</pre>
-<p>
-Displays the menu with name N previously defined, and allows the user to pick and manipulate items with the cursor. Pressing ESC will cancel the menu.
-</p>
-
-<pre>newgui S</pre>
-<p>
-Creates a new menu with name S. All the following 'gui' menuitem commands will apply to this menu.
-See "data/menus.cfg" for defaults.
-</p>
-
-<pre>
-guilist '[' ... ']'
-</pre>
-<p>
-Defines a menu item that is a group of menu items. The layout of each nested group will alternate - the top level (newgui) is laid out vertically, 
-the first guilist will be laid out horizontally, the second guilist vertically, etc. This allows tables and lists to be created. The 
-layout direction also influences the display of items such as sliders, bars, progress bars, and struts.
-</p>
-
-<pre>
-guititle S
-</pre>
-<p>
-Creates a menu item with horizontally centered title S.
-</p>
-
-<pre>
-guibutton [S] A
-</pre>
-<p>
-Creates a menu button with the name S, which will execute A when selected. If you only specify one parameter, then it will be used for both.
-The icon used will be a blue-button if A contains showgui, otherwise it is a green button. Clicking a button will close the menu.
-</p>
-
-<pre>
-guiimage P A S [O]
-</pre>
-<p>
-Creates a menu image tile from the path P, which will execute A when selected. Clicking the image will close the menu. Uses image scale S and O=1 if an overlay is required.
-</p>
-<pre>
-guitext S
-</pre>
-<p>
-Creates a menu consisting of the text line S and an information icon.
-</p>
-
-<pre>
-guibar
-</pre>
-<p>
-Creates a vertical/horizontal menu bar. The orientation depends on the layout direction.
-</p>
-
-<pre>
-guislider V [MIN MAX A]
-</pre>
-<p>
-Creates a vertical/horizontal menu slider that is bound to a variable V. The min/max bounds of the slider will be as defined by the data model of the variable unless explicitly specified. 
-An action A can also be specified for every slider change.
-The orientation of the slider depends on the layout direction.
-</p>
-
-<pre>
-guicheck N V [ON OFF A]
-</pre>
-<p>
-Creates a menu checkbox with a label N that is bound to a variable V. The default value are 0/1 unless supplied by ON/OFF. An action A can also be specified for every checkbox change.
-</p>
-
-<pre>
-guiradio N V VAL [A]
-</pre>
-<p>
-Creates a menu radio button with a label N that is bound to a variable V. The radio button is only ticked when the variable has value VAL, and 
-presing the button will update the variable to the value VAL.
-An action A can also be specified for every radio button change.
-</p>
+<pre>spawn_apple    = [ r_worth 20 ]</pre>
 
-<pre>
-guitab S
-</pre>
-<p>
-Creates a new menu tab with title S. Note: has no effect if used within a guilist.
-</p>
-
-<h1>CubeScript</h1>
-
-<p>
-Cube's console language is similar to console languages of other games (e.g. Quake), but is a bit more powerful in that it is a
-full programming language.
-</p>
-
-<p>
-What is similar to quake is the basic command structure: commands consist of 
-the command itself, followed by any number of arguments seperated by 
-whitespace. you can use "" to quote strings with whitespace in them (such as 
-the actions in bind/alias), and whereever a command is required you can also 
-use ; to sequence multiple commands in one.
-</p>
+you define a script that gets executed when an apple is spawned. You place this apple either directly in the world or as part of another objects inventory.
+To place it in the world, you create an entity of type "spawn" with a name attached. This is best done by typing:
 
-<p>
-What is new compared to quake is that you can evaluate aliases and expressions. 
-You can substitute the value of an alias as an argument by prefixing it with a 
-"$" sign, (example: echo The current value of x is $x). You can even 
-substitute the values of console variables this way, i.e $fov gives the current 
-fov. Some aliases are set automatically, for example $arg1 to $argN are set if 
-you supply arguments when you execute an alias.
-</p>
+<pre>newrpgspawn apple</pre>
 
-<p>
-An alternative re two alternatives to "" for quoting a string: () and []. They work in
-the same way as "", with the difference that they can be nested infinitely, and
-that they may contain linefeeds (useful for larger scripts). () is different
-from [] in that it evaluates the commands contained in it _before_ it evaluates
-the surrounding command, and substitutes the results. () bracketed strings are
-called expressions, and [] bracketed strings may be thought of as blocks.
-</p>
+What is important to realize is that most r_ commands work with what is called the RPG stack. This makes it possible to apply
+properties and actions to things without having to specify all the time which object you are talking about. For example, when the
+spawn_apple script gets executed, the apple object will be on the top of the RPG stack, so any commands such as r_worth that apply to an
+object, will automatically apply to it. It is a stack, because during the initialization of one object you may spawn another, which means
+all r_ commands will apply to the new object, until it is done, when the RPG stack returns to the previous object.
 
-<p>
-An alternative to $x is @x, which uses an alias as a macro. The difference is that @x 
-can be subtituted inside [] or () forms before they have ever been evaluated (at parse time), 
-which makes them useful for composing strings or creating code on the fly. The @x form will be
-substituted using the value of x at the time the enclosing [] is evaluated. You can add more @ prefixes
-to move up more levels of []s, so @@x will move up two levels of []s and so on.
-Example: x = 0; if $cond [x = 1; [x = 2; echo @@x]] will echo 0, since it uses the value of x at two levels up. 
-</p>
+Following is a list of all commands... unless otherwise noted, they apply to the current object (top of the RPG stack).
 
-<p>
-The form @(body) is similar to @x, except that body contains commands executed at parse time.
-The result value after body executes is substituted in for @(body). 
-You may use multiple @ prefixes as with the @x form.
-Example: @(result "Hello, World!") will substitute itself with Hello, World!
-</p>
 
-<p>
-The following commands are available for programming:
-</p>
+<h1>RPG object commands</h1>
 
-<pre>
-+ A B
-- A B
-* A B
-div A B
-mod A B
-</pre>
-<p>
-(add, substract, multiply, divide, modulo): these all work like the integer 
-operators from other languages (example: echo x squared is (* $x $x)).
-</p>
 
-<pre>
-= A B
-&lt; A B
-&gt; A B
-strcmp A B
-</pre>
+<pre>r_pop</pre>
 <p>
-(equals, lessthan, greaterthan, stringcompare): comparison operators that return 1 for true and 0 for false.
+Removes the top object from the RPG stack
 </p>
 
-<pre>
-! A
-&amp&amp A B
-|| A B
-^  A B
-</pre>
+<pre>r_spawn N</pre>
 <p>
-(not, and, or, xor): boolean operators. 0 is false, everything else is true.
-The AND and OR operators are implemented to shortcut.
+creates a new object, places it on the top of the RPG stack, then executes spawn_N to initialize it.
 </p>
 
-<pre>if cond true false</pre>
+<pre>r_contain T</pre>
 <p>
-Executes the true or false&nbsp;part depending on wether cond is "0" or 
-something else (example: if (&lt; $x 10) [ echo "x is" $x ] [ echo "x is too big" ]).
+Takes the object on the top of the stack, and makes it part of the inventory of the object on the stack below it.
+T is the type of inventory object, see the convenient scripts r_inventory, r_loot, r_fortrade instead.
 </p>
 
-<pre>loop I N body</pre>
+<pre>r_gold G</pre>
 <p>
-Evaluates body N times, and sets the alias I from 0 to N-1 for every iteration (example: loop i 10 [ echo $i ]).
+G gold is owned by this object for use in trading. Only makes sense for player/NPCs
 </p>
 
-<pre>while cond body</pre>
+<pre>r_worth V</pre>
 <p>
-Evaluates body while cond evaluates to true. Note that cond here has to have [], otherwise it would only be evaluated once
-(example: i = 0; while [ (&lt; $i 10) ] [ echo $i; i = (+ $i 1) ]).
+This object has base value V when used in trading
 </p>
 
-<pre>concat S...</pre>
+<pre>r_stat ST V</pre>
 <p>
-Concatenates all the arguments and returns the result
+This object has value V for stat type ST (see stats.h)
 </p>
 
-<pre>concatword S...</pre>
+<pre>r_model M</pre>
 <p>
-Same as concat but without spaces between the elements.
+Specify model M to represent this object visually when placed in the world
 </p>
 
-<pre>format F V1..Vn</pre>
+<pre>r_ai</pre>
 <p>
-Substitutes the V values into the format string F and returns the result. The format strings %1 through %9 are substituted with V1 through V9, respectively, and may be
-used multiple times. %% will generate a single % character (example: format "%1 bottles of %2 on the %3, %1 bottles of %2!" 99 beer wall).
+Signifies that this object should run AI code when placed in the world, used for NPCs/monsters, not items.
 </p>
 
-<pre>at S N</pre>
+<pre>r_action N A</pre>
 <p>
-Grabs the Nth word out of string S and returns the result
+defines a custom action the player can take on this object. N is the tag word that describes the action, visible in
+the objects menu in the game world, and A is the script that gets executed when the player selects it.
 </p>
 
-<pre>listlen L</pre>
+<pre>r_say T</pre>
 <p>
-Returns the number of items in the list L
+Make text T the last thing this object said to the player
 </p>
 
-<pre>onrelease A</pre>
+<pre>r_take N A NA</pre>
 <p>
-Only executes A if the command is executed on the release of a key/button (must be in an action in a bind or an alias in a bind).
+Attempt to take object with name N from the player inventory, and place it in the objects inventory. If the item was succesfully grabbed (it was present),
+action A is executed. If the item was not available, NA is executed. r_take is the preferred way to structure resolution of quests, i.e. everything the player ever
+needs to do should go via token items.
 </p>
 
-<pre>result V</pre>
+<pre>r_give N</pre>
 <p>
-Normally the result of a [] block is the result of the last command in the block. If you want the result to be a particular
-variable or value, you can use e.g. "result $i" etc.
+give the player an item with name N
 </p>
 
-<p>Variables that are only really useful when used as value:</p>
 
-<pre>$editing</pre>
-<p>
-This is true when in edit mode.
-</p>
 </body>
 </html>
