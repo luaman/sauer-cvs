@@ -175,7 +175,8 @@ smooth out the flow around decoration. Shows red volume in edit mode.
 <li>
 noclip: cubes are always treated as empty in physics. Shows green volume in edit mode.
 <li>
-glass: a clip-like material with a blended surface. Glass also stops bullets.
+glass: a clip-like material with a blended/reflective surface. Glass also stops bullets.
+Will reflect the closest envmap entity, or if none is in range, the skybox.
 Shows cyan volume in edit mode.
 </ul>
 </p>
@@ -784,8 +785,7 @@ mappers may find it interesting too.
 <h1>Entity Types</h1>
 </p>
 
-<pre>"light" radius brightness
-"light" radius r g b</pre>
+<pre>"light" radius r g b</pre>
 <p>
 If G and B are 0 the R value will be taken as brightness for a white light. A
 good radius for a small wall light is 64, for a middle sized room 128... for a
@@ -794,6 +794,18 @@ be more appropriate for simulating sunlight or ambient light; however, this
 comes at the cost of slightly greater map file sizes. See the <a href="#lightingcommands">
 lighting commands</a> for an indepth list of all lighting related commands.
 </p>
+
+<pre>"envmap"
+"envmap" radius</pre>
+Creates an environment map reflecting the geometry around the entity. The optional radius
+overrides the maximum distance within which glass will reflect from this environment map. If none is specified,
+the default is taken from the variable "envmapradius" (which defaults to 128 units), which may also be set in 
+map cfgs. Environment maps are generated on a map load, or can be regenerated while editing using the "recalc" command.
+
+Please use the absolute minimum number of these possible. Each one uses up a decent amount of texture memory. 
+For instance, rather than using two environment maps on each side of a window, use only one in the middle of the pane
+of glass. If you have a wall with many windows, place only one environment map in the middle of the wall geometry, and 
+it should work just fine for all the windows.
 
 <pre>"playerstart"</pre>
 <p>
