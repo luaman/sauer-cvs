@@ -122,7 +122,8 @@ VARF(gridpower, 2, 3, VVEC_INT-1,
 });
 
 
-VAR(passthrough, 0, 0, 1);
+VAR(passthroughcube, 0, 0, 1);
+VAR(passthroughsel, 0, 0, 1);
 VAR(editing,0,0,1);
 
 void toggleedit()
@@ -307,6 +308,11 @@ void cursorupdate()
         sel.o[C[od]] = e[C[od]];
     }
     else 
+    if(entmoving)
+    {
+        entdrag(ray, d, e, false);
+    }
+    else
     {  
         vec v;
         ivec w;
@@ -314,7 +320,7 @@ void cursorupdate()
         bool hit = false;
 
         wdist = raycubepos(player->o, ray, v, 0,  (editmode && showmat ? RAY_EDITMAT : 0)   // select cubes first
-                                                | (passthrough ? RAY_PASS : 0)
+                                                | (passthroughcube ? RAY_PASS : 0)
                                                 | RAY_SKIPFIRST, gridsize);
         if(dragging) // update selection 
         {
@@ -325,7 +331,7 @@ void cursorupdate()
             updateselection();
         };
 
-        if(havesel && !passthrough)     // now try selecting the selection
+        if(havesel && !passthroughsel)     // now try selecting the selection
             if(hit = rayrectintersect(sel.o, ivec(sel.s).mul(sel.grid), player->o, ray, sdist, orient))
                 wdist = min(sdist, wdist);  // and choose the nearest of the two
 
@@ -385,10 +391,6 @@ void cursorupdate()
         selchildcount = 0;
         countselchild(worldroot, origin, hdr.worldsize/2);
         if(mag>1 && selchildcount==1) selchildcount = -mag;
-    };
-    if(entmoving)
-    {
-        entdrag(ray, d, e, false);
     };
     
     glEnable(GL_BLEND);

@@ -174,6 +174,8 @@ bool haveselent()
     return entgroup.length() > 0;
 };
 
+extern void entcancel();
+
 void initundoent(undoblock &u)
 {
     u.n = 0; u.e = NULL;
@@ -199,18 +201,18 @@ void makeundoent()
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
-#define implicitent(f)  { if(entgroup.empty()) { int _ = closestent(); if(_>=0) { entgroup.add(_); f; entgroup.setsize(0); }; } else f; }
+#define implicitent(f)  { if(entgroup.empty()) { int _ = closestent(); if(_>=0) { entgroup.add(_); f; entcancel(); }; } else f; }
 #define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; addentity(n); et->editent(n)); }
 #define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
-#define setgroup(exp)   { entgroup.setsize(0); addgroup(exp); }
+#define setgroup(exp)   { entcancel(); addgroup(exp); }
 #define groupeditpure(f){ loopv(entgroup) entedit(entgroup[i], f); }
 #define groupeditundo(f){ makeundoent(); groupeditpure(f); }
 #define groupedit(f)    { implicitent(groupeditundo(f)); }
 
 void copyundoents(undoblock &d, undoblock &s)
 {
-    entgroup.setsize(0);
+    entcancel();
     loopi(s.n)
         entgroup.add(s.e[i].i);
     initundoent(d);
@@ -220,12 +222,6 @@ void pasteundoents(undoblock &u)
 {
     loopi(u.n)
         entedit(u.e[i].i, e = u.e[i].e);
-};
-
-void entmove(selinfo &sel, ivec &o)
-{
-    vec s(o.v), a(sel.o.v); s.sub(a);
-    groupeditundo(e.o.add(s));
 };
 
 void entflip()
@@ -325,7 +321,7 @@ void delent()
         et->editent(n);
         continue;
     );
-    entgroup.setsize(0);
+    entcancel();
 };
 
 int findtype(char *what)
@@ -421,7 +417,7 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
     return &e;
 };
 
-int newentity(int type, int a1, int a2, int a3, int a4)
+void newentity(int type, int a1, int a2, int a3, int a4)
 {
     extentity *t = newentity(true, player->o, type, a1, a2, a3, a4);
     dropentity(*t);
@@ -431,7 +427,6 @@ int newentity(int type, int a1, int a2, int a3, int a4)
     enttoggle(i);
     makeundoent();
     entedit(i, e.type = type);
-    return i;
 };
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
@@ -442,9 +437,42 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
         newentity(type, *a1, *a2, *a3, *a4);
 };
 
+
+vec entcopyorigin;
+vector<entity> entcopybuf;
+
+void entcopy()
+{
+    entcopyorigin = sel.o.v;
+    entcopybuf.setsize(0);
+    loopv(entgroup) 
+        entfocus(entgroup[i], entcopybuf.add(e));
+};
+
+void entpaste()
+{
+    if(entcopybuf.length()==0) return;
+    entcancel();
+    int last = et->getents().length()-1;
+    vec s(entcopyorigin), a(sel.o.v); s.sub(a);
+    loopv(entcopybuf)
+    {
+        entity &c = entcopybuf[i];
+        vec o(c.o);
+        o.sub(s);
+        extentity *e = newentity(true, o, ET_EMPTY, c.attr1, c.attr2, c.attr3, c.attr4);
+        et->getents().add(e);
+        entgroup.add(++last);
+    };
+    int j = 0;
+    groupeditundo(e.type = entcopybuf[j++].type);
+};
+
 COMMAND(newent, "siiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
+COMMAND(entcopy, "");
+COMMAND(entpaste, "");
 
 void entset(char *what, int *a1, int *a2, int *a3, int *a4)
 {
