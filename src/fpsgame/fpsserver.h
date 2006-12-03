@@ -524,14 +524,6 @@ struct fpsserver : igameserver
                 if(physstate&0x10) getint(p);
                 int state = (getint(p)>>4) & 0x7;
                 if(ci->spectator && state!=CS_SPECTATOR) break;
-                if(!ci->local)
-                {
-                    if(state!=CS_DEAD && state!=CS_ALIVE && state!=CS_SPECTATOR && (gamemode!=1 || state!=CS_EDITING))
-                    {
-                        disconnect_client(sender, DISC_TAGT);
-                        return;
-                    };
-                };
                 if(m_capture)
                 {
                     if(ci->state==CS_ALIVE)
