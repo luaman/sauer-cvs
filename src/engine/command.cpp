@@ -57,7 +57,7 @@ void clearoverrides()
 void pushident(ident &id, char *val)
 {
     identstack *stack = new identstack;
-    stack->action = id._action;
+    stack->action = id._isexecuting==id._action ? newstring(id._action) : id._action;
     stack->next = id._stack;
     id._stack = stack;
     id._action = val;

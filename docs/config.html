@@ -159,6 +159,16 @@ Binds name N to commands A, after which you can use N as a shortcut for A. You
 may re-bind N as often as you like, call it recursively etc. You may use N = A as a shortcut for alias.
 </p>
 
+<pre>push N A</pre>
+<p>
+Pushes the old value of name N onto its stack, and then aliases N to A.
+</p>
+
+<pre>pop N</pre>
+<p>
+Pops the old value of name N off its stack, then aliases N to that value.
+</p>
+
 <pre>quit</pre>
 <p>
 Quits without asking.
@@ -492,8 +502,8 @@ What is new compared to quake is that you can evaluate aliases and expressions.
 You can substitute the value of an alias as an argument by prefixing it with a 
 "$" sign, (example: echo The current value of x is $x). You can even 
 substitute the values of console variables this way, i.e $fov gives the current 
-fov. Some aliases are set automatically, for example $arg1 to $argN are set if 
-you supply arguments when you execute an alias.
+fov. Some aliases are set automatically, for example $arg1 to $argN are set (as if by the "push" command)
+if you supply arguments when you execute an alias, and are popped when the alias finishes executing.
 </p>
 
 <p>
