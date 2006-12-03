@@ -143,17 +143,14 @@ struct fpsserver : igameserver
     void pickup(int i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
     {
         if(!sents.inrange(i)) return;
-        if(sents[i].spawned)
+        clientinfo *ci = (clientinfo *)getinfo(sender);
+        if(ci && ci->state==CS_ALIVE && sents[i].spawned)
         {
             sents[i].spawned = false;
             if(sents[i].type==I_QUAD || sents[i].type==I_BOOST) sec += rnd(40)-20;
             sents[i].spawnsecs = sec;
             sendf(sender, 1, "ri2", SV_ITEMACC, i);
-            if(minremain>=0 && sents[i].type == I_BOOST)
-            {
-                clientinfo *ci = (clientinfo *)getinfo(sender);
-                ci->score.maxhealth += 10;
-            };
+            if(minremain>=0 && sents[i].type == I_BOOST) ci->score.maxhealth += 10;
         };
     };
 
@@ -914,7 +911,11 @@ struct fpsserver : igameserver
         clients.add(ci);
         loopv(bannedips) if(bannedips[i].ip==ip) return DISC_IPBAN;
         if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
-        if(mastermode>=MM_LOCKED) ci->spectator = true;
+        if(mastermode>=MM_LOCKED) 
+        {
+            ci->spectator = true;
+            ci->state = CS_SPECTATOR;
+        };
         if(currentmaster>=0) masterupdate = true;
         ci->gamestart = enet_time_get();
         return DISC_NONE;
