@@ -437,16 +437,15 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
         newentity(type, *a1, *a2, *a3, *a4);
 };
 
-
-vec entcopyorigin;
+int entcopygrid;
 vector<entity> entcopybuf;
 
 void entcopy()
 {
-    entcopyorigin = sel.o.v;
+    entcopygrid = sel.grid;
     entcopybuf.setsize(0);
     loopv(entgroup) 
-        entfocus(entgroup[i], entcopybuf.add(e));
+        entfocus(entgroup[i], entcopybuf.add(e).o.sub(sel.o.v));
 };
 
 void entpaste()
@@ -454,12 +453,12 @@ void entpaste()
     if(entcopybuf.length()==0) return;
     entcancel();
     int last = et->getents().length()-1;
-    vec s(entcopyorigin), a(sel.o.v); s.sub(a);
+    float m = float(sel.grid)/float(entcopygrid);
     loopv(entcopybuf)
     {
         entity &c = entcopybuf[i];
         vec o(c.o);
-        o.sub(s);
+        o.mul(m).add(sel.o.v);
         extentity *e = newentity(true, o, ET_EMPTY, c.attr1, c.attr2, c.attr3, c.attr4);
         et->getents().add(e);
         entgroup.add(++last);
