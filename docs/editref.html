@@ -140,14 +140,29 @@ Multi-level redo of any of the changes caused by the above undo (default: i).
 paste
 </pre>
 <p>
-Copy copies the current selection into a buffer. For pasting, if the current
-selection is not the same size as the copy, the corner of the red reference box
-will be used as the origin. If the current gridsize is changed from the copy,
+Copy copies the current selection into a buffer. Upon pressing 'paste', a 
+selection box will be created to identify the location of the pasted cubes. 
+Releasing the 'paste' button will actually paste the cubes. So combined with
+the 'moving' command you can easily place and clone sets of cubes.
+If the current gridsize is changed from the copy,
 the pasted copy will be stretched by the same factor.
+</p>
 
-Copy will work on entities as well as cubes. However it does not work on both at the same time. 
-So if you select a set of cubes, the entities within that selection will not
-be copied over on a paste. (default: c and v respectively)
+<pre>
+editcopy
+editpaste
+</pre>
+<p>
+Will copy cubes as normal copy, but also features entity copies. There are three 
+different methods of use:<br><br>
+1: If no entity is explicitly selected, editcopy will copy the selected cube, 
+just like normal the normal 'copy' command.<br>
+2: If one or more entities are selected, editcopy will copy the last entity selected. 
+Editpaste will create a new entity using copy as the template if no entities are selected, 
+otherwise it will overwrite all selected entities with the copied ent.
+3: If there are both entity and cube selections, editcopy will copy the entire selection.
+In other words, when editpaste is used it will paste the cube selection along with all of the
+entities that were selected.
 </p>
 
 <pre>replace</pre>
@@ -325,6 +340,11 @@ entselect insel // select all entities in blue selection box<br>
 entselect [ strcmp (et) "shells" ] // select all shells in map
 </p>
 
+<pre>entloop X</pre>
+<p>
+Loops through and executes the given expression for all selected entities
+</p>
+
 <pre>entcancel</pre>
 <p>
 deselect all entities
@@ -349,7 +369,7 @@ Returns a string for scripts that has the 'type' of the selected entity.
 <p>
 Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
 
-<pre>entedit type    value1 value2 value3 value4</pre>
+<pre>entset type    value1 value2 value3 value4</pre>
 <p>
 Change the type and attributes of the selected entity.
 To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
