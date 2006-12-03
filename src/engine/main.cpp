@@ -182,10 +182,10 @@ void screenres(int *w, int *h, int *bpp = 0)
 #else
     SDL_Surface *surf = SDL_SetVideoMode(*w, *h, bpp ? *bpp : 0, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
-    scr_w = *w;
-    scr_h = *h;
     screen = surf;
-    glViewport(0, 0, *w, *h);
+    scr_w = screen->w;
+    scr_h = screen->h;
+    glViewport(0, 0, scr_w, scr_h);
 #endif
 };
 
@@ -391,6 +391,8 @@ int main(int argc, char **argv)
     #endif
     screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|SDL_RESIZABLE|fs);
     if(screen==NULL) fatal("Unable to create OpenGL screen: ", SDL_GetError());
+    scr_w = screen->w;
+    scr_h = screen->h;
 
     fullscreen = fs!=0;
 
