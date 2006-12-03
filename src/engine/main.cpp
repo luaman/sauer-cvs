@@ -383,7 +383,7 @@ int main(int argc, char **argv)
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, fsaa);
     };
-    int resize = SDL_RESIZEABLE;
+    int resize = SDL_RESIZABLE;
     #if defined(WIN32) || defined(__APPLE__)
     resize = 0;
     #endif
