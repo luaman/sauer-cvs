@@ -231,14 +231,14 @@ struct cubeloader
 
     void load_cube_world(char *mname)
     {
-        emptymap(12, true);
-        freeocta(worldroot);
-        worldroot = newcubes(F_SOLID);
         string pakname, cgzname;
         s_sprintf(pakname)("cube/%s", mname);
         s_sprintf(cgzname)("packages/%s.cgz", pakname);
         gzFile f = gzopen(path(cgzname), "rb9");
         if(!f) { conoutf("could not read cube map %s", cgzname); return; };
+        emptymap(12, true);
+        freeocta(worldroot);
+        worldroot = newcubes(F_SOLID);
         c_header hdr;
         gzread(f, &hdr, sizeof(c_header)-sizeof(int)*16);
         endianswap(&hdr.version, sizeof(int), 4);
