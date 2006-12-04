@@ -561,12 +561,13 @@ int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
 static vector<gui> guis;
 
-void g3d_addgui(g3d_callback *cb, vec &origin)
+void g3d_addgui(g3d_callback *cb, vec &origin, bool follow)
 {
     gui &g = guis.add();
     g.cb = cb;
     g.origin = origin;
-    g.dist = camera1->o.dist(origin);    
+    if(follow) g.origin.add(camera1->o);
+    g.dist = camera1->o.dist(g.origin);    
 };
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };

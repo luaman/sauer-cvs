@@ -72,8 +72,7 @@ extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 
 // menus
-extern vec menuinfrontofplayer(vec *o = NULL);
-extern void menufollow(vec &v, vec &o);
+extern vec menuinfrontofplayer(bool follow = false);
 extern void newgui(char *name, char *contents);
 extern void showgui(char *name);
 
@@ -223,4 +222,4 @@ struct g3d_callback
     virtual void gui(g3d_gui &g, bool firstpass) = 0;
 };
 
-extern void g3d_addgui(g3d_callback *cb, vec &origin);
+extern void g3d_addgui(g3d_callback *cb, vec &origin, bool follow = false);

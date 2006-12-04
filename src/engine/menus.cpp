@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-static vec menupos, campos;
+static vec menupos;
 static int menustart = 0;
 static int menutab = 1;
 static g3d_gui *cgui = NULL;
@@ -15,28 +15,14 @@ static bool clearlater = false;
 
 VARP(menudistance, 16, 40, 256);
 
-vec menuinfrontofplayer(vec *o) 
+vec menuinfrontofplayer(bool follow)
 { 
     vec dir;
     vecfromyawpitch(camera1->yaw, 0, 1, 0, dir, false);
-    dir.mul(menudistance).add(camera1->o);
-    dir.z -= player->eyeheight-1;
-    if(o) *o = camera1->o;
-    return dir;
-};
-
-void menufollow(vec &v, vec &o)
-{
-    vec dir(v);
-    dir.z += player->eyeheight-1;
-    dir.sub(o);
-    dir.normalize();
     dir.mul(menudistance);
     dir.z -= player->eyeheight-1;
-
-    o = camera1->o;
-    v = dir;
-    v.add(o);
+    if(!follow) dir.add(camera1->o);
+    return dir;
 };
 
 int cleargui(int n = 0)
@@ -174,7 +160,7 @@ void showgui(char *name)
     if(pos<0) 
     {   
         if(!guis.access(name)) return;
-        if(guistack.empty()) menupos = menuinfrontofplayer(&campos);
+        if(guistack.empty()) menupos = menuinfrontofplayer(true);
         guistack.add(newstring(name));
     }
     else
@@ -250,8 +236,7 @@ void g3d_mainmenu()
 {
     if(!guistack.empty()) 
     {   
-        menufollow(menupos, campos);
-        g3d_addgui(&mmcb, menupos);
+        g3d_addgui(&mmcb, menupos, true);
         //if(camera1->o.dist(menupos) > menudistance*3) cleargui();
         //else g3d_addgui(&mmcb, menupos);
     };

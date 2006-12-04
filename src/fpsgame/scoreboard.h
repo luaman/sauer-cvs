@@ -3,7 +3,7 @@
 struct scoreboard : g3d_callback
 {
     bool scoreson;
-    vec menupos, campos;
+    vec menupos;
     int menustart;
     fpsclient &cl;
     
@@ -16,7 +16,7 @@ struct scoreboard : g3d_callback
     {
         if(!scoreson && on)
         {
-            menupos = menuinfrontofplayer(&campos);
+            menupos = menuinfrontofplayer(true);
             menustart = cl.lastmillis;
         };
         scoreson = on;
@@ -122,8 +122,7 @@ struct scoreboard : g3d_callback
     {
         if(scoreson) 
         {
-            menufollow(menupos, campos);
-            g3d_addgui(this, menupos);
+            g3d_addgui(this, menupos, true);
         };
     };
 };
