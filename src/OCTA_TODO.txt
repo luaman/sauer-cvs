@@ -1,4 +1,6 @@
 
+- make menus work when game is paused
+
 - make sure all bumpmaps are parallax -> finetune each one individually
 
 - audio effect for chat messages | audio for gui events
