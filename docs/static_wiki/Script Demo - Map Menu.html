@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <title>cube &raquo; Script Demo - Map Menu</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+When using the <tt>complete</tt> function of the <br />
+
+<ul>
+    <li><tt>map</tt>,</li>
+    <li><tt>sp</tt>,</li>
+    <li><tt>dmsp</tt>,</li>
+    <li><tt>ffa</tt>,</li>
+    <li><tt>insta</tt> and</li>
+    <li><tt>capture</tt></li>
+</ul>
+
+aliases you always use an up-to-date list of maps (=*.ogz files).<br />
+This means they will auto-complete even your <em>just saved</em> mapname.<br />
+<br />
+The menus <em>do not auto-update</em> themselves;<br />
+these lists are editorial only - meaning they are a selection made by a human.<br />
+You can easily add your favourite creations, downloads and coop-edit maps by adding them to the map name lists in <tt>data/menus.cfg</tt>.<br />
+Look for the line reading<br />
+
+<pre><code>newmenu maps</code></pre>
+
+and after the last line containing <tt>menuitem</tt> before any new <tt>newmenu</tt>:<br />
+add your own <tt>menuitem</tt> like so<br />
+
+<pre><code>menuitem &quot;my favourites..&quot; &quot;showmenu favmaps&quot;
+
+newmenu favmaps
+genmapitems &quot;my_fav_001 work001 work002 work003&quot;</code></pre>
+
+Assuming those 4 maps exist your menu modification will work.
+    </div>
+  </body>
+</html>

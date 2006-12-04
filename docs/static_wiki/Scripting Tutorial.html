@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <title>cube &raquo; Scripting Tutorial</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+You should know about <a class="wiki_link" href="Using%20the%20Console.html">Using the Console</a>!<br />
+<br />
+<h2 id="toc0">Aliases</h2>
+You define blocks of actions by defining an alias for them.<br />
+
+<pre><code>//old style:
+alias aNAME $aVALUE
+//new style:
+aNAME = $aVALUE</code></pre>
+
+A common cause for errors is forgetting spaces around the &quot;=&quot;-sign in the new style!<br />
+In both variants the &quot;$aVALUE&quot; represents any valid CubeScript block.<br />
+Examples:<br />
+
+<pre><code>my_value = 0
+bind KP_5 [my_value = 5; onrelease my_value = 1]
+
+my_script = [if (= @my_value 1) [echo yes] [echo my value is @@my_value]]
+
+param_script = [
+  if (= $arg 1) [
+    echo &quot;yes :&quot; @arg2 @arg3 @arg4
+  ] [
+    echo &quot;no :&quot; @arg1
+  ]
+]
+
+param_script 0 1 2 3
+param_script 1 2 3 4
+param_script 1
+param_script 4 3 2 1
+param_script 1</code></pre>
+
+<br />
+<h2 id="toc1">Keybindings</h2>
+Beware of binding keys that are already bound by the default configuration - unless you're sure you know what you're doing :)<br />
+Check data/defaults.cfg for this.<br />
+<br />
+<h2 id="toc2">Triggering Action</h2>
+<br />
+For SP maps you can have <em>trigger entities</em> do scripting commands whenever the player touches the entity.<br />
+<br />
+The basic concept is to create aliases like<br />
+
+<pre><code>level_trigger_123 = [echo you triggered #123]</code></pre>
+
+This would be executed when the player crosses the space of any trigger-entity with first param 123.<br />
+<br />
+<h2 id="toc3">Triggers</h2>
+Sauerbraten can trigger special <a class="wiki_link" href="Scripting%20Guide.html">scripting</a> for you,<br />
+when an SP player crosses the space of one of your trigger entities;<br />
+triggers only work in SP (singleplayer mode), not MP (multiplayer mode)!<br />
+<br />
+Historical development associates a <em>carrot</em> model with triggers,<br />
+but any mapmodel can be used.<br />
+<br />
+Each trigger has it's index - entproperty 0.<br />
+You may have multiple entities with the same index though.<br />
+<br />
+Triggering another trigger will <em>not</em> always do exactly what you want ATM, <br />
+development toward that angle is under way!<br />
+<br />
+Maybe an example would be more educational?<br />
+Look at this <a href="files/MapTriggerTest.zip" >MapTriggerTest.zip</a> [6.7K] <em>map and it's cfg</em> to see how to implement a basic <em>secret's counter</em>.<br />
+There is also a secret's counter in &quot;Episode 1&quot; and other maps contain other scripting that you might like to use.<br />
+You should also check out stuff you liked in somebody else's map and in their cfg to work out how they did it.<br />
+To see how to trigger doors look at the map &quot;door_demo&quot; included with sauerbraten.
+    </div>
+  </body>
+</html>

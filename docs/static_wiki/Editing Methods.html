@@ -9,86 +9,92 @@
 <h1 id="toc0">Editing Methods</h1>
 
 <ul>
+    <li><a class="wiki_link" href="Editing%20Methods.html#conventions">Conventions</a></li>
     <li><a class="wiki_link" href="Editing%20Methods.html#intro">Introduction</a></li>
-</ul>
-
-
-<ol>
     <li><a class="wiki_link" href="Editing%20Methods.html#i-basics">basics</a></li>
     <li><a class="wiki_link" href="Editing%20Methods.html#i-geom">geometry</a></li>
     <li><a class="wiki_link" href="Editing%20Methods.html#i-ents">entities</a></li>
-</ol>
-
-
-<ul>
-    <li><a class="wiki_link" href="Editing%20Methods.html#walkthru">Walk Through 101</a></li>
+    <li><a class="wiki_link" href="Editing%20Methods.html#beforeumap">Before you map</a></li>
+    <li><a class="wiki_link" href="Editing%20Methods.html#walkthru">Walk Through</a><br />
+# <a class="wiki_link" href="Editing%20Methods.html#wt_basic">101</a><br />
+# <a class="wiki_link" href="Editing%20Methods.html#wt_features">Features</a><br />
+# <a class="wiki_link" href="Editing%20Methods.html#wt_expert">Expert</a></li>
 </ul>
 
 <br />
-<a name="intro"></a><br />
-<h2 id="toc1">Introduction</h2>
+<a name="conventions"></a><br />
+<h2 id="toc1">Conventions</h2>
+If we write <tt>'X' - key X</tt> is what you should press. <br />
+Abbreviations : <tt>MW - MouseWheel</tt><br />
+Any and all dimensions : <tt><em>Width</em> x <em>Depth</em> x <em>Height</em></tt> ...are, of course, always relative to your current viewport, unless explicitly noted otherwise!<br />
 <br />
+<br />
+<a name="intro"></a><br />
+<h2 id="toc2">Introduction</h2>
 <br />
 <a name="i-basics"></a><br />
-<h3 id="toc2">basics</h3>
-To get started with Sauerbraten editing, you will first need to be<br />
-aquainted with the key mappings. The easiest thing to do here, is<br />
-simply print out this file found in<br />
-<strong><em>\Sauerbraten\data\defaults.cfg</em></strong>. Aside from any autoexec.cfg<br />
-edits you use, this file contains everything you'll need to get editing fast.<br />
-<br />
-These pages will assume you are running a default keymapping if telling you about a key binding,<br />
-take a look at the <a class="wiki_link" href="Scripting.html">scripting section</a> if you want to adapt your bindings.<br />
-<br />
+<h3 id="toc3">basics</h3>
+To get started with Sauerbraten editing, you will first need to be aquainted with the key mappings. <br />
+The easiest thing to do here, is simply print out the file found in <strong><em>\Sauerbraten\data\defaults.cfg</em></strong>. <br />
+Aside from any autoexec.cfg edits you use, this file contains everything you'll need to get editing fast. <br />
+These pages will assume you are running a default keymapping if telling you about a key binding.<br />
+Take a look at the <a class="wiki_link" href="Scripting%20Guide.html">scripting section</a> if you want to adapt your bindings. <br />
 Using a wheel-mouse is highly recommended and the default bindings assume one is used!<br />
 <br />
+Some basic introduction into sauerbraten editing mode is given here <a class="wiki_link_ext" href="http://www.quadropolis.us/node/27" rel="nofollow">Sauer Editing (by staffy on quadropolis)</a>.<br />
+A good primer to every budding mapper is <a class="wiki_link_ext" href="http://www.quadropolis.us/node/30" rel="nofollow">Some general mapping tips (by makkE on quadropolis)</a>.<br />
+<br />
 <a name="i-geom"></a><br />
-<h3 id="toc3">geometry</h3>
+<h3 id="toc4">geometry</h3>
 <br />
 
 <ul>
     <li>mousewheel bindings</li>
-</ul>
-
-
-<ol>
     <li><tt>MW + Y</tt> : select texture for face</li>
     <li><tt>MW + F</tt> : push current face into cube</li>
     <li><tt>MW + Q</tt> : push current corner into cube</li>
     <li><tt>MW + R</tt> : rotate cube <em>(along current faces normal)</em></li>
-</ol>
-
-
-<ul>
     <li>single keypress bindings :</li>
-</ul>
-
-
-<ol>
     <li><tt>C</tt>, <tt>V</tt> : copy / paste <em>(use +/- X gridsize for scaling)</em></li>
     <li><tt>X</tt> : mirror cube <em>(along current faces plane)</em></li>
     <li><tt>BACKSPACE</tt> : delete entity</li>
-</ol>
+</ul>
 
 <br />
 <a name="i-ents"></a><br />
-<h3 id="toc4">entities</h3>
+<h3 id="toc5">entities</h3>
 create entities via menu or by manually calling <tt>newent NAME [arg1 [arg2 [arg3 [arg4]]]]</tt><br />
 drag entities by their sparkly along plane closest to current FOV.<br />
 modify a certain property of your selected (or closest) ent via <tt>MW + 4</tt> and select the appropriate property (0..3) via <tt>MW + 3</tt> <em>(2006-07-22 requires <a class="wiki_link_ext" href="http://www.quadropolis.us/node/300" rel="nofollow">this patch</a></em><br />
 <br />
+interesting entities:<br />
+  jumppad : these take Z force in param 0 (=up), X and Y in params 1 and 2 ... direction is always absolute on a map.<br />
+  that means you can have two jumppads opposite each other and with properties <em>10 10 0</em> and <em>10 -10 0</em>,<br />
+  the first'd push up and forward yet the second up and back.<br />
+  Once you figure out which way is &quot;north&quot; on your map future jumppad values are easy to work out.<br />
+  So a jumppad with <em>10 30 -30</em> will push you in a 45° angle North-West, <br />
+  <em>23 50 10</em> would be a high jump to a far-ahead (little off to the right) point.<br />
+<br />
+<a name="beforeumap"></a><br />
+<h2 id="toc6">Before you map</h2>
+Well - this section isn't filled yet, need to find &quot;careful wording&quot; for it;<br />
+but it's preferred to start with at least some outlook on what your mapping towards!<br />
+<br />
+<br />
 <a name="walkthru"></a><br />
-<h2 id="toc5">Walk Through 101</h2>
+<h2 id="toc7">Walk Through 101</h2>
+You should definitely be aware of the <a class="wiki_link" href="Editing%20Methods.html#conventions">conventions used here</a>.<br />
+Depending on your depth of involvement with this project you might want to skip ahead ...<br />
 
 <ul>
-    <li>Abbreviations : <tt>MW - MouseWheel</tt></li>
-    <li>Conventions : <tt>'X' - key X</tt></li>
-    <li>Dimensions : <tt><em>Width</em> x <em>Depth</em> x <em>Height</em></tt> ...are, of course, always relative to your current viewport, unless explicitly noted otherwise!</li>
+    <li><a class="wiki_link" href="Editing%20Methods.html#wt_basic">Basic Introduction</a></li>
+    <li><a class="wiki_link" href="Editing%20Methods.html#wt_features">Features Introduction</a></li>
+    <li><a class="wiki_link" href="Editing%20Methods.html#wt_expert">Expert Examples</a></li>
 </ul>
 
 <br />
-<br />
-<br />
+<a name="wt_basic"></a><br />
+<h3 id="toc8">First Edit Run</h3>
 run sauerbraten<br />
 open console (either press 'BACKQUOTE' or first 'T' and then '/')<br />
 
@@ -99,7 +105,7 @@ now enter<br />
 
 <pre><code>newmap</code></pre>
 
-FYI : the resulting &quot;map&quot; is an octree half-filled.<br />
+FYI : the resulting &quot;map&quot; is a half-filled octree.<br />
 <br />
 From here on you will start to build your own map layout.<br />
 <br />
@@ -130,7 +136,7 @@ select from outermost back face of corridor ...<br />
 ...to off-center side of square : 1x5x4<br />
 <tt>Y+MW</tt> - brick<br />
 and repeat for all 4 wall orientations.<br />
-<img src="files/wt101i_1x4x5.jpg" alt="wt101i_1x4x5.jpg" /><br />
+<img src="files/wt101i_1x4x5.jpg" alt="wt101i_1x4x5.jpg" title="wt101i_1x4x5.jpg" /><br />
 fly into square<br />
 scale down grid by 2 : <tt>G+MW</tt><br />
 HxWxD:3x2x5 cubes from center of any inner wall<br />
@@ -175,20 +181,35 @@ map wt101</code></pre>
 </ul>
 
 <br />
-when you've done tinkering around and<br />
-getting to grips with your tools;<br />
-tried to build some stuff -<br />
-just to really get a feel for resulting scale,<br />
-after endless hours refining just one corner of your layout -<br />
-you might want to read something like this <a class="wiki_link_ext" href="http://www.cliffyb.com/art-sci-ld.html" rel="nofollow">article on mapping</a>, to <u>get the most</u> <strong><u>out of your work</u> into</strong> <em>something being a great map</em>.<br />
-Also don't hesitate to really closely examine how architectural stuff and visual impressions are done by others.<br />
-Use 'E' on any part of a map you like to find out &quot;<em>how they did it</em>&quot;.<br />
-Just don't save over the originals!<br />
+when you've done tinkering around and getting to grips with your tools; tried to build some stuff - just to really get a feel for resulting scale, after endless hours refining just one corner of your layout - you might want to read something like this <a class="wiki_link_ext" href="http://www.cliffyb.com/art-sci-ld.html" rel="nofollow">article on mapping</a>, to <u>get the most</u> <strong><u>out of your work</u> into</strong> <em>something being a great map</em>. Also don't hesitate to really closely examine how architectural stuff and visual impressions are done by others. Use 'E' on any part of a map you like to find out &quot;<em>how they did it</em>&quot;. Just don't save over the originals!<br />
 <br />
-You will most surely want to use a lot of <tt>gamespeed 10</tt> up to <tt>gamesspeed 1000</tt><br />
-to sharpen or slur your movement precision -<br />
-depending on wether you need to zoom across your RPG map toward some distant location<br />
-or are fine tuning minmal gridsize stuff.
+You will most surely want to use a lot of <tt>gamespeed 10</tt> up to <tt>gamesspeed 1000</tt> to sharpen or slur your movement precision - depending on wether you need to zoom across your RPG map toward some distant location or are fine tuning minmal gridsize stuff.<br />
+<br />
+The last thing a new mapper should be thinking about is releasing the early map(s). Share the maps with a few other people, just for ideas, and encouragement along the way. If you are unsure about what is actually a nice looking/playing map, just load up any map from the first maps menu in Sauerbraten. This should give you some guidelines as to what is expected out of a map.<br />
+<br />
+<a name="wt_features"></a><br />
+<h3 id="toc9">Editing Features Explained</h3>
+You should really have some features at your fingertips - this will call for some personalized key-bindings sooner or later.<br />
+Since your view's angles have influence on the way you select e.g. faces of cubes you should think about being able to finetune your movement sensitivity by quickly switching from one gamespeed to another.<br />
+The simplest form would be have two key-bindings to toggle between &quot;default&quot; and a high as well as a low setting<br />
+
+<pre><code>[gamespeed 500; onrelease [gamespeed 100]]
+[gamespeed 30; onrelease [gamespeed 100]]</code></pre>
+
+Finer grained modifiers can be used if this is your style - either get some basic scripting from the interwebs or write it yourself,<br />
+this is too personal for there to be big packs, the meATpAk might be an exception - but it does everything it's own way, so : you've been warned!<br />
+<br />
+Another important control to have at the ready: <strong>history</strong><br />
+You should certainly have a key bound to the <tt>history</tt> command, then placing X lights of same setup is just movement and pressing <em>that key</em>. :)<br />
+Of course this requires you to set the first light via a console command - not via the menu, since this doesn't get added to your console history.<br />
+<br />
+While we're on the topic of the console you should look at the way <a class="wiki_link" href="Using%20the%20Console.html">basic on-the-fly scripting</a> can help you speed up your editing!<br />
+<br />
+<a name="wt_expert"></a><br />
+<h3 id="toc10">Expert Editing Methods</h3>
+<br />
+Well ... if you're far enough to need some tips ... we haven't yet found any to put here.<br />
+Tell us about them on IRC! :)
     </div>
   </body>
 </html>

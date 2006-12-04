@@ -1,6 +1,5 @@
 before next release:
 - nieb: finalize new heightmaps for bump sets -> finetune parallax
-- networking test
 - update static wiki
 
 after next release:
