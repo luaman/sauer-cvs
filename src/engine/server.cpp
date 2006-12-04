@@ -528,7 +528,7 @@ bool serveroption(char *opt)
         case 'c': 
         {
             int clients = atoi(opt+2); 
-            if(clients > 0) maxclients = min(maxclients, MAXCLIENTS);
+            if(clients > 0) maxclients = min(clients, MAXCLIENTS);
             else maxclients = DEFAULTCLIENTS;
             return true;
         };
