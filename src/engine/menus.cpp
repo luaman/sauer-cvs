@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-static vec menupos;
+static vec menupos, campos;
 static int menustart = 0;
 static int menutab = 1;
 static g3d_gui *cgui = NULL;
@@ -174,7 +174,7 @@ void showgui(char *name)
     if(pos<0) 
     {   
         if(!guis.access(name)) return;
-        if(guistack.empty()) menupos = menuinfrontofplayer();
+        if(guistack.empty()) menupos = menuinfrontofplayer(&campos);
         guistack.add(newstring(name));
     }
     else
@@ -250,8 +250,10 @@ void g3d_mainmenu()
 {
     if(!guistack.empty()) 
     {   
-        if(camera1->o.dist(menupos) > menudistance*3) cleargui();
-        else g3d_addgui(&mmcb, menupos);
+        menufollow(menupos, campos);
+        g3d_addgui(&mmcb, menupos);
+        //if(camera1->o.dist(menupos) > menudistance*3) cleargui();
+        //else g3d_addgui(&mmcb, menupos);
     };
 };
 
