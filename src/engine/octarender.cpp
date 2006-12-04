@@ -2096,8 +2096,9 @@ void renderreflectedgeom(float z, bool refract)
         if(doOQ)
         {
             glDepthFunc(GL_LEQUAL);
-            if(!cur.colormask) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            if(!cur.depthmask) glDepthMask(GL_TRUE);
+            if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
+            if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
+            cur.vbufGL = 0;
             for(vtxarray **prevva = &reflectedva, *va = reflectedva; va; prevva = &va->rnext, va = va->rnext)
             {
                 lodlevel &lod = va->curlod ? va->l1 : va->l0;
