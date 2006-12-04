@@ -428,6 +428,12 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     };
+#ifdef __APPLE__
+#undef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#undef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT GL_COMPRESSED_RGB_ARB
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT GL_COMPRESSED_RGBA_ARB
+#endif
     GLenum format = component, type = GL_UNSIGNED_BYTE, compressed = component;
     switch(component)
     {
