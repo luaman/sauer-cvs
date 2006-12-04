@@ -1,13 +1,12 @@
-before next release:
-- nieb: finalize new heightmaps for bump sets -> finetune parallax
-- update static wiki
 
-after next release:
-- make sure all bumpmaps are parallax
+- make sure all bumpmaps are parallax -> finetune each one individually
+
 - audio effect for chat messages | audio for gui events
 - texture selection window using new GUI
 
 - social cheating solution
+
+- before a release: update static wiki
 
 - improve smoothness of going up steps ?
 - remove delay before doors start opening ?
