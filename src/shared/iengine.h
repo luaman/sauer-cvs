@@ -72,7 +72,8 @@ extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 
 // menus
-extern vec menuinfrontofplayer();
+extern vec menuinfrontofplayer(vec *o = NULL);
+extern void menufollow(vec &v, vec &o);
 extern void newgui(char *name, char *contents);
 extern void showgui(char *name);
 

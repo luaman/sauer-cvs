@@ -15,13 +15,28 @@ static bool clearlater = false;
 
 VARP(menudistance, 16, 40, 256);
 
-vec menuinfrontofplayer() 
+vec menuinfrontofplayer(vec *o) 
 { 
     vec dir;
     vecfromyawpitch(camera1->yaw, 0, 1, 0, dir, false);
     dir.mul(menudistance).add(camera1->o);
     dir.z -= player->eyeheight-1;
+    if(o) *o = camera1->o;
     return dir;
+};
+
+void menufollow(vec &v, vec &o)
+{
+    vec dir(v);
+    dir.z += player->eyeheight-1;
+    dir.sub(o);
+    dir.normalize();
+    dir.mul(menudistance);
+    dir.z -= player->eyeheight-1;
+
+    o = camera1->o;
+    v = dir;
+    v.add(o);
 };
 
 int cleargui(int n = 0)
