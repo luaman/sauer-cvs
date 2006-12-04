@@ -956,19 +956,14 @@ void drawskybox(int farplane, bool limited, float zreflect = 0)
     if(zreflect && camera1->o.z>=zreflect) glScalef(1, 1, -1);
     glColor3f(1, 1, 1);
     extern int ati_skybox_bug;
-    if(limited) 
-    {
-        glDepthFunc(editmode || !insideworld(camera1->o) || ati_skybox_bug || zreflect ? GL_ALWAYS : GL_GEQUAL);
-        if(zreflect) glDepthMask(GL_FALSE);
-    };
+    if(limited) glDepthFunc(editmode || !insideworld(camera1->o) || ati_skybox_bug || zreflect ? GL_ALWAYS : GL_GEQUAL);
     draw_envbox(farplane/2, zreflect ? (zreflect+0.5f*(farplane-hdr.worldsize))/farplane : 0);
     glPopMatrix();
 
     if(limited) 
     {
         glDepthFunc(GL_LESS);
-        if(zreflect) glDepthMask(GL_TRUE);
-        else if(editmode && showsky) drawskyoutline();
+        if(!zreflect && editmode && showsky) drawskyoutline();
     };
 
     glEnable(GL_FOG);
