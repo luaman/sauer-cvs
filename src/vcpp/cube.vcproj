@@ -1411,6 +1411,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\data\default_map_models.cfg"
+						>
+					</File>
+					<File
 						RelativePath="..\..\data\default_map_settings.cfg"
 						>
 					</File>
