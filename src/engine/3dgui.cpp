@@ -566,7 +566,9 @@ void g3d_addgui(g3d_callback *cb, vec &origin, bool follow)
     gui &g = guis.add();
     g.cb = cb;
     g.origin = origin;
+    if(follow) g.origin.z += camera1->o.z;
     g.dist = camera1->o.dist(g.origin);    
+
 };
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
