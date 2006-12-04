@@ -529,10 +529,13 @@ struct clientcom : iclientcom
                 else
                 {
                     fpsent *victim = cl.getclient(target);
-                    victim->lastpain = cl.lastmillis;
-                    vec v = victim->abovehead();
-                    playsound(S_PAIN1+rnd(5), &v);
-                    cl.ws.damageeffect(v, damage, victim);
+                    if(victim)
+                    {
+                        victim->lastpain = cl.lastmillis;
+                        vec v = victim->abovehead();
+                        playsound(S_PAIN1+rnd(5), &v);
+                        cl.ws.damageeffect(v, damage, victim);
+                    };
                 };
                 break;
             };
