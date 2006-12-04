@@ -262,8 +262,11 @@ void particle_trail(int type, int fade, const vec &s, const vec &e)
     };
 };
 
+VARP(particletext, 0, 1, 1);
+
 void particle_text(const vec &s, char *t, int type, int fade)
 {
+    if(!particletext) return;
     if(t[0]=='@') t = newstring(t);
     particle *p = newparticle(s, vec(0, 0, 1), fade, type);
     p->text = t;
