@@ -1331,9 +1331,74 @@ void editmat(char *name)
 
 COMMAND(editmat, "s");
 
+
+//Work in progress...
+#define TEXTURE_WIDTH 10
+#define TEXTURE_HEIGHT 7
+struct texturegui : g3d_callback {
+    bool menuon;
+    vec menupos;
+    int menustart;
+    
+    void gui(g3d_gui &g, bool firstpass)
+    {
+        int menutab = 1+curtexindex/(TEXTURE_WIDTH*TEXTURE_HEIGHT);        
+        int origtab = menutab;
+        g.start(menustart, 0.04f, &menutab);
+        loopi(1+curtexnum/(TEXTURE_WIDTH*TEXTURE_HEIGHT))
+        {   
+            g.tab((i==0)?"Textures":NULL, 0xAAFFAA);
+            if(i == origtab-1) //don't load textures on non-visible tabs!
+            {
+                loopj(TEXTURE_HEIGHT) 
+                {
+                    g.pushlist();
+                    loopk(TEXTURE_WIDTH) 
+                    {
+                        int ti = (i*TEXTURE_HEIGHT+j)*TEXTURE_WIDTH+k;
+                        if(ti>=0 && ti<curtexnum) 
+                        {
+                            Texture *tex = lookuptexture(texmru[ti]).sts[0].t;
+                            if(g.texture(tex, 1.0)&G3D_UP) 
+                            {
+                                curtexindex = ti;
+                                texpaneltimer = 5000;
+                                mpedittex(texmru[ti], allfaces, sel, true); 
+                            };
+                        } 
+                        else 
+                            g.texture(crosshair, 1.0); //will create an empty space
+                    };
+                    g.poplist();
+                };
+            };
+        };
+        g.end();
+        if(origtab != menutab) {
+            curtexindex = (menutab-1)*TEXTURE_WIDTH*TEXTURE_HEIGHT;
+            texpaneltimer = 5000;
+        }
+    };
+
+    void showtextures(bool on)
+    {
+        if(on != menuon && (menuon = on)) { menupos = menuinfrontofplayer(); menustart = lastmillis; };
+    };
+
+    void show()
+    {   if(menuon) g3d_addgui(this, menupos);
+    };
+    
+} gui;
+
+void g3d_texturemenu() { gui.show(); }
+
+
 void render_texture_panel(int w, int h)
 {
-    if((texpaneltimer -= curtime)>0 && editmode)
+    bool flag = (texpaneltimer -= curtime)>0 && editmode;
+    gui.showtextures(flag);
+    if(flag)
     {
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);

@@ -191,6 +191,7 @@ extern void gets2c();
 extern bool netmapstart();
 
 // 3dgui
+struct Texture;
 
 enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
 
@@ -209,6 +210,7 @@ struct g3d_gui
 	virtual void tab(const char *name, int color) = 0;
     virtual int title(const char *text, int color, const char *icon = NULL) = 0;
     virtual int image(const char *path, float scale, bool overlaid = false) = 0;
+    virtual int texture(Texture *t, float scale) = 0;
     virtual void slider(int &val, int vmin, int vmax, int color) = 0;
     virtual void separator() = 0;
 	virtual void progress(float percent) = 0;

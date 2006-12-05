@@ -50,7 +50,7 @@ struct gui : g3d_gui
         };
     };
 
-    bool visible() { return (!tcurrent || tpos==*tcurrent) && !layoutpass; };
+    bool visible() { return frontside && (!tcurrent || tpos==*tcurrent) && !layoutpass; };
 
     //tab is always at top of page
     void tab(const char *name, int color) 
@@ -74,7 +74,7 @@ struct gui : g3d_gui
                 x2 = x1 + w + ((skinx[3]-skinx[2]) + (skinx[5]-skinx[4]))*SKIN_SCALE,
                 y1 = cury - ((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE-h,
                 y2 = cury;
-            bool hit = tcurrent && windowhit==this && hitx>=x1 && hity>=y1 && hitx<x2 && hity<y2;
+            bool hit = frontside && tcurrent && windowhit==this && hitx>=x1 && hity>=y1 && hitx<x2 && hity<y2;
             if(hit) 
             {	
                 *tcurrent = tpos; //roll-over to switch tab
@@ -82,7 +82,7 @@ struct gui : g3d_gui
             };
             
             skin_(x1-skinx[visible()?2:6]*SKIN_SCALE, y1-skiny[1]*SKIN_SCALE, w, h, visible()?10:19, 9);
-            text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, color, visible());
+            if(frontside) text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, color, visible());
         };
         tx += w + ((skinx[5]-skinx[4]) + (skinx[3]-skinx[2]))*SKIN_SCALE; 
     };
@@ -110,7 +110,7 @@ struct gui : g3d_gui
             xsize = lists[curlist].w;
             ysize = lists[curlist].h;
         };
-        curdepth++;		
+        curdepth++;	
     };
 
     void poplist()
@@ -124,7 +124,7 @@ struct gui : g3d_gui
         curlist = l.parent;
         curdepth--;
         if(curlist>=0)
-        {
+        {   
             xsize = lists[curlist].w;
             ysize = lists[curlist].h;
             if(ishorizontal()) cury -= l.h;
@@ -175,7 +175,6 @@ struct gui : g3d_gui
         return windowhit==this && hitx>=x && hity>=y && hitx<x+w && hity<y+h;
     };
 
-    //one day to replace render_texture_panel()...?
     int image(const char *path, float scale, bool overlaid)
     {
         Texture *t = textureload(path, false, true, false);
@@ -183,9 +182,19 @@ struct gui : g3d_gui
         autotab();
         if(scale==0) scale = 1;
         int size = (int)(scale*2*FONTH)-SHADOW;
-        if(visible()) icon_(t, overlaid, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
+        if(visible()) icon_(t, overlaid, false, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
         return layout(size+SHADOW, size+SHADOW);
     };
+    
+    int texture(Texture *t, float scale)
+    {
+        autotab();
+        if(scale==0) scale = 1;
+        int size = (int)(scale*2*FONTH)-SHADOW;
+        if(t!=crosshair && visible()) icon_(t, true, true, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
+        return layout(size+SHADOW, size+SHADOW);
+    };
+
 
     void slider(int &val, int vmin, int vmax, int color)
     {	
@@ -246,39 +255,59 @@ struct gui : g3d_gui
         draw_text(text, x, y, color>>16, (color>>8)&0xFF, color&0xFF);
     };
 
-    void icon_(Texture *t, bool overlaid, int x, int y, int size, bool hit) 
+    void icon_(Texture *t, bool overlaid, bool tiled, int x, int y, int size, bool hit) 
     {
-        float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
-        float xs = t->xs*scale;
-        float ys = t->ys*scale;
-        float xo = x + (size-xs)/2;
-        float yo = y + (size-ys)/2;
+        float xs, ys, xt, yt;
+        if(tiled)
+        {   
+            xt = min(1.0f, t->xs/(float)t->ys), 
+            yt = min(1.0f, t->ys/(float)t->xs);
+            xs = size;
+            ys = size;
+        } else 
+        {
+            xt = 1.0f;
+            yt = 1.0f;
+            float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
+            xs = t->xs*scale;
+            ys = t->ys*scale;
+            x += (size-xs)/2;
+            y += (size-ys)/2;
+        };
         if(hit && actionon) 
         {
             glDisable(GL_TEXTURE_2D);
             notextureshader->set();
             glColor4ub(0x00, 0x00, 0x00, 0xC0);
             glBegin(GL_QUADS);
-            rect_(xo+SHADOW, yo+SHADOW, xs, ys);
+            rect_(x+SHADOW, y+SHADOW, xs, ys);
             glEnd();
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();	
         };
-        loopi(overlaid ? 2 : 1)
+        if(tiled) {
+            static Shader *rgbonlyshader = NULL;
+            if(!rgbonlyshader) rgbonlyshader = lookupshaderbyname("rgbonly");
+            rgbonlyshader->set();
+        }
+        glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
+        glBindTexture(GL_TEXTURE_2D, t->gl);
+        glBegin(GL_QUADS);
+        glTexCoord2i(0,   0);     glVertex2f(x,    y);
+        glTexCoord2i(1/xt,  0);   glVertex2f(x+xs, y);
+        glTexCoord2i(1/xt, 1/yt); glVertex2f(x+xs, y+ys);
+        glTexCoord2i(0,  1/yt);   glVertex2f(x,    y+ys);
+        glEnd();
+        if(tiled) defaultshader->set();
+        if(overlaid) 
         {
-            if(i==1)
-            {
-                if(!overlaytex) overlaytex = textureload("data/guioverlay.png");
-                t = overlaytex;
-                hit = false;
-            };
-            glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
-            glBindTexture(GL_TEXTURE_2D, t->gl);
+            if(!overlaytex) overlaytex = textureload("data/guioverlay.png");
+            glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
+            glBindTexture(GL_TEXTURE_2D, overlaytex->gl);
             glBegin(GL_QUADS);
-            rect_(xo, yo, xs, ys, 0);
+            rect_(x, y, xs, ys, 0);
             glEnd();
-            xtraverts += 4;
-        };
+        }
     };
 
     void line_(int size, float percent = 1.0f)
@@ -325,7 +354,7 @@ struct gui : g3d_gui
             if(icon)
             {
                 s_sprintfd(tname)("packages/icons/%s.jpg", icon);
-                icon_(textureload(tname), false, x, cury, ICON_SIZE, clickable && hit);
+                icon_(textureload(tname), false, false, x, cury, ICON_SIZE, clickable && hit);
                 x += ICON_SIZE;
             };
             if(icon && text) x += padding;
@@ -431,11 +460,11 @@ struct gui : g3d_gui
     }; 
 
     vec origin;
-    float dist;
+    float dist, yaw;
     g3d_callback *cb;
 
     static float scale;
-    static bool passthrough;
+    static bool passthrough, frontside;
     static vec light;
 
     void start(int starttime, float basescale, int *tab, bool allowinput)
@@ -457,16 +486,18 @@ struct gui : g3d_gui
             cury = -ysize; 
             curx = -xsize/2;
 
-            float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
             glRotatef(yaw/RAD, 0, 0, 1); 
             glRotatef(-90, 1, 0, 0);
             glScalef(-scale, scale, scale);
-        
+            
+            vec normal = vec(yaw, 0.0f);
+            frontside = normal.dot(vec(camera1->o.x-origin.x, camera1->o.y - origin.y, 0.0f)) > 0.0f;
             vec dir;
             lightreaching(origin, light, dir, 0, 0.5f); 
-            float intensity = vec(yaw, 0.0f).dot(dir);
+            float intensity = normal.dot(dir);
+            if(!frontside) intensity = -intensity;
             light.mul(1.0f + max(intensity, 0));
        
             skin_(curx-skinx[2]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, ysize, 0, 9);
@@ -484,7 +515,7 @@ struct gui : g3d_gui
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
             if(!windowhit && !passthrough)
             {
-                vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
+                vec planenormal = vec(yaw+PI, 0.0f), intersectionpoint;
                 int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
                 vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
                 hitx = xaxis.dot(intersectionvec)/scale;
@@ -555,7 +586,7 @@ const gui::patch gui::patches[] =
 
 vector<gui::list> gui::lists;
 float gui::scale, gui::hitx, gui::hity;
-bool gui::passthrough;
+bool gui::passthrough, gui::frontside;
 vec gui::light;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
@@ -567,8 +598,16 @@ void g3d_addgui(g3d_callback *cb, vec &origin, bool follow)
     gui &g = guis.add();
     g.cb = cb;
     g.origin = origin;
-    g.dist = camera1->o.dist(origin);    
-
+    g.dist = camera1->o.dist(g.origin);    
+    
+    /* testing...
+    static float hackyaw = 1000;
+    if(hackyaw==1000) hackyaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;
+    g.yaw = hackyaw;
+    */
+    
+    //@TODO yaw could be passed as a parmeter - in effect you can then billboard the gui onto something
+    g.yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;     
 };
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
@@ -588,6 +627,7 @@ void g3d_render()
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_CULL_FACE);
     
     windowhit = NULL;
     if(actionon) mousebuttons |= G3D_PRESSED;
@@ -595,6 +635,8 @@ void g3d_render()
     guis.setsize(0);
     
     // call all places in the engine that may want to render a gui from here, they call g3d_addgui()
+    extern void g3d_texturemenu();
+    g3d_texturemenu();
     g3d_mainmenu();
     cl->g3d_gamemenus();
     
@@ -607,6 +649,7 @@ void g3d_render()
     
     mousebuttons = 0;
 	
+    glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
