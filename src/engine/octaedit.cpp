@@ -1335,6 +1335,8 @@ COMMAND(editmat, "s");
 //Work in progress...
 #define TEXTURE_WIDTH 10
 #define TEXTURE_HEIGHT 7
+extern int menudistance;
+
 struct texturegui : g3d_callback {
     bool menuon;
     vec menupos;
@@ -1362,7 +1364,6 @@ struct texturegui : g3d_callback {
                             if(g.texture(tex, 1.0)&G3D_UP) 
                             {
                                 curtexindex = ti;
-                                texpaneltimer = 5000;
                                 mpedittex(texmru[ti], allfaces, sel, true); 
                             };
                         } 
@@ -1374,10 +1375,7 @@ struct texturegui : g3d_callback {
             };
         };
         g.end();
-        if(origtab != menutab) {
-            curtexindex = (menutab-1)*TEXTURE_WIDTH*TEXTURE_HEIGHT;
-            texpaneltimer = 5000;
-        }
+        if(origtab != menutab) curtexindex = (menutab-1)*TEXTURE_WIDTH*TEXTURE_HEIGHT;
     };
 
     void showtextures(bool on)
@@ -1385,20 +1383,31 @@ struct texturegui : g3d_callback {
         if(on != menuon && (menuon = on)) { menupos = menuinfrontofplayer(); menustart = lastmillis; };
     };
 
+    
     void show()
-    {   if(menuon) g3d_addgui(this, menupos);
+    {   if(menuon) {
+            if(!editmode || camera1->o.dist(menupos) > menudistance*3) menuon = false;
+            else g3d_addgui(this, menupos); //follow?
+        }
     };
     
 } gui;
 
-void g3d_texturemenu() { gui.show(); }
+void g3d_texturemenu() { 
+    gui.show(); 
+};
+
+void showtexgui(int *n) { gui.showtextures(((*n==0) ? !gui.menuon : (*n==1)) && editmode); };
+
+// 0/noargs = toggle, 1 = on, other = off - will autoclose if too far away or exit editmode
+COMMAND(showtexgui, "i");
+
+
 
 
 void render_texture_panel(int w, int h)
 {
-    bool flag = (texpaneltimer -= curtime)>0 && editmode;
-    //gui.showtextures(flag);
-    if(flag)
+    if((texpaneltimer -= curtime)>0 && editmode)
     {
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
