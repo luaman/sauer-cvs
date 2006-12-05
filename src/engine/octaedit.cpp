@@ -1386,6 +1386,7 @@ struct texturegui : g3d_callback {
     
     void show()
     {   if(menuon) {
+            filltexlist();
             if(!editmode || camera1->o.dist(menupos) > menudistance*3) menuon = false;
             else g3d_addgui(this, menupos); //follow?
         }
