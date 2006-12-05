@@ -72,7 +72,7 @@ extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
 
 // menus
-extern vec menuinfrontofplayer(bool follow = false);
+extern vec menuinfrontofplayer();
 extern void newgui(char *name, char *contents);
 extern void showgui(char *name);
 

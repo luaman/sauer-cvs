@@ -15,13 +15,12 @@ static bool clearlater = false;
 
 VARP(menudistance, 16, 40, 256);
 
-vec menuinfrontofplayer(bool follow)
+vec menuinfrontofplayer()
 { 
     vec dir;
     vecfromyawpitch(camera1->yaw, 0, 1, 0, dir, false);
-    dir.mul(menudistance);
+    dir.mul(menudistance).add(camera1->o);
     dir.z -= player->eyeheight-1;
-    dir.add(follow ? vec(camera1->o.x, camera1->o.y, 0) : camera1->o);
     return dir;
 };
 
@@ -160,7 +159,7 @@ void showgui(char *name)
     if(pos<0) 
     {   
         if(!guis.access(name)) return;
-        if(guistack.empty()) menupos = menuinfrontofplayer(true);
+        if(guistack.empty()) menupos = menuinfrontofplayer();
         guistack.add(newstring(name));
     }
     else
@@ -236,9 +235,7 @@ void g3d_mainmenu()
 {
     if(!guistack.empty()) 
     {   
-        vec pos = menupos;
-        pos.z += camera1->o.z;
-        if(camera1->o.dist(pos) > menudistance*3) cleargui();
+        if(camera1->o.dist(menupos) > menudistance*3) cleargui();
         else g3d_addgui(&mmcb, menupos, true);
     };
 };
