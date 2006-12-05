@@ -271,8 +271,8 @@ struct gui : g3d_gui
             float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
             xs = t->xs*scale;
             ys = t->ys*scale;
-            x += (size-xs)/2;
-            y += (size-ys)/2;
+            x += int((size-xs)/2);
+            y += int((size-ys)/2);
         };
         if(hit && actionon) 
         {
@@ -289,14 +289,14 @@ struct gui : g3d_gui
             static Shader *rgbonlyshader = NULL;
             if(!rgbonlyshader) rgbonlyshader = lookupshaderbyname("rgbonly");
             rgbonlyshader->set();
-        }
+        };
         glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
         glBindTexture(GL_TEXTURE_2D, t->gl);
         glBegin(GL_QUADS);
-        glTexCoord2i(0,   0);     glVertex2f(x,    y);
-        glTexCoord2i(1/xt,  0);   glVertex2f(x+xs, y);
-        glTexCoord2i(1/xt, 1/yt); glVertex2f(x+xs, y+ys);
-        glTexCoord2i(0,  1/yt);   glVertex2f(x,    y+ys);
+        glTexCoord2f(0.0f,    0.0f);    glVertex2f(x,    y);
+        glTexCoord2f(1.0f/xt, 0.0f);    glVertex2f(x+xs, y);
+        glTexCoord2f(1.0f/xt, 1.0f/yt); glVertex2f(x+xs, y+ys);
+        glTexCoord2f(0.0f,    1.0f/yt); glVertex2f(x,    y+ys);
         glEnd();
         if(tiled) defaultshader->set();
         if(overlaid) 
@@ -307,7 +307,7 @@ struct gui : g3d_gui
             glBegin(GL_QUADS);
             rect_(x, y, xs, ys, 0);
             glEnd();
-        }
+        };
     };
 
     void line_(int size, float percent = 1.0f)
