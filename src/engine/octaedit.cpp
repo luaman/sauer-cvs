@@ -1397,7 +1397,7 @@ void g3d_texturemenu() { gui.show(); }
 void render_texture_panel(int w, int h)
 {
     bool flag = (texpaneltimer -= curtime)>0 && editmode;
-    gui.showtextures(flag);
+    //gui.showtextures(flag);
     if(flag)
     {
         glDepthMask(GL_FALSE);
