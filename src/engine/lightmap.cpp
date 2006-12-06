@@ -943,6 +943,8 @@ void calclight(int *quality)
 
 COMMAND(calclight, "i");
 
+VAR(patchnormals, 0, 0, 1);
+
 void patchlight()
 {
     if(noedit(true)) return;
@@ -958,12 +960,12 @@ void patchlight()
     calclight_canceled = false;
     check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(500, calclight_timer, NULL);
-    show_out_of_renderloop_progress(0, "computing normals...");
+    if(patchnormals) show_out_of_renderloop_progress(0, "computing normals...");
     Uint32 start = SDL_GetTicks();
-    calcnormals();
+    if(patchnormals) calcnormals();
     show_calclight_progress();
     generate_lightmaps(worldroot, 0, 0, 0, hdr.worldsize >> 1);
-    clearnormals();
+    if(patchnormals) clearnormals();
     Uint32 end = SDL_GetTicks();
     if(timer) SDL_RemoveTimer(timer);
     loopv(lightmaps)
