@@ -1146,13 +1146,18 @@ void mousemove(int dx, int dy)
     };
 };
 
-void entinmap(dynent *d)        // brute force but effective way to find a free spawn spot in the map
+bool entinmap(dynent *d, bool avoidplayers)        // brute force but effective way to find a free spawn spot in the map
 {
     d->o.z += d->eyeheight;     // pos specified is at feet
     vec orig = d->o;
     loopi(100)                  // try max 100 times
     {
-        if(collide(d) && !inside) return;
+        if(collide(d) && !inside) return true;
+        if(hitplayer && avoidplayers)
+        {
+            d->o = orig;
+            return false;
+        };
         d->o = orig;
         d->o.x += (rnd(21)-10)*i/5;  // increasing distance
         d->o.y += (rnd(21)-10)*i/5;
@@ -1161,6 +1166,7 @@ void entinmap(dynent *d)        // brute force but effective way to find a free 
     conoutf("can't find entity spawn spot! (%d, %d)", d->o.x, d->o.y);
     // leave ent at original pos, possibly stuck
     d->o = orig;
+    return false;
 };
 
 void updatephysstate(physent *d)

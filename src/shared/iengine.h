@@ -139,7 +139,7 @@ extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m
 extern bool intersect(physent *d, vec &from, vec &to);
 extern void updatephysstate(physent *d);
 extern void cleardynentcache();
-extern void entinmap(dynent *d);
+extern bool entinmap(dynent *d, bool avoidplayers = false);
 extern void findplayerspawn(dynent *d, int forceent = -1);
 
 // sound

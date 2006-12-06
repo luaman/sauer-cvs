@@ -513,16 +513,28 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
     };
     if(pick!=-1)
     {
-        d->o = et->getents()[pick]->o;
-        d->yaw = et->getents()[pick]->attr1;
         d->pitch = 0;
         d->roll = 0;
+        for(int attempt = pick;;)
+        {
+            d->o = et->getents()[attempt]->o;
+            d->yaw = et->getents()[attempt]->attr1;
+            if(entinmap(d, true)) break;
+            attempt = findentity(ET_PLAYERSTART, attempt+1);
+            if(attempt<0 || attempt==pick)
+            {
+                d->o = et->getents()[attempt]->o;
+                d->yaw = et->getents()[attempt]->attr1;
+                entinmap(d);
+                break;
+            };    
+        };
     }
     else
     {
         d->o.x = d->o.y = d->o.z = 0.5f*getworldsize();
+        entinmap(d);
     };
-    entinmap(d);
 };
 
 void splitocta(cube *c, int size)
