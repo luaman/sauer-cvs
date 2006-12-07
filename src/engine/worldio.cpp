@@ -244,7 +244,7 @@ void save_world(char *mname, bool nolms)
     loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
     hdr.lightmaps = nolms ? 0 : lightmaps.length();
     header tmp = hdr;
-    endianswap(&tmp.version, sizeof(int), 16);
+    endianswap(&tmp.version, sizeof(int), 9);
     gzwrite(f, &tmp, sizeof(header));
     
     gzputc(f, (int)strlen(cl->gameident()));
