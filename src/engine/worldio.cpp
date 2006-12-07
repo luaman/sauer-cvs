@@ -315,7 +315,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     clearoverrides();
     computescreen(mname);
     gzread(f, &hdr, sizeof(header));
-    endianswap(&hdr.version, sizeof(int), 16);
+    endianswap(&hdr.version, sizeof(int), 9);
     if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
     if(hdr.version>MAPVERSION) fatal("this map requires a newer version of cube 2");
     if(hdr.version<MAPVERSION) conoutf("loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
