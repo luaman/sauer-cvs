@@ -570,7 +570,7 @@ struct clientcom : iclientcom
                     fpsent *a = cl.getclient(actor);
                     if(a)
                     {
-                        if(isteam(a->team, d->name))
+                        if(isteam(a->team, d->team))
                         {
                             conoutf("\f2%s fragged his teammate (%s)", a->name, d->name);
                         }
