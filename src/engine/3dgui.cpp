@@ -6,11 +6,64 @@
 #include "pch.h"
 #include "engine.h"
 
-#define TILE 1
-
 static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
 static g3d_gui *windowhit = NULL;
+
+//text field state - only one ever active/focused
+static string fieldtext;  //copy of while focused
+static int fieldpos = -1; //-1=no focus, -2=wanting to commit
+static bool fieldactive; 
+static char *fieldref;    //so can itentify the source of the field
+
+bool menukey(int code, bool isdown, int cooked) {
+    if(code==-1 && g3d_windowhit(isdown, true)) return true;  
+    else if(code==-3 && g3d_windowhit(isdown, false)) return true;
+    
+	if(fieldpos<0) return false;
+	switch(code) 
+	{
+		case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+			fieldpos = -2; //signal field commit
+			return false;
+		case SDLK_DELETE:
+        case SDLK_BACKSPACE:
+        case SDLK_LEFT:
+        case SDLK_RIGHT:
+		case SDLK_TAB:
+			break;
+		default:
+			if(!cooked || (code<32) || (code>127)) return false;
+	};
+	if(!isdown) return true;	
+	int len = strlen(fieldtext);
+    if(fieldpos>len) fieldpos = len;
+	switch(code) {
+		case SDLK_LEFT:
+			if(fieldpos > 0) fieldpos--;
+			break;
+		case SDLK_RIGHT:
+		case SDLK_TAB:
+			if(fieldpos < len) fieldpos++;
+			break;
+		case SDLK_DELETE:
+            if(fieldpos < len) memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
+			break;
+		case SDLK_BACKSPACE:
+            if(fieldpos > 0) 
+            {   fieldpos--;
+                memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
+            };
+			break;
+		default:
+            memmove(fieldtext+fieldpos+1, fieldtext+fieldpos, len-fieldpos); //length then limited inside field draw code
+			fieldtext[fieldpos++] = cooked;
+	};
+	return true;
+};
+
+
 
 #define SHADOW 4
 #define ICON_SIZE (FONTH-SHADOW)
@@ -50,7 +103,7 @@ struct gui : g3d_gui
         };
     };
 
-    bool visible() { return frontside && (!tcurrent || tpos==*tcurrent) && !layoutpass; };
+    bool visible() { return (!tcurrent || tpos==*tcurrent) && !layoutpass; };
 
     //tab is always at top of page
     void tab(const char *name, int color) 
@@ -74,7 +127,7 @@ struct gui : g3d_gui
                 x2 = x1 + w + ((skinx[3]-skinx[2]) + (skinx[5]-skinx[4]))*SKIN_SCALE,
                 y1 = cury - ((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE-h,
                 y2 = cury;
-            bool hit = frontside && tcurrent && windowhit==this && hitx>=x1 && hity>=y1 && hitx<x2 && hity<y2;
+            bool hit = tcurrent && windowhit==this && hitx>=x1 && hity>=y1 && hitx<x2 && hity<y2;
             if(hit) 
             {	
                 *tcurrent = tpos; //roll-over to switch tab
@@ -82,7 +135,7 @@ struct gui : g3d_gui
             };
             
             skin_(x1-skinx[visible()?2:6]*SKIN_SCALE, y1-skiny[1]*SKIN_SCALE, w, h, visible()?10:19, 9);
-            if(frontside) text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, color, visible());
+            text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, color, visible());
         };
         tx += w + ((skinx[5]-skinx[4]) + (skinx[3]-skinx[2]))*SKIN_SCALE; 
     };
@@ -195,7 +248,6 @@ struct gui : g3d_gui
         return layout(size+SHADOW, size+SHADOW);
     };
 
-
     void slider(int &val, int vmin, int vmax, int color)
     {	
         autotab();
@@ -234,6 +286,69 @@ struct gui : g3d_gui
             };
         };
     };
+
+    char *field(char *text, int color, int length)
+	{	
+        int w = FONTH*length;
+        char *result = NULL;
+        if(!layoutpass)
+		{
+            bool hit = ishit(w, FONTH);            
+            if(hit && (mousebuttons & G3D_DOWN) && fieldref != text) //mouse request focus
+            {
+                s_strcpy(fieldtext, text);
+                fieldref = text;
+            };
+            if(fieldref==text) 
+            {
+                if(strlen(fieldtext) > length) fieldtext[length] = '\0';
+                if(fieldpos > length) fieldpos = length;
+                if(fieldpos==-2) {
+                    result = fieldtext;
+                    fieldpos = -1;
+                    fieldref = NULL;
+                } 
+                text = fieldtext;
+                fieldactive = hit;
+                if(!hit) fieldpos = -1; //mouse wandered out of focus
+            };
+            if(hit && (mousebuttons & G3D_PRESSED)) //mouse request position
+            {
+                extern int char_width(int c, int x);
+                int x = curx;
+                fieldpos = 0;
+                while(text[fieldpos] && fieldpos < length) {
+                    int nx = char_width(text[fieldpos], x);
+                    if(nx > hitx) break;
+                    x = nx;
+                    fieldpos++;
+                };
+            };
+                           
+            bool editing = fieldref && (fieldtext==text);
+            notextureshader->set();
+			glColor4ub(0xFF, editing?0x80:0xFF, editing?0x80:0xFF, 0xFF);
+			glBegin(GL_LINE_LOOP);
+            rect_(curx, cury, w, FONTH);
+			glEnd();
+            defaultshader->set();
+            
+            draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
+            
+            if(hit && fieldpos>=0 && (lastmillis/250)&1) {
+                int fx = curx + text_width(text, fieldpos);
+                color = 0xFF0000;
+                glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
+                notextureshader->set();
+                glBegin(GL_QUADS);
+                rect_(fx-2, cury, 4, FONTH);
+                glEnd();				
+                defaultshader->set();
+            };
+        };
+    	layout(w, FONTH);
+		return result;
+	};
 
     void rect_(float x, float y, float w, float h, int usetc = -1) 
     {
@@ -389,10 +504,6 @@ struct gui : g3d_gui
                 {
                     gapx1 = left;
                     gapx2 = right;
-#ifndef TILE
-                    right = left + gapw;
-                    if(gapw<gapx2-gapx1) tright = right*wscale;
-#endif
                 }
                 else if(left >= gapx2)
                 {
@@ -403,10 +514,6 @@ struct gui : g3d_gui
                 {
                     gapy1 = top;
                     gapy2 = bottom;
-#ifndef TILE
-                    bottom = top + gaph;
-                    if(gaph<gapy2-gapy1) tbottom = bottom*hscale;
-#endif
                 }
                 else if(top >= gapy2)
                 {
@@ -414,7 +521,6 @@ struct gui : g3d_gui
                     bottom += gaph - (gapy2-gapy1);
                 };
                
-#ifdef TILE
                 //multiple tiled quads if necessary rather than a single stretched one
                 int ystep = bottom-top;
                 int yo = y+top;
@@ -445,14 +551,6 @@ struct gui : g3d_gui
                     if(!(p.flags&0x10)) break;
                     yo += ystep;
                 };
-#else
-                if(left==right || top==bottom) continue;
-                glTexCoord2f(tleft, ttop); glVertex2i(x+left, y+top);
-                glTexCoord2f(tright, ttop); glVertex2i(x+right, y+top);
-                glTexCoord2f(tright, tbottom); glVertex2i(x+right, y+bottom);
-                glTexCoord2f(tleft, tbottom); glVertex2i(x+left, y+bottom);
-                xtraverts += 4;
-#endif
             };
             glEnd();
         };
@@ -460,11 +558,11 @@ struct gui : g3d_gui
     }; 
 
     vec origin;
-    float dist, yaw;
+    float dist;
     g3d_callback *cb;
 
     static float scale;
-    static bool passthrough, frontside;
+    static bool passthrough;
     static vec light;
 
     void start(int starttime, float basescale, int *tab, bool allowinput)
@@ -485,19 +583,17 @@ struct gui : g3d_gui
             if(tcurrent && !*tcurrent) tcurrent = NULL;
             cury = -ysize; 
             curx = -xsize/2;
-
+            
+            float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
             glRotatef(yaw/RAD, 0, 0, 1); 
             glRotatef(-90, 1, 0, 0);
             glScalef(-scale, scale, scale);
             
-            vec normal = vec(yaw, 0.0f);
-            frontside = normal.dot(vec(camera1->o.x-origin.x, camera1->o.y - origin.y, 0.0f)) > 0.0f;
             vec dir;
             lightreaching(origin, light, dir, 0, 0.5f); 
-            float intensity = normal.dot(dir);
-            if(!frontside) intensity = -intensity;
+            float intensity = vec(yaw, 0.0f).dot(dir);
             light.mul(1.0f + max(intensity, 0));
        
             skin_(curx-skinx[2]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, ysize, 0, 9);
@@ -515,7 +611,7 @@ struct gui : g3d_gui
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
             if(!windowhit && !passthrough)
             {
-                vec planenormal = vec(yaw+PI, 0.0f), intersectionpoint;
+                vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
                 int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
                 vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
                 hitx = xaxis.dot(intersectionvec)/scale;
@@ -529,11 +625,7 @@ struct gui : g3d_gui
         }
         else
         {
-#ifdef TILE
             if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, FONTH, 9, 1);
-#else
-            if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, 0, 9, 1);
-#endif
             glPopMatrix();
         };
         poplist();
@@ -586,7 +678,7 @@ const gui::patch gui::patches[] =
 
 vector<gui::list> gui::lists;
 float gui::scale, gui::hitx, gui::hity;
-bool gui::passthrough, gui::frontside;
+bool gui::passthrough;
 vec gui::light;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
@@ -598,16 +690,7 @@ void g3d_addgui(g3d_callback *cb, vec &origin, bool follow)
     gui &g = guis.add();
     g.cb = cb;
     g.origin = origin;
-    g.dist = camera1->o.dist(g.origin);    
-    
-    /* testing...
-    static float hackyaw = 1000;
-    if(hackyaw==1000) hackyaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;
-    g.yaw = hackyaw;
-    */
-    
-    //@TODO yaw could be passed as a parmeter - in effect you can then billboard the gui onto something
-    g.yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;     
+    g.dist = camera1->o.dist(g.origin);
 };
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
@@ -627,7 +710,6 @@ void g3d_render()
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_CULL_FACE);
     
     windowhit = NULL;
     if(actionon) mousebuttons |= G3D_PRESSED;
@@ -636,20 +718,26 @@ void g3d_render()
     
     // call all places in the engine that may want to render a gui from here, they call g3d_addgui()
     extern void g3d_texturemenu();
+    
     g3d_texturemenu();
     g3d_mainmenu();
     cl->g3d_gamemenus();
     
     guis.sort(g3d_sort);
     
+    bool fieldfocus = (fieldpos>=0);
+    fieldactive = false;
+    
     layoutpass = true;
     loopv(guis) guis[i].cb->gui(guis[i], true);
     layoutpass = false;
     loopvrev(guis) guis[i].cb->gui(guis[i], false);
     
+    if(!fieldactive) fieldpos = -1; //no hit fields, so loose focus - mainly for menu closed
+    if((fieldpos>=0) != fieldfocus) SDL_EnableUNICODE(fieldpos>=0);
+    
     mousebuttons = 0;
 	
-    glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);

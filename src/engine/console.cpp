@@ -238,10 +238,12 @@ void onrelease(char *s)
 
 COMMAND(onrelease, "s");
 
+
+extern bool menukey(int code, bool isdown, int cooked);
+
 void keypress(int code, bool isdown, int cooked)
 {
-    if(code==-1 && g3d_windowhit(isdown, true)) return; // 3D GUI mouse button intercept
-    else if(code==-3 && g3d_windowhit(isdown, false)) return;
+    if(menukey(code, isdown, cooked)) return;  // 3D GUI mouse button intercept   
     else if(saycommandon)                                // keystrokes go to commandline
     {
         if(isdown)

@@ -135,6 +135,26 @@ void guiradio(char *name, char *var, int *n, char *onchange)
     };
 };
 
+
+void guifield(char *var, int *maxlength, char *onchange)
+{   
+    if(!cgui) return;
+    
+    /* hacky demo in menu.cfg with:
+     * guitext "1"
+     * guitext "2"
+     */
+    
+    static string val[2] = {"testing1", "barf2"};
+    char *ref = (char*)(val+(var[0]-'1'));  //@TODO get this from somewhere, note char* ptr must remain same so can tell that it is the same field!
+    
+	char *result = cgui->field(ref, GUI_BUTTON_COLOR, (*maxlength==0)?12:*maxlength);
+    if(result) {
+        s_strcpy(ref, result); //@TODO changed so copy it somewhere
+    };
+};
+
+
 void guilist(char *contents)
 {
     if(!cgui) return;
@@ -201,6 +221,7 @@ COMMAND(guislider,"siis");
 COMMAND(guiradio,"ssis");
 COMMAND(guicheckbox, "ssiis");
 COMMAND(guitab, "s");
+COMMAND(guifield, "sis");
 
 static struct mainmenucallback : g3d_callback
 {
