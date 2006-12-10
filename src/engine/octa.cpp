@@ -641,9 +641,8 @@ int faceconvexity(cube &c, int orient)
     */
     // slow perfect
     ivec v[4];
-    plane pl;
 
-    if(touchingface(c, orient)) return 0;
+    if(flataxisface(c, orient)) return 0;
 
     loopi(4) genvectorvert(cubecoords[fv[orient][i]], c, v[i]);
 
@@ -657,11 +656,14 @@ int faceconvexity(cube &c, int orient)
 
 int faceorder(cube &c, int orient)
 {
+/*
     uchar *edges = &c.edges[4*dimension(orient)];
     uchar h[4];
     loopi(4) h[i] = dimcoord(orient) ? edges[i]>>4 : 8-(edges[i]&0xF);
     if(h[0]+h[3]<h[1]+h[2]) return 1;
     else return 0;
+*/
+    return faceconvexity(c, orient)<0 ? 1 : 0;
 };
 
 int faceverts(cube &c, int orient, int vert) // gets above 'fv' so that each face is convex
