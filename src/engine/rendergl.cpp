@@ -707,7 +707,7 @@ static int findtextype(Slot &s, int type, int last = -1)
         } \
     }
 
-#define sourcetex(s) uchar *src = &((uchar *)s->pixels)[(s->format->BitsPerPixel/8)*((y%s->h)*s->w + (x%s->w))];
+#define sourcetex(s) uchar *src = &((uchar *)s->pixels)[(s->format->BitsPerPixel/8)*(y*s->w + x)];
 
 static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
 {
@@ -791,6 +791,24 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
 #define AMASK 0xff000000
 #endif
 
+SDL_Surface *creatergbasurface(SDL_Surface *os)
+{
+    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, os->w, os->h, 32, RMASK, GMASK, BMASK, AMASK);
+    if(!ns) fatal("creatergbsurface");
+    SDL_BlitSurface(os, NULL, ns, NULL);
+    SDL_FreeSurface(os);
+    return ns;
+};
+
+SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
+{
+    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, os->format->BitsPerPixel, os->format->Rmask, os->format->Gmask, os->format->Bmask, os->format->Amask);
+    if(!ns) fatal("scalesurface");
+    gluScaleImage(os->format->BitsPerPixel==24 ? GL_RGB : GL_RGBA, os->w, os->h, GL_UNSIGNED_BYTE, os->pixels, w, h, GL_UNSIGNED_BYTE, ns->pixels);
+    SDL_FreeSurface(os);
+    return ns;
+};
+
 static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
     vector<char> key;
@@ -835,7 +853,8 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                     if(b.combined!=index) continue;
                     SDL_Surface *bs = texturedata(NULL, &b);
                     if(!bs) continue;
-                    if((ts->w%bs->w)==0 && (ts->h%bs->h)==0) switch(b.type)
+                    if(bs->w!=ts->w || bs->h!=ts->h) bs = scalesurface(bs, ts->w, ts->h); 
+                    switch(b.type)
                     { 
                         case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
                         case TEX_GLOW: addglow(ts, bs, s); break;
@@ -853,14 +872,8 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                 if(a.combined!=index) continue;
                 SDL_Surface *as = texturedata(NULL, &a);
                 if(!as) break;
-                if(ts->format->BitsPerPixel!=32)
-                {
-                    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, ts->w, ts->h, 32, RMASK, GMASK, BMASK, AMASK);
-                    if(!ns) fatal("create surface");
-                    SDL_BlitSurface(ts, NULL, ns, NULL);
-                    SDL_FreeSurface(ts);
-                    ts = ns;
-                };
+                if(ts->format->BitsPerPixel!=32) ts = creatergbasurface(ts);
+                if(as->w!=ts->w || as->h!=ts->h) as = scalesurface(as, ts->w, ts->h);
                 switch(a.type)
                 {
                     case TEX_SPEC: mergespec(ts, as); break;
