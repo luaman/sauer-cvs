@@ -160,7 +160,7 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     {
         if(!m->shadow || checktriggertype(e.attr3, TRIG_COLLIDE|TRIG_DISAPPEAR)) return false;
     }
-    else if(!(mode&RAY_ENTS) && !m->collide) return false;
+    else if((mode&RAY_ENTS)!=RAY_ENTS && !m->collide) return false;
     if(!m->spheretree && !m->setspheretree()) return false;
     if(!maxdist) maxdist = 1e16f;
     vec yo(o);
