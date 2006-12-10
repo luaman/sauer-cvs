@@ -507,7 +507,7 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
     int pick = forceent;
     if(pick<0)
     {
-        int r = fixspawn-->0 ? 5 : rnd(10)+1;
+        int r = fixspawn-->0 ? 7 : rnd(10)+1;
         loopi(r) spawncycle = findentity(ET_PLAYERSTART, spawncycle+1);
         pick = spawncycle;
     };
