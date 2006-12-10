@@ -301,7 +301,7 @@ struct gui : g3d_gui
             };
             if(fieldref==text) 
             {
-                if(strlen(fieldtext) > length) fieldtext[length] = '\0';
+                if((int)strlen(fieldtext) > length) fieldtext[length] = '\0';
                 if(fieldpos > length) fieldpos = length;
                 if(fieldpos==-2) {
                     result = fieldtext;
