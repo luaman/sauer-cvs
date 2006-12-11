@@ -37,7 +37,7 @@
 - use setbb also for monsters
 - experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions | store intensity multiplier in alpha?
 
-- the eyecandy priority list: reflective world shader | better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps? auto grass/vegetation...
+- the eyecandy priority list: reflective world shader, autograss/vegetation, better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps...
 - bots (level design placed waypoints?)
 - destructable geom
 
