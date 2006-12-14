@@ -37,7 +37,7 @@ struct fpsserver : igameserver
         vec o;
         int state;
         clientscore score;
-        enet_uint32 gamestart;
+        int gamestart;
         vector<uchar> position, messages;
 
         clientinfo() { reset(); };
@@ -62,7 +62,7 @@ struct fpsserver : igameserver
 
     struct worldstate
     {
-        enet_uint32 uses;
+        int uses;
         vector<uchar> positions, messages;
     };
 
@@ -238,13 +238,12 @@ struct fpsserver : igameserver
     const char *chooseworstteam(const char *suggest)
     {
         vector<teamscore> teamscores;
-        enet_uint32 curtime = enet_time_get();
         loopv(clients)
         {
             clientinfo *ci = clients[i];
             if(!ci->team[0]) continue;
-            ci->score.timeplayed += curtime - ci->gamestart;
-            ci->gamestart = curtime;
+            ci->score.timeplayed += lastsec - ci->gamestart;
+            ci->gamestart = lastsec;
             teamscore *ts = NULL;
             loopvj(teamscores) if(!strcmp(teamscores[j].team, ci->team)) { ts = &teamscores[j]; break; };
             if(!ts) { ts = &teamscores.add(); ts->team = ci->team; ts->rank = 0; ts->clients = 0; };
@@ -277,18 +276,17 @@ struct fpsserver : igameserver
         notgotitems = true;
         notgotbases = m_capture;
         scores.setsize(0);
-        enet_uint32 gamestart = enet_time_get();
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            ci->score.timeplayed += gamestart - ci->gamestart;
+            ci->score.timeplayed += lastsec - ci->gamestart;
         };
         if(m_teammode) autoteam();
         loopv(clients)
         {
             clientinfo *ci = clients[i];
             ci->mapchange();
-            ci->gamestart = gamestart;
+            ci->gamestart = lastsec;
         };
     };
 
@@ -301,9 +299,8 @@ struct fpsserver : igameserver
             clientinfo *oi = clients[i];
             if(oi->clientnum != ci->clientnum && getclientip(oi->clientnum) == ip && !strcmp(oi->name, ci->name))
             {
-                enet_uint32 gamestart = enet_time_get();
-                oi->score.timeplayed += gamestart - oi->gamestart;
-                oi->gamestart = gamestart;
+                oi->score.timeplayed += lastsec - oi->gamestart;
+                oi->gamestart = lastsec;
                 return oi->score;
             };
         };
@@ -910,7 +907,7 @@ struct fpsserver : igameserver
             ci->state = CS_SPECTATOR;
         };
         if(currentmaster>=0) masterupdate = true;
-        ci->gamestart = enet_time_get();
+        ci->gamestart = lastsec;
         return DISC_NONE;
     };
 
@@ -919,7 +916,7 @@ struct fpsserver : igameserver
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(ci->master) setmaster(ci, false);
         if(m_capture && ci->state==CS_ALIVE) cps.leavebases(ci->team, ci->o);
-        ci->score.timeplayed += enet_time_get() - ci->gamestart; 
+        ci->score.timeplayed += lastsec - ci->gamestart; 
         savescore(ci);
         sendf(-1, 1, "ri2", SV_CDIS, n); 
         clients.removeobj(ci);
