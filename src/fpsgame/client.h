@@ -723,7 +723,7 @@ struct clientcom : iclientcom
                 if(!s) return;
                 if(val)
                 {
-                    if(editmode) toggleedit();
+                    if(s==player1 && editmode) toggleedit();
                     s->state = CS_SPECTATOR;
                 }
                 else if(s->state==CS_SPECTATOR) s->state = CS_ALIVE;
