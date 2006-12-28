@@ -79,6 +79,11 @@ VARP(shaderdetail, 0, 3, 3);
 void shader(int *type, char *name, char *vs, char *ps)
 {
     if(lookupshaderbyname(name)) return;
+    if(renderpath==R_ASMSHADER)
+    {
+        if(!hasCM && strstr(ps, "CUBE")) return;
+        if(!hasTR && strstr(ps, "RECT")) return;
+    };
     char *rname = newstring(name);
     Shader &s = shaders[rname];
     s.name = rname;
@@ -87,7 +92,7 @@ void shader(int *type, char *name, char *vs, char *ps)
     s.fastdetail = -1;
     loopv(curparams) s.defaultparams.add(curparams[i]);
     curparams.setsize(0);
-    if(renderpath!=R_FIXEDFUNCTION)
+    if(renderpath==R_ASMSHADER)
     {
         compileshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
         compileshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
@@ -105,9 +110,9 @@ void setshader(char *name)
 void fastshader(char *nice, char *fast, int *detail)
 {
     Shader *ns = lookupshaderbyname(nice);
-    if(!ns) conoutf("no such shader: %s", nice);
+    if(!ns) return;
     Shader *fs = lookupshaderbyname(fast);
-    if(!fs) conoutf("no such shader: %s", fast);
+    if(!fs) return;
     ns->fastshader = fs;
     ns->fastdetail = *detail;
 };
