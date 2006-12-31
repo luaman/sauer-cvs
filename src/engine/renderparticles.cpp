@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define MAXPARTYPES 21
+#define MAXPARTYPES 22
 
 struct particle
 {
@@ -22,7 +22,7 @@ particle *parlist[MAXPARTYPES], *parempty = NULL;
 
 VARP(particlesize, 20, 100, 500);
 
-Texture *parttexs[6];
+Texture *parttexs[7];
 
 void particleinit()
 {
@@ -32,6 +32,7 @@ void particleinit()
     parttexs[3] = textureload("data/martin/ball2.png");
     parttexs[4] = textureload("data/martin/ball3.png");
     parttexs[5] = textureload("data/flare.jpg");
+    parttexs[6] = textureload("data/martin/spark.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
 };
 
@@ -76,12 +77,12 @@ void render_particles(int time)
 {
     static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
     {
-        { 0,          180, 155, 75,  2,  0, 0.24f }, // yellow: sparks 
-        { 0,          125, 125, 125, 20, 2, 0.6f },  // grey:   small smoke
+        { 0,          180, 155, 75,  2,  6, 0.24f }, // yellow: sparks 
+        { 0,          137, 118, 97, -2,  2,  0.6f }, // greyish-brown:   small smoke
         { 0,          50, 50, 255,   20, 0, 0.32f }, // blue:   edit mode entities
         { 0,          255, 25, 25,   1,  2, 0.24f }, // red:    blood spats
         { 0,          255, 200, 200, 20, 1, 4.8f  }, // yellow: fireball1
-        { 0,          125, 125, 125, 20, 2, 2.4f  }, // grey:   big smoke   
+        { 0,          137, 118, 97,  -2, 2, 2.4f  }, // greyish-brown:   big smoke   
         { 0,          255, 255, 255, 20, 3, 4.8f  }, // blue:   fireball2
         { 0,          255, 255, 255, 20, 4, 4.8f  }, // green:  big fireball3
         { PT_TEXTUP,  255, 75, 25,   -8, -1, 4.0f }, // 8 TEXT RED
@@ -97,6 +98,7 @@ void render_particles(int time)
         { PT_METER,   50, 50, 255,   0, -1, 2.0f },  // 18 METER BLUE, SMALL, NON-MOVING
         { PT_METERVS, 255, 25, 25,   0, -1, 2.0f },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
         { PT_METERVS, 50, 50, 255,   0, -1, 2.0f },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
+        { 0,          137, 118, 97, 20,  2, 0.6f },  // greyish-brown:   small smoke trail
     };
        
     bool enabled = false;
@@ -117,14 +119,13 @@ void render_particles(int time)
         {
             glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
             glBegin(GL_QUADS);
-            glColor3ub(pt.r, pt.g, pt.b);
         };
         
         for(particle *p, **pp = &parlist[i]; (p = *pp);)
         {   
             int blend = p->fade*255/(lastmillis-p->millis+p->fade);
             if(pt.tex>=0)  
-            {    
+            {   
                 if(pt.type==PT_FLARE)   // flares
                 {
                     glColor4ub(pt.r, pt.g, pt.b, blend);
@@ -140,6 +141,7 @@ void render_particles(int time)
                 }
                 else        // regular particles
                 {
+                    glColor4ub(pt.r, pt.g, pt.b, (int)(255.0f * (1.0f - powf(1.0f - blend/255.0f, 6.0f))));
                     glTexCoord2f(0.0, 1.0); glVertex3f(p->o.x+(-camright.x+camup.x)*sz, p->o.y+(-camright.y+camup.y)*sz, p->o.z+(-camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 1.0); glVertex3f(p->o.x+( camright.x+camup.x)*sz, p->o.y+( camright.y+camup.y)*sz, p->o.z+( camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 0.0); glVertex3f(p->o.x+( camright.x-camup.x)*sz, p->o.y+( camright.y-camup.y)*sz, p->o.z+( camright.z-camup.z)*sz);

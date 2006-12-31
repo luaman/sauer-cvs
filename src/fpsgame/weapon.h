@@ -422,7 +422,7 @@ struct weaponstate
 
             case GUN_RIFLE: 
                 particle_splash(0, 200, 250, to);
-                particle_trail(1, 500, hudgunorigin(gun, from, to, d), to);
+                particle_trail(21, 500, hudgunorigin(gun, from, to, d), to);
                 break;
         };
     };
