@@ -734,52 +734,11 @@ void drawreflections()
 
 VARP(showmat, 0, 1, 1);
 
-static int sortdim[3];
-static ivec sortorigin;
-
-static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
-{
-    const materialsurface &x = **xm, &y = **ym;
-    int xdim = dimension(x.orient), ydim = dimension(y.orient);
-    loopi(3)
-    {
-        int dim = sortdim[i], xmin, xmax, ymin, ymax;
-        xmin = xmax = x.o[dim];
-        if(dim==C[xdim]) xmax += x.csize;
-        else if(dim==R[xdim]) xmax += x.rsize;
-        ymin = ymax = y.o[dim];
-        if(dim==C[ydim]) ymax += y.csize;
-        else if(dim==R[ydim]) ymax += y.rsize;
-        if(xmax > ymin && ymax > xmin) continue;
-        int c = sortorigin[dim];
-        if(c > xmin && c < xmax) return 1;
-        if(c > ymin && c < ymax) return -1;
-        xmin = abs(xmin - c);
-        xmax = abs(xmax - c);
-        ymin = abs(ymin - c);
-        ymax = abs(ymax - c);
-        if(max(xmin, xmax) <= min(ymin, ymax)) return 1;
-        else if(max(ymin, ymax) <= min(xmin, xmax)) return -1;
-    };
-    if(x.material < y.material) return 1;
-    if(x.material > y.material) return -1;
-    return 0;
-};
-
 extern vtxarray *reflectedva;
 
 void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract)
 {
     bool reflected = zclip && !refract && camera1->o.z >= zclip;
-    sortorigin = ivec(camera1->o);
-    if(reflected) sortorigin.z = int(zclip - (camera1->o.z - zclip));
-    vec dir;
-    vecfromyawpitch(camera1->yaw, reflected ? -camera1->pitch : camera1->pitch, 1, 0, dir, true);
-    loopi(3) { dir[i] = fabs(dir[i]); sortdim[i] = i; };
-    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
-    if(dir[sortdim[1]] > dir[sortdim[0]]) swap(int, sortdim[1], sortdim[0]);
-    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
-
     bool vertwater = !hasFBO || renderpath==R_FIXEDFUNCTION;
     for(vtxarray *va = reflected ? reflectedva : visibleva; va; va = reflected ? va->rnext : va->next)
     {
@@ -797,20 +756,19 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
             vismats.add(&m);
         };
     };
-    vismats.sort(vismatcmp);
 };
 
 void rendermatgrid(vector<materialsurface *> &vismats)
 {   
     notextureshader->set();
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    static uchar cols[MAT_EDIT][3] =
+    static uchar cols[MAT_EDIT][4] = //NOTE - have premultiplied alpha
     {
-        { 0, 0, 0 },   // MAT_AIR - no edit volume,
-        { 0, 0, 85 },  // MAT_WATER - blue,
-        { 85, 0, 0 },  // MAT_CLIP - red,
-        { 0, 85, 85 }, // MAT_GLASS - cyan,
-        { 0, 85, 0 },  // MAT_NOCLIP - green
+        { 0,    0,   0,   0 }, // MAT_AIR - no edit volume,
+        { 0,    0, 128, 128 }, // MAT_WATER - blue,
+        { 128,  0,   0, 128 }, // MAT_CLIP - red,
+        { 0,  128, 128, 128 }, // MAT_GLASS - cyan,
+        { 0,  128,   0, 128 }, // MAT_NOCLIP - green 
     };
     int lastmat = -1;
     glBegin(GL_QUADS);
@@ -821,7 +779,7 @@ void rendermatgrid(vector<materialsurface *> &vismats)
         if(curmat != lastmat)
         {
             lastmat = curmat;
-            glColor3ubv(cols[curmat]);
+            glColor4ubv(cols[curmat]);
         };
         drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
     };
@@ -837,18 +795,19 @@ void rendermaterials(float zclip, bool refract)
     sortmaterials(vismats, zclip, refract);
     if(vismats.empty()) return;
 
-    if(!editmode || !showmat) glDepthMask(GL_FALSE);
+    /*if(!editmode || !showmat)*/ glDepthMask(GL_FALSE); //otherwise some depth fighting
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE); //premuliplied alpha style
 
     Slot &wslot = lookuptexture(-MAT_WATER);
-    uchar wcol[4] = { 128, 128, 128, 192 };
+    uchar wcol[4] = { 128, 128, 128, 192 }; 
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
     int lastorient = -1, lastmat = -1;
     Shader *curshader = NULL;
     bool textured = true, begin = false;
     GLuint cubemapped = 0;
-
+    
     loopv(vismats)
     {
         materialsurface &m = *vismats[editmode && showmat ? vismats.length()-1-i : i];
@@ -861,14 +820,15 @@ void rendermaterials(float zclip, bool refract)
                 case MAT_WATER:
                     if(lastmat==MAT_WATER && lastorient!=O_TOP && m.orient!=O_TOP) break;
                     if(begin) { glEnd(); begin = false; };
-                    if(lastmat!=MAT_WATER)
+                    if(lastmat!=MAT_WATER) 
                     {
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                         glColor4ubv(wcol);
+                        static Shader *premultalphashader = NULL;
+                        if(!premultalphashader) premultalphashader = lookupshaderbyname("premultalpha");
+                        if(curshader!=premultalphashader) (curshader = premultalphashader)->set();
                     };
-                    if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; };
+                    if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; }
                     glBindTexture(GL_TEXTURE_2D, wslot.sts[m.orient==O_TOP ? 0 : 1].t->gl); 
-                    if(curshader!=defaultshader) (curshader = defaultshader)->set();
                     break;
                 
                 case MAT_GLASS:
@@ -892,10 +852,9 @@ void rendermaterials(float zclip, bool refract)
                             0); 
                     };
                     if(lastmat==MAT_GLASS) break;
-                    if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
+                    if(textured) { glDisable(GL_TEXTURE_2D);  textured = false; }
                     if(hasCM && glassenv)
                     {
-                        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
                         glColor3f(0, 0.5f, 1.0f);
                         static Shader *glassshader = NULL;
                         if(!glassshader) glassshader = lookupshaderbyname("glass");
@@ -903,8 +862,7 @@ void rendermaterials(float zclip, bool refract)
                     }
                     else
                     {
-                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                        glColor3f(0.3f, 0.15f, 0.0f);
+                        glColor4f(0.0f, 0.15f, 0.3f, 0.3f); //NOTE - have premultiplied alpha
                         if(curshader!=notextureshader) (curshader = notextureshader)->set();
                     };
                     break;
@@ -915,19 +873,18 @@ void rendermaterials(float zclip, bool refract)
                     if(lastmat<MAT_EDIT)
                     {
                         if(begin) { glEnd(); begin = false; };
-                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
+                        if(textured) { glDisable(GL_TEXTURE_2D);  textured = false; }
                         if(curshader!=notextureshader) (curshader = notextureshader)->set();
                     };
-                    static uchar blendcols[MAT_EDIT][3] =
+                    static uchar blendcols[MAT_EDIT][4] = //NOTE - have premultiplied alpha
                     {
-                        { 0, 0, 0 },     // MAT_AIR - no edit volume,
-                        { 255, 128, 0 }, // MAT_WATER - blue,
-                        { 0, 255, 255 }, // MAT_CLIP - red,
-                        { 255, 0, 0 },   // MAT_GLASS - cyan,
-                        { 255, 0, 255 }, // MAT_NOCLIP - green
+                        { 0,  0,  0, 128 },  // MAT_AIR - no edit volume,
+                        { 0,  0, 85, 128 },  // MAT_WATER - blue,
+                        { 85, 0,  0, 128 },  // MAT_CLIP - red,
+                        { 0, 85, 85, 128 },  // MAT_GLASS - cyan,
+                        { 0, 85,  0, 128 },  // MAT_NOCLIP - green
                     };
-                    glColor3ubv(blendcols[curmat >= MAT_EDIT ? curmat-MAT_EDIT : curmat]);
+                    glColor4ubv(blendcols[curmat >= MAT_EDIT ? curmat-MAT_EDIT : curmat]);
                     break;
                 };
             };
@@ -959,10 +916,12 @@ void rendermaterials(float zclip, bool refract)
     };
 
     if(begin) glEnd();
+        
+    if(editmode && showmat) rendermatgrid(vismats);
+    
+    /*if(!editmode || !showmat)*/ glDepthMask(GL_TRUE); //otherwise depth fighting
+    
     glDisable(GL_BLEND);
-    if(!editmode || !showmat) glDepthMask(GL_TRUE);
-    else rendermatgrid(vismats);
-
     glEnable(GL_CULL_FACE);
     if(!textured) glEnable(GL_TEXTURE_2D);
 
@@ -1132,7 +1091,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->o[dim] == start->o[dim])
             ++cur;
          materialsurface *oldbuf = matbuf;
-         if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath==R_ASMSHADER))
+         if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath!=R_FIXEDFUNCTION))
          {
             memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
             matbuf = oldbuf + mergemats(oldbuf, matbuf + (cur-start) - oldbuf);
@@ -1298,7 +1257,7 @@ void setupmaterials(bool load)
                 float depth = raycube(center, vec(0, 0, -1), 10000);
                 waterdepths.add(depth);
             }
-            else if(m.material==MAT_GLASS && hasCM && renderpath==R_ASMSHADER)
+            else if(m.material==MAT_GLASS && hasCM && renderpath!=R_FIXEDFUNCTION)
             {
                 int dim = dimension(m.orient);
                 vec center(m.o.tovec());
