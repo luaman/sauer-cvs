@@ -1,5 +1,9 @@
 
+- server menu doesn't select right items... sorting?
 - make menus work when game is paused
+- make people that do teamkills/damage wait longer?
+
+- sound entities | http://freesound.iua.upf.edu/
 
 - make sure all bumpmaps are parallax -> finetune each one individually
 
@@ -7,6 +11,7 @@
 - texture selection window using new GUI
 
 - social cheating solution
+- demo recording?
 
 - before a release: update static wiki
 
@@ -15,7 +20,6 @@
 - make nearby closed doors render early so that they can contribute to OC?
 - when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
 - water physics close to surface
-- sound entities
 - add entity looping command?
 
 - LOD: improved lod-remip?
@@ -63,7 +67,7 @@
 
 - make start of flares etc spawn out further from the player
 - improve on cma render then add to sauer
-- new sounds: impact (diff materials + flesh) | flyby, both instant & projectile | soundspot / moving
+- new sounds: impact (diff materials + flesh) | flyby, both instant & projectile 
 
 - all cfg stuff in menu
 - draw not-spawned items in wireframe?

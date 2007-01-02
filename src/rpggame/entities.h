@@ -19,7 +19,7 @@ struct rpgentities : icliententities
     ~rpgentities() {};
     rpgentities(rpgclient &_cl) : cl(_cl), lastcreated(NULL)
     {
-        CCOMMAND(rpgentities, spawnname, "s", { if(self->lastcreated) s_strncpy(self->lastcreated->name, args[0], SPAWNNAMELEN); self->spawnfroment(*self->lastcreated); });    
+        CCOMMAND(rpgentities, spawnname, "s", { if(self->lastcreated) { s_strncpy(self->lastcreated->name, args[0], SPAWNNAMELEN); self->spawnfroment(*self->lastcreated); }; });    
     };
 
     vector<extentity *> &getents() { return (vector<extentity *> &)ents; };

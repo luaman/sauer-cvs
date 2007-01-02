@@ -901,7 +901,7 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool 
 
 VARP(maxroll, 0, 3, 20);
 
-void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool floating, int curtime)
+void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curtime)
 {
     if(floating)
     {
@@ -923,7 +923,7 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
         {
             pl->jumpnext = false;
 
-            pl->vel.add(vec(pl->vel).mul(0.3f));        // EXPERIMENTAL
+            pl->vel.add(vec(pl->vel).mul(0.5f));        // EXPERIMENTAL
             pl->vel.z = JUMPVEL; // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; }; // dampen velocity change even harder, gives correct water feel
 
@@ -961,6 +961,25 @@ void modifyvelocity(physent *pl, int moveres, bool local, bool water, bool float
     pl->vel.mul(fpsfric-1);
     pl->vel.add(d);
     pl->vel.div(fpsfric);
+    
+    /*
+    if(pl->physstate >= PHYS_SLOPE)
+    {
+        float mag = pl->vel.magnitude();
+        vec m2;
+        vecfromyawpitch(pl->yaw, pl->pitch, 1, 0, m2, floating || water || pl->type==ENT_CAMERA);
+        float dot = 1-m2.dot(pl->vel)/mag;
+        if(pl->strafe && mag>100)
+        {
+            pl->vel.sub(vec(m).mul(curtime/0.9f*dot));
+        }
+        if(pl->move && mag>90 && mag<500)
+        {
+            pl->vel.add(vec(m).mul(curtime/1.5f));
+        }   
+        conoutf("%d", (int)mag);
+    }
+    */
 };
 
 void modifygravity(physent *pl, bool water, float secs)
@@ -988,7 +1007,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     float secs = curtime/1000.f;
 
     // apply any player generated changes in velocity
-    modifyvelocity(pl, moveres, local, water, floating, curtime);
+    modifyvelocity(pl, local, water, floating, curtime);
 
     // apply gravity
     if(!floating && pl->type!=ENT_CAMERA) modifygravity(pl, water, secs);

@@ -2224,12 +2224,11 @@ void writeobj(char *name)
         if(verts)
         {
             loopj(v.verts) fprintf(f, "v %d %d %d\n", verts[j].x, verts[j].y, verts[j].z);
-            lodlevel &lod = v.curlod ? v.l1 : v.l0;
-            ushort *ebuf = lod.ebuf;
-            loopi(lod.texs) loopl(3) loopj(lod.eslist[i].length[l]/3)
+            ushort *ebuf = v.l0.ebuf;
+            loopi(v.l0.texs) loopl(3) loopj(v.l0.eslist[i].length[l]/3)
             {
                 fprintf(f, "f");
-                for(int k = 3; k>=0; k--) fprintf(f, " %d", ebuf[k]-v.verts);
+                for(int k = 0; k<3; k++) fprintf(f, " %d", ebuf[k]-v.verts);
                 ebuf += 3;
                 fprintf(f, "\n");
             };
