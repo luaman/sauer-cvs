@@ -117,7 +117,6 @@ void render_particles(int time)
         if(!enabled)
         {
             enabled = true;
-            defaultshader->set();
             glDepthMask(GL_FALSE);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);             
@@ -201,7 +200,6 @@ void render_particles(int time)
                     float psize = pinitsize + t * 0.04; //@TODO as default?
                     float size = psize/pmax;
                     
-                    
                     if(size > 1.0f) 
                     {
                         size = 1.0f;
@@ -212,19 +210,35 @@ void render_particles(int time)
                     {
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.x, o.y, o.z, 0);
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, psize, pmax, float(lastmillis));
-                    };
-                    glColor4ub(pt.r, pt.g, pt.b, (int)(255.0f * (1.0f - powf(size, 6.0f))));  
+                        /* @TODO if fussy
+                         * Ideally should render all 'filter' blended bits first
+                         * and in depth order
+                         * and with a quad behind them to kill any alpha
+                         */
+                        float lev = (1.0f - size*size);
+                        glColor4f(pt.r*(lev/255.0) , pt.g*(lev/255.0), pt.b*(lev/255.0), lev);
+                        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_SRC_COLOR);
+                    }
+                    else
+                        glColor4f(pt.r , pt.g, pt.b, 1.0f - size*size);
                     glRotatef(lastmillis/5.0f, 1, 1, 1);
                     glScalef(psize, psize, psize);
                     glCallList(1);
-                    if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.z, o.x, o.y, 0);
+                    
+                    if(renderpath!=R_FIXEDFUNCTION) 
+                    {
+                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.z, o.x, o.y, 0);
+                        glColor4f(pt.r , pt.g, pt.b, (1.0f - powf(size, 6.0f)));
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                    };
                     glScalef(0.8f, 0.8f, 0.8f);
                     glCallList(1);
                     
                     xtraverts += 12*6*2;
                     defaultshader->set();
-                    
-                } else {
+                } 
+                else 
+                {
                     glRotatef(camera1->yaw-180, 0, 0, 1);
                     glRotatef(camera1->pitch-90, 1, 0, 0);
                     float scale = pt.sz/80.0f;
