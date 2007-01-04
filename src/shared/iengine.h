@@ -108,7 +108,6 @@ extern void draw_envbox(int fogdist, float zclip = 0.0f);
 // renderextras
 extern vec worldpos, camright, camup;
 extern void dot(int x, int y, float z);
-extern void newsphere(vec &o, float max, int type);
 extern void renderspheres(int time);
 extern void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater);
 extern void blendbox(int x1, int y1, int x2, int y2, bool border);
@@ -122,6 +121,7 @@ extern void render_particles(int time);
 extern void particle_text(const vec &s, char *t, int type, int fade = 2000);
 extern void particle_meter(const vec &s, int val, int type, int fade = 1);
 extern void particle_flare(const vec &p, const vec &dest, int fade);
+extern void particle_fireball(const vec &dest, float max, int type);
 
 // worldio
 extern void load_world(const char *mname, const char *cname = NULL);

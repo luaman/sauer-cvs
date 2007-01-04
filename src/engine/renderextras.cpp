@@ -157,81 +157,10 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     defaultshader->set();
 };
 
-struct sphere { vec o; float size, max; int type; };
 
-vector<sphere> spheres;
-Texture *expltex = NULL;
-Shader *explshader = NULL;
+void renderspheres(int time) {};
 
-VARP(damagespherefactor, 0, 100, 200);
 
-void newsphere(vec &o, float max, int type)
-{
-    if(damagespherefactor<=10) return;
-    sphere p;
-    p.o = o;
-    p.max = max*damagespherefactor/100;
-    p.size = 4;
-    p.type = type;
-    spheres.add(p);
-};
-
-extern float reflecting;
-
-void renderspheres(int time)
-{
-    if(spheres.empty()) return;
-
-    static struct spheretype { float r, g, b; } spheretypes[2] =
-    {
-        { 1.0f, 0.5f, 0.5f },
-        { 0.9f, 1.0f, 0.5f },
-    };
-
-    if(!explshader) explshader = lookupshaderbyname("explosion");
-    if(!expltex) expltex = textureload("data/explosion.jpg");
-    explshader->set();
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, expltex->gl);
-    loopv(spheres)
-    {
-        sphere &p = spheres[i];
-        spheretype &pt = spheretypes[p.type];
-        float size = p.size/p.max;
-        if(renderpath!=R_FIXEDFUNCTION)
-        {
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, p.o.x, p.o.y, p.o.z, 0);
-            glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, p.size, p.max, 0);
-        };
-        glColor4f(pt.r, pt.g, pt.b, 1.0f-size*size);
-        glPushMatrix();
-        glTranslatef(p.o.x, p.o.y, p.o.z);
-        glRotatef(lastmillis/5.0f, 1, 1, 1);
-        glScalef(p.size, p.size, p.size);
-        glCallList(1);
-        if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, p.o.z, p.o.x, p.o.y, 0);
-        glScalef(0.8f, 0.8f, 0.8f);
-        glCallList(1);
-        glPopMatrix();
-        xtraverts += 12*6*2;
-        if(!reflecting)
-        {
-            if(p.size>p.max)
-            {
-                spheres.remove(i);
-            }
-            else
-            {
-                p.size += time/25.0f;
-            };
-        };
-    };
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
-    defaultshader->set();
-};
 
 string closeent, fullentname;
 
