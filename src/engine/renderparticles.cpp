@@ -23,32 +23,12 @@ static particle *parlist[MAXPARTYPES], *parempty = NULL;
 
 VARP(particlesize, 20, 100, 500);
 
+VARP(particlevolumes, 0, 0, 1);
+
 static Texture *parttexs[8];
 
-/* 5Jan2007 eihrul said:
-glBlendColor is an extension, you can't directly use it without checking for the extension and the loading the function pointer
-so you may want to avoid using that feature entirely if possible, unless you want to go to the trouble of the stupid extension checks
-and please don't hardcode and shaderdetail checks into the source code
-and even still, please avoid using the alpha channel of the frame buffer
-that is more complication than it is worth
-and it will screw up other things like frame buffer objects, i really don't want that messed with 
-*/
-//#define FIXALPHA
-
-#ifdef FIXALPHA
-static bool framealpha;
-#endif
-
 void particleinit()
-{
-
-#ifdef FIXALPHA
-    int val;
-    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &val);
-    framealpha = val>0;
-    if(!framealpha) conoutf("WARNING: No alpha channel in framebuffer");//no fancy particle effects for you!
-#endif
-    
+{    
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
     parttexs[2] = textureload("data/martin/smoke.png");
@@ -231,46 +211,36 @@ void render_particles(int time)
                     
                     glScalef(-psize, psize, -psize);
                     glRotatef(lastmillis/5.0f, 1, 1, 1);
+                    float lev = (1.0f - size*size);
+                    glColor4ub(int(pt.r*lev) , int(pt.g*lev), int(pt.b*lev), int(255.0f*lev));
                     
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
+                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.x, o.y, o.z, 0);
+                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, psize, pmax, float(lastmillis));
+                        if(particlevolumes)
+                        {
+                            //@TODO - ideally this should all be done in depth order...
+                            static Shader *backexplshader = NULL;
+                            if(!backexplshader) backexplshader = lookupshaderbyname("backexplosion");
+                            backexplshader->set();
+                            glBlendFunc(GL_ZERO, GL_SRC_COLOR); //reset alpha on back of sphere
+                            glCullFace(GL_BACK);
+                            glCallList(1);
+                            glCullFace(GL_FRONT);
+                        };
+                        glBlendFunc(particlevolumes ? GL_DST_ALPHA : GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                         static Shader *explshader = NULL;
                         if(!explshader) explshader = lookupshaderbyname("explosion");
                         explshader->set();
-                        
-                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.x, o.y, o.z, 0);
-                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, psize, pmax, float(lastmillis));
-#ifdef FIXALPHA                                                                        
-                        if(framealpha) {
-                            /*
-                             * Render back of the sphere to clear the alpha channel behind it
-                             * Render the front of the sphere to subtract and enhance regions with alpha inbetween
-                             * - maybe we want more things to be write into the alpha channel? i.e. glass!
-                             * @TODO - ideally this should all be done first and in depth order...
-                             */
-                            glBlendFunc(GL_ZERO, GL_CONSTANT_COLOR);
-                            glBlendColor(255, 255, 255, 0);                      
-                            glCullFace(GL_BACK); 
-                            glCallList(1);
-                            
-                            glCullFace(GL_FRONT);
-                            glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-                        };
-#endif
-                        float lev = (1.0f - size*size);
-                        glColor4ub(int(pt.r*lev) , int(pt.g*lev), int(pt.b*lev), int(255.0f*lev));
-                    }
-                    else
-                        glColor4ub(pt.r, pt.g, pt.b, int(255.0f*(1.0f - size*size)));
+                    };
                     glCallList(1);
                     
                     if(renderpath!=R_FIXEDFUNCTION) 
                     {
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.z, o.x, o.y, 0);
                         glColor4ub(pt.r, pt.g, pt.b, int(255.0f*(1.0f - powf(size, 6.0f))));
-#ifdef FIXALPHA
-                        if(framealpha) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-#endif
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                     };
                     glScalef(0.8f, 0.8f, 0.8f);
                     glCallList(1);
