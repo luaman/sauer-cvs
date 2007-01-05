@@ -19,14 +19,20 @@ struct particle
     };
 };
 
-particle *parlist[MAXPARTYPES], *parempty = NULL;
+static particle *parlist[MAXPARTYPES], *parempty = NULL;
 
 VARP(particlesize, 20, 100, 500);
 
-Texture *parttexs[8];
+static Texture *parttexs[8];
+static bool framealpha;
 
 void particleinit()
 {
+    int val;
+    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &val);
+    framealpha = val>0;
+    if(!framealpha) conoutf("WARNING: No alpha channel in framebuffer");//no fancy particle effects for you!
+    
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
     parttexs[2] = textureload("data/martin/smoke.png");
@@ -106,13 +112,18 @@ void render_particles(int time)
         {PT_FIREBALL, 230, 255, 128, 0,   7, 0.0f, 0.0f,   0 },  // orange fireball 
         
         //TESTING
-        {0,           0, 255,    0,  40,  0, 0.3f, 0.3f, 150 }, // green focused fast spinning red
-        {0,           255,   0,  0,  -2,  0, 1.3f, 4.0f,   5 }, // red orbiting slow spinning blue
+        {0,           0, 255,    0,  40,  0, 0.3f, 0.3f, 150 }, // green focused fast spinning
+        {0,           255,   0,  0,  -2,  0, 1.3f, 4.0f,   5 }, // red orbiting slow spinning
         
     };
                 
     bool enabled = false;
-    loopi(MAXPARTYPES) if(parlist[i])
+    loopj(MAXPARTYPES) {
+    
+    //@TODO - temporary workaound to reorder drawing order, currently require fire balls first... 
+    int i = (j+22)%MAXPARTYPES; 
+    
+    if(parlist[i])
     {        
         if(!enabled)
         {
@@ -172,9 +183,9 @@ void render_particles(int time)
                     glTexCoord2f(1.0, 1.0); glVertex3f(o.x+c2.x, o.y+c2.y, o.z+c2.z);
                     glTexCoord2f(1.0, 0.0); glVertex3f(o.x+c1.x, o.y+c1.y, o.z+c1.z);
                 }
-                else        // regular particles
+                else // regular particles
                 {                
-                    glColor4ub(pt.r, pt.g, pt.b, (int)(255.0f * (1.0f - powf(1.0f - blend/255.0f, 6.0f))));                    
+                    glColor4ub(pt.r, pt.g, pt.b, int(255.0f * (1.0f - powf(1.0f - blend/255.0f, 6.0f))));                    
                     glTexCoord2f(0.0, 1.0); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 1.0); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 0.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
@@ -186,15 +197,11 @@ void render_particles(int time)
             {
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
-                
+                   
                 if(pt.type==PT_FIREBALL)
                 {
                     float pinitsize = 4.0;  //@TODO as default?
                     float pmax = float(p->val);
-                    
-                    static Shader *explshader = NULL;
-                    if(!explshader) explshader = lookupshaderbyname("explosion");
-                    explshader->set();
                     
                     float t = float(lastmillis-p->millis);
                     float psize = pinitsize + t * 0.04; //@TODO as default?
@@ -206,30 +213,45 @@ void render_particles(int time)
                         if(!reflecting) p->fade = -1; //@TODO - push check into fade rather than doing here...
                     };
                     
+                    glScalef(-psize, psize, -psize);
+                    glRotatef(lastmillis/5.0f, 1, 1, 1);
+                    
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
+                        static Shader *explshader = NULL;
+                        if(!explshader) explshader = lookupshaderbyname("explosion");
+                        explshader->set();
+                        
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.x, o.y, o.z, 0);
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, psize, pmax, float(lastmillis));
-                        /* @TODO if fussy
-                         * Ideally should render all 'filter' blended bits first
-                         * and in depth order
-                         * and with a quad behind them to kill any alpha
-                         */
-                        float lev = (1.0f - size*size);
-                        glColor4f(pt.r*(lev/255.0) , pt.g*(lev/255.0), pt.b*(lev/255.0), lev);
-                        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_SRC_COLOR);
+                                                                        
+                        if(framealpha && shaderdetail>=3 ) {
+                            /*
+                             * Render back of the sphere to clear the alpha channel behind it
+                             * Render the front of the sphere to subtract and enhance regions with alpha inbetween
+                             * - maybe we want more things to be write into the alpha channel? i.e. glass!
+                             * @TODO - ideally this should all be done first and in depth order...
+                             */
+                            glBlendFunc(GL_ZERO, GL_CONSTANT_COLOR);
+                            glBlendColor(255, 255, 255, 0);                      
+                            glCullFace(GL_BACK); 
+                            glCallList(1);
+                            glCullFace(GL_FRONT);
+                        
+                            float lev = (1.0f - size*size);
+                            glColor4ub(int(pt.r*lev) , int(pt.g*lev), int(pt.b*lev), int(255.0f*lev));
+                            glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_SRC_COLOR);
+                        }
                     }
                     else
-                        glColor4f(pt.r , pt.g, pt.b, 1.0f - size*size);
-                    glRotatef(lastmillis/5.0f, 1, 1, 1);
-                    glScalef(psize, psize, psize);
+                        glColor4ub(pt.r, pt.g, pt.b, int(255.0f*(1.0f - size*size)));
                     glCallList(1);
                     
                     if(renderpath!=R_FIXEDFUNCTION) 
                     {
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.z, o.x, o.y, 0);
-                        glColor4f(pt.r , pt.g, pt.b, (1.0f - powf(size, 6.0f)));
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                        glColor4ub(pt.r, pt.g, pt.b, int(255.0f*(1.0f - powf(size, 6.0f))));
+                        if(framealpha && shaderdetail>=3) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                     };
                     glScalef(0.8f, 0.8f, 0.8f);
                     glCallList(1);
@@ -239,9 +261,9 @@ void render_particles(int time)
                 } 
                 else 
                 {
+                    float scale = pt.sz/80.0f;
                     glRotatef(camera1->yaw-180, 0, 0, 1);
                     glRotatef(camera1->pitch-90, 1, 0, 0);
-                    float scale = pt.sz/80.0f;
                     glScalef(-scale, scale, -scale);
                     if(pt.type==PT_METER || pt.type==PT_METERVS)
                     {
@@ -298,7 +320,7 @@ void render_particles(int time)
         };
         if(quads) glEnd();
     };
-
+    };
     if(enabled)
     {        
         glDisable(GL_BLEND);
