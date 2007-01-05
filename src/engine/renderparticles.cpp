@@ -23,8 +23,6 @@ static particle *parlist[MAXPARTYPES], *parempty = NULL;
 
 VARP(particlesize, 20, 100, 500);
 
-VARP(particlevolumes, 0, 0, 1);
-
 static Texture *parttexs[8];
 
 void particleinit()
@@ -218,18 +216,8 @@ void render_particles(int time)
                     {
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.x, o.y, o.z, 0);
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, psize, pmax, float(lastmillis));
-                        if(particlevolumes)
-                        {
-                            //@TODO - ideally this should all be done in depth order...
-                            static Shader *backexplshader = NULL;
-                            if(!backexplshader) backexplshader = lookupshaderbyname("backexplosion");
-                            backexplshader->set();
-                            glBlendFunc(GL_ZERO, GL_SRC_COLOR); //reset alpha on back of sphere
-                            glCullFace(GL_BACK);
-                            glCallList(1);
-                            glCullFace(GL_FRONT);
-                        };
-                        glBlendFunc(particlevolumes ? GL_DST_ALPHA : GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+                        
+                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                         static Shader *explshader = NULL;
                         if(!explshader) explshader = lookupshaderbyname("explosion");
                         explshader->set();
