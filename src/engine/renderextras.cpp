@@ -210,12 +210,12 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     loopv(ents)
     {
         entity &e = *ents[i];
-        if(e.type==ET_EMPTY) continue;
+        if(e.type==ET_EMPTY) continue;        
         if(e.o.dist(camera1->o)<128)
         {
             particle_text(e.o, entname(e), &e==c ? 14 : 11, 1);
         };
-        particle_splash(2, 2, 40, e.o);
+        if(emit_particles()) particle_splash(2, 2, 40, e.o);
     };
     loopv(entgroup)
     {
