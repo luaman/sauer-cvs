@@ -208,7 +208,7 @@ void render_particles(int time)
                 }
                 else // regular particles
                 {   
-                    glColor4ub(pt.r, pt.g, pt.b, (blend > 64) ? 255 : blend*4);                   
+                    glColor4ub(pt.r, pt.g, pt.b, (blend > 63) ? 255 : blend*4);                   
                     glTexCoord2f(0.0, 1.0); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 1.0); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 0.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
