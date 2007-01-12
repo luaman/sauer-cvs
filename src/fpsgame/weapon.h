@@ -146,7 +146,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = *(bouncers[i]);
-            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) particle_splash(5, 1, 150, bnc.o);
+            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f && emit_particles()) particle_splash(5, 1, 150, bnc.o);
             vec old(bnc.o);
             int rtime = time;
             while(rtime > 0)
@@ -342,7 +342,7 @@ struct weaponstate
                         continue; // if original target was moving, reevaluate endpoint
                     splash(p, v, NULL, qdam);
                 }
-                else
+                else if(emit_particles())
                 {
                     if(p.gun==GUN_RL) 
                     { 
