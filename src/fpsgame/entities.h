@@ -292,7 +292,7 @@ struct entities : icliententities
     {
         static const char *entnames[] =
         {
-            "none?", "light", "mapmodel", "playerstart", "envmap",
+            "none?", "light", "mapmodel", "playerstart", "envmap", "particles",
             "shells", "bullets", "rockets", "riflerounds", "grenades", "cartridges",
             "health", "healthboost", "greenarmour", "yellowarmour", "quaddamage",
             "teleport", "teledest",
