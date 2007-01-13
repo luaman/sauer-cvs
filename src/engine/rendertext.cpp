@@ -236,7 +236,7 @@ void loadsky(char *basename)
         s_sprintfd(name)("packages/%s_%s.jpg", basename, side[i]);
         if((sky[i] = textureload(name, true))==crosshair)
         {
-            s_sprintf(name)("packages/%s_%s.png", basename, side[i]);
+            strcpy(name+strlen(name)-3, "png");
             if((sky[i] = textureload(name, true))==crosshair) conoutf("could not load sky textures");
         };
     };
