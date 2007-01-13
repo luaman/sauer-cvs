@@ -182,8 +182,22 @@ extern int closestent();
 void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
-    if(!editmode) return;
     const vector<extentity *> &ents = et->getents();
+    
+    if(!editmode) 
+    {
+        loopv(ents)
+        {
+            entity &e = *ents[i];
+            if(e.type != ET_PARTICLES) continue;        
+            if(e.o.dist(camera1->o)<128 && emit_particles())
+            {
+                //@TODO use attrs to generate something sensible...
+                particle_splash(3, 4, 150, e.o);
+            };
+        };
+        return;
+    };
 
     bool implicit = !haveselent();
     entity *c = NULL;
