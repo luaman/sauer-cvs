@@ -421,8 +421,10 @@ extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Textur
 extern model *loadmodel(const char *name, int i = -1);
 extern mapmodelinfo &getmminfo(int i);
 
-// particles
+// renderparticles
 extern void particleinit();
+
+extern void entity_particles(entity &e);
 
 // 3dgui
 extern void g3d_render();

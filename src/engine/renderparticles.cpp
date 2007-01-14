@@ -425,8 +425,10 @@ void particle_fireball(const vec &dest, float max, int type)
 
 
 //Note: if fade!=1 then must always use emit_particles() check to limit rate
-void entity_particles(entity &e) {
-    switch(e.attr1) {
+void entity_particles(entity &e) 
+{
+    switch(e.attr1) 
+    {
         case 0: //fire
             if(emit_particles()) 
             {
