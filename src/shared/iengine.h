@@ -116,6 +116,7 @@ extern void damageblend(int n);
 // renderparticles
 extern void setorient(const vec &r, const vec &u);
 
+extern void entity_particles(entity &e); 
 extern bool emit_particles();
 extern void render_particles(int time);
 extern void particle_splash(int type, int num, int fade, const vec &p);
