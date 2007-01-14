@@ -190,11 +190,7 @@ void renderents()       // show sparkly thingies for map entities in edit mode
         {
             entity &e = *ents[i];
             if(e.type != ET_PARTICLES) continue;        
-            if(e.o.dist(camera1->o)<128 && emit_particles())
-            {
-                //@TODO use attrs to generate something sensible...
-                particle_splash(3, 4, 150, e.o);
-            };
+            if(e.o.dist(camera1->o)<128) entity_particles(e);
         };
         return;
     };

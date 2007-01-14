@@ -5,7 +5,7 @@
 
 extern float reflecting, refracting;
 
-#define MAXPARTYPES 26
+#define MAXPARTYPES 27
 
 struct particle
 {
@@ -83,6 +83,7 @@ enum
 {
     PT_PART = 0,
     PT_FLARE,
+    PT_TRAIL,
     PT_TEXT,
     PT_TEXTUP,
     PT_METER,
@@ -120,8 +121,9 @@ void render_particles(int time)
         {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange fireball 
         
         //TESTING
-        {0,           0, 255,    0, 40,  0,  0.3f, 0.3f, 150 }, // green focused fast spinning
-        {0,           255, 255,  0, 20,  0, 0.32f, 0.5f, 150 }, // yellow orbiting fast spinning - light        
+        {0,           0, 255,    0, -1,  0,  0.3f, 2.3f, 500 }, // green focused fast spinning
+        {0,           255, 255,  0, 20,  0, 0.32f, 0.5f, 150 }, // yellow orbiting fast spinning - light    
+        { PT_TRAIL,   50, 50, 255,   2 , 0, 0.60f, 0.0f,   0 }, // water  
     };
     
     if(!reflecting && emit) 
@@ -145,7 +147,7 @@ void render_particles(int time)
         parttype &pt = parttypes[i];
         float sz = pt.sz*particlesize/100.0f; 
 
-        bool quads = (pt.type == PT_PART || pt.type == PT_FLARE);
+        bool quads = (pt.type == PT_PART || pt.type == PT_FLARE || pt.type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
         if(quads) glBegin(GL_QUADS);        
         
@@ -193,16 +195,26 @@ void render_particles(int time)
             
             if(quads)
             {
-                if(pt.type==PT_FLARE)
-                {
-                    glColor4ub(pt.r, pt.g, pt.b, blend);
-					vec dir1 = p->d, dir2 = p->d, c1, c2;
+                if(pt.type==PT_FLARE || pt.type==PT_TRAIL)
+                {					
+                    vec e = p->d;
+                    if(pt.type==PT_TRAIL)
+                    {
+                        if(pt.gr) e.z -= float(ts)/pt.gr;
+                        e.div(-50.0f);
+                        e.add(o);
+                        //@TODO include spin influence, and maybe have min size
+                        glColor4ub(pt.r, pt.g, pt.b, (blend > 63) ? 255 : blend*4); 
+                    } else {
+                        glColor4ub(pt.r, pt.g, pt.b, blend);
+                    }
+                    vec dir1 = e, dir2 = e, c1, c2;
 					dir1.sub(o);
 					dir2.sub(camera1->o);
 					c1.cross(dir2, dir1).normalize().mul(sz);
 					c2.cross(dir1, dir2).normalize().mul(sz);
-                    glTexCoord2f(0.0, 0.0); glVertex3f(p->d.x+c1.x, p->d.y+c1.y, p->d.z+c1.z);
-                    glTexCoord2f(0.0, 1.0); glVertex3f(p->d.x+c2.x, p->d.y+c2.y, p->d.z+c2.z);
+                    glTexCoord2f(0.0, 0.0); glVertex3f(e.x+c1.x, e.y+c1.y, e.z+c1.z);
+                    glTexCoord2f(0.0, 1.0); glVertex3f(e.x+c2.x, e.y+c2.y, e.z+c2.z);
                     glTexCoord2f(1.0, 1.0); glVertex3f(o.x+c2.x, o.y+c2.y, o.z+c2.z);
                     glTexCoord2f(1.0, 0.0); glVertex3f(o.x+c1.x, o.y+c1.y, o.z+c1.z);
                 }
@@ -214,6 +226,7 @@ void render_particles(int time)
                     glTexCoord2f(1.0, 0.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
                     glTexCoord2f(0.0, 0.0); glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
                 };
+                
             }
             else
             {
@@ -234,9 +247,10 @@ void render_particles(int time)
                     {
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.x, o.y, o.z, 0);
                         glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, psize, pmax, float(lastmillis));
+                        
                         static Shader *explshader = NULL;
                         if(!explshader) explshader = lookupshaderbyname("explosion");
-                        explshader->set();
+                        explshader->set();                        
                     };
                     glCallList(1);
                     
@@ -375,11 +389,12 @@ void particle_helix(const vec &s, const vec &e, int fade, int type)
     loopi((int)d*2)
     {
         p.add(v);
-        //vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
-        //tmp.add(f);
+        vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
+        tmp.add(f);
         newparticle(p, f, rnd(fade)+fade, type)->oa = i*PI/9.0f;
     };
 };
+
 
 void particle_ring(const vec &s, const vec &dest, int fade, int type) 
 {
@@ -406,4 +421,31 @@ void particle_fireball(const vec &dest, float max, int type)
     if(damagespherefactor <= 10) return;
     int maxsize = int(max*damagespherefactor/100) - 4;
     newparticle(dest, vec(0, 0, 1), maxsize*25, type)->val = maxsize;
+};
+
+
+//Note: if fade!=1 then must always use emit_particles() check to limit rate
+void entity_particles(entity &e) {
+    switch(e.attr1) {
+        case 0: //fire
+            if(emit_particles()) 
+            {
+                particle_splash(4, 1, 40, e.o);                
+                if(rnd(3) == 1) particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+2.0));
+            };
+            break;
+        case 1: //smoke vent
+            if(emit_particles()) particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+            break;
+        case 2: //water fountain
+            if(emit_particles()) particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+            break;
+        case 22: //fire ball
+        case 23:
+            newparticle(e.o, vec(0, 0, 1), 1, e.attr1)->val = 1;
+            break;
+        default:
+            s_sprintfd(ds)("@particles %d?", e.attr1);
+            particle_text(e.o, ds, 16, 1);
+    };
 };
