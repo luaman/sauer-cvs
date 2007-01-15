@@ -29,7 +29,7 @@ struct rpgentities : icliententities
     const char *entnameinfo(entity &e) { return ((rpgentity &)e).name; };
     const char *entname(int i)
     {
-        static const char *entnames[] = { "none?", "light", "mapmodel", "playerstart", "envmap", "spawn" };
+        static const char *entnames[] = { "none?", "light", "mapmodel", "playerstart", "envmap", "particles", "spawn" };
         return i>=0 && size_t(i)<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
     };
 
