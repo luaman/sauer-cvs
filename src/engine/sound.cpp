@@ -179,7 +179,7 @@ int findsound(char *name, int vol)
     return s->id = samplevec.length()-1;
 };
 
-int registersound(char *name, char *vol) { return findsound(name, atoi(vol)); };
+void registersound(char *name, char *vol) { intret(findsound(name, atoi(vol))); };
 COMMAND(registersound, "ss");
 
 void clear_sound()
