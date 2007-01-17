@@ -1,0 +1,3 @@
+All models in the "tentus" folder are subject to the following license: 
+
+I, Thomas Holden, aka Tentus, give explicit written permission to anyone and everyone to use any of my models, sounds, textures, or maps, in any way, whether it be commercial or otherwise, to redistribute, edit, modify, rename, or otherwise, on the single condition: I should never be contacted about this use unless it is in an enlightening or beneficial form. Should you use my content in an illegal form, I should never be aware of it, nor suffer any legal action becuase of it.
