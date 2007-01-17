@@ -1505,6 +1505,7 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
 };
 
 VAR(outline, 0, 0, 0xFFFFFF);
+VAR(dtoutline, 0, 0, 1);
 
 void renderoutline()
 {
@@ -1519,6 +1520,8 @@ void renderoutline()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3ub((outline>>16)&0xFF, (outline>>8)&0xFF, outline&0xFF);
+
+    if(dtoutline) glDisable(GL_DEPTH_TEST);
 
     resetorigin();    
     GLuint vbufGL = 0, ebufGL = 0;
@@ -1550,6 +1553,8 @@ void renderoutline()
         glde++;
         xtravertsva += va->verts;
     };
+
+    if(dtoutline) glEnable(GL_DEPTH_TEST);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
