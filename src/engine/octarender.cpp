@@ -688,7 +688,6 @@ void vaclearc(cube *c)
     };
 };
 
-static ivec bbmin, bbmax;
 static vector<octaentities *> vamms;
 
 struct mergedface
@@ -802,17 +801,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
     };
     if(!c.children || lodcube) genskyfaces(c, ivec(cx, cy, cz), size, lodcube);
 
-    if(!isempty(c))
-    {
-        gencubeverts(c, cx, cy, cz, size, csi, lodcube);
-
-        if(cx<bbmin.x) bbmin.x = cx;
-        if(cy<bbmin.y) bbmin.y = cy;
-        if(cz<bbmin.z) bbmin.z = cz;
-        if(cx+size>bbmax.x) bbmax.x = cx+size;
-        if(cy+size>bbmax.y) bbmax.y = cy+size;
-        if(cz+size>bbmax.z) bbmax.z = cz+size;
-    };
+    if(!isempty(c)) gencubeverts(c, cx, cy, cz, size, csi, lodcube);
 
     if(lodcube) return;
 
@@ -827,6 +816,25 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
     if(csi < VVEC_INT && vamerges[csi].count) addmergedverts(csi);
 
     cstats[csi].nleaf++;
+};
+
+void calcvabb(int cx, int cy, int cz, int size, ivec &bbmin, ivec &bbmax)
+{
+    vvec vmin(cx+size, cy+size, cz+size), vmax(cx, cy, cz);
+
+    loopv(verts)
+    {
+        vvec &v = verts[i];
+        loopj(3)
+        {
+            if(v[j]<vmin[j]) vmin[j] = v[j];
+            if(v[j]>vmax[j]) vmax[j] = v[j];
+        };
+    };
+
+    bbmin = vmin.toivec(cx, cy, cz);
+    loopi(3) vmax[i] += (1<<VVEC_FRAC)-1;
+    bbmax = vmax.toivec(cx, cy, cz);
 };
 
 void setva(cube &c, int cx, int cy, int cz, int size, int csi)
@@ -844,10 +852,11 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
     vamms.setsizenodelete(0);
 
-    bbmin = ivec(cx+size, cy+size, cz+size);
-    bbmax = ivec(cx, cy, cz);
-
     rendercube(c, cx, cy, cz, size, csi);
+
+    ivec bbmin, bbmax;
+
+    calcvabb(cx, cy, cz, size, bbmin, bbmax);
 
     addskyverts(ivec(cx, cy, cz), size);
 
