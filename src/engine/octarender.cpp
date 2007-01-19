@@ -1897,6 +1897,8 @@ void setupTMUs()
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); };
         glActiveTexture_(GL_TEXTURE0_ARB);
         glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
+        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
     };
 
     glColor4f(1, 1, 1, 1);
