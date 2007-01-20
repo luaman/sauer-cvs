@@ -424,7 +424,7 @@ extern mapmodelinfo &getmminfo(int i);
 // renderparticles
 extern void particleinit();
 
-extern void entity_particles(entity &e);
+extern void entity_particles();
 
 // 3dgui
 extern void g3d_render();

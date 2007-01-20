@@ -435,7 +435,7 @@ void particle_fireball(const vec &dest, float max, int type)
 
 
 //Note: if fade!=1 then must always use emit_particles() check to limit rate
-void entity_particles(entity &e) 
+static void makeparticles(entity &e) 
 {
     switch(e.attr1) 
     {
@@ -461,3 +461,18 @@ void entity_particles(entity &e)
             particle_text(e.o, ds, 16, 1);
     };
 };
+
+void entity_particles()
+{
+    if(editmode) return;
+
+    const vector<extentity *> &ents = et->getents();
+    
+    loopv(ents)
+    {
+        entity &e = *ents[i];
+        if(e.type != ET_PARTICLES) continue;
+        if(e.o.dist(camera1->o)<128) makeparticles(e);
+    };
+};
+
