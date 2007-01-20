@@ -875,8 +875,6 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
     }; 
 };
 
-extern vector<vtxarray *> valist;
-
 void resetlightmaps()
 {
     loopv(lightmaps) DELETEA(lightmaps[i].converted);
@@ -890,8 +888,6 @@ static Uint32 calclight_timer(Uint32 interval, void *param)
     return interval;
 };
     
-extern vector<vtxarray *> valist;
-
 void calclight(int *quality)
 {
     switch(*quality)
