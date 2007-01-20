@@ -583,6 +583,7 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
 
     resetlightmaps();
     clearlights();
+    clearmapsounds();
     allchanged();
 
     overrideidents = true;

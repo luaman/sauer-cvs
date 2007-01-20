@@ -1409,8 +1409,6 @@ VAR(hudgunfov, 10, 65, 150);
 
 void gl_drawframe(int w, int h, float curfps)
 {
-    entity_particles();
-
     defaultshader->set();
 
     recomputecamera();

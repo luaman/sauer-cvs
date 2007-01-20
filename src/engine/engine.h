@@ -431,3 +431,9 @@ extern void g3d_render();
 extern bool g3d_windowhit(bool on, bool act);
 
 extern void g3d_mainmenu();
+
+// sound
+extern void checkmapsounds();
+extern void clearmapsounds();
+extern void updatevol();
+

@@ -408,6 +408,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         };
         if(hdr.version <= 20 && e.type >= ET_ENVMAP) e.type++;
         if(hdr.version <= 21 && e.type >= ET_PARTICLES) e.type++;
+        if(hdr.version <= 22 && e.type >= ET_SOUND) e.type++;
         if(!samegame)
         {
             if(e.type>=ET_GAMESPECIFIC || hdr.version<=14)
@@ -444,6 +445,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
 
+    clearmapsounds();
     cleanreflections();
     resetlightmaps();
     if(hdr.version < 7 || !hdr.lightmaps) clearlights();

@@ -61,6 +61,7 @@ struct cubeloader
         else if(ce.type>=ET_MAPMODEL && ce.type<16) ce.type++;
         if(ce.type>=ET_ENVMAP) ce.type++;
         if(ce.type>=ET_PARTICLES) ce.type++; 
+        if(ce.type>=ET_SOUND) ce.type++;
         extentity &e = *et->newentity();
         et->getents().add(&e);
         e.type = ce.type;

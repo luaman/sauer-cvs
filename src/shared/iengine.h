@@ -145,7 +145,7 @@ extern bool entinmap(dynent *d, bool avoidplayers = false);
 extern void findplayerspawn(dynent *d, int forceent = -1);
 
 // sound
-extern void playsound    (int n,   const vec *loc = NULL);
+extern void playsound    (int n,   const vec *loc = NULL, extentity *ent = NULL);
 extern void playsoundname(char *s, const vec *loc = NULL, int vol = 0);
 extern void initsound();
 

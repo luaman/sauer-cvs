@@ -483,7 +483,10 @@ int main(int argc, char **argv)
         fps = (1000.0f/elapsed+fps*10)/11;
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
 
-        extern void updatevol(); updatevol();
+        // miscellaneous general game effects
+        entity_particles();
+        updatevol();
+        checkmapsounds();
 
         inbetweenframes = false;
         SDL_GL_SwapBuffers();
