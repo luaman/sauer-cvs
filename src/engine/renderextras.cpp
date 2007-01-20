@@ -158,8 +158,6 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
 };
 
 
-void renderspheres(int time) {};
-
 string closeent;
 
 char *entname(entity &e)
