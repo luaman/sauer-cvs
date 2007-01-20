@@ -215,11 +215,10 @@ cube &blockcube(int x, int y, int z, const block3 &b, int rgrid) // looks up a w
 ////////////// cursor ///////////////
 
 int selchildcount=0;
-ivec origin(0,0,0);
 
 ICOMMAND(havesel, "", intret(havesel ? selchildcount : 0));
 
-void countselchild(cube *c, ivec &cor, int size)
+void countselchild(cube *c, const ivec &cor, int size)
 {
     ivec ss(sel.s);
     ss.mul(sel.grid);
@@ -389,7 +388,7 @@ void cursorupdate()
 
         sel.corner = (cor[R[d]]-lu[R[d]]/g2)+(cor[C[d]]-lu[C[d]]/g2)*2;
         selchildcount = 0;
-        countselchild(worldroot, origin, hdr.worldsize/2);
+        countselchild(worldroot, vec(0, 0, 0), hdr.worldsize/2);
         if(mag>1 && selchildcount==1) selchildcount = -mag;
     };
     
@@ -437,7 +436,7 @@ void cursorupdate()
 
 //////////// ready changes to vertex arrays ////////////
 
-void readychanges(block3 &b, cube *c, ivec &cor, int size)
+void readychanges(block3 &b, cube *c, const ivec &cor, int size)
 {
     loopoctabox(cor, size, b.o, b.s)
     {
@@ -476,7 +475,7 @@ void changed(const block3 &sel)
     {
         b.o[i] -= 1;
         b.s[i] += 2;
-        readychanges(b, worldroot, origin, hdr.worldsize/2);
+        readychanges(b, worldroot, vec(0, 0, 0), hdr.worldsize/2);
         b.o[i] += 1;
         b.s[i] -= 2;
     };
