@@ -44,6 +44,16 @@ static Texture *parttexs[8];
 
 void particleinit()
 {    
+    GLUquadricObj *qsphere = gluNewQuadric();
+    if(!qsphere) fatal("glu sphere");
+    gluQuadricDrawStyle(qsphere, GLU_FILL);
+    gluQuadricOrientation(qsphere, GLU_OUTSIDE);
+    gluQuadricTexture(qsphere, GL_TRUE);
+    glNewList(1, GL_COMPILE);
+    gluSphere(qsphere, 1, 12, 6);
+    glEndList();
+    gluDeleteQuadric(qsphere);
+
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
     parttexs[2] = textureload("data/martin/smoke.png");

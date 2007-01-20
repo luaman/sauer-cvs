@@ -341,16 +341,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
     if(fsaa) glEnable(GL_MULTISAMPLE);
 
-    GLUquadricObj *qsphere = gluNewQuadric();
-    if(!qsphere) fatal("glu sphere");
-    gluQuadricDrawStyle(qsphere, GLU_FILL);
-    gluQuadricOrientation(qsphere, GLU_OUTSIDE);
-    gluQuadricTexture(qsphere, GL_TRUE);
-    glNewList(1, GL_COMPILE);
-    gluSphere(qsphere, 1, 12, 6);
-    glEndList();
-    gluDeleteQuadric(qsphere);
-
     exec("data/stdshader.cfg");
     defaultshader = lookupshaderbyname("default");
     notextureshader = lookupshaderbyname("notexture");
@@ -1315,7 +1305,6 @@ void drawreflection(float z, bool refract, bool clear)
     glDisable(GL_FOG);
     defaultshader->set();
 
-    renderspheres(0);
     render_particles(0);
 
     if(reflectclip) undoclipmatrix();
@@ -1489,7 +1478,6 @@ void gl_drawframe(int w, int h, float curfps)
     glDisable(GL_FOG);
     defaultshader->set();
     
-    renderspheres(curtime);
     render_particles(curtime);
 
     glDisable(GL_CULL_FACE);

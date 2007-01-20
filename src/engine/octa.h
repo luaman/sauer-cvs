@@ -218,4 +218,3 @@ enum
     VFC_NOT_VISIBLE
 };
 
-struct block { int x, y, xs, ys; };
