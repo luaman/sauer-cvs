@@ -160,12 +160,11 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
 
 void renderspheres(int time) {};
 
-
-
-string closeent, fullentname;
+string closeent;
 
 char *entname(entity &e)
 {
+    static string fullentname;
     s_strcpy(fullentname, "@");
     s_strcat(fullentname, et->entname(e.type));
     const char *einfo = et->entnameinfo(e);
@@ -237,12 +236,11 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     };
 };
 
-GLfloat mm[16];
-
 vec worldpos, camright, camup;
 
 void aimat()
 {
+    static GLfloat mm[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, mm);
 
     camright = vec(mm[0], mm[4], mm[8]);
