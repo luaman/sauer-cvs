@@ -190,7 +190,7 @@ void renderents()       // show sparkly thingies for map entities in edit mode
         {
             particle_text(e.o, entname(e), &e==c ? 14 : 11, 1);
         };
-        if(emit_particles()) particle_splash(2, 2, 40, e.o);
+        regular_particle_splash(2, 2, 40, e.o);
     };
     loopv(entgroup)
     {

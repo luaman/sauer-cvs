@@ -31,7 +31,7 @@ VARP(emitfps, 1, 60, 200);
 static int lastemitframe = 0;
 static bool emit = false;
 
-bool emit_particles()
+static bool emit_particles()
 {
     if(reflecting) return false;
     if(emit) return emit;
@@ -134,13 +134,6 @@ void render_particles(int time)
         {0,           0, 255,    0, -1,  0,  0.3f, 2.3f, 500 }, // green focused fast spinning
         {0,           255, 255,  0, 20,  0, 0.32f, 0.5f, 150 }, // yellow orbiting fast spinning - light    
         { PT_TRAIL,   50, 50, 255,   2 , 0, 0.60f, 0.0f,   0 }, // water  
-    };
-    
-    if(!reflecting && emit) 
-    {
-        int emitmillis = 1000/emitfps;
-        lastemitframe = lastmillis-(lastmillis%emitmillis);
-        emit = false;
     };
     
     bool enabled = false;
@@ -337,6 +330,11 @@ void render_particles(int time)
 
 VARP(maxparticledistance, 256, 512, 4096);
 
+void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) {
+    if(!emit_particles() || (delay > 0 && rnd(delay) != 0)) return;
+    particle_splash(type, num, fade, p);
+};
+
 void particle_splash(int type, int num, int fade, const vec &p)
 {
     if(camera1->o.dist(p)>maxparticledistance) return; 
@@ -345,7 +343,6 @@ void particle_splash(int type, int num, int fade, const vec &p)
         newparticle(p, vec(0,0,1), 1, type);
         return;
     };
-    if(!emit_particles()) return;
     loopi(num)
     {
         const int radius = type==5 ? 50 : 150;
@@ -445,14 +442,14 @@ static void makeparticles(entity &e)
     switch(e.attr1) 
     {
         case 0: //fire
-            particle_splash(4, 1, 40, e.o);                
-            if(emit_particles() && (rnd(3) == 1)) particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+2.0));
+            regular_particle_splash(4, 1, 40, e.o);                
+            regular_particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+2.0), 3);
             break;
         case 1: //smoke vent
-            particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+            regular_particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
             break;
         case 2: //water fountain
-            particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+            regular_particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
             break;
         case 22: //fire ball
         case 23:
@@ -466,6 +463,13 @@ static void makeparticles(entity &e)
 
 void entity_particles()
 {
+    if(emit) 
+    {
+        int emitmillis = 1000/emitfps;
+        lastemitframe = lastmillis-(lastmillis%emitmillis);
+        emit = false;
+    };
+
     if(editmode) return;
 
     const vector<extentity *> &ents = et->getents();
