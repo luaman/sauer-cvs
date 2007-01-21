@@ -340,6 +340,12 @@ VARP(maxparticledistance, 256, 512, 4096);
 void particle_splash(int type, int num, int fade, const vec &p)
 {
     if(camera1->o.dist(p)>maxparticledistance) return; 
+    if(fade == 1) //special case - show for one frame
+    {
+        newparticle(p, vec(0,0,1), 1, type);
+        return;
+    };
+    if(!emit_particles()) return;
     loopi(num)
     {
         const int radius = type==5 ? 50 : 150;
@@ -434,23 +440,19 @@ void particle_fireball(const vec &dest, float max, int type)
 };
 
 
-//Note: if fade!=1 then must always use emit_particles() check to limit rate
 static void makeparticles(entity &e) 
 {
     switch(e.attr1) 
     {
         case 0: //fire
-            if(emit_particles()) 
-            {
-                particle_splash(4, 1, 40, e.o);                
-                if(rnd(3) == 1) particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+2.0));
-            };
+            particle_splash(4, 1, 40, e.o);                
+            if(emit_particles() && (rnd(3) == 1)) particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+2.0));
             break;
         case 1: //smoke vent
-            if(emit_particles()) particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+            particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
             break;
         case 2: //water fountain
-            if(emit_particles()) particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+            particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
             break;
         case 22: //fire ball
         case 23:
