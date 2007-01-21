@@ -43,6 +43,7 @@ struct soundslot
 {
     sample *s;
     int vol;
+    int uses, maxuses;
 };
 
 struct soundloc { vec loc; bool inuse; soundslot *slot; extentity *ent; } soundlocs[MAXCHAN];
@@ -178,7 +179,7 @@ int findsound(char *name, int vol, vector<soundslot> &sounds)
     return -1;
 };
 
-int addsound(char *name, int vol, vector<soundslot> &sounds)
+int addsound(char *name, int vol, int maxuses, vector<soundslot> &sounds)
 {
     sample *s = samples.access(name);
     if(!s)
@@ -191,14 +192,16 @@ int addsound(char *name, int vol, vector<soundslot> &sounds)
     soundslot &slot = sounds.add();
     slot.s = s;
     slot.vol = vol ? vol : 100;
+    slot.uses = 0;
+    slot.maxuses = maxuses;
     return sounds.length()-1;
 };
 
-void registersound(char *name, int *vol) { intret(addsound(name, *vol, gamesounds)); };
+void registersound(char *name, int *vol) { intret(addsound(name, *vol, 0, gamesounds)); };
 COMMAND(registersound, "si");
 
-void mapsound(char *name, int *vol) { intret(addsound(name, *vol, mapsounds)); };
-COMMAND(mapsound, "si");
+void mapsound(char *name, int *vol, int *maxuses) { intret(addsound(name, *vol, *maxuses, mapsounds)); };
+COMMAND(mapsound, "sii");
 
 void clear_sound()
 {
@@ -225,6 +228,7 @@ void clearmapsounds()
         #endif
         soundlocs[i].inuse = false;
         soundlocs[i].ent->visible = false;
+        soundlocs[i].slot->uses--;
     };
     mapsounds.setsizenodelete(0);
 };
@@ -303,7 +307,11 @@ void updatevol()
             else 
             {
                 soundlocs[i].inuse = false;
-                if(soundlocs[i].ent) soundlocs[i].ent->visible = false;
+                if(soundlocs[i].ent) 
+                {
+                    soundlocs[i].ent->visible = false;
+                    soundlocs[i].slot->uses--;
+                };
             };
     };
 #ifndef USE_MIXER
@@ -314,19 +322,21 @@ void updatevol()
 #endif
 };
 
-int soundsatonce = 0, lastsoundmillis = 0;
-
 void playsound(int n, const vec *loc, extentity *ent)
 {
     if(nosound) return;
     if(!soundvol) return;
+
+    static int soundsatonce = 0, lastsoundmillis = 0;
     if(lastmillis==lastsoundmillis) soundsatonce++; else soundsatonce = 1;
     lastsoundmillis = lastmillis;
     if(soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss and in sp
+
     vector<soundslot> &sounds = ent ? mapsounds : gamesounds;
     if(!sounds.inrange(n)) { conoutf("unregistered sound: %d", n); return; };
-
     soundslot &slot = sounds[n];
+    if(ent && slot.maxuses && slot.uses>=slot.maxuses) return;
+
     if(!slot.s->sound)
     {
         s_sprintfd(buf)("packages/sounds/%s.wav", slot.s->name);
@@ -346,10 +356,12 @@ void playsound(int n, const vec *loc, extentity *ent)
         int chan = FSOUND_PlaySoundEx(FSOUND_FREE, slot.s->sound, NULL, true);
     #endif
     if(chan<0) return;
+
     if(ent)
     {
         loc = &ent->o;
         ent->visible = true;
+        slot.uses++;
     };
     if(loc) newsoundloc(chan, loc, &slot, ent);
     updatechanvol(chan, slot.vol, loc, ent);
@@ -362,7 +374,7 @@ void playsoundname(char *s, const vec *loc, int vol)
 { 
     if(!vol) vol = 100;
     int id = findsound(s, vol, gamesounds);
-    if(id < 0) id = addsound(s, vol, gamesounds);
+    if(id < 0) id = addsound(s, vol, 0, gamesounds);
     playsound(id, loc);
 };
 
