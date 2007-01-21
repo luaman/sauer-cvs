@@ -146,7 +146,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = *(bouncers[i]);
-            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) particle_splash(5, 1, 150, bnc.o);
+            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) regular_particle_splash(5, 1, 150, bnc.o);
             vec old(bnc.o);
             int rtime = time;
             while(rtime > 0)
@@ -346,11 +346,11 @@ struct weaponstate
                 {   
                     if(p.gun==GUN_RL) 
                     {
-                        particle_splash(5, 2, 300, v); 
+                        regular_particle_splash(5, 2, 300, v); 
                     }
                     else 
                     {
-                         particle_splash(1, 2, 300, v); 
+                         regular_particle_splash(1, 2, 300, v); 
                          particle_splash(guns[p.gun].part, 1, 1, v);
                     };
                 };   
