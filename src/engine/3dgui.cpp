@@ -16,7 +16,8 @@ static int fieldpos = -1; //-1=no focus, -2=wanting to commit
 static bool fieldactive; 
 static char *fieldref;    //so can itentify the source of the field
 
-bool menukey(int code, bool isdown, int cooked) {
+bool menukey(int code, bool isdown, int cooked) 
+{
     if(code==-1 && g3d_windowhit(isdown, true)) return true;  
     else if(code==-3 && g3d_windowhit(isdown, false)) return true;
     
