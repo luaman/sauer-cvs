@@ -1,5 +1,3 @@
-// rendermd2.cpp: loader code adapted from a nehe tutorial
-
 #include "pch.h"
 #include "engine.h"
 
