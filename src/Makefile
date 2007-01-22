@@ -25,7 +25,9 @@ CLIENT_OBJS= \
 	engine/rendergl.o \
 	engine/rendermodel.o \
 	engine/renderparticles.o \
+	engine/rendersky.o \
 	engine/rendertext.o \
+	engine/renderva.o \
 	engine/server.o	\
 	engine/serverbrowser.o \
 	engine/spheretree.o \

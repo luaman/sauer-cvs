@@ -507,4 +507,37 @@ void savemap(char *mname) { save_world(mname); };
 COMMAND(savemap, "s");
 COMMAND(savecurrentmap, "");
 
+void writeobj(char *name)
+{
+    bool oldVBO = hasVBO;
+    hasVBO = false;
+    allchanged();
+    s_sprintfd(fname)("%s.obj", name);
+    FILE *f = fopen(fname, "w"); 
+    if(!f) return;
+    fprintf(f, "# obj file of sauerbraten level\n");
+    extern vector<vtxarray *> valist;
+    loopv(valist)
+    {
+        vtxarray &v = *valist[i];
+        vertex *verts = v.vbuf;
+        if(verts)
+        {
+            loopj(v.verts) fprintf(f, "v %d %d %d\n", verts[j].x, verts[j].y, verts[j].z);
+            ushort *ebuf = v.l0.ebuf;
+            loopi(v.l0.texs) loopl(3) loopj(v.l0.eslist[i].length[l]/3)
+            {
+                fprintf(f, "f");
+                for(int k = 0; k<3; k++) fprintf(f, " %d", ebuf[k]-v.verts);
+                ebuf += 3;
+                fprintf(f, "\n");
+            };
+        };
+    };
+    fclose(f);
+    hasVBO = oldVBO;
+    allchanged();
+};  
+    
+COMMAND(writeobj, "s"); 
 

@@ -255,6 +255,7 @@ extern void freeclipplanes(cube &c);
 extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s);
 extern void forcemip(cube &c);
 extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
+extern void converttovectorworld();
 extern int faceverts(cube &c, int orient, int vert);
 extern void calcvert(cube &c, int x, int y, int z, int size, vvec &vert, int i, bool solid = false);
 extern void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube);
@@ -293,20 +294,21 @@ extern void render_texture_panel(int w, int h);
 extern void addundo(undoblock &u);
 
 // octarender
-extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int fov);
-extern void reflectvfcP(float z);
-extern void restorevfcP();
 extern void octarender();
-extern void rendermapmodels();
-extern void rendergeom();
-extern void renderoutline();
 extern void allchanged(bool load = false);
-extern void rendersky(bool explicitonly = false, float zreflect = 0);
-extern void converttovectorworld();
-
 extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va, bool reparent = true);
+
+// renderva
+extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int fov);
+extern void reflectvfcP(float z);
+extern void restorevfcP();
+extern void rendermapmodels();
+extern void rendergeom();
+extern void renderoutline();
+extern void rendersky(bool explicitonly = false, float zreflect = 0);
+
 extern int isvisiblesphere(float rad, const vec &cv);
 extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);
 extern occludequery *newquery(void *owner);
@@ -424,8 +426,11 @@ extern mapmodelinfo &getmminfo(int i);
 
 // renderparticles
 extern void particleinit();
-
 extern void entity_particles();
+
+// rendersky
+extern void drawskybox(int farplane, bool limited, float zreflect = 0);
+extern bool limitsky();
 
 // 3dgui
 extern void g3d_render();
