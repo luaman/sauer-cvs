@@ -899,6 +899,12 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool 
     m.y += strafe*-sinf(RAD*(yaw));
 };
 
+void vectoyawpitch(const vec &v, float &yaw, float &pitch)
+{
+    yaw = -(float)atan2(v.x, v.y)/RAD + 180;
+    pitch = asin(v.z/v.magnitude())/RAD;
+};
+
 VARP(maxroll, 0, 3, 20);
 
 void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curtime)

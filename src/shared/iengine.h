@@ -137,6 +137,7 @@ extern void avoidcollision(physent *d, const vec &dir, physent *obstacle, float 
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
 extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
+extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 extern bool intersect(physent *d, vec &from, vec &to);
 extern void updatephysstate(physent *d);
 extern void cleardynentcache();
@@ -156,7 +157,6 @@ extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int var
 extern void abovemodel(vec &o, const char *mdl);
 extern void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain);
 extern void setbbfrommodel(dynent *d, char *mdl);
-extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 
 // server
 #define MAXCLIENTS 256                  // in a multiplayer game, can be arbitrarily changed
