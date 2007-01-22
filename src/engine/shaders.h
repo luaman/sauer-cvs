@@ -1,7 +1,7 @@
 // GL_ARB_vertex_program, GL_ARB_fragment_program
 extern PFNGLGENPROGRAMSARBPROC            glGenPrograms_;
 extern PFNGLBINDPROGRAMARBPROC            glBindProgram_;
-extern PFNGLPROGRAMSTRINGARBPROC          glProgramString;
+extern PFNGLPROGRAMSTRINGARBPROC          glProgramString_;
 extern PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_;
 extern PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_;
 

@@ -210,9 +210,7 @@ extern icliententities *et;
 
 extern vector<int> entgroup;
 
-// rendergl
-extern bool hasVBO, hasOQ, hasFBO, hasCM, hasTC;
-
+// texture
 struct cubemapside
 {
     GLenum target;
@@ -221,9 +219,6 @@ struct cubemapside
 
 extern cubemapside cubemapsides[6];
 
-extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
-extern void cleangl();
-extern void gl_drawframe(int w, int h, float curfps);
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
 extern GLuint cubemapfromsky(int size);
 extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true);
@@ -231,6 +226,14 @@ extern void drawcubemap(int size, const vec &o, float yaw, float pitch);
 extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
+extern void renderfullscreenshader(int w, int h);
+
+// rendergl
+extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC;
+
+extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
+extern void cleangl();
+extern void gl_drawframe(int w, int h, float curfps);
 extern void setfogplane(float scale = 0, float z = 0);
 
 // renderextras
