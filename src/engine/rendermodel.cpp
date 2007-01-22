@@ -185,6 +185,32 @@ extern int waterfog, reflectdist;
 
 VAR(showboundingbox, 0, 0, 2);
 
+void model::setshader()
+{
+    if(renderpath==R_FIXEDFUNCTION) return;
+    
+    if(shader) shader->set();
+    else
+    {
+        static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL;
+
+        if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
+        if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
+        if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
+
+        (masked ? modelshadermasks : (spec>=0.01f ? modelshader : modelshadernospec))->set();
+    };
+
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, spec, spec, spec, 0);
+    
+    GLfloat color[4];
+    glGetFloatv(GL_CURRENT_COLOR, color); 
+    vec diffuse = vec(color).mul(ambient);
+    loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
+    glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+};
+
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
 {
     model *m = loadmodel(mdl); 
