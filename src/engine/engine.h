@@ -373,6 +373,7 @@ extern void writecfg();
 
 // console
 extern void writebinds(FILE *f);
+extern void writecompletions(FILE *f);
 
 // main
 extern void estartmap(const char *name);

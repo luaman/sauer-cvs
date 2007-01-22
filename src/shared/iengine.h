@@ -59,8 +59,6 @@ extern int execute(char *p);
 extern char *executeret(char *p);
 extern void exec(char *cfgfile);
 extern bool execfile(char *cfgfile);
-extern void resetcomplete();
-extern void complete(char *s);
 extern void alias(char *name, char *action);
 extern const char *getalias(char *name);
 
@@ -70,6 +68,8 @@ extern void rendercommand(int x, int y);
 extern int renderconsole(int w, int h);
 extern void conoutf(const char *s, ...);
 extern char *getcurcommand();
+extern void resetcomplete();
+extern void complete(char *s);
 
 // menus
 extern vec menuinfrontofplayer();

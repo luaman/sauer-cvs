@@ -3,9 +3,6 @@
 
 #include "pch.h"
 #include "engine.h"
-#ifndef WIN32
-#include <dirent.h>
-#endif
 
 void itoa(char *s, int i) { s_sprintf(s)("%d", i); };
 char *exchangestr(char *o, const char *n) { delete[] o; return newstring(n); };
@@ -504,170 +501,6 @@ int execute(char *p)
     return i;
 };
 
-// tab-completion of all idents and base maps
-
-struct fileskey
-{
-    const char *dir, *ext;
-
-    fileskey() {};
-    fileskey(const char *dir, const char *ext) : dir(dir), ext(ext) {};
-};
-
-struct filesval
-{
-    char *dir, *ext;
-    vector<char *> files;
-
-    filesval(const char *dir, const char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {};
-    ~filesval() { DELETEA(dir); DELETEA(ext); loopv(files) DELETEA(files[i]); files.setsize(0); };
-};
-
-static inline bool htcmp(const fileskey &x, const fileskey &y)
-{
-    return !strcmp(x.dir, y.dir) && (x.ext == y.ext || (x.ext && y.ext && !strcmp(x.ext, y.ext)));
-};
-
-static inline uint hthash(const fileskey &k)
-{
-    return hthash(k.dir);
-};
-
-static hashtable<fileskey, filesval *> completefiles;
-static hashtable<char *, filesval *> completions;
-
-int completesize = 0;
-string lastcomplete;
-
-void resetcomplete() { completesize = 0; }
-
-void addcomplete(char *command, char *dir, char *ext)
-{
-    if(overrideidents)
-    {
-        conoutf("cannot override complete %s", command);
-        return;
-    };
-    if(!dir[0])
-    {
-        filesval **hasfiles = completions.access(command);
-        if(hasfiles) *hasfiles = NULL;
-        return;
-    };
-    int dirlen = (int)strlen(dir);
-    while(dirlen > 0 && (dir[dirlen-1] == '/' || dir[dirlen-1] == '\\'))
-        dir[--dirlen] = '\0';
-    if(strchr(ext, '*')) ext[0] = '\0';
-    fileskey key(dir, ext[0] ? ext : NULL);
-    filesval **val = completefiles.access(key);
-    if(!val)
-    {
-        filesval *f = new filesval(dir, ext);
-        val = &completefiles[fileskey(f->dir, f->ext)];
-        *val = f;
-    };
-    filesval **hasfiles = completions.access(command);
-    if(hasfiles) *hasfiles = *val;
-    else completions[newstring(command)] = *val;
-};
-
-COMMANDN(complete, addcomplete, "sss");
-
-void buildfilenames(filesval *f)
-{
-    int extsize = f->ext ? (int)strlen(f->ext)+1 : 0;
-    #if defined(WIN32)
-    s_sprintfd(pathname)("%s\\*.%s", f->dir, f->ext ? f->ext : "*");
-    WIN32_FIND_DATA	FindFileData;
-    HANDLE Find = FindFirstFile(path(pathname), &FindFileData);
-    if(Find != INVALID_HANDLE_VALUE)
-    {
-        do {
-            f->files.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - extsize));
-        } while(FindNextFile(Find, &FindFileData));
-    }
-    #elif defined(__GNUC__)
-    string pathname;
-    s_strcpy(pathname, f->dir);
-    DIR *d = opendir(path(pathname));
-    if(d)
-    {
-        struct dirent *dir;
-        while((dir = readdir(d)) != NULL)
-        {
-            if(!f->ext) f->files.add(newstring(dir->d_name));
-            else
-            {
-                int namelength = strlen(dir->d_name) - extsize;
-                if(namelength > 0 && dir->d_name[namelength] == '.' && strncmp(dir->d_name+namelength+1, f->ext, extsize-1)==0)
-                    f->files.add(newstring(dir->d_name, namelength));
-            };
-        };
-        closedir(d);
-    }
-    #else
-    if(0)
-    #endif
-    else conoutf("unable to read base folder for map autocomplete");
-};
-
-void complete(char *s)
-{
-    if(*s!='/')
-    {
-        string t;
-        s_strcpy(t, s);
-        s_strcpy(s, "/");
-        s_strcat(s, t);
-    };
-    if(!s[1]) return;
-    if(!completesize) { completesize = (int)strlen(s)-1; lastcomplete[0] = '\0'; };
-
-    filesval *f = NULL;
-    if(completesize)
-    {
-        char *end = strchr(s, ' ');
-        if(end)
-        {
-            string command;
-            s_strncpy(command, s+1, min(size_t(end-s), sizeof(command)));
-            filesval **hasfiles = completions.access(command);
-            if(hasfiles) f = *hasfiles;
-        };
-    };
-
-    char *nextcomplete = NULL;
-    string prefix;
-    s_strcpy(prefix, "/");
-    if(f) // complete using filenames
-    {
-        int commandsize = strchr(s, ' ')+1-s; 
-        s_strncpy(prefix, s, min(size_t(commandsize+1), sizeof(prefix)));
-        if(f->files.empty()) buildfilenames(f);
-        loopi(f->files.length())
-        {
-            if(strncmp(f->files[i], s+commandsize, completesize+1-commandsize)==0 && 
-               strcmp(f->files[i], lastcomplete) > 0 && (!nextcomplete || strcmp(f->files[i], nextcomplete) < 0))
-                nextcomplete = f->files[i];
-        };
-    }
-    else // complete using command names
-    {
-        enumerate(*idents, ident, id,
-            if(strncmp(id._name, s+1, completesize)==0 &&
-               strcmp(id._name, lastcomplete) > 0 && (!nextcomplete || strcmp(id._name, nextcomplete) < 0))
-                nextcomplete = id._name;
-        );
-    };
-    if(nextcomplete)
-    {
-        s_strcpy(s, prefix);
-        s_strcat(s, nextcomplete);
-        s_strcpy(lastcomplete, nextcomplete);
-    }
-    else lastcomplete[0] = '\0';
-};
-
 bool execfile(char *cfgfile)
 {
     string s;
@@ -707,9 +540,7 @@ void writecfg()
         };
     );
     fprintf(f, "\n");
-    enumeratekt(completions, char *, k, filesval *, v,
-        if(v) fprintf(f, "complete \"%s\" \"%s\" \"%s\"\n", k, v->dir, v->ext ? v->ext : "*");
-    );
+    writecompletions(f);
     fclose(f);
 };
 
