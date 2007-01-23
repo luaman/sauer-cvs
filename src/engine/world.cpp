@@ -132,6 +132,20 @@ void entitiesinoctanodes()
     loopv(et->getents()) addentity(i);
 };
 
+char *entname(entity &e)
+{
+    static string fullentname;
+    s_strcpy(fullentname, "@");
+    s_strcat(fullentname, et->entname(e.type));
+    const char *einfo = et->entnameinfo(e);
+    if(*einfo)
+    {
+        s_strcat(fullentname, ": ");
+        s_strcat(fullentname, einfo);
+    };
+    return fullentname;
+};
+
 extern selinfo sel;
 extern bool havesel, selectcorners;
 extern bool undogoahead;

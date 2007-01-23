@@ -136,7 +136,7 @@ extern bool bounce(physent *d, float secs, float elasticity = 0.8f, float waterf
 extern void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
-extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating);
+extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m);
 extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 extern bool intersect(physent *d, vec &from, vec &to);
 extern void updatephysstate(physent *d);

@@ -18,7 +18,7 @@ VARP(menudistance, 16, 40, 256);
 vec menuinfrontofplayer()
 { 
     vec dir;
-    vecfromyawpitch(camera1->yaw, 0, 1, 0, dir, false);
+    vecfromyawpitch(camera1->yaw, 0, 1, 0, dir);
     dir.mul(menudistance).add(camera1->o);
     dir.z -= player->eyeheight-1;
     return dir;

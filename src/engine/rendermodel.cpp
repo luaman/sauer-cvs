@@ -178,13 +178,6 @@ bool modeloccluded(const vec &center, float radius)
     return bboccluded(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br), worldroot, ivec(0, 0, 0), hdr.worldsize/2);
 };
 
-VARP(maxmodelradiusdistance, 10, 80, 1000);
-
-extern float reflecting, refracting;
-extern int waterfog, reflectdist;
-
-VAR(showboundingbox, 0, 0, 2);
-
 void model::setshader()
 {
     if(renderpath==R_FIXEDFUNCTION) return;
@@ -210,6 +203,46 @@ void model::setshader()
     glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
     glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
 };
+
+VAR(showboundingbox, 0, 0, 2);
+
+void render2dbox(vec &o, float x, float y, float z)
+{
+    glBegin(GL_POLYGON);
+    glVertex3f(o.x, o.y, o.z);
+    glVertex3f(o.x, o.y, o.z+z);
+    glVertex3f(o.x+x, o.y+y, o.z+z);
+    glVertex3f(o.x+x, o.y+y, o.z);
+    glEnd();
+};
+
+void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradius)
+{
+    if(yradius<=0) yradius = xradius;
+    vec c = o;
+    c.sub(vec(xradius, yradius, tofloor));
+    float xsz = xradius*2, ysz = yradius*2;
+    float h = tofloor+toceil;
+    notextureshader->set();
+    glColor3f(1, 1, 1);
+    glDisable(GL_CULL_FACE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDepthMask(GL_FALSE);
+    render2dbox(c, xsz, 0, h);
+    render2dbox(c, 0, ysz, h);
+    c.add(vec(xsz, ysz, 0));
+    render2dbox(c, -xsz, 0, h);
+    render2dbox(c, 0, -ysz, h);
+    glDepthMask(GL_TRUE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
+    xtraverts += 16;
+};
+
+VARP(maxmodelradiusdistance, 10, 80, 1000);
+
+extern float reflecting, refracting;
+extern int waterfog, reflectdist;
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
 {

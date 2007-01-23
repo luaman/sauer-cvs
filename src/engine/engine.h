@@ -211,10 +211,10 @@ extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
 extern void setfogplane(float scale = 0, float z = 0);
+extern void findorientation();
 
 // renderextras
 extern void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradius = 0);
-
 
 // octa
 extern cube *newcubes(uint face = F_EMPTY);
@@ -262,6 +262,7 @@ extern int mergefaces(int orient, cubeface *m, int sz);
 extern void mincubeface(cube &cu, int orient, const ivec &o, int size, const mergeinfo &orig, mergeinfo &cf);
 
 // ents
+extern char *entname(entity &e);
 extern bool haveselent();
 extern int rayent(const vec &o, vec &ray);
 extern void copyundoents(undoblock &d, undoblock &s);

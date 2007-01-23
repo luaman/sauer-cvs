@@ -879,24 +879,28 @@ void phystest()
 
 COMMAND(phystest, "");
 
-void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m, bool floating)
+void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m)
 {
-    m.x = move*sinf(RAD*(yaw));
-    m.y = move*-cosf(RAD*(yaw));
+    if(move)
+    {
+        m.x = move*sinf(RAD*(yaw));
+        m.y = move*-cosf(RAD*(yaw));
+    }
+    else m.x = m.y = 0;
 
-    if(floating)
+    if(pitch)
     {
         m.x *= cosf(RAD*pitch);
         m.y *= cosf(RAD*pitch);
         m.z = move*sinf(RAD*pitch);
     }
-    else
-    {
-        m.z = 0;
-    };
+    else m.z = 0;
 
-    m.x += strafe*-cosf(RAD*(yaw));
-    m.y += strafe*-sinf(RAD*(yaw));
+    if(strafe)
+    {
+        m.x += strafe*-cosf(RAD*(yaw));
+        m.y += strafe*-sinf(RAD*(yaw));
+    };
 };
 
 void vectoyawpitch(const vec &v, float &yaw, float &pitch)
@@ -944,7 +948,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     vec m(0.0f, 0.0f, 0.0f);
     if(pl->move || pl->strafe)
     {
-        vecfromyawpitch(pl->yaw, pl->pitch, pl->move, pl->strafe, m, floating || water || pl->type==ENT_CAMERA);
+        vecfromyawpitch(pl->yaw, floating || water || pl->type==ENT_CAMERA ? pl->pitch : 0, pl->move, pl->strafe, m);
 
         if(!floating && pl->physstate >= PHYS_SLIDE)
         {
@@ -973,7 +977,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     {
         float mag = pl->vel.magnitude();
         vec m2;
-        vecfromyawpitch(pl->yaw, pl->pitch, 1, 0, m2, floating || water || pl->type==ENT_CAMERA);
+        vecfromyawpitch(pl->yaw, floating || water || pl->type==ENT_CAMERA ? pl->pitch : 0, 1, 0, m2);
         float dot = 1-m2.dot(pl->vel)/mag;
         if(pl->strafe && mag>100)
         {
@@ -1106,6 +1110,46 @@ void moveplayer(physent *pl, int moveres, bool local)
     if(pl->o.z<0 && pl->state==CS_ALIVE) cl->worldhurts(pl, 400);
 };
 
+void updatephysstate(physent *d)
+{
+    if(d->physstate == PHYS_FALL) return;
+    d->timeinair = 0;
+    vec old(d->o);
+    /* Attempt to reconstruct the floor state.
+     * May be inaccurate since movement collisions are not considered.
+     * If good floor is not found, just keep the old floor and hope it's correct enough.
+     */
+    switch(d->physstate)
+    {
+        case PHYS_SLOPE:
+        case PHYS_FLOOR:
+            d->o.z -= 0.1f;
+            if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
+                d->floor = wall;
+            else if(d->physstate == PHYS_SLOPE)
+            {
+                d->o.z -= d->radius;
+                if(!collide(d, vec(0, 0, -1), SLOPEZ))
+                    d->floor = wall;
+            }
+            break;
+
+        case PHYS_STEP_UP:
+            d->o.z -= STAIRHEIGHT+0.1f;
+            if(!collide(d, vec(0, 0, -1), SLOPEZ))
+                d->floor = wall;
+            break;
+
+        case PHYS_SLIDE:
+            d->o.z -= d->radius+0.1f;
+            if(!collide(d, vec(0, 0, -1)) && wall.z < SLOPEZ)
+                d->floor = wall;
+            break;
+    };
+    if(d->physstate > PHYS_FALL && d->floor.z <= 0) d->floor = vec(0, 0, 1);
+    d->o = old;
+};
+
 bool intersect(physent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
 {
     vec v = to, w = d->o, *p;
@@ -1192,45 +1236,5 @@ bool entinmap(dynent *d, bool avoidplayers)        // brute force but effective 
     // leave ent at original pos, possibly stuck
     d->o = orig;
     return false;
-};
-
-void updatephysstate(physent *d)
-{
-    if(d->physstate == PHYS_FALL) return;
-    d->timeinair = 0;
-    vec old(d->o);
-    /* Attempt to reconstruct the floor state.
-     * May be inaccurate since movement collisions are not considered.
-     * If good floor is not found, just keep the old floor and hope it's correct enough.
-     */
-    switch(d->physstate)
-    {
-        case PHYS_SLOPE:
-        case PHYS_FLOOR:
-            d->o.z -= 0.1f;
-            if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
-                d->floor = wall;
-            else if(d->physstate == PHYS_SLOPE)
-            {
-                d->o.z -= d->radius;
-                if(!collide(d, vec(0, 0, -1), SLOPEZ))
-                    d->floor = wall;
-            }
-            break;
-
-        case PHYS_STEP_UP:
-            d->o.z -= STAIRHEIGHT+0.1f;
-            if(!collide(d, vec(0, 0, -1), SLOPEZ))
-                d->floor = wall;
-            break;
-
-        case PHYS_SLIDE:
-            d->o.z -= d->radius+0.1f;
-            if(!collide(d, vec(0, 0, -1)) && wall.z < SLOPEZ)
-                d->floor = wall;
-            break;
-    };
-    if(d->physstate > PHYS_FALL && d->floor.z <= 0) d->floor = vec(0, 0, 1);
-    d->o = old;
 };
 

@@ -461,6 +461,8 @@ static void makeparticles(entity &e)
     };
 };
 
+extern int closestent();
+
 void entity_particles()
 {
     if(emit) 
@@ -470,15 +472,36 @@ void entity_particles()
         emit = false;
     };
 
-    if(editmode) return;
-
     const vector<extentity *> &ents = et->getents();
     
-    loopv(ents)
+    if(!editmode) loopv(ents)
     {
         entity &e = *ents[i];
         if(e.type != ET_PARTICLES) continue;
         if(e.o.dist(camera1->o)<128) makeparticles(e);
+    }
+    else // show sparkly thingies for map entities in edit mode
+    {
+        int s = haveselent() ? -1 : closestent();
+        extentity *c = s>=0 ? ents[s] : NULL;
+        loopv(ents)
+        {
+            entity &e = *ents[i];
+            if(e.type==ET_EMPTY) continue;
+            if(e.o.dist(camera1->o)<128)
+            {
+                particle_text(e.o, entname(e), &e==c ? 14 : 11, 1);
+            };
+            regular_particle_splash(2, 2, 40, e.o);
+        };
+        loopv(entgroup)
+        {
+            entity &e = *ents[entgroup[i]];
+            if(e.o.dist(camera1->o)<128)
+            {
+                particle_text(e.o, entname(e), 13, 1);
+            };
+        };
     };
 };
 

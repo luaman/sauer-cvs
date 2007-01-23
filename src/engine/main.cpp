@@ -484,6 +484,7 @@ int main(int argc, char **argv)
         //if(curtime>14) printf("%d: %d\n", millis, curtime);
 
         // miscellaneous general game effects
+        findorientation();
         entity_particles();
         updatevol();
         checkmapsounds();
