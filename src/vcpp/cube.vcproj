@@ -896,37 +896,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\engine\renderextras.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
 					RelativePath="..\engine\rendergl.cpp"
 					>
 					<FileConfiguration
@@ -1017,6 +986,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\rendersky.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\rendertext.cpp"
 					>
 					<FileConfiguration
@@ -1048,6 +1021,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\renderva.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\shaders.h"
 					>
 				</File>
@@ -1065,6 +1042,10 @@
 				</File>
 				<File
 					RelativePath="..\engine\spheretree.h"
+					>
+				</File>
+				<File
+					RelativePath="..\engine\texture.cpp"
 					>
 				</File>
 				<File
