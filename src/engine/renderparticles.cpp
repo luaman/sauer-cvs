@@ -5,7 +5,7 @@
 
 extern float reflecting, refracting;
 
-#define MAXPARTYPES 27
+#define MAXPARTYPES 28
 
 struct particle
 {
@@ -106,11 +106,11 @@ void render_particles(int time)
     static struct parttype { int type; uchar r, g, b; int gr, tex; float sz, rsz; int rv; } parttypes[MAXPARTYPES] =
     {
         { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
-        { 0,          137, 118, 97, -2,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small smoke
+        { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
         { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
         { 0,          255, 25, 25,   1,  2, 0.24f, 0.0f,   0 }, // red:    blood spats
         { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
-        { 0,          137, 118, 97,  -2, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big smoke   
+        { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
         { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
         { 0,          255, 255, 255, 20, 4,  4.8f, 0.0f,   0 }, // green:  big fireball3
         { PT_TEXTUP,  255, 75, 25,   -8, -1, 4.0f, 0.0f,   0 }, // 8 TEXT RED
@@ -126,14 +126,13 @@ void render_particles(int time)
         { PT_METER,   50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 18 METER BLUE, SMALL, NON-MOVING
         { PT_METERVS, 255, 25, 25,   0,  -1, 2.0f, 0.0f,   0 },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
         { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
-        { 0,          137, 118, 97, 20,   2, 0.6f, 0.0f,   0 },  // greyish-brown:   small smoke trail
+        { 0,          137, 118, 97, 20,   2, 0.6f, 0.0f,   0 },  // greyish-brown:   small  slowly sinking smoke trail
         {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f, 0.0f,   0 },  // red fireball
         {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange fireball 
-        
-        //TESTING
-        {0,           0, 255,    0, -1,  0,  0.3f, 2.3f, 500 }, // green focused fast spinning
-        {0,           255, 255,  0, 20,  0, 0.32f, 0.5f, 150 }, // yellow orbiting fast spinning - light    
-        { PT_TRAIL,   50, 50, 255,   2 , 0, 0.60f, 0.0f,   0 }, // water  
+        { 0,           0, 255,    0, -1,  0, 0.3f, 2.3f, 500 }, // TESTING - green focused fast spinning
+        { 0,           118, 97,137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke  
+        { PT_TRAIL ,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
+        { 0,           255, 255,  0, 20, 0, 0.32f, 0.5f, 150 }, // TESTING -yellow orbiting fast spinning - light    
     };
     
     bool enabled = false;
@@ -423,7 +422,7 @@ void particle_flare(const vec &p, const vec &dest, int fade)
     newparticle(p, dest, fade, 10);    
     /* TESTING
     particle_helix(p, dest, fade, 24);
-    particle_ring(p, dest, fade, 25);
+    particle_ring(p, dest, fade, 27);
     */
 };
 
@@ -443,7 +442,7 @@ static void makeparticles(entity &e)
     {
         case 0: //fire
             regular_particle_splash(4, 1, 40, e.o);                
-            regular_particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+2.0), 3);
+            regular_particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+3.0), 3);
             break;
         case 1: //smoke vent
             regular_particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
