@@ -483,14 +483,13 @@ void entity_particles()
     else // show sparkly thingies for map entities in edit mode
     {
         int s = haveselent() ? -1 : closestent();
-        extentity *c = s>=0 ? ents[s] : NULL;
         loopv(ents)
         {
             entity &e = *ents[i];
             if(e.type==ET_EMPTY) continue;
             if(e.o.dist(camera1->o)<128)
             {
-                particle_text(e.o, entname(e), &e==c ? 14 : 11, 1);
+                particle_text(e.o, entname(e), i==s ? 14 : 11, 1);
             };
             regular_particle_splash(2, 2, 40, e.o);
         };
