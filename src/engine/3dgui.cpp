@@ -64,8 +64,6 @@ bool menukey(int code, bool isdown, int cooked)
 	return true;
 };
 
-
-
 #define SHADOW 4
 #define ICON_SIZE (FONTH-SHADOW)
 #define SKIN_W 256
