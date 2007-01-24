@@ -211,7 +211,11 @@ void pasteconsole()
     s_strcat(commandbuf, cb);
     GlobalUnlock(cb);
     CloseClipboard();
-    #elif !defined(__APPLE__)
+    #elif defined(__APPLE__)
+	void mac_pasteconsole(char *commandbuf);
+
+	mac_pasteconsole(commandbuf);
+	#else
     SDL_SysWMinfo wminfo;
     SDL_VERSION(&wminfo.version); 
     wminfo.subsystem = SDL_SYSWM_X11;
@@ -279,6 +283,12 @@ extern bool menukey(int code, bool isdown, int cooked);
 
 void keypress(int code, bool isdown, int cooked)
 {
+	#ifdef __APPLE__
+		int modifier = (KMOD_LMETA|KMOD_RMETA);
+	#else
+		int modifier = (KMOD_LCTRL|KMOD_RCTRL);	
+	#endif
+	
     if(menukey(code, isdown, cooked)) return;  // 3D GUI mouse button intercept   
     else if(saycommandon)                                // keystrokes go to commandline
     {
@@ -332,9 +342,9 @@ void keypress(int code, bool isdown, int cooked)
                     complete(commandbuf);
                     if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                     break;
-
+						
                 case SDLK_v:
-                    if(SDL_GetModState()&(KMOD_LCTRL|KMOD_RCTRL)) { pasteconsole(); return; };
+                    if(SDL_GetModState()&modifier) { pasteconsole(); return; };
 
                 default:
                     resetcomplete();

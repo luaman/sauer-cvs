@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		666E40300B67CE53005B491F /* rendersky.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 666E402F0B67CE53005B491F /* rendersky.cpp */; };
+		666E40320B67CE5A005B491F /* renderva.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 666E40310B67CE5A005B491F /* renderva.cpp */; };
+		666E40340B67CE6E005B491F /* texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 666E40330B67CE6E005B491F /* texture.cpp */; };
+		666E40370B67CE79005B491F /* tristrip.h in Headers */ = {isa = PBXBuildFile; fileRef = 666E40350B67CE79005B491F /* tristrip.h */; };
+		666E40380B67CE79005B491F /* vertmodel.h in Headers */ = {isa = PBXBuildFile; fileRef = 666E40360B67CE79005B491F /* vertmodel.h */; };
+		666E40F00B67D87F005B491F /* macutils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 666E40EF0B67D87F005B491F /* macutils.mm */; };
 		668185240AD0284E0072F968 /* 3dgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 668185230AD0284E0072F968 /* 3dgui.cpp */; };
 		668185260AD028630072F968 /* crypto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 668185250AD028630072F968 /* crypto.cpp */; };
 		668185280AD0287E0072F968 /* hash.h in Headers */ = {isa = PBXBuildFile; fileRef = 668185270AD0287E0072F968 /* hash.h */; };
@@ -69,7 +75,6 @@
 		B94198B109207E810029DAD1 /* octaedit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9419829092076920029DAD1 /* octaedit.cpp */; };
 		B94198B209207E810029DAD1 /* octarender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B941982A092076920029DAD1 /* octarender.cpp */; };
 		B94198B309207E810029DAD1 /* physics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B941982B092076920029DAD1 /* physics.cpp */; };
-		B94198B409207E810029DAD1 /* renderextras.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B941982C092076920029DAD1 /* renderextras.cpp */; };
 		B94198B509207E810029DAD1 /* rendergl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B941982D092076920029DAD1 /* rendergl.cpp */; };
 		B94198B609207E810029DAD1 /* rendermodel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B941982E092076920029DAD1 /* rendermodel.cpp */; };
 		B94198B709207E810029DAD1 /* renderparticles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B941982F092076920029DAD1 /* renderparticles.cpp */; };
@@ -108,6 +113,12 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		666E402F0B67CE53005B491F /* rendersky.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = rendersky.cpp; sourceTree = "<group>"; };
+		666E40310B67CE5A005B491F /* renderva.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = renderva.cpp; sourceTree = "<group>"; };
+		666E40330B67CE6E005B491F /* texture.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = texture.cpp; sourceTree = "<group>"; };
+		666E40350B67CE79005B491F /* tristrip.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tristrip.h; sourceTree = "<group>"; };
+		666E40360B67CE79005B491F /* vertmodel.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = vertmodel.h; sourceTree = "<group>"; };
+		666E40EF0B67D87F005B491F /* macutils.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = macutils.mm; sourceTree = "<group>"; };
 		668185230AD0284E0072F968 /* 3dgui.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = 3dgui.cpp; sourceTree = "<group>"; };
 		668185250AD028630072F968 /* crypto.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = crypto.cpp; sourceTree = "<group>"; };
 		668185270AD0287E0072F968 /* hash.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = hash.h; sourceTree = "<group>"; };
@@ -150,7 +161,6 @@
 		B9419829092076920029DAD1 /* octaedit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = octaedit.cpp; sourceTree = "<group>"; };
 		B941982A092076920029DAD1 /* octarender.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = octarender.cpp; sourceTree = "<group>"; };
 		B941982B092076920029DAD1 /* physics.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = physics.cpp; sourceTree = "<group>"; };
-		B941982C092076920029DAD1 /* renderextras.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = renderextras.cpp; sourceTree = "<group>"; };
 		B941982D092076920029DAD1 /* rendergl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = rendergl.cpp; sourceTree = "<group>"; };
 		B941982E092076920029DAD1 /* rendermodel.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = rendermodel.cpp; sourceTree = "<group>"; };
 		B941982F092076920029DAD1 /* renderparticles.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = renderparticles.cpp; sourceTree = "<group>"; };
@@ -220,6 +230,7 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				666E40EF0B67D87F005B491F /* macutils.mm */,
 				B96D0D6C0920976E00B6C936 /* main.m */,
 				B930D0900A3D9BC700BDFB85 /* ConsoleView.h */,
 				B930D0910A3D9BC700BDFB85 /* ConsoleView.m */,
@@ -357,17 +368,21 @@
 				B9419829092076920029DAD1 /* octaedit.cpp */,
 				B941982A092076920029DAD1 /* octarender.cpp */,
 				B941982B092076920029DAD1 /* physics.cpp */,
-				B941982C092076920029DAD1 /* renderextras.cpp */,
 				B941982D092076920029DAD1 /* rendergl.cpp */,
 				B941982E092076920029DAD1 /* rendermodel.cpp */,
 				B941982F092076920029DAD1 /* renderparticles.cpp */,
+				666E402F0B67CE53005B491F /* rendersky.cpp */,
 				B9419830092076920029DAD1 /* rendertext.cpp */,
+				666E40310B67CE5A005B491F /* renderva.cpp */,
 				B9419831092076920029DAD1 /* server.cpp */,
 				B9419832092076920029DAD1 /* serverbrowser.cpp */,
 				B92DC11309D08FA1008219BD /* shaders.h */,
 				B9419833092076920029DAD1 /* sound.cpp */,
 				B903576609D093AF002C9DC7 /* spheretree.cpp */,
 				B903576709D093AF002C9DC7 /* spheretree.h */,
+				666E40330B67CE6E005B491F /* texture.cpp */,
+				666E40350B67CE79005B491F /* tristrip.h */,
+				666E40360B67CE79005B491F /* vertmodel.h */,
 				B9419834092076920029DAD1 /* water.cpp */,
 				B9419835092076920029DAD1 /* world.cpp */,
 				B9419836092076920029DAD1 /* world.h */,
@@ -449,6 +464,8 @@
 				B918C8B30A90F30C009683DE /* entities.h in Headers */,
 				B918C8B50A90F30C009683DE /* rpgobjset.h in Headers */,
 				668185280AD0287E0072F968 /* hash.h in Headers */,
+				666E40370B67CE79005B491F /* tristrip.h in Headers */,
+				666E40380B67CE79005B491F /* vertmodel.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -567,7 +584,6 @@
 				B94198B109207E810029DAD1 /* octaedit.cpp in Sources */,
 				B94198B209207E810029DAD1 /* octarender.cpp in Sources */,
 				B94198B309207E810029DAD1 /* physics.cpp in Sources */,
-				B94198B409207E810029DAD1 /* renderextras.cpp in Sources */,
 				B94198B509207E810029DAD1 /* rendergl.cpp in Sources */,
 				B94198B609207E810029DAD1 /* rendermodel.cpp in Sources */,
 				B94198B709207E810029DAD1 /* renderparticles.cpp in Sources */,
@@ -594,6 +610,10 @@
 				B918C8B40A90F30C009683DE /* rpg.cpp in Sources */,
 				668185240AD0284E0072F968 /* 3dgui.cpp in Sources */,
 				668185260AD028630072F968 /* crypto.cpp in Sources */,
+				666E40300B67CE53005B491F /* rendersky.cpp in Sources */,
+				666E40320B67CE5A005B491F /* renderva.cpp in Sources */,
+				666E40340B67CE6E005B491F /* texture.cpp in Sources */,
+				666E40F00B67D87F005B491F /* macutils.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -744,10 +764,7 @@
 		B960CF36085F3CC7004FB142 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
+				ARCHS = "$(NATIVE_ARCH)";
 				MACOSX_DEPLOYMENT_TARGET = 10.3;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = NO;
