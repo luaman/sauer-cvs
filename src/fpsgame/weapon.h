@@ -171,29 +171,23 @@ struct weaponstate
         };
     };
 
-    static const int MAXPROJ = 100;
-    struct projectile { vec o, to, offset; float speed; fpsent *owner; int gun; bool inuse, local; int offsetmillis; } projs[MAXPROJ];
+    struct projectile { vec o, to, offset; float speed; fpsent *owner; int gun; bool local; int offsetmillis; };
+    vector<projectile> projs;
 
-    void projreset() { loopi(MAXPROJ) projs[i].inuse = false; bouncers.deletecontentsp(); bouncers.setsize(0); };
+    void projreset() { projs.setsize(0); bouncers.deletecontentsp(); bouncers.setsize(0); };
 
     void newprojectile(const vec &from, const vec &to, float speed, bool local, fpsent *owner, int gun)
     {
-        loopi(MAXPROJ)
-        {
-            projectile *p = &projs[i];
-            if(p->inuse) continue;
-            p->inuse = true;
-            p->o = from;
-            p->to = to;
-            p->offset = hudgunorigin(gun, from, to, owner);
-            p->offset.sub(from);
-            p->speed = speed;
-            p->local = local;
-            p->owner = owner;
-            p->gun = gun;
-            p->offsetmillis = OFFSETMILLIS;
-            return;
-        };
+        projectile &p = projs.add();
+        p.o = from;
+        p.to = to;
+        p.offset = hudgunorigin(gun, from, to, owner);
+        p.offset.sub(from);
+        p.speed = speed;
+        p.local = local;
+        p.owner = owner;
+        p.gun = gun;
+        p.offsetmillis = OFFSETMILLIS;
     };
     
     void damageeffect(const vec &p, int damage, fpsent *d)
@@ -242,9 +236,11 @@ struct weaponstate
 
     static const int RL_DAMRAD = 40;  
 
-    void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at, vec &dir, float dist, int gun)
+    void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at, int gun)
     {
         if(o->state!=CS_ALIVE) return;
+        vec dir;
+        float dist = rocketdist(o, dir, v);
         if(dist<RL_DAMRAD) 
         {
             int damage = (int)(qdam*(1-dist/1.5f/RL_DAMRAD));
@@ -277,15 +273,12 @@ struct weaponstate
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
             if(!o || o==notthis) continue;
-            vec dir;
-            float dist = rocketdist(o, dir, v);
-            radialeffect(o, v, i-1, qdam, owner, dir, dist, gun);
+            radialeffect(o, v, i-1, qdam, owner, gun);
         };
     };
 
     void splash(projectile &p, vec &v, dynent *notthis, int qdam)
     {
-        p.inuse = false;
         if(p.gun!=GUN_RL)
         {
             particle_splash(0, 100, 200, v);
@@ -298,24 +291,22 @@ struct weaponstate
         };
     };
 
-    void projdamage(fpsent *o, projectile &p, vec &v, int i, int qdam)
+    bool projdamage(fpsent *o, projectile &p, vec &v, int i, int qdam)
     {
-        if(o->state!=CS_ALIVE) return;
-        if(intersect(o, p.o, v))
-        {
-            splash(p, v, o, qdam);
-            vec dir;
-            rocketdist(o, dir, v);
-            hit(i, qdam, o, p.owner, dir, p.gun==GUN_RL);
-        }; 
+        if(o->state!=CS_ALIVE) return false;
+        if(!intersect(o, p.o, v)) return false;
+        splash(p, v, o, qdam);
+        vec dir;
+        rocketdist(o, dir, v);
+        hit(i, qdam, o, p.owner, dir, p.gun==GUN_RL);
+        return true;
     };
 
     void moveprojectiles(int time)
     {
-        loopi(MAXPROJ)
+        loopv(projs)
         {
             projectile &p = projs[i];
-            if(!p.inuse) continue;
             p.offsetmillis = max(p.offsetmillis-time, 0);
             int qdam = guns[p.gun].damage*(p.owner->quadmillis ? 4 : 1);
             if(p.owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
@@ -325,22 +316,24 @@ struct weaponstate
             if(time > dtime) dtime = time;
             v.mul(time/dtime);
             v.add(p.o);
+            bool exploded = false;
             if(p.local)
             {
                 loopi(cl.numdynents())
                 {
                     fpsent *o = (fpsent *)cl.iterdynents(i);
-                    if(!o) continue;
-                    if(!o->o.reject(v, 10.0f) && p.owner!=o) projdamage(o, p, v, i-1, qdam);
+                    if(!o || p.owner==o || o->o.reject(v, 10.0f)) continue;
+                    if(projdamage(o, p, v, i-1, qdam)) exploded = true;
                 };
             };
-            if(p.inuse)
+            if(!exploded)
             {
                 if(dist<4)
                 {
                     if(p.o!=p.to && raycubepos(p.o, vec(p.to).sub(p.o), p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) 
                         continue; // if original target was moving, reevaluate endpoint
                     splash(p, v, NULL, qdam);
+                    exploded = true;
                 }
                 else 
                 {   
@@ -355,7 +348,8 @@ struct weaponstate
                     };
                 };   
             };
-            p.o = v;
+            if(exploded) projs.remove(i--);
+            else p.o = v;
         };
     };
 
@@ -564,10 +558,10 @@ struct weaponstate
             else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; };
             rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos.x, pos.y, pos.z, yaw, pitch, 10.0f, 0, NULL, 0);
         };
-        loopi(MAXPROJ)
+        loopv(projs)
         {
             projectile &p = projs[i];
-            if(!p.inuse || p.gun!=GUN_RL) continue;
+            if(p.gun!=GUN_RL) continue;
             vec pos(p.o);
             pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
             if(p.to==pos) continue;
