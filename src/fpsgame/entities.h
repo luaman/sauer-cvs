@@ -5,11 +5,9 @@ struct entities : icliententities
     
     vector<extentity *> ents;
 
-    int triggertime;
-
     struct itemstat { int add, max, sound; char *name; } *itemstats;
 
-    entities(fpsclient &_cl) : cl(_cl), triggertime(1)
+    entities(fpsclient &_cl) : cl(_cl)
     {
         static itemstat _itemstats[] =
         {
@@ -44,7 +42,6 @@ struct entities : icliententities
 
     void renderentities()
     {
-        if(cl.lastmillis>triggertime+1000) triggertime = 0;
         loopv(ents)
         {
             static char *entmdlnames[] =
