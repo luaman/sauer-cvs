@@ -423,14 +423,17 @@ struct weaponstate
     fpsent *intersectclosest(vec &from, vec &to, int &n, fpsent *at)
     {
         fpsent *best = NULL;
+        float bestdist = 1e16f;
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
             if(!o || o==at || o->state!=CS_ALIVE) continue;
             if(!intersect(o, from, to)) continue;
-            if(!best || at->o.dist(o->o)<at->o.dist(best->o))
+            float dist = at->o.dist(o->o);
+            if(dist<bestdist)
             {
                 best = o;
+                bestdist = dist;
                 n = i-1;
             };
         };
