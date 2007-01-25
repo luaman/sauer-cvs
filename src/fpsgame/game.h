@@ -73,10 +73,6 @@ struct fpsent : dynent
     };
 };
 
-extern int gamemode, nextmode;
-extern vector<fpsent *> players;                 // all the other clients (in multiplayer)
-extern fpsent *player1;                 // special client ent that receives input
-
 #define m_noitems     (gamemode>=4 && gamemode<12)
 #define m_noitemsrail ((gamemode>=4 && gamemode<=5) || (gamemode>=8 && gamemode<=9))
 #define m_arena       (gamemode>=8 && gamemode<12)
