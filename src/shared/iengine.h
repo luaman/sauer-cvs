@@ -106,15 +106,11 @@ extern int text_visible(const char *str, int max);
 
 // renderextras
 extern vec worldpos, camright, camup;
-extern void dot(int x, int y, float z);
 extern void renderspheres(int time);
 extern void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater);
-extern void blendbox(int x1, int y1, int x2, int y2, bool border);
 extern void damageblend(int n);
 
 // renderparticles
-extern void setorient(const vec &r, const vec &u);
-
 extern void render_particles(int time);
 extern void regular_particle_splash(int type, int num, int fade, const vec &p, int delay = 0);
 extern void particle_splash(int type, int num, int fade, const vec &p);
