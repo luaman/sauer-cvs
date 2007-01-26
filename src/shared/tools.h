@@ -158,6 +158,15 @@ struct databuf
         len += min(maxlen-len, numvals);
     };
 
+    int get(T *vals, int numvals)
+    {
+        int read = min(maxlen-len, numvals);
+        if(read<numvals) flags |= OVERREAD;
+        memcpy(vals, &buf[len], read*sizeof(T));
+        len += read;
+        return read;
+    };
+
     int length() const { return len; };
     int remaining() const { return maxlen-len; };
     bool overread() const { return flags&OVERREAD; };
