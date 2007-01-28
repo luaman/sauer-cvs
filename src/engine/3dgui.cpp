@@ -194,6 +194,8 @@ struct gui : g3d_gui
 
     //use to set min size (useful when you have progress bars)
     void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); };
+    //add space between list items
+    void space(int size) { layout(isvertical() ? 0 : size*FONTH, isvertical() ? size*FONTH : 0); };
 
     int layout(int w, int h)
     {

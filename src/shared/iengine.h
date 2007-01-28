@@ -212,6 +212,7 @@ struct g3d_gui
     virtual void separator() = 0;
 	virtual void progress(float percent) = 0;
 	virtual void strut(int size) = 0;
+    virtual void space(int size) = 0;
     virtual char *field(char *text, int color, int length) = 0;
 };
 
