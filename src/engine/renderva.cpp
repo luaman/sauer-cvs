@@ -815,10 +815,12 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 static int si[] = { 1, 0, 0 };
                 static int ti[] = { 2, 2, 1 };
 
+                float scale = slot.sts[0].scale;
+                if(!scale) scale = 1;
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                s[si[l]] = 8.0f/(tex->xs<<VVEC_FRAC);
+                s[si[l]] = 8.0f/scale/(tex->xs<<VVEC_FRAC);
                 GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/(tex->ys<<VVEC_FRAC);
+                t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/scale/(tex->ys<<VVEC_FRAC);
 
                 if(renderpath==R_FIXEDFUNCTION)
                 {

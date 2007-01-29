@@ -693,25 +693,23 @@ const char *entline()
 void drawcrosshair(int w, int h)
 {
     bool windowhit = g3d_windowhit(true, false);
-    if(/*!rendermenu(w, h) && */windowhit || (!hidehud && player->state!=CS_SPECTATOR))
-    {
-        static Texture *cursor = NULL;
-        if(!cursor) cursor = textureload("data/guicursor.png", true, false);
-    
-        if((windowhit ? cursor : crosshair)->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        else glBlendFunc(GL_ONE, GL_ONE);
-        glColor3f(1, 1, 1);
-        float chsize = (windowhit ? cursorsize : crosshairsize)*w/300.0f;
-        float x = w*1.5f - (windowhit ? 0 : chsize/2.0f);
-        float y = h*1.5f - (windowhit ? 0 : chsize/2.0f);
-        glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->gl);
-        glBegin(GL_QUADS);
-        glTexCoord2d(0.0, 0.0); glVertex2f(x,          y);
-        glTexCoord2d(1.0, 0.0); glVertex2f(x + chsize, y);
-        glTexCoord2d(1.0, 1.0); glVertex2f(x + chsize, y + chsize);
-        glTexCoord2d(0.0, 1.0); glVertex2f(x,          y + chsize);
-        glEnd();
-     };
+    if(!windowhit && (hidehud || player->state==CS_SPECTATOR)) return;;
+
+    static Texture *cursor = NULL;
+    if(!cursor) cursor = textureload("data/guicursor.png", true, false);
+    if((windowhit ? cursor : crosshair)->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    else glBlendFunc(GL_ONE, GL_ONE);
+    glColor3f(1, 1, 1);
+    float chsize = (windowhit ? cursorsize : crosshairsize)*w/300.0f;
+    float x = w*1.5f - (windowhit ? 0 : chsize/2.0f);
+    float y = h*1.5f - (windowhit ? 0 : chsize/2.0f);
+    glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->gl);
+    glBegin(GL_QUADS);
+    glTexCoord2d(0.0, 0.0); glVertex2f(x,          y);
+    glTexCoord2d(1.0, 0.0); glVertex2f(x + chsize, y);
+    glTexCoord2d(1.0, 1.0); glVertex2f(x + chsize, y + chsize);
+    glTexCoord2d(0.0, 1.0); glVertex2f(x,          y + chsize);
+    glEnd();
 };
 
 void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)

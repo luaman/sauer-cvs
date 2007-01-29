@@ -405,7 +405,7 @@ ShaderParam *findshaderparam(Slot &s, int type, int index)
     return NULL;
 };
 
-void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
+void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float *scale)
 {
     if(curtexnum<0 || curtexnum>=0x10000) return;
     struct { const char *name; int type; } types[] =
@@ -446,12 +446,13 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset)
     st.rotation = max(*rot, 0);
     st.xoffset = max(*xoffset, 0);
     st.yoffset = max(*yoffset, 0);
+    st.scale = max(*scale, 0);
     st.t = NULL;
     s_strcpy(st.name, name);
     path(st.name);
 };
 
-COMMAND(texture, "ssiii");
+COMMAND(texture, "ssiiif");
 
 static int findtextype(Slot &s, int type, int last = -1)
 {

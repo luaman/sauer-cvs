@@ -105,6 +105,7 @@ struct Slot
         Texture *t;
         string name;
         int rotation, xoffset, yoffset;
+        float scale;
         int combined;
     };
 

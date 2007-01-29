@@ -430,6 +430,8 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         case 3: ((void (__cdecl *)(void *, void *, void *)                )id->_fun)(v[0], v[1], v[2]);             break;
                         case 4: ((void (__cdecl *)(void *, void *, void *, void *)        )id->_fun)(v[0], v[1], v[2], v[3]);       break;
                         case 5: ((void (__cdecl *)(void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4]); break;
+                        case 6: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4], v[5]); break;
+
                         default: fatal("builtin declared with too many args (use V?)");
                     };
                     if(id->_narg[0]=='C') delete[] (char *)v[0];
