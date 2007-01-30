@@ -738,6 +738,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1;
+    float lastscale = -1;
     Slot *lastslot = NULL;
     loopi(lod.texs)
     {
@@ -808,6 +809,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             lastslot = &slot;
         };
 
+        float scale = slot.sts[0].scale;
+        if(!scale) scale = 1;
         loopl(3) if (lod.eslist[i].length[l])
         {
             if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys)
@@ -815,8 +818,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 static int si[] = { 1, 0, 0 };
                 static int ti[] = { 2, 2, 1 };
 
-                float scale = slot.sts[0].scale;
-                if(!scale) scale = 1;
                 GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
                 s[si[l]] = 8.0f/scale/(tex->xs<<VVEC_FRAC);
                 GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -846,6 +847,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 lastxs = tex->xs;
                 lastys = tex->ys;
                 lastl = l;
+                lastscale = scale;
             };
 
             if(s->type>=SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
