@@ -1343,6 +1343,7 @@ struct texturegui : g3d_callback {
     
     void gui(g3d_gui &g, bool firstpass)
     {
+        bool canloadone = true; 
         int menutab = 1+curtexindex/(TEXTURE_WIDTH*TEXTURE_HEIGHT);        
         int origtab = menutab;
         g.start(menustart, 0.04f, &menutab);
@@ -1359,12 +1360,20 @@ struct texturegui : g3d_callback {
                         int ti = (i*TEXTURE_HEIGHT+j)*TEXTURE_WIDTH+k;
                         if(ti>=0 && ti<curtexnum) 
                         {
-                            Texture *tex = lookuptexture(texmru[ti]).sts[0].t;
-                            if(g.texture(tex, 1.0)&G3D_UP) 
+                            int slot = texmru[ti];
+                            bool found = isloadedtexture(slot);
+                            if(found || canloadone)
                             {
-                                curtexindex = ti;
-                                mpedittex(texmru[ti], allfaces, sel, true); 
-                            };
+                                Texture *tex = lookuptexture(slot).sts[0].t;
+                                if(g.texture(tex, 1.0)&G3D_UP) 
+                                {
+                                    curtexindex = ti;
+                                    mpedittex(slot, allfaces, sel, true); 
+                                };
+                            }
+                            else
+                                g.texture(crosshair, 1.0);
+                            if(!found) canloadone = false; //load only one unloaded texture per frame!
                         } 
                         else 
                             g.texture(crosshair, 1.0); //will create an empty space

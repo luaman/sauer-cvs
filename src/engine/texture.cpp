@@ -650,6 +650,12 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
     t.t = newtexture(key.getbuf(), ts);
 };
 
+bool isloadedtexture(int slot)
+{
+    Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots[slots.inrange(slot) ? slot : 0]);
+    return s.loaded;
+};
+
 Slot &lookuptexture(int slot, bool load)
 {
     Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots[slots.inrange(slot) ? slot : 0]);
