@@ -813,7 +813,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         if(!scale) scale = 1;
         loopl(3) if (lod.eslist[i].length[l])
         {
-            if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys)
+            if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys || lastscale!=scale)
             {
                 static int si[] = { 1, 0, 0 };
                 static int ti[] = { 2, 2, 1 };
