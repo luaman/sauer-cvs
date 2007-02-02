@@ -99,7 +99,10 @@ enum
     PT_TEXTUP,
     PT_METER,
     PT_METERVS,
-    PT_FIREBALL
+    PT_FIREBALL,
+
+    PT_ENT = 1<<8,
+    PT_MOD = 1<<9
 };
 
 void render_particles(int time)
@@ -109,7 +112,7 @@ void render_particles(int time)
         { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
         { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
         { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-        { PT_TRAIL,   255, 255, 255, 1,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb must be 255,255,255)
+        { PT_TRAIL|PT_MOD,   255, 255, 255, 1,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb must be 255,255,255)
         { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
         { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
         { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
@@ -134,8 +137,8 @@ void render_particles(int time)
         { 0,           118, 97,137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke  
         
     //all following particles are for 'ent particles' and not effected by particlesize
-        { PT_TRAIL ,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
-        { 0,           255, 255,  0, 20, 0, 0.32f, 0.5f, 150 }, // TESTING -yellow orbiting fast spinning - light    
+        { PT_ENT|PT_TRAIL,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
+        { PT_ENT,            255, 255,  0, 20, 0, 0.32f, 0.5f, 150 }, // TESTING -yellow orbiting fast spinning - light    
     };
     
     bool enabled = false;
@@ -150,11 +153,12 @@ void render_particles(int time)
         };
         
         parttype &pt = parttypes[i];
-        float sz = (i >= 26) ? pt.sz : pt.sz*particlesize/100.0f; 
+        float sz = pt.type&PT_ENT ? pt.sz : pt.sz*particlesize/100.0f; 
+        int type = pt.type&0xFF;
         
-        if(pt.tex == 8) glBlendFunc(GL_ZERO, GL_SRC_COLOR); //blood!
+        if(pt.type&PT_MOD) glBlendFunc(GL_ZERO, GL_SRC_COLOR); //blood!
 
-        bool quads = (pt.type == PT_PART || pt.type == PT_FLARE || pt.type == PT_TRAIL);
+        bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
         if(quads) glBegin(GL_QUADS);        
         
@@ -170,7 +174,7 @@ void render_particles(int time)
             {
                 *pp = p->next;
                 p->next = parempty;
-                if((pt.type==PT_TEXT || pt.type==PT_TEXTUP) && p->text && p->text[0]=='@') delete[] p->text;
+                if((type==PT_TEXT || type==PT_TEXTUP) && p->text && p->text[0]=='@') delete[] p->text;
                 parempty = p;
                 continue;
             };
@@ -202,10 +206,10 @@ void render_particles(int time)
             
             if(quads)
             {
-                if(pt.type==PT_FLARE || pt.type==PT_TRAIL)
+                if(type==PT_FLARE || type==PT_TRAIL)
                 {					
                     vec e = p->d;
-                    if(pt.type==PT_TRAIL)
+                    if(type==PT_TRAIL)
                     {
                         if(pt.gr) e.z -= float(ts)/pt.gr;
                         e.div(-50.0f);
@@ -242,7 +246,7 @@ void render_particles(int time)
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
                    
-                if(pt.type==PT_FIREBALL)
+                if(type==PT_FIREBALL)
                 {
                     float pmax = float(p->val);
                     float psize = pt.sz + pmax * float(255-blend)/255.0f;
@@ -276,7 +280,7 @@ void render_particles(int time)
                     glRotatef(camera1->yaw-180, 0, 0, 1);
                     glRotatef(camera1->pitch-90, 1, 0, 0);
                     glScalef(-scale, scale, -scale);
-                    if(pt.type==PT_METER || pt.type==PT_METERVS)
+                    if(type==PT_METER || type==PT_METERVS)
                     {
                         float right = 8*FONTH, left = p->val*right/100.0f;
                         glDisable(GL_BLEND);
@@ -292,7 +296,7 @@ void render_particles(int time)
                         glVertex2f(left, FONTH);
                         glVertex2f(0, FONTH);
                         
-                        if(pt.type==PT_METERVS) glColor3ub(parttypes[i-1].r, parttypes[i-1].g, parttypes[i-1].b);
+                        if(type==PT_METERVS) glColor3ub(parttypes[i-1].r, parttypes[i-1].g, parttypes[i-1].b);
                         else glColor3ub(0, 0, 0);
                         glVertex2f(left, 0);
                         glVertex2f(right, 0);
@@ -309,7 +313,7 @@ void render_particles(int time)
                         char *text = p->text+(p->text[0]=='@');
                         float xoff = -text_width(text)/2;
                         float yoff = 0;
-                        if(pt.type==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
+                        if(type==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
                         glTranslatef(xoff, yoff, 50);
                         
                         draw_text(text, 0, 0, pt.r, pt.g, pt.b, blend);
