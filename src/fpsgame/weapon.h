@@ -190,11 +190,13 @@ struct weaponstate
         p.offsetmillis = OFFSETMILLIS;
     };
     
-    void damageeffect(const vec &p, int damage, fpsent *d)
+    void damageeffect(int damage, fpsent *d)
     {
+        vec p = d->o;
+        p.z += 0.75f*(d->eyeheight + d->aboveeye) - d->eyeheight;
         particle_splash(3, damage, 1000, p);
         s_sprintfd(ds)("@%d", damage);
-        particle_text(p, ds, 8);
+        particle_text(d->abovehead(), ds, 8);
     };
     
     void spawnbouncer(vec &p, vec &vel, fpsent *d, int type)
@@ -205,10 +207,10 @@ struct weaponstate
         newbouncer(p, to, true, d, type, rnd(1000)+1000, rnd(100)+20);
     };    
 
-    void superdamageeffect(const vec &p, vec &vel, fpsent *d)
+    void superdamageeffect(vec &vel, fpsent *d)
     {
         if(!d->superdamage) return;
-        vec from = p;
+        vec from = d->abovehead();
         from.y -= 16;
         loopi(min(d->superdamage/25, 40)+1) spawnbouncer(from, vel, d, BNC_GIBS);
     };
@@ -222,8 +224,8 @@ struct weaponstate
         if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
         else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
         else                     { if(isrl) vel.mul(2); cl.cc.addmsg(SV_DAMAGE, "ri6", target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); };
-        damageeffect(d->abovehead(), damage, d);
-        if(d->type==ENT_AI && d->state==CS_DEAD) superdamageeffect(d->abovehead(), d->vel, d);
+        damageeffect(damage, d);
+        if(d->type==ENT_AI && d->state==CS_DEAD) superdamageeffect(d->vel, d);
     };
 
     void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
