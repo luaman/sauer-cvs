@@ -193,7 +193,7 @@ struct weaponstate
     void damageeffect(int damage, fpsent *d)
     {
         vec p = d->o;
-        p.z += 0.75f*(d->eyeheight + d->aboveeye) - d->eyeheight;
+        p.z += 0.6f*(d->eyeheight + d->aboveeye) - d->eyeheight;
         particle_splash(3, damage, 1000, p);
         s_sprintfd(ds)("@%d", damage);
         particle_text(d->abovehead(), ds, 8);
