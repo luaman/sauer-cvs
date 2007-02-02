@@ -40,7 +40,7 @@ static bool emit_particles()
     return emit;
 };
 
-static Texture *parttexs[8];
+static Texture *parttexs[9];
 
 void particleinit()
 {    
@@ -62,6 +62,7 @@ void particleinit()
     parttexs[5] = textureload("data/flare.jpg");
     parttexs[6] = textureload("data/martin/spark.png");
     parttexs[7] = textureload("data/explosion.jpg");
+    parttexs[8] = textureload("data/blood.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
 };
 
@@ -108,7 +109,7 @@ void render_particles(int time)
         { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
         { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
         { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-        { 0,          255, 25, 25,   1,  2, 0.24f, 0.0f,   0 }, // red:    blood spats
+        { PT_TRAIL,   255, 255, 255, 1,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb must be 255,255,255)
         { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
         { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
         { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
@@ -131,6 +132,8 @@ void render_particles(int time)
         {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange fireball 
         { 0,           0, 255,    0, -1,  0, 0.3f, 2.3f, 500 }, // TESTING - green focused fast spinning
         { 0,           118, 97,137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke  
+        
+    //all following particles are for 'ent particles' and not effected by particlesize
         { PT_TRAIL ,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
         { 0,           255, 255,  0, 20, 0, 0.32f, 0.5f, 150 }, // TESTING -yellow orbiting fast spinning - light    
     };
@@ -145,9 +148,11 @@ void render_particles(int time)
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);             
         };
-
+        
         parttype &pt = parttypes[i];
-        float sz = pt.sz*particlesize/100.0f; 
+        float sz = (i >= 26) ? pt.sz : pt.sz*particlesize/100.0f; 
+        
+        if(pt.tex == 8) glBlendFunc(GL_ZERO, GL_SRC_COLOR); //blood!
 
         bool quads = (pt.type == PT_PART || pt.type == PT_FLARE || pt.type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
@@ -207,9 +212,11 @@ void render_particles(int time)
                         e.add(o);
                         //@TODO include spin influence, and maybe have min size
                         glColor4ub(pt.r, pt.g, pt.b, (blend > 63) ? 255 : blend*4); 
-                    } else {
+                    } 
+                    else 
+                    {
                         glColor4ub(pt.r, pt.g, pt.b, blend);
-                    }
+                    };
                     vec dir1 = e, dir2 = e, c1, c2;
 					dir1.sub(o);
 					dir2.sub(camera1->o);
@@ -313,7 +320,9 @@ void render_particles(int time)
             };
         };
         if(quads) glEnd();
+        if(pt.tex == 8) glBlendFunc(GL_SRC_ALPHA, GL_ONE); //not blood!
     };
+
     if(enabled)
     {        
         glDisable(GL_BLEND);
