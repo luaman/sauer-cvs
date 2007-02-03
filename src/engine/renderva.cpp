@@ -641,10 +641,10 @@ void rendercaustics(float z, bool refract)
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
-        if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
+        if(!lod.texs || !lod.matsurfs || va->curvfc == VFC_FOGGED || va->occluded >= OCCLUDE_GEOM) continue;
         if(refract)
         {
-            if(va->curvfc == VFC_FOGGED || va->min.z > z) continue;
+            if(va->min.z > z) continue;
             if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
         };
  
