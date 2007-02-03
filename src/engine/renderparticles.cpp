@@ -112,7 +112,7 @@ void render_particles(int time)
         { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
         { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
         { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-        { PT_TRAIL|PT_MOD,   255, 255, 255, 1,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb must be 255,255,255)
+        { PT_TRAIL|PT_MOD,   0, 255, 255, 1,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb is inverted)
         { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
         { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
         { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
@@ -131,14 +131,12 @@ void render_particles(int time)
         { PT_METERVS, 255, 25, 25,   0,  -1, 2.0f, 0.0f,   0 },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
         { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
         { 0,          137, 118, 97, 20,   2, 0.6f, 0.0f,   0 },  // greyish-brown:   small  slowly sinking smoke trail
-        {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f, 0.0f,   0 },  // red fireball
-        {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange fireball 
-        { 0,           0, 255,    0, -1,  0, 0.3f, 2.3f, 500 }, // TESTING - green focused fast spinning
-        { 0,           118, 97,137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke  
-        
-    //all following particles are for 'ent particles' and not effected by particlesize
+        {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f, 0.0f,   0 },  // red explostion fireball
+        {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange explostion fireball 
+        { PT_ENT,     137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke
+        { 0,          118, 97, 137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke          
         { PT_ENT|PT_TRAIL,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
-        { PT_ENT,            255, 255,  0, 20, 0, 0.32f, 0.5f, 150 }, // TESTING -yellow orbiting fast spinning - light    
+        { PT_ENT,     255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
     };
     
     bool enabled = false;
@@ -156,7 +154,7 @@ void render_particles(int time)
         float sz = pt.type&PT_ENT ? pt.sz : pt.sz*particlesize/100.0f; 
         int type = pt.type&0xFF;
         
-        if(pt.type&PT_MOD) glBlendFunc(GL_ZERO, GL_SRC_COLOR); //blood!
+        if(pt.type&PT_MOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR); //note: if really fussy would multiply alpha into rgb too... shader?
 
         bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
@@ -206,6 +204,7 @@ void render_particles(int time)
             
             if(quads)
             {
+                glColor4ub(pt.r, pt.g, pt.b, (type==PT_FLARE) ? blend : ((blend > 63) ? 255 : blend*4));
                 if(type==PT_FLARE || type==PT_TRAIL)
                 {					
                     vec e = p->d;
@@ -215,11 +214,6 @@ void render_particles(int time)
                         e.div(-50.0f);
                         e.add(o);
                         //@TODO include spin influence, and maybe have min size
-                        glColor4ub(pt.r, pt.g, pt.b, (blend > 63) ? 255 : blend*4); 
-                    } 
-                    else 
-                    {
-                        glColor4ub(pt.r, pt.g, pt.b, blend);
                     };
                     vec dir1 = e, dir2 = e, c1, c2;
 					dir1.sub(o);
@@ -233,13 +227,11 @@ void render_particles(int time)
                 }
                 else // regular particles
                 {   
-                    glColor4ub(pt.r, pt.g, pt.b, (blend > 63) ? 255 : blend*4);                   
                     glTexCoord2f(0.0, 1.0); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 1.0); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
                     glTexCoord2f(1.0, 0.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
                     glTexCoord2f(0.0, 0.0); glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
                 };
-                
             }
             else
             {
@@ -324,7 +316,7 @@ void render_particles(int time)
             };
         };
         if(quads) glEnd();
-        if(pt.tex == 8) glBlendFunc(GL_SRC_ALPHA, GL_ONE); //not blood!
+        if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     };
 
     if(enabled)
@@ -355,9 +347,9 @@ void particle_splash(int type, int num, int fade, const vec &p)
         newparticle(p, vec(0,0,1), 1, type);
         return;
     };
+    const int radius = (type==5 || type == 24) ? 50 : 150;
     loopi(num)
     {
-        const int radius = type==5 ? 50 : 150;
         int x, y, z;
         do
         {
@@ -454,11 +446,11 @@ static void makeparticles(entity &e)
     switch(e.attr1) 
     {
         case 0: //fire
-            regular_particle_splash(4, 1, 40, e.o);                
-            regular_particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+3.0), 3);
+            regular_particle_splash(27, 1, 40, e.o);                
+            regular_particle_splash(24, 1, 200, vec(e.o.x, e.o.y, e.o.z+3.0), 3);
             break;
         case 1: //smoke vent
-            regular_particle_splash(5, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+            regular_particle_splash(24, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
             break;
         case 2: //water fountain
             regular_particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
