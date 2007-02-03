@@ -343,6 +343,7 @@ void renderwater()
 
     entity *lastlight = (entity *)-1;
     int lastdepth = -1;
+    float offset = -1.1f;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
@@ -358,7 +359,7 @@ void renderwater()
         if(waterrefract)
         {
             glActiveTexture_(GL_TEXTURE3_ARB);
-            glBindTexture(GL_TEXTURE_2D, ref.refracttex);
+            glBindTexture(GL_TEXTURE_2D, camera1->o.z>=ref.height+offset ? ref.refracttex : ref.tex);
             glActiveTexture_(GL_TEXTURE0_ARB);
         };
  

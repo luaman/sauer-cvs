@@ -586,7 +586,7 @@ void renderoutline()
 
 #define NUMCAUSTICS 32
 
-VAR(causticscale, 0, 600, 10000);
+VAR(causticscale, 0, 100, 10000);
 VAR(causticmillis, 0, 50, 1000);
 VARP(caustics, 0, 1, 1);
 
@@ -610,8 +610,8 @@ void rendercaustics(float z, bool refract)
     GLfloat fogc[4] = {1, 1, 1, 1};
     glFogfv(GL_FOG_COLOR, fogc);
 
-    GLfloat s[4] = { 0.05f, 0.03f, 0, 0 };
-    GLfloat t[4] = { 0, 0.03f, 0.05f, 0 };
+    GLfloat s[4] = { 0.008f, 0.005f, 0, 0 };
+    GLfloat t[4] = { 0, 0.005f, 0.008f, 0 };
     s[0] *= 100.0f/causticscale;
     s[1] *= 100.0f/causticscale;
     t[1] *= 100.0f/causticscale;
