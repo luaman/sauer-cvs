@@ -610,12 +610,13 @@ void rendercaustics(float z, bool refract)
     GLfloat fogc[4] = {1, 1, 1, 1};
     glFogfv(GL_FOG_COLOR, fogc);
 
-    GLfloat s[4] = { 0.008f, 0.005f, 0, 0 };
-    GLfloat t[4] = { 0, 0.005f, 0.008f, 0 };
-    s[0] *= 100.0f/causticscale;
-    s[1] *= 100.0f/causticscale;
-    t[1] *= 100.0f/causticscale;
-    t[2] *= 100.0f/causticscale;
+    GLfloat s[4] = { 0.008f, 0, 0.0048f, 0 };
+    GLfloat t[4] = { 0, 0.008f, 0.0048f, 0 };
+    loopk(3)
+    {
+        s[k] *= 100.0f/causticscale;
+        t[k] *= 100.0f/causticscale;
+    };
 
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
