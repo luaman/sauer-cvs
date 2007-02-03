@@ -584,6 +584,112 @@ void renderoutline()
     defaultshader->set();
 };
 
+#define NUMCAUSTICS 32
+
+VAR(causticscale, 0, 15, 1000);
+VAR(causticmillis, 0, 50, 1000);
+VARP(caustics, 0, 0, 1);
+
+void rendercaustics(float z, bool refract)
+{
+    if(!caustics || !causticscale || !causticmillis) return;
+
+    static Texture *caustics[NUMCAUSTICS] = { NULL };
+    if(!caustics[0]) loopi(NUMCAUSTICS)
+    {
+        s_sprintfd(name)("packages/caustics/caust%.2d.png", i);
+        caustics[i] = textureload(name);
+    };
+
+    static Shader *causticshader = NULL;
+    if(!causticshader) causticshader = lookupshaderbyname("caustic");
+    causticshader->set();
+
+    GLfloat oldfogc[4];
+    glGetFloatv(GL_FOG_COLOR, oldfogc);
+    GLfloat fogc[4] = {1, 1, 1, 1};
+    glFogfv(GL_FOG_COLOR, fogc);
+
+    GLfloat s[4] = { 0.05f, 0.03f, 0, 0 };
+    GLfloat t[4] = { 0, 0.03f, 0.05f, 0 };
+    s[0] *= causticscale/100.0f;
+    s[1] *= causticscale/100.0f;
+    t[1] *= causticscale/100.0f;
+    t[2] *= causticscale/100.0f;
+
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+    glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+    glDepthMask(GL_FALSE);
+    glDepthFunc(GL_EQUAL);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+
+    glBindTexture(GL_TEXTURE_2D, caustics[(lastmillis/causticmillis)%NUMCAUSTICS]->gl);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glPushMatrix();
+
+    glColor3f(1, 1, 1);
+
+    resetorigin();
+    GLuint vbufGL = 0, ebufGL = 0;
+    for(vtxarray *va = visibleva; va; va = va->next)
+    {
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
+        if(refract)
+        {
+            if(va->curvfc == VFC_FOGGED || va->min.z > z) continue;
+            if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
+        };
+ 
+        setorigin(va);
+
+        bool vbufchanged = true;
+        if(hasVBO)
+        {
+            if(vbufGL == va->vbufGL) vbufchanged = false;
+            else
+            {
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+                vbufGL = va->vbufGL;
+            };
+            if(ebufGL != lod.ebufGL)
+            {
+                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
+                ebufGL = lod.ebufGL;
+            };
+        };
+        if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
+
+        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        glde++;
+        xtravertsva += va->verts;
+    };
+
+    glPopMatrix();
+
+    if(hasVBO)
+    {
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+    };
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+
+    glFogfv(GL_FOG_COLOR, oldfogc);
+};
+
 float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
 float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 

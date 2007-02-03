@@ -119,7 +119,7 @@ SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
     if(numrots<1 || numrots>5) return s; 
     SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, (numrots&5)==1 ? s->h : s->w, (numrots&5)==1 ? s->w : s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
     if(!d) fatal("create surface");    
-    int depth = s->format->BitsPerPixel==24 ? 3 : 4;
+    int depth = s->format->BitsPerPixel/8;
     loop(y, s->h) loop(x, s->w)
     {
         uchar *src = (uchar *)s->pixels+(y*s->w+x)*depth;
@@ -149,7 +149,7 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     if(!xoffset && !yoffset) return s;
     SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
     if(!d) fatal("create surface");
-    int depth = s->format->BitsPerPixel==24 ? 3 : 4;
+    int depth = s->format->BitsPerPixel/8;
     uchar *src = (uchar *)s->pixels;
     loop(y, s->h)
     {
@@ -232,6 +232,17 @@ Texture *crosshair = NULL; // used as default, ensured to be loaded
 
 VAR(maxtexsize, 0, 0, 1<<12);
 
+static GLenum texformat(int bpp)
+{
+    switch(bpp)
+    {
+        case 8: return GL_LUMINANCE;
+        case 24: return GL_RGB;
+        case 32: return GL_RGBA;
+        default: return 0; 
+    };
+};
+
 static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false, bool mipit = true)
 {
     char *key = newstring(rname);
@@ -244,13 +255,13 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false
     if(maxtexsize && (t->w > maxtexsize || t->h > maxtexsize))
     {
         do { t->w /= 2; t->h /= 2; } while(t->w > maxtexsize || t->h > maxtexsize);
-        if(gluScaleImage(t->bpp==24 ? GL_RGB : GL_RGBA, t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels))
+        if(gluScaleImage(texformat(t->bpp), t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels))
         {
             t->w = t->xs;
             t->h = t->ys;
         };
     };
-    createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, t->bpp==24 ? GL_RGB : GL_RGBA);
+    createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, texformat(t->bpp));
     SDL_FreeSurface(s);
     return t;
 };
@@ -269,7 +280,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     SDL_Surface *s = IMG_Load(tname);
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; };
     int bpp = s->format->BitsPerPixel;
-    if(bpp!=24 && bpp!=32) { SDL_FreeSurface(s); conoutf("texture must be 24 or 32 bpp: %s", tname); return NULL; };
+    if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 24, or 32 bpp: %s", tname); return NULL; };
     if(tex)
     {
         if(tex->rotation) s = texrotate(s, tex->rotation, tex->type);
@@ -353,7 +364,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
     loopi(6)
     {
         SDL_Surface *s = surface[i];
-        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, true, mipit, s->format->BitsPerPixel==24 ? GL_RGB : GL_RGBA, cubemapsides[i].target);
+        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, true, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
         SDL_FreeSurface(s);
     };
     return t;
@@ -567,7 +578,7 @@ SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
 {
     SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, os->format->BitsPerPixel, os->format->Rmask, os->format->Gmask, os->format->Bmask, os->format->Amask);
     if(!ns) fatal("scalesurface");
-    gluScaleImage(os->format->BitsPerPixel==24 ? GL_RGB : GL_RGBA, os->w, os->h, GL_UNSIGNED_BYTE, os->pixels, w, h, GL_UNSIGNED_BYTE, ns->pixels);
+    gluScaleImage(texformat(os->format->BitsPerPixel), os->w, os->h, GL_UNSIGNED_BYTE, os->pixels, w, h, GL_UNSIGNED_BYTE, ns->pixels);
     SDL_FreeSurface(os);
     return ns;
 };

@@ -369,6 +369,8 @@ void setfogplane(float scale, float z)
     glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 9, fogplane);
 };
 
+extern void rendercaustics(float z, bool refract);
+
 void drawreflection(float z, bool refract, bool clear)
 {
     getwatercolour(wcol);
@@ -447,6 +449,8 @@ void drawreflection(float z, bool refract, bool clear)
 
     extern void renderreflectedgeom(float z, bool refract);
     renderreflectedgeom(z, refract);
+
+    if(refract) rendercaustics(z, refract);
 
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
@@ -607,6 +611,8 @@ void gl_drawframe(int w, int h, float curfps)
     rendergeom();
 
     queryreflections();
+
+    if(underwater) rendercaustics(0, false);
 
     if(!wireframe) renderoutline();
 
