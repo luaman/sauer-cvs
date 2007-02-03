@@ -586,9 +586,9 @@ void renderoutline()
 
 #define NUMCAUSTICS 32
 
-VAR(causticscale, 0, 15, 1000);
+VAR(causticscale, 0, 600, 10000);
 VAR(causticmillis, 0, 50, 1000);
-VARP(caustics, 0, 0, 1);
+VARP(caustics, 0, 1, 1);
 
 void rendercaustics(float z, bool refract)
 {
@@ -612,10 +612,10 @@ void rendercaustics(float z, bool refract)
 
     GLfloat s[4] = { 0.05f, 0.03f, 0, 0 };
     GLfloat t[4] = { 0, 0.03f, 0.05f, 0 };
-    s[0] *= causticscale/100.0f;
-    s[1] *= causticscale/100.0f;
-    t[1] *= causticscale/100.0f;
-    t[2] *= causticscale/100.0f;
+    s[0] *= 100.0f/causticscale;
+    s[1] *= 100.0f/causticscale;
+    t[1] *= 100.0f/causticscale;
+    t[2] *= 100.0f/causticscale;
 
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
