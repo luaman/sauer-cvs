@@ -629,7 +629,19 @@ void rendercaustics(float z, bool refract)
     glEnable(GL_BLEND);
     glBlendFunc(GL_ZERO, GL_SRC_COLOR);
 
-    glBindTexture(GL_TEXTURE_2D, caustics[(lastmillis/causticmillis)%NUMCAUSTICS]->gl);
+    int tex = (lastmillis/causticmillis)%NUMCAUSTICS;
+    glBindTexture(GL_TEXTURE_2D, caustics[tex]->gl);
+
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, caustics[(tex+1)%NUMCAUSTICS]->gl);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+   
+        float frac = float(lastmillis%causticmillis)/causticmillis; 
+        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, frac, frac, frac, 0);
+    };
 
     glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -681,6 +693,13 @@ void rendercaustics(float z, bool refract)
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
     };
     glDisableClientState(GL_VERTEX_ARRAY);
+
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        glDisable(GL_TEXTURE_2D);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    };
 
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
