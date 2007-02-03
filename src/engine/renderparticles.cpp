@@ -112,7 +112,7 @@ void render_particles(int time)
         { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
         { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
         { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-        { PT_TRAIL|PT_MOD,   0, 255, 255, 2,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb is inverted)
+        { PT_TRAIL|PT_MOD,   0, 255, 255, 2,  8, 0.74f, 0.8f,   50 }, // red:    blood spats (note: rgb is inverted)
         { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
         { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
         { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
@@ -154,7 +154,7 @@ void render_particles(int time)
         float sz = pt.type&PT_ENT ? pt.sz : pt.sz*particlesize/100.0f; 
         int type = pt.type&0xFF;
         
-        if(pt.type&PT_MOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR); //note: if really fussy would multiply alpha into rgb too... shader?
+        if(pt.type&PT_MOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 
         bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
@@ -204,14 +204,21 @@ void render_particles(int time)
             
             if(quads)
             {
-                glColor4ub(pt.r, pt.g, pt.b, (type==PT_FLARE) ? blend : ((blend > 63) ? 255 : blend*4));
+            
+                if(pt.type&PT_MOD)
+                {   
+                    int nblend = (blend > 63) ? 255 : blend*4; //multiply alpha into color
+                    glColor3ub(pt.r*nblend/255, pt.g*nblend/255, pt.b*nblend/255);
+                }
+                else
+                    glColor4ub(pt.r, pt.g, pt.b, (type==PT_FLARE) ? blend : ((blend > 63) ? 255 : blend*4));
                 if(type==PT_FLARE || type==PT_TRAIL)
                 {					
                     vec e = p->d;
                     if(type==PT_TRAIL)
                     {
                         if(pt.gr) e.z -= float(ts)/pt.gr;
-                        e.div(-50.0f);
+                        e.div(-75.0f);
                         e.add(o);
                         //@TODO include spin influence, and maybe have min size
                     };
@@ -359,7 +366,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
         }
         while(x*x+y*y+z*z>radius*radius);
     	vec tmp =  vec((float)x, (float)y, (float)z);
-        newparticle(p, tmp, rnd(fade*3)+1, type);
+        newparticle(p, tmp, rnd(fade*3)+1, type)->oa = 13.1 * i; //distribute initial angle
     };
 };
 
