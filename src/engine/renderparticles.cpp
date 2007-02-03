@@ -112,7 +112,7 @@ void render_particles(int time)
         { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
         { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
         { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-        { PT_TRAIL|PT_MOD,   0, 255, 255, 1,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb is inverted)
+        { PT_TRAIL|PT_MOD,   0, 255, 255, 2,  8, 0.74f, 0.0f,   0 }, // red:    blood spats (note: rgb is inverted)
         { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
         { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
         { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
@@ -131,8 +131,8 @@ void render_particles(int time)
         { PT_METERVS, 255, 25, 25,   0,  -1, 2.0f, 0.0f,   0 },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
         { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
         { 0,          137, 118, 97, 20,   2, 0.6f, 0.0f,   0 },  // greyish-brown:   small  slowly sinking smoke trail
-        {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f, 0.0f,   0 },  // red explostion fireball
-        {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange explostion fireball 
+        {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f, 0.0f,   0 },  // red explosion fireball
+        {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange explosion fireball 
         { PT_ENT,     137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke
         { 0,          118, 97, 137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke          
         { PT_ENT|PT_TRAIL,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
