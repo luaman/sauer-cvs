@@ -610,8 +610,8 @@ void rendercaustics(float z, bool refract)
     GLfloat fogc[4] = {1, 1, 1, 1};
     glFogfv(GL_FOG_COLOR, fogc);
 
-    GLfloat s[4] = { 0.008f, 0, 0.0048f, 0 };
-    GLfloat t[4] = { 0, 0.008f, 0.0048f, 0 };
+    GLfloat s[4] = { 0.0055f, 0, 0.0033f, 0 };
+    GLfloat t[4] = { 0, 0.0055f, 0.0033f, 0 };
     loopk(3)
     {
         s[k] *= 100.0f/causticscale;
