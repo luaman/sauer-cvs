@@ -204,7 +204,6 @@ void render_particles(int time)
             
             if(quads)
             {
-            
                 if(pt.type&PT_MOD)
                 {   
                     int nblend = (blend > 63) ? 255 : blend*4; //multiply alpha into color
@@ -365,7 +364,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
             z = rnd(radius*2)-radius;
         }
         while(x*x+y*y+z*z>radius*radius);
-    	vec tmp =  vec((float)x, (float)y, (float)z);
+    	vec tmp = vec((float)x, (float)y, (float)z);
         newparticle(p, tmp, rnd(fade*3)+1, type)->oa = 13.1 * i; //distribute initial angle
     };
 };

@@ -47,6 +47,64 @@ struct Shader
     };
 };
 
+// management of texture slots
+// each texture slot can have multople texture frames, of which currently only the first is used
+// additional frames can be used for various shaders
+
+struct Texture
+{
+    char *name;
+    int xs, ys, w, h, bpp;
+    GLuint gl;
+};
+
+enum
+{
+    TEX_DIFFUSE = 0,
+    TEX_UNKNOWN,
+    TEX_DECAL,
+    TEX_NORMAL,
+    TEX_GLOW,
+    TEX_SPEC,
+    TEX_DEPTH,
+};
+    
+struct Slot
+{
+    struct Tex
+    {
+        int type;
+        Texture *t;
+        string name;
+        int rotation, xoffset, yoffset;
+        float scale;
+        int combined;
+    };
+
+    vector<Tex> sts;
+    Shader *shader;
+    vector<ShaderParam> params;
+    bool loaded;
+    
+    void reset()
+    {
+        sts.setsize(0);
+        shader = NULL;
+        params.setsize(0);
+        loaded = false;
+    };
+};
+
+struct cubemapside
+{
+    GLenum target;
+    const char *name;
+};
+
+extern cubemapside cubemapsides[6];
+
+extern Texture *crosshair;
+
 extern Shader *defaultshader;
 extern Shader *notextureshader;
 extern Shader *nocolorshader;

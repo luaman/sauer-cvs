@@ -5,124 +5,9 @@
 #include "world.h"
 #include "octa.h"
 #include "lightmap.h"
-#include "shaders.h"
 #include "spheretree.h"
-
-struct Texture
-{
-    char *name;
-    int xs, ys, w, h, bpp;
-    GLuint gl;
-};
-
-struct SphereTree;
-
-enum { MDL_MD2 = 1, MDL_MD3 };
-
-struct model
-{
-    Shader *shader;
-    float spec, ambient;
-    bool collide, cullface, masked, shadow;
-    float scale;
-    vec translate;
-    SphereTree *spheretree;
-    vec bbcenter, bbradius;
-    float eyeheight, collideradius, collideheight;
-
-    model() : shader(0), spec(1.0f), ambient(0.3f), collide(true), cullface(true), masked(false), shadow(true), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), eyeheight(0.9f), collideradius(0), collideheight(0) {};
-    virtual ~model() { DELETEP(spheretree); };
-    virtual void calcbb(int frame, vec &center, vec &radius) = 0;
-    virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl = NULL) = 0;
-    virtual void setskin(int tex = 0) = 0;
-    virtual bool load() = 0;
-    virtual char *name() = 0;
-    virtual int type() = 0;
-    virtual SphereTree *setspheretree() { return 0; };
-
-    void boundbox(int frame, vec &center, vec &radius)
-    {
-        if(frame) calcbb(frame, center, radius);
-        else
-        {
-            if(bbradius.iszero()) calcbb(0, bbcenter, bbradius);
-            center = bbcenter;
-            radius = bbradius;
-        };
-    };
-
-    void collisionbox(int frame, vec &center, vec &radius)
-    {
-        boundbox(frame, center, radius);
-        if(collideradius) 
-        {
-            center[0] = center[1] = 0;
-            radius[0] = radius[1] = collideradius;
-        };
-        if(collideheight)
-        {
-            center[2] = radius[2] = collideheight/2;
-        };
-    };
-
-    float boundsphere(int frame, vec &center)
-    {
-        vec radius;
-        boundbox(frame, center, radius);
-        return radius.magnitude();
-    };
-
-    float above(int frame = 0)
-    {
-        vec center, radius;
-        boundbox(frame, center, radius);
-        return center.z+radius.z;
-    };
-
-    void setshader();
-};
-
-// management of texture slots
-// each texture slot can have multople texture frames, of which currently only the first is used
-// additional frames can be used for various shaders
-
-enum
-{
-    TEX_DIFFUSE = 0,
-    TEX_UNKNOWN,
-    TEX_DECAL,
-    TEX_NORMAL,
-    TEX_GLOW,
-    TEX_SPEC,
-    TEX_DEPTH,
-};
-
-struct Slot
-{
-    struct Tex
-    {
-        int type;
-        Texture *t;
-        string name;
-        int rotation, xoffset, yoffset;
-        float scale;
-        int combined;
-    };
-
-    vector<Tex> sts;
-    Shader *shader;
-    vector<ShaderParam> params;
-    bool loaded;
-
-    void reset()
-    {
-        sts.setsize(0);
-        shader = NULL;
-        params.setsize(0);
-        loaded = false;
-    };
-};
-
+#include "texture.h"
+#include "model.h"
 
 // GL_ARB_multitexture
 extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture_;
@@ -174,7 +59,6 @@ extern int curtexnum;
 extern const ivec cubecoords[8];
 extern const ushort fv[6][4];
 extern const uchar faceedgesidx[6][4];
-extern Texture *crosshair;
 extern bool inbetweenframes;
 
 extern int curtime;                     // current frame time
@@ -188,13 +72,6 @@ extern icliententities *et;
 extern vector<int> entgroup;
 
 // texture
-struct cubemapside
-{
-    GLenum target;
-    const char *name;
-};
-
-extern cubemapside cubemapsides[6];
 
 extern Texture *textureload(const char *name, bool clamp = false, bool mipit = true, bool msg = true);
 extern GLuint cubemapfromsky(int size);
@@ -362,6 +239,7 @@ extern void writecompletions(FILE *f);
 // main
 extern void estartmap(const char *name);
 extern void computescreen(const char *text);
+extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
 
 // menu
 extern void menuprocess();
@@ -394,9 +272,6 @@ extern int triggertypes[NUMTRIGGERTYPES];
 extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);
 extern bool pointinsel(selinfo &sel, vec &o);
-
-// lightmap
-extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
 
 // rendermodel
 struct mapmodelinfo { string name; int tex; model *m; };
