@@ -225,11 +225,11 @@ struct lodcollect
 
     int size() { return texs.length()*sizeof(elementset) + (hasVBO ? 0 : (3*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort)) + matsurfs.length()*sizeof(materialsurface); };
 
-    void clearidx() { indices.clear(); };
     void clear()
     {
         curtris = 0;
         offsetindices = 0;
+        indices.clear();
         skyindices.setsizenodelete(0);
         explicitskyindices.setsizenodelete(0);
         matsurfs.setsizenodelete(0);
@@ -841,16 +841,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 {
     ASSERT(size <= VVEC_INT_MASK+1);
 
-    if(verts.length())                                 // since reseting is a bit slow
-    {
-        verts.setsizenodelete(0);
-        explicitsky = skyarea = 0;
-        vh.clear();
-        l0.clear();
-        l1.clear();
-    };
-
-    vamms.setsizenodelete(0);
+    explicitsky = skyarea = 0;
 
     rendercube(c, cx, cy, cz, size, csi);
 
@@ -860,18 +851,19 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
     addskyverts(ivec(cx, cy, cz), size);
 
-    if(verts.length())
-    {
-        vtxarray *va = newva(cx, cy, cz, size);
-        ext(c).va = va;
-        va->min = bbmin;
-        va->max = bbmax;
-        if(vamms.length()) va->mapmodels = new vector<octaentities *>(vamms);
-        va->hasmerges = vahasmerges;
-    };
+    vtxarray *va = newva(cx, cy, cz, size);
+    ext(c).va = va;
+    va->min = bbmin;
+    va->max = bbmax;
+    if(vamms.length()) va->mapmodels = new vector<octaentities *>(vamms);
+    va->hasmerges = vahasmerges;
 
-    l0.clearidx();
-    l1.clearidx();
+    verts.setsizenodelete(0);
+    vamms.setsizenodelete(0);
+    explicitsky = skyarea = 0;
+    vh.clear(); 
+    l0.clear();
+    l1.clear();
 };
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
@@ -916,7 +908,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
                 if(vamergemax > size)
                 {
                     cmergemax = max(cmergemax, vamergemax);
-                    vahasmerges |= vahasmerges&~MERGE_USE;
+                    chasmerges |= vahasmerges&~MERGE_USE;
                 };
                 continue;
             };
