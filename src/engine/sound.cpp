@@ -112,6 +112,7 @@ void initsound()
 
 void musicdone()
 {
+    if(!musicdonecmd) return;
 #ifdef USE_MIXER
     if(mod) Mix_FreeMusic(mod);
 #else
@@ -120,13 +121,10 @@ void musicdone()
 #endif
     mod = NULL;
     stream = NULL;
-    if(musicdonecmd)
-    {
-        char *cmd = musicdonecmd;
-        musicdonecmd = NULL;
-        execute(cmd);
-        delete[] cmd;
-    };
+    char *cmd = musicdonecmd;
+    musicdonecmd = NULL;
+    execute(cmd);
+    delete[] cmd;
 };
 
 void music(char *name, char *cmd)
