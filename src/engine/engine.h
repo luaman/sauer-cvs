@@ -196,12 +196,18 @@ extern void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materi
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
-extern void setupmaterials(bool load = false);
+extern void setupmaterials();
 extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();
 extern void renderwater();
 extern void rendermaterials(float zclip = 0, bool refract = false);
+
+extern void initenvmaps();
+extern void genenvmaps();
+extern ushort closestenvmap(const vec &o);
+extern ushort closestenvmap(int orient, int x, int y, int z, int size);
+extern GLuint lookupenvmap(ushort emid);
 
 // server
 

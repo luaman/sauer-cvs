@@ -28,7 +28,7 @@ struct PackNode
     bool insert(ushort &tx, ushort &ty, ushort tw, ushort th);
 };
 
-enum { LM_NORMAL = 0, LM_BUMPMAP0, LM_BUMPMAP1 };
+enum { LM_DIFFUSE = 0, LM_BUMPMAP0, LM_BUMPMAP1 };
 
 struct LightMap
 {
@@ -39,7 +39,7 @@ struct LightMap
     int unlitx, unlity; 
     
     LightMap()
-     : converted(0), type(LM_NORMAL), lightmaps(0), lumels(0), unlitx(-1), unlity(-1)
+     : converted(0), type(LM_DIFFUSE), lightmaps(0), lumels(0), unlitx(-1), unlity(-1)
     {
         memset(data, 0, sizeof(data));
     };

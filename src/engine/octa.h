@@ -2,9 +2,15 @@
 
 struct elementset
 {
-    int texture;
-    int lmid;
-    int length[3];
+    ushort texture, lmid, envmap;
+    ushort length[3];
+};
+
+enum
+{
+    EMID_NONE = 0,
+    EMID_SKY,
+    EMID_RESERVED
 };
 
 struct materialsurface
@@ -20,7 +26,7 @@ struct materialsurface
     union
     {
         entity *light;
-        GLuint tex;
+        ushort envmap;
     };
 };
 

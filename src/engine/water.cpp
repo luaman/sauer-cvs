@@ -731,424 +731,9 @@ void drawreflections()
     defaultshader->set();
 };
 
-/* generic material rendering */
+// environment mapped reflections
 
-VARP(showmat, 0, 1, 1);
-
-static int sortdim[3];
-static ivec sortorigin;
-
-static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
-{
-    const materialsurface &x = **xm, &y = **ym;
-    int xdim = dimension(x.orient), ydim = dimension(y.orient);
-    loopi(3)
-    {
-        int dim = sortdim[i], xmin, xmax, ymin, ymax;
-        xmin = xmax = x.o[dim];
-        if(dim==C[xdim]) xmax += x.csize;
-        else if(dim==R[xdim]) xmax += x.rsize;
-        ymin = ymax = y.o[dim];
-        if(dim==C[ydim]) ymax += y.csize;
-        else if(dim==R[ydim]) ymax += y.rsize;
-        if(xmax > ymin && ymax > xmin) continue;
-        int c = sortorigin[dim];
-        if(c > xmin && c < xmax) return 1;
-        if(c > ymin && c < ymax) return -1;
-        xmin = abs(xmin - c);
-        xmax = abs(xmax - c);
-        ymin = abs(ymin - c);
-        ymax = abs(ymax - c);
-        if(max(xmin, xmax) <= min(ymin, ymax)) return 1;
-        else if(max(ymin, ymax) <= min(xmin, xmax)) return -1;
-    };
-    if(x.material < y.material) return 1;
-    if(x.material > y.material) return -1;
-    return 0;
-};
-
-extern vtxarray *reflectedva;
-
-void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract)
-{
-    bool reflected = zclip && !refract && camera1->o.z >= zclip;
-    sortorigin = ivec(camera1->o);
-    if(reflected) sortorigin.z = int(zclip - (camera1->o.z - zclip));
-    vec dir;
-    vecfromyawpitch(camera1->yaw, reflected ? -camera1->pitch : camera1->pitch, 1, 0, dir);
-    loopi(3) { dir[i] = fabs(dir[i]); sortdim[i] = i; };
-    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
-    if(dir[sortdim[1]] > dir[sortdim[0]]) swap(int, sortdim[1], sortdim[0]);
-    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
-
-    bool vertwater = !hasFBO || renderpath==R_FIXEDFUNCTION;
-    for(vtxarray *va = reflected ? reflectedva : visibleva; va; va = reflected ? va->rnext : va->next)
-    {
-        lodlevel &lod = va->l0;
-        if(!lod.matsurfs || va->occluded >= OCCLUDE_BB) continue;
-        if(zclip && (refract ? va->z >= zclip : va->z+va->size <= zclip)) continue;
-        loopi(lod.matsurfs)
-        {
-            materialsurface &m = lod.matbuf[i];
-            if(!editmode || !showmat)
-            {
-                if(!vertwater && m.material==MAT_WATER && m.orient==O_TOP) continue;
-                if(m.material>=MAT_EDIT) continue;
-            };
-            vismats.add(&m);
-        };
-    };
-    vismats.sort(vismatcmp);
-};
-
-void rendermatgrid(vector<materialsurface *> &vismats)
-{   
-    notextureshader->set();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    static uchar cols[MAT_EDIT][3] =
-    {
-        { 0, 0, 0 },   // MAT_AIR - no edit volume,
-        { 0, 0, 85 },  // MAT_WATER - blue,
-        { 85, 0, 0 },  // MAT_CLIP - red,
-        { 0, 85, 85 }, // MAT_GLASS - cyan,
-        { 0, 85, 0 },  // MAT_NOCLIP - green
-    };
-    int lastmat = -1;
-    glBegin(GL_QUADS);
-    loopv(vismats)
-    {
-        materialsurface &m = *vismats[i];
-        int curmat = m.material >= MAT_EDIT ? m.material-MAT_EDIT : m.material;
-        if(curmat != lastmat)
-        {
-            lastmat = curmat;
-            glColor3ubv(cols[curmat]);
-        };
-        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
-    };
-    glEnd();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-};
-
-VARP(glassenv, 0, 1, 1);
-
-void rendermaterials(float zclip, bool refract)
-{
-    vector<materialsurface *> vismats;
-    sortmaterials(vismats, zclip, refract);
-    if(vismats.empty()) return;
-
-    if(!editmode || !showmat) glDepthMask(GL_FALSE);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-
-    Slot &wslot = lookuptexture(-MAT_WATER);
-    uchar wcol[4] = { 128, 128, 128, 192 };
-    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
-    int lastorient = -1, lastmat = -1;
-    Shader *curshader = NULL;
-    bool textured = true, begin = false;
-    GLuint cubemapped = 0;
-
-    loopv(vismats)
-    {
-        materialsurface &m = *vismats[editmode && showmat ? vismats.length()-1-i : i];
-        int curmat = !editmode || !showmat || m.material>=MAT_EDIT ? m.material : m.material+MAT_EDIT;
-        if(lastmat!=curmat || lastorient!=m.orient || (curmat==MAT_GLASS && cubemapped && m.tex != cubemapped)) 
-        {
-            if(begin) { glEnd(); begin = false; };
-            switch(curmat)
-            {
-                case MAT_WATER:
-                    if(lastmat==MAT_WATER && lastorient!=O_TOP && m.orient!=O_TOP) break;
-                    if(begin) { glEnd(); begin = false; };
-                    if(lastmat!=MAT_WATER)
-                    {
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        glColor4ubv(wcol);
-                    };
-                    if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; };
-                    glBindTexture(GL_TEXTURE_2D, wslot.sts[m.orient==O_TOP ? 0 : 1].t->gl); 
-                    if(curshader!=defaultshader) (curshader = defaultshader)->set();
-                    break;
-                
-                case MAT_GLASS:
-                    if((!hasCM || !glassenv) && lastmat==MAT_GLASS) break;
-                    if(begin) { glEnd(); begin = false; };
-                    if(hasCM && glassenv)
-                    {
-                        if(cubemapped != m.tex)
-                        {
-                            glActiveTexture_(GL_TEXTURE1_ARB);
-                            if(!cubemapped) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, m.tex);
-                            glActiveTexture_(GL_TEXTURE0_ARB);
-                            if(!cubemapped) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
-                            cubemapped = m.tex;
-                        };
-                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1,
-                            dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
-                            dimension(m.orient)==1 ? dimcoord(m.orient)*2-1 : 0,
-                            dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0, 
-                            0); 
-                    };
-                    if(lastmat==MAT_GLASS) break;
-                    if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
-                    if(hasCM && glassenv)
-                    {
-                        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-                        glColor3f(0, 0.5f, 1.0f);
-                        static Shader *glassshader = NULL;
-                        if(!glassshader) glassshader = lookupshaderbyname("glass");
-                        if(curshader!=glassshader) (curshader = glassshader)->set();
-                    }
-                    else
-                    {
-                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                        glColor3f(0.3f, 0.15f, 0.0f);
-                        if(curshader!=notextureshader) (curshader = notextureshader)->set();
-                    };
-                    break;
-
-                default:
-                {
-                    if(lastmat==curmat) break;
-                    if(lastmat<MAT_EDIT)
-                    {
-                        if(begin) { glEnd(); begin = false; };
-                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
-                        if(curshader!=notextureshader) (curshader = notextureshader)->set();
-                    };
-                    static uchar blendcols[MAT_EDIT][3] =
-                    {
-                        { 0, 0, 0 },     // MAT_AIR - no edit volume,
-                        { 255, 128, 0 }, // MAT_WATER - blue,
-                        { 0, 255, 255 }, // MAT_CLIP - red,
-                        { 255, 0, 0 },   // MAT_GLASS - cyan,
-                        { 255, 0, 255 }, // MAT_NOCLIP - green
-                    };
-                    glColor3ubv(blendcols[curmat >= MAT_EDIT ? curmat-MAT_EDIT : curmat]);
-                    break;
-                };
-            };
-            lastmat = curmat;
-            lastorient = m.orient;
-        };            
-        switch(curmat)
-        {
-            case MAT_WATER:
-                if(m.orient!=O_TOP) 
-                {
-                    if(!begin) { glBegin(GL_QUADS); begin = true; };
-                    renderwaterfall(m, wslot.sts[1].t, 0.1f);
-                }
-                else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, wslot.sts[0].t) >= (uint)m.csize * 2)
-                    rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, wslot.sts[0].t);
-                break;
-            
-            case MAT_GLASS:
-                if(!begin) { glBegin(GL_QUADS); begin = true; };
-                drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
-                break;
-
-            default:
-                if(!begin) { glBegin(GL_QUADS); begin = true; };
-                drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
-                break;
-        };
-    };
-
-    if(begin) glEnd();
-    glDisable(GL_BLEND);
-    if(!editmode || !showmat) glDepthMask(GL_TRUE);
-    else rendermatgrid(vismats);
-
-    glEnable(GL_CULL_FACE);
-    if(!textured) glEnable(GL_TEXTURE_2D);
-
-    if(cubemapped)
-    {
-        glActiveTexture_(GL_TEXTURE1_ARB);
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        glActiveTexture_(GL_TEXTURE0_ARB);
-    };
-};
-
-struct material
-{
-    const char *name;
-    uchar id;
-} materials[] =
-{
-    {"air", MAT_AIR},
-    {"water", MAT_WATER},
-    {"clip", MAT_CLIP},
-    {"glass", MAT_GLASS},
-    {"noclip", MAT_NOCLIP},
-};
-
-int findmaterial(const char *name)
-{
-    loopi(sizeof(materials)/sizeof(material))
-    {
-        if(!strcmp(materials[i].name, name)) return materials[i].id;
-    };
-    return -1;
-};
-
-int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
-{
-    if(c.ext) switch(c.ext->material)
-    {
-    case MAT_AIR:
-         break;
-
-    case MAT_WATER:
-        if(visibleface(c, orient, x, y, z, size, MAT_WATER))
-            return (orient != O_BOTTOM ? MATSURF_VISIBLE : MATSURF_EDIT_ONLY);
-        break;
-    
-    case MAT_GLASS:
-        if(visibleface(c, orient, x, y, z, size, MAT_GLASS))
-            return MATSURF_VISIBLE;
-        break;
-    
-    default:
-        if(visibleface(c, orient, x, y, z, size, c.ext->material))
-            return MATSURF_EDIT_ONLY;
-        break;
-    };
-    return MATSURF_NOT_VISIBLE;
-};
-
-void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurface> &matsurfs)
-{
-    loopi(6)
-    {
-        int vis = visiblematerial(c, i, cx, cy, cz, size);
-        if(vis != MATSURF_NOT_VISIBLE)
-        {
-            materialsurface m;
-            m.material = (vis == MATSURF_EDIT_ONLY ? c.ext->material+MAT_EDIT : c.ext->material);
-            m.orient = i;
-            m.o = ivec(cx, cy, cz);
-            m.csize = m.rsize = size;
-            if(dimcoord(i)) m.o[dimension(i)] += size;
-            matsurfs.add(m);
-        };
-    };
-};
-
-static int mergematcmp(const materialsurface *x, const materialsurface *y)
-{
-    int dim = dimension(x->orient), c = C[dim], r = R[dim];
-    if(x->o[r] + x->rsize < y->o[r] + y->rsize) return -1;
-    if(x->o[r] + x->rsize > y->o[r] + y->rsize) return 1;
-    if(x->o[c] < y->o[c]) return -1;
-    if(x->o[c] > y->o[c]) return 1;
-    return 0;
-};
-
-static int mergematr(materialsurface *m, int sz, materialsurface &n)
-{
-    int dim = dimension(n.orient), c = C[dim], r = R[dim];
-    for(int i = sz-1; i >= 0; --i) 
-    {
-        if(m[i].o[r] + m[i].rsize < n.o[r]) break;
-        if(m[i].o[r] + m[i].rsize == n.o[r] && m[i].o[c] == n.o[c] && m[i].csize == n.csize)
-        {
-            n.o[r] = m[i].o[r];
-            n.rsize += m[i].rsize;
-            memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
-            return 1;
-        };
-    };
-    return 0;
-};
-
-static int mergematc(materialsurface &m, materialsurface &n)
-{
-    int dim = dimension(n.orient), c = C[dim], r = R[dim];
-    if(m.o[r] == n.o[r] && m.rsize == n.rsize && m.o[c] + m.csize == n.o[c])
-    {
-        n.o[c] = m.o[c];
-        n.csize += m.csize;
-        return 1;
-    };
-    return 0;
-};
-
-static int mergemat(materialsurface *m, int sz, materialsurface &n)
-{
-    for(bool merged = false; sz; merged = true)
-    {
-        int rmerged = mergematr(m, sz, n);
-        sz -= rmerged;
-        if(!rmerged && merged) break;
-        if(!sz) break;
-        int cmerged = mergematc(m[sz-1], n);
-        sz -= cmerged;
-        if(!cmerged) break;
-    };
-    m[sz++] = n;
-    return sz;
-};
-
-static int mergemats(materialsurface *m, int sz)
-{
-    qsort(m, sz, sizeof(materialsurface), (int (__cdecl *)(const void *, const void *))mergematcmp);
-
-    int nsz = 0;
-    loopi(sz) nsz = mergemat(m, nsz, m[i]);
-    return nsz;
-};
-
-static int optmatcmp(const materialsurface *x, const materialsurface *y)
-{   
-    if(x->material < y->material) return -1;
-    if(x->material > y->material) return 1;
-    if(x->orient > y->orient) return -1;
-    if(x->orient < y->orient) return 1;
-    int dim = dimension(x->orient), xc = x->o[dim], yc = y->o[dim];
-    if(xc < yc) return -1;
-    if(xc > yc) return 1;
-    return 0;
-};
-    
-VARF(optmats, 0, 1, 1, allchanged());
-
-int optimizematsurfs(materialsurface *matbuf, int matsurfs)
-{
-    qsort(matbuf, matsurfs, sizeof(materialsurface), (int (__cdecl *)(const void*, const void*))optmatcmp);
-    if(!optmats) return matsurfs;
-    materialsurface *cur = matbuf, *end = matbuf+matsurfs;
-    while(cur < end)
-    {
-         materialsurface *start = cur++;
-         int dim = dimension(start->orient);
-         while(cur < end &&
-               cur->material == start->material &&
-               cur->orient == start->orient &&
-               cur->o[dim] == start->o[dim])
-            ++cur;
-         materialsurface *oldbuf = matbuf;
-         if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath==R_ASMSHADER))
-         {
-            memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
-            matbuf = oldbuf + mergemats(oldbuf, matbuf + (cur-start) - oldbuf);
-         }
-         else if(cur-start>=4)
-         {
-            QuadNode vmats(0, 0, hdr.worldsize);
-            loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
-            vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
-         };
-    };
-    return matsurfs - (end-matbuf);
-};
-
-VARFP(envmapsize, 4, 7, 9, setupmaterials(true));
+VARFP(envmapsize, 4, 7, 9, setupmaterials());
 VAR(envmapradius, 0, 128, 10000);
 
 struct envmap
@@ -1222,7 +807,7 @@ GLuint genenvmap(const vec &o)
     return tex;
 };
 
-void genenvmaps()
+void initenvmaps()
 {
     if(!hasCM || renderpath==R_FIXEDFUNCTION) return;
     clearenvmaps();
@@ -1235,7 +820,12 @@ void genenvmaps()
         envmap &em = envmaps.add();
         em.radius = ent.attr1 ? ent.attr1 : envmapradius;
         em.o = ent.o;
+        em.tex = 0;
     };
+};
+
+void genenvmaps()
+{
     loopv(envmaps)
     {
         show_out_of_renderloop_progress(float(i)/float(envmaps.length()), "generating environment maps...");
@@ -1244,9 +834,9 @@ void genenvmaps()
     };
 };
 
-GLuint closestenvmap(const vec &o)
+ushort closestenvmap(const vec &o)
 {
-    GLuint mintex = 0;
+    ushort minemid = EMID_SKY;
     float mindist = 1e16f;
     loopv(envmaps)
     {
@@ -1254,18 +844,210 @@ GLuint closestenvmap(const vec &o)
         float dist = em.o.dist(o);
         if(dist < em.radius && dist < mindist)
         {
-            mintex = em.tex;
+            minemid = EMID_RESERVED + i;
             mindist = dist;
         };
     };
-    return mintex;
+    return minemid;
 };    
-   
+
+ushort closestenvmap(int orient, int x, int y, int z, int size)
+{
+    vec loc(x, y, z);
+    int dim = dimension(orient);
+    if(dimcoord(orient)) loc[dim] += size;
+    loc[R[dim]] += size/2;
+    loc[C[dim]] += size/2;
+    return closestenvmap(loc);
+};
+
+GLuint lookupenvmap(ushort emid)
+{
+    if(emid==EMID_SKY) return skyenvmap;
+    if(emid==EMID_NONE || !envmaps.inrange(emid-EMID_RESERVED)) return 0;
+    GLuint tex = envmaps[emid-EMID_RESERVED].tex;
+    return tex ? tex : skyenvmap;
+};
+
+/* generic material rendering */
+
+struct material
+{
+    const char *name;
+    uchar id;
+} materials[] = 
+{
+    {"air", MAT_AIR},
+    {"water", MAT_WATER},
+    {"clip", MAT_CLIP},
+    {"glass", MAT_GLASS},
+    {"noclip", MAT_NOCLIP},
+};
+
+int findmaterial(const char *name)
+{
+    loopi(sizeof(materials)/sizeof(material))
+    {
+        if(!strcmp(materials[i].name, name)) return materials[i].id;
+    }; 
+    return -1;
+};  
+    
+int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
+{   
+    if(c.ext) switch(c.ext->material)
+    {
+    case MAT_AIR:
+         break;
+
+    case MAT_WATER:
+        if(visibleface(c, orient, x, y, z, size, MAT_WATER))
+            return (orient != O_BOTTOM ? MATSURF_VISIBLE : MATSURF_EDIT_ONLY);
+        break;
+
+    case MAT_GLASS:
+        if(visibleface(c, orient, x, y, z, size, MAT_GLASS))
+            return MATSURF_VISIBLE;
+        break;
+
+    default:
+        if(visibleface(c, orient, x, y, z, size, c.ext->material))
+            return MATSURF_EDIT_ONLY;
+        break;
+    };
+    return MATSURF_NOT_VISIBLE;
+};
+
+void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurface> &matsurfs)
+{
+    loopi(6)
+    {
+        int vis = visiblematerial(c, i, cx, cy, cz, size);
+        if(vis != MATSURF_NOT_VISIBLE)
+        {
+            materialsurface m;
+            m.material = (vis == MATSURF_EDIT_ONLY ? c.ext->material+MAT_EDIT : c.ext->material);
+            m.orient = i;
+            m.o = ivec(cx, cy, cz);
+            m.csize = m.rsize = size;
+            if(dimcoord(i)) m.o[dimension(i)] += size;
+            matsurfs.add(m);
+        };
+    };
+};
+
+static int mergematcmp(const materialsurface *x, const materialsurface *y)
+{
+    int dim = dimension(x->orient), c = C[dim], r = R[dim];
+    if(x->o[r] + x->rsize < y->o[r] + y->rsize) return -1;
+    if(x->o[r] + x->rsize > y->o[r] + y->rsize) return 1;
+    if(x->o[c] < y->o[c]) return -1;
+    if(x->o[c] > y->o[c]) return 1;
+    return 0;
+};
+
+static int mergematr(materialsurface *m, int sz, materialsurface &n)
+{
+    int dim = dimension(n.orient), c = C[dim], r = R[dim];
+    for(int i = sz-1; i >= 0; --i)
+    {
+        if(m[i].o[r] + m[i].rsize < n.o[r]) break;
+        if(m[i].o[r] + m[i].rsize == n.o[r] && m[i].o[c] == n.o[c] && m[i].csize == n.csize)
+        {
+            n.o[r] = m[i].o[r];
+            n.rsize += m[i].rsize;
+            memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
+            return 1;
+        };
+    };
+    return 0;
+};
+
+static int mergematc(materialsurface &m, materialsurface &n)
+{
+    int dim = dimension(n.orient), c = C[dim], r = R[dim];
+    if(m.o[r] == n.o[r] && m.rsize == n.rsize && m.o[c] + m.csize == n.o[c])
+    {
+        n.o[c] = m.o[c];
+        n.csize += m.csize;
+        return 1;
+    };
+    return 0;
+};
+
+static int mergemat(materialsurface *m, int sz, materialsurface &n)
+{
+    for(bool merged = false; sz; merged = true)
+    {
+        int rmerged = mergematr(m, sz, n);
+        sz -= rmerged;
+        if(!rmerged && merged) break;
+        if(!sz) break;
+        int cmerged = mergematc(m[sz-1], n);
+        sz -= cmerged;
+        if(!cmerged) break;
+    };
+    m[sz++] = n;
+    return sz;
+};
+
+static int mergemats(materialsurface *m, int sz)
+{
+    qsort(m, sz, sizeof(materialsurface), (int (__cdecl *)(const void *, const void *))mergematcmp);
+
+    int nsz = 0;
+    loopi(sz) nsz = mergemat(m, nsz, m[i]);
+    return nsz;
+};
+
+static int optmatcmp(const materialsurface *x, const materialsurface *y)
+{
+    if(x->material < y->material) return -1;
+    if(x->material > y->material) return 1;
+    if(x->orient > y->orient) return -1;
+    if(x->orient < y->orient) return 1;
+    int dim = dimension(x->orient), xc = x->o[dim], yc = y->o[dim];
+    if(xc < yc) return -1;
+    if(xc > yc) return 1;
+    return 0;
+};
+
+VARF(optmats, 0, 1, 1, allchanged());
+
+int optimizematsurfs(materialsurface *matbuf, int matsurfs)
+{
+    qsort(matbuf, matsurfs, sizeof(materialsurface), (int (__cdecl *)(const void*, const void*))optmatcmp);
+    if(!optmats) return matsurfs;
+    materialsurface *cur = matbuf, *end = matbuf+matsurfs;
+    while(cur < end)
+    {
+         materialsurface *start = cur++;
+         int dim = dimension(start->orient);
+         while(cur < end &&
+               cur->material == start->material &&
+               cur->orient == start->orient &&
+               cur->o[dim] == start->o[dim])
+            ++cur;
+         materialsurface *oldbuf = matbuf;
+         if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath==R_ASMSHADER))
+         {
+            memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
+            matbuf = oldbuf + mergemats(oldbuf, matbuf + (cur-start) - oldbuf);
+         }
+         else if(cur-start>=4)
+         {
+            QuadNode vmats(0, 0, hdr.worldsize);
+            loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
+            vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
+         };
+    };
+    return matsurfs - (end-matbuf);
+};
+
 extern vector<vtxarray *> valist;
 
-void setupmaterials(bool load)
+void setupmaterials()
 {
-    if(load) genenvmaps();
     vector<materialsurface *> water;
     hashtable<ivec, int> watersets;
     vector<float> waterdepths;
@@ -1299,14 +1081,17 @@ void setupmaterials(bool load)
                 float depth = raycube(center, vec(0, 0, -1), 10000);
                 waterdepths.add(depth);
             }
-            else if(m.material==MAT_GLASS && hasCM && renderpath==R_ASMSHADER)
+            else if(m.material==MAT_GLASS)
             {
-                int dim = dimension(m.orient);
-                vec center(m.o.tovec());
-                center[R[dim]] += m.rsize/2;
-                center[C[dim]] += m.csize/2;
-                m.tex = closestenvmap(center);
-                if(!m.tex) m.tex = skyenvmap;
+                if(!hasCM || renderpath==R_FIXEDFUNCTION) m.envmap = EMID_NONE;
+                else
+                {
+                    int dim = dimension(m.orient);
+                    vec center(m.o.tovec());
+                    center[R[dim]] += m.rsize/2;
+                    center[C[dim]] += m.csize/2;
+                    m.envmap = closestenvmap(center);
+                };
             };
         };
     };
@@ -1326,4 +1111,245 @@ void setupmaterials(bool load)
     };
 };
 
+VARP(showmat, 0, 1, 1);
+
+static int sortdim[3];
+static ivec sortorigin;
+
+static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
+{
+    const materialsurface &x = **xm, &y = **ym;
+    int xdim = dimension(x.orient), ydim = dimension(y.orient);
+    loopi(3)
+    {
+        int dim = sortdim[i], xmin, xmax, ymin, ymax;
+        xmin = xmax = x.o[dim];
+        if(dim==C[xdim]) xmax += x.csize;
+        else if(dim==R[xdim]) xmax += x.rsize;
+        ymin = ymax = y.o[dim];
+        if(dim==C[ydim]) ymax += y.csize;
+        else if(dim==R[ydim]) ymax += y.rsize;
+        if(xmax > ymin && ymax > xmin) continue;
+        int c = sortorigin[dim];
+        if(c > xmin && c < xmax) return 1;
+        if(c > ymin && c < ymax) return -1;
+        xmin = abs(xmin - c);
+        xmax = abs(xmax - c);
+        ymin = abs(ymin - c);
+        ymax = abs(ymax - c);
+        if(max(xmin, xmax) <= min(ymin, ymax)) return 1;
+        else if(max(ymin, ymax) <= min(xmin, xmax)) return -1;
+    };
+    if(x.material < y.material) return 1;
+    if(x.material > y.material) return -1;
+    return 0;
+};
+
+extern vtxarray *reflectedva;
+
+void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract)
+{
+    bool reflected = zclip && !refract && camera1->o.z >= zclip;
+    sortorigin = ivec(camera1->o);
+    if(reflected) sortorigin.z = int(zclip - (camera1->o.z - zclip));
+    vec dir;
+    vecfromyawpitch(camera1->yaw, reflected ? -camera1->pitch : camera1->pitch, 1, 0, dir);
+    loopi(3) { dir[i] = fabs(dir[i]); sortdim[i] = i; };
+    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
+    if(dir[sortdim[1]] > dir[sortdim[0]]) swap(int, sortdim[1], sortdim[0]);
+    if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
+
+    bool vertwater = !hasFBO || renderpath==R_FIXEDFUNCTION;
+    for(vtxarray *va = reflected ? reflectedva : visibleva; va; va = reflected ? va->rnext : va->next)
+    {
+        lodlevel &lod = va->l0;
+        if(!lod.matsurfs || va->occluded >= OCCLUDE_BB) continue;
+        if(zclip && (refract ? va->z >= zclip : va->z+va->size <= zclip)) continue;
+        loopi(lod.matsurfs)
+        {
+            materialsurface &m = lod.matbuf[i];
+            if(!editmode || !showmat)
+            {
+                if(!vertwater && m.material==MAT_WATER && m.orient==O_TOP) continue;
+                if(m.material>=MAT_EDIT) continue;
+            };
+            vismats.add(&m);
+        };
+    };
+    vismats.sort(vismatcmp);
+};
+
+void rendermatgrid(vector<materialsurface *> &vismats)
+{
+    notextureshader->set();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    static uchar cols[MAT_EDIT][3] =
+    {
+        { 0, 0, 0 },   // MAT_AIR - no edit volume,
+        { 0, 0, 85 },  // MAT_WATER - blue,
+        { 85, 0, 0 },  // MAT_CLIP - red,
+        { 0, 85, 85 }, // MAT_GLASS - cyan,
+        { 0, 85, 0 },  // MAT_NOCLIP - green
+    };
+    int lastmat = -1;
+    glBegin(GL_QUADS);
+    loopv(vismats)
+    {
+        materialsurface &m = *vismats[i];
+        int curmat = m.material >= MAT_EDIT ? m.material-MAT_EDIT : m.material;
+        if(curmat != lastmat)
+        {
+            lastmat = curmat;
+            glColor3ubv(cols[curmat]);
+        };
+        drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
+    };
+    glEnd();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+};
+
+VARP(glassenv, 0, 1, 1);
+
+void rendermaterials(float zclip, bool refract)
+{
+    vector<materialsurface *> vismats;
+    sortmaterials(vismats, zclip, refract);
+    if(vismats.empty()) return;
+
+    if(!editmode || !showmat) glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+
+    Slot &wslot = lookuptexture(-MAT_WATER);
+    uchar wcol[4] = { 128, 128, 128, 192 };
+    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+    int lastorient = -1, lastmat = -1;
+    Shader *curshader = NULL;
+    bool textured = true, begin = false;
+    ushort envmapped = EMID_NONE;
+
+    loopv(vismats)
+    {
+        materialsurface &m = *vismats[editmode && showmat ? vismats.length()-1-i : i];
+        int curmat = !editmode || !showmat || m.material>=MAT_EDIT ? m.material : m.material+MAT_EDIT;
+        if(lastmat!=curmat || lastorient!=m.orient || (curmat==MAT_GLASS && envmapped && m.envmap != envmapped))
+        {
+            if(begin) { glEnd(); begin = false; };
+            switch(curmat)
+            {
+                case MAT_WATER:
+                    if(lastmat==MAT_WATER && lastorient!=O_TOP && m.orient!=O_TOP) break;
+                    if(begin) { glEnd(); begin = false; };
+                    if(lastmat!=MAT_WATER)
+                    {
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        glColor4ubv(wcol);
+                    };
+                    if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; };
+                    glBindTexture(GL_TEXTURE_2D, wslot.sts[m.orient==O_TOP ? 0 : 1].t->gl);
+                    if(curshader!=defaultshader) (curshader = defaultshader)->set();
+                    break;
+
+                case MAT_GLASS:
+                    if((m.envmap==EMID_NONE || !glassenv) && lastmat==MAT_GLASS) break;
+                    if(begin) { glEnd(); begin = false; };
+                    if(m.envmap!=EMID_NONE && glassenv)
+                    {
+                        if(envmapped != m.envmap)
+                        {
+                            glActiveTexture_(GL_TEXTURE1_ARB);
+                            if(envmapped==EMID_NONE) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(m.envmap));
+                            glActiveTexture_(GL_TEXTURE0_ARB);
+                            if(envmapped==EMID_NONE) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
+                            envmapped = m.envmap;
+                        };
+                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1,
+                            dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
+                            dimension(m.orient)==1 ? dimcoord(m.orient)*2-1 : 0,
+                            dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0,
+                            0);
+                    };
+                    if(lastmat==MAT_GLASS) break;
+                    if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
+                    if(m.envmap!=EMID_NONE && glassenv)
+                    {
+                        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+                        glColor3f(0, 0.5f, 1.0f);
+                        static Shader *glassshader = NULL;
+                        if(!glassshader) glassshader = lookupshaderbyname("glass");
+                        if(curshader!=glassshader) (curshader = glassshader)->set();
+                    }
+                    else
+                    {
+                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+                        glColor3f(0.3f, 0.15f, 0.0f);
+                        if(curshader!=notextureshader) (curshader = notextureshader)->set();
+                    };
+                    break;
+
+                default:
+                {
+                    if(lastmat==curmat) break;
+                    if(lastmat<MAT_EDIT)
+                    {
+                        if(begin) { glEnd(); begin = false; };
+                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
+                        if(curshader!=notextureshader) (curshader = notextureshader)->set();
+                    };
+                    static uchar blendcols[MAT_EDIT][3] =
+                    {
+                        { 0, 0, 0 },     // MAT_AIR - no edit volume,
+                        { 255, 128, 0 }, // MAT_WATER - blue,
+                        { 0, 255, 255 }, // MAT_CLIP - red,
+                        { 255, 0, 0 },   // MAT_GLASS - cyan,
+                        { 255, 0, 255 }, // MAT_NOCLIP - green
+                    };
+                    glColor3ubv(blendcols[curmat >= MAT_EDIT ? curmat-MAT_EDIT : curmat]);
+                    break;
+                };
+            };
+            lastmat = curmat;
+            lastorient = m.orient;
+        };
+        switch(curmat)
+        {
+            case MAT_WATER:
+                if(m.orient!=O_TOP)
+                {
+                    if(!begin) { glBegin(GL_QUADS); begin = true; };
+                    renderwaterfall(m, wslot.sts[1].t, 0.1f);
+                }
+                else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, wslot.sts[0].t) >= (uint)m.csize * 2)
+                    rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, wslot.sts[0].t);
+                break;
+
+            case MAT_GLASS:
+                if(!begin) { glBegin(GL_QUADS); begin = true; };
+                drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
+                break;
+
+            default:
+                if(!begin) { glBegin(GL_QUADS); begin = true; };
+                drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
+                break;
+        };
+    };
+
+    if(begin) glEnd();
+    glDisable(GL_BLEND);
+    if(!editmode || !showmat) glDepthMask(GL_TRUE);
+    else rendermatgrid(vismats);
+
+    glEnable(GL_CULL_FACE);
+    if(!textured) glEnable(GL_TEXTURE_2D);
+
+    if(envmapped!=EMID_NONE)
+    {
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    };
+};
 

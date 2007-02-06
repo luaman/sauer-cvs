@@ -114,7 +114,7 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
 void insert_unlit(int i)
 {
     LightMap &l = lightmaps[i];
-    if(l.type != LM_NORMAL && l.type != LM_BUMPMAP0)
+    if(l.type != LM_DIFFUSE && l.type != LM_BUMPMAP0)
     {
         l.unlitx = l.unlity = -1;
         return;
@@ -828,14 +828,14 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
                 };
             };
         };
-        lmtype = LM_NORMAL;
+        lmtype = LM_DIFFUSE;
         lmorient = i;
         if(!lodcube)
         {
             Shader *shader = lookupshader(c.texture[i]);
-            if(shader->type == SHADER_NORMALSLMS)
+            if(shader->type == SHADER_NORMALSLMS || shader -> type == SHADER_ENVMAP)
             {
-                lmtype = LM_BUMPMAP0;
+                if(shader->type == SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
                 newnormals(c);
                 surfacenormals *cn = c.ext->normals;
                 cn[i].normals[0] = bvec(n[0]);
@@ -1012,9 +1012,9 @@ void clearlights()
     alloctexids();
     loopi(lightmaps.length() + LMID_RESERVED)
     {
-        switch(i < LMID_RESERVED ? (i&1 ? LM_BUMPMAP1 : LM_NORMAL) : lightmaps[i-LMID_RESERVED].type)
+        switch(i < LMID_RESERVED ? (i&1 ? LM_BUMPMAP1 : LM_DIFFUSE) : lightmaps[i-LMID_RESERVED].type)
         {
-            case LM_NORMAL:
+            case LM_DIFFUSE:
             case LM_BUMPMAP0:
                 createtexture(lmtexids[i], 1, 1, bright, false, false);
                 break;
@@ -1078,7 +1078,7 @@ static void find_unlit(int i)
     {
         if(i+1>=lightmaps.length() || lightmaps[i+1].type!=LM_BUMPMAP1) return;
     }
-    else if(lm.type!=LM_NORMAL) return;
+    else if(lm.type!=LM_DIFFUSE) return;
     uchar *data = lm.data;
     loop(y, 2) loop(x, LM_PACKW)
     {

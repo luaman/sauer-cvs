@@ -187,13 +187,13 @@ vechash vh;
 
 struct sortkey
 {
-     uint tex, lmid;
+     ushort tex, lmid, envmap;
      sortkey() {};
-     sortkey(uint tex, uint lmid)
-      : tex(tex), lmid(lmid)
+     sortkey(ushort tex, ushort lmid, ushort envmap = EMID_NONE)
+      : tex(tex), lmid(lmid), envmap(envmap)
      {};
 
-     bool operator==(const sortkey &o) const { return tex==o.tex && lmid==o.lmid; };
+     bool operator==(const sortkey &o) const { return tex==o.tex && lmid==o.lmid && envmap==o.envmap; };
 };
 
 struct sortval
@@ -206,7 +206,7 @@ struct sortval
 
 static inline bool htcmp(const sortkey &x, const sortkey &y)
 {
-    return x.tex == y.tex && x.lmid == y.lmid;
+    return x == y;
 };
 
 static inline uint hthash(const sortkey &k)
@@ -235,7 +235,7 @@ struct lodcollect
         matsurfs.setsizenodelete(0);
     };
 
-    void remapunlit(vector<sortkey> &unlit)
+    void remapunlit(vector<sortkey> &remap)
     {
         uint lastlmid = LMID_AMBIENT, firstlmid = LMID_AMBIENT;
         int firstlit = -1;
@@ -263,9 +263,9 @@ struct lodcollect
             if(k.lmid!=LMID_AMBIENT) continue;
             indices[k].unlit = firstlmid;
         }; 
-        loopv(unlit)
+        loopv(remap)
         {
-            sortkey &k = unlit[i];
+            sortkey &k = remap[i];
             sortval &t = indices[k];
             if(t.unlit<=0) continue; 
             LightMap &lm = lightmaps[t.unlit-LMID_RESERVED];
@@ -287,14 +287,14 @@ struct lodcollect
                     t.dims[l][j] = vh.access(vv, u, v, n);
                 };
             };
-            sortval *dst = indices.access(sortkey(k.tex, t.unlit));
+            sortval *dst = indices.access(sortkey(k.tex, t.unlit, k.envmap));
             if(dst) loopl(3) loopvj(t.dims[l]) dst->dims[l].add(t.dims[l][j]);
         };
     };
                     
     void optimize()
     {
-        vector<sortkey> unlit;
+        vector<sortkey> remap;
 
         texs.setsizenodelete(0);
         enumeratekt(indices, sortkey, k, sortval, t,
@@ -302,18 +302,18 @@ struct lodcollect
             {
                 if(k.lmid>=LMID_RESERVED && lightmaps[k.lmid-LMID_RESERVED].unlitx>=0)
                 {
-                    sortkey ukey(k.tex, LMID_AMBIENT);
+                    sortkey ukey(k.tex, LMID_AMBIENT, k.envmap);
                     sortval *uval = indices.access(ukey);
                     if(uval && uval->unlit<=0)
                     {
                         if(uval->unlit<0) texs.removeobj(ukey);
-                        else unlit.add(ukey);
+                        else remap.add(ukey);
                         uval->unlit = k.lmid;
                     };
                 }
                 else if(k.lmid==LMID_AMBIENT)
                 {
-                    unlit.add(k);
+                    remap.add(k);
                     t.unlit = -1;
                 };
                 texs.add(k);
@@ -322,7 +322,7 @@ struct lodcollect
         );
         texs.sort(texsort);
 
-        remapunlit(unlit);
+        remapunlit(remap);
 
         matsurfs.setsize(optimizematsurfs(matsurfs.getbuf(), matsurfs.length()));
     };
@@ -394,6 +394,7 @@ struct lodcollect
                 const sortval &t = indices[k];
                 lod.eslist[i].texture = k.tex;
                 lod.eslist[i].lmid = t.unlit>0 ? t.unlit : k.lmid;
+                lod.eslist[i].envmap = k.envmap;
                 loopl(3) if((lod.eslist[i].length[l] = t.dims[l].length()))
                 {
                     memcpy(curbuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
@@ -445,7 +446,7 @@ int addtriindexes(usvector &v, int index[4])
     return tris;
 };
 
-void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, surfaceinfo *surface, surfacenormals *normals)
+void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, surfaceinfo *surface, surfacenormals *normals, ushort envmap = EMID_NONE)
 {
     int index[4];
     loopk(4)
@@ -461,7 +462,7 @@ void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, 
     };
 
     extern vector<GLuint> lmtexids;
-    sortkey key(texture, surface && lmtexids.inrange(surface->lmid) ? surface->lmid : LMID_AMBIENT);
+    sortkey key(texture, surface && lmtexids.inrange(surface->lmid) ? surface->lmid : LMID_AMBIENT, envmap);
     if(!lodcube)
     {
         int tris = addtriindexes(texture == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(orient)], index);
@@ -492,7 +493,9 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 
         vvec vv[4];
         loopk(4) calcvert(c, x, y, z, size, vv[k], faceverts(c, i, k));
-        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL);
+        ushort envmap = EMID_NONE;
+        if(lookupshader(c.texture[i])->type==SHADER_ENVMAP) envmap = closestenvmap(i, x, y, z, size); 
+        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
     };
 };
 
@@ -693,7 +696,7 @@ static vector<octaentities *> vamms;
 struct mergedface
 {   
     uchar orient;
-    ushort tex;
+    ushort tex, envmap;
     vvec v[4];
     surfaceinfo *surface;
     surfacenormals *normals;
@@ -713,6 +716,8 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
         mergedface mf;
         mf.orient = i;
         mf.tex = c.texture[i];
+        mf.envmap = EMID_NONE;
+        if(lookupshader(mf.tex)->type==SHADER_ENVMAP) mf.envmap = closestenvmap(i, co.x, co.y, co.z, size);
         mf.surface = c.ext->surfaces ? &c.ext->surfaces[i] : NULL;
         mf.normals = c.ext->normals ? &c.ext->normals[i] : NULL;
         genmergedverts(c, i, co, size, m, mf.v);
@@ -747,7 +752,7 @@ void addmergedverts(int level)
     loopv(mfl)
     {
         mergedface &mf = mfl[i];
-        addcubeverts(mf.orient, 1<<level, false, mf.v, mf.tex, mf.surface, mf.normals);
+        addcubeverts(mf.orient, 1<<level, false, mf.v, mf.tex, mf.surface, mf.normals, mf.envmap);
         cstats[level].nface++;
         vahasmerges |= MERGE_USE;
     };
@@ -961,9 +966,11 @@ void allchanged(bool load)
     vaclearc(worldroot);
     memset(cstats, 0, sizeof(cstat)*32);
     resetqueries();
+    if(load) initenvmaps();
     octarender();
     if(load) precacheall();
-    setupmaterials(load);
+    setupmaterials();
+    if(load) genenvmaps();
     printcstats();
 };
 
