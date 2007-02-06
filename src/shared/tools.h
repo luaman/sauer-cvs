@@ -232,6 +232,23 @@ template <class T> struct vector
         return buf[ulen++];
     };
 
+    void move(vector<T> &v)
+    {
+        if(!ulen)
+        {
+            swap(T *, buf, v.buf);
+            swap(int, ulen, v.ulen);
+            swap(int, alen, v.alen);
+        }
+        else
+        {
+            while(alen-ulen<v.ulen) vrealloc();
+            memcpy(&buf[ulen], v.buf, v.ulen*sizeof(T));
+            ulen += v.ulen;
+            v.ulen = 0;
+        };
+    };
+
     bool inrange(size_t i) const { return i<size_t(ulen); };
     bool inrange(int i) const { return i>=0 && i<ulen; };
 

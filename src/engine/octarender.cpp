@@ -692,7 +692,6 @@ static vector<octaentities *> vamms;
 
 struct mergedface
 {   
-    mergedface *next;
     uchar orient;
     ushort tex;
     vvec v[4];
@@ -700,14 +699,8 @@ struct mergedface
     surfacenormals *normals;
 };  
 
-struct mflist
-{
-    mergedface *first, *last;
-    int count;
-};
-
 static int vahasmerges = 0, vamergemax = 0;
-static mflist vamerges[VVEC_INT];
+static vector<mergedface> vamerges[VVEC_INT];
 
 void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
 {
@@ -726,13 +719,7 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
         int level = calcmergedsize(i, co, size, m, mf.v);
         if(level > minlevel)
         {
-            mergedface &nf = *new mergedface;
-            nf = mf;
-            mflist &mfl = vamerges[level];
-            nf.next = mfl.first;
-            mfl.first = &nf;
-            if(!mfl.last) mfl.last = &nf;
-            mfl.count++;
+            vamerges[level].add(mf);
             vamergemax = max(vamergemax, level);
             vahasmerges |= MERGE_ORIGIN;
         };
@@ -755,19 +742,16 @@ void findmergedfaces(cube &c, const ivec &co, int size, int csi, int minlevel)
 
 void addmergedverts(int level)
 {
-    mflist &mfl = vamerges[level];
-    if(!mfl.count) return;
-    while(mfl.count)
+    vector<mergedface> &mfl = vamerges[level];
+    if(mfl.empty()) return;
+    loopv(mfl)
     {
-        mergedface &mf = *mfl.first;
-        mfl.first = mf.next;
-        if(mfl.last == &mf) mfl.last = NULL;
+        mergedface &mf = mfl[i];
         addcubeverts(mf.orient, 1<<level, false, mf.v, mf.tex, mf.surface, mf.normals);
-        delete &mf;
-        mfl.count--;
         cstats[level].nface++;
         vahasmerges |= MERGE_USE;
     };
+    mfl.setsizenodelete(0);
 };
 
 void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates vertices and indices ready to be put into a va
@@ -787,7 +771,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
             rendercube(c.children[i], o.x, o.y, o.z, size/2, csi-1);
         };
 
-        if(csi < VVEC_INT && vamerges[csi].count) addmergedverts(csi);
+        if(csi < VVEC_INT && vamerges[csi].length()) addmergedverts(csi);
 
         if(size!=lodsize)
         {
@@ -813,7 +797,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         if(c.ext->merged & ~c.ext->mergeorigin) vahasmerges |= MERGE_PART;
     };
 
-    if(csi < VVEC_INT && vamerges[csi].count) addmergedverts(csi);
+    if(csi < VVEC_INT && vamerges[csi].length()) addmergedverts(csi);
 
     cstats[csi].nleaf++;
 };
@@ -892,7 +876,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
         }
         else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi-1);
         else if(!isempty(c[i]) || hasskyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        int tcount = count + (csi < VVEC_INT ? vamerges[csi].count : 0);
+        int tcount = count + (csi < VVEC_INT ? vamerges[csi].length() : 0);
         if(tcount > vacubemax || (tcount >= vacubemin && size == vacubesize) || (tcount && size == min(VVEC_INT_MASK+1, hdr.worldsize/2))) 
         {
             setva(c[i], o.x, o.y, o.z, size, csi);
@@ -913,16 +897,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
                 continue;
             };
         };
-        if(csi < VVEC_INT-1 && vamerges[csi].count)
-        {
-            mflist &mfl = vamerges[csi], &nfl = vamerges[csi+1];
-            mfl.last->next = nfl.first;
-            nfl.first = mfl.first; 
-            if(!nfl.last) nfl.last = mfl.last;
-            mfl.first = mfl.last = 0;
-            nfl.count += mfl.count;
-            mfl.count = 0;
-        };
+        if(csi < VVEC_INT-1 && vamerges[csi].length()) vamerges[csi+1].move(vamerges[csi]);
         cmergemax = max(cmergemax, vamergemax);
         chasmerges |= vahasmerges;
         ccount += count;
