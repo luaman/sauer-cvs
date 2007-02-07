@@ -101,8 +101,9 @@ enum
     PT_METERVS,
     PT_FIREBALL,
 
-    PT_ENT = 1<<8,
-    PT_MOD = 1<<9
+    PT_ENT  = 1<<8,
+    PT_MOD  = 1<<9,
+    PT_RND4 = 1<<10
 };
 
 void render_particles(int time)
@@ -112,7 +113,7 @@ void render_particles(int time)
         { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
         { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
         { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-        { PT_TRAIL|PT_MOD,   0, 255, 255, 2,  8, 0.74f, 0.8f,   50 }, // red:    blood spats (note: rgb is inverted)
+        { PT_TRAIL|PT_MOD|PT_RND4,   0, 255, 255, 2,  8, 0.74f, 0.8f,   50 }, // red:    blood spats (note: rgb is inverted)
         { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
         { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
         { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
@@ -211,6 +212,14 @@ void render_particles(int time)
                 }
                 else
                     glColor4ub(pt.r, pt.g, pt.b, (type==PT_FLARE) ? blend : ((blend > 63) ? 255 : blend*4));
+                float tx = 0, ty = 0, tsz = 1;
+                if(pt.type&PT_RND4)
+                {
+                    int i = detrnd((size_t)p, 4);
+                    tx = 0.5f*(i&1);
+                    ty = 0.5f*((i>>1)&1);
+                    tsz = 0.5f;
+                };
                 if(type==PT_FLARE || type==PT_TRAIL)
                 {					
                     vec e = p->d;
@@ -226,17 +235,17 @@ void render_particles(int time)
 					dir2.sub(camera1->o);
 					c1.cross(dir2, dir1).normalize().mul(sz);
 					c2.cross(dir1, dir2).normalize().mul(sz);
-                    glTexCoord2f(0.0, 0.0); glVertex3f(e.x+c1.x, e.y+c1.y, e.z+c1.z);
-                    glTexCoord2f(0.0, 1.0); glVertex3f(e.x+c2.x, e.y+c2.y, e.z+c2.z);
-                    glTexCoord2f(1.0, 1.0); glVertex3f(o.x+c2.x, o.y+c2.y, o.z+c2.z);
-                    glTexCoord2f(1.0, 0.0); glVertex3f(o.x+c1.x, o.y+c1.y, o.z+c1.z);
+                    glTexCoord2f(tx,     ty);     glVertex3f(e.x+c1.x, e.y+c1.y, e.z+c1.z);
+                    glTexCoord2f(tx,     ty+tsz); glVertex3f(e.x+c2.x, e.y+c2.y, e.z+c2.z);
+                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+c2.x, o.y+c2.y, o.z+c2.z);
+                    glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+c1.x, o.y+c1.y, o.z+c1.z);
                 }
                 else // regular particles
                 {   
-                    glTexCoord2f(0.0, 1.0); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
-                    glTexCoord2f(1.0, 1.0); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
-                    glTexCoord2f(1.0, 0.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
-                    glTexCoord2f(0.0, 0.0); glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
+                    glTexCoord2f(tx,     ty+tsz); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
+                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
+                    glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
+                    glTexCoord2f(tx,     ty);     glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
                 };
             }
             else

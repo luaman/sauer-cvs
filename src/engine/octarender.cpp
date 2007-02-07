@@ -494,7 +494,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
         vvec vv[4];
         loopk(4) calcvert(c, x, y, z, size, vv[k], faceverts(c, i, k));
         ushort envmap = EMID_NONE;
-        if(lookupshader(c.texture[i])->type==SHADER_ENVMAP) envmap = closestenvmap(i, x, y, z, size); 
+        if(lookupshader(c.texture[i])->type & SHADER_ENVMAP) envmap = closestenvmap(i, x, y, z, size); 
         addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
     };
 };
@@ -717,7 +717,7 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
         mf.orient = i;
         mf.tex = c.texture[i];
         mf.envmap = EMID_NONE;
-        if(lookupshader(mf.tex)->type==SHADER_ENVMAP) mf.envmap = closestenvmap(i, co.x, co.y, co.z, size);
+        if(lookupshader(mf.tex)->type & SHADER_ENVMAP) mf.envmap = closestenvmap(i, co.x, co.y, co.z, size);
         mf.surface = c.ext->surfaces ? &c.ext->surfaces[i] : NULL;
         mf.normals = c.ext->normals ? &c.ext->normals[i] : NULL;
         genmergedverts(c, i, co, size, m, mf.v);

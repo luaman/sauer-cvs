@@ -37,8 +37,12 @@ void shader(int *type, char *name, char *vs, char *ps)
     if(lookupshaderbyname(name)) return;
     if(renderpath==R_ASMSHADER)
     {
-        if(!hasCM && strstr(ps, "CUBE")) return;
-        if(!hasTR && strstr(ps, "RECT")) return;
+        if((!hasCM && strstr(ps, "CUBE")) ||
+           (!hasTR && strstr(ps, "RECT")))
+        {
+            curparams.setsize(0);
+            return;
+        };
     };
     char *rname = newstring(name);
     Shader &s = shaders[rname];
@@ -63,6 +67,22 @@ void setshader(char *name)
     curparams.setsize(0);
 };
 
+void altshader(char *orig, char *altname)
+{
+    if(lookupshaderbyname(orig)) return;
+    Shader *alt = lookupshaderbyname(altname);
+    if(!alt) return;
+    char *rname = newstring(orig);
+    Shader &s = shaders[rname];
+    s.name = rname;
+    s.type = alt->type;
+    s.fastshader = NULL;
+    s.fastdetail = -1;
+    loopv(alt->defaultparams) s.defaultparams.add(alt->defaultparams[i]);
+    s.vs = alt->vs;
+    s.ps = alt->ps;
+};
+
 void fastshader(char *nice, char *fast, int *detail)
 {
     Shader *ns = lookupshaderbyname(nice);
@@ -75,6 +95,7 @@ void fastshader(char *nice, char *fast, int *detail)
 
 COMMAND(shader, "isss");
 COMMAND(setshader, "s");
+COMMAND(altshader, "ss");
 COMMAND(fastshader, "ssi");
 
 void setshaderparam(int type, int n, float x, float y, float z, float w)

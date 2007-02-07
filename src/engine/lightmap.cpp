@@ -833,9 +833,9 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         if(!lodcube)
         {
             Shader *shader = lookupshader(c.texture[i]);
-            if(shader->type == SHADER_NORMALSLMS || shader -> type == SHADER_ENVMAP)
+            if(shader->type & (SHADER_NORMALSLMS | SHADER_ENVMAP))
             {
-                if(shader->type == SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
+                if(shader->type & SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
                 newnormals(c);
                 surfacenormals *cn = c.ext->normals;
                 cn[i].normals[0] = bvec(n[0]);

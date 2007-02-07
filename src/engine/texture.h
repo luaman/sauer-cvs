@@ -20,7 +20,12 @@ struct ShaderParam
     float val[4];
 };
 
-enum { SHADER_DEFAULT = 0, SHADER_NORMALSLMS, SHADER_ENVMAP };
+enum 
+{ 
+    SHADER_DEFAULT    = 0, 
+    SHADER_NORMALSLMS = 1<<0, 
+    SHADER_ENVMAP     = 1<<1
+};
 
 extern int shaderdetail;
 

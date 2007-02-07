@@ -863,7 +863,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     };
 
     ushort *ebuf = lod.ebuf;
-    int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = EMID_NONE;
+    int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
     float lastscale = -1;
     Slot *lastslot = NULL;
     loopi(lod.texs)
@@ -873,38 +873,40 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         Shader *s = slot.shader;
 
         extern vector<GLuint> lmtexids;
-        int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid], envmap = lod.eslist[i].envmap;
-        if(curlm!=lastlm || !lastslot || s->type!=lastslot->shader->type)
+        int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
+        if(curlm!=lastlm)
         {
-            if(curlm!=lastlm)
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glBindTexture(GL_TEXTURE_2D, curlm);
+            lastlm = curlm;
+        };
+        if(renderpath!=R_FIXEDFUNCTION)
+        {
+            int tmu = 2;
+            if(s->type&SHADER_NORMALSLMS)
             {
-                glActiveTexture_(GL_TEXTURE1_ARB);
-                glBindTexture(GL_TEXTURE_2D, curlm);
-                lastlm = curlm;
-            };
-            if(renderpath!=R_FIXEDFUNCTION)
-            {
-                if(s->type==SHADER_NORMALSLMS && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
+                if((!lastslot || s->type!=lastslot->shader->type || curlm!=lastlm) && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
                 {
-                    glActiveTexture_(GL_TEXTURE2_ARB);
+                    glActiveTexture_(GL_TEXTURE0_ARB+tmu);
                     glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
                 };
-                if(s->type==SHADER_ENVMAP)
+                tmu++;
+            };
+            if(s->type&SHADER_ENVMAP)
+            {
+                int envmap = lod.eslist[i].envmap;
+                if((!lastslot || s->type!=lastslot->shader->type || envmap!=lastenvmap) && hasCM)
                 {
-                    if(envmap!=lastenvmap)
+                    glActiveTexture_(GL_TEXTURE0_ARB+tmu);
+                    if(!(envmapped & (1<<tmu)))
                     {
-                        glActiveTexture_(GL_TEXTURE2_ARB);
-                        if(lastenvmap==EMID_NONE) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(envmap));
-                        lastenvmap = envmap;
+                        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                        envmapped |= 1<<tmu;
                     };
-                }
-                else if(lastenvmap!=EMID_NONE)
-                {
-                    glActiveTexture_(GL_TEXTURE2_ARB);
-                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                    lastenvmap = EMID_NONE;
+                    glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(envmap));
+                    lastenvmap = envmap;
                 };
+                tmu++;
             };
             glActiveTexture_(GL_TEXTURE0_ARB);
         };
@@ -916,7 +918,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
             if(renderpath!=R_FIXEDFUNCTION)
             {
-                int tmu = s->type==SHADER_NORMALSLMS || s->type==SHADER_ENVMAP ? 3 : 2;
+                int tmu = 2;
+                if(s->type&SHADER_NORMALSLMS) tmu++;
+                if(s->type&SHADER_ENVMAP) tmu++;
                 loopvj(slot.sts)
                 {
                     Slot::Tex &t = slot.sts[j];
@@ -994,7 +998,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 lastscale = scale;
             };
 
-            if(s->type>=SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
+            if(s->type&SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
             {
                 glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, orientation_tangent[l]);
                 glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, orientation_binormal[l]);
@@ -1006,10 +1010,13 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         };
     };
 
-    if(lastenvmap!=EMID_NONE)
+    if(envmapped)
     {
-        glActiveTexture_(GL_TEXTURE2_ARB);
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        loopi(4) if(envmapped&(1<<i))
+        {
+            glActiveTexture_(GL_TEXTURE0_ARB+i);
+            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        };
         glActiveTexture_(GL_TEXTURE0_ARB);
     };
  
