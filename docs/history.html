@@ -5,7 +5,7 @@
 		<link rel="stylesheet" type="text/css" href="style.css" />
     </head>
     <body>
-        <div>Sauerbraten Change History</div>
+        <h1>Sauerbraten Change History</h1>
         <ul>
         <li> added a scale parameter to the "texture" command, for changing the apparent size</li>
         <li> texture combining now scales combined texture to match size of base texture</li>
@@ -13,7 +13,7 @@
         <li> made gui's stick to players Z</li>
         <li> fixed server lockup (in patch)</li>
         </ul>
-        <div>2006_12_04_gui_edition</div>
+        <h2>2006_12_04_gui_edition</h2>
         <ul>
         <li> added 'particletext' var for toggling particle text</li>
         <li> alias arguments now set by 'push' on execution, and restored by 'pop' after</li>
@@ -45,7 +45,7 @@
         <li> "newmap" is now synchronized across all clients in coopedit</li>
         <li> revised networking code to better utilize enet (less lag and bandwidth usage)</li>
         </ul>
-        <div>2006_09_12_water_edition</div>
+        <h2>2006_09_12_water_edition</h2>
         <ul>
         <li> added "setteam" command for forcing teams via mastermode</li>
         <li> added support for material texture slots</li>
@@ -67,7 +67,7 @@
         <li> fixed broken world-specular on ATI cards</li>
         <li> changed rendering architecture to do seperate Z pass to get more accurate occlusion culling and reduced pixelshader load</li>
         </ul>
-        <div>2006_07_22_normalmap_edition</div>
+        <h2>2006_07_22_normalmap_edition</h2>
         <ul>
         <li> added support for "dot3 lightmap / radiosity lightmap" mode that works well with normalmaps & per pixel light, various shaders supporting bump/parallax mapping, glow/specmaps etc.</li>
         <li> added lots of normalmapped textures</li>
@@ -92,7 +92,7 @@
         <li> added showcharacterboundingbox var (useful when creating new models)</li>
         <li> increased rhino bounding box size </li>
         </ul>
-        <div>2006_06_11_sp_edition</div>
+        <h2>2006_06_11_sp_edition</h2>
         <ul>
         <li> scripting language: every command/block/exp can now return string values (no more use of variable "s", much cleaner code)</li>
         <li> scripting language: reduced allocations a great deal, should execute faster now</li>
@@ -130,7 +130,7 @@
         <li> fixed invincibility bug
         </ul>
 
-        <div>2006_04_26_occlusion_edition</div>
+        <h2>2006_04_26_occlusion_edition</h2>
         <UL>
 
         <li> tweaks & fixes to the capture gameplay mode
@@ -154,7 +154,7 @@
         <li> shorter fuse on grenades (2 seconds)</li>
         <li> fixed hudgun light computation related crash </li>
         </ul>
-        <div>2006_03_20_shader_edition</div>
+        <h2>2006_03_20_shader_edition</h2>
         <UL>
             <li> registersound now allows individual sound volume adjustment
             <li> can now render md2s without back face culling (good for vegetation models), custom specularity, custom shader.
@@ -178,7 +178,7 @@
             <li> added Cube-like "replace" command that will repeat a texture edit across matching parts of a selection
             <li> maxhealth now persists across disconnects
             </UL>
-        <div>2006_02_27_physics_edition</div>
+        <h2>2006_02_27_physics_edition</h2>
         <UL>
             <li> added Fanatic's new soundtrack! 15 2 minute tracks, played at random in sequence (they were meant to "connect"), an endlessly varying song! :)</li>
             <li> experimental gameplay feature: the health boost / megahealth now only gives you +10, except it is permanent to your maxhealth for this game, as opposed to just health.</li>
@@ -198,7 +198,7 @@
             <li> added coopedit support back in | no map uploading yet...
             <li> rewrote physics to be closer to the original Cube physics
             </UL>
-        <div>2006_01_31_mp_edition</div>
+        <h2>2006_01_31_mp_edition</h2>
         <UL>
             <li> disconnection messages now show why you were disconnected
             <li> multiplayer enemies show firing/pain animations
@@ -223,7 +223,7 @@
             <li> gettex command
             <li> fixed sky HOM when fog was closer than size of world
             </UL>
-        <div>2005_11_07_agc_edition</div>
+        <h2>2005_11_07_agc_edition</h2>
         <UL>
             <li>
             warning will appear if player cannot see most of selection when trying to edit
@@ -253,7 +253,7 @@
             <LI>
                 "lodsize" must be set to 32 to turn lod on for a map (use only for really large
                 maps), 0 turns it off. saved with the map.</LI></UL>
-        <div>2005_08_15_quakecon_edition</div>
+        <h2>2005_08_15_quakecon_edition</h2>
         <ul>
             <LI>
             animation blending... makes 3rd person view, other players&nbsp;and monsters
@@ -264,7 +264,7 @@
             <LI>
                 first attempt at&nbsp;factoring out all gameplay code, results may be buggy</LI>
         </ul>
-        <div>[old history]</div>
+        <h2>[old history]</h2>
         <pre>
 May 22 2005:
 ----------------
