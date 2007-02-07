@@ -896,6 +896,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\model.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\rendergl.cpp"
 					>
 					<FileConfiguration
@@ -1025,10 +1029,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\engine\shaders.h"
-					>
-				</File>
-				<File
 					RelativePath="..\engine\spheretree.cpp"
 					>
 					<FileConfiguration
@@ -1046,6 +1046,10 @@
 				</File>
 				<File
 					RelativePath="..\engine\texture.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\engine\texture.h"
 					>
 				</File>
 				<File
