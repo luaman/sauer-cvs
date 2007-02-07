@@ -874,12 +874,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
         extern vector<GLuint> lmtexids;
         int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
-        if(curlm!=lastlm)
-        {
-            glActiveTexture_(GL_TEXTURE1_ARB);
-            glBindTexture(GL_TEXTURE_2D, curlm);
-            lastlm = curlm;
-        };
         if(renderpath!=R_FIXEDFUNCTION)
         {
             int tmu = 2;
@@ -910,7 +904,13 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             };
             glActiveTexture_(GL_TEXTURE0_ARB);
         };
-
+        if(curlm!=lastlm)
+        {
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glBindTexture(GL_TEXTURE_2D, curlm);
+            lastlm = curlm;
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        };
         if(&slot!=lastslot)
         {
             glBindTexture(GL_TEXTURE_2D, tex->gl);
