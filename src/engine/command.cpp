@@ -185,7 +185,7 @@ void addident(char *name, ident *id)
     idents->access(name, id);
 };
 
-static vector<vector<char> > wordbufs;
+static vector<vector<char> *> wordbufs;
 static int bufnest = 0;
 
 char *parseexp(char *&p, int right);
@@ -220,8 +220,8 @@ void parsemacro(char *&p, int level, vector<char> &wordbuf)
 
 char *parseexp(char *&p, int right)          // parse any nested set of () or []
 {
-    if(bufnest++>=wordbufs.length()) wordbufs.add();
-    vector<char> &wordbuf = wordbufs[bufnest-1];
+    if(bufnest++>=wordbufs.length()) wordbufs.add(new vector<char>);
+    vector<char> &wordbuf = *wordbufs[bufnest-1];
     int left = *p++;
     for(int brak = 1; brak; )
     {
