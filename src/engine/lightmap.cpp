@@ -786,6 +786,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         vec v[4], n[4], n2[3];
         int numplanes;
 
+        Shader *shader = lookupshader(c.texture[i]);
         if(!lodcube && c.ext && c.ext->merged&(1<<i))
         {
             if(!(c.ext->mergeorigin&(1<<i))) continue;
@@ -797,7 +798,10 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
             numplanes = 1;
             int msz = calcmergedsize(i, mo, size, m, mv);
             mo.mask(~((1<<msz)-1));
-            if(!find_lights(mo.x, mo.y, mo.z, 1<<msz, planes, numplanes)) continue;
+            if(!find_lights(mo.x, mo.y, mo.z, 1<<msz, planes, numplanes))
+            {
+                if(!(shader->type&SHADER_ENVMAP)) continue;
+            };
 
             loopj(4)
             {
@@ -808,8 +812,11 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         else
         {
             numplanes = genclipplane(c, i, verts, planes);
-            if(!numplanes || !find_lights(cx, cy, cz, size, planes, numplanes))
-                continue;
+            if(!numplanes) continue;
+            if(!find_lights(cx, cy, cz, size, planes, numplanes))
+            {
+                if(lodcube || !(shader->type&SHADER_ENVMAP)) continue;
+            };
 
             loopj(4) n[j] = planes[0];
             if(numplanes >= 2) loopj(3) n2[j] = planes[1];
@@ -832,10 +839,9 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         lmorient = i;
         if(!lodcube)
         {
-            Shader *shader = lookupshader(c.texture[i]);
-            if(shader->type & (SHADER_NORMALSLMS | SHADER_ENVMAP))
+            if(shader->type&(SHADER_NORMALSLMS | SHADER_ENVMAP))
             {
-                if(shader->type & SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
+                if(shader->type&SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
                 newnormals(c);
                 surfacenormals *cn = c.ext->normals;
                 cn[i].normals[0] = bvec(n[0]);
@@ -844,6 +850,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
                 cn[i].normals[3] = bvec(numplanes < 2 ? n[3] : n2[2]);
             };
         };
+        if(lights1.empty() && lights2.empty()) continue;
         uchar texcoords[8];
         if(!setup_surface(planes, v, n, numplanes >= 2 ? n2 : NULL, texcoords))
             continue;
