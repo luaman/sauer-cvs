@@ -738,7 +738,7 @@ VAR(envmapradius, 0, 128, 10000);
 
 struct envmap
 {
-    int radius;
+    int radius, size;
     vec o;
     GLuint tex;
 };
@@ -759,7 +759,7 @@ void clearenvmaps()
 
 VAR(aaenvmap, 0, 1, 1);
 
-GLuint genenvmap(const vec &o)
+GLuint genenvmap(const vec &o, int envmapsize)
 {
     extern int scr_w, scr_h;
     int rendersize = 1;
@@ -819,6 +819,7 @@ void initenvmaps()
         if(ent.type != ET_ENVMAP) continue;
         envmap &em = envmaps.add();
         em.radius = ent.attr1 ? ent.attr1 : envmapradius;
+        em.size = ent.attr2;
         em.o = ent.o;
         em.tex = 0;
     };
@@ -830,7 +831,7 @@ void genenvmaps()
     {
         show_out_of_renderloop_progress(float(i)/float(envmaps.length()), "generating environment maps...");
         envmap &em = envmaps[i];
-        em.tex = genenvmap(em.o);
+        em.tex = genenvmap(em.o, em.size ? em.size : envmapsize);
     };
 };
 
