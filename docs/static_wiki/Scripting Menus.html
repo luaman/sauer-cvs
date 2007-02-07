@@ -7,37 +7,56 @@
   <body>
     <div class="wiki" id="content_view" style="display: block;">
 <h2 id="toc0">Menu configuration and personalization</h2>
-For example the menu structure is compeletly organized in data/menus.cfg,<br />
-so - providing a backup of a working copy - you can edit it to fit your needs.<br />
-If you think that is too much of a hassle, then there are several menu translations and ScriptPAKs that further modify your menu on <a class="wiki_link_ext" href="http://www.quadropolis.us" rel="nofollow">quadropolis</a>.<br />
+The games menus are completely organized in data/menus.cfg.<br />
+Providing yourself with a backup of a working copy - you can edit it to fit your needs.<br />
 <br />
-Caution : The water-edition (2006-09-12) is the last to use this type of menu construction.<br />
-The following editions (not released to date) will be using an in-world GUI system.<br />
-So be sure to check your local documentation!<br />
+If you think that is too much of a hassle, <br />
+then there are several menu translations and ScriptPAKs that further modify your menu on <a class="wiki_link_ext" href="http://www.quadropolis.us" rel="nofollow">quadropolis</a>.<br />
+<br />
+Caution : The water-edition (2006-09-12) is the last to use the <em>2D style menus</em>,<br />
+the gui-edition (2006-12-04) is the first to use the <em>3D style menus</em>.<br />
+Be sure to check your local documentation ... code here might not fit your personal release!<br />
+<br />
+For a little while these pages will remain in an intermediary state - between 2D and 3D style.<br />
 <br />
 <hr />
 <br />
 The respective commands for menu construction are:<br />
 <br />
 
-<pre><code>newmenu N</code></pre>
+<pre><code>// 2D style:
+newmenu N
 
-Creates a new menu with name N. All following menuitem commands will apply to this menu<br />
+// 3D style:
+newgui S
+</code></pre>
+
+Creates a new menu with name N. All following menuitem/gui* commands will apply to this menu<br />
 <br />
 
-<pre><code>menuitem N A
-menuitem A</code></pre>
+<pre><code>// 2D style
+menuitem N A
+menuitem A
+
+// for 3D style check documentation - multiple types available : radio, button, slider, image, text, ...</code></pre>
 
 Creates a new menuitem with description N and action A. if you only specify 1, then it will be used for both the description and the action. See data/menus.cfg for examples. If N starts with the special character &quot;^&quot;, then the name will be evaluated as a command when being displayed, and the the variable &quot;s&quot; used as name. This allows you to create menu items that depend on changing gamestate.<br />
 <br />
 
-<pre><code>showmenu N</code></pre>
+<pre><code>// 2D style
+showmenu N
+
+// 3D style
+showgui N
+// error in documentation :
+showgui servers
+// not &quot;showservermenu&quot; as the docs still say from 2D times :-P</code></pre>
 
 Displays the menu with name N previously defined, and allows the user to pick an item with the cursor keys. Upon pressing return, the associated action will be executed. pressing ESC will cancel the menu.<br />
 <br />
 <hr />
 <br />
-To show you how easy things can be done : some examples<br />
+To show you how easy things can be done : some examples (2D style only ATM!)<br />
 <br />
 
 <ul>

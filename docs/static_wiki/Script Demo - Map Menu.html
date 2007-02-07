@@ -20,13 +20,23 @@ When using the <tt>complete</tt> function of the <br />
 aliases you always use an up-to-date list of maps (=*.ogz files).<br />
 This means they will auto-complete even your <em>just saved</em> mapname.<br />
 <br />
+Beware of menu code differences between the 2006-09-12 (water) and the 2006-12-04 (gui) releases of Sauerbraten.<br />
+The <em>from 2D to 3D paradigm shift</em> forces us to go dual track here, for a while!<br />
+Always check your local documentation when in doubt!<br />
+<br />
 The menus <em>do not auto-update</em> themselves;<br />
 these lists are editorial only - meaning they are a selection made by a human.<br />
 You can easily add your favourite creations, downloads and coop-edit maps by adding them to the map name lists in <tt>data/menus.cfg</tt>.<br />
 Look for the line reading<br />
 
-<pre><code>newmenu maps</code></pre>
+<pre><code>// 2D style
+newmenu maps
 
+// 3D style
+newgui maps</code></pre>
+
+<br />
+<h3 id="toc0">2D style modification</h3>
 and after the last line containing <tt>menuitem</tt> before any new <tt>newmenu</tt>:<br />
 add your own <tt>menuitem</tt> like so<br />
 
@@ -35,7 +45,22 @@ add your own <tt>menuitem</tt> like so<br />
 newmenu favmaps
 genmapitems &quot;my_fav_001 work001 work002 work003&quot;</code></pre>
 
-Assuming those 4 maps exist your menu modification will work.
+<br />
+<h3 id="toc1">3D style modification</h3>
+insert after the line with <tt>rpgmaps = &quot;</tt> (line 49 in 2006-12-04 release)<br />
+
+<pre><code>personalmaps = &quot;my_personal_favourite_map_nr_1 my_personal_favourite_map_nr_2 my_personal_favourite_map_nr_3&quot;</code></pre>
+
+and inside the <tt>newgui maps</tt> block - at appropriate position<br />
+
+<pre><code>guitab personal
+  guilist [
+    guilist [ genmapitems $personalmaps ]
+    showmapshot
+  ]</code></pre>
+
+<br />
+Assuming the maps you entered truely exist in packages/base your menu modification will work.
     </div>
   </body>
 </html>

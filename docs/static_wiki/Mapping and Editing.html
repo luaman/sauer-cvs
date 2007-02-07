@@ -8,81 +8,25 @@
     <div class="wiki" id="content_view" style="display: block;">
 <h1 id="toc0">Introduction</h1>
 <br />
-Editing in Sauer is very intuitive, yet extremely powerful. There are a multitude of options for editing, and it is impossible to create a complete walkthrough of <strong>everything</strong> you can do with sauer. Thus, experimentation is not only encouraged, to some degree it is required. Even the developers don't know everything that can be done with Sauer - there are many possibilities to be discovered and thought of. As such, this guide will focus on the abstract concepts of editing, and will introduce you to some of the possibilities. For a more concrete (but far from complete) list on the specifics of editing, see the page on <a class="wiki_link" href="Editing%20Methods.html">Editing Methodology</a>.<br />
+Editing in Sauer is very intuitive, yet extremely powerful. There are a multitude of options for editing, and it is impossible to create a complete walkthrough of <strong>everything</strong> you can do with sauer. Thus, experimentation is not only encouraged, to some degree it is required. Even the developers don't know everything that can be done with Sauer - there are many possibilities to be discovered and thought of. As such, this guide will focus on the abstract concepts of editing, and will introduce you to some of the possibilities. For a more concrete (but far from complete) list on the specifics of editing, see the page on <a class="wiki_link" href="Editing%20Methods.html">Editing Methods</a>.<br />
 <br />
-You might want to see <a class="wiki_link" href="Script%20Demo%20-%20Map%20Menu.html">Script Demo - Map Menu</a> about loading your personal maps from console and/or menu.<br />
+Additional background can be collected from viewing <a class="wiki_link" href="Script%20Demo%20-%20Map%20Menu.html">Script Demo - Map Menu</a> about loading your personal maps from console and/or menu and <a class="wiki_link" href="Map%20Screenshot.html">Map Screenshot</a> about how to go about creating the required image.<br />
 <br />
 <h1 id="toc1">Map CFGs</h1>
 <br />
 Each map's individual properties are determined by its .CFG file. You can find examples in existing .CFG files (just open them up in a text editor) and the wiki-teams <a class="wiki_link" href="Map%20Config%20and%20Scripting.html">map configuration page</a> for the specific commands, and their uses. It is recommended that every map uses a .CFG, since many things are controlled by the .CFG. There is a default .CFG that will be used, if one is not provided. To use a map-specific .CFG, just name the .CFG the same as your map file name.<br />
 <br />
-<h1 id="toc2">Map Menu-Screenshot</h1>
-<br />
-Making screenshot of your map that appears in the menu is simple:<br />
-<br />
-1 . Just take a clean screenshot of your map, with <em>hudgun 0</em> and <em>hidehud 1</em>.<br />
-Alternatively you can get MeatROme´s &quot;<a class="wiki_link_ext" href="http://www.quadropolis.us/node/276" rel="nofollow">Pretty Screenshot</a>&quot; script.<br />
-<br />
-You might want to take it at a higher fov (like 120) to get some more of the map onto the screen.<br />
-<br />
-2. Now open your screenshot in Photoshop or in <a class="wiki_link_ext" href="http://www.gimp.org/" rel="nofollow">The Gimp</a> (free). Select a rectangular portion of your image. Just hold down shift while using the marquee tool, it will restrict it to rectangular. Now crop the portion.<br />
-<br />
-3. Go &quot;Image&quot; -&gt; &quot;Image Size&quot; and resize it to 256x256 pixels. Chose &quot;Cubic&quot; ( called &quot;bicubic&quot; in PS) as resampling method.<br />
-<br />
-4. Press ctrl-alt-keypad 0 to view it at it´s actual size.<br />
-<br />
-Now you might want to tweak the brightness a bit if you feel it´s neccessairy.<br />
-Keep in mind, using the &quot;brightness/contrast&quot; command, if you increase the brightness, your image might get a washed out look. To counter this also raise the contrast a bit. Raising the contrast though can make the colours appear too saturated. Counter this with slightly decreasing the saturation a bit if neccessairy, until the image looks natural again.<br />
-<br />
-5. As a last step you might want to experiment with sharpening a bit. (resizing an image always decreses sharpness a bit).<br />
-I recommend you use an &quot;Unsharp Mask&quot; filter, since it gives a milder result and enhances contrast and highlights a bit. Don´t overdo this.<br />
-<br />
-6. Now save your image as <em>mymapname.jpg</em> and move it to the &quot;base&quot; folder.<br />
-<br />
-Final Notes : Don´t overdo the tweaking. Also it might be a good idea to choose a prominent place of your map. Keep in mind the mapshot should be informational in nature, helping the players to learn wich map is wich better. So there´s really no need to get all artistic on it. Please refrain from adding text or paint filters, to help keep the look consistent.<br />
-<br />
-<h1 id="toc3">Masks on models (specular and glow)</h1>
-<br />
-A masks.jpg is an image that combines a glowmap and a specular map. To fit both into one image, they are essentially greyscale images in the red (specular) and green (glow) channel. The blue channel is unused, but might be used in the future for another type of map.<br />
-<br />
-Easiest way to grasp the concept would be to open an exsisting mask (for example /packages/models/boost/masks.jpg).<br />
-Open your &quot;channels&quot; window in either Photoshop or The Gimp, and have a look at the individual channels. Blue is black (unused) and the red and green channels will hold the specular and glow information. The brighter the values, the stonger the effect will be. With the specular map, you can control the shininess of the materials (and for example make the metal more reflective than the wood parts of a model) and the glow map will allow you to have certain parts of the model appear as if they emit light (for example lamps, leds, lava, flames). Note that the colour, since the green channel only holds brightness values, will have to be controlled via the colour map (usually referred to as the &quot;skin&quot;).<br />
-If your model doesn´t need any glow, just keep the green channel empty (i.e. black).<br />
-<br />
-To use your mask, you have basically two options. On an md2, you simply drop a file called &quot;masks.jpg&quot; into your model´s directory, and it will be used on the model. On an md3, you either use it without configuration, and add a &quot;masks.jpg&quot; like for an md2, or you can assign diffrent mask textures to the parts of your model, wich then can have individual names. (see &quot;md3 how-to&quot; below for further info).<br />
-<br />
-You can also control the overall strenght of the specular part with the &quot;mdlspec&quot; command in your model´s cfg-file. Be sure to keep the blue channel empty, for one day it might be used for a third type of map, and you don´t want any unwanted results to appear on your model that day.<br />
-<br />
-<br />
-<br />
-<h1 id="toc4">Editing related links</h1>
+<h1 id="toc2">Editing related links</h1>
 <br />
 
 <ul>
     <li><a class="wiki_link_ext" href="http://www.quadropolis.us/node/27" rel="nofollow">Sauer Editing on quadropolis</a> Out of date, but still a good resource:</li>
     <li>excellent <a class="wiki_link_ext" href="http://www.cliffyb.com/art-sci-ld.html" rel="nofollow">article</a> on <em>mapping in general</em>.</li>
     <li>a whole bunch of <a class="wiki_link_ext" href="http://www.lunaran.com/stuff.php" rel="nofollow">articles</a> on <em>mapping in general</em>.</li>
-    <li><a class="wiki_link" href="MD3%20Guide.html">Sauerbraten md3 howto</a></li>
+    <li><a class="wiki_link" href="MD3%20Guide.html">MD3 Guide</a></li>
 </ul>
 
-<br />
-<h1 id="toc5">Suggested Modelling Tools</h1>
-<br />
-<a class="wiki_link_ext" href="http://www.blender.org" rel="nofollow">Blender</a><br />
-A free, powerfull, cross platform open source modelling suite.<br />
-To export md3´s you will need Python 2.4 installed and <a class="wiki_link_ext" href="http://www.planetgargoyle.com/openarena/tools/blendermd3.zip" rel="nofollow">these python scripts</a> (if link remains broken mirrored by geartrooper : <a class="wiki_link_ext" href="http://johnny3d.promail.ca/blendermd3.zip" rel="nofollow">blendermd3.zip</a>).<br />
-Blender´s md2 script is a bit broken unfortunately, you will need to export your md2 as an .obj from blender, import it into Misfit, export as md2,<br />
-import it to q2modeller, then export it as md2 once again from there.<br />
-<br />
-<a class="wiki_link_ext" href="http://http://www.swissquake.ch/chumbalum-soft/" rel="nofollow">Milkshape3D</a><br />
-A low cost, simple low polygon modeller for Windows, exports md2 and md3 fine. Does not support vertex weights. Fine for everything exept characters (due to no vertex weighting animation might be hard to do).<br />
-<br />
-<a class="wiki_link_ext" href="http://makke.snieb.com/q2mdlr9b.zip" rel="nofollow">Q2Modeller</a><br />
-Native tool to model md2´s for windows. Can be emulated easily on Linux too. A bit aged by now, but can be handy to make custom vweaps from existing vweaps.<br />
-Also used as a &quot;clean up&quot; for incorrect md2´s you might encounter using other programs.<br />
-<br />
-<a class="wiki_link_ext" href="http://www.misfitcode.com/misfitmodel3d/" rel="nofollow">Misfit Model 3D</a><br />
-A free cross platform 3D modeling program that imports md2 and animations. Misfit supports bone animation and conversion to vertex animations. After exporting the md2 load it up and export as md2 again in q2modeller to have the proper headers for your file.
+
     </div>
   </body>
 </html>

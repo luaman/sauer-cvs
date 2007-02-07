@@ -6,19 +6,16 @@
   </head>
   <body>
     <div class="wiki" id="content_view" style="display: block;">
-<h1 id="toc0">Overriding default_map_settings.cfg</h1>
-
-<ol>
-    <li><a class="wiki_link" href="Map%20Config%20and%20Scripting.html#basic">basic</a> :basic uses, like skymap, fog</li>
-    <li><a class="wiki_link" href="Map%20Config%20and%20Scripting.html#cross-platform">cross-platform</a> :what can go wrong when sharing my stuff</li>
-    <li><a class="wiki_link" href="Map%20Config%20and%20Scripting.html#textures">textures</a> :loading a texture set</li>
-    <li><a class="wiki_link" href="Map%20Config%20and%20Scripting.html#sound">sound</a> :defining sounds and music</li>
-    <li><a class="wiki_link" href="Map%20Config%20and%20Scripting.html#triggers">triggers</a> :defining triggers</li>
-</ol>
-
-<br />
-<br />
-<h2 id="toc1">Introduction</h2>
+<div id="toc"><h1 class="nopad">Table of Contents</h1><div style="margin-left: 1em;"><a href="#toc0">Introduction</a></div>
+<div style="margin-left: 1em;"><a href="#toc1">Basic Uses</a></div>
+<div style="margin-left: 2em;"><a href="#toc2">Cross-Platform</a></div>
+<div style="margin-left: 1em;"><a href="#toc3">Textures</a></div>
+<div style="margin-left: 2em;"><a href="#toc4">Shaders</a></div>
+<div style="margin-left: 1em;"><a href="#toc5">Sound</a></div>
+<div style="margin-left: 1em;"><a href="#toc6">Triggers</a></div>
+</div>
+<a name="intro"></a><br />
+<h1 id="toc0">Introduction</h1>
 Once you've created a *.cfg file for your map:<br />
 
 <ul>
@@ -60,7 +57,7 @@ So either get some free webspace to put your maps on, email them to your friends
 <br />
 <br />
 <a name="basic"></a><br />
-<h2 id="toc2">Basic Uses</h2>
+<h1 id="toc1">Basic Uses</h1>
 <br />
 Each map will first load default_map_settings.cfg<br />
 and then any package CFG and last the specific map CFG.<br />
@@ -88,8 +85,8 @@ To help converting RGB to HEX values this <a class="wiki_link_ext" href="http://
 <br />
 <br />
 <a name="cross-platform"></a><br />
-<h3 id="toc3">Cross-Platform</h3>
-Beware that your filenames and cfg files match in all spelling of filenames - <br />
+<h2 id="toc2">Cross-Platform</h2>
+Beware that your filenames and cfg files match in all spelling of filenames -<br />
 especially lower-/uppercase has often been the reason it didn't run somewhere else -<br />
 also some platforms sometimes have issues with media.<br />
 Known for jpg and mp3 from linux to windows for example.<br />
@@ -100,7 +97,7 @@ PNG should be available for most textures - skyboxes will need to JPG though.<br
 <br />
 <br />
 <a name="textures"></a><br />
-<h2 id="toc4">Textures</h2>
+<h1 id="toc3">Textures</h1>
 <br />
 The first thing to understand here is, the default map configuration is already in place. Unless you want to add new textures to your map, you do not need this part of a map.cfg Sauerbraten has a very large texture list by default. For the beginner mappers, this shoudl do fine. For the ones that need to add new textures, do the following -<br />
 <br />
@@ -117,15 +114,87 @@ After you reset the texture list, you need to add your own. The first 2 slots ar
 <pre><code>texture 0 &quot;ik2k/ik_sky_day_back.jpg&quot;
 texture 0 &quot;golgotha/water2d.jpg&quot;</code></pre>
 
-From this point on, you can add as many textures as you want ( up to around 16000 I believe )<br />
+From this point on, you can add as many textures as you want ( up to 2^16 or 65,536 )<br />
 You could also list the same texture more than once, to have rotated versions, by adding a number AFTER the texture name:<br />
 
 <pre><code>texture 0 &quot;dg/trail_in.jpg&quot; 0 // 0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW, 4 = X-axis flip, 5 = Y-axis flip</code></pre>
 
 <br />
+<a name="shaders"></a><br />
+<h2 id="toc4">Shaders</h2>
+<br />
+Shaders are post processing effects applied to textures. They are used to provide added realism and depth to flat textures.<br />
+<br />
+You define a shader with:<br />
+
+<pre><code>setshader x
+set*param index x y z w</code></pre>
+
+<br />
+You define textures to use as &quot;maps&quot; for the shaders using the following:<br />
+<br />
+
+<pre><code>texture 0 &quot;texturename&quot; // default texture
+texture d &quot;texturename&quot; // decal texture
+texture n &quot;texturename&quot; // normal map
+texture s &quot;texturename&quot; // specular map
+texture g &quot;texturename&quot; // glow map
+texture z &quot;texturename&quot; // depth (parallax) map
+texture u &quot;texturename&quot; // undefined (currently used for sphere maps)</code></pre>
+
+<br />
+Currently supported texture shaders are:<br />
+
+<ul>
+    <li>&quot;stdworld&quot; (null shader; no params; uses 0 only)</li>
+    <li>&quot;decalworld&quot; (decal shader; no params; uses 0, d)</li>
+    <li>&quot;glowworld&quot; (glow map shader; setpixelparam 0 r g b; uses 0, g)</li>
+    <li>&quot;pulseworld&quot; (pulse shader; setvertexparam 1 x; uses 0) [CVS only]<br />
+</li>
+    <li>&quot;pulseglowworld&quot; (pulsing glow map shader; setpixelparam 0 r g b, setvertexparam 1 x; uses 0, g) [CVS only]<br />
+</li>
+    <li>&quot;metalworld&quot; (sphere map shader; setpixelparam 0 r g b; uses 0, u) [CVS only]</li>
+    <li>&quot;bumpworld&quot; (normal map shader; no params; uses 0, n)</li>
+    <li>&quot;bumpspecworld&quot; (normal map shader with spec; setpixelparam 1 r g b; uses 0, n)</li>
+    <li>&quot;bumpspecmapworld&quot; (normal, spec map shader; setpixelparam 1 r g b; uses 0, n, s)</li>
+    <li>&quot;bumpspecmapglowworld&quot; (normal, spec, glow map shader; setpixelparam 0 r g b, setpixelparam 1 r g b; uses 0, n, s, g)</li>
+    <li>&quot;bumpspecparallaxworld&quot; (normal, parallax map shader with spec; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, z)</li>
+    <li>&quot;bumpspecmapparallaxworld&quot; (normal, parallax, spec map shader; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, s, z)</li>
+    <li>&quot;bumpspecmapparallaxglowworld&quot; (normal, parallax, glow, spec map shader; setpixelparam 0 r g b; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, s, g, z)<br />
+</li>
+</ul>
+
+<br />
+preliminary copy from IRC log:<br />
+
+<pre><code>[19:40] &lt;KaiserTodretter&gt; bumpmaps are greyscale images that basically say what the heights of the different parts
+                          of a texture are
+[19:40] &lt;KaiserTodretter&gt; white being high spots and black being low spots
+[19:41] &lt;KaiserTodretter&gt; bumpmaps make a texture appear not flat and distorts the texture in a way that it actually looks 3D
+[19:42] &lt;KaiserTodretter&gt; normal maps are made from bumpmaps and are used to determined at what angles you will see the specularity of a texture
+[19:43] &lt;KaiserTodretter&gt; the specularity can either be a constant set in the map config or a specmap texture can be made to show what parts
+                          of the texture are shiney and what parts are dull
+[19:43] &lt;KaiserTodretter&gt; the last thing you can add is glowmaps
+[19:43] &lt;KaiserTodretter&gt; they dont actually 'emit' light to their surroundings
+[19:44] &lt;KaiserTodretter&gt; but they are lit up even if there is no light on them
+[19:44] &lt;KaiserTodretter&gt; you probably also noticed how as you move by certain textures you can see some shine on them
+                          and it changes as you move by
+[19:45] &lt;KaiserTodretter&gt; that is the spec and normal maps
+[19:45] &lt;devoid&gt; ok
+[19:45] &lt;devoid&gt; they make the &quot;shine&quot; effect ?
+[19:45] &lt;devoid&gt; ill experiment some more
+[19:46] &lt;KaiserTodretter&gt; the 'shine' itself comes from the specularity
+[19:46] &lt;KaiserTodretter&gt; however using normal maps with that will make the shine appear at the correct angles
+[19:46] &lt;devoid&gt; so, does it involve alot of work to make a set of such textures?
+                 or is it pretty easy if you got the hang of it ?
+[19:47] &lt;KaiserTodretter&gt; otherwise it will appear as if the texture is perfectly flat
+[19:47] &lt;KaiserTodretter&gt; some are time consuming
+[19:47] &lt;devoid&gt; well thx for the tips</code></pre>
+
+<br />
 <br />
 <a name="sound"></a><br />
-<h2 id="toc5">Sound</h2>
+<h1 id="toc5">Sound</h1>
 use the commands<br />
 
 <pre><code>music package_path/file.ogg | file.mp3</code></pre>
@@ -142,7 +211,7 @@ to add individual sound fx to your map.<br />
 <br />
 <br />
 <a name="triggers"></a><br />
-<h3 id="toc6">Triggers</h3>
+<h1 id="toc6">Triggers</h1>
 Defining trigger actions - for SP maps only - is a vast field.<br />
 You can basically define any scripting action inside a trigger alias,<br />
 this will be parsed when the player enters the space of the trigger entity.<br />
@@ -158,7 +227,7 @@ A simplistic form of a <em>secret's counter</em> - can be found on the <a class=
 Try finding out how maps do stuff if you want to start using triggers yourself.<br />
 Then try &quot;faking&quot; the action by calling your script by hand.<br />
 Finally select an index for this action, say 42,<br />
-then you'll simply need to place this scripting inside a <br />
+then you'll simply need to place this scripting inside a<br />
 
 <pre><code>level_trigger_42 = [
   // your code here
