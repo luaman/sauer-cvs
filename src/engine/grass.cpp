@@ -5,8 +5,8 @@ VAR(grassanimdist, 0, 150, 10000);
 VAR(grassdist, 0, 300, 10000);
 VAR(grassfalloff, 0, 100, 1000);
 
-const float GRASSWIDTH = 16.0f;
-const float GRASSHEIGHT = 6.0f;
+VAR(grasswidth, 1, 16, 64);
+VAR(grassheight, 1, 6, 64);
 
 void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm)
 {
@@ -25,7 +25,17 @@ void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm
     else loopk(3) g.color[k] = hdr.ambient;
 };
 
-VAR(grassgrid, 1, 6, 32);
+void resetgrasssamples()
+{
+    extern vector<vtxarray *> valist;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        DELETEP(va->grasssamples);
+    };
+};
+
+VARF(grassgrid, 1, 6, 32, resetgrasssamples());
 
 bool gengrassheader(vtxarray *va, const vec *v)
 {
@@ -44,12 +54,12 @@ bool gengrassheader(vtxarray *va, const vec *v)
     g.x = ushort(center.x) | GRASS_BOUNDS;
     g.y = ushort(center.y);
     g.z = ushort(center.z);
-    g.radius = ushort(radius + GRASSWIDTH);
+    g.radius = ushort(radius + grasswidth);
     g.numsamples = 0;
     return true;
 };
 
-VAR(grasssamples, 0, 2, 10);
+VAR(grasssamples, 0, 2, 100);
 
 void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
 {
@@ -219,21 +229,25 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
     if(grasstest>1) return;
 
     vec right(1, 0, 0);
-    right.rotate_around_z(detrnd((size_t)&g + seed, 360)*RAD);
+    right.rotate_around_z(detrnd((size_t)&g * (seed + 1), 360)*RAD);
+
 
     vec b1 = right;
-    b1.mul(-GRASSWIDTH/2);
+    b1.mul(-0.5f*grasswidth);
     b1.add(o);
 
+    b1.x += detrnd((size_t)&g * (seed + 1) * 3, grassgrid*100)/100.0f - grassgrid/2.0f;
+    b1.y += detrnd((size_t)&g * (seed + 1) * 5, grassgrid*100)/100.0f - grassgrid/2.0f;
+
     vec b2 = right;
-    b2.mul(GRASSWIDTH);
+    b2.mul(grasswidth);
     b2.add(b1);
 
     vec t1 = b1;
-    t1.z += GRASSHEIGHT;
+    t1.z += grassheight;
 
     vec t2 = b2;
-    t2.z += GRASSHEIGHT;
+    t2.z += grassheight;
 
     float w1 = 0, w2 = 0;
     if(grasstest>0) t1 = t2 = b1;
@@ -243,21 +257,21 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
         w1 += lastmillis*0.0015f;
         w1 = sinf(w1);
         vec d1 = vec(1.0f, 1.0f, 0.5f);
-        d1.mul(GRASSHEIGHT/4.0f * w1);
+        d1.mul(grassheight/4.0f * w1);
         t1.add(d1);
 
         w2 = detrnd((size_t)&g, 360)*RAD + t2.x*0.55f + t2.y*0.45f;
         w2 += lastmillis*0.0015f;
         w2 = sinf(w2);
         vec d2 = vec(0.4f, 0.4f, 0.2f);
-        d2.mul(GRASSHEIGHT/4.0f * w2);
+        d2.mul(grassheight/4.0f * w2);
         t2.add(d2);
     };
 
     vec color(g.color[0], g.color[1], g.color[2]);
     color.div(255);
 
-    float offset = detrnd((size_t)&g + seed, max(int(32/GRASSWIDTH), 2))*GRASSWIDTH/32,
+    float offset = detrnd((size_t)&g + seed, max(32/grasswidth, 2))*grasswidth/32.0f,
           height = 1 - dist/grassdist;
     glColor3fv(color.v);
     glTexCoord2f(0, height); glVertex3fv(b1.v);
@@ -266,9 +280,9 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
     glTexCoord2f(0, 0); glVertex3fv(t1.v);
     vec color2t = vec(color).mul(0.8f + w2*0.2f);
     glColor3fv(color2t.v);
-    glTexCoord2f(offset + GRASSWIDTH/32.0f, 0); glVertex3fv(t2.v);
+    glTexCoord2f(offset + grasswidth/32.0f, 0); glVertex3fv(t2.v);
     glColor3fv(color.v);
-    glTexCoord2f(offset + GRASSWIDTH/32.0f, height); glVertex3fv(b2.v);
+    glTexCoord2f(offset + grasswidth/32.0f, height); glVertex3fv(b2.v);
 };
 
 void rendergrasssamples(vtxarray *va, const vec &dir)
@@ -283,13 +297,13 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
         {
             grassbounds &b = *(grassbounds *)&g;
             float dist = o.dist(camera1->o, tograss);
-            if(dist > grassdist + b.radius || (dir.dot(tograss)<0 && dist > 2*GRASSWIDTH + b.radius))
+            if(dist > grassdist + b.radius || (dir.dot(tograss)<0 && dist > b.radius + 2*(grassgrid + player->eyeheight)))
                 i += b.numsamples;
             continue;
         };
 
         float dist = o.dist(camera1->o, tograss);
-        if(dist > grassdist || (dir.dot(tograss)<0 && dist > 2*GRASSWIDTH)) continue;
+        if(dist > grassdist || (dir.dot(tograss)<0 && dist > grasswidth/2 + 2*(grassgrid + player->eyeheight))) continue;
 
         float chance = dist*grassfalloff/grassdist;
         loopj(grasssamples) if(detrnd((size_t)&g + j, 100) > chance)
@@ -341,7 +355,7 @@ void rendergrass()
     for(vtxarray *va = visibleva; va; va = va->next)
     {
         if(!va->grasstris || va->occluded >= OCCLUDE_GEOM || va->curlod) continue;
-        if(va->distance > grassdist + GRASSWIDTH) continue;
+        if(va->distance > grassdist) continue;
         if(!va->grasssamples) gengrasssamples(va);
         if(!rendered++) setupgrass();
         rendergrasssamples(va, dir);
