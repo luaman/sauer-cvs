@@ -233,7 +233,6 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     vec right(1, 0, 0);
     right.rotate_around_z(detrnd((size_t)&g * (seed + 1), 360)*RAD);
 
-
     vec b1 = right;
     b1.mul(-0.5f*grasswidth);
     b1.add(o);
@@ -274,13 +273,13 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     vec color(g.color[0], g.color[1], g.color[2]);
     color.div(255);
 
+    vec color1t = vec(color).mul(0.8f + w1*0.2f), color2t = vec(color).mul(0.8f + w2*0.2f);
+
     float offset = detrnd((size_t)&g * (seed + 1)*13, max(32/grasswidth, 2))*float(grasswidth)*64.0f/grasstex->xs;
     glColor3fv(color.v);
     glTexCoord2f(0, 1); glVertex3fv(b1.v);
-    vec color1t = vec(color).mul(0.8f + w1*0.2f);
     glColor3fv(color1t.v);
     glTexCoord2f(0, 0); glVertex3fv(t1.v);
-    vec color2t = vec(color).mul(0.8f + w2*0.2f);
     glColor3fv(color2t.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 0); glVertex3fv(t2.v);
     glColor3fv(color.v);
