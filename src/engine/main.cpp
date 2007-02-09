@@ -409,7 +409,7 @@ int main(int argc, char **argv)
 
     log("gl");
     gl_init(scr_w, scr_h, bpp, depth, fsaa);
-    crosshair = textureload("data/crosshair.png", true, false);
+    crosshair = textureload("data/crosshair.png", 3, false);
     if(!crosshair) fatal("could not find core textures");
     computescreen("initializing...");
     inbetweenframes = true;

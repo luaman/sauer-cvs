@@ -89,7 +89,7 @@ struct Slot
     vector<Tex> sts;
     Shader *shader;
     vector<ShaderParam> params;
-    bool loaded;
+    bool loaded, autograss;
     
     void reset()
     {
@@ -97,6 +97,7 @@ struct Slot
         shader = NULL;
         params.setsize(0);
         loaded = false;
+        autograss = false;
     };
 };
 

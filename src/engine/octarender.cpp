@@ -4,6 +4,7 @@
 #include "engine.h"
 
 vector<vertex> verts;
+vector<grasstri> grasstris;
 
 struct cstat { int size, nleaf, nnode, nface; } cstats[32];
 
@@ -494,8 +495,15 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
         vvec vv[4];
         loopk(4) calcvert(c, x, y, z, size, vv[k], faceverts(c, i, k));
         ushort envmap = EMID_NONE;
-        if(lookupshader(c.texture[i])->type & SHADER_ENVMAP) envmap = closestenvmap(i, x, y, z, size); 
+        Slot &slot = lookuptexture(c.texture[i], false);
+        if(slot.shader && slot.shader->type & SHADER_ENVMAP) envmap = closestenvmap(i, x, y, z, size); 
         addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
+        if(!lodcube && slot.autograss && i!=O_BOTTOM) 
+        {
+            grasstri &g = grasstris.add();
+            memcpy(g.v, vv, sizeof(vv));
+            g.surface = e.surfaces ? &e.surfaces[i] : NULL;
+        };
     };
 };
 
@@ -643,6 +651,13 @@ vtxarray *newva(int x, int y, int z, int size)
     va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
     va->mapmodels = NULL;
+    if(grasstris.empty()) va->grasstris = NULL;
+    else
+    {
+        va->grasstris = new vector<grasstri>;
+        va->grasstris->move(grasstris);
+    };
+    va->grasssamples = NULL;
     va->hasmerges = 0;
     wverts += va->verts = verts.length();
     wtris  += va->l0.tris;
@@ -675,6 +690,8 @@ void destroyva(vtxarray *va, bool reparent)
     };
     if(va->mapmodels) delete va->mapmodels;
     if(va->children) delete va->children;
+    if(va->grasstris) delete va->grasstris;
+    if(va->grasssamples) delete va->grasssamples;
     delete[] (uchar *)va;
 };
 
@@ -753,6 +770,13 @@ void addmergedverts(int level)
     {
         mergedface &mf = mfl[i];
         addcubeverts(mf.orient, 1<<level, false, mf.v, mf.tex, mf.surface, mf.normals, mf.envmap);
+        Slot &slot = lookuptexture(mf.tex, false);
+        if(slot.autograss && mf.orient!=O_BOTTOM)
+        {
+            grasstri &g = grasstris.add();
+            memcpy(g.v, mf.v, sizeof(mf.v));
+            g.surface = mf.surface;
+        };
         cstats[level].nface++;
         vahasmerges |= MERGE_USE;
     };
@@ -849,6 +873,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
     verts.setsizenodelete(0);
     vamms.setsizenodelete(0);
+    grasstris.setsizenodelete(0);
     explicitsky = skyarea = 0;
     vh.clear(); 
     l0.clear();

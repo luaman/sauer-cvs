@@ -620,6 +620,8 @@ void gl_drawframe(int w, int h, float curfps)
 
     if(!wireframe) renderoutline();
 
+    rendergrass();
+
     rendermapmodels();
 
     defaultshader->set();
@@ -706,7 +708,7 @@ void drawcrosshair(int w, int h)
     if(!windowhit && (hidehud || player->state==CS_SPECTATOR)) return;;
 
     static Texture *cursor = NULL;
-    if(!cursor) cursor = textureload("data/guicursor.png", true, false);
+    if(!cursor) cursor = textureload("data/guicursor.png", 3, false);
     if((windowhit ? cursor : crosshair)->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     else glBlendFunc(GL_ONE, GL_ONE);
     glColor3f(1, 1, 1);

@@ -30,6 +30,46 @@ struct materialsurface
     };
 };
 
+struct surfaceinfo
+{
+    uchar texcoords[8];
+    uchar w, h;
+    ushort x, y, lmid;
+};
+
+struct surfacenormals
+{
+    bvec normals[4];
+};
+
+struct grasstri
+{
+    vvec v[4];
+    surfaceinfo *surface;
+};
+
+enum
+{
+    GRASS_SAMPLE = 0,
+    GRASS_BOUNDS
+};
+
+struct grassbounds
+{
+    uchar reserved[3];
+    uchar type;
+    vec center;
+    float radius;
+    int numsamples;
+};
+
+struct grasssample
+{
+    uchar color[3];
+    uchar type;
+    vec v[2];
+};
+
 struct lodlevel
 {
     elementset *eslist;      // List of element indces sets (range) per texture
@@ -92,19 +132,9 @@ struct vtxarray
     uchar curvfc, occluded;
     occludequery *query, *rquery;
     vector<octaentities *> *mapmodels;
+    vector<grasstri> *grasstris;
+    vector<grasssample> *grasssamples;
     int hasmerges;
-};
-
-struct surfaceinfo
-{
-    uchar texcoords[8];
-    uchar w, h;
-    ushort x, y, lmid;
-};
-
-struct surfacenormals
-{
-    bvec normals[4];
 };
 
 struct clipplanes

@@ -1023,10 +1023,10 @@ void clearlights()
         {
             case LM_DIFFUSE:
             case LM_BUMPMAP0:
-                createtexture(lmtexids[i], 1, 1, bright, false, false);
+                createtexture(lmtexids[i], 1, 1, bright, 0, false);
                 break;
             case LM_BUMPMAP1:
-                createtexture(lmtexids[i], 1, 1, &front, false, false);
+                createtexture(lmtexids[i], 1, 1, &front, 0, false);
                 break;
         }
     };            
@@ -1119,15 +1119,15 @@ void initlights()
     };
     alloctexids();
     uchar unlit[3] = { ambient, ambient, ambient };
-    createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, false, false);
+    createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, 0, false);
     bvec front(128, 128, 255);
-    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &front, false, false);
+    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &front, 0, false);
     uchar bright[3] = { 128, 128, 128 };
-    createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, false, false);
-    createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, false, false);
+    createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, 0, false);
+    createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, 0, false);
     uchar dark[3] = { 0, 0, 0 };
-    createtexture(lmtexids[LMID_DARK], 1, 1, dark, false, false);
-    createtexture(lmtexids[LMID_DARK1], 1, 1, &front, false, false);
+    createtexture(lmtexids[LMID_DARK], 1, 1, dark, 0, false);
+    createtexture(lmtexids[LMID_DARK1], 1, 1, &front, 0, false);
     loopv(lightmaps)
     {
         LightMap &lm = lightmaps[i];
@@ -1138,7 +1138,7 @@ void initlights()
             if(!lm.converted) convert_lightmap(lm, lightmaps[i+1]);
             data = lm.converted;
         };
-        createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, false, false);
+        createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, 0, false);
     };
     clearlightcache();
     updateentlighting();

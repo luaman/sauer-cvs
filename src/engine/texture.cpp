@@ -185,7 +185,7 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
 
 VARP(mintexcompresssize, 0, 1<<10, 1<<12);
 
-void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit, GLenum component, GLenum subtarget)
+void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, GLenum component, GLenum subtarget)
 {
     GLenum target = subtarget;
     switch(subtarget)
@@ -203,8 +203,8 @@ void createtexture(int tnum, int w, int h, void *pixels, bool clamp, bool mipit,
     {
         glBindTexture(target, tnum);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-        glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp&1 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -264,7 +264,7 @@ static GLenum texformat(int bpp)
     };
 };
 
-static Texture *newtexture(const char *rname, SDL_Surface *s, bool clamp = false, bool mipit = true)
+static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, bool mipit = true)
 {
     char *key = newstring(rname);
     Texture *t = &textures[key];
@@ -310,7 +310,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     return s;
 };
 
-Texture *textureload(const char *name, bool clamp, bool mipit, bool msg)
+Texture *textureload(const char *name, int clamp, bool mipit, bool msg)
 {
     string tname;
     s_strcpy(tname, name);
@@ -343,7 +343,7 @@ GLuint cubemapfromsky(int size)
         glBindTexture(GL_TEXTURE_2D, sky[i]->gl);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
         gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, size, size, GL_UNSIGNED_BYTE, scaled);
-        createtexture(!i ? tex : 0, size, size, scaled, true, true, GL_RGB5, cubemapsides[i].target);
+        createtexture(!i ? tex : 0, size, size, scaled, 3, true, GL_RGB5, cubemapsides[i].target);
         delete[] pixels;
     };
     delete[] scaled;
@@ -385,7 +385,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
     loopi(6)
     {
         SDL_Surface *s = surface[i];
-        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, true, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
+        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, 3, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
         SDL_FreeSurface(s);
     };
     return t;
@@ -485,6 +485,14 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
 };
 
 COMMAND(texture, "ssiiif");
+
+void autograss()
+{
+    Slot &s = slots.last();
+    s.autograss = true;
+};
+
+COMMAND(autograss, "");
 
 static int findtextype(Slot &s, int type, int last = -1)
 {
@@ -771,7 +779,7 @@ void renderfullscreenshader(int w, int h)
     {
         char *pixels = new char[w*h*3];
         loopi(NUMSCALE)
-            createtexture(rendertarget[i], w>>i, h>>i, pixels, true, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
+            createtexture(rendertarget[i], w>>i, h>>i, pixels, 3, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
         delete[] pixels;
         fs_w = w;
         fs_h = h;

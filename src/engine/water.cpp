@@ -496,12 +496,12 @@ void addreflection(materialsurface &m)
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->fb);
         char *pixels = new char[size*size*3];
         memset(pixels, 0, size*size*3);
-        createtexture(ref->tex, size, size, pixels, true, false, fboFormat);
+        createtexture(ref->tex, size, size, pixels, 3, false, fboFormat);
         glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
         if(fboFormat==GL_RGB && glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)!=GL_FRAMEBUFFER_COMPLETE_EXT)
         {
             fboFormat = GL_RGB8;
-            createtexture(ref->tex, size, size, pixels, true, false, fboFormat);
+            createtexture(ref->tex, size, size, pixels, 3, false, fboFormat);
             glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
         };
         delete[] pixels;
@@ -535,7 +535,7 @@ void addreflection(materialsurface &m)
         int size = 1<<reflectsize;
         char *pixels = new char[size*size*3];
         memset(pixels, 0, size*size*3);
-        createtexture(ref->refracttex, size, size, pixels, true, false, fboFormat);
+        createtexture(ref->refracttex, size, size, pixels, 3, false, fboFormat);
         delete[] pixels;
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref->refractfb);
         glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->refracttex, 0);
@@ -800,7 +800,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
             dst -= 3;
         };
         if(texsize<rendersize) gluScaleImage(GL_RGB, rendersize, rendersize, GL_UNSIGNED_BYTE, pixels, texsize, texsize, GL_UNSIGNED_BYTE, pixels);
-        createtexture(tex, texsize, texsize, pixels, true, true, GL_RGB5, side.target);
+        createtexture(tex, texsize, texsize, pixels, 3, true, GL_RGB5, side.target);
     };
     delete[] pixels;
     glViewport(0, 0, scr_w, scr_h);

@@ -231,7 +231,7 @@ struct gui : g3d_gui
 
     int image(const char *path, float scale, bool overlaid)
     {
-        Texture *t = textureload(path, false, true, false);
+        Texture *t = textureload(path, 0, true, false);
         if(t==crosshair) return 0;
         autotab();
         if(scale==0) scale = 1;
