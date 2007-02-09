@@ -226,7 +226,7 @@ VAR(grasstest, 0, 0, 2);
 
 static Texture *grasstex = NULL;
 
-void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
+void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed, float height)
 {
     if(grasstest>1) return;
 
@@ -245,7 +245,7 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
     b2.mul(grasswidth);
     b2.add(b1);
 
-    float height = 1 - dist/grassdist;
+    //float height = 1 - dist/grassdist;
     vec t1 = b1;
     t1.z += grassheight * height;
 
@@ -287,6 +287,8 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 1); glVertex3fv(b2.v);
 };
 
+VAR(grasspopup, 0, 50, 100);
+
 void rendergrasssamples(vtxarray *va, const vec &dir)
 {
     if(!va->grasssamples) return;
@@ -309,7 +311,12 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
 
         float chance = dist*grassfalloff/grassdist;
         loopj(grasssamples) if(detrnd((size_t)&g + j, 100) > chance)
-            rendergrasssample(g, o, dist, j);
+        {
+            int val = detrnd((size_t)&g * (j + 1) * 19, 100);
+            float height = (val - chance) / max(grasspopup - val, val - chance);
+            height *= 1 - dist/grassdist;
+            rendergrasssample(g, o, dist, j, height);
+        };
     };
 };
 
