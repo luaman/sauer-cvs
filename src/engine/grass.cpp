@@ -12,18 +12,9 @@ void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm
 {
     grasssample &g = va->grasssamples->add();
 
-    g.type = GRASS_SAMPLE;
-
-    vec right(1, 0, 0);
-    right.rotate_around_z(rnd(360)*RAD);//detrnd((size_t)&g, 360)*RAD);
-
-    g.v[0] = right;
-    g.v[0].mul(-GRASSWIDTH/2);    
-    g.v[0].add(o);
-
-    g.v[1] = right;
-    g.v[1].mul(GRASSWIDTH);
-    g.v[1].add(g.v[0]);
+    g.x = ushort(o.x) | GRASS_SAMPLE;
+    g.y = ushort(o.y);
+    g.z = ushort(o.z);
 
     if(lm)  
     {
@@ -50,9 +41,10 @@ bool gengrassheader(vtxarray *va, const vec *v)
     if(radius < grassgrid*2) return false;
 
     grassbounds &g = *(grassbounds *)&va->grasssamples->add();
-    g.type = GRASS_BOUNDS;
-    g.center = center;
-    g.radius = radius + GRASSWIDTH;
+    g.x = ushort(center.x) | GRASS_BOUNDS;
+    g.y = ushort(center.y);
+    g.z = ushort(center.z);
+    g.radius = ushort(radius + GRASSWIDTH);
     g.numsamples = 0;
     return true;
 };
@@ -113,15 +105,11 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
     float dy = grassgrid - fmodf(o1.y, grassgrid);
     for(;;)
     {
-        if(isinf(o1.x)) *(int *)0 = 0;
-        if(isnan(o1.x)) *(int *)0 = 0;
-        if(!dy) *(int *)0 = 0;
         if(endl > o1.y) dy = min(dy, endl - o1.y);
         if(endr > o2.y) dy = min(dy, endr - o2.y);
 
         o1.y += dy;
         o1.x += dl.x * dy/dl.y;
-        if(isinf(o1.x)) *(int *)0 = 5;
         o1.z += dl.z * dy/dl.y;
         ls += lds * dy/dl.y;
         lt += ldt * dy/dl.y;
@@ -143,9 +131,8 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
             {
                 if(!numsamples++) header = gengrassheader(va, v);
                 gengrasssample(va, p, s, t, lm);
-                loopi(grasssamples-1) gengrasssample(va, p, s, t, lm), numsamples++;
             }
-            else for(;;)
+            else while(!header || numsamples<USHRT_MAX)
             {
                 p.x += dx;
                 p.y += dp.y * dx/dp.x;
@@ -155,14 +142,12 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
 
                 if(p.x > o2.x) break;
 
-                if(isnan(p.x)) *(int *)0 = 0;
-
                 if(!numsamples++) header = gengrassheader(va, v);
                 gengrasssample(va, p, s, t, lm);
-                loopi(grasssamples-1) gengrasssample(va, p, s, t, lm), numsamples++;
 
                 dx = grassgrid;
             };
+            if(header && numsamples>=USHRT_MAX) break;
         };
 
         if(o1.y >= endl)
@@ -227,6 +212,60 @@ void gengrasssamples(vtxarray *va)
     };
 };
 
+void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
+{
+    vec right(1, 0, 0);
+    right.rotate_around_z(detrnd((size_t)&g + seed, 360)*RAD);
+
+    vec b1 = right;
+    b1.mul(-GRASSWIDTH/2);
+    b1.add(o);
+
+    vec b2 = right;
+    b2.mul(GRASSWIDTH);
+    b2.add(b1);
+
+    vec t1 = b1;
+    t1.z += GRASSHEIGHT;
+
+    vec t2 = b2;
+    t2.z += GRASSHEIGHT;
+
+    float w1 = 0, w2 = 0;
+    if(dist < grassanimdist)
+    {
+        w1 = detrnd((size_t)&g, 360)*RAD + t1.x*0.4f + t1.y*0.5f;
+        w1 += lastmillis*0.0015f;
+        w1 = sinf(w1);
+        vec d1 = vec(1.0f, 1.0f, 0.5f);
+        d1.mul(GRASSHEIGHT/4.0f * w1);
+        t1.add(d1);
+
+        w2 = detrnd((size_t)&g, 360)*RAD + t2.x*0.55f + t2.y*0.45f;
+        w2 += lastmillis*0.0015f;
+        w2 = sinf(w2);
+        vec d2 = vec(0.4f, 0.4f, 0.2f);
+        d2.mul(GRASSHEIGHT/4.0f * w2);
+        t2.add(d2);
+    };
+
+    vec color(g.color[0], g.color[1], g.color[2]);
+    color.div(255);
+
+    float offset = detrnd((size_t)&g + seed, max(int(32/GRASSWIDTH), 2))*GRASSWIDTH/32,
+          height = 1 - dist/grassdist;
+    glColor3fv(color.v);
+    glTexCoord2f(0, height); glVertex3fv(b1.v);
+    vec color1t = vec(color).mul(0.8f + w1*0.2f);
+    glColor3fv(color1t.v);
+    glTexCoord2f(0, 0); glVertex3fv(t1.v);
+    vec color2t = vec(color).mul(0.8f + w2*0.2f);
+    glColor3fv(color2t.v);
+    glTexCoord2f(offset + GRASSWIDTH/32.0f, 0); glVertex3fv(t2.v);
+    glColor3fv(color.v);
+    glTexCoord2f(offset + GRASSWIDTH/32.0f, height); glVertex3fv(b2.v);
+};
+
 void rendergrasssamples(vtxarray *va, const vec &dir)
 {
     if(!va->grasssamples) return;
@@ -234,59 +273,22 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
     {
         grasssample &g = (*va->grasssamples)[i];
 
-        vec tograss;
-        if(g.type==GRASS_BOUNDS)
+        vec o(g.x&~GRASS_TYPE, g.y, g.z), tograss;
+        if((g.x&GRASS_TYPE)==GRASS_BOUNDS)
         {
             grassbounds &b = *(grassbounds *)&g;
-            float dist = b.center.dist(camera1->o, tograss);
+            float dist = o.dist(camera1->o, tograss);
             if(dist > grassdist + b.radius || (dir.dot(tograss)<0 && dist > 2*GRASSWIDTH + b.radius))
                 i += b.numsamples;
             continue;
         };
 
-        float dist = g.v[0].dist(camera1->o, tograss);
+        float dist = o.dist(camera1->o, tograss);
         if(dist > grassdist || (dir.dot(tograss)<0 && dist > 2*GRASSWIDTH)) continue;
-        if(detrnd((size_t)&g, 100) < dist*grassfalloff/grassdist) continue;
 
-        vec t1 = g.v[0];
-        t1.z += GRASSHEIGHT;
-
-        vec t2 = g.v[1];
-        t2.z += GRASSHEIGHT;
-
-        float w1 = 0, w2 = 0;
-        if(dist < grassanimdist)
-        {
-            w1 = detrnd((size_t)&g, 360)*RAD + t1.x*0.4f + t1.y*0.5f;
-            w1 += lastmillis*0.0015f;
-            w1 = sinf(w1);
-            vec d1 = vec(1.0f, 1.0f, 0.5f);
-            d1.mul(GRASSHEIGHT/4.0f * w1);
-            t1.add(d1);
-
-            w2 = detrnd((size_t)&g, 360)*RAD + t2.x*0.55f + t2.y*0.45f;
-            w2 += lastmillis*0.0015f;
-            w2 = sinf(w2);
-            vec d2 = vec(0.4f, 0.4f, 0.2f);
-            d2.mul(GRASSHEIGHT/4.0f * w2);
-            t2.add(d2);
-        };
-
-        vec color(g.color[0], g.color[1], g.color[2]);
-        color.div(255);
-
-        float offset = detrnd((size_t)&g, max(int(32/GRASSWIDTH), 2))*GRASSWIDTH/32,
-              height = 1 - dist/grassdist;
-        glColor3fv(color.v);
-        glTexCoord2f(0, height); glVertex3fv(g.v[0].v);
-        vec color1t = vec(color).mul(0.8f + w1*0.2f);
-        glColor3fv(color1t.v);
-        glTexCoord2f(0, 0); glVertex3fv(t1.v);
-        vec color2t = vec(color).mul(0.8f + w2*0.2f);
-        glColor3fv(color2t.v);
-        glTexCoord2f(offset + GRASSWIDTH/32.0f, 0); glVertex3fv(t2.v);
-        glColor3fv(color.v);
-        glTexCoord2f(offset + GRASSWIDTH/32.0f, height); glVertex3fv(g.v[1].v);
+        float chance = dist*grassfalloff/grassdist;
+        loopj(grasssamples) if(detrnd((size_t)&g + j, 100) > chance)
+            rendergrasssample(g, o, dist, j);
     };
 };
 
@@ -324,7 +326,7 @@ void cleanupgrass()
 
 void rendergrass()
 {
-    if(!grassgrid || !grassdist) return;
+    if(!grassgrid || !grasssamples || !grassdist) return;
 
     vec dir;
     vecfromyawpitch(camera1->yaw, 0, 1, 0, dir);
