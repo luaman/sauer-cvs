@@ -25,7 +25,7 @@ void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm
     else loopk(3) g.color[k] = hdr.ambient;
 };
 
-VAR(grassgrid, 0, 4, 32);
+VAR(grassgrid, 1, 6, 32);
 
 bool gengrassheader(vtxarray *va, const vec *v)
 {
@@ -49,7 +49,7 @@ bool gengrassheader(vtxarray *va, const vec *v)
     return true;
 };
 
-VAR(grasssamples, 1, 1, 10);
+VAR(grasssamples, 0, 2, 10);
 
 void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
 {
@@ -212,8 +212,12 @@ void gengrasssamples(vtxarray *va)
     };
 };
 
+VAR(grasstest, 0, 0, 2);
+
 void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
 {
+    if(grasstest>1) return;
+
     vec right(1, 0, 0);
     right.rotate_around_z(detrnd((size_t)&g + seed, 360)*RAD);
 
@@ -232,7 +236,8 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
     t2.z += GRASSHEIGHT;
 
     float w1 = 0, w2 = 0;
-    if(dist < grassanimdist)
+    if(grasstest>0) t1 = t2 = b1;
+    else if(dist < grassanimdist)
     {
         w1 = detrnd((size_t)&g, 360)*RAD + t1.x*0.4f + t1.y*0.5f;
         w1 += lastmillis*0.0015f;
@@ -326,7 +331,7 @@ void cleanupgrass()
 
 void rendergrass()
 {
-    if(!grassgrid || !grasssamples || !grassdist) return;
+    if(!grasssamples || !grassdist) return;
 
     vec dir;
     vecfromyawpitch(camera1->yaw, 0, 1, 0, dir);
