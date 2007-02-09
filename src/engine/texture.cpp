@@ -695,7 +695,8 @@ bool isloadedtexture(int slot)
 
 Slot &lookuptexture(int slot, bool load)
 {
-    Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots[slots.inrange(slot) ? slot : 0]);
+    static Slot dummyslot;
+    Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots.inrange(slot) ? slots[slot] : (slots.length() ? slots[0] : dummyslot));
     if(s.loaded || !load) return s;
     loopv(s.sts)
     {

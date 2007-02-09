@@ -100,6 +100,8 @@ struct Slot
         loaded = false;
         autograss = false;
     };
+    
+    Slot() { reset(); }
 };
 
 struct cubemapside
