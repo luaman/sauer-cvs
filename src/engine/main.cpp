@@ -361,7 +361,9 @@ int main(int argc, char **argv)
     #ifdef _DEBUG
     par = SDL_INIT_NOPARACHUTE;
     fs = 0;
+    #ifdef WIN32
     SetEnvironmentVariable("SDL_DEBUG", "1");
+    #endif
     #endif
 
     //#ifdef WIN32
