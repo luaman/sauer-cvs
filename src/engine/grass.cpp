@@ -312,7 +312,7 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
         float chance = dist*grassfalloff/grassdist;
         loopj(grasssamples) 
         {
-            int val = detrnd((size_t)&g * (j + 1) * 19, 100);
+            int val = 1 + detrnd((size_t)&g * (j + 1) * 19, 100);
             if(val <= chance) continue;
             float height = 1 - dist/grassdist;
             height *= (val - chance) / max(chance - grasspopup, val - chance);
