@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "engine.h"
 
-VAR(grassanimdist, 0, 150, 10000);
+VAR(grassanimdist, 0, 200, 10000);
 VAR(grassdist, 0, 300, 10000);
 VAR(grassfalloff, 0, 100, 1000);
 
 VAR(grasswidth, 1, 16, 64);
-VAR(grassheight, 1, 6, 64);
+VAR(grassheight, 1, 8, 64);
 
 void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm)
 {
@@ -224,6 +224,8 @@ void gengrasssamples(vtxarray *va)
 
 VAR(grasstest, 0, 0, 2);
 
+static Texture *grasstex = NULL;
+
 void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
 {
     if(grasstest>1) return;
@@ -236,31 +238,32 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
     b1.mul(-0.5f*grasswidth);
     b1.add(o);
 
-    b1.x += detrnd((size_t)&g * (seed + 1) * 3, grassgrid*100)/100.0f - grassgrid/2.0f;
-    b1.y += detrnd((size_t)&g * (seed + 1) * 5, grassgrid*100)/100.0f - grassgrid/2.0f;
+    b1.x += detrnd((size_t)&g * (seed + 1)*3, grassgrid*100)/100.0f - grassgrid/2.0f;
+    b1.y += detrnd((size_t)&g * (seed + 1)*5, grassgrid*100)/100.0f - grassgrid/2.0f;
 
     vec b2 = right;
     b2.mul(grasswidth);
     b2.add(b1);
 
+    float height = 1 - dist/grassdist;
     vec t1 = b1;
-    t1.z += grassheight;
+    t1.z += grassheight * height;
 
     vec t2 = b2;
-    t2.z += grassheight;
+    t2.z += grassheight * height;
 
     float w1 = 0, w2 = 0;
     if(grasstest>0) t1 = t2 = b1;
     else if(dist < grassanimdist)
     {
-        w1 = detrnd((size_t)&g, 360)*RAD + t1.x*0.4f + t1.y*0.5f;
+        w1 = detrnd((size_t)&g * (seed + 1)*7, 360)*RAD + t1.x*0.4f + t1.y*0.5f;
         w1 += lastmillis*0.0015f;
         w1 = sinf(w1);
         vec d1 = vec(1.0f, 1.0f, 0.5f);
         d1.mul(grassheight/4.0f * w1);
         t1.add(d1);
 
-        w2 = detrnd((size_t)&g, 360)*RAD + t2.x*0.55f + t2.y*0.45f;
+        w2 = detrnd((size_t)&g * (seed + 1)*11, 360)*RAD + t2.x*0.55f + t2.y*0.45f;
         w2 += lastmillis*0.0015f;
         w2 = sinf(w2);
         vec d2 = vec(0.4f, 0.4f, 0.2f);
@@ -271,18 +274,17 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed)
     vec color(g.color[0], g.color[1], g.color[2]);
     color.div(255);
 
-    float offset = detrnd((size_t)&g + seed, max(32/grasswidth, 2))*grasswidth/32.0f,
-          height = 1 - dist/grassdist;
+    float offset = detrnd((size_t)&g * (seed + 1)*13, max(32/grasswidth, 2))*float(grasswidth)*64.0f/grasstex->xs;
     glColor3fv(color.v);
-    glTexCoord2f(0, height); glVertex3fv(b1.v);
+    glTexCoord2f(0, 1); glVertex3fv(b1.v);
     vec color1t = vec(color).mul(0.8f + w1*0.2f);
     glColor3fv(color1t.v);
     glTexCoord2f(0, 0); glVertex3fv(t1.v);
     vec color2t = vec(color).mul(0.8f + w2*0.2f);
     glColor3fv(color2t.v);
-    glTexCoord2f(offset + grasswidth/32.0f, 0); glVertex3fv(t2.v);
+    glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 0); glVertex3fv(t2.v);
     glColor3fv(color.v);
-    glTexCoord2f(offset + grasswidth/32.0f, height); glVertex3fv(b2.v);
+    glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 1); glVertex3fv(b2.v);
 };
 
 void rendergrasssamples(vtxarray *va, const vec &dir)
@@ -313,7 +315,6 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
 
 void setupgrass()
 {
-    static Texture *grasstex = NULL;
     if(!grasstex) grasstex = textureload("data/grass.png", 2);
 
     glDisable(GL_CULL_FACE);
