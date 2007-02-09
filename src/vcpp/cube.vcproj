@@ -888,6 +888,18 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\grass.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\engine\md2.h"
 					>
 				</File>
@@ -992,6 +1004,14 @@
 				<File
 					RelativePath="..\engine\rendersky.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\rendertext.cpp"
@@ -1027,6 +1047,14 @@
 				<File
 					RelativePath="..\engine\renderva.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\spheretree.cpp"
@@ -1047,6 +1075,14 @@
 				<File
 					RelativePath="..\engine\texture.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\texture.h"
