@@ -27,6 +27,8 @@ enum
     SHADER_ENVMAP     = 1<<1
 };
 
+#define MAXSHADERDETAIL 3
+
 extern int shaderdetail;
 
 struct Shader
@@ -35,8 +37,7 @@ struct Shader
     int type;
     GLuint vs, ps;
     vector<ShaderParam> defaultparams;
-    Shader *fastshader;
-    int fastdetail;
+    Shader *fastshader[MAXSHADERDETAIL];
 
     void bindprograms()
     {
@@ -47,7 +48,7 @@ struct Shader
     void set()
     {
         if(renderpath==R_FIXEDFUNCTION) return;
-        if(fastshader && shaderdetail <= fastdetail) fastshader->bindprograms();
+        if(shaderdetail < MAXSHADERDETAIL) fastshader[shaderdetail]->bindprograms();
         else bindprograms();
     };
 };

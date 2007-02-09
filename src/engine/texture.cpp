@@ -30,7 +30,7 @@ void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
 };
 
 VAR(shaderprecision, 0, 1, 3);
-VARP(shaderdetail, 0, 3, 3);
+VARP(shaderdetail, 0, MAXSHADERDETAIL, MAXSHADERDETAIL);
 
 void shader(int *type, char *name, char *vs, char *ps)
 {
@@ -48,8 +48,7 @@ void shader(int *type, char *name, char *vs, char *ps)
     Shader &s = shaders[rname];
     s.name = rname;
     s.type = *type;
-    s.fastshader = NULL;
-    s.fastdetail = -1;
+    loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
     loopv(curparams) s.defaultparams.add(curparams[i]);
     curparams.setsize(0);
     if(renderpath==R_ASMSHADER)
@@ -76,8 +75,7 @@ void altshader(char *orig, char *altname)
     Shader &s = shaders[rname];
     s.name = rname;
     s.type = alt->type;
-    s.fastshader = NULL;
-    s.fastdetail = -1;
+    loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
     loopv(alt->defaultparams) s.defaultparams.add(alt->defaultparams[i]);
     s.vs = alt->vs;
     s.ps = alt->ps;
@@ -89,8 +87,7 @@ void fastshader(char *nice, char *fast, int *detail)
     if(!ns) return;
     Shader *fs = lookupshaderbyname(fast);
     if(!fs) return;
-    ns->fastshader = fs;
-    ns->fastdetail = *detail;
+    loopi(min(*detail+1, MAXSHADERDETAIL)) ns->fastshader[i] = fs;
 };
 
 COMMAND(shader, "isss");
