@@ -50,24 +50,22 @@ struct grasstri
 
 enum
 {
-    GRASS_SAMPLE = 0,
-    GRASS_BOUNDS
+    GRASS_SAMPLE = 0<<15,
+    GRASS_BOUNDS = 1<<15,
+
+    GRASS_TYPE = 1<<15
 };
 
 struct grassbounds
 {
-    uchar reserved[3];
-    uchar type;
-    vec center;
-    float radius;
-    int numsamples;
+    ushort x, y, z;
+    ushort radius, numsamples;
 };
 
 struct grasssample
 {
-    uchar color[3];
-    uchar type;
-    vec v[2];
+    ushort x, y, z;
+    uchar color[3], reserved;
 };
 
 struct lodlevel

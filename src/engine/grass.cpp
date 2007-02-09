@@ -310,11 +310,12 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
         if(dist > grassdist || (dir.dot(tograss)<0 && dist > grasswidth/2 + 2*(grassgrid + player->eyeheight))) continue;
 
         float chance = dist*grassfalloff/grassdist;
-        loopj(grasssamples) if(detrnd((size_t)&g + j, 100) > chance)
+        loopj(grasssamples) 
         {
             int val = detrnd((size_t)&g * (j + 1) * 19, 100);
-            float height = (val - chance) / max(grasspopup - val, val - chance);
-            height *= 1 - dist/grassdist;
+            if(val <= chance) continue;
+            float height = 1 - dist/grassdist;
+            height *= (val - chance) / max(chance - grasspopup, val - chance);
             rendergrasssample(g, o, dist, j, height);
         };
     };
