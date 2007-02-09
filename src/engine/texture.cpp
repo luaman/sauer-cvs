@@ -687,16 +687,10 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
     t.t = newtexture(key.getbuf(), ts);
 };
 
-bool isloadedtexture(int slot)
-{
-    Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots[slots.inrange(slot) ? slot : 0]);
-    return s.loaded;
-};
-
 Slot &lookuptexture(int slot, bool load)
 {
     static Slot dummyslot;
-    Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots.inrange(slot) ? slots[slot] : (slots.length() ? slots[0] : dummyslot));
+    Slot &s = slot<0 && slot>-MAT_EDIT ? materialslots[-slot] : (slots.inrange(slot) ? slots[slot] : (slots.empty() ? dummyslot : slots[0]));
     if(s.loaded || !load) return s;
     loopv(s.sts)
     {
@@ -705,6 +699,11 @@ Slot &lookuptexture(int slot, bool load)
     };
     s.loaded = true;
     return s;
+};
+
+bool isloadedtexture(int slot)
+{
+    return lookuptexture(slot, false).loaded;
 };
 
 Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); };
