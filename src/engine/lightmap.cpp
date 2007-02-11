@@ -815,7 +815,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
             if(!numplanes) continue;
             if(!find_lights(cx, cy, cz, size, planes, numplanes))
             {
-                if(lodcube || !(shader->type&SHADER_ENVMAP)) continue;
+                if(lodcube || !(shader->type&(SHADER_NORMALSLMS | SHADER_ENVMAP))) continue;
             };
 
             loopj(4) n[j] = planes[0];
