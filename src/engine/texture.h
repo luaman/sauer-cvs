@@ -90,7 +90,9 @@ struct Slot
     vector<Tex> sts;
     Shader *shader;
     vector<ShaderParam> params;
-    bool loaded, autograss;
+    bool loaded;
+    char *autograss;
+    Texture *grasstex;
     
     void reset()
     {
@@ -98,10 +100,11 @@ struct Slot
         shader = NULL;
         params.setsize(0);
         loaded = false;
-        autograss = false;
+        DELETEA(autograss);
+        grasstex = NULL;
     };
     
-    Slot() { reset(); }
+    Slot() : autograss(NULL) { reset(); }
 };
 
 struct cubemapside

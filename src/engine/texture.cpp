@@ -483,13 +483,15 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
 
 COMMAND(texture, "ssiiif");
 
-void autograss()
+void autograss(char *name)
 {
     Slot &s = slots.last();
-    s.autograss = true;
+    DELETEA(s.autograss);
+    s_sprintfd(pname)("packages/%s", name);
+    s.autograss = newstring(name[0] ? pname : "data/grass.png");
 };
 
-COMMAND(autograss, "");
+COMMAND(autograss, "s");
 
 static int findtextype(Slot &s, int type, int last = -1)
 {

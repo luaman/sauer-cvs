@@ -197,9 +197,17 @@ void gengrasssamples(vtxarray *va)
 {
     if(va->grasssamples) return;
     va->grasssamples = new vector<grasssample>;
+    int lasttex = -1;
     loopv(*va->grasstris)
     {
         grasstri &g = (*va->grasstris)[i];
+        if(g.texture != lasttex)
+        {
+            grasstexture &t = *(grasstexture *)&va->grasssamples->add();
+            t.x = GRASS_TEXTURE;
+            t.texture = g.texture;
+            lasttex = g.texture;
+        };
         vec v[4];
         float tc[8];
         static int remap[4] = { 1, 2, 0, 3 };
@@ -214,7 +222,6 @@ void gengrasssamples(vtxarray *va)
             };
         };
         LightMap *lm = g.surface && g.surface->lmid >= LMID_RESERVED ? &lightmaps[g.surface->lmid-LMID_RESERVED] : NULL;
-
         gengrasssamples(va, v, tc, lm);
         gengrasssamples(va, &v[1], &tc[2], lm);
     };
@@ -326,42 +333,62 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
         grasssample &g = (*va->grasssamples)[i];
 
         vec o(g.x&~GRASS_TYPE, g.y, g.z/4.0f), tograss;
-        if((g.x&GRASS_TYPE)==GRASS_BOUNDS)
+        switch(g.x&GRASS_TYPE)
         {
-            grassbounds &b = *(grassbounds *)&g;
-            float dist = o.dist(camera1->o, tograss);
-            if(dist > grassdist + b.radius || (dir.dot(tograss)<0 && dist > b.radius + 2*(grassgrid + player->eyeheight)))
-                i += b.numsamples;
-            continue;
-        };
+            case GRASS_BOUNDS:
+            {
+                grassbounds &b = *(grassbounds *)&g;
+                float dist = o.dist(camera1->o, tograss);
+                if(dist > grassdist + b.radius || (dir.dot(tograss)<0 && dist > b.radius + 2*(grassgrid + player->eyeheight)))
+                    i += b.numsamples;
+                break;
+            };
 
-        float dist = o.dist(camera1->o, tograss);
-        if(dist > grassdist || (dir.dot(tograss)<0 && dist > grasswidth/2 + 2*(grassgrid + player->eyeheight))) continue;
+            case GRASS_TEXTURE:
+            {
+                grasstexture &t = *(grasstexture *)&g;
+                Slot &s = lookuptexture(t.texture, false);
+                if(!s.grasstex || s.grasstex!=grasstex)
+                {
+                    glEnd();
+                    if(!s.grasstex) s.grasstex = textureload(s.autograss, 2);
+                    glBindTexture(GL_TEXTURE_2D, s.grasstex->gl);
+                    glBegin(GL_QUADS);
+                    grasstex = s.grasstex;
+                };
+                break;
+            };
 
-        float ld = loddist(o);
-        int numsamples = int(grasssamples/100.0f*max(grassgrid - ld/grasslod, 100.0f/grasssamples));
-        float height = 1 - (dist + grasstaper - grassdist) / (grasstaper ? grasstaper : 1);
-        height = min(height, 1);
-        loopj(2*numsamples)
-        {
-            rendergrasssample(g, o, dist, j, height, numsamples);
+            case GRASS_SAMPLE:
+            {
+                float dist = o.dist(camera1->o, tograss);
+                if(dist > grassdist || (dir.dot(tograss)<0 && dist > grasswidth/2 + 2*(grassgrid + player->eyeheight))) continue;
+
+                float ld = loddist(o);
+                int numsamples = int(grasssamples/100.0f*max(grassgrid - ld/grasslod, 100.0f/grasssamples));
+                float height = 1 - (dist + grasstaper - grassdist) / (grasstaper ? grasstaper : 1);
+                height = min(height, 1);
+                loopj(2*numsamples)
+                {
+                    rendergrasssample(g, o, dist, j, height, numsamples);
+                };
+                break;
+            };
         };
     };
 };
 
 void setupgrass()
 {
-    if(!grasstex) grasstex = textureload("data/grass.png", 2);
-
     glDisable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.3f);
 
-    glBindTexture(GL_TEXTURE_2D, grasstex->gl);
-
     static Shader *grassshader = NULL;
     if(!grassshader) grassshader = lookupshaderbyname("grass");
     grassshader->set();
+
+    grasstex = NULL;
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
 
@@ -370,11 +397,11 @@ void setupgrass()
 
 void cleanupgrass()
 {
-    defaultshader->set();
-
     glEnd();
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+
+    defaultshader->set();
 
     glDisable(GL_ALPHA_TEST);
     glEnable(GL_CULL_FACE);

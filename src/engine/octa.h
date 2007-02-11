@@ -46,14 +46,16 @@ struct grasstri
 {
     vvec v[4];
     surfaceinfo *surface;
+    ushort texture;
 };
 
 enum
 {
-    GRASS_SAMPLE = 0<<15,
-    GRASS_BOUNDS = 1<<15,
+    GRASS_SAMPLE  = 0<<14,
+    GRASS_BOUNDS  = 1<<14,
+    GRASS_TEXTURE = 2<<14,
 
-    GRASS_TYPE = 1<<15
+    GRASS_TYPE = 3<<14
 };
 
 struct grassbounds
@@ -66,6 +68,12 @@ struct grasssample
 {
     ushort x, y, z;
     uchar color[3], reserved;
+};
+
+struct grasstexture
+{
+    ushort x, y, z;
+    ushort texture, reserved;
 };
 
 struct lodlevel

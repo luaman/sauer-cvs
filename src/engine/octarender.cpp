@@ -503,6 +503,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             grasstri &g = grasstris.add();
             memcpy(g.v, vv, sizeof(vv));
             g.surface = e.surfaces ? &e.surfaces[i] : NULL;
+            g.texture = c.texture[i];
         };
     };
 };
@@ -776,6 +777,7 @@ void addmergedverts(int level)
             grasstri &g = grasstris.add();
             memcpy(g.v, mf.v, sizeof(mf.v));
             g.surface = mf.surface;
+            g.texture = mf.tex;
         };
         cstats[level].nface++;
         vahasmerges |= MERGE_USE;
