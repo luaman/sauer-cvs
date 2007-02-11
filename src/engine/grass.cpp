@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "engine.h"
 
-VAR(grassanimdist, 0, 200, 10000);
+VAR(grassanimdist, 0, 500, 10000);
 VAR(grassdist, 0, 500, 10000);
 VAR(grassfalloff, 0, 100, 1000);
 
@@ -311,19 +311,14 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     if(fullbright) loopk(3) color[k] = 128;
     color.div(255);
 
-    vec color1t = vec(color).mul(0.8f + w1*0.2f), color2t = vec(color).mul(0.8f + w2*0.2f);
-
-    color1t = color;
-    color2t = color;
+    vec color1 = vec(color).mul(0.9f + w1*0.1f), color2 = vec(color).mul(0.9f + w2*0.1f);
 
     float offset = detrnd((size_t)&g * (seed + 1)*13, max(32/grasswidth, 2))*float(grasswidth)*64.0f/grasstex->xs;
-    glColor3fv(color.v);
+    glColor3fv(color1.v);
     glTexCoord2f(0, 1); glVertex3fv(b1.v);
-    glColor3fv(color1t.v);
     glTexCoord2f(0, 0); glVertex3fv(t1.v);
-    glColor3fv(color2t.v);
+    glColor3fv(color2.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 0); glVertex3fv(t2.v);
-    glColor3fv(color.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 1); glVertex3fv(b2.v);
 };
 
