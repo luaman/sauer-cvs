@@ -2,28 +2,11 @@
 #include "engine.h"
 
 VAR(grassanimdist, 0, 200, 10000);
-VAR(grassdist, 0, 300, 10000);
+VAR(grassdist, 0, 500, 10000);
 VAR(grassfalloff, 0, 100, 1000);
 
-VAR(grasswidth, 1, 16, 64);
+VAR(grasswidth, 1, 7, 64);
 VAR(grassheight, 1, 8, 64);
-
-void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm)
-{
-    grasssample &g = va->grasssamples->add();
-
-    g.x = ushort(o.x) | GRASS_SAMPLE;
-    g.y = ushort(o.y);
-    g.z = ushort(4*o.z);
-
-    if(lm)  
-    {
-        tu = min(tu, LM_PACKW-0.01f);
-        tv = min(tv, LM_PACKH-0.01f);
-        memcpy(g.color, &lm->data[3*(int(tv)*LM_PACKW + int(tu))], 3);
-    }
-    else loopk(3) g.color[k] = hdr.ambient;
-};
 
 void resetgrasssamples()
 {
@@ -36,6 +19,23 @@ void resetgrasssamples()
 };
 
 VARF(grassgrid, 1, 6, 32, resetgrasssamples());
+
+void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm)
+{
+    grasssample &g = va->grasssamples->add();
+
+    g.x = ushort(o.x) | GRASS_SAMPLE;
+    g.y = ushort(o.y);
+    g.z = ushort(4*o.z);
+
+    if(lm)
+    {
+        tu = min(tu, LM_PACKW-0.01f);
+        tv = min(tv, LM_PACKH-0.01f);
+        memcpy(g.color, &lm->data[3*(int(tv)*LM_PACKW + int(tu))], 3);
+    }
+    else loopk(3) g.color[k] = hdr.ambient;
+};
 
 bool gengrassheader(vtxarray *va, const vec *v)
 {
@@ -58,8 +58,6 @@ bool gengrassheader(vtxarray *va, const vec *v)
     g.numsamples = 0;
     return true;
 };
-
-VAR(grasssamples, 0, 2, 100);
 
 void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
 {
@@ -222,33 +220,62 @@ void gengrasssamples(vtxarray *va)
     };
 };
 
-VAR(grasstest, 0, 0, 2);
+VAR(grasstest, 0, 0, 3);
 
 static Texture *grasstex = NULL;
 
-void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed, float height)
-{
-    if(grasstest>1) return;
+VAR(grasslod, 0, 10, 1000);
 
-    vec right(1, 0, 0);
-    right.rotate_around_z(detrnd((size_t)&g * (seed + 1), 360)*RAD);
+VAR(grasslodz, 0, 150, 10000);
+
+float loddist(const vec &o)
+{
+    float dx = o.x - camera1->o.x, dy = o.y - camera1->o.y, dz = camera1->o.z - o.z;
+    float dist = sqrt(dx*dx + dy*dy);
+    dist -= grasslodz/100.0f * max(dz, 0);
+    return max(dist, 0);
+};
+
+VAR(grassrand, 0, 30, 90);
+
+VAR(grasssamples, 0, 50, 10000);
+
+VAR(grassbillboard, 0, 1, 100);
+VAR(grassbbcorrect, 0, 0, 1);
+VAR(grasstaper, 0, 200, 10000);
+
+void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed, float height, int numsamples)
+{
+    if(grasstest>2) return;
+
+    if(seed >= 2*numsamples) return;
+
+    vec up(0, 0, 1), right(seed%2, (seed+1)%2, 0);
+    float width = grasswidth;
+    if(numsamples<=grassbillboard)
+    {
+        if(seed%2) return;
+        right = camright;
+        if(grassrand) right.rotate_around_z((detrnd((size_t)&g * (seed + 1), 2*grassrand)-grassrand)*RAD);
+        if(grassbbcorrect) 
+        {
+            if(fabs(right.x) > fabs(right.y)) width *= sqrt(right.y*right.y/(right.x*right.x) + 1);
+            else width *= sqrt(right.x*right.x/(right.y*right.y) + 1);
+        };
+    }
+    else if(grassrand) right.rotate_around_z((detrnd((size_t)&g * (seed + 1), 2*grassrand)-grassrand)*RAD);
 
     vec b1 = right;
-    b1.mul(-0.5f*grasswidth);
+    b1.mul(-0.5f*width);
     b1.add(o);
-
-    b1.x += detrnd((size_t)&g * (seed + 1)*3, grassgrid*100)/100.0f - grassgrid/2.0f;
-    b1.y += detrnd((size_t)&g * (seed + 1)*5, grassgrid*100)/100.0f - grassgrid/2.0f;
+    b1[seed%2] += (seed/2 * grassgrid) / float(numsamples) - grassgrid/2.0f;
 
     vec b2 = right;
-    b2.mul(grasswidth);
+    b2.mul(width);
     b2.add(b1);
 
-    //float height = 1 - dist/grassdist;
-    vec t1 = b1;
+    vec t1 = b1, t2 = b2;
     t1.z += grassheight * height;
-
-    vec t2 = b2;
     t2.z += grassheight * height;
 
     float w1 = 0, w2 = 0;
@@ -270,10 +297,15 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
         t2.add(d2);
     };
 
+    if(grasstest>1) return;
+
     vec color(g.color[0], g.color[1], g.color[2]);
     color.div(255);
 
     vec color1t = vec(color).mul(0.8f + w1*0.2f), color2t = vec(color).mul(0.8f + w2*0.2f);
+
+    color1t = color;
+    color2t = color;
 
     float offset = detrnd((size_t)&g * (seed + 1)*13, max(32/grasswidth, 2))*float(grasswidth)*64.0f/grasstex->xs;
     glColor3fv(color.v);
@@ -285,8 +317,6 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     glColor3fv(color.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 1); glVertex3fv(b2.v);
 };
-
-VAR(grasspopup, 0, 50, 100);
 
 void rendergrasssamples(vtxarray *va, const vec &dir)
 {
@@ -308,14 +338,13 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
         float dist = o.dist(camera1->o, tograss);
         if(dist > grassdist || (dir.dot(tograss)<0 && dist > grasswidth/2 + 2*(grassgrid + player->eyeheight))) continue;
 
-        float chance = dist*grassfalloff/grassdist;
-        loopj(grasssamples) 
+        float ld = loddist(o);
+        int numsamples = int(grasssamples/100.0f*max(grassgrid - ld/grasslod, 100.0f/grasssamples));
+        float height = 1 - (dist + grasstaper - grassdist) / (grasstaper ? grasstaper : 1);
+        height = min(height, 1);
+        loopj(2*numsamples)
         {
-            int val = 1 + detrnd((size_t)&g * (j + 1) * 19, 100);
-            if(val <= chance) continue;
-            float height = 1 - dist/grassdist;
-            height *= (val - chance) / max(chance - grasspopup, val - chance);
-            rendergrasssample(g, o, dist, j, height);
+            rendergrasssample(g, o, dist, j, height, numsamples);
         };
     };
 };
@@ -330,9 +359,9 @@ void setupgrass()
 
     glBindTexture(GL_TEXTURE_2D, grasstex->gl);
 
-    static Shader *overbrightshader = NULL;
-    if(!overbrightshader) overbrightshader = lookupshaderbyname("overbright");
-    overbrightshader->set();
+    static Shader *grassshader = NULL;
+    if(!grassshader) grassshader = lookupshaderbyname("grass");
+    grassshader->set();
 
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
 
