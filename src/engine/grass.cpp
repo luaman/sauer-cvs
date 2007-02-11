@@ -307,6 +307,8 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     if(grasstest>1) return;
 
     vec color(g.color[0], g.color[1], g.color[2]);
+    extern int fullbright;
+    if(fullbright) loopk(3) color[k] = 128;
     color.div(255);
 
     vec color1t = vec(color).mul(0.8f + w1*0.2f), color2t = vec(color).mul(0.8f + w2*0.2f);
