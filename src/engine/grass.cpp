@@ -224,7 +224,7 @@ VAR(grasstest, 0, 0, 3);
 
 static Texture *grasstex = NULL;
 
-VAR(grasslod, 0, 10, 1000);
+VAR(grasslod, 0, 25, 1000);
 
 VAR(grasslodz, 0, 150, 10000);
 
