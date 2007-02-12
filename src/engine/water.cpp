@@ -305,12 +305,6 @@ void renderwater()
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
     glColor3ubv(wcol);
 
-    if(!watershader) watershader = lookupshaderbyname("water");
-    if(!waterreflectshader) waterreflectshader = lookupshaderbyname("waterreflect");
-    if(!waterrefractshader) waterrefractshader = lookupshaderbyname("waterrefract");
-
-    (waterrefract ? waterrefractshader : (waterreflect ? waterreflectshader : watershader))->set();
-
     Slot &s = lookuptexture(-MAT_WATER);
 
     glActiveTexture_(GL_TEXTURE1_ARB);
@@ -332,8 +326,14 @@ void renderwater()
     };
     glActiveTexture_(GL_TEXTURE0_ARB);
 
-    glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
-    glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
+    setenvparamf("camera", SHPARAM_VERTEX, 0, camera1->o.x, camera1->o.y, camera1->o.z);
+    setenvparamf("millis", SHPARAM_VERTEX, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
+
+    if(!watershader) watershader = lookupshaderbyname("water");
+    if(!waterreflectshader) waterreflectshader = lookupshaderbyname("waterreflect");
+    if(!waterrefractshader) waterrefractshader = lookupshaderbyname("waterrefract");
+    
+    (waterrefract ? waterrefractshader : (waterreflect ? waterreflectshader : watershader))->set();
 
     if(waterreflect || waterrefract)
     {
@@ -375,9 +375,9 @@ void renderwater()
                 const vec &lightpos = light ? light->o : vec(hdr.worldsize/2, hdr.worldsize/2, hdr.worldsize);
                 float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
                 const vec &lightcol = (light ? vec(light->attr2, light->attr3, light->attr4) : vec(hdr.ambient, hdr.ambient, hdr.ambient)).div(255.0f).mul(waterspec/100.0f);
-                glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 2, lightpos.x, lightpos.y, lightpos.z, 0);
-                glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, lightcol.x, lightcol.y, lightcol.z, 0);
-                glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 4, lightrad, lightrad, lightrad, 0);
+                setlocalparamf("lightpos", SHPARAM_VERTEX, 2, lightpos.x, lightpos.y, lightpos.z);
+                setlocalparamf("lightcolor", SHPARAM_PIXEL, 3, lightcol.x, lightcol.y, lightcol.z);
+                setlocalparamf("lightradius", SHPARAM_PIXEL, 4, lightrad, lightrad, lightrad);
                 lastlight = light;
             };
 
@@ -385,7 +385,7 @@ void renderwater()
             {
                 if(begin) { glEnd(); begin = false; };
                 float depth = !waterfog ? 1.0f : min(0.75f*m.depth/waterfog, 0.95f);
-                glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, depth, 1.0f-depth, 0, 0);
+                setlocalparamf("depth", SHPARAM_PIXEL, 5, depth, 1.0f-depth);
                 lastdepth = m.depth;
             };
 
@@ -1030,7 +1030,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->o[dim] == start->o[dim])
             ++cur;
          materialsurface *oldbuf = matbuf;
-         if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath==R_ASMSHADER))
+         if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath!=R_FIXEDFUNCTION))
          {
             memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
             matbuf = oldbuf + mergemats(oldbuf, matbuf + (cur-start) - oldbuf);
@@ -1225,7 +1225,6 @@ void rendermaterials(float zclip, bool refract)
     uchar wcol[4] = { 128, 128, 128, 192 };
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
     int lastorient = -1, lastmat = -1;
-    Shader *curshader = NULL;
     bool textured = true, begin = false;
     ushort envmapped = EMID_NONE;
 
@@ -1248,45 +1247,44 @@ void rendermaterials(float zclip, bool refract)
                     };
                     if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; };
                     glBindTexture(GL_TEXTURE_2D, wslot.sts[m.orient==O_TOP ? 0 : 1].t->gl);
-                    if(curshader!=defaultshader) (curshader = defaultshader)->set();
+                    defaultshader->set();
                     break;
 
                 case MAT_GLASS:
                     if((m.envmap==EMID_NONE || !glassenv) && lastmat==MAT_GLASS) break;
                     if(begin) { glEnd(); begin = false; };
-                    if(m.envmap!=EMID_NONE && glassenv)
+                    if(m.envmap!=EMID_NONE && glassenv && envmapped!=m.envmap)
                     {
-                        if(envmapped != m.envmap)
+                        glActiveTexture_(GL_TEXTURE1_ARB);
+                        if(envmapped==EMID_NONE) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(m.envmap));
+                        glActiveTexture_(GL_TEXTURE0_ARB);
+                        if(envmapped==EMID_NONE) setenvparamf("camera", SHPARAM_VERTEX, 0, camera1->o.x, camera1->o.y, camera1->o.z);
+                        envmapped = m.envmap;
+                    };
+                    if(lastmat!=MAT_GLASS)
+                    {
+                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
+                        if(m.envmap!=EMID_NONE && glassenv)
                         {
-                            glActiveTexture_(GL_TEXTURE1_ARB);
-                            if(envmapped==EMID_NONE) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(m.envmap));
-                            glActiveTexture_(GL_TEXTURE0_ARB);
-                            if(envmapped==EMID_NONE) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, camera1->o.x, camera1->o.y, camera1->o.z, 0);
-                            envmapped = m.envmap;
+                            glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+                            glColor3f(0, 0.5f, 1.0f);
+                            static Shader *glassshader = NULL;
+                            if(!glassshader) glassshader = lookupshaderbyname("glass");
+                            glassshader->set();
+                        }
+                        else
+                        {
+                            glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+                            glColor3f(0.3f, 0.15f, 0.0f);
+                            notextureshader->set();
                         };
-                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1,
+                    };
+                    if(m.envmap!=EMID_NONE && glassenv && (lastmat!=MAT_GLASS || lastorient!=m.orient)) 
+                        setlocalparamf("normal", SHPARAM_VERTEX, 1,
                             dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
                             dimension(m.orient)==1 ? dimcoord(m.orient)*2-1 : 0,
-                            dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0,
-                            0);
-                    };
-                    if(lastmat==MAT_GLASS) break;
-                    if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
-                    if(m.envmap!=EMID_NONE && glassenv)
-                    {
-                        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-                        glColor3f(0, 0.5f, 1.0f);
-                        static Shader *glassshader = NULL;
-                        if(!glassshader) glassshader = lookupshaderbyname("glass");
-                        if(curshader!=glassshader) (curshader = glassshader)->set();
-                    }
-                    else
-                    {
-                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                        glColor3f(0.3f, 0.15f, 0.0f);
-                        if(curshader!=notextureshader) (curshader = notextureshader)->set();
-                    };
+                            dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0);
                     break;
 
                 default:
@@ -1297,7 +1295,7 @@ void rendermaterials(float zclip, bool refract)
                         if(begin) { glEnd(); begin = false; };
                         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                         if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
-                        if(curshader!=notextureshader) (curshader = notextureshader)->set();
+                        notextureshader->set();
                     };
                     static uchar blendcols[MAT_EDIT][3] =
                     {

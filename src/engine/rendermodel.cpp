@@ -194,14 +194,14 @@ void model::setshader()
         (masked ? modelshadermasks : (spec>=0.01f ? modelshader : modelshadernospec))->set();
     };
 
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 2, spec, spec, spec, 0);
+    setlocalparamf("specscale", SHPARAM_PIXEL, 2, spec, spec, spec); 
     
     GLfloat color[4];
     glGetFloatv(GL_CURRENT_COLOR, color); 
     vec diffuse = vec(color).mul(ambient);
     loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
-    glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+    setlocalparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+    setlocalparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
 };
 
 VAR(showboundingbox, 0, 0, 2);
@@ -289,12 +289,12 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         vec rdir(dir);
         rdir.rotate_around_z((-yaw-180.0f)*RAD);
         rdir.rotate_around_y(-pitch*RAD);
-        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, rdir.x, rdir.y, rdir.z, 0);
+        setlocalparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
 
         vec camerapos = vec(player->o).sub(vec(x, y, z));
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
         camerapos.rotate_around_y(-pitch*RAD);
-        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, camerapos.x, camerapos.y, camerapos.z, 1);
+        setlocalparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
 
         if(refracting) setfogplane(1, refracting - z);
     };

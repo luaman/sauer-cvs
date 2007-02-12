@@ -48,6 +48,21 @@ PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffers_         = NULL;
 PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2D_    = NULL;
 PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbuffer_ = NULL;
 
+// GL_ARB_shading_language_100, GL_ARB_shader_objects, GL_ARB_fragment_shader, GL_ARB_vertex_shader
+PFNGLCREATEPROGRAMOBJECTARBPROC       glCreateProgramObject_      = NULL;
+PFNGLDELETEOBJECTARBPROC              glDeleteObject_             = NULL;
+PFNGLUSEPROGRAMOBJECTARBPROC          glUseProgramObject_         = NULL; 
+PFNGLCREATESHADEROBJECTARBPROC        glCreateShaderObject_       = NULL;
+PFNGLSHADERSOURCEARBPROC              glShaderSource_             = NULL;
+PFNGLCOMPILESHADERARBPROC             glCompileShader_            = NULL;
+PFNGLGETOBJECTPARAMETERIVARBPROC      glGetObjectParameteriv_     = NULL;
+PFNGLATTACHOBJECTARBPROC              glAttachObject_             = NULL;
+PFNGLGETINFOLOGARBPROC                glGetInfoLog_               = NULL;
+PFNGLLINKPROGRAMARBPROC               glLinkProgram_              = NULL;
+PFNGLGETUNIFORMLOCATIONARBPROC        glGetUniformLocation_       = NULL;
+PFNGLUNIFORM4FVARBPROC                glUniform4fv_               = NULL;
+PFNGLUNIFORM1IARBPROC                 glUniform1i_                = NULL;
+
 void *getprocaddress(const char *name)
 {
     return SDL_GL_GetProcAddress(name);
@@ -151,8 +166,32 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glProgramString_ =          (PFNGLPROGRAMSTRINGARBPROC)         getprocaddress("glProgramStringARB");
         glProgramEnvParameter4f_ =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");
         glProgramEnvParameter4fv_ = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
-        renderpath = R_ASMSHADER;
-        conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
+
+        if(strstr(exts, "GL_ARB_shading_language_100") && strstr(exts, "GL_ARB_shader_objects") && strstr(exts, "GL_ARB_vertex_shader") && strstr(exts, "GL_ARB_fragment_shader"))
+        {
+            glCreateProgramObject_ =        (PFNGLCREATEPROGRAMOBJECTARBPROC)     getprocaddress("glCreateProgramObjectARB");
+            glDeleteObject_ =               (PFNGLDELETEOBJECTARBPROC)            getprocaddress("glDeleteObjectARB");
+            glUseProgramObject_ =           (PFNGLUSEPROGRAMOBJECTARBPROC)        getprocaddress("glUseProgramObjectARB");
+            glCreateShaderObject_ =         (PFNGLCREATESHADEROBJECTARBPROC)      getprocaddress("glCreateShaderObjectARB");
+            glShaderSource_ =               (PFNGLSHADERSOURCEARBPROC)            getprocaddress("glShaderSourceARB");
+            glCompileShader_ =              (PFNGLCOMPILESHADERARBPROC)           getprocaddress("glCompileShaderARB");
+            glGetObjectParameteriv_ =       (PFNGLGETOBJECTPARAMETERIVARBPROC)    getprocaddress("glGetObjectParameterivARB");
+            glAttachObject_ =               (PFNGLATTACHOBJECTARBPROC)            getprocaddress("glAttachObjectARB");
+            glGetInfoLog_ =                 (PFNGLGETINFOLOGARBPROC)              getprocaddress("glGetInfoLogARB");
+            glLinkProgram_ =                (PFNGLLINKPROGRAMARBPROC)             getprocaddress("glLinkProgramARB");
+            glGetUniformLocation_ =         (PFNGLGETUNIFORMLOCATIONARBPROC)      getprocaddress("glGetUniformLocationARB");
+            glUniform4fv_ =                 (PFNGLUNIFORM4FVARBPROC)              getprocaddress("glUniform4fvARB");
+            glUniform1i_ =                  (PFNGLUNIFORM1IARBPROC)               getprocaddress("glUniform1iARB");
+
+            renderpath = R_GLSLANG;
+            conoutf("Rendering using the OpenGL 1.5 GLSL shader path.");
+        }
+        else
+        {
+            renderpath = R_ASMSHADER;
+            conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
+        };
+
         glEnable(GL_VERTEX_PROGRAM_ARB);
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
     };
@@ -185,7 +224,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         if(renderpath==R_FIXEDFUNCTION) zpass = 0;
     };
 
-    if(renderpath==R_ASMSHADER)
+    if(renderpath!=R_FIXEDFUNCTION)
     {
         if(strstr(exts, "GL_EXT_framebuffer_object"))
         {
@@ -366,7 +405,7 @@ void setfogplane(float scale, float z)
         fogplane[2] = scale;
         fogplane[3] = -z;
     };  
-    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 9, fogplane);
+    setenvparamfv("fogplane", SHPARAM_VERTEX, 9, fogplane);
 };
 
 extern void rendercaustics(float z, bool refract);
@@ -509,7 +548,7 @@ static void setfog(bool underwater)
         glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
     };
 
-    if(renderpath==R_ASMSHADER) setfogplane();
+    if(renderpath!=R_FIXEDFUNCTION) setfogplane();
 };
 
 void drawcubemap(int size, const vec &o, float yaw, float pitch)

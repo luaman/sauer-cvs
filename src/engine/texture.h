@@ -5,51 +5,107 @@ extern PFNGLPROGRAMSTRINGARBPROC          glProgramString_;
 extern PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_;
 extern PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_;
 
+// GL_ARB_shading_language_100, GL_ARB_shader_objects, GL_ARB_fragment_shader, GL_ARB_vertex_shader
+extern PFNGLCREATEPROGRAMOBJECTARBPROC  glCreateProgramObject_;
+extern PFNGLDELETEOBJECTARBPROC         glDeleteObject_;
+extern PFNGLUSEPROGRAMOBJECTARBPROC     glUseProgramObject_;
+extern PFNGLCREATESHADEROBJECTARBPROC   glCreateShaderObject_;
+extern PFNGLSHADERSOURCEARBPROC         glShaderSource_;
+extern PFNGLCOMPILESHADERARBPROC        glCompileShader_;
+extern PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameteriv_;
+extern PFNGLATTACHOBJECTARBPROC         glAttachObject_;
+extern PFNGLGETINFOLOGARBPROC           glGetInfoLog_;
+extern PFNGLLINKPROGRAMARBPROC          glLinkProgram_;
+extern PFNGLGETUNIFORMLOCATIONARBPROC   glGetUniformLocation_;
+extern PFNGLUNIFORM4FVARBPROC           glUniform4fv_;
+extern PFNGLUNIFORM1IARBPROC            glUniform1i_;
+
 extern int renderpath;
 
-enum { R_FIXEDFUNCTION = 0, R_ASMSHADER, /* R_GLSLANG */ };
+enum { R_FIXEDFUNCTION = 0, R_ASMSHADER, R_GLSLANG };
 
-enum { SHPARAM_VERTEX = 0, SHPARAM_PIXEL };
+enum { SHPARAM_VERTEX = 0, SHPARAM_PIXEL, SHPARAM_UNIFORM };
 
 #define MAXSHADERPARAMS 10
 
 struct ShaderParam
 {
-    int type;
-    int index;
+    char *name;
+    int type, index, loc;
     float val[4];
+};
+
+struct LocalShaderParamState : ShaderParam
+{
+    float curval[4];
+
+    LocalShaderParamState() 
+    { 
+        memset(curval, 0, sizeof(curval)); 
+    };
+    LocalShaderParamState(const ShaderParam &p) : ShaderParam(p)
+    {
+        memset(curval, 0, sizeof(curval));
+    };
+};
+
+struct ShaderParamState
+{
+    char *name;
+    float val[4];
+    bool dirty;
+
+    ShaderParamState()
+        : name(NULL), dirty(false)
+    {
+        memset(val, 0, sizeof(val));
+    };
 };
 
 enum 
 { 
     SHADER_DEFAULT    = 0, 
     SHADER_NORMALSLMS = 1<<0, 
-    SHADER_ENVMAP     = 1<<1
+    SHADER_ENVMAP     = 1<<1,
+    SHADER_GLSLANG    = 1<<2
 };
 
 #define MAXSHADERDETAIL 3
 
 extern int shaderdetail;
 
+struct Slot;
+
+extern ShaderParamState vertexparamstate[10 + MAXSHADERPARAMS], pixelparamstate[10 + MAXSHADERPARAMS];
+
 struct Shader
 {
+    static Shader *lastshader;
+
     char *name;
     int type;
     GLuint vs, ps;
-    vector<ShaderParam> defaultparams;
+    GLhandleARB program, vsobj, psobj;
+    vector<LocalShaderParamState> defaultparams, extparams;
     Shader *fastshader[MAXSHADERDETAIL];
+    LocalShaderParamState *extvertparams[10], *extpixparams[10];
+    bool used;
 
-    void bindprograms()
-    {
-        glBindProgram_(GL_VERTEX_PROGRAM_ARB,   vs);
-        glBindProgram_(GL_FRAGMENT_PROGRAM_ARB, ps);
-    };
+    void allocenvparams(Slot *slot = NULL);
+    void flushenvparams(Slot *slot = NULL);
+    void setslotparams(Slot &slot);
+    void bindprograms();
 
-    void set()
+    void set(Slot *slot = NULL)
     {
         if(renderpath==R_FIXEDFUNCTION) return;
-        if(shaderdetail < MAXSHADERDETAIL) fastshader[shaderdetail]->bindprograms();
-        else bindprograms();
+        if(this!=lastshader)
+        {
+            if(shaderdetail < MAXSHADERDETAIL) fastshader[shaderdetail]->bindprograms();
+            else bindprograms();
+        };
+        lastshader->flushenvparams(slot);
+        if(slot) lastshader->setslotparams(*slot);
     };
 };
 
@@ -122,4 +178,14 @@ extern Shader *notextureshader;
 extern Shader *nocolorshader;
 
 extern Shader *lookupshaderbyname(const char *name);
+
+extern void setslotshader(Slot &s);
+
+extern void setenvparamf(char *name, int type, int index, float x = 0, float y = 0, float z = 0, float w = 0);
+extern void setenvparamfv(char *name, int type, int index, float *v);
+extern void flushenvparam(int type, int index);
+extern void setlocalparamf(char *name, int type, int index, float x = 0, float y = 0, float z = 0, float w = 0);
+extern void setlocalparamfv(char *name, int type, int index, float *v);
+
+extern ShaderParam *findshaderparam(Slot &s, char *name, int type, int index);
 

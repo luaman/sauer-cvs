@@ -1,135 +1,7 @@
-// texture.cpp: core opengl texture/shader stuff
+// texture.cpp: texture slot management
 
 #include "pch.h"
 #include "engine.h"
-
-hashtable<const char *, Shader> shaders;
-static Shader *curshader = NULL;
-static vector<ShaderParam> curparams;
-Shader *defaultshader = NULL;
-Shader *notextureshader = NULL;
-Shader *nocolorshader = NULL;
-
-Shader *lookupshaderbyname(const char *name) { return shaders.access(name); };
-
-void compileshader(GLint type, GLuint &idx, char *def, char *tname, char *name)
-{
-    glGenPrograms_(1, &idx);
-    glBindProgram_(type, idx);
-    def += strspn(def, " \t\r\n");
-    glProgramString_(type, GL_PROGRAM_FORMAT_ASCII_ARB, (GLsizei)strlen(def), def);
-    GLint err;
-    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
-    if(err!=-1)
-    {
-        conoutf("COMPILE ERROR (%s:%s) - %s", tname, name, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
-        loopi(err) putchar(*def++);
-        puts(" <<HERE>> ");
-        while(*def) putchar(*def++);
-    };
-};
-
-VAR(shaderprecision, 0, 1, 3);
-VARP(shaderdetail, 0, MAXSHADERDETAIL, MAXSHADERDETAIL);
-
-void shader(int *type, char *name, char *vs, char *ps)
-{
-    if(lookupshaderbyname(name)) return;
-    if(renderpath==R_ASMSHADER)
-    {
-        if((!hasCM && strstr(ps, "CUBE")) ||
-           (!hasTR && strstr(ps, "RECT")))
-        {
-            curparams.setsize(0);
-            return;
-        };
-    };
-    char *rname = newstring(name);
-    Shader &s = shaders[rname];
-    s.name = rname;
-    s.type = *type;
-    loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
-    loopv(curparams) s.defaultparams.add(curparams[i]);
-    curparams.setsize(0);
-    if(renderpath==R_ASMSHADER)
-    {
-        compileshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
-        compileshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
-    };
-};
-
-void setshader(char *name)
-{
-    Shader *s = lookupshaderbyname(name);
-    if(!s) conoutf("no such shader: %s", name);
-    else curshader = s;
-    curparams.setsize(0);
-};
-
-void altshader(char *orig, char *altname)
-{
-    if(lookupshaderbyname(orig)) return;
-    Shader *alt = lookupshaderbyname(altname);
-    if(!alt) return;
-    char *rname = newstring(orig);
-    Shader &s = shaders[rname];
-    s.name = rname;
-    s.type = alt->type;
-    loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
-    loopv(alt->defaultparams) s.defaultparams.add(alt->defaultparams[i]);
-    s.vs = alt->vs;
-    s.ps = alt->ps;
-};
-
-void fastshader(char *nice, char *fast, int *detail)
-{
-    Shader *ns = lookupshaderbyname(nice);
-    if(!ns) return;
-    Shader *fs = lookupshaderbyname(fast);
-    if(!fs) return;
-    loopi(min(*detail+1, MAXSHADERDETAIL)) ns->fastshader[i] = fs;
-};
-
-COMMAND(shader, "isss");
-COMMAND(setshader, "s");
-COMMAND(altshader, "ss");
-COMMAND(fastshader, "ssi");
-
-void setshaderparam(int type, int n, float x, float y, float z, float w)
-{
-    if(n<0 || n>=MAXSHADERPARAMS)
-    {
-        conoutf("shader param index must be 0..%d\n", MAXSHADERPARAMS-1);
-        return;
-    };
-    loopv(curparams)
-    {
-        ShaderParam &param = curparams[i];
-        if(param.type == type && param.index == n)
-        {
-            param.val[0] = x;
-            param.val[1] = y;
-            param.val[2] = z;
-            param.val[3] = w;
-            return;
-        };
-    };
-    ShaderParam param = {type, n, {x, y, z, w}};
-    curparams.add(param);
-};
-
-void setvertexparam(int *n, float *x, float *y, float *z, float *w)
-{
-    setshaderparam(SHPARAM_VERTEX, *n, *x, *y, *z, *w);
-};
-
-void setpixelparam(int *n, float *x, float *y, float *z, float *w)
-{
-    setshaderparam(SHPARAM_PIXEL, *n, *x, *y, *z, *w);
-};
-
-COMMAND(setvertexparam, "iffff");
-COMMAND(setpixelparam, "iffff");
 
 SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
 {
@@ -419,21 +291,6 @@ void materialreset()
 
 COMMAND(materialreset, "");
 
-ShaderParam *findshaderparam(Slot &s, int type, int index)
-{
-    loopv(s.params)
-    {
-        ShaderParam &param = s.params[i];
-        if(param.type==type && param.index==index) return &param;
-    };
-    loopv(s.shader->defaultparams)
-    {
-        ShaderParam &param = s.shader->defaultparams[i];
-        if(param.type==type && param.index==index) return &param;
-    };
-    return NULL;
-};
-
 void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float *scale)
 {
     if(curtexnum<0 || curtexnum>=0x10000) return;
@@ -458,15 +315,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     else if(curmatslot>=0) matslot=curmatslot;
     else if(!curtexnum) return;
     Slot &s = matslot>=0 ? materialslots[matslot] : (tnum!=TEX_DIFFUSE ? slots.last() : slots.add());
-    if(tnum==TEX_DIFFUSE)
-    {
-        s.shader = curshader ? curshader : defaultshader;
-        loopv(curparams)
-        {
-            ShaderParam &param = curparams[i], *defaultparam = findshaderparam(s, tnum, param.index);
-            if(!defaultparam || memcmp(param.val, defaultparam->val, sizeof(param.val))) s.params.add(param);
-        };
-    };
+    if(tnum==TEX_DIFFUSE) setslotshader(s);
     s.loaded = false;
     if(s.sts.length()>=8) conoutf("warning: too many textures in slot %d", curtexnum);
     Slot::Tex &st = s.sts.add();
@@ -513,7 +362,7 @@ static int findtextype(Slot &s, int type, int last = -1)
 
 static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
 {
-    ShaderParam *cparam = findshaderparam(s, SHPARAM_PIXEL, 0);
+    ShaderParam *cparam = findshaderparam(s, "glowscale", SHPARAM_PIXEL, 0);
     float color[3] = {1, 1, 1};
     if(cparam) memcpy(color, cparam->val, sizeof(color));
     writetex(c,
@@ -574,7 +423,7 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
     {
         case TEX_GLOW:
         {
-            ShaderParam *cparam = findshaderparam(slot, SHPARAM_PIXEL, 0);
+            ShaderParam *cparam = findshaderparam(slot, "glowscale", SHPARAM_PIXEL, 0);
             s_sprintfd(suffix)("?%.2f,%.2f,%.2f", cparam ? cparam->val[0] : 1.0f, cparam ? cparam->val[1] : 1.0f, cparam ? cparam->val[2] : 1.0f);
             for(const char *s = suffix; *s; key.add(*s++));
         };
@@ -631,7 +480,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 
         case TEX_NORMAL:
         {
-            if(renderpath!=R_ASMSHADER) break;
+            if(renderpath==R_FIXEDFUNCTION) break;
             int i = findtextype(s, t.type==TEX_DIFFUSE ? (1<<TEX_SPEC) : (1<<TEX_DEPTH));
             if(i<0) break;
             s.sts[i].combined = index;
@@ -709,130 +558,6 @@ bool isloadedtexture(int slot)
 };
 
 Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); };
-
-const int NUMSCALE = 7;
-Shader *fsshader = NULL, *scaleshader = NULL;
-GLuint rendertarget[NUMSCALE];
-GLuint fsfb[NUMSCALE-1];
-GLfloat fsparams[4];
-int fs_w = 0, fs_h = 0; 
-    
-void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
-{
-    if(!hasTR || !*name)
-    {
-        fsshader = NULL;
-    }
-    else
-    {
-        Shader *s = lookupshaderbyname(name);
-        if(!s) return conoutf("no such fullscreen shader: %s", name);
-        fsshader = s;
-        string ssname;
-        s_strcpy(ssname, name);
-        s_strcat(ssname, "_scale");
-        scaleshader = lookupshaderbyname(ssname);
-        static bool rtinit = false;
-        if(!rtinit)
-        {
-            rtinit = true;
-            glGenTextures(NUMSCALE, rendertarget);
-            if(hasFBO) glGenFramebuffers_(NUMSCALE-1, fsfb);
-        };
-        conoutf("now rendering with: %s", name);
-        fsparams[0] = *x/255.0f;
-        fsparams[1] = *y/255.0f;
-        fsparams[2] = *z/255.0f;
-        fsparams[3] = *w/255.0f;
-    };
-};
-
-COMMAND(setfullscreenshader, "siiii");
-
-void renderfsquad(int w, int h, Shader *s)
-{
-    s->set();
-    glViewport(0, 0, w, h);
-    if(s==scaleshader)
-    {
-        w *= 2;
-        h *= 2;
-    };
-    glBegin(GL_QUADS);
-    glTexCoord2i(0, 0); glVertex3f(-1, -1, 0);
-    glTexCoord2i(w, 0); glVertex3f( 1, -1, 0);
-    glTexCoord2i(w, h); glVertex3f( 1,  1, 0);
-    glTexCoord2i(0, h); glVertex3f(-1,  1, 0);
-    glEnd();
-};
-
-void renderfullscreenshader(int w, int h)
-{
-    if(!fsshader || renderpath==R_FIXEDFUNCTION) return;
-    
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    glEnable(GL_TEXTURE_RECTANGLE_ARB);
-    
-    if(fs_w != w || fs_h != h)
-    {
-        char *pixels = new char[w*h*3];
-        loopi(NUMSCALE)
-            createtexture(rendertarget[i], w>>i, h>>i, pixels, 3, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
-        delete[] pixels;
-        fs_w = w;
-        fs_h = h;
-        if(fsfb[0])
-        {
-            loopi(NUMSCALE-1)
-            {
-                glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[i]);
-                glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, rendertarget[i+1], 0);
-            };
-            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
-        };
-    };
-
-    glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, fsparams[0], fsparams[1], fsparams[2], fsparams[3]);
-
-    int nw = w, nh = h;
-
-    loopi(NUMSCALE)
-    {
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
-        glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, nw, nh);
-        if(i>=NUMSCALE-1 || !scaleshader || fsfb[0]) break;
-        renderfsquad(nw /= 2, nh /= 2, scaleshader);
-    };
-    if(scaleshader && fsfb[0])
-    {
-        loopi(NUMSCALE-1)
-        {
-            if(i) glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
-            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[i]);
-            renderfsquad(nw /= 2, nh /= 2, scaleshader);
-        };
-        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
-    };
-
-    if(scaleshader) loopi(NUMSCALE)
-    {
-        glActiveTexture_(GL_TEXTURE0_ARB+i);
-        glEnable(GL_TEXTURE_RECTANGLE_ARB);
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
-    };
-    renderfsquad(w, h, fsshader);
-
-    if(scaleshader) loopi(NUMSCALE)
-    {
-        glActiveTexture_(GL_TEXTURE0_ARB+i);
-        glDisable(GL_TEXTURE_RECTANGLE_ARB);
-    };
-
-    glActiveTexture_(GL_TEXTURE0_ARB);
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
-};
 
 void writetgaheader(FILE *f, SDL_Surface *s, int bits)
 {

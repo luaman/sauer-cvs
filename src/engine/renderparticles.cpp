@@ -265,16 +265,15 @@ void render_particles(int time)
                     glColor4ub(pt.r, pt.g, pt.b, blend);  
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
-                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.x, o.y, o.z, 0);
-                        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 1, size, psize, pmax, float(lastmillis));
-                        
                         static Shader *explshader = NULL;
                         if(!explshader) explshader = lookupshaderbyname("explosion");
                         explshader->set();                        
+
+                        setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
+                        setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                     };
                     glCallList(1);
                     
-                    if(renderpath!=R_FIXEDFUNCTION) glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 0, o.z, o.x, o.y, 0);
                     glScalef(0.8f, 0.8f, 0.8f);
                     glCallList(1);
                     

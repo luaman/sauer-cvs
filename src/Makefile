@@ -30,6 +30,7 @@ CLIENT_OBJS= \
 	engine/renderva.o \
 	engine/server.o	\
 	engine/serverbrowser.o \
+	engine/shader.o \
 	engine/spheretree.o \
 	engine/sound.o \
 	engine/texture.o \

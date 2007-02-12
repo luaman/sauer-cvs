@@ -601,10 +601,6 @@ void rendercaustics(float z, bool refract)
         caustics[i] = textureload(name);
     };
 
-    static Shader *causticshader = NULL;
-    if(!causticshader) causticshader = lookupshaderbyname("caustic");
-    causticshader->set();
-
     GLfloat oldfogc[4];
     glGetFloatv(GL_FOG_COLOR, oldfogc);
     GLfloat fogc[4] = {1, 1, 1, 1};
@@ -640,8 +636,12 @@ void rendercaustics(float z, bool refract)
         glActiveTexture_(GL_TEXTURE0_ARB);
    
         float frac = float(lastmillis%causticmillis)/causticmillis; 
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 0, frac, frac, frac, 0);
+        setenvparamf("frameoffset", SHPARAM_PIXEL, 0, frac, frac, frac);
     };
+
+    static Shader *causticshader = NULL;
+    if(!causticshader) causticshader = lookupshaderbyname("caustic");
+    causticshader->set();
 
     glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -718,34 +718,16 @@ struct renderstate
     bool colormask, depthmask, texture;
     GLuint vbufGL, ebufGL;
     float fogplane;
-    Shader *shader;
-    const ShaderParam *vertparams[MAXSHADERPARAMS], *pixparams[MAXSHADERPARAMS];
 
-    renderstate() : colormask(true), depthmask(true), texture(true), vbufGL(0), ebufGL(0), fogplane(-1), shader(NULL)
+    renderstate() : colormask(true), depthmask(true), texture(true), vbufGL(0), ebufGL(0), fogplane(-1)
     {
-        memset(vertparams, 0, sizeof(vertparams));
-        memset(pixparams, 0, sizeof(pixparams));
     };
 };
-
-#define setvertparam(param) \
-    { \
-        if(!cur.vertparams[param.index] || memcmp(cur.vertparams[param.index]->val, param.val, sizeof(param.val))) \
-            glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 10+param.index, param.val); \
-        cur.vertparams[param.index] = &param; \
-    }
-
-#define setpixparam(param) \
-    { \
-        if(!cur.pixparams[param.index] || memcmp(cur.pixparams[param.index]->val, param.val, sizeof(param.val))) \
-            glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, 10+param.index, param.val); \
-        cur.pixparams[param.index] = &param; \
-    }
 
 void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 {
     setorigin(va);
-    if(cur.shader!=nocolorshader) (cur.shader = nocolorshader)->set();
+    nocolorshader->set();
     if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
     if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); };
 
@@ -800,7 +782,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
     if(zfill)
     {
-        if(cur.shader != nocolorshader) (cur.shader = nocolorshader)->set();
+        nocolorshader->set();
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
@@ -824,7 +806,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     {
         static Shader *fogshader = NULL;
         if(!fogshader) fogshader = lookupshaderbyname("fogworld");
-        if(fogshader!=cur.shader) (cur.shader = fogshader)->set();
+        fogshader->set();
+
         if(cur.texture)
         {
             cur.texture = false;
@@ -852,7 +835,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     if(renderpath!=R_FIXEDFUNCTION) 
     { 
         if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
-        glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
+        setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
     };
 
     if(vbufchanged)
@@ -914,8 +897,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         if(&slot!=lastslot)
         {
             glBindTexture(GL_TEXTURE_2D, tex->gl);
-            if(s!=cur.shader) (cur.shader = s)->set();
-
+            s->set(&slot);
             if(renderpath!=R_FIXEDFUNCTION)
             {
                 int tmu = 2;
@@ -927,30 +909,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                     if(t.type==TEX_DIFFUSE || t.combined>=0) continue;
                     glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
                     glBindTexture(GL_TEXTURE_2D, t.t->gl);
-                };
-                uint vertparams = 0, pixparams = 0;
-                loopvj(slot.params)
-                {
-                    const ShaderParam &param = slot.params[j];
-                    if(param.type == SHPARAM_VERTEX)
-                    {
-                        setvertparam(param);
-                        vertparams |= 1<<param.index;
-                    }
-                    else
-                    {
-                        setpixparam(param);
-                        pixparams |= 1<<param.index;
-                    };
-                };
-                loopvj(s->defaultparams)
-                {
-                    const ShaderParam &param = s->defaultparams[j];
-                    if(param.type == SHPARAM_VERTEX)
-                    {
-                        if(!(vertparams & (1<<param.index))) setvertparam(param);
-                    }
-                    else if(!(pixparams & (1<<param.index))) setpixparam(param);
                 };
                 glActiveTexture_(GL_TEXTURE0_ARB);
             };
@@ -988,8 +946,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 }
                 else
                 {
-                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 0, s);     // have to pass in env, otherwise same problem as fixed function
-                    glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 1, t);
+                    // have to pass in env, otherwise same problem as fixed function
+                    setlocalparamfv("texgenS", SHPARAM_VERTEX, 0, s);
+                    setlocalparamfv("texgenT", SHPARAM_VERTEX, 1, t);
                 };
 
                 lastxs = tex->xs;
@@ -1000,8 +959,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
             if(s->type&SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
             {
-                glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 2, orientation_tangent[l]);
-                glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, 3, orientation_binormal[l]);
+                setlocalparamfv("orienttangent", SHPARAM_VERTEX, 2, orientation_tangent[l]);
+                setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);
             };
 
             glDrawElements(GL_TRIANGLES, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
@@ -1062,8 +1021,8 @@ void setupTMUs()
     {
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); };
         glActiveTexture_(GL_TEXTURE0_ARB);
-        glProgramEnvParameter4f_(GL_FRAGMENT_PROGRAM_ARB, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f, 0);
-        glProgramEnvParameter4f_(GL_VERTEX_PROGRAM_ARB, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
+        setenvparamf("ambient", SHPARAM_PIXEL, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f);
+        setenvparamf("millis", SHPARAM_VERTEX, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
     };
 
     glColor4f(1, 1, 1, 1);
