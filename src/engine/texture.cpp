@@ -552,11 +552,6 @@ Slot &lookuptexture(int slot, bool load)
     return s;
 };
 
-bool isloadedtexture(int slot)
-{
-    return lookuptexture(slot, false).loaded;
-};
-
 Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); };
 
 void writetgaheader(FILE *f, SDL_Surface *s, int bits)

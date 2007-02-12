@@ -76,8 +76,6 @@ extern int shaderdetail;
 
 struct Slot;
 
-extern ShaderParamState vertexparamstate[10 + MAXSHADERPARAMS], pixelparamstate[10 + MAXSHADERPARAMS];
-
 struct Shader
 {
     static Shader *lastshader;

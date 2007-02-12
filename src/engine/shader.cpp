@@ -41,7 +41,8 @@ static void showglslerror(GLhandleARB obj, char *tname, char *name)
     {
         GLcharARB *log = new GLcharARB[length];
         glGetInfoLog_(obj, length, &length, log);
-        conoutf("GLSL ERROR (%s:%s) - compile log:\n%s\n", tname, name, (const char *)log);
+        conoutf("GLSL ERROR (%s:%s)", tname, name);
+        puts(log);
         delete[] log;
     };
 };

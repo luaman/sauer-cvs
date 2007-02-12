@@ -1361,7 +1361,7 @@ struct texturegui : g3d_callback {
                         if(ti>=0 && ti<curtexnum) 
                         {
                             int slot = texmru[ti];
-                            bool found = isloadedtexture(slot);
+                            bool found = lookuptexture(slot, false).loaded;
                             if(found || canloadone)
                             {
                                 Texture *tex = lookuptexture(slot).sts[0].t;
