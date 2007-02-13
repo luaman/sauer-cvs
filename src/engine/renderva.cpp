@@ -759,6 +759,8 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     endquery(query);
 };
 
+VARP(apple_glsldepth_bug, 0, 0, 1);
+
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
     setorigin(va);
@@ -782,9 +784,36 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
     if(zfill)
     {
-        nocolorshader->set();
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
-        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        if(renderpath != R_GLSLANG || !apple_glsldepth_bug) 
+        {
+            nocolorshader->set();
+            glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+        }
+        else
+        {
+            static Shader *nocolorglslshader = NULL;
+            if(!nocolorglslshader) nocolorglslshader = lookupshaderbyname("nocolorglsl");
+            Slot *lastslot = NULL;
+            int lastdraw = 0, offset = 0;
+            loopi(lod.texs)
+            {
+                Slot &slot = lookuptexture(lod.eslist[i].texture);
+                if(lastslot && (slot.shader->type&SHADER_GLSLANG) != (lastslot->shader->type&SHADER_GLSLANG) && offset > lastdraw)
+                {
+                    (lastslot->shader->type&SHADER_GLSLANG ? nocolorglslshader : nocolorshader)->set();
+                    glDrawElements(GL_TRIANGLES, offset - lastdraw, GL_UNSIGNED_SHORT, lod.ebuf + lastdraw);
+                    lastdraw = offset;
+                };
+                lastslot = &slot;
+                loopl(3) offset += lod.eslist[i].length[l];
+            };
+            if(offset > lastdraw)
+            {
+                (lastslot->shader->type&SHADER_GLSLANG ? nocolorglslshader : nocolorshader)->set();
+                glDrawElements(GL_TRIANGLES, offset - lastdraw, GL_UNSIGNED_SHORT, lod.ebuf + lastdraw);
+            };
+        };
         glde++;
         xtravertsva += va->verts;
         return;
