@@ -194,6 +194,7 @@ void setenvparamf(char *name, int type, int index, float x, float y, float z, fl
 {
     ShaderParamState &val = (type==SHPARAM_VERTEX ? vertexparamstate[index] : pixelparamstate[index]);
     val.name = name;
+    val.local = false;
     if(val.val[0]!=x || val.val[1]!=y && val.val[2]!=z || val.val[3]!=w)
     {
         val.val[0] = x;
@@ -209,6 +210,7 @@ void setenvparamfv(char *name, int type, int index, float *v)
 {
     ShaderParamState &val = (type==SHPARAM_VERTEX ? vertexparamstate[index] : pixelparamstate[index]);
     val.name = name;
+    val.local = false;
     if(memcmp(val.val, v, sizeof(val.val)))
     {
         memcpy(val.val, v, sizeof(val.val));
@@ -217,13 +219,14 @@ void setenvparamfv(char *name, int type, int index, float *v)
     };
 };
 
-void flushenvparam(int type, int index)
+void flushenvparam(int type, int index, bool local)
 {
     ShaderParamState &val = (type==SHPARAM_VERTEX ? vertexparamstate[index] : pixelparamstate[index]);
+    val.local = local;
     if(Shader::lastshader->type & SHADER_GLSLANG)
     {
         LocalShaderParamState *&ext = (type==SHPARAM_VERTEX ? Shader::lastshader->extvertparams[index] : Shader::lastshader->extpixparams[index]);
-        if(!ext) allocglsluniformparam(*Shader::lastshader, type, index, true);
+        if(!ext) allocglsluniformparam(*Shader::lastshader, type, index, local);
         if(!ext || ext == &unusedextparam) return;
         if(!memcmp(ext->curval, val.val, sizeof(ext->curval))) return;
         memcpy(ext->curval, val.val, sizeof(ext->curval));
@@ -240,13 +243,13 @@ void flushenvparam(int type, int index)
 void setlocalparamf(char *name, int type, int index, float x, float y, float z, float w)
 {
     setenvparamf(name, type, index, x, y, z, w);
-    flushenvparam(type, index);
+    flushenvparam(type, index, true);
 };
 
 void setlocalparamfv(char *name, int type, int index, float *v)
 {
     setenvparamfv(name, type, index, v);
-    flushenvparam(type, index);
+    flushenvparam(type, index, true);
 };
 
 void Shader::flushenvparams(Slot *slot)
@@ -270,7 +273,7 @@ void Shader::flushenvparams(Slot *slot)
         loopi(10)
         {
             ShaderParamState &val = vertexparamstate[i];
-            if(!val.dirty) continue;
+            if(val.local || !val.dirty) continue;
             glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, i, val.val);
             val.dirty = false;
             dirtyparams--;
@@ -278,7 +281,7 @@ void Shader::flushenvparams(Slot *slot)
         loopi(10)
         {
             ShaderParamState &val = pixelparamstate[i];
-            if(!val.dirty) continue;
+            if(val.local || !val.dirty) continue;
             glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, i, val.val);
             val.dirty = false;
             dirtyparams--;
@@ -310,6 +313,7 @@ void Shader::setslotparams(Slot &slot)
             else if(!val.dirty) continue;
             glProgramEnvParameter4fv_(p.type==SHPARAM_VERTEX ? GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB, 10+p.index, val.val);
             if(val.dirty) dirtyparams--;
+            val.local = true;
             val.dirty = false;
         };
     };
@@ -335,6 +339,7 @@ void Shader::setslotparams(Slot &slot)
             else if(!val.dirty) continue;
             glProgramEnvParameter4fv_(l.type==SHPARAM_VERTEX ? GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB, 10+l.index, val.val);
             if(val.dirty) dirtyparams--;
+            val.local = true;
             val.dirty = false;
         };
     };
