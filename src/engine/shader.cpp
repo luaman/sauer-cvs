@@ -148,9 +148,10 @@ void Shader::allocenvparams(Slot *slot)
 
     if(slot)
     {
-#define UNIFORMTEX(name, val) \
+#define UNIFORMTEX(name, tmu) \
         { \
             loc = glGetUniformLocation_(program, name); \
+            int val = tmu; \
             if(loc != -1) glUniform1i_(loc, val); \
         }
         int loc, tmu = 2;
