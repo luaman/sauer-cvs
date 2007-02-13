@@ -33,11 +33,11 @@ static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, c
     };
 };
 
-static void showglslerror(GLhandleARB obj, char *tname, char *name)
+static void showglslinfo(GLhandleARB obj, char *tname, char *name)
 {
     GLint length = 0;
     glGetObjectParameteriv_(obj, GL_OBJECT_INFO_LOG_LENGTH_ARB, &length);
-    if(length > 0)
+    if(length > 1)
     {
         GLcharARB *log = new GLcharARB[length];
         glGetInfoLog_(obj, length, &length, log);
@@ -53,11 +53,11 @@ static void compileglslshader(GLenum type, GLhandleARB &obj, char *def, char *tn
     obj = glCreateShaderObject_(type);
     glShaderSource_(obj, 1, &source, NULL);
     glCompileShader_(obj);
+    showglslinfo(obj, tname, name);
     GLint success;
     glGetObjectParameteriv_(obj, GL_OBJECT_COMPILE_STATUS_ARB, &success);
     if(!success) 
     {
-        showglslerror(obj, tname, name);
         glDeleteObject_(obj);
         obj = 0;
     };
@@ -97,7 +97,7 @@ static void linkglslprogram(Shader &s)
     {
         if(s.program)
         {
-            showglslerror(s.program, "PROG", s.name);
+            showglslinfo(s.program, "PROG", s.name);
             glDeleteObject_(s.program);
             s.program = 0;
         };
