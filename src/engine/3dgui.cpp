@@ -489,11 +489,13 @@ struct gui : g3d_gui
         glBindTexture(GL_TEXTURE_2D, skintex->gl);
         int gapx1 = INT_MAX, gapy1 = INT_MAX, gapx2 = INT_MAX, gapy2 = INT_MAX;
         float wscale = 1.0f/(SKIN_W*SKIN_SCALE), hscale = 1.0f/(SKIN_H*SKIN_SCALE);
+        
         loopj(2)
         {	
+            bool quads = false;
             glDepthFunc(j?GL_LEQUAL:GL_GREATER);
             glColor4f(j?light.x:1.0f, j?light.y:1.0f, j?light.z:1.0f, j?0.80f:0.35f); //ghost when its behind something in depth
-            glBegin(GL_QUADS);
+           
             loopi(n)
             {
                 const patch &p = patches[start+i];
@@ -540,6 +542,10 @@ struct gui : g3d_gui
                             xstep = gapw+x+left-xo; 
                             tright = tleft+xstep*wscale;
                         };
+                        if(!quads) 
+                        {   quads = true;
+                            glBegin(GL_QUADS);
+                        };
                         glTexCoord2f(tleft,  ttop);    glVertex2i(xo,       yo);
                         glTexCoord2f(tright, ttop);    glVertex2i(xo+xstep, yo);
                         glTexCoord2f(tright, tbottom); glVertex2i(xo+xstep, yo+ystep);
@@ -553,7 +559,8 @@ struct gui : g3d_gui
                     yo += ystep;
                 };
             };
-            glEnd();
+            if(quads) glEnd();
+            else break; //if it didn't happen on the first pass, it won't happen on the second..
         };
         glDepthFunc(GL_ALWAYS);
     }; 

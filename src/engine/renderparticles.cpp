@@ -274,6 +274,7 @@ void render_particles(int time)
                     };
                     glCallList(1);
                     
+                    if(renderpath!=R_FIXEDFUNCTION) setlocalparamf("center", SHPARAM_VERTEX, 0, o.z, o.x, o.y);
                     glScalef(0.8f, 0.8f, 0.8f);
                     glCallList(1);
                     
