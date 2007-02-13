@@ -53,10 +53,10 @@ struct ShaderParamState
 {
     char *name;
     float val[4];
-    bool dirty;
+    bool dirty, local;
 
     ShaderParamState()
-        : name(NULL), dirty(false)
+        : name(NULL), dirty(false), local(false)
     {
         memset(val, 0, sizeof(val));
     };
@@ -181,7 +181,7 @@ extern void setslotshader(Slot &s);
 
 extern void setenvparamf(char *name, int type, int index, float x = 0, float y = 0, float z = 0, float w = 0);
 extern void setenvparamfv(char *name, int type, int index, float *v);
-extern void flushenvparam(int type, int index);
+extern void flushenvparam(int type, int index, bool local = false);
 extern void setlocalparamf(char *name, int type, int index, float x = 0, float y = 0, float z = 0, float w = 0);
 extern void setlocalparamfv(char *name, int type, int index, float *v);
 

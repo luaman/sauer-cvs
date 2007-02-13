@@ -184,9 +184,9 @@ void Shader::allocenvparams(Slot *slot)
             };
         };
     };
-    loopi(10) if(vertexparamstate[i].name)
+    loopi(10) if(vertexparamstate[i].name && !vertexparamstate[i].local)
         allocglsluniformparam(*this, SHPARAM_VERTEX, i);
-    loopi(10) if(pixelparamstate[i].name)
+    loopi(10) if(pixelparamstate[i].name && !pixelparamstate[i].local)
         allocglsluniformparam(*this, SHPARAM_PIXEL, i);
 };
 

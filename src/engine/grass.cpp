@@ -292,14 +292,14 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
         w1 = detrnd((size_t)&g * (seed + 1)*7, 360)*RAD + t1.x*0.4f + t1.y*0.5f;
         w1 += lastmillis*0.0015f;
         w1 = sinf(w1);
-        vec d1 = vec(1.0f, 1.0f, 0.5f);
+        vec d1(1.0f, 1.0f, 0.5f);
         d1.mul(grassheight/4.0f * w1);
         t1.add(d1);
 
         w2 = detrnd((size_t)&g * (seed + 1)*11, 360)*RAD + t2.x*0.55f + t2.y*0.45f;
         w2 += lastmillis*0.0015f;
         w2 = sinf(w2);
-        vec d2 = vec(0.4f, 0.4f, 0.2f);
+        vec d2(0.4f, 0.4f, 0.2f);
         d2.mul(grassheight/4.0f * w2);
         t2.add(d2);
     };
