@@ -759,8 +759,6 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     endquery(query);
 };
 
-VARP(apple_glsldepth_bug, 0, 0, 1);
-
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
     setorigin(va);
@@ -785,7 +783,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     if(zfill)
     {
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
-        if(renderpath != R_GLSLANG || !apple_glsldepth_bug) 
+        extern int apple_glsldepth_bug;
+        if(renderpath!=R_GLSLANG || !apple_glsldepth_bug) 
         {
             nocolorshader->set();
             glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);

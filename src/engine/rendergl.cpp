@@ -72,6 +72,7 @@ VARP(ati_skybox_bug, 0, 0, 1);
 VAR(ati_texgen_bug, 0, 0, 1);
 VAR(ati_oq_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
+VAR(apple_glsldepth_bug, 0, 0, 1);
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
@@ -185,6 +186,11 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
             renderpath = R_GLSLANG;
             conoutf("Rendering using the OpenGL 1.5 GLSL shader path.");
+
+#ifdef __APPLE__
+            apple_glsldepth_bug = 1;
+#endif
+            if(apple_glsldepth_bug) conoutf("WARNING: Using Apple GLSL depth bug workaround. (use \"/apple_glsldepth_bug 0\" to disable if unnecessary");
         }
         else
         {
