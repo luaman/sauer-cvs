@@ -106,6 +106,42 @@ static void linkglslprogram(Shader &s)
     };
 };
 
+bool checkglslsupport()
+{
+    /* check for loop support */
+    const GLcharARB *source = 
+        "uniform int N;\n"
+        "uniform vec4 delta;\n"
+        "void main(void) {\n"
+        "   vec4 test = vec4(0.0, 0.0, 0.0, 0.0);\n"
+        "   for(int i = 0; i < N; i++)  test += delta;\n"
+        "   gl_FragColor = test;\n"
+        "}\n";
+    GLhandleARB obj = glCreateShaderObject_(GL_FRAGMENT_SHADER_ARB);
+    if(!obj) return false;
+    glShaderSource_(obj, 1, &source, NULL);
+    glCompileShader_(obj);
+    GLint success;
+    glGetObjectParameteriv_(obj, GL_OBJECT_COMPILE_STATUS_ARB, &success);
+    if(!success)
+    {
+        glDeleteObject_(obj);
+        return false;
+    };
+    GLhandleARB program = glCreateProgramObject_();
+    if(!program)
+    {
+        glDeleteObject_(obj);
+        return false;
+    }; 
+    glAttachObject_(program, obj);
+    glLinkProgram_(program); 
+    glGetObjectParameteriv_(program, GL_OBJECT_LINK_STATUS_ARB, &success);
+    glDeleteObject_(obj);
+    glDeleteObject_(program);
+    return success!=0;
+};
+            
 static LocalShaderParamState unusedextparam;
 
 static void allocglsluniformparam(Shader &s, int type, int index, bool local = false)

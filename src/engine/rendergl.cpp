@@ -167,6 +167,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glProgramString_ =          (PFNGLPROGRAMSTRINGARBPROC)         getprocaddress("glProgramStringARB");
         glProgramEnvParameter4f_ =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");
         glProgramEnvParameter4fv_ = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
+        renderpath = R_ASMSHADER;
 
         if(strstr(exts, "GL_ARB_shading_language_100") && strstr(exts, "GL_ARB_shader_objects") && strstr(exts, "GL_ARB_vertex_shader") && strstr(exts, "GL_ARB_fragment_shader"))
         {
@@ -184,19 +185,18 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             glUniform4fv_ =                 (PFNGLUNIFORM4FVARBPROC)              getprocaddress("glUniform4fvARB");
             glUniform1i_ =                  (PFNGLUNIFORM1IARBPROC)               getprocaddress("glUniform1iARB");
 
-            renderpath = R_GLSLANG;
-            conoutf("Rendering using the OpenGL 1.5 GLSL shader path.");
-
+            extern bool checkglslsupport();            
+            if(checkglslsupport())
+            {
+                renderpath = R_GLSLANG;
+                conoutf("Rendering using the OpenGL 1.5 GLSL shader path.");
 #ifdef __APPLE__
-            apple_glsldepth_bug = 1;
+                apple_glsldepth_bug = 1;
 #endif
-            if(apple_glsldepth_bug) conoutf("WARNING: Using Apple GLSL depth bug workaround. (use \"/apple_glsldepth_bug 0\" to disable if unnecessary");
-        }
-        else
-        {
-            renderpath = R_ASMSHADER;
-            conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
+                if(apple_glsldepth_bug) conoutf("WARNING: Using Apple GLSL depth bug workaround. (use \"/apple_glsldepth_bug 0\" to disable if unnecessary");
+            };
         };
+        if(renderpath==R_ASMSHADER) conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
 
         glEnable(GL_VERTEX_PROGRAM_ARB);
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
