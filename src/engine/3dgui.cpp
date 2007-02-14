@@ -527,7 +527,8 @@ struct gui : g3d_gui
                 //multiple tiled quads if necessary rather than a single stretched one
                 int ystep = bottom-top;
                 int yo = y+top;
-                while(ystep > 0) {
+                while(ystep > 0) 
+                {
                     if(p.flags&0x10 && yo+ystep-(y+top) > gaph) 
                     {
                         ystep = gaph+y+top-yo;
@@ -536,16 +537,14 @@ struct gui : g3d_gui
                     int xstep = right-left;
                     int xo = x+left;
                     float tright2 = tright;
-                    while(xstep > 0) {
+                    while(xstep > 0) 
+                    {
                         if(p.flags&0x01 && xo+xstep-(x+left) > gapw) 
                         {
                             xstep = gapw+x+left-xo; 
                             tright = tleft+xstep*wscale;
                         };
-                        if(!quads) 
-                        {   quads = true;
-                            glBegin(GL_QUADS);
-                        };
+                        if(!quads) { quads = true; glBegin(GL_QUADS); };
                         glTexCoord2f(tleft,  ttop);    glVertex2i(xo,       yo);
                         glTexCoord2f(tright, ttop);    glVertex2i(xo+xstep, yo);
                         glTexCoord2f(tright, tbottom); glVertex2i(xo+xstep, yo+ystep);
