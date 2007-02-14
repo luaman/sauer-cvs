@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "engine.h"
 
-VAR(grassanimdist, 0, 500, 10000);
-VAR(grassdist, 0, 500, 10000);
-VAR(grassfalloff, 0, 100, 1000);
+VARP(grassanimdist, 0, 500, 10000);
+VARP(grassdist, 0, 500, 10000);
+VARP(grassfalloff, 0, 100, 1000);
 
 VAR(grasswidth, 1, 7, 64);
 VAR(grassheight, 1, 8, 64);
@@ -231,9 +231,9 @@ VAR(grasstest, 0, 0, 3);
 
 static Texture *grasstex = NULL;
 
-VAR(grasslod, 0, 25, 1000);
+VARP(grasslod, 0, 25, 1000);
 
-VAR(grasslodz, 0, 150, 10000);
+VARP(grasslodz, 0, 150, 10000);
 
 float loddist(const vec &o)
 {
@@ -245,11 +245,11 @@ float loddist(const vec &o)
 
 VAR(grassrand, 0, 30, 90);
 
-VAR(grasssamples, 0, 50, 10000);
+VARP(grasssamples, 0, 50, 10000);
 
-VAR(grassbillboard, 0, 1, 100);
-VAR(grassbbcorrect, 0, 0, 1);
-VAR(grasstaper, 0, 200, 10000);
+VARP(grassbillboard, 0, 1, 100);
+VARP(grassbbcorrect, 0, 0, 1);
+VARP(grasstaper, 0, 200, 10000);
 
 void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed, float height, int numsamples)
 {
@@ -404,9 +404,11 @@ void cleanupgrass()
     glEnable(GL_CULL_FACE);
 };
 
+VARP(grass, 0, 1, 1);
+
 void rendergrass()
 {
-    if(!grasssamples || !grassdist) return;
+    if(!grass || !grasssamples || !grassdist) return;
 
     vec dir;
     vecfromyawpitch(camera1->yaw, 0, 1, 0, dir);
