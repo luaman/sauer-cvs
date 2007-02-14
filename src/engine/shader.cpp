@@ -108,7 +108,9 @@ static void linkglslprogram(Shader &s)
 
 bool checkglslsupport()
 {
-    /* check for loop support */
+    /* check if GLSL profile supports loops
+     * might need to rewrite this if compiler does strength reduction 
+     */
     const GLcharARB *source = 
         "uniform int N;\n"
         "uniform vec4 delta;\n"
