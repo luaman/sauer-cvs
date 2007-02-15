@@ -189,77 +189,6 @@ Texture *textureload(const char *name, int clamp, bool mipit, bool msg)
     return s ? newtexture(tname, s, clamp, mipit) : crosshair;
 };
 
-cubemapside cubemapsides[6] =
-{
-    { GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, "ft" },
-    { GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, "bk" },
-    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, "lf" },
-    { GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, "rt" },
-    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, "dn" },
-    { GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, "up" },
-};
-
-GLuint cubemapfromsky(int size)
-{
-    extern Texture *sky[6];
-    if(!sky[0]) return 0;
-    GLuint tex;
-    glGenTextures(1, &tex);
-    uchar *scaled = new uchar[3*size*size];
-    loopi(6)
-    {
-        uchar *pixels = new uchar[3*sky[i]->w*sky[i]->h];
-        glBindTexture(GL_TEXTURE_2D, sky[i]->gl);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, size, size, GL_UNSIGNED_BYTE, scaled);
-        createtexture(!i ? tex : 0, size, size, scaled, 3, true, GL_RGB5, cubemapsides[i].target);
-        delete[] pixels;
-    };
-    delete[] scaled;
-    return tex;
-};
-
-Texture *cubemapload(const char *name, bool mipit, bool msg)
-{
-    if(!hasCM) return NULL;
-    string tname;
-    s_strcpy(tname, name);
-    Texture *t = textures.access(path(tname));
-    if(t) return t;
-    char *wildcard = strchr(tname, '*');
-    SDL_Surface *surface[6];
-    string sname;
-    if(!wildcard) s_strcpy(sname, tname);
-    loopi(6)
-    {
-        if(wildcard)
-        {
-            s_strncpy(sname, tname, wildcard-tname+1);
-            s_strcat(sname, cubemapsides[i].name);
-            s_strcat(sname, wildcard+1);
-        };
-        surface[i] = texturedata(sname, NULL, msg);
-        if(!surface[i])
-        {
-            loopj(i) SDL_FreeSurface(surface[j]);
-            return NULL;
-        };
-    };
-    t = &textures[newstring(tname)];
-    s_strcpy(t->name, tname);
-    t->bpp = surface[0]->format->BitsPerPixel;
-    t->xs = surface[0]->w;
-    t->ys = surface[0]->h;
-    glGenTextures(1, &t->gl);
-    loopi(6)
-    {
-        SDL_Surface *s = surface[i];
-        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, 3, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
-        SDL_FreeSurface(s);
-    };
-    return t;
-};
-
 void cleangl()
 {
     enumerate(textures, Texture, t, { delete[] t.name; });
@@ -553,6 +482,216 @@ Slot &lookuptexture(int slot, bool load)
 };
 
 Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); };
+
+// environment mapped reflections
+
+cubemapside cubemapsides[6] =
+{
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, "ft" },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, "bk" },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, "lf" },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, "rt" },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, "dn" },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, "up" },
+};
+
+GLuint cubemapfromsky(int size)
+{
+    extern Texture *sky[6];
+    if(!sky[0]) return 0;
+    GLuint tex;
+    glGenTextures(1, &tex);
+    uchar *scaled = new uchar[3*size*size];
+    loopi(6)
+    {
+        uchar *pixels = new uchar[3*sky[i]->w*sky[i]->h];
+        glBindTexture(GL_TEXTURE_2D, sky[i]->gl);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, size, size, GL_UNSIGNED_BYTE, scaled);
+        createtexture(!i ? tex : 0, size, size, scaled, 3, true, GL_RGB5, cubemapsides[i].target);
+        delete[] pixels;
+    };
+    delete[] scaled;
+    return tex;
+};
+
+Texture *cubemapload(const char *name, bool mipit, bool msg)
+{
+    if(!hasCM) return NULL;
+    string tname;
+    s_strcpy(tname, name);
+    Texture *t = textures.access(path(tname));
+    if(t) return t;
+    char *wildcard = strchr(tname, '*');
+    SDL_Surface *surface[6];
+    string sname;
+    if(!wildcard) s_strcpy(sname, tname);
+    loopi(6)
+    {
+        if(wildcard)
+        {
+            s_strncpy(sname, tname, wildcard-tname+1);
+            s_strcat(sname, cubemapsides[i].name);
+            s_strcat(sname, wildcard+1);
+        };
+        surface[i] = texturedata(sname, NULL, msg);
+        if(!surface[i])
+        {
+            loopj(i) SDL_FreeSurface(surface[j]);
+            return NULL;
+        };
+    };
+    t = &textures[newstring(tname)];
+    s_strcpy(t->name, tname);
+    t->bpp = surface[0]->format->BitsPerPixel;
+    t->xs = surface[0]->w;
+    t->ys = surface[0]->h;
+    glGenTextures(1, &t->gl);
+    loopi(6)
+    {
+        SDL_Surface *s = surface[i];
+        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, 3, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
+        SDL_FreeSurface(s);
+    };
+    return t;
+};
+
+VARFP(envmapsize, 4, 7, 9, setupmaterials());
+VAR(envmapradius, 0, 128, 10000);
+
+struct envmap
+{
+    int radius, size;
+    vec o;
+    GLuint tex;
+};  
+
+static vector<envmap> envmaps;
+static GLuint skyenvmap = 0;
+
+void clearenvmaps()
+{
+    if(skyenvmap)
+    {
+        glDeleteTextures(1, &skyenvmap);
+        skyenvmap = 0;
+    };
+    loopv(envmaps) glDeleteTextures(1, &envmaps[i].tex);
+    envmaps.setsize(0);
+};
+
+VAR(aaenvmap, 0, 1, 1);
+
+GLuint genenvmap(const vec &o, int envmapsize)
+{
+    extern int scr_w, scr_h;
+    int rendersize = 1;
+    while(rendersize < scr_w && rendersize < scr_h) rendersize *= 2;
+    if(rendersize > scr_w || rendersize > scr_h) rendersize /= 2;
+    if(!aaenvmap && rendersize > 1<<envmapsize) rendersize = 1<<envmapsize;
+    int texsize = rendersize < 1<<envmapsize ? rendersize : 1<<envmapsize;
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glViewport(0, 0, rendersize, rendersize);
+    float yaw = 0, pitch = 0;
+    uchar *pixels = new uchar[3*rendersize*rendersize];
+    loopi(6)
+    {
+        const cubemapside &side = cubemapsides[i];
+        switch(side.target)
+        {
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: // ft
+                yaw = 0; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: // bk
+                yaw = 180; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: // lf
+                yaw = 270; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: // rt
+                yaw = 90; pitch = 0; break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: // dn
+                yaw = 90; pitch = -90; break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: // up
+                yaw = 90; pitch = 90; break;
+        };
+        drawcubemap(rendersize, o, yaw, pitch);
+        glReadPixels(0, 0, rendersize, rendersize, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        uchar *src = pixels, *dst = &pixels[3*rendersize*rendersize-3];
+        loop(y, rendersize/2) loop(x, rendersize)
+        {
+            loopk(3) swap(uchar, src[k], dst[k]);
+            src += 3;
+            dst -= 3;
+        };
+        if(texsize<rendersize) gluScaleImage(GL_RGB, rendersize, rendersize, GL_UNSIGNED_BYTE, pixels, texsize, texsize, GL_UNSIGNED_BYTE, pixels);
+        createtexture(tex, texsize, texsize, pixels, 3, true, GL_RGB5, side.target);
+    };
+    delete[] pixels;
+    glViewport(0, 0, scr_w, scr_h);
+    return tex;
+};
+
+void initenvmaps()
+{
+    if(!hasCM || renderpath==R_FIXEDFUNCTION) return;
+    clearenvmaps();
+    skyenvmap = cubemapfromsky(1<<envmapsize);
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        const extentity &ent = *ents[i];
+        if(ent.type != ET_ENVMAP) continue;
+        envmap &em = envmaps.add();
+        em.radius = ent.attr1 ? ent.attr1 : envmapradius;
+        em.size = ent.attr2;
+        em.o = ent.o;
+        em.tex = 0;
+    };
+};
+
+void genenvmaps()
+{
+    loopv(envmaps)
+    {
+        show_out_of_renderloop_progress(float(i)/float(envmaps.length()), "generating environment maps...");
+        envmap &em = envmaps[i];
+        em.tex = genenvmap(em.o, em.size ? em.size : envmapsize);
+    };
+};
+
+ushort closestenvmap(const vec &o)
+{
+    ushort minemid = EMID_SKY;
+    float mindist = 1e16f;
+    loopv(envmaps)
+    {
+        envmap &em = envmaps[i];
+        float dist = em.o.dist(o);
+        if(dist < em.radius && dist < mindist)
+        {
+            minemid = EMID_RESERVED + i;
+            mindist = dist;
+        };
+    };
+    return minemid;
+};
+
+ushort closestenvmap(int orient, int x, int y, int z, int size)
+{
+    vec loc(x, y, z);
+    int dim = dimension(orient);
+    if(dimcoord(orient)) loc[dim] += size;
+    loc[R[dim]] += size/2;
+    loc[C[dim]] += size/2;
+    return closestenvmap(loc);
+};
+
+GLuint lookupenvmap(ushort emid)
+{
+    if(emid==EMID_SKY) return skyenvmap;
+    if(emid==EMID_NONE || !envmaps.inrange(emid-EMID_RESERVED)) return 0;
+    GLuint tex = envmaps[emid-EMID_RESERVED].tex;
+    return tex ? tex : skyenvmap;
+};
 
 void writetgaheader(FILE *f, SDL_Surface *s, int bits)
 {
