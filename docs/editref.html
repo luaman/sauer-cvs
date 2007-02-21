@@ -1,5 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
 <title>Sauerbraten Mapping Command Reference</title>
@@ -7,22 +11,425 @@
 </head>
 
 <body>
-<h1>Editing Related Console Commands</h1>
+<h1>Sauerbraten Mapping Command Reference</h1>
 
-<p style="text-align: center;">
-<a href="#editing">Editing</a>
-<a href="#heightfield">Heightfield</a>
-<a href="#entity">Entity</a>
-<a href="#settings">Settings</a>
-<a href="#map">Map and Config</a>
-<a href="#lightingcommands">Lighting</a>
-<a href="#entitytypes">Entity Types</a>
-<a href="#hud">The HUD</a>
-</p>
+<div class="contents">
+<ul class="contents">
+<li>
+<a href="#editing"><b>Editing</b></a>
+<ul class="contents2">
+<li>
+<a href="#edittoggle"><tt>edittoggle</tt></a>
+</li>
+<li>
+<a href="#dragging"><tt>dragging</tt></a>
+</li>
+<li>
+<a href="#editdrag"><tt>editdrag</tt></a>
+</li>
+<li>
+<a href="#selcorners"><tt>selcorners</tt></a>
+</li>
+<li>
+<a href="#moving"><tt>moving</tt></a>
+</li>
+<li>
+<a href="#editmovedrag"><tt>editmovedrag</tt></a>
+</li>
+<li>
+<a href="#cancelsel"><tt>cancelsel</tt></a>
+</li>
+<li>
+<a href="#editface"><tt>editface</tt></a>
+</li>
+<li>
+<a href="#gridpower"><tt>gridpower</tt></a>
+</li>
+<li>
+<a href="#edittex"><tt>edittex</tt></a>
+</li>
+<li>
+<a href="#gettex"><tt>gettex</tt></a>
+</li>
+<li>
+<a href="#selextend"><tt>selextend</tt></a>
+</li>
+<li>
+<a href="#passthrough"><tt>passthrough</tt></a>
+</li>
+<li>
+<a href="#reorient"><tt>reorient</tt></a>
+</li>
+<li>
+<a href="#flip"><tt>flip</tt></a>
+</li>
+<li>
+<a href="#rotate"><tt>rotate</tt></a>
+</li>
+<li>
+<a href="#undo"><tt>undo</tt></a>
+</li>
+<li>
+<a href="#redo"><tt>redo</tt></a>
+</li>
+<li>
+<a href="#copy"><tt>copy</tt></a>
+</li>
+<li>
+<a href="#paste"><tt>paste</tt></a>
+</li>
+<li>
+<a href="#editcopy"><tt>editcopy</tt></a>
+</li>
+<li>
+<a href="#editpaste"><tt>editpaste</tt></a>
+</li>
+<li>
+<a href="#replace"><tt>replace</tt></a>
+</li>
+<li>
+<a href="#editmat"><tt>editmat</tt></a>
+</li>
+<li>
+<a href="#recalc"><tt>recalc</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#heightfield"><b>Heightfield</b></a>
+<ul class="contents2">
+<li>
+<a href="#getheightmap"><tt>getheightmap</tt></a>
+</li>
+<li>
+<a href="#selectbrush"><tt>selectbrush</tt></a>
+</li>
+<li>
+<a href="#copybrush"><tt>copybrush</tt></a>
+</li>
+<li>
+<a href="#savebrush"><tt>savebrush</tt></a>
+</li>
+<li>
+<a href="#clearbrush"><tt>clearbrush</tt></a>
+</li>
+<li>
+<a href="#brushvert"><tt>brushvert</tt></a>
+</li>
+<li>
+<a href="#brushx"><tt>brushx</tt></a>
+</li>
+<li>
+<a href="#brushy"><tt>brushy</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#entity"><b>Entity</b></a>
+<ul class="contents2">
+<li>
+<a href="#newent"><tt>newent</tt></a>
+</li>
+<li>
+<a href="#delent"><tt>delent</tt></a>
+</li>
+<li>
+<a href="#entflip"><tt>entflip</tt></a>
+</li>
+<li>
+<a href="#entpush"><tt>entpush</tt></a>
+</li>
+<li>
+<a href="#entrotate"><tt>entrotate</tt></a>
+</li>
+<li>
+<a href="#entmoving"><tt>entmoving</tt></a>
+</li>
+<li>
+<a href="#entdrop"><tt>entdrop</tt></a>
+</li>
+<li>
+<a href="#dropent"><tt>dropent</tt></a>
+</li>
+<li>
+<a href="#trigger"><tt>trigger</tt></a>
+</li>
+<li>
+<a href="#entselect"><tt>entselect</tt></a>
+</li>
+<li>
+<a href="#entloop"><tt>entloop</tt></a>
+</li>
+<li>
+<a href="#entcancel"><tt>entcancel</tt></a>
+</li>
+<li>
+<a href="#enthavesel"><tt>enthavesel</tt></a>
+</li>
+<li>
+<a href="#insel"><tt>insel</tt></a>
+</li>
+<li>
+<a href="#et"><tt>et</tt></a>
+</li>
+<li>
+<a href="#ea"><tt>ea</tt></a>
+</li>
+<li>
+<a href="#entset"><tt>entset</tt></a>
+</li>
+<li>
+<a href="#entproperty"><tt>entproperty</tt></a>
+</li>
+<li>
+<a href="#entfind"><tt>entfind</tt></a>
+</li>
+<li>
+<a href="#clearents"><tt>clearents</tt></a>
+</li>
+<li>
+<a href="#replaceents"><tt>replaceents</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#settings"><b>Settings</b></a>
+<ul class="contents2">
+<li>
+<a href="#undomegs"><tt>undomegs</tt></a>
+</li>
+<li>
+<a href="#showsky"><tt>showsky</tt></a>
+</li>
+<li>
+<a href="#outline"><tt>outline</tt></a>
+</li>
+<li>
+<a href="#wireframe"><tt>wireframe</tt></a>
+</li>
+<li>
+<a href="#allfaces"><tt>allfaces</tt></a>
+</li>
+<li>
+<a href="#showmat"><tt>showmat</tt></a>
+</li>
+<li>
+<a href="#optmats"><tt>optmats</tt></a>
+</li>
+<li>
+<a href="#entselradius"><tt>entselradius</tt></a>
+</li>
+<li>
+<a href="#entselsnap"><tt>entselsnap</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#map_and_config"><b>Map and Config</b></a>
+<ul class="contents2">
+<li>
+<a href="#map"><tt>map</tt></a>
+</li>
+<li>
+<a href="#sendmap"><tt>sendmap</tt></a>
+</li>
+<li>
+<a href="#getmap"><tt>getmap</tt></a>
+</li>
+<li>
+<a href="#savemap"><tt>savemap</tt></a>
+</li>
+<li>
+<a href="#savecurrentmap"><tt>savecurrentmap</tt></a>
+</li>
+<li>
+<a href="#newmap"><tt>newmap</tt></a>
+</li>
+<li>
+<a href="#mapenlarge"><tt>mapenlarge</tt></a>
+</li>
+<li>
+<a href="#mapmsg"><tt>mapmsg</tt></a>
+</li>
+<li>
+<a href="#texturereset"><tt>texturereset</tt></a>
+</li>
+<li>
+<a href="#materialreset"><tt>materialreset</tt></a>
+</li>
+<li>
+<a href="#texture"><tt>texture</tt></a>
+</li>
+<li>
+<a href="#fog"><tt>fog</tt></a>
+</li>
+<li>
+<a href="#fogcolour"><tt>fogcolour</tt></a>
+</li>
+<li>
+<a href="#waterspec"><tt>waterspec</tt></a>
+</li>
+<li>
+<a href="#waterfog"><tt>waterfog</tt></a>
+</li>
+<li>
+<a href="#watercolour"><tt>watercolour</tt></a>
+</li>
+<li>
+<a href="#shader"><tt>shader</tt></a>
+</li>
+<li>
+<a href="#fastshader"><tt>fastshader</tt></a>
+</li>
+<li>
+<a href="#setshader"><tt>setshader</tt></a>
+</li>
+<li>
+<a href="#setpixelparam"><tt>setpixelparam</tt></a>
+</li>
+<li>
+<a href="#setvertexparam"><tt>setvertexparam</tt></a>
+</li>
+<li>
+<a href="#music"><tt>music</tt></a>
+</li>
+<li>
+<a href="#n"><tt>N</tt></a>
+</li>
+<li>
+<a href="#sound"><tt>sound</tt></a>
+</li>
+<li>
+<a href="#mapmodel"><tt>mapmodel</tt></a>
+</li>
+<li>
+<a href="#mmodel"><tt>mmodel</tt></a>
+</li>
+<li>
+<a href="#importcube"><tt>importcube</tt></a>
+</li>
+<li>
+<a href="#lodsize"><tt>lodsize</tt></a>
+</li>
+<li>
+<a href="#writeobj"><tt>writeobj</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#lighting"><b>Lighting</b></a>
+<ul class="contents2">
+<li>
+<a href="#calclight"><tt>calclight</tt></a>
+</li>
+<li>
+<a href="#patchlight"><tt>patchlight</tt></a>
+</li>
+<li>
+<a href="#fullbright"><tt>fullbright</tt></a>
+</li>
+<li>
+<a href="#lerpangle"><tt>lerpangle</tt></a>
+</li>
+<li>
+<a href="#lerpsubdiv"><tt>lerpsubdiv</tt></a>
+</li>
+<li>
+<a href="#lerpsubdivsize"><tt>lerpsubdivsize</tt></a>
+</li>
+<li>
+<a href="#lightprecision"><tt>lightprecision</tt></a>
+</li>
+<li>
+<a href="#lighterror"><tt>lighterror</tt></a>
+</li>
+<li>
+<a href="#lightlod"><tt>lightlod</tt></a>
+</li>
+<li>
+<a href="#dumplms"><tt>dumplms</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#entity_types"><b>Entity Types</b></a>
+<ul class="contents2">
+<li>
+<a href="#_light_"><tt>"light"</tt></a>
+</li>
+<li>
+<a href="#_envmap_"><tt>"envmap"</tt></a>
+</li>
+<li>
+<a href="#_playerstart_"><tt>"playerstart"</tt></a>
+</li>
+<li>
+<a href="#_shells_"><tt>"shells"</tt></a>
+</li>
+<li>
+<a href="#_bullets_"><tt>"bullets"</tt></a>
+</li>
+<li>
+<a href="#_rockets_"><tt>"rockets"</tt></a>
+</li>
+<li>
+<a href="#_riflerounds_"><tt>"riflerounds"</tt></a>
+</li>
+<li>
+<a href="#_grenades_"><tt>"grenades"</tt></a>
+</li>
+<li>
+<a href="#_cartridges_"><tt>"cartridges"</tt></a>
+</li>
+<li>
+<a href="#_health_"><tt>"health"</tt></a>
+</li>
+<li>
+<a href="#_healthboost_"><tt>"healthboost"</tt></a>
+</li>
+<li>
+<a href="#_greenarmour_"><tt>"greenarmour"</tt></a>
+</li>
+<li>
+<a href="#_yellowarmour_"><tt>"yellowarmour"</tt></a>
+</li>
+<li>
+<a href="#_quaddamage_"><tt>"quaddamage"</tt></a>
+</li>
+<li>
+<a href="#_teleport_"><tt>"teleport"</tt></a>
+</li>
+<li>
+<a href="#_teledest_"><tt>"teledest"</tt></a>
+</li>
+<li>
+<a href="#_mapmodel_"><tt>"mapmodel"</tt></a>
+</li>
+<li>
+<a href="#_monster_"><tt>"monster"</tt></a>
+</li>
+<li>
+<a href="#_respawnpoint_"><tt>"respawnpoint"</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#the_hud"><b>The HUD</b></a>
+<ul class="contents2">
+<li>
+<a href="#hidestats"><tt>hidestats</tt></a>
+</li>
+<li>
+<a href="#hidehud"><tt>hidehud</tt></a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
 
-<a name="editing"></a><h1>Editing</h1>
+<h2 id="editing">Editing</h2>
 
-<pre>edittoggle</pre>
+<pre id="edittoggle">edittoggle</pre>
 <p>
 Switches between map edit mode and normal (default key: e). In map edit mode
 you can select bits of the map by clicking or dragging your crosshair on the
@@ -31,22 +438,22 @@ below to modify the selection. While in edit mode, physics &amp; collision
 don't apply (noclip), and key repeat is ON.
 </p>
 
-<pre>dragging 0/1</pre>
+<pre id="dragging">dragging 0/1</pre>
 <p>
 Select cubes when set to 1. stop selection when set to 0
 </p>
 
-<pre>editdrag</pre>
+<pre id="editdrag">editdrag</pre>
 <p>
 Select cubes and entities. (default: left mouse button)
 </p>
 
-<pre>selcorners</pre>
+<pre id="selcorners">selcorners</pre>
 <p>
 Select the corners of cubes. (default: middle mouse button)
 </p>
 
-<pre>moving 0/1</pre>
+<pre id="moving">moving 0/1</pre>
 <p>
 set to 1 to turn on. when on, it will move the selection (cubes not included) to another position. 
 the plane on which it will move on is dependent on which side of the selection your cursor was on when 
@@ -54,29 +461,29 @@ turned on. set to 0 to turn off moving. if cursor is not on selection when turne
 will automatically be turned off.
 </p>
 
-<pre>editmovedrag</pre>
+<pre id="editmovedrag">editmovedrag</pre>
 <p>
 if cursor is in current cube selection, holding will move selection. otherwise will create new selection.
 </p>
 
-<pre>cancelsel</pre>
+<pre id="cancelsel">cancelsel</pre>
 <p>
 Cancels out any explicit selection you currently have (default: space).
 </p>
 
-<pre>editface D N</pre>
+<pre id="editface">editface D N</pre>
 <p>
 This is the main editing command. D is the direction of the action, -1 for
 towards you, 1 for away from you. N=0 to push all corners in the white box. N=1
 create or destroy cubes. N=2 push or pull a corner you are pointing at.       
 </p>
 
-<pre>gridpower N</pre>
+<pre id="gridpower">gridpower N</pre>
 <p>
 Changes the size of the grid. (default: g + scrollwheel)
 </p>
 
-<pre>edittex D</pre>
+<pre id="edittex">edittex D</pre>
 <p>
 Changes the texture on current selection by browsing through a list of textures
 directly shown on the cubes. D is the direction you want to cycle the textures
@@ -89,56 +496,55 @@ texture is set immediately when you press the forward key for the type. These
 lists are saved with the map.
 </p>
 
-<pre>gettex</pre>
+<pre id="gettex">gettex</pre>
 <p>
 moves the texture on the current selection to the top of the texture list. Useful for quickly
 texturing things using already textured geometry.
 </p>
 
-<pre>selextend</pre>
+<pre id="selextend">selextend</pre>
 <p>
 Extend current selection to include the cursor.
 </p>
 
-<pre>passthrough</pre>
+<pre id="passthrough">passthrough</pre>
 <p>
 normally cubes of equal size to the grid are given priority when selecting.
 passthrough removes this priority while held down so that the cube the cursor is directly on is selected.   
 Holding down passthrough will also give priority to cube over entities. (default: alt)
 </p>
 
-<pre>reorient</pre>
+<pre id="reorient">reorient</pre>
 <p>
 Change the side the white box is on to be the same as where you are currently
 pointing. (default: shift)
 </p>
 
-<pre>flip</pre>
+<pre id="flip">flip</pre>
 <p>
 Flip (mirror) the selected cubes front to back relative to the side of the
 white box. (default: x)
 </p>
 
-<pre>rotate D</pre>
+<pre id="rotate">rotate D</pre>
 <p>
 Rotates the selection 90 degrees around the side of the white box.
 Automatically squares the selection if it isn't already.
 (default: r + scroll wheel)
 </p>
 
-<pre>undo</pre>
+<pre id="undo">undo</pre>
 <p>
 Multi-level undo of any of the changes caused by the above operations (default: z [or u]).
 </p>
 
-<pre>redo</pre>
+<pre id="redo">redo</pre>
 <p>
 Multi-level redo of any of the changes caused by the above undo (default: i).      
 </p>
 
-<pre>copy
-paste
-</pre>
+<pre id="copy">copy</pre>
+<pre id="paste">paste</pre>
 <p>
 Copy copies the current selection into a buffer. Upon pressing 'paste', a 
 selection box will be created to identify the location of the pasted cubes. 
@@ -148,62 +554,68 @@ If the current gridsize is changed from the copy,
 the pasted copy will be stretched by the same factor.
 </p>
 
-<pre>
-editcopy
-editpaste
-</pre>
+<pre id="editcopy">editcopy</pre>
+<pre id="editpaste">editpaste</pre>
 <p>
 Will copy cubes as normal copy, but also features entity copies. There are three 
-different methods of use:<br><br>
-1: If no entity is explicitly selected, editcopy will copy the selected cube, 
-just like normal the normal 'copy' command.<br>
-2: If one or more entities are selected, editcopy will copy the last entity selected. 
-Editpaste will create a new entity using copy as the template if no entities are selected, 
-otherwise it will overwrite all selected entities with the copied ent.
-3: If there are both entity and cube selections, editcopy will copy the entire selection.
-In other words, when editpaste is used it will paste the cube selection along with all of the
-entities that were selected.
+different methods of use:
 </p>
 
-<pre>replace</pre>
+<ul class="list-style-type: decimal">
+<li>If no entity is explicitly selected, editcopy will copy the selected cube, 
+just like normal the normal 'copy' command.</li>
+<li>If one or more entities are selected, editcopy will copy the last entity selected. 
+Editpaste will create a new entity using copy as the template if no entities are selected, 
+otherwise it will overwrite all selected entities with the copied ent.</li>
+<li>If there are both entity and cube selections, editcopy will copy the entire selection.
+In other words, when editpaste is used it will paste the cube selection along with all of the
+entities that were selected.</li>
+</ul>
+
+<pre id="replace">replace</pre>
 <p>
 Repeats the last texture edit across the whole map. Only those faces with
 textures matching the one that was last edited will be
 replaced.        
 </p>
 
-<pre>editmat</pre>
+<pre id="editmat">editmat</pre>
 <p>
 Changes the type of material left behind when a cube is deleted. Currently the
 following types of materials are supported:
+</p>
+
 <ul>
 <li>
 air: the default material, has no effect.
+</li>
 <li>
 water: acts as you would expect. Only renders from the top, so treat it like
 real water and keep all 4 sides contained. Shows blue volume in edit mode.
+</li>
 <li>
 clip: an invisible wall that blocks players movement but not bullets. Is
 ideally used to keep players "in bounds" in a map. Can be used sparingly to
 smooth out the flow around decoration. Shows red volume in edit mode.
+</li>
 <li>
 noclip: cubes are always treated as empty in physics. Shows green volume in edit mode.
+</li>
 <li>
 glass: a clip-like material with a blended/reflective surface. Glass also stops bullets.
 Will reflect the closest envmap entity, or if none is in range, the skybox.
 Shows cyan volume in edit mode.
+</li>
 </ul>
-</p>
 
-<pre>recalc</pre>
+<pre id="recalc">recalc</pre>
 <p>
 Recalculates scene geometry. Shouldn't be needed under normal curcumstances.
 </p>
 
-<a name="heightfield"></a>        
-<h1>Heightfield</h1>
+<h2 id="heightfield">Heightfield</h2>
 
-<pre>getheightmap</pre>
+<pre id="getheightmap">getheightmap</pre>
 <p>
 This command will turn any selection into a heightmap mode selection (default: H). When this
 happens the selection will turn green with the orientation and gridsize denoted
@@ -220,33 +632,33 @@ extend it, cancel it, etc. The only exceptions to this right now are the flip an
 rotate commands. This type of selection cannot currently be used in coop edit.
 </p>
 
-<pre>selectbrush D</pre>
+<pre id="selectbrush">selectbrush D</pre>
 <p>
 This is not an actual engine command, but rather an alias which is defined
 in data/brush.cfg. It is to be used as a modifier (default: B), and switches between the
 various brushes that have been saved within that config file.
 </p>
 
-<pre>copybrush</pre>
+<pre id="copybrush">copybrush</pre>
 <p>
 This command (default: K) copies the current heightmap mode selection and
 saves it as a new brush. The current location of the cursor will turn into the
 new handle of the brush.
 </p>
 
-<pre>savebrush name</pre>
+<pre id="savebrush">savebrush name</pre>
 <p>
 This will save the current brush in script format. This script will be saved in 
 a file called mybrushes.cfg file for example. This is usually used after copybrush.
 The brush can also be named for easy reference later.
 </p>
 
-<pre>clearbrush</pre>
+<pre id="clearbrush">clearbrush</pre>
 <p>
 This resets the current brush that is used during heightmap mode editing.
 </p>
 
-<pre>brushvert x y depth </pre>
+<pre id="brushvert">brushvert x y depth </pre>
 <p>
 A brush is a 2D map that describes the depth that the editface commands should
 push into the cubes at various points. The first two parameters of brushvert are the X and Y
@@ -254,19 +666,17 @@ coordinates, respectively, of a vert on this 2D map. The last parameter
 is used to set the depth.
 </p>
 
-<pre>brushx
-brushy
-</pre>
+<pre id="brushx">brushx</pre>
+<pre id="brushy">brushy</pre>
 <p>
 Along with the 2D map, all brushes also have a handle. This handle is a reference
 point on the 2D map which defines where the brush is relative to the editing cursor.
 These two variables define the brush handle's coordinates.
-
-<a name="entity"></a>        
-<h1>Entity</h1>
 </p>
 
-<pre>newent type    value1 value2 value3 value4</pre>
+<h2 id="entity">Entity</h2>
+
+<pre id="newent">newent type value1 value2 value3 value4</pre>
 <p>
 Adds a new entity where (x,y) is determined by the current selection (the red
 dot corner) and z by the camera height, of said type. Type is a string giving
@@ -275,29 +685,29 @@ on the entity). The types are defines below in the <a href="#entitytypes">Entity
 Types</a> section.
 </p>
 
-<pre>delent</pre>
+<pre id="delent">delent</pre>
 <p>
 deletes the selected entities
 </p>
 
-<pre>entflip</pre>
+<pre id="entflip">entflip</pre>
 <p>
 flip the selected entities. cube selection serves as both reference point and 
 orientation to flip around.
 </p>
 
-<pre>entpush D</pre>
+<pre id="entpush">entpush D</pre>
 <p>
 push the selected entities. cube selection serves as orientation to push towards.
 </p>
 
-<pre>entrotate D</pre>
+<pre id="entrotate">entrotate D</pre>
 <p>
 rotate the selected entities. cube selection serves as both reference point and 
 orientation to rotate around.
 </p>
 
-<pre>entmoving 0/1</pre>
+<pre id="entmoving">entmoving 0/1</pre>
 <p>
 set to 1 to turn on. if an entity is under the cursor when turned on, the
 entity will get toggled selected/unselected. if selected, one can move the
@@ -308,7 +718,7 @@ if no entity is under the cursor when turned on, it will automatically turn off.
 </p>
 
 
-<pre>entdrop N</pre>
+<pre id="entdrop">entdrop N</pre>
 <p>
 variable controlling where entities created with "newent" will be placed.
 N=0 place entities at your current eye position.
@@ -322,177 +732,182 @@ useful for placing objects on selected floors. Lights are also dropped to the
 floor, unlike for N=1.
 </p>
 
-<pre>dropent</pre>
+<pre id="dropent">dropent</pre>
 <p>
 Positions the selected entity according to the entdrop variable.
 </p>
 
-<pre>trigger T N</pre>
+<pre id="trigger">trigger T N</pre>
 <p>
 Sets the state of all locked triggers with tag T to N.
 </p>
 
-<pre>entselect X</pre>
+<pre id="entselect">entselect X</pre>
 <p>
-Takes a boolean expression as argument. Selects all entities that evaluate to true for the given expression.<br>
-examples:<br>
-entselect insel // select all entities in blue selection box<br>
-entselect [ strcmp (et) "shells" ] // select all shells in map
+Takes a boolean expression as argument. Selects all entities that evaluate to true for the given expression.
+examples:
 </p>
 
-<pre>entloop X</pre>
+<ul>
+<li>entselect insel // select all entities in blue selection box</li>
+<li>entselect [ strcmp (et) "shells" ] // select all shells in map</li>
+</ul>
+
+<pre id="entloop">entloop X</pre>
 <p>
 Loops through and executes the given expression for all selected entities
 </p>
 
-<pre>entcancel</pre>
+<pre id="entcancel">entcancel</pre>
 <p>
 deselect all entities
 </p>
 
-<pre>enthavesel</pre>
+<pre id="enthavesel">enthavesel</pre>
 <p>
 Returns the number of entities in the current selection.
 </p>
 
-<pre>insel</pre>
+<pre id="insel">insel</pre>
 <p>
 Returns true if the selected entity is inside the cube selection
 </p>
 
-<pre>et</pre>
+<pre id="et">et</pre>
 <p>
 Returns a string for scripts that has the 'type' of the selected entity.
 </p>
 
-<pre>ea N</pre>
+<pre id="ea">ea N</pre>
 <p>
 Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
+</p>
 
-<pre>entset type    value1 value2 value3 value4</pre>
+<pre id="entset">entset type value1 value2 value3 value4</pre>
 <p>
 Change the type and attributes of the selected entity.
 To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
 </p>
 
-<pre>entproperty P A</pre>
+<pre id="entproperty">entproperty P A</pre>
 <p>
 Changes property P (0..3) of the closest entity by amount A. For example
 "entproperty 0 2" when executed near a lightsource would increase its radius by
 2.
 </p>
 
-<pre>entfind type type value1 value2 value3 value4</pre>
+<pre id="entfind">entfind type type value1 value2 value3 value4</pre>
 <p>
 Select all entities matching given values. '*' and blanks are wildcard.
 </p>
 
-<pre>clearents type</pre>
+<pre id="clearents">clearents type</pre>
 <p>
 Deletes all entities of said type.
 </p>
 
-<pre>replaceents type value1 value2 value3 value4</pre>
+<pre id="replaceents">replaceents type value1 value2 value3 value4</pre>
 <p>
 Replaces the given values for the selected entity and all entities that are
 equal to the selected entity. 
 To quickly bring up the replaceents command in the console press ',' (default: comma). It will come pre-filled with the values of the current entity selection.
 </p>
 
-<a name="settings"></a>        
-<h1>Settings</h1>
-</p>
+<h2 id="settings">Settings</h2>
 
-<pre>undomegs N</pre>
+<pre id="undomegs">undomegs N</pre>
 <p>
 Sets the number of megabytes used for the undo buffer (default 5, max 100).
 Undo's work for any size areas, so the amount of undo steps per megabyte is
 more for small areas than for big ones.
 </p>
 
-<pre>showsky B</pre>
+<pre id="showsky">showsky B</pre>
 <p>
 This variable controls whether explicit sky polygons are outlined (in purple) in edit mode.
 Default = 1.
 </p>
 
-<pre>outline B</pre>
+<pre id="outline">outline B</pre>
 <p>
 This variable controls whether geometry boundaries (outlines) are shown.
 Default = 0.
 </p>
 
-<pre>wireframe 0/1</pre>
+<pre id="wireframe">wireframe 0/1</pre>
 <p>
 Turns on wireframe drawing of the map.
 </p>
 
-<pre>allfaces 0/1</pre>
+<pre id="allfaces">allfaces 0/1</pre>
 <p>
 when on, causes the texturing commands to apply the new texture to all sides of the selected cubes
 rather than just the selected face.
 </p>
 
-<pre>showmat B</pre>
+<pre id="showmat">showmat B</pre>
 <p>
 This variables whether volumes are shown for invisible material surfaces in edit mode.
 Material volumes may also be selected while this is enabled. Default = 1.
 </p>
 
-<pre>optmats B</pre>
+<pre id="optmats">optmats B</pre>
 <p>
 This variables controls whether material rendering should be optimized by grouping materials
 into the largest possible surfaces. This will always make rendering faster, so the only reason
 to disable it is for testing. Default = 1.
 </p>
 
-<pre>entselradius N</pre>
+<pre id="entselradius">entselradius N</pre>
 <p>
 Sets the 'handle' size of entities when trying to select them. 
 Larger sizes means it should be easier to select entities.
 </p>
 
-<pre>entselsnap 0/1</pre>
+<pre id="entselsnap">entselsnap 0/1</pre>
 <p>
 Turns on snap-to-grid while draggin entities. (default: 6)
-
-<a name="map"></a>        
-<h1>Map and Config</h1>
 </p>
 
-<pre>map name</pre>
+<h2 id="map_and_config">Map and Config</h2>
+
+<pre id="map">map name</pre>
 <p>
 Loads up map "name" in the gamemode set previously by "mode". A map given as
 "blah" refers to "packages/base/blah.cgz", "mypackage/blah" refers to
 "packages/mypackage/blah.cgz". The menu has a set of maps that can be loaded.
 See also map in the gameplay docs.
+</p>
 
+<p>
 At every map load, "data/default_map_settings.cfg" is loaded which sets up all
 texture definitions etc. Everything defined in there can be overridden per
 package or per map by creating a "package.cfg" or "mapname.cfg" which contains
 whatever you want to do differently from the default. It can also set up
 triggers scripts per map etc.
+</p>
 
+<p>
 When the map finishes it will load the next map when one is defined, otherwise
 reloads the current map. You can define what map follows a particular map by
 making an alias like (in the map script): <code>alias nextmap_blah1 blah2</code>
 (loads "blah2" after "blah1").
 </p>
 
-<pre>sendmap</pre>
+<pre id="sendmap">sendmap</pre>
 <p>
 Saves the current map (without lightmaps) and sends it to the server so other clients may download it.
 Only works in coopedit game mode.
 </p>
 
-<pre>getmap</pre>
+<pre id="getmap">getmap</pre>
 <p>
 Gets a map from the server if one is available. Automatically loads the map when done. Only works in coopedit
 game mode.        
 </p>
 
-<pre>savemap name
-savecurrentmap</pre>
+<pre id="savemap">savemap name</pre>
+<pre id="savecurrentmap">savecurrentmap</pre>
 <p>
 Saves the current map, using the same naming scheme as "map". Makes a versioned
 backup to "mapname_N.BAK" if a map by that name already exists, so you can never
@@ -506,35 +921,35 @@ to store it in its own package (a directory under "packages"), which makes
 distributing it less messy.
 </p>
 
-<pre>newmap size</pre>
+<pre id="newmap">newmap size</pre>
 <p>
 Creates a new map of size^2 cubes (on the smallest grid size). 10 is a small
 map, 15 is a large map but it goes up to 20.
 </p>
 
-<pre>mapenlarge</pre>
+<pre id="mapenlarge">mapenlarge</pre>
 <p>
 Doubles the dimensions of the current map.        
 </p>
 
-<pre>mapmsg "Title by Author"</pre>
+<pre id="mapmsg">mapmsg "Title by Author"</pre>
 <p>
 sets the map msg, which will be displayed when the map loads. Either use the
 above format, or simply "by Author" if the map has no particular title (always
 displayed after the map load msg).
 </p>
 
-<pre>texturereset</pre>
+<pre id="texturereset">texturereset</pre>
 <p>
 Sets the texture slot to 0 for the subsequent "texture" commands.
 </p>
 
-<pre>materialreset</pre>
+<pre id="materialreset">materialreset</pre>
 <p>
 Resets the material texture slots for subsequent "texture" commands.
 </p>
 
-<pre>texture TYPE FILENAME ROT X Y SCALE</pre>
+<pre id="texture">texture TYPE FILENAME ROT X Y SCALE</pre>
 <p>
 Binds the texture indicated in FILENAME to the current texture slot, then
 increments the slot number depending on TYPE. This is for use in texture.cfg files only. TYPE
@@ -542,32 +957,27 @@ allows secondary textures to be specified for a single texture slot, for use in
 shaders and other features: 0 or "c" for primary diffuse texture (RGB), 1 or "u" for generic secondary texture, "d" for decals (RGBA), "n" for normal maps (XYZ), "g" for glow maps (RGB), "s" for specularity maps (grey-scale), "z" for depth maps (Z). 
 Specifying the primary diffuse texture advances to the next texture slot as above, while secondary types fill additional texture units in the order specified in the .cfg file. The following combinations of multiple textures into a single texture are performed automatically in the shader rendering path: specularity ("s") maps put in alpha channel of diffuse ("c") maps and depth ("z") maps put in alpha channel of normal ("n") maps. Decal ("d") and glow ("g") maps will be blended into the diffuse texture if running in fixed-function mode. To disable this combining, specify secondary textures as generic with 1 or "u". TYPE may also be a material name, in which case it behaves like 0, but instead associates the slot with a material.
 ROT specifies preprocessing on the image, currently only rotation and flipping (0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW, 4 = X flip, 5 = Y flip). X and Y are the X and Y offset in texels. SCALE will multiply the size of the texture as it appears on world geometry.
-
-<p>
 </p>
 
-<pre>fog N</pre>
+<pre id="fog">fog N</pre>
 <p>
 Sets fog distance to N (default: 160). You can do this for tweaking the visual effect of the fog, or if you are on a slow machine,
 setting the fog to a low value can also be a very effective way to increase fps (if you are geometry limited). Try out different
 values on big maps or maps which give you low fps.
 </p>
 
-<p>
-</p>
-
-<pre>fogcolour N</pre>
+<pre id="fogcolour">fogcolour N</pre>
 <p>
 The colour of the fog, which may be represetned as a decimal integer from 0..16777215, or a hexidecimal value from 0x000000..0xFFFFFF
 (note the "0x") in "0xRRGGBB" format, where R is red, G is green, and B is blue values (default: 8427955 (0x8099B3)).
 </p>
 
-<pre>waterspec N</pre>
+<pre id="waterspec">waterspec N</pre>
 <p>
 This sets the percentage of light water shows as specularity (default: 150).
 </p>
 
-<pre>waterfog N</pre>
+<pre id="waterfog">waterfog N</pre>
 <p>
 Sets the distance beneath the surface of water at which it fogs, from 1..10000 (default: 150).
 </p>
@@ -575,14 +985,12 @@ Sets the distance beneath the surface of water at which it fogs, from 1..10000 (
 <p>
 </p>
 
-<pre>watercolour R G B</pre>
+<pre id="watercolour">watercolour R G B</pre>
 <p>
 Sets the the colour of fog inside the water to the specified R G B value from 0..255 (default: 20 80 80). Used to give water some colour.
 </p>
 
-</p>
-
-<pre>shader TYPE NAME VS PS</pre>
+<pre id="shader">shader TYPE NAME VS PS</pre>
 <p>
 defines a shader NAME with vertex shader VS and pixel shader PS (both in ARB OpenGL 1.5 assembly format). See data/stdshader.cfg for examples.
 These definitions can be put in map cfg files or anywhere else, and will only be compiled once.
@@ -591,292 +999,212 @@ TYPE is either 0 for default shader, or 1 for normal-mapped world shaders.
 Requires DX9 / shader 2 class hardware (radeon 9500 or better, geforce 5200 or better) to run (older hardware will default to basic rendering).
 </p>
 
-<pre>fastshader NICE FAST N</pre>
+<pre id="fastshader">fastshader NICE FAST N</pre>
 <p>
 Associates shader FAST so that it will run in place of shader NICE if shaderdetail is less than or equal to N.
 </p>
 
-<pre>setshader NAME</pre>
+<pre id="setshader">setshader NAME</pre>
 <p>
 Sets a previously defined shader as the current shader. Any following texture slots (see "texture" command) will have this shader
 attached to them. Any pixel or vertex parameters are reset to the shader's defaults when this command is used.
 </p>
 
-<pre>setpixelparam INDEX X Y Z W</pre>
+<pre id="setpixelparam">setpixelparam INDEX X Y Z W</pre>
 <p>
 Overrides a pixel parameter for the current shader. Any following texture slots will use this pixel parameter until its value is set/reset by subsequent commands.
 INDEX is the index of a program environment parameter (program.env[10+INDEX]) to the pixel program of the current shader. It's value is set to the vector (X, Y, Z, W). Coordinates that are not specified default to 0.
 </p>
 
-<pre>setvertexparam INDEX X Y Z W</pre>
+<pre id="setvertexparam">setvertexparam INDEX X Y Z W</pre>
 <p>
 Overrides a vertex parameter for the current shader. Any following texture slots will use this vertex parameter until its value is set/reset by subsequent commands.
 INDEX is the index of a program environment parameter (program.env[10+INDEX]) to the vertex program of the current shader. It's value is set to the vector (X, Y, Z, W). Coordinates that are not specified default to 0.
 </p>
-<table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
+<table>
 <tr>
-<td style="width: 61px; height: 13px">
-Shader</td>
-<td style="width: 100px; height: 13px">
-Pixel params</td>
-<td style="width: 100px; height: 13px">
-Vertex params</td>
-<td style="width: 61px; height: 13px">
-Texture slots</td>
-<td style="width: 486px; height: 13px">
+<td>Shader</td>
+<td>Pixel params</td>
+<td>Vertex params</td>
+<td>Texture slots</td>
+<td></td>
+</tr>
+
+<tr>
+<td>stdworld</td>
+<td></td>
+<td></td>
+<td>c</td>
+<td>The default lightmapped world shader. 
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-stdworld</td>
-<td style="width: 100px; height: 13px">
+<td>decalworld</td>
+<td></td>
+<td></td>
+<td>c, d
 </td>
-<td style="width: 100px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c</td>
-<td style="width: 486px; height: 13px">
-The default lightmapped world shader. 
+<td>Like stdworld, except alpha blends decal texture on diffuse texture.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-decalworld</td>
-<td style="width: 200px; height: 13px">
+<td>glowworld</td>
+<td>  <ul><li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li></ul>
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, d</td>
-<td style="width: 486px; height: 13px">
-Like stdworld, except alpha blends decal texture on diffuse texture.
+<td></td>
+<td>c, g</td>
+<td>Like stdworld, except adds light from glow map.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-glowworld</td>
-<td style="width: 200px; height: 13px">
-  <ul><li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li></ul>
-</td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, g</td>
-<td style="width: 486px; height: 13px">
-Like stdworld, except adds light from glow map.
+<td>bumpworld</td>
+<td></td>
+<td></td>
+<td>c, n</td>
+<td>Normal-mapped shader without specularity (diffuse lighting only).  
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpworld</td>
-<td style="width: 200px; height: 13px">
+<td>bumpglowworld</td>
+<td>  <ul><li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li></ul>
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader without specularity (diffuse lighting only).  
+<td></td>
+<td>c, n, g</td>
+<td>Normal-mapped shader with glow map and without specularity.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpglowworld</td>
-<td style="width: 200px; height: 13px">
-  <ul><li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li></ul>
+<td>bumpspecworld</td>
+<td>  <ul><li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li></ul>
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, g</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with glow map and without specularity.
+<td></td>
+<td>c, n</td>
+<td>Normal-mapped shader with constant specularity factor.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpspecworld</td>
-<td style="width: 200px; height: 13px">
-  <ul><li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li></ul>
+<td>bumpspecmapworld</td>
+<td>same as above
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with constant specularity factor.
+<td></td>
+<td>c, n, s</td>
+<td>Normal-mapped shader with specularity map.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpspecmapworld</td>
-<td style="width: 200px; height: 13px">
-same as above
-</td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, s</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with specularity map.
-</td>
-</tr>
-
-<tr>
-<td style="width: 61px; height: 13px">
-bumpspecglowworld</td>
-<td style="width: 200px; height: 13px">
-  <ul>
+<td>bumpspecglowworld</td>
+<td>  <ul>
         <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
         <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
   </ul>
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, g</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with constant specularity factor and glow map.
+<td></td>
+<td>c, n, g</td>
+<td>Normal-mapped shader with constant specularity factor and glow map.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpspecmapglowworld</td>
-<td style="width: 200px; height: 13px">
-same as above
+<td>bumpspecmapglowworld</td>
+<td>same as above
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, s, g</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with specularity map and glow map.
+<td></td>
+<td>c, n, s, g</td>
+<td>Normal-mapped shader with specularity map and glow map.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpparallaxworld</td>
-<td style="width: 200px; height: 13px">
-    <ul>
+<td>bumpparallaxworld</td>
+<td>    <ul>
         <li>2: Scale, Bias - Scales the heightmap offset</li>
     </ul>
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, z</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with height map and without specularity.
+<td></td>
+<td>c, n, z</td>
+<td>Normal-mapped shader with height map and without specularity.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpspecparallaxworld</td>
-<td style="width: 200px; height: 13px">
-  <ul>
+<td>bumpspecparallaxworld</td>
+<td>  <ul>
         <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
             <li>2: Scale, Bias - Scales the heightmap offset</li>
         </ul> 
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, z</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with constant specularity factor and height map.
+<td></td>
+<td>c, n, z</td>
+<td>Normal-mapped shader with constant specularity factor and height map.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpspecmapparallaxworld</td>
-<td style="width: 200px; height: 13px">
-same as above
+<td>bumpspecmapparallaxworld</td>
+<td>same as above
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, s, z</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with specularity map and height map.
+<td></td>
+<td>c, n, s, z</td>
+<td>Normal-mapped shader with specularity map and height map.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpparallaxglowworld</td>
-<td style="width: 200px; height: 13px">
-  <ul>
+<td>bumpparallaxglowworld</td>
+<td>  <ul>
         <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
             <li>2: Scale, Bias - Scales the heightmap offset</li>
         </ul>
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, z, g</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with height and glow maps, and without specularity.
+<td></td>
+<td>c, n, z, g</td>
+<td>Normal-mapped shader with height and glow maps, and without specularity.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpspecparallaxglowworld</td>
-<td style="width: 200px; height: 13px">
-  <ul>
+<td>bumpspecparallaxglowworld</td>
+<td>  <ul>
         <li>0: Rk, Gk, Bk - multiplies the glow map color by the factors Rk, Gk, Bk</li>
         <li>1: Rk, Gk, Bk - multiplies the specular light color by the factors Rk, Gk, Bk</li>
             <li>2: Scale, Bias - Scales the heightmap offset</li>
         </ul>
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, z, g</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with constant specularity factor, and height and glow maps.
+<td></td>
+<td>c, n, z, g</td>
+<td>Normal-mapped shader with constant specularity factor, and height and glow maps.
 </td>
 </tr>
 
 <tr>
-<td style="width: 61px; height: 13px">
-bumpspecmapparallaxglowworld</td>
-<td style="width: 200px; height: 13px">
-same as above
+<td>bumpspecmapparallaxglowworld</td>
+<td>same as above
 </td>
-<td style="width: 200px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-c, n, s, z, g</td>
-<td style="width: 486px; height: 13px">
-Normal-mapped shader with specularity, height, and glow maps.
+<td></td>
+<td>c, n, s, z, g</td>
+<td>Normal-mapped shader with specularity, height, and glow maps.
 </td>
 </tr>
 
 </table>
 
-<pre>music name
-music name ondone</pre>
+<pre id="music">music name [ondone]</pre>
 <p>
 Plays song "name" (with "packages" as base dir). This command is best used from
 map cfg files or triggers. Evaluates ondone when the song is finished, or just keeps
-looping the song if ondone is missing. Example:
-
-<code>music "songs/music.ogg" [ echo "Song done playing!" ]</code>
+looping the song if ondone is missing. Example: <code>music "songs/music.ogg" [ echo "Song done playing!" ]</code>
 </p>
 
-<pre>N = registersound name V</pre>
+
+
+<pre id="n">N = registersound name V</pre>
 <p>
 Registers sound "name" with cube (see for example data/sounds.cfg). This
 command returns the sound number N, which is assigned from 0 onwards, and which
@@ -885,19 +1213,19 @@ its existing index is returned. registersound does not actually load the sound,
 this is done on first play. V is volume adjustment, if not specified (0), it is the default 100, valid
 range is 1-255.</p>
 
-<pre>sound N</pre>
+<pre id="sound">sound N</pre>
 <p>
 Plays sound N, see data/sounds.cfg for default sounds, and use registersound to
 register your own. for example, <code>sound 0</code> and <code>sound (registersound
 "aard/jump")</code>both play the standard jump sound.
 </p>
 
-<pre>mapmodel R H T N SH</pre>
-<pre>mmodel N</pre>
+<pre id="mapmodel">mapmodel R H T N SH</pre>
+<pre id="mmodel">mmodel N</pre>
 <p>
 <i>NOTE: the mapmodel form is deprecated.. set additional properties of a mapmodel in its .cfg</i>
-Registers a mapmodel that can be placed in maps using <code><font size="2">newent
-mapmodel</font></code> (see newent). N is the name, R is the square
+Registers a mapmodel that can be placed in maps using <code>newent
+mapmodel</code> (see newent). N is the name, R is the square
 radius, H the height, T the texture slot to skin the model with (0 for default skin), and SH toggles whether the it
 will cast shadows (not given or 1 casts shadows, 0 has no shadows). The radius R and height
 H define the collision bounding box of the model (if either is 0, players won't collide
@@ -906,13 +1234,13 @@ with the mapmodel). Name N is the name of a folder inside packages/models folder
 skin.png, or the same from the parent folder to allow skin sharing).
 
 
-Example: <code><font size="2">mapmodel 4 32 0 "tree1"</font></code>
+Example: <code>mapmodel 4 32 0 "tree1"</code>
 
 This map model is loaded from packages/models/tree1/. It has a collision box 8x8x32 in size (x=2*R, y=2*R, z=H). It uses the model's default skin (texture slot=0).
 It casts shadows (default).
 </p>
 
-<pre>importcube N</pre>
+<pre id="importcube">importcube N</pre>
 <p>
 Imports a cube map (.cgz) and converts it to sauerbraten's map format. N is the
 name of the map, without the .cgz. The map file must reside in packages/cube,
@@ -932,7 +1260,7 @@ packages/cube/N.ogz. Reload the map to be able to pick up stuff. Waterlevel is
 also not supported, you will have to add water using the new material system.
 </p>
 
-<pre>lodsize N</pre>
+<pre id="lodsize">lodsize N</pre>
 <p>
 Turn on world LOD (level of detail) for this map if N=32 (default is N=0, off).
 The state of this command is saved with the map. N is the size of the blocks
@@ -947,7 +1275,7 @@ is dependent on the "loddistance" variable which the player can set to trade
 off speed vs visual quality.
 </p>
 
-<pre>writeobj N</pre>
+<pre id="writeobj">writeobj N</pre>
 <p>
 Writes out the current map as N.obj, so you could use sauerbraten as a generic modeller
 with any program/engine that uses meshes. The meshes aren't very optimal and don't
@@ -955,11 +1283,10 @@ have texture/lighting information.
 
 
 
-<a name="lightingcommands"></a>        
 </p>
-<h1>Lighting</h1>
+<h2 id="lighting">Lighting</h2>
 
-<pre>calclight Q</pre>
+<pre id="calclight">calclight Q</pre>
 <p>
 This calculates all lightmaps. Usually takes only a few seconds, depending on
 map size and settings. If you "savemap", the lightmap will be stored along with
@@ -973,7 +1300,7 @@ it. Q is these predefined quality settinsg:
 <li>-2: no anti aliasing and no shadows (VERY fast, good for lighting previews)</li>
 </ul>
 
-<pre>patchlight</pre>
+<pre id="patchlight">patchlight</pre>
 <p>
 This will calculate lightmaps for any newly created cubes. This will generally
 be much quicker than doing a "calclight", and so is very useful when editing.
@@ -983,14 +1310,14 @@ recommended you do a "calclight" on your map before you publish it with
 "savemap".
 </p>
 
-<pre>fullbright B</pre>
+<pre id="fullbright">fullbright B</pre>
 <p>
 This variable controls whether the map will be shown with lighting disabled.
 Fullbright 1 will disable lighting, whereas 0 will enable lighting. (Default =
 0)
 </p>
 
-<pre>lerpangle A</pre>
+<pre id="lerpangle">lerpangle A</pre>
 <p>
 Default = 44. This variable controls whether surface normals are interpolated for
 lighting. Normals are sampled at each vertex of the surface. If the angle between
@@ -999,20 +1326,20 @@ normal will be the average of the two. Normals are then later interpolated betwe
 the normals at the vertexes of a surface.
 </p>
 
-<pre>lerpsubdiv N</pre>
+<pre id="lerpsubdiv">lerpsubdiv N</pre>
 <p>
 Default = 2. This allows more normals to be sampled at points along an edge between
 two vertexes of a surface. 2^N-1 extra normals will be sampled along the edge, i.e.
 the edge is split in half for every increment of N.
 </p>
 
-<pre>lerpsubdivsize N</pre>
+<pre id="lerpsubdivsize">lerpsubdivsize N</pre>
 <p>
 Default = 4. This sets the minimum size to which an edge may be subdivided. Edges
 smaller than N or edge sections smaller than N will not be sampled.
 </p>
 
-<pre>lightprecision P</pre>
+<pre id="lightprecision">lightprecision P</pre>
 <p>
 Default = 32. This is the most important variable for tweaking the lighting, it
 determines what the resolution of the lightmap is. As such has a BIG effect on
@@ -1038,7 +1365,7 @@ world that are not part of your map. Lightprecision, lighterror, and lightlod
 are stored as part of map files.
 </p>
 
-<pre>lighterror E</pre>
+<pre id="lighterror">lighterror E</pre>
 <p>
 There should be little reason to tweak this. If in your map you can see visible
 polygon boundaries caused by lighting, you can try stepping this down to 6 or 4
@@ -1047,7 +1374,7 @@ large map and looking for ways to reduce file size, increasing error up to 16
 may help. (Default = 8)
 </p>
 
-<pre>lightlod D</pre>
+<pre id="lightlod">lightlod D</pre>
 <p>
 Default = 0. This will double the resolution of lightmaps (cut the
 lightprecision in half) if size of the surface being lit is smaller than 2^D
@@ -1060,16 +1387,15 @@ detailed maps, this command wastes space, use lightlod 0. Lightlod &gt; 0 is
 only useful for huge maps
 </p>
 
-<pre>dumplms</pre>
+<pre id="dumplms">dumplms</pre>
 <p>
 Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but
 mappers may find it interesting too.
 
-<a name="entitytypes"></a>        
 </p>
-<h1>Entity Types</h1>
+<h2 id="entity_types">Entity Types</h2>
 
-<pre>"light" radius r g b</pre>
+<pre id="_light_">"light" radius r g b</pre>
 <p>
 If G and B are 0 the R value will be taken as brightness for a white light. A
 good radius for a small wall light is 64, for a middle sized room 128... for a
@@ -1079,8 +1405,7 @@ comes at the cost of slightly greater map file sizes. See the <a href="#lighting
 lighting commands</a> for an indepth list of all lighting related commands.
 </p>
 
-<pre>"envmap"
-"envmap" radius</pre>
+<pre id="_envmap_">"envmap" [radius]</pre>
 <p>
 Creates an environment map reflecting the geometry around the entity. The optional radius
 overrides the maximum distance within which glass will reflect from this environment map. If none is specified,
@@ -1093,35 +1418,35 @@ of glass. If you have a wall with many windows, place only one environment map i
 it should work just fine for all the windows.
 </p>
 
-<pre>"playerstart"</pre>
+<pre id="_playerstart_">"playerstart"</pre>
 <p>
 Spawn spot, yaw is taken from the current camera yaw.
 </p>
 
-<pre>"shells"
-"bullets"
-"rockets"
-"riflerounds"
-"grenades"
-"cartridges"
-"health"
-"healthboost"
-"greenarmour"
-"yellowarmour"
-"quaddamage"</pre>
+<pre id="_shells_">"shells"</pre>
+<pre id="_bullets_">"bullets"</pre>
+<pre id="_rockets_">"rockets"</pre>
+<pre id="_riflerounds_">"riflerounds"</pre>
+<pre id="_grenades_">"grenades"</pre>
+<pre id="_cartridges_">"cartridges"</pre>
+<pre id="_health_">"health"</pre>
+<pre id="_healthboost_">"healthboost"</pre>
+<pre id="_greenarmour_">"greenarmour"</pre>
+<pre id="_yellowarmour_">"yellowarmour"</pre>
+<pre id="_quaddamage_">"quaddamage"</pre>
 <p>
 A variety of pickup-able items, see <a href="./game.html">here</a>.
 </p>
 
-<pre>"teleport" N
-"teledest" N</pre>
+<pre id="_teleport_">"teleport" N</pre>
+<pre id="_teledest_">"teledest" N</pre>
 <p>
 creates a teleport connection, teleports are linked to a teledest with the same
 N (of which there should be exactly one). N can be 0..255. The teledest uses
 the current camera yaw.
 </p>
 
-<pre>"mapmodel" N Type Trigger</pre>
+<pre id="_mapmodel_">"mapmodel" N Type Trigger</pre>
 <p>
 A map model, i.e. an object rendered as md2/md3 which you collide against, cast
 shadows etc. N determines which mapmodel you want, this depends on "mapmodel" declarations
@@ -1132,220 +1457,138 @@ the alias "<span style="font-family: Courier New">level_trigger_Trigger</span>"
 will be executed, where Trigger is substituted accordingly (this allows you to script
 additional actions upon a trigger, i.e. put this into your map cfg file to print
 a message: <span style="font-family: Courier New">alias level_trigger_1 "echo A door
-opened nearby"</span>). The alias "<span style="font-family: Courier New">triggerstate</span>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.<br />
-<br />
-<table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
-<tr>
-<td style="width: 38px; height: 13px">
-Type</td>
-<td style="width: 61px; height: 13px">
-Trigger states</td>
-<td style="width: 61px; height: 13px">
-Trigger how often</td>
-<td style="width: 61px; height: 13px">
-Sound</td>
-<td style="width: 486px; height: 13px">
-</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 13px">
-0</td>
-<td style="width: 61px; height: 13px">
-</td>
-<td style="width: 61px; height: 13px">
-0</td>
-<td style="width: 61px; height: 13px">
-</td>
-<td style="width: 486px; height: 13px">
-loops mapmodel animation</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 3px">
-1</td>
-<td style="width: 61px; height: 3px">
-</td>
-<td style="width: 61px; height: 3px">
-1</td>
-<td style="width: 61px; height: 3px">
-</td>
-<td style="width: 486px; height: 3px">
-do trigger animation when touched for the first time only and return to starting position (best for switches, use switch/lever models)</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 3px">
-2</td>
-<td style="width: 61px; height: 3px">
-</td>
-<td style="width: 61px; height: 3px">
-1</td>
-<td style="width: 61px; height: 3px">
-rumble</td>
-<td style="width: 486px; height: 3px">
-same as above but with sound</td>
-</tr>
-<tr>
-<td style="width: 38px;">
-3</td>
-<td style="width: 61px;">
-toggle (0/1) </td>
-<td style="width: 61px;">
-1</td>
-<td style="width: 61px;">
-</td>
-<td style="width: 486px;">
-do trigger animation when touched for the first time only and stay in toggled position (best for switches, use switch/lever models)</td>
-</tr>
-<tr>
-<td style="width: 38px;">
-4</td>
-<td style="width: 61px;">
-toggle (0/1) </td>
-<td style="width: 61px;">
-1</td>
-<td style="width: 61px;">
-rumble</td>
-<td style="width: 486px;">
-same as above but with sound</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 3px">
-5</td>
-<td style="width: 61px; height: 3px">
-</td>
-<td style="width: 61px; height: 3px">
-N</td>
-<td style="width: 61px; height: 3px">
-</td>
-<td style="width: 486px; height: 3px">
-do trigger animation when touched every time and return to starting position (best for switches, use switch/lever models)</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 3px">
-6</td>
-<td style="width: 61px; height: 3px">
-</td>
-<td style="width: 61px; height: 3px">
-N</td>
-<td style="width: 61px; height: 3px">
-rumble</td>
-<td style="width: 486px; height: 3px">
-same as above but with sound</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 3px">
-7</td>
-<td style="width: 61px; height: 3px">
-toggle (0/1) </td>
-<td style="width: 61px; height: 3px">
-N</td>
-<td style="width: 61px; height: 3px">
-</td>
-<td style="width: 486px; height: 3px">
-do trigger animation when touched every time and toggle positions (best for reversible switches, use switch/lever models)</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 3px">
-8</td>
-<td style="width: 61px; height: 3px">
-toggle (0/1)</td>
-<td style="width: 61px; height: 3px">
-N</td>
-<td style="width: 61px; height: 3px">
-rumble</td>
-<td style="width: 486px; height: 3px">
-same as above but with sound</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 13px">
-9</td>
-<td style="width: 61px; height: 13px">
-closed/open (0/1)</td>
-<td style="width: 61px; height: 13px">
-1</td>
-<td style="width: 61px; height: 13px">
-door?</td>
-<td style="width: 486px; height: 13px">
-opened by approach first time only, stays open afterwards. Collides while closed. (use door specific models)</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 13px">
-10</td>
-<td style="width: 61px; height: 13px">
-closed/open (0/1)</td>
-<td style="width: 61px; height: 13px">
-N</td>
-<td style="width: 61px; height: 13px">
-door?</td>
-<td style="width: 486px; height: 13px">
-opened by approach every time, closes after 5 seconds. Collides while closed. (use door specific models)</td>
-</tr>
-<tr>
-<td style="width: 38px">
-11</td>
-<td style="width: 61px">
-locked (-1) </td>
-<td style="width: 61px">
-0/N</td>
-<td style="width: 61px">
-door?</td>
-<td style="width: 486px">
-opened/closed only by associated trigger. When approached while closed, collides and invokes level trigger with triggerstate -1. (use door specific models)</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 13px">
-12</td>
-<td style="width: 61px; height: 13px">
-disappear (0)</td>
-<td style="width: 61px; height: 13px">
-1</td>
-<td style="width: 61px; height: 13px">
-</td>
-<td style="width: 486px; height: 13px">
-do trigger animation once when touched, disappear after (good for triggers that look more like pickups, such as the carrot)</td>
-</tr>
-<tr>
-<td style="width: 38px">
-13</td>
-<td style="width: 61px">
-disappear (0)</td>
-<td style="width: 61px">
-1</td>
-<td style="width: 61px">
-rumble</td>
-<td style="width: 486px">
-same as above but with sound</td>
-</tr>
-<tr>
-<td style="width: 38px; height: 13px">
-29</td>
-<td style="width: 61px; height: 13px">
-disappear (0)</td>
-<td style="width: 61px; height: 13px">
-1</td>
-<td style="width: 61px; height: 13px">
-end?</td>
-<td style="width: 486px; height: 13px">
-FPS specific. END LEVEL</td>
-</tr>
-</table>
-<br />
-Be careful when using "switch many" for thing that affect gameplay, such as opening
-doors, as it can be confusing. Best is to reserve a particular model to mean "many"
-and others "once".<br />
-All types &gt;0 are snapped to 15 degree angles for orientation.&nbsp;<br />
-
+opened nearby"</span>). The alias "<span style="font-family: Courier New">triggerstate</span>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.
 </p>
 
-<pre>"monster" N</pre>
+<table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
+<tr>
+<td>Type</td>
+<td>Trigger states</td>
+<td>Trigger how often</td>
+<td>Sound</td>
+<td></td>
+</tr>
+<tr>
+<td>0</td>
+<td></td>
+<td>0</td>
+<td></td>
+<td>loops mapmodel animation</td>
+</tr>
+<tr>
+<td>1</td>
+<td></td>
+<td>1</td>
+<td></td>
+<td>do trigger animation when touched for the first time only and return to starting position (best for switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td>2</td>
+<td></td>
+<td>1</td>
+<td>rumble</td>
+<td>same as above but with sound</td>
+</tr>
+<tr>
+<td>3</td>
+<td>toggle (0/1) </td>
+<td>1</td>
+<td></td>
+<td>do trigger animation when touched for the first time only and stay in toggled position (best for switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>toggle (0/1) </td>
+<td>1</td>
+<td>rumble</td>
+<td>same as above but with sound</td>
+</tr>
+<tr>
+<td>5</td>
+<td></td>
+<td>N</td>
+<td></td>
+<td>do trigger animation when touched every time and return to starting position (best for switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td>6</td>
+<td></td>
+<td>N</td>
+<td>rumble</td>
+<td>same as above but with sound</td>
+</tr>
+<tr>
+<td>7</td>
+<td>toggle (0/1) </td>
+<td>N</td>
+<td></td>
+<td>do trigger animation when touched every time and toggle positions (best for reversible switches, use switch/lever models)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>toggle (0/1)</td>
+<td>N</td>
+<td>rumble</td>
+<td>same as above but with sound</td>
+</tr>
+<tr>
+<td>9</td>
+<td>closed/open (0/1)</td>
+<td>1</td>
+<td>door?</td>
+<td>opened by approach first time only, stays open afterwards. Collides while closed. (use door specific models)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>closed/open (0/1)</td>
+<td>N</td>
+<td>door?</td>
+<td>opened by approach every time, closes after 5 seconds. Collides while closed. (use door specific models)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>locked (-1) </td>
+<td>0/N</td>
+<td>door?</td>
+<td>opened/closed only by associated trigger. When approached while closed, collides and invokes level trigger with triggerstate -1. (use door specific models)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>disappear (0)</td>
+<td>1</td>
+<td></td>
+<td>do trigger animation once when touched, disappear after (good for triggers that look more like pickups, such as the carrot)</td>
+</tr>
+<tr>
+<td>13</td>
+<td>disappear (0)</td>
+<td>1</td>
+<td>rumble</td>
+<td>same as above but with sound</td>
+</tr>
+<tr>
+<td>29</td>
+<td>disappear (0)</td>
+<td>1</td>
+<td>end?</td>
+<td>FPS specific. END LEVEL</td>
+</tr>
+</table>
+
+<p>
+Be careful when using "switch many" for thing that affect gameplay, such as opening
+doors, as it can be confusing. Best is to reserve a particular model to mean "many"
+and others "once". All types &gt;0 are snapped to 15 degree angles for orientation.
+</p>
+
+<pre id="_monster_">"monster" N</pre>
 <p>
 A monster, currently N = 0..4 (see gameplay docs). Monster entities will be
 spawned when in classic single player mode, and will attack you when you come
 into view. yaw is taken from the current camera yaw.
-<br />
-
 </p>
 
-<pre>"respawnpoint"</pre>
+<pre id="_respawnpoint_">"respawnpoint"</pre>
 <p>
 
 A respawnpoint for classic SP mode (see "SP Respawning"). Place these spaced evenly in quieter areas between fights. Will actually work in
@@ -1353,44 +1596,53 @@ any game mode, just probably isn't helpful in DM.
 
 Entities are shown in editmode by blue sparklies, and the closest one is
 indicated on the HUD.
-
-<a name="hud"></a>        
 </p>
-<h1>The HUD</h1>
+
+<h2 id="the_hud">The HUD</h2>
+<p>
 On the bottom left of the screen are a bunch of stats. You'll find out what they mean below.
+</p>
+
 <ul>
 <li>
-cube: the number of cubes in the current selection. Only the visible (leaf)
-cubes are counted.
+cube: the number of cubes in the current selection. Only the visible (leaf)cubes are counted.
+</li>
 <li>
 fps: frames per second
+</li>
 <li>
-ond: number of cubes in the system. This includes parent cubes, copied cubes,
-and undos.
+ond: number of cubes in the system. This includes parent cubes, copied cubes,and undos.
+</li>
 <li>
-va: number of vertex arrays used to store vertecies in the map. you probably
-don't need to use this.
+va: number of vertex arrays used to store vertecies in the map. you probablydon't need to use this.
+</li>
 <li>
-vtr: number of triangles currently being displayed. will be a useful stat when
-culling is done.
+vtr: number of triangles currently being displayed. will be a useful stat whenculling is done.
+</li>
 <li>
-vvt: number of vertecies currently being displayed. again, useful when culling
-is done.
+vvt: number of vertecies currently being displayed. again, useful when cullingis done.
+</li>
 <li>
 tri: number of triangles in the entire map
+</li>
 <li>
 wvt: number of vertecies in the entire map
+</li>
 <li>
 evt: misc rendering effects. stuff like particles displayed, or text written on
-screen.</li></ul>
+screen.
+</li>
+</ul>
 
-<pre>hidestats 0/1</pre>
+<pre id="hidestats">hidestats 0/1</pre>
 <p>
 Turn on to hide the above stats
 </p>
 
-<pre>hidehud 0/1</pre>
+<pre id="hidehud">hidehud 0/1</pre>
 <p>
 Turn on to hide all HUD elements
+</p>
+
 </body>
 </html>

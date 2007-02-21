@@ -1,12 +1,42 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>Sauerbraten Map Editing</title>
 <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
 
-<h1>Editing In Sauerbraten</h1>
+<h1>Sauerbraten Map Editing</h1>
+
+<div class="contents">
+<ul class="contents">
+<li>
+<a href="#editing_in_sauerbraten"><b>Editing In Sauerbraten</b></a>
+</li>
+<li>
+<a href="#the_basics"><b>The Basics</b></a>
+</li>
+<li>
+<a href="#entities"><b>Entities</b></a>
+</li>
+<li>
+<a href="#lighting"><b>Lighting</b></a>
+</li>
+<li>
+<a href="#materials"><b>Materials</b></a>
+</li>
+<li>
+<a href="#cheat_sheet"><b>Cheat Sheet</b></a>
+</li>
+</ul>
+</div>
+
+<h2 id="editing_in_sauerbraten">Editing In Sauerbraten</h2>
 
 <p>
 Editing in Sauerbraten isn't like editing in any other game. Editing is done within the game itself, and the
@@ -16,8 +46,10 @@ Imagine a cube you can do two things to: push the corners at any angle inwards, 
 Below is an example cube where it is split and one cube is removed, and then again for a smaller cube.
 </p>
 
-<p>
-<center><img src="images/editing1.jpg"> <img src="images/editing2.jpg"> <img src="images/editing3.jpg"></center>
+<p class="text-align: center">
+<img src="images/editing1.jpg" alt="Editing Example 1" />
+<img src="images/editing2.jpg" alt="Editing Example 2" />
+<img src="images/editing3.jpg" alt="Editing Example 2" />
 </p>
 
 <p>
@@ -30,11 +62,11 @@ In the bottom left above your health you'll find text stating what the closest e
 The effect properties have depend upon the type of entity.
 </p>
 
-<p>
-<center><img src="images/editing4.jpg"></center>
+<p class="text-align: center">
+<img src="images/editing4.jpg" alt="Editing Example 4" />
 </p>
 
-<h1>The Basics</h1>
+<h2 id="the_basics">The Basics</h2>
 
 <p>
 Go into edit mode (E) and press ` to open a console (pressing T then / has the same effect) and run the command <i>/newmap 7</i>.
@@ -66,7 +98,7 @@ where mapname is some name of your choosing. This will create a file in packages
 Backups of old saves will be made for you with a .BAK extension. You can later open your map with the command <i>/map mapname</i>.
 </p>
 
-<h1>Entities</h1>
+<h2 id="entities">Entities</h2>
 
 <p>
 Entities in Sauerbraten all have a blue sparklie showing their position. Some entities such as ammo boxes and armor will also show
@@ -89,19 +121,19 @@ multiple green armours or boosts in bigger maps. Add some teleports sparingly, o
 
 <p>
 For an SP map, place just a single "playerstart", but preferably in an area with some space around it for future coop play.
-Place monster entities throughout the map (take good care of position & orientation: they determine when the monster will wake up).
-Ammo & health placement should be finely tuned to match monster load, not too much, not too little. By the kinds of ammo you give
-the player and when you can influence the gameplay a lot. Placement of armours & quad is up to you, but unless you stage massive
+Place monster entities throughout the map (take good care of position &amp; orientation: they determine when the monster will wake up).
+Ammo &amp; health placement should be finely tuned to match monster load, not too much, not too little. By the kinds of ammo you give
+the player and when you can influence the gameplay a lot. Placement of armours &amp; quad is up to you, but unless you stage massive
 battles, don't put too many of them in.
 </p>
 
-<h1>Lighting</h1>
+<h2 id="lighting">Lighting</h2>
 
 <p>
 See the <a href="editref.html#lightingcommands">lighting commands</a> for an indepth list of all lighting related commands.
 </p>
 
-<h1>Materials</h1>
+<h2 id="materials">Materials</h2>
 
 <p>
 When a cube is deleted or pushed away a material is left behind. Typically this will be air. You can change the type of material left
@@ -117,7 +149,7 @@ Sometimes the player should be able to fall off the map though, so use sparingly
 destroys the belivability of your map.
 </p>
 
-<h1>Cheat Sheet</h1>
+<h2 id="cheat_sheet">Cheat Sheet</h2>
 
 <ul>
 <li>Selecting cubes lets you edit many at once and you don't have to point to edit them</li>

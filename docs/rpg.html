@@ -1,5 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
 <title>Sauerbraten RPG gameplay scripting</title>
@@ -8,98 +12,164 @@
 
 <body>
 
-<h1>Gameplay Scripting</h1>
+<h1>Sauerbraten RPG gameplay scripting</h1>
+
+<div class="contents">
+<ul class="contents">
+<li>
+<a href="#gameplay_scripting"><b>Gameplay Scripting</b></a>
+<ul class="contents2">
+<li>
+<a href="#spawn_apple"><tt>spawn_apple</tt></a>
+</li>
+<li>
+<a href="#newrpgspawn"><tt>newrpgspawn</tt></a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#rpg_object_commands"><b>RPG object commands</b></a>
+<ul class="contents2">
+<li>
+<a href="#r_pop"><tt>r_pop</tt></a>
+</li>
+<li>
+<a href="#r_spawn"><tt>r_spawn</tt></a>
+</li>
+<li>
+<a href="#r_contain"><tt>r_contain</tt></a>
+</li>
+<li>
+<a href="#r_gold"><tt>r_gold</tt></a>
+</li>
+<li>
+<a href="#r_worth"><tt>r_worth</tt></a>
+</li>
+<li>
+<a href="#r_stat"><tt>r_stat</tt></a>
+</li>
+<li>
+<a href="#r_model"><tt>r_model</tt></a>
+</li>
+<li>
+<a href="#r_ai"><tt>r_ai</tt></a>
+</li>
+<li>
+<a href="#r_action"><tt>r_action</tt></a>
+</li>
+<li>
+<a href="#r_say"><tt>r_say</tt></a>
+</li>
+<li>
+<a href="#r_take"><tt>r_take</tt></a>
+</li>
+<li>
+<a href="#r_give"><tt>r_give</tt></a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2 id="gameplay_scripting">Gameplay Scripting</h2>
 
 
 <p>
 The RPG is set up in a very open way such that all gameplay objects and behaviour can be modified in a script file,
 currently in data/game_rpg.cfg (this will change later to be on a per-map basis).
+</p>
+
 <p>
 This file simply lists all gameplay objects, which can then be placed in the level editor. For example, by writing:
+</p>
 
-<pre>spawn_apple    = [ r_worth 20 ]</pre>
+<pre id="spawn_apple">spawn_apple = [ r_worth 20 ]</pre>
 
+<p>
 you define a script that gets executed when an apple is spawned. You place this apple either directly in the world or as part of another objects inventory.
 To place it in the world, you create an entity of type "spawn" with a name attached. This is best done by typing:
+</p>
 
-<pre>newrpgspawn apple</pre>
+<pre id="newrpgspawn">newrpgspawn apple</pre>
 
+<p>
 What is important to realize is that most r_ commands work with what is called the RPG stack. This makes it possible to apply
 properties and actions to things without having to specify all the time which object you are talking about. For example, when the
 spawn_apple script gets executed, the apple object will be on the top of the RPG stack, so any commands such as r_worth that apply to an
 object, will automatically apply to it. It is a stack, because during the initialization of one object you may spawn another, which means
 all r_ commands will apply to the new object, until it is done, when the RPG stack returns to the previous object.
+</p>
 
+<p>
 Following is a list of all commands... unless otherwise noted, they apply to the current object (top of the RPG stack).
+</p>
+
+<h2 id="rpg_object_commands">RPG object commands</h2>
 
 
-<h1>RPG object commands</h1>
-
-
-<pre>r_pop</pre>
+<pre id="r_pop">r_pop</pre>
 <p>
 Removes the top object from the RPG stack
 </p>
 
-<pre>r_spawn N</pre>
+<pre id="r_spawn">r_spawn N</pre>
 <p>
 creates a new object, places it on the top of the RPG stack, then executes spawn_N to initialize it.
 </p>
 
-<pre>r_contain T</pre>
+<pre id="r_contain">r_contain T</pre>
 <p>
 Takes the object on the top of the stack, and makes it part of the inventory of the object on the stack below it.
 T is the type of inventory object, see the convenient scripts r_inventory, r_loot, r_fortrade instead.
 </p>
 
-<pre>r_gold G</pre>
+<pre id="r_gold">r_gold G</pre>
 <p>
 G gold is owned by this object for use in trading. Only makes sense for player/NPCs
 </p>
 
-<pre>r_worth V</pre>
+<pre id="r_worth">r_worth V</pre>
 <p>
 This object has base value V when used in trading
 </p>
 
-<pre>r_stat ST V</pre>
+<pre id="r_stat">r_stat ST V</pre>
 <p>
 This object has value V for stat type ST (see stats.h)
 </p>
 
-<pre>r_model M</pre>
+<pre id="r_model">r_model M</pre>
 <p>
 Specify model M to represent this object visually when placed in the world
 </p>
 
-<pre>r_ai</pre>
+<pre id="r_ai">r_ai</pre>
 <p>
 Signifies that this object should run AI code when placed in the world, used for NPCs/monsters, not items.
 </p>
 
-<pre>r_action N A</pre>
+<pre id="r_action">r_action N A</pre>
 <p>
 defines a custom action the player can take on this object. N is the tag word that describes the action, visible in
 the objects menu in the game world, and A is the script that gets executed when the player selects it.
 </p>
 
-<pre>r_say T</pre>
+<pre id="r_say">r_say T</pre>
 <p>
 Make text T the last thing this object said to the player
 </p>
 
-<pre>r_take N A NA</pre>
+<pre id="r_take">r_take N A NA</pre>
 <p>
 Attempt to take object with name N from the player inventory, and place it in the objects inventory. If the item was succesfully grabbed (it was present),
 action A is executed. If the item was not available, NA is executed. r_take is the preferred way to structure resolution of quests, i.e. everything the player ever
 needs to do should go via token items.
 </p>
 
-<pre>r_give N</pre>
+<pre id="r_give">r_give N</pre>
 <p>
 give the player an item with name N
 </p>
-
 
 </body>
 </html>
