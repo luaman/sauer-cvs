@@ -1,5 +1,3 @@
-// rendertext.cpp: based on Don's gl_text.cpp
-
 #include "pch.h"
 #include "engine.h"
 
