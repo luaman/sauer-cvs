@@ -352,6 +352,30 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
     tryload(skin, skinpath, "skin", {}, return);
 };
 
+void model::loadshadowmask()
+{
+    if(!shadowmasked || shadowmask) return;
+    if(shadowmasked->bpp!=32) { shadowmasked = NULL; return; };
+    SDL_Surface *s = IMG_Load(shadowmasked->name);
+    if(!s || !s->format->Amask) { shadowmasked = NULL; if(s) SDL_FreeSurface(s); return; };
+    uint alpha = s->format->Amask;
+    shadowmask = new uchar[shadowmasked->h * ((shadowmasked->w+7)/8)];
+    uchar *srcrow = (uchar *)s->pixels, *dst = shadowmask-1;
+    loop(y, s->h) 
+    {
+        uint *src = (uint *)srcrow;
+        loop(x, s->w)
+        {
+            int offset = x%8;
+            if(!offset) *++dst = 0;
+            if(*src & alpha) *dst |= 1<<offset;
+            src++;
+        };
+        srcrow += s->pitch;
+    };
+    SDL_FreeSurface(s);
+};
+
 // convenient function that covers the usual anims for players/monsters/npcs
 
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain)

@@ -137,21 +137,30 @@ struct vertmodel : model
             };
         };
 
-        void gentris(int frame, vector<triangle> &out, float m[12])
+        void gentris(int frame, vector<SphereTree::tri> &out, float m[12])
         {
             vert *fverts = &verts[frame*numverts];
             loopj(numtris)
             {
-                triangle &t = out.add();
-                vec &a = fverts[tcverts[tris[j].vert[0]].index].pos,
-                    &b = fverts[tcverts[tris[j].vert[1]].index].pos,
-                    &c = fverts[tcverts[tris[j].vert[2]].index].pos;
+                SphereTree::tri &t = out.add();
+                tcvert &av = tcverts[tris[j].vert[0]],
+                       &bv = tcverts[tris[j].vert[1]],
+                       &cv = tcverts[tris[j].vert[2]];
+                vec &a = fverts[av.index].pos,
+                    &b = fverts[bv.index].pos,
+                    &c = fverts[cv.index].pos;
                 loopi(3)
                 {
                     t.a[i] = m[i]*a.x + m[i+3]*a.y + m[i+6]*a.z + m[i+9];
                     t.b[i] = m[i]*b.x + m[i+3]*b.y + m[i+6]*b.z + m[i+9];
                     t.c[i] = m[i]*c.x + m[i+3]*c.y + m[i+6]*c.z + m[i+9];
                 };
+                t.tc[0] = av.u;
+                t.tc[1] = av.v;
+                t.tc[2] = bv.u;
+                t.tc[3] = bv.v;
+                t.tc[4] = cv.u;
+                t.tc[5] = cv.v;
             };
         };
 
@@ -375,13 +384,13 @@ struct vertmodel : model
             };
         };
 
-        void gentris(int frame, vector<triangle> &tris)
+        void gentris(int frame, vector<SphereTree::tri> &tris)
         {
             float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
             gentris(frame, tris, m);
         };
 
-        void gentris(int frame, vector<triangle> &tris, float m[12])
+        void gentris(int frame, vector<SphereTree::tri> &tris, float m[12])
         {
             loopv(meshes) meshes[i]->gentris(frame, tris, m);
             loopi(numtags) if(links[i])
@@ -545,7 +554,7 @@ struct vertmodel : model
 
     char *name() { return loadname; };
 
-    void gentris(int frame, vector<triangle> &tris)
+    void gentris(int frame, vector<SphereTree::tri> &tris)
     {
         loopv(parts) parts[i]->gentris(frame, tris);
     };
@@ -553,7 +562,7 @@ struct vertmodel : model
     SphereTree *setspheretree()
     {
         if(spheretree) return spheretree;
-        vector<triangle> tris;
+        vector<SphereTree::tri> tris;
         gentris(0, tris);
         spheretree = buildspheretree(tris.length(), tris.getbuf());
         return spheretree;
@@ -571,6 +580,11 @@ struct vertmodel : model
         mesh &m = *parts[0]->meshes[0]; 
         m.tex = tex;
         masked = tex ? lookuptexture(tex).sts.length()>=2 : m.masks!=crosshair;
+    };
+
+    Texture *getskin()
+    {
+        return parts.length()==1 && parts[0]->meshes.length()==1 ? parts[0]->meshes[0]->skin : NULL;
     };
 
     void calcbb(int frame, vec &center, vec &radius)

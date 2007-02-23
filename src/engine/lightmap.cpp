@@ -253,7 +253,7 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
         ray.mul(1.0f / mag);
         if(shadows)
         {
-            float dist = raycube(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows ? RAY_POLY : 0));
+            float dist = raycube(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows > 1 ? RAY_ALPHAPOLY : (mmshadows ? RAY_POLY : 0)));
             if(dist < mag - tolerance) continue;
         };
         float intensity;
@@ -899,6 +899,7 @@ void calclight(int *quality)
 {
     switch(*quality)
     {
+        case  3: shadows = 1; aalights = 3; mmshadows = 2; break;
         case  2: shadows = 1; aalights = 3; mmshadows = 1; break;
         case  1: shadows = 1; aalights = 3; mmshadows = 0; break;
         case  0: shadows = 1; aalights = 2; mmshadows = 0; break;

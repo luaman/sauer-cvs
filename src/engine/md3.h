@@ -202,7 +202,8 @@ struct md3 : vertmodel
             if(skin==crosshair) conoutf("could not load model skin for %s", name1);
         };
         loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
-
+        Texture *skin = getskin();
+        if(skin && skin->bpp==32) shadowmasked = skin;
         return loaded = true;
     };
 };

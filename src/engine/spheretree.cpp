@@ -27,41 +27,18 @@ struct SphereBranch : SphereTree
         DELETEP(child2);
     };
 
-    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist) const
+    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, model *m) const
     {
-        return child1->intersect(o, ray, maxdist, dist) ||
-               child2->intersect(o, ray, maxdist, dist);
+        return child1->intersect(o, ray, maxdist, dist, m) ||
+               child2->intersect(o, ray, maxdist, dist, m);
     };
 };  
 
-static inline bool raytriintersect(const vec &o, const vec &ray, float maxdist, const triangle &tri, float &dist)
-{
-    vec edge1(tri.b), edge2(tri.c);
-    edge1.sub(tri.a);
-    edge2.sub(tri.a);
-    vec p;
-    p.cross(ray, edge2);
-    float det = edge1.dot(p);
-    if(det == 0) return false;
-    vec r(o);
-    r.sub(tri.a);
-    float u = r.dot(p) / det;
-    if(u < 0 || u > 1) return false;
-    vec q;
-    q.cross(r, edge1);
-    float v = ray.dot(q) / det;
-    if(v < 0 || u + v > 1) return false;
-    float f = edge2.dot(q) / det;
-    if(f < 0 || f > maxdist) return false;
-    dist = f;
-    return true;
-};
-
 struct SphereLeaf : SphereTree
 {
-    triangle tri;
+    tri tri;
 
-    SphereLeaf(const triangle &t) : tri(t)
+    SphereLeaf(const SphereTree::tri &t) : tri(t)
     {
         center = t.a;
         center.add(t.b);
@@ -73,15 +50,45 @@ struct SphereLeaf : SphereTree
         radius = max(r1, max(r2, r3));
     };
     
-    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist) const
+    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, model *m) const
     {
-        return raytriintersect(o, ray, maxdist, tri, dist);
+        vec edge1(tri.b), edge2(tri.c);
+        edge1.sub(tri.a); 
+        edge2.sub(tri.a);
+        vec p;
+        p.cross(ray, edge2);
+        float det = edge1.dot(p);
+        if(det == 0) return false;
+        vec r(o); 
+        r.sub(tri.a);
+        float u = r.dot(p) / det;
+        if(u < 0 || u > 1) return false;
+        vec q; 
+        q.cross(r, edge1);
+        float v = ray.dot(q) / det;
+        if(v < 0 || u + v > 1) return false;
+        float f = edge2.dot(q) / det;
+        if(f < 0 || f > maxdist) return false;
+        if(m && m->shadowmasked) 
+        {
+            if(!m->shadowmask) 
+            {
+                m->loadshadowmask();
+                if(!m->shadowmask) { dist = f; return true; };
+            };
+            float s = tri.tc[0] + u*(tri.tc[2] - tri.tc[0]) + v*(tri.tc[4] - tri.tc[0]),
+                  t = tri.tc[1] + u*(tri.tc[3] - tri.tc[1]) + v*(tri.tc[5] - tri.tc[1]);
+            int si = int(s*m->shadowmasked->w), ti = int(t*m->shadowmasked->h);
+            if(!(m->shadowmask[ti*((m->shadowmasked->w+7)/8) + si/8] & (1<<(si%8)))) return false;
+        };
+        dist = f;
+        return true;
     };
 
     bool isleaf() { return true; };
 };
 
-SphereTree *buildspheretree(int numtris, const triangle *tris)
+SphereTree *buildspheretree(int numtris, const SphereTree::tri *tris)
 {
     if(numtris<=0) return NULL;
 
@@ -169,6 +176,6 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
     vec yray(ray);
     if(yaw != 0) yawray(yo, yray, yaw);
-    return m->spheretree->childintersect(yo, yray, maxdist, dist);
+    return m->spheretree->childintersect(yo, yray, maxdist, dist, (mode&RAY_ALPHAPOLY)==RAY_ALPHAPOLY ? m : NULL);
 };
 
