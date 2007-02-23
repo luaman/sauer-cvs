@@ -498,7 +498,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         };
     };
 
-    entitiesinoctanodes();
+    //entitiesinoctanodes();
 };
 
 void savecurrentmap() { save_world(cl->getclientmap()); };

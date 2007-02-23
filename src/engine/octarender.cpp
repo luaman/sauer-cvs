@@ -997,7 +997,11 @@ void allchanged(bool load)
     octarender();
     if(load) precacheall();
     setupmaterials();
-    if(load) genenvmaps();
+    if(load) 
+    {
+        entitiesinoctanodes();
+        genenvmaps();
+    };
     printcstats();
 };
 
