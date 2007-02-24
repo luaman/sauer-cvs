@@ -190,10 +190,10 @@ void showgui(char *name)
 
 void guiservers()
 {
-    extern const char *showservers(g3d_gui *cgui, bool firstpass);
+    extern const char *showservers(g3d_gui *cgui);
     if(cgui) 
     {
-        const char *name = showservers(cgui, cguifirstpass); 
+        const char *name = showservers(cgui);
         if(name)
         {
             s_sprintfd(connect)("connect %s", name);
