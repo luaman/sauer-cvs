@@ -336,7 +336,7 @@ struct gui : g3d_gui
             
             draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
             
-            if(hit && fieldpos>=0 && (lastmillis/250)&1) {
+            if(hit && fieldpos>=0 && (totalmillis/250)&1) {
                 int fx = curx + text_width(text, fieldpos);
                 color = 0xFF0000;
                 glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
@@ -574,10 +574,7 @@ struct gui : g3d_gui
 
     void start(int starttime, float basescale, int *tab, bool allowinput)
     {	
-        scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
-        
-        extern int paused;
-        if(paused) scale = basescale;
+        scale = basescale*min((totalmillis-starttime)/300.0f, 1.0f);
         
         passthrough = scale<basescale || !allowinput;
         curdepth = -1;

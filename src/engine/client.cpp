@@ -65,7 +65,7 @@ void connects(char *servername)
     {
         enet_host_connect(clienthost, &address, cc->numchannels()); 
         enet_host_flush(clienthost);
-        connecting = lastmillis;
+        connecting = totalmillis;
         connattempts = 0;
     }
     else
@@ -88,7 +88,7 @@ void disconnect(int onlyclean, int async)
         {
             enet_peer_disconnect(clienthost->peers, DISC_NONE);
             enet_host_flush(clienthost);
-            disconnecting = lastmillis;
+            disconnecting = totalmillis;
         };
         if(clienthost->peers->state != ENET_PEER_STATE_DISCONNECTED)
         {
@@ -144,8 +144,8 @@ void sendpackettoserv(ENetPacket *packet, int chan)
 
 void c2sinfo(dynent *d, int rate)                     // send update to the server
 {
-    if(lastmillis-lastupdate<rate) return;    // don't update faster than 30fps
-    lastupdate = lastmillis;
+    if(totalmillis-lastupdate<rate) return;    // don't update faster than 30fps
+    lastupdate = totalmillis;
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, 0);
     ucharbuf p(packet->data, packet->dataLength);
     bool reliable = false;
@@ -175,10 +175,10 @@ void gets2c()           // get updates from the server
 {
     ENetEvent event;
     if(!clienthost) return;
-    if(connecting && lastmillis/3000 > connecting/3000)
+    if(connecting && totalmillis/3000 > connecting/3000)
     {
         conoutf("attempting to connect...");
-        connecting = lastmillis;
+        connecting = totalmillis;
         ++connattempts; 
         if(connattempts > 3)
         {

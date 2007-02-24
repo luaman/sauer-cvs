@@ -36,7 +36,7 @@ static bool emit_particles()
     if(reflecting) return false;
     if(emit) return emit;
     int emitmillis = 1000/emitfps;
-    emit = (lastmillis-lastemitframe>emitmillis);
+    emit = (totalmillis-lastemitframe>emitmillis);
     return emit;
 };
 
@@ -487,7 +487,7 @@ void entity_particles()
     if(emit) 
     {
         int emitmillis = 1000/emitfps;
-        lastemitframe = lastmillis-(lastmillis%emitmillis);
+        lastemitframe = totalmillis-(totalmillis%emitmillis);
         emit = false;
     };
 

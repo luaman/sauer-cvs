@@ -29,7 +29,7 @@ void conline(const char *sf, bool highlight)        // add a line to the console
 {
     cline cl;
     cl.cref = conlines.length()>100 ? conlines.pop().cref : newstringbuf("");   // constrain the buffer size
-    cl.outtime = lastmillis;                        // for how long to keep line on screen
+    cl.outtime = totalmillis;                       // for how long to keep line on screen
     conlines.insert(0,cl);
     if(highlight)                                   // show line in a different colour, for chat etc.
     {
@@ -123,7 +123,7 @@ int renderconsole(int w, int h)                   // render buffer taking into a
     {
         int nd = 0;
         char *refs[ndraw];
-        loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-ndraw : lastmillis-conlines[i].outtime<20000)
+        loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-ndraw : totalmillis-conlines[i].outtime<20000)
         {
             refs[nd++] = conlines[i].cref;
             if(nd==ndraw) break;

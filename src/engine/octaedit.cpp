@@ -1388,7 +1388,7 @@ struct texturegui : g3d_callback {
 
     void showtextures(bool on)
     {
-        if(on != menuon && (menuon = on)) { menupos = menuinfrontofplayer(); menustart = lastmillis; };
+        if(on != menuon && (menuon = on)) { menupos = menuinfrontofplayer(); menustart = totalmillis; };
     };
 
     

@@ -17,7 +17,7 @@ struct scoreboard : g3d_callback
         if(!scoreson && on)
         {
             menupos = menuinfrontofplayer();
-            menustart = cl.lastmillis;
+            menustart = starttime();
         };
         scoreson = on;
     };

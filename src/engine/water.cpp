@@ -266,7 +266,7 @@ Shader *watershader = NULL, *waterreflectshader = NULL, *waterrefractshader = NU
 
 void setprojtexmatrix(Reflection &ref)
 {
-    if(ref.lastupdate==lastmillis)
+    if(ref.lastupdate==totalmillis)
     {
         GLfloat tm[16] = {0.5f, 0, 0, 0,
                           0, 0.5f, 0, 0,
@@ -347,7 +347,7 @@ void renderwater()
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || ref.lastused<lastmillis || ref.matsurfs.empty()) continue;
+        if(ref.height<0 || ref.lastused<totalmillis || ref.matsurfs.empty()) continue;
 
         if(waterreflect || waterrefract)
         {
@@ -477,7 +477,7 @@ void addreflection(materialsurface &m)
         else if(r.height==height) 
         {
             r.matsurfs.add(&m);
-            if(r.lastused==lastmillis) return;
+            if(r.lastused==totalmillis) return;
             ref = &r;
             break;
         }
@@ -485,7 +485,7 @@ void addreflection(materialsurface &m)
     };
     if(!ref)
     {
-        if(!oldest || oldest->lastused==lastmillis) return;
+        if(!oldest || oldest->lastused==totalmillis) return;
         ref = oldest;
     };
     if((waterreflect || waterrefract) && !ref->fb)
@@ -545,7 +545,7 @@ void addreflection(materialsurface &m)
     };
     if(ref->height!=height) ref->height = height;
     rplanes++;
-    ref->lastused = lastmillis;
+    ref->lastused = totalmillis;
     ref->matsurfs.setsizenodelete(0);
     ref->matsurfs.add(&m);
 };
@@ -593,7 +593,7 @@ void queryreflections()
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || ref.lastused<lastmillis || lastmillis-lastreflectframe<watermillis || ref.matsurfs.empty())
+        if(ref.height<0 || ref.lastused<totalmillis || totalmillis-lastreflectframe<watermillis || ref.matsurfs.empty())
         {
             ref.query = NULL;
             continue;
@@ -682,8 +682,8 @@ void drawreflections()
     if(editmode && showmat) return;
     if(!waterreflect && !waterrefract) return;
     int watermillis = 1000/reflectfps;
-    if(lastmillis-lastreflectframe<watermillis) return;
-    lastreflectframe = lastmillis-(lastmillis%watermillis);
+    if(totalmillis-lastreflectframe<watermillis) return;
+    lastreflectframe = totalmillis-(totalmillis%watermillis);
 
     static int lastdrawn = 0;
     int refs = 0, n = lastdrawn;
@@ -691,7 +691,7 @@ void drawreflections()
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[++n%MAXREFLECTIONS];
-        if(ref.height<0 || ref.lastused<lastmillis || ref.matsurfs.empty()) continue;
+        if(ref.height<0 || ref.lastused<totalmillis || ref.matsurfs.empty()) continue;
         if(hasOQ && oqfrags && oqwater && ref.query && checkquery(ref.query)) continue;
 
         bool hasbottom = true;
@@ -704,7 +704,7 @@ void drawreflections()
         if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
 
         refs++;
-        ref.lastupdate = lastmillis;
+        ref.lastupdate = totalmillis;
         lastdrawn = n;
 
         if(waterreflect)

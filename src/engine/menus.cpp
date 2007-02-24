@@ -151,7 +151,6 @@ void guifield(char *var, int *maxlength, char *onchange)
     };
 };
 
-
 void guilist(char *contents)
 {
     if(!cgui) return;
@@ -185,7 +184,7 @@ void showgui(char *name)
         loopi(pos) delete[] guistack.pop();
     };
     menutab = 1;
-    menustart = lastmillis;    
+    menustart = totalmillis;    
 };
 
 void guiservers()

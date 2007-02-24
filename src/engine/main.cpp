@@ -33,7 +33,7 @@ void fatal(char *s, char *o)    // failure exit
 SDL_Surface *screen = NULL;
 
 int curtime;
-int lastmillis = 0;
+int totalmillis = 0, lastmillis = 0;
 
 dynent *player = NULL;
 
@@ -459,10 +459,9 @@ int main(int argc, char **argv)
     {
         static int frames = 0;
         static float fps = 10.0;
-        static int curmillis = 0;
         int millis = SDL_GetTicks();
-        limitfps(millis, curmillis);
-        int elapsed = millis-curmillis;
+        limitfps(millis, totalmillis);
+        int elapsed = millis-totalmillis;
         curtime = elapsed*gamespeed/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
@@ -475,7 +474,7 @@ int main(int argc, char **argv)
         menuprocess();
 
         lastmillis += curtime;
-        curmillis = millis;
+        totalmillis = millis;
 
         checksleep(lastmillis);
 

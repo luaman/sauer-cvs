@@ -39,7 +39,7 @@ int resolverloop(void * data)
         SDL_LockMutex(resolvermutex);
         while(resolverqueries.empty()) SDL_CondWait(querycond, resolvermutex);
         rt->query = resolverqueries.pop();
-        rt->starttime = lastmillis;
+        rt->starttime = totalmillis;
         SDL_UnlockMutex(resolvermutex);
 
         ENetAddress address = { ENET_HOST_ANY, sv->serverinfoport() };
@@ -131,7 +131,7 @@ bool resolvercheck(const char **name, ENetAddress *address)
     else loopv(resolverthreads)
     {
         resolverthread &rt = resolverthreads[i];
-        if(rt.query && lastmillis - rt.starttime > RESOLVERLIMIT)        
+        if(rt.query && totalmillis - rt.starttime > RESOLVERLIMIT)        
         {
             resolverstop(rt);
             *name = rt.query;
@@ -231,12 +231,12 @@ void pingservers()
         serverinfo &si = servers[i];
         if(si.address.host == ENET_HOST_ANY) continue;
         ucharbuf p(ping, sizeof(ping));
-        putint(p, lastmillis);
+        putint(p, totalmillis);
         buf.data = ping;
         buf.dataLength = p.length();
         enet_socket_send(pingsock, &si.address, &buf, 1);
     };
-    lastinfo = lastmillis;
+    lastinfo = totalmillis;
 };
   
 void checkresolver()
@@ -292,7 +292,7 @@ void checkpings()
             if(addr.host == si.address.host)
             {
                 ucharbuf p(ping, len);
-                si.ping = lastmillis - getint(p);
+                si.ping = totalmillis - getint(p);
                 si.numplayers = getint(p);
                 int numattr = getint(p);
                 si.attr.setsize(0);
@@ -321,12 +321,12 @@ int sicompare(serverinfo *a, serverinfo *b)
 void refreshservers()
 {
     static int lastrefresh = 0;
-    if(lastrefresh==lastmillis) return;
-    lastrefresh = lastmillis;
+    if(lastrefresh==totalmillis) return;
+    lastrefresh = totalmillis;
 
     checkresolver();
     checkpings();
-    if(lastmillis - lastinfo >= 5000) pingservers();
+    if(totalmillis - lastinfo >= 5000) pingservers();
     servers.sort(sicompare);
     loopv(servers)
     {
@@ -343,9 +343,9 @@ void refreshservers()
     };
 };
 
-const char *showservers(g3d_gui *cgui, bool firstpass)
+const char *showservers(g3d_gui *cgui)
 {
-    if(firstpass) refreshservers();
+    refreshservers();
     const char *name = NULL;
     int maxmenu = 20;
     loopv(servers)
@@ -366,6 +366,7 @@ void updatefrommaster()
     else
     {
         resolverclear();
+        loopv(servers) delete[] servers[i].name;
         servers.setsize(0);
         execute((char *)reply);
     };

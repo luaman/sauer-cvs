@@ -220,6 +220,8 @@ struct g3d_callback
 {
     virtual ~g3d_callback() {};
 
+    int starttime() { extern int totalmillis; return totalmillis; };
+
     virtual void gui(g3d_gui &g, bool firstpass) = 0;
 };
 

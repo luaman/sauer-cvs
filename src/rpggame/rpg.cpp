@@ -77,7 +77,7 @@ struct rpgclient : igameclient, g3d_callback
         }
         else
         {
-            menutime = lastmillis;
+            menutime = starttime();
             menupos  = menuinfrontofplayer();        
         };
     };
