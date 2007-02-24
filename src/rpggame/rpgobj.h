@@ -115,7 +115,7 @@ struct rpgobj : g3d_callback
     {
         moveplayer(ent, 10, true, curtime);
         float dist = ent->o.dist(os.cl.player1.o);
-        if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = os.cl.lastmillis;
+        if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
         else if(dist>96) menutime = 0;
     };
 
