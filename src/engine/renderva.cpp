@@ -23,7 +23,7 @@ int isvisiblesphere(float rad, const vec &cv)
         if(dist < rad) v = VFC_PART_VISIBLE;
     };
 
-    dist = vfcP[0].dist(cv) - vfcDfog;
+    dist -= vfcDfog;
     if(dist > rad) return VFC_FOGGED;  //VFC_NOT_VISIBLE;    // culling when fog is closer than size of world results in HOM
     if(dist > -rad) v = VFC_PART_VISIBLE;
 
@@ -106,21 +106,17 @@ void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
     };
 };
 
-void setvfcP(float pyaw, float ppitch, const vec &camera)
+void setvfcP(float yaw, float pitch, const vec &camera)
 {
-    float vpxo = 90.0 - vfcfov / 2.0;
-    float vpyo = 90.0 - (vfcfov * float(vfch) / float(vfcw)) / 2;
-    float yaw = pyaw * RAD;
-    float yawp = (pyaw + vpxo) * RAD;
-    float yawm = (pyaw - vpxo) * RAD;
-    float pitch = ppitch * RAD;
-    float pitchp = (ppitch + vpyo) * RAD;
-    float pitchm = (ppitch - vpyo) * RAD;
-    vfcP[0].toplane(vec(yaw,  pitch), camera);  // back/far plane
-    vfcP[1].toplane(vec(yawp, pitch), camera);  // left plane
-    vfcP[2].toplane(vec(yawm, pitch), camera);  // right plane
-    vfcP[3].toplane(vec(yaw,  pitchp), camera); // top plane
-    vfcP[4].toplane(vec(yaw,  pitchm), camera); // bottom plane
+    float yawd = (90.0f - vfcfov/2.0f) * RAD;
+    float pitchd = (90.0f - (vfcfov*float(vfch)/float(vfcw))/2.0f) * RAD;
+    yaw *= RAD;
+    pitch *= RAD;
+    vfcP[0].toplane(vec(yaw + yawd, pitch), camera);   // left plane
+    vfcP[1].toplane(vec(yaw - yawd, pitch), camera);   // right plane
+    vfcP[2].toplane(vec(yaw, pitch + pitchd), camera); // top plane
+    vfcP[3].toplane(vec(yaw, pitch - pitchd), camera); // bottom plane
+    vfcP[4].toplane(vec(yaw, pitch), camera);          // near/far planes
     vfcDfog = getvar("fog");
 };
 
