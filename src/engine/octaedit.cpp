@@ -1,48 +1,47 @@
 #include "pch.h"
 #include "engine.h"
 
-void boxs(int orient, int x, int y, int xs, int ys, int z)
+void boxs(int orient, vec o, const vec &s)
 {
-    int d = dimension(orient);
-    float f = (dimcoord(orient)>0 ? 0.2f : -0.2f);
-    vec m(ivec(d, x,    y,    z).v);
-    vec n(ivec(d, x+xs, y,    z).v);
-    vec o(ivec(d, x+xs, y+ys, z).v);
-    vec p(ivec(d, x,    y+ys, z).v);
-
-    extern int outline;
-    if(outline)
-    {
-        m[d] += f;
-        n[d] += f;
-        o[d] += f;
-        p[d] += f;
-    };
+    int   d = dimension(orient),
+          dc= dimcoord(orient);
+    extern bool outline;
+    float f = !outline ? 0 : (dc>0 ? 0.2f : -0.2f);
+    o[D[d]] += float(dc) * s[D[d]] + f,
 
     glBegin(GL_POLYGON);
 
-    glVertex3f(m.x, m.y, m.z);
-    glVertex3f(n.x, n.y, n.z);
-    glVertex3f(o.x, o.y, o.z);
-    glVertex3f(p.x, p.y, p.z);
+    glVertex3fv(o.v); o[R[d]] += s[R[d]];
+    glVertex3fv(o.v); o[C[d]] += s[C[d]];
+    glVertex3fv(o.v); o[R[d]] -= s[R[d]];
+    glVertex3fv(o.v);
 
     glEnd();
 };
 
-void boxs3D(const ivec &o, const ivec &s, int g)
+void boxs3D(const vec &o, vec s, int g)
 {
+    s.mul(g);
     loopi(6)
-    {
-        int d = dimension(i), dc = dimcoord(i);
-        boxs(i, o[R[d]], o[C[d]], g*s[R[d]], g*s[C[d]], o[d]+dc*g*s[d]);
-    };
+        boxs(i, o, s);
 };
 
-void boxsgrid(const ivec &o, const ivec &s, int g, int orient)
+void boxsgrid(int orient, vec o, vec s, int g)
 {
-    int d = dimension(orient), dc = dimcoord(orient);
-    loop(x, s[R[d]]) loop(y, s[C[d]])
-        boxs(orient, o[R[d]]+x*g, o[C[d]]+y*g, g, g, o[d]+dc*g*s[d]);
+    int d = dimension(orient);
+    float ox = o[R[d]],
+          oy = o[C[d]],
+          xs = s[R[d]],
+          ys = s[C[d]];
+
+    s[R[d]] = s[C[d]] = 1;
+    s.mul(g);
+
+    loop(x, xs) loop(y, ys) {
+        o[R[d]] = x*g + ox;
+        o[C[d]] = y*g + oy;
+        boxs(orient, o, s);
+    }
 };
 
 selinfo sel = { 0 }, lastsel;
@@ -60,7 +59,7 @@ ushort *htex = NULL; // textures for heightmap
 ushort htexture = 0; // single texture for heightmap
 
 extern int entmoving;
-extern void entdrag(const vec &ray, int d, ivec &dest, bool first);
+extern void entdrag(const vec &ray, int d, vec &dest, bool first);
 
 VARF(dragging, 0, 0, 1,
     if(!dragging || cor[0]<0) return;
@@ -121,7 +120,7 @@ VARF(gridpower, 2, 3, VVEC_INT-1,
     cancelsel();
 });
 
-
+VAR(passthroughenthover, 0, 0, 1);
 VAR(passthroughcube, 0, 0, 1);
 VAR(passthroughsel, 0, 0, 1);
 VAR(editing,0,0,1);
@@ -285,12 +284,17 @@ void cursorupdate()
         target[i] = max(min(target[i], hdr.worldsize), 0);
     vec ray(target);
     ray.sub(player->o).normalize();
-    int g2 = gridsize/2;
-    int d = dimension(sel.orient),
-        od = dimension(orient),
-        odc= dimcoord(orient);
+    int g2  = gridsize/2,
+        d   = dimension(sel.orient),
+        od  = dimension(orient),
+        odc = dimcoord(orient),
+        n   = -1;
     ivec e;
-               
+    extern int entselradius;
+    vec eo(-entselradius), es(entselradius*2);
+    bool enthover = false;
+    float edist = -1;
+           
     if(moving)
     {       
         static vec v, handle;
@@ -309,7 +313,14 @@ void cursorupdate()
     else 
     if(entmoving)
     {
-        entdrag(ray, d, e, false);
+        entdrag(ray, dimension(orient), eo, false);
+        eo.sub(entselradius);
+    }
+    else if(!passthroughenthover &&
+            (n = rayent(player->o, ray)) >= 0 &&
+            rayrectintersect(eo.add(et->getents()[n]->o), es, player->o, ray, edist, orient)) 
+    {
+       enthover = true;
     }
     else
     {  
@@ -331,7 +342,7 @@ void cursorupdate()
         };
 
         if(havesel && !passthroughsel)     // now try selecting the selection
-            if(hit = rayrectintersect(sel.o, ivec(sel.s).mul(sel.grid), player->o, ray, sdist, orient))
+            if(hit = rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
                 wdist = min(sdist, wdist);  // and choose the nearest of the two
 
         v = ray;
@@ -341,7 +352,7 @@ void cursorupdate()
         lookupcube(w.x, w.y, w.z);
         int mag = lusize / gridsize;
         normalizelookupcube(w.x, w.y, w.z);
-        if(!hit) rayrectintersect(lu, ivec(gridsize,gridsize,gridsize), player->o, ray, t=0, orient); // just getting orient     
+        if(!hit) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
         cur = lu;
         cor = w;
         cor.div(g2);
@@ -388,7 +399,7 @@ void cursorupdate()
 
         sel.corner = (cor[R[d]]-lu[R[d]]/g2)+(cor[C[d]]-lu[C[d]]/g2)*2;
         selchildcount = 0;
-        countselchild(worldroot, vec(0, 0, 0), hdr.worldsize/2);
+        countselchild(worldroot, vec(0), hdr.worldsize/2);
         if(mag>1 && selchildcount==1) selchildcount = -mag;
     };
     
@@ -396,39 +407,45 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     
     // cursors    
-    if(entmoving)
+    if(enthover || entmoving)
     {
-        glColor3ub(40,40,40);
-        loop(x, 4) loop(y, 4)
-            boxs(sel.orient, e[R[d]]+(x-2)*sel.grid, e[C[d]]+(y-2)*sel.grid, sel.grid, sel.grid, e[d]+dimcoord(opposite(sel.orient))*sel.us(d));
-    };
-
-    if(!moving)
+        glColor3ub(200,30,0);
+        boxs(orient, eo, es);
+        glColor3ub(30,30,30);        
+        boxs3D(eo, es, 1);
+    }
+    else if(!moving)
     {
         glColor3ub(120,120,120);
-        boxs(orient, lu[R[od]], lu[C[od]], lusize, lusize, lu[od]+dimcoord(orient)*lusize);
+        boxs(orient, lu.tovec(), vec(lusize));
     };
 
     // selections
     if(hmap != NULL)
     {
-        glColor3ub(0,200,0);
         d = dimension(sel.orient);
-        loop(x, 2) loop(y, 2) // corners
-            boxs(sel.orient, sel.o[R[d]]+x*(sel.us(R[d])-sel.grid), sel.o[C[d]]+y*(sel.us(C[d])-sel.grid), sel.grid, sel.grid, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
-        boxs3D(sel.o, sel.s, sel.grid);
+        glColor3ub(0,200,0);
+        boxs3D(sel.o.tovec(), sel.s.tovec(), sel.grid);
+        glColor3ub(20,20,20);   // grid
+        boxsgrid(sel.orient, sel.o.tovec(), sel.s.tovec(), sel.grid);
     }
     else if(havesel)
     {
         d = dimension(sel.orient);
         glColor3ub(20,20,20);   // grid
-        boxsgrid(sel.o, sel.s, sel.grid, sel.orient);
+        boxsgrid(sel.orient, sel.o.tovec(), sel.s.tovec(), sel.grid);
         glColor3ub(200,0,0);    // 0 reference
-        boxs(sel.orient, sel.o[R[d]]-4, sel.o[C[d]]-4, 8, 8, sel.o[d]);
+        boxs3D(sel.o.tovec().sub(1), vec(2), 1);
         glColor3ub(200,200,200);// 2D selection box
-        boxs(sel.orient, sel.o[R[d]]+sel.cx*g2, sel.o[C[d]]+sel.cy*g2, sel.cxs*g2, sel.cys*g2, sel.o[d]+dimcoord(sel.orient)*sel.us(d));
+        vec co(sel.o.v), cs(sel.s.v);
+        co[R[d]] += sel.cx*g2;
+        co[C[d]] += sel.cy*g2;
+        cs[R[d]]  = sel.cxs*g2;
+        cs[C[d]]  = sel.cys*g2;       
+        cs[D[d]] *= gridsize;
+        boxs(sel.orient, co, cs);
         glColor3ub(0,0,120);     // 3D selection box
-        boxs3D(sel.o, sel.s, sel.grid);
+        boxs3D(sel.o.tovec(), sel.s.tovec(), sel.grid);
     };
     
     glDisable(GL_BLEND);
@@ -475,7 +492,7 @@ void changed(const block3 &sel)
     {
         b.o[i] -= 1;
         b.s[i] += 2;
-        readychanges(b, worldroot, vec(0, 0, 0), hdr.worldsize/2);
+        readychanges(b, worldroot, vec(0), hdr.worldsize/2);
         b.o[i] += 1;
         b.s[i] -= 2;
     };
@@ -940,6 +957,24 @@ void edithmap(int dir)
     cubifyheightmap(b);
     setheightmap(b);
 };
+
+void smoothmap()
+{    
+    if(multiplayer() || hmap == NULL) return;
+    int d = dimension(sel.orient);
+    int w = sel.s[R[d]];
+    int l = sel.s[C[d]];
+    for(int x=1; x<w; x++) 
+        for(int y=1; y<l; y++) 
+        {
+            int i = x+(y*w);
+            hmap[i] = (hmap[i+1] + hmap[i-1] + hmap[i] + hmap[i+w] + hmap[i-w]) / 5;    
+        };
+    cubifyheightmap(sel);
+    setheightmap(sel);
+};
+
+COMMAND(smoothmap, "");
 
 ///////////// main cube edit ////////////////
 

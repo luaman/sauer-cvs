@@ -147,6 +147,7 @@ char *entname(entity &e)
 };
 
 extern selinfo sel;
+extern int orient;
 extern bool havesel, selectcorners;
 extern bool undogoahead;
 int efocus = -1;
@@ -265,7 +266,7 @@ VAR(entselsnap, 0, 0, 1);
 
 extern void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, vec &dest, bool first);
 
-void entdrag(const vec &ray, int d, ivec &dest, bool first)
+void entdrag(const vec &ray, int d, vec &dest, bool first)
 {
     if(!haveselent()) return;
 
@@ -274,10 +275,7 @@ void entdrag(const vec &ray, int d, ivec &dest, bool first)
 
     entfocus(entgroup.last(),        
         editmoveplane(e.o, ray, d, e.o[D[d]], handle, v, first);
-        dest = v;
-        int z = dest[d]&(~(sel.grid-1));
-        dest.add(sel.grid/2).mask(~(sel.grid-1));
-        dest[d] = z;
+        dest = e.o;
         r = (entselsnap ? dest[R[d]] : v[R[d]]) - e.o[R[d]];
         c = (entselsnap ? dest[C[d]] : v[C[d]]) - e.o[C[d]];       
     );
@@ -302,9 +300,9 @@ VARF(entmoving, 0, 0, 1,
         vec ray(worldpos); 
         ray.sub(player->o);
         int id = rayent(player->o, ray);
-        ivec t;
+        vec t;
         if(id >= 0 && enttoggle(id))
-            entdrag(ray, dimension(sel.orient), t, true);
+            entdrag(ray, dimension(orient), t, true);
         else 
             entmoving = 0;
     };
@@ -313,8 +311,8 @@ VARF(entmoving, 0, 0, 1,
 void entpush(int *dir)
 {
     if(noedit(true)) return;
-    int d = dimension(sel.orient);
-    int s = dimcoord(sel.orient) ? -*dir : *dir;
+    int d = dimension(orient);
+    int s = dimcoord(orient) ? -*dir : *dir;
     if(entmoving) 
     {
         groupeditpure(e.o[d] += float(s*sel.grid)); // editdrag supplies the undo
