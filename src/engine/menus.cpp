@@ -7,6 +7,7 @@ static vec menupos;
 static int menustart = 0;
 static int menutab = 1;
 static g3d_gui *cgui = NULL;
+static bool cguifirstpass;
 
 static hashtable<char *, char *> guis;
 static vector<char *> guistack;
@@ -189,10 +190,10 @@ void showgui(char *name)
 
 void guiservers()
 {
-    extern const char *showservers(g3d_gui *cgui);
+    extern const char *showservers(g3d_gui *cgui, bool firstpass);
     if(cgui) 
     {
-        const char *name = showservers(cgui); 
+        const char *name = showservers(cgui, cguifirstpass); 
         if(name)
         {
             s_sprintfd(connect)("connect %s", name);
@@ -228,6 +229,7 @@ static struct mainmenucallback : g3d_callback
         char **contents = guis.access(name);
         if(!contents) return;
 		cgui = &g;
+        cguifirstpass = firstpass;
         cgui->start(menustart, 0.03f, &menutab);
 		guitab(name);		
 		execute(*contents);

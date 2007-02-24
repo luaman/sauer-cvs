@@ -343,9 +343,9 @@ void refreshservers()
     };
 };
 
-const char *showservers(g3d_gui *cgui)
+const char *showservers(g3d_gui *cgui, bool firstpass)
 {
-    refreshservers();
+    if(firstpass) refreshservers();
     const char *name = NULL;
     int maxmenu = 20;
     loopv(servers)
