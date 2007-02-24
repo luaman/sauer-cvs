@@ -14,7 +14,7 @@ bool raysphereintersect(vec c, float radius, const vec &o, const vec &ray, float
     return true;
 };
 
-bool rayrectintersect(const ivec &b, const ivec &s, const vec &o, const vec &ray, float &dist, int &orient)
+bool rayrectintersect(const vec &b, const vec &s, const vec &o, const vec &ray, float &dist, int &orient)
 {
     loopi(6)
     {

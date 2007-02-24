@@ -8,6 +8,8 @@ struct vec
     };
 
     vec() {};
+    vec(int a) : x(a), y(a), z(a) {}; 
+    vec(float a) : x(a), y(a), z(a) {}; 
     vec(float a, float b, float c) : x(a), y(b), z(c) {};
     vec(int v[3]) : x(v[0]), y(v[1]), z(v[2]) {};
     vec(float *v) : x(v[0]), y(v[1]), z(v[2]) {};
@@ -296,7 +298,7 @@ struct bvec
 };
 
 extern bool raysphereintersect(vec c, float radius, const vec &o, const vec &ray, float &dist);
-extern bool rayrectintersect(const ivec &b, const ivec &s, const vec &o, const vec &ray, float &dist, int &orient);
+extern bool rayrectintersect(const vec &b, const vec &s, const vec &o, const vec &ray, float &dist, int &orient);
 
 enum { INTERSECT_NONE, INTERSECT_OVERLAP, INTERSECT_BEFORESTART, INTERSECT_MIDDLE, INTERSECT_AFTEREND };
 extern int intersect_plane_line(vec &linestart, vec &linestop, vec &planeorig, vec &planenormal, vec &intersectionpoint);
