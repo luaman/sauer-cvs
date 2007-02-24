@@ -575,6 +575,10 @@ struct gui : g3d_gui
     void start(int starttime, float basescale, int *tab, bool allowinput)
     {	
         scale = basescale*min((lastmillis-starttime)/300.0f, 1.0f);
+        
+        extern int paused;
+        if(paused) scale = basescale;
+        
         passthrough = scale<basescale || !allowinput;
         curdepth = -1;
         curlist = -1;

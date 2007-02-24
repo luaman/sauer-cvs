@@ -1,6 +1,4 @@
 
-- server menu doesn't select right items... sorting?
-- make menus work when game is paused
 - make people that do teamkills/damage wait longer?
 
 - sound entities | http://freesound.iua.upf.edu/
