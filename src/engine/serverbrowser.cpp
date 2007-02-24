@@ -192,7 +192,7 @@ enum { UNRESOLVED = 0, RESOLVING, RESOLVED };
 
 struct serverinfo
 {
-    string name;
+    char *name; //NOTE if string then threading+sorting lead to overwriten values
     string full;
     string map;
     string sdesc;
@@ -211,7 +211,7 @@ void addserver(char *servername)
 {
     loopv(servers) if(!strcmp(servers[i].name, servername)) return;
     serverinfo &si = servers.add();
-    s_strcpy(si.name, servername);
+    si.name = newstring(servername);
     si.full[0] = 0;
     si.ping = 999;
     si.map[0] = 0;
