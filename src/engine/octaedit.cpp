@@ -1366,13 +1366,13 @@ void editmat(char *name)
 
 COMMAND(editmat, "s");
 
-
 //Work in progress...
 #define TEXTURE_WIDTH 10
 #define TEXTURE_HEIGHT 7
 extern int menudistance;
 
-struct texturegui : g3d_callback {
+struct texturegui : g3d_callback 
+{
     bool menuon;
     vec menupos;
     int menustart;
@@ -1424,21 +1424,20 @@ struct texturegui : g3d_callback {
 
     void showtextures(bool on)
     {
-        if(on != menuon && (menuon = on)) { menupos = menuinfrontofplayer(); menustart = totalmillis; };
+        if(on != menuon && (menuon = on)) { menupos = menuinfrontofplayer(); menustart = starttime(); };
     };
 
-    
     void show()
-    {   if(menuon) {
-            filltexlist();
-            if(!editmode || camera1->o.dist(menupos) > menudistance*3) menuon = false;
-            else g3d_addgui(this, menupos); //follow?
-        }
+    {   
+        if(!menuon) return;
+        filltexlist();
+        if(!editmode || camera1->o.dist(menupos) > menudistance*3) menuon = false;
+        else g3d_addgui(this, menupos); //follow?
     };
-    
 } gui;
 
-void g3d_texturemenu() { 
+void g3d_texturemenu() 
+{ 
     gui.show(); 
 };
 
@@ -1446,9 +1445,6 @@ void showtexgui(int *n) { gui.showtextures(((*n==0) ? !gui.menuon : (*n==1)) && 
 
 // 0/noargs = toggle, 1 = on, other = off - will autoclose if too far away or exit editmode
 COMMAND(showtexgui, "i");
-
-
-
 
 void render_texture_panel(int w, int h)
 {

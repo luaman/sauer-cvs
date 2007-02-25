@@ -328,7 +328,8 @@ struct gui : g3d_gui
                            
             bool editing = fieldref && (fieldtext==text);
             notextureshader->set();
-			glColor4ub(0xFF, editing?0x80:0xFF, editing?0x80:0xFF, 0xFF);
+			if(editing) glColor3f(1, 0.5f, 0.5f);
+            else glColor3fv(light.v);
 			glBegin(GL_LINE_LOOP);
             rect_(curx, cury, w, FONTH);
 			glEnd();
@@ -336,10 +337,11 @@ struct gui : g3d_gui
             
             draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
             
-            if(hit && fieldpos>=0 && (totalmillis/250)&1) {
+            if(hit && fieldpos>=0 && (totalmillis/250)&1) 
+            {
                 int fx = curx + text_width(text, fieldpos);
                 color = 0xFF0000;
-                glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0xFF);
+                glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
                 notextureshader->set();
                 glBegin(GL_QUADS);
                 rect_(fx-2, cury, 4, FONTH);
@@ -394,19 +396,22 @@ struct gui : g3d_gui
         {
             glDisable(GL_TEXTURE_2D);
             notextureshader->set();
-            glColor4ub(0x00, 0x00, 0x00, 0xC0);
+            glColor4f(0, 0, 0, 0.75f);
             glBegin(GL_QUADS);
             rect_(x+SHADOW, y+SHADOW, xs, ys);
             glEnd();
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();	
         };
-        if(tiled) {
+        if(tiled) 
+        {
             static Shader *rgbonlyshader = NULL;
             if(!rgbonlyshader) rgbonlyshader = lookupshaderbyname("rgbonly");
             rgbonlyshader->set();
         };
-        glColor4ub(0xFF, hit?0x80:0xFF, hit?0x80:0xFF, 0xFF);
+        if(hit) glColor3f(1, 0.5f, 0.5f);
+        else if(overlaid) glColor3f(1, 1, 1);
+        else glColor3fv(light.v);
         glBindTexture(GL_TEXTURE_2D, t->gl);
         glBegin(GL_QUADS);
         glTexCoord2f(0.0f,    0.0f);    glVertex2f(x,    y);
@@ -418,7 +423,7 @@ struct gui : g3d_gui
         if(overlaid) 
         {
             if(!overlaytex) overlaytex = textureload("data/guioverlay.png");
-            glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
+            glColor3fv(light.v);
             glBindTexture(GL_TEXTURE_2D, overlaytex->gl);
             glBegin(GL_QUADS);
             rect_(x, y, xs, ys, 0);
@@ -436,13 +441,13 @@ struct gui : g3d_gui
             glBegin(GL_QUADS);
             if(percent < 0.99f) 
             {
-                glColor4ub(0xFF, 0xFF, 0xFF, 0x60);
+                glColor4f(light.x, light.y, light.z, 0.375f);
                 if(ishorizontal()) 
                     rect_(curx + FONTH/2 - size, cury, size*2, ysize, 0);
                 else
                     rect_(curx, cury + FONTH/2 - size, xsize, size*2, 1);
             };
-            glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
+            glColor3fv(light.v);
             if(ishorizontal()) 
                 rect_(curx + FONTH/2 - size, cury + ysize*(1-percent), size*2, ysize*percent, 0);
             else 
