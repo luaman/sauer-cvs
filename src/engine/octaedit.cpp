@@ -408,10 +408,12 @@ void cursorupdate()
     // cursors    
     if(hovering || entmoving)
     {
-        glColor3ub(200,30,0);
-        boxs(orient, eo, es);
-        glColor3ub(30,30,30);        
+        glColor3ub(0, 40, 0);        
         boxs3D(eo, es, 1);
+        glColor3ub(150,0,0);
+        glLineWidth(5);
+        boxs(orient, eo, es);
+        glLineWidth(1);
     }
     else if(!moving)
     {
