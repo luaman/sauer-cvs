@@ -118,7 +118,7 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
             if(!e.inoctanode || &e==t) continue;
             if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED) && (mode&RAY_ENTS)!=RAY_ENTS) continue;
             if(!mmintersect(e, o, ray, radius, mode, f)) continue;
-            if(f<dist) { hitentdist = dist = f; hitent = oc->mapmodels[i]; };
+            if(f<dist && f>0) { hitentdist = dist = f; hitent = oc->mapmodels[i]; };
         };
     if((mode&RAY_ENTS)==RAY_ENTS)
         loopv(oc->other) if(!last || last->other.find(oc->other[i])<0)
@@ -126,7 +126,7 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
             extentity &e = *ents[oc->other[i]];
             if(!e.inoctanode || &e==t) continue;
             if(!raysphereintersect(e.o, entselradius, o, ray, f)) continue;
-            if(f<dist) { hitentdist = dist = f; hitent = oc->other[i]; };
+            if(f<dist && f>0) { hitentdist = dist = f; hitent = oc->other[i]; };
         };
     return dist;
 };
