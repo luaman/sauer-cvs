@@ -723,7 +723,7 @@ VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
 VARP(crosshairfx, 0, 1, 1);
 
-extern int closestent();
+extern int enthover;
 
 const char *entline()
 {
@@ -736,7 +736,7 @@ const char *entline()
         bool implicit = !haveselent();
         int s;
         if(implicit)
-            s = closestent();
+            s = enthover;
         else
             s = entgroup[0];
         if(s>=0)

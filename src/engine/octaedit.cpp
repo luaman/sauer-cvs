@@ -289,14 +289,16 @@ void cursorupdate()
         od  = dimension(orient),
         odc = dimcoord(orient),
         n   = -1;
-    ivec e;
-    extern int entselradius;
-    vec eo(-entselradius), es(entselradius*2);
-    bool enthover = false;
+
+    extern int entselradius, enthover, entselsnap, efocus;
+    vec eo(-entselradius), es(entselradius*2);   
+    efocus   = entgroup.empty() ? -1 : entgroup.last();
+    enthover = -1;
     float edist = -1;
            
     if(moving)
     {       
+        ivec e;
         static vec v, handle;
         editmoveplane(sel.o.tovec(), ray, od, sel.o[D[od]]+odc*sel.grid*sel.s[D[od]], handle, v, !havesel);
         if(!havesel)
@@ -315,12 +317,18 @@ void cursorupdate()
     {
         entdrag(ray, dimension(orient), eo, false);
         eo.sub(entselradius);
+        if(entselsnap)
+            es = vec(gridsize);
     }
     else if(!passthroughenthover &&
             (n = rayent(player->o, ray)) >= 0 &&
             rayrectintersect(eo.add(et->getents()[n]->o), es, player->o, ray, edist, orient)) 
     {
-       enthover = true;
+       efocus = enthover = n;
+       if(!havesel) {
+           selchildcount = 0;
+           sel.s = vec(0);
+       }
     }
     else
     {  
@@ -407,7 +415,7 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     
     // cursors    
-    if(enthover || entmoving)
+    if(enthover>0 || entmoving)
     {
         glColor3ub(200,30,0);
         boxs(orient, eo, es);
@@ -847,7 +855,7 @@ void createheightmap()
 
 void getheightmap()
 {
-    if(noedit() || multiplayer() || haveselent()) return;
+    if(noedit() || multiplayer() || !havesel) return;
     createheightmap();
 };
 

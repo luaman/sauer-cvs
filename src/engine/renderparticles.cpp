@@ -480,7 +480,7 @@ static void makeparticles(entity &e)
     };
 };
 
-extern int closestent();
+extern int enthover;
 
 void entity_particles()
 {
@@ -501,7 +501,7 @@ void entity_particles()
     }
     else // show sparkly thingies for map entities in edit mode
     {
-        int s = haveselent() ? -1 : closestent();
+        int s = haveselent() ? -1 : enthover;
         loopv(ents)
         {
             entity &e = *ents[i];
