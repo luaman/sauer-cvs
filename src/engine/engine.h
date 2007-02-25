@@ -143,7 +143,6 @@ extern void mincubeface(cube &cu, int orient, const ivec &o, int size, const mer
 // ents
 extern char *entname(entity &e);
 extern bool haveselent();
-extern int rayent(const vec &o, vec &ray);
 extern void copyundoents(undoblock &d, undoblock &s);
 extern void pasteundoents(undoblock &u);
 

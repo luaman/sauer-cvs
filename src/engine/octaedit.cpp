@@ -59,7 +59,6 @@ ushort *htex = NULL; // textures for heightmap
 ushort htexture = 0; // single texture for heightmap
 
 extern int entmoving;
-extern void entdrag(const vec &ray, int d, vec &dest, bool first);
 
 VARF(dragging, 0, 0, 1,
     if(!dragging || cor[0]<0) return;
@@ -120,7 +119,6 @@ VARF(gridpower, 2, 3, VVEC_INT-1,
     cancelsel();
 });
 
-VAR(passthroughenthover, 0, 0, 1);
 VAR(passthroughcube, 0, 0, 1);
 VAR(passthroughsel, 0, 0, 1);
 VAR(editing,0,0,1);
@@ -275,6 +273,9 @@ void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, 
     };
 };
 
+extern void entdrag(const vec &ray, vec &eo, vec &es);
+extern bool hoveringonent(const vec &o, const vec &ray, vec &eo, vec &es);
+
 void cursorupdate()
 {
     if(sel.grid == 0) sel.grid = gridsize;
@@ -287,14 +288,10 @@ void cursorupdate()
     int g2  = gridsize/2,
         d   = dimension(sel.orient),
         od  = dimension(orient),
-        odc = dimcoord(orient),
-        n   = -1;
+        odc = dimcoord(orient);
 
-    extern int entselradius, enthover, entselsnap, efocus;
-    vec eo(-entselradius), es(entselradius*2);   
-    efocus   = entgroup.empty() ? -1 : entgroup.last();
-    enthover = -1;
-    float edist = -1;
+    vec eo, es;
+    bool hovering = false;
            
     if(moving)
     {       
@@ -315,16 +312,10 @@ void cursorupdate()
     else 
     if(entmoving)
     {
-        entdrag(ray, dimension(orient), eo, false);
-        eo.sub(entselradius);
-        if(entselsnap)
-            es = vec(gridsize);
+        entdrag(ray, eo, es);       
     }
-    else if(!passthroughenthover &&
-            (n = rayent(player->o, ray)) >= 0 &&
-            rayrectintersect(eo.add(et->getents()[n]->o), es, player->o, ray, edist, orient)) 
+    else if(hovering = hoveringonent(player->o, ray, eo, es))
     {
-       efocus = enthover = n;
        if(!havesel) {
            selchildcount = 0;
            sel.s = vec(0);
@@ -415,7 +406,7 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     
     // cursors    
-    if(enthover>0 || entmoving)
+    if(hovering || entmoving)
     {
         glColor3ub(200,30,0);
         boxs(orient, eo, es);

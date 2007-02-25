@@ -131,9 +131,8 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
     return dist;
 };
 
-int rayent(const vec &o, vec &ray)
+int rayent(const vec &o, const vec &ray)
 {
-    ray.normalize();
     hitent = -1;
     float d = raycube(o, ray, hitentdist = 1e20f, RAY_ENTS | RAY_POLY);
     if(hitentdist == d)

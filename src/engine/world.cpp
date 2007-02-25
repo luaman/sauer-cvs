@@ -248,50 +248,82 @@ VAR(entselsnap, 0, 0, 1);
 
 extern void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, vec &dest, bool first);
 
-void entdrag(const vec &ray, int d, vec &dest, bool first)
+bool initentdragging = true;
+
+void entdrag(const vec &ray, vec &eo, vec &es)
 {
     if(!haveselent()) return;
 
     float r = 0, c = 0;
     static vec v, handle;
+    int d = dimension(orient),
+        dc= dimcoord(orient);
 
     entfocus(entgroup.last(),        
-        editmoveplane(e.o, ray, d, e.o[D[d]], handle, v, first);
-        dest = e.o;
+        editmoveplane(e.o, ray, d, e.o[D[d]] + (dc?entselradius:-entselradius), handle, v, initentdragging);
+        
+        eo = e.o;
+        eo.sub(entselradius);
+        es = (entselsnap ? vec(sel.grid) : entselradius * 2);
+
         ivec g(v);
         int z = g[d]&(~(sel.grid-1));
         g.add(sel.grid/2).mask(~(sel.grid-1));
         g[d] = z;
+        
         r = (entselsnap ? g[R[d]] : v[R[d]]) - e.o[R[d]];
         c = (entselsnap ? g[C[d]] : v[C[d]]) - e.o[C[d]];       
     );
 
-    if(first) makeundoent();
-    groupeditpure(e.o[R[d]] += r; e.o[C[d]] += c);   
+    if(initentdragging) makeundoent();
+    groupeditpure(e.o[R[d]] += r; e.o[C[d]] += c);
+    initentdragging = false;
 };
 
-bool enttoggle(int id)
+bool entadd(int id)
 {
     int i = entgroup.find(id);
     if(i < 0)
         entgroup.add(id);
-    else
-        entgroup.remove(i);
     return i < 0;
+}
+
+bool enttoggle(int id)
+{
+    bool remove;
+    if(remove = !entadd(id))
+        entgroup.removeobj(id);
+    return !remove;
 };
 
-VARF(entmoving, 0, 0, 1,
-    if(entmoving == 1)
-    {
-        vec ray(worldpos); 
-        ray.sub(player->o);
-        int id = rayent(player->o, ray);
-        vec t;
-        if(id >= 0 && enttoggle(id))
-            entdrag(ray, dimension(orient), t, true);
-        else 
-            entmoving = 0;
-    };
+VAR(passthroughent, 0, 0, 1);
+extern int rayent(const vec &o, const vec &ray);
+
+bool hoveringonent(const vec &o, const vec &ray, vec &eo, vec &es)
+{
+    if(!passthroughent) 
+        entfocus(enthover = rayent(o, ray),
+            float dist = 0;
+            eo = e.o;
+            es = vec(entselradius*2);
+            if(rayrectintersect(eo.sub(entselradius), es, o, ray, dist, orient))
+                return true;
+        );
+
+    efocus   = entgroup.empty() ? -1 : entgroup.last();
+    enthover = -1;
+    return false;
+}
+
+VARF(entmoving, 0, 0, 2,
+    if(enthover < 0)
+        entmoving = 0;
+    else if(entmoving == 1)
+        entmoving = enttoggle(enthover);
+    else if(entmoving == 2)
+        entadd(enthover);
+    if(entmoving > 0)
+        initentdragging = true;
 );
 
 void entpush(int *dir)
