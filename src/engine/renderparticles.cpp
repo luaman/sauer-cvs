@@ -487,7 +487,7 @@ void entity_particles()
     if(emit) 
     {
         int emitmillis = 1000/emitfps;
-        lastemitframe = lastmillis-(totalmillis%emitmillis);
+        lastemitframe = lastmillis-(lastmillis%emitmillis);
         emit = false;
     };
 
