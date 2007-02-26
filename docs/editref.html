@@ -111,6 +111,9 @@
 <a href="#savebrush"><tt>savebrush</tt></a>
 </li>
 <li>
+<a href="#smoothmap"><tt>smoothmap</tt></a>
+</li>
+<li>
 <a href="#clearbrush"><tt>clearbrush</tt></a>
 </li>
 <li>
@@ -165,6 +168,9 @@
 </li>
 <li>
 <a href="#enthavesel"><tt>enthavesel</tt></a>
+</li>
+<li>
+<a href="#entget"><tt>entget</tt></a>
 </li>
 <li>
 <a href="#insel"><tt>insel</tt></a>
@@ -653,6 +659,13 @@ a file called mybrushes.cfg file for example. This is usually used after copybru
 The brush can also be named for easy reference later.
 </p>
 
+<pre id="smoothmap">smoothmap</pre>
+<p>
+This will apply a simple moving average filter to the heightmap thereby making
+the change between neighbouring points less abrupt. Smoothmap can be executed 
+multiple times on a heightmap to increase the smoothness.
+</p>
+
 <pre id="clearbrush">clearbrush</pre>
 <p>
 This resets the current brush that is used during heightmap mode editing.
@@ -703,18 +716,19 @@ push the selected entities. cube selection serves as orientation to push towards
 
 <pre id="entrotate">entrotate D</pre>
 <p>
-rotate the selected entities. cube selection serves as both reference point and 
-orientation to rotate around.
+rotate the selected entities in relation to the cube selection.
 </p>
 
-<pre id="entmoving">entmoving 0/1</pre>
+<pre id="entmoving">entmoving 0/1/2</pre>
 <p>
 set to 1 to turn on. if an entity is under the cursor when turned on, the
-entity will get toggled selected/unselected. if selected, one can move the
+entity will get toggled selected/unselected (set to 2 to add to selection instead of toggle). 
+if selected, one can move the
 entity around using the cursor. if multiple entities are selected, they will 
 also move. the plane on which the entity will be moved is
-dependent on the orientation of the cube selection. set to 0 to turn off moving.
+dependent on the orientation of the cube surrounding the entity. set to 0 to turn off moving.
 if no entity is under the cursor when turned on, it will automatically turn off.
+
 </p>
 
 
@@ -755,7 +769,21 @@ examples:
 
 <pre id="entloop">entloop X</pre>
 <p>
-Loops through and executes the given expression for all selected entities
+Loops through and executes the given expression for all selected entities.
+Note that most of the entity commands are already vector based and will 
+automatically do this. Therefore they don't need to be explicitly executed within an entloop. 
+Entloop is to be used when more 
+precise custom instructions need to be executed on a selection. 
+<br><br>
+Another property of entloop is that entity commands within it, that are normally executed 
+on the entire selection, will only be done on the current entity iterator.
+In other words, the two following examples are equivalent:
+<ul>
+<li>entset light 120 0 0 0</li>
+<li>entloop [ entset light 120 0 0 0 ]</li>
+</ul>
+The entset in the second statement will NOT be applied n squared times.
+Entloops can be nested.
 </p>
 
 <pre id="entcancel">entcancel</pre>
@@ -768,6 +796,23 @@ deselect all entities
 Returns the number of entities in the current selection.
 </p>
 
+<pre id="entget">entget</pre>
+<p>
+Returns a string in the form of "type value1 value2 value3 value4".
+This string is the definition of the current selected entity. 
+For example, the following statement will display the values of
+all the entities within the current selection:
+<ul>
+<li>entloop [ echo (entget) ]</li>
+</ul>
+Outside of an entloop, the last entity selected will be returned. 
+Normally, if an entity is highlighted by the cursor, it will
+only be considered as in the selection if an explicit one does not exisit 
+(like cubic selections). However, entget is special in that it considers
+the highlighted entity as being the last entity in the selection.
+Entget is used to generate the default entdisplay at the bottom of the screen.
+</p>
+
 <pre id="insel">insel</pre>
 <p>
 Returns true if the selected entity is inside the cube selection
@@ -775,23 +820,24 @@ Returns true if the selected entity is inside the cube selection
 
 <pre id="et">et</pre>
 <p>
-Returns a string for scripts that has the 'type' of the selected entity.
+Cuts out the 'type' field from entget.
 </p>
 
 <pre id="ea">ea N</pre>
 <p>
-Returns a string for scripts that has the 'attribute' of the selected entity. Attributes are numbered 0 to 3.
+Cuts out the given 'value' field from entget. Attributes are numbered 0 to 3.
 </p>
 
 <pre id="entset">entset type value1 value2 value3 value4</pre>
 <p>
 Change the type and attributes of the selected entity.
-To quickly bring up the entedit command in the console press '.' (default: period). It will come pre-filled with the values of the current entity selection.
+To quickly bring up the entset command in the console press '.' (default: period). 
+It will come pre-filled with the values of the current entity selection (from entget).
 </p>
 
 <pre id="entproperty">entproperty P A</pre>
 <p>
-Changes property P (0..3) of the closest entity by amount A. For example
+Changes property P (0..3) of the selected entities by amount A. For example
 "entproperty 0 2" when executed near a lightsource would increase its radius by
 2.
 </p>
@@ -799,6 +845,7 @@ Changes property P (0..3) of the closest entity by amount A. For example
 <pre id="entfind">entfind type type value1 value2 value3 value4</pre>
 <p>
 Select all entities matching given values. '*' and blanks are wildcard.
+All ents that match the pattern will be ADDED to the selection.
 </p>
 
 <pre id="clearents">clearents type</pre>
