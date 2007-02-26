@@ -150,7 +150,7 @@ extern selinfo sel;
 extern int orient;
 extern bool havesel, selectcorners;
 extern bool undogoahead;
-bool inentloop = false;
+int entlooplevel = 0;
 int efocus = -1, enthover;
 
 bool pointinsel(selinfo &sel, vec &o)
@@ -202,8 +202,8 @@ void makeundoent()
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; if(e.type != ET_EMPTY) addentity(n); et->editent(n)); }
 #define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
 #define setgroup(exp)   { entcancel(); addgroup(exp); }
-#define groupeditloop(f){ inentloop = true; loopv(entgroup) entedit(entgroup[i], f); inentloop = false; }
-#define groupeditpure(f){ if(inentloop) { entedit(efocus, f); } else groupeditloop(f); }
+#define groupeditloop(f){ entlooplevel++; int _ = efocus; loopv(entgroup) entedit(entgroup[i], f); efocus = _; entlooplevel--; }
+#define groupeditpure(f){ if(entlooplevel>0) { entedit(efocus, f); } else groupeditloop(f); }
 #define groupeditundo(f){ makeundoent(); groupeditpure(f); }
 #define groupedit(f)    { addimplicit(groupeditundo(f)); }
 
@@ -280,20 +280,20 @@ void entdrag(const vec &ray, vec &eo, vec &es)
     initentdragging = false;
 };
 
-bool entadd(int id)
+void entadd(int id)
 {
-    int i = entgroup.find(id);
-    if(i < 0)
-        entgroup.add(id);
-    return i < 0;
+    entgroup.removeobj(id);
+    entgroup.add(id);
 }
 
 bool enttoggle(int id)
 {
-    bool remove;
-    if(remove = !entadd(id))
-        entgroup.removeobj(id);
-    return !remove;
+    int i = entgroup.find(id);
+    if(i < 0)
+        entadd(id);
+    else
+        entgroup.remove(i);
+    return i < 0;
 };
 
 VAR(passthroughent, 0, 0, 1);

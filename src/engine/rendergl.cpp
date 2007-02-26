@@ -275,6 +275,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
     if(fsaa) glEnable(GL_MULTISAMPLE);
 
+    
     exec("data/stdshader.cfg");
     defaultshader = lookupshaderbyname("default");
     notextureshader = lookupshaderbyname("notexture");
@@ -723,31 +724,6 @@ VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
 VARP(crosshairfx, 0, 1, 1);
 
-extern int enthover;
-
-const char *entline()
-{
-    static string line;
-    line[0] = 0;
-
-    if(entgroup.length() > 1) s_sprintf(line)("%d entities selected", entgroup.length());
-    else
-    {
-        bool implicit = !haveselent();
-        int s;
-        if(implicit)
-            s = enthover;
-        else
-            s = entgroup[0];
-        if(s>=0)
-        {
-            extentity &c = *et->getents()[s];
-            s_sprintf(line)("%s%s (%d, %d, %d, %d)", implicit ? "" : "\f0", entname(c)+1, c.attr1, c.attr2, c.attr3, c.attr4);
-        };
-    };
-    return line;
-};
-
 void drawcrosshair(int w, int h)
 {
     bool windowhit = g3d_windowhit(true, false);
@@ -850,7 +826,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             };
         };
 
-        if(editmode) draw_text(entline(), FONTH/2, abovegameplayhud);
+        if(editmode) draw_text(executeret("if (enthavesel) [ result ( concatword (entget) \" : \" (enthavesel) \" selected\" ) ] [ result ]"), FONTH/2, abovegameplayhud);
 
         cl->gameplayhud(w, h);
         render_texture_panel(w, h);
