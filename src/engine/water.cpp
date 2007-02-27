@@ -1095,7 +1095,6 @@ void rendermaterials(float zclip, bool refract)
         int curmat = !editmode || !showmat || m.material>=MAT_EDIT ? m.material : m.material+MAT_EDIT;
         if(lastmat!=curmat || lastorient!=m.orient || (curmat==MAT_GLASS && envmapped && m.envmap != envmapped))
         {
-            if(begin) { glEnd(); begin = false; };
             switch(curmat)
             {
                 case MAT_WATER:

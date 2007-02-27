@@ -233,7 +233,7 @@ void setenvparamf(char *name, int type, int index, float x, float y, float z, fl
     ShaderParamState &val = (type==SHPARAM_VERTEX ? vertexparamstate[index] : pixelparamstate[index]);
     val.name = name;
     val.local = false;
-    if(val.val[0]!=x || val.val[1]!=y && val.val[2]!=z || val.val[3]!=w)
+    if(val.val[0]!=x || val.val[1]!=y || val.val[2]!=z || val.val[3]!=w)
     {
         val.val[0] = x;
         val.val[1] = y;
