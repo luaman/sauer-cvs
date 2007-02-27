@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "engine.h"
 
+extern bool outline;
+
 void boxs(int orient, vec o, const vec &s)
 {
     int   d = dimension(orient),
           dc= dimcoord(orient);
-    extern bool outline;
+
     float f = !outline ? 0 : (dc>0 ? 0.2f : -0.2f);
     o[D[d]] += float(dc) * s[D[d]] + f,
 
@@ -23,25 +25,37 @@ void boxs3D(const vec &o, vec s, int g)
 {
     s.mul(g);
     loopi(6)
-        boxs(i, o, s);
+        boxs(i, o, s);    
 };
 
 void boxsgrid(int orient, vec o, vec s, int g)
 {
-    int d = dimension(orient);
+    int   d = dimension(orient),
+          dc= dimcoord(orient);
     float ox = o[R[d]],
           oy = o[C[d]],
           xs = s[R[d]],
-          ys = s[C[d]];
+          ys = s[C[d]],
+          f = !outline ? 0 : (dc>0 ? 0.2f : -0.2f);    
 
-    s[R[d]] = s[C[d]] = 1;
-    s.mul(g);
+    o[D[d]] += dc * s[D[d]]*g + f;
 
-    loop(x, xs) loop(y, ys) {
-        o[R[d]] = x*g + ox;
-        o[C[d]] = y*g + oy;
-        boxs(orient, o, s);
-    }
+    glBegin(GL_LINES);
+    loop(x, xs) {
+        o[R[d]] += g;
+        glVertex3fv(o.v);
+        o[C[d]] += ys*g;
+        glVertex3fv(o.v);
+        o[C[d]] = oy;
+    };
+    loop(y, ys) {
+        o[C[d]] += g;
+        o[R[d]] = ox;
+        glVertex3fv(o.v);
+        o[R[d]] += xs*g;
+        glVertex3fv(o.v);
+    };
+    glEnd();
 };
 
 selinfo sel = { 0 }, lastsel;
@@ -275,6 +289,7 @@ void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, 
 
 extern void entdrag(const vec &ray, vec &eo, vec &es);
 extern bool hoveringonent(const vec &o, const vec &ray, vec &eo, vec &es);
+VAR(entmovingshadow, 0, 1, 1);
 
 void cursorupdate()
 {
@@ -408,8 +423,21 @@ void cursorupdate()
     // cursors    
     if(hovering || entmoving)
     {
-        glColor3ub(0, 40, 0);        
+        if(entmoving && entmovingshadow==1) 
+        {
+            vec a, b;
+            glColor3ub(20, 20, 20);
+            (a=eo).x=0; (b=es).x=hdr.worldsize; boxs3D(a, b, 1);  
+            (a=eo).y=0; (b=es).y=hdr.worldsize; boxs3D(a, b, 1);  
+            (a=eo).z=0; (b=es).z=hdr.worldsize; boxs3D(a, b, 1);
+        };
+        glColor3ub(0, 40, 0);
         boxs3D(eo, es, 1);
+        loopv(entgroup)
+        {
+            vec a(et->getents()[entgroup[i]]->o);
+            boxs3D(a.sub(es.x/2), es, 1);
+        };
         glColor3ub(150,0,0);
         glLineWidth(5);
         boxs(orient, eo, es);
@@ -433,7 +461,7 @@ void cursorupdate()
     else if(havesel)
     {
         d = dimension(sel.orient);
-        glColor3ub(20,20,20);   // grid
+        glColor3ub(50,50,50);   // grid
         boxsgrid(sel.orient, sel.o.tovec(), sel.s.tovec(), sel.grid);
         glColor3ub(200,0,0);    // 0 reference
         boxs3D(sel.o.tovec().sub(1), vec(2), 1);
