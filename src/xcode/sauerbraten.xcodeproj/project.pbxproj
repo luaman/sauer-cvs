@@ -197,7 +197,7 @@
 		B941984B092076920029DAD1 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
 		B941984C092076920029DAD1 /* tools.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = tools.cpp; sourceTree = "<group>"; };
 		B941984D092076920029DAD1 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
-		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D4C092096F200B6C936 /* launcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D570920970C00B6C936 /* Launcher.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Launcher.h; sourceTree = "<group>"; };
 		B96D0D580920970C00B6C936 /* Launcher.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Launcher.m; sourceTree = "<group>"; };
@@ -669,7 +669,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		B94198C709207E810029DAD1 /* Development */ = {
+		B94198C709207E810029DAD1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -697,9 +697,9 @@
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
 			};
-			name = Development;
+			name = Debug;
 		};
-		B94198C809207E810029DAD1 /* Deployment */ = {
+		B94198C809207E810029DAD1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -726,9 +726,9 @@
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
-			name = Deployment;
+			name = Release;
 		};
-		B94198EB09207F510029DAD1 /* Deployment-Release */ = {
+		B94198EB09207F510029DAD1 /* Release-Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -758,9 +758,9 @@
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
-			name = "Deployment-Release";
+			name = "Release-Deployment";
 		};
-		B94198EC09207F510029DAD1 /* Deployment-Release */ = {
+		B94198EC09207F510029DAD1 /* Release-Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
@@ -771,9 +771,9 @@
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = NO;
 			};
-			name = "Deployment-Release";
+			name = "Release-Deployment";
 		};
-		B960CF36085F3CC7004FB142 /* Development */ = {
+		B960CF36085F3CC7004FB142 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(NATIVE_ARCH)";
@@ -781,9 +781,9 @@
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = NO;
 			};
-			name = Development;
+			name = Debug;
 		};
-		B960CF37085F3CC7004FB142 /* Deployment */ = {
+		B960CF37085F3CC7004FB142 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
@@ -794,9 +794,9 @@
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = NO;
 			};
-			name = Deployment;
+			name = Release;
 		};
-		B96D0D50092096F300B6C936 /* Development */ = {
+		B96D0D50092096F300B6C936 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -825,9 +825,9 @@
 					"-Wno-unknown-pragmas",
 				);
 			};
-			name = Development;
+			name = Debug;
 		};
-		B96D0D51092096F300B6C936 /* Deployment */ = {
+		B96D0D51092096F300B6C936 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -856,9 +856,9 @@
 					"-Wno-unknown-pragmas",
 				);
 			};
-			name = Deployment;
+			name = Release;
 		};
-		B96D0D52092096F300B6C936 /* Deployment-Release */ = {
+		B96D0D52092096F300B6C936 /* Release-Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -887,7 +887,7 @@
 					"-Wno-unknown-pragmas",
 				);
 			};
-			name = "Deployment-Release";
+			name = "Release-Deployment";
 		};
 /* End XCBuildConfiguration section */
 
@@ -895,32 +895,32 @@
 		B94198C609207E810029DAD1 /* Build configuration list for PBXNativeTarget "sauerbraten" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B94198C709207E810029DAD1 /* Development */,
-				B94198C809207E810029DAD1 /* Deployment */,
-				B94198EB09207F510029DAD1 /* Deployment-Release */,
+				B94198C709207E810029DAD1 /* Debug */,
+				B94198C809207E810029DAD1 /* Release */,
+				B94198EB09207F510029DAD1 /* Release-Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Debug;
 		};
 		B960CF35085F3CC7004FB142 /* Build configuration list for PBXProject "sauerbraten" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B960CF36085F3CC7004FB142 /* Development */,
-				B960CF37085F3CC7004FB142 /* Deployment */,
-				B94198EC09207F510029DAD1 /* Deployment-Release */,
+				B960CF36085F3CC7004FB142 /* Debug */,
+				B960CF37085F3CC7004FB142 /* Release */,
+				B94198EC09207F510029DAD1 /* Release-Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Debug;
 		};
 		B96D0D4F092096F300B6C936 /* Build configuration list for PBXNativeTarget "launcher" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B96D0D50092096F300B6C936 /* Development */,
-				B96D0D51092096F300B6C936 /* Deployment */,
-				B96D0D52092096F300B6C936 /* Deployment-Release */,
+				B96D0D50092096F300B6C936 /* Debug */,
+				B96D0D51092096F300B6C936 /* Release */,
+				B96D0D52092096F300B6C936 /* Release-Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
