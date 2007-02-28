@@ -19,6 +19,7 @@ void boxs(int orient, vec o, const vec &s)
     glVertex3fv(o.v);
 
     glEnd();
+    xtraverts += 4;
 };
 
 void boxs3D(const vec &o, vec s, int g)
@@ -56,6 +57,7 @@ void boxsgrid(int orient, vec o, vec s, int g)
         glVertex3fv(o.v);
     };
     glEnd();
+    xtraverts += 2*int(xs+ys);
 };
 
 selinfo sel = { 0 }, lastsel;
@@ -718,14 +720,10 @@ void copy()
 void paste(int *isdown)
 {
     if(noedit()) return;
-    if(*isdown!=0)
+    if(*isdown!=0 && localedit && localedit->copy)
     {
-        if(localedit && localedit->copy)
-        {
-            sel.s = localedit->copy->s;
-            havesel = true;
-            reorient();
-        };
+        sel.s = localedit->copy->s;
+        havesel = true;
     }
     else if(havesel)
         mppaste(localedit, sel, true);
