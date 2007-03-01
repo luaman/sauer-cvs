@@ -289,9 +289,9 @@ void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, 
     };
 };
 
-extern void entdrag(const vec &ray, vec &eo, vec &es);
-extern bool hoveringonent(const vec &o, const vec &ray, vec &eo, vec &es);
-VAR(entmovingshadow, 0, 1, 1);
+extern void entdrag(const vec &ray);
+extern bool hoveringonent(const vec &o, const vec &ray);
+extern void renderentselection(const vec &o, const vec &ray, bool entmoving);
 
 void cursorupdate()
 {
@@ -307,7 +307,6 @@ void cursorupdate()
         od  = dimension(orient),
         odc = dimcoord(orient);
 
-    vec eo, es;
     bool hovering = false;
            
     if(moving)
@@ -329,9 +328,9 @@ void cursorupdate()
     else 
     if(entmoving)
     {
-        entdrag(ray, eo, es);       
+        entdrag(ray);       
     }
-    else if(hovering = hoveringonent(player->o, ray, eo, es))
+    else if(hovering = hoveringonent(player->o, ray))
     {
        if(!havesel) {
            selchildcount = 0;
@@ -423,29 +422,10 @@ void cursorupdate()
     glBlendFunc(GL_ONE, GL_ONE);
     
     // cursors    
-    if(hovering || entmoving)
-    {
-        if(entmoving && entmovingshadow==1) 
-        {
-            vec a, b;
-            glColor3ub(20, 20, 20);
-            (a=eo).x=0; (b=es).x=hdr.worldsize; boxs3D(a, b, 1);  
-            (a=eo).y=0; (b=es).y=hdr.worldsize; boxs3D(a, b, 1);  
-            (a=eo).z=0; (b=es).z=hdr.worldsize; boxs3D(a, b, 1);
-        };
-        glColor3ub(0, 40, 0);
-        boxs3D(eo, es, 1);
-        loopv(entgroup)
-        {
-            vec a(et->getents()[entgroup[i]]->o);
-            boxs3D(a.sub(es.x/2), es, 1);
-        };
-        glColor3ub(150,0,0);
-        glLineWidth(5);
-        boxs(orient, eo, es);
-        glLineWidth(1);
-    }
-    else if(!moving)
+
+    renderentselection(player->o, ray, entmoving);
+
+    if(!moving && !hovering)
     {
         glColor3ub(120,120,120);
         boxs(orient, lu.tovec(), vec(lusize));

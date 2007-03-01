@@ -244,27 +244,52 @@ void entrotate(int *cw)
     );
 };
 
-VAR(entselsnap, 0, 0, 1);
+void entselectionbox(const entity &e, vec &eo, vec &es) 
+{
+    if(e.type == ET_MAPMODEL) 
+    {
+        model *m = loadmodel(NULL, e.attr2);
+        m->collisionbox(0, eo, es);
+        if(m->collide)
+            eo.z -= player->aboveeye; // wacky but true. see physics collide                    
+        else
+            es.div(2);  // cause the usual bb is too big...
+        eo.add(e.o);
+    }   
+    else
+    {
+        es = vec(entselradius);
+        eo = e.o;
+    };    
+    eo.sub(es);
+    es.mul(2);
+};
 
+VAR(entselsnap, 0, 0, 1);
+VAR(passthroughent, 0, 0, 1);
+VAR(entmovingshadow, 0, 1, 1);
+
+extern int rayent(const vec &o, const vec &ray);
+extern void boxs(int orient, vec o, const vec &s);
+extern void boxs3D(const vec &o, vec s, int g);
 extern void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, vec &dest, bool first);
 
 bool initentdragging = true;
 
-void entdrag(const vec &ray, vec &eo, vec &es)
+void entdrag(const vec &ray)
 {
     if(!haveselent()) return;
 
     float r = 0, c = 0;
     static vec v, handle;
+    vec eo, es;
     int d = dimension(orient),
         dc= dimcoord(orient);
 
     entfocus(entgroup.last(),        
-        editmoveplane(e.o, ray, d, e.o[D[d]] + (dc?entselradius:-entselradius), handle, v, initentdragging);
-        
-        eo = e.o;
-        eo.sub(entselradius);
-        es = (entselsnap ? vec(sel.grid) : entselradius * 2);
+        entselectionbox(e, eo, es);
+
+        editmoveplane(e.o, ray, d, eo[d] + (dc ? es[d] : 0), handle, v, initentdragging);        
 
         ivec g(v);
         int z = g[d]&(~(sel.grid-1));
@@ -278,6 +303,37 @@ void entdrag(const vec &ray, vec &eo, vec &es)
     if(initentdragging) makeundoent();
     groupeditpure(e.o[R[d]] += r; e.o[C[d]] += c);
     initentdragging = false;
+};
+
+void renderentselection(const vec &o, const vec &ray, bool entmoving)
+{   
+    float f;
+    vec eo, es;
+ 
+    glColor3ub(0, 40, 0);
+    loopv(entgroup) entfocus(entgroup[i],     
+        entselectionbox(e, eo, es);
+        boxs3D(eo, es, 1);
+    );
+
+    if(enthover >= 0)
+    {
+        entselectionbox(*et->getents()[enthover], eo, es);
+        boxs3D(eo, es, 1);
+        if(entmoving && entmovingshadow==1)
+        {
+            vec a, b;
+            glColor3ub(20, 20, 20);
+            (a=eo).x=0; (b=es).x=hdr.worldsize; boxs3D(a, b, 1);  
+            (a=eo).y=0; (b=es).y=hdr.worldsize; boxs3D(a, b, 1);  
+            (a=eo).z=0; (b=es).z=hdr.worldsize; boxs3D(a, b, 1);
+        };
+        rayrectintersect(eo, es, o, ray, f, orient);
+        glColor3ub(150,0,0);
+        glLineWidth(5);
+        boxs(orient, eo, es);
+        glLineWidth(1);
+    };
 };
 
 void entadd(int id)
@@ -296,24 +352,15 @@ bool enttoggle(int id)
     return i < 0;
 };
 
-VAR(passthroughent, 0, 0, 1);
-extern int rayent(const vec &o, const vec &ray);
-
-bool hoveringonent(const vec &o, const vec &ray, vec &eo, vec &es)
+bool hoveringonent(const vec &o, const vec &ray)
 {
-    if(!passthroughent) 
-        entfocus(enthover = rayent(o, ray),
-            float dist = 0;
-            eo = e.o;
-            es = vec(entselradius*2);
-            if(rayrectintersect(eo.sub(entselradius), es, o, ray, dist, orient))
-                return true;
-        );
-
+    if(!passthroughent)          
+        if((efocus = enthover = rayent(o, ray)) >= 0)
+            return true;
     efocus   = entgroup.empty() ? -1 : entgroup.last();
     enthover = -1;
     return false;
-}
+};
 
 VARF(entmoving, 0, 0, 2,
     if(enthover < 0)

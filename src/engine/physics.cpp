@@ -102,39 +102,53 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
     return false;
 };
 
+extern void entselectionbox(const entity &e, vec &eo, vec &es);
 extern int entselradius;
 float hitentdist;
 int  hitent;
 
 static float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
+    vec eo, es;
+    int orient;
     float dist = 1e16f, f = 0.0f;
     if(oc == last || oc == NULL) return dist;
     const vector<extentity *> &ents = et->getents();
-    if((mode&RAY_POLY)==RAY_POLY)
-        loopv(oc->mapmodels) if(!last || last->mapmodels.find(oc->mapmodels[i])<0)
-        {
-            extentity &e = *ents[oc->mapmodels[i]];
-            if(!e.inoctanode || &e==t) continue;
-            if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED) && (mode&RAY_ENTS)!=RAY_ENTS) continue;
-            if(!mmintersect(e, o, ray, radius, mode, f)) continue;
-            if(f<dist && f>0) { hitentdist = dist = f; hitent = oc->mapmodels[i]; };
-        };
-    if((mode&RAY_ENTS)==RAY_ENTS)
-        loopv(oc->other) if(!last || last->other.find(oc->other[i])<0)
-        {
-            extentity &e = *ents[oc->other[i]];
-            if(!e.inoctanode || &e==t) continue;
-            if(!raysphereintersect(e.o, entselradius, o, ray, f)) continue;
-            if(f<dist && f>0) { hitentdist = dist = f; hitent = oc->other[i]; };
-        };
+
+    #define entintersect(mask, type, func) {\
+        if((mode&(mask))==(mask)) \
+            loopv(oc->type) \
+                if(!last || last->type.find(oc->type[i])<0) \
+                { \
+                    extentity &e = *ents[oc->type[i]]; \
+                    if(!e.inoctanode || &e==t) continue; \
+                    func; \
+                    if(f<dist && f>0) { hitentdist = dist = f; hitent = oc->type[i]; }; \
+                }; \
+    }
+
+    entintersect(RAY_POLY, mapmodels,
+        if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED) && (mode&RAY_ENTS)!=RAY_ENTS) continue;
+        if(!mmintersect(e, o, ray, radius, mode, f)) continue;
+    );
+
+    entintersect(RAY_ENTS, other,
+        entselectionbox(e, eo, es);
+        if(!rayrectintersect(eo, es, o, ray, f, orient)) continue;
+    );
+
+    entintersect(RAY_ENTS, mapmodels,
+        entselectionbox(e, eo, es);
+        if(!rayrectintersect(eo, es, o, ray, f, orient)) continue;
+    );
+
     return dist;
 };
 
 int rayent(const vec &o, const vec &ray)
 {
     hitent = -1;
-    float d = raycube(o, ray, hitentdist = 1e20f, RAY_ENTS | RAY_POLY);
+    float d = raycube(o, ray, hitentdist = 1e20f, RAY_ENTS);
     if(hitentdist == d)
         return hitent;
     else
