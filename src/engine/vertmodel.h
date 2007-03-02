@@ -34,8 +34,11 @@ struct vertmodel : model
     struct tcvert { float u, v; ushort index; };
     struct tri { ushort vert[3]; };
 
+    struct part;
+
     struct mesh
     {
+        part *owner;
         char *name;
         vert *verts;
         tcvert *tcverts;
@@ -51,7 +54,7 @@ struct vertmodel : model
         GLuint statbuf, statidx;
         int statlen;
 
-        mesh() : name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), dynframe(-1), statbuf(0), statidx(0) {};
+        mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), dynframe(-1), statbuf(0), statidx(0) {};
 
         ~mesh()
         {
@@ -218,7 +221,7 @@ struct vertmodel : model
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glEnable(GL_ALPHA_TEST);
-                glAlphaFunc(GL_GREATER, 0.9f);
+                glAlphaFunc(GL_GREATER, owner->model->alphatest);
             };
             glBindTexture(GL_TEXTURE_2D, s->gl);
             if(m!=crosshair)

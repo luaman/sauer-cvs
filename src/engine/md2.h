@@ -143,6 +143,7 @@ struct md2 : vertmodel
             numframes = header.numframes;
 
             mesh &m = *new mesh;
+            m.owner = this;
             meshes.add(&m);
 
             int *glcommands = new int[header.numglcommands];

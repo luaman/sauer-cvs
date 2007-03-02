@@ -50,6 +50,14 @@ void mdlambient(int *percent)
 
 COMMAND(mdlambient, "i");
 
+void mdlalphatest(float *cutoff)
+{   
+    checkmdl;
+    loadingmodel->alphatest = max(0, min(1, *cutoff));
+};
+
+COMMAND(mdlalphatest, "f");
+
 void mdlshader(char *shader)
 {
     checkmdl;
