@@ -143,6 +143,7 @@ struct vertmodel : model
             loopj(numtris)
             {
                 SphereTree::tri &t = out.add();
+                t.tex = skin->bpp==32 ? skin : NULL;
                 tcvert &av = tcverts[tris[j].vert[0]],
                        &bv = tcverts[tris[j].vert[1]],
                        &cv = tcverts[tris[j].vert[2]];
@@ -580,11 +581,6 @@ struct vertmodel : model
         mesh &m = *parts[0]->meshes[0]; 
         m.tex = tex;
         masked = tex ? lookuptexture(tex).sts.length()>=2 : m.masks!=crosshair;
-    };
-
-    Texture *getskin()
-    {
-        return parts.length()==1 && parts[0]->meshes.length()==1 ? parts[0]->meshes[0]->skin : NULL;
     };
 
     void calcbb(int frame, vec &center, vec &radius)

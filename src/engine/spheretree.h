@@ -5,6 +5,7 @@ struct SphereTree
     struct tri : triangle
     {
         float tc[6];
+        Texture *tex;
     };
 
     float radius;
@@ -12,7 +13,7 @@ struct SphereTree
 
     virtual ~SphereTree() {};
 
-    bool shellintersect(const vec &o, const vec &ray, float maxdist, model *m = NULL) const
+    bool shellintersect(const vec &o, const vec &ray, float maxdist) const
     {
         vec tocenter(center);
         tocenter.sub(o);
@@ -24,11 +25,11 @@ struct SphereTree
         return true;
     };
 
-    virtual bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, model *m = NULL) const = 0;
+    virtual bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const = 0;
 
-    bool intersect(const vec &o, const vec &ray, float maxdist, float &dist, model *m = NULL) const
+    bool intersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const
     {
-        return shellintersect(o, ray, maxdist, m) && childintersect(o, ray, maxdist, dist, m);
+        return shellintersect(o, ray, maxdist) && childintersect(o, ray, maxdist, dist, mode);
     };
 
     virtual bool isleaf() { return false; };

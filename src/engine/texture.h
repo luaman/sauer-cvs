@@ -108,7 +108,7 @@ struct Shader
 };
 
 // management of texture slots
-// each texture slot can have multople texture frames, of which currently only the first is used
+// each texture slot can have multiple texture frames, of which currently only the first is used
 // additional frames can be used for various shaders
 
 struct Texture
@@ -116,6 +116,9 @@ struct Texture
     char *name;
     int xs, ys, w, h, bpp;
     GLuint gl;
+    uchar *alphamask;
+
+    Texture() : alphamask(NULL) {};
 };
 
 enum

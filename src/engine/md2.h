@@ -267,7 +267,6 @@ struct md2 : vertmodel
         delete[] pname;
         loadingmd2 = 0;
         loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
-        if(skin && skin->bpp==32) shadowmasked = skin;
         return loaded = true;
     };
 };

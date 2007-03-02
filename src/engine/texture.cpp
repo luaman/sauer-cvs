@@ -179,6 +179,29 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     return s;
 };
 
+void loadalphamask(Texture *t)
+{
+    if(t->alphamask || t->bpp!=32) return;
+    SDL_Surface *s = IMG_Load(t->name);
+    if(!s || !s->format->Amask) { if(s) SDL_FreeSurface(s); return; };
+    uint alpha = s->format->Amask;
+    t->alphamask = new uchar[s->h * ((s->w+7)/8)];
+    uchar *srcrow = (uchar *)s->pixels, *dst = t->alphamask-1;
+    loop(y, s->h)
+    {
+        uint *src = (uint *)srcrow;
+        loop(x, s->w)
+        {
+            int offset = x%8;
+            if(!offset) *++dst = 0;
+            if(*src & alpha) *dst |= 1<<offset;
+            src++;
+        };
+        srcrow += s->pitch;
+    };
+    SDL_FreeSurface(s);
+}
+
 Texture *textureload(const char *name, int clamp, bool mipit, bool msg)
 {
     string tname;
@@ -191,7 +214,7 @@ Texture *textureload(const char *name, int clamp, bool mipit, bool msg)
 
 void cleangl()
 {
-    enumerate(textures, Texture, t, { delete[] t.name; });
+    enumerate(textures, Texture, t, { delete[] t.name; if(t.alphamask) delete[] t.alphamask; });
     textures.clear();
 };
 

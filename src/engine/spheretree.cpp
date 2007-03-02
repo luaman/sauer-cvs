@@ -27,10 +27,10 @@ struct SphereBranch : SphereTree
         DELETEP(child2);
     };
 
-    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, model *m) const
+    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const
     {
-        return child1->intersect(o, ray, maxdist, dist, m) ||
-               child2->intersect(o, ray, maxdist, dist, m);
+        return child1->intersect(o, ray, maxdist, dist, mode) ||
+               child2->intersect(o, ray, maxdist, dist, mode);
     };
 };  
 
@@ -50,7 +50,7 @@ struct SphereLeaf : SphereTree
         radius = max(r1, max(r2, r3));
     };
     
-    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, model *m) const
+    bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const
     {
         vec edge1(tri.b), edge2(tri.c);
         edge1.sub(tri.a); 
@@ -69,17 +69,17 @@ struct SphereLeaf : SphereTree
         if(v < 0 || u + v > 1) return false;
         float f = edge2.dot(q) / det;
         if(f < 0 || f > maxdist) return false;
-        if(m && m->shadowmasked) 
+        if(tri.tex && (mode&RAY_ALPHAPOLY)==RAY_ALPHAPOLY)
         {
-            if(!m->shadowmask) 
+            if(!tri.tex->alphamask)
             {
-                m->loadshadowmask();
-                if(!m->shadowmask) { dist = f; return true; };
+                loadalphamask(tri.tex);
+                if(!tri.tex->alphamask) { dist = f; return true; };
             };
             float s = tri.tc[0] + u*(tri.tc[2] - tri.tc[0]) + v*(tri.tc[4] - tri.tc[0]),
                   t = tri.tc[1] + u*(tri.tc[3] - tri.tc[1]) + v*(tri.tc[5] - tri.tc[1]);
-            int si = int(s*m->shadowmasked->w), ti = int(t*m->shadowmasked->h);
-            if(!(m->shadowmask[ti*((m->shadowmasked->w+7)/8) + si/8] & (1<<(si%8)))) return false;
+            int si = int(s*tri.tex->w), ti = int(t*tri.tex->h);
+            if(!(tri.tex->alphamask[ti*((tri.tex->w+7)/8) + si/8] & (1<<(si%8)))) return false;
         };
         dist = f;
         return true;
@@ -176,6 +176,6 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     float yaw = -180.0f-(float)((e.attr1+7)-(e.attr1+7)%15);
     vec yray(ray);
     if(yaw != 0) yawray(yo, yray, yaw);
-    return m->spheretree->childintersect(yo, yray, maxdist, dist, (mode&RAY_ALPHAPOLY)==RAY_ALPHAPOLY ? m : NULL);
+    return m->spheretree->childintersect(yo, yray, maxdist, dist, mode);
 };
 
