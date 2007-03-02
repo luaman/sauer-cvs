@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "engine.h"
 
-extern bool outline;
+extern int outline;
 
 void boxs(int orient, vec o, const vec &s)
 {
@@ -423,7 +423,7 @@ void cursorupdate()
     
     // cursors    
 
-    renderentselection(player->o, ray, entmoving);
+    renderentselection(player->o, ray, entmoving!=0);
 
     if(!moving && !hovering)
     {
