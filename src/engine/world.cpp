@@ -246,9 +246,9 @@ void entrotate(int *cw)
 
 void entselectionbox(const entity &e, vec &eo, vec &es) 
 {
-    if(e.type == ET_MAPMODEL) 
+    model *m = NULL;
+    if(e.type == ET_MAPMODEL && NULL != (m = loadmodel(NULL, e.attr2)))
     {
-        model *m = loadmodel(NULL, e.attr2);
         m->collisionbox(0, eo, es);
         if(m->collide)
             eo.z -= player->aboveeye; // wacky but true. see physics collide                    

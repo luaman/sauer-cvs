@@ -496,6 +496,7 @@ void readychanges(block3 &b, cube *c, const ivec &cor, int size)
 
 void changed(const block3 &sel)
 {
+    if(sel.s == vec(0)) return;
     block3 b = sel;
     loopi(3) b.s[i] *= b.grid;
     b.grid = 1;
@@ -617,7 +618,7 @@ bool undogoahead = false;
 void makeundo()                        // stores state of selected cubes before editing
 {
     undogoahead = false;
-    if(lastsel==sel) return;
+    if(lastsel==sel || sel.s==vec(0)) return;
     lastsel=sel;
     if(multiplayer(false)) return;
     undogoahead = true;
