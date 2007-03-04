@@ -1,6 +1,16 @@
-"Two Minute Warning" by Marc A. Pullen <marcpullen@adelphia.net>
+-------------------------------------------------
+
+Music by Marc A. Pullen <marcpullen@comcast.net>
+
+Higher quality MP3 versions and many other free MP3 tracks are available here:
+
 http://fanaticalproductions.net/
 
+-------------------------------------------------
+
+Song titles for "Two Minute Warning":
+
+http://www2.fanaticalproductions.net:8080/index.htm?module=music_album_view&albumId=21
 
 01 - Enough
 02 - Suicidal
@@ -18,7 +28,9 @@ http://fanaticalproductions.net/
 14 - Misfortune
 15 - Salvation
 
-Song titles for Sauer Anger:
+Song titles for "Sauer Anger":
+
+http://www2.fanaticalproductions.net:8080/index.htm?module=music_album_view&albumId=27
 
 16 - Straight To Hell
 17 - Relentless
@@ -28,3 +40,16 @@ Song titles for Sauer Anger:
 21 - Lagged and Tagged
 22 - Owned
 23 - Ninja Monkey Attack
+
+Song titles for "Panexypnos Dimiourgia":
+
+http://www2.fanaticalproductions.net:8080/index.htm?module=music_album_view&albumId=33
+
+24 - Exousia
+25 - Kalos
+26 - Katastrefo
+27 - Aythadis
+28 - Koutos
+29 - Kakos
+30 - Katalabaino
+31 - Epinoo
