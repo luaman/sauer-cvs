@@ -247,7 +247,7 @@ void entrotate(int *cw)
 void entselectionbox(const entity &e, vec &eo, vec &es) 
 {
     model *m = NULL;
-    if(e.type == ET_MAPMODEL && NULL != (m = loadmodel(NULL, e.attr2)))
+    if(e.type == ET_MAPMODEL && (m = loadmodel(NULL, e.attr2)))
     {
         m->collisionbox(0, eo, es);
         if(m->collide)
