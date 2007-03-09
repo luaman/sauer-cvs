@@ -28,6 +28,7 @@
 - combine mingw and linux makefiles?
 - arrow / lines to indicate direction of ents like playerstart, teledest
 - something to help judge depth when moving entities... maybe lines stretching out in all 6 directions...
+- need to make selecting cubes/ents while inside a cube easier.... maybe modify raycube/rayent to treat cubes as 'hollow'?
 
 - maybe add a way to purge infrequent / not recently used textures? esp now with mapshots.
 
