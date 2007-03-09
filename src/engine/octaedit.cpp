@@ -1110,12 +1110,15 @@ void editface(int *dir, int *mode)
         mpeditface(*dir, *mode, sel, true);
 };
 
+VAR(selectionsurf, 0, 0, 1);
+
 void pushsel(int *dir)
 {
     if(noedit(moving!=0)) return;
     int d = dimension(orient);
     int s = dimcoord(orient) ? -*dir : *dir;
     sel.o[d] += s*sel.grid;
+    if(selectionsurf==1) player->o[d] += s*sel.grid;
 };
 
 void mpdelcube(selinfo &sel, bool local)

@@ -250,6 +250,7 @@ void entselectionbox(const entity &e, vec &eo, vec &es)
     if(e.type == ET_MAPMODEL && (m = loadmodel(NULL, e.attr2)))
     {
         m->collisionbox(0, eo, es);
+        rotatebb(eo, es, e.attr1);
         if(m->collide)
             eo.z -= player->aboveeye; // wacky but true. see physics collide                    
         else
@@ -362,6 +363,7 @@ bool hoveringonent(const vec &o, const vec &ray)
     return false;
 };
 
+VAR(entitysurf, 0, 0, 1);
 VARF(entmoving, 0, 0, 2,
     if(enthover < 0)
         entmoving = 0;
@@ -384,6 +386,8 @@ void entpush(int *dir)
     }
     else 
         groupedit(e.o[d] += float(s*sel.grid));
+    if(entitysurf==1)
+        player->o[d] += float(s*sel.grid);
 };
 
 COMMAND(entflip, "");
