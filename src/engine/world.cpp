@@ -390,6 +390,25 @@ void entpush(int *dir)
         player->o[d] += float(s*sel.grid);
 };
 
+VAR(entautoviewdist, 0, 25, 100);
+void entautoview(int *dir) 
+{
+    if(!haveselent()) return;
+    static int s = 0;
+    vec v(player->o);
+    v.sub(worldpos);
+    v.normalize();
+    v.mul(entautoviewdist);
+    int t = s + *dir;
+    s = abs(t) % entgroup.length();
+    if(t<0 && s>0) s = entgroup.length() - s;
+    entfocus(entgroup[s],
+        v.add(e.o);
+        player->o = v;
+    );
+};
+
+COMMAND(entautoview, "i");
 COMMAND(entflip, "");
 COMMAND(entrotate, "i");
 COMMAND(entpush, "i");
