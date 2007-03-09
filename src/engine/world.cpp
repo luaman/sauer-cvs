@@ -319,7 +319,7 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
 
     if(enthover >= 0)
     {
-        entselectionbox(*et->getents()[enthover], eo, es);
+        entfocus(enthover, entselectionbox(e, eo, es)); // also ensures enthover is back in focus
         boxs3D(eo, es, 1);
         if(entmoving && entmovingshadow==1)
         {
