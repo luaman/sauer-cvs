@@ -324,6 +324,11 @@ struct cubeloader
             t = s;
         };
         gzclose(f);
+        estartmap(pakname);
+        string cfgname;
+        s_sprintf(cfgname)("packages/cube/%s.cfg", mname);
+        exec("packages/cube/package.cfg");
+        exec(path(cfgname));
         create_cubes();
         remipworld();
         allchanged();
@@ -331,11 +336,6 @@ struct cubeloader
         entitiesinoctanodes();
         clearlights();
         conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-totalmillis);
-        estartmap(pakname);
-        string cfgname;
-        s_sprintf(cfgname)("packages/cube/%s.cfg", mname);
-        exec("packages/cube/package.cfg");
-        exec(path(cfgname));
     };
 };
 
