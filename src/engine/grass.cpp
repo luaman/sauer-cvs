@@ -379,7 +379,7 @@ void setupgrass()
 {
     glDisable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.3f);
+    glAlphaFunc(GL_GREATER, 0.5f);
 
     static Shader *grassshader = NULL;
     if(!grassshader) grassshader = lookupshaderbyname("grass");
