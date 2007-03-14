@@ -5,7 +5,7 @@ VARP(grassanimdist, 0, 500, 10000);
 VARP(grassdist, 0, 500, 10000);
 VARP(grassfalloff, 0, 100, 1000);
 
-VAR(grasswidth, 1, 7, 64);
+VAR(grasswidth, 1, 6, 64);
 VAR(grassheight, 1, 8, 64);
 
 void resetgrasssamples()
@@ -248,7 +248,7 @@ VAR(grassrand, 0, 30, 90);
 VARP(grasssamples, 0, 50, 10000);
 
 VARP(grassbillboard, 0, 1, 100);
-VARP(grassbbcorrect, 0, 0, 1);
+VARP(grassbbcorrect, 0, 1, 1);
 VARP(grasstaper, 0, 200, 10000);
 
 void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed, float height, int numsamples)
@@ -306,18 +306,12 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
 
     if(grasstest>1) return;
 
-    vec color(g.color[0], g.color[1], g.color[2]);
     extern int fullbright;
-    if(fullbright) loopk(3) color[k] = 128;
-    color.div(255);
-
-    vec color1 = vec(color).mul(0.9f + w1*0.1f), color2 = vec(color).mul(0.9f + w2*0.1f);
-
-    float offset = detrnd((size_t)&g * (seed + 1)*13, max(32/grasswidth, 2))*float(grasswidth)*64.0f/grasstex->xs;
-    glColor3fv(color1.v);
-    glTexCoord2f(0, 1); glVertex3fv(b1.v);
-    glTexCoord2f(0, 0); glVertex3fv(t1.v);
-    glColor3fv(color2.v);
+    if(fullbright) glColor3ub(128, 128, 128);
+    else glColor3ubv(g.color);
+    float offset = detrnd((size_t)&g * (seed + 1)*13, grasstex->xs)/float(grasstex->xs);
+    glTexCoord2f(offset, 1); glVertex3fv(b1.v);
+    glTexCoord2f(offset, 0); glVertex3fv(t1.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 0); glVertex3fv(t2.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 1); glVertex3fv(b2.v);
 };
