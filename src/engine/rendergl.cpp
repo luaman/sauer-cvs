@@ -413,7 +413,7 @@ void setfogplane(float scale, float z)
         fogplane[3] = -z;
     };  
     setenvparamfv("fogplane", SHPARAM_VERTEX, 9, fogplane);
-    flushenvparam(SHPARAM_VERTEX, 9);
+//    flushenvparam(SHPARAM_VERTEX, 9);
 };
 
 extern void rendercaustics(float z, bool refract);

@@ -186,32 +186,6 @@ bool modeloccluded(const vec &center, float radius)
     return bboccluded(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br), worldroot, ivec(0, 0, 0), hdr.worldsize/2);
 };
 
-void model::setshader()
-{
-    if(renderpath==R_FIXEDFUNCTION) return;
-    
-    if(shader) shader->set();
-    else
-    {
-        static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL;
-
-        if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
-        if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
-        if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
-
-        (masked ? modelshadermasks : (spec>=0.01f ? modelshader : modelshadernospec))->set();
-    };
-
-    setlocalparamf("specscale", SHPARAM_PIXEL, 2, spec, spec, spec); 
-    
-    GLfloat color[4];
-    glGetFloatv(GL_CURRENT_COLOR, color); 
-    vec diffuse = vec(color).mul(ambient);
-    loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
-    setlocalparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-    setlocalparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-};
-
 VAR(showboundingbox, 0, 0, 2);
 
 void render2dbox(vec &o, float x, float y, float z)
@@ -291,18 +265,24 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(d) lightreaching(d->o, color, dir);
     m->setskin(tex);  
     glColor3fv(color.v);
-    m->setshader();
     if(renderpath!=R_FIXEDFUNCTION)
     {
         vec rdir(dir);
         rdir.rotate_around_z((-yaw-180.0f)*RAD);
         rdir.rotate_around_y(-pitch*RAD);
-        setlocalparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
+        setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
 
         vec camerapos = vec(player->o).sub(vec(x, y, z));
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
         camerapos.rotate_around_y(-pitch*RAD);
-        setlocalparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
+        setenvparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
+
+        setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
+    
+        vec diffuse = vec(color).mul(m->ambient);
+        loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
+        setenvparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+        setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
 
         if(refracting) setfogplane(1, refracting - z);
     };
@@ -336,7 +316,7 @@ int findanim(const char *name)
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m) // model skin sharing
 {
 #define ifnoload(tex, path) if((tex = textureload(path, 0, true, false))==crosshair)
-#define tryload(tex, path, name, success, fail) \
+#define tryload(tex, path, name) \
     s_sprintfd(path)("packages/models/%s/%s.jpg", dir, name); \
     ifnoload(tex, path) \
     { \
@@ -347,17 +327,14 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
             ifnoload(tex, path) \
             { \
                 strcpy(path+strlen(path)-3, "png"); \
-                ifnoload(tex, path) fail; \
-            } else success; \
-        } else success; \
-    } else success;
-        
-    if(renderpath==R_FIXEDFUNCTION) masks = crosshair;
-    else
-    {
-        tryload(masks, maskspath, "masks", m->masked = true, {});
+                ifnoload(tex, path) return; \
+            }; \
+        }; \
     };
-    tryload(skin, skinpath, "skin", {}, return);
+     
+    masks = crosshair;
+    tryload(skin, skinpath, "skin");
+    if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "masks"); };
 };
 
 // convenient function that covers the usual anims for players/monsters/npcs

@@ -231,7 +231,6 @@ struct md2 : vertmodel
         {
             ((md2 *)vwepmdl)->parts[0]->index = parts.length();
             vwepmdl->setskin();
-            vwepmdl->setshader();
             vwepmdl->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, NULL);
         };
     };

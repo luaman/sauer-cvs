@@ -234,7 +234,6 @@ void md3skin(char *objname, char *skin, char *masks)
             {
                 s_sprintfd(mpath)("%s/%s", md3dir, masks);
                 m.masks = textureload(mpath, false, true, false);
-                loadingmd3->masked = true;
             };
         };
     };

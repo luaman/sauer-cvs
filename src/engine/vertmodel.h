@@ -207,6 +207,23 @@ struct vertmodel : model
             };
         };
 
+        void setshader(bool masked)
+        {
+            if(renderpath==R_FIXEDFUNCTION) return;
+   
+            if(owner->model->shader) owner->model->shader->set();
+            else
+            {
+                static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL;
+
+                if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
+                if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
+                if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
+        
+                (masked ? modelshadermasks : (owner->model->spec>=0.01f ? modelshader : modelshadernospec))->set();
+            };
+        };
+
         void bindskin()
         {
             Texture *s = skin, *m = masks;
@@ -216,7 +233,7 @@ struct vertmodel : model
                 s = slot.sts[0].t;
                 m = slot.sts.length() >= 2 ? slot.sts[1].t : crosshair;
             };
-            if(s->bpp==32) // transparent ss
+            if(s->bpp==32) // transparent skin
             {
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -230,6 +247,7 @@ struct vertmodel : model
                 glBindTexture(GL_TEXTURE_2D, m->gl);
                 glActiveTexture_(GL_TEXTURE0_ARB);
             };
+            setshader(m!=crosshair);
         };
 
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t)
@@ -280,7 +298,7 @@ struct vertmodel : model
                 xtraverts += dynlen;
             };
 
-            if(skin && skin->bpp==32)
+            if(tex ? lookuptexture(tex).sts[0].t->bpp==32 : (skin && skin->bpp==32))
             {
                 glDisable(GL_ALPHA_TEST);
                 glDisable(GL_BLEND);
@@ -490,7 +508,6 @@ struct vertmodel : model
             loopi(numtags) if(links[i]) // render the linked models - interpolate rotation and position of the 'link-tags'
             {
                 part *link = links[i];
-                if(link->model!=model) link->model->setshader();
 
                 GLfloat matrix[16];
                 tag *tag1 = &tags[cur.fr1*numtags+i];
@@ -521,8 +538,6 @@ struct vertmodel : model
                     glMultMatrixf(matrix);
                     link->render(anim, varseed, speed, basetime, d);
                 glPopMatrix();
-
-                if(link->model!=model && i+1<numtags) model->setshader();
             };
         };
 
@@ -583,7 +598,6 @@ struct vertmodel : model
         if(parts.length()!=1 || parts[0]->meshes.length()!=1) return;
         mesh &m = *parts[0]->meshes[0]; 
         m.tex = tex;
-        masked = tex ? lookuptexture(tex).sts.length()>=2 : m.masks!=crosshair;
     };
 
     void calcbb(int frame, vec &center, vec &radius)

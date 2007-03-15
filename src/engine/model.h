@@ -4,14 +4,14 @@ struct model
 {
     Shader *shader;
     float spec, ambient, alphatest;
-    bool collide, cullface, masked, shadow;
+    bool collide, cullface, shadow;
     float scale;
     vec translate;
     SphereTree *spheretree;
     vec bbcenter, bbradius;
     float eyeheight, collideradius, collideheight;
 
-    model() : shader(0), spec(1.0f), ambient(0.3f), alphatest(0.9f), collide(true), cullface(true), masked(false), shadow(true), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), eyeheight(0.9f), collideradius(0), collideheight(0) {};
+    model() : shader(0), spec(1.0f), ambient(0.3f), alphatest(0.9f), collide(true), cullface(true), shadow(true), scale(1.0f), translate(0, 0, 0), spheretree(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), eyeheight(0.9f), collideradius(0), collideheight(0) {};
     virtual ~model() { DELETEP(spheretree); };
     virtual void calcbb(int frame, vec &center, vec &radius) = 0;
     virtual void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl = NULL) = 0;
@@ -59,7 +59,5 @@ struct model
         boundbox(frame, center, radius);
         return center.z+radius.z;
     };
-
-    void setshader();
 };
 
