@@ -24,6 +24,7 @@
                 serverOptions = NSTextField; 
                 shader = NSSlider; 
                 team = NSTextField; 
+                window = NSWindow; 
             }; 
             SUPERCLASS = NSObject; 
         }

@@ -198,7 +198,18 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	else
 	{	//START
 		NSString *cwd = [self cwd];
-		NSArray *opts = [[serverOptions stringValue] componentsSeparatedByString:@" "];
+		NSMutableString *optstring = [NSMutableString stringWithString:[serverOptions stringValue]];
+		
+		if (![[[NSUserDefaults standardUserDefaults] stringForKey:@"server_description"] isEqualToString:@""])
+			[optstring appendFormat:@"-n%@", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_description"]];
+	
+		if (![[[NSUserDefaults standardUserDefaults] stringForKey:@"server_password"] isEqualToString:@""])
+			[optstring appendFormat:@"-p%@", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_password"]];
+		
+		if ([[NSUserDefaults standardUserDefaults] integerForKey:@"server_maxclients"] > 0)
+			[optstring appendFormat:@"-c%d", [[NSUserDefaults standardUserDefaults] integerForKey:@"server_maxclients"]];
+			
+		NSArray *opts = [optstring componentsSeparatedByString:@" "];
 		
 		const char *childCwd  = [cwd fileSystemRepresentation];
 		const char *childPath = [[cwd stringByAppendingPathComponent:@"sauerbraten.app/Contents/MacOS/sauerbraten"] fileSystemRepresentation];
@@ -284,7 +295,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	[args addObject:[NSString stringWithFormat:@"-h%@", [res objectAtIndex:1]]];
 	[args addObject:@"-z32"]; 
 	
-	if([fullscreen state] == NSOffState) [args addObject:@"-t"];
+	if([fullscreen indexOfSelectedItem] == 0) [args addObject:@"-t"];
 	[args addObject:[NSString stringWithFormat:@"-a%d", [fsaa intValue]]];
 	[args addObject:[NSString stringWithFormat:@"-f%d", [shader intValue]]];
 	
@@ -342,6 +353,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	if ( err != CGDisplayNoErr )
         exit(1);
     
+	[window setShowsResizeIndicator:FALSE];
 	[resolutions removeAllItems];
     for ( i = 0; i < numDisplays; ++i )
         [self addResolutionsForDisplay:display[i]];
@@ -384,5 +396,23 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	filename = [filename substringFromIndex:[cwd length]+1]; //+1 to skip the leading '/'
 	if([filename hasSuffix:@".ogz"]) filename = [filename substringToIndex:[filename length]-4]; //chop .ogz
 	return [self playFile:filename];
+}
+
+- (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
+{
+    NSRect prefFrame = [window frame];
+    float prefHeight = prefFrame.size.height;
+    float prefX = prefFrame.origin.x;
+    float prefY = prefFrame.origin.y;
+	
+    if ([tabView indexOfTabViewItem:tabViewItem] < 3)
+        [window setFrame:NSMakeRect(prefX,prefY+(prefHeight - 364), 579, 364) display:YES animate:YES];
+	else
+        [window setFrame:NSMakeRect(prefX,prefY+(prefHeight - 284), 336, 284) display:YES animate:YES];	
+
+	if (([tabView indexOfTabViewItem:tabViewItem] == 0) || ([tabView indexOfTabViewItem:tabViewItem] == 3)) 
+		[window setShowsResizeIndicator:FALSE];
+	else
+		[window setShowsResizeIndicator:TRUE];		
 }
 @end

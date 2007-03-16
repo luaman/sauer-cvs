@@ -4,8 +4,9 @@
 
 @interface Launcher : NSObject
 {
+	IBOutlet NSWindow *window;
     IBOutlet NSPopUpButton *resolutions;
-    IBOutlet NSButton *fullscreen;
+    IBOutlet NSPopUpButton *fullscreen;
     IBOutlet NSSlider *shader;
 	IBOutlet NSSlider *fsaa;
 	IBOutlet NSButton *multiplayer;
