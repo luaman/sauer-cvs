@@ -191,17 +191,17 @@ void render_particles(int time)
                 o.add(v);
                 o.z -= t*t/(2.0f * 5000.0f * pt.gr);
             };
-			if(pt.rv) 
-			{
-				vec v = p->d;
-				if(pt.gr) v.z -= float(ts)/pt.gr;
+            if(pt.rv) 
+            {
+                vec v = p->d;
+                if(pt.gr) v.z -= float(ts)/pt.gr;
                 
-				vec u = v.z ? vec(0.0f, v.z, -v.y) : vec(v.y, -v.x, 0.0f); //what best satifies u.v = 0, and u != <0,0,0>
-				matrix(v, p->oa + lastmillis*(pt.rv/5000.0f)).transform(u);
-				u.normalize();
-				u.mul(pt.rsz);
-				o.add(u);				
-			};
+                vec u = v.z ? vec(0.0f, v.z, -v.y) : vec(v.y, -v.x, 0.0f); //what best satifies u.v = 0, and u != <0,0,0>
+                matrix(v, p->oa + lastmillis*(pt.rv/5000.0f)).transform(u);
+                u.normalize();
+                u.mul(pt.rsz);
+                o.add(u);				
+            };
             
             if(quads)
             {
@@ -230,15 +230,14 @@ void render_particles(int time)
                         e.add(o);
                         //@TODO include spin influence, and maybe have min size
                     };
-                    vec dir1 = e, dir2 = e, c1, c2;
-					dir1.sub(o);
-					dir2.sub(camera1->o);
-					c1.cross(dir2, dir1).normalize().mul(sz);
-					c2.cross(dir1, dir2).normalize().mul(sz);
-                    glTexCoord2f(tx,     ty);     glVertex3f(e.x+c1.x, e.y+c1.y, e.z+c1.z);
-                    glTexCoord2f(tx,     ty+tsz); glVertex3f(e.x+c2.x, e.y+c2.y, e.z+c2.z);
-                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+c2.x, o.y+c2.y, o.z+c2.z);
-                    glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+c1.x, o.y+c1.y, o.z+c1.z);
+                    vec dir1 = e, dir2 = e, c;
+                    dir1.sub(o);
+                    dir2.sub(camera1->o);
+                    c.cross(dir2, dir1).normalize().mul(sz);
+                    glTexCoord2f(tx,     ty+tsz); glVertex3f(e.x-c.x, e.y-c.y, e.z-c.z);
+                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x-c.x, o.y-c.y, o.z-c.z);
+                    glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+c.x, o.y+c.y, o.z+c.z);
+                    glTexCoord2f(tx,     ty);     glVertex3f(e.x+c.x, e.y+c.y, e.z+c.z);
                 }
                 else // regular particles
                 {   

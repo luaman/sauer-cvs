@@ -1376,7 +1376,7 @@ void editmat(char *name)
 
 COMMAND(editmat, "s");
 
-//Work in progress...
+
 #define TEXTURE_WIDTH 10
 #define TEXTURE_HEIGHT 7
 extern int menudistance;
@@ -1389,43 +1389,37 @@ struct texturegui : g3d_callback
     
     void gui(g3d_gui &g, bool firstpass)
     {
-        bool canloadone = true; 
+        bool canloadone = firstpass; 
         int menutab = 1+curtexindex/(TEXTURE_WIDTH*TEXTURE_HEIGHT);        
         int origtab = menutab;
         g.start(menustart, 0.04f, &menutab);
         loopi(1+curtexnum/(TEXTURE_WIDTH*TEXTURE_HEIGHT))
         {   
             g.tab((i==0)?"Textures":NULL, 0xAAFFAA);
-            if(i == origtab-1) //don't load textures on non-visible tabs!
+            if(i != origtab-1) continue; //don't load textures on non-visible tabs!
+            loopj(TEXTURE_HEIGHT) 
             {
-                loopj(TEXTURE_HEIGHT) 
+                g.pushlist();
+                loopk(TEXTURE_WIDTH) 
                 {
-                    g.pushlist();
-                    loopk(TEXTURE_WIDTH) 
+                    int ti = (i*TEXTURE_HEIGHT+j)*TEXTURE_WIDTH+k;
+                    if(ti<curtexnum) 
                     {
-                        int ti = (i*TEXTURE_HEIGHT+j)*TEXTURE_WIDTH+k;
-                        if(ti>=0 && ti<curtexnum) 
+                        Texture *tex = crosshair;
+                        int slot = texmru[ti];
+                        bool found = lookuptexture(slot, false).loaded;
+                        if(found || canloadone) tex = lookuptexture(slot).sts[0].t;
+                        if(!found) canloadone = false; //load only one unloaded texture per frame!
+                        if(g.texture(tex, 1.0)&G3D_UP && found) 
                         {
-                            int slot = texmru[ti];
-                            bool found = lookuptexture(slot, false).loaded;
-                            if(found || canloadone)
-                            {
-                                Texture *tex = lookuptexture(slot).sts[0].t;
-                                if(g.texture(tex, 1.0)&G3D_UP) 
-                                {
-                                    curtexindex = ti;
-                                    mpedittex(slot, allfaces, sel, true); 
-                                };
-                            }
-                            else
-                                g.texture(crosshair, 1.0);
-                            if(!found) canloadone = false; //load only one unloaded texture per frame!
-                        } 
-                        else 
-                            g.texture(crosshair, 1.0); //will create an empty space
-                    };
-                    g.poplist();
+                            curtexindex = ti;
+                            mpedittex(slot, allfaces, sel, true); 
+                        };
+                    }
+                    else
+                        g.texture(crosshair, 1.0); //create an empty space
                 };
+                g.poplist();
             };
         };
         g.end();
@@ -1455,6 +1449,7 @@ void showtexgui(int *n) { gui.showtextures(((*n==0) ? !gui.menuon : (*n==1)) && 
 
 // 0/noargs = toggle, 1 = on, other = off - will autoclose if too far away or exit editmode
 COMMAND(showtexgui, "i");
+
 
 void render_texture_panel(int w, int h)
 {
