@@ -105,7 +105,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 extern void entselectionbox(const entity &e, vec &eo, vec &es);
 extern int entselradius;
 float hitentdist;
-int  hitent;
+int  hitent, hitorient;
 
 static float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
@@ -123,7 +123,11 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
                     extentity &e = *ents[oc->type[i]]; \
                     if(!e.inoctanode || &e==t) continue; \
                     func; \
-                    if(f<dist && f>0) { hitentdist = dist = f; hitent = oc->type[i]; }; \
+                    if(f<dist && f>0) { \
+                        hitentdist = dist = f; \
+                        hitent = oc->type[i]; \
+                        hitorient = orient; \
+                    }; \
                 }; \
     }
 
@@ -145,10 +149,11 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
     return dist;
 };
 
-int rayent(const vec &o, const vec &ray)
+int rayent(const vec &o, const vec &ray, int &orient)
 {
     hitent = -1;
     float d = raycube(o, ray, hitentdist = 1e20f, RAY_ENTS);
+    orient = hitorient;
     if(hitentdist == d)
         return hitent;
     else

@@ -149,9 +149,8 @@ char *entname(entity &e)
 extern selinfo sel;
 extern int orient;
 extern bool havesel, selectcorners;
-extern bool undogoahead;
 int entlooplevel = 0;
-int efocus = -1, enthover;
+int efocus = -1, enthover, entorient = -1;
 
 bool pointinsel(selinfo &sel, vec &o)
 {
@@ -270,7 +269,7 @@ VAR(entselsnap, 0, 0, 1);
 VAR(passthroughent, 0, 0, 1);
 VAR(entmovingshadow, 0, 1, 1);
 
-extern int rayent(const vec &o, const vec &ray);
+extern int rayent(const vec &o, const vec &ray, int &orient);
 extern void boxs(int orient, vec o, const vec &s);
 extern void boxs3D(const vec &o, vec s, int g);
 extern void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, vec &dest, bool first);
@@ -284,8 +283,8 @@ void entdrag(const vec &ray)
     float r = 0, c = 0;
     static vec v, handle;
     vec eo, es;
-    int d = dimension(orient),
-        dc= dimcoord(orient);
+    int d = dimension(entorient),
+        dc= dimcoord(entorient);
 
     entfocus(entgroup.last(),        
         entselectionbox(e, eo, es);
@@ -308,7 +307,6 @@ void entdrag(const vec &ray)
 
 void renderentselection(const vec &o, const vec &ray, bool entmoving)
 {   
-    float f;
     vec eo, es;
  
     glColor3ub(0, 40, 0);
@@ -329,10 +327,9 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
             (a=eo).y=0; (b=es).y=hdr.worldsize; boxs3D(a, b, 1);  
             (a=eo).z=0; (b=es).z=hdr.worldsize; boxs3D(a, b, 1);
         };
-        rayrectintersect(eo, es, o, ray, f, orient);
         glColor3ub(150,0,0);
         glLineWidth(5);
-        boxs(orient, eo, es);
+        boxs(entorient, eo, es);
         glLineWidth(1);
     };
 };
@@ -356,7 +353,7 @@ bool enttoggle(int id)
 bool hoveringonent(const vec &o, const vec &ray)
 {
     if(!passthroughent)          
-        if((efocus = enthover = rayent(o, ray)) >= 0)
+        if((efocus = enthover = rayent(o, ray, entorient)) >= 0)
             return true;
     efocus   = entgroup.empty() ? -1 : entgroup.last();
     enthover = -1;
@@ -378,8 +375,8 @@ VARF(entmoving, 0, 0, 2,
 void entpush(int *dir)
 {
     if(noedit(true)) return;
-    int d = dimension(orient);
-    int s = dimcoord(orient) ? -*dir : *dir;
+    int d = dimension(entorient);
+    int s = dimcoord(entorient) ? -*dir : *dir;
     if(entmoving) 
     {
         groupeditpure(e.o[d] += float(s*sel.grid)); // editdrag supplies the undo

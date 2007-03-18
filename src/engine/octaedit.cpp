@@ -613,15 +613,11 @@ void addundo(undoblock &u)
     pruneundos(undomegs<<20);
 };
 
-bool undogoahead = false;
-
 void makeundo()                        // stores state of selected cubes before editing
 {
-    undogoahead = false;
     if(lastsel==sel || sel.s==vec(0)) return;
     lastsel=sel;
     if(multiplayer(false)) return;
-    undogoahead = true;
     undoblock u;
     initundocube(u, sel);
     addundo(u);
