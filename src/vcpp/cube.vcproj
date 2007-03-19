@@ -1059,6 +1059,14 @@
 				<File
 					RelativePath="..\engine\shader.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\spheretree.cpp"

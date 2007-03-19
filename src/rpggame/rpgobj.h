@@ -152,11 +152,12 @@ struct rpgobj : g3d_callback
         return NULL;
     };
 
-    void attacked(rpgent &attacker)
+    void attacked(rpgobj &attacker)
     {
-        if(attacker.o.dist(ent->o)<32 && ent->state==CS_ALIVE)
+        if(attacker.ent->o.dist(ent->o)<32 && ent->state==CS_ALIVE)
         {
-            int damage = 10;
+            int weapondamage = 10;
+            int damage = weapondamage*attacker.st.eff_melee()/100;
             particle_splash(3, damage*5, 1000, ent->o);
             s_sprintfd(ds)("@%d", damage);
             particle_text(ent->o, ds, 8);
@@ -233,11 +234,8 @@ struct rpgobj : g3d_callback
                 g.tab("sell", 0xDDDDDD);
                 os.playerobj->invgui(g, this);
             };
-            if(st.values)
-            {
-                g.tab("stats", 0xDDDDDD);
-                st.gui(g, os.playerobj->st);
-            };
+            g.tab("stats", 0xDDDDDD);
+            st.gui(g, os.playerobj->st);
         };
         
         g.end();
