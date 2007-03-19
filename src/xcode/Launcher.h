@@ -2,24 +2,19 @@
 
 @class ConsoleView;
 
-@interface Launcher : NSObject
-{
+@interface Launcher : NSObject {
 	IBOutlet NSWindow *window;
-    IBOutlet NSPopUpButton *resolutions;
-    IBOutlet NSPopUpButton *fullscreen;
-    IBOutlet NSSlider *shader;
-	IBOutlet NSSlider *fsaa;
-	IBOutlet NSButton *multiplayer;
-	IBOutlet ConsoleView *console;
-	IBOutlet NSTextField *serverOptions;
-	IBOutlet NSTextField *advancedOptions;
-	
-
-	IBOutlet NSTextField *name;
-	IBOutlet NSTextField *team;
+	IBOutlet NSView *view1;
+	IBOutlet NSView *view2;
+	IBOutlet NSView *view3;
+	IBOutlet NSView *view4;
 	
 	IBOutlet NSArrayController *keys;
-@private
+    IBOutlet NSPopUpButton *resolutions;
+	IBOutlet NSButton *multiplayer;
+	IBOutlet ConsoleView *console;
+@private	
+	NSMutableDictionary *toolBarItems;
 	pid_t server;
 }
 
