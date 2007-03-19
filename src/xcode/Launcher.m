@@ -6,6 +6,19 @@
 
 #define kMaxDisplays	16
 
+// unless you want strings with "(null)" in them :-/
+@interface NSUserDefaults(Extras)
+- (NSString*)nonNullStringForKey:(NSString*)key;
+@end
+
+@implementation NSUserDefaults(Extras)
+- (NSString*)nonNullStringForKey:(NSString*)key {
+    NSString *result = [self stringForKey:key];
+    return (result?result:@"");
+}
+@end
+
+
 static int numberForKey(CFDictionaryRef desc, CFStringRef key) 
 {
     CFNumberRef value;
@@ -304,22 +317,12 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     {	//START
         NSString *cwd = [self cwd];
         NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
-        NSMutableString *optstring = [defs stringForKey:@"server_options"];
-        
-        if (![[[NSUserDefaults standardUserDefaults] stringForKey:@"server_description"] isEqualToString:@""])
-            [optstring appendFormat:@"-n%@", [defs stringForKey:@"server_description"]];
-        
-        if (![[[NSUserDefaults standardUserDefaults] stringForKey:@"server_password"] isEqualToString:@""])
-            [optstring appendFormat:@"-p%@", [defs stringForKey:@"server_password"]];
-		
-        if ([[NSUserDefaults standardUserDefaults] integerForKey:@"server_maxclients"] > 0)
-            [optstring appendFormat:@"-c%d", [defs integerForKey:@"server_maxclients"]];
-        
-        NSArray *opts = [optstring componentsSeparatedByString:@" "];
+                       
+        NSArray *opts = [[defs nonNullStringForKey:@"server_options"] componentsSeparatedByString:@" "];
 		
         const char *childCwd  = [cwd fileSystemRepresentation];
         const char *childPath = [[cwd stringByAppendingPathComponent:@"sauerbraten.app/Contents/MacOS/sauerbraten"] fileSystemRepresentation];
-        const char **args = (const char**)malloc(sizeof(char*)*([opts count] + 3)); //3 = {path, -d, NULL}
+        const char **args = (const char**)malloc(sizeof(char*)*([opts count] + 3 + 3)); //3 = {path, -d, NULL}, and +3 again for optional settings...
         int i, fdm, argc = 0;
 		
         args[argc++] = childPath;
@@ -331,9 +334,18 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
             if([opt length] == 0) continue; //skip empty
             args[argc++] = [opt UTF8String];
         }
-		
-        args[argc++] = NULL;
         
+        NSString *desc = [[NSUserDefaults standardUserDefaults] nonNullStringForKey:@"server_description"];
+        if (![desc isEqualToString:@""]) args[argc++] = [[NSString stringWithFormat:@"-n%@", desc] UTF8String];
+        
+        NSString *pass = [[NSUserDefaults standardUserDefaults] nonNullStringForKey:@"server_password"];
+        if (![pass isEqualToString:@""]) args[argc++] = [[NSString stringWithFormat:@"-p%@", pass] UTF8String];
+		
+        int clients = [[NSUserDefaults standardUserDefaults] integerForKey:@"server_maxclients"];
+        if (clients > 0) args[argc++] = [[NSString stringWithFormat:@"-c%d", clients] UTF8String];
+        
+        args[argc++] = NULL;
+                
         switch ( (server = forkpty(&fdm, NULL, NULL, NULL)) ) // forkpty so we can reliably grab SDL console
         { 
             case -1:
@@ -395,8 +407,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	
     //suppose could use this to update gamma and keys too, but can't be bothered...
     [self updateAutoexecFile:[NSDictionary dictionaryWithObjectsAndKeys:
-        [defs stringForKey:@"name"], @"name",
-        [defs stringForKey:@"team"], @"team",
+        [defs nonNullStringForKey:@"name"], @"name",
+        [defs nonNullStringForKey:@"team"], @"team",
         nil]];
     
     [args addObject:[NSString stringWithFormat:@"-w%@", [res objectAtIndex:0]]];
@@ -412,8 +424,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     else if(filename) 
         [args addObject:[NSString stringWithFormat:@"-l%@",filename]];
 	
-    if(![[defs stringForKey:@"advancedOptions"] isEqual:@""])
-        [args addObjectsFromArray:[[defs stringForKey:@"advancedOptions"] componentsSeparatedByString:@" "]];
+    NSString *adv = [defs nonNullStringForKey:@"advancedOptions"];
+    if(![adv isEqual:@""]) [args addObjectsFromArray:[adv componentsSeparatedByString:@" "]];
     
     NSTask *task = [[NSTask alloc] init];
     [task setCurrentDirectoryPath:cwd];
@@ -498,11 +510,13 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
  */
 - (IBAction)multiplayerAction:(id)sender 
 { 
+    [window makeFirstResponder:window]; //ensure fields are exited and committed
     [self setServerActive:(server==-1)]; 
 }
 
 - (IBAction)playAction:(id)sender 
 { 
+    [window makeFirstResponder:window]; //ensure fields are exited and committed
     [self playFile:nil]; 
 }
 
