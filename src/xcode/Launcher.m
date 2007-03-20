@@ -462,6 +462,14 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	
     NSDictionary *dict = [self readConfigFiles];
     [keys addObjects:[self getKeys:dict]];
+    NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
+    if([[defs nonNullStringForKey:@"name"] isEqual:@""]) 
+    {
+        NSString *name = [dict objectForKey:@"name"];
+        if([name isEqual:@""] || [name isEqual:@"unnamed"]) name = NSUserName();
+        [defs setValue:name forKey:@"name"];
+    }
+    if([[defs nonNullStringForKey:@"team"] isEqual:@""]) [defs setValue:[dict objectForKey:@"team"] forKey:@"team"];
 	
     [self initResolutions];
     server = -1;
