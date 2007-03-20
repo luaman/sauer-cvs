@@ -369,11 +369,18 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
     };
 };
 
+VAR(grassblend, 0, 0, 100);
+
 void setupgrass()
 {
     glDisable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.4f);
+    glAlphaFunc(GL_GREATER, grassblend ? grassblend/100.0f : 0.4f);
+    if(grassblend)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    };
 
     static Shader *grassshader = NULL;
     if(!grassshader) grassshader = lookupshaderbyname("grass");
@@ -394,6 +401,7 @@ void cleanupgrass()
 
     defaultshader->set();
 
+    if(grassblend) glDisable(GL_BLEND);
     glDisable(GL_ALPHA_TEST);
     glEnable(GL_CULL_FACE);
 };
