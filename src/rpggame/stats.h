@@ -18,6 +18,9 @@
     N(feared) \
     N(stealth) \
     N(hostility) \
+    N(stata) \
+    N(statb) \
+    N(statc) \
 
 
 struct stats

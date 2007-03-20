@@ -7,7 +7,7 @@ struct rpgobjset
     rpgobj *pointingat;
     rpgobj *playerobj;
     
-    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL)
+    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL), playerobj(NULL)
     {
         #define N(n) CCOMMAND(rpgobjset, r_##n,     "i",    { self->stack[0]->st.s_##n = atoi(args[0]); }); \
                      CCOMMAND(rpgobjset, r_def_##n, "ii",   { stats::def_##n(atoi(args[0]), atoi(args[1])); });     
@@ -26,19 +26,21 @@ struct rpgobjset
         CCOMMAND(rpgobjset, r_worth,   "i",   { self->stack[0]->worth = atoi(args[0]); });    
         CCOMMAND(rpgobjset, r_gold,    "i",   { self->stack[0]->gold  = atoi(args[0]); });    
         
-        playerobj = new rpgobj("player", *this);
-        playerobj->ent = &cl.player1;
         clearworld();
     };
     
     void clearworld()
     {
+        if(playerobj) { playerobj->ent = NULL; delete playerobj; };
+        playerobj = new rpgobj("player", *this);
+        playerobj->ent = &cl.player1;
+
         pointingat = NULL;
         set.deletecontentsp();
         stack.setsize(0);
         loopi(10) stack.add(playerobj);     // determines the stack depth
         
-        playerobj->scriptinit();
+        playerobj->scriptinit();            // will fail when this is called from emptymap(), which is ok
     };
     
     void update(int curtime)
