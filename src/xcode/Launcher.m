@@ -495,16 +495,24 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 }
 
 
-//Should I shove this into a seperate thread? Seems fast enough for me...
-- (void)initMaps
+- (void)initMaps:(id)obj //@note threaded!
 {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     NSString *dir = [[self cwd] stringByAppendingPathComponent:@"packages"];
     NSString *file;
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
     while(file = [enumerator nextObject]) {
-        if([[file pathExtension] isEqualToString: @"ogz"]) [maps addObject:[[Map alloc] initWithPath:[dir stringByAppendingPathComponent:file]]];
+        if([[file pathExtension] isEqualToString: @"ogz"]) 
+            [self performSelectorOnMainThread:@selector(addMap:) withObject:[dir stringByAppendingPathComponent:file] waitUntilDone:NO];
     }
+    [pool release];
+    //@todo - update a progress indicator - not unless silly numbers of files, or incredibly slow mac..
 }
+-(void)addMap:(NSString*)path {
+    [maps addObject:[[Map alloc] initWithPath:path]]; 
+}
+
+
 
 - (void)awakeFromNib 
 {
@@ -521,7 +529,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     }
     if([[defs nonNullStringForKey:@"team"] isEqual:@""]) [defs setValue:[dict objectForKey:@"team"] forKey:@"team"];
 	
-    [self initMaps];
+    [NSThread detachNewThreadSelector: @selector(initMaps:) toTarget:self withObject: nil];
     
     [self initResolutions];
     server = -1;
