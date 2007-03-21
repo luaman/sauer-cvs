@@ -104,6 +104,7 @@
 		D17E0F2E0BAF1FA9008BB696 /* Server.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F2A0BAF1FA9008BB696 /* Server.gif */; };
 		D17E0F2F0BAF1FA9008BB696 /* EisenStern.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F2B0BAF1FA9008BB696 /* EisenStern.gif */; };
 		D17E0F310BAF2031008BB696 /* Help.tiff in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F300BAF2031008BB696 /* Help.tiff */; };
+		D1F0AC200BB0688A00CE4E84 /* Maps.gif in Resources */ = {isa = PBXBuildFile; fileRef = D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -202,8 +203,8 @@
 		B941984B092076920029DAD1 /* pch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = pch.h; sourceTree = "<group>"; };
 		B941984C092076920029DAD1 /* tools.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = tools.cpp; sourceTree = "<group>"; };
 		B941984D092076920029DAD1 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
-		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B96D0D4C092096F200B6C936 /* launcher.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B96D0D4C092096F200B6C936 /* launcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B96D0D570920970C00B6C936 /* Launcher.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Launcher.h; sourceTree = "<group>"; };
 		B96D0D580920970C00B6C936 /* Launcher.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Launcher.m; sourceTree = "<group>"; };
 		B96D0D5B0920971300B6C936 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
@@ -216,6 +217,7 @@
 		D17E0F2A0BAF1FA9008BB696 /* Server.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Server.gif; sourceTree = "<group>"; };
 		D17E0F2B0BAF1FA9008BB696 /* EisenStern.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = EisenStern.gif; sourceTree = "<group>"; };
 		D17E0F300BAF2031008BB696 /* Help.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Help.tiff; sourceTree = "<group>"; };
+		D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Maps.gif; sourceTree = "<group>"; };
 		F5A47A9D01A0482F01D3D55B /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = SOURCE_ROOT; };
 		F5A47A9E01A0483001D3D55B /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SDLMain.m; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -315,11 +317,12 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				D17E0F300BAF2031008BB696 /* Help.tiff */,
-				D17E0F280BAF1FA9008BB696 /* Keys.gif */,
 				D17E0F290BAF1FA9008BB696 /* Main.gif */,
+				D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */,
+				D17E0F280BAF1FA9008BB696 /* Keys.gif */,
 				D17E0F2A0BAF1FA9008BB696 /* Server.gif */,
 				D17E0F2B0BAF1FA9008BB696 /* EisenStern.gif */,
+				D17E0F300BAF2031008BB696 /* Help.tiff */,
 				B930D0D10A3DA92300BDFB85 /* map.icns */,
 				B9CACA14092099E700A13F04 /* sauerbraten-Info.plist */,
 				B9CACA12092099DF00A13F04 /* launcher-Info.plist */,
@@ -576,6 +579,7 @@
 				D17E0F2E0BAF1FA9008BB696 /* Server.gif in Resources */,
 				D17E0F2F0BAF1FA9008BB696 /* EisenStern.gif in Resources */,
 				D17E0F310BAF2031008BB696 /* Help.tiff in Resources */,
+				D1F0AC200BB0688A00CE4E84 /* Maps.gif in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

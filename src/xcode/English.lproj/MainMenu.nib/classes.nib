@@ -3,18 +3,26 @@
         {CLASS = ConsoleView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
         {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
         {
-            ACTIONS = {helpAction = id; multiplayerAction = id; playAction = id; playRpg = id; }; 
+            ACTIONS = {
+                helpAction = id; 
+                multiplayerAction = id; 
+                playAction = id; 
+                playMap = id; 
+                playRpg = id; 
+            }; 
             CLASS = Launcher; 
             LANGUAGE = ObjC; 
             OUTLETS = {
                 console = ConsoleView; 
                 keys = NSArrayController; 
+                maps = NSArrayController; 
                 multiplayer = NSButton; 
                 resolutions = NSPopUpButton; 
                 view1 = NSView; 
                 view2 = NSView; 
                 view3 = NSView; 
                 view4 = NSView; 
+                view5 = NSView; 
                 window = NSWindow; 
             }; 
             SUPERCLASS = NSObject; 

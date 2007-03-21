@@ -19,6 +19,44 @@
 @end
 
 
+
+@interface Map : NSObject {
+    NSString *path;
+}
+@end
+
+@implementation Map
+- (id)initWithPath:(NSString*)aPath 
+{
+    if((self = [super init])) 
+        path = [[aPath stringByDeletingPathExtension] retain];
+    return self;
+}
+- (void)dealloc 
+{
+    [path release];
+    [super dealloc];
+}
+- (NSString*)path { return path; }
+- (NSString*)name { return [path lastPathComponent]; }
+- (NSImage*)image { return [[NSImage alloc] initWithContentsOfFile:[path stringByAppendingString:@".jpg"]]; }
+- (NSString*)text 
+{
+    NSError *error;
+    return [[NSString alloc] initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error];
+}
+- (NSString*)tickIfExists:(NSString*)ext 
+{
+    unichar tickCh = 0x2713; 
+    return [[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingString:ext]] ? [NSString stringWithCharacters:&tickCh length:1] : @"";
+}
+- (NSString*)hasImage { return [self tickIfExists:@".jpg"]; }
+- (NSString*)hasText { return [self tickIfExists:@".txt"]; }
+- (NSString*)hasCfg { return [self tickIfExists:@".cfg"]; }
+@end
+
+
+
 static int numberForKey(CFDictionaryRef desc, CFStringRef key) 
 {
     CFNumberRef value;
@@ -40,6 +78,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         case 2: prefsView = view2; break;
         case 3: prefsView = view3; break;
         case 4: prefsView = view4; break;
+        case 5: prefsView = view5; break;
             //extend as see fit...
         default: return;
     }
@@ -80,6 +119,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
     toolBarItems = [[NSMutableDictionary alloc] init];
     NSToolbarItem *first = [self addToolBarItem:@"Main"];
+    [self addToolBarItem:@"Maps"];
     [self addToolBarItem:@"Keys"];
     [self addToolBarItem:@"Server"];
     [self addToolBarItem:@"EisenStern"];
@@ -118,11 +158,11 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)theToolbar 
 {
-    return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", NSToolbarFlexibleSpaceItemIdentifier, @"6", nil];
+    return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", @"5", NSToolbarFlexibleSpaceItemIdentifier, @"7", nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {
-    return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", nil];
+    return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", @"5", nil];
 }
 
 
@@ -455,6 +495,16 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 }
 
 
+//Should I shove this into a seperate thread? Seems fast enough for me...
+- (void)initMaps
+{
+    NSString *dir = [[self cwd] stringByAppendingPathComponent:@"packages"];
+    NSString *file;
+    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
+    while(file = [enumerator nextObject]) {
+        if([[file pathExtension] isEqualToString: @"ogz"]) [maps addObject:[[Map alloc] initWithPath:[dir stringByAppendingPathComponent:file]]];
+    }
+}
 
 - (void)awakeFromNib 
 {
@@ -471,6 +521,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     }
     if([[defs nonNullStringForKey:@"team"] isEqual:@""]) [defs setValue:[dict objectForKey:@"team"] forKey:@"team"];
 	
+    [self initMaps];
+    
     [self initResolutions];
     server = -1;
     [window setDelegate:self]; // so can catch the window close	
@@ -531,6 +583,12 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 - (IBAction)playRpg:(id)sender 
 { 
     [self playFile:@"-rpg"]; 
+}
+
+- (IBAction)playMap:(id)sender
+{
+    NSArray *sel = [maps selectedObjects];
+    if(sel && [sel count] > 0) [self playFile:[[sel objectAtIndex:0] path]];
 }
 
 - (IBAction)helpAction:(id)sender 

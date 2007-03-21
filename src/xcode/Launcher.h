@@ -8,7 +8,9 @@
 	IBOutlet NSView *view2;
 	IBOutlet NSView *view3;
 	IBOutlet NSView *view4;
+	IBOutlet NSView *view5;
 	
+	IBOutlet NSArrayController *maps;
 	IBOutlet NSArrayController *keys;
     IBOutlet NSPopUpButton *resolutions;
 	IBOutlet NSButton *multiplayer;
@@ -25,5 +27,7 @@
 - (IBAction)helpAction:(id)sender;
 
 - (IBAction)playRpg:(id)sender;
+
+- (IBAction)playMap:(id)sender;
 
 @end
