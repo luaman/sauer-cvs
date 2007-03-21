@@ -155,7 +155,7 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int f
 
 bool insideva(const vtxarray *va, const vec &v)
 {
-    return va->x<=v.x && va->y<=v.y && va->z<=v.z && va->x+va->size>v.x && va->y+va->size>v.y && va->z+va->size>v.z;
+    return v.x>=va->x && v.y>=va->y && v.z>=va->z && v.x<=va->x+va->size && v.y<=va->y+va->size && v.z<=va->z+va->size;
 };
 
 static ivec vaorigin;
