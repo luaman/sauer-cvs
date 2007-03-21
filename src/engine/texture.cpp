@@ -673,6 +673,7 @@ void initenvmaps()
 
 void genenvmaps()
 {
+    if(envmaps.empty()) return;
     show_out_of_renderloop_progress(0, "generating environment maps...");
     loopv(envmaps)
     {
