@@ -673,9 +673,9 @@ void initenvmaps()
 
 void genenvmaps()
 {
+    show_out_of_renderloop_progress(0, "generating environment maps...");
     loopv(envmaps)
     {
-        show_out_of_renderloop_progress(float(i)/float(envmaps.length()), "generating environment maps...");
         envmap &em = envmaps[i];
         em.tex = genenvmap(em.o, em.size ? em.size : envmapsize);
     };
