@@ -958,7 +958,7 @@ void edithmap(int dir, int mode)
     b.s[R[d]] = x+ex;
     b.grid   = sel.grid;
     b.orient = sel.orient;
-    cubifyheightmap(b, mode != dir>0);
+    cubifyheightmap(b, mode == dir>0);
     setheightmap(b);
 };
 
