@@ -342,8 +342,7 @@ void cursorupdate()
         vec v;
         ivec w;
         float sdist = 0, wdist = 0, t;
-        bool hit = false;
-
+       
         wdist = raycubepos(player->o, ray, v, 0,  (editmode && showmat ? RAY_EDITMAT : 0)   // select cubes first
                                                 | (passthroughcube ? RAY_PASS : 0)
                                                 | RAY_SKIPFIRST, gridsize);
@@ -357,7 +356,7 @@ void cursorupdate()
         };
 
         if(havesel && !passthroughsel)     // now try selecting the selection
-            if(hit = rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
+            if(rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
                 wdist = min(sdist, wdist);  // and choose the nearest of the two
 
         v = ray;
@@ -367,7 +366,7 @@ void cursorupdate()
         lookupcube(w.x, w.y, w.z);
         int mag = lusize / gridsize;
         normalizelookupcube(w.x, w.y, w.z);
-        if(!hit) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
+        if(sdist == 0 || sdist > wdist) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
         cur = lu;
         cor = w;
         cor.div(g2);
