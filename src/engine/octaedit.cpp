@@ -761,7 +761,7 @@ void setheightmap(selinfo &b)
     changed(b);
 };
 
-void cubifyheightmap(selinfo &b)     // pull up heighfields to where they don't cross cube boundaries
+void cubifyheightmap(selinfo &b, bool downbias)     // pull up heighfields to where they don't cross cube boundaries
 {
     int d = dimension(sel.orient);
     int w = sel.s[R[d]] + 1;
@@ -773,22 +773,31 @@ void cubifyheightmap(selinfo &b)     // pull up heighfields to where they don't 
         {
             loop(y, l-1)
             {
-                int *o[4];
+                int *o[4], best, par;
                 loopi(2) loopj(2) o[i+j*2] = hmap+x+i+(y+j)*w;
-                int best = 0xFFFF;
-                loopi(4) if(*o[i]<best) best = *o[i];
-                int bottom = (best&(~7))+8;
-                if((*o[0]==*o[3] && *o[0]==bottom) ||
-                   (*o[1]==*o[2] && *o[1]==bottom)) bottom += 8;
-                loopj(4) if(*o[j]>bottom)
-                {
-                    *o[j] = bottom;
-                    changed = true;
-                    b.o[R[d]] = min(b.o[R[d]], x*sel.grid+sel.o[R[d]]);
-                    b.o[C[d]] = min(b.o[C[d]], y*sel.grid+sel.o[C[d]]);
-                    b.s[R[d]] = max(b.s[R[d]], x+1);
-                    b.s[C[d]] = max(b.s[C[d]], y+1);
-                };
+                
+                #define pullhmap(I, LT, GT, M, N, A) { \
+                    best = I; \
+                    loopi(4) if(*o[i] LT best) best = *o[i] - M; \
+                    par = (best&(~7)) + N; \
+                    if((*o[0]==*o[3] && *o[0]==par) || \
+                       (*o[1]==*o[2] && *o[1]==par)) \
+                        par += A; \
+                    loopj(4) if(*o[j] GT par) { \
+                        *o[j] = par; \
+                        changed = true; \
+                        b.o[R[d]] = min(b.o[R[d]], x*sel.grid+sel.o[R[d]]); \
+                        b.o[C[d]] = min(b.o[C[d]], y*sel.grid+sel.o[C[d]]); \
+                        b.s[R[d]] = max(b.s[R[d]], x+1); \
+                        b.s[C[d]] = max(b.s[C[d]], y+1); \
+                    }; \
+                }
+                
+                if(downbias) {
+                    pullhmap(hdr.worldsize, <, >, 0, 8, 8);
+                }
+                else 
+                    pullhmap(0, >, <, 1, 0, -8);
             };
         };
         if(!changed) break;
@@ -844,17 +853,9 @@ void createheightmap()
             hmap[a] = max(hmap[a], e);// simply take the heighest points
         };
     );
-    cubifyheightmap(b);
+    cubifyheightmap(b, !dc);
     setheightmap(b);
 };
-
-void getheightmap()
-{
-    if(noedit() || multiplayer() || !havesel) return;
-    createheightmap();
-};
-
-COMMAND(getheightmap, "");
 
 const int MAXBRUSH = 50;
 int brush[MAXBRUSH][MAXBRUSH];
@@ -921,7 +922,7 @@ COMMAND(brushvert, "iii");
 COMMAND(copybrush, "");
 COMMAND(savebrush, "s");
 
-void edithmap(int dir)
+void edithmap(int dir, int mode)
 {
     if(multiplayer() || hmap == NULL) return;
 
@@ -957,7 +958,7 @@ void edithmap(int dir)
     b.s[R[d]] = x+ex;
     b.grid   = sel.grid;
     b.orient = sel.orient;
-    cubifyheightmap(b);
+    cubifyheightmap(b, mode != dir>0);
     setheightmap(b);
 };
 
@@ -973,10 +974,20 @@ void smoothmap()
             int i = x+(y*w);
             hmap[i] = (hmap[i+1] + hmap[i-1] + hmap[i] + hmap[i+w] + hmap[i-w]) / 5;    
         };
-    cubifyheightmap(sel);
+    cubifyheightmap(sel, !dimcoord(sel.orient));
     setheightmap(sel);
 };
 
+void getheightmap()
+{
+    if(noedit() || multiplayer() || !havesel) return;
+    if(hmap == NULL)
+        createheightmap();
+    else 
+        smoothmap();
+};
+
+COMMAND(getheightmap, "");
 COMMAND(smoothmap, "");
 
 ///////////// main cube edit ////////////////
@@ -1100,7 +1111,7 @@ void editface(int *dir, int *mode)
 {
     if(noedit(moving!=0)) return;
     if(hmap)
-        edithmap(*dir);
+        edithmap(*dir, *mode);
     else
         mpeditface(*dir, *mode, sel, true);
 };
