@@ -357,6 +357,11 @@ struct monsterset
         loopv(monsters)
         {
             monster &m = *monsters[i];
+            if(m.state!=CS_DEAD) rendershadow(&m);
+        };
+        loopv(monsters)
+        {
+            monster &m = *monsters[i];
             if(m.state!=CS_DEAD || m.superdamage<50) renderclient(&m, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].vwepname, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
         };
     };
