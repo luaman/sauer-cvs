@@ -346,15 +346,37 @@ void rendershadow(dynent *d)
     if(d->physstate<=PHYS_FALL || d->physstate>PHYS_FLOOR)
     {
         dist = raycube(d->o, vec(0, 0, -1), hdr.worldsize);
-        if(dist >= hdr.worldsize) return;
-        slope = vec(0, 0, 1);
+        if(dist>=hdr.worldsize) return;
+        cube &c = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z-dist));
+        if(isempty(c) || isentirelysolid(c) || (c.ext && c.ext->material!=MAT_AIR)) slope = vec(0, 0, 1);
+        else
+        {
+            extern void setcubeclip(cube &c, int x, int y, int z, int size);
+            setcubeclip(c, lu.x, lu.y, lu.z, lusize);
+            clipplanes &p = *c.ext->clip;
+            loopi(p.size) if(p.p[i].z>0)
+            {
+                float f = p.p[i].dist(d->o)/p.p[i].z;
+                if(f<0) continue;
+                if(pointincube(p, vec(d->o.x, d->o.y, d->o.z - f-0.1f))) slope = p.p[i];
+            };
+        };
     };
 
     vec center = d->o;
     center.z -= max(dist-0.25f, 0.0f);
-    
+  
     float radius = 0.75f*d->radius;
-    radius *= 1.0f + min(1.0f, max(0.0f, 0.5f*(dist - d->eyeheight)/(d->aboveeye + d->eyeheight))); 
+    radius *= 1.0f + min(1.0f, max(0.0f, 0.5f*(dist - d->eyeheight)/(d->aboveeye + d->eyeheight)));
+ 
+    if(d->physstate<=PHYS_FALL || d->physstate>PHYS_FLOOR)
+    {
+        float offset = slope.dot(center);
+        center.z = max(center.z, (offset - slope.x*(center.x-radius) - slope.y*(center.y-radius))/slope.z);
+        center.z = max(center.z, (offset - slope.x*(center.x+radius) - slope.y*(center.y-radius))/slope.z);
+        center.z = max(center.z, (offset - slope.x*(center.x+radius) - slope.y*(center.y+radius))/slope.z);
+        center.z = max(center.z, (offset - slope.x*(center.x-radius) - slope.y*(center.y+radius))/slope.z);
+    };
 
     static Texture *shadowtex = NULL;
     if(!shadowtex) shadowtex = textureload("data/shadow.png", 3);
@@ -370,10 +392,10 @@ void rendershadow(dynent *d)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glBegin(GL_POLYGON);
-    glTexCoord2f(0, 0); glVertex3f(center.x-radius, center.y-radius, center.z + radius*(-slope.x - slope.y)/slope.z);
-    glTexCoord2f(1, 0); glVertex3f(center.x+radius, center.y-radius, center.z + radius*( slope.x - slope.y)/slope.z);
-    glTexCoord2f(1, 1); glVertex3f(center.x+radius, center.y+radius, center.z + radius*( slope.x + slope.y)/slope.z);
-    glTexCoord2f(0, 1); glVertex3f(center.x-radius, center.y+radius, center.z + radius*(-slope.x + slope.y)/slope.z);
+    glTexCoord2f(0, 0); glVertex3f(center.x-radius, center.y-radius, center.z);
+    glTexCoord2f(1, 0); glVertex3f(center.x+radius, center.y-radius, center.z);
+    glTexCoord2f(1, 1); glVertex3f(center.x+radius, center.y+radius, center.z);
+    glTexCoord2f(0, 1); glVertex3f(center.x-radius, center.y+radius, center.z);
     glEnd();
 
     glDepthMask(GL_TRUE);
