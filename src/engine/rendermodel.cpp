@@ -337,6 +337,49 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
     if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "masks"); };
 };
 
+VAR(dynshadow, 0, 50, 100);
+
+void rendershadow(dynent *d)
+{
+    float dist = d->eyeheight;
+    vec slope = d->floor;
+    if(d->physstate<=PHYS_FALL || d->physstate>PHYS_FLOOR)
+    {
+        dist = raycube(d->o, vec(0, 0, -1), hdr.worldsize);
+        if(dist >= hdr.worldsize) return;
+        slope = vec(0, 0, 1);
+    };
+
+    vec center = d->o;
+    center.z -= max(dist-0.25f, 0.0f);
+    
+    float radius = 0.75f*d->radius;
+    radius *= 1.0f + min(1.0f, max(0.0f, 0.5f*(dist - d->eyeheight)/(d->aboveeye + d->eyeheight))); 
+
+    static Texture *shadowtex = NULL;
+    if(!shadowtex) shadowtex = textureload("data/shadow.png", 3);
+
+    defaultshader->set();
+
+    glColor4f(1, 1, 1, dynshadow/100.0f);
+
+    glBindTexture(GL_TEXTURE_2D, shadowtex->gl);
+
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_POLYGON);
+    glTexCoord2f(0, 0); glVertex3f(center.x-radius, center.y-radius, center.z - radius*(slope.x + slope.y)/slope.z);
+    glTexCoord2f(1, 0); glVertex3f(center.x+radius, center.y-radius, center.z + radius*(slope.x - slope.y)/slope.z);
+    glTexCoord2f(1, 1); glVertex3f(center.x+radius, center.y+radius, center.z + radius*(slope.x + slope.y)/slope.z);
+    glTexCoord2f(0, 1); glVertex3f(center.x-radius, center.y+radius, center.z + radius*(slope.y - slope.x)/slope.z);
+    glEnd();
+
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+};
+
 // convenient function that covers the usual anims for players/monsters/npcs
 
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain)
