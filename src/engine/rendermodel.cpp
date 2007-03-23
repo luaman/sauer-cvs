@@ -373,7 +373,7 @@ void rendershadow(dynent *d)
     glTexCoord2f(0, 0); glVertex3f(center.x-radius, center.y-radius, center.z + radius*(-slope.x - slope.y)/slope.z);
     glTexCoord2f(1, 0); glVertex3f(center.x+radius, center.y-radius, center.z + radius*( slope.x - slope.y)/slope.z);
     glTexCoord2f(1, 1); glVertex3f(center.x+radius, center.y+radius, center.z + radius*( slope.x + slope.y)/slope.z);
-    glTexCoord2f(0, 1); glVertex3f(center.x-radius, center.y+radius, center.z + radius*(-slope.x + slope.x)/slope.z);
+    glTexCoord2f(0, 1); glVertex3f(center.x-radius, center.y+radius, center.z + radius*(-slope.x + slope.y)/slope.z);
     glEnd();
 
     glDepthMask(GL_TRUE);
