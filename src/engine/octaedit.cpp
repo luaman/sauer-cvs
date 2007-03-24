@@ -742,16 +742,21 @@ void setheightmap(selinfo &b)
             discardchildren(c);
         solidfaces(c);
 
+        int e[2][2];
+
+        loopi(2) loopj(2)
+            e[i][j] = min(8, hmap[x+sx+i+(y+sy+j)*w] - (h-z-1)*8);
+
         loopi(2) loopj(2)
         {
-            int e = min(8, hmap[x+sx+i+(y+sy+j)*w] - (h-z-1)*8);
-            if(e<0)
+            int f = e[i][j];
+            if(f<0 || (f==0 && e[1-i][j]==0 && e[i][1-j]==0))
             {
-                e=0;
+                f=0;
                 pushside(c, d, i, j, 0);
                 pushside(c, d, i, j, 1);
             };
-            edgeset(cubeedge(c, d, i, j), dc, dc ? e : 8-e);
+            edgeset(cubeedge(c, d, i, j), dc, dc ? f : 8-f);
         };
 
         c.texture[sel.orient] = (htex ? htex[x+sx+(y+sy)*w] : htexture);
@@ -761,43 +766,59 @@ void setheightmap(selinfo &b)
     changed(b);
 };
 
+void extendchangedhmap(selinfo &b, int x, int y, int d) 
+{
+    b.o[R[d]] = min(b.o[R[d]], x*sel.grid+sel.o[R[d]]);
+    b.o[C[d]] = min(b.o[C[d]], y*sel.grid+sel.o[C[d]]);
+    b.s[R[d]] = max(b.s[R[d]], x+1);
+    b.s[C[d]] = max(b.s[C[d]], y+1);
+};
+
 void cubifyheightmap(selinfo &b, bool downbias)     // pull up heighfields to where they don't cross cube boundaries
 {
     int d = dimension(sel.orient);
     int w = sel.s[R[d]] + 1;
     int l = sel.s[C[d]] + 1;
-    for(;;)
+    for(int zz = 0;; zz++)
     {
         bool changed = false;
         loop(x, w-1)
         {
             loop(y, l-1)
             {
-                int *o[4], best, par;
+                int *o[4], best, par, q = 0;
                 loopi(2) loopj(2) o[i+j*2] = hmap+x+i+(y+j)*w;
-                
+
+                // to avoid infinite loops, we must always ensure:
+                // a) all changes satisfies the reason it needed to be pulled
+                // b) all changes are done in the same direction
                 #define pullhmap(I, LT, GT, M, N, A) { \
                     best = I; \
-                    loopi(4) if(*o[i] LT best) best = *o[i] - M; \
+                    loopi(4) if(*o[i] LT best) best = *o[q = i] - M; \
                     par = (best&(~7)) + N; \
-                    if((*o[0]==*o[3] && *o[0]==par) || \
-                       (*o[1]==*o[2] && *o[1]==par)) \
-                        par += A; \
-                    loopj(4) if(*o[j] GT par) { \
-                        *o[j] = par; \
-                        changed = true; \
-                        b.o[R[d]] = min(b.o[R[d]], x*sel.grid+sel.o[R[d]]); \
-                        b.o[C[d]] = min(b.o[C[d]], y*sel.grid+sel.o[C[d]]); \
-                        b.s[R[d]] = max(b.s[R[d]], x+1); \
-                        b.s[C[d]] = max(b.s[C[d]], y+1); \
+                    /* dual layer for extra smoothness */ \
+                    if(*o[q^3] GT par && !(*o[q^1] LT par || *o[q^2] LT par)) { \
+                        if(*o[q^3] GT par A 8 || *o[q^1] != par || *o[q^2] != par) { \
+                            *o[q^3] = (*o[q^3] GT par A 8 ? par A 8 : *o[q^3]); \
+                            *o[q^1] = *o[q^2] = par; \
+                            changed = true; \
+                            extendchangedhmap(b, x, y, d); \
+                        }; \
+                    /* single layer */ \
+                    } else { \
+                        loopj(4) if(*o[j] GT par) { \
+                            *o[j] = par; \
+                            changed = true; \
+                            extendchangedhmap(b, x, y, d); \
+                        }; \
                     }; \
                 }
                 
                 if(downbias) {
-                    pullhmap(hdr.worldsize, <, >, 0, 8, 8);
+                    pullhmap(hdr.worldsize, <, >, 0, 8, +);
                 }
-                else 
-                    pullhmap(0, >, <, 1, 0, -8);
+                else
+                    pullhmap(0, >, <, 1, 0, -);
             };
         };
         if(!changed) break;
