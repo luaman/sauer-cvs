@@ -779,7 +779,7 @@ void cubifyheightmap(selinfo &b, bool downbias)     // pull up heighfields to wh
     int d = dimension(sel.orient);
     int w = sel.s[R[d]] + 1;
     int l = sel.s[C[d]] + 1;
-    for(int zz = 0;; zz++)
+    for(;;)
     {
         bool changed = false;
         loop(x, w-1)
@@ -987,13 +987,13 @@ void smoothmap()
 {    
     if(multiplayer() || hmap == NULL) return;
     int d = dimension(sel.orient);
-    int w = sel.s[R[d]];
-    int l = sel.s[C[d]];
-    for(int x=1; x<w; x++) 
-        for(int y=1; y<l; y++) 
+    int w = sel.s[R[d]] + 1;
+    int l = sel.s[C[d]] + 1;
+    for(int x=1; x<w-2; x++) 
+        for(int y=1; y<l-2; y++) 
         {
             int i = x+(y*w);
-            hmap[i] = (hmap[i+1] + hmap[i-1] + hmap[i] + hmap[i+w] + hmap[i-w]) / 5;    
+            hmap[i] = (hmap[i+1] + hmap[i-1] + hmap[i] +hmap[i+w] + hmap[i-w]) / 5;    
         };
     cubifyheightmap(sel, !dimcoord(sel.orient));
     setheightmap(sel);
