@@ -6,8 +6,6 @@ struct fpsrender
 //      const char *vweps[] = {NULL, "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
         const char *vweps[] = {NULL, "monster/ogro/vwep", "monster/ogro/vwep", "monster/ogro/vwep", "monster/ogro/vwep", "monster/ogro/vwep", "monster/ogro/vwep"};
         fpsent *d;
-        loopv(cl.players) if((d = cl.players[i]) && d->state==CS_ALIVE) rendershadow(d);
-        if(isthirdperson() && cl.player1->state==CS_ALIVE) rendershadow(cl.player1);
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
             const char *mdlname = m_teammode ? (isteam(cl.player1->team, d->team) ? "monster/ogro/blue" : "monster/ogro/red") : (gamemode!=1 ? "monster/ogro/red" : "monster/ogro");
