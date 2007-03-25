@@ -222,6 +222,19 @@ void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradi
 };
 
 VAR(dynshadow, 0, 40, 100);
+
+void setshadowmatrix(float z, const vec &dir)
+{
+    GLfloat m[16] =
+    {
+        dir.z,      0,          0,          0,
+        0,          dir.z,      0,          0,
+        -dir.x,     -dir.y,     0,          0,
+        dir.x*z,    dir.y*z,    dir.z*z,    dir.z
+    };
+    glMultMatrixf(m);
+};
+
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
 extern float reflecting, refracting;
@@ -300,7 +313,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 
-    if((cull&MDL_SHADOW) && hasstencil)
+    if(dir.z>0 && (cull&MDL_SHADOW) && hasstencil)
     {
         vec floor;
         float dist = rayfloor(center, floor);
@@ -312,7 +325,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         center.z = max(center.z, (offset - floor.x*(center.x+radius) - floor.y*(center.y+radius))/floor.z);
         center.z = max(center.z, (offset - floor.x*(center.x-radius) - floor.y*(center.y+radius))/floor.z);
 
-        if(center.z<=camera1->o.z) return;
+        if(center.z>=camera1->o.z) return;
 
         notextureshader->set();
         glDisable(GL_TEXTURE_2D);
@@ -324,7 +337,10 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
         glColor4f(0, 0, 0, dynshadow/100.0f);
-        m->render(anim|ANIM_NOSKIN|ANIM_REUSE|ANIM_FLATTEN, varseed, speed, basetime, x, y, center.z, yaw, pitch, d, vwep);
+        glPushMatrix();
+        setshadowmatrix(center.z, dir);
+        m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+        glPopMatrix();
 
         glEnable(GL_TEXTURE_2D);
         glDepthMask(GL_TRUE);
