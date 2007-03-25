@@ -313,7 +313,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 
-    if(dir.z>0 && (cull&MDL_SHADOW) && hasstencil)
+    if(!refracting && !reflecting && dir.z>=0 && (cull&MDL_SHADOW) && hasstencil)
     {
         vec floor;
         float dist = rayfloor(center, floor);
@@ -338,7 +338,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 
         glColor4f(0, 0, 0, dynshadow/100.0f);
         glPushMatrix();
-        setshadowmatrix(center.z, dir);
+        setshadowmatrix(center.z, dir.iszero() ? vec(0, 0, 1) : dir);
         m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
         glPopMatrix();
 
