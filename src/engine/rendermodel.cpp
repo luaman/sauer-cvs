@@ -337,13 +337,10 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
         vec shaddir = dir;
-        if(shaddir.z<1)
-        {
-            shaddir.z = 0;
-            shaddir.normalize();
-            shaddir.z = 1.5f*(dir.z*0.5f+1);
-            shaddir.normalize();
-        };
+        shaddir.z = 0;
+        if(!shaddir.iszero()) shaddir.normalize();
+        shaddir.z = 1.5f*(dir.z*0.5f+1);
+        shaddir.normalize();
 
         glColor4f(0, 0, 0, dynshadow/100.0f);
         glPushMatrix();
