@@ -667,8 +667,6 @@ void gl_drawframe(int w, int h, float curfps)
 
     if(!wireframe) renderoutline();
 
-    rendergrass();
-
     rendermapmodels();
 
     defaultshader->set();
@@ -682,6 +680,7 @@ void gl_drawframe(int w, int h, float curfps)
     drawreflections();
 
     renderwater();
+    rendergrass();
     rendermaterials();
 
     defaultshader->set();
