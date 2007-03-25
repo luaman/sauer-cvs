@@ -119,9 +119,9 @@ struct weaponstate
         bnc.reset();
         bnc.type = ENT_BOUNCE;
         bnc.o = from;
-        bnc.radius = 1.5f;
-        bnc.eyeheight = 1.5f;
-        bnc.aboveeye = 1.5f;
+        bnc.radius = bnc.type==BNC_DEBRIS ? 0.5f : 1.5f;
+        bnc.eyeheight = bnc.radius;
+        bnc.aboveeye = bnc.radius;
         bnc.lifetime = lifetime;
         bnc.roll = 0;
         bnc.local = local;
