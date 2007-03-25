@@ -561,7 +561,7 @@ struct weaponstate
             string debrisname;
             if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x40 ? "gibc" : "gibh";
             else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; };
-            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos.x, pos.y, pos.z, yaw, pitch, 10.0f, 0, NULL, 0);
+            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos.x, pos.y, pos.z, yaw, pitch, 10.0f, 0, NULL, bnc.bouncetype==BNC_GRENADE ? MDL_SHADOW : 0);
         };
         loopv(projs)
         {
@@ -579,7 +579,7 @@ struct weaponstate
             v.mul(3);
             v.add(pos);
             lightreaching(v, color, dir);
-            rendermodel(color, dir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v.x, v.y, v.z, yaw, pitch, 10.0f, 0, NULL, 0);
+            rendermodel(color, dir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v.x, v.y, v.z, yaw, pitch, 10.0f, 0, NULL, MDL_SHADOW);
         };
     };  
 };
