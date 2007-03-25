@@ -221,7 +221,7 @@ void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradi
     xtraverts += 16;
 };
 
-VAR(dynshadow, 0, 40, 100);
+VAR(dynshadow, 0, 60, 100);
 
 void setshadowmatrix(float z, const vec &dir)
 {
@@ -337,11 +337,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
         vec shaddir = dir;
-        if(shaddir.z<0.7f)
-        {
-            shaddir.z = 0.7f;
-            shaddir.normalize();
-        };
+        shaddir.z = max(shaddir.z, 0.9f);
+        shaddir.normalize();
 
         glColor4f(0, 0, 0, dynshadow/100.0f);
         glPushMatrix();
