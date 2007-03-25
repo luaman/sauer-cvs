@@ -312,6 +312,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         center.z = max(center.z, (offset - floor.x*(center.x+radius) - floor.y*(center.y+radius))/floor.z);
         center.z = max(center.z, (offset - floor.x*(center.x-radius) - floor.y*(center.y+radius))/floor.z);
 
+        if(center.z<=camera1->o.z) return;
+
         notextureshader->set();
         glDisable(GL_TEXTURE_2D);
         glDepthMask(GL_FALSE);
