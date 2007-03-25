@@ -79,6 +79,8 @@ bool pointincube(const clipplanes &p, const vec &v)
     return true;
 };
 
+vec hitslope;
+
 bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 {
     clipplanes &p = *c.ext->clip;
@@ -95,6 +97,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
         pushvec(d, ray, f+0.1f);
         if(pointincube(p, d))
         {
+            hitslope = p.p[i];
             dist = f+0.1f;
             return true;
         };
@@ -167,6 +170,16 @@ float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, in
     float dist = raycube(o, ray, radius, mode, size);
     hitpos.mul(dist);
     hitpos.add(o);
+    return dist;
+};
+
+float rayfloor(const vec &o, vec &floor, int mode)
+{
+    if(o.z<=0) return -1;
+    hitslope = vec(0, 0, 1);
+    float dist = raycube(o, vec(0, 0, -1), o.z, mode); 
+    if(dist>=o.z) return -1;
+    floor = hitslope;
     return dist;
 };
 

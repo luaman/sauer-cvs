@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false;
+bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasstencil = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -625,7 +625,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     recomputecamera();
     
-    glClear(GL_DEPTH_BUFFER_BIT|(wireframe ? GL_COLOR_BUFFER_BIT : 0));
+    glClear(GL_DEPTH_BUFFER_BIT|(wireframe ? GL_COLOR_BUFFER_BIT : 0)|(hasstencil ? GL_STENCIL_BUFFER_BIT : 0));
 
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;

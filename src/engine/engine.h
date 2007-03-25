@@ -85,7 +85,7 @@ extern void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool 
 extern void renderfullscreenshader(int w, int h);
 
 // rendergl
-extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC;
+extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasstencil;
 
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();

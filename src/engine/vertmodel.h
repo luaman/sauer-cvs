@@ -250,9 +250,18 @@ struct vertmodel : model
             setshader(m!=crosshair);
         };
 
+        void unbindskin()
+        {
+            if(tex ? lookuptexture(tex).sts[0].t->bpp==32 : (skin && skin->bpp==32))
+            {
+                glDisable(GL_ALPHA_TEST);
+                glDisable(GL_BLEND);
+            };
+        };
+
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t)
         {
-            bindskin();
+            if(!(as.anim&ANIM_NOSKIN)) bindskin();
 
             if(hasVBO && as.frame==0 && as.range==1 && statbuf) // vbo's for static stuff
             {
@@ -261,24 +270,30 @@ struct vertmodel : model
                 glEnableClientState(GL_VERTEX_ARRAY);
                 vvert *vverts = 0;
                 glVertexPointer(3, GL_FLOAT, sizeof(vvert), &vverts->pos);
-                glEnableClientState(GL_NORMAL_ARRAY);
-                glNormalPointer(GL_FLOAT, sizeof(vvert), &vverts->norm);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, sizeof(vvert), &vverts->u);
+                if(!(as.anim&ANIM_NOSKIN))
+                {
+                    glEnableClientState(GL_NORMAL_ARRAY);
+                    glNormalPointer(GL_FLOAT, sizeof(vvert), &vverts->norm);
+                    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                    glTexCoordPointer(2, GL_FLOAT, sizeof(vvert), &vverts->u);
+                };
 
                 glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, 0);
 
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                glDisableClientState(GL_NORMAL_ARRAY);
+                if(!(as.anim&ANIM_NOSKIN)) 
+                {
+                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                    glDisableClientState(GL_NORMAL_ARRAY);
+                };
                 glDisableClientState(GL_VERTEX_ARRAY);
 
                 xtravertsva += numtcverts;
             }
             else if(dynbuf)
             {
-                gendynverts(cur, prev, ai_t);
+                if(!(as.anim&ANIM_REUSE)) gendynverts(cur, prev, ai_t);
                 loopj(dynlen)
                 {
                     ushort index = dynidx[j];
@@ -290,19 +305,18 @@ struct vertmodel : model
                     };
                     tcvert &tc = tcverts[index];
                     vert &v = dynbuf[tc.index];
-                    glTexCoord2f(tc.u, tc.v);
-                    glNormal3fv(v.norm.v);
+                    if(!(as.anim&ANIM_NOSKIN))
+                    {
+                        glTexCoord2f(tc.u, tc.v);
+                        glNormal3fv(v.norm.v);
+                    };
                     glVertex3fv(v.pos.v);
                 };
                 glEnd();
                 xtraverts += dynlen;
             };
 
-            if(tex ? lookuptexture(tex).sts[0].t->bpp==32 : (skin && skin->bpp==32))
-            {
-                glDisable(GL_ALPHA_TEST);
-                glDisable(GL_BLEND);
-            };
+            if(!(as.anim&ANIM_NOSKIN)) unbindskin();
         };                     
     };
 
@@ -465,7 +479,7 @@ struct vertmodel : model
                 as.range = numframes-as.frame;
             };
 
-            if(d && index<2)
+            if(d && index<2 && !(anim&ANIM_REUSE))
             {
                 if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1)
                 {

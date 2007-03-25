@@ -221,6 +221,7 @@ void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradi
     xtraverts += 16;
 };
 
+VAR(dynshadow, 0, 40, 100);
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
 extern float reflecting, refracting;
@@ -230,10 +231,11 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
+    vec center;
+    float radius = 0;
     if(cull)
     {
-        vec center;
-        float radius = m->boundsphere(0/*frame*/, center);   // FIXME
+        radius = m->boundsphere(0/*frame*/, center); // FIXME
         center.add(vec(x, y, z));
         if((cull&MDL_CULL_DIST) && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(cull&MDL_CULL_VFC)
@@ -297,6 +299,36 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(!m->cullface) glDisable(GL_CULL_FACE);
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
     if(!m->cullface) glEnable(GL_CULL_FACE);
+
+    if((cull&MDL_SHADOW) && hasstencil)
+    {
+        vec floor;
+        float dist = rayfloor(center, floor);
+        if(dist<0) return;
+        center.z -= max(dist-0.25f, 0.0f);
+        float offset = floor.dot(center);
+        center.z = max(center.z, (offset - floor.x*(center.x-radius) - floor.y*(center.y-radius))/floor.z);
+        center.z = max(center.z, (offset - floor.x*(center.x+radius) - floor.y*(center.y-radius))/floor.z);
+        center.z = max(center.z, (offset - floor.x*(center.x+radius) - floor.y*(center.y+radius))/floor.z);
+        center.z = max(center.z, (offset - floor.x*(center.x-radius) - floor.y*(center.y+radius))/floor.z);
+
+        notextureshader->set();
+        glDisable(GL_TEXTURE_2D);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_STENCIL_TEST);
+        glStencilFunc(GL_NOTEQUAL, 1, 1);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+        glColor4f(0, 0, 0, dynshadow/100.0f);
+        m->render(anim|ANIM_NOSKIN|ANIM_REUSE|ANIM_FLATTEN, varseed, speed, basetime, x, y, center.z, yaw, pitch, d, vwep);
+
+        glEnable(GL_TEXTURE_2D);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        glDisable(GL_STENCIL_TEST);
+    };
 };
 
 void abovemodel(vec &o, const char *mdl)
@@ -337,71 +369,6 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
     if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "masks"); };
 };
 
-VAR(dynshadow, 0, 50, 100);
-
-void rendershadow(dynent *d)
-{
-    float dist = d->eyeheight;
-    vec slope = d->floor;
-    if(d->physstate<=PHYS_FALL || d->physstate>PHYS_FLOOR)
-    {
-        dist = raycube(d->o, vec(0, 0, -1), hdr.worldsize);
-        if(dist>=hdr.worldsize) return;
-        cube &c = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z-dist));
-        if(isempty(c) || isentirelysolid(c) || (c.ext && c.ext->material!=MAT_AIR)) slope = vec(0, 0, 1);
-        else
-        {
-            extern void setcubeclip(cube &c, int x, int y, int z, int size);
-            setcubeclip(c, lu.x, lu.y, lu.z, lusize);
-            clipplanes &p = *c.ext->clip;
-            loopi(p.size) if(p.p[i].z>0)
-            {
-                float f = p.p[i].dist(d->o)/p.p[i].z;
-                if(f<0) continue;
-                if(pointincube(p, vec(d->o.x, d->o.y, d->o.z - f-0.1f))) slope = p.p[i];
-            };
-        };
-    };
-
-    vec center = d->o;
-    center.z -= max(dist-0.25f, 0.0f);
-  
-    float radius = 0.75f*d->radius;
-    radius *= 1.0f + min(1.0f, max(0.0f, 0.5f*(dist - d->eyeheight)/(d->aboveeye + d->eyeheight)));
- 
-    if(d->physstate<=PHYS_FALL || d->physstate>PHYS_FLOOR)
-    {
-        float offset = slope.dot(center);
-        center.z = max(center.z, (offset - slope.x*(center.x-radius) - slope.y*(center.y-radius))/slope.z);
-        center.z = max(center.z, (offset - slope.x*(center.x+radius) - slope.y*(center.y-radius))/slope.z);
-        center.z = max(center.z, (offset - slope.x*(center.x+radius) - slope.y*(center.y+radius))/slope.z);
-        center.z = max(center.z, (offset - slope.x*(center.x-radius) - slope.y*(center.y+radius))/slope.z);
-    };
-
-    static Texture *shadowtex = NULL;
-    if(!shadowtex) shadowtex = textureload("data/shadow.png", 3);
-
-    defaultshader->set();
-
-    glColor4f(1, 1, 1, dynshadow/100.0f);
-
-    glBindTexture(GL_TEXTURE_2D, shadowtex->gl);
-
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBegin(GL_POLYGON);
-    glTexCoord2f(0, 0); glVertex3f(center.x-radius, center.y-radius, center.z);
-    glTexCoord2f(1, 0); glVertex3f(center.x+radius, center.y-radius, center.z);
-    glTexCoord2f(1, 1); glVertex3f(center.x+radius, center.y+radius, center.z);
-    glTexCoord2f(0, 1); glVertex3f(center.x-radius, center.y+radius, center.z);
-    glEnd();
-
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-};
-
 // convenient function that covers the usual anims for players/monsters/npcs
 
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain)
@@ -432,7 +399,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
         if(attack) basetime = lastaction;
     };
     vec color, dir;
-    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, (MDL_CULL_VFC | MDL_CULL_OCCLUDED) | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), vwepname);
+    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED | (d->type==ENT_PLAYER ? 0 : MDL_CULL_DIST), vwepname);
 };
 
 void setbbfrommodel(dynent *d, char *mdl)

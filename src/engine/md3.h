@@ -158,6 +158,7 @@ struct md3 : vertmodel
 
         glPushMatrix();
         glTranslatef(x, y, z);
+        if(anim&ANIM_FLATTEN) glScalef(1, 1, 0);
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
         parts[0]->render(anim, varseed, speed, basetime, d);

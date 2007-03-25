@@ -321,7 +321,7 @@ int main(int argc, char **argv)
     #endif
 
     bool dedicated = false;
-    int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0, fsaa = 0;
+    int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0, fsaa = 0, stencil = 1;
     char *load = NULL;
     
     #define log(s) puts("init: " s)
@@ -338,6 +338,7 @@ int main(int argc, char **argv)
             case 'b': bpp = atoi(&argv[i][2]); break;
             case 'a': fsaa = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
+            case 's': stencil = atoi(&argv[i][2]); break;
             case 'f': 
             {
                 extern int shaderprecision; 
@@ -385,12 +386,26 @@ int main(int argc, char **argv)
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, fsaa);
     };
+    if(stencil) 
+    {
+        SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
+        hasstencil = true;
+    };
     int resize = SDL_RESIZABLE;
     #if defined(WIN32) || defined(__APPLE__)
     resize = 0;
     #endif
     screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|resize|fs);
-    if(screen==NULL) fatal("Unable to create OpenGL screen: ", SDL_GetError());
+    if(!screen) 
+    {
+        if(stencil) 
+        {
+            SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+            hasstencil = false;
+        };
+        screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|resize|fs);
+        if(!screen) fatal("Unable to create OpenGL screen: ", SDL_GetError());
+    };
     scr_w = screen->w;
     scr_h = screen->h;
 
