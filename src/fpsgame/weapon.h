@@ -119,9 +119,9 @@ struct weaponstate
         bnc.reset();
         bnc.type = ENT_BOUNCE;
         bnc.o = from;
-        bnc.radius = 2;
-        bnc.eyeheight = 2;
-        bnc.aboveeye = 2;
+        bnc.radius = 1.5f;
+        bnc.eyeheight = 1.5f;
+        bnc.aboveeye = 1.5f;
         bnc.lifetime = lifetime;
         bnc.roll = 0;
         bnc.local = local;
@@ -561,7 +561,7 @@ struct weaponstate
             string debrisname;
             if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x40 ? "gibc" : "gibh";
             else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; };
-            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos.x, pos.y, pos.z, yaw, pitch, 10.0f, 0, NULL, bnc.bouncetype==BNC_GRENADE ? MDL_SHADOW : 0);
+            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos.x, pos.y, pos.z, yaw, pitch, 10.0f, 0, NULL, MDL_SHADOW);
         };
         loopv(projs)
         {
