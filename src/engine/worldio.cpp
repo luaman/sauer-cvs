@@ -312,12 +312,15 @@ void load_world(const char *mname, const char *cname)        // still supports a
     setnames(mname, cname);
     gzFile f = gzopen(cgzname, "rb9");
     if(!f) { conoutf("could not read map %s", cgzname); return; };
+    header newhdr;
+    gzread(f, &newhdr, sizeof(header));
+    endianswap(&newhdr.version, sizeof(int), 9);
+    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; };
+    if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return; };
+    hdr = newhdr;
+    
     clearoverrides();
     computescreen(mname);
-    gzread(f, &hdr, sizeof(header));
-    endianswap(&hdr.version, sizeof(int), 9);
-    if(strncmp(hdr.head, "OCTA", 4)!=0) fatal("while reading map: header malformatted");
-    if(hdr.version>MAPVERSION) fatal("this map requires a newer version of cube 2");
     if(hdr.version<=20) conoutf("loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
     if(!hdr.ambient) hdr.ambient = 25;
     if(!hdr.lerpsubdivsize)
