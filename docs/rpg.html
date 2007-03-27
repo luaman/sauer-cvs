@@ -76,8 +76,10 @@
 
 <p>
 The RPG is set up in a very open way such that all gameplay objects and behaviour can be modified in a script file,
-currently in data/game_rpg.cfg (this will change later to be on a per-map basis).
-</p>
+currently in data/game_rpg.cfg (this will change later to be on a per-map basis). The idea is that every map comes with its own "mod",
+    and that gameplay can be influenced by level designer, allowing gameplay types spanning
+    from a stat/story influenced FPS game, an action RPG, all the way to more complex
+    quest/story/stat based RPGs.&nbsp;</p>
 
 <p>
 This file simply lists all gameplay objects, which can then be placed in the level editor. For example, by writing:
@@ -87,18 +89,22 @@ This file simply lists all gameplay objects, which can then be placed in the lev
 
 <p>
 you define a script that gets executed when an apple is spawned. You place this apple either directly in the world or as part of another objects inventory.
-To place it in the world, you create an entity of type "spawn" with a name attached. This is best done by typing:
+To place it in the world, you create an entity of type "spawn" with a name attached. This is best done by typing (in the console):
 </p>
 
 <pre id="newrpgspawn">newrpgspawn apple</pre>
 
 <p>
+    which will show you your new entity in the editor. Running the map then will create
+    a new apple object at that location, with all stats set to your liking (in this
+    case just its worth).</p>
+    <p>
 What is important to realize is that most r_ commands work with what is called the RPG stack. This makes it possible to apply
 properties and actions to things without having to specify all the time which object you are talking about. For example, when the
 spawn_apple script gets executed, the apple object will be on the top of the RPG stack, so any commands such as r_worth that apply to an
 object, will automatically apply to it. It is a stack, because during the initialization of one object you may spawn another, which means
 all r_ commands will apply to the new object, until it is done, when the RPG stack returns to the previous object.
-</p>
+    </p>
 
 <p>
 Following is a list of all commands... unless otherwise noted, they apply to the current object (top of the RPG stack).
@@ -133,11 +139,6 @@ G gold is owned by this object for use in trading. Only makes sense for player/N
 This object has base value V when used in trading
 </p>
 
-<pre id="r_stat">r_stat ST V</pre>
-<p>
-This object has value V for stat type ST (see stats.h)
-</p>
-
 <pre id="r_model">r_model M</pre>
 <p>
 Specify model M to represent this object visually when placed in the world
@@ -170,6 +171,185 @@ needs to do should go via token items.
 <p>
 give the player an item with name N
 </p>
+
+
+
+<h2 id="H2_1">RPG stats</h2>
+
+The following is a list of all stats tracked by each object. A stat is defined as a property of an object that determines its effectiveness when performing a certain action,
+i.e. the "melee" stat affects your melee combat effectiveness. Stats are things that you can build up thuout the game, hence "health" is not a stat, but it is dependent on a stat, maxhp.
+    <br />
+    <br />
+    <table border="1" cellpadding="3" cellspacing="0">
+        <tr>
+            <td style="width: 100px">
+                melee</td>
+            <td style="width: 802px">
+                amount of damage when using a melee weapon (fists, swords, axes...)</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                ranged</td>
+            <td style="width: 802px">
+                amount of damage when using a ranged weapon (crossbow, shotgun, ...)</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                magic</td>
+            <td style="width: 802px">
+                amount of damage when using an attack spell (fireball...), level of utility when
+                using healing/creation spells</td>
+        </tr>
+        <tr>
+            <td style="width: 100px; height: 44px;">
+                regen</td>
+            <td style="width: 802px; height: 44px;">
+                amount of hp regenerated per second. regen is the only defense stat, it replaces
+                the tradition armour or resistence stats. regen is more flexible in the sense that
+                it is time based, so your effectiveness depends on being able to give or take sustained
+                damage, and deals better with the effects of running away mid-fight etc.</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                focus</td>
+            <td style="width: 802px">
+                amount of mana regenerated per second</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                attackspeed</td>
+            <td style="width: 802px">
+                reduces time delay between two attacks for any attack (melee/ranged/magic)</td>
+        </tr>
+        <tr>
+            <td style="width: 100px; height: 17px;">
+                movespeed</td>
+            <td style="width: 802px; height: 17px;">
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                jumpheight</td>
+            <td style="width: 802px">
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                maxhp</td>
+            <td style="width: 802px">
+                maximum health you will regenerate to</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                maxmana</td>
+            <td style="width: 802px">
+                maximum mana you can store</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                tradeskill</td>
+            <td style="width: 802px">
+                will give your better deals when trading</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                feared</td>
+            <td style="width: 802px; font-family: verdana,'trebuchet ms','zurich bt',tahoma,arial,helvetica,sans-serif;">
+                the higher this stat, the more likely people are likely to comply with your wishes</td>
+        </tr>
+        <tr style="font-family: verdana,'trebuchet ms','zurich bt',tahoma,arial,helvetica,sans-serif">
+            <td style="width: 100px">
+                stealth</td>
+            <td style="width: 802px">
+                reduces npc fov &amp; distance when stealing stuff</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                hostility</td>
+            <td style="width: 802px">
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                stata</td>
+            <td style="width: 802px">
+                a/b/c are generic stats, i.e. their meaning is map-specific. they can be set and
+                accumulated like any other stat, then scripts can use the results in any way they
+                wish.</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                statb</td>
+            <td style="width: 802px">
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                statc</td>
+            <td style="width: 802px">
+            </td>
+        </tr>
+    </table>
+    <br />
+    a stat can be set on any rpg object using the r_X command, where X is any of the
+    above stat names, e.g. <span style="font-family: Courier New">r_melee 50</span>
+    gives the current object 50 melee points.<br />
+    a script can read the current points using r_get_X, i.e. <span style="font-family: Courier New">
+        echo "your melee points are: " (r_get_melee)</span> outputs the current objects
+    melee points.<br />
+    <br />
+    A special case are objects that have no stats set directly (typically the player,
+    and sometimes NPCs): their stats are computed as cumulative from the stats of all
+    their inventory items. So if the player carries a gem that has melee 50, and gloves
+    that have melee 20, his own melee points are 70.<br />
+    <br />
+    It's important to realize that stat points do not directly translate to damage and
+    such. Points are an indication of efficiency of a particular stat over the base
+    100%, along a logarithmic curve. So 0 melee points translates into 100% melee efficiency,
+    and what 70 melee points translates into... well, something above 100%, depending
+    on the log curve. Every map can define their own log curve for each stat, depending
+    on how fast you want points to result in increased melee damage. This is a game
+    balancing thing, in the sense that if the game world makes obtain items with melee
+    points too easy and the log curve is too gentle, then players will be overpowered.
+    The formula for melee is (other stats work similarly):<br />
+    <br />
+    <span style="font-family: Courier New">meleedamage = weapondamage * ( log ( points /
+        pointsscale + 1 ) * percentscale + 100 ) / 100<br />
+    </span>
+    <br />
+    (log = natural logarithm). so with a pointscale of 10, and a percentscale of 25,
+    our 70 points amount to a 152% melee efficiency, which, when combined with a weapon
+    that does 10 damage (at 100%), now does 15 melee damage. For movespeed you'd have
+    a similar formula, where instead of weapondamage you'd have the default running
+    speed.<br />
+    <br />
+    That may seem like a really convoluted way of doing things, but the log scale is
+    the only way to give a relatively constant challenge level in the game. Without
+    it, the game would start hard and become too easy real soon. The UI will show both
+    points and efficiency for stats so you can easy see the effect without understanding
+    the math.<br />
+    <br />
+    You can define the log scale by doing: <span style="font-family: Courier New">r_def_X
+        pointscale percentscale</span>, but this should only really ever be done by
+    the game designer, or experienced rpg level designers on their own levels, as tweaking
+    these values requires deep insight into how players will collect points thruout
+    a game.<br />
+    <br />
+    It is worth repeating what should be obvious from the above: the player and npcs
+    don't have "levels" as in other RPGs. Increased ability is purely denoted by means
+    of points and efficiency above whatever is the 100% value of the related ability.
+    The end result is similar to traditional RPGs, but not quite. The above system is
+    more flexible in the sense that you can have completely independent "levels" for
+    all your abilities. But best of all, since your points are determined by what you
+    have in your inventory, any way you can get items can increase your ability, which
+    includes killing, stealing, finding, trading etc. You can change how you assign
+    your priorities mid-game, by trading melee items for magic items, for example. You
+    won't hit a "item plateau" as in so many RPG games 20% into the game because most
+    items you get are useless, here you can put everything to <em>some</em> use, even
+    if sometimes minimal.<br />
+    <br />
+
+
 
 </body>
 </html>
