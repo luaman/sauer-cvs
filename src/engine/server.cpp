@@ -6,7 +6,7 @@
 
 #ifdef STANDALONE
 void localservertoclient(int chan, uchar *buf, int len) {};
-void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); };
+void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); }
 #endif
 
 // all network traffic is in 32bit ints, which are then compressed using the following simple scheme (assumes that most values are small).
@@ -15,7 +15,7 @@ void putint(ucharbuf &p, int n)
 {
     if(n<128 && n>-127) p.put(n);
     else if(n<0x8000 && n>=-0x8000) { p.put(0x80); p.put(n); p.put(n>>8); }
-    else { p.put(0x81); p.put(n); p.put(n>>8); p.put(n>>16); p.put(n>>24); };
+    else { p.put(0x81); p.put(n); p.put(n>>8); p.put(n>>16); p.put(n>>24); }
 };
 
 int getint(ucharbuf &p)
@@ -47,7 +47,7 @@ void putuint(ucharbuf &p, int n)
         p.put(0x80 | (n & 0x7F)); 
         p.put(0x80 | ((n >> 7) & 0x7F));
         p.put(n >> 14); 
-    };
+    }
 };
 
 int getuint(ucharbuf &p)
@@ -59,7 +59,7 @@ int getuint(ucharbuf &p)
         if(n & (1<<14)) n += (p.get() << 14) - (1<<14);
         if(n & (1<<21)) n += (p.get() << 21) - (1<<21);
         if(n & (1<<28)) n |= 0xF0000000; 
-    };
+    }
     return n;
 };
 
@@ -74,8 +74,8 @@ void getstring(char *text, ucharbuf &p, int len)
     char *t = text;
     do
     {
-        if(t>=&text[len]) { text[len-1] = 0; return; };
-        if(!p.remaining()) { *t = 0; return; }; 
+        if(t>=&text[len]) { text[len-1] = 0; return; }
+        if(!p.remaining()) { *t = 0; return; } 
         *t = getint(p);
     }
     while(*t++);
@@ -131,9 +131,9 @@ void process(ENetPacket *packet, int sender, int chan);
 void multicast(ENetPacket *packet, int sender, int chan);
 //void disconnect_client(int n, int reason);
 
-void *getinfo(int i)    { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; };
-int getnumclients()     { return clients.length(); };
-uint getclientip(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; };
+void *getinfo(int i)    { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; }
+int getnumclients()     { return clients.length(); }
+uint getclientip(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; }
 
 void sendpacket(int n, int chan, ENetPacket *packet)
 {
@@ -144,18 +144,18 @@ void sendpacket(int n, int chan, ENetPacket *packet)
             enet_peer_send(clients[n]->peer, chan, packet);
             bsend += packet->dataLength;
             break;
-        };
+        }
 
         case ST_LOCAL:
             localservertoclient(chan, packet->data, (int)packet->dataLength);
             break;
-    };
+    }
 };
 
 void sendf(int cn, int chan, const char *format, ...)
 {
     bool reliable = false;
-    if(*format=='r') { reliable = true; ++format; };
+    if(*format=='r') { reliable = true; ++format; }
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
     ucharbuf p(packet->data, packet->dataLength);
     va_list args;
@@ -167,9 +167,9 @@ void sendf(int cn, int chan, const char *format, ...)
             int n = isdigit(*format) ? *format++-'0' : 1;
             loopi(n) putint(p, va_arg(args, int));
             break;
-        };
+        }
         case 's': sendstring(va_arg(args, const char *), p); break;
-    };
+    }
     va_end(args);
     enet_packet_resize(packet, p.length());
     if(cn<0) multicast(packet, -1, chan);
@@ -195,7 +195,7 @@ void process(ENetPacket *packet, int sender, int chan)   // sender may be -1
 {
     ucharbuf p(packet->data, (int)packet->dataLength);
     sv->parsepacket(sender, chan, (packet->flags&ENET_PACKET_FLAG_RELIABLE)!=0, p);
-    if(p.overread()) { disconnect_client(sender, DISC_EOP); return; };
+    if(p.overread()) { disconnect_client(sender, DISC_EOP); return; }
 };
 
 void send_welcome(int n)
@@ -214,7 +214,7 @@ void multicast(ENetPacket *packet, int sender, int chan)
     {
         if(i==sender) continue;
         sendpacket(i, chan, packet);
-    };
+    }
 };
 
 void localclienttoserver(int chan, ENetPacket *packet)
@@ -229,7 +229,7 @@ client &addclient()
     {
         sv->resetinfo(clients[i]->info);
         return *clients[i];
-    };
+    }
     client *c = new client;
     c->num = clients.length();
     c->info = sv->newinfo();
@@ -239,7 +239,7 @@ client &addclient()
 
 int nonlocalclients = 0;
 
-bool hasnonlocalclients() { return nonlocalclients!=0; };
+bool hasnonlocalclients() { return nonlocalclients!=0; }
 
 void sendpongs()        // reply all server info requests
 {
@@ -258,7 +258,7 @@ void sendpongs()        // reply all server info requests
         sv->serverinforeply(p);
         buf.dataLength = len + p.length();
         enet_socket_send(pongsock, &addr, &buf, 1);
-    };
+    }
 };      
 
 #ifdef STANDALONE
@@ -276,21 +276,21 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
     {
         enet_socket_destroy(mssock);
         mssock = ENET_SOCKET_NULL;
-    };
+    }
     if(ad.host==ENET_HOST_ANY)
     {
         printf("looking up %s...\n", hostname);
         if(!resolverwait(hostname, &ad)) return;
-    };
+    }
     mssock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, NULL);
-    if(mssock==ENET_SOCKET_NULL) { printf("could not open socket\n"); return; };
+    if(mssock==ENET_SOCKET_NULL) { printf("could not open socket\n"); return; }
     if(enet_socket_connect(mssock, &ad)<0) 
     { 
         printf("could not connect\n"); 
         enet_socket_destroy(mssock);
         mssock = ENET_SOCKET_NULL;
         return; 
-    };
+    }
     ENetBuffer buf;
     s_sprintfd(httpget)("GET %s HTTP/1.0\nHost: %s\nReferer: %s\nUser-Agent: %s\n\n", req, hostname, ref, agent);
     buf.data = httpget;
@@ -311,11 +311,11 @@ void httpgetreceive(ENetBuffer &buf)
             enet_socket_destroy(mssock);
             mssock = ENET_SOCKET_NULL;
             return;
-        };
+        }
         buf.data = ((char *)buf.data)+len;
         ((char*)buf.data)[0] = 0;
         buf.dataLength -= len;
-    };
+    }
 };  
 
 uchar *stripheader(uchar *b)
@@ -380,7 +380,7 @@ void serverslice(int seconds, uint timeout)   // main server update, called from
     {
         updatemasterserver();
         updmaster = seconds+60*60;
-    };
+    }
     
     nonlocalclients = 0;
     loopv(clients) if(clients[i]->type==ST_TCPIP) nonlocalclients++;
@@ -390,7 +390,7 @@ void serverslice(int seconds, uint timeout)   // main server update, called from
         laststatus = seconds;     
         if(nonlocalclients || bsend || brec) printf("status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, bsend/60.0f/1024, brec/60.0f/1024);
         bsend = brec = 0;
-    };
+    }
 
     ENetEvent event;
     if(enet_host_service(serverhost, &event, timeout) > 0)
@@ -409,7 +409,7 @@ void serverslice(int seconds, uint timeout)   // main server update, called from
             if(nonlocalclients<maxclients && !(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
             else disconnect_client(c.num, reason);
             break;
-        };
+        }
         case ENET_EVENT_TYPE_RECEIVE:
         {
             brec += event.packet->dataLength;
@@ -417,7 +417,7 @@ void serverslice(int seconds, uint timeout)   // main server update, called from
             if(c) process(event.packet, c->num, event.channelID);
             if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
             break;
-        };
+        }
         case ENET_EVENT_TYPE_DISCONNECT: 
         {
             client *c = (client *)event.peer->data;
@@ -427,10 +427,10 @@ void serverslice(int seconds, uint timeout)   // main server update, called from
             c->type = ST_EMPTY;
             event.peer->data = NULL;
             break;
-        };
+        }
         default:
             break;
-    };
+    }
     if(sv->sendpackets()) enet_host_flush(serverhost);
 };
 
@@ -445,7 +445,7 @@ void localdisconnect()
     {
         sv->localdisconnect(i);
         clients[i]->type = ST_EMPTY;
-    };
+    }
 };
 
 void localconnect()
@@ -481,7 +481,7 @@ void initgame(char *game)
         cc = cl->getcom();
         et = cl->getents();
         cl->initclient();
-    };
+    }
 }
 
 void initserver(bool dedicated)
@@ -504,7 +504,7 @@ void initserver(bool dedicated)
         address.port = sv->serverinfoport();
         pongsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, &address);
         if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
-    };
+    }
 
     sv->serverinit(sdesc, adminpass);
 
@@ -517,7 +517,7 @@ void initserver(bool dedicated)
         atexit(cleanupserver);
         atexit(enet_deinitialize);
         for(;;) serverslice(time(NULL), 5);
-    };
+    }
 };
 
 bool serveroption(char *opt)
@@ -531,14 +531,14 @@ bool serveroption(char *opt)
             if(clients > 0) maxclients = min(clients, MAXCLIENTS);
             else maxclients = DEFAULTCLIENTS;
             return true;
-        };
+        }
         case 'n': sdesc = opt+2; return true;
         case 'i': ip = opt+2; return true;
         case 'm': master = opt+2; return true;
         case 'g': game = opt+2; return true;
         case 'p': adminpass = opt+2; return true;
         default: return false;
-    };
+    }
     
 };
 

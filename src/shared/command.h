@@ -48,9 +48,9 @@ template <class T> struct tident
         : _type(t), _name(n), _fun((void (__cdecl *)(void))f), _narg(narg), self(_s) {};
     virtual ~tident() {};        
 
-    tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; };        // force vtable copy, ugh
+    tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; }        // force vtable copy, ugh
     
-    int operator()() { return (int)(size_t)_narg; };
+    int operator()() { return (int)(size_t)_narg; }
     
     virtual void run(char **args) {};
 };
@@ -74,9 +74,9 @@ extern void result(const char *s);
 #define VARFP(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, true)
 
 // new style macros, have the body inline, and allow binds to happen anywhere, even inside class constructors, and access the surrounding class
-#define _COMMAND(t, ts, sv, tv, n, g, b) struct cmd_##n : tident<t> { cmd_##n(ts) : tident<t>(ID_ICOMMAND, #n, g, NULL, sv) { addident(_name, (ident *)this); }; void run(char **args) { b; }; } icom_##n tv
+#define _COMMAND(t, ts, sv, tv, n, g, b) struct cmd_##n : tident<t> { cmd_##n(ts) : tident<t>(ID_ICOMMAND, #n, g, NULL, sv) { addident(_name, (ident *)this); } void run(char **args) { b; } } icom_##n tv
 #define ICOMMAND(n, g, b) _COMMAND(void, , NULL, , n, g, b)
 #define CCOMMAND(t, n, g, b) _COMMAND(t, t *_s, _s, (this), n, g, b)
  
-#define IVAR(n, m, c, x)  struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val) { addident(_name, this); }; } n
+#define IVAR(n, m, c, x)  struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val) { addident(_name, this); } } n
 //#define ICALL(n, a) { char *args[] = a; icom_##n.run(args); }

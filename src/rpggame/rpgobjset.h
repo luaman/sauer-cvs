@@ -9,7 +9,8 @@ struct rpgobjset
     
     rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL), playerobj(NULL)
     {
-        #define N(n) CCOMMAND(rpgobjset, r_##n,     "i",    { self->stack[0]->st.s_##n = atoi(args[0]); }); \
+        #define N(n) CCOMMAND(rpgobjset, r_##n,     "i",    { self->stack[0]->st.s_##n = atoi(args[0]); self->stack[0]->st.accumulate_stats = false; }); \
+                     CCOMMAND(rpgobjset, r_get_##n, "",     { intret(self->stack[0]->st.s_##n); }); \
                      CCOMMAND(rpgobjset, r_def_##n, "ii",   { stats::def_##n(atoi(args[0]), atoi(args[1])); });     
         RPGSTATNAMES 
         #undef N
@@ -27,11 +28,11 @@ struct rpgobjset
         CCOMMAND(rpgobjset, r_gold,    "i",   { self->stack[0]->gold  = atoi(args[0]); });    
         
         clearworld();
-    };
+    }
     
     void clearworld()
     {
-        if(playerobj) { playerobj->ent = NULL; delete playerobj; };
+        if(playerobj) { playerobj->ent = NULL; delete playerobj; }
         playerobj = new rpgobj("player", *this);
         playerobj->ent = &cl.player1;
 
@@ -41,7 +42,7 @@ struct rpgobjset
         loopi(10) stack.add(playerobj);     // determines the stack depth
         
         playerobj->scriptinit();            // will fail when this is called from emptymap(), which is ok
-    };
+    }
     
     void update(int curtime)
     {
@@ -55,32 +56,32 @@ struct rpgobjset
             if(dist<50 && intersect(set[i]->ent, cl.player1.o, worldpos) && (!pointingat || cl.player1.o.dist(pointingat->ent->o)>dist))    
             {    
                 pointingat = set[i]; 
-            };
-        };
-    };
+            }
+        }
+    }
     
     void spawn(char *name)
     {
         rpgobj *o = new rpgobj(name, *this);
         pushobj(o);
         o->scriptinit();
-    };
+    }
     
     void placeinworld(vec &pos, float yaw)
     {
         stack[0]->placeinworld(pos, yaw);
         set.add(stack[0]);
-    };
+    }
     
-    void pushobj(rpgobj *o) { stack.pop(); stack.insert(0, o); };       // never overflows, just removes bottom
-    void popobj()           { stack.add(stack.remove(0)); };            // never underflows, just puts it at the bottom
+    void pushobj(rpgobj *o) { stack.pop(); stack.insert(0, o); }       // never overflows, just removes bottom
+    void popobj()           { stack.add(stack.remove(0)); }            // never underflows, just puts it at the bottom
     
     void take(rpgobj *worldobj, rpgobj *newowner)
     {
         set.removeobj(worldobj);
         DELETEP(worldobj->ent);
         newowner->add(worldobj, false);
-    };
+    }
     
     void takefromplayer(char *name, char *ok, char *notok)
     {
@@ -89,9 +90,9 @@ struct rpgobjset
         {
             stack[0]->add(o, false);
             conoutf("\f2you hand over a %s", o->name);
-        };
+        }
         execute(o ? ok : notok);
-    };
+    }
     
     void givetoplayer(char *name)
     {
@@ -100,8 +101,8 @@ struct rpgobjset
         {
             conoutf("\f2you receive a %s", o->name);
             playerobj->add(o, false);
-        };
-    };
+        }
+    }
     
     char *stringpool(char *name)
     {
@@ -110,8 +111,8 @@ struct rpgobjset
         name = newstring(name);
         names[name] = name;
         return name;
-    };
+    }
     
-    void render()       { loopv(set) set[i]->render();   };
-    void g3d_npcmenus() { loopv(set) set[i]->g3d_menu(); }; 
+    void render()       { loopv(set) set[i]->render();   }
+    void g3d_npcmenus() { loopv(set) set[i]->g3d_menu(); } 
 };

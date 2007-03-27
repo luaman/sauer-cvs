@@ -23,9 +23,9 @@ struct selinfo
     int cx, cxs, cy, cys;
     ivec o, s;
     int grid, orient;
-    int size() const    { return s.x*s.y*s.z; };
-    int us(int d) const { return s[d]*grid; };
-    bool operator==(const selinfo &sel) const { return o==sel.o && s==sel.s && grid==sel.grid && orient==sel.orient; };
+    int size() const    { return s.x*s.y*s.z; }
+    int us(int d) const { return s[d]*grid; }
+    bool operator==(const selinfo &sel) const { return o==sel.o && s==sel.s && grid==sel.grid && orient==sel.orient; }
 };
 
 struct editinfo;
@@ -95,7 +95,7 @@ extern void fatal(char *s, char *o = "");
 extern void keyrepeat(bool on);
 extern void registergame(char *name, igame *ig);
 
-#define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); }; igameclient *newclient() { return c; }; igameserver *newserver() { return s; }; } reg_##t
+#define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); } igameclient *newclient() { return c; } igameserver *newserver() { return s; } } reg_##t
 
 // rendertext
 extern void gettextres(int &w, int &h);
@@ -222,7 +222,7 @@ struct g3d_callback
 {
     virtual ~g3d_callback() {};
 
-    int starttime() { extern int totalmillis; return totalmillis; };
+    int starttime() { extern int totalmillis; return totalmillis; }
 
     virtual void gui(g3d_gui &g, bool firstpass) = 0;
 };

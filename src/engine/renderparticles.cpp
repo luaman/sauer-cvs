@@ -75,8 +75,8 @@ particle *newparticle(const vec &o, const vec &d, int fade, int type)
         {
             ps[i].next = parempty;
             parempty = &ps[i];
-        };
-    };
+        }
+    }
     particle *p = parempty;
     parempty = p->next;
     p->o = o;
@@ -149,7 +149,7 @@ void render_particles(int time)
             glDepthMask(GL_FALSE);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);             
-        };
+        }
         
         parttype &pt = parttypes[i];
         float sz = pt.type&PT_ENT ? pt.sz : pt.sz*particlesize/100.0f; 
@@ -176,7 +176,7 @@ void render_particles(int time)
                 if((type==PT_TEXT || type==PT_TEXTUP) && p->text && p->text[0]=='@') delete[] p->text;
                 parempty = p;
                 continue;
-            };
+            }
             pp = &p->next;
             
             int blend = 255 - ts*255/p->fade;
@@ -190,7 +190,7 @@ void render_particles(int time)
                 v.mul(t/5000.0f);
                 o.add(v);
                 o.z -= t*t/(2.0f * 5000.0f * pt.gr);
-            };
+            }
             if(pt.rv) 
             {
                 vec v = p->d;
@@ -201,7 +201,7 @@ void render_particles(int time)
                 u.normalize();
                 u.mul(pt.rsz);
                 o.add(u);				
-            };
+            }
             
             if(quads)
             {
@@ -219,7 +219,7 @@ void render_particles(int time)
                     tx = 0.5f*(i&1);
                     ty = 0.5f*((i>>1)&1);
                     tsz = 0.5f;
-                };
+                }
                 if(type==PT_FLARE || type==PT_TRAIL)
                 {					
                     vec e = p->d;
@@ -229,7 +229,7 @@ void render_particles(int time)
                         e.div(-75.0f);
                         e.add(o);
                         //@TODO include spin influence, and maybe have min size
-                    };
+                    }
                     vec dir1 = e, dir2 = e, c;
                     dir1.sub(o);
                     dir2.sub(camera1->o);
@@ -245,7 +245,7 @@ void render_particles(int time)
                     glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
                     glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
                     glTexCoord2f(tx,     ty);     glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
-                };
+                }
             }
             else
             {
@@ -270,7 +270,7 @@ void render_particles(int time)
 
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
-                    };
+                    }
                     glCallList(1);
                     
                     if(renderpath!=R_FIXEDFUNCTION) setlocalparamf("center", SHPARAM_VERTEX, 0, o.z, o.x, o.y);
@@ -324,20 +324,20 @@ void render_particles(int time)
                         
                         draw_text(text, 0, 0, pt.r, pt.g, pt.b, blend);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-                    };
-                };
+                    }
+                }
                 glPopMatrix();
-            };
-        };
+            }
+        }
         if(quads) glEnd();
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    };
+    }
 
     if(enabled)
     {        
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
-    }; 
+    } 
    
     /* TESTING 
     int pcount = 0;   
@@ -360,7 +360,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
     {
         newparticle(p, vec(0,0,1), 1, type);
         return;
-    };
+    }
     const int radius = (type==5 || type == 24) ? 50 : 150;
     loopi(num)
     {
@@ -374,7 +374,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
         while(x*x+y*y+z*z>radius*radius);
     	vec tmp = vec((float)x, (float)y, (float)z);
         newparticle(p, tmp, rnd(fade*3)+1, type)->oa = 13.1 * i; //distribute initial angle
-    };
+    }
 };
 
 void particle_trail(int type, int fade, const vec &s, const vec &e)
@@ -388,7 +388,7 @@ void particle_trail(int type, int fade, const vec &s, const vec &e)
         p.add(v);
         vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
         newparticle(p, tmp, rnd(fade)+fade, type);
-    };
+    }
 };
 
 VARP(particletext, 0, 1, 1);
@@ -423,7 +423,7 @@ void particle_helix(const vec &s, const vec &e, int fade, int type)
         vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
         tmp.add(f);
         newparticle(p, f, rnd(fade)+fade, type)->oa = i*PI/9.0f;
-    };
+    }
 };
 
 
@@ -476,7 +476,7 @@ static void makeparticles(entity &e)
         default:
             s_sprintfd(ds)("@particles %d?", e.attr1);
             particle_text(e.o, ds, 16, 1);
-    };
+    }
 };
 
 void entity_particles()
@@ -486,7 +486,7 @@ void entity_particles()
         int emitmillis = 1000/emitfps;
         lastemitframe = lastmillis-(lastmillis%emitmillis);
         emit = false;
-    };
+    }
 
     const vector<extentity *> &ents = et->getents();
     
@@ -505,17 +505,17 @@ void entity_particles()
             if(e.o.dist(camera1->o)<128)
             {
                 particle_text(e.o, entname(e), 11, 1);
-            };
+            }
             regular_particle_splash(2, 2, 40, e.o);
-        };
+        }
         loopv(entgroup)
         {
             entity &e = *ents[entgroup[i]];
             if(e.o.dist(camera1->o)<128)
             {
                 particle_text(e.o, entname(e), 13, 1);
-            };
-        };
-    };
+            }
+        }
+    }
 };
 

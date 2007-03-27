@@ -15,8 +15,8 @@ void loadsky(char *basename)
         {
             strcpy(name+strlen(name)-3, "png");
             if((sky[i] = textureload(name, true))==crosshair) conoutf("could not load sky textures");
-        };
-    };
+        }
+    }
     s_strcpy(lastsky, basename);
 };
 
@@ -137,7 +137,7 @@ void drawskybox(int farplane, bool limited, float zreflect)
     {
         glDepthFunc(GL_LESS);
         if(!zreflect && editmode && showsky) drawskyoutline();
-    };
+    }
 
     glEnable(GL_FOG);
 };

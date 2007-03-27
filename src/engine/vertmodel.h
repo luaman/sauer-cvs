@@ -20,13 +20,13 @@ struct vertmodel : model
             {
                 fr1 = min(fr1, as.range-1)+as.frame;
                 fr2 = min(fr1+1, as.frame+as.range-1);
-            };
+            }
             if(as.anim&ANIM_REVERSE)
             {
                 fr1 = (as.frame+as.range-1)-(fr1-as.frame);
                 fr2 = (as.frame+as.range-1)-(fr2-as.frame);
-            };
-        };
+            }
+        }
     };
 
     struct vert { vec norm, pos; };
@@ -66,10 +66,10 @@ struct vertmodel : model
             {
                 if(statbuf) glDeleteBuffers_(1, &statbuf);
                 if(statidx) glDeleteBuffers_(1, &statidx);
-            };
+            }
             DELETEA(dynidx);
             DELETEA(dynbuf);
-        };
+        }
 
         void genva(bool dyn) // generate vbo's for each mesh
         {
@@ -87,8 +87,8 @@ struct vertmodel : model
                     loopvj(vverts) // check if it's already added
                     {
                         vvert &w = vverts[j];
-                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && v.norm==w.norm) { idxs.add((ushort)j); goto found; };
-                    };
+                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && v.norm==w.norm) { idxs.add((ushort)j); goto found; }
+                    }
                     {
                         idxs.add(vverts.length());
                         vvert &w = vverts.add();
@@ -98,8 +98,8 @@ struct vertmodel : model
                         w.v = tc.v;
                     }
                     found:;
-                };
-            };
+                }
+            }
 
             if(dyn)
             {
@@ -122,8 +122,8 @@ struct vertmodel : model
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
                 glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
                 statlen = idxs.length();
-            };
-        };
+            }
+        }
 
         void calcbb(int frame, vec &bbmin, vec &bbmax, float m[12])
         {
@@ -136,9 +136,9 @@ struct vertmodel : model
                     float c = m[i]*v.x + m[i+3]*v.y + m[i+6]*v.z + m[i+9];
                     bbmin[i] = min(bbmin[i], c);
                     bbmax[i] = max(bbmax[i], c);
-                };
-            };
-        };
+                }
+            }
+        }
 
         void gentris(int frame, vector<SphereTree::tri> &out, float m[12])
         {
@@ -158,15 +158,15 @@ struct vertmodel : model
                     t.a[i] = m[i]*a.x + m[i+3]*a.y + m[i+6]*a.z + m[i+9];
                     t.b[i] = m[i]*b.x + m[i+3]*b.y + m[i+6]*b.z + m[i+9];
                     t.c[i] = m[i]*c.x + m[i+3]*c.y + m[i+6]*c.z + m[i+9];
-                };
+                }
                 t.tc[0] = av.u;
                 t.tc[1] = av.v;
                 t.tc[2] = bv.u;
                 t.tc[3] = bv.v;
                 t.tc[4] = cv.u;
                 t.tc[5] = cv.v;
-            };
-        };
+            }
+        }
 
         void gendynverts(anpos &cur, anpos *prev, float ai_t)
         {
@@ -201,11 +201,11 @@ struct vertmodel : model
                 {
                     v.norm = vec(ip_v(vert, norm.x, cur.t), ip_v(vert, norm.y, cur.t), ip_v(vert, norm.z, cur.t));
                     v.pos = vec(ip_v(vert, pos.x, cur.t), ip_v(vert, pos.y, cur.t), ip_v(vert, pos.z, cur.t));
-                };
+                }
                 #undef ip
                 #undef ip_v
-            };
-        };
+            }
+        }
 
         void setshader(bool masked)
         {
@@ -221,8 +221,8 @@ struct vertmodel : model
                 if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
         
                 (masked ? modelshadermasks : (owner->model->spec>=0.01f ? modelshader : modelshadernospec))->set();
-            };
-        };
+            }
+        }
 
         void bindskin()
         {
@@ -232,23 +232,23 @@ struct vertmodel : model
                 Slot &slot = lookuptexture(tex);
                 s = slot.sts[0].t;
                 m = slot.sts.length() >= 2 ? slot.sts[1].t : crosshair;
-            };
+            }
             if(s->bpp==32) // transparent skin
             {
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glEnable(GL_ALPHA_TEST);
                 glAlphaFunc(GL_GREATER, owner->model->alphatest);
-            };
+            }
             glBindTexture(GL_TEXTURE_2D, s->gl);
             if(m!=crosshair)
             {
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, m->gl);
                 glActiveTexture_(GL_TEXTURE0_ARB);
-            };
+            }
             setshader(m!=crosshair);
-        };
+        }
 
         void unbindskin()
         {
@@ -256,8 +256,8 @@ struct vertmodel : model
             {
                 glDisable(GL_ALPHA_TEST);
                 glDisable(GL_BLEND);
-            };
-        };
+            }
+        }
 
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t)
         {
@@ -276,7 +276,7 @@ struct vertmodel : model
                     glNormalPointer(GL_FLOAT, sizeof(vvert), &vverts->norm);
                     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                     glTexCoordPointer(2, GL_FLOAT, sizeof(vvert), &vverts->u);
-                };
+                }
 
                 glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, 0);
 
@@ -286,7 +286,7 @@ struct vertmodel : model
                 {
                     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                     glDisableClientState(GL_NORMAL_ARRAY);
-                };
+                }
                 glDisableClientState(GL_VERTEX_ARRAY);
 
                 xtravertsva += numtcverts;
@@ -302,22 +302,22 @@ struct vertmodel : model
                         if(j) glEnd();
                         glBegin(index==tristrip::LIST ? GL_TRIANGLES : GL_TRIANGLE_STRIP);
                         if(index>=tristrip::RESTART) continue;
-                    };
+                    }
                     tcvert &tc = tcverts[index];
                     vert &v = dynbuf[tc.index];
                     if(!(as.anim&ANIM_NOSKIN))
                     {
                         glTexCoord2f(tc.u, tc.v);
                         glNormal3fv(v.norm.v);
-                    };
+                    }
                     glVertex3fv(v.pos.v);
-                };
+                }
                 glEnd();
                 xtraverts += dynlen;
-            };
+            }
 
             if(!(as.anim&ANIM_NOSKIN)) unbindskin();
-        };                     
+        }                     
     };
 
     struct animinfo
@@ -333,7 +333,7 @@ struct vertmodel : model
         float transform[3][3];
         
         tag() : name(NULL) {};
-        ~tag() { DELETEA(name); };
+        ~tag() { DELETEA(name); }
     };
 
     struct part
@@ -354,7 +354,7 @@ struct vertmodel : model
             DELETEA(anims);
             DELETEA(links);
             DELETEA(tags);
-        };
+        }
 
         bool link(part *link, const char *tag)
         {
@@ -362,9 +362,9 @@ struct vertmodel : model
             {
                 links[i] = link;
                 return true;
-            };
+            }
             return false;
-        };
+        }
 
         void scaleverts(const float scale, const vec &translate)
         {
@@ -376,20 +376,20 @@ struct vertmodel : model
                    vec &v = m.verts[j].pos;
                    if(!index) v.add(translate);
                    v.mul(scale);
-               };
-           };
+               }
+           }
            loopi(numframes*numtags)
            {
                vec &v = tags[i].pos;
                if(!index) v.add(translate);
                v.mul(scale);
-           };
-        };
+           }
+        }
 
         void genva(bool dyn) // generate vbo's for each mesh
         {
             loopv(meshes) meshes[i]->genva(dyn);
-        };
+        }
             
         void calctransform(tag &t, float m[12], float n[12])
         {
@@ -399,14 +399,14 @@ struct vertmodel : model
                 n[3+y] = m[y]*t.transform[1][0] + m[y+3]*t.transform[1][1] + m[y+6]*t.transform[1][2];
                 n[6+y] = m[y]*t.transform[2][0] + m[y+3]*t.transform[2][1] + m[y+6]*t.transform[2][2];
                 n[9+y] = m[y]*t.pos[0] + m[y+3]*t.pos[1] + m[y+6]*t.pos[2] + m[y+9];
-            };
-        };
+            }
+        }
 
         void calcbb(int frame, vec &bbmin, vec &bbmax)
         {
             float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
             calcbb(frame, bbmin, bbmax, m);
-        };
+        }
 
         void calcbb(int frame, vec &bbmin, vec &bbmax, float m[12])
         {
@@ -417,14 +417,14 @@ struct vertmodel : model
                 float n[12];
                 calctransform(t, m, n);
                 links[i]->calcbb(frame, bbmin, bbmax, n);
-            };
-        };
+            }
+        }
 
         void gentris(int frame, vector<SphereTree::tri> &tris)
         {
             float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
             gentris(frame, tris, m);
-        };
+        }
 
         void gentris(int frame, vector<SphereTree::tri> &tris, float m[12])
         {
@@ -435,15 +435,15 @@ struct vertmodel : model
                 float n[12];
                 calctransform(t, m, n);
                 links[i]->gentris(frame, tris, n);
-            };
-        };
+            }
+        }
 
         virtual void getdefaultanim(animstate &as, int anim, int varseed, float speed)
         {
             as.frame = 0;
             as.range = 1;
             as.speed = speed;
-        };
+        }
 
         bool calcanimstate(int anim, int varseed, float speed, int basetime, dynent *d, animstate &as)
         {
@@ -464,20 +464,20 @@ struct vertmodel : model
                     as.frame = 0;
                     as.range = 1;
                     as.speed = speed;
-                };
+                }
             }
             else getdefaultanim(as, anim&ANIM_INDEX, varseed, speed);
             if(anim&(ANIM_START|ANIM_END))
             {
                 if(anim&ANIM_END) as.frame += as.range-1;
                 as.range = 1; 
-            };
+            }
 
             if(as.frame+as.range>numframes)
             {
                 if(as.frame>=numframes) return false;
                 as.range = numframes-as.frame;
-            };
+            }
 
             if(d && index<2 && !(anim&ANIM_REUSE))
             {
@@ -491,11 +491,11 @@ struct vertmodel : model
                     if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
                     d->current[index] = as;
                     d->lastanimswitchtime[index] = lastmillis;
-                };
+                }
                 d->lastmodel[index] = this;
-            };
+            }
             return true;
-        };
+        }
         
         void render(int anim, int varseed, float speed, int basetime, dynent *d)
         {
@@ -515,7 +515,7 @@ struct vertmodel : model
             {
                 prev.setframes(d->prev[index]);
                 ai_t = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
-            };
+            }
             
             loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
 
@@ -543,7 +543,7 @@ struct vertmodel : model
                     loopj(3) matrix[4 + j] = ip(tag1->transform[1][j], tag2->transform[1][j], cur.t);
                     loopj(3) matrix[8 + j] = ip(tag1->transform[2][j], tag2->transform[2][j], cur.t);
                     loopj(3) matrix[12 + j] = ip(tag1->pos[j], tag2->pos[j], cur.t); // position
-                };
+                }
                 #undef ip_ai_tag
                 #undef ip 
                 matrix[3] = matrix[7] = matrix[11] = 0.0f;
@@ -552,8 +552,8 @@ struct vertmodel : model
                     glMultMatrixf(matrix);
                     link->render(anim, varseed, speed, basetime, d);
                 glPopMatrix();
-            };
-        };
+            }
+        }
 
         void setanim(int num, int frame, int range, float speed)
         {
@@ -561,13 +561,13 @@ struct vertmodel : model
             { 
                 conoutf("invalid frame %d, range %d in model %s", frame, range, model->loadname); 
                 return; 
-            };
+            }
             if(!anims) anims = new vector<animinfo>[NUMANIMS];
             animinfo &ai = anims[num].add();
             ai.frame = frame;
             ai.range = range;
             ai.speed = speed;
-        };
+        }
     };
 
     bool loaded;
@@ -577,20 +577,20 @@ struct vertmodel : model
     vertmodel(const char *name) : loaded(false)
     {
         loadname = newstring(name);
-    };
+    }
 
     ~vertmodel()
     {
         delete[] loadname;
         parts.deletecontentsp();
-    };
+    }
 
-    char *name() { return loadname; };
+    char *name() { return loadname; }
 
     void gentris(int frame, vector<SphereTree::tri> &tris)
     {
         loopv(parts) parts[i]->gentris(frame, tris);
-    };
+    }
 
     SphereTree *setspheretree()
     {
@@ -599,20 +599,20 @@ struct vertmodel : model
         gentris(0, tris);
         spheretree = buildspheretree(tris.length(), tris.getbuf());
         return spheretree;
-    };
+    }
 
     bool link(part *link, const char *tag)
     {
         loopv(parts) if(parts[i]->link(link, tag)) return true;
         return false;
-    };
+    }
 
     void setskin(int tex)
     {
         if(parts.length()!=1 || parts[0]->meshes.length()!=1) return;
         mesh &m = *parts[0]->meshes[0]; 
         m.tex = tex;
-    };
+    }
 
     void calcbb(int frame, vec &center, vec &radius)
     {
@@ -625,14 +625,14 @@ struct vertmodel : model
             {
                 bbmin = bbmax = m.verts[frame*m.numverts].pos;
                 break;
-            };
-        };
+            }
+        }
         parts[0]->calcbb(frame, bbmin, bbmax);
         radius = bbmax;
         radius.sub(bbmin);
         radius.mul(0.5f);
         center = bbmin;
         center.add(radius);
-    };
+    }
 };
 

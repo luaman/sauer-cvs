@@ -14,6 +14,7 @@
     N(movespeed) \
     N(jumpheight) \
     N(maxhp) \
+    N(maxmana) \
     N(tradeskill) \
     N(feared) \
     N(stealth) \
@@ -31,7 +32,9 @@ struct stats
     RPGSTATNAMES 
     #undef N
     
-    stats() { reset(); }
+    bool accumulate_stats;
+    
+    stats() : accumulate_stats(true) { reset(); }
     
     void reset()
     {

@@ -35,6 +35,7 @@ struct rpgobj : g3d_callback
     bool ai;            // whether this object does its own thinking (npcs/monsters)
     behaviour *beh;
     int health;
+    int mana;
     int gold;           // how much money is owned by the object (mostly for npcs/player only)
     int worth;          // base value when this object is sold by an npc (not necessarily when sold TO an npc)
 
@@ -48,9 +49,9 @@ struct rpgobj : g3d_callback
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
-        actions(NULL), abovetext(NULL), ai(false), health(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {};
+        actions(NULL), abovetext(NULL), ai(false), health(100), mana(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {};
 
-    ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); DELETEP(actions); };
+    ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); DELETEP(actions); }
 
     void scriptinit()
     {
@@ -63,7 +64,7 @@ struct rpgobj : g3d_callback
     {
         if(parent) parent->remove(this);
         parent = sibling = NULL;
-    };
+    }
 
     void add(rpgobj *o, int itemflags)
     {
@@ -73,7 +74,7 @@ struct rpgobj : g3d_callback
         o->itemflags = itemflags;
         
         recalcstats();
-    };
+    }
 
     void remove(rpgobj *o)
     {
@@ -82,13 +83,14 @@ struct rpgobj : g3d_callback
             else l = &(*l)->sibling;
             
         recalcstats();
-    };
+    }
 
     void recalcstats()
     {
+        if(!st.accumulate_stats) return;
         st.reset();
         loopinventorytype(IF_INVENTORY) st.accumulate(o->st);
-    };
+    }
 
     void placeinworld(vec &pos, float yaw)
     {
@@ -98,7 +100,7 @@ struct rpgobj : g3d_callback
         ent->yaw = yaw;
         setbbfrommodel(ent, model);
         entinmap(ent);
-    };
+    }
 
     void render()
     {
@@ -108,8 +110,8 @@ struct rpgobj : g3d_callback
             vec color, dir;
             lightreaching(ent->o, color, dir);  // FIXME just once for nonmoving objects
             rendermodel(color, dir, model, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, ent->o.x, ent->o.y, ent->o.z, ent->yaw, 0, 0, 0);
-        };
-    };
+        }
+    }
 
     void update(int curtime)
     {
@@ -117,7 +119,7 @@ struct rpgobj : g3d_callback
         float dist = ent->o.dist(os.cl.player1.o);
         if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
         else if(dist>96) menutime = 0;
-    };
+    }
 
     void addaction(char *initiate, char *script)
     {
@@ -128,7 +130,7 @@ struct rpgobj : g3d_callback
         na->script = script;
         na->used = false;
         actions = na;
-    };
+    }
 
     void droploot()
     {
@@ -139,8 +141,8 @@ struct rpgobj : g3d_callback
             os.placeinworld(ent->o, rnd(360));
             droploot();
             return;
-        };
-    };
+        }
+    }
 
     rpgobj *take(char *name)
     {
@@ -148,10 +150,10 @@ struct rpgobj : g3d_callback
         {
             o->decontain();
             return o;
-        };
+        }
         return NULL;
-    };
-
+    }
+    
     void attacked(rpgobj &attacker)
     {
         if(attacker.ent->o.dist(ent->o)<32 && ent->state==CS_ALIVE)
@@ -168,9 +170,9 @@ struct rpgobj : g3d_callback
                 menutime = 0;
                 conoutf("you killed: %s", name);
                 droploot();
-            };
-        };
-    };
+            }
+        }
+    }
     
     void guiaction(g3d_gui &g, rpgaction *a)
     {
@@ -178,10 +180,10 @@ struct rpgobj : g3d_callback
         guiaction(g, a->next);
         if(g.button(a->initiate, a->used ? 0xAAAAAA : 0xFFFFFF, "chat")&G3D_UP)
         {
-            if(*a->script) { os.pushobj(this); execute(a->script); };
+            if(*a->script) { os.pushobj(this); execute(a->script); }
             a->used = true;
-        };
-    };
+        }
+    }
     
     void gui(g3d_gui &g, bool firstpass)
     {
@@ -221,25 +223,25 @@ struct rpgobj : g3d_callback
                     else
                     {
                         conoutf("\f2you cannot afford this item!");
-                    };
+                    }
                 }
                 else if(ret&G3D_ROLLOVER)
                 {
                     s_sprintf(info)("buy for %d gold (you have %d)", price, os.playerobj->gold);
-                };
-            };
+                }
+            }
             if(numtrade)
             {
                 g.text(info, 0xAAAAAA);   
                 g.tab("sell", 0xDDDDDD);
                 os.playerobj->invgui(g, this);
-            };
+            }
             g.tab("stats", 0xDDDDDD);
             st.gui(g, os.playerobj->st);
-        };
+        }
         
         g.end();
-    };
+    }
     
     void invgui(g3d_gui &g, rpgobj *seller = NULL)
     {
@@ -263,25 +265,25 @@ struct rpgobj : g3d_callback
                         seller->gold -= price;
                         o->decontain();
                         seller->add(o, IF_TRADE);                    
-                    };
+                    }
                 }
                 else    // player wants to use this item
                 {
                     conoutf("\f2using: %s", o->name);
-                };
+                }
             }
             else if(ret&G3D_ROLLOVER)
             {
                 if(seller) s_sprintf(info)("sell for %d gold (you have %d)",      price, gold);
                 else       s_sprintf(info)("item is worth %d gold (you have %d)", price, gold);
-            };
-        };
+            }
+        }
         g.text(info, 0xAAAAAA);   
-    };
+    }
 
     void g3d_menu()
     {
         if(!menutime) return;
         g3d_addgui(this, vec(ent->o).add(vec(0, 0, 2)));
-    };
+    }
 };

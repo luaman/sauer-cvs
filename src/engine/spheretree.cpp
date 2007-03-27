@@ -18,20 +18,20 @@ struct SphereBranch : SphereTree
         {
             n.mul((radius - child1->radius) / dist);
             center.add(n);
-        };
-    };
+        }
+    }
 
     ~SphereBranch()
     {
         DELETEP(child1);
         DELETEP(child2);
-    };
+    }
 
     bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const
     {
         return child1->intersect(o, ray, maxdist, dist, mode) ||
                child2->intersect(o, ray, maxdist, dist, mode);
-    };
+    }
 };  
 
 struct SphereLeaf : SphereTree
@@ -48,7 +48,7 @@ struct SphereLeaf : SphereTree
               r2 = center.dist(t.b), 
               r3 = center.dist(t.c);
         radius = max(r1, max(r2, r3));
-    };
+    }
     
     bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const
     {
@@ -74,18 +74,18 @@ struct SphereLeaf : SphereTree
             if(!tri.tex->alphamask)
             {
                 loadalphamask(tri.tex);
-                if(!tri.tex->alphamask) { dist = f; return true; };
-            };
+                if(!tri.tex->alphamask) { dist = f; return true; }
+            }
             float s = tri.tc[0] + u*(tri.tc[2] - tri.tc[0]) + v*(tri.tc[4] - tri.tc[0]),
                   t = tri.tc[1] + u*(tri.tc[3] - tri.tc[1]) + v*(tri.tc[5] - tri.tc[1]);
             int si = int(s*tri.tex->w), ti = int(t*tri.tex->h);
             if(!(tri.tex->alphamask[ti*((tri.tex->w+7)/8) + si/8] & (1<<(si%8)))) return false;
-        };
+        }
         dist = f;
         return true;
-    };
+    }
 
-    bool isleaf() { return true; };
+    bool isleaf() { return true; }
 };
 
 SphereTree *buildspheretree(int numtris, const SphereTree::tri *tris)
@@ -111,8 +111,8 @@ SphereTree *buildspheretree(int numtris, const SphereTree::tri *tris)
             {
                 farthest = i;
                 dist = d;
-            };
-        }; 
+            }
+        } 
         SphereTree *child1 = spheres[farthest];
         int closest = -1;
         float radius = 1e16f;
@@ -132,14 +132,14 @@ SphereTree *buildspheretree(int numtris, const SphereTree::tri *tris)
             {
                 closest = i;
                 radius = xyradius;
-            };
-        };
+            }
+        }
         if(closest>=0)
         {
             spheres[farthest] = new SphereBranch(spheres[farthest], spheres[closest]);
             spheres[closest] = spheres[--numspheres];
-        };
-    };
+        }
+    }
     
     SphereTree *root = spheres[0];
     delete[] spheres;

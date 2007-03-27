@@ -63,15 +63,15 @@ struct vvec : svec
     vvec(int x, int y, int z) : svec(VVEC_INT_COORD(x), VVEC_INT_COORD(y), VVEC_INT_COORD(z)) {};
     vvec(const int *i) : svec(VVEC_INT_COORD(i[0]), VVEC_INT_COORD(i[1]), VVEC_INT_COORD(i[2])) {};
 
-    void mask(int f) { f <<= VVEC_FRAC; f |= (1<<VVEC_FRAC)-1; x &= f; y &= f; z &= f; };
+    void mask(int f) { f <<= VVEC_FRAC; f |= (1<<VVEC_FRAC)-1; x &= f; y &= f; z &= f; }
 
-    ivec toivec() const                    { return ivec(x, y, z).div(1<<VVEC_FRAC); };
-    ivec toivec(int x, int y, int z) const { ivec t = toivec(); t.x += x&~VVEC_INT_MASK; t.y += y&~VVEC_INT_MASK; t.z += z&~VVEC_INT_MASK; return t; }; 
-    ivec toivec(const ivec &o) const       { return toivec(o.x, o.y, o.z); };
+    ivec toivec() const                    { return ivec(x, y, z).div(1<<VVEC_FRAC); }
+    ivec toivec(int x, int y, int z) const { ivec t = toivec(); t.x += x&~VVEC_INT_MASK; t.y += y&~VVEC_INT_MASK; t.z += z&~VVEC_INT_MASK; return t; } 
+    ivec toivec(const ivec &o) const       { return toivec(o.x, o.y, o.z); }
 
-    vec tovec() const                    { return vec(x, y, z).div(1<<VVEC_FRAC); };
-    vec tovec(int x, int y, int z) const { vec t = tovec(); t.x += x&~VVEC_INT_MASK; t.y += y&~VVEC_INT_MASK; t.z += z&~VVEC_INT_MASK; return t; };
-    vec tovec(const ivec &o) const       { return tovec(o.x, o.y, o.z); };
+    vec tovec() const                    { return vec(x, y, z).div(1<<VVEC_FRAC); }
+    vec tovec(int x, int y, int z) const { vec t = tovec(); t.x += x&~VVEC_INT_MASK; t.y += y&~VVEC_INT_MASK; t.z += z&~VVEC_INT_MASK; return t; }
+    vec tovec(const ivec &o) const       { return tovec(o.x, o.y, o.z); }
 };
 
 struct vertex : vvec { short u, v; bvec n; };

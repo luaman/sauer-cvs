@@ -23,16 +23,16 @@ struct SphereTree
         if(inside >= 0) return true;
         if(d < 0 || v - sqrt(d) > maxdist) return false;
         return true;
-    };
+    }
 
     virtual bool childintersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const = 0;
 
     bool intersect(const vec &o, const vec &ray, float maxdist, float &dist, int mode) const
     {
         return shellintersect(o, ray, maxdist) && childintersect(o, ray, maxdist, dist, mode);
-    };
+    }
 
-    virtual bool isleaf() { return false; };
+    virtual bool isleaf() { return false; }
 };
 
 extern SphereTree *buildspheretree(int numtris, const SphereTree::tri *tris);

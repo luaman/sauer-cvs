@@ -19,7 +19,7 @@ struct fpsserver : igameserver
         { 
             maxhealth = 100;
             frags = timeplayed = 0; 
-        };
+        }
     };
 
     struct savedscore : clientscore
@@ -40,7 +40,7 @@ struct fpsserver : igameserver
         int gamestart;
         vector<uchar> position, messages;
 
-        clientinfo() { reset(); };
+        clientinfo() { reset(); }
 
         void mapchange()
         {
@@ -48,7 +48,7 @@ struct fpsserver : igameserver
             mapvote[0] = 0;
             o = vec(-1e10f, -1e10f, -1e10f);
             state = -1;
-        };
+        }
 
         void reset()
         {
@@ -57,7 +57,7 @@ struct fpsserver : igameserver
             position.setsizenodelete(0);
             messages.setsizenodelete(0);
             mapchange();
-        };
+        }
     };
 
     struct worldstate
@@ -98,8 +98,8 @@ struct fpsserver : igameserver
 
     fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {};
 
-    void *newinfo() { return new clientinfo; };
-    void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); }; 
+    void *newinfo() { return new clientinfo; }
+    void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); } 
     
     vector<server_entity> sents;
     vector<savedscore> scores;
@@ -114,7 +114,7 @@ struct fpsserver : igameserver
             "capture",
         };
         return (n>=-2 && size_t(n+2)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+2] : "unknown";
-    };
+    }
 
     static char msgsizelookup(int msg)
     {
@@ -134,11 +134,11 @@ struct fpsserver : igameserver
         };
         for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
         return -1;
-    };
+    }
 
-    void sendservmsg(const char *s) { sendf(-1, 1, "ris", SV_SERVMSG, s); };
+    void sendservmsg(const char *s) { sendf(-1, 1, "ris", SV_SERVMSG, s); }
 
-    void resetitems() { sents.setsize(0); cps.reset(); };
+    void resetitems() { sents.setsize(0); cps.reset(); }
 
     void pickup(int i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
     {
@@ -151,8 +151,8 @@ struct fpsserver : igameserver
             sents[i].spawnsecs = sec;
             sendf(sender, 1, "ri2", SV_ITEMACC, i);
             if(minremain>=0 && sents[i].type == I_BOOST) ci->score.maxhealth += 10;
-        };
-    };
+        }
+    }
 
     void vote(char *map, int reqmode, int sender)
     {
@@ -167,7 +167,7 @@ struct fpsserver : igameserver
             {
                 s_sprintfd(msg)("master forced %s on map %s", modestr(reqmode), map);
                 sendservmsg(msg);
-            };
+            }
             sendf(-1, 1, "risi", SV_MAPCHANGE, ci->mapvote, ci->modevote);
             changemap(ci->mapvote, ci->modevote);
         }
@@ -176,8 +176,8 @@ struct fpsserver : igameserver
             s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", ci->name, modestr(reqmode), map);
             sendservmsg(msg);
             checkvotes();
-        };
-    };
+        }
+    }
 
     clientinfo *choosebestclient(float &bestrank)
     {
@@ -188,10 +188,10 @@ struct fpsserver : igameserver
             clientinfo *ci = clients[i];
             if(ci->score.timeplayed<0) continue;
             float rank = float(ci->score.frags)/float(max(ci->score.timeplayed, 1));
-            if(!best || rank > bestrank) { best = ci; bestrank = rank; };
-        };
+            if(!best || rank > bestrank) { best = ci; bestrank = rank; }
+        }
         return best;
-    };  
+    }  
 
     void autoteam()
     {
@@ -212,10 +212,10 @@ struct fpsserver : igameserver
                 teamrank[first] += rank;
                 selected++;
                 if(rank<=0) break;
-            };
+            }
             if(!selected) break;
             remaining -= selected;
-        };
+        }
         loopi(sizeof(team)/sizeof(team[0]))
         {
             loopvj(team[i])
@@ -224,9 +224,9 @@ struct fpsserver : igameserver
                 if(!strcmp(ci->team, teamnames[i])) continue;
                 s_strncpy(ci->team, teamnames[i], MAXTEAMLEN+1);
                 sendf(-1, 1, "riis", SV_SETTEAM, ci->clientnum, teamnames[i]);
-            };
-        };
-    };
+            }
+        }
+    }
 
     struct teamscore
     {
@@ -234,7 +234,7 @@ struct fpsserver : igameserver
         float rank;
         int clients;
     };
-
+    
     const char *chooseworstteam(const char *suggest)
     {
         vector<teamscore> teamscores;
@@ -245,24 +245,24 @@ struct fpsserver : igameserver
             ci->score.timeplayed += lastsec - ci->gamestart;
             ci->gamestart = lastsec;
             teamscore *ts = NULL;
-            loopvj(teamscores) if(!strcmp(teamscores[j].team, ci->team)) { ts = &teamscores[j]; break; };
-            if(!ts) { ts = &teamscores.add(); ts->team = ci->team; ts->rank = 0; ts->clients = 0; };
+            loopvj(teamscores) if(!strcmp(teamscores[j].team, ci->team)) { ts = &teamscores[j]; break; }
+            if(!ts) { ts = &teamscores.add(); ts->team = ci->team; ts->rank = 0; ts->clients = 0; }
             ts->rank += float(ci->score.frags)/float(max(ci->score.timeplayed, 1));
             ts->clients++;
-        };
+        }
         if(teamscores.length()==1)
         {
             if(suggest[0] && strcmp(teamscores[0].team, suggest)) return NULL;
             return strcmp(teamscores[0].team, "good") ? "good" : "evil";
-        };
+        }
         teamscore *worst = NULL;
         loopv(teamscores)
         {
             teamscore &ts = teamscores[i];
             if(!worst || ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
-        };
+        }
         return worst ? worst->team : NULL;
-    };
+    }
 
     void changemap(const char *s, int mode)
     {
@@ -280,15 +280,15 @@ struct fpsserver : igameserver
         {
             clientinfo *ci = clients[i];
             ci->score.timeplayed += lastsec - ci->gamestart;
-        };
+        }
         if(m_teammode) autoteam();
         loopv(clients)
         {
             clientinfo *ci = clients[i];
             ci->mapchange();
             ci->gamestart = lastsec;
-        };
-    };
+        }
+    }
 
     clientscore &findscore(clientinfo *ci, bool insert)
     {
@@ -302,26 +302,26 @@ struct fpsserver : igameserver
                 oi->score.timeplayed += lastsec - oi->gamestart;
                 oi->gamestart = lastsec;
                 return oi->score;
-            };
-        };
+            }
+        }
         loopv(scores)
         {
             savedscore &sc = scores[i];
             if(sc.ip == ip && !strcmp(sc.name, ci->name)) return sc;
-        };
+        }
         if(!insert) return *(clientscore *)0;
         savedscore &sc = scores.add();
         sc.reset();
         sc.ip = ip;
         s_strcpy(sc.name, ci->name);
         return sc;
-    };
+    }
 
     void savescore(clientinfo *ci)
     {
         clientscore &sc = findscore(ci, true);
         if(&sc) sc = ci->score;
-    };
+    }
 
     struct votecount
     {
@@ -346,10 +346,10 @@ struct fpsserver : igameserver
             { 
                 vc = &votes[j];
                 break;
-            };
+            }
             if(!vc) vc = &votes.add(votecount(oi->mapvote, oi->modevote));
             vc->count++;
-        };
+        }
         votecount *best = NULL;
         loopv(votes) if(!best || votes[i].count > best->count || (votes[i].count == best->count && rnd(2))) best = &votes[i];
         if(force || (best && best->count > maxvotes/2))
@@ -364,9 +364,9 @@ struct fpsserver : igameserver
             {
                 mapreload = true;
                 sendf(-1, 1, "ri", SV_MAPRELOAD);
-            };
-        };
-    };
+            }
+        }
+    }
 
     int checktype(int type, clientinfo *ci)
     {
@@ -377,20 +377,20 @@ struct fpsserver : igameserver
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
             return -1;
-        };
+        }
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
         static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_CLIENT };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
-    };
+    }
 
     static void freecallback(ENetPacket *packet)
     {
         extern igameserver *sv;
         ((fpsserver *)sv)->cleanworldstate(packet);
-    };
+    }
 
     void cleanworldstate(ENetPacket *packet)
     {
@@ -404,10 +404,10 @@ struct fpsserver : igameserver
             {
                 delete ws;
                 worldstates.remove(i);
-            };
+            }
             break;
-        };
-    };
+        }
+    }
 
     bool buildworldstate()
     {
@@ -421,7 +421,7 @@ struct fpsserver : igameserver
             {
                 pkt[i].posoff = ws.positions.length();
                 loopvj(ci.position) ws.positions.add(ci.position[j]);
-            };
+            }
             if(ci.messages.empty()) pkt[i].msgoff = -1;
             else
             {
@@ -433,11 +433,11 @@ struct fpsserver : igameserver
                 ws.messages.addbuf(p);
                 loopvj(ci.messages) ws.messages.add(ci.messages[j]);
                 pkt[i].msglen = ws.messages.length() - pkt[i].msgoff;
-            };
-        };
+            }
+        }
         int psize = ws.positions.length(), msize = ws.messages.length();
-        loopi(psize) { uchar c = ws.positions[i]; ws.positions.add(c); };
-        loopi(msize) { uchar c = ws.messages[i]; ws.messages.add(c); };
+        loopi(psize) { uchar c = ws.positions[i]; ws.positions.add(c); }
+        loopi(msize) { uchar c = ws.messages[i]; ws.messages.add(c); }
         ws.uses = 0;
         loopv(clients)
         {
@@ -450,8 +450,8 @@ struct fpsserver : igameserver
                                             ENET_PACKET_FLAG_NO_ALLOCATE);
                 sendpacket(ci.clientnum, 0, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
-                else { ++ws.uses; packet->freeCallback = freecallback; };
-            };
+                else { ++ws.uses; packet->freeCallback = freecallback; }
+            }
             ci.position.setsizenodelete(0);
 
             if(msize && (pkt[i].msgoff<0 || msize-pkt[i].msglen>0))
@@ -461,10 +461,10 @@ struct fpsserver : igameserver
                                             (reliablemessages ? ENET_PACKET_FLAG_RELIABLE : 0) | ENET_PACKET_FLAG_NO_ALLOCATE);
                 sendpacket(ci.clientnum, 1, packet);
                 if(!packet->referenceCount) enet_packet_destroy(packet);
-                else { ++ws.uses; packet->freeCallback = freecallback; };
-            };
+                else { ++ws.uses; packet->freeCallback = freecallback; }
+            }
             ci.messages.setsizenodelete(0);
-        };
+        }
         reliablemessages = false;
         if(!ws.uses) 
         {
@@ -475,8 +475,8 @@ struct fpsserver : igameserver
         {
             worldstates.add(&ws); 
             return true;
-        };
-    };
+        }
+    }
 
     bool sendpackets()
     {
@@ -486,7 +486,7 @@ struct fpsserver : igameserver
         bool flush = buildworldstate();
         lastsend += curtime - (curtime%33);
         return flush;
-    };
+    }
 
     void parsepacket(int sender, int chan, bool reliable, ucharbuf &p)     // has to parse exactly each byte of the packet
     {
@@ -495,7 +495,7 @@ struct fpsserver : igameserver
         {
             receivefile(sender, p.buf, p.maxlen);
             return;
-        };
+        }
         if(reliable) reliablemessages = true;
         char text[MAXTRANS];
         int cn = -1, type;
@@ -511,7 +511,7 @@ struct fpsserver : igameserver
                 {
                     disconnect_client(sender, DISC_CN);
                     return;
-                };
+                }
                 vec oldpos(ci->o), newpos;
                 loopi(3) newpos.v[i] = getuint(p)/DMF;
                 if(!notgotitems && !notgotbases) ci->o = newpos;
@@ -530,15 +530,15 @@ struct fpsserver : igameserver
                         else cps.leavebases(ci->team, oldpos);
                     }
                     else if(state==CS_ALIVE) cps.enterbases(ci->team, ci->o);
-                };
+                }
                 if(!notgotitems && !notgotbases) ci->state = state;
                 if(!ci->local)
                 {
                     ci->position.setsizenodelete(0);
                     while(curmsg<p.length()) ci->position.add(p.buf[curmsg++]);
-                };
+                }
                 break;
-            };
+            }
 
             case SV_TEXT:
                 getstring(text, p);
@@ -557,8 +557,8 @@ struct fpsserver : igameserver
                     {
                         ci->score = sc;
                         sendf(-1, 1, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
-                    };
-                };
+                    }
+                }
                 QUEUE_MSG;
                 curmsg = p.length();
                 getstring(text, p);
@@ -573,14 +573,14 @@ struct fpsserver : igameserver
                         sendstring(worst, buf);
                         ci->messages.addbuf(buf);
                         curmsg = p.length();
-                    };
-                };
+                    }
+                }
                 if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);
                 QUEUE_MSG;
                 break;
-            };
+            }
 
             case SV_MAPVOTE:
             case SV_MAPCHANGE:
@@ -591,7 +591,7 @@ struct fpsserver : igameserver
                 if(!ci->local && !m_mp(reqmode)) reqmode = 0;
                 vote(text, reqmode, sender);
                 break;
-            };
+            }
 
             case SV_ITEMLIST:
             {
@@ -604,11 +604,11 @@ struct fpsserver : igameserver
                         while(sents.length()<=n) sents.add(se);
                         if(gamemode>=0 && (sents[n].type==I_QUAD || sents[n].type==I_BOOST)) sents[n].spawnsecs = rnd(60)+20;
                         else sents[n].spawned = true;
-                    };
-                };
+                    }
+                }
                 notgotitems = false;
                 break;
-            };
+            }
 
             case SV_TEAMSCORE:
                 getstring(text, p);
@@ -634,10 +634,10 @@ struct fpsserver : igameserver
                     o.y = getint(p)/DMF;
                     o.z = getint(p)/DMF;
                     if(notgotbases) cps.addbase(o);
-                };
+                }
                 notgotbases = false;
                 break;
-            };
+            }
 
             case SV_ITEMPICKUP:
             {
@@ -645,7 +645,7 @@ struct fpsserver : igameserver
                 pickup(n, getint(p), sender);
                 QUEUE_MSG;
                 break;
-            };
+            }
 
             case SV_PING:
                 sendf(sender, 1, "i2", SV_PONG, getint(p));
@@ -657,7 +657,7 @@ struct fpsserver : igameserver
                 if(minremain>=0) ci->score.frags = frags;
                 QUEUE_MSG;
                 break;
-            };
+            }
                 
             case SV_MASTERMODE:
             {
@@ -667,9 +667,9 @@ struct fpsserver : igameserver
                     mastermode = mm;
                     s_sprintfd(s)("mastermode is now %d", mastermode);
                     sendservmsg(s);
-                };
+                }
                 break;
-            };
+            }
             
             case SV_KICK:
             {
@@ -680,9 +680,9 @@ struct fpsserver : igameserver
                     b.time = lastsec;
                     b.ip = getclientip(victim);
                     disconnect_client(victim, DISC_KICK);
-                };
+                }
                 break;
-            };
+            }
 
             case SV_SPECTATOR:
             {
@@ -695,12 +695,12 @@ struct fpsserver : igameserver
                 {
                     if(m_capture && spinfo->state==CS_ALIVE) cps.leavebases(spinfo->team, spinfo->o);
                     spinfo->state = CS_SPECTATOR;
-                };
+                }
                 spinfo->spectator = val!=0;
                 sendf(sender, 1, "ri3", SV_SPECTATOR, spectator, val);
                 QUEUE_MSG;
                 break;
-            };
+            }
 
             case SV_SETTEAM:
             {
@@ -714,7 +714,7 @@ struct fpsserver : igameserver
                 sendf(sender, 1, "riis", SV_SETTEAM, who, text);
                 QUEUE_MSG;
                 break;
-            }; 
+            } 
 
             case SV_FORCEINTERMISSION:
                 if(m_sp) startintermission();
@@ -737,10 +737,10 @@ struct fpsserver : igameserver
                     smapname[0] = '\0';
                     resetitems();
                     notgotitems = notgotbases = false;
-                };
+                }
                 QUEUE_MSG;
                 break;
-            };
+            }
 
             case SV_SETMASTER:
             {
@@ -749,18 +749,18 @@ struct fpsserver : igameserver
                 setmaster(ci, val!=0, text);
                 // don't broadcast the master password
                 break;
-            };
+            }
 
             default:
             {
                 int size = msgsizelookup(type);
-                if(size==-1) { disconnect_client(sender, DISC_TAGT); return; };
+                if(size==-1) { disconnect_client(sender, DISC_TAGT); return; }
                 loopi(size-1) getint(p);
                 if(ci) QUEUE_MSG;
                 break;
-            };
-        };
-    };
+            }
+        }
+    }
 
     int welcomepacket(ucharbuf &p, int n)
     {
@@ -779,15 +779,15 @@ struct fpsserver : igameserver
             {
                 putint(p, i);
                 putint(p, sents[i].type);
-            };
+            }
             putint(p, -1);
-        };
+        }
         if(((clientinfo *)getinfo(n))->spectator)
         {
             putint(p, SV_SPECTATOR);
             putint(p, n);
             putint(p, 1);
-        };
+        }
         loopv(clients)
         {
            clientinfo *ci = clients[i];
@@ -797,10 +797,10 @@ struct fpsserver : igameserver
            putint(p, ci->clientnum);
            putint(p, ci->score.maxhealth);
            putint(p, ci->score.frags);
-        };
+        }
         if(m_capture) cps.initclient(p);
         return 1;
-    };
+    }
 
     void checkintermission()
     {
@@ -808,15 +808,15 @@ struct fpsserver : igameserver
         {
             interm = lastsec+10;
             mapend = lastsec+1000;
-        };
+        }
         if(minremain>=0)
         {
             do minremain--; while(lastsec>mapend-minremain*60);
             sendf(-1, 1, "ri2", SV_TIMEUP, minremain+1);
-        };
-    };
+        }
+    }
 
-    void startintermission() { minremain = 0; checkintermission(); };
+    void startintermission() { minremain = 0; checkintermission(); }
 
     void serverupdate(int seconds)
     {
@@ -834,9 +834,9 @@ struct fpsserver : igameserver
                 else if(sents[i].spawnsecs==10 && seconds-lastsec && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
                 {
                     sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
-                };
-            };
-        };
+                }
+            }
+        }
         
         if(m_capture) cps.updatescores(seconds);
 
@@ -844,15 +844,15 @@ struct fpsserver : igameserver
         
         while(bannedips.length() && bannedips[0].time+4*60*60<lastsec) bannedips.remove(0);
         
-        if(masterupdate) { sendf(-1, 1, "ri2", SV_CURRENTMASTER, currentmaster); masterupdate = false; }; 
+        if(masterupdate) { sendf(-1, 1, "ri2", SV_CURRENTMASTER, currentmaster); masterupdate = false; } 
     
         if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
         {
             interm = 0;
             checkvotes(true);
-        };
-    };
+        }
+    }
 
     void serverinit(char *sdesc, char *adminpass)
     {
@@ -860,7 +860,7 @@ struct fpsserver : igameserver
         s_strcpy(masterpass, adminpass ? adminpass : "");
         smapname[0] = 0;
         resetitems();
-    };
+    }
     
     void setmaster(clientinfo *ci, bool val, const char *pass = "")
     {
@@ -870,14 +870,14 @@ struct fpsserver : igameserver
             {
                 if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->master = false;
                 else return;
-            };
+            }
         }        
         else if(!ci->master) return;
         ci->master = val;
         mastermode = MM_OPEN;
         currentmaster = val ? ci->clientnum : -1;
         masterupdate = true;
-    };
+    }
 
     void localconnect(int n)
     {
@@ -885,14 +885,14 @@ struct fpsserver : igameserver
         ci->clientnum = n;
         ci->local = true;
         clients.add(ci);
-    };
+    }
 
     void localdisconnect(int n)
     {
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(m_capture && ci->state==CS_ALIVE) cps.leavebases(ci->team, ci->o);
         clients.removeobj(ci);
-    };
+    }
 
     int clientconnect(int n, uint ip)
     {
@@ -905,11 +905,11 @@ struct fpsserver : igameserver
         {
             ci->spectator = true;
             ci->state = CS_SPECTATOR;
-        };
+        }
         if(currentmaster>=0) masterupdate = true;
         ci->gamestart = lastsec;
         return DISC_NONE;
-    };
+    }
 
     void clientdisconnect(int n) 
     { 
@@ -922,12 +922,12 @@ struct fpsserver : igameserver
         clients.removeobj(ci);
         if(clients.empty()) bannedips.setsize(0); // bans clear when server empties
         else checkvotes();
-    };
+    }
 
-    char *servername() { return "sauerbratenserver"; };
-    int serverinfoport() { return SAUERBRATEN_SERVINFO_PORT; };
-    int serverport() { return SAUERBRATEN_SERVER_PORT; };
-    char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; }; 
+    char *servername() { return "sauerbratenserver"; }
+    int serverinfoport() { return SAUERBRATEN_SERVINFO_PORT; }
+    int serverport() { return SAUERBRATEN_SERVER_PORT; }
+    char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; } 
 
     void serverinforeply(ucharbuf &p)
     {
@@ -940,12 +940,12 @@ struct fpsserver : igameserver
         putint(p, mastermode);
         sendstring(smapname, p);
         sendstring(serverdesc, p);
-    };
+    }
 
     bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np)
     {
         return attr.length() && attr[0]==PROTOCOL_VERSION;
-    };
+    }
 
     void serverinfostr(char *buf, const char *name, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
@@ -959,22 +959,22 @@ struct fpsserver : igameserver
             {
                 case MM_LOCKED: s_strcat(numcl, " L"); break;
                 case MM_PRIVATE: s_strcat(numcl, " P"); break;
-            };
+            }
             
             s_sprintf(buf)("%d\t%s\t%s, %s: %s %s", ping, numcl, map[0] ? map : "[unknown]", modestr(attr[1]), name, sdesc);
-        };
-    };
+        }
+    }
 
     void receivefile(int sender, uchar *data, int len)
     {
         if(gamemode != 1 || len > 1024*1024) return;
         clientinfo *ci = (clientinfo *)getinfo(sender);
         if(ci->spectator && !ci->master) return;
-        if(mapdata) { fclose(mapdata); mapdata = NULL; };
+        if(mapdata) { fclose(mapdata); mapdata = NULL; }
         if(!len) return;
         mapdata = tmpfile();
         if(!mapdata) return;
         fwrite(data, 1, len, mapdata);
         sendservmsg("[map uploaded to server, \"/getmap\" to receive it]");
-    };
+    }
 };

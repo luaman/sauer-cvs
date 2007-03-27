@@ -13,7 +13,7 @@ struct monsterset
         short gun, speed, health, freq, lag, rate, pain, loyalty, bscale, weight; 
         short painsound, diesound;
         char *name, *mdlname, *vwepname;
-    };   
+    };
     
     struct monster : fpsent
     {
@@ -39,7 +39,7 @@ struct monsterset
             {
                 conoutf("warning: unknown monster in spawn: %d", _type);
                 _type = 0;
-            };
+            }
             monstertype *t = monstertypes+(mtype = _type);
             eyeheight = 8.0f;
             aboveeye = 7.0f;
@@ -62,7 +62,7 @@ struct monsterset
             state = CS_ALIVE;
             anger = 0;
             s_strcpy(name, t->name);
-        };
+        }
         
         bool enemylos(vec &v)
         {
@@ -71,7 +71,7 @@ struct monsterset
             float mag = ray.magnitude();
             float distance = raycubepos(o, ray, v, mag, RAY_CLIPMAT|RAY_POLY);
             return distance >= mag; 
-        };
+        }
 
         // monster AI is sequenced using transitions: they are in a particular state where
         // they execute a particular behaviour until the trigger time is hit, and then they
@@ -85,18 +85,12 @@ struct monsterset
             move = _moving;
             n = n*130/100;
             trigger = cl.lastmillis+n-ms->skill()*(n/16)+rnd(r+1);
-        };
-
-        void normalise(float angle)
-        {
-            while(yaw<angle-180.0f) yaw += 360.0f;
-            while(yaw>angle+180.0f) yaw -= 360.0f;
-        };
+        }
 
         void monsteraction(int curtime)           // main AI thinking routine, called every frame for every monster
         {
-            if(enemy->state==CS_DEAD) { enemy = cl.player1; anger = 0; };
-            normalise(targetyaw);
+            if(enemy->state==CS_DEAD) { enemy = cl.player1; anger = 0; }
+            normalize_yaw(targetyaw);
             if(targetyaw>yaw)             // slowly turn monster towards his target
             {
                 yaw += curtime*0.5f;
@@ -106,7 +100,7 @@ struct monsterset
             {
                 yaw -= curtime*0.5f;
                 if(targetyaw>yaw) yaw = targetyaw;
-            };
+            }
             float dist = enemy->o.dist(o);
             if(monsterstate!=M_SLEEP) pitch = asin((enemy->o.z - o.z) / dist) / RAD; 
 
@@ -121,8 +115,8 @@ struct monsterset
                 {
                     targetyaw += 180+rnd(180);                                       // patented "random walk" AI pathfinding (tm) ;)
                     transition(M_SEARCH, 1, 100, 1000);
-                };
-            };
+                }
+            }
             
             float enemyyaw = -(float)atan2(enemy->o.x - o.x, enemy->o.y - o.y)/RAD+180;
             
@@ -137,7 +131,7 @@ struct monsterset
                 case M_SLEEP:                       // state classic sp monster start in, wait for visual contact
                 {
                     if(editmode) break;          
-                    normalise(enemyyaw);
+                    normalize_yaw(enemyyaw);
                     float angle = (float)fabs(enemyyaw-yaw);
                     if(dist<32                   // the better the angle to the player, the further the monster can see/hear
                     ||(dist<64 && angle<135)
@@ -151,10 +145,10 @@ struct monsterset
                         {
                             transition(M_HOME, 1, 500, 200);
                             playsound(S_GRUNT1+rnd(2), &o);
-                        };
-                    };
+                        }
+                    }
                     break;
-                };
+                }
                 
                 case M_AIMING:                      // this state is the delay between wanting to shoot and actually firing
                     if(trigger<cl.lastmillis)
@@ -163,7 +157,7 @@ struct monsterset
                         attacking = true;
                         cl.ws.shoot(this, attacktarget);
                         transition(M_ATTACKING, 0, 600, 0);
-                    };
+                    }
                     break;
 
                 case M_HOME:                        // monster has visual contact, heads straight for player and may want to shoot at any time
@@ -186,15 +180,15 @@ struct monsterset
                             else                                                        // track player some more
                             {
                                 transition(M_HOME, 1, monstertypes[mtype].rate, 0);
-                            };
-                        };
-                    };
+                            }
+                        }
+                    }
                     break;
                     
-            };
+            }
 
             if(move || moving) moveplayer(this, 2, false);        // use physics to move monster
-        };
+        }
 
         void monsterpain(int damage, fpsent *d)
         {
@@ -205,7 +199,7 @@ struct monsterset
                     anger++;     // don't attack straight away, first get angry
                     int _anger = d->type==ENT_AI && mtype==((monster *)d)->mtype ? anger/2 : anger;
                     if(_anger>=monstertypes[mtype].loyalty) enemy = d;     // monster infight if very angry
-                };
+                }
             }
             else                    // player hit us
             {
@@ -213,7 +207,7 @@ struct monsterset
                 enemy = d;
                 ms->monsterhurt = true;
                 ms->monsterhurtpos = o;
-            };
+            }
             if((health -= damage)<=0)
             {
                 state = CS_DEAD;
@@ -226,8 +220,8 @@ struct monsterset
             {
                 transition(M_PAIN, 0, monstertypes[mtype].pain, 200);      // in this state monster won't attack
                 playsound(monstertypes[mtype].painsound, &o);
-            };
-        };
+            }
+        }
     };
 
     monstertype *monstertypes;
@@ -246,7 +240,7 @@ struct monsterset
             { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 10,  60, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin",     "monster/goblin/vwep"},
         };
         monstertypes = _monstertypes;
-    };
+    }
     
     vector<monster *> monsters;
     
@@ -260,9 +254,9 @@ struct monsterset
     void spawnmonster()     // spawn a random monster according to freq distribution in DMSP
     {
         int n = rnd(TOTMFREQ), type;
-        for(int i = 0; ; i++) if((n -= monstertypes[i].freq)<0) { type = i; break; };
+        for(int i = 0; ; i++) if((n -= monstertypes[i].freq)<0) { type = i; break; }
         monsters.add(new monster(type, rnd(360), M_SEARCH, 1000, 1, this));
-    };
+    }
 
     void monsterclear(int gamemode)     // called after map start or when toggling edit mode to reset/spawn all monsters to initial state
     {
@@ -289,16 +283,16 @@ struct monsterset
                 m->o = ents[i]->o;
                 entinmap(m);
                 monstertotal++;
-            };
-        };
-    };
+            }
+        }
+    }
 
     void endsp(bool allkilled)
     {
         conoutf(allkilled ? "\f2you have cleared the map!" : "\f2you reached the exit!");
         monstertotal = 0;
         cl.cc.addmsg(SV_FORCEINTERMISSION, "r");
-    };
+    }
     
     void monsterkilled()
     {
@@ -306,16 +300,16 @@ struct monsterset
         cl.player1->frags = numkilled;
         remain = monstertotal-numkilled;
         if(remain>0 && remain<=5) conoutf("\f2only %d monster(s) remaining", remain);
-    };
+    }
 
     void monsterthink(int curtime, int gamemode)
     {
         if(m_dmsp && spawnremain && cl.lastmillis>nextmonster)
         {
-            if(spawnremain--==monstertotal) { conoutf("\f2The invasion has begun!"); playsound(S_V_FIGHT); };
+            if(spawnremain--==monstertotal) { conoutf("\f2The invasion has begun!"); playsound(S_V_FIGHT); }
             nextmonster = cl.lastmillis+1000;
             spawnmonster();
-        };
+        }
         
         if(monstertotal && !spawnremain && numkilled==monstertotal) endsp(true);
         
@@ -330,8 +324,8 @@ struct monsterset
                 float dist = v.dist(monsters[i]->o);
                 v.z -= monsters[i]->eyeheight;
                 if(dist<16) cl.et.teleport(j, monsters[i]);
-            };
-        };
+            }
+        }
         
         bool monsterwashurt = monsterhurt;
         
@@ -345,12 +339,12 @@ struct monsterset
                     //monsters[i]->move = 0;
                     monsters[i]->move = monsters[i]->strafe = 0;
                     moveplayer(monsters[i], 2, false);
-                };
+                }
             }
-        };
+        }
         
         if(monsterwashurt) monsterhurt = false;
-    };
+    }
 
     void monsterrender()
     {
@@ -358,6 +352,6 @@ struct monsterset
         {
             monster &m = *monsters[i];
             if(m.state!=CS_DEAD || m.superdamage<50) renderclient(&m, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].vwepname, m.monsterstate==M_ATTACKING, m.lastaction, m.lastpain);
-        };
-    };
+        }
+    }
 };

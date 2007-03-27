@@ -42,11 +42,11 @@ struct LocalShaderParamState : ShaderParam
     LocalShaderParamState() 
     { 
         memset(curval, 0, sizeof(curval)); 
-    };
+    }
     LocalShaderParamState(const ShaderParam &p) : ShaderParam(p)
     {
         memset(curval, 0, sizeof(curval));
-    };
+    }
 };
 
 struct ShaderParamState
@@ -59,7 +59,7 @@ struct ShaderParamState
         : name(NULL), dirty(false), local(false)
     {
         memset(val, 0, sizeof(val));
-    };
+    }
 };
 
 enum 
@@ -101,10 +101,10 @@ struct Shader
         {
             if(shaderdetail < MAXSHADERDETAIL) fastshader[shaderdetail]->bindprograms();
             else bindprograms();
-        };
+        }
         lastshader->flushenvparams(slot);
         if(slot) lastshader->setslotparams(*slot);
-    };
+    }
 };
 
 // management of texture slots
@@ -159,7 +159,7 @@ struct Slot
         loaded = false;
         DELETEA(autograss);
         grasstex = NULL;
-    };
+    }
     
     Slot() : autograss(NULL) { reset(); }
 };

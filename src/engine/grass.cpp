@@ -15,7 +15,7 @@ void resetgrasssamples()
     {
         vtxarray *va = valist[i];
         DELETEP(va->grasssamples);
-    };
+    }
 };
 
 VARF(grassgrid, 1, 6, 32, resetgrasssamples());
@@ -71,7 +71,7 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
     {
         if(v[l].x <= v[u].x) swap(int, u, l);
         swap(int, l, r);
-    };
+    }
     vec o1 = v[u], dl = v[l];
     dl.sub(o1);
     if(dl.x==0 && dl.y==0) return;
@@ -104,7 +104,7 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
         rt = lt;
         rds = tc[2*r] - rs;
         rdt = tc[2*r+1] - rt;
-    };
+    }
     if(dr.y==0 && (dr.x==0 || dl.y==0)) return;
     if(dr.x==0 && dl.x==0) return;
     
@@ -154,9 +154,9 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
                 gengrasssample(va, p, s, t, lm);
 
                 dx = grassgrid;
-            };
+            }
             if(header && numsamples>=USHRT_MAX) break;
-        };
+        }
 
         if(o1.y >= endl)
         {
@@ -169,7 +169,7 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
 
             dy = grassgrid - fmod(o1.y, grassgrid);
             continue;
-        };
+        }
 
         if(o2.y >= endr)
         {
@@ -182,15 +182,15 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
 
             dy = grassgrid - fmod(o1.y, grassgrid);
             continue;
-        };
+        }
 
         dy = grassgrid;
-    };
+    }
     if(header)
     {
         grassbounds &g = *(grassbounds *)&(*va->grasssamples)[va->grasssamples->length() - numsamples - 1];
         g.numsamples = numsamples;
-    }; 
+    } 
 };
 
 void gengrasssamples(vtxarray *va)
@@ -207,7 +207,7 @@ void gengrasssamples(vtxarray *va)
             t.x = GRASS_TEXTURE;
             t.texture = g.texture;
             lasttex = g.texture;
-        };
+        }
         vec v[4];
         float tc[8];
         static int remap[4] = { 1, 2, 0, 3 };
@@ -219,12 +219,12 @@ void gengrasssamples(vtxarray *va)
             {
                 tc[2*k] = float(g.surface->x + (g.surface->texcoords[j*2] / 255.0f) * (g.surface->w - 1) + 0.5f);
                 tc[2*k+1] = float(g.surface->y + (g.surface->texcoords[j*2 + 1] / 255.0f) * (g.surface->h - 1) + 0.5f);
-            };
-        };
+            }
+        }
         LightMap *lm = g.surface && g.surface->lmid >= LMID_RESERVED ? &lightmaps[g.surface->lmid-LMID_RESERVED] : NULL;
         gengrasssamples(va, v, tc, lm);
         gengrasssamples(va, &v[1], &tc[2], lm);
-    };
+    }
 };
 
 VAR(grasstest, 0, 0, 3);
@@ -268,7 +268,7 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
         {
             if(fabs(right.x) > fabs(right.y)) width *= sqrt(right.y*right.y/(right.x*right.x) + 1);
             else width *= sqrt(right.x*right.x/(right.y*right.y) + 1);
-        };
+        }
     }
     else if(grassrand) right.rotate_around_z((detrnd((size_t)&g * (seed + 1), 2*grassrand)-grassrand)*RAD);
 
@@ -302,7 +302,7 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
         vec d2(0.4f, 0.4f, 0.2f);
         d2.mul(grassheight/4.0f * w2);
         t2.add(d2);
-    };
+    }
 
     if(grasstest>1) return;
 
@@ -333,7 +333,7 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
                 if(dist > grassdist + b.radius || (dir.dot(tograss)<0 && dist > b.radius + 2*(grassgrid + player->eyeheight)))
                     i += b.numsamples;
                 break;
-            };
+            }
 
             case GRASS_TEXTURE:
             {
@@ -346,9 +346,9 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
                     glBindTexture(GL_TEXTURE_2D, s.grasstex->gl);
                     glBegin(GL_QUADS);
                     grasstex = s.grasstex;
-                };
+                }
                 break;
-            };
+            }
 
             case GRASS_SAMPLE:
             {
@@ -362,11 +362,11 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
                 loopj(2*numsamples)
                 {
                     rendergrasssample(g, o, dist, j, height, numsamples);
-                };
+                }
                 break;
-            };
-        };
-    };
+            }
+        }
+    }
 };
 
 VAR(grassblend, 0, 0, 100);
@@ -380,7 +380,7 @@ void setupgrass()
     {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    };
+    }
 
     static Shader *grassshader = NULL;
     if(!grassshader) grassshader = lookupshaderbyname("grass");
@@ -424,7 +424,7 @@ void rendergrass()
         if(!va->grasssamples) gengrasssamples(va);
         if(!rendered++) setupgrass();
         rendergrasssamples(va, dir);
-    };
+    }
 
     if(rendered) cleanupgrass();
 };

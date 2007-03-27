@@ -55,8 +55,8 @@ struct fpsent : dynent
     string name, team, info;
 
     fpsent() : weight(100), clientnum(-1), lastupdate(0), plag(0), ping(0), lifesequence(0), maxhealth(100), lastpain(0), frags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL)
-               { name[0] = team[0] = info[0] = 0; respawn(); };
-    ~fpsent() { freeeditinfo(edit); };
+               { name[0] = team[0] = info[0] = 0; respawn(); }
+    ~fpsent() { freeeditinfo(edit); }
 
     void respawn()
     {
@@ -70,7 +70,7 @@ struct fpsent : dynent
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
         superdamage = 0;
-    };
+    }
 };
 
 #define m_noitems     (gamemode>=4 && gamemode<12)

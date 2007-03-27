@@ -18,12 +18,12 @@ struct PackNode
     {
         DELETEP(child1);
         DELETEP(child2);
-    };
+    }
 
     ~PackNode()
     {
         clear();
-    };
+    }
 
     bool insert(ushort &tx, ushort &ty, ushort tw, ushort th);
 };
@@ -42,13 +42,13 @@ struct LightMap
      : converted(0), type(LM_DIFFUSE), lightmaps(0), lumels(0), unlitx(-1), unlity(-1)
     {
         memset(data, 0, sizeof(data));
-    };
+    }
 
     void finalize()
     {
         packroot.clear();
         packroot.available = 0;
-    };
+    }
 
     bool insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th);
 };
@@ -70,8 +70,8 @@ struct lerpvert
     vec normal;
     float u, v;
 
-    bool operator==(const lerpvert &l) const { return u == l.u && v == l.v; };
-    bool operator!=(const lerpvert &l) const { return u != l.u || v != l.v; };
+    bool operator==(const lerpvert &l) const { return u == l.u && v == l.v; }
+    bool operator!=(const lerpvert &l) const { return u != l.u || v != l.v; }
 };
     
 struct lerpbounds
@@ -99,9 +99,9 @@ extern void freenormals(cube &c);
         { \
             show_calclight_progress(); \
             check_calclight_canceled(); \
-        }; \
+        } \
         if(calclight_canceled) exit; \
-    };
+    }
 
 extern bool calclight_canceled;
 extern volatile bool check_calclight_progress;

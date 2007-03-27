@@ -28,7 +28,7 @@ void setnames(const char *fname, const char *cname = 0)
     {
         s_strcpy(pakname, "base");
         s_strcpy(cfgname, name);
-    };
+    }
     if(strpbrk(fname, "/\\")) s_strcpy(mapname, fname);
     else s_sprintf(mapname)("base/%s", fname);
 
@@ -78,7 +78,7 @@ void savec(cube *c, gzFile f, bool nolms)
             {
                 gzputc(f, oflags | OCTSAV_NORMAL);
                 gzwrite(f, c[i].edges, 12);
-            };
+            }
             loopj(6) writeushort(f, c[i].texture[j]);
             uchar mask = 0;
             if(c[i].ext)
@@ -88,8 +88,8 @@ void savec(cube *c, gzFile f, bool nolms)
                 {
                     mask |= 0x40;
                     loopj(6) if(c[i].ext->normals[j].normals[0] != bvec(128, 128, 128)) mask |= 1 << j;
-                };
-            };
+                }
+            }
             // save surface info for lighting
             if(!c[i].ext || !c[i].ext->surfaces || nolms)
             {
@@ -101,8 +101,8 @@ void savec(cube *c, gzFile f, bool nolms)
                     {
                         loopk(sizeof(surfaceinfo)) gzputc(f, 0);
                         gzwrite(f, &c[i].ext->normals[j], sizeof(surfacenormals));
-                    }; 
-                };
+                    } 
+                }
             }
             else
             {
@@ -115,8 +115,8 @@ void savec(cube *c, gzFile f, bool nolms)
                     endianswap(&tmp.x, sizeof(ushort), 3);
                     gzwrite(f, &tmp, sizeof(surfaceinfo));
                     if(c[i].ext->normals) gzwrite(f, &c[i].ext->normals[j], sizeof(surfacenormals));
-                };
-            };
+                }
+            }
             if(c[i].ext && c[i].ext->merged)
             {
                 gzputc(f, c[i].ext->merged | (c[i].ext->mergeorigin ? 0x80 : 0));
@@ -129,12 +129,12 @@ void savec(cube *c, gzFile f, bool nolms)
                         mergeinfo tmp = c[i].ext->merges[index++];
                         endianswap(&tmp, sizeof(ushort), 4);
                         gzwrite(f, &tmp, sizeof(mergeinfo));
-                    };
-                };
-            };
+                    }
+                }
+            }
             if(c[i].children) savec(c[i].children, f, nolms);
-        };
-    };
+        }
+    }
 };
 
 cube *loadchildren(gzFile f);
@@ -156,7 +156,7 @@ void loadc(gzFile f, cube &c)
 
         default:
             fatal("garbage in map");
-    };
+    }
     loopi(6) c.texture[i] = hdr.version<14 ? gzgetc(f) : readushort(f);
     if(hdr.version < 7) loopi(3) gzgetc(f); //gzread(f, c.colour, 3);
     else
@@ -179,23 +179,23 @@ void loadc(gzFile f, cube &c)
                     {
                         if(c.ext->surfaces[i].lmid >= LMID_AMBIENT1) ++c.ext->surfaces[i].lmid;
                         if(c.ext->surfaces[i].lmid >= LMID_BRIGHT1) ++c.ext->surfaces[i].lmid;
-                    };
+                    }
                     if(hdr.version < 19)
                     {
                         if(c.ext->surfaces[i].lmid >= LMID_DARK) c.ext->surfaces[i].lmid += 2;
-                    };
+                    }
                     if(mask & 0x40) gzread(f, &c.ext->normals[i], sizeof(surfacenormals));
                 }
                 else c.ext->surfaces[i].lmid = LMID_AMBIENT;
                 if(c.ext->surfaces[i].lmid == LMID_BRIGHT) bright |= 1 << i;
                 else if(c.ext->surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
-            };
+            }
             if(!lit) 
             {
                 freesurfaces(c);
                 if(bright) brightencube(c);
-            };
-        };
+            }
+        }
         if(hdr.version >= 20)
         {
             if(octsav&0x80)
@@ -214,12 +214,12 @@ void loadc(gzFile f, cube &c)
                         {
                             gzread(f, &c.ext->merges[i], sizeof(mergeinfo));
                             endianswap(&c.ext->merges[i], sizeof(ushort), 4);
-                        };
-                    };
-                };
-            };    
-        };                
-    };
+                        }
+                    }
+                }
+            }    
+        }                
+    }
     c.children = (haschildren ? loadchildren(f) : NULL);
 };
 
@@ -237,7 +237,7 @@ void save_world(char *mname, bool nolms)
     setnames(mname);
     if(savebak) backup(cgzname, bakname);
     gzFile f = gzopen(cgzname, "wb9");
-    if(!f) { conoutf("could not write map to %s", cgzname); return; };
+    if(!f) { conoutf("could not write map to %s", cgzname); return; }
     hdr.version = MAPVERSION;
     hdr.numents = 0;
     const vector<extentity *> &ents = et->getents();
@@ -269,8 +269,8 @@ void save_world(char *mname, bool nolms)
             gzwrite(f, &tmp, sizeof(entity));
             et->writeent(*ents[i], ebuf);
             if(et->extraentinfosize()) gzwrite(f, ebuf, et->extraentinfosize());
-        };
-    };
+        }
+    }
     delete[] ebuf;
 
     savec(worldroot, f, nolms);
@@ -282,9 +282,9 @@ void save_world(char *mname, bool nolms)
         {
             writeushort(f, ushort(lm.unlitx));
             writeushort(f, ushort(lm.unlity));
-        };
+        }
         gzwrite(f, lm.data, sizeof(lm.data));
-    };
+    }
 
     gzclose(f);
     conoutf("wrote map file %s", cgzname);
@@ -318,7 +318,6 @@ void load_world(const char *mname, const char *cname)        // still supports a
     if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; };
     if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return; };
     hdr = newhdr;
-    
     clearoverrides();
     computescreen(mname);
     if(hdr.version<=20) conoutf("loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
@@ -328,7 +327,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         if(!hdr.lerpangle) hdr.lerpangle = 44;
         hdr.lerpsubdiv = 2;
         hdr.lerpsubdivsize = 4;
-    };
+    }
     setvar("lightprecision", hdr.mapprec ? hdr.mapprec : 32);
     setvar("lighterror", hdr.maple ? hdr.maple : 8);
     setvar("bumperror", hdr.mapbe ? hdr.mapbe : 3);
@@ -348,12 +347,12 @@ void load_world(const char *mname, const char *cname)        // still supports a
     {
         int len = gzgetc(f);
         gzread(f, gametype, len+1);
-    };
+    }
     if(strcmp(gametype, cl->gameident())!=0)
     {
         samegame = false;
         conoutf("WARNING: loading map from %s game, ignoring entities except for lights/mapmodels)", gametype);
-    };
+    }
     if(hdr.version>=16)
     {
         eif = readushort(f);
@@ -361,7 +360,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         vector<char> extras;
         loopj(extrasize) extras.add(gzgetc(f));
         if(samegame) cl->readgamedata(extras);
-    };
+    }
     
     show_out_of_renderloop_progress(0, "clearing world...");
 
@@ -376,7 +375,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     {
         ushort nummru = readushort(f);
         loopi(nummru) texmru.add(readushort(f));
-    };
+    }
 
     freeocta(worldroot);
     worldroot = NULL;
@@ -403,12 +402,12 @@ void load_world(const char *mname, const char *cname)        // still supports a
         else
         {
             loopj(eif) gzgetc(f);
-        };
+        }
         if(hdr.version <= 14 && e.type >= ET_MAPMODEL && e.type <= 16)
         {
             if(e.type == 16) e.type = ET_MAPMODEL;
             else e.type++;
-        };
+        }
         if(hdr.version <= 20 && e.type >= ET_ENVMAP) e.type++;
         if(hdr.version <= 21 && e.type >= ET_PARTICLES) e.type++;
         if(hdr.version <= 22 && e.type >= ET_SOUND) e.type++;
@@ -418,22 +417,22 @@ void load_world(const char *mname, const char *cname)        // still supports a
             {
                 ents.pop();
                 continue;
-            };
-        };
+            }
+        }
         if(!insideworld(e.o))
         {
             if(e.type != ET_LIGHT)
             {
                 conoutf("warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
-            };
-        };
+            }
+        }
         if(hdr.version <= 14 && e.type == ET_MAPMODEL)
         {
             e.o.z += e.attr3;
             if(e.attr4) conoutf("warning: mapmodel ent (index %d) uses texture slot %d", i, e.attr4);
             e.attr3 = e.attr4 = 0;
-        };
-    };
+        }
+    }
     delete[] ebuf;
 
     show_out_of_renderloop_progress(0, "loading octree...");
@@ -466,13 +465,13 @@ void load_world(const char *mname, const char *cname)        // still supports a
                 {
                     lm.unlitx = readushort(f);
                     lm.unlity = readushort(f);
-                };
-            };
+                }
+            }
             gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
             lm.finalize();
-        };
+        }
         initlights();
-    };
+    }
 
     gzclose(f);
 
@@ -498,14 +497,14 @@ void load_world(const char *mname, const char *cname)        // still supports a
             mapmodelinfo &mmi = getmminfo(e.attr2);
             if(!&mmi) conoutf("could not find map model: %d", e.attr2);
             else if(!loadmodel(mmi.name)) conoutf("could not load model: %s", mmi.name);
-        };
-    };
+        }
+    }
 
     //entitiesinoctanodes();
 };
 
-void savecurrentmap() { save_world(cl->getclientmap()); };
-void savemap(char *mname) { save_world(mname); };
+void savecurrentmap() { save_world(cl->getclientmap()); }
+void savemap(char *mname) { save_world(mname); }
 
 COMMAND(savemap, "s");
 COMMAND(savecurrentmap, "");
@@ -534,9 +533,9 @@ void writeobj(char *name)
                 for(int k = 0; k<3; k++) fprintf(f, " %d", ebuf[k]-v.verts);
                 ebuf += 3;
                 fprintf(f, "\n");
-            };
-        };
-    };
+            }
+        }
+    }
     fclose(f);
     hasVBO = oldVBO;
     allchanged();

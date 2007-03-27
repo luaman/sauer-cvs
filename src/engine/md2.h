@@ -75,7 +75,7 @@ struct md2 : vertmodel
     
     md2(const char *name) : vertmodel(name) {};
 
-    int type() { return MDL_MD2; };
+    int type() { return MDL_MD2; }
 
     struct md2part : part
     {
@@ -105,9 +105,9 @@ struct md2 : vertmodel
                         tc.u = u.f;
                         tc.v = v.f;
                         tc.index = (ushort)vindex;
-                    };        
+                    }        
                     idxs.add(*idx);
-                };
+                }
                 loopi(numvertex-2) 
                 { 
                     tri &t = tris.add();
@@ -118,9 +118,9 @@ struct md2 : vertmodel
                         t.vert[2] = idxs[i+2];
                     }
                     else loopk(3) t.vert[k] = idxs[i&1 && k ? i+(1-(k-1))+1 : i+k];
-                };
-            };
-        };
+                }
+            }
+        }
         
         bool load(char *filename)
         {
@@ -138,7 +138,7 @@ struct md2 : vertmodel
             {
                 fclose(file);
                 return false;
-            };
+            }
            
             numframes = header.numframes;
 
@@ -185,14 +185,14 @@ struct md2 : vertmodel
                     float *norm = md2normaltable[v.normalindex];
                     curvert->norm = vec(norm[0], -norm[1], norm[2]);
                     curvert++;
-                };
+                }
                 frame_offset += header.framesize;
-            };
+            }
                  
             fclose(file);
            
             return loaded = true;
-        };
+        }
 
         void getdefaultanim(animstate &as, int anim, int varseed, float speed)
         {
@@ -208,12 +208,12 @@ struct md2 : vertmodel
                 as.frame = 0;
                 as.range = 1;
                 return;
-            };
+            }
             int n = animfr[anim];
             if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
             as.frame = _frame[n];
             as.range = _range[n];
-        };
+        }
     };
 
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl)
@@ -232,8 +232,8 @@ struct md2 : vertmodel
             ((md2 *)vwepmdl)->parts[0]->index = parts.length();
             vwepmdl->setskin();
             vwepmdl->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, NULL);
-        };
-    };
+        }
+    }
 
     bool load()
     { 
@@ -247,15 +247,15 @@ struct md2 : vertmodel
         if(!mdl.load(path(name1)))
         {
             s_sprintf(name1)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
-            if(!mdl.load(path(name1))) { delete[] pname; return false; };
-        };
+            if(!mdl.load(path(name1))) { delete[] pname; return false; }
+        }
         Texture *skin, *masks;
         loadskin(loadname, pname, skin, masks, this);
         loopv(mdl.meshes)
         {
             mdl.meshes[i]->skin  = skin;
             mdl.meshes[i]->masks = masks;
-        };
+        }
         if(skin==crosshair) conoutf("could not load model skin for %s", name1);
         loadingmd2 = this;
         s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
@@ -263,19 +263,19 @@ struct md2 : vertmodel
         {
             s_sprintf(name3)("packages/models/%s/md2.cfg", pname);
             execfile(name3);
-        };
+        }
         delete[] pname;
         loadingmd2 = 0;
         loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
         return loaded = true;
-    };
+    }
 };
 
 void md2anim(char *anim, int *frame, int *range, char *s)
 {
-    if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; };
+    if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; }
     int num = findanim(anim);
-    if(num<0) { conoutf("could not find animation %s", anim); return; };
+    if(num<0) { conoutf("could not find animation %s", anim); return; }
     float speed = s[0] ? atof(s) : 100.0f;
     loadingmd2->parts.last()->setanim(num, *frame, *range, speed);
 };

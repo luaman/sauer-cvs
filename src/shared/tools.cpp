@@ -27,10 +27,10 @@ char *loadfile(char *fn, int *size)
     if(!f) return NULL;
     fseek(f, 0, SEEK_END);
     int len = ftell(f);
-    if(len<=0) { fclose(f); return NULL; };
+    if(len<=0) { fclose(f); return NULL; }
     fseek(f, 0, SEEK_SET);
     char *buf = new char[len+1];
-    if(!buf) { fclose(f); return NULL; };
+    if(!buf) { fclose(f); return NULL; }
     buf[len] = 0;
     size_t rlen = fread(buf, 1, len, f);
     fclose(f);
@@ -38,7 +38,7 @@ char *loadfile(char *fn, int *size)
     {
         delete[] buf;
         return NULL;
-    };
+    }
     if(size!=NULL) *size = len;
     return buf;
 };
@@ -52,7 +52,7 @@ void endianswap(void *memory, int stride, int length)   // little endian as stor
         uchar t = p[i];
         p[i] = p[stride-i-1];
         p[stride-i-1] = t;
-    };
+    }
 #endif
 };
 

@@ -21,7 +21,7 @@ int isvisiblesphere(float rad, const vec &cv)
         dist = vfcP[i].dist(cv);
         if(dist < -rad) return VFC_NOT_VISIBLE;
         if(dist < rad) v = VFC_PART_VISIBLE;
-    };
+    }
 
     dist -= vfcDfog;
     if(dist > rad) return VFC_FOGGED;  //VFC_NOT_VISIBLE;    // culling when fog is closer than size of world results in HOM
@@ -44,7 +44,7 @@ float vadist(vtxarray *va, const vec &p)
     {
         ivec o(va->x, va->y, va->z);
         return p.dist_to_bb(o, ivec(o).add(va->size)); // box contains only sky/water
-    };
+    }
     return p.dist_to_bb(va->min, va->max);
 };
 
@@ -67,7 +67,7 @@ void addvisibleva(vtxarray *va)
     {
         prev = &cur->next;
         cur = cur->next;
-    };
+    }
 
     va->next = *prev;
     *prev = va;
@@ -83,7 +83,7 @@ void sortvisiblevas()
         *last = va;
         while(va->next) va = va->next;
         last = &va->next;
-    };
+    }
 };
 
 void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
@@ -101,9 +101,9 @@ void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
             {
                 v.occluded = OCCLUDE_NOTHING;
                 v.query = NULL;
-            };
-        };
-    };
+            }
+        }
+    }
 };
 
 void setvfcP(float yaw, float pitch, const vec &camera)
@@ -177,7 +177,7 @@ void setorigin(vtxarray *va)
         glTranslatef(o.x, o.y, o.z);
         static const float scale = 1.0f/(1<<VVEC_FRAC);
         glScalef(scale, scale, scale);
-    };
+    }
 };
 
 void setupTMU()
@@ -223,7 +223,7 @@ occludequery *newquery(void *owner)
     {
         if(qf.max >= MAXQUERY) return NULL;
         glGenQueries_(1, &qf.queries[qf.max++].id);
-    };
+    }
     occludequery *query = &qf.queries[qf.cur++];
     query->owner = owner;
     query->fragments = -1;
@@ -251,10 +251,10 @@ bool checkquery(occludequery *query, bool nowait)
             GLint avail;
             glGetQueryObjectiv_(query->id, GL_QUERY_RESULT_AVAILABLE, &avail);
             if(!avail) return false;
-        };
+        }
         glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, &fragments);
         query->fragments = fragments;
-    };
+    }
     return fragments < (uint)(reflecting ? oqreflect : oqfrags);
 };
 
@@ -278,10 +278,10 @@ void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o)
             glVertex3i(cc.x ? bo.x+br.x : bo.x,
                        cc.y ? bo.y+br.y : bo.y,
                        cc.z ? bo.z+br.z : bo.z);
-        };
+        }
 
         xtraverts += 4;
-    };
+    }
 
     glEnd();
 };
@@ -318,7 +318,7 @@ void findvisiblemms(const vector<extentity *> &ents)
                     if(e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
                     e.visible = true;
                     ++visible;
-                };
+                }
                 if(!visible) continue;
 
                 oe->distance = int(camera1->o.dist_to_bb(oe->o, oe->size));
@@ -328,14 +328,14 @@ void findvisiblemms(const vector<extentity *> &ents)
                 {
                     prev = &cur->next;
                     cur = cur->next;
-                };
+                }
 
                 if(*prev == NULL) lastvisiblemms = &oe->next;
                 oe->next = *prev;
                 *prev = oe;
-            };
-        };
-    };
+            }
+        }
+    }
 };
 
 VAR(oqmm, 0, 4, 8);
@@ -351,7 +351,7 @@ void rendermapmodel(extentity &e)
         case TRIGGERING: anim = ANIM_TRIGGER; basetime = e.lasttrigger; break;
         case TRIGGERED: anim = ANIM_TRIGGER|ANIM_END; break;
         case TRIGGER_RESETTING: anim = ANIM_TRIGGER|ANIM_REVERSE; basetime = e.lasttrigger; break;
-    };
+    }
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(&mmi) rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
 };
@@ -376,8 +376,8 @@ void renderreflectedmapmodels(float z, bool refract)
         {
             if(!va->mapmodels || va->distance > reflectdist) continue;
             loopv(*va->mapmodels) reflectedmms.add((*va->mapmodels)[i]);
-        };
-    };
+        }
+    }
     loopv(mms)
     {
         octaentities *oe = mms[i];
@@ -388,8 +388,8 @@ void renderreflectedmapmodels(float z, bool refract)
            extentity &e = *ents[oe->mapmodels[i]];
            if(e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
            e.visible = true;
-        };
-    };
+        }
+    }
     loopv(mms)
     {
         octaentities *oe = mms[i];
@@ -399,8 +399,8 @@ void renderreflectedmapmodels(float z, bool refract)
            if(!e.visible) continue;
            rendermapmodel(e);
            e.visible = false;
-        };
-    };
+        }
+    }
     if(reflected) restorevfcP();
 };
 
@@ -428,9 +428,9 @@ void rendermapmodels()
                 if(!e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
                 hasmodels = true;
                 break;
-            };
+            }
             if(!hasmodels) continue;
-        };
+        }
 
         if(!hasOQ || !oqfrags || !oqmm || !oe->distance) oe->query = NULL;
         else if(!occluded && (++skipoq % oqmm)) oe->query = NULL;
@@ -442,9 +442,9 @@ void rendermapmodels()
             {
                 glDepthMask(GL_FALSE);
                 glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            };
+            }
             startquery(oe->query);
-        };
+        }
         if(!occluded || oe->query)
         {
             ivec bbmin(oe->o), bbmax(oe->o);
@@ -463,26 +463,26 @@ void rendermapmodels()
                         {
                             bbmin[j] = min(bbmin[j], bo[j]);
                             bbmax[j] = max(bbmax[j], bo[j]+br[j]);
-                        };
-                    };
+                        }
+                    }
                 }
                 else if(e.visible)
                 {
-                    if(!rendered) { renderedmms.add(oe); rendered = true; };
+                    if(!rendered) { renderedmms.add(oe); rendered = true; }
                     rendermapmodel(e);
                     e.visible = false;
-                };
-            };
+                }
+            }
             if(occluded)
             {
                 loopj(3)
                 {
                     bbmin[j] = max(bbmin[j], oe->o[j]);
                     bbmax[j] = min(bbmax[j], oe->o[j]+oe->size);
-                };
+                }
                 drawbb(bbmin, bbmax.sub(bbmin));
-            };
-        };
+            }
+        }
         if(oe->query)
         {
             endquery(oe->query);
@@ -490,9 +490,9 @@ void rendermapmodels()
             {
                 glDepthMask(GL_TRUE);
                 glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            };
-        };
-    };
+            }
+        }
+    }
 };
 
 bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
@@ -504,10 +504,10 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
         {
             vtxarray *va = c[i].ext->va;
             if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) continue;
-        };
+        }
         if(c[i].children && bboccluded(bo, br, c[i].children, co, size>>1)) continue;
         return false;
-    };
+    }
     return true;
 };
 
@@ -549,19 +549,19 @@ void renderoutline()
             {
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
                 vbufGL = va->vbufGL;
-            };
+            }
             if(ebufGL != lod.ebufGL)
             {
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
                 ebufGL = lod.ebufGL;
-            };
-        };
+            }
+        }
         if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
         xtravertsva += va->verts;
-    };
+    }
 
     if(dtoutline) glEnable(GL_DEPTH_TEST);
 
@@ -573,7 +573,7 @@ void renderoutline()
     {
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-    };
+    }
     glDisableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_2D);
 
@@ -595,7 +595,7 @@ void rendercaustics(float z, bool refract)
     {
         s_sprintfd(name)("packages/caustics/caust%.2d.png", i);
         caustics[i] = textureload(name);
-    };
+    }
 
     GLfloat oldfogc[4];
     glGetFloatv(GL_FOG_COLOR, oldfogc);
@@ -608,7 +608,7 @@ void rendercaustics(float z, bool refract)
     {
         s[k] *= 100.0f/causticscale;
         t[k] *= 100.0f/causticscale;
-    };
+    }
 
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -633,7 +633,7 @@ void rendercaustics(float z, bool refract)
    
         float frac = float(lastmillis%causticmillis)/causticmillis; 
         setenvparamf("frameoffset", SHPARAM_PIXEL, 0, frac, frac, frac);
-    };
+    }
 
     static Shader *causticshader = NULL;
     if(!causticshader) causticshader = lookupshaderbyname("caustic");
@@ -655,7 +655,7 @@ void rendercaustics(float z, bool refract)
         {
             if(va->min.z > z) continue;
             if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
-        };
+        }
  
         setorigin(va);
 
@@ -667,19 +667,19 @@ void rendercaustics(float z, bool refract)
             {
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
                 vbufGL = va->vbufGL;
-            };
+            }
             if(ebufGL != lod.ebufGL)
             {
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
                 ebufGL = lod.ebufGL;
-            };
-        };
+            }
+        }
         if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
         xtravertsva += va->verts;
-    };
+    }
 
     glPopMatrix();
 
@@ -687,7 +687,7 @@ void rendercaustics(float z, bool refract)
     {
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-    };
+    }
     glDisableClientState(GL_VERTEX_ARRAY);
 
     if(renderpath!=R_FIXEDFUNCTION)
@@ -695,7 +695,7 @@ void rendercaustics(float z, bool refract)
         glActiveTexture_(GL_TEXTURE1_ARB);
         glDisable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
-    };
+    }
 
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
@@ -717,15 +717,15 @@ struct renderstate
 
     renderstate() : colormask(true), depthmask(true), texture(true), vbufGL(0), ebufGL(0), fogplane(-1)
     {
-    };
+    }
 };
 
 void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 {
     setorigin(va);
     nocolorshader->set();
-    if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
-    if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); };
+    if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); }
+    if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); }
 
     startquery(query);
 
@@ -746,7 +746,7 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
         bbmin = va->min;
         bbmax = va->max;
         bbmax.sub(bbmin);
-    };
+    }
 
     drawbb(bbmin.sub(origin).mul(1<<VVEC_FRAC),
            bbmax.mul(1<<VVEC_FRAC),
@@ -766,19 +766,19 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
             cur.vbufGL = va->vbufGL;
-        };
+        }
         if(cur.ebufGL != lod.ebufGL)
         {
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
             cur.ebufGL = lod.ebufGL;
-        };
-    };
+        }
+    }
     if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
-    if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
+    if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
 
     if(zfill)
     {
-        if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); };
+        if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); }
         extern int apple_glsldepth_bug;
         if(renderpath!=R_GLSLANG || !apple_glsldepth_bug) 
         {
@@ -799,20 +799,20 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                     (lastslot->shader->type&SHADER_GLSLANG ? nocolorglslshader : nocolorshader)->set();
                     glDrawElements(GL_TRIANGLES, offset - lastdraw, GL_UNSIGNED_SHORT, lod.ebuf + lastdraw);
                     lastdraw = offset;
-                };
+                }
                 lastslot = &slot;
                 loopl(3) offset += lod.eslist[i].length[l];
-            };
+            }
             if(offset > lastdraw)
             {
                 (lastslot->shader->type&SHADER_GLSLANG ? nocolorglslshader : nocolorshader)->set();
                 glDrawElements(GL_TRIANGLES, offset - lastdraw, GL_UNSIGNED_SHORT, lod.ebuf + lastdraw);
-            };
-        };
+            }
+        }
         glde++;
         xtravertsva += va->verts;
         return;
-    };
+    }
 
     if(refracting)
     {
@@ -821,9 +821,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         {
             cur.fogplane = fogplane;
             setfogplane(0.5f, fogplane);
-        };
-    };
-    if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
+        }
+    }
+    if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
 
     extern int waterfog;
     if(refracting ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED)
@@ -839,13 +839,13 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             glActiveTexture_(GL_TEXTURE1_ARB);
             glDisable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE0_ARB);
-        };
+        }
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
         vtris += lod.tris;
         vverts += va->verts;
         return;
-    };
+    }
 
     if(!cur.texture)
     {
@@ -854,20 +854,20 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         glActiveTexture_(GL_TEXTURE1_ARB);
         glEnable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
-    };
+    }
 
     if(renderpath!=R_FIXEDFUNCTION) 
     { 
         if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
-    };
+    }
 
     if(vbufchanged)
     {
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
-    };
+    }
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
@@ -890,9 +890,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 {
                     glActiveTexture_(GL_TEXTURE0_ARB+tmu);
                     glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
-                };
+                }
                 tmu++;
-            };
+            }
             if(s->type&SHADER_ENVMAP)
             {
                 int envmap = lod.eslist[i].envmap;
@@ -903,21 +903,21 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                     {
                         glEnable(GL_TEXTURE_CUBE_MAP_ARB);
                         envmapped |= 1<<tmu;
-                    };
+                    }
                     glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(envmap));
                     lastenvmap = envmap;
-                };
+                }
                 tmu++;
-            };
+            }
             glActiveTexture_(GL_TEXTURE0_ARB);
-        };
+        }
         if(curlm!=lastlm)
         {
             glActiveTexture_(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, curlm);
             lastlm = curlm;
             glActiveTexture_(GL_TEXTURE0_ARB);
-        };
+        }
         if(&slot!=lastslot)
         {
             glBindTexture(GL_TEXTURE_2D, tex->gl);
@@ -933,11 +933,11 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                     if(t.type==TEX_DIFFUSE || t.combined>=0) continue;
                     glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
                     glBindTexture(GL_TEXTURE_2D, t.t->gl);
-                };
+                }
                 glActiveTexture_(GL_TEXTURE0_ARB);
-            };
+            }
             lastslot = &slot;
-        };
+        }
 
         float scale = slot.sts[0].scale;
         if(!scale) scale = 1;
@@ -966,32 +966,32 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                         glDisable(GL_TEXTURE_GEN_T);
                         glEnable(GL_TEXTURE_GEN_S);
                         glEnable(GL_TEXTURE_GEN_T);
-                    };
+                    }
                 }
                 else
                 {
                     // have to pass in env, otherwise same problem as fixed function
                     setlocalparamfv("texgenS", SHPARAM_VERTEX, 0, s);
                     setlocalparamfv("texgenT", SHPARAM_VERTEX, 1, t);
-                };
+                }
 
                 lastxs = tex->xs;
                 lastys = tex->ys;
                 lastl = l;
                 lastscale = scale;
-            };
+            }
 
             if(s->type&SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
             {
                 setlocalparamfv("orienttangent", SHPARAM_VERTEX, 2, orientation_tangent[l]);
                 setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);
-            };
+            }
 
             glDrawElements(GL_TRIANGLES, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
             ebuf += lod.eslist[i].length[l];  // Advance to next array.
             glde++;
-        };
-    };
+        }
+    }
 
     if(envmapped)
     {
@@ -999,9 +999,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         {
             glActiveTexture_(GL_TEXTURE0_ARB+i);
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        };
+        }
         glActiveTexture_(GL_TEXTURE0_ARB);
-    };
+    }
  
     vtris += lod.tris;
     vverts += va->verts;
@@ -1043,11 +1043,11 @@ void setupTMUs()
 
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); };
+        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); }
         glActiveTexture_(GL_TEXTURE0_ARB);
         setenvparamf("ambient", SHPARAM_PIXEL, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f);
         setenvparamf("millis", SHPARAM_VERTEX, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
-    };
+    }
 
     glColor4f(1, 1, 1, 1);
 };
@@ -1058,13 +1058,13 @@ void cleanupTMUs()
     {
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-    };
+    }
     glDisableClientState(GL_VERTEX_ARRAY);
     if(renderpath!=R_FIXEDFUNCTION)
     {
         glDisableClientState(GL_COLOR_ARRAY);
-        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); };
-    };
+        loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); }
+    }
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
@@ -1120,7 +1120,7 @@ void rendergeom()
                 {
                     va->occluded = OCCLUDE_PARENT;
                     continue;
-                };
+                }
             }
             else if(va->occluded >= OCCLUDE_GEOM)
             {
@@ -1134,7 +1134,7 @@ void rendergeom()
         {
             va->query = NULL;
             va->occluded = OCCLUDE_NOTHING;
-        };
+        }
 
 
         if(va->query) startquery(va->query);
@@ -1142,10 +1142,10 @@ void rendergeom()
         renderva(cur, va, lod, zpass!=0);
 
         if(va->query) endquery(va->query);
-    };
+    }
 
-    if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
-    if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
+    if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
+    if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
 
     if(zpass) 
     {
@@ -1181,12 +1181,12 @@ void rendergeom()
                     showvas++;
                 }
                 else glColor3f(1, 1, 1);
-            };
+            }
 #endif
             renderva(cur, va, lod);
-        };
+        }
         glDepthFunc(GL_LESS);
-    };
+    }
 
     glPopMatrix();
     cleanupTMUs();
@@ -1205,7 +1205,7 @@ void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc =
         {
             if(va->occluded >= OCCLUDE_BB) continue;
             if(va->occluded >= OCCLUDE_GEOM) render = false;
-        };
+        }
         if(render)
         {
             if(va->curvfc == VFC_NOT_VISIBLE) va->distance = (int)vadist(va, camera1->o);
@@ -1216,12 +1216,12 @@ void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc =
             {
                 vprev = &vcur->rnext;
                 vcur = vcur->rnext;
-            };
+            }
             va->rnext = *vprev;
             *vprev = va;
-        };
+        }
         if(va->children->length()) findreflectedvas(*va->children, z, refract, va->curvfc != VFC_NOT_VISIBLE);
-    };
+    }
 };
 
 void renderreflectedgeom(float z, bool refract)
@@ -1251,17 +1251,17 @@ void renderreflectedgeom(float z, bool refract)
                 {
                     renderquery(cur, va->rquery, va);
                     continue;
-                };
-            };
+                }
+            }
             if(va->rquery) startquery(va->rquery);
             renderva(cur, va, lod, doOQ);
             if(va->rquery) endquery(va->rquery);
-        };            
+        }            
         if(doOQ)
         {
             glDepthFunc(GL_LEQUAL);
-            if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); };
-            if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); };
+            if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
+            if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
             cur.vbufGL = 0;
             for(vtxarray **prevva = &reflectedva, *va = reflectedva; va; prevva = &va->rnext, va = va->rnext)
             {
@@ -1271,11 +1271,11 @@ void renderreflectedgeom(float z, bool refract)
                 {
                     if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) *prevva = va->rnext;
                     continue;
-                };
+                }
                 renderva(cur, va, lod);
-            };
+            }
             glDepthFunc(GL_LESS);
-        };
+        }
         restorevfcP();
     }
     else
@@ -1287,8 +1287,8 @@ void renderreflectedgeom(float z, bool refract)
             if(va->curvfc == VFC_FOGGED || (refract && camera1->o.z >= z ? va->min.z > z : va->max.z <= z) || va->occluded >= OCCLUDE_GEOM) continue;
             if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
             renderva(cur, va, lod);
-        };
-    };
+        }
+    }
 
     glPopMatrix();
     cleanupTMUs();
@@ -1309,13 +1309,13 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
             glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
             skyvbufGL = va->vbufGL;
-        };
+        }
         if(skyebufGL != lod.skybufGL)
         {
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.skybufGL);
             skyebufGL = lod.skybufGL;
-        };
-    };
+        }
+    }
     if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, floatvtx ? sizeof(fvertex) : sizeof(vertex), &(va->vbuf[0].x));
 
     glDrawElements(GL_TRIANGLES, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
@@ -1335,7 +1335,7 @@ void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
         if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) == VFC_NOT_VISIBLE) continue;
         if(lod.sky+lod.explicitsky) renderskyva(va, lod);
         if(va->children->length()) renderreflectedskyvas(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
-    };
+    }
 };
 
 void rendersky(bool explicitonly, float zreflect)
@@ -1360,7 +1360,7 @@ void rendersky(bool explicitonly, float zreflect)
         if(va->occluded >= OCCLUDE_BB || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
 
         renderskyva(va, lod, explicitonly);
-    };
+    }
 
     glPopMatrix();
 
@@ -1368,7 +1368,7 @@ void rendersky(bool explicitonly, float zreflect)
     {
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-    };
+    }
     glDisableClientState(GL_VERTEX_ARRAY);
 };
 

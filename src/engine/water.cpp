@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "engine.h"
 
-#define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; }; }
+#define matloop(mat, s) loopi(matsurfs) { materialsurface &m = matbuf[i]; if(m.material==mat) { s; } }
 
 /* old vertex water */
 VARP(watersubdiv, 0, 2, 3);
@@ -15,8 +15,8 @@ static inline void vertw(float v1, float v2, float v3, float t1, float t2, float
     glVertex3f(v1, v2, v3-1.1f-(float)sin((v1-wx1)/wsize*(v2-wy1)/wsize*(v1-wx2)*(v2-wy2)*59/23+t)*0.8f);
 };
 
-static inline float dx(float x) { return x + (float)sin(x*2+lastmillis/1000.0f)*0.04f; };
-static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; };
+static inline float dx(float x) { return x + (float)sin(x*2+lastmillis/1000.0f)*0.04f; }
+static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; }
 
 void rendervertwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 {   
@@ -47,15 +47,15 @@ void rendervertwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
             {
                 vertw(xx, yy, z, dx(xo), dy(yo), t1);
                 vertw(xx+subdiv, yy, z, dx(xo+xs), dy(yo), t1);
-            };
+            }
             vertw(xx, yy+subdiv, z, dx(xo), dy(yo+ys), t1);
             vertw(xx+subdiv, yy+subdiv, z, dx(xo+xs), dy(yo+ys), t1);
-        };
+        }
         glEnd();
         int n = (wy2-wy1-1)/subdiv;
         n = (n+2)*2; 
         xtraverts += n;
-    };
+    }
 };
 
 uint calcwatersubdiv(int x, int y, int z, uint size)
@@ -68,7 +68,7 @@ uint calcwatersubdiv(int x, int y, int z, uint size)
     {
         vec t(x + size/2, y + size/2, z + size/2);
         dist = t.dist(camera1->o) - size*1.42f/2;
-    };
+    }
     uint subdiv = watersubdiv + int(dist) / (32 << waterlod);
     if(subdiv >= 8*sizeof(subdiv))
         subdiv = ~0;
@@ -94,7 +94,7 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
             if(subdiv < size * 2)
                 rendervertwater(size, x, y, z, size, t);
             return subdiv;
-        };
+        }
         uint childsize = size / 2,
              subdiv1 = renderwaterlod(x, y, z, childsize, t),
              subdiv2 = renderwaterlod(x + childsize, y, z, childsize, t),
@@ -118,10 +118,10 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
                     rendervertwater(childsize, x + childsize, y + childsize, z, childsize, t);
                 if(subdiv4 >= size) 
                     rendervertwater(childsize, x, y + childsize, z, childsize, t);
-            }; 
-        };
+            } 
+        }
         return minsubdiv;
-    };
+    }
 };
 
 struct QuadNode
@@ -130,17 +130,17 @@ struct QuadNode
     uint filled;
     QuadNode *child[4];
 
-    QuadNode(int x, int y, int size) : x(x), y(y), size(size), filled(0) { loopi(4) child[i] = 0; };
+    QuadNode(int x, int y, int size) : x(x), y(y), size(size), filled(0) { loopi(4) child[i] = 0; }
 
     void clear() 
     {
         loopi(4) DELETEP(child[i]);
-    };
+    }
     
     ~QuadNode()
     {
         clear();
-    };
+    }
 
     void insert(int mx, int my, int msize)
     {
@@ -148,7 +148,7 @@ struct QuadNode
         {
             filled = 0xF;
             return;
-        };
+        }
         int csize = size>>1, i = 0;
         if(mx >= x+csize) i |= 1;
         if(my >= y+csize) i |= 2;
@@ -156,7 +156,7 @@ struct QuadNode
         {
             filled |= (1 << i);
             return;
-        };
+        }
         if(!child[i]) child[i] = new QuadNode(i&1 ? x+csize : x, i&2 ? y+csize : y, csize);
         child[i]->insert(mx, my, msize);
         loopj(4) if(child[j])
@@ -165,9 +165,9 @@ struct QuadNode
             {
                 DELETEP(child[j]);
                 filled |= (1 << j);
-            };
-        };
-    };
+            }
+        }
+    }
 
     void genmatsurf(uchar mat, uchar orient, int x, int y, int z, int size, materialsurface *&matbuf)
     {
@@ -180,7 +180,7 @@ struct QuadNode
         m.o[C[dim]] = x;
         m.o[R[dim]] = y;
         m.o[dim] = z;
-    };
+    }
 
     void genmatsurfs(uchar mat, uchar orient, int z, materialsurface *&matbuf)
     {
@@ -190,9 +190,9 @@ struct QuadNode
             int csize = size>>1;
             loopi(4) if(filled & (1 << i))
                 genmatsurf(mat, orient, i&1 ? x+csize : x, i&2 ? y+csize : y, z, csize, matbuf);
-        };
+        }
         loopi(4) if(child[i]) child[i]->genmatsurfs(mat, orient, z, matbuf);
-    };
+    }
 };
 
 void renderwaterfall(materialsurface &m, Texture *t, float offset)
@@ -212,7 +212,7 @@ void renderwaterfall(materialsurface &m, Texture *t, float offset)
         if(i <= 1) v.z += rsize;
         glTexCoord2f(xf*v[dim^1], yf*(v.z+d));
         glVertex3fv(v.v);
-    };
+    }
 
     xtraverts += 4;
 };
@@ -249,7 +249,7 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
         v[dim] += dimcoord(orient) ? -offset : offset;
         if(usetc) glTexCoord2f(v[c]/8, v[r]/8);
         glVertex3fv(v.v);
-    };
+    }
     xtraverts += 4;
 };
 
@@ -323,7 +323,7 @@ void renderwater()
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-    };
+    }
     glActiveTexture_(GL_TEXTURE0_ARB);
 
     setenvparamf("camera", SHPARAM_VERTEX, 0, camera1->o.x, camera1->o.y, camera1->o.z);
@@ -339,7 +339,7 @@ void renderwater()
     {
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
-    };
+    }
 
     entity *lastlight = (entity *)-1;
     int lastdepth = -1;
@@ -354,14 +354,14 @@ void renderwater()
             if(hasOQ && oqfrags && oqwater && ref.query && checkquery(ref.query)) continue;
             glBindTexture(GL_TEXTURE_2D, ref.tex);
             setprojtexmatrix(ref);
-        };
+        }
 
         if(waterrefract)
         {
             glActiveTexture_(GL_TEXTURE3_ARB);
             glBindTexture(GL_TEXTURE_2D, camera1->o.z>=ref.height+offset ? ref.refracttex : ref.tex);
             glActiveTexture_(GL_TEXTURE0_ARB);
-        };
+        }
  
         bool begin = false;
         loopvj(ref.matsurfs)
@@ -371,7 +371,7 @@ void renderwater()
             entity *light = (m.light && m.light->type==ET_LIGHT ? m.light : NULL);
             if(light!=lastlight)
             {
-                if(begin) { glEnd(); begin = false; };
+                if(begin) { glEnd(); begin = false; }
                 const vec &lightpos = light ? light->o : vec(hdr.worldsize/2, hdr.worldsize/2, hdr.worldsize);
                 float lightrad = light && light->attr1 ? light->attr1 : hdr.worldsize*8.0f;
                 const vec &lightcol = (light ? vec(light->attr2, light->attr3, light->attr4) : vec(hdr.ambient, hdr.ambient, hdr.ambient)).div(255.0f).mul(waterspec/100.0f);
@@ -379,27 +379,27 @@ void renderwater()
                 setlocalparamf("lightcolor", SHPARAM_PIXEL, 3, lightcol.x, lightcol.y, lightcol.z);
                 setlocalparamf("lightradius", SHPARAM_PIXEL, 4, lightrad, lightrad, lightrad);
                 lastlight = light;
-            };
+            }
 
             if(!waterrefract && m.depth!=lastdepth)
             {
-                if(begin) { glEnd(); begin = false; };
+                if(begin) { glEnd(); begin = false; }
                 float depth = !waterfog ? 1.0f : min(0.75f*m.depth/waterfog, 0.95f);
                 setlocalparamf("depth", SHPARAM_PIXEL, 5, depth, 1.0f-depth);
                 lastdepth = m.depth;
-            };
+            }
 
-            if(!begin) { glBegin(GL_QUADS); begin = true; };
+            if(!begin) { glBegin(GL_QUADS); begin = true; }
             drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
-        };
+        }
         if(begin) glEnd();
-    };
+    }
 
     if(waterreflect || waterrefract)
     {
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
-    };
+    }
 
     if(waterrefract)
     {
@@ -410,13 +410,13 @@ void renderwater()
     {
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
-    };
+    }
 
     loopi(2)
     {
         glActiveTexture_(GL_TEXTURE1_ARB+i);
         glDisable(GL_TEXTURE_2D);
-    };
+    }
     glActiveTexture_(GL_TEXTURE0_ARB);
 
     glEnable(GL_CULL_FACE);
@@ -427,7 +427,7 @@ Reflection *findreflection(int height)
     loopi(MAXREFLECTIONS)
     {
         if(reflections[i].height==height) return &reflections[i];
-    };
+    }
     return NULL;
 };
 
@@ -444,20 +444,20 @@ void cleanreflections()
             ref.tex = 0;
             ref.height = -1;
             ref.lastupdate = 0;
-        };
+        }
         if(ref.refractfb)
         {
             glDeleteFramebuffers_(1, &ref.refractfb);
             ref.refractfb = 0;
             glDeleteTextures(1, &ref.refracttex);
             ref.refracttex = 0;
-        };
-    };
+        }
+    }
     if(reflectiondb)
     {
         glDeleteRenderbuffers_(1, &reflectiondb);
         reflectiondb = 0;
-    };
+    }
 };
 
 VARFP(reflectsize, 6, 8, 10, cleanreflections());
@@ -482,12 +482,12 @@ void addreflection(materialsurface &m)
             break;
         }
         else if(!oldest || r.lastused<oldest->lastused) oldest = &r;
-    };
+    }
     if(!ref)
     {
         if(!oldest || oldest->lastused==totalmillis) return;
         ref = oldest;
-    };
+    }
     if((waterreflect || waterrefract) && !ref->fb)
     {
         glGenFramebuffers_(1, &ref->fb);
@@ -503,7 +503,7 @@ void addreflection(materialsurface &m)
             fboFormat = GL_RGB8;
             createtexture(ref->tex, size, size, pixels, 3, false, fboFormat);
             glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref->tex, 0);
-        };
+        }
         delete[] pixels;
 
         if(!reflectiondb)
@@ -511,7 +511,7 @@ void addreflection(materialsurface &m)
             glGenRenderbuffers_(1, &reflectiondb);
             glBindRenderbuffer_(GL_RENDERBUFFER_EXT, reflectiondb);
             glRenderbufferStorage_(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, size, size);
-        };
+        }
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
         if(dbFormat==GL_DEPTH_COMPONENT && glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)!=GL_FRAMEBUFFER_COMPLETE_EXT)
         {
@@ -523,11 +523,11 @@ void addreflection(materialsurface &m)
                 glRenderbufferStorage_(GL_RENDERBUFFER_EXT, dbFormat, size, size);
                 glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
                 if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT) break;
-            };
-        };
+            }
+        }
 
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
-    };
+    }
     if(waterrefract && !ref->refractfb)
     {
         glGenFramebuffers_(1, &ref->refractfb);
@@ -542,7 +542,7 @@ void addreflection(materialsurface &m)
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
             
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
-    };
+    }
     if(ref->height!=height) ref->height = height;
     rplanes++;
     ref->lastused = totalmillis;
@@ -575,9 +575,9 @@ void queryreflections()
             reflections[i].height = -1;
             reflections[i].lastused = 0;
             reflections[i].query = NULL;
-        };
+        }
         refinit = true;
-    };
+    }
     
     for(vtxarray *va = visibleva; va; va = va->next)
     {
@@ -586,7 +586,7 @@ void queryreflections()
         materialsurface *matbuf = lod.matbuf;
         int matsurfs = lod.matsurfs;
         matloop(MAT_WATER, if(m.orient==O_TOP) addreflection(m));
-    };
+    }
     
     if((editmode && showmat) || !hasOQ || !oqfrags || !oqwater || (!waterreflect && !waterrefract)) return;
     int refs = 0, watermillis = 1000/reflectfps;
@@ -597,7 +597,7 @@ void queryreflections()
         {
             ref.query = NULL;
             continue;
-        };
+        }
         ref.query = newquery(&ref);
         if(!ref.query) continue;
 
@@ -607,7 +607,7 @@ void queryreflections()
             glDepthMask(GL_FALSE);
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
             glDisable(GL_CULL_FACE);
-        };
+        }
         refs++;
         startquery(ref.query);
         glBegin(GL_QUADS);
@@ -615,10 +615,10 @@ void queryreflections()
         {
             materialsurface &m = *ref.matsurfs[j];
             drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f);
-        };
+        }
         glEnd();
         endquery(ref.query);
-    };
+    }
 
     if(refs)
     {
@@ -626,7 +626,7 @@ void queryreflections()
         glDepthMask(GL_TRUE);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glEnable(GL_CULL_FACE);
-    };
+    }
 };
 
 VARP(maxreflect, 1, 1, 8);
@@ -641,7 +641,7 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
         return;
-    };
+    }
     glClearDepth(0);
     glClear(GL_DEPTH_BUFFER_BIT);
     glClearDepth(1);
@@ -656,7 +656,7 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
         glPushMatrix();
         glTranslatef(0, 0, 2*ref.height);
         glScalef(1, 1, -1);
-    };
+    }
     int border = maskreflect;
     glBegin(GL_QUADS);
     loopv(ref.matsurfs)
@@ -666,7 +666,7 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
         o[R[dimension(m.orient)]] -= border;
         o[C[dimension(m.orient)]] -= border;
         drawface(m.orient, o.x, o.y, o.z, m.csize+2*border, m.rsize+2*border, -offset);
-    };
+    }
     glEnd();
     if(reflect) glPopMatrix();
     defaultshader->set();
@@ -699,7 +699,7 @@ void drawreflections()
         {
            materialsurface &m = *ref.matsurfs[j];
            if(m.depth>=10000) hasbottom = false;
-        };
+        }
 
         if(!refs) glViewport(0, 0, 1<<reflectsize, 1<<reflectsize);
 
@@ -712,17 +712,17 @@ void drawreflections()
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.fb);
             maskreflection(ref, offset, camera1->o.z >= ref.height+offset);
             drawreflection(ref.height+offset, false, false);
-        };
+        }
 
         if(waterrefract && ref.refractfb && camera1->o.z >= ref.height+offset)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, ref.refractfb);
             maskreflection(ref, offset, false);
             drawreflection(ref.height+offset, true, !hasbottom);
-        };    
+        }    
 
         if(refs>=maxreflect) break;
-    };
+    }
     
     if(!refs) return;
     glViewport(0, 0, scr_w, scr_h);
@@ -751,7 +751,7 @@ int findmaterial(const char *name)
     loopi(sizeof(materials)/sizeof(material))
     {
         if(!strcmp(materials[i].name, name)) return materials[i].id;
-    }; 
+    } 
     return -1;
 };  
     
@@ -776,7 +776,7 @@ int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
         if(visibleface(c, orient, x, y, z, size, c.ext->material))
             return MATSURF_EDIT_ONLY;
         break;
-    };
+    }
     return MATSURF_NOT_VISIBLE;
 };
 
@@ -794,8 +794,8 @@ void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurfa
             m.csize = m.rsize = size;
             if(dimcoord(i)) m.o[dimension(i)] += size;
             matsurfs.add(m);
-        };
-    };
+        }
+    }
 };
 
 static int mergematcmp(const materialsurface *x, const materialsurface *y)
@@ -820,8 +820,8 @@ static int mergematr(materialsurface *m, int sz, materialsurface &n)
             n.rsize += m[i].rsize;
             memmove(&m[i], &m[i+1], (sz - (i+1)) * sizeof(materialsurface));
             return 1;
-        };
-    };
+        }
+    }
     return 0;
 };
 
@@ -833,7 +833,7 @@ static int mergematc(materialsurface &m, materialsurface &n)
         n.o[c] = m.o[c];
         n.csize += m.csize;
         return 1;
-    };
+    }
     return 0;
 };
 
@@ -848,7 +848,7 @@ static int mergemat(materialsurface *m, int sz, materialsurface &n)
         int cmerged = mergematc(m[sz-1], n);
         sz -= cmerged;
         if(!cmerged) break;
-    };
+    }
     m[sz++] = n;
     return sz;
 };
@@ -901,8 +901,8 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
             QuadNode vmats(0, 0, hdr.worldsize);
             loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
             vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
-         };
-    };
+         }
+    }
     return matsurfs - (end-matbuf);
 };
 
@@ -935,8 +935,8 @@ void setupmaterials()
                     else if(n.o.y+n.csize==m.o.y || m.o.y+m.csize==n.o.y)
                     {
                         if(n.o.x+n.rsize>m.o.x && n.o.x<m.o.x+m.rsize) uf.unite(m.index, n.index);
-                    };
-                };
+                    }
+                }
                 water.add(&m);
                 vec center(m.o.x+m.rsize/2, m.o.y+m.csize/2, m.o.z-1.1f);
                 m.light = brightestlight(center, vec(0, 0, 1));
@@ -953,10 +953,10 @@ void setupmaterials()
                     center[R[dim]] += m.rsize/2;
                     center[C[dim]] += m.csize/2;
                     m.envmap = closestenvmap(center);
-                };
-            };
-        };
-    };
+                }
+            }
+        }
+    }
     loopv(waterdepths)
     {
         int root = uf.find(i);
@@ -964,13 +964,13 @@ void setupmaterials()
         materialsurface &m = *water[i], &n = *water[root];
         if(m.light && (!m.light->attr1 || !n.light || (n.light->attr1 && m.light->attr1 > n.light->attr1))) n.light = m.light;
         waterdepths[root] = max(waterdepths[root], waterdepths[i]);
-    };
+    }
     loopv(water)
     {
         int root = uf.find(i);
         water[i]->light = water[root]->light;
         water[i]->depth = (short)waterdepths[root];
-    };
+    }
 };
 
 VARP(showmat, 0, 1, 1);
@@ -1001,7 +1001,7 @@ static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
         ymax = abs(ymax - c);
         if(max(xmin, xmax) <= min(ymin, ymax)) return 1;
         else if(max(ymin, ymax) <= min(xmin, xmax)) return -1;
-    };
+    }
     if(x.material < y.material) return 1;
     if(x.material > y.material) return -1;
     return 0;
@@ -1016,7 +1016,7 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
     if(reflected) sortorigin.z = int(zclip - (camera1->o.z - zclip));
     vec dir;
     vecfromyawpitch(camera1->yaw, reflected ? -camera1->pitch : camera1->pitch, 1, 0, dir);
-    loopi(3) { dir[i] = fabs(dir[i]); sortdim[i] = i; };
+    loopi(3) { dir[i] = fabs(dir[i]); sortdim[i] = i; }
     if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
     if(dir[sortdim[1]] > dir[sortdim[0]]) swap(int, sortdim[1], sortdim[0]);
     if(dir[sortdim[2]] > dir[sortdim[1]]) swap(int, sortdim[2], sortdim[1]);
@@ -1034,10 +1034,10 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
             {
                 if(!vertwater && m.material==MAT_WATER && m.orient==O_TOP) continue;
                 if(m.material>=MAT_EDIT) continue;
-            };
+            }
             vismats.add(&m);
-        };
-    };
+        }
+    }
     vismats.sort(vismatcmp);
 };
 
@@ -1063,9 +1063,9 @@ void rendermatgrid(vector<materialsurface *> &vismats)
         {
             lastmat = curmat;
             glColor3ubv(cols[curmat]);
-        };
+        }
         drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
-    };
+    }
     glEnd();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 };
@@ -1099,20 +1099,20 @@ void rendermaterials(float zclip, bool refract)
             {
                 case MAT_WATER:
                     if(lastmat==MAT_WATER && lastorient!=O_TOP && m.orient!=O_TOP) break;
-                    if(begin) { glEnd(); begin = false; };
+                    if(begin) { glEnd(); begin = false; }
                     if(lastmat!=MAT_WATER)
                     {
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                         glColor4ubv(wcol);
-                    };
-                    if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; };
+                    }
+                    if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; }
                     glBindTexture(GL_TEXTURE_2D, wslot.sts[m.orient==O_TOP ? 0 : 1].t->gl);
                     defaultshader->set();
                     break;
 
                 case MAT_GLASS:
                     if((m.envmap==EMID_NONE || !glassenv) && lastmat==MAT_GLASS) break;
-                    if(begin) { glEnd(); begin = false; };
+                    if(begin) { glEnd(); begin = false; }
                     if(m.envmap!=EMID_NONE && glassenv && envmapped!=m.envmap)
                     {
                         glActiveTexture_(GL_TEXTURE1_ARB);
@@ -1121,10 +1121,10 @@ void rendermaterials(float zclip, bool refract)
                         glActiveTexture_(GL_TEXTURE0_ARB);
                         if(envmapped==EMID_NONE) setenvparamf("camera", SHPARAM_VERTEX, 0, camera1->o.x, camera1->o.y, camera1->o.z);
                         envmapped = m.envmap;
-                    };
+                    }
                     if(lastmat!=MAT_GLASS)
                     {
-                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
+                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; }
                         if(m.envmap!=EMID_NONE && glassenv)
                         {
                             glBlendFunc(GL_ONE, GL_SRC_ALPHA);
@@ -1138,8 +1138,8 @@ void rendermaterials(float zclip, bool refract)
                             glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                             glColor3f(0.3f, 0.15f, 0.0f);
                             notextureshader->set();
-                        };
-                    };
+                        }
+                    }
                     if(m.envmap!=EMID_NONE && glassenv && (lastmat!=MAT_GLASS || lastorient!=m.orient)) 
                         setlocalparamf("normal", SHPARAM_VERTEX, 1,
                             dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
@@ -1152,11 +1152,11 @@ void rendermaterials(float zclip, bool refract)
                     if(lastmat==curmat) break;
                     if(lastmat<MAT_EDIT)
                     {
-                        if(begin) { glEnd(); begin = false; };
+                        if(begin) { glEnd(); begin = false; }
                         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; };
+                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; }
                         notextureshader->set();
-                    };
+                    }
                     static uchar blendcols[MAT_EDIT][3] =
                     {
                         { 0, 0, 0 },     // MAT_AIR - no edit volume,
@@ -1167,17 +1167,17 @@ void rendermaterials(float zclip, bool refract)
                     };
                     glColor3ubv(blendcols[curmat >= MAT_EDIT ? curmat-MAT_EDIT : curmat]);
                     break;
-                };
-            };
+                }
+            }
             lastmat = curmat;
             lastorient = m.orient;
-        };
+        }
         switch(curmat)
         {
             case MAT_WATER:
                 if(m.orient!=O_TOP)
                 {
-                    if(!begin) { glBegin(GL_QUADS); begin = true; };
+                    if(!begin) { glBegin(GL_QUADS); begin = true; }
                     renderwaterfall(m, wslot.sts[1].t, 0.1f);
                 }
                 else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, wslot.sts[0].t) >= (uint)m.csize * 2)
@@ -1185,16 +1185,16 @@ void rendermaterials(float zclip, bool refract)
                 break;
 
             case MAT_GLASS:
-                if(!begin) { glBegin(GL_QUADS); begin = true; };
+                if(!begin) { glBegin(GL_QUADS); begin = true; }
                 drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
                 break;
 
             default:
-                if(!begin) { glBegin(GL_QUADS); begin = true; };
+                if(!begin) { glBegin(GL_QUADS); begin = true; }
                 drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -0.1f);
                 break;
-        };
-    };
+        }
+    }
 
     if(begin) glEnd();
     glDisable(GL_BLEND);
@@ -1209,6 +1209,6 @@ void rendermaterials(float zclip, bool refract)
         glActiveTexture_(GL_TEXTURE1_ARB);
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         glActiveTexture_(GL_TEXTURE0_ARB);
-    };
+    }
 };
 

@@ -32,9 +32,9 @@ bool rayrectintersect(const vec &b, const vec &s, const vec &o, const vec &ray, 
             {
                 dist += t;
                 return true;
-            };
-        };
-    };
+            }
+        }
+    }
     return false;
 };
 

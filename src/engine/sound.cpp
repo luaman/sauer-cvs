@@ -36,7 +36,7 @@ struct sample
     #endif
 
     sample() : name(NULL) {};
-    ~sample() { DELETEA(name); };
+    ~sample() { DELETEA(name); }
 };
 
 struct soundslot
@@ -77,14 +77,14 @@ void stopsound()
             FMUSIC_FreeSong(mod);
         #endif
         mod = NULL;
-    };
+    }
     if(stream)
     {
         #ifndef USE_MIXER
             FSOUND_Stream_Close(stream);
         #endif
         stream = NULL;
-    };
+    }
 };
 
 VAR(soundbufferlen, 128, 1024, 4096);
@@ -97,7 +97,7 @@ void initsound()
         {
             conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
             return;
-        };
+        }
 	    Mix_AllocateChannels(MAXCHAN);	
     #else
         if(FSOUND_GetVersion()<FMOD_VERSION) fatal("old FMOD dll");
@@ -105,7 +105,7 @@ void initsound()
         {
             conoutf("sound init failed (FMOD): %d", FSOUND_GetError());
             return;
-        };
+        }
     #endif
     nosound = false;
 };
@@ -153,14 +153,14 @@ void music(char *name, char *cmd)
             else if((stream = FSOUND_Stream_Open(path(sn), cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0)))
             {
                 musicchan = FSOUND_Stream_Play(FSOUND_FREE, stream);
-                if(musicchan>=0) { FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(musicchan, false); };
+                if(musicchan>=0) { FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(musicchan, false); }
             }
         #endif
             else
             {
                 conoutf("could not play music: %s", sn);
-            };
-    };
+            }
+    }
 };
 
 COMMAND(music, "ss");
@@ -173,7 +173,7 @@ int findsound(char *name, int vol, vector<soundslot> &sounds)
     loopv(sounds)
     {
         if(!strcmp(sounds[i].s->name, name) && (!vol || sounds[i].vol==vol)) return i;
-    };
+    }
     return -1;
 };
 
@@ -186,7 +186,7 @@ int addsound(char *name, int vol, int maxuses, vector<soundslot> &sounds)
         s = &samples[n];
         s->name = n;
         s->sound = NULL;
-    };
+    }
     soundslot &slot = sounds.add();
     slot.s = s;
     slot.vol = vol ? vol : 100;
@@ -195,10 +195,10 @@ int addsound(char *name, int vol, int maxuses, vector<soundslot> &sounds)
     return sounds.length()-1;
 };
 
-void registersound(char *name, int *vol) { intret(addsound(name, *vol, 0, gamesounds)); };
+void registersound(char *name, int *vol) { intret(addsound(name, *vol, 0, gamesounds)); }
 COMMAND(registersound, "si");
 
-void mapsound(char *name, int *vol, int *maxuses) { intret(addsound(name, *vol, *maxuses, mapsounds)); };
+void mapsound(char *name, int *vol, int *maxuses) { intret(addsound(name, *vol, *maxuses, mapsounds)); }
 COMMAND(mapsound, "sii");
 
 void clear_sound()
@@ -227,7 +227,7 @@ void clearmapsounds()
         soundlocs[i].inuse = false;
         soundlocs[i].ent->visible = false;
         soundlocs[i].slot->uses--;
-    };
+    }
     mapsounds.setsizenodelete(0);
 };
 
@@ -239,7 +239,7 @@ void checkmapsounds()
         extentity &e = *ents[i];
         if(e.type!=ET_SOUND || e.visible || camera1->o.dist(e.o)>=e.attr2) continue;
         playsound(e.attr1, NULL, &e);
-    };
+    }
 };
 
 VAR(stereo, 0, 1, 1);
@@ -258,20 +258,20 @@ void updatechanvol(int chan, int svol, const vec *loc = NULL, extentity *ent = N
             {
                 rad -= ent->attr3;
                 dist -= ent->attr3;
-            };
+            }
             vol -= (int)(min(max(dist/rad, 0), 1)*soundvol);
         }
         else
         {
             vol -= (int)(dist*3/4*soundvol/255); // simple mono distance attenuation
             if(vol<0) vol = 0;
-        };
+        }
         if(stereo && (v.x != 0 || v.y != 0))
         {
             float yaw = -atan2f(v.x, v.y) - camera1->yaw*RAD; // relative angle of sound along X-Y axis
             pan = int(255.9f*(0.5f*sinf(yaw)+0.5f)); // range is from 0 (left) to 255 (right)
-        };
-    };
+        }
+    }
     vol = (vol*MAXVOL*svol)/255/255;
     #ifdef USE_MIXER
         Mix_Volume(chan, vol);
@@ -309,9 +309,9 @@ void updatevol()
                 {
                     soundlocs[i].ent->visible = false;
                     soundlocs[i].slot->uses--;
-                };
-            };
-    };
+                }
+            }
+    }
 #ifndef USE_MIXER
     if(mod && FMUSIC_IsFinished(mod)) musicdone();
     else if(stream && !FSOUND_IsPlaying(musicchan)) musicdone();
@@ -331,7 +331,7 @@ void playsound(int n, const vec *loc, extentity *ent)
     if(soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss and in sp
 
     vector<soundslot> &sounds = ent ? mapsounds : gamesounds;
-    if(!sounds.inrange(n)) { conoutf("unregistered sound: %d", n); return; };
+    if(!sounds.inrange(n)) { conoutf("unregistered sound: %d", n); return; }
     soundslot &slot = sounds[n];
     if(ent && slot.maxuses && slot.uses>=slot.maxuses) return;
 
@@ -345,8 +345,8 @@ void playsound(int n, const vec *loc, extentity *ent)
             slot.s->sound = FSOUND_Sample_Load(ent ? n+gamesounds.length() : n, path(buf), FSOUND_LOOP_OFF, 0, 0);
         #endif
 
-        if(!slot.s->sound) { conoutf("failed to load sample: %s", buf); return; };
-    };
+        if(!slot.s->sound) { conoutf("failed to load sample: %s", buf); return; }
+    }
 
     #ifdef USE_MIXER
         int chan = Mix_PlayChannel(-1, slot.s->sound, 0);
@@ -360,7 +360,7 @@ void playsound(int n, const vec *loc, extentity *ent)
         loc = &ent->o;
         ent->visible = true;
         slot.uses++;
-    };
+    }
     if(loc) newsoundloc(chan, loc, &slot, ent);
     updatechanvol(chan, slot.vol, loc, ent);
     #ifndef USE_MIXER
@@ -376,6 +376,6 @@ void playsoundname(char *s, const vec *loc, int vol)
     playsound(id, loc);
 };
 
-void sound(int *n) { playsound(*n); };
+void sound(int *n) { playsound(*n); }
 COMMAND(sound, "i");
 

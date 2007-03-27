@@ -10,7 +10,7 @@ struct scoreboard : g3d_callback
     scoreboard(fpsclient &_cl) : scoreson(false), cl(_cl)
     {
         CCOMMAND(scoreboard, showscores, "D", self->showscores(args!=NULL));
-    };
+    }
 
     void showscores(bool on)
     {
@@ -18,9 +18,9 @@ struct scoreboard : g3d_callback
         {
             menupos = menuinfrontofplayer();
             menustart = starttime();
-        };
+        }
         scoreson = on;
-    };
+    }
 
     struct sline { string s; };
 
@@ -37,12 +37,12 @@ struct scoreboard : g3d_callback
         if(x->score > y->score) return -1;
         if(x->score < y->score) return 1;
         return 0;
-    };
+    }
     
     static int playersort(const fpsent **a, const fpsent **b)
     {
         return (int)((*a)->frags<(*b)->frags)*2-1;
-    };
+    }
 
     void gui(g3d_gui &g, bool firstpass)
     {
@@ -60,7 +60,7 @@ struct scoreboard : g3d_callback
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
             if(o && o->type!=ENT_AI) sbplayers.add(o);
-        };
+        }
         
         sbplayers.sort(playersort);
         
@@ -77,9 +77,9 @@ struct scoreboard : g3d_callback
             {
                 s_sprintfd(lag)("%d", o->plag);
                 s_sprintf(line)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, name);
-            };
+            }
             g.text(line, 0xFFFFDD, "ogro");
-        };
+        }
 
         if(m_teammode)
         {
@@ -94,11 +94,11 @@ struct scoreboard : g3d_callback
                 if(o && o->type!=ENT_AI && o->frags)
                 {
                     teamscore *ts = NULL;
-                    loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; };
+                    loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; }
                     if(!ts) teamscores.add(teamscore(o->team, o->frags));
                     else ts->score += o->frags;
-                };
-            };
+                }
+            }
             teamscores.sort(teamscorecmp);
             while(teamscores.length() && teamscores.last().score <= 0) teamscores.drop();
             if(teamscores.length())
@@ -110,19 +110,19 @@ struct scoreboard : g3d_callback
                     if(j >= 4) break;
                     s_sprintfd(s)("[ %s: %d ]", teamscores[j].team, teamscores[j].score);
                     s_strcat(teamline, s);
-                };
+                }
                 g.text(teamline, 0xFFFF40);
-            };
-        };
+            }
+        }
         
         g.end();
-    };
+    }
     
     void show()
     {
         if(scoreson) 
         {
             g3d_addgui(this, menupos, true);
-        };
-    };
+        }
+    }
 };

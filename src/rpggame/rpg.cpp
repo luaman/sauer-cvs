@@ -5,23 +5,48 @@
 #include "igame.h"
 #include "stubs.h"
 
-struct rpgent : dynent
-{
-    int lastaction, lastpain;
-    bool attacking;
-    
-    rpgent() : lastaction(0), lastpain(0), attacking(false) {};
-    
-};
-
 #include "stats.h"
 
 struct rpgclient : igameclient, g3d_callback
 {
+    struct rpgent;
+
     #include "entities.h"
     #include "behaviours.h"
     #include "rpgobj.h"
     #include "rpgobjset.h"
+
+    struct rpgent : dynent
+    {
+        int lastaction, lastpain;
+        bool attacking;
+
+        rpgent() : lastaction(0), lastpain(0), attacking(false) {};
+
+        void tryattack(vector<rpgobj *> &set, rpgobj *attacker, int lastmillis)
+        {
+            if(attacking && lastmillis-lastaction>250)
+            {
+                lastaction = lastmillis;
+                loopv(set)
+                {
+                    vec d = o;
+                    vec &target = set[i]->ent->o;
+                    d.sub(target);
+                    // FIXME: need to find closest point on bounding box
+                    // FIXME: need to allow more close bounding boxes to be defined... OOBB
+                    d.z /= 3;   // attackers with an eyeheight below or above the target should affect distance check only slightly
+                    if(d.magnitude()>20) continue;
+
+                    float targetyaw = -(float)atan2(target.x-o.x, target.y-o.y)/RAD+180;
+                    normalize_yaw(targetyaw);
+                    if(fabs(targetyaw-yaw)>60) continue;
+
+                    set[i]->attacked(*attacker);
+                }        
+            }
+        }
+    };
 
     rpgentities et;
     rpgdummycom cc;
@@ -39,11 +64,11 @@ struct rpgclient : igameclient, g3d_callback
     {
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
         CCOMMAND(rpgclient, showinventory, "", self->showinventory());    
-    };
+    }
     ~rpgclient() {};
 
-    icliententities *getents() { return &et; };
-    iclientcom *getcom() { return &cc; };
+    icliententities *getents() { return &et; }
+    iclientcom *getcom() { return &cc; }
 
     void updateworld(vec &pos, int curtime, int lm)
     {
@@ -59,16 +84,9 @@ struct rpgclient : igameclient, g3d_callback
         {
             moveplayer(&player1, 20, true);
             checktriggers();
-            if(player1.attacking && lastmillis-player1.lastaction>250)
-            {
-                player1.lastaction = lastmillis;
-                if(os.pointingat)
-                {
-                    os.pointingat->attacked(*os.playerobj);
-                };
-            };
-        };        
-    };
+            player1.tryattack(os.set, os.playerobj, lastmillis);
+        }        
+    }
     
     void showinventory()
     {
@@ -80,8 +98,8 @@ struct rpgclient : igameclient, g3d_callback
         {
             menutime = starttime();
             menupos  = menuinfrontofplayer();        
-        };
-    };
+        }
+    }
 
     void gui(g3d_gui &g, bool firstpass)
     {
@@ -89,7 +107,7 @@ struct rpgclient : igameclient, g3d_callback
         g.tab("inventory", 0xFFFFF);
         os.playerobj->invgui(g);
         g.end();
-    };
+    }
     
     void initclient() {};
         
@@ -98,11 +116,11 @@ struct rpgclient : igameclient, g3d_callback
         if     (waterlevel>0) playsoundname("free/splash1", d==&player1 ? NULL : &d->o);
         else if(waterlevel<0) playsoundname("free/splash2", d==&player1 ? NULL : &d->o);
         if     (floorlevel>0) { if(local) playsoundname("aard/jump"); else if(d->type==ENT_AI) playsoundname("aard/jump", &d->o); }
-        else if(floorlevel<0) { if(local) playsoundname("aard/land"); else if(d->type==ENT_AI) playsoundname("aard/land", &d->o); };    
-    };
+        else if(floorlevel<0) { if(local) playsoundname("aard/land"); else if(d->type==ENT_AI) playsoundname("aard/land", &d->o); }    
+    }
     
     void edittrigger(const selinfo &sel, int op, int arg1 = 0, int arg2 = 0, int arg3 = 0) {};
-    char *getclientmap() { return mapname; };
+    char *getclientmap() { return mapname; }
     void resetgamestate() {};
     void worldhurts(physent *d, int damage) {};
     void newmap(int size) {};
@@ -113,7 +131,7 @@ struct rpgclient : igameclient, g3d_callback
         s_strcpy(mapname, name);
         findplayerspawn(&player1);
         et.startmap();
-    };
+    }
     
     void gameplayhud(int w, int h) {};
     
@@ -122,7 +140,7 @@ struct rpgclient : igameclient, g3d_callback
         vec color, dir;
         lightreaching(player1.o, color, dir);
         rendermodel(color, dir, "hudguns/fist", anim, 0, 0, player1.o.x, player1.o.y, player1.o.z, player1.yaw+90, player1.pitch, speed, base, NULL, 0);
-    };
+    }
 
     void drawhudgun()
     {
@@ -136,26 +154,26 @@ struct rpgclient : igameclient, g3d_callback
         else
         {
             drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP, 100, 0);
-        };
-    };
+        }
+    }
 
-    bool canjump() { return true; };
-    void doattack(bool on) { player1.attacking = on; };
-    dynent *iterdynents(int i) { return i ? NULL : &player1; };
-    int numdynents() { return 1; };
+    bool canjump() { return true; }
+    void doattack(bool on) { player1.attacking = on; }
+    dynent *iterdynents(int i) { return i ? NULL : &player1; }
+    int numdynents() { return 1; }
 
     void rendergame()
     {
         if(isthirdperson()) renderclient(&player1, "monster/ogro", NULL, false, player1.lastaction, player1.lastpain);
         os.render();
-    };
+    }
     
-    void g3d_gamemenus() { os.g3d_npcmenus(); if(menutime) g3d_addgui(this, menupos); };
+    void g3d_gamemenus() { os.g3d_npcmenus(); if(menutime) g3d_addgui(this, menupos); }
 
     void writegamedata(vector<char> &extras) {};
     void readgamedata(vector<char> &extras) {};
 
-    char *gameident() { return "rpg"; };
+    char *gameident() { return "rpg"; }
 };
 
 REGISTERGAME(rpggame, "rpg", new rpgclient(), new rpgdummyserver());

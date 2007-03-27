@@ -10,9 +10,9 @@ struct nvec : svec
     float dot(const vec &o) const
     {
         return x*o.x + y*o.y + z*o.z;
-    };
+    }
 
-    vec tovec() const { return vec(x, y, z).normalize(); };
+    vec tovec() const { return vec(x, y, z).normalize(); }
 };
         
 struct normal
@@ -75,8 +75,8 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
         {
             o.average.add(n.surface);
             n.average.add(o.surface);
-        };
-    };
+        }
+    }
     val.normals.add(n);
 };
 
@@ -109,8 +109,8 @@ bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &v, int 
         {
             v = n.average.tovec();
             return true;
-        };
-    };
+        }
+    }
     return false;
 };
 
@@ -159,14 +159,14 @@ void addnormals(cube &c, const ivec &o, int size)
         {
             subdiv = 1<<lerpsubdiv;
             while(size/subdiv < lerpsubdivsize) subdiv >>= 1; 
-        };
+        }
         vec avg;
         if(numplanes >= 2)
         {
             avg = planes[0];
             avg.add(planes[1]);
             avg.normalize();
-        };
+        }
         int index = faceverts(c, i, 0);
         loopj(4)
         {
@@ -197,10 +197,10 @@ void addnormals(cube &c, const ivec &o, int size)
                     vs.add(dv);
                     n.add(dn);
                     addnormal(o, i, vs, vec(dn).normalize());
-                };
-            };
-        };
-    };
+                }
+            }
+        }
+    }
 };
 
 void calcnormals()
@@ -226,14 +226,14 @@ void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ust
         {
             if(p[j] == p[j-1] && n[j] == n[j-1]) continue;
             if(j == numv-1 && p[j] == p[0] && n[j] == n[0]) continue;
-        };
+        }
         vec dir(p[j]);
         dir.sub(origin);
         lv[i].normal = n[j];
         lv[i].u = ustep.dot(dir)/ul;
         lv[i].v = vstep.dot(dir)/vl;
         i++;
-    };
+    }
     numv = i;
 };
 
@@ -247,11 +247,11 @@ void setlerpstep(float v, lerpbounds &bounds)
         {
             bounds.normal.add(bounds.max->normal);
             bounds.normal.normalize();
-        };
+        }
         bounds.ustep = 0;
         bounds.u = bounds.min->u;
         return;
-    };
+    }
 
     bounds.nstep = bounds.max->normal;
     bounds.nstep.sub(bounds.min->normal);
@@ -272,11 +272,11 @@ void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds 
     {
         if(lv[i+1].v < first->v) { second = first; first = &lv[i+1]; }
         else if(!second || lv[i+1].v < second->v) second = &lv[i+1];
-    };
+    }
 
     if(int(first->v) < int(second->v)) { start.min = end.min = first; }
     else if(first->u > second->u) { start.min = second; end.min = first; }
-    else { start.min = first; end.min = second; };
+    else { start.min = first; end.min = second; }
 
     start.max = (start.min == lv ? &lv[numv-1] : start.min-1);
     end.max = (end.min == &lv[numv-1] ? lv : end.min+1);
@@ -295,8 +295,8 @@ void updatelerpbounds(float v, const lerpvert *lv, int numv, lerpbounds &start, 
             start.min = start.max;
             start.max = next;
             setlerpstep(v, start);
-        };
-    };
+        }
+    }
     if(v >= end.max->v)
     {
         const lerpvert *next = (end.max == &lv[numv-1] ? lv : end.max+1);
@@ -305,8 +305,8 @@ void updatelerpbounds(float v, const lerpvert *lv, int numv, lerpbounds &start, 
             end.min = end.max;
             end.max = next;
             setlerpstep(v, end);
-        };
-    };
+        }
+    }
 };
 
 void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep)
@@ -334,7 +334,7 @@ void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbo
         normal.mul(-start.u);
         normal.add(nstart);
         normal.normalize();
-    };
+    }
      
     start.normal.add(start.nstep);
     start.u += start.ustep;
@@ -350,7 +350,7 @@ void newnormals(cube &c)
     {
         c.ext->normals = new surfacenormals[6];
         memset(c.ext->normals, 128, 6*sizeof(surfacenormals));
-    };
+    }
 };
 
 void freenormals(cube &c)

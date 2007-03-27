@@ -29,15 +29,15 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                         {
                             if(!va->mapmodels) va->mapmodels = new vector<octaentities *>;
                             va->mapmodels->add(c[i].ext->ents);
-                        };
+                        }
                         c[i].ext->ents->mapmodels.add(id);
                         break;
-                    };
+                    }
                     // invisible mapmodel
                 default:
                     c[i].ext->ents->other.add(id);
                     break;
-            };
+            }
 
         }
         else if(c[i].ext && c[i].ext->ents)
@@ -52,19 +52,19 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
                         {
                             va->mapmodels->removeobj(c[i].ext->ents);
                             if(va->mapmodels->empty()) DELETEP(va->mapmodels);
-                        };
+                        }
                         break;
-                    };
+                    }
                     // invisible mapmodel
                 default:
                     c[i].ext->ents->other.removeobj(id);
                     break;
-            };
+            }
             if(c[i].ext->ents->mapmodels.empty() && c[i].ext->ents->other.empty()) 
                 freeoctaentities(c[i]);
-        };
+        }
         if(c[i].ext && c[i].ext->ents) c[i].ext->ents->query = NULL;
-    };
+    }
 };
 
 bool getentboundingbox(extentity &e, ivec &o, ivec &r)
@@ -89,15 +89,15 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
                 o.sub(r);
                 r.mul(2);
                 break;
-            };
-        };
+            }
+        }
         // invisible mapmodels use entselradius
         default:
             o = e.o;
             o.sub(entselradius);
             r.x = r.y = r.z = entselradius*2;
             break;
-    };
+    }
     return true;
 };
 
@@ -112,8 +112,8 @@ static void modifyoctaent(bool add, int id)
     else if(add) lightent(e);
 };
 
-static inline void addentity(int id)    { modifyoctaent(true,  id); };
-static inline void removeentity(int id) { modifyoctaent(false, id); };
+static inline void addentity(int id)    { modifyoctaent(true,  id); }
+static inline void removeentity(int id) { modifyoctaent(false, id); }
 
 void freeoctaentities(cube &c)
 {
@@ -124,7 +124,7 @@ void freeoctaentities(cube &c)
     {
         delete c.ext->ents;
         c.ext->ents = NULL;
-    };
+    }
 };
 
 void entitiesinoctanodes()
@@ -142,7 +142,7 @@ char *entname(entity &e)
     {
         s_strcat(fullentname, ": ");
         s_strcat(fullentname, einfo);
-    };
+    }
     return fullentname;
 };
 
@@ -182,7 +182,7 @@ void initundoent(undoblock &u)
         u.e->i = entgroup[i];
         u.e->e = *et->getents()[entgroup[i]];
         u.e++;
-    };
+    }
     u.e -= u.n;    
 };
 
@@ -197,7 +197,7 @@ void makeundoent()
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
 #define addimplicit(f)  { if(entgroup.empty() && enthover>=0) { entgroup.add(enthover); f; entgroup.drop(); } else f; }
-#define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { entity &e = *et->getents()[n]; f; }; }
+#define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { entity &e = *et->getents()[n]; f; } }
 #define entedit(i, f)   { entfocus(i, removeentity(n); f; if(e.type != ET_EMPTY) addentity(n); et->editent(n)); }
 #define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
 #define setgroup(exp)   { entcancel(); addgroup(exp); }
@@ -260,7 +260,7 @@ void entselectionbox(const entity &e, vec &eo, vec &es)
     {
         es = vec(entselradius);
         eo = e.o;
-    };    
+    }    
     eo.sub(es);
     es.mul(2);
 };
@@ -326,12 +326,12 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
             (a=eo).x=0; (b=es).x=hdr.worldsize; boxs3D(a, b, 1);  
             (a=eo).y=0; (b=es).y=hdr.worldsize; boxs3D(a, b, 1);  
             (a=eo).z=0; (b=es).z=hdr.worldsize; boxs3D(a, b, 1);
-        };
+        }
         glColor3ub(150,0,0);
         glLineWidth(5);
         boxs(entorient, eo, es);
         glLineWidth(1);
-    };
+    }
 };
 
 void entadd(int id)
@@ -440,9 +440,9 @@ bool dropentity(entity &e, int drop = -1)
             rotatebb(center, radius, e.attr1);
             radius.x += fabs(center.x);
             radius.y += fabs(center.y);
-        };
+        }
         radius.z = 0.0f;
-    };
+    }
     switch(drop)
     {
     case 1:
@@ -469,7 +469,7 @@ bool dropentity(entity &e, int drop = -1)
         if(drop == 3)
             dropenttofloor(&e);
         break;
-    };
+    }
     return true;
 };
 
@@ -504,9 +504,9 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
                 case ET_PLAYERSTART:
                     e.attr1 = (int)camera1->yaw;
                     break;
-        };
+        }
         et->fixentity(e);
-    };
+    }
     return &e;
 };
 
@@ -555,7 +555,7 @@ void entpaste()
         extentity *e = newentity(true, o, ET_EMPTY, c.attr1, c.attr2, c.attr3, c.attr4);
         et->getents().add(e);
         entgroup.add(++last);
-    };
+    }
     int j = 0;
     groupeditundo(e.type = entcopybuf[j++].type);
 };
@@ -603,7 +603,7 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
         int r = fixspawn-->0 ? 7 : rnd(10)+1;
         loopi(r) spawncycle = findentity(ET_PLAYERSTART, spawncycle+1);
         pick = spawncycle;
-    };
+    }
     if(pick!=-1)
     {
         d->pitch = 0;
@@ -620,14 +620,14 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
                 d->yaw = et->getents()[attempt]->attr1;
                 entinmap(d);
                 break;
-            };    
-        };
+            }    
+        }
     }
     else
     {
         d->o.x = d->o.y = d->o.z = 0.5f*getworldsize();
         entinmap(d);
-    };
+    }
 };
 
 void splitocta(cube *c, int size)
@@ -637,7 +637,7 @@ void splitocta(cube *c, int size)
     {
         if(!c[i].children) c[i].children = newcubes(isempty(c[i]) ? F_EMPTY : F_SOLID);
         splitocta(c[i].children, size>>1);
-    };
+    }
 };
 
 bool emptymap(int scale, bool force)    // main empty world creation routine
@@ -646,7 +646,7 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
     {
         conoutf("newmap only allowed in edit mode");
         return false;
-    };
+    }
 
     clearoverrides();
 
@@ -692,7 +692,7 @@ bool enlargemap(bool force)
     {
         conoutf("mapenlarge only allowed in edit mode");
         return false;
-    };
+    }
     if(hdr.worldsize >= 1<<20) return false;
 
     hdr.worldsize *= 2;
@@ -708,8 +708,8 @@ bool enlargemap(bool force)
     return true;
 };
 
-void newmap(int *i) { if(emptymap(*i, false)) cl->newmap(max(*i, 0)); };
-void mapenlarge() { if(enlargemap(false)) cl->newmap(-1); };
+void newmap(int *i) { if(emptymap(*i, false)) cl->newmap(max(*i, 0)); }
+void mapenlarge() { if(enlargemap(false)) cl->newmap(-1); }
 COMMAND(newmap, "i");
 COMMAND(mapenlarge, "");
 
@@ -730,11 +730,11 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
         e.o = o;
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
         addentity(i);
-    };
+    }
 };
 
-int getworldsize() { return hdr.worldsize; };
-int getmapversion() { return hdr.version; };
+int getworldsize() { return hdr.worldsize; }
+int getmapversion() { return hdr.version; }
 
 bool insideworld(const vec &o)
 {
@@ -770,7 +770,7 @@ void resettriggers()
         if(e.type != ET_MAPMODEL || !e.attr3) continue;
         e.triggerstate = TRIGGER_RESET;
         e.lasttrigger = 0;
-    };
+    }
 };
 
 void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGERING)
@@ -786,8 +786,8 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
             e.triggerstate = newstate;
             e.lasttrigger = lastmillis;
             if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
-        };
-    };
+        }
+    }
 };
 
 void trigger(int *tag, int *state)
@@ -807,7 +807,7 @@ void doleveltrigger(int trigger, int state)
     {
         triggerstate = state;
         execute(aliasname);
-    };
+    }
 };
 
 void checktriggers()
@@ -830,11 +830,11 @@ void checktriggers()
                     {
                         if(e.triggerstate == TRIGGERING) unlocktriggers(e.attr4);
                         else unlocktriggers(e.attr4, TRIGGERED, TRIGGER_RESETTING);
-                    };
+                    }
                     if(checktriggertype(e.attr3, TRIG_DISAPPEAR)) e.triggerstate = TRIGGER_DISAPPEARED;
                     else if(e.triggerstate==TRIGGERING && checktriggertype(e.attr3, TRIG_TOGGLE)) e.triggerstate = TRIGGERED;
                     else e.triggerstate = TRIGGER_RESET;
-                };
+                }
                 break;
             case TRIGGER_RESET:
                 if(e.lasttrigger)
@@ -850,7 +850,7 @@ void checktriggers()
                     doleveltrigger(e.attr4, -1);
                     e.lasttrigger = lastmillis;
                     break;
-                };
+                }
                 e.triggerstate = TRIGGERING;
                 e.lasttrigger = lastmillis;
                 if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
@@ -879,7 +879,7 @@ void checktriggers()
                 et->trigger(e);
                 if(e.attr4) doleveltrigger(e.attr4, 0);
                 break;
-        };
-    };
+        }
+    }
 };
 

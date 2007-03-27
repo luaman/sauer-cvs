@@ -14,7 +14,7 @@ Shader *nocolorshader = NULL;
 ShaderParamState vertexparamstate[10 + MAXSHADERPARAMS], pixelparamstate[10 + MAXSHADERPARAMS];
 int dirtyparams = 0;
 
-Shader *lookupshaderbyname(const char *name) { return shaders.access(name); };
+Shader *lookupshaderbyname(const char *name) { return shaders.access(name); }
 
 static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, char *name)
 {
@@ -30,7 +30,7 @@ static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, c
         loopi(err) putchar(*def++);
         puts(" <<HERE>> ");
         while(*def) putchar(*def++);
-    };
+    }
 };
 
 static void showglslinfo(GLhandleARB obj, char *tname, char *name)
@@ -44,7 +44,7 @@ static void showglslinfo(GLhandleARB obj, char *tname, char *name)
         conoutf("GLSL ERROR (%s:%s)", tname, name);
         puts(log);
         delete[] log;
-    };
+    }
 };
 
 static void compileglslshader(GLenum type, GLhandleARB &obj, char *def, char *tname, char *name) 
@@ -60,7 +60,7 @@ static void compileglslshader(GLenum type, GLhandleARB &obj, char *def, char *tn
     {
         glDeleteObject_(obj);
         obj = 0;
-    };
+    }
 };  
 
 static void linkglslprogram(Shader &s)
@@ -73,7 +73,7 @@ static void linkglslprogram(Shader &s)
         glAttachObject_(s.program, s.psobj);
         glLinkProgram_(s.program);
         glGetObjectParameteriv_(s.program, GL_OBJECT_LINK_STATUS_ARB, &success);
-    };
+    }
     if(success)
     {
         glUseProgramObject_(s.program);
@@ -82,7 +82,7 @@ static void linkglslprogram(Shader &s)
             s_sprintfd(arg)("tex%d", i);
             GLint loc = glGetUniformLocation_(s.program, arg);
             if(loc != -1) glUniform1i_(loc, i);
-        };
+        }
         loopv(s.defaultparams)
         {
             ShaderParam &param = s.defaultparams[i];
@@ -90,7 +90,7 @@ static void linkglslprogram(Shader &s)
             if(param.type==SHPARAM_UNIFORM) s_strcpy(pname, param.name);
             else s_sprintf(pname)("%s%d", param.type==SHPARAM_VERTEX ? "v" : "p", param.index);
             param.loc = glGetUniformLocation_(s.program, pname);
-        };
+        }
         glUseProgramObject_(0);
     }
     else
@@ -100,10 +100,10 @@ static void linkglslprogram(Shader &s)
             showglslinfo(s.program, "PROG", s.name);
             glDeleteObject_(s.program);
             s.program = 0;
-        };
-        if(s.vsobj) { glDeleteObject_(s.vsobj); s.vsobj = 0; };
-        if(s.psobj) { glDeleteObject_(s.psobj); s.psobj = 0; };
-    };
+        }
+        if(s.vsobj) { glDeleteObject_(s.vsobj); s.vsobj = 0; }
+        if(s.psobj) { glDeleteObject_(s.psobj); s.psobj = 0; }
+    }
 };
 
 bool checkglslsupport()
@@ -129,13 +129,13 @@ bool checkglslsupport()
     {
         glDeleteObject_(obj);
         return false;
-    };
+    }
     GLhandleARB program = glCreateProgramObject_();
     if(!program)
     {
         glDeleteObject_(obj);
         return false;
-    }; 
+    } 
     glAttachObject_(program, obj);
     glLinkProgram_(program); 
     glGetObjectParameteriv_(program, GL_OBJECT_LINK_STATUS_ARB, &success);
@@ -163,14 +163,14 @@ static void allocglsluniformparam(Shader &s, int type, int index, bool local = f
             if(type==SHPARAM_VERTEX) s.extvertparams[index] = alt;
             else s.extpixparams[index] = alt;
             return;
-        };
-    };
+        }
+    }
     if(loc == -1)
     {
         if(type==SHPARAM_VERTEX) s.extvertparams[index] = local ? &unusedextparam : NULL;
         else s.extpixparams[index] = local ? &unusedextparam : NULL;
         return;
-    };
+    }
     LocalShaderParamState &ext = s.extparams.add();
     ext.name = val.name;
     ext.type = type;
@@ -218,10 +218,10 @@ void Shader::allocenvparams(Slot *slot)
                     s_sprintfd(sname)("stex%d", stex++); 
                     UNIFORMTEX(sname, tmu++);
                     break;
-                };
-            };
-        };
-    };
+                }
+            }
+        }
+    }
     loopi(10) if(vertexparamstate[i].name && !vertexparamstate[i].local)
         allocglsluniformparam(*this, SHPARAM_VERTEX, i);
     loopi(10) if(pixelparamstate[i].name && !pixelparamstate[i].local)
@@ -241,7 +241,7 @@ void setenvparamf(char *name, int type, int index, float x, float y, float z, fl
         val.val[3] = w;
         if(!val.dirty) dirtyparams++;
         val.dirty = true;
-    };
+    }
 };
 
 void setenvparamfv(char *name, int type, int index, float *v)
@@ -254,7 +254,7 @@ void setenvparamfv(char *name, int type, int index, float *v)
         memcpy(val.val, v, sizeof(val.val));
         if(!val.dirty) dirtyparams++;
         val.dirty = true;
-    };
+    }
 };
 
 void flushenvparam(int type, int index, bool local)
@@ -275,7 +275,7 @@ void flushenvparam(int type, int index, bool local)
         glProgramEnvParameter4fv_(type==SHPARAM_VERTEX ? GL_VERTEX_PROGRAM_ARB : GL_FRAGMENT_PROGRAM_ARB, index, val.val);
         dirtyparams--;
         val.dirty = false;
-    };
+    }
 };
 
 void setlocalparamf(char *name, int type, int index, float x, float y, float z, float w)
@@ -304,7 +304,7 @@ void Shader::flushenvparams(Slot *slot)
             if(!memcmp(ext.curval, val, sizeof(ext.val))) continue;
             memcpy(ext.curval, val, sizeof(ext.val));
             glUniform4fv_(ext.loc, 1, ext.curval);
-        };
+        }
     }
     else if(dirtyparams)
     {
@@ -315,7 +315,7 @@ void Shader::flushenvparams(Slot *slot)
             glProgramEnvParameter4fv_(GL_VERTEX_PROGRAM_ARB, i, val.val);
             val.dirty = false;
             dirtyparams--;
-        };
+        }
         loopi(10)
         {
             ShaderParamState &val = pixelparamstate[i];
@@ -323,8 +323,8 @@ void Shader::flushenvparams(Slot *slot)
             glProgramEnvParameter4fv_(GL_FRAGMENT_PROGRAM_ARB, i, val.val);
             val.dirty = false;
             dirtyparams--;
-        };
-    };
+        }
+    }
     used = true;
 };
 
@@ -353,8 +353,8 @@ void Shader::setslotparams(Slot &slot)
             if(val.dirty) dirtyparams--;
             val.local = true;
             val.dirty = false;
-        };
-    };
+        }
+    }
     loopv(defaultparams)
     {
         LocalShaderParamState &l = defaultparams[i];
@@ -379,8 +379,8 @@ void Shader::setslotparams(Slot &slot)
             if(val.dirty) dirtyparams--;
             val.local = true;
             val.dirty = false;
-        };
-    };
+        }
+    }
 };
 
 void Shader::bindprograms()
@@ -396,7 +396,7 @@ void Shader::bindprograms()
 
         glBindProgram_(GL_VERTEX_PROGRAM_ARB,   vs);
         glBindProgram_(GL_FRAGMENT_PROGRAM_ARB, ps);
-    };
+    }
     lastshader = this;
 };
 
@@ -415,11 +415,11 @@ void shader(int *type, char *name, char *vs, char *ps)
             loopv(curparams)
             {
                 if(curparams[i].name) delete[] curparams[i].name;
-            };
+            }
             curparams.setsize(0);
             return;
-        };
-    };
+        }
+    }
     char *rname = newstring(name);
     Shader &s = shaders[rname];
     s.name = rname;
@@ -442,8 +442,8 @@ void shader(int *type, char *name, char *vs, char *ps)
         {
             compileasmshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
             compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
-        };
-    };
+        }
+    }
 };
 
 void setshader(char *name)
@@ -454,7 +454,7 @@ void setshader(char *name)
     loopv(curparams)
     {
         if(curparams[i].name) delete[] curparams[i].name;
-    };
+    }
     curparams.setsize(0);
 };
 
@@ -464,12 +464,12 @@ ShaderParam *findshaderparam(Slot &s, char *name, int type, int index)
     {
         ShaderParam &param = s.params[i];
         if((name && param.name && !strcmp(name, param.name)) || (param.type==type && param.index==index)) return &param;
-    };
+    }
     loopv(s.shader->defaultparams)
     {
         ShaderParam &param = s.shader->defaultparams[i];
         if((name && param.name && !strcmp(name, param.name)) || (param.type==type && param.index==index)) return &param;
-    };
+    }
     return NULL;
 };
 
@@ -483,7 +483,7 @@ void setslotshader(Slot &s)
         ShaderParam &override = s.params.add(param);
         override.name = defaultparam->name;
         if(s.shader->type & SHADER_GLSLANG) override.index = (LocalShaderParamState *)defaultparam - &s.shader->defaultparams[0];
-    };
+    }
 };
 
 void altshader(char *orig, char *altname)
@@ -528,7 +528,7 @@ void setshaderparam(char *name, int type, int n, float x, float y, float z, floa
     {
         conoutf("shader param index must be 0..%d\n", MAXSHADERPARAMS-1);
         return;
-    };
+    }
     loopv(curparams)
     {
         ShaderParam &param = curparams[i];
@@ -539,8 +539,8 @@ void setshaderparam(char *name, int type, int n, float x, float y, float z, floa
             param.val[2] = z;
             param.val[3] = w;
             return;
-        };
-    };
+        }
+    }
     ShaderParam param = {name ? newstring(name) : NULL, type, n, -1, {x, y, z, w}};
     curparams.add(param);
 };
@@ -592,13 +592,13 @@ void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
             rtinit = true;
             glGenTextures(NUMSCALE, rendertarget);
             if(hasFBO) glGenFramebuffers_(NUMSCALE-1, fsfb);
-        };
+        }
         conoutf("now rendering with: %s", name);
         fsparams[0] = *x/255.0f;
         fsparams[1] = *y/255.0f;
         fsparams[2] = *z/255.0f;
         fsparams[3] = *w/255.0f;
-    };
+    }
 };
 
 COMMAND(setfullscreenshader, "siiii");
@@ -611,7 +611,7 @@ void renderfsquad(int w, int h, Shader *s)
     {
         w *= 2;
         h *= 2;
-    };
+    }
     glBegin(GL_QUADS);
     glTexCoord2i(0, 0); glVertex3f(-1, -1, 0);
     glTexCoord2i(w, 0); glVertex3f( 1, -1, 0);
@@ -642,10 +642,10 @@ void renderfullscreenshader(int w, int h)
             {
                 glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[i]);
                 glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, rendertarget[i+1], 0);
-            };
+            }
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
-        };
-    };
+        }
+    }
 
     setenvparamfv("fsparams", SHPARAM_PIXEL, 0, fsparams);
 
@@ -657,7 +657,7 @@ void renderfullscreenshader(int w, int h)
         glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, nw, nh);
         if(i>=NUMSCALE-1 || !scaleshader || fsfb[0]) break;
         renderfsquad(nw /= 2, nh /= 2, scaleshader);
-    };
+    }
     if(scaleshader && fsfb[0])
     {
         loopi(NUMSCALE-1)
@@ -665,23 +665,23 @@ void renderfullscreenshader(int w, int h)
             if(i) glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[i]);
             renderfsquad(nw /= 2, nh /= 2, scaleshader);
-        };
+        }
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
-    };
+    }
 
     if(scaleshader) loopi(NUMSCALE)
     {
         glActiveTexture_(GL_TEXTURE0_ARB+i);
         glEnable(GL_TEXTURE_RECTANGLE_ARB);
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
-    };
+    }
     renderfsquad(w, h, fsshader);
 
     if(scaleshader) loopi(NUMSCALE)
     {
         glActiveTexture_(GL_TEXTURE0_ARB+i);
         glDisable(GL_TEXTURE_RECTANGLE_ARB);
-    };
+    }
 
     glActiveTexture_(GL_TEXTURE0_ARB);
     glDepthMask(GL_TRUE);

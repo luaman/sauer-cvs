@@ -51,13 +51,13 @@ void connects(char *servername)
         {
             conoutf("could not resolve server %s", servername);
             return;
-        };
+        }
     }
     else
     {
         conoutf("attempting to connect over LAN");
         address.host = ENET_HOST_BROADCAST;
-    };
+    }
 
     clienthost = enet_host_create(NULL, 1, rate, rate);
 
@@ -72,7 +72,7 @@ void connects(char *servername)
     {
         conoutf("\f3could not connect to server");
         disconnect();
-    };
+    }
 };
 
 void lanconnect()
@@ -89,14 +89,14 @@ void disconnect(int onlyclean, int async)
             enet_peer_disconnect(clienthost->peers, DISC_NONE);
             enet_host_flush(clienthost);
             disconnecting = totalmillis;
-        };
+        }
         if(clienthost->peers->state != ENET_PEER_STATE_DISCONNECTED)
         {
             if(async) return;
             enet_peer_reset(clienthost->peers);
-        };
+        }
         enet_host_destroy(clienthost);
-    };
+    }
 
     if(clienthost && !connecting) conoutf("disconnected");
     clienthost = NULL;
@@ -108,7 +108,7 @@ void disconnect(int onlyclean, int async)
     
     localdisconnect();
 
-    if(!onlyclean) { localconnect(); cc->gameconnect(false); };
+    if(!onlyclean) { localconnect(); cc->gameconnect(false); }
 };
 
 void trydisconnect()
@@ -117,13 +117,13 @@ void trydisconnect()
     {
         conoutf("not connected");
         return;
-    };
+    }
     if(connecting) 
     {
         conoutf("aborting connection attempt");
         disconnect();
         return;
-    };
+    }
     conoutf("attempting to disconnect...");
     disconnect(0, !disconnecting);
 };
@@ -134,7 +134,7 @@ COMMANDN(disconnect, trydisconnect, "");
 
 int lastupdate = 0;
 
-bool netmapstart() { return clienthost!=NULL; };
+bool netmapstart() { return clienthost!=NULL; }
 
 void sendpackettoserv(ENetPacket *packet, int chan)
 {
@@ -150,7 +150,7 @@ void c2sinfo(dynent *d, int rate)                     // send update to the serv
     ucharbuf p(packet->data, packet->dataLength);
     bool reliable = false;
     int chan = cc->sendpacketclient(p, reliable, d);
-    if(!p.length()) { enet_packet_destroy(packet); return; };
+    if(!p.length()) { enet_packet_destroy(packet); return; }
     if(reliable) packet->flags = ENET_PACKET_FLAG_RELIABLE;
     enet_packet_resize(packet, p.length());
     sendpackettoserv(packet, chan);
@@ -169,7 +169,7 @@ void localservertoclient(int chan, uchar *buf, int len)   // processes any updat
     cc->parsepacketclient(chan, p);
 };
 
-void clientkeepalive() { if(clienthost) enet_host_service(clienthost, NULL, 0); };
+void clientkeepalive() { if(clienthost) enet_host_service(clienthost, NULL, 0); }
 
 void gets2c()           // get updates from the server
 {
@@ -185,8 +185,8 @@ void gets2c()           // get updates from the server
             conoutf("\f3could not connect to server");
             disconnect();
             return;
-        };
-    };
+        }
+    }
     while(clienthost!=NULL && enet_host_service(clienthost, &event, 0)>0)
     switch(event.type)
     {
@@ -213,6 +213,6 @@ void gets2c()           // get updates from the server
 
         default:
             break;
-    };
+    }
 };
 

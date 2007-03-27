@@ -54,13 +54,13 @@ void screenshot()
                 char *dest = (char *)temp->pixels+temp->pitch*idx;
                 memcpy(dest, (char *)image->pixels+image->pitch*(scr_h-1-idx), 3*scr_w);
                 endianswap(dest, 3, scr_w);
-            };
+            }
             s_sprintfd(buf)("screenshot_%d.bmp", lastmillis);
             SDL_SaveBMP(temp, buf);
             SDL_FreeSurface(temp);
-        };
+        }
         SDL_FreeSurface(image);
-    };
+    }
 };
 
 COMMAND(screenshot, "");
@@ -96,7 +96,7 @@ void computescreen(const char *text)
         glTexCoord2f(0, 1); glVertex2i(x,     y+256);
         glEnd();
         SDL_GL_SwapBuffers();
-    };
+    }
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
@@ -135,13 +135,13 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     {
         bar(1,    w, 4, 0, 0,    0.8f);
         bar(bar1, w, 4, 0, 0.5f, 1);
-    };
+    }
 
     if(bar2>0)
     {
         bar(1,    w, 6, 0.5f,  0, 0);
         bar(bar2, w, 6, 0.75f, 0, 0);
-    };
+    }
 
     glEnd();
 
@@ -172,7 +172,7 @@ void setfullscreen(bool enable)
         SDL_WM_ToggleFullScreen(screen);
         SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
 #endif
-    };
+    }
 };
 
 void screenres(int *w, int *h, int *bpp = 0)
@@ -200,7 +200,7 @@ VARFP(gamma, 30, 100, 300,
     {
         conoutf("Could not set gamma (card/driver doesn't support it?)");
         conoutf("sdl: %s", SDL_GetError());
-    };
+    }
 });
 
 void keyrepeat(bool on)
@@ -238,8 +238,8 @@ void checksleep(int millis)
             execute(cmd);
             delete[] cmd; 
             sleepcmds.remove(i--); 
-        };
-    };
+        }
+    }
 };
 
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
@@ -271,13 +271,13 @@ void limitfps(int &millis, int curmillis)
         {
             ++delay;
             fpserror -= maxfps;
-        };
+        }
         if(delay > 0)
         {
             SDL_Delay(delay);
             millis += delay;
-        };
-    };
+        }
+    }
 };
 
 #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
@@ -301,8 +301,8 @@ void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
             char *del = strrchr(li.FileName, '\\');
             s_sprintf(t)("%s - %s [%d]\n", si.sym.Name, del ? del + 1 : li.FileName, li.LineNumber);
             s_strcat(out, t);
-        };
-    };
+        }
+    }
     fatal(out);
 };
 #endif
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
                 shaderprecision = atoi(&argv[i][2]); 
                 shaderprecision = min(max(shaderprecision, 0), 3);
                 break;
-            };
+            }
             case 'l': 
             {
                 char pkgdir[] = "packages/"; 
@@ -353,11 +353,11 @@ int main(int argc, char **argv)
                 if(load) load += sizeof(pkgdir)-1; 
                 else load = &argv[i][2]; 
                 break;
-            };
+            }
             default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");
         }
         else conoutf("unknown commandline argument");
-    };
+    }
 
     #ifdef _DEBUG
     par = SDL_INIT_NOPARACHUTE;
@@ -385,12 +385,12 @@ int main(int argc, char **argv)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, fsaa);
-    };
+    }
     if(stencil) 
     {
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
         hasstencil = true;
-    };
+    }
     int resize = SDL_RESIZABLE;
     #if defined(WIN32) || defined(__APPLE__)
     resize = 0;
@@ -402,10 +402,10 @@ int main(int argc, char **argv)
         {
             SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
             hasstencil = false;
-        };
+        }
         screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|resize|fs);
         if(!screen) fatal("Unable to create OpenGL screen: ", SDL_GetError());
-    };
+    }
     scr_w = screen->w;
     scr_h = screen->h;
 
@@ -541,7 +541,7 @@ int main(int argc, char **argv)
                     break;
 
                 case SDL_MOUSEMOTION:
-                    if(ignore) { ignore--; break; };
+                    if(ignore) { ignore--; break; }
                     if(!(screen->flags&SDL_FULLSCREEN) && grabmouse)
                     {   
                         #ifdef __APPLE__
@@ -549,7 +549,7 @@ int main(int argc, char **argv)
                         #endif
                         if(event.motion.x == scr_w / 2 && event.motion.y == scr_h / 2) break;
                         SDL_WarpMouse(scr_w / 2, scr_h / 2);
-                    };
+                    }
                     #ifndef WIN32
                     if((screen->flags&SDL_FULLSCREEN) || grabmouse)
                     #endif
@@ -563,14 +563,14 @@ int main(int argc, char **argv)
                     lasttype = event.type;
                     lastbut = event.button.button;
                     break;
-            };
-        };
-    };
+            }
+        }
+    }
     
     ASSERT(0);   
     return EXIT_FAILURE;
 
     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
-    } __except(stackdumper(0, GetExceptionInformation()), EXCEPTION_CONTINUE_SEARCH) { return 0; };
+    } __except(stackdumper(0, GetExceptionInformation()), EXCEPTION_CONTINUE_SEARCH) { return 0; }
     #endif
 };

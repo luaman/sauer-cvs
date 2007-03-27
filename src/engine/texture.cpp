@@ -24,8 +24,8 @@ SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
             if(numrots>=2 && numrots<=4) dst[0] = 255-dst[0];      // flip X   on normal when 180/270 degrees
             if(numrots<=2 || numrots==5) dst[1] = 255-dst[1];      // flip Y   on normal when  90/180 degrees
             if((numrots&5)==1) swap(uchar, dst[0], dst[1]);       // swap X/Y on normal when  90/270 degrees
-        };
-    };
+        }
+    }
     SDL_FreeSurface(s);
     return d;
 };
@@ -47,7 +47,7 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
         memcpy(dst+xoffset*depth, src, (s->w-xoffset)*depth);
         memcpy(dst, src+(s->w-xoffset)*depth, xoffset*depth);
         src += s->pitch;
-    };
+    }
     SDL_FreeSurface(s);
     return d;
 };
@@ -67,7 +67,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
             target = GL_TEXTURE_CUBE_MAP_ARB;
             break;
-    };
+    }
     if(tnum)
     {
         glBindTexture(target, tnum);
@@ -77,7 +77,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    };
+    }
 #ifdef __APPLE__
 #undef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
 #undef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
@@ -104,14 +104,14 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         case GL_RGBA:
             if(mipit && hasTC && mintexcompresssize && max(w, h) >= mintexcompresssize) compressed = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
             break;
-    };
+    }
     //component = format == GL_RGB ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
     if(mipit)
     {
         if(gluBuild2DMipmaps(subtarget, compressed, w, h, format, type, pixels))
         {
             if(compressed==component || gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps");
-        };
+        }
     }
     else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
 };
@@ -130,7 +130,7 @@ static GLenum texformat(int bpp)
         case 24: return GL_RGB;
         case 32: return GL_RGBA;
         default: return 0; 
-    };
+    }
 };
 
 static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, bool mipit = true)
@@ -149,8 +149,8 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
         {
             t->w = t->xs;
             t->h = t->ys;
-        };
-    };
+        }
+    }
     createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, texformat(t->bpp));
     SDL_FreeSurface(s);
     return t;
@@ -163,19 +163,19 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     {
         s_sprintf(pname)("packages/%s", tex->name);
         tname = path(pname);
-    };
+    }
 
     show_out_of_renderloop_progress(0, tname);
 
     SDL_Surface *s = IMG_Load(tname);
-    if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; };
+    if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
     int bpp = s->format->BitsPerPixel;
-    if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 24, or 32 bpp: %s", tname); return NULL; };
+    if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 24, or 32 bpp: %s", tname); return NULL; }
     if(tex)
     {
         if(tex->rotation) s = texrotate(s, tex->rotation, tex->type);
         if(tex->xoffset || tex->yoffset) s = texoffset(s, tex->xoffset, tex->yoffset);
-    };
+    }
     return s;
 };
 
@@ -183,7 +183,7 @@ void loadalphamask(Texture *t)
 {
     if(t->alphamask || t->bpp!=32) return;
     SDL_Surface *s = IMG_Load(t->name);
-    if(!s || !s->format->Amask) { if(s) SDL_FreeSurface(s); return; };
+    if(!s || !s->format->Amask) { if(s) SDL_FreeSurface(s); return; }
     uint alpha = s->format->Amask;
     t->alphamask = new uchar[s->h * ((s->w+7)/8)];
     uchar *srcrow = (uchar *)s->pixels, *dst = t->alphamask-1;
@@ -196,9 +196,9 @@ void loadalphamask(Texture *t)
             if(!offset) *++dst = 0;
             if(*src & alpha) *dst |= 1<<offset;
             src++;
-        };
+        }
         srcrow += s->pitch;
-    };
+    }
     SDL_FreeSurface(s);
 }
 
@@ -257,12 +257,12 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
         {"z", TEX_DEPTH},
     };
     int tnum = -1, matslot = findmaterial(type);
-    loopi(sizeof(types)/sizeof(types[0])) if(!strcmp(types[i].name, type)) { tnum = i; break; };
+    loopi(sizeof(types)/sizeof(types[0])) if(!strcmp(types[i].name, type)) { tnum = i; break; }
     if(tnum<0) tnum = atoi(type);
     if(tnum==TEX_DIFFUSE)
     {
         if(matslot>=0) curmatslot = matslot;
-        else { curmatslot = -1; curtexnum++; };
+        else { curmatslot = -1; curtexnum++; }
     }
     else if(curmatslot>=0) matslot=curmatslot;
     else if(!curtexnum) return;
@@ -365,12 +365,12 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
     {
         s_sprintfd(rnum)("#%d", t.rotation);
         for(const char *s = rnum; *s; key.add(*s++));
-    };
+    }
     if(t.xoffset || t.yoffset)
     {
         s_sprintfd(toffset)("+%d,%d", t.xoffset, t.yoffset);
         for(const char *s = toffset; *s; key.add(*s++));
-    };
+    }
     switch(t.type)
     {
         case TEX_GLOW:
@@ -378,8 +378,8 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
             ShaderParam *cparam = findshaderparam(slot, "glowscale", SHPARAM_PIXEL, 0);
             s_sprintfd(suffix)("?%.2f,%.2f,%.2f", cparam ? cparam->val[0] : 1.0f, cparam ? cparam->val[1] : 1.0f, cparam ? cparam->val[2] : 1.0f);
             for(const char *s = suffix; *s; key.add(*s++));
-        };
-    };
+        }
+    }
 };
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -416,7 +416,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
     vector<char> key;
     addname(key, s, t);
-    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && !forceload) { t.t = crosshair; return; };
+    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && !forceload) { t.t = crosshair; return; }
     switch(t.type)
     {
         case TEX_DIFFUSE:
@@ -426,9 +426,9 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                 {
                     s.sts[i].combined = index;
                     addname(key, s, s.sts[i]);
-                };
+                }
                 break;
-            }; // fall through to shader case
+            } // fall through to shader case
 
         case TEX_NORMAL:
         {
@@ -438,13 +438,13 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
             s.sts[i].combined = index;
             addname(key, s, s.sts[i]);
             break;
-        };
-    };
+        }
+    }
     key.add('\0');
     t.t = textures.access(key.getbuf());
     if(t.t) return;
     SDL_Surface *ts = texturedata(NULL, &t);
-    if(!ts) { t.t = crosshair; return; };
+    if(!ts) { t.t = crosshair; return; }
     switch(t.type)
     {
         case TEX_DIFFUSE:
@@ -462,11 +462,11 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                         case TEX_DECAL: if(bs->format->BitsPerPixel==32) blenddecal(ts, bs); break;
                         case TEX_GLOW: addglow(ts, bs, s); break;
                         case TEX_NORMAL: addbump(ts, bs); break;
-                    };
+                    }
                     SDL_FreeSurface(bs);
-                };
+                }
                 break;
-            }; // fall through to shader case
+            } // fall through to shader case
 
         case TEX_NORMAL:
             loopv(s.sts)
@@ -481,12 +481,12 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                 {
                     case TEX_SPEC: mergespec(ts, as); break;
                     case TEX_DEPTH: mergedepth(ts, as); break;
-                };
+                }
                 SDL_FreeSurface(as);
                 break; // only one combination
-            };
+            }
             break;
-    };
+    }
     t.t = newtexture(key.getbuf(), ts);
 };
 
@@ -499,12 +499,12 @@ Slot &lookuptexture(int slot, bool load)
     {
         Slot::Tex &t = s.sts[i];
         if(t.combined<0) texcombine(s, i, t, slot<0 && slot>-MAT_EDIT);
-    };
+    }
     s.loaded = true;
     return s;
 };
 
-Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); };
+Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); }
 
 // environment mapped reflections
 
@@ -533,7 +533,7 @@ GLuint cubemapfromsky(int size)
         gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, size, size, GL_UNSIGNED_BYTE, scaled);
         createtexture(!i ? tex : 0, size, size, scaled, 3, true, GL_RGB5, cubemapsides[i].target);
         delete[] pixels;
-    };
+    }
     delete[] scaled;
     return tex;
 };
@@ -556,14 +556,14 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
             s_strncpy(sname, tname, wildcard-tname+1);
             s_strcat(sname, cubemapsides[i].name);
             s_strcat(sname, wildcard+1);
-        };
+        }
         surface[i] = texturedata(sname, NULL, msg);
         if(!surface[i])
         {
             loopj(i) SDL_FreeSurface(surface[j]);
             return NULL;
-        };
-    };
+        }
+    }
     t = &textures[newstring(tname)];
     s_strcpy(t->name, tname);
     t->bpp = surface[0]->format->BitsPerPixel;
@@ -575,7 +575,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
         SDL_Surface *s = surface[i];
         createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, 3, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
         SDL_FreeSurface(s);
-    };
+    }
     return t;
 };
 
@@ -598,7 +598,7 @@ void clearenvmaps()
     {
         glDeleteTextures(1, &skyenvmap);
         skyenvmap = 0;
-    };
+    }
     loopv(envmaps) glDeleteTextures(1, &envmaps[i].tex);
     envmaps.setsize(0);
 };
@@ -635,7 +635,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
                 yaw = 90; pitch = -90; break;
             case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: // up
                 yaw = 90; pitch = 90; break;
-        };
+        }
         drawcubemap(rendersize, o, yaw, pitch);
         glReadPixels(0, 0, rendersize, rendersize, GL_RGB, GL_UNSIGNED_BYTE, pixels);
         uchar *src = pixels, *dst = &pixels[3*rendersize*rendersize-3];
@@ -644,10 +644,10 @@ GLuint genenvmap(const vec &o, int envmapsize)
             loopk(3) swap(uchar, src[k], dst[k]);
             src += 3;
             dst -= 3;
-        };
+        }
         if(texsize<rendersize) gluScaleImage(GL_RGB, rendersize, rendersize, GL_UNSIGNED_BYTE, pixels, texsize, texsize, GL_UNSIGNED_BYTE, pixels);
         createtexture(tex, texsize, texsize, pixels, 3, true, GL_RGB5, side.target);
-    };
+    }
     delete[] pixels;
     glViewport(0, 0, scr_w, scr_h);
     return tex;
@@ -668,7 +668,7 @@ void initenvmaps()
         em.size = ent.attr2;
         em.o = ent.o;
         em.tex = 0;
-    };
+    }
 };
 
 void genenvmaps()
@@ -679,7 +679,7 @@ void genenvmaps()
     {
         envmap &em = envmaps[i];
         em.tex = genenvmap(em.o, em.size ? em.size : envmapsize);
-    };
+    }
 };
 
 ushort closestenvmap(const vec &o)
@@ -694,8 +694,8 @@ ushort closestenvmap(const vec &o)
         {
             minemid = EMID_RESERVED + i;
             mindist = dist;
-        };
-    };
+        }
+    }
     return minemid;
 };
 
@@ -741,9 +741,9 @@ void flipnormalmapy(char *destfile, char *normalfile)           // RGB (jpg/png)
             fputc(nd[2], f);
             fputc(255-nd[1], f);
             fputc(nd[0], f);
-        };
+        }
         fclose(f);
-    };
+    }
     if(ns) SDL_FreeSurface(ns);
 };  
 
@@ -770,10 +770,10 @@ void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR 
                 uchar o[3] = { (uchar)n.x, (uchar)n.y, (uchar)n.z };
                 fwrite(o, 3, 1, f);
                 #undef S
-            };
+            }
             fclose(f);
-        };
-    };
+        }
+    }
     if(hs) SDL_FreeSurface(hs);
     if(ns) SDL_FreeSurface(ns);
 };

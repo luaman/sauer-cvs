@@ -19,7 +19,7 @@ static int parsedigits(ushort *digits, int maxlen, const char *s)
         else if(isdigit(c)) c -= '0';
         else return 0;
         digits[i/(2*sizeof(ushort))] |= c<<(4*(i%(2*sizeof(ushort)))); 
-    };
+    }
     return len;
 };
 
@@ -40,13 +40,13 @@ template<int BI_DIGITS> struct bigint
     digit digits[BI_DIGITS];
 
     bigint() {};
-    bigint(digit n) { if(n) { len = 1; digits[0] = n; } else len = 0; };
-    bigint(const char *s) { len = parsedigits(digits, BI_DIGITS, s); shrink(); };
-    template<int Y_DIGITS> bigint(const bigint<Y_DIGITS> &y) { *this = y; };
+    bigint(digit n) { if(n) { len = 1; digits[0] = n; } else len = 0; }
+    bigint(const char *s) { len = parsedigits(digits, BI_DIGITS, s); shrink(); }
+    template<int Y_DIGITS> bigint(const bigint<Y_DIGITS> &y) { *this = y; }
 
-    void zero() { len = 0; };
+    void zero() { len = 0; }
 
-    void print(FILE *out) const { printdigits(digits, len, out); };
+    void print(FILE *out) const { printdigits(digits, len, out); }
 
     void writedigits(vector<uchar> &buf) const
     {
@@ -57,9 +57,9 @@ template<int BI_DIGITS> struct bigint
             {
                 buf.add(d&0xFF);
                 d >>= 8;
-            };
-        };
-    };
+            }
+        }
+    }
 
     void readdigits(const vector<uchar> &buf, int offset, int newlen)
     {
@@ -70,18 +70,18 @@ template<int BI_DIGITS> struct bigint
             loopj(sizeof(digit)) if(buf.inrange(offset+j)) d |= buf[offset+j]<<(j*8);
             digits[i] = d;
             offset += sizeof(digit);
-        };
-    };
+        }
+    }
  
     template<int Y_DIGITS> bigint &operator=(const bigint<Y_DIGITS> &y)
     {
         len = y.len;
         memcpy(digits, y.digits, len*sizeof(digit));
         return *this;
-    };
+    }
 
-    bool iszero() const { return !len; };
-    bool isone() const { return len==1 && digits[0]==1; };
+    bool iszero() const { return !len; }
+    bool isone() const { return len==1 && digits[0]==1; }
 
     int numbits() const
     {
@@ -93,11 +93,11 @@ template<int BI_DIGITS> struct bigint
             if(last&mask) return bits;
             bits--;
             mask >>= 1;
-        };
+        }
         return 0;
-    };
+    }
 
-    bool hasbit(int n) const { return n/BI_DIGIT_BITS < len && ((digits[n/BI_DIGIT_BITS]>>(n%BI_DIGIT_BITS))&1); };
+    bool hasbit(int n) const { return n/BI_DIGIT_BITS < len && ((digits[n/BI_DIGIT_BITS]>>(n%BI_DIGIT_BITS))&1); }
 
     template<int X_DIGITS, int Y_DIGITS> bigint &add(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -108,12 +108,12 @@ template<int BI_DIGITS> struct bigint
              carry += (i < x.len ? (dbldigit)x.digits[i] : 0) + (i < y.len ? (dbldigit)y.digits[i] : 0);
              digits[i] = (digit)carry;
              carry >>= BI_DIGIT_BITS;
-        };
+        }
         if(i < x.len && this != &x) memcpy(&digits[i], &x.digits[i], (x.len - i)*sizeof(digit));
         len = max(i, maxlen);
         return *this;
-    };
-    template<int Y_DIGITS> bigint &add(const bigint<Y_DIGITS> &y) { return add(*this, y); };
+    }
+    template<int Y_DIGITS> bigint &add(const bigint<Y_DIGITS> &y) { return add(*this, y); }
 
     template<int X_DIGITS, int Y_DIGITS> bigint &sub(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -125,19 +125,19 @@ template<int BI_DIGITS> struct bigint
              borrow = (1<<BI_DIGIT_BITS) + (dbldigit)x.digits[i] - (i<y.len ? (dbldigit)y.digits[i] : 0) - borrow;
              digits[i] = (digit)borrow;
              borrow = (borrow>>BI_DIGIT_BITS)^1;
-        };
+        }
         if(i < x.len && this != &x) memcpy(&digits[i], &x.digits[i], (x.len - i)*sizeof(digit));
         len = x.len;
         shrink();
         return *this;
-    };
-    template<int Y_DIGITS> bigint &sub(const bigint<Y_DIGITS> &y) { return sub(*this, y); };
+    }
+    template<int Y_DIGITS> bigint &sub(const bigint<Y_DIGITS> &y) { return sub(*this, y); }
 
-    void shrink() { while(len && !digits[len-1]) len--; };
+    void shrink() { while(len && !digits[len-1]) len--; }
 
     template<int X_DIGITS, int Y_DIGITS> bigint &mul(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
-        if(!x.len || !y.len) { len = 0; return *this; };
+        if(!x.len || !y.len) { len = 0; return *this; }
         memset(digits, 0, y.len*sizeof(digit));
         loopi(x.len)
         {
@@ -147,13 +147,13 @@ template<int BI_DIGITS> struct bigint
                 carry += (dbldigit)x.digits[i] * (dbldigit)y.digits[j] + (dbldigit)digits[i+j];
                 digits[i+j] = (digit)carry;
                 carry >>= BI_DIGIT_BITS;
-            };
+            }
             digits[i+y.len] = carry;
-        };
+        }
         len = x.len + y.len;
         shrink();
         return *this;
-    };
+    }
 
     template<int X_DIGITS> bigint &rshift(const bigint<X_DIGITS> &x, int n)
     {
@@ -166,13 +166,13 @@ template<int BI_DIGITS> struct bigint
             digit tmp = x.digits[i+dig+1];
             digits[i] = digit((tmp<<(BI_DIGIT_BITS-n)) | carry);
             carry = digit(tmp>>n);
-        };
+        }
         digits[len-dig-1] = carry;
         len -= dig + (n>>BI_DIGIT_BITS);
         shrink();
         return *this;
-    };
-    bigint &rshift(int n) { return rshift(*this, n); };
+    }
+    bigint &rshift(int n) { return rshift(*this, n); }
 
     template<int X_DIGITS> bigint &lshift(const bigint<X_DIGITS> &x, int n)
     {
@@ -185,21 +185,21 @@ template<int BI_DIGITS> struct bigint
             digit tmp = x.digits[i];
             digits[i+dig] = digit((tmp<<n) | carry);
             carry = digit(tmp>>(BI_DIGIT_BITS-n));
-        };
+        }
         len += dig;
         if(carry) digits[len++] = carry;
         if(dig) memset(digits, 0, dig*sizeof(digit));
         return *this;
-    };
-    bigint &lshift(int n) { return lshift(*this, n); };
+    }
+    bigint &lshift(int n) { return lshift(*this, n); }
 
     template<int Y_DIGITS> bool operator==(const bigint<Y_DIGITS> &y) const
     {
         if(len!=y.len) return false;
         for(int i = len-1; i>=0; i--) if(digits[i]!=y.digits[i]) return false;
         return true;
-    };
-    template<int Y_DIGITS> bool operator!=(const bigint<Y_DIGITS> &y) const { return !(*this==y); };
+    }
+    template<int Y_DIGITS> bool operator!=(const bigint<Y_DIGITS> &y) const { return !(*this==y); }
     template<int Y_DIGITS> bool operator<(const bigint<Y_DIGITS> &y) const
     {
         if(len<y.len) return true;
@@ -208,12 +208,12 @@ template<int BI_DIGITS> struct bigint
         {
             if(digits[i]<y.digits[i]) return true;
             if(digits[i]>y.digits[i]) return false;
-        };
+        }
         return false;
-    };
-    template<int Y_DIGITS> bool operator>(const bigint<Y_DIGITS> &y) const { return y<*this; };
-    template<int Y_DIGITS> bool operator<=(const bigint<Y_DIGITS> &y) const { return !(y<*this); };
-    template<int Y_DIGITS> bool operator>=(const bigint<Y_DIGITS> &y) const { return !(*this<y); };
+    }
+    template<int Y_DIGITS> bool operator>(const bigint<Y_DIGITS> &y) const { return y<*this; }
+    template<int Y_DIGITS> bool operator<=(const bigint<Y_DIGITS> &y) const { return !(y<*this); }
+    template<int Y_DIGITS> bool operator>=(const bigint<Y_DIGITS> &y) const { return !(*this<y); }
 };
 
 #define GF_BITS         192
@@ -238,26 +238,26 @@ struct gfield : gfint
     { 
         gfint::operator=(y);
         return *this;
-    };
+    }
 
     template<int X_DIGITS, int Y_DIGITS> gfield &add(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
         gfint::add(x, y);
         if(*this >= P) gfint::sub(*this, P);
         return *this;
-    };
-    template<int Y_DIGITS> gfield &add(const bigint<Y_DIGITS> &y) { return add(*this, y); };
+    }
+    template<int Y_DIGITS> gfield &add(const bigint<Y_DIGITS> &y) { return add(*this, y); }
 
-    template<int X_DIGITS> gfield &mul2(const bigint<X_DIGITS> &x) { return add(x, x); }; 
-    gfield &mul2() { return mul2(*this); };
+    template<int X_DIGITS> gfield &mul2(const bigint<X_DIGITS> &x) { return add(x, x); } 
+    gfield &mul2() { return mul2(*this); }
 
     template<int X_DIGITS> gfield &div2(const bigint<X_DIGITS> &x) 
     {
         if(hasbit(0)) { gfint::add(x, P); rshift(1); } 
         else rshift(x, 1);
         return *this;
-    };
-    gfield &div2() { return div2(*this); };
+    }
+    gfield &div2() { return div2(*this); }
 
     template<int X_DIGITS, int Y_DIGITS> gfield &sub(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -269,18 +269,18 @@ struct gfield : gfint
         }
         else gfint::sub(x, y);
         return *this;
-    };
-    template<int Y_DIGITS> gfield &sub(const bigint<Y_DIGITS> &y) { return sub(*this, y); };
+    }
+    template<int Y_DIGITS> gfield &sub(const bigint<Y_DIGITS> &y) { return sub(*this, y); }
 
     template<int X_DIGITS> gfield &neg(const bigint<X_DIGITS> &x)
     {
         gfint::sub(P, x);
         return *this;
-    };
-    gfield &neg() { return neg(*this); };
+    }
+    gfield &neg() { return neg(*this); }
 
-    template<int X_DIGITS> gfield &square(const bigint<X_DIGITS> &x) { return mul(x, x); };
-    gfield &square() { return square(*this); };
+    template<int X_DIGITS> gfield &square(const bigint<X_DIGITS> &x) { return mul(x, x); }
+    gfield &square() { return square(*this); }
 
     template<int X_DIGITS, int Y_DIGITS> gfield &mul(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -288,8 +288,8 @@ struct gfield : gfint
         result.mul(x, y);
         reduce(result);
         return *this;
-    };
-    template<int Y_DIGITS> gfield &mul(const bigint<Y_DIGITS> &y) { return mul(*this, y); };
+    }
+    template<int Y_DIGITS> gfield &mul(const bigint<Y_DIGITS> &y) { return mul(*this, y); }
 
     template<int RESULT_DIGITS> void reduce(const bigint<RESULT_DIGITS> &result)
     {
@@ -327,14 +327,14 @@ struct gfield : gfint
                     s.len = GF_DIGITS;
                     s.shrink();
                     add(s);
-                };
-            };
+                }
+            }
         }
         else if(*this >= P) gfint::sub(*this, P);
 #else
 #error Unsupported GF
 #endif
-    };
+    }
 
     template<int X_DIGITS, int Y_DIGITS> gfield &pow(const bigint<X_DIGITS> &x, const bigint<Y_DIGITS> &y)
     {
@@ -345,15 +345,15 @@ struct gfield : gfint
             len = 1; 
             digits[0] = 1; 
             if(!y.len) return *this;
-        };
+        }
         for(int i = 1, j = y.numbits(); i < j; i++)
         {
             a.square();
             if(y.hasbit(i)) mul(a);
-        };
+        }
         return *this;
-    };
-    template<int Y_DIGITS> gfield &pow(const bigint<Y_DIGITS> &y) { return pow(*this, y); };
+    }
+    template<int Y_DIGITS> gfield &pow(const bigint<Y_DIGITS> &y) { return pow(*this, y); }
     
     bool invert(const gfield &x)
     {
@@ -367,11 +367,11 @@ struct gfield : gfint
                 ushift++;
                 if(A.hasbit(ashift))
                 { 
-                    if(ashift) { A.rshift(ashift); ashift = 0; }; 
+                    if(ashift) { A.rshift(ashift); ashift = 0; } 
                     A.add(P); 
-                };
+                }
                 ashift++;
-            };
+            }
             if(ushift) u.rshift(ushift);
             if(ashift) A.rshift(ashift);
             int vshift = 0, cshift = 0;
@@ -380,11 +380,11 @@ struct gfield : gfint
                 vshift++;
                 if(C.hasbit(cshift))
                 { 
-                    if(cshift) { C.rshift(cshift); cshift = 0; }; 
+                    if(cshift) { C.rshift(cshift); cshift = 0; } 
                     C.add(P); 
-                };
+                }
                 cshift++;
-            };
+            }
             if(vshift) v.rshift(vshift);
             if(cshift) C.rshift(cshift);
             if(u >= v)
@@ -398,14 +398,14 @@ struct gfield : gfint
                 v.sub(v, u);
                 if(C < A) C.add(P);
                 C.sub(A);
-            };    
-        };
+            }    
+        }
         if(C >= P) gfint::sub(C, P);
-        else { len = C.len; memcpy(digits, C.digits, len*sizeof(digit)); };
+        else { len = C.len; memcpy(digits, C.digits, len*sizeof(digit)); }
         ASSERT(*this < P);
         return true;
-    };    
-    void invert() { invert(*this); };
+    }    
+    void invert() { invert(*this); }
 
     template<int X_DIGITS> static int legendre(const bigint<X_DIGITS> &x)
     {
@@ -415,12 +415,12 @@ struct gfield : gfint
         if(!L.len) return 0;
         if(L.len==1) return 1;
         return -1;
-    };
-    int legendre() const { return legendre(*this); };
+    }
+    int legendre() const { return legendre(*this); }
 
     bool sqrt(const gfield &x)
     {
-        if(!x.len) { len = 0; return true; };
+        if(!x.len) { len = 0; return true; }
 #if GF_BITS==224
 #error Unsupported GF
 #else
@@ -431,10 +431,10 @@ struct gfield : gfint
             case 0: len = 0; return true;
             case -1: return false;
             default: pow(x, Padd1div4); return true;
-        }; 
+        } 
 #endif
-    };
-    bool sqrt() { return sqrt(*this); };
+    }
+    bool sqrt() { return sqrt(*this); }
 };
 
 struct ecjacobian
@@ -452,7 +452,7 @@ struct ecjacobian
     void mul2()
     {
         if(z.iszero()) return;
-        else if(y.iszero()) { *this = origin; return; };
+        else if(y.iszero()) { *this = origin; return; }
         gfield a, b, c, d;
         d.sub(x, c.square(z));
         d.mul(c.add(x));
@@ -464,12 +464,12 @@ struct ecjacobian
         x.square(c).sub(d).sub(d);
         a.square(b).add(a);
         y.sub(d, x).mul(c).sub(a);
-    };
+    }
 
     void add(const ecjacobian &q)
     {
         if(q.z.iszero()) return;
-        else if(z.iszero()) { *this = q; return; };
+        else if(z.iszero()) { *this = q; return; }
         gfield a, b, c, d, e, f;
         a.square(z);
         b.mul(q.y, a).mul(z);
@@ -489,13 +489,13 @@ struct ecjacobian
             d.add(f, b);
             a.sub(e, a);
             b.sub(f, b);
-        };
-        if(a.iszero()) { if(b.iszero()) mul2(); else *this = origin; return; };
+        }
+        if(a.iszero()) { if(b.iszero()) mul2(); else *this = origin; return; }
         if(!q.z.isone()) z.mul(q.z);
         z.mul(a);
         x.square(b).sub(f.mul(c, e.square(a)));
         y.sub(f, x).sub(x).mul(b).sub(e.mul(a).mul(d)).div2();
-    };
+    }
  
     template<int Q_DIGITS> void mul(const ecjacobian &p, const bigint<Q_DIGITS> q)
     {
@@ -504,9 +504,9 @@ struct ecjacobian
         {
             mul2();
             if(q.hasbit(i)) add(p);
-        };
-    };
-    template<int Q_DIGITS> void mul(const bigint<Q_DIGITS> q) { ecjacobian tmp(*this); mul(tmp, q); };
+        }
+    }
+    template<int Q_DIGITS> void mul(const bigint<Q_DIGITS> q) { ecjacobian tmp(*this); mul(tmp, q); }
 
     void normalize()
     {
@@ -517,16 +517,16 @@ struct ecjacobian
         x.mul(tmp);
         y.mul(tmp).mul(z);
         z = bigint<1>(1);
-    };
+    }
 
     bool calcy(bool ybit)
     {
         gfield y2, tmp;
         y2.square(x).mul(x).sub(tmp.add(x, x).add(x)).add(B);
-        if(!y.sqrt(y2)) { y.zero(); return false; };
+        if(!y.sqrt(y2)) { y.zero(); return false; }
         if(y.hasbit(0) != ybit) y.neg();
         return true;
-    };
+    }
     
     void write(vector<uchar> &buf)
     {
@@ -534,7 +534,7 @@ struct ecjacobian
         buf.add(y.hasbit(0) ? 0x80 : 0);
         x.writedigits(buf);
         buf[0] |= buf.length()-1;
-    };
+    }
 
     void read(const vector<uchar> &buf)
     {
@@ -543,7 +543,7 @@ struct ecjacobian
         x.readdigits(buf, 1, (len+sizeof(gfield::digit)-1)/sizeof(gfield::digit));
         calcy(ybit);
         z = bigint<1>(1);
-    };
+    }
 };
 
 const ecjacobian ecjacobian::origin(gfield((gfield::digit)1), gfield((gfield::digit)1), gfield((gfield::digit)0));
@@ -632,7 +632,7 @@ void testgf(char *s)
     printf("n^10000: "); n.print(stdout); putchar('\n');
     n = gfield(s);
     if(!n.sqrt()) puts("no square root!");
-    else { printf("sqrt(n): "); n.print(stdout); putchar('\n'); };
+    else { printf("sqrt(n): "); n.print(stdout); putchar('\n'); }
 
     gfield x(s);
     printf("x: "); x.print(stdout); putchar('\n');

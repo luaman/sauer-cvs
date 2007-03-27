@@ -128,9 +128,9 @@ void mapmodelcompat(int *rad, int *h, int *tex, char *name, char *shadow)
     mmodel(name, tex);
 };
 
-void mapmodelreset() { mapmodels.setsize(0); };
+void mapmodelreset() { mapmodels.setsize(0); }
 
-mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i] : *(mapmodelinfo *)0; };
+mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i] : *(mapmodelinfo *)0; }
 
 COMMAND(mmodel, "si");
 COMMANDN(mapmodel, mapmodelcompat, "iiiss");
@@ -148,7 +148,7 @@ model *loadmodel(const char *name, int i)
         mapmodelinfo &mmi = mapmodels[i];
         if(mmi.m) return mmi.m;
         name = mmi.name;
-    };
+    }
     model **mm = mdllookup.access(name);
     model *m;
     if(mm) m = *mm;
@@ -166,11 +166,11 @@ model *loadmodel(const char *name, int i)
                 delete m;
                 loadingmodel = NULL;
                 return NULL; 
-            };
-        };
+            }
+        }
         loadingmodel = NULL;
         mdllookup.access(m->name(), &m);
-    };
+    }
     if(mapmodels.inrange(i) && !mapmodels[i].m) mapmodels[i].m = m;
     return m;
 };
@@ -260,9 +260,9 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             else if(reflecting && center.z+radius<=reflecting) return;
             if((reflecting || refracting) && center.dist(camera1->o)-radius>reflectdist) return;
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
-        };
+        }
         if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
-    };
+    }
     if(showboundingbox)
     {
         if(d) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
@@ -274,8 +274,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             rotatebb(center, radius, int(yaw));
             center.add(vec(x, y, z));
             render3dbox(center, radius.z, radius.z, radius.x, radius.y);
-        };
-    };
+        }
+    }
 
     if(d) lightreaching(d->o, color, dir);
     m->setskin(tex);  
@@ -300,14 +300,14 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
 
         if(refracting) setfogplane(1, refracting - z);
-    };
+    }
 
     model *vwep = NULL;
     if(vwepmdl)
     {
         vwep = loadmodel(vwepmdl);
         if(vwep->type()!=m->type()) vwep = NULL;
-    };
+    }
 
     if(!m->cullface) glDisable(GL_CULL_FACE);
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
@@ -352,7 +352,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST);
-    };
+    }
 };
 
 void abovemodel(vec &o, const char *mdl)
@@ -384,13 +384,13 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
             { \
                 strcpy(path+strlen(path)-3, "png"); \
                 ifnoload(tex, path) return; \
-            }; \
-        }; \
-    };
+            } \
+        } \
+    }
      
     masks = crosshair;
     tryload(skin, skinpath, "skin");
-    if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "masks"); };
+    if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "masks"); }
 };
 
 // convenient function that covers the usual anims for players/monsters/npcs
@@ -409,7 +409,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
         basetime = lastaction;
         int t = lastmillis-lastaction;
         if(t<0 || t>20000) return;
-        if(t>(r-1)*100) { anim = ANIM_DEAD|ANIM_LOOP; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t/16.0f; }; };
+        if(t>(r-1)*100) { anim = ANIM_DEAD|ANIM_LOOP; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t/16.0f; } }
         if(mz<-1000) return;
     }
     else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) { anim = ANIM_EDIT|ANIM_LOOP; }
@@ -419,9 +419,9 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
     {
         if(d->timeinair>100)            { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP|ANIM_END; }
         else if(!d->move && !d->strafe) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE|ANIM_LOOP; }
-        else                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN|ANIM_LOOP; speed = 5500/d->maxspeed; };
+        else                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN|ANIM_LOOP; speed = 5500/d->maxspeed; }
         if(attack) basetime = lastaction;
-    };
+    }
     int flags = MDL_CULL_VFC | MDL_CULL_OCCLUDED;
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;

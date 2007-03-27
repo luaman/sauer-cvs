@@ -4,8 +4,8 @@
 #include "pch.h"
 #include "engine.h"
 
-void itoa(char *s, int i) { s_sprintf(s)("%d", i); };
-char *exchangestr(char *o, const char *n) { delete[] o; return newstring(n); };
+void itoa(char *s, int i) { s_sprintf(s)("%d", i); }
+char *exchangestr(char *o, const char *n) { delete[] o; return newstring(n); }
 
 typedef hashtable<char *, ident> identtable;
 
@@ -22,7 +22,7 @@ void clearstack(ident &id)
         identstack *tmp = stack;
         stack = stack->next;
         delete tmp;
-    };
+    }
     id._stack = NULL;
 };
 
@@ -46,7 +46,7 @@ void clearoverrides()
                     *i._storage = i._override;
                     if(i._fun) ((void (__cdecl *)())i._fun)();
                     break;
-            };
+            }
             i._override = NO_OVERRIDE;
         });
 };
@@ -78,7 +78,7 @@ void pusha(char *name, char *action)
         name = newstring(name);
         ident init(ID_ALIAS, name, newstring(""), persistidents);
         id = idents->access(name, &init);
-    };
+    }
     pushident(*id, action);
 };
 
@@ -120,11 +120,11 @@ void aliasa(char *name, char *action)
         {
             if(b->_override != NO_OVERRIDE) b->_override = NO_OVERRIDE;
             if(b->_persist != persistidents) b->_persist = persistidents;
-        };
-    };
+        }
+    }
 };
 
-void alias(char *name, char *action) { aliasa(name, newstring(action)); };
+void alias(char *name, char *action) { aliasa(name, newstring(action)); }
 
 COMMAND(alias, "ss");
 
@@ -162,8 +162,8 @@ int getvarmax(char *name)
     GETVAR(id, name, 0);
     return id->_max;
 };
-bool identexists(char *name) { return idents->access(name)!=NULL; };
-ident *getident(char *name) { return idents->access(name); };
+bool identexists(char *name) { return idents->access(name)!=NULL; }
+ident *getident(char *name) { return idents->access(name); }
 
 const char *getalias(char *name)
 {
@@ -198,7 +198,7 @@ void parsemacro(char *&p, int level, vector<char> &wordbuf)
     {
         while(escape--) wordbuf.add('@');
         return;
-    };
+    }
     if(*p=='(')
     {
         char *ret = parseexp(p, ')');
@@ -206,9 +206,9 @@ void parsemacro(char *&p, int level, vector<char> &wordbuf)
         {
             for(char *sub = ret; *sub; ) wordbuf.add(*sub++);
             delete[] ret;
-        };
+        }
         return;
-    };
+    }
     char *ident = p;
     while(isalnum(*p) || *p=='_') p++;
     int c = *p;
@@ -231,7 +231,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         {
             parsemacro(p, brak, wordbuf);
             continue;
-        };
+        }
         if(c=='\"')
         {
             wordbuf.add(c);
@@ -239,12 +239,12 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
             while(p < end) wordbuf.add(*p++);
             if(*p=='\"') wordbuf.add(*p++);
             continue;
-        };
+        }
         if(c=='/' && *p=='/')
         {
             p += strcspn(p, "\n\0");
             continue;
-        };
+        }
             
         if(c==left) brak++;
         else if(c==right) brak--;
@@ -255,9 +255,9 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
             wordbuf.setsize(0); 
             bufnest--;
             return NULL; 
-        };
+        }
         wordbuf.add(c);
-    };
+    }
     wordbuf.pop();
     char *s;
     if(left=='(')
@@ -270,7 +270,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     else
     {
         s = newstring(wordbuf.getbuf(), wordbuf.length());
-    };
+    }
     wordbuf.setsize(0);
     bufnest--;
     return s;
@@ -281,9 +281,9 @@ char *lookup(char *n)                           // find value of ident reference
     ident *id = idents->access(n+1);
     if(id) switch(id->_type)
     {
-        case ID_VAR: { string t; itoa(t, *(id->_storage)); return exchangestr(n, t); };
+        case ID_VAR: { string t; itoa(t, *(id->_storage)); return exchangestr(n, t); }
         case ID_ALIAS: return exchangestr(n, id->_action);
-    };
+    }
     conoutf("unknown alias lookup: %s", n+1);
     return n;
 };
@@ -295,7 +295,7 @@ char *parseword(char *&p)                       // parse single argument, includ
         p += strspn(p, " \t\r");
         if(p[0]!='/' || p[1]!='/') break;
         p += strcspn(p, "\n\0");  
-    };
+    }
     if(*p=='\"')
     {
         p++;
@@ -304,7 +304,7 @@ char *parseword(char *&p)                       // parse single argument, includ
         char *s = newstring(word, p-word);
         if(*p=='\"') p++;
         return s;
-    };
+    }
     if(*p=='(') return parseexp(p, ')');
     if(*p=='[') return parseexp(p, ']');
     char *word = p;
@@ -312,9 +312,9 @@ char *parseword(char *&p)                       // parse single argument, includ
     {
         p += strcspn(p, "/; \t\r\n\0");
         if(p[0]!='/' || p[1]=='/') break;
-        else if(p[1]=='\0') { p++; break; };
+        else if(p[1]=='\0') { p++; break; }
         p += 2;
-    };
+    }
     if(p-word==0) return NULL;
     char *s = newstring(word, p-word);
     if(*s=='$') return lookup(s);               // substitute variables
@@ -331,7 +331,7 @@ char *conc(char **w, int n, bool space)
         strcat(r, w[i]);  // make string-list out of all arguments
         if(i==n-1) break;
         if(space) strcat(r, " ");
-    };
+    }
     return r;
 };
 
@@ -359,7 +359,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
             char *s = parseword(p);             // parse and evaluate exps
             if(s) w[i] = s;
             else numargs = i;
-        };
+        }
         
         p += strcspn(p, ";\n\0");
         cont = *p++!=0;                         // more statements if this isn't the end of the string
@@ -397,11 +397,11 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                             id->run(&r); 
                             delete[] r; 
                             break;
-                        };
-                    };
+                        }
+                    }
                     setretval(commandret);
                     break;
-                };
+                }
 
                 case ID_COMMAND:                     // game defined commands
                 {    
@@ -421,7 +421,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         case 'V': v[n++] = w+1; nstor[n].i = numargs-1; v[n] = &nstor[n].i; n++; break;
                         case 'C': v[n++] = conc(w+1, numargs-1, true);  break;
                         default: fatal("builtin declared with illegal type");
-                    };
+                    }
                     switch(n)
                     {
                         case 0: ((void (__cdecl *)()                                      )id->_fun)();                             break;
@@ -433,11 +433,11 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         case 6: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4], v[5]); break;
 
                         default: fatal("builtin declared with too many args (use V?)");
-                    };
+                    }
                     if(id->_narg[0]=='C') delete[] (char *)v[0];
                     setretval(commandret);
                     break;
-                };
+                }
 
                 case ID_VAR:                        // game defined variables 
                     if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
@@ -449,7 +449,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                             {
                                 conoutf("cannot override persistent var %s", id->_name);
                                 break;
-                            };
+                            }
                             if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
                         }
                         else if(id->_override!=NO_OVERRIDE) id->_override = NO_OVERRIDE;
@@ -461,7 +461,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         }
                         *id->_storage = i1;
                         if(id->_fun) ((void (__cdecl *)())id->_fun)();            // call trigger function if available
-                    };
+                    }
                     break;
                     
                 case ID_ALIAS:                              // alias, also used as functions and (global) variables
@@ -471,7 +471,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
                         pusha(t, w[i]);
                         w[i] = NULL;
-                    };
+                    }
                     _numargs = numargs-1;
                     bool wasoverriding = overrideidents;
                     if(id->_override!=NO_OVERRIDE) overrideidents = true;
@@ -485,13 +485,13 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     {
                         s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
                         pop(t);
-                    };
+                    }
                     break;
-                };
-            };
-        };
+                }
+            }
+        }
         loopj(numargs) if(w[j]) delete[] w[j];
-    };
+    }
     return retval;
 };
 
@@ -499,7 +499,7 @@ int execute(char *p)
 {
     char *ret = executeret(p);
     int i = 0; 
-    if(ret) { i = parseint(ret); delete[] ret; };
+    if(ret) { i = parseint(ret); delete[] ret; }
     return i;
 };
 
@@ -530,7 +530,7 @@ void writecfg()
         if(id._type==ID_VAR && id._persist)
         {
             fprintf(f, "%s %d\n", id._name, *id._storage);
-        };
+        }
     );
     fprintf(f, "\n");
     writebinds(f);
@@ -539,7 +539,7 @@ void writecfg()
         if(id._type==ID_ALIAS && id._persist && id._override==NO_OVERRIDE && !strstr(id._name, "nextmap_") && id._action[0])
         {
             fprintf(f, "\"%s\" = [%s]\n", id._name, id._action);
-        };
+        }
     );
     fprintf(f, "\n");
     writecompletions(f);
@@ -551,16 +551,16 @@ COMMAND(writecfg, "");
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.
 
-void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); };
-void intret            (int v) { string b; itoa(b, v); commandret = newstring(b); };
+void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); }
+void intret            (int v) { string b; itoa(b, v); commandret = newstring(b); }
 
 ICOMMAND(if, "sss", commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
 
-ICOMMAND(loop, "sss", { int n = parseint(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); }; });
+ICOMMAND(loop, "sss", { int n = parseint(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); } });
 ICOMMAND(while, "ss", while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
 
-void concat(const char *s) { commandret = newstring(s); };
-void result(const char *s) { commandret = newstring(s); };
+void concat(const char *s) { commandret = newstring(s); }
+void result(const char *s) { commandret = newstring(s); }
 
 void concatword(char **args, int *numargs)
 {
@@ -586,7 +586,7 @@ void format(char **args, int *numargs)
             else s.add(i);
         }
         else s.add(c);
-    };
+    }
     s.add('\0');
     result(s.getbuf());
 };
@@ -612,7 +612,7 @@ void at(char *s, int *pos)
     {
         e++;
         if(s[-1] == '"') --s;
-    };
+    }
     *s = '\0';
     result(e);
 };
@@ -631,31 +631,31 @@ COMMAND(at, "si");
 COMMAND(listlen, "s");
 COMMANDN(getalias, getalias_, "s");
 
-void add  (int *a, int *b) { intret(*a + *b); };          COMMANDN(+, add, "ii");
-void mul  (int *a, int *b) { intret(*a * *b); };          COMMANDN(*, mul, "ii");
-void sub  (int *a, int *b) { intret(*a - *b); };          COMMANDN(-, sub, "ii");
-void divi (int *a, int *b) { intret(*b ? *a / *b : 0); }; COMMANDN(div, divi, "ii");
-void mod  (int *a, int *b) { intret(*b ? *a % *b : 0); }; COMMAND(mod, "ii");
-void equal(int *a, int *b) { intret((int)(*a == *b)); };  COMMANDN(=, equal, "ii");
-void nequal(int *a, int *b) { intret((int)(*a != *b)); }; COMMANDN(!=, nequal, "ii");
-void lt   (int *a, int *b) { intret((int)(*a < *b)); };   COMMANDN(<, lt, "ii");
-void gt   (int *a, int *b) { intret((int)(*a > *b)); };   COMMANDN(>, gt, "ii");
-void lte   (int *a, int *b) { intret((int)(*a <= *b)); }; COMMANDN(<=, lte, "ii");
-void gte   (int *a, int *b) { intret((int)(*a >= *b)); }; COMMANDN(>=, gte, "ii");
-void xora (int *a, int *b) { intret(*a ^ *b); };          COMMANDN(^, xora, "ii");
-void nota (int *a)         { intret(*a == 0); };          COMMANDN(!, nota, "i");
+void add  (int *a, int *b) { intret(*a + *b); }          COMMANDN(+, add, "ii");
+void mul  (int *a, int *b) { intret(*a * *b); }          COMMANDN(*, mul, "ii");
+void sub  (int *a, int *b) { intret(*a - *b); }          COMMANDN(-, sub, "ii");
+void divi (int *a, int *b) { intret(*b ? *a / *b : 0); } COMMANDN(div, divi, "ii");
+void mod  (int *a, int *b) { intret(*b ? *a % *b : 0); } COMMAND(mod, "ii");
+void equal(int *a, int *b) { intret((int)(*a == *b)); }  COMMANDN(=, equal, "ii");
+void nequal(int *a, int *b) { intret((int)(*a != *b)); } COMMANDN(!=, nequal, "ii");
+void lt   (int *a, int *b) { intret((int)(*a < *b)); }   COMMANDN(<, lt, "ii");
+void gt   (int *a, int *b) { intret((int)(*a > *b)); }   COMMANDN(>, gt, "ii");
+void lte   (int *a, int *b) { intret((int)(*a <= *b)); } COMMANDN(<=, lte, "ii");
+void gte   (int *a, int *b) { intret((int)(*a >= *b)); } COMMANDN(>=, gte, "ii");
+void xora (int *a, int *b) { intret(*a ^ *b); }          COMMANDN(^, xora, "ii");
+void nota (int *a)         { intret(*a == 0); }          COMMANDN(!, nota, "i");
 
-void anda (char *a, char *b) { intret(execute(a)!=0 && execute(b)!=0); };
-void ora  (char *a, char *b) { intret(execute(a)!=0 || execute(b)!=0); };
+void anda (char *a, char *b) { intret(execute(a)!=0 && execute(b)!=0); }
+void ora  (char *a, char *b) { intret(execute(a)!=0 || execute(b)!=0); }
 
 COMMANDN(&&, anda, "ss");
 COMMANDN(||, ora, "ss");
 
-void rndn(int *a)          { intret(*a>0 ? rnd(*a) : 0); };  COMMANDN(rnd, rndn, "i");
+void rndn(int *a)          { intret(*a>0 ? rnd(*a) : 0); }  COMMANDN(rnd, rndn, "i");
 
-void strcmpa(char *a, char *b) { intret(strcmp(a,b)==0); };  COMMANDN(strcmp, strcmpa, "ss");
+void strcmpa(char *a, char *b) { intret(strcmp(a,b)==0); }  COMMANDN(strcmp, strcmpa, "ss");
 
 ICOMMAND(echo, "C", conoutf("\f1%s", args[0]));
 
-void strstra(char *a, char *b) { char *s = strstr(a, b); intret(s ? s-a : -1); }; COMMANDN(strstr, strstra, "ss");
+void strstra(char *a, char *b) { char *s = strstr(a, b); intret(s ? s-a : -1); } COMMANDN(strstr, strstra, "ss");
 

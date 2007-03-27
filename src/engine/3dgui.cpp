@@ -55,7 +55,7 @@ bool menukey(int code, bool isdown, int cooked)
             if(fieldpos > 0) 
             {   fieldpos--;
                 memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
-            };
+            }
 			break;
 		default:
             memmove(fieldtext+fieldpos+1, fieldtext+fieldpos, len-fieldpos); //length then limited inside field draw code
@@ -89,7 +89,7 @@ struct gui : g3d_gui
     static void reset()
     {
         lists.setsize(0);
-    };
+    }
 
     static int ty, tx, tpos, *tcurrent, tcolor; //tracking tab size and position since uses different layout method...
 
@@ -99,10 +99,10 @@ struct gui : g3d_gui
         {
             if(layoutpass && !tpos) tcurrent = NULL; //disable tabs because you didn't start with one
             if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab) tab(NULL, tcolor); 
-        };
-    };
+        }
+    }
 
-    bool visible() { return (!tcurrent || tpos==*tcurrent) && !layoutpass; };
+    bool visible() { return (!tcurrent || tpos==*tcurrent) && !layoutpass; }
 
     //tab is always at top of page
     void tab(const char *name, int color) 
@@ -131,16 +131,16 @@ struct gui : g3d_gui
             {	
                 *tcurrent = tpos; //roll-over to switch tab
                 color = 0xFF0000;
-            };
+            }
             
             skin_(x1-skinx[visible()?2:6]*SKIN_SCALE, y1-skiny[1]*SKIN_SCALE, w, h, visible()?10:19, 9);
             text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, color, visible());
-        };
+        }
         tx += w + ((skinx[5]-skinx[4]) + (skinx[3]-skinx[2]))*SKIN_SCALE; 
-    };
+    }
 
-    bool ishorizontal() const { return curdepth&1; };
-    bool isvertical() const { return !ishorizontal(); };
+    bool ishorizontal() const { return curdepth&1; }
+    bool isvertical() const { return !ishorizontal(); }
 
     void pushlist()
     {	
@@ -150,7 +150,7 @@ struct gui : g3d_gui
             {
                 lists[curlist].w = xsize;
                 lists[curlist].h = ysize;
-            };
+            }
             list &l = lists.add();
             l.parent = curlist;
             curlist = lists.length()-1;
@@ -161,9 +161,9 @@ struct gui : g3d_gui
             curlist = nextlist++;
             xsize = lists[curlist].w;
             ysize = lists[curlist].h;
-        };
+        }
         curdepth++;	
-    };
+    }
 
     void poplist()
     {
@@ -172,7 +172,7 @@ struct gui : g3d_gui
         {
             l.w = xsize;
             l.h = ysize;
-        };
+        }
         curlist = l.parent;
         curdepth--;
         if(curlist>=0)
@@ -182,20 +182,20 @@ struct gui : g3d_gui
             if(ishorizontal()) cury -= l.h;
             else curx -= l.w;
             layout(l.w, l.h);
-        };
-    };
+        }
+    }
 
-    int text  (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, false); };
-    int button(const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, true, false); };
-    int title (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, true); };
+    int text  (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, false); }
+    int button(const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, true, false); }
+    int title (const char *text, int color, const char *icon) { autotab(); return button_(text, color, icon, false, true); }
 
-    void separator() { autotab(); line_(5); };
-    void progress(float percent) { autotab(); line_(FONTH*2/5, percent); };
+    void separator() { autotab(); line_(5); }
+    void progress(float percent) { autotab(); line_(FONTH*2/5, percent); }
 
     //use to set min size (useful when you have progress bars)
-    void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); };
+    void strut(int size) { layout(isvertical() ? size*FONTH : 0, isvertical() ? 0 : size*FONTH); }
     //add space between list items
-    void space(int size) { layout(isvertical() ? 0 : size*FONTH, isvertical() ? size*FONTH : 0); };
+    void space(int size) { layout(isvertical() ? 0 : size*FONTH, isvertical() ? size*FONTH : 0); }
 
     int layout(int w, int h)
     {
@@ -210,7 +210,7 @@ struct gui : g3d_gui
             {
                 xsize = max(xsize, w);
                 ysize += h;
-            };
+            }
             return 0;
         }
         else
@@ -219,15 +219,15 @@ struct gui : g3d_gui
             if(ishorizontal()) curx += w;
             else cury += h;
             return (hit && visible()) ? mousebuttons|G3D_ROLLOVER : 0;
-        };
-    };
+        }
+    }
 
     bool ishit(int w, int h, int x = curx, int y = cury)
     {
         if(ishorizontal()) h = ysize;
         else w = xsize;
         return windowhit==this && hitx>=x && hity>=y && hitx<x+w && hity<y+h;
-    };
+    }
 
     int image(const char *path, float scale, bool overlaid)
     {
@@ -238,7 +238,7 @@ struct gui : g3d_gui
         int size = (int)(scale*2*FONTH)-SHADOW;
         if(visible()) icon_(t, overlaid, false, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
         return layout(size+SHADOW, size+SHADOW);
-    };
+    }
     
     int texture(Texture *t, float scale)
     {
@@ -247,7 +247,7 @@ struct gui : g3d_gui
         int size = (int)(scale*2*FONTH)-SHADOW;
         if(t!=crosshair && visible()) icon_(t, true, true, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
         return layout(size+SHADOW, size+SHADOW);
-    };
+    }
 
     void slider(int &val, int vmin, int vmax, int color)
     {	
@@ -273,7 +273,7 @@ struct gui : g3d_gui
                 hit = ishit(xsize, FONTH, x, y);
                 px = x + ((xsize-w)*(val-vmin))/(vmax-vmin);
                 py = y;
-            };
+            }
         
             if(hit) color = 0xFF0000;
             text_(label, px, py, color, hit && actionon);
@@ -284,9 +284,9 @@ struct gui : g3d_gui
                 else vnew = int(vnew*(hitx-x)/xsize);
                 vnew += vmin;
                 if(vnew != val) val = vnew;
-            };
-        };
-    };
+            }
+        }
+    }
 
     char *field(char *text, int color, int length)
 	{	
@@ -299,7 +299,7 @@ struct gui : g3d_gui
             {
                 s_strcpy(fieldtext, text);
                 fieldref = text;
-            };
+            }
             if(fieldref==text) 
             {
                 if((int)strlen(fieldtext) > length) fieldtext[length] = '\0';
@@ -312,7 +312,7 @@ struct gui : g3d_gui
                 text = fieldtext;
                 fieldactive = hit;
                 if(!hit) fieldpos = -1; //mouse wandered out of focus
-            };
+            }
             if(hit && (mousebuttons & G3D_PRESSED)) //mouse request position
             {
                 extern int char_width(int c, int x);
@@ -323,8 +323,8 @@ struct gui : g3d_gui
                     if(nx > hitx) break;
                     x = nx;
                     fieldpos++;
-                };
-            };
+                }
+            }
                            
             bool editing = fieldref && (fieldtext==text);
             notextureshader->set();
@@ -347,8 +347,8 @@ struct gui : g3d_gui
                 rect_(fx-2, cury, 4, FONTH);
                 glEnd();				
                 defaultshader->set();
-            };
-        };
+            }
+        }
     	layout(w, FONTH);
 		return result;
 	};
@@ -365,13 +365,13 @@ struct gui : g3d_gui
         if(usetc>=0) glTexCoord2iv(tc[(usetc+3)%4]);
         glVertex2f(x, y + h);
         xtraverts += 4;
-    };
+    }
 
     void text_(const char *text, int x, int y, int color, bool shadow) 
     {
         if(shadow) draw_text(text, x+SHADOW, y+SHADOW, 0x00, 0x00, 0x00, 0xC0);
         draw_text(text, x, y, color>>16, (color>>8)&0xFF, color&0xFF);
-    };
+    }
 
     void icon_(Texture *t, bool overlaid, bool tiled, int x, int y, int size, bool hit) 
     {
@@ -391,7 +391,7 @@ struct gui : g3d_gui
             ys = t->ys*scale;
             x += int((size-xs)/2);
             y += int((size-ys)/2);
-        };
+        }
         if(hit && actionon) 
         {
             glDisable(GL_TEXTURE_2D);
@@ -402,13 +402,13 @@ struct gui : g3d_gui
             glEnd();
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();	
-        };
+        }
         if(tiled) 
         {
             static Shader *rgbonlyshader = NULL;
             if(!rgbonlyshader) rgbonlyshader = lookupshaderbyname("rgbonly");
             rgbonlyshader->set();
-        };
+        }
         if(hit) glColor3f(1, 0.5f, 0.5f);
         else if(overlaid) glColor3f(1, 1, 1);
         else glColor3fv(light.v);
@@ -428,8 +428,8 @@ struct gui : g3d_gui
             glBegin(GL_QUADS);
             rect_(x, y, xs, ys, 0);
             glEnd();
-        };
-    };
+        }
+    }
 
     void line_(int size, float percent = 1.0f)
     {		
@@ -446,16 +446,16 @@ struct gui : g3d_gui
                     rect_(curx + FONTH/2 - size, cury, size*2, ysize, 0);
                 else
                     rect_(curx, cury + FONTH/2 - size, xsize, size*2, 1);
-            };
+            }
             glColor3fv(light.v);
             if(ishorizontal()) 
                 rect_(curx + FONTH/2 - size, cury + ysize*(1-percent), size*2, ysize*percent, 0);
             else 
                 rect_(curx, cury + FONTH/2 - size, xsize*percent, size*2, 1);
             glEnd();
-        };
+        }
         layout(ishorizontal() ? FONTH : 0, ishorizontal() ? 0 : FONTH);
-    };
+    }
 
     int button_(const char *text, int color, const char *icon, bool clickable, bool center)
     {
@@ -477,12 +477,12 @@ struct gui : g3d_gui
                 s_sprintfd(tname)("packages/icons/%s.jpg", icon);
                 icon_(textureload(tname), false, false, x, cury, ICON_SIZE, clickable && hit);
                 x += ICON_SIZE;
-            };
+            }
             if(icon && text) x += padding;
             if(text) text_(text, x, cury, color, center || (hit && clickable && actionon));
-        };
+        }
         return layout(w, FONTH);
-    };
+    }
 
     static Texture *skintex, *overlaytex, *slidertex;
     static const int skinx[], skiny[];
@@ -517,7 +517,7 @@ struct gui : g3d_gui
                 {
                     left += gapw - (gapx2-gapx1);
                     right += gapw - (gapx2-gapx1);
-                };
+                }
                 if(p.flags&0x10)
                 {
                     gapy1 = top;
@@ -527,7 +527,7 @@ struct gui : g3d_gui
                 {
                     top += gaph - (gapy2-gapy1);
                     bottom += gaph - (gapy2-gapy1);
-                };
+                }
                
                 //multiple tiled quads if necessary rather than a single stretched one
                 int ystep = bottom-top;
@@ -538,7 +538,7 @@ struct gui : g3d_gui
                     {
                         ystep = gaph+y+top-yo;
                         tbottom = ttop+ystep*hscale;
-                    };
+                    }
                     int xstep = right-left;
                     int xo = x+left;
                     float tright2 = tright;
@@ -548,8 +548,8 @@ struct gui : g3d_gui
                         {
                             xstep = gapw+x+left-xo; 
                             tright = tleft+xstep*wscale;
-                        };
-                        if(!quads) { quads = true; glBegin(GL_QUADS); };
+                        }
+                        if(!quads) { quads = true; glBegin(GL_QUADS); }
                         glTexCoord2f(tleft,  ttop);    glVertex2i(xo,       yo);
                         glTexCoord2f(tright, ttop);    glVertex2i(xo+xstep, yo);
                         glTexCoord2f(tright, tbottom); glVertex2i(xo+xstep, yo+ystep);
@@ -557,17 +557,17 @@ struct gui : g3d_gui
                         xtraverts += 4;
                         if(!(p.flags&0x01)) break;
                         xo += xstep;
-                    };
+                    }
                     tright = tright2;
                     if(!(p.flags&0x10)) break;
                     yo += ystep;
-                };
-            };
+                }
+            }
             if(quads) glEnd();
             else break; //if it didn't happen on the first pass, it won't happen on the second..
-        };
+        }
         glDepthFunc(GL_ALWAYS);
-    }; 
+    } 
 
     vec origin;
     float dist;
@@ -611,8 +611,8 @@ struct gui : g3d_gui
        
             skin_(curx-skinx[2]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, ysize, 0, 9);
             if(!tcurrent) skin_(curx-skinx[5]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, 0, 9, 1);
-        };
-    };
+        }
+    }
 
     void end()
     {
@@ -633,16 +633,16 @@ struct gui : g3d_gui
                 {
                     if(hity>=-ysize || (tcurrent && hity>=-ysize-(FONTH-2*INSERT)-((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE && hitx<=tx-xsize/2))
                         windowhit = this;
-                };
-            };
+                }
+            }
         }
         else
         {
             if(tcurrent && tx<xsize) skin_(curx+tx-skinx[5]*SKIN_SCALE, -ysize-skiny[5]*SKIN_SCALE, xsize-tx, FONTH, 9, 1);
             glPopMatrix();
-        };
+        }
         poplist();
-    };
+    }
 };
 
 Texture *gui::skintex = NULL, *gui::overlaytex = NULL, *gui::slidertex = NULL;
@@ -706,7 +706,7 @@ void g3d_addgui(g3d_callback *cb, vec &origin, bool follow)
     g.dist = camera1->o.dist(g.origin);
 };
 
-int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; };
+int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; }
 
 bool g3d_windowhit(bool on, bool act)
 {

@@ -23,26 +23,26 @@ struct tiger
         chunk state[3] = { 0x0123456789ABCDEFULL, 0xFEDCBA9876543210ULL, 0xF096A5B4C3B2E187ULL };
         uchar temp[64];
 
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-        loopj(64) temp[j^7] = str[j];
-#else
-        loopj(64) temp[j] = str[j];
-#endif
+        #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+            loopj(64) temp[j^7] = str[j];
+        #else
+            loopj(64) temp[j] = str[j];
+        #endif
         loopi(1024) loop(col, 8) ((uchar *)&sboxes[i])[col] = i&0xFF;
         
         int abc = 2;
         loop(pass, 5) loopi(256) for(int sb = 0; sb < 1024; sb += 256)
         {
             abc++;
-            if(abc >= 3) { abc = 0; compress((chunk *)temp, state); };
+            if(abc >= 3) { abc = 0; compress((chunk *)temp, state); }
             loop(col, 8)
             {
                 uchar val = ((uchar *)&sboxes[sb+i])[col];
                 ((uchar *)&sboxes[sb+i])[col] = ((uchar *)&sboxes[sb + ((uchar *)&state[abc])[col]])[col];
                 ((uchar *)&sboxes[sb + ((uchar *)&state[abc])[col]])[col] = val;
-            };
-        };
-    };
+            }
+        }
+    }
 
     static void compress(const chunk *str, chunk state[3])
     {
@@ -69,7 +69,7 @@ struct tiger
                 x4 ^= x3; x5 += x4; x6 -= x5 ^ ((~x4)>>23); x7 ^= x6;
                 x0 += x7; x1 -= x0 ^ ((~x7)<<19); x2 ^= x1; x3 += x2;
                 x4 -= x3 ^ ((~x2)>>23); x5 ^= x4; x6 += x5; x7 -= x6 ^ 0x0123456789ABCDEFULL;
-            };
+            }
 
 #define sb1 (sboxes)
 #define sb2 (sboxes+256)
@@ -89,7 +89,7 @@ struct tiger
             round(b, c, a, x4) round(c, a, b, x5) round(a, b, c, x6) round(b, c, a, x7)
  
             chunk tmp = a; a = c; c = b; b = tmp;
-        };
+        }
 
         a ^= aa;
         b -= bb;
@@ -98,12 +98,12 @@ struct tiger
         state[0] = a;
         state[1] = b;
         state[2] = c;
-    };
+    }
 
     static void hash(const uchar *str, int length, hashval &val)
     {
         static bool init = false;
-        if(!init) { gensboxes(); init = true; }; 
+        if(!init) { gensboxes(); init = true; } 
 
         uchar temp[64];
 
@@ -120,7 +120,7 @@ struct tiger
 #else
             compress((chunk *)str, val.chunks);
 #endif
-        };
+        }
 
         int j;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -138,11 +138,11 @@ struct tiger
             while(j < 64) temp[j++] = 0;
             compress((chunk *)temp, val.chunks);
             j = 0;
-        };
+        }
         while(j < 56) temp[j++] = 0;
         *(chunk *)(temp+56) = (chunk)length<<3;
         compress((chunk *)temp, val.chunks);
-    };
+    }
 };
 
 tiger::chunk tiger::sboxes[4*256];
@@ -173,10 +173,10 @@ struct xtea
             y += (((z<<4) ^ (z>>5)) + z) ^ (sum + key.chunks[sum&3]);
             sum += 0x9E3779B9;
             z += (((y<<4) ^ (y>>5)) + y) ^ (sum + key.chunks[(sum>>11) & 3]);
-        };
+        }
         dst->chunks[0] = y;
         dst->chunks[1] = z;
-    };
+    }
 
     static void decrypt(block *dst, const block *src, const key &key)
     {
@@ -187,11 +187,11 @@ struct xtea
             z -= (((y <<4) ^ (y >> 5)) + y) ^ (sum + key.chunks[(sum>>11) & 3]);
             sum -= 0x9E3779B9;
             y -= (((z <<4) ^ (z >> 5)) + z) ^ (sum + key.chunks[sum&3]);
-        };
+        }
 
         dst->chunks[0] = y;
         dst->chunks[1] = z;
-    };
+    }
 };
 
 

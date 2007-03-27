@@ -41,7 +41,7 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     else
     {
         s_strcpy(cl.cref, sf);
-    };
+    }
 };
 
 extern int scr_w, scr_h;
@@ -62,11 +62,11 @@ void conoutf(const char *s, ...)
         s_strncpy(t, s, visible+1);
         conline(t, n++!=0);
         s += visible;
-    };
+    }
 };
 
 bool fullconsole = false;
-void toggleconsole() { fullconsole = !fullconsole; };
+void toggleconsole() { fullconsole = !fullconsole; }
 COMMAND(toggleconsole, "");
 
 void rendercommand(int x, int y)
@@ -127,13 +127,13 @@ int renderconsole(int w, int h)                   // render buffer taking into a
         {
             refs[nd++] = conlines[i].cref;
             if(nd==ndraw) break;
-        };
+        }
         loopj(nd)
         {
             draw_text(refs[j], FONTH/2, FONTH*(nd-j-1)+FONTH/2);
-        };
+        }
         return nd*FONTH+FONTH/2;
-    };
+    }
 };
 
 // keymap is defined externally in keymap.cfg
@@ -143,7 +143,7 @@ struct keym
     int code;
     char *name, *action, *editaction;
 
-    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); };
+    ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); }
 };
 
 vector<keym> keyms;                                 
@@ -173,12 +173,12 @@ void bindkey(char *key, char *action, bool edit)
         if(!keypressed || keyaction!=binding) delete[] binding;
         binding = newstring(action);
         return;
-    };
+    }
     conoutf("unknown key \"%s\"", key);   
 };
 
-void bindnorm(char *key, char *action) { bindkey(key, action, false); };
-void bindedit(char *key, char *action) { bindkey(key, action, true);  };
+void bindnorm(char *key, char *action) { bindkey(key, action, false); }
+void bindedit(char *key, char *action) { bindkey(key, action, true);  }
 
 COMMANDN(bind,     bindnorm, "ss");
 COMMANDN(editbind, bindedit, "ss");
@@ -192,7 +192,7 @@ void saycommand(char *init)                         // turns input to the comman
     commandpos = -1;
 };
 
-void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); };
+void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); }
 
 COMMAND(saycommand, "C");
 COMMAND(mapmsg, "s");
@@ -234,7 +234,7 @@ void pasteconsole()
         commandbuf[commandlen] = '\n';
         if(commandlen + 1 < sizeof(commandbuf) && cbend < &cb[cbsize]) ++commandlen;
         commandbuf[commandlen] = '\0';
-    };
+    }
     XFree(cb);
     #endif
 };
@@ -250,7 +250,7 @@ void history(int *n)
         rec = true;
         execute(vhistory[vhistory.length()-*n-1]);
         rec = false;
-    };
+    }
 };
 
 COMMAND(history, "i");
@@ -308,7 +308,7 @@ void keypress(int code, bool isdown, int cooked)
                     resetcomplete();
                     if(commandpos>=len-1) commandpos = -1;
                     break;
-                };
+                }
 
                 case SDLK_BACKSPACE:
                 {
@@ -319,7 +319,7 @@ void keypress(int code, bool isdown, int cooked)
                     if(commandpos>0) commandpos--;
                     else if(!commandpos && len<=1) commandpos = -1;
                     break;
-                };
+                }
 
                 case SDLK_LEFT:
                     if(commandpos>0) commandpos--;
@@ -344,7 +344,7 @@ void keypress(int code, bool isdown, int cooked)
                     break;
 						
                 case SDLK_v:
-                    if(SDL_GetModState()&MOD_KEYS) { pasteconsole(); return; };
+                    if(SDL_GetModState()&MOD_KEYS) { pasteconsole(); return; }
 
                 default:
                     resetcomplete();
@@ -358,11 +358,11 @@ void keypress(int code, bool isdown, int cooked)
                             {
                                 memmove(&commandbuf[commandpos+1], &commandbuf[commandpos], len - commandpos);
                                 commandbuf[commandpos++] = cooked;
-                            };
+                            }
                             commandbuf[len+1] = '\0';
-                        };
-                    };
-            };
+                        }
+                    }
+            }
         }
         else
         {
@@ -373,18 +373,18 @@ void keypress(int code, bool isdown, int cooked)
                     if(vhistory.empty() || strcmp(vhistory.last(), commandbuf))
                     {
                         vhistory.add(newstring(commandbuf));  // cap this?
-                    };
+                    }
                     histpos = vhistory.length();
                     if(commandbuf[0]=='/') execute(commandbuf);
                     else cc->toserver(commandbuf);
-                };
+                }
                 saycommand(NULL);
             }
             else if(code==SDLK_ESCAPE)
             {
                 saycommand(NULL);
-            };
-        };
+            }
+        }
     }
     else
     {
@@ -399,8 +399,8 @@ void keypress(int code, bool isdown, int cooked)
                     if(!isdown) execute(ra.action);
                     delete[] ra.action;
                     releaseactions.remove(i--);
-                };
-            };
+                }
+            }
             if(isdown)
             {
                 char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
@@ -409,10 +409,10 @@ void keypress(int code, bool isdown, int cooked)
                 execute(keyaction); 
                 keypressed = NULL;
                 if(keyaction!=action) delete[] keyaction;
-            };
+            }
             break;
-        };
-    };
+        }
+    }
 };
 
 char *getcurcommand()
@@ -431,7 +431,7 @@ void writebinds(FILE *f)
     {
         if(*keyms[i].action)     fprintf(f, "bind \"%s\" [%s]\n",     keyms[i].name, keyms[i].action);
         if(*keyms[i].editaction) fprintf(f, "editbind \"%s\" [%s]\n", keyms[i].name, keyms[i].editaction);
-    };
+    }
 };
 
 // tab-completion of all idents and base maps
@@ -450,7 +450,7 @@ struct filesval
     vector<char *> files;
 
     filesval(const char *dir, const char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {};
-    ~filesval() { DELETEA(dir); DELETEA(ext); loopv(files) DELETEA(files[i]); files.setsize(0); };
+    ~filesval() { DELETEA(dir); DELETEA(ext); loopv(files) DELETEA(files[i]); files.setsize(0); }
 };
 
 static inline bool htcmp(const fileskey &x, const fileskey &y)
@@ -477,13 +477,13 @@ void addcomplete(char *command, char *dir, char *ext)
     {
         conoutf("cannot override complete %s", command);
         return;
-    };
+    }
     if(!dir[0])
     {
         filesval **hasfiles = completions.access(command);
         if(hasfiles) *hasfiles = NULL;
         return;
-    };
+    }
     int dirlen = (int)strlen(dir);
     while(dirlen > 0 && (dir[dirlen-1] == '/' || dir[dirlen-1] == '\\'))
         dir[--dirlen] = '\0';
@@ -495,7 +495,7 @@ void addcomplete(char *command, char *dir, char *ext)
         filesval *f = new filesval(dir, ext);
         val = &completefiles[fileskey(f->dir, f->ext)];
         *val = f;
-    };
+    }
     filesval **hasfiles = completions.access(command);
     if(hasfiles) *hasfiles = *val;
     else completions[newstring(command)] = *val;
@@ -531,8 +531,8 @@ void buildfilenames(filesval *f)
                 int namelength = strlen(dir->d_name) - extsize;
                 if(namelength > 0 && dir->d_name[namelength] == '.' && strncmp(dir->d_name+namelength+1, f->ext, extsize-1)==0)
                     f->files.add(newstring(dir->d_name, namelength));
-            };
-        };
+            }
+        }
         closedir(d);
     }
     #else
@@ -549,9 +549,9 @@ void complete(char *s)
         s_strcpy(t, s);
         s_strcpy(s, "/");
         s_strcat(s, t);
-    };
+    }
     if(!s[1]) return;
-    if(!completesize) { completesize = (int)strlen(s)-1; lastcomplete[0] = '\0'; };
+    if(!completesize) { completesize = (int)strlen(s)-1; lastcomplete[0] = '\0'; }
 
     filesval *f = NULL;
     if(completesize)
@@ -563,8 +563,8 @@ void complete(char *s)
             s_strncpy(command, s+1, min(size_t(end-s), sizeof(command)));
             filesval **hasfiles = completions.access(command);
             if(hasfiles) f = *hasfiles;
-        };
-    };
+        }
+    }
 
     char *nextcomplete = NULL;
     string prefix;
@@ -579,7 +579,7 @@ void complete(char *s)
             if(strncmp(f->files[i], s+commandsize, completesize+1-commandsize)==0 &&
                strcmp(f->files[i], lastcomplete) > 0 && (!nextcomplete || strcmp(f->files[i], nextcomplete) < 0))
                 nextcomplete = f->files[i];
-        };
+        }
     }
     else // complete using command names
     {
@@ -589,7 +589,7 @@ void complete(char *s)
                strcmp(id._name, lastcomplete) > 0 && (!nextcomplete || strcmp(id._name, nextcomplete) < 0))
                 nextcomplete = id._name;
         );
-    };
+    }
     if(nextcomplete)
     {
         s_strcpy(s, prefix);

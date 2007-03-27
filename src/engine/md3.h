@@ -45,7 +45,7 @@ struct md3 : vertmodel
 {
     md3(const char *name) : vertmodel(name) {};
 
-    int type() { return MDL_MD3; };
+    int type() { return MDL_MD3; }
 
     struct md3part : part
     {
@@ -63,7 +63,7 @@ struct md3 : vertmodel
                 fclose(f);
                 conoutf("md3: corrupted header"); 
                 return false; 
-            };
+            }
 
             numframes = header.numframes;
             numtags = header.numtags;        
@@ -80,10 +80,10 @@ struct md3 : vertmodel
                     if(tag.name[0] && i<header.numtags) tags[i].name = newstring(tag.name);
                     tags[i].pos = vec(tag.pos.x, -tag.pos.y, -tag.pos.z);
                     memcpy(tags[i].transform, tag.rotation, sizeof(tag.rotation));
-                };
+                }
                 links = new part *[numtags];
                 loopi(numtags) links[i] = NULL;
-            };
+            }
 
             int mesh_offset = header.ofs_meshes;
             loopi(header.nummeshes)
@@ -106,7 +106,7 @@ struct md3 : vertmodel
                     fread(&tri, sizeof(md3triangle), 1, f); // read the triangles
                     endianswap(&tri, sizeof(int), 3);
                     loopk(3) m.tris[j].vert[k] = (ushort)tri.vertexindices[k];
-                };
+                }
 
                 m.numtcverts = mheader.numvertices;
                 m.tcverts = new tcvert[m.numtcverts];
@@ -116,7 +116,7 @@ struct md3 : vertmodel
                     fread(&m.tcverts[j].u, sizeof(float), 2, f); // read the UV data
                     endianswap(&m.tcverts[j].u, sizeof(float), 2);
                     m.tcverts[j].index = j;
-                };
+                }
                 
                 m.numverts = mheader.numvertices;
                 m.verts = new vert[numframes*m.numverts];
@@ -136,14 +136,14 @@ struct md3 : vertmodel
                     m.verts[j].norm.x = cosf(lat)*sinf(lng);
                     m.verts[j].norm.y = -sinf(lat)*sinf(lng);
                     m.verts[j].norm.z = cosf(lng);
-                };
+                }
 
                 mesh_offset += mheader.meshsize;
-            };
+            }
 
             fclose(f);
             return loaded=true;
-        };
+        }
     };
     
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl)
@@ -154,7 +154,7 @@ struct md3 : vertmodel
         {
             part *vwep = ((md3 *)vwepmdl)->parts[0];
             if(link(vwep, "tag_weapon")) vwep->index = parts.length();
-        };
+        }
 
         glPushMatrix();
         glTranslatef(x, y, z);
@@ -162,7 +162,7 @@ struct md3 : vertmodel
         glRotatef(pitch, 0, -1, 0);
         parts[0]->render(anim, varseed, speed, basetime, d);
         glPopMatrix();
-    };
+    }
 
     bool load()
     {
@@ -191,25 +191,25 @@ struct md3 : vertmodel
             if(!mdl.load(path(name1)))
             {
                 s_sprintf(name1)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
-                if(!mdl.load(path(name1))) { delete[] pname; return false; };
-            };
+                if(!mdl.load(path(name1))) { delete[] pname; return false; }
+            }
             Texture *skin, *masks;
             loadskin(loadname, pname, skin, masks, this);
             loopv(mdl.meshes)
             {
                 mdl.meshes[i]->skin  = skin;
                 mdl.meshes[i]->masks = masks;
-            };
+            }
             if(skin==crosshair) conoutf("could not load model skin for %s", name1);
-        };
+        }
         loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
         return loaded = true;
-    };
+    }
 };
 
 void md3load(char *model)
 {   
-    if(!loadingmd3) { conoutf("not loading an md3"); return; };
+    if(!loadingmd3) { conoutf("not loading an md3"); return; }
     s_sprintfd(filename)("%s/%s", md3dir, model);
     md3::md3part &mdl = *new md3::md3part;
     loadingmd3->parts.add(&mdl);
@@ -221,7 +221,7 @@ void md3load(char *model)
 void md3skin(char *objname, char *skin, char *masks)
 {   
     if(!objname || !skin) return;
-    if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; };
+    if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
     md3::part &mdl = *loadingmd3->parts.last();
     loopv(mdl.meshes)
     {   
@@ -234,24 +234,24 @@ void md3skin(char *objname, char *skin, char *masks)
             {
                 s_sprintfd(mpath)("%s/%s", md3dir, masks);
                 m.masks = textureload(mpath, false, true, false);
-            };
-        };
-    };
+            }
+        }
+    }
 };
 
 void md3anim(char *anim, int *startframe, int *range, char *s)
 {
-    if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; };
+    if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
     float speed = s[0] ? atof(s) : 100.0f;
     int num = findanim(anim);
-    if(num<0) { conoutf("could not find animation %s", anim); return; };
+    if(num<0) { conoutf("could not find animation %s", anim); return; }
     loadingmd3->parts.last()->setanim(num, *startframe, *range, speed);
 };
 
 void md3link(int *parent, int *child, char *tagname)
 {
-    if(!loadingmd3) { conoutf("not loading an md3"); return; };
-    if(max(*parent, *child) >= loadingmd3->parts.length() || min(*parent, *child) < 0) { conoutf("no models loaded to link"); return; };
+    if(!loadingmd3) { conoutf("not loading an md3"); return; }
+    if(max(*parent, *child) >= loadingmd3->parts.length() || min(*parent, *child) < 0) { conoutf("no models loaded to link"); return; }
     if(!loadingmd3->parts[*parent]->link(loadingmd3->parts[*child], tagname)) conoutf("could not link model %s", loadingmd3->loadname);
 };
 

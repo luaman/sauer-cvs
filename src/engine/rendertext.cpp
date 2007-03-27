@@ -112,8 +112,8 @@ void gettextres(int &w, int &h)
         {
             w = w*MINRESH/h;
             h = MINRESH;
-        };
-    };
+        }
+    }
 };
 
 #define PIXELTAB (FONTH*4)
@@ -127,7 +127,7 @@ int char_width(int c, int x)
         c -= 33;
         int in_width = char_coords[c][2];
         x += in_width + 1;
-    };
+    }
     return x;
 };
 
@@ -140,9 +140,9 @@ int text_width(const char *str, int limit)
         {
             i++;
             continue;
-        };
+        }
         x = char_width(str[i], x);
-    };
+    }
     return x;
 }
 
@@ -155,11 +155,11 @@ int text_visible(const char *str, int max)
         {
             i += 2;
             continue;
-        };
+        }
         x = char_width(str[i], x);
         if(x > max) return i;
         ++i;
-    };
+    }
     return i;
 };
  
@@ -190,7 +190,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
     for (i = 0; str[i] != 0; i++)
     {
         int c = str[i];
-        if(c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
+        if(c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; } 
         if(c=='\f') switch(str[i+1])
         {
             case '0': glColor3ub(64,255,128); i++; continue;    // green: player talk
@@ -198,8 +198,8 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
             case '2': glColor3ub(255,192,64); i++; continue;    // yellow: gameplay messages 
             case '3': glColor3ub(255,64,64);  i++; continue;    // red: important errors
             default: continue;                                  // white: everything else
-        };
-        if(c==' ') { x += FONTH/2; continue; };
+        }
+        if(c==' ') { x += FONTH/2; continue; }
         c -= 33;
         if(c<0 || c>=95) continue;
         
@@ -218,7 +218,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         
         xtraverts += 4;
         x += in_width  + 1;
-    };
+    }
     glEnd();
 };
 

@@ -57,7 +57,7 @@ void guibutton(char *name, char *action, char *icon)
     {
         alias("guirollovername", name);
         alias("guirolloveraction", action);
-    };
+    }
 };
 
 void guiimage(char *path, char *action, float *scale, int *overlaid)
@@ -66,7 +66,7 @@ void guiimage(char *path, char *action, float *scale, int *overlaid)
     {
         executelater.add(newstring(action));
         clearlater = true;
-    };
+    }
 };
 
 void guitext(char *name)
@@ -124,7 +124,7 @@ void guicheckbox(char *name, char *var, int *on, int *off, char *onchange)
     if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "checkbox_on" : "checkbox_off")&G3D_UP)
     {
         updateval(var, enabled ? *off : (*on || *off ? *on : 1), onchange);
-    };
+    }
 };
 
 void guiradio(char *name, char *var, int *n, char *onchange)
@@ -133,7 +133,7 @@ void guiradio(char *name, char *var, int *n, char *onchange)
     if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "radio_on" : "radio_off")&G3D_UP)
     {
         if(!enabled) updateval(var, *n, onchange);
-    };
+    }
 };
 
 
@@ -148,7 +148,7 @@ void guifield(char *var, int *maxlength, char *onchange)
 	char *result = cgui->field(ref, GUI_BUTTON_COLOR, (*maxlength==0)?12:*maxlength);
     if(result) {
         alias(var, result);
-    };
+    }
 };
 
 void guilist(char *contents)
@@ -182,7 +182,7 @@ void showgui(char *name)
     {
         pos = guistack.length()-pos-1;
         loopi(pos) delete[] guistack.pop();
-    };
+    }
     menutab = 1;
     menustart = totalmillis;    
 };
@@ -198,8 +198,8 @@ void guiservers()
             s_sprintfd(connect)("connect %s", name);
             executelater.add(newstring(connect));
             clearlater = true;
-        };
-    };
+        }
+    }
 };
 
 COMMAND(newgui, "ss");
@@ -234,7 +234,7 @@ static struct mainmenucallback : g3d_callback
 		execute(*contents);
         cgui->end();
 		cgui = NULL;
-    };
+    }
 } mmcb;
 
 void menuprocess()
@@ -246,7 +246,7 @@ void menuprocess()
     {
         if(level==guistack.length()) guistack.deletecontentsa();
         clearlater = false;
-    };
+    }
 };
 
 void g3d_mainmenu()
@@ -255,6 +255,6 @@ void g3d_mainmenu()
     {   
         if(camera1->o.dist(menupos) > menudistance*3) cleargui();
         else g3d_addgui(&mmcb, menupos, true);
-    };
+    }
 };
 

@@ -54,9 +54,9 @@ int resolverloop(void * data)
             rt->query = NULL;
             rt->starttime = 0;
             SDL_CondSignal(resultcond);
-        };
+        }
         SDL_UnlockMutex(resolvermutex);
-    };
+    }
     return 0;
 };
 
@@ -73,7 +73,7 @@ void resolverinit()
         rt.query = NULL;
         rt.starttime = 0;
         rt.thread = SDL_CreateThread(resolverloop, &rt);
-    };
+    }
     SDL_UnlockMutex(resolvermutex);
 };
 
@@ -86,7 +86,7 @@ void resolverstop(resolverthread &rt)
         SDL_KillThread(rt.thread);
 #endif
         rt.thread = SDL_CreateThread(resolverloop, &rt);
-    };
+    }
     rt.query = NULL;
     rt.starttime = 0;
     SDL_UnlockMutex(resolvermutex);
@@ -103,7 +103,7 @@ void resolverclear()
     {
         resolverthread &rt = resolverthreads[i];
         resolverstop(rt);
-    };
+    }
     SDL_UnlockMutex(resolvermutex);
 };
 
@@ -136,8 +136,8 @@ bool resolvercheck(const char **name, ENetAddress *address)
             resolverstop(rt);
             *name = rt.query;
             resolved = true;
-        };    
-    };
+        }    
+    }
     SDL_UnlockMutex(resolvermutex);
     return resolved;
 };
@@ -163,7 +163,7 @@ bool resolverwait(const char *name, ENetAddress *address)
             resolverresults.remove(i);
             resolved = true;
             break;
-        };
+        }
         if(resolved) break;
     
         timeout = SDL_GetTicks() - starttime;
@@ -172,18 +172,18 @@ bool resolverwait(const char *name, ENetAddress *address)
         while(SDL_PollEvent(&event))
         {
             if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) timeout = RESOLVERLIMIT + 1;
-        };
+        }
 
         if(timeout > RESOLVERLIMIT) break;    
-    };
+    }
     if(!resolved && timeout > RESOLVERLIMIT)
     {
         loopv(resolverthreads)
         {
             resolverthread &rt = resolverthreads[i];
-            if(rt.query == name) { resolverstop(rt); break; };
-        };
-    };
+            if(rt.query == name) { resolverstop(rt); break; }
+        }
+    }
     SDL_UnlockMutex(resolvermutex);
     return resolved;
 };
@@ -205,7 +205,7 @@ vector<serverinfo> servers;
 ENetSocket pingsock = ENET_SOCKET_NULL;
 int lastinfo = 0;
 
-char *getservername(int n) { return servers[n].name; };
+char *getservername(int n) { return servers[n].name; }
 
 void addserver(char *servername)
 {
@@ -235,7 +235,7 @@ void pingservers()
         buf.data = ping;
         buf.dataLength = p.length();
         enet_socket_send(pingsock, &si.address, &buf, 1);
-    };
+    }
     lastinfo = totalmillis;
 };
   
@@ -248,10 +248,10 @@ void checkresolver()
         if(si.resolved == RESOLVED) continue;
         if(si.address.host == ENET_HOST_ANY)
         {
-            if(si.resolved == UNRESOLVED) { si.resolved = RESOLVING; resolverquery(si.name); };
+            if(si.resolved == UNRESOLVED) { si.resolved = RESOLVING; resolverquery(si.name); }
             resolving++;
-        };
-    };
+        }
+    }
     if(!resolving) return;
 
     const char *name = NULL;
@@ -267,9 +267,9 @@ void checkresolver()
                 si.address = addr;
                 addr.host = ENET_HOST_ANY;
                 break;
-            };
-        };
-    };
+            }
+        }
+    }
 };
 
 void checkpings()
@@ -302,9 +302,9 @@ void checkpings()
                 getstring(text, p);
                 s_strcpy(si.sdesc, text);                
                 break;
-            };
-        };
-    };
+            }
+        }
+    }
 };
 
 int sicompare(serverinfo *a, serverinfo *b)
@@ -338,9 +338,9 @@ void refreshservers()
         else
         {
             s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "[waiting for response] %s" : "[unknown host] %s\t", si.name);
-        };
+        }
         si.full[60] = 0; // cut off too long server descriptions
-    };
+    }
 };
 
 const char *showservers(g3d_gui *cgui)
@@ -353,7 +353,7 @@ const char *showservers(g3d_gui *cgui)
         serverinfo &si = servers[i];
         if(cgui->button(si.full, 0xFFFFDD, "server")&G3D_UP) name = si.name;
         if(!--maxmenu) break;
-    };
+    }
     return name;
 };
 
@@ -369,7 +369,7 @@ void updatefrommaster()
         loopv(servers) delete[] servers[i].name;
         servers.setsize(0);
         execute((char *)reply);
-    };
+    }
     refreshservers();
 };
 

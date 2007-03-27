@@ -24,21 +24,21 @@ struct entities : icliententities
             {20000, 30000, S_ITEMPUP,    "Q"},
         };
         itemstats = _itemstats;
-    };
+    }
 
-    vector<extentity *> &getents() { return ents; };
+    vector<extentity *> &getents() { return ents; }
     
     char *itemname(int i)
     {
         int t = ents[i]->type;
         if(t<I_SHELLS || t>I_QUAD) return NULL;
         return itemstats[t-I_SHELLS].name;
-    };
+    }
     
     void renderent(extentity &e, const char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
     {
         rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, speed, basetime, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
-    };
+    }
 
     void renderentities()
     {
@@ -55,29 +55,29 @@ struct entities : icliententities
             {
                 renderent(e, e.type==CARROT ? "carrot" : "checkpoint", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
                 continue;
-            };
+            }
             if(!e.spawned && e.type!=TELEPORT) continue;
             if(e.type<I_SHELLS || e.type>TELEPORT) continue;
             renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
-        };
-    };
+        }
+    }
 
     void rumble(const extentity &e)
     {
         playsound(S_RUMBLE, &e.o);
-    };
+    }
 
     void trigger(extentity &e)
     {
         if(e.attr3==29) cl.ms.endsp(false);
-    };
+    }
 
-    void baseammo(int gun) { cl.player1->ammo[gun] = itemstats[gun-1].add*2; };
+    void baseammo(int gun) { cl.player1->ammo[gun] = itemstats[gun-1].add*2; }
     void repammo(int gun) 
     { 
         int &ammo = cl.player1->ammo[gun];
         ammo = max(ammo, itemstats[gun-1].add*2);
-    };
+    }
 
     // these two functions are called when the server acknowledges that you really
     // picked up the item (in multiplayer someone may grab it before you).
@@ -89,7 +89,7 @@ struct entities : icliententities
         v += is.add;
         if(v>is.max) v = is.max;
         cl.playsoundc(is.sound);
-    };
+    }
 
     void realpickup(int n, fpsent *d)
     {
@@ -97,7 +97,7 @@ struct entities : icliententities
         {
             char *name = itemname(n);
             if(name) particle_text(d->abovehead(), name, 15);
-        };
+        }
         switch(ents[n]->type)
         {
             case I_SHELLS:     radditem(n, d->ammo[GUN_SG]); break;
@@ -130,8 +130,8 @@ struct entities : icliententities
                 conoutf("\f2you got the quad!");
                 playsound(S_V_QUAD);
                 break;
-        };
-    };
+        }
+    }
 
     // these functions are called when the client touches the item
 
@@ -142,8 +142,8 @@ struct entities : icliententities
             int gamemode = cl.gamemode;
             cl.cc.addmsg(SV_ITEMPICKUP, "rii", i, m_classicsp ? 100000 : spawnsec);     // first ask the server for an ack
             ents[i]->spawned = false;                                            // even if someone else gets it first
-        };
-    };
+        }
+    }
 
     void teleport(int n, fpsent *d)     // also used by monsters
     {
@@ -151,7 +151,7 @@ struct entities : icliententities
         for(;;)
         {
             e = findentity(TELEDEST, e+1);
-            if(e==beenhere || e<0) { conoutf("no teleport destination for tag %d", tag); return; };
+            if(e==beenhere || e<0) { conoutf("no teleport destination for tag %d", tag); return; }
             if(beenhere<0) beenhere = e;
             if(ents[e]->attr2==tag)
             {
@@ -162,9 +162,9 @@ struct entities : icliententities
                 entinmap(d);
                 cl.playsoundc(S_TELEPORT);
                 break;
-            };
-        };
-    };
+            }
+        }
+    }
 
     void pickup(int n, fpsent *d)
     {
@@ -204,7 +204,7 @@ struct entities : icliententities
                 lastteleport = cl.lastmillis;
                 teleport(n, d);
                 break;
-            };
+            }
 
             case RESPAWNPOINT:
                 if(n==cl.respawnent) break;
@@ -226,9 +226,9 @@ struct entities : icliententities
 //                cl.player1->vel.add(v);
                 cl.playsoundc(S_JUMPPAD);
                 break;
-            };
-        };
-    };
+            }
+        }
+    }
 
     void checkitems()
     {
@@ -243,8 +243,8 @@ struct entities : icliententities
             if(!e.spawned && e.type!=TELEPORT && e.type!=JUMPPAD && e.type!=RESPAWNPOINT) continue;
             float dist = e.o.dist(o);
             if(dist<(e.type==TELEPORT ? 16 : 12)) pickup(i, cl.player1);
-        };
-    };
+        }
+    }
 
     void checkquad(int time)
     {
@@ -253,8 +253,8 @@ struct entities : icliententities
             cl.player1->quadmillis = 0;
             cl.playsoundc(S_PUPOUT);
             conoutf("\f2quad damage is over");
-        };
-    };
+        }
+    }
 
     void putitems(ucharbuf &p, int gamemode)            // puts items in network stream and also spawns them locally
     {
@@ -264,13 +264,13 @@ struct entities : icliententities
             putint(p, ents[i]->type);
             
             ents[i]->spawned = (m_sp || (ents[i]->type!=I_QUAD && ents[i]->type!=I_BOOST)); 
-        };
-    };
+        }
+    }
 
-    void resetspawns() { loopv(ents) ents[i]->spawned = false; };
-    void setspawn(int i, bool on) { if(ents.inrange(i)) ents[i]->spawned = on; };
+    void resetspawns() { loopv(ents) ents[i]->spawned = false; }
+    void setspawn(int i, bool on) { if(ents.inrange(i)) ents[i]->spawned = on; }
 
-    extentity *newentity() { return new fpsentity(); };
+    extentity *newentity() { return new fpsentity(); }
 
     void fixentity(extentity &e)
     {
@@ -281,10 +281,10 @@ struct entities : icliententities
                 e.attr2 = e.attr1;
             case RESPAWNPOINT:
                 e.attr1 = (int)cl.player1->yaw;
-        };
-    };
+        }
+    }
 
-    const char *entnameinfo(entity &e) { return ""; };
+    const char *entnameinfo(entity &e) { return ""; }
     const char *entname(int i)
     {
         static const char *entnames[] =
@@ -298,13 +298,13 @@ struct entities : icliententities
             "", "", "", "",
         };
         return i>=0 && size_t(i)<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
-    };
+    }
     
-    int extraentinfosize() { return 0; };       // size in bytes of what the 2 methods below read/write... so it can be skipped by other games
+    int extraentinfosize() { return 0; }       // size in bytes of what the 2 methods below read/write... so it can be skipped by other games
 
     void writeent(entity &e, char *buf)   // write any additional data to disk (except for ET_ ents)
     {
-    };
+    }
 
     void readent(entity &e, char *buf)     // read from disk, and init
     {
@@ -312,12 +312,12 @@ struct entities : icliententities
         if(ver <= 10)
         {
             if(e.type >= 7) e.type++;
-        };
+        }
         if(ver <= 12)
         {
             if(e.type >= 8) e.type++;
-        };
-    };
+        }
+    }
 
     void editent(int i)
     {
@@ -326,13 +326,13 @@ struct entities : icliententities
         {
             int gamemode = cl.gamemode;
             if(m_capture) cl.cpc.setupbases();
-        };
+        }
         cl.cc.addmsg(SV_EDITENT, "ri9", i, (int)(e.o.x*DMF), (int)(e.o.y*DMF), (int)(e.o.z*DMF), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
-    };
+    }
 
     float dropheight(entity &e)
     {
         if(e.type==MAPMODEL || e.type==BASE) return 0.0f;
         return 4.0f;
-    };
+    }
 };

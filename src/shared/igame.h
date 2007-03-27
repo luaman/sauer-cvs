@@ -30,7 +30,7 @@ struct iclientcom
     virtual void writeclientinfo(FILE *f) = 0;
     virtual void toserver(char *text) = 0;
     virtual void changemap(const char *name) = 0;
-    virtual int numchannels() { return 1; };
+    virtual int numchannels() { return 1; }
 };
 
 struct igameclient

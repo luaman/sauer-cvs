@@ -37,10 +37,10 @@ struct animstate                                // used for animation blending o
 {
     int anim, frame, range, basetime;
     float speed;
-    animstate() : anim(0), frame(0), range(0), basetime(0), speed(100.0f) { };
+    animstate() : anim(0), frame(0), range(0), basetime(0), speed(100.0f) { }
 
-    bool operator==(const animstate &o) const { return frame==o.frame && range==o.range && basetime==o.basetime && speed==o.speed; };
-    bool operator!=(const animstate &o) const { return frame!=o.frame || range!=o.range || basetime!=o.basetime || speed!=o.speed; };
+    bool operator==(const animstate &o) const { return frame==o.frame && range==o.range && basetime==o.basetime && speed==o.speed; }
+    bool operator!=(const animstate &o) const { return frame!=o.frame || range!=o.range || basetime!=o.basetime || speed!=o.speed; }
 };
 
 enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_PAIN, ANIM_IDLE, ANIM_IDLE_ATTACK, ANIM_RUN, ANIM_RUN_ATTACK, ANIM_EDIT, ANIM_LAG, ANIM_JUMP, ANIM_JUMP_ATTACK, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_MAPMODEL, ANIM_TRIGGER, NUMANIMS };
@@ -81,14 +81,14 @@ struct physent                                  // base entity type, can be affe
     physent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
                radius(4.1f), eyeheight(14), aboveeye(1), 
                inwater(false), blocked(false), moving(true), state(CS_ALIVE), type(ENT_PLAYER)
-               { reset(); };
+               { reset(); }
                
     void reset()
     {
         timeinair = strafe = move = 0;
         physstate = PHYS_FALL;
         vel = gravity = vec(0, 0, 0);
-    };
+    }
 };
 
 struct dynent : physent                         // animated characters, or characters that can receive input
@@ -99,21 +99,27 @@ struct dynent : physent                         // animated characters, or chara
     int lastanimswitchtime[2];
     void *lastmodel[2];
     
-    dynent() { reset(); loopi(2) { lastanimswitchtime[i] = -1; lastmodel[i] = NULL; }; };
+    dynent() { reset(); loopi(2) { lastanimswitchtime[i] = -1; lastmodel[i] = NULL; } }
                
     void stopmoving()
     {
         k_left = k_right = k_up = k_down = jumpnext = false;
         move = strafe = 0;
-    };
+    }
         
     void reset()
     {
         physent::reset();
         stopmoving();
-    };
+    }
 
-    vec abovehead() { return vec(o).add(vec(0, 0, aboveeye+4)); };
+    vec abovehead() { return vec(o).add(vec(0, 0, aboveeye+4)); }
+
+    void normalize_yaw(float angle)
+    {
+        while(yaw<angle-180.0f) yaw += 360.0f;
+        while(yaw>angle+180.0f) yaw -= 360.0f;
+    }
 };
 
 

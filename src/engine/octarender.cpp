@@ -16,7 +16,7 @@ void printcstats()
     {
         if(!cstats[i].size) continue;
         conoutf("%d: %d faces, %d leafs, %d nodes", cstats[i].size, cstats[i].nface, cstats[i].nleaf, cstats[i].nnode);
-    };
+    }
 };
 
 VARF(floatvtx, 0, 0, 1, allchanged());
@@ -33,7 +33,7 @@ void genfloatverts(fvertex *f)
         f->v = v.v;
         f->n = v.n;
         f++;
-    };
+    }
 };
 
 struct vboinfo
@@ -101,8 +101,8 @@ void genvbo(int type, void *buf, int len, vtxarray **vas, int numva)
             case VBO_EBUF_L1: va->l1.ebufGL = vbo; break;
             case VBO_SKYBUF_L0: va->l0.skybufGL = vbo; break;
             case VBO_SKYBUF_L1: va->l1.skybufGL = vbo; break;
-        };
-    };
+        }
+    }
 };
 
 void flushvbo(int type = -1)
@@ -111,7 +111,7 @@ void flushvbo(int type = -1)
     {
         loopi(NUMVBO) flushvbo(i);
         return;
-    };
+    }
 
     vector<char> &data = vbodata[type];
     if(data.empty()) return;
@@ -129,7 +129,7 @@ void *addvbo(vtxarray *va, int type, void *buf, int len)
     {
         genvbo(type, buf, len, &va, 1);
         return 0;
-    };
+    }
 
     vector<char> &data = vbodata[type];
     vector<vtxarray *> &vas = vbovas[type];
@@ -156,8 +156,8 @@ struct vechash
     int table[size];
     vector<int> chain;
 
-    vechash() { clear(); };
-    void clear() { loopi(size) table[i] = -1; chain.setsizenodelete(0); };
+    vechash() { clear(); }
+    void clear() { loopi(size) table[i] = -1; chain.setsizenodelete(0); }
 
     int access(const vvec &v, short tu, short tv, const bvec &n)
     {
@@ -172,8 +172,8 @@ struct vechash
             {
                  if(!tu && !tv) return i; 
                  if(c.u==tu && c.v==tv) return i;
-            };
-        };
+            }
+        }
         vertex &vtx = verts.add();
         ((vvec &)vtx) = v;
         vtx.u = tu;
@@ -181,7 +181,7 @@ struct vechash
         vtx.n = n;
         chain.add(table[h]);
         return table[h] = verts.length()-1;
-    };
+    }
 };
 
 vechash vh;
@@ -194,7 +194,7 @@ struct sortkey
       : tex(tex), lmid(lmid), envmap(envmap)
      {};
 
-     bool operator==(const sortkey &o) const { return tex==o.tex && lmid==o.lmid && envmap==o.envmap; };
+     bool operator==(const sortkey &o) const { return tex==o.tex && lmid==o.lmid && envmap==o.envmap; }
 };
 
 struct sortval
@@ -224,7 +224,7 @@ struct lodcollect
     int curtris;
     uint offsetindices;
 
-    int size() { return texs.length()*sizeof(elementset) + (hasVBO ? 0 : (3*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort)) + matsurfs.length()*sizeof(materialsurface); };
+    int size() { return texs.length()*sizeof(elementset) + (hasVBO ? 0 : (3*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort)) + matsurfs.length()*sizeof(materialsurface); }
 
     void clear()
     {
@@ -234,7 +234,7 @@ struct lodcollect
         skyindices.setsizenodelete(0);
         explicitskyindices.setsizenodelete(0);
         matsurfs.setsizenodelete(0);
-    };
+    }
 
     void remapunlit(vector<sortkey> &remap)
     {
@@ -250,20 +250,20 @@ struct lodcollect
                 {
                     firstlit = i;
                     firstlmid = lastlmid;
-                };
+                }
             }
             else if(k.lmid==LMID_AMBIENT && lastlmid!=LMID_AMBIENT)
             {
                 sortval &t = indices[k];
                 if(t.unlit<=0) t.unlit = lastlmid;
-            };
-        };
+            }
+        }
         if(firstlmid!=LMID_AMBIENT) loopi(firstlit)
         {
             sortkey &k = texs[i];
             if(k.lmid!=LMID_AMBIENT) continue;
             indices[k].unlit = firstlmid;
-        }; 
+        } 
         loopv(remap)
         {
             sortkey &k = remap[i];
@@ -286,12 +286,12 @@ struct lodcollect
                     vvec vv = vtx;
                     bvec n = vtx.n;
                     t.dims[l][j] = vh.access(vv, u, v, n);
-                };
-            };
+                }
+            }
             sortval *dst = indices.access(sortkey(k.tex, t.unlit, k.envmap));
             if(dst) loopl(3) loopvj(t.dims[l]) dst->dims[l].add(t.dims[l][j]);
-        };
-    };
+        }
+    }
                     
     void optimize()
     {
@@ -310,23 +310,23 @@ struct lodcollect
                         if(uval->unlit<0) texs.removeobj(ukey);
                         else remap.add(ukey);
                         uval->unlit = k.lmid;
-                    };
+                    }
                 }
                 else if(k.lmid==LMID_AMBIENT)
                 {
                     remap.add(k);
                     t.unlit = -1;
-                };
+                }
                 texs.add(k);
                 break;
-            };
+            }
         );
         texs.sort(texsort);
 
         remapunlit(remap);
 
         matsurfs.setsize(optimizematsurfs(matsurfs.getbuf(), matsurfs.length()));
-    };
+    }
 
     static int texsort(const sortkey *x, const sortkey *y)
     {
@@ -338,7 +338,7 @@ struct lodcollect
         if(xs.params.length() > ys.params.length()) return 1;
         if(x->tex < y->tex) return -1;
         else return 1;
-    };
+    }
 
     char *setup(vtxarray *va, lodlevel &lod, char *buf)
     {
@@ -353,7 +353,7 @@ struct lodcollect
             lod.ebuf = (ushort *)(lod.eslist + texs.length());
             lod.skybuf = lod.ebuf + 3*curtris;
             lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky+lod.explicitsky);
-        };
+        }
 
         ushort *skybuf = NULL;
         if(lod.sky+lod.explicitsky)
@@ -361,7 +361,7 @@ struct lodcollect
             skybuf = hasVBO ? new ushort[lod.sky+lod.explicitsky] : lod.skybuf;
             memcpy(skybuf, skyindices.getbuf(), lod.sky*sizeof(ushort));
             memcpy(skybuf+lod.sky, explicitskyindices.getbuf(), lod.explicitsky*sizeof(ushort));
-        };
+        }
  
         if(hasVBO)
         {
@@ -381,7 +381,7 @@ struct lodcollect
                 delete[] skybuf;
             }
             else lod.skybufGL = 0;
-        };
+        }
 
         lod.matsurfs = matsurfs.length();
         if(lod.matsurfs) memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
@@ -400,8 +400,8 @@ struct lodcollect
                 {
                     memcpy(curbuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
                     curbuf += t.dims[l].length();
-                };
-            };
+                }
+            }
             if(hasVBO)
             {
 #if 1
@@ -413,13 +413,13 @@ struct lodcollect
                 glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, 3*curtris*sizeof(ushort), ebuf, GL_STATIC_DRAW_ARB);
 #endif
                 delete[] ebuf;
-            };
+            }
         }
         else if(hasVBO) lod.ebufGL = 0;
         lod.texs = texs.length();
         lod.tris = curtris;
         return (char *)(lod.matbuf+lod.matsurfs);
-    };
+    }
 } l0, l1;
 
 int explicitsky = 0, skyarea = 0;
@@ -436,14 +436,14 @@ int addtriindexes(usvector &v, int index[4])
         v.add(index[0]);
         v.add(index[1]);
         v.add(index[2]);
-    };
+    }
     if(index[0]!=index[2] && index[0]!=index[3] && index[2]!=index[3])
     {
         tris++;
         v.add(index[0]);
         v.add(index[2]);
         v.add(index[3]);
-    };
+    }
     return tris;
 };
 
@@ -460,7 +460,7 @@ void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, 
         }
         else u = v = 0;
         index[k] = vh.access(vv[k], u, v, normals ? normals->normals[k] : bvec(128, 128, 128));
-    };
+    }
 
     extern vector<GLuint> lmtexids;
     sortkey key(texture, surface && lmtexids.inrange(surface->lmid) ? surface->lmid : LMID_AMBIENT, envmap);
@@ -469,12 +469,12 @@ void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, 
         int tris = addtriindexes(texture == DEFAULT_SKY ? l0.explicitskyindices : l0.indices[key].dims[dimension(orient)], index);
         if(texture == DEFAULT_SKY) explicitsky += tris;
         else l0.curtris += tris;
-    };
+    }
     if(lodsize && size>=lodsize)
     {
         int tris = addtriindexes(texture == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(orient)], index);
         if(texture != DEFAULT_SKY) l1.curtris += tris;
-    };
+    }
 };
 
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
@@ -504,8 +504,8 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             memcpy(g.v, vv, sizeof(vv));
             g.surface = e.surfaces ? &e.surfaces[i] : NULL;
             g.texture = c.texture[i];
-        };
-    };
+        }
+    }
 };
 
 bool skyoccluded(cube &c, int orient)
@@ -567,9 +567,9 @@ void genskyfaces(cube &c, const ivec &o, int size, bool lodcube)
         {
             skyarea += (int(m.u2-m.u1)*int(m.v2-m.v1) + (1<<(2*VVEC_FRAC))-1)>>(2*VVEC_FRAC);
             skyfaces[orient][0].add(m);
-        };
+        }
         if(lodsize && size>=lodsize) skyfaces[orient][1].add(m);
-    };
+    }
 };
 
 void addskyverts(const ivec &o, int size)
@@ -595,12 +595,12 @@ void addskyverts(const ivec &o, int size)
                     vv[c] = coords[c] ? m.u2 : m.u1;
                     vv[r] = coords[r] ? m.v2 : m.v1;
                     index[k] = vh.access(vv, 0, 0, bvec(128, 128, 128));
-                };
+                }
                 addtriindexes((!l ? l0 : l1).skyindices, index);
-            };
+            }
             sf.setsizenodelete(0);
-        };
-    };
+        }
+    }
 };
                     
 ////////// Vertex Arrays //////////////
@@ -632,7 +632,7 @@ vtxarray *newva(int x, int y, int z, int size)
         l0.offsetindices = offset;
         l1.offsetindices = offset;
         va->vbuf = 0; // Offset in VBO
-    };
+    }
     char *buf = l1.setup(va, va->l1, l0.setup(va, va->l0, (char *)(va+1)));
     if(!hasVBO)
     {
@@ -640,7 +640,7 @@ vtxarray *newva(int x, int y, int z, int size)
         va->vbuf = (vertex *)buf;
         if(floatvtx) genfloatverts((fvertex *)buf);
         else memcpy(va->vbuf, verts.getbuf(), bufsize);
-    };
+    }
 
     va->parent = NULL;
     va->children = new vector<vtxarray *>;
@@ -657,7 +657,7 @@ vtxarray *newva(int x, int y, int z, int size)
     {
         va->grasstris = new vector<grasstri>;
         va->grasstris->move(grasstris);
-    };
+    }
     va->grasssamples = NULL;
     va->hasmerges = 0;
     wverts += va->verts = verts.length();
@@ -687,8 +687,8 @@ void destroyva(vtxarray *va, bool reparent)
             vtxarray *child = (*va->children)[i];
             child->parent = va->parent;
             if(child->parent) child->parent->children->add(va);
-        };
-    };
+        }
+    }
     if(va->mapmodels) delete va->mapmodels;
     if(va->children) delete va->children;
     if(va->grasstris) delete va->grasstris;
@@ -704,9 +704,9 @@ void vaclearc(cube *c)
         {
             if(c[i].ext->va) destroyva(c[i].ext->va, false);
             c[i].ext->va = NULL;
-        };
+        }
         if(c[i].children) vaclearc(c[i].children);
-    };
+    }
 };
 
 static vector<octaentities *> vamms;
@@ -745,8 +745,8 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
             vamerges[level].add(mf);
             vamergemax = max(vamergemax, level);
             vahasmerges |= MERGE_ORIGIN;
-        };
-    };
+        }
+    }
 };
 
 void findmergedfaces(cube &c, const ivec &co, int size, int csi, int minlevel)
@@ -758,7 +758,7 @@ void findmergedfaces(cube &c, const ivec &co, int size, int csi, int minlevel)
         {
             ivec o(i, co.x, co.y, co.z, size/2); 
             findmergedfaces(c.children[i], o, size/2, csi-1, minlevel);
-        };
+        }
     }
     else if(c.ext && c.ext->merges) genmergedfaces(c, co, size, minlevel);
 };
@@ -778,10 +778,10 @@ void addmergedverts(int level)
             memcpy(g.v, mf.v, sizeof(mf.v));
             g.surface = mf.surface;
             g.texture = mf.tex;
-        };
+        }
         cstats[level].nface++;
         vahasmerges |= MERGE_USE;
-    };
+    }
     mfl.setsizenodelete(0);
 };
 
@@ -800,7 +800,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         {
             ivec o(i, cx, cy, cz, size/2);
             rendercube(c.children[i], o.x, o.y, o.z, size/2, csi-1);
-        };
+        }
 
         if(csi < VVEC_INT && vamerges[csi].length()) addmergedverts(csi);
 
@@ -809,11 +809,11 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
             if(c.ext)
             {
                 if(c.ext->ents && c.ext->ents->mapmodels.length()) vamms.add(c.ext->ents);
-            };
+            }
             return;
-        };
+        }
         lodcube = true;
-    };
+    }
     if(!c.children || lodcube) genskyfaces(c, ivec(cx, cy, cz), size, lodcube);
 
     if(!isempty(c)) gencubeverts(c, cx, cy, cz, size, csi, lodcube);
@@ -826,7 +826,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
         if(c.ext->material != MAT_AIR) genmatsurfs(c, cx, cy, cz, size, l0.matsurfs);
         if(c.ext->merges) genmergedfaces(c, ivec(cx, cy, cz), size);
         if(c.ext->merged & ~c.ext->mergeorigin) vahasmerges |= MERGE_PART;
-    };
+    }
 
     if(csi < VVEC_INT && vamerges[csi].length()) addmergedverts(csi);
 
@@ -844,8 +844,8 @@ void calcvabb(int cx, int cy, int cz, int size, ivec &bbmin, ivec &bbmax)
         {
             if(v[j]<vmin[j]) vmin[j] = v[j];
             if(v[j]>vmax[j]) vmax[j] = v[j];
-        };
-    };
+        }
+    }
 
     bbmin = vmin.toivec(cx, cy, cz);
     loopi(3) vmax[i] += (1<<VVEC_FRAC)-1;
@@ -919,21 +919,21 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
                     vtxarray *child = varoot.pop();
                     c[i].ext->va->children->add(child);
                     child->parent = c[i].ext->va;
-                };
+                }
                 varoot.add(c[i].ext->va);
                 if(vamergemax > size)
                 {
                     cmergemax = max(cmergemax, vamergemax);
                     chasmerges |= vahasmerges&~MERGE_USE;
-                };
+                }
                 continue;
-            };
-        };
+            }
+        }
         if(csi < VVEC_INT-1 && vamerges[csi].length()) vamerges[csi+1].move(vamerges[csi]);
         cmergemax = max(cmergemax, vamergemax);
         chasmerges |= vahasmerges;
         ccount += count;
-    };
+    }
 
     vamergemax = cmergemax;
     vahasmerges = chasmerges;
@@ -956,7 +956,7 @@ void genlod(cube &c, int size)
     {
         forcemip(c);
         return;
-    };
+    }
 
     emptyfaces(c);
 };
@@ -981,11 +981,11 @@ void octarender()                               // creates va s for all leaf cub
         vtxarray *va = valist[i];
         explicitsky += va->explicitsky;
         skyarea += va->skyarea;
-    };
+    }
 };
 
-void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); };
-void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; };
+void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); }
+void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; }
 
 void allchanged(bool load)
 {
@@ -1001,7 +1001,7 @@ void allchanged(bool load)
     {
         entitiesinoctanodes();
         genenvmaps();
-    };
+    }
     printcstats();
 };
 

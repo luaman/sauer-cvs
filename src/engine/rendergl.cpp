@@ -111,7 +111,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     
     extern int shaderprecision;
     // default to low precision shaders on certain cards, can be overridden with -f3
-    // char *weakcards[] = { "GeForce FX", "Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome", NULL }; 
+    // char *weakcards[] = { "GeForce FX", "Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome", NULL } 
     // if(shaderprecision==2) for(char **wc = weakcards; *wc; wc++) if(strstr(renderer, *wc)) shaderprecision = 1;
     
     if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
@@ -137,7 +137,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
         //conoutf("Using GL_ARB_vertex_buffer_object extension.");
-    };
+    }
 
     extern int floatvtx;
     if(strstr(vendor, "ATI"))
@@ -148,7 +148,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     else if(strstr(vendor, "Tungsten"))
     {
         floatvtx = 1;
-    };
+    }
     if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
 
     if(!shaderprecision || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
@@ -194,13 +194,13 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
                 apple_glsldepth_bug = 1;
 #endif
                 if(apple_glsldepth_bug) conoutf("WARNING: Using Apple GLSL depth bug workaround. (use \"/apple_glsldepth_bug 0\" to disable if unnecessary");
-            };
-        };
+            }
+        }
         if(renderpath==R_ASMSHADER) conoutf("Rendering using the OpenGL 1.5 assembly shader path.");
 
         glEnable(GL_VERTEX_PROGRAM_ARB);
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
-    };
+    }
 
     if(strstr(exts, "GL_ARB_occlusion_query"))
     {
@@ -221,14 +221,14 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             if(strstr(vendor, "ATI")) ati_oq_bug = 1; 
 #endif            
             if(ati_oq_bug) conoutf("WARNING: Using ATI occlusion query bug workaround. (use \"/ati_oq_bug 0\" to disable if unnecessary)");
-        };
-    };
+        }
+    }
     if(!hasOQ)
     {
         conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
         extern int zpass;
         if(renderpath==R_FIXEDFUNCTION) zpass = 0;
-    };
+    }
 
     if(renderpath!=R_FIXEDFUNCTION)
     {
@@ -261,14 +261,14 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             //conoutf("Using GL_ARB_texture_cube_map extension.");
         }
         else conoutf("WARNING: No cube map texture support. (no reflective glass)");
-    };
+    }
     if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
 
     if(strstr(exts, "GL_EXT_texture_compression_s3tc"))
     {
         hasTC = true;
         //conoutf("Using GL_EXT_texture_compression_s3tc extension.");
-    };
+    }
 
     extern int maxtexsize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
@@ -325,7 +325,7 @@ VAR(thirdpersondistance, 10, 50, 1000);
 extern float reflecting, refracting;
 physent *camera1 = NULL;
 bool deathcam = false;
-bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (reflecting && !refracting); };
+bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (reflecting && !refracting); }
 
 void recomputecamera()
 {
@@ -344,7 +344,7 @@ void recomputecamera()
         {
             *camera1 = *player;
             if(player->state==CS_DEAD) deathcam = true;
-        };
+        }
         camera1->reset();
         camera1->type = ENT_CAMERA;
         camera1->move = -1;
@@ -353,8 +353,8 @@ void recomputecamera()
         loopi(10)
         {
             if(!moveplayer(camera1, 10, true, thirdpersondistance)) break;
-        };
-    };
+        }
+    }
 };
 
 void project(float fovy, float aspect, int farplane)
@@ -411,7 +411,7 @@ void setfogplane(float scale, float z)
         fogplane[0] = 0;
         fogplane[2] = scale;
         fogplane[3] = -z;
-    };  
+    }  
     setenvparamfv("fogplane", SHPARAM_VERTEX, 9, fogplane);
 //    flushenvparam(SHPARAM_VERTEX, 9);
 };
@@ -422,13 +422,13 @@ void drawreflection(float z, bool refract, bool clear)
 {
     getwatercolour(wcol);
     float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
-
+    
     if(refract && !waterfog)
     {
         glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         return;
-    };
+    }
 
     reflecting = z;
     if(refract) refracting = z;
@@ -453,14 +453,14 @@ void drawreflection(float z, bool refract, bool clear)
             glFogi(GL_FOG_END, fog);
             float fogc[4] = { (fogcolour>>16)/256.0f, ((fogcolour>>8)&255)/256.0f, (fogcolour&255)/256.0f, 1.0f };
             glFogfv(GL_FOG_COLOR, fogc);
-        };
-    };
+        }
+    }
 
     if(clear)
     {
         glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-    };
+    }
 
     if(!refract && camera1->o.z >= z)
     {
@@ -469,7 +469,7 @@ void drawreflection(float z, bool refract, bool clear)
         glScalef(1, 1, -1);
 
         glCullFace(GL_BACK);
-    };
+    }
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
     //if(!refract && explicitsky) drawskybox(farplane, true, z);
@@ -487,10 +487,10 @@ void drawreflection(float z, bool refract, bool clear)
         {
             zclip = z-zoffset;
             if(camera1->o.z>=zclip && camera1->o.z<=z+4.0f) zclip = z;
-        };
+        }
         genclipmatrix(0, 0, refract ? -1 : 1, refract ? zclip : -zclip, clipmatrix);
         setclipmatrix(clipmatrix);
-    };
+    }
 
     //if(!refract && explicitsky) drawskylimits(true, z);
 
@@ -509,7 +509,7 @@ void drawreflection(float z, bool refract, bool clear)
         defaultshader->set();
         drawskybox(farplane, false, z);
         if(reflectclip) setclipmatrix(clipmatrix);
-    };
+    }
 
     rendermaterials(z, refract);
 
@@ -526,14 +526,14 @@ void drawreflection(float z, bool refract, bool clear)
         glPopMatrix();
 
         glCullFace(GL_FRONT);
-    };
+    }
 
     if(refract || camera1->o.z < z)
     {
         glFogf(GL_FOG_START, oldfogstart);
         glFogf(GL_FOG_END, oldfogend);
         glFogfv(GL_FOG_COLOR, oldfogcolor);
-    };
+    }
     
     refracting = 0;
     reflecting = 0;
@@ -554,7 +554,7 @@ static void setfog(bool underwater)
         glFogfv(GL_FOG_COLOR, fogwc); 
         glFogi(GL_FOG_START, 0);
         glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
-    };
+    }
 
     if(renderpath!=R_FIXEDFUNCTION) setfogplane();
 };
@@ -637,7 +637,7 @@ void gl_drawframe(int w, int h, float curfps)
     {
         fovy += (float)sin(lastmillis/1000.0)*2.0f;
         aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
-    };
+    }
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
@@ -663,7 +663,7 @@ void gl_drawframe(int w, int h, float curfps)
     {
         cube &s = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*1.25f));
         if(s.ext && s.ext->material==MAT_WATER) rendercaustics(0, false);
-    };
+    }
 
     if(!wireframe) renderoutline();
 
@@ -692,7 +692,7 @@ void gl_drawframe(int w, int h, float curfps)
         project(hudgunfov, aspect, farplane);
         cl->drawhudgun();
         project(fovy, aspect, farplane);
-    };
+    }
 
     glDisable(GL_FOG);
     defaultshader->set();
@@ -717,7 +717,7 @@ VARP(cursorsize, 0, 30, 50);
 VARP(damageblendfactor, 0, 300, 1000);
 
 int dblend = 0;
-void damageblend(int n) { dblend += n; };
+void damageblend(int n) { dblend += n; }
 
 VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
@@ -754,7 +754,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         cursorupdate();
         glDepthMask(GL_TRUE);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    };
+    }
 
     glDisable(GL_DEPTH_TEST);
 
@@ -783,7 +783,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
             loopi(3) wblend[i] = wcol[i] / min(32 + maxc*7/8, 255);
             glColor3fv(wblend);
             //glColor3f(0.1f, 0.5f, 1.0f);
-        };
+        }
         glVertex2i(0, 0);
         glVertex2i(w, 0);
         glVertex2i(w, h);
@@ -792,7 +792,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glDepthMask(GL_TRUE);
         dblend -= curtime*100/damageblendfactor;
         if(dblend<0) dblend = 0;
-    };
+    }
 
     glEnable(GL_TEXTURE_2D);
     defaultshader->set();
@@ -822,14 +822,14 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
                 draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*3, selchildcount<0 ? "1/" : "", abs(selchildcount));
                 draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
                 draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d, rp:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length(), rplanes);
-            };
-        };
+            }
+        }
 
         if(editmode) draw_text(executeret("if (enthavesel) [ result ( concatword (entget) \" : \" (enthavesel) \" selected\" ) ] [ result ]"), FONTH/2, abovegameplayhud);
 
         cl->gameplayhud(w, h);
         render_texture_panel(w, h);
-    };
+    }
 
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
