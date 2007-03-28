@@ -24,9 +24,9 @@ void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm
 {
     grasssample &g = va->grasssamples->add();
 
-    g.x = ushort(o.x) | GRASS_SAMPLE;
-    g.y = ushort(o.y);
-    g.z = ushort(4*o.z);
+    g.x = ushort(o.x-va->x) | GRASS_SAMPLE;
+    g.y = ushort(o.y-va->y);
+    g.z = ushort(4*(o.z-va->z));
 
     if(lm)
     {
@@ -51,9 +51,9 @@ bool gengrassheader(vtxarray *va, const vec *v)
     if(radius < grassgrid*2) return false;
 
     grassbounds &g = *(grassbounds *)&va->grasssamples->add();
-    g.x = ushort(center.x) | GRASS_BOUNDS;
-    g.y = ushort(center.y);
-    g.z = ushort(4*center.z);
+    g.x = ushort(center.x-va->x) | GRASS_BOUNDS;
+    g.y = ushort(center.y-va->y);
+    g.z = ushort(4*(center.z-va->z));
     g.radius = ushort(radius + grasswidth);
     g.numsamples = 0;
     return true;
@@ -323,7 +323,7 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
     {
         grasssample &g = (*va->grasssamples)[i];
 
-        vec o(g.x&~GRASS_TYPE, g.y, g.z/4.0f), tograss;
+        vec o((g.x&~GRASS_TYPE)+va->x, g.y+va->y, g.z/4.0f+va->z), tograss;
         switch(g.x&GRASS_TYPE)
         {
             case GRASS_BOUNDS:
