@@ -16,7 +16,7 @@ void resetgrasssamples()
         vtxarray *va = valist[i];
         DELETEP(va->grasssamples);
     }
-};
+}
 
 VARF(grassgrid, 1, 6, 32, resetgrasssamples());
 
@@ -35,7 +35,7 @@ void gengrasssample(vtxarray *va, const vec &o, float tu, float tv, LightMap *lm
         memcpy(g.color, &lm->data[3*(int(tv)*LM_PACKW + int(tu))], 3);
     }
     else loopk(3) g.color[k] = hdr.ambient;
-};
+}
 
 bool gengrassheader(vtxarray *va, const vec *v)
 {
@@ -57,7 +57,7 @@ bool gengrassheader(vtxarray *va, const vec *v)
     g.radius = ushort(radius + grasswidth);
     g.numsamples = 0;
     return true;
-};
+}
 
 void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
 {
@@ -191,7 +191,7 @@ void gengrasssamples(vtxarray *va, const vec *v, float *tc, LightMap *lm)
         grassbounds &g = *(grassbounds *)&(*va->grasssamples)[va->grasssamples->length() - numsamples - 1];
         g.numsamples = numsamples;
     } 
-};
+}
 
 void gengrasssamples(vtxarray *va)
 {
@@ -225,7 +225,7 @@ void gengrasssamples(vtxarray *va)
         gengrasssamples(va, v, tc, lm);
         gengrasssamples(va, &v[1], &tc[2], lm);
     }
-};
+}
 
 VAR(grasstest, 0, 0, 3);
 
@@ -241,7 +241,7 @@ float loddist(const vec &o)
     float dist = sqrt(dx*dx + dy*dy);
     dist -= grasslodz/100.0f * max(dz, 0);
     return max(dist, 0);
-};
+}
 
 VAR(grassrand, 0, 30, 90);
 
@@ -314,7 +314,7 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     glTexCoord2f(offset, 0); glVertex3fv(t1.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 0); glVertex3fv(t2.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 1); glVertex3fv(b2.v);
-};
+}
 
 void rendergrasssamples(vtxarray *va, const vec &dir)
 {
@@ -367,7 +367,7 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
             }
         }
     }
-};
+}
 
 VAR(grassblend, 0, 0, 100);
 
@@ -391,7 +391,7 @@ void setupgrass()
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
 
     glBegin(GL_QUADS);
-};
+}
 
 void cleanupgrass()
 {
@@ -404,7 +404,7 @@ void cleanupgrass()
     if(grassblend) glDisable(GL_BLEND);
     glDisable(GL_ALPHA_TEST);
     glEnable(GL_CULL_FACE);
-};
+}
 
 VARP(grass, 0, 1, 1);
 
@@ -427,5 +427,5 @@ void rendergrass()
     }
 
     if(rendered) cleanupgrass();
-};
+}
 

@@ -18,7 +18,7 @@ void quit()                     // normal exit
     extern void clear_sound();   clear_sound();
     SDL_Quit();
     exit(EXIT_SUCCESS);
-};
+}
 
 void fatal(char *s, char *o)    // failure exit
 {
@@ -28,7 +28,7 @@ void fatal(char *s, char *o)    // failure exit
         MessageBox(NULL, msg, "sauerbraten fatal error", MB_OK|MB_SYSTEMMODAL);
     #endif
     exit(EXIT_FAILURE);
-};
+}
 
 SDL_Surface *screen = NULL;
 
@@ -61,7 +61,7 @@ void screenshot()
         }
         SDL_FreeSurface(image);
     }
-};
+}
 
 COMMAND(screenshot, "");
 COMMAND(quit, "");
@@ -101,7 +101,7 @@ void computescreen(const char *text)
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-};
+}
 
 void bar(float bar, int w, int o, float r, float g, float b)
 {
@@ -111,7 +111,7 @@ void bar(float bar, int w, int o, float r, float g, float b)
     glVertex2f(bar*(w*3-2*side)+side, o*FONTH);
     glVertex2f(bar*(w*3-2*side)+side, (o+2)*FONTH);
     glVertex2f(side,                  (o+2)*FONTH);
-};
+}
 
 void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, const char *text2)   // also used during loading
 {
@@ -158,7 +158,7 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);
     SDL_GL_SwapBuffers();
-};
+}
 
 void setfullscreen(bool enable)
 {
@@ -173,7 +173,7 @@ void setfullscreen(bool enable)
         SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
 #endif
     }
-};
+}
 
 void screenres(int *w, int *h, int *bpp = 0)
 {
@@ -187,7 +187,7 @@ void screenres(int *w, int *h, int *bpp = 0)
     scr_h = screen->h;
     glViewport(0, 0, scr_w, scr_h);
 #endif
-};
+}
 
 VARF(fullscreen, 0, 0, 1, setfullscreen(fullscreen!=0));
 
@@ -207,7 +207,7 @@ void keyrepeat(bool on)
 {
     SDL_EnableKeyRepeat(on ? SDL_DEFAULT_REPEAT_DELAY : 0,
                              SDL_DEFAULT_REPEAT_INTERVAL);
-};
+}
 
 VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 
@@ -223,7 +223,7 @@ void addsleep(int *msec, char *cmd)
     sleepcmd &s = sleepcmds.add(); 
     s.millis = *msec+lastmillis; 
     s.command = newstring(cmd); 
-};
+}
 
 COMMANDN(sleep, addsleep, "is");
 
@@ -240,7 +240,7 @@ void checksleep(int millis)
             sleepcmds.remove(i--); 
         }
     }
-};
+}
 
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
@@ -255,7 +255,7 @@ void estartmap(const char *name)
     pruneundos();
     setvar("wireframe", 0);
     cl->startmap(name);
-};
+}
 
 VAR(maxfps, 5, 200, 500);
 
@@ -278,7 +278,7 @@ void limitfps(int &millis, int curmillis)
             millis += delay;
         }
     }
-};
+}
 
 #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
 void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
@@ -304,7 +304,7 @@ void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
         }
     }
     fatal(out);
-};
+}
 #endif
 
 bool inbetweenframes = false;
@@ -573,4 +573,4 @@ int main(int argc, char **argv)
     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
     } __except(stackdumper(0, GetExceptionInformation()), EXCEPTION_CONTINUE_SEARCH) { return 0; }
     #endif
-};
+}

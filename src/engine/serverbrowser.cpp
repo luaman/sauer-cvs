@@ -58,7 +58,7 @@ int resolverloop(void * data)
         SDL_UnlockMutex(resolvermutex);
     }
     return 0;
-};
+}
 
 void resolverinit()
 {
@@ -75,7 +75,7 @@ void resolverinit()
         rt.thread = SDL_CreateThread(resolverloop, &rt);
     }
     SDL_UnlockMutex(resolvermutex);
-};
+}
 
 void resolverstop(resolverthread &rt)
 {
@@ -90,7 +90,7 @@ void resolverstop(resolverthread &rt)
     rt.query = NULL;
     rt.starttime = 0;
     SDL_UnlockMutex(resolvermutex);
-}; 
+} 
 
 void resolverclear()
 {
@@ -105,7 +105,7 @@ void resolverclear()
         resolverstop(rt);
     }
     SDL_UnlockMutex(resolvermutex);
-};
+}
 
 void resolverquery(const char *name)
 {
@@ -115,7 +115,7 @@ void resolverquery(const char *name)
     resolverqueries.add(name);
     SDL_CondSignal(querycond);
     SDL_UnlockMutex(resolvermutex);
-};
+}
 
 bool resolvercheck(const char **name, ENetAddress *address)
 {
@@ -140,7 +140,7 @@ bool resolvercheck(const char **name, ENetAddress *address)
     }
     SDL_UnlockMutex(resolvermutex);
     return resolved;
-};
+}
 
 bool resolverwait(const char *name, ENetAddress *address)
 {
@@ -186,7 +186,7 @@ bool resolverwait(const char *name, ENetAddress *address)
     }
     SDL_UnlockMutex(resolvermutex);
     return resolved;
-};
+}
 
 enum { UNRESOLVED = 0, RESOLVING, RESOLVED };
 
@@ -219,7 +219,7 @@ void addserver(char *servername)
     si.resolved = UNRESOLVED;
     si.address.host = ENET_HOST_ANY;
     si.address.port = sv->serverinfoport();
-};
+}
 
 void pingservers()
 {
@@ -237,7 +237,7 @@ void pingservers()
         enet_socket_send(pingsock, &si.address, &buf, 1);
     }
     lastinfo = totalmillis;
-};
+}
   
 void checkresolver()
 {
@@ -270,7 +270,7 @@ void checkresolver()
             }
         }
     }
-};
+}
 
 void checkpings()
 {
@@ -305,7 +305,7 @@ void checkpings()
             }
         }
     }
-};
+}
 
 int sicompare(serverinfo *a, serverinfo *b)
 {
@@ -316,7 +316,7 @@ int sicompare(serverinfo *a, serverinfo *b)
     if(a->ping>b->ping) return 1;
     if(a->ping<b->ping) return -1;
     return strcmp(a->name, b->name);
-};
+}
 
 void refreshservers()
 {
@@ -341,7 +341,7 @@ void refreshservers()
         }
         si.full[60] = 0; // cut off too long server descriptions
     }
-};
+}
 
 const char *showservers(g3d_gui *cgui)
 {
@@ -355,7 +355,7 @@ const char *showservers(g3d_gui *cgui)
         if(!--maxmenu) break;
     }
     return name;
-};
+}
 
 void updatefrommaster()
 {
@@ -371,7 +371,7 @@ void updatefrommaster()
         execute((char *)reply);
     }
     refreshservers();
-};
+}
 
 COMMAND(addserver, "s");
 COMMAND(updatefrommaster, "");
@@ -383,5 +383,5 @@ void writeservercfg()
     fprintf(f, "// servers connected to are added here automatically\n\n");
     loopvrev(servers) fprintf(f, "addserver %s\n", servers[i].name);
     fclose(f);
-};
+}
 

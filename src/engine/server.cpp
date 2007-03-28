@@ -5,7 +5,7 @@
 #include "engine.h" 
 
 #ifdef STANDALONE
-void localservertoclient(int chan, uchar *buf, int len) {};
+void localservertoclient(int chan, uchar *buf, int len) {}
 void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); }
 #endif
 
@@ -16,7 +16,7 @@ void putint(ucharbuf &p, int n)
     if(n<128 && n>-127) p.put(n);
     else if(n<0x8000 && n>=-0x8000) { p.put(0x80); p.put(n); p.put(n>>8); }
     else { p.put(0x81); p.put(n); p.put(n>>8); p.put(n>>16); p.put(n>>24); }
-};
+}
 
 int getint(ucharbuf &p)
 {
@@ -24,7 +24,7 @@ int getint(ucharbuf &p)
     if(c==-128) { int n = p.get(); n |= char(p.get())<<8; return n; }
     else if(c==-127) { int n = p.get(); n |= p.get()<<8; n |= p.get()<<16; return n|(p.get()<<24); } 
     else return c;
-};
+}
 
 // much smaller encoding for unsigned integers up to 28 bits, but can handle signed
 void putuint(ucharbuf &p, int n)
@@ -48,7 +48,7 @@ void putuint(ucharbuf &p, int n)
         p.put(0x80 | ((n >> 7) & 0x7F));
         p.put(n >> 14); 
     }
-};
+}
 
 int getuint(ucharbuf &p)
 {
@@ -61,13 +61,13 @@ int getuint(ucharbuf &p)
         if(n & (1<<28)) n |= 0xF0000000; 
     }
     return n;
-};
+}
 
 void sendstring(const char *t, ucharbuf &p)
 {
     while(*t) putint(p, *t++);
     putint(p, 0);
-};
+}
 
 void getstring(char *text, ucharbuf &p, int len)
 {
@@ -79,7 +79,7 @@ void getstring(char *text, ucharbuf &p, int len)
         *t = getint(p);
     }
     while(*t++);
-};
+}
 
 enum { ST_EMPTY, ST_LOCAL, ST_TCPIP };
 
@@ -125,7 +125,7 @@ void sendfile(int cn, int chan, FILE *file)
 #endif
 
     if(!packet->referenceCount) enet_packet_destroy(packet);
-};
+}
 
 void process(ENetPacket *packet, int sender, int chan);
 void multicast(ENetPacket *packet, int sender, int chan);
@@ -150,7 +150,7 @@ void sendpacket(int n, int chan, ENetPacket *packet)
             localservertoclient(chan, packet->data, (int)packet->dataLength);
             break;
     }
-};
+}
 
 void sendf(int cn, int chan, const char *format, ...)
 {
@@ -175,7 +175,7 @@ void sendf(int cn, int chan, const char *format, ...)
     if(cn<0) multicast(packet, -1, chan);
     else sendpacket(cn, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
-};
+}
 
 char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL (maxclients)" };
 
@@ -189,14 +189,14 @@ void disconnect_client(int n, int reason)
     clients[n]->type = ST_EMPTY;
     clients[n]->peer->data = NULL;
     sv->sendservmsg(s);
-};
+}
 
 void process(ENetPacket *packet, int sender, int chan)   // sender may be -1
 {
     ucharbuf p(packet->data, (int)packet->dataLength);
     sv->parsepacket(sender, chan, (packet->flags&ENET_PACKET_FLAG_RELIABLE)!=0, p);
     if(p.overread()) { disconnect_client(sender, DISC_EOP); return; }
-};
+}
 
 void send_welcome(int n)
 {
@@ -206,7 +206,7 @@ void send_welcome(int n)
     enet_packet_resize(packet, p.length());
     sendpacket(n, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
-};
+}
 
 void multicast(ENetPacket *packet, int sender, int chan)
 {
@@ -215,13 +215,13 @@ void multicast(ENetPacket *packet, int sender, int chan)
         if(i==sender) continue;
         sendpacket(i, chan, packet);
     }
-};
+}
 
 void localclienttoserver(int chan, ENetPacket *packet)
 {
     process(packet, 0, chan);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
-};
+}
 
 client &addclient()
 {
@@ -235,7 +235,7 @@ client &addclient()
     c->info = sv->newinfo();
     clients.add(c);
     return *c;
-};
+}
 
 int nonlocalclients = 0;
 
@@ -259,13 +259,13 @@ void sendpongs()        // reply all server info requests
         buf.dataLength = len + p.length();
         enet_socket_send(pongsock, &addr, &buf, 1);
     }
-};      
+}      
 
 #ifdef STANDALONE
 bool resolverwait(const char *name, ENetAddress *address)
 {
     return enet_address_set_host(address, name) >= 0;
-};
+}
 #endif
 
 ENetSocket mssock = ENET_SOCKET_NULL;
@@ -297,7 +297,7 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
     buf.dataLength = strlen((char *)buf.data);
     printf("sending request to %s...\n", hostname);
     enet_socket_send(mssock, NULL, &buf, 1);
-};  
+}  
 
 void httpgetreceive(ENetBuffer &buf)
 {
@@ -316,14 +316,14 @@ void httpgetreceive(ENetBuffer &buf)
         ((char*)buf.data)[0] = 0;
         buf.dataLength -= len;
     }
-};  
+}  
 
 uchar *stripheader(uchar *b)
 {
     char *s = strstr((char *)b, "\n\r\n");
     if(!s) s = strstr((char *)b, "\n\n");
     return s ? (uchar *)s : b;
-};
+}
 
 ENetAddress masterserver = { ENET_HOST_ANY, 80 };
 int updmaster = 0;
@@ -339,14 +339,14 @@ void updatemasterserver()
     masterrep[0] = 0;
     masterb.data = masterrep;
     masterb.dataLength = MAXTRANS-1;
-}; 
+} 
 
 void checkmasterreply()
 {
     bool busy = mssock!=ENET_SOCKET_NULL;
     httpgetreceive(masterb);
     if(busy && mssock==ENET_SOCKET_NULL) printf("masterserver reply: %s\n", stripheader(masterrep));
-}; 
+} 
 
 uchar *retrieveservers(uchar *buf, int buflen)
 {
@@ -358,7 +358,7 @@ uchar *retrieveservers(uchar *buf, int buflen)
     eb.dataLength = buflen-1;
     while(mssock!=ENET_SOCKET_NULL) httpgetreceive(eb);
     return stripheader(buf);
-};
+}
 
 #define DEFAULTCLIENTS 6
 
@@ -432,12 +432,12 @@ void serverslice(int seconds, uint timeout)   // main server update, called from
             break;
     }
     if(sv->sendpackets()) enet_host_flush(serverhost);
-};
+}
 
 void cleanupserver()
 {
     if(serverhost) enet_host_destroy(serverhost);
-};
+}
 
 void localdisconnect()
 {
@@ -446,7 +446,7 @@ void localdisconnect()
         sv->localdisconnect(i);
         clients[i]->type = ST_EMPTY;
     }
-};
+}
 
 void localconnect()
 {
@@ -455,7 +455,7 @@ void localconnect()
     s_strcpy(c.hostname, "local");
     sv->localconnect(c.num);
     send_welcome(c.num); 
-};
+}
 
 hashtable<char *, igame *> *gamereg = NULL;
 
@@ -463,7 +463,7 @@ void registergame(char *name, igame *ig)
 {
     if(!gamereg) gamereg = new hashtable<char *, igame *>;
     (*gamereg)[name] = ig;
-};
+}
 
 igameclient     *cl = NULL;
 igameserver     *sv = NULL;
@@ -518,7 +518,7 @@ void initserver(bool dedicated)
         atexit(enet_deinitialize);
         for(;;) serverslice(time(NULL), 5);
     }
-};
+}
 
 bool serveroption(char *opt)
 {
@@ -540,7 +540,7 @@ bool serveroption(char *opt)
         default: return false;
     }
     
-};
+}
 
 #ifdef STANDALONE
 int main(int argc, char* argv[])
@@ -549,5 +549,5 @@ int main(int argc, char* argv[])
     if(enet_initialize()<0) fatal("Unable to initialise network module");
     initserver(true);
     return 0;
-};
+}
 #endif

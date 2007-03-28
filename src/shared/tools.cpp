@@ -9,7 +9,7 @@ char *path(char *s)
 {
     for(char *t = s; (t = strpbrk(t, "/\\")); *t++ = PATHDIV);
     return s;
-};
+}
 
 char *parentdir(char *directory)
 {
@@ -19,7 +19,7 @@ char *parentdir(char *directory)
     char *parent = new char[len];
     s_strncpy(parent, directory, len);
     return parent;
-};
+}
 
 char *loadfile(char *fn, int *size)
 {
@@ -41,7 +41,7 @@ char *loadfile(char *fn, int *size)
     }
     if(size!=NULL) *size = len;
     return buf;
-};
+}
 
 void endianswap(void *memory, int stride, int length)   // little endian as storage format
 {
@@ -54,7 +54,7 @@ void endianswap(void *memory, int stride, int length)   // little endian as stor
         p[stride-i-1] = t;
     }
 #endif
-};
+}
 
 
 ////////////////////////// rnd numbers ////////////////////////////////////////
@@ -76,7 +76,7 @@ void seedMT(uint seed)
     register uint x = (seed | 1U) & 0xFFFFFFFFU, *s = state;
     register int j;
     for(left=0, *s++=x, j=N; --j; *s++ = (x*=69069U) & 0xFFFFFFFFU);
-};
+}
 
 uint reloadMT(void)
 {
@@ -91,7 +91,7 @@ uint reloadMT(void)
     s1 ^= (s1 <<  7) & 0x9D2C5680U;
     s1 ^= (s1 << 15) & 0xEFC60000U;
     return(s1 ^ (s1 >> 18));
-};
+}
 
 uint randomMT(void)
 {
@@ -102,4 +102,4 @@ uint randomMT(void)
     y ^= (y <<  7) & 0x9D2C5680U;
     y ^= (y << 15) & 0xEFC60000U;
     return(y ^ (y >> 18));
-};
+}

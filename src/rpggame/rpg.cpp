@@ -21,7 +21,7 @@ struct rpgclient : igameclient, g3d_callback
         int lastaction, lastpain;
         bool attacking;
 
-        rpgent() : lastaction(0), lastpain(0), attacking(false) {};
+        rpgent() : lastaction(0), lastpain(0), attacking(false) {}
 
         void tryattack(vector<rpgobj *> &set, rpgobj *attacker, int lastmillis)
         {
@@ -65,7 +65,7 @@ struct rpgclient : igameclient, g3d_callback
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
         CCOMMAND(rpgclient, showinventory, "", self->showinventory());    
     }
-    ~rpgclient() {};
+    ~rpgclient() {}
 
     icliententities *getents() { return &et; }
     iclientcom *getcom() { return &cc; }
@@ -109,7 +109,7 @@ struct rpgclient : igameclient, g3d_callback
         g.end();
     }
     
-    void initclient() {};
+    void initclient() {}
         
     void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)
     {
@@ -119,11 +119,11 @@ struct rpgclient : igameclient, g3d_callback
         else if(floorlevel<0) { if(local) playsoundname("aard/land"); else if(d->type==ENT_AI) playsoundname("aard/land", &d->o); }    
     }
     
-    void edittrigger(const selinfo &sel, int op, int arg1 = 0, int arg2 = 0, int arg3 = 0) {};
+    void edittrigger(const selinfo &sel, int op, int arg1 = 0, int arg2 = 0, int arg3 = 0) {}
     char *getclientmap() { return mapname; }
-    void resetgamestate() {};
-    void worldhurts(physent *d, int damage) {};
-    void newmap(int size) {};
+    void resetgamestate() {}
+    void worldhurts(physent *d, int damage) {}
+    void newmap(int size) {}
 
     void startmap(const char *name)
     {
@@ -133,7 +133,7 @@ struct rpgclient : igameclient, g3d_callback
         et.startmap();
     }
     
-    void gameplayhud(int w, int h) {};
+    void gameplayhud(int w, int h) {}
     
     void drawhudmodel(int anim, float speed, int base)
     {
@@ -170,8 +170,8 @@ struct rpgclient : igameclient, g3d_callback
     
     void g3d_gamemenus() { os.g3d_npcmenus(); if(menutime) g3d_addgui(this, menupos); }
 
-    void writegamedata(vector<char> &extras) {};
-    void readgamedata(vector<char> &extras) {};
+    void writegamedata(vector<char> &extras) {}
+    void readgamedata(vector<char> &extras) {}
 
     char *gameident() { return "rpg"; }
 };

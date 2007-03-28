@@ -11,7 +11,7 @@ struct SphereTree
     float radius;
     vec center;
 
-    virtual ~SphereTree() {};
+    virtual ~SphereTree() {}
 
     bool shellintersect(const vec &o, const vec &ray, float maxdist) const
     {

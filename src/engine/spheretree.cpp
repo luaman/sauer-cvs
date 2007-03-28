@@ -144,7 +144,7 @@ SphereTree *buildspheretree(int numtris, const SphereTree::tri *tris)
     SphereTree *root = spheres[0];
     delete[] spheres;
     return root;
-};
+}
 
 static inline void yawray(vec &o, vec &ray, float angle)
 {
@@ -157,7 +157,7 @@ static inline void yawray(vec &o, vec &ray, float angle)
     ray.x = rx*c - ry*s - o.x;
     ray.y = ry*c + rx*s - o.y;
     ray.normalize();
-};
+}
 
 bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist, int mode, float &dist)
 {
@@ -177,5 +177,5 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     vec yray(ray);
     if(yaw != 0) yawray(yo, yray, yaw);
     return m->spheretree->childintersect(yo, yray, maxdist, dist, mode);
-};
+}
 

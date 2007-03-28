@@ -17,7 +17,7 @@ void printcstats()
         if(!cstats[i].size) continue;
         conoutf("%d: %d faces, %d leafs, %d nodes", cstats[i].size, cstats[i].nface, cstats[i].nleaf, cstats[i].nnode);
     }
-};
+}
 
 VARF(floatvtx, 0, 0, 1, allchanged());
 
@@ -34,7 +34,7 @@ void genfloatverts(fvertex *f)
         f->n = v.n;
         f++;
     }
-};
+}
 
 struct vboinfo
 {
@@ -44,12 +44,12 @@ struct vboinfo
 static inline uint hthash(GLuint key)
 {
     return key;
-};
+}
 
 static inline bool htcmp(GLuint x, GLuint y)
 {
     return x==y;
-};
+}
 
 hashtable<GLuint, vboinfo> vbos;
 
@@ -75,7 +75,7 @@ void destroyvbo(GLuint vbo)
     if(vbi.uses <= 0) return;
     vbi.uses--;
     if(!vbi.uses) glDeleteBuffers_(1, &vbo);
-};
+}
 
 void genvbo(int type, void *buf, int len, vtxarray **vas, int numva)
 {
@@ -103,7 +103,7 @@ void genvbo(int type, void *buf, int len, vtxarray **vas, int numva)
             case VBO_SKYBUF_L1: va->l1.skybufGL = vbo; break;
         }
     }
-};
+}
 
 void flushvbo(int type = -1)
 {
@@ -119,7 +119,7 @@ void flushvbo(int type = -1)
     genvbo(type, data.getbuf(), data.length(), vas.getbuf(), vas.length());
     data.setsizenodelete(0);
     vas.setsizenodelete(0);
-};
+}
 
 void *addvbo(vtxarray *va, int type, void *buf, int len)
 {
@@ -148,7 +148,7 @@ void *addvbo(vtxarray *va, int type, void *buf, int len)
     if(data.length() >= minsize) flushvbo(type);
 
     return (void *)offset;
-};
+}
  
 struct vechash
 {
@@ -189,10 +189,10 @@ vechash vh;
 struct sortkey
 {
      ushort tex, lmid, envmap;
-     sortkey() {};
+     sortkey() {}
      sortkey(ushort tex, ushort lmid, ushort envmap = EMID_NONE)
       : tex(tex), lmid(lmid), envmap(envmap)
-     {};
+     {}
 
      bool operator==(const sortkey &o) const { return tex==o.tex && lmid==o.lmid && envmap==o.envmap; }
 };
@@ -202,18 +202,18 @@ struct sortval
      int unlit;
      usvector dims[3];
 
-     sortval() : unlit(0) {};
+     sortval() : unlit(0) {}
 };
 
 static inline bool htcmp(const sortkey &x, const sortkey &y)
 {
     return x == y;
-};
+}
 
 static inline uint hthash(const sortkey &k)
 {
     return k.tex + k.lmid*9741;
-};
+}
 
 struct lodcollect
 {
@@ -445,7 +445,7 @@ int addtriindexes(usvector &v, int index[4])
         v.add(index[3]);
     }
     return tris;
-};
+}
 
 void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, surfaceinfo *surface, surfacenormals *normals, ushort envmap = EMID_NONE)
 {
@@ -475,7 +475,7 @@ void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, 
         int tris = addtriindexes(texture == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[dimension(orient)], index);
         if(texture != DEFAULT_SKY) l1.curtris += tris;
     }
-};
+}
 
 void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
 {
@@ -506,7 +506,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             g.texture = c.texture[i];
         }
     }
-};
+}
 
 bool skyoccluded(cube &c, int orient)
 {
@@ -514,7 +514,7 @@ bool skyoccluded(cube &c, int orient)
 //    if(c.texture[orient] == DEFAULT_SKY) return true;
     if(touchingface(c, orient) && faceedges(c, orient) == F_SOLID) return true;
     return false;
-};
+}
 
 int hasskyfaces(cube &c, int x, int y, int z, int size, int faces[6])
 {
@@ -526,7 +526,7 @@ int hasskyfaces(cube &c, int x, int y, int z, int size, int faces[6])
     if(z == 0 && !skyoccluded(c, O_BOTTOM)) faces[numfaces++] = O_BOTTOM;
     if(z + size == hdr.worldsize && !skyoccluded(c, O_TOP)) faces[numfaces++] = O_TOP;
     return numfaces;
-};
+}
 
 vector<cubeface> skyfaces[6][2];
  
@@ -542,7 +542,7 @@ void minskyface(cube &cu, int orient, const ivec &co, int size, mergeinfo &orig)
     orig.u2 = min(mincf.u2, orig.u2);
     orig.v1 = max(mincf.v1, orig.v1);
     orig.v2 = min(mincf.v2, orig.v2);
-};  
+}  
 
 void genskyfaces(cube &c, const ivec &o, int size, bool lodcube)
 {
@@ -570,7 +570,7 @@ void genskyfaces(cube &c, const ivec &o, int size, bool lodcube)
         }
         if(lodsize && size>=lodsize) skyfaces[orient][1].add(m);
     }
-};
+}
 
 void addskyverts(const ivec &o, int size)
 {
@@ -601,7 +601,7 @@ void addskyverts(const ivec &o, int size)
             sf.setsizenodelete(0);
         }
     }
-};
+}
                     
 ////////// Vertex Arrays //////////////
 
@@ -665,7 +665,7 @@ vtxarray *newva(int x, int y, int z, int size)
     allocva++;
     valist.add(va);
     return va;
-};
+}
 
 void destroyva(vtxarray *va, bool reparent)
 {
@@ -694,7 +694,7 @@ void destroyva(vtxarray *va, bool reparent)
     if(va->grasstris) delete va->grasstris;
     if(va->grasssamples) delete va->grasssamples;
     delete[] (uchar *)va;
-};
+}
 
 void vaclearc(cube *c)
 {
@@ -707,7 +707,7 @@ void vaclearc(cube *c)
         }
         if(c[i].children) vaclearc(c[i].children);
     }
-};
+}
 
 static vector<octaentities *> vamms;
 
@@ -747,7 +747,7 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
             vahasmerges |= MERGE_ORIGIN;
         }
     }
-};
+}
 
 void findmergedfaces(cube &c, const ivec &co, int size, int csi, int minlevel)
 {
@@ -761,7 +761,7 @@ void findmergedfaces(cube &c, const ivec &co, int size, int csi, int minlevel)
         }
     }
     else if(c.ext && c.ext->merges) genmergedfaces(c, co, size, minlevel);
-};
+}
 
 void addmergedverts(int level)
 {
@@ -783,7 +783,7 @@ void addmergedverts(int level)
         vahasmerges |= MERGE_USE;
     }
     mfl.setsizenodelete(0);
-};
+}
 
 void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates vertices and indices ready to be put into a va
 {
@@ -831,7 +831,7 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi)  // creates 
     if(csi < VVEC_INT && vamerges[csi].length()) addmergedverts(csi);
 
     cstats[csi].nleaf++;
-};
+}
 
 void calcvabb(int cx, int cy, int cz, int size, ivec &bbmin, ivec &bbmax)
 {
@@ -850,7 +850,7 @@ void calcvabb(int cx, int cy, int cz, int size, ivec &bbmin, ivec &bbmax)
     bbmin = vmin.toivec(cx, cy, cz);
     loopi(3) vmax[i] += (1<<VVEC_FRAC)-1;
     bbmax = vmax.toivec(cx, cy, cz);
-};
+}
 
 void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 {
@@ -880,7 +880,7 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
     vh.clear(); 
     l0.clear();
     l1.clear();
-};
+}
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
 VARF(vacubesize, 128, 128, VVEC_INT_MASK+1, allchanged());
@@ -939,7 +939,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     vahasmerges = chasmerges;
 
     return ccount;
-};
+}
 
 void genlod(cube &c, int size)
 {
@@ -959,7 +959,7 @@ void genlod(cube &c, int size)
     }
 
     emptyfaces(c);
-};
+}
 
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
@@ -982,7 +982,7 @@ void octarender()                               // creates va s for all leaf cub
         explicitsky += va->explicitsky;
         skyarea += va->skyarea;
     }
-};
+}
 
 void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); }
 void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; }
@@ -1003,12 +1003,12 @@ void allchanged(bool load)
         genenvmaps();
     }
     printcstats();
-};
+}
 
 void recalc()
 {
     allchanged(true);
-};
+}
 
 COMMAND(recalc, "");
 

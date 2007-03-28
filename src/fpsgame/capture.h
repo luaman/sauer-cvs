@@ -86,7 +86,7 @@ struct capturestate
 
     int captures;
 
-    capturestate() : captures(0) {};
+    capturestate() : captures(0) {}
 
     void reset()
     {
@@ -376,7 +376,7 @@ struct captureserv : capturestate
     fpsserver &sv;
     int scoresec;
     
-    captureserv(fpsserver &sv) : sv(sv), scoresec(0) {};
+    captureserv(fpsserver &sv) : sv(sv), scoresec(0) {}
 
     void reset()
     {

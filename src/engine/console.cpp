@@ -21,7 +21,7 @@ void setconskip(int *n)
 {
     conskip += *n;
     if(conskip<0) conskip = 0;
-};
+}
 
 COMMANDN(conskip, setconskip, "i");
 
@@ -42,7 +42,7 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     {
         s_strcpy(cl.cref, sf);
     }
-};
+}
 
 extern int scr_w, scr_h;
 
@@ -63,7 +63,7 @@ void conoutf(const char *s, ...)
         conline(t, n++!=0);
         s += visible;
     }
-};
+}
 
 bool fullconsole = false;
 void toggleconsole() { fullconsole = !fullconsole; }
@@ -74,7 +74,7 @@ void rendercommand(int x, int y)
     s_sprintfd(s)("> %s", commandbuf);
     draw_text(s, x, y);
     draw_text("_", x + text_width(s, commandpos>=0 ? commandpos+2 : -1), y);
-};
+}
 
 void blendbox(int x1, int y1, int x2, int y2, bool border)
 {
@@ -107,7 +107,7 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     glDepthMask(GL_TRUE);
 
     defaultshader->set();
-};
+}
 
 int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
@@ -134,7 +134,7 @@ int renderconsole(int w, int h)                   // render buffer taking into a
         }
         return nd*FONTH+FONTH/2;
     }
-};
+}
 
 // keymap is defined externally in keymap.cfg
 
@@ -156,7 +156,7 @@ void keymap(char *code, char *key)
     km.name = newstring(key);
     km.action = newstring("");
     km.editaction = newstring("");
-};
+}
 
 COMMAND(keymap, "ss");
 
@@ -175,7 +175,7 @@ void bindkey(char *key, char *action, bool edit)
         return;
     }
     conoutf("unknown key \"%s\"", key);   
-};
+}
 
 void bindnorm(char *key, char *action) { bindkey(key, action, false); }
 void bindedit(char *key, char *action) { bindkey(key, action, true);  }
@@ -190,7 +190,7 @@ void saycommand(char *init)                         // turns input to the comman
     if(!init) init = "";
     s_strcpy(commandbuf, init);
     commandpos = -1;
-};
+}
 
 void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); }
 
@@ -237,7 +237,7 @@ void pasteconsole()
     }
     XFree(cb);
     #endif
-};
+}
 
 cvector vhistory;
 int histpos = 0;
@@ -251,7 +251,7 @@ void history(int *n)
         execute(vhistory[vhistory.length()-*n-1]);
         rec = false;
     }
-};
+}
 
 COMMAND(history, "i");
 
@@ -269,12 +269,12 @@ const char *addreleaseaction(const char *s)
     ra.key = keypressed;
     ra.action = newstring(s);
     return keypressed->name;
-};
+}
 
 void onrelease(char *s)
 {
     addreleaseaction(s);
-};
+}
 
 COMMAND(onrelease, "s");
 
@@ -413,17 +413,17 @@ void keypress(int code, bool isdown, int cooked)
             break;
         }
     }
-};
+}
 
 char *getcurcommand()
 {
     return saycommandon ? commandbuf : (char *)NULL;
-};
+}
 
 void clear_console()
 {
     keyms.setsize(0);
-};
+}
 
 void writebinds(FILE *f)
 {
@@ -432,7 +432,7 @@ void writebinds(FILE *f)
         if(*keyms[i].action)     fprintf(f, "bind \"%s\" [%s]\n",     keyms[i].name, keyms[i].action);
         if(*keyms[i].editaction) fprintf(f, "editbind \"%s\" [%s]\n", keyms[i].name, keyms[i].editaction);
     }
-};
+}
 
 // tab-completion of all idents and base maps
 
@@ -440,8 +440,8 @@ struct fileskey
 {
     const char *dir, *ext;
 
-    fileskey() {};
-    fileskey(const char *dir, const char *ext) : dir(dir), ext(ext) {};
+    fileskey() {}
+    fileskey(const char *dir, const char *ext) : dir(dir), ext(ext) {}
 };
 
 struct filesval
@@ -449,19 +449,19 @@ struct filesval
     char *dir, *ext;
     vector<char *> files;
 
-    filesval(const char *dir, const char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {};
+    filesval(const char *dir, const char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {}
     ~filesval() { DELETEA(dir); DELETEA(ext); loopv(files) DELETEA(files[i]); files.setsize(0); }
 };
 
 static inline bool htcmp(const fileskey &x, const fileskey &y)
 {
     return !strcmp(x.dir, y.dir) && (x.ext == y.ext || (x.ext && y.ext && !strcmp(x.ext, y.ext)));
-};
+}
 
 static inline uint hthash(const fileskey &k)
 {
     return hthash(k.dir);
-};
+}
 
 static hashtable<fileskey, filesval *> completefiles;
 static hashtable<char *, filesval *> completions;
@@ -499,7 +499,7 @@ void addcomplete(char *command, char *dir, char *ext)
     filesval **hasfiles = completions.access(command);
     if(hasfiles) *hasfiles = *val;
     else completions[newstring(command)] = *val;
-};
+}
 
 COMMANDN(complete, addcomplete, "sss");
 
@@ -539,7 +539,7 @@ void buildfilenames(filesval *f)
     if(0)
     #endif
     else conoutf("unable to read base folder for map autocomplete");
-};
+}
 
 void complete(char *s)
 {
@@ -597,12 +597,12 @@ void complete(char *s)
         s_strcpy(lastcomplete, nextcomplete);
     }
     else lastcomplete[0] = '\0';
-};
+}
 
 void writecompletions(FILE *f)
 {
     enumeratekt(completions, char *, k, filesval *, v,
         if(v) fprintf(f, "complete \"%s\" \"%s\" \"%s\"\n", k, v->dir, v->ext ? v->ext : "*");
     );
-};
+}
 

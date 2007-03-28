@@ -43,7 +43,7 @@ struct md3meshheader
 
 struct md3 : vertmodel
 {
-    md3(const char *name) : vertmodel(name) {};
+    md3(const char *name) : vertmodel(name) {}
 
     int type() { return MDL_MD3; }
 
@@ -216,7 +216,7 @@ void md3load(char *model)
     mdl.model = loadingmd3;
     mdl.index = loadingmd3->parts.length()-1;
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
-};  
+}  
     
 void md3skin(char *objname, char *skin, char *masks)
 {   
@@ -237,7 +237,7 @@ void md3skin(char *objname, char *skin, char *masks)
             }
         }
     }
-};
+}
 
 void md3anim(char *anim, int *startframe, int *range, char *s)
 {
@@ -246,14 +246,14 @@ void md3anim(char *anim, int *startframe, int *range, char *s)
     int num = findanim(anim);
     if(num<0) { conoutf("could not find animation %s", anim); return; }
     loadingmd3->parts.last()->setanim(num, *startframe, *range, speed);
-};
+}
 
 void md3link(int *parent, int *child, char *tagname)
 {
     if(!loadingmd3) { conoutf("not loading an md3"); return; }
     if(max(*parent, *child) >= loadingmd3->parts.length() || min(*parent, *child) < 0) { conoutf("no models loaded to link"); return; }
     if(!loadingmd3->parts[*parent]->link(loadingmd3->parts[*child], tagname)) conoutf("could not link model %s", loadingmd3->loadname);
-};
+}
 
 COMMAND(md3load, "s");
 COMMAND(md3skin, "sss");

@@ -96,7 +96,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {};
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); } 
@@ -327,8 +327,8 @@ struct fpsserver : igameserver
     {
         char *map;
         int mode, count;
-        votecount() {};
-        votecount(char *s, int n) : map(s), mode(n), count(0) {};
+        votecount() {}
+        votecount(char *s, int n) : map(s), mode(n), count(0) {}
     };
 
     void checkvotes(bool force = false)

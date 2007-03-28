@@ -36,7 +36,7 @@ bool menukey(int code, bool isdown, int cooked)
 			break;
 		default:
 			if(!cooked || (code<32) || (code>127)) return false;
-	};
+	}
 	if(!isdown) return true;	
 	int len = strlen(fieldtext);
     if(fieldpos>len) fieldpos = len;
@@ -60,9 +60,9 @@ bool menukey(int code, bool isdown, int cooked)
 		default:
             memmove(fieldtext+fieldpos+1, fieldtext+fieldpos, len-fieldpos); //length then limited inside field draw code
 			fieldtext[fieldpos++] = cooked;
-	};
+	}
 	return true;
-};
+}
 
 #define SHADOW 4
 #define ICON_SIZE (FONTH-SHADOW)
@@ -351,7 +351,7 @@ struct gui : g3d_gui
         }
     	layout(w, FONTH);
 		return result;
-	};
+	}
 
     void rect_(float x, float y, float w, float h, int usetc = -1) 
     {
@@ -704,7 +704,7 @@ void g3d_addgui(g3d_callback *cb, vec &origin, bool follow)
     g.cb = cb;
     g.origin = origin;
     g.dist = camera1->o.dist(g.origin);
-};
+}
 
 int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; }
 
@@ -714,7 +714,7 @@ bool g3d_windowhit(bool on, bool act)
     if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
     else if(!on && windowhit) cleargui(1);
     return windowhit!=NULL;
-};
+}
 
 void g3d_render()   
 {
@@ -754,4 +754,4 @@ void g3d_render()
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
-};
+}

@@ -28,7 +28,7 @@ struct extentity : entity                       // part of the entity that doesn
     vec color, dir;
     int lasttrigger;
 
-    extentity() : visible(false), triggerstate(TRIGGER_RESET), lasttrigger(0) {};
+    extentity() : visible(false), triggerstate(TRIGGER_RESET), lasttrigger(0) {}
 };
 
 //extern vector<extentity *> ents;                // map entities

@@ -28,7 +28,7 @@ SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
     }
     SDL_FreeSurface(s);
     return d;
-};
+}
 
 SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
 {
@@ -50,7 +50,7 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     }
     SDL_FreeSurface(s);
     return d;
-};
+}
 
 VARP(mintexcompresssize, 0, 1<<10, 1<<12);
 
@@ -114,7 +114,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         }
     }
     else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
-};
+}
 
 hashtable<char *, Texture> textures;
 
@@ -131,7 +131,7 @@ static GLenum texformat(int bpp)
         case 32: return GL_RGBA;
         default: return 0; 
     }
-};
+}
 
 static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, bool mipit = true)
 {
@@ -154,7 +154,7 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
     createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, texformat(t->bpp));
     SDL_FreeSurface(s);
     return t;
-};
+}
 
 static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool msg = true)
 {
@@ -177,7 +177,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         if(tex->xoffset || tex->yoffset) s = texoffset(s, tex->xoffset, tex->yoffset);
     }
     return s;
-};
+}
 
 void loadalphamask(Texture *t)
 {
@@ -210,18 +210,18 @@ Texture *textureload(const char *name, int clamp, bool mipit, bool msg)
     if(t) return t;
     SDL_Surface *s = texturedata(tname, NULL, msg);
     return s ? newtexture(tname, s, clamp, mipit) : crosshair;
-};
+}
 
 void cleangl()
 {
     enumerate(textures, Texture, t, { delete[] t.name; if(t.alphamask) delete[] t.alphamask; });
     textures.clear();
-};
+}
 
 void settexture(const char *name)
 {
     glBindTexture(GL_TEXTURE_2D, textureload(name)->gl);
-};
+}
 
 vector<Slot> slots;
 Slot materialslots[MAT_EDIT];
@@ -232,14 +232,14 @@ void texturereset()
 {
     curtexnum = 0;
     slots.setsize(0);
-};
+}
 
 COMMAND(texturereset, "");
 
 void materialreset()
 {
     loopi(MAT_EDIT) materialslots[i].reset();
-};
+}
 
 COMMAND(materialreset, "");
 
@@ -280,7 +280,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     st.t = NULL;
     s_strcpy(st.name, name);
     path(st.name);
-};
+}
 
 COMMAND(texture, "ssiiif");
 
@@ -290,7 +290,7 @@ void autograss(char *name)
     DELETEA(s.autograss);
     s_sprintfd(pname)("packages/%s", name);
     s.autograss = newstring(name[0] ? pname : "data/grass.png");
-};
+}
 
 COMMAND(autograss, "s");
 
@@ -298,7 +298,7 @@ static int findtextype(Slot &s, int type, int last = -1)
 {
     for(int i = last+1; i<s.sts.length(); i++) if((type&(1<<s.sts[i].type)) && s.sts[i].combined<0) return i;
     return -1;
-};
+}
 
 #define writetex(t, body) \
     { \
@@ -321,7 +321,7 @@ static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
         sourcetex(g);
         loopk(3) dst[k] = min(255, int(dst[k]) + int(src[k] * color[k]));
     );
-};
+}
 
 static void addbump(SDL_Surface *c, SDL_Surface *n)
 {
@@ -329,7 +329,7 @@ static void addbump(SDL_Surface *c, SDL_Surface *n)
         sourcetex(n);
         loopk(3) dst[k] = int(dst[k])*(int(src[2])*2-255)/255;
     );
-};
+}
 
 static void blenddecal(SDL_Surface *c, SDL_Surface *d)
 {
@@ -338,7 +338,7 @@ static void blenddecal(SDL_Surface *c, SDL_Surface *d)
         uchar a = src[3];
         loopk(3) dst[k] = (int(src[k])*int(a) + int(dst[k])*int(255-a))/255;
     );
-};
+}
 
 static void mergespec(SDL_Surface *c, SDL_Surface *s)
 {
@@ -346,7 +346,7 @@ static void mergespec(SDL_Surface *c, SDL_Surface *s)
         sourcetex(s);
         dst[3] = (int(src[0]) + int(src[1]) + int(src[2]))/3;
     );
-};
+}
 
 static void mergedepth(SDL_Surface *c, SDL_Surface *z)
 {
@@ -354,7 +354,7 @@ static void mergedepth(SDL_Surface *c, SDL_Surface *z)
         sourcetex(z);
         dst[3] = src[0];
     );
-};
+}
 
 static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
 {
@@ -380,7 +380,7 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
             for(const char *s = suffix; *s; key.add(*s++));
         }
     }
-};
+}
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define RMASK 0xff000000
@@ -401,7 +401,7 @@ SDL_Surface *creatergbasurface(SDL_Surface *os)
     SDL_BlitSurface(os, NULL, ns, NULL);
     SDL_FreeSurface(os);
     return ns;
-};
+}
 
 SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
 {
@@ -410,7 +410,7 @@ SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
     gluScaleImage(texformat(os->format->BitsPerPixel), os->w, os->h, GL_UNSIGNED_BYTE, os->pixels, w, h, GL_UNSIGNED_BYTE, ns->pixels);
     SDL_FreeSurface(os);
     return ns;
-};
+}
 
 static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
@@ -488,7 +488,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
             break;
     }
     t.t = newtexture(key.getbuf(), ts);
-};
+}
 
 Slot &lookuptexture(int slot, bool load)
 {
@@ -502,7 +502,7 @@ Slot &lookuptexture(int slot, bool load)
     }
     s.loaded = true;
     return s;
-};
+}
 
 Shader *lookupshader(int slot) { return slot<0 && slot>-MAT_EDIT ? materialslots[-slot].shader : (slots.inrange(slot) ? slots[slot].shader : defaultshader); }
 
@@ -536,7 +536,7 @@ GLuint cubemapfromsky(int size)
     }
     delete[] scaled;
     return tex;
-};
+}
 
 Texture *cubemapload(const char *name, bool mipit, bool msg)
 {
@@ -577,7 +577,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
         SDL_FreeSurface(s);
     }
     return t;
-};
+}
 
 VARFP(envmapsize, 4, 7, 9, setupmaterials());
 VAR(envmapradius, 0, 128, 10000);
@@ -601,7 +601,7 @@ void clearenvmaps()
     }
     loopv(envmaps) glDeleteTextures(1, &envmaps[i].tex);
     envmaps.setsize(0);
-};
+}
 
 VAR(aaenvmap, 0, 1, 1);
 
@@ -651,7 +651,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
     delete[] pixels;
     glViewport(0, 0, scr_w, scr_h);
     return tex;
-};
+}
 
 void initenvmaps()
 {
@@ -669,7 +669,7 @@ void initenvmaps()
         em.o = ent.o;
         em.tex = 0;
     }
-};
+}
 
 void genenvmaps()
 {
@@ -680,7 +680,7 @@ void genenvmaps()
         envmap &em = envmaps[i];
         em.tex = genenvmap(em.o, em.size ? em.size : envmapsize);
     }
-};
+}
 
 ushort closestenvmap(const vec &o)
 {
@@ -697,7 +697,7 @@ ushort closestenvmap(const vec &o)
         }
     }
     return minemid;
-};
+}
 
 ushort closestenvmap(int orient, int x, int y, int z, int size)
 {
@@ -707,7 +707,7 @@ ushort closestenvmap(int orient, int x, int y, int z, int size)
     loc[R[dim]] += size/2;
     loc[C[dim]] += size/2;
     return closestenvmap(loc);
-};
+}
 
 GLuint lookupenvmap(ushort emid)
 {
@@ -715,7 +715,7 @@ GLuint lookupenvmap(ushort emid)
     if(emid==EMID_NONE || !envmaps.inrange(emid-EMID_RESERVED)) return 0;
     GLuint tex = envmaps[emid-EMID_RESERVED].tex;
     return tex ? tex : skyenvmap;
-};
+}
 
 void writetgaheader(FILE *f, SDL_Surface *s, int bits)
 {
@@ -745,7 +745,7 @@ void flipnormalmapy(char *destfile, char *normalfile)           // RGB (jpg/png)
         fclose(f);
     }
     if(ns) SDL_FreeSurface(ns);
-};  
+}  
 
 void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR (tga) (SDL loads TGA as BGR!)
 {
@@ -776,7 +776,7 @@ void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR 
     }
     if(hs) SDL_FreeSurface(hs);
     if(ns) SDL_FreeSurface(ns);
-};
+}
 
 COMMAND(flipnormalmapy, "ss");
 COMMAND(mergenormalmaps, "sss");

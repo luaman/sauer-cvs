@@ -28,8 +28,8 @@ struct scoreboard : g3d_callback
     {
         char *team;
         int score;
-        teamscore() {};
-        teamscore(char *s, int n) : team(s), score(n) {};
+        teamscore() {}
+        teamscore(char *s, int n) : team(s), score(n) {}
     };
 
     static int teamscorecmp(const teamscore *x, const teamscore *y)

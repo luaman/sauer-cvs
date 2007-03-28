@@ -38,7 +38,7 @@ static bool emit_particles()
     int emitmillis = 1000/emitfps;
     emit = (lastmillis-lastemitframe>emitmillis);
     return emit;
-};
+}
 
 static Texture *parttexs[9];
 
@@ -64,7 +64,7 @@ void particleinit()
     parttexs[7] = textureload("data/explosion.jpg");
     parttexs[8] = textureload("data/blood.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
-};
+}
 
 particle *newparticle(const vec &o, const vec &d, int fade, int type)
 {
@@ -88,7 +88,7 @@ particle *newparticle(const vec &o, const vec &d, int fade, int type)
     p->text = NULL;
     parlist[type] = p;
     return p;
-};
+}
 
 enum
 {
@@ -344,14 +344,14 @@ void render_particles(int time)
     loopi(MAXPARTYPES) if(parlist[i]) for(particle *p = parlist[i]; p; p=p->next) pcount++;
     printf("%d particles\n", pcount);
     */
-};
+}
 
 VARP(maxparticledistance, 256, 512, 4096);
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) {
     if(!emit_particles() || (delay > 0 && rnd(delay) != 0)) return;
     particle_splash(type, num, fade, p);
-};
+}
 
 void particle_splash(int type, int num, int fade, const vec &p)
 {
@@ -375,7 +375,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
     	vec tmp = vec((float)x, (float)y, (float)z);
         newparticle(p, tmp, rnd(fade*3)+1, type)->oa = 13.1 * i; //distribute initial angle
     }
-};
+}
 
 void particle_trail(int type, int fade, const vec &s, const vec &e)
 {
@@ -389,7 +389,7 @@ void particle_trail(int type, int fade, const vec &s, const vec &e)
         vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
         newparticle(p, tmp, rnd(fade)+fade, type);
     }
-};
+}
 
 VARP(particletext, 0, 1, 1);
 
@@ -398,12 +398,12 @@ void particle_text(const vec &s, char *t, int type, int fade)
     if(!particletext) return;
     if(t[0]=='@') t = newstring(t);
     newparticle(s, vec(0, 0, 1), fade, type)->text = t;
-};
+}
 
 void particle_meter(const vec &s, int val, int type, int fade)
 {
     newparticle(s, vec(0, 0, 1), fade, type)->val = val;
-};
+}
 
 /* TESTING
 void particle_helix(const vec &s, const vec &e, int fade, int type) 
@@ -424,7 +424,7 @@ void particle_helix(const vec &s, const vec &e, int fade, int type)
         tmp.add(f);
         newparticle(p, f, rnd(fade)+fade, type)->oa = i*PI/9.0f;
     }
-};
+}
 
 
 void particle_ring(const vec &s, const vec &dest, int fade, int type) 
@@ -433,7 +433,7 @@ void particle_ring(const vec &s, const vec &dest, int fade, int type)
     v.sub(dest);
     loopi(15)
         newparticle(dest, v, rnd(fade)+fade, type)->oa = (i*24)*RAD;
-};
+}
 */
 
 void particle_flare(const vec &p, const vec &dest, int fade)
@@ -443,7 +443,7 @@ void particle_flare(const vec &p, const vec &dest, int fade)
     particle_helix(p, dest, fade, 24);
     particle_ring(p, dest, fade, 27);
     */
-};
+}
 
 VARP(damagespherefactor, 0, 100, 200);
 
@@ -452,7 +452,7 @@ void particle_fireball(const vec &dest, float max, int type)
     if(damagespherefactor <= 10) return;
     int maxsize = int(max*damagespherefactor/100) - 4;
     newparticle(dest, vec(0, 0, 1), maxsize*25, type)->val = maxsize;
-};
+}
 
 
 static void makeparticles(entity &e) 
@@ -477,7 +477,7 @@ static void makeparticles(entity &e)
             s_sprintfd(ds)("@particles %d?", e.attr1);
             particle_text(e.o, ds, 16, 1);
     }
-};
+}
 
 void entity_particles()
 {
@@ -517,5 +517,5 @@ void entity_particles()
             }
         }
     }
-};
+}
 

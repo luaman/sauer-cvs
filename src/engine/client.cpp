@@ -13,13 +13,13 @@ bool multiplayer(bool msg)
     // check not correct on listen server?
     if(clienthost && msg) conoutf("operation not available in multiplayer");
     return clienthost != NULL;
-};
+}
 
 void setrate(int rate)
 {
    if(!clienthost || connecting) return;
    enet_host_bandwidth_limit(clienthost, rate, rate);
-};
+}
 
 VARF(rate, 0, 0, 25000, setrate(rate));
 
@@ -34,7 +34,7 @@ void throttle()
     if(!clienthost || connecting) return;
     ASSERT(ENET_PEER_PACKET_THROTTLE_SCALE==32);
     enet_peer_throttle_configure(clienthost->peers, throttle_interval*1000, throttle_accel, throttle_decel);
-};
+}
 
 void connects(char *servername)
 {   
@@ -73,12 +73,12 @@ void connects(char *servername)
         conoutf("\f3could not connect to server");
         disconnect();
     }
-};
+}
 
 void lanconnect()
 {
     connects(0);
-};
+}
 
 void disconnect(int onlyclean, int async)
 {
@@ -109,7 +109,7 @@ void disconnect(int onlyclean, int async)
     localdisconnect();
 
     if(!onlyclean) { localconnect(); cc->gameconnect(false); }
-};
+}
 
 void trydisconnect()
 {
@@ -126,7 +126,7 @@ void trydisconnect()
     }
     conoutf("attempting to disconnect...");
     disconnect(0, !disconnecting);
-};
+}
 
 COMMANDN(connect, connects, "s");
 COMMAND(lanconnect, "");
@@ -140,7 +140,7 @@ void sendpackettoserv(ENetPacket *packet, int chan)
 {
     if(clienthost) enet_host_broadcast(clienthost, chan, packet);
     else localclienttoserver(chan, packet);
-};
+}
 
 void c2sinfo(dynent *d, int rate)                     // send update to the server
 {
@@ -155,19 +155,19 @@ void c2sinfo(dynent *d, int rate)                     // send update to the serv
     enet_packet_resize(packet, p.length());
     sendpackettoserv(packet, chan);
     if(clienthost) enet_host_flush(clienthost);
-};
+}
 
 void neterr(char *s)
 {
     conoutf("\f3illegal network message (%s)", s);
     disconnect();
-};
+}
 
 void localservertoclient(int chan, uchar *buf, int len)   // processes any updates from the server
 {
     ucharbuf p(buf, len);
     cc->parsepacketclient(chan, p);
-};
+}
 
 void clientkeepalive() { if(clienthost) enet_host_service(clienthost, NULL, 0); }
 
@@ -214,5 +214,5 @@ void gets2c()           // get updates from the server
         default:
             break;
     }
-};
+}
 

@@ -281,7 +281,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     notextureshader = lookupshaderbyname("notexture");
     nocolorshader = lookupshaderbyname("nocolor");
     defaultshader->set();
-};
+}
 
 VARF(wireframe, 0, 0, 1, if(noedit(true)) wireframe = 0);
 
@@ -296,7 +296,7 @@ void findorientation()
 
     if(raycubepos(camera1->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST) == -1)
         worldpos = dir.mul(10).add(camera1->o); //otherwise 3dgui won't work when outside of map
-};
+}
 
 void transplayer()
 {
@@ -311,7 +311,7 @@ void transplayer()
     glScalef(1, -1, 1);
 
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);   
-};
+}
 
 VARP(fov, 10, 105, 150);
 
@@ -355,7 +355,7 @@ void recomputecamera()
             if(!moveplayer(camera1, 10, true, thirdpersondistance)) break;
         }
     }
-};
+}
 
 void project(float fovy, float aspect, int farplane)
 {
@@ -363,7 +363,7 @@ void project(float fovy, float aspect, int farplane)
     glLoadIdentity();
     gluPerspective(fovy, aspect, 0.54f, farplane);
     glMatrixMode(GL_MODELVIEW);
-};
+}
 
 void genclipmatrix(float a, float b, float c, float d, GLfloat matrix[16])
 {
@@ -381,7 +381,7 @@ void genclipmatrix(float a, float b, float c, float d, GLfloat matrix[16])
     matrix[6] = clip[1]*scale; 
     matrix[10] = clip[2]*scale + 1.0f;
     matrix[14] = clip[3]*scale;
-};
+}
 
 void setclipmatrix(GLfloat matrix[16])
 {
@@ -389,14 +389,14 @@ void setclipmatrix(GLfloat matrix[16])
     glPushMatrix();
     glLoadMatrixf(matrix);
     glMatrixMode(GL_MODELVIEW);
-};
+}
 
 void undoclipmatrix()
 {
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
-};
+}
 
 VAR(reflectclip, 0, 6, 64);
 VARP(reflectmms, 0, 1, 1);
@@ -414,7 +414,7 @@ void setfogplane(float scale, float z)
     }  
     setenvparamfv("fogplane", SHPARAM_VERTEX, 9, fogplane);
 //    flushenvparam(SHPARAM_VERTEX, 9);
-};
+}
 
 extern void rendercaustics(float z, bool refract);
 
@@ -537,7 +537,7 @@ void drawreflection(float z, bool refract, bool clear)
     
     refracting = 0;
     reflecting = 0;
-};
+}
 
 static void setfog(bool underwater)
 {
@@ -557,7 +557,7 @@ static void setfog(bool underwater)
     }
 
     if(renderpath!=R_FIXEDFUNCTION) setfogplane();
-};
+}
 
 void drawcubemap(int size, const vec &o, float yaw, float pitch)
 {
@@ -615,7 +615,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     glDisable(GL_TEXTURE_2D);
 
     camera1 = oldcamera;
-};
+}
 
 VAR(hudgunfov, 10, 65, 150);
 
@@ -710,7 +710,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
-};
+}
 
 VARP(crosshairsize, 0, 15, 50);
 VARP(cursorsize, 0, 30, 50);
@@ -743,7 +743,7 @@ void drawcrosshair(int w, int h)
     glTexCoord2d(1.0, 1.0); glVertex2f(x + chsize, y + chsize);
     glTexCoord2d(0.0, 1.0); glVertex2f(x,          y + chsize);
     glEnd();
-};
+}
 
 void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
 {
@@ -834,5 +834,5 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-};
+}
 

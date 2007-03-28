@@ -73,7 +73,7 @@ struct md2 : vertmodel
         char       name[16];
     };
     
-    md2(const char *name) : vertmodel(name) {};
+    md2(const char *name) : vertmodel(name) {}
 
     int type() { return MDL_MD2; }
 
@@ -278,7 +278,7 @@ void md2anim(char *anim, int *frame, int *range, char *s)
     if(num<0) { conoutf("could not find animation %s", anim); return; }
     float speed = s[0] ? atof(s) : 100.0f;
     loadingmd2->parts.last()->setanim(num, *frame, *range, speed);
-};
+}
 
 COMMAND(md2anim, "siis");
 

@@ -114,7 +114,7 @@ void gettextres(int &w, int &h)
             h = MINRESH;
         }
     }
-};
+}
 
 #define PIXELTAB (FONTH*4)
 
@@ -129,7 +129,7 @@ int char_width(int c, int x)
         x += in_width + 1;
     }
     return x;
-};
+}
 
 int text_width(const char *str, int limit)
 {
@@ -161,13 +161,13 @@ int text_visible(const char *str, int max)
         ++i;
     }
     return i;
-};
+}
  
 void draw_textf(const char *fstr, int left, int top, ...)
 {
     s_sprintfdlv(str, top, fstr);
     draw_text(str, left, top);
-};
+}
 
 void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
 {
@@ -220,5 +220,5 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         x += in_width  + 1;
     }
     glEnd();
-};
+}
 

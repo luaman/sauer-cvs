@@ -72,8 +72,8 @@ struct tristrip
     {
         ushort from, to;
 
-        edge() {};
-        edge(ushort from, ushort to) : from(min(from, to)), to(max(from, to)) {};
+        edge() {}
+        edge(ushort from, ushort to) : from(min(from, to)), to(max(from, to)) {}
 
         void link(ushort tri)
         {

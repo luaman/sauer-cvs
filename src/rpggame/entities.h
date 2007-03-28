@@ -16,7 +16,7 @@ struct rpgentities : icliententities
     vector<rpgentity *> ents;
     rpgentity *lastcreated;
 
-    ~rpgentities() {};
+    ~rpgentities() {}
     rpgentities(rpgclient &_cl) : cl(_cl), lastcreated(NULL)
     {
         CCOMMAND(rpgentities, spawnname, "s", { if(self->lastcreated) { s_strncpy(self->lastcreated->name, args[0], SPAWNNAMELEN); self->spawnfroment(*self->lastcreated); } });    
@@ -24,7 +24,7 @@ struct rpgentities : icliententities
 
     vector<extentity *> &getents() { return (vector<extentity *> &)ents; }
 
-    void editent(int i) {};
+    void editent(int i) {}
 
     const char *entnameinfo(entity &e) { return ((rpgentity &)e).name; }
     const char *entname(int i)
@@ -40,7 +40,7 @@ struct rpgentities : icliententities
     float dropheight(entity &e) { return e.type==ET_MAPMODEL ? 0 : 4; }
 
     void rumble(const extentity &e) { playsoundname("free/rumble", &e.o); }
-    void trigger(extentity &e) {};
+    void trigger(extentity &e) {}
 
     extentity *newentity() { return new rpgentity; }
 

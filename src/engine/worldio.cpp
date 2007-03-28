@@ -7,7 +7,7 @@ void backup(char *name, char *backupname)
 {
     remove(backupname);
     rename(name, backupname);
-};
+}
 
 string cgzname, bakname, pcfname, mcfname;
 
@@ -40,7 +40,7 @@ void setnames(const char *fname, const char *cname = 0)
 
     path(cgzname);
     path(bakname);
-};
+}
 
 ushort readushort(gzFile f)
 {
@@ -135,7 +135,7 @@ void savec(cube *c, gzFile f, bool nolms)
             if(c[i].children) savec(c[i].children, f, nolms);
         }
     }
-};
+}
 
 cube *loadchildren(gzFile f);
 
@@ -221,7 +221,7 @@ void loadc(gzFile f, cube &c)
         }                
     }
     c.children = (haschildren ? loadchildren(f) : NULL);
-};
+}
 
 cube *loadchildren(gzFile f)
 {
@@ -229,7 +229,7 @@ cube *loadchildren(gzFile f)
     loopi(8) loadc(f, c[i]);
     // TODO: remip c from children here
     return c;
-};
+}
 
 void save_world(char *mname, bool nolms)
 {
@@ -288,7 +288,7 @@ void save_world(char *mname, bool nolms)
 
     gzclose(f);
     conoutf("wrote map file %s", cgzname);
-};
+}
 
 void swapXZ(cube *c)
 {	
@@ -301,22 +301,22 @@ void swapXZ(cube *c)
 		{
 			swap(surfaceinfo, c[i].ext->surfaces[0], c[i].ext->surfaces[4]);
 			swap(surfaceinfo, c[i].ext->surfaces[1], c[i].ext->surfaces[5]);
-		};
+		}
 		if(c[i].children) swapXZ(c[i].children);
-	};
-};
+	}
+}
 
 void load_world(const char *mname, const char *cname)        // still supports all map formats that have existed since the earliest cube betas!
 {
     int loadingstart = SDL_GetTicks();
     setnames(mname, cname);
     gzFile f = gzopen(cgzname, "rb9");
-    if(!f) { conoutf("could not read map %s", cgzname); return; };
+    if(!f) { conoutf("could not read map %s", cgzname); return; }
     header newhdr;
     gzread(f, &newhdr, sizeof(header));
     endianswap(&newhdr.version, sizeof(int), 9);
-    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; };
-    if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return; };
+    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; }
+    if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return; }
     hdr = newhdr;
     clearoverrides();
     computescreen(mname);
@@ -501,7 +501,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     }
 
     //entitiesinoctanodes();
-};
+}
 
 void savecurrentmap() { save_world(cl->getclientmap()); }
 void savemap(char *mname) { save_world(mname); }
@@ -539,7 +539,7 @@ void writeobj(char *name)
     fclose(f);
     hasVBO = oldVBO;
     allchanged();
-};  
+}  
     
 COMMAND(writeobj, "s"); 
 

@@ -21,12 +21,12 @@ static int parsedigits(ushort *digits, int maxlen, const char *s)
         digits[i/(2*sizeof(ushort))] |= c<<(4*(i%(2*sizeof(ushort)))); 
     }
     return len;
-};
+}
 
 static void printdigits(const ushort *digits, int len, FILE *out)
 {
     loopi(len) fprintf(out, "%.4x", digits[len-i-1]);
-};
+}
 
 #define BI_DIGIT_BITS 16
 #define BI_DIGIT_MASK ((1<<BI_DIGIT_BITS)-1)
@@ -39,7 +39,7 @@ template<int BI_DIGITS> struct bigint
     int len;
     digit digits[BI_DIGITS];
 
-    bigint() {};
+    bigint() {}
     bigint(digit n) { if(n) { len = 1; digits[0] = n; } else len = 0; }
     bigint(const char *s) { len = parsedigits(digits, BI_DIGITS, s); shrink(); }
     template<int Y_DIGITS> bigint(const bigint<Y_DIGITS> &y) { *this = y; }
@@ -228,11 +228,11 @@ struct gfield : gfint
 {
     static const gfield P;
 
-    gfield() {};
-    gfield(digit n) : gfint(n) {};
-    gfield(const char *s) : gfint(s) {};
+    gfield() {}
+    gfield(digit n) : gfint(n) {}
+    gfield(const char *s) : gfint(s) {}
 
-    template<int Y_DIGITS> gfield(const bigint<Y_DIGITS> &y) : gfint(y) {};
+    template<int Y_DIGITS> gfield(const bigint<Y_DIGITS> &y) : gfint(y) {}
     
     template<int Y_DIGITS> gfield &operator=(const bigint<Y_DIGITS> &y)
     { 
@@ -445,9 +445,9 @@ struct ecjacobian
 
     gfield x, y, z;
 
-    ecjacobian() {};
-    ecjacobian(const gfield &x, const gfield &y) : x(x), y(y), z(bigint<1>(1)) {};
-    ecjacobian(const gfield &x, const gfield &y, const gfield &z) : x(x), y(y), z(z) {};
+    ecjacobian() {}
+    ecjacobian(const gfield &x, const gfield &y) : x(x), y(y), z(bigint<1>(1)) {}
+    ecjacobian(const gfield &x, const gfield &y, const gfield &z) : x(x), y(y), z(z) {}
 
     void mul2()
     {
@@ -642,7 +642,7 @@ void testgf(char *s)
     printf("(1/x)*x: "); x.print(stdout); putchar('\n');
     x.sub(gfield(42));
     printf("(1/x)*x-42: "); x.print(stdout); putchar('\n');
-};
+}
 
 COMMAND(testgf, "s");
 
@@ -718,7 +718,7 @@ void testcurve(char *s)
     printf("de-xtea random: %.8x%.8x\n", b.chunks[1], b.chunks[0]);
 
     putchar('\n');
-};
+}
 
 COMMAND(testcurve, "s");
 

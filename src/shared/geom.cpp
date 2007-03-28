@@ -12,7 +12,7 @@ bool raysphereintersect(vec c, float radius, const vec &o, const vec &ray, float
     if(inside<0 && d<0) return false;
     dist += v - sqrt(d);
     return true;
-};
+}
 
 bool rayrectintersect(const vec &b, const vec &s, const vec &o, const vec &ray, float &dist, int &orient)
 {
@@ -36,7 +36,7 @@ bool rayrectintersect(const vec &b, const vec &s, const vec &o, const vec &ray, 
         }
     }
     return false;
-};
+}
 
 int intersect_plane_line(vec &linestart, vec &linestop, vec &planeorig, vec &planenormal, vec &intersectionpoint)
 {
@@ -48,4 +48,4 @@ int intersect_plane_line(vec &linestart, vec &linestop, vec &planeorig, vec &pla
     float si = n/d;
     intersectionpoint = u.mul(si).add(linestart);              
     return si<0 ? INTERSECT_BEFORESTART : (si>1 ? INTERSECT_AFTEREND : INTERSECT_MIDDLE);
-};
+}

@@ -36,7 +36,7 @@ template <class T> struct tident
     };
     T *self;
     
-    tident() {};
+    tident() {}
     // ID_VAR
     tident(int t, char *n, int m, int c, int x, int *s, void *f = NULL, bool p = false)
         : _type(t), _name(n), _min(m), _max(x), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _val(c), _persist(p), _storage(s) {}

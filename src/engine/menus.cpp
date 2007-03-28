@@ -23,7 +23,7 @@ vec menuinfrontofplayer()
     dir.mul(menudistance).add(camera1->o);
     dir.z -= player->eyeheight-1;
     return dir;
-};
+}
 
 int cleargui(int n = 0)
 {
@@ -32,12 +32,12 @@ int cleargui(int n = 0)
     loopi(clear) delete[] guistack.pop();
     if(!guistack.empty()) showgui(guistack.last());
     return clear;
-};
+}
 
 void cleargui_(int *n)
 {
     intret(cleargui(*n));
-};
+}
 
 #define GUI_TITLE_COLOR  0xFFDD88
 #define GUI_BUTTON_COLOR 0xFFFFFF
@@ -58,7 +58,7 @@ void guibutton(char *name, char *action, char *icon)
         alias("guirollovername", name);
         alias("guirolloveraction", action);
     }
-};
+}
 
 void guiimage(char *path, char *action, float *scale, int *overlaid)
 {
@@ -67,27 +67,27 @@ void guiimage(char *path, char *action, float *scale, int *overlaid)
         executelater.add(newstring(action));
         clearlater = true;
     }
-};
+}
 
 void guitext(char *name)
 {
     if(cgui) cgui->text(name, GUI_TEXT_COLOR, "info");
-};
+}
 
 void guititle(char *name)
 {
     if(cgui) cgui->title(name, GUI_TITLE_COLOR);
-};
+}
 
 void guitab(char *name)
 {
     if(cgui) cgui->tab(name, GUI_TITLE_COLOR);
-};
+}
 
 void guibar()
 {
     if(cgui) cgui->separator();
-};
+}
 
 static void updateval(char *var, int val, char *onchange)
 {
@@ -99,7 +99,7 @@ static void updateval(char *var, int val, char *onchange)
     else return;
     executelater.add(newstring(assign));
     if(onchange[0]) executelater.add(newstring(onchange)); 
-};
+}
 
 static int getval(char *var)
 {
@@ -108,7 +108,7 @@ static int getval(char *var)
     else if(id->_type==ID_VAR) return *id->_storage;
     else if(id->_type==ID_ALIAS) return atoi(id->_action);
     else return 0;
-};
+}
 
 void guislider(char *var, int *min, int *max, char *onchange)
 {
@@ -116,7 +116,7 @@ void guislider(char *var, int *min, int *max, char *onchange)
     int oldval = getval(var), val = oldval, vmin = *max ? *min : getvarmin(var), vmax = *max ? *max : getvarmax(var);
     cgui->slider(val, vmin, vmax, GUI_TITLE_COLOR);
     if(val != oldval) updateval(var, val, onchange);
-};
+}
 
 void guicheckbox(char *name, char *var, int *on, int *off, char *onchange)
 {
@@ -125,7 +125,7 @@ void guicheckbox(char *name, char *var, int *on, int *off, char *onchange)
     {
         updateval(var, enabled ? *off : (*on || *off ? *on : 1), onchange);
     }
-};
+}
 
 void guiradio(char *name, char *var, int *n, char *onchange)
 {
@@ -134,7 +134,7 @@ void guiradio(char *name, char *var, int *n, char *onchange)
     {
         if(!enabled) updateval(var, *n, onchange);
     }
-};
+}
 
 
 //@TODO - fix, currently only works on aliases at the moment...
@@ -149,7 +149,7 @@ void guifield(char *var, int *maxlength, char *onchange)
     if(result) {
         alias(var, result);
     }
-};
+}
 
 void guilist(char *contents)
 {
@@ -157,7 +157,7 @@ void guilist(char *contents)
     cgui->pushlist();
     execute(contents);
     cgui->poplist();
-};
+}
 
 void newgui(char *name, char *contents) 
 { 
@@ -167,7 +167,7 @@ void newgui(char *name, char *contents)
         guis[name] = newstring(contents);
     }
     else guis[newstring(name)] = newstring(contents); 
-};
+}
 
 void showgui(char *name)
 {
@@ -185,7 +185,7 @@ void showgui(char *name)
     }
     menutab = 1;
     menustart = totalmillis;    
-};
+}
 
 void guiservers()
 {
@@ -200,7 +200,7 @@ void guiservers()
             clearlater = true;
         }
     }
-};
+}
 
 COMMAND(newgui, "ss");
 COMMAND(guibutton, "sss");
@@ -247,7 +247,7 @@ void menuprocess()
         if(level==guistack.length()) guistack.deletecontentsa();
         clearlater = false;
     }
-};
+}
 
 void g3d_mainmenu()
 {
@@ -256,5 +256,5 @@ void g3d_mainmenu()
         if(camera1->o.dist(menupos) > menudistance*3) cleargui();
         else g3d_addgui(&mmcb, menupos, true);
     }
-};
+}
 

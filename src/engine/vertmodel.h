@@ -54,7 +54,7 @@ struct vertmodel : model
         GLuint statbuf, statidx;
         int statlen;
 
-        mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), dynframe(-1), statbuf(0), statidx(0) {};
+        mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), dynframe(-1), statbuf(0), statidx(0) {}
 
         ~mesh()
         {
@@ -332,7 +332,7 @@ struct vertmodel : model
         vec pos;
         float transform[3][3];
         
-        tag() : name(NULL) {};
+        tag() : name(NULL) {}
         ~tag() { DELETEA(name); }
     };
 
@@ -347,7 +347,7 @@ struct vertmodel : model
         tag *tags;
         int numtags;
 
-        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0) {};
+        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0) {}
         virtual ~part()
         {
             meshes.deletecontentsp();

@@ -65,7 +65,7 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
         }
         if(c[i].ext && c[i].ext->ents) c[i].ext->ents->query = NULL;
     }
-};
+}
 
 bool getentboundingbox(extentity &e, ivec &o, ivec &r)
 {
@@ -99,7 +99,7 @@ bool getentboundingbox(extentity &e, ivec &o, ivec &r)
             break;
     }
     return true;
-};
+}
 
 static void modifyoctaent(bool add, int id)
 {
@@ -110,7 +110,7 @@ static void modifyoctaent(bool add, int id)
     modifyoctaentity(add, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
     if(e.type == ET_LIGHT) clearlightcache(id);
     else if(add) lightent(e);
-};
+}
 
 static inline void addentity(int id)    { modifyoctaent(true,  id); }
 static inline void removeentity(int id) { modifyoctaent(false, id); }
@@ -125,12 +125,12 @@ void freeoctaentities(cube &c)
         delete c.ext->ents;
         c.ext->ents = NULL;
     }
-};
+}
 
 void entitiesinoctanodes()
 {
     loopv(et->getents()) addentity(i);
-};
+}
 
 char *entname(entity &e)
 {
@@ -144,7 +144,7 @@ char *entname(entity &e)
         s_strcat(fullentname, einfo);
     }
     return fullentname;
-};
+}
 
 extern selinfo sel;
 extern int orient;
@@ -160,14 +160,14 @@ bool pointinsel(selinfo &sel, vec &o)
         && o.y >= sel.o.y
         && o.z <= sel.o.z+sel.s.z*sel.grid
         && o.z >= sel.o.z);
-};
+}
 
 vector<int> entgroup;
 
 bool haveselent()
 {
     return entgroup.length() > 0;
-};
+}
 
 extern void entcancel();
 
@@ -184,14 +184,14 @@ void initundoent(undoblock &u)
         u.e++;
     }
     u.e -= u.n;    
-};
+}
 
 void makeundoent()
 {
     undoblock u;
     initundoent(u);
     if(u.n) addundo(u);
-};
+}
 
 // convenience macros implicitly define:
 // e         entity, currently edited ent
@@ -212,13 +212,13 @@ void copyundoents(undoblock &d, undoblock &s)
     loopi(s.n)
         entgroup.add(s.e[i].i);
     initundoent(d);
-};
+}
 
 void pasteundoents(undoblock &u)
 {
     loopi(u.n)
         entedit(u.e[i].i, e = u.e[i].e);
-};
+}
 
 void entflip()
 {
@@ -226,7 +226,7 @@ void entflip()
     int d = dimension(sel.orient);
     float mid = sel.s[d]*sel.grid/2+sel.o[d];
     groupeditundo(e.o[d] -= (e.o[d]-mid)*2);
-};
+}
 
 void entrotate(int *cw)
 {
@@ -241,7 +241,7 @@ void entrotate(int *cw)
         swap(float, e.o[R[d]], e.o[C[d]]);
         e.o.add(s);
     );
-};
+}
 
 void entselectionbox(const entity &e, vec &eo, vec &es) 
 {
@@ -263,7 +263,7 @@ void entselectionbox(const entity &e, vec &eo, vec &es)
     }    
     eo.sub(es);
     es.mul(2);
-};
+}
 
 VAR(entselsnap, 0, 0, 1);
 VAR(passthroughent, 0, 0, 1);
@@ -303,7 +303,7 @@ void entdrag(const vec &ray)
     if(initentdragging) makeundoent();
     groupeditpure(e.o[R[d]] += r; e.o[C[d]] += c);
     initentdragging = false;
-};
+}
 
 void renderentselection(const vec &o, const vec &ray, bool entmoving)
 {   
@@ -332,7 +332,7 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
         boxs(entorient, eo, es);
         glLineWidth(1);
     }
-};
+}
 
 void entadd(int id)
 {
@@ -348,7 +348,7 @@ bool enttoggle(int id)
     else
         entgroup.remove(i);
     return i < 0;
-};
+}
 
 bool hoveringonent(const vec &o, const vec &ray)
 {
@@ -358,7 +358,7 @@ bool hoveringonent(const vec &o, const vec &ray)
     efocus   = entgroup.empty() ? -1 : entgroup.last();
     enthover = -1;
     return false;
-};
+}
 
 VAR(entitysurf, 0, 0, 1);
 VARF(entmoving, 0, 0, 2,
@@ -385,7 +385,7 @@ void entpush(int *dir)
         groupedit(e.o[d] += float(s*sel.grid));
     if(entitysurf==1)
         player->o[d] += float(s*sel.grid);
-};
+}
 
 VAR(entautoviewdist, 0, 25, 100);
 void entautoview(int *dir) 
@@ -403,7 +403,7 @@ void entautoview(int *dir)
         v.add(e.o);
         player->o = v;
     );
-};
+}
 
 COMMAND(entautoview, "i");
 COMMAND(entflip, "");
@@ -415,7 +415,7 @@ void delent()
     if(noedit(true)) return;
     groupedit(e.type = ET_EMPTY;);
     entcancel();
-};
+}
 
 int findtype(char *what)
 {
@@ -471,13 +471,13 @@ bool dropentity(entity &e, int drop = -1)
         break;
     }
     return true;
-};
+}
 
 void dropent()
 {
     if(noedit(true)) return;
     groupedit(dropentity(e));
-};
+}
 
 extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
 {
@@ -508,7 +508,7 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
         et->fixentity(e);
     }
     return &e;
-};
+}
 
 void newentity(int type, int a1, int a2, int a3, int a4)
 {
@@ -520,7 +520,7 @@ void newentity(int type, int a1, int a2, int a3, int a4)
     enttoggle(i);
     makeundoent();
     entedit(i, e.type = type);
-};
+}
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
@@ -528,7 +528,7 @@ void newent(char *what, int *a1, int *a2, int *a3, int *a4)
     int type = findtype(what);
     if(type != ET_EMPTY)
         newentity(type, *a1, *a2, *a3, *a4);
-};
+}
 
 int entcopygrid;
 vector<entity> entcopybuf;
@@ -539,7 +539,7 @@ void entcopy()
     entcopybuf.setsize(0);
     loopv(entgroup) 
         entfocus(entgroup[i], entcopybuf.add(e).o.sub(sel.o.v));
-};
+}
 
 void entpaste()
 {
@@ -558,7 +558,7 @@ void entpaste()
     }
     int j = 0;
     groupeditundo(e.type = entcopybuf[j++].type);
-};
+}
 
 COMMAND(newent, "siiii");
 COMMAND(delent, "");
@@ -575,7 +575,7 @@ void entset(char *what, int *a1, int *a2, int *a3, int *a4)
               e.attr2=*a2;
               e.attr3=*a3;
               e.attr4=*a4;);
-};
+}
 
 ICOMMAND(enthavesel,"",  addimplicit(intret(entgroup.length())));
 ICOMMAND(entselect, "s", addgroup(e.type != ET_EMPTY && entgroup.find(n)<0 && execute(args[0])>0));
@@ -591,7 +591,7 @@ int findentity(int type, int index)
     for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
     loopj(min(index, ents.length())) if(ents[j]->type==type) return j;
     return -1;
-};
+}
 
 int spawncycle = -1, fixspawn = 2;
 
@@ -628,7 +628,7 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
         d->o.x = d->o.y = d->o.z = 0.5f*getworldsize();
         entinmap(d);
     }
-};
+}
 
 void splitocta(cube *c, int size)
 {
@@ -638,7 +638,7 @@ void splitocta(cube *c, int size)
         if(!c[i].children) c[i].children = newcubes(isempty(c[i]) ? F_EMPTY : F_SOLID);
         splitocta(c[i].children, size>>1);
     }
-};
+}
 
 bool emptymap(int scale, bool force)    // main empty world creation routine
 {
@@ -684,7 +684,7 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
     overrideidents = false;
 
     return true;
-};
+}
 
 bool enlargemap(bool force)
 {
@@ -706,7 +706,7 @@ bool enlargemap(bool force)
     allchanged();
 
     return true;
-};
+}
 
 void newmap(int *i) { if(emptymap(*i, false)) cl->newmap(max(*i, 0)); }
 void mapenlarge() { if(enlargemap(false)) cl->newmap(-1); }
@@ -731,7 +731,7 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
         addentity(i);
     }
-};
+}
 
 int getworldsize() { return hdr.worldsize; }
 int getmapversion() { return hdr.version; }
@@ -740,7 +740,7 @@ bool insideworld(const vec &o)
 {
     loopi(3) if(o.v[i]<0 || o.v[i]>=hdr.worldsize) return false;
     return true;
-};
+}
 
 int triggertypes[NUMTRIGGERTYPES] =
 {
@@ -771,7 +771,7 @@ void resettriggers()
         e.triggerstate = TRIGGER_RESET;
         e.lasttrigger = 0;
     }
-};
+}
 
 void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGERING)
 {
@@ -788,13 +788,13 @@ void unlocktriggers(int tag, int oldstate = TRIGGER_RESET, int newstate = TRIGGE
             if(checktriggertype(e.attr3, TRIG_RUMBLE)) et->rumble(e);
         }
     }
-};
+}
 
 void trigger(int *tag, int *state)
 {
     if(*state) unlocktriggers(*tag);
     else unlocktriggers(*tag, TRIGGERED, TRIGGER_RESETTING);
-};
+}
 
 COMMAND(trigger, "ii");
 
@@ -808,7 +808,7 @@ void doleveltrigger(int trigger, int state)
         triggerstate = state;
         execute(aliasname);
     }
-};
+}
 
 void checktriggers()
 {
@@ -881,5 +881,5 @@ void checktriggers()
                 break;
         }
     }
-};
+}
 

@@ -18,7 +18,7 @@ void loadsky(char *basename)
         }
     }
     s_strcpy(lastsky, basename);
-};
+}
 
 COMMAND(loadsky, "s");
 
@@ -36,7 +36,7 @@ void draw_envbox_face(float s0, float t0, int x0, int y0, int z0,
     glTexCoord2f(s0, t0); glVertex3i(x0, y0, z0);
     glEnd();
     xtraverts += 4;
-};
+}
 
 void draw_envbox(int w, float zclip = 0.0f)
 {
@@ -79,7 +79,7 @@ void draw_envbox(int w, float zclip = 0.0f)
                      1.0f, 1.0f, +w, -w, -w, sky[5]->gl);
 
     glDepthMask(GL_TRUE);
-};
+}
 
 VARP(sparklyfix, 0, 1, 1);
 VAR(showsky, 0, 1, 1); 
@@ -95,7 +95,7 @@ void drawskylimits(bool explicitonly, float zreflect)
     glEnable(GL_TEXTURE_2D);
 
     defaultshader->set();
-};
+}
 
 void drawskyoutline()
 {
@@ -112,7 +112,7 @@ void drawskyoutline()
     glEnable(GL_TEXTURE_2D);
 
     defaultshader->set();
-};
+}
 
 void drawskybox(int farplane, bool limited, float zreflect)
 {
@@ -140,11 +140,11 @@ void drawskybox(int farplane, bool limited, float zreflect)
     }
 
     glEnable(GL_FOG);
-};
+}
 
 bool limitsky()
 {
     extern int ati_skybox_bug, explicitsky, skyarea;
     return explicitsky || (!ati_skybox_bug && sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
-};
+}
 

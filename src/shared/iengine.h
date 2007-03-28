@@ -196,15 +196,15 @@ enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
 
 struct g3d_gui
 {
-    virtual ~g3d_gui() {};
+    virtual ~g3d_gui() {}
 
     virtual void start(int starttime, float basescale, int *tab = NULL, bool allowinput = true) = 0;
     virtual void end() = 0;
     virtual int text(const char *text, int color, const char *icon = NULL) = 0;
     virtual int button(const char *text, int color, const char *icon = NULL) = 0;
 
-    virtual void pushlist() {};
-    virtual void poplist() {};
+    virtual void pushlist() {}
+    virtual void poplist() {}
 
 	virtual void tab(const char *name, int color) = 0;
     virtual int title(const char *text, int color, const char *icon = NULL) = 0;
@@ -220,7 +220,7 @@ struct g3d_gui
 
 struct g3d_callback
 {
-    virtual ~g3d_callback() {};
+    virtual ~g3d_callback() {}
 
     int starttime() { extern int totalmillis; return totalmillis; }
 

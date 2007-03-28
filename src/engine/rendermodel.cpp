@@ -16,7 +16,7 @@ void mdlcullface(int *cullface)
 {
     checkmdl;
     loadingmodel->cullface = *cullface!=0;
-};
+}
 
 COMMAND(mdlcullface, "i");
 
@@ -24,7 +24,7 @@ void mdlcollide(int *collide)
 {
     checkmdl;
     loadingmodel->collide = *collide!=0;
-};
+}
 
 COMMAND(mdlcollide, "i");
 
@@ -35,7 +35,7 @@ void mdlspec(int *percent)
     if(*percent>0) spec = *percent/100.0f;
     else if(*percent<0) spec = 0.0f;
     loadingmodel->spec = spec;
-};
+}
 
 COMMAND(mdlspec, "i");
 
@@ -46,7 +46,7 @@ void mdlambient(int *percent)
     if(*percent>0) ambient = *percent/100.0f;
     else if(*percent<0) ambient = 0.0f;
     loadingmodel->ambient = ambient;
-};
+}
 
 COMMAND(mdlambient, "i");
 
@@ -54,7 +54,7 @@ void mdlalphatest(float *cutoff)
 {   
     checkmdl;
     loadingmodel->alphatest = max(0, min(1, *cutoff));
-};
+}
 
 COMMAND(mdlalphatest, "f");
 
@@ -62,7 +62,7 @@ void mdlshader(char *shader)
 {
     checkmdl;
     loadingmodel->shader = lookupshaderbyname(shader);
-};
+}
 
 COMMAND(mdlshader, "s");
 
@@ -73,7 +73,7 @@ void mdlscale(int *percent)
     if(*percent>0) scale = *percent/100.0f;
     else if(*percent<0) scale = 0.0f;
     loadingmodel->scale = scale;
-};  
+}  
 
 COMMAND(mdlscale, "i");
 
@@ -81,7 +81,7 @@ void mdltrans(float *x, float *y, float *z)
 {
     checkmdl;
     loadingmodel->translate = vec(*x, *y, *z);
-}; 
+} 
 
 COMMAND(mdltrans, "fff");
 
@@ -89,7 +89,7 @@ void mdlshadow(int *shadow)
 {
     checkmdl;
     loadingmodel->shadow = *shadow!=0;
-};
+}
 
 COMMAND(mdlshadow, "i");
 
@@ -99,7 +99,7 @@ void mdlbb(float *rad, float *h, float *eyeheight)
     loadingmodel->collideradius = *rad;
     loadingmodel->collideheight = *h;
     loadingmodel->eyeheight = *eyeheight; 
-};
+}
 
 COMMAND(mdlbb, "fff");
 
@@ -107,7 +107,7 @@ void mdlname()
 {
     checkmdl;
     result(loadingmodel->name());
-};
+}
 
 COMMAND(mdlname, "");
 
@@ -121,12 +121,12 @@ void mmodel(char *name, int *tex)
     s_strcpy(mmi.name, name);
     mmi.tex = *tex;
     mmi.m = NULL;
-};
+}
 
 void mapmodelcompat(int *rad, int *h, int *tex, char *name, char *shadow)
 {
     mmodel(name, tex);
-};
+}
 
 void mapmodelreset() { mapmodels.setsize(0); }
 
@@ -173,18 +173,18 @@ model *loadmodel(const char *name, int i)
     }
     if(mapmodels.inrange(i) && !mapmodels[i].m) mapmodels[i].m = m;
     return m;
-};
+}
 
 void clear_mdls()
 {
     enumerate(mdllookup, model *, m, delete m);
-};
+}
 
 bool modeloccluded(const vec &center, float radius)
 {
     int br = int(radius*2)+1;
     return bboccluded(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br), worldroot, ivec(0, 0, 0), hdr.worldsize/2);
-};
+}
 
 VAR(showboundingbox, 0, 0, 2);
 
@@ -196,7 +196,7 @@ void render2dbox(vec &o, float x, float y, float z)
     glVertex3f(o.x+x, o.y+y, o.z+z);
     glVertex3f(o.x+x, o.y+y, o.z);
     glEnd();
-};
+}
 
 void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradius)
 {
@@ -219,7 +219,7 @@ void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradi
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
     xtraverts += 16;
-};
+}
 
 VAR(dynshadow, 0, 60, 100);
 
@@ -233,7 +233,7 @@ void setshadowmatrix(float z, const vec &dir)
         dir.x*z,    dir.y*z,    dir.z*z,    dir.z
     };
     glMultMatrixf(m);
-};
+}
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
@@ -353,21 +353,21 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST);
     }
-};
+}
 
 void abovemodel(vec &o, const char *mdl)
 {
     model *m = loadmodel(mdl);
     if(!m) return;
     o.z += m->above(0/*frame*/);
-};
+}
 
 int findanim(const char *name)
 {
     const char *names[] = { "dying", "dead", "pain", "idle", "idle attack", "run", "run attack", "edit", "lag", "jump", "jump attack", "gun shoot", "gun idle", "mapmodel", "trigger" };
     loopi(sizeof(names)/sizeof(names[0])) if(!strcmp(name, names[i])) return i;
     return -1;
-};
+}
 
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m) // model skin sharing
 {
@@ -391,7 +391,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
     masks = crosshair;
     tryload(skin, skinpath, "skin");
     if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "masks"); }
-};
+}
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
@@ -427,7 +427,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
     vec color, dir;
     rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, flags, vwepname);
-};
+}
 
 void setbbfrommodel(dynent *d, char *mdl)
 {
@@ -438,5 +438,5 @@ void setbbfrommodel(dynent *d, char *mdl)
     d->radius    = max(radius.x+fabs(center.x), radius.y+fabs(center.y));
     d->eyeheight = (center.z-radius.z) + radius.z*2*m->eyeheight;
     d->aboveeye  = radius.z*2*(1.0f-m->eyeheight);
-};
+}
 

@@ -39,7 +39,7 @@ void check_calclight_canceled()
         }
     }
     if(!calclight_canceled) check_calclight_progress = false;
-};
+}
 
 static int curlumels = 0;
 
@@ -54,7 +54,7 @@ void show_calclight_progress()
     s_sprintfd(text2)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100));
 
     show_out_of_renderloop_progress(bar1, text1, bar2, text2);
-};
+}
 
 #define CHECK_PROGRESS(exit) CHECK_CALCLIGHT_PROGRESS(exit, show_calclight_progress)
 
@@ -92,7 +92,7 @@ bool PackNode::insert(ushort &tx, ushort &ty, ushort tw, ushort th)
     bool inserted = child1->insert(tx, ty, tw, th);
     available = max(child1->available, child2->available);
     return inserted;
-};
+}
 
 bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
 {
@@ -109,7 +109,7 @@ bool LightMap::insert(ushort &tx, ushort &ty, uchar *src, ushort tw, ushort th)
     ++lightmaps;
     lumels += tw * th;
     return true;
-};
+}
 
 void insert_unlit(int i)
 {
@@ -131,7 +131,7 @@ void insert_unlit(int i)
         l.unlitx = x;
         l.unlity = y;
     }
-};
+}
 
 void insert_lightmap(int type, ushort &x, ushort &y, ushort &lmid)
 {
@@ -155,23 +155,23 @@ void insert_lightmap(int type, ushort &x, ushort &y, ushort &lmid)
         r.type = LM_BUMPMAP1;
         ASSERT(r.insert(x, y, (uchar *)lm_ray, lm_w, lm_h));
     }
-};
+}
 
 struct compresskey 
 { 
     ushort x, y, lmid;
     uchar w, h;
 
-    compresskey() {};
-    compresskey(const surfaceinfo &s) : x(s.x), y(s.y), lmid(s.lmid), w(s.w), h(s.h) {};
+    compresskey() {}
+    compresskey(const surfaceinfo &s) : x(s.x), y(s.y), lmid(s.lmid), w(s.w), h(s.h) {}
 };
 
 struct compressval 
 { 
     ushort x, y, lmid;
 
-    compressval() {};
-    compressval(const surfaceinfo &s) : x(s.x), y(s.y), lmid(s.lmid) {}; 
+    compressval() {}
+    compressval(const surfaceinfo &s) : x(s.x), y(s.y), lmid(s.lmid) {} 
 };
 
 static inline bool htcmp(const compresskey &x, const compresskey &y)
@@ -196,7 +196,7 @@ static inline bool htcmp(const compresskey &x, const compresskey &y)
         ydir += LM_PACKW - y.w;
     }
     return true;
-};
+}
     
 static inline uint hthash(const compresskey &k)
 {
@@ -208,7 +208,7 @@ static inline uint hthash(const compresskey &k)
        color += 3;
     }
     return hash;  
-};
+}
 
 static hashtable<compresskey, compressval> compressed;
 
@@ -232,7 +232,7 @@ void pack_lightmap(int type, surfaceinfo &surface)
         }
     }
     else insert_lightmap(type, surface.x, surface.y, surface.lmid);
-};
+}
 
 void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int x, int y)
 {
@@ -289,7 +289,7 @@ void generate_lumel(const float tolerance, const vector<const entity *> &lights,
     sample.x = min(255, max(r, ambient));
     sample.y = min(255, max(g, ambient));
     sample.z = min(255, max(b, ambient));
-};
+}
 
 bool lumel_sample(const vec &sample, int aasample, int stride)
 {
@@ -304,7 +304,7 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
     n += stride;
     NCHECK(n[0]); NCHECK(n[aasample]); NCHECK(n[2*aasample]);
     return false;
-};
+}
 
 VAR(edgetolerance, 1, 4, 8);
 VAR(adaptivesample, 0, 1, 1);
@@ -499,7 +499,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         }
     }
     return true;
-};
+}
 
 void clear_lmids(cube *c)
 {
@@ -512,7 +512,7 @@ void clear_lmids(cube *c)
         }
         if(c[i].children) clear_lmids(c[i].children);
     }
-};
+}
 
 #define LIGHTCACHESIZE 1024
 
@@ -549,7 +549,7 @@ void clearlightcache(int e)
             lce.lights.setsize(0);
         }
     }
-};
+}
 
 const vector<int> &checklightcache(int x, int y)
 {
@@ -579,7 +579,7 @@ const vector<int> &checklightcache(int x, int y)
     lce.x = x;
     lce.y = y;
     return lce.lights;
-};
+}
 
 static inline void addlight(const entity &light, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
 {
@@ -601,7 +601,7 @@ static inline void addlight(const entity &light, int cx, int cy, int cz, int siz
         if(dist >= 0.0 && (!radius || dist < float(radius)))
             lights2.add(&light);
     }
-}; 
+} 
 
 bool find_lights(int cx, int cy, int cz, int size, plane planes[2], int numplanes)
 {
@@ -624,7 +624,7 @@ bool find_lights(int cx, int cy, int cz, int size, plane planes[2], int numplane
         addlight(light, cx, cy, cz, size, planes, numplanes);
     }
     return lights1.length() || lights2.length();
-};
+}
 
 bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, uchar texcoords[8])
 {
@@ -757,7 +757,7 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
         CALCVERT(origin2, u, t, toffset, 3)
     }
     return true;
-};
+}
 
 void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
 {
@@ -863,7 +863,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         memcpy(surface.texcoords, texcoords, 8);
         pack_lightmap(lmtype, surface);
     }
-};
+}
 
 void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
 {
@@ -880,20 +880,20 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         if((!c[i].children || lodcube) && !isempty(c[i]))
             setup_surfaces(c[i], o.x, o.y, o.z, size, lodcube);
     } 
-};
+}
 
 void resetlightmaps()
 {
     loopv(lightmaps) DELETEA(lightmaps[i].converted);
     lightmaps.setsize(0);
     compressed.clear();
-};
+}
 
 static Uint32 calclight_timer(Uint32 interval, void *param)
 {
     check_calclight_progress = true;
     return interval;
-};
+}
     
 void calclight(int *quality)
 {
@@ -943,7 +943,7 @@ void calclight(int *quality)
             lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
             lightmaps.length(),
             (end - start) / 1000.0f);
-};
+}
 
 COMMAND(calclight, "i");
 
@@ -988,7 +988,7 @@ void patchlight()
             lightmaps.length() ? lumels * 100 / (lightmaps.length() * LM_PACKW * LM_PACKH) : 0,
             lightmaps.length(),
             (end - start) / 1000.0f); 
-};
+}
 
 COMMAND(patchlight, "");
 
@@ -1011,7 +1011,7 @@ vector<GLuint> lmtexids;
 void alloctexids()
 {
     for(int i = lmtexids.length(); i<lightmaps.length()+LMID_RESERVED; i++) glGenTextures(1, &lmtexids.add());
-};
+}
 
 void clearlights()
 {
@@ -1039,7 +1039,7 @@ void clearlights()
         e.color = vec(1, 1, 1);
         e.dir = vec(0, 0, 1);
     }
-};
+}
 
 void lightent(extentity &e, float height)
 {
@@ -1051,13 +1051,13 @@ void lightent(extentity &e, float height)
     }
     vec target(e.o.x, e.o.y, e.o.z + height);
     lightreaching(target, e.color, e.dir, &e, renderpath==R_FIXEDFUNCTION && e.type>=ET_GAMESPECIFIC ? 0.7f : 0.4f);
-};
+}
 
 void updateentlighting()
 {
     const vector<extentity *> &ents = et->getents();
     loopv(ents) lightent(*ents[i]);
-};
+}
 
 void convert_lightmap(LightMap &lmc, LightMap &lml)
 {
@@ -1074,7 +1074,7 @@ void convert_lightmap(LightMap &lmc, LightMap &lml)
         conv[1] = max(g, ambient);
         conv[2] = max(b, ambient);
     }
-};
+}
 
 VARF(convertlms, 0, 1, 1, initlights());
 
@@ -1109,7 +1109,7 @@ static void find_unlit(int i)
         }
         data += 3;
     }
-};
+}
 
 void initlights()
 {
@@ -1143,7 +1143,7 @@ void initlights()
     }
     clearlightcache();
     updateentlighting();
-};
+}
 
 void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float ambient)
 {
@@ -1179,7 +1179,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
         //if(target==player->o)
         //{
         //    conoutf("%d - %f %f", i, intensity, mag);
-        //};
+        //}
  
         color.add(vec(e.attr2, e.attr3, e.attr4).div(255).mul(intensity));
 
@@ -1192,7 +1192,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
     color.y = min(1.5f, max(ambient, color.y));
     color.z = min(1.5f, max(ambient, color.z));
     if(!dir.iszero()) dir.normalize();
-};
+}
 
 entity *brightestlight(const vec &target, const vec &dir)
 {
@@ -1225,7 +1225,7 @@ entity *brightestlight(const vec &target, const vec &dir)
         }
     }
     return brightest;
-};
+}
 
 static surfaceinfo brightsurfaces[6] =
 {
@@ -1245,7 +1245,7 @@ void brightencube(cube &c)
         freesurfaces(c);
     }
     ext(c).surfaces = brightsurfaces;
-};
+}
         
 void newsurfaces(cube &c)
 {
@@ -1255,7 +1255,7 @@ void newsurfaces(cube &c)
         c.ext->surfaces = new surfaceinfo[6];
         memset(c.ext->surfaces, 0, 6*sizeof(surfaceinfo));
     }
-};
+}
 
 void freesurfaces(cube &c)
 {
@@ -1264,7 +1264,7 @@ void freesurfaces(cube &c)
         if(c.ext->surfaces==brightsurfaces) c.ext->surfaces = NULL;
         else DELETEA(c.ext->surfaces);
     }
-};
+}
 
 void dumplms()
 {
@@ -1284,7 +1284,7 @@ void dumplms()
         }
         SDL_FreeSurface(temp);
     }
-};
+}
 
 COMMAND(dumplms, "");
 

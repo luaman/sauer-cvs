@@ -5,7 +5,7 @@
 
 struct nvec : svec
 {
-    nvec(const vec &v) : svec(short(v.x*(1<<NORMAL_BITS)), short(v.y*(1<<NORMAL_BITS)), short(v.z*(1<<NORMAL_BITS))) {};
+    nvec(const vec &v) : svec(short(v.x*(1<<NORMAL_BITS)), short(v.y*(1<<NORMAL_BITS)), short(v.z*(1<<NORMAL_BITS))) {}
     
     float dot(const vec &o) const
     {
@@ -26,12 +26,12 @@ struct nkey
 {
     ivec v;
 
-    nkey() {};
+    nkey() {}
     nkey(const ivec &origin, const vvec &offset)
      : v(((origin.x&~VVEC_INT_MASK)<<VVEC_FRAC) | offset.x,
          ((origin.y&~VVEC_INT_MASK)<<VVEC_FRAC) | offset.y,
          ((origin.z&~VVEC_INT_MASK)<<VVEC_FRAC) | offset.z)
-    {};            
+    {}            
 };
 
 struct nval
@@ -42,12 +42,12 @@ struct nval
 static inline bool htcmp(const nkey &x, const nkey &y)
 {
     return x.v == y.v;
-};
+}
 
 static inline uint hthash(const nkey &k)
 {
     return k.v.x^k.v.y^k.v.z;
-};
+}
 
 hashtable<nkey, nval> normals;
 
@@ -78,7 +78,7 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
         }
     }
     val.normals.add(n);
-};
+}
 
 bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &v, int index)
 {
@@ -112,7 +112,7 @@ bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &v, int 
         }
     }
     return false;
-};
+}
 
 VAR(lerpsubdiv, 0, 2, 4);
 VAR(lerpsubdivsize, 4, 4, 128);
@@ -123,7 +123,7 @@ void show_calcnormals_progress()
 {
     float bar1 = float(progress) / float(allocnodes);
     show_out_of_renderloop_progress(bar1, "computing normals...");
-};
+}
 
 #define CHECK_PROGRESS(exit) CHECK_CALCLIGHT_PROGRESS(exit, show_calcnormals_progress)
 
@@ -201,7 +201,7 @@ void addnormals(cube &c, const ivec &o, int size)
             }
         }
     }
-};
+}
 
 void calcnormals()
 {
@@ -209,12 +209,12 @@ void calcnormals()
     lerpthreshold = (1<<NORMAL_BITS)*cos(lerpangle*RAD); 
     progress = 1;
     loopi(8) addnormals(worldroot[i], ivec(i, 0, 0, 0, hdr.worldsize/2), hdr.worldsize/2);
-};
+}
 
 void clearnormals()
 {
     normals.clear();
-};
+}
 
 void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ustep, const vec &vstep, lerpvert *lv, int &numv)
 {
@@ -235,7 +235,7 @@ void calclerpverts(const vec &origin, const vec *p, const vec *n, const vec &ust
         i++;
     }
     numv = i;
-};
+}
 
 void setlerpstep(float v, lerpbounds &bounds)
 {
@@ -263,7 +263,7 @@ void setlerpstep(float v, lerpbounds &bounds)
 
     bounds.ustep = (bounds.max->u-bounds.min->u) / (bounds.max->v-bounds.min->v);
     bounds.u = bounds.ustep * (v-bounds.min->v) + bounds.min->u;
-};
+}
 
 void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end)
 {
@@ -283,7 +283,7 @@ void initlerpbounds(const lerpvert *lv, int numv, lerpbounds &start, lerpbounds 
 
     setlerpstep(0, start);
     setlerpstep(0, end);
-};
+}
 
 void updatelerpbounds(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end)
 {
@@ -307,7 +307,7 @@ void updatelerpbounds(float v, const lerpvert *lv, int numv, lerpbounds &start, 
             setlerpstep(v, end);
         }
     }
-};
+}
 
 void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbounds &end, vec &normal, vec &nstep)
 {   
@@ -341,7 +341,7 @@ void lerpnormal(float v, const lerpvert *lv, int numv, lerpbounds &start, lerpbo
 
     end.normal.add(end.nstep); 
     end.u += end.ustep;
-};
+}
 
 void newnormals(cube &c)
 {
@@ -351,10 +351,10 @@ void newnormals(cube &c)
         c.ext->normals = new surfacenormals[6];
         memset(c.ext->normals, 128, 6*sizeof(surfacenormals));
     }
-};
+}
 
 void freenormals(cube &c)
 {
     if(c.ext) DELETEA(c.ext->normals);
-};
+}
 

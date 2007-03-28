@@ -118,7 +118,7 @@ struct Texture
     GLuint gl;
     uchar *alphamask;
 
-    Texture() : alphamask(NULL) {};
+    Texture() : alphamask(NULL) {}
 };
 
 enum

@@ -105,7 +105,7 @@ struct octaentities
     ivec o;
     int size;
 
-    octaentities(const ivec &o, int size) : query(0), o(o), size(size) {};
+    octaentities(const ivec &o, int size) : query(0), o(o), size(size) {}
 };
 
 enum
@@ -188,14 +188,14 @@ static inline cubeext &ext(cube &c)
 {
     extern cubeext *newcubeext(cube &c);
     return *(c.ext ? c.ext : newcubeext(c));
-};
+}
 
 struct block3
 {
     ivec o, s;
     int grid, orient;
-    block3() {};
-    block3(const selinfo &sel) : o(sel.o), s(sel.s), grid(sel.grid), orient(sel.orient) {};
+    block3() {}
+    block3(const selinfo &sel) : o(sel.o), s(sel.s), grid(sel.grid), orient(sel.orient) {}
     cube *c()           { return (cube *)(this+1); }
     int size()    const { return s.x*s.y*s.z; }
 };
@@ -203,11 +203,11 @@ struct block3
 struct editinfo
 {
     block3 *copy;
-    editinfo() : copy(NULL) {};
+    editinfo() : copy(NULL) {}
 };
 
 struct undoent   { int i; entity e; };
-struct undoblock { int *g, n; block3 *b; undoent *e; undoblock() : g(NULL), n(0), b(NULL), e(NULL) {}; };
+struct undoblock { int *g, n; block3 *b; undoent *e; undoblock() : g(NULL), n(0), b(NULL), e(NULL) {} };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern ivec lu;

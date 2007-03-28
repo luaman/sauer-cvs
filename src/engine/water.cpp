@@ -13,7 +13,7 @@ static inline void vertw(float v1, float v2, float v3, float t1, float t2, float
 {
     glTexCoord2f(t1, t2);
     glVertex3f(v1, v2, v3-1.1f-(float)sin((v1-wx1)/wsize*(v2-wy1)/wsize*(v1-wx2)*(v2-wy2)*59/23+t)*0.8f);
-};
+}
 
 static inline float dx(float x) { return x + (float)sin(x*2+lastmillis/1000.0f)*0.04f; }
 static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; }
@@ -56,7 +56,7 @@ void rendervertwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
         n = (n+2)*2; 
         xtraverts += n;
     }
-};
+}
 
 uint calcwatersubdiv(int x, int y, int z, uint size)
 {
@@ -75,7 +75,7 @@ uint calcwatersubdiv(int x, int y, int z, uint size)
     else
         subdiv = 1 << subdiv;
     return subdiv;
-};
+}
 
 uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
 {
@@ -122,7 +122,7 @@ uint renderwaterlod(int x, int y, int z, uint size, Texture *t)
         }
         return minsubdiv;
     }
-};
+}
 
 struct QuadNode
 {
@@ -215,7 +215,7 @@ void renderwaterfall(materialsurface &m, Texture *t, float offset)
     }
 
     xtraverts += 4;
-};
+}
 
 /* reflective/refractive water */
 
@@ -251,14 +251,14 @@ void drawface(int orient, int x, int y, int z, int csize, int rsize, float offse
         glVertex3fv(v.v);
     }
     xtraverts += 4;
-};
+}
 
 void watercolour(int *r, int *g, int *b)
 {
     hdr.watercolour[0] = *r;
     hdr.watercolour[1] = *g;
     hdr.watercolour[2] = *b;
-};
+}
 
 COMMAND(watercolour, "iii");
 
@@ -283,7 +283,7 @@ void setprojtexmatrix(Reflection &ref)
         glGetFloatv(GL_TEXTURE_MATRIX, ref.tm);
     } 
     else glLoadMatrixf(ref.tm);
-};
+}
 
 VAR(waterspec, 0, 150, 1000);
 
@@ -420,7 +420,7 @@ void renderwater()
     glActiveTexture_(GL_TEXTURE0_ARB);
 
     glEnable(GL_CULL_FACE);
-};
+}
 
 Reflection *findreflection(int height)
 {
@@ -429,7 +429,7 @@ Reflection *findreflection(int height)
         if(reflections[i].height==height) return &reflections[i];
     }
     return NULL;
-};
+}
 
 void cleanreflections()
 {
@@ -458,7 +458,7 @@ void cleanreflections()
         glDeleteRenderbuffers_(1, &reflectiondb);
         reflectiondb = 0;
     }
-};
+}
 
 VARFP(reflectsize, 6, 8, 10, cleanreflections());
 
@@ -548,7 +548,7 @@ void addreflection(materialsurface &m)
     ref->lastused = totalmillis;
     ref->matsurfs.setsizenodelete(0);
     ref->matsurfs.add(&m);
-};
+}
 
 extern vtxarray *visibleva;
 extern void drawreflection(float z, bool refract, bool clear);
@@ -627,7 +627,7 @@ void queryreflections()
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glEnable(GL_CULL_FACE);
     }
-};
+}
 
 VARP(maxreflect, 1, 1, 8);
 
@@ -675,7 +675,7 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthFunc(GL_LESS);
     glDepthRange(0, 1);
-};
+}
 
 void drawreflections()
 {
@@ -729,7 +729,7 @@ void drawreflections()
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
 
     defaultshader->set();
-};
+}
 
 /* generic material rendering */
 
@@ -753,7 +753,7 @@ int findmaterial(const char *name)
         if(!strcmp(materials[i].name, name)) return materials[i].id;
     } 
     return -1;
-};  
+}  
     
 int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
 {   
@@ -778,7 +778,7 @@ int visiblematerial(cube &c, int orient, int x, int y, int z, int size)
         break;
     }
     return MATSURF_NOT_VISIBLE;
-};
+}
 
 void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurface> &matsurfs)
 {
@@ -796,7 +796,7 @@ void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurfa
             matsurfs.add(m);
         }
     }
-};
+}
 
 static int mergematcmp(const materialsurface *x, const materialsurface *y)
 {
@@ -806,7 +806,7 @@ static int mergematcmp(const materialsurface *x, const materialsurface *y)
     if(x->o[c] < y->o[c]) return -1;
     if(x->o[c] > y->o[c]) return 1;
     return 0;
-};
+}
 
 static int mergematr(materialsurface *m, int sz, materialsurface &n)
 {
@@ -823,7 +823,7 @@ static int mergematr(materialsurface *m, int sz, materialsurface &n)
         }
     }
     return 0;
-};
+}
 
 static int mergematc(materialsurface &m, materialsurface &n)
 {
@@ -835,7 +835,7 @@ static int mergematc(materialsurface &m, materialsurface &n)
         return 1;
     }
     return 0;
-};
+}
 
 static int mergemat(materialsurface *m, int sz, materialsurface &n)
 {
@@ -851,7 +851,7 @@ static int mergemat(materialsurface *m, int sz, materialsurface &n)
     }
     m[sz++] = n;
     return sz;
-};
+}
 
 static int mergemats(materialsurface *m, int sz)
 {
@@ -860,7 +860,7 @@ static int mergemats(materialsurface *m, int sz)
     int nsz = 0;
     loopi(sz) nsz = mergemat(m, nsz, m[i]);
     return nsz;
-};
+}
 
 static int optmatcmp(const materialsurface *x, const materialsurface *y)
 {
@@ -872,7 +872,7 @@ static int optmatcmp(const materialsurface *x, const materialsurface *y)
     if(xc < yc) return -1;
     if(xc > yc) return 1;
     return 0;
-};
+}
 
 VARF(optmats, 0, 1, 1, allchanged());
 
@@ -904,7 +904,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
          }
     }
     return matsurfs - (end-matbuf);
-};
+}
 
 extern vector<vtxarray *> valist;
 
@@ -971,7 +971,7 @@ void setupmaterials()
         water[i]->light = water[root]->light;
         water[i]->depth = (short)waterdepths[root];
     }
-};
+}
 
 VARP(showmat, 0, 1, 1);
 
@@ -1005,7 +1005,7 @@ static int vismatcmp(const materialsurface ** xm, const materialsurface ** ym)
     if(x.material < y.material) return 1;
     if(x.material > y.material) return -1;
     return 0;
-};
+}
 
 extern vtxarray *reflectedva;
 
@@ -1039,7 +1039,7 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
         }
     }
     vismats.sort(vismatcmp);
-};
+}
 
 void rendermatgrid(vector<materialsurface *> &vismats)
 {
@@ -1068,7 +1068,7 @@ void rendermatgrid(vector<materialsurface *> &vismats)
     }
     glEnd();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-};
+}
 
 VARP(glassenv, 0, 1, 1);
 
@@ -1210,5 +1210,5 @@ void rendermaterials(float zclip, bool refract)
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
-};
+}
 

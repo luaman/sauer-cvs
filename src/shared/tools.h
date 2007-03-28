@@ -19,7 +19,7 @@ typedef unsigned int uint;
 #define ASSERT(c) if(!(c)) { __asm int 3 }
 #endif
 #else
-#define ASSERT(c) if(c) {};
+#define ASSERT(c) if(c) {}
 #endif
 
 #define swap(t,a,b) { t m=a; a=b; b=m; }
@@ -82,7 +82,7 @@ inline char *s_strcat(char *d, const char *s) { size_t n = strlen(d); return s_s
 struct s_sprintf_f
 {
     char *d;
-    s_sprintf_f(char *str): d(str) {};
+    s_sprintf_f(char *str): d(str) {}
     void operator()(const char* fmt, ...)
     {
         va_list v;
@@ -128,7 +128,7 @@ struct databuf
     uchar flags;
 
     template<class U> 
-    databuf(T *buf, U maxlen) : buf(buf), len(0), maxlen((int)maxlen), flags(0) {};
+    databuf(T *buf, U maxlen) : buf(buf), len(0), maxlen((int)maxlen), flags(0) {}
 
     const T &get()
     {
@@ -356,22 +356,22 @@ static inline uint hthash(const char *key)
     uint h = 5381;
     for(int i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k;    // bernstein k=33 xor
     return h;
-};
+}
 
 static inline bool htcmp(const char *x, const char *y)
 {
     return !strcmp(x, y);
-};
+}
 
 static inline uint hthash(int key)
 {   
     return key;
-};
+}
 
 static inline bool htcmp(int x, int y)
 {
     return x==y;
-};
+}
 
 template <class K, class T> struct hashtable
 {
@@ -496,7 +496,7 @@ struct unionfind
     {
         int rank, next;
 
-        ufval() : rank(0), next(-1) {};
+        ufval() : rank(0), next(-1) {}
     };
     
     vector<ufval> ufvals;

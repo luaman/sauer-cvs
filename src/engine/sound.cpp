@@ -35,7 +35,7 @@ struct sample
         FSOUND_SAMPLE *sound;
     #endif
 
-    sample() : name(NULL) {};
+    sample() : name(NULL) {}
     ~sample() { DELETEA(name); }
 };
 
@@ -57,7 +57,7 @@ void setmusicvol(int musicvol)
         if(mod) FMUSIC_SetMasterVolume(mod, musicvol);
         else if(stream && musicchan>=0) FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255);
     #endif
-};
+}
 
 VARP(soundvol, 0, 255, 255);
 VARFP(musicvol, 0, 128, 255, setmusicvol(musicvol));
@@ -85,7 +85,7 @@ void stopsound()
         #endif
         stream = NULL;
     }
-};
+}
 
 VAR(soundbufferlen, 128, 1024, 4096);
 
@@ -108,7 +108,7 @@ void initsound()
         }
     #endif
     nosound = false;
-};
+}
 
 void musicdone()
 {
@@ -125,7 +125,7 @@ void musicdone()
     musicdonecmd = NULL;
     execute(cmd);
     delete[] cmd;
-};
+}
 
 void music(char *name, char *cmd)
 {
@@ -161,7 +161,7 @@ void music(char *name, char *cmd)
                 conoutf("could not play music: %s", sn);
             }
     }
-};
+}
 
 COMMAND(music, "ss");
 
@@ -175,7 +175,7 @@ int findsound(char *name, int vol, vector<soundslot> &sounds)
         if(!strcmp(sounds[i].s->name, name) && (!vol || sounds[i].vol==vol)) return i;
     }
     return -1;
-};
+}
 
 int addsound(char *name, int vol, int maxuses, vector<soundslot> &sounds)
 {
@@ -193,7 +193,7 @@ int addsound(char *name, int vol, int maxuses, vector<soundslot> &sounds)
     slot.uses = 0;
     slot.maxuses = maxuses;
     return sounds.length()-1;
-};
+}
 
 void registersound(char *name, int *vol) { intret(addsound(name, *vol, 0, gamesounds)); }
 COMMAND(registersound, "si");
@@ -213,7 +213,7 @@ void clear_sound()
     #else
         FSOUND_Close();
     #endif
-};
+}
 
 void clearmapsounds()
 {
@@ -229,7 +229,7 @@ void clearmapsounds()
         soundlocs[i].slot->uses--;
     }
     mapsounds.setsizenodelete(0);
-};
+}
 
 void checkmapsounds()
 {
@@ -240,7 +240,7 @@ void checkmapsounds()
         if(e.type!=ET_SOUND || e.visible || camera1->o.dist(e.o)>=e.attr2) continue;
         playsound(e.attr1, NULL, &e);
     }
-};
+}
 
 VAR(stereo, 0, 1, 1);
 
@@ -280,7 +280,7 @@ void updatechanvol(int chan, int svol, const vec *loc = NULL, extentity *ent = N
         FSOUND_SetVolume(chan, vol);
         FSOUND_SetPan(chan, pan);
     #endif
-};  
+}  
 
 void newsoundloc(int chan, const vec *loc, soundslot *slot, extentity *ent = NULL)
 {
@@ -289,7 +289,7 @@ void newsoundloc(int chan, const vec *loc, soundslot *slot, extentity *ent = NUL
     soundlocs[chan].inuse = true;
     soundlocs[chan].slot = slot;
     soundlocs[chan].ent = ent;
-};
+}
 
 void updatevol()
 {
@@ -318,7 +318,7 @@ void updatevol()
 #else
     if(mod && !Mix_PlayingMusic()) musicdone();
 #endif
-};
+}
 
 void playsound(int n, const vec *loc, extentity *ent)
 {
@@ -366,7 +366,7 @@ void playsound(int n, const vec *loc, extentity *ent)
     #ifndef USE_MIXER
         FSOUND_SetPaused(chan, false);
     #endif
-};
+}
 
 void playsoundname(char *s, const vec *loc, int vol) 
 { 
@@ -374,7 +374,7 @@ void playsoundname(char *s, const vec *loc, int vol)
     int id = findsound(s, vol, gamesounds);
     if(id < 0) id = addsound(s, vol, 0, gamesounds);
     playsound(id, loc);
-};
+}
 
 void sound(int *n) { playsound(*n); }
 COMMAND(sound, "i");

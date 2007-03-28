@@ -49,7 +49,7 @@ struct rpgobj : g3d_callback
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
-        actions(NULL), abovetext(NULL), ai(false), health(100), mana(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {};
+        actions(NULL), abovetext(NULL), ai(false), health(100), mana(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {}
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); DELETEP(actions); }
 

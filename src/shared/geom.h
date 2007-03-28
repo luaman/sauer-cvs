@@ -7,14 +7,14 @@ struct vec
         float v[3];
     };
 
-    vec() {};
-    vec(int a) : x(a), y(a), z(a) {}; 
-    vec(float a) : x(a), y(a), z(a) {}; 
-    vec(float a, float b, float c) : x(a), y(b), z(c) {};
-    vec(int v[3]) : x(v[0]), y(v[1]), z(v[2]) {};
-    vec(float *v) : x(v[0]), y(v[1]), z(v[2]) {};
+    vec() {}
+    vec(int a) : x(a), y(a), z(a) {} 
+    vec(float a) : x(a), y(a), z(a) {} 
+    vec(float a, float b, float c) : x(a), y(b), z(c) {}
+    vec(int v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
+    vec(float *v) : x(v[0]), y(v[1]), z(v[2]) {}
 
-    vec(float yaw, float pitch) : x(sinf(yaw)*cosf(pitch)), y(-cosf(yaw)*cosf(pitch)), z(sinf(pitch)) {};
+    vec(float yaw, float pitch) : x(sinf(yaw)*cosf(pitch)), y(-cosf(yaw)*cosf(pitch)), z(sinf(pitch)) {}
 
     float &operator[](int i)       { return v[i]; }
     float  operator[](int i) const { return v[i]; }
@@ -66,7 +66,7 @@ struct vec
 struct vec4 : vec
 {
     float w;
-    vec4() : w(0) {};
+    vec4() : w(0) {}
     vec4(vec &_v, float _w = 0) : w(_w) { *(vec *)this = _v; }
 };
 
@@ -74,7 +74,7 @@ struct matrix
 {
     vec X, Y, Z;
 
-    matrix(const vec &_X, const vec &_Y, const vec &_Z) : X(_X), Y(_Y), Z(_Z) {};
+    matrix(const vec &_X, const vec &_Y, const vec &_Z) : X(_X), Y(_Y), Z(_Z) {}
     matrix(vec v, float angle) //matrix for rotating a point around a vector
     {
         v.normalize();
@@ -119,15 +119,15 @@ struct plane : vec
     bool operator==(const plane &p) const { return x==p.x && y==p.y && z==p.z && offset==p.offset; }
     bool operator!=(const plane &p) const { return x!=p.x || y!=p.y || z!=p.z || offset!=p.offset; }
 
-    plane() {};
-    plane(vec &c, float off) : vec(c), offset(off) {}; 
+    plane() {}
+    plane(vec &c, float off) : vec(c), offset(off) {} 
     plane(int d, float off)
     {
         x = y = z = 0.0f;
         v[d] = 1.0f;
         offset = -off;
     }
-    plane(float a, float b, float c, float d) : vec(a, b, c), offset(d) {};
+    plane(float a, float b, float c, float d) : vec(a, b, c), offset(d) {}
 
     void toplane(const vec &n, const vec &p)
     {
@@ -162,8 +162,8 @@ struct triangle
 {
     vec a, b, c;
 
-    triangle(const vec &a, const vec &b, const vec &c) : a(a), b(b), c(c) {};
-    triangle() {};
+    triangle(const vec &a, const vec &b, const vec &c) : a(a), b(b), c(c) {}
+    triangle() {}
 
     bool operator==(const triangle &t) const { return a == t.a && b == t.b && c == t.c; }
 };
@@ -198,15 +198,15 @@ struct ivec
         int v[3];
     };
 
-    ivec() {};
-    ivec(const vec &v) : x(int(v.x)), y(int(v.y)), z(int(v.z)) {};
+    ivec() {}
+    ivec(const vec &v) : x(int(v.x)), y(int(v.y)), z(int(v.z)) {}
     ivec(int i)
     {
         x = ((i&1)>>0);
         y = ((i&2)>>1);
         z = ((i&4)>>2);
     }
-    ivec(int a, int b, int c) : x(a), y(b), z(c) {};
+    ivec(int a, int b, int c) : x(a), y(b), z(c) {}
     ivec(int d, int row, int col, int depth)
     {
         v[R[d]] = row;
@@ -242,12 +242,12 @@ struct ivec
 static inline bool htcmp(const ivec &x, const ivec &y)
 {
     return x == y;
-};  
+}  
 
 static inline uint hthash(const ivec &k)
 {
     return k.x^k.y^k.z;
-};  
+}  
 
 struct svec
 {
@@ -257,8 +257,8 @@ struct svec
         short v[3];
     };
 
-    svec() {};
-    svec(short x, short y, short z) : x(x), y(y), z(z) {};
+    svec() {}
+    svec(short x, short y, short z) : x(x), y(y), z(z) {}
 
     short &operator[](int i)       { return v[i]; }
     short  operator[](int i) const { return v[i]; }
@@ -282,9 +282,9 @@ struct bvec
         uchar v[3];
     };
 
-    bvec() {};
-    bvec(uchar x, uchar y, uchar z) : x(x), y(y), z(z) {};
-    bvec(const vec &v) : x((uchar)((v.x+1)*255/2)), y((uchar)((v.y+1)*255/2)), z((uchar)((v.z+1)*255/2)) {};
+    bvec() {}
+    bvec(uchar x, uchar y, uchar z) : x(x), y(y), z(z) {}
+    bvec(const vec &v) : x((uchar)((v.x+1)*255/2)), y((uchar)((v.y+1)*255/2)), z((uchar)((v.z+1)*255/2)) {}
 
     uchar &operator[](int i)       { return v[i]; }
     uchar  operator[](int i) const { return v[i]; }

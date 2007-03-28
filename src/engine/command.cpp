@@ -24,13 +24,13 @@ void clearstack(ident &id)
         delete tmp;
     }
     id._stack = NULL;
-};
+}
 
 void clear_command()
 {
     enumerate(*idents, ident, i, if(i._type==ID_ALIAS) { DELETEA(i._name); DELETEA(i._action); if(i._stack) clearstack(i); });
     if(idents) idents->clear();
-};
+}
 
 void clearoverrides()
 {
@@ -49,7 +49,7 @@ void clearoverrides()
             }
             i._override = NO_OVERRIDE;
         });
-};
+}
 
 void pushident(ident &id, char *val)
 {
@@ -58,7 +58,7 @@ void pushident(ident &id, char *val)
     stack->next = id._stack;
     id._stack = stack;
     id._action = val;
-};
+}
 
 void popident(ident &id)
 {
@@ -68,7 +68,7 @@ void popident(ident &id)
     id._action = stack->action;
     id._stack = stack->next;
     delete stack;
-};
+}
 
 void pusha(char *name, char *action)
 {
@@ -80,18 +80,18 @@ void pusha(char *name, char *action)
         id = idents->access(name, &init);
     }
     pushident(*id, action);
-};
+}
 
 void push(char *name, char *action)
 {
     pusha(name, newstring(action));
-};
+}
 
 void pop(char *name)
 {
     ident *id = idents->access(name);
     if(id) popident(*id);
-};
+}
 
 COMMAND(push, "ss");
 COMMAND(pop, "s");
@@ -122,7 +122,7 @@ void aliasa(char *name, char *action)
             if(b->_persist != persistidents) b->_persist = persistidents;
         }
     }
-};
+}
 
 void alias(char *name, char *action) { aliasa(name, newstring(action)); }
 
@@ -136,7 +136,7 @@ int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(),
     ident v(ID_VAR, name, min, cur, max, storage, (void *)fun, persist);
     idents->access(name, &v);
     return cur;
-};
+}
 
 #define GETVAR(id, name, retval) \
     ident *id = idents->access(name); \
@@ -146,22 +146,22 @@ void setvar(char *name, int i, bool dofunc)
     GETVAR(id, name, );
     *id->_storage = i; 
     if(dofunc && id->_fun) ((void (__cdecl *)())id->_fun)();
-}; 
+} 
 int getvar(char *name) 
 { 
     GETVAR(id, name, 0);
     return *id->_storage;
-};
+}
 int getvarmin(char *name) 
 { 
     GETVAR(id, name, 0);
     return id->_min;
-};
+}
 int getvarmax(char *name) 
 { 
     GETVAR(id, name, 0);
     return id->_max;
-};
+}
 bool identexists(char *name) { return idents->access(name)!=NULL; }
 ident *getident(char *name) { return idents->access(name); }
 
@@ -169,7 +169,7 @@ const char *getalias(char *name)
 {
     ident *i = idents->access(name);
     return i && i->_type==ID_ALIAS ? i->_action : "";
-};
+}
 
 bool addcommand(char *name, void (*fun)(), char *narg)
 {
@@ -177,13 +177,13 @@ bool addcommand(char *name, void (*fun)(), char *narg)
     ident c(ID_COMMAND, name, narg, (void *)fun);
     idents->access(name, &c);
     return false;
-};
+}
 
 void addident(char *name, ident *id)
 {
     if(!idents) idents = new identtable;
     idents->access(name, id);
-};
+}
 
 static vector<vector<char> *> wordbufs;
 static int bufnest = 0;
@@ -216,7 +216,7 @@ void parsemacro(char *&p, int level, vector<char> &wordbuf)
     const char *alias = getalias(ident);
     *p = c;
     while(*alias) wordbuf.add(*alias++);
-};
+}
 
 char *parseexp(char *&p, int right)          // parse any nested set of () or []
 {
@@ -274,7 +274,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
     wordbuf.setsize(0);
     bufnest--;
     return s;
-};
+}
 
 char *lookup(char *n)                           // find value of ident referenced with $ in exp
 {
@@ -286,7 +286,7 @@ char *lookup(char *n)                           // find value of ident reference
     }
     conoutf("unknown alias lookup: %s", n+1);
     return n;
-};
+}
 
 char *parseword(char *&p)                       // parse single argument, including expressions
 {
@@ -319,7 +319,7 @@ char *parseword(char *&p)                       // parse single argument, includ
     char *s = newstring(word, p-word);
     if(*s=='$') return lookup(s);               // substitute variables
     return s;
-};
+}
 
 char *conc(char **w, int n, bool space)
 {
@@ -333,7 +333,7 @@ char *conc(char **w, int n, bool space)
         if(space) strcat(r, " ");
     }
     return r;
-};
+}
 
 VARN(numargs, _numargs, 0, 0, 25);
 
@@ -493,7 +493,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
         loopj(numargs) if(w[j]) delete[] w[j];
     }
     return retval;
-};
+}
 
 int execute(char *p)
 {
@@ -501,7 +501,7 @@ int execute(char *p)
     int i = 0; 
     if(ret) { i = parseint(ret); delete[] ret; }
     return i;
-};
+}
 
 bool execfile(char *cfgfile)
 {
@@ -512,12 +512,12 @@ bool execfile(char *cfgfile)
     execute(buf);
     delete[] buf;
     return true;
-};
+}
 
 void exec(char *cfgfile)
 {
     if(!execfile(cfgfile)) conoutf("could not read \"%s\"", cfgfile);
-};
+}
 
 void writecfg()
 {
@@ -544,7 +544,7 @@ void writecfg()
     fprintf(f, "\n");
     writecompletions(f);
     fclose(f);
-};
+}
 
 COMMAND(writecfg, "");
 
@@ -565,7 +565,7 @@ void result(const char *s) { commandret = newstring(s); }
 void concatword(char **args, int *numargs)
 {
     commandret = conc(args, *numargs, false);
-};
+}
 
 void format(char **args, int *numargs)
 {
@@ -589,7 +589,7 @@ void format(char **args, int *numargs)
     }
     s.add('\0');
     result(s.getbuf());
-};
+}
 
 #define whitespaceskip s += strspn(s, "\n\t ")
 #define elementskip *s=='"' ? (++s, s += strcspn(s, "\"\n\0"), s += *s=='"') : s += strcspn(s, "\n\t \0")
@@ -600,7 +600,7 @@ void listlen(char *s)
     whitespaceskip;
     for(; *s; n++) elementskip, whitespaceskip;
     intret(n);
-};
+}
 
 void at(char *s, int *pos)
 {
@@ -615,12 +615,12 @@ void at(char *s, int *pos)
     }
     *s = '\0';
     result(e);
-};
+}
 
 void getalias_(char *s)
 {
     result(getalias(s));
-};
+}
 
 COMMAND(exec, "s");
 COMMAND(concat, "C");

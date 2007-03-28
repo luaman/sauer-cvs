@@ -28,15 +28,14 @@ int isvisiblesphere(float rad, const vec &cv)
     if(dist > -rad) v = VFC_PART_VISIBLE;
 
     return v;
-};
+}
 
 int isvisiblecube(const vec &o, int size)
 {
     vec center(o);
     center.add(size/2.0f);
     return isvisiblesphere(size*SQRT3/2.0f, center);
-};
-
+}
 
 float vadist(vtxarray *va, const vec &p)
 {
@@ -46,7 +45,7 @@ float vadist(vtxarray *va, const vec &p)
         return p.dist_to_bb(o, ivec(o).add(va->size)); // box contains only sky/water
     }
     return p.dist_to_bb(va->min, va->max);
-};
+}
 
 #define VASORTSIZE 64
 
@@ -71,7 +70,7 @@ void addvisibleva(vtxarray *va)
 
     va->next = *prev;
     *prev = va;
-};
+}
 
 void sortvisiblevas()
 {
@@ -84,7 +83,7 @@ void sortvisiblevas()
         while(va->next) va = va->next;
         last = &va->next;
     }
-};
+}
 
 void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
 {
@@ -104,7 +103,7 @@ void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
             }
         }
     }
-};
+}
 
 void setvfcP(float yaw, float pitch, const vec &camera)
 {
@@ -118,7 +117,7 @@ void setvfcP(float yaw, float pitch, const vec &camera)
     vfcP[3].toplane(vec(yaw, pitch - pitchd), camera); // bottom plane
     vfcP[4].toplane(vec(yaw, pitch), camera);          // near/far planes
     vfcDfog = getvar("fog");
-};
+}
 
 plane oldvfcP[5];
 
@@ -129,12 +128,12 @@ void reflectvfcP(float z)
     vec o(camera1->o);
     o.z = z-(camera1->o.z-z);
     setvfcP(camera1->yaw, -camera1->pitch, o);
-};
+}
 
 void restorevfcP()
 {
     memcpy(vfcP, oldvfcP, sizeof(vfcP));
-};
+}
 
 extern vector<vtxarray *> varoot;
 
@@ -151,19 +150,19 @@ void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int f
 
     findvisiblevas(varoot);
     sortvisiblevas();
-};
+}
 
 bool insideva(const vtxarray *va, const vec &v)
 {
     return v.x>=va->x && v.y>=va->y && v.z>=va->z && v.x<=va->x+va->size && v.y<=va->y+va->size && v.z<=va->z+va->size;
-};
+}
 
 static ivec vaorigin;
 
 void resetorigin()
 {
     vaorigin = ivec(-1, -1, -1);
-};
+}
 
 void setorigin(vtxarray *va)
 {
@@ -178,7 +177,7 @@ void setorigin(vtxarray *va)
         static const float scale = 1.0f/(1<<VVEC_FRAC);
         glScalef(scale, scale, scale);
     }
-};
+}
 
 void setupTMU()
 {
@@ -188,7 +187,7 @@ void setupTMU()
     glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, GL_SRC_COLOR);
     glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT,  GL_TEXTURE);
     glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
-};
+}
 
 ///////// occlusion queries /////////////
 
@@ -206,7 +205,7 @@ static uint flipquery = 0;
 int getnumqueries()
 {
     return queryframes[flipquery].cur;
-};
+}
 
 void flipqueries()
 {
@@ -214,7 +213,7 @@ void flipqueries()
     queryframe &qf = queryframes[flipquery];
     loopi(qf.cur) qf.queries[i].owner = NULL;
     qf.cur = 0;
-};
+}
 
 occludequery *newquery(void *owner)
 {
@@ -228,12 +227,12 @@ occludequery *newquery(void *owner)
     query->owner = owner;
     query->fragments = -1;
     return query;
-};
+}
 
 void resetqueries()
 {
     loopi(2) loopj(queryframes[i].max) queryframes[i].queries[j].owner = NULL;
-};
+}
 
 VAR(oqfrags, 0, 8, 64);
 VAR(oqreflect, 0, 4, 64);
@@ -256,7 +255,7 @@ bool checkquery(occludequery *query, bool nowait)
         query->fragments = fragments;
     }
     return fragments < (uint)(reflecting ? oqreflect : oqfrags);
-};
+}
 
 void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o)
 {
@@ -284,7 +283,7 @@ void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o)
     }
 
     glEnd();
-};
+}
 
 extern int octaentsize;
 
@@ -336,7 +335,7 @@ void findvisiblemms(const vector<extentity *> &ents)
             }
         }
     }
-};
+}
 
 VAR(oqmm, 0, 4, 8);
 
@@ -354,7 +353,7 @@ void rendermapmodel(extentity &e)
     }
     mapmodelinfo &mmi = getmminfo(e.attr2);
     if(&mmi) rendermodel(e.color, e.dir, mmi.name, anim, 0, mmi.tex, e.o.x, e.o.y, e.o.z, (float)((e.attr1+7)-(e.attr1+7)%15), 0, 10.0f, basetime, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
-};
+}
 
 extern int reflectdist;
 
@@ -402,7 +401,7 @@ void renderreflectedmapmodels(float z, bool refract)
         }
     }
     if(reflected) restorevfcP();
-};
+}
 
 void rendermapmodels()
 {
@@ -493,7 +492,7 @@ void rendermapmodels()
             }
         }
     }
-};
+}
 
 bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
 {
@@ -509,7 +508,7 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
         return false;
     }
     return true;
-};
+}
 
 VAR(outline, 0, 0, 0xFFFFFF);
 VAR(dtoutline, 0, 0, 1);
@@ -578,7 +577,7 @@ void renderoutline()
     glEnable(GL_TEXTURE_2D);
 
     defaultshader->set();
-};
+}
 
 #define NUMCAUSTICS 32
 
@@ -704,7 +703,7 @@ void rendercaustics(float z, bool refract)
     glDisable(GL_TEXTURE_GEN_T);
 
     glFogfv(GL_FOG_COLOR, oldfogc);
-};
+}
 
 float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
 float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
@@ -753,7 +752,7 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
            vec(camera).sub(origin.tovec()).mul(1<<VVEC_FRAC));
 
     endquery(query);
-};
+}
 
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 {
@@ -1005,7 +1004,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
  
     vtris += lod.tris;
     vverts += va->verts;
-};
+}
 
 VAR(oqdist, 0, 256, 1024);
 VAR(zpass, 0, 1, 1);
@@ -1050,7 +1049,7 @@ void setupTMUs()
     }
 
     glColor4f(1, 1, 1, 1);
-};
+}
 
 void cleanupTMUs()
 {
@@ -1081,7 +1080,7 @@ void cleanupTMUs()
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
     if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
-};
+}
 
 #ifdef SHOWVA
 VAR(showva, 0, 0, 1);
@@ -1190,7 +1189,7 @@ void rendergeom()
 
     glPopMatrix();
     cleanupTMUs();
-};
+}
 
 void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc = true)
 {
@@ -1222,7 +1221,7 @@ void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc =
         }
         if(va->children->length()) findreflectedvas(*va->children, z, refract, va->curvfc != VFC_NOT_VISIBLE);
     }
-};
+}
 
 void renderreflectedgeom(float z, bool refract)
 {
@@ -1292,7 +1291,7 @@ void renderreflectedgeom(float z, bool refract)
 
     glPopMatrix();
     cleanupTMUs();
-};
+}
 
 static GLuint skyvbufGL, skyebufGL;
 
@@ -1323,7 +1322,7 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
 
     if(!explicitonly) xtraverts += lod.sky/3;
     xtraverts += lod.explicitsky/3;
-};
+}
 
 void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
 {
@@ -1336,7 +1335,7 @@ void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
         if(lod.sky+lod.explicitsky) renderskyva(va, lod);
         if(va->children->length()) renderreflectedskyvas(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
     }
-};
+}
 
 void rendersky(bool explicitonly, float zreflect)
 {
@@ -1370,5 +1369,5 @@ void rendersky(bool explicitonly, float zreflect)
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
     }
     glDisableClientState(GL_VERTEX_ARRAY);
-};
+}
 
