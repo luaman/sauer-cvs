@@ -131,7 +131,7 @@ void music(char *name, char *cmd)
 {
     if(nosound) return;
     stopsound();
-    if(soundvol && musicvol)
+    if(soundvol && musicvol && *name)
     {
         if(cmd[0]) musicdonecmd = newstring(cmd);
         string sn;
