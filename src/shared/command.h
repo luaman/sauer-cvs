@@ -39,20 +39,20 @@ template <class T> struct tident
     tident() {};
     // ID_VAR
     tident(int t, char *n, int m, int c, int x, int *s, void *f = NULL, bool p = false)
-        : _type(t), _name(n), _min(m), _max(x), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _val(c), _persist(p), _storage(s) {};
+        : _type(t), _name(n), _min(m), _max(x), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _val(c), _persist(p), _storage(s) {}
     // ID_ALIAS
     tident(int t, char *n, char *a, bool p)
-        : _type(t), _name(n), _override(NO_OVERRIDE), _stack(NULL), _action(a), _persist(p) {};
+        : _type(t), _name(n), _override(NO_OVERRIDE), _stack(NULL), _action(a), _persist(p) {}
     // ID_COMMAND, ID_ICOMMAND
     tident(int t, char *n, char *narg, void *f = NULL, T *_s = NULL)
-        : _type(t), _name(n), _fun((void (__cdecl *)(void))f), _narg(narg), self(_s) {};
-    virtual ~tident() {};        
+        : _type(t), _name(n), _fun((void (__cdecl *)(void))f), _narg(narg), self(_s) {}
+    virtual ~tident() {}        
 
     tident &operator=(const tident &o) { memcpy(this, &o, sizeof(tident)); return *this; }        // force vtable copy, ugh
     
     int operator()() { return (int)(size_t)_narg; }
     
-    virtual void run(char **args) {};
+    virtual void run(char **args) {}
 };
 
 typedef tident<void> ident;
