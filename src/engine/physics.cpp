@@ -307,6 +307,38 @@ const float JUMPVEL = 125.0f;
 const float GRAVITY = 200.0f;
 const float STEPSPEED = 1.0f;
 
+bool ellipsecollide(dynent *d, const vec &dir, dynent *e)
+{
+    float below = (e->o.z-e->eyeheight) - (d->o.z+d->aboveeye),
+          above = (d->o.z-d->eyeheight) - (e->o.z+e->aboveeye);
+    if(below>=0 || above>=0) return true;
+    float x = e->o.x - d->o.x, y = e->o.y - d->o.y;
+    float angle = atan2f(y, x), dangle = angle-(d->yaw+90)*RAD, eangle = angle-(e->yaw+90)*RAD;
+    float dx = d->xradius*cosf(dangle), dy = d->yradius*sinf(dangle);
+    float ex = e->xradius*cosf(eangle), ey = e->yradius*sinf(eangle);
+    float dist = sqrtf(x*x + y*y) - sqrtf(dx*dx + dy*dy) - sqrtf(ex*ex + ey*ey);
+    if(dist < 0)
+    {
+        if((d->type==ENT_CAMERA || below >= -(d->eyeheight+d->aboveeye)/4.0f) && (dir.iszero() || dir.z > 0))                             
+        {    
+            wall = vec(0, 0, -1); 
+            return false;
+        }
+        if((d->type==ENT_CAMERA || above >= -(d->eyeheight+d->aboveeye)/2.0f) && (dir.iszero() || dir.z < 0))              
+        { 
+            wall = vec(0, 0, 1); 
+            return false;
+        }
+        if(dir.iszero() || -x*dir.x + -y*dir.y < 0)
+        {    
+            wall = vec(-x, -y, 0);
+            wall.normalize();
+            return false;
+        }
+    }
+    return true;
+}
+
 bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true)
 {
     if(collideonly && !visible) return true;
@@ -415,7 +447,15 @@ bool plcollide(physent *d, const vec &dir)    // collide with player or monster
         {
             physent *o = dynents[i];
             if(o==d || (o==player && d->type==ENT_CAMERA) || d->o.reject(o->o, d->radius+o->radius)) continue;
-            if(!rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight))
+            if(d->type==ENT_PLAYER || d->type==ENT_CAMERA)
+            {
+                if(!ellipsecollide((dynent *)d, dir, (dynent *)o))
+                {
+                    hitplayer = true;
+                    return false;
+                }
+            }
+            else if(!rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight))
             {
                 hitplayer = true;
                 return false;
@@ -915,8 +955,8 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m)
 {
     if(move)
     {
-        m.x = move*sinf(RAD*(yaw));
-        m.y = move*-cosf(RAD*(yaw));
+        m.x = move*sinf(RAD*yaw);
+        m.y = move*-cosf(RAD*yaw);
     }
     else m.x = m.y = 0;
 
@@ -930,8 +970,8 @@ void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m)
 
     if(strafe)
     {
-        m.x += strafe*-cosf(RAD*(yaw));
-        m.y += strafe*-sinf(RAD*(yaw));
+        m.x += strafe*-cosf(RAD*yaw);
+        m.y += strafe*-sinf(RAD*yaw);
     }
 }
 
@@ -996,13 +1036,12 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
 
     vec d(m);
     d.mul((pl->maxspeed * (pl->move && !pl->strafe ? 1.3f : 1.0f))*(pl->physstate < PHYS_SLOPE && pl->move>=0 ? 1.3f : 1.0f)); // EXPERIMENTAL
-    
     float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     float fpsfric = friction/curtime*20.0f;
 
     pl->vel.mul(fpsfric-1);
     pl->vel.add(d);
-    pl->vel.div(fpsfric);   
+    pl->vel.div(fpsfric);
 }
 
 void modifygravity(physent *pl, bool water, float secs)

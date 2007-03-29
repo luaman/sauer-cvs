@@ -66,6 +66,7 @@ struct physent                                  // base entity type, can be affe
     float maxspeed;                             // cubes per second, 100 for player
     int timeinair;
     float radius, eyeheight, aboveeye;          // bounding box size
+    float xradius, yradius;
     vec floor;                                  // the normal of floor the dynent is on
 
     bool inwater;
@@ -79,7 +80,7 @@ struct physent                                  // base entity type, can be affe
     uchar type;                                 // one of ENT_* above
 
     physent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
-               radius(4.1f), eyeheight(14), aboveeye(1), 
+               radius(4.1f), eyeheight(14), aboveeye(1), xradius(4.1f), yradius(4.1f), 
                inwater(false), blocked(false), moving(true), state(CS_ALIVE), type(ENT_PLAYER)
                { reset(); }
                

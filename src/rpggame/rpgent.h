@@ -9,7 +9,7 @@ struct rpgent : dynent
     float targetyaw;
     int trigger;
 
-    rpgent(vec &_pos, float _yaw, int _maxspeed = 20) : targetyaw(_yaw), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0)
+    rpgent(const vec &_pos, float _yaw, int _maxspeed = 20) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), targetyaw(_yaw), trigger(0)
     {
         o = _pos;
         yaw = _yaw;

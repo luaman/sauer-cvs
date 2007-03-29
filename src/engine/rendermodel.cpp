@@ -190,7 +190,7 @@ VAR(showboundingbox, 0, 0, 2);
 
 void render2dbox(vec &o, float x, float y, float z)
 {
-    glBegin(GL_POLYGON);
+    glBegin(GL_LINE_LOOP);
     glVertex3f(o.x, o.y, o.z);
     glVertex3f(o.x, o.y, o.z+z);
     glVertex3f(o.x+x, o.y+y, o.z+z);
@@ -207,19 +207,28 @@ void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradi
     float h = tofloor+toceil;
     notextureshader->set();
     glColor3f(1, 1, 1);
-    glDisable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDepthMask(GL_FALSE);
     render2dbox(c, xsz, 0, h);
     render2dbox(c, 0, ysz, h);
     c.add(vec(xsz, ysz, 0));
     render2dbox(c, -xsz, 0, h);
     render2dbox(c, 0, -ysz, h);
-    glDepthMask(GL_TRUE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_CULL_FACE);
     xtraverts += 16;
 }
+
+void renderellipse(vec &o, float xradius, float yradius, float yaw)
+{
+    notextureshader->set();
+    glColor3f(0.5f, 0.5f, 0.5f);
+    glBegin(GL_LINE_LOOP);
+    loopi(16)
+    {
+        vec p(xradius*cosf(2*M_PI*i/16.0f), yradius*sinf(2*M_PI*i/16.0f), 0);
+        p.rotate_around_z((yaw+90)*RAD);
+        p.add(o);
+        glVertex3fv(p.v);
+    };
+    glEnd();
+};
 
 VAR(dynshadow, 0, 60, 100);
 
@@ -265,7 +274,11 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     }
     if(showboundingbox)
     {
-        if(d) render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
+        if(d) 
+        {
+            render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
+            renderellipse(d->o, d->xradius, d->yradius, d->yaw);
+        }
         else if((anim&ANIM_INDEX)!=ANIM_GUNSHOOT && (anim&ANIM_INDEX)!=ANIM_GUNIDLE)
         {
             vec center, radius;
@@ -435,7 +448,9 @@ void setbbfrommodel(dynent *d, char *mdl)
     if(!m) return;
     vec center, radius;
     m->collisionbox(0, center, radius);
-    d->radius    = max(radius.x+fabs(center.x), radius.y+fabs(center.y));
+    d->xradius   = radius.x + fabs(center.x);
+    d->yradius   = radius.y + fabs(center.y);
+    d->radius    = max(d->xradius, d->yradius);
     d->eyeheight = (center.z-radius.z) + radius.z*2*m->eyeheight;
     d->aboveeye  = radius.z*2*(1.0f-m->eyeheight);
 }
