@@ -285,6 +285,15 @@ These two commands allow you to send other players maps they may not have while 
 want to send before issuing the command! (in some multiplayer that requires voting). Also note that "getmap" operates on the last map send by some other player, whatever it is.
 </p>
 
+<h2 id="H2_1">Movement, controls & physics</h2>
+
+<p>
+Jumping gains a 30% speedboost while in the air (not when jumping backwards).
+Moveing forwards or backwards without strafing also gains a 30% speedboost. Forward and jumping speedboosts are cumulative.</p>
+    <p>
+This has been designed such to give you multiple options to control your speed while navigating a level, you can use strafe for example to slowdown forward motion as you approach a corner to make navigating the corner easier. What this achieves is giving you both speed and precision at the same time, because pure speed (all action being equally fast) just makes you bump into walls.
+    </p>
+
 <h2 id="items_and_gameplay">Items and Gameplay</h2>
 
 <p>
@@ -761,6 +770,8 @@ Sauerbraten uses player prediction based on extrapolation using the physics mode
 </li>
 <li>if a player is severely lagged (or you are) he temporarily becomes a "ghost" that cannot be hit (if &gt;1sec packet jump).</li>
 </ul>
+
+
 
 <h2 id="multiplayer_online">Multiplayer Online</h2>
 
