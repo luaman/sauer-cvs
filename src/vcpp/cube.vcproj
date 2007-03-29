@@ -1590,10 +1590,6 @@
 			Name="RPG"
 			>
 			<File
-				RelativePath="..\rpggame\behaviours.h"
-				>
-			</File>
-			<File
 				RelativePath="..\rpggame\entities.h"
 				>
 			</File>
@@ -1628,6 +1624,10 @@
 						PrecompiledHeaderThrough="pch.h"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\rpggame\rpgent.h"
+				>
 			</File>
 			<File
 				RelativePath="..\rpggame\rpgobj.h"

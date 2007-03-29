@@ -33,7 +33,6 @@ struct rpgobj : g3d_callback
     char *abovetext;
 
     bool ai;            // whether this object does its own thinking (npcs/monsters)
-    behaviour *beh;
     int health;
     int mana;
     int gold;           // how much money is owned by the object (mostly for npcs/player only)

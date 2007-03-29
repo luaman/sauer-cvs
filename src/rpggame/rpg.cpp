@@ -12,41 +12,9 @@ struct rpgclient : igameclient, g3d_callback
     struct rpgent;
 
     #include "entities.h"
-    #include "behaviours.h"
     #include "rpgobj.h"
     #include "rpgobjset.h"
-
-    struct rpgent : dynent
-    {
-        int lastaction, lastpain;
-        bool attacking;
-
-        rpgent() : lastaction(0), lastpain(0), attacking(false) {}
-
-        void tryattack(vector<rpgobj *> &set, rpgobj *attacker, int lastmillis)
-        {
-            if(attacking && lastmillis-lastaction>250)
-            {
-                lastaction = lastmillis;
-                loopv(set)
-                {
-                    vec d = o;
-                    vec &target = set[i]->ent->o;
-                    d.sub(target);
-                    // FIXME: need to find closest point on bounding box
-                    // FIXME: need to allow more close bounding boxes to be defined... OOBB
-                    d.z /= 3;   // attackers with an eyeheight below or above the target should affect distance check only slightly
-                    if(d.magnitude()>20) continue;
-
-                    float targetyaw = -(float)atan2(target.x-o.x, target.y-o.y)/RAD+180;
-                    normalize_yaw(targetyaw);
-                    if(fabs(targetyaw-yaw)>60) continue;
-
-                    set[i]->attacked(*attacker);
-                }        
-            }
-        }
-    };
+    #include "rpgent.h"
 
     rpgentities et;
     rpgdummycom cc;
