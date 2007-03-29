@@ -50,7 +50,7 @@ struct rpgobjset
         pointingat = NULL;
         loopv(set)
         {
-            set[i]->update(curtime);
+            set[i]->update(curtime, cl.player1, cl.lastmillis);
 
             float dist = cl.player1.o.dist(set[i]->ent->o);
             if(dist<50 && intersect(set[i]->ent, cl.player1.o, worldpos) && (!pointingat || cl.player1.o.dist(pointingat->ent->o)>dist))    

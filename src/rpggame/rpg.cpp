@@ -28,7 +28,7 @@ struct rpgclient : igameclient, g3d_callback
     int menutime, menutab;
     vec menupos;
 
-    rpgclient() : et(*this), os(*this), lastmillis(0), menutime(0), menutab(1)
+    rpgclient() : et(*this), os(*this), lastmillis(0), menutime(0), menutab(1), player1(vec(0, 0, 0), 0, 100)
     {
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
         CCOMMAND(rpgclient, showinventory, "", self->showinventory());    
@@ -127,8 +127,8 @@ struct rpgclient : igameclient, g3d_callback
 
     bool canjump() { return true; }
     void doattack(bool on) { player1.attacking = on; }
-    dynent *iterdynents(int i) { return i ? NULL : &player1; }
-    int numdynents() { return 1; }
+    dynent *iterdynents(int i) { return i ? os.set[i-1]->ent : &player1; }
+    int numdynents() { return os.set.length()+1; }
 
     void rendergame()
     {

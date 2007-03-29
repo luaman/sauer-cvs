@@ -94,9 +94,7 @@ struct rpgobj : g3d_callback
     void placeinworld(vec &pos, float yaw)
     {
         if(!model) model = "tentus/moneybag";
-        ent = new rpgent;
-        ent->o = pos;
-        ent->yaw = yaw;
+        ent = new rpgent(pos, yaw);
         setbbfrommodel(ent, model);
         entinmap(ent);
     }
@@ -112,10 +110,10 @@ struct rpgobj : g3d_callback
         }
     }
 
-    void update(int curtime)
+    void update(int curtime, rpgent &player1, int lastmillis)
     {
-        moveplayer(ent, 10, true, curtime);
         float dist = ent->o.dist(os.cl.player1.o);
+        ent->update(curtime, dist, player1, lastmillis);
         if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
         else if(dist>96) menutime = 0;
     }
