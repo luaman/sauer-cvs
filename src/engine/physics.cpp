@@ -965,7 +965,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         {
             pl->jumpnext = false;
 
-            pl->vel.add(vec(pl->vel).mul(0.5f));        // EXPERIMENTAL
+            pl->vel.add(vec(pl->vel).mul(0.3f));        // EXPERIMENTAL
             pl->vel.z = JUMPVEL; // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; } // dampen velocity change even harder, gives correct water feel
 
@@ -996,15 +996,15 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     }
 
     vec d(m);
-    d.mul(pl->maxspeed);
-    float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.f);
+    d.mul(pl->maxspeed * (pl->move && !pl->strafe ? 1.3f : 1.0f));
+    float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     float fpsfric = friction/curtime*20.0f;
 
     pl->vel.mul(fpsfric-1);
     pl->vel.add(d);
     pl->vel.div(fpsfric);
-    
-    /*
+   
+/*
     if(pl->physstate >= PHYS_SLOPE)
     {
         float mag = pl->vel.magnitude();
@@ -1019,9 +1019,9 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         {
             pl->vel.add(vec(m).mul(curtime/1.5f));
         }   
-        conoutf("%d", (int)mag);
     }
-    */
+*/    
+    conoutf("%d", (int)pl->vel.magnitude());
 }
 
 void modifygravity(physent *pl, bool water, float secs)
