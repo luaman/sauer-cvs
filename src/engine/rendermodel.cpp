@@ -232,14 +232,15 @@ void renderellipse(vec &o, float xradius, float yradius, float yaw)
 
 VAR(dynshadow, 0, 60, 100);
 
-void setshadowmatrix(float z, const vec &dir)
+void setshadowmatrix(const plane &p, const vec &dir)
 {
+    float d = p.dot(dir);
     GLfloat m[16] =
     {
-        dir.z,      0,          0,          0,
-        0,          dir.z,      0,          0,
-        -dir.x,     -dir.y,     0,          0,
-        dir.x*z,    dir.y*z,    dir.z*z,    dir.z
+        d-dir.x*p.x,       -dir.y*p.x,       -dir.z*p.x,      0, 
+         -dir.x*p.y,      d-dir.y*p.y,       -dir.z*p.y,      0,
+         -dir.x*p.z,       -dir.y*p.z,      d-dir.z*p.z,      0,
+         -dir.x*p.offset,  -dir.y*p.offset,  -dir.z*p.offset, d
     };
     glMultMatrixf(m);
 }
@@ -332,12 +333,6 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         float dist = rayfloor(center, floor);
         if(dist<0) return;
         center.z -= max(dist-0.25f, 0.0f);
-        float offset = floor.dot(center);
-        center.z = max(center.z, (offset - floor.x*(center.x-radius) - floor.y*(center.y-radius))/floor.z);
-        center.z = max(center.z, (offset - floor.x*(center.x+radius) - floor.y*(center.y-radius))/floor.z);
-        center.z = max(center.z, (offset - floor.x*(center.x+radius) - floor.y*(center.y+radius))/floor.z);
-        center.z = max(center.z, (offset - floor.x*(center.x-radius) - floor.y*(center.y+radius))/floor.z);
-
         if(center.z>=camera1->o.z) return;
 
         notextureshader->set();
@@ -357,7 +352,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 
         glColor4f(0, 0, 0, dynshadow/100.0f);
         glPushMatrix();
-        setshadowmatrix(center.z, shaddir);
+        setshadowmatrix(plane(floor, -floor.dot(center)), shaddir);
         m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
         glPopMatrix();
     
