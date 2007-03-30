@@ -788,7 +788,7 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
     return found;
 }
 
-bool move(physent *d, vec &dir)
+bool move(physent *d, vec &dir, int res = 0)
 {
     vec old(d->o);
 #if 0
@@ -822,7 +822,7 @@ bool move(physent *d, vec &dir)
         /* can't step over the obstacle, so just slide against it */
         collided = true;
     }
-    else if(inside && d->type != ENT_PLAYER)
+    else if(inside && (d->type==ENT_CAMERA || (d->type==ENT_AI && res>=10)))
     {
         d->o = old;
         if(d->type == ENT_AI) d->blocked = true;
@@ -1116,7 +1116,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d)) { if(pl->type==ENT_CAMERA) return false; if(++collisions<5) i--; } // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d, moveres)) { if(pl->type==ENT_CAMERA) return false; if(++collisions<5) i--; } // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
