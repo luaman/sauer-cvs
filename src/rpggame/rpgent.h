@@ -18,6 +18,8 @@ struct rpgent : dynent
 
     float vecyaw(vec &t) { return -(float)atan2(t.x-o.x, t.y-o.y)/RAD+180; }
 
+    static const int ATTACKSAMPLES = 32;
+
     void tryattack(vector<rpgobj *> &set, rpgobj *attacker, int lastmillis)
     {
         if(attacking && lastmillis-lastaction>250)
@@ -25,15 +27,26 @@ struct rpgent : dynent
             lastaction = lastmillis;
             loopv(set)
             {
-                vec d = o;
-                vec &target = set[i]->ent->o;
-                d.sub(target);
-                // FIXME: need to find closest point on bounding box
-                // FIXME: need to allow more close bounding boxes to be defined... OOBB
-                d.z /= 3;   // attackers with an eyeheight below or above the target should affect distance check only slightly
-                if(d.magnitude()>20) continue;
+                rpgent *e = set[i]->ent;
+                if(o.z+aboveeye<=e->o.z-e->eyeheight || o.z-eyeheight>=e->o.z+e->aboveeye) continue;
+                vec d = e->o;
+                d.sub(o);
+                d.z = 0;
+                if(d.magnitude()>e->radius+20) continue; // FIXME
+                vec p(0, 0, 0), closep;
+                float closedist = 1e10f; 
+                loopj(ATTACKSAMPLES)
+                {
+                    p.x = e->xradius * cosf(2*M_PI*j/ATTACKSAMPLES);
+                    p.y = e->yradius * sinf(2*M_PI*j/ATTACKSAMPLES);
+                    p.rotate_around_z((e->yaw+90)*RAD);
+                    float dx = p.x+e->o.x-o.x, dy = p.y+e->o.y-o.y, dist = dx*dx + dy*dy;
+                    if(dist<closedist) { closep = p; closedist = dist; }
+                }
+                //closedist = sqrtf(closedist);
+                if(closedist>20*20) continue;
 
-                float tyaw = vecyaw(target);
+                float tyaw = vecyaw(closep);
                 normalize_yaw(tyaw);
                 if(fabs(tyaw-yaw)>60) continue;
 
