@@ -91,7 +91,7 @@ struct rpgobj : g3d_callback, stats
     void placeinworld(vec &pos, float yaw)
     {
         if(!model) model = "tentus/moneybag";
-        ent = new rpgent(pos, yaw);
+        ent = new rpgent(*this, pos, yaw);
         setbbfrommodel(ent, model);
         entinmap(ent);
         s_health = eff_maxhp();
@@ -106,6 +106,7 @@ struct rpgobj : g3d_callback, stats
             if(ent->physstate>=PHYS_SLIDE)
                 sink = raycube(ent->o, vec(0, 0, -1), 2*ent->eyeheight)-ent->eyeheight;
             ent->sink = ent->sink*0.8 + sink*0.2;
+            //if(ent->blocked) particle_splash(0, 100, 100, ent->o);
             renderclient(ent, model, NULL, false, ent->lastaction, 0, ent->sink);
         }
         else

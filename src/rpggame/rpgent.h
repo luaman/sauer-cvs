@@ -3,7 +3,7 @@ struct rpgent : dynent
     int lastaction, lastpain;
     bool attacking;
     
-    enum { R_STARE, R_ROAM, };
+    enum { R_STARE, R_ROAM, R_SEEK, R_ATTACK, R_BLOCKED, R_BACKHOME };
     int npcstate;
     
     int trigger;
@@ -11,14 +11,16 @@ struct rpgent : dynent
     float sink;
 
     vec home;
+    
+    rpgobj &ro;
 
-    rpgent(const vec &_pos, float _yaw, int _maxspeed = 40) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
+    rpgent(rpgobj &_ro, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
     {
         o = _pos;
         home = _pos;
         yaw = _yaw;
         maxspeed = _maxspeed;
-        type = ENT_AI;
+        type = _type;
     }
 
     float vecyaw(vec &t) { return -(float)atan2(t.x-o.x, t.y-o.y)/RAD+180; }
@@ -71,7 +73,16 @@ struct rpgent : dynent
             set[i]->attacked(*attacker, *weapon);
         }        
     }
-    
+    /*
+    bool enemylos(vec &v)
+    {
+        vec ray(enemy->o);
+        ray.sub(o);
+        float mag = ray.magnitude();
+        float distance = raycubepos(o, ray, v, mag, RAY_CLIPMAT|RAY_POLY);
+        return distance >= mag; 
+    }
+*/
     void transition(int _state, int _moving, int n, int lastmillis) 
     {
         npcstate = _state;
@@ -81,35 +92,58 @@ struct rpgent : dynent
     
     void goroam(int lastmillis)
     {
-        if(home.dist(o)>128)
+        if(home.dist(o)>128 && npcstate!=R_BACKHOME)
         {
+            //particle_splash(1, 100, 1000, vec(o).add(vec(0, 0, 5)));
             targetyaw = vecyaw(home);            
+            transition(R_ROAM, 1, 500, lastmillis);        
         }
         else
         {
-            targetyaw += 180+rnd(180);                                       
+            targetyaw += 90+rnd(180);                                       
+            transition(R_ROAM, 1, 500, lastmillis);        
         }
-        rotspeed = 50.0f;
-        transition(R_ROAM, 1, 500, lastmillis);        
+        rotspeed = 100.0f;
     }
     
     void update(int curtime, float playerdist, rpgent &player1, int lastmillis)
     {
-        if(state==CS_DEAD) return;
+        if(state==CS_DEAD) { stopmoving(); return; };
+        //s_sprintfd(s)("@%d", npcstate); particle_text(o, s, 13, 1);
 
-        if(blocked)                                                             
+        if(blocked && npcstate!=R_BLOCKED)                                                             
         {
             blocked = false;
-            goroam(lastmillis); 
+            targetyaw += 90+rnd(180);                                       
+            rotspeed = 100.0f;
+            transition(R_BLOCKED, 1, 1000, lastmillis);        
         }
 
         switch(npcstate)
         {
+            case R_BACKHOME:
+                if(trigger<lastmillis)
+                {
+                    goroam(lastmillis);
+                }
+                break;
+            
+            case R_BLOCKED:
+                if(trigger<lastmillis)
+                {
+                    goroam(lastmillis);
+                }
+                break;
+        
             case R_STARE:
                 if(playerdist<64)
                 {
                     targetyaw = vecyaw(player1.o);
-                    rotspeed = 50.0f;
+                    rotspeed = 100.0f;
+                    if(ro.s_ai==2)
+                    {
+                        transition(R_SEEK, 1, 100, lastmillis);
+                    }
                 }
                 else if(trigger<lastmillis)
                 {
@@ -129,6 +163,13 @@ struct rpgent : dynent
                     else goroam(lastmillis);    
                 }
                 break;
+                
+            case R_SEEK:
+                if(trigger<lastmillis)
+                {
+                    //if(
+                }
+                
         }
     }
 };

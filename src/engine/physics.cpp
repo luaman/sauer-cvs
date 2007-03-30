@@ -822,7 +822,7 @@ bool move(physent *d, vec &dir, int res = 0)
         /* can't step over the obstacle, so just slide against it */
         collided = true;
     }
-    else if(inside && (d->type==ENT_CAMERA || (d->type==ENT_AI && res>=10)))
+    else if(inside && (d->type==ENT_CAMERA || (d->type==ENT_AI && res<10)))
     {
         d->o = old;
         if(d->type == ENT_AI) d->blocked = true;

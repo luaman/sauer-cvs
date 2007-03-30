@@ -113,7 +113,7 @@ struct monsterset
                 }
                 else if(trigger<cl.lastmillis && (monsterstate!=M_HOME || !rnd(5)))  // search for a way around (common)
                 {
-                    targetyaw += 180+rnd(180);                                       // patented "random walk" AI pathfinding (tm) ;)
+                    targetyaw += 90+rnd(180);                                        // patented "random walk" AI pathfinding (tm) ;)
                     transition(M_SEARCH, 1, 100, 1000);
                 }
             }
