@@ -403,17 +403,11 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, bool sinktoslope)
+void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
-    float mz = d->o.z-d->eyeheight;     
-    if(sinktoslope && d->physstate>=PHYS_SLOPE)
-    {
-        vec floor;
-        float dist = rayfloor(d->o, floor);
-        mz = d->o.z-dist;
-    }
+    float mz = d->o.z-d->eyeheight-sink;     
     int basetime = -((int)(size_t)d&0xFFF);
     bool attack = (forceattack || (d->type!=ENT_AI && lastmillis-lastaction<200));
     if(d->state==CS_DEAD)

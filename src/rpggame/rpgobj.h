@@ -100,7 +100,13 @@ struct rpgobj : g3d_callback, stats
 
     void render()
     {
-        if(s_ai) renderclient(ent, model, NULL, false, ent->lastaction, 0, true);
+        if(s_ai) 
+        {
+            float sink = 0;
+            if(ent->physstate>=PHYS_SLIDE)
+                sink = raycube(ent->o, vec(0, 0, -1), 2*ent->eyeheight)-ent->eyeheight;
+            renderclient(ent, model, NULL, false, ent->lastaction, 0, sink);
+        }
         else
         {
             vec color, dir;
