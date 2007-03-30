@@ -105,7 +105,8 @@ struct rpgobj : g3d_callback, stats
             float sink = 0;
             if(ent->physstate>=PHYS_SLIDE)
                 sink = raycube(ent->o, vec(0, 0, -1), 2*ent->eyeheight)-ent->eyeheight;
-            renderclient(ent, model, NULL, false, ent->lastaction, 0, sink);
+            ent->sink = ent->sink*0.8 + sink*0.2;
+            renderclient(ent, model, NULL, false, ent->lastaction, 0, ent->sink);
         }
         else
         {

@@ -7,10 +7,12 @@ struct rpgent : dynent
     int npcstate;
     
     int trigger;
-    
+
+    float sink;
+
     vec home;
 
-    rpgent(const vec &_pos, float _yaw, int _maxspeed = 40) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0)
+    rpgent(const vec &_pos, float _yaw, int _maxspeed = 40) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
     {
         o = _pos;
         home = _pos;
