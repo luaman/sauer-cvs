@@ -333,7 +333,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         float dist = rayfloor(center, floor);
         if(dist<0) return;
         center.z -= max(dist-0.25f, 0.0f);
-        if(center.z>=camera1->o.z) return;
+        if(vec(center).sub(camera1->o).dot(floor)>0) return;
 
         notextureshader->set();
         glDisable(GL_TEXTURE_2D);
