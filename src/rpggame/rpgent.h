@@ -1,5 +1,7 @@
 struct rpgent : dynent
 {
+    rpgobj &ro;
+
     int lastaction, lastpain;
     bool attacking;
     
@@ -12,8 +14,6 @@ struct rpgent : dynent
 
     vec home;
     
-    rpgobj &ro;
-
     rpgent(rpgobj &_ro, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
     {
         o = _pos;
