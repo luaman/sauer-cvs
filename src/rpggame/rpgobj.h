@@ -30,10 +30,7 @@ struct rpgobj : g3d_callback, stats
     };
 
     rpgaction *actions;
-    char *abovetext;
-
-    bool ai;            // whether this object does its own thinking (npcs/monsters)
-    
+    char *abovetext;    
 
     int menutime, menutab;
 
@@ -43,7 +40,7 @@ struct rpgobj : g3d_callback, stats
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
-        actions(NULL), abovetext(NULL), ai(false), menutime(0), menutab(1), os(_os) {}
+        actions(NULL), abovetext(NULL), menutime(0), menutab(1), os(_os) {}
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); DELETEP(actions); }
 
@@ -84,6 +81,12 @@ struct rpgobj : g3d_callback, stats
         st_reset();
         loopinventorytype(IF_INVENTORY) st_accumulate(*o);
     }
+    
+    rpgobj *selectedweapon()
+    {
+        loopinventorytype(IF_INVENTORY) if(o->s_selected && o->s_usetype && o->s_damage) return o;
+        return NULL;
+    }
 
     void placeinworld(vec &pos, float yaw)
     {
@@ -97,7 +100,7 @@ struct rpgobj : g3d_callback, stats
 
     void render()
     {
-        if(ai) renderclient(ent, model, NULL, false, ent->lastaction, 0);
+        if(s_ai) renderclient(ent, model, NULL, false, ent->lastaction, 0, true);
         else
         {
             vec color, dir;
@@ -109,7 +112,7 @@ struct rpgobj : g3d_callback, stats
     void update(int curtime, rpgent &player1, int lastmillis)
     {
         float dist = ent->o.dist(os.cl.player1.o);
-        if(ai) ent->update(curtime, dist, player1, lastmillis);
+        if(s_ai) ent->update(curtime, dist, player1, lastmillis);
         moveplayer(ent, 10, false, curtime);
         if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
         else if(dist>96) menutime = 0;
@@ -148,12 +151,11 @@ struct rpgobj : g3d_callback, stats
         return NULL;
     }
     
-    void attacked(rpgobj &attacker)
+    void attacked(rpgobj &attacker, rpgobj &weapon)
     {
         if(attacker.ent->o.dist(ent->o)<32 && ent->state==CS_ALIVE)
         {
-            int weapondamage = 10;
-            int damage = weapondamage*attacker.eff_melee()/100;
+            int damage = weapon.s_damage*attacker.eff_melee()/100;
             particle_splash(3, damage*5, 1000, ent->o);
             s_sprintfd(ds)("@%d", damage);
             particle_text(ent->o, ds, 8);
@@ -187,7 +189,7 @@ struct rpgobj : g3d_callback, stats
         
         guiaction(g, actions);
         
-        if(!ai)
+        if(!s_ai)
         {
             if(g.button("take", 0xFFFFFF, "hand")&G3D_UP)
             {
@@ -263,7 +265,12 @@ struct rpgobj : g3d_callback, stats
                 }
                 else    // player wants to use this item
                 {
-                    conoutf("\f2using: %s", o->name);
+                    if(o->s_usetype)
+                    {
+                        conoutf("\f2using: %s", o->name);
+                        { loopinventory() o->s_selected = 0; }
+                        o->s_selected = 1;                    
+                    }
                 }
             }
             else if(ret&G3D_ROLLOVER)

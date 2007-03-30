@@ -28,6 +28,7 @@
 
 
 #define RPGATTRNAMES \
+    N(ai) \
     N(health) \
     N(mana) \
     N(gold) \
@@ -37,6 +38,7 @@
     N(damage) \
     N(maxrange) \
     N(maxangle) \
+    N(selected) \
     N(attra) \
     N(attrb) \
     N(attrc) \

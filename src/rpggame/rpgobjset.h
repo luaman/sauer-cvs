@@ -22,7 +22,6 @@ struct rpgobjset
         CCOMMAND(rpgobjset, r_spawn,   "s",   { self->spawn(self->stringpool(args[0])); });    
         CCOMMAND(rpgobjset, r_contain, "s",   { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0], atoi(args[0])); });    
         CCOMMAND(rpgobjset, r_pop,     "",    { self->popobj(); });    
-        CCOMMAND(rpgobjset, r_ai,      "",    { self->stack[0]->ai = true; });    
         CCOMMAND(rpgobjset, r_say,     "s",   { self->stack[0]->abovetext = self->stringpool(args[0]); });    
         CCOMMAND(rpgobjset, r_action,  "ss",  { self->stack[0]->addaction(self->stringpool(args[0]), self->stringpool(args[1])); });    
         CCOMMAND(rpgobjset, r_take,    "sss", { self->takefromplayer(args[0], args[1], args[2]); });    

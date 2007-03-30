@@ -25,46 +25,49 @@ struct rpgent : dynent
 
     void tryattack(vector<rpgobj *> &set, rpgobj *attacker, int lastmillis)
     {
-        if(attacking && lastmillis-lastaction>250)
+        if(!attacking || lastmillis-lastaction<250) return;
+        
+        lastaction = lastmillis;
+        
+        rpgobj *weapon = attacker->selectedweapon();
+        if(!weapon) return;
+        
+        loopv(set)
         {
-            lastaction = lastmillis;
-            loopv(set)
+            if(!set[i]->s_ai) continue;
+            
+            rpgent *e = set[i]->ent;
+            if(e->state==CS_DEAD) continue;
+            
+            vec d = e->o;
+            d.sub(o);
+            d.z = 0;
+            if(d.magnitude()>e->radius+weapon->s_maxrange) continue; 
+            
+            if(o.z+aboveeye<=e->o.z-e->eyeheight || o.z-eyeheight>=e->o.z+e->aboveeye) continue;
+            
+            vec p(0, 0, 0), closep;
+            float closedist = 1e10f; 
+            loopj(ATTACKSAMPLES)
             {
-                if(!set[i]->ai) continue;
-                
-                rpgent *e = set[i]->ent;
-                if(e->state==CS_DEAD) continue;
-                
-                vec d = e->o;
-                d.sub(o);
-                d.z = 0;
-                if(d.magnitude()>e->radius+20) continue; 
-                
-                if(o.z+aboveeye<=e->o.z-e->eyeheight || o.z-eyeheight>=e->o.z+e->aboveeye) continue;
-                
-                vec p(0, 0, 0), closep;
-                float closedist = 1e10f; 
-                loopj(ATTACKSAMPLES)
-                {
-                    p.x = e->xradius * cosf(2*M_PI*j/ATTACKSAMPLES);
-                    p.y = e->yradius * sinf(2*M_PI*j/ATTACKSAMPLES);
-                    p.rotate_around_z((e->yaw+90)*RAD);
+                p.x = e->xradius * cosf(2*M_PI*j/ATTACKSAMPLES);
+                p.y = e->yradius * sinf(2*M_PI*j/ATTACKSAMPLES);
+                p.rotate_around_z((e->yaw+90)*RAD);
 
-                    p.x += e->o.x;
-                    p.y += e->o.y;
-                    float tyaw = vecyaw(p);
-                    normalize_yaw(tyaw);
-                    if(fabs(tyaw-yaw)>60) continue;
+                p.x += e->o.x;
+                p.y += e->o.y;
+                float tyaw = vecyaw(p);
+                normalize_yaw(tyaw);
+                if(fabs(tyaw-yaw)>weapon->s_maxangle) continue;
 
-                    float dx = p.x-o.x, dy = p.y-o.y, dist = dx*dx + dy*dy;
-                    if(dist<closedist) { closedist = dist; closep = p; }
-                }
+                float dx = p.x-o.x, dy = p.y-o.y, dist = dx*dx + dy*dy;
+                if(dist<closedist) { closedist = dist; closep = p; }
+            }
 
-                if(closedist>20*20) continue;
+            if(closedist>weapon->s_maxrange*weapon->s_maxrange) continue;
 
-                set[i]->attacked(*attacker);
-            }        
-        }
+            set[i]->attacked(*attacker, *weapon);
+        }        
     }
     
     void transition(int _state, int _moving, int n, int lastmillis) 
