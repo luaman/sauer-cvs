@@ -1,6 +1,6 @@
 struct rpgobjset;
 
-struct rpgobj : g3d_callback
+struct rpgobj : g3d_callback, stats
 {
     rpgobj *parent;     // container object, if not top level
     rpgobj *inventory;  // contained objects, if any
@@ -33,14 +33,9 @@ struct rpgobj : g3d_callback
     char *abovetext;
 
     bool ai;            // whether this object does its own thinking (npcs/monsters)
-    int health;
-    int mana;
-    int gold;           // how much money is owned by the object (mostly for npcs/player only)
-    int worth;          // base value when this object is sold by an npc (not necessarily when sold TO an npc)
+    
 
     int menutime, menutab;
-
-    stats st;
 
     rpgobjset &os;
     
@@ -48,7 +43,7 @@ struct rpgobj : g3d_callback
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
-        actions(NULL), abovetext(NULL), ai(false), health(100), mana(100), gold(0), worth(1), menutime(0), menutab(1), os(_os) {}
+        actions(NULL), abovetext(NULL), ai(false), menutime(0), menutab(1), os(_os) {}
 
     ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); DELETEP(actions); }
 
@@ -72,7 +67,7 @@ struct rpgobj : g3d_callback
         inventory = o;
         o->itemflags = itemflags;
         
-        recalcstats();
+        if(itemflags&IF_INVENTORY) recalcstats();
     }
 
     void remove(rpgobj *o)
@@ -81,14 +76,13 @@ struct rpgobj : g3d_callback
             if(*l==o) *l = o->sibling;
             else l = &(*l)->sibling;
             
-        recalcstats();
+        if(o->itemflags&IF_INVENTORY) recalcstats();
     }
 
     void recalcstats()
     {
-        if(!st.accumulate_stats) return;
-        st.reset();
-        loopinventorytype(IF_INVENTORY) st.accumulate(o->st);
+        st_reset();
+        loopinventorytype(IF_INVENTORY) st_accumulate(*o);
     }
 
     void placeinworld(vec &pos, float yaw)
@@ -97,6 +91,8 @@ struct rpgobj : g3d_callback
         ent = new rpgent(pos, yaw);
         setbbfrommodel(ent, model);
         entinmap(ent);
+        s_health = eff_maxhp();
+        s_mana = eff_maxmana();
     }
 
     void render()
@@ -113,7 +109,8 @@ struct rpgobj : g3d_callback
     void update(int curtime, rpgent &player1, int lastmillis)
     {
         float dist = ent->o.dist(os.cl.player1.o);
-        ent->update(curtime, dist, player1, lastmillis);
+        if(ai) ent->update(curtime, dist, player1, lastmillis);
+        moveplayer(ent, 10, false, curtime);
         if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
         else if(dist>96) menutime = 0;
     }
@@ -156,11 +153,11 @@ struct rpgobj : g3d_callback
         if(attacker.ent->o.dist(ent->o)<32 && ent->state==CS_ALIVE)
         {
             int weapondamage = 10;
-            int damage = weapondamage*attacker.st.eff_melee()/100;
+            int damage = weapondamage*attacker.eff_melee()/100;
             particle_splash(3, damage*5, 1000, ent->o);
             s_sprintfd(ds)("@%d", damage);
             particle_text(ent->o, ds, 8);
-            if((health -= damage)<=0)
+            if((s_health -= damage)<=0)
             {
                 ent->state = CS_DEAD;
                 ent->lastaction = os.cl.lastmillis;
@@ -194,7 +191,7 @@ struct rpgobj : g3d_callback
         {
             if(g.button("take", 0xFFFFFF, "hand")&G3D_UP)
             {
-                conoutf("\f2you take a %s (worth %d gold)", name, worth);
+                conoutf("\f2you take a %s (worth %d gold)", name, s_worth);
                 os.take(this, os.playerobj);
             }
         }
@@ -206,14 +203,14 @@ struct rpgobj : g3d_callback
             {
                 if(!numtrade++) g.tab("buy", 0xDDDDDD);
                 int ret = g.button(o->name, 0xFFFFFF, "coins");
-                int price = o->worth;
+                int price = o->s_worth;
                 if(ret&G3D_UP)
                 {
-                    if(os.playerobj->gold>=price)
+                    if(os.playerobj->s_gold>=price)
                     {
                         conoutf("\f2you bought %s for %d gold", o->name, price);
-                        os.playerobj->gold -= price;
-                        gold += price;
+                        os.playerobj->s_gold -= price;
+                        s_gold += price;
                         o->decontain();
                         os.playerobj->add(o, IF_INVENTORY);
                     }
@@ -224,7 +221,7 @@ struct rpgobj : g3d_callback
                 }
                 else if(ret&G3D_ROLLOVER)
                 {
-                    s_sprintf(info)("buy for %d gold (you have %d)", price, os.playerobj->gold);
+                    s_sprintf(info)("buy for %d gold (you have %d)", price, os.playerobj->s_gold);
                 }
             }
             if(numtrade)
@@ -234,7 +231,7 @@ struct rpgobj : g3d_callback
                 os.playerobj->invgui(g, this);
             }
             g.tab("stats", 0xDDDDDD);
-            st.gui(g, os.playerobj->st);
+            st_gui(g, *os.playerobj);
         }
         
         g.end();
@@ -246,20 +243,20 @@ struct rpgobj : g3d_callback
         loopinventory()
         {
             int ret = g.button(o->name, 0xFFFFFF, "coins");
-            int price = o->worth/2;
+            int price = o->s_worth/2;
             if(ret&G3D_UP)
             {
                 if(seller)
                 {
-                    if(price>seller->gold)
+                    if(price>seller->s_gold)
                     {
                         conoutf("\f2%s cannot afford to buy %s from you!", seller->name, o->name);                    
                     }
                     else
                     {
                         conoutf("\f2you sold %s for %d gold", o->name, price);
-                        gold += price;
-                        seller->gold -= price;
+                        s_gold += price;
+                        seller->s_gold -= price;
                         o->decontain();
                         seller->add(o, IF_TRADE);                    
                     }
@@ -271,8 +268,8 @@ struct rpgobj : g3d_callback
             }
             else if(ret&G3D_ROLLOVER)
             {
-                if(seller) s_sprintf(info)("sell for %d gold (you have %d)",      price, gold);
-                else       s_sprintf(info)("item is worth %d gold (you have %d)", price, gold);
+                if(seller) s_sprintf(info)("sell for %d gold (you have %d)",      price, s_gold);
+                else       s_sprintf(info)("item is worth %d gold (you have %d)", price, s_gold);
             }
         }
         g.text(info, 0xAAAAAA);   

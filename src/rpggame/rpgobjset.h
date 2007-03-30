@@ -9,9 +9,12 @@ struct rpgobjset
     
     rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL), playerobj(NULL)
     {
-        #define N(n) CCOMMAND(rpgobjset, r_##n,     "i",    { self->stack[0]->st.s_##n = atoi(args[0]); self->stack[0]->st.accumulate_stats = false; }); \
-                     CCOMMAND(rpgobjset, r_get_##n, "",     { intret(self->stack[0]->st.s_##n); }); \
-                     CCOMMAND(rpgobjset, r_def_##n, "ii",   { stats::def_##n(atoi(args[0]), atoi(args[1])); });     
+        #define N(n) CCOMMAND(rpgobjset, r_##n,     "i",    { self->stack[0]->s_##n = atoi(args[0]); }); \
+                     CCOMMAND(rpgobjset, r_get_##n, "",     { intret(self->stack[0]->s_##n); }); 
+                     
+        RPGNAMES 
+        #undef N
+        #define N(n) CCOMMAND(rpgobjset, r_def_##n, "ii",   { stats::def_##n(atoi(args[0]), atoi(args[1])); });     
         RPGSTATNAMES 
         #undef N
         
@@ -24,8 +27,6 @@ struct rpgobjset
         CCOMMAND(rpgobjset, r_action,  "ss",  { self->stack[0]->addaction(self->stringpool(args[0]), self->stringpool(args[1])); });    
         CCOMMAND(rpgobjset, r_take,    "sss", { self->takefromplayer(args[0], args[1], args[2]); });    
         CCOMMAND(rpgobjset, r_give,    "s",   { self->givetoplayer(args[0]); });    
-        CCOMMAND(rpgobjset, r_worth,   "i",   { self->stack[0]->worth = atoi(args[0]); });    
-        CCOMMAND(rpgobjset, r_gold,    "i",   { self->stack[0]->gold  = atoi(args[0]); });    
         
         clearworld();
     }

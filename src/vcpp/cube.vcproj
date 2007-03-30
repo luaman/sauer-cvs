@@ -1431,10 +1431,6 @@
 						RelativePath="..\..\README.html"
 						>
 					</File>
-					<File
-						RelativePath="..\..\docs\rpg.html"
-						>
-					</File>
 				</Filter>
 				<Filter
 					Name="cfg"
@@ -1624,6 +1620,10 @@
 						PrecompiledHeaderThrough="pch.h"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\docs\rpg.html"
+				>
 			</File>
 			<File
 				RelativePath="..\rpggame\rpgent.h"

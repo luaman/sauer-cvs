@@ -5,13 +5,13 @@
 #include "igame.h"
 #include "stubs.h"
 
-#include "stats.h"
 
 struct rpgclient : igameclient, g3d_callback
 {
     struct rpgent;
 
     #include "entities.h"
+    #include "stats.h"
     #include "rpgobj.h"
     #include "rpgobjset.h"
     #include "rpgent.h"
@@ -143,6 +143,10 @@ struct rpgclient : igameclient, g3d_callback
 
     char *gameident() { return "rpg"; }
 };
+
+#define N(n) int rpgclient::stats::pointscale_##n, rpgclient::stats::percentscale_##n; 
+RPGSTATNAMES 
+#undef N
 
 REGISTERGAME(rpggame, "rpg", new rpgclient(), new rpgdummyserver());
 

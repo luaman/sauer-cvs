@@ -40,15 +40,6 @@
 <a href="#r_contain"><tt>r_contain</tt></a>
 </li>
 <li>
-<a href="#r_gold"><tt>r_gold</tt></a>
-</li>
-<li>
-<a href="#r_worth"><tt>r_worth</tt></a>
-</li>
-<li>
-<a href="#r_stat"><tt>r_stat</tt></a>
-</li>
-<li>
 <a href="#r_model"><tt>r_model</tt></a>
 </li>
 <li>
@@ -129,16 +120,6 @@ Takes the object on the top of the stack, and makes it part of the inventory of 
 T is the type of inventory object, see the convenient scripts r_inventory, r_loot, r_fortrade instead.
 </p>
 
-<pre id="r_gold">r_gold G</pre>
-<p>
-G gold is owned by this object for use in trading. Only makes sense for player/NPCs
-</p>
-
-<pre id="r_worth">r_worth V</pre>
-<p>
-This object has base value V when used in trading
-</p>
-
 <pre id="r_model">r_model M</pre>
 <p>
 Specify model M to represent this object visually when placed in the world
@@ -174,7 +155,7 @@ give the player an item with name N
 
 
 
-<h2 id="H2_1">RPG stats</h2>
+<h2 id="H2_1">RPG stats &amp; attributes</h2>
 
 The following is a list of all stats tracked by each object. A stat is defined as a property of an object that determines its effectiveness when performing a certain action,
 i.e. the "melee" stat affects your melee combat effectiveness. Stats are things that you can build up thruout the game, hence "health" is not a stat, but it is dependent on a stat, maxhp.
@@ -240,9 +221,9 @@ i.e. the "melee" stat affects your melee combat effectiveness. Stats are things 
                 maximum health you will regenerate to</td>
         </tr>
         <tr>
-            <td style="width: 100px">
+            <td style="width: 100px; height: 17px;">
                 maxmana</td>
-            <td style="width: 802px">
+            <td style="width: 802px; height: 17px;">
                 maximum mana you can store</td>
         </tr>
         <tr>
@@ -271,23 +252,12 @@ i.e. the "melee" stat affects your melee combat effectiveness. Stats are things 
         </tr>
         <tr>
             <td style="width: 100px">
-                stata</td>
-            <td style="width: 802px">
-                a/b/c are generic stats, i.e. their meaning is map-specific. they can be set and
-                accumulated like any other stat, then scripts can use the results in any way they
-                wish.</td>
-        </tr>
-        <tr>
-            <td style="width: 100px">
-                statb</td>
-            <td style="width: 802px">
-            </td>
-        </tr>
-        <tr>
-            <td style="width: 100px">
+                stata, statb,
                 statc</td>
             <td style="width: 802px">
-            </td>
+                generic stats, i.e. their meaning is map-specific. they can be set and
+                accumulated like any other stat, then scripts can use the results in any way they
+                wish.</td>
         </tr>
     </table>
     <br />
@@ -348,6 +318,91 @@ i.e. the "melee" stat affects your melee combat effectiveness. Stats are things 
     items you get are useless, here you can put everything to <em>some</em> use, even
     if sometimes minimal.<br />
     <br />
+    The following are the attributes of any rpg object. Attrs are simpler in the sense
+    that they are just variables kept track of per object, and can be set/changed by
+    either the rpg system or the script code at will. They are all default 0 for a newly
+    initialized object.<br />
+    <br />
+    <table border="1" cellpadding="0" cellspacing="3">
+        <tr>
+            <td style="width: 100px">
+                health</td>
+            <td style="width: 800px">
+                set to maxhp when an AI object spawns in the world, and regens to maxhp</td>
+        </tr>
+        <tr>
+            <td style="width: 100px; height: 16px">
+                mana</td>
+            <td style="width: 800px; height: 16px">
+                set to maxmana upon spawn, and regens to focus</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                gold</td>
+            <td style="width: 800px">
+                how much money is owned by the object (mostly for npcs/player only)</td>
+        </tr>
+        <tr>
+            <td style="width: 100px; height: 17px;">
+                worth</td>
+            <td style="width: 800px; height: 17px;">
+                base value when this object is sold by an npc (not necessarily when sold TO an npc)
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100px; height: 17px">
+                useamount</td>
+            <td style="width: 800px; height: 17px">
+                amount of uses this object has. items such as melee weapons have a certain amount
+                of uses before they break, and potion bottles may have a certain content.</td>
+        </tr>
+        <tr>
+            <td style="width: 100px; height: 30px;">
+                usetype</td>
+            <td style="width: 800px; height: 30px;">
+                if this item is used, what happens:<br />
+                0: nothing, 1: melee weapon, 2: ranged weapon, 3: magic projectile</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                damage</td>
+            <td style="width: 800px">
+                if not 0, this object can be used a weapon</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                maxrange</td>
+            <td style="width: 800px">
+                max range within which objects can be targeted when this object is used</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+                maxangle</td>
+            <td style="width: 800px">
+                max angle from "forward" that objects can be targeted</td>
+        </tr>
+        <tr style="font-family: verdana,'trebuchet ms','zurich bt',tahoma,arial,helvetica,sans-serif">
+            <td style="width: 100px">
+                attra, attrb, attrc</td>
+            <td style="width: 800px">
+                generic attributes, can be set by the script code to implement gameplay features
+                not foreseen by the system</td>
+        </tr>
+        <tr>
+            <td style="width: 100px">
+            </td>
+            <td style="width: 800px">
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100px; height: 17px;">
+            </td>
+            <td style="width: 800px; height: 17px;">
+            </td>
+        </tr>
+    </table>
+    <br />
+    These can be used similarly using r_X and r_get_X.<br />
 
 
 

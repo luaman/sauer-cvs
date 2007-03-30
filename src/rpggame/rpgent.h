@@ -7,10 +7,13 @@ struct rpgent : dynent
     int npcstate;
     
     int trigger;
+    
+    vec home;
 
-    rpgent(const vec &_pos, float _yaw, int _maxspeed = 20) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0)
+    rpgent(const vec &_pos, float _yaw, int _maxspeed = 40) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0)
     {
         o = _pos;
+        home = _pos;
         yaw = _yaw;
         maxspeed = _maxspeed;
         type = ENT_AI;
@@ -27,12 +30,18 @@ struct rpgent : dynent
             lastaction = lastmillis;
             loopv(set)
             {
+                if(!set[i]->ai) continue;
+                
                 rpgent *e = set[i]->ent;
-                if(o.z+aboveeye<=e->o.z-e->eyeheight || o.z-eyeheight>=e->o.z+e->aboveeye) continue;
+                if(e->state==CS_DEAD) continue;
+                
                 vec d = e->o;
                 d.sub(o);
                 d.z = 0;
-                if(d.magnitude()>e->radius+20) continue; // FIXME
+                if(d.magnitude()>e->radius+20) continue; 
+                
+                if(o.z+aboveeye<=e->o.z-e->eyeheight || o.z-eyeheight>=e->o.z+e->aboveeye) continue;
+                
                 vec p(0, 0, 0), closep;
                 float closedist = 1e10f; 
                 loopj(ATTACKSAMPLES)
@@ -40,15 +49,18 @@ struct rpgent : dynent
                     p.x = e->xradius * cosf(2*M_PI*j/ATTACKSAMPLES);
                     p.y = e->yradius * sinf(2*M_PI*j/ATTACKSAMPLES);
                     p.rotate_around_z((e->yaw+90)*RAD);
-                    float dx = p.x+e->o.x-o.x, dy = p.y+e->o.y-o.y, dist = dx*dx + dy*dy;
-                    if(dist<closedist) { closep = p; closedist = dist; }
-                }
-                //closedist = sqrtf(closedist);
-                if(closedist>20*20) continue;
 
-                float tyaw = vecyaw(closep);
-                normalize_yaw(tyaw);
-                if(fabs(tyaw-yaw)>60) continue;
+                    p.x += e->o.x;
+                    p.y += e->o.y;
+                    float tyaw = vecyaw(p);
+                    normalize_yaw(tyaw);
+                    if(fabs(tyaw-yaw)>60) continue;
+
+                    float dx = p.x-o.x, dy = p.y-o.y, dist = dx*dx + dy*dy;
+                    if(dist<closedist) { closedist = dist; closep = p; }
+                }
+
+                if(closedist>20*20) continue;
 
                 set[i]->attacked(*attacker);
             }        
@@ -64,14 +76,22 @@ struct rpgent : dynent
     
     void goroam(int lastmillis)
     {
-        targetyaw += 180+rnd(180);                                       
-        transition(R_ROAM, 1, 500, lastmillis);
+        if(home.dist(o)>128)
+        {
+            targetyaw = vecyaw(home);            
+        }
+        else
+        {
+            targetyaw += 180+rnd(180);                                       
+        }
+        rotspeed = 50.0f;
+        transition(R_ROAM, 1, 500, lastmillis);        
     }
     
     void update(int curtime, float playerdist, rpgent &player1, int lastmillis)
     {
         if(state==CS_DEAD) return;
-    
+
         if(blocked)                                                             
         {
             blocked = false;
@@ -86,7 +106,7 @@ struct rpgent : dynent
                     targetyaw = vecyaw(player1.o);
                     rotspeed = 50.0f;
                 }
-                if(trigger<lastmillis)
+                else if(trigger<lastmillis)
                 {
                     if(rnd(10)) transition(R_STARE, 0, 500, lastmillis);
                     else goroam(lastmillis);    
@@ -94,14 +114,16 @@ struct rpgent : dynent
                 break;
             
             case R_ROAM:
-                if(trigger<lastmillis)
+                if(playerdist<64)
+                {
+                    transition(R_STARE, 0, 500, lastmillis);
+                }
+                else if(trigger<lastmillis)
                 {
                     if(!rnd(10)) transition(R_STARE, 0, 500, lastmillis);
                     else goroam(lastmillis);    
                 }
                 break;
         }
-            
-        moveplayer(this, 10, true, curtime);
     }
 };
