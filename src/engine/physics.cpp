@@ -296,7 +296,8 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
 /////////////////////////  entity collision  ///////////////////////////////////////////////
 
 // info about collisions
-bool inside, hitplayer; // whether an internal collision happened, whether the collision hit a player
+bool inside; // whether an internal collision happened
+physent *hitplayer; // whether the collection hit a player
 vec wall; // just the normal vectors.
 float walldistance;
 const float STAIRHEIGHT = 4.1f;
@@ -438,7 +439,7 @@ bool overlapsdynent(const vec &o, float radius)
 
 bool plcollide(physent *d, const vec &dir)    // collide with player or monster
 {
-    if(d->state != CS_ALIVE) return true;
+    if(d->type==ENT_CAMERA || d->state!=CS_ALIVE) return true;
     for(int x = int(max(d->o.x-d->radius, 0))>>dynentsize, ex = int(min(d->o.x+d->radius, hdr.worldsize-1))>>dynentsize; x <= ex; x++)
     for(int y = int(max(d->o.y-d->radius, 0))>>dynentsize, ey = int(min(d->o.y+d->radius, hdr.worldsize-1))>>dynentsize; y <= ey; y++)
     {
@@ -446,18 +447,10 @@ bool plcollide(physent *d, const vec &dir)    // collide with player or monster
         loopv(dynents)
         {
             physent *o = dynents[i];
-            if(o==d || (o==player && d->type==ENT_CAMERA) || d->o.reject(o->o, d->radius+o->radius)) continue;
-            if(d->type==ENT_PLAYER || d->type==ENT_CAMERA)
+            if(o==d || d->o.reject(o->o, d->radius+o->radius)) continue;
+            if(!ellipsecollide((dynent *)d, dir, (dynent *)o))
             {
-                if(!ellipsecollide((dynent *)d, dir, (dynent *)o))
-                {
-                    hitplayer = true;
-                    return false;
-                }
-            }
-            else if(!rectcollide(d, dir, o->o, o->radius, o->radius, o->aboveeye, o->eyeheight))
-            {
-                hitplayer = true;
+                hitplayer = o;
                 return false;
             }
         }
@@ -587,7 +580,8 @@ bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const
 // all collision happens here
 bool collide(physent *d, const vec &dir, float cutoff)
 {
-    inside = hitplayer = false;
+    inside = false;
+    hitplayer = NULL;
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
@@ -897,7 +891,7 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         if(d->o == old) return true;
         d->physstate = PHYS_BOUNCE;
     }
-    return hitplayer;
+    return hitplayer != 0;
 }
 
 void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
@@ -1017,7 +1011,30 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     }
 
     vec m(0.0f, 0.0f, 0.0f);
-    if(pl->move || pl->strafe)
+    if(pl->type==ENT_AI)
+    {
+        dynent *d = (dynent *)pl;
+        if(d->rotspeed && d->yaw!=d->targetyaw)
+        {
+            float oldyaw = d->yaw, diff = d->rotspeed*curtime/1000.0f, maxdiff = fabs(d->targetyaw-d->yaw);
+            if(diff >= maxdiff) 
+            {
+                d->yaw = d->targetyaw;
+                d->rotspeed = 0;
+            }
+            else d->yaw += (d->targetyaw>d->yaw ? 1 : -1) * min(diff, maxdiff);
+            d->normalize_yaw(d->targetyaw);
+            if(!plcollide(d, vec(0, 0, 0)))
+            {
+                d->yaw = oldyaw;
+                m.x = d->o.x - hitplayer->o.x;
+                m.y = d->o.y - hitplayer->o.y;
+                if(!m.iszero()) m.normalize();
+            }
+        }
+    }
+
+    if(m.iszero() && (pl->move || pl->strafe))
     {
         vecfromyawpitch(pl->yaw, floating || water || pl->type==ENT_CAMERA ? pl->pitch : 0, pl->move, pl->strafe, m);
 

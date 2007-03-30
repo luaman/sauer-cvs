@@ -6,14 +6,14 @@ struct rpgent : dynent
     enum { R_STARE, R_ROAM, };
     int npcstate;
     
-    float targetyaw;
     int trigger;
 
-    rpgent(const vec &_pos, float _yaw, int _maxspeed = 20) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), targetyaw(_yaw), trigger(0)
+    rpgent(const vec &_pos, float _yaw, int _maxspeed = 20) : lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0)
     {
         o = _pos;
         yaw = _yaw;
         maxspeed = _maxspeed;
+        type = ENT_AI;
     }
 
     float vecyaw(vec &t) { return -(float)atan2(t.x-o.x, t.y-o.y)/RAD+180; }
@@ -59,18 +59,6 @@ struct rpgent : dynent
     {
         if(state==CS_DEAD) return;
     
-        normalize_yaw(targetyaw);
-        if(targetyaw>yaw)            
-        {
-            yaw += curtime*0.05f;
-            if(targetyaw<yaw) yaw = targetyaw;
-        }
-        else
-        {
-            yaw -= curtime*0.05f;
-            if(targetyaw>yaw) yaw = targetyaw;
-        }
-
         if(blocked)                                                             
         {
             blocked = false;
@@ -83,6 +71,7 @@ struct rpgent : dynent
                 if(playerdist<64)
                 {
                     targetyaw = vecyaw(player1.o);
+                    rotspeed = 50.0f;
                 }
                 if(trigger<lastmillis)
                 {
@@ -99,7 +88,7 @@ struct rpgent : dynent
                 }
                 break;
         }
-        
-        if(move || moving) moveplayer(this, 10, true, curtime);
+            
+        moveplayer(this, 10, true, curtime);
     }
 };

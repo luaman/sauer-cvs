@@ -95,6 +95,7 @@ struct physent                                  // base entity type, can be affe
 struct dynent : physent                         // animated characters, or characters that can receive input
 {
     bool k_left, k_right, k_up, k_down;         // see input code
+    float targetyaw, rotspeed;                  // AI rotation
 
     animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
     int lastanimswitchtime[2];
@@ -106,6 +107,7 @@ struct dynent : physent                         // animated characters, or chara
     {
         k_left = k_right = k_up = k_down = jumpnext = false;
         move = strafe = 0;
+        targetyaw = rotspeed = 0;
     }
         
     void reset()
