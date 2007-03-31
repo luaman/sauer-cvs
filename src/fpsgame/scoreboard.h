@@ -67,16 +67,18 @@ struct scoreboard : g3d_callback
         loopv(sbplayers) 
         {
             fpsent *o = sbplayers[i];
-            const char *master = cl.cc.currentmaster>= 0 && (cl.cc.currentmaster==o->clientnum) ? "\f0" : "";
+            const char *status = "";
+            if(cl.cc.currentmaster>=0 && cl.cc.currentmaster==o->clientnum) status = "\f0";
+            if(o->state==CS_DEAD) status = "\f3";
             string name;
             if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, o->clientnum);
             else s_strcpy(name, o->name);
             string line;
-            if(o->state == CS_SPECTATOR) s_sprintf(line)("SPECTATOR\t\t\t%s%s", master, name);
+            if(o->state==CS_SPECTATOR) s_sprintf(line)("SPECTATOR\t\t\t%s%s", status, name);
             else
             {
                 s_sprintfd(lag)("%d", o->plag);
-                s_sprintf(line)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, master, name);
+                s_sprintf(line)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, status, name);
             }
             g.text(line, 0xFFFFDD, "ogro");
         }

@@ -136,7 +136,7 @@ struct fpsclient : igameclient
         return NULL;
     }
 
-    void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
+    void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, char *&lastname, bool &oneteam)
     {
         if(d->state==CS_SPECTATOR) return;
         if(d->state!=CS_DEAD)
@@ -144,6 +144,7 @@ struct fpsclient : igameclient
             alive++;
             if(lastteam && strcmp(lastteam, d->team)) oneteam = false;
             lastteam = d->team;
+            lastname = d->name;
         }
         else
         {
@@ -167,14 +168,18 @@ struct fpsclient : igameclient
         {
             arenadetectwait = 0;
             int alive = 0, dead = 0;
-            char *lastteam = NULL;
+            char *lastteam = NULL, *lastname = NULL;
             bool oneteam = true;
-            loopv(players) if(players[i]) arenacount(players[i], alive, dead, lastteam, oneteam);
-            arenacount(player1, alive, dead, lastteam, oneteam);
+            loopv(players) if(players[i]) arenacount(players[i], alive, dead, lastteam, lastname, oneteam);
+            arenacount(player1, alive, dead, lastteam, lastname, oneteam);
             if(dead>0 && (alive<=1 || (m_teammode && oneteam)))
             {
                 conoutf("\f2arena round is over! next round in 5 seconds...");
-                if(alive) conoutf("\f2team %s is last man standing", lastteam);
+                if(alive) 
+                {
+                    if(m_teammode) conoutf("\f2%s is the last team standing", lastteam);
+                    else conoutf("\f2%s is the last man standing", lastname);
+                }
                 else conoutf("\f2everyone died!");
                 arenarespawnwait = lastmillis+5000;
                 arenadetectwait  = lastmillis+10000;
