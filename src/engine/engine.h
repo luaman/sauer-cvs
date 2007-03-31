@@ -230,6 +230,7 @@ extern void writeservercfg();
 extern void localdisconnect();
 extern void localservertoclient(int chan, uchar *buf, int len);
 extern void connects(char *servername);
+extern void abortconnect();
 extern void clientkeepalive();
 
 // command

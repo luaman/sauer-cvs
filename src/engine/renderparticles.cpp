@@ -106,40 +106,40 @@ enum
     PT_RND4 = 1<<10
 };
 
+static struct parttype { int type; uchar r, g, b; int gr, tex; float sz, rsz; int rv; } parttypes[MAXPARTYPES] =
+{
+    { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
+    { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
+    { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
+    { PT_TRAIL|PT_MOD|PT_RND4,   0, 255, 255, 2,  8, 0.74f, 0.8f,   50 }, // red:    blood spats (note: rgb is inverted)
+    { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
+    { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
+    { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
+    { 0,          255, 255, 255, 20, 4,  4.8f, 0.0f,   0 }, // green:  big fireball3
+    { PT_TEXTUP,  255, 75, 25,   -8, -1, 4.0f, 0.0f,   0 }, // 8 TEXT RED
+    { PT_TEXTUP,  50, 255, 100,  -8, -1, 4.0f, 0.0f,   0 }, // 9 TEXT GREEN
+    { PT_FLARE,   255, 200, 100, 0,  5, 0.28f, 0.0f,   0 }, // 10 yellow flare
+    { PT_TEXT,    30, 200, 80,   0, -1,  2.0f, 0.0f,   0 },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+    { 0,          255, 255, 255, 20, 4,  2.0f, 0.0f,   0 },  // 12 green small fireball3
+    { PT_TEXT,    255, 75, 25,   0, -1,  2.0f, 0.0f,   0 },  // 13 TEXT RED, SMALL, NON-MOVING
+    { PT_TEXT,    180, 180, 180, 0, -1,  2.0f, 0.0f,   0 },  // 14 TEXT GREY, SMALL, NON-MOVING
+    { PT_TEXTUP,  255, 200, 100, -8, -1, 4.0f, 0.0f,   0 }, // 15 TEXT YELLOW
+    { PT_TEXT,    100, 150, 255, 0,  -1, 2.0f, 0.0f,   0 },  // 16 TEXT BLUE, SMALL, NON-MOVING
+    { PT_METER,   255, 25, 25,   0,  -1, 2.0f, 0.0f,   0 },  // 17 METER RED, SMALL, NON-MOVING
+    { PT_METER,   50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 18 METER BLUE, SMALL, NON-MOVING
+    { PT_METERVS, 255, 25, 25,   0,  -1, 2.0f, 0.0f,   0 },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
+    { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
+    { 0,          137, 118, 97, 20,   2, 0.6f, 0.0f,   0 },  // greyish-brown:   small  slowly sinking smoke trail
+    {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f, 0.0f,   0 },  // red explosion fireball
+    {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange explosion fireball 
+    { PT_ENT,     137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke
+    { 0,          118, 97, 137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke          
+    { PT_ENT|PT_TRAIL,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
+    { PT_ENT,     255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
+};
+
 void render_particles(int time)
 {
-    static struct parttype { int type; uchar r, g, b; int gr, tex; float sz, rsz; int rv; } parttypes[MAXPARTYPES] =
-    {
-        { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
-        { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
-        { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-        { PT_TRAIL|PT_MOD|PT_RND4,   0, 255, 255, 2,  8, 0.74f, 0.8f,   50 }, // red:    blood spats (note: rgb is inverted)
-        { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
-        { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
-        { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
-        { 0,          255, 255, 255, 20, 4,  4.8f, 0.0f,   0 }, // green:  big fireball3
-        { PT_TEXTUP,  255, 75, 25,   -8, -1, 4.0f, 0.0f,   0 }, // 8 TEXT RED
-        { PT_TEXTUP,  50, 255, 100,  -8, -1, 4.0f, 0.0f,   0 }, // 9 TEXT GREEN
-        { PT_FLARE,   255, 200, 100, 0,  5, 0.28f, 0.0f,   0 }, // 10 yellow flare
-        { PT_TEXT,    30, 200, 80,   0, -1,  2.0f, 0.0f,   0 },  // 11 TEXT DARKGREEN, SMALL, NON-MOVING
-        { 0,          255, 255, 255, 20, 4,  2.0f, 0.0f,   0 },  // 12 green small fireball3
-        { PT_TEXT,    255, 75, 25,   0, -1,  2.0f, 0.0f,   0 },  // 13 TEXT RED, SMALL, NON-MOVING
-        { PT_TEXT,    180, 180, 180, 0, -1,  2.0f, 0.0f,   0 },  // 14 TEXT GREY, SMALL, NON-MOVING
-        { PT_TEXTUP,  255, 200, 100, -8, -1, 4.0f, 0.0f,   0 }, // 15 TEXT YELLOW
-        { PT_TEXT,    100, 150, 255, 0,  -1, 2.0f, 0.0f,   0 },  // 16 TEXT BLUE, SMALL, NON-MOVING
-        { PT_METER,   255, 25, 25,   0,  -1, 2.0f, 0.0f,   0 },  // 17 METER RED, SMALL, NON-MOVING
-        { PT_METER,   50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 18 METER BLUE, SMALL, NON-MOVING
-        { PT_METERVS, 255, 25, 25,   0,  -1, 2.0f, 0.0f,   0 },  // 19 METER RED vs. BLUE, SMALL, NON-MOVING
-        { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f, 0.0f,   0 },  // 20 METER BLUE vs. RED, SMALL, NON-MOVING
-        { 0,          137, 118, 97, 20,   2, 0.6f, 0.0f,   0 },  // greyish-brown:   small  slowly sinking smoke trail
-        {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f, 0.0f,   0 },  // red explosion fireball
-        {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange explosion fireball 
-        { PT_ENT,     137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke
-        { 0,          118, 97, 137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke          
-        { PT_ENT|PT_TRAIL,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
-        { PT_ENT,     255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
-    };
-    
     bool enabled = false;
     loopi(MAXPARTYPES) if(parlist[i])
     {        
