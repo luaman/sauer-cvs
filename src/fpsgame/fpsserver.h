@@ -81,7 +81,7 @@ struct fpsserver : igameserver
     bool mapreload;
     int lastsec;
     enet_uint32 lastsend;
-    int mastermode;
+    int mastermode, mastermask;
     int currentmaster;
     bool masterupdate;
     string masterpass;
@@ -96,7 +96,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); } 
@@ -662,7 +662,7 @@ struct fpsserver : igameserver
             case SV_MASTERMODE:
             {
                 int mm = getint(p);
-                if(ci->master && mm>=MM_OPEN && mm<=MM_PRIVATE)
+                if(ci->master && mm>=MM_OPEN && mm<=MM_PRIVATE && (mastermask&(1<<mm)))
                 {
                     mastermode = mm;
                     s_sprintfd(s)("mastermode is now %d", mastermode);
@@ -854,10 +854,11 @@ struct fpsserver : igameserver
         }
     }
 
-    void serverinit(char *sdesc, char *adminpass)
+    void serverinit(char *sdesc, char *adminpass, bool pubserv)
     {
         s_strcpy(serverdesc, sdesc);
         s_strcpy(masterpass, adminpass ? adminpass : "");
+        if(pubserv) mastermask = (1<<MM_OPEN) | (1<<MM_VETO);
         smapname[0] = 0;
         resetitems();
     }

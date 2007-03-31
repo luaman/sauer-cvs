@@ -365,6 +365,7 @@ uchar *retrieveservers(uchar *buf, int buflen)
 int uprate = 0, maxclients = DEFAULTCLIENTS;
 char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
+bool pubserv = false;
 
 void serverslice(int seconds, uint timeout)   // main server update, called from main loop in sp, or from below in dedicated server
 {
@@ -487,7 +488,7 @@ void initgame(char *game)
 void initserver(bool dedicated)
 {
     initgame(game);
-    
+
     if(!master) master = sv->getdefaultmaster();
     char *mid = strstr(master, "/");
     if(!mid) mid = master;
@@ -506,7 +507,7 @@ void initserver(bool dedicated)
         if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
     }
 
-    sv->serverinit(sdesc, adminpass);
+    sv->serverinit(sdesc, adminpass, pubserv);
 
     if(dedicated)       // do not return, this becomes main loop
     {
@@ -537,9 +538,9 @@ bool serveroption(char *opt)
         case 'm': master = opt+2; return true;
         case 'g': game = opt+2; return true;
         case 'p': adminpass = opt+2; return true;
+        case 'o': pubserv = atoi(opt+2)!=0; return true;
         default: return false;
     }
-    
 }
 
 #ifdef STANDALONE
