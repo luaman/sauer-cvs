@@ -372,7 +372,7 @@ struct fpsserver : igameserver
     {
         if(ci && ci->local) return type;
         // spectators can only connect and talk
-        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_PING, SV_CLIENTPING, SV_GETMAP };
+        static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_PING, SV_CLIENTPING, SV_GETMAP, SV_SETMASTER };
         if(ci && ci->spectator && !ci->master)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
@@ -866,6 +866,8 @@ struct fpsserver : igameserver
     {
         if(val) 
         {
+            if(ci->master) return;
+            if(ci->spectator && (!masterpass[0] || !pass[0])) return;
             loopv(clients) if(clients[i]->master)
             {
                 if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->master = false;

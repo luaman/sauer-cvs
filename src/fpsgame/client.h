@@ -161,7 +161,7 @@ struct clientcom : iclientcom
     {
         if(spectator && (currentmaster!=player1->clientnum || type<SV_MASTERMODE))
         {
-            static int spectypes[] = { SV_MAPVOTE, SV_GETMAP, SV_TEXT };
+            static int spectypes[] = { SV_MAPVOTE, SV_GETMAP, SV_TEXT, SV_SETMASTER };
             bool allowed = false;
             loopi(sizeof(spectypes)/sizeof(spectypes[0])) if(type==spectypes[i]) 
             {
