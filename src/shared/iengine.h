@@ -162,7 +162,7 @@ extern void setbbfrommodel(dynent *d, char *mdl);
 
 extern int maxclients;
 
-enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS };
+enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS, DISC_NUM };
 
 extern void *getinfo(int i);
 extern void sendf(int cn, int chan, const char *format, ...);
@@ -187,7 +187,6 @@ extern bool isconnected();
 extern bool multiplayer(bool msg = true);
 extern void neterr(char *s);
 extern void gets2c();
-extern bool netmapstart();
 
 // 3dgui
 struct Texture;

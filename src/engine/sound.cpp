@@ -325,10 +325,13 @@ void playsound(int n, const vec *loc, extentity *ent)
     if(nosound) return;
     if(!soundvol) return;
 
-    static int soundsatonce = 0, lastsoundmillis = 0;
-    if(totalmillis==lastsoundmillis) soundsatonce++; else soundsatonce = 1;
-    lastsoundmillis = totalmillis;
-    if(soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss and in sp
+    if(!ent)
+    {
+        static int soundsatonce = 0, lastsoundmillis = 0;
+        if(totalmillis==lastsoundmillis) soundsatonce++; else soundsatonce = 1;
+        lastsoundmillis = totalmillis;
+        if(soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss and in sp
+    }
 
     vector<soundslot> &sounds = ent ? mapsounds : gamesounds;
     if(!sounds.inrange(n)) { conoutf("unregistered sound: %d", n); return; }
