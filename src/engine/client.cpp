@@ -4,20 +4,19 @@
 #include "engine.h"
 
 ENetHost *clienthost = NULL;
-int connecting = 0;
-int connattempts = 0;
-int disconnecting = 0;
+ENetPeer *curpeer = NULL, *connpeer = NULL;
+int connmillis = 0, connattempts = 0, discmillis = 0;
 
 bool multiplayer(bool msg)
 {
     // check not correct on listen server?
-    if(clienthost && msg) conoutf("operation not available in multiplayer");
-    return clienthost != NULL;
+    if(curpeer && msg) conoutf("operation not available in multiplayer");
+    return curpeer!=NULL;
 }
 
 void setrate(int rate)
 {
-   if(!clienthost || connecting) return;
+   if(!curpeer) return;
    enet_host_bandwidth_limit(clienthost, rate, rate);
 }
 
@@ -31,14 +30,28 @@ VARF(throttle_decel,    0, 2, 32, throttle());
 
 void throttle()
 {
-    if(!clienthost || connecting) return;
+    if(!curpeer) return;
     ASSERT(ENET_PEER_PACKET_THROTTLE_SCALE==32);
-    enet_peer_throttle_configure(clienthost->peers, throttle_interval*1000, throttle_accel, throttle_decel);
+    enet_peer_throttle_configure(curpeer, throttle_interval*1000, throttle_accel, throttle_decel);
+}
+
+void abortconnect()
+{
+    if(!connpeer) return;
+    if(connpeer->state!=ENET_PEER_STATE_DISCONNECTED) enet_peer_reset(connpeer);
+    connpeer = NULL;
+    if(curpeer) return;
+    enet_host_destroy(clienthost);
+    clienthost = NULL;
 }
 
 void connects(char *servername)
 {   
-    disconnect(1);  // reset state
+    if(connpeer)
+    {
+        conoutf("aborting connection attempt");
+        abortconnect();
+    }
 
     ENetAddress address;
     address.port = sv->serverport();
@@ -59,20 +72,16 @@ void connects(char *servername)
         address.host = ENET_HOST_BROADCAST;
     }
 
-    clienthost = enet_host_create(NULL, 1, rate, rate);
+    if(!clienthost) clienthost = enet_host_create(NULL, 2, rate, rate);
 
     if(clienthost)
     {
-        enet_host_connect(clienthost, &address, cc->numchannels()); 
+        connpeer = enet_host_connect(clienthost, &address, cc->numchannels()); 
         enet_host_flush(clienthost);
-        connecting = totalmillis;
+        connmillis = totalmillis;
         connattempts = 0;
     }
-    else
-    {
-        conoutf("\f3could not connect to server");
-        disconnect();
-    }
+    else conoutf("\f3could not connect to server");
 }
 
 void lanconnect()
@@ -82,50 +91,53 @@ void lanconnect()
 
 void disconnect(int onlyclean, int async)
 {
-    if(clienthost) 
+    bool cleanup = onlyclean!=0;
+    if(curpeer) 
     {
-        if(!connecting && !disconnecting) 
+        if(!discmillis)
         {
-            enet_peer_disconnect(clienthost->peers, DISC_NONE);
+            enet_peer_disconnect(curpeer, DISC_NONE);
             enet_host_flush(clienthost);
-            disconnecting = totalmillis;
+            discmillis = totalmillis;
         }
-        if(clienthost->peers->state != ENET_PEER_STATE_DISCONNECTED)
+        if(curpeer->state!=ENET_PEER_STATE_DISCONNECTED)
         {
             if(async) return;
-            enet_peer_reset(clienthost->peers);
+            enet_peer_reset(curpeer);
         }
-        enet_host_destroy(clienthost);
+        curpeer = NULL;
+        discmillis = 0;
+        conoutf("disconnected");
+        cleanup = true;
     }
-
-    if(clienthost && !connecting) conoutf("disconnected");
-    clienthost = NULL;
-    connecting = 0;
-    connattempts = 0;
-    disconnecting = 0;
-    
-    cc->gamedisconnect();
-    
-    localdisconnect();
-
+    if(cleanup)
+    {
+        cc->gamedisconnect();
+        localdisconnect();
+    }
+    if(!connpeer && clienthost)
+    {
+        enet_host_destroy(clienthost);
+        clienthost = NULL;
+    }
     if(!onlyclean) { localconnect(); cc->gameconnect(false); }
 }
 
 void trydisconnect()
 {
-    if(!clienthost)
+    if(connpeer)
+    {
+        conoutf("aborting connection attempt");
+        abortconnect();
+        return;
+    }
+    if(!curpeer)
     {
         conoutf("not connected");
         return;
     }
-    if(connecting) 
-    {
-        conoutf("aborting connection attempt");
-        disconnect();
-        return;
-    }
     conoutf("attempting to disconnect...");
-    disconnect(0, !disconnecting);
+    disconnect(0, !discmillis);
 }
 
 COMMANDN(connect, connects, "s");
@@ -134,11 +146,9 @@ COMMANDN(disconnect, trydisconnect, "");
 
 int lastupdate = 0;
 
-bool netmapstart() { return clienthost!=NULL; }
-
 void sendpackettoserv(ENetPacket *packet, int chan)
 {
-    if(clienthost) enet_host_broadcast(clienthost, chan, packet);
+    if(curpeer) enet_peer_send(curpeer, chan, packet);
     else localclienttoserver(chan, packet);
 }
 
@@ -175,40 +185,50 @@ void gets2c()           // get updates from the server
 {
     ENetEvent event;
     if(!clienthost) return;
-    if(connecting && totalmillis/3000 > connecting/3000)
+    if(connpeer && totalmillis/3000 > connmillis/3000)
     {
         conoutf("attempting to connect...");
-        connecting = totalmillis;
+        connmillis = totalmillis;
         ++connattempts; 
         if(connattempts > 3)
         {
             conoutf("\f3could not connect to server");
-            disconnect();
+            abortconnect();
             return;
         }
     }
-    while(clienthost!=NULL && enet_host_service(clienthost, &event, 0)>0)
+    while(clienthost && enet_host_service(clienthost, &event, 0)>0)
     switch(event.type)
     {
         case ENET_EVENT_TYPE_CONNECT:
+            disconnect(1); 
+            curpeer = connpeer;
+            connpeer = NULL;
             conoutf("connected to server");
-            connecting = 0;
             throttle();
             if(rate) setrate(rate);
             cc->gameconnect(true);
             break;
          
         case ENET_EVENT_TYPE_RECEIVE:
-            if(disconnecting) conoutf("attempting to disconnect...");
+            if(discmillis) conoutf("attempting to disconnect...");
             else localservertoclient(event.channelID, event.packet->data, (int)event.packet->dataLength); break;
             enet_packet_destroy(event.packet);
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT:
             extern char *disc_reasons[];
-            if(event.data>DISC_MAXCLIENTS) event.data = DISC_NONE;
-            if(!disconnecting || event.data) conoutf("\f3server network error, disconnecting (%s) ...", disc_reasons[event.data]);
-            disconnect();
+            if(event.data>=DISC_NUM) event.data = DISC_NONE;
+            if(event.peer==connpeer)
+            {
+                conoutf("\f3could not connect to server");
+                abortconnect();
+            }
+            else
+            {
+                if(!discmillis || event.data) conoutf("\f3server network error, disconnecting (%s) ...", disc_reasons[event.data]);
+                disconnect();
+            }
             return;
 
         default:

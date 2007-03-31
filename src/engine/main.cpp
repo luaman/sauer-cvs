@@ -6,7 +6,9 @@
 void quit()                     // normal exit
 {
     writeservercfg();
-    disconnect(true);
+    extern void abortconnect();
+    abortconnect();
+    disconnect(1);
     if(strcmp(cl->gameident(), "fps")==0) writecfg();       // TEMP HACK: make other games not overwrite cfg
     cleangl();
     cleanupserver();
