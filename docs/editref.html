@@ -1429,18 +1429,21 @@ calculation time, video memory usage, and map file size. The default is good
 for most maps, you may go as low as 16 if you are lighting a really small map
 and love hard shadows, and for bigger maps you may need to set it to 64 or so
 to get reasonable memory usage.
+</p>
 
-
+<p>
 The number to watch out for is the number of lightmaps generated which are
 shown on the HUD (and also as output after a calclight). 1 or 2 lightmap
 textures is very good, over 10 lightmap textures is excessive.
+</p>
 
-
-The map file size is for 90% determined by the lightmaps, so tweak this value
+<p>
+The map file size is 90% determined by the lightmaps, so tweak this value
 to get an acceptable quality to size ratio. Look at the size of the map files,
 sometimes a slightly higher lightprecision can halve the size of your .ogz.
+</p>
 
-
+<p>
 Every surface matters, even though sauerbraten attempts to compress surfaces
 with a uniform lightvalue, it is always a good ideas to delete parts of the
 world that are not part of your map. Lightprecision, lighterror, and lightlod
@@ -1473,8 +1476,8 @@ only useful for huge maps
 <p>
 Dumps all lightmaps to a set of .bmps. Mostly interesting for developers, but
 mappers may find it interesting too.
-
 </p>
+
 <h2 id="entity_types">Entity Types</h2>
 
 <pre id="_light_">"light" radius r g b</pre>
