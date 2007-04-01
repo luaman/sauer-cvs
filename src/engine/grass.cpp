@@ -375,7 +375,7 @@ void setupgrass()
 {
     glDisable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, grassblend ? grassblend/100.0f : 0.4f);
+    glAlphaFunc(GL_GREATER, grassblend ? grassblend/100.0f : 0.6f);
     if(grassblend)
     {
         glEnable(GL_BLEND);
