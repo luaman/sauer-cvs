@@ -193,11 +193,12 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         if(c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; } 
         if(c=='\f') switch(str[i+1])
         {
-            case '0': glColor3ub(64,255,128); i++; continue;    // green: player talk
-            case '1': glColor3ub(96,160,255); i++; continue;    // blue: "echo" command
-            case '2': glColor3ub(255,192,64); i++; continue;    // yellow: gameplay messages 
-            case '3': glColor3ub(255,64,64);  i++; continue;    // red: important errors
-            default: continue;                                  // white: everything else
+            case '0': glColor4ub(64,  255, 128, a); i++; continue;    // green: player talk
+            case '1': glColor4ub(96,  160, 255, a); i++; continue;    // blue: "echo" command
+            case '2': glColor4ub(255, 192, 64,  a); i++; continue;    // yellow: gameplay messages 
+            case '3': glColor4ub(255, 64,  64,  a); i++; continue;    // red: important errors
+            case '4': glColor4ub(64,  64,  64,  a); i++; continue;    // gray
+            default:  glColor4ub(r,   g,   b,   a); i++; continue;    // white: everything else
         }
         if(c==' ') { x += FONTH/2; continue; }
         c -= 33;

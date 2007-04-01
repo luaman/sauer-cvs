@@ -69,7 +69,7 @@ struct scoreboard : g3d_callback
             fpsent *o = sbplayers[i];
             const char *status = "";
             if(cl.cc.currentmaster>=0 && cl.cc.currentmaster==o->clientnum) status = "\f0";
-            if(o->state==CS_DEAD) status = "\f3";
+            if(o->state==CS_DEAD) status = "\f4";
             string name;
             if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, o->clientnum);
             else s_strcpy(name, o->name);
