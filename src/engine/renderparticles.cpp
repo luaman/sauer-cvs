@@ -140,12 +140,12 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz, rsz; in
 
 void render_particles(int time)
 {
-    bool enabled = false;
+    bool rendered = false;
     loopi(MAXPARTYPES) if(parlist[i])
     {        
-        if(!enabled)
+        if(!rendered)
         {
-            enabled = true;
+            rendered = true;
             glDepthMask(GL_FALSE);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);             
@@ -333,7 +333,7 @@ void render_particles(int time)
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     }
 
-    if(enabled)
+    if(rendered)
     {        
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
