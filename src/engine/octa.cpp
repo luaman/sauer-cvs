@@ -895,10 +895,12 @@ int genclipplane(cube &c, int orient, vec *v, plane *clip)
     if(p[0]==p[2]) return 0;
     if(p[0]!=p[1] && p[1]!=p[2]) clip[planes++].toplane(p[0], p[1], p[2]);
     if(p[0]!=p[3] && p[2]!=p[3] && (!planes || faceconvexity(c, orient))) clip[planes++].toplane(p[0], p[2], p[3]);
+/* this will break lightmap/normal calcs... should never need to do this!
     if(planes == 0 && dimension(orient)!=dimension(O_TOP)) 
     {   // simple hack for now. should probably find more robust solution
         clip[planes++].toplane(p[0], p[1].add(vec(0,0,orient==0 ? -1 : 1)), p[2]);
     }
+*/
     return planes;
 }
 
