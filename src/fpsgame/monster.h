@@ -44,6 +44,7 @@ struct monsterset
             eyeheight = 8.0f;
             aboveeye = 7.0f;
             radius *= t->bscale/10.0f;
+            xradius = yradius = radius;
             eyeheight *= t->bscale/10.0f;
             aboveeye *= t->bscale/10.0f;
             weight = t->weight;
