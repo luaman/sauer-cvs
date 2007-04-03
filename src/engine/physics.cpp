@@ -24,7 +24,7 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
         clipcache[0].prev = clipcache+MAXCLIPPLANES-1;
         nextclip = clipcache;
     }
-    if(c.ext && c.ext->clip != NULL)
+    if(c.ext && c.ext->clip)
     {
         if(nextclip == c.ext->clip) return;
         clipplanes *&n = c.ext->clip->next;
@@ -38,7 +38,7 @@ void setcubeclip(cube &c, int x, int y, int z, int size)
     }
     else
     {
-        if(nextclip->backptr != NULL) *(nextclip->backptr) = NULL;
+        if(nextclip->backptr) *nextclip->backptr = NULL;
         nextclip->backptr = &ext(c).clip;
         c.ext->clip = nextclip;
         genclipplanes(c, x, y, z, size, *c.ext->clip);
@@ -551,12 +551,19 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
         }
         if(w==&wall)
         {
+            vec wo(o), wrad(r, r, zr);
+            loopi(3) if(wall[i])
+            {
+                wo[i] = wall[i]>0 ? p.o[i]+p.r[i] : p.o[i]-p.r[i];
+                wrad[i] = 0;
+                break;
+            }
             loopi(p.size)
             {
                 plane &f = p.p[i];
-                if(wall.dot(f)>=0) continue;
-                float dist = -f.dist(o) - (fabs(f.x*r)+fabs(f.y*r)+fabs(f.z*zr));
-                if(dist<m) return true;
+                if(!wall.dot(f)) continue;
+                float dist = f.dist(wo) - (fabs(f.x*wrad.x)+fabs(f.y*wrad.y)+fabs(f.z*wrad.z));
+                if(dist>=0) return true;
             }
         }
         else
