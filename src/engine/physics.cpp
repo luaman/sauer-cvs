@@ -552,28 +552,19 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
         if(w==&wall)
         {
             vec wo(o), wrad(r, r, zr);
-            loopi(3) if(wall[i])
-            {
-                wo[i] = wall[i]>0 ? p.o[i]+p.r[i] : p.o[i]-p.r[i];
-                wrad[i] = 0;
-                break;
-            }
+            loopi(3) if(wall[i]) { wo[i] = p.o[i]+wall[i]*p.r[i]; wrad[i] = 0; break; }
             loopi(p.size)
             {
                 plane &f = p.p[i];
                 if(!wall.dot(f)) continue;
-                float dist = f.dist(wo) - (fabs(f.x*wrad.x)+fabs(f.y*wrad.y)+fabs(f.z*wrad.z));
-                if(dist>=0) return true;
+                if(f.dist(wo) >= fabs(f.x*wrad.x)+fabs(f.y*wrad.y)+fabs(f.z*wrad.z)) return true;
             }
         }
         else
         {
-            if(w->x>0) { float dist = o.x - (p.o.x-p.r.x) - r; if(dist<m) return true; }
-            else if(w->x<0) { float dist = (p.o.x+p.r.x) - o.x - r; if(dist<m) return true; }
-            if(w->y>0) { float dist = o.y - (p.o.y-p.r.y) - r; if(dist<m) return true; }
-            else if(w->y<0) { float dist = (p.o.y+p.r.y) - o.y - r; if(dist<m) return true; }
-            if(w->z>0) { float dist = o.z - (p.o.z-p.r.z) - zr; if(dist<m) return true; }
-            else if(w->z<0) { float dist = (p.o.z+p.r.z) - o.z - zr; if(dist<m) return true; }
+            if(w->x) { if((w->x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < m) return true; }
+            if(w->y) { if((w->y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < m) return true; }
+            if(w->z) { if((w->z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < m) return true; }
         }
         wall = *w;
         if(wall.iszero())
