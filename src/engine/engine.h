@@ -239,6 +239,9 @@ extern bool overrideidents, persistidents;
 extern void clearoverrides();
 extern void writecfg();
 
+extern void checksleep(int millis);
+extern void clearsleep();
+
 // console
 extern void writebinds(FILE *f);
 extern void writecompletions(FILE *f);

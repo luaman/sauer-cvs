@@ -348,7 +348,8 @@ void render_particles(int time)
 
 VARP(maxparticledistance, 256, 512, 4096);
 
-void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) {
+void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
+{
     if(!emit_particles() || (delay > 0 && rnd(delay) != 0)) return;
     particle_splash(type, num, fade, p);
 }

@@ -212,37 +212,6 @@ void keyrepeat(bool on)
 
 VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 
-struct sleepcmd
-{
-    int millis;
-    char *command;
-};
-vector<sleepcmd> sleepcmds;
-
-void addsleep(int *msec, char *cmd)
-{
-    sleepcmd &s = sleepcmds.add(); 
-    s.millis = *msec+lastmillis; 
-    s.command = newstring(cmd); 
-}
-
-COMMANDN(sleep, addsleep, "is");
-
-void checksleep(int millis)
-{
-    loopv(sleepcmds)
-    {
-        sleepcmd &s = sleepcmds[i];
-        if(s.millis && millis>s.millis)
-        {
-            char *cmd = s.command; // execute might create more sleep commands
-            execute(cmd);
-            delete[] cmd; 
-            sleepcmds.remove(i--); 
-        }
-    }
-}
-
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
 void estartmap(const char *name)
@@ -250,8 +219,7 @@ void estartmap(const char *name)
     ///if(!editmode) toggleedit();
     gamespeed = 100;
     paused = 0;
-    loopv(sleepcmds) delete[] sleepcmds[i].command;
-    sleepcmds.setsize(0);
+    clearsleep();
     cancelsel();
     pruneundos();
     setvar("wireframe", 0);

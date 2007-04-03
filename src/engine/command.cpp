@@ -659,3 +659,42 @@ ICOMMAND(echo, "C", conoutf("\f1%s", args[0]));
 
 void strstra(char *a, char *b) { char *s = strstr(a, b); intret(s ? s-a : -1); } COMMANDN(strstr, strstra, "ss");
 
+struct sleepcmd
+{
+    int millis;
+    char *command;
+};
+vector<sleepcmd> sleepcmds;
+
+void addsleep(int *msec, char *cmd)
+{
+    sleepcmd &s = sleepcmds.add();
+    s.millis = *msec+lastmillis;
+    s.command = newstring(cmd);
+}
+
+COMMANDN(sleep, addsleep, "is");
+
+void checksleep(int millis)
+{
+    loopv(sleepcmds)
+    {
+        sleepcmd &s = sleepcmds[i];
+        if(s.millis && millis>s.millis)
+        {
+            char *cmd = s.command; // execute might create more sleep commands
+            execute(cmd);
+            delete[] cmd;
+            sleepcmds.remove(i--);
+        }
+    }
+}
+
+void clearsleep()
+{
+    loopv(sleepcmds) delete[] sleepcmds[i].command;
+    sleepcmds.setsize(0);
+}
+
+COMMAND(clearsleep, "");
+
