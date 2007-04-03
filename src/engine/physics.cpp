@@ -549,7 +549,17 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                 m = dist;
             }
         }
-        if(w!=&wall)
+        if(w==&wall)
+        {
+            loopi(p.size)
+            {
+                plane &f = p.p[i];
+                if(wall.dot(f)>=0) continue;
+                float dist = -f.dist(o) - (fabs(f.x*r)+fabs(f.y*r)+fabs(f.z*zr));
+                if(dist<m) return true;
+            }
+        }
+        else
         {
             if(w->x>0) { float dist = o.x - (p.o.x-p.r.x) - r; if(dist<m) return true; }
             else if(w->x<0) { float dist = (p.o.x+p.r.x) - o.x - r; if(dist<m) return true; }
