@@ -597,10 +597,10 @@ struct gui : g3d_gui
             cury = -ysize; 
             curx = -xsize/2;
             
-            float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x) - 90*RAD;
+            float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x);
             glPushMatrix();
             glTranslatef(origin.x, origin.y, origin.z);
-            glRotatef(yaw/RAD, 0, 0, 1); 
+            glRotatef(yaw/RAD-90, 0, 0, 1); 
             glRotatef(-90, 1, 0, 0);
             glScalef(-scale, scale, scale);
             

@@ -226,9 +226,9 @@ void renderellipse(vec &o, float xradius, float yradius, float yaw)
         p.rotate_around_z((yaw+90)*RAD);
         p.add(o);
         glVertex3fv(p.v);
-    };
+    }
     glEnd();
-};
+}
 
 VAR(dynshadow, 0, 60, 100);
 
