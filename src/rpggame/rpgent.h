@@ -13,7 +13,9 @@ struct rpgent : dynent
     float sink;
 
     vec home;
-    
+        
+    enum { ROTSPEED = 200 };
+
     rpgent(rpgobj &_ro, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
     {
         o = _pos;
@@ -96,14 +98,14 @@ struct rpgent : dynent
         {
             //particle_splash(1, 100, 1000, vec(o).add(vec(0, 0, 5)));
             targetyaw = vecyaw(home);            
-            transition(R_ROAM, 1, 500, lastmillis);        
+            transition(R_ROAM, 1, 1000, lastmillis);        
         }
         else
         {
             targetyaw += 90+rnd(180);                                       
-            transition(R_ROAM, 1, 500, lastmillis);        
+            transition(R_ROAM, 1, 1000, lastmillis);        
         }
-        rotspeed = 100.0f;
+        rotspeed = ROTSPEED;
     }
     
     void update(int curtime, float playerdist, rpgent &player1, int lastmillis)
@@ -115,7 +117,7 @@ struct rpgent : dynent
         {
             blocked = false;
             targetyaw += 90+rnd(180);                                       
-            rotspeed = 100.0f;
+            rotspeed = ROTSPEED;
             transition(R_BLOCKED, 1, 1000, lastmillis);        
         }
 
@@ -139,7 +141,7 @@ struct rpgent : dynent
                 if(playerdist<64)
                 {
                     targetyaw = vecyaw(player1.o);
-                    rotspeed = 100.0f;
+                    rotspeed = ROTSPEED;
                     if(ro.s_ai==2)
                     {
                         transition(R_SEEK, 1, 100, lastmillis);

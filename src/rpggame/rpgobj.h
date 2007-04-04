@@ -121,7 +121,7 @@ struct rpgobj : g3d_callback, stats
     {
         float dist = ent->o.dist(os.cl.player1.o);
         if(s_ai) ent->update(curtime, dist, player1, lastmillis);
-        moveplayer(ent, 10, false, curtime);
+        moveplayer(ent, 10, false, curtime);    // 10 or above gets blocked less, because physics accuracy doesn't need extra tests
         if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
         else if(dist>96) menutime = 0;
     }
