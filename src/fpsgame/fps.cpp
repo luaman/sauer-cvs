@@ -401,7 +401,7 @@ struct fpsclient : igameclient
     void startmap(const char *name)   // called just after a map load
     {
         respawnent = -1;
-        if(m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
+        if(multiplayer(false) && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
         cc.mapstart();
         ms.monsterclear(gamemode);
         ws.projreset();
