@@ -104,7 +104,7 @@ void computescreen(const char *text)
     glEnable(GL_CULL_FACE);
 }
 
-void bar(float bar, int w, int o, float r, float g, float b)
+static void bar(float bar, int w, int o, float r, float g, float b)
 {
     int side = 50;
     glColor3f(r, g, b);
