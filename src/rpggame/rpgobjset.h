@@ -35,6 +35,7 @@ struct rpgobjset
         if(playerobj) { playerobj->ent = NULL; delete playerobj; }
         playerobj = new rpgobj("player", *this);
         playerobj->ent = &cl.player1;
+        cl.player1.ro = playerobj;
 
         pointingat = NULL;
         set.deletecontentsp();
@@ -69,7 +70,7 @@ struct rpgobjset
     
     void placeinworld(vec &pos, float yaw)
     {
-        stack[0]->placeinworld(new rpgent(*stack[0], cl, pos, yaw));
+        stack[0]->placeinworld(new rpgent(stack[0], cl, pos, yaw));
         set.add(stack[0]);
     }
     

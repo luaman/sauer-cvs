@@ -1,6 +1,6 @@
 struct rpgent : dynent
 {
-    rpgobj &ro;
+    rpgobj *ro;
     rpgclient &cl;
 
     int lastaction, lastpain;
@@ -17,7 +17,7 @@ struct rpgent : dynent
         
     enum { ROTSPEED = 200 };
 
-    rpgent(rpgobj &_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
+    rpgent(rpgobj *_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
     {
         o = _pos;
         home = _pos;
@@ -32,7 +32,7 @@ struct rpgent : dynent
 
     void tryattackobj(rpgobj &eo, rpgobj &weapon)
     {
-        if(!eo.s_ai || eo.s_ai==ro.s_ai) return;    // will need a more accurate way of denoting enemies & friends in the future
+        if(!eo.s_ai || eo.s_ai==ro->s_ai) return;    // will need a more accurate way of denoting enemies & friends in the future
 
         rpgent &e = *eo.ent;
         if(e.state==CS_DEAD) return;
@@ -64,7 +64,7 @@ struct rpgent : dynent
 
         if(closedist>weapon.s_maxrange*weapon.s_maxrange) return;
 
-        eo.attacked(ro, weapon);
+        eo.attacked(*ro, weapon);
     }
 
     void tryattack()
@@ -73,12 +73,12 @@ struct rpgent : dynent
         
         lastaction = cl.lastmillis;
         
-        rpgobj &weapon = ro.selectedweapon();
+        rpgobj &weapon = ro->selectedweapon();
         if(!weapon.s_damage) return;
         
-        loopv(cl.os.set) if(cl.os.set[i]!=&ro) tryattackobj(*cl.os.set[i], weapon);  
+        loopv(cl.os.set) if(cl.os.set[i]!=ro) tryattackobj(*cl.os.set[i], weapon);  
         
-        if(cl.os.playerobj!=&ro) tryattackobj(*cl.os.playerobj, weapon);    
+        if(cl.os.playerobj!=ro) tryattackobj(*cl.os.playerobj, weapon);    
     }
 
     void transition(int _state, int _moving, int n) 
@@ -133,7 +133,7 @@ struct rpgent : dynent
             case R_STARE:
                 ifplayerclose
                 {
-                    if(ro.s_ai==2) gotopos(cl.player1.o, R_SEEK,  1, 200);
+                    if(ro->s_ai==2) gotopos(cl.player1.o, R_SEEK,  1, 200);
                     else           gotopos(cl.player1.o, R_STARE, 0, 500);
                 }
                 else ifnextstate stareorroam();
@@ -171,14 +171,14 @@ struct rpgent : dynent
             {
                 findplayerspawn(this);
                 state = CS_ALIVE;
-                ro.st_respawn();
+                ro->st_respawn();
                 particle_splash(2, 1000, 500, o);
             }
         }
         else
         {
             moveplayer(this, 20, true);
-            ro.st_update(cl.lastmillis);
+            ro->st_update(cl.lastmillis);
             tryattack();
         }            
     }

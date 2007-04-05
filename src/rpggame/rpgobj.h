@@ -54,7 +54,6 @@ struct rpgobj : g3d_callback, stats
     void decontain() 
     {
         if(parent) parent->remove(this);
-        parent = sibling = NULL;
     }
 
     void add(rpgobj *o, int itemflags)
@@ -70,7 +69,11 @@ struct rpgobj : g3d_callback, stats
     void remove(rpgobj *o)
     {
         for(rpgobj **l = &inventory; *l; )
-            if(*l==o) *l = o->sibling;
+            if(*l==o) 
+            {
+                *l = o->sibling;
+                o->sibling = o->parent = NULL;
+            }
             else l = &(*l)->sibling;
             
         if(o->itemflags&IF_INVENTORY) recalcstats();
