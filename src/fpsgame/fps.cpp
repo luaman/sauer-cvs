@@ -136,7 +136,7 @@ struct fpsclient : igameclient
         return NULL;
     }
 
-    void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, char *&lastname, bool &oneteam)
+    void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
     {
         if(d->state==CS_SPECTATOR) return;
         if(d->state!=CS_DEAD)
@@ -144,7 +144,6 @@ struct fpsclient : igameclient
             alive++;
             if(lastteam && strcmp(lastteam, d->team)) oneteam = false;
             lastteam = d->team;
-            lastname = d->name;
         }
         else
         {
@@ -168,18 +167,14 @@ struct fpsclient : igameclient
         {
             arenadetectwait = 0;
             int alive = 0, dead = 0;
-            char *lastteam = NULL, *lastname = NULL;
+            char *lastteam = NULL;
             bool oneteam = true;
-            loopv(players) if(players[i]) arenacount(players[i], alive, dead, lastteam, lastname, oneteam);
-            arenacount(player1, alive, dead, lastteam, lastname, oneteam);
+            loopv(players) if(players[i]) arenacount(players[i], alive, dead, lastteam, oneteam);
+            arenacount(player1, alive, dead, lastteam, oneteam);
             if(dead>0 && (alive<=1 || (m_teammode && oneteam)))
             {
                 conoutf("\f2arena round is over! next round in 5 seconds...");
-                if(alive) 
-                {
-                    if(m_teammode) conoutf("\f2%s is the last team standing", lastteam);
-                    else conoutf("\f2%s is the last man standing", lastname);
-                }
+                if(alive) conoutf("\f2team %s is last man standing", lastteam);
                 else conoutf("\f2everyone died!");
                 arenarespawnwait = lastmillis+5000;
                 arenadetectwait  = lastmillis+10000;
@@ -406,7 +401,7 @@ struct fpsclient : igameclient
     void startmap(const char *name)   // called just after a map load
     {
         respawnent = -1;
-        if(multiplayer(false) && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
+        if(m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
         cc.mapstart();
         ms.monsterclear(gamemode);
         ws.projreset();

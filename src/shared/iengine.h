@@ -140,7 +140,7 @@ extern void updatephysstate(physent *d);
 extern void cleardynentcache();
 extern bool entinmap(dynent *d, bool avoidplayers = false);
 extern void findplayerspawn(dynent *d, int forceent = -1);
-
+extern bool raycubelos(vec &o, vec &dest, vec &hitpos);
 // sound
 extern void playsound    (int n,   const vec *loc = NULL, extentity *ent = NULL);
 extern void playsoundname(char *s, const vec *loc = NULL, int vol = 0);

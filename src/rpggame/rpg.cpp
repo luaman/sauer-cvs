@@ -28,7 +28,7 @@ struct rpgclient : igameclient, g3d_callback
     int menutime, menutab;
     vec menupos;
 
-    rpgclient() : et(*this), os(*this), player1(*os.playerobj, vec(0, 0, 0), 0, 100, ENT_PLAYER), lastmillis(0), menutime(0), menutab(1)
+    rpgclient() : et(*this), os(*this), player1(*os.playerobj, *this, vec(0, 0, 0), 0, 100, ENT_PLAYER), lastmillis(0), menutime(0), menutab(1)
     {
         CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
         CCOMMAND(rpgclient, showinventory, "", self->showinventory());    
@@ -44,16 +44,8 @@ struct rpgclient : igameclient, g3d_callback
         if(!curtime) return;
         physicsframe();
         os.update(curtime);
-        if(player1.state==CS_DEAD)
-        {
-            player1.lastaction = lastmillis;
-        }
-        else
-        {
-            moveplayer(&player1, 20, true);
-            checktriggers();
-            player1.tryattack(os.set, os.playerobj, lastmillis);
-        }        
+        player1.updateplayer();
+        checktriggers();
     }
     
     void showinventory()
@@ -98,10 +90,16 @@ struct rpgclient : igameclient, g3d_callback
         os.clearworld();
         s_strcpy(mapname, name);
         findplayerspawn(&player1);
+        if(*name) os.playerobj->st_init();
         et.startmap();
     }
     
-    void gameplayhud(int w, int h) {}
+    void gameplayhud(int w, int h)
+    {
+        glLoadIdentity();
+        glOrtho(0, w*2, h*2, 0, -1, 1);
+        draw_textf("health: %d/%d", 0, h*2-64, os.playerobj->s_health, os.playerobj->eff_maxhp());       // temp     
+    }
     
     void drawhudmodel(int anim, float speed, int base)
     {

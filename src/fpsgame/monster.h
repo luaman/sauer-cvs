@@ -65,15 +65,6 @@ struct monsterset
             s_strcpy(name, t->name);
         }
         
-        bool enemylos(vec &v)
-        {
-            vec ray(enemy->o);
-            ray.sub(o);
-            float mag = ray.magnitude();
-            float distance = raycubepos(o, ray, v, mag, RAY_CLIPMAT|RAY_POLY);
-            return distance >= mag; 
-        }
-
         // monster AI is sequenced using transitions: they are in a particular state where
         // they execute a particular behaviour until the trigger time is hit, and then they
         // reevaluate their situation based on the current state, the environment etc., and
@@ -142,7 +133,7 @@ struct monsterset
                     || (ms->monsterhurt && o.dist(ms->monsterhurtpos)<128))
                     {
                         vec target;
-                        if(enemylos(target))
+                        if(raycubelos(o, enemy->o, target))
                         {
                             transition(M_HOME, 1, 500, 200);
                             playsound(S_GRUNT1+rnd(2), &o);
@@ -166,7 +157,7 @@ struct monsterset
                     if(trigger<cl.lastmillis)
                     {
                         vec target;
-                        if(!enemylos(target))    // no visual contact anymore, let monster get as close as possible then search for player
+                        if(!raycubelos(o, enemy->o, target))    // no visual contact anymore, let monster get as close as possible then search for player
                         {
                             transition(M_HOME, 1, 800, 500);
                         }

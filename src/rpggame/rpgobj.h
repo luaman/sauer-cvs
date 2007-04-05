@@ -82,20 +82,19 @@ struct rpgobj : g3d_callback, stats
         loopinventorytype(IF_INVENTORY) st_accumulate(*o);
     }
     
-    rpgobj *selectedweapon()
+    rpgobj &selectedweapon()
     {
-        loopinventorytype(IF_INVENTORY) if(o->s_selected && o->s_usetype && o->s_damage) return o;
-        return NULL;
+        loopinventorytype(IF_INVENTORY) if(o->s_selected && o->s_usetype && o->s_damage) return *o;
+        return *this;
     }
-
-    void placeinworld(vec &pos, float yaw)
+    
+    void placeinworld(rpgent *_ent)
     {
         if(!model) model = "tentus/moneybag";
-        ent = new rpgent(*this, pos, yaw);
+        ent = _ent;
         setbbfrommodel(ent, model);
         entinmap(ent);
-        s_health = eff_maxhp();
-        s_mana = eff_maxmana();
+        st_init();
     }
 
     void render()
@@ -113,14 +112,14 @@ struct rpgobj : g3d_callback, stats
         {
             vec color, dir;
             lightreaching(ent->o, color, dir);  // FIXME just once for nonmoving objects
-            rendermodel(color, dir, model, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, ent->o.x, ent->o.y, ent->o.z, ent->yaw, 0, 0, 0);
+            rendermodel(color, dir, model, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, ent->o.x, ent->o.y, ent->o.z-ent->eyeheight, ent->yaw, 0, 0, 0, ent);
         }
     }
 
-    void update(int curtime, rpgent &player1, int lastmillis)
+    void update(int curtime)
     {
         float dist = ent->o.dist(os.cl.player1.o);
-        if(s_ai) ent->update(curtime, dist, player1, lastmillis);
+        if(s_ai) { ent->update(curtime, dist); st_update(ent->cl.lastmillis); };
         moveplayer(ent, 10, false, curtime);    // 10 or above gets blocked less, because physics accuracy doesn't need extra tests
         if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
         else if(dist>96) menutime = 0;
@@ -161,20 +160,17 @@ struct rpgobj : g3d_callback, stats
     
     void attacked(rpgobj &attacker, rpgobj &weapon)
     {
-        if(attacker.ent->o.dist(ent->o)<32 && ent->state==CS_ALIVE)
+        int damage = weapon.s_damage*attacker.eff_melee()/100;
+        particle_splash(3, damage*5, 1000, ent->o);
+        s_sprintfd(ds)("@%d", damage);
+        particle_text(ent->o, ds, 8);
+        if((s_health -= damage)<=0)
         {
-            int damage = weapon.s_damage*attacker.eff_melee()/100;
-            particle_splash(3, damage*5, 1000, ent->o);
-            s_sprintfd(ds)("@%d", damage);
-            particle_text(ent->o, ds, 8);
-            if((s_health -= damage)<=0)
-            {
-                ent->state = CS_DEAD;
-                ent->lastaction = os.cl.lastmillis;
-                menutime = 0;
-                conoutf("you killed: %s", name);
-                droploot();
-            }
+            ent->state = CS_DEAD;
+            ent->lastaction = os.cl.lastmillis;
+            menutime = 0;
+            conoutf("%s killed: %s", attacker.name, name);
+            droploot();
         }
     }
     

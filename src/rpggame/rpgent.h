@@ -1,6 +1,7 @@
 struct rpgent : dynent
 {
     rpgobj &ro;
+    rpgclient &cl;
 
     int lastaction, lastpain;
     bool attacking;
@@ -16,7 +17,7 @@ struct rpgent : dynent
         
     enum { ROTSPEED = 200 };
 
-    rpgent(rpgobj &_ro, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
+    rpgent(rpgobj &_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
     {
         o = _pos;
         home = _pos;
@@ -29,149 +30,156 @@ struct rpgent : dynent
 
     static const int ATTACKSAMPLES = 32;
 
-    void tryattack(vector<rpgobj *> &set, rpgobj *attacker, int lastmillis)
+    void tryattackobj(rpgobj &eo, rpgobj &weapon)
     {
-        if(!attacking || lastmillis-lastaction<250) return;
-        
-        lastaction = lastmillis;
-        
-        rpgobj *weapon = attacker->selectedweapon();
-        if(!weapon) return;
-        
-        loopv(set)
+        if(!eo.s_ai || eo.s_ai==ro.s_ai) return;    // will need a more accurate way of denoting enemies & friends in the future
+
+        rpgent &e = *eo.ent;
+        if(e.state==CS_DEAD) return;
+
+        vec d = e.o;
+        d.sub(o);
+        d.z = 0;
+        if(d.magnitude()>e.radius+weapon.s_maxrange) return; 
+
+        if(o.z+aboveeye<=e.o.z-e.eyeheight || o.z-eyeheight>=e.o.z+e.aboveeye) return;
+
+        vec p(0, 0, 0), closep;
+        float closedist = 1e10f; 
+        loopj(ATTACKSAMPLES)
         {
-            if(!set[i]->s_ai) continue;
-            
-            rpgent *e = set[i]->ent;
-            if(e->state==CS_DEAD) continue;
-            
-            vec d = e->o;
-            d.sub(o);
-            d.z = 0;
-            if(d.magnitude()>e->radius+weapon->s_maxrange) continue; 
-            
-            if(o.z+aboveeye<=e->o.z-e->eyeheight || o.z-eyeheight>=e->o.z+e->aboveeye) continue;
-            
-            vec p(0, 0, 0), closep;
-            float closedist = 1e10f; 
-            loopj(ATTACKSAMPLES)
-            {
-                p.x = e->xradius * cosf(2*M_PI*j/ATTACKSAMPLES);
-                p.y = e->yradius * sinf(2*M_PI*j/ATTACKSAMPLES);
-                p.rotate_around_z((e->yaw+90)*RAD);
+            p.x = e.xradius * cosf(2*M_PI*j/ATTACKSAMPLES);
+            p.y = e.yradius * sinf(2*M_PI*j/ATTACKSAMPLES);
+            p.rotate_around_z((e.yaw+90)*RAD);
 
-                p.x += e->o.x;
-                p.y += e->o.y;
-                float tyaw = vecyaw(p);
-                normalize_yaw(tyaw);
-                if(fabs(tyaw-yaw)>weapon->s_maxangle) continue;
+            p.x += e.o.x;
+            p.y += e.o.y;
+            float tyaw = vecyaw(p);
+            normalize_yaw(tyaw);
+            if(fabs(tyaw-yaw)>weapon.s_maxangle) continue;
 
-                float dx = p.x-o.x, dy = p.y-o.y, dist = dx*dx + dy*dy;
-                if(dist<closedist) { closedist = dist; closep = p; }
-            }
+            float dx = p.x-o.x, dy = p.y-o.y, dist = dx*dx + dy*dy;
+            if(dist<closedist) { closedist = dist; closep = p; }
+        }
 
-            if(closedist>weapon->s_maxrange*weapon->s_maxrange) continue;
+        if(closedist>weapon.s_maxrange*weapon.s_maxrange) return;
 
-            set[i]->attacked(*attacker, *weapon);
-        }        
+        eo.attacked(ro, weapon);
     }
-    /*
-    bool enemylos(vec &v)
+
+    void tryattack()
     {
-        vec ray(enemy->o);
-        ray.sub(o);
-        float mag = ray.magnitude();
-        float distance = raycubepos(o, ray, v, mag, RAY_CLIPMAT|RAY_POLY);
-        return distance >= mag; 
+        if(!attacking || cl.lastmillis-lastaction<250) return;
+        
+        lastaction = cl.lastmillis;
+        
+        rpgobj &weapon = ro.selectedweapon();
+        if(!weapon.s_damage) return;
+        
+        loopv(cl.os.set) if(cl.os.set[i]!=&ro) tryattackobj(*cl.os.set[i], weapon);  
+        
+        if(cl.os.playerobj!=&ro) tryattackobj(*cl.os.playerobj, weapon);    
     }
-*/
-    void transition(int _state, int _moving, int n, int lastmillis) 
+
+    void transition(int _state, int _moving, int n) 
     {
         npcstate = _state;
         move = _moving;
-        trigger = lastmillis+n;
+        trigger = cl.lastmillis+n;
     }
     
-    void goroam(int lastmillis)
+    void gotoyaw(float yaw, int s, int m, int t)
     {
-        if(home.dist(o)>128 && npcstate!=R_BACKHOME)
-        {
-            //particle_splash(1, 100, 1000, vec(o).add(vec(0, 0, 5)));
-            targetyaw = vecyaw(home);            
-            transition(R_ROAM, 1, 1000, lastmillis);        
-        }
-        else
-        {
-            targetyaw += 90+rnd(180);                                       
-            transition(R_ROAM, 1, 1000, lastmillis);        
-        }
+        targetyaw = yaw;            
         rotspeed = ROTSPEED;
+        transition(s, m, t);            
     }
     
-    void update(int curtime, float playerdist, rpgent &player1, int lastmillis)
+    void gotopos(vec &pos, int s, int m, int t) { gotoyaw(vecyaw(pos), s, m, t); }
+    
+    void goroam()
+    {
+        if(home.dist(o)>128 && npcstate!=R_BACKHOME)  gotopos(home, R_ROAM, 1, 1000);
+        else                                          gotoyaw(targetyaw+90+rnd(180), R_ROAM, 1, 1000);                                       
+    }
+    
+    void stareorroam()
+    {
+        if(rnd(10)) transition(R_STARE, 0, 500);
+        else goroam();    
+    }
+    
+    void update(int curtime, float playerdist)
     {
         if(state==CS_DEAD) { stopmoving(); return; };
-        //s_sprintfd(s)("@%d", npcstate); particle_text(o, s, 13, 1);
 
-        if(blocked && npcstate!=R_BLOCKED)                                                             
+        if(blocked && npcstate!=R_BLOCKED && npcstate!=R_SEEK)                                                             
         {
             blocked = false;
-            targetyaw += 90+rnd(180);                                       
-            rotspeed = ROTSPEED;
-            transition(R_BLOCKED, 1, 1000, lastmillis);        
+            gotoyaw(targetyaw+90+rnd(180), R_BLOCKED, 1, 1000);                           
         }
+        
+        #define ifnextstate   if(trigger<cl.lastmillis)
+        #define ifplayerclose if(playerdist<64)
+        #define ifplayerfar   if(playerdist>256)
 
         switch(npcstate)
         {
-            case R_BACKHOME:
-                if(trigger<lastmillis)
-                {
-                    goroam(lastmillis);
-                }
-                break;
-            
             case R_BLOCKED:
-                if(trigger<lastmillis)
-                {
-                    goroam(lastmillis);
-                }
+            case R_BACKHOME:
+                ifnextstate goroam();
                 break;
         
             case R_STARE:
-                if(playerdist<64)
+                ifplayerclose
                 {
-                    targetyaw = vecyaw(player1.o);
-                    rotspeed = ROTSPEED;
-                    if(ro.s_ai==2)
-                    {
-                        transition(R_SEEK, 1, 100, lastmillis);
-                    }
+                    if(ro.s_ai==2) gotopos(cl.player1.o, R_SEEK,  1, 200);
+                    else           gotopos(cl.player1.o, R_STARE, 0, 500);
                 }
-                else if(trigger<lastmillis)
-                {
-                    if(rnd(10)) transition(R_STARE, 0, 500, lastmillis);
-                    else goroam(lastmillis);    
-                }
+                else ifnextstate stareorroam();
                 break;
             
             case R_ROAM:
-                if(playerdist<64)
-                {
-                    transition(R_STARE, 0, 500, lastmillis);
-                }
-                else if(trigger<lastmillis)
-                {
-                    if(!rnd(10)) transition(R_STARE, 0, 500, lastmillis);
-                    else goroam(lastmillis);    
-                }
+                ifplayerclose    transition(R_STARE, 0, 500);
+                else ifnextstate stareorroam();
                 break;
                 
             case R_SEEK:
-                if(trigger<lastmillis)
+                ifnextstate
                 {
-                    //if(
+                    vec target;
+                    attacking = true;
+                    if(raycubelos(o, cl.player1.o, target)) tryattack();
+                    attacking = false;
+                    ifplayerfar goroam();
+                    else gotopos(cl.player1.o, R_SEEK, 1, 100);
                 }
                 
         }
+        
+        #undef ifnextstate
+        #undef ifplayerclose
+        #undef ifplayerfar
+    }
+
+    void updateplayer()     // alternative version of update() if this ent is the main player
+    {
+        if(state==CS_DEAD)
+        {
+            //lastaction = lastmillis;
+            if(cl.lastmillis-lastaction>5000)
+            {
+                findplayerspawn(this);
+                state = CS_ALIVE;
+                ro.st_respawn();
+                particle_splash(2, 1000, 500, o);
+            }
+        }
+        else
+        {
+            moveplayer(this, 20, true);
+            ro.st_update(cl.lastmillis);
+            tryattack();
+        }            
     }
 };

@@ -58,8 +58,10 @@ struct stats
     #define N(n) int s_##n;
     RPGNAMES
     #undef N
+    
+    int statupdatetime;
         
-    stats()
+    stats() : statupdatetime(0)
     {
         st_reset();
         #define N(n) s_##n = 0;
@@ -96,6 +98,28 @@ struct stats
         st_show(g);
         g.separator();
         o.st_show(g); // TEMP
+    }
+    
+    void st_init()
+    {
+        s_health = eff_maxhp();
+        s_mana = eff_maxmana();
+    }
+    
+    void st_respawn()   // player only
+    {
+        s_health = 10;
+    }
+    
+    void st_update(int lastmillis)
+    {
+        if(lastmillis-statupdatetime>1000)
+        {
+            statupdatetime += 1000;
+            const int regenrate = 10;
+            s_health += eff_regen()*regenrate/100;
+            if(s_health>eff_maxhp()) s_health = eff_maxhp();
+        }
     }
 };
 

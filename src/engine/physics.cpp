@@ -174,6 +174,15 @@ float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, in
     return dist;
 }
 
+bool raycubelos(vec &o, vec &dest, vec &hitpos)
+{
+    vec ray(dest);
+    ray.sub(o);
+    float mag = ray.magnitude();
+    float distance = raycubepos(o, ray, hitpos, mag, RAY_CLIPMAT|RAY_POLY);
+    return distance >= mag; 
+}
+
 float rayfloor(const vec &o, vec &floor, int mode)
 {
     if(o.z<=0) return -1;

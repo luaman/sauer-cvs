@@ -50,7 +50,7 @@ struct rpgobjset
         pointingat = NULL;
         loopv(set)
         {
-            set[i]->update(curtime, cl.player1, cl.lastmillis);
+            set[i]->update(curtime);
 
             float dist = cl.player1.o.dist(set[i]->ent->o);
             if(dist<50 && intersect(set[i]->ent, cl.player1.o, worldpos) && (!pointingat || cl.player1.o.dist(pointingat->ent->o)>dist))    
@@ -69,7 +69,7 @@ struct rpgobjset
     
     void placeinworld(vec &pos, float yaw)
     {
-        stack[0]->placeinworld(pos, yaw);
+        stack[0]->placeinworld(new rpgent(*stack[0], cl, pos, yaw));
         set.add(stack[0]);
     }
     
