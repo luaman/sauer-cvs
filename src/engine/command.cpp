@@ -441,7 +441,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
 
                 case ID_VAR:                        // game defined variables 
                     if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
-                    else if(id->min>id->max) conoutf("variable %s is read-only", id->_name);
+                    else if(id->_min>id->_max) conoutf("variable %s is read-only", id->_name);
                     else
                     {
                         if(overrideidents)
