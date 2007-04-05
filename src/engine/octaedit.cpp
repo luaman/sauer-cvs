@@ -137,7 +137,7 @@ VARF(gridpower, 2, 3, VVEC_INT-1,
 
 VAR(passthroughcube, 0, 0, 1);
 VAR(passthroughsel, 0, 0, 1);
-VAR(editing,0,0,1);
+VAR(editing, 1, 0, 0);
 
 void toggleedit()
 {

@@ -441,13 +441,14 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
 
                 case ID_VAR:                        // game defined variables 
                     if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
+                    else if(id->min>id->max) conoutf("variable %s is read-only", id->_name);
                     else
                     {
                         if(overrideidents)
                         {
                             if(id->_persist)
                             {
-                                conoutf("cannot override persistent var %s", id->_name);
+                                conoutf("cannot override persistent variable %s", id->_name);
                                 break;
                             }
                             if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
@@ -457,7 +458,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         if(i1<id->_min || i1>id->_max)
                         {
                             i1 = i1<id->_min ? id->_min : id->_max;                // clamp to valid range
-                            conoutf("valid range for %s is %d..%d", c, id->_min, id->_max);
+                            conoutf("valid range for %s is %d..%d", id->_name, id->_min, id->_max);
                         }
                         *id->_storage = i1;
                         if(id->_fun) ((void (__cdecl *)())id->_fun)();            // call trigger function if available
