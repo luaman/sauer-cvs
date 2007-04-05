@@ -321,11 +321,11 @@ struct weaponstate
             bool exploded = false;
             if(p.local)
             {
-                loopi(cl.numdynents())
+                loopj(cl.numdynents())
                 {
-                    fpsent *o = (fpsent *)cl.iterdynents(i);
+                    fpsent *o = (fpsent *)cl.iterdynents(j);
                     if(!o || p.owner==o || o->o.reject(v, 10.0f)) continue;
-                    if(projdamage(o, p, v, i-1, qdam)) exploded = true;
+                    if(projdamage(o, p, v, j-1, qdam)) exploded = true;
                 }
             }
             if(!exploded)
