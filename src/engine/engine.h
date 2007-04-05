@@ -247,7 +247,6 @@ extern void writebinds(FILE *f);
 extern void writecompletions(FILE *f);
 
 // main
-extern void estartmap(const char *name);
 extern void computescreen(const char *text);
 extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
 
@@ -282,6 +281,9 @@ extern int triggertypes[NUMTRIGGERTYPES];
 extern void entitiesinoctanodes();
 extern void freeoctaentities(cube &c);
 extern bool pointinsel(selinfo &sel, vec &o);
+
+extern void resetmap();
+extern void startmap(const char *name);
 
 // rendermodel
 struct mapmodelinfo { string name; int tex; model *m; };

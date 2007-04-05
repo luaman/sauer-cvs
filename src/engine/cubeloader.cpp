@@ -324,18 +324,19 @@ struct cubeloader
             t = s;
         }
         gzclose(f);
-        estartmap(pakname);
+
         string cfgname;
         s_sprintf(cfgname)("packages/cube/%s.cfg", mname);
         exec("packages/cube/package.cfg");
         exec(path(cfgname));
         create_cubes();
         remipworld();
+        clearlights();
         allchanged();
         loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
         entitiesinoctanodes();
-        clearlights();
         conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-totalmillis);
+        startmap(pakname);
     }
 };
 

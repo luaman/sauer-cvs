@@ -640,6 +640,26 @@ void splitocta(cube *c, int size)
     }
 }
 
+void resetmap()
+{
+    clearoverrides();
+    clearmapsounds();
+    cleanreflections();
+    resetlightmaps();
+    clearsleep();
+    cancelsel();
+    pruneundos();
+
+    setvar("gamespeed", 100);
+    setvar("paused", 0);
+    setvar("wireframe", 0);
+}
+
+void startmap(const char *name)
+{
+    cl->startmap(name);
+}
+
 bool emptymap(int scale, bool force)    // main empty world creation routine
 {
     if(!force && !editmode) 
@@ -648,7 +668,7 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
         return false;
     }
 
-    clearoverrides();
+    resetmap();
 
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
@@ -669,19 +689,18 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
     et->getents().setsize(0);
     worldroot = newcubes(F_EMPTY);
     loopi(4) solidfaces(worldroot[i]);
-    estartmap("");
-    player->o.z += player->eyeheight+1;
 
     if(hdr.worldsize > VVEC_INT_MASK+1) splitocta(worldroot, hdr.worldsize>>1);
 
-    resetlightmaps();
     clearlights();
-    clearmapsounds();
     allchanged();
 
     overrideidents = true;
     execfile("data/default_map_settings.cfg");
     overrideidents = false;
+
+    startmap("");
+    player->o.z += player->eyeheight+1;
 
     return true;
 }

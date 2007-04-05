@@ -318,7 +318,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; }
     if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return; }
     hdr = newhdr;
-    clearoverrides();
+    resetmap();
     computescreen(mname);
     if(hdr.version<=20) conoutf("loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
     if(!hdr.ambient) hdr.ambient = 25;
@@ -447,9 +447,6 @@ void load_world(const char *mname, const char *cname)        // still supports a
     show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
 
-    clearmapsounds();
-    cleanreflections();
-    resetlightmaps();
     if(hdr.version < 7 || !hdr.lightmaps) clearlights();
     else
     {
@@ -480,7 +477,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);
-    estartmap(cname ? cname : mname);
+
     overrideidents = true;
     execfile("data/default_map_settings.cfg");
     execfile(pcfname);
@@ -500,7 +497,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         }
     }
 
-    //entitiesinoctanodes();
+    startmap(cname ? cname : mname);
 }
 
 void savecurrentmap() { save_world(cl->getclientmap()); }

@@ -214,18 +214,6 @@ VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
-void estartmap(const char *name)
-{
-    ///if(!editmode) toggleedit();
-    gamespeed = 100;
-    paused = 0;
-    clearsleep();
-    cancelsel();
-    pruneundos();
-    setvar("wireframe", 0);
-    cl->startmap(name);
-}
-
 VAR(maxfps, 5, 200, 500);
 
 void limitfps(int &millis, int curmillis)
