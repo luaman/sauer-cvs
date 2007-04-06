@@ -15,8 +15,8 @@ static inline void vertw(float v1, float v2, float v3, float t1, float t2, float
     glVertex3f(v1, v2, v3-1.1f-(float)sin((v1-wx1)/wsize*(v2-wy1)/wsize*(v1-wx2)*(v2-wy2)*59/23+t)*0.8f);
 }
 
-static inline float dx(float x) { return x + (float)sin(x*2+lastmillis/1000.0f)*0.04f; }
-static inline float dy(float x) { return x + (float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; }
+static inline float dx(float x) { return x + sinf(x*2+lastmillis/1000.0f)*0.04f; }
+static inline float dy(float x) { return x + sinf(x*2+lastmillis/900.0f+PI/5)*0.05f; }
 
 void rendervertwater(uint subdiv, int x, int y, int z, uint size, Texture *t)
 {   
