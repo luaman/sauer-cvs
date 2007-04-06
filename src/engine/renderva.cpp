@@ -834,8 +834,10 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         if(cur.texture)
         {
             cur.texture = false;
+            glDisableClientState(GL_COLOR_ARRAY);
             glDisable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE1_ARB);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE0_ARB);
         }
@@ -849,8 +851,10 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     if(!cur.texture)
     {
         cur.texture = true;
+        glEnableClientState(GL_COLOR_ARRAY);
         glEnable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE1_ARB);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
