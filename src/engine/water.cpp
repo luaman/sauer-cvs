@@ -888,17 +888,21 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->orient == start->orient &&
                cur->o[dim] == start->o[dim])
             ++cur;
-         materialsurface *oldbuf = matbuf;
          if(start->material != MAT_WATER || start->orient != O_TOP || (hasFBO && renderpath!=R_FIXEDFUNCTION))
          {
-            memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
-            matbuf = oldbuf + mergemats(oldbuf, matbuf + (cur-start) - oldbuf);
+            if(start!=matbuf) memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
+            matbuf += mergemats(matbuf, cur-start);
          }
          else if(cur-start>=4)
          {
             QuadNode vmats(0, 0, hdr.worldsize);
             loopi(cur-start) vmats.insert(start[i].o[C[dim]], start[i].o[R[dim]], start[i].csize);
             vmats.genmatsurfs(start->material, start->orient, start->o[dim], matbuf);
+         }
+         else
+         {
+            if(start!=matbuf) memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
+            matbuf += cur-start;
          }
     }
     return matsurfs - (end-matbuf);

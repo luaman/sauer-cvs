@@ -230,8 +230,6 @@ void renderellipse(vec &o, float xradius, float yradius, float yaw)
     glEnd();
 }
 
-VARP(dynshadow, 0, 60, 100);
-
 void setshadowmatrix(const plane &p, const vec &dir)
 {
     float d = p.dot(dir);
@@ -246,11 +244,12 @@ void setshadowmatrix(const plane &p, const vec &dir)
 }
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
+VARP(bounddynshadows, 0, 0, 1);
+VARP(dynshadow, 0, 60, 100);
 
 extern float reflecting, refracting;
 extern int waterfog, reflectdist;
 
-VARP(bounddynshadows, 0, 0, 1);
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
 {
