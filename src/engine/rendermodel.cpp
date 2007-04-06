@@ -230,7 +230,7 @@ void renderellipse(vec &o, float xradius, float yradius, float yaw)
     glEnd();
 }
 
-VAR(dynshadow, 0, 60, 100);
+VARP(dynshadow, 0, 60, 100);
 
 void setshadowmatrix(const plane &p, const vec &dir)
 {
@@ -249,6 +249,8 @@ VARP(maxmodelradiusdistance, 10, 80, 1000);
 
 extern float reflecting, refracting;
 extern int waterfog, reflectdist;
+
+VARP(bounddynshadows, 0, 0, 1);
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
 {
@@ -327,22 +329,13 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 
-    if(!refracting && !reflecting && (cull&MDL_SHADOW) && hasstencil)
+    if(dynshadow && !refracting && !reflecting && (cull&MDL_SHADOW) && hasstencil)
     {
         vec floor;
         float dist = rayfloor(center, floor);
         if(dist<0) return;
-        center.z -= max(dist-0.25f, 0.0f);
+        center.z -= dist;
         if(vec(center).sub(camera1->o).dot(floor)>0) return;
-
-        notextureshader->set();
-        glDisable(GL_TEXTURE_2D);
-        glDepthMask(GL_FALSE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_STENCIL_TEST);
-        glStencilFunc(GL_NOTEQUAL, 1, 1);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
         vec shaddir = dir;
         shaddir.z = 0;
@@ -350,12 +343,65 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         shaddir.z = 1.5f*(dir.z*0.5f+1);
         shaddir.normalize();
 
+        glDisable(GL_TEXTURE_2D);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_STENCIL_TEST);
+
+        if(bounddynshadows)
+        {
+            nocolorshader->set();
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            glStencilFunc(GL_NOTEQUAL, 1, 1);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+            glPushMatrix();
+            vec above(center);
+            above.z += 0.25f;
+            setshadowmatrix(plane(floor, -floor.dot(above)), shaddir);
+            m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+            glPopMatrix();
+
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        }
+
+        notextureshader->set();
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
+        glStencilOp(bounddynshadows ? GL_REPLACE : GL_KEEP, bounddynshadows ? GL_REPLACE : GL_KEEP, GL_REPLACE);
+
         glColor4f(0, 0, 0, dynshadow/100.0f);
-        glPushMatrix();
-        setshadowmatrix(plane(floor, -floor.dot(center)), shaddir);
-        m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
-        glPopMatrix();
-    
+
+        if(bounddynshadows)
+        {
+            glDepthFunc(GL_GEQUAL);
+            vec below(center);
+            below.z -= 1.0f;
+            glPushMatrix();
+            setshadowmatrix(plane(floor, -floor.dot(below)), shaddir);
+            glBegin(GL_QUADS);
+            loopi(6) if((shaddir[dimension(i)]>0)==dimcoord(i)) loopj(4)
+            {
+                const ivec &cc = cubecoords[fv[i][j]];
+                glVertex3f(center.x + (cc.x ? 1.5f : -1.5f)*radius,
+                           center.y + (cc.y ? 1.5f : -1.5f)*radius,
+                           cc.z ? center.z + dist + radius : below.z);
+                xtraverts += 4;
+            }
+            glEnd();
+            glPopMatrix();
+
+            glDepthFunc(GL_LESS);
+        }
+        else
+        {
+            center.z += 0.25f;
+            glPushMatrix();
+            setshadowmatrix(plane(floor, -floor.dot(center)), shaddir);
+            m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+            glPopMatrix();
+        }
+ 
         glEnable(GL_TEXTURE_2D);
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
