@@ -208,8 +208,9 @@ void renderwaterfall(materialsurface &m, Texture *t, float offset)
     {
         vec v(m.o.tovec());
         v[dim] += dimcoord(m.orient) ? -offset : offset;
-        if(i == 1 || i == 2) v[dim^1] += csize;
-        if(i <= 1) v.z += rsize;
+        if(i==1 || i==2) v[dim^1] += csize;
+        if(i<=1) v.z += rsize;
+        if(m.ends&(i<=1 ? 2 : 1)) v.z -= 1.1f;
         glTexCoord2f(xf*v[dim^1], yf*(v.z+d));
         glVertex3fv(v.v);
     }
@@ -942,6 +943,30 @@ void setupmaterials()
                 m.light = brightestlight(center, vec(0, 0, 1));
                 float depth = raycube(center, vec(0, 0, -1), 10000);
                 waterdepths.add(depth);
+            }
+            else if(m.material==MAT_WATER && m.orient!=O_BOTTOM)
+            {
+                m.ends = 0;
+                int dim = dimension(m.orient), coord = dimcoord(m.orient);
+                ivec o(m.o);
+                o.z -= 1;
+                o[dim] += coord ? 1 : -1;
+                int minc = o[dim^1], maxc = minc + (C[dim]==2 ? m.rsize : m.csize);
+                while(o[dim^1] < maxc)
+                {
+                    cube &c = lookupcube(o.x, o.y, o.z);
+                    if(c.ext && c.ext->material==MAT_WATER) { m.ends |= 1; break; }
+                    o[dim^1] += lusize;
+                }
+                o[dim^1] = minc;
+                o.z += R[dim]==2 ? m.rsize : m.csize;
+                o[dim] -= coord ? 2 : -2;
+                while(o[dim^1] < maxc)
+                {
+                    cube &c = lookupcube(o.x, o.y, o.z);
+                    if(visiblematerial(c, O_TOP, lu.x, lu.y, lu.z, lusize)) { m.ends |= 2; break; }
+                    o[dim^1] += lusize;
+                }
             }
             else if(m.material==MAT_GLASS)
             {

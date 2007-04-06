@@ -27,6 +27,7 @@ struct materialsurface
     {
         entity *light;
         ushort envmap;
+        uchar ends;
     };
 };
 
