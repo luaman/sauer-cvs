@@ -269,15 +269,12 @@ void setprojtexmatrix(Reflection &ref)
 {
     if(ref.lastupdate==totalmillis)
     {
-        GLfloat tm[16] = {0.5f, 0, 0, 0,
-                          0, 0.5f, 0, 0,
-                          0, 0, 0.5f, 0,
-                          0.5f, 0.5f, 0.5f, 1};
         GLfloat pm[16], mm[16];
         glGetFloatv(GL_PROJECTION_MATRIX, pm);
         glGetFloatv(GL_MODELVIEW_MATRIX, mm);
 
-        glLoadMatrixf(tm);
+        glTranslatef(0.5f, 0.5f, 0.5f);
+        glScalef(0.5f, 0.5f, 0.5f);
         glMultMatrixf(pm);
         glMultMatrixf(mm);
 
