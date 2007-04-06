@@ -857,6 +857,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
+        vbufchanged = true;
     }
 
     if(renderpath!=R_FIXEDFUNCTION) 
