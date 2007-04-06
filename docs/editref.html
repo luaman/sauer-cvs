@@ -608,8 +608,10 @@ following types of materials are supported:
 air: the default material, has no effect.
 </li>
 <li>
-water: acts as you would expect. Only renders from the top, so treat it like
-real water and keep all 4 sides contained. Shows blue volume in edit mode.
+water: acts as you would expect. In fixedfunction mode (<i>-f0</i>) renders using
+the defined top/side textures, otherwise, renders the top as a reflection/refraction and the
+sides as a waterfall if it isn't contained. Should be placed with a floor at the bottom
+to contain it. Shows blue volume in edit mode.
 </li>
 <li>
 clip: an invisible wall that blocks players movement but not bullets. Is
@@ -1375,7 +1377,8 @@ map size and settings. If you "savemap", the lightmap will be stored along with
 it. Q is these predefined quality settinsg:
 </p>
 <ul>
-<li>2: 8x anti aliasing, shadows for mapmodels also (maximum quality, very slow)</li>
+<li>3: 8x anti aliasing, shadows for mapmodels with alpha (maximum quality, extremely slow)</li>
+<li>2: 8x anti aliasing, shadows for mapmodels (high quality, very slow)</li>
 <li>1: 8x anti aliasing, world shadows only (better lighting quality for huge maps, slow)</li>
 <li>0: 4x anti aliasing, world shadows only (default, good enough for most maps)</li>
 <li>-1: no anti aliasing, but still shadowed (good for shadow previews)</li>
