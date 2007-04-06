@@ -617,6 +617,8 @@ vtxarray *newva(int x, int y, int z, int size)
     int bufsize = verts.length()*(floatvtx ? sizeof(fvertex) : sizeof(vertex));
     if(!hasVBO) allocsize += bufsize; // length of vertex buffer
     vtxarray *va = (vtxarray *)new uchar[allocsize];
+    va->vbufGL = 0;
+    va->vbuf = 0; // Offset in VBO, or just null
     if(hasVBO && verts.length())
     {
         void *vbuf;
@@ -631,12 +633,10 @@ vtxarray *newva(int x, int y, int z, int size)
         int offset = int(size_t(vbuf)) / (floatvtx ? sizeof(fvertex) : sizeof(vertex)); 
         l0.offsetindices = offset;
         l1.offsetindices = offset;
-        va->vbuf = 0; // Offset in VBO
     }
     char *buf = l1.setup(va, va->l1, l0.setup(va, va->l0, (char *)(va+1)));
     if(!hasVBO)
     {
-        va->vbufGL = 0;
         va->vbuf = (vertex *)buf;
         if(floatvtx) genfloatverts((fvertex *)buf);
         else memcpy(va->vbuf, verts.getbuf(), bufsize);
