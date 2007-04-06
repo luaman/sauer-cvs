@@ -273,6 +273,7 @@ void setprojtexmatrix(Reflection &ref)
         glGetFloatv(GL_PROJECTION_MATRIX, pm);
         glGetFloatv(GL_MODELVIEW_MATRIX, mm);
 
+        glLoadIdentity();
         glTranslatef(0.5f, 0.5f, 0.5f);
         glScalef(0.5f, 0.5f, 0.5f);
         glMultMatrixf(pm);
@@ -360,7 +361,7 @@ void renderwater()
             glBindTexture(GL_TEXTURE_2D, camera1->o.z>=ref.height+offset ? ref.refracttex : ref.tex);
             glActiveTexture_(GL_TEXTURE0_ARB);
         }
- 
+
         bool begin = false;
         loopvj(ref.matsurfs)
         {
