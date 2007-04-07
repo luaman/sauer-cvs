@@ -357,7 +357,9 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             vec above(center);
             above.z += 0.25f;
             setshadowmatrix(plane(floor, -floor.dot(above)), shaddir);
+            if(!m->cullface) glDisable(GL_CULL_FACE);
             m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+            if(!m->cullface) glEnable(GL_CULL_FACE);
             glPopMatrix();
 
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -397,7 +399,9 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             center.z += 0.25f;
             glPushMatrix();
             setshadowmatrix(plane(floor, -floor.dot(center)), shaddir);
+            if(!m->cullface) glDisable(GL_CULL_FACE);
             m->render(anim|ANIM_NOSKIN|ANIM_REUSE, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+            if(!m->cullface) glEnable(GL_CULL_FACE);
             glPopMatrix();
         }
  
