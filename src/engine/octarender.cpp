@@ -21,19 +21,30 @@ void printcstats()
 
 VARF(floatvtx, 0, 0, 1, allchanged());
 
-void genfloatverts(fvertex *f)
-{
-    loopv(verts)
-    {
-        const vertex &v = verts[i];
-        f->x = v.x;
-        f->y = v.y;
-        f->z = v.z;
-        f->u = v.u;
-        f->v = v.v;
-        f->n = v.n;
-        f++;
+#define GENVERTS(type, ptr, body) \
+    { \
+        type *f = (type *)ptr; \
+        loopv(verts) \
+        { \
+            const vertex &v = verts[i]; \
+            f->x = v.x; \
+            f->y = v.y; \
+            f->z = v.z; \
+            f->u = v.u; \
+            f->v = v.v; \
+            body; \
+            f++; \
+        } \
     }
+
+void genverts(void *buf)
+{
+    if(renderpath==R_FIXEDFUNCTION)
+    {
+        if(floatvtx) { GENVERTS(fvertexff, buf, {}); }
+        else { GENVERTS(vertexff, buf, {}); }
+    }
+    else if(floatvtx) { GENVERTS(fvertex, buf, { f->n = v.n; }); }
 }
 
 struct vboinfo
@@ -123,7 +134,7 @@ void flushvbo(int type = -1)
 
 void *addvbo(vtxarray *va, int type, void *buf, int len)
 {
-    int minsize = type==VBO_VBUF ? min(vbosize, int(floatvtx ? sizeof(fvertex) : sizeof(vertex)) << 16) : vbosize;
+    int minsize = type==VBO_VBUF ? min(vbosize, int(VERTSIZE) << 16) : vbosize;
 
     if(len >= minsize)
     {
@@ -614,7 +625,7 @@ vtxarray *newva(int x, int y, int z, int size)
     l0.optimize();
     l1.optimize();
     int allocsize = sizeof(vtxarray) + l0.size() + l1.size();
-    int bufsize = verts.length()*(floatvtx ? sizeof(fvertex) : sizeof(vertex));
+    int bufsize = verts.length()*VERTSIZE;
     if(!hasVBO) allocsize += bufsize; // length of vertex buffer
     vtxarray *va = (vtxarray *)new uchar[allocsize];
     va->vbufGL = 0;
@@ -622,15 +633,15 @@ vtxarray *newva(int x, int y, int z, int size)
     if(hasVBO && verts.length())
     {
         void *vbuf;
-        if(floatvtx)
+        if(VERTSIZE!=sizeof(vertex))
         {
-            fvertex *f = new fvertex[verts.length()];
-            genfloatverts(f);
+            char *f = new char[bufsize];
+            genverts(f);
             vbuf = (vertex *)addvbo(va, VBO_VBUF, f, bufsize); 
             delete[] f;
         }
         else vbuf = (vertex *)addvbo(va, VBO_VBUF, verts.getbuf(), bufsize);
-        int offset = int(size_t(vbuf)) / (floatvtx ? sizeof(fvertex) : sizeof(vertex)); 
+        int offset = int(size_t(vbuf)) / VERTSIZE;
         l0.offsetindices = offset;
         l1.offsetindices = offset;
     }
@@ -638,7 +649,7 @@ vtxarray *newva(int x, int y, int z, int size)
     if(!hasVBO)
     {
         va->vbuf = (vertex *)buf;
-        if(floatvtx) genfloatverts((fvertex *)buf);
+        if(VERTSIZE!=sizeof(vertex)) genverts(buf);
         else memcpy(va->vbuf, verts.getbuf(), bufsize);
     }
 

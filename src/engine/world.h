@@ -74,5 +74,12 @@ struct vvec : svec
     vec tovec(const ivec &o) const       { return tovec(o.x, o.y, o.z); }
 };
 
-struct vertex : vvec { short u, v; bvec n; };
-struct fvertex : vec { short u, v; bvec n; };
+struct vertexff : vvec { short u, v; };
+struct fvertexff : vec { short u, v; };
+struct vertex : vertexff { bvec n; };
+struct fvertex : fvertexff { bvec n; };
+
+extern int floatvtx;
+
+#define VERTSIZE (renderpath==R_FIXEDFUNCTION ? (floatvtx ? sizeof(fvertexff) : sizeof(vertexff)) : (floatvtx ? sizeof(fvertex) : sizeof(vertex)))
+

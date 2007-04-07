@@ -139,7 +139,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         //conoutf("Using GL_ARB_vertex_buffer_object extension.");
     }
 
-    extern int floatvtx;
     if(strstr(vendor, "ATI"))
     {
         floatvtx = 1;
