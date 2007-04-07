@@ -32,7 +32,8 @@ struct vertmodel : model
     };
 
     struct vert { vec norm, pos; };
-    struct vvert : vert { float u, v; };
+    struct vvertff { vec pos; float u, v; };
+    struct vvert : vvertff { vec norm; };
     struct tcvert { float u, v; ushort index; };
     struct tri { ushort vert[3]; };
 
@@ -94,7 +95,7 @@ struct vertmodel : model
                     loopvj(vverts) // check if it's already added
                     {
                         vvert &w = vverts[j];
-                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && v.norm==w.norm) { idxs.add((ushort)j); goto found; }
+                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && (renderpath==R_FIXEDFUNCTION || v.norm==w.norm)) { idxs.add((ushort)j); goto found; }
                     }
                     {
                         idxs.add(vverts.length());
@@ -123,7 +124,14 @@ struct vertmodel : model
             {
                 glGenBuffers_(1, &statbuf);
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
-                glBufferData_(GL_ARRAY_BUFFER_ARB, vverts.length()*sizeof(vvert), vverts.getbuf(), GL_STATIC_DRAW_ARB);
+                if(renderpath==R_FIXEDFUNCTION)
+                {
+                    vvertff *ff = new vvertff[vverts.length()];
+                    loopv(vverts) { vvert &v = vverts[i]; ff[i].pos = v.pos; ff[i].u = v.u; ff[i].v = v.v; }
+                    glBufferData_(GL_ARRAY_BUFFER_ARB, vverts.length()*sizeof(vvertff), ff, GL_STATIC_DRAW_ARB);
+                    delete[] ff;
+                }
+                else glBufferData_(GL_ARRAY_BUFFER_ARB, vverts.length()*sizeof(vvert), vverts.getbuf(), GL_STATIC_DRAW_ARB);
 
                 glGenBuffers_(1, &statidx);
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
@@ -193,26 +201,32 @@ struct vertmodel : model
                 dynprev.fr1 = -1;
             }
             dyncur = cur;
-            loopi(numverts) // vertices
+            #define ip(p1, p2, t) (p1+t*(p2-p1))
+            #define ip_v(p, c, t) ip(p##1[i].c, p##2[i].c, t)
+            #define ip_v_ai(c) ip( ip_v(pvert, c, prev->t), ip_v(vert, c, cur.t), ai_t)
+            if(renderpath==R_FIXEDFUNCTION) loopi(numverts)
             {
                 vert &v = dynbuf[i];
-                #define ip(p1, p2, t) (p1+t*(p2-p1))
-                #define ip_v(p, c, t) ip(p##1[i].c, p##2[i].c, t)
+                if(prev) v.pos = vec(ip_v_ai(pos.x), ip_v_ai(pos.y), ip_v_ai(pos.z));
+                else v.pos = vec(ip_v(vert, pos.x, cur.t), ip_v(vert, pos.y, cur.t), ip_v(vert, pos.z, cur.t));
+            }
+            else loopi(numverts)
+            {
+                vert &v = dynbuf[i];
                 if(prev)
                 {
-                    #define ip_v_ai(c) ip( ip_v(pvert, c, prev->t), ip_v(vert, c, cur.t), ai_t)
                     v.norm = vec(ip_v_ai(norm.x), ip_v_ai(norm.y), ip_v_ai(norm.z));
                     v.pos = vec(ip_v_ai(pos.x), ip_v_ai(pos.y), ip_v_ai(pos.z));
-                    #undef ip_v_ai
                 }
                 else
                 {
                     v.norm = vec(ip_v(vert, norm.x, cur.t), ip_v(vert, norm.y, cur.t), ip_v(vert, norm.z, cur.t));
                     v.pos = vec(ip_v(vert, pos.x, cur.t), ip_v(vert, pos.y, cur.t), ip_v(vert, pos.z, cur.t));
                 }
-                #undef ip
-                #undef ip_v
             }
+            #undef ip
+            #undef ip_v
+            #undef ip_v_ai
         }
 
         void setshader(bool masked)
@@ -274,17 +288,21 @@ struct vertmodel : model
             bool isstat = as.frame==0 && as.range==1;
             if(hasVBO && isstat && statbuf) // vbo's for static stuff
             {
+                size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
                 glEnableClientState(GL_VERTEX_ARRAY);
                 vvert *vverts = 0;
-                glVertexPointer(3, GL_FLOAT, sizeof(vvert), &vverts->pos);
+                glVertexPointer(3, GL_FLOAT, vertsize, &vverts->pos);
                 if(!(as.anim&ANIM_NOSKIN))
                 {
-                    glEnableClientState(GL_NORMAL_ARRAY);
-                    glNormalPointer(GL_FLOAT, sizeof(vvert), &vverts->norm);
+                    if(renderpath!=R_FIXEDFUNCTION)
+                    {
+                        glEnableClientState(GL_NORMAL_ARRAY);
+                        glNormalPointer(GL_FLOAT, vertsize, &vverts->norm);
+                    }
                     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                    glTexCoordPointer(2, GL_FLOAT, sizeof(vvert), &vverts->u);
+                    glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
                 }
 
                 glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, 0);
@@ -294,7 +312,7 @@ struct vertmodel : model
                 if(!(as.anim&ANIM_NOSKIN)) 
                 {
                     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                    glDisableClientState(GL_NORMAL_ARRAY);
+                    if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
                 }
                 glDisableClientState(GL_VERTEX_ARRAY);
 
