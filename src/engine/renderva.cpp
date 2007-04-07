@@ -1309,7 +1309,6 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
         else
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
-            glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VERTSIZE, &(va->vbuf[0].x));
             skyvbufGL = va->vbufGL;
         }
         if(skyebufGL != lod.skybufGL)
