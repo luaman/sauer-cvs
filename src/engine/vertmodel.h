@@ -54,10 +54,10 @@ struct vertmodel : model
         ushort *dynidx;
         int dynlen;
         anpos dyncur, dynprev;
-        GLuint statbuf, statidx;
+        GLuint statbuf, statidx, statlist;
         int statlen;
 
-        mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), statbuf(0), statidx(0) 
+        mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), statbuf(0), statidx(0), statlist(0)
         {
             dyncur.fr1 = dynprev.fr1 = -1;
         }
@@ -73,6 +73,7 @@ struct vertmodel : model
                 if(statbuf) glDeleteBuffers_(1, &statbuf);
                 if(statidx) glDeleteBuffers_(1, &statidx);
             }
+            if(statlist) glDeleteLists(statlist, 1);
             DELETEA(dynidx);
             DELETEA(dynbuf);
         }
@@ -270,7 +271,8 @@ struct vertmodel : model
         {
             if(!(as.anim&ANIM_NOSKIN)) bindskin();
 
-            if(hasVBO && as.frame==0 && as.range==1 && statbuf) // vbo's for static stuff
+            bool isstat = as.frame==0 && as.range==1;
+            if(hasVBO && isstat && statbuf) // vbo's for static stuff
             {
                 glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
@@ -298,8 +300,14 @@ struct vertmodel : model
 
                 xtravertsva += numtcverts;
             }
+            else if(isstat && statlist)
+            {
+                glCallList(statlist);
+                xtraverts += dynlen;
+            }
             else if(dynbuf)
             {
+                if(isstat) glNewList(statlist = glGenLists(1), GL_COMPILE);
                 gendynverts(cur, prev, ai_t);
                 loopj(dynlen)
                 {
@@ -312,14 +320,19 @@ struct vertmodel : model
                     }
                     tcvert &tc = tcverts[index];
                     vert &v = dynbuf[tc.index];
-                    if(!(as.anim&ANIM_NOSKIN))
+                    if(isstat || !(as.anim&ANIM_NOSKIN))
                     {
                         glTexCoord2f(tc.u, tc.v);
-                        glNormal3fv(v.norm.v);
+                        if(renderpath!=R_FIXEDFUNCTION) glNormal3fv(v.norm.v);
                     }
                     glVertex3fv(v.pos.v);
                 }
                 glEnd();
+                if(isstat)
+                {
+                    glEndList();
+                    glCallList(statlist);
+                }
                 xtraverts += dynlen;
             }
 
