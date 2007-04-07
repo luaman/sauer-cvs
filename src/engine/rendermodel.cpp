@@ -244,7 +244,7 @@ void setshadowmatrix(const plane &p, const vec &dir)
 }
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
-VARP(bounddynshadows, 0, 0, 1);
+VARP(bounddynshadows, 0, 1, 1);
 VARP(dynshadow, 0, 60, 100);
 
 extern float reflecting, refracting;
