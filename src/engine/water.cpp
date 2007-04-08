@@ -1223,8 +1223,11 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
         loopi(lod.matsurfs)
         {
             materialsurface &m = lod.matbuf[i];
-            if(m.material==MAT_WATER && m.orient==O_TOP) continue;
-            if(m.material>=MAT_EDIT) continue;
+            if(!editmode || !showmat)
+            {
+                if(m.material==MAT_WATER && m.orient==O_TOP) continue;
+                if(m.material>=MAT_EDIT) continue;
+            }
             vismats.add(&m);
         }
     }
