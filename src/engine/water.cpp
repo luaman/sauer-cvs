@@ -291,7 +291,7 @@ void rendervertwater()
 
         if(waterreflect || waterrefract)
         {
-            if(hasOQ && oqfrags && oqwater && ref.query && checkquery(ref.query)) continue;
+            if(hasOQ && oqfrags && oqwater && ref.query && ref.query->owner==&ref && checkquery(ref.query)) continue;
             if(waterrefract) glActiveTexture_(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, ref.tex);
             setprojtexmatrix(ref);
@@ -392,7 +392,7 @@ void renderwater()
 
         if(waterreflect || waterrefract)
         {
-            if(hasOQ && oqfrags && oqwater && ref.query && checkquery(ref.query)) continue;
+            if(hasOQ && oqfrags && oqwater && ref.query && ref.query->owner==&ref && checkquery(ref.query)) continue;
             glBindTexture(GL_TEXTURE_2D, ref.tex);
             setprojtexmatrix(ref);
         }
@@ -628,8 +628,11 @@ void queryreflections()
             if(m.material==MAT_WATER && m.orient==O_TOP) addreflection(m);
         }
     }
-    
+   
+    lastquery = totalmillis;
+ 
     if((editmode && showmat) || !hasOQ || !oqfrags || !oqwater || (!waterreflect && !waterrefract)) return;
+
     int refs = 0, minmillis = 1000/reflectfps;
     loopi(MAXREFLECTIONS)
     {
@@ -668,8 +671,6 @@ void queryreflections()
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glEnable(GL_CULL_FACE);
     }
-
-    lastquery = totalmillis;
 }
 
 VARP(maxreflect, 1, 1, 8);
