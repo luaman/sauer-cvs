@@ -1416,10 +1416,6 @@ void rendermaterials(float zclip, bool refract)
                     if(!begin) { glBegin(GL_QUADS); begin = true; }
                     renderwaterfall(m, wslot.sts[1].t, 0.1f);
                 }
-#if 0
-                else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize) >= (uint)m.csize * 2)
-                    rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize);
-#endif
                 break;
 
             case MAT_GLASS:

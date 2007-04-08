@@ -81,5 +81,5 @@ struct fvertex : fvertexff { bvec n; };
 
 extern int floatvtx;
 
-#define VERTSIZE (renderpath==R_FIXEDFUNCTION ? (floatvtx ? sizeof(fvertexff) : sizeof(vertexff)) : (floatvtx ? sizeof(fvertex) : sizeof(vertex)))
+#define VTXSIZE (renderpath==R_FIXEDFUNCTION ? (floatvtx ? sizeof(fvertexff) : sizeof(vertexff)) : (floatvtx ? sizeof(fvertex) : sizeof(vertex)))
 

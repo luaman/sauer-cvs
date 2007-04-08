@@ -134,7 +134,7 @@ void flushvbo(int type = -1)
 
 void *addvbo(vtxarray *va, int type, void *buf, int len)
 {
-    int minsize = type==VBO_VBUF ? min(vbosize, int(VERTSIZE) << 16) : vbosize;
+    int minsize = type==VBO_VBUF ? min(vbosize, int(VTXSIZE) << 16) : vbosize;
 
     if(len >= minsize)
     {
@@ -625,7 +625,7 @@ vtxarray *newva(int x, int y, int z, int size)
     l0.optimize();
     l1.optimize();
     int allocsize = sizeof(vtxarray) + l0.size() + l1.size();
-    int bufsize = verts.length()*VERTSIZE;
+    int bufsize = verts.length()*VTXSIZE;
     if(!hasVBO) allocsize += bufsize; // length of vertex buffer
     vtxarray *va = (vtxarray *)new uchar[allocsize];
     va->vbufGL = 0;
@@ -633,7 +633,7 @@ vtxarray *newva(int x, int y, int z, int size)
     if(hasVBO && verts.length())
     {
         void *vbuf;
-        if(VERTSIZE!=sizeof(vertex))
+        if(VTXSIZE!=sizeof(vertex))
         {
             char *f = new char[bufsize];
             genverts(f);
@@ -641,7 +641,7 @@ vtxarray *newva(int x, int y, int z, int size)
             delete[] f;
         }
         else vbuf = (vertex *)addvbo(va, VBO_VBUF, verts.getbuf(), bufsize);
-        int offset = int(size_t(vbuf)) / VERTSIZE;
+        int offset = int(size_t(vbuf)) / VTXSIZE;
         l0.offsetindices = offset;
         l1.offsetindices = offset;
     }
@@ -649,7 +649,7 @@ vtxarray *newva(int x, int y, int z, int size)
     if(!hasVBO)
     {
         va->vbuf = (vertex *)buf;
-        if(VERTSIZE!=sizeof(vertex)) genverts(buf);
+        if(VTXSIZE!=sizeof(vertex)) genverts(buf);
         else memcpy(va->vbuf, verts.getbuf(), bufsize);
     }
 

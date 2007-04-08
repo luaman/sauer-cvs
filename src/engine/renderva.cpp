@@ -553,7 +553,7 @@ void renderoutline()
                 ebufGL = lod.ebufGL;
             }
         }
-        if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VERTSIZE, &(va->vbuf[0].x));
+        if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
 
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
@@ -671,7 +671,7 @@ void rendercaustics(float z, bool refract)
                 ebufGL = lod.ebufGL;
             }
         }
-        if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VERTSIZE, &(va->vbuf[0].x));
+        if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
 
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
@@ -770,7 +770,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             cur.ebufGL = lod.ebufGL;
         }
     }
-    if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VERTSIZE, &(va->vbuf[0].x));
+    if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
 
     if(zfill)
@@ -860,14 +860,14 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
     if(renderpath!=R_FIXEDFUNCTION) 
     { 
-        if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, VERTSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+        if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
     }
 
     if(vbufchanged)
     {
         glClientActiveTexture_(GL_TEXTURE1_ARB);
-        glTexCoordPointer(2, GL_SHORT, VERTSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
+        glTexCoordPointer(2, GL_SHORT, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
     }
 
@@ -1317,7 +1317,7 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
             skyebufGL = lod.skybufGL;
         }
     }
-    if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VERTSIZE, &(va->vbuf[0].x));
+    if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
 
     glDrawElements(GL_TRIANGLES, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
     glde++;
