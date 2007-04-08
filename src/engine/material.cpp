@@ -528,10 +528,18 @@ void rendermaterials(float zclip, bool refract)
                 case MAT_WATER:
                     if(lastmat==MAT_WATER && lastorient!=O_TOP && m.orient!=O_TOP) break;
                     if(begin) { glEnd(); begin = false; }
-                    if(lastmat!=MAT_WATER)
+                    if(lastmat!=MAT_WATER || (lastorient==O_TOP)!=(m.orient==O_TOP))
                     {
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        glColor4ubv(wcol);
+                        if(m.orient==O_TOP)
+                        {
+                            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                            glColor4ubv(wcol);
+                        }
+                        else
+                        {
+                            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
+                            glColor3f(wcol[0]/192.0f, wcol[1]/192.0f, wcol[2]/192.0f);
+                        }
                     }
                     if(textured!=GL_TEXTURE_2D) 
                     { 
