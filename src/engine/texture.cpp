@@ -52,6 +52,17 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     return d;
 }
 
+void texmad(SDL_Surface *s, float mul, float add)
+{
+    int depth = s->format->BitsPerPixel/8;
+    uchar *src = (uchar *)s->pixels;
+    loopi(s->h*s->w*depth)
+    {
+        float val = *src*mul + 255*add;
+        *src++ = uchar(min(max(val, 0), 255));
+    }
+}
+
 VARP(mintexcompresssize, 0, 1<<10, 1<<12);
 
 void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, GLenum component, GLenum subtarget)
@@ -158,16 +169,25 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
 
 static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool msg = true)
 {
-    static string pname;
     if(tex && !tname)
     {
+        static string pname;
         s_sprintf(pname)("packages/%s", tex->name);
         tname = path(pname);
     }
+    if(!tname) return NULL;
 
-    show_out_of_renderloop_progress(0, tname);
+    const char *file = tname;
+    if(tname[0]=='<')
+    {
+        file = strchr(tname, '>');
+        if(!file) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
+        file++;
+    }
 
-    SDL_Surface *s = IMG_Load(tname);
+    show_out_of_renderloop_progress(0, file);
+
+    SDL_Surface *s = IMG_Load(file);
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
     int bpp = s->format->BitsPerPixel;
     if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 24, or 32 bpp: %s", tname); return NULL; }
@@ -175,6 +195,12 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     {
         if(tex->rotation) s = texrotate(s, tex->rotation, tex->type);
         if(tex->xoffset || tex->yoffset) s = texoffset(s, tex->xoffset, tex->yoffset);
+    }
+    if(tname[0]=='<')
+    {
+        const char *cmd = &tname[1], *arg1 = strchr(cmd, ':'), *arg2 = arg1 ? strchr(arg1, ',') : NULL;
+        if(!arg1) arg1 = strchr(cmd, '>');
+        if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, atof(arg1+1), arg2 ? atof(arg2+1) : 0); 
     }
     return s;
 }

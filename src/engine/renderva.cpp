@@ -590,7 +590,7 @@ void rendercaustics(float z, bool refract)
     static Texture *caustics[NUMCAUSTICS] = { NULL };
     if(!caustics[0]) loopi(NUMCAUSTICS)
     {
-        s_sprintfd(name)("packages/caustics/caust%.2d.png", i);
+        s_sprintfd(name)("<mad:0.6,0.4>packages/caustics/caust%.2d.png", i);
         caustics[i] = textureload(name);
     }
 
