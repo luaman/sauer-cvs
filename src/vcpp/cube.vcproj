@@ -900,6 +900,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\material.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\md2.h"
 					>
 				</File>

@@ -85,6 +85,11 @@ extern Slot    &lookuptexture(int tex, bool load = true);
 extern Shader  *lookupshader(int slot);
 extern void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D);
 extern void renderfullscreenshader(int w, int h);
+extern void initenvmaps();
+extern void genenvmaps();
+extern ushort closestenvmap(const vec &o);
+extern ushort closestenvmap(int orient, int x, int y, int z, int size);
+extern GLuint lookupenvmap(ushort emid);
 
 // rendergl
 extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasstencil;
@@ -185,11 +190,7 @@ extern int getnumqueries();
         if(ati_oq_bug) glFlush(); \
     }
 
-// water
-
-#define getwatercolour(wcol) \
-    uchar wcol[3] = { 20, 70, 80 }; \
-    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+// material
 
 extern int showmat;
 
@@ -199,20 +200,20 @@ extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
 extern void setupmaterials();
+extern void rendermaterials(float zclip = 0, bool refract = false);
+extern void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false);
+
+// water
+#define getwatercolour(wcol) \
+    uchar wcol[3] = { 20, 70, 80 }; \
+    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+
 extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();
 extern void renderwater();
-extern void rendermaterials(float zclip = 0, bool refract = false);
-
-extern void initenvmaps();
-extern void genenvmaps();
-extern ushort closestenvmap(const vec &o);
-extern ushort closestenvmap(int orient, int x, int y, int z, int size);
-extern GLuint lookupenvmap(ushort emid);
 
 // server
-
 extern void initserver(bool dedicated);
 extern void cleanupserver();
 extern void serverslice(int seconds, uint timeout);
