@@ -290,11 +290,16 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
 
 extern vector<vtxarray *> valist;
 
+struct waterinfo
+{
+    materialsurface *m;
+    double depth, area;
+};
+
 void setupmaterials()
 {
-    vector<materialsurface *> water;
+    vector<waterinfo> water;
     hashtable<ivec, int> watersets;
-    vector<float> waterdepths;
     unionfind uf;
     loopv(valist)
     {
@@ -308,7 +313,7 @@ void setupmaterials()
                 m.index = water.length();
                 loopvk(water)
                 {
-                    materialsurface &n = *water[k];
+                    materialsurface &n = *water[k].m;
                     if(m.o.z!=n.o.z) continue;
                     if(n.o.x+n.rsize==m.o.x || m.o.x+m.rsize==n.o.x)
                     {
@@ -319,11 +324,13 @@ void setupmaterials()
                         if(n.o.x+n.rsize>m.o.x && n.o.x<m.o.x+m.rsize) uf.unite(m.index, n.index);
                     }
                 }
-                water.add(&m);
+                waterinfo &wi = water.add();
+                wi.m = &m;
                 vec center(m.o.x+m.rsize/2, m.o.y+m.csize/2, m.o.z-1.1f);
                 m.light = brightestlight(center, vec(0, 0, 1));
                 float depth = raycube(center, vec(0, 0, -1), 10000);
-                waterdepths.add(depth);
+                wi.depth = double(depth)*m.rsize*m.csize;
+                wi.area = m.rsize*m.csize; 
             }
             else if(m.material==MAT_WATER && m.orient!=O_BOTTOM)
             {
@@ -363,19 +370,20 @@ void setupmaterials()
             }
         }
     }
-    loopv(waterdepths)
+    loopv(water)
     {
         int root = uf.find(i);
         if(i==root) continue;
-        materialsurface &m = *water[i], &n = *water[root];
+        materialsurface &m = *water[i].m, &n = *water[root].m;
         if(m.light && (!m.light->attr1 || !n.light || (n.light->attr1 && m.light->attr1 > n.light->attr1))) n.light = m.light;
-        waterdepths[root] = max(waterdepths[root], waterdepths[i]);
+        water[root].depth += water[i].depth;
+        water[root].area += water[i].area;
     }
     loopv(water)
     {
         int root = uf.find(i);
-        water[i]->light = water[root]->light;
-        water[i]->depth = (short)waterdepths[root];
+        water[i].m->light = water[root].m->light;
+        water[i].m->depth = (short)(water[root].depth/water[root].area);
     }
 }
 
