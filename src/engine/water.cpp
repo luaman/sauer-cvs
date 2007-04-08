@@ -625,7 +625,7 @@ void queryreflections()
         loopi(lod.matsurfs)
         {
             materialsurface &m = lod.matbuf[i];
-            if(m.orient==O_TOP) addreflection(m);
+            if(m.material==MAT_WATER && m.orient==O_TOP) addreflection(m);
         }
     }
     
