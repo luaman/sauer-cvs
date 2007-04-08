@@ -972,7 +972,7 @@ void setupmaterials()
             }
             else if(m.material==MAT_GLASS)
             {
-                if(!hasCM || renderpath==R_FIXEDFUNCTION) m.envmap = EMID_NONE;
+                if(!hasCM) m.envmap = EMID_NONE;
                 else
                 {
                     int dim = dimension(m.orient);
@@ -1099,6 +1099,27 @@ void rendermatgrid(vector<materialsurface *> &vismats)
 
 VARP(glassenv, 0, 1, 1);
 
+void drawglass(int orient, int x, int y, int z, int csize, int rsize, float offset)
+{
+    int dim = dimension(orient), c = C[dim], r = R[dim];
+    loopi(4)
+    {
+        int coord = fv[orient][i];
+        vec v(x, y, z);
+        v[c] += cubecoords[coord][c]/8*csize;
+        v[r] += cubecoords[coord][r]/8*rsize;
+        v[dim] += dimcoord(orient) ? -offset : offset;
+
+        vec reflect(v);
+        reflect.sub(camera1->o);
+        reflect[dim] = -reflect[dim];
+
+        glTexCoord3f(-reflect.y, reflect.z, reflect.x);
+        glVertex3fv(v.v);
+    }
+    xtraverts += 4;
+}
+
 void rendermaterials(float zclip, bool refract)
 {
     vector<materialsurface *> vismats;
@@ -1113,8 +1134,10 @@ void rendermaterials(float zclip, bool refract)
     uchar wcol[4] = { 128, 128, 128, 192 };
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
     int lastorient = -1, lastmat = -1;
-    bool textured = true, begin = false;
+    GLenum textured = GL_TEXTURE_2D;
+    bool begin = false;
     ushort envmapped = EMID_NONE;
+    vec normal(0, 0, 0);
 
     loopv(vismats)
     {
@@ -1132,46 +1155,69 @@ void rendermaterials(float zclip, bool refract)
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                         glColor4ubv(wcol);
                     }
-                    if(!textured) { glEnable(GL_TEXTURE_2D); textured = true; }
+                    if(textured!=GL_TEXTURE_2D) 
+                    { 
+                        if(textured) glDisable(textured); 
+                        glEnable(GL_TEXTURE_2D); 
+                        textured = GL_TEXTURE_2D; 
+                    }
                     glBindTexture(GL_TEXTURE_2D, wslot.sts[m.orient==O_TOP ? 0 : 1].t->gl);
                     defaultshader->set();
                     break;
 
                 case MAT_GLASS:
-                    if((m.envmap==EMID_NONE || !glassenv) && lastmat==MAT_GLASS) break;
+                    if(m.envmap!=EMID_NONE && glassenv && (lastmat!=MAT_GLASS || lastorient!=m.orient))
+                        normal = vec(dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
+                                     dimension(m.orient)==1 ? dimcoord(m.orient)*2-1 : 0,
+                                     dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0);
+                    if((m.envmap==EMID_NONE || !glassenv || (envmapped==m.envmap && textured==GL_TEXTURE_CUBE_MAP_ARB)) && lastmat==MAT_GLASS) break;
                     if(begin) { glEnd(); begin = false; }
-                    if(m.envmap!=EMID_NONE && glassenv && envmapped!=m.envmap)
+                    if(m.envmap!=EMID_NONE && glassenv)
                     {
-                        glActiveTexture_(GL_TEXTURE1_ARB);
-                        if(envmapped==EMID_NONE) glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(m.envmap));
-                        glActiveTexture_(GL_TEXTURE0_ARB);
-                        if(envmapped==EMID_NONE) setenvparamf("camera", SHPARAM_VERTEX, 0, camera1->o.x, camera1->o.y, camera1->o.z);
-                        envmapped = m.envmap;
+                        if(textured!=GL_TEXTURE_CUBE_MAP_ARB) 
+                        { 
+                            if(textured) glDisable(textured); 
+                            glEnable(GL_TEXTURE_CUBE_MAP_ARB); 
+                            textured = GL_TEXTURE_CUBE_MAP_ARB; 
+                        }
+                        if(envmapped!=m.envmap)
+                        {
+                            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(m.envmap));
+                            if(envmapped==EMID_NONE && renderpath!=R_FIXEDFUNCTION) 
+                                setenvparamf("camera", SHPARAM_VERTEX, 0, camera1->o.x, camera1->o.y, camera1->o.z);
+                            envmapped = m.envmap;
+                        }
                     }
                     if(lastmat!=MAT_GLASS)
                     {
-                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; }
                         if(m.envmap!=EMID_NONE && glassenv)
                         {
-                            glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-                            glColor3f(0, 0.5f, 1.0f);
+                            if(renderpath==R_FIXEDFUNCTION)
+                            {
+                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                                glColor4f(0.8f, 0.9f, 1.0f, 0.25f);
+                            }
+                            else
+                            {
+                                glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+                                glColor3f(0, 0.5f, 1.0f);
+                            }
                             static Shader *glassshader = NULL;
                             if(!glassshader) glassshader = lookupshaderbyname("glass");
                             glassshader->set();
                         }
                         else
                         {
+                            if(textured) 
+                            { 
+                                glDisable(textured);
+                                textured = 0;
+                            }
                             glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                             glColor3f(0.3f, 0.15f, 0.0f);
                             notextureshader->set();
                         }
                     }
-                    if(m.envmap!=EMID_NONE && glassenv && (lastmat!=MAT_GLASS || lastorient!=m.orient)) 
-                        setlocalparamf("normal", SHPARAM_VERTEX, 1,
-                            dimension(m.orient)==0 ? dimcoord(m.orient)*2-1 : 0,
-                            dimension(m.orient)==1 ? dimcoord(m.orient)*2-1 : 0,
-                            dimension(m.orient)==2 ? dimcoord(m.orient)*2-1 : 0);
                     break;
 
                 default:
@@ -1181,7 +1227,7 @@ void rendermaterials(float zclip, bool refract)
                     {
                         if(begin) { glEnd(); begin = false; }
                         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-                        if(textured) { glDisable(GL_TEXTURE_2D); textured = false; }
+                        if(textured) { glDisable(GL_TEXTURE_2D); textured = 0; }
                         notextureshader->set();
                     }
                     static uchar blendcols[MAT_EDIT][3] =
@@ -1213,7 +1259,12 @@ void rendermaterials(float zclip, bool refract)
 
             case MAT_GLASS:
                 if(!begin) { glBegin(GL_QUADS); begin = true; }
-                drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
+                if(m.envmap!=EMID_NONE && glassenv)
+                {
+                    if(renderpath!=R_FIXEDFUNCTION) glNormal3fv(normal.v);
+                    drawglass(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
+                }
+                else drawface(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 0.1f);
                 break;
 
             default:
@@ -1229,13 +1280,10 @@ void rendermaterials(float zclip, bool refract)
     else rendermatgrid(vismats);
 
     glEnable(GL_CULL_FACE);
-    if(!textured) glEnable(GL_TEXTURE_2D);
-
-    if(envmapped!=EMID_NONE)
+    if(textured!=GL_TEXTURE_2D)
     {
-        glActiveTexture_(GL_TEXTURE1_ARB);
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        glActiveTexture_(GL_TEXTURE0_ARB);
+        if(textured) glDisable(textured);
+        glEnable(GL_TEXTURE_2D);
     }
 }
 

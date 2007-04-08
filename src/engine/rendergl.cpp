@@ -254,13 +254,15 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             //conoutf("Using GL_ARB_texture_rectangle extension.");
         }
         else conoutf("WARNING: No texture rectangle support. (no full screen shaders)");
-        if(strstr(exts, "GL_ARB_texture_cube_map"))
-        {
-            hasCM = true;
-            //conoutf("Using GL_ARB_texture_cube_map extension.");
-        }
-        else conoutf("WARNING: No cube map texture support. (no reflective glass)");
     }
+
+    if(strstr(exts, "GL_ARB_texture_cube_map"))
+    {
+        hasCM = true;
+        //conoutf("Using GL_ARB_texture_cube_map extension.");
+    }
+    else conoutf("WARNING: No cube map texture support. (no reflective glass)");
+
     if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
 
     if(strstr(exts, "GL_EXT_texture_compression_s3tc"))

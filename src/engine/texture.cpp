@@ -655,7 +655,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
 
 void initenvmaps()
 {
-    if(!hasCM || renderpath==R_FIXEDFUNCTION) return;
+    if(!hasCM) return;
     clearenvmaps();
     skyenvmap = cubemapfromsky(1<<envmapsize);
     const vector<extentity *> &ents = et->getents();
