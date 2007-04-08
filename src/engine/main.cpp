@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 
     bool dedicated = false;
     int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0, fsaa = 0, stencil = 1;
-    char *load = NULL;
+    char *load = NULL, *initscript = NULL;
     
     #define log(s) puts("init: " s)
     log("sdl");
@@ -311,6 +311,7 @@ int main(int argc, char **argv)
                 else load = &argv[i][2]; 
                 break;
             }
+            case 'x': initscript = &argv[i][2]; break;
             default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");
         }
         else conoutf("unknown commandline argument");
@@ -424,6 +425,8 @@ int main(int argc, char **argv)
     localconnect();
     cc->gameconnect(false);
     cc->changemap(load ? load : "metl4");
+
+    if(initscript) execute(initscript);
 
     log("mainloop");
     int ignore = 5, grabmouse = 0;
