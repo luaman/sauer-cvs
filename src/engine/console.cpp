@@ -44,8 +44,6 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     }
 }
 
-extern int scr_w, scr_h;
-
 const int CONSPAD = FONTH/3;
 
 void conoutf(const char *s, ...)

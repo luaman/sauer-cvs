@@ -13,6 +13,7 @@
 extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture_;
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_;
 extern PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2f_;
+extern PFNGLMULTITEXCOORD3FARBPROC     glMultiTexCoord3f_;
 
 // GL_ARB_vertex_buffer_object
 extern PFNGLGENBUFFERSARBPROC    glGenBuffers_;
@@ -64,6 +65,7 @@ extern bool inbetweenframes;
 extern int curtime;                     // current frame time
 extern int lastmillis;                  // last time
 extern int totalmillis;                 // total elapsed time
+extern int scr_w, scr_h;
 
 extern igameclient     *cl;
 extern igameserver     *sv;

@@ -607,7 +607,6 @@ VAR(aaenvmap, 0, 1, 1);
 
 GLuint genenvmap(const vec &o, int envmapsize)
 {
-    extern int scr_w, scr_h;
     int rendersize = 1;
     while(rendersize < scr_w && rendersize < scr_h) rendersize *= 2;
     if(rendersize > scr_w || rendersize > scr_h) rendersize /= 2;

@@ -21,7 +21,7 @@ float wcol[4];
         body; \
         glVertex3f(v1, v2, v3+h); \
     }
-#define VERTWT(vertwt, body) VERTW(vertwt, { float v = cosf(angle); float duv = 0.3f*v; body; })
+#define VERTWT(vertwt, body) VERTW(vertwt, { float v = cosf(angle); float duv = 0.5f*v; body; })
 VERTW(vertwc, {
     glColor4f(wcol[0], wcol[1], wcol[2], max(wcol[3], 0.5f) - fabs(s)*0.1f);
 })
