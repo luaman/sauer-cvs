@@ -104,9 +104,9 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     glEnable(GL_CULL_FACE);
 
     const char *vendor = (const char *)glGetString(GL_VENDOR);
-    const char *exts = (char *)glGetString(GL_EXTENSIONS);
-    const char *renderer = (char *)glGetString(GL_RENDERER);
-    const char *version = (char *)glGetString(GL_VERSION);
+    const char *exts = (const char *)glGetString(GL_EXTENSIONS);
+    const char *renderer = (const char *)glGetString(GL_RENDERER);
+    const char *version = (const char *)glGetString(GL_VERSION);
     conoutf("Renderer: %s (%s)", renderer, vendor);
     conoutf("Driver: %s", version);
     
