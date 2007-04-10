@@ -689,10 +689,6 @@ void gl_drawframe(int w, int h, float curfps)
     rendergrass();
     rendermaterials();
 
-    defaultshader->set();
-
-    g3d_render();
-
     if(!isthirdperson()) 
     {
         project(hudgunfov, aspect, farplane);
@@ -704,6 +700,8 @@ void gl_drawframe(int w, int h, float curfps)
     defaultshader->set();
     
     render_particles(curtime);
+
+    g3d_render();
 
     glDisable(GL_CULL_FACE);
 
