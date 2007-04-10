@@ -665,12 +665,6 @@ void gl_drawframe(int w, int h, float curfps)
 
     queryreflections();
 
-    if(underwater) 
-    {
-        cube &s = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*1.25f));
-        if(s.ext && s.ext->material==MAT_WATER) rendercaustics(0, false);
-    }
-
     if(!wireframe) renderoutline();
 
     rendermapmodels();
@@ -678,6 +672,12 @@ void gl_drawframe(int w, int h, float curfps)
     defaultshader->set();
 
     cl->rendergame();
+
+    if(underwater) 
+    {
+        cube &s = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*1.25f));
+        if(s.ext && s.ext->material==MAT_WATER) rendercaustics(0, false);
+    }
 
     defaultshader->set();
 
