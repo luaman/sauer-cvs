@@ -19,7 +19,7 @@ template <class T> struct tident
     int _override;       // either NO_OVERRIDE, OVERRIDDEN, or value
     union
     {
-        void (*_fun)();      // ID_VAR, ID_COMMAND
+        void (__cdecl *_fun)();      // ID_VAR, ID_COMMAND
         identstack *_stack;  // ID_ALIAS
     };
     union
@@ -53,6 +53,7 @@ template <class T> struct tident
     int operator()() { return (int)(size_t)_narg; }
     
     virtual void run(char **args) {}
+    virtual void changed() { if(_fun) _fun(); }
 };
 
 typedef tident<void> ident;
@@ -78,5 +79,7 @@ extern void result(const char *s);
 #define ICOMMAND(n, g, b) _COMMAND(void, , NULL, , n, g, b)
 #define CCOMMAND(t, n, g, b) _COMMAND(t, t *_s, _s, (this), n, g, b)
  
-#define IVAR(n, m, c, x)  struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val) { addident(_name, this); } } n
+#define _IVAR(n, m, c, x, b) struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val) { addident(_name, this); } } n
+#define IVAR(n, m, c, x)  _IVAR(n, m, c, x, )
+#define IVARF(n, m, c, x, b) _IVAR(n, m, c, x, void changed() { b; })
 //#define ICALL(n, a) { char *args[] = a; icom_##n.run(args); }

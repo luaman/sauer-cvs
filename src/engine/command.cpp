@@ -44,7 +44,7 @@ void clearoverrides()
                     break;
                 case ID_VAR: 
                     *i._storage = i._override;
-                    if(i._fun) ((void (__cdecl *)())i._fun)();
+                    i.changed();
                     break;
             }
             i._override = NO_OVERRIDE;
@@ -145,7 +145,7 @@ void setvar(char *name, int i, bool dofunc)
 { 
     GETVAR(id, name, );
     *id->_storage = i; 
-    if(dofunc && id->_fun) ((void (__cdecl *)())id->_fun)();
+    if(dofunc) id->changed();
 } 
 int getvar(char *name) 
 { 
@@ -461,7 +461,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                             conoutf("valid range for %s is %d..%d", id->_name, id->_min, id->_max);
                         }
                         *id->_storage = i1;
-                        if(id->_fun) ((void (__cdecl *)())id->_fun)();            // call trigger function if available
+                        id->changed();                                             // call trigger function if available
                     }
                     break;
                     
