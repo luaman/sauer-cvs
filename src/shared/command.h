@@ -79,7 +79,7 @@ extern void result(const char *s);
 #define ICOMMAND(n, g, b) _COMMAND(void, , NULL, , n, g, b)
 #define CCOMMAND(t, n, g, b) _COMMAND(t, t *_s, _s, (this), n, g, b)
  
-#define _IVAR(n, m, c, x, b) struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val) { addident(_name, this); } } n
+#define _IVAR(n, m, c, x, b) struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val) { addident(_name, this); } b } n
 #define IVAR(n, m, c, x)  _IVAR(n, m, c, x, )
 #define IVARF(n, m, c, x, b) _IVAR(n, m, c, x, void changed() { b; })
 //#define ICALL(n, a) { char *args[] = a; icom_##n.run(args); }
