@@ -452,7 +452,8 @@ Loads map S on startup (default: base/metl4).
 
 <pre id="_minus_xs">-xS</pre>
 <p>
-Executes the script commands S on startup.
+Executes the script commands S on startup, note that this is done <i>before the map loads</i>, so if you wish them to
+be executed later, you should enclose them in a <i>sleep</i> statement. Example: <tt>-x"sleep 1000 [ connect localhost ]"</tt>
 </p>
 
 <pre id="_minus_un">-uN</pre>
