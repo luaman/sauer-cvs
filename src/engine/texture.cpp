@@ -3,6 +3,47 @@
 #include "pch.h"
 #include "engine.h"
 
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+#define RMASK 0xff000000
+#define GMASK 0x00ff0000
+#define BMASK 0x0000ff00
+#define AMASK 0x000000ff
+#else
+#define RMASK 0x000000ff
+#define GMASK 0x0000ff00
+#define BMASK 0x00ff0000
+#define AMASK 0xff000000
+#endif
+
+SDL_Surface *creatergbasurface(SDL_Surface *os)
+{
+    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, os->w, os->h, 32, RMASK, GMASK, BMASK, AMASK);
+    if(!ns) fatal("creatergbsurface");
+    SDL_BlitSurface(os, NULL, ns, NULL);
+    SDL_FreeSurface(os);
+    return ns;
+}
+
+static GLenum texformat(int bpp)
+{
+    switch(bpp)
+    {
+        case 8: return GL_LUMINANCE;
+        case 24: return GL_RGB;
+        case 32: return GL_RGBA;
+        default: return 0;
+    }
+}
+
+SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
+{
+    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, os->format->BitsPerPixel, os->format->Rmask, os->format->Gmask, os->format->Bmask, os->format->Amask);
+    if(!ns) fatal("scalesurface");
+    gluScaleImage(texformat(os->format->BitsPerPixel), os->w, os->h, GL_UNSIGNED_BYTE, os->pixels, w, h, GL_UNSIGNED_BYTE, ns->pixels);
+    SDL_FreeSurface(os);
+    return ns;
+}
+
 SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
 {
     // 1..3 rotate through 90..270 degrees, 4 flips X, 5 flips Y 
@@ -121,7 +162,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
     {
         if(gluBuild2DMipmaps(subtarget, compressed, w, h, format, type, pixels))
         {
-            if(compressed==component || gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) fatal("could not build mipmaps");
+            if(compressed==component || gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) conoutf("could not build mipmaps");
         }
     }
     else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
@@ -132,17 +173,6 @@ hashtable<char *, Texture> textures;
 Texture *crosshair = NULL; // used as default, ensured to be loaded
 
 VAR(maxtexsize, 0, 0, 1<<12);
-
-static GLenum texformat(int bpp)
-{
-    switch(bpp)
-    {
-        case 8: return GL_LUMINANCE;
-        case 24: return GL_RGB;
-        case 32: return GL_RGBA;
-        default: return 0; 
-    }
-}
 
 static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, bool mipit = true)
 {
@@ -177,17 +207,9 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     }
     if(!tname) return NULL;
 
-    const char *file = tname;
-    if(tname[0]=='<')
-    {
-        file = strchr(tname, '>');
-        if(!file) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
-        file++;
-    }
+    show_out_of_renderloop_progress(0, tname);
 
-    show_out_of_renderloop_progress(0, file);
-
-    SDL_Surface *s = IMG_Load(file);
+    SDL_Surface *s = IMG_Load(tname);
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
     int bpp = s->format->BitsPerPixel;
     if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 24, or 32 bpp: %s", tname); return NULL; }
@@ -195,12 +217,6 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     {
         if(tex->rotation) s = texrotate(s, tex->rotation, tex->type);
         if(tex->xoffset || tex->yoffset) s = texoffset(s, tex->xoffset, tex->yoffset);
-    }
-    if(tname[0]=='<')
-    {
-        const char *cmd = &tname[1], *arg1 = strchr(cmd, ':'), *arg2 = arg1 ? strchr(arg1, ',') : NULL;
-        if(!arg1) arg1 = strchr(cmd, '>');
-        if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, atof(arg1+1), arg2 ? atof(arg2+1) : 0); 
     }
     return s;
 }
@@ -234,8 +250,26 @@ Texture *textureload(const char *name, int clamp, bool mipit, bool msg)
     s_strcpy(tname, name);
     Texture *t = textures.access(path(tname));
     if(t) return t;
-    SDL_Surface *s = texturedata(tname, NULL, msg);
-    return s ? newtexture(tname, s, clamp, mipit) : crosshair;
+    const char *file = tname;
+    if(tname[0]=='<')
+    {
+        file = strchr(tname, '>');
+        if(!file) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
+        file++;
+    }
+    SDL_Surface *s = texturedata(file, NULL, msg);
+    if(!s) return crosshair;
+    int xs = s->w, ys = s->h;
+    if(tname[0]=='<')
+    {
+        const char *cmd = &tname[1], *arg1 = strchr(cmd, ':'), *arg2 = arg1 ? strchr(arg1, ',') : NULL;
+        if(!arg1) arg1 = strchr(cmd, '>');
+        if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, atof(arg1+1), arg2 ? atof(arg2+1) : 0);
+        if(!strncmp(cmd, "thumb", arg1-cmd)) s = scalesurface(s, arg1 ? atoi(arg1+1) : s->w, arg2 ? atoi(arg2+1) : s->h);
+    }
+    t = newtexture(tname, s, clamp, mipit);
+    if(tname[0]=='<') { t->xs = xs; t->ys = ys; }
+    return t;
 }
 
 void cleangl()
@@ -406,36 +440,6 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
             for(const char *s = suffix; *s; key.add(*s++));
         }
     }
-}
-
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-#define RMASK 0xff000000
-#define GMASK 0x00ff0000
-#define BMASK 0x0000ff00
-#define AMASK 0x000000ff
-#else
-#define RMASK 0x000000ff
-#define GMASK 0x0000ff00
-#define BMASK 0x00ff0000
-#define AMASK 0xff000000
-#endif
-
-SDL_Surface *creatergbasurface(SDL_Surface *os)
-{
-    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, os->w, os->h, 32, RMASK, GMASK, BMASK, AMASK);
-    if(!ns) fatal("creatergbsurface");
-    SDL_BlitSurface(os, NULL, ns, NULL);
-    SDL_FreeSurface(os);
-    return ns;
-}
-
-SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
-{
-    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, os->format->BitsPerPixel, os->format->Rmask, os->format->Gmask, os->format->Bmask, os->format->Amask);
-    if(!ns) fatal("scalesurface");
-    gluScaleImage(texformat(os->format->BitsPerPixel), os->w, os->h, GL_UNSIGNED_BYTE, os->pixels, w, h, GL_UNSIGNED_BYTE, ns->pixels);
-    SDL_FreeSurface(os);
-    return ns;
 }
 
 static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
@@ -689,8 +693,8 @@ void initenvmaps()
         const extentity &ent = *ents[i];
         if(ent.type != ET_ENVMAP) continue;
         envmap &em = envmaps.add();
-        em.radius = ent.attr1 ? ent.attr1 : envmapradius;
-        em.size = ent.attr2;
+        em.radius = ent.attr1 ? max(0, min(10000, ent.attr1)) : envmapradius;
+        em.size = ent.attr2 ? max(4, min(9, ent.attr2)) : 0;
         em.o = ent.o;
         em.tex = 0;
     }

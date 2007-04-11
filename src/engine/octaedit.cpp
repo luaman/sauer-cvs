@@ -1403,10 +1403,11 @@ void editmat(char *name)
 
 COMMAND(editmat, "s");
 
-
 #define TEXTURE_WIDTH 10
 #define TEXTURE_HEIGHT 7
 extern int menudistance;
+
+static hashtable<char *, Texture *> thumbnails;
 
 struct texturegui : g3d_callback 
 {
@@ -1416,7 +1417,7 @@ struct texturegui : g3d_callback
     
     void gui(g3d_gui &g, bool firstpass)
     {
-        bool canloadone = firstpass; 
+        int loaded = 0;
         int menutab = 1+curtexindex/(TEXTURE_WIDTH*TEXTURE_HEIGHT);        
         int origtab = menutab;
         g.start(menustart, 0.04f, &menutab);
@@ -1433,14 +1434,24 @@ struct texturegui : g3d_callback
                     if(ti<curtexnum) 
                     {
                         Texture *tex = crosshair;
-                        int slot = texmru[ti];
-                        bool found = lookuptexture(slot, false).loaded;
-                        if(found || canloadone) tex = lookuptexture(slot).sts[0].t;
-                        if(!found) canloadone = false; //load only one unloaded texture per frame!
-                        if(g.texture(tex, 1.0)&G3D_UP && found) 
+                        Slot &slot = lookuptexture(texmru[ti], false);
+                        if(slot.sts.empty()) continue;
+                        else if(slot.loaded) tex = slot.sts[0].t;
+                        else
+                        {
+                            s_sprintfd(thumbnail)("<thumb:64,64>packages/%s", slot.sts[0].name);
+                            Texture **t = thumbnails.access(thumbnail);
+                            if(t) tex = *t;
+                            else if(loaded<1)
+                            {
+                                thumbnails[newstring(thumbnail)] = tex = textureload(thumbnail, 0, false, false);
+                                loaded++;
+                            }
+                        }
+                        if(g.texture(tex, 1.0)&G3D_UP && (slot.loaded || tex!=crosshair)) 
                         {
                             curtexindex = ti;
-                            mpedittex(slot, allfaces, sel, true); 
+                            mpedittex(texmru[ti], allfaces, sel, true); 
                         }
                     }
                     else
@@ -1476,7 +1487,6 @@ void showtexgui(int *n) { gui.showtextures(((*n==0) ? !gui.menuon : (*n==1)) && 
 
 // 0/noargs = toggle, 1 = on, other = off - will autoclose if too far away or exit editmode
 COMMAND(showtexgui, "i");
-
 
 void render_texture_panel(int w, int h)
 {

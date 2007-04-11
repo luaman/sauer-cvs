@@ -11,10 +11,10 @@ void loadsky(char *basename)
     loopi(6)
     {
         s_sprintfd(name)("packages/%s_%s.jpg", basename, side[i]);
-        if((sky[i] = textureload(name, 3))==crosshair)
+        if((sky[i] = textureload(name, 3, true, false))==crosshair)
         {
             strcpy(name+strlen(name)-3, "png");
-            if((sky[i] = textureload(name, true))==crosshair) conoutf("could not load sky textures");
+            if((sky[i] = textureload(name, 3, true, false))==crosshair) conoutf("could not load sky texture packages/%s_%s", basename, side[i]);
         }
     }
     s_strcpy(lastsky, basename);

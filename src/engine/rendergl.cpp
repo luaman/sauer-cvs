@@ -725,7 +725,7 @@ void damageblend(int n) { dblend += n; }
 
 VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
-VARP(crosshairfx, 0, 1, 1);
+VARP(crosshairfx, 0, 0, 1);
 
 void drawcrosshair(int w, int h)
 {

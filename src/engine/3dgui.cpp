@@ -382,7 +382,8 @@ struct gui : g3d_gui
             yt = min(1.0f, t->ys/(float)t->xs);
             xs = size;
             ys = size;
-        } else 
+        } 
+        else 
         {
             xt = 1.0f;
             yt = 1.0f;
