@@ -318,6 +318,9 @@
 <a href="#sound"><tt>sound</tt></a>
 </li>
 <li>
+<a href="#mapsound"><tt>mapsound</tt></a>
+</li>
+<li>
 <a href="#mapmodel"><tt>mapmodel</tt></a>
 </li>
 <li>
@@ -377,6 +380,9 @@
 </li>
 <li>
 <a href="#_envmap_"><tt>"envmap"</tt></a>
+</li>
+<li>
+<a href="#_sound_"><tt>"sound"</tt></a>
 </li>
 <li>
 <a href="#_playerstart_"><tt>"playerstart"</tt></a>
@@ -1289,11 +1295,11 @@ looping the song if ondone is missing. Example: <code>music "songs/music.ogg" [ 
 
 <pre id="n">N = registersound name V</pre>
 <p>
-Registers sound "name" with cube (see for example data/sounds.cfg). This
+Registers sound "name" (see for example data/sounds.cfg). This
 command returns the sound number N, which is assigned from 0 onwards, and which
 can be used with "sound" command below. if the sound was already registered,
 its existing index is returned. registersound does not actually load the sound,
-this is done on first play. V is volume adjustment, if not specified (0), it is the default 100, valid
+this is done on first play. V is volume adjustment; if not specified (0), it is the default 100, valid
 range is 1-255.</p>
 
 <pre id="sound">sound N</pre>
@@ -1302,6 +1308,14 @@ Plays sound N, see data/sounds.cfg for default sounds, and use registersound to
 register your own. for example, <code>sound 0</code> and <code>sound (registersound
 "aard/jump")</code>both play the standard jump sound.
 </p>
+
+<pre id="mapsound">mapsound name V N</pre>
+<p>
+Registers sound "name" as a map-specific sounds. These map-specific sounds may currently only
+be used with "sound" entities within a map. The first map sound registered in a map has index 0, 
+and increases afterwards. V is volume adjustment; if not specified (0), it is the default 100, valid
+range is 1-255. N is the maximum number instances of this sound that are allowed to play simultaneously;
+the default (0) is unlimited.</p>
 
 <pre id="mapmodel">mapmodel R H T N SH</pre>
 <pre id="mmodel">mmodel N</pre>
@@ -1503,6 +1517,13 @@ Please use the absolute minimum number of these possible. Each one uses up a dec
 For instance, rather than using two environment maps on each side of a window, use only one in the middle of the pane
 of glass. If you have a wall with many windows, place only one environment map in the middle of the wall geometry, and 
 it should work just fine for all the windows.
+</p>
+
+<pre id="_sound_">"sound" N radius [size]</pre>
+<p>
+Will play map-specific sound N so long as the player is within the radius. However, only up to the max uses allowed for N (specified in the <a href="#mapsound">mapsound</a> command) will play, even if the player is within the radius of more N sounds than the max. 
+
+By default (size 0), the sound is a point source. Its volume is maximal at the entity's location, and tapers off to 0 at the radius. If size is specified, the volume is maximal within the specified size, and only starts tapering once outside this distance. Radius is always defined as distance from the entity's location, so a size greater than or equal to the radius will just make a sound that is always max volume within the radius, and off outside.
 </p>
 
 <pre id="_playerstart_">"playerstart"</pre>
