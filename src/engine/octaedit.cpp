@@ -1407,8 +1407,6 @@ COMMAND(editmat, "s");
 #define TEXTURE_HEIGHT 7
 extern int menudistance;
 
-static hashtable<char *, Texture *> thumbnails;
-
 struct texturegui : g3d_callback 
 {
     bool menuon;
@@ -1437,17 +1435,8 @@ struct texturegui : g3d_callback
                         Slot &slot = lookuptexture(texmru[ti], false);
                         if(slot.sts.empty()) continue;
                         else if(slot.loaded) tex = slot.sts[0].t;
-                        else
-                        {
-                            s_sprintfd(thumbnail)("<thumb:64,64>packages/%s", slot.sts[0].name);
-                            Texture **t = thumbnails.access(thumbnail);
-                            if(t) tex = *t;
-                            else if(loaded<1)
-                            {
-                                thumbnails[newstring(thumbnail)] = tex = textureload(thumbnail, 0, false, false);
-                                loaded++;
-                            }
-                        }
+                        else if(slot.thumbnail) tex = slot.thumbnail;
+                        else if(loaded<1) { tex = loadthumbnail(slot); loaded++; }
                         if(g.texture(tex, 1.0)&G3D_UP && (slot.loaded || tex!=crosshair)) 
                         {
                             curtexindex = ti;

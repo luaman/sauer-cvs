@@ -149,7 +149,7 @@ struct Slot
     vector<ShaderParam> params;
     bool loaded;
     char *autograss;
-    Texture *grasstex;
+    Texture *grasstex, *thumbnail;
     
     void reset()
     {
@@ -159,6 +159,7 @@ struct Slot
         loaded = false;
         DELETEA(autograss);
         grasstex = NULL;
+        thumbnail = NULL;
     }
     
     Slot() : autograss(NULL) { reset(); }
@@ -179,6 +180,8 @@ extern Shader *notextureshader;
 extern Shader *nocolorshader;
 
 extern Shader *lookupshaderbyname(const char *name);
+
+extern Texture *loadthumbnail(Slot &slot);
 
 extern void setslotshader(Slot &s);
 
