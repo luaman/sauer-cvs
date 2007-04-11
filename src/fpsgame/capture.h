@@ -8,8 +8,8 @@ struct capturestate
     static const int OCCUPYLIMIT = 100;
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
-    static const int AMMOSECS = 10;
-    static const int MAXAMMO = 8;
+    static const int AMMOSECS = 20;
+    static const int MAXAMMO = 5;
     static const int REPAMMODIST = 32;
     static const int RESPAWNSECS = 10;        
     static const int RADARRADIUS = 1024;
