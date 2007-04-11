@@ -83,8 +83,14 @@ struct entities : icliententities
         if(e.attr3==29) cl.ms.endsp(false);
     }
 
-    void baseammo(int gun) { cl.player1->ammo[gun] = itemstats[gun-1].add*2; }
+    void baseammo(int gun, int k = 2) { cl.player1->ammo[gun] = itemstats[gun-1].add*k; }
 
+    bool hasmaxammo(fpsent *d, int type)
+    {
+        itemstat &is = itemstats[type-I_SHELLS];
+        return d->ammo[type-I_SHELLS+GUN_SG]>=is.max;
+    }
+        
     void addammo(int type, int &v)
     {
         itemstat &is = itemstats[type-I_SHELLS];
