@@ -1407,6 +1407,10 @@ COMMAND(editmat, "s");
 #define TEXTURE_HEIGHT 7
 extern int menudistance;
 
+VAR(thumbtime, 0, 50, 1000);
+
+static int lastthumbnail = 0;
+
 struct texturegui : g3d_callback 
 {
     bool menuon;
@@ -1415,7 +1419,6 @@ struct texturegui : g3d_callback
     
     void gui(g3d_gui &g, bool firstpass)
     {
-        int loaded = 0;
         int menutab = 1+curtexindex/(TEXTURE_WIDTH*TEXTURE_HEIGHT);        
         int origtab = menutab;
         g.start(menustart, 0.04f, &menutab);
@@ -1436,7 +1439,7 @@ struct texturegui : g3d_callback
                         if(slot.sts.empty()) continue;
                         else if(slot.loaded) tex = slot.sts[0].t;
                         else if(slot.thumbnail) tex = slot.thumbnail;
-                        else if(loaded<1) { tex = loadthumbnail(slot); loaded++; }
+                        else if(lastmillis-lastthumbnail>=thumbtime) { tex = loadthumbnail(slot); lastthumbnail = lastmillis; }
                         if(g.texture(tex, 1.0)&G3D_UP && (slot.loaded || tex!=crosshair)) 
                         {
                             curtexindex = ti;
