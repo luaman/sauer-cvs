@@ -85,9 +85,9 @@ struct capturestate
             return true;
         }
 
-        bool takeammo()
+        bool takeammo(const char *team)
         {
-            if(ammo<=0) return false;
+            if(strcmp(owner, team) || ammo<=0) return false;
             ammo--;
             return true;
         }
@@ -437,7 +437,7 @@ struct captureserv : capturestate
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            if(insidebase(b, o) && b.takeammo())
+            if(insidebase(b, o) && b.takeammo(team))
             {
                 sendbaseinfo(i);
                 sendf(client, 1, "rii", SV_REPAMMO, b.ammotype);
