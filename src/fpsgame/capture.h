@@ -190,7 +190,7 @@ struct captureclient : capturestate
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, cl.player1->o) && cl.et.hasmaxammo(cl.player1, b.ammotype-1+I_SHELLS)) return;
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, cl.player1->o)) return;
         }
         cl.cc.addmsg(SV_REPAMMO, "r");
     }
