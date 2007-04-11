@@ -635,7 +635,9 @@ Shows cyan volume in edit mode.
 
 <pre id="recalc">recalc</pre>
 <p>
-Recalculates scene geometry. Shouldn't be needed under normal curcumstances.
+Recalculates scene geometry. This also will regenerate any envmaps to reflect the changed geometry,
+and fix any geometry with "bumpenv*" shaders to use the closest available envmaps. This command is also
+implicitly used by <a href="#calclight">calclight</a>.
 </p>
 
 <pre id="havesel">havesel</pre>
@@ -1282,6 +1284,18 @@ INDEX is the index of a program environment parameter (program.env[10+INDEX]) to
 </td>
 </tr>
 
+<tr>
+<td>bumpenv*</td>
+<td>  <ul>
+        <li>3: Rk, Gk, Bk - multiplies the environment map color by the factors Rk, Gk, Bk</li>
+        </ul>
+</td>
+<td></td> 
+<td></td>
+<td>Any of the above bump* shader permutations may replace "bump" with "bumpenv" (i.e. bumpenvspecmapworld), and will then reflect the closest <a href="#_envmap_">envmap</a> entity (or the skybox if necessary). They support all their usual texture slots and pixel params, in addition to the envmap multiplier pixel param. If a specmap is present in the given shader, the raw specmap value will be scaled by the envmap multipliers (instead of the specmap ones), to determine how much of the envmap to reflect. A <a href="#calclight">calclight</a> (if it has not been done before) or <a href="#recalc">recalc</a> (thereafter) is also needed by this shader to properly setup its engine state.</td> 
+</td>
+</tr>
+
 </table>
 
 <pre id="music">music name [ondone]</pre>
@@ -1387,7 +1401,7 @@ have texture/lighting information.
 <p>
 This calculates all lightmaps. Usually takes only a few seconds, depending on
 map size and settings. If you "savemap", the lightmap will be stored along with
-it. Q is these predefined quality settinsg:
+it. Q is these predefined quality settings:
 </p>
 <ul>
 <li>3: 8x anti aliasing, shadows for mapmodels with alpha (maximum quality, extremely slow)</li>
