@@ -1523,7 +1523,7 @@ lighting commands</a> for an indepth list of all lighting related commands.
 <pre id="_envmap_">"envmap" [radius]</pre>
 <p>
 Creates an environment map reflecting the geometry around the entity. The optional radius
-overrides the maximum distance within which glass will reflect from this environment map. If none is specified,
+overrides the maximum distance within which glass or geometry using the "bumpenv*" shaders will reflect from this environment map. If none is specified,
 the default is taken from the variable "envmapradius" (which defaults to 128 units), which may also be set in 
 map cfgs. Environment maps are generated on a map load, or can be regenerated while editing using the "recalc" command.
 
