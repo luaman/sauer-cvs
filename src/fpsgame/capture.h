@@ -351,6 +351,7 @@ struct captureclient : capturestate
         s_strcpy(b.owner, owner);
         s_strcpy(b.enemy, enemy);
         b.converted = converted;
+        if(ammo>b.ammo) playsound(S_ITEMSPAWN, &b.o);
         b.ammo = ammo;
     }
 
