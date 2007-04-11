@@ -332,7 +332,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     {
         vec floor;
         float dist = rayfloor(center, floor);
-        if(dist<0) return;
+        if(dist<=0) return;
         center.z -= dist;
         if(vec(center).sub(camera1->o).dot(floor)>0) return;
 
