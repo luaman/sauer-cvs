@@ -98,7 +98,7 @@ struct fpsclient : igameclient
                     d->ammo[GUN_PISTOL] = 80;
                     int spawngun1 = rnd(5)+1, spawngun2;
                     et.baseammo(d->gunselect = spawngun1, m_capture ? 1 : 2);
-                    do spawngun2 = rnd(5)+1; while(!m_capture && spawngun1==spawngun2);
+                    do spawngun2 = rnd(5)+1; while(spawngun1==spawngun2);
                     et.baseammo(spawngun2, m_capture ? 1 : 2);
                     if(!m_capture) d->ammo[GUN_GL] += 1;
                 }

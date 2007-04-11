@@ -130,7 +130,7 @@ struct capturestate
     void addbase(int ammotype, const vec &o)
     {
         baseinfo &b = bases.add();
-        b.ammotype = ammotype ? ammotype : rnd(I_CARTRIDGES-I_SHELLS+1)+1;
+        b.ammotype = ammotype ? ammotype : rnd(5)+1;
         b.o = o;
     }
 
