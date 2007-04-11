@@ -743,14 +743,29 @@ struct clientcom : iclientcom
             {
                 int base = getint(p);
                 string owner, enemy;
-                int converted;
                 getstring(text, p);
                 s_strcpy(owner, text);
                 getstring(text, p);
                 s_strcpy(enemy, text);
-                converted = getint(p);
+                int converted = getint(p), ammo = getint(p);
                 int gamemode = cl.gamemode;
-                if(m_capture) cl.cpc.updatebase(base, owner, enemy, converted);
+                if(m_capture) cl.cpc.updatebase(base, owner, enemy, converted, ammo);
+                break;
+            }
+
+            case SV_BASES:
+            {
+                int base = 0, ammotype;
+                while((ammotype = getint(p))>=0)
+                {
+                    string owner, enemy;
+                    getstring(text, p);
+                    s_strcpy(owner, text);
+                    getstring(text, p);
+                    s_strcpy(enemy, text);
+                    int converted = getint(p), ammo = getint(p);
+                    cl.cpc.initbase(base++, ammotype, owner, enemy, converted, ammo);
+                }
                 break;
             }
 
@@ -764,10 +779,9 @@ struct clientcom : iclientcom
 
             case SV_REPAMMO:
             {
-                if(!d) return;
-                int target = getint(p), gun1 = getint(p), gun2 = getint(p);
+                int ammotype = getint(p);
                 int gamemode = cl.gamemode;
-                if(m_capture && target==player1->clientnum) cl.cpc.recvammo(d, gun1, gun2);
+                if(m_capture) cl.cpc.receiveammo(ammotype);
                 break;
             }
 

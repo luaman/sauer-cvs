@@ -128,7 +128,7 @@ struct fpsserver : igameserver
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
             SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_DELCUBE, 14, SV_NEWMAP, 2, SV_GETMAP, 1,
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
-            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 4, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
+            SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 1, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
             SV_CLIENT, 0,
             -1
         };
@@ -626,18 +626,23 @@ struct fpsserver : igameserver
 
             case SV_BASES:
             {
-                int x;
-                while((x = getint(p))!=-1)
+                int ammotype;
+                while((ammotype = getint(p))>=0)
                 {
                     vec o;
-                    o.x = x/DMF;
+                    o.x = getint(p)/DMF;
                     o.y = getint(p)/DMF;
                     o.z = getint(p)/DMF;
-                    if(notgotbases) cps.addbase(o);
+                    if(notgotbases) cps.addbase(ammotype, o);
                 }
+                if(notgotbases) cps.sendbases();
                 notgotbases = false;
                 break;
             }
+
+            case SV_REPAMMO:
+                if(m_capture && ci->state==CS_ALIVE) cps.replenishammo(sender, ci->team, ci->o);
+                break;
 
             case SV_ITEMPICKUP:
             {
@@ -798,7 +803,7 @@ struct fpsserver : igameserver
            putint(p, ci->score.maxhealth);
            putint(p, ci->score.frags);
         }
-        if(m_capture) cps.initclient(p);
+        if(m_capture) cps.initclient(p, true);
         return 1;
     }
 

@@ -8,6 +8,8 @@ struct capturestate
     static const int OCCUPYLIMIT = 100;
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
+    static const int AMMOSECS = 10;
+    static const int MAXAMMO = 8;
     static const int REPAMMODIST = 32;
     static const int RESPAWNSECS = 10;        
     static const int RADARRADIUS = 1024;
@@ -18,8 +20,9 @@ struct capturestate
         string owner, enemy;
 #ifndef CAPTURESERV
         string info;
+        extentity *ent;
 #endif
-        int enemies, converted, capturetime;
+        int ammotype, ammo, enemies, converted, capturetime;
 
         baseinfo() { reset(); }
 
@@ -35,6 +38,8 @@ struct capturestate
             noenemy();
             owner[0] = '\0';
             capturetime = -1;
+            ammotype = 0;
+            ammo = 0;
         }
 
         bool enter(const char *team)
@@ -64,13 +69,27 @@ struct capturestate
             return !enemies;
         }
 
-        int occupy(const char *team, int units, int secs)
+        int occupy(const char *team, int units)
         {
             if(strcmp(enemy, team)) return -1;
             converted += units;
             if(converted<OCCUPYLIMIT) return -1;
             if(owner[0]) { owner[0] = '\0'; converted = 0; s_strcpy(enemy, team); return 0; }
-            else { s_strcpy(owner, team); capturetime = secs; noenemy(); return 1; }
+            else { s_strcpy(owner, team); ammo = 0; capturetime = 0; noenemy(); return 1; }
+        }
+
+        bool addammo(int i)
+        {
+            if(ammo>=MAXAMMO) return false;
+            ammo = min(ammo+i, MAXAMMO);
+            return true;
+        }
+
+        bool takeammo()
+        {
+            if(ammo<=0) return false;
+            ammo--;
+            return true;
         }
     };
 
@@ -108,9 +127,22 @@ struct capturestate
         return cs;
     }
 
-    void addbase(const vec &o)
+    void addbase(int ammotype, const vec &o)
     {
-        bases.add().o = o;
+        baseinfo &b = bases.add();
+        b.ammotype = ammotype ? ammotype : rnd(I_CARTRIDGES-I_SHELLS+1)+1;
+        b.o = o;
+    }
+
+    void initbase(int i, int ammotype, const char *owner, const char *enemy, int converted, int ammo)
+    {
+        if(!bases.inrange(i)) return;
+        baseinfo &b = bases[i];
+        b.ammotype = ammotype;
+        s_strcpy(b.owner, owner);
+        s_strcpy(b.enemy, enemy);
+        b.converted = converted;
+        b.ammo = ammo;
     }
 
     bool hasbases(const char *team)
@@ -150,66 +182,63 @@ struct captureclient : capturestate
 
     captureclient(fpsclient &cl) : cl(cl)
     {
-        CCOMMAND(captureclient, repammo, "", self->sendammo()); 
+        CCOMMAND(captureclient, repammo, "", self->replenishammo()); 
     }
     
-    void sendammo()
+    void replenishammo()
     {
-        fpsent *target = cl.pointatplayer();
-        if(!target || strcmp(target->team, cl.player1->team) || cl.player1->o.dist(target->o) > REPAMMODIST) 
-        {
-            conoutf("\f2no teammate in range");
-            return;
-        }
-        conoutf("\f2replenished %s's ammo", target->name);
-        cl.cc.addmsg(SV_REPAMMO, "ri3", target->clientnum, cl.spawngun1, cl.spawngun2);
+        cl.cc.addmsg(SV_REPAMMO, "r");
     }
 
-    void recvammo(fpsent *from, int gun1, int gun2)
+    void receiveammo(int type)
     {
-        if(cl.spawngun1!=gun1 && cl.spawngun1!=gun2) cl.et.repammo(cl.spawngun1);
-        if(cl.spawngun2!=gun1 && cl.spawngun2!=gun2) cl.et.repammo(cl.spawngun2);
-        conoutf("\f2%s replenished your ammo", from->name);
+        type += I_SHELLS-1;
+        if(type<I_SHELLS || type>I_CARTRIDGES) return;
+        cl.et.repammo(cl.player1, type);
     }
 
     void renderbases()
     {
-        int j = 0;
-        loopv(cl.et.ents)
+        loopv(bases)
         {
-            extentity *e = cl.et.ents[i];
-            if(e->type == BASE)
+            baseinfo &b = bases[i];
+            const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
+            rendermodel(b.ent->color, b.ent->dir, flagname, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, b.o.x, b.o.y, b.o.z, 0, 0, 10.0f, 0, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1) loopi(b.ammo)
             {
-                baseinfo &b = bases[j++];
-                const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
-                rendermodel(e->color, e->dir, flagname, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, e->o.x, e->o.y, e->o.z, 0, 0, 10.0f, 0, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
-                int ttype = 11, mtype = -1;
-                if(b.owner[0])
+                float angle = 2*M_PI*(cl.lastmillis/4000.0f + i/float(MAXAMMO));
+                vec p(b.o);
+                p.x += 10*cosf(angle);
+                p.y += 10*sinf(angle);
+                p.z += 4;
+                rendermodel(b.ent->color, b.ent->dir, cl.et.entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, 0, 0, p.x, p.y, p.z, 0, 0, 10.0f, 0, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+            }
+            int ttype = 11, mtype = -1;
+            if(b.owner[0])
+            {
+                bool isowner = !strcmp(b.owner, cl.player1->team);
+                if(b.enemy[0])
                 {
-                    bool isowner = !strcmp(b.owner, cl.player1->team);
-                    if(b.enemy[0])
-                    {
-                        s_sprintf(b.info)("\f%d%s \f0vs. \f%d%s", isowner ? 3 : 1, b.enemy, isowner ? 1 : 3, b.owner);
-                        mtype = isowner ? 19 : 20; 
-                    }
-                    else { s_sprintf(b.info)("%s", b.owner); ttype = isowner ? 16 : 13; }
+                    s_sprintf(b.info)("\f%d%s \f0vs. \f%d%s", isowner ? 3 : 1, b.enemy, isowner ? 1 : 3, b.owner);
+                    mtype = isowner ? 19 : 20; 
                 }
-                else if(b.enemy[0])
-                {
-                    s_sprintf(b.info)("%s", b.enemy);
-                    if(strcmp(b.enemy, cl.player1->team)) { ttype = 13; mtype = 17; }
-                    else { ttype = 16; mtype = 18; }
-                }
-                else b.info[0] = '\0';
-                vec above(e->o);
-                abovemodel(above, flagname);
-                above.z += 2.0f;
-                particle_text(above, b.info, ttype, 1);
-                if(mtype>=0)
-                {
-                    above.z += 3.0f;
-                    particle_meter(above, b.converted, mtype, 1);
-                }
+                else { s_sprintf(b.info)("%s", b.owner); ttype = isowner ? 16 : 13; }
+            }
+            else if(b.enemy[0])
+            {
+                s_sprintf(b.info)("%s", b.enemy);
+                if(strcmp(b.enemy, cl.player1->team)) { ttype = 13; mtype = 17; }
+                else { ttype = 16; mtype = 18; }
+            }
+            else b.info[0] = '\0';
+            vec above(b.o);
+            abovemodel(above, flagname);
+            above.z += 2.0f;
+            particle_text(above, b.info, ttype, 1);
+            if(mtype>=0)
+            {
+                above.z += 3.0f;
+                particle_meter(above, b.converted, mtype, 1);
             }
         }
     }
@@ -277,30 +306,35 @@ struct captureclient : capturestate
         glDisable(GL_BLEND);
     }
 
-    void sendbases(ucharbuf &p)
-    {
-        putint(p, SV_BASES);
-        loopv(bases)
-        {
-            baseinfo &b = bases[i];
-            putint(p, int(b.o.x*DMF));   
-            putint(p, int(b.o.y*DMF));
-            putint(p, int(b.o.z*DMF));
-        }
-        putint(p, -1);
-    }
-
     void setupbases()
     {
         reset();
         loopv(cl.et.ents)
         {
             extentity *e = cl.et.ents[i];
-            if(e->type == BASE) addbase(e->o);
+            if(e->type!=BASE) continue; 
+            baseinfo &b = bases.add();
+            b.o = e->o;
+            b.ammotype = e->attr1;
+            b.ent = e;
         }
     }
-                
-    void updatebase(int i, const char *owner, const char *enemy, int converted)
+            
+    void sendbases(ucharbuf &p)
+    {
+        putint(p, SV_BASES);
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            putint(p, max(b.ammotype, 0));
+            putint(p, int(b.o.x*DMF));
+            putint(p, int(b.o.y*DMF));
+            putint(p, int(b.o.z*DMF));
+        }
+        putint(p, -1);
+    }
+
+    void updatebase(int i, const char *owner, const char *enemy, int converted, int ammo)
     {
         if(!bases.inrange(i)) return;
         baseinfo &b = bases[i];
@@ -312,6 +346,7 @@ struct captureclient : capturestate
         s_strcpy(b.owner, owner);
         s_strcpy(b.enemy, enemy);
         b.converted = converted;
+        b.ammo = ammo;
     }
 
     void setscore(const char *team, int total)
@@ -396,6 +431,21 @@ struct captureserv : capturestate
         sendbaseinfo(n);
     }
 
+    void replenishammo(int client, const char *team, const vec &o)
+    {
+        if(!team[0]) return;
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            if(insidebase(b, o) && b.takeammo())
+            {
+                sendbaseinfo(i);
+                sendf(client, 1, "rii", SV_REPAMMO, b.ammotype);
+                break;
+            }
+        }
+    }
+
     void movebases(const char *team, const vec &oldpos, const vec &newpos)
     {
         if(!team[0] || sv.minremain<0) return;
@@ -445,14 +495,16 @@ struct captureserv : capturestate
             baseinfo &b = bases[i];
             if(b.enemy[0])
             {
-                if(b.occupy(b.enemy, OCCUPYPOINTS*b.enemies*t, secs)==1) addscore(b.owner, CAPTURESCORE);
+                if(b.occupy(b.enemy, OCCUPYPOINTS*b.enemies*t)==1) addscore(b.owner, CAPTURESCORE);
                 sendbaseinfo(i);
             }
-            if(b.owner[0])
+            else if(b.owner[0])
             {
-                int sincecapt = secs - b.capturetime,
-                    lastcapt = sv.lastsec - b.capturetime;
-                addscore(b.owner, (sincecapt - lastcapt+(lastcapt%SCORESECS))/SCORESECS);
+                b.capturetime += t;
+                int score = b.capturetime/SCORESECS - (b.capturetime-t)/SCORESECS,
+                    ammo = b.capturetime/AMMOSECS - (b.capturetime-t)/AMMOSECS;
+                if(score) addscore(b.owner, score);
+                if(b.addammo(ammo)) sendbaseinfo(i);
             }
         }
     }
@@ -460,27 +512,39 @@ struct captureserv : capturestate
     void sendbaseinfo(int i)
     {
         baseinfo &b = bases[i];
-        sendf(-1, 1, "riissi", SV_BASEINFO, i, b.owner, b.enemy, b.converted);
+        sendf(-1, 1, "riissii", SV_BASEINFO, i, b.owner, b.enemy, b.enemy[0] ? b.converted : 0, b.owner[0] ? b.ammo : 0);
     }
 
-    void initclient(ucharbuf &p)
+    void sendbases()
     {
-        loopv(scores)
+        ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+        ucharbuf p(packet->data, packet->dataLength);
+        initclient(p, false);
+        enet_packet_resize(packet, p.length());
+        sendpacket(-1, 1, packet);
+        if(!packet->referenceCount) enet_packet_destroy(packet);
+    }
+
+    void initclient(ucharbuf &p, bool connecting)
+    {
+        if(connecting) loopv(scores)
         {
             score &cs = scores[i];
             putint(p, SV_TEAMSCORE);
             sendstring(cs.team, p);
             putint(p, cs.total);
         }
+        putint(p, SV_BASES);
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            putint(p, SV_BASEINFO);
-            putint(p, i);
+            putint(p, min(max(b.ammotype, 1), I_CARTRIDGES+1));
             sendstring(b.owner, p);
             sendstring(b.enemy, p);
             putint(p, b.converted);
+            putint(p, b.ammo);
         }
+        putint(p, -1);
     }
 
     void endcheck()

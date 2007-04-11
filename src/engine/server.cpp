@@ -128,7 +128,6 @@ void sendfile(int cn, int chan, FILE *file)
 }
 
 void process(ENetPacket *packet, int sender, int chan);
-void multicast(ENetPacket *packet, int sender, int chan);
 //void disconnect_client(int n, int reason);
 
 void *getinfo(int i)    { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; }
@@ -137,6 +136,11 @@ uint getclientip(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPI
 
 void sendpacket(int n, int chan, ENetPacket *packet)
 {
+    if(n<0)
+    {
+        loopv(clients) sendpacket(i, chan, packet);
+        return;
+    }
     switch(clients[n]->type)
     {
         case ST_TCPIP:
@@ -172,8 +176,7 @@ void sendf(int cn, int chan, const char *format, ...)
     }
     va_end(args);
     enet_packet_resize(packet, p.length());
-    if(cn<0) multicast(packet, -1, chan);
-    else sendpacket(cn, chan, packet);
+    sendpacket(cn, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 }
 
@@ -206,15 +209,6 @@ void send_welcome(int n)
     enet_packet_resize(packet, p.length());
     sendpacket(n, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
-}
-
-void multicast(ENetPacket *packet, int sender, int chan)
-{
-    loopv(clients)
-    {
-        if(i==sender) continue;
-        sendpacket(i, chan, packet);
-    }
 }
 
 void localclienttoserver(int chan, ENetPacket *packet)

@@ -34,9 +34,26 @@ struct entities : icliententities
         if(t<I_SHELLS || t>I_QUAD) return NULL;
         return itemstats[t-I_SHELLS].name;
     }
-    
-    void renderent(extentity &e, const char *mdlname, float z, float yaw, int frame = 0, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
+   
+    char *entmdlname(int type)
     {
+        static char *entmdlnames[] =
+        {
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            "shells", "bullets", "rockets", "rrounds", "grenades", "cartridges",
+            "health", "boost", "g_armour", "y_armour", "quad", "teleporter",
+            NULL, NULL,
+            "carrot",
+            NULL, NULL,
+            "checkpoint"
+        };
+        return entmdlnames[type];
+    }
+
+    void renderent(extentity &e, int type, float z, float yaw, int frame = 0, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
+    {
+        char *mdlname = entmdlname(type);
+        if(!mdlname) return;
         rendermodel(e.color, e.dir, mdlname, anim, 0, 0, e.o.x, e.o.y, z+e.o.z, yaw, 0, speed, basetime, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
     }
 
@@ -44,21 +61,15 @@ struct entities : icliententities
     {
         loopv(ents)
         {
-            static char *entmdlnames[] =
-            {
-                "shells", "bullets", "rockets", "rrounds", "grenades", "cartridges", "health", "boost",
-                "g_armour", "y_armour", "quad", "teleporter",
-            };
-
             extentity &e = *ents[i];
             if(e.type==CARROT || e.type==RESPAWNPOINT)
             {
-                renderent(e, e.type==CARROT ? "carrot" : "checkpoint", (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
+                renderent(e, e.type, (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
                 continue;
             }
             if(!e.spawned && e.type!=TELEPORT) continue;
             if(e.type<I_SHELLS || e.type>TELEPORT) continue;
-            renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
+            renderent(e, e.type, (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
         }
     }
 
@@ -73,10 +84,18 @@ struct entities : icliententities
     }
 
     void baseammo(int gun) { cl.player1->ammo[gun] = itemstats[gun-1].add*2; }
-    void repammo(int gun) 
-    { 
-        int &ammo = cl.player1->ammo[gun];
-        ammo = max(ammo, itemstats[gun-1].add*2);
+
+    void addammo(int type, int &v)
+    {
+        itemstat &is = itemstats[type-I_SHELLS];
+        v += is.add;
+        if(v>is.max) v = is.max;
+        cl.playsoundc(is.sound);
+    }
+
+    void repammo(fpsent *d, int type)
+    {
+        addammo(type, d->ammo[type-I_SHELLS+GUN_SG]);
     }
 
     // these two functions are called when the server acknowledges that you really
@@ -84,11 +103,8 @@ struct entities : icliententities
 
     void radditem(int i, int &v)
     {
-        itemstat &is = itemstats[ents[i]->type-I_SHELLS];
         ents[i]->spawned = false;
-        v += is.add;
-        if(v>is.max) v = is.max;
-        cl.playsoundc(is.sound);
+        addammo(ents[i]->type, v);
     }
 
     void realpickup(int n, fpsent *d)
@@ -322,11 +338,6 @@ struct entities : icliententities
     void editent(int i)
     {
         extentity &e = *ents[i];
-        if(e.type==BASE)
-        {
-            int gamemode = cl.gamemode;
-            if(m_capture) cl.cpc.setupbases();
-        }
         cl.cc.addmsg(SV_EDITENT, "ri9", i, (int)(e.o.x*DMF), (int)(e.o.y*DMF), (int)(e.o.z*DMF), e.type, e.attr1, e.attr2, e.attr3, e.attr4);
     }
 
