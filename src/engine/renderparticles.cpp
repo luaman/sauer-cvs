@@ -17,7 +17,7 @@ struct particle
     union
     {
         char *text;         // will call delete[] on this only if it starts with an @
-        int val;
+        float val;
     };
 };
 
@@ -254,9 +254,9 @@ void render_particles(int time)
                    
                 if(type==PT_FIREBALL)
                 {
-                    float pmax = float(p->val);
+                    float pmax = p->val;
                     float psize = pt.sz + pmax * float(255-blend)/255.0f;
-                    float size = (p->val) ? (psize/pmax) : 0.0f;
+                    float size = p->val ? (psize/pmax) : 0.0f;
                     
                     glScalef(-psize, psize, -psize);
                     glRotatef(lastmillis/5.0f, 1, 1, 1);
@@ -288,7 +288,7 @@ void render_particles(int time)
                     glScalef(-scale, scale, -scale);
                     if(type==PT_METER || type==PT_METERVS)
                     {
-                        float right = 8*FONTH, left = p->val*right/100.0f;
+                        float right = 8*FONTH, left = p->val*right;
                         glDisable(GL_BLEND);
                         glDisable(GL_TEXTURE_2D);
                         notextureshader->set();
@@ -401,7 +401,7 @@ void particle_text(const vec &s, char *t, int type, int fade)
     newparticle(s, vec(0, 0, 1), fade, type)->text = t;
 }
 
-void particle_meter(const vec &s, int val, int type, int fade)
+void particle_meter(const vec &s, float val, int type, int fade)
 {
     newparticle(s, vec(0, 0, 1), fade, type)->val = val;
 }

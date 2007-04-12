@@ -117,7 +117,7 @@ extern void regular_particle_splash(int type, int num, int fade, const vec &p, i
 extern void particle_splash(int type, int num, int fade, const vec &p);
 extern void particle_trail(int type, int fade, const vec &from, const vec &to);
 extern void particle_text(const vec &s, char *t, int type, int fade = 2000);
-extern void particle_meter(const vec &s, int val, int type, int fade = 1);
+extern void particle_meter(const vec &s, float val, int type, int fade = 1);
 extern void particle_flare(const vec &p, const vec &dest, int fade);
 extern void particle_fireball(const vec &dest, float max, int type);
 
