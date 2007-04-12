@@ -388,6 +388,9 @@
 <a href="#_playerstart_"><tt>"playerstart"</tt></a>
 </li>
 <li>
+<a href="#_base_"><tt>"base"</tt></a>
+</li>
+<li>
 <a href="#_shells_"><tt>"shells"</tt></a>
 </li>
 <li>
@@ -1545,6 +1548,17 @@ By default (size 0), the sound is a point source. Its volume is maximal at the e
 Spawn spot, yaw is taken from the current camera yaw.
 </p>
 
+<pre id="_base_">"base" [ammo]</pre>
+<p>
+A base for capture mode. If ammo is specified, the base will always produce that type of ammo. If ammo is unspecified or 0, the server will randomly choose a type of ammo to produce at the start of the match. Ammo types are:</p>
+<ul>
+<li>1: shells (shotgun)</li>
+<li>2: bullets (chaingun)</li>
+<li>3: rockets (rocket launcher)</li>
+<li>4: rifle rounds (rifle)</li>
+<li>5: grenades (grenade launcher</li>
+<li>6: cartridges (pistol)</li>
+</ul>
 <pre id="_shells_">"shells"</pre>
 <pre id="_bullets_">"bullets"</pre>
 <pre id="_rockets_">"rockets"</pre>
