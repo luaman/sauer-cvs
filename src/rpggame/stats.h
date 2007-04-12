@@ -38,6 +38,7 @@
     N(damage) \
     N(maxrange) \
     N(maxangle) \
+    N(attackrate) \
     N(selected) \
     N(attra) \
     N(attrb) \
@@ -116,7 +117,7 @@ struct stats
         if(lastmillis-statupdatetime>1000)
         {
             statupdatetime += 1000;
-            const int regenrate = 10;
+            const int regenrate = 2;
             s_health += eff_regen()*regenrate/100;
             if(s_health>eff_maxhp()) s_health = eff_maxhp();
         }

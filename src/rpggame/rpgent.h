@@ -69,12 +69,14 @@ struct rpgent : dynent
 
     void tryattack()
     {
-        if(!attacking || cl.lastmillis-lastaction<250) return;
-        
-        lastaction = cl.lastmillis;
+        if(!attacking) return;
         
         rpgobj &weapon = ro->selectedweapon();
         if(!weapon.s_damage) return;
+        
+        if(cl.lastmillis-lastaction<weapon.s_attackrate) return;
+        
+        lastaction = cl.lastmillis;
         
         loopv(cl.os.set) if(cl.os.set[i]!=ro) tryattackobj(*cl.os.set[i], weapon);  
         
@@ -172,6 +174,7 @@ struct rpgent : dynent
                 findplayerspawn(this);
                 state = CS_ALIVE;
                 ro->st_respawn();
+                attacking = false;
                 particle_splash(2, 1000, 500, o);
             }
         }

@@ -170,6 +170,7 @@ struct rpgobj : g3d_callback, stats
         if((s_health -= damage)<=0)
         {
             ent->state = CS_DEAD;
+            ent->attacking = false;
             ent->lastaction = os.cl.lastmillis;
             menutime = 0;
             conoutf("%s killed: %s", attacker.name, name);
