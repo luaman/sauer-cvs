@@ -834,11 +834,11 @@ bool move(physent *d, vec &dir)
     bool collided = false;
     vec obstacle;
     d->o.add(dir);
-    if(!collide(d, dir))
+    if(!collide(d, dir) || ((d->type==ENT_CAMERA || d->type==ENT_AI) && !collide(d)))
     {
+        d->o = old;
         if(d->type == ENT_CAMERA) return false;
         obstacle = wall;
-        d->o = old;
         d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
         if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || (!collide(d, vec(0, 0, -1), SLOPEZ) && (d->physstate == PHYS_STEP_UP || wall.z == 1.0f)))
         {
@@ -849,12 +849,6 @@ bool move(physent *d, vec &dir)
         else d->o = old;
         /* can't step over the obstacle, so just slide against it */
         collided = true;
-    }
-    else if((d->type==ENT_CAMERA || d->type==ENT_AI) && (inside || !collide(d)))
-    {
-        d->o = old;
-        if(d->type == ENT_AI) d->blocked = true;
-        return false;
     }
     vec floor(0, 0, 0);
     bool slide = collided && obstacle.z < 1.0f,
