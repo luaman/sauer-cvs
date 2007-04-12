@@ -27,7 +27,7 @@ struct fpsclient : igameclient
     int lastmillis;
     string clientmap;
     int arenarespawnwait, arenadetectwait;
-    int maptime;
+    int maptime, minremain;
     int respawnent;
 
     fpsent *player1;                // our client
@@ -44,7 +44,7 @@ struct fpsclient : igameclient
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
-          arenarespawnwait(0), arenadetectwait(0), maptime(0), respawnent(-1),
+          arenarespawnwait(0), arenadetectwait(0), maptime(0), minremain(0), respawnent(-1),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), sb(*this), et(*this), cc(*this), cpc(*this)
     {
@@ -335,6 +335,7 @@ struct fpsclient : igameclient
 
     void timeupdate(int timeremain)
     {
+        minremain = timeremain;
         if(!timeremain)
         {
             intermission = true;

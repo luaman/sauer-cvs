@@ -52,8 +52,12 @@ struct scoreboard : g3d_callback
         s_sprintfd(modemapstr)("%s: %s", fpsserver::modestr(gamemode), cl.getclientmap()[0] ? cl.getclientmap() : "[new map]");
         if((gamemode>1 || (gamemode==0 && multiplayer(false))) && cl.minremain >= 0)
         {
-            s_sprintfd(timestr)(", %d minutes remaining", cl.minremain);
-            s_strcat(modemapstr, timestr);
+            if(!cl.minremain) s_strcat(modemapstr, ", intermission");
+            else
+            {
+                s_sprintfd(timestr)(", %d %s remaining", cl.minremain, cl.minremain==1 ? "minute", "minutes");
+                s_strcat(modemapstr, timestr);
+            }
         }
         g.text(modemapstr, 0xFFFF80, "server");
         g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
