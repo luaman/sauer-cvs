@@ -47,12 +47,19 @@ struct scoreboard : g3d_callback
     void gui(g3d_gui &g, bool firstpass)
     {
         g.start(menustart, 0.04f, NULL, false);
-        
+       
+        int gamemode = cl.gamemode;
+        s_sprintfd(modemapstr)("%s: %s", fpsserver::modestr(gamemode), cl.getclientmap()[0] ? cl.getclientmap() : "[new map]");
+        if((gamemode>1 || (gamemode==0 && multiplayer(false))) && cl.minremain >= 0)
+        {
+            s_sprintfd(timestr)(", %d minutes remaining", cl.minremain);
+            s_strcat(modemapstr, timestr);
+        }
+        g.text(modemapstr, 0xFFFF80, "server");
         g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
 
         vector<teamscore> teamscores;
         bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.player1->clientnum;
-        int gamemode = cl.gamemode;
         
         vector<fpsent *> sbplayers;
 
