@@ -13,7 +13,7 @@ struct fpsrender
             if(d->state!=CS_DEAD || d->superdamage<50) renderclient(d, mdlname, vwepname, false, d->lastaction, d->lastpain);
             s_strcpy(d->info, d->name);
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); }
-            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, m_teammode ? (isteam(cl.player1->team, d->team) ? 16 : 13) : 11, 1);
+            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, m_mp(gamemode) && gamemode!=1 ? (isteam(cl.player1->team, d->team) ? 16 : 13) : 11, 1);
         }
         if(isthirdperson()) renderclient(cl.player1, m_mp(gamemode) && gamemode!=1 ? "monster/ogro/blue" : "monster/ogro", cl.player1->gunselect<=GUN_PISTOL ? vweps[cl.player1->gunselect] : NULL, false, cl.player1->lastaction, cl.player1->lastpain);
 
