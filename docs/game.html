@@ -444,15 +444,15 @@ the game "battlefield 1942" and the "onslaught" mode of unreal 2004: "bases" are
 </p>
 
 <p>
-A base can be in 2 states: captured or neutral. When captured, it is
+A base (flag) can be in 2 states: captured or neutral. When captured, it is
 captured by a certain team. This is shown
 by the texture its rendered with (red means enemy captured, blue means
-your team, grey means neutral). The model can be a flag, or whatever.
+your team, grey means neutral). When a base is captured, it will produce ammo periodically (every 20 seconds). Your team may take ammo with the R key ("repammo" command).
 </p>
 
 <p>
 A neutral base can be converted to your team by standing next to
-it for N seconds (N = 10 or so) within a certain radius. Multiple players speed up
+it for N seconds (N = 7 or so) within a certain radius. Multiple players speed up
 the process proportionally. The time accumulated to N is counted by the server as soon
 as the first player enters the radius,
 and reset to 0 immediately once all players of the initial team leave the radius.
@@ -460,7 +460,7 @@ and reset to 0 immediately once all players of the initial team leave the radius
 
 <p>
 A base of the enemy color can be converted to neutral in exactly the same way.
-(so often it is a 2 step process to take over a base).
+(so often it is a 2 step process to take over a base). However, it takes twice as long to convert an enemy base to neutral, as it does to convert a neutral base to your team.
 </p>
 
 <p>
