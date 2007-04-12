@@ -243,7 +243,7 @@ struct captureclient : capturestate
             if(mtype>=0)
             {
                 above.z += 3.0f;
-                particle_meter(above, b.converted, mtype, 1);
+                particle_meter(above, b.converted/float((b.owner[0] ? 2 : 1) * OCCUPYLIMIT), mtype, 1);
             }
         }
     }
