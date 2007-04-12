@@ -546,7 +546,7 @@ void rendermaterials(float zclip, bool refract)
                         else
                         {
                             glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
-                            glColor3f(wcol[0]/192.0f, wcol[1]/192.0f, wcol[2]/192.0f);
+                            glColor3f(wcol[0]/255.0f, wcol[1]/255.0f, wcol[2]/255.0f);
                         }
                     }
                     if(textured!=GL_TEXTURE_2D) 
