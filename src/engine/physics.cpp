@@ -329,12 +329,12 @@ bool ellipsecollide(dynent *d, const vec &dir, dynent *e)
     float dist = sqrtf(x*x + y*y) - sqrtf(dx*dx + dy*dy) - sqrtf(ex*ex + ey*ey);
     if(dist < 0)
     {
-        if((d->type==ENT_CAMERA || below >= -(d->eyeheight+d->aboveeye)/4.0f) && (dir.iszero() || dir.z > 0))                             
+        if(dir.iszero() || ((d->type==ENT_CAMERA || below >= -(d->eyeheight+d->aboveeye)/4.0f) && dir.z > 0))                             
         {    
             wall = vec(0, 0, -1); 
             return false;
         }
-        if((d->type==ENT_CAMERA || above >= -(d->eyeheight+d->aboveeye)/2.0f) && (dir.iszero() || dir.z < 0))              
+        if(dir.iszero() || ((d->type==ENT_CAMERA || above >= -(d->eyeheight+d->aboveeye)/2.0f) && dir.z < 0))              
         { 
             wall = vec(0, 0, 1); 
             return false;
@@ -349,7 +349,7 @@ bool ellipsecollide(dynent *d, const vec &dir, dynent *e)
     return true;
 }
 
-bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true)
+bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true, float cutoff = 0)
 {
     if(collideonly && !visible) return true;
     vec s(d->o);
@@ -363,16 +363,16 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     float az = fabs(s.z)-zr;
     if(ax>0 || ay>0 || az>0) return true;
     wall.x = wall.y = wall.z = 0;
-#define TRYCOLLIDE(dim, N, P) \
+#define TRYCOLLIDE(dim, ON, OP, N, P) \
     { \
-        if(s.dim<0) { if((dir.iszero() || dir.dim>0) && (N)) { walldistance = a ## dim; wall.dim = -1; return false; } } \
-        else if((dir.iszero() || dir.dim<0) && (P)) { walldistance = a ## dim; wall.dim = 1; return false; } \
+        if(s.dim<0) { if(visible&(1<<ON) && (dir.iszero() || (dir.dim>0 && (N)))) { walldistance = a ## dim; wall.dim = -1; return false; } } \
+        else if(visible&(1<<OP) && (dir.iszero() || (dir.dim<0 && (P)))) { walldistance = a ## dim; wall.dim = 1; return false; } \
     }
-    if(ax>ay && ax>az) TRYCOLLIDE(x, visible&(1<<O_LEFT), visible&(1<<O_RIGHT));
-    if(ay>az) TRYCOLLIDE(y, visible&(1<<O_BACK), visible&(1<<O_FRONT));
-    TRYCOLLIDE(z,
-        (d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/4.0f) && (visible&(1<<O_BOTTOM)),
-        (d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/2.0f) && (visible&(1<<O_TOP)));
+    if(ax>ay && ax>az) TRYCOLLIDE(x, O_LEFT, O_RIGHT, ax > -d->radius, ax > -d->radius);
+    if(ay>az) TRYCOLLIDE(y, O_BACK, O_FRONT, ay > -d->radius, ay > -d->radius);
+    TRYCOLLIDE(z, O_BOTTOM, O_TOP,
+         d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/4.0f,
+         d->type >= ENT_CAMERA || az >= -(d->eyeheight+d->aboveeye)/2.0f);
     if(collideonly) inside = true;
     return collideonly;
 }
@@ -522,7 +522,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
         vec r = vec(s2, s2, s2);
-        return rectcollide(d, dir, o, r.x, r.y, r.z, r.z, isentirelysolid(c) ? (c.ext ? c.ext->visible : 0) : 0xFF);
+        return rectcollide(d, dir, o, r.x, r.y, r.z, r.z, isentirelysolid(c) ? (c.ext ? c.ext->visible : 0) : 0xFF, true, cutoff);
     }
 
     setcubeclip(c, x, y, z, size);
@@ -533,31 +533,10 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
     vec o(d->o), *w = &wall;
     o.z += zr - d->eyeheight;
 
-    if(rectcollide(d, dir, p.o, p.r.x, p.r.y, p.r.z, p.r.z, c.ext->visible, !p.size)) return true;
+    if(rectcollide(d, dir, p.o, p.r.x, p.r.y, p.r.z, p.r.z, c.ext->visible, !p.size, cutoff)) return true;
 
     if(p.size)
     {
-        float m = walldistance;
-        loopi(p.size)
-        {
-            plane &f = p.p[i];
-            float dist = f.dist(o) - (fabs(f.x*r)+fabs(f.y*r)+fabs(f.z*zr));
-            if(dist > 0) return true;
-            if(dist > m)
-            {
-                if(!dir.iszero())
-                {
-                    if(f.dot(dir) >= -cutoff) continue;
-                    if(d->type < ENT_CAMERA)
-                    {
-                        if(dir.z < 0 && f.z > 0 && dist < -(d->eyeheight+d->aboveeye)/2.0f) continue;
-                        else if(dir.z > 0 && f.z < 0 && dist < -(d->eyeheight+d->aboveeye)/4.0f) continue;
-                    }
-                }
-                w = &p.p[i];
-                m = dist;
-            }
-        }
         if(w==&wall)
         {
             vec wo(o), wrad(r, r, zr);
@@ -566,14 +545,37 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
             {
                 plane &f = p.p[i];
                 if(!wall.dot(f)) continue;
-                if(f.dist(wo) >= fabs(f.x*wrad.x)+fabs(f.y*wrad.y)+fabs(f.z*wrad.z)) return true;
+                if(f.dist(wo) >= vec(f.x*wrad.x, f.y*wrad.y, f.z*wrad.z).magnitude()) 
+                { 
+                    wall = vec(0, 0, 0);
+                    walldistance = -1e10f;
+                    break;
+                }
             }
         }
-        else
+        float m = walldistance;
+        loopi(p.size)
         {
-            if(w->x) { if((w->x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < m) return true; }
-            if(w->y) { if((w->y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < m) return true; }
-            if(w->z) { if((w->z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < m) return true; }
+            plane &f = p.p[i];
+            float dist = f.dist(o) - vec(f.x*r, f.y*r, f.z*zr).magnitude();
+            if(dist > 0) return true;
+            if(dist > m)
+            {
+                if(!dir.iszero())
+                {
+                    if(f.dot(dir) >= -cutoff) continue;
+                    if(d->type < ENT_CAMERA)
+                    {
+                        if((dir.x*f.x < 0 || dir.y*f.y < 0) && dist <= -r) continue;
+                        if(dir.z*f.z < 0 && dist < -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f)) continue;
+                    }
+                }
+                if(p.p[i].x) { if((p.p[i].x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < dist) continue; } 
+                if(p.p[i].y) { if((p.p[i].y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < dist) continue; }
+                if(p.p[i].z) { if((p.p[i].z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist) continue; }
+                w = &p.p[i];
+                m = dist;
+            }
         }
         wall = *w;
         if(wall.iszero())
@@ -814,7 +816,7 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
     return found;
 }
 
-bool move(physent *d, vec &dir, int res = 0)
+bool move(physent *d, vec &dir)
 {
     vec old(d->o);
 #if 0
@@ -848,7 +850,7 @@ bool move(physent *d, vec &dir, int res = 0)
         /* can't step over the obstacle, so just slide against it */
         collided = true;
     }
-    else if(inside && (d->type==ENT_CAMERA || (d->type==ENT_AI && res<10)))
+    else if((d->type==ENT_CAMERA || d->type==ENT_AI) && (inside || !collide(d)))
     {
         d->o = old;
         if(d->type == ENT_AI) d->blocked = true;
@@ -1143,7 +1145,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         int collisions = 0;
 
         d.mul(f);
-        loopi(moveres) if(!move(pl, d, moveres)) { if(pl->type==ENT_CAMERA) return false; if(++collisions<5) i--; } // discrete steps collision detection & sliding
+        loopi(moveres) if(!move(pl, d)) { if(pl->type==ENT_CAMERA) return false; if(++collisions<5) i--; } // discrete steps collision detection & sliding
         if(timeinair > 800 && !pl->timeinair) // if we land after long time must have been a high jump, make thud sound
         {
             cl->physicstrigger(pl, local, -1, 0);
