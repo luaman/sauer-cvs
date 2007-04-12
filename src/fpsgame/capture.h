@@ -73,7 +73,7 @@ struct capturestate
         {
             if(strcmp(enemy, team)) return -1;
             converted += units;
-            if(converted<OCCUPYLIMIT) return -1;
+            if(converted<(owner[0] ? 2 : 1)*OCCUPYLIMIT) return -1;
             if(owner[0]) { owner[0] = '\0'; converted = 0; s_strcpy(enemy, team); return 0; }
             else { s_strcpy(owner, team); ammo = 0; capturetime = 0; noenemy(); return 1; }
         }
