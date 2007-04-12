@@ -55,7 +55,7 @@ struct scoreboard : g3d_callback
             if(!cl.minremain) s_strcat(modemapstr, ", intermission");
             else
             {
-                s_sprintfd(timestr)(", %d %s remaining", cl.minremain, cl.minremain==1 ? "minute", "minutes");
+                s_sprintfd(timestr)(", %d %s remaining", cl.minremain, cl.minremain==1 ? "minute" : "minutes");
                 s_strcat(modemapstr, timestr);
             }
         }

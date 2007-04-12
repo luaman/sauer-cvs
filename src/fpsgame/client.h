@@ -812,6 +812,7 @@ struct clientcom : iclientcom
         if(remote && !m_mp(gamemode)) gamemode = 0;
         cl.gamemode = gamemode;
         cl.nextmode = gamemode;
+        cl.minremain = -1;
         if(editmode && !allowedittoggle()) toggleedit();
         if(gamemode==1 && !name[0]) emptymap(0, true);
         else load_world(name);

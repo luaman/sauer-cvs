@@ -366,7 +366,7 @@ struct fpsclient : igameclient
         }
         else if(timeremain > 0)
         {
-            conoutf("\f2time remaining: %d minutes", timeremain);
+            conoutf("\f2time remaining: %d %s", timeremain, timeremain==1 ? "minute" : "minutes");
         }
     }
 
