@@ -1,0 +1,162 @@
+# Project: sauerbraten
+# Makefile created by Dev-C++ 4.9.9.2
+
+CPP  = g++.exe
+CC   = gcc.exe
+WINDRES = windres.exe
+RES  = sauerbraten_private.res
+OBJ  = ../engine/cubeloader.o ../engine/lightmap.o ../engine/normal.o ../engine/octa.o ../engine/octaedit.o ../engine/octarender.o ../engine/physics.o ../engine/world.o ../engine/worldio.o ../engine/client.o ../engine/server.o ../engine/serverbrowser.o ../enet/callbacks.o ../enet/host.o ../enet/list.o ../enet/packet.o ../enet/peer.o ../enet/protocol.o ../enet/unix.o ../enet/win32.o ../engine/rendergl.o ../engine/rendermodel.o ../engine/renderparticles.o ../engine/rendertext.o ../engine/spheretree.o ../engine/water.o ../engine/command.o ../engine/console.o ../engine/main.o ../engine/menus.o ../engine/sound.o ../shared/geom.o ../shared/pch.o ../shared/tools.o ../fpsgame/fps.o ../rpggame/rpg.o ../engine/3dgui.o ../engine/renderva.o ../engine/rendersky.o ../engine/texture.o ../engine/grass.o ../engine/shader.o ../engine/crypto.o ../engine/material.o $(RES)
+LINKOBJ  = ../engine/cubeloader.o ../engine/lightmap.o ../engine/normal.o ../engine/octa.o ../engine/octaedit.o ../engine/octarender.o ../engine/physics.o ../engine/world.o ../engine/worldio.o ../engine/client.o ../engine/server.o ../engine/serverbrowser.o ../enet/callbacks.o ../enet/host.o ../enet/list.o ../enet/packet.o ../enet/peer.o ../enet/protocol.o ../enet/unix.o ../enet/win32.o ../engine/rendergl.o ../engine/rendermodel.o ../engine/renderparticles.o ../engine/rendertext.o ../engine/spheretree.o ../engine/water.o ../engine/command.o ../engine/console.o ../engine/main.o ../engine/menus.o ../engine/sound.o ../shared/geom.o ../shared/pch.o ../shared/tools.o ../fpsgame/fps.o ../rpggame/rpg.o ../engine/3dgui.o ../engine/renderva.o ../engine/rendersky.o ../engine/texture.o ../engine/grass.o ../engine/shader.o ../engine/crypto.o ../engine/material.o $(RES)
+LIBS =  -L"C:/Media/Command/Bin/Dev-Cpp/lib" -L"../mingw/lib" -L"../lib" -lwinmm -lws2_32 -lz -lopengl32 -lglu32 -lglaux -lSDL -lSDL_image -lSDL_mixer -lfmodvc  -s 
+INCS =  -I"C:/Media/Command/Bin/Dev-Cpp/include"  -I"../devcpp"  -I"../enet/include"  -I"../include"  -I"../engine"  -I"../shared" 
+CXXINCS =  -I"C:/Media/Command/Bin/Dev-Cpp/lib/gcc/mingw32/3.4.2/include"  -I"C:/Media/Command/Bin/Dev-Cpp/include/c++/3.4.2/backward"  -I"C:/Media/Command/Bin/Dev-Cpp/include/c++/3.4.2/mingw32"  -I"C:/Media/Command/Bin/Dev-Cpp/include/c++/3.4.2"  -I"C:/Media/Command/Bin/Dev-Cpp/include"  -I"../devcpp"  -I"../enet/include"  -I"../include"  -I"../engine"  -I"../shared" 
+BIN  = ../bin/sauerbraten.exe
+CXXFLAGS = $(CXXINCS) -DDEVCPP -D__GNUWIN32__ -DNDEBUG -D_CONSOLE -D_MBCS -fsigned-char -finline-functions -fomit-frame-pointer   -w -O3
+CFLAGS = $(INCS) -DDEVCPP -D__GNUWIN32__ -DNDEBUG -D_CONSOLE -D_MBCS -fsigned-char -finline-functions -fomit-frame-pointer   -w -O3
+RM = rm -f
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before ../bin/sauerbraten.exe all-after
+
+
+clean: clean-custom
+	${RM} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CPP) $(LINKOBJ) -o "..\bin\sauerbraten.exe" $(LIBS)
+
+../engine/cubeloader.o: ../engine/cubeloader.cpp
+	$(CPP) -c ../engine/cubeloader.cpp -o ../engine/cubeloader.o $(CXXFLAGS)
+
+../engine/lightmap.o: ../engine/lightmap.cpp
+	$(CPP) -c ../engine/lightmap.cpp -o ../engine/lightmap.o $(CXXFLAGS)
+
+../engine/normal.o: ../engine/normal.cpp
+	$(CPP) -c ../engine/normal.cpp -o ../engine/normal.o $(CXXFLAGS)
+
+../engine/octa.o: ../engine/octa.cpp
+	$(CPP) -c ../engine/octa.cpp -o ../engine/octa.o $(CXXFLAGS)
+
+../engine/octaedit.o: ../engine/octaedit.cpp
+	$(CPP) -c ../engine/octaedit.cpp -o ../engine/octaedit.o $(CXXFLAGS)
+
+../engine/octarender.o: ../engine/octarender.cpp
+	$(CPP) -c ../engine/octarender.cpp -o ../engine/octarender.o $(CXXFLAGS)
+
+../engine/physics.o: ../engine/physics.cpp
+	$(CPP) -c ../engine/physics.cpp -o ../engine/physics.o $(CXXFLAGS)
+
+../engine/world.o: ../engine/world.cpp
+	$(CPP) -c ../engine/world.cpp -o ../engine/world.o $(CXXFLAGS)
+
+../engine/worldio.o: ../engine/worldio.cpp
+	$(CPP) -c ../engine/worldio.cpp -o ../engine/worldio.o $(CXXFLAGS)
+
+../engine/client.o: ../engine/client.cpp
+	$(CPP) -c ../engine/client.cpp -o ../engine/client.o $(CXXFLAGS)
+
+../engine/server.o: ../engine/server.cpp
+	$(CPP) -c ../engine/server.cpp -o ../engine/server.o $(CXXFLAGS)
+
+../engine/serverbrowser.o: ../engine/serverbrowser.cpp
+	$(CPP) -c ../engine/serverbrowser.cpp -o ../engine/serverbrowser.o $(CXXFLAGS)
+
+../enet/callbacks.o: ../enet/callbacks.c
+	$(CC) -c ../enet/callbacks.c -o ../enet/callbacks.o $(CFLAGS)
+
+../enet/host.o: ../enet/host.c
+	$(CC) -c ../enet/host.c -o ../enet/host.o $(CFLAGS)
+
+../enet/list.o: ../enet/list.c
+	$(CC) -c ../enet/list.c -o ../enet/list.o $(CFLAGS)
+
+../enet/packet.o: ../enet/packet.c
+	$(CC) -c ../enet/packet.c -o ../enet/packet.o $(CFLAGS)
+
+../enet/peer.o: ../enet/peer.c
+	$(CC) -c ../enet/peer.c -o ../enet/peer.o $(CFLAGS)
+
+../enet/protocol.o: ../enet/protocol.c
+	$(CC) -c ../enet/protocol.c -o ../enet/protocol.o $(CFLAGS)
+
+../enet/unix.o: ../enet/unix.c
+	$(CC) -c ../enet/unix.c -o ../enet/unix.o $(CFLAGS)
+
+../enet/win32.o: ../enet/win32.c
+	$(CC) -c ../enet/win32.c -o ../enet/win32.o $(CFLAGS)
+
+../engine/rendergl.o: ../engine/rendergl.cpp
+	$(CPP) -c ../engine/rendergl.cpp -o ../engine/rendergl.o $(CXXFLAGS)
+
+../engine/rendermodel.o: ../engine/rendermodel.cpp
+	$(CPP) -c ../engine/rendermodel.cpp -o ../engine/rendermodel.o $(CXXFLAGS)
+
+../engine/renderparticles.o: ../engine/renderparticles.cpp
+	$(CPP) -c ../engine/renderparticles.cpp -o ../engine/renderparticles.o $(CXXFLAGS)
+
+../engine/rendertext.o: ../engine/rendertext.cpp
+	$(CPP) -c ../engine/rendertext.cpp -o ../engine/rendertext.o $(CXXFLAGS)
+
+../engine/spheretree.o: ../engine/spheretree.cpp
+	$(CPP) -c ../engine/spheretree.cpp -o ../engine/spheretree.o $(CXXFLAGS)
+
+../engine/water.o: ../engine/water.cpp
+	$(CPP) -c ../engine/water.cpp -o ../engine/water.o $(CXXFLAGS)
+
+../engine/command.o: ../engine/command.cpp
+	$(CPP) -c ../engine/command.cpp -o ../engine/command.o $(CXXFLAGS)
+
+../engine/console.o: ../engine/console.cpp
+	$(CPP) -c ../engine/console.cpp -o ../engine/console.o $(CXXFLAGS)
+
+../engine/main.o: ../engine/main.cpp
+	$(CPP) -c ../engine/main.cpp -o ../engine/main.o $(CXXFLAGS)
+
+../engine/menus.o: ../engine/menus.cpp
+	$(CPP) -c ../engine/menus.cpp -o ../engine/menus.o $(CXXFLAGS)
+
+../engine/sound.o: ../engine/sound.cpp
+	$(CPP) -c ../engine/sound.cpp -o ../engine/sound.o $(CXXFLAGS)
+
+../shared/geom.o: ../shared/geom.cpp
+	$(CPP) -c ../shared/geom.cpp -o ../shared/geom.o $(CXXFLAGS)
+
+../shared/pch.o: ../shared/pch.cpp
+	$(CPP) -c ../shared/pch.cpp -o ../shared/pch.o $(CXXFLAGS)
+
+../shared/tools.o: ../shared/tools.cpp
+	$(CPP) -c ../shared/tools.cpp -o ../shared/tools.o $(CXXFLAGS)
+
+../fpsgame/fps.o: ../fpsgame/fps.cpp
+	$(CPP) -c ../fpsgame/fps.cpp -o ../fpsgame/fps.o $(CXXFLAGS)
+
+../rpggame/rpg.o: ../rpggame/rpg.cpp
+	$(CPP) -c ../rpggame/rpg.cpp -o ../rpggame/rpg.o $(CXXFLAGS)
+
+../engine/3dgui.o: ../engine/3dgui.cpp
+	$(CPP) -c ../engine/3dgui.cpp -o ../engine/3dgui.o $(CXXFLAGS)
+
+../engine/renderva.o: ../engine/renderva.cpp
+	$(CPP) -c ../engine/renderva.cpp -o ../engine/renderva.o $(CXXFLAGS)
+
+../engine/rendersky.o: ../engine/rendersky.cpp
+	$(CPP) -c ../engine/rendersky.cpp -o ../engine/rendersky.o $(CXXFLAGS)
+
+../engine/texture.o: ../engine/texture.cpp
+	$(CPP) -c ../engine/texture.cpp -o ../engine/texture.o $(CXXFLAGS)
+
+../engine/grass.o: ../engine/grass.cpp
+	$(CPP) -c ../engine/grass.cpp -o ../engine/grass.o $(CXXFLAGS)
+
+../engine/shader.o: ../engine/shader.cpp
+	$(CPP) -c ../engine/shader.cpp -o ../engine/shader.o $(CXXFLAGS)
+
+../engine/crypto.o: ../engine/crypto.cpp
+	$(CPP) -c ../engine/crypto.cpp -o ../engine/crypto.o $(CXXFLAGS)
+
+../engine/material.o: ../engine/material.cpp
+	$(CPP) -c ../engine/material.cpp -o ../engine/material.o $(CXXFLAGS)
+
+sauerbraten_private.res: sauerbraten_private.rc 
+	$(WINDRES) -i sauerbraten_private.rc --input-format=rc -o sauerbraten_private.res -O coff 
