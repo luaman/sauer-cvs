@@ -15,6 +15,7 @@ CLIENT_OBJS= \
 	engine/grass.o \
 	engine/lightmap.o \
 	engine/main.o \
+	engine/material.o \
 	engine/menus.o \
 	engine/normal.o \
 	engine/octa.o \
