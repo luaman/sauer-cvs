@@ -320,7 +320,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(vwepmdl)
     {
         vwep = loadmodel(vwepmdl);
-        if(vwep->type()!=m->type()) vwep = NULL;
+        if(vwep && vwep->type()!=m->type()) vwep = NULL;
     }
 
     if(!m->cullface) glDisable(GL_CULL_FACE);
