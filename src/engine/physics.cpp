@@ -564,7 +564,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                 if(!dir.iszero())
                 {
                     if(f.dot(dir) >= -cutoff) continue;
-                    if(dist < dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0)) continue;
+                    if(dist < (dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) continue;
                 }
                 if(p.p[i].z) { if((p.p[i].z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist) continue; }
                 else
