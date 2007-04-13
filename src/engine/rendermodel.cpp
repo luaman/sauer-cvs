@@ -260,12 +260,15 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if((cull&MDL_CULL_DIST) && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(cull&MDL_CULL_VFC)
         {
-            if(refracting)
+            if(reflecting)
             {
-                if(center.z+radius<refracting-waterfog || center.z-radius>=refracting) return;
+                if(refracting)
+                {
+                    if(center.z+radius<refracting-waterfog || center.z-radius>=refracting) return;
+                }
+                else if(center.z+radius<=reflecting) return;
+                if(center.dist(camera1->o)-radius>reflectdist) return;
             }
-            else if(reflecting && center.z+radius<=reflecting) return;
-            if((reflecting || refracting) && center.dist(camera1->o)-radius>reflectdist) return;
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
         }
         if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
@@ -324,7 +327,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 
-    if(dynshadow && !refracting && !reflecting && (cull&MDL_SHADOW) && hasstencil)
+    if(dynshadow && !reflecting && (cull&MDL_SHADOW) && hasstencil)
     {
         vec floor;
         float dist = rayfloor(center, floor);
