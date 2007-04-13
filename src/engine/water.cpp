@@ -759,7 +759,7 @@ void drawreflections()
         int size = 1<<reflectsize;
         if(!hasFBO) while(size>scr_w || size>scr_h) size /= 2;
 
-        if(!refs) glViewport(scr_w-size, scr_h-size, size, size);
+        if(!refs) glViewport(hasFBO ? 0 : scr_w-size, hasFBO ? 0 : scr_h-size, size, size);
 
         refs++;
         ref.lastupdate = totalmillis;
