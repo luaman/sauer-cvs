@@ -208,6 +208,9 @@ extern void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, 
     uchar wcol[3] = { 20, 70, 80 }; \
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
 
+extern float reflecting, refracting;
+extern int reflectdist, waterfog;
+
 extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();

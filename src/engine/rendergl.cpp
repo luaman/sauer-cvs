@@ -325,7 +325,6 @@ VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
-extern float reflecting, refracting;
 physent *camera1 = NULL;
 bool deathcam = false;
 bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (reflecting && !refracting); }
@@ -404,8 +403,6 @@ void undoclipmatrix()
 VAR(reflectclip, 0, 6, 64);
 VARP(reflectmms, 0, 1, 1);
 
-extern int waterfog;
-
 void setfogplane(float scale, float z)
 {
     float fogplane[4] = {1, 0, 0, 0};
@@ -438,7 +435,7 @@ void drawreflection(float z, bool refract, bool clear)
 
     float oldfogstart, oldfogend, oldfogcolor[4];
 
-    if(renderpath!=R_FIXEDFUNCTION && (refract || camera1->o.z < z))
+    if((renderpath!=R_FIXEDFUNCTION && refract) || camera1->o.z < z)
     {
         glGetFloatv(GL_FOG_START, &oldfogstart);
         glGetFloatv(GL_FOG_END, &oldfogend);
@@ -532,7 +529,7 @@ void drawreflection(float z, bool refract, bool clear)
         glCullFace(GL_FRONT);
     }
 
-    if(renderpath!=R_FIXEDFUNCTION && (refract || camera1->o.z < z))
+    if((renderpath!=R_FIXEDFUNCTION && refract) || camera1->o.z < z)
     {
         glFogf(GL_FOG_START, oldfogstart);
         glFogf(GL_FOG_END, oldfogend);

@@ -247,10 +247,6 @@ VARP(maxmodelradiusdistance, 10, 80, 1000);
 VARP(bounddynshadows, 0, 1, 1);
 VARP(dynshadow, 0, 60, 100);
 
-extern float reflecting, refracting;
-extern int waterfog, reflectdist;
-
-
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
 {
     model *m = loadmodel(mdl); 

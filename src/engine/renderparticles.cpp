@@ -3,8 +3,6 @@
 #include "pch.h"
 #include "engine.h"
 
-extern float reflecting, refracting;
-
 #define MAXPARTYPES 28
 
 struct particle

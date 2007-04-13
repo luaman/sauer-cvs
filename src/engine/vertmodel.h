@@ -257,8 +257,11 @@ struct vertmodel : model
             }
             if(s->bpp==32) // transparent skin
             {
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                if(!reflecting && !refracting)
+                {
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                }
                 glEnable(GL_ALPHA_TEST);
                 glAlphaFunc(GL_GREATER, owner->model->alphatest);
             }
@@ -277,7 +280,7 @@ struct vertmodel : model
             if(tex ? lookuptexture(tex).sts[0].t->bpp==32 : (skin && skin->bpp==32))
             {
                 glDisable(GL_ALPHA_TEST);
-                glDisable(GL_BLEND);
+                if(!reflecting && !refracting) glDisable(GL_BLEND);
             }
         }
 

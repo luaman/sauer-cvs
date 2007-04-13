@@ -284,6 +284,7 @@ void rendervertwater()
     getwatercolour(wcolub);
     loopi(3) wcol[i] = wcolub[i]/255.0f;
 
+    bool blended = true;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
@@ -303,7 +304,11 @@ void rendervertwater()
             glBindTexture(GL_TEXTURE_2D, camera1->o.z>=ref.height+offset ? ref.refracttex : ref.tex);
             setprojtexmatrix(ref, !waterreflect);
         }
-
+        else if(waterreflect)
+        {
+            if(camera1->o.z < ref.height+offset) { if(blended) { glDepthMask(GL_TRUE); glDisable(GL_BLEND); blended = false; } }
+            else if(!blended) { glDepthMask(GL_FALSE); glEnable(GL_BLEND); blended = true; }
+        }
         loopvj(ref.matsurfs)
         {
             materialsurface &m = *ref.matsurfs[j];
@@ -385,6 +390,7 @@ void renderwater()
     entity *lastlight = (entity *)-1;
     int lastdepth = -1;
     float offset = -1.1f;
+    bool blended = true;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
@@ -402,6 +408,11 @@ void renderwater()
             glActiveTexture_(GL_TEXTURE3_ARB);
             glBindTexture(GL_TEXTURE_2D, camera1->o.z>=ref.height+offset ? ref.refracttex : ref.tex);
             glActiveTexture_(GL_TEXTURE0_ARB);
+        }
+        else if(waterreflect)
+        {
+            if(camera1->o.z < ref.height+offset) { if(blended) { glDepthMask(GL_TRUE); glDisable(GL_BLEND); blended = false; } }
+            else if(!blended) { glDepthMask(GL_FALSE); glEnable(GL_BLEND); blended = true; }
         }
 
         bool begin = false;
@@ -748,7 +759,7 @@ void drawreflections()
         int size = 1<<reflectsize;
         if(!hasFBO) while(size>scr_w || size>scr_h) size /= 2;
 
-        if(!refs) glViewport(0, 0, size, size);
+        if(!refs) glViewport(scr_w-size, scr_h-size, size, size);
 
         refs++;
         ref.lastupdate = totalmillis;
@@ -762,7 +773,7 @@ void drawreflections()
             if(!ref.fb)
             {
                 glBindTexture(GL_TEXTURE_2D, ref.tex);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, size, size);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, scr_w-size, scr_h-size, size, size);
             }
         }
 
@@ -774,7 +785,7 @@ void drawreflections()
             if(!ref.refractfb)
             {
                 glBindTexture(GL_TEXTURE_2D, ref.refracttex);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, size, size);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, scr_w-size, scr_h-size, size, size);
             }   
         }    
 

@@ -237,8 +237,6 @@ void resetqueries()
 VAR(oqfrags, 0, 8, 64);
 VAR(oqreflect, 0, 4, 64);
 
-extern float reflecting, refracting;
-
 bool checkquery(occludequery *query, bool nowait)
 {
     GLuint fragments;
@@ -822,7 +820,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     }
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
 
-    extern int waterfog;
     if(refracting ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED)
     {
         static Shader *fogshader = NULL;
