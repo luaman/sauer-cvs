@@ -74,8 +74,8 @@ void guiimage(char *path, char *action, float *scale, int *overlaid)
     }
     else if(ret&G3D_ROLLOVER)
     {
-        alias("guirollovername", path);
-        alias("guirolloveraction", action);
+        alias("guirolloverimgpath", path);
+        alias("guirolloverimgaction", action);
     }
 }
 
