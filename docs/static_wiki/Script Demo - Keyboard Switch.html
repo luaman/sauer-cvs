@@ -8,18 +8,29 @@
     <div class="wiki" id="content_view" style="display: block;">
 in autoexec.cfg (create in base game dir if it doesn't exist):<br />
 
-<pre><code>bind e []</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">bind e []</pre>
 
 to disable edittoggle at game engine start.<br />
 then modify data/menus.cfg:<br />
 
-<pre><code>newmenu keyswitcher
-menuitem &quot;normal&quot; [exec gamekeys.cfg]
-menuitem &quot;editor&quot; [exec editkeys.cfg]</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
 
-Do not forget to add a &quot;showmenu&quot;-line for your new menu too (see above).<br />
-Then all you have to do is copy data/defaults.cfg to gamekeys.cfg and editkeys.cfg (in base folder)<br />
-and then edit them to match your needs. So probably you'll delete all lines not containing a keybind.<br />
+-->
+</style><pre class="text">newgui keyswitcher [
+guibutton &quot;normal&quot; [exec gamekeys.cfg]
+guibutton &quot;editor&quot; [exec editkeys.cfg]
+]</pre>
+
+Do not forget to add a &quot;showgui&quot;-line for your new menu too (in data/menus.cfg, e.g. in the main menu).<br />
+Then all you have to do is copy data/defaults.cfg to gamekeys.cfg and editkeys.cfg (in base folder), remove all non-keybind lines<br />
+and then edit them to match your needs.<br />
 Remember to keep the edittoggle bind for editkeys.cfg and in gamekeys.cfg to bind to an empty string (like in autoexec.cfg above).
     </div>
   </body>

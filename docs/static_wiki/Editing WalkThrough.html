@@ -23,12 +23,22 @@ Depending on your depth of involvement with this project you might want to skip 
 run sauerbraten<br />
 open console (either press 'BACKQUOTE' or first 'T' and then '/')<br />
 
-<pre><code>gamma 150</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">gamma 150</pre>
 
 then <tt>edittoggle</tt> (or press 'E')<br />
 now enter<br />
 
-<pre><code>newmap</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">newmap</pre>
 
 FYI : the resulting &quot;map&quot; is a half-filled octree.<br />
 <br />
@@ -48,12 +58,17 @@ with orientation depending on your position and selection of first cube, etc.<br
 <br />
 turn it into a square of corridors<br />
 
-<pre><code>a top-down view of your square,
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">a top-down view of your square,
 with x as deleted cubes
  xxxx
  x  x
  x  x
- xxxx</code></pre>
+ xxxx</pre>
 
 select this top-down square of cubes into a 6x6 selection of the top<br />
 adapt the texture : <tt>Y+MW</tt> - brick<br />
@@ -68,8 +83,13 @@ HxWxD:3x2x5 cubes from center of any inner wall<br />
 turn corner (left or right)<br />
 repeat 3x2x5 inwards<br />
 
-<pre><code>savemap wt101
-map wt101</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">savemap wt101
+map wt101</pre>
 
 orientation will be same as when changing the map,<br />
 but spawn will replace you at the coordinates (0,0,0)<br />
@@ -81,20 +101,35 @@ You can select a specific starting point by placing your first entity.<br />
 What every map should have at least on of.<br />
 A <tt>playerstart</tt><br />
 
-<pre><code>newent playerstart</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">newent playerstart</pre>
 
 (or use editing menu)<br />
 orientation taken from your LOS as the editing camera position at creation time<br />
 [LOS:line-of-sight]<br />
 
-<pre><code>entproperty N D</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">entproperty N D</pre>
 
 with N the property index (0..3) and D the delta (..-2,-1,0,+1,+2..)<br />
 
-<pre><code>savecurrentmap
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">savecurrentmap
 map wt101
 map wt101
-map wt101</code></pre>
+map wt101</pre>
 
 
     </div>

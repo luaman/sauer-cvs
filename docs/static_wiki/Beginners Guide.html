@@ -30,6 +30,14 @@ On this page you will get information about your first steps into the project.<b
 <h1 id="toc0">requirements</h1>
 When you decide to try out Sauerbraten you should be aware of your operating system, your current graphics chipset (manufacturer and card name) and that this project is still &quot;Work in Progress&quot; (WiP)!<br />
 <br />
+Typically, to run Sauerbraten at playable speeds on minimum settings, you'll need at least:<br />
+1GHz or higher CPU, 256MB RAM and a GeForce 4 MX or equivalent GPU.<br />
+<br />
+For maximum settings, you'll need at least:<br />
+2GHz or higher CPU, 512MB RAM and a GeForce 6600 or equivalent shader model 2.0 GPU.<br />
+<br />
+Before you even download Sauerbraten, make sure you meet the above requirements and have the latest video card drivers installed for your OS. If you're on Linux, make sure you're not using MESA drivers, and if you're on Windows, make sure you're not using the generic drivers.<br />
+<br />
 <h2 id="toc1">graphics cards</h2>
 Be prepared that some graphics cards have problems running with the default configuration.<br />
 You should then try to use all toggles to reduce rendering complexity and work yourself up.<br />
@@ -57,7 +65,7 @@ running &quot;glxgears -info&quot; can help and having other OpenGL and/or SDL b
 <a name="progstart"></a><br />
 <h1 id="toc3">setup</h1>
 First try running the game out-of-the-box,<br />
-but in the long run you will want to optimize your setup to your hardware and personal preferences.<br />
+but in the long run you will want to optimize <a class="wiki_link" href="configuration.html">your setup</a> to your hardware and personal preferences.<br />
 There is a <a class="wiki_link" href="Performance%20Guide.html">plethora of settings</a> for you to do this.<br />
 RTFM : <a class="wiki_link_ext" href="http://sauerbraten.org/docs/config.html" rel="nofollow">config page</a><br />
 <br />
@@ -76,7 +84,12 @@ switching between different setups made easy and including a random start map se
 </ul>
 
 
-<pre><code>@ECHO OFF
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">@ECHO OFF
 REM -- default call
 REM bin\sauerbraten.exe -w1024 -h768 %1 %2 %3 %4 %5
 REM -- full fledged call
@@ -84,13 +97,18 @@ REM bin\sauerbraten.exe -w1600 -h1200 -b24 -z24 -a4 -f3 %1 %2 %3 %4 %5
 REM -- minimalistic call
 REM bin\sauerbraten.exe -w800 -h600 -b8 -z16 -a0 -f -lpindakaas
 REM -- my call
-bin\sauerbraten.exe -w800 -h600 -b8 -z16 -a0 -f -lpindakaas</code></pre>
+bin\sauerbraten.exe -w800 -h600 -b8 -z16 -a0 -f -lpindakaas</pre>
 
 Later you might want to change the last line to your systems optimal settings.<br />
 It often pays to not have any settings in sauerbraten.bat itself.<br />
 Instead you could just call<br />
 
-<pre><code>bin\sauerbraten.exe %1 %2 %3 %4 %5</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">bin\sauerbraten.exe %1 %2 %3 %4 %5</pre>
 
 and add appropriate parameters to a range of links (*.lnk) - say on your Desktop -<br />
 like &quot;Medium-Resolution Sauer&quot;, &quot;minimal sauer&quot;, &quot;EyeCandy&quot;, ...<br />
@@ -119,12 +137,17 @@ Pick a local mirror.<br />
 <br />
 <a name="autoexec"></a><br />
 <h2 id="toc6">basic configuration</h2>
-Manage your configuration via the &quot;<em>autoexec.cfg</em>&quot;.<br />
+Manage your <a class="wiki_link" href="configuration.html">configuration</a> via the &quot;<em>autoexec.cfg</em>&quot;.<br />
 If the file does not exist in your base installation folder then create it.<br />
 Two lines are a bare minimum:<br />
 
-<pre><code>name &quot;FragOrBeFragged&quot;
-team &quot;none&quot;</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">name &quot;FragOrBeFragged&quot;
+team &quot;none&quot;</pre>
 
 <br />
 name is capped off at 15 characters, team at 4.<br />
@@ -229,14 +252,14 @@ the documentation is also available from <a class="wiki_link_ext" href="http://s
 <br />
 <h2 id="toc15">See?!??</h2>
 The game is pretty straight-forward to jump into,<br />
-so some people seem to overlook the manual - <br />
+so some people seem to overlook the manual -<br />
 don't make that mistake yourself!<br />
 <br />
 But - in the end - a lot of Sauerbraten Know-How<br />
 comes through actively experimenting with the engine;<br />
-even more so since it is still under development <br />
+even more so since it is still under development<br />
 and you might find something should work differently -<br />
-ask in the forum or on IRC about it - <br />
+ask in the forum or on IRC about it -<br />
 maybe it's a bug? Help the project if you can!<br />
 <br />
 Familiarize yourself with the different aspects that make up the game.<br />

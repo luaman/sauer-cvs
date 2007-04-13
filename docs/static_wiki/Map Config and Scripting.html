@@ -11,8 +11,11 @@
 <div style="margin-left: 2em;"><a href="#toc2">Cross-Platform</a></div>
 <div style="margin-left: 1em;"><a href="#toc3">Textures</a></div>
 <div style="margin-left: 2em;"><a href="#toc4">Shaders</a></div>
-<div style="margin-left: 1em;"><a href="#toc5">Sound</a></div>
-<div style="margin-left: 1em;"><a href="#toc6">Triggers</a></div>
+<div style="margin-left: 3em;"><a href="#toc5">shader</a></div>
+<div style="margin-left: 3em;"><a href="#toc6">description</a></div>
+<div style="margin-left: 3em;"><a href="#toc7">CVS only?</a></div>
+<div style="margin-left: 1em;"><a href="#toc8">Sound</a></div>
+<div style="margin-left: 1em;"><a href="#toc9">Triggers</a></div>
 </div>
 <a name="intro"></a><br />
 <h1 id="toc0">Introduction</h1>
@@ -25,7 +28,12 @@ Once you've created a *.cfg file for your map:<br />
 </ul>
 
 
-<pre><code>newmap</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">newmap</pre>
 
 
 <ul>
@@ -33,7 +41,12 @@ Once you've created a *.cfg file for your map:<br />
 </ul>
 
 
-<pre><code>savemap mapnamehere</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">savemap mapnamehere</pre>
 
 
 <ul>
@@ -42,7 +55,12 @@ Once you've created a *.cfg file for your map:<br />
 </ul>
 
 
-<pre><code>map mapnamehere</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">map mapnamehere</pre>
 
 
 <ul>
@@ -65,20 +83,35 @@ So a map called metl4.ogz will call metl4.cfg.<br />
 <br />
 The first need for such a specific map configuration file will most likely arise when you want to have a special skybox background. For this enter<br />
 
-<pre><code>loadsky &quot;skyname&quot;
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">loadsky &quot;skyname&quot;
 //loadsky &quot;ik2k/env/iklake&quot;
-//loadsky &quot;socksy/mars&quot;</code></pre>
+//loadsky &quot;socksy/mars&quot;</pre>
 
 where skyname is the path to the 6 required images for a skybox. Check exisiting map CFGs for which skies are available and how to reference them exactly, currently the comment lines in the above code example should work.<br />
 <br />
 Second, the fog cut-off distance, and fog colour can be applied. For this enter<br />
 
-<pre><code>fog 2500 // can be set from 1 to 100000 as needed
-fogcolour 16777215 // this is the max setting. This is also a hex parameter, 0XRRGGBB.</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">fog 2500 // can be set from 1 to 100000 as needed
+fogcolour 16777215 // this is the max setting. This is also a hex parameter, 0XRRGGBB.</pre>
 
 Third, you might want some ambient lighting. For this enter<br />
 
-<pre><code>ambient 15 // can be set from 1 to 255</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">ambient 15 // can be set from 1 to 255</pre>
 
 Be carefull with the ambient option, as it reduces the texture contrast.<br />
 To help converting RGB to HEX values this <a class="wiki_link_ext" href="http://www.kenjikojima.com/java/RGBHexConverter2.html" rel="nofollow">RGB &amp; Hex Converter</a> popped up on the forum.<br />
@@ -106,18 +139,33 @@ To explain the meaning of this parameter(s), the line &quot; texture 0 &quot;dg/
 Start your map after creating this part of the maps .cfg file. You do not want to retexture anything.<br />
 The first thing to add to the texture list section of a map.cfg file, is :<br />
 
-<pre><code>texturereset</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">texturereset</pre>
 
 This tells the engine to reset from the default configuration, and use the map.cfg for the texture list.<br />
 After you reset the texture list, you need to add your own. The first 2 slots are &quot;reserved&quot; for the engine, and must be in every map.cfg file you use new textures with :<br />
 
-<pre><code>texture 0 &quot;ik2k/ik_sky_day_back.jpg&quot;
-texture 0 &quot;golgotha/water2d.jpg&quot;</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">texture 0 &quot;ik2k/ik_sky_day_back.jpg&quot;
+texture 0 &quot;golgotha/water2d.jpg&quot;</pre>
 
 From this point on, you can add as many textures as you want ( up to 2^16 or 65,536 )<br />
 You could also list the same texture more than once, to have rotated versions, by adding a number AFTER the texture name:<br />
 
-<pre><code>texture 0 &quot;dg/trail_in.jpg&quot; 0 // 0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW, 4 = X-axis flip, 5 = Y-axis flip</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">texture 0 &quot;dg/trail_in.jpg&quot; 0 // 0 = none, 1 = 90 CW, 2 = 180, 3 = 270 CW, 4 = X-axis flip, 5 = Y-axis flip</pre>
 
 <br />
 <a name="shaders"></a><br />
@@ -127,47 +175,120 @@ Shaders are post processing effects applied to textures. They are used to provid
 <br />
 You define a shader with:<br />
 
-<pre><code>setshader x
-set*param index x y z w</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">setshader x
+set*param index x y z w</pre>
 
 <br />
 You define textures to use as &quot;maps&quot; for the shaders using the following:<br />
 <br />
 
-<pre><code>texture 0 &quot;texturename&quot; // default texture
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">texture 0 &quot;texturename&quot; // default texture
 texture d &quot;texturename&quot; // decal texture
 texture n &quot;texturename&quot; // normal map
 texture s &quot;texturename&quot; // specular map
 texture g &quot;texturename&quot; // glow map
 texture z &quot;texturename&quot; // depth (parallax) map
-texture u &quot;texturename&quot; // undefined (currently used for sphere maps)</code></pre>
+texture u &quot;texturename&quot; // undefined (currently used for sphere maps)</pre>
 
 <br />
-Currently supported texture shaders are:<br />
+Currently (20061204 &quot;gui&quot; edition) supported texture shaders are:<br />
 
-<ul>
-    <li>&quot;stdworld&quot; (null shader; no params; uses 0 only)</li>
-    <li>&quot;decalworld&quot; (decal shader; no params; uses 0, d)</li>
-    <li>&quot;glowworld&quot; (glow map shader; setpixelparam 0 r g b; uses 0, g)</li>
-    <li>&quot;pulseworld&quot; (pulse shader; setvertexparam 1 x; uses 0) [CVS only]<br />
-</li>
-    <li>&quot;pulseglowworld&quot; (pulsing glow map shader; setpixelparam 0 r g b, setvertexparam 1 x; uses 0, g) [CVS only]<br />
-</li>
-    <li>&quot;metalworld&quot; (sphere map shader; setpixelparam 0 r g b; uses 0, u) [CVS only]</li>
-    <li>&quot;bumpworld&quot; (normal map shader; no params; uses 0, n)</li>
-    <li>&quot;bumpspecworld&quot; (normal map shader with spec; setpixelparam 1 r g b; uses 0, n)</li>
-    <li>&quot;bumpspecmapworld&quot; (normal, spec map shader; setpixelparam 1 r g b; uses 0, n, s)</li>
-    <li>&quot;bumpspecmapglowworld&quot; (normal, spec, glow map shader; setpixelparam 0 r g b, setpixelparam 1 r g b; uses 0, n, s, g)</li>
-    <li>&quot;bumpspecparallaxworld&quot; (normal, parallax map shader with spec; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, z)</li>
-    <li>&quot;bumpspecmapparallaxworld&quot; (normal, parallax, spec map shader; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, s, z)</li>
-    <li>&quot;bumpspecmapparallaxglowworld&quot; (normal, parallax, glow, spec map shader; setpixelparam 0 r g b; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, s, g, z)<br />
-</li>
-</ul>
+
+<table class="wiki_table">
+    <tr>
+        <td><h3 id="toc5">shader</h3>
+</td>
+        <td><h3 id="toc6">description</h3>
+</td>
+        <td><h3 id="toc7">CVS only?</h3>
+</td>
+    </tr>
+    <tr>
+        <td>stdworld</td>
+        <td>null shader; no params; uses 0 only</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>decalworld</td>
+        <td>decal shader; no params; uses 0, d</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>glowworld</td>
+        <td>glow map shader; setpixelparam 0 r g b; uses 0, g</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>pulseworld</td>
+        <td>pulse shader; setvertexparam 1 x; uses 0</td>
+        <td>yes</td>
+    </tr>
+    <tr>
+        <td>pulseglowworld</td>
+        <td>pulsing glow map shader; setpixelparam 0 r g b, setvertexparam 1 x; uses 0, g</td>
+        <td>yes</td>
+    </tr>
+    <tr>
+        <td>metalworld</td>
+        <td>sphere map shader; setpixelparam 0 r g b; uses 0, u</td>
+        <td>yes</td>
+    </tr>
+    <tr>
+        <td>bumpworld</td>
+        <td>normal map shader; no params; uses 0, n</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>bumpspecworld</td>
+        <td>normal map shader with spec; setpixelparam 1 r g b; uses 0, n</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>bumpspecmapworld</td>
+        <td>normal, spec map shader; setpixelparam 1 r g b; uses 0, n, s</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>bumpspecmapglowworld</td>
+        <td>normal, spec, glow map shader; setpixelparam 0 r g b, setpixelparam 1 r g b; uses 0, n, s, g</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>bumpspecparallaxworld</td>
+        <td>normal, parallax map shader with spec; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, z</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>bumpspecmapparallaxworld</td>
+        <td>normal, parallax, spec map shader; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, s, z</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>bumpspecmapparallaxglowworld</td>
+        <td>normal, parallax, glow, spec map shader; setpixelparam 0 r g b; setpixelparam 1 r g b, setpixelparam 2 x y; uses 0, n, s, g, z</td>
+        <td></td>
+    </tr>
+</table>
 
 <br />
 preliminary copy from IRC log:<br />
 
-<pre><code>[19:40] &lt;KaiserTodretter&gt; bumpmaps are greyscale images that basically say what the heights of the different parts
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">[19:40] &lt;KaiserTodretter&gt; bumpmaps are greyscale images that basically say what the heights of the different parts
                           of a texture are
 [19:40] &lt;KaiserTodretter&gt; white being high spots and black being low spots
 [19:41] &lt;KaiserTodretter&gt; bumpmaps make a texture appear not flat and distorts the texture in a way that it actually looks 3D
@@ -189,29 +310,39 @@ preliminary copy from IRC log:<br />
                  or is it pretty easy if you got the hang of it ?
 [19:47] &lt;KaiserTodretter&gt; otherwise it will appear as if the texture is perfectly flat
 [19:47] &lt;KaiserTodretter&gt; some are time consuming
-[19:47] &lt;devoid&gt; well thx for the tips</code></pre>
+[19:47] &lt;devoid&gt; well thx for the tips</pre>
 
 <br />
 <br />
 <a name="sound"></a><br />
-<h1 id="toc5">Sound</h1>
+<h1 id="toc8">Sound</h1>
 use the commands<br />
 
-<pre><code>music package_path/file.ogg | file.mp3</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">music package_path/file.ogg | file.mp3</pre>
 
 and<br />
 
-<pre><code>snd_index = registersound package_path/file.wav | file.mp3
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
 
+-->
+</style><pre class="text">snd_index = registersound package_path/file.wav | file.mp3
+&nbsp;
 level_trigger_42 = [
   sound $snd_index
-]</code></pre>
+]</pre>
 
 to add individual sound fx to your map.<br />
 <br />
 <br />
 <a name="triggers"></a><br />
-<h1 id="toc6">Triggers</h1>
+<h1 id="toc9">Triggers</h1>
 Defining trigger actions - for SP maps only - is a vast field.<br />
 You can basically define any scripting action inside a trigger alias,<br />
 this will be parsed when the player enters the space of the trigger entity.<br />
@@ -229,16 +360,26 @@ Then try &quot;faking&quot; the action by calling your script by hand.<br />
 Finally select an index for this action, say 42,<br />
 then you'll simply need to place this scripting inside a<br />
 
-<pre><code>level_trigger_42 = [
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">level_trigger_42 = [
   // your code here
-]</code></pre>
+]</pre>
 
 alias and place triggers with tag 42 into the right places.<br />
 To modify a placed triggers (default menu only has 0-8) tag :<br />
 
-<pre><code>entproperty 3 +30
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">entproperty 3 +30
 entproperty 3 +2
-entproperty 3 -1</code></pre>
+entproperty 3 -1</pre>
 
 
     </div>

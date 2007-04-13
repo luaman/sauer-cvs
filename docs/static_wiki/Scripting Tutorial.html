@@ -21,14 +21,19 @@
 <div style="margin-left: 2em;"><a href="#toc12">Triggers</a></div>
 </div>
 <h1 id="toc0">MTFBWY</h1>
-<a class="wiki_link_new" href="Using%20the%20Force%20%28of%20the%20console%29.html">Using the Force (of the console)</a>!<br />
+<a class="wiki_link" href="Using%20the%20Console.html">Using the Force (of the console)</a>!<br />
 <br />
 <h1 id="toc1">Basics</h1>
 <br />
 <h2 id="toc2">Configuration</h2>
 Your already writing CubeScript when you edit your <tt>autoexec.cfg</tt>.<br />
 
-<pre><code>name &quot;my name&quot;</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">name &quot;my name&quot;</pre>
 
 <br />
 ..this is a basic CubeScript block.<br />
@@ -47,10 +52,15 @@ Learn to use the console.<br />
 Try out combining calls on-the-fly.<br />
 One of the first CubeScript structures useful for this can be<br />
 
-<pre><code>loop I N BODY
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
 
+-->
+</style><pre class="text">loop I N BODY
+&nbsp;
 // for example as in
-loop a 3 [ entproperty (+ $a 1) +42 ]</code></pre>
+loop a 3 [ entproperty (+ $a 1) +42 ]</pre>
 
 Stuff gets saved to <tt>config.cfg</tt>, you can copy snippets <br />
 of useful CubeScript to some file to hoard.<br />
@@ -76,10 +86,15 @@ Check data/defaults.cfg for this.<br />
 <h1 id="toc6">Aliases</h1>
 You define blocks of actions by defining an alias for them.<br />
 
-<pre><code>//old style:
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">//old style:
 alias aNAME $aVALUE
 //new style:
-aNAME = $aVALUE</code></pre>
+aNAME = $aVALUE</pre>
 
 <br />
 <h2 id="toc7">the modifier alias</h2>
@@ -90,8 +105,13 @@ I'll leave out the details of <em>where exactly</em> something occurs,<br />
 this is trivial to reconstruct.<br />
 <br />
 
-<pre><code>bind MOUSE4 [ universaldelta +1 ]
-bind MOUSE5 [ universaldelta -1 ]</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">bind MOUSE4 [ universaldelta +1 ]
+bind MOUSE5 [ universaldelta -1 ]</pre>
 
 with an exquisitely atomized definition of <tt>universaldelta</tt><br />
 which is an excellent test to see if you can <a class="wiki_link_ext" href="http://catb.org/jargon/html/G/grok.html" rel="nofollow">grok</a> it!<br />
@@ -100,26 +120,36 @@ This in turn gets bound to an internal <tt>modifier</tt> alias,<br />
 you change this modifier by binding keys to certain settings,<br />
 these in turn need to be defined as special aliases to be parsed.<br />
 
-<pre><code>// echo 5 or 1, depending on _RCTRL - our flag
-bind &quot;O&quot; [ if (= $_RCTRL 1) [echo 5 ] [echo 1] ]
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
 
+-->
+</style><pre class="text">// echo 5 or 1, depending on _RCTRL - our flag
+bind &quot;O&quot; [ if (= $_RCTRL 1) [echo 5 ] [echo 1] ]
+&nbsp;
 // set the _RCTRL flag while key &quot;right control&quot; is being pressed, off when released.
 bind &quot;RCTRL&quot; [ _RCTRL = 1; onrelease [ _RCTRL = 0 ] ]
-
+&nbsp;
 // initialize the _RCTRL flag before ever parsing $_RCTRL
 // the CubeScript block for bind &quot;O&quot; hasn't been parsed at this point yet,..
 // ..someone would need to press that key first ;)
-&quot;_RCTRL&quot; = [0]</code></pre>
+&quot;_RCTRL&quot; = [0]</pre>
 
 This code will make your right control key be a sort of x1 / x5 switch, <br />
 for the 'O'-key just a simple echo,<br />
 <br />
 
-<pre><code>bind &quot;M&quot;  [ domodifier 128 ]
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
 
+-->
+</style><pre class="text">bind &quot;M&quot;  [ domodifier 128 ]
+&nbsp;
 delta_game_128 = [
   echo (concat &quot;DG_128:&quot; (if (= $_RCTRL 1) [echo (* 5 @arg1) ] [echo (* 1 @arg1)]))
-]</code></pre>
+]</pre>
 
 try pressing M and turning your wheel, now RCTRL+M and MW ...<br />
 ...are you getting the hang of it?<br />
@@ -133,20 +163,30 @@ In both variants the &quot;$aVALUE&quot; represents any valid CubeScript block.<
 Examples:<br />
 want to handle a script with a simple parameter toggle?<br />
 
-<pre><code>my_value = 1
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">my_value = 1
 bind N [my_value = 5; onrelease [my_value = 1]]
 my_script = [if (= $my_value 1) [echo regular] [echo modified]]
-bind M [my_script]</code></pre>
+bind M [my_script]</pre>
 
 <br />
 <a name="modifier-demo"></a><br />
 <h2 id="toc9">modifier-demo</h2>
 want to handle a script with +X/-X input via mousewheel?<br />
 
-<pre><code>delta_game_42 = [echo we got $arg1 as param &quot;(game)&quot;]
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">delta_game_42 = [echo we got $arg1 as param &quot;(game)&quot;]
 delta_edit_42 = [echo we got $arg1 as param &quot;(edit)&quot;]
 bind KP_5 = [domodifier 42]
-editbind KP_5 = [domodifier 42]</code></pre>
+editbind KP_5 = [domodifier 42]</pre>
 
 <br />
 <a name="parameter-demo"></a><br />
@@ -154,7 +194,12 @@ editbind KP_5 = [domodifier 42]</code></pre>
 To clarify parameter passing -<br />
 usage of a zero value or no value at all shouldn't confuse your scripts!<br />
 
-<pre><code>param_script = [
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">param_script = [
         info = &quot;&quot;
         loop p 4 [
             cax = (+ $p 1)
@@ -170,11 +215,11 @@ usage of a zero value or no value at all shouldn't confuse your scripts!<br />
             echo &quot;no :&quot; $info
         ]
     ]
-
+&nbsp;
     param_script 0 1 2 3
     param_script 1
     param_script 4 3 2 1
-    param_script</code></pre>
+    param_script</pre>
 
 <br />
 <br />
@@ -184,7 +229,12 @@ For SP maps you can have <em>trigger entities</em> do scripting commands wheneve
 <br />
 The basic concept is to create aliases like<br />
 
-<pre><code>level_trigger_123 = [echo you triggered #123]</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">level_trigger_123 = [echo you triggered #123]</pre>
 
 This would be executed when the player crosses the space of any trigger-entity with first param 123.<br />
 <br />

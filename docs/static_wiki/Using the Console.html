@@ -13,7 +13,14 @@ Single commands you enter into your console.<br />
 Open your console with the <tt>saycommand</tt> (default key <tt>T</tt>) and then start with a slash (&quot;<tt>/</tt>&quot;).<br />
 Or use a short script that is bound to the BACKQUOTE key :<br />
 
-<pre><code>bind BACKQUOTE [saycommand /]</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">bind BACKQUOTE [saycommand /]
+// for some language layouts, this is unusable in Sauerbraten though - so ... bind your own :) ... like:
+bind CARET [saycommand /]</pre>
 
 While entering the first word on the console and you're to lazy to type in a full command ... <br />
 ... say <tt>thirdpersondistance</tt> ... <br />
@@ -48,7 +55,12 @@ Well, you could of course execute three seperate <tt>entproperty</tt> commands -
 Right!<br />
 So you want to have that yellow light entity with properties 64 256 256 192 be about half as bright?<br />
 
-<pre><code>loop i 3 [entproperty (+ $i 1) -128]</code></pre>
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">loop i 3 [entproperty (+ $i 1) -128]</pre>
 
 and you're done.<br />
 <br />
@@ -56,9 +68,14 @@ The <tt>loop</tt> will evaluate the body (the stuff inside <tt>[ ]</tt>) 3 times
 each iteration runs with an incremented value of <tt>$i</tt>. In the first loop it is 0, but since we want to modify <tt>entproperty 1</tt> to <tt>entproperty 3</tt> we need to increment it still further - this is done inside the <tt>()</tt> where we use the <tt>+</tt> operator to result in the sum of <tt>$i</tt> and <tt>1</tt>.<br />
 So the above line is the same as typing<br />
 
-<pre><code>entproperty 1 -128
+<style type="text/css"><!--
+/* GeSHi (c) Nigel McNie 2004 (http://qbnz.com/highlighter) */
+.text .imp {font-weight: bold; color: red;}
+
+-->
+</style><pre class="text">entproperty 1 -128
 entproperty 2 -128
-entproperty 3 -128</code></pre>
+entproperty 3 -128</pre>
 
 <br />
 In our above example the light entity would end up having the attributes 64 128 128 64.
