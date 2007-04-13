@@ -564,12 +564,14 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                 if(!dir.iszero())
                 {
                     if(f.dot(dir) >= -cutoff) continue;
-                    if((dir.x*f.x < 0 || dir.y*f.y < 0) && dist <= -r) continue;
-                    if(dir.z*f.z < 0 && dist < -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f)) continue;
+                    if(dist < dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0)) continue;
                 }
-                if(p.p[i].x) { if((p.p[i].x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < dist) continue; } 
-                if(p.p[i].y) { if((p.p[i].y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < dist) continue; }
                 if(p.p[i].z) { if((p.p[i].z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist) continue; }
+                else
+                {
+                    if(p.p[i].x) { if((p.p[i].x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < dist) continue; } 
+                    if(p.p[i].y) { if((p.p[i].y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < dist) continue; }
+                }
                 w = &p.p[i];
                 m = dist;
             }
