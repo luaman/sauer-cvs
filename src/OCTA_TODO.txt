@@ -1,3 +1,10 @@
+[06:05] <rocknrol> but i also encountered some issues: On map killfactory, you can jump through the wall into death when you try to jump up the wall between the greenarmour and the healthboost (lower section) 
+[06:06] <rocknrol> map skycastle is very laggy now (the framerate is "stuttering") 
+[06:06] <rocknrol> on maps demomap, rpg and rpg_01, the music stops immediately when loading one of these maps
+
+[10:37] <Drakas> have you ever tried hosting two servers on the same machine under two different IPs? When you specify the -i option, the I assigned is only for the hosting socket. But it is not for the actual request socket, which registers the server. So if I specify that I want to host on ip #2, it will set up a socket on ip #2, and request the sauer masterserver using the ip #1, therefore not making it work properly
+(doublecheck no uses of localhost anymore)
+
 
 - make people that do teamkills/damage wait longer?
 
