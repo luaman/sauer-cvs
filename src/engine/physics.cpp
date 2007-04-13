@@ -833,7 +833,7 @@ bool move(physent *d, vec &dir)
     bool collided = false;
     vec obstacle;
     d->o.add(dir);
-    if(!collide(d, d->type!=ENT_CAMERA ? dir : vec(0, 0, 0)) || (d->type==ENT_AI ? !collide(d) : (!dir.z && !collide(d, vec(0, 0, -1)))))
+    if(!collide(d, d->type!=ENT_CAMERA ? dir : vec(0, 0, 0)) || (d->type==ENT_AI && !collide(d)))
     {
         d->o = old;
         if(d->type == ENT_CAMERA) return false;
