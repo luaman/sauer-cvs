@@ -62,10 +62,20 @@ void guibutton(char *name, char *action, char *icon)
 
 void guiimage(char *path, char *action, float *scale, int *overlaid)
 {
-    if(cgui && cgui->image(path, *scale, *overlaid!=0)&G3D_UP && *action)
+    if(!cgui) return;
+    int ret = cgui->image(path, *scale, *overlaid!=0);
+    if(ret&G3D_UP)
     {
-        executelater.add(newstring(action));
-        clearlater = true;
+        if(*action)
+        {
+            executelater.add(newstring(action));
+            clearlater = true;
+        }
+    }
+    else if(ret&G3D_ROLLOVER)
+    {
+        alias("guirollovername", path);
+        alias("guirolloveraction", action);
     }
 }
 
