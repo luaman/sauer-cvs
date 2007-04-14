@@ -263,6 +263,7 @@ bool resolverwait(const char *name, ENetAddress *address)
 #endif
 
 ENetSocket mssock = ENET_SOCKET_NULL;
+ENetAddress msaddress;
 
 void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *agent)
 {
@@ -276,7 +277,7 @@ void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *ag
         printf("looking up %s...\n", hostname);
         if(!resolverwait(hostname, &ad)) return;
     }
-    mssock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, NULL);
+    mssock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, &msaddress);
     if(mssock==ENET_SOCKET_NULL) { printf("could not open socket\n"); return; }
     if(enet_socket_connect(mssock, &ad)<0) 
     { 
@@ -499,6 +500,8 @@ void initserver(bool dedicated)
         address.port = sv->serverinfoport();
         pongsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, &address);
         if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
+        msaddress.host = address.host;
+        msaddress.port = ENET_PORT_ANY;
     }
 
     sv->serverinit(sdesc, adminpass, pubserv);
