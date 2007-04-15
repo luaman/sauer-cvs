@@ -722,7 +722,7 @@ void damageblend(int n) { dblend += n; }
 
 VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
-VARP(crosshairfx, 0, 0, 1);
+VARP(crosshairfx, 0, 1, 1);
 
 void drawcrosshair(int w, int h)
 {
@@ -733,7 +733,9 @@ void drawcrosshair(int w, int h)
     if(!cursor) cursor = textureload("data/guicursor.png", 3, false);
     if((windowhit ? cursor : crosshair)->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     else glBlendFunc(GL_ONE, GL_ONE);
-    glColor3f(1, 1, 1);
+    float r = 1, g = 1, b = 1;
+    if(!windowhit && crosshairfx) cl->crosshaircolor(r, g, b);
+    glColor3f(r, g, b);
     float chsize = (windowhit ? cursorsize : crosshairsize)*w/300.0f;
     float x = w*1.5f - (windowhit ? 0 : chsize/2.0f);
     float y = h*1.5f - (windowhit ? 0 : chsize/2.0f);

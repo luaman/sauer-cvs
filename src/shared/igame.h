@@ -61,6 +61,7 @@ struct igameclient
     virtual void writegamedata(vector<char> &extras) = 0;
     virtual void readgamedata(vector<char> &extras) = 0;
     virtual void g3d_gamemenus() = 0;
+    virtual void crosshaircolor(float &r, float &g, float &b) {} 
 }; 
  
 struct igameserver
