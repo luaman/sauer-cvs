@@ -364,7 +364,10 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         }
 
-        notextureshader->set();
+        static Shader *dynshadowshader = NULL;
+        if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
+        dynshadowshader->set();
+
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
