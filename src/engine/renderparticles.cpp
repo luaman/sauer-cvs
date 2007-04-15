@@ -3,6 +3,98 @@
 #include "pch.h"
 #include "engine.h"
 
+static struct flaretype {
+    int type;             /* flaretex index, 0..5, -1 for 6+random shine */
+    float loc;            /* postion on axis */
+    float scale;          /* texture scaling */
+    float color;          /* color multiplier */
+ } flaretypes[] = {
+    {2,  1.30f, 0.04f, 0.6}, //flares
+    {3,  1.00f, 0.10f, 0.4},
+    {1,  0.50f, 0.20f, 0.3},
+    {3,  0.20f, 0.05f, 0.3},
+    {0,  0.00f, 0.04f, 0.3},
+    {5, -0.25f, 0.07f, 0.5},
+    {5, -0.40f, 0.02f, 0.6},
+    {5, -0.60f, 0.04f, 0.4},
+    {5, -1.00f, 0.03f, 0.2},  
+    {-1, 1.00f, 0.30f, 1.0}, //shine - red, green, blue
+    {-2, 1.00f, 0.20f, 1.0},
+    {-3, 1.00f, 0.25f, 1.0}
+};
+static Texture *flaretexs[16];
+
+static void flareinit() {
+    unsigned int id = 0;
+    loopi(6) {
+        s_sprintfd(filename)("data/flares/flare%d.png", i + 1);
+        flaretexs[id++] = textureload(filename);
+    }    
+    loopi(10) {
+        s_sprintfd(filename)("data/flares/shine%d.png", i);        
+        flaretexs[id++] = textureload(filename);
+    }
+}
+
+struct flare
+{
+    vec o, center, color;
+    float size;
+    bool sparkle;
+};
+
+#define MAXFLARE 64 //overkill..
+static flare flarelist[MAXFLARE];
+static int flarecnt;
+static unsigned int shinetime = 0; //randomish 
+                 
+VAR(flarelights, 0, 0, 1);
+VARP(flarecutoff, 0, 1000, 10000);
+VARP(flaresize, 20, 100, 500);
+                    
+static void newflare(vec &o, const vec &color, bool sun, bool sparkle) 
+{
+    if(flarecnt >= MAXFLARE) return;
+    
+    //frustrum + fog check
+    if(isvisiblesphere(0.0, o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) return;
+    
+    //find closest point between camera line of sight and flare pos
+    vec viewdir;
+    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, viewdir);
+    vec flaredir = vec(o).sub(camera1->o);
+    float t = flaredir.dot(viewdir);
+    if(t < 0) return; //shouldn't happen because of frustrum test
+    vec center = viewdir.mul(t).add(camera1->o); 
+    
+    float mod, size;
+    if(sun) 
+    {
+        float len = flaredir.magnitude();
+        if(len != 0.0) flaredir.mul(1.0/len);
+        mod = powf(flaredir.dot(viewdir), 4.0);
+        size = len * flaresize / 100.0; 
+    } else {
+        mod = vec(o).sub(center).squaredlen();
+        mod = (flarecutoff-mod)/flarecutoff; 
+        if(mod < 0.0) return;  //not really correct, but works nicely...
+        size = flaresize / 5.0;
+    }      
+    
+    //occlusion check (neccessary as depth testing is turned off)
+    vec target;
+    if(!raycubelos(o, camera1->o, target)) return;
+    
+    flare &f = flarelist[flarecnt++];
+    f.o = o;
+    f.center = center;
+    f.size = size;
+    f.color = vec(color).mul(mod);
+    f.sparkle = sparkle;
+}
+
+
+
 #define MAXPARTYPES 28
 
 struct particle
@@ -62,6 +154,8 @@ void particleinit()
     parttexs[7] = textureload("data/explosion.jpg");
     parttexs[8] = textureload("data/blood.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
+    
+    flareinit();
 }
 
 particle *newparticle(const vec &o, const vec &d, int fade, int type)
@@ -331,6 +425,52 @@ void render_particles(int time)
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     }
 
+
+    if(flarecnt && !reflecting)
+    {        
+        if(!rendered)
+        {
+            rendered = true;
+            glDepthMask(GL_FALSE);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        }
+        glDisable(GL_DEPTH_TEST);
+        loopi(flarecnt)
+        {   
+            flare *f = flarelist+i; 
+            vec center = f->center;
+            vec axis = vec(f->o).sub(center);
+            GLfloat color[4] = {f->color[0], f->color[1], f->color[2], 1.0};
+            loopj(f->sparkle?12:9) {
+                const flaretype &ft = flaretypes[j];
+                vec o = vec(axis).mul(ft.loc).add(center);
+                float sz = ft.scale * f->size;
+                if(ft.type < 0) 
+                {
+                    extern int paused;
+                    shinetime = paused ? j : (shinetime + 1) % 10;
+                    glBindTexture(GL_TEXTURE_2D, flaretexs[6+shinetime]->gl);
+                    color[0] = 0.0;
+                    color[1] = 0.0;
+                    color[2] = 0.0;
+                    color[-ft.type-1] = f->color[-ft.type-1]; //only want a single channel
+                } else {
+                    glBindTexture(GL_TEXTURE_2D, flaretexs[ft.type]->gl);
+                }
+                color[3] = ft.color;
+                glColor4fv(color); 
+                glBegin(GL_QUADS);
+                glTexCoord2f(0.0, 1.0); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
+                glTexCoord2f(1.0, 1.0); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
+                glTexCoord2f(1.0, 0.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
+                glTexCoord2f(0.0, 0.0); glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);                
+                glEnd();
+            }
+        }
+        glEnable(GL_DEPTH_TEST);
+    }
+
     if(rendered)
     {        
         glDisable(GL_BLEND);
@@ -468,6 +608,12 @@ static void makeparticles(entity &e)
         case 2: //water fountain
             regular_particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
             break;
+        case 32: // flares - plain/sparkle/sun/sparklesun
+        case 33:
+        case 34:
+        case 35:
+            newflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), e.attr1&0x02, e.attr1&0x01);
+            break;
         case 22: //fire ball
         case 23:
             newparticle(e.o, vec(0, 0, 1), 1, e.attr1)->val = 1;
@@ -486,14 +632,17 @@ void entity_particles()
         lastemitframe = lastmillis-(lastmillis%emitmillis);
         emit = false;
     }
-
+    
+    flarecnt = 0; //regenerate flarelist each frame
+    shinetime += detrnd(lastmillis, 10);
+    
     const vector<extentity *> &ents = et->getents();
     
     if(!editmode) loopv(ents)
     {
         entity &e = *ents[i];
-        if(e.type != ET_PARTICLES) continue;
-        if(e.o.dist(camera1->o)<128) makeparticles(e);
+        if(e.type == ET_LIGHT && flarelights) newflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1==0), true);
+        else if(e.type == ET_PARTICLES && e.o.dist(camera1->o) < 128) makeparticles(e);
     }
     else // show sparkly thingies for map entities in edit mode
     {
