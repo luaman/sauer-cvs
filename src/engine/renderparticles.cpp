@@ -109,7 +109,7 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz, rsz; in
     { 0,          180, 155, 75,  2,  6, 0.24f, 0.0f,   0 }, // yellow: sparks 
     { 0,          137, 118, 97,-20,  2,  0.6f, 0.0f,   0 }, // greyish-brown:   small slowly rising smoke
     { 0,          50, 50, 255,   20, 0, 0.32f, 0.0f,   0 }, // blue:   edit mode entities
-    { PT_TRAIL|PT_MOD|PT_RND4,   0, 255, 255, 2,  8, 0.74f, 0.8f,   50 }, // red:    blood spats (note: rgb is inverted)
+    { PT_TRAIL|PT_MOD|PT_RND4, 25, 255, 255, 2,  8, 0.74f, 0.8f, 50 }, // red:    blood spats (note: rgb is inverted)
     { 0,          255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
     { 0,          137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke   
     { 0,          255, 255, 255, 20, 3,  4.8f, 0.0f,   0 }, // blue:   fireball2
@@ -132,7 +132,7 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz, rsz; in
     {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f, 0.0f,   0 },  // orange explosion fireball 
     { PT_ENT,     137, 118, 97, -20, 2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  slowly rising smoke
     { 0,          118, 97, 137,-15,  2,  2.4f, 0.0f,   0 }, // greyish-brown:   big  fast rising smoke          
-    { PT_ENT|PT_TRAIL,   50, 50, 255,   2, 0, 0.60f, 0.0f,   0 }, // water  
+    { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f, 0.0f, 0 }, // water  
     { PT_ENT,     255, 200, 200, 20, 1,  4.8f, 0.0f,   0 }, // yellow: fireball1
 };
 
@@ -177,7 +177,7 @@ void render_particles(int time)
             }
             pp = &p->next;
             
-            int blend = 255 - ts*255/p->fade;
+            int blend = 255 - (ts*255)/p->fade;
                             
             //parametric coordinate generation
             vec o = p->o;
@@ -205,11 +205,11 @@ void render_particles(int time)
             {
                 if(pt.type&PT_MOD)
                 {   
-                    int nblend = (blend > 63) ? 255 : blend*4; //multiply alpha into color
+                    int nblend = min(blend*4, 255); //multiply alpha into color
                     glColor3ub(pt.r*nblend/255, pt.g*nblend/255, pt.b*nblend/255);
                 }
                 else
-                    glColor4ub(pt.r, pt.g, pt.b, (type==PT_FLARE) ? blend : ((blend > 63) ? 255 : blend*4));
+                    glColor4ub(pt.r, pt.g, pt.b, type==PT_FLARE ? blend : min(blend*4, 255));
                 float tx = 0, ty = 0, tsz = 1;
                 if(pt.type&PT_RND4)
                 {
