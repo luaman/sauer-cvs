@@ -227,7 +227,7 @@ struct fpsclient : igameclient
             if(player1->physstate>=PHYS_SLOPE) swaymillis += curtime;
             float k = pow(0.5f, curtime/10.0f);
             swaydir.mul(k); 
-            swaydir.add(vec(player1->vel).mul((1-k)/(25*player1->maxspeed)));
+            swaydir.add(vec(player1->vel).mul((1-k)/(20*player1->maxspeed)));
             et.checkitems();
             if(m_classicsp) checktriggers();
         }
