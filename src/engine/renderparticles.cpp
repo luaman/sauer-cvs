@@ -449,7 +449,7 @@ void render_particles(int time)
                 if(ft.type < 0) 
                 {
                     extern int paused;
-                    shinetime = paused ? j : (shinetime + 1) % 10;
+                    shinetime = (paused ? j : (shinetime + 1)) % 10;
                     glBindTexture(GL_TEXTURE_2D, flaretexs[6+shinetime]->gl);
                     color[0] = 0.0;
                     color[1] = 0.0;
