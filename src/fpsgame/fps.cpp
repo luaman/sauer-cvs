@@ -540,8 +540,11 @@ struct fpsclient : igameclient
     void crosshaircolor(float &r, float &g, float &b)
     {
         if(player1->gunwait) r = g = b = 0.5f;
-        else if(player1->health<=25) { r = 1.0f; g = b = 0; }
-        else if(player1->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
+        else if(!m_noitemsrail)
+        {
+            if(player1->health<=25) { r = 1.0f; g = b = 0; }
+            else if(player1->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
+        }
     }
 
     void newmap(int size)
