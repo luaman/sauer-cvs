@@ -29,6 +29,8 @@ struct fpsclient : igameclient
     int arenarespawnwait, arenadetectwait;
     int maptime, minremain;
     int respawnent;
+    int swaymillis;
+    vec swaydir;
 
     fpsent *player1;                // our client
     vector<fpsent *> players;       // other clients
@@ -44,7 +46,8 @@ struct fpsclient : igameclient
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
-          arenarespawnwait(0), arenadetectwait(0), maptime(0), minremain(0), respawnent(-1),
+          arenarespawnwait(0), arenadetectwait(0), maptime(0), minremain(0), respawnent(-1), 
+          swaymillis(0), swaydir(0, 0, 0),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), sb(*this), et(*this), cc(*this), cpc(*this)
     {
@@ -221,6 +224,10 @@ struct fpsclient : igameclient
         else if(!intermission)
         {
             moveplayer(player1, 20, true);
+            if(player1->physstate>=PHYS_SLOPE) swaymillis += curtime;
+            float k = pow(0.5f, curtime/10.0f);
+            swaydir.mul(k); 
+            swaydir.add(vec(player1->vel).mul((1-k)/(25*player1->maxspeed)));
             et.checkitems();
             if(m_classicsp) checktriggers();
         }
@@ -464,15 +471,26 @@ struct fpsclient : igameclient
         else if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(damage, player1);
     }
 
-    IVAR(hudgun, 0, 1, 1);
+    IVARP(hudgun, 0, 1, 1);
+    IVARP(hudgunsway, 0, 1, 1);
 
     void drawhudmodel(int anim, float speed, int base)
     {
         static char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "hudguns/gl", "hudguns/pistol" };
         if(player1->gunselect>GUN_PISTOL) return;
-        vec color, dir;
-        lightreaching(player1->o, color, dir);
-        rendermodel(color, dir, hudgunnames[player1->gunselect], anim, 0, 0, player1->o.x, player1->o.y, player1->o.z, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
+
+        vec sway, color, dir;
+        vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, sway);
+        sway.mul(min(4.0f, player1->vel.magnitude()));
+        float swayxy = sinf(swaymillis/115.0f)/100.0f,
+              swayz = cosf(swaymillis/115.0f)/50.0f;
+        swap(float, sway.x, sway.y);
+        sway.x *= swayxy;
+        sway.y *= -swayxy;
+        sway.z = fabs(swayz*sway.z);
+        sway.add(swaydir).add(player1->o);
+        lightreaching(sway, color, dir);
+        rendermodel(color, dir, hudgunnames[player1->gunselect], anim, 0, 0, sway.x, sway.y, sway.z, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }
 
     void drawhudgun()
