@@ -489,6 +489,7 @@ struct fpsclient : igameclient
         sway.y *= -swayxy;
         sway.z = fabs(swayz*sway.z);
         sway.add(swaydir).add(player1->o);
+        if(!hudgunsway()) sway = player1->o;
         lightreaching(sway, color, dir);
         rendermodel(color, dir, hudgunnames[player1->gunselect], anim, 0, 0, sway.x, sway.y, sway.z, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }
