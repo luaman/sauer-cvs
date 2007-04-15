@@ -8,29 +8,33 @@ static struct flaretype {
     float loc;            /* postion on axis */
     float scale;          /* texture scaling */
     float color;          /* color multiplier */
- } flaretypes[] = {
-    {2,  1.30f, 0.04f, 0.6}, //flares
-    {3,  1.00f, 0.10f, 0.4},
-    {1,  0.50f, 0.20f, 0.3},
-    {3,  0.20f, 0.05f, 0.3},
-    {0,  0.00f, 0.04f, 0.3},
-    {5, -0.25f, 0.07f, 0.5},
-    {5, -0.40f, 0.02f, 0.6},
-    {5, -0.60f, 0.04f, 0.4},
-    {5, -1.00f, 0.03f, 0.2},  
-    {-1, 1.00f, 0.30f, 1.0}, //shine - red, green, blue
-    {-2, 1.00f, 0.20f, 1.0},
-    {-3, 1.00f, 0.25f, 1.0}
+} flaretypes[] = 
+{
+    {2,  1.30f, 0.04f, 0.6f}, //flares
+    {3,  1.00f, 0.10f, 0.4f},
+    {1,  0.50f, 0.20f, 0.3f},
+    {3,  0.20f, 0.05f, 0.3f},
+    {0,  0.00f, 0.04f, 0.3f},
+    {5, -0.25f, 0.07f, 0.5f},
+    {5, -0.40f, 0.02f, 0.6f},
+    {5, -0.60f, 0.04f, 0.4f},
+    {5, -1.00f, 0.03f, 0.2f},  
+    {-1, 1.00f, 0.30f, 1.0f}, //shine - red, green, blue
+    {-2, 1.00f, 0.20f, 1.0f},
+    {-3, 1.00f, 0.25f, 1.0f}
 };
 static Texture *flaretexs[16];
 
-static void flareinit() {
-    unsigned int id = 0;
-    loopi(6) {
+static void flareinit() 
+{
+    int id = 0;
+    loopi(6) 
+    {
         s_sprintfd(filename)("data/flares/flare%d.png", i + 1);
         flaretexs[id++] = textureload(filename);
     }    
-    loopi(10) {
+    loopi(10) 
+    {
         s_sprintfd(filename)("data/flares/shine%d.png", i);        
         flaretexs[id++] = textureload(filename);
     }
@@ -57,7 +61,7 @@ static void newflare(vec &o, const vec &color, bool sun, bool sparkle)
     if(flarecnt >= MAXFLARE) return;
     
     //frustrum + fog check
-    if(isvisiblesphere(0.0, o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) return;
+    if(isvisiblesphere(0.0f, o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) return;
     
     //find closest point between camera line of sight and flare pos
     vec viewdir;
@@ -71,14 +75,16 @@ static void newflare(vec &o, const vec &color, bool sun, bool sparkle)
     if(sun) 
     {
         float len = flaredir.magnitude();
-        if(len != 0.0) flaredir.mul(1.0/len);
-        mod = powf(flaredir.dot(viewdir), 4.0);
-        size = len * flaresize / 100.0; 
-    } else {
+        if(len != 0.0f) flaredir.mul(1.0f/len);
+        mod = powf(flaredir.dot(viewdir), 4.0f);
+        size = len * flaresize / 100.0f; 
+    } 
+    else 
+    {
         mod = vec(o).sub(center).squaredlen();
         mod = (flarecutoff-mod)/flarecutoff; 
-        if(mod < 0.0) return;  //not really correct, but works nicely...
-        size = flaresize / 5.0;
+        if(mod < 0.0f) return;  //not really correct, but works nicely...
+        size = flaresize / 5.0f;
     }      
     
     //occlusion check (neccessary as depth testing is turned off)
@@ -455,7 +461,9 @@ void render_particles(int time)
                     color[1] = 0.0;
                     color[2] = 0.0;
                     color[-ft.type-1] = f->color[-ft.type-1]; //only want a single channel
-                } else {
+                } 
+                else 
+                {
                     glBindTexture(GL_TEXTURE_2D, flaretexs[ft.type]->gl);
                 }
                 color[3] = ft.color;
@@ -612,7 +620,7 @@ static void makeparticles(entity &e)
         case 33:
         case 34:
         case 35:
-            newflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), e.attr1&0x02, e.attr1&0x01);
+            newflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
             break;
         case 22: //fire ball
         case 23:
