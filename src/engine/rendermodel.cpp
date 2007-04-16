@@ -349,35 +349,9 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         {
             nocolorshader->set();
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            glStencilFunc(GL_NOTEQUAL, 1, 1);
-            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+            glStencilFunc(GL_ALWAYS, 1, 1);
+            glStencilOp(GL_KEEP, GL_REPLACE, GL_ZERO);
 
-            glPushMatrix();
-            vec above(center);
-            above.z += 0.25f;
-            setshadowmatrix(plane(floor, -floor.dot(above)), shaddir);
-            if(!m->cullface) glDisable(GL_CULL_FACE);
-            m->render(anim|ANIM_NOSKIN, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
-            if(!m->cullface) glEnable(GL_CULL_FACE);
-            glPopMatrix();
-
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        }
-
-        static Shader *dynshadowshader = NULL;
-        if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
-        dynshadowshader->set();
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
-        glStencilOp(bounddynshadows ? GL_REPLACE : GL_KEEP, bounddynshadows ? GL_REPLACE : GL_KEEP, GL_REPLACE);
-
-        glColor4f(0, 0, 0, dynshadow/100.0f);
-
-        if(bounddynshadows)
-        {
-            glDepthFunc(GL_GEQUAL);
             vec below(center);
             below.z -= 1.0f;
             glPushMatrix();
@@ -394,18 +368,27 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             glEnd();
             glPopMatrix();
 
-            glDepthFunc(GL_LESS);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         }
-        else
-        {
-            center.z += 0.25f;
-            glPushMatrix();
-            setshadowmatrix(plane(floor, -floor.dot(center)), shaddir);
-            if(!m->cullface) glDisable(GL_CULL_FACE);
-            m->render(anim|ANIM_NOSKIN, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
-            if(!m->cullface) glEnable(GL_CULL_FACE);
-            glPopMatrix();
-        }
+
+        static Shader *dynshadowshader = NULL;
+        if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
+        dynshadowshader->set();
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
+        glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+
+        glColor4f(0, 0, 0, dynshadow/100.0f);
+
+        center.z += 0.25f;
+        glPushMatrix();
+        setshadowmatrix(plane(floor, -floor.dot(center)), shaddir);
+        if(!m->cullface) glDisable(GL_CULL_FACE);
+        m->render(anim|ANIM_NOSKIN, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+        if(!m->cullface) glEnable(GL_CULL_FACE);
+        glPopMatrix();
  
         glEnable(GL_TEXTURE_2D);
         glDepthMask(GL_TRUE);
