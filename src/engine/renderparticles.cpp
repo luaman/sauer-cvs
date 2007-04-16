@@ -23,22 +23,6 @@ static struct flaretype {
     {-2, 1.00f, 0.20f, 1.0f},
     {-3, 1.00f, 0.25f, 1.0f}
 };
-static Texture *flaretexs[16];
-
-static void flareinit() 
-{
-    int id = 0;
-    loopi(6) 
-    {
-        s_sprintfd(filename)("data/flares/flare%d.png", i + 1);
-        flaretexs[id++] = textureload(filename);
-    }    
-    loopi(10) 
-    {
-        s_sprintfd(filename)("data/flares/shine%d.png", i);        
-        flaretexs[id++] = textureload(filename);
-    }
-}
 
 struct flare
 {
@@ -46,7 +30,6 @@ struct flare
     float size;
     bool sparkle;
 };
-
 #define MAXFLARE 64 //overkill..
 static flare flarelist[MAXFLARE];
 static int flarecnt;
@@ -136,7 +119,7 @@ static bool emit_particles()
     return emit;
 }
 
-static Texture *parttexs[9];
+static Texture *parttexs[10];
 
 void particleinit()
 {    
@@ -159,9 +142,8 @@ void particleinit()
     parttexs[6] = textureload("data/martin/spark.png");
     parttexs[7] = textureload("data/explosion.jpg");
     parttexs[8] = textureload("data/blood.png");
+    parttexs[9] = textureload("data/lensflares.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
-    
-    flareinit();
 }
 
 particle *newparticle(const vec &o, const vec &d, int fade, int type)
@@ -442,9 +424,11 @@ void render_particles(int time)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         }
         glDisable(GL_DEPTH_TEST);
+        glBindTexture(GL_TEXTURE_2D, parttexs[9]->gl);
+        glBegin(GL_QUADS);
         loopi(flarecnt)
         {   
-            flare *f = flarelist+i; 
+            flare *f = flarelist+i;
             vec center = f->center;
             vec axis = vec(f->o).sub(center);
             GLfloat color[4] = {f->color[0], f->color[1], f->color[2], 1.0};
@@ -452,30 +436,29 @@ void render_particles(int time)
                 const flaretype &ft = flaretypes[j];
                 vec o = vec(axis).mul(ft.loc).add(center);
                 float sz = ft.scale * f->size;
-                if(ft.type < 0) 
+                int tex = ft.type;
+                if(ft.type < 0) //sparkles - always done last
                 {
                     extern int paused;
                     shinetime = (paused ? j : (shinetime + 1)) % 10;
-                    glBindTexture(GL_TEXTURE_2D, flaretexs[6+shinetime]->gl);
+                    tex = 6+shinetime;
                     color[0] = 0.0;
                     color[1] = 0.0;
                     color[2] = 0.0;
                     color[-ft.type-1] = f->color[-ft.type-1]; //only want a single channel
                 } 
-                else 
-                {
-                    glBindTexture(GL_TEXTURE_2D, flaretexs[ft.type]->gl);
-                }
                 color[3] = ft.color;
-                glColor4fv(color); 
-                glBegin(GL_QUADS);
-                glTexCoord2f(0.0, 1.0); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
-                glTexCoord2f(1.0, 1.0); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
-                glTexCoord2f(1.0, 0.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
-                glTexCoord2f(0.0, 0.0); glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);                
-                glEnd();
+                glColor4fv(color);
+                const float tsz = 0.25; //flares are aranged in 4x4 grid
+                float tx = tsz*(tex&0x03);
+                float ty = tsz*((tex>>2)&0x03);
+                glTexCoord2f(tx,     ty+tsz); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
+                glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
+                glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
+                glTexCoord2f(tx,     ty);     glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
             }
         }
+        glEnd();
         glEnable(GL_DEPTH_TEST);
     }
 
