@@ -35,7 +35,6 @@
 		</Compiler>
 		<Linker>
 			<Add option="-s"/>
-			<Add library="stdc++"/>
 			<Add library="mingw32"/>
 			<Add library="SDLmain"/>
 			<Add library="SDL"/>
