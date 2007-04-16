@@ -42,8 +42,11 @@
 - (NSImage*)image { return [[NSImage alloc] initWithContentsOfFile:[path stringByAppendingString:@".jpg"]]; }
 - (NSString*)text 
 {
+    NSString *text = [NSString alloc];
+    if(![text respondsToSelector:@selector(initWithContentsOfFile:encoding:error:)])
+        return [text initWithContentsOfFile:[path stringByAppendingString:@".txt"]]; //deprecated in 10.4
     NSError *error;
-    return [[NSString alloc] initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error];
+    return [text initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error]; 
 }
 - (NSString*)tickIfExists:(NSString*)ext 
 {
@@ -136,7 +139,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [toolbar setAutosavesConfiguration:NO];  
     [window setToolbar:toolbar]; 
     [toolbar release];
-    [window setShowsToolbarButton:NO];
+    if([window respondsToSelector:@selector(setShowsToolbarButton:)]) [window setShowsToolbarButton:NO]; //10.4+
     
     //Make it select the first by default
     [toolbar setSelectedItemIdentifier:[first itemIdentifier]];
