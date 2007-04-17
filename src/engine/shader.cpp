@@ -261,7 +261,7 @@ void flushenvparam(int type, int index, bool local)
 {
     ShaderParamState &val = (type==SHPARAM_VERTEX ? vertexparamstate[index] : pixelparamstate[index]);
     val.local = local;
-    if(Shader::lastshader->type & SHADER_GLSLANG)
+    if(Shader::lastshader && Shader::lastshader->type&SHADER_GLSLANG)
     {
         LocalShaderParamState *&ext = (type==SHPARAM_VERTEX ? Shader::lastshader->extvertparams[index] : Shader::lastshader->extpixparams[index]);
         if(!ext) allocglsluniformparam(*Shader::lastshader, type, index, local);
@@ -449,7 +449,10 @@ void shader(int *type, char *name, char *vs, char *ps)
 void setshader(char *name)
 {
     Shader *s = lookupshaderbyname(name);
-    if(!s) conoutf("no such shader: %s", name);
+    if(!s)
+    {
+        if(renderpath!=R_FIXEDFUNCTION) conoutf("no such shader: %s", name);
+    }
     else curshader = s;
     loopv(curparams)
     {
@@ -460,6 +463,7 @@ void setshader(char *name)
 
 ShaderParam *findshaderparam(Slot &s, char *name, int type, int index)
 {
+    if(!s.shader) return NULL;
     loopv(s.params)
     {
         ShaderParam &param = s.params[i];
@@ -476,13 +480,14 @@ ShaderParam *findshaderparam(Slot &s, char *name, int type, int index)
 void setslotshader(Slot &s)
 {
     s.shader = curshader ? curshader : defaultshader;
+    if(!s.shader) return;
     loopv(curparams)
     {
         ShaderParam &param = curparams[i], *defaultparam = findshaderparam(s, param.name, param.type, param.index);
         if(!defaultparam || !memcmp(param.val, defaultparam->val, sizeof(param.val))) continue;
         ShaderParam &override = s.params.add(param);
         override.name = defaultparam->name;
-        if(s.shader->type & SHADER_GLSLANG) override.index = (LocalShaderParamState *)defaultparam - &s.shader->defaultparams[0];
+        if(s.shader->type&SHADER_GLSLANG) override.index = (LocalShaderParamState *)defaultparam - &s.shader->defaultparams[0];
     }
 }
 

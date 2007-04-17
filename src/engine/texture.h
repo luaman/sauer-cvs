@@ -96,7 +96,7 @@ struct Shader
 
     void set(Slot *slot = NULL)
     {
-        if(renderpath==R_FIXEDFUNCTION) return;
+        if(!this || renderpath==R_FIXEDFUNCTION) return;
         if(this!=lastshader)
         {
             if(shaderdetail < MAXSHADERDETAIL) fastshader[shaderdetail]->bindprograms();

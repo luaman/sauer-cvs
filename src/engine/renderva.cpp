@@ -880,7 +880,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
         extern vector<GLuint> lmtexids;
         int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
-        if(renderpath!=R_FIXEDFUNCTION)
+        if(s && renderpath!=R_FIXEDFUNCTION)
         {
             int tmu = 2;
             if(s->type&SHADER_NORMALSLMS)
@@ -942,7 +942,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         if(!scale) scale = 1;
         loopl(3) if (lod.eslist[i].length[l])
         {
-            if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys || lastscale!=scale || s->type&SHADER_GLSLANG)
+            if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys || lastscale!=scale || (s && s->type&SHADER_GLSLANG))
             {
                 static int si[] = { 1, 0, 0 };
                 static int ti[] = { 2, 2, 1 };
@@ -980,7 +980,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 lastscale = scale;
             }
 
-            if(s->type&SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
+            if(s && s->type&SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
             {
                 setlocalparamfv("orienttangent", SHPARAM_VERTEX, 2, orientation_tangent[l]);
                 setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);

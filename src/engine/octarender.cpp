@@ -746,7 +746,8 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
         mf.orient = i;
         mf.tex = c.texture[i];
         mf.envmap = EMID_NONE;
-        if(lookupshader(mf.tex)->type & SHADER_ENVMAP) mf.envmap = closestenvmap(i, co.x, co.y, co.z, size);
+        Shader *s = lookupshader(mf.tex);
+        if(s && s->type&SHADER_ENVMAP) mf.envmap = closestenvmap(i, co.x, co.y, co.z, size);
         mf.surface = c.ext->surfaces ? &c.ext->surfaces[i] : NULL;
         mf.normals = c.ext->normals ? &c.ext->normals[i] : NULL;
         genmergedverts(c, i, co, size, m, mf.v);
