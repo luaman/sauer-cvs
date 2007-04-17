@@ -449,10 +449,7 @@ void shader(int *type, char *name, char *vs, char *ps)
 void setshader(char *name)
 {
     Shader *s = lookupshaderbyname(name);
-    if(!s)
-    {
-        if(renderpath!=R_FIXEDFUNCTION) conoutf("no such shader: %s", name);
-    }
+    if(!s) conoutf("no such shader: %s", name);
     else curshader = s;
     loopv(curparams)
     {
