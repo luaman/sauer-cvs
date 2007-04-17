@@ -475,7 +475,7 @@ void drawreflection(float z, bool refract, bool clear)
     //if(!refract && explicitsky) drawskybox(farplane, true, z);
 
     GLfloat clipmatrix[16];
-    if(reflectclip) 
+    if(reflectclip && !refract && camera1->o.z >= z) 
     {
         float zoffset = reflectclip/4.0f, zclip;
         if(refract)
@@ -503,7 +503,7 @@ void drawreflection(float z, bool refract, bool clear)
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
 
-    if(!refract /*&& !explicitsky*/) 
+    if(!refract && camera1->o.z >= z/*&& !explicitsky*/) 
     {
         if(reflectclip) undoclipmatrix();
         defaultshader->set();
@@ -520,7 +520,7 @@ void drawreflection(float z, bool refract, bool clear)
     render_particles(0);
     glEnable(GL_FOG);
 
-    if(reflectclip) undoclipmatrix();
+    if(reflectclip && !refract && camera1->o.z >= z) undoclipmatrix();
 
     if(!refract && camera1->o.z >= z)
     {
