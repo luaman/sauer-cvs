@@ -20,6 +20,9 @@ float wcol[4];
         glVertex3f(v1, v2, v3+h); \
     }
 #define VERTWT(vertwt, body) VERTW(vertwt, { float v = cosf(angle); float duv = 0.5f*v; body; })
+VERTW(vertwt, {
+    glTexCoord2f(v2/8.0f, v1/8.0f);
+})
 VERTW(vertwc, {
     glColor4f(wcol[0], wcol[1], wcol[2], max(wcol[3], 0.6f) + fabs(s)*0.1f);
 })
@@ -52,7 +55,7 @@ VERTWT(vertwmtc, {
 
 void rendervertwater(uint subdiv, int xo, int yo, int z, uint size)
 {   
-    float t = lastmillis/300.0f;
+    float t = lastmillis/(renderpath!=R_FIXEDFUNCTION ? 600.0f : 300.0f);
 
     wx1 = xo;
     wy1 = yo;
@@ -63,7 +66,8 @@ void rendervertwater(uint subdiv, int xo, int yo, int z, uint size)
     ASSERT((wx1 & (subdiv - 1)) == 0);
     ASSERT((wy1 & (subdiv - 1)) == 0);
 
-    if(waterrefract) { renderwaterstrips(vertwmtc, z, t); }
+    if(renderpath!=R_FIXEDFUNCTION) { renderwaterstrips(vertwt, z, t); }
+    else if(waterrefract) { renderwaterstrips(vertwmtc, z, t); }
     else if(waterreflect) { renderwaterstrips(vertwtc, z, t); }
     else { renderwaterstrips(vertwc, z, t); }
 }
@@ -342,6 +346,8 @@ void rendervertwater()
     glEnable(GL_CULL_FACE);
 }
 
+VARP(vertwater, 0, 1, 1);
+
 void renderwater()
 {
     if(editmode && showmat) return;
@@ -441,8 +447,13 @@ void renderwater()
                 lastdepth = m.depth;
             }
 
-            if(!begin) { glBegin(GL_QUADS); begin = true; }
-            drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
+            if(!vertwater)
+            {
+                if(!begin) { glBegin(GL_QUADS); begin = true; }
+                drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
+            }
+            else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize) >= (uint)m.csize * 2)
+                rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize);
         }
         if(begin) glEnd();
     }
