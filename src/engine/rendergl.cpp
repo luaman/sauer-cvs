@@ -511,6 +511,7 @@ void drawreflection(float z, bool refract, bool clear)
         if(reflectclip) setclipmatrix(clipmatrix);
     }
 
+    if(refract) rendergrass();
     rendermaterials(z, refract);
 
     setfogplane();

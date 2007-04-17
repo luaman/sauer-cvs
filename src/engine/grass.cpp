@@ -329,6 +329,11 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
             case GRASS_BOUNDS:
             {
                 grassbounds &b = *(grassbounds *)&g;
+                if(reflecting && (refracting ? o.z-b.radius>=refracting : o.z+b.radius<reflecting))
+                {
+                    i += b.numsamples;
+                    continue;
+                }
                 float dist = o.dist(camera1->o, tograss);
                 if(dist > grassdist + b.radius || (dir.dot(tograss)<0 && dist > b.radius + 2*(grassgrid + player->eyeheight)))
                     i += b.numsamples;
@@ -352,6 +357,7 @@ void rendergrasssamples(vtxarray *va, const vec &dir)
 
             case GRASS_SAMPLE:
             {
+                if(reflecting && (refracting ? o.z>=reflecting : o.z+grassheight<=reflecting)) continue;
                 float dist = o.dist(camera1->o, tograss);
                 if(dist > grassdist || (dir.dot(tograss)<0 && dist > grasswidth/2 + 2*(grassgrid + player->eyeheight))) continue;
 
@@ -421,6 +427,7 @@ void rendergrass()
     {
         if(!va->grasstris || va->occluded >= OCCLUDE_GEOM || va->curlod) continue;
         if(va->distance > grassdist) continue;
+        if(reflecting && (refracting ? va->z>=refracting : va->z+va->size<reflecting)) continue;
         if(!va->grasssamples) gengrasssamples(va);
         if(!rendered++) setupgrass();
         rendergrasssamples(va, dir);
