@@ -346,7 +346,7 @@ void rendervertwater()
     glEnable(GL_CULL_FACE);
 }
 
-VARP(vertwater, 0, 1, 1);
+VARFP(vertwater, 0, 1, 1, allchanged());
 
 void renderwater()
 {

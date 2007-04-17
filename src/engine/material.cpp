@@ -268,7 +268,8 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->orient == start->orient &&
                cur->o[dim] == start->o[dim])
             ++cur;
-         if(start->material != MAT_WATER || start->orient != O_TOP)// || renderpath!=R_FIXEDFUNCTION)
+         extern int vertwater;
+         if(start->material != MAT_WATER || start->orient != O_TOP || (!vertwater && renderpath!=R_FIXEDFUNCTION))
          {
             if(start!=matbuf) memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
             matbuf += mergemats(matbuf, cur-start);
