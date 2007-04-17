@@ -1008,6 +1008,7 @@ void allchanged(bool load)
     octarender();
     if(load) precacheall();
     setupmaterials();
+    invalidatereflections();
     if(load) 
     {
         entitiesinoctanodes();

@@ -520,6 +520,12 @@ void cleanreflections()
 
 VARFP(reflectsize, 6, 8, 10, cleanreflections());
 
+void invalidatereflections()
+{
+    if(hasFBO) return;
+    loopi(MAXREFLECTIONS) reflections[i].matsurfs.setsizenodelete(0);
+}
+
 void addreflection(materialsurface &m)
 {
     int height = m.o.z;
