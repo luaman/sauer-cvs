@@ -62,12 +62,10 @@ static void makeflare(vec &o, const vec &color, bool sun, bool sparkle)
     vec flaredir = vec(o).sub(camera1->o);
     vec center = viewdir.mul(flaredir.dot(viewdir)).add(camera1->o); 
     float mod, size;
-    if(sun) 
+    if(sun) //fixed size
     {
-        float len = flaredir.magnitude();
-        if(len == 0.0f) return;
-        mod = powf(flaredir.mul(1.0f/len).dot(viewdir), 4.0f);
-        size = len * flaresize / 100.0f; 
+        mod = 1.0;
+        size = flaredir.magnitude() * flaresize / 100.0f; 
     } 
     else 
     {
@@ -640,10 +638,9 @@ void entity_particles()
                 if(isvisiblesphere(0.0f, e.o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) continue;
                 vec center = vec(viewdir).mul(flaredir.dot(viewdir)).add(camera1->o); 
                 float mod, size;
-                if(sun) 
+                if(sun) //fixed size
                 {
-                    if(len == 0.0f) continue;
-                    mod = powf(flaredir.mul(1.0f/len).dot(viewdir), 4.0f);
+                    mod = 1.0;
                     size = len * flaresize / 100.0f; 
                 } 
                 else 
