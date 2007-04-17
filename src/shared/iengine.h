@@ -105,10 +105,8 @@ extern int char_width(int c, int x = 0);
 extern int text_width(const char *str, int limit = -1);
 extern int text_visible(const char *str, int max);
 
-// renderextras
+// rendergl
 extern vec worldpos, camright, camup;
-extern void renderspheres(int time);
-extern void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater);
 extern void damageblend(int n);
 
 // renderparticles

@@ -620,6 +620,8 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
 VAR(hudgunfov, 10, 65, 150);
 
+void gl_drawhud(int w, int h, int curfps, bool underwater);
+
 void gl_drawframe(int w, int h, float curfps)
 {
     defaultshader->set();
@@ -707,7 +709,7 @@ void gl_drawframe(int w, int h, float curfps)
     glDisable(GL_TEXTURE_2D);
     notextureshader->set();
 
-    gl_drawhud(w, h, (int)curfps, 0, verts.length(), underwater);
+    gl_drawhud(w, h, (int)curfps, underwater);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
@@ -748,7 +750,7 @@ void drawcrosshair(int w, int h)
     glEnd();
 }
 
-void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
+void gl_drawhud(int w, int h, int curfps, bool underwater)
 {
     if(editmode && !hidehud)
     {
