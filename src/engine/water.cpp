@@ -709,7 +709,7 @@ VAR(maskreflect, 0, 2, 16);
 
 void maskreflection(Reflection &ref, float offset, bool reflect)
 {
-    if(!maskreflect || !reflect || camera1->o.z<ref.height+offset+4.0f)
+    if(!maskreflect)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
         return;
