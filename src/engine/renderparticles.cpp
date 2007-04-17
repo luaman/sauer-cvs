@@ -35,54 +35,48 @@ static flare flarelist[MAXFLARE];
 static int flarecnt;
 static unsigned int shinetime = 0; //randomish 
                  
-VAR(flarelights, 0, 0, 1);
+VAR(flarelights, 0, 0, 2);
 VARP(flarecutoff, 0, 1000, 10000);
 VARP(flaresize, 20, 100, 500);
                     
-static void newflare(vec &o, const vec &color, bool sun, bool sparkle) 
+static void newflare(vec &o,  const vec &center, const vec &color, float size, bool sun, bool sparkle)
 {
     if(flarecnt >= MAXFLARE) return;
-    
-    //frustrum + fog check
-    if(isvisiblesphere(0.0f, o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) return;
-    
-    //find closest point between camera line of sight and flare pos
-    vec viewdir;
-    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, viewdir);
-    vec flaredir = vec(o).sub(camera1->o);
-    float t = flaredir.dot(viewdir);
-    if(t < 0) return; //shouldn't happen because of frustrum test
-    vec center = viewdir.mul(t).add(camera1->o); 
-    
-    float mod, size;
-    if(sun) 
-    {
-        float len = flaredir.magnitude();
-        if(len != 0.0f) flaredir.mul(1.0f/len);
-        mod = powf(flaredir.dot(viewdir), 4.0f);
-        size = len * flaresize / 100.0f; 
-    } 
-    else 
-    {
-        mod = vec(o).sub(center).squaredlen();
-        mod = (flarecutoff-mod)/flarecutoff; 
-        if(mod < 0.0f) return;  //not really correct, but works nicely...
-        size = flaresize / 5.0f;
-    }      
-    
-    //occlusion check (neccessary as depth testing is turned off)
-    vec target;
+    vec target; //occlusion check (neccessary as depth testing is turned off)
     if(!raycubelos(o, camera1->o, target)) return;
-    
     flare &f = flarelist[flarecnt++];
     f.o = o;
     f.center = center;
     f.size = size;
-    f.color = vec(color).mul(mod);
+    f.color = color;
     f.sparkle = sparkle;
 }
 
-
+static void makeflare(vec &o, const vec &color, bool sun, bool sparkle) 
+{
+    //frustrum + fog check
+    if(isvisiblesphere(0.0f, o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) return;
+    //find closest point between camera line of sight and flare pos
+    vec viewdir;
+    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, viewdir);
+    vec flaredir = vec(o).sub(camera1->o);
+    vec center = viewdir.mul(flaredir.dot(viewdir)).add(camera1->o); 
+    float mod, size;
+    if(sun) 
+    {
+        float len = flaredir.magnitude();
+        if(len == 0.0f) return;
+        mod = powf(flaredir.mul(1.0f/len).dot(viewdir), 4.0f);
+        size = len * flaresize / 100.0f; 
+    } 
+    else 
+    {
+        mod = (flarecutoff-vec(o).sub(center).squaredlen())/flarecutoff; 
+        if(mod < 0.0f) return;
+        size = flaresize / 5.0f;
+    }      
+    newflare(o, center, vec(color).mul(mod), size, sun, sparkle);
+}
 
 #define MAXPARTYPES 28
 
@@ -413,8 +407,7 @@ void render_particles(int time)
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     }
 
-
-    if(flarecnt && !reflecting)
+    if(flarecnt && !reflecting) //the camera is hardcoded into the flares.. reflecting would be nonsense
     {        
         if(!rendered)
         {
@@ -471,7 +464,7 @@ void render_particles(int time)
     /* TESTING 
     int pcount = 0;   
     loopi(MAXPARTYPES) if(parlist[i]) for(particle *p = parlist[i]; p; p=p->next) pcount++;
-    printf("%d particles\n", pcount);
+    printf("%d particles\n", pcount+flarecnt);
     */
 }
 
@@ -603,7 +596,7 @@ static void makeparticles(entity &e)
         case 33:
         case 34:
         case 35:
-            newflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
+            makeflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
             break;
         case 22: //fire ball
         case 23:
@@ -628,12 +621,45 @@ void entity_particles()
     shinetime += detrnd(lastmillis, 10);
     
     const vector<extentity *> &ents = et->getents();
-    
-    if(!editmode) loopv(ents)
-    {
-        entity &e = *ents[i];
-        if(e.type == ET_LIGHT && flarelights) newflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1==0), true);
-        else if(e.type == ET_PARTICLES && e.o.dist(camera1->o) < 128) makeparticles(e);
+    if(!editmode) {
+        if(flarelights==1) //not quite correct, but much more efficient
+        {
+            vec viewdir;
+            vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, viewdir);
+            extern const vector<int> &checklightcache(int x, int y);
+            const vector<int> &lights = checklightcache(int(camera1->o.x), int(camera1->o.y));
+            loopv(lights)
+            {
+                entity &e = *ents[lights[i]];
+                if(e.type != ET_LIGHT) continue;
+                bool sun = (e.attr1==0);
+                float radius = float(e.attr1);
+                vec flaredir = vec(e.o).sub(camera1->o);
+                float len = flaredir.magnitude();
+                if(!sun && (len > radius)) continue;
+                if(isvisiblesphere(0.0f, e.o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) continue;
+                vec center = vec(viewdir).mul(flaredir.dot(viewdir)).add(camera1->o); 
+                float mod, size;
+                if(sun) 
+                {
+                    if(len == 0.0f) continue;
+                    mod = powf(flaredir.mul(1.0f/len).dot(viewdir), 4.0f);
+                    size = len * flaresize / 100.0f; 
+                } 
+                else 
+                {
+                    mod = (radius-len)/radius;
+                    size = flaresize / 5.0f;
+                }
+                newflare(e.o, center, vec(float(e.attr2), float(e.attr3), float(e.attr4)).mul(mod/255.0), size, sun, sun);
+            }
+        }
+        loopv(ents)
+        {
+            entity &e = *ents[i];
+            if(e.type == ET_PARTICLES && e.o.dist(camera1->o) < 128) makeparticles(e);
+            else if(flarelights==2 && e.type == ET_LIGHT) makeflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1==0), true);
+        }
     }
     else // show sparkly thingies for map entities in edit mode
     {
