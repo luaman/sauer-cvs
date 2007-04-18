@@ -376,7 +376,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         dynshadowshader->set();
 
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
         glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
         glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
 
