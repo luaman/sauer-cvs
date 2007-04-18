@@ -249,13 +249,13 @@ void render_particles(int time)
                     o.z -= t*t/(2.0f * 5000.0f * pt.gr);
                 }
                 blend = max(255 - (ts<<8)/p->fade, 0);
-                remove = !refracting && (ts >= p->fade);
+                remove = !refracting && !reflecting && (ts >= p->fade);
             }   
             else
             {
                 blend = 255;
                 ts = p->fade;
-                remove = !refracting;
+                remove = !refracting && !reflecting;
             }
             
             if(quads)
