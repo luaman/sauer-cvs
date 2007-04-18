@@ -235,8 +235,7 @@ void render_particles(int time)
         for(particle *p, **pp = &parlist[i]; (p = *pp);)
         {   
             int ts = (lastmillis-p->millis);
-            bool remove = !refracting && (ts >= p->fade);
-            
+            bool remove;
             int blend;
             vec o = p->o;
             if(p->fade > 5) 
@@ -250,11 +249,13 @@ void render_particles(int time)
                     o.z -= t*t/(2.0f * 5000.0f * pt.gr);
                 }
                 blend = max(255 - (ts<<8)/p->fade, 0);
+                remove = !refracting && (ts >= p->fade);
             }   
             else
             {
                 blend = 255;
                 ts = p->fade;
+                remove = !refracting;
             }
             
             if(quads)
