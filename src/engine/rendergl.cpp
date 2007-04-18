@@ -406,7 +406,7 @@ VARP(reflectmms, 0, 1, 1);
 void setfogplane(float scale, float z)
 {
     float fogplane[4] = {1, 0, 0, 0};
-    if(scale)
+    if(scale || z)
     {
         fogplane[0] = 0;
         fogplane[2] = scale;

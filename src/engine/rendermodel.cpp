@@ -252,7 +252,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
     float dist = rayfloor(center, floor);
     if(dist<=0) return;
     center.z -= dist;
-    if((cull&MDL_CULL_VFC) && refracting && center.z>=refracting) return;
+    if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) return;
     if(vec(center).sub(camera1->o).dot(floor)>0) return;
 
     vec shaddir = dir;
@@ -264,9 +264,9 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
     
-    if(!reflecting) glEnable(GL_STENCIL_TEST);
+    if(!reflecting || !hasFBO) glEnable(GL_STENCIL_TEST);
 
-    if(!reflecting && bounddynshadows)
+    if((!reflecting || !hasFBO) && bounddynshadows)
     { 
         nocolorshader->set();
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -292,14 +292,16 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 
+    if(renderpath!=R_FIXEDFUNCTION && refracting) setfogplane(0, refracting-center.z);
+
     static Shader *dynshadowshader = NULL;
     if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
     dynshadowshader->set();
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if(!reflecting)
+    if(!reflecting || !hasFBO)
     {
         glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
         glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
@@ -321,7 +323,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
     
-    if(!reflecting) glDisable(GL_STENCIL_TEST);
+    if(!reflecting || !hasFBO) glDisable(GL_STENCIL_TEST);
 }
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
@@ -379,14 +381,12 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if(vwep && vwep->type()!=m->type()) vwep = NULL;
     }
    
-    if(renderpath!=R_FIXEDFUNCTION && refracting) setfogplane(1, refracting - z);
- 
     if(shadow && (!reflecting || refracting))
     {
         rendershadow(dir, m, anim, varseed, x, y, z, center, radius, yaw, pitch, speed, basetime, d, cull, vwep);
         if(refracting && center.z-radius>=refracting) return;
     }
- 
+
     m->setskin(tex);  
     glColor3fv(color.v);
     if(renderpath!=R_FIXEDFUNCTION)
@@ -407,6 +407,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
         setenvparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
         setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+
+        if(refracting) setfogplane(1, refracting - z);
     }
 
     if(!m->cullface) glDisable(GL_CULL_FACE);
