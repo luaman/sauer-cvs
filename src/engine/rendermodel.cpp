@@ -243,9 +243,88 @@ void setshadowmatrix(const plane &p, const vec &dir)
     glMultMatrixf(m);
 }
 
-VARP(maxmodelradiusdistance, 10, 80, 1000);
 VARP(bounddynshadows, 0, 1, 1);
 VARP(dynshadow, 0, 60, 100);
+
+void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, float z, vec center, float radius, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, model *vwep)
+{
+    vec floor;
+    float dist = rayfloor(center, floor);
+    if(dist<=0) return;
+    center.z -= dist;
+    if((cull&MDL_CULL_VFC) && refracting && center.z>=refracting) return;
+    if(vec(center).sub(camera1->o).dot(floor)>0) return;
+
+    vec shaddir = dir;
+    shaddir.z = 0;
+    if(!shaddir.iszero()) shaddir.normalize();
+    shaddir.z = 1.5f*(dir.z*0.5f+1);
+    shaddir.normalize();
+
+    glDisable(GL_TEXTURE_2D);
+    glDepthMask(GL_FALSE);
+    
+    if(!reflecting) glEnable(GL_STENCIL_TEST);
+
+    if(!reflecting && bounddynshadows)
+    { 
+        nocolorshader->set();
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glStencilFunc(GL_ALWAYS, 1, 1);
+        glStencilOp(GL_KEEP, GL_REPLACE, GL_ZERO);
+
+        vec below(center);
+        below.z -= 1.0f;
+        glPushMatrix();
+        setshadowmatrix(plane(floor, -floor.dot(below)), shaddir);
+        glBegin(GL_QUADS);
+        loopi(6) if((shaddir[dimension(i)]>0)==dimcoord(i)) loopj(4)
+        {
+            const ivec &cc = cubecoords[fv[i][j]];
+            glVertex3f(center.x + (cc.x ? 1.5f : -1.5f)*radius,
+                       center.y + (cc.y ? 1.5f : -1.5f)*radius,
+                       cc.z ? center.z + dist + radius : below.z);
+            xtraverts += 4;
+        }
+        glEnd();
+        glPopMatrix();
+
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    }
+
+    static Shader *dynshadowshader = NULL;
+    if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
+    dynshadowshader->set();
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+
+    if(!reflecting)
+    {
+        glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
+        glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+    }
+
+    glColor4f(0, 0, 0, dynshadow/100.0f);
+
+    vec above(center);
+    above.z += 0.25f;
+
+    glPushMatrix();
+    setshadowmatrix(plane(floor, -floor.dot(above)), shaddir);
+    if(!m->cullface) glDisable(GL_CULL_FACE);
+    m->render(anim|ANIM_NOSKIN, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+    if(!m->cullface) glEnable(GL_CULL_FACE);
+    glPopMatrix();
+
+    glEnable(GL_TEXTURE_2D);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    
+    if(!reflecting) glDisable(GL_STENCIL_TEST);
+}
+
+VARP(maxmodelradiusdistance, 10, 80, 1000);
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
 {
@@ -253,6 +332,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(!m) return;
     vec center;
     float radius = 0;
+    bool shadow = (cull&MDL_SHADOW) && dynshadow && hasstencil;
     if(cull)
     {
         radius = m->boundsphere(0/*frame*/, center); // FIXME
@@ -264,7 +344,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             {
                 if(refracting)
                 {
-                    if(center.z+radius<refracting-waterfog || center.z-radius>=refracting) return;
+                    if(center.z+radius<refracting-waterfog || (!shadow && center.z-radius>=refracting)) return;
                 }
                 else if(center.z+radius<=reflecting) return;
                 if(center.dist(camera1->o)-radius>reflectdist) return;
@@ -292,6 +372,21 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     }
 
     if(d) lightreaching(d->o, color, dir);
+    model *vwep = NULL;
+    if(vwepmdl)
+    {
+        vwep = loadmodel(vwepmdl);
+        if(vwep && vwep->type()!=m->type()) vwep = NULL;
+    }
+   
+    if(renderpath!=R_FIXEDFUNCTION && refracting) setfogplane(1, refracting - z);
+ 
+    if(shadow && (!reflecting || refracting))
+    {
+        rendershadow(dir, m, anim, varseed, x, y, z, center, radius, yaw, pitch, speed, basetime, d, cull, vwep);
+        if(refracting && center.z-radius>=refracting) return;
+    }
+ 
     m->setskin(tex);  
     glColor3fv(color.v);
     if(renderpath!=R_FIXEDFUNCTION)
@@ -312,89 +407,11 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
         setenvparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
         setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-
-        if(refracting) setfogplane(1, refracting - z);
-    }
-
-    model *vwep = NULL;
-    if(vwepmdl)
-    {
-        vwep = loadmodel(vwepmdl);
-        if(vwep && vwep->type()!=m->type()) vwep = NULL;
     }
 
     if(!m->cullface) glDisable(GL_CULL_FACE);
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
     if(!m->cullface) glEnable(GL_CULL_FACE);
-
-    if(dynshadow && !reflecting && (cull&MDL_SHADOW) && hasstencil)
-    {
-        vec floor;
-        float dist = rayfloor(center, floor);
-        if(dist<=0) return;
-        center.z -= dist;
-        if(vec(center).sub(camera1->o).dot(floor)>0) return;
-
-        vec shaddir = dir;
-        shaddir.z = 0;
-        if(!shaddir.iszero()) shaddir.normalize();
-        shaddir.z = 1.5f*(dir.z*0.5f+1);
-        shaddir.normalize();
-
-        glDisable(GL_TEXTURE_2D);
-        glDepthMask(GL_FALSE);
-        glEnable(GL_STENCIL_TEST);
-
-        if(bounddynshadows)
-        {
-            nocolorshader->set();
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            glStencilFunc(GL_ALWAYS, 1, 1);
-            glStencilOp(GL_KEEP, GL_REPLACE, GL_ZERO);
-
-            vec below(center);
-            below.z -= 1.0f;
-            glPushMatrix();
-            setshadowmatrix(plane(floor, -floor.dot(below)), shaddir);
-            glBegin(GL_QUADS);
-            loopi(6) if((shaddir[dimension(i)]>0)==dimcoord(i)) loopj(4)
-            {
-                const ivec &cc = cubecoords[fv[i][j]];
-                glVertex3f(center.x + (cc.x ? 1.5f : -1.5f)*radius,
-                           center.y + (cc.y ? 1.5f : -1.5f)*radius,
-                           cc.z ? center.z + dist + radius : below.z);
-                xtraverts += 4;
-            }
-            glEnd();
-            glPopMatrix();
-
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        }
-
-        static Shader *dynshadowshader = NULL;
-        if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
-        dynshadowshader->set();
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-        glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
-        glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
-
-        glColor4f(0, 0, 0, dynshadow/100.0f);
-
-        center.z += 0.25f;
-        glPushMatrix();
-        setshadowmatrix(plane(floor, -floor.dot(center)), shaddir);
-        if(!m->cullface) glDisable(GL_CULL_FACE);
-        m->render(anim|ANIM_NOSKIN, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
-        if(!m->cullface) glEnable(GL_CULL_FACE);
-        glPopMatrix();
- 
-        glEnable(GL_TEXTURE_2D);
-        glDepthMask(GL_TRUE);
-        glDisable(GL_BLEND);
-        glDisable(GL_STENCIL_TEST);
-    }
 }
 
 void abovemodel(vec &o, const char *mdl)
