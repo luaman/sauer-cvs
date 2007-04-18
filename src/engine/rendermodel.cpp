@@ -252,7 +252,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
     float dist = rayfloor(center, floor);
     if(dist<=0) return;
     center.z -= dist;
-    if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) return;
+    if((cull&MDL_CULL_VFC) && refracting && center.z>=refracting) return;
     if(vec(center).sub(camera1->o).dot(floor)>0) return;
 
     vec shaddir = dir;
@@ -292,7 +292,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 
-    if(renderpath!=R_FIXEDFUNCTION && refracting) setfogplane(0, refracting-center.z);
+    if(renderpath!=R_FIXEDFUNCTION && refracting) setfogplane(0, max(0.1f, refracting-center.z));
 
     static Shader *dynshadowshader = NULL;
     if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");

@@ -686,7 +686,7 @@ void queryreflections()
         loopvj(ref.matsurfs)
         {
             materialsurface &m = *ref.matsurfs[j];
-            drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f);
+            drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, renderpath==R_FIXEDFUNCTION || vertwater ? 0.1f : 1.1f);
         }
         glEnd();
         endquery(ref.query);
