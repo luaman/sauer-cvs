@@ -9,7 +9,6 @@ model *loadingmodel = NULL;
 #include "vertmodel.h"
 #include "md2.h"
 #include "md3.h"
-#include "md5.h"
 
 #define checkmdl if(!loadingmodel) { conoutf("not loading a model"); return; }
 
