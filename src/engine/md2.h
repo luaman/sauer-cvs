@@ -216,7 +216,7 @@ struct md2 : vertmodel
         }
     };
 
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl)
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
     {
         if(!loaded) return;
 
@@ -224,14 +224,14 @@ struct md2 : vertmodel
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
-        parts[0]->render(anim, varseed, speed, basetime, d);
+        parts[0]->render(anim, varseed, speed, basetime, d, dir, campos);
         glPopMatrix();
 
         if(vwepmdl)
         {
             ((md2 *)vwepmdl)->parts[0]->index = parts.length();
             vwepmdl->setskin();
-            vwepmdl->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, NULL);
+            vwepmdl->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, NULL, dir, campos);
         }
     }
 

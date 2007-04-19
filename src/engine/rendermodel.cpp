@@ -9,6 +9,7 @@ model *loadingmodel = NULL;
 #include "vertmodel.h"
 #include "md2.h"
 #include "md3.h"
+#include "md5.h"
 
 #define checkmdl if(!loadingmodel) { conoutf("not loading a model"); return; }
 
@@ -389,14 +390,16 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 
     m->setskin(tex);  
     glColor3fv(color.v);
+
+    vec rdir, camerapos;
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        vec rdir(dir);
+        rdir = dir;
         rdir.rotate_around_z((-yaw-180.0f)*RAD);
         rdir.rotate_around_y(-pitch*RAD);
         setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
 
-        vec camerapos = vec(player->o).sub(vec(x, y, z));
+        camerapos = vec(player->o).sub(vec(x, y, z));
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
         camerapos.rotate_around_y(-pitch*RAD);
         setenvparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
@@ -412,7 +415,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     }
 
     if(!m->cullface) glDisable(GL_CULL_FACE);
-    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
+    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep, rdir, camerapos);
     if(!m->cullface) glEnable(GL_CULL_FACE);
 }
 

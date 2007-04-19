@@ -537,8 +537,29 @@ struct vertmodel : model
             }
             return true;
         }
-        
-        void render(int anim, int varseed, float speed, int basetime, dynent *d)
+
+        void calclightdir(GLfloat *m, vec &ndir, vec &ncampos)
+        {
+            vec n(ndir), p(ncampos);
+                
+            ndir.x = n.x*m[0] + n.y*m[1] + n.z*m[2];
+            ndir.y = n.x*m[4] + n.y*m[5] + n.z*m[6];
+            ndir.z = n.x*m[8] + n.y*m[9] + n.z*m[10];
+
+            p.x -= m[12];
+            p.y -= m[13];
+            p.z -= m[14];
+
+            float a1 = m[0], a2 = m[4], a3 = m[8],
+                  b1 = m[1], b2 = m[5], b3 = m[9],
+                  c1 = m[2], c2 = m[6], c3 = m[10];
+
+            ncampos.z = (p.z - c1*p.x/a1 - (c2 - c1*a2/a1)*(p.y - b1*p.x/a1)/(b2 - b1*a2/a1)) / (c3 - c1*a3/a1 - (c2 - c1*a2/a1)*(b3 - b1*a3/a1)/(b2 - b1*a2/a1));
+            ncampos.y = (p.y - b1*p.x/a1 - (b3 - b1*a3/a1)*ncampos.z)/(b2 - b1*a2/a1);
+            ncampos.x = (p.x - a2*ncampos.y - a3*ncampos.z)/a1;
+        }
+ 
+        void render(int anim, int varseed, float speed, int basetime, dynent *d, const vec &dir, const vec &campos)
         {
             if(meshes.length() <= 0) return;
             animstate as;
@@ -589,9 +610,17 @@ struct vertmodel : model
                 #undef ip 
                 matrix[3] = matrix[7] = matrix[11] = 0.0f;
                 matrix[15] = 1.0f;
+
+                vec ndir(dir), ncampos(campos);
+                if(renderpath!=R_FIXEDFUNCTION && !(anim&ANIM_NOSKIN))
+                {
+                    calclightdir(matrix, ndir, ncampos);
+                    setenvparamf("direction", SHPARAM_VERTEX, 0, ndir.x, ndir.y, ndir.z);
+                    setenvparamf("camera", SHPARAM_VERTEX, 1, ncampos.x, ncampos.y, ncampos.z, 1);
+                }
                 glPushMatrix();
                     glMultMatrixf(matrix);
-                    link->render(anim, varseed, speed, basetime, d);
+                    link->render(anim, varseed, speed, basetime, d, ndir, ncampos);
                 glPopMatrix();
             }
         }
