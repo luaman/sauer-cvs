@@ -142,7 +142,6 @@ struct weaponstate
 
     void bounceupdate(int time)
     {
-        static const int maxtime = 20; // run at least 50 times a second
         loopv(bouncers)
         {
             bouncent &bnc = *(bouncers[i]);
@@ -151,7 +150,7 @@ struct weaponstate
             int rtime = time;
             while(rtime > 0)
             {
-                int qtime = min(maxtime, rtime);
+                int qtime = min(bnc.bouncetype==BNC_GRENADE ? 10 : 30, rtime);
                 rtime -= qtime;
                 if((bnc.lifetime -= qtime)<0 || bounce(&bnc, qtime/1000.0f, 0.6f))
                 {
