@@ -23,11 +23,13 @@
 - "editing not in view" sometimes obstructs editing
 - simultaneous heightmap orientations (all six sides at same time for easier rock/cliff/caves/destructable geom?)
 - multiple cube selections for heightmaps? maybe instead of selections+mode, use textures+Q?
+- heightmap outlines (like sky) instead of selection box
 - context sensitive editing menu: short cuts to ents, lighting, map ops etc. bind to tab. (current menu being more detailed and reference)
 - combine mingw and linux makefiles?
 - arrow / lines to indicate direction of ents like playerstart, teledest
 - something to help judge depth when moving entities... maybe lines stretching out in all 6 directions...
 - need to make selecting cubes/ents while inside a cube easier.... maybe modify raycube/rayent to treat cubes as 'hollow'?
+- entundo more efficeint
 
 - maybe add a way to purge infrequent / not recently used textures? esp now with mapshots.
 
