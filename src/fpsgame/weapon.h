@@ -46,8 +46,8 @@ struct weaponstate
 
     void weaponswitch(int a = -1, int b = -1, int c = -1)
     {
+        if(player1->state!=CS_ALIVE || a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
         int *ammo = player1->ammo;
-        if(a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
         int s = player1->gunselect;
 
         if     (a>=0 && s!=a  && ammo[a])          s = a;
