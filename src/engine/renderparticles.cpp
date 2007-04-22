@@ -111,6 +111,7 @@ static bool emit_particles()
 }
 
 static Texture *parttexs[10];
+static GLuint spherelist = 0;
 
 void particleinit()
 {    
@@ -119,7 +120,8 @@ void particleinit()
     gluQuadricDrawStyle(qsphere, GLU_FILL);
     gluQuadricOrientation(qsphere, GLU_OUTSIDE);
     gluQuadricTexture(qsphere, GL_TRUE);
-    glNewList(1, GL_COMPILE);
+    spherelist = glGenLists(1);
+    glNewList(spherelist, GL_COMPILE);
     gluSphere(qsphere, 1, 12, 6);
     glEndList();
     gluDeleteQuadric(qsphere);
@@ -325,11 +327,11 @@ void render_particles(int time)
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                     }
-                    glCallList(1);
+                    glCallList(spherelist);
                     
                     if(renderpath!=R_FIXEDFUNCTION) setlocalparamf("center", SHPARAM_VERTEX, 0, o.z, o.x, o.y);
                     glScalef(0.8f, 0.8f, 0.8f);
-                    glCallList(1);
+                    glCallList(spherelist);
                     
                     xtraverts += 12*6*2;
                     defaultshader->set();
