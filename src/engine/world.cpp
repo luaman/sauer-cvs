@@ -305,11 +305,68 @@ void entdrag(const vec &ray)
     initentdragging = false;
 }
 
+VAR(showentradius, 0, 1, 1);
+
+void renderentradius(entity &e)
+{
+    if(!showentradius) return;
+    float radius = 0.0f;
+    switch(e.type)
+    {
+        case ET_LIGHT:
+            radius = e.attr1;
+            break;
+
+        case ET_SOUND:
+            radius = e.attr2;
+            break;
+
+        case ET_ENVMAP:
+        {
+            extern int envmapradius;
+            radius = e.attr1 ? max(0, min(10000, e.attr1)) : envmapradius;
+            break;
+        }
+    }
+    if(radius<=0) return;
+    loopj(2)
+    {
+        if(!j)
+        {
+            glDepthFunc(GL_GREATER);
+            glColor3f(0.25f, 0.25f, 0.25f);
+        }
+        else 
+        {
+            glDepthFunc(GL_LESS);
+            glColor3f(0, 1, 1);
+        }
+        glBegin(GL_LINE_LOOP);
+        loopi(16)
+        {
+            vec p(radius*cosf(2*M_PI*i/16.0f), radius*sinf(2*M_PI*i/16.0f), 0);
+            p.rotate_around_x(2*M_PI*lastmillis/20000.0f);
+            p.add(e.o);
+            glVertex3fv(p.v);
+        }
+        glEnd();
+        glBegin(GL_LINE_LOOP);
+        loopi(16)
+        {
+            vec p(radius*cosf(2*M_PI*i/16.0f), 0, radius*sinf(2*M_PI*i/16.0f));
+            p.rotate_around_z(2*M_PI*lastmillis/20000.0f);
+            p.add(e.o);
+            glVertex3fv(p.v);
+        }
+        glEnd();
+    }
+}
+
 void renderentselection(const vec &o, const vec &ray, bool entmoving)
 {   
     vec eo, es;
- 
-    glColor3ub(0, 40, 0);
+
+    glColor3ub(0, 40, 0); 
     loopv(entgroup) entfocus(entgroup[i],     
         entselectionbox(e, eo, es);
         boxs3D(eo, es, 1);
@@ -317,7 +374,11 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
 
     if(enthover >= 0)
     {
-        entfocus(enthover, entselectionbox(e, eo, es)); // also ensures enthover is back in focus
+        entfocus(enthover, 
+            renderentradius(e);
+            entselectionbox(e, eo, es) // also ensures enthover is back in focus
+        );
+        glColor3ub(0, 40, 0);
         boxs3D(eo, es, 1);
         if(entmoving && entmovingshadow==1)
         {
