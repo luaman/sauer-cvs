@@ -84,15 +84,15 @@ struct scoreboard : g3d_callback
             {
                 loopv(cl.cpc.scores) teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
             }
-            else loopi(cl.numdynents())
+            loopi(cl.numdynents())
             {
                 fpsent *o = (fpsent *)cl.iterdynents(i);
                 if(o && o->type!=ENT_AI)
                 {
                     teamscore *ts = NULL;
                     loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; }
-                    if(!ts) teamscores.add(teamscore(o->team, o->frags));
-                    else ts->score += o->frags;
+                    if(!ts) teamscores.add(teamscore(o->team, m_capture ? 0 : o->frags));
+                    else if(!m_capture) ts->score += o->frags;
                 }
             }
             teamscores.sort(teamscorecmp);
