@@ -112,19 +112,22 @@ static bool emit_particles()
 
 static Texture *parttexs[10];
 static GLuint spherelist = 0;
+static GLUquadricOBJ *spherequadric = NULL;
+
+extern int intel_quadric_bug;
 
 void particleinit()
 {    
-    GLUquadricObj *qsphere = gluNewQuadric();
-    if(!qsphere) fatal("glu sphere");
-    gluQuadricDrawStyle(qsphere, GLU_FILL);
-    gluQuadricOrientation(qsphere, GLU_OUTSIDE);
-    gluQuadricTexture(qsphere, GL_TRUE);
+    spherequadric = gluNewQuadric();
+    if(!spherequadric) fatal("glu sphere");
+    gluQuadricDrawStyle(spherequadric, GLU_FILL);
+    gluQuadricOrientation(spherequadric, GLU_OUTSIDE);
+    gluQuadricTexture(spherequadric, GL_TRUE);
     spherelist = glGenLists(1);
     glNewList(spherelist, GL_COMPILE);
-    gluSphere(qsphere, 1, 12, 6);
+    gluSphere(spherequadric, 1, 12, 6);
     glEndList();
-    gluDeleteQuadric(qsphere);
+    if(!intel_quadric_bug) gluDeleteQuadric(spherequadric);
 
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
@@ -327,11 +330,13 @@ void render_particles(int time)
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                     }
-                    glCallList(spherelist);
+                    if(intel_quadric_bug && spherequadric) gluSphere(spherequadric, 1, 12, 6);
+                    else glCallList(spherelist);
                     
                     if(renderpath!=R_FIXEDFUNCTION) setlocalparamf("center", SHPARAM_VERTEX, 0, o.z, o.x, o.y);
                     glScalef(0.8f, 0.8f, 0.8f);
-                    glCallList(spherelist);
+                    if(intel_quadric_bug && spherequadric) gluSphere(spherequadric, 1, 12, 6);
+                    else glCallList(spherelist);
                     
                     xtraverts += 12*6*2;
                     defaultshader->set();
