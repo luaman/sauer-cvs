@@ -310,7 +310,8 @@ VAR(showentradius, 0, 1, 1);
 void renderentradius(entity &e)
 {
     if(!showentradius) return;
-    float radius = 0.0f;
+    float radius = 0.0f, angle = 0.0f;
+    vec dir(0, 0, 0);
     switch(e.type)
     {
         case ET_LIGHT:
@@ -329,6 +330,8 @@ void renderentradius(entity &e)
         }
     }
     if(radius<=0) return;
+    float offset = 2*M_PI*lastmillis/20000.0f;
+    if(angle>0) radius *= sinf(angle*RAD);
     loopj(2)
     {
         if(!j)
@@ -341,24 +344,45 @@ void renderentradius(entity &e)
             glDepthFunc(GL_LESS);
             glColor3f(0, 1, 1);
         }
-        glBegin(GL_LINE_LOOP);
-        loopi(16)
+        if(angle<=0) loopk(2)
         {
-            vec p(radius*cosf(2*M_PI*i/16.0f), radius*sinf(2*M_PI*i/16.0f), 0);
-            p.rotate_around_x(2*M_PI*lastmillis/20000.0f);
-            p.add(e.o);
-            glVertex3fv(p.v);
+            glBegin(GL_LINE_LOOP);
+            loopi(16)
+            {
+                vec p(radius*cosf(2*M_PI*i/16.0f), 0, 0);
+                p[k ? 2 : 1] = radius*sinf(2*M_PI*i/16.0f);
+                if(k) p.rotate_around_z(offset); else p.rotate_around_x(offset);
+                p.add(e.o);
+                glVertex3fv(p.v);
+            }
+            glEnd();
         }
-        glEnd();
-        glBegin(GL_LINE_LOOP);
-        loopi(16)
+        else
         {
-            vec p(radius*cosf(2*M_PI*i/16.0f), 0, radius*sinf(2*M_PI*i/16.0f));
-            p.rotate_around_z(2*M_PI*lastmillis/20000.0f);
-            p.add(e.o);
-            glVertex3fv(p.v);
+            vec spot(vec(dir).mul(radius).add(e.o)), spoke;
+            spoke.orthogonal(dir);
+            spoke.normalize();
+            spoke.mul(radius);
+            glBegin(GL_LINES);
+            loopi(8)
+            {
+                vec p(spoke);
+                p.rotate(2*M_PI*i/8.0f+offset, dir);
+                p.add(spot);
+                glVertex3fv(e.o.v);
+                glVertex3fv(p.v);
+            }
+            glEnd();
+            glBegin(GL_LINE_LOOP);
+            loopi(8)
+            {
+                vec p(spoke);
+                p.rotate(2*M_PI*i/8.0f+offset, dir);
+                p.add(spot);
+                glVertex3fv(p.v);
+            }
+            glEnd();
         }
-        glEnd();
     }
 }
 
