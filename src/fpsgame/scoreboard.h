@@ -60,7 +60,8 @@ struct scoreboard : g3d_callback
             }
         }
         g.text(modemapstr, 0xFFFF80, "server");
-        g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
+        if(m_capture) g.text("score\tpj\tping\tteam\tname", 0xFFFF80, "server"); 
+        else g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
 
         vector<teamscore> teamscores;
         bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.player1->clientnum;
@@ -74,7 +75,35 @@ struct scoreboard : g3d_callback
         }
         
         sbplayers.sort(playersort);
-        
+       
+        if(m_teammode)
+        {
+            if(m_capture)
+            {
+                loopv(cl.cpc.scores) if(cl.cpc.scores[i].total)
+                    teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
+            }
+            else loopi(cl.numdynents())
+            {
+                fpsent *o = (fpsent *)cl.iterdynents(i);
+                if(o && o->type!=ENT_AI && o->frags)
+                {
+                    teamscore *ts = NULL;
+                    loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; }
+                    if(!ts) teamscores.add(teamscore(o->team, o->frags));
+                    else ts->score += o->frags;
+                }
+            }
+            teamscores.sort(teamscorecmp);
+            vector<fpsent *> teamplayers;
+            loopv(teamscores)
+            {
+                const char *team = teamscores[i].team;
+                loopvj(sbplayers) if(!strcmp(sbplayers[j]->team, team)) teamplayers.add(sbplayers[j]);
+            }
+            sbplayers = teamplayers;
+        }
+ 
         loopv(sbplayers) 
         {
             fpsent *o = sbplayers[i];
@@ -96,23 +125,6 @@ struct scoreboard : g3d_callback
 
         if(m_teammode)
         {
-            if(m_capture)
-            {
-                loopv(cl.cpc.scores) if(cl.cpc.scores[i].total)
-                    teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
-            }
-            else loopi(cl.numdynents()) 
-            {
-                fpsent *o = (fpsent *)cl.iterdynents(i);
-                if(o && o->type!=ENT_AI && o->frags)
-                {
-                    teamscore *ts = NULL;
-                    loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; }
-                    if(!ts) teamscores.add(teamscore(o->team, o->frags));
-                    else ts->score += o->frags;
-                }
-            }
-            teamscores.sort(teamscorecmp);
             while(teamscores.length() && teamscores.last().score <= 0) teamscores.drop();
             if(teamscores.length())
             {
