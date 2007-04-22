@@ -112,7 +112,7 @@ static bool emit_particles()
 
 static Texture *parttexs[10];
 static GLuint spherelist = 0;
-static GLUquadricOBJ *spherequadric = NULL;
+static GLUquadricObj *spherequadric = NULL;
 
 extern int intel_quadric_bug;
 

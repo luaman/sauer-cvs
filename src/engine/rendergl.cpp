@@ -74,6 +74,7 @@ VAR(ati_texgen_bug, 0, 0, 1);
 VAR(ati_oq_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
 VAR(apple_glsldepth_bug, 0, 0, 1);
+VAR(intel_quadric_bug, 0, 0, 1);
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
@@ -150,6 +151,10 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     {
         floatvtx = 1;
     }
+    else if(strstr(vendor, "Intel"))
+    {
+        intel_quadric_bug = 1;
+    } 
     if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
 
     if(!shaderprecision || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
