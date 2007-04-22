@@ -36,12 +36,14 @@ struct scoreboard : g3d_callback
     {
         if(x->score > y->score) return -1;
         if(x->score < y->score) return 1;
-        return 0;
+        return strcmp(x->team, y->team);
     }
     
     static int playersort(const fpsent **a, const fpsent **b)
     {
-        return (int)((*a)->frags<(*b)->frags)*2-1;
+        if((*a)->frags > (*b)->frags) return -1;
+        if((*a)->frags < (*b)->frags) return 1;
+        return strcmp((*a)->name, (*b)->name);
     }
 
     void gui(g3d_gui &g, bool firstpass)
@@ -80,13 +82,12 @@ struct scoreboard : g3d_callback
         {
             if(m_capture)
             {
-                loopv(cl.cpc.scores) if(cl.cpc.scores[i].total)
-                    teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
+                loopv(cl.cpc.scores) teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
             }
             else loopi(cl.numdynents())
             {
                 fpsent *o = (fpsent *)cl.iterdynents(i);
-                if(o && o->type!=ENT_AI && o->frags)
+                if(o && o->type!=ENT_AI)
                 {
                     teamscore *ts = NULL;
                     loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; }
