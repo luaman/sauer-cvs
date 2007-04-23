@@ -420,7 +420,7 @@ void renderentradius(extentity &e)
         }
         else
         {
-            vec spot(vec(dir).mul(radius).add(e.attached->o)), spoke;
+            vec spot(vec(dir).mul(radius*cosf(angle*RAD)).add(e.attached->o)), spoke;
             spoke.orthogonal(dir);
             spoke.normalize();
             spoke.mul(radius*sinf(angle*RAD));
