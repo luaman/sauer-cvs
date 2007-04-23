@@ -25,9 +25,9 @@ int mmshadows = 0;
 int aalights = 3;
 
 static int lmtype, lmorient;
-static uchar lm[3 * LM_MAXW * LM_MAXH];
-static vec lm_ray[LM_MAXW * LM_MAXH];
-static uint lm_w, lm_h;
+static uchar lm[3*LM_MAXW*LM_MAXH], skylm[3*LM_MAXW*LM_MAXH];
+static vec lm_ray[LM_MAXW*LM_MAXH];
+static int lm_w, lm_h;
 static vector<const extentity *> lights1, lights2;
 static uint progress = 0;
 
@@ -243,7 +243,7 @@ void pack_lightmap(int type, surfaceinfo &surface)
     else insert_lightmap(type, surface.x, surface.y, surface.lmid);
 }
 
-void generate_lumel(const float tolerance, const vector<const extentity *> &lights, const vec &target, const vec &normal, const vec &skylight, vec &sample, int x, int y)
+void generate_lumel(const float tolerance, const vector<const extentity *> &lights, const vec &target, const vec &normal, vec &sample, int x, int y)
 {
     vec avgray(0, 0, 0);
     float r = 0, g = 0, b = 0;
@@ -303,9 +303,9 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
             lm_ray[y*lm_w+x].add(avgray);
             break;
     }
-    sample.x = min(255, max(r, skylight.x));
-    sample.y = min(255, max(g, skylight.y));
-    sample.z = min(255, max(b, skylight.z));
+    sample.x = min(255, max(r, ambient));
+    sample.y = min(255, max(g, ambient));
+    sample.z = min(255, max(b, ambient));
 }
 
 bool lumel_sample(const vec &sample, int aasample, int stride)
@@ -323,7 +323,7 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
     return false;
 }
 
-void calcskylight(const vec &o, const vec &normal, vec &skylight)
+void calcskylight(const vec &o, const vec &normal, uchar *skylight)
 {
     static const vec rays[17] =
     {
@@ -356,13 +356,52 @@ void calcskylight(const vec &o, const vec &normal, vec &skylight)
         if(raycube(o, rays[i], 1e16f, RAY_SHADOW | RAY_SKIPFIRST)>1e15f) hit++;
     }
 
-    loopk(3) skylight[k] = ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/17.0f;
+    loopk(3) skylight[k] = uchar(ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/17.0f);
+}
+
+VAR(blurlms, 0, 0, 2);
+VAR(blurskylight, 0, 0, 2);
+
+void blurlightmap(int n, uchar *lm)
+{
+    static uchar blur[3*LM_MAXW*LM_MAXH];
+    static const int matrix3x3[9] =
+    {
+        1, 2, 1,
+        2, 4, 2,
+        1, 2, 1
+    };
+    static const int matrix3x3sum = 16;
+    static const int matrix5x5[25] =
+    {
+        1, 1, 2, 1, 1,
+        1, 2, 4, 2, 1,
+        2, 4, 8, 4, 2,
+        1, 2, 4, 2, 1,
+        1, 1, 2, 1, 1
+    };
+    static const int matrix5x5sum = 52;
+    uchar *src = lm, *dst = blur;
+    int stride = 3*lm_w;
+
+    loop(y, lm_h) loop(x, lm_w) loopk(3)
+    {
+        int c = *src, val = 0; 
+        const int *m = n>1 ? matrix5x5 : matrix3x3;
+        for(int t = -n; t<=n; t++) for(int s = -n; s<=n; s++, m++)
+        {
+            val += *m * (x+s>=0 && x+s<lm_w && y+t>=0 && y+t<lm_h ? src[t*stride+3*s] : c);
+        }
+        *dst++ = val/(n>1 ? matrix5x5sum : matrix3x3sum);
+        src++;
+    }
+    memcpy(lm, blur, 3*lm_w*lm_h);
 }
 
 VAR(edgetolerance, 1, 4, 8);
 VAR(adaptivesample, 0, 1, 1);
 
-bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const lerpvert *lv, int numv, const vec &ustep, const vec &vstep)
+bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpvert *lv, int numv, const vec &ustep, const vec &vstep)
 {
     static uchar mincolor[3], maxcolor[3];
     static float aacoords[8][2] =
@@ -392,22 +431,29 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
 
     static vec samples [4*(LM_MAXW+1)*(LM_MAXH+1)];
 
-    vec minskylight(ambient, ambient, ambient);
     int aasample = min(1 << aalights, 4);
     int stride = aasample*(lm_w+1);
     vec *sample = &samples[stride*y1];
+    uchar *skysample = &skylm[3*lm_w*y1];
     lerpbounds start, end;
     initlerpbounds(lv, numv, start, end);
-    for(uint y = y1; y < y2; ++y, v.add(vstep)) 
+    for(int y = y1; y < y2; ++y, v.add(vstep)) 
     {
         vec normal, nstep;
         lerpnormal(y, lv, numv, start, end, normal, nstep);
         
         vec u(v);
-        for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
+        for(int x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep), skysample += 3) 
         {
             CHECK_PROGRESS(return false);
-            generate_lumel(tolerance, lights, u, vec(normal).normalize(), minskylight, *sample, x, y);
+            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, x, y);
+            if(hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient)
+            {
+                if(!adaptivesample || sample->x<hdr.skylight[0] || sample->y<hdr.skylight[1] || sample->z<hdr.skylight[2])
+                    calcskylight(u, normal, skysample);
+                else loopk(3) skysample[k] = max(hdr.skylight[k], ambient);
+            }
+            else loopk(3) skysample[k] = ambient;
             sample += aasample;
         }
         sample += aasample;
@@ -415,28 +461,15 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
     v = origin;
     sample = &samples[stride*y1];
     initlerpbounds(lv, numv, start, end);
-    for(uint y = y1; y < y2; ++y, v.add(vstep)) 
+    for(int y = y1; y < y2; ++y, v.add(vstep)) 
     {
         vec normal, nstep;
         lerpnormal(y, lv, numv, start, end, normal, nstep);
 
         vec u(v);
-        for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
+        for(int x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             vec &center = *sample++;
-#define CALCSKYLIGHT(light, pos) \
-            vec skylight(ambient, ambient, ambient); \
-            if(hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient) \
-            { \
-                if(adaptivesample && light.x>hdr.skylight[0] && light.y>hdr.skylight[1] && light.z>hdr.skylight[2]) \
-                    loopk(3) skylight[k] = max(hdr.skylight[k], ambient); \
-                else \
-                { \
-                    calcskylight(pos, normal, skylight); \
-                    loopk(3) light[k] = max(light[k], skylight[k]); \
-                } \
-            }
-            CALCSKYLIGHT(center, u);
             if(adaptivesample && x > 0 && x+1 < lm_w && y > y1 && y+1 < y2 && !lumel_sample(center, aasample, stride))
                 loopi(aasample-1) *sample++ = center;
             else
@@ -450,13 +483,13 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 vec n(normal);
                 n.normalize();
                 loopi(aasample-1)
-                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, skylight, *sample++, x, y);
+                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++, x, y);
                 if(aalights == 3) 
                 {
                     loopi(4)
                     {
                         vec s;
-                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, skylight, s, x, y);
+                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, s, x, y);
                         center.add(s);
                     }
                     center.div(5);
@@ -466,10 +499,9 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         if(aasample > 1)
         {
             normal.normalize();
-            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, minskylight, sample[1], lm_w-1, y);
-            CALCSKYLIGHT(sample[1], u);
+            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1], lm_w-1, y);
             if(aasample > 2)
-                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, skylight, sample[3], lm_w-1, y);
+                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, sample[3], lm_w-1, y);
         }
         sample += aasample;
     }
@@ -481,20 +513,24 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
             vec normal, nstep;
             lerpnormal(lm_h, lv, numv, start, end, normal, nstep);
 
-            for(uint x = 0; x <= lm_w; ++x, v.add(ustep), normal.add(nstep))
+            for(int x = 0; x <= lm_w; ++x, v.add(ustep), normal.add(nstep))
             {
                 CHECK_PROGRESS(return false);
                 vec n(normal);
                 n.normalize();
-                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, minskylight, sample[1], min(x, lm_w-1), lm_h-1);
-                CALCSKYLIGHT(sample[1], v);
+                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1], min(x, lm_w-1), lm_h-1);
                 if(aasample > 2)
-                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, skylight, sample[2], min(x, lm_w-1), lm_h-1);
+                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, sample[2], min(x, lm_w-1), lm_h-1);
                 sample += aasample;
             } 
         }
 
+        if(hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient)
+        {
+            if(blurskylight && (lm_w>1 || lm_h>1)) blurlightmap(blurskylight, skylm);
+        }
         sample = samples;
+        skysample = skylm;
         float weight = 1.0f / (1.0f + 4.0f*aalights),
               cweight = weight * (aalights == 3 ? 5.0f : 1.0f);
         uchar *lumel = lm;
@@ -523,6 +559,8 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 lumel[0] = int(center.x*cweight + l.x*weight);
                 lumel[1] = int(center.y*cweight + l.y*weight);
                 lumel[2] = int(center.z*cweight + l.z*weight);
+                loopk(3) lumel[k] = max(lumel[k], skysample[k]);
+                skysample += 3;
                 loopk(3)
                 {
                     mincolor[k] = min(mincolor[k], lumel[k]);
@@ -565,6 +603,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 lm_h = 1;
             }
         }
+        if(blurlms && (lm_w>1 || lm_h>1)) blurlightmap(blurlms, lm);
     }
     return true;
 }
