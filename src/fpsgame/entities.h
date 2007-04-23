@@ -39,7 +39,7 @@ struct entities : icliententities
     {
         static char *entmdlnames[] =
         {
-            NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             "shells", "bullets", "rockets", "rrounds", "grenades", "cartridges",
             "health", "boost", "g_armour", "y_armour", "quad", "teleporter",
             NULL, NULL,

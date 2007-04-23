@@ -25,8 +25,8 @@ struct header                   // map file format header
     uchar mapwlod;
     uchar lerpangle, lerpsubdiv, lerpsubdivsize;
     uchar mapbe;
-    uchar reserved1[3];
-    int reserved2[4];
+    uchar skylight[3];
+    int reserved[4];
     char maptitle[128];
 };
 

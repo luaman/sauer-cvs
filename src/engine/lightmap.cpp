@@ -10,6 +10,15 @@ VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
 VARF(worldlod, 0, 0, 1,  hdr.mapwlod = worldlod);
 VARF(ambient, 1, 25, 64, hdr.ambient = ambient);
 
+void skylight(int *r, int *g, int *b)
+{
+    hdr.skylight[0] = *r;
+    hdr.skylight[1] = *g ? *g : *r;
+    hdr.skylight[2] = *b ? *b : *r;
+}
+
+COMMAND(skylight, "iii");
+
 // quality parameters, set by the calclight arg
 int shadows = 1;
 int mmshadows = 0;
@@ -234,7 +243,7 @@ void pack_lightmap(int type, surfaceinfo &surface)
     else insert_lightmap(type, surface.x, surface.y, surface.lmid);
 }
 
-void generate_lumel(const float tolerance, const vector<const extentity *> &lights, const vec &target, const vec &normal, vec &sample, int x, int y)
+void generate_lumel(const float tolerance, const vector<const extentity *> &lights, const vec &target, const vec &normal, const vec &skylight, vec &sample, int x, int y)
 {
     vec avgray(0, 0, 0);
     float r = 0, g = 0, b = 0;
@@ -294,9 +303,9 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
             lm_ray[y*lm_w+x].add(avgray);
             break;
     }
-    sample.x = min(255, max(r, ambient));
-    sample.y = min(255, max(g, ambient));
-    sample.z = min(255, max(b, ambient));
+    sample.x = min(255, max(r, skylight.x));
+    sample.y = min(255, max(g, skylight.y));
+    sample.z = min(255, max(b, skylight.z));
 }
 
 bool lumel_sample(const vec &sample, int aasample, int stride)
@@ -312,6 +321,31 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
     n += stride;
     NCHECK(n[0]); NCHECK(n[aasample]); NCHECK(n[2*aasample]);
     return false;
+}
+
+void calcskylight(const vec &o, const vec &normal, vec &skylight)
+{
+    static const vec rays[9] =
+    {
+        vec(cosf(21*RAD)*cosf(50*RAD), sinf(21*RAD)*cosf(50*RAD), sinf(50*RAD)),
+        vec(cosf(111*RAD)*cosf(50*RAD), sinf(111*RAD)*cosf(50*RAD), sinf(50*RAD)),
+        vec(cosf(201*RAD)*cosf(50*RAD), sinf(201*RAD)*cosf(50*RAD), sinf(50*RAD)),
+        vec(cosf(291*RAD)*cosf(50*RAD), sinf(291*RAD)*cosf(50*RAD), sinf(50*RAD)),
+
+        vec(cosf(66*RAD)*cosf(70*RAD), sinf(66*RAD)*cosf(70*RAD), sinf(70*RAD)),
+        vec(cosf(156*RAD)*cosf(70*RAD), sinf(156*RAD)*cosf(70*RAD), sinf(70*RAD)),
+        vec(cosf(246*RAD)*cosf(70*RAD), sinf(246*RAD)*cosf(70*RAD), sinf(70*RAD)),
+        vec(cosf(336*RAD)*cosf(70*RAD), sinf(336*RAD)*cosf(70*RAD), sinf(70*RAD)),
+       
+        vec(0, 0, 1)
+    };
+    int hit = 0;
+    loopi(9) if(normal.dot(rays[i])>=0)
+    {
+        if(raycube(o, rays[i], 1e16f, RAY_SHADOW | RAY_SKIPFIRST)>1e15f) hit++;
+    }
+
+    loopk(3) skylight[k] = ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/9.0f;
 }
 
 VAR(edgetolerance, 1, 4, 8);
@@ -347,6 +381,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
 
     static vec samples [4*(LM_MAXW+1)*(LM_MAXH+1)];
 
+    vec minskylight(ambient, ambient, ambient);
     int aasample = min(1 << aalights, 4);
     int stride = aasample*(lm_w+1);
     vec *sample = &samples[stride*y1];
@@ -361,7 +396,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             CHECK_PROGRESS(return false);
-            generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, x, y);
+            generate_lumel(tolerance, lights, u, vec(normal).normalize(), minskylight, *sample, x, y);
             sample += aasample;
         }
         sample += aasample;
@@ -378,6 +413,19 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         for(uint x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep)) 
         {
             vec &center = *sample++;
+#define CALCSKYLIGHT(light, pos) \
+            vec skylight(ambient, ambient, ambient); \
+            if(hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient) \
+            { \
+                if(adaptivesample && light.x>hdr.skylight[0] && light.y>hdr.skylight[1] && light.z>hdr.skylight[2]) \
+                    loopk(3) skylight[k] = max(hdr.skylight[k], ambient); \
+                else \
+                { \
+                    calcskylight(pos, normal, skylight); \
+                    loopk(3) light[k] = max(light[k], skylight[k]); \
+                } \
+            }
+            CALCSKYLIGHT(center, u);
             if(adaptivesample && x > 0 && x+1 < lm_w && y > y1 && y+1 < y2 && !lumel_sample(center, aasample, stride))
                 loopi(aasample-1) *sample++ = center;
             else
@@ -388,17 +436,16 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
      || (!y && aacoords[i][1] < 0) \
      || (y+1==lm_h && aacoords[i][1] > 0) \
      ? edgetolerance : 1)
-
                 vec n(normal);
                 n.normalize();
                 loopi(aasample-1)
-                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, *sample++, x, y);
+                    generate_lumel(EDGE_TOLERANCE(i+1) * tolerance, lights, vec(u).add(offsets[i+1]), n, skylight, *sample++, x, y);
                 if(aalights == 3) 
                 {
                     loopi(4)
                     {
                         vec s;
-                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, s, x, y);
+                        generate_lumel(EDGE_TOLERANCE(i+4) * tolerance, lights, vec(u).add(offsets[i+4]), n, skylight, s, x, y);
                         center.add(s);
                     }
                     center.div(5);
@@ -408,9 +455,10 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         if(aasample > 1)
         {
             normal.normalize();
-            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, sample[1], lm_w-1, y);
+            generate_lumel(tolerance, lights, vec(u).add(offsets[1]), normal, minskylight, sample[1], lm_w-1, y);
+            CALCSKYLIGHT(sample[1], u);
             if(aasample > 2)
-                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, sample[3], lm_w-1, y);
+                generate_lumel(edgetolerance * tolerance, lights, vec(u).add(offsets[3]), normal, skylight, sample[3], lm_w-1, y);
         }
         sample += aasample;
     }
@@ -427,9 +475,10 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
                 CHECK_PROGRESS(return false);
                 vec n(normal);
                 n.normalize();
-                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, sample[1], min(x, lm_w-1), lm_h-1);
+                generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[1]), n, minskylight, sample[1], min(x, lm_w-1), lm_h-1);
+                CALCSKYLIGHT(sample[1], v);
                 if(aasample > 2)
-                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, sample[2], min(x, lm_w-1), lm_h-1);
+                    generate_lumel(edgetolerance * tolerance, lights, vec(v).add(offsets[2]), n, skylight, sample[2], min(x, lm_w-1), lm_h-1);
                 sample += aasample;
             } 
         }
@@ -631,7 +680,7 @@ bool find_lights(int cx, int cy, int cz, int size, plane planes[2], int numplane
         if(light.type != ET_LIGHT) continue;
         addlight(light, cx, cy, cz, size, planes, numplanes);
     }
-    return lights1.length() || lights2.length();
+    return lights1.length() || lights2.length() || hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient;
 }
 
 bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, uchar texcoords[8])
@@ -858,7 +907,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
                 cn[i].normals[3] = bvec(numplanes < 2 ? n[3] : n2[2]);
             }
         }
-        if(lights1.empty() && lights2.empty()) continue;
+        if(lights1.empty() && lights2.empty() && hdr.skylight[0]<=ambient && hdr.skylight[1]<=ambient && hdr.skylight[2]<=ambient) continue;
         uchar texcoords[8];
         if(!setup_surface(planes, v, n, numplanes >= 2 ? n2 : NULL, texcoords))
             continue;
