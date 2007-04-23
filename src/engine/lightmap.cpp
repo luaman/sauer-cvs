@@ -361,6 +361,7 @@ void calcskylight(const vec &o, const vec &normal, uchar *skylight)
 
 VAR(blurlms, 0, 0, 2);
 VAR(blurskylight, 0, 0, 2);
+VAR(blurbound, 0, 0, 1);
 
 void blurlightmap(int n, uchar *lm)
 {
@@ -386,6 +387,11 @@ void blurlightmap(int n, uchar *lm)
 
     loop(y, lm_h) loop(x, lm_w) loopk(3)
     {
+        if(!blurbound && (!x || !y || x+1==lm_w || y+1==lm_h))
+        {
+            *dst++ = *src++;
+            continue;
+        }
         int c = *src, val = 0; 
         const int *m = n>1 ? matrix5x5 : matrix3x3;
         for(int t = -n; t<=n; t++) for(int s = -n; s<=n; s++, m++)
