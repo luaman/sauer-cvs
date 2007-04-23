@@ -353,7 +353,7 @@ void calcskylight(const vec &o, const vec &normal, uchar *skylight)
     int hit = 0;
     loopi(17) if(normal.dot(rays[i])>=0)
     {
-        if(raycube(o, rays[i], 1e16f, RAY_SHADOW | RAY_SKIPFIRST)>1e15f) hit++;
+        if(raycube(vec(rays[i]).mul(0.5f).add(o), rays[i], 1e16f, RAY_SHADOW)>1e15f) hit++;
     }
 
     loopk(3) skylight[k] = uchar(ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/17.0f);
