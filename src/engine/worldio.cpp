@@ -422,7 +422,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         }
         if(!insideworld(e.o))
         {
-            if(e.type != ET_LIGHT || e.type != ET_SPOTLIGHT)
+            if(e.type != ET_LIGHT && e.type != ET_SPOTLIGHT)
             {
                 conoutf("warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
             }

@@ -325,7 +325,7 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
 
 void calcskylight(const vec &o, const vec &normal, vec &skylight)
 {
-    static const vec rays[9] =
+    static const vec rays[17] =
     {
         vec(cosf(21*RAD)*cosf(50*RAD), sinf(21*RAD)*cosf(50*RAD), sinf(50*RAD)),
         vec(cosf(111*RAD)*cosf(50*RAD), sinf(111*RAD)*cosf(50*RAD), sinf(50*RAD)),
@@ -337,15 +337,26 @@ void calcskylight(const vec &o, const vec &normal, vec &skylight)
         vec(cosf(246*RAD)*cosf(70*RAD), sinf(246*RAD)*cosf(70*RAD), sinf(70*RAD)),
         vec(cosf(336*RAD)*cosf(70*RAD), sinf(336*RAD)*cosf(70*RAD), sinf(70*RAD)),
        
-        vec(0, 0, 1)
+        vec(0, 0, 1),
+
+        vec(cosf(43*RAD)*cosf(60*RAD), sinf(43*RAD)*cosf(60*RAD), sinf(60*RAD)),
+        vec(cosf(133*RAD)*cosf(60*RAD), sinf(133*RAD)*cosf(60*RAD), sinf(60*RAD)),
+        vec(cosf(223*RAD)*cosf(60*RAD), sinf(223*RAD)*cosf(60*RAD), sinf(60*RAD)),
+        vec(cosf(313*RAD)*cosf(60*RAD), sinf(313*RAD)*cosf(60*RAD), sinf(60*RAD)),
+
+        vec(cosf(88*RAD)*cosf(80*RAD), sinf(88*RAD)*cosf(80*RAD), sinf(80*RAD)),
+        vec(cosf(178*RAD)*cosf(80*RAD), sinf(178*RAD)*cosf(80*RAD), sinf(80*RAD)),
+        vec(cosf(268*RAD)*cosf(80*RAD), sinf(268*RAD)*cosf(80*RAD), sinf(80*RAD)),
+        vec(cosf(358*RAD)*cosf(80*RAD), sinf(358*RAD)*cosf(80*RAD), sinf(80*RAD)),
+
     };
     int hit = 0;
-    loopi(9) if(normal.dot(rays[i])>=0)
+    loopi(17) if(normal.dot(rays[i])>=0)
     {
         if(raycube(o, rays[i], 1e16f, RAY_SHADOW | RAY_SKIPFIRST)>1e15f) hit++;
     }
 
-    loopk(3) skylight[k] = ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/9.0f;
+    loopk(3) skylight[k] = ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/17.0f;
 }
 
 VAR(edgetolerance, 1, 4, 8);
