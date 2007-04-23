@@ -411,6 +411,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         if(hdr.version <= 20 && e.type >= ET_ENVMAP) e.type++;
         if(hdr.version <= 21 && e.type >= ET_PARTICLES) e.type++;
         if(hdr.version <= 22 && e.type >= ET_SOUND) e.type++;
+        if(hdr.version <= 23 && e.type >= ET_SPOTLIGHT) e.type++;
         if(!samegame)
         {
             if(e.type>=ET_GAMESPECIFIC || hdr.version<=14)
@@ -421,7 +422,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
         }
         if(!insideworld(e.o))
         {
-            if(e.type != ET_LIGHT)
+            if(e.type != ET_LIGHT || e.type != ET_SPOTLIGHT)
             {
                 conoutf("warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
             }

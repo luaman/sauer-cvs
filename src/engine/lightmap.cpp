@@ -19,7 +19,7 @@ static int lmtype, lmorient;
 static uchar lm[3 * LM_MAXW * LM_MAXH];
 static vec lm_ray[LM_MAXW * LM_MAXH];
 static uint lm_w, lm_h;
-static vector<const entity *> lights1, lights2;
+static vector<const extentity *> lights1, lights2;
 static uint progress = 0;
 
 bool calclight_canceled = false;
@@ -234,23 +234,31 @@ void pack_lightmap(int type, surfaceinfo &surface)
     else insert_lightmap(type, surface.x, surface.y, surface.lmid);
 }
 
-void generate_lumel(const float tolerance, const vector<const entity *> &lights, const vec &target, const vec &normal, vec &sample, int x, int y)
+void generate_lumel(const float tolerance, const vector<const extentity *> &lights, const vec &target, const vec &normal, vec &sample, int x, int y)
 {
     vec avgray(0, 0, 0);
     float r = 0, g = 0, b = 0;
     loopv(lights)
     {
-        const entity &light = *lights[i];
+        const extentity &light = *lights[i];
         vec ray = target;
         ray.sub(light.o);
         float mag = ray.magnitude(),
-              attenuation = 1.0;
+              attenuation = 1;
         if(light.attr1)
         {
             attenuation -= mag / float(light.attr1);
-            if(attenuation <= 0.0) continue;
+            if(attenuation <= 0) continue;
         }
         ray.mul(1.0f / mag);
+        if(light.attached && light.attached->type==ET_SPOTLIGHT)
+        {
+            vec spot(vec(light.attached->o).sub(light.o).normalize());
+            float maxatten = 1-cosf(max(1, min(90, light.attached->attr1))*RAD);
+            float spotatten = 1-(1-ray.dot(spot))/maxatten;
+            if(spotatten <= 0) continue;
+            attenuation *= spotatten;
+        }
         if(shadows)
         {
             float dist = raycube(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows > 1 ? RAY_ALPHAPOLY : (mmshadows ? RAY_POLY : 0)));
@@ -325,7 +333,7 @@ bool generate_lightmap(float lpu, uint y1, uint y2, const vec &origin, const ler
         {-0.6f, -0.3f},
     };
     float tolerance = 0.5 / lpu;
-    vector<const entity *> &lights = (y1 == 0 ? lights1 : lights2);
+    vector<const extentity *> &lights = (y1 == 0 ? lights1 : lights2);
     vec v = origin;
     vec offsets[8];
     loopi(8) loopj(3) offsets[i][j] = aacoords[i][0]*ustep[j] + aacoords[i][1]*vstep[j];
@@ -538,7 +546,7 @@ void clearlightcache(int e)
     }
     else
     {
-        const entity &light = *et->getents()[e];
+        const extentity &light = *et->getents()[e];
         int radius = light.attr1;
         for(int x = int(max(light.o.x-radius, 0))>>lightcachesize, ex = int(min(light.o.x+radius, hdr.worldsize-1))>>lightcachesize; x <= ex; x++)
         for(int y = int(max(light.o.y-radius, 0))>>lightcachesize, ey = int(min(light.o.y+radius, hdr.worldsize-1))>>lightcachesize; y <= ey; y++)
@@ -581,7 +589,7 @@ const vector<int> &checklightcache(int x, int y)
     return lce.lights;
 }
 
-static inline void addlight(const entity &light, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
+static inline void addlight(const extentity &light, int cx, int cy, int cz, int size, plane planes[2], int numplanes)
 {
     int radius = light.attr1;
     if(radius > 0)
@@ -613,13 +621,13 @@ bool find_lights(int cx, int cy, int cz, int size, plane planes[2], int numplane
         const vector<int> &lights = checklightcache(cx, cy);
         loopv(lights)
         {
-            const entity &light = *ents[lights[i]];
+            const extentity &light = *ents[lights[i]];
             addlight(light, cx, cy, cz, size, planes, numplanes);
         }
     }
     else loopv(ents)
     {
-        const entity &light = *ents[i];
+        const extentity &light = *ents[i];
         if(light.type != ET_LIGHT) continue;
         addlight(light, cx, cy, cz, size, planes, numplanes);
     }
@@ -1159,7 +1167,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
     const vector<int> &lights = checklightcache(int(target.x), int(target.y));
     loopv(lights)
     {
-        entity &e = *ents[lights[i]];
+        extentity &e = *ents[lights[i]];
         if(e.type != ET_LIGHT)
             continue;
     
@@ -1176,6 +1184,14 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
         if(e.attr1)
             intensity -= mag / float(e.attr1);
 
+        if(e.attached && e.attached->type==ET_SPOTLIGHT)
+        {
+            vec spot(vec(e.attached->o).sub(e.o).normalize());
+            float maxatten = 1-cosf(max(1, min(90, e.attached->attr1))*RAD);
+            float spotatten = 1-(1-ray.dot(spot))/maxatten;
+            if(spotatten<=0) continue;
+            intensity *= spotatten;
+        }
         //if(target==player->o)
         //{
         //    conoutf("%d - %f %f", i, intensity, mag);
@@ -1198,11 +1214,11 @@ entity *brightestlight(const vec &target, const vec &dir)
 {
     const vector<extentity *> &ents = et->getents();
     const vector<int> &lights = checklightcache(int(target.x), int(target.y));
-    entity *brightest = NULL;
+    extentity *brightest = NULL;
     float bintensity = 0;
     loopv(lights)
     {
-        entity &e = *ents[lights[i]];
+        extentity &e = *ents[lights[i]];
         if(e.type != ET_LIGHT || vec(e.o).sub(target).dot(dir)<0)
             continue;
 

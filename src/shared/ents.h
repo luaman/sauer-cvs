@@ -3,7 +3,7 @@
 
 // ET_*: the only static entity types dictated by the engine... rest are gamecode dependent
 
-enum { ET_EMPTY=0, ET_LIGHT, ET_MAPMODEL, ET_PLAYERSTART, ET_ENVMAP, ET_PARTICLES, ET_SOUND, ET_GAMESPECIFIC };
+enum { ET_EMPTY=0, ET_LIGHT, ET_MAPMODEL, ET_PLAYERSTART, ET_ENVMAP, ET_PARTICLES, ET_SOUND, ET_SPOTLIGHT, ET_GAMESPECIFIC };
 
 struct entity                                   // persistent map entity
 {
@@ -27,8 +27,9 @@ struct extentity : entity                       // part of the entity that doesn
     uchar spawned, inoctanode, visible, triggerstate;        // the only dynamic state of a map entity
     vec color, dir;
     int lasttrigger;
+    extentity *attached;
 
-    extentity() : visible(false), triggerstate(TRIGGER_RESET), lasttrigger(0) {}
+    extentity() : visible(false), triggerstate(TRIGGER_RESET), lasttrigger(0), attached(NULL) {}
 };
 
 //extern vector<extentity *> ents;                // map entities

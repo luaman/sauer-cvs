@@ -193,12 +193,59 @@ void makeundoent()
     if(u.n) addundo(u);
 }
 
+void detachentity(extentity &e)
+{
+    if(!e.attached) return;
+    e.attached->attached = NULL;
+    e.attached = NULL;
+}
+
+VAR(attachradius, 1, 100, 1000);
+
+void attachentity(extentity &e)
+{
+    if(e.type!=ET_SPOTLIGHT) return;
+
+    detachentity(e);
+
+    vector<extentity *> &ents = et->getents();
+    int closest = -1;
+    float closedist = 1e10f;
+    loopv(ents)
+    {
+        extentity *a = ents[i];
+        if(a->attached) continue;
+        switch(e.type)
+        {
+            case ET_SPOTLIGHT: if(a->type!=ET_LIGHT) continue; break;
+        }
+        float dist = e.o.dist(a->o);
+        if(dist < closedist)
+        {
+            closest = i;
+            closedist = dist;
+        }
+    }
+    if(closedist>attachradius) return;
+    e.attached = ents[closest];
+    ents[closest]->attached = &e;
+}
+
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
 #define addimplicit(f)  { if(entgroup.empty() && enthover>=0) { entgroup.add(enthover); f; entgroup.drop(); } else f; }
-#define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { entity &e = *et->getents()[n]; f; } }
-#define entedit(i, f)   { entfocus(i, removeentity(n); f; if(e.type != ET_EMPTY) addentity(n); et->editent(n)); }
+#define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { extentity &e = *et->getents()[n]; f; } }
+#define entedit(i, f) \
+{ \
+    entfocus(i, \
+    int oldtype = e.type; \
+    removeentity(n);  \
+    f; \
+    if(oldtype!=e.type) detachentity(e); \
+    if(e.type!=ET_EMPTY) { addentity(n); if(oldtype!=e.type) attachentity(e); } \
+    et->editent(n)); \
+}
 #define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
 #define setgroup(exp)   { entcancel(); addgroup(exp); }
 #define groupeditloop(f){ entlooplevel++; int _ = efocus; loopv(entgroup) entedit(entgroup[i], f); efocus = _; entlooplevel--; }
@@ -217,7 +264,7 @@ void copyundoents(undoblock &d, undoblock &s)
 void pasteundoents(undoblock &u)
 {
     loopi(u.n)
-        entedit(u.e[i].i, e = u.e[i].e);
+        entedit(u.e[i].i, (entity &)e = u.e[i].e);
 }
 
 void entflip()
@@ -307,7 +354,7 @@ void entdrag(const vec &ray)
 
 VAR(showentradius, 0, 1, 1);
 
-void renderentradius(entity &e)
+void renderentradius(extentity &e)
 {
     if(!showentradius) return;
     float radius = 0.0f, angle = 0.0f;
@@ -316,6 +363,15 @@ void renderentradius(entity &e)
     {
         case ET_LIGHT:
             radius = e.attr1;
+            break;
+
+        case ET_SPOTLIGHT:
+            if(e.attached)
+            {
+                radius = e.attached->attr1;
+                dir = vec(e.o).sub(e.attached->o).normalize();
+                angle = max(1, min(90, e.attr1));
+            }
             break;
 
         case ET_SOUND:
@@ -330,8 +386,6 @@ void renderentradius(entity &e)
         }
     }
     if(radius<=0) return;
-    float offset = 2*M_PI*lastmillis/20000.0f;
-    if(angle>0) radius *= sinf(angle*RAD);
     loopj(2)
     {
         if(!j)
@@ -344,14 +398,21 @@ void renderentradius(entity &e)
             glDepthFunc(GL_LESS);
             glColor3f(0, 1, 1);
         }
-        if(angle<=0) loopk(2)
+        if(e.attached)
+        {
+            glBegin(GL_LINES);
+            glVertex3fv(e.o.v);
+            glVertex3fv(e.attached->o.v);
+            glEnd();
+        }
+        if(dir.iszero()) loopk(3)
         {
             glBegin(GL_LINE_LOOP);
             loopi(16)
             {
-                vec p(radius*cosf(2*M_PI*i/16.0f), 0, 0);
-                p[k ? 2 : 1] = radius*sinf(2*M_PI*i/16.0f);
-                if(k) p.rotate_around_z(offset); else p.rotate_around_x(offset);
+                vec p(0, 0, 0);
+                p[k>=2 ? 1 : 0] = radius*cosf(2*M_PI*i/16.0f);
+                p[k>=1 ? 2 : 1] = radius*sinf(2*M_PI*i/16.0f);
                 p.add(e.o);
                 glVertex3fv(p.v);
             }
@@ -359,17 +420,17 @@ void renderentradius(entity &e)
         }
         else
         {
-            vec spot(vec(dir).mul(radius).add(e.o)), spoke;
+            vec spot(vec(dir).mul(radius).add(e.attached->o)), spoke;
             spoke.orthogonal(dir);
             spoke.normalize();
-            spoke.mul(radius);
+            spoke.mul(radius*sinf(angle*RAD));
             glBegin(GL_LINES);
             loopi(8)
             {
                 vec p(spoke);
-                p.rotate(2*M_PI*i/8.0f+offset, dir);
+                p.rotate(2*M_PI*i/8.0f, dir);
                 p.add(spot);
-                glVertex3fv(e.o.v);
+                glVertex3fv(e.attached->o.v);
                 glVertex3fv(p.v);
             }
             glEnd();
@@ -377,7 +438,7 @@ void renderentradius(entity &e)
             loopi(8)
             {
                 vec p(spoke);
-                p.rotate(2*M_PI*i/8.0f+offset, dir);
+                p.rotate(2*M_PI*i/8.0f, dir);
                 p.add(spot);
                 glVertex3fv(p.v);
             }
@@ -390,7 +451,7 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
 {   
     vec eo, es;
 
-    glColor3ub(0, 40, 0); 
+    glColor3ub(0, 40, 0);
     loopv(entgroup) entfocus(entgroup[i],     
         entselectionbox(e, eo, es);
         boxs3D(eo, es, 1);
@@ -398,11 +459,7 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
 
     if(enthover >= 0)
     {
-        entfocus(enthover, 
-            renderentradius(e);
-            entselectionbox(e, eo, es) // also ensures enthover is back in focus
-        );
-        glColor3ub(0, 40, 0);
+        entfocus(enthover, entselectionbox(e, eo, es)); // also ensures enthover is back in focus
         boxs3D(eo, es, 1);
         if(entmoving && entmovingshadow==1)
         {
@@ -417,6 +474,9 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
         boxs(entorient, eo, es);
         glLineWidth(1);
     }
+
+    loopv(entgroup) entfocus(entgroup[i], renderentradius(e));
+    if(enthover>=0) entfocus(enthover, renderentradius(e));
 }
 
 void entadd(int id)
@@ -531,7 +591,7 @@ bool dropentity(entity &e, int drop = -1)
     switch(drop)
     {
     case 1:
-        if(e.type != ET_LIGHT)
+        if(e.type != ET_LIGHT && e.type != ET_SPOTLIGHT)
             dropenttofloor(&e);
         break;
     case 2:
@@ -563,6 +623,14 @@ void dropent()
     if(noedit(true)) return;
     groupedit(dropentity(e));
 }
+
+void attachent()
+{
+    if(noedit(true)) return;
+    groupedit(attachentity(e));
+}
+
+COMMAND(attachent, "");
 
 extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4)
 {
@@ -642,7 +710,7 @@ void entpaste()
         entgroup.add(++last);
     }
     int j = 0;
-    groupeditundo(e.type = entcopybuf[j++].type);
+    groupeditundo(e.type = entcopybuf[j++].type;);
 }
 
 COMMAND(newent, "siiii");
@@ -825,15 +893,19 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
         extentity *e = newentity(local, o, type, attr1, attr2, attr3, attr4);
         et->getents().add(e);
         addentity(i);
+        attachentity(*e);
     }
     else
     {
         extentity &e = *et->getents()[i];
         removeentity(i);
+        int oldtype = e.type;
+        if(oldtype!=type) detachentity(e);
         e.type = type;
         e.o = o;
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4;
         addentity(i);
+        if(oldtype!=type) attachentity(e);
     }
 }
 
