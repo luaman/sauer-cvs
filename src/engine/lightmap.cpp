@@ -573,7 +573,7 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
                     else
                     {
                         ray->normalize();
-                        // this is necessary to prevent the light values from dropping too far below the skylight (to the ambient) if N.L is small
+                        // this is necessary to prevent the light values in shaders from dropping too far below the skylight (to the ambient) if N.L is small
                         float k = (int(skysample[0]) + int(skysample[1]) + int(skysample[2]))/(255.0f*3.0f);
                         ray->z += k;
                         n = bvec(ray->normalize());
