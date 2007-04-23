@@ -1180,10 +1180,9 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
         ray.div(mag);
         if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY, 0, t) < mag)
             continue;
-        float intensity = 1.0;
+        float intensity = 1;
         if(e.attr1)
             intensity -= mag / float(e.attr1);
-
         if(e.attached && e.attached->type==ET_SPOTLIGHT)
         {
             vec spot(vec(e.attached->o).sub(e.o).normalize());
@@ -1192,6 +1191,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
             if(spotatten<=0) continue;
             intensity *= spotatten;
         }
+
         //if(target==player->o)
         //{
         //    conoutf("%d - %f %f", i, intensity, mag);
@@ -1231,9 +1231,18 @@ entity *brightestlight(const vec &target, const vec &dir)
         ray.div(mag);
         if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY) < mag)
             continue;
-        float intensity = 1.0;
+        float intensity = 1;
         if(e.attr1)
             intensity -= mag / float(e.attr1);
+        if(e.attached && e.attached->type==ET_SPOTLIGHT)
+        {
+            vec spot(vec(e.attached->o).sub(e.o).normalize());
+            float maxatten = 1-cosf(max(1, min(90, e.attached->attr1))*RAD);
+            float spotatten = 1-(1-ray.dot(spot))/maxatten;
+            if(spotatten<=0) continue;
+            intensity *= spotatten;
+        }
+
         if(!brightest || intensity > bintensity)
         {
             brightest = &e;
