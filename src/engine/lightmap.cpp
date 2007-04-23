@@ -560,24 +560,32 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
                 lumel[1] = int(center.y*cweight + l.y*weight);
                 lumel[2] = int(center.z*cweight + l.z*weight);
                 loopk(3) lumel[k] = max(lumel[k], skysample[k]);
-                skysample += 3;
                 loopk(3)
                 {
                     mincolor[k] = min(mincolor[k], lumel[k]);
                     maxcolor[k] = max(maxcolor[k], lumel[k]);
                 }
-                lumel += 3;
 
                 if(lmtype == LM_BUMPMAP0)
                 {
                     bvec &n = ((bvec *)lm_ray)[ray-lm_ray];
-                    n = ray->iszero() ? bvec(128, 128, 255) : bvec(ray->normalize());
+                    if(ray->iszero() || (lumel[0]<=skysample[0] && lumel[1]<=skysample[1] && lumel[2]<=skysample[2])) n = bvec(128, 128, 255);
+                    else
+                    {
+                        ray->normalize();
+                        // this is necessary to prevent the light values from dropping too far below the skylight (to the ambient) if N.L is small
+                        float k = (int(skysample[0]) + int(skysample[1]) + int(skysample[2]))/(255.0f*3.0f);
+                        ray->z += k;
+                        n = bvec(ray->normalize());
+                    }
                     loopk(3)
                     {
                         minray[k] = min(minray[k], n[k]);
                         maxray[k] = max(maxray[k], n[k]);
                     }
                 }
+                lumel += 3;
+                skysample += 3;
                 ray++;
             }
             sample += aasample;
