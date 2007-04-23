@@ -25,7 +25,7 @@ int mmshadows = 0;
 int aalights = 3;
 
 static int lmtype, lmorient;
-static uchar lm[3*LM_MAXW*LM_MAXH], skylm[3*LM_MAXW*LM_MAXH];
+static uchar lm[3*LM_MAXW*LM_MAXH];
 static vec lm_ray[LM_MAXW*LM_MAXH];
 static int lm_w, lm_h;
 static vector<const extentity *> lights1, lights2;
@@ -362,7 +362,7 @@ void calcskylight(const vec &o, const vec &normal, uchar *skylight)
 VAR(blurlms, 0, 0, 2);
 VAR(blurskylight, 0, 0, 2);
 
-void blurlightmap(int n, uchar *lm)
+void blurlightmap(int n)
 {
     static uchar blur[3*LM_MAXW*LM_MAXH];
     static const int matrix3x3[9] =
@@ -434,7 +434,7 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
     int aasample = min(1 << aalights, 4);
     int stride = aasample*(lm_w+1);
     vec *sample = &samples[stride*y1];
-    uchar *skysample = &skylm[3*lm_w*y1];
+    uchar *skylight = &lm[3*lm_w*y1];
     lerpbounds start, end;
     initlerpbounds(lv, numv, start, end);
     for(int y = y1; y < y2; ++y, v.add(vstep)) 
@@ -443,17 +443,17 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
         lerpnormal(y, lv, numv, start, end, normal, nstep);
         
         vec u(v);
-        for(int x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep), skysample += 3) 
+        for(int x = 0; x < lm_w; ++x, u.add(ustep), normal.add(nstep), skylight += 3) 
         {
             CHECK_PROGRESS(return false);
             generate_lumel(tolerance, lights, u, vec(normal).normalize(), *sample, x, y);
             if(hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient)
             {
-                if(!adaptivesample || sample->x<hdr.skylight[0] || sample->y<hdr.skylight[1] || sample->z<hdr.skylight[2])
-                    calcskylight(u, normal, skysample);
-                else loopk(3) skysample[k] = max(hdr.skylight[k], ambient);
+                if(lmtype==LM_BUMPMAP0 || !adaptivesample || sample->x<hdr.skylight[0] || sample->y<hdr.skylight[1] || sample->z<hdr.skylight[2])
+                    calcskylight(u, normal, skylight);
+                else loopk(3) skylight[k] = max(hdr.skylight[k], ambient);
             }
-            else loopk(3) skysample[k] = ambient;
+            else loopk(3) skylight[k] = ambient;
             sample += aasample;
         }
         sample += aasample;
@@ -527,10 +527,9 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
 
         if(hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient)
         {
-            if(blurskylight && (lm_w>1 || lm_h>1)) blurlightmap(blurskylight, skylm);
+            if(blurskylight && (lm_w>1 || lm_h>1)) blurlightmap(blurskylight);
         }
         sample = samples;
-        skysample = skylm;
         float weight = 1.0f / (1.0f + 4.0f*aalights),
               cweight = weight * (aalights == 3 ? 5.0f : 1.0f);
         uchar *lumel = lm;
@@ -556,10 +555,13 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
                     l.add(next[aasample+1]);
                 }
 
-                lumel[0] = int(center.x*cweight + l.x*weight);
-                lumel[1] = int(center.y*cweight + l.y*weight);
-                lumel[2] = int(center.z*cweight + l.z*weight);
-                loopk(3) lumel[k] = max(lumel[k], skysample[k]);
+                int r = int(center.x*cweight + l.x*weight),
+                    g = int(center.y*cweight + l.y*weight),
+                    b = int(center.z*cweight + l.z*weight),
+                    ar = lumel[0], ag = lumel[1], ab = lumel[2];
+                lumel[0] = max(ar, r);
+                lumel[1] = max(ag, g);
+                lumel[2] = max(ab, b);
                 loopk(3)
                 {
                     mincolor[k] = min(mincolor[k], lumel[k]);
@@ -569,14 +571,15 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
                 if(lmtype == LM_BUMPMAP0)
                 {
                     bvec &n = ((bvec *)lm_ray)[ray-lm_ray];
-                    if(ray->iszero() || (lumel[0]<=skysample[0] && lumel[1]<=skysample[1] && lumel[2]<=skysample[2])) n = bvec(128, 128, 255);
+                    if(ray->iszero()) n = bvec(128, 128, 255);
                     else
                     {
                         ray->normalize();
+                        // bias the normals towards the amount of ambient/skylight in the lumel
                         // this is necessary to prevent the light values in shaders from dropping too far below the skylight (to the ambient) if N.L is small
-                        int l = int(lumel[0]) + int(lumel[1]) + int(lumel[2]), k = int(skysample[0]) + int(skysample[1]) + int(skysample[2]);
-                        ray->mul(max(l-k, 0));
-                        ray->z += k;
+                        int l = max(r, max(g, b)), a = max(ar, max(ag, ab));
+                        ray->mul(max(l-a, 0));
+                        ray->z += a;
                         n = bvec(ray->normalize());
                     }
                     loopk(3)
@@ -586,7 +589,6 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
                     }
                 }
                 lumel += 3;
-                skysample += 3;
                 ray++;
             }
             sample += aasample;
@@ -612,7 +614,7 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
                 lm_h = 1;
             }
         }
-        if(blurlms && (lm_w>1 || lm_h>1)) blurlightmap(blurlms, lm);
+        if(blurlms && (lm_w>1 || lm_h>1)) blurlightmap(blurlms);
     }
     return true;
 }
