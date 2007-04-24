@@ -231,6 +231,12 @@ void attachentity(extentity &e)
     ents[closest]->attached = &e;
 }
 
+void attachentities()
+{
+    vector<extentity *> &ents = et->getents();
+    loopv(ents) attachentity(*ents[i]);
+}
+
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent

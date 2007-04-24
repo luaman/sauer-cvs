@@ -286,6 +286,7 @@ extern int triggertypes[NUMTRIGGERTYPES];
 #define checktriggertype(type, flag) (triggertypes[(type) & (NUMTRIGGERTYPES-1)] & (flag))
 
 extern void entitiesinoctanodes();
+extern void attachentities();
 extern void freeoctaentities(cube &c);
 extern bool pointinsel(selinfo &sel, vec &o);
 

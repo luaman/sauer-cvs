@@ -486,6 +486,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     overrideidents = false;
 
     allchanged(true);
+    attachentities();
 
     loopv(ents)
     {
