@@ -9,7 +9,7 @@ struct rpgdummycom : iclientcom
     bool allowedittoggle() { return true; }
     void writeclientinfo(FILE *f) {}
     void toserver(char *text) {}
-    void changemap(const char *name) { if (strcmp(name, "metl4")==0) { name = "rpg_01"; } load_world(name); } // TEMP!!! override start map
+    void changemap(const char *name) { load_world(name); }
 };
 
 struct rpgdummyserver : igameserver

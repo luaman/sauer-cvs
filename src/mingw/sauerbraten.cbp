@@ -9,16 +9,19 @@
 		<Option compiler="0"/>
 		<Build>
 			<Target title="default">
-				<Option output="..\..\bin\sauerbraten.exe"/>
-				<Option working_dir="."/>
+				<Option output="..\..\bin\sauerbraten-mingw.exe"/>
+				<Option working_dir="..\..\"/>
 				<Option object_output=".objs"/>
 				<Option deps_output=".deps"/>
 				<Option type="1"/>
 				<Option compiler="0"/>
+				<Option parameters="-f0 -w640 -h480 -grpg"/>
 				<Option projectResourceIncludeDirsRelation="1"/>
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-fexpensive-optimizations"/>
+			<Add option="-Os"/>
 			<Add option="-O3"/>
 			<Add option="-fsigned-char"/>
 			<Add option="-finline-functions"/>
