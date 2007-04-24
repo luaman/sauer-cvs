@@ -140,7 +140,7 @@ struct rpgclient : igameclient, g3d_callback
     void readgamedata(vector<char> &extras) {}
 
     char *gameident() { return "rpg"; }
-    char *gamestartmap() { return "rpg_01"; }
+    char *defaultmap() { return "rpg_01"; }
 };
 
 #define N(n) int rpgclient::stats::pointscale_##n, rpgclient::stats::percentscale_##n; 

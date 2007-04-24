@@ -424,7 +424,7 @@ int main(int argc, char **argv)
     log("localconnect");
     localconnect();
     cc->gameconnect(false);
-    cc->changemap(load ? load : cl->gamestartmap());
+    cc->changemap(load ? load : cl->defaultmap());
 
     if(initscript) execute(initscript);
 

@@ -38,7 +38,7 @@ struct igameclient
     virtual ~igameclient() {}
 
     virtual char *gameident() = 0;
-    virtual char *gamestartmap() = 0;
+    virtual char *defaultmap() = 0;
 
     virtual icliententities *getents() = 0;
     virtual iclientcom *getcom() = 0;

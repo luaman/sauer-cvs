@@ -614,7 +614,7 @@ struct fpsclient : igameclient
     void readgamedata(vector<char> &extras) {}
 
     char *gameident() { return "fps"; }
-    char *gamestartmap() { return "metl4"; }
+    char *defaultmap() { return "metl4"; }
 };
 
 REGISTERGAME(fpsgame, "fps", new fpsclient(), new fpsserver());
