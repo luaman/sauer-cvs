@@ -114,7 +114,11 @@ COMMAND(mdlname, "");
 void mdlenvmap(char *envmap)
 {
     checkmdl;
-    if(renderpath!=R_FIXEDFUNCTION) loadingmodel->envmap = cubemapload(envmap);
+    if(renderpath!=R_FIXEDFUNCTION) 
+    {
+        s_sprintfd(pname)("packages/%s", envmap);
+        loadingmodel->envmap = cubemapload(path(pname));
+    }
 }
 
 COMMAND(mdlenvmap, "s");
