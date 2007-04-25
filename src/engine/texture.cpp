@@ -615,11 +615,12 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
             return NULL;
         }
     }
-    t = &textures[newstring(tname)];
-    s_strcpy(t->name, tname);
+    char *key = newstring(tname);
+    t = &textures[key];
+    t->name = key;
     t->bpp = surface[0]->format->BitsPerPixel;
-    t->xs = surface[0]->w;
-    t->ys = surface[0]->h;
+    t->xs = t->w = surface[0]->w;
+    t->ys = t->h = surface[0]->h;
     glGenTextures(1, &t->gl);
     loopi(6)
     {
