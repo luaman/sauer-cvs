@@ -111,6 +111,14 @@ void mdlname()
 
 COMMAND(mdlname, "");
 
+void mdlenvmap(char *envmap)
+{
+    checkmdl;
+    if(renderpath!=R_FIXEDFUNCTION) loadingmodel->envmap = cubemapload(envmap);
+}
+
+COMMAND(mdlenvmap, "s");
+
 // mapmodels
 
 vector<mapmodelinfo> mapmodels;
@@ -415,7 +423,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if(hasCM && m->envmapped() || (vwep && vwep->envmapped()))
         {
             anim |= ANIM_ENVMAP;
-            GLuint em = lookupenvmap(closestenvmap(vec(x, y, z)));
+            GLuint em = m->envmap ? m->envmap->gl : (vwep && vwep->envmap ? vwep->envmap->gl : lookupenvmap(closestenvmap(vec(x, y, z))));
             glActiveTexture_(GL_TEXTURE2_ARB);
             glEnable(GL_TEXTURE_CUBE_MAP_ARB);
             glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, em);

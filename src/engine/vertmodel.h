@@ -225,9 +225,9 @@ struct vertmodel : model
                 if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksmodel");
                 if(!modelshaderenvmap) modelshaderenvmap = lookupshaderbyname("envmapmodel");
 
-                (envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (owner->model->spec>=0.01f ? modelshader : modelshadernospec)))->set();
+                (hasCM && envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (owner->model->spec>=0.01f ? modelshader : modelshadernospec)))->set();
 
-                if(envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 4, envmapmin-envmapmax, envmapmax);
+                if(hasCM && envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 4, envmapmin-envmapmax, envmapmax);
             }
         }
 
@@ -700,6 +700,7 @@ struct vertmodel : model
 
     bool envmapped()
     {
+        if(renderpath==R_FIXEDFUNCTION || !hasCM) return false;
         loopv(parts)
         {
             part *p = parts[i];
