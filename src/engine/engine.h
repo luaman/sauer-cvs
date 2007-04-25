@@ -2,6 +2,12 @@
 #include "iengine.h"
 #include "igame.h"
 
+extern igameclient     *cl;
+extern igameserver     *sv;
+extern iclientcom      *cc;
+extern icliententities *et;
+
+#ifndef STANDALONE
 #include "world.h"
 #include "octa.h"
 #include "lightmap.h"
@@ -66,11 +72,6 @@ extern int curtime;                     // current frame time
 extern int lastmillis;                  // last time
 extern int totalmillis;                 // total elapsed time
 extern int scr_w, scr_h;
-
-extern igameclient     *cl;
-extern igameserver     *sv;
-extern iclientcom      *cc;
-extern icliententities *et;
 
 extern vector<int> entgroup;
 
@@ -322,4 +323,5 @@ extern void updatevol();
 
 // grass
 extern void rendergrass();
+#endif
 

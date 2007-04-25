@@ -4,11 +4,6 @@
 #include "pch.h"
 #include "engine.h" 
 
-#ifdef STANDALONE
-void localservertoclient(int chan, uchar *buf, int len) {}
-void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); }
-#endif
-
 // all network traffic is in 32bit ints, which are then compressed using the following simple scheme (assumes that most values are small).
 
 void putint(ucharbuf &p, int n)
@@ -98,6 +93,16 @@ ENetHost *serverhost = NULL;
 size_t bsend = 0, brec = 0;
 int laststatus = 0; 
 ENetSocket pongsock = ENET_SOCKET_NULL;
+
+void cleanupserver()
+{
+    if(serverhost) enet_host_destroy(serverhost);
+}
+
+#ifdef STANDALONE
+void localservertoclient(int chan, uchar *buf, int len) {}
+void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); }
+#endif
 
 void sendfile(int cn, int chan, FILE *file)
 {
@@ -428,11 +433,6 @@ void serverslice(int seconds, uint timeout)   // main server update, called from
             break;
     }
     if(sv->sendpackets()) enet_host_flush(serverhost);
-}
-
-void cleanupserver()
-{
-    if(serverhost) enet_host_destroy(serverhost);
 }
 
 void localdisconnect()

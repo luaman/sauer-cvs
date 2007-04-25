@@ -27,6 +27,7 @@
 #include "windows.h"
 #endif
 
+#ifndef STANDALONE
 #include <SDL.h>
 #include <SDL_image.h>
 
@@ -36,6 +37,7 @@
 #include <SDL_opengl.h>
 #undef __glext_h__
 #include "GL/glext.h"
+#endif
 
 #include <enet/enet.h>
 
