@@ -117,7 +117,19 @@ void mdlenvmap(char *envmap)
     if(renderpath!=R_FIXEDFUNCTION) 
     {
         s_sprintfd(pname)("packages/%s", envmap);
-        loadingmodel->envmap = cubemapload(path(pname));
+        path(pname);
+        if(!strchr(pname, '*'))
+        {
+            s_sprintfd(jpgname)("%s_*.jpg", pname);
+            loadingmodel->envmap = cubemapload(jpgname, true, false);
+            if(!loadingmodel->envmap)
+            {
+                s_sprintfd(pngname)("%s_*.png", pname);
+                loadingmodel->envmap = cubemapload(pngname, true, false);
+                if(!loadingmodel->envmap) conoutf("could not load envmap %s", envmap);
+            }
+        }        
+        else loadingmodel->envmap = cubemapload(pname);
     }
 }
 
