@@ -49,7 +49,7 @@ SERVER_OBJS= \
 
 default: all
 
-all: libenet client server
+all: client server
 
 enet/Makefile:
 	cd enet; ./configure
@@ -67,10 +67,10 @@ engine/server-standalone.o:
 fpsgame/fps-standalone.o:
 	$(CXX) $(CXXFLAGS) -DSTANDALONE	-c -o fpsgame/fps-standalone.o fpsgame/fps.cpp
 
-client:	$(CLIENT_OBJS)
+client:	libenet $(CLIENT_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
 
-server:	$(SERVER_OBJS)
+server:	libenet $(SERVER_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  
 	
 install: all
