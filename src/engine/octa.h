@@ -9,6 +9,7 @@ struct elementset
 enum
 {
     EMID_NONE = 0,
+    EMID_CUSTOM,
     EMID_SKY,
     EMID_RESERVED
 };

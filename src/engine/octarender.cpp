@@ -507,7 +507,11 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
         loopk(4) calcvert(c, x, y, z, size, vv[k], faceverts(c, i, k));
         ushort envmap = EMID_NONE;
         Slot &slot = lookuptexture(c.texture[i], false);
-        if(slot.shader && slot.shader->type & SHADER_ENVMAP) envmap = closestenvmap(i, x, y, z, size); 
+        if(slot.shader && slot.shader->type&SHADER_ENVMAP)
+        {
+            loopv(slot.sts) if(slot.sts[i].type==TEX_ENVMAP) { envmap = EMID_CUSTOM; break; }
+            if(envmap==EMID_NONE) envmap = closestenvmap(i, x, y, z, size); 
+        }
         addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
         if(!lodcube && slot.autograss && i!=O_BOTTOM) 
         {
@@ -746,8 +750,12 @@ void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
         mf.orient = i;
         mf.tex = c.texture[i];
         mf.envmap = EMID_NONE;
-        Shader *s = lookupshader(mf.tex);
-        if(s && s->type&SHADER_ENVMAP) mf.envmap = closestenvmap(i, co.x, co.y, co.z, size);
+        Slot &slot = lookuptexture(mf.tex, false);
+        if(slot.shader && slot.shader->type&SHADER_ENVMAP)
+        {
+            loopv(slot.sts) if(slot.sts[i].type==TEX_ENVMAP) { mf.envmap = EMID_CUSTOM; break; }
+            if(mf.envmap==EMID_NONE) mf.envmap = closestenvmap(i, co.x, co.y, co.z, size);
+        }
         mf.surface = c.ext->surfaces ? &c.ext->surfaces[i] : NULL;
         mf.normals = c.ext->normals ? &c.ext->normals[i] : NULL;
         genmergedverts(c, i, co, size, m, mf.v);

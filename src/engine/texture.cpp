@@ -281,6 +281,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
         {"g", TEX_GLOW},
         {"s", TEX_SPEC},
         {"z", TEX_DEPTH},
+        {"e", TEX_ENVMAP}
     };
     int tnum = -1, matslot = findmaterial(type);
     loopi(sizeof(types)/sizeof(types[0])) if(!strcmp(types[i].name, type)) { tnum = i; break; }
@@ -524,7 +525,32 @@ Slot &lookuptexture(int slot, bool load)
     loopv(s.sts)
     {
         Slot::Tex &t = s.sts[i];
-        if(t.combined<0) texcombine(s, i, t, slot<0 && slot>-MAT_EDIT);
+        if(t.combined>=0) continue;
+        switch(t.type)
+        {
+            case TEX_ENVMAP: if(renderpath!=R_FIXEDFUNCTION && hasCM)
+            {
+                s_sprintfd(pname)("packages/%s", t.name);
+                path(pname);
+                if(!strchr(pname, '*'))
+                {
+                    s_sprintfd(jpgname)("%s_*.jpg", pname);
+                    t.t = cubemapload(jpgname, true, false);
+                    if(!t.t)
+                    {
+                        s_sprintfd(pngname)("%s_*.png", pname);
+                        t.t = cubemapload(pngname, true, false);
+                        if(!t.t) conoutf("could not load envmap %s", t.name);
+                    }
+                }
+                else t.t = cubemapload(pname);
+                break;
+            }
+
+            default:
+                texcombine(s, i, t, slot<0 && slot>-MAT_EDIT);
+                break;
+        }
     }
     s.loaded = true;
     return s;
@@ -762,7 +788,7 @@ ushort closestenvmap(int orient, int x, int y, int z, int size)
 
 GLuint lookupenvmap(ushort emid)
 {
-    if(emid==EMID_SKY) return skyenvmap;
+    if(emid==EMID_SKY || emid==EMID_CUSTOM) return skyenvmap;
     if(emid==EMID_NONE || !envmaps.inrange(emid-EMID_RESERVED)) return 0;
     GLuint tex = envmaps[emid-EMID_RESERVED].tex;
     return tex ? tex : skyenvmap;

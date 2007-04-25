@@ -130,6 +130,7 @@ enum
     TEX_GLOW,
     TEX_SPEC,
     TEX_DEPTH,
+    TEX_ENVMAP
 };
     
 struct Slot

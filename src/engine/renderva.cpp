@@ -895,7 +895,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             if(s->type&SHADER_ENVMAP)
             {
                 int envmap = lod.eslist[i].envmap;
-                if((!lastslot || s->type!=lastslot->shader->type || envmap!=lastenvmap) && hasCM)
+                if((!lastslot || s->type!=lastslot->shader->type || (envmap==EMID_CUSTOM ? &slot!=lastslot : envmap!=lastenvmap)) && hasCM)
                 {
                     glActiveTexture_(GL_TEXTURE0_ARB+tmu);
                     if(!(envmapped & (1<<tmu)))
@@ -903,7 +903,14 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                         glEnable(GL_TEXTURE_CUBE_MAP_ARB);
                         envmapped |= 1<<tmu;
                     }
-                    glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, lookupenvmap(envmap));
+                    GLuint emtex = 0;
+                    if(envmap==EMID_CUSTOM) loopvj(slot.sts)
+                    {
+                        Slot::Tex &t = slot.sts[j];
+                        if(t.type==TEX_ENVMAP && t.t) { emtex = t.t->gl; break; }
+                    }
+                    if(!emtex) emtex = lookupenvmap(envmap);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, emtex);
                     lastenvmap = envmap;
                 }
                 tmu++;
@@ -929,7 +936,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                 loopvj(slot.sts)
                 {
                     Slot::Tex &t = slot.sts[j];
-                    if(t.type==TEX_DIFFUSE || t.combined>=0) continue;
+                    if(t.type==TEX_DIFFUSE || t.type==TEX_ENVMAP || t.combined>=0) continue;
                     glActiveTexture_(GL_TEXTURE0_ARB+tmu++);
                     glBindTexture(GL_TEXTURE_2D, t.t->gl);
                 }
