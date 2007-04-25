@@ -2,7 +2,43 @@
 // runs dedicated or as client coroutine
 
 #include "pch.h"
-#include "engine.h" 
+
+#ifdef STANDALONE
+#include "cube.h"
+#include "iengine.h"
+#include "igame.h"
+void localservertoclient(int chan, uchar *buf, int len) {}
+void fatal(char *s, char *o) { void cleanupserver(); cleanupserver(); printf("servererror: %s\n", s); exit(EXIT_FAILURE); }
+#else
+#include "engine.h"
+#endif
+
+igameclient     *cl = NULL;
+igameserver     *sv = NULL;
+iclientcom      *cc = NULL;
+icliententities *et = NULL;
+
+hashtable<char *, igame *> *gamereg = NULL;
+
+void registergame(char *name, igame *ig)
+{
+    if(!gamereg) gamereg = new hashtable<char *, igame *>;
+    (*gamereg)[name] = ig;
+}
+
+void initgame(char *game)
+{
+    igame **ig = gamereg->access(game);
+    if(!ig) fatal("cannot start game module: ", game);
+    sv = (*ig)->newserver();
+    cl = (*ig)->newclient();
+    if(cl)
+    {
+        cc = cl->getcom();
+        et = cl->getents();
+        cl->initclient();
+    }
+}
 
 // all network traffic is in 32bit ints, which are then compressed using the following simple scheme (assumes that most values are small).
 
@@ -98,11 +134,6 @@ void cleanupserver()
 {
     if(serverhost) enet_host_destroy(serverhost);
 }
-
-#ifdef STANDALONE
-void localservertoclient(int chan, uchar *buf, int len) {}
-void fatal(char *s, char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); }
-#endif
 
 void sendfile(int cn, int chan, FILE *file)
 {
@@ -451,33 +482,6 @@ void localconnect()
     s_strcpy(c.hostname, "local");
     sv->localconnect(c.num);
     send_welcome(c.num); 
-}
-
-hashtable<char *, igame *> *gamereg = NULL;
-
-void registergame(char *name, igame *ig)
-{
-    if(!gamereg) gamereg = new hashtable<char *, igame *>;
-    (*gamereg)[name] = ig;
-}
-
-igameclient     *cl = NULL;
-igameserver     *sv = NULL;
-iclientcom      *cc = NULL;
-icliententities *et = NULL;
-
-void initgame(char *game)
-{
-    igame **ig = gamereg->access(game);
-    if(!ig) fatal("cannot start game module: ", game);
-    sv = (*ig)->newserver();
-    cl = (*ig)->newclient();
-    if(cl)
-    {
-        cc = cl->getcom();
-        et = cl->getents();
-        cl->initclient();
-    }
 }
 
 void initserver(bool dedicated)

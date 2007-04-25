@@ -7,7 +7,6 @@ extern igameserver     *sv;
 extern iclientcom      *cc;
 extern icliententities *et;
 
-#ifndef STANDALONE
 #include "world.h"
 #include "octa.h"
 #include "lightmap.h"
@@ -323,5 +322,4 @@ extern void updatevol();
 
 // grass
 extern void rendergrass();
-#endif
 
