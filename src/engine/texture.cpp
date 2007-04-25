@@ -528,24 +528,9 @@ Slot &lookuptexture(int slot, bool load)
         if(t.combined>=0) continue;
         switch(t.type)
         {
-            case TEX_ENVMAP: if(renderpath!=R_FIXEDFUNCTION && hasCM)
-            {
-                s_sprintfd(pname)("packages/%s", t.name);
-                path(pname);
-                if(!strchr(pname, '*'))
-                {
-                    s_sprintfd(jpgname)("%s_*.jpg", pname);
-                    t.t = cubemapload(jpgname, true, false);
-                    if(!t.t)
-                    {
-                        s_sprintfd(pngname)("%s_*.png", pname);
-                        t.t = cubemapload(pngname, true, false);
-                        if(!t.t) conoutf("could not load envmap %s", t.name);
-                    }
-                }
-                else t.t = cubemapload(pname);
+            case TEX_ENVMAP:
+                if(hasCM && (renderpath!=R_FIXEDFUNCTION || (slot<0 && slot>-MAT_EDIT))) t.t = cubemapload(t.name);
                 break;
-            }
 
             default:
                 texcombine(s, i, t, slot<0 && slot>-MAT_EDIT);
@@ -615,7 +600,7 @@ GLuint cubemapfromsky(int size)
     return tex;
 }
 
-Texture *cubemapload(const char *name, bool mipit, bool msg)
+Texture *cubemaploadwildcard(const char *name, bool mipit, bool msg)
 {
     if(!hasCM) return NULL;
     string tname;
@@ -654,6 +639,27 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
         createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, 3, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
         SDL_FreeSurface(s);
     }
+    return t;
+}
+
+Texture *cubemapload(const char *name, bool mipit, bool msg)
+{
+    if(!hasCM) return NULL;
+    s_sprintfd(pname)("packages/%s", name);
+    path(pname);
+    Texture *t = NULL;
+    if(!strchr(pname, '*'))
+    {
+        s_sprintfd(jpgname)("%s_*.jpg", pname);
+        t = cubemaploadwildcard(jpgname, mipit, false);
+        if(!t)
+        {
+            s_sprintfd(pngname)("%s_*.png", pname);
+            t = cubemaploadwildcard(pngname, mipit, false);
+            if(!t && msg) conoutf("could not load envmap %s", name);
+        }
+    }
+    else t = cubemaploadwildcard(pname, mipit, msg);
     return t;
 }
 
