@@ -411,11 +411,28 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
 
         if(refracting) setfogplane(1, refracting - z);
+
+        if(hasCM && m->envmapped() || (vwep && vwep->envmapped()))
+        {
+            anim |= ANIM_ENVMAP;
+            GLuint em = lookupenvmap(closestenvmap(vec(x, y, z)));
+            glActiveTexture_(GL_TEXTURE2_ARB);
+            glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, em);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        }
     }
 
     if(!m->cullface) glDisable(GL_CULL_FACE);
     m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep, rdir, camerapos);
     if(!m->cullface) glEnable(GL_CULL_FACE);
+
+    if(anim&ANIM_ENVMAP)
+    {
+        glActiveTexture_(GL_TEXTURE2_ARB);
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    }
 }
 
 void abovemodel(vec &o, const char *mdl)

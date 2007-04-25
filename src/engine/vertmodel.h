@@ -55,10 +55,11 @@ struct vertmodel : model
         ushort *dynidx;
         int dynlen;
         anpos dyncur, dynprev;
-        GLuint statbuf, statidx, statlist;
-        int statlen;
+        GLuint statlist;
+        int statoffset, statlen;
+        float envmapmin, envmapmax;
 
-        mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), statbuf(0), statidx(0), statlist(0)
+        mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), statlist(0), envmapmin(0), envmapmax(0)
         {
             dyncur.fr1 = dynprev.fr1 = -1;
         }
@@ -69,33 +70,43 @@ struct vertmodel : model
             DELETEA(verts);
             DELETEA(tcverts);
             DELETEA(tris);
-            if(hasVBO)
-            {
-                if(statbuf) glDeleteBuffers_(1, &statbuf);
-                if(statidx) glDeleteBuffers_(1, &statidx);
-            }
             if(statlist) glDeleteLists(statlist, 1);
             DELETEA(dynidx);
             DELETEA(dynbuf);
         }
 
-        void genva(bool dyn) // generate vbo's for each mesh
+        void gendynbuf()
         {
             vector<ushort> idxs;
-            vector<vvert> vverts;
-
-            loopl(numtris)
+            loopi(numtris)
             {
-                tri &t = tris[l];
-                if(dyn) loopk(3) idxs.add(t.vert[k]);
-                else loopk(3)
+                tri &t = tris[i];
+                loopj(3) idxs.add(t.vert[j]);
+            }
+            tristrip ts;
+            ts.addtriangles(idxs.getbuf(), idxs.length()/3);
+            idxs.setsizenodelete(0);
+            ts.buildstrips(idxs);
+            dynbuf = new vert[numverts];
+            dynidx = new ushort[idxs.length()];
+            memcpy(dynidx, idxs.getbuf(), idxs.length()*sizeof(ushort));
+            dynlen = idxs.length();
+        }
+
+        void genvbo(vector<ushort> &idxs, vector<vvert> &vverts)
+        {
+            statoffset = idxs.length();
+            loopi(numtris)
+            {
+                tri &t = tris[i];
+                loopj(3)
                 {
-                    tcvert &tc = tcverts[t.vert[k]];
+                    tcvert &tc = tcverts[t.vert[j]];
                     vert &v = verts[tc.index];
-                    loopvj(vverts) // check if it's already added
+                    loopvk(vverts) // check if it's already added
                     {
-                        vvert &w = vverts[j];
-                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && (renderpath==R_FIXEDFUNCTION || v.norm==w.norm)) { idxs.add((ushort)j); goto found; }
+                        vvert &w = vverts[k];
+                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && (renderpath==R_FIXEDFUNCTION || v.norm==w.norm)) { idxs.add((ushort)k); goto found; }
                     }
                     {
                         idxs.add(vverts.length());
@@ -108,36 +119,7 @@ struct vertmodel : model
                     found:;
                 }
             }
-
-            if(dyn)
-            {
-                tristrip ts;
-                ts.addtriangles(idxs.getbuf(), idxs.length()/3);
-                idxs.setsizenodelete(0);
-                ts.buildstrips(idxs);
-                dynbuf = new vert[numverts];
-                dynidx = new ushort[idxs.length()];
-                memcpy(dynidx, idxs.getbuf(), idxs.length()*sizeof(ushort));
-                dynlen = idxs.length();
-            }
-            else
-            {
-                glGenBuffers_(1, &statbuf);
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
-                if(renderpath==R_FIXEDFUNCTION)
-                {
-                    vvertff *ff = new vvertff[vverts.length()];
-                    loopv(vverts) { vvert &v = vverts[i]; ff[i].pos = v.pos; ff[i].u = v.u; ff[i].v = v.v; }
-                    glBufferData_(GL_ARRAY_BUFFER_ARB, vverts.length()*sizeof(vvertff), ff, GL_STATIC_DRAW_ARB);
-                    delete[] ff;
-                }
-                else glBufferData_(GL_ARRAY_BUFFER_ARB, vverts.length()*sizeof(vvert), vverts.getbuf(), GL_STATIC_DRAW_ARB);
-
-                glGenBuffers_(1, &statidx);
-                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
-                glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
-                statlen = idxs.length();
-            }
+            statlen = idxs.length()-statoffset;
         }
 
         void calcbb(int frame, vec &bbmin, vec &bbmax, float m[12])
@@ -236,13 +218,16 @@ struct vertmodel : model
             if(owner->model->shader) owner->model->shader->set();
             else
             {
-                static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL;
+                static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshaderenvmap = NULL;
 
-                if(!modelshader)       modelshader       = lookupshaderbyname("stdppmodel");
-                if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecpvmodel");
-                if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksppmodel");
-        
-                (masked ? modelshadermasks : (owner->model->spec>=0.01f ? modelshader : modelshadernospec))->set();
+                if(!modelshader)       modelshader       = lookupshaderbyname("stdmodel");
+                if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecmodel");
+                if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksmodel");
+                if(!modelshaderenvmap) modelshaderenvmap = lookupshaderbyname("envmapmodel");
+
+                (envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (owner->model->spec>=0.01f ? modelshader : modelshadernospec)))->set();
+
+                if(envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 4, envmapmin-envmapmax, envmapmax);
             }
         }
 
@@ -253,7 +238,7 @@ struct vertmodel : model
             {
                 Slot &slot = lookuptexture(tex);
                 s = slot.sts[0].t;
-                m = slot.sts.length() >= 2 ? slot.sts[1].t : crosshair;
+                if(slot.sts.length() >= 2) m = slot.sts[1].t;
             }
             if(s->bpp==32) // transparent skin
             {
@@ -289,35 +274,9 @@ struct vertmodel : model
             if(!(as.anim&ANIM_NOSKIN)) bindskin();
 
             bool isstat = as.frame==0 && as.range==1;
-            if(hasVBO && isstat && statbuf) // vbo's for static stuff
+            if(isstat && owner->statbuf)
             {
-                size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
-                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
-                glEnableClientState(GL_VERTEX_ARRAY);
-                vvert *vverts = 0;
-                glVertexPointer(3, GL_FLOAT, vertsize, &vverts->pos);
-                if(!(as.anim&ANIM_NOSKIN))
-                {
-                    if(renderpath!=R_FIXEDFUNCTION)
-                    {
-                        glEnableClientState(GL_NORMAL_ARRAY);
-                        glNormalPointer(GL_FLOAT, vertsize, &vverts->norm);
-                    }
-                    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                    glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
-                }
-
-                glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, 0);
-
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
-                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-                if(!(as.anim&ANIM_NOSKIN)) 
-                {
-                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                    if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
-                }
-                glDisableClientState(GL_VERTEX_ARRAY);
+                glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, (void *)(statoffset*sizeof(ushort)));
 
                 xtravertsva += numtcverts;
             }
@@ -387,14 +346,17 @@ struct vertmodel : model
         part **links;
         tag *tags;
         int numtags;
+        GLuint statbuf, statidx;
 
-        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0) {}
+        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0), statbuf(0), statidx(0) {}
         virtual ~part()
         {
             meshes.deletecontentsp();
             DELETEA(anims);
             DELETEA(links);
             DELETEA(tags);
+            if(statbuf) glDeleteBuffers_(1, &statbuf);
+            if(statidx) glDeleteBuffers_(1, &statidx);
         }
 
         bool link(part *link, const char *tag)
@@ -427,11 +389,29 @@ struct vertmodel : model
            }
         }
 
-        void genva(bool dyn) // generate vbo's for each mesh
+        void genvbo()
         {
-            loopv(meshes) meshes[i]->genva(dyn);
+            vector<ushort> idxs;
+            vector<vvert> vverts;
+           
+            loopv(meshes) meshes[i]->genvbo(idxs, vverts);
+ 
+            glGenBuffers_(1, &statbuf);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
+            if(renderpath==R_FIXEDFUNCTION)
+            {
+                vvertff *ff = new vvertff[vverts.length()];
+                loopv(vverts) { vvert &v = vverts[i]; ff[i].pos = v.pos; ff[i].u = v.u; ff[i].v = v.v; }
+                glBufferData_(GL_ARRAY_BUFFER_ARB, vverts.length()*sizeof(vvertff), ff, GL_STATIC_DRAW_ARB);
+                delete[] ff;
+            }
+            else glBufferData_(GL_ARRAY_BUFFER_ARB, vverts.length()*sizeof(vvert), vverts.getbuf(), GL_STATIC_DRAW_ARB);
+
+            glGenBuffers_(1, &statidx);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
+            glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
         }
-            
+
         void calctransform(tag &t, float m[12], float n[12])
         {
             loop(y, 3)
@@ -558,15 +538,47 @@ struct vertmodel : model
             ncampos.y = (p.y - b1*p.x/a1 - (b3 - b1*a3/a1)*ncampos.z)/(b2 - b1*a2/a1);
             ncampos.x = (p.x - a2*ncampos.y - a3*ncampos.z)/a1;
         }
- 
+
+        void bindvbo(animstate &as)
+        {
+            size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            vvert *vverts = 0;
+            glVertexPointer(3, GL_FLOAT, vertsize, &vverts->pos);
+            if(!(as.anim&ANIM_NOSKIN))
+            {
+                if(renderpath!=R_FIXEDFUNCTION)
+                {
+                    glEnableClientState(GL_NORMAL_ARRAY);
+                    glNormalPointer(GL_FLOAT, vertsize, &vverts->norm);
+                }
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
+            }
+        }
+
+        void unbindvbo(animstate &as)
+        {
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+            if(!(as.anim&ANIM_NOSKIN)) 
+            {
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
+            }
+            glDisableClientState(GL_VERTEX_ARRAY);
+        }
+
         void render(int anim, int varseed, float speed, int basetime, dynent *d, const vec &dir, const vec &campos)
         {
             if(meshes.length() <= 0) return;
             animstate as;
             if(!calcanimstate(anim, varseed, speed, basetime, d, as)) return;
     
-            if(hasVBO && !meshes[0]->statbuf && as.frame==0 && as.range==1) genva(false);
-            else if(!meshes[0]->dynbuf && (!hasVBO || as.frame!=0 || as.range!=1)) genva(true);
+            if(hasVBO && !statbuf && as.frame==0 && as.range==1) genvbo();
+            else if(!meshes[0]->dynbuf && (!hasVBO || as.frame!=0 || as.range!=1)) loopv(meshes) meshes[i]->gendynbuf();
     
             anpos prev, cur;
             cur.setframes(d && index<2 ? d->current[index] : as);
@@ -578,8 +590,10 @@ struct vertmodel : model
                 prev.setframes(d->prev[index]);
                 ai_t = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
             }
-            
+   
+            if(statbuf && as.frame==0 && as.range==1) bindvbo(as);
             loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
+            if(statbuf && as.frame==0 && as.range==1) unbindvbo(as);
 
             loopi(numtags) if(links[i]) // render the linked models - interpolate rotation and position of the 'link-tags'
             {
@@ -619,8 +633,21 @@ struct vertmodel : model
                     setenvparamf("camera", SHPARAM_VERTEX, 1, ncampos.x, ncampos.y, ncampos.z, 1);
                 }
                 glPushMatrix();
-                    glMultMatrixf(matrix);
-                    link->render(anim, varseed, speed, basetime, d, ndir, ncampos);
+                glMultMatrixf(matrix);
+                if(anim&ANIM_ENVMAP) 
+                { 
+                    glMatrixMode(GL_TEXTURE); 
+                    glPushMatrix(); 
+                    glMultMatrixf(matrix); 
+                    glMatrixMode(GL_MODELVIEW); 
+                }
+                link->render(anim, varseed, speed, basetime, d, ndir, ncampos);
+                if(anim&ANIM_ENVMAP) 
+                { 
+                    glMatrixMode(GL_TEXTURE); 
+                    glPopMatrix(); 
+                    glMatrixMode(GL_MODELVIEW); 
+                }
                 glPopMatrix();
             }
         }
@@ -671,13 +698,23 @@ struct vertmodel : model
         return spheretree;
     }
 
+    bool envmapped()
+    {
+        loopv(parts)
+        {
+            part *p = parts[i];
+            loopvj(p->meshes) if(p->meshes[j]->envmapmax>0) return true;
+        }
+        return false;
+    }
+
     bool link(part *link, const char *tag)
     {
         loopv(parts) if(parts[i]->link(link, tag)) return true;
         return false;
     }
 
-    void setskin(int tex)
+    void setskin(int tex = 0)
     {
         if(parts.length()!=1 || parts[0]->meshes.length()!=1) return;
         mesh &m = *parts[0]->meshes[0]; 
@@ -703,6 +740,35 @@ struct vertmodel : model
         radius.mul(0.5f);
         center = bbmin;
         center.add(radius);
+    }
+
+    virtual void render(int anim, int varseed, float speed, int basetime, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    {
+    }
+
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    {
+        glPushMatrix(); 
+        glTranslatef(x, y, z);
+        glRotatef(yaw+180, 0, 0, 1);
+        glRotatef(pitch, 0, -1, 0);
+        if(anim&ANIM_ENVMAP)
+        {
+            glMatrixMode(GL_TEXTURE);
+            glLoadIdentity();
+            glTranslatef(x, y, z);
+            glRotatef(yaw+180, 0, 0, 1);
+            glRotatef(pitch, 0, -1, 0);
+            glMatrixMode(GL_MODELVIEW);
+        }
+        render(anim, varseed, speed, basetime, d, vwepmdl, dir, campos);
+        if(anim&ANIM_ENVMAP)
+        {
+            glMatrixMode(GL_TEXTURE);
+            glLoadIdentity();
+            glMatrixMode(GL_MODELVIEW);
+        }
+        glPopMatrix();
     }
 };
 

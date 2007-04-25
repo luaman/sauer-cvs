@@ -52,6 +52,7 @@ enum { ANIM_DYING = 0, ANIM_DEAD, ANIM_PAIN, ANIM_IDLE, ANIM_IDLE_ATTACK, ANIM_R
 #define ANIM_END        (1<<10)
 #define ANIM_REVERSE    (1<<11)
 #define ANIM_NOSKIN     (1<<12)
+#define ANIM_ENVMAP     (1<<13)
 
 enum { CS_ALIVE = 0, CS_DEAD, CS_LAGGED, CS_EDITING, CS_SPECTATOR };
 

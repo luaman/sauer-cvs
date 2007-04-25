@@ -146,7 +146,7 @@ struct md3 : vertmodel
         }
     };
     
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    void render(int anim, int varseed, float speed, int basetime, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
     {
         if(!loaded) return;
 
@@ -156,12 +156,7 @@ struct md3 : vertmodel
             if(link(vwep, "tag_weapon")) vwep->index = parts.length();
         }
 
-        glPushMatrix();
-        glTranslatef(x, y, z);
-        glRotatef(yaw+180, 0, 0, 1);
-        glRotatef(pitch, 0, -1, 0);
         parts[0]->render(anim, varseed, speed, basetime, d, dir, campos);
-        glPopMatrix();
     }
 
     bool load()
@@ -218,7 +213,7 @@ void md3load(char *model)
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
 }  
     
-void md3skin(char *objname, char *skin, char *masks)
+void md3skin(char *objname, char *skin, char *masks, float *envmapmax, float *envmapmin)
 {   
     if(!objname || !skin) return;
     if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
@@ -234,6 +229,8 @@ void md3skin(char *objname, char *skin, char *masks)
             {
                 s_sprintfd(mpath)("%s/%s", md3dir, masks);
                 m.masks = textureload(mpath, false, true, false);
+                m.envmapmax = *envmapmax;
+                m.envmapmin = *envmapmin;
             }
         }
     }
@@ -256,7 +253,7 @@ void md3link(int *parent, int *child, char *tagname)
 }
 
 COMMAND(md3load, "s");
-COMMAND(md3skin, "sss");
+COMMAND(md3skin, "sssff");
 COMMAND(md3anim, "siis");
 COMMAND(md3link, "iis");
             

@@ -20,6 +20,7 @@ struct model
     virtual char *name() = 0;
     virtual int type() = 0;
     virtual SphereTree *setspheretree() { return 0; }
+    virtual bool envmapped() { return false; }
 
     void boundbox(int frame, vec &center, vec &radius)
     {
