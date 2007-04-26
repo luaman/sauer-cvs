@@ -305,6 +305,7 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
 /////////////////////////  entity collision  ///////////////////////////////////////////////
 
 // info about collisions
+bool inside; // whether an internal collision happened
 physent *hitplayer; // whether the collection hit a player
 vec wall; // just the normal vectors.
 float walldistance;
@@ -372,6 +373,7 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     TRYCOLLIDE(z, O_BOTTOM, O_TOP,
          az >= -(d->eyeheight+d->aboveeye)/4.0f,
          az >= -(d->eyeheight+d->aboveeye)/2.0f);
+    if(collideonly) inside = true;
     return collideonly;
 }
 
@@ -575,7 +577,11 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
             }
         }
         wall = *w;
-        if(wall.iszero()) return true;
+        if(wall.iszero())
+        {
+            inside = true;
+            return true;
+        }
     }
     return false;
 }
@@ -601,6 +607,7 @@ bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const
 // all collision happens here
 bool collide(physent *d, const vec &dir, float cutoff)
 {
+    inside = false;
     hitplayer = NULL;
     wall.x = wall.y = wall.z = 0;
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
@@ -878,7 +885,17 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         dir.add(d->gravity);
         dir.mul(secs);
         d->o.add(dir);
-        if(collide(d, dir) || (d->physstate==PHYS_BOUNCE && hitplayer)) break;
+        if(collide(d, dir))
+        {
+            if(inside)
+            {
+                d->o = old;
+                d->gravity.mul(-elasticity);
+                d->vel.mul(-elasticity);
+            }
+            break;
+        }
+        else if(hitplayer) break;
         d->o = old;
         vec dvel(d->vel), wvel(wall);
         dvel.add(d->gravity);
