@@ -328,12 +328,12 @@ bool ellipsecollide(dynent *d, const vec &dir, dynent *e)
     float dist = sqrtf(x*x + y*y) - sqrtf(dx*dx + dy*dy) - sqrtf(ex*ex + ey*ey);
     if(dist < 0)
     {
-        if(dir.iszero() || (below >= -(d->eyeheight+d->aboveeye)/4.0f) && dir.z > 0)                             
+        if(dir.iszero() || (below >= -(d->eyeheight+d->aboveeye)/4.0f && dir.z > 0))                            
         {    
             wall = vec(0, 0, -1); 
             return false;
         }
-        if(dir.iszero() || (above >= -(d->eyeheight+d->aboveeye)/2.0f && dir.z < 0))              
+        if(dir.iszero() || (above >= -(d->eyeheight+d->aboveeye)/2.0f && dir.z < 0))             
         { 
             wall = vec(0, 0, 1); 
             return false;
@@ -866,10 +866,10 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
     if(water)
     {
         if(d->vel.z > 0 && d->vel.z + d->gravity.z < 0) d->vel.z = 0.0f;
+        d->vel.mul(1.0f - secs/waterfric);
         d->gravity.z = -4.0f*GRAVITY*secs;
-    }
+    } 
     else d->gravity.z -= GRAVITY*secs;
-    if(water) d->vel.mul(1.0f - secs/waterfric);
     vec old(d->o);
     loopi(2)
     {
@@ -878,7 +878,7 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         dir.add(d->gravity);
         dir.mul(secs);
         d->o.add(dir);
-        if(collide(d, dir) || hitplayer) break;
+        if(collide(d) || hitplayer) break;
         d->o = old;
         vec dvel(d->vel), wvel(wall);
         dvel.add(d->gravity);
