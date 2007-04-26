@@ -1316,25 +1316,18 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
         dir.add(vec(e.o).sub(target).mul(intensity/mag));
     }
 
-    vec skylight;
     if(t)
     {
-        uchar rgb[3];
-        calcskylight(target, vec(0, 0, 0), rgb);
-        loopk(3) skylight[k] = rgb[k]/255.0f;
+        uchar skylight[3];
+        calcskylight(target, vec(0, 0, 0), skylight);
+        loopk(3) color[k] = min(1.5f, max(max(skylight[k]/255.0f, ambient), color[k]));
     }
-    else loopk(3) skylight[k] = 0.75f*max(hdr.skylight[k]/255.0f, ambient) + 0.25f*ambient;
-    float l = 0, a = 0;
-    loopk(3) 
+    else loopk(3)
     {
-        l = max(l, color[k]);
-        a = max(a, skylight[k]);
-        color[k] = min(1.5f, max(skylight[k], color[k]));
+        float skylight = 0.75f*max(hdr.skylight[k]/255.0f, ambient) + 0.25f*ambient;
+        color[k] = min(1.5f, max(skylight, color[k]));
     }
     if(!dir.iszero()) dir.normalize();
-    dir.mul(max(l-a, 0));
-    dir.z += a;
-    dir.normalize();
 }
 
 entity *brightestlight(const vec &target, const vec &dir)
