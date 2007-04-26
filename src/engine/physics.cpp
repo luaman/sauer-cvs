@@ -328,12 +328,12 @@ bool ellipsecollide(dynent *d, const vec &dir, dynent *e)
     float dist = sqrtf(x*x + y*y) - sqrtf(dx*dx + dy*dy) - sqrtf(ex*ex + ey*ey);
     if(dist < 0)
     {
-        if(dir.iszero() || (below >= -(d->eyeheight+d->aboveeye)/4.0f && dir.z > 0))                            
+        if(dir.iszero() || ((d->type>=ENT_CAMERA || below >= -(d->eyeheight+d->aboveeye)/4.0f) && dir.z > 0))                            
         {    
             wall = vec(0, 0, -1); 
             return false;
         }
-        if(dir.iszero() || (above >= -(d->eyeheight+d->aboveeye)/2.0f && dir.z < 0))             
+        if(dir.iszero() || ((d->type>=ENT_CAMERA || above >= -(d->eyeheight+d->aboveeye)/2.0f) && dir.z < 0))             
         { 
             wall = vec(0, 0, 1); 
             return false;
@@ -364,8 +364,8 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     wall.x = wall.y = wall.z = 0;
 #define TRYCOLLIDE(dim, ON, OP, N, P) \
     { \
-        if(s.dim<0) { if(visible&(1<<ON) && (dir.iszero() || (dir.dim>0 && (N)))) { walldistance = a ## dim; wall.dim = -1; return false; } } \
-        else if(visible&(1<<OP) && (dir.iszero() || (dir.dim<0 && (P)))) { walldistance = a ## dim; wall.dim = 1; return false; } \
+        if(s.dim<0) { if(visible&(1<<ON) && (dir.iszero() || (dir.dim>0 && (d->type>=ENT_CAMERA || (N))))) { walldistance = a ## dim; wall.dim = -1; return false; } } \
+        else if(visible&(1<<OP) && (dir.iszero() || (dir.dim<0 && (d->type>=ENT_CAMERA || (P))))) { walldistance = a ## dim; wall.dim = 1; return false; } \
     }
     if(ax>ay && ax>az) TRYCOLLIDE(x, O_LEFT, O_RIGHT, ax > -d->radius, ax > -d->radius);
     if(ay>az) TRYCOLLIDE(y, O_BACK, O_FRONT, ay > -d->radius, ay > -d->radius);
@@ -562,7 +562,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                 if(!dir.iszero())
                 {
                     if(f.dot(dir) >= -cutoff) continue;
-                    if(dist < (dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) continue;
+                    if(d->type<ENT_CAMERA && dist < (dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) continue;
                 }
                 if(p.p[i].z) { if((p.p[i].z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist) continue; }
                 else
@@ -878,7 +878,7 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         dir.add(d->gravity);
         dir.mul(secs);
         d->o.add(dir);
-        if(collide(d) || hitplayer) break;
+        if(collide(d, dir) || (d->physstate==PHYS_BOUNCE && hitplayer)) break;
         d->o = old;
         vec dvel(d->vel), wvel(wall);
         dvel.add(d->gravity);
@@ -889,13 +889,13 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         d->vel.mul(k);
         d->vel.sub(wvel);
     }
-    if(d->physstate != PHYS_BOUNCE)
+    if(d->physstate!=PHYS_BOUNCE)
     {
         // make sure bouncers don't start inside geometry
-        if(d->o == old) return true;
+        if(d->o == old) return !hitplayer;
         d->physstate = PHYS_BOUNCE;
     }
-    return hitplayer != 0;
+    return hitplayer!=0;
 }
 
 void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
