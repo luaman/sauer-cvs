@@ -208,8 +208,8 @@ struct fpsclient : igameclient
         et.checkquad(curtime);
         if(m_arena) arenarespawn();
         ws.moveprojectiles(curtime);
-        ws.bounceupdate(curtime);
-        if(player1->clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos);     // only shoot when connected to server
+        if(player1->clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos); // only shoot when connected to server
+        ws.bounceupdate(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
         gets2c();           // do this first, so we have most accurate information when our player moves
         otherplayers();
         ms.monsterthink(curtime, gamemode);
