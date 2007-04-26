@@ -31,13 +31,16 @@ md3load model_path
     "name_path" is the path to the md3 file to load, its recursive to the location of the md3.cfg.
 
 
-md3skin mesh skin_path masks_path
+md3skin mesh skin_path masks_path [envmap_max [envmap_min]]
 
     This loads a texture and assigns it to a mesh of the last loaded model (md3load).
     "mesh" is the name of the mesh you want to assign the texture to.
     "skin_path" is the path to the texture, its recursive to the location of the md3.cfg.
-    The optional "masks_path" sets a texture for spec/glow maps as above.
-
+    The optional "masks_path" sets a texture for spec (red channel)/glow (green channel) maps as above.
+    If "envmap_max" is non-zero, then the blue channel of the masks is interpreted as a chrome map.
+    "envmap_max" and "envmap_min" (default: 0) are floating point values in the range of 0 to 1, and will vary based
+    on viewing angle (max envmap intensity at glancing angles, minimal viewed dead-on). The intensity, after
+    scaled into this range, is then multiplied by the chrome map.
 
 md3anim anim frame numframes speed
 
@@ -108,6 +111,9 @@ mdlscale S
 mdltrans X Y Z
     Translate the model's center by (X, Y, Z), where X/Y/Z are in model units (may use floating point).
 
+mdlenvmap P
+    Sets the environment map used for the model, where P is a pathname in the same syntax as the "loadsky" command.
+    If this is not specified, the model will use the closest "envmap" entity, or skybox, if none is available.
 
 ----
 
