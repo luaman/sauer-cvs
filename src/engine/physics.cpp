@@ -1312,7 +1312,7 @@ bool entinmap(dynent *d, bool avoidplayers)        // brute force but effective 
     vec orig = d->o;
     loopi(100)                  // try max 100 times
     {
-        if(collide(d)) return true;
+        if(collide(d) && !inside) return true;
         if(hitplayer && avoidplayers)
         {
             d->o = orig;
