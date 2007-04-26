@@ -115,6 +115,9 @@ mdlenvmap P
     Sets the environment map used for the model, where P is a pathname in the same syntax as the "loadsky" command.
     If this is not specified, the model will use the closest "envmap" entity, or skybox, if none is available.
 
+mdlshadow B
+    Controls whether a mapmodel will cast shadows. Default B=1.
+
 ----
 
 Sample md3.cfg file, used for a playermodel:

@@ -69,3 +69,6 @@ mdlscale S
 mdltrans X Y Z
     Translate the model's center by (X, Y, Z), where X/Y/Z are in model units (may use floating point).
 
+mdlshadow B
+    Controls whether a mapmodel will cast shadows. Default B=1.
+
