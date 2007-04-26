@@ -1162,13 +1162,15 @@ void clearlights()
 void lightent(extentity &e, float height)
 {
     if(e.type==ET_LIGHT) return;
+    float ambient = hdr.ambient/255.0f;
     if(e.type==ET_MAPMODEL)
     {
         model *m = loadmodel(NULL, e.attr2);
         if(m) height = m->above()*0.75f;
     }
+    else if(e.type>=ET_GAMESPECIFIC) ambient = renderpath==R_FIXEDFUNCTION ? 0.7f : 0.4f;
     vec target(e.o.x, e.o.y, e.o.z + height);
-    lightreaching(target, e.color, e.dir, &e, renderpath==R_FIXEDFUNCTION && e.type>=ET_GAMESPECIFIC ? 0.7f : 0.4f);
+    lightreaching(target, e.color, e.dir, &e, ambient);
 }
 
 void updateentlighting()
