@@ -385,6 +385,9 @@
 <a href="#_light_"><tt>"light"</tt></a>
 </li>
 <li>
+<a href="#_spotlight_"><tt>"spotlight"</tt></a>
+</li>
+<li>
 <a href="#_envmap_"><tt>"envmap"</tt></a>
 </li>
 <li>
@@ -1543,6 +1546,16 @@ sun probably more like 1000. Lights with a radius of 0 do not attenuate and may
 be more appropriate for simulating sunlight or ambient light; however, this
 comes at the cost of slightly greater map file sizes. See the <a href="#lightingcommands">
 lighting commands</a> for an indepth list of all lighting related commands.
+</p>
+
+<pre id="_spotlight_">"spotlight" radius</pre>
+<p>
+Creates a spotlight with the given "radius" (in degrees, 0 to 90). A 90 degree spotlight will
+be a full hemisphere, whereas 0 degrees is simply a line. These will attach to the nearest "light"
+entity within 100 units of the spotlight. The spotlight will shine in the direction of the spotlight,
+relative to the "light" entity it is attached to. It inherits the sphere of influence (length of the spotlight) and 
+color values from the attached light as well. Do not move these very far from the light they're or attached to or
+you risk them detaching or attaching to the wrong lights on a map load!
 </p>
 
 <pre id="_envmap_">"envmap" [radius]</pre>
