@@ -501,6 +501,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     }
     else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) anim = ANIM_EDIT|ANIM_LOOP;
     else if(d->state==CS_LAGGED)                            anim = ANIM_LAG|ANIM_LOOP;
+    else
     {
         if(lastmillis-lastpain<300) anim = ANIM_PAIN|ANIM_LOOP;
         else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<200)) { anim = attack<0 ? -attack : attack; basetime = lastaction; }
@@ -511,7 +512,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
         else if(d->strafe) anim |= ((d->strafe>0 ? ANIM_RIGHT : ANIM_LEFT)|ANIM_LOOP)<<ANIM_SECONDARY;
 
         if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) { anim >>= ANIM_SECONDARY; anim |= (ANIM_IDLE|ANIM_LOOP)<<ANIM_SECONDARY; }
-    };
+    }
     int flags = MDL_CULL_VFC | MDL_CULL_OCCLUDED;
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
