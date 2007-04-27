@@ -93,6 +93,8 @@ md3anim anim frame numframes speed
         jump
         swim
     This allows, for example, a torso part to "shoot" (a primary animation) while a leg part simultaneously runs "forward" (a secondary animation).
+    In the event that a secondary animation other than "idle" is playing and there is no primary animation, then the secondary animation will behave as if it were primary, and the secondary
+animation will effectively be "idle". This allows parts that would not normally participate in a certain animation to do so in the "idle" case, or otherwise simply be "idle" if this is not desired.
 
     Example: md3anim "punch" 131 6 15
         Defines a "punch" animation starting at frame 131 with 6 frames and running at 15 frames per second.
