@@ -194,7 +194,7 @@ struct md2 : vertmodel
             return loaded = true;
         }
 
-        void getdefaultanim(animstate &as, int anim, int varseed, float speed, dynent *d)
+        void getdefaultanim(animstate &as, int anim, int varseed, dynent *d)
         {
             //                      0              3              6   7   8   9   10        12  13
             //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI
@@ -204,7 +204,6 @@ struct md2 : vertmodel
             static int animfr[] = { 5, 2, 8, 9, 9, 9, 9, 6, 6, 7, 12, 9, 10, 11, 13, 14 };
             
             anim &= ANIM_INDEX;
-            as.speed = speed;
             if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0]))
             {
                 as.frame = 0;
@@ -212,21 +211,7 @@ struct md2 : vertmodel
                 return;
             }
             int n = animfr[anim];
-            switch(anim)
-            {
-                case ANIM_DYING:
-                case ANIM_DEAD:
-                    n -= varseed%3;
-                    break;
-
-                case ANIM_FORWARD:
-                case ANIM_BACKWARD:
-                case ANIM_LEFT:
-                case ANIM_RIGHT:
-                case ANIM_SWIM:
-                    as.speed *= 55.0f/d->maxspeed;
-                    break;
-            }
+            if(anim==ANIM_DEAD || anim==ANIM_DEAD) n -= varseed%3;
             as.frame = _frame[n];
             as.range = _range[n];
         }
@@ -283,7 +268,7 @@ struct md2 : vertmodel
     }
 };
 
-void md2anim(char *anim, int *frame, int *range, char *s)
+void md2anim(char *anim, int *frame, int *range, float *speed)
 {
     if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; }
     for(;;)
@@ -294,15 +279,11 @@ void md2anim(char *anim, int *frame, int *range, char *s)
         else s_strcpy(curanim, anim);
         int num = findanim(curanim);
         if(num<0) conoutf("could not find animation %s", curanim);
-        else
-        {
-            float speed = s[0] ? atof(s) : 100.0f;
-            loadingmd2->parts.last()->setanim(num, *frame, *range, speed);
-        }
+        else loadingmd2->parts.last()->setanim(num, *frame, *range, *speed);
         if(!nextanim) break;
         anim = nextanim+1;
     }
 }
 
-COMMAND(md2anim, "siis");
+COMMAND(md2anim, "siif");
 

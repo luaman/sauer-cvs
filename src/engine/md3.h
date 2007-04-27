@@ -236,7 +236,7 @@ void md3skin(char *objname, char *skin, char *masks, float *envmapmax, float *en
     }
 }
 
-void md3anim(char *anim, int *frame, int *range, char *s)
+void md3anim(char *anim, int *frame, int *range, float *speed)
 {
     if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
     for(;;)
@@ -247,11 +247,7 @@ void md3anim(char *anim, int *frame, int *range, char *s)
         else s_strcpy(curanim, anim);
         int num = findanim(curanim);
         if(num<0) conoutf("could not find animation %s", curanim); 
-        else
-        {
-            float speed = s[0] ? atof(s) : 100.0f;
-            loadingmd3->parts.last()->setanim(num, *frame, *range, speed);
-        }
+        else loadingmd3->parts.last()->setanim(num, *frame, *range, *speed);
         if(!nextanim) break;
         anim = nextanim+1;
     }
@@ -266,6 +262,6 @@ void md3link(int *parent, int *child, char *tagname)
 
 COMMAND(md3load, "s");
 COMMAND(md3skin, "sssff");
-COMMAND(md3anim, "siis");
+COMMAND(md3anim, "siif");
 COMMAND(md3link, "iis");
             

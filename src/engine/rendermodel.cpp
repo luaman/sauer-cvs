@@ -486,7 +486,6 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, int attack, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
-    float speed = 100.0f;
     float mz = d->o.z-d->eyeheight-sink;     
     int basetime = 0;
     if(d->state==CS_DEAD)
@@ -517,7 +516,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
     vec color, dir;
-    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, speed, basetime, d, flags, vwepname);
+    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, d->yaw+90, d->pitch/4, 0, basetime, d, flags, vwepname);
 }
 
 void setbbfrommodel(dynent *d, char *mdl)

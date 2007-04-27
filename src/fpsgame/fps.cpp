@@ -474,7 +474,7 @@ struct fpsclient : igameclient
     IVARP(hudgun, 0, 1, 1);
     IVARP(hudgunsway, 0, 1, 1);
 
-    void drawhudmodel(int anim, float speed, int base)
+    void drawhudmodel(int anim, float speed = 0, int base = 0)
     {
         static char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "hudguns/gl", "hudguns/pistol" };
         if(player1->gunselect>GUN_PISTOL) return;
@@ -505,7 +505,7 @@ struct fpsclient : igameclient
         }
         else
         {
-            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP, 100, 0);
+            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP);
         }
     }
 

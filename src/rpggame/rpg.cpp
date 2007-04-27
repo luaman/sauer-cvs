@@ -101,7 +101,7 @@ struct rpgclient : igameclient, g3d_callback
         draw_textf("health: %d/%d", 0, h*2-64, os.playerobj->s_health, os.playerobj->eff_maxhp());       // temp     
     }
     
-    void drawhudmodel(int anim, float speed, int base)
+    void drawhudmodel(int anim, float speed = 0, int base = 0)
     {
         vec color, dir;
         lightreaching(player1.o, color, dir);
@@ -119,7 +119,7 @@ struct rpgclient : igameclient, g3d_callback
         }
         else
         {
-            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP, 100, 0);
+            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP);
         }
     }
 

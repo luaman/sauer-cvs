@@ -459,16 +459,34 @@ struct vertmodel : model
             }
         }
 
-        virtual void getdefaultanim(animstate &as, int anim, int varseed, float speed, dynent *d)
+        virtual void getdefaultanim(animstate &as, int anim, int varseed, dynent *d)
         {
             as.frame = 0;
             as.range = 1;
-            as.speed = speed;
         }
 
+        void getanimspeed(animstate &as, dynent *d)
+        {
+            switch(as.anim&ANIM_INDEX)
+            {
+                case ANIM_FORWARD:
+                case ANIM_BACKWARD:
+                case ANIM_LEFT:
+                case ANIM_RIGHT:
+                case ANIM_SWIM:
+                    as.speed = 5500.0f/d->maxspeed;
+                    break;
+
+                default:
+                    as.speed = 100.0f;
+                    break;
+            }
+        }
+                
         bool calcanimstate(int anim, int varseed, float speed, int basetime, dynent *d, animstate &as)
         {
             as.anim = anim;
+            as.speed = speed;
             if(anims)
             {
                 vector<animinfo> *ais = &anims[anim&ANIM_INDEX];
@@ -482,11 +500,12 @@ struct vertmodel : model
                     animinfo &ai = (*ais)[varseed%ais->length()];
                     as.frame = ai.frame;
                     as.range = ai.range;
-                    as.speed = speed*100.0f/ai.speed;
+                    if(ai.speed>0) as.speed = 1000.0f/ai.speed;
                 }
-                else getdefaultanim(as, anim, varseed, speed, d);
+                else getdefaultanim(as, anim, varseed, d);
             }
-            else getdefaultanim(as, anim, varseed, speed, d);
+            else getdefaultanim(as, anim, varseed, d);
+            if(as.speed<=0) getanimspeed(as, d);
 
             as.anim &= ~ANIM_FLAGS;
             as.anim |= anim&ANIM_FLAGS;
@@ -576,7 +595,7 @@ struct vertmodel : model
 
         void render(int anim, int varseed, float speed, int basetime, dynent *d, const vec &dir, const vec &campos)
         {
-            if(meshes.length() <= 0) return;
+            if(meshes.empty()) return;
             animstate as;
             if(!calcanimstate(anim, varseed, speed, basetime, d, as)) return;
     
