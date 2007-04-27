@@ -20,14 +20,17 @@ md2anim name frame numframes speed
         dying
         dead
         pain
-        idle
-        idle attack
-        run
-        run attack
+        idle 
+        forward
+        backward
+        left
+        right
+        punch
+        shoot
+        jump
+        swim
         edit
         lag
-        jump
-        jump attack
         gun shoot
         gun idle
         mapmodel
@@ -37,8 +40,8 @@ md2anim name frame numframes speed
     "numframes" is the number of frames in the animation.
     "speed" is the relative speed to run the animation at. This is optional and defaults to 100.
 
-    Example: md2anim "run attack" 50 6 30
-        Defines a "run attack" animation starting at frame 50 with 6 frames and running at 30% speed.      
+    Example: md2anim "pain" 50 6 30
+        Defines a "pain" animation starting at frame 50 with 6 frames and running at 30% speed.      
 
 mdlcollide N
     If N is 0, collisions with the model are disabled. Default = 1.

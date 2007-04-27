@@ -42,6 +42,7 @@ md3skin mesh skin_path masks_path [envmap_max [envmap_min]]
     on viewing angle (max envmap intensity at glancing angles, minimal viewed dead-on). The intensity, after
     scaled into this range, is then multiplied by the chrome map.
 
+md3anim anim frame numframes
 md3anim anim frame numframes speed
 
     This assigns a new animation to the last loaded model (md3load).
@@ -52,13 +53,16 @@ md3anim anim frame numframes speed
         dead
         pain
         idle
-        idle attack
-        run
-        run attack
+        forward
+        backward
+        left
+        right
+        punch
+        shoot
+        jump
+        swim
         edit
         lag
-        jump
-        jump attack
         gun shoot
         gun idle
         mapmodel
@@ -68,8 +72,8 @@ md3anim anim frame numframes speed
     "numframes" is the number of frames in the animation.
     "speed" is the relative speed to run the animation at. This is optional and defaults to 100.
 
-    Example: md3anim "jump attack" 131 6 15
-        Defines a "jump attack" animation starting at frame 131 with 6 frames and running at 15% speed.
+    Example: md3anim "punch" 131 6 15
+        Defines a "punch" animation starting at frame 131 with 6 frames and running at 15% speed.
 
 
 md3link parent child tag
@@ -127,27 +131,18 @@ md3skin l_lower ./default_l.png
 
 md3anim dying           0   30  0   20
 md3anim dead            30  1   0   25
-md3anim run             114 10  0   18
-md3anim "run attack"    114 10  0   18
+md3anim "forward|backward|left|right|swim" 114 10  0   18
 md3anim idle            164 30  30  30
-md3anim "idle attack"   164 30  30  30
-md3anim jump            147	8	0	15
-md3anim "jump attack"   147	8	0	15
-
+md3anim "jump|lag|edit" 147	8	0	15
 
 md3load upper.md3 // model no. 1
 md3skin u_torso ./default.png
 
 md3anim dying           0   30  0   20
 md3anim dead            30  1   0   25
-md3anim lag             91  40  0   18
-md3anim edit             91  40  0   18
-md3anim "idle attack"   131 6   0   15
-md3anim "run attack"    131 6   0   15
-md3anim "jump attack"   131 6   0   15
-md3anim jump            143 5   0   20
+md3anim "lag|edit"      91  40  0   18
+md3anim "punch|shoot"   131 6   0   15
 md3anim idle            152 1   0   15
-md3anim run             152 1   0   15
 md3anim pain            152 1   0   15
 
 
