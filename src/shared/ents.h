@@ -84,11 +84,12 @@ struct physent                                  // base entity type, can be affe
 
     physent() : o(0, 0, 0), yaw(270), pitch(0), roll(0), maxspeed(100), 
                radius(4.1f), eyeheight(14), aboveeye(1), xradius(4.1f), yradius(4.1f), 
-               inwater(false), blocked(false), moving(true), state(CS_ALIVE), type(ENT_PLAYER)
+               blocked(false), moving(true), state(CS_ALIVE), type(ENT_PLAYER)
                { reset(); }
                
     void reset()
     {
+    	inwater = false;
         timeinair = strafe = move = 0;
         physstate = PHYS_FALL;
         vel = gravity = vec(0, 0, 0);
