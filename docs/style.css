@@ -8,7 +8,7 @@ h1				{ font-size: 120%; }
 h2				{ font-size: 100%; }
 h3				{ font-size: 90%; }
 pre				{ padding: 1px 1px 1px 10px; font-family: monospace; border: 2px dotted #662222; }
-table,tr,td		{ margin: 0px 0px 0px 0px; padding: 4px 4px 4px 4px; border: 2px solid #000000; }
+table,tr,td		{ margin: 0px 0px 0px 0px; padding: 0px 0px 0px 0px; border: 2px solid #662222; }
 p				{ padding: 1px 10px 5px 10px; }
 div				{ padding: 1px 10px 1px 10px; }
 div.credits		{ letter-spacing: 8px; font-weight: bold; }
