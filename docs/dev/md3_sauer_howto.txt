@@ -72,9 +72,32 @@ md3anim anim frame numframes speed
     "numframes" is the number of frames in the animation.
     "speed" is frames per second at which to run the anim. If none is specified, 10 FPS is the default.
 
+    A character model will have up to 2 animations simultaneously playing - a primary animation and a secondary animation.
+    If a character model defines the primary animation, it will be used, otherwise the secondary will be used if it is available.
+    Primary animations are:
+        dying
+        dead
+        pain
+        punch
+        shoot
+        edit
+        lag
+    Secondary animations are:
+        idle
+        forward
+        backward
+        left
+        right
+        punch
+        shoot
+        jump
+        swim
+    This allows, for example, a torso part to "shoot" (a primary animation) while a leg part simultaneously runs "forward" (a secondary animation).
+
     Example: md3anim "punch" 131 6 15
         Defines a "punch" animation starting at frame 131 with 6 frames and running at 15 frames per second.
 
+    
 
 md3link parent child tag
 
