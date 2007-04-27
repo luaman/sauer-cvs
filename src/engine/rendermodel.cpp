@@ -452,7 +452,7 @@ void abovemodel(vec &o, const char *mdl)
 
 int findanim(const char *name)
 {
-    const char *names[] = { "dying", "dead", "pain", "idle", "idle attack", "run", "run attack", "edit", "lag", "jump", "jump attack", "gun shoot", "gun idle", "mapmodel", "trigger" };
+    const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "swim", "edit", "lag", "gun shoot", "gun idle", "mapmodel", "trigger" };
     loopi(sizeof(names)/sizeof(names[0])) if(!strcmp(name, names[i])) return i;
     return -1;
 }
@@ -483,13 +483,12 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool forceattack, int lastaction, int lastpain, float sink)
+void renderclient(dynent *d, const char *mdlname, const char *vwepname, int attack, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float speed = 100.0f;
     float mz = d->o.z-d->eyeheight-sink;     
-    int basetime = -((int)(size_t)d&0xFFF);
-    bool attack = (forceattack || (d->type!=ENT_AI && lastmillis-lastaction<200));
+    int basetime = 0;
     if(d->state==CS_DEAD)
     {
         anim = ANIM_DYING;
@@ -500,16 +499,19 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, bool for
         if(t>(r-1)*100) { anim = ANIM_DEAD|ANIM_LOOP; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t/16.0f; } }
         if(mz<-1000) return;
     }
-    else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) { anim = ANIM_EDIT|ANIM_LOOP; }
-    else if(d->state==CS_LAGGED)                            { anim = ANIM_LAG|ANIM_LOOP; }
-    else if(lastmillis-lastpain<300)                        { anim = ANIM_PAIN|ANIM_LOOP; }
-    else
+    else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) anim = ANIM_EDIT|ANIM_LOOP;
+    else if(d->state==CS_LAGGED)                            anim = ANIM_LAG|ANIM_LOOP;
     {
-        if(d->timeinair>100)            { anim = attack ? ANIM_JUMP_ATTACK : ANIM_JUMP|ANIM_END; }
-        else if(!d->move && !d->strafe) { anim = attack ? ANIM_IDLE_ATTACK : ANIM_IDLE|ANIM_LOOP; }
-        else                            { anim = attack ? ANIM_RUN_ATTACK : ANIM_RUN|ANIM_LOOP; speed = 5500/d->maxspeed; }
-        if(attack) basetime = lastaction;
-    }
+        if(lastmillis-lastpain<300) anim = ANIM_PAIN|ANIM_LOOP;
+        else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<200)) { anim = attack<0 ? -attack : attack; basetime = lastaction; }
+
+        if(d->inwater && d->physstate<=PHYS_FALL) anim |= (ANIM_SWIM|ANIM_LOOP)<<ANIM_SECONDARY;
+        else if(d->timeinair>100) anim |= (ANIM_JUMP|ANIM_END)<<ANIM_SECONDARY;
+        else if(d->move) anim |= ((d->move>0 ? ANIM_FORWARD : ANIM_BACKWARD)|ANIM_LOOP)<<ANIM_SECONDARY;
+        else if(d->strafe) anim |= ((d->strafe>0 ? ANIM_RIGHT : ANIM_LEFT)|ANIM_LOOP)<<ANIM_SECONDARY;
+
+        if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) { anim >>= ANIM_SECONDARY; anim |= (ANIM_IDLE|ANIM_LOOP)<<ANIM_SECONDARY; }
+    };
     int flags = MDL_CULL_VFC | MDL_CULL_OCCLUDED;
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;

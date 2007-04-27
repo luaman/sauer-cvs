@@ -109,7 +109,7 @@ struct rpgobj : g3d_callback, stats
                 sink = raycube(ent->o, vec(0, 0, -1), 2*ent->eyeheight)-ent->eyeheight;
             ent->sink = ent->sink*0.8 + sink*0.2;
             //if(ent->blocked) particle_splash(0, 100, 100, ent->o);
-            renderclient(ent, model, NULL, false, ent->lastaction, 0, ent->sink);
+            renderclient(ent, model, NULL, ANIM_PUNCH, ent->lastaction, 0, ent->sink);
         }
         else
         {

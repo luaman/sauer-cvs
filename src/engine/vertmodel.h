@@ -459,7 +459,7 @@ struct vertmodel : model
             }
         }
 
-        virtual void getdefaultanim(animstate &as, int anim, int varseed, float speed)
+        virtual void getdefaultanim(animstate &as, int anim, int varseed, float speed, dynent *d)
         {
             as.frame = 0;
             as.range = 1;
@@ -469,28 +469,31 @@ struct vertmodel : model
         bool calcanimstate(int anim, int varseed, float speed, int basetime, dynent *d, animstate &as)
         {
             as.anim = anim;
-            as.basetime = basetime;
             if(anims)
             {
-                vector<animinfo> &ais = anims[anim&ANIM_INDEX];
-                if(ais.length())
+                vector<animinfo> *ais = &anims[anim&ANIM_INDEX];
+                if(!ais->length() && (anim>>ANIM_SECONDARY)&ANIM_INDEX)
                 {
-                    animinfo &ai = ais[varseed%ais.length()];
+                    ais = &anims[(anim>>ANIM_SECONDARY)&ANIM_INDEX];
+                    if(ais->length()) as.anim = anim>>ANIM_SECONDARY;
+                }
+                if(ais->length())
+                {
+                    animinfo &ai = (*ais)[varseed%ais->length()];
                     as.frame = ai.frame;
                     as.range = ai.range;
                     as.speed = speed*100.0f/ai.speed;
                 }
-                else
-                {
-                    as.frame = 0;
-                    as.range = 1;
-                    as.speed = speed;
-                }
+                else getdefaultanim(as, anim, varseed, speed, d);
             }
-            else getdefaultanim(as, anim&ANIM_INDEX, varseed, speed);
-            if(anim&(ANIM_START|ANIM_END))
+            else getdefaultanim(as, anim, varseed, speed, d);
+
+            as.anim &= ~ANIM_FLAGS;
+            as.anim |= anim&ANIM_FLAGS;
+            as.basetime = as.anim&ANIM_LOOP ? -((int)(size_t)d&0xFFF) : basetime;
+            if(as.anim&(ANIM_START|ANIM_END))
             {
-                if(anim&ANIM_END) as.frame += as.range-1;
+                if(as.anim&ANIM_END) as.frame += as.range-1;
                 as.range = 1; 
             }
 

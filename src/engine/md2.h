@@ -194,14 +194,16 @@ struct md2 : vertmodel
             return loaded = true;
         }
 
-        void getdefaultanim(animstate &as, int anim, int varseed, float speed)
+        void getdefaultanim(animstate &as, int anim, int varseed, float speed, dynent *d)
         {
             //                      0              3              6   7   8   9   10        12  13
             //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   GS  GI
             static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 7,  6 };
             static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  18, 1 };
-            static int animfr[] = { 2, 5, 7, 8, 6, 9, 6, 10, 11, 12, 12, 13, 14 };
-
+            //                      DE DY I  F  B  L  R  PU SH PA J   SW ED  LA  GS  GI
+            static int animfr[] = { 5, 2, 8, 9, 9, 9, 9, 6, 6, 7, 12, 9, 10, 11, 13, 14 };
+            
+            anim &= ANIM_INDEX;
             as.speed = speed;
             if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0]))
             {
@@ -210,7 +212,21 @@ struct md2 : vertmodel
                 return;
             }
             int n = animfr[anim];
-            if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
+            switch(anim)
+            {
+                case ANIM_DYING:
+                case ANIM_DEAD:
+                    n -= varseed%3;
+                    break;
+
+                case ANIM_FORWARD:
+                case ANIM_BACKWARD:
+                case ANIM_LEFT:
+                case ANIM_RIGHT:
+                case ANIM_SWIM:
+                    as.speed *= 55.0f/d->maxspeed;
+                    break;
+            }
             as.frame = _frame[n];
             as.range = _range[n];
         }
@@ -270,10 +286,22 @@ struct md2 : vertmodel
 void md2anim(char *anim, int *frame, int *range, char *s)
 {
     if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; }
-    int num = findanim(anim);
-    if(num<0) { conoutf("could not find animation %s", anim); return; }
-    float speed = s[0] ? atof(s) : 100.0f;
-    loadingmd2->parts.last()->setanim(num, *frame, *range, speed);
+    for(;;)
+    {
+        string curanim;
+        char *nextanim = strchr(anim, '|');
+        if(nextanim) s_strncpy(curanim, anim, nextanim-anim+1);
+        else s_strcpy(curanim, anim);
+        int num = findanim(curanim);
+        if(num<0) conoutf("could not find animation %s", curanim);
+        else
+        {
+            float speed = s[0] ? atof(s) : 100.0f;
+            loadingmd2->parts.last()->setanim(num, *frame, *range, speed);
+        }
+        if(!nextanim) break;
+        anim = nextanim+1;
+    }
 }
 
 COMMAND(md2anim, "siis");
