@@ -70,10 +70,10 @@ md3anim anim frame numframes speed
 
     "frame" is the frame number the animation starts at.
     "numframes" is the number of frames in the animation.
-    "speed" is the relative speed to run the animation at. This is optional and defaults to 100.
+    "speed" is frames per second at which to run the anim. If none is specified, 10 FPS is the default.
 
     Example: md3anim "punch" 131 6 15
-        Defines a "punch" animation starting at frame 131 with 6 frames and running at 15% speed.
+        Defines a "punch" animation starting at frame 131 with 6 frames and running at 15 frames per second.
 
 
 md3link parent child tag

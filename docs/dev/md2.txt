@@ -38,10 +38,10 @@ md2anim name frame numframes speed
 
     "frame" is the frame number the animation starts at.
     "numframes" is the number of frames in the animation.
-    "speed" is the relative speed to run the animation at. This is optional and defaults to 100.
+    "speed" is frames per second at which to run the anim. If none is specified, 10 FPS is the default.
 
     Example: md2anim "pain" 50 6 30
-        Defines a "pain" animation starting at frame 50 with 6 frames and running at 30% speed.      
+        Defines a "pain" animation starting at frame 50 with 6 frames and running at 30 frames per second.
 
 mdlcollide N
     If N is 0, collisions with the model are disabled. Default = 1.
