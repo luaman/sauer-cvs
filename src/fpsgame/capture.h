@@ -19,7 +19,7 @@ struct capturestate
         vec o;
         string owner, enemy;
 #ifndef CAPTURESERV
-        string info;
+        string name, info;
         extentity *ent;
 #endif
         int ammotype, ammo, enemies, converted, capturetime;
@@ -321,6 +321,9 @@ struct captureclient : capturestate
             baseinfo &b = bases.add();
             b.o = e->o;
             b.ammotype = e->attr1;
+            s_sprintfd(alias)("base_%d", e->attr2);
+            const char *name = getalias(alias);
+            if(name) s_strcpy(b.name, name); else s_sprintf(b.name)("base %d", i);
             b.ent = e;
         }
     }
@@ -345,9 +348,9 @@ struct captureclient : capturestate
         baseinfo &b = bases[i];
         if(owner[0])
         {
-            if(strcmp(b.owner, owner)) { conoutf("\f2%s captured base %d", owner, i); playsound(S_V_BASECAP); }
+            if(strcmp(b.owner, owner)) { conoutf("\f2%s captured %s", owner, b.name); playsound(S_V_BASECAP); }
         }
-        else if(b.owner[0]) { conoutf("\f2%s lost base %d", b.owner, i); playsound(S_V_BASELOST); }
+        else if(b.owner[0]) { conoutf("\f2%s lost %s", b.owner, b.name); playsound(S_V_BASELOST); }
         s_strcpy(b.owner, owner);
         s_strcpy(b.enemy, enemy);
         b.converted = converted;
