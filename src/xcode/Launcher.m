@@ -440,7 +440,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
  * "-rpg" will launch the rpg demo
  * otherwise we are specifying a map to play
  */
-- (BOOL)playFile:(NSString*)filename 
+- (BOOL)playFile:(id)filename 
 {	
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
     
@@ -462,11 +462,16 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [args addObject:[NSString stringWithFormat:@"-a%d", [defs integerForKey:@"fsaa"]]];
     [args addObject:[NSString stringWithFormat:@"-f%d", [defs integerForKey:@"shader"]]];
     
-    if([filename isEqual:@"-rpg"])
-        [args addObject:@"-grpg"]; //demo the rpg game
-    else if(filename) 
-        [args addObject:[NSString stringWithFormat:@"-l%@",filename]];
-	
+    if(filename) 
+    {
+        if([filename respondsToSelector:@selector(host)])
+            [args addObject:[NSString stringWithFormat:@"-xconnect %@", [filename host]]];
+        else if([filename isEqual:@"-rpg"])
+            [args addObject:@"-grpg"]; //demo the rpg game
+        else
+            [args addObject:[NSString stringWithFormat:@"-l%@",filename]];
+	}
+    
     NSString *adv = [defs nonNullStringForKey:@"advancedOptions"];
     if(![adv isEqual:@""]) [args addObjectsFromArray:[adv componentsSeparatedByString:@" "]];
     
@@ -581,10 +586,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
     NSURL *url = [NSURL URLWithString:[[event paramDescriptorForKeyword:keyDirectObject] stringValue]];
     if(!url) return;
-    
-    // @NOTE - Unfortunately the sauerbraten game doesn't support 'connect to server' as a command line arg yet!
-    NSLog(@"Connect to server: scheme='%@' host='%@'", [url scheme], [url host]);
-    [self playFile:nil]; 
+    [self playFile:url]; 
 }
 
 
