@@ -127,7 +127,7 @@ void particleinit()
     glNewList(spherelist, GL_COMPILE);
     gluSphere(spherequadric, 1, 12, 6);
     glEndList();
-    if(!intel_quadric_bug) gluDeleteQuadric(spherequadric);
+    if(!intel_quadric_bug) { gluDeleteQuadric(spherequadric); spherequadric = NULL; }
 
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
