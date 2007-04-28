@@ -213,6 +213,114 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { PT_ENT,     255, 200, 200, 20, 1,  4.8f }, // yellow: fireball1
 };
 
+
+VAR(particledistort, 0, 1, 1);
+
+static int dfs_w, dfs_h;
+static GLuint dtex;
+
+// This is a fullscreen effect...
+void renderdistortion() 
+{
+    if(reflecting || refracting || !particledistort || renderpath==R_FIXEDFUNCTION || !hasTR) return;
+    bool rendered = false;
+    loopi(MAXPARTYPES) if(parlist[i]) 
+    {
+        parttype &pt = parttypes[i];
+        int type = pt.type&0xFF;
+        if(type != PT_PART && type !=  PT_TRAIL) continue;
+         
+        if(!rendered) 
+        {
+            rendered = true;
+            
+            glEnable(GL_TEXTURE_RECTANGLE_ARB);
+            int w = scr_w, h = scr_h;
+            if(dfs_w != w || dfs_h != h)
+            {
+                static bool dinit = false;
+                if(!dinit)
+                {
+                    dinit = true;
+                    glGenTextures(1, &dtex);
+                }
+                char *pixels = new char[w*h*3];
+                createtexture(dtex, w, h, pixels, 3, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
+                delete[] pixels;
+                dfs_w = w;
+                dfs_h = h;
+            }
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dtex);
+            glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, w, h);
+            
+            static Shader *disshader = NULL;
+            if(!disshader) disshader = lookupshaderbyname("particledistort");
+            disshader->set();              
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4ub(0xFF, 0xFF, 0xFF, 0x80);
+            glDepthMask(GL_FALSE);
+            glBegin(GL_QUADS);
+        }
+        float sz = pt.type&PT_ENT ? pt.sz : pt.sz*particlesize/100.0f;       
+        
+        for(particle *p, **pp = &parlist[i]; (p = *pp);)
+        {   
+            int ts = (lastmillis-p->millis);
+            int blend;
+            vec o = p->o;
+            if(p->fade > 5) 
+            {   //parametric coordinate generation (but only if its going to show for more than one frame)
+                if(pt.gr)
+                {
+                    float t = (float)(ts);
+                    vec v = p->d;
+                    v.mul(t/5000.0f);
+                    o.add(v);
+                    o.z -= t*t/(2.0f * 5000.0f * pt.gr);
+                }
+            } 
+            else ts = p->fade;  
+            if(type==PT_TRAIL)
+            {					
+                vec e = p->d;
+                if(pt.gr) e.z -= float(ts)/pt.gr;
+                e.div(-75.0f);
+                e.add(o);
+                vec dir1 = e, dir2 = e, c;
+                dir1.sub(o);
+                dir2.sub(camera1->o);
+                c.cross(dir2, dir1).normalize().mul(sz);
+                glTexCoord2f(-1.0,  1.0); glVertex3f(e.x-c.x, e.y-c.y, e.z-c.z);
+                glTexCoord2f( 1.0,  1.0); glVertex3f(o.x-c.x, o.y-c.y, o.z-c.z);
+                glTexCoord2f( 1.0, -1.0); glVertex3f(o.x+c.x, o.y+c.y, o.z+c.z);
+                glTexCoord2f(-1.0, -1.0); glVertex3f(e.x+c.x, e.y+c.y, e.z+c.z);
+            }
+            else
+            {    
+                glTexCoord2f(-1.0,  1.0); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
+                glTexCoord2f( 1.0,  1.0); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
+                glTexCoord2f( 1.0, -1.0); glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
+                glTexCoord2f(-1.0, -1.0); glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
+            }
+            pp = &p->next;
+        }
+    }
+    
+    if(rendered) 
+    {
+        glEnd();
+        glDepthMask(GL_TRUE);
+        defaultshader->set();
+        glDisable(GL_BLEND);
+        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+    }
+}
+
+
+
+
 void render_particles(int time)
 {
     bool rendered = false;
@@ -289,7 +397,7 @@ void render_particles(int time)
                         if(pt.gr) e.z -= float(ts)/pt.gr;
                         e.div(-75.0f);
                         e.add(o);
-                    }
+                    }                    
                     vec dir1 = e, dir2 = e, c;
                     dir1.sub(o);
                     dir2.sub(camera1->o);
@@ -404,7 +512,7 @@ void render_particles(int time)
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     }
 
-    if(flarecnt && !reflecting) //the camera is hardcoded into the flares.. reflecting would be nonsense
+    if(flarecnt && !reflecting && !refracting) //the camera is hardcoded into the flares.. reflecting would be nonsense
     {        
         if(!rendered)
         {
@@ -471,6 +579,7 @@ void render_particles(int time)
     printf("%3d = %d\n", flarecnt, tot);
     // - sparks, blood and trails are the main users...
     */
+    renderdistortion();
 }
 
 VARP(maxparticledistance, 256, 512, 4096);
