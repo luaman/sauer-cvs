@@ -481,13 +481,14 @@ struct fpsclient : igameclient
 
         vec sway, color, dir;
         vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, sway);
-        sway.mul(min(4.0f, player1->vel.magnitude()));
+        float swayspeed = min(4.0f, player1->vel.magnitude());
+        sway.mul(swayspeed);
         float swayxy = sinf(swaymillis/115.0f)/100.0f,
-              swayz = cosf(swaymillis/115.0f)/50.0f;
+              swayz = cosf(swaymillis/115.0f)/75.0f;
         swap(float, sway.x, sway.y);
-        sway.x *= swayxy;
-        sway.y *= -swayxy;
-        sway.z = fabs(swayz*sway.z);
+        sway.x *= -swayxy;
+        sway.y *= swayxy;
+        sway.z = -fabs(swayspeed*swayz);
         sway.add(swaydir).add(player1->o);
         if(!hudgunsway()) sway = player1->o;
         lightreaching(sway, color, dir);
