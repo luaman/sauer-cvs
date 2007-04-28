@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html 
-     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
@@ -134,7 +134,13 @@
 
 <h2 id="gameplay_commands">Gameplay Commands</h2>
 
-The following commands can be applied in the game by pressing T, and then typing <i>/commandname</i>.  The backquote key (`) is a shortcut for having the / typed for you.  To have these commands applied automatically before the game starts open the autoexec.cfg file and add them there, without the /.  <i>Name</i> and <i>team</i> in particular should be changed there.
+<p>
+The following commands can be applied in the game by pressing T, and then typing
+<i>/commandname</i>.  The backquote key (`) is a shortcut for having the / typed for you.
+To have these commands applied automatically before the game starts open the autoexec.cfg
+file and add them there, without the /.  <i>Name</i> and <i>team</i> in particular should be
+changed there.
+</p>
 
 <pre id="map">map M</pre>
 <p>
@@ -207,15 +213,13 @@ play the game normally with the larger console on.
 Tries to select weapons a, b &amp; c, in that order, if they have ammo (0 = fist, 1 = sg, 2 = cg, 3 = rl, 4 = rifle, 5 = gl, 6 = pistol). If none of the 3 indicated have any ammo, it will try the remaining weapons for one with ammo (in order 3/2/1/4/0) (the fist needs no ammo). You can use the weapon command with 0 to 3 arguments. 
 examples:
 </p>
-<p>
-<code>
-weapon 2 1 0 // close up selection<br />
-weapon 4 3 2 // far away selection<br />
-weapon 3 2 1 // medium distance selection<br />
-weapon 0 // humiliate selection :)<br />
-weapon // just switch to anything with ammo<br />
-</code>
-</p>
+<pre>
+weapon 2 1 0 // close up selection
+weapon 4 3 2 // far away selection
+weapon 3 2 1 // medium distance selection
+weapon 0 // humiliate selection :)
+weapon // just switch to anything with ammo
+</pre>
 
 <p>
 In any selection, it will skip whichever weapon you have currently selected, so executing a weapon command repeatedly toggles between the two best weapons with ammo within a given selection. default keys 0 to 4 select the corresponding weapons, with sensible default alternatives, middle mouse button is a simple weapon switch.
@@ -285,14 +289,18 @@ These two commands allow you to send other players maps they may not have while 
 want to send before issuing the command! (in some multiplayer that requires voting). Also note that "getmap" operates on the last map send by some other player, whatever it is.
 </p>
 
-<h2 id="H2_1">Movement, controls & physics</h2>
+<h2 id="H2_1">Movement, controls &amp; physics</h2>
 
 <p>
 Jumping gains a 30% speedboost while in the air (not when jumping backwards).
-Moveing forwards or backwards without strafing also gains a 30% speedboost. Forward and jumping speedboosts are cumulative.</p>
-    <p>
-This has been designed such to give you multiple options to control your speed while navigating a level, you can use strafe for example to slowdown forward motion as you approach a corner to make navigating the corner easier. What this achieves is giving you both speed and precision at the same time, because pure speed (all action being equally fast) just makes you bump into walls.
-    </p>
+Moving forwards or backwards without strafing also gains a 30% speedboost. Forward and jumping
+speedboosts are cumulative.</p>
+<p>
+This has been designed such to give you multiple options to control your speed while navigating
+a level, you can use strafe for example to slowdown forward motion as you approach a corner to
+make navigating the corner easier. What this achieves is giving you both speed and precision at
+the same time, because pure speed (all action being equally fast) just makes you bump into walls.
+</p>
 
 <h2 id="items_and_gameplay">Items and Gameplay</h2>
 
@@ -314,12 +322,12 @@ There are initially 5 weapons:
 <td>technically similar to</td>
 </tr>
 <tr>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 </tr>
 <tr>
 <td>0</td>
@@ -546,12 +554,12 @@ There are currently 8 monsters, with the following properties (sorted roughly in
 <td>loyalty</td>
 </tr>
 <tr>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
-<td><font size="-5">&nbsp;</font></td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <td></td>
 <td></td>
 <td></td>
@@ -715,17 +723,15 @@ You may have to work with your pistol more, but that is part of the tradeoff.
 An additional motivation to not die, is that deaths are the most important component in reaching a good score on a level. Every time you finish a level, you will see a printout like this:
 </p>
 
-<p>
-<code>
---- single player time score: ---<br />
-time taken: 155 seconds<br />
-time penalty for 1 deaths (1 minute each): 60 seconds<br />
-time penalty for 21 monsters remaining (10 seconds each): 210 seconds<br />
-time penalty for lower skill level (20 seconds each): 140 seconds<br />
-time penalty for missed shots (1 second each %): 25 seconds<br />
-TOTAL SCORE (time + time penalties): 590 seconds (best so far: 423 seconds)<br />
-</code>
-</p>
+<pre>
+--- single player time score: ---
+time taken: 155 seconds
+time penalty for 1 deaths (1 minute each): 60 seconds
+time penalty for 21 monsters remaining (10 seconds each): 210 seconds
+time penalty for lower skill level (20 seconds each): 140 seconds
+time penalty for missed shots (1 second each %): 25 seconds
+TOTAL SCORE (time + time penalties): 590 seconds (best so far: 423 seconds)
+</pre>
 
 <p>
 This gives you the stats of your game. The overal score is something that will be displayed in the menus next to the map name, so you can try and improve your best score, and compare to others. These score values are saved accross runs of the game

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html 
-     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
@@ -811,23 +811,27 @@ examples:
 Loops through and executes the given expression for all selected entities.
 Note that most of the entity commands are already vector based and will 
 automatically do this. Therefore they don't need to be explicitly executed within an entloop. 
-Entloop is to be used when more 
-precise custom instructions need to be executed on a selection. 
-<br><br>
+Entloop is to be used when more precise custom instructions need to be executed on a selection. 
+</p>
+
+<p>
 Another property of entloop is that entity commands within it, that are normally executed 
 on the entire selection, will only be done on the current entity iterator.
 In other words, the two following examples are equivalent:
+</p>
+
 <ul>
 <li>entset light 120 0 0 0</li>
 <li>entloop [ entset light 120 0 0 0 ]</li>
 </ul>
-The entset in the second statement will NOT be applied n squared times.
-Entloops can be nested.
+
+<p>
+The entset in the second statement will NOT be applied n squared times. Entloops can be nested.
 </p>
 
 <pre id="entcancel">entcancel</pre>
 <p>
-deselect all entities
+Deselect all entities.
 </p>
 
 <pre id="enthavesel">enthavesel</pre>
@@ -841,9 +845,12 @@ Returns a string in the form of "type value1 value2 value3 value4".
 This string is the definition of the current selected entity. 
 For example, the following statement will display the values of
 all the entities within the current selection:
+</p>
 <ul>
 <li>entloop [ echo (entget) ]</li>
 </ul>
+
+<p>
 Outside of an entloop, the last entity selected will be returned. 
 Normally, if an entity is highlighted by the cursor, it will
 only be considered as in the selection if an explicit one does not exisit 
@@ -993,7 +1000,7 @@ triggers scripts per map etc.
 <p>
 When the map finishes it will load the next map when one is defined, otherwise
 reloads the current map. You can define what map follows a particular map by
-making an alias like (in the map script): <code>alias nextmap_blah1 blah2</code>
+making an alias like (in the map script): <i>alias nextmap_blah1 blah2</i>
 (loads "blah2" after "blah1").
 </p>
 
@@ -1348,8 +1355,14 @@ INDEX is the index of a program environment parameter (program.env[10+INDEX]) to
 </td>
 <td></td> 
 <td></td>
-<td>Any of the above bump* shader permutations may replace "bump" with "bumpenv" (i.e. bumpenvspecmapworld), and will then reflect the closest <a href="#_envmap_">envmap</a> entity (or the skybox if necessary). They support all their usual texture slots and pixel params, in addition to the envmap multiplier pixel param. If a specmap is present in the given shader, the raw specmap value will be scaled by the envmap multipliers (instead of the specmap ones), to determine how much of the envmap to reflect. A <a href="#calclight">calclight</a> (if it has not been done before) or <a href="#recalc">recalc</a> (thereafter) is also needed by this shader to properly setup its engine state.</td> 
-</td>
+<td>Any of the above bump* shader permutations may replace "bump" with "bumpenv"
+(i.e. bumpenvspecmapworld), and will then reflect the closest <a href="#_envmap_">envmap</a>
+entity (or the skybox if necessary). They support all their usual texture slots and pixel params,
+in addition to the envmap multiplier pixel param. If a specmap is present in the given shader,
+the raw specmap value will be scaled by the envmap multipliers (instead of the specmap ones),
+to determine how much of the envmap to reflect. A <a href="#calclight">calclight</a> (if it
+has not been done before) or <a href="#recalc">recalc</a> (thereafter) is also needed by this
+shader to properly setup its engine state.</td> 
 </tr>
 
 </table>
@@ -1358,7 +1371,7 @@ INDEX is the index of a program environment parameter (program.env[10+INDEX]) to
 <p>
 Plays song "name" (with "packages" as base dir). This command is best used from
 map cfg files or triggers. Evaluates ondone when the song is finished, or just keeps
-looping the song if ondone is missing. Example: <code>music "songs/music.ogg" [ echo "Song done playing!" ]</code>
+looping the song if ondone is missing. Example: <i>music "songs/music.ogg" [ echo "Song done playing!" ]</i>
 </p>
 
 
@@ -1375,8 +1388,8 @@ range is 1-255.</p>
 <pre id="sound">sound N</pre>
 <p>
 Plays sound N, see data/sounds.cfg for default sounds, and use registersound to
-register your own. for example, <code>sound 0</code> and <code>sound (registersound
-"aard/jump")</code>both play the standard jump sound.
+register your own. for example, <i>sound 0</i> and <i>sound (registersound
+"aard/jump")</i> both play the standard jump sound.
 </p>
 
 <pre id="mapsound">mapsound name V N</pre>
@@ -1391,18 +1404,19 @@ the default (0) is unlimited.</p>
 <pre id="mmodel">mmodel N</pre>
 <p>
 <i>NOTE: the mapmodel form is deprecated.. set additional properties of a mapmodel in its .cfg</i>
-Registers a mapmodel that can be placed in maps using <code>newent
-mapmodel</code> (see newent). N is the name, R is the square
+Registers a mapmodel that can be placed in maps using <i>newent
+mapmodel</i> (see newent). N is the name, R is the square
 radius, H the height, T the texture slot to skin the model with (0 for default skin), and SH toggles whether the it
 will cast shadows (not given or 1 casts shadows, 0 has no shadows). The radius R and height
 H define the collision bounding box of the model (if either is 0, players won't collide
 with the mapmodel). Name N is the name of a folder inside packages/models folder, e.g.
 "hudguns/rifle". Loaded from that folder are: tris.md2 and skin.jpg (and if not available,
 skin.png, or the same from the parent folder to allow skin sharing).
-
-
-Example: <code>mapmodel 4 32 0 "tree1"</code>
-
+</p>
+<p>
+Example: <i>mapmodel 4 32 0 "tree1"</i>
+</p>
+<p>
 This map model is loaded from packages/models/tree1/. It has a collision box 8x8x32 in size (x=2*R, y=2*R, z=H). It uses the model's default skin (texture slot=0).
 It casts shadows (default).
 </p>
