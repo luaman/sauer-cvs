@@ -538,6 +538,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     server = -1;
     [window setDelegate:self]; // so can catch the window close	
     [NSApp setDelegate:self]; //so can catch the double-click & dropped files
+    [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
 }
 
 -(void)windowWillClose:(NSNotification *)notification 
@@ -573,6 +574,17 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     if(returnCode == 0) return;
     NSString *cwd = [[self cwd] stringByAppendingPathComponent:@"packages"];
     [[NSWorkspace sharedWorkspace] selectFile:cwd inFileViewerRootedAtPath:@""];
+}
+
+//we register 'sauerbraten' as a url scheme
+- (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
+{
+    NSURL *url = [NSURL URLWithString:[[event paramDescriptorForKeyword:keyDirectObject] stringValue]];
+    if(!url) return;
+    
+    // @NOTE - Unfortunately the sauerbraten game doesn't support 'connect to server' as a command line arg yet!
+    NSLog(@"Connect to server: scheme='%@' host='%@'", [url scheme], [url host]);
+    [self playFile:nil]; 
 }
 
 
