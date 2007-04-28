@@ -197,10 +197,10 @@ This loads a texture and assigns it to a mesh of the last loaded model (md3load)
 of the mesh you want to assign the texture to. D is the path to the texture, its recursive
 to the location of the <i>md3.cfg</i>. The optional M sets a texture for spec (red channel)/glow
 (green channel) maps as above. If E is non-zero, then the blue channel of the masks is
-interpreted as a chrome map. E and F (default: 0) are floating point values in the range of 0
-to 1, and will vary based on viewing angle (max envmap intensity at glancing angles, minimal
-viewed dead-on). The intensity, after scaled into this range, is then multiplied by the chrome
-map.
+interpreted as a chrome map. E (maximum envmap intensity) and F (minimum envmap intensity, default: 0) are floating point 
+values in the range of 0 to 1, and specify the range in which the envmapping intensity will vary based on a viewing angle
+(a Fresnel term that is maximal at glancing angles, minimal when viewed dead-on). The intensity, 
+after scaled into this range, is then multiplied by the chrome map.
 </p>
 
 <pre id="md3anim">md3anim A F N [S]</pre>
