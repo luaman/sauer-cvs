@@ -14,11 +14,13 @@ struct fpsserver : igameserver
     struct clientscore
     {
         int maxhealth, frags, timeplayed;
- 
+        float effectiveness;
+
         void reset() 
         { 
             maxhealth = 100;
             frags = timeplayed = 0; 
+            effectiveness = 0;
         }
     };
 
@@ -187,7 +189,7 @@ struct fpsserver : igameserver
         {
             clientinfo *ci = clients[i];
             if(ci->score.timeplayed<0) continue;
-            float rank = float(ci->score.frags)/float(max(ci->score.timeplayed, 1));
+            float rank = ci->score.effectiveness/max(ci->score.timeplayed, 1);
             if(!best || rank > bestrank) { best = ci; bestrank = rank; }
         }
         return best;
@@ -247,7 +249,7 @@ struct fpsserver : igameserver
             teamscore *ts = NULL;
             loopvj(teamscores) if(!strcmp(teamscores[j].team, ci->team)) { ts = &teamscores[j]; break; }
             if(!ts) { ts = &teamscores.add(); ts->team = ci->team; ts->rank = 0; ts->clients = 0; }
-            ts->rank += float(ci->score.frags)/float(max(ci->score.timeplayed, 1));
+            ts->rank += ci->score.effectiveness/max(ci->score.timeplayed, 1);
             ts->clients++;
         }
         if(teamscores.length()==1)
@@ -659,7 +661,17 @@ struct fpsserver : igameserver
             case SV_FRAGS:
             {
                 int frags = getint(p);    
-                if(minremain>=0) ci->score.frags = frags;
+                if(minremain>=0) 
+                {
+                    int oldfrags = ci->score.frags;
+                    ci->score.frags = frags;
+                    if(frags>oldfrags)
+                    {
+                        int friends = 0, enemies = 0; // note: friends also includes the fragger
+                        loopv(clients) if(strcmp(clients[i]->team, ci->team)) enemies++; else friends++;
+                        ci->score.effectiveness += (frags-oldfrags)*friends/float(max(enemies, 1));
+                    }
+                }
                 QUEUE_MSG;
                 break;
             }
