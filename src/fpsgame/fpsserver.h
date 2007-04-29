@@ -668,7 +668,8 @@ struct fpsserver : igameserver
                     if(frags>oldfrags)
                     {
                         int friends = 0, enemies = 0; // note: friends also includes the fragger
-                        loopv(clients) if(strcmp(clients[i]->team, ci->team)) enemies++; else friends++;
+                        if(m_teammode) loopv(clients) if(strcmp(clients[i]->team, ci->team)) enemies++; else friends++;
+                        else { friends = 1; enemies = clients.length()-1; }
                         ci->score.effectiveness += (frags-oldfrags)*friends/float(max(enemies, 1));
                     }
                 }

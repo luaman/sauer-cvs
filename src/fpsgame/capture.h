@@ -323,7 +323,7 @@ struct captureclient : capturestate
             b.ammotype = e->attr1;
             s_sprintfd(alias)("base_%d", e->attr2);
             const char *name = getalias(alias);
-            if(name) s_strcpy(b.name, name); else s_sprintf(b.name)("base %d", i);
+            if(name[0]) s_strcpy(b.name, name); else s_sprintf(b.name)("base %d", i);
             b.ent = e;
         }
     }
