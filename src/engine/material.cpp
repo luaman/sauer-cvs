@@ -81,13 +81,14 @@ void renderwaterfall(materialsurface &m, Texture *t, float offset)
         csize = C[dim]==2 ? m.rsize : m.csize,
         rsize = R[dim]==2 ? m.rsize : m.csize;
 
+    float wave = m.ends&2 ? 0.8f*sinf(lastmillis/(renderpath!=R_FIXEDFUNCTION ? 600.0f : 300.0f))-1.1f : 0;
     loopi(4)
     {
         vec v(m.o.tovec());
         v[dim] += dimcoord(m.orient) ? -offset : offset;
         if(i==1 || i==2) v[dim^1] += csize;
         if(i<=1) v.z += rsize;
-        if(m.ends&(i<=1 ? 2 : 1)) v.z -= 1.1f;
+        if(m.ends&(i<=1 ? 2 : 1)) v.z += i<=1 ? wave : -1.1f-0.8f;
         glTexCoord2f(xf*v[dim^1], yf*(v.z+d));
         glVertex3fv(v.v);
     }
