@@ -268,7 +268,7 @@ VAR(oqwater, 0, 1, 1);
 
 extern int oqfrags;
 
-void rendervertwater()
+void renderwaterff()
 {
     glDisable(GL_CULL_FACE);
     
@@ -353,7 +353,7 @@ void renderwater()
     if(editmode && showmat) return;
     if(!rplanes) return;
 
-    if(renderpath==R_FIXEDFUNCTION) { rendervertwater(); return; }
+    if(renderpath==R_FIXEDFUNCTION) { renderwaterff(); return; }
 
     glDisable(GL_CULL_FACE);
 
