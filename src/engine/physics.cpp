@@ -1176,7 +1176,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     return true;
 }
 
-VAR(minframetime, 5, 10, 20);
+VARP(minframetime, 5, 10, 20);
 
 int physicsfraction = 0, physicsrepeat = 0;
 
