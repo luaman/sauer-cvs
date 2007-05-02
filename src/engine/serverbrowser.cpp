@@ -347,12 +347,10 @@ const char *showservers(g3d_gui *cgui)
 {
     refreshservers();
     const char *name = NULL;
-    int maxmenu = 20;
     loopv(servers)
     {
         serverinfo &si = servers[i];
         if(cgui->button(si.full, 0xFFFFDD, "server")&G3D_UP) name = si.name;
-        if(!--maxmenu) break;
     }
     return name;
 }
