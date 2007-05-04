@@ -1675,18 +1675,19 @@ N (of which there should be exactly one). N can be 0..255. The teledest uses
 the current camera yaw.
 </p>
 
-<pre id="_mapmodel_">"mapmodel" N Type Trigger</pre>
+<pre id="_mapmodel_">"mapmodel" [Y] N T R</pre>
 <p>
 A map model, i.e. an object rendered as md2/md3 which you collide against, cast
-shadows etc. N determines which mapmodel you want, this depends on "mapmodel" declarations
-in the maps cfg file. Yaw of the model is taken from the current camera yaw. Type
-specifies mapmodel behaviour such as triggers, see table below. Trigger is the trigger
-number, 0 means no trigger. This number specifies what trigger to activate, and in addition, 
-the alias "<span style="font-family: Courier New">level_trigger_Trigger</span>"
+shadows etc. Y is the yaw of the model and is initially taken from the current camera yaw,
+it cannot be specified when creating the entity. N determines which mapmodel you want, this
+depends on "mapmodel" declarations in the maps cfg file. T specifies mapmodel behaviour such
+as triggers, see table below. R is the trigger number, 0 means no trigger. This number specifies
+what trigger to activate, and in addition, the alias
+"<tt>level_trigger_Trigger</t>"
 will be executed, where Trigger is substituted accordingly (this allows you to script
 additional actions upon a trigger, i.e. put this into your map cfg file to print
-a message: <span style="font-family: Courier New">alias level_trigger_1 "echo A door
-opened nearby"</span>). The alias "<span style="font-family: Courier New">triggerstate</span>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.
+a message: <tt>alias level_trigger_1 "echo A door opened nearby"</tt>). The alias
+"<tt>triggerstate</tt>" will hold a value of -1, 0, or 1 indicating how the trigger was activated.
 </p>
 
 <table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
