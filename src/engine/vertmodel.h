@@ -512,7 +512,7 @@ struct vertmodel : model
             else getdefaultanim(as, anim, varseed, d);
             if(as.speed<=0) getanimspeed(as, d);
 
-            as.anim &= ~ANIM_FLAGS;
+            as.anim &= (1<<ANIM_SECONDARY)-1;
             as.anim |= anim&ANIM_FLAGS;
             as.basetime = as.anim&ANIM_LOOP ? -((int)(size_t)d&0xFFF) : basetime;
             if(as.anim&(ANIM_START|ANIM_END))
