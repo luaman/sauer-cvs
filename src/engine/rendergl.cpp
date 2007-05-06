@@ -337,7 +337,8 @@ bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (refl
 void recomputecamera()
 {
     if(deathcam && player->state!=CS_DEAD) deathcam = false;
-    if((editmode || !thirdperson) && player->state!=CS_DEAD)
+    extern int testanims;
+    if(((editmode && !testanims) || !thirdperson) && player->state!=CS_DEAD)
     {
         //if(camera1->state==CS_DEAD) camera1->o.z -= camera1->eyeheight-0.8f;
         camera1 = player;
