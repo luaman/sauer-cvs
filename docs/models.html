@@ -204,7 +204,7 @@ values in the range of 0 to 1, and specify the range in which the envmapping int
 after scaled into this range, is then multiplied by the chrome map.
 </p>
 
-<pre id="md3anim">md3anim A F N [S]</pre>
+<pre id="md3anim">md3anim A F N [S [P]]]</pre>
 <p>
 This assigns a new animation to the last loaded model (md3load). A is the name of the animation
 to define. Any of the following names may be used:
@@ -233,7 +233,8 @@ to define. Any of the following names may be used:
 
 <p>
 F is the frame number the animation starts at. N is the number of frames in the animation.
-S is frames per second at which to run the anim. If none is specified, 10 FPS is the default.
+S is frames per second at which to run the anim. If none is specified or S=0, 10 FPS is the default.
+P specifies an optional priority for the animation (defaults to P=0).
 </p>
 
 <p>
@@ -273,7 +274,12 @@ simultaneously runs "forward" (a secondary animation). In the event that a secon
 other than "idle" is playing and there is no primary animation, then the secondary animation
 will behave as if it were primary, and the secondary animation will effectively be "idle".
 This allows parts that would not normally participate in a certain animation to do so in the
-"idle" case, or otherwise simply be "idle" if this is not desired.
+"idle" case, or otherwise simply be "idle" if this is not desired. However, if you want to override
+which animation is primary for a specific part, you can set an explicit priority for that animation,
+and the animation with the highest priority is chosen, regardless of which is primary and 
+which is secondary. So, for example, you could give an animation a -1 priority so that all animations
+with the default 0 priority are chosen first, or you could give an animation a 1 or greater priority
+so that it is always chosen before animations with the default 0 priority.
 </p>
 
 <p>
