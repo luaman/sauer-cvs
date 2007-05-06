@@ -324,6 +324,7 @@ struct vertmodel : model
     {
         int frame, range;
         float speed;
+        int priority;
     };
 
     struct tag
@@ -489,15 +490,19 @@ struct vertmodel : model
             as.speed = speed;
             if(anims)
             {
-                vector<animinfo> *ais = &anims[anim&ANIM_INDEX];
-                if(!ais->length() && (anim>>ANIM_SECONDARY)&ANIM_INDEX)
+                vector<animinfo> *primary = &anims[anim&ANIM_INDEX];
+                if((anim>>ANIM_SECONDARY)&ANIM_INDEX)
                 {
-                    ais = &anims[(anim>>ANIM_SECONDARY)&ANIM_INDEX];
-                    if(ais->length()) as.anim = anim>>ANIM_SECONDARY;
+                    vector<animinfo> *secondary = &anims[(anim>>ANIM_SECONDARY)&ANIM_INDEX];
+                    if(secondary->length() && (primary->empty() || (*secondary)[0].priority > (*primary)[0].priority))
+                    {
+                        primary = secondary;
+                        as.anim = anim>>ANIM_SECONDARY;
+                    }
                 }
-                if(ais->length())
+                if(primary->length())
                 {
-                    animinfo &ai = (*ais)[varseed%ais->length()];
+                    animinfo &ai = (*primary)[varseed%primary->length()];
                     as.frame = ai.frame;
                     as.range = ai.range;
                     if(ai.speed>0) as.speed = 1000.0f/ai.speed;
@@ -674,7 +679,7 @@ struct vertmodel : model
             }
         }
 
-        void setanim(int num, int frame, int range, float speed)
+        void setanim(int num, int frame, int range, float speed, int priority = 0)
         {
             if(frame<0 || frame>=numframes || range<=0 || frame+range>numframes) 
             { 
@@ -686,6 +691,7 @@ struct vertmodel : model
             ai.frame = frame;
             ai.range = range;
             ai.speed = speed;
+            ai.priority = priority;
         }
     };
 
