@@ -514,7 +514,7 @@ struct vertmodel : model
 
             as.anim &= (1<<ANIM_SECONDARY)-1;
             as.anim |= anim&ANIM_FLAGS;
-            as.basetime = as.anim&ANIM_LOOP ? -((int)(size_t)d&0xFFF) : basetime;
+            as.basetime = as.anim&(ANIM_LOOP|ANIM_START|ANIM_END) ? -((int)(size_t)d&0xFFF) : basetime;
             if(as.anim&(ANIM_START|ANIM_END))
             {
                 if(as.anim&ANIM_END) as.frame += as.range-1;
