@@ -12,6 +12,8 @@ struct fpsrender
 
     void rendergame(fpsclient &cl, int gamemode)
     {
+        startmodelbatches();
+
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
@@ -27,6 +29,8 @@ struct fpsrender
         cl.et.renderentities();
         cl.ws.renderprojectiles();
         if(m_capture) cl.cpc.renderbases();
+
+        endmodelbatches();
     }
 
 };

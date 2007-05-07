@@ -231,8 +231,20 @@ struct vertmodel : model
             }
         }
 
-        void bindskin()
+        void disablealpha()
         {
+            glDisable(GL_ALPHA_TEST);
+            if(!reflecting && !refracting) glDisable(GL_BLEND);
+            enablealpha = false;
+        }
+
+        void bindskin(animstate &as)
+        {
+            if(as.anim&ANIM_NOSKIN)
+            {
+                if(enablealpha) disablealpha();
+                return;
+            }
             Texture *s = skin, *m = masks;
             if(tex)
             {
@@ -240,38 +252,43 @@ struct vertmodel : model
                 s = slot.sts[0].t;
                 if(slot.sts.length() >= 2) m = slot.sts[1].t;
             }
-            if(s->bpp==32) // transparent skin
+            if(s!=lastskin)
             {
-                if(!reflecting && !refracting)
-                {
-                    glEnable(GL_BLEND);
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                }
-                glEnable(GL_ALPHA_TEST);
-                glAlphaFunc(GL_GREATER, owner->model->alphatest);
+                glBindTexture(GL_TEXTURE_2D, s->gl);
+                lastskin = s;
             }
-            glBindTexture(GL_TEXTURE_2D, s->gl);
-            if(m!=crosshair)
+            if(s->bpp==32)
+            {
+                if(!enablealpha)
+                {
+                    if(!reflecting && !refracting)
+                    {
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    }
+                    glEnable(GL_ALPHA_TEST);
+                    enablealpha = true;
+                }
+                if(lastalphatest!=owner->model->alphatest)
+                {
+                    glAlphaFunc(GL_GREATER, owner->model->alphatest);
+                    lastalphatest = owner->model->alphatest;
+                }
+            }
+            else if(enablealpha) disablealpha();
+            if(m!=lastmasks && m!=crosshair)
             {
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, m->gl);
                 glActiveTexture_(GL_TEXTURE0_ARB);
+                lastmasks = m;
             }
             setshader(m!=crosshair);
         }
 
-        void unbindskin()
-        {
-            if(tex ? lookuptexture(tex).sts[0].t->bpp==32 : (skin && skin->bpp==32))
-            {
-                glDisable(GL_ALPHA_TEST);
-                if(!reflecting && !refracting) glDisable(GL_BLEND);
-            }
-        }
-
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t)
         {
-            if(!(as.anim&ANIM_NOSKIN)) bindskin();
+            bindskin(as);
 
             bool isstat = as.frame==0 && as.range==1;
             if(isstat && owner->statbuf)
@@ -315,8 +332,6 @@ struct vertmodel : model
                 }
                 xtraverts += dynlen;
             }
-
-            if(!(as.anim&ANIM_NOSKIN)) unbindskin();
         }                     
     };
 
@@ -578,12 +593,25 @@ struct vertmodel : model
         void bindvbo(animstate &as)
         {
             size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
-            glEnableClientState(GL_VERTEX_ARRAY);
             vvert *vverts = 0;
-            glVertexPointer(3, GL_FLOAT, vertsize, &vverts->pos);
-            if(!(as.anim&ANIM_NOSKIN))
+            if(laststatbuf!=statbuf)
+            {
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
+                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
+                glEnableClientState(GL_VERTEX_ARRAY);
+                glVertexPointer(3, GL_FLOAT, vertsize, &vverts->pos);
+                enabletc = false;
+            }
+            if(as.anim&ANIM_NOSKIN)
+            {
+                if(enabletc)
+                {
+                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                    if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
+                    enabletc = false;
+                }
+            }
+            else if(!enabletc)
             {
                 if(renderpath!=R_FIXEDFUNCTION)
                 {
@@ -592,19 +620,23 @@ struct vertmodel : model
                 }
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
+                enabletc = true;
             }
+            laststatbuf = statbuf;
         }
 
-        void unbindvbo(animstate &as)
+        void disablevbo()
         {
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-            if(!(as.anim&ANIM_NOSKIN)) 
+            if(enabletc)
             {
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
+                enabletc = false;
             }
             glDisableClientState(GL_VERTEX_ARRAY);
+            laststatbuf = 0;
         }
 
         void render(int anim, int varseed, float speed, int basetime, dynent *d, const vec &dir, const vec &campos)
@@ -628,8 +660,8 @@ struct vertmodel : model
             }
   
             if(statbuf && as.frame==0 && as.range==1) bindvbo(as);
+            else if(laststatbuf) disablevbo();
             loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
-            if(statbuf && as.frame==0 && as.range==1) unbindvbo(as);
 
             loopi(numtags) if(links[i]) // render the linked models - interpolate rotation and position of the 'link-tags'
             {
@@ -808,5 +840,47 @@ struct vertmodel : model
         }
         glPopMatrix();
     }
+
+    static bool enabletc, enablealpha; 
+    static float lastalphatest;
+    static GLuint laststatbuf;
+    static Texture *lastskin, *lastmasks;
+
+    void startrender()
+    {
+        enabletc = enablealpha = false;
+        lastalphatest = -1;
+        laststatbuf = 0;
+        lastskin = lastmasks = NULL;
+    }
+
+    void endrender()
+    {
+        if(laststatbuf)
+        {
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+            if(enabletc)
+            {
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
+            }
+            glDisableClientState(GL_VERTEX_ARRAY);
+        }
+        if(enablealpha)
+        {
+            glDisable(GL_ALPHA_TEST);
+            if(!reflecting && !refracting) glDisable(GL_BLEND);
+        }
+        enabletc = enablealpha = false;
+        lastalphatest = -1;
+        laststatbuf = 0;
+        lastskin = lastmasks = NULL;
+    }
 };
+
+bool vertmodel::enabletc = false, vertmodel::enablealpha = false;
+float vertmodel::lastalphatest = -1;
+GLuint vertmodel::laststatbuf = 0;
+Texture *vertmodel::lastskin = NULL, *vertmodel::lastmasks = NULL;
 

@@ -387,16 +387,21 @@ void renderreflectedmapmodels(float z, bool refract)
            e.visible = true;
         }
     }
-    loopv(mms)
+    if(mms.length())
     {
-        octaentities *oe = mms[i];
-        loopv(oe->mapmodels)
+        startmodelbatches();
+        loopv(mms)
         {
-           extentity &e = *ents[oe->mapmodels[i]];
-           if(!e.visible) continue;
-           rendermapmodel(e);
-           e.visible = false;
+            octaentities *oe = mms[i];
+            loopv(oe->mapmodels)
+            {
+                extentity &e = *ents[oe->mapmodels[i]];
+                if(!e.visible) continue;
+                rendermapmodel(e);
+                e.visible = false;
+            }
         }
+        endmodelbatches();
     }
     if(reflected) restorevfcP();
 }
@@ -412,6 +417,8 @@ void rendermapmodels()
     static int skipoq = 0;
 
     renderedmms.setsizenodelete(0);
+
+    startmodelbatches();
 
     for(octaentities *oe = visiblemms; oe; oe = oe->next)
     {
@@ -433,63 +440,53 @@ void rendermapmodels()
         else if(!occluded && (++skipoq % oqmm)) oe->query = NULL;
         else oe->query = newquery(oe);
 
-        if(oe->query)
+        if(occluded) { if(!oe->query) continue; }
+        else if(oe->query) startmodelquery(oe->query);
+
+        ivec bbmin(oe->o), bbmax(oe->o);
+        bbmin.add(oe->size);
+        loopv(oe->mapmodels)
         {
+            extentity &e = *ents[oe->mapmodels[i]];
+            if(e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED) continue;
             if(occluded)
             {
-                glDepthMask(GL_FALSE);
-                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            }
-            startquery(oe->query);
-        }
-        if(!occluded || oe->query)
-        {
-            ivec bbmin(oe->o), bbmax(oe->o);
-            bbmin.add(oe->size);
-            bool rendered = false;
-            loopv(oe->mapmodels)
-            {
-                extentity &e = *ents[oe->mapmodels[i]];
-                if(e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED) continue;
-                if(occluded)
+                ivec bo, br;
+                if(getentboundingbox(e, bo, br))
                 {
-                    ivec bo, br;
-                    if(getentboundingbox(e, bo, br))
+                    loopj(3)
                     {
-                        loopj(3)
-                        {
-                            bbmin[j] = min(bbmin[j], bo[j]);
-                            bbmax[j] = max(bbmax[j], bo[j]+br[j]);
-                        }
+                        bbmin[j] = min(bbmin[j], bo[j]);
+                        bbmax[j] = max(bbmax[j], bo[j]+br[j]);
                     }
                 }
-                else if(e.visible)
-                {
-                    if(!rendered) { renderedmms.add(oe); rendered = true; }
-                    rendermapmodel(e);
-                    e.visible = false;
-                }
             }
-            if(occluded)
+            else if(e.visible)
             {
-                loopj(3)
-                {
-                    bbmin[j] = max(bbmin[j], oe->o[j]);
-                    bbmax[j] = min(bbmax[j], oe->o[j]+oe->size);
-                }
-                drawbb(bbmin, bbmax.sub(bbmin));
+                if(renderedmms.empty() || renderedmms.last()!=oe) renderedmms.add(oe);
+                rendermapmodel(e);
+                e.visible = false;
             }
         }
-        if(oe->query)
+        if(occluded)
         {
-            endquery(oe->query);
-            if(occluded)
+            loopj(3)
             {
-                glDepthMask(GL_TRUE);
-                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                bbmin[j] = max(bbmin[j], oe->o[j]);
+                bbmax[j] = min(bbmax[j], oe->o[j]+oe->size);
             }
+            glDepthMask(GL_FALSE);
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            startquery(oe->query);
+            drawbb(bbmin, bbmax.sub(bbmin));
+            endquery(oe->query);
+            glDepthMask(GL_TRUE);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         }
+        else if(oe->query) endmodelquery();
     }
+
+    endmodelbatches();
 }
 
 bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)

@@ -334,6 +334,172 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
     if(!reflecting || !hasFBO) glDisable(GL_STENCIL_TEST);
 }
 
+void rendermodel(vec &color, vec &dir, model *m, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, model *vwep)
+{
+    m->setskin(tex);
+    glColor3fv(color.v);
+
+    vec rdir, camerapos;
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        rdir = dir;
+        rdir.rotate_around_z((-yaw-180.0f)*RAD);
+        rdir.rotate_around_y(-pitch*RAD);
+        setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
+
+        camerapos = vec(player->o).sub(vec(x, y, z));
+        camerapos.rotate_around_z((-yaw-180.0f)*RAD);
+        camerapos.rotate_around_y(-pitch*RAD);
+        setenvparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
+
+        setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
+
+        vec diffuse = vec(color).mul(m->ambient);
+        loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
+        setenvparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+        setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
+
+        if(refracting) setfogplane(1, refracting - z);
+
+        if(hasCM && m->envmapped() || (vwep && vwep->envmapped()))
+        {
+            anim |= ANIM_ENVMAP;
+            GLuint em = m->envmap ? m->envmap->gl : (vwep && vwep->envmap ? vwep->envmap->gl : lookupenvmap(closestenvmap(vec(x, y, z))));
+            glActiveTexture_(GL_TEXTURE2_ARB);
+            glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, em);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        }
+    }
+
+    if(!m->cullface) glDisable(GL_CULL_FACE);
+    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep, rdir, camerapos);
+    if(!m->cullface) glEnable(GL_CULL_FACE);
+
+    if(anim&ANIM_ENVMAP)
+    {
+        glActiveTexture_(GL_TEXTURE2_ARB);
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    }
+}
+
+struct batchedmodel
+{
+    vec pos, color, dir;
+    int anim, varseed, tex;
+    float yaw, pitch, speed;
+    int basetime, cull;
+    dynent *d;
+    model *vwep;
+    occludequery *query;
+};  
+struct modelbatch
+{
+    model *m;
+    vector<batchedmodel> batched;
+};  
+static vector<modelbatch *> batches;
+static int numbatches = -1;
+static occludequery *modelquery = NULL;
+
+void startmodelbatches()
+{
+    numbatches = 0;
+}
+
+batchedmodel &addbatchedmodel(model *m)
+{
+    modelbatch *b = NULL;
+    if(m->batch>=0 && m->batch<numbatches && batches[m->batch]->m==m) b = batches[m->batch];
+    else
+    {
+        if(numbatches<batches.length())
+        {
+            b = batches[numbatches];
+            b->batched.setsizenodelete(0);
+        }
+        else b = batches.add(new modelbatch);
+        b->m = m;
+        m->batch = numbatches++;
+    }
+    batchedmodel &bm = b->batched.add();
+    bm.query = modelquery;
+    return bm;
+}
+
+void renderbatchedmodel(model *m, batchedmodel &b)
+{
+    if((b.cull&MDL_SHADOW) && dynshadow && hasstencil && (!reflecting || refracting))
+    {
+        vec center;
+        float radius = m->boundsphere(0/*frame*/, center); // FIXME
+        center.add(b.pos);
+        rendershadow(b.dir, m, b.anim, b.varseed, b.pos.x, b.pos.y, b.pos.z, center, radius, b.yaw, b.pitch, b.speed, b.basetime, b.d, b.cull, b.vwep);
+        if((b.cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) return;
+    }
+    rendermodel(b.color, b.dir, m, b.anim, b.varseed, b.tex, b.pos.x, b.pos.y, b.pos.z, b.yaw, b.pitch, b.speed, b.basetime, b.d, b.cull, b.vwep);
+}
+
+void endmodelbatches()
+{
+    loopi(numbatches)
+    {
+        modelbatch &b = *batches[i];
+        if(b.batched.empty()) continue;
+        b.m->startrender();
+        occludequery *query = NULL;
+        loopvj(b.batched) 
+        {
+            batchedmodel &bm = b.batched[j];
+            if(bm.query!=query)
+            {
+                if(query) endquery(query);
+                if(bm.query) startquery(bm.query);
+                query = bm.query;
+            }
+            renderbatchedmodel(b.m, bm);
+        }
+        if(query) endquery(query);
+        b.m->endrender();
+    }
+    numbatches = -1;
+}
+
+void startmodelquery(occludequery *query)
+{
+    modelquery = query;
+}
+
+void endmodelquery()
+{
+    int querybatches = 0;
+    loopi(numbatches)
+    {
+        modelbatch &b = *batches[i];
+        if(b.batched.empty() || b.batched.last().query!=modelquery) continue;
+        querybatches++;
+    }
+    if(querybatches<=1)
+    {
+        if(!querybatches) modelquery->fragments = 0;
+        modelquery = NULL;
+        return;
+    }
+    startquery(modelquery);
+    loopi(numbatches)
+    {
+        modelbatch &b = *batches[i];
+        if(b.batched.empty() || b.batched.last().query!=modelquery) continue;
+        b.m->startrender();
+        do renderbatchedmodel(b.m, b.batched.pop());
+        while(b.batched.length() && b.batched.last().query==modelquery);
+        b.m->endrender();
+    }
+    endquery(modelquery);
+    modelquery = NULL;
+}
+
 VARP(maxmodelradiusdistance, 10, 80, 1000);
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, const char *vwepmdl)
@@ -388,59 +554,37 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         vwep = loadmodel(vwepmdl);
         if(vwep && vwep->type()!=m->type()) vwep = NULL;
     }
-   
+  
+    if(numbatches>=0)
+    {
+        batchedmodel &b = addbatchedmodel(m);
+        b.pos = vec(x, y, z);
+        b.color = color;
+        b.dir = dir;
+        b.anim = anim;
+        b.varseed = varseed;
+        b.tex = tex;
+        b.yaw = yaw;
+        b.pitch = pitch;
+        b.speed = speed;
+        b.basetime = basetime;
+        b.cull = cull;
+        b.d = d;
+        b.vwep = vwep;
+        return;
+    }
+
+    m->startrender();
+
     if(shadow && (!reflecting || refracting))
     {
         rendershadow(dir, m, anim, varseed, x, y, z, center, radius, yaw, pitch, speed, basetime, d, cull, vwep);
-        if(refracting && center.z-radius>=refracting) return;
+        if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) { m->endrender(); return; }
     }
 
-    m->setskin(tex);  
-    glColor3fv(color.v);
+    rendermodel(color, dir, m, anim, varseed, tex, x, y, z, yaw, pitch, speed, basetime, d, cull, vwep);
 
-    vec rdir, camerapos;
-    if(renderpath!=R_FIXEDFUNCTION)
-    {
-        rdir = dir;
-        rdir.rotate_around_z((-yaw-180.0f)*RAD);
-        rdir.rotate_around_y(-pitch*RAD);
-        setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
-
-        camerapos = vec(player->o).sub(vec(x, y, z));
-        camerapos.rotate_around_z((-yaw-180.0f)*RAD);
-        camerapos.rotate_around_y(-pitch*RAD);
-        setenvparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
-
-        setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
-    
-        vec diffuse = vec(color).mul(m->ambient);
-        loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
-        setenvparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-        setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-
-        if(refracting) setfogplane(1, refracting - z);
-
-        if(hasCM && m->envmapped() || (vwep && vwep->envmapped()))
-        {
-            anim |= ANIM_ENVMAP;
-            GLuint em = m->envmap ? m->envmap->gl : (vwep && vwep->envmap ? vwep->envmap->gl : lookupenvmap(closestenvmap(vec(x, y, z))));
-            glActiveTexture_(GL_TEXTURE2_ARB);
-            glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, em);
-            glActiveTexture_(GL_TEXTURE0_ARB);
-        }
-    }
-
-    if(!m->cullface) glDisable(GL_CULL_FACE);
-    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep, rdir, camerapos);
-    if(!m->cullface) glEnable(GL_CULL_FACE);
-
-    if(anim&ANIM_ENVMAP)
-    {
-        glActiveTexture_(GL_TEXTURE2_ARB);
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        glActiveTexture_(GL_TEXTURE0_ARB);
-    }
+    m->endrender();
 }
 
 void abovemodel(vec &o, const char *mdl)

@@ -300,6 +300,8 @@ extern int findanim(const char *name);
 extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m);
 extern model *loadmodel(const char *name, int i = -1);
 extern mapmodelinfo &getmminfo(int i);
+extern void startmodelquery(occludequery *query);
+extern void endmodelquery();
 
 // renderparticles
 extern void particleinit();
