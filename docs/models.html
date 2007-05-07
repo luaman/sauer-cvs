@@ -68,6 +68,12 @@
 <a href="#mdlspec"><tt>mdlspec</tt></a>
 </li>
 <li>
+<a href="#mdlalphatest"><tt>mdlalphatest</tt></a>
+</li>
+<li>
+<a href="#mdlalphablend"><tt>mdlalphablend</tt></a>
+</li>
+<li>
 <a href="#mdlshader"><tt>mdlshader</tt></a>
 </li>
 <li>
@@ -358,6 +364,17 @@ If N is 0, backface culling is disabled for this model. Otherwise, backface cull
 <p>
 S is the specular intensity (not given or 0 gives the default of 100, good for metal/plastics
 and anything shiny, use lower values like 50 for wood etc, -1 means off entirely).
+</p>
+
+<pre id="mdlalphatest">mdlalphatest T</pre>
+<p>
+Controls the cut-off threshold, T, at which alpha-channel skins will discard pixels where alpha is less than T.
+T is a floating point value in the range of 0 to 1 (Default: 0.9).
+</p>
+
+<pre id="mdlalphablend">mdlalphablend B</pre>
+<p>
+Controls whether a model with an alpha-channel skin will alpha blend (Default: 1).
 </p>
 
 <pre id="mdlshader">mdlshader S</pre>

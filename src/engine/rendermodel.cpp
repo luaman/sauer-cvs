@@ -58,6 +58,14 @@ void mdlalphatest(float *cutoff)
 
 COMMAND(mdlalphatest, "f");
 
+void mdlalphablend(int *blend)
+{   
+    checkmdl;
+    loadingmodel->alphablend = *blend!=0;
+}
+
+COMMAND(mdlalphablend, "i");
+
 void mdlshader(char *shader)
 {
     checkmdl;

@@ -231,18 +231,12 @@ struct vertmodel : model
             }
         }
 
-        void disablealpha()
-        {
-            glDisable(GL_ALPHA_TEST);
-            if(!reflecting && !refracting) glDisable(GL_BLEND);
-            enablealpha = false;
-        }
-
         void bindskin(animstate &as)
         {
             if(as.anim&ANIM_NOSKIN)
             {
-                if(enablealpha) disablealpha();
+                if(enablealphatest) { glDisable(GL_ALPHA_TEST); enablealphatest = false; }
+                if(enablealphablend) { glDisable(GL_BLEND); enablealphablend = false; }
                 return;
             }
             Texture *s = skin, *m = masks;
@@ -259,23 +253,32 @@ struct vertmodel : model
             }
             if(s->bpp==32)
             {
-                if(!enablealpha)
+                if(owner->model->alphablend)
                 {
-                    if(!reflecting && !refracting)
+                    if(!enablealphablend && !reflecting && !refracting)
                     {
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        enablealphablend = true;
                     }
-                    glEnable(GL_ALPHA_TEST);
-                    enablealpha = true;
                 }
-                if(lastalphatest!=owner->model->alphatest)
+                else if(enablealphablend) { glDisable(GL_BLEND); enablealphablend = false; }
+                if(owner->model->alphatest>0)
                 {
-                    glAlphaFunc(GL_GREATER, owner->model->alphatest);
-                    lastalphatest = owner->model->alphatest;
+                    if(!enablealphatest) { glEnable(GL_ALPHA_TEST); enablealphatest = true; }
+                    if(lastalphatest!=owner->model->alphatest)
+                    {
+                        glAlphaFunc(GL_GREATER, owner->model->alphatest);
+                        lastalphatest = owner->model->alphatest;
+                    }
                 }
+                else if(enablealphatest) { glDisable(GL_ALPHA_TEST); enablealphatest = false; }
             }
-            else if(enablealpha) disablealpha();
+            else 
+            {
+                if(enablealphatest) { glDisable(GL_ALPHA_TEST); enablealphatest = false; }
+                if(enablealphablend) { glDisable(GL_BLEND); enablealphablend = false; }
+            }
             if(m!=lastmasks && m!=crosshair)
             {
                 glActiveTexture_(GL_TEXTURE1_ARB);
@@ -841,14 +844,14 @@ struct vertmodel : model
         glPopMatrix();
     }
 
-    static bool enabletc, enablealpha; 
+    static bool enabletc, enablealphatest, enablealphablend; 
     static float lastalphatest;
     static GLuint laststatbuf;
     static Texture *lastskin, *lastmasks;
 
     void startrender()
     {
-        enabletc = enablealpha = false;
+        enabletc = enablealphatest = enablealphablend = false;
         lastalphatest = -1;
         laststatbuf = 0;
         lastskin = lastmasks = NULL;
@@ -867,19 +870,16 @@ struct vertmodel : model
             }
             glDisableClientState(GL_VERTEX_ARRAY);
         }
-        if(enablealpha)
-        {
-            glDisable(GL_ALPHA_TEST);
-            if(!reflecting && !refracting) glDisable(GL_BLEND);
-        }
-        enabletc = enablealpha = false;
+        if(enablealphatest) glDisable(GL_ALPHA_TEST);
+        if(enablealphablend) glDisable(GL_BLEND);
+        enabletc = enablealphatest = enablealphablend = false;
         lastalphatest = -1;
         laststatbuf = 0;
         lastskin = lastmasks = NULL;
     }
 };
 
-bool vertmodel::enabletc = false, vertmodel::enablealpha = false;
+bool vertmodel::enabletc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false;
 float vertmodel::lastalphatest = -1;
 GLuint vertmodel::laststatbuf = 0;
 Texture *vertmodel::lastskin = NULL, *vertmodel::lastmasks = NULL;
