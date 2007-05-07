@@ -557,13 +557,22 @@ struct vertmodel : model
             p.y -= m[13];
             p.z -= m[14];
 
-            float a1 = m[0], a2 = m[4], a3 = m[8],
-                  b1 = m[1], b2 = m[5], b3 = m[9],
-                  c1 = m[2], c2 = m[6], c3 = m[10];
+#if 0
+            // This is probably overkill, since just about any transformations this encounters will be orthogonal matrices 
+            // where their inverse is simply the transpose.
+            int a = fabs(m[0])>fabs(m[1]) && fabs(m[0])>fabs(m[2]) ? 0 : (fabs(m[1])>fabs(m[2]) ? 1 : 2), b = (a+1)%3, c = (a+2)%3;
+            float a1 = m[a], a2 = m[a+4], a3 = m[a+8],
+                  b1 = m[b], b2 = m[b+4], b3 = m[b+8],
+                  c1 = m[c], c2 = m[c+4], c3 = m[c+8];
 
-            ncampos.z = (p.z - c1*p.x/a1 - (c2 - c1*a2/a1)*(p.y - b1*p.x/a1)/(b2 - b1*a2/a1)) / (c3 - c1*a3/a1 - (c2 - c1*a2/a1)*(b3 - b1*a3/a1)/(b2 - b1*a2/a1));
-            ncampos.y = (p.y - b1*p.x/a1 - (b3 - b1*a3/a1)*ncampos.z)/(b2 - b1*a2/a1);
-            ncampos.x = (p.x - a2*ncampos.y - a3*ncampos.z)/a1;
+            ncampos.z = (p[c] - c1*p[a]/a1 - (c2 - c1*a2/a1)*(p[b] - b1*p[a]/a1)/(b2 - b1*a2/a1)) / (c3 - c1*a3/a1 - (c2 - c1*a2/a1)*(b3 - b1*a3/a1)/(b2 - b1*a2/a1));
+            ncampos.y = (p[b] - b1*p[a]/a1 - (b3 - b1*a3/a1)*ncampos.z)/(b2 - b1*a2/a1);
+            ncampos.x = (p[a] - a2*ncampos.y - a3*ncampos.z)/a1;
+#else
+            ncampos.x = p.x*m[0] + p.y*m[1] + p.z*m[2];
+            ncampos.y = p.x*m[4] + p.y*m[5] + p.z*m[6];
+            ncampos.z = p.x*m[8] + p.y*m[9] + p.z*m[10];
+#endif
         }
 
         void bindvbo(animstate &as)
@@ -617,7 +626,7 @@ struct vertmodel : model
                 prev.setframes(d->prev[index]);
                 ai_t = (lastmillis-d->lastanimswitchtime[index])/(float)animationinterpolationtime;
             }
-   
+  
             if(statbuf && as.frame==0 && as.range==1) bindvbo(as);
             loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
             if(statbuf && as.frame==0 && as.range==1) unbindvbo(as);
