@@ -323,7 +323,9 @@ bool lumel_sample(const vec &sample, int aasample, int stride)
     return false;
 }
 
-void calcskylight(const vec &o, const vec &normal, float tolerance, uchar *skylight)
+VAR(mmskylight, 0, 1, 1);
+
+void calcskylight(const vec &o, const vec &normal, float tolerance, uchar *skylight, int mmshadows = 1)
 {
     static const vec rays[17] =
     {
@@ -353,7 +355,7 @@ void calcskylight(const vec &o, const vec &normal, float tolerance, uchar *skyli
     int hit = 0;
     loopi(17) if(normal.dot(rays[i])>=0)
     {
-        if(raycube(vec(rays[i]).mul(tolerance).add(o), rays[i], 1e16f, RAY_SHADOW)>1e15f) hit++;
+        if(raycube(vec(rays[i]).mul(tolerance).add(o), rays[i], 1e16f, RAY_SHADOW | (!mmskylight || !mmshadows ? 0 : (mmshadows > 1 ? RAY_ALPHAPOLY : RAY_POLY)))>1e15f) hit++;
     }
 
     loopk(3) skylight[k] = uchar(ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/17.0f);
@@ -450,7 +452,7 @@ bool generate_lightmap(float lpu, int y1, int y2, const vec &origin, const lerpv
             if(hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient)
             {
                 if(lmtype==LM_BUMPMAP0 || !adaptivesample || sample->x<hdr.skylight[0] || sample->y<hdr.skylight[1] || sample->z<hdr.skylight[2])
-                    calcskylight(u, normal, tolerance, skylight);
+                    calcskylight(u, normal, tolerance, skylight, mmshadows);
                 else loopk(3) skylight[k] = max(hdr.skylight[k], ambient);
             }
             else loopk(3) skylight[k] = ambient;
