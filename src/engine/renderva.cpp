@@ -448,6 +448,7 @@ void rendermapmodels()
         {
             glDepthMask(GL_FALSE);
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            nocolorshader->set();
             colormask = false;
         }
         startquery(oe->query);
