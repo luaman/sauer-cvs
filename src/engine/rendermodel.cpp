@@ -604,7 +604,7 @@ void abovemodel(vec &o, const char *mdl)
 
 int findanim(const char *name)
 {
-    const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "gun shoot", "gun idle", "mapmodel", "trigger" };
+    static const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "gun shoot", "gun idle", "mapmodel", "trigger" };
     loopi(sizeof(names)/sizeof(names[0])) if(!strcmp(name, names[i])) return i;
     return -1;
 }
