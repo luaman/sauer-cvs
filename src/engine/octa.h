@@ -106,8 +106,12 @@ struct octaentities
     int distance;
     ivec o;
     int size;
+    ivec bbmin, bbmax;
 
-    octaentities(const ivec &o, int size) : query(0), o(o), size(size) {}
+    octaentities(const ivec &o, int size) : query(0), o(o), size(size), bbmin(o), bbmax(o)
+    {
+        bbmin.add(size);
+    }
 };
 
 enum

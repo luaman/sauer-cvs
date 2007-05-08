@@ -1169,6 +1169,7 @@ COMMAND(delcube, "");
 
 int curtexindex = -1, lasttex = 0;
 int texpaneltimer = 0;
+vector<ushort> texmru;
 
 void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
 {

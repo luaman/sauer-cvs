@@ -417,75 +417,52 @@ void rendermapmodels()
     static int skipoq = 0;
 
     renderedmms.setsizenodelete(0);
-
     startmodelbatches();
-
+    bool colormask = true, doquery = hasOQ && oqfrags && oqmm;
     for(octaentities *oe = visiblemms; oe; oe = oe->next)
     {
-        bool occluded = oe->distance < 0;
-        if(!occluded)
+        if(oe->distance<0)
         {
-            bool hasmodels = false;
-            loopv(oe->mapmodels)
+            oe->query = doquery ? newquery(oe) : NULL;
+            if(!oe->query) continue;
+            if(colormask)
             {
-                const extentity &e = *ents[oe->mapmodels[i]];
-                if(!e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
-                hasmodels = true;
-                break;
+                glDepthMask(GL_FALSE);
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                colormask = false;
             }
-            if(!hasmodels) continue;
+            startquery(oe->query);
+            drawbb(oe->bbmin, ivec(oe->bbmax).sub(oe->bbmin));
+            endquery(oe->query);
+            continue;
         }
-
-        if(!hasOQ || !oqfrags || !oqmm || !oe->distance) oe->query = NULL;
-        else if(!occluded && (++skipoq % oqmm)) oe->query = NULL;
-        else oe->query = newquery(oe);
-
-        if(occluded) { if(!oe->query) continue; }
-        else if(oe->query) startmodelquery(oe->query);
-
-        ivec bbmin(oe->o), bbmax(oe->o);
-        bbmin.add(oe->size);
+      
         loopv(oe->mapmodels)
         {
             extentity &e = *ents[oe->mapmodels[i]];
-            if(e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED) continue;
-            if(occluded)
+            if(!e.visible || (e.attr3 && e.triggerstate == TRIGGER_DISAPPEARED)) continue;
+            if(renderedmms.empty() || renderedmms.last()!=oe)
             {
-                ivec bo, br;
-                if(getentboundingbox(e, bo, br))
+                renderedmms.add(oe);
+                if(!colormask)
                 {
-                    loopj(3)
-                    {
-                        bbmin[j] = min(bbmin[j], bo[j]);
-                        bbmax[j] = max(bbmax[j], bo[j]+br[j]);
-                    }
+                    glDepthMask(GL_TRUE);
+                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                    colormask = true;
                 }
-            }
-            else if(e.visible)
-            {
-                if(renderedmms.empty() || renderedmms.last()!=oe) renderedmms.add(oe);
-                rendermapmodel(e);
-                e.visible = false;
-            }
+                oe->query = doquery && oe->distance>0 && !(++skipoq%oqmm) ? newquery(oe) : NULL;
+                if(oe->query) startmodelquery(oe->query);
+            }        
+            rendermapmodel(e);
+            e.visible = false;
         }
-        if(occluded)
-        {
-            loopj(3)
-            {
-                bbmin[j] = max(bbmin[j], oe->o[j]);
-                bbmax[j] = min(bbmax[j], oe->o[j]+oe->size);
-            }
-            glDepthMask(GL_FALSE);
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            startquery(oe->query);
-            drawbb(bbmin, bbmax.sub(bbmin));
-            endquery(oe->query);
-            glDepthMask(GL_TRUE);
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        }
-        else if(oe->query) endmodelquery();
+        if(renderedmms.length() && renderedmms.last()==oe && oe->query) endmodelquery();
     }
-
+    if(!colormask)
+    {
+        glDepthMask(GL_TRUE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    }
     endmodelbatches();
 }
 
