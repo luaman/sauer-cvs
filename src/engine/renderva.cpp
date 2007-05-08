@@ -116,7 +116,8 @@ void setvfcP(float yaw, float pitch, const vec &camera)
     vfcP[2].toplane(vec(yaw, pitch + pitchd), camera); // top plane
     vfcP[3].toplane(vec(yaw, pitch - pitchd), camera); // bottom plane
     vfcP[4].toplane(vec(yaw, pitch), camera);          // near/far planes
-    vfcDfog = getvar("fog");
+    extern int fog;
+    vfcDfog = fog;
 }
 
 plane oldvfcP[5];
