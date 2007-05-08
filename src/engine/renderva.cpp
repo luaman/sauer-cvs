@@ -415,28 +415,12 @@ void rendermapmodels()
     findvisiblemms(ents);
 
     static int skipoq = 0;
+    bool doquery = hasOQ && oqfrags && oqmm;
 
     renderedmms.setsizenodelete(0);
     startmodelbatches();
-    bool colormask = true, doquery = hasOQ && oqfrags && oqmm;
-    for(octaentities *oe = visiblemms; oe; oe = oe->next)
+    for(octaentities *oe = visiblemms; oe; oe = oe->next) if(oe->distance>=0)
     {
-        if(oe->distance<0)
-        {
-            oe->query = doquery ? newquery(oe) : NULL;
-            if(!oe->query) continue;
-            if(colormask)
-            {
-                glDepthMask(GL_FALSE);
-                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-                colormask = false;
-            }
-            startquery(oe->query);
-            drawbb(oe->bbmin, ivec(oe->bbmax).sub(oe->bbmin));
-            endquery(oe->query);
-            continue;
-        }
-      
         loopv(oe->mapmodels)
         {
             extentity &e = *ents[oe->mapmodels[i]];
@@ -444,12 +428,6 @@ void rendermapmodels()
             if(renderedmms.empty() || renderedmms.last()!=oe)
             {
                 renderedmms.add(oe);
-                if(!colormask)
-                {
-                    glDepthMask(GL_TRUE);
-                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-                    colormask = true;
-                }
                 oe->query = doquery && oe->distance>0 && !(++skipoq%oqmm) ? newquery(oe) : NULL;
                 if(oe->query) startmodelquery(oe->query);
             }        
@@ -458,12 +436,28 @@ void rendermapmodels()
         }
         if(renderedmms.length() && renderedmms.last()==oe && oe->query) endmodelquery();
     }
+    endmodelbatches();
+
+    bool colormask = true;
+    for(octaentities *oe = visiblemms; oe; oe = oe->next) if(oe->distance<0)
+    {
+        oe->query = doquery ? newquery(oe) : NULL;
+        if(!oe->query) continue;
+        if(colormask)
+        {
+            glDepthMask(GL_FALSE);
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            colormask = false;
+        }
+        startquery(oe->query);
+        drawbb(oe->bbmin, ivec(oe->bbmax).sub(oe->bbmin));
+        endquery(oe->query);
+    }
     if(!colormask)
     {
         glDepthMask(GL_TRUE);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-    endmodelbatches();
 }
 
 bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
