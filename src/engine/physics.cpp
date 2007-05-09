@@ -108,7 +108,7 @@ bool raycubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 extern void entselectionbox(const entity &e, vec &eo, vec &es);
 extern int entselradius;
 float hitentdist;
-int  hitent, hitorient;
+int hitent, hitorient;
 
 static float disttoent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
@@ -153,102 +153,119 @@ static float disttoent(octaentities *oc, octaentities *last, const vec &o, const
     return dist;
 }
 
-int rayent(const vec &o, const vec &ray, int &orient)
+// optimized shadow version
+static float shadowent(octaentities *oc, octaentities *last, const vec &o, const vec &ray, float radius, int mode, extentity *t)
 {
-    hitent = -1;
-    float d = raycube(o, ray, hitentdist = 1e20f, RAY_ENTS);
-    orient = hitorient;
-    if(hitentdist == d)
-        return hitent;
-    else
-        return -1;
-}
-
-float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)
-{
-    ray.normalize();
-    hitpos = ray;
-    float dist = raycube(o, ray, radius, mode, size);
-    hitpos.mul(dist);
-    hitpos.add(o);
+    float dist = 1e16f, f = 0.0f;
+    if(oc == last || oc == NULL) return dist;
+    const vector<extentity *> &ents = et->getents();
+    loopv(oc->mapmodels) if(!last || last->mapmodels.find(oc->mapmodels[i])<0)
+    {
+        extentity &e = *ents[oc->mapmodels[i]];
+        if(!e.inoctanode || &e==t) continue;
+        if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
+        if(!mmintersect(e, o, ray, radius, mode, f)) continue;
+        if(f>0 && f<dist) dist = f;
+    } 
     return dist;
 }
 
-bool raycubelos(vec &o, vec &dest, vec &hitpos)
+bool insideworld(const vec &o)
 {
-    vec ray(dest);
-    ray.sub(o);
-    float mag = ray.magnitude();
-    float distance = raycubepos(o, ray, hitpos, mag, RAY_CLIPMAT|RAY_POLY);
-    return distance >= mag; 
+    loopi(3) if(o[i]<0 || o[i]>=hdr.worldsize) return false;
+    return true;
 }
 
-float rayfloor(const vec &o, vec &floor, int mode)
-{
-    if(o.z<=0) return -1;
-    hitslope = vec(0, 0, 1);
-    float dist = raycube(o, vec(0, 0, -1), o.z, mode); 
-    if(dist>=o.z) return -1;
-    floor = hitslope;
-    return dist;
-}
+#define INITRAYCUBE \
+    octaentities *oclast = NULL; \
+    float dist = 0, dent = mode&RAY_BB ? 1e16f : 1e14f; \
+    cube *last = NULL; \
+    vec v = o; \
+    static cube *levels[32]; \
+    levels[0] = worldroot; \
+    int l = 0, lsize = hdr.worldsize; \
+    ivec lo(0, 0, 0);
+
+#define CHECKINSIDEWORLD \
+    if(!insideworld(v)) \
+    { \
+        float disttoworld = 1e16f, exitworld = 1e16f; \
+        loopi(3) if(ray[i]!=0) \
+        { \
+            float c = v[i]; \
+            if(c>=0 && c<hdr.worldsize) \
+            { \
+                float d = (float(ray[i]>0?hdr.worldsize:0)-c)/ray[i]; \
+                exitworld = min(exitworld, d); \
+            } \
+            else \
+            { \
+                float d = (float(ray[i]>0?0:hdr.worldsize)-c)/ray[i]; \
+                if(d<0) return (radius>0?radius:-1); \
+                disttoworld = min(disttoworld, 0.1f + d); \
+            } \
+        } \
+        if(disttoworld > exitworld) return (radius>0?radius:-1); \
+        pushvec(v, ray, disttoworld); \
+        dist += disttoworld; \
+    }
+
+#define DOWNOCTREE(disttoent, earlyexit) \
+        cube *lc = levels[l]; \
+        for(;;) \
+        { \
+            lsize >>= 1; \
+            if(z>=lo.z+lsize) { lo.z += lsize; lc += 4; } \
+            if(y>=lo.y+lsize) { lo.y += lsize; lc += 2; } \
+            if(x>=lo.x+lsize) { lo.x += lsize; lc += 1; } \
+            if(lc->ext && lc->ext->ents && dent > 1e15f) \
+            { \
+                dent = disttoent(lc->ext->ents, oclast, o, ray, radius, mode, t); \
+                if(dent < 1e15f earlyexit) return min(dent, dist); \
+                oclast = lc->ext->ents; \
+            } \
+            if(lc->children==NULL) break; \
+            lc = lc->children; \
+            levels[++l] = lc; \
+        }
+
+#define FINDCLOSEST \
+        float disttonext = 1e16f; \
+        loopi(3) if(ray[i]!=0) \
+        { \
+            float d = (float(lo[i]+(ray[i]>0?lsize:0))-v[i])/ray[i]; \
+            if(d >= 0) disttonext = min(disttonext, d); \
+        } \
+        pushvec(v, ray, disttonext+0.1f); \
+        dist += disttonext; \
+        last = &c;
+
+#define UPOCTREE \
+        x = int(v.x); \
+        y = int(v.y); \
+        z = int(v.z); \
+        for(;;) \
+        { \
+            lo.x &= ~lsize; \
+            lo.y &= ~lsize; \
+            lo.z &= ~lsize; \
+            lsize <<= 1; \
+            if(x<lo.x+lsize && y<lo.y+lsize && z<lo.z+lsize && x>=lo.x && y>=lo.y && z>=lo.z) break; \
+            if(!l) break; \
+            --l; \
+        }
 
 float raycube(const vec &o, const vec &ray, float radius, int mode, int size, extentity *t)
 {
-    octaentities *oclast = NULL;
-    float dist = 0, dent = 1e16f;
-    cube *last = NULL;
-    vec v = o;
-    if(ray.iszero()) return dist;
+    if(ray.iszero()) return 0;
 
-    static cube *levels[32];
-    levels[0] = worldroot;
-    int l = 0, lsize = hdr.worldsize;
-    ivec lo(0, 0, 0);
-
-    if(!insideworld(v))
-    {
-        float disttoworld = 1e16f, exitworld = 1e16f;
-        loopi(3) if(ray[i]!=0)
-        {
-            float c = v[i];
-            if(c>=0 && c<hdr.worldsize)
-            {
-                float d = (float(ray[i]>0?hdr.worldsize:0)-c)/ray[i];
-                exitworld = min(exitworld, d);
-            }
-            else
-            {
-                float d = (float(ray[i]>0?0:hdr.worldsize)-c)/ray[i];
-                if(d<0) return (radius>0?radius:-1);
-                disttoworld = min(disttoworld, 0.1f + d);
-            }
-        }
-        if(disttoworld > exitworld) return (radius>0?radius:-1);
-        pushvec(v, ray, disttoworld);
-        dist += disttoworld;
-    }
+    INITRAYCUBE
+    CHECKINSIDEWORLD
 
     int x = int(v.x), y = int(v.y), z = int(v.z);
     for(;;)
     {
-        cube *lc = levels[l];
-        for(;;)
-        {
-            lsize >>= 1;
-            if(z>=lo.z+lsize) { lo.z += lsize; lc += 4; }
-            if(y>=lo.y+lsize) { lo.y += lsize; lc += 2; }
-            if(x>=lo.x+lsize) { lo.x += lsize; lc += 1; }
-            if(lc->ext && lc->ext->ents && (mode&RAY_BB) && dent > 1e15f)
-            {
-                dent = disttoent(lc->ext->ents, oclast, o, ray, radius, mode, t);
-                if((mode&RAY_SHADOW) && dent < 1e15f) return min(dent, dist);
-                oclast = lc->ext->ents;
-            }
-            if(lc->children==NULL) break;
-            lc = lc->children;
-            levels[++l] = lc;
-        }
+        DOWNOCTREE(disttoent, && (mode&RAY_SHADOW));
 
         cube &c = *lc;
         if((dist>0 || !(mode&RAY_SKIPFIRST)) &&
@@ -270,36 +287,81 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
                 return min(dent, dist+f);
         }
 
-        float disttonext = 1e16f;
-        loopi(3) if(ray[i]!=0)
-        {
-            float d = (float(lo[i]+(ray[i]>0?lsize:0))-v[i])/ray[i];
-            if(d >= 0) disttonext = min(disttonext, 0.1f + d);
-        }
-        pushvec(v, ray, disttonext);
-        dist += disttonext;
-        last = &c;
+        FINDCLOSEST
 
         if(radius>0 && dist>=radius) return min(dent, dist);
 
-        x = int(v.x);
-        y = int(v.y);
-        z = int(v.z);
-
-        for(;;)
-        {
-            lo.x &= ~lsize;
-            lo.y &= ~lsize;
-            lo.z &= ~lsize;
-            lsize <<= 1;
-            if(x<lo.x+lsize && y<lo.y+lsize && z<lo.z+lsize)
-            {
-                if(x>=lo.x && y>=lo.y && z>=lo.z) break;
-            }
-            if(!l) break;
-            --l;
-        }
+        UPOCTREE
     }
+}
+
+// optimized version for lightmap shadowing... every cycle here counts!!!
+float shadowray(const vec &o, const vec &ray, float radius, int mode, extentity *t)
+{
+    INITRAYCUBE
+    CHECKINSIDEWORLD 
+
+    int x = int(v.x), y = int(v.y), z = int(v.z);
+    for(;;)
+    {
+        DOWNOCTREE(shadowent, );
+
+        cube &c = *lc;
+        if(isentirelysolid(c)) return dist;
+        else if(last==&c) return radius;        
+        else if(!isempty(c))
+        {
+            float f = 0;
+            setcubeclip(c, lo.x, lo.y, lo.z, lsize);
+            if(raycubeintersect(c, v, ray, f)) return dist+f;
+        }
+
+        FINDCLOSEST
+
+        if(dist>=radius) return dist;
+
+        UPOCTREE
+    }
+}
+
+int rayent(const vec &o, const vec &ray, int &orient)
+{
+    hitent = -1;
+    float d = raycube(o, ray, hitentdist = 1e20f, RAY_ENTS);
+    orient = hitorient;
+    if(hitentdist == d) 
+        return hitent;
+    else
+        return -1;
+}
+
+float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)
+{
+    ray.normalize();
+    hitpos = ray;
+    float dist = raycube(o, ray, radius, mode, size);
+    hitpos.mul(dist); 
+    hitpos.add(o);
+    return dist; 
+}
+
+bool raycubelos(vec &o, vec &dest, vec &hitpos)
+{
+    vec ray(dest);
+    ray.sub(o);
+    float mag = ray.magnitude();
+    float distance = raycubepos(o, ray, hitpos, mag, RAY_CLIPMAT|RAY_POLY);
+    return distance >= mag;
+}
+
+float rayfloor(const vec &o, vec &floor, int mode)
+{
+    if(o.z<=0) return -1;
+    hitslope = vec(0, 0, 1);
+    float dist = raycube(o, vec(0, 0, -1), o.z, mode);
+    if(dist>=o.z) return -1;
+    floor = hitslope;
+    return dist;
 }
 
 /////////////////////////  entity collision  ///////////////////////////////////////////////

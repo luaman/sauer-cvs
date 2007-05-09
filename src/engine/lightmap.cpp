@@ -270,7 +270,7 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
         }
         if(shadows)
         {
-            float dist = raycube(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows > 1 ? RAY_ALPHAPOLY : (mmshadows ? RAY_POLY : 0)));
+            float dist = shadowray(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows > 1 ? RAY_ALPHAPOLY : (mmshadows ? RAY_POLY : 0)));
             if(dist < mag - tolerance) continue;
         }
         float intensity;
@@ -355,7 +355,7 @@ void calcskylight(const vec &o, const vec &normal, float tolerance, uchar *skyli
     int hit = 0;
     loopi(17) if(normal.dot(rays[i])>=0)
     {
-        if(raycube(vec(rays[i]).mul(tolerance).add(o), rays[i], 1e16f, RAY_SHADOW | (!mmskylight || !mmshadows ? 0 : (mmshadows > 1 ? RAY_ALPHAPOLY : RAY_POLY)))>1e15f) hit++;
+        if(shadowray(vec(rays[i]).mul(tolerance).add(o), rays[i], 1e16f, RAY_SHADOW | (!mmskylight || !mmshadows ? 0 : (mmshadows > 1 ? RAY_ALPHAPOLY : RAY_POLY)))>1e15f) hit++;
     }
 
     loopk(3) skylight[k] = uchar(ambient + (max(hdr.skylight[k], ambient) - ambient)*hit/17.0f);
@@ -1292,7 +1292,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
             continue;
     
         ray.div(mag);
-        if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY, 0, t) < mag)
+        if(shadowray(e.o, ray, mag, RAY_SHADOW | RAY_POLY, t) < mag)
             continue;
         float intensity = 1;
         if(e.attr1)
@@ -1352,7 +1352,7 @@ entity *brightestlight(const vec &target, const vec &dir)
              continue;
 
         ray.div(mag);
-        if(raycube(e.o, ray, mag, RAY_SHADOW | RAY_POLY) < mag)
+        if(shadowray(e.o, ray, mag, RAY_SHADOW | RAY_POLY) < mag)
             continue;
         float intensity = 1;
         if(e.attr1)
