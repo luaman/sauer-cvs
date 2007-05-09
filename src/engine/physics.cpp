@@ -180,7 +180,7 @@ bool insideworld(const vec &o)
     octaentities *oclast = NULL; \
     float dist = 0, dent = mode&RAY_BB ? 1e16f : 1e14f; \
     cube *last = NULL; \
-    vec v = o; \
+    vec v(o), invray(ray.x ? 1/ray.x : 0, ray.y ? 1/ray.y : 0, ray.z ? 1/ray.z : 0); \
     static cube *levels[32]; \
     levels[0] = worldroot; \
     int l = 0, lsize = hdr.worldsize; \
@@ -190,17 +190,17 @@ bool insideworld(const vec &o)
     if(!insideworld(v)) \
     { \
         float disttoworld = 1e16f, exitworld = 1e16f; \
-        loopi(3) if(ray[i]!=0) \
+        loopi(3) if(invray[i]!=0) \
         { \
             float c = v[i]; \
             if(c>=0 && c<hdr.worldsize) \
             { \
-                float d = (float(ray[i]>0?hdr.worldsize:0)-c)/ray[i]; \
+                float d = ((invray[i]>0?hdr.worldsize:0)-c)*invray[i]; \
                 exitworld = min(exitworld, d); \
             } \
             else \
             { \
-                float d = (float(ray[i]>0?0:hdr.worldsize)-c)/ray[i]; \
+                float d = ((invray[i]>0?0:hdr.worldsize)-c)*invray[i]; \
                 if(d<0) return (radius>0?radius:-1); \
                 disttoworld = min(disttoworld, 0.1f + d); \
             } \
@@ -231,9 +231,9 @@ bool insideworld(const vec &o)
 
 #define FINDCLOSEST \
         float disttonext = 1e16f; \
-        loopi(3) if(ray[i]!=0) \
+        loopi(3) if(invray[i]!=0) \
         { \
-            float d = (float(lo[i]+(ray[i]>0?lsize:0))-v[i])/ray[i]; \
+            float d = (lo[i]+(invray[i]>0?lsize:0)-v[i])*invray[i]; \
             if(d >= 0) disttonext = min(disttonext, d); \
         } \
         pushvec(v, ray, disttonext+0.1f); \
