@@ -657,7 +657,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     else
     {
         if(lastmillis-lastpain<300) anim = ANIM_PAIN|ANIM_LOOP;
-        else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<200)) { anim = attack<0 ? -attack : attack; basetime = lastaction; }
+        else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<300)) { anim = attack<0 ? -attack : attack; basetime = lastaction; }
 
         if(d->inwater && d->physstate<=PHYS_FALL) anim |= ((d->move || d->strafe || d->vel.z+d->gravity.z>0 ? ANIM_SWIM : ANIM_SINK)|ANIM_LOOP)<<ANIM_SECONDARY;
         else if(d->timeinair>100) anim |= (ANIM_JUMP|ANIM_END)<<ANIM_SECONDARY;
