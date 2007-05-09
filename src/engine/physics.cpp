@@ -236,7 +236,8 @@ bool insideworld(const vec &o)
             float d = (lo[i]+(invray[i]>0?lsize:0)-v[i])*invray[i]; \
             if(d >= 0) disttonext = min(disttonext, d); \
         } \
-        pushvec(v, ray, disttonext+0.1f); \
+		disttonext += 0.1f; \
+        pushvec(v, ray, disttonext); \
         dist += disttonext; \
         last = &c;
 
