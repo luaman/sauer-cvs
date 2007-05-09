@@ -161,6 +161,8 @@ struct md3 : vertmodel
         }
 
         parts[0]->render(anim, varseed, speed, basetime, d, dir, campos);
+
+        if(vwepmdl) link(NULL, "tag_weapon");
     }
 
     bool load()
