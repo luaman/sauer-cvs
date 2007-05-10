@@ -55,6 +55,7 @@ struct vertmodel : model
         ushort *dynidx;
         int dynlen;
         anpos dyncur, dynprev;
+        float dynt;
         GLuint statlist;
         int statoffset, statlen;
         float envmapmin, envmapmax;
@@ -172,8 +173,9 @@ struct vertmodel : model
                  *pvert1 = NULL, *pvert2 = NULL;
             if(prev)
             {
-                if(dynprev==*prev && dyncur==cur) return;
+                if(dynprev==*prev && dyncur==cur && dynt==ai_t) return;
                 dynprev = *prev;
+                dynt = ai_t;
                 pvert1 = &verts[prev->fr1 * numverts];
                 pvert2 = &verts[prev->fr2 * numverts];
             }
