@@ -63,7 +63,8 @@ struct scoreboard : g3d_callback
         }
         g.text(modemapstr, 0xFFFF80, "server");
         if(m_capture) g.text("score\tpj\tping\tteam\tname", 0xFFFF80, "server"); 
-        else g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
+        else if(m_teammode) g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
+        else g.text("frags\tpj\tping\tname", 0xFFFF80, "server");
 
         vector<teamscore> teamscores;
         bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.player1->clientnum;
@@ -111,15 +112,21 @@ struct scoreboard : g3d_callback
             const char *status = "";
             if(cl.cc.currentmaster>=0 && cl.cc.currentmaster==o->clientnum) status = "\f0";
             if(o->state==CS_DEAD) status = "\f4";
-            string name;
-            if(showclientnum) s_sprintf(name)("%s \f0(%d)", o->name, o->clientnum);
-            else s_strcpy(name, o->name);
+            string name, team;
+            if(showclientnum) s_sprintf(name)("%s%s \f0(%d)", status, o->name, o->clientnum);
+            else s_sprintf(name)("%s%s", status, o->name);
+            if(m_teammode)
+            {
+                if(o->state==CS_SPECTATOR) s_strcpy(team, "\t");
+                else s_sprintf(team)("%s%s\f9\t", isteam(cl.player1->team, o->team) ? "\f1" : "\f3", o->team);
+            }
+            else team[0] = '\0';
             string line;
-            if(o->state==CS_SPECTATOR) s_sprintf(line)("SPECTATOR\t\t\t%s%s", status, name);
+            if(o->state==CS_SPECTATOR) s_sprintf(line)("SPECTATOR\t\t%s%s", team, name);
             else
             {
                 s_sprintfd(lag)("%d", o->plag);
-                s_sprintf(line)("%d\t%s\t%d\t%s\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, o->team, status, name);
+                s_sprintf(line)("%d\t%s\t%d\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, team, name);
             }
             g.text(line, 0xFFFFDD, "ogro");
         }
