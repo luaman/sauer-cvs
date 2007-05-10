@@ -186,7 +186,7 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { 0,          180, 155, 75,  2,  6, 0.24f }, // yellow: sparks 
     { 0,          137, 118, 97,-20,  2,  0.6f }, // greyish-brown:   small slowly rising smoke
     { 0,          50, 50, 255,   20, 0, 0.32f }, // blue:   edit mode entities
-    { PT_TRAIL|PT_MOD|PT_RND4, 25, 255, 255, 2,  8, 0.74f }, // red:    blood spats (note: rgb is inverted)
+    { PT_MOD|PT_RND4, 25, 255, 255, 2,  8, 2.96f }, // red:    blood spats (note: rgb is inverted)
     { 0,          255, 200, 200, 20, 1,  4.8f }, // yellow: fireball1
     { 0,          137, 118, 97, -20, 2,  2.4f }, // greyish-brown:   big  slowly rising smoke   
     { 0,          255, 255, 255, 20, 3,  4.8f }, // blue:   fireball2
