@@ -94,20 +94,23 @@ void computescreen(const char *text, Texture *t)
             glDisable(GL_BLEND);
             glBindTexture(GL_TEXTURE_2D, t->gl);
             int sz = min(640, min(w, h)), x = (w-sz)/2, y = (h-sz)/2;
-            glBegin(GL_QUADS);
+            glBegin(GL_TRIANGLE_FAN);
+            glTexCoord2f(0.5f, 0.5f); glVertex2f(x+sz/2.0f, y+sz/2.0f);
+            loopj(64+1) 
+            { 
+                float c = 0.5f+0.5f*cosf(2*M_PI*j/64.0f), s = 0.5f+0.5f*sinf(2*M_PI*j/64.0f);
+                glTexCoord2f(c, s); 
+                glVertex2f(x+sz*c, y+sz*s);
+            }
+#if 0
+            glBegin(QUADS);
             glTexCoord2f(0, 0); glVertex2i(x,    y);
             glTexCoord2f(1, 0); glVertex2i(x+sz, y);
             glTexCoord2f(1, 1); glVertex2i(x+sz, y+sz);
             glTexCoord2f(0, 1); glVertex2i(x,    y+sz);
+#endif
             glEnd();
             glEnable(GL_BLEND);
-            settexture("data/guioverlay.png");
-            glBegin(GL_QUADS);
-            glTexCoord2f(0, 0); glVertex2i(x,    y);
-            glTexCoord2f(1, 0); glVertex2i(x+sz, y);
-            glTexCoord2f(1, 1); glVertex2i(x+sz, y+sz);
-            glTexCoord2f(0, 1); glVertex2i(x,    y+sz);
-            glEnd();
         }
         int x = (w-512)/2, y = (h-256)/2;
         settexture("data/sauer_logo_512_256a.png");
