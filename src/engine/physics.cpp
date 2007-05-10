@@ -397,7 +397,7 @@ bool ellipsecollide(dynent *d, const vec &dir, dynent *e)
             wall = vec(0, 0, -1); 
             return false;
         }
-        if(dir.iszero() || ((d->type>=ENT_CAMERA || above >= -(d->eyeheight+d->aboveeye)/2.0f) && dir.z < 0))             
+        if(dir.iszero() || ((d->type>=ENT_CAMERA || above >= -(d->eyeheight+d->aboveeye)/3.0f) && dir.z < 0))             
         { 
             wall = vec(0, 0, 1); 
             return false;
@@ -435,7 +435,7 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     if(ay>az) TRYCOLLIDE(y, O_BACK, O_FRONT, ay > -d->radius, ay > -d->radius);
     TRYCOLLIDE(z, O_BOTTOM, O_TOP,
          az >= -(d->eyeheight+d->aboveeye)/4.0f,
-         az >= -(d->eyeheight+d->aboveeye)/2.0f);
+         az >= -(d->eyeheight+d->aboveeye)/3.0f);
     if(collideonly) inside = true;
     return collideonly;
 }
@@ -627,7 +627,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                 if(!dir.iszero())
                 {
                     if(f.dot(dir) >= -cutoff) continue;
-                    if(d->type<ENT_CAMERA && dist < (dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 2.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) continue;
+                    if(d->type<ENT_CAMERA && dist < (dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) continue;
                 }
                 if(p.p[i].z) { if((p.p[i].z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist) continue; }
                 else
