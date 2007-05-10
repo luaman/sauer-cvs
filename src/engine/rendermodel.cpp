@@ -355,7 +355,7 @@ void rendermodel(vec &color, vec &dir, model *m, int anim, int varseed, int tex,
         rdir.rotate_around_y(-pitch*RAD);
         setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
 
-        camerapos = vec(player->o).sub(vec(x, y, z));
+        camerapos = vec(camera1->o).sub(vec(x, y, z));
         camerapos.rotate_around_z((-yaw-180.0f)*RAD);
         camerapos.rotate_around_y(-pitch*RAD);
         setenvparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
