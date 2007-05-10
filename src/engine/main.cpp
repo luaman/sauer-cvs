@@ -99,7 +99,7 @@ void computescreen(const char *text, Texture *t)
             loopj(64+1) 
             { 
                 float c = 0.5f+0.5f*cosf(2*M_PI*j/64.0f), s = 0.5f+0.5f*sinf(2*M_PI*j/64.0f);
-                glTexCoord2f(c, 0.5f*(s+0.5f)); 
+                glTexCoord2f(c, 320.0f/640.0f*(s-0.5f)+0.5f);
                 glVertex2f(x+640*c, y+320*s);
             }
 #if 0
