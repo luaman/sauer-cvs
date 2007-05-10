@@ -9,7 +9,7 @@ void backup(char *name, char *backupname)
     rename(name, backupname);
 }
 
-string cgzname, bakname, pcfname, mcfname;
+string cgzname, bakname, pcfname, mcfname, picname;
 
 VARP(savebak, 0, 2, 2);
 
@@ -37,9 +37,11 @@ void setnames(const char *fname, const char *cname = 0)
     else s_sprintf(bakname)("packages/%s_%d.BAK", mapname, lastmillis);
     s_sprintf(pcfname)("packages/%s/package.cfg", pakname);
     s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, cfgname);
+    s_sprintf(picname)("packages/%s.jpg", mapname);
 
     path(cgzname);
     path(bakname);
+    path(picname);
 }
 
 ushort readushort(gzFile f)
@@ -319,7 +321,8 @@ void load_world(const char *mname, const char *cname)        // still supports a
     if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return; }
     hdr = newhdr;
     resetmap();
-    computescreen(mname);
+    Texture *mapshot = textureload(picname, 0, true, false);
+    computescreen(mname, mapshot!=crosshair ? mapshot : NULL);
     if(hdr.version<=20) conoutf("loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
     if(!hdr.ambient) hdr.ambient = 25;
     if(!hdr.lerpsubdivsize)
@@ -486,7 +489,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     overrideidents = false;
 
     allchanged(true);
-    computescreen(mname);
+    computescreen(mname, mapshot!=crosshair ? mapshot : NULL);
     attachentities();
 
     loopv(ents)

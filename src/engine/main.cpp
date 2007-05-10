@@ -67,7 +67,7 @@ void screenshot()
 COMMAND(screenshot, "");
 COMMAND(quit, "");
 
-void computescreen(const char *text)
+void computescreen(const char *text, Texture *t)
 {
     int w = scr_w, h = scr_h;
     gettextres(w, h);
@@ -78,18 +78,39 @@ void computescreen(const char *text)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glClearColor(0.15f, 0.15f, 0.15f, 1);
+    glColor3f(1, 1, 1);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glMatrixMode(GL_PROJECTION);
     loopi(2)
     {
-        glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(0, w*3, h*3, 0, -1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         draw_text(text, 70, 2*FONTH + FONTH/2);
-        settexture("data/sauer_logo_512_256.png");
         glLoadIdentity();
         glOrtho(0, w, h, 0, -1, 1);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if(t)
+        {
+            glDisable(GL_BLEND);
+            glBindTexture(GL_TEXTURE_2D, t->gl);
+            int sz = min(640, min(w, h)), x = (w-sz)/2, y = (h-sz)/2;
+            glBegin(GL_QUADS);
+            glTexCoord2f(0, 0); glVertex2i(x,    y);
+            glTexCoord2f(1, 0); glVertex2i(x+sz, y);
+            glTexCoord2f(1, 1); glVertex2i(x+sz, y+sz);
+            glTexCoord2f(0, 1); glVertex2i(x,    y+sz);
+            glEnd();
+            glEnable(GL_BLEND);
+            settexture("data/guioverlay.png");
+            glBegin(GL_QUADS);
+            glTexCoord2f(0, 0); glVertex2i(x,    y);
+            glTexCoord2f(1, 0); glVertex2i(x+sz, y);
+            glTexCoord2f(1, 1); glVertex2i(x+sz, y+sz);
+            glTexCoord2f(0, 1); glVertex2i(x,    y+sz);
+            glEnd();
+        }
         int x = (w-512)/2, y = (h-256)/2;
+        settexture("data/sauer_logo_512_256a.png");
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2i(x,     y);
         glTexCoord2f(1, 0); glVertex2i(x+512, y);
@@ -98,6 +119,7 @@ void computescreen(const char *text)
         glEnd();
         SDL_GL_SwapBuffers();
     }
+    glMatrixMode(GL_MODELVIEW);
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);

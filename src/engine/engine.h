@@ -254,7 +254,7 @@ extern void writebinds(FILE *f);
 extern void writecompletions(FILE *f);
 
 // main
-extern void computescreen(const char *text);
+extern void computescreen(const char *text, Texture *t = NULL);
 extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
 
 // menu

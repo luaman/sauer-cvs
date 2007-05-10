@@ -185,7 +185,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         file++;
     }
     
-    show_out_of_renderloop_progress(0, file);
+    if(msg) show_out_of_renderloop_progress(0, file);
 
     SDL_Surface *s = IMG_Load(file);
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
@@ -246,7 +246,7 @@ void cleangl()
 
 void settexture(const char *name)
 {
-    glBindTexture(GL_TEXTURE_2D, textureload(name)->gl);
+    glBindTexture(GL_TEXTURE_2D, textureload(name, 0, true, false)->gl);
 }
 
 vector<Slot> slots;
