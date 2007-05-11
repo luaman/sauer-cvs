@@ -112,6 +112,25 @@ void getstring(char *text, ucharbuf &p, int len)
     while(*t++);
 }
 
+void filtertext(char *dst, const char *src, bool whitespace, int len)
+{
+    for(int c = *src; c; c = *++src)
+    {
+        switch(c)
+        {
+        case '\f':
+            if(src[1]>='0' && src[1]<='3') ++src;
+            continue;
+        }
+        if(isprint(c) || (whitespace && isspace(c)))
+        {
+            *dst++ = c;
+            if(!--len) break;
+        }
+    }
+    *dst = '\0';
+}
+
 enum { ST_EMPTY, ST_LOCAL, ST_TCPIP };
 
 struct client                   // server side version of "dynent" type

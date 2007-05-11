@@ -295,7 +295,7 @@ struct fpsclient : igameclient
         {
             if(actor==-2)
             {
-                conoutf("\f2you got killed by %s!", &act->name);
+                conoutf("\f2you got killed by %s!", colorname(act));
             }
             else if(actor==-1)
             {
@@ -310,11 +310,11 @@ struct fpsclient : igameclient
                 {
                     if(isteam(a->team, player1->team))
                     {
-                        conoutf("\f2you got fragged by a teammate (%s)", a->name);
+                        conoutf("\f2you got fragged by a teammate (%s)", colorname(a));
                     }
                     else
                     {
-                        conoutf("\f2you got fragged by %s", a->name);
+                        conoutf("\f2you got fragged by %s", colorname(a));
                     }
                 }
             }
@@ -463,6 +463,22 @@ struct fpsclient : igameclient
         i -= players.length();
         if(i<ms.monsters.length()) return ms.monsters[i];
         return NULL;
+    }
+
+    bool duplicatename(fpsent *d, char *name = NULL)
+    {
+        if(!name) name = d->name;
+        if(d!=player1 && !strcmp(name, player1->name)) return true;
+        loopv(players) if(players[i] && d!=players[i] && !strcmp(name, players[i]->name)) return true;
+        return false;
+    }
+
+    char *colorname(fpsent *d, char *name = NULL, char *prefix = "")
+    {
+        if(!duplicatename(d, name)) return name;
+        static string cname;
+        s_sprintf(cname)("%s%s \f5(%d)\f9", prefix, name ? name : d->name, d->clientnum);
+        return cname;
     }
 
     void worldhurts(physent *d, int damage)

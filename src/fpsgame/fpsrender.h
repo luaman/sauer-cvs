@@ -19,7 +19,7 @@ struct fpsrender
         {
             const char *mdlname = m_teammode ? (isteam(cl.player1->team, d->team) ? "ironsnout/blue" : "ironsnout/red") : "ironsnout";
             if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlname);
-            s_strcpy(d->info, d->name);
+            s_strcpy(d->info, cl.colorname(d, NULL, "@"));
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); }
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, m_teammode ? (isteam(cl.player1->team, d->team) ? 16 : 13) : 11, 1);
         }

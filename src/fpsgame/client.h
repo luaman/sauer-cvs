@@ -36,7 +36,7 @@ struct clientcom : iclientcom
             c2sinit = false; 
             filtertext(player1->name, name, false, MAXNAMELEN);
         }
-        else conoutf("your name is: %s", player1->name);
+        else conoutf("your name is: %s", cl.colorname(player1));
     }
 
     void switchteam(const char *team)
@@ -50,25 +50,6 @@ struct clientcom : iclientcom
     }
 
     int numchannels() { return 3; }
-
-    static void filtertext(char *dst, const char *src, bool whitespace = true, int len = sizeof(string)-1)
-    {
-        for(int c = *src; c; c = *++src)
-        {
-            switch(c)
-            {
-            case '\f':
-                if(src[1]>='0' && src[1]<='3') ++src;
-                continue;
-            }
-            if(isprint(c) || (whitespace && isspace(c)))
-            {
-                *dst++ = c;
-                if(!--len) break;
-            }
-        }
-        *dst = '\0';
-    }
 
     void mapstart() { if(!spectator || currentmaster==player1->clientnum) senditemstoserver = true; }
 
@@ -201,7 +182,7 @@ struct clientcom : iclientcom
         loopi(len) messages.add(buf[i]);
     }
 
-    void toserver(char *text) { conoutf("%s:\f0 %s", player1->name, text); addmsg(SV_TEXT, "rs", text); }
+    void toserver(char *text) { conoutf("%s:\f0 %s", cl.colorname(player1), text); addmsg(SV_TEXT, "rs", text); }
 
     int sendpacketclient(ucharbuf &p, bool &reliable, dynent *d)
     {
@@ -416,7 +397,7 @@ struct clientcom : iclientcom
                     s_sprintfd(ds)("@%s", &text);
                     particle_text(d->abovehead(), ds, 9);
                 }
-                conoutf("%s:\f0 %s", d->name, &text);
+                conoutf("%s:\f0 %s", cl.colorname(d), &text);
                 break;
             }
 
@@ -460,12 +441,12 @@ struct clientcom : iclientcom
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text))
-                        conoutf("%s is now known as %s", d->name, &text);
+                        conoutf("%s is now known as %s", cl.colorname(d), cl.colorname(d, text));
                 }
                 else                    // new client
                 {
                     c2sinit = false;    // send new players my info again
-                    conoutf("connected: %s", &text);
+                    conoutf("connected: %s", cl.colorname(d, text));
                     loopv(cl.players)   // clear copies since new player doesn't have them
                         if(cl.players[i]) freeeditinfo(cl.players[i]->edit);
                     extern editinfo *localedit;
@@ -484,7 +465,7 @@ struct clientcom : iclientcom
                 int cn = getint(p);
                 fpsent *d = cl.getclient(cn);
                 if(!d) break;
-                if(d->name[0]) conoutf("player %s disconnected", d->name);
+                if(d->name[0]) conoutf("player %s disconnected", cl.colorname(d));
                 DELETEP(cl.players[cn]);
                 cleardynentcache();
                 if(currentmaster==cn) currentmaster = -1;
@@ -547,7 +528,7 @@ struct clientcom : iclientcom
                 d->superdamage = getint(p);
                 if(actor==cn)
                 {
-                    conoutf("\f2%s suicided", d->name);
+                    conoutf("\f2%s suicided", cl.colorname(d));
                 }
                 else if(actor==player1->clientnum)
                 {
@@ -555,12 +536,12 @@ struct clientcom : iclientcom
                     if(isteam(player1->team, d->team))
                     {
                         frags = -1;
-                        conoutf("\f2you fragged a teammate (%s)", d->name);
+                        conoutf("\f2you fragged a teammate (%s)", cl.colorname(d));
                     }
                     else
                     {
                         frags = 1;
-                        conoutf("\f2you fragged %s", d->name);
+                        conoutf("\f2you fragged %s", cl.colorname(d));
                     }
                     addmsg(SV_FRAGS, "ri", player1->frags += frags);
                 }
@@ -571,11 +552,11 @@ struct clientcom : iclientcom
                     {
                         if(isteam(a->team, d->team))
                         {
-                            conoutf("\f2%s fragged his teammate (%s)", a->name, d->name);
+                            conoutf("\f2%s fragged his teammate (%s)", cl.colorname(a), cl.colorname(d));
                         }
                         else
                         {
-                            conoutf("\f2%s fragged %s", a->name, d->name);
+                            conoutf("\f2%s fragged %s", cl.colorname(a), cl.colorname(d));
                         }
                     }
                 }

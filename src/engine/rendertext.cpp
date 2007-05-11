@@ -198,6 +198,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
             case '2': glColor4ub(255, 192, 64,  a); i++; continue;    // yellow: gameplay messages 
             case '3': glColor4ub(255, 64,  64,  a); i++; continue;    // red: important errors
             case '4': glColor4ub(128, 128, 128, a); i++; continue;    // gray
+            case '5': glColor4ub(255, 64,  255, a); i++; continue;    // magenta
             default:  glColor4ub(r,   g,   b,   a); i++; continue;    // white: everything else
         }
         if(c==' ') { x += FONTH/2; continue; }

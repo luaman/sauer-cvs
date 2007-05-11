@@ -175,7 +175,7 @@ struct fpsserver : igameserver
         }
         else 
         {
-            s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", ci->name, modestr(reqmode), map);
+            s_sprintfd(msg)("%s suggests %s on map %s (select map to vote)", colorname(ci), modestr(reqmode), map);
             sendservmsg(msg);
             checkvotes();
         }
@@ -503,6 +503,8 @@ struct fpsserver : igameserver
         int cn = -1, type;
         clientinfo *ci = sender>=0 ? (clientinfo *)getinfo(sender) : NULL;
         #define QUEUE_MSG { if(!ci->local) while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]); }
+        #define QUEUE_INT(n) { if(!ci->local) { curmsg = p.length(); ucharbuf buf = ci->messages.reserve(5); putint(buf, n); ci->messages.addbuf(buf); } }
+        #define QUEUE_STR(text) { if(!ci->local) { curmsg = p.length(); ucharbuf buf = ci->messages.reserve(2*strlen(text)+1); sendstring(text, buf); ci->messages.addbuf(buf); } }
         int curmsg;
         while((curmsg = p.length()) < p.maxlen) switch(type = checktype(getint(p), ci))
         {
@@ -543,14 +545,19 @@ struct fpsserver : igameserver
             }
 
             case SV_TEXT:
-                getstring(text, p);
                 QUEUE_MSG;
+                getstring(text, p);
+                filtertext(text, text);
+                QUEUE_STR(text);
                 break;
 
             case SV_INITC2S:
             {
+                QUEUE_MSG;
                 bool connected = !ci->name[0];
                 getstring(text, p);
+                filtertext(text, text, false, MAXNAMELEN);
+                QUEUE_STR(text);
                 s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
                 if(!ci->local && connected)
                 {
@@ -561,9 +568,8 @@ struct fpsserver : igameserver
                         sendf(-1, 1, "ri4", SV_RESUME, sender, sc.maxhealth, sc.frags);
                     }
                 }
-                QUEUE_MSG;
-                curmsg = p.length();
                 getstring(text, p);
+                filtertext(text, text, false, MAXTEAMLEN);
                 if(!ci->local && connected && m_teammode)
                 {
                     const char *worst = chooseworstteam(text);
@@ -571,10 +577,7 @@ struct fpsserver : igameserver
                     {
                         s_strcpy(text, worst);
                         sendf(sender, 1, "riis", SV_SETTEAM, sender, worst);
-                        ucharbuf buf = ci->messages.reserve(2*strlen(worst)+1);
-                        sendstring(worst, buf);
-                        ci->messages.addbuf(buf);
-                        curmsg = p.length();
+                        QUEUE_STR(worst);
                     }
                 }
                 if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
@@ -588,6 +591,7 @@ struct fpsserver : igameserver
             case SV_MAPCHANGE:
             {
                 getstring(text, p);
+                filtertext(text, text);
                 int reqmode = getint(p);
                 if(type!=SV_MAPVOTE && !mapreload) break;
                 if(!ci->local && !m_mp(reqmode)) reqmode = 0;
@@ -724,13 +728,16 @@ struct fpsserver : igameserver
             {
                 int who = getint(p);
                 getstring(text, p);
+                filtertext(text, text, false, MAXTEAMLEN);
                 if(!ci->master || who<0 || who>=getnumclients()) break;
                 clientinfo *wi = (clientinfo *)getinfo(who);
                 if(!wi) break;
                 if(m_capture && wi->state==CS_ALIVE && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->o);
                 s_strncpy(wi->team, text, MAXTEAMLEN+1);
                 sendf(sender, 1, "riis", SV_SETTEAM, who, text);
-                QUEUE_MSG;
+                QUEUE_INT(SV_SETTEAM);
+                QUEUE_INT(who);
+                QUEUE_STR(text);
                 break;
             } 
 
@@ -896,6 +903,8 @@ struct fpsserver : igameserver
         else if(!ci->master) return;
         ci->master = val;
         mastermode = MM_OPEN;
+        s_sprintfd(msg)("%s %s master", colorname(ci), val ? "claimed" : "relinquished");
+        sendservmsg(msg);
         currentmaster = val ? ci->clientnum : -1;
         masterupdate = true;
     }
@@ -998,4 +1007,19 @@ struct fpsserver : igameserver
         fwrite(data, 1, len, mapdata);
         sendservmsg("[map uploaded to server, \"/getmap\" to receive it]");
     }
+
+    bool duplicatename(clientinfo *ci, char *name)
+    {
+        if(!name) name = ci->name;
+        loopv(clients) if(clients[i]!=ci && !strcmp(name, clients[i]->name)) return true;
+        return false;
+    }
+
+    char *colorname(clientinfo *ci, char *name = NULL)
+    {
+        if(!duplicatename(ci, name)) return ci->name;
+        static string cname;
+        s_sprintf(cname)("%s \f5(%d)\f9", name ? name : ci->name, ci->clientnum);
+        return cname;
+    }   
 };
