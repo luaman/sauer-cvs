@@ -341,9 +341,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
 
     glPushMatrix();
     setshadowmatrix(plane(floor, -floor.dot(above)), shaddir);
-    if(!m->cullface) glDisable(GL_CULL_FACE);
     m->render(anim|ANIM_NOSKIN, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep);
-    if(!m->cullface) glEnable(GL_CULL_FACE);
     glPopMatrix();
 
     glEnable(GL_TEXTURE_2D);
@@ -351,46 +349,6 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, float x, float y, f
     glDisable(GL_BLEND);
     
     if(!reflecting || !hasFBO) glDisable(GL_STENCIL_TEST);
-}
-
-void rendermodel(vec &color, vec &dir, model *m, int anim, int varseed, int tex, float x, float y, float z, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, model *vwep)
-{
-    m->setskin(tex);
-    glColor3fv(color.v);
-
-    vec rdir(dir), camerapos(camera1->o);
-    rdir.rotate_around_z((-yaw-180.0f)*RAD); 
-    rdir.rotate_around_y(-pitch*RAD); 
-
-    camerapos.sub(vec(x, y, z));
-    camerapos.rotate_around_z((-yaw-180.0f)*RAD);
-    camerapos.rotate_around_y(-pitch*RAD);
-
-    if(renderpath!=R_FIXEDFUNCTION)
-    {
-        if(refracting) setfogplane(1, refracting - z);
-
-        if(hasCM && m->envmapped() || (vwep && vwep->envmapped()))
-        {
-            anim |= ANIM_ENVMAP;
-            GLuint em = m->envmap ? m->envmap->gl : (vwep && vwep->envmap ? vwep->envmap->gl : lookupenvmap(closestenvmap(vec(x, y, z))));
-            glActiveTexture_(GL_TEXTURE2_ARB);
-            glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, em);
-            glActiveTexture_(GL_TEXTURE0_ARB);
-        }
-    }
-
-    if(!m->cullface) glDisable(GL_CULL_FACE);
-    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep, rdir, camerapos);
-    if(!m->cullface) glEnable(GL_CULL_FACE);
-
-    if(anim&ANIM_ENVMAP)
-    {
-        glActiveTexture_(GL_TEXTURE2_ARB);
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        glActiveTexture_(GL_TEXTURE0_ARB);
-    }
 }
 
 struct batchedmodel
@@ -447,7 +405,8 @@ void renderbatchedmodel(model *m, batchedmodel &b)
         rendershadow(b.dir, m, b.anim, b.varseed, b.pos.x, b.pos.y, b.pos.z, center, radius, b.yaw, b.pitch, b.speed, b.basetime, b.d, b.cull, b.vwep);
         if((b.cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) return;
     }
-    rendermodel(b.color, b.dir, m, b.anim, b.varseed, b.tex, b.pos.x, b.pos.y, b.pos.z, b.yaw, b.pitch, b.speed, b.basetime, b.d, b.cull, b.vwep);
+    m->setskin(b.tex);
+    m->render(b.anim, b.varseed, b.speed, b.basetime, b.pos.x, b.pos.y, b.pos.z, b.yaw, b.pitch, b.d, b.vwep, b.color, b.dir);
 }
 
 void endmodelbatches()
@@ -591,7 +550,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) { m->endrender(); return; }
     }
 
-    rendermodel(color, dir, m, anim, varseed, tex, x, y, z, yaw, pitch, speed, basetime, d, cull, vwep);
+    m->setskin(tex);
+    m->render(anim, varseed, speed, basetime, x, y, z, yaw, pitch, d, vwep, color, dir);
 
     m->endrender();
 }

@@ -213,7 +213,7 @@ struct vertmodel : model
             #undef ip_v_ai
         }
 
-        void setshader(bool masked)
+        void setshader(animstate &as, bool masked)
         {
             if(renderpath==R_FIXEDFUNCTION) return;
    
@@ -233,9 +233,9 @@ struct vertmodel : model
                 setenvparamf("ambient", SHPARAM_PIXEL, 3, m->ambient, m->ambient, m->ambient, 1);
                 setenvparamf("glowscale", SHPARAM_PIXEL, 4, m->glow, m->glow, m->glow);
 
-                (hasCM && envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (m->spec>=0.01f ? modelshader : modelshadernospec)))->set();
+                (as.anim&ANIM_ENVMAP && envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (m->spec>=0.01f ? modelshader : modelshadernospec)))->set();
     
-                if(hasCM && envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
+                if(as.anim&ANIM_ENVMAP && envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
             }
         }
 
@@ -294,7 +294,24 @@ struct vertmodel : model
                 glActiveTexture_(GL_TEXTURE0_ARB);
                 lastmasks = m;
             }
-            setshader(m!=crosshair);
+            if(as.anim&ANIM_ENVMAP && envmapmax>0)
+            {
+                GLuint emtex = owner->model->envmap ? owner->model->envmap->gl : closestenvmaptex;
+                if(!enableenvmap || lastenvmaptex!=emtex)
+                {
+                    glActiveTexture_(GL_TEXTURE2_ARB);
+                    if(!enableenvmap) { glEnable(GL_TEXTURE_CUBE_MAP_ARB); enableenvmap = true; }
+                    if(lastenvmaptex!=emtex) { glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, emtex); lastenvmaptex = emtex; }
+                    glActiveTexture_(GL_TEXTURE0_ARB);
+                }
+            }
+            else if(enableenvmap)
+            {
+                glActiveTexture_(GL_TEXTURE2_ARB);
+                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                glActiveTexture_(GL_TEXTURE0_ARB);
+            }
+            setshader(as, m!=crosshair);
         }
 
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t)
@@ -673,6 +690,9 @@ struct vertmodel : model
             if(statbuf && as.frame==0 && as.range==1) bindvbo(as);
             else if(laststatbuf) disablevbo();
 
+            if(!model->cullface && enablecullface) { glDisable(GL_CULL_FACE); enablecullface = false; }
+            else if(model->cullface && !enablecullface) { glEnable(GL_CULL_FACE); enablecullface = true; }
+
             if(renderpath!=R_FIXEDFUNCTION && !(anim&ANIM_NOSKIN))
             {
                 setenvparamf("direction", SHPARAM_VERTEX, 0, dir.x, dir.y, dir.z);
@@ -830,8 +850,37 @@ struct vertmodel : model
     {
     }
 
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &color, const vec &dir)
     {
+        vec rdir, campos;
+        if(!(anim&ANIM_NOSKIN))
+        {
+            glColor3fv(color.v);
+
+            rdir = dir;
+            rdir.rotate_around_z((-yaw-180.0f)*RAD);
+            rdir.rotate_around_y(-pitch*RAD);
+
+            campos = camera1->o;
+            campos.sub(vec(x, y, z));
+            campos.rotate_around_z((-yaw-180.0f)*RAD);
+            campos.rotate_around_y(-pitch*RAD);
+
+            if(renderpath!=R_FIXEDFUNCTION)
+            {
+                if(refracting) setfogplane(1, refracting - z);
+            }
+            
+            if(envmapped() || (vwepmdl && vwepmdl->envmapped()))
+            {
+                anim |= ANIM_ENVMAP;
+
+                closestenvmaptex = 0;
+                if((envmapped() && !envmap) || (vwepmdl && vwepmdl->envmapped() && !vwepmdl->envmap))
+                    closestenvmaptex = lookupenvmap(closestenvmap(vec(x, y, z)));
+            }
+        }
+
         glPushMatrix(); 
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
@@ -845,7 +894,7 @@ struct vertmodel : model
             glRotatef(pitch, 0, -1, 0);
             glMatrixMode(GL_MODELVIEW);
         }
-        render(anim, varseed, speed, basetime, d, vwepmdl, dir, campos);
+        render(anim, varseed, speed, basetime, d, vwepmdl, rdir, campos);
         if(anim&ANIM_ENVMAP)
         {
             glMatrixMode(GL_TEXTURE);
@@ -855,16 +904,17 @@ struct vertmodel : model
         glPopMatrix();
     }
 
-    static bool enabletc, enablealphatest, enablealphablend; 
+    static bool enabletc, enablealphatest, enablealphablend, enableenvmap, enablecullface; 
     static float lastalphatest;
-    static GLuint laststatbuf;
+    static GLuint laststatbuf, lastenvmaptex, closestenvmaptex;
     static Texture *lastskin, *lastmasks;
 
     void startrender()
     {
-        enabletc = enablealphatest = enablealphablend = false;
+        enabletc = enablealphatest = enablealphablend = enableenvmap = false;
+        enablecullface = true;
         lastalphatest = -1;
-        laststatbuf = 0;
+        laststatbuf = lastenvmaptex = 0;
         lastskin = lastmasks = NULL;
     }
 
@@ -883,15 +933,23 @@ struct vertmodel : model
         }
         if(enablealphatest) glDisable(GL_ALPHA_TEST);
         if(enablealphablend) glDisable(GL_BLEND);
-        enabletc = enablealphatest = enablealphablend = false;
+        if(enableenvmap)
+        {
+            glActiveTexture_(GL_TEXTURE2_ARB);
+            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+        }
+        if(!enablecullface) glEnable(GL_CULL_FACE);
+        enabletc = enablealphatest = enablealphablend = enableenvmap = false;
+        enablecullface = true;
         lastalphatest = -1;
-        laststatbuf = 0;
+        laststatbuf = lastenvmaptex = 0;
         lastskin = lastmasks = NULL;
     }
 };
 
-bool vertmodel::enabletc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false;
+bool vertmodel::enabletc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false, vertmodel::enableenvmap = false, vertmodel::enablecullface = true;
 float vertmodel::lastalphatest = -1;
-GLuint vertmodel::laststatbuf = 0;
+GLuint vertmodel::laststatbuf = 0, vertmodel::lastenvmaptex = 0, vertmodel::closestenvmaptex = 0;
 Texture *vertmodel::lastskin = NULL, *vertmodel::lastmasks = NULL;
 
