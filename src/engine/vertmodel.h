@@ -217,7 +217,8 @@ struct vertmodel : model
         {
             if(renderpath==R_FIXEDFUNCTION) return;
    
-            if(owner->model->shader) owner->model->shader->set();
+            vertmodel *m = owner->model;
+            if(m->shader) m->shader->set();
             else
             {
                 static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshaderenvmap = NULL;
@@ -227,9 +228,14 @@ struct vertmodel : model
                 if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksmodel");
                 if(!modelshaderenvmap) modelshaderenvmap = lookupshaderbyname("envmapmodel");
 
-                (hasCM && envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (owner->model->spec>=0.01f ? modelshader : modelshadernospec)))->set();
+                setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
+                setenvparamf("ambient", SHPARAM_VERTEX, 3, m->ambient, m->ambient, m->ambient, 1);
+                setenvparamf("ambient", SHPARAM_PIXEL, 3, m->ambient, m->ambient, m->ambient, 1);
+                setenvparamf("glowscale", SHPARAM_PIXEL, 4, m->glow, m->glow, m->glow);
 
-                if(hasCM && envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 4, envmapmin-envmapmax, envmapmax);
+                (hasCM && envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (m->spec>=0.01f ? modelshader : modelshadernospec)))->set();
+    
+                if(hasCM && envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
             }
         }
 
@@ -666,6 +672,13 @@ struct vertmodel : model
   
             if(statbuf && as.frame==0 && as.range==1) bindvbo(as);
             else if(laststatbuf) disablevbo();
+
+            if(renderpath!=R_FIXEDFUNCTION && !(anim&ANIM_NOSKIN))
+            {
+                setenvparamf("direction", SHPARAM_VERTEX, 0, dir.x, dir.y, dir.z);
+                setenvparamf("camera", SHPARAM_VERTEX, 1, campos.x, campos.y, campos.z, 1);
+            }
+
             loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
 
             loopi(numtags) if(links[i]) // render the linked models - interpolate rotation and position of the 'link-tags'
@@ -699,12 +712,8 @@ struct vertmodel : model
                 matrix[15] = 1.0f;
 
                 vec ndir(dir), ncampos(campos);
-                if(renderpath!=R_FIXEDFUNCTION && !(anim&ANIM_NOSKIN))
-                {
-                    calclightdir(matrix, ndir, ncampos);
-                    setenvparamf("direction", SHPARAM_VERTEX, 0, ndir.x, ndir.y, ndir.z);
-                    setenvparamf("camera", SHPARAM_VERTEX, 1, ncampos.x, ncampos.y, ncampos.z, 1);
-                }
+                if(!(anim&ANIM_NOSKIN)) calclightdir(matrix, ndir, ncampos);
+
                 glPushMatrix();
                 glMultMatrixf(matrix);
                 if(anim&ANIM_ENVMAP) 

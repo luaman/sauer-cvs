@@ -74,6 +74,9 @@
 <a href="#mdlalphablend"><tt>mdlalphablend</tt></a>
 </li>
 <li>
+<a href="#mdlglow"><tt>mdlglow</tt></a>
+</li>
+<li>
 <a href="#mdlshader"><tt>mdlshader</tt></a>
 </li>
 <li>
@@ -375,6 +378,13 @@ T is a floating point value in the range of 0 to 1 (Default: 0.9).
 <pre id="mdlalphablend">mdlalphablend B</pre>
 <p>
 Controls whether a model with an alpha-channel skin will alpha blend (Default: 1).
+</p>
+
+<pre id="mdlglow">mdlglow G</pre>
+<p>
+G is the glowmap scale (not given or 0 gives the default of 200, -1 means off entirely).
+A maximum value in the glow channel of the masks texture will add G percent light (colored 
+the same as the diffuse skin color) to the diffuse lighting.
 </p>
 
 <pre id="mdlshader">mdlshader S</pre>

@@ -66,6 +66,17 @@ void mdlalphablend(int *blend)
 
 COMMAND(mdlalphablend, "i");
 
+void mdlglow(int *percent)
+{
+    checkmdl;
+    float glow = 2.0f;
+    if(*percent>0) glow = *percent/100.0f;
+    else if(*percent<0) glow = 0.0f;
+    loadingmodel->glow = glow;
+}
+
+COMMAND(mdlglow, "i");
+
 void mdlshader(char *shader)
 {
     checkmdl;
@@ -347,26 +358,16 @@ void rendermodel(vec &color, vec &dir, model *m, int anim, int varseed, int tex,
     m->setskin(tex);
     glColor3fv(color.v);
 
-    vec rdir, camerapos;
+    vec rdir(dir), camerapos(camera1->o);
+    rdir.rotate_around_z((-yaw-180.0f)*RAD); 
+    rdir.rotate_around_y(-pitch*RAD); 
+
+    camerapos.sub(vec(x, y, z));
+    camerapos.rotate_around_z((-yaw-180.0f)*RAD);
+    camerapos.rotate_around_y(-pitch*RAD);
+
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        rdir = dir;
-        rdir.rotate_around_z((-yaw-180.0f)*RAD);
-        rdir.rotate_around_y(-pitch*RAD);
-        setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
-
-        camerapos = vec(camera1->o).sub(vec(x, y, z));
-        camerapos.rotate_around_z((-yaw-180.0f)*RAD);
-        camerapos.rotate_around_y(-pitch*RAD);
-        setenvparamf("camera", SHPARAM_VERTEX, 1, camerapos.x, camerapos.y, camerapos.z, 1);
-
-        setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
-
-        vec diffuse = vec(color).mul(m->ambient);
-        loopi(3) diffuse[i] = max(diffuse[i], 0.2f);
-        setenvparamf("diffuse", SHPARAM_VERTEX, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-        setenvparamf("diffuse", SHPARAM_PIXEL, 3, diffuse.x, diffuse.y, diffuse.z, 1);
-
         if(refracting) setfogplane(1, refracting - z);
 
         if(hasCM && m->envmapped() || (vwep && vwep->envmapped()))
