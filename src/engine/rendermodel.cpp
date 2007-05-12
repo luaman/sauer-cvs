@@ -69,7 +69,7 @@ COMMAND(mdlalphablend, "i");
 void mdlglow(int *percent)
 {
     checkmdl;
-    float glow = 2.0f;
+    float glow = 3.0f;
     if(*percent>0) glow = *percent/100.0f;
     else if(*percent<0) glow = 0.0f;
     loadingmodel->glow = glow;
