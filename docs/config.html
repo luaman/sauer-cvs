@@ -875,9 +875,8 @@ Creates a field which accepts editable input, the value of which is taken from a
 to (upon change) the alias A, and can have at most N characters. If specified, O is executed
 when the user presses enter. If U is also specified, it will execute it every every frame
 (unless it is currently being edited) to allow updating the field. Note that all fields that
-share the same A alias, also share the same edit info. Edit field changes are only commit once
-the user presses enter, if they move outside the field or select another one, changes will be
-lost.
+share the same A alias, also share the same edit info, if the user moves outside the field the
+changes are not committed, if they select another field, changes will be lost.
 </p>
 
 <h2 id="cubescript">CubeScript</h2>
