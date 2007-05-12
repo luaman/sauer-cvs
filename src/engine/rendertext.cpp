@@ -201,7 +201,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
             case '2': glColor4ub(255, 192, 64,  a); i++; continue;    // yellow: gameplay messages 
             case '3': glColor4ub(255, 64,  64,  a); i++; continue;    // red: important errors
             case '4': glColor4ub(128, 128, 128, a); i++; continue;    // gray
-            case '5': glColor4ub(255, 64,  255, a); i++; continue;    // magenta
+            case '5': glColor4ub(192, 64,  192, a); i++; continue;    // magenta
             case 's': // save color
                 if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) 
                 {

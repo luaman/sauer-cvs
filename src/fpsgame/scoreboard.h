@@ -110,8 +110,8 @@ struct scoreboard : g3d_callback
         {
             fpsent *o = sbplayers[i];
             const char *status = "";
-            if(cl.cc.currentmaster>=0 && cl.cc.currentmaster==o->clientnum) status = "\f0";
             if(o->state==CS_DEAD) status = "\f4";
+            if(cl.cc.currentmaster>=0 && cl.cc.currentmaster==o->clientnum) status = "\f0";
             string name, team;
             if(cl.duplicatename(o)) s_sprintf(name)("%s%s", status, cl.colorname(o));
             else if(showclientnum) s_sprintf(name)("%s%s \f0(%d)", status, cl.colorname(o), o->clientnum);
