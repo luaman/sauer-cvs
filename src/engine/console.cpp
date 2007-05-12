@@ -51,7 +51,9 @@ void conoutf(const char *s, ...)
     int w = scr_w, h = scr_h;
     gettextres(w, h);
     s_sprintfdv(sf, s);
-    puts(sf);
+    string sp;
+    filtertext(sp, sf);
+    puts(sp);
     s = sf;
     int n = 0, visible;
     while((visible = text_visible(s, 3*w - 2*CONSPAD - 2*FONTH/3))) // cut strings to fit on screen

@@ -1019,7 +1019,7 @@ struct fpsserver : igameserver
     {
         if(!duplicatename(ci, name)) return ci->name;
         static string cname;
-        s_sprintf(cname)("%s \f5(%d)\f9", name ? name : ci->name, ci->clientnum);
+        s_sprintf(cname)("%s \fs\f5(%d)\fr", name ? name : ci->name, ci->clientnum);
         return cname;
     }   
 };

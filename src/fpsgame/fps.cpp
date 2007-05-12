@@ -478,7 +478,7 @@ struct fpsclient : igameclient
         if(!name) name = d->name;
         if(!duplicatename(d, name)) return name;
         static string cname;
-        s_sprintf(cname)("%s%s \f5(%d)\f9", prefix, name, d->clientnum);
+        s_sprintf(cname)("%s%s \fs\f5(%d)\fr", prefix, name, d->clientnum);
         return cname;
     }
 

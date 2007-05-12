@@ -186,6 +186,9 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
     float in_left, in_top, in_right, in_bottom;
     int in_width, in_height;
 
+    static float colorstack[8][4];
+    int colorpos = 0;
+
     glBegin(GL_QUADS);
     for (i = 0; str[i] != 0; i++)
     {
@@ -199,6 +202,16 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
             case '3': glColor4ub(255, 64,  64,  a); i++; continue;    // red: important errors
             case '4': glColor4ub(128, 128, 128, a); i++; continue;    // gray
             case '5': glColor4ub(255, 64,  255, a); i++; continue;    // magenta
+            case 's': // save color
+                if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) 
+                    glGetFloatv(GL_CURRENT_COLOR, colorstack[colorpos++]); 
+                i++; 
+                continue;
+            case 'r': // restore color
+                if(colorpos>0) 
+                    glColor3fv(colorstack[--colorpos]); 
+                i++; 
+                break;
             default:  glColor4ub(r,   g,   b,   a); i++; continue;    // white: everything else
         }
         if(c==' ') { x += FONTH/2; continue; }
