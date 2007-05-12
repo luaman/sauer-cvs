@@ -118,9 +118,7 @@ void filtertext(char *dst, const char *src, bool whitespace, int len)
     {
         switch(c)
         {
-        case '\f':
-            if(src[1]>='0' && src[1]<='3') ++src;
-            continue;
+        case '\f': ++src; continue;
         }
         if(isprint(c) || (whitespace && isspace(c)))
         {
