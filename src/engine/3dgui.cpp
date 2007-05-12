@@ -316,7 +316,7 @@ struct gui : g3d_gui
                 fieldlen = length;
                 editing = true;
             }
-            if(editing)
+            if(editing && windowhit==this)
             {
                 if(fieldpos==-2) 
                 {
