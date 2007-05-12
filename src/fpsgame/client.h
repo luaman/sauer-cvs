@@ -445,7 +445,12 @@ struct clientcom : iclientcom
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text))
-                        conoutf("%s is now known as %s", cl.colorname(d), cl.colorname(d, text));
+                    {
+                        string oldname, newname;
+                        s_strcpy(oldname, cl.colorname(d));
+                        s_strcpy(newname, cl.colorname(d, text));
+                        conoutf("%s is now known as %s", oldname, newname);
+                    }
                 }
                 else                    // new client
                 {
@@ -554,13 +559,16 @@ struct clientcom : iclientcom
                     fpsent *a = cl.getclient(actor);
                     if(a)
                     {
+                        string aname, dname;
+                        s_strcpy(aname, cl.colorname(a));
+                        s_strcpy(dname, cl.colorname(d));
                         if(isteam(a->team, d->team))
                         {
-                            conoutf("\f2%s fragged his teammate (%s)", cl.colorname(a), cl.colorname(d));
+                            conoutf("\f2%s fragged his teammate (%s)", aname, dname);
                         }
                         else
                         {
-                            conoutf("\f2%s fragged %s", cl.colorname(a), cl.colorname(d));
+                            conoutf("\f2%s fragged %s", aname, dname);
                         }
                     }
                 }
