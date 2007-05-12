@@ -204,7 +204,11 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
             case '5': glColor4ub(255, 64,  255, a); i++; continue;    // magenta
             case 's': // save color
                 if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) 
+                {
+                    glEnd();
                     glGetFloatv(GL_CURRENT_COLOR, colorstack[colorpos++]); 
+                    glBegin(GL_QUADS);
+                }
                 i++; 
                 continue;
             case 'r': // restore color
