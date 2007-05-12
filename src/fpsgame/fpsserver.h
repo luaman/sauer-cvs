@@ -1017,9 +1017,10 @@ struct fpsserver : igameserver
 
     char *colorname(clientinfo *ci, char *name = NULL)
     {
-        if(!duplicatename(ci, name)) return ci->name;
+        if(!name) name = ci->name;
+        if(name[0] && !duplicatename(ci, name)) return name;
         static string cname;
-        s_sprintf(cname)("%s \fs\f5(%d)\fr", name ? name : ci->name, ci->clientnum);
+        s_sprintf(cname)("%s \fs\f5(%d)\fr", name, ci->clientnum);
         return cname;
     }   
 };

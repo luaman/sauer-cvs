@@ -209,7 +209,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
                 continue;
             case 'r': // restore color
                 if(colorpos>0) 
-                    glColor3fv(colorstack[--colorpos]); 
+                    glColor4fv(colorstack[--colorpos]); 
                 i++; 
                 break;
             default:  glColor4ub(r,   g,   b,   a); i++; continue;    // white: everything else

@@ -476,7 +476,7 @@ struct fpsclient : igameclient
     char *colorname(fpsent *d, char *name = NULL, char *prefix = "")
     {
         if(!name) name = d->name;
-        if(!duplicatename(d, name)) return name;
+        if(name[0] && !duplicatename(d, name)) return name;
         static string cname;
         s_sprintf(cname)("%s%s \fs\f5(%d)\fr", prefix, name, d->clientnum);
         return cname;
