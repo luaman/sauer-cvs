@@ -211,7 +211,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
                 if(colorpos>0) 
                     glColor4fv(colorstack[--colorpos]); 
                 i++; 
-                break;
+                continue;
             default:  glColor4ub(r,   g,   b,   a); i++; continue;    // white: everything else
         }
         if(c==' ') { x += FONTH/2; continue; }
