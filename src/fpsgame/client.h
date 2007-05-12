@@ -27,6 +27,10 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, setteam, "s", self->setteam(args[0], args[1]));
         CCOMMAND(clientcom, getmap, "", self->getmap());
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
+
+        extern void result(const char *s);
+        CCOMMAND(clientcom, getname, "", result(self->player1->name));
+        CCOMMAND(clientcom, getteam, "", result(self->player1->team));
     }
 
     void switchname(const char *name)

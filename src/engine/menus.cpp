@@ -79,9 +79,9 @@ void guiimage(char *path, char *action, float *scale, int *overlaid)
     }
 }
 
-void guitext(char *name)
+void guitext(char *name, char *icon)
 {
-    if(cgui) cgui->text(name, GUI_TEXT_COLOR, "info");
+    if(cgui) cgui->text(name, icon[0] ? GUI_BUTTON_COLOR : GUI_TEXT_COLOR, icon[0] ? icon : "info");
 }
 
 void guititle(char *name)
@@ -147,17 +147,21 @@ void guiradio(char *name, char *var, int *n, char *onchange)
 }
 
 
-//@TODO - fix, currently only works on aliases at the moment...
-void guifield(char *var, int *maxlength, char *onchange)
+void guifield(char *var, int *maxlength, char *onchange, char *updateval)
 {   
     if(!cgui) return;
-    ident *id = getident(var);
-    if(!id || id->_type!=ID_ALIAS) return;
-    char *ref = id->_action;  //note: uses the ptr to identify each time that it is the same field
-    
-	char *result = cgui->field(ref, GUI_BUTTON_COLOR, (*maxlength==0)?12:*maxlength);
-    if(result) {
+    char *initval = "";
+    if(!cguifirstpass && strcmp(g3d_fieldname(), var)) 
+    {
+        if(updateval[0]) execute(updateval);
+        ident *id = getident(var);
+        if(id && id->_type==ID_ALIAS) initval = id->_action;
+    }
+	char *result = cgui->field(var, GUI_BUTTON_COLOR, *maxlength>0 ? *maxlength : 12, initval);
+    if(result) 
+    {
         alias(var, result);
+        if(onchange[0]) execute(onchange);
     }
 }
 
@@ -214,7 +218,7 @@ void guiservers()
 
 COMMAND(newgui, "ss");
 COMMAND(guibutton, "sss");
-COMMAND(guitext, "s");
+COMMAND(guitext, "ss");
 COMMAND(guiservers, "s");
 COMMANDN(cleargui, cleargui_, "i");
 COMMAND(showgui, "s");
@@ -227,7 +231,7 @@ COMMAND(guislider,"siis");
 COMMAND(guiradio,"ssis");
 COMMAND(guicheckbox, "ssiis");
 COMMAND(guitab, "s");
-COMMAND(guifield, "sis");
+COMMAND(guifield, "siss");
 
 static struct mainmenucallback : g3d_callback
 {

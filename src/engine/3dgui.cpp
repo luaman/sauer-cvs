@@ -11,10 +11,9 @@ static int mousebuttons = 0;
 static g3d_gui *windowhit = NULL;
 
 //text field state - only one ever active/focused
-static string fieldtext;  //copy of while focused
-static int fieldpos = -1; //-1=no focus, -2=wanting to commit
+static string fieldname, fieldtext;  //copy of while focused
+static int fieldpos = -1, fieldlen = 0; //-1=no focus, -2=wanting to commit
 static bool fieldactive; 
-static char *fieldref;    //so can itentify the source of the field
 
 bool menukey(int code, bool isdown, int cooked) 
 {
@@ -40,7 +39,8 @@ bool menukey(int code, bool isdown, int cooked)
 	if(!isdown) return true;	
 	int len = strlen(fieldtext);
     if(fieldpos>len) fieldpos = len;
-	switch(code) {
+	switch(code) 
+    {
 		case SDLK_LEFT:
 			if(fieldpos > 0) fieldpos--;
 			break;
@@ -49,17 +49,28 @@ bool menukey(int code, bool isdown, int cooked)
 			if(fieldpos < len) fieldpos++;
 			break;
 		case SDLK_DELETE:
-            if(fieldpos < len) memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
+            if(fieldpos < len) 
+            {
+                memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
+                fieldtext[len-1] = '\0';
+            }
 			break;
 		case SDLK_BACKSPACE:
             if(fieldpos > 0) 
-            {   fieldpos--;
+            {   
+                fieldpos--;
                 memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
+                fieldtext[len-1] = '\0';
             }
 			break;
 		default:
-            memmove(fieldtext+fieldpos+1, fieldtext+fieldpos, len-fieldpos); //length then limited inside field draw code
-			fieldtext[fieldpos++] = cooked;
+            if(fieldpos<fieldlen)
+            {
+                memmove(fieldtext+fieldpos+1, fieldtext+fieldpos, len-fieldpos); //length then limited inside field draw code
+			    fieldtext[fieldpos++] = cooked;
+                fieldtext[len+1] = '\0';
+            }
+            break;
 	}
 	return true;
 }
@@ -288,60 +299,62 @@ struct gui : g3d_gui
         }
     }
 
-    char *field(char *text, int color, int length)
+    char *field(char *name, int color, int length, char *initval)
 	{	
-        int w = FONTH*length;
+        length = min(length, (int)sizeof(string)-1);
+        int w = char_width('%')*length;
         char *result = NULL;
         if(!layoutpass)
 		{
-            bool hit = ishit(w, FONTH);            
-            if(hit && (mousebuttons & G3D_DOWN) && fieldref != text) //mouse request focus
+            bool hit = ishit(w, FONTH), editing = !strcmp(fieldname, name);            
+            if(hit && (mousebuttons&G3D_DOWN) && !editing) //mouse request focus
             {
-                s_strcpy(fieldtext, text);
-                fieldref = text;
+                s_strcpy(fieldname, name);
+                s_strcpy(fieldtext, initval);
+                fieldtext[length] = '\0';
+                fieldpos = strlen(fieldtext);
+                fieldlen = length;
+                editing = true;
             }
-            if(fieldref==text) 
+            if(editing)
             {
-                if((int)strlen(fieldtext) > length) fieldtext[length] = '\0';
-                if(fieldpos > length) fieldpos = length;
-                if(fieldpos==-2) {
+                if(fieldpos==-2) 
+                {
                     result = fieldtext;
                     fieldpos = -1;
-                    fieldref = NULL;
+                    fieldname[0] = '\0';
+                    editing = false;
                 } 
-                text = fieldtext;
-                fieldactive = hit;
-                if(!hit) fieldpos = -1; //mouse wandered out of focus
+                else if(hit) fieldactive = true;
+                else fieldpos = -1; // mouse wandered out of focus
             }
-            if(hit && (mousebuttons & G3D_PRESSED)) //mouse request position
+            if(editing && hit && (mousebuttons&G3D_PRESSED)) //mouse request position
             {
-                extern int char_width(int c, int x);
                 int x = curx;
                 fieldpos = 0;
-                while(text[fieldpos] && fieldpos < length) {
-                    int nx = char_width(text[fieldpos], x);
+                while(fieldtext[fieldpos] && fieldpos < length)
+                {
+                    int nx = char_width(fieldtext[fieldpos], x);
                     if(nx > hitx) break;
                     x = nx;
                     fieldpos++;
                 }
             }
                            
-            bool editing = fieldref && (fieldtext==text);
             notextureshader->set();
-			if(editing) glColor3f(1, 0.5f, 0.5f);
-            else glColor3fv(light.v);
+			if(editing) glColor3f(1, 0, 0);
+            else glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
 			glBegin(GL_LINE_LOOP);
             rect_(curx, cury, w, FONTH);
 			glEnd();
             defaultshader->set();
             
-            draw_text(text, curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
+            draw_text(editing ? fieldtext : (result ? result : initval), curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
             
-            if(hit && fieldpos>=0 && (totalmillis/250)&1) 
+            if(editing && hit && fieldpos>=0 && (totalmillis/250)&1) 
             {
-                int fx = curx + text_width(text, fieldpos);
-                color = 0xFF0000;
-                glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
+                int fx = curx + text_width(fieldtext, fieldpos);
+                glColor3f(1, 0, 0);
                 notextureshader->set();
                 glBegin(GL_QUADS);
                 rect_(fx-2, cury, 4, FONTH);
@@ -715,6 +728,11 @@ bool g3d_windowhit(bool on, bool act)
     if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
     else if(!on && windowhit) cleargui(1);
     return windowhit!=NULL;
+}
+
+char *g3d_fieldname()
+{
+    return fieldname;
 }
 
 void g3d_render()   
