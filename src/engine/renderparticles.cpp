@@ -360,6 +360,8 @@ void render_particles(int time)
                         float right = 8*FONTH, left = p->val*right;
                         glDisable(GL_BLEND);
                         glDisable(GL_TEXTURE_2D);
+
+                        foggednotextureshader->set();
                         glFogfv(GL_FOG_COLOR, oldfogc);
 
                         glTranslatef(-right/2.0f, 0, 0);
@@ -379,7 +381,9 @@ void render_particles(int time)
                         glVertex2f(left, FONTH);
                         glEnd();
                         
+                        foggedshader->set();
                         glFogfv(GL_FOG_COLOR, zerofog);
+
                         glEnable(GL_TEXTURE_2D);
                         glEnable(GL_BLEND);
                     }
