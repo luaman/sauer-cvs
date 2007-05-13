@@ -93,6 +93,7 @@ void computescreen(const char *text, Texture *t)
         {
             glDisable(GL_BLEND);
             glBindTexture(GL_TEXTURE_2D, t->gl);
+#if 0
             int x = (w-640)/2, y = (h-320)/2;
             glBegin(GL_TRIANGLE_FAN);
             glTexCoord2f(0.5f, 0.5f); glVertex2f(x+640/2.0f, y+320/2.0f);
@@ -102,8 +103,9 @@ void computescreen(const char *text, Texture *t)
                 glTexCoord2f(c, 320.0f/640.0f*(s-0.5f)+0.5f);
                 glVertex2f(x+640*c, y+320*s);
             }
-#if 0
-            glBegin(QUADS);
+#else
+            int sz = 256, x = (w-sz)/2, y = min(h-sz, (h-256)/2+256);
+            glBegin(GL_QUADS);
             glTexCoord2f(0, 0); glVertex2i(x,    y);
             glTexCoord2f(1, 0); glVertex2i(x+sz, y);
             glTexCoord2f(1, 1); glVertex2i(x+sz, y+sz);
