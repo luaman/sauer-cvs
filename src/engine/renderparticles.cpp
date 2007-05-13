@@ -215,6 +215,8 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
 
 void render_particles(int time)
 {
+    static float zerofog[4] = { 0, 0, 0, 1 };
+    float oldfogc[4];
     bool rendered = false;
     loopi(MAXPARTYPES) if(parlist[i])
     {        
@@ -224,6 +226,10 @@ void render_particles(int time)
             glDepthMask(GL_FALSE);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);             
+
+            foggedshader->set();
+            glGetFloatv(GL_FOG_COLOR, oldfogc);
+            glFogfv(GL_FOG_COLOR, zerofog);
         }
         
         parttype &pt = parttypes[i];
@@ -330,6 +336,7 @@ void render_particles(int time)
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                     }
+                    glDisable(GL_FOG);
                     if(intel_quadric_bug && spherequadric) gluSphere(spherequadric, 1, 12, 6);
                     else glCallList(spherelist);
                     
@@ -339,7 +346,8 @@ void render_particles(int time)
                     else glCallList(spherelist);
                     
                     xtraverts += 12*6*2;
-                    defaultshader->set();
+                    foggedshader->set();
+                    glEnable(GL_FOG);
                 } 
                 else 
                 {
@@ -352,8 +360,8 @@ void render_particles(int time)
                         float right = 8*FONTH, left = p->val*right;
                         glDisable(GL_BLEND);
                         glDisable(GL_TEXTURE_2D);
-                        notextureshader->set();
-                        
+                        glFogfv(GL_FOG_COLOR, oldfogc);
+
                         glTranslatef(-right/2.0f, 0, 0);
                         
                         glBegin(GL_QUADS);
@@ -371,7 +379,7 @@ void render_particles(int time)
                         glVertex2f(left, FONTH);
                         glEnd();
                         
-                        defaultshader->set();
+                        glFogfv(GL_FOG_COLOR, zerofog);
                         glEnable(GL_TEXTURE_2D);
                         glEnable(GL_BLEND);
                     }
@@ -413,6 +421,9 @@ void render_particles(int time)
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         }
+
+        glDisable(GL_FOG);
+        defaultshader->set();
         glDisable(GL_DEPTH_TEST);
         glBindTexture(GL_TEXTURE_2D, parttexs[9]->gl);
         glBegin(GL_QUADS);
@@ -451,10 +462,12 @@ void render_particles(int time)
         }
         glEnd();
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_FOG);
     }
 
     if(rendered)
     {        
+        glFogfv(GL_FOG_COLOR, oldfogc);
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     } 

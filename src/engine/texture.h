@@ -176,9 +176,7 @@ extern cubemapside cubemapsides[6];
 
 extern Texture *crosshair;
 
-extern Shader *defaultshader;
-extern Shader *notextureshader;
-extern Shader *nocolorshader;
+extern Shader *defaultshader, *notextureshader, *nocolorshader, *foggedshader, *foggednotextureshader;
 
 extern Shader *lookupshaderbyname(const char *name);
 

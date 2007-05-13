@@ -458,7 +458,6 @@ void sortmaterials(vector<materialsurface *> &vismats, float zclip, bool refract
 
 void rendermatgrid(vector<materialsurface *> &vismats)
 {
-    notextureshader->set();
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     static uchar cols[MAT_EDIT][3] =
     {
@@ -527,12 +526,18 @@ void rendermaterials(float zclip, bool refract)
     ushort envmapped = EMID_NONE;
     vec normal(0, 0, 0);
 
+    static float zerofog[4] = { 0, 0, 0, 1 };
+    float oldfogc[4];
+    glGetFloatv(GL_FOG_COLOR, oldfogc);
+    int lastfogtype = 1;
+
     loopv(vismats)
     {
         materialsurface &m = *vismats[editmode && showmat ? vismats.length()-1-i : i];
         int curmat = !editmode || !showmat || m.material>=MAT_EDIT ? m.material : m.material+MAT_EDIT;
         if(lastmat!=curmat || lastorient!=m.orient || (curmat==MAT_GLASS && envmapped && m.envmap != envmapped))
         {
+            int fogtype = lastfogtype;
             switch(curmat)
             {
                 case MAT_WATER:
@@ -550,15 +555,16 @@ void rendermaterials(float zclip, bool refract)
                             glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
                             glColor3f(wcol[0]/255.0f, wcol[1]/255.0f, wcol[2]/255.0f);
                         }
+                        foggedshader->set();
+                        fogtype = 0;
                     }
                     if(textured!=GL_TEXTURE_2D) 
                     { 
-                        if(textured) glDisable(textured); 
-                        glEnable(GL_TEXTURE_2D); 
+                        if(textured) glDisable(textured);
+                        glEnable(GL_TEXTURE_2D);
                         textured = GL_TEXTURE_2D; 
                     }
                     glBindTexture(GL_TEXTURE_2D, wslot.sts[m.orient==O_TOP ? 0 : 1].t->gl);
-                    defaultshader->set();
                     break;
 
                 case MAT_GLASS:
@@ -592,6 +598,7 @@ void rendermaterials(float zclip, bool refract)
                             {
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                                 glColor4f(0.8f, 0.9f, 1.0f, 0.25f);
+                                fogtype = 1;
                             }
                             else
                             {
@@ -611,7 +618,8 @@ void rendermaterials(float zclip, bool refract)
                             }
                             glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                             glColor3f(0.3f, 0.15f, 0.0f);
-                            notextureshader->set();
+                            foggednotextureshader->set();
+                            fogtype = 0;
                         }
                     }
                     break;
@@ -624,7 +632,8 @@ void rendermaterials(float zclip, bool refract)
                         if(begin) { glEnd(); begin = false; }
                         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                         if(textured) { glDisable(GL_TEXTURE_2D); textured = 0; }
-                        notextureshader->set();
+                        foggednotextureshader->set();
+                        fogtype = 0;
                     }
                     static uchar blendcols[MAT_EDIT][3] =
                     {
@@ -640,6 +649,11 @@ void rendermaterials(float zclip, bool refract)
             }
             lastmat = curmat;
             lastorient = m.orient;
+            if(fogtype!=lastfogtype)
+            {
+                glFogfv(GL_FOG_COLOR, fogtype ? oldfogc : zerofog);
+                lastfogtype = fogtype;
+            }
         }
         switch(curmat)
         {
@@ -670,8 +684,13 @@ void rendermaterials(float zclip, bool refract)
 
     if(begin) glEnd();
     glDisable(GL_BLEND);
+    if(!lastfogtype) glFogfv(GL_FOG_COLOR, oldfogc);
     if(!editmode || !showmat) glDepthMask(GL_TRUE);
-    else rendermatgrid(vismats);
+    else 
+    {
+        foggednotextureshader->set();
+        rendermatgrid(vismats);
+    }
 
     glEnable(GL_CULL_FACE);
     if(textured!=GL_TEXTURE_2D)

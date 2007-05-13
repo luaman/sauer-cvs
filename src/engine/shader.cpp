@@ -8,9 +8,7 @@ Shader *Shader::lastshader = NULL;
 hashtable<const char *, Shader> shaders;
 static Shader *curshader = NULL;
 static vector<ShaderParam> curparams;
-Shader *defaultshader = NULL;
-Shader *notextureshader = NULL;
-Shader *nocolorshader = NULL;
+Shader *defaultshader = NULL, *notextureshader = NULL, *nocolorshader = NULL, *foggedshader = NULL, *foggednotextureshader = NULL;
 ShaderParamState vertexparamstate[10 + MAXSHADERPARAMS], pixelparamstate[10 + MAXSHADERPARAMS];
 int dirtyparams = 0;
 
@@ -449,7 +447,10 @@ void shader(int *type, char *name, char *vs, char *ps)
 void setshader(char *name)
 {
     Shader *s = lookupshaderbyname(name);
-    if(!s) conoutf("no such shader: %s", name);
+    if(!s)
+    {
+        if(renderpath!=R_FIXEDFUNCTION) conoutf("no such shader: %s", name);
+    }
     else curshader = s;
     loopv(curparams)
     {

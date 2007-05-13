@@ -288,6 +288,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     defaultshader = lookupshaderbyname("default");
     notextureshader = lookupshaderbyname("notexture");
     nocolorshader = lookupshaderbyname("nocolor");
+    foggedshader = lookupshaderbyname("fogged");
+    foggednotextureshader = lookupshaderbyname("foggednotexture");
     defaultshader->set();
 }
 
@@ -520,13 +522,9 @@ void drawreflection(float z, bool refract, bool clear)
     setfogplane(1, z);
     if(refract) rendergrass();
     rendermaterials(z, refract);
+    render_particles(0);
 
     setfogplane();
-    defaultshader->set();
-
-    glDisable(GL_FOG);
-    render_particles(0);
-    glEnable(GL_FOG);
 
     if(reflectclip) undoclipmatrix();
 
@@ -703,10 +701,10 @@ void gl_drawframe(int w, int h, float curfps)
         project(fovy, aspect, farplane);
     }
 
+    render_particles(curtime);
+
     glDisable(GL_FOG);
     defaultshader->set();
-    
-    render_particles(curtime);
 
     g3d_render();
 
