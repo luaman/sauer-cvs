@@ -38,7 +38,7 @@ int totalmillis = 0, lastmillis = 0;
 
 dynent *player = NULL;
 
-int scr_w = 640, scr_h = 480;
+int scr_w = 1024, scr_h = 768;
 
 void screenshot()
 {
@@ -104,7 +104,7 @@ void computescreen(const char *text, Texture *t)
                 glVertex2f(x+640*c, y+320*s);
             }
 #else
-            int sz = 256, x = (w-sz)/2, y = min(h-sz, (h-256)/2+256);
+            int sz = 256, x = (w-sz)/2, y = min(384, h-256);
             glBegin(GL_QUADS);
             glTexCoord2f(0, 0); glVertex2i(x,    y);
             glTexCoord2f(1, 0); glVertex2i(x+sz, y);
@@ -114,7 +114,7 @@ void computescreen(const char *text, Texture *t)
             glEnd();
             glEnable(GL_BLEND);
         }
-        int x = (w-512)/2, y = (h-256)/2;
+        int x = (w-512)/2, y = 128;
         settexture("data/sauer_logo_512_256a.png");
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2i(x,     y);
