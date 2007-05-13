@@ -1,16 +1,20 @@
 
 struct fpsrender
 {      
+    fpsclient &cl;
+
+    fpsrender(fpsclient &_cl) : cl(_cl) {}
+
     void renderplayer(fpsent *d, const char *mdlname)
     {
 //      static const char *vweps[] = {NULL, "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
         static const char *vweps[] = {NULL, "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing"};
         const char *vwepname = d->gunselect<=GUN_PISTOL ? vweps[d->gunselect] : NULL;
         int attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT;
-        renderclient(d, mdlname, vwepname, attack, d->lastaction, d->lastpain);
+        renderclient(d, mdlname, vwepname, attack, cl.ws.reloadtime(d->gunselect)+50, d->lastaction, d->lastpain);
     }
 
-    void rendergame(fpsclient &cl, int gamemode)
+    void rendergame(int gamemode)
     {
         startmodelbatches();
 

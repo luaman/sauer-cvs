@@ -49,7 +49,7 @@ struct fpsclient : igameclient
           arenarespawnwait(0), arenadetectwait(0), maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), sb(*this), et(*this), cc(*this), cpc(*this)
+          ws(*this), ms(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
         CCOMMAND(fpsclient, kill, "",  { self->selfdamage(self->player1->health+self->player1->armour, -1, self->player1); });
@@ -66,7 +66,7 @@ struct fpsclient : igameclient
 
     char *getclientmap() { return clientmap; }
 
-    void rendergame() { fr.rendergame(*this, gamemode); }
+    void rendergame() { fr.rendergame(gamemode); }
 
     void resetgamestate()
     {

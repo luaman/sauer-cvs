@@ -598,7 +598,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 VAR(testanims, 0, 0, 1);
 
-void renderclient(dynent *d, const char *mdlname, const char *vwepname, int attack, int lastaction, int lastpain, float sink)
+void renderclient(dynent *d, const char *mdlname, const char *vwepname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float mz = d->o.z-d->eyeheight-sink;     
@@ -618,7 +618,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     else
     {
         if(lastmillis-lastpain<300) anim = ANIM_PAIN|ANIM_LOOP;
-        else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<300)) { anim = attack<0 ? -attack : attack; basetime = lastaction; }
+        else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<attackdelay)) { anim = attack<0 ? -attack : attack; basetime = lastaction; }
 
         if(d->inwater && d->physstate<=PHYS_FALL) anim |= ((d->move || d->strafe || d->vel.z+d->gravity.z>0 ? ANIM_SWIM : ANIM_SINK)|ANIM_LOOP)<<ANIM_SECONDARY;
         else if(d->timeinair>100) anim |= (ANIM_JUMP|ANIM_END)<<ANIM_SECONDARY;
