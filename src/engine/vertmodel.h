@@ -743,7 +743,13 @@ struct vertmodel : model
                     glMultMatrixf(matrix); 
                     glMatrixMode(GL_MODELVIEW); 
                 }
+                if(renderpath!=R_FIXEDFUNCTION && refracting)
+                {
+                    fogz += matrix[14];
+                    setfogplane(1, refracting - fogz);
+                }
                 link->render(anim, varseed, speed, basetime, d, ndir, ncampos);
+                if(renderpath!=R_FIXEDFUNCTION && refracting) fogz -= matrix[14];
                 if(anim&ANIM_ENVMAP) 
                 { 
                     glMatrixMode(GL_TEXTURE); 
@@ -866,9 +872,10 @@ struct vertmodel : model
             campos.rotate_around_z((-yaw-180.0f)*RAD);
             campos.rotate_around_y(-pitch*RAD);
 
-            if(renderpath!=R_FIXEDFUNCTION)
+            if(renderpath!=R_FIXEDFUNCTION && refracting)
             {
-                if(refracting) setfogplane(1, refracting - z);
+                fogz = z;
+                setfogplane(1, refracting - fogz); 
             }
             
             if(envmapped() || (vwepmdl && vwepmdl->envmapped()))
@@ -905,7 +912,7 @@ struct vertmodel : model
     }
 
     static bool enabletc, enablealphatest, enablealphablend, enableenvmap, enablecullface; 
-    static float lastalphatest;
+    static float lastalphatest, fogz;
     static GLuint laststatbuf, lastenvmaptex, closestenvmaptex;
     static Texture *lastskin, *lastmasks;
 
@@ -949,7 +956,7 @@ struct vertmodel : model
 };
 
 bool vertmodel::enabletc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false, vertmodel::enableenvmap = false, vertmodel::enablecullface = true;
-float vertmodel::lastalphatest = -1;
+float vertmodel::lastalphatest = -1, vertmodel::fogz = 0;
 GLuint vertmodel::laststatbuf = 0, vertmodel::lastenvmaptex = 0, vertmodel::closestenvmaptex = 0;
 Texture *vertmodel::lastskin = NULL, *vertmodel::lastmasks = NULL;
 
