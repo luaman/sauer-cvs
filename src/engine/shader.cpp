@@ -581,13 +581,6 @@ void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
         s_strcpy(ssname, name);
         s_strcat(ssname, "_scale");
         scaleshader = lookupshaderbyname(ssname);
-        static bool rtinit = false;
-        if(!rtinit)
-        {
-            rtinit = true;
-            glGenTextures(NUMSCALE, rendertarget);
-            if(hasFBO) glGenFramebuffers_(NUMSCALE-1, fsfb);
-        }
         conoutf("now rendering with: %s", name);
         fsparams[0] = *x/255.0f;
         fsparams[1] = *y/255.0f;
@@ -625,6 +618,11 @@ void renderfullscreenshader(int w, int h)
     
     if(fs_w != w || fs_h != h)
     {
+        if(!fs_w && !fs_h)
+        {
+            glGenTextures(NUMSCALE, rendertarget);
+            if(hasFBO) glGenFramebuffers_(NUMSCALE-1, fsfb);
+        }
         char *pixels = new char[w*h*3];
         loopi(NUMSCALE)
             createtexture(rendertarget[i], w>>i, h>>i, pixels, 3, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
