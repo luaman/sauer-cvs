@@ -12,7 +12,11 @@ Shader *defaultshader = NULL, *notextureshader = NULL, *nocolorshader = NULL, *f
 ShaderParamState vertexparamstate[10 + MAXSHADERPARAMS], pixelparamstate[10 + MAXSHADERPARAMS];
 int dirtyparams = 0;
 
-Shader *lookupshaderbyname(const char *name) { return shaders.access(name); }
+Shader *lookupshaderbyname(const char *name) 
+{ 
+    Shader *s = shaders.access(name);
+    return s && s->altshader ? s->altshader : s;
+}
 
 static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, char *name)
 {
@@ -422,7 +426,6 @@ void shader(int *type, char *name, char *vs, char *ps)
     Shader &s = shaders[rname];
     s.name = rname;
     s.type = *type;
-    s.used = false;
     loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
     loopv(curparams) s.defaultparams.add(curparams[i]);
     memset(s.extvertparams, 0, sizeof(s.extvertparams));
@@ -497,24 +500,13 @@ void altshader(char *orig, char *altname)
     char *rname = newstring(orig);
     Shader &s = shaders[rname];
     s.name = rname;
-    s.type = alt->type;
-    s.used = alt->used;
-    loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
-    loopv(alt->defaultparams) s.defaultparams.add(alt->defaultparams[i]);
-    loopv(alt->extparams) s.extparams.add(alt->extparams[i]);
-    memcpy(s.extvertparams, alt->extvertparams, sizeof(s.extvertparams));
-    memcpy(s.extpixparams, alt->extpixparams, sizeof(s.extpixparams));
-    s.vs = alt->vs;
-    s.ps = alt->ps;
-    s.program = alt->program;
-    s.vsobj = alt->vsobj;
-    s.psobj = alt->psobj;
+    s.altshader = alt;
 }
 
 void fastshader(char *nice, char *fast, int *detail)
 {
-    Shader *ns = lookupshaderbyname(nice);
-    if(!ns) return;
+    Shader *ns = shaders.access(nice);
+    if(!ns || ns->altshader) return;
     Shader *fs = lookupshaderbyname(fast);
     if(!fs) return;
     loopi(min(*detail+1, MAXSHADERDETAIL)) ns->fastshader[i] = fs;

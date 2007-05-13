@@ -85,9 +85,12 @@ struct Shader
     GLuint vs, ps;
     GLhandleARB program, vsobj, psobj;
     vector<LocalShaderParamState> defaultparams, extparams;
-    Shader *fastshader[MAXSHADERDETAIL];
+    Shader *altshader, *fastshader[MAXSHADERDETAIL];
     LocalShaderParamState *extvertparams[10], *extpixparams[10];
     bool used;
+
+    Shader() : name(NULL), type(SHADER_DEFAULT), vs(0), ps(0), program(0), vsobj(0), psobj(0), altshader(NULL), used(false)
+    {}
 
     void allocenvparams(Slot *slot = NULL);
     void flushenvparams(Slot *slot = NULL);

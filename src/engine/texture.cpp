@@ -591,6 +591,7 @@ GLuint cubemapfromsky(int size)
     {
         uchar *pixels = new uchar[3*sky[i]->w*sky[i]->h];
         glBindTexture(GL_TEXTURE_2D, sky[i]->gl);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
         gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, size, size, GL_UNSIGNED_BYTE, scaled);
         createtexture(!i ? tex : 0, size, size, scaled, 3, true, GL_RGB5, cubemapsides[i].target);
