@@ -1112,19 +1112,7 @@ void patchlight()
 
 COMMAND(patchlight, "");
 
-VARF(fullbright, 0, 0, 1,
-    if(fullbright)
-    {
-        if(noedit(true))
-        {
-            fullbright = 0;
-            initlights();
-            return;
-        }
-        clearlights();
-    }
-    else initlights();
-);
+VARF(fullbright, 0, 0, 1, initlights());
 
 vector<GLuint> lmtexids;
 
@@ -1235,7 +1223,7 @@ static void find_unlit(int i)
 
 void initlights()
 {
-    if(fullbright)
+    if(fullbright && editmode)
     {
         clearlights();
         return;
@@ -1269,7 +1257,7 @@ void initlights()
 
 void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float ambient)
 {
-    if(fullbright)
+    if(fullbright && editmode)
     {
         color = vec(1, 1, 1);
         dir = vec(0, 0, 1);

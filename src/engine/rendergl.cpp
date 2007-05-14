@@ -293,7 +293,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     defaultshader->set();
 }
 
-VARF(wireframe, 0, 0, 1, if(noedit(true)) wireframe = 0);
+VAR(wireframe, 0, 0, 1);
 
 vec worldpos, camright, camup;
 
@@ -654,13 +654,13 @@ void gl_drawframe(int w, int h, float curfps)
 
     glEnable(GL_TEXTURE_2D);
 
-    glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, wireframe && editmode ? GL_LINE : GL_FILL);
     
     xtravertsva = xtraverts = glde = 0;
 
     if(!hasFBO) drawreflections();
 
-    glClear(GL_DEPTH_BUFFER_BIT|(wireframe ? GL_COLOR_BUFFER_BIT : 0)|(hasstencil ? GL_STENCIL_BUFFER_BIT : 0));
+    glClear(GL_DEPTH_BUFFER_BIT|(wireframe && editmode ? GL_COLOR_BUFFER_BIT : 0)|(hasstencil ? GL_STENCIL_BUFFER_BIT : 0));
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, fov);
     
@@ -670,7 +670,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     queryreflections();
 
-    if(!wireframe) renderoutline();
+    if(!wireframe || !editmode) renderoutline();
 
     rendermapmodels();
 

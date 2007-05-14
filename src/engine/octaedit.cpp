@@ -157,6 +157,8 @@ void toggleedit()
     cancelsel();
     keyrepeat(editmode);
     editing = editmode;
+    extern int fullbright;
+    if(fullbright) initlights();
 }
 
 bool noedit(bool view)

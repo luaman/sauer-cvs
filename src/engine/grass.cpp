@@ -307,7 +307,7 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     if(grasstest>1) return;
 
     extern int fullbright;
-    if(fullbright) glColor3ub(128, 128, 128);
+    if(fullbright && editmode) glColor3ub(128, 128, 128);
     else glColor3ubv(g.color);
     float offset = detrnd((size_t)&g * (seed + 1)*13, grasstex->xs)/float(grasstex->xs);
     glTexCoord2f(offset, 1); glVertex3fv(b1.v);
