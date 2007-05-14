@@ -342,6 +342,7 @@ static int findtextype(Slot &s, int type, int last = -1)
 static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
 {
     ShaderParam *cparam = findshaderparam(s, "glowscale", SHPARAM_PIXEL, 0);
+    if(!cparam) cparam = findshaderparam(s, "glowscale", SHPARAM_VERTEX, 0);
     float color[3] = {1, 1, 1};
     if(cparam) memcpy(color, cparam->val, sizeof(color));
     writetex(c,
@@ -403,6 +404,7 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
         case TEX_GLOW:
         {
             ShaderParam *cparam = findshaderparam(slot, "glowscale", SHPARAM_PIXEL, 0);
+            if(!cparam) cparam = findshaderparam(slot, "glowscale", SHPARAM_VERTEX, 0);
             s_sprintfd(suffix)("?%.2f,%.2f,%.2f", cparam ? cparam->val[0] : 1.0f, cparam ? cparam->val[1] : 1.0f, cparam ? cparam->val[2] : 1.0f);
             for(const char *s = suffix; *s; key.add(*s++));
         }
