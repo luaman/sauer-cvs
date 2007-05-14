@@ -371,7 +371,8 @@ void project(float fovy, float aspect, int farplane)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 0.54f, farplane);
+    extern float spinsky;
+    gluPerspective(fovy, aspect, 0.54f, farplane*(spinsky ? 1.0f : sqrt(2.0f)));
     glMatrixMode(GL_MODELVIEW);
 }
 

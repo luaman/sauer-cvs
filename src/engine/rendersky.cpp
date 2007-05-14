@@ -2,9 +2,12 @@
 #include "engine.h"
 
 Texture *sky[6] = { 0, 0, 0, 0, 0, 0 };
+float spinsky = 0;
 
-void loadsky(char *basename)
+void loadsky(char *basename, float *spin)
 {
+    spinsky = *spin;
+
     static string lastsky = "";
     if(strcmp(lastsky, basename)==0) return;
     static char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
@@ -20,7 +23,7 @@ void loadsky(char *basename)
     s_strcpy(lastsky, basename);
 }
 
-COMMAND(loadsky, "s");
+COMMAND(loadsky, "sf");
 
 void draw_envbox_face(float s0, float t0, int x0, int y0, int z0,
                       float s1, float t1, int x1, int y1, int z1,
@@ -124,7 +127,7 @@ void drawskybox(int farplane, bool limited, float zreflect)
     glLoadIdentity();
     glRotatef(camera1->roll, 0, 0, 1);
     glRotatef(camera1->pitch, -1, 0, 0);
-    glRotatef(camera1->yaw, 0, 1, 0);
+    glRotatef(camera1->yaw+spinsky*lastmillis/1000.0f, 0, 1, 0);
     glRotatef(90, 1, 0, 0);
     if(zreflect && camera1->o.z>=zreflect) glScalef(1, 1, -1);
     glColor3f(1, 1, 1);
