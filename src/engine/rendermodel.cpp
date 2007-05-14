@@ -606,11 +606,10 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     if(d->state==CS_DEAD)
     {
         anim = ANIM_DYING;
-        int r = 6;//FIXME, 3rd anim & hellpig take longer
         basetime = lastaction;
         int t = lastmillis-lastaction;
         if(t<0 || t>20000) return;
-        if(t>(r-1)*100) { anim = ANIM_DEAD|ANIM_LOOP; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t/16.0f; } }
+        if(t>500) { anim = ANIM_DEAD|ANIM_LOOP; if(t>1600) { t -= 1600; mz -= t*t/10000000000.0f*t/16.0f; } }
         if(mz<-1000) return;
     }
     else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) anim = ANIM_EDIT|ANIM_LOOP;
@@ -626,8 +625,9 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
         else if(d->strafe) anim |= ((d->strafe>0 ? ANIM_LEFT : ANIM_RIGHT)|ANIM_LOOP)<<ANIM_SECONDARY;
         else if(d->move<0) anim |= (ANIM_BACKWARD|ANIM_LOOP)<<ANIM_SECONDARY;
 
-        if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) { anim >>= ANIM_SECONDARY; anim |= (ANIM_IDLE|ANIM_LOOP)<<ANIM_SECONDARY; }
+        if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) anim >>= ANIM_SECONDARY;
     }
+    if(!((anim>>ANIM_SECONDARY)&ANIM_INDEX)) anim |= (ANIM_IDLE|ANIM_LOOP)<<ANIM_SECONDARY;
     int flags = MDL_CULL_VFC | MDL_CULL_OCCLUDED;
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
