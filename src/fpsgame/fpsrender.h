@@ -5,17 +5,41 @@ struct fpsrender
 
     fpsrender(fpsclient &_cl) : cl(_cl) {}
 
+    vector<fpsent *> bestplayers;
+    vector<char *> bestteams;
+    
     void renderplayer(fpsent *d, const char *mdlname)
     {
 //      static const char *vweps[] = {NULL, "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
         static const char *vweps[] = {NULL, "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing"};
         const char *vwepname = d->gunselect<=GUN_PISTOL ? vweps[d->gunselect] : NULL;
-        int attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT;
-        renderclient(d, mdlname, vwepname, attack, cl.ws.reloadtime(d->gunselect)+50, d->lastaction, d->lastpain);
+        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = cl.ws.reloadtime(d->gunselect)+50;
+        if(cl.intermission && d->state!=CS_DEAD)
+        {
+            lastaction = cl.lastmillis;
+            attack = ANIM_LOSE|ANIM_LOOP;
+            delay = 1000;
+            int gamemode = cl.gamemode;
+            if(m_teammode) loopv(bestteams) if(!strcmp(bestteams[i], d->team)) { attack = ANIM_WIN|ANIM_LOOP; break; }
+            else if(bestplayers.find(d)>=0) attack = ANIM_WIN|ANIM_LOOP;
+        }
+        else if(d->state==CS_ALIVE && cl.lastmillis-d->lasttaunt<1000 && cl.lastmillis-d->lastaction>delay)
+        {
+            lastaction = d->lasttaunt;
+            attack = ANIM_TAUNT;
+            delay = 1000;
+        }
+        renderclient(d, mdlname, vwepname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
     }
 
     void rendergame(int gamemode)
     {
+        if(cl.intermission)
+        {
+            if(m_teammode) { bestteams.setsize(0); cl.sb.bestteams(bestteams); }
+            else { bestplayers.setsize(0); cl.sb.bestplayers(bestplayers); }
+        }
+
         startmodelbatches();
 
         fpsent *d;

@@ -46,10 +46,56 @@ struct scoreboard : g3d_callback
         return strcmp((*a)->name, (*b)->name);
     }
 
+    void sortplayers(vector<fpsent *> &sbplayers)
+    {
+        loopi(cl.numdynents())
+        {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(o && o->type!=ENT_AI) sbplayers.add(o);
+        }
+
+        sbplayers.sort(playersort);
+    }
+
+    void bestplayers(vector<fpsent *> &best)
+    {
+        sortplayers(best);
+        while(best.length()>1 && best.last()->frags < best[0]->frags) best.drop();
+    }
+
+    void sortteams(vector<teamscore> &teamscores)
+    {
+        int gamemode = cl.gamemode;
+        if(m_capture)
+        {
+            loopv(cl.cpc.scores) teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
+        }
+        loopi(cl.numdynents())
+        {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(o && o->type!=ENT_AI)
+            {
+                teamscore *ts = NULL;
+                loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; }
+                if(!ts) teamscores.add(teamscore(o->team, m_capture ? 0 : o->frags));
+                else if(!m_capture) ts->score += o->frags;
+            }
+        }
+        teamscores.sort(teamscorecmp);
+    }
+
+    void bestteams(vector<char *> &best)
+    {
+        vector<teamscore> teamscores;
+        sortteams(teamscores);
+        while(teamscores.length()>1 && teamscores.last().score < teamscores[0].score) teamscores.drop();
+        loopv(teamscores) best.add(teamscores[i].team);
+    }
+
     void gui(g3d_gui &g, bool firstpass)
     {
         g.start(menustart, 0.04f, NULL, false);
-       
+   
         int gamemode = cl.gamemode;
         s_sprintfd(modemapstr)("%s: %s", fpsserver::modestr(gamemode), cl.getclientmap()[0] ? cl.getclientmap() : "[new map]");
         if((gamemode>1 || (gamemode==0 && multiplayer(false))) && cl.minremain >= 0)
@@ -66,37 +112,15 @@ struct scoreboard : g3d_callback
         else if(m_teammode) g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
         else g.text("frags\tpj\tping\tname", 0xFFFF80, "server");
 
-        vector<teamscore> teamscores;
         bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.player1->clientnum;
         
         vector<fpsent *> sbplayers;
-
-        loopi(cl.numdynents()) 
-        {
-            fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && o->type!=ENT_AI) sbplayers.add(o);
-        }
-        
-        sbplayers.sort(playersort);
-       
+        sortplayers(sbplayers);
+      
+        vector<teamscore> teamscores; 
         if(m_teammode)
         {
-            if(m_capture)
-            {
-                loopv(cl.cpc.scores) teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
-            }
-            loopi(cl.numdynents())
-            {
-                fpsent *o = (fpsent *)cl.iterdynents(i);
-                if(o && o->type!=ENT_AI)
-                {
-                    teamscore *ts = NULL;
-                    loopv(teamscores) if(!strcmp(teamscores[i].team, o->team)) { ts = &teamscores[i]; break; }
-                    if(!ts) teamscores.add(teamscore(o->team, m_capture ? 0 : o->frags));
-                    else if(!m_capture) ts->score += o->frags;
-                }
-            }
-            teamscores.sort(teamscorecmp);
+            sortteams(teamscores);
             vector<fpsent *> teamplayers;
             loopv(teamscores)
             {

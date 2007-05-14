@@ -53,6 +53,7 @@ struct fpsclient : igameclient
     {
         CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
         CCOMMAND(fpsclient, kill, "",  { self->selfdamage(self->player1->health+self->player1->armour, -1, self->player1); });
+        CCOMMAND(fpsclient, taunt, "", { self->taunt(); });
     }
 
     iclientcom      *getcom()  { return &cc; }
@@ -62,6 +63,13 @@ struct fpsclient : igameclient
     {
         if(multiplayer(false) && !m_mp(mode)) { conoutf("mode %d not supported in multiplayer", mode); return; }
         nextmode = mode;
+    }
+
+    void taunt()
+    {
+        if(player1->state!=CS_ALIVE) return;
+        if(lastmillis-player1->lasttaunt<1000) return;
+        player1->lasttaunt = lastmillis;
     }
 
     char *getclientmap() { return clientmap; }

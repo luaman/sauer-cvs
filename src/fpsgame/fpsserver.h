@@ -788,7 +788,7 @@ struct fpsserver : igameserver
 
     int welcomepacket(ucharbuf &p, int n)
     {
-        int hasmap = (gamemode==1 && clients.length()) || (smapname[0] && (clients.length() || !mapreload));
+        int hasmap = (gamemode==1 && clients.length()) || (smapname[0] && (clients.length() || minremain>=0));
         putint(p, SV_INITS2C);
         putint(p, n);
         putint(p, PROTOCOL_VERSION);

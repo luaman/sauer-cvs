@@ -48,6 +48,7 @@ struct fpsent : dynent
     int gunselect, gunwait;
     int lastaction, lastattackgun;
     bool attacking;
+    int lasttaunt;
     int ammo[NUMGUNS];
     int superdamage;
     int frags, deaths, totaldamage, totalshots;
@@ -68,6 +69,7 @@ struct fpsent : dynent
         quadmillis = gunwait = lastaction = 0;
         lastattackgun = gunselect = GUN_PISTOL;
         attacking = false;
+        lasttaunt = 0;
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
         superdamage = 0;
