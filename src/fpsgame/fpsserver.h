@@ -79,8 +79,7 @@ struct fpsserver : igameserver
 
     string serverdesc;
     string smapname;
-    int interm, minremain, mapend;
-    bool mapreload;
+    int interm, minremain, mapend, mapreload;
     int lastsec;
     enet_uint32 lastsend;
     int mastermode, mastermask;
@@ -98,7 +97,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(false), lastsec(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(0), lastsec(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); } 
@@ -268,7 +267,7 @@ struct fpsserver : igameserver
 
     void changemap(const char *s, int mode)
     {
-        mapreload = false;
+        mapreload = 0;
         gamemode = mode;
         minremain = m_teammode ? 15 : 10;
         mapend = lastsec+minremain*60;
@@ -362,10 +361,10 @@ struct fpsserver : igameserver
                 sendf(-1, 1, "risi", SV_MAPCHANGE, best->map, best->mode);
                 changemap(best->map, best->mode); 
             }
-            else if(clients.length()) 
+            else
             {
-                mapreload = true;
-                sendf(-1, 1, "ri", SV_MAPRELOAD);
+                mapreload = lastsec;
+                if(clients.length()) sendf(-1, 1, "ri", SV_MAPRELOAD);
             }
         }
     }
@@ -832,7 +831,7 @@ struct fpsserver : igameserver
         if(!minremain)
         {
             interm = lastsec+10;
-            mapend = lastsec+1000;
+            mapend = lastsec+60;
         }
         if(minremain>=0)
         {
