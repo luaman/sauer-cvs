@@ -110,10 +110,76 @@ static bool emit_particles()
     return emit;
 }
 
+
 static Texture *parttexs[10];
+
+static GLuint hemispherelist;
+
+//non-standard texture coord generation for a hemisphere
+static void hemisphere(int hres, int vres) 
+{
+	const int nVertices = hres*vres+1;
+	const int nFaces = (2*vres-1)*hres;	
+	GLfloat *vertices = new GLfloat[nVertices*5];
+	GLuint *indices = new GLuint[3*nFaces];
+	int p = 0;
+    loopi(vres+1) 
+    {
+        float elevation = 0.5*M_PI*float(i)/vres;
+        float z = sin(elevation);
+        float r = cos(elevation);
+        loopj(hres) 
+        {
+            float azimuth = 2.0*M_PI*float(j)/hres;
+            float x = r*cos(azimuth);
+            float y = r*sin(azimuth);
+            vertices[p++] = x;
+			vertices[p++] = y;
+            vertices[p++] = z;
+            vertices[p++] = 0.5*(1.0+x);  //circular projection onto texture (i.e. corners are lost)
+            vertices[p++] = 0.5*(1.0+y);
+            if(i == vres) break; //only need one point at the pole
+		}
+	}
+	p = 0;
+    loopi(vres) 
+    {
+        bool pole = (i == (vres-1));
+        loopj(hres) 
+        {
+            indices[p++] = hres*i + j;
+            indices[p++] = hres*i + (j+1)%hres;
+            indices[p++] = hres*(i+1) + ((pole)?0:((j+1)%hres));
+            if(!pole)
+            {
+                indices[p++] = hres*i + j;
+                indices[p++] = hres*(i+1) + (j+1)%hres;
+                indices[p++] = hres*(i+1) + j;
+            }
+        }
+    }
+    glBegin(GL_TRIANGLES);
+    loopi(nFaces) 
+    {
+        int a = indices[i*3]*5;
+        int b = indices[i*3+1]*5;
+        int c = indices[i*3+2]*5;
+        glTexCoord2fv(vertices+a+3); glVertex3fv(vertices+a);
+        glTexCoord2fv(vertices+b+3); glVertex3fv(vertices+b);
+        glTexCoord2fv(vertices+c+3); glVertex3fv(vertices+c);
+    }
+    glEnd();
+    delete[] indices;
+    delete[] vertices;
+}
 
 void particleinit()
 {
+    hemispherelist = glGenLists(1);	 
+    glNewList(hemispherelist, GL_COMPILE);	 
+    hemisphere(18,6);
+    glEndList();
+    
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
     parttexs[2] = textureload("data/martin/smoke.png");
@@ -121,7 +187,7 @@ void particleinit()
     parttexs[4] = textureload("data/martin/ball3.png");
     parttexs[5] = textureload("data/flare.jpg");
     parttexs[6] = textureload("data/martin/spark.png");
-    parttexs[7] = textureload("data/fire_exp.png");    
+    parttexs[7] = textureload("data/explosion.jpg");   
     parttexs[8] = textureload("data/blood.png");
     parttexs[9] = textureload("data/lensflares.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
@@ -191,7 +257,7 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f }, // 20 METER BLUE vs. RED, SMALL, NON-MOVING
     { 0,          137, 118, 97, 20,   2, 0.6f }, // greyish-brown:   small  slowly sinking smoke trail
     {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f }, // red explosion fireball
-    {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f }, // orange explosion fireball 
+    {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f }, // orange explosion fireball
     { PT_ENT,     137, 118, 97, -20, 2,  2.4f }, // greyish-brown:   big  slowly rising smoke
     { 0,          118, 97, 137,-15,  2,  2.4f }, // greyish-brown:   big  fast rising smoke          
     { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f }, // water  
@@ -306,41 +372,39 @@ void render_particles(int time)
                 glRotatef(camera1->pitch-90, 1, 0, 0);
                    
                 if(type==PT_FIREBALL)
-                {                
+                {
                     float pmax = p->val;
                     float psize = pt.sz + pmax * float(ts)/p->fade;
                     float size = psize/pmax;
                     
-                    glScalef(-psize, psize, -psize);
-                    glColor4ub(pt.r, pt.g, pt.b, blend);  
+                    float scale = (o.dist(camera1->o) > psize)?psize:-psize; //if within explosion draw back face 
+                    glScalef(-scale, scale, -scale);
+                    glColor4ub(pt.r, pt.g, pt.b, blend);
                     
-                    int rands = (int)p;
-                    glBegin(GL_QUADS);
-                    loopj(6) 
+                    if(renderpath==R_FIXEDFUNCTION)
+                        glRotatef(lastmillis/5.0f, 0, 0, 1);
+                    else
                     {
-                        vec q;
-                        q.z = float(j)/5.0;
-                        float r = 1.0 - q.z;
-                        
-                        int n = 9 - (8*j)/5; //i.e [9, 8, 6, 5, 3, 1] = 32quads
-                        loopk(n) 
-                        {
-                            float a = j*2.37+float(k)/n*PI2;
-                            q.x = r*cos(a);
-                            q.y = r*sin(a);
-                            float s = 0.3 + detrnd(rands++, 100)/200.0; //randomish size
-            
-                            float ra = float(lastmillis)/((j*381 + k*73)%1000 + 200); //randomish rotation rate
-                            float rx = s*cos(ra);
-                            float ry = s*sin(ra);
-                            
-                            glTexCoord2f(0.0, 1.0); glVertex3f(q.x-ry, q.y+rx, q.z);
-                            glTexCoord2f(1.0, 1.0); glVertex3f(q.x-rx, q.y-ry, q.z);
-                            glTexCoord2f(1.0, 0.0); glVertex3f(q.x+ry, q.y-rx, q.z);
-                            glTexCoord2f(0.0, 0.0); glVertex3f(q.x+rx, q.y+ry, q.z);
-                        }
+                        static Shader *explshader = NULL;
+                        if(!explshader) explshader = lookupshaderbyname("explosion");
+                        explshader->set();
+                        setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
+                        setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
+                        glDisable(GL_FOG);
                     }
-                    glEnd();
+                    
+                    glCallList(hemispherelist);
+                    
+                    if(renderpath==R_FIXEDFUNCTION)
+                    {
+                        glScalef(0.8f, 0.8f, 0.8f);
+                        glCallList(hemispherelist);
+                    } 
+                    else
+                    {
+                        glEnable(GL_FOG);
+                        foggedshader->set();	 
+                    } 
                 } 
                 else 
                 {
