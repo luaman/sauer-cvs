@@ -137,7 +137,8 @@ struct vtxarray
     vertex *vbuf;           // vertex buffer
     vtxarray *next, *rnext; // linked list of visible VOBs
     int allocsize;          // size of allocated memory for this va
-    int verts, explicitsky, skyarea, curlod, distance;
+    int verts, explicitsky, curlod, distance;
+    double skyarea;
     GLuint vbufGL;            // VBO buffer ID
     int x, y, z, size;      // location and size of cube.
     ivec min, max;          // BB

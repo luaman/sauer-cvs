@@ -144,7 +144,8 @@ void drawskybox(int farplane, bool limited, float zreflect)
 
 bool limitsky()
 {
-    extern int ati_skybox_bug, explicitsky, skyarea;
-    return explicitsky || (!ati_skybox_bug && sparklyfix && skyarea*10 / (float(hdr.worldsize>>4)*float(hdr.worldsize>>4)*6) < 9);
+    extern int ati_skybox_bug, explicitsky;
+    extern double skyarea;
+    return explicitsky || (!ati_skybox_bug && sparklyfix && skyarea / (double(hdr.worldsize)*double(hdr.worldsize)*6) < 0.9);
 }
 

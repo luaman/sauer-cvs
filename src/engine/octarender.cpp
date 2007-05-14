@@ -433,7 +433,8 @@ struct lodcollect
     }
 } l0, l1;
 
-int explicitsky = 0, skyarea = 0;
+int explicitsky = 0;
+double skyarea = 0;
 
 VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize);
 VAR(loddistance, 0, 2000, 100000);
@@ -876,7 +877,8 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 {
     ASSERT(size <= VVEC_INT_MASK+1);
 
-    explicitsky = skyarea = 0;
+    explicitsky = 0;
+    skyarea = 0;
 
     rendercube(c, cx, cy, cz, size, csi);
 
@@ -896,7 +898,8 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
     verts.setsizenodelete(0);
     vamms.setsizenodelete(0);
     grasstris.setsizenodelete(0);
-    explicitsky = skyarea = 0;
+    explicitsky = 0;
+    skyarea = 0;
     vh.clear(); 
     l0.clear();
     l1.clear();
