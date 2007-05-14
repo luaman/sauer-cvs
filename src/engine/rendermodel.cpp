@@ -77,6 +77,14 @@ void mdlglow(int *percent)
 
 COMMAND(mdlglow, "i");
 
+void mdlspin(float *rate)
+{
+    checkmdl;
+    loadingmodel->spin = *rate;
+}
+
+COMMAND(mdlspin, "f");
+
 void mdlshader(char *shader)
 {
     checkmdl;

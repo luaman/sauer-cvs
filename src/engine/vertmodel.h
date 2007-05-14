@@ -858,6 +858,8 @@ struct vertmodel : model
 
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &color, const vec &dir)
     {
+        yaw += spin*lastmillis/1000.0f;
+
         vec rdir, campos;
         if(!(anim&ANIM_NOSKIN))
         {
