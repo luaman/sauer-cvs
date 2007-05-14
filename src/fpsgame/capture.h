@@ -361,6 +361,7 @@ struct captureclient : capturestate
     void setscore(const char *team, int total)
     {
         findscore(team).total = total;
+        if(total>=10000) conoutf("team %s captured all bases", team);
     }
 
     int closesttoenemy(const char *team, bool noattacked = false)
@@ -580,8 +581,8 @@ struct captureserv : capturestate
         }
 
         if(!lastteam) return;
-        s_sprintfd(msg)("team %s captured all bases", lastteam); 
-        sv.sendservmsg(msg);
+        findscore(lastteam).total = 10000;
+        sendf(-1, 1, "risi", SV_TEAMSCORE, lastteam, 10000);
         sv.startintermission(); 
     }
 };

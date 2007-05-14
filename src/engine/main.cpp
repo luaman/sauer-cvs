@@ -380,6 +380,16 @@ int main(int argc, char **argv)
     #if defined(WIN32) || defined(__APPLE__)
     resize = 0;
     #endif
+    SDL_Rect **modes = SDL_ListModes(NULL, SDL_OPENGL|resize|fs);
+    if(modes && modes!=(SDL_Rect **)-1)
+    {
+        bool hasmode = false;
+        for(int i = 0; modes[i]; i++)
+        {
+            if(scr_w <= modes[i]->w && scr_h <= modes[i]->h) { hasmode = true; break; }
+        }
+        if(!hasmode) { scr_w = modes[0]->w; scr_h = modes[0]->h; }
+    }
     screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|resize|fs);
     if(!screen) 
     {

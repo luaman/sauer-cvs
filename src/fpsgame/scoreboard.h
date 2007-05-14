@@ -127,7 +127,15 @@ struct scoreboard : g3d_callback
             else
             {
                 s_sprintfd(lag)("%d", o->plag);
-                s_sprintf(line)("%d\t%s\t%d\t%s%s", m_capture ? cl.cpc.findscore(o->team).total : o->frags, o->state==CS_LAGGED ? "LAG" : lag, o->ping, team, name);
+                string score;
+                if(m_capture) 
+                { 
+                    int total = cl.cpc.findscore(o->team).total; 
+                    if(total>=10000) s_strcpy(score, "WIN");
+                    else s_sprintf(score)("%d", total);
+                }
+                else s_sprintf(score)("%d", o->frags);
+                s_sprintf(line)("%s\t%s\t%d\t%s%s", score, o->state==CS_LAGGED ? "LAG" : lag, o->ping, team, name);
             }
             g.text(line, 0xFFFFDD, "ogro");
         }
