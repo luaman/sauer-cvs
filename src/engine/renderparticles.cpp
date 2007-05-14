@@ -320,7 +320,7 @@ void render_particles(int time)
                     {
                         vec q;
                         q.z = float(j)/5.0;
-                        float r = 1.0 - q.z*(1.0 - 0.5*float(ts)/p->fade); //form a smoke ring near end
+                        float r = 1.0 - q.z;
                         
                         int n = 9 - (8*j)/5; //i.e [9, 8, 6, 5, 3, 1] = 32quads
                         loopk(n) 
