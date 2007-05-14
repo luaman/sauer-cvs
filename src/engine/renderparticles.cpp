@@ -111,24 +111,9 @@ static bool emit_particles()
 }
 
 static Texture *parttexs[10];
-static GLuint spherelist = 0;
-static GLUquadricObj *spherequadric = NULL;
-
-extern int intel_quadric_bug;
 
 void particleinit()
-{    
-    spherequadric = gluNewQuadric();
-    if(!spherequadric) fatal("glu sphere");
-    gluQuadricDrawStyle(spherequadric, GLU_FILL);
-    gluQuadricOrientation(spherequadric, GLU_OUTSIDE);
-    gluQuadricTexture(spherequadric, GL_TRUE);
-    spherelist = glGenLists(1);
-    glNewList(spherelist, GL_COMPILE);
-    gluSphere(spherequadric, 1, 12, 6);
-    glEndList();
-    if(!intel_quadric_bug) { gluDeleteQuadric(spherequadric); spherequadric = NULL; }
-
+{
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
     parttexs[2] = textureload("data/martin/smoke.png");
@@ -136,7 +121,7 @@ void particleinit()
     parttexs[4] = textureload("data/martin/ball3.png");
     parttexs[5] = textureload("data/flare.jpg");
     parttexs[6] = textureload("data/martin/spark.png");
-    parttexs[7] = textureload("data/explosion.jpg");
+    parttexs[7] = textureload("data/fire_exp.png");    
     parttexs[8] = textureload("data/blood.png");
     parttexs[9] = textureload("data/lensflares.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
@@ -317,6 +302,8 @@ void render_particles(int time)
             {
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
+                glRotatef(camera1->yaw-180, 0, 0, 1);
+                glRotatef(camera1->pitch-90, 1, 0, 0);
                    
                 if(type==PT_FIREBALL)
                 {                
@@ -324,36 +311,40 @@ void render_particles(int time)
                     float psize = pt.sz + pmax * float(ts)/p->fade;
                     float size = psize/pmax;
                     
-                    glScalef(-psize, psize, -psize);                    
-                    glRotatef(lastmillis/5.0f, 1, 1, 1);
+                    glScalef(-psize, psize, -psize);
                     glColor4ub(pt.r, pt.g, pt.b, blend);  
-                    if(renderpath!=R_FIXEDFUNCTION)
+                    
+                    int rands = (int)p;
+                    glBegin(GL_QUADS);
+                    loopj(6) 
                     {
-                        static Shader *explshader = NULL;
-                        if(!explshader) explshader = lookupshaderbyname("explosion");
-                        explshader->set();                        
-
-                        setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
-                        setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
+                        vec q;
+                        q.z = float(j)/5.0;
+                        float r = 1.0 - q.z*(1.0 - 0.5*float(ts)/p->fade); //form a smoke ring near end
+                        
+                        int n = 9 - (8*j)/5; //i.e [9, 8, 6, 5, 3, 1] = 32quads
+                        loopk(n) 
+                        {
+                            float a = j*2.37+float(k)/n*PI2;
+                            q.x = r*cos(a);
+                            q.y = r*sin(a);
+                            float s = 0.3 + detrnd(rands++, 100)/200.0; //randomish size
+            
+                            float ra = float(lastmillis)/((j*381 + k*73)%1000 + 200); //randomish rotation rate
+                            float rx = s*cos(ra);
+                            float ry = s*sin(ra);
+                            
+                            glTexCoord2f(0.0, 1.0); glVertex3f(q.x-ry, q.y+rx, q.z);
+                            glTexCoord2f(1.0, 1.0); glVertex3f(q.x-rx, q.y-ry, q.z);
+                            glTexCoord2f(1.0, 0.0); glVertex3f(q.x+ry, q.y-rx, q.z);
+                            glTexCoord2f(0.0, 0.0); glVertex3f(q.x+rx, q.y+ry, q.z);
+                        }
                     }
-                    glDisable(GL_FOG);
-                    if(intel_quadric_bug && spherequadric) gluSphere(spherequadric, 1, 12, 6);
-                    else glCallList(spherelist);
-                    
-                    if(renderpath!=R_FIXEDFUNCTION) setlocalparamf("center", SHPARAM_VERTEX, 0, o.z, o.x, o.y);
-                    glScalef(0.8f, 0.8f, 0.8f);
-                    if(intel_quadric_bug && spherequadric) gluSphere(spherequadric, 1, 12, 6);
-                    else glCallList(spherelist);
-                    
-                    xtraverts += 12*6*2;
-                    foggedshader->set();
-                    glEnable(GL_FOG);
+                    glEnd();
                 } 
                 else 
                 {
                     float scale = pt.sz/80.0f;
-                    glRotatef(camera1->yaw-180, 0, 0, 1);
-                    glRotatef(camera1->pitch-90, 1, 0, 0);
                     glScalef(-scale, scale, -scale);
                     if(type==PT_METER || type==PT_METERVS)
                     {
