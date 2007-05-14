@@ -602,11 +602,12 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float mz = d->o.z-d->eyeheight-sink;     
-    int basetime = 0;
+    int varseed = (int)(size_t)d, basetime = 0;
     if(d->state==CS_DEAD)
     {
         anim = ANIM_DYING;
         basetime = lastaction;
+        varseed += lastaction;
         int t = lastmillis-lastaction;
         if(t<0 || t>20000) return;
         if(t>500) { anim = ANIM_DEAD|ANIM_LOOP; if(t>1600) { t -= 1600; mz -= t*t/10000000000.0f*t/16.0f; } }
@@ -616,8 +617,17 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     else if(d->state==CS_LAGGED)                            anim = ANIM_LAG|ANIM_LOOP;
     else
     {
-        if(lastmillis-lastpain<300) anim = ANIM_PAIN|ANIM_LOOP;
-        else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<attackdelay)) { anim = attack<0 ? -attack : attack; basetime = lastaction; }
+        if(lastmillis-lastpain<300) 
+        { 
+            anim = ANIM_PAIN|ANIM_LOOP; 
+            varseed += lastpain; 
+        }
+        else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<attackdelay)) 
+        { 
+            anim = attack<0 ? -attack : attack; 
+            basetime = lastaction; 
+            varseed += lastaction;
+        }
 
         if(d->inwater && d->physstate<=PHYS_FALL) anim |= ((d->move || d->strafe || d->vel.z+d->gravity.z>0 ? ANIM_SWIM : ANIM_SINK)|ANIM_LOOP)<<ANIM_SECONDARY;
         else if(d->timeinair>100) anim |= (ANIM_JUMP|ANIM_END)<<ANIM_SECONDARY;
@@ -632,7 +642,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
     vec color, dir;
-    rendermodel(color, dir, mdlname,  anim, (int)(size_t)d, 0, d->o.x, d->o.y, mz, testanims && d==player ? 0 : d->yaw+90, d->pitch/4, 0, basetime, d, flags, vwepname);
+    rendermodel(color, dir, mdlname,  anim, varseed, 0, d->o.x, d->o.y, mz, testanims && d==player ? 0 : d->yaw+90, d->pitch/4, 0, basetime, d, flags, vwepname);
 }
 
 void setbbfrommodel(dynent *d, char *mdl)
