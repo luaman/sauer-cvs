@@ -184,48 +184,21 @@ void setprojtexmatrix(Reflection &ref, bool init = true)
 
 void setuprefractTMUs()
 {
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB,  GL_INTERPOLATE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB,  GL_CONSTANT_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB,  GL_TEXTURE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB,  GL_CONSTANT_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
-    
+    setuptmu(0, "K , T @ Ka");
+
     glActiveTexture_(GL_TEXTURE1_ARB);
     glEnable(GL_TEXTURE_2D);
 
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB,  GL_INTERPOLATE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB,  GL_PREVIOUS_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB,  GL_TEXTURE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB,  GL_PRIMARY_COLOR_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
-   
+    setuptmu(1, "P , T @ C~a");
+
     glActiveTexture_(GL_TEXTURE0_ARB);
     glMatrixMode(GL_TEXTURE);
 }
 
 void setupreflectTMUs()
 {
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB,  GL_INTERPOLATE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB,  GL_TEXTURE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB,  GL_CONSTANT_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB,  GL_PRIMARY_COLOR_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
+    setuptmu(0, "T , K @ Ca", "Ka * P~a");
 
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB,  GL_MODULATE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB,  GL_CONSTANT_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB,  GL_PREVIOUS_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_ONE_MINUS_SRC_ALPHA);
-    
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_SRC_ALPHA);
@@ -235,22 +208,18 @@ void setupreflectTMUs()
 
 void cleanupwaterTMUs(bool refract)
 {
-    extern void setupTMU();
-    setupTMU();
+    resettmu(0);
 
     if(refract)
     {
         glActiveTexture_(GL_TEXTURE1_ARB);
-        setupTMU();
+        resettmu(1);
         glLoadIdentity();
         glDisable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
     else
     {
-        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
-        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
-
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     }

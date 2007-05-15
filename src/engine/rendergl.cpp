@@ -278,12 +278,10 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         //conoutf("Using GL_EXT_texture_compression_s3tc extension.");
     }
 
-    extern int maxtexsize;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
-
     if(fsaa) glEnable(GL_MULTISAMPLE);
 
-    
+    inittmus();
+
     exec("data/stdshader.cfg");
     defaultshader = lookupshaderbyname("default");
     notextureshader = lookupshaderbyname("notexture");

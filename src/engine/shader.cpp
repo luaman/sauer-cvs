@@ -791,6 +791,7 @@ void inittmus()
 {
     extern int maxtexsize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
+
     glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&maxtmus);
     maxtmus = max(1, min(4, maxtmus));
     loopi(maxtmus)
@@ -798,7 +799,6 @@ void inittmus()
         glActiveTexture_(GL_TEXTURE0_ARB+i);
         resettmu(i);
     }
-
     glActiveTexture_(GL_TEXTURE0_ARB);
 }
 

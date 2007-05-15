@@ -180,16 +180,6 @@ void setorigin(vtxarray *va)
     }
 }
 
-void setupTMU()
-{
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,  GL_MODULATE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT,  GL_PREVIOUS_EXT);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT,  GL_TEXTURE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, GL_SRC_COLOR);
-}
-
 ///////// occlusion queries /////////////
 
 #define MAXQUERY 2048
@@ -998,15 +988,14 @@ void setupTMUs()
 
     if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
 
-    setupTMU();
+    setuptmu(0, "= T");
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+    setuptmu(1, "P * T x 2");
 
     glEnable(GL_TEXTURE_2D);
-    setupTMU();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     glMatrixMode(GL_TEXTURE);
@@ -1045,7 +1034,7 @@ void cleanupTMUs()
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+    resettmu(1);
 
     glDisable(GL_TEXTURE_2D);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1053,6 +1042,8 @@ void cleanupTMUs()
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
     glEnable(GL_TEXTURE_2D);
+
+    resettmu(0);
 
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);

@@ -87,7 +87,6 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     }
 #ifdef __APPLE__
 #undef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
