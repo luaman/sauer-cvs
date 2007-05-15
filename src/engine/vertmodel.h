@@ -871,12 +871,7 @@ struct vertmodel : model
 
     bool envmapped()
     {
-        if((renderpath==R_FIXEDFUNCTION && maxtmus<3) || !hasCM) return false;
-        loopv(parts)
-        {
-            part *p = parts[i];
-            loopvj(p->meshes) if(p->meshes[j]->envmapmax>0) return true;
-        }
+        if(hasCM) loopv(parts) if(parts[i]->envmapped()) return true;
         return false;
     }
 
