@@ -496,7 +496,7 @@ SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
 
 static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
-    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && (maxtmus<3 || t.type!=TEX_GLOW) && !forceload) { t.t = crosshair; return; }
+    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && t.type!=TEX_GLOW && !forceload) { t.t = crosshair; return; }
     vector<char> key; 
     addname(key, s, t);
     switch(t.type)
@@ -504,7 +504,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
         case TEX_DIFFUSE:
             if(renderpath==R_FIXEDFUNCTION)
             {
-                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_NORMAL)|(maxtmus<3 ? 1<<TEX_GLOW : 0), i))>=0;)
+                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_NORMAL), i))>=0;)
                 {
                     s.sts[i].combined = index;
                     addname(key, s, s.sts[i]);

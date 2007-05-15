@@ -710,8 +710,30 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     endquery(query);
 }
 
-void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
+enum
 {
+    RENDERPASS_COLOR = 0,
+    RENDERPASS_Z,
+    RENDERPASS_GLOW
+};
+
+void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPASS_COLOR)
+{
+    if(pass==RENDERPASS_GLOW)
+    {
+        bool noglow = true;
+        loopi(lod.texs)
+        {
+            Slot &slot = lookuptexture(lod.eslist[i].texture);
+            loopvj(slot.sts)
+            {
+                Slot::Tex &t = slot.sts[j];
+                if(t.type==TEX_GLOW && t.combined<0) noglow = false;
+            }
+        }
+        if(noglow) return;
+    }
+
     setorigin(va);
     bool vbufchanged = true;
     if(hasVBO)
@@ -731,7 +753,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
 
-    if(zfill)
+    if(pass==RENDERPASS_Z)
     {
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); }
         extern int apple_glsldepth_bug;
@@ -769,7 +791,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         return;
     }
 
-    if(refracting)
+    if(refracting && renderpath!=R_FIXEDFUNCTION)
     {
         float fogplane = refracting - (va->z & ~VVEC_INT_MASK);
         if(cur.fogplane!=fogplane)
@@ -780,8 +802,10 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
     }
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
 
-    if(refracting ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED)
+    if(refracting && renderpath!=R_FIXEDFUNCTION ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED)
     {
+        if(pass==RENDERPASS_GLOW) return;
+
         static Shader *fogshader = NULL;
         if(!fogshader) fogshader = lookupshaderbyname("fogworld");
         fogshader->set();
@@ -798,6 +822,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             glActiveTexture_(GL_TEXTURE0_ARB);
             glClientActiveTexture_(GL_TEXTURE0_ARB);
         }
+
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
         vtris += lod.tris;
@@ -810,12 +835,15 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         cur.texture = true;
         if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
         glEnable(GL_TEXTURE_2D);
-        glActiveTexture_(GL_TEXTURE1_ARB);
-        glClientActiveTexture_(GL_TEXTURE1_ARB);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glEnable(GL_TEXTURE_2D);
-        glActiveTexture_(GL_TEXTURE0_ARB);
-        glClientActiveTexture_(GL_TEXTURE0_ARB);
+        if(pass==RENDERPASS_COLOR)
+        {
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glClientActiveTexture_(GL_TEXTURE1_ARB);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glEnable(GL_TEXTURE_2D);
+            glActiveTexture_(GL_TEXTURE0_ARB);
+            glClientActiveTexture_(GL_TEXTURE0_ARB);
+        }
         vbufchanged = true;
     }
 
@@ -825,7 +853,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
     }
 
-    if(vbufchanged)
+    if(vbufchanged && pass==RENDERPASS_COLOR)
     {
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_SHORT, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
@@ -882,7 +910,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             }
             glActiveTexture_(GL_TEXTURE0_ARB);
         }
-        if(curlm!=lastlm)
+        if(curlm!=lastlm && pass==RENDERPASS_COLOR)
         {
             glActiveTexture_(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, curlm);
@@ -891,23 +919,27 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         }
         if(&slot!=lastslot)
         {
-            glBindTexture(GL_TEXTURE_2D, tex->gl);
+            if(pass==RENDERPASS_COLOR) glBindTexture(GL_TEXTURE_2D, tex->gl);
             s->set(&slot);
             if(renderpath==R_FIXEDFUNCTION)
             {
                 bool noglow = true;
-                loopvj(slot.sts)
+                if(pass!=RENDERPASS_COLOR || maxtmus>=3) loopvj(slot.sts)
                 {
                     Slot::Tex &t = slot.sts[j];
                     if(t.type==TEX_GLOW && t.combined<0)
                     {
-                        glActiveTexture_(GL_TEXTURE2_ARB);
-                        if(!glow) { glEnable(GL_TEXTURE_2D); glow = true; }
-                        noglow = false;
+                        if(pass==RENDERPASS_COLOR)
+                        {
+                            glActiveTexture_(GL_TEXTURE2_ARB);
+                            if(!glow) { glEnable(GL_TEXTURE_2D); glow = true; }
+                        }
                         glBindTexture(GL_TEXTURE_2D, t.t->gl);
+                        noglow = false;
                     }
                 }
-                if(glow)
+                if(pass==RENDERPASS_GLOW && noglow) continue;
+                else if(glow)
                 {
                     if(noglow) { glActiveTexture_(GL_TEXTURE2_ARB); glDisable(GL_TEXTURE_2D); }
                     glActiveTexture_(GL_TEXTURE0_ARB);
@@ -1066,9 +1098,9 @@ void setupTMUs()
     glColor4f(1, 1, 1, 1);
 }
 
-void cleanupTMUs()
+void cleanupTMU0()
 {
-    if(hasVBO) 
+    if(hasVBO)
     {
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
@@ -1078,8 +1110,20 @@ void cleanupTMUs()
     {
         glDisableClientState(GL_COLOR_ARRAY);
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); }
+        glActiveTexture_(GL_TEXTURE0_ARB);
     }
 
+    glEnable(GL_TEXTURE_2D);
+
+    resettmu(0);
+
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
+}
+
+void cleanupTMU1()
+{
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
 
@@ -1103,18 +1147,19 @@ void cleanupTMUs()
 
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
-    glEnable(GL_TEXTURE_2D);
+}
 
-    resettmu(0);
-
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
+void cleanupTMUs()
+{
+    cleanupTMU0();
+    cleanupTMU1();
 }
 
 #ifdef SHOWVA
 VAR(showva, 0, 0, 1);
 #endif
+
+VAR(glowpass, 0, 1, 1);
 
 void rendergeom()
 {
@@ -1165,10 +1210,9 @@ void rendergeom()
             va->occluded = OCCLUDE_NOTHING;
         }
 
-
         if(va->query) startquery(va->query);
 
-        renderva(cur, va, lod, zpass!=0);
+        renderva(cur, va, lod, zpass ? RENDERPASS_Z : RENDERPASS_COLOR);
 
         if(va->query) endquery(va->query);
     }
@@ -1212,13 +1256,39 @@ void rendergeom()
                 else glColor3f(1, 1, 1);
             }
 #endif
-            renderva(cur, va, lod);
+            renderva(cur, va, lod, RENDERPASS_COLOR);
         }
         glDepthFunc(GL_LESS);
     }
 
+    cleanupTMU1();
+
+    if(renderpath==R_FIXEDFUNCTION && maxtmus<3 && glowpass) // glow pass
+    {
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
+        GLfloat oldfogc[4];
+        glGetFloatv(GL_FOG_COLOR, oldfogc);
+        static GLfloat zerofog[4] = { 0, 0, 0, 1 };
+        glFogfv(GL_FOG_COLOR, zerofog);
+
+        cur.vbufGL = 0;
+        for(vtxarray *va = visibleva; va; va = va->next)
+        {
+            lodlevel &lod = va->curlod ? va->l1 : va->l0;
+            if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
+            if(refracting && renderpath!=R_FIXEDFUNCTION ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED) continue;
+            renderva(cur, va, lod, RENDERPASS_GLOW);
+        }
+
+        glFogfv(GL_FOG_COLOR, oldfogc);
+        glDisable(GL_BLEND);
+        glDepthFunc(GL_LESS);
+    }
+
     glPopMatrix();
-    cleanupTMUs();
+    cleanupTMU0();
 }
 
 void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc = true)
