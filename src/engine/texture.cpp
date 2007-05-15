@@ -67,26 +67,29 @@ void texmad(SDL_Surface *s, const vec &mul, const vec &add)
     }
 }
 
-SDL_Surface *texmask(SDL_Surface *s, int chan, int minval)
+SDL_Surface *texffmask(SDL_Surface *s, int minval)
 {
-    if(chan<0 || chan>=s->format->BytesPerPixel)
-    {
-        SDL_FreeSurface(s);
-        return NULL;
-    }
-    SDL_Surface *m = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, 8, 0, 0, 0, 0xFF);
-    if(!m) fatal("create surface");
-    uchar *dst = (uchar *)m->pixels, *src = (uchar *)s->pixels;
-    int passed = 0;
+    if(s->format->BytesPerPixel<3) { SDL_FreeSurface(s); return NULL; }
+    bool glow = false, envmap = true;
+    uchar *src = (uchar *)s->pixels;
     loopi(s->h*s->w)
     {
-        *dst = src[chan];
-        if(*dst>=minval) passed++;
-        dst++;
+        if(src[1]>minval) glow = true;
+        if(src[2]>minval) { glow = envmap = true; break; }
+        src += s->format->BytesPerPixel;
+    }
+    if(!glow && !envmap) { SDL_FreeSurface(s); return NULL; }
+    SDL_Surface *m = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, envmap ? 16 : 8, 0, 0, 0, 0);
+    if(!m) fatal("create surface");
+    uchar *dst = (uchar *)m->pixels;
+    src = (uchar *)s->pixels;
+    loopi(s->h*s->w)
+    {
+        *dst++ = src[1];
+        if(envmap) *dst++ = src[2];
         src += s->format->BytesPerPixel;
     }
     SDL_FreeSurface(s);
-    if(!passed) { SDL_FreeSurface(m); return NULL; }
     return m;
 }
 
@@ -238,7 +241,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         const char *cmd = &tname[1], *arg1 = strchr(cmd, ':'), *arg2 = arg1 ? strchr(arg1, ',') : NULL;
         if(!arg1) arg1 = strchr(cmd, '>');
         if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, parsevec(arg1+1), arg2 ? parsevec(arg2+1) : vec(0, 0, 0)); 
-        else if(!strncmp(cmd, "mask", arg1-cmd)) s = texmask(s, atoi(arg1+1), arg2 ? atoi(arg2+1) : 0);
+        else if(!strncmp(cmd, "ffmask", arg1-cmd)) s = texffmask(s, atoi(arg1+1));
     }
     return s;
 }

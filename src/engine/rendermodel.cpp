@@ -600,7 +600,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
     masks = crosshair;
     tryload(skin, skinpath, "", "skin");
     if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "", "masks"); }
-    else { tryload(masks, maskspath, "<mask:1,25>", "masks"); }
+    else { tryload(masks, maskspath, "<ffmask:25>", "masks"); }
 }
 
 // convenient function that covers the usual anims for players/monsters/npcs

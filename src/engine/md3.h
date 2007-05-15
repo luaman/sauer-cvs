@@ -233,7 +233,7 @@ void md3skin(char *objname, char *skin, char *masks, float *envmapmax, float *en
             m.skin = textureload(spath, false, true, false);
             if(*masks)
             {
-                s_sprintfd(mpath)("%s%s/%s", renderpath==R_FIXEDFUNCTION ? "<mask:1,25>" : "", md3dir, masks);
+                s_sprintfd(mpath)("%s%s/%s", renderpath==R_FIXEDFUNCTION ? "<ffmask:25>" : "", md3dir, masks);
                 m.masks = textureload(mpath, false, true, false);
                 m.envmapmax = *envmapmax;
                 m.envmapmin = *envmapmin;

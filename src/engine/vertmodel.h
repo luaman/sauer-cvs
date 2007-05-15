@@ -107,7 +107,7 @@ struct vertmodel : model
                     loopvk(vverts) // check if it's already added
                     {
                         vvert &w = vverts[k];
-                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && (renderpath==R_FIXEDFUNCTION || v.norm==w.norm)) { idxs.add((ushort)k); goto found; }
+                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && ((renderpath==R_FIXEDFUNCTION && (envmapmax<=0 || maxtmus<3)) || v.norm==w.norm)) { idxs.add((ushort)k); goto found; }
                     }
                     {
                         idxs.add(vverts.length());
@@ -188,7 +188,7 @@ struct vertmodel : model
             #define ip(p1, p2, t) (p1+t*(p2-p1))
             #define ip_v(p, c, t) ip(p##1[i].c, p##2[i].c, t)
             #define ip_v_ai(c) ip( ip_v(pvert, c, prev->t), ip_v(vert, c, cur.t), ai_t)
-            if(renderpath==R_FIXEDFUNCTION) loopi(numverts)
+            if(renderpath==R_FIXEDFUNCTION && (envmapmax<=0 || maxtmus<3)) loopi(numverts)
             {
                 vert &v = dynbuf[i];
                 if(prev) v.pos = vec(ip_v_ai(pos.x), ip_v_ai(pos.y), ip_v_ai(pos.z));
@@ -213,23 +213,24 @@ struct vertmodel : model
             #undef ip_v_ai
         }
 
-        void setupglow(bool masked)
+        void setuptmus(animstate &as, bool masked)
         {
             if(masked!=enableglow) lastskin = lastmasks = NULL;
             if(masked)
             {
                 vertmodel *m = owner->model;
-                if(!enableglow) setuptmu(0, "K , C @ T");
+                if(!enableglow) setuptmu(0, "K , C @ T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "Ca * Ta" : NULL);
                 int glowscale = m->glow>2 ? 4 : (m->glow > 1 ? 2 : 1);
                 float glow = m->glow/glowscale;
                 colortmu(0, glow, glow, glow);
-                glColor3f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale);
+                glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, 
+                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.5f*envmapmax + 0.5f*envmapmin : 1);
 
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 if(!enableglow)
                 {
                     glEnable(GL_TEXTURE_2D);
-                    setuptmu(1, "P * T");
+                    setuptmu(1, "P * T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "= Pa" : NULL);
                     if(laststatbuf && enabletc) owner->setupglowtc();
                 }
                 scaletmu(1, glowscale);
@@ -247,7 +248,7 @@ struct vertmodel : model
         void setshader(animstate &as, bool masked)
         {
             vertmodel *m = owner->model;
-            if(renderpath==R_FIXEDFUNCTION) setupglow(masked);
+            if(renderpath==R_FIXEDFUNCTION) setuptmus(as, masked);
             else if(m->shader) m->shader->set();
             else
             {
@@ -276,6 +277,7 @@ struct vertmodel : model
                 if(enablealphatest) { glDisable(GL_ALPHA_TEST); enablealphatest = false; }
                 if(enablealphablend) { glDisable(GL_BLEND); enablealphablend = false; }
                 if(enableglow) disableglow();
+                if(enableenvmap) disableenvmap();
                 return;
             }
             Texture *s = skin, *m = masks;
@@ -334,7 +336,20 @@ struct vertmodel : model
                 if(!enableenvmap || lastenvmaptex!=emtex)
                 {
                     glActiveTexture_(GL_TEXTURE2_ARB);
-                    if(!enableenvmap) { glEnable(GL_TEXTURE_CUBE_MAP_ARB); enableenvmap = true; }
+                    if(!enableenvmap) 
+                    { 
+                        glEnable(GL_TEXTURE_CUBE_MAP_ARB); 
+                        if(renderpath==R_FIXEDFUNCTION)
+                        {
+                            glTexGeni(GL_S,GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                            glTexGeni(GL_T,GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                            glTexGeni(GL_R,GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB); 
+                            glEnable(GL_TEXTURE_GEN_S);
+                            glEnable(GL_TEXTURE_GEN_T);
+                            glEnable(GL_TEXTURE_GEN_R);
+                        }
+                        enableenvmap = true; 
+                    }
                     if(lastenvmaptex!=emtex) { glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, emtex); lastenvmaptex = emtex; }
                     glActiveTexture_(GL_TEXTURE0_ARB);
                 }
@@ -343,7 +358,14 @@ struct vertmodel : model
             {
                 glActiveTexture_(GL_TEXTURE2_ARB);
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                if(renderpath==R_FIXEDFUNCTION)
+                {
+                    glDisable(GL_TEXTURE_GEN_S);
+                    glDisable(GL_TEXTURE_GEN_T);
+                    glDisable(GL_TEXTURE_GEN_R);
+                }
                 glActiveTexture_(GL_TEXTURE0_ARB);
+                enableenvmap = false;
             }
         }
 
@@ -365,6 +387,7 @@ struct vertmodel : model
             }
             else if(dynbuf)
             {
+                bool norms = renderpath!=R_FIXEDFUNCTION || (envmapmax>0 && maxtmus>=3);
                 if(isstat) glNewList(statlist = glGenLists(1), GL_COMPILE);
                 gendynverts(cur, prev, ai_t);
                 loopj(dynlen)
@@ -381,8 +404,8 @@ struct vertmodel : model
                     if(isstat || !(as.anim&ANIM_NOSKIN))
                     {
                         glTexCoord2f(tc.u, tc.v);
-                        if(renderpath!=R_FIXEDFUNCTION) glNormal3fv(v.norm.v);
-                        else if(enableglow) glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v); 
+                        if(norms) glNormal3fv(v.norm.v);
+                        if(enableglow) glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v); 
                     }
                     glVertex3fv(v.pos.v);
                 }
@@ -467,16 +490,22 @@ struct vertmodel : model
            }
         }
 
+        bool envmapped() 
+        { 
+            loopv(meshes) if(meshes[i]->envmapmax>0 && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3)) return true;
+            return false;
+        }
+
         void genvbo()
         {
             vector<ushort> idxs;
             vector<vvert> vverts;
-           
+
             loopv(meshes) meshes[i]->genvbo(idxs, vverts);
  
             glGenBuffers_(1, &statbuf);
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
-            if(renderpath==R_FIXEDFUNCTION)
+            if(renderpath==R_FIXEDFUNCTION && !envmapped())
             {
                 vvertff *ff = new vvertff[vverts.length()];
                 loopv(vverts) { vvert &v = vverts[i]; ff[i].pos = v.pos; ff[i].u = v.u; ff[i].v = v.v; }
@@ -654,7 +683,7 @@ struct vertmodel : model
 
         void setupglowtc()
         {
-            size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
+            size_t vertsize = renderpath==R_FIXEDFUNCTION && !envmapped() ? sizeof(vvertff) : sizeof(vvert);
             vvert *vverts = 0;
             glClientActiveTexture_(GL_TEXTURE1_ARB);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -664,7 +693,7 @@ struct vertmodel : model
 
         void bindvbo(animstate &as)
         {
-            size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
+            size_t vertsize = renderpath==R_FIXEDFUNCTION && !envmapped() ? sizeof(vvertff) : sizeof(vvert);
             vvert *vverts = 0;
             if(laststatbuf!=statbuf)
             {
@@ -680,7 +709,7 @@ struct vertmodel : model
             }
             else if(!enabletc)
             {
-                if(renderpath!=R_FIXEDFUNCTION)
+                if(vertsize==sizeof(vvert))
                 {
                     glEnableClientState(GL_NORMAL_ARRAY);
                     glNormalPointer(GL_FLOAT, vertsize, &vverts->norm);
@@ -762,25 +791,31 @@ struct vertmodel : model
 
                 glPushMatrix();
                 glMultMatrixf(matrix);
-                if(anim&ANIM_ENVMAP) 
-                { 
-                    glMatrixMode(GL_TEXTURE); 
-                    glPushMatrix(); 
-                    glMultMatrixf(matrix); 
-                    glMatrixMode(GL_MODELVIEW); 
-                }
-                if(renderpath!=R_FIXEDFUNCTION && refracting)
+                if(renderpath!=R_FIXEDFUNCTION)
                 {
-                    fogz += matrix[14];
-                    setfogplane(1, refracting - fogz);
+                    if(anim&ANIM_ENVMAP) 
+                    {    
+                        glMatrixMode(GL_TEXTURE); 
+                        glPushMatrix(); 
+                        glMultMatrixf(matrix); 
+                        glMatrixMode(GL_MODELVIEW); 
+                    }
+                    if(refracting)
+                    {
+                        fogz += matrix[14];
+                        setfogplane(1, refracting - fogz);
+                    }
                 }
                 link->render(anim, varseed, speed, basetime, d, ndir, ncampos);
-                if(renderpath!=R_FIXEDFUNCTION && refracting) fogz -= matrix[14];
-                if(anim&ANIM_ENVMAP) 
-                { 
-                    glMatrixMode(GL_TEXTURE); 
-                    glPopMatrix(); 
-                    glMatrixMode(GL_MODELVIEW); 
+                if(renderpath!=R_FIXEDFUNCTION)
+                {
+                    if(refracting) fogz -= matrix[14];
+                    if(anim&ANIM_ENVMAP) 
+                    { 
+                        glMatrixMode(GL_TEXTURE); 
+                        glPopMatrix(); 
+                        glMatrixMode(GL_MODELVIEW); 
+                    }
                 }
                 glPopMatrix();
             }
@@ -835,7 +870,7 @@ struct vertmodel : model
 
     bool envmapped()
     {
-        if(renderpath==R_FIXEDFUNCTION || !hasCM) return false;
+        if((renderpath==R_FIXEDFUNCTION && maxtmus<3) || !hasCM) return false;
         loopv(parts)
         {
             part *p = parts[i];
@@ -917,27 +952,50 @@ struct vertmodel : model
             }
         }
 
-        glPushMatrix(); 
+        if(anim&ANIM_ENVMAP)
+        {
+            if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE2_ARB);
+            glMatrixMode(GL_TEXTURE);
+            if(renderpath==R_FIXEDFUNCTION)
+            {
+                setuptmu(2, "T , P @ Pa");
+
+                GLfloat mm[16], mmtrans[16];
+                glGetFloatv(GL_MODELVIEW_MATRIX, mm);
+                loopi(4) loopj(4) mmtrans[i*4+j] = mm[j*4+i];
+                loopi(4)
+                {
+                    GLfloat x = mmtrans[4*i], y = mmtrans[4*i+1], z = mmtrans[4*i+2];
+                    mmtrans[4*i] = -y;
+                    mmtrans[4*i+1] = z;
+                    mmtrans[4*i+2] = x;
+                }
+                glLoadMatrixf(mmtrans);
+            }
+            else
+            {
+                glLoadIdentity();
+                glTranslatef(x, y, z);
+                glRotatef(yaw+180, 0, 0, 1);
+                glRotatef(pitch, 0, -1, 0);
+            }
+            glMatrixMode(GL_MODELVIEW);
+            if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE0_ARB);
+        }
+        glPushMatrix();
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
         glRotatef(pitch, 0, -1, 0);
-        if(anim&ANIM_ENVMAP)
-        {
-            glMatrixMode(GL_TEXTURE);
-            glLoadIdentity();
-            glTranslatef(x, y, z);
-            glRotatef(yaw+180, 0, 0, 1);
-            glRotatef(pitch, 0, -1, 0);
-            glMatrixMode(GL_MODELVIEW);
-        }
         render(anim, varseed, speed, basetime, d, vwepmdl, rdir, campos);
+        glPopMatrix();
         if(anim&ANIM_ENVMAP)
         {
+            if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE2_ARB);
             glMatrixMode(GL_TEXTURE);
             glLoadIdentity();
             glMatrixMode(GL_MODELVIEW);
+            if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE0_ARB);
         }
-        glPopMatrix();
     }
 
     static bool enabletc, enablealphatest, enablealphablend, enableenvmap, enableglow, enablecullface;
@@ -965,8 +1023,8 @@ struct vertmodel : model
     static void disabletc()
     {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
-        else if(enableglow) disableglowtc();
+        glDisableClientState(GL_NORMAL_ARRAY);
+        if(enableglow) disableglowtc();
         enabletc = false;
     }
 
@@ -987,9 +1045,22 @@ struct vertmodel : model
         resettmu(1);
         glDisable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
-
         lastskin = lastmasks = NULL;
         enableglow = false;
+    }
+
+    static void disableenvmap()
+    {
+        glActiveTexture_(GL_TEXTURE2_ARB);
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        if(renderpath==R_FIXEDFUNCTION)
+        {
+            glDisable(GL_TEXTURE_GEN_S);
+            glDisable(GL_TEXTURE_GEN_T);
+            glDisable(GL_TEXTURE_GEN_R);
+        }
+        glActiveTexture_(GL_TEXTURE0_ARB);
+        enableenvmap = false;
     }
 
     void endrender()
@@ -998,12 +1069,7 @@ struct vertmodel : model
         if(enablealphatest) glDisable(GL_ALPHA_TEST);
         if(enablealphablend) glDisable(GL_BLEND);
         if(enableglow) disableglow();
-        if(enableenvmap)
-        {
-            glActiveTexture_(GL_TEXTURE2_ARB);
-            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-            glActiveTexture_(GL_TEXTURE0_ARB);
-        }
+        if(enableenvmap) disableenvmap();
         if(!enablecullface) glEnable(GL_CULL_FACE);
         enabletc = enablealphatest = enablealphablend = enableenvmap = enableglow = false;
         enablecullface = true;
