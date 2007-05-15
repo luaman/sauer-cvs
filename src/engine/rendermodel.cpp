@@ -581,14 +581,14 @@ int findanim(const char *name)
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m) // model skin sharing
 {
 #define ifnoload(tex, path) if((tex = textureload(path, 0, true, false))==crosshair)
-#define tryload(tex, path, name) \
-    s_sprintfd(path)("packages/models/%s/%s.jpg", dir, name); \
+#define tryload(tex, path, prefix, name) \
+    s_sprintfd(path)("%spackages/models/%s/%s.jpg", prefix, dir, name); \
     ifnoload(tex, path) \
     { \
         strcpy(path+strlen(path)-3, "png"); \
         ifnoload(tex, path) \
         { \
-            s_sprintf(path)("packages/models/%s/%s.jpg", altdir, name); \
+            s_sprintf(path)("%spackages/models/%s/%s.jpg", prefix, altdir, name); \
             ifnoload(tex, path) \
             { \
                 strcpy(path+strlen(path)-3, "png"); \
@@ -598,8 +598,9 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
     }
      
     masks = crosshair;
-    tryload(skin, skinpath, "skin");
-    if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "masks"); }
+    tryload(skin, skinpath, "", "skin");
+    if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "", "masks"); }
+    else { tryload(masks, maskspath, "<mask:1,25>", "masks"); }
 }
 
 // convenient function that covers the usual anims for players/monsters/npcs

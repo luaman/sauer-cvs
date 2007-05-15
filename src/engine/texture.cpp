@@ -9,7 +9,7 @@ SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
     if(numrots<1 || numrots>5) return s; 
     SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, (numrots&5)==1 ? s->h : s->w, (numrots&5)==1 ? s->w : s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
     if(!d) fatal("create surface");    
-    int depth = s->format->BitsPerPixel/8;
+    int depth = s->format->BytesPerPixel;
     loop(y, s->h) loop(x, s->w)
     {
         uchar *src = (uchar *)s->pixels+(y*s->w+x)*depth;
@@ -39,7 +39,7 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     if(!xoffset && !yoffset) return s;
     SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, s->format->BitsPerPixel, s->format->Rmask, s->format->Gmask, s->format->Bmask, s->format->Amask);
     if(!d) fatal("create surface");
-    int depth = s->format->BitsPerPixel/8;
+    int depth = s->format->BytesPerPixel;
     uchar *src = (uchar *)s->pixels;
     loop(y, s->h)
     {
@@ -54,7 +54,7 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
 
 void texmad(SDL_Surface *s, const vec &mul, const vec &add)
 {
-    int depth = s->format->BitsPerPixel/8, maxk = min(depth, 3);
+    int maxk = min(s->format->BytesPerPixel, 3);
     uchar *src = (uchar *)s->pixels;
     loopi(s->h*s->w) 
     {
@@ -63,8 +63,32 @@ void texmad(SDL_Surface *s, const vec &mul, const vec &add)
             float val = src[k]*mul[k] + 255*add[k];
             src[k] = uchar(min(max(val, 0), 255));
         }
-        src += depth;
+        src += s->format->BytesPerPixel;
     }
+}
+
+SDL_Surface *texmask(SDL_Surface *s, int chan, int minval)
+{
+    if(chan<0 || chan>=s->format->BytesPerPixel)
+    {
+        SDL_FreeSurface(s);
+        return NULL;
+    }
+    printf("testing mask");
+    SDL_Surface *m = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, 8, 0, 0, 0, 0xFF);
+    if(!m) fatal("create surface");
+    uchar *dst = (uchar *)m->pixels, *src = (uchar *)s->pixels;
+    int passed = 0;
+    loopi(s->h*s->w)
+    {
+        *dst = src[chan];
+        if(*dst>=minval) passed++;
+        dst++;
+        src += s->format->BytesPerPixel;
+    }
+    SDL_FreeSurface(s);
+    if(!passed) { SDL_FreeSurface(m); return NULL; }
+    return m;
 }
 
 VARP(mintexcompresssize, 0, 1<<10, 1<<12);
@@ -214,6 +238,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         const char *cmd = &tname[1], *arg1 = strchr(cmd, ':'), *arg2 = arg1 ? strchr(arg1, ',') : NULL;
         if(!arg1) arg1 = strchr(cmd, '>');
         if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, parsevec(arg1+1), arg2 ? parsevec(arg2+1) : vec(0, 0, 0)); 
+        else if(!strncmp(cmd, "mask", arg1-cmd)) s = texmask(s, atoi(arg1+1), arg2 ? atoi(arg2+1) : 0);
     }
     return s;
 }
@@ -346,11 +371,11 @@ static int findtextype(Slot &s, int type, int last = -1)
         loop(y, t->h) loop(x, t->w) \
         { \
             body; \
-            dst += t->format->BitsPerPixel/8; \
+            dst += t->format->BytesPerPixel; \
         } \
     }
 
-#define sourcetex(s) uchar *src = &((uchar *)s->pixels)[(s->format->BitsPerPixel/8)*(y*s->w + x)];
+#define sourcetex(s) uchar *src = &((uchar *)s->pixels)[s->format->BytesPerPixel*(y*s->w + x)];
 
 static void scaleglow(SDL_Surface *g, Slot &s)
 {

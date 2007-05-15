@@ -792,9 +792,11 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_COLOR_ARRAY);
             glDisable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE1_ARB);
+            glClientActiveTexture_(GL_TEXTURE1_ARB);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE0_ARB);
+            glClientActiveTexture_(GL_TEXTURE0_ARB);
         }
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
         glde++;
@@ -809,9 +811,11 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
         glEnable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE1_ARB);
+        glClientActiveTexture_(GL_TEXTURE1_ARB);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
+        glClientActiveTexture_(GL_TEXTURE0_ARB);
         vbufchanged = true;
     }
 
@@ -1078,6 +1082,10 @@ void cleanupTMUs()
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
+
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
 
     resettmu(1);
 

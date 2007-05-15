@@ -199,5 +199,6 @@ extern int maxtmus;
 extern void inittmus();
 extern void resettmu(int n);
 extern void scaletmu(int n, int rgbscale, int alphascale = 0);
+extern void colortmu(int n, float r = 0, float g = 0, float b = 0, float a = 0);
 extern void setuptmu(int n, const char *rgbfunc = NULL, const char *alphafunc = NULL);
 

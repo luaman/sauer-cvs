@@ -1158,7 +1158,7 @@ void lightent(extentity &e, float height)
         model *m = loadmodel(NULL, e.attr2);
         if(m) height = m->above()*0.75f;
     }
-    else if(e.type>=ET_GAMESPECIFIC) ambient = renderpath==R_FIXEDFUNCTION ? 0.7f : 0.4f;
+    else if(e.type>=ET_GAMESPECIFIC) ambient = 0.4f;
     vec target(e.o.x, e.o.y, e.o.z + height);
     lightreaching(target, e.color, e.dir, &e, ambient);
 }

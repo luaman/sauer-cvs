@@ -294,7 +294,7 @@ void renderwaterff()
                 {
                     float ec[4] = { wcol[0], wcol[1], wcol[2], depth };
                     if(!waterrefract) { loopk(3) ec[k] *= depth; ec[3] = 1-ec[3]; }
-                    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, ec);
+                    colortmu(0, ec[0], ec[1], ec[2], ec[3]);
                 }
                 lastdepth = m.depth;
             }

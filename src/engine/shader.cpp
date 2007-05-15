@@ -690,12 +690,14 @@ struct tmufunc
 struct tmu
 {
     GLenum mode;
+    GLfloat color[4];
     tmufunc rgb, alpha;
 };
 
 #define INVALIDTMU \
 { \
     0, \
+    { -1, -1, -1, -1 }, \
     { 0, { 0, 0, 0, }, { 0, 0, 0 }, 0 }, \
     { 0, { 0, 0, 0, }, { 0, 0, 0 }, 0 } \
 }
@@ -703,6 +705,7 @@ struct tmu
 #define INITTMU \
 { \
     GL_MODULATE, \
+    { 0, 0, 0, 0 }, \
     { GL_MODULATE, { GL_TEXTURE, GL_PREVIOUS_ARB, GL_CONSTANT_ARB }, { GL_SRC_COLOR, GL_SRC_COLOR, GL_SRC_ALPHA }, 1 }, \
     { GL_MODULATE, { GL_TEXTURE, GL_PREVIOUS_ARB, GL_CONSTANT_ARB }, { GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA }, 1 } \
 }
@@ -751,6 +754,7 @@ void committmufunc(bool rgb, tmufunc &dst, tmufunc &src)
 void committmu(int n, tmu &f)
 {
     if(tmus[n].mode!=f.mode) glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, f.mode);
+    if(memcmp(tmus[n].color, f.color, sizeof(f.color))) glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, f.color);
     committmufunc(true, tmus[n].rgb, f.rgb);
     committmufunc(false, tmus[n].alpha, f.alpha);
     tmus[n] = f;
@@ -770,6 +774,16 @@ void scaletmu(int n, int rgbscale, int alphascale)
     tmu f = tmus[n];
     if(rgbscale) f.rgb.scale = rgbscale;
     if(alphascale) f.alpha.scale = alphascale;
+    committmu(n, f);
+}
+
+void colortmu(int n, float r, float g, float b, float a)
+{
+    tmu f = tmus[n];
+    f.color[0] = r;
+    f.color[1] = g;
+    f.color[2] = b;
+    f.color[3] = a;
     committmu(n, f);
 }
 

@@ -213,12 +213,42 @@ struct vertmodel : model
             #undef ip_v_ai
         }
 
+        void setupglow(bool masked)
+        {
+            if(masked!=enableglow) lastskin = lastmasks = NULL;
+            if(masked)
+            {
+                vertmodel *m = owner->model;
+                if(!enableglow) setuptmu(0, "K , C @ T");
+                int glowscale = m->glow>2 ? 4 : (m->glow > 1 ? 2 : 1);
+                float glow = m->glow/glowscale;
+                colortmu(0, glow, glow, glow);
+                glColor3f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale);
+
+                glActiveTexture_(GL_TEXTURE1_ARB);
+                if(!enableglow)
+                {
+                    glEnable(GL_TEXTURE_2D);
+                    setuptmu(1, "P * T");
+                    if(laststatbuf && enabletc) owner->setupglowtc();
+                }
+                scaletmu(1, glowscale);
+                glActiveTexture_(GL_TEXTURE0_ARB);
+
+                enableglow = true;
+            }
+            else if(enableglow)
+            {
+                disableglow();
+                glColor3fv(lightcolor.v);
+            }
+        }
+
         void setshader(animstate &as, bool masked)
         {
-            if(renderpath==R_FIXEDFUNCTION) return;
-   
             vertmodel *m = owner->model;
-            if(m->shader) m->shader->set();
+            if(renderpath==R_FIXEDFUNCTION) setupglow(masked);
+            else if(m->shader) m->shader->set();
             else
             {
                 static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshaderenvmap = NULL;
@@ -245,6 +275,7 @@ struct vertmodel : model
             {
                 if(enablealphatest) { glDisable(GL_ALPHA_TEST); enablealphatest = false; }
                 if(enablealphablend) { glDisable(GL_BLEND); enablealphablend = false; }
+                if(enableglow) disableglow();
                 return;
             }
             Texture *s = skin, *m = masks;
@@ -254,9 +285,12 @@ struct vertmodel : model
                 s = slot.sts[0].t;
                 if(slot.sts.length() >= 2) m = slot.sts[1].t;
             }
+            setshader(as, m!=crosshair);
             if(s!=lastskin)
             {
+                if(enableglow) glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, s->gl);
+                if(enableglow) glActiveTexture_(GL_TEXTURE0_ARB);
                 lastskin = s;
             }
             if(s->bpp==32)
@@ -289,9 +323,9 @@ struct vertmodel : model
             }
             if(m!=lastmasks && m!=crosshair)
             {
-                glActiveTexture_(GL_TEXTURE1_ARB);
+                if(!enableglow) glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, m->gl);
-                glActiveTexture_(GL_TEXTURE0_ARB);
+                if(!enableglow) glActiveTexture_(GL_TEXTURE0_ARB);
                 lastmasks = m;
             }
             if(as.anim&ANIM_ENVMAP && envmapmax>0)
@@ -311,7 +345,6 @@ struct vertmodel : model
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                 glActiveTexture_(GL_TEXTURE0_ARB);
             }
-            setshader(as, m!=crosshair);
         }
 
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t)
@@ -349,6 +382,7 @@ struct vertmodel : model
                     {
                         glTexCoord2f(tc.u, tc.v);
                         if(renderpath!=R_FIXEDFUNCTION) glNormal3fv(v.norm.v);
+                        else if(enableglow) glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v); 
                     }
                     glVertex3fv(v.pos.v);
                 }
@@ -618,6 +652,16 @@ struct vertmodel : model
 #endif
         }
 
+        void setupglowtc()
+        {
+            size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
+            vvert *vverts = 0;
+            glClientActiveTexture_(GL_TEXTURE1_ARB);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
+            glClientActiveTexture_(GL_TEXTURE0_ARB);
+        }
+
         void bindvbo(animstate &as)
         {
             size_t vertsize = renderpath==R_FIXEDFUNCTION ? sizeof(vvertff) : sizeof(vvert);
@@ -632,12 +676,7 @@ struct vertmodel : model
             }
             if(as.anim&ANIM_NOSKIN)
             {
-                if(enabletc)
-                {
-                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                    if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
-                    enabletc = false;
-                }
+                if(enabletc) disabletc();
             }
             else if(!enabletc)
             {
@@ -648,23 +687,10 @@ struct vertmodel : model
                 }
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
+                if(enableglow) setupglowtc();
                 enabletc = true;
             }
             laststatbuf = statbuf;
-        }
-
-        void disablevbo()
-        {
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-            if(enabletc)
-            {
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
-                enabletc = false;
-            }
-            glDisableClientState(GL_VERTEX_ARRAY);
-            laststatbuf = 0;
         }
 
         void render(int anim, int varseed, float speed, int basetime, dynent *d, const vec &dir, const vec &campos)
@@ -863,6 +889,7 @@ struct vertmodel : model
         vec rdir, campos;
         if(!(anim&ANIM_NOSKIN))
         {
+            lightcolor = color;
             glColor3fv(color.v);
 
             rdir = dir;
@@ -913,35 +940,64 @@ struct vertmodel : model
         glPopMatrix();
     }
 
-    static bool enabletc, enablealphatest, enablealphablend, enableenvmap, enablecullface; 
+    static bool enabletc, enablealphatest, enablealphablend, enableenvmap, enableglow, enablecullface;
+    static vec lightcolor;
     static float lastalphatest, fogz;
     static GLuint laststatbuf, lastenvmaptex, closestenvmaptex;
     static Texture *lastskin, *lastmasks;
 
     void startrender()
     {
-        enabletc = enablealphatest = enablealphablend = enableenvmap = false;
+        enabletc = enablealphatest = enablealphablend = enableenvmap = enableglow = false;
         enablecullface = true;
         lastalphatest = -1;
         laststatbuf = lastenvmaptex = 0;
         lastskin = lastmasks = NULL;
     }
 
+    static void disableglowtc()
+    {
+        glClientActiveTexture_(GL_TEXTURE1_ARB);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glClientActiveTexture_(GL_TEXTURE0_ARB);
+    }
+
+    static void disabletc()
+    {
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
+        else if(enableglow) disableglowtc();
+        enabletc = false;
+    }
+
+    static void disablevbo()
+    {
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        if(enabletc) disabletc();
+        laststatbuf = 0;
+    }
+
+    static void disableglow()
+    {
+        resettmu(0);
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        if(laststatbuf && enabletc) disableglowtc();
+        resettmu(1);
+        glDisable(GL_TEXTURE_2D);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+
+        lastskin = lastmasks = NULL;
+        enableglow = false;
+    }
+
     void endrender()
     {
-        if(laststatbuf)
-        {
-            glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
-            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-            if(enabletc)
-            {
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_NORMAL_ARRAY);
-            }
-            glDisableClientState(GL_VERTEX_ARRAY);
-        }
+        if(laststatbuf) disablevbo();
         if(enablealphatest) glDisable(GL_ALPHA_TEST);
         if(enablealphablend) glDisable(GL_BLEND);
+        if(enableglow) disableglow();
         if(enableenvmap)
         {
             glActiveTexture_(GL_TEXTURE2_ARB);
@@ -949,7 +1005,7 @@ struct vertmodel : model
             glActiveTexture_(GL_TEXTURE0_ARB);
         }
         if(!enablecullface) glEnable(GL_CULL_FACE);
-        enabletc = enablealphatest = enablealphablend = enableenvmap = false;
+        enabletc = enablealphatest = enablealphablend = enableenvmap = enableglow = false;
         enablecullface = true;
         lastalphatest = -1;
         laststatbuf = lastenvmaptex = 0;
@@ -957,7 +1013,9 @@ struct vertmodel : model
     }
 };
 
-bool vertmodel::enabletc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false, vertmodel::enableenvmap = false, vertmodel::enablecullface = true;
+bool vertmodel::enabletc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false, vertmodel::enableenvmap = false, 
+     vertmodel::enableglow = false, vertmodel::enablecullface = true;
+vec vertmodel::lightcolor;
 float vertmodel::lastalphatest = -1, vertmodel::fogz = 0;
 GLuint vertmodel::laststatbuf = 0, vertmodel::lastenvmaptex = 0, vertmodel::closestenvmaptex = 0;
 Texture *vertmodel::lastskin = NULL, *vertmodel::lastmasks = NULL;
