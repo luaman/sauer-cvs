@@ -394,7 +394,7 @@ void setupgrass()
 
     grasstex = NULL;
 
-    scaletmu(0, 2);
+    setuptmu(0, "C * T x 2");
 
     glBegin(GL_QUADS);
 }
@@ -403,7 +403,7 @@ void cleanupgrass()
 {
     glEnd();
 
-    scaletmu(0, 1);
+    resettmu(0);
 
     defaultshader->set();
 
