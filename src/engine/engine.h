@@ -298,7 +298,7 @@ extern void startmap(const char *name);
 struct mapmodelinfo { string name; int tex; model *m; };
 
 extern int findanim(const char *name);
-extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks, model *m);
+extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks);
 extern model *loadmodel(const char *name, int i = -1);
 extern mapmodelinfo &getmminfo(int i);
 extern void startmodelquery(occludequery *query);

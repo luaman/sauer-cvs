@@ -74,7 +74,6 @@ SDL_Surface *texmask(SDL_Surface *s, int chan, int minval)
         SDL_FreeSurface(s);
         return NULL;
     }
-    printf("testing mask");
     SDL_Surface *m = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, 8, 0, 0, 0, 0xFF);
     if(!m) fatal("create surface");
     uchar *dst = (uchar *)m->pixels, *src = (uchar *)s->pixels;
@@ -165,6 +164,7 @@ static GLenum texformat(int bpp)
     switch(bpp)
     {
         case 8: return GL_LUMINANCE;
+        case 16: return GL_LUMINANCE_ALPHA;
         case 24: return GL_RGB;
         case 32: return GL_RGBA;
         default: return 0;

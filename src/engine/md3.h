@@ -195,7 +195,7 @@ struct md3 : vertmodel
                 if(!mdl.load(path(name1))) { delete[] pname; return false; }
             }
             Texture *skin, *masks;
-            loadskin(loadname, pname, skin, masks, this);
+            loadskin(loadname, pname, skin, masks);
             loopv(mdl.meshes)
             {
                 mdl.meshes[i]->skin  = skin;
