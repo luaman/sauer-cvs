@@ -224,7 +224,7 @@ struct vertmodel : model
                 float glow = m->glow/glowscale;
                 colortmu(0, glow, glow, glow);
                 glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, 
-                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.25f*envmapmax + 0.75f*envmapmin : 1);
+                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.1f*envmapmax + 0.9f*envmapmin : 1);
 
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 if(!enableglow)
@@ -387,7 +387,8 @@ struct vertmodel : model
             }
             else if(dynbuf)
             {
-                bool norms = renderpath!=R_FIXEDFUNCTION || (envmapmax>0 && maxtmus>=3);
+                bool norms = renderpath!=R_FIXEDFUNCTION || (envmapmax>0 && maxtmus>=3),
+                     glow = renderpath==R_FIXEDFUNCTION && masks!=crosshair;
                 if(isstat) glNewList(statlist = glGenLists(1), GL_COMPILE);
                 gendynverts(cur, prev, ai_t);
                 loopj(dynlen)
@@ -405,7 +406,7 @@ struct vertmodel : model
                     {
                         glTexCoord2f(tc.u, tc.v);
                         if(norms) glNormal3fv(v.norm.v);
-                        if(enableglow) glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v); 
+                        if(glow) glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v); 
                     }
                     glVertex3fv(v.pos.v);
                 }
