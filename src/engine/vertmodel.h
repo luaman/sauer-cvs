@@ -219,12 +219,12 @@ struct vertmodel : model
             if(masked)
             {
                 vertmodel *m = owner->model;
-                if(!enableglow) setuptmu(0, "K , C @ T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "Ca" : NULL);
+                if(!enableglow) setuptmu(0, "K , C @ T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "Ca * Ta" : NULL);
                 int glowscale = m->glow>2 ? 4 : (m->glow > 1 ? 2 : 1);
                 float glow = m->glow/glowscale;
                 colortmu(0, glow, glow, glow);
                 glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, 
-                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.5f*envmapmax + 0.5f*envmapmin : 1);
+                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.25f*envmapmax + 0.75f*envmapmin : 1);
 
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 if(!enableglow)
