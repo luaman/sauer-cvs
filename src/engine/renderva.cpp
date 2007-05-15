@@ -830,6 +830,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
+    bool glow = false;
     float lastscale = -1;
     Slot *lastslot = NULL;
     loopi(lod.texs)
@@ -888,7 +889,27 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         {
             glBindTexture(GL_TEXTURE_2D, tex->gl);
             s->set(&slot);
-            if(s && renderpath!=R_FIXEDFUNCTION)
+            if(renderpath==R_FIXEDFUNCTION)
+            {
+                bool noglow = true;
+                loopvj(slot.sts)
+                {
+                    Slot::Tex &t = slot.sts[j];
+                    if(t.type==TEX_GLOW && t.combined<0)
+                    {
+                        glActiveTexture_(GL_TEXTURE2_ARB);
+                        if(!glow) { glEnable(GL_TEXTURE_2D); glow = true; }
+                        noglow = false;
+                        glBindTexture(GL_TEXTURE_2D, t.t->gl);
+                    }
+                }
+                if(glow)
+                {
+                    if(noglow) { glActiveTexture_(GL_TEXTURE2_ARB); glDisable(GL_TEXTURE_2D); }
+                    glActiveTexture_(GL_TEXTURE0_ARB);
+                }
+            }
+            else if(s)
             {
                 int tmu = 2;
                 if(s->type&SHADER_NORMALSLMS) tmu++;
@@ -933,6 +954,14 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
                         glEnable(GL_TEXTURE_GEN_S);
                         glEnable(GL_TEXTURE_GEN_T);
                     }
+    
+                    if(glow)
+                    {
+                        glActiveTexture_(GL_TEXTURE2_ARB);
+                        glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+                        glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                        glActiveTexture_(GL_TEXTURE0_ARB);
+                    }
                 }
                 else
                 {
@@ -959,6 +988,11 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
         }
     }
 
+    if(glow)
+    {
+        glActiveTexture_(GL_TEXTURE2_ARB); 
+        glDisable(GL_TEXTURE_2D);
+    }
     if(envmapped)
     {
         loopi(4) if(envmapped&(1<<i))
@@ -966,8 +1000,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, bool zfill = false)
             glActiveTexture_(GL_TEXTURE0_ARB+i);
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         }
-        glActiveTexture_(GL_TEXTURE0_ARB);
     }
+    if(glow || envmapped) glActiveTexture_(GL_TEXTURE0_ARB);
  
     vtris += lod.tris;
     vverts += va->verts;
@@ -1002,6 +1036,17 @@ void setupTMUs()
     glLoadIdentity();
     glScalef(1.0f/SHRT_MAX, 1.0f/SHRT_MAX, 1.0f);
     glMatrixMode(GL_MODELVIEW);
+
+    if(renderpath==R_FIXEDFUNCTION && maxtmus>=3)
+    {
+        glActiveTexture_(GL_TEXTURE2_ARB);
+        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+        glEnable(GL_TEXTURE_GEN_S);
+        glEnable(GL_TEXTURE_GEN_T);
+
+        setuptmu(2, "P + T");
+    }
 
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
@@ -1038,6 +1083,15 @@ void cleanupTMUs()
 
     glDisable(GL_TEXTURE_2D);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    if(renderpath==R_FIXEDFUNCTION && maxtmus>=3)
+    {
+        glActiveTexture_(GL_TEXTURE2_ARB);
+        resettmu(2);
+        glDisable(GL_TEXTURE_GEN_S);
+        glDisable(GL_TEXTURE_GEN_T);
+        glDisable(GL_TEXTURE_2D);
+    }
 
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);

@@ -52,14 +52,18 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
     return d;
 }
 
-void texmad(SDL_Surface *s, float mul, float add)
+void texmad(SDL_Surface *s, const vec &mul, const vec &add)
 {
-    int depth = s->format->BitsPerPixel/8;
+    int depth = s->format->BitsPerPixel/8, maxk = min(depth, 3);
     uchar *src = (uchar *)s->pixels;
-    loopi(s->h*s->w*depth)
+    loopi(s->h*s->w) 
     {
-        float val = *src*mul + 255*add;
-        *src++ = uchar(min(max(val, 0), 255));
+        loopk(maxk)
+        {
+            float val = src[k]*mul[k] + 255*add[k];
+            src[k] = uchar(min(max(val, 0), 255));
+        }
+        src += depth;
     }
 }
 
@@ -166,6 +170,16 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
     return t;
 }
 
+static vec parsevec(const char *arg)
+{
+    vec v(0, 0, 0);
+    int i = 0;
+    for(; arg[0] && arg[0]!='>' && i<3; arg += strcspn(i ? arg+1 : arg, "/>"), i++)
+        v[i] = atof(i ? arg+1 : arg);
+    if(i==1) v.y = v.z = v.x;
+    return v;
+}
+
 static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool msg = true)
 {
     if(tex && !tname)
@@ -199,7 +213,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     {
         const char *cmd = &tname[1], *arg1 = strchr(cmd, ':'), *arg2 = arg1 ? strchr(arg1, ',') : NULL;
         if(!arg1) arg1 = strchr(cmd, '>');
-        if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, atof(arg1+1), arg2 ? atof(arg2+1) : 0);
+        if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, parsevec(arg1+1), arg2 ? parsevec(arg2+1) : vec(0, 0, 0)); 
     }
     return s;
 }
@@ -338,6 +352,17 @@ static int findtextype(Slot &s, int type, int last = -1)
 
 #define sourcetex(s) uchar *src = &((uchar *)s->pixels)[(s->format->BitsPerPixel/8)*(y*s->w + x)];
 
+static void scaleglow(SDL_Surface *g, Slot &s)
+{
+    ShaderParam *cparam = findshaderparam(s, "glowscale", SHPARAM_PIXEL, 0);
+    if(!cparam) cparam = findshaderparam(s, "glowscale", SHPARAM_VERTEX, 0);
+    float color[3] = {1, 1, 1};
+    if(cparam) memcpy(color, cparam->val, sizeof(color));
+    writetex(g,
+        loopk(3) dst[k] = min(255, int(dst[k] * color[k]));
+    );
+}
+
 static void addglow(SDL_Surface *c, SDL_Surface *g, Slot &s)
 {
     ShaderParam *cparam = findshaderparam(s, "glowscale", SHPARAM_PIXEL, 0);
@@ -398,7 +423,7 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
         s_sprintfd(toffset)("+%d,%d", t.xoffset, t.yoffset);
         for(const char *s = toffset; *s; key.add(*s++));
     }
-    switch(t.type)
+    if(t.combined>=0 || renderpath==R_FIXEDFUNCTION) switch(t.type)
     {
         case TEX_GLOW:
         {
@@ -406,6 +431,7 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t)
             if(!cparam) cparam = findshaderparam(slot, "glowscale", SHPARAM_VERTEX, 0);
             s_sprintfd(suffix)("?%.2f,%.2f,%.2f", cparam ? cparam->val[0] : 1.0f, cparam ? cparam->val[1] : 1.0f, cparam ? cparam->val[2] : 1.0f);
             for(const char *s = suffix; *s; key.add(*s++));
+            break;
         }
     }
 }
@@ -442,15 +468,15 @@ SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
 
 static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
-    vector<char> key;
+    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && (maxtmus<3 || t.type!=TEX_GLOW) && !forceload) { t.t = crosshair; return; }
+    vector<char> key; 
     addname(key, s, t);
-    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && !forceload) { t.t = crosshair; return; }
     switch(t.type)
     {
         case TEX_DIFFUSE:
             if(renderpath==R_FIXEDFUNCTION)
             {
-                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_GLOW)|(1<<TEX_NORMAL), i))>=0;)
+                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_NORMAL)|(maxtmus<3 ? 1<<TEX_GLOW : 0), i))>=0;)
                 {
                     s.sts[i].combined = index;
                     addname(key, s, s.sts[i]);
@@ -475,6 +501,10 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
     if(!ts) { t.t = crosshair; return; }
     switch(t.type)
     {
+        case TEX_GLOW:
+            if(renderpath==R_FIXEDFUNCTION) scaleglow(ts, s);  
+            break;
+
         case TEX_DIFFUSE:
             if(renderpath==R_FIXEDFUNCTION)
             {

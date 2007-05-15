@@ -793,6 +793,8 @@ void inittmus()
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&maxtmus);
+    if(maxtmus<2) fatal("No multitexture support!");
+
     maxtmus = max(1, min(4, maxtmus));
     loopi(maxtmus)
     {
