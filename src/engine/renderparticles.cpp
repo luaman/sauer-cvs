@@ -115,69 +115,67 @@ static Texture *parttexs[10];
 
 static GLuint hemispherelist;
 
-//non-standard texture coord generation for a hemisphere
-static void hemisphere(int hres, int vres) 
+
+static void subdivide(int *indices, vec *verts, int &nIndices, int &nVerts, int depth, int face);
+
+static void genface(int *indices, vec *verts, int &nIndices, int &nVerts, int depth, int i1, int i2, int i3) 
 {
-	const int nVertices = hres*vres+1;
-	const int nFaces = (2*vres-1)*hres;	
-	GLfloat *vertices = new GLfloat[nVertices*5];
-	GLuint *indices = new GLuint[3*nFaces];
-	int p = 0;
-    loopi(vres+1) 
+    int face = nIndices; nIndices += 3;
+    indices[face] = i1;
+    indices[face+1] = i2;
+    indices[face+2] = i3;
+    subdivide(indices, verts, nIndices, nVerts, depth, face);
+}
+
+static void subdivide(int *indices, vec *verts, int &nIndices, int &nVerts, int depth, int face) 
+{
+    if(depth-- <= 0) return;
+    int idx[6];
+    loopi(3) idx[i] = indices[face+i];	
+    loopi(3) 
     {
-        float elevation = 0.5*M_PI*float(i)/vres;
-        float z = sin(elevation);
-        float r = cos(elevation);
-        loopj(hres) 
-        {
-            float azimuth = 2.0*M_PI*float(j)/hres;
-            float x = r*cos(azimuth);
-            float y = r*sin(azimuth);
-            vertices[p++] = x;
-			vertices[p++] = y;
-            vertices[p++] = z;
-            vertices[p++] = 0.5*(1.0+x);  //circular projection onto texture (i.e. corners are lost)
-            vertices[p++] = 0.5*(1.0+y);
-            if(i == vres) break; //only need one point at the pole
-		}
-	}
-	p = 0;
-    loopi(vres) 
-    {
-        bool pole = (i == (vres-1));
-        loopj(hres) 
-        {
-            indices[p++] = hres*i + j;
-            indices[p++] = hres*i + (j+1)%hres;
-            indices[p++] = hres*(i+1) + ((pole)?0:((j+1)%hres));
-            if(!pole)
-            {
-                indices[p++] = hres*i + j;
-                indices[p++] = hres*(i+1) + (j+1)%hres;
-                indices[p++] = hres*(i+1) + j;
-            }
-        }
+        int vert = nVerts++;
+        verts[vert] = vec(verts[idx[i]]).add(verts[idx[(i+1)%3]]).normalize(); //push on to unit sphere
+        idx[3+i] = vert;
+        indices[face+i] = vert;
     }
-    glBegin(GL_TRIANGLES);
-    loopi(nFaces) 
+    subdivide(indices, verts, nIndices, nVerts, depth, face);
+    loopi(3) genface(indices, verts, nIndices, nVerts, depth, idx[i], idx[3+i], idx[3+(i+2)%3]);
+}
+
+//non-standard texture coord generation for a hemisphere
+//subdiv version wobble much more nicely than a lat/longitude version
+static void hemisphere(int hres, int depth) 
+{
+    const int tris = hres << (2*depth);
+    vec *verts = new vec[tris+1];
+    int *indices = new int[tris*3];
+    int nVerts = 0;
+    int nIndices = 0;
+    verts[nVerts++] = vec(0.0, 0.0, 1.0); //build initial 'hres' sided pyramid
+    loopi(hres) 
     {
-        int a = indices[i*3]*5;
-        int b = indices[i*3+1]*5;
-        int c = indices[i*3+2]*5;
-        glTexCoord2fv(vertices+a+3); glVertex3fv(vertices+a);
-        glTexCoord2fv(vertices+b+3); glVertex3fv(vertices+b);
-        glTexCoord2fv(vertices+c+3); glVertex3fv(vertices+c);
+        float a = 2.0*M_PI*float(i)/hres;
+        verts[nVerts++] = vec(cos(a), sin(a), 0.0);
+    }
+    loopi(hres) genface(indices, verts, nIndices, nVerts, depth, 0, i+1, 1+(i+1)%hres);
+    glBegin(GL_TRIANGLES);
+    loopi(nIndices) 
+    {
+        int p = indices[i];
+        glTexCoord2f(verts[p].x*0.5+0.5, verts[p].y*0.5+0.5); glVertex3f(verts[p].x, verts[p].y, verts[p].z);
     }
     glEnd();
+    delete[] verts;
     delete[] indices;
-    delete[] vertices;
 }
+
 
 void particleinit()
 {
     hemispherelist = glGenLists(1);	 
     glNewList(hemispherelist, GL_COMPILE);	 
-    hemisphere(18,6);
+    hemisphere(5, 2);
     glEndList();
     
     parttexs[0] = textureload("data/martin/base.png");
@@ -374,15 +372,15 @@ void render_particles(int time)
                 if(type==PT_FIREBALL)
                 {
                     float pmax = p->val;
-                    float psize = pt.sz + pmax * float(ts)/p->fade;
-                    float size = psize/pmax;
+                    float size = float(ts)/p->fade;
+                    float psize = pt.sz + pmax * size;
                     
                     float scale = (o.dist(camera1->o) > psize)?psize:-psize; //if within explosion draw back face 
                     glScalef(-scale, scale, -scale);
                     glColor4ub(pt.r, pt.g, pt.b, blend);
                     
                     if(renderpath==R_FIXEDFUNCTION)
-                        glRotatef(lastmillis/5.0f, 0, 0, 1);
+                        glRotatef(lastmillis/7.0f, 0, 0, 1);
                     else
                     {
                         static Shader *explshader = NULL;
@@ -397,6 +395,7 @@ void render_particles(int time)
                     
                     if(renderpath==R_FIXEDFUNCTION)
                     {
+                        glRotatef(lastmillis/-3.9f, 0, 0, 1);
                         glScalef(0.8f, 0.8f, 0.8f);
                         glCallList(hemispherelist);
                     } 
