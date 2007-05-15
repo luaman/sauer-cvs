@@ -230,7 +230,7 @@ struct vertmodel : model
                 if(!enableglow)
                 {
                     glEnable(GL_TEXTURE_2D);
-                    setuptmu(1, "P * T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "= Pa" : NULL);
+                    setuptmu(1, "P * T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "= Pa" : "= Ta");
                     if(laststatbuf && enabletc) owner->setupglowtc();
                 }
                 scaletmu(1, glowscale);
