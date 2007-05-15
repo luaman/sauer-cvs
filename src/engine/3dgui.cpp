@@ -342,11 +342,13 @@ struct gui : g3d_gui
             }
                            
             notextureshader->set();
+            glDisable(GL_TEXTURE_2D);
 			if(editing) glColor3f(1, 0, 0);
             else glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
 			glBegin(GL_LINE_LOOP);
             rect_(curx, cury, w, FONTH);
 			glEnd();
+            glEnable(GL_TEXTURE_2D);
             defaultshader->set();
             
             draw_text(editing ? fieldtext : (result ? result : initval), curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
@@ -356,9 +358,11 @@ struct gui : g3d_gui
                 int fx = curx + text_width(fieldtext, fieldpos);
                 glColor3f(1, 0, 0);
                 notextureshader->set();
+                glDisable(GL_TEXTURE_2D);
                 glBegin(GL_QUADS);
                 rect_(fx-2, cury, 4, FONTH);
                 glEnd();				
+                glEnable(GL_TEXTURE_2D);
                 defaultshader->set();
             }
         }
