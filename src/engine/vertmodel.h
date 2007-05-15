@@ -219,7 +219,7 @@ struct vertmodel : model
             if(masked)
             {
                 vertmodel *m = owner->model;
-                if(!enableglow) setuptmu(0, "K , C @ T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "Ca * Ta" : NULL);
+                if(!enableglow) setuptmu(0, "K , C @ T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "Ca" : NULL);
                 int glowscale = m->glow>2 ? 4 : (m->glow > 1 ? 2 : 1);
                 float glow = m->glow/glowscale;
                 colortmu(0, glow, glow, glow);
