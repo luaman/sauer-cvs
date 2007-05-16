@@ -366,8 +366,10 @@ void render_particles(int time)
             {
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
-                glRotatef(camera1->yaw-180, 0, 0, 1);
-                glRotatef(camera1->pitch-90, 1, 0, 0);
+                vec oc(o);
+                oc.sub(camera1->o);
+                glRotatef(atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
+                glRotatef(asin(oc.z/oc.magnitude())/RAD - 90, 1, 0, 0);
                    
                 if(type==PT_FIREBALL)
                 {
