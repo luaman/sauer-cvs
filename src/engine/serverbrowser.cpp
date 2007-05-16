@@ -313,6 +313,8 @@ int sicompare(serverinfo *a, serverinfo *b)
          bc = sv->servercompatible(b->name, b->sdesc, b->map, b->ping, b->attr, b->numplayers);
     if(ac>bc) return -1;
     if(bc>ac) return 1;   
+    if(a->numplayers<b->numplayers) return 1;
+    if(a->numplayers>b->numplayers) return -1;
     if(a->ping>b->ping) return 1;
     if(a->ping<b->ping) return -1;
     return strcmp(a->name, b->name);
