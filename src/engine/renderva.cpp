@@ -1198,7 +1198,7 @@ void rendergeom()
         vtris = vverts = 0;
     }
 
-    bool doOQ = !refracting && (reflecting ? hasOQ && oqfrags && oqreflect : zpass!=0);
+    bool doOQ = !refracting && (reflecting ? camera1->o.z >= reflecting && hasOQ && oqfrags && oqreflect : zpass!=0);
     if(!doOQ) setupTMUs();
 
     glPushMatrix();
