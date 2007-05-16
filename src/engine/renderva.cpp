@@ -1163,8 +1163,8 @@ void cleanupTMU1()
 VAR(showva, 0, 0, 1);
 #endif
 
-#define FIRSTVA (reflecting && camera1->o.z >= reflecting ? reflectedva : visibleva)
-#define NEXTVA (reflecting && camera1->o.z >= reflecting ? va->rnext : va->next)
+#define FIRSTVA (reflecting && !refracting && camera1->o.z >= reflecting ? reflectedva : visibleva)
+#define NEXTVA (reflecting && !refracting && camera1->o.z >= reflecting ? va->rnext : va->next)
 
 void rendergeomffmultipass(renderstate &cur, int pass)
 {
@@ -1259,13 +1259,19 @@ void rendergeom()
             va->occluded = OCCLUDE_NOTHING;
         }
 
-        if(!reflecting && !refracting) { if(va->query) startquery(va->query); }
-        else if(reflecting && camera1->o.z >= reflecting && va->rquery) startquery(va->rquery);
+        if(!refracting)
+        {
+            if(!reflecting) { if(va->query) startquery(va->query); }
+            else if(camera1->o.z >= reflecting && va->rquery) startquery(va->rquery);
+        }
 
         renderva(cur, va, lod, doOQ ? RENDERPASS_Z : (nolights ? RENDERPASS_COLOR : RENDERPASS_LIGHTMAP));
 
-        if(!reflecting && !refracting) { if(va->query) endquery(va->query); }
-        else if(reflecting && camera1->o.z >= reflecting && va->rquery) endquery(va->rquery);
+        if(!refracting)
+        {
+            if(!reflecting) { if(va->query) endquery(va->query); }
+            else if(camera1->o.z >= reflecting && va->rquery) endquery(va->rquery);
+        }
     }
 
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
