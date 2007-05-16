@@ -605,7 +605,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-VAR(animoverride, 0, 0, NUMANIMS);
+VAR(animoverride, 0, 0, NUMANIMS-1);
 VAR(testanims, 0, 0, 1);
 
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
