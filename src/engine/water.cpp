@@ -240,7 +240,6 @@ void renderwaterff()
         if(waterrefract) setuprefractTMUs();
         else setupreflectTMUs();
 
-        glDepthFunc(GL_LEQUAL);
         glMatrixMode(GL_TEXTURE);
     }
     else
@@ -307,7 +306,6 @@ void renderwaterff()
     if(!nowater && (waterreflect || waterrefract))
     {
         cleanupwaterTMUs(waterrefract!=0);
-        glDepthFunc(GL_LESS);
         glLoadIdentity();
         glMatrixMode(GL_MODELVIEW);
     }
