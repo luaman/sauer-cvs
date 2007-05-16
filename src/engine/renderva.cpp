@@ -926,7 +926,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             if(renderpath==R_FIXEDFUNCTION)
             {
                 bool noglow = true;
-                if(pass==RENDERPASS_GLOW || (!nolights && maxtmus>=3)) loopvj(slot.sts)
+                if(pass==RENDERPASS_GLOW || maxtmus>=3) loopvj(slot.sts)
                 {
                     Slot::Tex &t = slot.sts[j];
                     if(t.type==TEX_GLOW && t.combined<0)

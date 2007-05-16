@@ -69,7 +69,7 @@ void texmad(SDL_Surface *s, const vec &mul, const vec &add)
 
 SDL_Surface *texffmask(SDL_Surface *s, int minval)
 {
-    if(nomasks || s->format->BytesPerPixel<3) { if(nomasks) puts("shit"); SDL_FreeSurface(s); return NULL; }
+    if(nomasks || s->format->BytesPerPixel<3) { SDL_FreeSurface(s); return NULL; }
     bool glow = false, envmap = true;
     uchar *src = (uchar *)s->pixels;
     loopi(s->h*s->w)
