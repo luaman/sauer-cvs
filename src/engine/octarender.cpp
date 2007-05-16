@@ -522,6 +522,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             g.texture = c.texture[i];
         }
     }
+    else if(touchingface(c, i) && visibleface(c, i, x, y, z, size, MAT_AIR, MAT_NOCLIP, lodcube)) ext(c).visible |= 1<<i;
 }
 
 bool skyoccluded(cube &c, int orient)

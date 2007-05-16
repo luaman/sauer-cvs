@@ -806,12 +806,17 @@ bool collapsedface(uint cfe)
     return ((cfe >> 4) & 0x0F0F) == (cfe & 0x0F0F) ||
            ((cfe >> 20) & 0x0F0F) == ((cfe >> 16) & 0x0F0F);
 }  
-    
-bool occludesface(cube &c, int orient, const ivec &o, int size, const ivec &vo, int vsize, uchar vmat, const facevec *vf)
+   
+bool occludesface(cube &c, int orient, const ivec &o, int size, const ivec &vo, int vsize, uchar vmat, uchar nmat, const facevec *vf)
 {
     int dim = dimension(orient);
     if(!c.children)
     {
+         if(nmat != MAT_AIR && c.ext && c.ext->material == nmat)
+         {
+            facevec nf[8];
+            return clipfacevecs(vf, o[C[dim]], o[R[dim]], size, nf) < 3;
+         }
          if(isentirelysolid(c)) return true;
          if(vmat != MAT_AIR && c.ext && c.ext->material == vmat) return true;
          if(touchingface(c, orient) && faceedges(c, orient) == F_SOLID) return true;
@@ -828,13 +833,13 @@ bool occludesface(cube &c, int orient, const ivec &o, int size, const ivec &vo, 
     int coord = dimcoord(orient);
     loopi(8) if(octacoord(dim, i) == coord)
     {
-        if(!occludesface(c.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, vo, vsize, vmat, vf)) return false;
+        if(!occludesface(c.children[i], orient, ivec(i, o.x, o.y, o.z, size), size, vo, vsize, vmat, nmat, vf)) return false;
     }
 
     return true;
 }
 
-bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, bool lodcube)
+bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, uchar nmat, bool lodcube)
 {
     uint cfe = faceedges(c, orient);
     if(mat != MAT_AIR)
@@ -852,6 +857,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
 
     if(lusize > size || (lusize == size && (!o.children || lodcube)))
     {
+        if(nmat != MAT_AIR && o.ext && o.ext->material == nmat) return true;
         if(isentirelysolid(o)) return false;
         if(mat != MAT_AIR && o.ext && (o.ext->material == mat || (mat == MAT_WATER && o.ext->material == MAT_GLASS))) return false;
         if(isempty(o) || !touchingface(o, opposite(orient))) return true;
@@ -864,7 +870,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
 
     facevec cf[4];
     genfacevecs(c, orient, ivec(x, y, z), size, mat != MAT_AIR, cf);
-    return !occludesface(o, opposite(orient), lu, lusize, ivec(x, y, z), size, mat, cf);
+    return !occludesface(o, opposite(orient), lu, lusize, ivec(x, y, z), size, mat, nmat, cf);
 }
 
 void calcvert(cube &c, int x, int y, int z, int size, vvec &v, int i, bool solid)
@@ -882,7 +888,7 @@ void calcvert(cube &c, int x, int y, int z, int size, vvec &v, int i, bool solid
 void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube)
 {
     loopi(8) vertused[i] = 0;
-    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
+    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
     loopi(8) if(vertused[i]) calcvert(c, x, y, z, size, verts[i], i);
 }
 
