@@ -224,7 +224,7 @@ struct vertmodel : model
                 float glow = m->glow/glowscale;
                 colortmu(0, glow, glow, glow);
                 glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, 
-                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.1f*envmapmax + 0.9f*envmapmin : 1);
+                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.2f*envmapmax + 0.8f*envmapmin : 1);
 
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 if(!enableglow)

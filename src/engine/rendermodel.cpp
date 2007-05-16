@@ -628,7 +628,8 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     {
         if(lastmillis-lastpain<300) 
         { 
-            anim = ANIM_PAIN|ANIM_LOOP; 
+            anim = ANIM_PAIN;
+            basetime = lastpain;
             varseed += lastpain; 
         }
         else if(attack<0 || (d->type!=ENT_AI && lastmillis-lastaction<attackdelay)) 

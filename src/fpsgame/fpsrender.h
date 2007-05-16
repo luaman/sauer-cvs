@@ -11,7 +11,7 @@ struct fpsrender
     void renderplayer(fpsent *d, const char *mdlname)
     {
 //      static const char *vweps[] = {NULL, "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
-        static const char *vweps[] = {NULL, "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing"};
+        static const char *vweps[] = {"vwep/fist", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing"};
         const char *vwepname = d->gunselect<=GUN_PISTOL ? vweps[d->gunselect] : NULL;
         int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = cl.ws.reloadtime(d->gunselect)+50;
         if(cl.intermission && d->state!=CS_DEAD)
