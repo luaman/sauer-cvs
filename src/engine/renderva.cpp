@@ -1103,6 +1103,7 @@ void setupTMUs()
     
     if(renderpath!=R_FIXEDFUNCTION)
     {
+        glEnableClientState(GL_COLOR_ARRAY);
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); }
         glActiveTexture_(GL_TEXTURE0_ARB);
         setenvparamf("ambient", SHPARAM_PIXEL, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f);
@@ -1322,9 +1323,10 @@ void rendergeom()
 
     cleanupTMU1();
 
-    if(renderpath==R_FIXEDFUNCTION && (nolights || maxtmus<3) && glowpass)
+    if(renderpath==R_FIXEDFUNCTION && maxtmus<3 && glowpass)
     {
         glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE);
         GLfloat oldfogc[4];
@@ -1338,6 +1340,7 @@ void rendergeom()
         glFogfv(GL_FOG_COLOR, oldfogc);
         glDisable(GL_BLEND);
         glDepthFunc(GL_LESS);
+        glDepthMask(GL_TRUE);
     }
 
     glPopMatrix();
