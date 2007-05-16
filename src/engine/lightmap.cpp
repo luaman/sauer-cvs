@@ -1123,6 +1123,16 @@ void alloctexids()
 
 void clearlights()
 {
+    clearlightcache();
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        e.color = vec(1, 1, 1);
+        e.dir = vec(0, 0, 1);
+    }
+    if(nolights) return;
+
     uchar bright[3] = { 128, 128, 128 };
     bvec front(128, 128, 255);
     alloctexids();
@@ -1139,14 +1149,6 @@ void clearlights()
                 break;
         }
     }            
-    clearlightcache();
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents) 
-    {
-        extentity &e = *ents[i];
-        e.color = vec(1, 1, 1);
-        e.dir = vec(0, 0, 1);
-    }
 }
 
 void lightent(extentity &e, float height)
@@ -1223,11 +1225,15 @@ static void find_unlit(int i)
 
 void initlights()
 {
-    if(fullbright && editmode)
+    if(nolights || (fullbright && editmode))
     {
         clearlights();
         return;
     }
+
+    clearlightcache();
+    updateentlighting();
+
     alloctexids();
     uchar unlit[3] = { ambient, ambient, ambient };
     createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, 0, false);
@@ -1251,13 +1257,11 @@ void initlights()
         }
         createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, 0, false);
     }
-    clearlightcache();
-    updateentlighting();
 }
 
 void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float ambient)
 {
-    if(fullbright && editmode)
+    if(nolights || (fullbright && editmode))
     {
         color = vec(1, 1, 1);
         dir = vec(0, 0, 1);

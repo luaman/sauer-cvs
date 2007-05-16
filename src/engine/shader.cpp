@@ -753,6 +753,7 @@ void committmufunc(bool rgb, tmufunc &dst, tmufunc &src)
 
 void committmu(int n, tmu &f)
 {
+    if(renderpath!=R_FIXEDFUNCTION || n>=maxtmus) return;
     if(tmus[n].mode!=f.mode) glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, f.mode);
     if(memcmp(tmus[n].color, f.color, sizeof(f.color))) glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, f.color);
     committmufunc(true, tmus[n].rgb, f.rgb);
@@ -801,20 +802,29 @@ void setuptmu(int n, const char *rgbfunc, const char *alphafunc)
     committmu(n, f);
 }
 
+VAR(nolights, 1, 0, 0);
+VAR(nowater, 1, 0, 0);
+VAR(nomasks, 1, 0, 0);
+
 void inittmus()
 {
     extern int maxtexsize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
 
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&maxtmus);
-    if(maxtmus<2) fatal("No multitexture support!");
-
-    maxtmus = max(1, min(4, maxtmus));
-    loopi(maxtmus)
+    if(hasTE && hasMT)
     {
-        glActiveTexture_(GL_TEXTURE0_ARB+i);
-        resettmu(i);
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&maxtmus);
+        maxtmus = max(1, min(4, maxtmus));
+        loopi(maxtmus)
+        {
+            glActiveTexture_(GL_TEXTURE0_ARB+i);
+            resettmu(i);
+        }
+        glActiveTexture_(GL_TEXTURE0_ARB);
     }
-    glActiveTexture_(GL_TEXTURE0_ARB);
+    if(renderpath==R_FIXEDFUNCTION && maxtmus<2)
+    {
+        nolights = nowater = nomasks = 1;
+    }
 }
 

@@ -71,6 +71,7 @@ extern int curtime;                     // current frame time
 extern int lastmillis;                  // last time
 extern int totalmillis;                 // total elapsed time
 extern int scr_w, scr_h;
+extern int zpass, glowpass;
 
 extern vector<int> entgroup;
 
@@ -92,7 +93,7 @@ extern ushort closestenvmap(int orient, int x, int y, int z, int size);
 extern GLuint lookupenvmap(ushort emid);
 
 // rendergl
-extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasstencil;
+extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasTE, hasMT, hasstencil;
 
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();

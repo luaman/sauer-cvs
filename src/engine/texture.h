@@ -195,7 +195,7 @@ extern void setlocalparamfv(char *name, int type, int index, float *v);
 
 extern ShaderParam *findshaderparam(Slot &s, char *name, int type, int index);
 
-extern int maxtmus;
+extern int maxtmus, nolights, nowater, nomasks;
 extern void inittmus();
 extern void resettmu(int n);
 extern void scaletmu(int n, int rgbscale, int alphascale = 0);

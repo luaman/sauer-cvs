@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasstencil = false;
+bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasstencil = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -116,14 +116,18 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     // char *weakcards[] = { "GeForce FX", "Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome", NULL } 
     // if(shaderprecision==2) for(char **wc = weakcards; *wc; wc++) if(strstr(renderer, *wc)) shaderprecision = 1;
     
-    if(!strstr(exts, "GL_EXT_texture_env_combine") && !strstr(exts, "GL_ARB_texture_env_combine")) 
-        fatal("No texture_env_combine extension! (your video card is WAY too old)");
+    if(strstr(exts, "GL_EXT_texture_env_combine") || strstr(exts, "GL_ARB_texture_env_combine")) hasTE = true;
+    else conoutf("WARNING: No texture_env_combine extension! (your video card is WAY too old)");
 
-    if(!strstr(exts, "GL_ARB_multitexture")) fatal("No multitexture extension!");
-    glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
-    glClientActiveTexture_ = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
-    glMultiTexCoord2f_     = (PFNGLMULTITEXCOORD2FARBPROC)    getprocaddress("glMultiTexCoord2fARB");
-    glMultiTexCoord3f_     = (PFNGLMULTITEXCOORD3FARBPROC)    getprocaddress("glMultiTexCoord3fARB");
+    if(strstr(exts, "GL_ARB_multitexture"))
+    {
+        glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
+        glClientActiveTexture_ = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
+        glMultiTexCoord2f_     = (PFNGLMULTITEXCOORD2FARBPROC)    getprocaddress("glMultiTexCoord2fARB");
+        glMultiTexCoord3f_     = (PFNGLMULTITEXCOORD3FARBPROC)    getprocaddress("glMultiTexCoord3fARB");
+        hasMT = true;
+    }
+    else conoutf("WARNING: No multitexture extension!");
 
     if(!strstr(exts, "GL_ARB_vertex_buffer_object"))
     {
@@ -232,7 +236,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     if(!hasOQ)
     {
         conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
-        extern int zpass;
         if(renderpath==R_FIXEDFUNCTION) zpass = 0;
     }
 

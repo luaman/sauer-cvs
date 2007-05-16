@@ -69,7 +69,7 @@ void texmad(SDL_Surface *s, const vec &mul, const vec &add)
 
 SDL_Surface *texffmask(SDL_Surface *s, int minval)
 {
-    if(s->format->BytesPerPixel<3) { SDL_FreeSurface(s); return NULL; }
+    if(nomasks || s->format->BytesPerPixel<3) { if(nomasks) puts("shit"); SDL_FreeSurface(s); return NULL; }
     bool glow = false, envmap = true;
     uchar *src = (uchar *)s->pixels;
     loopi(s->h*s->w)
@@ -496,7 +496,7 @@ SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
 
 static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
-    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && t.type!=TEX_GLOW && !forceload) { t.t = crosshair; return; }
+    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && (!glowpass || t.type!=TEX_GLOW) && !forceload) { t.t = crosshair; return; }
     vector<char> key; 
     addname(key, s, t);
     switch(t.type)
@@ -504,7 +504,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
         case TEX_DIFFUSE:
             if(renderpath==R_FIXEDFUNCTION)
             {
-                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_NORMAL), i))>=0;)
+                for(int i = -1; (i = findtextype(s, (1<<TEX_DECAL)|(1<<TEX_NORMAL)|(!glowpass ? 1<<TEX_GLOW : 0), i))>=0;)
                 {
                     s.sts[i].combined = index;
                     addname(key, s, s.sts[i]);

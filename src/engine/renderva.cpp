@@ -712,12 +712,13 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 
 enum
 {
-    RENDERPASS_COLOR = 0,
+    RENDERPASS_LIGHTMAP = 0,
+    RENDERPASS_COLOR,
     RENDERPASS_Z,
     RENDERPASS_GLOW
 };
 
-void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPASS_COLOR)
+void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPASS_LIGHTMAP)
 {
     if(pass==RENDERPASS_GLOW)
     {
@@ -804,8 +805,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
     if(refracting && renderpath!=R_FIXEDFUNCTION ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED)
     {
-        if(pass==RENDERPASS_GLOW) return;
-
         static Shader *fogshader = NULL;
         if(!fogshader) fogshader = lookupshaderbyname("fogworld");
         fogshader->set();
@@ -813,14 +812,17 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         if(cur.texture)
         {
             cur.texture = false;
-            if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_COLOR_ARRAY);
             glDisable(GL_TEXTURE_2D);
-            glActiveTexture_(GL_TEXTURE1_ARB);
-            glClientActiveTexture_(GL_TEXTURE1_ARB);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            glDisable(GL_TEXTURE_2D);
-            glActiveTexture_(GL_TEXTURE0_ARB);
-            glClientActiveTexture_(GL_TEXTURE0_ARB);
+            if(pass==RENDERPASS_LIGHTMAP)
+            {
+                if(renderpath!=R_FIXEDFUNCTION) glDisableClientState(GL_COLOR_ARRAY);
+                glActiveTexture_(GL_TEXTURE1_ARB);
+                glClientActiveTexture_(GL_TEXTURE1_ARB);
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glDisable(GL_TEXTURE_2D);
+                glActiveTexture_(GL_TEXTURE0_ARB);
+                glClientActiveTexture_(GL_TEXTURE0_ARB);
+            }
         }
 
         glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
@@ -833,27 +835,27 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
     if(!cur.texture)
     {
         cur.texture = true;
-        if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
         glEnable(GL_TEXTURE_2D);
-        if(pass==RENDERPASS_COLOR)
+        if(pass==RENDERPASS_LIGHTMAP)
         {
+            if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
             glActiveTexture_(GL_TEXTURE1_ARB);
             glClientActiveTexture_(GL_TEXTURE1_ARB);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glEnable(GL_TEXTURE_2D);
             glActiveTexture_(GL_TEXTURE0_ARB);
             glClientActiveTexture_(GL_TEXTURE0_ARB);
+            vbufchanged = true;
         }
-        vbufchanged = true;
     }
 
-    if(renderpath!=R_FIXEDFUNCTION) 
-    { 
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
         if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
     }
 
-    if(vbufchanged && pass==RENDERPASS_COLOR)
+    if(vbufchanged && pass==RENDERPASS_LIGHTMAP)
     {
         glClientActiveTexture_(GL_TEXTURE1_ARB);
         glTexCoordPointer(2, GL_SHORT, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
@@ -872,7 +874,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         Shader *s = slot.shader;
 
         extern vector<GLuint> lmtexids;
-        int lmid = lod.eslist[i].lmid, curlm = lmtexids[lmid];
+        int lmid = lod.eslist[i].lmid, curlm = pass==RENDERPASS_LIGHTMAP ? lmtexids[lmid] : -1;
         if(s && renderpath!=R_FIXEDFUNCTION)
         {
             int tmu = 2;
@@ -910,7 +912,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             }
             glActiveTexture_(GL_TEXTURE0_ARB);
         }
-        if(curlm!=lastlm && pass==RENDERPASS_COLOR)
+        if(curlm!=lastlm && pass==RENDERPASS_LIGHTMAP)
         {
             glActiveTexture_(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, curlm);
@@ -919,17 +921,17 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         }
         if(&slot!=lastslot)
         {
-            if(pass==RENDERPASS_COLOR) glBindTexture(GL_TEXTURE_2D, tex->gl);
+            if(pass==RENDERPASS_LIGHTMAP || pass==RENDERPASS_COLOR) glBindTexture(GL_TEXTURE_2D, tex->gl);
             s->set(&slot);
             if(renderpath==R_FIXEDFUNCTION)
             {
                 bool noglow = true;
-                if(pass!=RENDERPASS_COLOR || maxtmus>=3) loopvj(slot.sts)
+                if(pass==RENDERPASS_GLOW || (!nolights && maxtmus>=3)) loopvj(slot.sts)
                 {
                     Slot::Tex &t = slot.sts[j];
                     if(t.type==TEX_GLOW && t.combined<0)
                     {
-                        if(pass==RENDERPASS_COLOR)
+                        if(pass==RENDERPASS_LIGHTMAP)
                         {
                             glActiveTexture_(GL_TEXTURE2_ARB);
                             if(!glow) { glEnable(GL_TEXTURE_2D); glow = true; }
@@ -1045,18 +1047,33 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
 VAR(oqdist, 0, 256, 1024);
 VAR(zpass, 0, 1, 1);
+VAR(glowpass, 0, 1, 1);
 
 extern int ati_texgen_bug;
 
-void setupTMUs()
+static void setuptexgen()
 {
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
     glEnable(GL_TEXTURE_GEN_S);
     glEnable(GL_TEXTURE_GEN_T);
     if(ati_texgen_bug) glEnable(GL_TEXTURE_GEN_R);     // should not be needed, but apparently makes some ATI drivers happy
+}
 
-    if(renderpath!=R_FIXEDFUNCTION) glEnableClientState(GL_COLOR_ARRAY);
+static void disabletexgen()
+{
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
+}
+
+void setupTMUs()
+{
+    glColor3f(1, 1, 1);
+
+    setuptexgen();
+
+    if(nolights) return;
 
     setuptmu(0, "= T");
 
@@ -1076,17 +1093,14 @@ void setupTMUs()
     if(renderpath==R_FIXEDFUNCTION && maxtmus>=3)
     {
         glActiveTexture_(GL_TEXTURE2_ARB);
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-        glEnable(GL_TEXTURE_GEN_S);
-        glEnable(GL_TEXTURE_GEN_T);
+        setuptexgen();
 
         setuptmu(2, "P + T");
     }
-
+        
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
-
+    
     if(renderpath!=R_FIXEDFUNCTION)
     {
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); }
@@ -1094,12 +1108,14 @@ void setupTMUs()
         setenvparamf("ambient", SHPARAM_PIXEL, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f);
         setenvparamf("millis", SHPARAM_VERTEX, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
     }
-
-    glColor4f(1, 1, 1, 1);
 }
 
 void cleanupTMU0()
 {
+    glEnable(GL_TEXTURE_2D);
+
+    disabletexgen();
+
     if(hasVBO)
     {
         glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
@@ -1113,74 +1129,106 @@ void cleanupTMU0()
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
 
-    glEnable(GL_TEXTURE_2D);
-
-    resettmu(0);
-
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    if(ati_texgen_bug) glDisable(GL_TEXTURE_GEN_R);
+    if(!nolights) resettmu(0);
 }
 
 void cleanupTMU1()
 {
+    if(nolights) return;
+
     glActiveTexture_(GL_TEXTURE1_ARB);
     glClientActiveTexture_(GL_TEXTURE1_ARB);
 
+    resettmu(1);
+    glDisable(GL_TEXTURE_2D);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
-
-    resettmu(1);
-
-    glDisable(GL_TEXTURE_2D);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
     if(renderpath==R_FIXEDFUNCTION && maxtmus>=3)
     {
         glActiveTexture_(GL_TEXTURE2_ARB);
         resettmu(2);
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
+        disabletexgen();
         glDisable(GL_TEXTURE_2D);
     }
-
+        
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
-}
-
-void cleanupTMUs()
-{
-    cleanupTMU0();
-    cleanupTMU1();
 }
 
 #ifdef SHOWVA
 VAR(showva, 0, 0, 1);
 #endif
 
-VAR(glowpass, 0, 1, 1);
+#define FIRSTVA (reflecting && camera1->o.z >= reflecting ? reflectedva : visibleva)
+#define NEXTVA (reflecting && camera1->o.z >= reflecting ? va->rnext : va->next)
+
+void rendergeomffmultipass(renderstate &cur, int pass)
+{
+    cur.vbufGL = 0;
+    for(vtxarray *va = FIRSTVA; va; va = NEXTVA)
+    {
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
+        if(refracting || (reflecting && camera1->o.z < reflecting))
+        {    
+            if(va->curvfc == VFC_FOGGED || (refracting && camera1->o.z >= refracting ? va->min.z > refracting : va->max.z <= refracting)) continue;
+            if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
+        }
+        else if(reflecting)
+        {
+            if(va->max.z <= reflecting || (va->rquery && checkquery(va->rquery))) continue;
+            if(va->rquery && checkquery(va->rquery)) continue;
+        }
+        if(refracting && renderpath!=R_FIXEDFUNCTION ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED) continue;
+        renderva(cur, va, lod, pass);
+    }
+}
 
 void rendergeom()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
 
-    if(!zpass) setupTMUs();
+    if(!reflecting && !refracting)
+    {
+        flipqueries();
+        vtris = vverts = 0;
+    }
 
-    flipqueries();
-
-    vtris = vverts = 0;
+    bool doOQ = !refracting && (reflecting ? hasOQ && oqfrags && oqreflect : zpass!=0);
+    if(!doOQ) setupTMUs();
 
     glPushMatrix();
 
     resetorigin();
 
     renderstate cur;
-    for(vtxarray *va = visibleva; va; va = va->next)
+    for(vtxarray *va = FIRSTVA; va; va = NEXTVA)
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if(!lod.texs) continue;
-        if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
+        if(refracting || (reflecting && camera1->o.z < reflecting))
+        {
+            if(va->curvfc == VFC_FOGGED || (refracting && camera1->o.z >= refracting ? va->min.z > refracting : va->max.z <= reflecting) || va->occluded >= OCCLUDE_GEOM) continue;
+            if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
+        }
+        else if(reflecting)
+        {
+            if(va->max.z <= reflecting) continue;
+            if(doOQ)
+            {
+                va->rquery = newquery(&va->rquery);
+                if(!va->rquery) continue;
+                if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE)
+                {
+                    renderquery(cur, va->rquery, va);
+                    continue;
+                }
+            }
+        }
+        else if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
         {
             if(!zpass && va->query && va->query->owner == va) 
                 va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
@@ -1210,17 +1258,19 @@ void rendergeom()
             va->occluded = OCCLUDE_NOTHING;
         }
 
-        if(va->query) startquery(va->query);
+        if(!reflecting && !refracting) { if(va->query) startquery(va->query); }
+        else if(reflecting && camera1->o.z >= reflecting && va->rquery) startquery(va->rquery);
 
-        renderva(cur, va, lod, zpass ? RENDERPASS_Z : RENDERPASS_COLOR);
+        renderva(cur, va, lod, doOQ ? RENDERPASS_Z : (nolights ? RENDERPASS_COLOR : RENDERPASS_LIGHTMAP));
 
-        if(va->query) endquery(va->query);
+        if(!reflecting && !refracting) { if(va->query) endquery(va->query); }
+        else if(reflecting && camera1->o.z >= reflecting && va->rquery) endquery(va->rquery);
     }
 
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
 
-    if(zpass) 
+    if(doOQ)
     {
         setupTMUs();
         glDepthFunc(GL_LEQUAL);
@@ -1228,11 +1278,20 @@ void rendergeom()
         int showvas = 0;
 #endif
         cur.vbufGL = 0;
-        for(vtxarray *va = visibleva; va; va = va->next)
+        for(vtxarray **prevva = &FIRSTVA, *va = FIRSTVA; va; prevva = &NEXTVA, va = NEXTVA)
         {
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
             if(!lod.texs) continue;
-            if(va->parent && va->parent->occluded >= OCCLUDE_BB && (!va->parent->query || va->parent->query->fragments >= 0)) 
+            if(reflecting)
+            {
+                if(va->max.z <= reflecting) continue;
+                if(va->rquery && checkquery(va->rquery))
+                {
+                    if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) *prevva = va->rnext;
+                    continue;
+                }
+            }
+            else if(va->parent && va->parent->occluded >= OCCLUDE_BB && (!va->parent->query || va->parent->query->fragments >= 0)) 
             {
                 va->query = NULL;
                 va->occluded = OCCLUDE_BB;
@@ -1256,31 +1315,25 @@ void rendergeom()
                 else glColor3f(1, 1, 1);
             }
 #endif
-            renderva(cur, va, lod, RENDERPASS_COLOR);
+            renderva(cur, va, lod, nolights ? RENDERPASS_COLOR : RENDERPASS_LIGHTMAP);
         }
         glDepthFunc(GL_LESS);
     }
 
     cleanupTMU1();
 
-    if(renderpath==R_FIXEDFUNCTION && maxtmus<3 && glowpass) // glow pass
+    if(renderpath==R_FIXEDFUNCTION && (nolights || maxtmus<3) && glowpass)
     {
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE);
         GLfloat oldfogc[4];
-        glGetFloatv(GL_FOG_COLOR, oldfogc);
-        static GLfloat zerofog[4] = { 0, 0, 0, 1 };
-        glFogfv(GL_FOG_COLOR, zerofog);
+        glGetFloatv(GL_FOG_COLOR, oldfogc); 
 
-        cur.vbufGL = 0;
-        for(vtxarray *va = visibleva; va; va = va->next)
-        {
-            lodlevel &lod = va->curlod ? va->l1 : va->l0;
-            if(!lod.texs || va->occluded >= OCCLUDE_GEOM) continue;
-            if(refracting && renderpath!=R_FIXEDFUNCTION ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED) continue;
-            renderva(cur, va, lod, RENDERPASS_GLOW);
-        }
+        static GLfloat glowfog[4] = { 0, 0, 0, 1 };
+        glFogfv(GL_FOG_COLOR, glowfog);
+
+        rendergeomffmultipass(cur, RENDERPASS_GLOW);
 
         glFogfv(GL_FOG_COLOR, oldfogc);
         glDisable(GL_BLEND);
@@ -1325,73 +1378,16 @@ void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc =
 
 void renderreflectedgeom(float z, bool refract)
 {
-    glEnableClientState(GL_VERTEX_ARRAY);
-    setupTMUs();
-    glPushMatrix();
-
-    resetorigin();
-
-    renderstate cur;
     if(!refract && camera1->o.z >= z)
     {
         reflectvfcP(z);
         reflectedva = NULL;
         findreflectedvas(varoot, z, refract);
-        bool doOQ = hasOQ && oqfrags && oqreflect;
-        for(vtxarray *va = reflectedva; va; va = va->rnext)
-        {
-            lodlevel &lod = va->curlod ? va->l1 : va->l0;
-            if(!lod.texs || va->max.z <= z) continue;
-            if(doOQ)
-            {
-                va->rquery = newquery(&va->rquery);
-                if(!va->rquery) continue;
-                if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE)
-                {
-                    renderquery(cur, va->rquery, va);
-                    continue;
-                }
-            }
-            if(va->rquery) startquery(va->rquery);
-            renderva(cur, va, lod, doOQ);
-            if(va->rquery) endquery(va->rquery);
-        }            
-        if(doOQ)
-        {
-            glDepthFunc(GL_LEQUAL);
-            if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
-            if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
-            cur.vbufGL = 0;
-            for(vtxarray **prevva = &reflectedva, *va = reflectedva; va; prevva = &va->rnext, va = va->rnext)
-            {
-                lodlevel &lod = va->curlod ? va->l1 : va->l0;
-                if(!lod.texs || va->max.z <= z) continue;
-                if(va->rquery && checkquery(va->rquery)) 
-                {
-                    if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) *prevva = va->rnext;
-                    continue;
-                }
-                renderva(cur, va, lod);
-            }
-            glDepthFunc(GL_LESS);
-        }
+        rendergeom();
         restorevfcP();
     }
-    else
-    {
-        for(vtxarray *va = visibleva; va; va = va->next)
-        {
-            lodlevel &lod = va->curlod ? va->l1 : va->l0;
-            if(!lod.texs) continue;
-            if(va->curvfc == VFC_FOGGED || (refract && camera1->o.z >= z ? va->min.z > z : va->max.z <= z) || va->occluded >= OCCLUDE_GEOM) continue;
-            if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
-            renderva(cur, va, lod);
-        }
-    }
-
-    glPopMatrix();
-    cleanupTMUs();
-}
+    else rendergeom();
+}                
 
 static GLuint skyvbufGL, skyebufGL;
 

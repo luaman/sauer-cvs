@@ -30,21 +30,25 @@ VARF(floatvtx, 0, 0, 1, allchanged());
             f->x = v.x; \
             f->y = v.y; \
             f->z = v.z; \
-            f->u = v.u; \
-            f->v = v.v; \
             body; \
             f++; \
         } \
     }
+#define GENVERTSUV(type, ptr, body) GENVERTS(type, ptr, { f->u = v.u; f->v = v.v; body; })
 
 void genverts(void *buf)
 {
     if(renderpath==R_FIXEDFUNCTION)
     {
-        if(floatvtx) { GENVERTS(fvertexff, buf, {}); }
-        else { GENVERTS(vertexff, buf, {}); }
+        if(nolights)
+        {
+            if(floatvtx) { GENVERTS(fvertexffc, buf, {}); }
+            else { GENVERTS(vertexffc, buf, {}); }
+        }
+        else if(floatvtx) { GENVERTSUV(fvertexff, buf, {}); }
+        else { GENVERTSUV(vertexff, buf, {}); }
     }
-    else if(floatvtx) { GENVERTS(fvertex, buf, { f->n = v.n; }); }
+    else if(floatvtx) { GENVERTSUV(fvertex, buf, { f->n = v.n; }); }
 }
 
 struct vboinfo
@@ -465,13 +469,13 @@ void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, 
     loopk(4)
     {
         short u, v;
-        if(surface && surface->lmid >= LMID_RESERVED)
+        if(!nolights && surface && surface->lmid >= LMID_RESERVED)
         {
             u = short((surface->x + (surface->texcoords[k*2] / 255.0f) * (surface->w - 1) + 0.5f) * SHRT_MAX/LM_PACKW);
             v = short((surface->y + (surface->texcoords[k*2 + 1] / 255.0f) * (surface->h - 1) + 0.5f) * SHRT_MAX/LM_PACKH);
         }
         else u = v = 0;
-        index[k] = vh.access(vv[k], u, v, normals ? normals->normals[k] : bvec(128, 128, 128));
+        index[k] = vh.access(vv[k], u, v, renderpath!=R_FIXEDFUNCTION && normals ? normals->normals[k] : bvec(128, 128, 128));
     }
 
     extern vector<GLuint> lmtexids;
