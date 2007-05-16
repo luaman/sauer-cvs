@@ -370,20 +370,16 @@ void render_particles(int time)
                 oc.sub(camera1->o);
                 glRotatef(atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
                 glRotatef(asin(oc.z/oc.magnitude())/RAD - 90, 1, 0, 0);
-                   
+
                 if(type==PT_FIREBALL)
                 {
                     float pmax = p->val;
                     float size = float(ts)/p->fade;
                     float psize = pt.sz + pmax * size;
                     
-                    float scale = (o.dist(camera1->o) > psize)?psize:-psize; //if within explosion draw back face 
-                    glScalef(-scale, scale, -scale);
                     glColor4ub(pt.r, pt.g, pt.b, blend);
                     
-                    if(renderpath==R_FIXEDFUNCTION)
-                        glRotatef(lastmillis/7.0f, 0, 0, 1);
-                    else
+                    if(renderpath!=R_FIXEDFUNCTION)
                     {
                         static Shader *explshader = NULL;
                         if(!explshader) explshader = lookupshaderbyname("explosion");
@@ -392,7 +388,9 @@ void render_particles(int time)
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                         glDisable(GL_FOG);
                     }
-                    
+
+                    glRotatef(lastmillis/7.0f, 0, 0, 1);
+                    glScalef(-psize, psize, o.dist(camera1->o) > psize ? -psize : psize);
                     glCallList(hemispherelist);
                     
                     if(renderpath==R_FIXEDFUNCTION)
