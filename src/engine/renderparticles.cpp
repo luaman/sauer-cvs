@@ -113,71 +113,123 @@ static bool emit_particles()
 
 static Texture *parttexs[10];
 
-static GLuint hemispherelist;
 
+//cache our unit hemisphere
+static GLushort *hemiindices = NULL;
+static GLfloat (*hemiverts)[3];
 
-static void subdivide(int *indices, vec *verts, int &nIndices, int &nVerts, int depth, int face);
+static void subdivide(int &nIndices, int &nVerts, int depth, int face);
 
-static void genface(int *indices, vec *verts, int &nIndices, int &nVerts, int depth, int i1, int i2, int i3) 
+static int genvert(int &nVerts, float x, float y, float z)
 {
-    int face = nIndices; nIndices += 3;
-    indices[face] = i1;
-    indices[face+1] = i2;
-    indices[face+2] = i3;
-    subdivide(indices, verts, nIndices, nVerts, depth, face);
+    int vert = nVerts++;
+    hemiverts[vert][0] = x;
+    hemiverts[vert][1] = y;
+    hemiverts[vert][2] = z;
+    return vert;
 }
 
-static void subdivide(int *indices, vec *verts, int &nIndices, int &nVerts, int depth, int face) 
+static void genface(int &nIndices, int &nVerts, int depth, int i1, int i2, int i3) 
+{
+    int face = nIndices; nIndices += 3;
+    hemiindices[face]   = i1;
+    hemiindices[face+1] = i2;
+    hemiindices[face+2] = i3;
+    subdivide(nIndices, nVerts, depth, face);
+}
+
+static void subdivide(int &nIndices, int &nVerts, int depth, int face) 
 {
     if(depth-- <= 0) return;
     int idx[6];
-    loopi(3) idx[i] = indices[face+i];	
+    loopi(3) idx[i] = hemiindices[face+i];	
     loopi(3) 
     {
-        int vert = nVerts++;
-        verts[vert] = vec(verts[idx[i]]).add(verts[idx[(i+1)%3]]).normalize(); //push on to unit sphere
+        int v1 = idx[i];
+        int v2 = idx[(i+1)%3];
+        float x = hemiverts[v1][0] + hemiverts[v2][0];
+        float y = hemiverts[v1][1] + hemiverts[v2][1];
+        float z = hemiverts[v1][2] + hemiverts[v2][2];
+        float m = sqrt(x*x+y*y+z*z); //never zero
+        int vert = genvert(nVerts, x/m, y/m, z/m); //ensure point on unit sphere
         idx[3+i] = vert;
-        indices[face+i] = vert;
+        hemiindices[face+i] = vert;
     }
-    subdivide(indices, verts, nIndices, nVerts, depth, face);
-    loopi(3) genface(indices, verts, nIndices, nVerts, depth, idx[i], idx[3+i], idx[3+(i+2)%3]);
+    subdivide(nIndices, nVerts, depth, face);
+    loopi(3) genface(nIndices, nVerts, depth, idx[i], idx[3+i], idx[3+(i+2)%3]);
 }
 
-//non-standard texture coord generation for a hemisphere
 //subdiv version wobble much more nicely than a lat/longitude version
-static void hemisphere(int hres, int depth) 
+static void inithemisphere(int hres, int depth) 
 {
     const int tris = hres << (2*depth);
-    vec *verts = new vec[tris+1];
-    int *indices = new int[tris*3];
     int nVerts = 0;
     int nIndices = 0;
-    verts[nVerts++] = vec(0.0, 0.0, 1.0); //build initial 'hres' sided pyramid
-    loopi(hres) 
+    hemiverts = new GLfloat[(tris+1)][3];
+    hemiindices = new GLushort[tris*3];
+    genvert(nVerts, 0.0, 0.0, 1.0); //build initial 'hres' sided pyramid
+    loopi(hres)
     {
-        float a = 2.0*M_PI*float(i)/hres;
-        verts[nVerts++] = vec(cos(a), sin(a), 0.0);
+        float a = PI2*float(i)/hres;
+        genvert(nVerts, cos(a), sin(a), 0.0);
     }
-    loopi(hres) genface(indices, verts, nIndices, nVerts, depth, 0, i+1, 1+(i+1)%hres);
-    glBegin(GL_TRIANGLES);
-    loopi(nIndices) 
+    loopi(hres) genface(nIndices, nVerts, depth, 0, i+1, 1+(i+1)%hres);
+}
+
+static void drawexplosion(float ts, vec center) 
+{
+    const int hres = 5;
+    const int depth = 2;
+    if(!hemiindices) inithemisphere(hres, depth);
+    
+    int tris = hres << (2*depth);
+    int nVerts = tris+1;
+    int nIndices = tris*3;
+    
+    static GLfloat (*gverts)[3] = NULL;  
+    static GLfloat (*gtexs)[2] = NULL;
+    static int lastexpmillis = 0;
+    if(renderpath == R_FIXEDFUNCTION)
     {
-        int p = indices[i];
-        glTexCoord2f(verts[p].x*0.5+0.5, verts[p].y*0.5+0.5); glVertex3f(verts[p].x, verts[p].y, verts[p].z);
+        if(lastexpmillis != lastmillis || !gverts)
+        {
+            center = vec(13.0, 2.3, 7.1);  //only update once per frame! - so use the same center for all...
+            lastexpmillis = lastmillis;
+            if(!gverts)
+            {
+                gverts = new GLfloat[nVerts][3];
+                gtexs = new GLfloat[nVerts][2];
+            }
+            loopi(nVerts) 
+            {
+                //texgen - scrolling billboard
+                gtexs[i][0] = hemiverts[i][0]*0.5 + 0.5 + 0.0004*float(lastmillis);
+                gtexs[i][1] = hemiverts[i][1]*0.5 + 0.5 + 0.0004*float(lastmillis);
+                //wobble - identical to shader code
+                float wobble = hemiverts[i][0]*center.x + hemiverts[i][1]*center.y + hemiverts[i][2]*center.z + 0.002*float(lastmillis);
+                wobble = wobble - floor(wobble);
+                wobble = 1.0 + fabs(wobble - 0.5)*0.5 - 0.125;
+                gverts[i][0] = hemiverts[i][0]*wobble;
+                gverts[i][1] = hemiverts[i][1]*wobble;
+                gverts[i][2] = hemiverts[i][2]*wobble; 
+            }
+        }
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, 2*sizeof(GLfloat), gtexs);
     }
-    glEnd();
-    delete[] verts;
-    delete[] indices;
+    else gverts = hemiverts;
+    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 3*sizeof(GLfloat), gverts);
+	glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, hemiindices);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    
+    if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 
 void particleinit()
-{
-    hemispherelist = glGenLists(1);	 
-    glNewList(hemispherelist, GL_COMPILE);	 
-    hemisphere(5, 2);
-    glEndList();
-    
+{    
     parttexs[0] = textureload("data/martin/base.png");
     parttexs[1] = textureload("data/martin/ball1.png");
     parttexs[2] = textureload("data/martin/smoke.png");
@@ -370,7 +422,7 @@ void render_particles(int time)
                 oc.sub(camera1->o);
                 glRotatef(atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
                 glRotatef(asin(oc.z/oc.magnitude())/RAD - 90, 1, 0, 0);
-
+                
                 if(type==PT_FIREBALL)
                 {
                     float pmax = p->val;
@@ -386,22 +438,20 @@ void render_particles(int time)
                         explshader->set();
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
-                        glDisable(GL_FOG);
                     }
-
+                    
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
                     glScalef(-psize, psize, o.dist(camera1->o) > psize ? -psize : psize);
-                    glCallList(hemispherelist);
+                    drawexplosion(size, o);
                     
                     if(renderpath==R_FIXEDFUNCTION)
                     {
                         glRotatef(lastmillis/-3.9f, 0, 0, 1);
                         glScalef(0.8f, 0.8f, 0.8f);
-                        glCallList(hemispherelist);
+                        drawexplosion(size, o);
                     } 
                     else
                     {
-                        glEnable(GL_FOG);
                         foggedshader->set();	 
                     } 
                 } 
@@ -520,11 +570,11 @@ void render_particles(int time)
         }
         glEnd();
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_FOG);
     }
 
     if(rendered)
-    {        
+    {   
+        glEnable(GL_FOG);
         glFogfv(GL_FOG_COLOR, oldfogc);
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
