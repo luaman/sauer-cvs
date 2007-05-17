@@ -1307,7 +1307,8 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
 
         intensity *= e.attr2*e.attr3*e.attr4;
 
-        dir.add(vec(e.o).sub(target).mul(intensity/mag));
+        if(fabs(mag)<1e-3) dir.add(vec(0, 0, 1));
+        else dir.add(vec(e.o).sub(target).mul(intensity/mag));
     }
 
     if(t && (hdr.skylight[0]>ambient || hdr.skylight[1]>ambient || hdr.skylight[2]>ambient))
