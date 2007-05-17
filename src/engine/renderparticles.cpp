@@ -120,15 +120,6 @@ static vec *hemiverts;
 
 static void subdivide(int &nIndices, int &nVerts, int depth, int face);
 
-static int genvert(int &nVerts, float x, float y, float z)
-{
-    int vert = nVerts++;
-    hemiverts[vert].x = x;
-    hemiverts[vert].y = y;
-    hemiverts[vert].z = z;
-    return vert;
-}
-
 static void genface(int &nIndices, int &nVerts, int depth, int i1, int i2, int i3) 
 {
     int face = nIndices; nIndices += 3;
@@ -145,12 +136,8 @@ static void subdivide(int &nIndices, int &nVerts, int depth, int face)
     loopi(3) idx[i] = hemiindices[face+i];	
     loopi(3) 
     {
-        int v1 = idx[i];
-        int v2 = idx[(i+1)%3];
-        vec v(hemiverts[v1]);
-        v.add(hemiverts[v2]);
-        v.normalize();
-        int vert = genvert(nVerts, v.x, v.y, v.z); //ensure point on unit sphere
+        int vert = nVerts++;
+        hemiverts[vert] = vec(hemiverts[idx[i]]).add(hemiverts[idx[(i+1)%3]]).normalize(); //push on to unit sphere
         idx[3+i] = vert;
         hemiindices[face+i] = vert;
     }
@@ -166,11 +153,11 @@ static void inithemisphere(int hres, int depth)
     int nIndices = 0;
     hemiverts = new vec[(tris+1)];
     hemiindices = new GLushort[tris*3];
-    genvert(nVerts, 0.0, 0.0, 1.0); //build initial 'hres' sided pyramid
+    hemiverts[nVerts++] = vec(0.0, 0.0, 1.0); //build initial 'hres' sided pyramid
     loopi(hres)
     {
         float a = PI2*float(i)/hres;
-        genvert(nVerts, cos(a), sin(a), 0.0);
+        hemiverts[nVerts++] = vec(cos(a), sin(a), 0.0);
     }
     loopi(hres) genface(nIndices, nVerts, depth, 0, i+1, 1+(i+1)%hres);
 }
@@ -227,8 +214,7 @@ static void drawexplosion(float ts, vec center, bool setup, bool cleanup)
                 float wobble = v.dot(center) + 0.002*float(lastmillis);
                 wobble = wobble - floor(wobble);
                 wobble = 1.0 + fabs(wobble - 0.5)*0.5 - 0.125;
-                e.pos = v;
-                e.pos.mul(wobble);
+                e.pos = vec(v).mul(wobble);
             }
         }
     }
@@ -481,10 +467,6 @@ void render_particles(int time)
             {
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
-                vec oc(o);
-                oc.sub(camera1->o);
-                glRotatef(atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
-                glRotatef(asin(oc.z/oc.magnitude())/RAD - 90, 1, 0, 0);
                 
                 if(type==PT_FIREBALL)
                 {
@@ -492,19 +474,39 @@ void render_particles(int time)
                     float size = float(ts)/p->fade;
                     float psize = pt.sz + pmax * size;
                    
-                    glColor4ub(pt.r, pt.g, pt.b, blend);
+                    bool inside = o.dist(camera1->o) <= psize*1.25; //1.25 is max wobble scale
+                    if(inside)
+                    {
+                        extern int dblend;
+                        if(dblend == 0) dblend = 1;
+                        glRotatef(camera1->yaw-180, 0, 0, 1);
+                        glRotatef(camera1->pitch-90, 1, 0, 0);
+                        glColor4ub(0x40, 0xFF, 0xFF, blend);
+                    }
+                    else
+                    {
+                        vec oc(o);
+                        oc.sub(camera1->o);
+                        glRotatef(atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
+                        glRotatef(asin(oc.z/oc.magnitude())/RAD - 90, 1, 0, 0);
+                        glColor4ub(pt.r, pt.g, pt.b, blend);
+                    }
+                    
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                     }
 
-                    glRotatef(detrnd((size_t)p, 360) + lastmillis/7.0f, 0, 0, 1);
-                    glScalef(-psize, psize, o.dist(camera1->o) > psize ? -psize : psize);
+                    glRotatef(lastmillis/7.0f, 0, 0, 1);
+                    glScalef(-psize, psize, inside ? psize : -psize);
                     drawexplosion(size, o, pp==&parlist[i], !p->next);
                 } 
                 else 
                 {
+                    glRotatef(camera1->yaw-180, 0, 0, 1);
+                    glRotatef(camera1->pitch-90, 1, 0, 0);
+                    
                     float scale = pt.sz/80.0f;
                     glScalef(-scale, scale, -scale);
                     if(type==PT_METER || type==PT_METERVS)
