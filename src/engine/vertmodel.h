@@ -1,4 +1,4 @@
-VARP(lightmodels, 0, 0, 1);
+VARP(lightmodels, 0, 1, 1);
 
 struct vertmodel : model
 {

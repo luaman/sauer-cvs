@@ -826,6 +826,8 @@ void inittmus()
     if(renderpath==R_FIXEDFUNCTION && maxtmus<2)
     {
         nolights = nowater = nomasks = 1;
+        extern int lightmodels;
+        lightmodels = 0;
     }
 }
 
