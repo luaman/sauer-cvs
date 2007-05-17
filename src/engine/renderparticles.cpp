@@ -175,7 +175,25 @@ static void inithemisphere(int hres, int depth)
     loopi(hres) genface(nIndices, nVerts, depth, 0, i+1, 1+(i+1)%hres);
 }
 
-static void drawexplosion(float ts, vec center) 
+GLuint createexpmodtex(int size)
+{
+    uchar *data = new uchar[size*size], *dst = data;
+    loop(y, size) loop(x, size)
+    {
+        float dx = 2*float(x)/(size-1) - 1, dy = 2*float(y)/(size-1) - 1;
+        float z = 1 - dx*dx - dy*dy;
+        z = sqrtf(max(z, 0));
+        loopk(3) z *= z;
+        *dst++ = uchar(z*255);
+    }
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    createtexture(tex, size, size, data, 3, true, GL_ALPHA);
+    delete[] data;
+    return tex;
+}
+
+static void drawexplosion(float ts, vec center, bool setup, bool cleanup) 
 {
     const int hres = 5;
     const int depth = 2;
@@ -201,29 +219,36 @@ static void drawexplosion(float ts, vec center)
             loopi(nVerts) 
             {
                 expvert &e = expverts[i];
+                vec &v = hemiverts[i];
                 //texgen - scrolling billboard
-                e.u = hemiverts[i].x*0.5 + 0.5 + 0.0004*float(lastmillis);
-                e.v = hemiverts[i].y*0.5 + 0.5 + 0.0004*float(lastmillis);
+                e.u = v.x*0.5 + 0.5 + 0.0004*float(lastmillis);
+                e.v = v.y*0.5 + 0.5 + 0.0004*float(lastmillis);
                 //wobble - identical to shader code
-                float wobble = hemiverts[i].dot(center) + 0.002*float(lastmillis);
+                float wobble = v.dot(center) + 0.002*float(lastmillis);
                 wobble = wobble - floor(wobble);
                 wobble = 1.0 + fabs(wobble - 0.5)*0.5 - 0.125;
-                e.pos = hemiverts[i];
+                e.pos = v;
                 e.pos.mul(wobble);
             }
         }
     }
     
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
-    if(renderpath == R_FIXEDFUNCTION)
+    if(setup)
     {
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->u);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
+        if(renderpath == R_FIXEDFUNCTION)
+        {
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->u);
+        }
     } 
 	glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, hemiindices);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    if(cleanup)
+    {
+        glDisableClientState(GL_VERTEX_ARRAY);
+        if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
 }
 
 
@@ -338,11 +363,52 @@ void render_particles(int time)
         
         if(pt.type&PT_MOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 
+        if(type==PT_METER || type==PT_METERVS)
+        {
+            glDisable(GL_BLEND);
+            glDisable(GL_TEXTURE_2D);
+            foggednotextureshader->set();
+            glFogfv(GL_FOG_COLOR, oldfogc);
+        }
+        else if(type==PT_FIREBALL)
+        {
+            if(renderpath!=R_FIXEDFUNCTION)
+            {
+                static Shader *explshader = NULL;
+                if(!explshader) explshader = lookupshaderbyname("explosion");
+                explshader->set();
+            }
+            else if(maxtmus>=2)
+            {
+                static GLuint expmodtex = 0;
+                if(!expmodtex) expmodtex = createexpmodtex(64);
+
+                setuptmu(0, "C * T", "= Ca");
+                glActiveTexture_(GL_TEXTURE1_ARB);
+                glEnable(GL_TEXTURE_2D);
+
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, expmodtex);
+
+                GLfloat s[4] = { 0.5f, 0, 0, 0.5f }, t[4] = { 0, 0.5f, 0, 0.5f };
+                glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+                glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+                glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+                glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                glEnable(GL_TEXTURE_GEN_S);
+                glEnable(GL_TEXTURE_GEN_T);
+
+                setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
+
+                glActiveTexture_(GL_TEXTURE0_ARB);
+            }
+        }
+
         bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
                 
         if(quads) glBegin(GL_QUADS);        
-          
+         
         for(particle *p, **pp = &parlist[i]; (p = *pp);)
         {   
             int ts = (lastmillis-p->millis);
@@ -427,32 +493,17 @@ void render_particles(int time)
                     float pmax = p->val;
                     float size = float(ts)/p->fade;
                     float psize = pt.sz + pmax * size;
-                    
+                   
                     glColor4ub(pt.r, pt.g, pt.b, blend);
-                    
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
-                        static Shader *explshader = NULL;
-                        if(!explshader) explshader = lookupshaderbyname("explosion");
-                        explshader->set();
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                     }
-                    
+
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
                     glScalef(-psize, psize, o.dist(camera1->o) > psize ? -psize : psize);
-                    drawexplosion(size, o);
-                    
-                    if(renderpath==R_FIXEDFUNCTION)
-                    {
-                        glRotatef(lastmillis/-3.9f, 0, 0, 1);
-                        glScalef(0.8f, 0.8f, 0.8f);
-                        drawexplosion(size, o);
-                    } 
-                    else
-                    {
-                        foggedshader->set();	 
-                    } 
+                    drawexplosion(size, o, pp==&parlist[i], !p->next);
                 } 
                 else 
                 {
@@ -461,12 +512,6 @@ void render_particles(int time)
                     if(type==PT_METER || type==PT_METERVS)
                     {
                         float right = 8*FONTH, left = p->val*right;
-                        glDisable(GL_BLEND);
-                        glDisable(GL_TEXTURE_2D);
-
-                        foggednotextureshader->set();
-                        glFogfv(GL_FOG_COLOR, oldfogc);
-
                         glTranslatef(-right/2.0f, 0, 0);
                         
                         glBegin(GL_QUADS);
@@ -483,12 +528,6 @@ void render_particles(int time)
                         glVertex2f(right, FONTH);
                         glVertex2f(left, FONTH);
                         glEnd();
-                        
-                        foggedshader->set();
-                        glFogfv(GL_FOG_COLOR, zerofog);
-
-                        glEnable(GL_TEXTURE_2D);
-                        glEnable(GL_BLEND);
                     }
                     else
                     {
@@ -499,7 +538,6 @@ void render_particles(int time)
                         glTranslatef(xoff, yoff, 50);
                         
                         draw_text(text, 0, 0, pt.r, pt.g, pt.b, blend);
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                     }
                 }
                 glPopMatrix();
@@ -517,6 +555,28 @@ void render_particles(int time)
         }
         if(quads) glEnd();
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        if(type==PT_TEXT || type==PT_TEXTUP) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        else if(type==PT_METER || type==PT_METERVS)
+        {
+            foggedshader->set();
+            glFogfv(GL_FOG_COLOR, zerofog);
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_BLEND);
+        }
+        else if(type==PT_FIREBALL)
+        {
+            if(renderpath!=R_FIXEDFUNCTION) foggedshader->set();
+            else if(maxtmus>=2)
+            {
+                resettmu(0);
+                glActiveTexture_(GL_TEXTURE1_ARB);
+                glDisable(GL_TEXTURE_2D);
+                glDisable(GL_TEXTURE_GEN_S);
+                glDisable(GL_TEXTURE_GEN_T);
+                resettmu(1);
+                glActiveTexture_(GL_TEXTURE0_ARB);
+            }
+        }
     }
 
     if(flarecnt && !reflecting && !refracting) //the camera is hardcoded into the flares.. reflecting would be nonsense
