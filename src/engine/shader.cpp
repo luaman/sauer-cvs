@@ -736,6 +736,7 @@ void parsetmufunc(tmufunc &f, const char *s)
         case '-': f.combine = GL_SUBTRACT_ARB; break;
         case ',': 
         case '@': f.combine = GL_INTERPOLATE_ARB; break;
+        case '.': f.combine = GL_DOT3_RGB_ARB; break;
         case 'x': while(!isdigit(*s)) s++; f.scale = *s++-'0'; break;
     }
 }

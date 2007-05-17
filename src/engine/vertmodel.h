@@ -1,3 +1,5 @@
+VARP(lightmodels, 0, 0, 1);
+
 struct vertmodel : model
 {
     struct anpos
@@ -58,6 +60,7 @@ struct vertmodel : model
         float dynt;
         GLuint statlist;
         int statoffset, statlen;
+        bool statnorms, dynnorms;
         float envmapmin, envmapmax;
 
         mesh() : owner(0), name(0), verts(0), tcverts(0), tris(0), skin(crosshair), masks(crosshair), tex(0), dynbuf(0), dynidx(0), statlist(0), envmapmin(0), envmapmax(0)
@@ -96,6 +99,7 @@ struct vertmodel : model
 
         void genvbo(vector<ushort> &idxs, vector<vvert> &vverts)
         {
+            statnorms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && maxtmus>=3);
             statoffset = idxs.length();
             loopi(numtris)
             {
@@ -107,7 +111,7 @@ struct vertmodel : model
                     loopvk(vverts) // check if it's already added
                     {
                         vvert &w = vverts[k];
-                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && ((renderpath==R_FIXEDFUNCTION && (envmapmax<=0 || maxtmus<3)) || v.norm==w.norm)) { idxs.add((ushort)k); goto found; }
+                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && (!statnorms || v.norm==w.norm)) { idxs.add((ushort)k); goto found; }
                     }
                     {
                         idxs.add(vverts.length());
@@ -185,10 +189,11 @@ struct vertmodel : model
                 dynprev.fr1 = -1;
             }
             dyncur = cur;
+            dynnorms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && maxtmus>=3);
             #define ip(p1, p2, t) (p1+t*(p2-p1))
             #define ip_v(p, c, t) ip(p##1[i].c, p##2[i].c, t)
             #define ip_v_ai(c) ip( ip_v(pvert, c, prev->t), ip_v(vert, c, cur.t), ai_t)
-            if(renderpath==R_FIXEDFUNCTION && (envmapmax<=0 || maxtmus<3)) loopi(numverts)
+            if(!dynnorms) loopi(numverts)
             {
                 vert &v = dynbuf[i];
                 if(prev) v.pos = vec(ip_v_ai(pos.x), ip_v_ai(pos.y), ip_v_ai(pos.z));
@@ -215,17 +220,23 @@ struct vertmodel : model
 
         void setuptmus(animstate &as, bool masked)
         {
+            if(lightmodels && !enablelighting) { glEnable(GL_LIGHTING); enablelighting = true; } 
             if(masked!=enableglow) lastskin = lastmasks = NULL;
             if(masked)
             {
                 vertmodel *m = owner->model;
                 if(!enableglow) setuptmu(0, "K , C @ T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "Ca * Ta" : NULL);
                 int glowscale = m->glow>2 ? 4 : (m->glow > 1 ? 2 : 1);
-                float glow = m->glow/glowscale;
+                float glow = m->glow/glowscale, envmap = as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.2f*envmapmax + 0.8f*envmapmin : 1;
                 colortmu(0, glow, glow, glow);
-                glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, 
-                          as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.2f*envmapmax + 0.8f*envmapmin : 1);
-
+                if(lightmodels)
+                {
+                    GLfloat material[4] = { 1.0f/glowscale, 1.0f/glowscale, 1.0f/glowscale, envmap };
+                    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
+                }
+                else
+                    glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, envmap);
+                
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 if(!enableglow)
                 {
@@ -241,7 +252,24 @@ struct vertmodel : model
             else if(enableglow)
             {
                 disableglow();
-                glColor3fv(lightcolor.v);
+                if(lightmodels) 
+                { 
+                    static const GLfloat material[4] = { 1, 1, 1, 1 };
+                    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
+                }
+                else glColor3fv(lightcolor.v);
+            }
+            if(lightmodels)
+            {
+                float ambient = min(owner->model->ambient*0.75f, 1), diffuse = 1-ambient;
+                GLfloat ambientcol[4] = { lightcolor.x*ambient, lightcolor.y*ambient, lightcolor.z*ambient, 1 },
+                        diffusecol[4] = { lightcolor.x*diffuse, lightcolor.y*diffuse, lightcolor.z*diffuse, 1 };
+                float ambientmax = max(ambientcol[0], max(ambientcol[1], ambientcol[2])),
+                      diffusemax = max(diffusecol[0], max(diffusecol[1], diffusecol[2]));
+                if(ambientmax>1e-3f) loopk(3) ambientcol[k] *= min(1.5f, 1.0f/ambientmax);
+                if(diffusemax>1e-3f) loopk(3) diffusecol[k] *= min(1.5f, 1.0f/diffusemax);
+                glLightfv(GL_LIGHT0, GL_AMBIENT, ambientcol);
+                glLightfv(GL_LIGHT0, GL_DIFFUSE, diffusecol);
             }
         }
 
@@ -278,6 +306,7 @@ struct vertmodel : model
                 if(enablealphablend) { glDisable(GL_BLEND); enablealphablend = false; }
                 if(enableglow) disableglow();
                 if(enableenvmap) disableenvmap();
+                if(enablelighting) { glDisable(GL_LIGHTING); enablelighting = false; }
                 return;
             }
             Texture *s = skin, *m = masks;
@@ -373,23 +402,28 @@ struct vertmodel : model
         {
             bindskin(as);
 
-            bool isstat = as.frame==0 && as.range==1;
-            if(isstat && owner->statbuf)
+            bool isstat = as.frame==0 && as.range==1, norms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && maxtmus>=3);
+            if(isstat && owner->statbuf && statnorms==norms)
             {
                 glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, (void *)(statoffset*sizeof(ushort)));
 
                 xtravertsva += numtcverts;
             }
-            else if(isstat && statlist)
+            else if(isstat && statlist && statnorms==norms)
             {
                 glCallList(statlist);
                 xtraverts += dynlen;
             }
             else if(dynbuf)
             {
-                bool norms = renderpath!=R_FIXEDFUNCTION || (envmapmax>0 && maxtmus>=3),
-                     glow = renderpath==R_FIXEDFUNCTION && masks!=crosshair;
-                if(isstat) glNewList(statlist = glGenLists(1), GL_COMPILE);
+                bool glow = renderpath==R_FIXEDFUNCTION && masks!=crosshair;
+                if(isstat) 
+                { 
+                    statnorms = norms; 
+                    if(!statlist) statlist = glGenLists(1);
+                    glNewList(statlist, GL_COMPILE); 
+                }
+                if(dynnorms!=norms) dyncur.fr1 = -1;
                 gendynverts(cur, prev, ai_t);
                 loopj(dynlen)
                 {
@@ -506,7 +540,7 @@ struct vertmodel : model
  
             glGenBuffers_(1, &statbuf);
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);
-            if(renderpath==R_FIXEDFUNCTION && !envmapped())
+            if(renderpath==R_FIXEDFUNCTION && !lightmodels && !envmapped())
             {
                 vvertff *ff = new vvertff[vverts.length()];
                 loopv(vverts) { vvert &v = vverts[i]; ff[i].pos = v.pos; ff[i].u = v.u; ff[i].v = v.v; }
@@ -684,7 +718,7 @@ struct vertmodel : model
 
         void setupglowtc()
         {
-            size_t vertsize = renderpath==R_FIXEDFUNCTION && !envmapped() ? sizeof(vvertff) : sizeof(vvert);
+            size_t vertsize = renderpath==R_FIXEDFUNCTION && !lightmodels && !envmapped() ? sizeof(vvertff) : sizeof(vvert);
             vvert *vverts = 0;
             glClientActiveTexture_(GL_TEXTURE1_ARB);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -694,7 +728,7 @@ struct vertmodel : model
 
         void bindvbo(animstate &as)
         {
-            size_t vertsize = renderpath==R_FIXEDFUNCTION && !envmapped() ? sizeof(vvertff) : sizeof(vvert);
+            size_t vertsize = renderpath==R_FIXEDFUNCTION && !lightmodels && !envmapped() ? sizeof(vvertff) : sizeof(vvert);
             vvert *vverts = 0;
             if(laststatbuf!=statbuf)
             {
@@ -728,9 +762,22 @@ struct vertmodel : model
             if(meshes.empty()) return;
             animstate as;
             if(!calcanimstate(anim, varseed, speed, basetime, d, as)) return;
-    
-            if(hasVBO && !statbuf && as.frame==0 && as.range==1) genvbo();
-            else if(!meshes[0]->dynbuf && (!hasVBO || as.frame!=0 || as.range!=1)) loopv(meshes) meshes[i]->gendynbuf();
+   
+            if(hasVBO && as.frame==0 && as.range==1) 
+            {
+                if(statbuf && renderpath==R_FIXEDFUNCTION)
+                {
+                    bool norms = lightmodels || envmapped();
+                    loopv(meshes) if(norms!=meshes[i]->statnorms)
+                    {
+                        glDeleteBuffers_(1, &statbuf);
+                        glDeleteBuffers_(1, &statidx);
+                        statbuf = statidx = 0;
+                    }
+                } 
+                if(!statbuf) genvbo();
+            }
+            else if(!meshes[0]->dynbuf) loopv(meshes) meshes[i]->gendynbuf();
     
             anpos prev, cur;
             cur.setframes(d && index<2 ? d->current[index] : as);
@@ -749,10 +796,18 @@ struct vertmodel : model
             if(!model->cullface && enablecullface) { glDisable(GL_CULL_FACE); enablecullface = false; }
             else if(model->cullface && !enablecullface) { glEnable(GL_CULL_FACE); enablecullface = true; }
 
-            if(renderpath!=R_FIXEDFUNCTION && !(anim&ANIM_NOSKIN))
+            if(!(anim&ANIM_NOSKIN))
             {
-                setenvparamf("direction", SHPARAM_VERTEX, 0, dir.x, dir.y, dir.z);
-                setenvparamf("camera", SHPARAM_VERTEX, 1, campos.x, campos.y, campos.z, 1);
+                if(renderpath!=R_FIXEDFUNCTION)
+                {
+                    setenvparamf("direction", SHPARAM_VERTEX, 0, dir.x, dir.y, dir.z);
+                    setenvparamf("camera", SHPARAM_VERTEX, 1, campos.x, campos.y, campos.z, 1);
+                }
+                else if(lightmodels)
+                {
+                    GLfloat pos[4] = { dir.x*1000, dir.y*1000, dir.z*1000, 0 };
+                    glLightfv(GL_LIGHT0, GL_POSITION, pos);
+                }
             }
 
             loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
@@ -921,7 +976,16 @@ struct vertmodel : model
         if(!(anim&ANIM_NOSKIN))
         {
             lightcolor = color;
-            glColor3fv(color.v);
+            if(renderpath==R_FIXEDFUNCTION && lightmodels) 
+            {
+                if(!enableglow)
+                {
+                    static const GLfloat material[4] = { 1, 1, 1, 1 };
+                    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
+                }
+            }
+            else glColor3fv(color.v);
+            
 
             rdir = dir;
             rdir.rotate_around_z((-yaw-180.0f)*RAD);
@@ -994,7 +1058,7 @@ struct vertmodel : model
         }
     }
 
-    static bool enabletc, enablealphatest, enablealphablend, enableenvmap, enableglow, enablecullface;
+    static bool enabletc, enablealphatest, enablealphablend, enableenvmap, enableglow, enablelighting, enablecullface;
     static vec lightcolor;
     static float lastalphatest, fogz;
     static GLuint laststatbuf, lastenvmaptex, closestenvmaptex;
@@ -1007,6 +1071,17 @@ struct vertmodel : model
         lastalphatest = -1;
         laststatbuf = lastenvmaptex = 0;
         lastskin = lastmasks = NULL;
+
+        static bool initlights = false;
+        if(renderpath==R_FIXEDFUNCTION && lightmodels && !initlights)
+        {
+            glEnable(GL_LIGHT0);
+            static const GLfloat zero[4] = { 0, 0, 0, 0 };
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, zero);
+            glLightfv(GL_LIGHT0, GL_SPECULAR, zero);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, zero);
+            initlights = true;
+        }
     }
 
     static void disableglowtc()
@@ -1065,9 +1140,10 @@ struct vertmodel : model
         if(enablealphatest) glDisable(GL_ALPHA_TEST);
         if(enablealphablend) glDisable(GL_BLEND);
         if(enableglow) disableglow();
+        if(enablelighting) glDisable(GL_LIGHTING);
         if(enableenvmap) disableenvmap();
         if(!enablecullface) glEnable(GL_CULL_FACE);
-        enabletc = enablealphatest = enablealphablend = enableenvmap = enableglow = false;
+        enabletc = enablealphatest = enablealphablend = enableenvmap = enableglow = enablelighting = false;
         enablecullface = true;
         lastalphatest = -1;
         laststatbuf = lastenvmaptex = 0;
@@ -1076,7 +1152,7 @@ struct vertmodel : model
 };
 
 bool vertmodel::enabletc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false, vertmodel::enableenvmap = false, 
-     vertmodel::enableglow = false, vertmodel::enablecullface = true;
+     vertmodel::enableglow = false, vertmodel::enablelighting = false, vertmodel::enablecullface = true;
 vec vertmodel::lightcolor;
 float vertmodel::lastalphatest = -1, vertmodel::fogz = 0;
 GLuint vertmodel::laststatbuf = 0, vertmodel::lastenvmaptex = 0, vertmodel::closestenvmaptex = 0;

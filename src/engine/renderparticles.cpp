@@ -501,7 +501,7 @@ void render_particles(int time)
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
                     }
 
-                    glRotatef(lastmillis/7.0f, 0, 0, 1);
+                    glRotatef(detrnd((size_t)p, 360) + lastmillis/7.0f, 0, 0, 1);
                     glScalef(-psize, psize, o.dist(camera1->o) > psize ? -psize : psize);
                     drawexplosion(size, o, pp==&parlist[i], !p->next);
                 } 

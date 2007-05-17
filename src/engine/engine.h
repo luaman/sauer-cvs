@@ -93,7 +93,7 @@ extern ushort closestenvmap(int orient, int x, int y, int z, int size);
 extern GLuint lookupenvmap(ushort emid);
 
 // rendergl
-extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasTE, hasMT, hasstencil;
+extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasTE, hasMT, hasD3, hasstencil;
 
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();

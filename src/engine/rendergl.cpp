@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasstencil = false;
+bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -118,6 +118,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     
     if(strstr(exts, "GL_EXT_texture_env_combine") || strstr(exts, "GL_ARB_texture_env_combine")) hasTE = true;
     else conoutf("WARNING: No texture_env_combine extension! (your video card is WAY too old)");
+
+    if(strstr(exts, "GL_EXT_texture_env_dot3") || strstr(exts, "GL_ARB_texture_env_dot3")) hasD3 = true;
 
     if(strstr(exts, "GL_ARB_multitexture"))
     {
