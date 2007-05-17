@@ -370,25 +370,22 @@ void render_particles(int time)
             foggednotextureshader->set();
             glFogfv(GL_FOG_COLOR, oldfogc);
         }
-        else if(type==PT_FIREBALL)
+        else if(type==PT_FIREBALL && (renderpath!=R_FIXEDFUNCTION || maxtmus>=2))
         {
+            static GLuint expmodtex = 0;
+            if(!expmodtex) expmodtex = createexpmodtex(64);
             if(renderpath!=R_FIXEDFUNCTION)
             {
                 static Shader *explshader = NULL;
                 if(!explshader) explshader = lookupshaderbyname("explosion");
                 explshader->set();
+                glActiveTexture_(GL_TEXTURE1_ARB);
             }
             else if(maxtmus>=2)
             {
-                static GLuint expmodtex = 0;
-                if(!expmodtex) expmodtex = createexpmodtex(64);
-
                 setuptmu(0, "C * T", "= Ca");
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 glEnable(GL_TEXTURE_2D);
-
-                glEnable(GL_TEXTURE_2D);
-                glBindTexture(GL_TEXTURE_2D, expmodtex);
 
                 GLfloat s[4] = { 0.5f, 0, 0, 0.5f }, t[4] = { 0, 0.5f, 0, 0.5f };
                 glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -399,9 +396,10 @@ void render_particles(int time)
                 glEnable(GL_TEXTURE_GEN_T);
 
                 setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
-
-                glActiveTexture_(GL_TEXTURE0_ARB);
             }
+
+            glBindTexture(GL_TEXTURE_2D, expmodtex);
+            glActiveTexture_(GL_TEXTURE0_ARB);
         }
 
         bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
