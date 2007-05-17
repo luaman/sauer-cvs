@@ -116,16 +116,16 @@ static Texture *parttexs[10];
 
 //cache our unit hemisphere
 static GLushort *hemiindices = NULL;
-static GLfloat (*hemiverts)[3];
+static vec *hemiverts;
 
 static void subdivide(int &nIndices, int &nVerts, int depth, int face);
 
 static int genvert(int &nVerts, float x, float y, float z)
 {
     int vert = nVerts++;
-    hemiverts[vert][0] = x;
-    hemiverts[vert][1] = y;
-    hemiverts[vert][2] = z;
+    hemiverts[vert].x = x;
+    hemiverts[vert].y = y;
+    hemiverts[vert].z = z;
     return vert;
 }
 
@@ -147,11 +147,10 @@ static void subdivide(int &nIndices, int &nVerts, int depth, int face)
     {
         int v1 = idx[i];
         int v2 = idx[(i+1)%3];
-        float x = hemiverts[v1][0] + hemiverts[v2][0];
-        float y = hemiverts[v1][1] + hemiverts[v2][1];
-        float z = hemiverts[v1][2] + hemiverts[v2][2];
-        float m = sqrt(x*x+y*y+z*z); //never zero
-        int vert = genvert(nVerts, x/m, y/m, z/m); //ensure point on unit sphere
+        vec v(hemiverts[v1]);
+        v.add(hemiverts[v2]);
+        v.normalize();
+        int vert = genvert(nVerts, v.x, v.y, v.z); //ensure point on unit sphere
         idx[3+i] = vert;
         hemiindices[face+i] = vert;
     }
@@ -165,7 +164,7 @@ static void inithemisphere(int hres, int depth)
     const int tris = hres << (2*depth);
     int nVerts = 0;
     int nIndices = 0;
-    hemiverts = new GLfloat[(tris+1)][3];
+    hemiverts = new vec[(tris+1)];
     hemiindices = new GLushort[tris*3];
     genvert(nVerts, 0.0, 0.0, 1.0); //build initial 'hres' sided pyramid
     loopi(hres)
@@ -185,45 +184,45 @@ static void drawexplosion(float ts, vec center)
     int tris = hres << (2*depth);
     int nVerts = tris+1;
     int nIndices = tris*3;
-    
-    static GLfloat (*gverts)[3] = NULL;  
-    static GLfloat (*gtexs)[2] = NULL;
+   
+    static struct expvert
+    {
+        vec pos;
+        float u, v;
+    } *expverts = NULL; 
     static int lastexpmillis = 0;
     if(renderpath == R_FIXEDFUNCTION)
     {
-        if(lastexpmillis != lastmillis || !gverts)
+        if(lastexpmillis != lastmillis || !expverts)
         {
             center = vec(13.0, 2.3, 7.1);  //only update once per frame! - so use the same center for all...
             lastexpmillis = lastmillis;
-            if(!gverts)
-            {
-                gverts = new GLfloat[nVerts][3];
-                gtexs = new GLfloat[nVerts][2];
-            }
+            if(!expverts) expverts = new expvert[nVerts];
             loopi(nVerts) 
             {
+                expvert &e = expverts[i];
                 //texgen - scrolling billboard
-                gtexs[i][0] = hemiverts[i][0]*0.5 + 0.5 + 0.0004*float(lastmillis);
-                gtexs[i][1] = hemiverts[i][1]*0.5 + 0.5 + 0.0004*float(lastmillis);
+                e.u = hemiverts[i].x*0.5 + 0.5 + 0.0004*float(lastmillis);
+                e.v = hemiverts[i].y*0.5 + 0.5 + 0.0004*float(lastmillis);
                 //wobble - identical to shader code
-                float wobble = hemiverts[i][0]*center.x + hemiverts[i][1]*center.y + hemiverts[i][2]*center.z + 0.002*float(lastmillis);
+                float wobble = hemiverts[i].dot(center) + 0.002*float(lastmillis);
                 wobble = wobble - floor(wobble);
                 wobble = 1.0 + fabs(wobble - 0.5)*0.5 - 0.125;
-                gverts[i][0] = hemiverts[i][0]*wobble;
-                gverts[i][1] = hemiverts[i][1]*wobble;
-                gverts[i][2] = hemiverts[i][2]*wobble; 
+                e.pos = hemiverts[i];
+                e.pos.mul(wobble);
             }
         }
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, 2*sizeof(GLfloat), gtexs);
     }
-    else gverts = hemiverts;
     
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 3*sizeof(GLfloat), gverts);
+    glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
+    if(renderpath == R_FIXEDFUNCTION)
+    {
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->u);
+    } 
 	glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, hemiindices);
     glDisableClientState(GL_VERTEX_ARRAY);
-    
     if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
