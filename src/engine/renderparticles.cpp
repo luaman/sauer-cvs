@@ -181,8 +181,8 @@ GLuint createexpmodtex(int size, float minval)
     {
         float dx = 2*float(x)/(size-1) - 1, dy = 2*float(y)/(size-1) - 1;
         float z = 1 - dx*dx - dy*dy;
-        z = sqrtf(max(z, 0));
-        if(!minval) loopk(3) z *= z;
+        if(minval) z = sqrtf(max(z, 0));
+        else loopk(2) z *= z;
         *dst++ = uchar(max(z, minval)*255);
     }
     GLuint tex = 0;
@@ -558,7 +558,6 @@ void render_particles(int time)
                     {
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
-                        setlocalparamf("minblend", SHPARAM_PIXEL, 2, inside ? 0.25f : 0);
                     }
 
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
