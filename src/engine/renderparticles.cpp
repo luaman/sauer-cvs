@@ -174,7 +174,7 @@ static void inithemisphere(int hres, int depth)
     loopi(hres) genface(heminumindices, heminumverts, depth, 0, i+1, 1+(i+1)%hres);
 }
 
-GLuint createexpmodtex(int size)
+GLuint createexpmodtex(int size, float minval)
 {
     uchar *data = new uchar[size*size], *dst = data;
     loop(y, size) loop(x, size)
@@ -182,8 +182,8 @@ GLuint createexpmodtex(int size)
         float dx = 2*float(x)/(size-1) - 1, dy = 2*float(y)/(size-1) - 1;
         float z = 1 - dx*dx - dy*dy;
         z = sqrtf(max(z, 0));
-        loopk(3) z *= z;
-        *dst++ = uchar(z*255);
+        if(!minval) loopk(3) z *= z;
+        *dst++ = uchar(max(z, minval)*255);
     }
     GLuint tex = 0;
     glGenTextures(1, &tex);
@@ -198,7 +198,8 @@ static struct expvert
     float u, v;
 } *expverts = NULL;
 
-static GLuint expmodtex = 0;
+static GLuint expmodtex[2] = {0, 0};
+static GLuint lastexpmodtex = 0;
 
 void setupexplosion()
 {
@@ -244,6 +245,8 @@ void setupexplosion()
             glEnable(GL_TEXTURE_GEN_T);
 
             setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
+
+            glActiveTexture_(GL_TEXTURE0_ARB);
         }
     }
     else
@@ -251,15 +254,13 @@ void setupexplosion()
         static Shader *explshader = NULL;
         if(!explshader) explshader = lookupshaderbyname("explosion");
         explshader->set();
-
-        glActiveTexture_(GL_TEXTURE1_ARB);
     }
 
     if(renderpath!=R_FIXEDFUNCTION || maxtmus>=2)
     {
-        if(!expmodtex) expmodtex = createexpmodtex(64);
-        glBindTexture(GL_TEXTURE_2D, expmodtex);
-        glActiveTexture_(GL_TEXTURE0_ARB);
+        if(!expmodtex[0]) expmodtex[0] = createexpmodtex(64, 0);
+        if(!expmodtex[1]) expmodtex[1] = createexpmodtex(64, 0.25f);
+        lastexpmodtex = 0;
     }
 
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -271,8 +272,16 @@ void setupexplosion()
     }
 }
  
-void drawexplosion()
+void drawexplosion(bool inside)
 {
+    if((renderpath!=R_FIXEDFUNCTION || maxtmus>=2) && lastexpmodtex != expmodtex[inside ? 1 : 0])
+    {
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        lastexpmodtex = expmodtex[inside ? 1 :0];
+        glBindTexture(GL_TEXTURE_2D, lastexpmodtex);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    }
+
 	glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
 }
 
@@ -549,12 +558,13 @@ void render_particles(int time)
                     {
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
+                        setlocalparamf("minblend", SHPARAM_PIXEL, 2, inside ? 0.25f : 0);
                     }
 
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
                     glScalef(-psize, psize, inside ? psize : -psize);
                     if(inside) glDisable(GL_DEPTH_TEST);
-                    drawexplosion();
+                    drawexplosion(inside);
                     if(inside) glEnable(GL_DEPTH_TEST);
                 } 
                 else 
