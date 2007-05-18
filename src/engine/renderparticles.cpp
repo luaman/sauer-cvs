@@ -200,8 +200,6 @@ static struct expvert
 
 static GLuint expmodtex = 0;
 
-VAR(blah, 0, 0, 1);
-
 void setupexplosion()
 {
     const int hres = 5;
@@ -221,8 +219,8 @@ void setupexplosion()
                 expvert &e = expverts[i];
                 vec &v = hemiverts[i];
                 //texgen - scrolling billboard
-                e.u = v.x*0.5f*(1+v.z) + 0.0004f*lastmillis;
-                e.v = v.y*0.5f*(1+v.z) + 0.0004f*lastmillis;
+                e.u = v.x*0.5f + 0.0004f*lastmillis;
+                e.v = v.y*0.5f + 0.0004f*lastmillis;
                 //wobble - similar to shader code
                 float wobble = v.dot(center) + 0.002f*lastmillis;
                 wobble -= floor(wobble);
