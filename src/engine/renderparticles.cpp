@@ -76,47 +76,58 @@ static void makeflare(vec &o, const vec &color, bool sun, bool sparkle)
     newflare(o, center, vec(color).mul(mod), size, sun, sparkle);
 }
 
-#define MAXPARTYPES 28
-
-struct particle
+static void renderflares()
 {
-    vec o, d;
-    int fade;
-    int millis;
-    particle *next;
-    union
+    glDisable(GL_FOG);
+    defaultshader->set();
+    glDisable(GL_DEPTH_TEST);
+
+    static Texture *flaretex = NULL;
+    if(!flaretex) flaretex = textureload("data/lensflares.png");
+    glBindTexture(GL_TEXTURE_2D, flaretex->gl);
+    glBegin(GL_QUADS);
+    loopi(flarecnt)
     {
-        char *text;         // will call delete[] on this only if it starts with an @
-        float val;
-    };
-};
-
-static particle *parlist[MAXPARTYPES], *parempty = NULL;
-
-VARP(particlesize, 20, 100, 500);
-
-// Check emit_particles() to limit the rate that paricles can be emitted for models/sparklies
-// Automatically stops particles being emitted when paused or in reflective drawing
-VARP(emitfps, 1, 60, 200);
-static int lastemitframe = 0;
-static bool emit = false;
-
-static bool emit_particles()
-{
-    if(reflecting) return false;
-    if(emit) return emit;
-    int emitmillis = 1000/emitfps;
-    emit = (lastmillis-lastemitframe>emitmillis);
-    return emit;
+        flare *f = flarelist+i;
+        vec center = f->center;
+        vec axis = vec(f->o).sub(center);
+        GLfloat color[4] = {f->color[0], f->color[1], f->color[2], 1.0};
+        loopj(f->sparkle?12:9)
+        {
+            const flaretype &ft = flaretypes[j];
+            vec o = vec(axis).mul(ft.loc).add(center);
+            float sz = ft.scale * f->size;
+            int tex = ft.type;
+            if(ft.type < 0) //sparkles - always done last
+            {
+                extern int paused;
+                shinetime = (paused ? j : (shinetime + 1)) % 10;
+                tex = 6+shinetime;
+                color[0] = 0.0;
+                color[1] = 0.0;
+                color[2] = 0.0;
+                color[-ft.type-1] = f->color[-ft.type-1]; //only want a single channel
+            }
+            color[3] = ft.color;
+            glColor4fv(color);
+            const float tsz = 0.25; //flares are aranged in 4x4 grid
+            float tx = tsz*(tex&0x03);
+            float ty = tsz*((tex>>2)&0x03);
+            glTexCoord2f(tx,     ty+tsz); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
+            glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
+            glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
+            glTexCoord2f(tx,     ty);     glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
+        }
+    }
+    glEnd();
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_FOG);
 }
-
-
-static Texture *parttexs[10];
-
 
 //cache our unit hemisphere
 static GLushort *hemiindices = NULL;
-static vec *hemiverts;
+static vec *hemiverts = NULL;
+static int heminumverts = 0, heminumindices = 0;
 
 static void subdivide(int &nIndices, int &nVerts, int depth, int face);
 
@@ -149,17 +160,18 @@ static void subdivide(int &nIndices, int &nVerts, int depth, int face)
 static void inithemisphere(int hres, int depth) 
 {
     const int tris = hres << (2*depth);
-    int nVerts = 0;
-    int nIndices = 0;
+    heminumverts = heminumindices = 0;
+    DELETEA(hemiverts);
+    DELETEA(hemiindices);
     hemiverts = new vec[(tris+1)];
     hemiindices = new GLushort[tris*3];
-    hemiverts[nVerts++] = vec(0.0, 0.0, 1.0); //build initial 'hres' sided pyramid
+    hemiverts[heminumverts++] = vec(0.0f, 0.0f, 1.0f); //build initial 'hres' sided pyramid
     loopi(hres)
     {
         float a = PI2*float(i)/hres;
-        hemiverts[nVerts++] = vec(cos(a), sin(a), 0.0);
+        hemiverts[heminumverts++] = vec(cos(a), sin(a), 0.0f);
     }
-    loopi(hres) genface(nIndices, nVerts, depth, 0, i+1, 1+(i+1)%hres);
+    loopi(hres) genface(heminumindices, heminumverts, depth, 0, i+1, 1+(i+1)%hres);
 }
 
 GLuint createexpmodtex(int size)
@@ -180,63 +192,146 @@ GLuint createexpmodtex(int size)
     return tex;
 }
 
-static void drawexplosion(float ts, vec center, bool setup, bool cleanup) 
+static struct expvert
+{
+    vec pos;
+    float u, v;
+} *expverts = NULL;
+
+static GLuint expmodtex = 0;
+
+VAR(blah, 0, 0, 1);
+
+void setupexplosion()
 {
     const int hres = 5;
     const int depth = 2;
     if(!hemiindices) inithemisphere(hres, depth);
-    
-    int tris = hres << (2*depth);
-    int nVerts = tris+1;
-    int nIndices = tris*3;
    
-    static struct expvert
-    {
-        vec pos;
-        float u, v;
-    } *expverts = NULL; 
-    static int lastexpmillis = 0;
     if(renderpath == R_FIXEDFUNCTION)
     {
+        static int lastexpmillis = 0;
         if(lastexpmillis != lastmillis || !expverts)
         {
-            center = vec(13.0, 2.3, 7.1);  //only update once per frame! - so use the same center for all...
+            vec center = vec(13.0f, 2.3f, 7.1f);  //only update once per frame! - so use the same center for all...
             lastexpmillis = lastmillis;
-            if(!expverts) expverts = new expvert[nVerts];
-            loopi(nVerts) 
+            if(!expverts) expverts = new expvert[heminumverts];
+            loopi(heminumverts)
             {
                 expvert &e = expverts[i];
                 vec &v = hemiverts[i];
                 //texgen - scrolling billboard
-                e.u = v.x*0.5 + 0.5 + 0.0004*float(lastmillis);
-                e.v = v.y*0.5 + 0.5 + 0.0004*float(lastmillis);
-                //wobble - identical to shader code
-                float wobble = v.dot(center) + 0.002*float(lastmillis);
-                wobble = wobble - floor(wobble);
-                wobble = 1.0 + fabs(wobble - 0.5)*0.5 - 0.125;
+                e.u = v.x*0.5f*(1+v.z) + 0.0004f*lastmillis;
+                e.v = v.y*0.5f*(1+v.z) + 0.0004f*lastmillis;
+                //wobble - similar to shader code
+                float wobble = v.dot(center) + 0.002f*lastmillis;
+                wobble -= floor(wobble);
+                wobble = 1.0f + fabs(wobble - 0.5f)*0.5f;
                 e.pos = vec(v).mul(wobble);
             }
         }
-    }
-    
-    if(setup)
-    {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
-        if(renderpath == R_FIXEDFUNCTION)
+
+        if(maxtmus>=2)
         {
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->u);
+            setuptmu(0, "C * T", "= Ca");
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glEnable(GL_TEXTURE_2D);
+
+            GLfloat s[4] = { 0.5f, 0, 0, 0.5f }, t[4] = { 0, 0.5f, 0, 0.5f };
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+            glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+            glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+            glEnable(GL_TEXTURE_GEN_S);
+            glEnable(GL_TEXTURE_GEN_T);
+
+            setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
         }
-    } 
-	glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, hemiindices);
-    if(cleanup)
+    }
+    else
     {
-        glDisableClientState(GL_VERTEX_ARRAY);
-        if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        static Shader *explshader = NULL;
+        if(!explshader) explshader = lookupshaderbyname("explosion");
+        explshader->set();
+
+        glActiveTexture_(GL_TEXTURE1_ARB);
+    }
+
+    if(renderpath!=R_FIXEDFUNCTION || maxtmus>=2)
+    {
+        if(!expmodtex) expmodtex = createexpmodtex(64);
+        glBindTexture(GL_TEXTURE_2D, expmodtex);
+        glActiveTexture_(GL_TEXTURE0_ARB);
+    }
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
+    if(renderpath == R_FIXEDFUNCTION)
+    {
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->u);
+    }
+}
+ 
+void drawexplosion()
+{
+	glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+}
+
+void cleanupexplosion()
+{
+    glDisableClientState(GL_VERTEX_ARRAY);
+    if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    if(renderpath!=R_FIXEDFUNCTION) foggedshader->set();
+    else if(maxtmus>=2)
+    {
+        resettmu(0);
+        glActiveTexture_(GL_TEXTURE1_ARB);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_TEXTURE_GEN_S);
+        glDisable(GL_TEXTURE_GEN_T);
+        resettmu(1);
+        glActiveTexture_(GL_TEXTURE0_ARB);
     }
 }
 
+
+#define MAXPARTYPES 28
+
+struct particle
+{   
+    vec o, d;
+    int fade;
+    int millis;
+    particle *next;
+    union
+    {
+        char *text;         // will call delete[] on this only if it starts with an @
+        float val;
+    };
+};
+    
+static particle *parlist[MAXPARTYPES], *parempty = NULL;
+    
+VARP(particlesize, 20, 100, 500);
+    
+// Check emit_particles() to limit the rate that paricles can be emitted for models/sparklies
+// Automatically stops particles being emitted when paused or in reflective drawing
+VARP(emitfps, 1, 60, 200);
+static int lastemitframe = 0;
+static bool emit = false;
+
+static bool emit_particles()
+{
+    if(reflecting) return false;
+    if(emit) return emit;
+    int emitmillis = 1000/emitfps;
+    emit = (lastmillis-lastemitframe>emitmillis);
+    return emit;
+}
+
+static Texture *parttexs[9];
 
 void particleinit()
 {    
@@ -249,7 +344,6 @@ void particleinit()
     parttexs[6] = textureload("data/martin/spark.png");
     parttexs[7] = textureload("data/explosion.jpg");   
     parttexs[8] = textureload("data/blood.png");
-    parttexs[9] = textureload("data/lensflares.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
 }
 
@@ -324,6 +418,8 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { PT_ENT,     255, 200, 200, 20, 1,  4.8f }, // yellow: fireball1
 };
 
+VAR(iscale, 0, 100, 10000);
+
 void render_particles(int time)
 {
     static float zerofog[4] = { 0, 0, 0, 1 };
@@ -356,37 +452,7 @@ void render_particles(int time)
             foggednotextureshader->set();
             glFogfv(GL_FOG_COLOR, oldfogc);
         }
-        else if(type==PT_FIREBALL && (renderpath!=R_FIXEDFUNCTION || maxtmus>=2))
-        {
-            static GLuint expmodtex = 0;
-            if(!expmodtex) expmodtex = createexpmodtex(64);
-            if(renderpath!=R_FIXEDFUNCTION)
-            {
-                static Shader *explshader = NULL;
-                if(!explshader) explshader = lookupshaderbyname("explosion");
-                explshader->set();
-                glActiveTexture_(GL_TEXTURE1_ARB);
-            }
-            else if(maxtmus>=2)
-            {
-                setuptmu(0, "C * T", "= Ca");
-                glActiveTexture_(GL_TEXTURE1_ARB);
-                glEnable(GL_TEXTURE_2D);
-
-                GLfloat s[4] = { 0.5f, 0, 0, 0.5f }, t[4] = { 0, 0.5f, 0, 0.5f };
-                glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-                glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-                glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
-                glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
-                glEnable(GL_TEXTURE_GEN_S);
-                glEnable(GL_TEXTURE_GEN_T);
-
-                setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
-            }
-
-            glBindTexture(GL_TEXTURE_2D, expmodtex);
-            glActiveTexture_(GL_TEXTURE0_ARB);
-        }
+        else if(type==PT_FIREBALL) setupexplosion();
 
         bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
@@ -474,23 +540,12 @@ void render_particles(int time)
                     float size = float(ts)/p->fade;
                     float psize = pt.sz + pmax * size;
                    
-                    bool inside = o.dist(camera1->o) <= psize*1.25; //1.25 is max wobble scale
-                    if(inside)
-                    {
-                        extern int dblend;
-                        if(dblend == 0) dblend = 1;
-                        glRotatef(camera1->yaw-180, 0, 0, 1);
-                        glRotatef(camera1->pitch-90, 1, 0, 0);
-                        glColor4ub(0x40, 0xFF, 0xFF, blend);
-                    }
-                    else
-                    {
-                        vec oc(o);
-                        oc.sub(camera1->o);
-                        glRotatef(atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
-                        glRotatef(asin(oc.z/oc.magnitude())/RAD - 90, 1, 0, 0);
-                        glColor4ub(pt.r, pt.g, pt.b, blend);
-                    }
+                    bool inside = o.dist(camera1->o) <= psize*1.25f; //1.25 is max wobble scale
+                    vec oc(o);
+                    oc.sub(camera1->o);
+                    glRotatef(inside ? camera1->yaw - 180 : atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
+                    glRotatef((inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90, 1, 0, 0);
+                    glColor4ub(pt.r, pt.g, pt.b, blend);
                     
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
@@ -500,7 +555,9 @@ void render_particles(int time)
 
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
                     glScalef(-psize, psize, inside ? psize : -psize);
-                    drawexplosion(size, o, pp==&parlist[i], !p->next);
+                    if(inside) glDisable(GL_DEPTH_TEST);
+                    drawexplosion();
+                    if(inside) glEnable(GL_DEPTH_TEST);
                 } 
                 else 
                 {
@@ -563,77 +620,24 @@ void render_particles(int time)
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_BLEND);
         }
-        else if(type==PT_FIREBALL)
-        {
-            if(renderpath!=R_FIXEDFUNCTION) foggedshader->set();
-            else if(maxtmus>=2)
-            {
-                resettmu(0);
-                glActiveTexture_(GL_TEXTURE1_ARB);
-                glDisable(GL_TEXTURE_2D);
-                glDisable(GL_TEXTURE_GEN_S);
-                glDisable(GL_TEXTURE_GEN_T);
-                resettmu(1);
-                glActiveTexture_(GL_TEXTURE0_ARB);
-            }
-        }
+        else if(type==PT_FIREBALL) cleanupexplosion();
     }
 
     if(flarecnt && !reflecting && !refracting) //the camera is hardcoded into the flares.. reflecting would be nonsense
     {        
         if(!rendered)
         {
-            rendered = true;
-            glDepthMask(GL_FALSE);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         }
 
-        glDisable(GL_FOG);
-        defaultshader->set();
-        glDisable(GL_DEPTH_TEST);
-        glBindTexture(GL_TEXTURE_2D, parttexs[9]->gl);
-        glBegin(GL_QUADS);
-        loopi(flarecnt)
-        {   
-            flare *f = flarelist+i;
-            vec center = f->center;
-            vec axis = vec(f->o).sub(center);
-            GLfloat color[4] = {f->color[0], f->color[1], f->color[2], 1.0};
-            loopj(f->sparkle?12:9) 
-            {
-                const flaretype &ft = flaretypes[j];
-                vec o = vec(axis).mul(ft.loc).add(center);
-                float sz = ft.scale * f->size;
-                int tex = ft.type;
-                if(ft.type < 0) //sparkles - always done last
-                {
-                    extern int paused;
-                    shinetime = (paused ? j : (shinetime + 1)) % 10;
-                    tex = 6+shinetime;
-                    color[0] = 0.0;
-                    color[1] = 0.0;
-                    color[2] = 0.0;
-                    color[-ft.type-1] = f->color[-ft.type-1]; //only want a single channel
-                } 
-                color[3] = ft.color;
-                glColor4fv(color);
-                const float tsz = 0.25; //flares are aranged in 4x4 grid
-                float tx = tsz*(tex&0x03);
-                float ty = tsz*((tex>>2)&0x03);
-                glTexCoord2f(tx,     ty+tsz); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
-                glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
-                glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
-                glTexCoord2f(tx,     ty);     glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
-            }
-        }
-        glEnd();
-        glEnable(GL_DEPTH_TEST);
+        renderflares();
+
+        if(!rendered) glDisable(GL_BLEND);
     }
 
     if(rendered)
     {   
-        glEnable(GL_FOG);
         glFogfv(GL_FOG_COLOR, oldfogc);
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
