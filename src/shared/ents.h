@@ -44,7 +44,7 @@ struct animstate                                // used for animation blending o
     bool operator!=(const animstate &o) const { return frame!=o.frame || range!=o.range || basetime!=o.basetime || speed!=o.speed; }
 };
 
-enum { ANIM_DEAD = 0, ANIM_DYING, ANIM_IDLE, ANIM_FORWARD, ANIM_BACKWARD, ANIM_LEFT, ANIM_RIGHT, ANIM_CW, ANIM_CCW, ANIM_PUNCH, ANIM_SHOOT, ANIM_PAIN, ANIM_JUMP, ANIM_SINK, ANIM_SWIM, ANIM_EDIT, ANIM_LAG, ANIM_TAUNT, ANIM_WIN, ANIM_LOSE, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_MAPMODEL, ANIM_TRIGGER, NUMANIMS };
+enum { ANIM_DEAD = 0, ANIM_DYING, ANIM_IDLE, ANIM_FORWARD, ANIM_BACKWARD, ANIM_LEFT, ANIM_RIGHT, ANIM_PUNCH, ANIM_SHOOT, ANIM_PAIN, ANIM_JUMP, ANIM_SINK, ANIM_SWIM, ANIM_EDIT, ANIM_LAG, ANIM_TAUNT, ANIM_WIN, ANIM_LOSE, ANIM_GUNSHOOT, ANIM_GUNIDLE, ANIM_MAPMODEL, ANIM_TRIGGER, NUMANIMS };
 
 #define ANIM_INDEX      0xFF
 #define ANIM_LOOP       (1<<8)
@@ -104,8 +104,6 @@ struct dynent : physent                         // animated characters, or chara
     animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
     int lastanimswitchtime[2];
     void *lastmodel[2];
-    float lastyaw, lastyawmillis;
-    int yawanim;
 
     dynent() { reset(); loopi(2) { lastanimswitchtime[i] = -1; lastmodel[i] = NULL; } }
                
@@ -114,7 +112,6 @@ struct dynent : physent                         // animated characters, or chara
         k_left = k_right = k_up = k_down = jumpnext = false;
         move = strafe = 0;
         targetyaw = rotspeed = 0;
-        lastyawmillis = 0;
     }
         
     void reset()

@@ -573,7 +573,7 @@ void abovemodel(vec &o, const char *mdl)
 
 int findanim(const char *name)
 {
-    static const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "cw", "ccw", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "taunt", "win", "lose", "gun shoot", "gun idle", "mapmodel", "trigger" };
+    static const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "taunt", "win", "lose", "gun shoot", "gun idle", "mapmodel", "trigger" };
     loopi(sizeof(names)/sizeof(names[0])) if(!strcmp(name, names[i])) return i;
     return -1;
 }
@@ -641,20 +641,11 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
             varseed += lastaction;
         }
 
-        if(d->yaw!=d->lastyaw) d->yawanim = (d->yaw<d->lastyaw) == (fabs(d->yaw-d->lastyaw)<180) ? ANIM_CCW : ANIM_CW;
-
         if(d->inwater && d->physstate<=PHYS_FALL) anim |= ((d->move || d->strafe || d->vel.z+d->gravity.z>0 ? ANIM_SWIM : ANIM_SINK)|ANIM_LOOP)<<ANIM_SECONDARY;
         else if(d->timeinair>100) anim |= (ANIM_JUMP|ANIM_END)<<ANIM_SECONDARY;
         else if(d->move>0) anim |= (ANIM_FORWARD|ANIM_LOOP)<<ANIM_SECONDARY;
         else if(d->strafe) anim |= ((d->strafe>0 ? ANIM_LEFT : ANIM_RIGHT)|ANIM_LOOP)<<ANIM_SECONDARY;
         else if(d->move<0) anim |= (ANIM_BACKWARD|ANIM_LOOP)<<ANIM_SECONDARY;
-        else if(lastmillis-d->lastyawmillis<100) anim |= (d->yawanim|ANIM_LOOP)<<ANIM_SECONDARY;
-
-        if(d->yaw!=d->lastyaw)
-        {
-            d->lastyaw = d->yaw;
-            d->lastyawmillis = lastmillis;
-        }
 
         if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) anim >>= ANIM_SECONDARY;
     }
