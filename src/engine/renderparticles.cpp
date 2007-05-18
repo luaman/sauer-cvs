@@ -129,31 +129,31 @@ static GLushort *hemiindices = NULL;
 static vec *hemiverts = NULL;
 static int heminumverts = 0, heminumindices = 0;
 
-static void subdivide(int &nIndices, int &nVerts, int depth, int face);
+static void subdivide(int depth, int face);
 
-static void genface(int &nIndices, int &nVerts, int depth, int i1, int i2, int i3) 
+static void genface(int depth, int i1, int i2, int i3) 
 {
-    int face = nIndices; nIndices += 3;
+    int face = heminumindices; heminumindices += 3;
     hemiindices[face]   = i1;
     hemiindices[face+1] = i2;
     hemiindices[face+2] = i3;
-    subdivide(nIndices, nVerts, depth, face);
+    subdivide(depth, face);
 }
 
-static void subdivide(int &nIndices, int &nVerts, int depth, int face) 
+static void subdivide(int depth, int face) 
 {
     if(depth-- <= 0) return;
     int idx[6];
     loopi(3) idx[i] = hemiindices[face+i];	
     loopi(3) 
     {
-        int vert = nVerts++;
+        int vert = heminumverts++;
         hemiverts[vert] = vec(hemiverts[idx[i]]).add(hemiverts[idx[(i+1)%3]]).normalize(); //push on to unit sphere
         idx[3+i] = vert;
         hemiindices[face+i] = vert;
     }
-    subdivide(nIndices, nVerts, depth, face);
-    loopi(3) genface(nIndices, nVerts, depth, idx[i], idx[3+i], idx[3+(i+2)%3]);
+    subdivide(depth, face);
+    loopi(3) genface(depth, idx[i], idx[3+i], idx[3+(i+2)%3]);
 }
 
 //subdiv version wobble much more nicely than a lat/longitude version
@@ -171,7 +171,7 @@ static void inithemisphere(int hres, int depth)
         float a = PI2*float(i)/hres;
         hemiverts[heminumverts++] = vec(cosf(a), sinf(a), 0.0f);
     }
-    loopi(hres) genface(heminumindices, heminumverts, depth, 0, i+1, 1+(i+1)%hres);
+    loopi(hres) genface(depth, 0, i+1, 1+(i+1)%hres);
 }
 
 GLuint createexpmodtex(int size, float minval)
@@ -203,9 +203,7 @@ static GLuint lastexpmodtex = 0;
 
 void setupexplosion()
 {
-    const int hres = 5;
-    const int depth = 2;
-    if(!hemiindices) inithemisphere(hres, depth);
+    if(!hemiindices) inithemisphere(5, 2);
    
     if(renderpath == R_FIXEDFUNCTION)
     {
@@ -299,7 +297,7 @@ void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
             }
             glScalef(1, 1, -1);
         }
-	    glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+        glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
         if(i) glDepthFunc(GL_LESS);
     }
 }
@@ -767,13 +765,13 @@ static void makeparticles(entity &e)
         case 2: //water fountain
             regular_particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
             break;
-        case 32: // flares - plain/sparkle/sun/sparklesun
+        case 32: //flares - plain/sparkle/sun/sparklesun <red> <green> <blue>
         case 33:
         case 34:
         case 35:
             makeflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
             break;
-        case 22: //fire ball
+        case 22: //fire ball <size>
         case 23:
             newparticle(e.o, vec(0, 0, 1), 1, e.attr1)->val = 1+e.attr2;
             break;
