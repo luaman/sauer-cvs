@@ -163,7 +163,7 @@ static void inithemisphere(int hres, int depth)
     heminumverts = heminumindices = 0;
     DELETEA(hemiverts);
     DELETEA(hemiindices);
-    hemiverts = new vec[(tris+1)];
+    hemiverts = new vec[tris+1];
     hemiindices = new GLushort[tris*3];
     hemiverts[heminumverts++] = vec(0.0f, 0.0f, 1.0f); //build initial 'hres' sided pyramid
     loopi(hres)
