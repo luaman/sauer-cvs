@@ -169,7 +169,7 @@ static void inithemisphere(int hres, int depth)
     loopi(hres)
     {
         float a = PI2*float(i)/hres;
-        hemiverts[heminumverts++] = vec(cos(a), sin(a), 0.0f);
+        hemiverts[heminumverts++] = vec(cosf(a), sinf(a), 0.0f);
     }
     loopi(hres) genface(heminumindices, heminumverts, depth, 0, i+1, 1+(i+1)%hres);
 }
