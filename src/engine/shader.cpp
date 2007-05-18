@@ -717,7 +717,8 @@ tmu tmus[4] =
     INVALIDTMU,
     INVALIDTMU
 };
-int maxtmus = 0;
+
+VAR(maxtmus, 1, 0, 0);
 
 void parsetmufunc(tmufunc &f, const char *s)
 {
