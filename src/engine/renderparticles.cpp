@@ -272,7 +272,7 @@ void setupexplosion()
     }
 }
  
-void drawexplosion(bool inside)
+void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
 {
     if((renderpath!=R_FIXEDFUNCTION || maxtmus>=2) && lastexpmodtex != expmodtex[inside ? 1 : 0])
     {
@@ -281,16 +281,24 @@ void drawexplosion(bool inside)
         glBindTexture(GL_TEXTURE_2D, lastexpmodtex);
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
-    if(inside) 
+    loopi(inside ? 2 : 1)
     {
-        glDisable(GL_DEPTH_TEST);
-        glCullFace(GL_BACK);
-        glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
-        glCullFace(GL_FRONT);
-        glScalef(1, 1, -1);
+        glColor4ub(r, g, b, i ? a/2 : a);
+        if(i) 
+        {
+            glScalef(1, 1, -1);
+            glDepthFunc(GL_GEQUAL);
+        }
+        if(inside) 
+        {
+            glCullFace(GL_BACK);
+            glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+            glCullFace(GL_FRONT);
+            glScalef(1, 1, -1);
+        }
+	    glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+        if(i) glDepthFunc(GL_LESS);
     }
-	glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
-    if(inside) glEnable(GL_DEPTH_TEST);
 }
 
 void cleanupexplosion()
@@ -560,7 +568,6 @@ void render_particles(int time)
                     oc.sub(camera1->o);
                     glRotatef(inside ? camera1->yaw - 180 : atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
                     glRotatef((inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90, 1, 0, 0);
-                    glColor4ub(pt.r, pt.g, pt.b, blend);
                     
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
@@ -570,7 +577,7 @@ void render_particles(int time)
 
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
                     glScalef(-psize, psize, -psize);
-                    drawexplosion(inside);
+                    drawexplosion(inside, pt.r, pt.g, pt.b, blend);
                 } 
                 else 
                 {
