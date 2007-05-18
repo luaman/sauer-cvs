@@ -759,6 +759,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
     GLuint tex;
     glGenTextures(1, &tex);
     glViewport(0, 0, rendersize, rendersize);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
     float yaw = 0, pitch = 0;
     uchar *pixels = new uchar[3*rendersize*rendersize];
     loopi(6)

@@ -49,6 +49,7 @@ void screenshot()
     {
         if((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)))
         {
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
             glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
             for (idx = 0; idx<scr_h; idx++)
             {
