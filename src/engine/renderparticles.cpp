@@ -437,7 +437,7 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f }, // 20 METER BLUE vs. RED, SMALL, NON-MOVING
     { 0,          137, 118, 97, 20,   2, 0.6f }, // greyish-brown:   small  slowly sinking smoke trail
     {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f }, // red explosion fireball
-    {PT_FIREBALL, 230, 255, 128, 0,   7, 4.0f }, // orange explosion fireball
+    {PT_FIREBALL, 128, 160, 128, 0,   7, 4.0f }, // orange explosion fireball
     { PT_ENT,     137, 118, 97, -20, 2,  2.4f }, // greyish-brown:   big  slowly rising smoke
     { 0,          118, 97, 137,-15,  2,  2.4f }, // greyish-brown:   big  fast rising smoke          
     { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f }, // water  
