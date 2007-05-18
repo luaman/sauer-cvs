@@ -281,7 +281,7 @@ void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
         glBindTexture(GL_TEXTURE_2D, lastexpmodtex);
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
-    loopi(inside ? 2 : 1)
+    loopi(!reflecting && inside ? 2 : 1)
     {
         glColor4ub(r, g, b, i ? a/2 : a);
         if(i) 
@@ -291,9 +291,12 @@ void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
         }
         if(inside) 
         {
-            glCullFace(GL_BACK);
-            glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
-            glCullFace(GL_FRONT);
+            if(!reflecting)
+            {
+                glCullFace(GL_BACK);
+                glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+                glCullFace(GL_FRONT);
+            }
             glScalef(1, 1, -1);
         }
 	    glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
