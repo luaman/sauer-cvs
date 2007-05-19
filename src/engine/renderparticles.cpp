@@ -574,6 +574,9 @@ void render_particles(int time)
                     {
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
+
+                        // object is rolled, so object space fogging (used in shader refraction) won't work, so just use constant fog
+                        if(reflecting && refracting) setfogplane(0, refracting - o.z, true);
                     }
 
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
@@ -641,7 +644,11 @@ void render_particles(int time)
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_BLEND);
         }
-        else if(type==PT_FIREBALL) cleanupexplosion();
+        else if(type==PT_FIREBALL) 
+        {
+            cleanupexplosion();
+            if(renderpath!=R_FIXEDFUNCTION && reflecting && refracting) setfogplane(1, refracting);
+        }
     }
 
     if(flarecnt && !reflecting && !refracting) //the camera is hardcoded into the flares.. reflecting would be nonsense

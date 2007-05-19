@@ -98,7 +98,7 @@ extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasTE, hasMT, hasD3, has
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h, float curfps);
-extern void setfogplane(float scale = 0, float z = 0);
+extern void setfogplane(float scale = 0, float z = 0, bool flush = false);
 extern void findorientation();
 
 // renderextras

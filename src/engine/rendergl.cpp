@@ -414,7 +414,7 @@ void undoclipmatrix()
 VAR(reflectclip, 0, 6, 64);
 VARP(reflectmms, 0, 1, 1);
 
-void setfogplane(float scale, float z)
+void setfogplane(float scale, float z, bool flush)
 {
     float fogplane[4] = {1, 0, 0, 0};
     if(scale || z)
@@ -424,7 +424,7 @@ void setfogplane(float scale, float z)
         fogplane[3] = -z;
     }  
     setenvparamfv("fogplane", SHPARAM_VERTEX, 9, fogplane);
-//    flushenvparam(SHPARAM_VERTEX, 9);
+    if(flush) flushenvparam(SHPARAM_VERTEX, 9);
 }
 
 extern void rendercaustics(float z, bool refract);
