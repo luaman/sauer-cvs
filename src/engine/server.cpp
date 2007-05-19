@@ -377,7 +377,7 @@ uchar *stripheader(uchar *b)
 }
 
 ENetSocket mssock = ENET_SOCKET_NULL;
-ENetAddress msaddress;
+ENetAddress msaddress = { ENET_HOST_ANY, ENET_PORT_ANY };
 ENetAddress masterserver = { ENET_HOST_ANY, 80 };
 int updmaster = 0;
 string masterbase;
@@ -423,7 +423,6 @@ uchar *retrieveservers(uchar *buf, int buflen)
     eb.data = buf;
     eb.dataLength = buflen-1;
     while(httpgetreceive(sock, eb));
-
     return stripheader(buf);
 }
 #endif
@@ -534,15 +533,17 @@ void initserver(bool dedicated)
     if(dedicated)
     {
         ENetAddress address = { ENET_HOST_ANY, sv->serverport() };
-        if(*ip && enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
+        if(*ip)
+        {
+            if(enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
+            else msaddress.host = address.host;
+        }
         serverhost = enet_host_create(&address, maxclients+1, 0, uprate);
         if(!serverhost) fatal("could not create server host\n");
         loopi(maxclients) serverhost->peers[i].data = NULL;
         address.port = sv->serverinfoport();
         pongsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, &address);
         if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
-        msaddress.host = address.host;
-        msaddress.port = ENET_PORT_ANY;
     }
 
     sv->serverinit(sdesc, adminpass, pubserv);
