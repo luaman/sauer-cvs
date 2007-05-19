@@ -1,4 +1,6 @@
 VARP(lightmodels, 0, 1, 1);
+VARP(envmapmodels, 0, 1, 1);
+VARP(glowmodels, 0, 1, 1);
 
 struct vertmodel : model
 {
@@ -189,7 +191,7 @@ struct vertmodel : model
                 dynprev.fr1 = -1;
             }
             dyncur = cur;
-            dynnorms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && maxtmus>=3);
+            dynnorms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && envmapmodels && maxtmus>=3);
             #define ip(p1, p2, t) (p1+t*(p2-p1))
             #define ip_v(p, c, t) ip(p##1[i].c, p##2[i].c, t)
             #define ip_v_ai(c) ip( ip_v(pvert, c, prev->t), ip_v(vert, c, cur.t), ai_t)
@@ -316,6 +318,7 @@ struct vertmodel : model
                 s = slot.sts[0].t;
                 if(slot.sts.length() >= 2) m = slot.sts[1].t;
             }
+            if(!glowmodels) m = crosshair;
             setshader(as, m!=crosshair);
             if(s!=lastskin)
             {
@@ -402,7 +405,7 @@ struct vertmodel : model
         {
             bindskin(as);
 
-            bool isstat = as.frame==0 && as.range==1, norms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && maxtmus>=3);
+            bool isstat = as.frame==0 && as.range==1, norms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && envmapmodels && maxtmus>=3);
             if(isstat && owner->statbuf && statnorms==norms)
             {
                 glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, (void *)(statoffset*sizeof(ushort)));
@@ -527,7 +530,7 @@ struct vertmodel : model
 
         bool envmapped() 
         { 
-            loopv(meshes) if(meshes[i]->envmapmax>0 && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3)) return true;
+            loopv(meshes) if(meshes[i]->envmapmax>0 && envmapmodels && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3)) return true;
             return false;
         }
 
