@@ -313,6 +313,13 @@ bool resolverwait(const char *name, ENetAddress *address)
 {
     return enet_address_set_host(address, name) >= 0;
 }
+
+int connectwithtimeout(ENetSocket sock, char *hostname, ENetAddress &remoteaddress)
+{
+    int result = enet_socket_connect(sock, &remoteaddress);
+    if(result<0) enet_socket_destroy(sock);
+    return result;
+}
 #endif
 
 ENetSocket httpgetsend(ENetAddress &remoteaddress, char *hostname, char *req, char *ref, char *agent, ENetAddress *localaddress = NULL)
@@ -325,24 +332,11 @@ ENetSocket httpgetsend(ENetAddress &remoteaddress, char *hostname, char *req, ch
         if(!resolverwait(hostname, &remoteaddress)) return ENET_SOCKET_NULL;
     }
     ENetSocket sock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, localaddress);
-    if(sock==ENET_SOCKET_NULL) 
+    if(sock==ENET_SOCKET_NULL || connectwithtimeout(sock, hostname, remoteaddress)<0) 
     { 
 #ifdef STANDALONE
-        printf("could not open socket\n"); 
+        printf(sock==ENET_SOCKET_NULL ? "could not open socket\n" : "could not connect\n"); 
 #endif
-        return ENET_SOCKET_NULL; 
-    }
-    int result = 0;
-#ifdef STANDALONE
-    if(enet_socket_connect(sock, &remoteaddress)<0) 
-#else
-    if((result = connectwithtimeout(sock, hostname, remoteaddress))<=0)
-#endif
-    { 
-#ifdef STANDALONE
-        printf("could not connect\n"); 
-#endif
-        if(!result) enet_socket_destroy(sock);
         return ENET_SOCKET_NULL; 
     }
     ENetBuffer buf;

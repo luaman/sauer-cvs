@@ -240,12 +240,12 @@ int connectwithtimeout(ENetSocket sock, char *hostname, ENetAddress &address)
     connectdata cd = { sock, address, -1 };
     connthread = SDL_CreateThread(connectthread, &cd);
 
-    int starttime = SDL_GetTicks(), timeout = 0, result = -1;
+    int starttime = SDL_GetTicks(), timeout = 0;
     for(;;)
     {
         if(!SDL_CondWaitTimeout(conncond, connmutex, 250))
         {
-            result = cd.result<0 ? 0 : 1;
+            if(cd.result<0) enet_socket_destroy(sock);
             break;
         }      
         timeout = SDL_GetTicks() - starttime;
@@ -258,11 +258,13 @@ int connectwithtimeout(ENetSocket sock, char *hostname, ENetAddress &address)
         if(timeout > CONNLIMIT) break;
     }
 
-    /* thread will actually timeout eventually if its still trying to connect, so just leave it instead of causing problems on some platforms by killing it */
+    /* thread will actually timeout eventually if its still trying to connect
+     * so just leave it (and let it destroy socket) instead of causing problems on some platforms by killing it 
+     */
     connthread = NULL;
     SDL_UnlockMutex(connmutex);
 
-    return result;
+    return cd.result;
 }
  
 enum { UNRESOLVED = 0, RESOLVING, RESOLVED };
