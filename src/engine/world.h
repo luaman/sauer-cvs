@@ -49,8 +49,9 @@ enum
 
 #define isclipped(mat) ((mat) >= MAT_CLIP && (mat) < MAT_NOCLIP)
 
-#define VVEC_INT  14
+// VVEC_FRAC must be between 0..3
 #define VVEC_FRAC 1
+#define VVEC_INT (15-VVEC_FRAC)
 #define VVEC_BITS (VVEC_INT + VVEC_FRAC)
 
 #define VVEC_INT_MASK     ((1<<(VVEC_INT-1))-1)

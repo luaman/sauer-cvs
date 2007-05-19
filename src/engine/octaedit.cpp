@@ -370,7 +370,7 @@ void cursorupdate()
         if(sdist == 0 || sdist > wdist) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
         cur = lu;
         cor = w;
-        cor.mul(gridsize).div(2);
+        cor.mul(2).div(gridsize);
         od = dimension(orient);
         d = dimension(sel.orient);
 
