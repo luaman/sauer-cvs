@@ -304,8 +304,7 @@ void cursorupdate()
         target[i] = max(min(target[i], hdr.worldsize), 0);
     vec ray(target);
     ray.sub(player->o).normalize();
-    int g2  = gridsize/2,
-        d   = dimension(sel.orient),
+    int d   = dimension(sel.orient),
         od  = dimension(orient),
         odc = dimcoord(orient);
 
@@ -371,7 +370,7 @@ void cursorupdate()
         if(sdist == 0 || sdist > wdist) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
         cur = lu;
         cor = w;
-        cor.div(g2);
+        cor.mul(gridsize).div(2);
         od = dimension(orient);
         d = dimension(sel.orient);
 
@@ -413,7 +412,7 @@ void cursorupdate()
             d = od;
         }
 
-        sel.corner = (cor[R[d]]-lu[R[d]]/g2)+(cor[C[d]]-lu[C[d]]/g2)*2;
+        sel.corner = (cor[R[d]]-(lu[R[d]]*2)/gridsize)+(cor[C[d]]-(lu[C[d]]*2)/gridsize)*2;
         selchildcount = 0;
         countselchild(worldroot, vec(0), hdr.worldsize/2);
         if(mag>1 && selchildcount==1) selchildcount = -mag;
@@ -447,13 +446,13 @@ void cursorupdate()
         glColor3ub(50,50,50);   // grid
         boxsgrid(sel.orient, sel.o.tovec(), sel.s.tovec(), sel.grid);
         glColor3ub(200,0,0);    // 0 reference
-        boxs3D(sel.o.tovec().sub(1), vec(2), 1);
+        boxs3D(sel.o.tovec().sub(0.5f*min(gridsize*0.25f, 2)), vec(min(gridsize*0.25f, 2)), 1);
         glColor3ub(200,200,200);// 2D selection box
         vec co(sel.o.v), cs(sel.s.v);
-        co[R[d]] += sel.cx*g2;
-        co[C[d]] += sel.cy*g2;
-        cs[R[d]]  = sel.cxs*g2;
-        cs[C[d]]  = sel.cys*g2;       
+        co[R[d]] += 0.5f*(sel.cx*gridsize);
+        co[C[d]] += 0.5f*(sel.cy*gridsize);
+        cs[R[d]]  = 0.5f*(sel.cxs*gridsize);
+        cs[C[d]]  = 0.5f*(sel.cys*gridsize);       
         cs[D[d]] *= gridsize;
         boxs(sel.orient, co, cs);
         glColor3ub(0,0,120);     // 3D selection box
