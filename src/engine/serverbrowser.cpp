@@ -173,7 +173,6 @@ bool resolverwait(const char *name, ENetAddress *address)
         {
             if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) timeout = RESOLVERLIMIT + 1;
         }
-
         if(timeout > RESOLVERLIMIT) break;    
     }
     if(!resolved && timeout > RESOLVERLIMIT)
@@ -188,6 +187,84 @@ bool resolverwait(const char *name, ENetAddress *address)
     return resolved;
 }
 
+SDL_Thread *connthread = NULL;
+SDL_mutex *connmutex = NULL;
+SDL_cond *conncond = NULL;
+
+struct connectdata
+{
+    ENetSocket sock;
+    ENetAddress address;
+    int result;
+};
+
+// do this in a thread to prevent timeouts
+// could set timeouts on sockets, but this is more reliable and gives more control
+int connectthread(void *data)
+{
+    SDL_LockMutex(connmutex);
+    if(!connthread || SDL_GetThreadID(connthread) != SDL_ThreadID())
+    {
+        SDL_UnlockMutex(connmutex);
+        return 0;
+    }
+    connectdata cd = *(connectdata *)data;
+    SDL_UnlockMutex(connmutex);
+
+    int result = enet_socket_connect(cd.sock, &cd.address);
+
+    SDL_LockMutex(connmutex);
+    if(!connthread || SDL_GetThreadID(connthread) != SDL_ThreadID())
+    {
+        enet_socket_destroy(cd.sock);
+        SDL_UnlockMutex(connmutex);
+        return 0;
+    }
+    ((connectdata *)data)->result = result;
+    SDL_CondSignal(conncond);
+    SDL_UnlockMutex(connmutex);
+
+    return 0;
+}
+
+#define CONNLIMIT 20000
+
+int connectwithtimeout(ENetSocket sock, char *hostname, ENetAddress &address)
+{
+    s_sprintfd(text)("connecting to %s... (esc to abort)", hostname);
+    show_out_of_renderloop_progress(0, text);
+
+    if(!connmutex) connmutex = SDL_CreateMutex();
+    if(!conncond) conncond = SDL_CreateCond();
+    SDL_LockMutex(connmutex);
+    connectdata cd = { sock, address, -1 };
+    connthread = SDL_CreateThread(connectthread, &cd);
+
+    int starttime = SDL_GetTicks(), timeout = 0, result = -1;
+    for(;;)
+    {
+        if(!SDL_CondWaitTimeout(conncond, connmutex, 250))
+        {
+            result = cd.result<0 ? 0 : 1;
+            break;
+        }      
+        timeout = SDL_GetTicks() - starttime;
+        show_out_of_renderloop_progress(min(float(timeout)/CONNLIMIT, 1), text);
+        SDL_Event event;
+        while(SDL_PollEvent(&event))
+        {
+            if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) timeout = CONNLIMIT + 1;
+        }
+        if(timeout > CONNLIMIT) break;
+    }
+
+    /* thread will actually timeout eventually if its still trying to connect, so just leave it instead of causing problems on some platforms by killing it */
+    connthread = NULL;
+    SDL_UnlockMutex(connmutex);
+
+    return result;
+}
+ 
 enum { UNRESOLVED = 0, RESOLVING, RESOLVED };
 
 struct serverinfo

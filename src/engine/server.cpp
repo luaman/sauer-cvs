@@ -315,55 +315,64 @@ bool resolverwait(const char *name, ENetAddress *address)
 }
 #endif
 
-ENetSocket mssock = ENET_SOCKET_NULL;
-ENetAddress msaddress;
-
-void httpgetsend(ENetAddress &ad, char *hostname, char *req, char *ref, char *agent)
+ENetSocket httpgetsend(ENetAddress &remoteaddress, char *hostname, char *req, char *ref, char *agent, ENetAddress *localaddress = NULL)
 {
-    if(mssock!=ENET_SOCKET_NULL)
+    if(remoteaddress.host==ENET_HOST_ANY)
     {
-        enet_socket_destroy(mssock);
-        mssock = ENET_SOCKET_NULL;
-    }
-    if(ad.host==ENET_HOST_ANY)
-    {
+#ifdef STANDALONE
         printf("looking up %s...\n", hostname);
-        if(!resolverwait(hostname, &ad)) return;
+#endif
+        if(!resolverwait(hostname, &remoteaddress)) return ENET_SOCKET_NULL;
     }
-    mssock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, &msaddress);
-    if(mssock==ENET_SOCKET_NULL) { printf("could not open socket\n"); return; }
-    if(enet_socket_connect(mssock, &ad)<0) 
+    ENetSocket sock = enet_socket_create(ENET_SOCKET_TYPE_STREAM, localaddress);
+    if(sock==ENET_SOCKET_NULL) 
     { 
+#ifdef STANDALONE
+        printf("could not open socket\n"); 
+#endif
+        return ENET_SOCKET_NULL; 
+    }
+    int result = 0;
+#ifdef STANDALONE
+    if(enet_socket_connect(sock, &remoteaddress)<0) 
+#else
+    if((result = connectwithtimeout(sock, hostname, remoteaddress))<=0)
+#endif
+    { 
+#ifdef STANDALONE
         printf("could not connect\n"); 
-        enet_socket_destroy(mssock);
-        mssock = ENET_SOCKET_NULL;
-        return; 
+#endif
+        if(!result) enet_socket_destroy(sock);
+        return ENET_SOCKET_NULL; 
     }
     ENetBuffer buf;
     s_sprintfd(httpget)("GET %s HTTP/1.0\nHost: %s\nReferer: %s\nUser-Agent: %s\n\n", req, hostname, ref, agent);
     buf.data = httpget;
     buf.dataLength = strlen((char *)buf.data);
+#ifdef STANDALONE
     printf("sending request to %s...\n", hostname);
-    enet_socket_send(mssock, NULL, &buf, 1);
+#endif
+    enet_socket_send(sock, NULL, &buf, 1);
+    return sock;
 }  
 
-void httpgetreceive(ENetBuffer &buf)
+bool httpgetreceive(ENetSocket sock, ENetBuffer &buf)
 {
-    if(mssock==ENET_SOCKET_NULL) return;
+    if(sock==ENET_SOCKET_NULL) return false;
     enet_uint32 events = ENET_SOCKET_WAIT_RECEIVE;
-    if(enet_socket_wait(mssock, &events, 0) >= 0 && events)
+    if(enet_socket_wait(sock, &events, 0) >= 0 && events)
     {
-        int len = enet_socket_receive(mssock, NULL, &buf, 1);
+        int len = enet_socket_receive(sock, NULL, &buf, 1);
         if(len<=0)
         {
-            enet_socket_destroy(mssock);
-            mssock = ENET_SOCKET_NULL;
-            return;
+            enet_socket_destroy(sock);
+            return false;
         }
         buf.data = ((char *)buf.data)+len;
         ((char*)buf.data)[0] = 0;
         buf.dataLength -= len;
     }
+    return true;
 }  
 
 uchar *stripheader(uchar *b)
@@ -373,6 +382,8 @@ uchar *stripheader(uchar *b)
     return s ? (uchar *)s : b;
 }
 
+ENetSocket mssock = ENET_SOCKET_NULL;
+ENetAddress msaddress;
 ENetAddress masterserver = { ENET_HOST_ANY, 80 };
 int updmaster = 0;
 string masterbase;
@@ -383,7 +394,8 @@ ENetBuffer masterb;
 void updatemasterserver()
 {
     s_sprintfd(path)("%sregister.do?action=add", masterpath);
-    httpgetsend(masterserver, masterbase, path, sv->servername(), sv->servername());
+    if(mssock!=ENET_SOCKET_NULL) enet_socket_destroy(mssock);
+    mssock = httpgetsend(masterserver, masterbase, path, sv->servername(), sv->servername(), &msaddress);
     masterrep[0] = 0;
     masterb.data = masterrep;
     masterb.dataLength = MAXTRANS-1;
@@ -391,22 +403,36 @@ void updatemasterserver()
 
 void checkmasterreply()
 {
-    bool busy = mssock!=ENET_SOCKET_NULL;
-    httpgetreceive(masterb);
-    if(busy && mssock==ENET_SOCKET_NULL) printf("masterserver reply: %s\n", stripheader(masterrep));
+    if(mssock!=ENET_SOCKET_NULL && !httpgetreceive(mssock, masterb))
+    {
+        mssock = ENET_SOCKET_NULL;
+        printf("masterserver reply: %s\n", stripheader(masterrep));
+    }
 } 
 
+#ifndef STANDALONE
 uchar *retrieveservers(uchar *buf, int buflen)
 {
+    buf[0] = '\0';
+
     s_sprintfd(path)("%sretrieve.do?item=list", masterpath);
-    httpgetsend(masterserver, masterbase, path, sv->servername(), sv->servername());
+    ENetAddress address = masterserver;
+    ENetSocket sock = httpgetsend(address, masterbase, path, sv->servername(), sv->servername());
+    if(sock==ENET_SOCKET_NULL) return buf;
+    /* only cache this if connection succeeds */
+    masterserver = address;
+
+    s_sprintfd(text)("retrieving servers from %s...", masterbase);
+    show_out_of_renderloop_progress(0, text);
+
     ENetBuffer eb;
-    buf[0] = 0;
     eb.data = buf;
     eb.dataLength = buflen-1;
-    while(mssock!=ENET_SOCKET_NULL) httpgetreceive(eb);
+    while(httpgetreceive(sock, eb));
+
     return stripheader(buf);
 }
+#endif
 
 #define DEFAULTCLIENTS 6
 
