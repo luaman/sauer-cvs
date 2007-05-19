@@ -20,6 +20,7 @@ char *path(char *s)
         }
         else if(curdir[1]=='.' && curdir[2]=='.' && curdir[3]==PATHDIV) 
         {
+            if(prevdir+2==curdir && prevdir[0]=='.' && prevdir[1]=='.') continue;
             memmove(prevdir, curdir+4, strlen(curdir+4)+1); 
             curdir = prevdir;
         }
