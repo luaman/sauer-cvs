@@ -852,7 +852,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
     if(renderpath!=R_FIXEDFUNCTION)
     {
         if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
-        setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(2).v);
+        setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
     }
 
     if(vbufchanged && pass==RENDERPASS_LIGHTMAP)
