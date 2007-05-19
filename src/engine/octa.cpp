@@ -135,7 +135,7 @@ void validatec(cube *c, int size)
     {
         if(c[i].children)
         {
-            if(size<=4)
+            if(size<=(8>>VVEC_FRAC))
             {
                 solidfaces(c[i]);
                 discardchildren(c[i]);

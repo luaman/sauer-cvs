@@ -127,7 +127,7 @@ void cancelsel()
     entcancel();
 }
 
-VARF(gridpower, 2, 3, VVEC_INT-1,
+VARF(gridpower, 3-VVEC_FRAC, 3, VVEC_INT-1,
 {
     if(dragging) return;
     gridsize = 1<<gridpower;
@@ -483,7 +483,7 @@ void readychanges(block3 &b, cube *c, const ivec &cor, int size)
         }
         if(c[i].children)
         {
-            if(size<=4)
+            if(size<=(8>>VVEC_FRAC))
             {
                 solidfaces(c[i]);
                 discardchildren(c[i]);
