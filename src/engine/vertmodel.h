@@ -101,7 +101,7 @@ struct vertmodel : model
 
         void genvbo(vector<ushort> &idxs, vector<vvert> &vverts)
         {
-            statnorms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && maxtmus>=3);
+            statnorms = renderpath!=R_FIXEDFUNCTION || lightmodels || (envmapmax>0 && envmapmodels && maxtmus>=3);
             statoffset = idxs.length();
             loopi(numtris)
             {
@@ -282,21 +282,28 @@ struct vertmodel : model
             else if(m->shader) m->shader->set();
             else
             {
-                static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshaderenvmap = NULL;
+                static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshadermasksnospec = NULL, *modelshaderenvmap = NULL;
 
-                if(!modelshader)       modelshader       = lookupshaderbyname("stdmodel");
-                if(!modelshadernospec) modelshadernospec = lookupshaderbyname("nospecmodel");
-                if(!modelshadermasks)  modelshadermasks  = lookupshaderbyname("masksmodel");
-                if(!modelshaderenvmap) modelshaderenvmap = lookupshaderbyname("envmapmodel");
+                if(!modelshader)             modelshader            = lookupshaderbyname("stdmodel");
+                if(!modelshadernospec)       modelshadernospec      = lookupshaderbyname("nospecmodel");
+                if(!modelshadermasks)        modelshadermasks       = lookupshaderbyname("masksmodel");
+                if(!modelshadermasksnospec)  modelshadermasksnospec = lookupshaderbyname("masksnospecmodel");
+                if(!modelshaderenvmap)       modelshaderenvmap      = lookupshaderbyname("envmapmodel");
 
                 setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
                 setenvparamf("ambient", SHPARAM_VERTEX, 3, m->ambient, m->ambient, m->ambient, 1);
                 setenvparamf("ambient", SHPARAM_PIXEL, 3, m->ambient, m->ambient, m->ambient, 1);
                 setenvparamf("glowscale", SHPARAM_PIXEL, 4, m->glow, m->glow, m->glow);
 
-                (as.anim&ANIM_ENVMAP && envmapmax>0 ? modelshaderenvmap : (masked ? modelshadermasks : (m->spec>=0.01f ? modelshader : modelshadernospec)))->set();
-    
-                if(as.anim&ANIM_ENVMAP && envmapmax>0) setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
+                if(as.anim&ANIM_ENVMAP && envmapmax>0)
+                {
+                    modelshaderenvmap->set();
+                    setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
+                }
+                else if(masked && lightmodels) modelshadermasks->set();
+                else if(masked && glowmodels) modelshadermasksnospec->set();
+                else if(m->spec>=0.01f && lightmodels) modelshader->set();
+                else modelshadernospec->set();
             }
         }
 
@@ -318,7 +325,7 @@ struct vertmodel : model
                 s = slot.sts[0].t;
                 if(slot.sts.length() >= 2) m = slot.sts[1].t;
             }
-            if(!glowmodels) m = crosshair;
+            if((renderpath==R_FIXEDFUNCTION || !lightmodels) && !glowmodels && !envmapmodels) m = crosshair;
             setshader(as, m!=crosshair);
             if(s!=lastskin)
             {
