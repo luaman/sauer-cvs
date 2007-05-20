@@ -497,7 +497,7 @@ struct vertmodel : model
         GLuint statbuf, statidx;
         float pitchscale, pitchoffset, pitchmin, pitchmax;
 
-        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0), statbuf(0), statidx(0), pitchscale(0), pitchoffset(0), pitchmin(-90), pitchmax(90) {}
+        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0), statbuf(0), statidx(0), pitchscale(1), pitchoffset(0), pitchmin(-360), pitchmax(360) {}
         virtual ~part()
         {
             meshes.deletecontentsp();

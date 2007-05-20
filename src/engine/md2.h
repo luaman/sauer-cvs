@@ -191,11 +191,6 @@ struct md2 : vertmodel
                  
             fclose(file);
 
-            pitchscale = 1;
-            pitchoffset = 0;
-            pitchmin = -90*pitchscale;
-            pitchmax = 90*pitchscale;
-
             return loaded = true;
         }
 
