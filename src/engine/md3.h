@@ -202,10 +202,13 @@ struct md3 : vertmodel
                 mdl.meshes[i]->masks = masks;
             }
             if(skin==crosshair) conoutf("could not load model skin for %s", name1);
-            mdl.pitchscale = 1;
-            mdl.pitchoffset = 0;
-            mdl.pitchmin = -90*mdl.pitchscale;
-            mdl.pitchmax = 90*mdl.pitchscale;
+        }
+        if(parts.length()==1 && !parts[0].pitchscale)
+        {
+            parts[0]->pitchscale = 1;
+            parts[0]->pitchoffset = 0;
+            parts[0]->pitchmin = -90*parts[0]->pitchscale;
+            parts[0]->pitchmax = 90*parts[0]->pitchscale;
         }
         loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
         return loaded = true;
