@@ -737,20 +737,13 @@ struct vertmodel : model
             float angle = max(pitchmin, min(pitchmax, pitchscale*pitch + pitchoffset));
             if(!angle) return 0;
 
-            float x = axis.x, y = axis.y, z = axis.z, s = sinf(angle*RAD), c = cosf(angle*RAD);
-            GLfloat r[16] =
-            {
-                x*x*(1-c)+c,    y*x*(1-c)+z*s,  x*z*(1-c)-y*s,  0, 
-                x*y*(1-c)-z*s,  y*y*(1-c)+c,    y*z*(1-c)+x*s,  0, 
-                x*z*(1-c)+y*s,  y*z*(1-c)-x*s,  z*z*(1-c)+c,    0,
-                0,              0,              0,              1
-            };
-
-            calcnormal(r, axis);
+            float c = cosf(angle*RAD), s = sinf(angle*RAD);
+            vec d(axis);
+            axis.rotate(c, s, d);
             if(!(anim&ANIM_NOSKIN))
             {
-                calcnormal(r, dir);
-                calcvertex(r, campos);
+                dir.rotate(c, s, d);
+                campos.rotate(c, s, d); 
             }
 
             return angle;

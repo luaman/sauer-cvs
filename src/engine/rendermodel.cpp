@@ -611,11 +611,12 @@ VAR(testanims, 0, 0, 1);
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
-    float mz = d->o.z-d->eyeheight-sink;     
+    float pitch = d->pitch, mz = d->o.z-d->eyeheight-sink;     
     int varseed = (int)(size_t)d, basetime = 0;
     if(animoverride) anim = animoverride|ANIM_LOOP;
     else if(d->state==CS_DEAD)
     {
+        pitch = 0;
         anim = ANIM_DYING;
         basetime = lastaction;
         varseed += lastaction;
@@ -654,7 +655,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
     vec color, dir;
-    rendermodel(color, dir, mdlname,  anim, varseed, 0, d->o.x, d->o.y, mz, testanims && d==player ? 0 : d->yaw+90, d->pitch, 0, basetime, d, flags, vwepname);
+    rendermodel(color, dir, mdlname,  anim, varseed, 0, d->o.x, d->o.y, mz, testanims && d==player ? 0 : d->yaw+90, pitch, 0, basetime, d, flags, vwepname);
 }
 
 void setbbfrommodel(dynent *d, char *mdl)

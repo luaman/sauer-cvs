@@ -49,6 +49,11 @@ struct vec
     void rotate(float angle, const vec &d)
     {
         float c = cosf(angle), s = sinf(angle);
+        rotate(c, s, d);
+    }
+
+    void rotate(float c, float s, const vec &d)
+    {
         *this = vec(x*(d.x*d.x*(1-c)+c) + y*(d.x*d.y*(1-c)-d.z*s) + z*(d.x*d.z*(1-c)+d.y*s),
                     x*(d.y*d.x*(1-c)+d.z*s) + y*(d.y*d.y*(1-c)+c) + z*(d.y*d.z*(1-c)-d.x*s),
                     x*(d.x*d.z*(1-c)-d.y*s) + y*(d.y*d.z*(1-c)+d.x*s) + z*(d.z*d.z*(1-c)+c));
