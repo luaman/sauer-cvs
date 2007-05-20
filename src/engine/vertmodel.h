@@ -1,5 +1,3 @@
-#include "matrix.h"
-
 VARP(lightmodels, 0, 1, 1);
 VARP(envmapmodels, 0, 1, 1);
 VARP(glowmodels, 0, 1, 1);
@@ -699,14 +697,19 @@ struct vertmodel : model
             return true;
         }
 
-        void calclightdir(GLfloat *m, vec &ndir, vec &ncampos)
+        void calcnormal(GLfloat *m, vec &dir)
         {
-            vec n(ndir), p(ncampos);
-                
-            ndir.x = n.x*m[0] + n.y*m[1] + n.z*m[2];
-            ndir.y = n.x*m[4] + n.y*m[5] + n.z*m[6];
-            ndir.z = n.x*m[8] + n.y*m[9] + n.z*m[10];
+            vec n(dir);
+            dir.x = n.x*m[0] + n.y*m[1] + n.z*m[2];
+            dir.y = n.x*m[4] + n.y*m[5] + n.z*m[6];
+            dir.z = n.x*m[8] + n.y*m[9] + n.z*m[10];
+        }
 
+
+        void calcvertex(GLfloat *m, vec &pos)
+        {
+            vec p(pos);
+                
             p.x -= m[12];
             p.y -= m[13];
             p.z -= m[14];
@@ -719,30 +722,22 @@ struct vertmodel : model
                   b1 = m[b], b2 = m[b+4], b3 = m[b+8],
                   c1 = m[c], c2 = m[c+4], c3 = m[c+8];
 
-            ncampos.z = (p[c] - c1*p[a]/a1 - (c2 - c1*a2/a1)*(p[b] - b1*p[a]/a1)/(b2 - b1*a2/a1)) / (c3 - c1*a3/a1 - (c2 - c1*a2/a1)*(b3 - b1*a3/a1)/(b2 - b1*a2/a1));
-            ncampos.y = (p[b] - b1*p[a]/a1 - (b3 - b1*a3/a1)*ncampos.z)/(b2 - b1*a2/a1);
-            ncampos.x = (p[a] - a2*ncampos.y - a3*ncampos.z)/a1;
+            pos.z = (p[c] - c1*p[a]/a1 - (c2 - c1*a2/a1)*(p[b] - b1*p[a]/a1)/(b2 - b1*a2/a1)) / (c3 - c1*a3/a1 - (c2 - c1*a2/a1)*(b3 - b1*a3/a1)/(b2 - b1*a2/a1));
+            pos.y = (p[b] - b1*p[a]/a1 - (b3 - b1*a3/a1)*pos.z)/(b2 - b1*a2/a1);
+            pos.x = (p[a] - a2*pos.y - a3*pos.z)/a1;
 #else
-            ncampos.x = p.x*m[0] + p.y*m[1] + p.z*m[2];
-            ncampos.y = p.x*m[4] + p.y*m[5] + p.z*m[6];
-            ncampos.z = p.x*m[8] + p.y*m[9] + p.z*m[10];
+            pos.x = p.x*m[0] + p.y*m[1] + p.z*m[2];
+            pos.y = p.x*m[4] + p.y*m[5] + p.z*m[6];
+            pos.z = p.x*m[8] + p.y*m[9] + p.z*m[10];
 #endif
         }
 
-        void calcpitchaxis(GLfloat *m, GLfloat pitch, vec &axis)
+        float calcpitchaxis(int anim, GLfloat pitch, vec &axis, vec &dir, vec &campos)
         {
-            float x = axis.x*m[0] + axis.y*m[1] + axis.z*m[2],
-                  y = axis.x*m[4] + axis.y*m[5] + axis.z*m[6],
-                  z = axis.x*m[8] + axis.y*m[9] + axis.z*m[10];
-            if(!pitch)
-            {
-                axis.x = x;
-                axis.y = y;
-                axis.z = z;
-                return;
-            }
+            float angle = max(pitchmin, min(pitchmax, pitchscale*pitch + pitchoffset));
+            if(!angle) return 0;
 
-            float s = sinf(pitch*RAD), c = cosf(pitch*RAD);
+            float x = axis.x, y = axis.y, z = axis.z, s = sinf(angle*RAD), c = cosf(angle*RAD);
             GLfloat r[16] =
             {
                 x*x*(1-c)+c,    y*x*(1-c)+z*s,  x*z*(1-c)-y*s,  0, 
@@ -750,16 +745,15 @@ struct vertmodel : model
                 x*z*(1-c)+y*s,  y*z*(1-c)-x*s,  z*z*(1-c)+c,    0,
                 0,              0,              0,              1
             };
-            GLfloat t[16];
-            loop(row, 4) loop(col, 4)
-            {
-                t[col*4 + row] = m[row]*r[col*4] + m[4+row]*r[col*4+1] + m[8+row]*r[col*4+2] + m[12+row]*r[col*4+3];
-            }
-            memcpy(m, t, sizeof(t));
 
-            axis.x = x*r[0] + y*r[1] + z*r[2];
-            axis.y = x*r[4] + y*r[5] + z*r[6];
-            axis.z = x*r[8] + y*r[9] + z*r[10];
+            calcnormal(r, axis);
+            if(!(anim&ANIM_NOSKIN))
+            {
+                calcnormal(r, dir);
+                calcvertex(r, campos);
+            }
+
+            return angle;
         }
 
         void setupglowtc()
@@ -842,16 +836,31 @@ struct vertmodel : model
             if(!model->cullface && enablecullface) { glDisable(GL_CULL_FACE); enablecullface = false; }
             else if(model->cullface && !enablecullface) { glEnable(GL_CULL_FACE); enablecullface = true; }
 
+            vec raxis(axis), rdir(dir), rcampos(campos);
+            float pitchamount = calcpitchaxis(anim, pitch, raxis, rdir, rcampos);
+            if(pitchamount)
+            {
+                glPushMatrix();
+                glRotatef(pitchamount, axis.x, axis.y, axis.z); 
+                if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
+                {
+                    glMatrixMode(GL_TEXTURE);
+                    glPushMatrix();
+                    glRotatef(pitchamount, axis.x, axis.y, axis.z);
+                    glMatrixMode(GL_MODELVIEW);
+                }
+            }
+
             if(!(anim&ANIM_NOSKIN))
             {
                 if(renderpath!=R_FIXEDFUNCTION)
                 {
-                    setenvparamf("direction", SHPARAM_VERTEX, 0, dir.x, dir.y, dir.z);
-                    setenvparamf("camera", SHPARAM_VERTEX, 1, campos.x, campos.y, campos.z, 1);
+                    setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
+                    setenvparamf("camera", SHPARAM_VERTEX, 1, rcampos.x, rcampos.y, rcampos.z, 1);
                 }
                 else if(lightmodels)
                 {
-                    GLfloat pos[4] = { dir.x*1000, dir.y*1000, dir.z*1000, 0 };
+                    GLfloat pos[4] = { rdir.x*1000, rdir.y*1000, rdir.z*1000, 0 };
                     glLightfv(GL_LIGHT0, GL_POSITION, pos);
                 }
             }
@@ -888,9 +897,13 @@ struct vertmodel : model
                 matrix[3] = matrix[7] = matrix[11] = 0.0f;
                 matrix[15] = 1.0f;
 
-                vec ndir(dir), ncampos(campos), naxis(axis);
-                calcpitchaxis(matrix, max(link->pitchmin, min(link->pitchmax, link->pitchscale*pitch + link->pitchoffset)), naxis);
-                if(!(anim&ANIM_NOSKIN)) calclightdir(matrix, ndir, ncampos);
+                vec naxis(raxis), ndir(rdir), ncampos(rcampos);
+                calcnormal(matrix, naxis);
+                if(!(anim&ANIM_NOSKIN)) 
+                {
+                    calcnormal(matrix, ndir);
+                    calcvertex(matrix, ncampos);
+                }
 
                 glPushMatrix();
                 glMultMatrixf(matrix);
@@ -921,6 +934,17 @@ struct vertmodel : model
                     }
                 }
                 glPopMatrix();
+            }
+
+            if(pitchamount)
+            {
+                glPopMatrix();
+                if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
+                {
+                    glMatrixMode(GL_TEXTURE); 
+                    glPopMatrix(); 
+                    glMatrixMode(GL_MODELVIEW); 
+                }
             }
         }
 
@@ -1019,9 +1043,7 @@ struct vertmodel : model
     {
         yaw += spin*lastmillis/1000.0f;
 
-        vec rdir, campos, axis(0, -1, 0);
-        float initpitch = max(parts[0]->pitchmin, min(parts[0]->pitchmax, parts[0]->pitchscale*pitch + parts[0]->pitchoffset));
-        axis.rotate_around_y(-initpitch*RAD);
+        vec rdir, campos;
         if(!(anim&ANIM_NOSKIN))
         {
             lightcolor = color;
@@ -1038,12 +1060,10 @@ struct vertmodel : model
 
             rdir = dir;
             rdir.rotate_around_z((-yaw-180.0f)*RAD);
-            rdir.rotate_around_y(-initpitch*RAD);
 
             campos = camera1->o;
             campos.sub(vec(x, y, z));
             campos.rotate_around_z((-yaw-180.0f)*RAD);
-            campos.rotate_around_y(-initpitch*RAD);
 
             if(renderpath!=R_FIXEDFUNCTION && refracting)
             {
@@ -1086,7 +1106,6 @@ struct vertmodel : model
                 glLoadIdentity();
                 glTranslatef(x, y, z);
                 glRotatef(yaw+180, 0, 0, 1);
-                glRotatef(initpitch, 0, -1, 0);
             }
             glMatrixMode(GL_MODELVIEW);
             if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE0_ARB);
@@ -1094,8 +1113,7 @@ struct vertmodel : model
         glPushMatrix();
         glTranslatef(x, y, z);
         glRotatef(yaw+180, 0, 0, 1);
-        glRotatef(initpitch, 0, -1, 0);
-        render(anim, varseed, speed, basetime, pitch, axis, d, vwepmdl, rdir, campos);
+        render(anim, varseed, speed, basetime, pitch, vec(0, -1, 0), d, vwepmdl, rdir, campos);
         glPopMatrix();
         if(anim&ANIM_ENVMAP)
         {
