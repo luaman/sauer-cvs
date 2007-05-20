@@ -203,7 +203,7 @@ struct md3 : vertmodel
             }
             if(skin==crosshair) conoutf("could not load model skin for %s", name1);
         }
-        if(parts.length()==1 && !parts[0].pitchscale)
+        if(parts.length()==1 && !parts[0]->pitchscale && parts[0]->pitchmin)
         {
             parts[0]->pitchscale = 1;
             parts[0]->pitchoffset = 0;
