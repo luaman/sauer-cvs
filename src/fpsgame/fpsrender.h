@@ -30,6 +30,11 @@ struct fpsrender
             delay = 1000;
         }
         renderclient(d, mdlname, vwepname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
+        if(d->state==CS_ALIVE && d->quadmillis) 
+        {
+            vec color(1, 1, 1), dir(0, 0, 1);
+            rendermodel(color, dir, "quadrings", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, d->o.x, d->o.y, d->o.z-d->eyeheight, 360*cl.lastmillis/2000.0f, 0, 0, 0, NULL, MDL_CULL_VFC | MDL_CULL_DIST);
+        }
     }
 
     void rendergame(int gamemode)
