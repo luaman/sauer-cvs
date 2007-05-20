@@ -598,7 +598,7 @@ struct fpsclient : igameclient
         if(d->quadmillis)
         {
             float t = 0.5f + 0.5f*sinf(2*M_PI*lastmillis/1000.0f);
-            color.mul(1-t).add(vec(0.25f, 1, 0.25f).mul(t));
+            color.y = color.y*(1-t) + t;
         }
     }
 
