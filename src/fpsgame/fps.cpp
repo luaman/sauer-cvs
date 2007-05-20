@@ -595,7 +595,7 @@ struct fpsclient : igameclient
     void lighteffects(dynent *e, vec &color, vec &dir)
     {
         fpsent *d = (fpsent *)e;
-        if(d->quadmillis)
+        if(d->state!=CS_DEAD && d->quadmillis)
         {
             float t = 0.5f + 0.5f*sinf(2*M_PI*lastmillis/1000.0f);
             color.y = color.y*(1-t) + t;
