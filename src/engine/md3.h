@@ -174,11 +174,10 @@ struct md3 : vertmodel
         s_sprintfd(cfgname)("packages/models/%s/md3.cfg", loadname);
 
         loadingmd3 = this;
-        if(execfile(cfgname)) // configured md3, will call the md3* commands below
+        if(execfile(cfgname) && parts.length()) // configured md3, will call the md3* commands below
         {
             delete[] pname;
             loadingmd3 = NULL;
-            if(parts.empty()) return false;
             loopv(parts) if(!parts[i]->loaded) return false;
         }
         else // md3 without configuration, try default tris and skin
@@ -202,6 +201,7 @@ struct md3 : vertmodel
                 mdl.meshes[i]->masks = masks;
             }
             if(skin==crosshair) conoutf("could not load model skin for %s", name1);
+            delete[] pname;
         }
         loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
         return loaded = true;
@@ -247,7 +247,7 @@ void md3skin(char *objname, char *skin, char *masks, float *envmapmax, float *en
     loopv(mdl.meshes)
     {   
         md3::mesh &m = *mdl.meshes[i];
-        if(!strcmp(m.name, objname))
+        if(!strcmp(objname, "*") || !strcmp(m.name, objname))
         {
             s_sprintfd(spath)("%s/%s", md3dir, skin);
             m.skin = textureload(spath, false, true, false);
