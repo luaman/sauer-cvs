@@ -654,7 +654,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, int atta
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
     vec color, dir;
-    rendermodel(color, dir, mdlname,  anim, varseed, 0, d->o.x, d->o.y, mz, testanims && d==player ? 0 : d->yaw+90, d->pitch/4, 0, basetime, d, flags, vwepname);
+    rendermodel(color, dir, mdlname,  anim, varseed, 0, d->o.x, d->o.y, mz, testanims && d==player ? 0 : d->yaw+90, d->pitch, 0, basetime, d, flags, vwepname);
 }
 
 void setbbfrommodel(dynent *d, char *mdl)

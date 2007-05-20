@@ -150,7 +150,7 @@ struct md3 : vertmodel
         }
     };
     
-    void render(int anim, int varseed, float speed, int basetime, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
     {
         if(!loaded) return;
 
@@ -160,7 +160,7 @@ struct md3 : vertmodel
             if(link(vwep, "tag_weapon")) vwep->index = parts.length();
         }
 
-        parts[0]->render(anim, varseed, speed, basetime, d, dir, campos);
+        parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
 
         if(vwepmdl) link(NULL, "tag_weapon");
     }
@@ -202,6 +202,10 @@ struct md3 : vertmodel
                 mdl.meshes[i]->masks = masks;
             }
             if(skin==crosshair) conoutf("could not load model skin for %s", name1);
+            mdl.pitchscale = 1;
+            mdl.pitchoffset = 0;
+            mdl.pitchmin = -90*mdl.pitchscale;
+            mdl.pitchmax = 90*mdl.pitchscale;
         }
         loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
         return loaded = true;
@@ -218,7 +222,26 @@ void md3load(char *model)
     mdl.index = loadingmd3->parts.length()-1;
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
 }  
-    
+
+void md3pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pitchmax)
+{
+    if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
+    md3::part &mdl = *loadingmd3->parts.last();
+
+    mdl.pitchscale = *pitchscale;
+    mdl.pitchoffset = *pitchoffset;
+    if(*pitchmin || *pitchmax)
+    {
+        mdl.pitchmin = *pitchmin;
+        mdl.pitchmax = *pitchmax;
+    }
+    else
+    {
+        mdl.pitchmin = -90*mdl.pitchscale;
+        mdl.pitchmax = 90*mdl.pitchscale;
+    }
+}
+
 void md3skin(char *objname, char *skin, char *masks, float *envmapmax, float *envmapmin)
 {   
     if(!objname || !skin) return;
@@ -267,6 +290,7 @@ void md3link(int *parent, int *child, char *tagname)
 }
 
 COMMAND(md3load, "s");
+COMMAND(md3pitch, "ffff");
 COMMAND(md3skin, "sssff");
 COMMAND(md3anim, "siifi");
 COMMAND(md3link, "iis");

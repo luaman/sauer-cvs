@@ -190,7 +190,12 @@ struct md2 : vertmodel
             }
                  
             fclose(file);
-           
+
+            pitchscale = 1;
+            pitchoffset = 0;
+            pitchmin = -90*pitchscale;
+            pitchmax = 90*pitchscale;
+
             return loaded = true;
         }
 
@@ -217,18 +222,18 @@ struct md2 : vertmodel
         }
     };
 
-    void render(int anim, int varseed, float speed, int basetime, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
     {
         if(!loaded) return;
 
-        parts[0]->render(anim, varseed, speed, basetime, d, dir, campos);
+        parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
 
         if(vwepmdl)
         {
             vwepmdl->setskin();
             md2part *vwep = (md2part *)((md2 *)vwepmdl)->parts[0];
             vwep->index = parts.length();
-            vwep->render(anim, varseed, speed, basetime, d, dir, campos);
+            vwep->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
         }
     }
 
