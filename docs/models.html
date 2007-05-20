@@ -37,6 +37,9 @@
 <a href="#md3load"><tt>md3load</tt></a>
 </li>
 <li>
+<a href="#md3pitch"><tt>md3pitch</tt></a>
+</li>
+<li>
 <a href="#md3skin"><tt>md3skin</tt></a>
 </li>
 <li>
@@ -199,6 +202,13 @@ following commands may be used in the <i>md3.cfg</i>:
 This command loads the first part of your model. As an example, this could be the <i>head.md3</i>
 of a playermodel. P is the path to the md3 file to load, its recursive to the location of the
 <i>md3.cfg</i>.
+</p>
+
+<pre id="md3pitch">md3pitch S O M N</pre>
+<p>
+This command controls how a model responds to the model's pitch. The pitch (in degrees) is scaled
+by S, offset by O, and then clamped to the range M..N, i.e. clamp(pitch*S + O, M, N). By default, 
+all model parts have S=1, O=0, M=-360, and N=360, such that the model part will pitch one-to-one.
 </p>
 
 <pre id="md3skin">md3skin H S M [E [F]]</pre>
