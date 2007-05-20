@@ -213,6 +213,7 @@ void md3load(char *model)
     if(!loadingmd3) { conoutf("not loading an md3"); return; }
     s_sprintfd(filename)("%s/%s", md3dir, model);
     md3::md3part &mdl = *new md3::md3part;
+    if(loadingmd3->parts.length()) mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
     loadingmd3->parts.add(&mdl);
     mdl.model = loadingmd3;
     mdl.index = loadingmd3->parts.length()-1;
@@ -281,7 +282,7 @@ void md3anim(char *anim, int *frame, int *range, float *speed, int *priority)
 void md3link(int *parent, int *child, char *tagname)
 {
     if(!loadingmd3) { conoutf("not loading an md3"); return; }
-    if(max(*parent, *child) >= loadingmd3->parts.length() || min(*parent, *child) < 0) { conoutf("no models loaded to link"); return; }
+    if(!loadingmd3->parts.inrange(*parent) || !loadingmd3->parts.inrange(*child)) { conoutf("no models loaded to link"); return; }
     if(!loadingmd3->parts[*parent]->link(loadingmd3->parts[*child], tagname)) conoutf("could not link model %s", loadingmd3->loadname);
 }
 
