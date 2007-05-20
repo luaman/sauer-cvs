@@ -617,6 +617,7 @@ struct clientcom : iclientcom
                 char *name = cl.et.itemname(i);
                 if(name) particle_text(d->abovehead(), name, 15);
                 if(cl.et.ents[i]->type==I_BOOST && !inited) d->maxhealth += 10;
+                if(cl.et.ents[i]->type==I_QUAD) cl.et.addammo(I_QUAD, d->quadmillis);
                 break;
             }
 

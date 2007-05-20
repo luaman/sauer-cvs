@@ -141,18 +141,39 @@ struct fpsserver : igameserver
 
     void resetitems() { sents.setsize(0); cps.reset(); }
 
-    void pickup(int i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
+    int spawntime(int type)
     {
-        if(!sents.inrange(i)) return;
-        clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(ci && ci->state==CS_ALIVE && sents[i].spawned)
+        int np = 0;
+        loopv(clients) if(clients[i]->state!=CS_SPECTATOR) np++;
+        np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
+        int sec = 0;
+        switch(type)
         {
-            sents[i].spawned = false;
-            if(sents[i].type==I_QUAD || sents[i].type==I_BOOST) sec += rnd(40)-20;
-            sents[i].spawnsecs = sec;
-            sendf(sender, 1, "ri2", SV_ITEMACC, i);
-            if(minremain>=0 && sents[i].type == I_BOOST) ci->score.maxhealth += 10;
+            case I_SHELLS:
+            case I_BULLETS:
+            case I_ROCKETS:
+            case I_ROUNDS:
+            case I_GRENADES:
+            case I_CARTRIDGES: sec = np*4; break;
+            case I_HEALTH: sec = np*5; break;
+            case I_GREENARMOUR:
+            case I_YELLOWARMOUR: sec = 20; break;
+            case I_BOOST:
+            case I_QUAD: sec = 40+rnd(40); break;
         }
+        return sec;
+    }
+        
+    bool pickup(int i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
+    {
+        if(!sents.inrange(i)) return false;
+        clientinfo *ci = (clientinfo *)getinfo(sender);
+        if(!ci || ci->state!=CS_ALIVE || !sents[i].spawned) return false;
+        sents[i].spawned = false;
+        sents[i].spawnsecs = spawntime(sents[i].type);
+        sendf(sender, 1, "ri2", SV_ITEMACC, i);
+        if(minremain>=0 && sents[i].type == I_BOOST) ci->score.maxhealth += 10;
+        return true;
     }
 
     void vote(char *map, int reqmode, int sender)
@@ -652,8 +673,7 @@ struct fpsserver : igameserver
             case SV_ITEMPICKUP:
             {
                 int n = getint(p);
-                pickup(n, getint(p), sender);
-                QUEUE_MSG;
+                if(pickup(n, getint(p), sender)) QUEUE_MSG;
                 break;
             }
 

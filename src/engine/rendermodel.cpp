@@ -523,7 +523,11 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         }
     }
 
-    if(d) lightreaching(d->o, color, dir);
+    if(d) 
+    {
+        lightreaching(d->o, color, dir);
+        cl->lighteffects(d, color, dir);
+    }
     model *vwep = NULL;
     if(vwepmdl)
     {

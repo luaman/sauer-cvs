@@ -91,12 +91,12 @@ struct entities : icliententities
        return d->ammo[type-I_SHELLS+GUN_SG]>=is.max;
     }
 
-    void addammo(int type, int &v)
+    void addammo(int type, int &v, bool local = true)
     {
         itemstat &is = itemstats[type-I_SHELLS];
         v += is.add;
         if(v>is.max) v = is.max;
-        cl.playsoundc(is.sound);
+        if(local) cl.playsoundc(is.sound);
     }
 
     void repammo(fpsent *d, int type)
@@ -270,11 +270,18 @@ struct entities : icliententities
 
     void checkquad(int time)
     {
-        if(cl.player1->quadmillis && (cl.player1->quadmillis -= time)<0)
+        loopi(cl.numdynents())
         {
-            cl.player1->quadmillis = 0;
-            cl.playsoundc(S_PUPOUT);
-            conoutf("\f2quad damage is over");
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(o && o->quadmillis && (o->quadmillis -= time)<0)
+            {
+                o->quadmillis = 0;
+                if(o==cl.player1)
+                {
+                    cl.playsoundc(S_PUPOUT);
+                    conoutf("\f2quad damage is over");
+                }
+            }
         }
     }
 
