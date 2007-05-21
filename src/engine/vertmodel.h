@@ -495,7 +495,7 @@ struct vertmodel : model
         GLuint statbuf, statidx;
         float pitchscale, pitchoffset, pitchmin, pitchmax;
 
-        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0), statbuf(0), statidx(0), pitchscale(1), pitchoffset(0), pitchmin(-360), pitchmax(360) {}
+        part() : loaded(false), anims(NULL), links(NULL), tags(NULL), numtags(0), statbuf(0), statidx(0), pitchscale(1), pitchoffset(0), pitchmin(0), pitchmax(0) {}
         virtual ~part()
         {
             meshes.deletecontentsp();
@@ -734,7 +734,8 @@ struct vertmodel : model
 
         float calcpitchaxis(int anim, GLfloat pitch, vec &axis, vec &dir, vec &campos)
         {
-            float angle = max(pitchmin, min(pitchmax, pitchscale*pitch + pitchoffset));
+            float angle = pitchscale*pitch + pitchoffset;
+            if(pitchmin || pitchmax) angle = max(pitchmin, min(pitchmax, angle));
             if(!angle) return 0;
 
             float c = cosf(angle*RAD), s = sinf(angle*RAD);
@@ -1034,9 +1035,6 @@ struct vertmodel : model
 
     void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &color, const vec &dir)
     {
-        if(pitch>=360) pitch = fmod(pitch, 360);
-        else if(pitch<0) pitch = 360 - fmod(-pitch, 360);
-
         yaw += spin*lastmillis/1000.0f;
 
         vec rdir, campos;
