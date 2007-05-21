@@ -170,6 +170,11 @@ struct weaponstate
         }
     }
 
+    void removebouncers(fpsent *owner)
+    {
+        loopv(bouncers) if(bouncers[i]->owner==owner) { delete bouncers[i]; bouncers.remove(i--); }
+    }
+
     struct projectile { vec o, to, offset; float speed; fpsent *owner; int gun; bool local; int offsetmillis; };
     vector<projectile> projs;
 
@@ -188,7 +193,12 @@ struct weaponstate
         p.gun = gun;
         p.offsetmillis = OFFSETMILLIS;
     }
-    
+   
+    void removeprojectiles(fpsent *owner) 
+    { 
+        loopv(projs) if(projs[i].owner==owner) projs.remove(i--);
+    }
+
     void damageeffect(int damage, fpsent *d)
     {
         vec p = d->o;

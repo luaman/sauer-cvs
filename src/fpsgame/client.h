@@ -476,6 +476,8 @@ struct clientcom : iclientcom
                 fpsent *d = cl.getclient(cn);
                 if(!d) break;
                 if(d->name[0]) conoutf("player %s disconnected", cl.colorname(d));
+                cl.ws.removebouncers(d);
+                cl.ws.removeprojectiles(d);
                 DELETEP(cl.players[cn]);
                 cleardynentcache();
                 if(currentmaster==cn) currentmaster = -1;
