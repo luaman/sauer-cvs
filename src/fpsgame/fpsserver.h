@@ -143,6 +143,7 @@ struct fpsserver : igameserver
 
     int spawntime(int type)
     {
+        if(m_classicsp) return 100000;
         int np = 0;
         loopv(clients) if(clients[i]->state!=CS_SPECTATOR) np++;
         np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
