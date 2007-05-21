@@ -21,6 +21,7 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, team, "s", self->switchteam(args[0]));
         CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
+        CCOMMAND(clientcom, goto, "s", self->gotoplayer(args[0])); 
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
         CCOMMAND(clientcom, mastermode, "s", if(self->remote) self->addmsg(SV_MASTERMODE, "ri", atoi(args[0])));
         CCOMMAND(clientcom, setmaster, "s", self->setmaster(args[0]));
@@ -858,5 +859,20 @@ struct clientcom : iclientcom
         }
         else conoutf("could not read map");
         remove(fname);
+    }
+
+    void gotoplayer(const char *arg)
+    {
+        if(!remote || player1->state!=CS_SPECTATOR) return;
+        int i = parseplayer(arg);
+        if(i>=0 && i!=player1->clientnum) 
+        {
+            fpsent *d = cl.getclient(i);
+            if(!d) return;
+            player1->o = d->o;
+            vec dir;
+            vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, dir);
+            player1->o.add(dir.mul(-32));
+        }
     }
 };
