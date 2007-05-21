@@ -262,9 +262,9 @@ struct weaponstate
 
     void explode(bool local, fpsent *owner, vec &v, dynent *notthis, int qdam, int gun)
     {
-        particle_splash(0, 200, 300, v);
+        particle_splash(owner->quadmillis ? 28 : 0, 200, 300, v);
         playsound(S_RLHIT, &v);
-        particle_fireball(v, RL_DAMRAD, gun==GUN_RL ? 22 : 23);
+        particle_fireball(v, RL_DAMRAD, owner->quadmillis ? 30 : (gun==GUN_RL ? 22 : 23));
         int numdebris = rnd(maxdebris()-5)+5;
         vec debrisvel = vec(owner->o).sub(v).normalize(), debrisorigin(v);
         if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
@@ -282,7 +282,7 @@ struct weaponstate
     {
         if(p.gun!=GUN_RL)
         {
-            particle_splash(0, 100, 200, v);
+            particle_splash(p.owner->quadmillis ? 28 : 0, 100, 200, v);
             playsound(S_FEXPLODE, &v);
             // no push?
         }
@@ -381,8 +381,8 @@ struct weaponstate
             {
                 loopi(SGRAYS)
                 {
-                    particle_splash(0, 20, 250, sg[i]);
-                    particle_flare(hudgunorigin(gun, behind, sg[i], d), sg[i], 300);
+                    particle_splash(d->quadmillis ? 28 : 0, 20, 250, sg[i]);
+                    particle_flare(hudgunorigin(gun, behind, sg[i], d), sg[i], 300, d->quadmillis ? 29 : 10);
                 }
                 break;
             }
@@ -390,9 +390,9 @@ struct weaponstate
             case GUN_CG:
             case GUN_PISTOL:
             {
-                particle_splash(0, 200, 250, to);
+                particle_splash(d->quadmillis ? 28 : 0, 200, 250, to);
                 //particle_trail(1, 10, from, to);
-                particle_flare(hudgunorigin(gun, behind, to, d), to, 600);
+                particle_flare(hudgunorigin(gun, behind, to, d), to, 600, d->quadmillis ? 29 : 10);
                 break;
             }
 
@@ -415,7 +415,7 @@ struct weaponstate
             }
 
             case GUN_RIFLE: 
-                particle_splash(0, 200, 250, to);
+                particle_splash(d->quadmillis ? 28 : 0, 200, 250, to);
                 particle_trail(21, 500, hudgunorigin(gun, from, to, d), to);
                 break;
         }

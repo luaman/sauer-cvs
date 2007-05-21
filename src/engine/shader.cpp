@@ -641,7 +641,7 @@ void renderfullscreenshader(int w, int h)
     }
 
     setenvparamfv("fsparams", SHPARAM_PIXEL, 0, fsparams);
-    setenvparamfv("millis", SHPARAM_VERTEX, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
+    setenvparamf("millis", SHPARAM_VERTEX, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
 
     int nw = w, nh = h;
 

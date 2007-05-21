@@ -1107,7 +1107,7 @@ void setupTMUs()
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); }
         glActiveTexture_(GL_TEXTURE0_ARB);
         setenvparamf("ambient", SHPARAM_PIXEL, 5, hdr.ambient/255.0f, hdr.ambient/255.0f, hdr.ambient/255.0f);
-        setenvparamf("millis", SHPARAM_VERTEX, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f, 0);
+        setenvparamf("millis", SHPARAM_VERTEX, 6, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
     }
 }
 

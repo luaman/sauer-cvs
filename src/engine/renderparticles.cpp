@@ -321,7 +321,7 @@ void cleanupexplosion()
 }
 
 
-#define MAXPARTYPES 28
+#define MAXPARTYPES 31
 
 struct particle
 {   
@@ -412,14 +412,14 @@ enum
 
 static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
 {
-    { 0,          180, 155, 75,  2,  6, 0.24f }, // yellow: sparks 
-    { 0,          137, 118, 97,-20,  2,  0.6f }, // greyish-brown:   small slowly rising smoke
-    { 0,          50, 50, 255,   20, 0, 0.32f }, // blue:   edit mode entities
-    { PT_MOD|PT_RND4, 25, 255, 255, 2,  8, 2.96f }, // red:    blood spats (note: rgb is inverted)
-    { 0,          255, 200, 200, 20, 1,  4.8f }, // yellow: fireball1
-    { 0,          137, 118, 97, -20, 2,  2.4f }, // greyish-brown:   big  slowly rising smoke   
-    { 0,          255, 255, 255, 20, 3,  4.8f }, // blue:   fireball2
-    { 0,          255, 255, 255, 20, 4,  4.8f }, // green:  big fireball3
+    { 0,          180, 155, 75,  2,  6, 0.24f }, // 0 yellow: sparks 
+    { 0,          137, 118, 97,-20,  2,  0.6f }, // 1 greyish-brown:   small slowly rising smoke
+    { 0,          50, 50, 255,   20, 0, 0.32f }, // 2 blue:   edit mode entities
+    { PT_MOD|PT_RND4, 25, 255, 255, 2,  8, 2.96f }, // 3 red:    blood spats (note: rgb is inverted)
+    { 0,          255, 200, 200, 20, 1,  4.8f }, // 4 yellow: fireball1
+    { 0,          137, 118, 97, -20, 2,  2.4f }, // 5 greyish-brown:   big  slowly rising smoke   
+    { 0,          255, 255, 255, 20, 3,  4.8f }, // 6 blue:   fireball2
+    { 0,          255, 255, 255, 20, 4,  4.8f }, // 7 green:  big fireball3
     { PT_TEXTUP,  255, 75, 25,   -8, -1, 4.0f }, // 8 TEXT RED
     { PT_TEXTUP,  50, 255, 100,  -8, -1, 4.0f }, // 9 TEXT GREEN
     { PT_FLARE,   255, 200, 100, 0,  5, 0.28f }, // 10 yellow flare
@@ -433,13 +433,16 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { PT_METER,   50, 50, 255,   0,  -1, 2.0f }, // 18 METER BLUE, SMALL, NON-MOVING
     { PT_METERVS, 255, 25, 25,   0,  -1, 2.0f }, // 19 METER RED vs. BLUE, SMALL, NON-MOVING
     { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f }, // 20 METER BLUE vs. RED, SMALL, NON-MOVING
-    { 0,          137, 118, 97, 20,   2, 0.6f }, // greyish-brown:   small  slowly sinking smoke trail
-    {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f }, // red explosion fireball
-    {PT_FIREBALL, 160, 192, 128, 0,   7, 4.0f }, // orange explosion fireball
-    { PT_ENT,     137, 118, 97, -20, 2,  2.4f }, // greyish-brown:   big  slowly rising smoke
-    { 0,          118, 97, 137,-15,  2,  2.4f }, // greyish-brown:   big  fast rising smoke          
-    { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f }, // water  
-    { PT_ENT,     255, 200, 200, 20, 1,  4.8f }, // yellow: fireball1
+    { 0,          137, 118, 97, 20,   2, 0.6f }, // 21 greyish-brown:   small  slowly sinking smoke trail
+    {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f }, // 22 red explosion fireball
+    {PT_FIREBALL, 160, 192, 128, 0,   7, 4.0f }, // 23 orange explosion fireball
+    { PT_ENT,     137, 118, 97, -20, 2,  2.4f }, // 24 greyish-brown:   big  slowly rising smoke
+    { 0,          118, 97, 137,-15,  2,  2.4f }, // 25 greyish-brown:   big  fast rising smoke          
+    { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f }, // 26 water  
+    { PT_ENT,     255, 200, 200, 20, 1,  4.8f }, // 27 yellow: fireball1
+    { 0,          0, 255, 0,  2,  6, 0.24f }, // 28 green: sparks 
+    { PT_FLARE,   0, 255, 0, 0,  5, 0.28f }, // 29 green flare
+    {PT_FIREBALL, 64, 255, 128, 0,   7, 4.0f }, // 30 green explosion fireball
 };
 
 VAR(iscale, 0, 100, 10000);
@@ -743,9 +746,9 @@ void particle_meter(const vec &s, float val, int type, int fade)
     newparticle(s, vec(0, 0, 1), fade, type)->val = val;
 }
 
-void particle_flare(const vec &p, const vec &dest, int fade)
+void particle_flare(const vec &p, const vec &dest, int fade, int type)
 {
-    newparticle(p, dest, fade, 10);
+    newparticle(p, dest, fade, type);
 }
 
 VARP(damagespherefactor, 0, 100, 200);
