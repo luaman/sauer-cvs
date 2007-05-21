@@ -440,8 +440,8 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { 0,          118, 97, 137,-15,  2,  2.4f }, // 25 greyish-brown:   big  fast rising smoke          
     { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f }, // 26 water  
     { PT_ENT,     255, 200, 200, 20, 1,  4.8f }, // 27 yellow: fireball1
-    { 0,          0, 255, 0,  2,  6, 0.24f }, // 28 green: sparks 
-    { PT_FLARE,   0, 255, 0, 0,  5, 0.28f }, // 29 green flare
+    { 0,          125, 180, 75,  2,  6, 0.24f }, // 28 green: sparks 
+    { PT_FLARE,   125, 200, 100, 0,  5, 0.28f }, // 29 green flare
     {PT_FIREBALL, 64, 255, 128, 0,   7, 4.0f }, // 30 green explosion fireball
 };
 
