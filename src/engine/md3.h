@@ -213,10 +213,10 @@ void md3load(char *model)
     if(!loadingmd3) { conoutf("not loading an md3"); return; }
     s_sprintfd(filename)("%s/%s", md3dir, model);
     md3::md3part &mdl = *new md3::md3part;
-    if(loadingmd3->parts.length()) mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
     loadingmd3->parts.add(&mdl);
     mdl.model = loadingmd3;
     mdl.index = loadingmd3->parts.length()-1;
+    if(mdl.index) mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
     if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
 }  
 
