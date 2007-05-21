@@ -325,7 +325,7 @@ struct vertmodel : model
                 s = slot.sts[0].t;
                 if(slot.sts.length() >= 2) m = slot.sts[1].t;
             }
-            if((renderpath==R_FIXEDFUNCTION || !lightmodels) && !glowmodels && !envmapmodels) m = crosshair;
+            if((renderpath==R_FIXEDFUNCTION || !lightmodels) && !glowmodels && (!envmapmodels || !(as.anim&ANIM_ENVMAP) || envmapmax<=0)) m = crosshair;
             setshader(as, m!=crosshair);
             if(s!=lastskin)
             {
