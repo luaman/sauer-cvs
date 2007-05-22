@@ -761,6 +761,13 @@ void particle_fireball(const vec &dest, float max, int type)
 }
 
 
+//dir = 0..6 where 0=up
+static inline vec offsetvec(vec o, int dir, int dist) {
+    vec v = vec(o);    
+    v.v[(2+dir)%3] += (dir>2)?(-dist):dist;
+    return v;
+}
+
 static void makeparticles(entity &e) 
 {
     switch(e.attr1) 
@@ -769,20 +776,34 @@ static void makeparticles(entity &e)
             regular_particle_splash(27, 1, 40, e.o);                
             regular_particle_splash(24, 1, 200, vec(e.o.x, e.o.y, e.o.z+3.0), 3);
             break;
-        case 1: //smoke vent
-            regular_particle_splash(24, 1, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+        case 1: //smoke vent - <dir>
+            regular_particle_splash(24, 1, 200, offsetvec(e.o, e.attr2, rnd(10)));
             break;
-        case 2: //water fountain
-            regular_particle_splash(26, 5, 200, vec(e.o.x, e.o.y, e.o.z+float(rnd(10))));
+        case 2: //water fountain - <dir>
+            regular_particle_splash(26, 5, 200, offsetvec(e.o, e.attr2, rnd(10)));
             break;
-        case 32: //flares - plain/sparkle/sun/sparklesun <red> <green> <blue>
+        case 32: //lens flares - plain/sparkle/sun/sparklesun <red> <green> <blue>
         case 33:
         case 34:
         case 35:
             makeflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
             break;
-        case 22: //fire ball <size>
+            
+        //number is based on existing particles types:
+        
+        case 10: //tape - yelllow/green <dir> <length>
+        case 29:
+            particle_flare(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, e.attr1);
+            break;     
+        case 17: //meter - red/blue/redvsblue/bluevsred <percent>
+        case 18:
+        case 19:
+        case 20:
+            particle_meter(e.o, float(e.attr2)/255, e.attr1, 1);
+            break;
+        case 22: //fire ball - red/orange/green <size>
         case 23:
+        case 30:
             newparticle(e.o, vec(0, 0, 1), 1, e.attr1)->val = 1+e.attr2;
             break;
         default:
