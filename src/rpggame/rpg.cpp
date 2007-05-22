@@ -105,7 +105,7 @@ struct rpgclient : igameclient, g3d_callback
     {
         vec color, dir;
         lightreaching(player1.o, color, dir);
-        rendermodel(color, dir, "hudguns/fist", anim, 0, 0, player1.o.x, player1.o.y, player1.o.z, player1.yaw+90, player1.pitch, speed, base, NULL, 0);
+        rendermodel(color, dir, "hudguns/fist", anim, 0, 0, player1.o, player1.yaw+90, player1.pitch, speed, base, NULL, 0);
     }
 
     void drawhudgun()

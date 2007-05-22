@@ -259,7 +259,8 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
             attenuation -= mag / float(light.attr1);
             if(attenuation <= 0) continue;
         }
-        ray.mul(1.0f / mag);
+        if(mag) ray.mul(1.0f / mag);
+        else { ray = normal; ray.neg(); }
         if(light.attached && light.attached->type==ET_SPOTLIGHT)
         {
             vec spot(vec(light.attached->o).sub(light.o).normalize());
@@ -268,7 +269,7 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
             if(spotatten <= 0) continue;
             attenuation *= spotatten;
         }
-        if(shadows)
+        if(shadows && mag)
         {
             float dist = shadowray(light.o, ray, mag - tolerance, RAY_SHADOW | (mmshadows > 1 ? RAY_ALPHAPOLY : (mmshadows ? RAY_POLY : 0)));
             if(dist < mag - tolerance) continue;

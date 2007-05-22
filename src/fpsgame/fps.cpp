@@ -524,7 +524,7 @@ struct fpsclient : igameclient
             color.y = color.y*(1-t) + t;
         }
 #endif
-        rendermodel(color, dir, hudgunnames[player1->gunselect], anim, 0, 0, sway.x, sway.y, sway.z, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
+        rendermodel(color, dir, hudgunnames[player1->gunselect], anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }
 
     void drawhudgun()

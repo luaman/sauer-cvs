@@ -1029,11 +1029,11 @@ struct vertmodel : model
         center.add(radius);
     }
 
-    virtual void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    virtual void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos)
     {
     }
 
-    void render(int anim, int varseed, float speed, int basetime, float x, float y, float z, float yaw, float pitch, dynent *d, model *vwepmdl, const vec &color, const vec &dir)
+    void render(int anim, int varseed, float speed, int basetime, const vec &o, float yaw, float pitch, dynent *d, modelattach *a, const vec &color, const vec &dir)
     {
         yaw += spin*lastmillis/1000.0f;
 
@@ -1056,22 +1056,28 @@ struct vertmodel : model
             rdir.rotate_around_z((-yaw-180.0f)*RAD);
 
             campos = camera1->o;
-            campos.sub(vec(x, y, z));
+            campos.sub(o);
             campos.rotate_around_z((-yaw-180.0f)*RAD);
 
             if(renderpath!=R_FIXEDFUNCTION && refracting)
             {
-                fogz = z;
+                fogz = o.z;
                 setfogplane(1, refracting - fogz); 
             }
-            
-            if(envmapped() || (vwepmdl && vwepmdl->envmapped()))
+           
+            if(envmapped())
             {
                 anim |= ANIM_ENVMAP;
-
-                closestenvmaptex = 0;
-                if((envmapped() && !envmap) || (vwepmdl && vwepmdl->envmapped() && !vwepmdl->envmap))
-                    closestenvmaptex = lookupenvmap(closestenvmap(vec(x, y, z)));
+                if(!envmap) closestenvmaptex = lookupenvmap(closestenvmap(o));
+            }
+            else if(a) for(int i = 0; a[i].name; i++) if(a[i].m && a[i].m->envmapped())
+            {
+                anim |= ANIM_ENVMAP;
+                if(!a[i].m->envmap)
+                {
+                    closestenvmaptex = lookupenvmap(closestenvmap(o));
+                    break;
+                }
             }
         }
 
@@ -1098,16 +1104,16 @@ struct vertmodel : model
             else
             {
                 glLoadIdentity();
-                glTranslatef(x, y, z);
+                glTranslatef(o.x, o.y, o.z);
                 glRotatef(yaw+180, 0, 0, 1);
             }
             glMatrixMode(GL_MODELVIEW);
             if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE0_ARB);
         }
         glPushMatrix();
-        glTranslatef(x, y, z);
+        glTranslatef(o.x, o.y, o.z);
         glRotatef(yaw+180, 0, 0, 1);
-        render(anim, varseed, speed, basetime, pitch, vec(0, -1, 0), d, vwepmdl, rdir, campos);
+        render(anim, varseed, speed, basetime, pitch, vec(0, -1, 0), d, a, rdir, campos);
         glPopMatrix();
         if(anim&ANIM_ENVMAP)
         {
