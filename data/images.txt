@@ -1,0 +1,9 @@
+explosion.jpg
+fire_exp.png
+guioverlay.png
+guiskin.png
+guislider.png
+smoke_exp.png
+
+(c) 2006-2007 Markus "makkE" Bekel
+ALL RIGHTS RESERVED
