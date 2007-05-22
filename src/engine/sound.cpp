@@ -198,7 +198,7 @@ int addsound(char *name, int vol, int maxuses, vector<soundslot> &sounds)
 void registersound(char *name, int *vol) { intret(addsound(name, *vol, 0, gamesounds)); }
 COMMAND(registersound, "si");
 
-void mapsound(char *name, int *vol, int *maxuses) { intret(addsound(name, *vol, *maxuses, mapsounds)); }
+void mapsound(char *name, int *vol, int *maxuses) { intret(addsound(name, *vol, *maxuses < 0 ? 0 : max(1, *maxuses), mapsounds)); }
 COMMAND(mapsound, "sii");
 
 void clear_sound()

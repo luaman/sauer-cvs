@@ -1398,7 +1398,7 @@ Registers sound "name" as a map-specific sounds. These map-specific sounds may c
 be used with "sound" entities within a map. The first map sound registered in a map has index 0, 
 and increases afterwards. V is volume adjustment; if not specified (0), it is the default 100, valid
 range is 1-255. N is the maximum number instances of this sound that are allowed to play simultaneously;
-the default (0) is unlimited.</p>
+the default is only 1 instance. If N is -1, then an unlimited number of instances may play simultaneously.</p>
 
 <pre id="mapmodel">mapmodel R H T N SH</pre>
 <pre id="mmodel">mmodel N</pre>
