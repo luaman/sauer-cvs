@@ -273,6 +273,7 @@ void updatechanvol(int chan, int svol, const vec *loc = NULL, extentity *ent = N
         }
     }
     vol = (vol*MAXVOL*svol)/255/255;
+    vol = min(vol, MAXVOL);
     #ifdef USE_MIXER
         Mix_Volume(chan, vol);
         Mix_SetPanning(chan, 255-pan, pan);
@@ -340,13 +341,20 @@ void playsound(int n, const vec *loc, extentity *ent)
 
     if(!slot.s->sound)
     {
-        s_sprintfd(buf)("packages/sounds/%s.wav", slot.s->name);
+        s_sprintfd(buf)("packages/sounds/%s", slot.s->name);
 
-        #ifdef USE_MIXER
-            slot.s->sound = Mix_LoadWAV(path(buf));
-        #else
-            slot.s->sound = FSOUND_Sample_Load(ent ? n+gamesounds.length() : n, path(buf), FSOUND_LOOP_OFF, 0, 0);
-        #endif
+        loopi(2)
+        {
+            if(i) s_strcat(buf, ".wav");
+
+            #ifdef USE_MIXER
+                slot.s->sound = Mix_LoadWAV(path(buf));
+            #else
+                slot.s->sound = FSOUND_Sample_Load(ent ? n+gamesounds.length() : n, path(buf), FSOUND_LOOP_OFF, 0, 0);
+            #endif
+
+            if(slot.s->sound) break;
+        }
 
         if(!slot.s->sound) { conoutf("failed to load sample: %s", buf); return; }
     }
