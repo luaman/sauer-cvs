@@ -517,11 +517,13 @@ struct fpsclient : igameclient
         sway.add(swaydir).add(player1->o);
         if(!hudgunsway()) sway = player1->o;
         lightreaching(sway, color, dir);
+#if 0
         if(player1->state!=CS_DEAD && player1->quadmillis)
         {
             float t = 0.5f + 0.5f*sinf(2*M_PI*lastmillis/1000.0f);
             color.y = color.y*(1-t) + t;
         }
+#endif
         rendermodel(color, dir, hudgunnames[player1->gunselect], anim, 0, 0, sway.x, sway.y, sway.z, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }
 
