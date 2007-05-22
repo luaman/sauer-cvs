@@ -382,6 +382,7 @@ static occludequery *modelquery = NULL;
 void startmodelbatches()
 {
     numbatches = 0;
+    modelattached.setsizenodelete(0);
 }
 
 batchedmodel &addbatchedmodel(model *m)
@@ -465,18 +466,25 @@ void endmodelquery()
         modelquery = NULL;
         return;
     }
+    int minattached = modelattached.length();
     startquery(modelquery);
     loopi(numbatches)
     {
         modelbatch &b = *batches[i];
         if(b.batched.empty() || b.batched.last().query!=modelquery) continue;
         b.m->startrender();
-        do renderbatchedmodel(b.m, b.batched.pop());
+        do
+        {
+            batchedmodel &bm = b.batched.pop();
+            if(bm.attached>=0) minattached = min(minattached, bm.attached);
+            renderbatchedmodel(b.m, bm);
+        }
         while(b.batched.length() && b.batched.last().query==modelquery);
         b.m->endrender();
     }
     endquery(modelquery);
     modelquery = NULL;
+    modelattached.setsizenodelete(minattached);
 }
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
@@ -578,11 +586,35 @@ void abovemodel(vec &o, const char *mdl)
     o.z += m->above(0/*frame*/);
 }
 
-int findanim(const char *name)
+bool matchanim(const char *name, const char *pattern)
+{
+    for(;; pattern++)
+    {
+        const char *s = name;
+        char c;
+        for(;; pattern++)
+        {
+            c = *pattern;
+            if(!c || c=='|') break;
+            else if(c=='*') 
+            {
+                if(!*s || isspace(*s)) break;
+                do s++; while(*s && !isspace(*s));
+            }
+            else if(c!=*s) break;
+            else s++;
+        }
+        if(!*s && (!c || c=='|')) return true;
+        pattern = strchr(pattern, '|');
+        if(!pattern) break;
+    }
+    return false;
+}
+
+void findanims(const char *pattern, vector<int> &anims)
 {
     static const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "taunt", "win", "lose", "gun shoot", "gun idle", "mapmodel", "trigger" };
-    loopi(sizeof(names)/sizeof(names[0])) if(!strcmp(name, names[i])) return i;
-    return -1;
+    loopi(sizeof(names)/sizeof(names[0])) if(matchanim(names[i], pattern)) anims.add(i);
 }
 
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks) // model skin sharing

@@ -278,17 +278,12 @@ void md3skin(char *objname, char *skin, char *masks, float *envmapmax, float *en
 void md3anim(char *anim, int *frame, int *range, float *speed, int *priority)
 {
     if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
-    for(;;)
+    vector<int> anims;
+    findanims(anim, anims);
+    if(anims.empty()) conoutf("could not find animation %s", anim);
+    else loopv(anims)
     {
-        string curanim;
-        char *nextanim = strchr(anim, '|');
-        if(nextanim) s_strncpy(curanim, anim, nextanim-anim+1);
-        else s_strcpy(curanim, anim);
-        int num = findanim(curanim);
-        if(num<0) conoutf("could not find animation %s", curanim); 
-        else loadingmd3->parts.last()->setanim(num, *frame, *range, *speed, *priority);
-        if(!nextanim) break;
-        anim = nextanim+1;
+        loadingmd3->parts.last()->setanim(anims[i], *frame, *range, *speed, *priority);
     }
 }
 

@@ -299,7 +299,7 @@ extern void startmap(const char *name);
 // rendermodel
 struct mapmodelinfo { string name; int tex; model *m; };
 
-extern int findanim(const char *name);
+extern void findanims(const char *pattern, vector<int> &anims);
 extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks);
 extern model *loadmodel(const char *name, int i = -1);
 extern mapmodelinfo &getmminfo(int i);
