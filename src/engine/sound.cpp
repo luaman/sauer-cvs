@@ -266,7 +266,7 @@ void updatechanvol(int chan, int svol, const vec *loc = NULL, extentity *ent = N
             vol -= (int)(dist*3/4*soundvol/255); // simple mono distance attenuation
             if(vol<0) vol = 0;
         }
-        if(stereo && (v.x != 0 || v.y != 0))
+        if(stereo && (v.x != 0 || v.y != 0) && dist>0)
         {
             float yaw = -atan2f(v.x, v.y) - camera1->yaw*RAD; // relative angle of sound along X-Y axis
             pan = int(255.9f*(0.5f*sinf(yaw)+0.5f)); // range is from 0 (left) to 255 (right)
