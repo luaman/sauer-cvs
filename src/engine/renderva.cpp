@@ -798,7 +798,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         if(cur.fogplane!=fogplane)
         {
             cur.fogplane = fogplane;
-            setfogplane(0.5f, fogplane);
+            setfogplane(1.0f/(1<<VVEC_FRAC), fogplane);
         }
     }
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
