@@ -795,6 +795,12 @@ struct clientcom : iclientcom
                 int size = getint(p);
                 if(size>=0) emptymap(size, true);
                 else enlargemap(true);
+                if(d && d!=player1)
+                {
+                    int newsize = 0;
+                    while(1<<newsize < getworldsize()) newsize++;
+                    conoutf(size>=0 ? "%s started a new map of size %d" : "%s enlarged the map to size %d", cl.colorname(d), newsize);
+                }
                 break;
             }
 
