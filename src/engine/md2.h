@@ -217,18 +217,20 @@ struct md2 : vertmodel
         }
     };
 
-    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos)
     {
         if(!loaded) return;
 
         parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
 
-        if(vwepmdl)
+        if(a) for(int i = 0; a[i].name; i++)
         {
-            vwepmdl->setskin();
-            md2part *vwep = (md2part *)((md2 *)vwepmdl)->parts[0];
-            vwep->index = parts.length();
-            vwep->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
+            md2 *m = (md2 *)a[i].m;
+            if(!m) continue;
+            m->setskin();
+            md2part *p = (md2part *)m->parts[0];
+            p->index = parts.length()+i;
+            p->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
         }
     }
 

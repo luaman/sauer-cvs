@@ -150,19 +150,32 @@ struct md3 : vertmodel
         }
     };
     
-    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, model *vwepmdl, const vec &dir, const vec &campos)
+    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos)
     {
         if(!loaded) return;
 
-        if(vwepmdl) // cross link the vwep to this model
+        if(a) for(int i = 0; a[i].name; i++)
         {
-            part *vwep = ((md3 *)vwepmdl)->parts[0];
-            if(link(vwep, "tag_weapon")) vwep->index = parts.length();
+            md3 *m = (md3 *)a[i].m;
+            if(!m) continue;
+            md3part *p = (md3part *)m->parts[0];
+            switch(a[i].type)
+            {
+                case MDL_ATTACH_VWEP: if(link(p, "tag_weapon")) p->index = parts.length()+i; break;
+                case MDL_ATTACH_POWERUP: if(link(p, "tag_powerup")) p->index = parts.length()+i; break;
+            }
         }
 
         parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
 
-        if(vwepmdl) link(NULL, "tag_weapon");
+        if(a) for(int i = 0; a[i].name; i++)
+        {
+            switch(a[i].type)
+            {
+                case MDL_ATTACH_VWEP: link(NULL, "tag_weapon"); break;
+                case MDL_ATTACH_POWERUP: link(NULL, "tag_powerup"); break;
+            }
+        }
     }
 
     bool load()

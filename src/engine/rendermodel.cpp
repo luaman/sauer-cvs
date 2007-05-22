@@ -382,7 +382,6 @@ static occludequery *modelquery = NULL;
 void startmodelbatches()
 {
     numbatches = 0;
-    modelattached.setsizenodelete(0);
 }
 
 batchedmodel &addbatchedmodel(model *m)
@@ -466,25 +465,18 @@ void endmodelquery()
         modelquery = NULL;
         return;
     }
-    int minattached = modelattached.length();
     startquery(modelquery);
     loopi(numbatches)
     {
         modelbatch &b = *batches[i];
         if(b.batched.empty() || b.batched.last().query!=modelquery) continue;
         b.m->startrender();
-        do
-        {
-            batchedmodel &bm = b.batched.pop();
-            if(bm.attached>=0) minattached = min(minattached, bm.attached);
-            renderbatchedmodel(b.m, bm);
-        }
+        do renderbatchedmodel(b.m, b.batched.pop());
         while(b.batched.length() && b.batched.last().query==modelquery);
         b.m->endrender();
     }
     endquery(modelquery);
     modelquery = NULL;
-    modelattached.setsizenodelete(minattached);
 }
 
 VARP(maxmodelradiusdistance, 10, 80, 1000);
