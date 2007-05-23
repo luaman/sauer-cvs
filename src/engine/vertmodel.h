@@ -271,6 +271,22 @@ struct vertmodel : model
             DELETEA(dynbuf);
         }
 
+        mesh *copy()
+        {
+            mesh &m = *new mesh;
+            m.name = newstring(name);
+            m.numverts = numverts;
+            m.verts = new vert[numverts*group->numframes];
+            memcpy(m.verts, verts, numverts*group->numframes*sizeof(vert));
+            m.numtcverts = numtcverts;
+            m.tcverts = new tcvert[numtcverts];
+            memcpy(m.tcverts, tcverts, numtcverts*sizeof(tcvert));
+            m.numtris = numtris;
+            m.tris = new tri[numtris];
+            memcpy(m.tris, tris, numtris*sizeof(tri));
+            return &m;
+        }
+
         void gendynbuf()
         {
             vector<ushort> idxs;
@@ -479,20 +495,26 @@ struct vertmodel : model
 
     struct meshgroup
     {
+        meshgroup *next;
+        int shared;
         char *name;
         vector<mesh *> meshes;
         tag *tags;
         int numtags, numframes;
         GLuint statbuf, statidx;
-        bool statnorms, scaled;
+        bool statnorms;
+        float scale;
+        vec translate;
 
-        meshgroup() : tags(NULL), numtags(0), numframes(0), statbuf(0), statidx(0), scaled(false) {}
+        meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), statbuf(0), statidx(0), scale(1), translate(0, 0, 0) {}
         virtual ~meshgroup()
         {
+            DELETEA(name);
             meshes.deletecontentsp();
             DELETEA(tags);
             if(statbuf) glDeleteBuffers_(1, &statbuf);
             if(statidx) glDeleteBuffers_(1, &statidx);
+            if(next) delete next;
         }
 
         int findtag(const char *name)
@@ -521,16 +543,43 @@ struct vertmodel : model
         bool hasframes(int i, int n) { return i>=0 && i+n<=numframes; }
         int clipframes(int i, int n) { return min(n, numframes - i); }
 
-        void scaleverts(const float scale, const vec &translate)
+        meshgroup *copy()
         {
-           if(scaled) return;
-           loopv(meshes)
-           { 
-               mesh &m = *meshes[i];
-               loopj(numframes*m.numverts) m.verts[j].pos.add(translate).mul(scale);
-           }
-           loopi(numframes*numtags) tags[i].pos.add(translate).mul(scale);
-           scaled = true;
+            meshgroup &group = *new meshgroup;
+            group.name = newstring(name);
+            loopv(meshes) group.meshes.add(meshes[i]->copy())->group = &group;
+            group.numtags = numtags;
+            group.tags = new tag[numframes*numtags];
+            memcpy(group.tags, tags, numframes*numtags*sizeof(tag));
+            loopi(numframes*numtags) if(group.tags[i].name) group.tags[i].name = newstring(group.tags[i].name);
+            group.numframes = numframes;
+            group.scale = scale;
+            group.translate = translate;
+            return &group;
+        }
+
+        meshgroup *scaleverts(const float nscale, const vec &ntranslate)
+        {
+            if(nscale==scale && ntranslate==translate) { shared++; return this; }
+            else if(next || shared)
+            {
+                if(!next) next = copy();
+                return next->scaleverts(nscale, ntranslate);
+            }
+            float scalediff = nscale/scale;
+            vec transdiff(ntranslate);
+            transdiff.sub(translate);
+            transdiff.mul(scale);
+            loopv(meshes)
+            { 
+                mesh &m = *meshes[i];
+                loopj(numframes*m.numverts) m.verts[j].pos.add(transdiff).mul(scalediff);
+            }
+            loopi(numframes*numtags) tags[i].pos.add(transdiff).mul(scalediff);
+            scale = nscale;
+            translate = ntranslate;
+            shared++;
+            return this;
         }
 
         void genvbo(bool norms)

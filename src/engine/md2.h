@@ -279,7 +279,7 @@ struct md2 : vertmodel
         }
         delete[] pname;
         loadingmd2 = 0;
-        loopv(parts) parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
+        loopv(parts) parts[i]->meshes = parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
         return loaded = true;
     }
 };
