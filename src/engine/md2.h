@@ -238,16 +238,11 @@ struct md2 : vertmodel
         }
     }
 
-    static meshgroup *loadmeshes(char *name)
+    meshgroup *loadmeshes(char *name)
     {
-        static hashtable<char *, vertmodel::meshgroup *> md2s;
-        if(!md2s.access(name))
-        {
-            md2meshgroup *group = new md2meshgroup();
-            if(!group->load(name)) { delete group; return NULL; }
-            md2s[group->name] = group;
-        }
-        return md2s[name];
+        md2meshgroup *group = new md2meshgroup();
+        if(!group->load(name)) { delete group; return NULL; }
+        return group;
     }
 
     bool load()
@@ -259,7 +254,7 @@ struct md2 : vertmodel
         mdl.index = 0;
         char *pname = parentdir(loadname);
         s_sprintfd(name1)("packages/models/%s/tris.md2", loadname);
-        mdl.meshes = loadmeshes(path(name1));
+        mdl.meshes = sharemeshes(path(name1));
         if(!mdl.meshes)
         {
             s_sprintfd(name2)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)

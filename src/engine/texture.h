@@ -188,10 +188,10 @@ extern Texture *loadthumbnail(Slot &slot);
 extern void setslotshader(Slot &s);
 
 extern void setenvparamf(char *name, int type, int index, float x = 0, float y = 0, float z = 0, float w = 0);
-extern void setenvparamfv(char *name, int type, int index, float *v);
+extern void setenvparamfv(char *name, int type, int index, const float *v);
 extern void flushenvparam(int type, int index, bool local = false);
 extern void setlocalparamf(char *name, int type, int index, float x = 0, float y = 0, float z = 0, float w = 0);
-extern void setlocalparamfv(char *name, int type, int index, float *v);
+extern void setlocalparamfv(char *name, int type, int index, const float *v);
 
 extern ShaderParam *findshaderparam(Slot &s, char *name, int type, int index);
 

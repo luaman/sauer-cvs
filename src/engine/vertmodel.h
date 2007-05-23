@@ -287,53 +287,6 @@ struct vertmodel : model
             return &m;
         }
 
-        void gendynbuf()
-        {
-            vector<ushort> idxs;
-            loopi(numtris)
-            {
-                tri &t = tris[i];
-                loopj(3) idxs.add(t.vert[j]);
-            }
-            tristrip ts;
-            ts.addtriangles(idxs.getbuf(), idxs.length()/3);
-            idxs.setsizenodelete(0);
-            ts.buildstrips(idxs);
-            dynbuf = new vert[numverts];
-            dynidx = new ushort[idxs.length()];
-            memcpy(dynidx, idxs.getbuf(), idxs.length()*sizeof(ushort));
-            dynlen = idxs.length();
-        }
-
-        void genvbo(vector<ushort> &idxs, vector<vvert> &vverts, bool norms)
-        {
-            statoffset = idxs.length();
-            loopi(numtris)
-            {
-                tri &t = tris[i];
-                loopj(3)
-                {
-                    tcvert &tc = tcverts[t.vert[j]];
-                    vert &v = verts[tc.index];
-                    loopvk(vverts) // check if it's already added
-                    {
-                        vvert &w = vverts[k];
-                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && (!norms || v.norm==w.norm)) { idxs.add((ushort)k); goto found; }
-                    }
-                    {
-                        idxs.add(vverts.length());
-                        vvert &w = vverts.add();
-                        w.pos = v.pos;
-                        w.norm = v.norm;
-                        w.u = tc.u;
-                        w.v = tc.v;
-                    }
-                    found:;
-                }
-            }
-            statlen = idxs.length()-statoffset;
-        }
-    
         void calcbb(int frame, vec &bbmin, vec &bbmax, float m[12])
         {
             vert *fverts = &verts[frame*numverts];
@@ -375,6 +328,53 @@ struct vertmodel : model
                 t.tc[4] = cv.u;
                 t.tc[5] = cv.v;
             }
+        }
+
+        void gendynbuf()
+        {
+            vector<ushort> idxs;
+            loopi(numtris)
+            {
+                tri &t = tris[i];
+                loopj(3) idxs.add(t.vert[j]);
+            }
+            tristrip ts;
+            ts.addtriangles(idxs.getbuf(), idxs.length()/3);
+            idxs.setsizenodelete(0);
+            ts.buildstrips(idxs);
+            dynbuf = new vert[numverts];
+            dynidx = new ushort[idxs.length()];
+            memcpy(dynidx, idxs.getbuf(), idxs.length()*sizeof(ushort));
+            dynlen = idxs.length();
+        }
+
+        void genvbo(vector<ushort> &idxs, vector<vvert> &vverts, bool norms)
+        {
+            statoffset = idxs.length();
+            loopi(numtris)
+            {
+                tri &t = tris[i];
+                loopj(3) 
+                {
+                    tcvert &tc = tcverts[t.vert[j]];
+                    vert &v = verts[tc.index];
+                    loopvk(vverts) // check if it's already added
+                    {
+                        vvert &w = vverts[k];
+                        if(tc.u==w.u && tc.v==w.v && v.pos==w.pos && (!norms || v.norm==w.norm)) { idxs.add((ushort)k); goto found; }
+                    }
+                    {
+                        idxs.add(vverts.length());
+                        vvert &w = vverts.add();
+                        w.pos = v.pos;
+                        w.norm = v.norm;
+                        w.u = tc.u;
+                        w.v = tc.v;
+                    }
+                    found:;
+                }
+            }
+            statlen = idxs.length()-statoffset;
         }
 
         void gendynverts(anpos &cur, anpos *prev, float ai_t, bool norms)
@@ -516,12 +516,12 @@ struct vertmodel : model
         vector<mesh *> meshes;
         tag *tags;
         int numtags, numframes;
-        GLuint statbuf, statidx;
-        bool statnorms;
         float scale;
         vec translate;
+        GLuint statbuf, statidx;
+        bool statnorms;
 
-        meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), statbuf(0), statidx(0), scale(1), translate(0, 0, 0) {}
+        meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), scale(1), translate(0, 0, 0), statbuf(0), statidx(0) {}
         virtual ~meshgroup()
         {
             DELETEA(name);
@@ -597,6 +597,18 @@ struct vertmodel : model
             return this;
         }
 
+        void calctagtransform(int frame, int i, float m[12], float n[12])
+        {
+            tag &t = tags[frame*numtags + i];
+            loop(y, 3)
+            {
+                n[y] = m[y]*t.transform[0][0] + m[y+3]*t.transform[0][1] + m[y+6]*t.transform[0][2];
+                n[3+y] = m[y]*t.transform[1][0] + m[y+3]*t.transform[1][1] + m[y+6]*t.transform[1][2];
+                n[6+y] = m[y]*t.transform[2][0] + m[y+3]*t.transform[2][1] + m[y+6]*t.transform[2][2];
+                n[9+y] = m[y]*t.pos[0] + m[y+3]*t.pos[1] + m[y+6]*t.pos[2] + m[y+9];
+            }
+        }
+
         void genvbo(bool norms)
         {
             statnorms = norms;
@@ -620,18 +632,6 @@ struct vertmodel : model
             glGenBuffers_(1, &statidx);
             glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, statidx);
             glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
-        }
-
-        void calctagtransform(int frame, int i, float m[12], float n[12])
-        {
-            tag &t = tags[frame*numtags + i];
-            loop(y, 3)
-            {
-                n[y] = m[y]*t.transform[0][0] + m[y+3]*t.transform[0][1] + m[y+6]*t.transform[0][2];
-                n[3+y] = m[y]*t.transform[1][0] + m[y+3]*t.transform[1][1] + m[y+6]*t.transform[1][2];
-                n[6+y] = m[y]*t.transform[2][0] + m[y+3]*t.transform[2][1] + m[y+6]*t.transform[2][2];
-                n[9+y] = m[y]*t.pos[0] + m[y+3]*t.pos[1] + m[y+6]*t.pos[2] + m[y+9];
-            }
         }
 
         void calctagmatrix(int i, const anpos &cur, const anpos *prev, float ai_t, GLfloat *matrix)
@@ -738,38 +738,15 @@ struct vertmodel : model
         vertmodel *model;
         int index;
         meshgroup *meshes;
+        vector<linkedpart> links;
         vector<skin> skins;
         vector<animinfo> *anims;
-        vector<linkedpart> links;
         float pitchscale, pitchoffset, pitchmin, pitchmax;
 
         part() : meshes(NULL), anims(NULL), pitchscale(1), pitchoffset(0), pitchmin(0), pitchmax(0) {}
         virtual ~part()
         {
             DELETEA(anims);
-        }
-
-        void initskins(Texture *tex = crosshair, Texture *masks = crosshair)
-        {
-            if(!meshes) return;
-            while(skins.length() < meshes->meshes.length())
-            {
-                skin &s = skins.add();
-                s.owner = this;
-                s.tex = tex;
-                s.masks = masks;
-            }
-        }
-
-        bool link(part *link, const char *tag, int anim = -1, int basetime = 0)
-        {
-            int i = meshes->findtag(tag);
-            if(i<0) return false;
-            while(i>=links.length()) links.add();
-            links[i].p = link;
-            links[i].anim = anim;
-            links[i].basetime = basetime;
-            return true;
         }
 
         void calcbb(int frame, vec &bbmin, vec &bbmax)
@@ -803,6 +780,29 @@ struct vertmodel : model
                 float n[12];
                 meshes->calctagtransform(frame, i, m, n);
                 links[i].p->gentris(frame, tris, n);
+            }
+        }
+
+        bool link(part *link, const char *tag, int anim = -1, int basetime = 0)
+        {
+            int i = meshes->findtag(tag);
+            if(i<0) return false;
+            while(i>=links.length()) links.add();
+            links[i].p = link;
+            links[i].anim = anim;
+            links[i].basetime = basetime;
+            return true;
+        }
+
+        void initskins(Texture *tex = crosshair, Texture *masks = crosshair)
+        {
+            if(!meshes) return;
+            while(skins.length() < meshes->meshes.length())
+            {
+                skin &s = skins.add();
+                s.owner = this;
+                s.tex = tex;
+                s.masks = masks;
             }
         }
 
@@ -1089,6 +1089,20 @@ struct vertmodel : model
 
     char *name() { return loadname; }
 
+    virtual meshgroup *loadmeshes(char *name) { return NULL; }
+
+    meshgroup *sharemeshes(char *name)
+    {
+        static hashtable<char *, vertmodel::meshgroup *> meshgroups;
+        if(!meshgroups.access(name))
+        {
+            meshgroup *group = loadmeshes(name);
+            if(!group) return NULL;
+            meshgroups[group->name] = group;
+        }
+        return meshgroups[name];
+    }
+
     void gentris(int frame, vector<SphereTree::tri> &tris)
     {
         if(parts.empty()) return;
@@ -1104,23 +1118,6 @@ struct vertmodel : model
         return spheretree;
     }
 
-    bool envmapped()
-    {
-        loopv(parts) loopvj(parts[i]->skins) if(parts[i]->skins[j].envmapped()) return true;
-        return false;
-    }
-
-    bool link(part *link, const char *tag, int anim = -1, int basetime = 0)
-    {
-        loopv(parts) if(parts[i]->link(link, tag, anim, basetime)) return true;
-        return false;
-    }
-
-    void setskin(int tex = 0)
-    {
-        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].override = tex;
-    }
-
     void calcbb(int frame, vec &center, vec &radius)
     {
         if(parts.empty()) return;
@@ -1132,6 +1129,23 @@ struct vertmodel : model
         radius.mul(0.5f);
         center = bbmin;
         center.add(radius);
+    }
+
+    bool link(part *link, const char *tag, int anim = -1, int basetime = 0)
+    {
+        loopv(parts) if(parts[i]->link(link, tag, anim, basetime)) return true;
+        return false;
+    }
+
+    bool envmapped()
+    {
+        loopv(parts) loopvj(parts[i]->skins) if(parts[i]->skins[j].envmapped()) return true;
+        return false;
+    }
+
+    void setskin(int tex = 0)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].override = tex;
     }
 
     virtual void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)

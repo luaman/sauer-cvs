@@ -177,16 +177,11 @@ struct md3 : vertmodel
         }
     }
 
-    static meshgroup *loadmeshes(char *name)
+    meshgroup *loadmeshes(char *name)
     {
-        static hashtable<char *, vertmodel::meshgroup *> md3s;
-        if(!md3s.access(name))
-        {
-            md3meshgroup *group = new md3meshgroup();
-            if(!group->load(name)) { delete group; return NULL; }
-            md3s[group->name] = group; 
-        }
-        return md3s[name];
+        md3meshgroup *group = new md3meshgroup();
+        if(!group->load(name)) { delete group; return NULL; }
+        return group;
     }
 
     bool load()
@@ -212,11 +207,11 @@ struct md3 : vertmodel
             mdl.model = this;
             mdl.index = 0; 
             s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
-            mdl.meshes = loadmeshes(path(name1));
+            mdl.meshes = sharemeshes(path(name1));
             if(!mdl.meshes)
             {
                 s_sprintfd(name2)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
-                mdl.meshes = loadmeshes(path(name2));
+                mdl.meshes = sharemeshes(path(name2));
                 if(!mdl.meshes) { delete[] pname; return false; }
             }
             Texture *tex, *masks;
@@ -239,7 +234,7 @@ void md3load(char *model)
     mdl.model = loadingmd3;
     mdl.index = loadingmd3->parts.length()-1;
     if(mdl.index) mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
-    mdl.meshes = md3::loadmeshes(path(filename));
+    mdl.meshes = loadingmd3->sharemeshes(path(filename));
     if(!mdl.meshes) conoutf("could not load %s", filename); // ignore failure
     else mdl.initskins();
 }  

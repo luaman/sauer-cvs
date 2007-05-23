@@ -246,7 +246,7 @@ void setenvparamf(char *name, int type, int index, float x, float y, float z, fl
     }
 }
 
-void setenvparamfv(char *name, int type, int index, float *v)
+void setenvparamfv(char *name, int type, int index, const float *v)
 {
     ShaderParamState &val = (type==SHPARAM_VERTEX ? vertexparamstate[index] : pixelparamstate[index]);
     val.name = name;
@@ -286,7 +286,7 @@ void setlocalparamf(char *name, int type, int index, float x, float y, float z, 
     flushenvparam(type, index, true);
 }
 
-void setlocalparamfv(char *name, int type, int index, float *v)
+void setlocalparamfv(char *name, int type, int index, const float *v)
 {
     setenvparamfv(name, type, index, v);
     flushenvparam(type, index, true);
