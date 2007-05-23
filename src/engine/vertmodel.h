@@ -960,8 +960,9 @@ struct vertmodel : model
                     }
                     if(refracting)
                     {
-                        fogz += matrix[14];
-                        setfogplane(1, refracting - fogz);
+                        fogz += matrix[14]*model->scale;
+                        if(link->model!=model) fogz += link->model->scale*link->model->translate.z;
+                        setfogplane(link->model->scale, refracting - fogz);
                     }
                 }
                 int nanim = anim, nbasetime = basetime;
@@ -973,7 +974,11 @@ struct vertmodel : model
                 link->render(nanim, varseed, speed, nbasetime, pitch, naxis, d, ndir, ncampos);
                 if(renderpath!=R_FIXEDFUNCTION)
                 {
-                    if(refracting) fogz -= matrix[14];
+                    if(refracting) 
+                    {
+                        fogz -= matrix[14]*model->scale;
+                        if(link->model!=model) fogz -= link->model->scale*link->model->translate.z;
+                    }
                     if(anim&ANIM_ENVMAP) 
                     { 
                         glMatrixMode(GL_TEXTURE); 
@@ -1106,8 +1111,8 @@ struct vertmodel : model
 
             if(renderpath!=R_FIXEDFUNCTION && refracting)
             {
-                fogz = o.z;
-                setfogplane(1, refracting - fogz); 
+                fogz = o.z + scale*translate.z;
+                setfogplane(scale, refracting - fogz); 
             }
            
             if(envmapped())
