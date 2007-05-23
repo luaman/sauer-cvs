@@ -29,12 +29,19 @@ struct fpsrender
             attack = ANIM_TAUNT;
             delay = 1000;
         }
-        renderclient(d, mdlname, vwepname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
+        const char *pupname = NULL;
+        if(d->state==CS_ALIVE)
+        {
+            if(d->quadmillis) pupname = "quadspheres";
+        }
+        renderclient(d, mdlname, vwepname, pupname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
+#if 0
         if(d->state!=CS_DEAD && d->quadmillis) 
         {
             vec color(1, 1, 1), dir(0, 0, 1);
             rendermodel(color, dir, "quadrings", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, vec(d->o).sub(vec(0, 0, d->eyeheight/2)), 360*cl.lastmillis/1000.0f, 0, 0, 0, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_DIST);
         }
+#endif
     }
 
     void rendergame(int gamemode)
