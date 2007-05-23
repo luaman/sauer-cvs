@@ -85,8 +85,7 @@ struct md3 : vertmodel
                     // then restore it
                     loopj(3) tags[i].transform[j][1] *= -1;
                 }
-                links = new part *[numtags];
-                loopi(numtags) links[i] = NULL;
+                links = new linkedpart[numtags];
             }
 
             int mesh_offset = header.ofs_meshes;
@@ -161,8 +160,8 @@ struct md3 : vertmodel
             md3part *p = (md3part *)m->parts[0];
             switch(a[i].type)
             {
-                case MDL_ATTACH_VWEP: if(link(p, "tag_weapon")) p->index = parts.length()+i; break;
-                case MDL_ATTACH_POWERUP: if(link(p, "tag_powerup")) p->index = parts.length()+i; break;
+                case MDL_ATTACH_VWEP: if(link(p, "tag_weapon", ANIM_VWEP|ANIM_LOOP)) p->index = parts.length()+i; break;
+                case MDL_ATTACH_POWERUP: if(link(p, "tag_powerup", ANIM_POWERUP|ANIM_LOOP)) p->index = parts.length()+i; break;
             }
         }
 

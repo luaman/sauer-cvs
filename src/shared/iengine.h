@@ -154,7 +154,7 @@ struct model;
 struct modelattach
 {
     const char *name;
-    int type;
+    int type, anim, basetime;
     model *m;
 };
 

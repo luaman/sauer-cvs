@@ -482,6 +482,14 @@ struct vertmodel : model
         ~tag() { DELETEA(name); }
     };
 
+    struct linkedpart
+    {
+        part *p;
+        int anim, basetime;
+
+        linkedpart() : p(NULL), anim(-1), basetime(0) {}
+    };
+
     struct part
     {
         bool loaded;
@@ -489,7 +497,7 @@ struct vertmodel : model
         int index, numframes;
         vector<mesh *> meshes;
         vector<animinfo> *anims;
-        part **links;
+        linkedpart *links;
         tag *tags;
         int numtags;
         GLuint statbuf, statidx;
@@ -506,11 +514,13 @@ struct vertmodel : model
             if(statidx) glDeleteBuffers_(1, &statidx);
         }
 
-        bool link(part *link, const char *tag)
+        bool link(part *link, const char *tag, int anim = -1, int basetime = 0)
         {
             loopi(numtags) if(!strcmp(tags[i].name, tag))
             {
-                links[i] = link;
+                links[i].p = link;
+                links[i].anim = anim;
+                links[i].basetime = basetime;
                 return true;
             }
             return false;
@@ -585,12 +595,12 @@ struct vertmodel : model
         void calcbb(int frame, vec &bbmin, vec &bbmax, float m[12])
         {
             loopv(meshes) meshes[i]->calcbb(frame, bbmin, bbmax, m);
-            loopi(numtags) if(links[i])
+            loopi(numtags) if(links[i].p)
             {
                 tag &t = tags[frame*numtags+i];
                 float n[12];
                 calctransform(t, m, n);
-                links[i]->calcbb(frame, bbmin, bbmax, n);
+                links[i].p->calcbb(frame, bbmin, bbmax, n);
             }
         }
 
@@ -603,12 +613,12 @@ struct vertmodel : model
         void gentris(int frame, vector<SphereTree::tri> &tris, float m[12])
         {
             loopv(meshes) meshes[i]->gentris(frame, tris, m);
-            loopi(numtags) if(links[i])
+            loopi(numtags) if(links[i].p)
             {
                 tag &t = tags[frame*numtags+i];
                 float n[12];
                 calctransform(t, m, n);
-                links[i]->gentris(frame, tris, n);
+                links[i].p->gentris(frame, tris, n);
             }
         }
 
@@ -861,9 +871,9 @@ struct vertmodel : model
 
             loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
 
-            loopi(numtags) if(links[i]) // render the linked models - interpolate rotation and position of the 'link-tags'
+            loopi(numtags) if(links[i].p) // render the linked models - interpolate rotation and position of the 'link-tags'
             {
-                part *link = links[i];
+                part *link = links[i].p;
 
                 GLfloat matrix[16];
                 tag *tag1 = &tags[cur.fr1*numtags+i];
@@ -916,7 +926,13 @@ struct vertmodel : model
                         setfogplane(1, refracting - fogz);
                     }
                 }
-                link->render(anim, varseed, speed, basetime, pitch, naxis, d, ndir, ncampos);
+                int nanim = anim, nbasetime = basetime;
+                if(links[i].anim>=0)
+                {
+                    nanim = links[i].anim | (anim&ANIM_FLAGS);
+                    nbasetime = links[i].basetime;
+                }
+                link->render(nanim, varseed, speed, nbasetime, pitch, naxis, d, ndir, ncampos);
                 if(renderpath!=R_FIXEDFUNCTION)
                 {
                     if(refracting) fogz -= matrix[14];
@@ -995,9 +1011,9 @@ struct vertmodel : model
         return false;
     }
 
-    bool link(part *link, const char *tag)
+    bool link(part *link, const char *tag, int anim = -1, int basetime = 0)
     {
-        loopv(parts) if(parts[i]->link(link, tag)) return true;
+        loopv(parts) if(parts[i]->link(link, tag, anim, basetime)) return true;
         return false;
     }
 
