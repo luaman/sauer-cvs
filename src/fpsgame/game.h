@@ -136,7 +136,7 @@ enum
 
 #define SAUERBRATEN_SERVER_PORT 28785
 #define SAUERBRATEN_SERVINFO_PORT 28786
-#define PROTOCOL_VERSION 253            // bump when protocol changes
+#define PROTOCOL_VERSION 254            // bump when protocol changes
 
 #define MAXNAMELEN 15
 #define MAXTEAMLEN 4

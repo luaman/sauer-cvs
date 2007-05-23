@@ -157,12 +157,11 @@ struct entities : icliententities
 
     // these functions are called when the client touches the item
 
-    void additem(int i, int &v, int spawnsec)
+    void additem(int i, int &v)
     {
         if(v<itemstats[ents[i]->type-I_SHELLS].max)                              // don't pick up if not needed
         {
-            int gamemode = cl.gamemode;
-            cl.cc.addmsg(SV_ITEMPICKUP, "rii", i, m_classicsp ? 100000 : spawnsec);     // first ask the server for an ack
+            cl.cc.addmsg(SV_ITEMPICKUP, "ri", i);
             ents[i]->spawned = false;                                            // even if someone else gets it first
         }
     }
@@ -190,33 +189,29 @@ struct entities : icliententities
 
     void pickup(int n, fpsent *d)
     {
-        int np = 1;
-        loopv(cl.players) if(cl.players[i] && cl.players[i]->state!=CS_SPECTATOR) np++;
-        np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
-        int ammo = np*4;
         switch(ents[n]->type)
         {
-            case I_SHELLS:     additem(n, d->ammo[GUN_SG], ammo); break;
-            case I_BULLETS:    additem(n, d->ammo[GUN_CG], ammo); break;
-            case I_ROCKETS:    additem(n, d->ammo[GUN_RL], ammo); break;
-            case I_ROUNDS:     additem(n, d->ammo[GUN_RIFLE], ammo); break;
-            case I_GRENADES:   additem(n, d->ammo[GUN_GL], ammo); break;
-            case I_CARTRIDGES: additem(n, d->ammo[GUN_PISTOL], ammo); break;
-            case I_HEALTH:     additem(n, d->health,  np*5); break;
-            case I_BOOST:      additem(n, d->health,  60); break;
+            case I_SHELLS:     additem(n, d->ammo[GUN_SG]); break;
+            case I_BULLETS:    additem(n, d->ammo[GUN_CG]); break;
+            case I_ROCKETS:    additem(n, d->ammo[GUN_RL]); break;
+            case I_ROUNDS:     additem(n, d->ammo[GUN_RIFLE]); break;
+            case I_GRENADES:   additem(n, d->ammo[GUN_GL]); break;
+            case I_CARTRIDGES: additem(n, d->ammo[GUN_PISTOL]); break;
+            case I_HEALTH:     additem(n, d->health); break;
+            case I_BOOST:      additem(n, d->health); break;
 
             case I_GREENARMOUR:
                 // (100h/100g only absorbs 200 damage)
                 if(d->armourtype==A_YELLOW && d->armour>=100) break;
-                additem(n, d->armour, 20);
+                additem(n, d->armour);
                 break;
 
             case I_YELLOWARMOUR:
-                additem(n, d->armour, 20);
+                additem(n, d->armour);
                 break;
 
             case I_QUAD:
-                additem(n, d->quadmillis, 60);
+                additem(n, d->quadmillis);
                 break;
                 
             case TELEPORT:

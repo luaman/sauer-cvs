@@ -207,15 +207,20 @@ struct clientcom : iclientcom
             putint(q, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(q, (int)(d->vel.y*DVELF));
             putint(q, (int)(d->vel.z*DVELF));
-            putint(q, d->physstate | (d->gravity.x || d->gravity.y ? 0x20 : 0) | (d->gravity.z ? 0x10 : 0));
+            putuint(q, d->physstate | (d->gravity.x || d->gravity.y ? 0x20 : 0) | (d->gravity.z ? 0x10 : 0));
             if(d->gravity.x || d->gravity.y)
             {
                 putint(q, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
                 putint(q, (int)(d->gravity.y*DVELF));
             }
             if(d->gravity.z) putint(q, (int)(d->gravity.z*DVELF));
-            // pack rest in 1 byte: strafe:2, move:2, state:3, reserved:1
-            putint(q, (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<4) );
+            // pack rest in almost always 1 byte: strafe:2, move:2, state:3, garmour: 1, yarmour: 1, quad: 1
+            uint flags = (d->strafe&3) | ((d->move&3)<<2) | ((editmode ? CS_EDITING : d->state)<<4);
+            fpsent *f = (fpsent *)d;
+            if(f->armourtype==A_GREEN && f->armour>0) flags |= 1<<7;
+            if(f->armourtype==A_YELLOW && f->armour>0) flags |= 1<<8;
+            if(f->quadmillis) flags |= 1<<9;
+            putuint(q, flags);
             enet_packet_resize(packet, q.length());
             sendpackettoserv(packet, 0);
         }
@@ -323,9 +328,15 @@ struct clientcom : iclientcom
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2;
                 d->move = (f&3)==3 ? -1 : f&3;
-                int state = (f>>2)&7;
+                f >>= 2;
+                int state = f&7;
                 if(state==CS_DEAD && d->state!=CS_DEAD) d->lastaction = cl.lastmillis;
                 d->state = state;
+                f >>= 3;
+                if(f&1) { d->armourtype = A_GREEN; d->armour = 1; }
+                else if(f&2) { d->armourtype = A_YELLOW; d->armour = 1; }
+                else { d->armourtype = A_BLUE; d->armour = 0; }
+                if(f&4) d->quadmillis = 1;
                 updatephysstate(d);
                 updatepos(d);
                 break;
@@ -614,13 +625,11 @@ struct clientcom : iclientcom
             {
                 if(!d) return;
                 int i = getint(p);
-                getint(p);
                 if(!cl.et.ents.inrange(i)) break;
                 cl.et.setspawn(i, false);
                 char *name = cl.et.itemname(i);
                 if(name) particle_text(d->abovehead(), name, 15);
                 if(cl.et.ents[i]->type==I_BOOST && !inited) d->maxhealth += 10;
-                if(cl.et.ents[i]->type==I_QUAD) cl.et.addammo(I_QUAD, d->quadmillis);
                 break;
             }
 

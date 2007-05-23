@@ -123,7 +123,7 @@ struct fpsserver : igameserver
         { 
             SV_INITS2C, 4, SV_INITC2S, 0, SV_POS, 0, SV_TEXT, 0, SV_SOUND, 2, SV_CDIS, 2,
             SV_DIED, 4, SV_DAMAGE, 7, SV_SHOT, 8, SV_FRAGS, 2, SV_GUNSELECT, 2,
-            SV_MAPCHANGE, 0, SV_MAPVOTE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 3, SV_DENIED, 2,
+            SV_MAPCHANGE, 0, SV_MAPVOTE, 0, SV_ITEMSPAWN, 2, SV_ITEMPICKUP, 2, SV_DENIED, 2,
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 1, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
@@ -165,7 +165,7 @@ struct fpsserver : igameserver
         return sec;
     }
         
-    bool pickup(int i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
+    bool pickup(int i, int sender)         // server side item pickup, acknowledge first client that gets it
     {
         if(!sents.inrange(i)) return false;
         clientinfo *ci = (clientinfo *)getinfo(sender);
@@ -674,7 +674,7 @@ struct fpsserver : igameserver
             case SV_ITEMPICKUP:
             {
                 int n = getint(p);
-                if(pickup(n, getint(p), sender)) QUEUE_MSG;
+                if(pickup(n, sender)) QUEUE_MSG;
                 break;
             }
 
