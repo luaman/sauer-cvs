@@ -270,18 +270,11 @@ struct entities : icliententities
 
     void checkquad(int time)
     {
-        loopi(cl.numdynents())
+        if(cl.player1->quadmillis && (cl.player1->quadmillis -= time)<0)
         {
-            fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && o->quadmillis && (o->quadmillis -= time)<0)
-            {
-                o->quadmillis = 0;
-                if(o==cl.player1)
-                {
-                    cl.playsoundc(S_PUPOUT);
-                    conoutf("\f2quad damage is over");
-                }
-            }
+            cl.player1->quadmillis = 0;
+            cl.playsoundc(S_PUPOUT);
+            conoutf("\f2quad damage is over");
         }
     }
 
