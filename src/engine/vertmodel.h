@@ -899,6 +899,12 @@ struct vertmodel : model
             dir.z = n.x*m[8] + n.y*m[9] + n.z*m[10];
         }
 
+        void calcplane(GLfloat *m, plane &p)
+        {
+            p.offset += p.x*m[12] + p.y*m[13] + p.z*m[14];
+            calcnormal(m, p);
+        }
+
         void calcvertex(GLfloat *m, vec &pos)
         {
             vec p(pos);
@@ -925,7 +931,7 @@ struct vertmodel : model
 #endif
         }
 
-        float calcpitchaxis(int anim, GLfloat pitch, vec &axis, vec &dir, vec &campos)
+        float calcpitchaxis(int anim, GLfloat pitch, vec &axis, vec &dir, vec &campos, plane &fogplane)
         {
             float angle = pitchscale*pitch + pitchoffset;
             if(pitchmin || pitchmax) angle = max(pitchmin, min(pitchmax, angle));
@@ -938,12 +944,13 @@ struct vertmodel : model
             {
                 dir.rotate(c, s, d);
                 campos.rotate(c, s, d); 
+                fogplane.rotate(c, s, d);
             }
 
             return angle;
         }
 
-        void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, const vec &dir, const vec &campos)
+        void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, const vec &dir, const vec &campos, const plane &fogplane)
         {
             animstate as;
             if(!calcanimstate(anim, varseed, speed, basetime, d, as)) return;
@@ -963,7 +970,8 @@ struct vertmodel : model
             else if(model->cullface && !enablecullface) { glEnable(GL_CULL_FACE); enablecullface = true; }
 
             vec raxis(axis), rdir(dir), rcampos(campos);
-            float pitchamount = calcpitchaxis(anim, pitch, raxis, rdir, rcampos);
+            plane rfogplane(fogplane);
+            float pitchamount = calcpitchaxis(anim, pitch, raxis, rdir, rcampos, rfogplane);
             if(pitchamount)
             {
                 glPushMatrix();
@@ -981,6 +989,7 @@ struct vertmodel : model
             {
                 if(renderpath!=R_FIXEDFUNCTION)
                 {
+                    if(refracting) setfogplane(rfogplane);
                     setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
                     setenvparamf("camera", SHPARAM_VERTEX, 1, rcampos.x, rcampos.y, rcampos.z, 1);
                 }
@@ -1001,29 +1010,23 @@ struct vertmodel : model
                 meshes->calctagmatrix(i, cur, doai ? &prev : NULL, ai_t, matrix);
 
                 vec naxis(raxis), ndir(rdir), ncampos(rcampos);
+                plane nfogplane(rfogplane);
                 calcnormal(matrix, naxis);
                 if(!(anim&ANIM_NOSKIN)) 
                 {
                     calcnormal(matrix, ndir);
                     calcvertex(matrix, ncampos);
+                    calcplane(matrix, nfogplane);
                 }
 
                 glPushMatrix();
                 glMultMatrixf(matrix);
-                if(renderpath!=R_FIXEDFUNCTION)
-                {
-                    if(anim&ANIM_ENVMAP) 
-                    {    
-                        glMatrixMode(GL_TEXTURE); 
-                        glPushMatrix(); 
-                        glMultMatrixf(matrix); 
-                        glMatrixMode(GL_MODELVIEW); 
-                    }
-                    if(refracting)
-                    {
-                        fogz += matrix[14];
-                        setfogplane(1, refracting - fogz);
-                    }
+                if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP) 
+                {    
+                    glMatrixMode(GL_TEXTURE); 
+                    glPushMatrix(); 
+                    glMultMatrixf(matrix); 
+                    glMatrixMode(GL_MODELVIEW); 
                 }
                 int nanim = anim, nbasetime = basetime;
                 if(links[i].anim>=0)
@@ -1031,16 +1034,12 @@ struct vertmodel : model
                     nanim = links[i].anim | (anim&ANIM_FLAGS);
                     nbasetime = links[i].basetime;
                 }
-                link->render(nanim, varseed, speed, nbasetime, pitch, naxis, d, ndir, ncampos);
-                if(renderpath!=R_FIXEDFUNCTION)
-                {
-                    if(refracting) fogz -= matrix[14];
-                    if(anim&ANIM_ENVMAP) 
-                    { 
-                        glMatrixMode(GL_TEXTURE); 
-                        glPopMatrix(); 
-                        glMatrixMode(GL_MODELVIEW); 
-                    }
+                link->render(nanim, varseed, speed, nbasetime, pitch, naxis, d, ndir, ncampos, nfogplane);
+                if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP) 
+                { 
+                    glMatrixMode(GL_TEXTURE); 
+                    glPopMatrix(); 
+                    glMatrixMode(GL_MODELVIEW); 
                 }
                 glPopMatrix();
             }
@@ -1135,7 +1134,7 @@ struct vertmodel : model
         center.add(radius);
     }
 
-    virtual void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos)
+    virtual void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)
     {
     }
 
@@ -1144,8 +1143,11 @@ struct vertmodel : model
         yaw += spin*lastmillis/1000.0f;
 
         vec rdir, campos;
+        plane fogplane;
         if(!(anim&ANIM_NOSKIN))
         {
+            fogplane = plane(0, 0, 1, o.z-refracting);
+
             lightcolor = color;
             if(renderpath==R_FIXEDFUNCTION && lightmodels) 
             {
@@ -1164,12 +1166,6 @@ struct vertmodel : model
             campos.sub(o);
             campos.rotate_around_z((-yaw-180.0f)*RAD);
 
-            if(renderpath!=R_FIXEDFUNCTION && refracting)
-            {
-                fogz = o.z + scale*translate.z;
-                setfogplane(scale, refracting - fogz); 
-            }
-           
             if(envmapped())
             {
                 anim |= ANIM_ENVMAP;
@@ -1218,7 +1214,7 @@ struct vertmodel : model
         glPushMatrix();
         glTranslatef(o.x, o.y, o.z);
         glRotatef(yaw+180, 0, 0, 1);
-        render(anim, varseed, speed, basetime, pitch, vec(0, -1, 0), d, a, rdir, campos);
+        render(anim, varseed, speed, basetime, pitch, vec(0, -1, 0), d, a, rdir, campos, fogplane);
         glPopMatrix();
         if(anim&ANIM_ENVMAP)
         {
@@ -1232,7 +1228,7 @@ struct vertmodel : model
 
     static bool enabletc, enablemtc, enablealphatest, enablealphablend, enableenvmap, enableglow, enablelighting, enablecullface;
     static vec lightcolor;
-    static float lastalphatest, fogz;
+    static float lastalphatest;
     static GLuint laststatbuf, lastenvmaptex, closestenvmaptex;
     static Texture *lasttex, *lastmasks;
 
@@ -1321,7 +1317,7 @@ struct vertmodel : model
 bool vertmodel::enabletc = false, vertmodel::enablemtc = false, vertmodel::enablealphatest = false, vertmodel::enablealphablend = false, 
      vertmodel::enableenvmap = false, vertmodel::enableglow = false, vertmodel::enablelighting = false, vertmodel::enablecullface = true;
 vec vertmodel::lightcolor;
-float vertmodel::lastalphatest = -1, vertmodel::fogz = 0;
+float vertmodel::lastalphatest = -1;
 GLuint vertmodel::laststatbuf = 0, vertmodel::lastenvmaptex = 0, vertmodel::closestenvmaptex = 0;
 Texture *vertmodel::lasttex = NULL, *vertmodel::lastmasks = NULL;
 

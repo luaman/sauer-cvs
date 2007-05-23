@@ -221,11 +221,11 @@ struct md2 : vertmodel
         }
     };
 
-    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos)
+    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)
     {
         if(!loaded) return;
 
-        parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
+        parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos, fogplane);
 
         if(a) for(int i = 0; a[i].name; i++)
         {
@@ -234,7 +234,7 @@ struct md2 : vertmodel
             m->setskin();
             part *p = m->parts[0];
             p->index = parts.length()+i;
-            p->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
+            p->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos, fogplane);
         }
     }
 

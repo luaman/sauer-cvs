@@ -414,17 +414,35 @@ void undoclipmatrix()
 VAR(reflectclip, 0, 6, 64);
 VARP(reflectmms, 0, 1, 1);
 
+void setfogplane(const plane &p, bool flush)
+{
+    static float fogselect[4] = {0, 0, 0, 0};
+    setenvparamfv("fogselect", SHPARAM_VERTEX, 8, fogselect);
+    setenvparamfv("fogplane", SHPARAM_VERTEX, 9, p.v);
+    if(flush)
+    {
+        flushenvparam(SHPARAM_VERTEX, 8);
+        flushenvparam(SHPARAM_VERTEX, 9);
+    }
+}
+
 void setfogplane(float scale, float z, bool flush)
 {
-    float fogplane[4] = {1, 0, 0, 0};
+    float fogselect[4] = {1, 1, 1, 1}, fogplane[4] = {0, 0, 0, 0};
     if(scale || z)
     {
-        fogplane[0] = 0;
+        loopk(4) fogselect[k] = 0;
+
         fogplane[2] = scale;
         fogplane[3] = -z;
     }  
+    setenvparamfv("fogselect", SHPARAM_VERTEX, 8, fogselect);
     setenvparamfv("fogplane", SHPARAM_VERTEX, 9, fogplane);
-    if(flush) flushenvparam(SHPARAM_VERTEX, 9);
+    if(flush)
+    {
+        flushenvparam(SHPARAM_VERTEX, 8);
+        flushenvparam(SHPARAM_VERTEX, 9);
+    }
 }
 
 extern void rendercaustics(float z, bool refract);
