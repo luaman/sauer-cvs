@@ -307,7 +307,7 @@ struct clientcom : iclientcom
                 vel.x = getint(p)/DVELF;
                 vel.y = getint(p)/DVELF;
                 vel.z = getint(p)/DVELF;
-                physstate = getint(p);
+                physstate = getuint(p);
                 gravity = vec(0, 0, 0);
                 if(physstate&0x20)
                 {
@@ -315,7 +315,7 @@ struct clientcom : iclientcom
                     gravity.y = getint(p)/DVELF;
                 }
                 if(physstate&0x10) gravity.z = getint(p)/DVELF;
-                f = getint(p);
+                f = getuint(p);
                 fpsent *d = cl.getclient(cn);
                 if(!d) continue;
                 d->o = o;
@@ -336,7 +336,7 @@ struct clientcom : iclientcom
                 if(f&1) { d->armourtype = A_GREEN; d->armour = 1; }
                 else if(f&2) { d->armourtype = A_YELLOW; d->armour = 1; }
                 else { d->armourtype = A_BLUE; d->armour = 0; }
-                if(f&4) d->quadmillis = 1;
+                d->quadmillis = f&4 ? 1 : 0;
                 updatephysstate(d);
                 updatepos(d);
                 break;

@@ -542,10 +542,10 @@ struct fpsserver : igameserver
                 if(!notgotitems && !notgotbases) ci->o = newpos;
                 getuint(p);
                 loopi(5) getint(p);
-                int physstate = getint(p);
+                int physstate = getuint(p);
                 if(physstate&0x20) loopi(2) getint(p);
                 if(physstate&0x10) getint(p);
-                int state = (getint(p)>>4) & 0x7;
+                int state = (getuint(p)>>4) & 0x7;
                 if(ci->spectator && state!=CS_SPECTATOR) break;
                 if(m_capture)
                 {
