@@ -701,12 +701,16 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, const ch
     {
         a[ai].name = vwepname;
         a[ai].type = MDL_ATTACH_VWEP;
+        a[ai].anim = ANIM_VWEP|ANIM_LOOP;
+        a[ai].basetime = 0;
         ai++;
     }
     if(pupname)
     {
         a[ai].name = pupname;
         a[ai].type = MDL_ATTACH_POWERUP;
+        a[ai].anim = ANIM_POWERUP|ANIM_LOOP;
+        a[ai].basetime = 0;
         ai++;
     }
     vec color, dir;
