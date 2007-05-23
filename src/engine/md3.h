@@ -225,8 +225,7 @@ struct md3 : vertmodel
             if(tex==crosshair) conoutf("could not load model skin for %s", name1);
             delete[] pname;
         }
-        scale /= 4.0f;
-        translate.y = -translate.y;
+        loopv(parts) parts[i]->meshes = parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
         return loaded = true;
     }
 };

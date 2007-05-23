@@ -52,7 +52,7 @@ struct vertmodel : model
         
         skin() : owner(0), tex(crosshair), masks(crosshair), override(0), envmapmin(0), envmapmax(0) {}
 
-        bool multitextured() { return renderpath==R_FIXEDFUNCTION && masks!=crosshair; }
+        bool multitextured() { return enableglow; }
         bool envmapped() { return hasCM && envmapmax>0 && envmapmodels && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3); }
         bool normals() { return renderpath!=R_FIXEDFUNCTION || lightmodels || envmapped(); }
 
@@ -271,6 +271,22 @@ struct vertmodel : model
             DELETEA(dynbuf);
         }
 
+        mesh *copy()
+        {
+            mesh &m = *new mesh;
+            m.name = newstring(name);
+            m.numverts = numverts;
+            m.verts = new vert[numverts*group->numframes];
+            memcpy(m.verts, verts, numverts*group->numframes*sizeof(vert));
+            m.numtcverts = numtcverts;
+            m.tcverts = new tcvert[numtcverts];
+            memcpy(m.tcverts, tcverts, numtcverts*sizeof(tcvert));
+            m.numtris = numtris;
+            m.tris = new tri[numtris];
+            memcpy(m.tris, tris, numtris*sizeof(tri));
+            return &m;
+        }
+
         void gendynbuf()
         {
             vector<ushort> idxs;
@@ -416,6 +432,21 @@ struct vertmodel : model
             bool isstat = as.frame==0 && as.range==1;
             if(isstat && group->statbuf)
             {
+                if(s.multitextured())
+                {
+                    if(!enablemtc)
+                    {
+                        size_t vertsize = group->statnorms ? sizeof(vvert) : sizeof(vvertff);
+                        vvert *vverts = 0;
+                        glClientActiveTexture_(GL_TEXTURE1_ARB);
+                        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                        glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
+                        glClientActiveTexture_(GL_TEXTURE0_ARB);
+                        enablemtc = true;
+                    }
+                }
+                else if(enablemtc) disablemtc();
+
                 glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, (void *)(statoffset*sizeof(ushort)));
 
                 xtravertsva += numtcverts;
@@ -479,14 +510,18 @@ struct vertmodel : model
 
     struct meshgroup
     {
+        meshgroup *next;
+        int shared;
         char *name;
         vector<mesh *> meshes;
         tag *tags;
         int numtags, numframes;
         GLuint statbuf, statidx;
         bool statnorms;
+        float scale;
+        vec translate;
 
-        meshgroup() : name(NULL), tags(NULL), numtags(0), numframes(0), statbuf(0), statidx(0) {}
+        meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), statbuf(0), statidx(0), scale(1), translate(0, 0, 0) {}
         virtual ~meshgroup()
         {
             DELETEA(name);
@@ -494,6 +529,7 @@ struct vertmodel : model
             DELETEA(tags);
             if(statbuf) glDeleteBuffers_(1, &statbuf);
             if(statidx) glDeleteBuffers_(1, &statidx);
+            if(next) delete next;
         }
 
         int findtag(const char *name)
@@ -521,6 +557,45 @@ struct vertmodel : model
         bool hasframe(int i) { return i>=0 && i<numframes; }
         bool hasframes(int i, int n) { return i>=0 && i+n<=numframes; }
         int clipframes(int i, int n) { return min(n, numframes - i); }
+
+        meshgroup *copy()
+        {
+            meshgroup &group = *new meshgroup;
+            group.name = newstring(name);
+            loopv(meshes) group.meshes.add(meshes[i]->copy())->group = &group;
+            group.numtags = numtags;
+            group.tags = new tag[numframes*numtags];
+            memcpy(group.tags, tags, numframes*numtags*sizeof(tag));
+            loopi(numframes*numtags) if(group.tags[i].name) group.tags[i].name = newstring(group.tags[i].name);
+            group.numframes = numframes;
+            group.scale = scale;
+            group.translate = translate;
+            return &group;
+        }
+           
+        meshgroup *scaleverts(const float nscale, const vec &ntranslate)
+        {
+            if(nscale==scale && ntranslate==translate) { shared++; return this; }
+            else if(next || shared)
+            {
+                if(!next) next = copy();
+                return next->scaleverts(nscale, ntranslate);
+            }
+            float scalediff = nscale/scale;
+            vec transdiff(ntranslate);
+            transdiff.sub(translate);
+            transdiff.mul(scale);
+            loopv(meshes)
+            {
+                mesh &m = *meshes[i];
+                loopj(numframes*m.numverts) m.verts[j].pos.add(transdiff).mul(scalediff);
+            }
+            loopi(numframes*numtags) tags[i].pos.add(transdiff).mul(scalediff);
+            scale = nscale;
+            translate = ntranslate;
+            shared++;
+            return this;
+        }
 
         void genvbo(bool norms)
         {
@@ -617,14 +692,6 @@ struct vertmodel : model
                     enabletc = true;
                     enablemtc = false;
                 }
-                if(enableglow && !enablemtc)
-                {
-                    glClientActiveTexture_(GL_TEXTURE1_ARB);
-                    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                    glTexCoordPointer(2, GL_FLOAT, vertsize, &vverts->u);
-                    glClientActiveTexture_(GL_TEXTURE0_ARB);
-                    enablemtc = true;
-                }
             }
             laststatbuf = statbuf;
         }
@@ -707,7 +774,7 @@ struct vertmodel : model
 
         void calcbb(int frame, vec &bbmin, vec &bbmax)
         {
-            float m[12] = { model->scale, 0, 0, 0, model->scale, 0, 0, 0, model->scale, model->scale*model->translate.x, model->scale*model->translate.y, model->scale*model->translate.z };
+            float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
             calcbb(frame, bbmin, bbmax, m);
         }
 
@@ -724,7 +791,7 @@ struct vertmodel : model
 
         void gentris(int frame, vector<SphereTree::tri> &tris)
         {
-            float m[12] = { model->scale, 0, 0, 0, model->scale, 0, 0, 0, model->scale, model->scale*model->translate.x, model->scale*model->translate.y, model->scale*model->translate.z };
+            float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
             gentris(frame, tris, m);
         }
 
@@ -932,12 +999,6 @@ struct vertmodel : model
 
                 GLfloat matrix[16];
                 meshes->calctagmatrix(i, cur, doai ? &prev : NULL, ai_t, matrix);
-                if(link->model!=model)
-                {
-                    float scalediff = link->model->scale/model->scale;
-                    loopj(12) matrix[j] *= scalediff;
-                    loopj(4) matrix[12+j] += matrix[j]*link->model->translate.x + matrix[4+j]*link->model->translate.y + matrix[8+j]*link->model->translate.z;
-                }
 
                 vec naxis(raxis), ndir(rdir), ncampos(rcampos);
                 calcnormal(matrix, naxis);
@@ -960,8 +1021,8 @@ struct vertmodel : model
                     }
                     if(refracting)
                     {
-                        fogz += matrix[14]*model->scale;
-                        setfogplane(link->model->scale, refracting - fogz);
+                        fogz += matrix[14];
+                        setfogplane(1, refracting - fogz);
                     }
                 }
                 int nanim = anim, nbasetime = basetime;
@@ -973,7 +1034,7 @@ struct vertmodel : model
                 link->render(nanim, varseed, speed, nbasetime, pitch, naxis, d, ndir, ncampos);
                 if(renderpath!=R_FIXEDFUNCTION)
                 {
-                    if(refracting) fogz -= matrix[14]*model->scale;
+                    if(refracting) fogz -= matrix[14];
                     if(anim&ANIM_ENVMAP) 
                     { 
                         glMatrixMode(GL_TEXTURE); 
@@ -1096,7 +1157,6 @@ struct vertmodel : model
             }
             else glColor3fv(color.v);
             
-
             rdir = dir;
             rdir.rotate_around_z((-yaw-180.0f)*RAD);
 
@@ -1151,8 +1211,6 @@ struct vertmodel : model
                 glLoadIdentity();
                 glTranslatef(o.x, o.y, o.z);
                 glRotatef(yaw+180, 0, 0, 1);
-                glScalef(scale, scale, scale);
-                glTranslatef(translate.x, translate.y, translate.z);
             }
             glMatrixMode(GL_MODELVIEW);
             if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE0_ARB);
@@ -1160,8 +1218,6 @@ struct vertmodel : model
         glPushMatrix();
         glTranslatef(o.x, o.y, o.z);
         glRotatef(yaw+180, 0, 0, 1);
-        glScalef(scale, scale, scale);
-        glTranslatef(translate.x, translate.y, translate.z);
         render(anim, varseed, speed, basetime, pitch, vec(0, -1, 0), d, a, rdir, campos);
         glPopMatrix();
         if(anim&ANIM_ENVMAP)
@@ -1182,7 +1238,7 @@ struct vertmodel : model
 
     void startrender()
     {
-        enabletc = enablemtc = enablealphatest = enablealphablend = enableenvmap = enableglow = false;
+        enabletc = enablemtc = enablealphatest = enablealphablend = enableenvmap = enableglow = enablelighting = false;
         enablecullface = true;
         lastalphatest = -1;
         laststatbuf = lastenvmaptex = 0;
