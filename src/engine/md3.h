@@ -47,11 +47,10 @@ struct md3 : vertmodel
 
     int type() { return MDL_MD3; }
 
-    struct md3part : part
+    struct md3meshgroup : meshgroup
     {
         bool load(char *path)
         {
-            if(loaded) return true;
             FILE *f = fopen(path, "rb");
             if(!f) return false;
             md3header header;
@@ -64,6 +63,8 @@ struct md3 : vertmodel
                 conoutf("md3: corrupted header"); 
                 return false; 
             }
+
+            name = newstring(path);
 
             numframes = header.numframes;
             numtags = header.numtags;        
@@ -85,14 +86,13 @@ struct md3 : vertmodel
                     // then restore it
                     loopj(3) tags[i].transform[j][1] *= -1;
                 }
-                links = new linkedpart[numtags];
             }
 
             int mesh_offset = header.ofs_meshes;
             loopi(header.nummeshes)
             {
                 mesh &m = *meshes.add(new mesh);
-                m.owner = this;
+                m.group = this;
                 md3meshheader mheader;
                 fseek(f, mesh_offset, SEEK_SET);
                 fread(&mheader, sizeof(md3meshheader), 1, f);
@@ -145,7 +145,7 @@ struct md3 : vertmodel
             }
 
             fclose(f);
-            return loaded=true;
+            return true;
         }
     };
     
@@ -157,7 +157,7 @@ struct md3 : vertmodel
         {
             md3 *m = (md3 *)a[i].m;
             if(!m) continue;
-            md3part *p = (md3part *)m->parts[0];
+            part *p = m->parts[0];
             switch(a[i].type)
             {
                 case MDL_ATTACH_VWEP: if(link(p, "tag_weapon", a[i].anim, a[i].basetime)) p->index = parts.length()+i; break;
@@ -177,6 +177,18 @@ struct md3 : vertmodel
         }
     }
 
+    static meshgroup *loadmeshes(char *name)
+    {
+        static hashtable<char *, vertmodel::meshgroup *> md3s;
+        if(!md3s.access(name))
+        {
+            md3meshgroup *group = new md3meshgroup();
+            if(!group->load(name)) { delete group; return NULL; }
+            md3s[group->name] = group; 
+        }
+        return md3s[name];
+    }
+
     bool load()
     {
         if(loaded) return true;
@@ -190,32 +202,30 @@ struct md3 : vertmodel
         {
             delete[] pname;
             loadingmd3 = NULL;
-            loopv(parts) if(!parts[i]->loaded) return false;
+            loopv(parts) if(!parts[i]->meshes) return false;
         }
         else // md3 without configuration, try default tris and skin
         {
             loadingmd3 = NULL;
-            md3part &mdl = *new md3part;
+            part &mdl = *new part;
             parts.add(&mdl);
             mdl.model = this;
             mdl.index = 0; 
             s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
-            if(!mdl.load(path(name1)))
+            mdl.meshes = loadmeshes(path(name1));
+            if(!mdl.meshes)
             {
-                s_sprintf(name1)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
-                if(!mdl.load(path(name1))) { delete[] pname; return false; }
+                s_sprintfd(name2)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
+                mdl.meshes = loadmeshes(path(name2));
+                if(!mdl.meshes) { delete[] pname; return false; }
             }
-            Texture *skin, *masks;
-            loadskin(loadname, pname, skin, masks);
-            loopv(mdl.meshes)
-            {
-                mdl.meshes[i]->skin  = skin;
-                mdl.meshes[i]->masks = masks;
-            }
-            if(skin==crosshair) conoutf("could not load model skin for %s", name1);
+            Texture *tex, *masks;
+            loadskin(loadname, pname, tex, masks);
+            mdl.initskins(tex, masks);
+            if(tex==crosshair) conoutf("could not load model skin for %s", name1);
             delete[] pname;
         }
-        loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
+        loopv(parts) parts[i]->meshes->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
         return loaded = true;
     }
 };
@@ -224,12 +234,14 @@ void md3load(char *model)
 {   
     if(!loadingmd3) { conoutf("not loading an md3"); return; }
     s_sprintfd(filename)("%s/%s", md3dir, model);
-    md3::md3part &mdl = *new md3::md3part;
+    md3::part &mdl = *new md3::part;
     loadingmd3->parts.add(&mdl);
     mdl.model = loadingmd3;
     mdl.index = loadingmd3->parts.length()-1;
     if(mdl.index) mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
-    if(!mdl.load(path(filename))) conoutf("could not load %s", filename); // ignore failure
+    mdl.meshes = md3::loadmeshes(path(filename));
+    if(!mdl.meshes) conoutf("could not load %s", filename); // ignore failure
+    else mdl.initskins();
 }  
 
 void md3pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pitchmax)
@@ -251,24 +263,26 @@ void md3pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pit
     }
 }
 
-void md3skin(char *objname, char *skin, char *masks, float *envmapmax, float *envmapmin)
+void md3skin(char *objname, char *tex, char *masks, float *envmapmax, float *envmapmin)
 {   
-    if(!objname || !skin) return;
+    if(!objname || !tex) return;
     if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
     md3::part &mdl = *loadingmd3->parts.last();
-    loopv(mdl.meshes)
+    if(!mdl.meshes) return;
+    loopv(mdl.meshes->meshes)
     {   
-        md3::mesh &m = *mdl.meshes[i];
+        md3::mesh &m = *mdl.meshes->meshes[i];
         if(!strcmp(objname, "*") || !strcmp(m.name, objname))
         {
-            s_sprintfd(spath)("%s/%s", md3dir, skin);
-            m.skin = textureload(spath, false, true, false);
+            md3::skin &s = mdl.skins[i];
+            s_sprintfd(spath)("%s/%s", md3dir, tex);
+            s.tex = textureload(spath, false, true, false);
             if(*masks)
             {
                 s_sprintfd(mpath)("%s%s/%s", renderpath==R_FIXEDFUNCTION ? "<ffmask:25>" : "", md3dir, masks);
-                m.masks = textureload(mpath, false, true, false);
-                m.envmapmax = *envmapmax;
-                m.envmapmin = *envmapmin;
+                s.masks = textureload(mpath, false, true, false);
+                s.envmapmax = *envmapmax;
+                s.envmapmin = *envmapmin;
             }
         }
     }

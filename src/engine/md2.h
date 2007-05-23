@@ -77,7 +77,7 @@ struct md2 : vertmodel
 
     int type() { return MDL_MD2; }
 
-    struct md2part : part
+    struct md2meshgroup : meshgroup
     {
         void gentcverts(int *glcommands, vector<tcvert> &tcverts, vector<tri> &tris)
         {
@@ -124,7 +124,6 @@ struct md2 : vertmodel
         
         bool load(char *filename)
         {
-            if(loaded) return true;
             FILE *file = fopen(filename, "rb");
             if(!file) return false;
 
@@ -139,11 +138,13 @@ struct md2 : vertmodel
                 fclose(file);
                 return false;
             }
-           
+          
+            name = newstring(filename);
+
             numframes = header.numframes;
 
             mesh &m = *new mesh;
-            m.owner = this;
+            m.group = this;
             meshes.add(&m);
 
             int *glcommands = new int[header.numglcommands];
@@ -191,9 +192,12 @@ struct md2 : vertmodel
                  
             fclose(file);
 
-            return loaded = true;
+            return true;
         }
+    };
 
+    struct md2part : part
+    {
         void getdefaultanim(animstate &as, int anim, int varseed, dynent *d)
         {
             //                      0              3              6   7   8   9   10        12  13  14  15  16  17
@@ -228,34 +232,44 @@ struct md2 : vertmodel
             md2 *m = (md2 *)a[i].m;
             if(!m) continue;
             m->setskin();
-            md2part *p = (md2part *)m->parts[0];
+            part *p = m->parts[0];
             p->index = parts.length()+i;
             p->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos);
         }
     }
 
+    static meshgroup *loadmeshes(char *name)
+    {
+        static hashtable<char *, vertmodel::meshgroup *> md2s;
+        if(!md2s.access(name))
+        {
+            md2meshgroup *group = new md2meshgroup();
+            if(!group->load(name)) { delete group; return NULL; }
+            md2s[group->name] = group;
+        }
+        return md2s[name];
+    }
+
     bool load()
     { 
         if(loaded) return true;
-        md2part &mdl = *new md2part;
+        part &mdl = *new md2part;
         parts.add(&mdl);
         mdl.model = this;
         mdl.index = 0;
         char *pname = parentdir(loadname);
         s_sprintfd(name1)("packages/models/%s/tris.md2", loadname);
-        if(!mdl.load(path(name1)))
+        mdl.meshes = loadmeshes(path(name1));
+        if(!mdl.meshes)
         {
-            s_sprintf(name1)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
-            if(!mdl.load(path(name1))) { delete[] pname; return false; }
+            s_sprintfd(name2)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
+            mdl.meshes = loadmeshes(path(name2));
+            if(!mdl.meshes) { delete[] pname; return false; }
         }
-        Texture *skin, *masks;
-        loadskin(loadname, pname, skin, masks);
-        loopv(mdl.meshes)
-        {
-            mdl.meshes[i]->skin  = skin;
-            mdl.meshes[i]->masks = masks;
-        }
-        if(skin==crosshair) conoutf("could not load model skin for %s", name1);
+        Texture *tex, *masks;
+        loadskin(loadname, pname, tex, masks);
+        mdl.initskins(tex, masks);
+        if(tex==crosshair) conoutf("could not load model skin for %s", name1);
         loadingmd2 = this;
         s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
         if(!execfile(name3))
@@ -265,7 +279,7 @@ struct md2 : vertmodel
         }
         delete[] pname;
         loadingmd2 = 0;
-        loopv(parts) parts[i]->scaleverts(scale/4.0f, vec(translate.x, -translate.y, translate.z));
+        loopv(parts) parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
         return loaded = true;
     }
 };
