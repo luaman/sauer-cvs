@@ -932,6 +932,12 @@ struct vertmodel : model
 
                 GLfloat matrix[16];
                 meshes->calctagmatrix(i, cur, doai ? &prev : NULL, ai_t, matrix);
+                if(link->model!=model)
+                {
+                    float scalediff = link->model->scale/model->scale;
+                    loopj(12) matrix[j] *= scalediff;
+                    loopj(4) matrix[12+j] += matrix[j]*link->model->translate.x + matrix[4+j]*link->model->translate.y + matrix[8+j]*link->model->translate.z;
+                }
 
                 vec naxis(raxis), ndir(rdir), ncampos(rcampos);
                 calcnormal(matrix, naxis);
@@ -943,12 +949,6 @@ struct vertmodel : model
 
                 glPushMatrix();
                 glMultMatrixf(matrix);
-                if(link->model!=model)
-                {
-                    float scalediff = link->model->scale/model->scale;
-                    glScalef(scalediff, scalediff, scalediff);
-                    glTranslatef(link->model->translate.x, link->model->translate.y, link->model->translate.z);
-                }
                 if(renderpath!=R_FIXEDFUNCTION)
                 {
                     if(anim&ANIM_ENVMAP) 
@@ -956,12 +956,6 @@ struct vertmodel : model
                         glMatrixMode(GL_TEXTURE); 
                         glPushMatrix(); 
                         glMultMatrixf(matrix); 
-                        if(link->model!=model)
-                        {
-                            float scalediff = link->model->scale/model->scale;
-                            glScalef(scalediff, scalediff, scalediff);
-                            glTranslatef(link->model->translate.x, link->model->translate.y, link->model->translate.z);
-                        }
                         glMatrixMode(GL_MODELVIEW); 
                     }
                     if(refracting)
