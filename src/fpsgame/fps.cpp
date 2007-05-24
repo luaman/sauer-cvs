@@ -70,6 +70,7 @@ struct fpsclient : igameclient
         if(player1->state!=CS_ALIVE) return;
         if(lastmillis-player1->lasttaunt<1000) return;
         player1->lasttaunt = lastmillis;
+        cc.addmsg(SV_TAUNT, "r");
     }
 
     char *getclientmap() { return clientmap; }

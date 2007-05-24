@@ -609,6 +609,13 @@ struct clientcom : iclientcom
                 break;
             }
 
+            case SV_TAUNT:
+            {
+                if(!d) return;
+                d->lasttaunt = cl.lastmillis;
+                break;
+            }
+
             case SV_RESUME:
             {
                 int cn = getint(p);
