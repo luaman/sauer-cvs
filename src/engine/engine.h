@@ -50,6 +50,9 @@ extern PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffers_;
 extern PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2D_;
 extern PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbuffer_;
 
+// GL_EXT_draw_range_elements
+extern PFNGLDRAWRANGEELEMENTSEXTPROC       glDrawRangeElements_;
+
 #define FONTH 64
 #define MINRESW 640
 #define MINRESH 480
@@ -93,7 +96,7 @@ extern ushort closestenvmap(int orient, int x, int y, int z, int size);
 extern GLuint lookupenvmap(ushort emid);
 
 // rendergl
-extern bool hasVBO, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasTE, hasMT, hasD3, hasstencil;
+extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasCM, hasTC, hasTE, hasMT, hasD3, hasstencil;
 
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();

@@ -447,7 +447,9 @@ struct vertmodel : model
                 }
                 else if(enablemtc) disablemtc();
 
-                glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, (void *)(statoffset*sizeof(ushort)));
+                if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, group->statlen-1, statlen, GL_UNSIGNED_SHORT, (void *)(statoffset*sizeof(ushort)));
+                else glDrawElements(GL_TRIANGLES, statlen, GL_UNSIGNED_SHORT, (void *)(statoffset*sizeof(ushort)));
+                glde++;
 
                 xtravertsva += numtcverts;
                 return;
@@ -519,6 +521,7 @@ struct vertmodel : model
         float scale;
         vec translate;
         GLuint statbuf, statidx;
+        int statlen;
         bool statnorms;
 
         meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), scale(1), translate(0, 0, 0), statbuf(0), statidx(0) {}
@@ -617,6 +620,8 @@ struct vertmodel : model
             vector<vvert> vverts;
 
             loopv(meshes) meshes[i]->genvbo(idxs, vverts, norms);
+
+            statlen = vverts.length();
 
             glGenBuffers_(1, &statbuf);
             glBindBuffer_(GL_ARRAY_BUFFER_ARB, statbuf);

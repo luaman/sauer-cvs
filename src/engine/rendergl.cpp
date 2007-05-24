@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
+bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -63,6 +63,9 @@ PFNGLLINKPROGRAMARBPROC               glLinkProgram_              = NULL;
 PFNGLGETUNIFORMLOCATIONARBPROC        glGetUniformLocation_       = NULL;
 PFNGLUNIFORM4FVARBPROC                glUniform4fv_               = NULL;
 PFNGLUNIFORM1IARBPROC                 glUniform1i_                = NULL;
+
+// GL_EXT_draw_range_elements
+PFNGLDRAWRANGEELEMENTSEXTPROC         glDrawRangeElements_        = NULL;
 
 void *getprocaddress(const char *name)
 {
@@ -146,6 +149,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glDeleteBuffers_ = (PFNGLDELETEBUFFERSARBPROC)getprocaddress("glDeleteBuffersARB");
         hasVBO = true;
         //conoutf("Using GL_ARB_vertex_buffer_object extension.");
+    }
+
+    if(strstr(exts, "GL_EXT_draw_range_elements"))
+    {
+        glDrawRangeElements_ = (PFNGLDRAWRANGEELEMENTSEXTPROC)getprocaddress("glDrawRangeElementsEXT");
+        hasDRE = true;
     }
 
     if(strstr(vendor, "ATI"))

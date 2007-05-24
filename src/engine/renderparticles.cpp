@@ -292,12 +292,16 @@ void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
             if(!reflecting)
             {
                 glCullFace(GL_BACK);
-                glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+                if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, heminumverts-1, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+                else glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+                glde++;
                 glCullFace(GL_FRONT);
             }
             glScalef(1, 1, -1);
         }
-        glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+        if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, heminumverts-1, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+        else glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+        glde++;
         if(i) glDepthFunc(GL_LESS);
     }
 }

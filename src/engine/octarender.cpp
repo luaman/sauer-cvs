@@ -385,14 +385,8 @@ struct lodcollect
 
             if(skybuf)
             {
-#if 1
                 if(offsetindices) loopi(lod.sky+lod.explicitsky) skybuf[i] += offsetindices;
                 lod.skybuf = (ushort *)addvbo(va, &lod==&va->l0 ? VBO_SKYBUF_L0 : VBO_SKYBUF_L1, skybuf, (lod.sky+lod.explicitsky)*sizeof(ushort));
-#else
-                glGenBuffers_(1, &lod.skybufGL);
-                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.skybufGL);
-                glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, (lod.sky+lod.explicitsky)*sizeof(ushort), skybuf, GL_STATIC_DRAW_ARB);
-#endif
                 delete[] skybuf;
             }
             else lod.skybufGL = 0;
@@ -408,25 +402,27 @@ struct lodcollect
             {
                 const sortkey &k = texs[i];
                 const sortval &t = indices[k];
-                lod.eslist[i].texture = k.tex;
-                lod.eslist[i].lmid = t.unlit>0 ? t.unlit : k.lmid;
-                lod.eslist[i].envmap = k.envmap;
-                loopl(3) if((lod.eslist[i].length[l] = t.dims[l].length()))
+                elementset &e = lod.eslist[i];
+                e.texture = k.tex;
+                e.lmid = t.unlit>0 ? t.unlit : k.lmid;
+                e.envmap = k.envmap;
+                loopl(3) if((e.length[l] = t.dims[l].length()))
                 {
                     memcpy(curbuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
+                    e.minvert[l] = USHRT_MAX;
+                    e.maxvert[l] = 0;
+                    loopvj(t.dims[l])
+                    {
+                        curbuf[j] += offsetindices;
+                        e.minvert[l] = min(e.minvert[j], curbuf[j]);
+                        e.maxvert[l] = max(e.maxvert[j], curbuf[j]);
+                    }
                     curbuf += t.dims[l].length();
                 }
             }
             if(hasVBO)
             {
-#if 1
-                if(offsetindices) loopi(3*curtris) ebuf[i] += offsetindices;
                 lod.ebuf = (ushort *)addvbo(va, &lod==&va->l0 ? VBO_EBUF_L0 : VBO_EBUF_L1, ebuf, 3*curtris*sizeof(ushort));
-#else
-                glGenBuffers_(1, &lod.ebufGL);
-                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
-                glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, 3*curtris*sizeof(ushort), ebuf, GL_STATIC_DRAW_ARB);
-#endif
                 delete[] ebuf;
             }
         }
@@ -640,6 +636,8 @@ vtxarray *newva(int x, int y, int z, int size)
     vtxarray *va = (vtxarray *)new uchar[allocsize];
     va->vbufGL = 0;
     va->vbuf = 0; // Offset in VBO, or just null
+    va->minvert = 0;
+    va->maxvert = verts.length()-1;
     if(hasVBO && verts.length())
     {
         void *vbuf;
@@ -654,6 +652,8 @@ vtxarray *newva(int x, int y, int z, int size)
         int offset = int(size_t(vbuf)) / VTXSIZE;
         l0.offsetindices = offset;
         l1.offsetindices = offset;
+        va->minvert += offset;
+        va->maxvert += offset;
     }
     char *buf = l1.setup(va, va->l1, l0.setup(va, va->l0, (char *)(va+1)));
     if(!hasVBO)

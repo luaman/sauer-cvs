@@ -3,6 +3,14 @@
 #include "pch.h"
 #include "engine.h"
 
+void drawvatris(vtxarray *va, GLsizei numindices, const GLvoid *indices, ushort minvert = 0, ushort maxvert = 0)
+{
+    if(!minvert && !maxvert) { minvert = va->minvert; maxvert = va->maxvert; }
+    if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, minvert, maxvert, numindices, GL_UNSIGNED_SHORT, indices);
+    else glDrawElements(GL_TRIANGLES, numindices, GL_UNSIGNED_SHORT, indices);
+    glde++;
+}
+
 ///////// view frustrum culling ///////////////////////
 
 plane vfcP[5];  // perpindictular vectors to view frustrum bounding planes
@@ -513,8 +521,7 @@ void renderoutline()
         }
         if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
 
-        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
-        glde++;
+        drawvatris(va, 3*lod.tris, lod.ebuf);
         xtravertsva += va->verts;
     }
 
@@ -631,8 +638,7 @@ void rendercaustics(float z, bool refract)
         }
         if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
 
-        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
-        glde++;
+        drawvatris(va, 3*lod.tris, lod.ebuf);
         xtravertsva += va->verts;
     }
 
@@ -761,7 +767,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         if(renderpath!=R_GLSLANG || !apple_glsldepth_bug) 
         {
             nocolorshader->set();
-            glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
+            drawvatris(va, 3*lod.tris, lod.ebuf);
         }
         else
         {
@@ -775,7 +781,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 if(lastslot && (slot.shader->type&SHADER_GLSLANG) != (lastslot->shader->type&SHADER_GLSLANG) && offset > lastdraw)
                 {
                     (lastslot->shader->type&SHADER_GLSLANG ? nocolorglslshader : nocolorshader)->set();
-                    glDrawElements(GL_TRIANGLES, offset - lastdraw, GL_UNSIGNED_SHORT, lod.ebuf + lastdraw);
+                    drawvatris(va, offset-lastdraw, lod.ebuf+lastdraw);
                     lastdraw = offset;
                 }
                 lastslot = &slot;
@@ -784,10 +790,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             if(offset > lastdraw)
             {
                 (lastslot->shader->type&SHADER_GLSLANG ? nocolorglslshader : nocolorshader)->set();
-                glDrawElements(GL_TRIANGLES, offset - lastdraw, GL_UNSIGNED_SHORT, lod.ebuf + lastdraw);
+                drawvatris(va, offset-lastdraw, lod.ebuf+lastdraw);
             }
         }
-        glde++;
         xtravertsva += va->verts;
         return;
     }
@@ -825,8 +830,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             }
         }
 
-        glDrawElements(GL_TRIANGLES, 3*lod.tris, GL_UNSIGNED_SHORT, lod.ebuf);
-        glde++;
+        drawvatris(va, 3*lod.tris, lod.ebuf);
         vtris += lod.tris;
         vverts += va->verts;
         return;
@@ -1020,9 +1024,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);
             }
 
-            glDrawElements(GL_TRIANGLES, lod.eslist[i].length[l], GL_UNSIGNED_SHORT, ebuf);
+            drawvatris(va, lod.eslist[i].length[l], ebuf, lod.eslist[i].minvert[l], lod.eslist[i].maxvert[l]);
             ebuf += lod.eslist[i].length[l];  // Advance to next array.
-            glde++;
         }
     }
 
@@ -1421,8 +1424,7 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
     }
     if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
 
-    glDrawElements(GL_TRIANGLES, explicitonly  ? lod.explicitsky : lod.sky+lod.explicitsky, GL_UNSIGNED_SHORT, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
-    glde++;
+    drawvatris(va, explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky, explicitonly ? lod.skybuf+lod.sky : lod.skybuf);
 
     if(!explicitonly) xtraverts += lod.sky/3;
     xtraverts += lod.explicitsky/3;

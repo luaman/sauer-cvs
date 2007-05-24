@@ -4,6 +4,7 @@ struct elementset
 {
     ushort texture, lmid, envmap;
     ushort length[3];
+    ushort minvert[3], maxvert[3];
 };
 
 enum
@@ -135,11 +136,12 @@ struct vtxarray
     vector<vtxarray *> *children;
     lodlevel l0, l1;
     vertex *vbuf;           // vertex buffer
+    ushort minvert, maxvert; // DRE info
     vtxarray *next, *rnext; // linked list of visible VOBs
     int allocsize;          // size of allocated memory for this va
     int verts, explicitsky, curlod, distance;
     double skyarea;
-    GLuint vbufGL;            // VBO buffer ID
+    GLuint vbufGL;          // VBO buffer ID
     int x, y, z, size;      // location and size of cube.
     ivec min, max;          // BB
     uchar curvfc, occluded;
