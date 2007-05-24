@@ -136,7 +136,7 @@ struct vtxarray
     vector<vtxarray *> *children;
     lodlevel l0, l1;
     vertex *vbuf;           // vertex buffer
-    ushort minvert, maxvert; // DRE info
+    int minvert, maxvert;   // DRE info
     vtxarray *next, *rnext; // linked list of visible VOBs
     int allocsize;          // size of allocated memory for this va
     int verts, explicitsky, curlod, distance;
