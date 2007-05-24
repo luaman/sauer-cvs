@@ -414,8 +414,8 @@ struct lodcollect
                     loopvj(t.dims[l])
                     {
                         curbuf[j] += offsetindices;
-                        e.minvert[l] = min(e.minvert[j], curbuf[j]);
-                        e.maxvert[l] = max(e.maxvert[j], curbuf[j]);
+                        e.minvert[l] = min(e.minvert[l], curbuf[j]);
+                        e.maxvert[l] = max(e.maxvert[l], curbuf[j]);
                     }
                     curbuf += t.dims[l].length();
                 }
