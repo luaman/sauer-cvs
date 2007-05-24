@@ -265,7 +265,7 @@ struct entities : icliententities
 
     void checkquad(int time)
     {
-        if(cl.player1->quadmillis && (cl.player1->quadmillis -= time)<0)
+        if(cl.player1->quadmillis && (cl.player1->quadmillis -= time)<=0)
         {
             cl.player1->quadmillis = 0;
             cl.playsoundc(S_PUPOUT);
