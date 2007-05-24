@@ -325,7 +325,7 @@ void cleanupexplosion()
 }
 
 
-#define MAXPARTYPES 31
+#define MAXPARTYPES 28
 
 struct particle
 {   
@@ -443,10 +443,7 @@ static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } partt
     { PT_ENT,     137, 118, 97, -20, 2,  2.4f }, // 24 greyish-brown:   big  slowly rising smoke
     { 0,          118, 97, 137,-15,  2,  2.4f }, // 25 greyish-brown:   big  fast rising smoke          
     { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f }, // 26 water  
-    { PT_ENT,     255, 200, 200, 20, 1,  4.8f }, // 27 yellow: fireball1
-    { 0,          125, 180, 75,  2,  6, 0.24f }, // 28 green: sparks 
-    { PT_FLARE,   125, 200, 100, 0,  5, 0.28f }, // 29 green flare
-    {PT_FIREBALL, 64, 255, 128, 0,   7, 4.0f }, // 30 green explosion fireball
+    { PT_ENT,     255, 200, 200, 20, 1,  4.8f } // 27 yellow: fireball1
 };
 
 VAR(iscale, 0, 100, 10000);
@@ -795,8 +792,7 @@ static void makeparticles(entity &e)
             
         //number is based on existing particles types:
         
-        case 10: //tape - yelllow/green <dir> <length>
-        case 29:
+        case 10: //tape - yelllow <dir> <length>
             particle_flare(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, e.attr1);
             break;     
         case 17: //meter - red/blue/redvsblue/bluevsred <percent>
@@ -805,9 +801,8 @@ static void makeparticles(entity &e)
         case 20:
             particle_meter(e.o, float(e.attr2)/255, e.attr1, 1);
             break;
-        case 22: //fire ball - red/orange/green <size>
+        case 22: //fire ball - red/orange <size>
         case 23:
-        case 30:
             newparticle(e.o, vec(0, 0, 1), 1, e.attr1)->val = 1+e.attr2;
             break;
         default:
