@@ -40,32 +40,31 @@ dynent *player = NULL;
 
 int scr_w = 1024, scr_h = 768;
 
-void screenshot()
+void screenshot(char *filename)
 {
-    SDL_Surface *image;
-    SDL_Surface *temp;
-    int idx;
-    if((image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)))
+    SDL_Surface *image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+    if(!image) return;
+    uchar *tmp = new uchar[scr_w*scr_h*3];
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, tmp);
+    uchar *dst = (uchar *)image->pixels;
+    loopi(scr_h)
     {
-        if((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)))
-        {
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);
-            glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-            for (idx = 0; idx<scr_h; idx++)
-            {
-                char *dest = (char *)temp->pixels+temp->pitch*idx;
-                memcpy(dest, (char *)image->pixels+image->pitch*(scr_h-1-idx), 3*scr_w);
-                endianswap(dest, 3, scr_w);
-            }
-            s_sprintfd(buf)("screenshot_%d.bmp", lastmillis);
-            SDL_SaveBMP(temp, buf);
-            SDL_FreeSurface(temp);
-        }
-        SDL_FreeSurface(image);
+        memcpy(dst, &tmp[3*scr_w*i], 3*scr_w);
+        endianswap(dst, 3, scr_w);
     }
+    delete[] tmp;
+    if(!filename[0])
+    {
+        static string buf;
+        s_sprintf(buf)("screenshot_%d.bmp", lastmillis);
+        filename = buf;
+    }
+    SDL_SaveBMP(image, filename);
+    SDL_FreeSurface(image);
 }
 
-COMMAND(screenshot, "");
+COMMAND(screenshot, "s");
 COMMAND(quit, "");
 
 void computescreen(const char *text, Texture *t)
