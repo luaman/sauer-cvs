@@ -613,7 +613,7 @@ bool matchanim(const char *name, const char *pattern)
 
 void findanims(const char *pattern, vector<int> &anims)
 {
-    static const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "taunt", "win", "lose", "vwep", "powerup", "gun shoot", "gun idle", "mapmodel", "trigger" };
+    static const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "taunt", "win", "lose", "gun shoot", "gun idle", "vwep", "powerup", "mapmodel", "trigger" };
     loopi(sizeof(names)/sizeof(names[0])) if(matchanim(names[i], pattern)) anims.add(i);
 }
 
