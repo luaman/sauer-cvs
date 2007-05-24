@@ -1,13 +1,23 @@
 *nix versions of cube clients and standalone servers.
-
 The clients function identical to the win32 client, see config.html.
-Run them from the root cube dir (chmod em as exe first).
+
+Please run "sauerbraten_unix" from the root Sauerbraten dir to launch these.
 Clients will need the following dynamic link libraries present:
-opengl, glu, sdl, sdl_image, sdl_mixer, png, jpeg, zlib (1.2.1 for
-all SDL libs, do a ldd for details).
+* libGL (OpenGL)
+* libGLU (OpenGL)
+* SDL (>= 1.2.1)
+* SDL_image (>= 1.2.1)
+* SDL_mixer (>= 1.2.1)
+* libpng
+* libjpeg
+* zlib
 
-The servers need NO libs, no external files, no sound or video,
-just run it :) Server ports are fixed at UDP 28785 and UDP 28786, currently.
+If native binaries for your platform are not included, then try the following:
+1) Ensure you have the DEVELOPMENT VERSIONS of the above libraries installed.
+2) Change to the src/ directory and type "make install".
+3) Re-run the "sauerbraten_unix" script from the root Sauerbraten directory if it succeeded.
 
-Make sure to chmod +x these binaries and the sauerbraten_unix script
-before running them.
+The servers (bin_unix/linux_server or bin_unix/native_server) should need no libs 
+other than  libstdc++, no external files, no sound or video - just run it. 
+Server ports are fixed at UDP 28785 and UDP 28786, currently.
+
