@@ -647,7 +647,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 VAR(animoverride, 0, 0, NUMANIMS-1);
 VAR(testanims, 0, 0, 1);
 
-void renderclient(dynent *d, const char *mdlname, const char *shieldname, const char *vwepname, const char *pupname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
+void renderclient(dynent *d, const char *mdlname, const char *vwepname, const char *shieldname, const char *pupname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float pitch = d->pitch;
