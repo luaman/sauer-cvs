@@ -344,7 +344,7 @@ struct monsterset
         {
             monster &m = *monsters[i];
             if(m.state!=CS_DEAD || m.superdamage<50) 
-                renderclient(&m, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].vwepname, NULL, m.monsterstate==M_ATTACKING ? -ANIM_SHOOT : 0, 300, m.lastaction, m.lastpain);
+                renderclient(&m, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].vwepname, NULL, NULL, m.monsterstate==M_ATTACKING ? -ANIM_SHOOT : 0, 300, m.lastaction, m.lastpain);
         }
     }
 };

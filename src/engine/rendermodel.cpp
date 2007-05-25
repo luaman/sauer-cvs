@@ -647,7 +647,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 VAR(animoverride, 0, 0, NUMANIMS-1);
 VAR(testanims, 0, 0, 1);
 
-void renderclient(dynent *d, const char *mdlname, const char *vwepname, const char *pupname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
+void renderclient(dynent *d, const char *mdlname, const char *shieldname, const char *vwepname, const char *pupname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
     float pitch = d->pitch;
@@ -695,13 +695,21 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, const ch
     int flags = MDL_CULL_VFC | MDL_CULL_OCCLUDED;
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_SHADOW;
-    modelattach a[3] = { { NULL }, { NULL }, { NULL } };
+    modelattach a[4] = { { NULL }, { NULL }, { NULL } };
     int ai = 0;
     if(vwepname)
     {
         a[ai].name = vwepname;
         a[ai].type = MDL_ATTACH_VWEP;
         a[ai].anim = ANIM_VWEP|ANIM_LOOP;
+        a[ai].basetime = 0;
+        ai++;
+    }
+    if(shieldname)
+    {
+        a[ai].name = shieldname;
+        a[ai].type = MDL_ATTACH_SHIELD;
+        a[ai].anim = ANIM_SHIELD|ANIM_LOOP;
         a[ai].basetime = 0;
         ai++;
     }

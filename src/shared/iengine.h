@@ -148,7 +148,7 @@ extern void initsound();
 
 // rendermodel
 enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2, MDL_SHADOW = 1<<3 };
-enum { MDL_ATTACH_VWEP = 0, MDL_ATTACH_POWERUP };
+enum { MDL_ATTACH_VWEP = 0, MDL_ATTACH_SHIELD, MDL_ATTACH_POWERUP };
 
 struct model;
 struct modelattach
@@ -163,7 +163,7 @@ extern void endmodelbatches();
 extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, const vec &o, float yaw = 0, float pitch = 0, float speed = 0, int basetime = 0, dynent *d = NULL, int cull = MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED, modelattach *a = NULL);
 extern void abovemodel(vec &o, const char *mdl);
 extern void rendershadow(dynent *d);
-extern void renderclient(dynent *d, const char *mdlname, const char *vwepname, const char *pupname, int attack, int attackdelay, int lastaction, int lastpain, float sink = 0);
+extern void renderclient(dynent *d, const char *mdlname, const char *vwepname, const char *shieldname, const char *pupname, int attack, int attackdelay, int lastaction, int lastpain, float sink = 0);
 extern void setbbfrommodel(dynent *d, char *mdl);
 
 // server

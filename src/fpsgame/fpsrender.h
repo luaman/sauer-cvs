@@ -29,12 +29,14 @@ struct fpsrender
             attack = ANIM_TAUNT;
             delay = 1000;
         }
-        const char *pupname = NULL;
+        const char *shieldname = NULL, *pupname = NULL;
         if(d->state==CS_ALIVE)
         {
             if(d->quadmillis) pupname = "quadspheres";
+            if(d->armourtype==A_GREEN && d->armour) shieldname = "shield/green";
+            if(d->armourtype==A_YELLOW && d->armour) shieldname = "shield/yellow";
         }
-        renderclient(d, mdlname, vwepname, pupname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
+        renderclient(d, mdlname, vwepname, shieldname, pupname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
 #if 0
         if(d->state!=CS_DEAD && d->quadmillis) 
         {
