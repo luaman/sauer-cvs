@@ -571,6 +571,7 @@ void render_particles(int time)
                     bool inside = o.dist(camera1->o) <= psize*1.25f; //1.25 is max wobble scale
                     vec oc(o);
                     oc.sub(camera1->o);
+                    if(reflecting && !refracting) oc.z = o.z - reflecting;
                     glRotatef(inside ? camera1->yaw - 180 : atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
                     glRotatef((inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90, 1, 0, 0);
                     
