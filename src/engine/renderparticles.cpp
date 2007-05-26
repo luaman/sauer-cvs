@@ -3,31 +3,85 @@
 #include "pch.h"
 #include "engine.h"
 
+/*
+ * Ideally this color palette would be shared everywhere, e.g. draw_text, 3dgui, materials...
+ * Then adding a gui color picker might be helpful at some point too
+ */ 
+static uchar colors[][3] = {
+    {255, 255, 255}, // fullwhite
+    //particle colors
+    {180, 155,  75}, // yellow sparks
+    {137, 118,  97}, // greyish-brown smoke
+    { 50,  50, 255}, // blue edit mode entities    
+    { 25, 255, 255}, // blood spats (note: rgb is inverted)
+    {255,  25,  50}, // team red
+    { 50,  25, 255}, // team blue
+    {255, 200, 200}, // fire 
+    {255, 128, 128}, // fire red 
+    {160, 192, 128}, // fire orange
+    {255, 200, 100}, // fire yellow 
+    { 50, 255, 100}, // green text
+    {100, 150, 255}, // blue text
+    {255, 200, 100}, // yellow text
+    {255,  75,  25}, // red text
+    {180, 180, 180}, // grey text
+    { 30, 200,  80}, // drkgreen text
+    { 50,  50, 255}, // water
+    //text colors (unused)
+    { 64, 255, 128}, // green: player talk
+    { 96, 160, 255}, // blue: "echo" command
+    {255, 192,  64}, // yellow: gameplay messages 
+    {255,  64,  64}, // red: important errors
+    {128, 128, 128}, // gray
+    {192,  64, 192}, // magenta
+};
+
+#define COL_FULLWHITE 0
+#define COL_PT_SPARKS 1
+#define COL_PT_SMOKE 2
+#define COL_PT_EDIT 3
+#define COL_PT_INVBLOOD 4
+#define COL_PT_TEAMRED 5
+#define COL_PT_TEAMBLUE 6
+#define COL_PT_FIRE 7
+#define COL_PT_FIRERED 8
+#define COL_PT_FIREORANGE 9
+#define COL_PT_FIREYELLOW 10
+#define COL_PT_TEXTGREEN 11
+#define COL_PT_TEXTBLUE 12
+#define COL_PT_TEXTYELLOW 13
+#define COL_PT_TEXTRED 14
+#define COL_PT_TEXTGREY 15
+#define COL_PT_TEXTDGREEN 16
+#define COL_PT_WATER 17
+
+
 static struct flaretype {
     int type;             /* flaretex index, 0..5, -1 for 6+random shine */
     float loc;            /* postion on axis */
     float scale;          /* texture scaling */
-    float color;          /* color multiplier */
+    uchar alpha;          /* color alpha */
 } flaretypes[] = 
 {
-    {2,  1.30f, 0.04f, 0.6f}, //flares
-    {3,  1.00f, 0.10f, 0.4f},
-    {1,  0.50f, 0.20f, 0.3f},
-    {3,  0.20f, 0.05f, 0.3f},
-    {0,  0.00f, 0.04f, 0.3f},
-    {5, -0.25f, 0.07f, 0.5f},
-    {5, -0.40f, 0.02f, 0.6f},
-    {5, -0.60f, 0.04f, 0.4f},
-    {5, -1.00f, 0.03f, 0.2f},  
-    {-1, 1.00f, 0.30f, 1.0f}, //shine - red, green, blue
-    {-2, 1.00f, 0.20f, 1.0f},
-    {-3, 1.00f, 0.25f, 1.0f}
+    {2,  1.30f, 0.04f, 153}, //flares
+    {3,  1.00f, 0.10f, 102},
+    {1,  0.50f, 0.20f, 77},
+    {3,  0.20f, 0.05f, 77},
+    {0,  0.00f, 0.04f, 77},
+    {5, -0.25f, 0.07f, 127},
+    {5, -0.40f, 0.02f, 153},
+    {5, -0.60f, 0.04f, 102},
+    {5, -1.00f, 0.03f, 51},  
+    {-1, 1.00f, 0.30f, 255}, //shine - red, green, blue
+    {-2, 1.00f, 0.20f, 255},
+    {-3, 1.00f, 0.25f, 255}
 };
 
 struct flare
 {
-    vec o, center, color;
+    vec o, center;
     float size;
+    uchar color[3];
     bool sparkle;
 };
 #define MAXFLARE 64 //overkill..
@@ -39,7 +93,7 @@ VAR(flarelights, 0, 0, 1);
 VARP(flarecutoff, 0, 1000, 10000);
 VARP(flaresize, 20, 100, 500);
                     
-static void newflare(vec &o,  const vec &center, const vec &color, float size, bool sun, bool sparkle)
+static void newflare(vec &o,  const vec &center, uchar r, uchar g, uchar b, float mod, float size, bool sun, bool sparkle)
 {
     if(flarecnt >= MAXFLARE) return;
     vec target; //occlusion check (neccessary as depth testing is turned off)
@@ -48,11 +102,13 @@ static void newflare(vec &o,  const vec &center, const vec &color, float size, b
     f.o = o;
     f.center = center;
     f.size = size;
-    f.color = color;
+    f.color[0] = uchar(r*mod);
+    f.color[1] = uchar(g*mod);
+    f.color[2] = uchar(b*mod);
     f.sparkle = sparkle;
 }
 
-static void makeflare(vec &o, const vec &color, bool sun, bool sparkle) 
+static void makeflare(vec &o, uchar r, uchar g, uchar b, bool sun, bool sparkle) 
 {
     //frustrum + fog check
     if(isvisiblesphere(0.0f, o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) return;
@@ -72,8 +128,8 @@ static void makeflare(vec &o, const vec &color, bool sun, bool sparkle)
         mod = (flarecutoff-vec(o).sub(center).squaredlen())/flarecutoff; 
         if(mod < 0.0f) return;
         size = flaresize / 5.0f;
-    }      
-    newflare(o, center, vec(color).mul(mod), size, sun, sparkle);
+    }   
+    newflare(o, center, r, g, b, mod, size, sun, sparkle);
 }
 
 static void renderflares()
@@ -91,7 +147,7 @@ static void renderflares()
         flare *f = flarelist+i;
         vec center = f->center;
         vec axis = vec(f->o).sub(center);
-        GLfloat color[4] = {f->color[0], f->color[1], f->color[2], 1.0};
+        uchar color[4] = {f->color[0], f->color[1], f->color[2], 255};
         loopj(f->sparkle?12:9)
         {
             const flaretype &ft = flaretypes[j];
@@ -108,8 +164,8 @@ static void renderflares()
                 color[2] = 0.0;
                 color[-ft.type-1] = f->color[-ft.type-1]; //only want a single channel
             }
-            color[3] = ft.color;
-            glColor4fv(color);
+            color[3] = ft.alpha;
+            glColor4ubv(color);
             const float tsz = 0.25; //flares are aranged in 4x4 grid
             float tx = tsz*(tex&0x03);
             float ty = tsz*((tex>>2)&0x03);
@@ -324,14 +380,13 @@ void cleanupexplosion()
     }
 }
 
-
-#define MAXPARTYPES 28
+#define MAXPARTYPES 20
 
 struct particle
 {   
     vec o, d;
-    int fade;
-    int millis;
+    int fade, millis;
+    uchar coloridx;
     particle *next;
     union
     {
@@ -375,7 +430,7 @@ void particleinit()
     loopi(MAXPARTYPES) parlist[i] = NULL;
 }
 
-particle *newparticle(const vec &o, const vec &d, int fade, int type)
+particle *newparticle(const vec &o, const vec &d, int fade, int type, uchar coloridx)
 {
     if(!parempty)
     {
@@ -392,6 +447,7 @@ particle *newparticle(const vec &o, const vec &d, int fade, int type)
     p->d = d;
     p->fade = fade;
     p->millis = lastmillis;
+    p->coloridx = coloridx;
     p->next = parlist[type];
     p->text = NULL;
     parlist[type] = p;
@@ -414,39 +470,62 @@ enum
     PT_RND4 = 1<<10
 };
 
-static struct parttype { int type; uchar r, g, b; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
+static struct parttype { int type; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
 {
-    { 0,          180, 155, 75,  2,  6, 0.24f }, // 0 yellow: sparks 
-    { 0,          137, 118, 97,-20,  2,  0.6f }, // 1 greyish-brown:   small slowly rising smoke
-    { 0,          50, 50, 255,   20, 0, 0.32f }, // 2 blue:   edit mode entities
-    { PT_MOD|PT_RND4, 25, 255, 255, 2,  8, 2.96f }, // 3 red:    blood spats (note: rgb is inverted)
-    { 0,          255, 200, 200, 20, 1,  4.8f }, // 4 yellow: fireball1
-    { 0,          137, 118, 97, -20, 2,  2.4f }, // 5 greyish-brown:   big  slowly rising smoke   
-    { 0,          255, 255, 255, 20, 3,  4.8f }, // 6 blue:   fireball2
-    { 0,          255, 255, 255, 20, 4,  4.8f }, // 7 green:  big fireball3
-    { PT_TEXTUP,  255, 75, 25,   -8, -1, 4.0f }, // 8 TEXT RED
-    { PT_TEXTUP,  50, 255, 100,  -8, -1, 4.0f }, // 9 TEXT GREEN
-    { PT_FLARE,   255, 200, 100, 0,  5, 0.28f }, // 10 yellow flare
-    { PT_TEXT,    30, 200, 80,   0, -1,  2.0f }, // 11 TEXT DARKGREEN, SMALL, NON-MOVING
-    { 0,          255, 255, 255, 20, 4,  2.0f }, // 12 green small fireball3
-    { PT_TEXT,    255, 75, 25,   0, -1,  2.0f }, // 13 TEXT RED, SMALL, NON-MOVING
-    { PT_TEXT,    180, 180, 180, 0, -1,  2.0f }, // 14 TEXT GREY, SMALL, NON-MOVING
-    { PT_TEXTUP,  255, 200, 100, -8, -1, 4.0f }, // 15 TEXT YELLOW
-    { PT_TEXT,    100, 150, 255, 0,  -1, 2.0f }, // 16 TEXT BLUE, SMALL, NON-MOVING
-    { PT_METER,   255, 25, 25,   0,  -1, 2.0f }, // 17 METER RED, SMALL, NON-MOVING
-    { PT_METER,   50, 50, 255,   0,  -1, 2.0f }, // 18 METER BLUE, SMALL, NON-MOVING
-    { PT_METERVS, 255, 25, 25,   0,  -1, 2.0f }, // 19 METER RED vs. BLUE, SMALL, NON-MOVING
-    { PT_METERVS, 50, 50, 255,   0,  -1, 2.0f }, // 20 METER BLUE vs. RED, SMALL, NON-MOVING
-    { 0,          137, 118, 97, 20,   2, 0.6f }, // 21 greyish-brown:   small  slowly sinking smoke trail
-    {PT_FIREBALL, 255, 128, 128, 0,   7, 4.0f }, // 22 red explosion fireball
-    {PT_FIREBALL, 160, 192, 128, 0,   7, 4.0f }, // 23 orange explosion fireball
-    { PT_ENT,     137, 118, 97, -20, 2,  2.4f }, // 24 greyish-brown:   big  slowly rising smoke
-    { 0,          118, 97, 137,-15,  2,  2.4f }, // 25 greyish-brown:   big  fast rising smoke          
-    { PT_ENT|PT_TRAIL, 50, 50, 255, 2, 0, 0.60f }, // 26 water  
-    { PT_ENT,     255, 200, 200, 20, 1,  4.8f } // 27 yellow: fireball1
+    { 0,               2,  6, 0.24f }, // 0 sparks 
+    { 0,             -20,  2,  0.6f }, // 1 small slowly rising smoke
+    { 0,              20,  0, 0.32f }, // 2 edit mode entities
+    { PT_MOD|PT_RND4,  2,  8, 2.96f }, // 3 blood spats (note: rgb is inverted)
+    { 0,              20,  1,  4.8f }, // 4 fireball1
+    { 0,             -20,  2,  2.4f }, // 5 big  slowly rising smoke   
+    { 0,              20,  3,  4.8f }, // 6 fireball2
+    { 0,              20,  4,  4.8f }, // 7 big fireball3
+    { PT_TEXTUP,      -8, -1,  4.0f }, // 8 TEXT
+    { PT_FLARE,        0,  5, 0.28f }, // 9 flare
+    { PT_TEXT,         0, -1,  2.0f }, // 10 TEXT, SMALL, NON-MOVING
+    { 0,              20,  4,  2.0f }, // 11 fireball3
+    { PT_METER,        0, -1,  2.0f }, // 12 METER, SMALL, NON-MOVING
+    { PT_METERVS,      0, -1,  2.0f }, // 13 METER vs., SMALL, NON-MOVING
+    { 0,              20,  2,  0.6f }, // 14 small  slowly sinking smoke trail
+    { PT_FIREBALL,     0,  7,  4.0f }, // 15 explosion fireball
+    { PT_ENT,        -20,  2,  2.4f }, // 16 big  slowly rising smoke, entity
+    { 0,             -15,  2,  2.4f }, // 17 big  fast rising smoke          
+    { PT_ENT|PT_TRAIL, 2,  0, 0.60f }, // 18 water, entity 
+    { PT_ENT,         20,  1,  4.8f }  // 19 fireball1, entity
 };
 
-VAR(iscale, 0, 100, 10000);
+
+//maps 'classic' particles types to newer types and colors - @TODO edit public funcs and weapons.h to bypass this and use types&colors
+static struct partmap { uchar type; uchar color; } partmaps[] = {
+    {  0, COL_PT_SPARKS},    // 0 yellow: sparks 
+    {  1, COL_PT_SMOKE},     // 1 greyish-brown:   small slowly rising smoke
+    {  2, COL_PT_EDIT},      // 2 blue:   edit mode entities
+    {  3, COL_PT_INVBLOOD},  // 3 red:    blood spats (note: rgb is inverted)
+    {  4, COL_PT_FIRE},      // 4 yellow: fireball1
+    {  5, COL_PT_SMOKE},     // 5 greyish-brown:   big  slowly rising smoke   
+    {  6, COL_FULLWHITE},    // 6 blue:   fireball2
+    {  7, COL_FULLWHITE},    // 7 green:  big fireball3
+    {  8, COL_PT_TEXTRED},   // 8 TEXT RED
+    {  8, COL_PT_TEXTGREEN}, // 9 TEXT GREEN
+    {  9, COL_PT_FIREYELLOW},// 10 yellow flare
+    { 10, COL_PT_TEXTDGREEN},// 11 TEXT DARKGREEN, SMALL, NON-MOVING
+    { 11, COL_FULLWHITE},    // 12 green small fireball3
+    { 10, COL_PT_TEXTRED},   // 13 TEXT RED, SMALL, NON-MOVING
+    { 10, COL_PT_TEXTGREY},  // 14 TEXT GREY, SMALL, NON-MOVING
+    {  8, COL_PT_TEXTYELLOW},// 15 TEXT YELLOW
+    { 10, COL_PT_TEXTBLUE},  // 16 TEXT BLUE, SMALL, NON-MOVING
+    { 12, COL_PT_TEAMRED},   // 17 METER RED, SMALL, NON-MOVING
+    { 12, COL_PT_TEAMBLUE},  // 18 METER BLUE, SMALL, NON-MOVING
+    { 13, COL_PT_TEAMRED},   // 19 METER RED vs. BLUE, SMALL, NON-MOVING (note swaps r<->b)
+    { 13, COL_PT_TEAMBLUE},  // 20 METER BLUE vs. RED, SMALL, NON-MOVING (note swaps r<->b)
+    { 14, COL_PT_SMOKE},     // 21 greyish-brown:   small  slowly sinking smoke trail
+    { 15, COL_PT_FIRERED},   // 22 red explosion fireball
+    { 15, COL_PT_FIREORANGE},// 23 orange explosion fireball
+    { 16, COL_PT_SMOKE},     // 24 greyish-brown:   big  slowly rising smoke
+    { 17, COL_PT_SMOKE},     // 25 greyish-brown:   big  fast rising smoke          
+    { 18, COL_PT_WATER},     // 26 water  
+    { 19, COL_PT_FIRE}       // 27 yellow: fireball1
+};
 
 void render_particles(int time)
 {
@@ -492,6 +571,7 @@ void render_particles(int time)
             int ts = (lastmillis-p->millis);
             bool remove;
             int blend;
+            uchar *color = colors[p->coloridx];
             vec o = p->o;
             if(p->fade > 5) 
             {   //parametric coordinate generation (but only if its going to show for more than one frame)
@@ -512,16 +592,16 @@ void render_particles(int time)
                 ts = p->fade;
                 remove = !refracting && !reflecting;
             }
-            
+                        
             if(quads)
             {
                 if(pt.type&PT_MOD)
                 {   
                     blend = min(blend<<2, 255); //multiply alpha into color
-                    glColor3ub((pt.r*blend)>>8, (pt.g*blend)>>8, (pt.b*blend)>>8);
+                    glColor3ub((color[0]*blend)>>8, (color[1]*blend)>>8, (color[2]*blend)>>8);
                 }
                 else
-                    glColor4ub(pt.r, pt.g, pt.b, type==PT_FLARE ? blend : min(blend<<2, 255));
+                    glColor4ub(color[0], color[1], color[2], type==PT_FLARE ? blend : min(blend<<2, 255));
                     
                 float tx = 0, ty = 0, tsz = 1;
                 if(pt.type&PT_RND4)
@@ -586,7 +666,7 @@ void render_particles(int time)
 
                     glRotatef(lastmillis/7.0f, 0, 0, 1);
                     glScalef(-psize, psize, -psize);
-                    drawexplosion(inside, pt.r, pt.g, pt.b, blend);
+                    drawexplosion(inside, color[0], color[1], color[2], blend);
                 } 
                 else 
                 {
@@ -601,13 +681,13 @@ void render_particles(int time)
                         glTranslatef(-right/2.0f, 0, 0);
                         
                         glBegin(GL_QUADS);
-                        glColor3ub(pt.r, pt.g, pt.b);
+                        glColor3ubv(color);
                         glVertex2f(0, 0);
                         glVertex2f(left, 0);
                         glVertex2f(left, FONTH);
                         glVertex2f(0, FONTH);
                         
-                        if(type==PT_METERVS) glColor3ub(parttypes[i-1].r, parttypes[i-1].g, parttypes[i-1].b);
+                        if(type==PT_METERVS) glColor3ub(color[2], color[1], color[0]); //swap r<->b                        
                         else glColor3ub(0, 0, 0);
                         glVertex2f(left, 0);
                         glVertex2f(right, 0);
@@ -623,7 +703,7 @@ void render_particles(int time)
                         if(type==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
                         glTranslatef(xoff, yoff, 50);
                         
-                        draw_text(text, 0, 0, pt.r, pt.g, pt.b, blend);
+                        draw_text(text, 0, 0, color[0], color[1], color[2], blend);
                     }
                 }
                 glPopMatrix();
@@ -701,6 +781,8 @@ void regular_particle_splash(int type, int num, int fade, const vec &p, int dela
 void particle_splash(int type, int num, int fade, const vec &p)
 {
     if(camera1->o.dist(p) > maxparticledistance) return;
+    int ptype = partmaps[type].type;
+    uchar color = partmaps[type].color;    
     loopi(num)
     {
         const int radius = (type==5 || type == 24) ? 50 : 150;   
@@ -713,7 +795,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
         }
         while(x*x+y*y+z*z>radius*radius);
     	vec tmp = vec((float)x, (float)y, (float)z);
-        newparticle(p, tmp, rnd(fade*3)+1, type);
+        newparticle(p, tmp, rnd(fade*3)+1, ptype, color);
     }
 }
 
@@ -726,11 +808,13 @@ void particle_trail(int type, int fade, const vec &s, const vec &e)
     /* @TODO - this needs to be throttled
      * one idea is that particles further from the eye could be drawn larger and more spread apart, should consider this for splash too
      */
+    int ptype = partmaps[type].type;
+    uchar color = partmaps[type].color;    
     loopi((int)d*2)
     {
         p.add(v);
         vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
-        newparticle(p, tmp, rnd(fade)+fade, type);
+        newparticle(p, tmp, rnd(fade)+fade, ptype, color);
     }
 }
 
@@ -740,17 +824,17 @@ void particle_text(const vec &s, char *t, int type, int fade)
 {
     if(!particletext || camera1->o.dist(s) > 128) return;
     if(t[0]=='@') t = newstring(t);
-    newparticle(s, vec(0, 0, 1), fade, type)->text = t;
+    newparticle(s, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->text = t;
 }
 
 void particle_meter(const vec &s, float val, int type, int fade)
 {
-    newparticle(s, vec(0, 0, 1), fade, type)->val = val;
+    newparticle(s, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->val = val;
 }
 
 void particle_flare(const vec &p, const vec &dest, int fade, int type)
 {
-    newparticle(p, dest, fade, type);
+    newparticle(p, dest, fade, partmaps[type].type, partmaps[type].color);
 }
 
 VARP(damagespherefactor, 0, 100, 200);
@@ -759,15 +843,19 @@ void particle_fireball(const vec &dest, float max, int type)
 {
     if(damagespherefactor <= 10) return;
     int maxsize = int(max*damagespherefactor/100) - 4;
-    newparticle(dest, vec(0, 0, 1), maxsize*25, type)->val = maxsize;
+    newparticle(dest, vec(0, 0, 1), maxsize*25, partmaps[type].type, partmaps[type].color)->val = maxsize;
 }
-
 
 //dir = 0..6 where 0=up
 static inline vec offsetvec(vec o, int dir, int dist) {
     vec v = vec(o);    
     v.v[(2+dir)%3] += (dir>2)?(-dist):dist;
     return v;
+}
+
+static inline uchar okcolor(uchar idx) {
+    if(idx >= sizeof(colors)/sizeof(uchar[3])) idx = 0;
+    return idx;
 }
 
 static void makeparticles(entity &e) 
@@ -784,28 +872,28 @@ static void makeparticles(entity &e)
         case 2: //water fountain - <dir>
             regular_particle_splash(26, 5, 200, offsetvec(e.o, e.attr2, rnd(10)));
             break;
+        case 3: //fire ball - <size> <colidx>
+            newparticle(e.o, vec(0, 0, 1), 1, 15, okcolor(e.attr3))->val = 1+e.attr2;
+            break;
+        case 4: //tape - <dir> <length> <colidx>
+            newparticle(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, 9, okcolor(e.attr4));
+            break;
+            
         case 32: //lens flares - plain/sparkle/sun/sparklesun <red> <green> <blue>
         case 33:
         case 34:
         case 35:
-            makeflare(e.o, vec(float(e.attr2)/255, float(e.attr3)/255, float(e.attr4)/255), (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
+            makeflare(e.o, e.attr2, e.attr3, e.attr4, (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
             break;
             
         //number is based on existing particles types:
-        
-        case 10: //tape - yelllow <dir> <length>
-            particle_flare(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, e.attr1);
-            break;     
         case 17: //meter - red/blue/redvsblue/bluevsred <percent>
         case 18:
         case 19:
         case 20:
-            particle_meter(e.o, float(e.attr2)/255, e.attr1, 1);
+            particle_meter(e.o, min(1.0, float(e.attr2)/100), e.attr1, 1);
             break;
-        case 22: //fire ball - red/orange <size>
-        case 23:
-            newparticle(e.o, vec(0, 0, 1), 1, e.attr1)->val = 1+e.attr2;
-            break;
+            
         default:
             s_sprintfd(ds)("@particles %d?", e.attr1);
             particle_text(e.o, ds, 16, 1);
@@ -855,7 +943,7 @@ void entity_particles()
                     mod = (radius-len)/radius;
                     size = flaresize / 5.0f;
                 }
-                newflare(e.o, center, vec(float(e.attr2), float(e.attr3), float(e.attr4)).mul(mod/255.0), size, sun, sun);
+                newflare(e.o, center, e.attr2, e.attr3, e.attr4, mod, size, sun, sun);
             }
         }
         loopv(ents)
