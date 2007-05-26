@@ -955,17 +955,18 @@ void entity_particles()
     }
     else // show sparkly thingies for map entities in edit mode
     {
+        // note: order matters in this case as particles of the same type are drawn in the reverse order that they are added
+        loopv(entgroup)
+        {
+            entity &e = *ents[entgroup[i]];
+            particle_text(e.o, entname(e), 13, 1);
+        }
         loopv(ents)
         {
             entity &e = *ents[i];
             if(e.type==ET_EMPTY) continue;
             particle_text(e.o, entname(e), 11, 1);
             regular_particle_splash(2, 2, 40, e.o);
-        }
-        loopv(entgroup)
-        {
-            entity &e = *ents[entgroup[i]];
-            particle_text(e.o, entname(e), 13, 1);
         }
     }
 }
