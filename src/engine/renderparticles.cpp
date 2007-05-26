@@ -159,9 +159,9 @@ static void renderflares()
                 extern int paused;
                 shinetime = (paused ? j : (shinetime + 1)) % 10;
                 tex = 6+shinetime;
-                color[0] = 0.0;
-                color[1] = 0.0;
-                color[2] = 0.0;
+                color[0] = 0;
+                color[1] = 0;
+                color[2] = 0;
                 color[-ft.type-1] = f->color[-ft.type-1]; //only want a single channel
             }
             color[3] = ft.alpha;
