@@ -656,9 +656,9 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
 VAR(hudgunfov, 10, 65, 150);
 
-void gl_drawhud(int w, int h, int curfps, bool underwater);
+void gl_drawhud(int w, int h, bool underwater);
 
-void gl_drawframe(int w, int h, float curfps)
+void gl_drawframe(int w, int h)
 {
     defaultshader->set();
 
@@ -745,7 +745,7 @@ void gl_drawframe(int w, int h, float curfps)
     glDisable(GL_TEXTURE_2D);
     notextureshader->set();
 
-    gl_drawhud(w, h, (int)curfps, underwater);
+    gl_drawhud(w, h, underwater);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
@@ -786,7 +786,9 @@ void drawcrosshair(int w, int h)
     glEnd();
 }
 
-void gl_drawhud(int w, int h, int curfps, bool underwater)
+VARP(showfpsrange, 0, 0, 1);
+
+void gl_drawhud(int w, int h, bool underwater)
 {
     if(editmode && !hidehud)
     {
@@ -856,7 +858,11 @@ void gl_drawhud(int w, int h, int curfps, bool underwater)
 
         if(!hidestats)
         {
-            draw_textf("fps %d", w*3-5*FONTH, h*3-100, curfps);
+            extern void getfps(int &fps, int &bestdiff, int &worstdiff);
+            int fps, bestdiff, worstdiff;
+            getfps(fps, bestdiff, worstdiff);
+            if(showfpsrange) draw_textf("fps %d+%d-%d", w*3-7*FONTH, h*3-100, fps, bestdiff, worstdiff);
+            else draw_textf("fps %d+%d-%d", w*3-5*FONTH, h*3-100, fps);
 
             if(editmode)
             {

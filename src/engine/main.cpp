@@ -292,6 +292,38 @@ void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
 }
 #endif
 
+#define MAXFPSHISTORY 100
+
+int fpspos = 0, fpshistory[MAXFPSHISTORY];
+
+void resetfpshistory()
+{
+    loopi(MAXFPSHISTORY) fpshistory[i] = 40;
+    fpspos = 0;
+}
+
+void updatefpshistory(int millis)
+{
+    fpshistory[fpspos++] = millis;
+    if(fpspos>=MAXFPSHISTORY) fpspos = 0;
+}
+
+void getfps(int &fps, int &bestdiff, int &worstdiff)
+{
+    int total = fpshistory[MAXFPSHISTORY-1], best = total, worst = total;
+    loopi(MAXFPSHISTORY-1)
+    {
+        int millis = fpshistory[i];
+        total += millis;
+        if(millis < best) best = millis;
+        if(millis > worst) worst = millis;
+    }
+
+    fps = (1000*MAXFPSHISTORY)/total;
+    bestdiff = 1000/best-fps;
+    worstdiff = fps-1000/worst;
+}
+
 bool inbetweenframes = false;
 
 int main(int argc, char **argv)
@@ -467,11 +499,13 @@ int main(int argc, char **argv)
     if(initscript) execute(initscript);
 
     log("mainloop");
+
+    resetfpshistory();
+
     int ignore = 5, grabmouse = 0;
     for(;;)
     {
         static int frames = 0;
-        static float fps = 10.0;
         int millis = SDL_GetTicks();
         limitfps(millis, totalmillis);
         int elapsed = millis-totalmillis;
@@ -479,7 +513,7 @@ int main(int argc, char **argv)
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
         if(paused) curtime = 0;
-        
+
         if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
        
         menuprocess();
@@ -491,9 +525,8 @@ int main(int argc, char **argv)
 
         serverslice(time(NULL), 0);
 
+        updatefpshistory(elapsed);
         frames++;
-        fps = (1000.0f/elapsed+fps*10)/11;
-        //if(curtime>14) printf("%d: %d\n", millis, curtime);
 
         // miscellaneous general game effects
         findorientation();
@@ -503,7 +536,7 @@ int main(int argc, char **argv)
 
         inbetweenframes = false;
         SDL_GL_SwapBuffers();
-        if(frames>2) gl_drawframe(scr_w, scr_h, fps);
+        if(frames>2) gl_drawframe(scr_w, scr_h);
         //SDL_Delay(10);
         inbetweenframes = true;
 
