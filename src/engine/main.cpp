@@ -298,13 +298,13 @@ int fpspos = 0, fpshistory[MAXFPSHISTORY];
 
 void resetfpshistory()
 {
-    loopi(MAXFPSHISTORY) fpshistory[i] = 40;
+    loopi(MAXFPSHISTORY) fpshistory[i] = 1;
     fpspos = 0;
 }
 
 void updatefpshistory(int millis)
 {
-    fpshistory[fpspos++] = millis;
+    fpshistory[fpspos++] = max(1, min(1000, millis));
     if(fpspos>=MAXFPSHISTORY) fpspos = 0;
 }
 
@@ -525,7 +525,7 @@ int main(int argc, char **argv)
 
         serverslice(time(NULL), 0);
 
-        updatefpshistory(elapsed);
+        if(frames) updatefpshistory(elapsed);
         frames++;
 
         // miscellaneous general game effects
