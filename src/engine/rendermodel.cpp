@@ -523,7 +523,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
             renderellipse(d->o, d->xradius, d->yradius, d->yaw);
         }
-        else if((anim&ANIM_INDEX)!=ANIM_GUNSHOOT && (anim&ANIM_INDEX)!=ANIM_GUNIDLE)
+        else
         {
             vec center, radius;
             if(showboundingbox==1) m->collisionbox(0, center, radius);
@@ -613,7 +613,18 @@ bool matchanim(const char *name, const char *pattern)
 
 void findanims(const char *pattern, vector<int> &anims)
 {
-    static const char *names[] = { "dead", "dying", "idle", "forward", "backward", "left", "right", "punch", "shoot", "pain", "jump", "sink", "swim", "edit", "lag", "taunt", "win", "lose", "gun shoot", "gun idle", "vwep", "shield", "powerup", "mapmodel", "trigger" };
+    static const char *names[] = 
+    { 
+        "dead", "dying", "idle", 
+        "forward", "backward", "left", "right", 
+        "punch", "shoot", "pain", 
+        "jump", "sink", "swim", 
+        "edit", "lag", "taunt", "win", "lose", 
+        "gun shoot 1", "gun shoot 2", "gun shoot 3", "gun shoot 4", "gun shoot 5", "gun shoot 6", "gun shoot 7", 
+        "gun idle 1", "gun idle 2", "gun idle 3", "gun idle 4", "gun idle 5", "gun idle 6", "gun idle 7", 
+        "vwep", "shield", "powerup", 
+        "mapmodel", "trigger" 
+    };
     loopi(sizeof(names)/sizeof(names[0])) if(matchanim(names[i], pattern)) anims.add(i);
 }
 
