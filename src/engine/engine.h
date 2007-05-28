@@ -206,7 +206,7 @@ extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
 extern void setupmaterials();
 extern void rendermaterials(float zclip = 0, bool refract = false);
-extern void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false);
+extern void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, float offset);
 
 // water
 extern float reflecting, refracting;

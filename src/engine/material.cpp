@@ -88,7 +88,7 @@ void renderwaterfall(materialsurface &m, Texture *tex, float scale, float offset
             d /= 1000.0f;
             break;
         case MAT_LAVA: 
-            t /= 5000.0f; 
+            t /= 2000.0f; 
             d /= 3000.0f;
             break;
     }
@@ -107,7 +107,7 @@ void renderwaterfall(materialsurface &m, Texture *tex, float scale, float offset
     xtraverts += 4;
 }
 
-void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc)
+void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, float offset)
 {
     int dim = dimension(orient), c = C[dim], r = R[dim];
     loopi(4)
@@ -117,7 +117,6 @@ void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, float o
         v[c] += cubecoords[coord][c]/8*csize;
         v[r] += cubecoords[coord][r]/8*rsize;
         v[dim] += dimcoord(orient) ? -offset : offset;
-        if(usetc) glTexCoord2f(v[c]/8, v[r]/8);
         glVertex3fv(v.v);
     }
     xtraverts += 4;
@@ -282,7 +281,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->orient == start->orient &&
                cur->o[dim] == start->o[dim])
             ++cur;
-         if(!isliquid(start->material) || start->orient != O_TOP || (!vertwater && renderpath!=R_FIXEDFUNCTION))
+         if(!isliquid(start->material) || start->orient != O_TOP || !vertwater)
          {
             if(start!=matbuf) memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
             matbuf += mergemats(matbuf, cur-start);

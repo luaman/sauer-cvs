@@ -19,26 +19,51 @@ float wcol[4];
         body; \
         glVertex3f(v1, v2, v3+h); \
     }
+#define VERTWN(vertw, body) \
+    inline void vertw(float v1, float v2, float v3) \
+    { \
+        float h = -1.1f; \
+        body; \
+        glVertex3f(v1, v2, v3+h); \
+    }
 #define VERTWT(vertwt, body) VERTW(vertwt, { float v = cosf(angle); float duv = 0.5f*v; body; })
 VERTW(vertwt, {
-    glTexCoord2f(v2/8.0f, v1/8.0f);
+    glTexCoord2f(v1/8.0f, v2/8.0f);
+})
+VERTWN(vertwtn, {
+    glTexCoord2f(v1/8.0f, v2/8.0f);
 })
 VERTW(vertwc, {
     glColor4f(wcol[0], wcol[1], wcol[2], max(wcol[3], 0.6f) + fabs(s)*0.1f);
 })
+VERTWN(vertwcn, {
+    glColor4f(wcol[0], wcol[1], wcol[2], max(wcol[3], 0.6f));
+})
 VERTWT(vertwtc, {
     glColor4f(1, 1, 1, 0.2f + fabs(s)*0.1f);
     glTexCoord3f(v1+duv, v2+duv, v3+h);
+})
+VERTWN(vertwtcn, {
+    glColor4f(1, 1, 1, 0.2f);
+    glTexCoord3f(v1, v2, v3+h);
 })
 VERTWT(vertwmtc, {
     glColor4f(1, 1, 1, 0.2f + fabs(s)*0.1f);
     glMultiTexCoord3f_(GL_TEXTURE0_ARB, v1+duv, v2+duv, v3+h);
     glMultiTexCoord3f_(GL_TEXTURE1_ARB, v1+duv, v2+duv, v3+h);
 })
+VERTWN(vertwmtcn, {
+    glColor4f(1, 1, 1, 0.2f);
+    glMultiTexCoord3f_(GL_TEXTURE0_ARB, v1, v2, v3+h);
+    glMultiTexCoord3f_(GL_TEXTURE1_ARB, v1, v2, v3+h);
+})
 
 static float lavaxk = 1.0f, lavayk = 1.0f, lavascroll = 0.0f;
 
 VERTW(vertl, {
+    glTexCoord2f(lavaxk*(v1+lavascroll), lavayk*(v2+lavascroll));
+})
+VERTWN(vertln, {
     glTexCoord2f(lavaxk*(v1+lavascroll), lavayk*(v2+lavascroll));
 })
 
@@ -150,6 +175,32 @@ uint renderwaterlod(int x, int y, int z, uint size, uchar mat = MAT_WATER)
     }
 }
 
+#define renderwaterquad(vertwn, z) \
+    { \
+        vertwn(x, y, z); \
+        vertwn(x+rsize, y, z); \
+        vertwn(x+rsize, y+csize, z); \
+        vertwn(x, y+csize, z); \
+        xtraverts += 4; \
+    }
+
+void renderflatwater(int x, int y, int z, uint rsize, uint csize, uchar mat = MAT_WATER)
+{
+    switch(mat)
+    {
+        case MAT_WATER:
+            if(renderpath!=R_FIXEDFUNCTION) { renderwaterquad(vertwtn, z); }
+            else if(nowater || (!waterrefract && !waterreflect)) { renderwaterquad(vertwcn, z); }
+            else if(waterrefract) { renderwaterquad(vertwmtcn, z); }
+            else { renderwaterquad(vertwtcn, z); }
+            break;
+
+        case MAT_LAVA:
+            renderwaterquad(vertln, z);
+            break;
+    }
+}
+
 VARFP(vertwater, 0, 1, 1, allchanged());
 
 void renderlava(materialsurface &m, Texture *tex, float scale)
@@ -162,18 +213,7 @@ void renderlava(materialsurface &m, Texture *tex, float scale)
         if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA) >= (uint)m.csize * 2)
             rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA);
     }
-    else
-    {
-        glTexCoord2f(lavaxk*(wx1+lavascroll), lavayk*(wy1+lavascroll));
-        glVertex3f(wx1, wy1, m.o.z-1.1f);
-        glTexCoord2f(lavaxk*(wx1+m.rsize+lavascroll), lavayk*(wy1+lavascroll));
-        glVertex3f(wx1+m.rsize, wy1, m.o.z-1.1f);
-        glTexCoord2f(lavaxk*(wx1+m.rsize+lavascroll), lavayk*(wy1+m.csize+lavascroll));
-        glVertex3f(wx1+m.rsize, wy1+m.csize, m.o.z-1.1f);
-        glTexCoord2f(lavaxk*(wx1+lavascroll), lavayk*(wy1+m.csize+lavascroll));
-        glVertex3f(wx1, wy1+m.csize, m.o.z-1.1f);
-        xtraverts += 4;
-    }
+    else renderflatwater(m.o.x, m.o.y, m.o.z, m.rsize, m.csize, MAT_LAVA);
 }
 
 /* reflective/refractive water */
@@ -352,6 +392,7 @@ void renderwaterff()
                 else if(!blended) { glDepthMask(GL_FALSE); glEnable(GL_BLEND); blended = true; }
             }
         }
+        bool begin = false;
         loopvj(ref.matsurfs)
         {
             materialsurface &m = *ref.matsurfs[j];
@@ -362,6 +403,7 @@ void renderwaterff()
                 wcol[3] = depth;
                 if(!nowater && (waterreflect || waterrefract))
                 {
+                    if(begin) { glEnd(); begin = false; }
                     float ec[4] = { wcol[0], wcol[1], wcol[2], depth };
                     if(!waterrefract) { loopk(3) ec[k] *= depth; ec[3] = 1-ec[3]; }
                     colortmu(0, ec[0], ec[1], ec[2], ec[3]);
@@ -369,9 +411,15 @@ void renderwaterff()
                 lastdepth = m.depth;
             }
 
-            if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize) >= (uint)m.csize * 2)
+            if(!vertwater)
+            {
+                if(!begin) { glBegin(GL_QUADS); begin = true; }
+                renderflatwater(m.o.x, m.o.y, m.o.z, m.rsize, m.csize);
+            }
+            else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize) >= (uint)m.csize * 2)
                 rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize);
         }
+        if(begin) glEnd();
     }
 
     if(!nowater && (waterreflect || waterrefract))
@@ -493,7 +541,7 @@ void renderwater()
             if(!vertwater)
             {
                 if(!begin) { glBegin(GL_QUADS); begin = true; }
-                drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, 1.1f, true);
+                renderflatwater(m.o.x, m.o.y, m.o.z, m.rsize, m.csize);
             }
             else if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize) >= (uint)m.csize * 2)
                 rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize);
