@@ -26,7 +26,8 @@ struct header                   // map file format header
     uchar lerpangle, lerpsubdiv, lerpsubdivsize;
     uchar mapbe;
     uchar skylight[3];
-    int reserved[4];
+    uchar lavacolour[3];
+    uchar reserved[1+12];
     char maptitle[128];
 };
 
@@ -37,6 +38,7 @@ enum                            // cube empty-space materials
     MAT_CLIP,                   // collisions always treat cube as solid
     MAT_GLASS,                  // behaves like clip but is blended blueish
     MAT_NOCLIP,                 // collisions always treat cube as empty
+    MAT_LAVA,                   // fill with lava
     MAT_EDIT                    // basis for the edit volumes of the above materials
 };
 
@@ -47,6 +49,7 @@ enum
     MATSURF_EDIT_ONLY
 };
 
+#define isliquid(mat) ((mat)==MAT_WATER || (mat)==MAT_LAVA)
 #define isclipped(mat) ((mat) >= MAT_CLIP && (mat) < MAT_NOCLIP)
 
 // VVEC_FRAC must be between 0..3

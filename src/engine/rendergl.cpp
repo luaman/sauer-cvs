@@ -458,6 +458,7 @@ extern void rendercaustics(float z, bool refract);
 
 void drawreflection(float z, bool refract, bool clear)
 {
+    uchar wcol[3];
     getwatercolour(wcol);
     float fogc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
     
@@ -576,7 +577,7 @@ void drawreflection(float z, bool refract, bool clear)
     reflecting = 0;
 }
 
-static void setfog(bool underwater)
+static void setfog(int fogmat)
 {
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
@@ -584,13 +585,15 @@ static void setfog(bool underwater)
     glFogfv(GL_FOG_COLOR, fogc);
     glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
     
-    if(underwater)
+    if(fogmat==MAT_WATER || fogmat==MAT_LAVA)
     {
-        getwatercolour(wcol);
-        float fogwc[4] = { wcol[0]/256.0f, wcol[1]/256.0f, wcol[2]/256.0f, 1.0f };
+        uchar col[3];
+        if(fogmat==MAT_WATER) getwatercolour(col);
+        else getlavacolour(col);
+        float fogwc[4] = { col[0]/256.0f, col[1]/256.0f, col[2]/256.0f, 1 };
         glFogfv(GL_FOG_COLOR, fogwc); 
         glFogi(GL_FOG_START, 0);
-        glFogi(GL_FOG_END, min(fog, max(waterfog*4, 32)));//(fog+96)/8);
+        glFogi(GL_FOG_END, min(fog, max((fogmat==MAT_WATER ? waterfog : lavafog)*4, 32)));//(fog+96)/8);
     }
 
     if(renderpath!=R_FIXEDFUNCTION) setfogplane();
@@ -612,9 +615,10 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     defaultshader->set();
 
     cube &c = lookupcube(int(o.x), int(o.y), int(o.z));
-    bool underwater = c.ext && c.ext->material == MAT_WATER;
+    int fogmat = c.ext ? c.ext->material : MAT_AIR;
+    if(fogmat!=MAT_WATER && fogmat!=MAT_LAVA) fogmat = MAT_AIR;
 
-    setfog(underwater);    
+    setfog(fogmat);
 
     glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -656,7 +660,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
 VAR(hudgunfov, 10, 65, 150);
 
-void gl_drawhud(int w, int h, bool underwater);
+void gl_drawhud(int w, int h, int fogmat);
 
 void gl_drawframe(int w, int h)
 {
@@ -667,10 +671,11 @@ void gl_drawframe(int w, int h)
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
     cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
-    bool underwater = c.ext && c.ext->material == MAT_WATER;
-    
-    setfog(underwater);
-    if(underwater)
+    int fogmat = c.ext ? c.ext->material : MAT_AIR;
+    if(fogmat!=MAT_WATER && fogmat!=MAT_LAVA) fogmat = MAT_AIR;
+
+    setfog(fogmat);
+    if(fogmat!=MAT_AIR)
     {
         fovy += (float)sin(lastmillis/1000.0)*2.0f;
         aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
@@ -708,7 +713,7 @@ void gl_drawframe(int w, int h)
 
     cl->rendergame();
 
-    if(underwater) 
+    if(fogmat==MAT_WATER)
     {
         cube &s = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*1.25f));
         if(s.ext && s.ext->material==MAT_WATER) rendercaustics(0, false);
@@ -745,7 +750,7 @@ void gl_drawframe(int w, int h)
     glDisable(GL_TEXTURE_2D);
     notextureshader->set();
 
-    gl_drawhud(w, h, underwater);
+    gl_drawhud(w, h, fogmat);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
@@ -788,7 +793,7 @@ void drawcrosshair(int w, int h)
 
 VARP(showfpsrange, 0, 0, 1);
 
-void gl_drawhud(int w, int h, bool underwater)
+void gl_drawhud(int w, int h, int fogmat)
 {
     if(editmode && !hidehud)
     {
@@ -812,7 +817,7 @@ void gl_drawhud(int w, int h, bool underwater)
 
     glEnable(GL_BLEND);
 
-    if(dblend || underwater)
+    if(dblend || fogmat==MAT_WATER || fogmat==MAT_LAVA)
     {
         glDepthMask(GL_FALSE);
         glBlendFunc(GL_ZERO, GL_SRC_COLOR);
@@ -820,11 +825,13 @@ void gl_drawhud(int w, int h, bool underwater)
         if(dblend) glColor3f(1.0f, 0.1f, 0.1f);
         else
         {
-            getwatercolour(wcol);
-            float maxc = max(wcol[0], max(wcol[1], wcol[2]));
-            float wblend[3];
-            loopi(3) wblend[i] = wcol[i] / min(32 + maxc*7/8, 255);
-            glColor3fv(wblend);
+            uchar col[3];
+            if(fogmat==MAT_WATER) getwatercolour(col);
+            else getlavacolour(col);
+            float maxc = max(col[0], max(col[1], col[2]));
+            float blend[3];
+            loopi(3) blend[i] = col[i] / min(32 + maxc*7/8, 255);
+            glColor3fv(blend);
             //glColor3f(0.1f, 0.5f, 1.0f);
         }
         glVertex2i(0, 0);

@@ -209,18 +209,17 @@ extern void rendermaterials(float zclip = 0, bool refract = false);
 extern void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, float offset, bool usetc = false);
 
 // water
-#define getwatercolour(wcol) \
-    uchar wcol[3] = { 20, 70, 80 }; \
-    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
-
 extern float reflecting, refracting;
-extern int reflectdist, waterfog;
+extern int reflectdist, waterfog, lavafog;
 
 extern void invalidatereflections();
 extern void cleanreflections();
 extern void queryreflections();
 extern void drawreflections();
 extern void renderwater();
+extern void renderlava(materialsurface &m, Texture *tex, float scale);
+extern void getwatercolour(uchar *wcol);
+extern void getlavacolour(uchar *lcol);
 
 // server
 extern void initserver(bool dedicated);

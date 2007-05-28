@@ -36,6 +36,12 @@ VERTWT(vertwmtc, {
     glMultiTexCoord3f_(GL_TEXTURE1_ARB, v1+duv, v2+duv, v3+h);
 })
 
+static float lavaxk = 1.0f, lavayk = 1.0f, lavascroll = 0.0f;
+
+VERTW(vertl, {
+    glTexCoord2f(lavaxk*(v1+lavascroll), lavayk*(v2+lavascroll));
+})
+
 #define renderwaterstrips(vertw, z, t) \
     for(int x = wx1; x<wx2; x += subdiv) \
     { \
@@ -53,10 +59,8 @@ VERTWT(vertwmtc, {
         xtraverts += n; \
     }
 
-void rendervertwater(uint subdiv, int xo, int yo, int z, uint size)
+void rendervertwater(uint subdiv, int xo, int yo, int z, uint size, uchar mat = MAT_WATER)
 {   
-    float t = lastmillis/(renderpath!=R_FIXEDFUNCTION ? 600.0f : 300.0f);
-
     wx1 = xo;
     wy1 = yo;
     wx2 = wx1 + size,
@@ -66,10 +70,24 @@ void rendervertwater(uint subdiv, int xo, int yo, int z, uint size)
     ASSERT((wx1 & (subdiv - 1)) == 0);
     ASSERT((wy1 & (subdiv - 1)) == 0);
 
-    if(renderpath!=R_FIXEDFUNCTION) { renderwaterstrips(vertwt, z, t); }
-    else if(nowater || (!waterrefract && !waterreflect)) { renderwaterstrips(vertwc, z, t); }
-    else if(waterrefract) { renderwaterstrips(vertwmtc, z, t); }
-    else { renderwaterstrips(vertwtc, z, t); }
+    switch(mat)
+    {
+        case MAT_WATER:
+        {
+            float t = lastmillis/(renderpath!=R_FIXEDFUNCTION ? 600.0f : 300.0f);
+            if(renderpath!=R_FIXEDFUNCTION) { renderwaterstrips(vertwt, z, t); }
+            else if(nowater || (!waterrefract && !waterreflect)) { renderwaterstrips(vertwc, z, t); }
+            else if(waterrefract) { renderwaterstrips(vertwmtc, z, t); }
+            else { renderwaterstrips(vertwtc, z, t); }
+            break;
+        }
+
+        case MAT_LAVA:
+        {
+            float t = lastmillis/5000.0f;
+            renderwaterstrips(vertl, z, t);
+        }
+    }
 }
 
 uint calcwatersubdiv(int x, int y, int z, uint size)
@@ -91,12 +109,12 @@ uint calcwatersubdiv(int x, int y, int z, uint size)
     return subdiv;
 }
 
-uint renderwaterlod(int x, int y, int z, uint size)
+uint renderwaterlod(int x, int y, int z, uint size, uchar mat = MAT_WATER)
 {
     if(size <= (uint)(32 << waterlod))
     {
         uint subdiv = calcwatersubdiv(x, y, z, size);
-        if(subdiv < size * 2) rendervertwater(min(subdiv, size), x, y, z, size);
+        if(subdiv < size * 2) rendervertwater(min(subdiv, size), x, y, z, size, mat);
         return subdiv;
     }
     else
@@ -104,31 +122,40 @@ uint renderwaterlod(int x, int y, int z, uint size)
         uint subdiv = calcwatersubdiv(x, y, z, size);
         if(subdiv >= size)
         {
-            if(subdiv < size * 2) rendervertwater(size, x, y, z, size);
+            if(subdiv < size * 2) rendervertwater(size, x, y, z, size, mat);
             return subdiv;
         }
         uint childsize = size / 2,
-             subdiv1 = renderwaterlod(x, y, z, childsize),
-             subdiv2 = renderwaterlod(x + childsize, y, z, childsize),
-             subdiv3 = renderwaterlod(x + childsize, y + childsize, z, childsize),
-             subdiv4 = renderwaterlod(x, y + childsize, z, childsize),
+             subdiv1 = renderwaterlod(x, y, z, childsize, mat),
+             subdiv2 = renderwaterlod(x + childsize, y, z, childsize, mat),
+             subdiv3 = renderwaterlod(x + childsize, y + childsize, z, childsize, mat),
+             subdiv4 = renderwaterlod(x, y + childsize, z, childsize, mat),
              minsubdiv = subdiv1;
         minsubdiv = min(minsubdiv, subdiv2);
         minsubdiv = min(minsubdiv, subdiv3);
         minsubdiv = min(minsubdiv, subdiv4);
         if(minsubdiv < size * 2)
         {
-            if(minsubdiv >= size) rendervertwater(size, x, y, z, size);
+            if(minsubdiv >= size) rendervertwater(size, x, y, z, size, mat);
             else
             {
-                if(subdiv1 >= size) rendervertwater(childsize, x, y, z, childsize);
-                if(subdiv2 >= size) rendervertwater(childsize, x + childsize, y, z, childsize);
-                if(subdiv3 >= size) rendervertwater(childsize, x + childsize, y + childsize, z, childsize);
-                if(subdiv4 >= size) rendervertwater(childsize, x, y + childsize, z, childsize);
+                if(subdiv1 >= size) rendervertwater(childsize, x, y, z, childsize, mat);
+                if(subdiv2 >= size) rendervertwater(childsize, x + childsize, y, z, childsize, mat);
+                if(subdiv3 >= size) rendervertwater(childsize, x + childsize, y + childsize, z, childsize, mat);
+                if(subdiv4 >= size) rendervertwater(childsize, x, y + childsize, z, childsize, mat);
             } 
         }
         return minsubdiv;
     }
+}
+
+void renderlava(materialsurface &m, Texture *tex, float scale)
+{
+    lavaxk = 8.0f/(tex->xs*scale);
+    lavayk = 8.0f/(tex->ys*scale); 
+    lavascroll = lastmillis/2000.0f;
+    if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA) >= (uint)m.csize * 2)
+        rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA);
 }
 
 /* reflective/refractive water */
@@ -152,6 +179,13 @@ Reflection *findreflection(int height);
 VARP(reflectdist, 0, 2000, 10000);
 VAR(waterfog, 0, 150, 10000);
 
+void getwatercolour(uchar *wcol)
+{
+    static const uchar defaultwcol[3] = { 20, 70, 80};
+    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+    else memcpy(wcol, defaultwcol, 3);
+}
+
 void watercolour(int *r, int *g, int *b)
 {
     hdr.watercolour[0] = *r;
@@ -160,6 +194,24 @@ void watercolour(int *r, int *g, int *b)
 }
 
 COMMAND(watercolour, "iii");
+
+VAR(lavafog, 0, 50, 10000);
+
+void getlavacolour(uchar *lcol)
+{
+    static const uchar defaultlcol[3] = { 255, 64, 0 };
+    if(hdr.lavacolour[0] || hdr.lavacolour[1] || hdr.lavacolour[2]) memcpy(lcol, hdr.lavacolour, 3);
+    else memcpy(lcol, defaultlcol, 3);
+}
+
+void lavacolour(int *r, int *g, int *b)
+{
+    hdr.lavacolour[0] = *r;
+    hdr.lavacolour[1] = *g;
+    hdr.lavacolour[2] = *b;
+}
+
+COMMAND(lavacolour, "iii");
 
 Shader *watershader = NULL, *waterreflectshader = NULL, *waterrefractshader = NULL;
 
@@ -253,6 +305,7 @@ void renderwaterff()
     int lastdepth = -1;
     float offset = -1.1f;
 
+    uchar wcolub[3];
     getwatercolour(wcolub);
     loopi(3) wcol[i] = wcolub[i]/255.0f;
 
