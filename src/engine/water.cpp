@@ -84,8 +84,9 @@ void rendervertwater(uint subdiv, int xo, int yo, int z, uint size, uchar mat = 
 
         case MAT_LAVA:
         {
-            float t = lastmillis/5000.0f;
+            float t = lastmillis/2000.0f;
             renderwaterstrips(vertl, z, t);
+            break;
         }
     }
 }
@@ -155,7 +156,7 @@ void renderlava(materialsurface &m, Texture *tex, float scale)
 {
     lavaxk = 8.0f/(tex->xs*scale);
     lavayk = 8.0f/(tex->ys*scale); 
-    lavascroll = lastmillis/2000.0f;
+    lavascroll = lastmillis/1000.0f;
     if(vertwater)
     {
         if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA) >= (uint)m.csize * 2)

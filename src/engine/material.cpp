@@ -526,7 +526,6 @@ void rendermaterials(float zclip, bool refract)
     sortmaterials(vismats, zclip, refract);
     if(vismats.empty()) return;
 
-    if(!editmode || !showmat) glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
 
     Slot &wslot = lookuptexture(-MAT_WATER), &lslot = lookuptexture(-MAT_LAVA);
@@ -534,7 +533,7 @@ void rendermaterials(float zclip, bool refract)
     if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
     int lastorient = -1, lastmat = -1;
     GLenum textured = GL_TEXTURE_2D;
-    bool begin = false, blended = false, overbright = false;
+    bool begin = false, depth = true, blended = false, overbright = false;
     ushort envmapped = EMID_NONE;
     vec normal(0, 0, 0);
 
@@ -557,6 +556,7 @@ void rendermaterials(float zclip, bool refract)
                     if(begin) { glEnd(); begin = false; }
                     if(lastmat!=MAT_WATER || (lastorient==O_TOP)!=(m.orient==O_TOP))
                     {
+                        if(depth) { glDepthMask(GL_FALSE); depth = false; }
                         if(!blended) { glEnable(GL_BLEND); blended = true; }
                         if(overbright) { resettmu(0); overbright = false; }
                         if(m.orient==O_TOP)
@@ -584,9 +584,11 @@ void rendermaterials(float zclip, bool refract)
                 case MAT_LAVA:
                     if(lastmat==MAT_LAVA && lastorient!=O_TOP && m.orient!=O_TOP) break;
                     if(begin) { glEnd(); begin = false; }
-                    if(blended) { glDisable(GL_BLEND); blended = false; }
                     if(lastmat!=MAT_LAVA)
                     {
+                        if(!depth) { glDepthMask(GL_TRUE); depth = true; }
+                        if(blended) { glDisable(GL_BLEND); blended = false; }
+                        if(renderpath==R_FIXEDFUNCTION && !overbright) { setuptmu(0, "C * T x 2"); overbright = true; }
                         float t = lastmillis/2000.0f;
                         t -= int(t);
                         t = 1.0f - fabs(t-0.5f);
@@ -594,7 +596,6 @@ void rendermaterials(float zclip, bool refract)
                         static Shader *lavashader = NULL;
                         if(!lavashader) lavashader = lookupshaderbyname("lava");
                         lavashader->set();
-                        if(renderpath==R_FIXEDFUNCTION && !overbright) { setuptmu(0, "C * T x 2"); overbright = true; }
                         fogtype = 1;
                     }
                     if(textured!=GL_TEXTURE_2D)
@@ -633,6 +634,7 @@ void rendermaterials(float zclip, bool refract)
                     {
                         if(!blended) { glEnable(GL_BLEND); blended = true; }
                         if(overbright) { resettmu(0); overbright = false; }
+                        if(depth) { glDepthMask(GL_FALSE); depth = false; }
                         if(m.envmap!=EMID_NONE && glassenv)
                         {
                             if(renderpath==R_FIXEDFUNCTION)
@@ -671,6 +673,7 @@ void rendermaterials(float zclip, bool refract)
                     if(lastmat<MAT_EDIT)
                     {
                         if(begin) { glEnd(); begin = false; }
+                        if(!depth) { glDepthMask(GL_TRUE); depth = true; }
                         if(!blended) { glEnable(GL_BLEND); blended = true; }
                         if(overbright) { resettmu(0); overbright = false; }
                         glBlendFunc(GL_ZERO, GL_SRC_COLOR);
@@ -740,11 +743,11 @@ void rendermaterials(float zclip, bool refract)
     }
 
     if(begin) glEnd();
+    if(!depth) glDepthMask(GL_TRUE);
     if(blended) glDisable(GL_BLEND);
     if(overbright) resettmu(0);
     if(!lastfogtype) glFogfv(GL_FOG_COLOR, oldfogc);
-    if(!editmode || !showmat) glDepthMask(GL_TRUE);
-    else 
+    if(editmode && showmat)
     {
         foggednotextureshader->set();
         rendermatgrid(vismats);
