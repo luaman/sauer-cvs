@@ -595,7 +595,6 @@ void rendermaterials(float zclip, bool refract)
                         static Shader *lavashader = NULL;
                         if(!lavashader) lavashader = lookupshaderbyname("lava");
                         lavashader->set();
-                        if(renderpath!=R_FIXEDFUNCTION) setlocalparamf("millis", SHPARAM_VERTEX, 0, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
                         fogtype = 1;
                     }
                     if(textured!=GL_TEXTURE_2D)
