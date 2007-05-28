@@ -41,6 +41,12 @@ struct scoreboard : g3d_callback
     
     static int playersort(const fpsent **a, const fpsent **b)
     {
+        if((*a)->state==CS_SPECTATOR)
+        {
+            if((*b)->state==CS_SPECTATOR) return strcmp((*a)->name, (*b)->name);
+            else return 1;
+        }
+        else if((*b)->state==CS_SPECTATOR) return -1;
         if((*a)->frags > (*b)->frags) return -1;
         if((*a)->frags < (*b)->frags) return 1;
         return strcmp((*a)->name, (*b)->name);
