@@ -590,7 +590,7 @@ void rendermaterials(float zclip, bool refract)
                     {
                         float t = lastmillis/2000.0f;
                         t -= int(t);
-                        t = 1.0f - fabs(t-0.5f);
+                        t = 0.5f + fabs(t-0.5f);
                         glColor3f(t, t, t);
                         static Shader *lavashader = NULL;
                         if(!lavashader) lavashader = lookupshaderbyname("lava");
