@@ -163,16 +163,14 @@ void renderlava(materialsurface &m, Texture *tex, float scale)
     }
     else
     {
-        glBegin(GL_TRIANGLE_STRIP);
         glTexCoord2f(lavaxk*(wx1+lavascroll), lavayk*(wy1+lavascroll));
         glVertex3f(wx1, wy1, m.o.z-1.1f);
         glTexCoord2f(lavaxk*(wx1+m.rsize+lavascroll), lavayk*(wy1+lavascroll));
         glVertex3f(wx1+m.rsize, wy1, m.o.z-1.1f);
-        glTexCoord2f(lavaxk*(wx1+lavascroll), lavayk*(wy1+m.csize+lavascroll));
-        glVertex3f(wx1, wy1+m.csize, m.o.z-1.1f);
         glTexCoord2f(lavaxk*(wx1+m.rsize+lavascroll), lavayk*(wy1+m.csize+lavascroll));
         glVertex3f(wx1+m.rsize, wy1+m.csize, m.o.z-1.1f);
-        glEnd();
+        glTexCoord2f(lavaxk*(wx1+lavascroll), lavayk*(wy1+m.csize+lavascroll));
+        glVertex3f(wx1, wy1+m.csize, m.o.z-1.1f);
         xtraverts += 4;
     }
 }

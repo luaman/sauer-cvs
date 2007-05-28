@@ -210,7 +210,7 @@ extern void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, 
 
 // water
 extern float reflecting, refracting;
-extern int reflectdist, waterfog, lavafog;
+extern int reflectdist, vertwater, waterfog, lavafog;
 
 extern void invalidatereflections();
 extern void cleanreflections();

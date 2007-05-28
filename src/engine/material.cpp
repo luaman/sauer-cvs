@@ -92,7 +92,6 @@ void renderwaterfall(materialsurface &m, Texture *tex, float scale, float offset
             d /= 3000.0f;
             break;
     }
-    extern int vertwater;
     float wave = m.ends&2 ? (vertwater ? 0.8f*sinf(t)-1.1f : -1.1f) : 0;
     loopi(4)
     {
@@ -283,7 +282,6 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->orient == start->orient &&
                cur->o[dim] == start->o[dim])
             ++cur;
-         extern int vertwater;
          if(!isliquid(start->material) || start->orient != O_TOP || (!vertwater && renderpath!=R_FIXEDFUNCTION))
          {
             if(start!=matbuf) memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
@@ -712,7 +710,11 @@ void rendermaterials(float zclip, bool refract)
                 break;
 
             case MAT_LAVA:
-                if(m.orient==O_TOP) renderlava(m, lslot.sts[0].t, lslot.sts[0].scale ? lslot.sts[0].scale : 1);
+                if(m.orient==O_TOP) 
+                {
+                    if(!vertwater && !begin) { glBegin(GL_QUADS); begin = true; }
+                    renderlava(m, lslot.sts[0].t, lslot.sts[0].scale ? lslot.sts[0].scale : 1);
+                }
                 else
                 {
                     if(!begin) { glBegin(GL_QUADS); begin = true; }
