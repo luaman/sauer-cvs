@@ -149,13 +149,32 @@ uint renderwaterlod(int x, int y, int z, uint size, uchar mat = MAT_WATER)
     }
 }
 
+VARFP(vertwater, 0, 1, 1, allchanged());
+
 void renderlava(materialsurface &m, Texture *tex, float scale)
 {
     lavaxk = 8.0f/(tex->xs*scale);
     lavayk = 8.0f/(tex->ys*scale); 
     lavascroll = lastmillis/2000.0f;
-    if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA) >= (uint)m.csize * 2)
-        rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA);
+    if(vertwater)
+    {
+        if(renderwaterlod(m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA) >= (uint)m.csize * 2)
+            rendervertwater(m.csize, m.o.x, m.o.y, m.o.z, m.csize, MAT_LAVA);
+    }
+    else
+    {
+        glBegin(GL_TRIANGLE_STRIP);
+        glTexCoord2f(lavaxk*(wx1+lavascroll), lavayk*(wy1+lavascroll));
+        glVertex3f(wx1, wy1, m.o.z-1.1f);
+        glTexCoord2f(lavaxk*(wx1+m.rsize+lavascroll), lavayk*(wy1+lavascroll));
+        glVertex3f(wx1+m.rsize, wy1, m.o.z-1.1f);
+        glTexCoord2f(lavaxk*(wx1+lavascroll), lavayk*(wy1+m.csize+lavascroll));
+        glVertex3f(wx1, wy1+m.csize, m.o.z-1.1f);
+        glTexCoord2f(lavaxk*(wx1+m.rsize+lavascroll), lavayk*(wy1+m.csize+lavascroll));
+        glVertex3f(wx1+m.rsize, wy1+m.csize, m.o.z-1.1f);
+        glEnd();
+        xtraverts += 4;
+    }
 }
 
 /* reflective/refractive water */
@@ -371,8 +390,6 @@ void renderwaterff()
 
     glEnable(GL_CULL_FACE);
 }
-
-VARFP(vertwater, 0, 1, 1, allchanged());
 
 void renderwater()
 {

@@ -92,7 +92,8 @@ void renderwaterfall(materialsurface &m, Texture *tex, float scale, float offset
             d /= 3000.0f;
             break;
     }
-    float wave = m.ends&2 ? 0.8f*sinf(t)-1.1f : 0;
+    extern int vertwater;
+    float wave = m.ends&2 ? (vertwater ? 0.8f*sinf(t)-1.1f : -1.1f) : 0;
     loopi(4)
     {
         vec v(m.o.tovec());
@@ -590,7 +591,7 @@ void rendermaterials(float zclip, bool refract)
                     {
                         float t = lastmillis/2000.0f;
                         t -= int(t);
-                        t = 0.5f + fabs(t-0.5f);
+                        t = 1.0f - fabs(t-0.5f);
                         glColor3f(t, t, t);
                         static Shader *lavashader = NULL;
                         if(!lavashader) lavashader = lookupshaderbyname("lava");
