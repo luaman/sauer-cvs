@@ -575,8 +575,8 @@ void initserver(bool dedicated)
         SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
         #endif
         printf("dedicated server started, waiting for clients...\nCtrl-C to exit\n\n");
-        atexit(cleanupserver);
         atexit(enet_deinitialize);
+        atexit(cleanupserver);
         for(;;) serverslice(time(NULL), 5);
     }
 }
