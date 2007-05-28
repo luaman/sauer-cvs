@@ -14,7 +14,8 @@ static vector<char *> guistack;
 static vector<char *> executelater;
 static bool clearlater = false;
 
-VARP(menudistance, 16, 40, 256);
+VARP(menudistance,  16, 40,  256);
+VARP(menuautoclose, 32, 120, 4096);
 
 vec menuinfrontofplayer()
 { 
@@ -267,7 +268,7 @@ void g3d_mainmenu()
 {
     if(!guistack.empty()) 
     {   
-        if(camera1->o.dist(menupos) > menudistance*3) cleargui();
+        if(camera1->o.dist(menupos) > menuautoclose) cleargui();
         else g3d_addgui(&mmcb, menupos, true);
     }
 }

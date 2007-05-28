@@ -13,11 +13,18 @@ string cgzname, bakname, pcfname, mcfname, picname;
 
 VARP(savebak, 0, 2, 2);
 
+void cutogz(char *s)
+{
+    char *ogzp = strstr(s, ".ogz");
+    if(ogzp) *ogzp = '\0';
+}
+
 void setnames(const char *fname, const char *cname = 0)
 {
     if(!cname) cname = fname;
     string name, pakname, mapname, cfgname;
     s_strncpy(name, cname, 100);
+    cutogz(name);
     char *slash = strpbrk(name, "/\\");
     if(slash)
     {
@@ -31,6 +38,7 @@ void setnames(const char *fname, const char *cname = 0)
     }
     if(strpbrk(fname, "/\\")) s_strcpy(mapname, fname);
     else s_sprintf(mapname)("base/%s", fname);
+    cutogz(mapname);
 
     s_sprintf(cgzname)("packages/%s.ogz", mapname);
     if(savebak==1) s_sprintf(bakname)("packages/%s.BAK", mapname);

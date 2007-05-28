@@ -1408,7 +1408,7 @@ COMMAND(editmat, "s");
 
 #define TEXTURE_WIDTH 10
 #define TEXTURE_HEIGHT 7
-extern int menudistance;
+extern int menudistance, menuautoclose;
 
 VAR(thumbtime, 0, 50, 1000);
 
@@ -1468,7 +1468,7 @@ struct texturegui : g3d_callback
     {   
         if(!menuon) return;
         filltexlist();
-        if(!editmode || camera1->o.dist(menupos) > menudistance*3) menuon = false;
+        if(!editmode || camera1->o.dist(menupos) > menuautoclose) menuon = false;
         else g3d_addgui(this, menupos); //follow?
     }
 } gui;
