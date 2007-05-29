@@ -100,10 +100,17 @@ struct clientcom : iclientcom
         int n = strtol(arg, &end, 10);
         if(!cl.players.inrange(n)) return -1;
         if(*arg && !*end) return n;
+        // try case sensitive first
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
             if(o && !strcmp(arg, o->name)) return o->clientnum;
+        }
+        // nothing found, try case insensitive
+        loopi(cl.numdynents())
+        {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(o && !strcasecmp(arg, o->name)) return o->clientnum;
         }
         return -1;
     }

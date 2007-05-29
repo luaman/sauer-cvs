@@ -61,6 +61,7 @@ typedef unsigned int uint;
 #pragma warning (disable: 4996) // 'strncpy' was declared deprecated
 #endif
 
+#define strcasecmp _stricmp
 #define PATHDIV '\\'
 #else
 #define __cdecl
