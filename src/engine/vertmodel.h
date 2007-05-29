@@ -600,7 +600,7 @@ struct vertmodel : model
             return this;
         }
 
-        void calctagtransform(int frame, int i, float m[12], float n[12])
+        void concattagtransform(int frame, int i, float m[12], float n[12])
         {
             tag &t = tags[frame*numtags + i];
             loop(y, 3)
@@ -766,7 +766,7 @@ struct vertmodel : model
             loopv(links) if(links[i].p)
             {
                 float n[12];
-                meshes->calctagtransform(frame, i, m, n);
+                meshes->concattagtransform(frame, i, m, n);
                 links[i].p->calcbb(frame, bbmin, bbmax, n);
             }
         }
@@ -783,7 +783,7 @@ struct vertmodel : model
             loopv(links) if(links[i].p)
             {
                 float n[12];
-                meshes->calctagtransform(frame, i, m, n);
+                meshes->concattagtransform(frame, i, m, n);
                 links[i].p->gentris(frame, tris, n);
             }
         }
