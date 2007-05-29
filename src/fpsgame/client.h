@@ -887,7 +887,7 @@ struct clientcom : iclientcom
 
     void gotoplayer(const char *arg)
     {
-        if(!remote || (player1->state!=CS_SPECTATOR && player1->state!=CS_EDIT)) return;
+        if(!remote || (player1->state!=CS_SPECTATOR && player1->state!=CS_EDITING)) return;
         int i = parseplayer(arg);
         if(i>=0 && i!=player1->clientnum) 
         {
