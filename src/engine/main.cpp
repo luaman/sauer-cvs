@@ -338,7 +338,7 @@ int main(int argc, char **argv)
     #endif
 
     bool dedicated = false;
-    int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0, fsaa = 0, stencil = 1;
+    int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0, fsaa = 0, stencil = 1, vsync = -1;
     char *load = NULL, *initscript = NULL;
     
     #define log(s) puts("init: " s)
@@ -354,6 +354,7 @@ int main(int argc, char **argv)
             case 'z': depth = atoi(&argv[i][2]); break;
             case 'b': bpp = atoi(&argv[i][2]); break;
             case 'a': fsaa = atoi(&argv[i][2]); break;
+            case 'v': vsync = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
             case 's': stencil = atoi(&argv[i][2]); break;
             case 'f': 
@@ -409,6 +410,8 @@ int main(int argc, char **argv)
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
         hasstencil = true;
     }
+    if(vsync>=0) SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, vsync);
+
     int resize = SDL_RESIZABLE;
     #if defined(WIN32) || defined(__APPLE__)
     resize = 0;
