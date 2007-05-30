@@ -725,7 +725,7 @@ void addreflection(materialsurface &m)
 extern vtxarray *visibleva;
 extern void drawreflection(float z, bool refract, bool clear);
 
-VARP(reflectfps, 1, 30, 200);
+VARP(reflectfps, 1, 200, 200);
 
 int rplanes = 0;
 
