@@ -49,7 +49,7 @@ VERTWN(vertwtcn, {
 })
 VERTWT(vertwmtc, {
     glColor4f(1, 1, 1, 0.2f + fabs(s)*0.1f);
-    glMultiTexCoord3f_(GL_TEXTURE0_ARB, v1+duv, v2+duv, v3+h);
+    glMultiTexCoord3f_(GL_TEXTURE0_ARB, v1-duv, v2+duv, v3+h);
     glMultiTexCoord3f_(GL_TEXTURE1_ARB, v1+duv, v2+duv, v3+h);
 })
 VERTWN(vertwmtcn, {
