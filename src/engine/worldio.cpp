@@ -479,9 +479,6 @@ void load_world(const char *mname, const char *cname)        // still supports a
 
     gzclose(f);
 
-// FIXME: need to load texture slots before VAs can be properly sorted    
-//    allchanged();
-
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);
 
