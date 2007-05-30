@@ -292,7 +292,7 @@ void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
 }
 #endif
 
-#define MAXFPSHISTORY 100
+#define MAXFPSHISTORY 60
 
 int fpspos = 0, fpshistory[MAXFPSHISTORY];
 

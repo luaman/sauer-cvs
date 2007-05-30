@@ -178,7 +178,7 @@ extern void restorevfcP();
 extern void rendermapmodels();
 extern void rendergeom();
 extern void renderoutline();
-extern void rendersky(bool explicitonly = false, float zreflect = 0);
+extern bool rendersky(bool explicitonly = false, float zreflect = 0);
 
 extern int isvisiblesphere(float rad, const vec &cv);
 extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);

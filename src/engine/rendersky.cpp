@@ -87,17 +87,19 @@ void draw_envbox(int w, float zclip = 0.0f)
 VARP(sparklyfix, 0, 1, 1);
 VAR(showsky, 0, 1, 1); 
 
-void drawskylimits(bool explicitonly, float zreflect)
+bool drawskylimits(bool explicitonly, float zreflect)
 {
     nocolorshader->set();
 
     glDisable(GL_TEXTURE_2D);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    rendersky(explicitonly, zreflect);
+    bool rendered = rendersky(explicitonly, zreflect);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glEnable(GL_TEXTURE_2D);
 
     defaultshader->set();
+
+    return rendered;
 }
 
 void drawskyoutline()
@@ -119,9 +121,12 @@ void drawskyoutline()
 
 void drawskybox(int farplane, bool limited, float zreflect)
 {
-    glDisable(GL_FOG);
+    if(limited && !zreflect) 
+    {
+        if(!drawskylimits(false, 0) && !editmode && insideworld(camera1->o)) return;
+    }
 
-    if(limited && !zreflect) drawskylimits(false, 0);
+    glDisable(GL_FOG);
 
     glPushMatrix();
     glLoadIdentity();

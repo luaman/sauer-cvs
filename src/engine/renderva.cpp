@@ -1443,7 +1443,7 @@ void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
     }
 }
 
-void rendersky(bool explicitonly, float zreflect)
+bool rendersky(bool explicitonly, float zreflect)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -1469,11 +1469,11 @@ void rendersky(bool explicitonly, float zreflect)
 
     glPopMatrix();
 
-    if(hasVBO)
-    {
-        glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-    }
+    if(skyvbufGL) glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+    if(skyebufGL) glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+
     glDisableClientState(GL_VERTEX_ARRAY);
+
+    return skyvbufGL || skyebufGL;
 }
 
