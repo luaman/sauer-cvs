@@ -459,27 +459,22 @@ void load_world(const char *mname, const char *cname)        // still supports a
     show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
 
-    if(hdr.version < 7 || !hdr.lightmaps) clearlights();
-    else
+    if(hdr.version >= 7) loopi(hdr.lightmaps)
     {
-        loopi(hdr.lightmaps)
+        show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");
+        LightMap &lm = lightmaps.add();
+        if(hdr.version >= 17)
         {
-            show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");
-            LightMap &lm = lightmaps.add();
-            if(hdr.version >= 17)
+            int type = gzgetc(f);
+            lm.type = type&0xF;
+            if(hdr.version >= 20 && type&0x80)
             {
-                int type = gzgetc(f);
-                lm.type = type&0xF;
-                if(hdr.version >= 20 && type&0x80)
-                {
-                    lm.unlitx = readushort(f);
-                    lm.unlity = readushort(f);
-                }
+                lm.unlitx = readushort(f);
+                lm.unlity = readushort(f);
             }
-            gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
-            lm.finalize();
         }
-        initlights();
+        gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
+        lm.finalize();
     }
 
     gzclose(f);
@@ -496,10 +491,6 @@ void load_world(const char *mname, const char *cname)        // still supports a
     execfile(mcfname);
     overrideidents = false;
 
-    allchanged(true);
-    computescreen(mname, mapshot!=crosshair ? mapshot : NULL);
-    attachentities();
-
     loopv(ents)
     {
         extentity &e = *ents[i];
@@ -507,9 +498,14 @@ void load_world(const char *mname, const char *cname)        // still supports a
         {
             mapmodelinfo &mmi = getmminfo(e.attr2);
             if(!&mmi) conoutf("could not find map model: %d", e.attr2);
-            else if(!loadmodel(mmi.name)) conoutf("could not load model: %s", mmi.name);
+            else if(!loadmodel(NULL, e.attr2, true)) conoutf("could not load model: %s", mmi.name);
         }
     }
+
+    initlights();
+    allchanged(true);
+    computescreen(mname, mapshot!=crosshair ? mapshot : NULL);
+    attachentities();
 
     startmap(cname ? cname : mname);
 }

@@ -127,8 +127,6 @@ struct md2 : vertmodel
             FILE *file = fopen(filename, "rb");
             if(!file) return false;
 
-            show_out_of_renderloop_progress(0, filename);
-
             md2_header header;
             fread(&header, sizeof(md2_header), 1, file);
             endianswap(&header, sizeof(int), sizeof(md2_header)/sizeof(int));

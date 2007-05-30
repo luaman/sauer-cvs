@@ -260,6 +260,7 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
             if(attenuation <= 0) continue;
         }
         if(mag) ray.mul(1.0f / mag);
+        else { ray = normal; ray.neg(); }
         if(light.attached && light.attached->type==ET_SPOTLIGHT)
         {
             vec spot(vec(light.attached->o).sub(light.o).normalize());
@@ -1225,7 +1226,7 @@ static void find_unlit(int i)
 
 void initlights()
 {
-    if(nolights || (fullbright && editmode))
+    if(nolights || (fullbright && editmode) || lightmaps.empty())
     {
         clearlights();
         return;

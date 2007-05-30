@@ -304,7 +304,7 @@ struct mapmodelinfo { string name; int tex; model *m; };
 
 extern void findanims(const char *pattern, vector<int> &anims);
 extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks);
-extern model *loadmodel(const char *name, int i = -1);
+extern model *loadmodel(const char *name, int i = -1, bool msg = false);
 extern mapmodelinfo &getmminfo(int i);
 extern void startmodelquery(occludequery *query);
 extern void endmodelquery();

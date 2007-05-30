@@ -175,7 +175,7 @@ COMMAND(mapmodelreset, "");
 
 hashtable<const char *, model *> mdllookup;
 
-model *loadmodel(const char *name, int i)
+model *loadmodel(const char *name, int i, bool msg)
 {
     if(!name)
     {
@@ -189,6 +189,11 @@ model *loadmodel(const char *name, int i)
     if(mm) m = *mm;
     else
     { 
+        if(msg)
+        {
+            s_sprintfd(filename)("packages/models/%s", name);
+            show_out_of_renderloop_progress(0, filename);
+        }
         m = new md2(name);
         loadingmodel = m;
         if(!m->load())
