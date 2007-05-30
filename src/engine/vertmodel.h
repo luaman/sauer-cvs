@@ -117,13 +117,14 @@ struct vertmodel : model
             else if(m->shader) m->shader->set();
             else
             {
-                static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshadermasksnospec = NULL, *modelshaderenvmap = NULL;
+                static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshadermasksnospec = NULL, *modelshaderenvmap = NULL, *modelshaderenvmapnospec = NULL;
 
-                if(!modelshader)             modelshader            = lookupshaderbyname("stdmodel");
-                if(!modelshadernospec)       modelshadernospec      = lookupshaderbyname("nospecmodel");
-                if(!modelshadermasks)        modelshadermasks       = lookupshaderbyname("masksmodel");
-                if(!modelshadermasksnospec)  modelshadermasksnospec = lookupshaderbyname("masksnospecmodel");
-                if(!modelshaderenvmap)       modelshaderenvmap      = lookupshaderbyname("envmapmodel");
+                if(!modelshader)             modelshader             = lookupshaderbyname("stdmodel");
+                if(!modelshadernospec)       modelshadernospec       = lookupshaderbyname("nospecmodel");
+                if(!modelshadermasks)        modelshadermasks        = lookupshaderbyname("masksmodel");
+                if(!modelshadermasksnospec)  modelshadermasksnospec  = lookupshaderbyname("masksnospecmodel");
+                if(!modelshaderenvmap)       modelshaderenvmap       = lookupshaderbyname("envmapmodel");
+                if(!modelshaderenvmapnospec) modelshaderenvmapnospec = lookupshaderbyname("envmapnospecmodel");
 
                 setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
                 setenvparamf("ambient", SHPARAM_VERTEX, 3, m->ambient, m->ambient, m->ambient, 1);
@@ -132,7 +133,8 @@ struct vertmodel : model
 
                 if(as.anim&ANIM_ENVMAP && envmapmax>0)
                 {
-                    modelshaderenvmap->set();
+                    if(lightmodels && (masked || m->spec>=0.01f)) modelshaderenvmap->set();
+                    else modelshaderenvmapnospec->set();
                     setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
                 }
                 else if(masked && lightmodels) modelshadermasks->set();
