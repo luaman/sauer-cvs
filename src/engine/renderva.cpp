@@ -947,7 +947,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 if(pass==RENDERPASS_GLOW && noglow) continue;
                 else if(glow)
                 {
-                    if(noglow) { glActiveTexture_(GL_TEXTURE2_ARB); glDisable(GL_TEXTURE_2D); }
+                    if(noglow) { glActiveTexture_(GL_TEXTURE2_ARB); glDisable(GL_TEXTURE_2D); glow = false; }
                     glActiveTexture_(GL_TEXTURE0_ARB);
                 }
             }
