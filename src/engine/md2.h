@@ -277,6 +277,25 @@ struct md2 : vertmodel
     }
 };
 
+void md2pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pitchmax)
+{
+    if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; }
+    md2::part &mdl = *loadingmd2->parts.last();
+
+    mdl.pitchscale = *pitchscale;
+    mdl.pitchoffset = *pitchoffset;
+    if(*pitchmin || *pitchmax)
+    {
+        mdl.pitchmin = *pitchmin;
+        mdl.pitchmax = *pitchmax;
+    }
+    else
+    {
+        mdl.pitchmin = -360*mdl.pitchscale;
+        mdl.pitchmax = 360*mdl.pitchscale;
+    }
+}
+
 void md2anim(char *anim, int *frame, int *range, float *speed, int *priority)
 {
     if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; }
@@ -289,5 +308,6 @@ void md2anim(char *anim, int *frame, int *range, float *speed, int *priority)
     }
 }
 
+COMMAND(md2pitch, "ffff");
 COMMAND(md2anim, "siifi");
 
