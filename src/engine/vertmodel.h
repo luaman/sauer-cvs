@@ -944,7 +944,7 @@ struct vertmodel : model
             if(pitchmin || pitchmax) angle = max(pitchmin, min(pitchmax, angle));
             if(!angle) return 0;
 
-            float c = cosf(angle*RAD), s = sinf(angle*RAD);
+            float c = cosf(-angle*RAD), s = sinf(-angle*RAD);
             vec d(axis);
             axis.rotate(c, s, d);
             if(!(anim&ANIM_NOSKIN))
