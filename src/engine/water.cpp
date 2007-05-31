@@ -725,11 +725,9 @@ void addreflection(materialsurface &m)
 extern vtxarray *visibleva;
 extern void drawreflection(float z, bool refract, bool clear);
 
-VARP(reflectfps, 1, 200, 200);
-
 int rplanes = 0;
 
-static int lastreflectframe = 0, lastquery = 0;
+static int lastquery = 0;
 
 void queryreflections()
 {
@@ -754,11 +752,11 @@ void queryreflections()
 
     if((editmode && showmat) || !hasOQ || !oqfrags || !oqwater || nowater || (!waterreflect && !waterrefract)) return;
 
-    int refs = 0, minmillis = 1000/reflectfps;
+    int refs = 0;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
-        if(ref.height<0 || ref.lastused<totalmillis || totalmillis-lastreflectframe<minmillis || ref.matsurfs.empty())
+        if(ref.height<0 || ref.lastused<totalmillis || ref.matsurfs.empty())
         {
             ref.query = NULL;
             continue;
@@ -846,9 +844,6 @@ void drawreflections()
 {
     if(editmode && showmat) return;
     if(nowater || (!waterreflect && !waterrefract)) return;
-    int minmillis = 1000/reflectfps;
-    if(lastquery-lastreflectframe<minmillis) return;
-    lastreflectframe = lastquery-(lastquery%minmillis);
 
     static int lastdrawn = 0;
     int refs = 0, n = lastdrawn;
