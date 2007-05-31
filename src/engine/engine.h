@@ -51,7 +51,7 @@ extern PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2D_;
 extern PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbuffer_;
 
 // GL_EXT_draw_range_elements
-extern PFNGLDRAWRANGEELEMENTSEXTPROC       glDrawRangeElements_;
+extern PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_;
 
 #define FONTH 64
 #define MINRESW 640

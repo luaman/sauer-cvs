@@ -65,7 +65,7 @@ PFNGLUNIFORM4FVARBPROC                glUniform4fv_               = NULL;
 PFNGLUNIFORM1IARBPROC                 glUniform1i_                = NULL;
 
 // GL_EXT_draw_range_elements
-PFNGLDRAWRANGEELEMENTSEXTPROC         glDrawRangeElements_        = NULL;
+PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_ = NULL;
 
 void *getprocaddress(const char *name)
 {

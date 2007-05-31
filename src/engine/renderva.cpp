@@ -970,7 +970,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
         float scale = slot.sts[0].scale;
         if(!scale) scale = 1;
-        loopl(3) if (lod.eslist[i].length[l])
+        loopl(3) if(lod.eslist[i].length[l])
         {
             if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys || lastscale!=scale || (s && s->type&SHADER_GLSLANG))
             {
