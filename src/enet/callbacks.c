@@ -7,7 +7,8 @@
 
 static ENetCallbacks callbacks = { malloc, free, rand };
 
-int enet_initialize_with_callbacks (ENetVersion version, const ENetCallbacks * inits)
+int
+enet_initialize_with_callbacks (ENetVersion version, const ENetCallbacks * inits)
 {
    if (version != ENET_VERSION)
      return -1;
@@ -27,7 +28,8 @@ int enet_initialize_with_callbacks (ENetVersion version, const ENetCallbacks * i
    return enet_initialize ();
 }
            
-void *enet_malloc (size_t size)
+void *
+enet_malloc (size_t size)
 {
    void * memory = callbacks.malloc (size);
 
@@ -37,12 +39,14 @@ void *enet_malloc (size_t size)
    return memory;
 }
 
-void enet_free (void * memory)
+void
+enet_free (void * memory)
 {
    callbacks.free (memory);
 }
 
-int enet_rand (void)
+int
+enet_rand (void)
 {
    return callbacks.rand ();
 }
