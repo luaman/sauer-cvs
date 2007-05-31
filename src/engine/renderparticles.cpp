@@ -177,7 +177,7 @@ static void inithemisphere(int hres, int depth)
     loopi(hres) genface(depth, 0, i+1, 1+(i+1)%hres);
 }
 
-GLuint createexpmodtex(int size, float minval)
+static GLuint createexpmodtex(int size, float minval)
 {
     uchar *data = new uchar[size*size], *dst = data;
     loop(y, size) loop(x, size)
@@ -204,7 +204,7 @@ static struct expvert
 static GLuint expmodtex[2] = {0, 0};
 static GLuint lastexpmodtex = 0;
 
-void setupexplosion()
+static void setupexplosion()
 {
     if(!hemiindices) inithemisphere(5, 2);
    
@@ -273,7 +273,7 @@ void setupexplosion()
     }
 }
  
-void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
+static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
 {
     if((renderpath!=R_FIXEDFUNCTION || maxtmus>=2) && lastexpmodtex != expmodtex[inside ? 1 : 0])
     {
@@ -309,12 +309,16 @@ void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
     }
 }
 
-void cleanupexplosion()
+static void cleanupexplosion()
 {
     glDisableClientState(GL_VERTEX_ARRAY);
     if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    if(renderpath!=R_FIXEDFUNCTION) foggedshader->set();
+    if(renderpath!=R_FIXEDFUNCTION) 
+    {
+        foggedshader->set();
+        if(reflecting && refracting) setfogplane(1, refracting);
+    }
     else if(maxtmus>=2)
     {
         resettmu(0);
@@ -376,7 +380,7 @@ void particleinit()
     loopi(MAXPARTYPES) parlist[i] = NULL;
 }
 
-particle *newparticle(const vec &o, const vec &d, int fade, int type, int color)
+static particle *newparticle(const vec &o, const vec &d, int fade, int type, int color)
 {
     if(!parempty)
     {
@@ -413,9 +417,11 @@ enum
 
     PT_ENT  = 1<<8,
     PT_MOD  = 1<<9,
-    PT_RND4 = 1<<10
+    PT_RND4 = 1<<10,
+    PT_LERP = 1<<11 // Use very sparingly!
 };
 
+// @TODO reorder so as to draw meters & lerps first to reduce visual errors
 static struct parttype { int type; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
 {
     { 0,               2,  6, 0.24f }, // 0 sparks 
@@ -436,42 +442,8 @@ static struct parttype { int type; int gr, tex; float sz; } parttypes[MAXPARTYPE
     { PT_FIREBALL,     0,  7,  4.0f }, // 15 explosion fireball
     { PT_ENT,        -20,  2,  2.4f }, // 16 big  slowly rising smoke, entity
     { 0,             -15,  2,  2.4f }, // 17 big  fast rising smoke          
-    { PT_ENT|PT_TRAIL, 2,  0, 0.60f }, // 18 water, entity 
+    { PT_ENT|PT_TRAIL|PT_LERP, 2,  0, 0.60f }, // 18 water, entity 
     { PT_ENT,         20,  1,  4.8f }  // 19 fireball1, entity
-};
-
-
-//maps 'classic' particles types to newer types and colors - @TODO edit public funcs and weapons.h to bypass this and use types&colors
-static struct partmap { int type; int color; } partmaps[] = 
-{
-    {  0, 0xB49B4B}, // 0 yellow: sparks 
-    {  1, 0x897661}, // 1 greyish-brown:   small slowly rising smoke
-    {  2, 0x3232FF}, // 2 blue:   edit mode entities
-    {  3, 0x19FFFF}, // 3 red:    blood spats (note: rgb is inverted)
-    {  4, 0xFFC8C8}, // 4 yellow: fireball1
-    {  5, 0x897661}, // 5 greyish-brown:   big  slowly rising smoke   
-    {  6, 0xFFFFFF}, // 6 blue:   fireball2
-    {  7, 0xFFFFFF}, // 7 green:  big fireball3
-    {  8, 0xFF4B19}, // 8 TEXT RED
-    {  8, 0x32FF64}, // 9 TEXT GREEN
-    {  9, 0xFFC864}, // 10 yellow flare
-    { 10, 0x1EC850}, // 11 TEXT DARKGREEN, SMALL, NON-MOVING
-    { 11, 0xFFFFFF}, // 12 green small fireball3
-    { 10, 0xFF4B19}, // 13 TEXT RED, SMALL, NON-MOVING
-    { 10, 0xB4B4B4}, // 14 TEXT GREY, SMALL, NON-MOVING
-    {  8, 0xFFC864}, // 15 TEXT YELLOW
-    { 10, 0x6496FF}, // 16 TEXT BLUE, SMALL, NON-MOVING
-    { 12, 0xFF1932}, // 17 METER RED, SMALL, NON-MOVING
-    { 12, 0x3219FF}, // 18 METER BLUE, SMALL, NON-MOVING
-    { 13, 0xFF1932}, // 19 METER RED vs. BLUE, SMALL, NON-MOVING (note swaps r<->b)
-    { 13, 0x3219FF}, // 20 METER BLUE vs. RED, SMALL, NON-MOVING (note swaps r<->b)
-    { 14, 0x897661}, // 21 greyish-brown:   small  slowly sinking smoke trail
-    { 15, 0xFF8080}, // 22 red explosion fireball
-    { 15, 0xA0C080}, // 23 orange explosion fireball
-    { 16, 0x897661}, // 24 greyish-brown:   big  slowly rising smoke
-    { 17, 0x897661}, // 25 greyish-brown:   big  fast rising smoke          
-    { 18, 0x3232FF}, // 26 water  
-    { 19, 0xFFC8C8}  // 27 yellow: fireball1
 };
 
 void render_particles(int time)
@@ -498,21 +470,31 @@ void render_particles(int time)
         int type = pt.type&0xFF;
         
         if(pt.type&PT_MOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-
-        if(type==PT_METER || type==PT_METERVS)
-        {
-            glDisable(GL_BLEND);
-            glDisable(GL_TEXTURE_2D);
-            foggednotextureshader->set();
+        else if(pt.type&PT_LERP) 
+        {   
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glFogfv(GL_FOG_COLOR, oldfogc);
         }
-        else if(type==PT_FIREBALL) setupexplosion();
-
-        bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
-                
-        if(quads) glBegin(GL_QUADS);        
-         
+    
+        bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
+        if(quads) glBegin(GL_QUADS);
+        else
+        {
+           if(type==PT_FIREBALL) setupexplosion();
+           else
+           {
+                if(type==PT_METER || type==PT_METERVS)
+                {
+                    glDepthMask(GL_TRUE); //is opaque
+                    glDisable(GL_BLEND);
+                    glDisable(GL_TEXTURE_2D);
+                    foggednotextureshader->set();
+                }
+                glFogfv(GL_FOG_COLOR, oldfogc);
+           } 
+        }
+            
         for(particle *p, **pp = &parlist[i]; (p = *pp);)
         {   
             int ts = (lastmillis-p->millis);
@@ -666,21 +648,31 @@ void render_particles(int time)
             else
                 pp = &p->next;
         }
+        
         if(quads) glEnd();
+        else
+        {
+            if(type==PT_FIREBALL) cleanupexplosion();
+            else
+            {
+                if(type==PT_METER || type==PT_METERVS)
+                {
+                    glDepthMask(GL_FALSE);
+                    glEnable(GL_TEXTURE_2D);
+                    glEnable(GL_BLEND);
+                    foggedshader->set();
+                }
+                else glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                glFogfv(GL_FOG_COLOR, zerofog);
+            }
+        }
+        
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-        if(type==PT_TEXT || type==PT_TEXTUP) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-        else if(type==PT_METER || type==PT_METERVS)
+        else if(pt.type&PT_LERP) 
         {
-            foggedshader->set();
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             glFogfv(GL_FOG_COLOR, zerofog);
-            glEnable(GL_TEXTURE_2D);
-            glEnable(GL_BLEND);
-        }
-        else if(type==PT_FIREBALL) 
-        {
-            cleanupexplosion();
-            if(renderpath!=R_FIXEDFUNCTION && reflecting && refracting) setfogplane(1, refracting);
-        }
+        } 
     }
 
     if(flarecnt && !reflecting && !refracting) //the camera is hardcoded into the flares.. reflecting would be nonsense
@@ -702,37 +694,17 @@ void render_particles(int time)
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     } 
-   
-    /* TESTING 
-    int tot = flarecnt;   
-    loopi(MAXPARTYPES) 
-    {
-        int cnt = 0;
-        if(parlist[i]) for(particle *p = parlist[i]; p; p=p->next) cnt++;
-        printf("%3d ", cnt);
-        tot+=cnt;
-    }
-    printf("%3d = %d\n", flarecnt, tot);
-    // - sparks, blood and trails are the main users...
-    */
 }
 
 VARP(maxparticledistance, 256, 512, 4096);
 
-void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
-{
-    if(!emit_particles() || (delay > 0 && rnd(delay) != 0)) return;
-    particle_splash(type, num, fade, p);
-}
 
-void particle_splash(int type, int num, int fade, const vec &p)
+//@TODO - extend this to splash in different shapes, e.g. cubes, curtains...
+static void splash(int type, int color, int radius, int num, int fade, const vec &p)
 {
     if(camera1->o.dist(p) > maxparticledistance) return;
-    int ptype = partmaps[type].type;
-    int color = partmaps[type].color;
     loopi(num)
     {
-        const int radius = (type==5 || type == 24) ? 50 : 150;   
         int x, y, z;
         do
         {
@@ -742,8 +714,61 @@ void particle_splash(int type, int num, int fade, const vec &p)
         }
         while(x*x+y*y+z*z>radius*radius);
     	vec tmp = vec((float)x, (float)y, (float)z);
-        newparticle(p, tmp, rnd(fade*3)+1, ptype, color);
+        newparticle(p, tmp, rnd(fade*3)+1, type, color);
     }
+}
+
+static void regularsplash(int type, int color, int radius, int num, int fade, const vec &p, int delay=0) 
+{
+    if(!emit_particles() || (delay > 0 && rnd(delay) != 0)) return;
+    splash(type, color, radius, num, fade, p);
+}
+
+
+
+//maps 'classic' particles types to newer types and colors
+// @NOTE potentially this and the following public funcs can be tidied up, but lets please defer that for a little bit...
+static struct partmap { int type; int color; } partmaps[] = 
+{
+    {  0, 0xB49B4B}, // 0 yellow: sparks 
+    {  1, 0x897661}, // 1 greyish-brown:   small slowly rising smoke
+    {  2, 0x3232FF}, // 2 blue:   edit mode entities
+    {  3, 0x19FFFF}, // 3 red:    blood spats (note: rgb is inverted)
+    {  4, 0xFFC8C8}, // 4 yellow: fireball1
+    {  5, 0x897661}, // 5 greyish-brown:   big  slowly rising smoke   
+    {  6, 0xFFFFFF}, // 6 blue:   fireball2
+    {  7, 0xFFFFFF}, // 7 green:  big fireball3
+    {  8, 0xFF4B19}, // 8 TEXT RED
+    {  8, 0x32FF64}, // 9 TEXT GREEN
+    {  9, 0xFFC864}, // 10 yellow flare
+    { 10, 0x1EC850}, // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+    { 11, 0xFFFFFF}, // 12 green small fireball3
+    { 10, 0xFF4B19}, // 13 TEXT RED, SMALL, NON-MOVING
+    { 10, 0xB4B4B4}, // 14 TEXT GREY, SMALL, NON-MOVING
+    {  8, 0xFFC864}, // 15 TEXT YELLOW
+    { 10, 0x6496FF}, // 16 TEXT BLUE, SMALL, NON-MOVING
+    { 12, 0xFF1932}, // 17 METER RED, SMALL, NON-MOVING
+    { 12, 0x3219FF}, // 18 METER BLUE, SMALL, NON-MOVING
+    { 13, 0xFF1932}, // 19 METER RED vs. BLUE, SMALL, NON-MOVING (note swaps r<->b)
+    { 13, 0x3219FF}, // 20 METER BLUE vs. RED, SMALL, NON-MOVING (note swaps r<->b)
+    { 14, 0x897661}, // 21 greyish-brown:   small  slowly sinking smoke trail
+    { 15, 0xFF8080}, // 22 red explosion fireball
+    { 15, 0xA0C080}, // 23 orange explosion fireball
+    { 16, 0x897661}, // 24 greyish-brown:   big  slowly rising smoke
+    { 17, 0x897661}, // 25 greyish-brown:   big  fast rising smoke          
+    { 18, 0x3232FF}, // 26 water  
+    { 19, 0xFFC8C8}  // 27 yellow: fireball1
+};
+
+void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
+{
+    int radius = (type==5 || type == 24) ? 50 : 150;
+    regularsplash(partmaps[type].type, partmaps[type].color, radius, num, fade, p, delay);
+}
+
+void particle_splash(int type, int num, int fade, const vec &p) 
+{
+    splash(partmaps[type].type, partmaps[type].color, 150, num, fade, p);
 }
 
 void particle_trail(int type, int fade, const vec &s, const vec &e)
@@ -752,9 +777,6 @@ void particle_trail(int type, int fade, const vec &s, const vec &e)
     float d = e.dist(s, v);
     v.div(d*2);
     vec p = s;
-    /* @TODO - this needs to be throttled
-     * one idea is that particles further from the eye could be drawn larger and more spread apart, should consider this for splash too
-     */
     int ptype = partmaps[type].type;
     int color = partmaps[type].color;    
     loopi((int)d*2)
@@ -797,7 +819,7 @@ void particle_fireball(const vec &dest, float max, int type)
 static inline vec offsetvec(vec o, int dir, int dist) 
 {
     vec v = vec(o);    
-    v.v[(2+dir)%3] += (dir>2)?(-dist):dist;
+    v[(2+dir)%3] += (dir>2)?(-dist):dist;
     return v;
 }
 
@@ -805,6 +827,82 @@ static inline vec offsetvec(vec o, int dir, int dist)
 static inline int colorfromattr(int attr) 
 {
     return (((attr&0xF)<<4) | ((attr&0xF0)<<8) | ((attr&0xF00)<<12)) + 0x0F0F0F;
+}
+
+/* Experiments in shapes...
+ * dir: (where dir%3 is similar to offsetvec with 0=up)
+ * 0..2 circle
+ * 3.. 5 cylinder shell
+ * 6..11 cone shell
+ * 12..14 plane volume
+ * 15..20 line volume, i.e. wall
+ * 21 sphere
+ * +32 to inverse direction of flares
+ */
+void regularshape(int type, int radius, int color, int dir, int num, int fade, const vec &p)
+{
+    if(!emit_particles()) return;
+    
+    bool inv = (dir >= 32);
+    dir = dir&0x1F;
+    loopi(num)
+    {
+        vec to, from;
+        if(dir < 12) 
+        { 
+            float a = PI2*float(rnd(1000))/1000.0;
+            to[dir%3] = sinf(a)*radius;
+            to[(dir+1)%3] = cosf(a)*radius;
+            to[(dir+2)%3] = 0.0;
+            to.add(p);
+            if(dir < 3) //circle
+                from = p;
+            else if(dir < 6) //cylinder
+            {
+                from = to;
+                to[(dir+2)%3] += radius;
+                from[(dir+2)%3] -= radius;
+            }
+            else //cone
+            {
+                from = p;
+                to[(dir+2)%3] += (dir < 9)?radius:(-radius);
+            }
+        }
+        else if(dir < 15) //plane
+        { 
+            to[dir%3] = float(rnd(radius<<4)-(radius<<3))/8.0;
+            to[(dir+1)%3] = float(rnd(radius<<4)-(radius<<3))/8.0;
+            to[(dir+2)%3] = radius;
+            to.add(p);
+            from = to;
+            from[(dir+2)%3] -= 2*radius;
+        }
+        else if(dir < 21) //line
+        {
+            if(dir < 18) 
+            {
+                to[dir%3] = float(rnd(radius<<4)-(radius<<3))/8.0;
+                to[(dir+1)%3] = 0.0;
+            } 
+            else 
+            {
+                to[dir%3] = 0.0;
+                to[(dir+1)%3] = float(rnd(radius<<4)-(radius<<3))/8.0;
+            }
+            to[(dir+2)%3] = 0.0;
+            to.add(p);
+            from = to;
+            to[(dir+2)%3] += radius;  
+        } 
+        else //sphere
+        {   
+            to = vec(PI2*float(rnd(1000))/1000.0, PI*float(rnd(1000)-500)/1000.0).mul(radius); 
+            to.add(p);
+            from = p;
+        }
+        newparticle(inv?to:from, inv?from:to, rnd(fade*3)+1, type, color);
+    }
 }
 
 static void makeparticles(entity &e) 
@@ -819,28 +917,30 @@ static void makeparticles(entity &e)
             regular_particle_splash(24, 1, 200, offsetvec(e.o, e.attr2, rnd(10)));
             break;
         case 2: //water fountain - <dir>
-            regular_particle_splash(26, 5, 200, offsetvec(e.o, e.attr2, rnd(10)));
+        {
+            uchar col[3];
+            getwatercolour(col);
+            int color = (col[0]<<16) | (col[1]<<8) | col[2];
+            regularsplash(18, color, 150, 5, 200, offsetvec(e.o, e.attr2, rnd(10)));
             break;
+        }
         case 3: //fire ball - <size> <rgb>
             newparticle(e.o, vec(0, 0, 1), 1, 15, colorfromattr(e.attr3))->val = 1+e.attr2;
             break;
         case 4: //tape - <dir> <length> <rgb>
-            newparticle(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, 9, colorfromattr(e.attr4));
+            if(e.attr2 >= 256) regularshape(9, 1+e.attr3, colorfromattr(e.attr4), e.attr2-256, 5, 200, e.o);
+            else newparticle(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, 9, colorfromattr(e.attr4));
             break;
-            
+        case 5: //meter, metervs - <percent> <rgb>
+        case 6:
+            newparticle(e.o, vec(0, 0, 1), 1, (e.attr1==5)?12:13, colorfromattr(e.attr3))->val = min(1.0, float(e.attr2)/100);
+            break;
+               
         case 32: //lens flares - plain/sparkle/sun/sparklesun <red> <green> <blue>
         case 33:
         case 34:
         case 35:
             makeflare(e.o, e.attr2, e.attr3, e.attr4, (e.attr1&0x02)!=0, (e.attr1&0x01)!=0);
-            break;
-            
-        //number is based on existing particles types:
-        case 17: //meter - red/blue/redvsblue/bluevsred <percent>
-        case 18:
-        case 19:
-        case 20:
-            particle_meter(e.o, min(1.0, float(e.attr2)/100), e.attr1, 1);
             break;
             
         default:
