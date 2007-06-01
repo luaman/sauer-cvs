@@ -160,7 +160,7 @@ hashtable<char *, Texture> textures;
 
 Texture *crosshair = NULL; // used as default, ensured to be loaded
 
-VAR(maxtexsize, 0, 0, 1<<12);
+VAR(maxtexsize, 0, -1, 1<<12);
 
 static GLenum texformat(int bpp)
 {
@@ -183,6 +183,7 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
     t->w = t->xs = s->w;
     t->h = t->ys = s->h;
     glGenTextures(1, &t->gl);
+    if(maxtexsize<0) glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
     if(maxtexsize && (t->w > maxtexsize || t->h > maxtexsize))
     {
         do { t->w /= 2; t->h /= 2; } while(t->w > maxtexsize || t->h > maxtexsize);

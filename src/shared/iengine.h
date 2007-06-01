@@ -100,6 +100,7 @@ extern void registergame(char *name, igame *ig);
 #define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); } igameclient *newclient() { return c; } igameserver *newserver() { return s; } } reg_##t
 
 // rendertext
+extern bool setfont(char *name);
 extern void gettextres(int &w, int &h);
 extern void draw_text(const char *str, int left, int top, int r = 255, int g = 255, int b = 255, int a = 255);
 extern void draw_textf(const char *fstr, int left, int top, ...);

@@ -811,9 +811,6 @@ VAR(nomasks, 1, 0, 0);
 
 void inittmus()
 {
-    extern int maxtexsize;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
-
     if(hasTE && hasMT)
     {
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&maxtmus);

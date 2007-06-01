@@ -454,11 +454,14 @@ int main(int argc, char **argv)
     log("console");
     persistidents = false;
     if(!execfile("data/stdlib.cfg")) fatal("cannot find data files (you are running from the wrong folder, try .bat file in the main folder)");   // this is the first file we load.
+    if(!execfile("data/font.cfg")) fatal("cannot find font definitions");
+    if(!setfont("default")) fatal("no default font specified");
 
     log("gl");
     gl_init(scr_w, scr_h, bpp, depth, fsaa);
     crosshair = textureload("data/crosshair.png", 3, false);
     if(!crosshair) fatal("could not find core textures");
+
     computescreen("initializing...");
     inbetweenframes = true;
     particleinit();
