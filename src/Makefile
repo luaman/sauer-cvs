@@ -1,9 +1,9 @@
 CXXOPTFLAGS= -O3 -fomit-frame-pointer
-INCLUDES= -Ishared -Iengine -Ifpsgame -Irpggame -Ienet/include `sdl-config --cflags`
+INCLUDES= -Ishared -Iengine -Ifpsgame -Irpggame -Ienet/include -I/usr/X11R6/include `sdl-config --cflags`
 CXXFLAGS= -Wall -fsigned-char $(CXXOPTFLAGS) $(INCLUDES)
 
 PLATFORM_PREFIX=native
-CLIENT_LIBS=-Lenet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
+CLIENT_LIBS=-Lenet -lenet -L/usr/X11R6/lib `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
 CLIENT_OBJS= \
 	shared/tools.o \
 	shared/geom.o \
