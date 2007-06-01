@@ -86,7 +86,7 @@ int char_width(int c, int x)
     if(!curfont) return x;
     else if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
     else if(c==' ') x += curfont->defaultw;
-    else if(c>=33 && c<=126)
+    else if(curfont->chars.inrange(c-33))
     {
         c -= 33;
         x += curfont->chars[c].w+1;
@@ -174,7 +174,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         }
         if(c==' ') { x += curfont->defaultw; continue; }
         c -= 33;
-        if(c<0 || c>=95) continue;
+        if(!curfont->chars.inrange(c)) continue;
         
         font::charinfo &info = curfont->chars[c];
         float tc_left    = (info.x + curfont->offsetx) / float(curfont->tex->xs);
