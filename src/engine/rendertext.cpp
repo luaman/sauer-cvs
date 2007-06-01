@@ -83,7 +83,7 @@ void gettextres(int &w, int &h)
 
 int char_width(int c, int x)
 {
-    if(!curfont) return 0;
+    if(!curfont) return x;
     else if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
     else if(c==' ') x += curfont->defaultw;
     else if(c>=33 && c<=126)
