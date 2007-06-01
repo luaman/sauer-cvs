@@ -83,7 +83,8 @@ void gettextres(int &w, int &h)
 
 int char_width(int c, int x)
 {
-    if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
+    if(!curfont) return 0;
+    else if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
     else if(c==' ') x += curfont->defaultw;
     else if(c>=33 && c<=126)
     {
@@ -133,6 +134,8 @@ void draw_textf(const char *fstr, int left, int top, ...)
 
 void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
 {
+    if(!curfont) return;
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, curfont->tex->gl);
     glColor4ub(r, g, b, a);
@@ -178,7 +181,6 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         float tc_top     = (info.y + curfont->offsety) / float(curfont->tex->ys);
         float tc_right   = (info.x + info.w + curfont->offsetw) / float(curfont->tex->xs);
         float tc_bottom  = (info.y + info.h + curfont->offseth) / float(curfont->tex->ys);
-
 
         glTexCoord2f(tc_left,  tc_top   ); glVertex2i(x,          y);
         glTexCoord2f(tc_right, tc_top   ); glVertex2i(x + info.w, y);
