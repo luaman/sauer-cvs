@@ -414,7 +414,6 @@ void renderentradius(extentity &e)
             break;
         }
 
-        case ET_MAPMODEL:
         case ET_PLAYERSTART:
             radius = 4;
             vecfromyawpitch(e.attr1, 0, 1, 0, dir);
