@@ -480,7 +480,7 @@ int main(int argc, char **argv)
     exec("data/sounds.cfg");
     exec("data/brush.cfg");
     execfile("mybrushes.cfg");
-    execfile("servers.cfg");
+    execfile(cl->savedservers());
     
     persistidents = true;
     
