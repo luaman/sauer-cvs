@@ -386,6 +386,7 @@ VAR(showentradius, 0, 1, 1);
 void renderentradius(extentity &e)
 {
     if(!showentradius) return;
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     float radius = 0.0f, angle = 0.0f;
     vec dir(0, 0, 0);
     switch(e.type)
@@ -413,6 +414,15 @@ void renderentradius(extentity &e)
             radius = e.attr1 ? max(0, min(10000, e.attr1)) : envmapradius;
             break;
         }
+
+        case ET_PLAYERSTART:
+            radius = 4;
+            vecfromyawpitch(e.attr1, 0, 1, 0, dir);
+            break;
+
+        default:
+            if(e.type>=ET_GAMESPECIFIC) et->entradius(e, radius, angle, dir);
+            break;
     }
     if(radius<=0) return;
     loopj(2)
@@ -447,6 +457,28 @@ void renderentradius(extentity &e)
             }
             glEnd();
         }
+        else if(!angle)
+        {
+            float arrowsize = min(radius/8, 0.5f);
+            vec target(vec(dir).mul(radius).add(e.o)), arrowbase(vec(dir).mul(radius - arrowsize).add(e.o)), spoke;
+            spoke.orthogonal(dir);
+            spoke.normalize();
+            spoke.mul(arrowsize);
+            glBegin(GL_LINES);
+            glVertex3fv(e.o.v);
+            glVertex3fv(target.v);
+            glEnd();
+            glBegin(GL_TRIANGLE_FAN);
+            glVertex3fv(target.v);
+            loopi(5)
+            {
+                vec p(spoke);
+                p.rotate(2*M_PI*i/4.0f, dir);
+                p.add(arrowbase);
+                glVertex3fv(p.v);
+            }
+            glEnd();
+        }
         else
         {
             vec spot(vec(dir).mul(radius*cosf(angle*RAD)).add(e.attached->o)), spoke;
@@ -474,6 +506,7 @@ void renderentradius(extentity &e)
             glEnd();
         }
     }
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void renderentselection(const vec &o, const vec &ray, bool entmoving)
