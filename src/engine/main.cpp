@@ -8,7 +8,7 @@ void quit()                     // normal exit
     writeservercfg();
     abortconnect();
     disconnect(1);
-    if(strcmp(cl->gameident(), "fps")==0) writecfg();       // TEMP HACK: make other games not overwrite cfg
+    writecfg();
     cleangl();
     cleanupserver();
     SDL_ShowCursor(1);
@@ -484,8 +484,8 @@ int main(int argc, char **argv)
     
     persistidents = true;
     
-    if(!execfile("config.cfg")) exec("data/defaults.cfg");
-    execfile("autoexec.cfg");
+    if(!execfile(cl->savedconfig())) exec(cl->defaultconfig());
+    execfile(cl->autoexec());
 
     persistidents = false;
 

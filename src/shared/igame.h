@@ -39,6 +39,10 @@ struct igameclient
 
     virtual char *gameident() = 0;
     virtual char *defaultmap() = 0;
+    virtual char *savedconfig() = 0;
+    virtual char *defaultconfig() = 0;
+    virtual char *autoexec() = 0;
+    virtual char *savedservers() { return NULL; }
 
     virtual icliententities *getents() = 0;
     virtual iclientcom *getcom() = 0;

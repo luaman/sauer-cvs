@@ -523,9 +523,9 @@ void exec(char *cfgfile)
 
 void writecfg()
 {
-    FILE *f = fopen("config.cfg", "w");
+    FILE *f = fopen(cl->savedconfig(), "w");
     if(!f) return;
-    fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// delete this file to have defaults.cfg overwrite these settings\n// modify settings in game, or put settings in autoexec.cfg to override anything\n\n");
+    fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// delete this file to have %s overwrite these settings\n// modify settings in game, or put settings in %s to override anything\n\n", cl->defaultconfig(), cl->autoexec());
     cc->writeclientinfo(f);
     fprintf(f, "\n");
     enumerate(*idents, ident, id,

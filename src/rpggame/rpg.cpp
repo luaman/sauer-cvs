@@ -141,6 +141,9 @@ struct rpgclient : igameclient, g3d_callback
 
     char *gameident() { return "rpg"; }
     char *defaultmap() { return "rpg_01"; }
+    char *savedconfig() { return "rpg_config.cfg"; }
+    char *defaultconfig() { return "data/defaults.cfg"; }
+    char *autoexec() { return "rpg_autoexec.cfg"; }
 };
 
 #define N(n) int rpgclient::stats::pointscale_##n, rpgclient::stats::percentscale_##n; 

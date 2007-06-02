@@ -671,6 +671,10 @@ struct fpsclient : igameclient
 
     char *gameident() { return "fps"; }
     char *defaultmap() { return "metl4"; }
+    char *savedconfig() { return "config.cfg"; }
+    char *defaultconfig() { return "data/defaults.cfg"; }
+    char *autoexec() { return "autoexec.cfg"; }
+    char *savedservers() { return "servers.cfg"; }
 };
 
 REGISTERGAME(fpsgame, "fps", new fpsclient(), new fpsserver());
