@@ -300,6 +300,18 @@ struct entities : icliententities
                 e.attr1 = (int)cl.player1->yaw;
         }
     }
+    void entradius(extentity &e, float &radius, float &angle, vec &dir)
+    {
+        switch(e.type)
+        {
+            case TELEDEST:
+            case MAPMODEL:
+            case RESPAWNPOINT:
+                radius = 4;
+                vecfromyawpitch(e.attr1, 0, 1, 0, dir);
+                break;
+        }
+    }
 
     const char *entnameinfo(entity &e) { return ""; }
     const char *entname(int i)

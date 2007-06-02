@@ -662,7 +662,7 @@ struct fpsclient : igameclient
             }
         }
     }
-    
+   
     void g3d_gamemenus() { sb.show(); }
 
     // any data written into this vector will get saved with the map data. Must take care to do own versioning, and endianess if applicable. Will not get called when loading maps from other games, so provide defaults.

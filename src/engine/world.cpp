@@ -386,7 +386,6 @@ VAR(showentradius, 0, 1, 1);
 void renderentradius(extentity &e)
 {
     if(!showentradius) return;
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     float radius = 0.0f, angle = 0.0f;
     vec dir(0, 0, 0);
     switch(e.type)
@@ -415,6 +414,7 @@ void renderentradius(extentity &e)
             break;
         }
 
+        case ET_MAPMODEL:
         case ET_PLAYERSTART:
             radius = 4;
             vecfromyawpitch(e.attr1, 0, 1, 0, dir);
@@ -425,6 +425,7 @@ void renderentradius(extentity &e)
             break;
     }
     if(radius<=0) return;
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     loopj(2)
     {
         if(!j)
