@@ -410,7 +410,9 @@ int main(int argc, char **argv)
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
         hasstencil = true;
     }
+#if SDL_VERSION_ATLEAST(1, 2, 11)
     if(vsync>=0) SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, vsync);
+#endif
 
     int resize = SDL_RESIZABLE;
     #if defined(WIN32) || defined(__APPLE__)
