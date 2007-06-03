@@ -192,7 +192,7 @@ struct tristrip
         return next;
     }
 
-    void buildstrip(vector<ushort> &strip, bool reverse = false)
+    void buildstrip(vector<ushort> &strip, bool reverse = false, bool prims = false)
     {
         ushort prev = leastconnected();
         if(prev==UNUSED) return;
@@ -201,7 +201,7 @@ struct tristrip
         ushort cur = nexttriangle(first, doswap);
         if(cur==UNUSED)
         {
-            loopi(3) strip.add(first.v[reverse && i>=1 ? 3-i : i]);
+            loopi(3) strip.add(first.v[!prims && reverse && i>=1 ? 3-i : i]);
             return;
         }
         int from = findedge(first, triangles[cur]), 
