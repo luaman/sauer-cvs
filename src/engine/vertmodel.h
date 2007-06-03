@@ -469,7 +469,7 @@ struct vertmodel : model
                 }
                 else if(enablemtc) disablemtc();
 
-                if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, group->vlen-1, elen, GL_UNSIGNED_SHORT, (void *)(eoffset*sizeof(ushort)));
+                if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, group->numframes>1 ? voffset : 0, group->numframes>1 ? voffset+numtcverts-1 : group->vlen-1, elen, GL_UNSIGNED_SHORT, (void *)(eoffset*sizeof(ushort)));
                 else glDrawElements(GL_TRIANGLES, elen, GL_UNSIGNED_SHORT, (void *)(eoffset*sizeof(ushort)));
                 glde++;
 
