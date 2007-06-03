@@ -354,7 +354,7 @@ struct vertmodel : model
             loopi(numtris)
             {
                 tri &t = tris[i];
-                if(group->numframes>1) loopj(3) idxs.add(t.vert[j]);
+                if(group->numframes>1) loopj(3) idxs.add(voffset+t.vert[j]);
                 else loopj(3) 
                 {
                     tcvert &tc = tcverts[t.vert[j]];
