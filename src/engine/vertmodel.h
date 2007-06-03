@@ -757,7 +757,7 @@ struct vertmodel : model
                         meshes[i]->interpverts(cur, prev, ai_t, norms, norms ? &vdata[meshes[i]->voffset] : &((vvertff *)vdata)[meshes[i]->voffset]);
                     }
                     glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf);
-                    glBufferData_(GL_ARRAY_BUFFER_ARB, vlen * (norms ? sizeof(vvert) : sizeof(vvertff)), vdata, GL_DYNAMIC_DRAW_ARB);    
+                    glBufferData_(GL_ARRAY_BUFFER_ARB, vlen * (norms ? sizeof(vvert) : sizeof(vvertff)), vdata, GL_STREAM_DRAW_ARB);    
                 }
             }
 
