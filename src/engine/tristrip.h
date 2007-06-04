@@ -177,6 +177,7 @@ struct tristrip
                     swap = true;
                     score += nodes[v2] > nodes[v1] ? 1 : -1;
                 }
+                else if(nexttri.hasvert(v2)) continue;
                 else score += nodes[v1] > nodes[v2] ? 1 : -1;
                 if(!tsswap && swap) continue;
                 score += swap ? 1 : -1;
