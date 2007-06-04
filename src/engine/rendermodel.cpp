@@ -2,6 +2,7 @@
 #include "engine.h"
 
 VARP(animationinterpolationtime, 0, 150, 1000);
+VARP(orientinterpolationtime, 0, 75, 1000);
 
 model *loadingmodel = NULL;
 
@@ -666,7 +667,20 @@ VAR(testanims, 0, 0, 1);
 void renderclient(dynent *d, const char *mdlname, const char *vwepname, const char *shieldname, const char *pupname, int attack, int attackdelay, int lastaction, int lastpain, float sink)
 {
     int anim = ANIM_IDLE|ANIM_LOOP;
-    float pitch = d->pitch;
+    float yaw = d->yaw, pitch = d->pitch;
+    if(d->type==ENT_PLAYER && d!=player && orientinterpolationtime)
+    {
+        if(d->orientmillis!=lastmillis)
+        {
+            if(yaw-d->lastyaw>=180) yaw -= 360;
+            else if(d->lastyaw-yaw>=180) yaw += 360;
+            d->lastyaw += (yaw-d->lastyaw)*min(orientinterpolationtime, lastmillis-d->orientmillis)/float(orientinterpolationtime);
+            d->lastpitch += (pitch-d->lastpitch)*min(orientinterpolationtime, lastmillis-d->orientmillis)/float(orientinterpolationtime);
+            d->orientmillis = lastmillis;
+        }
+        yaw = d->lastyaw;
+        pitch = d->lastpitch;
+    }
     vec o(d->o);
     o.z -= d->eyeheight + sink;
     int varseed = (int)(size_t)d, basetime = 0;
@@ -738,7 +752,7 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, const ch
         ai++;
     }
     vec color, dir;
-    rendermodel(color, dir, mdlname, anim, varseed, 0, o, testanims && d==player ? 0 : d->yaw+90, pitch, 0, basetime, d, flags, a[0].name ? a : NULL);
+    rendermodel(color, dir, mdlname, anim, varseed, 0, o, testanims && d==player ? 0 : yaw+90, pitch, 0, basetime, d, flags, a[0].name ? a : NULL);
 }
 
 void setbbfrommodel(dynent *d, char *mdl)

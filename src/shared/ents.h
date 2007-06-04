@@ -112,12 +112,18 @@ struct dynent : physent                         // animated characters, or chara
 {
     bool k_left, k_right, k_up, k_down;         // see input code
     float targetyaw, rotspeed;                  // AI rotation
+    float lastyaw, lastpitch;                   // last yaw/pitch to interpolate from, MP only
+    int orientmillis;                           // time last yaw/pitch was recorded
 
     animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
     int lastanimswitchtime[2];
     void *lastmodel[2];
 
-    dynent() { reset(); loopi(2) { lastanimswitchtime[i] = -1; lastmodel[i] = NULL; } }
+    dynent() : lastyaw(0), lastpitch(0), orientmillis(0) 
+    { 
+        reset(); 
+        loopi(2) { lastanimswitchtime[i] = -1; lastmodel[i] = NULL; } 
+    }
                
     void stopmoving()
     {
