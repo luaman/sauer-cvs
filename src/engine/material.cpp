@@ -540,7 +540,6 @@ void rendermaterials(float zclip, bool refract)
     float oldfogc[4];
     glGetFloatv(GL_FOG_COLOR, oldfogc);
     int lastfogtype = 1;
-
     loopv(vismats)
     {
         materialsurface &m = *vismats[editmode && showmat ? vismats.length()-1-i : i];
@@ -658,8 +657,8 @@ void rendermaterials(float zclip, bool refract)
                                 glDisable(textured);
                                 textured = 0;
                             }
-                            glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-                            glColor3f(0.7f, 0.85f, 1.0f);
+                            glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+                            glColor3f(0.3f, 0.15f, 0.0f);
                             foggednotextureshader->set();
                             fogtype = 0;
                         }
@@ -675,19 +674,20 @@ void rendermaterials(float zclip, bool refract)
                         if(!depth) { glDepthMask(GL_TRUE); depth = true; }
                         if(!blended) { glEnable(GL_BLEND); blended = true; }
                         if(overbright) { resettmu(0); overbright = false; }
-                        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+                        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
                         if(textured) { glDisable(GL_TEXTURE_2D); textured = 0; }
                         foggednotextureshader->set();
                         fogtype = 0;
                     }
                     static uchar blendcols[MAT_EDIT][3] =
                     {
-                        { 255, 255, 255 }, // MAT_AIR - no edit volume,
-                        { 0,   128, 255 }, // MAT_WATER - blue,
-                        { 255, 0,   0   }, // MAT_CLIP - red,
-                        { 0,   255, 255 }, // MAT_GLASS - cyan,
-                        { 0,   255, 0   }, // MAT_NOCLIP - green
-                        { 255, 128, 0   }, // MAT_LAVA - orange
+                        { 0,   0,   0   }, // MAT_AIR - no edit volume,
+                        { 255, 128, 0   }, // MAT_WATER - blue,
+                        { 0,   255, 255 }, // MAT_CLIP - red,
+                        { 255, 0,   0   }, // MAT_GLASS - cyan,
+                        { 255, 0,   255 }, // MAT_NOCLIP - green
+                        { 0, 128,   255 }, // MAT_LAVA - orange
+                        
                     };
                     glColor3ubv(blendcols[curmat >= MAT_EDIT ? curmat-MAT_EDIT : curmat]);
                     break;
