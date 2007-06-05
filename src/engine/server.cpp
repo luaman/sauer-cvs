@@ -120,7 +120,7 @@ void filtertext(char *dst, const char *src, bool whitespace, int len)
         {
         case '\f': ++src; continue;
         }
-        if(isprint(c) || (whitespace && isspace(c)))
+        if(isspace(c) ? whitespace : isprint(c))
         {
             *dst++ = c;
             if(!--len) break;
