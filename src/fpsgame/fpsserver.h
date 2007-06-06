@@ -578,8 +578,9 @@ struct fpsserver : igameserver
                 bool connected = !ci->name[0];
                 getstring(text, p);
                 filtertext(text, text, false, MAXNAMELEN);
+                if(!text[0]) s_strcpy(text, "unnamed");
                 QUEUE_STR(text);
-                s_strncpy(ci->name, text[0] ? text : "unnamed", MAXNAMELEN+1);
+                s_strncpy(ci->name, text, MAXNAMELEN+1);
                 if(!ci->local && connected)
                 {
                     clientscore &sc = findscore(ci, false);
@@ -600,7 +601,9 @@ struct fpsserver : igameserver
                         sendf(sender, 1, "riis", SV_SETTEAM, sender, worst);
                         QUEUE_STR(worst);
                     }
+                    else QUEUE_STR(text);
                 }
+                else QUEUE_STR(text);
                 if(m_capture && ci->state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->o);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 getint(p);

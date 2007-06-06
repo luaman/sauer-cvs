@@ -480,7 +480,7 @@ struct clientcom : iclientcom
                     extern editinfo *localedit;
                     freeeditinfo(localedit);
                 }
-                s_strcpy(d->name, text);
+                s_strncpy(d->name, text, MAXNAMELEN+1);
                 getstring(text, p);
                 filtertext(d->team, text, false, MAXTEAMLEN);
                 d->lifesequence = getint(p);
