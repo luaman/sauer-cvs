@@ -277,12 +277,12 @@ struct gui : g3d_gui
             {
                 hit = ishit(FONTH, ysize, x, y);
                 px = x + (FONTH-w)/2;
-                py = y + (ysize-FONTH) - ((ysize-FONTH)*(val-vmin))/(vmax-vmin); //zero at the bottom
+                py = y + (ysize-FONTH) - ((ysize-FONTH)*(val-vmin))/max(vmax-vmin, 1); //zero at the bottom
             }
             else
             {
                 hit = ishit(xsize, FONTH, x, y);
-                px = x + ((xsize-w)*(val-vmin))/(vmax-vmin);
+                px = x + ((xsize-w)*(val-vmin))/max(vmax-vmin, 1);
                 py = y;
             }
         
