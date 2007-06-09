@@ -175,6 +175,14 @@ extern bool havesel, selectcorners;
 int entlooplevel = 0;
 int efocus = -1, enthover, entorient = -1;
 
+VAR(entediting, 0, 0, 1);
+
+bool noentedit()
+{
+    if(!editmode) { conoutf("operation only allowed in edit mode"); return true; }
+    return !entediting;
+}
+
 bool pointinsel(selinfo &sel, vec &o)
 {
     return(o.x <= sel.o.x+sel.s.x*sel.grid
@@ -298,7 +306,7 @@ void pasteundoents(undoblock &u)
 
 void entflip()
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     int d = dimension(sel.orient);
     float mid = sel.s[d]*sel.grid/2+sel.o[d];
     groupeditundo(e.o[d] -= (e.o[d]-mid)*2);
@@ -306,7 +314,7 @@ void entflip()
 
 void entrotate(int *cw)
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     int d = dimension(sel.orient);
     int dd = *cw<0 == dimcoord(sel.orient) ? R[d] : C[d];
     float mid = sel.s[dd]*sel.grid/2+sel.o[dd];
@@ -345,7 +353,7 @@ VAR(entselsnap, 0, 0, 1);
 VAR(passthroughent, 0, 0, 1);
 VAR(entmovingshadow, 0, 1, 1);
 
-extern int rayent(const vec &o, const vec &ray, int &orient);
+extern int rayent(const vec &o, const vec &ray, float radius, int &orient);
 extern void boxs(int orient, vec o, const vec &s);
 extern void boxs3D(const vec &o, vec s, int g);
 extern void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, vec &dest, bool first);
@@ -354,7 +362,7 @@ bool initentdragging = true;
 
 void entdrag(const vec &ray)
 {
-    if(!haveselent()) return;
+    if(noentedit() || !haveselent()) return;
 
     float r = 0, c = 0;
     static vec v, handle;
@@ -414,6 +422,7 @@ void renderentradius(extentity &e)
             break;
         }
 
+        case ET_MAPMODEL:
         case ET_PLAYERSTART:
             radius = 4;
             vecfromyawpitch(e.attr1, 0, 1, 0, dir);
@@ -511,6 +520,7 @@ void renderentradius(extentity &e)
 
 void renderentselection(const vec &o, const vec &ray, bool entmoving)
 {   
+    if(noentedit()) return;
     vec eo, es;
 
     glColor3ub(0, 40, 0);
@@ -557,10 +567,11 @@ bool enttoggle(int id)
     return i < 0;
 }
 
-bool hoveringonent(const vec &o, const vec &ray)
+bool hoveringonent(const vec &o, const vec &ray, float radius)
 {
+    if(noentedit()) return false;
     if(!passthroughent)          
-        if((efocus = enthover = rayent(o, ray, entorient)) >= 0)
+        if((efocus = enthover = rayent(o, ray, radius, entorient)) >= 0)
             return true;
     efocus   = entgroup.empty() ? -1 : entgroup.last();
     enthover = -1;
@@ -569,7 +580,7 @@ bool hoveringonent(const vec &o, const vec &ray)
 
 VAR(entitysurf, 0, 0, 1);
 VARF(entmoving, 0, 0, 2,
-    if(enthover < 0)
+    if(enthover < 0 || noentedit())
         entmoving = 0;
     else if(entmoving == 1)
         entmoving = enttoggle(enthover);
@@ -581,7 +592,7 @@ VARF(entmoving, 0, 0, 2,
 
 void entpush(int *dir)
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     int d = dimension(entorient);
     int s = dimcoord(entorient) ? -*dir : *dir;
     if(entmoving) 
@@ -619,7 +630,7 @@ COMMAND(entpush, "i");
 
 void delent()
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     groupedit(e.type = ET_EMPTY;);
     entcancel();
 }
@@ -682,13 +693,13 @@ bool dropentity(entity &e, int drop = -1)
 
 void dropent()
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     groupedit(dropentity(e));
 }
 
 void attachent()
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     groupedit(attachentity(e));
 }
 
@@ -739,7 +750,7 @@ void newentity(int type, int a1, int a2, int a3, int a4)
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4)
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     int type = findtype(what);
     if(type != ET_EMPTY)
         newentity(type, *a1, *a2, *a3, *a4);
@@ -750,6 +761,7 @@ vector<entity> entcopybuf;
 
 void entcopy()
 {
+    if(noentedit()) return;
     entcopygrid = sel.grid;
     entcopybuf.setsize(0);
     loopv(entgroup) 
@@ -758,6 +770,7 @@ void entcopy()
 
 void entpaste()
 {
+    if(noentedit()) return;
     if(entcopybuf.length()==0) return;
     entcancel();
     int last = et->getents().length()-1;
@@ -783,7 +796,7 @@ COMMAND(entpaste, "");
 
 void entset(char *what, int *a1, int *a2, int *a3, int *a4)
 {
-    if(noedit(true)) return;
+    if(noentedit()) return;
     int type = findtype(what);
     groupedit(e.type=type;
               e.attr1=*a1;
@@ -793,8 +806,8 @@ void entset(char *what, int *a1, int *a2, int *a3, int *a4)
 }
 
 ICOMMAND(enthavesel,"",  addimplicit(intret(entgroup.length())));
-ICOMMAND(entselect, "s", addgroup(e.type != ET_EMPTY && entgroup.find(n)<0 && execute(args[0])>0));
-ICOMMAND(entloop,   "s", addimplicit(groupeditloop(((void)e, execute(args[0])))));
+ICOMMAND(entselect, "s", if(!noentedit()) addgroup(e.type != ET_EMPTY && entgroup.find(n)<0 && execute(args[0])>0));
+ICOMMAND(entloop,   "s", if(!noentedit()) addimplicit(groupeditloop(((void)e, execute(args[0])))));
 ICOMMAND(insel,     "",  entfocus(efocus, intret(pointinsel(sel, e.o))));
 ICOMMAND(entget,    "",  entfocus(efocus, s_sprintfd(s)("%s %d %d %d %d", et->entname(e.type), e.attr1, e.attr2, e.attr3, e.attr4);  result(s)));
 COMMAND(entset, "siiii");

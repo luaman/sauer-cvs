@@ -67,6 +67,7 @@ int gridsize = 8;
 ivec cor, lastcor;
 ivec cur, lastcur;
 
+extern bool entediting;
 bool editmode = false;
 bool havesel = false;
 
@@ -156,7 +157,7 @@ void toggleedit()
     }
     cancelsel();
     keyrepeat(editmode);
-    editing = editmode;
+    editing = entediting = editmode;
     extern int fullbright;
     if(fullbright) initlights();
 }
@@ -292,7 +293,7 @@ void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, 
 }
 
 extern void entdrag(const vec &ray);
-extern bool hoveringonent(const vec &o, const vec &ray);
+extern bool hoveringonent(const vec &o, const vec &ray, float radius);
 extern void renderentselection(const vec &o, const vec &ray, bool entmoving);
 
 void cursorupdate()
@@ -331,13 +332,6 @@ void cursorupdate()
     {
         entdrag(ray);       
     }
-    else if(hovering = hoveringonent(player->o, ray))
-    {
-       if(!havesel) {
-           selchildcount = 0;
-           sel.s = vec(0);
-       }
-    }
     else
     {  
         vec v;
@@ -360,62 +354,72 @@ void cursorupdate()
             if(rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
                 wdist = min(sdist, wdist);  // and choose the nearest of the two
 
-        v = ray;
-        v.mul(wdist+0.1f);
-        v.add(player->o);
-        w = v;
-        lookupcube(w.x, w.y, w.z);
-        int mag = lusize / gridsize;
-        normalizelookupcube(w.x, w.y, w.z);
-        if(sdist == 0 || sdist > wdist) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
-        cur = lu;
-        cor = w;
-        cor.mul(2).div(gridsize);
-        od = dimension(orient);
-        d = dimension(sel.orient);
-
-        if(dragging) 
+        if(hovering = hoveringonent(player->o, ray, wdist))
         {
-            updateselection();
-            sel.cx   = min(cor[R[d]], lastcor[R[d]]);
-            sel.cy   = min(cor[C[d]], lastcor[C[d]]);
-            sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
-            sel.cys  = max(cor[C[d]], lastcor[C[d]]);
-
-            if(!selectcorners)
-            {
-                sel.cx &= ~1;
-                sel.cy &= ~1;
-                sel.cxs &= ~1;
-                sel.cys &= ~1;
-                sel.cxs -= sel.cx-2;
-                sel.cys -= sel.cy-2;
-            }
-            else
-            {
-                sel.cxs -= sel.cx-1;
-                sel.cys -= sel.cy-1;
-            }
-
-            sel.cx  &= 1;
-            sel.cy  &= 1;
-            havesel = true;
+           if(!havesel) {
+               selchildcount = 0;
+               sel.s = vec(0);
+           }
         }
-        else if(!havesel && hmap == NULL)
+        else 
         {
-            sel.o = lu;
-            sel.s.x = sel.s.y = sel.s.z = 1;
-            sel.cx = sel.cy = 0;
-            sel.cxs = sel.cys = 2;
-            sel.grid = gridsize;
-            sel.orient = orient;
-            d = od;
-        }
+            v = ray;
+            v.mul(wdist+0.1f);
+            v.add(player->o);
+            w = v;
+            lookupcube(w.x, w.y, w.z);
+            int mag = lusize / gridsize;
+            normalizelookupcube(w.x, w.y, w.z);
+            if(sdist == 0 || sdist > wdist) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
+            cur = lu;
+            cor = w;
+            cor.mul(2).div(gridsize);
+            od = dimension(orient);
+            d = dimension(sel.orient);
 
-        sel.corner = (cor[R[d]]-(lu[R[d]]*2)/gridsize)+(cor[C[d]]-(lu[C[d]]*2)/gridsize)*2;
-        selchildcount = 0;
-        countselchild(worldroot, vec(0), hdr.worldsize/2);
-        if(mag>1 && selchildcount==1) selchildcount = -mag;
+            if(dragging) 
+            {
+                updateselection();
+                sel.cx   = min(cor[R[d]], lastcor[R[d]]);
+                sel.cy   = min(cor[C[d]], lastcor[C[d]]);
+                sel.cxs  = max(cor[R[d]], lastcor[R[d]]);
+                sel.cys  = max(cor[C[d]], lastcor[C[d]]);
+
+                if(!selectcorners)
+                {
+                    sel.cx &= ~1;
+                    sel.cy &= ~1;
+                    sel.cxs &= ~1;
+                    sel.cys &= ~1;
+                    sel.cxs -= sel.cx-2;
+                    sel.cys -= sel.cy-2;
+                }
+                else
+                {
+                    sel.cxs -= sel.cx-1;
+                    sel.cys -= sel.cy-1;
+                }
+
+                sel.cx  &= 1;
+                sel.cy  &= 1;
+                havesel = true;
+            }
+            else if(!havesel && hmap == NULL)
+            {
+                sel.o = lu;
+                sel.s.x = sel.s.y = sel.s.z = 1;
+                sel.cx = sel.cy = 0;
+                sel.cxs = sel.cys = 2;
+                sel.grid = gridsize;
+                sel.orient = orient;
+                d = od;
+            }
+
+            sel.corner = (cor[R[d]]-(lu[R[d]]*2)/gridsize)+(cor[C[d]]-(lu[C[d]]*2)/gridsize)*2;
+            selchildcount = 0;
+            countselchild(worldroot, vec(0), hdr.worldsize/2);
+            if(mag>1 && selchildcount==1) selchildcount = -mag;
+        }
     }
     
     glEnable(GL_BLEND);
