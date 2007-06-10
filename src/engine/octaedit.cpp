@@ -133,7 +133,6 @@ VARF(gridpower, 3-VVEC_FRAC, 3, VVEC_INT-1,
     cancelsel();
 });
 
-VAR(passthroughcube, 0, 0, 1);
 VAR(passthroughsel, 0, 0, 1);
 VAR(editing, 1, 0, 0);
 
@@ -338,20 +337,10 @@ void cursorupdate()
         int entorient = 0, ent = -1;
        
         wdist = rayent(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0)   // select cubes first
-                                           | (passthroughcube ? RAY_PASS : 0)
                                            | (!dragging && entediting ? RAY_ENTS : 0)
-                                           | RAY_SKIPFIRST, gridsize, entorient, ent);
+                                           | RAY_SKIPFIRST | RAY_PASS, gridsize, entorient, ent);
      
-        if(dragging) // update selection 
-        {
-            w = v;
-            lookupcube(w.x, w.y, w.z);
-            normalizelookupcube(w.x, w.y, w.z);
-            cur = lu;
-            updateselection();
-        }
-
-        if(havesel && !passthroughsel)     // now try selecting the selection
+        if((havesel || dragging) && !passthroughsel)     // now try selecting the selection
             if(rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
             {   // and choose the nearest of the two
                 if(sdist < wdist) 
@@ -696,7 +685,7 @@ void mppaste(editinfo *&e, selinfo &sel, bool local)
         int o = sel.orient;
         sel.orient = e->copy->orient;
         cube *s = e->copy->c();
-        loopselxyz(pastecube(*s++, c));
+        loopselxyz(if (!isempty(*s)) pastecube(*s, c); s++); // 'transparent'. old opaque by 'delcube; paste'
         sel.orient = o;
     }
 }
