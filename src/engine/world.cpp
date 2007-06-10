@@ -172,7 +172,8 @@ char *entname(entity &e)
 extern selinfo sel;
 extern bool havesel, selectcorners;
 int entlooplevel = 0;
-int efocus = -1, enthover, entorient = -1;
+int efocus = -1, enthover = -1, entorient = -1, oldhover = -1;
+bool undonext = true;
 
 VAR(entediting, 0, 0, 1);
 
@@ -204,6 +205,11 @@ void entcancel()
     entgroup.setsize(0);
 }
 
+void entadd(int id)
+{
+    undonext = true;
+    entgroup.add(id);
+}
 
 void initundoent(undoblock &u)
 {
@@ -222,6 +228,9 @@ void initundoent(undoblock &u)
 
 void makeundoent()
 {
+    if(!undonext) return;
+    undonext = false;
+    oldhover = enthover;
     undoblock u;
     initundoent(u);
     if(u.n) addundo(u);
@@ -274,7 +283,7 @@ void attachentities()
 // convenience macros implicitly define:
 // e         entity, currently edited ent
 // n         int,    index to currently edited ent
-#define addimplicit(f)  { if(entgroup.empty() && enthover>=0) { entgroup.add(enthover); f; entgroup.drop(); } else f; }
+#define addimplicit(f)  { if(entgroup.empty() && enthover>=0) { entadd(enthover); undonext = (enthover != oldhover); f; entgroup.drop(); } else f; }
 #define entfocus(i, f)  { int n = efocus = (i); if(n>=0) { extentity &e = *et->getents()[n]; f; } }
 #define entedit(i, f) \
 { \
@@ -286,7 +295,7 @@ void attachentities()
     if(e.type!=ET_EMPTY) { addentity(n); if(oldtype!=e.type) attachentity(e); } \
     et->editent(n)); \
 }
-#define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entgroup.add(n)); }
+#define addgroup(exp)   { loopv(et->getents()) entfocus(i, if(exp) entadd(n)); }
 #define setgroup(exp)   { entcancel(); addgroup(exp); }
 #define groupeditloop(f){ entlooplevel++; int _ = efocus; loopv(entgroup) entedit(entgroup[i], f); efocus = _; entlooplevel--; }
 #define groupeditpure(f){ if(entlooplevel>0) { entedit(efocus, f); } else groupeditloop(f); }
@@ -297,7 +306,7 @@ void copyundoents(undoblock &d, undoblock &s)
 {
     entcancel();
     loopi(s.n)
-        entgroup.add(s.e[i].i);
+        entadd(s.e[i].i);
     initundoent(d);
 }
 
@@ -556,14 +565,9 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
     if(enthover>=0) entfocus(enthover, renderentradius(e));
 }
 
-void entadd(int id)
-{
-    entgroup.removeobj(id);
-    entgroup.add(id);
-}
-
 bool enttoggle(int id)
 {
+    undonext = true;
     int i = entgroup.find(id);
     if(i < 0)
         entadd(id);
@@ -589,7 +593,7 @@ VARF(entmoving, 0, 0, 2,
         entmoving = 0;
     else if(entmoving == 1)
         entmoving = enttoggle(enthover);
-    else if(entmoving == 2)
+    else if(entmoving == 2 && entgroup.find(enthover) < 0)
         entadd(enthover);
     if(entmoving > 0)
         initentdragging = true;
@@ -787,7 +791,7 @@ void entpaste()
         o.mul(m).add(sel.o.v);
         extentity *e = newentity(true, o, ET_EMPTY, c.attr1, c.attr2, c.attr3, c.attr4);
         et->getents().add(e);
-        entgroup.add(++last);
+        entadd(++last);
     }
     int j = 0;
     groupeditundo(e.type = entcopybuf[j++].type;);
