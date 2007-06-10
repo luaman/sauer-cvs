@@ -117,10 +117,7 @@ void cubecancel()
     forcenextundo();
 }
 
-void entcancel()
-{
-    entgroup.setsize(0);
-}
+extern void entcancel();
 
 void cancelsel()
 {
@@ -293,8 +290,9 @@ void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, 
 }
 
 extern void entdrag(const vec &ray);
-extern bool hoveringonent(const vec &o, const vec &ray, float radius);
+extern bool hoveringonent(int ent, int orient);
 extern void renderentselection(const vec &o, const vec &ray, bool entmoving);
+extern float rayent(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size, int &orient, int &ent);
 
 void cursorupdate()
 {
@@ -337,10 +335,13 @@ void cursorupdate()
         vec v;
         ivec w;
         float sdist = 0, wdist = 0, t;
+        int entorient = 0, ent = -1;
        
-        wdist = raycubepos(player->o, ray, v, 0,  (editmode && showmat ? RAY_EDITMAT : 0)   // select cubes first
-                                                | (passthroughcube ? RAY_PASS : 0)
-                                                | RAY_SKIPFIRST, gridsize);
+        wdist = rayent(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0)   // select cubes first
+                                           | (passthroughcube ? RAY_PASS : 0)
+                                           | (!dragging && entediting ? RAY_ENTS : 0)
+                                           | RAY_SKIPFIRST, gridsize, entorient, ent);
+     
         if(dragging) // update selection 
         {
             w = v;
@@ -352,9 +353,15 @@ void cursorupdate()
 
         if(havesel && !passthroughsel)     // now try selecting the selection
             if(rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
-                wdist = min(sdist, wdist);  // and choose the nearest of the two
+            {   // and choose the nearest of the two
+                if(sdist < wdist) 
+                {
+                    wdist = sdist;
+                    ent   = -1;
+                }
+            }
 
-        if(hovering = hoveringonent(player->o, ray, wdist))
+        if(hovering = hoveringonent(ent, entorient))
         {
            if(!havesel) {
                selchildcount = 0;
@@ -363,6 +370,7 @@ void cursorupdate()
         }
         else 
         {
+       
             v = ray;
             v.mul(wdist+0.1f);
             v.add(player->o);

@@ -170,7 +170,6 @@ char *entname(entity &e)
 }
 
 extern selinfo sel;
-extern int orient;
 extern bool havesel, selectcorners;
 int entlooplevel = 0;
 int efocus = -1, enthover, entorient = -1;
@@ -200,7 +199,11 @@ bool haveselent()
     return entgroup.length() > 0;
 }
 
-extern void entcancel();
+void entcancel()
+{
+    entgroup.setsize(0);
+}
+
 
 void initundoent(undoblock &u)
 {
@@ -350,10 +353,8 @@ void entselectionbox(const entity &e, vec &eo, vec &es)
 }
 
 VAR(entselsnap, 0, 0, 1);
-VAR(passthroughent, 0, 0, 1);
 VAR(entmovingshadow, 0, 1, 1);
 
-extern int rayent(const vec &o, const vec &ray, float radius, int &orient);
 extern void boxs(int orient, vec o, const vec &s);
 extern void boxs3D(const vec &o, vec s, int g);
 extern void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, vec &dest, bool first);
@@ -396,10 +397,14 @@ void renderentradius(extentity &e)
     if(!showentradius) return;
     float radius = 0.0f, angle = 0.0f;
     vec dir(0, 0, 0);
+    float color[3] = {0, 1, 1};
     switch(e.type)
     {
         case ET_LIGHT:
             radius = e.attr1;
+            color[0] = float(e.attr2)/256.0f;
+            color[1] = float(e.attr3)/256.0f;
+            color[2] = float(e.attr4)/256.0f;
             break;
 
         case ET_SPOTLIGHT:
@@ -444,7 +449,7 @@ void renderentradius(extentity &e)
         else 
         {
             glDepthFunc(GL_LESS);
-            glColor3f(0, 1, 1);
+            glColor3fv(color);
         }
         if(e.attached)
         {
@@ -567,12 +572,12 @@ bool enttoggle(int id)
     return i < 0;
 }
 
-bool hoveringonent(const vec &o, const vec &ray, float radius)
+bool hoveringonent(int ent, int orient)
 {
     if(noentedit()) return false;
-    if(!passthroughent)          
-        if((efocus = enthover = rayent(o, ray, radius, entorient)) >= 0)
-            return true;
+    entorient = orient;
+    if((efocus = enthover = ent) >= 0)
+        return true;
     efocus   = entgroup.empty() ? -1 : entgroup.last();
     enthover = -1;
     return false;

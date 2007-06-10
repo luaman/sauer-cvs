@@ -325,15 +325,13 @@ float shadowray(const vec &o, const vec &ray, float radius, int mode, extentity 
     }
 }
 
-int rayent(const vec &o, const vec &ray, float radius, int &orient)
+float rayent(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size, int &orient, int &ent)
 {
     hitent = -1;
-    float d = raycube(o, ray, hitentdist = radius, RAY_ENTS);
+    float d = raycubepos(o, ray, hitpos, hitentdist = radius, mode, size);
     orient = hitorient;
-    if(hitentdist == d) 
-        return hitent;
-    else
-        return -1;
+    ent = (hitentdist == d) ? hitent : -1;
+    return d;
 }
 
 float raycubepos(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size)
