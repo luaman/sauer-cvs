@@ -35,7 +35,7 @@ struct monsterset
         {
             type = ENT_AI;
             respawn();
-            if(_type>=NUMMONSTERTYPES)
+            if(_type>=NUMMONSTERTYPES || _type < 0)
             {
                 conoutf("warning: unknown monster in spawn: %d", _type);
                 _type = 0;
