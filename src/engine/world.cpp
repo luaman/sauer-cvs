@@ -411,9 +411,9 @@ void renderentradius(extentity &e)
     {
         case ET_LIGHT:
             radius = e.attr1;
-            color[0] = float(e.attr2)/256.0f;
-            color[1] = float(e.attr3)/256.0f;
-            color[2] = float(e.attr4)/256.0f;
+            color[0] = e.attr2/255.0f;
+            color[1] = e.attr3/255.0f;
+            color[2] = e.attr4/255.0f;
             break;
 
         case ET_SPOTLIGHT:
