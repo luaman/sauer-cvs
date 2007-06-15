@@ -472,10 +472,9 @@ void renderentradius(extentity &e)
             glBegin(GL_LINE_LOOP);
             loopi(16)
             {
-                vec p(0, 0, 0);
-                p[k>=2 ? 1 : 0] = radius*cosf(2*M_PI*i/16.0f);
-                p[k>=1 ? 2 : 1] = radius*sinf(2*M_PI*i/16.0f);
-                p.add(e.o);
+                vec p(e.o);
+                p[k>=2 ? 1 : 0] += radius*cosf(2*M_PI*i/16.0f);
+                p[k>=1 ? 2 : 1] += radius*sinf(2*M_PI*i/16.0f);
                 glVertex3fv(p.v);
             }
             glEnd();
