@@ -20,7 +20,7 @@ struct fpsrender
             attack = ANIM_LOSE|ANIM_LOOP;
             delay = 1000;
             int gamemode = cl.gamemode;
-            if(m_teammode) loopv(bestteams) if(!strcmp(bestteams[i], d->team)) { attack = ANIM_WIN|ANIM_LOOP; break; }
+            if(m_teammode) loopv(bestteams) { if(!strcmp(bestteams[i], d->team)) { attack = ANIM_WIN|ANIM_LOOP; break; } }
             else if(bestplayers.find(d)>=0) attack = ANIM_WIN|ANIM_LOOP;
         }
         else if(d->state==CS_ALIVE && cl.lastmillis-d->lasttaunt<1000 && cl.lastmillis-d->lastaction>delay)
