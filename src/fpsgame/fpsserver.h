@@ -218,7 +218,7 @@ struct fpsserver : igameserver
 
     void autoteam()
     {
-        const char *teamnames[2] = {"good", "evil"};
+        static const char *teamnames[2] = {"good", "evil"};
         vector<clientinfo *> team[2];
         float teamrank[2] = {0, 0};
         for(int round = 0, remaining = clients.length(); remaining>=0; round++)
@@ -260,6 +260,7 @@ struct fpsserver : igameserver
     
     const char *chooseworstteam(const char *suggest)
     {
+        static const char *teamnames[2] = {"good", "evil"};
         vector<teamscore> teamscores;
         loopv(clients)
         {
@@ -267,16 +268,20 @@ struct fpsserver : igameserver
             if(!ci->team[0]) continue;
             ci->score.timeplayed += lastsec - ci->gamestart;
             ci->gamestart = lastsec;
+
+            bool valid = false;
+            loopj(sizeof(teamnames)/sizeof(teamnames[0])) if(!strcmp(ci->team, teamnames[j])) { valid = true; break; }
+            if(!valid) continue;
+
             teamscore *ts = NULL;
             loopvj(teamscores) if(!strcmp(teamscores[j].team, ci->team)) { ts = &teamscores[j]; break; }
             if(!ts) { ts = &teamscores.add(); ts->team = ci->team; ts->rank = 0; ts->clients = 0; }
             ts->rank += ci->score.effectiveness/max(ci->score.timeplayed, 1);
             ts->clients++;
         }
-        if(teamscores.length()==1)
+        if(teamscores.length()<sizeof(teamnames)/sizeof(teamnames[0]))
         {
-            if(suggest[0] && strcmp(teamscores[0].team, suggest)) return NULL;
-            return strcmp(teamscores[0].team, "good") ? "good" : "evil";
+            return teamnames[teamscores.length()];
         }
         teamscore *worst = NULL;
         loopv(teamscores)
@@ -284,7 +289,7 @@ struct fpsserver : igameserver
             teamscore &ts = teamscores[i];
             if(!worst || ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
         }
-        return worst ? worst->team : NULL;
+        return worst ? worst->team : teamnames[0];
     }
 
     void changemap(const char *s, int mode)
