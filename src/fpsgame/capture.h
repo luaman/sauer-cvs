@@ -12,7 +12,6 @@ struct capturestate
     static const int MAXAMMO = 5;
     static const int REPAMMODIST = 32;
     static const int RESPAWNSECS = 10;        
-    static const int RADARRADIUS = 1024;
 
     struct baseinfo
     {
@@ -179,8 +178,9 @@ struct capturestate
 struct captureclient : capturestate
 {
     fpsclient &cl;
+    float radarscale;
 
-    captureclient(fpsclient &cl) : cl(cl)
+    captureclient(fpsclient &cl) : cl(cl), radarscale(0)
     {
         CCOMMAND(captureclient, repammo, "", self->replenishammo()); 
     }
@@ -255,12 +255,15 @@ struct captureclient : capturestate
         glTexCoord2f(1.0f, 1.0f); glVertex2f(x+s, y+s);
         glTexCoord2f(0.0f, 1.0f); glVertex2f(x,   y+s);
     }
-    
+   
+    IVARP(maxradarscale, 0, 1024, 10000);
+
     void drawblips(int x, int y, int s, int type, bool skipenemy = false)
     {
         const char *textures[3] = {"data/blip_red.png", "data/blip_grey.png", "data/blip_blue.png"};
         settexture(textures[max(type+1, 0)]);
         glBegin(GL_QUADS);
+        float scale = radarscale<=0 || radarscale>maxradarscale() ? maxradarscale() : radarscale;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -276,9 +279,9 @@ struct captureclient : capturestate
             dir.sub(cl.player1->o);
             dir.z = 0.0f;
             float dist = dir.magnitude();
-            if(dist >= RADARRADIUS) dir.mul(RADARRADIUS/dist);
+            if(dist >= scale) dir.mul(scale/dist);
             dir.rotate_around_z(-cl.player1->yaw*RAD);
-            drawradar(x + s*0.5f*0.95f*(1.0f+dir.x/RADARRADIUS), y + s*0.5f*0.95f*(1.0f+dir.y/RADARRADIUS), 0.05f*s);
+            drawradar(x + s*0.5f*0.95f*(1.0f+dir.x/scale), y + s*0.5f*0.95f*(1.0f+dir.y/scale), 0.05f*s);
         }
         glEnd();
     }
@@ -326,6 +329,11 @@ struct captureclient : capturestate
             if(name[0]) s_strcpy(b.name, name); else s_sprintf(b.name)("base %d", bases.length());
             b.ent = e;
         }
+        vec center(0, 0, 0);
+        loopv(bases) center.add(bases[i].o);
+        center.div(bases.length());
+        radarscale = 0;
+        loopv(bases) radarscale = max(radarscale, 2*center.dist(bases[i].o));
     }
             
     void sendbases(ucharbuf &p)
