@@ -279,7 +279,7 @@ struct fpsserver : igameserver
             ts->rank += ci->score.effectiveness/max(ci->score.timeplayed, 1);
             ts->clients++;
         }
-        if(teamscores.length()<sizeof(teamnames)/sizeof(teamnames[0]))
+        if((size_t)teamscores.length()<sizeof(teamnames)/sizeof(teamnames[0]))
         {
             return teamnames[teamscores.length()];
         }

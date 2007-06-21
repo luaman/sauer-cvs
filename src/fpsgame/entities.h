@@ -300,24 +300,19 @@ struct entities : icliententities
                 e.attr1 = (int)cl.player1->yaw;
         }
     }
+
     void entradius(extentity &e, float &radius, float &angle, vec &dir)
     {
         switch(e.type)
         {
             case TELEPORT:
-            {
-                e.attached = NULL;
-                loopv(ents)
-                    if(ents[i]->type == TELEDEST && e.attr1 == ents[i]->attr2)
-                    {
-                        e.attached = ents[i];
-                        radius = 10.0f;
-                        dir = vec(e.o).sub(e.attached->o).normalize();
-                        angle = 5.0f;
-                        break;
-                    }
+                loopv(ents) if(ents[i]->type == TELEDEST && e.attr1==ents[i]->attr2)
+                {
+                    radius = e.o.dist(ents[i]->o);
+                    dir = vec(ents[i]->o).sub(e.o).normalize();
+                    break;
+                }
                 break;
-            }
 
             case MONSTER:
             case TELEDEST:
