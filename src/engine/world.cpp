@@ -247,7 +247,15 @@ VAR(attachradius, 1, 100, 1000);
 
 void attachentity(extentity &e)
 {
-    if(e.type!=ET_SPOTLIGHT) return;
+    switch(e.type)
+    {
+        case ET_SPOTLIGHT:
+            break;
+
+        default:
+            if(e.type<ET_GAMESPECIFIC || !et->mayattach(e)) return;
+            break;
+    }
 
     detachentity(e);
 
@@ -260,7 +268,13 @@ void attachentity(extentity &e)
         if(a->attached) continue;
         switch(e.type)
         {
-            case ET_SPOTLIGHT: if(a->type!=ET_LIGHT) continue; break;
+            case ET_SPOTLIGHT: 
+                if(a->type!=ET_LIGHT) continue; 
+                break;
+
+            default:
+                if(e.type<ET_GAMESPECIFIC || !et->attachent(e, *a)) continue;
+                break;
         }
         float dist = e.o.dist(a->o);
         if(dist < closedist)
