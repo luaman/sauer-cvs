@@ -924,5 +924,5 @@ void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR 
 }
 
 COMMAND(flipnormalmapy, "ss");
-COMMAND(mergenormalmaps, "sss");
+COMMAND(mergenormalmaps, "ss");
 

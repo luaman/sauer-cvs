@@ -1464,10 +1464,26 @@ off speed vs visual quality.
 Writes out the current map as N.obj, so you could use sauerbraten as a generic modeller
 with any program/engine that uses meshes. The meshes aren't very optimal and don't
 have texture/lighting information.
+</p>
 
-
+<pre >flipnormalmapy D N</pre>
+<p>
+Normalmaps generally come in two kinds, left-handed or righ-handed coordinate systems. If you are
+trying to use normalmaps authored for other engines, you may find that the lighting goes the wrong
+way along one axis, this can be fixed by flipping the Y coordinate of the normal. This command loads normalmap
+N (MUST be 24bit .tga), and writes out a flipped normalmap as D (also tga).
 
 </p>
+<pre >mergenormalmaps H N</pre>
+Normalmaps authored for Quake 4 often come as a base normal map, with seperate height offset file *_h.tga.
+This is NOT a height file as used for sauerbraten parallax, instead its detail to be blended onto the normals.
+This command takes normalmap N and a _h file H (both MUST be 24bit .tga), and outputs a combined normalmap N
+(it *overwrites* N).  
+<p>
+
+</p>
+
+
 <h2 id="lighting">Lighting</h2>
 
 <pre id="ambient">ambient N</pre>
@@ -1686,7 +1702,7 @@ it cannot be specified when creating the entity. N determines which mapmodel you
 depends on "mapmodel" declarations in the maps cfg file. T specifies mapmodel behaviour such
 as triggers, see table below. R is the trigger number, 0 means no trigger. This number specifies
 what trigger to activate, and in addition, the alias
-"<tt>level_trigger_Trigger</t>"
+"<tt>level_trigger_Trigger</tt>"
 will be executed, where Trigger is substituted accordingly (this allows you to script
 additional actions upon a trigger, i.e. put this into your map cfg file to print
 a message: <tt>alias level_trigger_1 "echo A door opened nearby"</tt>). The alias
