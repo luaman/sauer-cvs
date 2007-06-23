@@ -1226,18 +1226,21 @@ void filltexlist()
     }
 }
 
-void edittex(int *dir)
+void edittex(int i)
+{
+    curtexindex = i = min(max(i, 0), curtexnum-1);
+    int t = lasttex = htexture = texmru[i];
+    clearheighttexture();
+    mpedittex(t, allfaces, sel, true);
+}
+
+void edittex_(int *dir)
 {
     if(noedit()) return;
     filltexlist();
     texpaneltimer = 5000;
     if(!(lastsel==sel)) tofronttex();
-    int i = curtexindex;
-    i = i<0 ? 0 : i+*dir;
-    curtexindex = i = min(max(i, 0), curtexnum-1);
-    int t = lasttex = htexture = texmru[i];
-    clearheighttexture();
-    mpedittex(t, allfaces, sel, true);
+    edittex(curtexindex<0 ? 0 : curtexindex+*dir);
 }
 
 void gettex()
@@ -1253,7 +1256,7 @@ void gettex()
     }
 }
 
-COMMAND(edittex, "i");
+COMMANDN(edittex, edittex_, "i");
 COMMAND(gettex, "");
 
 void replacetexcube(cube &c, int oldtex, int newtex)
@@ -1445,10 +1448,7 @@ struct texturegui : g3d_callback
                         else if(slot.thumbnail) tex = slot.thumbnail;
                         else if(lastmillis-lastthumbnail>=thumbtime) { tex = loadthumbnail(slot); lastthumbnail = lastmillis; }
                         if(g.texture(tex, 1.0)&G3D_UP && (slot.loaded || tex!=crosshair)) 
-                        {
-                            curtexindex = ti;
-                            mpedittex(texmru[ti], allfaces, sel, true); 
-                        }
+                            edittex(ti);
                     }
                     else
                         g.texture(crosshair, 1.0); //create an empty space
