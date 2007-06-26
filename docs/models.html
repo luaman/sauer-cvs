@@ -427,11 +427,15 @@ Translate the model's center by (X, Y, Z), where X/Y/Z are in model units (may u
 point).
 </p>
 
-<pre id="mdlenvmap">mdlenvmap P</pre>
+<pre id="mdlenvmap">mdlenvmap E F [P]</pre>
 <p>
 Sets the environment map used for the model, where P is a pathname in the same syntax as the
 "loadsky" command. If this is not specified, the model will use the closest "envmap" entity,
-or skybox, if none is available.
+or skybox, if none is available. If E is non-zero, then the blue channel of the masks is
+interpreted as a chrome map. E (maximum envmap intensity) and F (minimum envmap intensity, default: 0) are floating point
+values in the range of 0 to 1, and specify the range in which the envmapping intensity will vary based on a viewing angle
+(a Fresnel term that is maximal at glancing angles, minimal when viewed dead-on). The intensity,
+after scaled into this range, is then multiplied by the chrome map.
 </p>
 
 <pre id="mdlshadow">mdlshadow B</pre>
