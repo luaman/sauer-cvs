@@ -139,13 +139,22 @@ void mdlname()
 
 COMMAND(mdlname, "");
 
-void mdlenvmap(char *envmap)
+void mdlenvmap(int *envmapmax, int *envmapmin, char *envmap)
 {
     checkmdl;
-    if(renderpath!=R_FIXEDFUNCTION) loadingmodel->envmap = cubemapload(envmap); 
+    if(*envmapmax) loadingmodel->setenvmap(*envmapmin, *envmapmax);
+    if(envmap[0]) loadingmodel->envmap = cubemapload(envmap);
 }
 
-COMMAND(mdlenvmap, "s");
+COMMAND(mdlenvmap, "iis");
+
+void mdltranslucent(float *translucency)
+{
+    checkmdl;
+    loadingmodel->translucency = *translucency;
+}
+
+COMMAND(mdltranslucent, "f");
 
 // mapmodels
 
@@ -339,9 +348,6 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec c
     if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
     dynshadowshader->set();
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     if(!reflecting || !hasFBO)
     {
         glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
@@ -355,12 +361,11 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec c
 
     glPushMatrix();
     setshadowmatrix(plane(floor, -floor.dot(above)), shaddir);
-    m->render(anim|ANIM_NOSKIN, varseed, speed, basetime, o, yaw, pitch, d, a);
+    m->render(anim|ANIM_NOSKIN|ANIM_SHADOW, varseed, speed, basetime, o, yaw, pitch, d, a);
     glPopMatrix();
 
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
     
     if(!reflecting || !hasFBO) glDisable(GL_STENCIL_TEST);
 }
@@ -423,17 +428,36 @@ void renderbatchedmodel(model *m, batchedmodel &b)
         rendershadow(b.dir, m, b.anim, b.varseed, b.pos, center, radius, b.yaw, b.pitch, b.speed, b.basetime, b.d, b.cull, a);
         if((b.cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) return;
     }
+
+    int anim = b.anim;
+    if(b.cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT;
+
     m->setskin(b.tex);
-    m->render(b.anim, b.varseed, b.speed, b.basetime, b.pos, b.yaw, b.pitch, b.d, a, b.color, b.dir);
+    m->render(anim, b.varseed, b.speed, b.basetime, b.pos, b.yaw, b.pitch, b.d, a, b.color, b.dir);
+}
+
+struct translucentmodel
+{
+    model *m;
+    batchedmodel *batched;
+    float dist;
+};
+
+static int sorttranslucentmodels(const translucentmodel *x, const translucentmodel *y)
+{
+    if(x->dist > y->dist) return -1;
+    if(x->dist < y->dist) return 1;
+    return 0;
 }
 
 void endmodelbatches()
 {
+    vector<translucentmodel> translucent;
     loopi(numbatches)
     {
         modelbatch &b = *batches[i];
         if(b.batched.empty()) continue;
-        b.m->startrender();
+        bool rendered = false;
         occludequery *query = NULL;
         loopvj(b.batched) 
         {
@@ -444,10 +468,35 @@ void endmodelbatches()
                 if(bm.query) startquery(bm.query);
                 query = bm.query;
             }
+            if(bm.cull&MDL_TRANSLUCENT && !query)
+            {
+                translucentmodel &tm = translucent.add();
+                tm.m = b.m;
+                tm.batched = &bm;
+                tm.dist = camera1->o.dist(bm.pos);
+                continue;
+            }
+            if(!rendered) { b.m->startrender(); rendered = true; }
             renderbatchedmodel(b.m, bm);
         }
         if(query) endquery(query);
-        b.m->endrender();
+        if(rendered) b.m->endrender();
+    }
+    if(translucent.length())
+    {
+        translucent.sort(sorttranslucentmodels);
+        model *lastmodel = NULL;
+        loopv(translucent)
+        {
+            translucentmodel &tm = translucent[i];
+            if(lastmodel!=tm.m)
+            {
+                if(lastmodel) lastmodel->endrender();
+                (lastmodel = tm.m)->startrender();
+            }
+            renderbatchedmodel(tm.m, *tm.batched);
+        }
+        if(lastmodel) lastmodel->endrender();
     }
     numbatches = -1;
 }
@@ -578,6 +627,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         rendershadow(dir, m, anim, varseed, o, center, radius, yaw, pitch, speed, basetime, d, cull, a);
         if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) { m->endrender(); return; }
     }
+
+    if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT; 
 
     m->setskin(tex);
     m->render(anim, varseed, speed, basetime, o, yaw, pitch, d, a, color, dir);

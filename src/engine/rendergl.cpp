@@ -709,9 +709,12 @@ void gl_drawframe(int w, int h)
 
     rendermapmodels();
 
-    defaultshader->set();
-
-    cl->rendergame();
+    extern int waterrefract;
+    if(!waterrefract) 
+    {
+        defaultshader->set();
+        cl->rendergame();
+    }
 
     if(fogmat==MAT_WATER)
     {
@@ -727,6 +730,13 @@ void gl_drawframe(int w, int h)
 
     renderwater();
     rendergrass();
+
+    if(waterrefract) 
+    {
+        defaultshader->set();
+        cl->rendergame();
+    }
+
     rendermaterials();
 
     if(!isthirdperson()) 
