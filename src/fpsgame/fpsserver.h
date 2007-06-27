@@ -93,11 +93,25 @@ struct fpsserver : igameserver
     vector<worldstate *> worldstates;
     bool reliablemessages;
 
+    struct demofile
+    {
+        string info;
+        uchar *data;
+        int len;
+    };
+
+    #define MAXDEMOS 5
+    vector<demofile> demos;
+
+    gzFile demorecord, demoplayback;
+    enet_uint32 demomillis;
+    int nextplayback;
+
     captureserv cps;
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(0), lastsec(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), cps(*this) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(0), lastsec(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demorecord(NULL), demoplayback(NULL), demomillis(0), nextplayback(0), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); } 
@@ -109,12 +123,12 @@ struct fpsserver : igameserver
     {
         static const char *modenames[] =
         {
-            "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
+            "demo", "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
             "instagib", "instagib team", "efficiency", "efficiency team",
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
             "capture",
         };
-        return (n>=-2 && size_t(n+2)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+2] : "unknown";
+        return (n>=-3 && size_t(n+2)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+3] : "unknown";
     }
 
     static char msgsizelookup(int msg)
@@ -127,9 +141,10 @@ struct fpsserver : igameserver
             SV_PING, 2, SV_PONG, 2, SV_CLIENTPING, 2,
             SV_TIMEUP, 2, SV_MAPRELOAD, 1, SV_ITEMACC, 2,
             SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 4,
-            SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_DELCUBE, 14, SV_NEWMAP, 2, SV_GETMAP, 1,
+            SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_DELCUBE, 14, SV_NEWMAP, 2, SV_GETMAP, 1, SV_SENDMAP, 0,
             SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
             SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 1, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
+            SV_LISTDEMOS, 1, SV_SENDDEMOLIST, 0, SV_GETDEMO, 2, SV_SENDDEMO, 0,
             SV_CLIENT, 0,
             -1
         };
@@ -292,8 +307,173 @@ struct fpsserver : igameserver
         return worst ? worst->team : teamnames[0];
     }
 
+    void writedemo(int chan, void *data, int len)
+    {
+        if(!demorecord) return;
+        int stamp[3] = { enet_time_get()-demomillis, chan, len };
+        endianswap(stamp, sizeof(int), 3);
+        gzwrite(demorecord, stamp, sizeof(stamp));
+        gzwrite(demorecord, data, len);
+    }
+
+    void recordpacket(int chan, void *data, int len)
+    {
+        writedemo(chan, data, len);
+    }
+
+    void enddemorecord()
+    {
+        if(!demorecord) return;
+        uchar buf[MAXTRANS];
+        ucharbuf p(buf, sizeof(buf));
+
+        loopv(clients)
+        {
+            clientinfo *ci = clients[i];
+            putint(p, SV_CDIS);
+            putint(p, ci->clientnum);
+        }
+        writedemo(1, buf, p.len);
+
+        gzclose(demorecord);
+
+        FILE *f = fopen("demorecord", "rb");
+        if(f)
+        {
+            fseek(f, 0, SEEK_END);
+            int len = ftell(f);
+            rewind(f);
+            if(demos.length()>=MAXDEMOS)
+            {
+                delete[] demos[0].data;
+                demos.remove(0);
+            }
+            demofile &d = demos.add();
+            time_t t = time(NULL);
+            char *timestr = ctime(&t), *trim = timestr + strlen(timestr);
+            while(trim>timestr && isspace(*--trim)) *trim = '\0';
+            s_sprintf(d.info)("%s: %s, %s", timestr, modestr(gamemode), smapname);
+            d.data = new uchar[len];
+            d.len = len;
+            fread(d.data, 1, len, f);
+            fclose(f);
+        }
+        demorecord = NULL;
+    }
+
+    void setupdemorecord()
+    {
+        if(gamemode==1) return;
+        demorecord = gzopen("demorecord", "wb9");
+        if(!demorecord) return;
+
+        demomillis = enet_time_get();
+
+        uchar buf[MAXTRANS];
+        ucharbuf p(buf, sizeof(buf));
+        welcomepacket(p, -1);
+        writedemo(1, buf, p.len);
+
+        loopv(clients)
+        {
+            clientinfo *ci = clients[i];
+            uchar header[16];
+            ucharbuf q(&buf[sizeof(header)], sizeof(buf)-sizeof(header));
+            putint(q, SV_INITC2S);
+            sendstring(ci->name, q);
+            sendstring(ci->team, q);
+            putint(q, -1);
+
+            ucharbuf h(header, sizeof(header));
+            putint(h, SV_CLIENT);
+            putint(h, ci->clientnum);
+            putuint(h, q.len);
+
+            memcpy(&buf[sizeof(header)-h.len], header, h.len);
+
+            writedemo(1, &buf[sizeof(header)-h.len], h.len+q.len);
+        }
+    }
+
+    void listdemos(int cn)
+    {
+        ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+        if(!packet) return;
+        ucharbuf p(packet->data, packet->dataLength);
+        putint(p, SV_SENDDEMOLIST);
+        putint(p, demos.length());
+        loopv(demos) sendstring(demos[i].info, p);
+        enet_packet_resize(packet, p.length());
+        sendpacket(cn, 1, packet);
+        if(!packet->referenceCount) enet_packet_destroy(packet);
+    }
+
+    void senddemo(int cn, int num)
+    {
+        if(!demos.inrange(num-1)) return;
+        demofile &d = demos[num-1];
+        sendf(cn, 2, "rim", SV_SENDDEMO, d.len, d.data); 
+    }
+
+    void setupdemoplayback()
+    {
+        demoplayback = gzopen(smapname, "rb9");
+        if(!demoplayback) return;
+
+        demomillis = enet_time_get();
+        if(gzread(demoplayback, &nextplayback, sizeof(nextplayback))!=sizeof(nextplayback))
+        {
+            enddemoplayback();
+            return;
+        }
+        endianswap(&nextplayback, sizeof(nextplayback), 1);
+    }
+
+    void enddemoplayback()
+    {
+        if(!demoplayback) return;
+        gzclose(demoplayback);
+        demoplayback = NULL;
+    }
+
+    void readdemo()
+    {
+        if(!demoplayback) return;
+        int curplayback = int(enet_time_get()-demomillis);
+        while(curplayback>=nextplayback)
+        {
+            int chan, len;
+            if(gzread(demoplayback, &chan, sizeof(chan))!=sizeof(chan) ||
+               gzread(demoplayback, &len, sizeof(len))!=sizeof(len))
+            {
+                enddemoplayback();
+                return;
+            }
+            endianswap(&chan, sizeof(chan), 1);
+            endianswap(&len, sizeof(len), 1);
+            ENetPacket *packet = enet_packet_create(NULL, len, 0);
+            if(!packet || gzread(demoplayback, packet->data, len)!=len)
+            {
+                if(packet) enet_packet_destroy(packet);
+                enddemoplayback();
+                return;
+            }
+            sendpacket(-1, chan, packet);
+            if(!packet->referenceCount) enet_packet_destroy(packet);
+            if(gzread(demoplayback, &nextplayback, sizeof(nextplayback))!=sizeof(nextplayback))
+            {
+                enddemoplayback();
+                return;
+            }
+            endianswap(&nextplayback, sizeof(nextplayback), 1);
+        }
+    }
+ 
     void changemap(const char *s, int mode)
     {
+        if(m_demo) enddemoplayback();
+        else enddemorecord();
+
         mapreload = 0;
         gamemode = mode;
         minremain = m_teammode ? 15 : 10;
@@ -316,6 +496,9 @@ struct fpsserver : igameserver
             ci->mapchange();
             ci->gamestart = lastsec;
         }
+
+        if(m_demo) setupdemoplayback();
+        else setupdemorecord();
     }
 
     clientscore &findscore(clientinfo *ci, bool insert)
@@ -409,7 +592,7 @@ struct fpsserver : igameserver
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
-        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_CLIENT };
+        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_SENDDEMOLIST, SV_SENDDEMO, SV_SENDMAP, SV_CLIENT };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     }
@@ -464,6 +647,8 @@ struct fpsserver : igameserver
             }
         }
         int psize = ws.positions.length(), msize = ws.messages.length();
+        if(psize) recordpacket(0, ws.positions.getbuf(), psize);
+        if(msize) recordpacket(1, ws.messages.getbuf(), msize);
         loopi(psize) { uchar c = ws.positions[i]; ws.positions.add(c); }
         loopi(msize) { uchar c = ws.messages[i]; ws.messages.add(c); }
         ws.uses = 0;
@@ -773,11 +958,19 @@ struct fpsserver : igameserver
                 if(m_sp) startintermission();
                 break;
 
+            case SV_LISTDEMOS:
+                listdemos(sender);
+                break;
+
+            case SV_GETDEMO:
+                senddemo(sender, getint(p));
+                break;
+
             case SV_GETMAP:
                 if(mapdata)
                 {
                     sendf(sender, 1, "ris", SV_SERVMSG, "server sending map...");
-                    sendfile(sender, 2, mapdata);
+                    sendfile(sender, 2, mapdata, "ri", SV_SENDMAP);
                 }
                 else sendf(sender, 1, "ris", SV_SERVMSG, "no map to send"); 
                 break;
@@ -835,7 +1028,7 @@ struct fpsserver : igameserver
             }
             putint(p, -1);
         }
-        if(((clientinfo *)getinfo(n))->spectator)
+        if(n<0 || n>=MAXCLIENTS || ((clientinfo *)getinfo(n))->spectator)
         {
             putint(p, SV_SPECTATOR);
             putint(p, n);
@@ -873,6 +1066,8 @@ struct fpsserver : igameserver
 
     void serverupdate(int seconds)
     {
+        if(m_demo) readdemo();
+
         loopv(sents)        // spawn entities when timer reached
         {
             if(sents[i].spawnsecs)

@@ -28,6 +28,8 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, setteam, "s", self->setteam(args[0], args[1]));
         CCOMMAND(clientcom, getmap, "", self->getmap());
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
+        CCOMMAND(clientcom, listdemos, "", self->listdemos());
+        CCOMMAND(clientcom, getdemo, "", self->getdemo(args[0]));
 
         extern void result(const char *s);
         CCOMMAND(clientcom, getname, "", result(self->player1->name));
@@ -725,6 +727,17 @@ struct clientcom : iclientcom
                 conoutf("%s", text);
                 break;
 
+            case SV_SENDDEMOLIST:
+            {
+                int demos = getint(p);
+                loopi(demos)
+                {
+                    getstring(text, p);
+                    conoutf("%d. %s", i+1, text);
+                }
+                break;
+            }
+
             case SV_CURRENTMASTER:
                 currentmaster = getint(p);
                 break;
@@ -852,18 +865,40 @@ struct clientcom : iclientcom
         
     void receivefile(uchar *data, int len)
     {
-        if(cl.gamemode!=1) return;
-        string oldname;
-        s_strcpy(oldname, cl.getclientmap());
-        s_sprintfd(mname)("getmap_%d", cl.lastmillis);
-        s_sprintfd(fname)("packages/base/%s.ogz", mname);
-        FILE *map = fopen(fname, "wb");
-        if(!map) return;
-        conoutf("received map");
-        fwrite(data, 1, len, map);
-        fclose(map);
-        load_world(mname, oldname[0] ? oldname : NULL);
-        remove(fname);
+        ucharbuf p(data, len);
+        int type = getint(p);
+        data += p.length();
+        len -= p.length();
+        switch(type)
+        {
+            case SV_SENDDEMO:
+            {
+                s_sprintfd(fname)("demo_%d", cl.lastmillis);
+                FILE *demo = fopen(fname, "wb");
+                if(!demo) return;
+                conoutf("received demo %s", fname);
+                fwrite(data, 1, len, demo);
+                fclose(demo);
+                break;
+            }
+
+            case SV_SENDMAP:
+            {
+                if(cl.gamemode!=1) return;
+                string oldname;
+                s_strcpy(oldname, cl.getclientmap());
+                s_sprintfd(mname)("getmap_%d", cl.lastmillis);
+                s_sprintfd(fname)("packages/base/%s.ogz", mname);
+                FILE *map = fopen(fname, "wb");
+                if(!map) return;
+                conoutf("received map");
+                fwrite(data, 1, len, map);
+                fclose(map);
+                load_world(mname, oldname[0] ? oldname : NULL);
+                remove(fname);
+                break;
+            }
+        }
     }
 
     void getmap()
@@ -871,6 +906,19 @@ struct clientcom : iclientcom
         if(cl.gamemode!=1) { conoutf("\"getmap\" only works in coopedit mode"); return; }
         conoutf("getting map...");
         addmsg(SV_GETMAP, "r");
+    }
+
+    void getdemo(char *arg)
+    {
+        int i = atoi(arg);
+        conoutf("getting demo %d...", i);
+        addmsg(SV_GETDEMO, "ri", i);
+    }
+
+    void listdemos()
+    {
+        conoutf("listing demos...");
+        addmsg(SV_LISTDEMOS, "r");
     }
 
     void sendmap()

@@ -152,7 +152,7 @@ void cleanupserver()
     if(serverhost) enet_host_destroy(serverhost);
 }
 
-void sendfile(int cn, int chan, FILE *file)
+void sendfile(int cn, int chan, FILE *file, const char *format, ...)
 {
 #ifndef STANDALONE
     extern ENetHost *clienthost;
@@ -168,9 +168,30 @@ void sendfile(int cn, int chan, FILE *file)
 
     fseek(file, 0, SEEK_END);
     int len = ftell(file);
-    ENetPacket *packet = enet_packet_create(NULL, len, ENET_PACKET_FLAG_RELIABLE);
+    bool reliable = false;
+    if(*format=='r') { reliable = true; ++format; }
+    ENetPacket *packet = enet_packet_create(NULL, MAXTRANS+len, ENET_PACKET_FLAG_RELIABLE);
     rewind(file);
-    fread(packet->data, 1, len, file);
+
+    ucharbuf p(packet->data, packet->dataLength);
+    va_list args;
+    va_start(args, format);
+    while(*format) switch(*format++)
+    {
+        case 'i':
+        {
+            int n = isdigit(*format) ? *format++-'0' : 1;
+            loopi(n) putint(p, va_arg(args, int));
+            break;
+        }
+        case 's': sendstring(va_arg(args, const char *), p); break;
+        case 'l': putint(p, len); break;
+    }
+    va_end(args);
+    enet_packet_resize(packet, p.length()+len);
+
+    fread(&packet->data[p.length()], 1, len, file);
+    enet_packet_resize(packet, p.length()+len);
 
     if(cn >= 0) enet_peer_send(clients[cn]->peer, chan, packet);
 #ifndef STANDALONE
@@ -191,6 +212,7 @@ void sendpacket(int n, int chan, ENetPacket *packet)
 {
     if(n<0)
     {
+        sv->recordpacket(chan, packet->data, packet->dataLength);
         loopv(clients) sendpacket(i, chan, packet);
         return;
     }
@@ -226,6 +248,15 @@ void sendf(int cn, int chan, const char *format, ...)
             break;
         }
         case 's': sendstring(va_arg(args, const char *), p); break;
+        case 'm':
+        {
+            int n = va_arg(args, int);
+            enet_packet_resize(packet, packet->dataLength+n);
+            p.buf = packet->data;
+            p.maxlen += n;
+            p.put(va_arg(args, uchar *), n);
+            break;
+        }
     }
     va_end(args);
     enet_packet_resize(packet, p.length());

@@ -81,10 +81,11 @@ struct fpsent : dynent
 #define m_arena       (gamemode>=8 && gamemode<12)
 #define m_tarena      (gamemode>=10 && gamemode<12)
 #define m_capture     (gamemode==12)
-#define m_teammode    ((gamemode&1 && gamemode>2) || m_capture)
-#define m_sp          (gamemode<0)
+#define m_teammode    ((gamemode>2 && gamemode&1) || m_capture)
+#define m_sp          (gamemode>=-2 && gamemode<0)
 #define m_dmsp        (gamemode==-1)
 #define m_classicsp   (gamemode==-2)
+#define m_demo        (gamemode==-3)
 #define isteam(a,b)   (m_teammode && strcmp(a, b)==0)
 
 #define m_mp(mode)       (mode>=0 && mode<=12)
@@ -128,9 +129,10 @@ enum
     SV_PING, SV_PONG, SV_CLIENTPING,
     SV_TIMEUP, SV_MAPRELOAD, SV_ITEMACC,
     SV_SERVMSG, SV_ITEMLIST, SV_RESUME,
-    SV_EDITENT, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_COPY, SV_PASTE, SV_ROTATE, SV_REPLACE, SV_DELCUBE, SV_NEWMAP, SV_GETMAP,
+    SV_EDITENT, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_COPY, SV_PASTE, SV_ROTATE, SV_REPLACE, SV_DELCUBE, SV_NEWMAP, SV_GETMAP, SV_SENDMAP,
     SV_MASTERMODE, SV_KICK, SV_CURRENTMASTER, SV_SPECTATOR, SV_SETMASTER, SV_SETTEAM,
     SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO, SV_FORCEINTERMISSION, SV_ANNOUNCE,
+    SV_LISTDEMOS, SV_SENDDEMOLIST, SV_GETDEMO, SV_SENDDEMO,
     SV_CLIENT,
 };
 
