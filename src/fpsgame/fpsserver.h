@@ -364,7 +364,7 @@ struct fpsserver : igameserver
 
     void setupdemorecord()
     {
-        if(!m_mp(gamemode) || gamemode==1) return;
+        if(haslocalclients() || !m_mp(gamemode) || gamemode==1) return;
         demorecord = gzopen("demorecord", "wb9");
         if(!demorecord) return;
 

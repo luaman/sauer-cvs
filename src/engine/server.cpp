@@ -318,6 +318,11 @@ client &addclient()
 int nonlocalclients = 0;
 
 bool hasnonlocalclients() { return nonlocalclients!=0; }
+bool haslocalclients() 
+{ 
+    loopv(clients) if(clients[i]->type==ST_LOCAL) return true;
+    return false;
+}
 
 void sendpongs()        // reply all server info requests
 {
