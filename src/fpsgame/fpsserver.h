@@ -364,7 +364,7 @@ struct fpsserver : igameserver
 
     void setupdemorecord()
     {
-        if(gamemode==1) return;
+        if(!m_mp(gamemode) || gamemode==1) return;
         demorecord = gzopen("demorecord", "wb9");
         if(!demorecord) return;
 
@@ -435,6 +435,8 @@ struct fpsserver : igameserver
         if(!demoplayback) return;
         gzclose(demoplayback);
         demoplayback = NULL;
+
+        sendf(-1, 1, "riii", SV_SPECTATOR, -1, 0);
     }
 
     void readdemo()
