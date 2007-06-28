@@ -437,6 +437,16 @@ struct fpsserver : igameserver
         demoplayback = NULL;
 
         sendf(-1, 1, "riii", SV_SPECTATOR, -1, 0);
+
+        loopv(clients)
+        {
+            ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+            ucharbuf p(packet->data, packet->dataLength);
+            welcomepacket(p, clients[i]->clientnum);
+            enet_packet_resize(packet, p.length());
+            sendpacket(clients[i]->clientnum, 1, packet);
+            if(!packet->referenceCount) enet_packet_destroy(packet);
+        }
     }
 
     void readdemo()
