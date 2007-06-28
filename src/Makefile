@@ -41,7 +41,7 @@ CLIENT_OBJS= \
 	fpsgame/fps.o \
 	rpggame/rpg.o
 
-SERVER_LIBS=-Lenet -lenet
+SERVER_LIBS=-Lenet -lenet -lz
 SERVER_OBJS= \
 	shared/tools.o \
 	engine/server-standalone.o \

@@ -411,6 +411,7 @@ struct fpsserver : igameserver
 
     void senddemo(int cn, int num)
     {
+        if(!num) num = demos.length()-1;
         if(!demos.inrange(num-1)) return;
         demofile &d = demos[num-1];
         sendf(cn, 2, "rim", SV_SENDDEMO, d.len, d.data); 
