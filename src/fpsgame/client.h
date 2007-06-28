@@ -853,6 +853,7 @@ struct clientcom : iclientcom
         cl.nextmode = gamemode;
         cl.minremain = -1;
         if(editmode && !allowedittoggle()) toggleedit();
+        if(m_demo) return;
         if(gamemode==1 && !name[0]) emptymap(0, true);
         else load_world(name);
         if(m_capture) cl.cpc.setupbases();
