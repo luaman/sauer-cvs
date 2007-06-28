@@ -201,6 +201,7 @@ struct fpsserver : igameserver
         if(!ci->mapvote[0]) return;
         if(ci->local || mapreload || (ci->master && mastermode>=MM_VETO))
         {
+            if(demorecord) enddemorecord();
             if(!ci->local && !mapreload) 
             {
                 s_sprintfd(msg)("master forced %s on map %s", modestr(reqmode), map);
@@ -567,6 +568,7 @@ struct fpsserver : igameserver
         {
             if(best && (best->count > (force ? 1 : maxvotes/2)))
             { 
+                if(demorecord) enddemorecord();
                 sendservmsg(force ? "vote passed by default" : "vote passed by majority");
                 sendf(-1, 1, "risi", SV_MAPCHANGE, best->map, best->mode);
                 changemap(best->map, best->mode); 
@@ -1097,6 +1099,7 @@ struct fpsserver : igameserver
         if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
         if(interm && seconds>interm)
         {
+            if(demorecord) enddemorecord();
             interm = 0;
             checkvotes(true);
         }
