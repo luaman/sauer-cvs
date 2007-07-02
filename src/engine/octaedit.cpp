@@ -67,7 +67,7 @@ int gridsize = 8;
 ivec cor, lastcor;
 ivec cur, lastcur;
 
-extern bool entediting;
+extern int entediting;
 bool editmode = false;
 bool havesel = false;
 
