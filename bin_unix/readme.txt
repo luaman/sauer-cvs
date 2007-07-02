@@ -5,9 +5,9 @@ Please run "sauerbraten_unix" from the root Sauerbraten dir to launch these.
 Clients will need the following dynamic link libraries present:
 * libGL (OpenGL)
 * libGLU (OpenGL)
-* SDL (>= 1.2.1)
-* SDL_image (>= 1.2.1)
-* SDL_mixer (>= 1.2.1)
+* SDL (>= 1.2.10)
+* SDL_image (>= 1.2.10)
+* SDL_mixer (>= 1.2.10)
 * libpng
 * libjpeg
 * zlib
