@@ -190,7 +190,7 @@ struct captureclient : capturestate
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, cl.player1->o) && cl.et.hasmaxammo(cl.player1, b.ammotype-1+I_SHELLS)) return;
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, cl.player1->o) && cl.player1->hasmaxammo(b.ammotype-1+I_SHELLS)) return;
         }
         cl.cc.addmsg(SV_REPAMMO, "r");
     }
@@ -307,7 +307,7 @@ struct captureclient : capturestate
             glPushMatrix();
             glLoadIdentity();
             glOrtho(0, w*900/h, 900, 0, -1, 1);
-            int wait = max(0, RESPAWNSECS-(cl.lastmillis-cl.player1->lastaction)/1000);
+            int wait = max(0, RESPAWNSECS-(cl.lastmillis-cl.player1->lastpain)/1000);
             draw_textf("%d", (x+s/2)/2-16, (y+s/2)/2-32, wait);
             glPopMatrix();
         }
@@ -443,7 +443,7 @@ struct captureserv : capturestate
         loopv(sv.clients)
         {
             fpsserver::clientinfo *ci = sv.clients[i];
-            if(!ci->spectator && ci->state==CS_ALIVE && ci->team[0] && !strcmp(ci->team, team) && insidebase(b, ci->o))
+            if(!ci->spectator && ci->state.state==CS_ALIVE && ci->team[0] && !strcmp(ci->team, team) && insidebase(b, ci->state.o))
                 b.enter(ci->team);
         }
         sendbaseinfo(n);
@@ -452,13 +452,16 @@ struct captureserv : capturestate
     void replenishammo(int client, const char *team, const vec &o)
     {
         if(!team[0]) return;
+        fpsserver::clientinfo *ci = sv.clients[client];
+        if(ci->state.state!=CS_ALIVE) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            if(insidebase(b, o) && b.takeammo(team))
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, o) && ci->state.hasmaxammo(b.ammotype-1+I_SHELLS) && b.takeammo(team))
             {
                 sendbaseinfo(i);
                 sendf(client, 1, "rii", SV_REPAMMO, b.ammotype);
+                ci->state.addammo(b.ammotype);
                 break;
             }
         }

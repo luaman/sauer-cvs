@@ -208,12 +208,12 @@ void *getinfo(int i)    { return !clients.inrange(i) || clients[i]->type==ST_EMP
 int getnumclients()     { return clients.length(); }
 uint getclientip(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; }
 
-void sendpacket(int n, int chan, ENetPacket *packet)
+void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
 {
     if(n<0)
     {
         sv->recordpacket(chan, packet->data, packet->dataLength);
-        loopv(clients) sendpacket(i, chan, packet);
+        loopv(clients) if(i!=exclude) sendpacket(i, chan, packet);
         return;
     }
     switch(clients[n]->type)
@@ -233,6 +233,7 @@ void sendpacket(int n, int chan, ENetPacket *packet)
 
 void sendf(int cn, int chan, const char *format, ...)
 {
+    int exclude = -1;
     bool reliable = false;
     if(*format=='r') { reliable = true; ++format; }
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
@@ -241,6 +242,18 @@ void sendf(int cn, int chan, const char *format, ...)
     va_start(args, format);
     while(*format) switch(*format++)
     {
+        case 'x':
+            exclude = va_arg(args, int);
+            break;
+
+        case 'v':
+        {
+            int n = va_arg(args, int);
+            int *v = va_arg(args, int *);
+            loopi(n) putint(p, v[i]);
+            break;
+        }
+
         case 'i': 
         {
             int n = isdigit(*format) ? *format++-'0' : 1;
@@ -260,7 +273,7 @@ void sendf(int cn, int chan, const char *format, ...)
     }
     va_end(args);
     enet_packet_resize(packet, p.length());
-    sendpacket(cn, chan, packet);
+    sendpacket(cn, chan, packet, exclude);
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 }
 

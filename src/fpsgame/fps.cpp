@@ -26,7 +26,6 @@ struct fpsclient : igameclient
     bool intermission;
     int lastmillis;
     string clientmap;
-    int arenarespawnwait, arenadetectwait;
     int maptime, minremain;
     int respawnent;
     int swaymillis;
@@ -46,13 +45,13 @@ struct fpsclient : igameclient
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
-          arenarespawnwait(0), arenadetectwait(0), maptime(0), minremain(0), respawnent(-1), 
+          maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
-        CCOMMAND(fpsclient, kill, "",  { self->selfdamage(self->player1->health+self->player1->armour, -1, self->player1); });
+        CCOMMAND(fpsclient, kill, "",  { self->suicide(self->player1); });
         CCOMMAND(fpsclient, taunt, "", { self->taunt(); });
     }
 
@@ -91,49 +90,18 @@ struct fpsclient : igameclient
     fpsent *spawnstate(fpsent *d)              // reset player state not persistent accross spawns
     {
         d->respawn();
-        if(m_noitems || m_capture)
-        {
-            d->gunselect = GUN_RIFLE;
-            d->armour = 0;
-            if(m_noitemsrail)
-            {
-                d->health = 1;
-                d->ammo[GUN_RIFLE] = 100;
-            }
-            else
-            {
-                //d->health = 100;
-                d->armour = 100;
-                d->armourtype = A_GREEN;
-                if(m_tarena || m_capture)
-                {
-                    d->ammo[GUN_PISTOL] = 80;
-                    int spawngun1 = rnd(5)+1, spawngun2;
-                    et.baseammo(d->gunselect = spawngun1, m_capture ? 1 : 2);
-                    do spawngun2 = rnd(5)+1; while(spawngun1==spawngun2);
-                    et.baseammo(spawngun2, m_capture ? 1 : 2);
-                    if(!m_capture) d->ammo[GUN_GL] += 1;
-                }
-                else // efficiency
-                {
-                    loopi(5) et.baseammo(i+1);
-                    d->gunselect = GUN_CG;
-                }
-                d->ammo[GUN_CG] /= 2;
-            }
-        }
-        else
-        {
-            d->ammo[GUN_PISTOL] = m_sp ? 80 : 40;
-            d->ammo[GUN_GL] = 1;
-        }
+        d->spawnstate(gamemode);
         return d;
     }
 
     void respawnself()
     {
-        spawnplayer(player1);
-        sb.showscores(false);
+        if(multiplayer(false)) cc.addmsg(SV_TRYSPAWN, "r");
+        else
+        {
+            spawnplayer(player1);
+            sb.showscores(false);
+        }
     }
 
     fpsent *pointatplayer()
@@ -145,53 +113,6 @@ struct fpsclient : igameclient
             if(intersect(o, player1->o, worldpos)) return o;
         }
         return NULL;
-    }
-
-    void arenacount(fpsent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
-    {
-        if(d->state==CS_SPECTATOR) return;
-        if(d->state!=CS_DEAD)
-        {
-            alive++;
-            if(lastteam && strcmp(lastteam, d->team)) oneteam = false;
-            lastteam = d->team;
-        }
-        else
-        {
-            dead++;
-        }
-    }
-
-    void arenarespawn()
-    {
-        if(arenarespawnwait)
-        {
-            if(arenarespawnwait<lastmillis)
-            {
-                arenarespawnwait = 0;
-                conoutf("\f2new round starting... fight!");
-                playsound(S_V_FIGHT);
-                if(!cc.spectator) respawnself();
-            }
-        }
-        else if(arenadetectwait==0 || arenadetectwait<lastmillis)
-        {
-            arenadetectwait = 0;
-            int alive = 0, dead = 0;
-            char *lastteam = NULL;
-            bool oneteam = true;
-            loopv(players) if(players[i]) arenacount(players[i], alive, dead, lastteam, oneteam);
-            arenacount(player1, alive, dead, lastteam, oneteam);
-            if(dead>0 && (alive<=1 || (m_teammode && oneteam)))
-            {
-                conoutf("\f2arena round is over! next round in 5 seconds...");
-                if(alive) conoutf("\f2team %s is last man standing", lastteam);
-                else conoutf("\f2everyone died!");
-                arenarespawnwait = lastmillis+5000;
-                arenadetectwait  = lastmillis+10000;
-                player1->roll = 0;
-            }
-        }
     }
 
     void otherplayers()
@@ -215,7 +136,6 @@ struct fpsclient : igameclient
         if(!curtime) return;
         physicsframe();
         et.checkquad(curtime);
-        if(m_arena) arenarespawn();
         ws.moveprojectiles(curtime);
         if(player1->clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos); // only shoot when connected to server
         ws.bounceupdate(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
@@ -255,9 +175,9 @@ struct fpsclient : igameclient
         if(player1->state==CS_DEAD)
         {
             player1->attacking = false;
-            if(m_capture && lastmillis-player1->lastaction<cpc.RESPAWNSECS*1000)
+            if(m_capture && lastmillis-player1->lastpain<cpc.RESPAWNSECS*1000)
             {
-                conoutf("\f2you must wait %d seconds before respawn!", cpc.RESPAWNSECS-(lastmillis-player1->lastaction)/1000);
+                conoutf("\f2you must wait %d seconds before respawn!", cpc.RESPAWNSECS-(lastmillis-player1->lastpain)/1000);
                 return;
             }
             if(m_arena) { conoutf("\f2waiting for new round to start..."); return; }
@@ -266,8 +186,7 @@ struct fpsclient : igameclient
             {
                 respawnself();
                 conoutf("\f2You wasted another life! The monsters stole your armour and some ammo...");
-                loopi(NUMGUNS) if((player1->ammo[i] = lastplayerstate.ammo[i])>5) player1->ammo[i] = max(player1->ammo[i]/3, 5); 
-                player1->ammo[GUN_PISTOL] = 80;
+                loopi(NUMGUNS) if(i!=GUN_PISTOL && (player1->ammo[i] = lastplayerstate.ammo[i])>5) player1->ammo[i] = max(player1->ammo[i]/3, 5); 
                 return;
             }
             respawnself();
@@ -288,64 +207,64 @@ struct fpsclient : igameclient
         return player1->state!=CS_DEAD && !intermission; 
     }
 
-    // damage arriving from the network, monsters, yourself, all ends up here.
-
-    void selfdamage(int damage, int actor, fpsent *act)
+    void damaged(int damage, fpsent *d, fpsent *actor, bool local = true)
     {
-        if(player1->state!=CS_ALIVE || editmode || intermission) return;
-        damageblend(damage);
-        int ad = damage*(player1->armourtype+1)*25/100;     // let armour absorb when possible
-        if(ad>player1->armour) ad = player1->armour;
-        player1->armour -= ad;
-        damage -= ad;
-        float droll = damage/0.5f;
-        player1->roll += player1->roll>0 ? droll : (player1->roll<0 ? -droll : (rnd(2) ? droll : -droll));  // give player a kick depending on amount of damage
-        if((player1->health -= damage)<=0)
+        if(d->state!=CS_ALIVE || intermission) return;
+
+        if(local) damage = d->dodamage(damage);
+        else if(actor==player1) return;
+
+        if(d==player1)
         {
-            if(actor==-2)
-            {
-                conoutf("\f2you got killed by %s!", colorname(act));
-            }
-            else if(actor==-1)
-            {
-                actor = player1->clientnum;
-                conoutf("\f2you suicided!");
-                cc.addmsg(SV_FRAGS, "ri", --player1->frags);
-            }
-            else
-            {
-                fpsent *a = getclient(actor);
-                if(a)
-                {
-                    if(isteam(a->team, player1->team))
-                    {
-                        conoutf("\f2you got fragged by a teammate (%s)", colorname(a));
-                    }
-                    else
-                    {
-                        conoutf("\f2you got fragged by %s", colorname(a));
-                    }
-                }
-            }
+            damageblend(damage);
+            d->damageroll(damage);
+        }
+        else ws.damageeffect(damage, d);
+
+        if(d->health<=0) { if(local) killed(d, actor); }
+        else if(d==player1) playsound(S_PAIN6);
+        else playsound(S_PAIN1+rnd(5), &d->o);
+    }
+
+    void killed(fpsent *d, fpsent *actor)
+    {
+        if(d->state!=CS_ALIVE || intermission) return;
+
+        string dname, aname;
+        s_strcpy(dname, d==player1 ? "you" : colorname(d));
+        s_strcpy(aname, actor==player1 ? "you" : colorname(actor));
+        if(actor->type==ENT_AI)
+            conoutf("\f2%s got killed by %s!", dname, aname);
+        else if(d==actor)
+            conoutf("\f2%s suicided%s", dname, d==player1 ? "!" : "");
+        else if(isteam(actor->team, player1->team))
+        {
+            if(d==player1) conoutf("\f2you got fragged by a teammate (%s)", aname);
+            else conoutf("\f2%s fragged a teammate (%s)", aname, dname);
+        }
+        else 
+        {
+            if(d==player1) conoutf("\f2you got fragged by %s", aname);
+            else conoutf("\f2%s fragged %s", aname, dname);
+        }
+
+        d->state = CS_DEAD;
+        d->lastpain = lastmillis;
+        d->superdamage = min(-d->health, 0);
+        if(d==player1)
+        {
             sb.showscores(true);
-            player1->superdamage = -player1->health;
-            cc.addmsg(SV_DIED, "ri3", actor, damage+ad, player1->superdamage);
             lastplayerstate = *player1;
-            player1->lifesequence++;
-            player1->attacking = false;
-            player1->state = CS_DEAD;
-            player1->deaths++;
-            player1->pitch = 0;
-            player1->roll = 0;
+            d->attacking = false;
+            d->deaths++;
+            d->pitch = 0;
+            d->roll = 0;
             playsound(S_DIE1+rnd(2));
-            vec vel = player1->vel;
-            spawnstate(player1);
-            player1->vel = vel;
-            player1->lastaction = lastmillis;
         }
         else
         {
-            playsound(S_PAIN6);
+            playsound(S_DIE1+rnd(2), &d->o);
+            ws.superdamageeffect(d->vel, d);
         }
     }
 
@@ -437,7 +356,8 @@ struct fpsclient : igameclient
             players[i]->maxhealth = 100;
         }
 
-        spawnplayer(player1);
+        if(!m_mp(gamemode)) spawnplayer(player1);
+        else findplayerspawn(player1, -1);
         et.resetspawns();
         s_strcpy(clientmap, name);
         sb.showscores(false);
@@ -491,10 +411,14 @@ struct fpsclient : igameclient
         return cname;
     }
 
-    void worldhurts(physent *d, int damage)
+    void suicide(physent *d)
     {
-        if(d==player1) selfdamage(damage, -1, player1);
-        else if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(damage, player1);
+        if(d==player1)
+        {
+            if(!multiplayer(false)) killed(player1, player1);
+            else cc.addmsg(SV_SUICIDE, "r");
+        }
+        else if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(400, player1);
     }
 
     IVARP(hudgun, 0, 1, 1);

@@ -5,36 +5,14 @@ struct weaponstate
     fpsclient &cl;
     fpsent *player1;
 
-    struct guninfo { short sound, attackdelay, damage, projspeed, part, kickamount; char *name; };
-
     static const int MONSTERDAMAGEFACTOR = 4;
-    static const int SGRAYS = 20;
-    static const int SGSPREAD = 4;
     static const int OFFSETMILLIS = 500;
     vec sg[SGRAYS];
 
-    guninfo *guns;
-    
     IVAR(maxdebris, 10, 50, 1000);
 
     weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
-        static guninfo _guns[NUMGUNS] =
-        {
-            { S_PUNCH1,    250,  50, 0,   0,  1, "fist"            },
-            { S_SG,       1400,  10, 0,   0, 20, "shotgun"         },  // *SGRAYS
-            { S_CG,        100,  30, 0,   0,  7, "chaingun"        },
-            { S_RLFIRE,    800, 120, 80,  0, 10, "rocketlauncher"  },
-            { S_RIFLE,    1500, 100, 0,   0, 30, "rifle"           },
-            { S_FLAUNCH,   500,  75, 80,  0, 10, "grenadelauncher" },
-            { S_PISTOL,    500,  25, 0,   0,  7, "pistol"          },
-            { S_FLAUNCH,   200,  20, 50,  4,  1, "fireball"        },
-            { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"         },
-            { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"       },
-            { S_PIGR1,     250,  50, 0,   0,  1, "bite"            },
-        };
-        guns = _guns;
-        
         CCOMMAND(weaponstate, weapon, "sss",
         {
             self->weaponswitch(args[0][0] ? atoi(args[0]) : -1,
@@ -92,10 +70,7 @@ struct weaponstate
 
     void createrays(vec &from, vec &to)             // create random spread of rays for the shotgun
     {
-        loopi(SGRAYS)
-        {
-            offsetray(from, to, SGSPREAD, sg[i]);
-        }
+        loopi(SGRAYS) offsetray(from, to, SGSPREAD, sg[i]);
     }
 
     enum { BNC_GRENADE, BNC_GIBS, BNC_DEBRIS };
@@ -157,7 +132,10 @@ struct weaponstate
                     if(bnc.bouncetype==BNC_GRENADE)
                     {
                         int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
+                        hits.setsizenodelete(0);
                         explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
+                        cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.maptime, GUN_GL,
+                                    hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
                     }
                     delete &bnc;
                     bouncers.remove(i--);
@@ -224,39 +202,63 @@ struct weaponstate
         loopi(min(d->superdamage/25, 40)+1) spawnbouncer(from, vel, d, BNC_GIBS);
     }
 
-    void hit(int target, int damage, fpsent *d, fpsent *at, vec &vel, bool isrl)
+    struct hitmsg
+    {
+        int target, lifesequence, info;
+        ivec dir;
+    };
+    vector<hitmsg> hits;
+
+    void hit(int damage, fpsent *d, fpsent *at, const vec &vel, int gun, int info = 1)
     {
         d->lastpain = cl.lastmillis;
         at->totaldamage += damage;
-        vel.mul(80*damage/d->weight);
         d->superdamage = 0;
-        if(d==player1)           { if(isrl) vel.mul(5); d->vel.add(vel); cl.selfdamage(damage, at==player1 ? -1 : -2, at); } 
-        else if(d->type==ENT_AI) { if(isrl) vel.mul(3); d->vel.add(vel); ((monsterset::monster *)d)->monsterpain(damage, at); }
-        else                     { if(isrl) vel.mul(2); cl.cc.addmsg(SV_DAMAGE, "ri6", target, damage, d->lifesequence, (int)(vel.x*DVELF), (int)(vel.y*DVELF), (int)(vel.z*DVELF)); playsound(S_PAIN1+rnd(5), &d->o); }
-        damageeffect(damage, d);
-        if(d->type==ENT_AI && d->state==CS_DEAD) superdamageeffect(d->vel, d);
+
+        if(d->type==ENT_AI || !multiplayer(false) || d==player1) d->hitpush(damage, vel, at, gun);
+
+        if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(damage, at); 
+        else if(!multiplayer(false)) cl.damaged(damage, d, at);
+        else 
+        { 
+            hitmsg &h = hits.add();
+            h.target = d->clientnum;
+            h.lifesequence = d->lifesequence;
+            h.info = info;
+            if(d==player1)
+            {
+                h.dir = ivec(0, 0, 0);
+                d->damageroll(damage);
+                damageblend(damage);
+                playsound(S_PAIN6);
+            }
+            else 
+            {
+                h.dir = ivec(int(vel.x*DNF), int(vel.y*DNF), int(vel.z*DNF));
+                damageeffect(damage, d);
+                playsound(S_PAIN1+rnd(5), &d->o); 
+            }
+        }
     }
 
-    void hitpush(int target, int damage, fpsent *d, fpsent *at, vec &from, vec &to)
+    void hitpush(int damage, fpsent *d, fpsent *at, vec &from, vec &to, int gun, int rays)
     {
         vec v(to);
         v.sub(from);
         v.normalize();
-        hit(target, damage, d, at, v, false);
+        hit(damage, d, at, v, gun, rays);
     }
 
-    static const int RL_DAMRAD = 40;  
-
-    void radialeffect(fpsent *o, vec &v, int cn, int qdam, fpsent *at, int gun)
+    void radialeffect(fpsent *o, vec &v, int qdam, fpsent *at, int gun)
     {
         if(o->state!=CS_ALIVE) return;
         vec dir;
         float dist = rocketdist(o, dir, v);
         if(dist<RL_DAMRAD) 
         {
-            int damage = (int)(qdam*(1-dist/1.5f/RL_DAMRAD));
-            if(gun==GUN_RL && o==at) damage /= 2; 
-            hit(cn, damage, o, at, dir, true);
+            int damage = (int)(qdam*(1-dist/RL_DISTSCALE/RL_DAMRAD));
+            if(gun==GUN_RL && o==at) damage /= RL_SELFDAMDIV; 
+            hit(damage, o, at, dir, gun, int(dist*DMF));
         }
     }
 
@@ -284,7 +286,7 @@ struct weaponstate
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
             if(!o || o==notthis) continue;
-            radialeffect(o, v, i-1, qdam, owner, gun);
+            radialeffect(o, v, qdam, owner, gun);
         }
     }
 
@@ -302,14 +304,14 @@ struct weaponstate
         }
     }
 
-    bool projdamage(fpsent *o, projectile &p, vec &v, int i, int qdam)
+    bool projdamage(fpsent *o, projectile &p, vec &v, int qdam)
     {
         if(o->state!=CS_ALIVE) return false;
         if(!intersect(o, p.o, v)) return false;
         splash(p, v, o, qdam);
         vec dir;
         rocketdist(o, dir, v);
-        hit(i, qdam, o, p.owner, dir, p.gun==GUN_RL);
+        hit(qdam, o, p.owner, dir, p.gun, 0);
         return true;
     }
 
@@ -328,13 +330,14 @@ struct weaponstate
             v.mul(time/dtime);
             v.add(p.o);
             bool exploded = false;
+            hits.setsizenodelete(0);
             if(p.local)
             {
                 loopj(cl.numdynents())
                 {
                     fpsent *o = (fpsent *)cl.iterdynents(j);
                     if(!o || p.owner==o || o->o.reject(v, 10.0f)) continue;
-                    if(projdamage(o, p, v, j-1, qdam)) exploded = true;
+                    if(projdamage(o, p, v, qdam)) exploded = true;
                 }
             }
             if(!exploded)
@@ -359,7 +362,12 @@ struct weaponstate
                     }
                 }   
             }
-            if(exploded) projs.remove(i--);
+            if(exploded) 
+            {
+                cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.maptime, p.gun,
+                            hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
+                projs.remove(i--);
+            }
             else p.o = v;
         }
     }
@@ -431,7 +439,7 @@ struct weaponstate
         }
     }
 
-    fpsent *intersectclosest(vec &from, vec &to, int &n, fpsent *at)
+    fpsent *intersectclosest(vec &from, vec &to, fpsent *at)
     {
         fpsent *best = NULL;
         float bestdist = 1e16f;
@@ -445,7 +453,6 @@ struct weaponstate
             {
                 best = o;
                 bestdist = dist;
-                n = i-1;
             }
         }
         return best;
@@ -461,7 +468,6 @@ struct weaponstate
         int qdam = guns[d->gunselect].damage;
         if(d->quadmillis) qdam *= 4;
         if(d->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
-        int i = -1, n = -1;
         fpsent *o, *cl;
         if(d->gunselect==GUN_SG)
         {
@@ -470,27 +476,26 @@ struct weaponstate
             for(;;)
             {
                 bool raysleft = false;
-                int damage = 0;
+                int hitrays = 0;
                 o = NULL;
-                loop(r, SGRAYS) if(!done[r] && (cl = intersectclosest(from, sg[r], n, d)))
+                loop(r, SGRAYS) if(!done[r] && (cl = intersectclosest(from, sg[r], d)))
                 {
                     if((!o || o==cl) /*&& (damage<cl->health+cl->armour || cl->type!=ENT_AI)*/)
                     {
-                        damage += qdam;
+                        hitrays++;
                         o = cl;
                         done[r] = true;
-                        i = n;
                         shorten(from, o->o, sg[r]);
                     }
                     else raysleft = true;
                 }
-                if(damage) hitpush(i, damage, o, d, from, to);
+                if(hitrays) hitpush(hitrays*qdam, o, d, from, to, d->gunselect, hitrays);
                 if(!raysleft) break;
             }
         }
-        else if((o = intersectclosest(from, to, i, d)))
+        else if((o = intersectclosest(from, to, d)))
         {
-            hitpush(i, qdam, o, d, from, to);
+            hitpush(qdam, o, d, from, to, d->gunselect, 1);
             shorten(from, o->o, to);
         }
     }
@@ -535,11 +540,19 @@ struct weaponstate
             
         if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP);
 
+        hits.setsizenodelete(0);
+
         if(!guns[d->gunselect].projspeed) raydamage(from, to, d);
 
         shootv(d->gunselect, from, to, d, true);
 
-        if(d->type!=ENT_AI) cl.cc.addmsg(SV_SHOT, "ri7", d->gunselect, (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF));
+        if(d->type!=ENT_AI)
+        {
+            cl.cc.addmsg(SV_SHOOT, "ri2i6iv", cl.maptime, d->gunselect,
+                            (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), 
+                            (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF),
+                            hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
+        }
 
         d->gunwait = guns[d->gunselect].attackdelay;
 

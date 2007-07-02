@@ -156,6 +156,7 @@ void toggleedit()
     editing = entediting = editmode;
     extern int fullbright;
     if(fullbright) initlights();
+    cc->edittoggled(editmode);
 }
 
 bool noedit(bool view)

@@ -740,9 +740,9 @@ void renderclient(dynent *d, const char *mdlname, const char *vwepname, const ch
     {
         pitch = 0;
         anim = ANIM_DYING;
-        basetime = lastaction;
-        varseed += lastaction;
-        int t = lastmillis-lastaction;
+        basetime = lastpain;
+        varseed += lastpain;
+        int t = lastmillis-lastpain;
         if(t<0 || t>20000) return;
         if(t>500) { anim = ANIM_DEAD|ANIM_LOOP; if(t>1600) { t -= 1600; o.z -= t*t/10000000000.0f*t/16.0f; } }
         if(o.z<-1000) return;

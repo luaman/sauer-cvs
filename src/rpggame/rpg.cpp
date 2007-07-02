@@ -82,7 +82,7 @@ struct rpgclient : igameclient, g3d_callback
     void edittrigger(const selinfo &sel, int op, int arg1 = 0, int arg2 = 0, int arg3 = 0) {}
     char *getclientmap() { return mapname; }
     void resetgamestate() {}
-    void worldhurts(physent *d, int damage) {}
+    void suicide(physent *d) {}
     void newmap(int size) {}
 
     void startmap(const char *name)

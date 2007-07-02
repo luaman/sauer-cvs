@@ -200,13 +200,15 @@ struct monsterset
                 ms->monsterhurt = true;
                 ms->monsterhurtpos = o;
             }
+            cl.ws.damageeffect(damage, this);
             if((health -= damage)<=0)
             {
                 state = CS_DEAD;
-                lastaction = cl.lastmillis;
+                lastpain = cl.lastmillis;
                 playsound(monstertypes[mtype].diesound, &o);
                 ms->monsterkilled();
                 superdamage = -health;
+                cl.ws.superdamageeffect(vel, this);
             }
             else
             {
@@ -326,7 +328,7 @@ struct monsterset
             if(monsters[i]->state==CS_ALIVE) monsters[i]->monsteraction(curtime);
             else if(monsters[i]->state==CS_DEAD)
             {
-                if(cl.lastmillis-monsters[i]->lastaction<2000)
+                if(cl.lastmillis-monsters[i]->lastpain<2000)
                 {
                     //monsters[i]->move = 0;
                     monsters[i]->move = monsters[i]->strafe = 0;

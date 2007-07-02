@@ -1259,7 +1259,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
 void moveplayer(physent *pl, int moveres, bool local)
 {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, min(curtime, minframetime));
-    if(pl->o.z<0 && pl->state==CS_ALIVE) cl->worldhurts(pl, 400);
+    if(pl->o.z<0 && pl->state==CS_ALIVE) cl->suicide(pl);
 }
 
 void updatephysstate(physent *d)

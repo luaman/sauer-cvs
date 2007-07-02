@@ -5,25 +5,8 @@ struct entities : icliententities
     
     vector<extentity *> ents;
 
-    struct itemstat { int add, max, sound; char *name; } *itemstats;
-
     entities(fpsclient &_cl) : cl(_cl)
     {
-        static itemstat _itemstats[] =
-        {
-            {10,    30,    S_ITEMAMMO,   "SG"},
-            {20,    60,    S_ITEMAMMO,   "MG"},
-            {5,     15,    S_ITEMAMMO,   "RL"},
-            {5,     15,    S_ITEMAMMO,   "RI"},
-            {10,    30,    S_ITEMAMMO,   "GL"},
-            {30,    120,   S_ITEMAMMO,   "PI"},
-            {25,    100,   S_ITEMHEALTH, "H"},
-            {10,    1000,  S_ITEMHEALTH, "MH"},
-            {100,   100,   S_ITEMARMOUR, "GA"},
-            {200,   200,   S_ITEMARMOUR, "YA"},
-            {20000, 30000, S_ITEMPUP,    "Q"},
-        };
-        itemstats = _itemstats;
     }
 
     vector<extentity *> &getents() { return ents; }
@@ -83,14 +66,6 @@ struct entities : icliententities
         if(e.attr3==29) cl.ms.endsp(false);
     }
 
-    void baseammo(int gun, int k = 2) { cl.player1->ammo[gun] = itemstats[gun-1].add*k; }
-
-    bool hasmaxammo(fpsent *d, int type)
-    {
-       itemstat &is = itemstats[type-I_SHELLS];
-       return d->ammo[type-I_SHELLS+GUN_SG]>=is.max;
-    }
-
     void addammo(int type, int &v, bool local = true)
     {
         itemstat &is = itemstats[type-I_SHELLS];
@@ -107,48 +82,32 @@ struct entities : icliententities
     // these two functions are called when the server acknowledges that you really
     // picked up the item (in multiplayer someone may grab it before you).
 
-    void radditem(int i, int &v)
+    void additem(int i, int &v)
     {
         ents[i]->spawned = false;
         addammo(ents[i]->type, v);
     }
 
-    void realpickup(int n, fpsent *d)
+    void pickupeffects(int n, fpsent *d, bool local = true)
     {
-        if(isthirdperson())
+        int type = ents[n]->type;
+        if(type<I_SHELLS || type>I_QUAD) return;
+        itemstat &is = itemstats[type-I_SHELLS];
+        if(isthirdperson()) particle_text(d->abovehead(), is.name, 15);
+        ents[n]->spawned = false;
+        if(local) 
         {
-            char *name = itemname(n);
-            if(name) particle_text(d->abovehead(), name, 15);
+            d->pickup(type);
+            cl.playsoundc(itemstats[type-I_SHELLS].sound);
         }
-        switch(ents[n]->type)
+        if(d==cl.player1) switch(type)
         {
-            case I_SHELLS:     radditem(n, d->ammo[GUN_SG]); break;
-            case I_BULLETS:    radditem(n, d->ammo[GUN_CG]); break;
-            case I_ROCKETS:    radditem(n, d->ammo[GUN_RL]); break;
-            case I_ROUNDS:     radditem(n, d->ammo[GUN_RIFLE]); break;
-            case I_GRENADES:   radditem(n, d->ammo[GUN_GL]); break;
-            case I_CARTRIDGES: radditem(n, d->ammo[GUN_PISTOL]); break;
-            case I_HEALTH:     radditem(n, d->health); break;
-
             case I_BOOST:
-                d->maxhealth += 10;
                 conoutf("\f2you have a permanent +10 health bonus! (%d)", d->maxhealth);
                 playsound(S_V_BOOST);
-                radditem(n, d->health);
-                break;
-
-            case I_GREENARMOUR:
-                radditem(n, d->armour);
-                d->armourtype = A_GREEN;
-                break;
-
-            case I_YELLOWARMOUR:
-                radditem(n, d->armour);
-                d->armourtype = A_YELLOW;
                 break;
 
             case I_QUAD:
-                radditem(n, d->quadmillis);
                 conoutf("\f2you got the quad!");
                 playsound(S_V_QUAD);
                 break;
@@ -156,15 +115,6 @@ struct entities : icliententities
     }
 
     // these functions are called when the client touches the item
-
-    void additem(int i, int &v)
-    {
-        if(v<itemstats[ents[i]->type-I_SHELLS].max)                              // don't pick up if not needed
-        {
-            cl.cc.addmsg(SV_ITEMPICKUP, "ri", i);
-            ents[i]->spawned = false;                                            // even if someone else gets it first
-        }
-    }
 
     void teleport(int n, fpsent *d)     // also used by monsters
     {
@@ -187,33 +137,18 @@ struct entities : icliententities
         }
     }
 
-    void pickup(int n, fpsent *d)
+    void trypickup(int n, fpsent *d)
     {
         switch(ents[n]->type)
         {
-            case I_SHELLS:     additem(n, d->ammo[GUN_SG]); break;
-            case I_BULLETS:    additem(n, d->ammo[GUN_CG]); break;
-            case I_ROCKETS:    additem(n, d->ammo[GUN_RL]); break;
-            case I_ROUNDS:     additem(n, d->ammo[GUN_RIFLE]); break;
-            case I_GRENADES:   additem(n, d->ammo[GUN_GL]); break;
-            case I_CARTRIDGES: additem(n, d->ammo[GUN_PISTOL]); break;
-            case I_HEALTH:     additem(n, d->health); break;
-            case I_BOOST:      additem(n, d->health); break;
-
-            case I_GREENARMOUR:
-                // (100h/100g only absorbs 200 damage)
-                if(d->armourtype==A_YELLOW && d->armour>=100) break;
-                additem(n, d->armour);
+            default:
+                if(d->canpickup(ents[n]->type))
+                {
+                    cl.cc.addmsg(SV_ITEMPICKUP, "ri", n);
+                    ents[n]->spawned = false; // even if someone else gets it first
+                }
                 break;
-
-            case I_YELLOWARMOUR:
-                additem(n, d->armour);
-                break;
-
-            case I_QUAD:
-                additem(n, d->quadmillis);
-                break;
-                
+                    
             case TELEPORT:
             {
                 static int lastteleport = 0;
@@ -259,7 +194,7 @@ struct entities : icliententities
             if(e.type==NOTUSED) continue;
             if(!e.spawned && e.type!=TELEPORT && e.type!=JUMPPAD && e.type!=RESPAWNPOINT) continue;
             float dist = e.o.dist(o);
-            if(dist<(e.type==TELEPORT ? 16 : 12)) pickup(i, cl.player1);
+            if(dist<(e.type==TELEPORT ? 16 : 12)) trypickup(i, cl.player1);
         }
     }
 
