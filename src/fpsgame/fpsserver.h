@@ -1438,11 +1438,13 @@ struct fpsserver : igameserver
 
     void processevents()
     {
+        int lastgamemillis = gamemillis; 
         gamemillis = int(enet_time_get()-gamestart);
-
+        int diff = gamemillis - lastgamemillis;
         loopv(clients)
         {
             clientinfo *ci = clients[i];
+            if(diff>0 && ci->state.quadmillis) ci->state.quadmillis = max(ci->state.quadmillis-diff, 0);
             while(ci->events.length())
             {
                 gameevent &e = ci->events[0];
