@@ -180,7 +180,10 @@ struct scoreboard : g3d_callback
                 loopvj(teamscores)
                 {
                     if(j >= 4) break;
-                    s_sprintfd(s)("[ %s: %d ]", teamscores[j].team, teamscores[j].score);
+                    string score;
+                    if(m_capture && teamscores[j].score>=10000) s_strcpy(score, "WIN");
+                    else s_sprintf(score)("%d", teamscores[j].score);
+                    s_sprintfd(s)("[ %s: %s ]", teamscores[j].team, score);
                     s_strcat(teamline, s);
                 }
                 g.text(teamline, 0xFFFF40);
