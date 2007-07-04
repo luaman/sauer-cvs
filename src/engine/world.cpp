@@ -843,7 +843,7 @@ int findentity(int type, int index)
     return -1;
 }
 
-int spawncycle = -1, fixspawn = 2;
+int spawncycle = -1, fixspawn = 4;
 
 void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also used by monsters!
 {
