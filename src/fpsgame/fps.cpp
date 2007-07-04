@@ -144,7 +144,7 @@ struct fpsclient : igameclient
         ms.monsterthink(curtime, gamemode);
         if(player1->state==CS_DEAD)
         {
-            if(lastmillis-player1->lastaction<2000)
+            if(lastmillis-player1->lastpain<2000)
             {
                 player1->move = player1->strafe = 0;
                 moveplayer(player1, 10, false);
