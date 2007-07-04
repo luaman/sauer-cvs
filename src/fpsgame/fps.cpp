@@ -237,7 +237,7 @@ struct fpsclient : igameclient
             conoutf("\f2%s got killed by %s!", dname, aname);
         else if(d==actor)
             conoutf("\f2%s suicided%s", dname, d==player1 ? "!" : "");
-        else if(isteam(actor->team, player1->team))
+        else if(isteam(d->team, actor->team))
         {
             if(d==player1) conoutf("\f2you got fragged by a teammate (%s)", aname);
             else conoutf("\f2%s fragged a teammate (%s)", aname, dname);
