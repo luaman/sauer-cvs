@@ -708,7 +708,7 @@ struct fpsserver : igameserver
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
-        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_SPAWN, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_SENDDEMOLIST, SV_SENDDEMO, SV_SENDMAP, SV_CLIENT };
+        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_SENDDEMOLIST, SV_SENDDEMO, SV_SENDMAP, SV_CLIENT };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     }
@@ -895,8 +895,17 @@ struct fpsserver : igameserver
             case SV_TRYSPAWN:
                 if(m_arena || ci->state.state!=CS_DEAD) break;
                 sendspawn(ci);
-                // for capture, so doesn't show up initially as inside bases
                 break;
+
+            case SV_SPAWN:
+            {
+                int ls = getint(p);
+                if(m_arena || ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence) break;
+                ci->state.state = CS_ALIVE;
+                if(m_capture && !notgotbases) cps.enterbases(ci->team, ci->state.o);
+                QUEUE_MSG;
+                break;
+            }
 
             case SV_SUICIDE:
             {
@@ -1242,7 +1251,6 @@ struct fpsserver : igameserver
                 putint(p, gs.armourtype);
                 putint(p, gs.gunselect);
                 loopi(GUN_PISTOL-GUN_SG+1) putint(p, gs.ammo[GUN_SG+i]);
-                sendf(-1, 1, "ri3x", SV_SPAWN, n, gs.lifesequence, n);
             }
         }
         if(n<0 || (ci && ci->state.state==CS_SPECTATOR))
@@ -1297,11 +1305,8 @@ struct fpsserver : igameserver
     void spawnstate(clientinfo *ci)
     {
         gamestate &gs = ci->state;
-        gs.respawn();
         gs.spawnstate(gamemode);
         gs.lifesequence++;
-        gs.state = CS_ALIVE;
-        if(m_capture && !notgotbases) cps.enterbases(ci->team, gs.o);
     }
 
     void sendspawn(clientinfo *ci)
@@ -1312,7 +1317,6 @@ struct fpsserver : igameserver
             gs.health, gs.maxhealth,
             gs.armour, gs.armourtype,
             gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG]);
-        sendf(-1, 1, "ri3x", SV_SPAWN, ci->clientnum, gs.lifesequence, ci->clientnum);
     }
 
     void dodamage(clientinfo *target, clientinfo *actor, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
@@ -1340,8 +1344,9 @@ struct fpsserver : igameserver
             }
             else actor->state.frags--;
             sendf(-1, 1, "ri4", SV_DIED, target->clientnum, actor->clientnum, actor->state.frags);
-            ts.state = CS_DEAD;
             if(m_capture && !notgotbases) cps.leavebases(target->team, target->state.o);
+            ts.state = CS_DEAD;
+            ts.respawn();
         }
     }
 
@@ -1351,8 +1356,9 @@ struct fpsserver : igameserver
         if(gs.state!=CS_ALIVE) return;
         gs.frags--;
         sendf(-1, 1, "ri4", SV_DIED, ci->clientnum, ci->clientnum, gs.frags);
-        gs.state = CS_DEAD;
         if(m_capture && !notgotbases) cps.leavebases(ci->team, ci->state.o);
+        gs.state = CS_DEAD;
+        gs.respawn();
     }
 
     void processevent(clientinfo *ci, explodeevent &e)

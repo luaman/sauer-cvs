@@ -532,8 +532,7 @@ struct clientcom : iclientcom
 
             case SV_SPAWN:
             {
-                int cn = getint(p), ls = getint(p);
-                fpsent *d = cl.newclient(cn);
+                int ls = getint(p);
                 if(!d) break;
                 d->lifesequence = ls;
                 d->state = CS_ALIVE;
@@ -555,6 +554,7 @@ struct clientcom : iclientcom
                 findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(d->team) : -1);
                 cl.sb.showscores(false);
                 if(m_arena) conoutf("new round starting... fight!");
+                addmsg(SV_SPAWN, "ri", player1->lifesequence);
                 break;
             }
 
