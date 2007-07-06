@@ -306,10 +306,15 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec c
     if(vec(center).sub(camera1->o).dot(floor)>0) return;
 
     vec shaddir = dir;
-    shaddir.z = 0;
-    if(!shaddir.iszero()) shaddir.normalize();
-    shaddir.z = 1.5f*(dir.z*0.5f+1);
-    shaddir.normalize();
+    if(d) shaddir = vec(0, 0, 1);
+    else
+    {
+        shaddir = dir;
+        shaddir.z = 0;
+        if(!shaddir.iszero()) shaddir.normalize();
+        shaddir.z = 1.5f*(dir.z*0.5f+1);
+        shaddir.normalize();
+    }
 
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
