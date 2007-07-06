@@ -1164,7 +1164,8 @@ void modifygravity(physent *pl, bool water, float secs)
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
     cube &c = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z));
-    bool water = c.ext && isliquid(c.ext->material);
+    int material = c.ext ? c.ext->material : MAT_AIR;
+    bool water = isliquid(material);
     bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state==CS_SPECTATOR;
     float secs = curtime/1000.f;
 
@@ -1206,7 +1207,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         }
     }
 
-    if(pl->state==CS_ALIVE) updatedynentcache(pl);
+    if(pl->type!=ENT_CAMERA && pl->state==CS_ALIVE) updatedynentcache(pl);
 
     if(!pl->timeinair && pl->physstate >= PHYS_FLOOR && pl->vel.squaredlen() < 1e-4f && pl->gravity.iszero()) pl->moving = false;
 
@@ -1232,6 +1233,8 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         if(!pl->inwater && inwater) cl->physicstrigger(pl, local, 0, -1);
         else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = inwater;
+
+        if(pl->state==CS_ALIVE && material==MAT_LAVA) cl->suicide(pl);
     }
 
     return true;

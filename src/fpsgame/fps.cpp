@@ -30,6 +30,7 @@ struct fpsclient : igameclient
     int respawnent;
     int swaymillis;
     vec swaydir;
+    int suicided;
 
     fpsent *player1;                // our client
     vector<fpsent *> players;       // other clients
@@ -47,6 +48,7 @@ struct fpsclient : igameclient
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
           maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
+          suicided(-1),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
     {
@@ -335,6 +337,7 @@ struct fpsclient : igameclient
 
     void startmap(const char *name)   // called just after a map load
     {
+        suicided = -1;
         respawnent = -1;
         if(multiplayer(false) && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
         cc.mapstart();
@@ -416,7 +419,11 @@ struct fpsclient : igameclient
         if(d==player1)
         {
             if(!multiplayer(false)) killed(player1, player1);
-            else cc.addmsg(SV_SUICIDE, "r");
+            else if(suicided!=player1->lifesequence)
+            {
+                cc.addmsg(SV_SUICIDE, "r");
+                suicided = player1->lifesequence;
+            }
         }
         else if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(400, player1);
     }
