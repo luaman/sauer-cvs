@@ -554,6 +554,8 @@ struct fpsserver : igameserver
 
         mapreload = 0;
         gamemode = mode;
+        gamestart = enet_time_get();
+        gamemillis = 0;
         minremain = m_teammode ? 15 : 10;
         mapend = lastsec+minremain*60;
         interm = 0;
