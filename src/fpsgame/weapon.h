@@ -505,10 +505,20 @@ struct weaponstate
         int attacktime = cl.lastmillis-d->lastaction;
         if(attacktime<d->gunwait) return;
         d->gunwait = 0;
-        if(!d->attacking) return;
+        if(d==player1 && !d->attacking) return;
         d->lastaction = cl.lastmillis;
         d->lastattackgun = d->gunselect;
-        if(!d->ammo[d->gunselect]) { cl.playsoundc(S_NOAMMO); d->gunwait = 600; d->lastattackgun = -1; weaponswitch(); return; }
+        if(!d->ammo[d->gunselect]) 
+        { 
+            if(d==player1)
+            {
+                cl.playsoundc(S_NOAMMO); 
+                d->gunwait = 600; 
+                d->lastattackgun = -1; 
+                weaponswitch(); 
+            }
+            return; 
+        }
         if(d->gunselect) d->ammo[d->gunselect]--;
         vec from = d->o;
         vec to = targ;
@@ -538,7 +548,11 @@ struct weaponstate
         if(d->gunselect==GUN_SG) createrays(from, to);
         else if(d->gunselect==GUN_CG) offsetray(from, to, 1, to);
             
-        if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP);
+        if(d->quadmillis && attacktime>200) 
+        {
+            if(d==player1) cl.playsoundc(S_ITEMPUP);
+            else playsound(S_ITEMPUP, &d->o);
+        }
 
         hits.setsizenodelete(0);
 
@@ -546,7 +560,7 @@ struct weaponstate
 
         shootv(d->gunselect, from, to, d, true);
 
-        if(d->type!=ENT_AI)
+        if(d==player1)
         {
             cl.cc.addmsg(SV_SHOOT, "ri2i6iv", cl.maptime, d->gunselect,
                             (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), 
