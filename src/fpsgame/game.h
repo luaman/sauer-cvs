@@ -309,6 +309,7 @@ struct fpsent : dynent, fpsstate
     int lastaction, lastattackgun;
     bool attacking;
     int lasttaunt;
+    int lastpickup, lastpickupmillis;
     int superdamage;
     int frags, deaths, totaldamage, totalshots;
     editinfo *edit;
@@ -341,6 +342,8 @@ struct fpsent : dynent, fpsstate
         lastattackgun = gunselect;
         attacking = false;
         lasttaunt = 0;
+        lastpickup = -1;
+        lastpickupmillis = 0;
         superdamage = 0;
     }
 };

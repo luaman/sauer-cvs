@@ -131,7 +131,8 @@ struct entities : icliententities
                 d->pitch = 0;
                 d->vel = vec(0, 0, 0);//vec(cosf(RAD*(d->yaw-90)), sinf(RAD*(d->yaw-90)), 0);
                 entinmap(d);
-                cl.playsoundc(S_TELEPORT);
+                if(d==cl.player1) cl.playsoundc(S_TELEPORT);
+                else cl.playsound(S_TELEPORT, &d->o);
                 break;
             }
         }
@@ -151,14 +152,15 @@ struct entities : icliententities
                     
             case TELEPORT:
             {
-                static int lastteleport = 0;
-                if(cl.lastmillis-lastteleport<500) break;
-                lastteleport = cl.lastmillis;
+                if(cl.lastpickup==ents[n]->type && cl.lastmillis-cl.lastpickupmillis<500) break;
+                cl.lastpickup = ents[n]->type;
+                cl.lastpickupmillis = cl.lastmillis;
                 teleport(n, d);
                 break;
             }
 
             case RESPAWNPOINT:
+                if(d!=cl.player1) break;
                 if(n==cl.respawnent) break;
                 cl.respawnent = n;
                 conoutf("\f2respawn point set!");
@@ -167,34 +169,35 @@ struct entities : icliententities
 
             case JUMPPAD:
             {
-                static int lastjumppad = 0;
-                if(cl.lastmillis-lastjumppad<300) break;
-                lastjumppad = cl.lastmillis;
+                if(cl.lastpickup==ents[n]->type && cl.lastmillis-cl.lastpickupmillis<300) break;
+                cl.lastpickup = ents[n]->type;
+                cl.lastpickupmillis = cl.lastmillis;
                 vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*12.5f);
-                cl.player1->timeinair = 0;
-                cl.player1->gravity = vec(0, 0, 0);
-                cl.player1->vel = v;
-//                cl.player1->vel.z = 0;
-//                cl.player1->vel.add(v);
-                cl.playsoundc(S_JUMPPAD);
+                d->timeinair = 0;
+                d->gravity = vec(0, 0, 0);
+                d->vel = v;
+//                d->vel.z = 0;
+//                d->vel.add(v);
+                if(d==player1) cl.playsoundc(S_JUMPPAD);
+                else cl.playsound(S_JUMPPAD, &d->o);
                 break;
             }
         }
     }
 
-    void checkitems()
+    void checkitems(fpsent *d)
     {
-        if(editmode || cl.cc.spectator) return;
-        itemstats[I_HEALTH-I_SHELLS].max = cl.player1->maxhealth;
-        vec o = cl.player1->o;
-        o.z -= cl.player1->eyeheight;
+        if(d==cl.player1 && (editmode || cl.cc.spectator)) return;
+        itemstats[I_HEALTH-I_SHELLS].max = d->maxhealth;
+        vec o = d->o;
+        o.z -= d->eyeheight;
         loopv(ents)
         {
             extentity &e = *ents[i];
             if(e.type==NOTUSED) continue;
             if(!e.spawned && e.type!=TELEPORT && e.type!=JUMPPAD && e.type!=RESPAWNPOINT) continue;
             float dist = e.o.dist(o);
-            if(dist<(e.type==TELEPORT ? 16 : 12)) trypickup(i, cl.player1);
+            if(dist<(e.type==TELEPORT ? 16 : 12)) trypickup(i, d);
         }
     }
 
