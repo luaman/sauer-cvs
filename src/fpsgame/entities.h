@@ -132,7 +132,7 @@ struct entities : icliententities
                 d->vel = vec(0, 0, 0);//vec(cosf(RAD*(d->yaw-90)), sinf(RAD*(d->yaw-90)), 0);
                 entinmap(d);
                 if(d==cl.player1) cl.playsoundc(S_TELEPORT);
-                else cl.playsound(S_TELEPORT, &d->o);
+                else playsound(S_TELEPORT, &d->o);
                 break;
             }
         }
@@ -152,9 +152,9 @@ struct entities : icliententities
                     
             case TELEPORT:
             {
-                if(cl.lastpickup==ents[n]->type && cl.lastmillis-cl.lastpickupmillis<500) break;
-                cl.lastpickup = ents[n]->type;
-                cl.lastpickupmillis = cl.lastmillis;
+                if(d->lastpickup==ents[n]->type && cl.lastmillis-d->lastpickupmillis<500) break;
+                d->lastpickup = ents[n]->type;
+                d->lastpickupmillis = cl.lastmillis;
                 teleport(n, d);
                 break;
             }
@@ -169,17 +169,17 @@ struct entities : icliententities
 
             case JUMPPAD:
             {
-                if(cl.lastpickup==ents[n]->type && cl.lastmillis-cl.lastpickupmillis<300) break;
-                cl.lastpickup = ents[n]->type;
-                cl.lastpickupmillis = cl.lastmillis;
+                if(d->lastpickup==ents[n]->type && cl.lastmillis-d->lastpickupmillis<300) break;
+                d->lastpickup = ents[n]->type;
+                d->lastpickupmillis = cl.lastmillis;
                 vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*12.5f);
                 d->timeinair = 0;
                 d->gravity = vec(0, 0, 0);
                 d->vel = v;
 //                d->vel.z = 0;
 //                d->vel.add(v);
-                if(d==player1) cl.playsoundc(S_JUMPPAD);
-                else cl.playsound(S_JUMPPAD, &d->o);
+                if(d==cl.player1) cl.playsoundc(S_JUMPPAD);
+                else playsound(S_JUMPPAD, &d->o);
                 break;
             }
         }

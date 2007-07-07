@@ -159,7 +159,7 @@ struct fpsclient : igameclient
             float k = pow(0.7f, curtime/10.0f);
             swaydir.mul(k); 
             swaydir.add(vec(player1->vel).mul((1-k)/(15*max(player1->vel.magnitude(), player1->maxspeed))));
-            et.checkitems();
+            et.checkitems(player1);
             if(m_classicsp) checktriggers();
         }
         if(player1->clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
