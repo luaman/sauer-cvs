@@ -488,6 +488,12 @@ struct clientcom : iclientcom
             case SV_INITC2S:            // another client either connected or changed name/team
             {
                 d = cl.newclient(cn);
+                if(!d)
+                {
+                    getstring(text, p);
+                    getstring(text, p);
+                    break;
+                }
                 getstring(text, p);
                 filtertext(text, text, false, MAXNAMELEN);
                 if(!text[0]) s_strcpy(text, "unnamed");
