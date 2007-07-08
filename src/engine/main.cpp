@@ -5,6 +5,8 @@
 
 void quit()                     // normal exit
 {
+    extern void writeinitcfg();
+    writeinitcfg();
     writeservercfg();
     abortconnect();
     disconnect(1);
@@ -38,7 +40,41 @@ int totalmillis = 0, lastmillis = 0;
 
 dynent *player = NULL;
 
-int scr_w = 1024, scr_h = 768;
+static bool initing = false;
+bool initwarning()
+{
+    if(!initing) conoutf("Please restart Sauerbraten for this setting to take effect.");
+    return !initing;
+}
+
+VARF(scr_w, 0, 1024, 10000, initwarning());
+VARF(scr_h, 0, 768, 10000, initwarning());
+VARF(colorbits, 0, 0, 32, initwarning());
+VARF(depthbits, 0, 0, 32, initwarning());
+VARF(stencilbits, 0, 1, 32, initwarning());
+VARF(fsaa, 0, 0, 16, initwarning());
+VARF(vsync, -1, -1, 1, initwarning());
+
+void writeinitcfg()
+{
+    FILE *f = fopen("init.cfg", "w");
+    if(!f) return;
+    fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
+    fprintf(f, "scr_w %d\n", scr_w);
+    fprintf(f, "scr_h %d\n", scr_h);
+    fprintf(f, "colorbits %d\n", colorbits);
+    fprintf(f, "depthbits %d\n", depthbits);
+    fprintf(f, "stencilbits %d\n", stencilbits);
+    fprintf(f, "fsaa %d\n", fsaa);
+    fprintf(f, "vsync %d\n", vsync);
+    extern int shaderprecision;
+    fprintf(f, "shaderprecision %d\n", shaderprecision);
+    extern int soundchans, soundfreq, soundbufferlen;
+    fprintf(f, "soundchans %d\n", soundchans);
+    fprintf(f, "soundfreq %d\n", soundfreq);
+    fprintf(f, "soundbufferlen %d\n", soundbufferlen);
+    fclose(f);
+}
 
 void screenshot(char *filename)
 {
@@ -206,14 +242,23 @@ void setfullscreen(bool enable)
 
 void screenres(int *w, int *h, int *bpp = 0)
 {
+    if(initing)
+    {
+        scr_w = *w;
+        scr_h = *h;
+        if(*bpp) colorbits = *bpp;
+        return;
+    }
+
 #if defined(WIN32) || defined(__APPLE__)
-    conoutf("\"screenres\" command not supported on this platform. Use the -w and -h command-line options.");
+    initwarning();
 #else
     SDL_Surface *surf = SDL_SetVideoMode(*w, *h, bpp ? *bpp : 0, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
     screen = surf;
     scr_w = screen->w;
     scr_h = screen->h;
+    if(*bpp) colorbits = *bpp;
     glViewport(0, 0, scr_w, scr_h);
 #endif
 }
@@ -326,6 +371,12 @@ void getfps(int &fps, int &bestdiff, int &worstdiff)
 
 bool inbetweenframes = false;
 
+static bool findarg(int argc, char **argv, char *str)
+{
+    for(int i = 1; i<argc; i++) if(strstr(argv[i], str)==argv[i]) return true;
+    return false;
+}
+
 int main(int argc, char **argv)
 {
     #ifdef WIN32
@@ -338,25 +389,29 @@ int main(int argc, char **argv)
     #endif
 
     bool dedicated = false;
-    int fs = SDL_FULLSCREEN, par = 0, depth = 0, bpp = 0, fsaa = 0, stencil = 1, vsync = -1;
+    int fs = SDL_FULLSCREEN, par = 0;
     char *load = NULL, *initscript = NULL;
     
     #define log(s) puts("init: " s)
     log("sdl");
+
+    initing = true;
+    execfile("init.cfg");
+    initing = false;
 
     for(int i = 1; i<argc; i++)
     {
         if(argv[i][0]=='-') switch(argv[i][1])
         {
             case 'd': dedicated = true; break;
-            case 'w': scr_w = atoi(&argv[i][2]); scr_h = scr_w*3/4; break;
-            case 'h': scr_h = atoi(&argv[i][2]); break;
-            case 'z': depth = atoi(&argv[i][2]); break;
-            case 'b': bpp = atoi(&argv[i][2]); break;
+            case 'w': scr_w = atoi(&argv[i][2]); if(!findarg(argc, argv, "-h")) scr_h = (scr_w*3)/4; break;
+            case 'h': scr_h = atoi(&argv[i][2]); if(!findarg(argc, argv, "-w")) scr_w = (scr_h*4)/3; break;
+            case 'z': depthbits = atoi(&argv[i][2]); break;
+            case 'b': colorbits = atoi(&argv[i][2]); break;
             case 'a': fsaa = atoi(&argv[i][2]); break;
             case 'v': vsync = atoi(&argv[i][2]); break;
             case 't': fs = 0; break;
-            case 's': stencil = atoi(&argv[i][2]); break;
+            case 's': stencilbits = atoi(&argv[i][2]); break;
             case 'f': 
             {
                 extern int shaderprecision; 
@@ -373,7 +428,7 @@ int main(int argc, char **argv)
                 break;
             }
             case 'x': initscript = &argv[i][2]; break;
-            default:  if(!serveroption(argv[i])) conoutf("unknown commandline option");
+            default: if(!serveroption(argv[i])) conoutf("unknown commandline option"); break;
         }
         else conoutf("unknown commandline argument");
     }
@@ -399,13 +454,13 @@ int main(int argc, char **argv)
 
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    if(depth) SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depth); 
+    if(depthbits) SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthbits); 
     if(fsaa)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, fsaa);
     }
-    if(stencil) 
+    if(stencilbits) 
     {
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
         hasstencil = true;
@@ -428,15 +483,15 @@ int main(int argc, char **argv)
         }
         if(!hasmode) { scr_w = modes[0]->w; scr_h = modes[0]->h; }
     }
-    screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|resize|fs);
+    screen = SDL_SetVideoMode(scr_w, scr_h, colorbits, SDL_OPENGL|resize|fs);
     if(!screen) 
     {
-        if(stencil) 
+        if(stencilbits) 
         {
             SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
             hasstencil = false;
         }
-        screen = SDL_SetVideoMode(scr_w, scr_h, bpp, SDL_OPENGL|resize|fs);
+        screen = SDL_SetVideoMode(scr_w, scr_h, colorbits, SDL_OPENGL|resize|fs);
         if(!screen) fatal("Unable to create OpenGL screen: ", SDL_GetError());
     }
     scr_w = screen->w;
@@ -460,7 +515,7 @@ int main(int argc, char **argv)
     if(!setfont("default")) fatal("no default font specified");
 
     log("gl");
-    gl_init(scr_w, scr_h, bpp, depth, fsaa);
+    gl_init(scr_w, scr_h, colorbits, depthbits, fsaa);
     crosshair = textureload("data/crosshair.png", 3, false);
     if(!crosshair) fatal("could not find core textures");
 

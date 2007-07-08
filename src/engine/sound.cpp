@@ -9,9 +9,6 @@
 
 bool nosound = true;
 
-#define MAXCHAN 32
-#define SOUNDFREQ 22050
-
 #ifdef USE_MIXER
     #include "SDL_mixer.h"
     #define MAXVOL MIX_MAX_VOLUME
@@ -46,7 +43,8 @@ struct soundslot
     int uses, maxuses;
 };
 
-struct soundloc { vec loc; bool inuse; soundslot *slot; extentity *ent; } soundlocs[MAXCHAN];
+struct soundloc { vec loc; bool inuse; soundslot *slot; extentity *ent; };
+vector<soundloc> soundlocs;
 
 void setmusicvol(int musicvol)
 {
@@ -87,21 +85,22 @@ void stopsound()
     }
 }
 
-VAR(soundbufferlen, 128, 1024, 4096);
+VARF(soundchans, 0, 32, 128, initwarning());
+VARF(soundfreq, 0, MIX_DEFAULT_FREQUENCY, 44100, initwarning());
+VARF(soundbufferlen, 128, 1024, 4096, initwarning());
 
 void initsound()
 {
-    memset(soundlocs, 0, sizeof(soundloc)*MAXCHAN);
     #ifdef USE_MIXER
-        if(Mix_OpenAudio(SOUNDFREQ, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
+        if(Mix_OpenAudio(soundfreq, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
         {
             conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
             return;
         }
-	    Mix_AllocateChannels(MAXCHAN);	
+	    Mix_AllocateChannels(soundchans);	
     #else
         if(FSOUND_GetVersion()<FMOD_VERSION) fatal("old FMOD dll");
-        if(!FSOUND_Init(SOUNDFREQ, MAXCHAN, FSOUND_INIT_GLOBALFOCUS))
+        if(!FSOUND_Init(soundfreq, soundchans, FSOUND_INIT_GLOBALFOCUS))
         {
             conoutf("sound init failed (FMOD): %d", FSOUND_GetError());
             return;
@@ -217,7 +216,7 @@ void clear_sound()
 
 void clearmapsounds()
 {
-    loopi(MAXCHAN) if(soundlocs[i].inuse && soundlocs[i].ent)
+    loopv(soundlocs) if(soundlocs[i].inuse && soundlocs[i].ent)
     {
         #ifdef USE_MIXER
             if(Mix_Playing(i)) Mix_HaltChannel(i);
@@ -285,7 +284,7 @@ void updatechanvol(int chan, int svol, const vec *loc = NULL, extentity *ent = N
 
 void newsoundloc(int chan, const vec *loc, soundslot *slot, extentity *ent = NULL)
 {
-    ASSERT(chan>=0 && chan<MAXCHAN);
+    while(chan >= soundlocs.length()) soundlocs.add().inuse = false;
     soundlocs[chan].loc = *loc;
     soundlocs[chan].inuse = true;
     soundlocs[chan].slot = slot;
@@ -295,7 +294,7 @@ void newsoundloc(int chan, const vec *loc, soundslot *slot, extentity *ent = NUL
 void updatevol()
 {
     if(nosound) return;
-    loopi(MAXCHAN) if(soundlocs[i].inuse)
+    loopv(soundlocs) if(soundlocs[i].inuse)
     {
         #ifdef USE_MIXER
             if(Mix_Playing(i))
