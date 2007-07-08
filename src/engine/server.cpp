@@ -555,7 +555,11 @@ void serverslice(uint timeout)   // main server update, called from main loop in
             s_strcpy(c.hostname, (enet_address_get_host_ip(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
             printf("client connected (%s)\n", c.hostname);
             int reason = DISC_MAXCLIENTS;
-            if(nonlocalclients<maxclients && !(reason = sv->clientconnect(c.num, c.peer->address.host))) send_welcome(c.num);
+            if(nonlocalclients<maxclients && !(reason = sv->clientconnect(c.num, c.peer->address.host))) 
+            {
+                nonlocalclients++;
+                send_welcome(c.num);
+            }
             else disconnect_client(c.num, reason);
             break;
         }
@@ -573,6 +577,7 @@ void serverslice(uint timeout)   // main server update, called from main loop in
             if(!c) break;
             printf("disconnected client (%s)\n", c->hostname);
             sv->clientdisconnect(c->num);
+            nonlocalclients--;
             c->type = ST_EMPTY;
             event.peer->data = NULL;
             break;
