@@ -59,7 +59,6 @@ void writeinitcfg()
 {
     FILE *f = fopen("init.cfg", "w");
     if(!f) return;
-    fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
     fprintf(f, "scr_w %d\n", scr_w);
     fprintf(f, "scr_h %d\n", scr_h);
     fprintf(f, "colorbits %d\n", colorbits);
