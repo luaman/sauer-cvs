@@ -401,7 +401,7 @@ int main(int argc, char **argv)
     {
         if(argv[i][0]=='-') switch(argv[i][1])
         {
-            case 'i': execfile("init.cfg"); break;
+            case 'r': execfile("init.cfg"); break;
             case 'd': dedicated = true; break;
             case 'w': scr_w = atoi(&argv[i][2]); if(!findarg(argc, argv, "-h")) scr_h = (scr_w*3)/4; break;
             case 'h': scr_h = atoi(&argv[i][2]); if(!findarg(argc, argv, "-w")) scr_w = (scr_h*4)/3; break;
