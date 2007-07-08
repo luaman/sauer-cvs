@@ -557,7 +557,7 @@ struct clientcom : iclientcom
                 player1->gunselect = getint(p);
                 loopi(GUN_PISTOL-GUN_SG+1) player1->ammo[GUN_SG+i] = getint(p);
                 player1->state = CS_ALIVE;
-                findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(d->team) : -1);
+                findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(player1->team) : -1);
                 cl.sb.showscores(false);
                 if(m_arena) conoutf("new round starting... fight!");
                 addmsg(SV_SPAWN, "ri", player1->lifesequence);
