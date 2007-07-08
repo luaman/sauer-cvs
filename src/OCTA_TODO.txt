@@ -1,5 +1,7 @@
 - make people that do teamkills/damage wait longer?
 
+- server game time in local gamemodes needs to take note of paused/gamespeed client state
+
 - fog entities (R, G, B, radius, fog dist),
      If player inside of radius, changes global fog color and distance to the entity's, interpolated
      with the outside map fog color depending on distance from center. Use some sort of weighted average
@@ -10,17 +12,18 @@
 - make sure all bumpmaps are parallax -> finetune each one individually
 
 - audio effect for chat messages | audio for gui events
-- texture selection window using new GUI
 
 - social cheating solution
-- demo recording?
+- server-side demo recording (WiP)
+    - needs proper header to distinguish demo files
+    - needs command-line flag to disable
+    - needs master/local player control of when to start or stop recording (startdemo/stopdemo commands?)
 
 - before a release: update static wiki
 
 - improve smoothness of going up steps ?
 - remove delay before doors start opening ?
 - make nearby closed doors render early so that they can contribute to OC?
-- when printing "base N captured" etc, look up value of alias basename_N, and substitute if found
 - water physics close to surface
 - add entity looping command?
 
@@ -31,8 +34,6 @@
 - heightmap outlines (like sky) instead of selection box
 - context sensitive editing menu: short cuts to ents, lighting, map ops etc. bind to tab. (current menu being more detailed and reference)
 - combine mingw and linux makefiles?
-- arrow / lines to indicate direction of ents like playerstart, teledest
-- something to help judge depth when moving entities... maybe lines stretching out in all 6 directions...
 - need to make selecting cubes/ents while inside a cube easier.... maybe modify raycube/rayent to treat cubes as 'hollow'?
 - entundo more efficeint
 
@@ -52,7 +53,7 @@
 - use setbb also for monsters
 - experiment with averaging lightvector based on intensity^N, such that dominant light becomes more dominant without losing smooth transitions | store intensity multiplier in alpha?
 
-- the eyecandy priority list: reflective world shader, autograss/vegetation, better bloom, motion blur, volumetric fog, character shadows, better particles, character bumpmaps...
+- the eyecandy priority list: better bloom, motion blur, volumetric fog (see fog entities idea above), character bumpmaps (likely need skeletal animation to make this memory efficient)...
 - bots (level design placed waypoints?)
 - destructable geom
 
@@ -64,17 +65,12 @@
 - improve bloom? optimize it.
 - report to ATI: float vs short issue
 - more cube map ports?
-- faster movement
 - integrate fmodex (to get both panning and stereo ogg on windows?)
 - 3d sprites?
 - monster spawner ammo - add egg model
 - iconic stats
-- new multiplayer model.. md3?
 - profile for memory usage (devpartner?) | if md2 buffers are a lot, can remove it
-- refactor octarender.cpp & others
 - glowmaps in the texture browser -> messy
-
-- better blood http://www.snieb.com/dg_blood_01.png (and 2/3)
 
 - make start of flares etc spawn out further from the player
 - improve on cma render then add to sauer
@@ -82,16 +78,12 @@
 
 - all cfg stuff in menu
 - draw not-spawned items in wireframe?
-- show quadded player with special rendering
-
-- experiment with physics speedup features
 
 - make wether you are hitting other player clearer - blip sounds like q3?
 - LOD: visibleface(lodcube==true) must not go across VA boundaries... otherwise minor HOM bewteen LOD/non-LOD rendering boundaries
 - LOD: materials & sky currently always rendered at lod0 only, is that ever a problem visually/performance?
 - LOD: make loddistance fov dependent (for models too)
 - a multiplayer player still shows SG rays go thru target | hard to fix, is it really a problem?
-- 2 teams only
 - sound samples for N kills in a row
 - sword?
 - think about doing other permanent powerups besides +10h
