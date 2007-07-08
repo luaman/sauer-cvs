@@ -250,7 +250,7 @@ void screenres(int *w, int *h, int *bpp = 0)
         scr_h = *h;
         if(*bpp) colorbits = *bpp;
 #if defined(WIN32) || defined(__APPLE__)
-        initwarning()
+        initwarning();
 #else
         return;
     }
