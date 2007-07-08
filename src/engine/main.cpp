@@ -248,7 +248,7 @@ void screenres(int *w, int *h, int *bpp = 0)
 #endif
         scr_w = *w;
         scr_h = *h;
-        if(*bpp) colorbits = *bpp;
+        if(bpp && *bpp) colorbits = *bpp;
 #if defined(WIN32) || defined(__APPLE__)
         initwarning();
 #else
@@ -259,7 +259,7 @@ void screenres(int *w, int *h, int *bpp = 0)
     screen = surf;
     scr_w = screen->w;
     scr_h = screen->h;
-    if(*bpp) colorbits = *bpp;
+    if(bpp && *bpp) colorbits = *bpp;
     glViewport(0, 0, scr_w, scr_h);
 #endif
 }
