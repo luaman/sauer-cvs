@@ -244,7 +244,7 @@ cube *loadchildren(gzFile f)
 void save_world(char *mname, bool nolms)
 {
     if(!*mname) mname = cl->getclientmap();
-    setnames(mname);
+    setnames(*mname ? mname : "untitled");
     if(savebak) backup(cgzname, bakname);
     gzFile f = gzopen(cgzname, "wb9");
     if(!f) { conoutf("could not write map to %s", cgzname); return; }
