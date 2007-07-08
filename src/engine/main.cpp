@@ -59,6 +59,7 @@ void writeinitcfg()
 {
     FILE *f = fopen("init.cfg", "w");
     if(!f) return;
+    fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
     fprintf(f, "scr_w %d\n", scr_w);
     fprintf(f, "scr_h %d\n", scr_h);
     fprintf(f, "colorbits %d\n", colorbits);
@@ -241,7 +242,9 @@ void setfullscreen(bool enable)
 
 void screenres(int *w, int *h, int *bpp = 0)
 {
+#if !defined(WIN32) && !defined(__APPLE__)
     if(initing)
+#endif
     {
         scr_w = *w;
         scr_h = *h;
