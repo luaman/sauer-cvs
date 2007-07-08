@@ -200,13 +200,17 @@ struct entities : icliententities
         }
     }
 
-    void checkquad(int time)
+    void checkquad(int time, fpsent *d)
     {
-        if(cl.player1->quadmillis && (cl.player1->quadmillis -= time)<=0)
+        if(d->quadmillis && (d->quadmillis -= time)<=0)
         {
-            cl.player1->quadmillis = 0;
-            cl.playsoundc(S_PUPOUT);
-            conoutf("\f2quad damage is over");
+            d->quadmillis = 0;
+            if(d==cl.player1)
+            {
+                cl.playsoundc(S_PUPOUT);
+                conoutf("\f2quad damage is over");
+            }
+            else playsound(S_PUPOUT, &d->o);
         }
     }
 

@@ -137,7 +137,7 @@ struct fpsclient : igameclient
         maptime += curtime;
         if(!curtime) return;
         physicsframe();
-        et.checkquad(curtime);
+        et.checkquad(curtime, player1);
         ws.moveprojectiles(curtime);
         if(player1->clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos); // only shoot when connected to server
         ws.bounceupdate(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
