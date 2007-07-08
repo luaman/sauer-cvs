@@ -247,7 +247,7 @@ struct fpsserver : igameserver
         
     bool pickup(int i, int sender)         // server side item pickup, acknowledge first client that gets it
     {
-        if(minremain<0 || !sents.inrange(i) || !sents[i].spawned) return false;
+        if(minremain<=0 || !sents.inrange(i) || !sents[i].spawned) return false;
         clientinfo *ci = (clientinfo *)getinfo(sender);
         if(!ci || (m_mp(gamemode) && (ci->state.state!=CS_ALIVE || !ci->state.canpickup(sents[i].type)))) return false;
         sents[i].spawned = false;
@@ -552,7 +552,7 @@ struct fpsserver : igameserver
         gamemode = mode;
         gamemillis = 0;
         minremain = m_teammode ? 15 : 10;
-        gamelimit = minremain*1000;
+        gamelimit = minremain*60*1000;
         interm = 0;
         s_strcpy(smapname, s);
         resetitems();
@@ -566,6 +566,7 @@ struct fpsserver : igameserver
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
         }
         if(m_teammode) autoteam();
+        if(gamemode>1 || (gamemode==0 && hasnonlocalclients())) sendf(-1, 1, "ri2", SV_TIMEUP, minremain);
         loopv(clients)
         {
             clientinfo *ci = clients[i];
@@ -1209,16 +1210,22 @@ struct fpsserver : igameserver
 
     int welcomepacket(ucharbuf &p, int n)
     {
-        int hasmap = (gamemode==1 && clients.length()) || (smapname[0] && (clients.length() || minremain>=0));
+        int hasmap = (gamemode==1 && clients.length()) || (smapname[0] && (clients.length() || minremain>0));
         putint(p, SV_INITS2C);
         putint(p, n);
         putint(p, PROTOCOL_VERSION);
         putint(p, hasmap);
+        clientinfo *ci = (clientinfo *)getinfo(n);
         if(hasmap)
         {
             putint(p, SV_MAPCHANGE);
             sendstring(smapname, p);
             putint(p, gamemode);
+            if(!ci || gamemode>1 || (gamemode==0 && hasnonlocalclients()))
+            {
+                putint(p, SV_TIMEUP);
+                putint(p, minremain);
+            }
             putint(p, SV_ITEMLIST);
             loopv(sents) if(sents[i].spawned)
             {
@@ -1227,7 +1234,6 @@ struct fpsserver : igameserver
             }
             putint(p, -1);
         }
-        clientinfo *ci = (clientinfo *)getinfo(n);
         if(ci && m_mp(gamemode) && ci->state.state!=CS_SPECTATOR)
         {
             if(m_arena && clients.length()>2) 
@@ -1279,11 +1285,11 @@ struct fpsserver : igameserver
 
     void checkintermission()
     {
-        if(minremain>=0)
+        if(minremain>0)
         {
-            minremain = gamemillis>=gamelimit ? -1 : (gamelimit - gamemillis)/(60*1000);
-            sendf(-1, 1, "ri2", SV_TIMEUP, minremain+1);
-            if(!interm && minremain<0) interm = gamemillis+10*1000;
+            minremain = gamemillis>=gamelimit ? 0 : (gamelimit - gamemillis + 60*1000 - 1)/(60*1000);
+            sendf(-1, 1, "ri2", SV_TIMEUP, minremain);
+            if(!interm && minremain<=0) interm = gamemillis+10*1000;
         }
     }
 
@@ -1465,7 +1471,7 @@ struct fpsserver : igameserver
         totalmillis = _totalmillis;
 
         if(m_demo) readdemo();
-        else if(minremain>=0)
+        else if(minremain>0)
         {
             processevents();
             if(curtime) loopv(sents) if(sents[i].spawntime) // spawn entities when timer reached
@@ -1491,7 +1497,7 @@ struct fpsserver : igameserver
         
         if(masterupdate) { sendf(-1, 1, "ri2", SV_CURRENTMASTER, currentmaster); masterupdate = false; } 
     
-        if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && gamemillis/(60*1000)!=(gamemillis-curtime)/(60*1000)) checkintermission();
+        if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && gamemillis-curtime>0 && gamemillis/(60*1000)!=(gamemillis-curtime)/(60*1000)) checkintermission();
         if(interm && gamemillis>interm)
         {
             if(demorecord) enddemorecord();
