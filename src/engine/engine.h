@@ -73,7 +73,7 @@ extern bool inbetweenframes;
 extern int curtime;                     // current frame time
 extern int lastmillis;                  // last time
 extern int totalmillis;                 // total elapsed time
-extern int scr_w, scr_h;
+extern SDL_Surface *screen;
 extern int zpass, glowpass;
 
 extern vector<int> entgroup;

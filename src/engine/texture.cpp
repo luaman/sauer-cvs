@@ -763,8 +763,8 @@ VAR(aaenvmap, 0, 1, 1);
 GLuint genenvmap(const vec &o, int envmapsize)
 {
     int rendersize = 1;
-    while(rendersize < scr_w && rendersize < scr_h) rendersize *= 2;
-    if(rendersize > scr_w || rendersize > scr_h) rendersize /= 2;
+    while(rendersize < screen->w && rendersize < screen->h) rendersize *= 2;
+    if(rendersize > screen->w || rendersize > screen->h) rendersize /= 2;
     if(!aaenvmap && rendersize > 1<<envmapsize) rendersize = 1<<envmapsize;
     int texsize = rendersize < 1<<envmapsize ? rendersize : 1<<envmapsize;
     GLuint tex;
@@ -804,7 +804,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
         createtexture(tex, texsize, texsize, pixels, 3, true, GL_RGB5, side.target);
     }
     delete[] pixels;
-    glViewport(0, 0, scr_w, scr_h);
+    glViewport(0, 0, screen->w, screen->h);
     return tex;
 }
 

@@ -78,16 +78,16 @@ void writeinitcfg()
 
 void screenshot(char *filename)
 {
-    SDL_Surface *image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+    SDL_Surface *image = SDL_CreateRGBSurface(SDL_SWSURFACE, screen->w, screen->h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
     if(!image) return;
-    uchar *tmp = new uchar[scr_w*scr_h*3];
+    uchar *tmp = new uchar[screen->w*screen->h*3];
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, tmp);
+    glReadPixels(0, 0, screen->w, screen->h, GL_RGB, GL_UNSIGNED_BYTE, tmp);
     uchar *dst = (uchar *)image->pixels;
     loopi(scr_h)
     {
-        memcpy(dst, &tmp[3*scr_w*(scr_h-i-1)], 3*scr_w);
-        endianswap(dst, 3, scr_w);
+        memcpy(dst, &tmp[3*screen->w*(screen->h-i-1)], 3*screen->w);
+        endianswap(dst, 3, screen->w);
         dst += image->pitch;
     }
     delete[] tmp;
@@ -106,7 +106,7 @@ COMMAND(quit, "");
 
 void computescreen(const char *text, Texture *t)
 {
-    int w = scr_w, h = scr_h;
+    int w = screen->w, h = screen->h;
     gettextres(w, h);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -184,7 +184,7 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
 
     clientkeepalive();      // make sure our connection doesn't time out while loading maps etc.
 
-    int w = scr_w, h = scr_h;
+    int w = screen->w, h = screen->h;
     gettextres(w, h);
 
     glDisable(GL_DEPTH_TEST);
@@ -601,7 +601,7 @@ int main(int argc, char **argv)
 
         inbetweenframes = false;
         SDL_GL_SwapBuffers();
-        if(frames>2) gl_drawframe(scr_w, scr_h);
+        if(frames>2) gl_drawframe(screen->w, screen->h);
         //SDL_Delay(10);
         inbetweenframes = true;
 
@@ -641,8 +641,8 @@ int main(int argc, char **argv)
                         #ifdef __APPLE__
                         if(event.motion.y == 0) break;  //let mac users drag windows via the title bar
                         #endif
-                        if(event.motion.x == scr_w / 2 && event.motion.y == scr_h / 2) break;
-                        SDL_WarpMouse(scr_w / 2, scr_h / 2);
+                        if(event.motion.x == screen->w / 2 && event.motion.y == screen->h / 2) break;
+                        SDL_WarpMouse(screen->w / 2, screen->h / 2);
                     }
                     #ifndef WIN32
                     if((screen->flags&SDL_FULLSCREEN) || grabmouse)

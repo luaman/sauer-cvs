@@ -663,7 +663,7 @@ void addreflection(materialsurface &m)
     static GLenum fboFormat = GL_RGB, dbFormat = GL_DEPTH_COMPONENT;
     char *buf = NULL;
     int size = 1<<reflectsize;
-    if(!hasFBO) while(size>scr_w || size>scr_h) size /= 2;
+    if(!hasFBO) while(size>screen->w || size>screen->h) size /= 2;
     if((waterreflect || waterrefract) && !ref->tex)
     {
         glGenTextures(1, &ref->tex);
@@ -734,7 +734,7 @@ void queryreflections()
     rplanes = 0;
 
     static int lastsize = 0, size = 1<<reflectsize;
-    if(!hasFBO) while(size>scr_w || size>scr_h) size /= 2;
+    if(!hasFBO) while(size>screen->w || size>screen->h) size /= 2;
     if(size!=lastsize) { if(lastsize) cleanreflections(); lastsize = size; }
 
     for(vtxarray *va = visibleva; va; va = va->next)
@@ -862,9 +862,9 @@ void drawreflections()
         }
 
         int size = 1<<reflectsize;
-        if(!hasFBO) while(size>scr_w || size>scr_h) size /= 2;
+        if(!hasFBO) while(size>screen->w || size>screen->h) size /= 2;
 
-        if(!refs) glViewport(hasFBO ? 0 : scr_w-size, hasFBO ? 0 : scr_h-size, size, size);
+        if(!refs) glViewport(hasFBO ? 0 : screen->w-size, hasFBO ? 0 : screen->h-size, size, size);
 
         refs++;
         ref.lastupdate = totalmillis;
@@ -878,7 +878,7 @@ void drawreflections()
             if(!ref.fb)
             {
                 glBindTexture(GL_TEXTURE_2D, ref.tex);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, scr_w-size, scr_h-size, size, size);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-size, screen->h-size, size, size);
             }
         }
 
@@ -890,7 +890,7 @@ void drawreflections()
             if(!ref.refractfb)
             {
                 glBindTexture(GL_TEXTURE_2D, ref.refracttex);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, scr_w-size, scr_h-size, size, size);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-size, screen->h-size, size, size);
             }   
         }    
 
@@ -898,7 +898,7 @@ void drawreflections()
     }
     
     if(!refs) return;
-    glViewport(0, 0, scr_w, scr_h);
+    glViewport(0, 0, screen->w, screen->h);
     if(hasFBO) glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
 
     defaultshader->set();
