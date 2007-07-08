@@ -98,7 +98,7 @@ struct entities : icliententities
         if(local) 
         {
             d->pickup(type);
-            cl.playsoundc(itemstats[type-I_SHELLS].sound);
+            cl.playsoundc(itemstats[type-I_SHELLS].sound, d);
         }
         if(d==cl.player1) switch(type)
         {
@@ -131,8 +131,7 @@ struct entities : icliententities
                 d->pitch = 0;
                 d->vel = vec(0, 0, 0);//vec(cosf(RAD*(d->yaw-90)), sinf(RAD*(d->yaw-90)), 0);
                 entinmap(d);
-                if(d==cl.player1) cl.playsoundc(S_TELEPORT);
-                else playsound(S_TELEPORT, &d->o);
+                cl.playsoundc(S_TELEPORT, d);
                 break;
             }
         }
@@ -178,8 +177,7 @@ struct entities : icliententities
                 d->vel = v;
 //                d->vel.z = 0;
 //                d->vel.add(v);
-                if(d==cl.player1) cl.playsoundc(S_JUMPPAD);
-                else playsound(S_JUMPPAD, &d->o);
+                cl.playsoundc(S_JUMPPAD, d);
                 break;
             }
         }
@@ -205,12 +203,8 @@ struct entities : icliententities
         if(d->quadmillis && (d->quadmillis -= time)<=0)
         {
             d->quadmillis = 0;
-            if(d==cl.player1)
-            {
-                cl.playsoundc(S_PUPOUT);
-                conoutf("\f2quad damage is over");
-            }
-            else playsound(S_PUPOUT, &d->o);
+            cl.playsoundc(S_PUPOUT, d);
+            if(d==cl.player1) conoutf("\f2quad damage is over");
         }
     }
 

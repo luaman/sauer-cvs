@@ -383,7 +383,15 @@ struct fpsclient : igameclient
         else if(floorlevel<0) { if(local) playsoundc(S_LAND); else if(d->type==ENT_AI) playsound(S_LAND, &d->o); }
     }
 
-    void playsoundc(int n) { cc.addmsg(SV_SOUND, "i", n); playsound(n); }
+    void playsoundc(int n, fpsent *d = NULL) 
+    { 
+        if(d==player1)
+        {
+            cc.addmsg(SV_SOUND, "i", n); 
+            playsound(n); 
+        }
+        else playsound(n, &d->o);
+    }
 
     int numdynents() { return 1+players.length()+ms.monsters.length(); }
 
