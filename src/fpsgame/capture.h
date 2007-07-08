@@ -505,11 +505,11 @@ struct captureserv : capturestate
         sendf(-1, 1, "risi", SV_TEAMSCORE, team, cs.total);
     }
 
-    void updatescores(int secs)
+    void updatescores()
     {
         if(sv.minremain<0) return;
         endcheck();
-        int t = secs-sv.lastsec;
+        int t = sv.gamemillis/1000 - (sv.gamemillis-sv.curtime)/1000;
         if(t<1) return;
         loopv(bases)
         {

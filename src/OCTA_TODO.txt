@@ -1,7 +1,5 @@
 - make people that do teamkills/damage wait longer?
 
-- server game time in local gamemodes needs to take note of paused/gamespeed client state
-
 - fog entities (R, G, B, radius, fog dist),
      If player inside of radius, changes global fog color and distance to the entity's, interpolated
      with the outside map fog color depending on distance from center. Use some sort of weighted average

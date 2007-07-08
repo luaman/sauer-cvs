@@ -224,7 +224,7 @@ extern void getlavacolour(uchar *lcol);
 // server
 extern void initserver(bool dedicated);
 extern void cleanupserver();
-extern void serverslice(int seconds, uint timeout);
+extern void serverslice(uint timeout);
 
 extern uchar *retrieveservers(uchar *buf, int buflen);
 extern void localclienttoserver(int chan, ENetPacket *);

@@ -7,7 +7,7 @@ struct fpsserver : igameserver
     struct server_entity            // server side version of "entity" type
     {
         int type;
-        int spawnsecs;
+        int spawntime;
         char spawned;
     };
 
@@ -160,13 +160,14 @@ struct fpsserver : igameserver
     
     bool notgotitems, notgotbases;        // true when map has changed and waiting for clients to send item
     int gamemode;
-    int gamemillis;
-    enet_uint32 gamestart;
+    int gamemillis, gamelimit;
 
     string serverdesc;
     string smapname;
-    int interm, minremain, mapend, mapreload;
-    int lastsec, arenaround;
+    int lastmillis, totalmillis, curtime;
+    int interm, minremain;
+    bool mapreload;
+    int arenaround;
     enet_uint32 lastsend;
     int mastermode, mastermask;
     int currentmaster;
@@ -190,14 +191,13 @@ struct fpsserver : igameserver
     vector<demofile> demos;
 
     gzFile demorecord, demoplayback;
-    enet_uint32 demomillis;
     int nextplayback;
 
     captureserv cps;
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapend(0), mapreload(0), lastsec(0), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demorecord(NULL), demoplayback(NULL), demomillis(0), nextplayback(0), cps(*this) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demorecord(NULL), demoplayback(NULL), nextplayback(0), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
     void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); } 
@@ -223,7 +223,7 @@ struct fpsserver : igameserver
 
     int spawntime(int type)
     {
-        if(m_classicsp) return 100000;
+        if(m_classicsp) return INT_MAX;
         int np = 0;
         loopv(clients) if(clients[i]->state.state!=CS_SPECTATOR) np++;
         np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
@@ -242,7 +242,7 @@ struct fpsserver : igameserver
             case I_BOOST:
             case I_QUAD: sec = 40+rnd(40); break;
         }
-        return sec;
+        return sec*1000;
     }
         
     bool pickup(int i, int sender)         // server side item pickup, acknowledge first client that gets it
@@ -251,7 +251,7 @@ struct fpsserver : igameserver
         clientinfo *ci = (clientinfo *)getinfo(sender);
         if(!ci || (m_mp(gamemode) && (ci->state.state!=CS_ALIVE || !ci->state.canpickup(sents[i].type)))) return false;
         sents[i].spawned = false;
-        sents[i].spawnsecs = spawntime(sents[i].type);
+        sents[i].spawntime = spawntime(sents[i].type);
         sendf(-1, 1, "ri3", SV_ITEMACC, i, sender);
         ci->state.pickup(sents[i].type);
         return true;
@@ -347,8 +347,8 @@ struct fpsserver : igameserver
         {
             clientinfo *ci = clients[i];
             if(!ci->team[0]) continue;
-            ci->state.timeplayed += lastsec - ci->state.lasttimeplayed;
-            ci->state.lasttimeplayed = lastsec;
+            ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
+            ci->state.lasttimeplayed = lastmillis;
 
             bool valid = false;
             loopj(sizeof(teamnames)/sizeof(teamnames[0])) if(!strcmp(ci->team, teamnames[j])) { valid = true; break; }
@@ -376,7 +376,7 @@ struct fpsserver : igameserver
     void writedemo(int chan, void *data, int len)
     {
         if(!demorecord) return;
-        int stamp[3] = { enet_time_get()-demomillis, chan, len };
+        int stamp[3] = { gamemillis, chan, len };
         endianswap(stamp, sizeof(int), 3);
         gzwrite(demorecord, stamp, sizeof(stamp));
         gzwrite(demorecord, data, len);
@@ -433,8 +433,6 @@ struct fpsserver : igameserver
         demorecord = gzopen("demorecord", "wb9");
         if(!demorecord) return;
 
-        demomillis = enet_time_get();
-
         uchar buf[MAXTRANS];
         ucharbuf p(buf, sizeof(buf));
         welcomepacket(p, -1);
@@ -486,7 +484,6 @@ struct fpsserver : igameserver
         demoplayback = gzopen(smapname, "rb9");
         if(!demoplayback) return;
 
-        demomillis = enet_time_get();
         if(gzread(demoplayback, &nextplayback, sizeof(nextplayback))!=sizeof(nextplayback))
         {
             enddemoplayback();
@@ -517,8 +514,7 @@ struct fpsserver : igameserver
     void readdemo()
     {
         if(!demoplayback) return;
-        int curplayback = int(enet_time_get()-demomillis);
-        while(curplayback>=nextplayback)
+        while(gamemillis>=nextplayback)
         {
             int chan, len;
             if(gzread(demoplayback, &chan, sizeof(chan))!=sizeof(chan) ||
@@ -552,29 +548,29 @@ struct fpsserver : igameserver
         if(m_demo) enddemoplayback();
         else enddemorecord();
 
-        mapreload = 0;
+        mapreload = false;
         gamemode = mode;
-        gamestart = enet_time_get();
         gamemillis = 0;
         minremain = m_teammode ? 15 : 10;
-        mapend = lastsec+minremain*60;
+        gamelimit = minremain*1000;
         interm = 0;
         s_strcpy(smapname, s);
         resetitems();
+        arenaround = 0;
         notgotitems = true;
         notgotbases = m_capture;
         scores.setsize(0);
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            ci->state.timeplayed += lastsec - ci->state.lasttimeplayed;
+            ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
         }
         if(m_teammode) autoteam();
         loopv(clients)
         {
             clientinfo *ci = clients[i];
             ci->mapchange();
-            ci->state.lasttimeplayed = lastsec;
+            ci->state.lasttimeplayed = lastmillis;
             if(ci->state.state!=CS_SPECTATOR) sendspawn(ci);
         }
 
@@ -591,8 +587,8 @@ struct fpsserver : igameserver
             clientinfo *oi = clients[i];
             if(oi->clientnum != ci->clientnum && getclientip(oi->clientnum) == ip && !strcmp(oi->name, ci->name))
             {
-                oi->state.timeplayed += lastsec - oi->state.lasttimeplayed;
-                oi->state.lasttimeplayed = lastsec;
+                oi->state.timeplayed += lastmillis - oi->state.lasttimeplayed;
+                oi->state.lasttimeplayed = lastmillis;
                 static savedscore curscore;
                 curscore.save(oi->state);
                 return curscore;
@@ -656,7 +652,7 @@ struct fpsserver : igameserver
             }
             else
             {
-                mapreload = lastsec;
+                mapreload = true;
                 if(clients.length()) sendf(-1, 1, "ri", SV_MAPRELOAD);
             }
         }
@@ -672,7 +668,7 @@ struct fpsserver : igameserver
 
     void arenacheck()
     {
-        if(!m_arena || interm || lastsec<arenaround || clients.empty()) return;
+        if(!m_arena || interm || gamemillis<arenaround || clients.empty()) return;
 
         if(arenaround)
         {
@@ -694,7 +690,7 @@ struct fpsserver : igameserver
         }
         if(!dead) return;
         sendf(-1, 1, "ri2", SV_ARENAWIN, !alive ? -1 : alive->clientnum);
-        arenaround = lastsec+5;
+        arenaround = gamemillis+5000;
     }
 
     int checktype(int type, clientinfo *ci)
@@ -1032,7 +1028,7 @@ struct fpsserver : igameserver
                     if(notgotitems)
                     {
                         while(sents.length()<=n) sents.add(se);
-                        if(gamemode>=0 && (sents[n].type==I_QUAD || sents[n].type==I_BOOST)) sents[n].spawnsecs = rnd(60)+20;
+                        if(gamemode>=0 && (sents[n].type==I_QUAD || sents[n].type==I_BOOST)) sents[n].spawntime = spawntime(sents[n].type);
                         else sents[n].spawned = true;
                     }
                 }
@@ -1107,7 +1103,7 @@ struct fpsserver : igameserver
                 if(ci->master && victim>=0 && victim<getnumclients() && ci->clientnum!=victim && getinfo(victim))
                 {
                     ban &b = bannedips.add();
-                    b.time = lastsec;
+                    b.time = totalmillis;
                     b.ip = getclientip(victim);
                     disconnect_client(victim, DISC_KICK);
                 }
@@ -1283,19 +1279,15 @@ struct fpsserver : igameserver
 
     void checkintermission()
     {
-        if(!minremain)
-        {
-            interm = lastsec+10;
-            mapend = lastsec+60;
-        }
         if(minremain>=0)
         {
-            do minremain--; while(lastsec>mapend-minremain*60);
+            minremain = gamemillis>=gamelimit ? -1 : (gamelimit - gamemillis)/(60*1000);
             sendf(-1, 1, "ri2", SV_TIMEUP, minremain+1);
+            if(!interm && minremain<0) interm = gamemillis+10*1000;
         }
     }
 
-    void startintermission() { minremain = 0; checkintermission(); }
+    void startintermission() { gamelimit = min(gamelimit, gamemillis); checkintermission(); }
 
     void clearevent(clientinfo *ci)
     {
@@ -1446,13 +1438,10 @@ struct fpsserver : igameserver
 
     void processevents()
     {
-        int lastgamemillis = gamemillis; 
-        gamemillis = int(enet_time_get()-gamestart);
-        int diff = gamemillis - lastgamemillis;
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            if(diff>0 && ci->state.quadmillis) ci->state.quadmillis = max(ci->state.quadmillis-diff, 0);
+            if(curtime>0 && ci->state.quadmillis) ci->state.quadmillis = max(ci->state.quadmillis-curtime, 0);
             while(ci->events.length())
             {
                 gameevent &e = ci->events[0];
@@ -1468,41 +1457,42 @@ struct fpsserver : igameserver
         }
     }
                          
-    void serverupdate(int seconds)
+    void serverupdate(int _lastmillis, int _totalmillis)
     {
+        curtime = _lastmillis - lastmillis;
+        gamemillis += curtime;
+        lastmillis = _lastmillis;
+        totalmillis = _totalmillis;
+
         if(m_demo) readdemo();
-        else if(minremain>=0) 
+        else if(minremain>=0)
         {
             processevents();
-            loopv(sents) // spawn entities when timer reached
+            if(curtime) loopv(sents) if(sents[i].spawntime) // spawn entities when timer reached
             {
-                if(sents[i].spawnsecs)
+                int oldtime = sents[i].spawntime;
+                sents[i].spawntime -= curtime;
+                if(sents[i].spawntime<=0)
                 {
-                    sents[i].spawnsecs -= seconds-lastsec;
-                    if(sents[i].spawnsecs<=0)
-                    {
-                        sents[i].spawnsecs = 0;
-                        sents[i].spawned = true;
-                        sendf(-1, 1, "ri2", SV_ITEMSPAWN, i);
-                    }
-                    else if(sents[i].spawnsecs==10 && seconds-lastsec && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
-                    {
-                        sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
-                    }
+                    sents[i].spawntime = 0;
+                    sents[i].spawned = true;
+                    sendf(-1, 1, "ri2", SV_ITEMSPAWN, i);
+                }
+                else if(sents[i].spawntime<=10*1000 && oldtime>10*1000 && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
+                {
+                    sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
                 }
             }
-            if(m_capture && !notgotbases) cps.updatescores(seconds);
+            if(m_capture && !notgotbases) cps.updatescores();
             if(m_arena) arenacheck();
         }
 
-        lastsec = seconds;
-        
-        while(bannedips.length() && bannedips[0].time+4*60*60<lastsec) bannedips.remove(0);
+        while(bannedips.length() && bannedips[0].time-totalmillis>4*60*60*1000) bannedips.remove(0);
         
         if(masterupdate) { sendf(-1, 1, "ri2", SV_CURRENTMASTER, currentmaster); masterupdate = false; } 
     
-        if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && seconds>mapend-minremain*60) checkintermission();
-        if(interm && seconds>interm)
+        if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && gamemillis/(60*1000)!=(gamemillis-curtime)/(60*1000)) checkintermission();
+        if(interm && gamemillis>interm)
         {
             if(demorecord) enddemorecord();
             interm = 0;
@@ -1564,7 +1554,7 @@ struct fpsserver : igameserver
         if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
         if(mastermode>=MM_LOCKED) ci->state.state = CS_SPECTATOR;
         if(currentmaster>=0) masterupdate = true;
-        ci->state.lasttimeplayed = lastsec;
+        ci->state.lasttimeplayed = lastmillis;
         return DISC_NONE;
     }
 
@@ -1573,7 +1563,7 @@ struct fpsserver : igameserver
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(ci->master) setmaster(ci, false);
         if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.leavebases(ci->team, ci->state.o);
-        ci->state.timeplayed += lastsec - ci->state.lasttimeplayed; 
+        ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed; 
         savescore(ci);
         sendf(-1, 1, "ri2", SV_CDIS, n); 
         clients.removeobj(ci);

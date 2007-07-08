@@ -91,7 +91,7 @@ struct igameserver
     virtual bool sendpackets() = 0;
     virtual int welcomepacket(ucharbuf &p, int n) = 0;
     virtual void serverinforeply(ucharbuf &p) = 0;
-    virtual void serverupdate(int seconds) = 0;
+    virtual void serverupdate(int lastmillis, int totalmillis) = 0;
     virtual bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np) = 0;
     virtual void serverinfostr(char *buf, const char *name, const char *desc, const char *map, int ping, const vector<int> &attr, int np) = 0;
     virtual int serverinfoport() = 0;

@@ -328,14 +328,10 @@ client &addclient()
     return *c;
 }
 
-int nonlocalclients = 0;
+int localclients = 0, nonlocalclients = 0;
 
 bool hasnonlocalclients() { return nonlocalclients!=0; }
-bool haslocalclients() 
-{ 
-    loopv(clients) if(clients[i]->type==ST_LOCAL) return true;
-    return false;
-}
+bool haslocalclients() { return localclients!=0; }
 
 void sendpongs()        // reply all server info requests
 {
@@ -504,28 +500,43 @@ char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
 char *game = "fps";
 bool pubserv = false;
 
-void serverslice(int seconds, uint timeout)   // main server update, called from main loop in sp, or from below in dedicated server
-{
-    sv->serverupdate(seconds);
+#ifdef STANDALONE
+int lastmillis = 0, totalmillis = 0;
+#endif
 
-    if(!serverhost) return;     // below is network only
+void serverslice(uint timeout)   // main server update, called from main loop in sp, or from below in dedicated server
+{
+    localclients = nonlocalclients = 0;
+    loopv(clients) switch(clients[i]->type)
+    {
+        case ST_LOCAL: localclients++; break;
+        case ST_TCPIP: nonlocalclients++; break;
+    }
+
+    if(!serverhost) 
+    {
+        sv->serverupdate(lastmillis, totalmillis);
+        return;
+    }
+       
+    // below is network only
+
+    lastmillis = totalmillis = (int)enet_time_get();
+    sv->serverupdate(lastmillis, totalmillis);
 
     sendpongs();
     
     if(*masterpath) checkmasterreply();
 
-    if(seconds>updmaster && *masterpath)       // send alive signal to masterserver every hour of uptime
+    if(totalmillis-updmaster>60*60*1000 && *masterpath)       // send alive signal to masterserver every hour of uptime
     {
         updatemasterserver();
-        updmaster = seconds+60*60;
+        updmaster = totalmillis;
     }
     
-    nonlocalclients = 0;
-    loopv(clients) if(clients[i]->type==ST_TCPIP) nonlocalclients++;
-
-    if(seconds-laststatus>60)   // display bandwidth stats, useful for server ops
+    if(totalmillis-laststatus>60*1000)   // display bandwidth stats, useful for server ops
     {
-        laststatus = seconds;     
+        laststatus = totalmillis;     
         if(nonlocalclients || bsend || brec) printf("status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, bsend/60.0f/1024, brec/60.0f/1024);
         bsend = brec = 0;
     }
@@ -626,7 +637,8 @@ void initserver(bool dedicated)
         printf("dedicated server started, waiting for clients...\nCtrl-C to exit\n\n");
         atexit(enet_deinitialize);
         atexit(cleanupserver);
-        for(;;) serverslice(time(NULL), 5);
+        enet_time_set(0);
+        for(;;) serverslice(5);
     }
 }
 

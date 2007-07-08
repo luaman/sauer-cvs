@@ -572,7 +572,7 @@ int main(int argc, char **argv)
         int millis = SDL_GetTicks();
         limitfps(millis, totalmillis);
         int elapsed = millis-totalmillis;
-        curtime = elapsed*gamespeed/100;
+        curtime = (elapsed*gamespeed)/100;
         if(curtime>200) curtime = 200;
         else if(curtime<1) curtime = 1;
         if(paused) curtime = 0;
@@ -586,7 +586,7 @@ int main(int argc, char **argv)
 
         checksleep(lastmillis);
 
-        serverslice(time(NULL), 0);
+        serverslice(0);
 
         if(frames) updatefpshistory(elapsed);
         frames++;
