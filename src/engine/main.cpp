@@ -396,9 +396,12 @@ int main(int argc, char **argv)
     #define log(s) puts("init: " s)
     log("sdl");
 
-    initing = true;
-    execfile("init.cfg");
-    initing = false;
+    if(argc<=1)
+    {
+        initing = true;
+        execfile("init.cfg");
+        initing = false;
+    }
 
     for(int i = 1; i<argc; i++)
     {
