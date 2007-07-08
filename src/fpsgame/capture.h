@@ -457,7 +457,7 @@ struct captureserv : capturestate
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, o) && ci->state.hasmaxammo(b.ammotype-1+I_SHELLS) && b.takeammo(team))
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, o) && !ci->state.hasmaxammo(b.ammotype-1+I_SHELLS) && b.takeammo(team))
             {
                 sendbaseinfo(i);
                 sendf(client, 1, "rii", SV_REPAMMO, b.ammotype);
