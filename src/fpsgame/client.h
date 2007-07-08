@@ -159,7 +159,7 @@ struct clientcom : iclientcom
 
     void addmsg(int type, const char *fmt = NULL, ...)
     {
-        if(spectator && (currentmaster!=player1->clientnum || type<SV_MASTERMODE))
+        if(remote && spectator && (currentmaster!=player1->clientnum || type<SV_MASTERMODE))
         {
             static int spectypes[] = { SV_MAPVOTE, SV_GETMAP, SV_TEXT, SV_SETMASTER };
             bool allowed = false;
