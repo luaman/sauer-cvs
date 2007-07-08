@@ -244,17 +244,16 @@ void screenres(int *w, int *h, int *bpp = 0)
 {
 #if !defined(WIN32) && !defined(__APPLE__)
     if(initing)
-#endif
     {
+#endif
         scr_w = *w;
         scr_h = *h;
         if(*bpp) colorbits = *bpp;
+#if defined(WIN32) || defined(__APPLE__)
+        initwarning()
+#else
         return;
     }
-
-#if defined(WIN32) || defined(__APPLE__)
-    initwarning();
-#else
     SDL_Surface *surf = SDL_SetVideoMode(*w, *h, bpp ? *bpp : 0, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
     screen = surf;
