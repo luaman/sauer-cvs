@@ -96,15 +96,13 @@ VARF(moving, 0, 0, 1,
 
 void clearheighttexture()
 {
-    if(htex != NULL) delete[] htex;
-    htex = NULL;
+    DELETEA(htex);
 }
 
 void clearheightmap()
 {
     clearheighttexture();
-    if(hmap != NULL) delete[] hmap;
-    hmap = NULL;
+    DELETEA(hmap);
 }
 
 void forcenextundo() { lastsel.orient = -1; }
@@ -294,6 +292,8 @@ extern bool hoveringonent(int ent, int orient);
 extern void renderentselection(const vec &o, const vec &ray, bool entmoving);
 extern float rayent(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size, int &orient, int &ent);
 
+VAR(gridlookup, 0, 0, 1);
+
 void cursorupdate()
 {
     if(sel.grid == 0) sel.grid = gridsize;
@@ -366,6 +366,7 @@ void cursorupdate()
             v.add(player->o);
             w = v;
             lookupcube(w.x, w.y, w.z);
+            if(gridlookup && !dragging && !moving && !havesel && !hmap) gridsize = lusize;
             int mag = lusize / gridsize;
             normalizelookupcube(w.x, w.y, w.z);
             if(sdist == 0 || sdist > wdist) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
