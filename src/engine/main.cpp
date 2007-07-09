@@ -67,7 +67,8 @@ void writeinitcfg()
     fprintf(f, "stencilbits %d\n", stencilbits);
     fprintf(f, "fsaa %d\n", fsaa);
     fprintf(f, "vsync %d\n", vsync);
-    extern int shaderprecision;
+    extern int useshaders, shaderprecision;
+    fprintf(f, "shaders %d\n", useshaders);
     fprintf(f, "shaderprecision %d\n", shaderprecision);
     extern int soundchans, soundfreq, soundbufferlen;
     fprintf(f, "soundchans %d\n", soundchans);
@@ -413,9 +414,10 @@ int main(int argc, char **argv)
             case 's': stencilbits = atoi(&argv[i][2]); break;
             case 'f': 
             {
-                extern int shaderprecision; 
-                shaderprecision = atoi(&argv[i][2]); 
-                shaderprecision = min(max(shaderprecision, 0), 3);
+                extern int useshaders, shaderprecision; 
+                int n = atoi(&argv[i][2]);
+                useshaders = n ? 1 : 0;
+                shaderprecision = min(max(n - 1, 0), 3);
                 break;
             }
             case 'l': 
