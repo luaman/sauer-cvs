@@ -260,20 +260,25 @@ struct gui : g3d_gui
         return layout(size+SHADOW, size+SHADOW);
     }
 
-    void slider(int &val, int vmin, int vmax, int color)
-    {	
+    void slider(int &val, int vmin, int vmax, int color, char *label)
+    {
         autotab();
         int x = curx;
         int y = cury;
         line_(10);
-        if(visible()) 
+        if(visible())
         {
-            s_sprintfd(label)("%d", val);
+            if(!label)
+            {
+                static string s;
+                s_sprintf(s)("%d", val);
+                label = s;
+            }
             int w = text_width(label);
-        
+
             bool hit;
             int px, py;
-            if(ishorizontal()) 
+            if(ishorizontal())
             {
                 hit = ishit(FONTH, ysize, x, y);
                 px = x + (FONTH-w)/2;
@@ -285,10 +290,10 @@ struct gui : g3d_gui
                 px = x + ((xsize-w)*(val-vmin))/max(vmax-vmin, 1);
                 py = y;
             }
-        
+
             if(hit) color = 0xFF0000;
             text_(label, px, py, color, hit && actionon);
-            if(hit && actionon) 
+            if(hit && actionon)
             {
                 int vnew = 1+vmax-vmin;
                 if(ishorizontal()) vnew = int(vnew*(y+ysize-hity)/ysize);
