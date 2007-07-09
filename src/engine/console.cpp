@@ -48,7 +48,8 @@ const int CONSPAD = FONTH/3;
 
 void conoutf(const char *s, ...)
 {
-    int w = screen->w, h = screen->h;
+    extern int scr_w, scr_h;
+    int w = screen ? screen->w : scr_w, h = screen ? screen->h : scr_h;
     gettextres(w, h);
     s_sprintfdv(sf, s);
     string sp;
