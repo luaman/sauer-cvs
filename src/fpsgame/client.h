@@ -785,7 +785,7 @@ struct clientcom : iclientcom
                 else if(s->state==CS_SPECTATOR) 
                 {
                     s->state = CS_DEAD;
-                    cl.sb.showscores(true);
+                    if(s==player1) cl.sb.showscores(true);
                 }
                 break;
             }

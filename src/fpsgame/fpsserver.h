@@ -1115,9 +1115,10 @@ struct fpsserver : igameserver
             {
                 int spectator = getint(p), val = getint(p);
                 if(!ci->master && spectator!=sender) break;
-                if(spectator<0 || spectator>=getnumclients()) break;
                 clientinfo *spinfo = (clientinfo *)getinfo(spectator);
                 if(!spinfo) break;
+
+                sendf(-1, 1, "ri3", SV_SPECTATOR, spectator, val);
 
                 if(spinfo->state.state!=CS_SPECTATOR && val)
                 {
@@ -1126,13 +1127,9 @@ struct fpsserver : igameserver
                 }
                 else if(spinfo->state.state==CS_SPECTATOR && !val)
                 {
-                    if(m_arena) spinfo->state.state = CS_DEAD;
-                    else sendspawn(spinfo);
-                }
-                if(spinfo->state.state!=CS_ALIVE) 
-                {
-                    sendf(sender, 1, "ri3", SV_SPECTATOR, spectator, val);
-                    QUEUE_MSG;
+                    spinfo->state.state = CS_DEAD;
+                    spinfo->state.respawn();
+                    if(!m_arena) sendspawn(spinfo);
                 }
                 break;
             }
