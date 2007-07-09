@@ -114,7 +114,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     conoutf("Renderer: %s (%s)", renderer, vendor);
     conoutf("Driver: %s", version);
     
-    extern int shaderprecision;
+    //extern int shaderprecision;
     // default to low precision shaders on certain cards, can be overridden with -f3
     // char *weakcards[] = { "GeForce FX", "Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome", NULL } 
     // if(shaderprecision==2) for(char **wc = weakcards; *wc; wc++) if(strstr(renderer, *wc)) shaderprecision = 1;
@@ -172,11 +172,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     } 
     if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
 
-    if(!shaderprecision || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
+    extern int useshaders;
+    if(!useshaders || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
     {
         conoutf("WARNING: No shader support! Using fixed function fallback. (no fancy visuals for you)");
         renderpath = R_FIXEDFUNCTION;
-        if(strstr(vendor, "ATI") && !shaderprecision) ati_texgen_bug = 1;
+        if(strstr(vendor, "ATI") && !useshaders) ati_texgen_bug = 1;
         else if(strstr(vendor, "NVIDIA")) nvidia_texgen_bug = 1;
         if(ati_texgen_bug) conoutf("WARNING: Using ATI texgen bug workaround. (use \"/ati_texgen_bug 0\" to disable if unnecessary)");
         if(nvidia_texgen_bug) conoutf("WARNING: Using NVIDIA texgen bug workaround. (use \"/nvidia_texgen_bug 0\" to disable if unnecessary)");
