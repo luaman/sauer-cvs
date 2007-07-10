@@ -426,7 +426,7 @@ struct fpsclient : igameclient
     {
         if(d==player1)
         {
-            if(!multiplayer(false)) killed(player1, player1);
+            if(!m_mp(gamemode)) killed(player1, player1);
             else if(suicided!=player1->lifesequence)
             {
                 cc.addmsg(SV_SUICIDE, "r");
