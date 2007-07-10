@@ -553,7 +553,7 @@ struct vertmodel : model
 
         meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), scale(1), translate(0, 0, 0), vbuf(0), ebuf(0), vdata(NULL) 
         {
-            cachecur.fr1 = cacheprev.fr1 = NULL;
+            cachecur.fr1 = cacheprev.fr1 = -1;
         }
 
         virtual ~meshgroup()
