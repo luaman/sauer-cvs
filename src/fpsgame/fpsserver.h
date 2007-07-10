@@ -249,7 +249,7 @@ struct fpsserver : igameserver
     {
         if(minremain<=0 || !sents.inrange(i) || !sents[i].spawned) return false;
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(!ci || (m_mp(gamemode) && (ci->state.state!=CS_ALIVE || !ci->state.canpickup(sents[i].type)))) return false;
+        if(!ci || (!ci->local && (ci->state.state!=CS_ALIVE || !ci->state.canpickup(sents[i].type)))) return false;
         sents[i].spawned = false;
         sents[i].spawntime = spawntime(sents[i].type);
         sendf(-1, 1, "ri3", SV_ITEMACC, i, sender);
@@ -1231,7 +1231,7 @@ struct fpsserver : igameserver
             }
             putint(p, -1);
         }
-        if(ci && m_mp(gamemode) && ci->state.state!=CS_SPECTATOR)
+        if(ci && !ci->local && ci->state.state!=CS_SPECTATOR)
         {
             if(m_arena && clients.length()>2) 
             {

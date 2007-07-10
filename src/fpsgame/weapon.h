@@ -215,10 +215,10 @@ struct weaponstate
         at->totaldamage += damage;
         d->superdamage = 0;
 
-        if(d->type==ENT_AI || !m_mp(cl.gamemode) || d==player1) d->hitpush(damage, vel, at, gun);
+        if(d->type==ENT_AI || !multiplayer(false) || d==player1) d->hitpush(damage, vel, at, gun);
 
         if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(damage, at); 
-        else if(!m_mp(cl.gamemode)) cl.damaged(damage, d, at);
+        else if(!multiplayer(false)) cl.damaged(damage, d, at);
         else 
         { 
             hitmsg &h = hits.add();
