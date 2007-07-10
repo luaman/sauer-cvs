@@ -314,6 +314,7 @@ void rendergrasssample(const grasssample &g, const vec &o, float dist, int seed,
     glTexCoord2f(offset, 0); glVertex3fv(t1.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 0); glVertex3fv(t2.v);
     glTexCoord2f(offset + float(grasswidth)*64.0f/grasstex->xs, 1); glVertex3fv(b2.v);
+    xtraverts += 4;
 }
 
 void rendergrasssamples(vtxarray *va, const vec &dir)
