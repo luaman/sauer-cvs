@@ -98,7 +98,7 @@ struct fpsclient : igameclient
 
     void respawnself()
     {
-        if(multiplayer(false)) cc.addmsg(SV_TRYSPAWN, "r");
+        if(m_mp(gamemode)) cc.addmsg(SV_TRYSPAWN, "r");
         else
         {
             spawnplayer(player1);
