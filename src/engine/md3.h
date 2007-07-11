@@ -4,6 +4,13 @@ md3 *loadingmd3 = NULL;
 
 string md3dir;
 
+struct md3frame
+{
+    vec bbmin, bbmax, origin;
+    float radius;
+    uchar name[16];
+};
+
 struct md3tag
 {
     char name[64];
