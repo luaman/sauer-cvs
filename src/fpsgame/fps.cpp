@@ -359,7 +359,7 @@ struct fpsclient : igameclient
             players[i]->maxhealth = 100;
         }
 
-        if(multiplayer(false)) spawnplayer(player1);
+        if(!multiplayer(false)) spawnplayer(player1);
         else findplayerspawn(player1, -1);
         et.resetspawns();
         s_strcpy(clientmap, name);
