@@ -673,20 +673,20 @@ VARP(dynlightdist, 0, 1024, 10000);
 struct dynlight
 {
     vec o;
-    float radius;
+    float radius, dist;
     vec color;
     int lifetime, expire;
 };
 
 vector<dynlight> dynlights;
-vector<dynlight *> visibledynlights;
+vector<dynlight *> closedynlights, visibledynlights;
 
 void adddynlight(const vec &o, float radius, const vec &color, int fade)
 {
-    if(dynlights.length()>=maxdynlights || o.dist(camera1->o) > dynlightdist) return;
+    if(o.dist(camera1->o) > dynlightdist) return;
 
-    int insert = -1, expire = fade + lastmillis;
-    loopvrev(dynlights) if(expire>=dynlights[i].expire) { insert = i; break; }
+    int insert = 0, expire = fade + lastmillis;
+    loopvrev(dynlights) if(expire>=dynlights[i].expire) { insert = i+1; break; }
     dynlight d;
     d.o = o;
     d.radius = radius;
@@ -704,12 +704,31 @@ void cleardynlights()
     else if(faded>0) dynlights.remove(0, faded);
 }
 
+void limitdynlights()
+{
+    closedynlights.setsize(0);
+    if(maxdynlights) loopvj(dynlights)
+    {
+        dynlight &d = dynlights[j];
+        d.dist = camera1->o.dist(d.o);
+        if(d.dist>dynlightdist) continue;
+        int insert = 0;
+        loopvrev(closedynlights) if(d.dist >= closedynlights[i]->dist) { insert = i+1; break; }
+        if(closedynlights.length()>=maxdynlights)
+        {
+            if(insert+1>=maxdynlights) continue;
+            closedynlights.drop();
+        }
+        closedynlights.insert(insert, &d);
+    }
+}
+
 int finddynlights(vtxarray *va)
 {
     visibledynlights.setsizenodelete(0);
-    loopv(dynlights)
+    loopv(closedynlights)
     {
-        dynlight &d = dynlights[i];
+        dynlight &d = *closedynlights[i];
         if(d.o.dist_to_bb(va->min, va->max) < d.radius) visibledynlights.add(&d);
     }
     return visibledynlights.length();
@@ -1465,6 +1484,8 @@ void rendergeom()
         static Shader *dynlightshader = NULL;
         if(!dynlightshader) dynlightshader = lookupshaderbyname("dynlight");
         dynlightshader->set();
+
+        limitdynlights();
 
         rendergeommultipass(cur, RENDERPASS_DYNLIGHT);
 
