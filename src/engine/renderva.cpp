@@ -693,7 +693,7 @@ void adddynlight(const vec &o, float radius, const vec &color, int fade)
     d.color = color;
     d.lifetime = fade;
     d.expire = expire;
-    dynlights.insert(insert+1, d);
+    dynlights.insert(insert, d);
 }
 
 void cleardynlights()
@@ -704,9 +704,10 @@ void cleardynlights()
     else if(faded>0) dynlights.remove(0, faded);
 }
 
-void limitdynlights()
+int limitdynlights()
 {
-    closedynlights.setsize(0);
+    if(dynlights.empty()) return 0;
+    closedynlights.setsizenodelete(0);
     if(maxdynlights) loopvj(dynlights)
     {
         dynlight &d = dynlights[j];
@@ -721,6 +722,7 @@ void limitdynlights()
         }
         closedynlights.insert(insert, &d);
     }
+    return closedynlights.length();
 }
 
 int finddynlights(vtxarray *va)
@@ -1477,15 +1479,13 @@ void rendergeom()
         END_ADDITIVE_PASS
     }
 
-    if(renderpath!=R_FIXEDFUNCTION && maxdynlights && dynlights.length())
+    if(renderpath!=R_FIXEDFUNCTION && maxdynlights && limitdynlights())
     {
         START_ADDITIVE_PASS
 
         static Shader *dynlightshader = NULL;
         if(!dynlightshader) dynlightshader = lookupshaderbyname("dynlight");
         dynlightshader->set();
-
-        limitdynlights();
 
         rendergeommultipass(cur, RENDERPASS_DYNLIGHT);
 
