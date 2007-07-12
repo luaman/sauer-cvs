@@ -379,13 +379,13 @@ struct fpsclient : igameclient
     {
         if     (waterlevel>0) playsound(S_SPLASH1, d==player1 ? NULL : &d->o);
         else if(waterlevel<0) playsound(S_SPLASH2, d==player1 ? NULL : &d->o);
-        if     (floorlevel>0) { if(local) playsoundc(S_JUMP); else if(d->type==ENT_AI) playsound(S_JUMP, &d->o); }
-        else if(floorlevel<0) { if(local) playsoundc(S_LAND); else if(d->type==ENT_AI) playsound(S_LAND, &d->o); }
+        if     (floorlevel>0) { if(local) playsoundc(S_JUMP, (fpsent *)d); else if(d->type==ENT_AI) playsound(S_JUMP, &d->o); }
+        else if(floorlevel<0) { if(local) playsoundc(S_LAND, (fpsent *)d); else if(d->type==ENT_AI) playsound(S_LAND, &d->o); }
     }
 
     void playsoundc(int n, fpsent *d = NULL) 
     { 
-        if(d==player1)
+        if(!d || d==player1)
         {
             cc.addmsg(SV_SOUND, "i", n); 
             playsound(n); 

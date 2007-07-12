@@ -512,7 +512,7 @@ struct weaponstate
         { 
             if(d==player1)
             {
-                cl.playsoundc(S_NOAMMO); 
+                cl.playsoundc(S_NOAMMO, d); 
                 d->gunwait = 600; 
                 d->lastattackgun = -1; 
                 weaponswitch(); 
@@ -548,11 +548,7 @@ struct weaponstate
         if(d->gunselect==GUN_SG) createrays(from, to);
         else if(d->gunselect==GUN_CG) offsetray(from, to, 1, to);
             
-        if(d->quadmillis && attacktime>200) 
-        {
-            if(d==player1) cl.playsoundc(S_ITEMPUP);
-            else playsound(S_ITEMPUP, &d->o);
-        }
+        if(d->quadmillis && attacktime>200) cl.playsoundc(S_ITEMPUP, d);
 
         hits.setsizenodelete(0);
 
