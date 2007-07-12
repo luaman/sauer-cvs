@@ -11,7 +11,7 @@ struct fpsserver : igameserver
         char spawned;
     };
 
-    enum { GE_NONE = 0, GE_SHOT, GE_EXPLODE, GE_HIT, GE_SUICIDE };
+    enum { GE_NONE = 0, GE_SHOT, GE_EXPLODE, GE_HIT, GE_SUICIDE, GE_PICKUP };
 
     struct shotevent
     {
@@ -46,6 +46,12 @@ struct fpsserver : igameserver
         int type;
     };
 
+    struct pickupevent
+    {
+        int type;
+        int ent;
+    };
+
     union gameevent
     {
         int type;
@@ -53,6 +59,7 @@ struct fpsserver : igameserver
         explodeevent explode;
         hitevent hit;
         suicideevent suicide;
+        pickupevent pickup;
     };
 
     struct gamestate : fpsstate
@@ -963,6 +970,19 @@ struct fpsserver : igameserver
                 break;
             }
 
+            case SV_ITEMPICKUP:
+            {
+                int n = getint(p);
+                if(ci->local) pickup(n, sender);
+                else
+                {
+                    gameevent &pickup = ci->events.add();
+                    pickup.type = GE_PICKUP;
+                    pickup.pickup.ent = n;
+                }
+                break;
+            }
+
             case SV_TEXT:
                 QUEUE_MSG;
                 getstring(text, p);
@@ -1074,13 +1094,6 @@ struct fpsserver : igameserver
             case SV_REPAMMO:
                 if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.replenishammo(sender, ci->team, ci->state.o);
                 break;
-
-            case SV_ITEMPICKUP:
-            {
-                int n = getint(p);
-                pickup(n, sender);
-                break;
-            }
 
             case SV_PING:
                 sendf(sender, 1, "i2", SV_PONG, getint(p));
@@ -1439,6 +1452,13 @@ struct fpsserver : igameserver
         }
     }
 
+    void processevent(clientinfo *ci, pickupevent &e)
+    {
+        gamestate &gs = ci->state;
+        if(gs.state!=CS_ALIVE) return;
+        pickup(e.ent, ci->clientnum);
+    }
+
     void processevents()
     {
         loopv(clients)
@@ -1448,12 +1468,14 @@ struct fpsserver : igameserver
             while(ci->events.length())
             {
                 gameevent &e = ci->events[0];
-                if(e.shot.millis>gamemillis) break;
+                if(e.type<GE_SUICIDE && e.shot.millis>gamemillis) break;
                 switch(e.type)
                 {
                     case GE_SHOT: processevent(ci, e.shot); break;
                     case GE_EXPLODE: processevent(ci, e.explode); break;
+                    // untimed events
                     case GE_SUICIDE: processevent(ci, e.suicide); break;
+                    case GE_PICKUP: processevent(ci, e.pickup); break;
                 }
                 clearevent(ci);
             }
