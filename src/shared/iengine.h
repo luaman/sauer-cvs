@@ -108,6 +108,11 @@ extern int char_width(int c, int x = 0);
 extern int text_width(const char *str, int limit = -1);
 extern int text_visible(const char *str, int max);
 
+// renderva
+extern void adddynlight(const vec &o, float radius, const vec &color, int fade = 0);
+extern void cleardynlights();
+extern void dynlightreaching(const vec &target, vec &color, vec &dir);
+
 // rendergl
 extern vec worldpos, camright, camup;
 extern void damageblend(int n);

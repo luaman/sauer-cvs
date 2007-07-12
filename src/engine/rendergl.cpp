@@ -668,7 +668,10 @@ void gl_drawframe(int w, int h)
     defaultshader->set();
 
     recomputecamera();
-    
+   
+    cleardynlights();
+    cl->adddynlights();
+
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
     cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));

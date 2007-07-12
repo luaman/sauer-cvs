@@ -72,6 +72,7 @@ struct igameclient
     virtual void g3d_gamemenus() = 0;
     virtual void crosshaircolor(float &r, float &g, float &b) {} 
     virtual void lighteffects(dynent *d, vec &color, vec &dir) {}
+    virtual void adddynlights() {}
 }; 
  
 struct igameserver

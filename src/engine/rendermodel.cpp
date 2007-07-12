@@ -599,6 +599,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         lightreaching(d->o, color, dir);
         cl->lighteffects(d, color, dir);
     }
+    vec dyncolor(color), dyndir(dir);
+    dynlightreaching(o, dyncolor, dyndir);
     if(a) for(int i = 0; a[i].name; i++)
     {
         a[i].m = loadmodel(a[i].name);
@@ -609,8 +611,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     {
         batchedmodel &b = addbatchedmodel(m);
         b.pos = o;
-        b.color = color;
-        b.dir = dir;
+        b.color = dyncolor;
+        b.dir = dyndir;
         b.anim = anim;
         b.varseed = varseed;
         b.tex = tex;
@@ -629,14 +631,14 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 
     if(shadow && (!reflecting || refracting))
     {
-        rendershadow(dir, m, anim, varseed, o, center, radius, yaw, pitch, speed, basetime, d, cull, a);
+        rendershadow(dyndir, m, anim, varseed, o, center, radius, yaw, pitch, speed, basetime, d, cull, a);
         if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) { m->endrender(); return; }
     }
 
     if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT; 
 
     m->setskin(tex);
-    m->render(anim, varseed, speed, basetime, o, yaw, pitch, d, a, color, dir);
+    m->render(anim, varseed, speed, basetime, o, yaw, pitch, d, a, dyncolor, dyndir);
 
     m->endrender();
 }
