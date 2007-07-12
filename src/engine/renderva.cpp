@@ -1134,7 +1134,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 loopvj(visibledynlights)
                 {
                     dynlight &d = *visibledynlights[j];
-                    setlocalparamfv("lightpos", SHPARAM_PIXEL, 4, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
+                    setlocalparamfv("lightpos", SHPARAM_VERTEX, 4, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
                     vec color(d.color);
                     color.mul(2);
                     if(d.lifetime) color.mul(min(float(d.expire - lastmillis)/d.lifetime, 1));
