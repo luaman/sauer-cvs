@@ -711,8 +711,8 @@ int limitdynlights()
     if(maxdynlights) loopvj(dynlights)
     {
         dynlight &d = dynlights[j];
-        d.dist = camera1->o.dist(d.o);
-        if(d.dist>dynlightdist) continue;
+        d.dist = camera1->o.dist(d.o) - d.radius;
+        if(d.dist>dynlightdist || isvisiblesphere(d.radius, d.o) >= VFC_FOGGED) continue;
         int insert = 0;
         loopvrev(closedynlights) if(d.dist >= closedynlights[i]->dist) { insert = i+1; break; }
         if(closedynlights.length()>=maxdynlights)
