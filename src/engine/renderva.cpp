@@ -667,7 +667,7 @@ void rendercaustics(float z, bool refract)
     glFogfv(GL_FOG_COLOR, oldfogc);
 }
 
-VARP(maxdynlights, 0, 5, 16);
+VARP(maxdynlights, 0, 4, 16);
 VARP(dynlightdist, 0, 1024, 10000);
 
 struct dynlight
