@@ -768,7 +768,34 @@ void dynlightreaching(const vec &target, vec &color, vec &dir)
 #endif
     color.add(dyncolor);
 }    
- 
+
+#define MAXDYNLIGHTS 4
+
+void setdynlights(vtxarray *va, int start, int num)
+{
+    if(num>MAXDYNLIGHTS || start+num>visibledynlights.length()) return;
+
+    static Shader *dynlightshader[MAXDYNLIGHTS] = { NULL, NULL, NULL, NULL };
+    if(!dynlightshader[num-1])
+    {
+        s_sprintfd(name)("dynlight%d", num);
+        dynlightshader[num-1] = lookupshaderbyname(name);
+    }
+    dynlightshader[num-1]->set();
+    loopi(num)
+    {
+        dynlight &d = *visibledynlights[start+i];
+        setlocalparamfv("lightpos", SHPARAM_VERTEX, 2+i, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
+        vec color(d.color);
+        color.mul(2);
+        if(d.lifetime) color.mul(min(float(d.expire - lastmillis)/d.lifetime, 1));
+        setlocalparamf("lightcolor", SHPARAM_PIXEL, 2+2*i, color.x, color.y, color.z);
+        vec atten(color);
+        atten.div(-d.radius*d.radius*(1<<(2*VVEC_FRAC)));
+        setlocalparamf("lightatten", SHPARAM_PIXEL, 3+2*i, atten.x, atten.y, atten.z);
+    }
+}
+
 float orientation_tangent [3][4] = { {  0,1, 0,0 }, { 1,0, 0,0 }, { 1,0,0,0 }};
 float orientation_binormal[3][4] = { {  0,0,-1,0 }, { 0,0,-1,0 }, { 0,1,0,0 }};
 
@@ -970,6 +997,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         glClientActiveTexture_(GL_TEXTURE0_ARB);
     }
 
+    if(pass==RENDERPASS_DYNLIGHT && visibledynlights.length()<=MAXDYNLIGHTS)
+        setdynlights(va, 0, visibledynlights.length());
+
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
     bool glow = false;
@@ -1129,19 +1159,11 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);
             }
 
-            if(pass==RENDERPASS_DYNLIGHT)
+            if(pass==RENDERPASS_DYNLIGHT && visibledynlights.length()>MAXDYNLIGHTS)
             {
-                loopvj(visibledynlights)
+                for(int offset = 0; offset < visibledynlights.length(); offset += MAXDYNLIGHTS)
                 {
-                    dynlight &d = *visibledynlights[j];
-                    setlocalparamfv("lightpos", SHPARAM_VERTEX, 4, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
-                    vec color(d.color);
-                    color.mul(2);
-                    if(d.lifetime) color.mul(min(float(d.expire - lastmillis)/d.lifetime, 1));
-                    setlocalparamf("lightcolor", SHPARAM_PIXEL, 5, color.x, color.y, color.z);
-                    vec atten(color);
-                    atten.div(-d.radius*d.radius*(1<<(2*VVEC_FRAC)));
-                    setlocalparamf("lightatten", SHPARAM_PIXEL, 6, atten.x, atten.y, atten.z);
+                    setdynlights(va, offset, min(MAXDYNLIGHTS, visibledynlights.length()-offset));
                     drawvatris(va, lod.eslist[i].length[l], ebuf, lod.eslist[i].minvert[l], lod.eslist[i].maxvert[l]);
                 }
             }
