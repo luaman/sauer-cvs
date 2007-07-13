@@ -74,7 +74,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (void)switchViews:(NSToolbarItem *)item 
 {
-    NSView *prefsView;
+    NSView *prefsView = nil;
     switch([item tag]) 
     {
         case 1: prefsView = view1; break;
@@ -90,6 +90,9 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     NSView *tempView = [[NSView alloc] initWithFrame:[[window contentView] frame]];
     [window setContentView:tempView];
     [tempView release];
+
+    //if no view then keep the blank one
+    if(!prefsView) prefsView = tempView;
     
     //mojo to get the right frame for the new window.
     NSRect newFrame = [window frame];
