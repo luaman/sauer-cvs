@@ -794,8 +794,10 @@ void drawcrosshair(int w, int h)
     if(!windowhit && crosshairfx) cl->crosshaircolor(r, g, b);
     glColor3f(r, g, b);
     float chsize = (windowhit ? cursorsize : crosshairsize)*w/300.0f;
-    float x = w*1.5f - (windowhit ? 0 : chsize/2.0f);
-    float y = h*1.5f - (windowhit ? 0 : chsize/2.0f);
+    float cx = 0.5f, cy = 0.5f;
+    if(windowhit) g3d_cursorpos(cx, cy);
+    float x = cx*w*3.0f - (windowhit ? 0 : chsize/2.0f);
+    float y = cy*h*3.0f - (windowhit ? 0 : chsize/2.0f);
     glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->gl);
     glBegin(GL_QUADS);
     glTexCoord2d(0.0, 0.0); glVertex2f(x,          y);

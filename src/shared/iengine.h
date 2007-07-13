@@ -245,3 +245,7 @@ struct g3d_callback
 };
 
 extern void g3d_addgui(g3d_callback *cb, vec &origin, bool follow = false);
+extern bool g3d_movecursor(int dx, int dy);
+extern void g3d_cursorpos(float &x, float &y);
+extern void g3d_resetcursor();
+

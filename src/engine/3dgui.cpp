@@ -75,6 +75,31 @@ bool menukey(int code, bool isdown, int cooked)
 	return true;
 }
 
+VARP(gui2d, 0, 0, 1);
+
+static bool hascursor;
+static float cursorx = 0.5f, cursory = 0.5f;
+
+void g3d_cursorpos(float &x, float &y)
+{
+    if(gui2d) { x = cursorx; y = cursory; }
+    else x = y = 0.5f;
+}
+
+void g3d_resetcursor()
+{
+    cursorx = cursory = 0.5f;
+}
+
+bool g3d_movecursor(int dx, int dy)
+{
+    if(!gui2d || !hascursor) return false;
+    const float CURSORSCALE = 1000.0f;
+    cursorx = max(0, min(1, cursorx+dx/CURSORSCALE));
+    cursory = max(0, min(1, cursory+dy/CURSORSCALE));
+    return true;
+}
+
 #define SHADOW 4
 #define ICON_SIZE (FONTH-SHADOW)
 #define SKIN_W 256
@@ -518,12 +543,11 @@ struct gui : g3d_gui
         int gapx1 = INT_MAX, gapy1 = INT_MAX, gapx2 = INT_MAX, gapy2 = INT_MAX;
         float wscale = 1.0f/(SKIN_W*SKIN_SCALE), hscale = 1.0f/(SKIN_H*SKIN_SCALE);
         
-        loopj(2)
+        loopj(gui2d ? 1 : 2)
         {	
             bool quads = false;
-            glDepthFunc(j?GL_LEQUAL:GL_GREATER);
-            glColor4f(j?light.x:1.0f, j?light.y:1.0f, j?light.z:1.0f, j?0.80f:0.35f); //ghost when its behind something in depth
-           
+            if(!gui2d) glDepthFunc(j ? GL_LEQUAL : GL_GREATER);
+            glColor4f(j ? light.x : 1.0f, j ? light.y : 1.0f, j ? light.z : 1.0f, gui2d || j ? 0.80f : 0.35f); //ghost when its behind something in depth
             loopi(n)
             {
                 const patch &p = patches[start+i];
@@ -589,22 +613,37 @@ struct gui : g3d_gui
             if(quads) glEnd();
             else break; //if it didn't happen on the first pass, it won't happen on the second..
         }
-        glDepthFunc(GL_ALWAYS);
+        if(!gui2d) glDepthFunc(GL_ALWAYS);
     } 
 
     vec origin;
     float dist;
     g3d_callback *cb;
 
-    static float scale;
+    static float basescale, scale;
     static bool passthrough;
     static vec light;
 
-    void start(int starttime, float basescale, int *tab, bool allowinput)
+    void adjustscale(vec &adjpos, vec &adjscale)
+    {
+        float aspect = float(screen->h)/float(screen->w), fit = 1.0f;
+        int w = xsize + (skinx[2]-skinx[1])*SKIN_SCALE + (skinx[10]-skinx[9])*SKIN_SCALE, h = ysize + (skiny[8]-skiny[6])*SKIN_SCALE;
+        if(tcurrent) h += ((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE + FONTH-2*INSERT;
+        else h += (skiny[5]-skiny[3])*SKIN_SCALE;
+
+        if(w*aspect*basescale>1) fit = 1.0f/(w*aspect*basescale);
+        if(h*basescale*fit>1) fit *= 1.0f/(h*basescale*fit);
+        adjpos = vec(0.5f-((w-xsize)/2 - (skinx[2]-skinx[1])*SKIN_SCALE)*aspect*scale*fit, 0.5f + (0.5f*h-(skiny[8]-skiny[6])*SKIN_SCALE)*scale*fit, 0);
+        adjscale = vec(aspect*scale*fit, scale*fit, 1);
+    }
+
+    void start(int starttime, float initscale, int *tab, bool allowinput)
     {	
+        if(gui2d) initscale *= 0.025f; 
+        basescale = initscale;
         scale = basescale*min((totalmillis-starttime)/300.0f, 1.0f);
-        
         passthrough = scale<basescale || !allowinput;
+        if(allowinput) hascursor = true;
         curdepth = -1;
         curlist = -1;
         tpos = 0;
@@ -620,18 +659,29 @@ struct gui : g3d_gui
             cury = -ysize; 
             curx = -xsize/2;
             
-            float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x);
             glPushMatrix();
-            glTranslatef(origin.x, origin.y, origin.z);
-            glRotatef(yaw/RAD-90, 0, 0, 1); 
-            glRotatef(-90, 1, 0, 0);
-            glScalef(-scale, scale, scale);
+            if(gui2d)
+            {
+                vec adjpos, adjscale;
+                adjustscale(adjpos, adjscale);
+                glTranslatef(adjpos.x, adjpos.y, adjpos.z);
+                glScalef(adjscale.x, adjscale.y, adjscale.z);
+                light = vec(1, 1, 1);
+            }
+            else
+            {
+                float yaw = atan2f(origin.y-camera1->o.y, origin.x-camera1->o.x);
+                glTranslatef(origin.x, origin.y, origin.z);
+                glRotatef(yaw/RAD-90, 0, 0, 1); 
+                glRotatef(-90, 1, 0, 0);
+                glScalef(-scale, scale, scale);
             
-            vec dir;
-            lightreaching(origin, light, dir, 0, 0.5f); 
-            float intensity = vec(yaw, 0.0f).dot(dir);
-            light.mul(1.0f + max(intensity, 0));
-       
+                vec dir;
+                lightreaching(origin, light, dir, 0, 0.5f); 
+                float intensity = vec(yaw, 0.0f).dot(dir);
+                light.mul(1.0f + max(intensity, 0));
+            }
+
             skin_(curx-skinx[2]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, ysize, 0, 9);
             if(!tcurrent) skin_(curx-skinx[5]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, 0, 9, 1);
         }
@@ -647,11 +697,22 @@ struct gui : g3d_gui
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
             if(!windowhit && !passthrough)
             {
-                vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
-                int intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
-                vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
-                hitx = xaxis.dot(intersectionvec)/scale;
-                hity = -intersectionvec.z/scale;
+                int intersects = INTERSECT_MIDDLE;
+                if(gui2d)
+                {
+                    vec adjpos, adjscale;
+                    adjustscale(adjpos, adjscale);
+                    hitx = (cursorx - adjpos.x)/adjscale.x;
+                    hity = (cursory - adjpos.y)/adjscale.y;
+                }
+                else
+                {
+                    vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
+                    intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
+                    vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
+                    hitx = xaxis.dot(intersectionvec)/scale;
+                    hity = -intersectionvec.z/scale;
+                }
                 if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hitx<=xsize/2 && hity<=0)
                 {
                     if(hity>=-ysize || (tcurrent && hity>=-ysize-(FONTH-2*INSERT)-((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE && hitx<=tx-xsize/2))
@@ -671,8 +732,8 @@ struct gui : g3d_gui
 Texture *gui::skintex = NULL, *gui::overlaytex = NULL, *gui::slidertex = NULL;
 
 //chop skin into a grid
-const int gui::skiny[] = {0, 7, 21, 34, 48, 56, 104, 111, 128},
-          gui::skinx[] = {0, 11, 23, 37, 105, 119, 137, 151, 215, 229, 256};
+const int gui::skiny[] = {0, 7, 21, 34, 48, 56, 104, 111, 116, 128},
+          gui::skinx[] = {0, 11, 23, 37, 105, 119, 137, 151, 215, 229, 245, 256};
 //Note: skinx[3]-skinx[2] = skinx[7]-skinx[6]
 //      skinx[5]-skinx[4] = skinx[9]-skinx[8]		 
 const gui::patch gui::patches[] = 
@@ -713,7 +774,7 @@ const gui::patch gui::patches[] =
 };
 
 vector<gui::list> gui::lists;
-float gui::scale, gui::hitx, gui::hity;
+float gui::basescale, gui::scale, gui::hitx, gui::hity;
 bool gui::passthrough;
 vec gui::light;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
@@ -736,7 +797,7 @@ bool g3d_windowhit(bool on, bool act)
     extern int cleargui(int n);
     if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
     else if(!on && windowhit) cleargui(1);
-    return windowhit!=NULL;
+    return gui2d ? hascursor : windowhit!=NULL;
 }
 
 char *g3d_fieldname()
@@ -746,12 +807,6 @@ char *g3d_fieldname()
 
 void g3d_render()   
 {
-    glMatrixMode(GL_MODELVIEW);
-    glDepthFunc(GL_ALWAYS);
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
     windowhit = NULL;
     if(actionon) mousebuttons |= G3D_PRESSED;
     gui::reset();
@@ -768,18 +823,58 @@ void g3d_render()
     
     bool fieldfocus = (fieldpos>=0);
     fieldactive = false;
-    
+    hascursor = false;
+
+    if(guis.length())
+    {
+        if(gui2d)
+        {
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glOrtho(0, 1, 1, 0, -1, 1);
+
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+
+            glDisable(GL_DEPTH_TEST);
+        }
+        else
+        {
+            glDepthFunc(GL_ALWAYS);
+            glDepthMask(GL_FALSE);
+        }
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
     layoutpass = true;
     loopv(guis) guis[i].cb->gui(guis[i], true);
     layoutpass = false;
     loopvrev(guis) guis[i].cb->gui(guis[i], false);
+
+    if(guis.length())
+    {
+        glDisable(GL_BLEND);
+        if(gui2d)
+        {
+            glEnable(GL_DEPTH_TEST);
     
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
+        }
+        else
+        { 
+            glDepthFunc(GL_LESS);
+            glDepthMask(GL_TRUE);
+        }
+    }
+
     if(!fieldactive) fieldpos = -1; //no hit fields, so loose focus - mainly for menu closed
     if((fieldpos>=0) != fieldfocus) SDL_EnableUNICODE(fieldpos>=0);
     
     mousebuttons = 0;
-	
-    glDisable(GL_BLEND);
-    glDepthFunc(GL_LESS);
-    glDepthMask(GL_TRUE);
 }

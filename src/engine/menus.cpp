@@ -208,7 +208,11 @@ void showgui(char *name)
     if(pos<0) 
     {   
         if(!guis.access(name)) return;
-        if(guistack.empty()) menupos = menuinfrontofplayer();
+        if(guistack.empty()) 
+        {
+            menupos = menuinfrontofplayer();
+            g3d_resetcursor();
+        }
         guistack.add(newstring(name));
     }
     else

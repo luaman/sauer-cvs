@@ -651,7 +651,8 @@ int main(int argc, char **argv)
                     #ifndef WIN32
                     if((screen->flags&SDL_FULLSCREEN) || grabmouse)
                     #endif
-                    mousemove(event.motion.xrel, event.motion.yrel);
+                    if(!g3d_movecursor(event.motion.xrel, event.motion.yrel))
+                        mousemove(event.motion.xrel, event.motion.yrel);
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
