@@ -667,7 +667,7 @@ void rendercaustics(float z, bool refract)
     glFogfv(GL_FOG_COLOR, oldfogc);
 }
 
-VARP(maxdynlights, 0, 4, 16);
+VARP(maxdynlights, 0, 5, 100);
 VARP(dynlightdist, 0, 1024, 10000);
 
 struct dynlight
@@ -774,7 +774,7 @@ void dynlightreaching(const vec &target, vec &color, vec &dir)
     color.add(dyncolor);
 }    
 
-#define MAXDYNLIGHTS 4
+#define MAXDYNLIGHTS 5
 
 void setdynlights(vtxarray *va, int start, int num)
 {
@@ -798,10 +798,7 @@ void setdynlights(vtxarray *va, int start, int num)
             int remaining = d.expire - lastmillis;
             color.mul(remaining > d.fade ? 1.0f - float(remaining - d.fade)/d.peak : float(remaining)/d.fade);
         }
-        setlocalparamf("lightcolor", SHPARAM_PIXEL, 2+2*i, color.x, color.y, color.z);
-        vec atten(color);
-        atten.div(-d.radius*d.radius*(1<<(2*VVEC_FRAC)));
-        setlocalparamf("lightatten", SHPARAM_PIXEL, 3+2*i, atten.x, atten.y, atten.z);
+        setlocalparamf("lightcolor", SHPARAM_PIXEL, 2+i, color.x, color.y, color.z, -1.0f/(d.radius*d.radius*(1<<(2*VVEC_FRAC))));
     }
 }
 
