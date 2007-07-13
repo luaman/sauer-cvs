@@ -94,7 +94,7 @@ void g3d_resetcursor()
 bool g3d_movecursor(int dx, int dy)
 {
     if(!gui2d || !hascursor) return false;
-    const float CURSORSCALE = 1000.0f;
+    const float CURSORSCALE = 500.0f;
     cursorx = max(0, min(1, cursorx+dx/CURSORSCALE));
     cursory = max(0, min(1, cursory+dy/CURSORSCALE));
     return true;
