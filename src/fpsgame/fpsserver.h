@@ -875,7 +875,7 @@ struct fpsserver : igameserver
                     putuint(buf, f);
                     ci->position.addbuf(buf);
                 }
-                if(m_capture && !notgotbases) cps.movebases(ci->team, oldpos, ci->state.o);
+                if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.movebases(ci->team, oldpos, ci->state.o);
                 break;
             }
 

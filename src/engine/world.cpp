@@ -434,6 +434,7 @@ void renderentradius(extentity &e)
             if(e.attached)
             {
                 radius = e.attached->attr1;
+                if(!radius) radius = 2*e.o.dist(e.attached->o);
                 dir = vec(e.o).sub(e.attached->o).normalize();
                 angle = max(1, min(90, e.attr1));
             }
