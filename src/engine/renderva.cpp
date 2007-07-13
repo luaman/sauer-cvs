@@ -675,23 +675,24 @@ struct dynlight
     vec o;
     float radius, dist;
     vec color;
-    int lifetime, expire;
+    int fade, peak, expire;
 };
 
 vector<dynlight> dynlights;
 vector<dynlight *> closedynlights, visibledynlights;
 
-void adddynlight(const vec &o, float radius, const vec &color, int fade)
+void adddynlight(const vec &o, float radius, const vec &color, int fade, int peak)
 {
     if(o.dist(camera1->o) > dynlightdist) return;
 
-    int insert = 0, expire = fade + lastmillis;
+    int insert = 0, expire = fade + peak + lastmillis;
     loopvrev(dynlights) if(expire>=dynlights[i].expire) { insert = i+1; break; }
     dynlight d;
     d.o = o;
     d.radius = radius;
     d.color = color;
-    d.lifetime = fade;
+    d.fade = fade;
+    d.peak = peak;
     d.expire = expire;
     dynlights.insert(insert, d);
 }
@@ -747,7 +748,11 @@ void dynlightreaching(const vec &target, vec &color, vec &dir)
         float mag = ray.magnitude();
         if(mag >= d.radius) continue;
         float intensity = 1 - mag/d.radius;
-        if(d.lifetime) intensity *= float(d.expire - lastmillis)/d.lifetime;
+        if(d.fade + d.peak)
+        {
+            int remaining = d.expire - lastmillis;
+            intensity *= remaining > d.fade ? 1.0f - float(remaining - d.fade)/d.peak : float(remaining)/d.fade;
+        }
         dyncolor.add(vec(d.color).mul(intensity));
         //dyndir.add(ray.mul(intensity/mag));
     }
@@ -788,7 +793,11 @@ void setdynlights(vtxarray *va, int start, int num)
         setlocalparamfv("lightpos", SHPARAM_VERTEX, 2+i, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
         vec color(d.color);
         color.mul(2);
-        if(d.lifetime) color.mul(min(float(d.expire - lastmillis)/d.lifetime, 1));
+        if(d.fade + d.peak)
+        {
+            int remaining = d.expire - lastmillis;
+            color.mul(remaining > d.fade ? 1.0f - float(remaining - d.fade)/d.peak : float(remaining)/d.fade);
+        }
         setlocalparamf("lightcolor", SHPARAM_PIXEL, 2+2*i, color.x, color.y, color.z);
         vec atten(color);
         atten.div(-d.radius*d.radius*(1<<(2*VVEC_FRAC)));
