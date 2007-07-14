@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
+bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -277,6 +277,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         //conoutf("Using GL_EXT_framebuffer_object extension.");
     }
     else conoutf("WARNING: No framebuffer object support. (reflective water may be slow)");
+
+    if(strstr(exts, "GL_EXT_packed_depth_stencil") || strstr(exts, "GL_NV_packed_depth_stencil"))
+    {
+        hasDS = true;
+        //conoutf("Using GL_EXT_packed_depth_stencil extension.");
+    }
 
     if(strstr(exts, "GL_ARB_texture_cube_map"))
     {

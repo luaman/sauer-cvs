@@ -319,9 +319,9 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec c
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
     
-    if(!reflecting || !hasFBO) glEnable(GL_STENCIL_TEST);
+    if(!hasFBO || !reflecting || hasDS) glEnable(GL_STENCIL_TEST);
 
-    if((!reflecting || !hasFBO) && bounddynshadows)
+    if((!hasFBO || !reflecting || hasDS) && bounddynshadows)
     { 
         nocolorshader->set();
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -353,7 +353,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec c
     if(!dynshadowshader) dynshadowshader = lookupshaderbyname("dynshadow");
     dynshadowshader->set();
 
-    if(!reflecting || !hasFBO)
+    if(!hasFBO || !reflecting || hasDS)
     {
         glStencilFunc(GL_NOTEQUAL, bounddynshadows ? 0 : 1, 1);
         glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
@@ -372,7 +372,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec c
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);
     
-    if(!reflecting || !hasFBO) glDisable(GL_STENCIL_TEST);
+    if(!hasFBO || !reflecting || hasDS) glDisable(GL_STENCIL_TEST);
 }
 
 struct batchedmodel
