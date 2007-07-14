@@ -39,15 +39,24 @@
 }
 - (NSString*)path { return path; }
 - (NSString*)name { return [path lastPathComponent]; }
-- (NSImage*)image { return [[NSImage alloc] initWithContentsOfFile:[path stringByAppendingString:@".jpg"]]; }
+- (NSImage*)image 
+{ 
+    NSImage *image = [[NSImage alloc] initWithContentsOfFile:[path stringByAppendingString:@".jpg"]]; 
+    if(!image) image = [NSImage imageNamed:@"Nomap"];
+    return image;
+}
 - (NSString*)text 
 {
     NSString *text = [NSString alloc];
-    if(![text respondsToSelector:@selector(initWithContentsOfFile:encoding:error:)])
-        return [text initWithContentsOfFile:[path stringByAppendingString:@".txt"]]; //deprecated in 10.4
     NSError *error;
-    return [text initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error]; 
+    if([text respondsToSelector:@selector(initWithContentsOfFile:encoding:error:)])
+        text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error];
+    else
+        text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"]]; //deprecated in 10.4
+    if(!text) return @"";
+    return text;
 }
+- (void)setText:(NSString*)text { } // wtf? - damn textfield believes it's editable
 - (NSString*)tickIfExists:(NSString*)ext 
 {
     unichar tickCh = 0x2713; 
@@ -547,6 +556,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [window setDelegate:self]; // so can catch the window close	
     [NSApp setDelegate:self]; //so can catch the double-click & dropped files
     [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
+
+    [window setBackgroundColor:[NSColor colorWithDeviceRed:0.90 green:0.90 blue:0.90 alpha:1.0]]; //Apples 'mercury' crayon color
 }
 
 -(void)windowWillClose:(NSNotification *)notification 
