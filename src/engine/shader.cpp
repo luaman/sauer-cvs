@@ -565,7 +565,7 @@ Shader *fsshader = NULL, *scaleshader = NULL;
 GLuint rendertarget[NUMSCALE];
 GLuint fsfb[NUMSCALE-1];
 GLfloat fsparams[4];
-int fs_w = 0, fs_h = 0; 
+int fs_w = 0, fs_h = 0, fspasses = NUMSCALE, fsskip = 1; 
     
 void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
 {
@@ -582,6 +582,23 @@ void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
         s_strcpy(ssname, name);
         s_strcat(ssname, "_scale");
         scaleshader = lookupshaderbyname(ssname);
+        fspasses = NUMSCALE;
+        fsskip = 1;
+        if(scaleshader)
+        {
+            int len = strlen(name);
+            char c = name[--len];
+            if(isdigit(c)) 
+            {
+                if(len>0 && isdigit(name[--len])) 
+                { 
+                    fsskip = c-'0';
+                    fspasses = name[len]-'0';
+                }
+                else fspasses = c-'0';
+            }
+            printf("%d passes, skip %d\n", fspasses, fsskip);
+        }
         conoutf("now rendering with: %s", name);
         fsparams[0] = *x/255.0f;
         fsparams[1] = *y/255.0f;
@@ -598,8 +615,8 @@ void renderfsquad(int w, int h, Shader *s)
     glViewport(0, 0, w, h);
     if(s==scaleshader)
     {
-        w *= 2;
-        h *= 2;
+        w <<= fsskip;
+        h <<= fsskip;
     }
     glBegin(GL_QUADS);
     glTexCoord2i(0, 0); glVertex3f(-1, -1, 0);
@@ -646,33 +663,33 @@ void renderfullscreenshader(int w, int h)
 
     int nw = w, nh = h;
 
-    loopi(NUMSCALE)
+    loopi(fspasses)
     {
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i*fsskip]);
         glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, nw, nh);
-        if(i>=NUMSCALE-1 || !scaleshader || fsfb[0]) break;
-        renderfsquad(nw /= 2, nh /= 2, scaleshader);
+        if(i>=fspasses-1 || !scaleshader || fsfb[0]) break;
+        renderfsquad(nw >>= fsskip, nh >>= fsskip, scaleshader);
     }
     if(scaleshader && fsfb[0])
     {
-        loopi(NUMSCALE-1)
+        loopi(fspasses-1)
         {
-            if(i) glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
-            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[i]);
-            renderfsquad(nw /= 2, nh /= 2, scaleshader);
+            if(i) glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i*fsskip]);
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[(i+1)*fsskip-1]);
+            renderfsquad(nw >>= fsskip, nh >>= fsskip, scaleshader);
         }
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     }
 
-    if(scaleshader) loopi(NUMSCALE)
+    if(scaleshader) loopi(fspasses)
     {
         glActiveTexture_(GL_TEXTURE0_ARB+i);
         glEnable(GL_TEXTURE_RECTANGLE_ARB);
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i]);
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i*fsskip]);
     }
     renderfsquad(w, h, fsshader);
 
-    if(scaleshader) loopi(NUMSCALE)
+    if(scaleshader) loopi(fspasses)
     {
         glActiveTexture_(GL_TEXTURE0_ARB+i);
         glDisable(GL_TEXTURE_RECTANGLE_ARB);
