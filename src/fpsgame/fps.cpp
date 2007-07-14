@@ -98,7 +98,7 @@ struct fpsclient : igameclient
 
     void respawnself()
     {
-        if(multiplayer(false)) cc.addmsg(SV_TRYSPAWN, "r");
+        if(m_mp(gamemode)) cc.addmsg(SV_TRYSPAWN, "r");
         else
         {
             spawnplayer(player1);
@@ -359,7 +359,7 @@ struct fpsclient : igameclient
             players[i]->maxhealth = 100;
         }
 
-        if(!multiplayer(false)) spawnplayer(player1);
+        if(!m_mp(gamemode)) spawnplayer(player1);
         else findplayerspawn(player1, -1);
         et.resetspawns();
         s_strcpy(clientmap, name);
@@ -426,7 +426,7 @@ struct fpsclient : igameclient
     {
         if(d==player1)
         {
-            if(!multiplayer(false)) killed(player1, player1);
+            if(!m_mp(gamemode)) killed(player1, player1);
             else if(suicided!=player1->lifesequence)
             {
                 cc.addmsg(SV_SUICIDE, "r");
