@@ -207,7 +207,7 @@ struct fpsserver : igameserver
     fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demorecord(NULL), demoplayback(NULL), nextplayback(0), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
-    void resetinfo(void *ci) { ((clientinfo *)ci)->reset(); } 
+    void deleteinfo(void *ci) { delete (clientinfo *)ci; } 
     
     vector<server_entity> sents;
     vector<savedscore> scores;

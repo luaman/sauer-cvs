@@ -288,6 +288,8 @@ void disconnect_client(int n, int reason)
     sv->clientdisconnect(n);
     clients[n]->type = ST_EMPTY;
     clients[n]->peer->data = NULL;
+    sv->deleteinfo(clients[n]->info);
+    clients[n]->info = NULL;
     sv->sendservmsg(s);
 }
 
@@ -318,7 +320,7 @@ client &addclient()
 {
     loopv(clients) if(clients[i]->type==ST_EMPTY)
     {
-        sv->resetinfo(clients[i]->info);
+        clients[i]->info = sv->newinfo();
         return *clients[i];
     }
     client *c = new client;
@@ -580,6 +582,8 @@ void serverslice(uint timeout)   // main server update, called from main loop in
             nonlocalclients--;
             c->type = ST_EMPTY;
             event.peer->data = NULL;
+            sv->deleteinfo(c->info);
+            c->info = NULL;
             break;
         }
         default:
@@ -595,6 +599,8 @@ void localdisconnect()
         sv->localdisconnect(i);
         localclients--;
         clients[i]->type = ST_EMPTY;
+        sv->deleteinfo(clients[i]->info);
+        clients[i]->info = NULL;
     }
 }
 
