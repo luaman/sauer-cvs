@@ -21,6 +21,8 @@
                 view1 = NSView; 
                 view2 = NSView; 
                 view3 = NSView; 
+                view4 = NSView; 
+                view5 = NSView; 
                 window = NSWindow; 
             }; 
             SUPERCLASS = NSObject; 
