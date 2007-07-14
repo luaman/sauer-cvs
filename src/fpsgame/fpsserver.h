@@ -1220,7 +1220,7 @@ struct fpsserver : igameserver
 
     int welcomepacket(ucharbuf &p, int n)
     {
-        int hasmap = (gamemode==1 && clients.length()) || (smapname[0] && (clients.length() || minremain>0));
+        int hasmap = (gamemode==1 && clients.length()>1) || (smapname[0] && (clients.length()>1 || minremain>0));
         putint(p, SV_INITS2C);
         putint(p, n);
         putint(p, PROTOCOL_VERSION);
@@ -1244,7 +1244,7 @@ struct fpsserver : igameserver
             }
             putint(p, -1);
         }
-        if(ci && !ci->local && ci->state.state!=CS_SPECTATOR)
+        if(ci && m_mp(gamemode) && ci->state.state!=CS_SPECTATOR)
         {
             if(m_arena && clients.length()>2) 
             {
