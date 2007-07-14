@@ -597,7 +597,6 @@ void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
                 }
                 else fspasses = c-'0';
             }
-            printf("%d passes, skip %d\n", fspasses, fsskip);
         }
         conoutf("now rendering with: %s", name);
         fsparams[0] = *x/255.0f;
