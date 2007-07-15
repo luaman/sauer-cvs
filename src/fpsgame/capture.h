@@ -356,9 +356,17 @@ struct captureclient : capturestate
         baseinfo &b = bases[i];
         if(owner[0])
         {
-            if(strcmp(b.owner, owner)) { conoutf("\f2%s captured %s", owner, b.name); playsound(S_V_BASECAP); }
+            if(strcmp(b.owner, owner)) 
+            { 
+                conoutf("\f2%s captured %s", owner, b.name); 
+                if(!strcmp(owner, cl.player1->team)) playsound(S_V_BASECAP); 
+            }
         }
-        else if(b.owner[0]) { conoutf("\f2%s lost %s", b.owner, b.name); playsound(S_V_BASELOST); }
+        else if(b.owner[0]) 
+        { 
+            conoutf("\f2%s lost %s", b.owner, b.name); 
+            if(!strcmp(b.owner, cl.player1->team)) playsound(S_V_BASELOST); 
+        }
         s_strcpy(b.owner, owner);
         s_strcpy(b.enemy, enemy);
         b.converted = converted;
