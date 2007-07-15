@@ -289,14 +289,13 @@ struct captureclient : capturestate
     void capturehud(int w, int h)
     {
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         int x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
-        glColor4f(1, 1, 1, 0.5f);
+        glColor3f(1, 1, 1);
         settexture("data/radar.png");
         glBegin(GL_QUADS);
         drawradar(float(x), float(y), float(s));
         glEnd();
-        glBlendFunc(GL_ONE, GL_ONE);
         bool showenemies = cl.lastmillis%1000 >= 500;
         drawblips(x, y, s, 1, showenemies);
         drawblips(x, y, s, 0, showenemies);
