@@ -1602,17 +1602,23 @@ void renderskyva(vtxarray *va, lodlevel &lod, bool explicitonly = false)
     xtraverts += lod.explicitsky/3;
 }
 
-void renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
+int renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
 {
+    int rendered = 0;
     loopv(vas)
     {
         vtxarray *va = vas[i];
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
         if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
         if(va->z+va->size <= z || isvisiblecube(vec(va->x, va->y, va->z), va->size) == VFC_NOT_VISIBLE) continue;
-        if(lod.sky+lod.explicitsky) renderskyva(va, lod);
-        if(va->children->length()) renderreflectedskyvas(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
+        if(lod.sky+lod.explicitsky) 
+        {
+            renderskyva(va, lod);
+            rendered++;
+        }
+        if(va->children->length()) rendered += renderreflectedskyvas(*va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
     }
+    return rendered;
 }
 
 bool rendersky(bool explicitonly, float zreflect)
@@ -1624,11 +1630,12 @@ bool rendersky(bool explicitonly, float zreflect)
     resetorigin();
 
     skyvbufGL = skyebufGL = 0;
- 
+
+    int rendered = 0;
     if(zreflect)
     {
         reflectvfcP(zreflect);
-        renderreflectedskyvas(varoot, zreflect);
+        rendered = renderreflectedskyvas(varoot, zreflect);
         restorevfcP();
     }
     else for(vtxarray *va = visibleva; va; va = va->next)
@@ -1637,6 +1644,7 @@ bool rendersky(bool explicitonly, float zreflect)
         if(va->occluded >= OCCLUDE_BB || !(explicitonly ? lod.explicitsky : lod.sky+lod.explicitsky)) continue;
 
         renderskyva(va, lod, explicitonly);
+        rendered++;
     }
 
     glPopMatrix();
@@ -1646,6 +1654,6 @@ bool rendersky(bool explicitonly, float zreflect)
 
     glDisableClientState(GL_VERTEX_ARRAY);
 
-    return skyvbufGL || skyebufGL;
+    return rendered>0;
 }
 

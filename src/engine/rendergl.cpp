@@ -118,7 +118,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     // default to low precision shaders on certain cards, can be overridden with -f3
     // char *weakcards[] = { "GeForce FX", "Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome", NULL } 
     // if(shaderprecision==2) for(char **wc = weakcards; *wc; wc++) if(strstr(renderer, *wc)) shaderprecision = 1;
-   
+  
     if(strstr(exts, "GL_EXT_texture_env_combine") || strstr(exts, "GL_ARB_texture_env_combine")) hasTE = true;
     else conoutf("WARNING: No texture_env_combine extension! (your video card is WAY too old)");
 
@@ -134,11 +134,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     }
     else conoutf("WARNING: No multitexture extension!");
 
-    if(!strstr(exts, "GL_ARB_vertex_buffer_object"))
-    {
-        conoutf("WARNING: No vertex_buffer_object extension! (geometry heavy maps will be SLOW)");
-    }
-    else
+    if(strstr(exts, "GL_ARB_vertex_buffer_object"))
     {
         glGenBuffers_    = (PFNGLGENBUFFERSARBPROC)   getprocaddress("glGenBuffersARB");
         glBindBuffer_    = (PFNGLBINDBUFFERARBPROC)   getprocaddress("glBindBufferARB");
@@ -150,6 +146,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         hasVBO = true;
         //conoutf("Using GL_ARB_vertex_buffer_object extension.");
     }
+    else conoutf("WARNING: No vertex_buffer_object extension! (geometry heavy maps will be SLOW)");
 
     if(strstr(exts, "GL_EXT_draw_range_elements"))
     {
