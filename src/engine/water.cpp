@@ -34,10 +34,10 @@ VERTWN(vertwtn, {
     glTexCoord2f(v1/8.0f, v2/8.0f);
 })
 VERTW(vertwc, {
-    glColor4f(wcol[0], wcol[1], wcol[2], max(wcol[3], 0.6f) + fabs(s)*0.1f);
+    glColor4f(wcol[0], wcol[1], wcol[2], wcol[3] + fabs(s)*0.1f);
 })
 VERTWN(vertwcn, {
-    glColor4f(wcol[0], wcol[1], wcol[2], max(wcol[3], 0.6f));
+    glColor4f(wcol[0], wcol[1], wcol[2], wcol[3]);
 })
 VERTWT(vertwtc, {
     glColor4f(1, 1, 1, 0.2f + fabs(s)*0.1f);
@@ -400,6 +400,7 @@ void renderwaterff()
             if(m.depth!=lastdepth)
             {
                 float depth = !waterfog ? 1.0f : min(0.75f*m.depth/waterfog, 0.95f);
+                if(nowater || !waterrefract) depth = max(depth, nowater || !waterreflect ? 0.6f : 0.3f);
                 wcol[3] = depth;
                 if(!nowater && (waterreflect || waterrefract))
                 {
@@ -534,6 +535,7 @@ void renderwater()
             {
                 if(begin) { glEnd(); begin = false; }
                 float depth = !waterfog ? 1.0f : min(0.75f*m.depth/waterfog, 0.95f);
+                depth = max(depth, waterreflect ? 0.3f : 0.6f);
                 setlocalparamf("depth", SHPARAM_PIXEL, 5, depth, 1.0f-depth);
                 lastdepth = m.depth;
             }
