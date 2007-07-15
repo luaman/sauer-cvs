@@ -592,10 +592,10 @@ struct weaponstate
             pitch = -bnc.roll;
             const char *mdl = "projectiles/grenade";
             string debrisname;
-            int cull = MDL_CULL_VFC;
+            int cull = MDL_CULL_VFC|MDL_CULL_DIST;
             if(bnc.bouncetype==BNC_GIBS) mdl = ((int)(size_t)&bnc)&0x40 ? "gibc" : "gibh";
             else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; }
-            else cull |= MDL_CULL_DIST|MDL_DYNSHADOW;
+            else cull = MDL_CULL_VFC|MDL_DYNSHADOW;
                 
             rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos, yaw, pitch, 0, 0, NULL, cull);
         }
