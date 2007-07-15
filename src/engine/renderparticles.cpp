@@ -198,7 +198,7 @@ static GLuint createexpmodtex(int size, float minval)
 static struct expvert
 {
     vec pos;
-    float u, v;
+    float u, v, s, t;
 } *expverts = NULL;
 
 static GLuint expmodtex[2] = {0, 0};
@@ -223,31 +223,15 @@ static void setupexplosion()
                 //texgen - scrolling billboard
                 e.u = v.x*0.5f + 0.0004f*lastmillis;
                 e.v = v.y*0.5f + 0.0004f*lastmillis;
+                //ensure the mod texture is wobbled
+                e.s = v.x*0.5f + 0.5f;
+                e.t = v.y*0.5f + 0.5f;
                 //wobble - similar to shader code
                 float wobble = v.dot(center) + 0.002f*lastmillis;
                 wobble -= floor(wobble);
                 wobble = 1.0f + fabs(wobble - 0.5f)*0.5f;
                 e.pos = vec(v).mul(wobble);
             }
-        }
-
-        if(maxtmus>=2)
-        {
-            setuptmu(0, "C * T", "= Ca");
-            glActiveTexture_(GL_TEXTURE1_ARB);
-            glEnable(GL_TEXTURE_2D);
-
-            GLfloat s[4] = { 0.5f, 0, 0, 0.5f }, t[4] = { 0, 0.5f, 0, 0.5f };
-            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-            glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
-            glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
-            glEnable(GL_TEXTURE_GEN_S);
-            glEnable(GL_TEXTURE_GEN_T);
-
-            setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
-
-            glActiveTexture_(GL_TEXTURE0_ARB);
         }
     }
     else
@@ -266,10 +250,27 @@ static void setupexplosion()
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
-    if(renderpath == R_FIXEDFUNCTION)
+
+    if(renderpath==R_FIXEDFUNCTION)
     {
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->u);
+
+        if(maxtmus>=2)
+        {
+            setuptmu(0, "C * T", "= Ca");
+
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glClientActiveTexture_(GL_TEXTURE1_ARB);
+
+            glEnable(GL_TEXTURE_2D);
+            setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->s);
+
+            glActiveTexture_(GL_TEXTURE0_ARB);
+            glClientActiveTexture_(GL_TEXTURE0_ARB);
+        }
     }
 }
  
@@ -312,22 +313,29 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
 static void cleanupexplosion()
 {
     glDisableClientState(GL_VERTEX_ARRAY);
-    if(renderpath == R_FIXEDFUNCTION) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    if(renderpath==R_FIXEDFUNCTION)
+    {
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    if(renderpath!=R_FIXEDFUNCTION) 
+        if(maxtmus>=2)
+        {
+            resettmu(0);
+
+            glActiveTexture_(GL_TEXTURE1_ARB);
+            glClientActiveTexture_(GL_TEXTURE1_ARB);
+
+            glDisable(GL_TEXTURE_2D);
+            resettmu(1);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+            glActiveTexture_(GL_TEXTURE0_ARB);
+            glClientActiveTexture_(GL_TEXTURE0_ARB);
+        }
+    }
+    else
     {
         foggedshader->set();
         if(reflecting && refracting) setfogplane(1, refracting);
-    }
-    else if(maxtmus>=2)
-    {
-        resettmu(0);
-        glActiveTexture_(GL_TEXTURE1_ARB);
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-        resettmu(1);
-        glActiveTexture_(GL_TEXTURE0_ARB);
     }
 }
 
