@@ -52,7 +52,7 @@ void fontchar(int *x, int *y, int *w, int *h)
 }
 
 COMMANDN(font, newfont, "ssiiiiii");
-COMMANDN(fontchar, fontchar, "iiii");
+COMMAND(fontchar, "iiii");
 
 bool setfont(char *name)
 {
@@ -138,39 +138,37 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, curfont->tex->gl);
-    glColor4ub(r, g, b, a);
 
-    static float colorstack[8][4];
+    static bvec colorstack[8];
+    bvec color(r, g, b);
     int colorpos = 0, x = left, y = top;
-
+    
+    glColor4ub(color.x, color.y, color.z, a);
     glBegin(GL_QUADS);
     for(int i = 0; str[i]; i++)
     {
         int c = str[i];
-        if(c=='\t') { x = ((x-left+PIXELTAB)/PIXELTAB)*PIXELTAB+left; continue; } 
-        if(c=='\f') switch(str[i+1])
+        if(c=='\t') { x = ((x-left+PIXELTAB)/PIXELTAB)*PIXELTAB+left; continue; }
+        if(c=='\f')
         {
-            case '0': glColor4ub(64,  255, 128, a); i++; continue;    // green: player talk
-            case '1': glColor4ub(96,  160, 255, a); i++; continue;    // blue: "echo" command
-            case '2': glColor4ub(255, 192, 64,  a); i++; continue;    // yellow: gameplay messages 
-            case '3': glColor4ub(255, 64,  64,  a); i++; continue;    // red: important errors
-            case '4': glColor4ub(128, 128, 128, a); i++; continue;    // gray
-            case '5': glColor4ub(192, 64,  192, a); i++; continue;    // magenta
-            case 's': // save color
-                if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) 
-                {
-                    glEnd();
-                    glGetFloatv(GL_CURRENT_COLOR, colorstack[colorpos++]); 
-                    glBegin(GL_QUADS);
-                }
-                i++; 
-                continue;
-            case 'r': // restore color
-                if(colorpos>0) 
-                    glColor4fv(colorstack[--colorpos]); 
-                i++; 
-                continue;
-            default:  glColor4ub(r,   g,   b,   a); i++; continue;    // white: everything else
+            switch(str[++i])
+            {
+                case '0': color = bvec( 64, 255, 128); break;   // green: player talk
+                case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
+                case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages 
+                case '3': color = bvec(255,  64,  64); break;   // red: important errors
+                case '4': color = bvec(128, 128, 128); break;   // gray
+                case '5': color = bvec(192,  64, 192); break;   // magenta
+                case 's': // save color
+                    if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) colorstack[colorpos++] = color;
+                    continue;
+                case 'r': // restore color
+                    if(colorpos<=0) continue;
+                    color = colorstack[--colorpos];
+                    break; 
+                default: color = bvec(r, g, b); break;          // white: everything else
+            }
+            glColor4ub(color.x, color.y, color.z, a);
         }
         if(c==' ') { x += curfont->defaultw; continue; }
         c -= 33;
