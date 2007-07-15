@@ -1008,7 +1008,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
-    bool glow = false;
+    bool mtglow = false;
     float lastscale = -1;
     Slot *lastslot = NULL;
     loopi(lod.texs)
@@ -1077,16 +1077,20 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                         if(pass==RENDERPASS_LIGHTMAP)
                         {
                             glActiveTexture_(GL_TEXTURE2_ARB);
-                            if(!glow) { glEnable(GL_TEXTURE_2D); glow = true; }
+                            if(!mtglow) { glEnable(GL_TEXTURE_2D); mtglow = true; }
                         }
                         glBindTexture(GL_TEXTURE_2D, t.t->gl);
                         noglow = false;
                     }
                 }
-                if(pass==RENDERPASS_GLOW && noglow) continue;
-                else if(glow)
+                if(pass==RENDERPASS_GLOW && noglow) 
                 {
-                    if(noglow) { glActiveTexture_(GL_TEXTURE2_ARB); glDisable(GL_TEXTURE_2D); glow = false; }
+                    loopl(3) ebuf += lod.eslist[i].length[l];
+                    continue;
+                }
+                else if(mtglow)
+                {
+                    if(noglow) { glActiveTexture_(GL_TEXTURE2_ARB); glDisable(GL_TEXTURE_2D); mtglow = false; }
                     glActiveTexture_(GL_TEXTURE0_ARB);
                 }
             }
@@ -1138,7 +1142,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                         glEnable(GL_TEXTURE_GEN_T);
                     }
     
-                    if(glow)
+                    if(mtglow)
                     {
                         glActiveTexture_(GL_TEXTURE2_ARB);
                         glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
@@ -1178,7 +1182,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         }
     }
 
-    if(glow)
+    if(mtglow)
     {
         glActiveTexture_(GL_TEXTURE2_ARB); 
         glDisable(GL_TEXTURE_2D);
@@ -1191,7 +1195,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         }
     }
-    if(glow || envmapped) glActiveTexture_(GL_TEXTURE0_ARB);
+    if(mtglow || envmapped) glActiveTexture_(GL_TEXTURE0_ARB);
  
     vtris += lod.tris;
     vverts += va->verts;
