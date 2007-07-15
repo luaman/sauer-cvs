@@ -578,7 +578,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     }
     if(showboundingbox)
     {
-        if(d) 
+        if(d && showboundingbox==1) 
         {
             render3dbox(d->o, d->eyeheight, d->aboveeye, d->radius);
             renderellipse(d->o, d->xradius, d->yradius, d->yaw);
