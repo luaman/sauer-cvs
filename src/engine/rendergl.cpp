@@ -898,7 +898,15 @@ void gl_drawhud(int w, int h, int fogmat)
             }
         }
 
-        if(editmode) draw_text(executeret("if (enthavesel) [ result ( concatword (entget) \" : \" (enthavesel) \" selected\" ) ] [ result ]"), FONTH/2, abovegameplayhud);
+        if(editmode) 
+        {
+            char *editinfo = executeret("edithud");
+            if(editinfo)
+            {
+                draw_text(editinfo, FONTH/2, abovegameplayhud);
+                DELETEA(editinfo);
+            }
+        }
 
         cl->gameplayhud(w, h);
         render_texture_panel(w, h);
