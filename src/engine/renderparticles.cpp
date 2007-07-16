@@ -639,13 +639,12 @@ void render_particles(int time)
                         t.rotate(pitch*RAD, vec(-1, 0, 0));
                         t.rotate(yaw*RAD, vec(0, 0, -1));
 
-                        matrix rot;
-                        rot.rotate(lastmillis/7.0f*RAD, vec(-1, 1, -1).normalize());
-                        rot.transposedtransform(s);
-                        rot.transposedtransform(t);
+                        rotdir = vec(-1, 1, -1).normalize();
+                        s.rotate(-lastmillis/7.0f*RAD, rotdir);
+                        t.rotate(-lastmillis/7.0f*RAD, rotdir);
+
                         setlocalparamf("texgenS", SHPARAM_VERTEX, 2, 0.5f*s.x, 0.5f*s.y, 0.5f*s.z, 0.5f);
                         setlocalparamf("texgenT", SHPARAM_VERTEX, 3, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
-                        rotdir = vec(1, 1, 1);
                     }
 
                     if(renderpath!=R_FIXEDFUNCTION)
@@ -657,7 +656,7 @@ void render_particles(int time)
                         if(reflecting && refracting) setfogplane(0, refracting - o.z, true);
                     }
 
-                    glRotatef(lastmillis/7.0f, rotdir.x, rotdir.y, rotdir.z);
+                    glRotatef(lastmillis/7.0f, -rotdir.x, rotdir.y, -rotdir.z);
                     glScalef(-psize, psize, -psize);
                     drawexplosion(inside, color[0], color[1], color[2], blend);
                 } 
