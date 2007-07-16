@@ -606,7 +606,6 @@ int main(int argc, char **argv)
         inbetweenframes = false;
         SDL_GL_SwapBuffers();
         if(frames>2) gl_drawframe(screen->w, screen->h);
-        //SDL_Delay(10);
         inbetweenframes = true;
 
         SDL_Event event;
