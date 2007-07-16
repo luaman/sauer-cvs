@@ -308,7 +308,7 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
             glColor4ub(r, g, b, i ? a/2 : a);
             if(i) glDepthFunc(GL_GEQUAL);
             if(qsphere) gluSphere(qsphere, 1, 12, 6);
-            xtraverts += 12*6*2;
+            xtraverts += 12*6;
             if(i) glDepthFunc(GL_LESS);
         }
         return;
