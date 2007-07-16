@@ -203,12 +203,15 @@ static struct expvert
 
 static GLuint expmodtex[2] = {0, 0};
 static GLuint lastexpmodtex = 0;
+static GLUquadricObj *qsphere = NULL;
+
+VARP(explosion2d, 0, 0, 1);
 
 static void setupexplosion()
 {
     if(!hemiindices) inithemisphere(5, 2);
    
-    if(renderpath == R_FIXEDFUNCTION)
+    if(renderpath==R_FIXEDFUNCTION)
     {
         static int lastexpmillis = 0;
         if(lastexpmillis != lastmillis || !expverts)
@@ -236,9 +239,10 @@ static void setupexplosion()
     }
     else
     {
-        static Shader *explshader = NULL;
-        if(!explshader) explshader = lookupshaderbyname("explosion");
-        explshader->set();
+        static Shader *expl2dshader = NULL, *expl3dshader = NULL;
+        if(!expl2dshader) expl2dshader = lookupshaderbyname("explosion2d");
+        if(!expl3dshader) expl3dshader = lookupshaderbyname("explosion3d");
+        (explosion2d ? expl2dshader : expl3dshader)->set();
     }
 
     if(renderpath!=R_FIXEDFUNCTION || maxtmus>=2)
@@ -248,8 +252,21 @@ static void setupexplosion()
         lastexpmodtex = 0;
     }
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
+    if(renderpath==R_FIXEDFUNCTION || explosion2d)
+    {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
+    }
+    else if(!qsphere)
+    {
+        qsphere = gluNewQuadric();
+        if(qsphere)
+        {
+            gluQuadricDrawStyle(qsphere, GLU_FILL);
+            gluQuadricOrientation(qsphere, GLU_OUTSIDE);
+            gluQuadricTexture(qsphere, GL_TRUE);
+        }
+    }
 
     if(renderpath==R_FIXEDFUNCTION)
     {
@@ -283,6 +300,18 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
         glBindTexture(GL_TEXTURE_2D, lastexpmodtex);
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
+    if(renderpath!=R_FIXEDFUNCTION && !explosion2d) 
+    {
+        if(inside) glScalef(1, 1, -1);
+        loopi(!reflecting && inside ? 2 : 1)
+        {
+            glColor4ub(r, g, b, i ? a/2 : a);
+            if(i) glDepthFunc(GL_GEQUAL);
+            if(qsphere) gluSphere(qsphere, 1, 12, 6);
+            if(i) glDepthFunc(GL_LESS);
+        }
+        return;
+    }
     loopi(!reflecting && inside ? 2 : 1)
     {
         glColor4ub(r, g, b, i ? a/2 : a);
@@ -312,7 +341,7 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
 
 static void cleanupexplosion()
 {
-    glDisableClientState(GL_VERTEX_ARRAY);
+    if(renderpath==R_FIXEDFUNCTION || explosion2d) glDisableClientState(GL_VERTEX_ARRAY);
     if(renderpath==R_FIXEDFUNCTION)
     {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -578,7 +607,7 @@ void render_particles(int time)
             {
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
-                
+               
                 if(type==PT_FIREBALL)
                 {
                     float pmax = p->val;
@@ -589,9 +618,33 @@ void render_particles(int time)
                     vec oc(o);
                     oc.sub(camera1->o);
                     if(reflecting && !refracting) oc.z = o.z - reflecting;
-                    glRotatef(inside ? camera1->yaw - 180 : atan2(oc.y, oc.x)/RAD - 90, 0, 0, 1);
-                    glRotatef((inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90, 1, 0, 0);
-                    
+
+                    float yaw = inside ? camera1->yaw - 180 : atan2(oc.y, oc.x)/RAD - 90,
+                          pitch = (inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90;                    
+                    vec rotdir;
+                    if(renderpath==R_FIXEDFUNCTION || explosion2d)
+                    {
+                        glRotatef(yaw, 0, 0, 1);
+                        glRotatef(pitch, 1, 0, 0);
+                        rotdir = vec(0, 0, 1);
+                    }
+                    else
+                    {
+                        vec s(1, 0, 0), t(0, 1, 0);
+                        s.rotate(pitch*RAD, vec(-1, 0, 0));
+                        s.rotate(yaw*RAD, vec(0, 0, -1));
+                        t.rotate(pitch*RAD, vec(-1, 0, 0));
+                        t.rotate(yaw*RAD, vec(0, 0, -1));
+
+                        matrix rot;
+                        rot.rotate(lastmillis/7.0f*RAD, vec(-1, 1, -1).normalize());
+                        rot.transposedtransform(s);
+                        rot.transposedtransform(t);
+                        setlocalparamf("texgenS", SHPARAM_VERTEX, 2, 0.5f*s.x, 0.5f*s.y, 0.5f*s.z, 0.5f);
+                        setlocalparamf("texgenT", SHPARAM_VERTEX, 3, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
+                        rotdir = vec(1, 1, 1);
+                    }
+
                     if(renderpath!=R_FIXEDFUNCTION)
                     {
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
@@ -601,7 +654,7 @@ void render_particles(int time)
                         if(reflecting && refracting) setfogplane(0, refracting - o.z, true);
                     }
 
-                    glRotatef(lastmillis/7.0f, 0, 0, 1);
+                    glRotatef(lastmillis/7.0f, rotdir.x, rotdir.y, rotdir.z);
                     glScalef(-psize, psize, -psize);
                     drawexplosion(inside, color[0], color[1], color[2], blend);
                 } 

@@ -561,7 +561,7 @@ COMMAND(setpixelparam, "iffff");
 COMMAND(setuniformparam, "sffff");
 
 const int NUMSCALE = 7;
-Shader *fsshader = NULL, *scaleshader = NULL;
+Shader *fsshader = NULL, *scaleshader = NULL, *initshader = NULL;
 GLuint rendertarget[NUMSCALE];
 GLuint fsfb[NUMSCALE-1];
 GLfloat fsparams[4];
@@ -578,10 +578,10 @@ void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
         Shader *s = lookupshaderbyname(name);
         if(!s) return conoutf("no such fullscreen shader: %s", name);
         fsshader = s;
-        string ssname;
-        s_strcpy(ssname, name);
-        s_strcat(ssname, "_scale");
+        s_sprintfd(ssname)("%s_scale", name);
+        s_sprintfd(isname)("%s_init", name);
         scaleshader = lookupshaderbyname(ssname);
+        initshader = lookupshaderbyname(isname);
         fspasses = NUMSCALE;
         fsskip = 1;
         if(scaleshader)
@@ -612,7 +612,7 @@ void renderfsquad(int w, int h, Shader *s)
 {
     s->set();
     glViewport(0, 0, w, h);
-    if(s==scaleshader)
+    if(s==scaleshader || s==initshader)
     {
         w <<= fsskip;
         h <<= fsskip;
@@ -667,7 +667,7 @@ void renderfullscreenshader(int w, int h)
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i*fsskip]);
         glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, nw, nh);
         if(i>=fspasses-1 || !scaleshader || fsfb[0]) break;
-        renderfsquad(nw >>= fsskip, nh >>= fsskip, scaleshader);
+        renderfsquad(nw >>= fsskip, nh >>= fsskip, !i && initshader ? initshader : scaleshader);
     }
     if(scaleshader && fsfb[0])
     {
@@ -675,7 +675,7 @@ void renderfullscreenshader(int w, int h)
         {
             if(i) glBindTexture(GL_TEXTURE_RECTANGLE_ARB, rendertarget[i*fsskip]);
             glBindFramebuffer_(GL_FRAMEBUFFER_EXT, fsfb[(i+1)*fsskip-1]);
-            renderfsquad(nw >>= fsskip, nh >>= fsskip, scaleshader);
+            renderfsquad(nw >>= fsskip, nh >>= fsskip, !i && initshader ? initshader : scaleshader);
         }
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     }

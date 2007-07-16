@@ -95,32 +95,8 @@ struct matrix
 {
     vec X, Y, Z;
 
+    matrix() {}
     matrix(const vec &_X, const vec &_Y, const vec &_Z) : X(_X), Y(_Y), Z(_Z) {}
-    matrix(vec v, float angle) //matrix for rotating a point around a vector
-    {
-        v.normalize();
-        float c = cosf(angle);
-        float s = sinf(angle);
-        float t = 1.0 - c;
-        X.x = c + v.x * v.x * t;
-        Y.y = c + v.y * v.y * t;
-        Z.z = c + v.z * v.z * t;
-        
-        float tmp1 = v.x * v.y * t;
-        float tmp2 = v.z * s;
-        Y.x = tmp1 + tmp2;
-        X.y = tmp1 - tmp2;
-        
-        tmp1 = v.x * v.z * t;
-        tmp2 = v.y * s;
-        Z.x = tmp1 - tmp2;
-        X.z = tmp1 + tmp2;
-        
-        tmp1 = v.y * v.z * t;
-        tmp2 = v.x * s;
-        Z.y = tmp1 + tmp2;
-        Y.z = tmp1 - tmp2;
-    }
 
     void transform(vec &o) { o = vec(o.dot(X), o.dot(Y), o.dot(Z)); }
 
@@ -130,6 +106,26 @@ struct matrix
         Y.sub(vec(Z).mul(Z.dot(Y)))
          .sub(vec(X).mul(X.dot(Y)));
     }
+
+    void rotate(float angle, const vec &d)
+    {
+        float c = cosf(angle), s = sinf(angle);
+        rotate(c, s, d);
+    }
+
+    void rotate(float c, float s, const vec &d)
+    {
+        X = vec(d.x*d.x*(1-c)+c, d.x*d.y*(1-c)-d.z*s, d.x*d.z*(1-c)+d.y*s);
+        Y = vec(d.y*d.x*(1-c)+d.z*s, d.y*d.y*(1-c)+c, d.y*d.z*(1-c)-d.x*s);
+        Z = vec(d.x*d.z*(1-c)-d.y*s, d.y*d.z*(1-c)+d.x*s, d.z*d.z*(1-c)+c);
+    }
+
+    void transposedtransform(vec &d)
+    {
+        d = vec(X.x*d.x + Y.x*d.y + Z.x*d.z,
+                X.y*d.x + Y.y*d.y + Z.y*d.z,
+                X.z*d.x + Y.z*d.y + Z.z*d.z);
+    } 
 };
 
 struct plane : vec
