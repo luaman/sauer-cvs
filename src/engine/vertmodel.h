@@ -221,9 +221,9 @@ struct vertmodel : model
                         glEnable(GL_TEXTURE_CUBE_MAP_ARB);
                         if(renderpath==R_FIXEDFUNCTION)
                         {
-                            glTexGeni(GL_S,GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
-                            glTexGeni(GL_T,GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
-                            glTexGeni(GL_R,GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
+                            glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
                             glEnable(GL_TEXTURE_GEN_S);
                             glEnable(GL_TEXTURE_GEN_T);
                             glEnable(GL_TEXTURE_GEN_R);
@@ -1222,27 +1222,6 @@ struct vertmodel : model
 
         yaw += spin*lastmillis/1000.0f;
 
-        glPushMatrix();
-        glTranslatef(o.x, o.y, o.z);
-        glRotatef(yaw+180, 0, 0, 1);
-
-        if(anim&ANIM_TRANSLUCENT)
-        {
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            nocolorshader->set();
-            render(anim|ANIM_NOSKIN, varseed, speed, basetime, pitch, vec(0, -1, 0), d, a, rdir, campos, fogplane);
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-            glDepthFunc(GL_LEQUAL);
-        }
-
-        if(anim&(ANIM_TRANSLUCENT|ANIM_SHADOW) && !enablealphablend)
-        {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            enablealphablend = true;
-        }
-
         if(!(anim&ANIM_NOSKIN))
         {
             fogplane = plane(0, 0, 1, o.z-refracting);
@@ -1310,6 +1289,27 @@ struct vertmodel : model
             }
             glMatrixMode(GL_MODELVIEW);
             if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE0_ARB);
+        }
+
+        glPushMatrix();
+        glTranslatef(o.x, o.y, o.z);
+        glRotatef(yaw+180, 0, 0, 1);
+
+        if(anim&ANIM_TRANSLUCENT)
+        {
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            nocolorshader->set();
+            render(anim|ANIM_NOSKIN, varseed, speed, basetime, pitch, vec(0, -1, 0), d, a, rdir, campos, fogplane);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+            glDepthFunc(GL_LEQUAL);
+        }
+
+        if(anim&(ANIM_TRANSLUCENT|ANIM_SHADOW) && !enablealphablend)
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            enablealphablend = true;
         }
 
         render(anim, varseed, speed, basetime, pitch, vec(0, -1, 0), d, a, rdir, campos, fogplane);
