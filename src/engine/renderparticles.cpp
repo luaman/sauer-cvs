@@ -308,6 +308,7 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
             glColor4ub(r, g, b, i ? a/2 : a);
             if(i) glDepthFunc(GL_GEQUAL);
             if(qsphere) gluSphere(qsphere, 1, 12, 6);
+            xtraverts += 12*6*2;
             if(i) glDepthFunc(GL_LESS);
         }
         return;
@@ -327,6 +328,7 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
                 glCullFace(GL_BACK);
                 if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, heminumverts-1, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
                 else glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+                xtraverts += heminumindices;
                 glde++;
                 glCullFace(GL_FRONT);
             }
@@ -334,6 +336,7 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
         }
         if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, heminumverts-1, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
         else glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
+        xtraverts += heminumindices;
         glde++;
         if(i) glDepthFunc(GL_LESS);
     }
