@@ -26,7 +26,8 @@ enum { R_FIXEDFUNCTION = 0, R_ASMSHADER, R_GLSLANG };
 
 enum { SHPARAM_VERTEX = 0, SHPARAM_PIXEL, SHPARAM_UNIFORM };
 
-#define MAXSHADERPARAMS 10
+#define RESERVEDSHADERPARAMS 16
+#define MAXSHADERPARAMS 8
 
 struct ShaderParam
 {
@@ -86,7 +87,7 @@ struct Shader
     GLhandleARB program, vsobj, psobj;
     vector<LocalShaderParamState> defaultparams, extparams;
     Shader *altshader, *fastshader[MAXSHADERDETAIL];
-    LocalShaderParamState *extvertparams[10], *extpixparams[10];
+    LocalShaderParamState *extvertparams[RESERVEDSHADERPARAMS], *extpixparams[RESERVEDSHADERPARAMS];
     bool used;
 
     Shader() : name(NULL), type(SHADER_DEFAULT), vs(0), ps(0), program(0), vsobj(0), psobj(0), altshader(NULL), used(false)
