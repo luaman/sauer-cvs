@@ -46,6 +46,8 @@ struct fpsrender
 #endif
     }
 
+    IVARP(teamskins, 0, 0, 1);
+
     void rendergame(int gamemode)
     {
         if(cl.intermission)
@@ -59,13 +61,13 @@ struct fpsrender
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
-            const char *mdlname = m_teammode ? (isteam(cl.player1->team, d->team) ? "ironsnout/blue" : "ironsnout/red") : "ironsnout";
+            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "ironsnout/blue" : "ironsnout/red") : "ironsnout";
             if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlname);
             s_strcpy(d->info, cl.colorname(d, NULL, "@"));
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); }
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, m_teammode ? (isteam(cl.player1->team, d->team) ? 16 : 13) : 11, 1);
         }
-        if(isthirdperson()) renderplayer(cl.player1, m_teammode ? "ironsnout/blue" : "ironsnout");
+        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "ironsnout/blue" : "ironsnout");
 
         cl.ms.monsterrender();
         cl.et.renderentities();
