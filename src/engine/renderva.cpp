@@ -676,6 +676,21 @@ struct dynlight
     float radius, dist;
     vec color;
     int fade, peak, expire;
+
+    float calcradius() const
+    {
+        return peak>0 && expire-lastmillis>fade ? (radius/peak)*(peak-(expire-lastmillis-fade)) : radius;
+    }
+    
+    float intensity() const
+    {
+        if(fade + peak)
+        {
+            int remaining = expire - lastmillis;
+            return remaining > fade ? 1.0f - float(remaining - fade)/peak : float(remaining)/fade;
+        }
+        return 1.0f;
+    }
 };
 
 vector<dynlight> dynlights;
@@ -711,7 +726,7 @@ int limitdynlights()
     if(maxdynlights) loopvj(dynlights)
     {
         dynlight &d = dynlights[j];
-        d.dist = camera1->o.dist(d.o) - d.radius;
+        d.dist = camera1->o.dist(d.o) - d.calcradius();
         if(d.dist>dynlightdist || isvisiblesphere(d.radius, d.o) >= VFC_FOGGED) continue;
         int insert = 0;
         loopvrev(closedynlights) if(d.dist >= closedynlights[i]->dist) { insert = i+1; break; }
@@ -733,14 +748,9 @@ void dynlightreaching(const vec &target, vec &color, vec &dir)
         dynlight &d = dynlights[i];
         vec ray(d.o);
         ray.sub(target);
-        float mag = ray.magnitude();
-        if(mag >= d.radius) continue;
-        float intensity = 1 - mag/d.radius;
-        if(d.fade + d.peak)
-        {
-            int remaining = d.expire - lastmillis;
-            intensity *= remaining > d.fade ? 1.0f - float(remaining - d.fade)/d.peak : float(remaining)/d.fade;
-        }
+        float mag = ray.magnitude(), radius = d.calcradius();
+        if(radius<=0 || mag >= radius) continue;
+        float intensity = d.intensity()*(1 - mag/radius);
         dyncolor.add(vec(d.color).mul(intensity));
         //dyndir.add(ray.mul(intensity/mag));
     }
@@ -768,7 +778,7 @@ void setdynlights(vtxarray *va)
     loopv(closedynlights)
     {
         dynlight &d = *closedynlights[i];
-        if(d.o.dist_to_bb(va->min, va->max) < d.radius) visibledynlights.add(&d);
+        if(d.o.dist_to_bb(va->min, va->max) < d.calcradius()) visibledynlights.add(&d);
     }
     if(visibledynlights.empty()) return;
 
@@ -784,13 +794,9 @@ void setdynlights(vtxarray *va)
         dynlight &d = *visibledynlights[i];
         setenvparamfv(vertexparams[i], SHPARAM_VERTEX, 10+i, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
         vec color(d.color);
-        color.mul(2);
-        if(d.fade + d.peak)
-        {
-            int remaining = d.expire - lastmillis;
-            color.mul(remaining > d.fade ? 1.0f - float(remaining - d.fade)/d.peak : float(remaining)/d.fade);
-        }
-        setenvparamf(pixelparams[i], SHPARAM_PIXEL, 10+i, color.x, color.y, color.z, -1.0f/(d.radius*d.radius*(1<<(2*VVEC_FRAC))));
+        color.mul(2*d.intensity());
+        float radius = d.calcradius();
+        setenvparamf(pixelparams[i], SHPARAM_PIXEL, 10+i, color.x, color.y, color.z, -1.0f/(radius*radius*(1<<(2*VVEC_FRAC))));
     }
 }
 
