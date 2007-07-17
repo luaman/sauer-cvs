@@ -454,7 +454,11 @@ static void gendynlightvariant(Shader &s, char *vs, char *ps)
     else
     {
         uint usedtc = findusedtexcoords(vs);
-        loopi(7) if(!(usedtc&(1<<i))) 
+        GLint maxtc = 0;
+        glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &maxtc);
+        if(maxtc<=0) return;
+        // -1 for fog coord on ATI cards
+        loopi(maxtc-1) if(!(usedtc&(1<<i))) 
         {
             lights[numlights++] = i;    
             if(numlights>=MAXDYNLIGHTS) break;
