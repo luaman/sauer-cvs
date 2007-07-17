@@ -1092,8 +1092,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             }
             else if(pass==RENDERPASS_LIGHTMAP && s)
             {
-                if(visibledynlights.empty() || s->variants.empty()) s->set(&slot);
-                else s->variants[min(visibledynlights.length(), s->variants.length())-1]->set(&slot);
+                if(visibledynlights.empty()) s->set(&slot);
+                else s->variant(visibledynlights.length()-1)->set(&slot);
 
                 int tmu = 2;
                 if(s->type&SHADER_NORMALSLMS) tmu++;

@@ -99,6 +99,13 @@ struct Shader
     void setslotparams(Slot &slot);
     void bindprograms();
 
+    Shader *variant(int i)
+    {
+        if(!this || renderpath==R_FIXEDFUNCTION) return this;
+        Shader *s = shaderdetail < MAXSHADERDETAIL ? fastshader[shaderdetail] : this;
+        return s->variants.inrange(i) ? s->variants[i] : s;
+    }
+
     void set(Slot *slot = NULL)
     {
         if(!this || renderpath==R_FIXEDFUNCTION) return;
