@@ -454,7 +454,7 @@ static void gendynlightvariant(Shader &s, char *vs, char *ps)
     else
     {
         uint usedtc = findusedtexcoords(vs);
-        loopi(8) if(!(usedtc&(1<<i))) 
+        loopi(7) if(!(usedtc&(1<<i))) 
         {
             lights[numlights++] = i;    
             if(numlights>=MAXDYNLIGHTS) break;
