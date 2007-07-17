@@ -87,6 +87,7 @@ struct Shader
     GLhandleARB program, vsobj, psobj;
     vector<LocalShaderParamState> defaultparams, extparams;
     Shader *altshader, *fastshader[MAXSHADERDETAIL];
+    vector<Shader *> variants;
     LocalShaderParamState *extvertparams[RESERVEDSHADERPARAMS], *extpixparams[RESERVEDSHADERPARAMS];
     bool used;
 
@@ -202,4 +203,6 @@ extern void resettmu(int n);
 extern void scaletmu(int n, int rgbscale, int alphascale = 0);
 extern void colortmu(int n, float r = 0, float g = 0, float b = 0, float a = 0);
 extern void setuptmu(int n, const char *rgbfunc = NULL, const char *alphafunc = NULL);
+
+#define MAXDYNLIGHTS 5
 

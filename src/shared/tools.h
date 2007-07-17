@@ -299,6 +299,13 @@ template <class T> struct vector
         ulen += p.length();
     }
 
+    void put(const T *v, int n)
+    {
+        databuf<T> buf = reserve(n);
+        buf.put(v, n);
+        addbuf(buf);
+    }
+
     void remove(int i, int n)
     {
         for(int p = i+n; p<ulen; p++) buf[p-n] = buf[p];

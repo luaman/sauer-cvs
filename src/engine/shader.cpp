@@ -407,6 +407,135 @@ VARFN(shaders, useshaders, 0, 1, 1, initwarning());
 VARF(shaderprecision, 0, 0, 2, initwarning());
 VARP(shaderdetail, 0, MAXSHADERDETAIL, MAXSHADERDETAIL);
 
+Shader *newshader(int type, char *name, char *vs, char *ps)
+{
+    char *rname = newstring(name);
+    Shader &s = shaders[rname];
+    s.name = rname;
+    s.type = type;
+    loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
+    memset(s.extvertparams, 0, sizeof(s.extvertparams));
+    memset(s.extpixparams, 0, sizeof(s.extpixparams));
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        if(type & SHADER_GLSLANG)
+        {
+            compileglslshader(GL_VERTEX_SHADER_ARB,   s.vsobj, vs, "VS", name);
+            compileglslshader(GL_FRAGMENT_SHADER_ARB, s.psobj, ps, "PS", name);
+            linkglslprogram(s);
+        }
+        else
+        {
+            compileasmshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
+            compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
+        }
+    }
+    return &s;
+}
+
+static uint findusedtexcoords(char *str)
+{
+    uint used = 0;
+    for(;;)
+    {
+        char *tc = strstr(str, "result.texcoord[");
+        if(!tc) break;
+        tc += strlen("result.texcoord[");
+        int n = strtol(tc, &str, 10);
+        used |= 1<<n;
+    }
+    return used;
+}
+
+static void gendynlightvariant(Shader &s, char *vs, char *ps)
+{
+    int numlights = 0, lights[MAXDYNLIGHTS];
+    if(s.type & SHADER_GLSLANG) numlights = MAXDYNLIGHTS;
+    else
+    {
+        uint usedtc = findusedtexcoords(vs);
+        loopi(8) if(!(usedtc&(1<<i))) 
+        {
+            lights[numlights++] = i;    
+            if(numlights>=MAXDYNLIGHTS) break;
+        }
+        if(!numlights) return;
+    }
+
+    char *vspragma = strstr(vs, "#pragma CUBE2_dynlight"), *pspragma = strstr(ps, "#pragma CUBE2_dynlight");
+    string pslight;
+    vspragma += strcspn(vspragma, "\n");
+    if(*vspragma) vspragma++;
+    
+    if(sscanf(pspragma, "#pragma CUBE2_dynlight %s", pslight)!=1) return;
+
+    pspragma += strcspn(pspragma, "\n"); 
+    if(*pspragma) pspragma++;
+
+    vector<char> vsdl, psdl;
+    loopi(numlights)
+    {
+        vsdl.setsizenodelete(0);
+        psdl.setsizenodelete(0);
+    
+        if(s.type & SHADER_GLSLANG)
+        {
+            loopk(i+1)
+            {
+                s_sprintfd(pos)("%sdynlight%dpos%s", !k ? "uniform vec4 " : " ", k, k==i ? ";\n" : ",");
+                vsdl.put(pos, strlen(pos));
+
+                s_sprintfd(color)("%sdynlight%dcolor%s", !k ? "uniform vec4 " : " ", k, k==i ? ";\n" : ",");
+                psdl.put(color, strlen(color));
+            }
+            loopk(i+1)
+            {
+                s_sprintfd(dir)("%sdynlight%ddir%s", !k ? "varying vec3 " : " ", k, k==i ? ";\n" : ",");
+                vsdl.put(dir, strlen(dir));
+                psdl.put(dir, strlen(dir));
+            }
+        }
+            
+        vsdl.put(vs, vspragma-vs);
+        psdl.put(ps, pspragma-ps);
+
+        loopk(i+1)
+        {
+            string tc, dl;
+            if(s.type & SHADER_GLSLANG) s_sprintf(tc)(
+                "dynlight%ddir = gl_Vertex.xyz - dynlight%dpos.xyz;\n",   
+                k, k); 
+            else s_sprintf(tc)(
+                "SUB result.texcoord[%d], vertex.position, program.env[%d];\n", 
+                lights[k], 10+k);
+            vsdl.put(tc, strlen(tc));
+
+            if(s.type & SHADER_GLSLANG) s_sprintf(dl)(
+                "%s.rgb += dynlight%dcolor.rgb * clamp(1.0 - dynlight%dcolor.a*dot(dynlight%ddir, dynlight%ddir), 0.0, 1.0);\n",
+                pslight, k, k, k, k);
+            else s_sprintf(dl)(
+                "%s"
+                "DP3 dynlight, fragment.texcoord[%d], fragment.texcoord[%d];\n"
+                "MAD_SAT dynlight, dynlight, program.env[%d].a, 1;\n"
+                "MAD %s.rgb, program.env[%d], dynlight, %s;\n",
+
+                !k ? "TEMP dynlight;\n" : "",
+                lights[k], lights[k],
+                10+k,
+                pslight, 10+k, pslight);
+            psdl.put(dl, strlen(dl));
+        }
+        vsdl.put(vspragma, strlen(vspragma)+1);
+        psdl.put(pspragma, strlen(pspragma)+1);
+       
+        s_sprintfd(name)("<dynlight %d>%s", i+1, s.name);
+        Shader *variant = newshader(s.type, name, vsdl.getbuf(), psdl.getbuf()); 
+        if(!variant) return;
+        loopv(s.defaultparams) variant->defaultparams.add(s.defaultparams[i]);
+        s.variants.add(variant); 
+    }
+}
+
 void shader(int *type, char *name, char *vs, char *ps)
 {
     if(lookupshaderbyname(name)) return;
@@ -424,29 +553,18 @@ void shader(int *type, char *name, char *vs, char *ps)
             return;
         }
     }
-    char *rname = newstring(name);
-    Shader &s = shaders[rname];
-    s.name = rname;
-    s.type = *type;
-    loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
-    loopv(curparams) s.defaultparams.add(curparams[i]);
-    memset(s.extvertparams, 0, sizeof(s.extvertparams));
-    memset(s.extpixparams, 0, sizeof(s.extpixparams));
-    curparams.setsize(0);
-    if(renderpath!=R_FIXEDFUNCTION)
+    Shader *s = newshader(*type, name, vs, ps);
+    if(s)
     {
-        if(*type & SHADER_GLSLANG)
+        loopv(curparams) s->defaultparams.add(curparams[i]);
+
+        if(renderpath!=R_FIXEDFUNCTION)
         {
-            compileglslshader(GL_VERTEX_SHADER_ARB,   s.vsobj, vs, "VS", name);
-            compileglslshader(GL_FRAGMENT_SHADER_ARB, s.psobj, ps, "PS", name);
-            linkglslprogram(s);
-        }
-        else
-        {
-            compileasmshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
-            compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
+            // '#' is a comment in vertex/fragment programs, while '#pragma' allows an escape for GLSL, so can handle both at once
+            if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, vs, ps);
         }
     }
+    curparams.setsize(0);
 }
 
 void setshader(char *name)

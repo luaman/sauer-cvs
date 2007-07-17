@@ -667,7 +667,7 @@ void rendercaustics(float z, bool refract)
     glFogfv(GL_FOG_COLOR, oldfogc);
 }
 
-VARP(maxdynlights, 0, 5, 100);
+VARP(maxdynlights, 0, MAXDYNLIGHTS, MAXDYNLIGHTS);
 VARP(dynlightdist, 0, 1024, 10000);
 
 struct dynlight
@@ -707,7 +707,6 @@ void cleardynlights()
 
 int limitdynlights()
 {
-    if(dynlights.empty()) return 0;
     closedynlights.setsizenodelete(0);
     if(maxdynlights) loopvj(dynlights)
     {
@@ -724,17 +723,6 @@ int limitdynlights()
         closedynlights.insert(insert, &d);
     }
     return closedynlights.length();
-}
-
-int finddynlights(vtxarray *va)
-{
-    visibledynlights.setsizenodelete(0);
-    loopv(closedynlights)
-    {
-        dynlight &d = *closedynlights[i];
-        if(d.o.dist_to_bb(va->min, va->max) < d.radius) visibledynlights.add(&d);
-    }
-    return visibledynlights.length();
 }
 
 void dynlightreaching(const vec &target, vec &color, vec &dir)
@@ -774,23 +762,27 @@ void dynlightreaching(const vec &target, vec &color, vec &dir)
     color.add(dyncolor);
 }    
 
-#define MAXDYNLIGHTS 5
-
-void setdynlights(vtxarray *va, int start, int num)
+void setdynlights(vtxarray *va)
 {
-    if(num>MAXDYNLIGHTS || start+num>visibledynlights.length()) return;
-
-    static Shader *dynlightshader[MAXDYNLIGHTS] = { NULL, NULL, NULL, NULL };
-    if(!dynlightshader[num-1])
+    visibledynlights.setsizenodelete(0);
+    loopv(closedynlights)
     {
-        s_sprintfd(name)("dynlight%d", num);
-        dynlightshader[num-1] = lookupshaderbyname(name);
+        dynlight &d = *closedynlights[i];
+        if(d.o.dist_to_bb(va->min, va->max) < d.radius) visibledynlights.add(&d);
     }
-    dynlightshader[num-1]->set();
-    loopi(num)
+    if(visibledynlights.empty()) return;
+
+    static string vertexparams[MAXDYNLIGHTS] = { "" }, pixelparams[MAXDYNLIGHTS] = { "" };
+    if(!*vertexparams[0]) loopi(MAXDYNLIGHTS)
     {
-        dynlight &d = *visibledynlights[start+i];
-        setlocalparamfv("lightpos", SHPARAM_VERTEX, 2+i, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
+        s_sprintf(vertexparams[i])("dynlight%dpos", i);
+        s_sprintf(pixelparams[i])("dynlight%dcolor", i);
+    }
+
+    loopv(visibledynlights)
+    {
+        dynlight &d = *visibledynlights[i];
+        setenvparamfv(vertexparams[i], SHPARAM_VERTEX, 10+i, vec4(d.o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
         vec color(d.color);
         color.mul(2);
         if(d.fade + d.peak)
@@ -798,7 +790,7 @@ void setdynlights(vtxarray *va, int start, int num)
             int remaining = d.expire - lastmillis;
             color.mul(remaining > d.fade ? 1.0f - float(remaining - d.fade)/d.peak : float(remaining)/d.fade);
         }
-        setlocalparamf("lightcolor", SHPARAM_PIXEL, 2+i, color.x, color.y, color.z, -1.0f/(d.radius*d.radius*(1<<(2*VVEC_FRAC))));
+        setenvparamf(pixelparams[i], SHPARAM_PIXEL, 10+i, color.x, color.y, color.z, -1.0f/(d.radius*d.radius*(1<<(2*VVEC_FRAC))));
     }
 }
 
@@ -856,8 +848,7 @@ enum
     RENDERPASS_LIGHTMAP = 0,
     RENDERPASS_COLOR,
     RENDERPASS_Z,
-    RENDERPASS_GLOW,
-    RENDERPASS_DYNLIGHT
+    RENDERPASS_GLOW
 };
 
 void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPASS_LIGHTMAP)
@@ -994,6 +985,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
     {
         if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
+
+        setdynlights(va);
     }
 
     if(vbufchanged && pass==RENDERPASS_LIGHTMAP)
@@ -1002,9 +995,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         glTexCoordPointer(2, GL_SHORT, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].u) : &(va->vbuf[0].u));
         glClientActiveTexture_(GL_TEXTURE0_ARB);
     }
-
-    if(pass==RENDERPASS_DYNLIGHT && visibledynlights.length()<=MAXDYNLIGHTS)
-        setdynlights(va, 0, visibledynlights.length());
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
@@ -1065,7 +1055,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         }
         if(&slot!=lastslot)
         {
-            if(pass==RENDERPASS_LIGHTMAP || pass==RENDERPASS_COLOR || pass==RENDERPASS_DYNLIGHT) glBindTexture(GL_TEXTURE_2D, tex->gl);
+            if(pass==RENDERPASS_LIGHTMAP || pass==RENDERPASS_COLOR) glBindTexture(GL_TEXTURE_2D, tex->gl);
             if(renderpath==R_FIXEDFUNCTION)
             {
                 bool noglow = true;
@@ -1096,7 +1086,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             }
             else if(pass==RENDERPASS_LIGHTMAP && s)
             {
-                s->set(&slot);
+                if(visibledynlights.empty() || s->variants.empty()) s->set(&slot);
+                else s->variants[min(visibledynlights.length(), s->variants.length())-1]->set(&slot);
 
                 int tmu = 2;
                 if(s->type&SHADER_NORMALSLMS) tmu++;
@@ -1169,15 +1160,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);
             }
 
-            if(pass==RENDERPASS_DYNLIGHT && visibledynlights.length()>MAXDYNLIGHTS)
-            {
-                for(int offset = 0; offset < visibledynlights.length(); offset += MAXDYNLIGHTS)
-                {
-                    setdynlights(va, offset, min(MAXDYNLIGHTS, visibledynlights.length()-offset));
-                    drawvatris(va, lod.eslist[i].length[l], ebuf, lod.eslist[i].minvert[l], lod.eslist[i].maxvert[l]);
-                }
-            }
-            else drawvatris(va, lod.eslist[i].length[l], ebuf, lod.eslist[i].minvert[l], lod.eslist[i].maxvert[l]);
+            drawvatris(va, lod.eslist[i].length[l], ebuf, lod.eslist[i].minvert[l], lod.eslist[i].maxvert[l]);
             ebuf += lod.eslist[i].length[l];  // Advance to next array.
         }
     }
@@ -1340,7 +1323,6 @@ void rendergeommultipass(renderstate &cur, int pass)
             if(va->rquery && checkquery(va->rquery)) continue;
         }
         if(refracting && renderpath!=R_FIXEDFUNCTION ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED) continue;
-        if(pass==RENDERPASS_DYNLIGHT && finddynlights(va)<=0) continue; 
         renderva(cur, va, lod, pass);
     }
 }
@@ -1357,6 +1339,8 @@ void rendergeom()
 
     bool doOQ = !refracting && (reflecting ? camera1->o.z >= reflecting && hasOQ && oqfrags && oqreflect : zpass!=0);
     if(!doOQ) setupTMUs();
+
+    limitdynlights();
 
     glPushMatrix();
 
@@ -1507,19 +1491,6 @@ void rendergeom()
         START_ADDITIVE_PASS
 
         rendergeommultipass(cur, RENDERPASS_GLOW);
-
-        END_ADDITIVE_PASS
-    }
-
-    if(renderpath!=R_FIXEDFUNCTION && maxdynlights && limitdynlights())
-    {
-        START_ADDITIVE_PASS
-
-        static Shader *dynlightshader = NULL;
-        if(!dynlightshader) dynlightshader = lookupshaderbyname("dynlight");
-        dynlightshader->set();
-
-        rendergeommultipass(cur, RENDERPASS_DYNLIGHT);
 
         END_ADDITIVE_PASS
     }
